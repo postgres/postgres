@@ -10333,32 +10333,36 @@ table2-mapping
        <row>
         <entry><literal>@&gt;</literal></entry>
         <entry><type>jsonb</type></entry>
-        <entry>Does the left JSON value contain within it the right value?</entry>
+        <entry>Does the left JSON value contain the right JSON
+        path/value entries at the top level?</entry>
         <entry><literal>'{"a":1, "b":2}'::jsonb &#64;&gt; '{"b":2}'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>&lt;@</literal></entry>
         <entry><type>jsonb</type></entry>
-        <entry>Is the left JSON value contained within the right value?</entry>
+        <entry>Are the left JSON path/value entries contained at the top level within
+        the right JSON value?</entry>
         <entry><literal>'{"b":2}'::jsonb &lt;@ '{"a":1, "b":2}'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>?</literal></entry>
         <entry><type>text</type></entry>
-        <entry>Does the key/element <emphasis>string</emphasis> exist within
-        the JSON value?</entry>
+        <entry>Does the <emphasis>string</emphasis> exist as a top-level
+        key within the JSON value?</entry>
         <entry><literal>'{"a":1, "b":2}'::jsonb ? 'b'</literal></entry>
        </row>
        <row>
         <entry><literal>?|</literal></entry>
         <entry><type>text[]</type></entry>
-        <entry>Do any of these key/element <emphasis>strings</emphasis> exist?</entry>
+        <entry>Do any of these array <emphasis>strings</emphasis>
+        exist as top-level keys?</entry>
         <entry><literal>'{"a":1, "b":2, "c":3}'::jsonb ?| array['b', 'c']</literal></entry>
        </row>
        <row>
         <entry><literal>?&amp;</literal></entry>
         <entry><type>text[]</type></entry>
-        <entry>Do all of these key/element <emphasis>strings</emphasis> exist?</entry>
+        <entry>Do all of these array <emphasis>strings</emphasis> exist
+        as top-level keys?</entry>
         <entry><literal>'["a", "b"]'::jsonb ?&amp; array['a', 'b']</literal></entry>
        </row>
        <row>

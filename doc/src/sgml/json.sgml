@@ -369,8 +369,9 @@ SELECT '"foo"'::jsonb ? 'foo';
   </para>
   <para>
     The default GIN operator class for <type>jsonb</> supports queries with
-    the <literal>@&gt;</>, <literal>?</>, <literal>?&amp;</>
-    and <literal>?|</> operators.
+    top-level key-exists operators <literal>?</>, <literal>?&amp;</>
+    and <literal>?|</> operators and path/value-exists operator
+    <literal>@&gt;</>.
     (For details of the semantics that these operators
     implement, see <xref linkend="functions-jsonb-op-table">.)
     An example of creating an index with this operator class is:
