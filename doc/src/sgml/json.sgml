@@ -280,7 +280,7 @@ SELECT '[1, 2, 3]'::jsonb @&gt; '[1, 2, 2]'::jsonb;
 
 -- The object with a single pair on the right side is contained
 -- within the object on the left side:
-SELECT '{"product": "PostgreSQL", "version": 9.4, "jsonb":true}'::jsonb @&gt; '{"version":9.4}'::jsonb;
+SELECT '{"product": "PostgreSQL", "version": 9.4, "jsonb": true}'::jsonb @&gt; '{"version": 9.4}'::jsonb;
 
 -- The array on the right side is <emphasis>not</> considered contained within the
 -- array on the left, even though a similar array is nested within it:
@@ -291,6 +291,9 @@ SELECT '[1, 2, [1, 3]]'::jsonb @&gt; '[[1, 3]]'::jsonb;
 
 -- Similarly, containment is not reported here:
 SELECT '{"foo": {"bar": "baz"}}'::jsonb @&gt; '{"bar": "baz"}'::jsonb;  -- yields false
+
+-- A top-level key and an empty object is contained:
+SELECT '{"foo": {"bar": "baz"}}'::jsonb @&gt; '{"foo": {}}'::jsonb;
 </programlisting>
 
   <para>
