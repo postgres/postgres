@@ -716,7 +716,7 @@ typedef unsigned char slock_t;
 asm int
 tas(volatile slock_t *s_lock)
 {
-/* UNIVEL wants %mem in column 1, so we don't pg_indent this file */
+/* UNIVEL wants %mem in column 1, so we don't pgindent this file */
 %mem s_lock
 	pushl %ebx
 	movl s_lock, %ebx
