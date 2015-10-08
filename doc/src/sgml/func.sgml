@@ -17442,7 +17442,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_replication_origin_session_setup</primary>
         </indexterm>
-        <literal><function>pg_replication_origin_setup_session(<parameter>node_name</parameter> <type>text</type>)</function></literal>
+        <literal><function>pg_replication_origin_session_setup(<parameter>node_name</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
         void
