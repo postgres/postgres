@@ -324,7 +324,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <replaceable class="parameter">internallength</replaceable>.
    Base data types can be fixed-length, in which case
    <replaceable class="parameter">internallength</replaceable> is a
-   positive integer, or variable  length, indicated by setting
+   positive integer, or variable-length, indicated by setting
    <replaceable class="parameter">internallength</replaceable>
    to <literal>VARIABLE</literal>.  (Internally, this is represented
    by setting <literal>typlen</> to -1.)  The internal representation of all
