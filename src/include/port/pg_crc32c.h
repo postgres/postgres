@@ -33,6 +33,8 @@
 #ifndef PG_CRC32C_H
 #define PG_CRC32C_H
 
+#include "port/pg_bswap.h"
+
 typedef uint32 pg_crc32c;
 
 /* The INIT and EQ macros are the same for all implementations. */
@@ -71,16 +73,6 @@ extern pg_crc32c (*pg_comp_crc32c) (pg_crc32c crc, const void *data, size_t len)
 #define COMP_CRC32C(crc, data, len) \
 	((crc) = pg_comp_crc32c_sb8((crc), (data), (len)))
 #ifdef WORDS_BIGENDIAN
-
-#ifdef HAVE__BUILTIN_BSWAP32
-#define BSWAP32(x) __builtin_bswap32(x)
-#else
-#define BSWAP32(x) (((x << 24) & 0xff000000) | \
-					((x << 8) & 0x00ff0000) | \
-					((x >> 8) & 0x0000ff00) | \
-					((x >> 24) & 0x000000ff))
-#endif
-
 #define FIN_CRC32C(crc) ((crc) = BSWAP32(crc) ^ 0xFFFFFFFF)
 #else
 #define FIN_CRC32C(crc) ((crc) ^= 0xFFFFFFFF)
