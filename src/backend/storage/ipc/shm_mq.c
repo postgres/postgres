@@ -962,63 +962,49 @@ static bool
 shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
 					 BackgroundWorkerHandle *handle)
 {
-	bool		save_set_latch_on_sigusr1;
 	bool		result = false;
 
-	save_set_latch_on_sigusr1 = set_latch_on_sigusr1;
-	if (handle != NULL)
-		set_latch_on_sigusr1 = true;
-
-	PG_TRY();
+	for (;;)
 	{
-		for (;;)
+		BgwHandleStatus status;
+		pid_t		pid;
+		bool		detached;
+
+		/* Acquire the lock just long enough to check the pointer. */
+		SpinLockAcquire(&mq->mq_mutex);
+		detached = mq->mq_detached;
+		result = (*ptr != NULL);
+		SpinLockRelease(&mq->mq_mutex);
+
+		/* Fail if detached; else succeed if initialized. */
+		if (detached)
 		{
-			BgwHandleStatus status;
-			pid_t		pid;
-			bool		detached;
+			result = false;
+			break;
+		}
+		if (result)
+			break;
 
-			/* Acquire the lock just long enough to check the pointer. */
-			SpinLockAcquire(&mq->mq_mutex);
-			detached = mq->mq_detached;
-			result = (*ptr != NULL);
-			SpinLockRelease(&mq->mq_mutex);
-
-			/* Fail if detached; else succeed if initialized. */
-			if (detached)
+		if (handle != NULL)
+		{
+			/* Check for unexpected worker death. */
+			status = GetBackgroundWorkerPid(handle, &pid);
+			if (status != BGWH_STARTED && status != BGWH_NOT_YET_STARTED)
 			{
 				result = false;
 				break;
 			}
-			if (result)
-				break;
-
-			if (handle != NULL)
-			{
-				/* Check for unexpected worker death. */
-				status = GetBackgroundWorkerPid(handle, &pid);
-				if (status != BGWH_STARTED && status != BGWH_NOT_YET_STARTED)
-				{
-					result = false;
-					break;
-				}
-			}
-
-			/* Wait to be signalled. */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
-
-			/* An interrupt may have occurred while we were waiting. */
-			CHECK_FOR_INTERRUPTS();
-
-			/* Reset the latch so we don't spin. */
-			ResetLatch(MyLatch);
 		}
+
+		/* Wait to be signalled. */
+		WaitLatch(MyLatch, WL_LATCH_SET, 0);
+
+		/* An interrupt may have occurred while we were waiting. */
+		CHECK_FOR_INTERRUPTS();
+
+		/* Reset the latch so we don't spin. */
+		ResetLatch(MyLatch);
 	}
-	PG_CATCH();
-	{
-		set_latch_on_sigusr1 = save_set_latch_on_sigusr1;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
 	return result;
 }
