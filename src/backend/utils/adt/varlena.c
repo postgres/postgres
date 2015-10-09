@@ -26,6 +26,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "port/pg_bswap.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
@@ -1967,25 +1968,25 @@ done:
 static int
 bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup)
 {
-	char	   *a = (char *) &x;
-	char	   *b = (char *) &y;
-	int			result;
-
-	result = memcmp(a, b, sizeof(Datum));
-
 	/*
-	 * When result = 0, the core system will call bttextfastcmp_c() or
+	 * When 0 is returned, the core system will call bttextfastcmp_c() or
 	 * bttextfastcmp_locale().  Even a strcmp() on two non-truncated strxfrm()
 	 * blobs cannot indicate *equality* authoritatively, for the same reason
 	 * that there is a strcoll() tie-breaker call to strcmp() in varstr_cmp().
 	 */
-	return result;
+	if (x > y)
+		return 1;
+	else if (x == y)
+		return 0;
+	else
+		return -1;
 }
 
 /*
  * Conversion routine for sortsupport.  Converts original text to abbreviated
  * key representation.  Our encoding strategy is simple -- pack the first 8
- * bytes of a strxfrm() blob into a Datum.
+ * bytes of a strxfrm() blob into a Datum (on little-endian machines, the 8
+ * bytes are stored in reverse order), and treat it as an unsigned integer.
  */
 static Datum
 bttext_abbrev_convert(Datum original, SortSupport ssup)
@@ -2103,6 +2104,16 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 #endif
 
 	addHyperLogLog(&tss->abbr_card, hash);
+
+	/*
+	 * Byteswap on little-endian machines.
+	 *
+	 * This is needed so that bttextcmp_abbrev() (an unsigned integer 3-way
+	 * comparator) works correctly on all platforms.  If we didn't do this,
+	 * the comparator would have to call memcmp() with a pair of pointers to
+	 * the first byte of each abbreviated key, which is slower.
+	 */
+	res = DatumBigEndianToNative(res);
 
 	/* Don't leak memory here */
 	if (PointerGetDatum(authoritative) != original)

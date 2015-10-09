@@ -28,7 +28,7 @@
 					((x << 8) & 0x00ff0000) | \
 					((x >> 8) & 0x0000ff00) | \
 					((x >> 24) & 0x000000ff))
-#endif	/* HAVE__BUILTIN_BSWAP32 */
+#endif   /* HAVE__BUILTIN_BSWAP32 */
 
 #ifdef HAVE__BUILTIN_BSWAP64
 #define BSWAP64(x) __builtin_bswap64(x)
@@ -41,6 +41,28 @@
 					((x >> 24) & 0x0000000000ff0000UL) | \
 					((x >> 40) & 0x000000000000ff00UL) | \
 					((x >> 56) & 0x00000000000000ffUL))
-#endif	/* HAVE__BUILTIN_BSWAP64 */
+#endif   /* HAVE__BUILTIN_BSWAP64 */
+
+/*
+ * Rearrange the bytes of a Datum from big-endian order into the native byte
+ * order.  On big-endian machines, this does nothing at all.  Note that the C
+ * type Datum is an unsigned integer type on all platforms.
+ *
+ * One possible application of the DatumBigEndianToNative() macro is to make
+ * bitwise comparisons cheaper.  A simple 3-way comparison of Datums
+ * transformed by the macro (based on native, unsigned comparisons) will return
+ * the same result as a memcmp() of the corresponding original Datums, but can
+ * be much cheaper.  It's generally safe to do this on big-endian systems
+ * without any special transformation occurring first.
+ */
+#ifdef WORDS_BIGENDIAN
+#define		DatumBigEndianToNative(x)	(x)
+#else							/* !WORDS_BIGENDIAN */
+#if SIZEOF_DATUM == 8
+#define		DatumBigEndianToNative(x)	BSWAP64(x)
+#else							/* SIZEOF_DATUM != 8 */
+#define		DatumBigEndianToNative(x)	BSWAP32(x)
+#endif   /* SIZEOF_DATUM == 8 */
+#endif   /* WORDS_BIGENDIAN */
 
 #endif   /* PG_BSWAP_H */
