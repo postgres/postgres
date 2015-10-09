@@ -640,6 +640,26 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
                                  Filter: ((a % 2) = 0)
 (12 rows)
 
+-- union all query
+SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+ a |  b  | oid 
+---+-----+-----
+ 1 | abc | 201
+ 3 | cde | 203
+ 1 | xxx | 301
+ 2 | yyy | 302
+ 3 | zzz | 303
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+          QUERY PLAN           
+-------------------------------
+ Append
+   ->  Seq Scan on t2
+         Filter: ((a % 2) = 1)
+   ->  Seq Scan on t3
+(4 rows)
+
 -- superuser is allowed to bypass RLS checks
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
