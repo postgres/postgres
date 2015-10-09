@@ -56,6 +56,12 @@ static bool security_barrier_replace_vars_walker(Node *node,
  * the others, providing protection against malicious user-defined security
  * barriers.  The first security barrier qual in the list will be used in the
  * innermost subquery.
+ *
+ * In practice, the only RTEs that will have security barrier quals are those
+ * that refer to tables with row-level security, or which are the target
+ * relation of an update to an auto-updatable security barrier view.  RTEs
+ * that read from a security barrier view will have already been expanded by
+ * the rewriter.
  */
 void
 expand_security_quals(PlannerInfo *root, List *tlist)
@@ -263,7 +269,8 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			 * Replace any variables in the outer query that refer to the
 			 * original relation RTE with references to columns that we will
 			 * expose in the new subquery, building the subquery's targetlist
-			 * as we go.
+			 * as we go.  Also replace any references in the translated_vars
+			 * lists of any appendrels.
 			 */
 			context.rt_index = rt_index;
 			context.sublevels_up = 0;
@@ -274,6 +281,8 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 
 			security_barrier_replace_vars((Node *) parse, &context);
 			security_barrier_replace_vars((Node *) tlist, &context);
+			security_barrier_replace_vars((Node *) root->append_rel_list,
+										  &context);
 
 			heap_close(context.rel, NoLock);
 

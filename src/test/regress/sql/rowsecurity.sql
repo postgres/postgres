@@ -255,6 +255,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
 SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 
+-- union all query
+SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+
 -- superuser is allowed to bypass RLS checks
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
