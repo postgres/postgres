@@ -26,6 +26,7 @@ our @EXPORT = qw(
 
   $tmp_check
   $log_path
+  $windows_os
 );
 
 use Cwd;
@@ -37,6 +38,8 @@ use IPC::Run qw(run start);
 use SimpleTee;
 
 use Test::More;
+
+our $windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 
 # Open log file. For each test, the log file name uses the name of the
 # file launching this module, without the .pl suffix.
