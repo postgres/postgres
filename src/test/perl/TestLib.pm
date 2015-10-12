@@ -3,6 +3,7 @@ package TestLib;
 use strict;
 use warnings;
 
+use Config;
 use Exporter 'import';
 our @EXPORT = qw(
   tempdir
