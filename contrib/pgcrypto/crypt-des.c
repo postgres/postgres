@@ -635,6 +635,8 @@ des_cipher(const char *in, char *out, long salt, int count)
 	rawr = ntohl(buffer[1]);
 
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
+	if (retval)
+		return (retval);
 
 	buffer[0] = htonl(l_out);
 	buffer[1] = htonl(r_out);
