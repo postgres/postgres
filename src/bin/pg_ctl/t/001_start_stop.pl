@@ -34,8 +34,13 @@ else
 close CONF;
 command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
 	'pg_ctl start -w');
-command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
-	'second pg_ctl start succeeds');
+# sleep here is because Windows builds can't check postmaster.pid exactly,
+# so they may mistake a pre-existing postmaster.pid for one created by the
+# postmaster they start.  Waiting more than the 2 seconds slop time allowed
+# by test_postmaster_connection prevents that mistake.
+sleep 3 if ($windows_os);
+command_fails([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
+	'second pg_ctl start -w fails');
 command_ok([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
 	'pg_ctl stop -w');
 command_fails([ 'pg_ctl', 'stop', '-D', "$tempdir/data", '-w', '-m', 'fast' ],
