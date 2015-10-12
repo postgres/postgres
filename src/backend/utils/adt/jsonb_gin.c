@@ -70,8 +70,8 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 	int			total = 2 * JB_ROOT_COUNT(jb);
 	JsonbIterator *it;
 	JsonbValue	v;
-	int			i = 0,
-				r;
+	JsonbIteratorToken r;
+	int			i = 0;
 	Datum	   *entries;
 
 	/* If the root level is empty, we certainly have no keys */
@@ -333,10 +333,10 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 	int			total = 2 * JB_ROOT_COUNT(jb);
 	JsonbIterator *it;
 	JsonbValue	v;
+	JsonbIteratorToken r;
 	PathHashStack tail;
 	PathHashStack *stack;
-	int			i = 0,
-				r;
+	int			i = 0;
 	Datum	   *entries;
 
 	/* If the root level is empty, we certainly have no keys */
@@ -429,7 +429,7 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 				stack = parent;
 				break;
 			default:
-				elog(ERROR, "invalid JsonbIteratorNext rc: %d", r);
+				elog(ERROR, "invalid JsonbIteratorNext rc: %d", (int) r);
 		}
 	}
 

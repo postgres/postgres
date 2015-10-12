@@ -255,7 +255,7 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 		bool		skipNested = false;
 		JsonbIterator *it;
 		JsonbValue	v;
-		int			r;
+		JsonbIteratorToken r;
 
 		if (JB_ROOT_IS_SCALAR(jb))
 			ereport(ERROR,
@@ -1195,7 +1195,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 		if (jbvp->type == jbvBinary)
 		{
 			JsonbIterator *it = JsonbIteratorInit((JsonbContainer *) jbvp->val.binary.data);
-			int			r;
+			JsonbIteratorToken r;
 
 			r = JsonbIteratorNext(&it, &tv, true);
 			container = (JsonbContainer *) jbvp->val.binary.data;
@@ -1368,7 +1368,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	bool		skipNested = false;
 	JsonbIterator *it;
 	JsonbValue	v;
-	int			r;
+	JsonbIteratorToken r;
 
 	if (!JB_ROOT_IS_OBJECT(jb))
 		ereport(ERROR,
@@ -1687,7 +1687,7 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 	bool		skipNested = false;
 	JsonbIterator *it;
 	JsonbValue	v;
-	int			r;
+	JsonbIteratorToken r;
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
@@ -2704,7 +2704,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		JsonbIterator *it;
 		JsonbValue	v;
 		bool		skipNested = false;
-		int			r;
+		JsonbIteratorToken r;
 
 		Assert(jtype == JSONBOID);
 
