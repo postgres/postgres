@@ -187,7 +187,7 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 	{
 		JsonbValue	va,
 					vb;
-		int			ra,
+		JsonbIteratorToken ra,
 					rb;
 
 		ra = JsonbIteratorNext(&ita, &va, false);
@@ -961,10 +961,10 @@ freeAndGetParent(JsonbIterator *it)
 bool
 JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 {
-	uint32		rval,
-				rcont;
 	JsonbValue	vval,
 				vcontained;
+	JsonbIteratorToken rval,
+				rcont;
 
 	/*
 	 * Guard against stack overflow due to overly complex Jsonb.
