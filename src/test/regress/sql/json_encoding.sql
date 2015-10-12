@@ -65,4 +65,3 @@ SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere
 SELECT jsonb '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
 SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
 SELECT jsonb '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
-
