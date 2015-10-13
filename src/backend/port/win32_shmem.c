@@ -17,7 +17,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
-HANDLE		UsedShmemSegID = 0;
+HANDLE		UsedShmemSegID = INVALID_HANDLE_VALUE;
 void	   *UsedShmemSegAddr = NULL;
 static Size UsedShmemSegSize = 0;
 
@@ -83,7 +83,6 @@ GetSharedMemName(void)
  * we only care about shmem segments that are associated with the intended
  * DataDir.  This is an important consideration since accidental matches of
  * shmem segment IDs are reasonably common.
- *
  */
 bool
 PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
@@ -115,7 +114,6 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  * or recycle any existing segment. On win32, we always create a new segment,
  * since there is no need for recycling (segments go away automatically
  * when the last backend exits)
- *
  */
 PGShmemHeader *
 PGSharedMemoryCreate(Size size, bool makePrivate, int port,
@@ -218,9 +216,6 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 		elog(LOG, "could not close handle to shared memory: error code %lu", GetLastError());
 
 
-	/* Register on-exit routine to delete the new segment */
-	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
-
 	/*
 	 * Get a pointer to the new shared memory segment. Map the whole segment
 	 * at once, and let the system decide on the initial address.
@@ -254,6 +249,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	UsedShmemSegSize = size;
 	UsedShmemSegID = hmap2;
 
+	/* Register on-exit routine to delete the new segment */
+	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
+
 	*shim = hdr;
 	return hdr;
 }
@@ -261,8 +259,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 /*
  * PGSharedMemoryReAttach
  *
- * Re-attach to an already existing shared memory segment. Use the
- * handle inherited from the postmaster.
+ * This is called during startup of a postmaster child process to re-attach to
+ * an already existing shared memory segment, using the handle inherited from
+ * the postmaster.
  *
  * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
  * routine.  The caller must have already restored them to the postmaster's
@@ -299,36 +298,87 @@ PGSharedMemoryReAttach(void)
 }
 
 /*
+ * PGSharedMemoryNoReAttach
+ *
+ * This is called during startup of a postmaster child process when we choose
+ * *not* to re-attach to the existing shared memory segment.  We must clean up
+ * to leave things in the appropriate state.
+ *
+ * The child process startup logic might or might not call PGSharedMemoryDetach
+ * after this; make sure that it will be a no-op if called.
+ *
+ * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
+ * routine.  The caller must have already restored them to the postmaster's
+ * values.
+ */
+void
+PGSharedMemoryNoReAttach(void)
+{
+	Assert(UsedShmemSegAddr != NULL);
+	Assert(IsUnderPostmaster);
+
+	/*
+	 * Under Windows we will not have mapped the segment, so we don't need to
+	 * un-map it.  Just reset UsedShmemSegAddr to show we're not attached.
+	 */
+	UsedShmemSegAddr = NULL;
+
+	/*
+	 * We *must* close the inherited shmem segment handle, else Windows will
+	 * consider the existence of this process to mean it can't release the
+	 * shmem segment yet.  We can now use PGSharedMemoryDetach to do that.
+	 */
+	PGSharedMemoryDetach();
+}
+
+/*
  * PGSharedMemoryDetach
  *
  * Detach from the shared memory segment, if still attached.  This is not
- * intended for use by the process that originally created the segment. Rather,
- * this is for subprocesses that have inherited an attachment and want to
- * get rid of it.
+ * intended to be called explicitly by the process that originally created the
+ * segment (it will have an on_shmem_exit callback registered to do that).
+ * Rather, this is for subprocesses that have inherited an attachment and want
+ * to get rid of it.
+ *
+ * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
+ * routine.
  */
 void
 PGSharedMemoryDetach(void)
 {
+	/* Unmap the view, if it's mapped */
 	if (UsedShmemSegAddr != NULL)
 	{
 		if (!UnmapViewOfFile(UsedShmemSegAddr))
-			elog(LOG, "could not unmap view of shared memory: error code %lu", GetLastError());
+			elog(LOG, "could not unmap view of shared memory: error code %lu",
+				 GetLastError());
 
 		UsedShmemSegAddr = NULL;
+	}
+
+	/* And close the shmem handle, if we have one */
+	if (UsedShmemSegID != INVALID_HANDLE_VALUE)
+	{
+		if (!CloseHandle(UsedShmemSegID))
+			elog(LOG, "could not close handle to shared memory: error code %lu",
+				 GetLastError());
+
+		UsedShmemSegID = INVALID_HANDLE_VALUE;
 	}
 }
 
 
 /*
- *	pgwin32_SharedMemoryDelete(status, shmId)		deletes a shared memory segment
- *	(called as an on_shmem_exit callback, hence funny argument list)
+ * pgwin32_SharedMemoryDelete
+ *
+ * Detach from and delete the shared memory segment
+ * (called as an on_shmem_exit callback, hence funny argument list)
  */
 static void
 pgwin32_SharedMemoryDelete(int status, Datum shmId)
 {
+	Assert(DatumGetPointer(shmId) == UsedShmemSegID);
 	PGSharedMemoryDetach();
-	if (!CloseHandle(DatumGetPointer(shmId)))
-		elog(LOG, "could not close handle to shared memory: error code %lu", GetLastError());
 }
 
 /*

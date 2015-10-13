@@ -195,7 +195,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 
 /****************************************************************************/
 /*	IpcMemoryDetach(status, shmaddr)	removes a shared memory segment		*/
-/*										from process' address spaceq		*/
+/*										from process' address space			*/
 /*	(called as an on_shmem_exit callback, hence funny argument list)		*/
 /****************************************************************************/
 static void
@@ -583,9 +583,10 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 /*
  * PGSharedMemoryReAttach
  *
- * Re-attach to an already existing shared memory segment.  In the non
- * EXEC_BACKEND case this is not used, because postmaster children inherit
- * the shared memory segment attachment via fork().
+ * This is called during startup of a postmaster child process to re-attach to
+ * an already existing shared memory segment.  This is needed only in the
+ * EXEC_BACKEND case; otherwise postmaster children inherit the shared memory
+ * segment attachment via fork().
  *
  * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
  * routine.  The caller must have already restored them to the postmaster's
@@ -619,16 +620,52 @@ PGSharedMemoryReAttach(void)
 
 	UsedShmemSegAddr = hdr;		/* probably redundant */
 }
+
+/*
+ * PGSharedMemoryNoReAttach
+ *
+ * This is called during startup of a postmaster child process when we choose
+ * *not* to re-attach to the existing shared memory segment.  We must clean up
+ * to leave things in the appropriate state.  This is not used in the non
+ * EXEC_BACKEND case, either.
+ *
+ * The child process startup logic might or might not call PGSharedMemoryDetach
+ * after this; make sure that it will be a no-op if called.
+ *
+ * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
+ * routine.  The caller must have already restored them to the postmaster's
+ * values.
+ */
+void
+PGSharedMemoryNoReAttach(void)
+{
+	Assert(UsedShmemSegAddr != NULL);
+	Assert(IsUnderPostmaster);
+
+#ifdef __CYGWIN__
+	/* cygipc (currently) appears to not detach on exec. */
+	PGSharedMemoryDetach();
+#endif
+
+	/* For cleanliness, reset UsedShmemSegAddr to show we're not attached. */
+	UsedShmemSegAddr = NULL;
+	/* And the same for UsedShmemSegID. */
+	UsedShmemSegID = 0;
+}
+
 #endif   /* EXEC_BACKEND */
 
 /*
  * PGSharedMemoryDetach
  *
  * Detach from the shared memory segment, if still attached.  This is not
- * intended for use by the process that originally created the segment
- * (it will have an on_shmem_exit callback registered to do that).  Rather,
- * this is for subprocesses that have inherited an attachment and want to
- * get rid of it.
+ * intended to be called explicitly by the process that originally created the
+ * segment (it will have an on_shmem_exit callback registered to do that).
+ * Rather, this is for subprocesses that have inherited an attachment and want
+ * to get rid of it.
+ *
+ * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
+ * routine.
  */
 void
 PGSharedMemoryDetach(void)
