@@ -37,15 +37,16 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	char		bufin[MAX_STRING];
 	FILE	   *output;
 	char	   *p;
-	bool		got_xid = false;
-	bool		got_oid = false;
-	bool		got_nextxlogfile = false;
-	bool		got_multi = false;
-	bool		got_mxoff = false;
-	bool		got_oldestmulti = false;
+	bool		got_tli = false;
 	bool		got_log_id = false;
 	bool		got_log_seg = false;
-	bool		got_tli = false;
+	bool		got_xid = false;
+	bool		got_oid = false;
+	bool		got_multi = false;
+	bool		got_oldestmulti = false;
+	bool		got_mxoff = false;
+	bool		got_nextxlogfile = false;
+	bool		got_float8_pass_by_value = false;
 	bool		got_align = false;
 	bool		got_blocksz = false;
 	bool		got_largesz = false;
@@ -56,7 +57,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	bool		got_toast = false;
 	bool		got_large_object = false;
 	bool		got_date_is_int = false;
-	bool		got_float8_pass_by_value = false;
 	bool		got_data_checksum_version = false;
 	char	   *lc_collate = NULL;
 	char	   *lc_ctype = NULL;
@@ -67,9 +67,9 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	char	   *language = NULL;
 	char	   *lc_all = NULL;
 	char	   *lc_messages = NULL;
+	uint32		tli = 0;
 	uint32		logid = 0;
 	uint32		segno = 0;
-	uint32		tli = 0;
 
 
 	/*
@@ -154,6 +154,17 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* remove ':' char */
 			cluster->controldata.cat_ver = str2uint(p);
 		}
+		else if ((p = strstr(bufin, "Latest checkpoint's TimeLineID:")) != NULL)
+		{
+			p = strchr(p, ':');
+
+			if (p == NULL || strlen(p) <= 1)
+				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* remove ':' char */
+			tli = str2uint(p);
+			got_tli = true;
+		}
 		else if ((p = strstr(bufin, "First log file ID after reset:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -175,17 +186,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* remove ':' char */
 			segno = str2uint(p);
 			got_log_seg = true;
-		}
-		else if ((p = strstr(bufin, "Latest checkpoint's TimeLineID:")) != NULL)
-		{
-			p = strchr(p, ':');
-
-			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			p++;				/* remove ':' char */
-			tli = str2uint(p);
-			got_tli = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
 		{
@@ -265,6 +265,18 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 			strlcpy(cluster->controldata.nextxlogfile, p, 25);
 			got_nextxlogfile = true;
+		}
+		else if ((p = strstr(bufin, "Float8 argument passing:")) != NULL)
+		{
+			p = strchr(p, ':');
+
+			if (p == NULL || strlen(p) <= 1)
+				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* remove ':' char */
+			/* used later for contrib check */
+			cluster->controldata.float8_pass_by_value = strstr(p, "by value") != NULL;
+			got_float8_pass_by_value = true;
 		}
 		else if ((p = strstr(bufin, "Maximum data alignment:")) != NULL)
 		{
@@ -376,18 +388,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			cluster->controldata.date_is_int = strstr(p, "64-bit integers") != NULL;
 			got_date_is_int = true;
 		}
-		else if ((p = strstr(bufin, "Float8 argument passing:")) != NULL)
-		{
-			p = strchr(p, ':');
-
-			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			p++;				/* remove ':' char */
-			/* used later for contrib check */
-			cluster->controldata.float8_pass_by_value = strstr(p, "by value") != NULL;
-			got_float8_pass_by_value = true;
-		}
 		else if ((p = strstr(bufin, "checksum")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -449,11 +449,12 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||
 		!got_mxoff || (!live_check && !got_nextxlogfile) ||
-		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
-		!got_walseg || !got_ident || !got_index || !got_toast ||
+		!got_float8_pass_by_value || !got_align || !got_blocksz ||
+		!got_largesz || !got_walsz || !got_walseg || !got_ident ||
+		!got_index || !got_toast ||
 		(!got_large_object &&
 		 cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER) ||
-		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
+		!got_date_is_int || !got_data_checksum_version)
 	{
 		pg_log(PG_REPORT,
 			   "The %s cluster lacks some required control information:\n",
@@ -477,6 +478,9 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 		if (!live_check && !got_nextxlogfile)
 			pg_log(PG_REPORT, "  first WAL segment after reset\n");
+
+		if (!got_float8_pass_by_value)
+			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
 		if (!got_align)
 			pg_log(PG_REPORT, "  maximum alignment\n");
@@ -508,9 +512,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 		if (!got_date_is_int)
 			pg_log(PG_REPORT, "  dates/times are integers?\n");
-
-		if (!got_float8_pass_by_value)
-			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
 		/* value added in Postgres 9.3 */
 		if (!got_data_checksum_version)
@@ -563,7 +564,10 @@ check_control_data(ControlData *oldctrl,
 	if (oldctrl->date_is_int != newctrl->date_is_int)
 		pg_fatal("old and new pg_controldata date/time storage types do not match\n");
 
-	/* float8_pass_by_value does not need to match */
+	/*
+	 * float8_pass_by_value does not need to match, but is used in
+	 * check_for_isn_and_int8_passing_mismatch().
+	 */
 
 	/*
 	 * We might eventually allow upgrades from checksum to no-checksum
