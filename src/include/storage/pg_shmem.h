@@ -48,6 +48,7 @@ extern HANDLE UsedShmemSegID;
 extern void *UsedShmemSegAddr;
 
 extern void PGSharedMemoryReAttach(void);
+extern void PGSharedMemoryNoReAttach(void);
 #endif
 
 extern PGShmemHeader *PGSharedMemoryCreate(Size size, bool makePrivate,
