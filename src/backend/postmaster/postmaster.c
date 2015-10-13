@@ -4628,7 +4628,8 @@ SubPostmasterMain(int argc, char *argv[])
 	/*
 	 * If appropriate, physically re-attach to shared memory segment. We want
 	 * to do this before going any further to ensure that we can attach at the
-	 * same address the postmaster used.
+	 * same address the postmaster used.  On the other hand, if we choose not
+	 * to re-attach, we may have other cleanup to do.
 	 */
 	if (strcmp(argv[1], "--forkbackend") == 0 ||
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
@@ -4636,6 +4637,8 @@ SubPostmasterMain(int argc, char *argv[])
 		strcmp(argv[1], "--forkboot") == 0 ||
 		strncmp(argv[1], "--forkbgworker=", 15) == 0)
 		PGSharedMemoryReAttach();
+	else
+		PGSharedMemoryNoReAttach();
 
 	/* autovacuum needs this set before calling InitProcess */
 	if (strcmp(argv[1], "--forkavlauncher") == 0)
