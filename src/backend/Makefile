@@ -188,8 +188,8 @@ $(top_builddir)/src/include/utils/probes.h: utils/probes.h
 	    $(LN_S) "../../../$(subdir)/utils/probes.h" .
 
 
-utils/probes.o: utils/probes.d $(SUBDIROBJS)
-	$(DTRACE) $(DTRACEFLAGS) -C -G -s $(call expand_subsys,$^) -o $@
+utils/probes.o: utils/probes.d $(call expand_subsys,$(SUBDIROBJS))
+	$(DTRACE) $(DTRACEFLAGS) -C -G -s $< $(call expand_subsys,$(SUBDIROBJS)) -o $@
 
 
 ##########################################################################
