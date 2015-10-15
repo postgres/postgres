@@ -5673,7 +5673,7 @@ ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 }
 
 /*
- * Return value is that of the dropped column.
+ * Return value is the address of the dropped column.
  */
 static ObjectAddress
 ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
@@ -10376,7 +10376,7 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
  * coninhcount and conislocal for inherited constraints are adjusted in
  * exactly the same way.
  *
- * Return value is the OID of the relation that is no longer parent.
+ * Return value is the address of the relation that is no longer parent.
  */
 static ObjectAddress
 ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
