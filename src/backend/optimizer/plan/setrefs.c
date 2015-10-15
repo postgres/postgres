@@ -1133,13 +1133,15 @@ set_foreignscan_references(PlannerInfo *root,
 	}
 	else
 	{
-		/* Adjust tlist, qual, fdw_exprs in the standard way */
+		/* Adjust tlist, qual, fdw_exprs, etc. in the standard way */
 		fscan->scan.plan.targetlist =
 			fix_scan_list(root, fscan->scan.plan.targetlist, rtoffset);
 		fscan->scan.plan.qual =
 			fix_scan_list(root, fscan->scan.plan.qual, rtoffset);
 		fscan->fdw_exprs =
 			fix_scan_list(root, fscan->fdw_exprs, rtoffset);
+		fscan->fdw_recheck_quals =
+			fix_scan_list(root, fscan->fdw_recheck_quals, rtoffset);
 	}
 
 	/* Adjust fs_relids if needed */

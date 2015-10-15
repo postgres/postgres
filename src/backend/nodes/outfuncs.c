@@ -594,6 +594,7 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 	WRITE_NODE_FIELD(fdw_exprs);
 	WRITE_NODE_FIELD(fdw_private);
 	WRITE_NODE_FIELD(fdw_scan_tlist);
+	WRITE_NODE_FIELD(fdw_recheck_quals);
 	WRITE_BITMAPSET_FIELD(fs_relids);
 	WRITE_BOOL_FIELD(fsSystemCol);
 }

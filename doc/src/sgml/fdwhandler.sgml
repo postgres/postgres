@@ -1136,6 +1136,15 @@ GetForeignServerByName(const char *name, bool missing_ok);
     </para>
 
     <para>
+     Any clauses removed from the plan node's qual list must instead be added
+     to <literal>fdw_recheck_quals</> in order to ensure correct behavior
+     at the <literal>READ COMMITTED</> isolation level.  When a concurrent
+     update occurs for some other table involved in the query, the executor
+     may need to verify that all of the original quals are still satisfied for
+     the tuple, possibly against a different set of parameter values.
+    </para>
+
+    <para>
      Another <structname>ForeignScan</> field that can be filled by FDWs
      is <structfield>fdw_scan_tlist</>, which describes the tuples returned by
      the FDW for this plan node.  For simple foreign table scans this can be

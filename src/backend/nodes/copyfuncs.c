@@ -648,6 +648,7 @@ _copyForeignScan(const ForeignScan *from)
 	COPY_NODE_FIELD(fdw_exprs);
 	COPY_NODE_FIELD(fdw_private);
 	COPY_NODE_FIELD(fdw_scan_tlist);
+	COPY_NODE_FIELD(fdw_recheck_quals);
 	COPY_BITMAPSET_FIELD(fs_relids);
 	COPY_SCALAR_FIELD(fsSystemCol);
 

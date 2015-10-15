@@ -45,7 +45,7 @@ extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 				 Index scanrelid, List *fdw_exprs, List *fdw_private,
-				 List *fdw_scan_tlist);
+				 List *fdw_scan_tlist, List *fdw_recheck_quals);
 extern Append *make_append(List *appendplans, List *tlist);
 extern RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree, Plan *righttree, int wtParam,

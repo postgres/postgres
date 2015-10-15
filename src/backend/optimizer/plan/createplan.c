@@ -2153,6 +2153,9 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 			replace_nestloop_params(root, (Node *) scan_plan->scan.plan.qual);
 		scan_plan->fdw_exprs = (List *)
 			replace_nestloop_params(root, (Node *) scan_plan->fdw_exprs);
+		scan_plan->fdw_recheck_quals = (List *)
+			replace_nestloop_params(root,
+									(Node *) scan_plan->fdw_recheck_quals);
 	}
 
 	/*
@@ -3738,7 +3741,8 @@ make_foreignscan(List *qptlist,
 				 Index scanrelid,
 				 List *fdw_exprs,
 				 List *fdw_private,
-				 List *fdw_scan_tlist)
+				 List *fdw_scan_tlist,
+				 List *fdw_recheck_quals)
 {
 	ForeignScan *node = makeNode(ForeignScan);
 	Plan	   *plan = &node->scan.plan;
@@ -3754,6 +3758,7 @@ make_foreignscan(List *qptlist,
 	node->fdw_exprs = fdw_exprs;
 	node->fdw_private = fdw_private;
 	node->fdw_scan_tlist = fdw_scan_tlist;
+	node->fdw_recheck_quals = fdw_recheck_quals;
 	/* fs_relids will be filled in by create_foreignscan_plan */
 	node->fs_relids = NULL;
 	/* fsSystemCol will be filled in by create_foreignscan_plan */

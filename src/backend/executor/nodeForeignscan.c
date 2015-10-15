@@ -25,6 +25,7 @@
 #include "executor/executor.h"
 #include "executor/nodeForeignscan.h"
 #include "foreign/fdwapi.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 
 static TupleTableSlot *ForeignNext(ForeignScanState *node);
@@ -72,8 +73,19 @@ ForeignNext(ForeignScanState *node)
 static bool
 ForeignRecheck(ForeignScanState *node, TupleTableSlot *slot)
 {
-	/* There are no access-method-specific conditions to recheck. */
-	return true;
+	ExprContext *econtext;
+
+	/*
+	 * extract necessary information from foreign scan node
+	 */
+	econtext = node->ss.ps.ps_ExprContext;
+
+	/* Does the tuple meet the remote qual condition? */
+	econtext->ecxt_scantuple = slot;
+
+	ResetExprContext(econtext);
+
+	return ExecQual(node->fdw_recheck_quals, econtext, false);
 }
 
 /* ----------------------------------------------------------------
@@ -134,6 +146,9 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 					 (PlanState *) scanstate);
 	scanstate->ss.ps.qual = (List *)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
+					 (PlanState *) scanstate);
+	scanstate->fdw_recheck_quals = (List *)
+		ExecInitExpr((Expr *) node->fdw_recheck_quals,
 					 (PlanState *) scanstate);
 
 	/*
