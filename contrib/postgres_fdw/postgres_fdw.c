@@ -748,6 +748,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	Index		scan_relid = baserel->relid;
 	List	   *fdw_private;
 	List	   *remote_conds = NIL;
+	List	   *remote_exprs = NIL;
 	List	   *local_exprs = NIL;
 	List	   *params_list = NIL;
 	List	   *retrieved_attrs;
@@ -769,8 +770,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 *
 	 * This code must match "extract_actual_clauses(scan_clauses, false)"
 	 * except for the additional decision about remote versus local execution.
-	 * Note however that we only strip the RestrictInfo nodes from the
-	 * local_exprs list, since appendWhereClause expects a list of
+	 * Note however that we don't strip the RestrictInfo nodes from the
+	 * remote_conds list, since appendWhereClause expects a list of
 	 * RestrictInfos.
 	 */
 	foreach(lc, scan_clauses)
@@ -784,11 +785,17 @@ postgresGetForeignPlan(PlannerInfo *root,
 			continue;
 
 		if (list_member_ptr(fpinfo->remote_conds, rinfo))
+		{
 			remote_conds = lappend(remote_conds, rinfo);
+			remote_exprs = lappend(remote_exprs, rinfo->clause);
+		}
 		else if (list_member_ptr(fpinfo->local_conds, rinfo))
 			local_exprs = lappend(local_exprs, rinfo->clause);
 		else if (is_foreign_expr(root, baserel, rinfo->clause))
+		{
 			remote_conds = lappend(remote_conds, rinfo);
+			remote_exprs = lappend(remote_exprs, rinfo->clause);
+		}
 		else
 			local_exprs = lappend(local_exprs, rinfo->clause);
 	}
@@ -874,7 +881,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 							scan_relid,
 							params_list,
 							fdw_private,
-							NIL /* no custom tlist */ );
+							NIL,	/* no custom tlist */
+							remote_exprs);
 }
 
 /*
