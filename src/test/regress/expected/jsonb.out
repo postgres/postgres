@@ -1362,6 +1362,15 @@ SELECT jsonb_build_object(json '{"a":1,"b":2}', 3);
 ERROR:  key value must be scalar, not array, composite or json
 SELECT jsonb_build_object('{1,2,3}'::int[], 3);
 ERROR:  key value must be scalar, not array, composite or json
+-- handling of NULL values
+SELECT jsonb_object_agg(1, NULL::jsonb);
+ jsonb_object_agg 
+------------------
+ {"1": null}
+(1 row)
+
+SELECT jsonb_object_agg(NULL, '{"a":1}');
+ERROR:  field name must not be null
 CREATE TEMP TABLE foo (serial_num int, name text, type text);
 INSERT INTO foo VALUES (847001,'t15','GE1043');
 INSERT INTO foo VALUES (847002,'t16','GE1043');
