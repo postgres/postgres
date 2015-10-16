@@ -75,7 +75,7 @@
 },
 
 {
-	REG_ETOOBIG, "REG_ETOOBIG", "nfa has too many states"
+	REG_ETOOBIG, "REG_ETOOBIG", "regular expression is too complex"
 },
 
 {
