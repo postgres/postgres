@@ -20,6 +20,7 @@
 
 #include "access/htup_details.h"
 #include "access/parallel.h"
+#include "access/xact.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "foreign/fdwapi.h"
@@ -210,11 +211,20 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * a parallel worker.  We might eventually be able to relax this
 	 * restriction, but for now it seems best not to have parallel workers
 	 * trying to create their own parallel workers.
+	 *
+	 * We can't use parallelism in serializable mode because the predicate
+	 * locking code is not parallel-aware.  It's not catastrophic if someone
+	 * tries to run a parallel plan in serializable mode; it just won't get
+	 * any workers and will run serially.  But it seems like a good heuristic
+	 * to assume that the same serialization level will be in effect at plan
+	 * time and execution time, so don't generate a parallel plan if we're
+	 * in serializable mode.
 	 */
 	glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
 		parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
 		parse->utilityStmt == NULL && !IsParallelWorker() &&
+		!IsolationIsSerializable() &&
 		!contain_parallel_unsafe((Node *) parse);
 
 	/*

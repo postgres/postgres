@@ -135,6 +135,14 @@ CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers)
 	if (dynamic_shared_memory_type == DSM_IMPL_NONE)
 		nworkers = 0;
 
+	/*
+	 * If we are running under serializable isolation, we can't use
+	 * parallel workers, at least not until somebody enhances that mechanism
+	 * to be parallel-aware.
+	 */
+	if (IsolationIsSerializable())
+		nworkers = 0;
+
 	/* We might be running in a short-lived memory context. */
 	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
