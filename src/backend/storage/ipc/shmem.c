@@ -170,29 +170,26 @@ ShmemAlloc(Size size)
 	Size		newFree;
 	void	   *newSpace;
 
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PGShmemHeader *shmemseghdr = ShmemSegHdr;
-
 	/*
 	 * ensure all space is adequately aligned.
 	 */
 	size = MAXALIGN(size);
 
-	Assert(shmemseghdr != NULL);
+	Assert(ShmemSegHdr != NULL);
 
 	SpinLockAcquire(ShmemLock);
 
-	newStart = shmemseghdr->freeoffset;
+	newStart = ShmemSegHdr->freeoffset;
 
 	/* extra alignment for large requests, since they are probably buffers */
 	if (size >= BLCKSZ)
 		newStart = BUFFERALIGN(newStart);
 
 	newFree = newStart + size;
-	if (newFree <= shmemseghdr->totalsize)
+	if (newFree <= ShmemSegHdr->totalsize)
 	{
 		newSpace = (void *) ((char *) ShmemBase + newStart);
-		shmemseghdr->freeoffset = newFree;
+		ShmemSegHdr->freeoffset = newFree;
 	}
 	else
 		newSpace = NULL;

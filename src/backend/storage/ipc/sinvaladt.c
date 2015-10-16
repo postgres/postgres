@@ -485,14 +485,9 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		}
 
 		/* Update current value of maxMsgNum using spinlock */
-		{
-			/* use volatile pointer to prevent code rearrangement */
-			volatile SISeg *vsegP = segP;
-
-			SpinLockAcquire(&vsegP->msgnumLock);
-			vsegP->maxMsgNum = max;
-			SpinLockRelease(&vsegP->msgnumLock);
-		}
+		SpinLockAcquire(&segP->msgnumLock);
+		segP->maxMsgNum = max;
+		SpinLockRelease(&segP->msgnumLock);
 
 		/*
 		 * Now that the maxMsgNum change is globally visible, we give everyone
@@ -579,14 +574,9 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	stateP->hasMessages = false;
 
 	/* Fetch current value of maxMsgNum using spinlock */
-	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile SISeg *vsegP = segP;
-
-		SpinLockAcquire(&vsegP->msgnumLock);
-		max = vsegP->maxMsgNum;
-		SpinLockRelease(&vsegP->msgnumLock);
-	}
+	SpinLockAcquire(&segP->msgnumLock);
+	max = segP->maxMsgNum;
+	SpinLockRelease(&segP->msgnumLock);
 
 	if (stateP->resetState)
 	{

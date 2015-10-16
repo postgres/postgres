@@ -941,25 +941,22 @@ hash_search_with_hash_value(HTAB *hashp,
 		case HASH_REMOVE:
 			if (currBucket != NULL)
 			{
-				/* use volatile pointer to prevent code rearrangement */
-				volatile HASHHDR *hctlv = hctl;
-
 				/* if partitioned, must lock to touch nentries and freeList */
-				if (IS_PARTITIONED(hctlv))
-					SpinLockAcquire(&hctlv->mutex);
+				if (IS_PARTITIONED(hctl))
+					SpinLockAcquire(&hctl->mutex);
 
-				Assert(hctlv->nentries > 0);
-				hctlv->nentries--;
+				Assert(hctl->nentries > 0);
+				hctl->nentries--;
 
 				/* remove record from hash bucket's chain. */
 				*prevBucketPtr = currBucket->link;
 
 				/* add the record to the freelist for this table.  */
-				currBucket->link = hctlv->freeList;
-				hctlv->freeList = currBucket;
+				currBucket->link = hctl->freeList;
+				hctl->freeList = currBucket;
 
-				if (IS_PARTITIONED(hctlv))
-					SpinLockRelease(&hctlv->mutex);
+				if (IS_PARTITIONED(hctl))
+					SpinLockRelease(&hctl->mutex);
 
 				/*
 				 * better hope the caller is synchronizing access to this
@@ -1180,26 +1177,25 @@ hash_update_hash_key(HTAB *hashp,
 static HASHBUCKET
 get_hash_entry(HTAB *hashp)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile HASHHDR *hctlv = hashp->hctl;
+	HASHHDR *hctl = hashp->hctl;
 	HASHBUCKET	newElement;
 
 	for (;;)
 	{
 		/* if partitioned, must lock to touch nentries and freeList */
-		if (IS_PARTITIONED(hctlv))
-			SpinLockAcquire(&hctlv->mutex);
+		if (IS_PARTITIONED(hctl))
+			SpinLockAcquire(&hctl->mutex);
 
 		/* try to get an entry from the freelist */
-		newElement = hctlv->freeList;
+		newElement = hctl->freeList;
 		if (newElement != NULL)
 			break;
 
 		/* no free elements.  allocate another chunk of buckets */
-		if (IS_PARTITIONED(hctlv))
-			SpinLockRelease(&hctlv->mutex);
+		if (IS_PARTITIONED(hctl))
+			SpinLockRelease(&hctl->mutex);
 
-		if (!element_alloc(hashp, hctlv->nelem_alloc))
+		if (!element_alloc(hashp, hctl->nelem_alloc))
 		{
 			/* out of memory */
 			return NULL;
@@ -1207,11 +1203,11 @@ get_hash_entry(HTAB *hashp)
 	}
 
 	/* remove entry from freelist, bump nentries */
-	hctlv->freeList = newElement->link;
-	hctlv->nentries++;
+	hctl->freeList = newElement->link;
+	hctl->nentries++;
 
-	if (IS_PARTITIONED(hctlv))
-		SpinLockRelease(&hctlv->mutex);
+	if (IS_PARTITIONED(hctl))
+		SpinLockRelease(&hctl->mutex);
 
 	return newElement;
 }
@@ -1536,8 +1532,7 @@ seg_alloc(HTAB *hashp)
 static bool
 element_alloc(HTAB *hashp, int nelem)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile HASHHDR *hctlv = hashp->hctl;
+	HASHHDR *hctl = hashp->hctl;
 	Size		elementSize;
 	HASHELEMENT *firstElement;
 	HASHELEMENT *tmpElement;
@@ -1548,7 +1543,7 @@ element_alloc(HTAB *hashp, int nelem)
 		return false;
 
 	/* Each element has a HASHELEMENT header plus user data. */
-	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctlv->entrysize);
+	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
 
 	CurrentDynaHashCxt = hashp->hcxt;
 	firstElement = (HASHELEMENT *) hashp->alloc(nelem * elementSize);
@@ -1567,15 +1562,15 @@ element_alloc(HTAB *hashp, int nelem)
 	}
 
 	/* if partitioned, must lock to touch freeList */
-	if (IS_PARTITIONED(hctlv))
-		SpinLockAcquire(&hctlv->mutex);
+	if (IS_PARTITIONED(hctl))
+		SpinLockAcquire(&hctl->mutex);
 
 	/* freelist could be nonempty if two backends did this concurrently */
-	firstElement->link = hctlv->freeList;
-	hctlv->freeList = prevElement;
+	firstElement->link = hctl->freeList;
+	hctl->freeList = prevElement;
 
-	if (IS_PARTITIONED(hctlv))
-		SpinLockRelease(&hctlv->mutex);
+	if (IS_PARTITIONED(hctl))
+		SpinLockRelease(&hctl->mutex);
 
 	return true;
 }
