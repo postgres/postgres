@@ -1311,7 +1311,7 @@ ECPGTypedef: TYPE_P
 			if (auto_create_c == false)
 				$$ = cat_str(7, mm_strdup("/* exec sql type"), mm_strdup($3), mm_strdup("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, mm_strdup("*/"));
 			else
-				$$ = cat_str(6, mm_strdup("typedef "), mm_strdup($5.type_str), *$7?mm_strdup("*"):mm_strdup(""), mm_strdup($6.str), mm_strdup($3), mm_strdup(";"));
+				$$ = cat_str(6, mm_strdup("typedef "), mm_strdup($5.type_str), *$7?mm_strdup("*"):mm_strdup(""), mm_strdup($3), mm_strdup($6.str), mm_strdup(";"));
 		}
 		;
 
