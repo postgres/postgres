@@ -96,6 +96,9 @@ int			ParallelWorkerNumber = -1;
 /* Is there a parallel message pending which we need to receive? */
 bool		ParallelMessagePending = false;
 
+/* Are we initializing a parallel worker? */
+bool		InitializingParallelWorker = false;
+
 /* Pointer to our fixed parallel state. */
 static FixedParallelState *MyFixedParallelState;
 
@@ -815,6 +818,9 @@ ParallelWorkerMain(Datum main_arg)
 	char	   *tstatespace;
 	StringInfoData msgbuf;
 
+	/* Set flag to indicate that we're initializing a parallel worker. */
+	InitializingParallelWorker = true;
+
 	/* Establish signal handlers. */
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
@@ -942,6 +948,7 @@ ParallelWorkerMain(Datum main_arg)
 	 * We've initialized all of our state now; nothing should change
 	 * hereafter.
 	 */
+	InitializingParallelWorker = false;
 	EnterParallelMode();
 
 	/*
