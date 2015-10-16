@@ -443,6 +443,23 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 }
 
 /*
+ * Clean up whatever ParallelExecutreInfo resources still exist after
+ * ExecParallelFinish.  We separate these routines because someone might
+ * want to examine the contents of the DSM after ExecParallelFinish and
+ * before calling this routine.
+ */
+void
+ExecParallelCleanup(ParallelExecutorInfo *pei)
+{
+	if (pei->pcxt != NULL)
+	{
+		DestroyParallelContext(pei->pcxt);
+		pei->pcxt = NULL;
+	}
+	pfree(pei);
+}
+
+/*
  * Create a DestReceiver to write tuples we produce to the shm_mq designated
  * for that purpose.
  */
