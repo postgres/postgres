@@ -38,6 +38,19 @@ explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
 -- Test for infinite loop in pullback() (CVE-2007-4772)
 select 'a' ~ '($|^)*';
 
+-- These cases expose a bug in the original fix for CVE-2007-4772
+select 'a' ~ '(^)+^';
+select 'a' ~ '$($$)+';
+
+-- More cases of infinite loop in pullback(), not fixed by CVE-2007-4772 fix
+select 'a' ~ '($^)+';
+select 'a' ~ '(^$)*';
+select 'aa bb cc' ~ '(^(?!aa))+';
+select 'aa x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+select 'bb x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+select 'cc x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+select 'dd x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+
 -- Test for infinite loop in fixempties() (Tcl bugs 3604074, 3606683)
 select 'a' ~ '((((((a)*)*)*)*)*)*';
 select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';

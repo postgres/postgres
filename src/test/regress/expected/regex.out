@@ -160,6 +160,62 @@ select 'a' ~ '($|^)*';
  t
 (1 row)
 
+-- These cases expose a bug in the original fix for CVE-2007-4772
+select 'a' ~ '(^)+^';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a' ~ '$($$)+';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- More cases of infinite loop in pullback(), not fixed by CVE-2007-4772 fix
+select 'a' ~ '($^)+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'a' ~ '(^$)*';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'aa bb cc' ~ '(^(?!aa))+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'aa x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'bb x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'cc x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'dd x' ~ '(^(?!aa)(?!bb)(?!cc))+';
+ ?column? 
+----------
+ t
+(1 row)
+
 -- Test for infinite loop in fixempties() (Tcl bugs 3604074, 3606683)
 select 'a' ~ '((((((a)*)*)*)*)*)*';
  ?column? 
