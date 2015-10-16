@@ -283,15 +283,13 @@ InitProcGlobal(void)
 void
 InitProcess(void)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
 	PGPROC * volatile * procgloballist;
 
 	/*
 	 * ProcGlobal should be set up already (if we are a backend, we inherit
 	 * this by fork() or EXEC_BACKEND mechanism from the postmaster).
 	 */
-	if (procglobal == NULL)
+	if (ProcGlobal == NULL)
 		elog(PANIC, "proc header uninitialized");
 
 	if (MyProc != NULL)
@@ -299,11 +297,11 @@ InitProcess(void)
 
 	/* Decide which list should supply our PGPROC. */
 	if (IsAnyAutoVacuumProcess())
-		procgloballist = &procglobal->autovacFreeProcs;
+		procgloballist = &ProcGlobal->autovacFreeProcs;
 	else if (IsBackgroundWorker)
-		procgloballist = &procglobal->bgworkerFreeProcs;
+		procgloballist = &ProcGlobal->bgworkerFreeProcs;
 	else
-		procgloballist = &procglobal->freeProcs;
+		procgloballist = &ProcGlobal->freeProcs;
 
 	/*
 	 * Try to get a proc struct from the appropriate free list.  If this
@@ -314,7 +312,7 @@ InitProcess(void)
 	 */
 	SpinLockAcquire(ProcStructLock);
 
-	set_spins_per_delay(procglobal->spins_per_delay);
+	set_spins_per_delay(ProcGlobal->spins_per_delay);
 
 	MyProc = *procgloballist;
 
@@ -578,13 +576,10 @@ InitAuxiliaryProcess(void)
 void
 PublishStartupProcessInformation(void)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
-
 	SpinLockAcquire(ProcStructLock);
 
-	procglobal->startupProc = MyProc;
-	procglobal->startupProcPid = MyProcPid;
+	ProcGlobal->startupProc = MyProc;
+	ProcGlobal->startupProcPid = MyProcPid;
 
 	SpinLockRelease(ProcStructLock);
 }
@@ -627,12 +622,9 @@ HaveNFreeProcs(int n)
 {
 	PGPROC	   *proc;
 
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
-
 	SpinLockAcquire(ProcStructLock);
 
-	proc = procglobal->freeProcs;
+	proc = ProcGlobal->freeProcs;
 
 	while (n > 0 && proc != NULL)
 	{
@@ -772,8 +764,6 @@ RemoveProcFromArray(int code, Datum arg)
 static void
 ProcKill(int code, Datum arg)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
 	PGPROC	   *proc;
 	PGPROC * volatile * procgloballist;
 
@@ -822,7 +812,7 @@ ProcKill(int code, Datum arg)
 	*procgloballist = proc;
 
 	/* Update shared estimate of spins_per_delay */
-	procglobal->spins_per_delay = update_spins_per_delay(procglobal->spins_per_delay);
+	ProcGlobal->spins_per_delay = update_spins_per_delay(ProcGlobal->spins_per_delay);
 
 	SpinLockRelease(ProcStructLock);
 
@@ -1644,9 +1634,6 @@ ProcSendSignal(int pid)
 
 	if (RecoveryInProgress())
 	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile PROC_HDR *procglobal = ProcGlobal;
-
 		SpinLockAcquire(ProcStructLock);
 
 		/*
@@ -1657,8 +1644,8 @@ ProcSendSignal(int pid)
 		 * backend, so BackendPidGetProc() will not return any pid at all. So
 		 * we remember the information for this special case.
 		 */
-		if (pid == procglobal->startupProcPid)
-			proc = procglobal->startupProc;
+		if (pid == ProcGlobal->startupProcPid)
+			proc = ProcGlobal->startupProc;
 
 		SpinLockRelease(ProcStructLock);
 	}
