@@ -19,6 +19,7 @@
 #include <ctype.h>
 
 #include "access/htup_details.h"
+#include "access/parallel.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/pg_authid.h"
@@ -877,9 +878,12 @@ check_role(char **newval, void **extra, GucSource source)
 		ReleaseSysCache(roleTup);
 
 		/*
-		 * Verify that session user is allowed to become this role
+		 * Verify that session user is allowed to become this role, but
+		 * skip this in parallel mode, where we must blindly recreate the
+		 * parallel leader's state.
 		 */
-		if (!is_member_of_role(GetSessionUserId(), roleid))
+		if (!InitializingParallelWorker &&
+			!is_member_of_role(GetSessionUserId(), roleid))
 		{
 			GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
 			GUC_check_errmsg("permission denied to set role \"%s\"",
