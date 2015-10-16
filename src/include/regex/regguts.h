@@ -289,8 +289,10 @@ struct arc
 	struct state *from;			/* where it's from (and contained within) */
 	struct state *to;			/* where it's to */
 	struct arc *outchain;		/* link in *from's outs chain or free chain */
-#define  freechain	 outchain
+	struct arc *outchainRev;	/* back-link in *from's outs chain */
+#define  freechain	outchain	/* we do not maintain "freechainRev" */
 	struct arc *inchain;		/* link in *to's ins chain */
+	struct arc *inchainRev;		/* back-link in *to's ins chain */
 	struct arc *colorchain;		/* link in color's arc chain */
 	struct arc *colorchainRev;	/* back-link in color's arc chain */
 };
