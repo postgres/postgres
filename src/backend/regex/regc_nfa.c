@@ -858,6 +858,18 @@ specialcolors(struct nfa * nfa)
 
 /*
  * optimize - optimize an NFA
+ *
+ * The main goal of this function is not so much "optimization" (though it
+ * does try to get rid of useless NFA states) as reducing the NFA to a form
+ * the regex executor can handle.  The executor, and indeed the cNFA format
+ * that is its input, can only handle PLAIN and LACON arcs.  The output of
+ * the regex parser also includes EMPTY (do-nothing) arcs, as well as
+ * ^, $, AHEAD, and BEHIND constraint arcs, which we must get rid of here.
+ * We first get rid of EMPTY arcs and then deal with the constraint arcs.
+ * The hardest part of either job is to get rid of circular loops of the
+ * target arc type.  We would have to do that in any case, though, as such a
+ * loop would otherwise allow the executor to cycle through the loop endlessly
+ * without making any progress in the input string.
  */
 static long						/* re_info bits */
 optimize(struct nfa * nfa,
@@ -881,6 +893,7 @@ optimize(struct nfa * nfa,
 	if (verbose)
 		fprintf(f, "\nconstraints:\n");
 #endif
+	fixconstraintloops(nfa, f); /* get rid of constraint loops */
 	pullback(nfa, f);			/* pull back constraints backward */
 	pushfwd(nfa, f);			/* push fwd constraints forward */
 #ifdef REG_DEBUG
@@ -892,7 +905,7 @@ optimize(struct nfa * nfa,
 }
 
 /*
- * pullback - pull back constraints backward to (with luck) eliminate them
+ * pullback - pull back constraints backward to eliminate them
  */
 static void
 pullback(struct nfa * nfa,
@@ -926,6 +939,12 @@ pullback(struct nfa * nfa,
 	if (NISERR())
 		return;
 
+	/*
+	 * Any ^ constraints we were able to pull to the start state can now be
+	 * replaced by PLAIN arcs referencing the BOS or BOL colors.  There should
+	 * be no other ^ or BEHIND arcs left in the NFA, though we do not check
+	 * that here (compact() will fail if so).
+	 */
 	for (a = nfa->pre->outs; a != NULL; a = nexta)
 	{
 		nexta = a->outchain;
@@ -954,11 +973,7 @@ pull(struct nfa * nfa,
 	struct arc *nexta;
 	struct state *s;
 
-	if (from == to)
-	{							/* circular constraint is pointless */
-		freearc(nfa, con);
-		return 1;
-	}
+	assert(from != to);			/* should have gotten rid of this earlier */
 	if (from->flag)				/* can't pull back beyond start */
 		return 0;
 	if (from->nins == 0)
@@ -967,33 +982,12 @@ pull(struct nfa * nfa,
 		return 1;
 	}
 
-	/*
-	 * DGP 2007-11-15: Cloning a state with a circular constraint on its list
-	 * of outs can lead to trouble [Tcl Bug 1810038], so get rid of them
-	 * first.
-	 */
-	for (a = from->outs; a != NULL; a = nexta)
-	{
-		nexta = a->outchain;
-		switch (a->type)
-		{
-			case '^':
-			case '$':
-			case BEHIND:
-			case AHEAD:
-				if (from == a->to)
-					freearc(nfa, a);
-				break;
-		}
-	}
-
 	/* first, clone from state if necessary to avoid other outarcs */
 	if (from->nouts > 1)
 	{
 		s = newstate(nfa);
 		if (NISERR())
 			return 0;
-		assert(to != from);		/* con is not an inarc */
 		copyins(nfa, from, s, 1);		/* duplicate inarcs */
 		cparc(nfa, con, s, to); /* move constraint arc */
 		freearc(nfa, con);
@@ -1036,7 +1030,7 @@ pull(struct nfa * nfa,
 }
 
 /*
- * pushfwd - push forward constraints forward to (with luck) eliminate them
+ * pushfwd - push forward constraints forward to eliminate them
  */
 static void
 pushfwd(struct nfa * nfa,
@@ -1070,6 +1064,12 @@ pushfwd(struct nfa * nfa,
 	if (NISERR())
 		return;
 
+	/*
+	 * Any $ constraints we were able to push to the post state can now be
+	 * replaced by PLAIN arcs referencing the EOS or EOL colors.  There should
+	 * be no other $ or AHEAD arcs left in the NFA, though we do not check
+	 * that here (compact() will fail if so).
+	 */
 	for (a = nfa->post->ins; a != NULL; a = nexta)
 	{
 		nexta = a->inchain;
@@ -1098,40 +1098,13 @@ push(struct nfa * nfa,
 	struct arc *nexta;
 	struct state *s;
 
-	if (to == from)
-	{							/* circular constraint is pointless */
-		freearc(nfa, con);
-		return 1;
-	}
+	assert(to != from);			/* should have gotten rid of this earlier */
 	if (to->flag)				/* can't push forward beyond end */
 		return 0;
 	if (to->nouts == 0)
 	{							/* dead end */
 		freearc(nfa, con);
 		return 1;
-	}
-
-	/*
-	 * DGP 2007-11-15: Here we duplicate the same protections as appear in
-	 * pull() above to avoid troubles with cloning a state with a circular
-	 * constraint on its list of ins.  It is not clear whether this is
-	 * necessary, or is protecting against a "can't happen". Any test case
-	 * that actually leads to a freearc() call here would be a welcome
-	 * addition to the test suite.
-	 */
-	for (a = to->ins; a != NULL; a = nexta)
-	{
-		nexta = a->inchain;
-		switch (a->type)
-		{
-			case '^':
-			case '$':
-			case BEHIND:
-			case AHEAD:
-				if (a->from == to)
-					freearc(nfa, a);
-				break;
-		}
 	}
 
 	/* first, clone to state if necessary to avoid other inarcs */
@@ -1458,6 +1431,611 @@ replaceempty(struct nfa * nfa,
 }
 
 /*
+ * isconstraintarc - detect whether an arc is of a constraint type
+ */
+static inline int
+isconstraintarc(struct arc * a)
+{
+	switch (a->type)
+	{
+		case '^':
+		case '$':
+		case BEHIND:
+		case AHEAD:
+		case LACON:
+			return 1;
+	}
+	return 0;
+}
+
+/*
+ * hasconstraintout - does state have a constraint out arc?
+ */
+static int
+hasconstraintout(struct state * s)
+{
+	struct arc *a;
+
+	for (a = s->outs; a != NULL; a = a->outchain)
+	{
+		if (isconstraintarc(a))
+			return 1;
+	}
+	return 0;
+}
+
+/*
+ * fixconstraintloops - get rid of loops containing only constraint arcs
+ *
+ * A loop of states that contains only constraint arcs is useless, since
+ * passing around the loop represents no forward progress.  Moreover, it
+ * would cause infinite looping in pullback/pushfwd, so we need to get rid
+ * of such loops before doing that.
+ */
+static void
+fixconstraintloops(struct nfa * nfa,
+				   FILE *f)		/* for debug output; NULL none */
+{
+	struct state *s;
+	struct state *nexts;
+	struct arc *a;
+	struct arc *nexta;
+	int			hasconstraints;
+
+	/*
+	 * In the trivial case of a state that loops to itself, we can just drop
+	 * the constraint arc altogether.  This is worth special-casing because
+	 * such loops are far more common than loops containing multiple states.
+	 * While we're at it, note whether any constraint arcs survive.
+	 */
+	hasconstraints = 0;
+	for (s = nfa->states; s != NULL && !NISERR(); s = nexts)
+	{
+		nexts = s->next;
+		/* while we're at it, ensure tmp fields are clear for next step */
+		assert(s->tmp == NULL);
+		for (a = s->outs; a != NULL && !NISERR(); a = nexta)
+		{
+			nexta = a->outchain;
+			if (isconstraintarc(a))
+			{
+				if (a->to == s)
+					freearc(nfa, a);
+				else
+					hasconstraints = 1;
+			}
+		}
+		/* If we removed all the outarcs, the state is useless. */
+		if (s->nouts == 0 && !s->flag)
+			dropstate(nfa, s);
+	}
+
+	/* Nothing to do if no remaining constraint arcs */
+	if (NISERR() || !hasconstraints)
+		return;
+
+	/*
+	 * Starting from each remaining NFA state, search outwards for a
+	 * constraint loop.  If we find a loop, break the loop, then start the
+	 * search over.  (We could possibly retain some state from the first scan,
+	 * but it would complicate things greatly, and multi-state constraint
+	 * loops are rare enough that it's not worth optimizing the case.)
+	 */
+restart:
+	for (s = nfa->states; s != NULL && !NISERR(); s = s->next)
+	{
+		if (findconstraintloop(nfa, s))
+			goto restart;
+	}
+
+	if (NISERR())
+		return;
+
+	/*
+	 * Now remove any states that have become useless.  (This cleanup is not
+	 * very thorough, and would be even less so if we tried to combine it with
+	 * the previous step; but cleanup() will take care of anything we miss.)
+	 *
+	 * Because findconstraintloop intentionally doesn't reset all tmp fields,
+	 * we have to clear them after it's done.  This is a convenient place to
+	 * do that, too.
+	 */
+	for (s = nfa->states; s != NULL; s = nexts)
+	{
+		nexts = s->next;
+		s->tmp = NULL;
+		if ((s->nins == 0 || s->nouts == 0) && !s->flag)
+			dropstate(nfa, s);
+	}
+
+	if (f != NULL)
+		dumpnfa(nfa, f);
+}
+
+/*
+ * findconstraintloop - recursively find a loop of constraint arcs
+ *
+ * If we find a loop, break it by calling breakconstraintloop(), then
+ * return 1; otherwise return 0.
+ *
+ * State tmp fields are guaranteed all NULL on a success return, because
+ * breakconstraintloop does that.  After a failure return, any state that
+ * is known not to be part of a loop is marked with s->tmp == s; this allows
+ * us not to have to re-prove that fact on later calls.  (This convention is
+ * workable because we already eliminated single-state loops.)
+ *
+ * Note that the found loop doesn't necessarily include the first state we
+ * are called on.  Any loop reachable from that state will do.
+ *
+ * The maximum recursion depth here is one more than the length of the longest
+ * loop-free chain of constraint arcs, which is surely no more than the size
+ * of the NFA ... but that could still be enough to cause trouble.
+ */
+static int
+findconstraintloop(struct nfa * nfa, struct state * s)
+{
+	struct arc *a;
+
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return 1;				/* to exit as quickly as possible */
+	}
+
+	if (s->tmp != NULL)
+	{
+		/* Already proven uninteresting? */
+		if (s->tmp == s)
+			return 0;
+		/* Found a loop involving s */
+		breakconstraintloop(nfa, s);
+		/* The tmp fields have been cleaned up by breakconstraintloop */
+		return 1;
+	}
+	for (a = s->outs; a != NULL; a = a->outchain)
+	{
+		if (isconstraintarc(a))
+		{
+			struct state *sto = a->to;
+
+			assert(sto != s);
+			s->tmp = sto;
+			if (findconstraintloop(nfa, sto))
+				return 1;
+		}
+	}
+
+	/*
+	 * If we get here, no constraint loop exists leading out from s.  Mark it
+	 * with s->tmp == s so we need not rediscover that fact again later.
+	 */
+	s->tmp = s;
+	return 0;
+}
+
+/*
+ * breakconstraintloop - break a loop of constraint arcs
+ *
+ * sinitial is any one member state of the loop.  Each loop member's tmp
+ * field links to its successor within the loop.  (Note that this function
+ * will reset all the tmp fields to NULL.)
+ *
+ * We can break the loop by, for any one state S1 in the loop, cloning its
+ * loop successor state S2 (and possibly following states), and then moving
+ * all S1->S2 constraint arcs to point to the cloned S2.  The cloned S2 should
+ * copy any non-constraint outarcs of S2.  Constraint outarcs should be
+ * dropped if they point back to S1, else they need to be copied as arcs to
+ * similarly cloned states S3, S4, etc.  In general, each cloned state copies
+ * non-constraint outarcs, drops constraint outarcs that would lead to itself
+ * or any earlier cloned state, and sends other constraint outarcs to newly
+ * cloned states.  No cloned state will have any inarcs that aren't constraint
+ * arcs or do not lead from S1 or earlier-cloned states.  It's okay to drop
+ * constraint back-arcs since they would not take us to any state we've not
+ * already been in; therefore, no new constraint loop is created.  In this way
+ * we generate a modified NFA that can still represent every useful state
+ * sequence, but not sequences that represent state loops with no consumption
+ * of input data.  Note that the set of cloned states will certainly include
+ * all of the loop member states other than S1, and it may also include
+ * non-loop states that are reachable from S2 via constraint arcs.  This is
+ * important because there is no guarantee that findconstraintloop found a
+ * maximal loop (and searching for one would be NP-hard, so don't try).
+ * Frequently the "non-loop states" are actually part of a larger loop that
+ * we didn't notice, and indeed there may be several overlapping loops.
+ * This technique ensures convergence in such cases, while considering only
+ * the originally-found loop does not.
+ *
+ * If there is only one S1->S2 constraint arc, then that constraint is
+ * certainly satisfied when we enter any of the clone states.  This means that
+ * in the common case where many of the constraint arcs are identically
+ * labeled, we can merge together clone states linked by a similarly-labeled
+ * constraint: if we can get to the first one we can certainly get to the
+ * second, so there's no need to distinguish.  This greatly reduces the number
+ * of new states needed, so we preferentially break the given loop at a state
+ * pair where this is true.
+ *
+ * Furthermore, it's fairly common to find that a cloned successor state has
+ * no outarcs, especially if we're a bit aggressive about removing unnecessary
+ * outarcs.  If that happens, then there is simply not any interesting state
+ * that can be reached through the predecessor's loop arcs, which means we can
+ * break the loop just by removing those loop arcs, with no new states added.
+ */
+static void
+breakconstraintloop(struct nfa * nfa, struct state * sinitial)
+{
+	struct state *s;
+	struct state *shead;
+	struct state *stail;
+	struct state *sclone;
+	struct state *nexts;
+	struct arc *refarc;
+	struct arc *a;
+	struct arc *nexta;
+
+	/*
+	 * Start by identifying which loop step we want to break at.
+	 * Preferentially this is one with only one constraint arc.  (XXX are
+	 * there any other secondary heuristics we want to use here?)  Set refarc
+	 * to point to the selected lone constraint arc, if there is one.
+	 */
+	refarc = NULL;
+	s = sinitial;
+	do
+	{
+		nexts = s->tmp;
+		assert(nexts != s);		/* should not see any one-element loops */
+		if (refarc == NULL)
+		{
+			int			narcs = 0;
+
+			for (a = s->outs; a != NULL; a = a->outchain)
+			{
+				if (a->to == nexts && isconstraintarc(a))
+				{
+					refarc = a;
+					narcs++;
+				}
+			}
+			assert(narcs > 0);
+			if (narcs > 1)
+				refarc = NULL;	/* multiple constraint arcs here, no good */
+		}
+		s = nexts;
+	} while (s != sinitial);
+
+	if (refarc)
+	{
+		/* break at the refarc */
+		shead = refarc->from;
+		stail = refarc->to;
+		assert(stail == shead->tmp);
+	}
+	else
+	{
+		/* for lack of a better idea, break after sinitial */
+		shead = sinitial;
+		stail = sinitial->tmp;
+	}
+
+	/*
+	 * Reset the tmp fields so that we can use them for local storage in
+	 * clonesuccessorstates.  (findconstraintloop won't mind, since it's just
+	 * going to abandon its search anyway.)
+	 */
+	for (s = nfa->states; s != NULL; s = s->next)
+		s->tmp = NULL;
+
+	/*
+	 * Recursively build clone state(s) as needed.
+	 */
+	sclone = newstate(nfa);
+	if (sclone == NULL)
+	{
+		assert(NISERR());
+		return;
+	}
+
+	clonesuccessorstates(nfa, stail, sclone, shead, refarc,
+						 NULL, NULL, nfa->nstates);
+
+	if (NISERR())
+		return;
+
+	/*
+	 * It's possible that sclone has no outarcs at all, in which case it's
+	 * useless.  (We don't try extremely hard to get rid of useless states
+	 * here, but this is an easy and fairly common case.)
+	 */
+	if (sclone->nouts == 0)
+	{
+		freestate(nfa, sclone);
+		sclone = NULL;
+	}
+
+	/*
+	 * Move shead's constraint-loop arcs to point to sclone, or just drop them
+	 * if we discovered we don't need sclone.
+	 */
+	for (a = shead->outs; a != NULL; a = nexta)
+	{
+		nexta = a->outchain;
+		if (a->to == stail && isconstraintarc(a))
+		{
+			if (sclone)
+				cparc(nfa, a, shead, sclone);
+			freearc(nfa, a);
+			if (NISERR())
+				break;
+		}
+	}
+}
+
+/*
+ * clonesuccessorstates - create a tree of constraint-arc successor states
+ *
+ * ssource is the state to be cloned, and sclone is the state to copy its
+ * outarcs into.  sclone's inarcs, if any, should already be set up.
+ *
+ * spredecessor is the original predecessor state that we are trying to build
+ * successors for (it may not be the immediate predecessor of ssource).
+ * refarc, if not NULL, is the original constraint arc that is known to have
+ * been traversed out of spredecessor to reach the successor(s).
+ *
+ * For each cloned successor state, we transiently create a "donemap" that is
+ * a boolean array showing which source states we've already visited for this
+ * clone state.  This prevents infinite recursion as well as useless repeat
+ * visits to the same state subtree (which can add up fast, since typical NFAs
+ * have multiple redundant arc pathways).  Each donemap is a char array
+ * indexed by state number.  The donemaps are all of the same size "nstates",
+ * which is nfa->nstates as of the start of the recursion.  This is enough to
+ * have entries for all pre-existing states, but *not* entries for clone
+ * states created during the recursion.  That's okay since we have no need to
+ * mark those.
+ *
+ * curdonemap is NULL when recursing to a new sclone state, or sclone's
+ * donemap when we are recursing without having created a new state (which we
+ * do when we decide we can merge a successor state into the current clone
+ * state).  outerdonemap is NULL at the top level and otherwise the parent
+ * clone state's donemap.
+ *
+ * The successor states we create and fill here form a strict tree structure,
+ * with each state having exactly one predecessor, except that the toplevel
+ * state has no inarcs as yet (breakconstraintloop will add its inarcs from
+ * spredecessor after we're done).  Thus, we can examine sclone's inarcs back
+ * to the root, plus refarc if any, to identify the set of constraints already
+ * known valid at the current point.  This allows us to avoid generating extra
+ * successor states.
+ */
+static void
+clonesuccessorstates(struct nfa * nfa,
+					 struct state * ssource,
+					 struct state * sclone,
+					 struct state * spredecessor,
+					 struct arc * refarc,
+					 char *curdonemap,
+					 char *outerdonemap,
+					 int nstates)
+{
+	char	   *donemap;
+	struct arc *a;
+
+	/* Since this is recursive, it could be driven to stack overflow */
+	if (STACK_TOO_DEEP(nfa->v->re))
+	{
+		NERR(REG_ETOOBIG);
+		return;
+	}
+
+	/* If this state hasn't already got a donemap, create one */
+	donemap = curdonemap;
+	if (donemap == NULL)
+	{
+		donemap = (char *) MALLOC(nstates * sizeof(char));
+		if (donemap == NULL)
+		{
+			NERR(REG_ESPACE);
+			return;
+		}
+
+		if (outerdonemap != NULL)
+		{
+			/*
+			 * Not at outermost recursion level, so copy the outer level's
+			 * donemap; this ensures that we see states in process of being
+			 * visited at outer levels, or already merged into predecessor
+			 * states, as ones we shouldn't traverse back to.
+			 */
+			memcpy(donemap, outerdonemap, nstates * sizeof(char));
+		}
+		else
+		{
+			/* At outermost level, only spredecessor is off-limits */
+			memset(donemap, 0, nstates * sizeof(char));
+			assert(spredecessor->no < nstates);
+			donemap[spredecessor->no] = 1;
+		}
+	}
+
+	/* Mark ssource as visited in the donemap */
+	assert(ssource->no < nstates);
+	assert(donemap[ssource->no] == 0);
+	donemap[ssource->no] = 1;
+
+	/*
+	 * We proceed by first cloning all of ssource's outarcs, creating new
+	 * clone states as needed but not doing more with them than that.  Then in
+	 * a second pass, recurse to process the child clone states.  This allows
+	 * us to have only one child clone state per reachable source state, even
+	 * when there are multiple outarcs leading to the same state.  Also, when
+	 * we do visit a child state, its set of inarcs is known exactly, which
+	 * makes it safe to apply the constraint-is-already-checked optimization.
+	 * Also, this ensures that we've merged all the states we can into the
+	 * current clone before we recurse to any children, thus possibly saving
+	 * them from making extra images of those states.
+	 *
+	 * While this function runs, child clone states of the current state are
+	 * marked by setting their tmp fields to point to the original state they
+	 * were cloned from.  This makes it possible to detect multiple outarcs
+	 * leading to the same state, and also makes it easy to distinguish clone
+	 * states from original states (which will have tmp == NULL).
+	 */
+	for (a = ssource->outs; a != NULL && !NISERR(); a = a->outchain)
+	{
+		struct state *sto = a->to;
+
+		/*
+		 * We do not consider cloning successor states that have no constraint
+		 * outarcs; just link to them as-is.  They cannot be part of a
+		 * constraint loop so there is no need to make copies.  In particular,
+		 * this rule keeps us from trying to clone the post state, which would
+		 * be a bad idea.
+		 */
+		if (isconstraintarc(a) && hasconstraintout(sto))
+		{
+			struct state *prevclone;
+			int			canmerge;
+			struct arc *a2;
+
+			/*
+			 * Back-link constraint arcs must not be followed.  Nor is there a
+			 * need to revisit states previously merged into this clone.
+			 */
+			assert(sto->no < nstates);
+			if (donemap[sto->no] != 0)
+				continue;
+
+			/*
+			 * Check whether we already have a child clone state for this
+			 * source state.
+			 */
+			prevclone = NULL;
+			for (a2 = sclone->outs; a2 != NULL; a2 = a2->outchain)
+			{
+				if (a2->to->tmp == sto)
+				{
+					prevclone = a2->to;
+					break;
+				}
+			}
+
+			/*
+			 * If this arc is labeled the same as refarc, or the same as any
+			 * arc we must have traversed to get to sclone, then no additional
+			 * constraints need to be met to get to sto, so we should just
+			 * merge its outarcs into sclone.
+			 */
+			if (refarc && a->type == refarc->type && a->co == refarc->co)
+				canmerge = 1;
+			else
+			{
+				struct state *s;
+
+				canmerge = 0;
+				for (s = sclone; s->ins; s = s->ins->from)
+				{
+					if (s->nins == 1 &&
+						a->type == s->ins->type && a->co == s->ins->co)
+					{
+						canmerge = 1;
+						break;
+					}
+				}
+			}
+
+			if (canmerge)
+			{
+				/*
+				 * We can merge into sclone.  If we previously made a child
+				 * clone state, drop it; there's no need to visit it.  (This
+				 * can happen if ssource has multiple pathways to sto, and we
+				 * only just now found one that is provably a no-op.)
+				 */
+				if (prevclone)
+					dropstate(nfa, prevclone);	/* kills our outarc, too */
+
+				/* Recurse to merge sto's outarcs into sclone */
+				clonesuccessorstates(nfa,
+									 sto,
+									 sclone,
+									 spredecessor,
+									 refarc,
+									 donemap,
+									 outerdonemap,
+									 nstates);
+				/* sto should now be marked as previously visited */
+				assert(NISERR() || donemap[sto->no] == 1);
+			}
+			else if (prevclone)
+			{
+				/*
+				 * We already have a clone state for this successor, so just
+				 * make another arc to it.
+				 */
+				cparc(nfa, a, sclone, prevclone);
+			}
+			else
+			{
+				/*
+				 * We need to create a new successor clone state.
+				 */
+				struct state *stoclone;
+
+				stoclone = newstate(nfa);
+				if (stoclone == NULL)
+				{
+					assert(NISERR());
+					break;
+				}
+				/* Mark it as to what it's a clone of */
+				stoclone->tmp = sto;
+				/* ... and add the outarc leading to it */
+				cparc(nfa, a, sclone, stoclone);
+			}
+		}
+		else
+		{
+			/*
+			 * Non-constraint outarcs just get copied to sclone, as do outarcs
+			 * leading to states with no constraint outarc.
+			 */
+			cparc(nfa, a, sclone, sto);
+		}
+	}
+
+	/*
+	 * If we are at outer level for this clone state, recurse to all its child
+	 * clone states, clearing their tmp fields as we go.  (If we're not
+	 * outermost for sclone, leave this to be done by the outer call level.)
+	 * Note that if we have multiple outarcs leading to the same clone state,
+	 * it will only be recursed-to once.
+	 */
+	if (curdonemap == NULL)
+	{
+		for (a = sclone->outs; a != NULL && !NISERR(); a = a->outchain)
+		{
+			struct state *stoclone = a->to;
+			struct state *sto = stoclone->tmp;
+
+			if (sto != NULL)
+			{
+				stoclone->tmp = NULL;
+				clonesuccessorstates(nfa,
+									 sto,
+									 stoclone,
+									 spredecessor,
+									 refarc,
+									 NULL,
+									 donemap,
+									 nstates);
+			}
+		}
+
+		/* Don't forget to free sclone's donemap when done with it */
+		FREE(donemap);
+	}
+}
+
+/*
  * cleanup - clean up NFA after optimizations
  */
 static void
@@ -1566,7 +2144,7 @@ analyze(struct nfa * nfa)
 }
 
 /*
- * compact - compact an NFA
+ * compact - construct the compact representation of an NFA
  */
 static void
 compact(struct nfa * nfa,
@@ -1636,7 +2214,7 @@ compact(struct nfa * nfa,
 					cnfa->flags |= HASLACONS;
 					break;
 				default:
-					assert(NOTREACHED);
+					NERR(REG_ASSERT);
 					break;
 			}
 		carcsort(first, ca - 1);
