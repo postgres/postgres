@@ -55,6 +55,17 @@ select 'dd x' ~ '(^(?!aa)(?!bb)(?!cc))+';
 select 'a' ~ '((((((a)*)*)*)*)*)*';
 select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';
 
+-- These cases used to give too-many-states failures
+select 'x' ~ 'abcd(\m)+xyz';
+select 'a' ~ '^abcd*(((((^(a c(e?d)a+|)+|)+|)+|)+|a)+|)';
+select 'x' ~ 'a^(^)bcd*xy(((((($a+|)+|)+|)+$|)+|)+|)^$';
+select 'x' ~ 'xyz(\Y\Y)+';
+select 'x' ~ 'x|(?:\M)+';
+
+-- This generates O(N) states but O(N^2) arcs, so it causes problems
+-- if arc count is not constrained
+select 'x' ~ repeat('x*y*z*', 1000);
+
 -- Test backref in combination with non-greedy quantifier
 -- https://core.tcl.tk/tcl/tktview/6585b21ca8fa6f3678d442b97241fdd43dba2ec0
 select 'Programmer' ~ '(\w).*?\1' as t;
