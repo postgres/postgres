@@ -229,6 +229,41 @@ select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';
  t
 (1 row)
 
+-- These cases used to give too-many-states failures
+select 'x' ~ 'abcd(\m)+xyz';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'a' ~ '^abcd*(((((^(a c(e?d)a+|)+|)+|)+|)+|a)+|)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'x' ~ 'a^(^)bcd*xy(((((($a+|)+|)+|)+$|)+|)+|)^$';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'x' ~ 'xyz(\Y\Y)+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'x' ~ 'x|(?:\M)+';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- This generates O(N) states but O(N^2) arcs, so it causes problems
+-- if arc count is not constrained
+select 'x' ~ repeat('x*y*z*', 1000);
+ERROR:  invalid regular expression: regular expression is too complex
 -- Test backref in combination with non-greedy quantifier
 -- https://core.tcl.tk/tcl/tktview/6585b21ca8fa6f3678d442b97241fdd43dba2ec0
 select 'Programmer' ~ '(\w).*?\1' as t;

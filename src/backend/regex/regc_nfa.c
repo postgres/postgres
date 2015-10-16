@@ -823,14 +823,11 @@ moveins(struct nfa * nfa,
 
 /*
  * copyins - copy in arcs of a state to another state
- *
- * Either all arcs, or only non-empty ones as determined by all value.
  */
 static void
 copyins(struct nfa * nfa,
 		struct state * oldState,
-		struct state * newState,
-		int all)
+		struct state * newState)
 {
 	assert(oldState != newState);
 
@@ -840,8 +837,7 @@ copyins(struct nfa * nfa,
 		struct arc *a;
 
 		for (a = oldState->ins; a != NULL; a = a->inchain)
-			if (all || a->type != EMPTY)
-				cparc(nfa, a, a->from, newState);
+			cparc(nfa, a, a->from, newState);
 	}
 	else
 	{
@@ -873,12 +869,6 @@ copyins(struct nfa * nfa,
 		{
 			struct arc *a = oa;
 
-			if (!all && a->type == EMPTY)
-			{
-				oa = oa->inchain;
-				continue;
-			}
-
 			switch (sortins_cmp(&oa, &na))
 			{
 				case -1:
@@ -903,12 +893,6 @@ copyins(struct nfa * nfa,
 		{
 			/* newState does not have anything matching oa */
 			struct arc *a = oa;
-
-			if (!all && a->type == EMPTY)
-			{
-				oa = oa->inchain;
-				continue;
-			}
 
 			oa = oa->inchain;
 			createarc(nfa, a->type, a->co, a->from, newState);
@@ -1107,14 +1091,11 @@ moveouts(struct nfa * nfa,
 
 /*
  * copyouts - copy out arcs of a state to another state
- *
- * Either all arcs, or only non-empty ones as determined by all value.
  */
 static void
 copyouts(struct nfa * nfa,
 		 struct state * oldState,
-		 struct state * newState,
-		 int all)
+		 struct state * newState)
 {
 	assert(oldState != newState);
 
@@ -1124,8 +1105,7 @@ copyouts(struct nfa * nfa,
 		struct arc *a;
 
 		for (a = oldState->outs; a != NULL; a = a->outchain)
-			if (all || a->type != EMPTY)
-				cparc(nfa, a, newState, a->to);
+			cparc(nfa, a, newState, a->to);
 	}
 	else
 	{
@@ -1157,12 +1137,6 @@ copyouts(struct nfa * nfa,
 		{
 			struct arc *a = oa;
 
-			if (!all && a->type == EMPTY)
-			{
-				oa = oa->outchain;
-				continue;
-			}
-
 			switch (sortouts_cmp(&oa, &na))
 			{
 				case -1:
@@ -1187,12 +1161,6 @@ copyouts(struct nfa * nfa,
 		{
 			/* newState does not have anything matching oa */
 			struct arc *a = oa;
-
-			if (!all && a->type == EMPTY)
-			{
-				oa = oa->outchain;
-				continue;
-			}
 
 			oa = oa->outchain;
 			createarc(nfa, a->type, a->co, newState, a->to);
@@ -1452,6 +1420,10 @@ optimize(struct nfa * nfa,
 		fprintf(f, "\nfinal cleanup:\n");
 #endif
 	cleanup(nfa);				/* final tidying */
+#ifdef REG_DEBUG
+	if (verbose)
+		dumpnfa(nfa, f);
+#endif
 	return analyze(nfa);		/* and analysis */
 }
 
@@ -1568,7 +1540,7 @@ pull(struct nfa * nfa,
 		s = newstate(nfa);
 		if (NISERR())
 			return 0;
-		copyins(nfa, from, s, 1);		/* duplicate inarcs */
+		copyins(nfa, from, s);	/* duplicate inarcs */
 		cparc(nfa, con, s, to); /* move constraint arc */
 		freearc(nfa, con);
 		if (NISERR())
@@ -1735,7 +1707,7 @@ push(struct nfa * nfa,
 		s = newstate(nfa);
 		if (NISERR())
 			return 0;
-		copyouts(nfa, to, s, 1);	/* duplicate outarcs */
+		copyouts(nfa, to, s);	/* duplicate outarcs */
 		cparc(nfa, con, from, s);		/* move constraint arc */
 		freearc(nfa, con);
 		if (NISERR())
@@ -2952,6 +2924,8 @@ dumpnfa(struct nfa * nfa,
 {
 #ifdef REG_DEBUG
 	struct state *s;
+	int			nstates = 0;
+	int			narcs = 0;
 
 	fprintf(f, "pre %d, post %d", nfa->pre->no, nfa->post->no);
 	if (nfa->bos[0] != COLORLESS)
@@ -2964,7 +2938,12 @@ dumpnfa(struct nfa * nfa,
 		fprintf(f, ", eol [%ld]", (long) nfa->eos[1]);
 	fprintf(f, "\n");
 	for (s = nfa->states; s != NULL; s = s->next)
+	{
 		dumpstate(s, f);
+		nstates++;
+		narcs += s->nouts;
+	}
+	fprintf(f, "total of %d states, %d arcs\n", nstates, narcs);
 	if (nfa->parent == NULL)
 		dumpcolors(nfa->cm, f);
 	fflush(f);
