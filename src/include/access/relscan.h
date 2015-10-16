@@ -20,6 +20,25 @@
 #include "access/itup.h"
 #include "access/tupdesc.h"
 
+/*
+ * Shared state for parallel heap scan.
+ *
+ * Each backend participating in a parallel heap scan has its own
+ * HeapScanDesc in backend-private memory, and those objects all contain
+ * a pointer to this structure.  The information here must be sufficient
+ * to properly initialize each new HeapScanDesc as workers join the scan,
+ * and it must act as a font of block numbers for those workers.
+ */
+typedef struct ParallelHeapScanDescData
+{
+	Oid			phs_relid;		/* OID of relation to scan */
+	bool		phs_syncscan;	/* report location to syncscan logic? */
+	BlockNumber phs_nblocks;	/* # blocks in relation at start of scan */
+	slock_t		phs_mutex;		/* mutual exclusion for block number fields */
+	BlockNumber phs_startblock; /* starting block number */
+	BlockNumber phs_cblock;		/* current block number */
+	char		phs_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
+}	ParallelHeapScanDescData;
 
 typedef struct HeapScanDescData
 {
@@ -49,6 +68,7 @@ typedef struct HeapScanDescData
 	BlockNumber rs_cblock;		/* current block # in scan, if any */
 	Buffer		rs_cbuf;		/* current buffer in scan, if any */
 	/* NB: if rs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
+	ParallelHeapScanDesc rs_parallel;	/* parallel scan information */
 
 	/* these fields only used in page-at-a-time mode and for bitmap scans */
 	int			rs_cindex;		/* current tuple's index in vistuples */
