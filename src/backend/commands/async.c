@@ -544,6 +544,9 @@ Async_Notify(const char *channel, const char *payload)
 	Notification *n;
 	MemoryContext oldcontext;
 
+	if (IsInParallelMode())
+		elog(ERROR, "cannot send notifications during a parallel operation");
+
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Notify(%s)", channel);
 
