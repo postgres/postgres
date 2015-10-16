@@ -28,6 +28,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/combocid.h"
 #include "utils/guc.h"
+#include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 #include "utils/snapmgr.h"
@@ -927,6 +928,12 @@ ParallelWorkerMain(Datum main_arg)
 	asnapspace = shm_toc_lookup(toc, PARALLEL_KEY_ACTIVE_SNAPSHOT);
 	Assert(asnapspace != NULL);
 	PushActiveSnapshot(RestoreSnapshot(asnapspace));
+
+	/*
+	 * We've changed which tuples we can see, and must therefore invalidate
+	 * system caches.
+	 */
+	InvalidateSystemCaches();
 
 	/* Restore user ID and security context. */
 	SetUserIdAndSecContext(fps->current_user_id, fps->sec_context);
