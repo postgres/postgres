@@ -497,7 +497,7 @@ AssignTransactionId(TransactionState s)
 	 * Workers synchronize transaction state at the beginning of each parallel
 	 * operation, so we can't account for new XIDs at this point.
 	 */
-	if (IsInParallelMode())
+	if (IsInParallelMode() || IsParallelWorker())
 		elog(ERROR, "cannot assign XIDs during a parallel operation");
 
 	/*
@@ -931,7 +931,7 @@ CommandCounterIncrement(void)
 		 * parallel operation, so we can't account for new commands after that
 		 * point.
 		 */
-		if (IsInParallelMode())
+		if (IsInParallelMode() || IsParallelWorker())
 			elog(ERROR, "cannot start commands during a parallel operation");
 
 		currentCommandId += 1;
@@ -1927,6 +1927,10 @@ CommitTransaction(void)
 
 	is_parallel_worker = (s->blockState == TBLOCK_PARALLEL_INPROGRESS);
 
+	/* Enforce parallel mode restrictions during parallel worker commit. */
+	if (is_parallel_worker)
+		EnterParallelMode();
+
 	ShowTransactionState("CommitTransaction");
 
 	/*
@@ -1971,10 +1975,7 @@ CommitTransaction(void)
 
 	/* If we might have parallel workers, clean them up now. */
 	if (IsInParallelMode())
-	{
 		AtEOXact_Parallel(true);
-		s->parallelModeLevel = 0;
-	}
 
 	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
@@ -2013,6 +2014,7 @@ CommitTransaction(void)
 	 * commit processing
 	 */
 	s->state = TRANS_COMMIT;
+	s->parallelModeLevel = 0;
 
 	if (!is_parallel_worker)
 	{
