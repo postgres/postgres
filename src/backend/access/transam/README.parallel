@@ -221,3 +221,8 @@ pattern looks like this:
 	DestroyParallelContext(pcxt);
 
 	ExitParallelMode();
+
+If desired, after WaitForParallelWorkersToFinish() has been called, another
+call to LaunchParallelWorkers() can be made using the same parallel context.
+Calls to these two functions can be alternated any number of times before
+destroying the parallel context.
