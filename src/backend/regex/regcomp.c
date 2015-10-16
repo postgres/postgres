@@ -129,8 +129,6 @@ static struct arc *allocarc(struct nfa *, struct state *);
 static void freearc(struct nfa *, struct arc *);
 static void changearctarget(struct arc *, struct state *);
 static int	hasnonemptyout(struct state *);
-static int	nonemptyouts(struct state *);
-static int	nonemptyins(struct state *);
 static struct arc *findarc(struct state *, int, pcolor);
 static void cparc(struct nfa *, struct arc *, struct state *, struct state *);
 static void sortins(struct nfa *, struct state *);
@@ -160,8 +158,8 @@ static int	push(struct nfa *, struct arc *);
 #define COMPATIBLE	3			/* compatible but not satisfied yet */
 static int	combine(struct arc *, struct arc *);
 static void fixempties(struct nfa *, FILE *);
-static struct state *emptyreachable(struct nfa *, struct state *, struct state *);
-static void replaceempty(struct nfa *, struct state *, struct state *);
+static struct state *emptyreachable(struct nfa *, struct state *,
+			   struct state *, struct arc **);
 static int	isconstraintarc(struct arc *);
 static int	hasconstraintout(struct state *);
 static void fixconstraintloops(struct nfa *, FILE *);
