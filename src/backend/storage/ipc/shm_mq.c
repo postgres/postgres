@@ -746,6 +746,15 @@ shm_mq_detach(shm_mq *mq)
 }
 
 /*
+ * Get the shm_mq from handle.
+ */
+shm_mq *
+shm_mq_get_queue(shm_mq_handle *mqh)
+{
+	return mqh->mqh_queue;
+}
+
+/*
  * Write bytes into a shared message queue.
  */
 static shm_mq_result

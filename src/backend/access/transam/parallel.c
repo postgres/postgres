@@ -867,7 +867,7 @@ ParallelWorkerMain(Datum main_arg)
 					 ParallelWorkerNumber * PARALLEL_ERROR_QUEUE_SIZE);
 	shm_mq_set_sender(mq, MyProc);
 	mqh = shm_mq_attach(mq, seg, NULL);
-	pq_redirect_to_shm_mq(mq, mqh);
+	pq_redirect_to_shm_mq(seg, mqh);
 	pq_set_parallel_master(fps->parallel_master_pid,
 						   fps->parallel_master_backend_id);
 
