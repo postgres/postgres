@@ -34,6 +34,7 @@ explain (costs off) select * from pg_proc where proname ~ '^abc+d';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)(def)';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)$';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
+explain (costs off) select * from pg_proc where proname ~ '^abcd(x|(?=\w\w)q)';
 
 -- Test for infinite loop in pullback() (CVE-2007-4772)
 select 'a' ~ '($|^)*';
