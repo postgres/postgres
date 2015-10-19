@@ -153,6 +153,14 @@ explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
    Filter: (proname ~ '^(abc)?d'::text)
 (2 rows)
 
+explain (costs off) select * from pg_proc where proname ~ '^abcd(x|(?=\w\w)q)';
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abcd'::name) AND (proname < 'abce'::name))
+   Filter: (proname ~ '^abcd(x|(?=\w\w)q)'::text)
+(3 rows)
+
 -- Test for infinite loop in pullback() (CVE-2007-4772)
 select 'a' ~ '($|^)*';
  ?column? 
