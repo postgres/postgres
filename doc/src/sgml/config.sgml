@@ -2417,27 +2417,6 @@ include_dir 'conf.d'
      <title>Checkpoints</title>
 
     <variablelist>
-     <varlistentry id="guc-max-wal-size" xreflabel="max_wal_size">
-      <term><varname>max_wal_size</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>max_wal_size</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Maximum size to let the WAL grow to between automatic WAL
-        checkpoints. This is a soft limit; WAL size can exceed
-        <varname>max_wal_size</> under special circumstances, like
-        under heavy load, a failing <varname>archive_command</>, or a high
-        <varname>wal_keep_segments</> setting. The default is 1 GB.
-        Increasing this parameter can increase the amount of time needed for
-        crash recovery.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-checkpoint-timeout" xreflabel="checkpoint_timeout">
       <term><varname>checkpoint_timeout</varname> (<type>integer</type>)
       <indexterm>
@@ -2488,6 +2467,27 @@ include_dir 'conf.d'
         30 seconds (<literal>30s</>).  Zero disables the warning.
         No warnings will be generated if <varname>checkpoint_timeout</varname>
         is less than <varname>checkpoint_warning</varname>.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-max-wal-size" xreflabel="max_wal_size">
+      <term><varname>max_wal_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_wal_size</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Maximum size to let the WAL grow to between automatic WAL
+        checkpoints. This is a soft limit; WAL size can exceed
+        <varname>max_wal_size</> under special circumstances, like
+        under heavy load, a failing <varname>archive_command</>, or a high
+        <varname>wal_keep_segments</> setting. The default is 1 GB.
+        Increasing this parameter can increase the amount of time needed for
+        crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
