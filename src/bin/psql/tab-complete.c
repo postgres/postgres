@@ -729,6 +729,13 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "   FROM pg_catalog.pg_available_extensions "\
 "  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s' AND installed_version IS NULL"
 
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_list_of_available_extension_versions \
+" SELECT pg_catalog.quote_ident(version) "\
+"   FROM pg_catalog.pg_available_extension_versions "\
+"  WHERE (%d = pg_catalog.length('%s'))"\
+"    AND pg_catalog.quote_ident(name)='%s'"
+
 #define Query_for_list_of_prepared_statements \
 " SELECT pg_catalog.quote_ident(name) "\
 "   FROM pg_catalog.pg_prepared_statements "\
@@ -2266,9 +2273,17 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "EXTENSION") == 0)
 	{
 		static const char *const list_CREATE_EXTENSION[] =
-		{"WITH SCHEMA", "CASCADE", NULL};
+		{"WITH SCHEMA", "CASCADE", "VERSION", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATE_EXTENSION);
+	}
+	/* CREATE EXTENSION <name> VERSION */
+	else if (pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "EXTENSION") == 0 &&
+			 pg_strcasecmp(prev_wd, "VERSION") == 0)
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_available_extension_versions);
 	}
 
 	/* CREATE FOREIGN */
