@@ -454,7 +454,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
  *		ExecCheckIndexConstraints
  *
  *		This routine checks if a tuple violates any unique or
- *		exclusion constraints.  Returns true if there is no no conflict.
+ *		exclusion constraints.  Returns true if there is no conflict.
  *		Otherwise returns false, and the TID of the conflicting
  *		tuple is returned in *conflictTid.
  *
