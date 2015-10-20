@@ -65,6 +65,7 @@ typedef struct
 	int			last_len1;		/* Length of last buf1 string/strxfrm() blob */
 	int			last_len2;		/* Length of last buf2 string/strxfrm() blob */
 	int			last_returned;	/* Last comparison result (cache) */
+	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
 	bool		collate_c;
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
@@ -1838,17 +1839,26 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 		/* Start with invalid values */
 		tss->last_len1 = -1;
 		tss->last_len2 = -1;
+		/* Initialize */
+		tss->last_returned = 0;
 #ifdef HAVE_LOCALE_T
 		tss->locale = locale;
 #endif
 		/*
-		 * To avoid somehow confusing a strxfrm() blob and an original string
-		 * within bttextfastcmp_locale(), initialize last returned cache to a
-		 * sentinel value.  A platform-specific actual strcoll() return value
-		 * of INT_MIN seems unlikely, but if that occurs it will not cause
-		 * wrong answers.
+		 * To avoid somehow confusing a strxfrm() blob and an original string,
+		 * constantly keep track of the variety of data that buf1 and buf2
+		 * currently contain.
+		 *
+		 * Comparisons may be interleaved with conversion calls.  Frequently,
+		 * conversions and comparisons are batched into two distinct phases,
+		 * but the correctness of caching cannot hinge upon this.  For
+		 * comparison caching, buffer state is only trusted if cache_blob is
+		 * found set to false, whereas strxfrm() caching only trusts the state
+		 * when cache_blob is found set to true.
+		 *
+		 * Arbitrarily initialize cache_blob to true.
 		 */
-		tss->last_returned = INT_MIN;
+		tss->cache_blob = true;
 		tss->collate_c = collate_c;
 		ssup->ssup_extra = tss;
 
@@ -1983,7 +1993,7 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 		tss->buf2[len2] = '\0';
 		tss->last_len2 = len2;
 	}
-	else if (arg1_match && tss->last_returned != INT_MIN)
+	else if (arg1_match && !tss->cache_blob)
 	{
 		/* Use result cached following last actual strcoll() call */
 		result = tss->last_returned;
@@ -2006,6 +2016,7 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 		result = strcmp(tss->buf1, tss->buf2);
 
 	/* Cache result, perhaps saving an expensive strcoll() call next time */
+	tss->cache_blob = false;
 	tss->last_returned = result;
 done:
 	/* We can't afford to leak memory here. */
@@ -2086,7 +2097,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 		}
 
 		/* Might be able to reuse strxfrm() blob from last call */
-		if (tss->last_len1 == len &&
+		if (tss->last_len1 == len && tss->cache_blob &&
 			memcmp(tss->buf1, authoritative_data, len) == 0)
 		{
 			memcpy(pres, tss->buf2, Min(sizeof(Datum), tss->last_len2));
@@ -2167,6 +2178,8 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 
 	addHyperLogLog(&tss->abbr_card, hash);
 
+	/* Cache result, perhaps saving an expensive strxfrm() call next time */
+	tss->cache_blob = true;
 done:
 	/*
 	 * Byteswap on little-endian machines.
