@@ -326,6 +326,7 @@ extern void EncodeDateOnly(struct pg_tm * tm, int style, char *str);
 extern void EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, int style, char *str);
 extern void EncodeDateTime(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str);
 extern void EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str);
+extern void EncodeSpecialTimestamp(Timestamp dt, char *str);
 
 extern int ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
 			 struct pg_tm * tm);

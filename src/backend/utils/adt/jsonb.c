@@ -28,14 +28,6 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-/*
- * String to output for infinite dates and timestamps.
- * Note the we don't use embedded quotes, unlike for json, because
- * we store jsonb strings dequoted.
- */
-
-#define DT_INFINITY "infinity"
-
 typedef struct JsonbInState
 {
 	JsonbParseState *parseState;
@@ -798,21 +790,18 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					char		buf[MAXDATELEN + 1];
 
 					date = DatumGetDateADT(val);
-					jb.type = jbvString;
-
+					/* Same as date_out(), but forcing DateStyle */
 					if (DATE_NOT_FINITE(date))
-					{
-						jb.val.string.len = strlen(DT_INFINITY);
-						jb.val.string.val = pstrdup(DT_INFINITY);
-					}
+						EncodeSpecialDate(date, buf);
 					else
 					{
 						j2date(date + POSTGRES_EPOCH_JDATE,
 							   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
 						EncodeDateOnly(&tm, USE_XSD_DATES, buf);
-						jb.val.string.len = strlen(buf);
-						jb.val.string.val = pstrdup(buf);
 					}
+					jb.type = jbvString;
+					jb.val.string.len = strlen(buf);
+					jb.val.string.val = pstrdup(buf);
 				}
 				break;
 			case JSONBTYPE_TIMESTAMP:
@@ -823,24 +812,18 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(val);
-					jb.type = jbvString;
-
+					/* Same as timestamp_out(), but forcing DateStyle */
 					if (TIMESTAMP_NOT_FINITE(timestamp))
-					{
-						jb.val.string.len = strlen(DT_INFINITY);
-						jb.val.string.val = pstrdup(DT_INFINITY);
-					}
+						EncodeSpecialTimestamp(timestamp, buf);
 					else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
-					{
-
 						EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
-						jb.val.string.len = strlen(buf);
-						jb.val.string.val = pstrdup(buf);
-					}
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("timestamp out of range")));
+					jb.type = jbvString;
+					jb.val.string.len = strlen(buf);
+					jb.val.string.val = pstrdup(buf);
 				}
 				break;
 			case JSONBTYPE_TIMESTAMPTZ:
@@ -852,24 +835,19 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					const char *tzn = NULL;
 					char		buf[MAXDATELEN + 1];
 
-					timestamp = DatumGetTimestamp(val);
-					jb.type = jbvString;
-
+					timestamp = DatumGetTimestampTz(val);
+					/* Same as timestamptz_out(), but forcing DateStyle */
 					if (TIMESTAMP_NOT_FINITE(timestamp))
-					{
-						jb.val.string.len = strlen(DT_INFINITY);
-						jb.val.string.val = pstrdup(DT_INFINITY);
-					}
+						EncodeSpecialTimestamp(timestamp, buf);
 					else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
-					{
 						EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
-						jb.val.string.len = strlen(buf);
-						jb.val.string.val = pstrdup(buf);
-					}
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("timestamp out of range")));
+					jb.type = jbvString;
+					jb.val.string.len = strlen(buf);
+					jb.val.string.val = pstrdup(buf);
 				}
 				break;
 			case JSONBTYPE_JSONCAST:

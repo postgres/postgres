@@ -90,6 +90,7 @@ typedef struct
 
 /* date.c */
 extern double date2timestamp_no_overflow(DateADT dateVal);
+extern void EncodeSpecialDate(DateADT dt, char *str);
 
 extern Datum date_in(PG_FUNCTION_ARGS);
 extern Datum date_out(PG_FUNCTION_ARGS);
