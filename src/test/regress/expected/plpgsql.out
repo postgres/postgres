@@ -2062,7 +2062,6 @@ set statement_timeout to 2000;
 select trap_timeout();
 NOTICE:  nyeah nyeah, can't stop me
 ERROR:  end of function
-CONTEXT:  PL/pgSQL function trap_timeout() line 15 at RAISE
 rollback;
 -- Test for pass-by-ref values being stored in proper context
 create function test_variable_storage() returns text as $$
