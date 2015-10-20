@@ -314,16 +314,34 @@ select to_jsonb(date 'Infinity');
  "infinity"
 (1 row)
 
+select to_jsonb(date '-Infinity');
+  to_jsonb   
+-------------
+ "-infinity"
+(1 row)
+
 select to_jsonb(timestamp 'Infinity');
   to_jsonb  
 ------------
  "infinity"
 (1 row)
 
+select to_jsonb(timestamp '-Infinity');
+  to_jsonb   
+-------------
+ "-infinity"
+(1 row)
+
 select to_jsonb(timestamptz 'Infinity');
   to_jsonb  
 ------------
  "infinity"
+(1 row)
+
+select to_jsonb(timestamptz '-Infinity');
+  to_jsonb   
+-------------
+ "-infinity"
 (1 row)
 
 --jsonb_agg

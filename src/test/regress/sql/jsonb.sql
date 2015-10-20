@@ -76,8 +76,11 @@ COMMIT;
 select to_jsonb(date '2014-05-28');
 
 select to_jsonb(date 'Infinity');
+select to_jsonb(date '-Infinity');
 select to_jsonb(timestamp 'Infinity');
+select to_jsonb(timestamp '-Infinity');
 select to_jsonb(timestamptz 'Infinity');
+select to_jsonb(timestamptz '-Infinity');
 
 --jsonb_agg
 

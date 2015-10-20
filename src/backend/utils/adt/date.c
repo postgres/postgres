@@ -40,7 +40,6 @@
 #endif
 
 
-static void EncodeSpecialDate(DateADT dt, char *str);
 static int	time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec);
 static int	timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp);
 static int	tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result);
@@ -273,7 +272,7 @@ make_date(PG_FUNCTION_ARGS)
 /*
  * Convert reserved date values to string.
  */
-static void
+void
 EncodeSpecialDate(DateADT dt, char *str)
 {
 	if (DATE_IS_NOBEGIN(dt))

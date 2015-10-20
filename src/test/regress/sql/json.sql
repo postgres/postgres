@@ -116,8 +116,11 @@ COMMIT;
 select to_json(date '2014-05-28');
 
 select to_json(date 'Infinity');
+select to_json(date '-Infinity');
 select to_json(timestamp 'Infinity');
+select to_json(timestamp '-Infinity');
 select to_json(timestamptz 'Infinity');
+select to_json(timestamptz '-Infinity');
 
 --json_agg
 

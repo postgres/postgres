@@ -418,16 +418,34 @@ select to_json(date 'Infinity');
  "infinity"
 (1 row)
 
+select to_json(date '-Infinity');
+   to_json   
+-------------
+ "-infinity"
+(1 row)
+
 select to_json(timestamp 'Infinity');
   to_json   
 ------------
  "infinity"
 (1 row)
 
+select to_json(timestamp '-Infinity');
+   to_json   
+-------------
+ "-infinity"
+(1 row)
+
 select to_json(timestamptz 'Infinity');
   to_json   
 ------------
  "infinity"
+(1 row)
+
+select to_json(timestamptz '-Infinity');
+   to_json   
+-------------
+ "-infinity"
 (1 row)
 
 --json_agg

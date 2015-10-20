@@ -68,7 +68,6 @@ typedef struct
 
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
-static void EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
@@ -1500,7 +1499,7 @@ make_interval(PG_FUNCTION_ARGS)
 /* EncodeSpecialTimestamp()
  * Convert reserved timestamp data type to string.
  */
-static void
+void
 EncodeSpecialTimestamp(Timestamp dt, char *str)
 {
 	if (TIMESTAMP_IS_NOBEGIN(dt))
