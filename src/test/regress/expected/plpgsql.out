@@ -2020,7 +2020,7 @@ NOTICE:  caught numeric_value_out_of_range or cardinality_violation
 (1 row)
 
 create temp table foo (f1 int);
-create function blockme() returns int as $$
+create function subxact_rollback_semantics() returns int as $$
 declare x int;
 begin
   x := 1;
@@ -2028,28 +2028,20 @@ begin
   begin
     x := x + 1;
     insert into foo values(x);
-    -- we assume this will take longer than 2 seconds:
-    select count(*) into x from tenk1 a, tenk1 b, tenk1 c;
+    raise exception 'inner';
   exception
     when others then
-      raise notice 'caught others?';
-      return -1;
-    when query_canceled then
-      raise notice 'nyeah nyeah, can''t stop me';
       x := x * 10;
   end;
   insert into foo values(x);
   return x;
 end$$ language plpgsql;
-set statement_timeout to 2000;
-select blockme();
-NOTICE:  nyeah nyeah, can't stop me
- blockme 
----------
-      20
+select subxact_rollback_semantics();
+ subxact_rollback_semantics 
+----------------------------
+                         20
 (1 row)
 
-reset statement_timeout;
 select * from foo;
  f1 
 ----
@@ -2058,6 +2050,29 @@ select * from foo;
 (2 rows)
 
 drop table foo;
+create function trap_timeout() returns void as $$
+begin
+  declare x int;
+  begin
+    -- we assume this will take longer than 2 seconds:
+    select count(*) into x from tenk1 a, tenk1 b, tenk1 c;
+  exception
+    when others then
+      raise notice 'caught others?';
+    when query_canceled then
+      raise notice 'nyeah nyeah, can''t stop me';
+  end;
+  -- Abort transaction to abandon the statement_timeout setting.  Otherwise,
+  -- the next top-level statement would be vulnerable to the timeout.
+  raise exception 'end of function';
+end$$ language plpgsql;
+begin;
+set statement_timeout to 2000;
+select trap_timeout();
+NOTICE:  nyeah nyeah, can't stop me
+ERROR:  end of function
+CONTEXT:  PL/pgSQL function trap_timeout() line 15 at RAISE
+rollback;
 -- Test for pass-by-ref values being stored in proper context
 create function test_variable_storage() returns text as $$
 declare x text;
