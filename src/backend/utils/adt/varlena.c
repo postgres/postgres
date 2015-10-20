@@ -2056,10 +2056,6 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	int			len;
 	uint32		hash;
 
-	/*
-	 * Abbreviated key representation is a pass-by-value Datum that is treated
-	 * as a char array by the specialized comparator bttextcmp_abbrev().
-	 */
 	pres = (char *) &res;
 	/* memset(), so any non-overwritten bytes are NUL */
 	memset(pres, 0, sizeof(Datum));
