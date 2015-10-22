@@ -804,10 +804,7 @@ ExecShutdownNode(PlanState *node)
 	switch (nodeTag(node))
 	{
 		case T_GatherState:
-			{
-				ExecShutdownGather((GatherState *) node);
-				return true;
-			}
+			ExecShutdownGather((GatherState *) node);
 			break;
 		default:
 			break;
