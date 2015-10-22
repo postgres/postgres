@@ -153,6 +153,22 @@
     </listitem>
 
     <listitem>
+     <para>
+      The configuration parameter <varname>checkpoint_segments</varname> has
+      been removed.  Its place is taken by the new
+      setting <xref linkend="guc-max-wal-size">.  If you had previously
+      tuned <varname>checkpoint_segments</varname>, the following formula will
+      give you an approximately equivalent setting:
+<programlisting>
+max_wal_size = (3 * checkpoint_segments) * 16MB
+</programlisting>
+      Note that the default setting for <varname>max_wal_size</varname> is
+      much higher than the default <varname>checkpoint_segments</varname> used
+      to be, so setting this might no longer be necessary.
+     </para>
+    </listitem>
+
+    <listitem>
 <!--
 2015-07-28 [6087d95] Andres..: Remove ssl renegotiation support.
 -->
