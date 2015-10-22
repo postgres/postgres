@@ -1126,7 +1126,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 		/*
 		 * To avoid swamping the postmaster with signals, we issue the autovac
 		 * request only when crossing a segment boundary. With default
-		 * compilation settings that's rougly after 50k members.  This still
+		 * compilation settings that's roughly after 50k members.  This still
 		 * gives plenty of chances before we get into real trouble.
 		 */
 		if ((MXOffsetToMemberPage(nextOffset) / SLRU_PAGES_PER_SEGMENT) !=

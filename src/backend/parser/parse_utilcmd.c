@@ -282,7 +282,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	if (like_found)
 	{
 		/*
-		 * To match INHERITS, the existance of any LIKE table with OIDs
+		 * To match INHERITS, the existence of any LIKE table with OIDs
 		 * causes the new table to have oids.  For the same reason,
 		 * WITH/WITHOUT OIDs is also ignored with LIKE.  We prepend
 		 * because the first oid option list entry is honored.  Our

@@ -775,7 +775,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				errctx.previous = pcxt->error_context_stack;
 				error_context_stack = &errctx;
 
-				/* Parse ErrorReponse or NoticeResponse. */
+				/* Parse ErrorResponse or NoticeResponse. */
 				pq_parse_errornotice(msg, &edata);
 
 				/* Death of a worker isn't enough justification for suicide. */

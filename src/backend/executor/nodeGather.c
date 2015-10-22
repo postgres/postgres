@@ -193,7 +193,7 @@ ExecEndGather(GatherState *node)
  * gather_getnext
  *
  * Get the next tuple from shared memory queue.  This function
- * is reponsible for fetching tuples from all the queues associated
+ * is responsible for fetching tuples from all the queues associated
  * with worker backends used in Gather node execution and if there is
  * no data available from queues or no worker is available, it does
  * fetch the data from local node.
