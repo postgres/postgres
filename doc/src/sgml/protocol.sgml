@@ -1320,16 +1320,16 @@ the connection to be used for logical replication from that database.
 <programlisting>
 psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
 </programlisting>
- However it is often more useful to use
- <application>pg_receivexlog</application> (for physical replication) or
- <application>pg_recvlogical</application> (for logical replication).
+ However, it is often more useful to use
+ <xref linkend="app-pgreceivexlog"> (for physical replication) or
+ <xref linkend="app-pgrecvlogical"> (for logical replication).
 </para>
 
 <para>
 The commands accepted in walsender mode are:
 <variablelist>
   <varlistentry>
-    <term>IDENTIFY_SYSTEM
+    <term><literal>IDENTIFY_SYSTEM</literal>
      <indexterm><primary>IDENTIFY_SYSTEM</primary></indexterm>
     </term>
     <listitem>
@@ -1342,7 +1342,7 @@ The commands accepted in walsender mode are:
       <variablelist>
       <varlistentry>
       <term>
-       systemid
+       <literal>systemid</literal> (<type>text</type>)
       </term>
       <listitem>
       <para>
@@ -1355,11 +1355,11 @@ The commands accepted in walsender mode are:
 
       <varlistentry>
       <term>
-       timeline
+       <literal>timeline</literal> (<type>int4</type>)
       </term>
       <listitem>
       <para>
-       Current TimelineID. Also useful to check that the standby is
+       Current timeline ID. Also useful to check that the standby is
        consistent with the master.
       </para>
       </listitem>
@@ -1367,7 +1367,7 @@ The commands accepted in walsender mode are:
 
       <varlistentry>
       <term>
-       xlogpos
+       <literal>xlogpos</literal> (<type>text</type>)
       </term>
       <listitem>
       <para>
@@ -1379,11 +1379,11 @@ The commands accepted in walsender mode are:
 
       <varlistentry>
       <term>
-       dbname
+       <literal>dbname</literal> (<type>text</type>)
       </term>
       <listitem>
       <para>
-       Database connected to or NULL.
+       Database connected to or null.
       </para>
       </listitem>
       </varlistentry>
@@ -1394,7 +1394,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>TIMELINE_HISTORY <replaceable class="parameter">tli</replaceable>
+    <term><literal>TIMELINE_HISTORY</literal> <replaceable class="parameter">tli</replaceable>
      <indexterm><primary>TIMELINE_HISTORY</primary></indexterm>
     </term>
     <listitem>
@@ -1408,18 +1408,18 @@ The commands accepted in walsender mode are:
       <variablelist>
       <varlistentry>
       <term>
-       filename
+       <literal>filename</literal> (<type>text</type>)
       </term>
       <listitem>
       <para>
-       Filename of the timeline history file, e.g <filename>00000002.history</>.
+       File name of the timeline history file, e.g., <filename>00000002.history</>.
       </para>
       </listitem>
       </varlistentry>
 
       <varlistentry>
       <term>
-       content
+       <literal>content</literal> (<type>bytea</type>)
       </term>
       <listitem>
       <para>
@@ -1434,7 +1434,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>CREATE_REPLICATION_SLOT <replaceable class="parameter">slot_name</> { <literal>PHYSICAL</> [ RESERVE_WAL ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> }
+   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> { <literal>PHYSICAL</> [ <literal>RESERVE_WAL</> ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> }
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1469,7 +1469,7 @@ The commands accepted in walsender mode are:
        <listitem>
         <para>
          Specify that this physical replication reserves <acronym>WAL</>
-         immediately; otherwise <acronym>WAL</> is only reserved upon
+         immediately.  Otherwise, <acronym>WAL</> is only reserved upon
          connection from a streaming replication client.
         </para>
        </listitem>
@@ -1479,7 +1479,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>START_REPLICATION [<literal>SLOT</literal> <replaceable class="parameter">slot_name</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]
+    <term><literal>START_REPLICATION</literal> [ <literal>SLOT</literal> <replaceable class="parameter">slot_name</> ] [ <literal>PHYSICAL</literal> ] <replaceable class="parameter">XXX/XXX</> [ <literal>TIMELINE</literal> <replaceable class="parameter">tli</> ]
      <indexterm><primary>START_REPLICATION</primary></indexterm>
     </term>
     <listitem>
@@ -1489,7 +1489,7 @@ The commands accepted in walsender mode are:
       If <literal>TIMELINE</literal> option is specified,
       streaming starts on timeline <replaceable class="parameter">tli</>;
       otherwise, the server's current timeline is selected. The server can
-      reply with an error, e.g. if the requested section of WAL has already
+      reply with an error, for example if the requested section of WAL has already
       been recycled. On success, server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
@@ -1503,9 +1503,9 @@ The commands accepted in walsender mode are:
      </para>
 
      <para>
-      If the client requests a timeline that's not the latest, but is part of
+      If the client requests a timeline that's not the latest but is part of
       the history of the server, the server will stream all the WAL on that
-      timeline starting from the requested startpoint, up to the point where
+      timeline starting from the requested start point up to the point where
       the server switched to another timeline. If the client requests
       streaming at exactly the end of an old timeline, the server responds
       immediately with CommandComplete without entering COPY mode.
@@ -1516,8 +1516,8 @@ The commands accepted in walsender mode are:
       the server will end streaming by exiting the COPY mode. When the client
       acknowledges this by also exiting COPY mode, the server sends a result
       set with one row and two columns, indicating the next timeline in this
-      server's history. The first column is the next timeline's ID, and the
-      second column is the XLOG position where the switch happened. Usually,
+      server's history. The first column is the next timeline's ID (type <type>int8</type>), and the
+      second column is the WAL position where the switch happened (type <type>text</type>). Usually,
       the switch position is the end of the WAL that was streamed, but there
       are corner cases where the server can send some WAL from the old
       timeline that it has not itself replayed before promoting. Finally, the
@@ -1809,12 +1809,12 @@ The commands accepted in walsender mode are:
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term>START_REPLICATION <literal>SLOT</literal> <replaceable class="parameter">slot_name</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</> [ ( <replaceable>option_name</replaceable> [<replaceable>option_value</replaceable>] [, ... ] ) ]</term>
+    <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slot_name</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</> [ ( <replaceable>option_name</replaceable> [ <replaceable>option_value</replaceable> ] [, ...] ) ]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL for logical replication, starting
       at WAL position <replaceable class="parameter">XXX/XXX</>. The server can
-      reply with an error, e.g. if the requested section of WAL has already
+      reply with an error, for example if the requested section of WAL has already
       been recycled. On success, server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
@@ -1871,7 +1871,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>DROP_REPLICATION_SLOT <replaceable class="parameter">slot_name</>
+    <term><literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</>
      <indexterm><primary>DROP_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1893,7 +1893,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>] [<literal>TABLESPACE_MAP</literal>]
+    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ]
      <indexterm><primary>BASE_BACKUP</primary></indexterm>
     </term>
     <listitem>
@@ -1923,10 +1923,10 @@ The commands accepted in walsender mode are:
           send back an approximate size in the header of each tablespace, which
           can be used to calculate how far along the stream is done. This is
           calculated by enumerating all the file sizes once before the transfer
-          is even started, and may as such have a negative impact on the
-          performance - in particular it may take longer before the first data
+          is even started, and might as such have a negative impact on the
+          performance.  In particular, it might take longer before the first data
           is streamed. Since the database files can change during the backup,
-          the size is only approximate and may both grow and shrink between
+          the size is only approximate and might both grow and shrink between
           the time of approximation and the sending of the actual files.
          </para>
         </listitem>
@@ -1957,7 +1957,7 @@ The commands accepted in walsender mode are:
         <term><literal>NOWAIT</literal></term>
         <listitem>
          <para>
-          By default, the backup will wait until the last required xlog
+          By default, the backup will wait until the last required WAL
           segment has been archived, or emit a warning if log archiving is
           not enabled. Specifying <literal>NOWAIT</literal> disables both
           the waiting and the warning, leaving the client responsible for
@@ -2010,29 +2010,29 @@ The commands accepted in walsender mode are:
       The fields in this row are:
       <variablelist>
        <varlistentry>
-        <term>spcoid</term>
+        <term><literal>spcoid</literal> (<type>oid</type>)</term>
         <listitem>
          <para>
-          The oid of the tablespace, or <literal>NULL</> if it's the base
+          The OID of the tablespace, or null if it's the base
           directory.
          </para>
         </listitem>
        </varlistentry>
        <varlistentry>
-        <term>spclocation</term>
+        <term><literal>spclocation</literal> (<type>text</type>)</term>
         <listitem>
          <para>
-          The full path of the tablespace directory, or <literal>NULL</>
+          The full path of the tablespace directory, or null
           if it's the base directory.
          </para>
         </listitem>
        </varlistentry>
        <varlistentry>
-        <term>size</term>
+        <term><literal>size</literal> (<type>int8</type>)</term>
         <listitem>
          <para>
           The approximate size of the tablespace, if progress report has
-          been requested; otherwise it's <literal>NULL</>.
+          been requested; otherwise it's null.
          </para>
         </listitem>
        </varlistentry>
@@ -2040,7 +2040,7 @@ The commands accepted in walsender mode are:
      </para>
      <para>
       After the second regular result set, one or more CopyResponse results
-      will be sent, one for PGDATA and one for each additional tablespace other
+      will be sent, one for the main data directory and one for each additional tablespace other
       than <literal>pg_default</> and <literal>pg_global</>. The data in
       the CopyResponse results will be a tar format (following the
       <quote>ustar interchange format</> specified in the POSIX 1003.1-2008
@@ -2093,13 +2093,8 @@ The commands accepted in walsender mode are:
         </para>
        </listitem>
       </itemizedlist>
-      Owner, group and file mode are set if the underlying file system on
+      Owner, group, and file mode are set if the underlying file system on
       the server supports it.
-     </para>
-     <para>
-      Once all tablespaces have been sent, a final regular result set will
-      be sent. This result set contains the end position of the
-      backup, given in XLogRecPtr format as a single column in a single row.
      </para>
     </listitem>
   </varlistentry>
