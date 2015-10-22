@@ -3,7 +3,7 @@ SET bytea_output TO escape;
 --
 -- create user defined conversion
 --
-CREATE USER conversion_test_user WITH NOCREATEDB NOCREATEUSER;
+CREATE USER conversion_test_user WITH NOCREATEDB NOCREATEROLE;
 SET SESSION AUTHORIZATION conversion_test_user;
 CREATE CONVERSION myconv FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;
 --

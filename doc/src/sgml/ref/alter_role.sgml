@@ -28,7 +28,6 @@ ALTER ROLE <replaceable class="PARAMETER">role_specification</replaceable> [ WIT
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
-    | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
     | REPLICATION | NOREPLICATION
@@ -160,8 +159,6 @@ ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | A
       <term><literal>NOCREATEDB</></term>
       <term><literal>CREATEROLE</literal></term>
       <term><literal>NOCREATEROLE</literal></term>
-      <term><literal>CREATEUSER</literal></term>
-      <term><literal>NOCREATEUSER</literal></term>
       <term><literal>INHERIT</literal></term>
       <term><literal>NOINHERIT</literal></term>
       <term><literal>LOGIN</literal></term>

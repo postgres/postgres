@@ -28,7 +28,6 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
-    | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
     | REPLICATION | NOREPLICATION
@@ -120,19 +119,6 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         and drop other roles.
         If not specified,
         <literal>NOCREATEROLE</literal> is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CREATEUSER</literal></term>
-      <term><literal>NOCREATEUSER</literal></term>
-      <listitem>
-       <para>
-        These clauses are an obsolete, but still accepted, spelling of
-        <literal>SUPERUSER</literal> and <literal>NOSUPERUSER</literal>.
-        Note that they are <emphasis>not</> equivalent to
-        <literal>CREATEROLE</literal> as one might naively expect!
        </para>
       </listitem>
      </varlistentry>
