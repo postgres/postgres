@@ -6,6 +6,20 @@
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * A Gather executor launches parallel workers to run multiple copies of a
+ * plan.  It can also run the plan itself, if the workers are not available
+ * or have not started up yet.  It then merges all of the results it produces
+ * and the results from the workers into a single output stream.  Therefore,
+ * it will normally be used with a plan where running multiple copies of the
+ * same plan does not produce duplicate output, such as PartialSeqScan.
+ *
+ * Alternatively, a Gather node can be configured to use just one worker
+ * and the single-copy flag can be set.  In this case, the Gather node will
+ * run the plan in one worker and will not execute the plan itself.  In
+ * this case, it simply returns whatever tuples were returned by the worker.
+ * If a worker cannot be obtained, then it will run the plan itself and
+ * return the results.  Therefore, a plan used with a single-copy Gather
+ * node need not be parallel-aware.
  *
  * IDENTIFICATION
  *	  src/backend/executor/nodeGather.c

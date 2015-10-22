@@ -6,6 +6,14 @@
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * This file contains routines that are intended to support setting up,
+ * using, and tearing down a ParallelContext from within the PostgreSQL
+ * executor.  The ParallelContext machinery will handle starting the
+ * workers and ensuring that their state generally matches that of the
+ * leader; see src/backend/access/transam/README.parallel for details.
+ * However, we must save and restore relevant executor state, such as
+ * any ParamListInfo associated with the query, buffer usage info, and
+ * the actual plan to be passed down to the worker.
  *
  * IDENTIFICATION
  *	  src/backend/executor/execParallel.c
