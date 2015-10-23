@@ -501,10 +501,12 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 	{
 		if (nowait)
 		{
-			if (shm_mq_counterparty_gone(mq, mqh->mqh_handle))
-				return SHM_MQ_DETACHED;
 			if (shm_mq_get_sender(mq) == NULL)
+			{
+				if (shm_mq_counterparty_gone(mq, mqh->mqh_handle))
+					return SHM_MQ_DETACHED;
 				return SHM_MQ_WOULD_BLOCK;
+			}
 		}
 		else if (!shm_mq_wait_internal(mq, &mq->mq_sender, mqh->mqh_handle)
 				 && shm_mq_get_sender(mq) == NULL)
