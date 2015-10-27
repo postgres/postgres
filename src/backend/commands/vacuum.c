@@ -1140,7 +1140,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 * Truncate CLOG, multixact and CommitTs to the oldest computed value.
 	 */
 	TruncateCLOG(frozenXID);
-	TruncateCommitTs(frozenXID, true);
+	TruncateCommitTs(frozenXID);
 	TruncateMultiXact(minMulti, minmulti_datoid);
 
 	/*
