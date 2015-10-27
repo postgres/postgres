@@ -602,12 +602,15 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			set_join_references(root, (Join *) plan, rtoffset);
 			break;
 
+		case T_Gather:
+			set_upper_references(root, plan, rtoffset);
+			break;
+
 		case T_Hash:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
-		case T_Gather:
 
 			/*
 			 * These plan types don't actually bother to evaluate their
