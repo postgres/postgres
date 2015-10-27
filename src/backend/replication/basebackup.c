@@ -698,10 +698,15 @@ SendBackupHeader(List *tablespaces)
 		}
 		else
 		{
-			pq_sendint(&buf, strlen(ti->oid), 4);		/* length */
-			pq_sendbytes(&buf, ti->oid, strlen(ti->oid));
-			pq_sendint(&buf, strlen(ti->path), 4);		/* length */
-			pq_sendbytes(&buf, ti->path, strlen(ti->path));
+			Size	len;
+
+			len = strlen(ti->oid);
+			pq_sendint(&buf, len, 4);
+			pq_sendbytes(&buf, ti->oid, len);
+
+			len = strlen(ti->path);
+			pq_sendint(&buf, len, 4);
+			pq_sendbytes(&buf, ti->path, len);
 		}
 		if (ti->size >= 0)
 			send_int8_string(&buf, ti->size / 1024);
@@ -724,6 +729,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 {
 	StringInfoData buf;
 	char		str[MAXFNAMELEN];
+	Size		len;
 
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
 	pq_sendint(&buf, 2, 2);		/* 2 fields */
@@ -742,7 +748,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	pq_sendint(&buf, 0, 2);		/* attnum */
 
 	/*
-	 * int8 may seem like a surprising data type for this, but in thory int4
+	 * int8 may seem like a surprising data type for this, but in theory int4
 	 * would not be wide enough for this, as TimeLineID is unsigned.
 	 */
 	pq_sendint(&buf, INT8OID, 4);		/* type oid */
@@ -755,13 +761,15 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	pq_beginmessage(&buf, 'D');
 	pq_sendint(&buf, 2, 2);		/* number of columns */
 
-	snprintf(str, sizeof(str), "%X/%X", (uint32) (ptr >> 32), (uint32) ptr);
-	pq_sendint(&buf, strlen(str), 4);	/* length */
-	pq_sendbytes(&buf, str, strlen(str));
+	len = snprintf(str, sizeof(str),
+				   "%X/%X", (uint32) (ptr >> 32), (uint32) ptr);
+	pq_sendint(&buf, len, 4);
+	pq_sendbytes(&buf, str, len);
 
-	snprintf(str, sizeof(str), "%u", tli);
-	pq_sendint(&buf, strlen(str), 4);	/* length */
-	pq_sendbytes(&buf, str, strlen(str));
+	len = snprintf(str, sizeof(str), "%u", tli);
+	pq_sendint(&buf, len, 4);
+	pq_sendbytes(&buf, str, len);
+
 	pq_endmessage(&buf);
 
 	/* Send a CommandComplete message */
