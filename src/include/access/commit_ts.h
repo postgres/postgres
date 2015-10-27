@@ -40,7 +40,7 @@ extern void CompleteCommitTsInitialization(void);
 extern void ShutdownCommitTs(void);
 extern void CheckPointCommitTs(void);
 extern void ExtendCommitTs(TransactionId newestXact);
-extern void TruncateCommitTs(TransactionId oldestXact, bool do_wal);
+extern void TruncateCommitTs(TransactionId oldestXact);
 extern void SetCommitTsLimit(TransactionId oldestXact,
 				 TransactionId newestXact);
 extern void AdvanceOldestCommitTs(TransactionId oldestXact);
