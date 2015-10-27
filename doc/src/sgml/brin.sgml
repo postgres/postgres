@@ -535,7 +535,7 @@ typedef struct BrinOpcInfo
   defined by the user for other data types using equivalent definitions,
   without having to write any source code; appropriate catalog entries being
   declared is enough.  Note that assumptions about the semantics of operator
-  strategies are embedded in the support procedures's source code.
+  strategies are embedded in the support procedures' source code.
  </para>
 
  <para>
@@ -566,19 +566,19 @@ typedef struct BrinOpcInfo
    <tbody>
     <row>
      <entry>Support Procedure 1</entry>
-     <entry>function <function>brin_minmax_opcinfo()</function></entry>
+     <entry>internal function <function>brin_minmax_opcinfo()</function></entry>
     </row>
     <row>
      <entry>Support Procedure 2</entry>
-     <entry>function <function>brin_minmax_add_value()</function></entry>
+     <entry>internal function <function>brin_minmax_add_value()</function></entry>
     </row>
     <row>
      <entry>Support Procedure 3</entry>
-     <entry>function <function>brin_minmax_consistent()</function></entry>
+     <entry>internal function <function>brin_minmax_consistent()</function></entry>
     </row>
     <row>
      <entry>Support Procedure 4</entry>
-     <entry>function <function>brin_minmax_union()</function></entry>
+     <entry>internal function <function>brin_minmax_union()</function></entry>
     </row>
     <row>
      <entry>Operator Strategy 1</entry>
@@ -603,5 +603,191 @@ typedef struct BrinOpcInfo
    </tbody>
   </tgroup>
  </table>
+
+ <para>
+  To write an operator class for a complex datatype which has values
+  included within another type, it's possible to use the inclusion support
+  procedures alongside the corresponding operators, as shown
+  in <xref linkend="brin-extensibility-inclusion-table">.  It requires
+  only a single additional function, which can be written in any language.
+  More functions can be defined for additional functionality.  All operators
+  are optional.  Some operators require other operators, as shown as
+  dependencies on the table.
+ </para>
+
+ <table id="brin-extensibility-inclusion-table">
+  <title>Procedure and Support Numbers for Inclusion Operator Classes</title>
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Operator class member</entry>
+     <entry>Object</entry>
+     <entry>Dependency</entry>
+    </row>
+   </thead>
+   <tbody>
+    <row>
+     <entry>Support Procedure 1</entry>
+     <entry>internal function <function>brin_inclusion_opcinfo()</function></entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 2</entry>
+     <entry>internal function <function>brin_inclusion_add_value()</function></entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 3</entry>
+     <entry>internal function <function>brin_inclusion_consistent()</function></entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 4</entry>
+     <entry>internal function <function>brin_inclusion_union()</function></entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 11</entry>
+     <entry>function to merge two elements</entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 12</entry>
+     <entry>optional function to check whether two elements are mergeable</entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 13</entry>
+     <entry>optional function to check if an element is contained within another</entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Support Procedure 14</entry>
+     <entry>optional function to check whether an element is empty</entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 1</entry>
+     <entry>operator left-of</entry>
+     <entry>Operator Strategy 4</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 2</entry>
+     <entry>operator does-not-extend-to-the-right-of</entry>
+     <entry>Operator Strategy 5</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 3</entry>
+     <entry>operator overlaps</entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 4</entry>
+     <entry>operator right-of</entry>
+     <entry>Operator Strategy 2</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 5</entry>
+     <entry>operator does-not-extend-to-the-right-of</entry>
+     <entry>Operator Strategy 1</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 6, 18</entry>
+     <entry>operator same-as-or-equal-to</entry>
+     <entry>Operator Strategy 7</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 7, 13, 16, 24, 25</entry>
+     <entry>operator contains-or-equal-to</entry>
+     <entry></entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 8, 14, 26, 27</entry>
+     <entry>operator is-contained-by-or-equal-to</entry>
+     <entry>Operator Strategy 3</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 9</entry>
+     <entry>operator does-not-extend-above</entry>
+     <entry>Operator Strategy 11</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 10</entry>
+     <entry>operator is-below</entry>
+     <entry>Operator Strategy 12</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 11</entry>
+     <entry>operator is-above</entry>
+     <entry>Operator Strategy 9</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 12</entry>
+     <entry>operator does-not-extend-below</entry>
+     <entry>Operator Strategy 10</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 20</entry>
+     <entry>operator less-than</entry>
+     <entry>Operator Strategy 4</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 21</entry>
+     <entry>operator less-than-or-equal-to</entry>
+     <entry>Operator Strategy 4</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 22</entry>
+     <entry>operator greater-than</entry>
+     <entry>Operator Strategy 1</entry>
+    </row>
+    <row>
+     <entry>Operator Strategy 23</entry>
+     <entry>operator greater-than-or-equal-to</entry>
+     <entry>Operator Strategy 1</entry>
+    </row>
+   </tbody>
+  </tgroup>
+ </table>
+
+ <para>
+    Support procedure numbers 1-10 are reserved for the BRIN internal
+    functions, so the SQL level functions start with number 11.  Support
+    function number 11 is the main function required to build the index.
+    It should accept two arguments with the same datatype as the opclass,
+    and return the union of them.  The inclusion opclass can store union
+    values with different datatypes if it is defined with the
+    <literal>STORAGE</> parameter.  The return value of the union
+    function should match the <literal>STORAGE</> datatype.
+ </para>
+
+ <para>
+    Support procedure numbers 12 and 14 are provided to support
+    irregularities of built-in datatypes.  Procedure number 12
+    is used to support network addresses from different families which
+    are not mergeable.  Procedure number 14 is used to support
+    empty ranges.  Procedure number 13 is an optional but
+    recommended one, which allows the new value to be checked before
+    it is passed to the union function.  As the BRIN framework can shortcut
+    some operations when the union is not changed, using this
+    function can improve index performance.
+ </para>
+
+ <para>
+    Both minmax and inclusion opclasses support cross-datatype
+    operators, though with these the dependencies become more complicated.
+    The minmax opclass requires a full set of operators to be
+    defined with both arguments having the same datatype.  It allows
+    additional datatypes to be supported by defining extra sets
+    of operators.  Inclusion opclass operator strategies are dependent
+    on another operator strategy as shown in
+    <xref linkend="brin-extensibility-inclusion-table">, or the same
+    operator strategy as themselves.  They require the dependency
+    operator to be defined with the <literal>STORAGE</> datatype as the
+    left-hand-side argument and the other supported datatype to be the
+    right-hand-side argument of the supported operator.  See
+    <literal>float4_minmax_ops</> as an example of minmax, and
+    <literal>box_inclusion_ops</> as an example of inclusion.
+ </para>
 </sect1>
 </chapter>
