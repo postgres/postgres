@@ -23,6 +23,16 @@
 #include "utils/rel.h"
 
 
+/*
+ * Maximum size of an entry in a BRIN_PAGETYPE_REGULAR page.  We can tolerate
+ * a single item per page, unlike other index AMs.
+ */
+#define BrinMaxItemSize \
+	MAXALIGN_DOWN(BLCKSZ - \
+				  (MAXALIGN(SizeOfPageHeaderData + \
+							sizeof(ItemIdData)) + \
+				   MAXALIGN(sizeof(BrinSpecialSpace))))
+
 static Buffer brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 					 bool *extended);
 static Size br_page_get_freespace(Page page);
@@ -57,6 +67,18 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	bool		extended;
 
 	Assert(newsz == MAXALIGN(newsz));
+
+	/* If the item is oversized, don't bother. */
+	if (newsz > BrinMaxItemSize)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+				   (unsigned long) newsz,
+				   (unsigned long) BrinMaxItemSize,
+				   RelationGetRelationName(idxrel))));
+		return false;			/* keep compiler quiet */
+	}
 
 	/* make sure the revmap is long enough to contain the entry we need */
 	brinRevmapExtend(revmap, heapBlk);
@@ -332,6 +354,18 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 
 	Assert(itemsz == MAXALIGN(itemsz));
 
+	/* If the item is oversized, don't even bother. */
+	if (itemsz > BrinMaxItemSize)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+				   (unsigned long) itemsz,
+				   (unsigned long) BrinMaxItemSize,
+				   RelationGetRelationName(idxrel))));
+		return InvalidOffsetNumber;		/* keep compiler quiet */
+	}
+
 	/* Make sure the revmap is long enough to contain the entry we need */
 	brinRevmapExtend(revmap, heapBlk);
 
@@ -360,9 +394,9 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	 */
 	if (!BufferIsValid(*buffer))
 	{
-		*buffer = brin_getinsertbuffer(idxrel, InvalidBuffer, itemsz, &extended);
-		Assert(BufferIsValid(*buffer));
-		Assert(extended || br_page_get_freespace(BufferGetPage(*buffer)) >= itemsz);
+		do
+			*buffer = brin_getinsertbuffer(idxrel, InvalidBuffer, itemsz, &extended);
+		while (!BufferIsValid(*buffer));
 	}
 	else
 		extended = false;
@@ -610,8 +644,9 @@ brin_page_cleanup(Relation idxrel, Buffer buf)
 
 /*
  * Return a pinned and exclusively locked buffer which can be used to insert an
- * index item of size itemsz.  If oldbuf is a valid buffer, it is also locked
- * (in an order determined to avoid deadlocks.)
+ * index item of size itemsz (caller must ensure not to request sizes
+ * impossible to fulfill).  If oldbuf is a valid buffer, it is also locked (in
+ * an order determined to avoid deadlocks.)
  *
  * If we find that the old page is no longer a regular index page (because
  * of a revmap extension), the old buffer is unlocked and we return
@@ -636,20 +671,8 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 	Page		page;
 	int			freespace;
 
-	/*
-	 * If the item is oversized, don't bother.  We have another, more precise
-	 * check below.
-	 */
-	if (itemsz > BLCKSZ - sizeof(BrinSpecialSpace))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-				   (unsigned long) itemsz,
-				   (unsigned long) BLCKSZ - sizeof(BrinSpecialSpace),
-				   RelationGetRelationName(irel))));
-		return InvalidBuffer;	/* keep compiler quiet */
-	}
+	/* callers must have checked */
+	Assert(itemsz <= BrinMaxItemSize);
 
 	*extended = false;
 
@@ -759,7 +782,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		 * page that has since been repurposed for the revmap.)
 		 */
 		freespace = *extended ?
-			BLCKSZ - sizeof(BrinSpecialSpace) : br_page_get_freespace(page);
+			BrinMaxItemSize : br_page_get_freespace(page);
 		if (freespace >= itemsz)
 		{
 			RelationSetTargetBlock(irel, BufferGetBlockNumber(buf));
