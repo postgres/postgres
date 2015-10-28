@@ -21,14 +21,11 @@ ERROR:  could not get commit timestamp data
 HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
 DROP TABLE committs_test;
 SELECT pg_xact_commit_timestamp('0'::xid);
-ERROR:  could not get commit timestamp data
-HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+ERROR:  cannot retrieve commit timestamp for transaction 0
 SELECT pg_xact_commit_timestamp('1'::xid);
-ERROR:  could not get commit timestamp data
-HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+ERROR:  cannot retrieve commit timestamp for transaction 1
 SELECT pg_xact_commit_timestamp('2'::xid);
-ERROR:  could not get commit timestamp data
-HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+ERROR:  cannot retrieve commit timestamp for transaction 2
 SELECT x.xid::text::bigint > 0, x.timestamp > '-infinity'::timestamptz, x.timestamp <= now() FROM pg_last_committed_xact() x;
 ERROR:  could not get commit timestamp data
 HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
