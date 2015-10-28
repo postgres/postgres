@@ -4337,7 +4337,7 @@ ATWrongRelkindError(Relation rel, int allowed_targets)
 			msg = _("\"%s\" is not a table or view");
 			break;
 		case ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE:
-			msg = _("\"%s\" is not a table, view or foreign table");
+			msg = _("\"%s\" is not a table, view, or foreign table");
 			break;
 		case ATT_TABLE | ATT_VIEW | ATT_MATVIEW | ATT_INDEX:
 			msg = _("\"%s\" is not a table, view, materialized view, or index");
