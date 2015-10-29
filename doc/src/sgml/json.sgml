@@ -349,6 +349,34 @@ SELECT '"foo"'::jsonb ? 'foo';
     need to be searched linearly.
   </para>
 
+  <tip>
+   <para>
+    Because JSON containment is nested, an appropriate query can skip
+    explicit selection of sub-objects.  As an example, suppose that we have
+    a <structfield>doc</> column containing objects at the top level, with
+    most objects containing <literal>tags</> fields that contain arrays of
+    sub-objects.  This query finds entries in which sub-objects containing
+    both <literal>"term":"paris"</> and <literal>"term":"food"</> appear,
+    while ignoring any such keys outside the <literal>tags</> array:
+<programlisting>
+SELECT doc-&gt;'site_name' FROM websites
+  WHERE doc @&gt; '{"tags":[{"term":"paris"}, {"term":"food"}]}';
+</programlisting>
+    One could accomplish the same thing with, say,
+<programlisting>
+SELECT doc-&gt;'site_name' FROM websites
+  WHERE doc-&gt;'tags' @&gt; '[{"term":"paris"}, {"term":"food"}]';
+</programlisting>
+    but that approach is less flexible, and often less efficient as well.
+   </para>
+
+   <para>
+    On the other hand, the JSON existence operator is not nested: it will
+    only look for the specified key or array element at top level of the
+    JSON value.
+   </para>
+  </tip>
+
   <para>
     The various containment and existence operators, along with all other
     JSON operators and functions are documented
