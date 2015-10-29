@@ -2805,7 +2805,9 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	/* show minimum lines for pager use */
 	else if (strcmp(param, "pager_min_lines") == 0)
 	{
-		printf(_("Pager won't be used for less than %d lines\n"),
+		printf(ngettext("Pager won't be used for less than %d line.\n",
+						"Pager won't be used for less than %d lines.\n",
+						popt->topt.pager_min_lines),
 			   popt->topt.pager_min_lines);
 	}
 

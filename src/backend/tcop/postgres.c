@@ -3900,7 +3900,7 @@ PostgresMain(int argc, char *argv[],
 		if (pq_is_reading_msg())
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-			errmsg("terminating connection because protocol sync was lost")));
+			errmsg("terminating connection because protocol synchronization was lost")));
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();

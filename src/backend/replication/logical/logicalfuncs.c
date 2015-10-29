@@ -403,7 +403,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			ctx->options.output_type !=OUTPUT_PLUGIN_TEXTUAL_OUTPUT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("logical decoding output plugin \"%s\" produces binary output, but \"%s\" expects textual data",
+					 errmsg("logical decoding output plugin \"%s\" produces binary output, but function \"%s\" expects textual data",
 							NameStr(MyReplicationSlot->data.plugin),
 							format_procedure(fcinfo->flinfo->fn_oid))));
 

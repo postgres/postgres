@@ -344,7 +344,7 @@ ReplicationSlotAcquire(const char *name)
 	if (active_pid != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-			   errmsg("replication slot \"%s\" is already active for pid %d",
+			   errmsg("replication slot \"%s\" is already active for PID %d",
 					  name, active_pid)));
 
 	/* We made this slot active, so it's ours now. */
@@ -1179,7 +1179,7 @@ RestoreSlotFromDisk(const char *name)
 	if (cp.magic != SLOT_MAGIC)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("replication slot file \"%s\" has wrong magic %u instead of %u",
+				 errmsg("replication slot file \"%s\" has wrong magic number: %u instead of %u",
 						path, cp.magic, SLOT_MAGIC)));
 
 	/* verify version */
@@ -1223,7 +1223,7 @@ RestoreSlotFromDisk(const char *name)
 
 	if (!EQ_CRC32C(checksum, cp.checksum))
 		ereport(PANIC,
-				(errmsg("replication slot file %s: checksum mismatch, is %u, should be %u",
+				(errmsg("checksum mismatch for replication slot file \"%s\": is %u, should be %u",
 						path, checksum, cp.checksum)));
 
 	/*

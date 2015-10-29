@@ -1832,7 +1832,7 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 
 					ereport(ERROR,
 							(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
-					  errmsg("new row violates WITH CHECK OPTION for \"%s\"",
+					  errmsg("new row violates check option for view \"%s\"",
 							 wco->relname),
 							 val_desc ? errdetail("Failing row contains %s.",
 												  val_desc) : 0));
@@ -1842,24 +1842,24 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					if (wco->polname != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row level security policy \"%s\" for \"%s\"",
+							 errmsg("new row violates row-level security policy \"%s\" for table \"%s\"",
 									wco->polname, wco->relname)));
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row level security policy for \"%s\"",
+							 errmsg("new row violates row-level security policy for table \"%s\"",
 									wco->relname)));
 					break;
 				case WCO_RLS_CONFLICT_CHECK:
 					if (wco->polname != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row level security policy \"%s\" (USING expression) for \"%s\"",
+							 errmsg("new row violates row-level security policy \"%s\" (USING expression) for table \"%s\"",
 									wco->polname, wco->relname)));
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row level security policy (USING expression) for \"%s\"",
+							 errmsg("new row violates row-level security policy (USING expression) for table \"%s\"",
 									wco->relname)));
 					break;
 				default:

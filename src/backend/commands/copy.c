@@ -875,7 +875,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				  errmsg("COPY FROM not supported with row level security."),
-						 errhint("Use direct INSERT statements instead.")));
+						 errhint("Use INSERT statements instead.")));
 
 			/* Build target list */
 			cr = makeNode(ColumnRef);

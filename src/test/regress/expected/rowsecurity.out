@@ -330,9 +330,9 @@ SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 
 -- RLS policies are checked before constraints
 INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user2', 'my third manga'); -- Should fail with RLS check violation, not duplicate key violation
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 UPDATE document SET did = 8, dauthor = 'rls_regress_user2' WHERE did = 5; -- Should fail with RLS check violation, not duplicate key violation
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 -- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;
@@ -1453,9 +1453,9 @@ NOTICE:  f_leak => d3d9446802a44259755d38e6d163e820
 (5 rows)
 
 INSERT INTO bv1 VALUES (-1, 'xxx'); -- should fail view WCO
-ERROR:  new row violates row level security policy for "b1"
+ERROR:  new row violates row-level security policy for table "b1"
 INSERT INTO bv1 VALUES (11, 'xxx'); -- should fail RLS check
-ERROR:  new row violates row level security policy for "b1"
+ERROR:  new row violates row-level security policy for table "b1"
 INSERT INTO bv1 VALUES (12, 'xxx'); -- ok
 EXPLAIN (COSTS OFF) UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
                                 QUERY PLAN                                 
@@ -1534,7 +1534,7 @@ SELECT * FROM document WHERE did = 2;
 -- alternative UPDATE path happens to be taken):
 INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user2', 'my first novel')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, dauthor = EXCLUDED.dauthor;
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 -- Violates USING qual for UPDATE policy p3.
 --
 -- UPDATE path is taken, but UPDATE fails purely because *existing* row to be
@@ -1543,7 +1543,7 @@ ERROR:  new row violates row level security policy for "document"
 INSERT INTO document VALUES (33, 22, 1, 'rls_regress_user1', 'okay science fiction'); -- preparation for next statement
 INSERT INTO document VALUES (33, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'Some novel, replaces sci-fi') -- takes UPDATE path
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle;
-ERROR:  new row violates row level security policy (USING expression) for "document"
+ERROR:  new row violates row-level security policy (USING expression) for table "document"
 -- Fine (we UPDATE, since INSERT WCOs and UPDATE security barrier quals + WCOs
 -- not violated):
 INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'my first novel')
@@ -1574,7 +1574,7 @@ INSERT INTO document VALUES (78, (SELECT cid from category WHERE cname = 'novel'
 -- passing quals:
 INSERT INTO document VALUES (78, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'some technology novel')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, cid = 33 RETURNING *;
-ERROR:  new row violates row level security policy (USING expression) for "document"
+ERROR:  new row violates row-level security policy (USING expression) for table "document"
 -- Don't fail just because INSERT doesn't satisfy WITH CHECK option that
 -- originated as a barrier/USING() qual from the UPDATE.  Note that the UPDATE
 -- path *isn't* taken, and so UPDATE-related policy does not apply:
@@ -1591,7 +1591,7 @@ INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'techno
 -- irrelevant, in fact.
 INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'technology book, can only insert')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
-ERROR:  new row violates row level security policy (USING expression) for "document"
+ERROR:  new row violates row-level security policy (USING expression) for table "document"
 -- Test default USING qual enforced as WCO
 SET SESSION AUTHORIZATION rls_regress_user0;
 DROP POLICY p1 ON document;
@@ -1613,14 +1613,14 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 -- UPDATE to make this fail:
 INSERT INTO document VALUES (79, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'technology book, can only insert')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle RETURNING *;
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 -- UPDATE path is taken here.  Existing tuple passes, since it's cid
 -- corresponds to "novel", but default USING qual is enforced against
 -- post-UPDATE tuple too (as always when updating with a policy that lacks an
 -- explicit WCO), and so this fails:
 INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'technology'), 1, 'rls_regress_user1', 'my first novel')
     ON CONFLICT (did) DO UPDATE SET cid = EXCLUDED.cid, dtitle = EXCLUDED.dtitle RETURNING *;
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 SET SESSION AUTHORIZATION rls_regress_user0;
 DROP POLICY p3_with_default ON document;
 --
@@ -1634,16 +1634,16 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 -- Fails, since ALL WCO is enforced in insert path:
 INSERT INTO document VALUES (80, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user2', 'my first novel')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle, cid = 33;
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 -- Fails, since ALL policy USING qual is enforced (existing, target tuple is in
 -- violation, since it has the "manga" cid):
 INSERT INTO document VALUES (4, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'my first novel')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle;
-ERROR:  new row violates row level security policy (USING expression) for "document"
+ERROR:  new row violates row-level security policy (USING expression) for table "document"
 -- Fails, since ALL WCO are enforced:
 INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'rls_regress_user1', 'my first novel')
     ON CONFLICT (did) DO UPDATE SET dauthor = 'rls_regress_user2';
-ERROR:  new row violates row level security policy for "document"
+ERROR:  new row violates row-level security policy for table "document"
 --
 -- ROLE/GROUP
 --
@@ -2249,7 +2249,7 @@ EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FRO
 (6 rows)
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
-ERROR:  new row violates row level security policy for "t1"
+ERROR:  new row violates row-level security policy for table "t1"
 WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok
  a  |                b                 
 ----+----------------------------------
@@ -2267,7 +2267,7 @@ WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok
 (11 rows)
 
 WITH cte1 AS (INSERT INTO t1 VALUES (21, 'Fail') RETURNING *) SELECT * FROM cte1; --fail
-ERROR:  new row violates row level security policy for "t1"
+ERROR:  new row violates row-level security policy for table "t1"
 WITH cte1 AS (INSERT INTO t1 VALUES (20, 'Success') RETURNING *) SELECT * FROM cte1; --ok
  a  |    b    
 ----+---------
@@ -2675,7 +2675,7 @@ ERROR:  insufficient privilege to bypass row security.
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 ERROR:  COPY FROM not supported with row level security.
-HINT:  Use direct INSERT statements instead.
+HINT:  Use INSERT statements instead.
 -- Check COPY FROM as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
 SET row_security TO ON;
@@ -2978,7 +2978,7 @@ SELECT * FROM r2;
 
 -- r2 is read-only
 INSERT INTO r2 VALUES (2); -- Not allowed
-ERROR:  new row violates row level security policy for "r2"
+ERROR:  new row violates row-level security policy for table "r2"
 UPDATE r2 SET a = 2 RETURNING *; -- Updates nothing
  a 
 ---
@@ -3047,7 +3047,7 @@ TABLE r1;
 
 -- RLS error
 INSERT INTO r1 VALUES (1);
-ERROR:  new row violates row level security policy for "r1"
+ERROR:  new row violates row-level security policy for table "r1"
 -- No error (unable to see any rows to update)
 UPDATE r1 SET a = 1;
 TABLE r1;
@@ -3208,7 +3208,7 @@ TABLE r1;
 SET row_security = on;
 -- Error
 INSERT INTO r1 VALUES (10), (20) RETURNING *;
-ERROR:  new row violates row level security policy for "r1"
+ERROR:  new row violates row-level security policy for table "r1"
 DROP TABLE r1;
 --
 -- Test UPDATE+RETURNING applies SELECT policies as
@@ -3244,7 +3244,7 @@ TABLE r1;
 SET row_security = on;
 -- Error
 UPDATE r1 SET a = 30 RETURNING *;
-ERROR:  new row violates row level security policy for "r1"
+ERROR:  new row violates row-level security policy for table "r1"
 DROP TABLE r1;
 --
 -- Clean up objects

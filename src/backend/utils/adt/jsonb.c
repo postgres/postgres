@@ -721,7 +721,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		  errmsg("key value must be scalar, not array, composite or json")));
+		  errmsg("key value must be scalar, not array, composite, or json")));
 	}
 	else
 	{
