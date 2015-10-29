@@ -2867,7 +2867,7 @@ transformOnConflictArbiter(ParseState *pstate,
 	if (IsCatalogRelation(pstate->p_target_relation))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("ON CONFLICT not supported with system catalog tables"),
+			  errmsg("ON CONFLICT is not supported with system catalog tables"),
 				 parser_errposition(pstate,
 								  exprLocation((Node *) onConflictClause))));
 
@@ -2875,7 +2875,7 @@ transformOnConflictArbiter(ParseState *pstate,
 	if (RelationIsUsedAsCatalogTable(pstate->p_target_relation))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ON CONFLICT not supported on table \"%s\" used as a catalog table",
+				 errmsg("ON CONFLICT is not supported on table \"%s\" used as a catalog table",
 						RelationGetRelationName(pstate->p_target_relation)),
 				 parser_errposition(pstate,
 								  exprLocation((Node *) onConflictClause))));

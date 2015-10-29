@@ -857,7 +857,7 @@ remove_tablespace_symlink(const char *linkloc)
 			return;
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not stat \"%s\": %m", linkloc)));
+				 errmsg("could not stat file \"%s\": %m", linkloc)));
 	}
 
 	if (S_ISDIR(st.st_mode))

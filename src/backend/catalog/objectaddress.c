@@ -1740,7 +1740,7 @@ get_object_address_defacl(List *objname, List *objargs, bool missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				  errmsg("unrecognized default ACL object type %c", objtype),
-				 errhint("Valid object types are 'r', 'S', 'f', and 'T'.")));
+				 errhint("Valid object types are \"r\", \"S\", \"f\", and \"T\".")));
 	}
 
 	/*

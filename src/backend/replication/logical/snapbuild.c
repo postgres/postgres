@@ -1677,12 +1677,12 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has wrong magic %u instead of %u",
+				(errmsg("snapbuild state file \"%s\" has wrong magic number: %u instead of %u",
 						path, ondisk.magic, SNAPBUILD_MAGIC)));
 
 	if (ondisk.version != SNAPBUILD_VERSION)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has unsupported version %u instead of %u",
+				(errmsg("snapbuild state file \"%s\" has unsupported version: %u instead of %u",
 						path, ondisk.version, SNAPBUILD_VERSION)));
 
 	INIT_CRC32C(checksum);
@@ -1738,7 +1738,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	if (!EQ_CRC32C(checksum, ondisk.checksum))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("snapbuild state file %s: checksum mismatch, is %u, should be %u",
+				 errmsg("checksum mismatch for snapbuild state file \"%s\": is %u, should be %u",
 						path, checksum, ondisk.checksum)));
 
 	/*

@@ -313,7 +313,7 @@ replorigin_create(char *roname)
 	if (tuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("no free replication origin oid could be found")));
+				 errmsg("could not find free replication origin OID")));
 
 	heap_freetuple(tuple);
 	return roident;
@@ -350,7 +350,7 @@ replorigin_drop(RepOriginId roident)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_IN_USE),
-						 errmsg("cannot drop replication origin with oid %d, in use by pid %d",
+						 errmsg("could not drop replication origin with OID %d, in use by PID %d",
 								state->roident,
 								state->acquired_by)));
 			}
@@ -728,7 +728,7 @@ StartupReplicationOrigin(void)
 		if (last_state == max_replication_slots)
 			ereport(PANIC,
 					(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-					 errmsg("no free replication state could be found, increase max_replication_slots")));
+					 errmsg("could not find free replication state, increase max_replication_slots")));
 
 		/* copy data to shared memory */
 		replication_states[last_state].roident = disk_state.roident;
@@ -746,7 +746,7 @@ StartupReplicationOrigin(void)
 	if (file_crc != crc)
 		ereport(PANIC,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("replication_slot_checkpoint has wrong checksum %u, expected %u",
+				 errmsg("replication slot checkpoint has wrong checksum %u, expected %u",
 						crc, file_crc)));
 
 	CloseTransientFile(fd);
@@ -870,7 +870,7 @@ replorigin_advance(RepOriginId node,
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("replication origin with oid %d is already active for pid %d",
+					 errmsg("replication origin with OID %d is already active for PID %d",
 							replication_state->roident,
 							replication_state->acquired_by)));
 		}
@@ -881,7 +881,7 @@ replorigin_advance(RepOriginId node,
 	if (replication_state == NULL && free_state == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("no free replication state slot could be found for replication origin with oid %u",
+				 errmsg("could not find free replication state slot for replication origin with OID %u",
 						node),
 				 errhint("Increase max_replication_slots and try again.")));
 
@@ -1049,7 +1049,7 @@ replorigin_session_setup(RepOriginId node)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			 errmsg("replication identifier %d is already active for pid %d",
+			 errmsg("replication identifier %d is already active for PID %d",
 					curstate->roident, curstate->acquired_by)));
 		}
 
@@ -1061,7 +1061,7 @@ replorigin_session_setup(RepOriginId node)
 	if (session_replication_state == NULL && free_slot == -1)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("no free replication state slot could be found for replication origin with oid %u",
+				 errmsg("could not find free replication state slot for replication origin with OID %u",
 						node),
 				 errhint("Increase max_replication_slots and try again.")));
 	else if (session_replication_state == NULL)

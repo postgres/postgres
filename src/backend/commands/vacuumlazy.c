@@ -1124,9 +1124,13 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 nkeep);
 	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
 					 nunused);
-	appendStringInfo(&buf, _("Skipped %u pages due to buffer pins.\n"),
+	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins.\n",
+									"Skipped %u pages due to buffer pins.\n",
+									vacrelstats->pinskipped_pages),
 					 vacrelstats->pinskipped_pages);
-	appendStringInfo(&buf, _("%u pages are entirely empty.\n"),
+	appendStringInfo(&buf, ngettext("%u page is entirely empty.\n",
+									"%u pages are entirely empty.\n",
+									empty_pages),
 					 empty_pages);
 	appendStringInfo(&buf, _("%s."),
 					 pg_rusage_show(&ru0));
