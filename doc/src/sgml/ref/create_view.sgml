@@ -139,7 +139,7 @@ CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replac
        </varlistentry>
 
        <varlistentry>
-        <term><literal>security_barrier</literal> (<type>string</type>)</term>
+        <term><literal>security_barrier</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
           This should be used if the view is intended to provide row-level
