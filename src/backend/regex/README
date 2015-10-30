@@ -332,10 +332,10 @@ The possible arc types are:
     as "$0->to_state" or "$1->to_state" for end-of-string and end-of-line
     constraints respectively.
 
-    LACON constraints, which represent "(?=re)" and "(?!re)" constraints,
-    i.e. the input starting at this point must match (or not match) a
-    given sub-RE, but the matching input is not consumed.  These are
-    dumped as ":subtree_number:->to_state".
+    LACON constraints, which represent "(?=re)", "(?!re)", "(?<=re)", and
+    "(?<!re)" constraints, i.e. the input starting/ending at this point must
+    match (or not match) a given sub-RE, but the matching input is not
+    consumed.  These are dumped as ":subtree_number:->to_state".
 
 If you see anything else (especially any question marks) in the display of
 an arc, it's dumpnfa() trying to tell you that there's something fishy

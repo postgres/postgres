@@ -287,6 +287,130 @@ shortest(struct vars * v,
 }
 
 /*
+ * matchuntil - incremental matching engine
+ *
+ * This is meant for use with a search-style NFA (that is, the pattern is
+ * known to act as though it had a leading .*).  We determine whether a
+ * match exists starting at v->start and ending at probe.  Multiple calls
+ * require only O(N) time not O(N^2) so long as the probe values are
+ * nondecreasing.  *lastcss and *lastcp must be initialized to NULL before
+ * starting a series of calls.
+ *
+ * Returns 1 if a match exists, 0 if not.
+ * Internal errors also return 0, with v->err set.
+ */
+static int
+matchuntil(struct vars * v,
+		   struct dfa * d,
+		   chr *probe,			/* we want to know if a match ends here */
+		   struct sset ** lastcss,		/* state storage across calls */
+		   chr **lastcp)		/* state storage across calls */
+{
+	chr		   *cp = *lastcp;
+	color		co;
+	struct sset *css = *lastcss;
+	struct sset *ss;
+	struct colormap *cm = d->cm;
+
+	/* initialize and startup, or restart, if necessary */
+	if (cp == NULL || cp > probe)
+	{
+		cp = v->start;
+		css = initialize(v, d, cp);
+		if (css == NULL)
+			return 0;
+
+		FDEBUG((">>> startup >>>\n"));
+		co = d->cnfa->bos[(v->eflags & REG_NOTBOL) ? 0 : 1];
+		FDEBUG(("color %ld\n", (long) co));
+
+		css = miss(v, d, css, co, cp, v->start);
+		if (css == NULL)
+			return 0;
+		css->lastseen = cp;
+	}
+	else if (css == NULL)
+	{
+		/* we previously found that no match is possible beyond *lastcp */
+		return 0;
+	}
+	ss = css;
+
+	/*
+	 * This is the main text-scanning loop.  It seems worth having two copies
+	 * to avoid the overhead of REG_FTRACE tests here, even in REG_DEBUG
+	 * builds, when you're not actively tracing.
+	 */
+#ifdef REG_DEBUG
+	if (v->eflags & REG_FTRACE)
+	{
+		while (cp < probe)
+		{
+			FDEBUG((">>> at c%d >>>\n", (int) (css - d->ssets)));
+			co = GETCOLOR(cm, *cp);
+			FDEBUG(("char %c, color %ld\n", (char) *cp, (long) co));
+			ss = css->outs[co];
+			if (ss == NULL)
+			{
+				ss = miss(v, d, css, co, cp + 1, v->start);
+				if (ss == NULL)
+					break;		/* NOTE BREAK OUT */
+			}
+			cp++;
+			ss->lastseen = cp;
+			css = ss;
+		}
+	}
+	else
+#endif
+	{
+		while (cp < probe)
+		{
+			co = GETCOLOR(cm, *cp);
+			ss = css->outs[co];
+			if (ss == NULL)
+			{
+				ss = miss(v, d, css, co, cp + 1, v->start);
+				if (ss == NULL)
+					break;		/* NOTE BREAK OUT */
+			}
+			cp++;
+			ss->lastseen = cp;
+			css = ss;
+		}
+	}
+
+	*lastcss = ss;
+	*lastcp = cp;
+
+	if (ss == NULL)
+		return 0;				/* impossible match, or internal error */
+
+	/* We need to process one more chr, or the EOS symbol, to check match */
+	if (cp < v->stop)
+	{
+		FDEBUG((">>> at c%d >>>\n", (int) (css - d->ssets)));
+		co = GETCOLOR(cm, *cp);
+		FDEBUG(("char %c, color %ld\n", (char) *cp, (long) co));
+		ss = css->outs[co];
+		if (ss == NULL)
+			ss = miss(v, d, css, co, cp + 1, v->start);
+	}
+	else
+	{
+		assert(cp == v->stop);
+		co = d->cnfa->eos[(v->eflags & REG_NOTEOL) ? 0 : 1];
+		FDEBUG(("color %ld\n", (long) co));
+		ss = miss(v, d, css, co, cp, v->start);
+	}
+
+	if (ss == NULL || !(ss->flags & POSTSTATE))
+		return 0;
+
+	return 1;
+}
+
+/*
  * lastcold - determine last point at which no progress had been made
  */
 static chr *					/* endpoint, or NULL */
@@ -613,19 +737,19 @@ miss(struct vars * v,
 }
 
 /*
- * lacon - lookahead-constraint checker for miss()
+ * lacon - lookaround-constraint checker for miss()
  */
 static int						/* predicate:  constraint satisfied? */
 lacon(struct vars * v,
 	  struct cnfa * pcnfa,		/* parent cnfa */
 	  chr *cp,
-	  pcolor co)				/* "color" of the lookahead constraint */
+	  pcolor co)				/* "color" of the lookaround constraint */
 {
 	int			n;
 	struct subre *sub;
 	struct dfa *d;
-	struct smalldfa sd;
 	chr		   *end;
+	int			satisfied;
 
 	/* Since this is recursive, it could be driven to stack overflow */
 	if (STACK_TOO_DEEP(v->re))
@@ -635,19 +759,35 @@ lacon(struct vars * v,
 	}
 
 	n = co - pcnfa->ncolors;
-	assert(n < v->g->nlacons && v->g->lacons != NULL);
+	assert(n > 0 && n < v->g->nlacons && v->g->lacons != NULL);
 	FDEBUG(("=== testing lacon %d\n", n));
 	sub = &v->g->lacons[n];
-	d = newdfa(v, &sub->cnfa, &v->g->cmap, &sd);
+	d = getladfa(v, n);
 	if (d == NULL)
-	{
-		ERR(REG_ESPACE);
 		return 0;
+	if (LATYPE_IS_AHEAD(sub->subno))
+	{
+		/* used to use longest() here, but shortest() could be much cheaper */
+		end = shortest(v, d, cp, cp, v->stop,
+					   (chr **) NULL, (int *) NULL);
+		satisfied = LATYPE_IS_POS(sub->subno) ? (end != NULL) : (end == NULL);
 	}
-	end = longest(v, d, cp, v->stop, (int *) NULL);
-	freedfa(d);
-	FDEBUG(("=== lacon %d match %d\n", n, (end != NULL)));
-	return (sub->subno) ? (end != NULL) : (end == NULL);
+	else
+	{
+		/*
+		 * To avoid doing O(N^2) work when repeatedly testing a lookbehind
+		 * constraint in an N-character string, we use matchuntil() which can
+		 * cache the DFA state across calls.  We only need to restart if the
+		 * probe point decreases, which is not common.  The NFA we're using is
+		 * a search NFA, so it doesn't mind scanning over stuff before the
+		 * nominal match.
+		 */
+		satisfied = matchuntil(v, d, cp, &v->lblastcss[n], &v->lblastcp[n]);
+		if (!LATYPE_IS_POS(sub->subno))
+			satisfied = !satisfied;
+	}
+	FDEBUG(("=== lacon %d satisfied %d\n", n, satisfied));
+	return satisfied;
 }
 
 /*

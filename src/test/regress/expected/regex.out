@@ -90,6 +90,175 @@ select substring('a' from '((a)+)');
  a
 (1 row)
 
+-- Test lookahead constraints
+select regexp_matches('ab', 'a(?=b)b*');
+ regexp_matches 
+----------------
+ {ab}
+(1 row)
+
+select regexp_matches('a', 'a(?=b)b*');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('abc', 'a(?=b)b*(?=c)c*');
+ regexp_matches 
+----------------
+ {abc}
+(1 row)
+
+select regexp_matches('ab', 'a(?=b)b*(?=c)c*');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('ab', 'a(?!b)b*');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('a', 'a(?!b)b*');
+ regexp_matches 
+----------------
+ {a}
+(1 row)
+
+select regexp_matches('b', '(?=b)b');
+ regexp_matches 
+----------------
+ {b}
+(1 row)
+
+select regexp_matches('a', '(?=b)b');
+ regexp_matches 
+----------------
+(0 rows)
+
+-- Test lookbehind constraints
+select regexp_matches('abb', '(?<=a)b*');
+ regexp_matches 
+----------------
+ {bb}
+(1 row)
+
+select regexp_matches('a', 'a(?<=a)b*');
+ regexp_matches 
+----------------
+ {a}
+(1 row)
+
+select regexp_matches('abc', 'a(?<=a)b*(?<=b)c*');
+ regexp_matches 
+----------------
+ {abc}
+(1 row)
+
+select regexp_matches('ab', 'a(?<=a)b*(?<=b)c*');
+ regexp_matches 
+----------------
+ {ab}
+(1 row)
+
+select regexp_matches('ab', 'a*(?<!a)b*');
+ regexp_matches 
+----------------
+ {""}
+(1 row)
+
+select regexp_matches('ab', 'a*(?<!a)b+');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('b', 'a*(?<!a)b+');
+ regexp_matches 
+----------------
+ {b}
+(1 row)
+
+select regexp_matches('a', 'a(?<!a)b*');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('b', '(?<=b)b');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('foobar', '(?<=f)b+');
+ regexp_matches 
+----------------
+(0 rows)
+
+select regexp_matches('foobar', '(?<=foo)b+');
+ regexp_matches 
+----------------
+ {b}
+(1 row)
+
+select regexp_matches('foobar', '(?<=oo)b+');
+ regexp_matches 
+----------------
+ {b}
+(1 row)
+
+-- Test optimization of single-chr-or-bracket-expression lookaround constraints
+select 'xz' ~ 'x(?=[xy])';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'xy' ~ 'x(?=[xy])';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'xz' ~ 'x(?![xy])';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'xy' ~ 'x(?![xy])';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'x'  ~ 'x(?![xy])';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'xyy' ~ '(?<=[xy])yy+';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'zyy' ~ '(?<=[xy])yy+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'xyy' ~ '(?<![xy])yy+';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'zyy' ~ '(?<![xy])yy+';
+ ?column? 
+----------
+ t
+(1 row)
+
 -- Test conversion of regex patterns to indexable conditions
 explain (costs off) select * from pg_proc where proname ~ 'abc';
             QUERY PLAN             

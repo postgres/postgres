@@ -1349,6 +1349,49 @@ cleartraverse(struct nfa * nfa,
 }
 
 /*
+ * single_color_transition - does getting from s1 to s2 cross one PLAIN arc?
+ *
+ * If traversing from s1 to s2 requires a single PLAIN match (possibly of any
+ * of a set of colors), return a state whose outarc list contains only PLAIN
+ * arcs of those color(s).  Otherwise return NULL.
+ *
+ * This is used before optimizing the NFA, so there may be EMPTY arcs, which
+ * we should ignore; the possibility of an EMPTY is why the result state could
+ * be different from s1.
+ *
+ * It's worth troubling to handle multiple parallel PLAIN arcs here because a
+ * bracket construct such as [abc] might yield either one or several parallel
+ * PLAIN arcs depending on earlier atoms in the expression.  We'd rather that
+ * that implementation detail not create user-visible performance differences.
+ */
+static struct state *
+single_color_transition(struct state * s1, struct state * s2)
+{
+	struct arc *a;
+
+	/* Ignore leading EMPTY arc, if any */
+	if (s1->nouts == 1 && s1->outs->type == EMPTY)
+		s1 = s1->outs->to;
+	/* Likewise for any trailing EMPTY arc */
+	if (s2->nins == 1 && s2->ins->type == EMPTY)
+		s2 = s2->ins->from;
+	/* Perhaps we could have a single-state loop in between, if so reject */
+	if (s1 == s2)
+		return NULL;
+	/* s1 must have at least one outarc... */
+	if (s1->outs == NULL)
+		return NULL;
+	/* ... and they must all be PLAIN arcs to s2 */
+	for (a = s1->outs; a != NULL; a = a->outchain)
+	{
+		if (a->type != PLAIN || a->to != s2)
+			return NULL;
+	}
+	/* OK, return s1 as the possessor of the relevant outarcs */
+	return s1;
+}
+
+/*
  * specialcolors - fill in special colors for an NFA
  */
 static void

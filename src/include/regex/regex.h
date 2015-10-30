@@ -58,7 +58,7 @@ typedef struct
 	size_t		re_nsub;		/* number of subexpressions */
 	long		re_info;		/* information about RE */
 #define  REG_UBACKREF		 000001
-#define  REG_ULOOKAHEAD		 000002
+#define  REG_ULOOKAROUND	 000002
 #define  REG_UBOUNDS	 000004
 #define  REG_UBRACES	 000010
 #define  REG_UBSALNUM		 000020

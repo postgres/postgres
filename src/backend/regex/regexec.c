@@ -112,7 +112,10 @@ struct vars
 	chr		   *search_start;	/* search start of string */
 	chr		   *stop;			/* just past end of string */
 	int			err;			/* error code if any (0 none) */
-	struct dfa **subdfas;		/* per-subre DFAs */
+	struct dfa **subdfas;		/* per-tree-subre DFAs */
+	struct dfa **ladfas;		/* per-lacon-subre DFAs */
+	struct sset **lblastcss;	/* per-lacon-subre lookbehind restart data */
+	chr		  **lblastcp;		/* per-lacon-subre lookbehind restart data */
 	struct smalldfa dfa1;
 	struct smalldfa dfa2;
 };
@@ -132,6 +135,7 @@ struct vars
  */
 /* === regexec.c === */
 static struct dfa *getsubdfa(struct vars *, struct subre *);
+static struct dfa *getladfa(struct vars *, int);
 static int	find(struct vars *, struct cnfa *, struct colormap *);
 static int	cfind(struct vars *, struct cnfa *, struct colormap *);
 static int	cfindloop(struct vars *, struct cnfa *, struct colormap *, struct dfa *, struct dfa *, chr **);
@@ -149,6 +153,7 @@ static int	creviterdissect(struct vars *, struct subre *, chr *, chr *);
 /* === rege_dfa.c === */
 static chr *longest(struct vars *, struct dfa *, chr *, chr *, int *);
 static chr *shortest(struct vars *, struct dfa *, chr *, chr *, chr *, chr **, int *);
+static int	matchuntil(struct vars *, struct dfa *, chr *, struct sset **, chr **);
 static chr *lastcold(struct vars *, struct dfa *);
 static struct dfa *newdfa(struct vars *, struct cnfa *, struct colormap *, struct smalldfa *);
 static void freedfa(struct dfa *);
@@ -226,20 +231,53 @@ pg_regexec(regex_t *re,
 	v->search_start = (chr *) string + search_start;
 	v->stop = (chr *) string + len;
 	v->err = 0;
+	v->subdfas = NULL;
+	v->ladfas = NULL;
+	v->lblastcss = NULL;
+	v->lblastcp = NULL;
+	/* below this point, "goto cleanup" will behave sanely */
+
 	assert(v->g->ntree >= 0);
 	n = (size_t) v->g->ntree;
 	if (n <= LOCALDFAS)
 		v->subdfas = subdfas;
 	else
-		v->subdfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
-	if (v->subdfas == NULL)
 	{
-		if (v->pmatch != pmatch && v->pmatch != mat)
-			FREE(v->pmatch);
-		return REG_ESPACE;
+		v->subdfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
+		if (v->subdfas == NULL)
+		{
+			st = REG_ESPACE;
+			goto cleanup;
+		}
 	}
 	for (i = 0; i < n; i++)
 		v->subdfas[i] = NULL;
+
+	assert(v->g->nlacons >= 0);
+	n = (size_t) v->g->nlacons;
+	if (n > 0)
+	{
+		v->ladfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
+		if (v->ladfas == NULL)
+		{
+			st = REG_ESPACE;
+			goto cleanup;
+		}
+		for (i = 0; i < n; i++)
+			v->ladfas[i] = NULL;
+		v->lblastcss = (struct sset **) MALLOC(n * sizeof(struct sset *));
+		v->lblastcp = (chr **) MALLOC(n * sizeof(chr *));
+		if (v->lblastcss == NULL || v->lblastcp == NULL)
+		{
+			st = REG_ESPACE;
+			goto cleanup;
+		}
+		for (i = 0; i < n; i++)
+		{
+			v->lblastcss[i] = NULL;
+			v->lblastcp[i] = NULL;
+		}
+	}
 
 	/* do it */
 	assert(v->g->tree != NULL);
@@ -257,22 +295,40 @@ pg_regexec(regex_t *re,
 	}
 
 	/* clean up */
+cleanup:
 	if (v->pmatch != pmatch && v->pmatch != mat)
 		FREE(v->pmatch);
-	n = (size_t) v->g->ntree;
-	for (i = 0; i < n; i++)
+	if (v->subdfas != NULL)
 	{
-		if (v->subdfas[i] != NULL)
-			freedfa(v->subdfas[i]);
+		n = (size_t) v->g->ntree;
+		for (i = 0; i < n; i++)
+		{
+			if (v->subdfas[i] != NULL)
+				freedfa(v->subdfas[i]);
+		}
+		if (v->subdfas != subdfas)
+			FREE(v->subdfas);
 	}
-	if (v->subdfas != subdfas)
-		FREE(v->subdfas);
+	if (v->ladfas != NULL)
+	{
+		n = (size_t) v->g->nlacons;
+		for (i = 0; i < n; i++)
+		{
+			if (v->ladfas[i] != NULL)
+				freedfa(v->ladfas[i]);
+		}
+		FREE(v->ladfas);
+	}
+	if (v->lblastcss != NULL)
+		FREE(v->lblastcss);
+	if (v->lblastcp != NULL)
+		FREE(v->lblastcp);
 
 	return st;
 }
 
 /*
- * getsubdfa - create or re-fetch the DFA for a subre node
+ * getsubdfa - create or re-fetch the DFA for a tree subre node
  *
  * We only need to create the DFA once per overall regex execution.
  * The DFA will be freed by the cleanup step in pg_regexec().
@@ -288,6 +344,28 @@ getsubdfa(struct vars * v,
 			return NULL;
 	}
 	return v->subdfas[t->id];
+}
+
+/*
+ * getladfa - create or re-fetch the DFA for a LACON subre node
+ *
+ * Same as above, but for LACONs.
+ */
+static struct dfa *
+getladfa(struct vars * v,
+		 int n)
+{
+	assert(n > 0 && n < v->g->nlacons && v->g->lacons != NULL);
+
+	if (v->ladfas[n] == NULL)
+	{
+		struct subre *sub = &v->g->lacons[n];
+
+		v->ladfas[n] = newdfa(v, &sub->cnfa, &v->g->cmap, DOMALLOC);
+		if (ISERR())
+			return NULL;
+	}
+	return v->ladfas[n];
 }
 
 /*

@@ -6,7 +6,7 @@
  * In this implementation, the NFA defines a necessary but not sufficient
  * condition for a string to match the regex: that is, there can be strings
  * that match the NFA but don't match the full regex, but not vice versa.
- * Thus, for example, it is okay for the functions below to ignore lookahead
+ * Thus, for example, it is okay for the functions below to ignore lookaround
  * constraints, which merely constrain the string some more.
  *
  * Notice that these functions return info into caller-provided arrays

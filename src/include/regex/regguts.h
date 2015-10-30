@@ -89,13 +89,19 @@
  */
 
 #define NOTREACHED	0
-#define xxx		1
 
 #define DUPMAX	_POSIX2_RE_DUP_MAX
 #define DUPINF	(DUPMAX+1)
 
 #define REMAGIC 0xfed7			/* magic number for main struct */
 
+/* Type codes for lookaround constraints */
+#define LATYPE_AHEAD_POS	03	/* positive lookahead */
+#define LATYPE_AHEAD_NEG	02	/* negative lookahead */
+#define LATYPE_BEHIND_POS	01	/* positive lookbehind */
+#define LATYPE_BEHIND_NEG	00	/* negative lookbehind */
+#define LATYPE_IS_POS(la)	((la) & 01)
+#define LATYPE_IS_AHEAD(la) ((la) & 02)
 
 
 /*
@@ -351,7 +357,7 @@ struct nfa
  *
  * The non-dummy carc structs are of two types: plain arcs and LACON arcs.
  * Plain arcs just store the transition color number as "co".  LACON arcs
- * store the lookahead constraint number plus cnfa.ncolors as "co".  LACON
+ * store the lookaround constraint number plus cnfa.ncolors as "co".  LACON
  * arcs can be distinguished from plain by testing for co >= cnfa.ncolors.
  */
 struct carc
@@ -365,7 +371,7 @@ struct cnfa
 	int			nstates;		/* number of states */
 	int			ncolors;		/* number of colors (max color in use + 1) */
 	int			flags;
-#define  HASLACONS	01			/* uses lookahead constraints */
+#define  HASLACONS	01			/* uses lookaround constraints */
 	int			pre;			/* setup state number */
 	int			post;			/* teardown state number */
 	color		bos[2];			/* colors, if any, assigned to BOS and BOL */
@@ -433,7 +439,8 @@ struct subre
 #define  PREF2(f1, f2)	 ((PREF(f1) != 0) ? PREF(f1) : PREF(f2))
 #define  COMBINE(f1, f2) (UP((f1)|(f2)) | PREF2(f1, f2))
 	short		id;				/* ID of subre (1..ntree-1) */
-	int			subno;			/* subexpression number (for 'b' and '(') */
+	int			subno;			/* subexpression number for 'b' and '(', or
+								 * LATYPE code for lookaround constraint */
 	short		min;			/* min repetitions for iteration or backref */
 	short		max;			/* max repetitions for iteration or backref */
 	struct subre *left;			/* left child, if any (also freelist chain) */
@@ -479,6 +486,7 @@ struct guts
 	int			ntree;			/* number of subre's, plus one */
 	struct colormap cmap;
 	int			FUNCPTR(compare, (const chr *, const chr *, size_t));
-	struct subre *lacons;		/* lookahead-constraint vector */
-	int			nlacons;		/* size of lacons */
+	struct subre *lacons;		/* lookaround-constraint vector */
+	int			nlacons;		/* size of lacons[]; note that only slots
+								 * numbered 1 .. nlacons-1 are used */
 };

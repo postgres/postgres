@@ -4477,13 +4477,27 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        where no substring matching <replaceable>re</> begins
        (AREs only) </entry>
        </row>
+
+       <row>
+       <entry> <literal>(?&lt;=</><replaceable>re</><literal>)</> </entry>
+       <entry> <firstterm>positive lookbehind</> matches at any point
+       where a substring matching <replaceable>re</> ends
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?&lt;!</><replaceable>re</><literal>)</> </entry>
+       <entry> <firstterm>negative lookbehind</> matches at any point
+       where no substring matching <replaceable>re</> ends
+       (AREs only) </entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
-    Lookahead constraints cannot contain <firstterm>back references</>
-    (see <xref linkend="posix-escape-sequences">),
+    Lookahead and lookbehind constraints cannot contain <firstterm>back
+    references</> (see <xref linkend="posix-escape-sequences">),
     and all parentheses within them are considered non-capturing.
    </para>
    </sect3>
@@ -5355,7 +5369,7 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     the lack of special treatment for a trailing newline,
     the addition of complemented bracket expressions to the things
     affected by newline-sensitive matching,
-    the restrictions on parentheses and back references in lookahead
+    the restrictions on parentheses and back references in lookahead/lookbehind
     constraints, and the longest/shortest-match (rather than first-match)
     matching semantics.
    </para>

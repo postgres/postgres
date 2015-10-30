@@ -57,6 +57,8 @@ static const chr *scanplain(struct vars *);
 static void onechr(struct vars *, chr, struct state *, struct state *);
 static void dovec(struct vars *, struct cvec *, struct state *, struct state *);
 static void wordchrs(struct vars *);
+static void processlacon(struct vars *, struct state *, struct state *, int,
+			 struct state *, struct state *);
 static struct subre *subre(struct vars *, int, int, struct state *, struct state *);
 static void freesubre(struct vars *, struct subre *);
 static void freesrnode(struct vars *, struct subre *);
@@ -65,7 +67,7 @@ static int	numst(struct subre *, int);
 static void markst(struct subre *);
 static void cleanst(struct vars *);
 static long nfatree(struct vars *, struct subre *, FILE *);
-static long nfanode(struct vars *, struct subre *, FILE *);
+static long nfanode(struct vars *, struct subre *, int, FILE *);
 static int	newlacon(struct vars *, struct state *, struct state *, int);
 static void freelacons(struct subre *, int);
 static void rfree(regex_t *);
@@ -146,6 +148,7 @@ static void deltraverse(struct nfa *, struct state *, struct state *);
 static void dupnfa(struct nfa *, struct state *, struct state *, struct state *, struct state *);
 static void duptraverse(struct nfa *, struct state *, struct state *);
 static void cleartraverse(struct nfa *, struct state *);
+static struct state *single_color_transition(struct state *, struct state *);
 static void specialcolors(struct nfa *);
 static long optimize(struct nfa *, FILE *);
 static void pullback(struct nfa *, FILE *);
@@ -245,8 +248,9 @@ struct vars
 	int			ntree;			/* number of tree nodes, plus one */
 	struct cvec *cv;			/* interface cvec */
 	struct cvec *cv2;			/* utility cvec */
-	struct subre *lacons;		/* lookahead-constraint vector */
-	int			nlacons;		/* size of lacons */
+	struct subre *lacons;		/* lookaround-constraint vector */
+	int			nlacons;		/* size of lacons[]; note that only slots
+								 * numbered 1 .. nlacons-1 are used */
 	size_t		spaceused;		/* approx. space used for compilation */
 };
 
@@ -277,7 +281,7 @@ struct vars
 #define CCLASS	'C'				/* start of [: */
 #define END 'X'					/* end of [. [= [: */
 #define RANGE	'R'				/* - within [] which might be range delim. */
-#define LACON	'L'				/* lookahead constraint subRE */
+#define LACON	'L'				/* lookaround constraint subRE */
 #define AHEAD	'a'				/* color-lookahead arc */
 #define BEHIND	'r'				/* color-lookbehind arc */
 #define WBDRY	'w'				/* word boundary constraint */
@@ -432,11 +436,15 @@ pg_regcomp(regex_t *re,
 	assert(v->nlacons == 0 || v->lacons != NULL);
 	for (i = 1; i < v->nlacons; i++)
 	{
+		struct subre *lasub = &v->lacons[i];
+
 #ifdef REG_DEBUG
 		if (debug != NULL)
 			fprintf(debug, "\n\n\n========= LA%d ==========\n", i);
 #endif
-		nfanode(v, &v->lacons[i], debug);
+
+		/* Prepend .* to pattern if it's a lookbehind LACON */
+		nfanode(v, lasub, !LATYPE_IS_AHEAD(lasub->subno), debug);
 	}
 	CNOERR();
 	if (v->tree->flags & SHORTER)
@@ -640,7 +648,7 @@ makesearch(struct vars * v,
 static struct subre *
 parse(struct vars * v,
 	  int stopper,				/* EOS or ')' */
-	  int type,					/* LACON (lookahead subRE) or PLAIN */
+	  int type,					/* LACON (lookaround subRE) or PLAIN */
 	  struct state * init,		/* initial state */
 	  struct state * final)		/* final state */
 {
@@ -719,7 +727,7 @@ parse(struct vars * v,
 static struct subre *
 parsebranch(struct vars * v,
 			int stopper,		/* EOS or ')' */
-			int type,			/* LACON (lookahead subRE) or PLAIN */
+			int type,			/* LACON (lookaround subRE) or PLAIN */
 			struct state * left,	/* leftmost state */
 			struct state * right,		/* rightmost state */
 			int partial)		/* is this only part of a branch? */
@@ -768,7 +776,7 @@ parsebranch(struct vars * v,
 static void
 parseqatom(struct vars * v,
 		   int stopper,			/* EOS or ')' */
-		   int type,			/* LACON (lookahead subRE) or PLAIN */
+		   int type,			/* LACON (lookaround subRE) or PLAIN */
 		   struct state * lp,	/* left state to hang it on */
 		   struct state * rp,	/* right state to hang it on */
 		   struct subre * top)	/* subtree top */
@@ -782,7 +790,7 @@ parseqatom(struct vars * v,
 	struct subre *atom;			/* atom's subtree */
 	struct subre *t;
 	int			cap;			/* capturing parens? */
-	int			pos;			/* positive lookahead? */
+	int			latype;			/* lookaround constraint type */
 	int			subno;			/* capturing-parens or backref number */
 	int			atomtype;
 	int			qprefer;		/* quantifier short/long preference */
@@ -866,19 +874,18 @@ parseqatom(struct vars * v,
 			nonword(v, AHEAD, s, rp);
 			return;
 			break;
-		case LACON:				/* lookahead constraint */
-			pos = v->nextvalue;
+		case LACON:				/* lookaround constraint */
+			latype = v->nextvalue;
 			NEXT();
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
 			NOERR();
 			t = parse(v, ')', LACON, s, s2);
 			freesubre(v, t);	/* internal structure irrelevant */
-			assert(SEE(')') || ISERR());
-			NEXT();
-			n = newlacon(v, s, s2, pos);
 			NOERR();
-			ARCV(LACON, n);
+			assert(SEE(')'));
+			NEXT();
+			processlacon(v, s, s2, latype, lp, rp);
 			return;
 			break;
 			/* then errors, to get them out of the way */
@@ -1634,6 +1641,75 @@ wordchrs(struct vars * v)
 }
 
 /*
+ * processlacon - generate the NFA representation of a LACON
+ *
+ * In the general case this is just newlacon() + newarc(), but some cases
+ * can be optimized.
+ */
+static void
+processlacon(struct vars * v,
+			 struct state * begin,		/* start of parsed LACON sub-re */
+			 struct state * end,	/* end of parsed LACON sub-re */
+			 int latype,
+			 struct state * lp, /* left state to hang it on */
+			 struct state * rp) /* right state to hang it on */
+{
+	struct state *s1;
+	int			n;
+
+	/*
+	 * Check for lookaround RE consisting of a single plain color arc (or set
+	 * of arcs); this would typically be a simple chr or a bracket expression.
+	 */
+	s1 = single_color_transition(begin, end);
+	switch (latype)
+	{
+		case LATYPE_AHEAD_POS:
+			/* If lookahead RE is just colorset C, convert to AHEAD(C) */
+			if (s1 != NULL)
+			{
+				cloneouts(v->nfa, s1, lp, rp, AHEAD);
+				return;
+			}
+			break;
+		case LATYPE_AHEAD_NEG:
+			/* If lookahead RE is just colorset C, convert to AHEAD(^C)|$ */
+			if (s1 != NULL)
+			{
+				colorcomplement(v->nfa, v->cm, AHEAD, s1, lp, rp);
+				newarc(v->nfa, '$', 1, lp, rp);
+				newarc(v->nfa, '$', 0, lp, rp);
+				return;
+			}
+			break;
+		case LATYPE_BEHIND_POS:
+			/* If lookbehind RE is just colorset C, convert to BEHIND(C) */
+			if (s1 != NULL)
+			{
+				cloneouts(v->nfa, s1, lp, rp, BEHIND);
+				return;
+			}
+			break;
+		case LATYPE_BEHIND_NEG:
+			/* If lookbehind RE is just colorset C, convert to BEHIND(^C)|^ */
+			if (s1 != NULL)
+			{
+				colorcomplement(v->nfa, v->cm, BEHIND, s1, lp, rp);
+				newarc(v->nfa, '^', 1, lp, rp);
+				newarc(v->nfa, '^', 0, lp, rp);
+				return;
+			}
+			break;
+		default:
+			assert(NOTREACHED);
+	}
+
+	/* General case: we need a LACON subre and arc */
+	n = newlacon(v, begin, end, latype);
+	newarc(v->nfa, LACON, n, lp, rp);
+}
+
+/*
  * subre - allocate a subre
  */
 static struct subre *
@@ -1826,15 +1902,18 @@ nfatree(struct vars * v,
 	if (t->right != NULL)
 		(DISCARD) nfatree(v, t->right, f);
 
-	return nfanode(v, t, f);
+	return nfanode(v, t, 0, f);
 }
 
 /*
- * nfanode - do one NFA for nfatree
+ * nfanode - do one NFA for nfatree or lacons
+ *
+ * If converttosearch is true, apply makesearch() to the NFA.
  */
 static long						/* optimize results */
 nfanode(struct vars * v,
 		struct subre * t,
+		int converttosearch,
 		FILE *f)				/* for debug output */
 {
 	struct nfa *nfa;
@@ -1855,10 +1934,11 @@ nfanode(struct vars * v,
 	NOERRZ();
 	dupnfa(nfa, t->begin, t->end, nfa->init, nfa->final);
 	if (!ISERR())
-	{
 		specialcolors(nfa);
+	if (!ISERR())
 		ret = optimize(nfa, f);
-	}
+	if (converttosearch && !ISERR())
+		makesearch(v, nfa);
 	if (!ISERR())
 		compact(nfa, &t->cnfa);
 
@@ -1867,13 +1947,13 @@ nfanode(struct vars * v,
 }
 
 /*
- * newlacon - allocate a lookahead-constraint subRE
+ * newlacon - allocate a lookaround-constraint subRE
  */
 static int						/* lacon number */
 newlacon(struct vars * v,
 		 struct state * begin,
 		 struct state * end,
-		 int pos)
+		 int latype)
 {
 	int			n;
 	struct subre *newlacons;
@@ -1900,13 +1980,13 @@ newlacon(struct vars * v,
 	sub = &v->lacons[n];
 	sub->begin = begin;
 	sub->end = end;
-	sub->subno = pos;
+	sub->subno = latype;
 	ZAPCNFA(sub->cnfa);
 	return n;
 }
 
 /*
- * freelacons - free lookahead-constraint subRE vector
+ * freelacons - free lookaround-constraint subRE vector
  */
 static void
 freelacons(struct subre * subs,
@@ -2020,9 +2100,29 @@ dump(regex_t *re,
 	}
 	for (i = 1; i < g->nlacons; i++)
 	{
-		fprintf(f, "\nla%d (%s):\n", i,
-				(g->lacons[i].subno) ? "positive" : "negative");
-		dumpcnfa(&g->lacons[i].cnfa, f);
+		struct subre *lasub = &g->lacons[i];
+		const char *latype;
+
+		switch (lasub->subno)
+		{
+			case LATYPE_AHEAD_POS:
+				latype = "positive lookahead";
+				break;
+			case LATYPE_AHEAD_NEG:
+				latype = "negative lookahead";
+				break;
+			case LATYPE_BEHIND_POS:
+				latype = "positive lookbehind";
+				break;
+			case LATYPE_BEHIND_NEG:
+				latype = "negative lookbehind";
+				break;
+			default:
+				latype = "???";
+				break;
+		}
+		fprintf(f, "\nla%d (%s):\n", i, latype);
+		dumpcnfa(&lasub->cnfa, f);
 	}
 	fprintf(f, "\n");
 	dumpst(g->tree, f, 0);
