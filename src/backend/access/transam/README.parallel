@@ -222,7 +222,9 @@ pattern looks like this:
 
 	ExitParallelMode();
 
-If desired, after WaitForParallelWorkersToFinish() has been called, another
-call to LaunchParallelWorkers() can be made using the same parallel context.
-Calls to these two functions can be alternated any number of times before
-destroying the parallel context.
+If desired, after WaitForParallelWorkersToFinish() has been called, the
+context can be reset so that workers can be launched anew using the same
+parallel context.  To do this, first call ReinitializeParallelDSM() to
+reinitialize state managed by the parallel context machinery itself; then,
+perform any other necessary resetting of state; after that, you can again
+call LaunchParallelWorkers.

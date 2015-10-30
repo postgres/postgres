@@ -56,6 +56,7 @@ extern bool InitializingParallelWorker;
 extern ParallelContext *CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers);
 extern ParallelContext *CreateParallelContextForExternalFunction(char *library_name, char *function_name, int nworkers);
 extern void InitializeParallelDSM(ParallelContext *);
+extern void ReinitializeParallelDSM(ParallelContext *pcxt);
 extern void LaunchParallelWorkers(ParallelContext *);
 extern void WaitForParallelWorkersToFinish(ParallelContext *);
 extern void DestroyParallelContext(ParallelContext *);

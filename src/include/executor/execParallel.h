@@ -33,5 +33,6 @@ extern ParallelExecutorInfo *ExecInitParallelPlan(PlanState *planstate,
 					 EState *estate, int nworkers);
 extern void ExecParallelFinish(ParallelExecutorInfo *pei);
 extern void ExecParallelCleanup(ParallelExecutorInfo *pei);
+extern shm_mq_handle **ExecParallelReinitializeTupleQueues(ParallelContext *pcxt);
 
 #endif   /* EXECPARALLEL_H */
