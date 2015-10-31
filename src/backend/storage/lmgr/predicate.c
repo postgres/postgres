@@ -3217,21 +3217,20 @@ ReleasePredicateLocks(bool isCommit)
 		return;
 	}
 
+	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
+
 	Assert(!isCommit || SxactIsPrepared(MySerializableXact));
 	Assert(!isCommit || !SxactIsDoomed(MySerializableXact));
 	Assert(!SxactIsCommitted(MySerializableXact));
 	Assert(!SxactIsRolledBack(MySerializableXact));
 
 	/* may not be serializable during COMMIT/ROLLBACK PREPARED */
-	if (MySerializableXact->pid != 0)
-		Assert(IsolationIsSerializable());
+	Assert(MySerializableXact->pid == 0 || IsolationIsSerializable());
 
 	/* We'd better not already be on the cleanup list. */
 	Assert(!SxactIsOnFinishedList(MySerializableXact));
 
 	topLevelIsDeclaredReadOnly = SxactIsReadOnly(MySerializableXact);
-
-	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
 	/*
 	 * We don't hold XidGenLock lock here, assuming that TransactionId is
@@ -4369,7 +4368,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
 	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
 		LWLockAcquire(PredicateLockHashPartitionLockByIndex(i), LW_SHARED);
-	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
+	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
 	/* Scan through target list */
 	hash_seq_init(&seqstat, PredicateLockTargetHash);
