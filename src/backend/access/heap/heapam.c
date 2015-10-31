@@ -1929,21 +1929,26 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	else
 		heaptup = tup;
 
-	/*
-	 * We're about to do the actual insert -- but check for conflict first,
-	 * to avoid possibly having to roll back work we've just done.
-	 *
-	 * For a heap insert, we only need to check for table-level SSI locks.
-	 * Our new tuple can't possibly conflict with existing tuple locks, and
-	 * heap page locks are only consolidated versions of tuple locks; they do
-	 * not lock "gaps" as index page locks do.  So we don't need to identify
-	 * a buffer before making the call.
-	 */
-	CheckForSerializableConflictIn(relation, NULL, InvalidBuffer);
-
 	/* Find buffer to insert this tuple into */
 	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
 									   InvalidBuffer, options, bistate);
+
+	/*
+	 * We're about to do the actual insert -- but check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
+	 *
+	 * This is safe without a recheck as long as there is no possibility of
+	 * another process scanning the page between this check and the insert
+	 * being visible to the scan (i.e., an exclusive buffer content lock is
+	 * continuously held from this point until the tuple insert is visible).
+	 *
+	 * For a heap insert, we only need to check for table-level SSI locks. Our
+	 * new tuple can't possibly conflict with existing tuple locks, and heap
+	 * page locks are only consolidated versions of tuple locks; they do not
+	 * lock "gaps" as index page locks do.  So we don't need to specify a
+	 * buffer when making the call, which makes for a faster check.
+	 */
+	CheckForSerializableConflictIn(relation, NULL, InvalidBuffer);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -2248,6 +2253,11 @@ l1:
 	/*
 	 * We're about to do the actual delete -- check for conflict first, to
 	 * avoid possibly having to roll back work we've just done.
+	 *
+	 * This is safe without a recheck as long as there is no possibility of
+	 * another process scanning the page between this check and the delete
+	 * being visible to the scan (i.e., an exclusive buffer content lock is
+	 * continuously held from this point until the tuple delete is visible).
 	 */
 	CheckForSerializableConflictIn(relation, &tp, buffer);
 
@@ -2604,12 +2614,6 @@ l2:
 		return result;
 	}
 
-	/*
-	 * We're about to do the actual update -- check for conflict first, to
-	 * avoid possibly having to roll back work we've just done.
-	 */
-	CheckForSerializableConflictIn(relation, &oldtup, buffer);
-
 	/* Fill in OID and transaction status data for newtup */
 	if (relation->rd_rel->relhasoids)
 	{
@@ -2755,14 +2759,20 @@ l2:
 	}
 
 	/*
-	 * We're about to create the new tuple -- check for conflict first, to
+	 * We're about to do the actual update -- check for conflict first, to
 	 * avoid possibly having to roll back work we've just done.
 	 *
-	 * NOTE: For a tuple insert, we only need to check for table locks, since
-	 * predicate locking at the index level will cover ranges for anything
-	 * except a table scan.  Therefore, only provide the relation.
+	 * This is safe without a recheck as long as there is no possibility of
+	 * another process scanning the pages between this check and the update
+	 * being visible to the scan (i.e., exclusive buffer content lock(s) are
+	 * continuously held from this point until the tuple update is visible).
+	 *
+	 * For the new tuple the only check needed is at the relation level, but
+	 * since both tuples are in the same relation and the check for oldtup
+	 * will include checking the relation level, there is no benefit to a
+	 * separate check for the new tuple.
 	 */
-	CheckForSerializableConflictIn(relation, NULL, InvalidBuffer);
+	CheckForSerializableConflictIn(relation, &oldtup, buffer);
 
 	/*
 	 * At this point newbuf and buffer are both pinned and locked, and newbuf
