@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "nodes/bitmapset.h"
 #include "nodes/params.h"
 #include "storage/shmem.h"
 #include "utils/datum.h"
@@ -50,6 +51,7 @@ copyParamList(ParamListInfo from)
 	retval->parserSetup = NULL;
 	retval->parserSetupArg = NULL;
 	retval->numParams = from->numParams;
+	retval->paramMask = NULL;
 
 	for (i = 0; i < from->numParams; i++)
 	{
@@ -57,6 +59,17 @@ copyParamList(ParamListInfo from)
 		ParamExternData *nprm = &retval->params[i];
 		int16		typLen;
 		bool		typByVal;
+
+		/* Ignore parameters we don't need, to save cycles and space. */
+		if (retval->paramMask != NULL &&
+			!bms_is_member(i, retval->paramMask))
+		{
+			nprm->value = (Datum) 0;
+			nprm->isnull = true;
+			nprm->pflags = 0;
+			nprm->ptype = InvalidOid;
+			continue;
+		}
 
 		/* give hook a chance in case parameter is dynamic */
 		if (!OidIsValid(oprm->ptype) && from->paramFetch != NULL)
@@ -90,19 +103,28 @@ EstimateParamListSpace(ParamListInfo paramLI)
 	for (i = 0; i < paramLI->numParams; i++)
 	{
 		ParamExternData *prm = &paramLI->params[i];
+		Oid			typeOid;
 		int16		typLen;
 		bool		typByVal;
 
-		/* give hook a chance in case parameter is dynamic */
-		if (!OidIsValid(prm->ptype) && paramLI->paramFetch != NULL)
-			(*paramLI->paramFetch) (paramLI, i + 1);
+		/* Ignore parameters we don't need, to save cycles and space. */
+		if (paramLI->paramMask != NULL &&
+			!bms_is_member(i, paramLI->paramMask))
+			typeOid = InvalidOid;
+		else
+		{
+			/* give hook a chance in case parameter is dynamic */
+			if (!OidIsValid(prm->ptype) && paramLI->paramFetch != NULL)
+				(*paramLI->paramFetch) (paramLI, i + 1);
+			typeOid = prm->ptype;
+		}
 
 		sz = add_size(sz, sizeof(Oid));			/* space for type OID */
 		sz = add_size(sz, sizeof(uint16));		/* space for pflags */
 
 		/* space for datum/isnull */
-		if (OidIsValid(prm->ptype))
-			get_typlenbyval(prm->ptype, &typLen, &typByVal);
+		if (OidIsValid(typeOid))
+			get_typlenbyval(typeOid, &typLen, &typByVal);
 		else
 		{
 			/* If no type OID, assume by-value, like copyParamList does. */
@@ -150,15 +172,24 @@ SerializeParamList(ParamListInfo paramLI, char **start_address)
 	for (i = 0; i < nparams; i++)
 	{
 		ParamExternData *prm = &paramLI->params[i];
+		Oid			typeOid;
 		int16		typLen;
 		bool		typByVal;
 
-		/* give hook a chance in case parameter is dynamic */
-		if (!OidIsValid(prm->ptype) && paramLI->paramFetch != NULL)
-			(*paramLI->paramFetch) (paramLI, i + 1);
+		/* Ignore parameters we don't need, to save cycles and space. */
+		if (paramLI->paramMask != NULL &&
+			!bms_is_member(i, paramLI->paramMask))
+			typeOid = InvalidOid;
+		else
+		{
+			/* give hook a chance in case parameter is dynamic */
+			if (!OidIsValid(prm->ptype) && paramLI->paramFetch != NULL)
+				(*paramLI->paramFetch) (paramLI, i + 1);
+			typeOid = prm->ptype;
+		}
 
 		/* Write type OID. */
-		memcpy(*start_address, &prm->ptype, sizeof(Oid));
+		memcpy(*start_address, &typeOid, sizeof(Oid));
 		*start_address += sizeof(Oid);
 
 		/* Write flags. */
@@ -166,8 +197,8 @@ SerializeParamList(ParamListInfo paramLI, char **start_address)
 		*start_address += sizeof(uint16);
 
 		/* Write datum/isnull. */
-		if (OidIsValid(prm->ptype))
-			get_typlenbyval(prm->ptype, &typLen, &typByVal);
+		if (OidIsValid(typeOid))
+			get_typlenbyval(typeOid, &typLen, &typByVal);
 		else
 		{
 			/* If no type OID, assume by-value, like copyParamList does. */
@@ -209,6 +240,7 @@ RestoreParamList(char **start_address)
 	paramLI->parserSetup = NULL;
 	paramLI->parserSetupArg = NULL;
 	paramLI->numParams = nparams;
+	paramLI->paramMask = NULL;
 
 	for (i = 0; i < nparams; i++)
 	{

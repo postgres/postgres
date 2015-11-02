@@ -14,7 +14,8 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-/* To avoid including a pile of parser headers, reference ParseState thus: */
+/* Forward declarations, to avoid including other headers */
+struct Bitmapset;
 struct ParseState;
 
 
@@ -71,6 +72,7 @@ typedef struct ParamListInfoData
 	ParserSetupHook parserSetup;	/* parser setup hook */
 	void	   *parserSetupArg;
 	int			numParams;		/* number of ParamExternDatas following */
+	struct Bitmapset *paramMask; /* if non-NULL, can ignore omitted params */
 	ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
 }	ParamListInfoData;
 

@@ -3287,6 +3287,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
 	estate->paramLI->parserSetupArg = NULL;		/* filled during use */
 	estate->paramLI->numParams = estate->ndatums;
+	estate->paramLI->paramMask = NULL;
 	estate->params_dirty = false;
 
 	/* set up for use of appropriate simple-expression EState and cast hash */
@@ -5559,6 +5560,12 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		paramLI->parserSetupArg = (void *) expr;
 
 		/*
+		 * Allow parameters that aren't needed by this expression to be
+		 * ignored.
+		 */
+		paramLI->paramMask = expr->paramnos;
+
+		/*
 		 * Also make sure this is set before parser hooks need it.  There is
 		 * no need to save and restore, since the value is always correct once
 		 * set.  (Should be set already, but let's be sure.)
@@ -5592,6 +5599,9 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
  * shared param list, where it could get passed to some less-trusted function.
  *
  * Caller should pfree the result after use, if it's not NULL.
+ *
+ * XXX. Could we use ParamListInfo's new paramMask to avoid creating unshared
+ * parameter lists?
  */
 static ParamListInfo
 setup_unshared_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
@@ -5623,6 +5633,7 @@ setup_unshared_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
 		paramLI->parserSetupArg = (void *) expr;
 		paramLI->numParams = estate->ndatums;
+		paramLI->paramMask = NULL;
 
 		/*
 		 * Instantiate values for "safe" parameters of the expression.  We
@@ -5696,25 +5707,20 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 	/* now we can access the target datum */
 	datum = estate->datums[dno];
 
-	/* need to behave slightly differently for shared and unshared arrays */
-	if (params != estate->paramLI)
+	/*
+	 * Since copyParamList() or SerializeParamList() will try to materialize
+	 * every single parameter slot, it's important to do nothing when asked
+	 * for a datum that's not supposed to be used by this SQL expression.
+	 * Otherwise we risk failures in exec_eval_datum(), or copying a lot more
+	 * data than necessary.
+	 */
+	if (!bms_is_member(dno, expr->paramnos))
+		return;
+
+	if (params == estate->paramLI)
 	{
 		/*
-		 * We're being called, presumably from copyParamList(), for cursor
-		 * parameters.  Since copyParamList() will try to materialize every
-		 * single parameter slot, it's important to do nothing when asked for
-		 * a datum that's not supposed to be used by this SQL expression.
-		 * Otherwise we risk failures in exec_eval_datum(), not to mention
-		 * possibly copying a lot more data than the cursor actually uses.
-		 */
-		if (!bms_is_member(dno, expr->paramnos))
-			return;
-	}
-	else
-	{
-		/*
-		 * Normal evaluation cases.  We don't need to sanity-check dno, but we
-		 * do need to mark the shared params array dirty if we're about to
+		 * We need to mark the shared params array dirty if we're about to
 		 * evaluate a resettable datum.
 		 */
 		switch (datum->dtype)
