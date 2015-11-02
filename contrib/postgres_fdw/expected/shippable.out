@@ -1,0 +1,225 @@
+-- ===================================================================
+-- create FDW objects
+-- ===================================================================
+-- Error, extension isn't installed yet
+ALTER SERVER loopback OPTIONS (ADD extensions 'cube');
+ERROR:  required extension "cube" is not installed
+HINT:  Extension must be installed locally before it can be used on a remote server.
+-- Try again
+CREATE EXTENSION cube;
+ALTER SERVER loopback OPTIONS (ADD extensions 'cube');
+ALTER SERVER loopback OPTIONS (DROP extensions);
+-- ===================================================================
+-- create objects used through FDW loopback server
+-- ===================================================================
+CREATE SCHEMA "SH 1";
+CREATE TABLE "SH 1"."TBL 1" (
+	"C 1" int NOT NULL,
+	c2 int NOT NULL,
+	c3 cube,
+	c4 timestamptz
+);
+INSERT INTO "SH 1"."TBL 1"
+	SELECT id,
+	       2 * id,
+	       cube(id,2*id),
+	       '1970-01-01'::timestamptz + ((id % 100) || ' days')::interval
+	FROM generate_series(1, 1000) id;
+ANALYZE "SH 1"."TBL 1";
+-- ===================================================================
+-- create foreign table
+-- ===================================================================
+CREATE FOREIGN TABLE shft1 (
+	"C 1" int NOT NULL,
+	c2 int NOT NULL,
+	c3 cube,
+	c4 timestamptz
+) SERVER loopback
+OPTIONS (schema_name 'SH 1', table_name 'TBL 1');
+-- ===================================================================
+-- simple queries
+-- ===================================================================
+-- without operator shipping
+EXPLAIN (COSTS false) SELECT * FROM shft1 LIMIT 1;
+         QUERY PLAN          
+-----------------------------
+ Limit
+   ->  Foreign Scan on shft1
+(2 rows)
+
+EXPLAIN VERBOSE SELECT c2 FROM shft1 WHERE c3 && cube(1.5,2.5);
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Foreign Scan on public.shft1  (cost=100.00..205.06 rows=15 width=4)
+   Output: c2
+   Filter: (shft1.c3 && '(1.5),(2.5)'::cube)
+   Remote SQL: SELECT c2, c3 FROM "SH 1"."TBL 1"
+(4 rows)
+
+SELECT c2 FROM shft1 WHERE c3 && cube(1.5,2.5);
+ c2 
+----
+  2
+  4
+(2 rows)
+
+EXPLAIN VERBOSE SELECT c2 FROM shft1 WHERE c3 && '(1.5),(2.5)'::cube;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Foreign Scan on public.shft1  (cost=100.00..205.06 rows=15 width=4)
+   Output: c2
+   Filter: (shft1.c3 && '(1.5),(2.5)'::cube)
+   Remote SQL: SELECT c2, c3 FROM "SH 1"."TBL 1"
+(4 rows)
+
+-- with operator shipping
+ALTER SERVER loopback OPTIONS (ADD extensions 'cube');
+EXPLAIN VERBOSE SELECT c2 FROM shft1 WHERE c3 && cube(1.5,2.5);
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.shft1  (cost=100.00..146.86 rows=15 width=4)
+   Output: c2
+   Remote SQL: SELECT c2 FROM "SH 1"."TBL 1" WHERE ((c3 OPERATOR(public.&&) '(1.5),(2.5)'::public.cube))
+(3 rows)
+
+SELECT c2 FROM shft1 WHERE c3 && cube(1.5,2.5);
+ c2 
+----
+  2
+  4
+(2 rows)
+
+EXPLAIN VERBOSE SELECT c2 FROM shft1 WHERE c3 && '(1.5),(2.5)'::cube;
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.shft1  (cost=100.00..146.86 rows=15 width=4)
+   Output: c2
+   Remote SQL: SELECT c2 FROM "SH 1"."TBL 1" WHERE ((c3 OPERATOR(public.&&) '(1.5),(2.5)'::public.cube))
+(3 rows)
+
+EXPLAIN VERBOSE SELECT cube_dim(c3) FROM shft1 WHERE c3 && '(1.5),(2.5)'::cube;
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.shft1  (cost=100.00..128.43 rows=7 width=32)
+   Output: cube_dim(c3)
+   Remote SQL: SELECT c3 FROM "SH 1"."TBL 1" WHERE ((c3 OPERATOR(public.&&) '(1.5),(2.5)'::public.cube))
+(3 rows)
+
+SELECT cube_dim(c3) FROM shft1 WHERE c3 && '(1.5),(2.5)'::cube;
+ cube_dim 
+----------
+        1
+        1
+(2 rows)
+
+EXPLAIN VERBOSE SELECT c2 FROM shft1 WHERE cube_dim(c3) = 1 LIMIT 2;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Limit  (cost=100.00..107.22 rows=2 width=4)
+   Output: c2
+   ->  Foreign Scan on public.shft1  (cost=100.00..154.18 rows=15 width=4)
+         Output: c2
+         Remote SQL: SELECT c2 FROM "SH 1"."TBL 1" WHERE ((public.cube_dim(c3) = 1))
+(5 rows)
+
+SELECT c2 FROM shft1 WHERE cube_dim(c3) = 1 LIMIT 2;
+ c2 
+----
+  2
+  4
+(2 rows)
+
+-- ===================================================================
+-- add a second server with different extension shipping
+-- ===================================================================
+DO $d$
+    BEGIN
+        EXECUTE $$CREATE SERVER loopback_two FOREIGN DATA WRAPPER postgres_fdw
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
+    END;
+$d$;
+CREATE USER MAPPING FOR CURRENT_USER SERVER loopback_two;
+CREATE EXTENSION seg;
+CREATE TABLE seg_local (
+	id integer,
+	s seg,
+  n text
+);
+INSERT INTO seg_local (id, s, n) VALUES (1, '1.0 .. 2.0', 'foo');
+INSERT INTO seg_local (id, s, n) VALUES (2, '3.0 .. 4.0', 'bar');
+INSERT INTO seg_local (id, s, n) VALUES (3, '5.0 .. 6.0', 'baz');
+ANALYZE seg_local;
+CREATE FOREIGN TABLE seg_remote_two (
+  id integer,
+  s seg,
+  n text
+) SERVER loopback_two
+OPTIONS (table_name 'seg_local');
+SELECT id FROM seg_local WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+ id 
+----
+  3
+(1 row)
+
+EXPLAIN VERBOSE SELECT id FROM seg_remote_two WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Foreign Scan on public.seg_remote_two  (cost=100.00..157.88 rows=1 width=4)
+   Output: id
+   Filter: (seg_remote_two.s && '5.8 .. 6.2'::seg)
+   Remote SQL: SELECT id, s FROM public.seg_local WHERE ((n = 'baz'::text))
+(4 rows)
+
+ALTER SERVER loopback_two OPTIONS (ADD extensions 'seg');
+EXPLAIN VERBOSE SELECT id FROM seg_remote_two WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.seg_remote_two  (cost=100.00..153.89 rows=1 width=4)
+   Output: id
+   Remote SQL: SELECT id FROM public.seg_local WHERE ((s OPERATOR(public.&&) '5.8 .. 6.2'::public.seg)) AND ((n = 'baz'::text))
+(3 rows)
+
+CREATE FOREIGN TABLE seg_remote_one (
+  id integer,
+  s seg,
+  n text
+) SERVER loopback
+OPTIONS (table_name 'seg_local');
+SELECT id FROM seg_remote_one WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+ id 
+----
+  3
+(1 row)
+
+EXPLAIN VERBOSE SELECT id FROM seg_remote_one WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Foreign Scan on public.seg_remote_one  (cost=100.00..157.88 rows=1 width=4)
+   Output: id
+   Filter: (seg_remote_one.s && '5.8 .. 6.2'::seg)
+   Remote SQL: SELECT id, s FROM public.seg_local WHERE ((n = 'baz'::text))
+(4 rows)
+
+EXPLAIN VERBOSE SELECT id FROM seg_remote_two WHERE s && '5.8 .. 6.2'::seg AND n = 'baz';
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.seg_remote_two  (cost=100.00..153.89 rows=1 width=4)
+   Output: id
+   Remote SQL: SELECT id FROM public.seg_local WHERE ((s OPERATOR(public.&&) '5.8 .. 6.2'::public.seg)) AND ((n = 'baz'::text))
+(3 rows)
+
+-- ===================================================================
+-- clean up
+-- ===================================================================
+DROP FOREIGN TABLE seg_remote_one, seg_remote_two;
+DROP USER MAPPING FOR CURRENT_USER SERVER loopback_two;
+DROP SERVER loopback_two;
+DROP TABLE seg_local;
+DROP FOREIGN TABLE shft1;
+DROP TABLE "SH 1"."TBL 1";
+DROP SCHEMA "SH 1";
+DROP EXTENSION cube;
+DROP EXTENSION seg;
+ALTER SERVER loopback OPTIONS (DROP extensions);

@@ -373,6 +373,38 @@
     foreign tables, see <xref linkend="sql-createforeigntable">.
    </para>
   </sect3>
+  
+  <sect3>
+   <title>Extension Options</title>
+
+   <para>
+    By default only built-in operators and functions will be sent from the 
+    local to the foreign server. This may be overridden using the following
+    option:
+   </para>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>extensions</literal></term>
+     <listitem>
+      <para>
+       This option controls the list of extensions that are expected to be
+       installed on the foreign server, using a comma-separated list of 
+       extension names. Those extensions are also expected to be installed
+       on the local server too. This option is available for servers.
+      </para>
+<programlisting>
+CREATE SERVER foreign_server
+        FOREIGN DATA WRAPPER postgres_fdw
+        OPTIONS (host '127.0.0.1', port '5432', dbname 'my_db', extensions 'cube, seg');
+</programlisting>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </sect3>
+  
  </sect2>
 
  <sect2>

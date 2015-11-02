@@ -19,6 +19,8 @@
 #include "catalog/pg_foreign_table.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
+#include "utils/builtins.h"
 
 
 /*
@@ -124,6 +126,11 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("%s requires a non-negative numeric value",
 								def->defname)));
 		}
+		else if (strcmp(def->defname, "extensions") == 0)
+		{
+			/* check that the requested extensions are actually installed */
+			(void) ExtractExtensionList(defGetString(def), false);
+		}
 	}
 
 	PG_RETURN_VOID();
@@ -153,6 +160,8 @@ InitPgFdwOptions(void)
 		/* updatable is available on both server and table */
 		{"updatable", ForeignServerRelationId, false},
 		{"updatable", ForeignTableRelationId, false},
+		/* "extensions" option is available on server */
+		{"extensions", ForeignServerRelationId, false},
 		{NULL, InvalidOid, false}
 	};
 
@@ -292,4 +301,50 @@ ExtractConnectionOptions(List *defelems, const char **keywords,
 		}
 	}
 	return i;
+}
+
+/*
+ * Parse a comma-separated string and return a List of the Oids of the
+ * extensions in the string. If an extension provided cannot be looked
+ * up in the catalog (it hasn't been installed or doesn't exist) then
+ * raise an error.
+ */
+List *
+ExtractExtensionList(char *extensionString, bool populateList)
+{
+	List *extlist;
+	List *extensionOids = NIL;
+	ListCell   *l;
+
+	if (!SplitIdentifierString(extensionString, ',', &extlist))
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("invalid extension list syntax")));
+	}
+
+	foreach(l, extlist)
+	{
+		const char *extension_name = (const char *) lfirst(l);
+		Oid extension_oid = get_extension_oid(extension_name, true);
+
+		if (!OidIsValid(extension_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("required extension \"%s\" is not installed",
+						extension_name),
+				 errhint("Extension must be installed locally before it can be used on a remote server.")));
+		else if (populateList)
+		{
+			/*
+			 * Only add this extension OID to the list if it is not already
+			 * in included.
+			 */
+			if (!list_member_oid(extensionOids, extension_oid))
+				extensionOids = lappend_oid(extensionOids, extension_oid);
+		}
+	}
+
+	list_free(extlist);
+	return extensionOids;
 }

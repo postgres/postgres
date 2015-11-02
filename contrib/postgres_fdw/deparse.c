@@ -233,6 +233,9 @@ foreign_expr_walker(Node *node,
 	Oid			collation;
 	FDWCollateState state;
 
+	/* Access extension metadata from fpinfo on baserel */
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *)(glob_cxt->foreignrel->fdw_private);
+
 	/* Need do nothing for empty subexpressions */
 	if (node == NULL)
 		return true;
@@ -378,7 +381,8 @@ foreign_expr_walker(Node *node,
 				 * can't be sent to remote because it might have incompatible
 				 * semantics on remote side.
 				 */
-				if (!is_builtin(fe->funcid))
+				if (!is_builtin(fe->funcid) &&
+					!is_shippable(fe->funcid, ProcedureRelationId, fpinfo->server, fpinfo->extensions))
 					return false;
 
 				/*
@@ -426,7 +430,8 @@ foreign_expr_walker(Node *node,
 				 * (If the operator is, surely its underlying function is
 				 * too.)
 				 */
-				if (!is_builtin(oe->opno))
+				if (!is_builtin(oe->opno) &&
+					!is_shippable(oe->opno, OperatorRelationId, fpinfo->server, fpinfo->extensions))
 					return false;
 
 				/*
@@ -466,7 +471,8 @@ foreign_expr_walker(Node *node,
 				/*
 				 * Again, only built-in operators can be sent to remote.
 				 */
-				if (!is_builtin(oe->opno))
+				if (!is_builtin(oe->opno) &&
+					!is_shippable(oe->opno, OperatorRelationId, fpinfo->server, fpinfo->extensions))
 					return false;
 
 				/*
@@ -616,7 +622,9 @@ foreign_expr_walker(Node *node,
 	 * If result type of given expression is not built-in, it can't be sent to
 	 * remote because it might have incompatible semantics on remote side.
 	 */
-	if (check_type && !is_builtin(exprType(node)))
+	if (check_type &&
+		!is_builtin(exprType(node)) &&
+		!is_shippable(exprType(node), TypeRelationId, fpinfo->server, fpinfo->extensions))
 		return false;
 
 	/*
@@ -1351,6 +1359,9 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 	bool		isfloat = false;
 	bool		needlabel;
 
+	/* Access extension metadata from fpinfo on baserel */
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *)(context->foreignrel->fdw_private);
+
 	if (node->constisnull)
 	{
 		appendStringInfoString(buf, "NULL");
@@ -1428,9 +1439,21 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 			break;
 	}
 	if (needlabel)
-		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->consttype,
-												  node->consttypmod));
+	{
+		/*
+		 * References to extension types need to be fully qualified,
+		 * but references to built-in types shouldn't be.
+		 */
+		if (!is_builtin(node->consttype) &&
+			 is_shippable(node->consttype, TypeRelationId, fpinfo->server, fpinfo->extensions))
+		{
+			appendStringInfo(buf, "::%s", format_type_be_qualified(node->consttype));
+		}
+		else
+		{
+			appendStringInfo(buf, "::%s", format_type_with_typemod(node->consttype, node->consttypmod));
+		}
+	}
 }
 
 /*
