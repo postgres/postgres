@@ -990,7 +990,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by the <command>DROP TABLE</>,
          <command>TRUNCATE</command>, <command>REINDEX</command>,
-         <command>CLUSTER</command>, and <command>VACUUM FULL</command>
+         <command>CLUSTER</command>, <command>VACUUM FULL</command>,
+         and <command>REFRESH MATERIALIZED VIEW</command> (without
+         <option>CONCURRENTLY</option>)
          commands. Many forms of <command>ALTER TABLE</> also acquire
          a lock at this level. This is also the default lock mode for
          <command>LOCK TABLE</command> statements that do not specify
