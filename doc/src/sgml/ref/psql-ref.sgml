@@ -2038,14 +2038,15 @@ lo_import 152801
           The <replaceable class="parameter">value</replaceable> must be a
           number. In general, the higher
           the number the more borders and lines the tables will have,
-          but this depends on the particular format. In
-          <acronym>HTML</acronym> format, this will translate directly
-          into the <literal>border=...</literal> attribute; in
-          <literal>latex</literal> and <literal>latex-longtable</literal>
-          formats, a value of 3 will add a dividing line between each row; in
-          the other formats only values 0 (no border), 1 (internal dividing
-          lines), and 2 (table frame) make sense and values above 2 will be
-          treated the same as <literal>border = 2</literal>.
+          but details depend on the particular format.
+          In <acronym>HTML</acronym> format, this will translate directly
+          into the <literal>border=...</literal> attribute.
+          In most other formats only values 0 (no border), 1 (internal
+          dividing lines), and 2 (table frame) make sense, and values above 2
+          will be treated the same as <literal>border = 2</literal>.
+          The <literal>latex</literal> and <literal>latex-longtable</literal>
+          formats additionally allow a value of 3 to add dividing lines
+          between data rows.
           </para>
           </listitem>
           </varlistentry>
@@ -2220,8 +2221,8 @@ lo_import 152801
 
           <para>
           When the <literal>border</> setting is greater than zero,
-          this option also determines the characters
-          with which the border lines are drawn.
+          the <literal>linestyle</literal> option also determines the
+          characters with which the border lines are drawn.
           Plain <acronym>ASCII</acronym> characters work everywhere, but
           Unicode characters look nicer on displays that recognize them.
           </para>
@@ -2364,31 +2365,34 @@ lo_import 152801
           </varlistentry>
 
           <varlistentry>
-          <term><literal>unicode_border_style</literal></term>
+          <term><literal>unicode_border_linestyle</literal></term>
           <listitem>
           <para>
-          Sets the border drawing style for the <literal>unicode</literal> line style to one
-          of <literal>single</literal> or <literal>double</literal>.
+          Sets the border drawing style for the <literal>unicode</literal>
+          line style to one of <literal>single</literal>
+          or <literal>double</literal>.
           </para>
           </listitem>
           </varlistentry>
 
           <varlistentry>
-          <term><literal>unicode_column_style</literal></term>
+          <term><literal>unicode_column_linestyle</literal></term>
           <listitem>
           <para>
-          Sets the column drawing style for the <literal>unicode</literal> line style to one
-          of <literal>single</literal> or <literal>double</literal>.
+          Sets the column drawing style for the <literal>unicode</literal>
+          line style to one of <literal>single</literal>
+          or <literal>double</literal>.
           </para>
           </listitem>
           </varlistentry>
 
           <varlistentry>
-          <term><literal>unicode_header_style</literal></term>
+          <term><literal>unicode_header_linestyle</literal></term>
           <listitem>
           <para>
-          Sets the header drawing style for the <literal>unicode</literal> line style to one
-          of <literal>single</literal> or <literal>double</literal>.
+          Sets the header drawing style for the <literal>unicode</literal>
+          line style to one of <literal>single</literal>
+          or <literal>double</literal>.
           </para>
           </listitem>
           </varlistentry>

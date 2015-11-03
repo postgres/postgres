@@ -2061,12 +2061,12 @@ FIXME: Add more specifics?
 2014-09-12 [a2dabf0] Stephe..: Add unicode_{column|header|border}_style to psql
 -->
         <para>
-         Allow column, header, and border control to <application>psql</>'s
-         Unicode style (Pavel Stehule)
+         Provide separate column, header, and border linestyle control
+         in <application>psql</>'s unicode linestyle (Pavel Stehule)
         </para>
 
         <para>
-         Single or double output is supported;  the default is
+         Single or double lines are supported; the default is
          <literal>single</>.
         </para>
        </listitem>
