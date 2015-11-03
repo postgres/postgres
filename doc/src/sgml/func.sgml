@@ -4656,16 +4656,6 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     Non-capturing parentheses do not define subexpressions.
    </para>
 
-   <note>
-    <para>
-     Keep in mind that an escape's leading <literal>\</> will need to be
-     doubled when entering the pattern as an SQL string constant.  For example:
-<programlisting>
-'123' ~ E'^\\d{3}' <lineannotation>true</lineannotation>
-</programlisting>
-    </para>
-   </note>
-
    <table id="posix-character-entry-escapes-table">
     <title>Regular Expression Character-entry Escapes</title>
 
