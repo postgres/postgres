@@ -501,11 +501,26 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 	{
 		if (nowait)
 		{
+			int			counterparty_gone;
+
+			/*
+			 * We shouldn't return at this point at all unless the sender
+			 * hasn't attached yet.  However, the correct return value depends
+			 * on whether the sender is still attached.  If we first test
+			 * whether the sender has ever attached and then test whether the
+			 * sender has detached, there's a race condition: a sender that
+			 * attaches and detaches very quickly might fool us into thinking
+			 * the sender never attached at all.  So, test whether our
+			 * counterparty is definitively gone first, and only afterwards
+			 * check whether the sender ever attached in the first place.
+			 */
+			counterparty_gone = shm_mq_counterparty_gone(mq, mqh->mqh_handle);
 			if (shm_mq_get_sender(mq) == NULL)
 			{
-				if (shm_mq_counterparty_gone(mq, mqh->mqh_handle))
+				if (counterparty_gone)
 					return SHM_MQ_DETACHED;
-				return SHM_MQ_WOULD_BLOCK;
+				else
+					return SHM_MQ_WOULD_BLOCK;
 			}
 		}
 		else if (!shm_mq_wait_internal(mq, &mq->mq_sender, mqh->mqh_handle)
