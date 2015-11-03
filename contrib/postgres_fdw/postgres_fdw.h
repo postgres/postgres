@@ -74,5 +74,8 @@ extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
+extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
+extern void appendOrderByClause(StringInfo buf, PlannerInfo *root,
+								RelOptInfo *baserel, List *pathkeys);
 
 #endif   /* POSTGRES_FDW_H */

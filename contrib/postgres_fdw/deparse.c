@@ -193,9 +193,12 @@ is_foreign_expr(PlannerInfo *root,
 	if (!foreign_expr_walker((Node *) expr, &glob_cxt, &loc_cxt))
 		return false;
 
-	/* Expressions examined here should be boolean, ie noncollatable */
-	Assert(loc_cxt.collation == InvalidOid);
-	Assert(loc_cxt.state == FDW_COLLATE_NONE);
+	/*
+	 * If the expression has a valid collation that does not arise from a
+	 * foreign var, the expression can not be sent over.
+	 */
+	if (loc_cxt.state == FDW_COLLATE_UNSAFE)
+		return false;
 
 	/*
 	 * An expression which includes any mutable functions can't be sent over
@@ -1876,4 +1879,51 @@ printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
 	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
 
 	appendStringInfo(buf, "((SELECT null::%s)::%s)", ptypename, ptypename);
+}
+
+/*
+ * Deparse ORDER BY clause according to the given pathkeys for given base
+ * relation. From given pathkeys expressions belonging entirely to the given
+ * base relation are obtained and deparsed.
+ */
+void
+appendOrderByClause(StringInfo buf, PlannerInfo *root, RelOptInfo *baserel,
+					List *pathkeys)
+{
+	ListCell			*lcell;
+	deparse_expr_cxt	context;
+	int					nestlevel;
+	char				*delim = " ";
+
+	/* Set up context struct for recursion */
+	context.root = root;
+	context.foreignrel = baserel;
+	context.buf = buf;
+	context.params_list = NULL;
+
+	/* Make sure any constants in the exprs are printed portably */
+	nestlevel = set_transmission_modes();
+
+	appendStringInfo(buf, " ORDER BY");
+	foreach(lcell, pathkeys)
+	{
+		PathKey				*pathkey = lfirst(lcell);
+		Expr				*em_expr;
+
+		em_expr = find_em_expr_for_rel(pathkey->pk_eclass, baserel);
+		Assert(em_expr != NULL);
+
+		appendStringInfoString(buf, delim);
+		deparseExpr(em_expr, &context);
+		if (pathkey->pk_strategy == BTLessStrategyNumber)
+			appendStringInfoString(buf, " ASC");
+		else
+			appendStringInfoString(buf, " DESC");
+
+		if (pathkey->pk_nulls_first)
+			appendStringInfoString(buf, " NULLS FIRST");
+
+		delim = ", ";
+	}
+	reset_transmission_modes(nestlevel);
 }

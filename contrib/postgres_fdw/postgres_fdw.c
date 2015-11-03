@@ -47,6 +47,9 @@ PG_MODULE_MAGIC;
 /* Default CPU cost to process 1 row (above and beyond cpu_tuple_cost). */
 #define DEFAULT_FDW_TUPLE_COST		0.01
 
+/* If no remote estimates, assume a sort costs 20% extra */
+#define DEFAULT_FDW_SORT_MULTIPLIER 1.2
+
 /*
  * FDW-specific planner information kept in RelOptInfo.fdw_private for a
  * foreign table.  This information is collected by postgresGetForeignRelSize.
@@ -296,6 +299,7 @@ static List *postgresImportForeignSchema(ImportForeignSchemaStmt *stmt,
 static void estimate_path_cost_size(PlannerInfo *root,
 						RelOptInfo *baserel,
 						List *join_conds,
+						List *pathkeys,
 						double *p_rows, int *p_width,
 						Cost *p_startup_cost, Cost *p_total_cost);
 static void get_remote_estimate(const char *sql,
@@ -497,7 +501,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		 * values in fpinfo so we don't need to do it again to generate the
 		 * basic foreign path.
 		 */
-		estimate_path_cost_size(root, baserel, NIL,
+		estimate_path_cost_size(root, baserel, NIL, NIL,
 								&fpinfo->rows, &fpinfo->width,
 								&fpinfo->startup_cost, &fpinfo->total_cost);
 
@@ -527,7 +531,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		set_baserel_size_estimates(root, baserel);
 
 		/* Fill in basically-bogus cost estimates for use later. */
-		estimate_path_cost_size(root, baserel, NIL,
+		estimate_path_cost_size(root, baserel, NIL, NIL,
 								&fpinfo->rows, &fpinfo->width,
 								&fpinfo->startup_cost, &fpinfo->total_cost);
 	}
@@ -546,6 +550,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 	ForeignPath *path;
 	List	   *ppi_list;
 	ListCell   *lc;
+	List	   *usable_pathkeys = NIL;
 
 	/*
 	 * Create simplest ForeignScan path node and add it to baserel.  This path
@@ -562,6 +567,60 @@ postgresGetForeignPaths(PlannerInfo *root,
 								   NULL,		/* no outer rel either */
 								   NIL);		/* no fdw_private list */
 	add_path(baserel, (Path *) path);
+
+	/*
+	 * Determine whether we can potentially push query pathkeys to the remote
+	 * side, avoiding a local sort.
+	 */
+	foreach(lc, root->query_pathkeys)
+	{
+		PathKey    *pathkey = (PathKey *) lfirst(lc);
+		EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
+		Expr	   *em_expr;
+
+		/*
+		 * is_foreign_expr would detect volatile expressions as well, but
+		 * ec_has_volatile saves some cycles.
+		 */
+		if (!pathkey_ec->ec_has_volatile &&
+			(em_expr = find_em_expr_for_rel(pathkey_ec, baserel)) &&
+			is_foreign_expr(root, baserel, em_expr))
+			usable_pathkeys = lappend(usable_pathkeys, pathkey);
+		else
+		{
+			/*
+			 * The planner and executor don't have any clever strategy for
+			 * taking data sorted by a prefix of the query's pathkeys and
+			 * getting it to be sorted by all of those pathekeys.  We'll just
+			 * end up resorting the entire data set.  So, unless we can push
+			 * down all of the query pathkeys, forget it.
+			 */
+			list_free(usable_pathkeys);
+			usable_pathkeys = NIL;
+			break;
+		}
+	}
+
+	/* Create a path with useful pathkeys, if we found one. */
+	if (usable_pathkeys != NULL)
+	{
+		double		rows;
+		int			width;
+		Cost		startup_cost;
+		Cost		total_cost;
+
+		estimate_path_cost_size(root, baserel, NIL, usable_pathkeys,
+								&rows, &width, &startup_cost, &total_cost);
+
+		add_path(baserel, (Path *)
+				 create_foreignscan_path(root, baserel,
+										 rows,
+										 startup_cost,
+										 total_cost,
+										 usable_pathkeys,
+										 NULL,
+										 NIL));
+	}
 
 	/*
 	 * If we're not using remote estimates, stop here.  We have no way to
@@ -710,7 +769,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 
 		/* Get a cost estimate from the remote */
 		estimate_path_cost_size(root, baserel,
-								param_info->ppi_clauses,
+								param_info->ppi_clauses, NIL,
 								&rows, &width,
 								&startup_cost, &total_cost);
 
@@ -810,6 +869,10 @@ postgresGetForeignPlan(PlannerInfo *root,
 	if (remote_conds)
 		appendWhereClause(&sql, root, baserel, remote_conds,
 						  true, &params_list);
+
+	/* Add ORDER BY clause if we found any useful pathkeys */
+	if (best_path->path.pathkeys)
+		appendOrderByClause(&sql, root, baserel, best_path->path.pathkeys);
 
 	/*
 	 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
@@ -1728,6 +1791,7 @@ static void
 estimate_path_cost_size(PlannerInfo *root,
 						RelOptInfo *baserel,
 						List *join_conds,
+						List *pathkeys,
 						double *p_rows, int *p_width,
 						Cost *p_startup_cost, Cost *p_total_cost)
 {
@@ -1779,6 +1843,9 @@ estimate_path_cost_size(PlannerInfo *root,
 		if (remote_join_conds)
 			appendWhereClause(&sql, root, baserel, remote_join_conds,
 							  (fpinfo->remote_conds == NIL), NULL);
+
+		if (pathkeys)
+			appendOrderByClause(&sql, root, baserel, pathkeys);
 
 		/* Get the remote estimate */
 		conn = GetConnection(fpinfo->server, fpinfo->user, false);
@@ -1836,6 +1903,21 @@ estimate_path_cost_size(PlannerInfo *root,
 		startup_cost += baserel->baserestrictcost.startup;
 		cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
 		run_cost += cpu_per_tuple * baserel->tuples;
+
+		/*
+		 * Without remote estimates, we have no real way to estimate the cost
+		 * of generating sorted output.  It could be free if the query plan
+		 * the remote side would have chosen generates properly-sorted output
+		 * anyway, but in most cases it will cost something.  Estimate a value
+		 * high enough that we won't pick the sorted path when the ordering
+		 * isn't locally useful, but low enough that we'll err on the side of
+		 * pushing down the ORDER BY clause when it's useful to do so.
+		 */
+		if (pathkeys != NIL)
+		{
+			startup_cost *= DEFAULT_FDW_SORT_MULTIPLIER;
+			run_cost *= DEFAULT_FDW_SORT_MULTIPLIER;
+		}
 
 		total_cost = startup_cost + run_cost;
 	}
@@ -3001,4 +3083,32 @@ conversion_error_callback(void *arg)
 		errcontext("column \"%s\" of foreign table \"%s\"",
 				   NameStr(tupdesc->attrs[errpos->cur_attno - 1]->attname),
 				   RelationGetRelationName(errpos->rel));
+}
+
+/*
+ * Find an equivalence class member expression, all of whose Vars, come from
+ * the indicated relation.
+ */
+extern Expr *
+find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
+{
+	ListCell   *lc_em;
+
+	foreach(lc_em, ec->ec_members)
+	{
+		EquivalenceMember *em = lfirst(lc_em);
+
+		if (bms_equal(em->em_relids, rel->relids))
+		{
+			/*
+			 * If there is more than one equivalence member whose Vars are
+			 * taken entirely from this relation, we'll be content to choose
+			 * any one of those.
+			 */
+			return em->em_expr;
+		}
+	}
+
+	/* We didn't find any suitable equivalence class expression */
+	return NULL;
 }
