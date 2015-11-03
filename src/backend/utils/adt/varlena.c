@@ -62,7 +62,7 @@ typedef struct
 	char	   *buf2;			/* 2nd string, or abbreviation strxfrm() buf */
 	int			buflen1;
 	int			buflen2;
-	int			last_len1;		/* Length of last buf1 string/strxfrm() blob */
+	int			last_len1;		/* Length of last buf1 string/strxfrm() input */
 	int			last_len2;		/* Length of last buf2 string/strxfrm() blob */
 	int			last_returned;	/* Last comparison result (cache) */
 	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
