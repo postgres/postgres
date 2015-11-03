@@ -97,7 +97,8 @@ format_type_be(Oid type_oid)
 }
 
 /*
- * This version returns a name which is always qualified.
+ * This version returns a name that is always qualified (unless it's one
+ * of the SQL-keyword type names, such as TIMESTAMP WITH TIME ZONE).
  */
 char *
 format_type_be_qualified(Oid type_oid)
@@ -114,6 +115,19 @@ format_type_with_typemod(Oid type_oid, int32 typemod)
 	return format_type_internal(type_oid, typemod, true, false, false);
 }
 
+/*
+ * This version allows a nondefault typemod to be specified, and forces
+ * qualification of normal type names.
+ */
+char *
+format_type_with_typemod_qualified(Oid type_oid, int32 typemod)
+{
+	return format_type_internal(type_oid, typemod, true, false, true);
+}
+
+/*
+ * Common workhorse.
+ */
 static char *
 format_type_internal(Oid type_oid, int32 typemod,
 					 bool typemod_given, bool allow_invalid,

@@ -38,7 +38,6 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
-#include "access/transam.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
@@ -102,7 +101,7 @@ typedef struct deparse_expr_cxt
 static bool foreign_expr_walker(Node *node,
 					foreign_glob_cxt *glob_cxt,
 					foreign_loc_cxt *outer_cxt);
-static bool is_builtin(Oid procid);
+static char *deparse_type_name(Oid type_oid, int32 typemod);
 
 /*
  * Functions to construct string representation of a node tree.
@@ -220,11 +219,12 @@ is_foreign_expr(PlannerInfo *root,
  * In addition, *outer_cxt is updated with collation information.
  *
  * We must check that the expression contains only node types we can deparse,
- * that all types/functions/operators are safe to send (which we approximate
- * as being built-in), and that all collations used in the expression derive
- * from Vars of the foreign table.  Because of the latter, the logic is
- * pretty close to assign_collations_walker() in parse_collate.c, though we
- * can assume here that the given expression is valid.
+ * that all types/functions/operators are safe to send (they are "shippable"),
+ * and that all collations used in the expression derive from Vars of the
+ * foreign table.  Because of the latter, the logic is pretty close to
+ * assign_collations_walker() in parse_collate.c, though we can assume here
+ * that the given expression is valid.  Note function mutability is not
+ * currently considered here.
  */
 static bool
 foreign_expr_walker(Node *node,
@@ -232,6 +232,7 @@ foreign_expr_walker(Node *node,
 					foreign_loc_cxt *outer_cxt)
 {
 	bool		check_type = true;
+	PgFdwRelationInfo *fpinfo;
 	foreign_loc_cxt inner_cxt;
 	Oid			collation;
 	FDWCollateState state;
@@ -239,6 +240,9 @@ foreign_expr_walker(Node *node,
 	/* Need do nothing for empty subexpressions */
 	if (node == NULL)
 		return true;
+
+	/* May need server info from baserel's fdw_private struct */
+	fpinfo = (PgFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
 
 	/* Set up inner_cxt for possible recursion to child nodes */
 	inner_cxt.collation = InvalidOid;
@@ -377,11 +381,11 @@ foreign_expr_walker(Node *node,
 				FuncExpr   *fe = (FuncExpr *) node;
 
 				/*
-				 * If function used by the expression is not built-in, it
+				 * If function used by the expression is not shippable, it
 				 * can't be sent to remote because it might have incompatible
 				 * semantics on remote side.
 				 */
-				if (!is_builtin(fe->funcid))
+				if (!is_shippable(fe->funcid, ProcedureRelationId, fpinfo))
 					return false;
 
 				/*
@@ -425,11 +429,11 @@ foreign_expr_walker(Node *node,
 				OpExpr	   *oe = (OpExpr *) node;
 
 				/*
-				 * Similarly, only built-in operators can be sent to remote.
-				 * (If the operator is, surely its underlying function is
-				 * too.)
+				 * Similarly, only shippable operators can be sent to remote.
+				 * (If the operator is shippable, we assume its underlying
+				 * function is too.)
 				 */
-				if (!is_builtin(oe->opno))
+				if (!is_shippable(oe->opno, OperatorRelationId, fpinfo))
 					return false;
 
 				/*
@@ -467,9 +471,9 @@ foreign_expr_walker(Node *node,
 				ScalarArrayOpExpr *oe = (ScalarArrayOpExpr *) node;
 
 				/*
-				 * Again, only built-in operators can be sent to remote.
+				 * Again, only shippable operators can be sent to remote.
 				 */
-				if (!is_builtin(oe->opno))
+				if (!is_shippable(oe->opno, OperatorRelationId, fpinfo))
 					return false;
 
 				/*
@@ -616,10 +620,10 @@ foreign_expr_walker(Node *node,
 	}
 
 	/*
-	 * If result type of given expression is not built-in, it can't be sent to
-	 * remote because it might have incompatible semantics on remote side.
+	 * If result type of given expression is not shippable, it can't be sent
+	 * to remote because it might have incompatible semantics on remote side.
 	 */
-	if (check_type && !is_builtin(exprType(node)))
+	if (check_type && !is_shippable(exprType(node), TypeRelationId, fpinfo))
 		return false;
 
 	/*
@@ -672,27 +676,23 @@ foreign_expr_walker(Node *node,
 }
 
 /*
- * Return true if given object is one of PostgreSQL's built-in objects.
+ * Convert type OID + typmod info into a type name we can ship to the remote
+ * server.  Someplace else had better have verified that this type name is
+ * expected to be known on the remote end.
  *
- * We use FirstBootstrapObjectId as the cutoff, so that we only consider
- * objects with hand-assigned OIDs to be "built in", not for instance any
- * function or type defined in the information_schema.
- *
- * Our constraints for dealing with types are tighter than they are for
- * functions or operators: we want to accept only types that are in pg_catalog,
- * else format_type might incorrectly fail to schema-qualify their names.
- * (This could be fixed with some changes to format_type, but for now there's
- * no need.)  Thus we must exclude information_schema types.
- *
- * XXX there is a problem with this, which is that the set of built-in
- * objects expands over time.  Something that is built-in to us might not
- * be known to the remote server, if it's of an older version.  But keeping
- * track of that would be a huge exercise.
+ * This is almost just format_type_with_typemod(), except that if left to its
+ * own devices, that function will make schema-qualification decisions based
+ * on the local search_path, which is wrong.  We must schema-qualify all
+ * type names that are not in pg_catalog.  We assume here that built-in types
+ * are all in pg_catalog and need not be qualified; otherwise, qualify.
  */
-static bool
-is_builtin(Oid oid)
+static char *
+deparse_type_name(Oid type_oid, int32 typemod)
 {
-	return (oid < FirstBootstrapObjectId);
+	if (is_builtin(type_oid))
+		return format_type_with_typemod(type_oid, typemod);
+	else
+		return format_type_with_typemod_qualified(type_oid, typemod);
 }
 
 
@@ -1358,8 +1358,8 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 	{
 		appendStringInfoString(buf, "NULL");
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->consttype,
-												  node->consttypmod));
+						 deparse_type_name(node->consttype,
+										   node->consttypmod));
 		return;
 	}
 
@@ -1432,8 +1432,8 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 	}
 	if (needlabel)
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->consttype,
-												  node->consttypmod));
+						 deparse_type_name(node->consttype,
+										   node->consttypmod));
 }
 
 /*
@@ -1558,7 +1558,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 
 		deparseExpr((Expr *) linitial(node->args), context);
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(rettype, coercedTypmod));
+						 deparse_type_name(rettype, coercedTypmod));
 		return;
 	}
 
@@ -1753,8 +1753,8 @@ deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 	deparseExpr(node->arg, context);
 	if (node->relabelformat != COERCE_IMPLICIT_CAST)
 		appendStringInfo(context->buf, "::%s",
-						 format_type_with_typemod(node->resulttype,
-												  node->resulttypmod));
+						 deparse_type_name(node->resulttype,
+										   node->resulttypmod));
 }
 
 /*
@@ -1834,7 +1834,7 @@ deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context)
 	/* If the array is empty, we need an explicit cast to the array type. */
 	if (node->elements == NIL)
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->array_typeid, -1));
+						 deparse_type_name(node->array_typeid, -1));
 }
 
 /*
@@ -1850,7 +1850,7 @@ printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
 				 deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
+	char	   *ptypename = deparse_type_name(paramtype, paramtypmod);
 
 	appendStringInfo(buf, "$%d::%s", paramindex, ptypename);
 }
@@ -1876,7 +1876,7 @@ printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
 					   deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
+	char	   *ptypename = deparse_type_name(paramtype, paramtypmod);
 
 	appendStringInfo(buf, "((SELECT null::%s)::%s)", ptypename, ptypename);
 }
@@ -1890,10 +1890,10 @@ void
 appendOrderByClause(StringInfo buf, PlannerInfo *root, RelOptInfo *baserel,
 					List *pathkeys)
 {
-	ListCell			*lcell;
-	deparse_expr_cxt	context;
-	int					nestlevel;
-	char				*delim = " ";
+	ListCell   *lcell;
+	deparse_expr_cxt context;
+	int			nestlevel;
+	char	   *delim = " ";
 
 	/* Set up context struct for recursion */
 	context.root = root;
@@ -1907,8 +1907,8 @@ appendOrderByClause(StringInfo buf, PlannerInfo *root, RelOptInfo *baserel,
 	appendStringInfo(buf, " ORDER BY");
 	foreach(lcell, pathkeys)
 	{
-		PathKey				*pathkey = lfirst(lcell);
-		Expr				*em_expr;
+		PathKey    *pathkey = lfirst(lcell);
+		Expr	   *em_expr;
 
 		em_expr = find_em_expr_for_rel(pathkey->pk_eclass, baserel);
 		Assert(em_expr != NULL);

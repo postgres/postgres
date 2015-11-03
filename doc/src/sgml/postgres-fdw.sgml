@@ -265,6 +265,46 @@
   </sect3>
 
   <sect3>
+   <title>Remote Execution Options</title>
+
+   <para>
+    By default, only <literal>WHERE</> clauses using built-in operators and
+    functions will be considered for execution on the remote server.  Clauses
+    involving non-built-in functions are checked locally after rows are
+    fetched.  If such functions are available on the remote server and can be
+    relied on to produce the same results as they do locally, performance can
+    be improved by sending such <literal>WHERE</> clauses for remote
+    execution.  This behavior can be controlled using the following option:
+   </para>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>extensions</literal></term>
+     <listitem>
+      <para>
+       This option is a comma-separated list of names
+       of <productname>PostgreSQL</> extensions that are installed, in
+       compatible versions, on both the local and remote servers.  Functions
+       and operators that are immutable and belong to a listed extension will
+       be considered shippable to the remote server.
+       This option can only be specified for foreign servers, not per-table.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+
+   <para>
+    When using the <literal>extensions</literal> option, <emphasis>it is the
+    user's responsibility</> that the listed extensions exist and behave
+    identically on both the local and remote servers.  Otherwise, remote
+    queries may fail or behave unexpectedly.
+   </para>
+
+  </sect3>
+
+  <sect3>
    <title>Updatability Options</title>
 
    <para>
@@ -427,8 +467,10 @@
    execution, and by not retrieving table columns that are not needed for
    the current query.  To reduce the risk of misexecution of queries,
    <literal>WHERE</> clauses are not sent to the remote server unless they use
-   only built-in data types, operators, and functions.  Operators and
-   functions in the clauses must be <literal>IMMUTABLE</> as well.
+   only data types, operators, and functions that are built-in or belong to an
+   extension that's listed in the foreign server's <literal>extensions</>
+   option.  Operators and functions in such clauses must
+   be <literal>IMMUTABLE</> as well.
   </para>
 
   <para>

@@ -51,40 +51,6 @@ PG_MODULE_MAGIC;
 #define DEFAULT_FDW_SORT_MULTIPLIER 1.2
 
 /*
- * FDW-specific planner information kept in RelOptInfo.fdw_private for a
- * foreign table.  This information is collected by postgresGetForeignRelSize.
- */
-typedef struct PgFdwRelationInfo
-{
-	/* baserestrictinfo clauses, broken down into safe and unsafe subsets. */
-	List	   *remote_conds;
-	List	   *local_conds;
-
-	/* Bitmap of attr numbers we need to fetch from the remote server. */
-	Bitmapset  *attrs_used;
-
-	/* Cost and selectivity of local_conds. */
-	QualCost	local_conds_cost;
-	Selectivity local_conds_sel;
-
-	/* Estimated size and cost for a scan with baserestrictinfo quals. */
-	double		rows;
-	int			width;
-	Cost		startup_cost;
-	Cost		total_cost;
-
-	/* Options extracted from catalogs. */
-	bool		use_remote_estimate;
-	Cost		fdw_startup_cost;
-	Cost		fdw_tuple_cost;
-
-	/* Cached catalog information. */
-	ForeignTable *table;
-	ForeignServer *server;
-	UserMapping *user;			/* only set in use_remote_estimate mode */
-} PgFdwRelationInfo;
-
-/*
  * Indexes of FDW-private information stored in fdw_private lists.
  *
  * We store various information in ForeignScan.fdw_private to pass it from
@@ -409,6 +375,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	fpinfo->use_remote_estimate = false;
 	fpinfo->fdw_startup_cost = DEFAULT_FDW_STARTUP_COST;
 	fpinfo->fdw_tuple_cost = DEFAULT_FDW_TUPLE_COST;
+	fpinfo->shippable_extensions = NIL;
 
 	foreach(lc, fpinfo->server->options)
 	{
@@ -420,6 +387,9 @@ postgresGetForeignRelSize(PlannerInfo *root,
 			fpinfo->fdw_startup_cost = strtod(defGetString(def), NULL);
 		else if (strcmp(def->defname, "fdw_tuple_cost") == 0)
 			fpinfo->fdw_tuple_cost = strtod(defGetString(def), NULL);
+		else if (strcmp(def->defname, "extensions") == 0)
+			fpinfo->shippable_extensions =
+				ExtractExtensionList(defGetString(def), false);
 	}
 	foreach(lc, fpinfo->table->options)
 	{
