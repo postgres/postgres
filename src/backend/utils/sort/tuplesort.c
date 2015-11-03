@@ -1294,8 +1294,10 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
@@ -1373,8 +1375,10 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 			 *
 			 * Alter datum1 representation in already-copied tuples, so as to
 			 * ensure a consistent representation (current tuple was just
-			 * handled). Note that we rely on all tuples copied so far
-			 * actually being contained within memtuples array.
+			 * handled).  It does not matter if some dumped tuples are
+			 * already sorted on tape, since serialized tuples lack
+			 * abbreviated keys (TSS_BUILDRUNS state prevents control
+			 * reaching here in any case).
 			 */
 			for (i = 0; i < state->memtupcount; i++)
 			{
@@ -3174,8 +3178,10 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
@@ -3414,8 +3420,10 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
@@ -3716,8 +3724,10 @@ copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
