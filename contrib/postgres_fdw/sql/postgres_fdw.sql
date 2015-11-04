@@ -121,8 +121,17 @@ ALTER SERVER testserver1 OPTIONS (
 	-- gsslib 'value',
 	--replication 'value'
 );
+
+-- Error, invalid list syntax
+ALTER SERVER testserver1 OPTIONS (ADD extensions 'foo; bar');
+
+-- OK but gets a warning
+ALTER SERVER testserver1 OPTIONS (ADD extensions 'foo, bar');
+ALTER SERVER testserver1 OPTIONS (DROP extensions);
+
 ALTER USER MAPPING FOR public SERVER testserver1
 	OPTIONS (DROP user, DROP password);
+
 ALTER FOREIGN TABLE ft1 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
@@ -169,23 +178,6 @@ SELECT * FROM ft1 t1 WHERE t1.c3 = (SELECT MAX(c3) FROM ft2 t2) ORDER BY c1;
 WITH t1 AS (SELECT * FROM ft1 WHERE c1 <= 10) SELECT t2.c1, t2.c2, t2.c3, t2.c4 FROM t1, ft2 t2 WHERE t1.c1 = t2.c1 ORDER BY t1.c1;
 -- fixed values
 SELECT 'fixed', NULL FROM ft1 t1 WHERE c1 = 1;
--- user-defined operator/function
-CREATE FUNCTION postgres_fdw_abs(int) RETURNS int AS $$
-BEGIN
-RETURN abs($1);
-END
-$$ LANGUAGE plpgsql IMMUTABLE;
-CREATE OPERATOR === (
-    LEFTARG = int,
-    RIGHTARG = int,
-    PROCEDURE = int4eq,
-    COMMUTATOR = ===,
-    NEGATOR = !==
-);
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2;
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = t1.c2;
 
 -- ===================================================================
 -- WHERE with remotely-executable conditions
@@ -221,6 +213,48 @@ EXPLAIN (VERBOSE, COSTS false)
 	SELECT * FROM ft2 ORDER BY ft2.c1, random();
 EXPLAIN (VERBOSE, COSTS false)
 	SELECT * FROM ft2 ORDER BY ft2.c1, ft2.c3 collate "C";
+
+-- user-defined operator/function
+CREATE FUNCTION postgres_fdw_abs(int) RETURNS int AS $$
+BEGIN
+RETURN abs($1);
+END
+$$ LANGUAGE plpgsql IMMUTABLE;
+CREATE OPERATOR === (
+    LEFTARG = int,
+    RIGHTARG = int,
+    PROCEDURE = int4eq,
+    COMMUTATOR = ===
+);
+
+-- built-in operators and functions can be shipped for remote execution
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
+
+-- by default, user-defined ones cannot
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+
+-- but let's put them in an extension ...
+ALTER EXTENSION postgres_fdw ADD FUNCTION postgres_fdw_abs(int);
+ALTER EXTENSION postgres_fdw ADD OPERATOR === (int, int);
+ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
+
+-- ... now they can be shipped
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
 
 -- ===================================================================
 -- parameterized queries
