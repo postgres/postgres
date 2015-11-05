@@ -277,7 +277,12 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
 	MemSet(&proc, 0, sizeof(PLyProcedure));
-	proc.pyname = PLy_strdup("__plpython_inline_block");
+	proc.mcxt = AllocSetContextCreate(TopMemoryContext,
+									  "__plpython_inline_block",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+	proc.pyname = MemoryContextStrdup(proc.mcxt, "__plpython_inline_block");
 	proc.langid = codeblock->langOid;
 	proc.result.out.d.typoid = VOIDOID;
 
@@ -364,17 +369,32 @@ PLy_current_execution_context(void)
 	return PLy_execution_contexts;
 }
 
+MemoryContext
+PLy_get_scratch_context(PLyExecutionContext *context)
+{
+	/*
+	 * A scratch context might never be needed in a given plpython procedure,
+	 * so allocate it on first request.
+	 */
+	if (context->scratch_ctx == NULL)
+		context->scratch_ctx =
+			AllocSetContextCreate(TopTransactionContext,
+								  "PL/Python scratch context",
+								  ALLOCSET_DEFAULT_MINSIZE,
+								  ALLOCSET_DEFAULT_INITSIZE,
+								  ALLOCSET_DEFAULT_MAXSIZE);
+	return context->scratch_ctx;
+}
+
 static PLyExecutionContext *
 PLy_push_execution_context(void)
 {
-	PLyExecutionContext *context = PLy_malloc(sizeof(PLyExecutionContext));
+	PLyExecutionContext *context;
 
+	context = (PLyExecutionContext *)
+		MemoryContextAlloc(TopTransactionContext, sizeof(PLyExecutionContext));
 	context->curr_proc = NULL;
-	context->scratch_ctx = AllocSetContextCreate(TopTransactionContext,
-												 "PL/Python scratch context",
-												 ALLOCSET_DEFAULT_MINSIZE,
-												 ALLOCSET_DEFAULT_INITSIZE,
-												 ALLOCSET_DEFAULT_MAXSIZE);
+	context->scratch_ctx = NULL;
 	context->next = PLy_execution_contexts;
 	PLy_execution_contexts = context;
 	return context;
@@ -390,6 +410,7 @@ PLy_pop_execution_context(void)
 
 	PLy_execution_contexts = context->next;
 
-	MemoryContextDelete(context->scratch_ctx);
-	PLy_free(context);
+	if (context->scratch_ctx)
+		MemoryContextDelete(context->scratch_ctx);
+	pfree(context);
 }

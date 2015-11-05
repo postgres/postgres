@@ -11,6 +11,7 @@
 #include "plpy_planobject.h"
 
 #include "plpy_elog.h"
+#include "utils/memutils.h"
 
 
 static void PLy_plan_dealloc(PyObject *arg);
@@ -80,6 +81,7 @@ PLy_plan_new(void)
 	ob->types = NULL;
 	ob->values = NULL;
 	ob->args = NULL;
+	ob->mcxt = NULL;
 
 	return (PyObject *) ob;
 }
@@ -96,20 +98,15 @@ PLy_plan_dealloc(PyObject *arg)
 	PLyPlanObject *ob = (PLyPlanObject *) arg;
 
 	if (ob->plan)
-		SPI_freeplan(ob->plan);
-	if (ob->types)
-		PLy_free(ob->types);
-	if (ob->values)
-		PLy_free(ob->values);
-	if (ob->args)
 	{
-		int			i;
-
-		for (i = 0; i < ob->nargs; i++)
-			PLy_typeinfo_dealloc(&ob->args[i]);
-		PLy_free(ob->args);
+		SPI_freeplan(ob->plan);
+		ob->plan = NULL;
 	}
-
+	if (ob->mcxt)
+	{
+		MemoryContextDelete(ob->mcxt);
+		ob->mcxt = NULL;
+	}
 	arg->ob_type->tp_free(arg);
 }
 

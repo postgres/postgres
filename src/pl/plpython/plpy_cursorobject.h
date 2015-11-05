@@ -14,6 +14,7 @@ typedef struct PLyCursorObject
 	char	   *portalname;
 	PLyTypeInfo result;
 	bool		closed;
+	MemoryContext mcxt;
 } PLyCursorObject;
 
 extern void PLy_cursor_init_type(void);

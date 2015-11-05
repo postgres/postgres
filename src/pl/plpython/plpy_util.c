@@ -17,42 +17,6 @@
 #include "plpy_elog.h"
 
 
-void *
-PLy_malloc(size_t bytes)
-{
-	/* We need our allocations to be long-lived, so use TopMemoryContext */
-	return MemoryContextAlloc(TopMemoryContext, bytes);
-}
-
-void *
-PLy_malloc0(size_t bytes)
-{
-	void	   *ptr = PLy_malloc(bytes);
-
-	MemSet(ptr, 0, bytes);
-	return ptr;
-}
-
-char *
-PLy_strdup(const char *str)
-{
-	char	   *result;
-	size_t		len;
-
-	len = strlen(str) + 1;
-	result = PLy_malloc(len);
-	memcpy(result, str, len);
-
-	return result;
-}
-
-/* define this away */
-void
-PLy_free(void *ptr)
-{
-	pfree(ptr);
-}
-
 /*
  * Convert a Python unicode object to a Python string/bytes object in
  * PostgreSQL server encoding.  Reference ownership is passed to the
