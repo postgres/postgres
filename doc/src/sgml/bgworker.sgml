@@ -58,6 +58,7 @@ typedef struct BackgroundWorker
     char        bgw_library_name[BGW_MAXLEN];   /* only if bgw_main is NULL */
     char        bgw_function_name[BGW_MAXLEN];  /* only if bgw_main is NULL */
     Datum       bgw_main_arg;
+    char        bgw_extra[BGW_EXTRALEN];
     int         bgw_notify_pid;
 } BackgroundWorker;
 </programlisting>
@@ -180,6 +181,13 @@ typedef struct BackgroundWorker
    into an array allocated in shared memory. If a value like a <type>cstring</>
    or <type>text</type> is passed then the pointer won't be valid from the
    new background worker process.
+  </para>
+
+  <para>
+   <structfield>bgw_extra</structfield> can contain extra data to be passed
+   to the background worker.  Unlike <structfield>bgw_main_arg</>, this data
+   is not passed as an argument to the worker's main function, but it can be
+   accessed via <literal>MyBgworkerEntry</literal>, as discussed above.
   </para>
 
   <para>
