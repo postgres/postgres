@@ -421,12 +421,12 @@ ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b));
-ERROR:  FORCE NOT NULL column "b" not referenced by COPY
+ERROR:  FORCE_NOT_NULL column "b" not referenced by COPY
 ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b));
-ERROR:  FORCE NULL column "b" not referenced by COPY
+ERROR:  FORCE_NULL column "b" not referenced by COPY
 ROLLBACK;
 \pset null ''
 -- test case with whole-row Var in a check constraint

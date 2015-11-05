@@ -121,7 +121,7 @@ typedef struct CopyStateData
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
 	List	   *force_quote;	/* list of column names */
-	bool		force_quote_all;	/* FORCE QUOTE *? */
+	bool		force_quote_all;	/* FORCE_QUOTE *? */
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
@@ -1469,7 +1469,7 @@ BeginCopy(bool is_from,
 
 	num_phys_attrs = tupDesc->natts;
 
-	/* Convert FORCE QUOTE name list to per-column flags, check validity */
+	/* Convert FORCE_QUOTE name list to per-column flags, check validity */
 	cstate->force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->force_quote_all)
 	{
@@ -1492,13 +1492,13 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				   errmsg("FORCE QUOTE column \"%s\" not referenced by COPY",
+				   errmsg("FORCE_QUOTE column \"%s\" not referenced by COPY",
 						  NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_quote_flags[attnum - 1] = true;
 		}
 	}
 
-	/* Convert FORCE NOT NULL name list to per-column flags, check validity */
+	/* Convert FORCE_NOT_NULL name list to per-column flags, check validity */
 	cstate->force_notnull_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->force_notnull)
 	{
@@ -1514,13 +1514,13 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				errmsg("FORCE NOT NULL column \"%s\" not referenced by COPY",
+				errmsg("FORCE_NOT_NULL column \"%s\" not referenced by COPY",
 					   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_notnull_flags[attnum - 1] = true;
 		}
 	}
 
-	/* Convert FORCE NULL name list to per-column flags, check validity */
+	/* Convert FORCE_NULL name list to per-column flags, check validity */
 	cstate->force_null_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->force_null)
 	{
@@ -1536,7 +1536,7 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("FORCE NULL column \"%s\" not referenced by COPY",
+					errmsg("FORCE_NULL column \"%s\" not referenced by COPY",
 						   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_null_flags[attnum - 1] = true;
 		}
