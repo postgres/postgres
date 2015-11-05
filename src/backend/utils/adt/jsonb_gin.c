@@ -375,51 +375,31 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 				parent = stack;
 				stack = (PathHashStack *) palloc(sizeof(PathHashStack));
 
-				if (parent->parent)
-				{
-					/*
-					 * We pass forward hashes from previous container nesting
-					 * levels so that nested arrays with an outermost nested
-					 * object will have element hashes mixed with the
-					 * outermost key.  It's also somewhat useful to have
-					 * nested objects' innermost values have hashes that are a
-					 * function of not just their own key, but outer keys too.
-					 *
-					 * Nesting an array within another array will not alter
-					 * innermost scalar element hash values, but that seems
-					 * inconsequential.
-					 */
-					stack->hash = parent->hash;
-				}
-				else
-				{
-					/*
-					 * At the outermost level, initialize hash with container
-					 * type proxy value.  Note that this makes JB_FARRAY and
-					 * JB_FOBJECT part of the on-disk representation, but they
-					 * are that in the base jsonb object storage already.
-					 */
-					stack->hash = (r == WJB_BEGIN_ARRAY) ? JB_FARRAY : JB_FOBJECT;
-				}
+				/*
+				 * We pass forward hashes from outer nesting levels so that
+				 * the hashes for nested values will include outer keys as
+				 * well as their own keys.
+				 *
+				 * Nesting an array within another array will not alter
+				 * innermost scalar element hash values, but that seems
+				 * inconsequential.
+				 */
+				stack->hash = parent->hash;
 				stack->parent = parent;
 				break;
 			case WJB_KEY:
-				/* initialize hash from parent */
-				stack->hash = stack->parent->hash;
-				/* and mix in this key */
+				/* mix this key into the current outer hash */
 				JsonbHashScalarValue(&v, &stack->hash);
 				/* hash is now ready to incorporate the value */
 				break;
 			case WJB_ELEM:
-				/* array elements use parent hash mixed with element's hash */
-				stack->hash = stack->parent->hash;
-				/* FALL THRU */
 			case WJB_VALUE:
 				/* mix the element or value's hash into the prepared hash */
 				JsonbHashScalarValue(&v, &stack->hash);
 				/* and emit an index entry */
 				entries[i++] = UInt32GetDatum(stack->hash);
-				/* Note: we assume we'll see KEY before another VALUE */
+				/* reset hash for next key, value, or sub-object */
+				stack->hash = stack->parent->hash;
 				break;
 			case WJB_END_ARRAY:
 			case WJB_END_OBJECT:
@@ -427,6 +407,11 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 				parent = stack->parent;
 				pfree(stack);
 				stack = parent;
+				/* reset hash for next key, value, or sub-object */
+				if (stack->parent)
+					stack->hash = stack->parent->hash;
+				else
+					stack->hash = 0;
 				break;
 			default:
 				elog(ERROR, "invalid JsonbIteratorNext rc: %d", (int) r);
