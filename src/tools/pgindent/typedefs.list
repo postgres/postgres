@@ -2018,7 +2018,7 @@ TupleHashEntry
 TupleHashEntryData
 TupleHashIterator
 TupleHashTable
-TupleQueueFunnel
+TupleQueueReader
 TupleTableSlot
 Tuplesortstate
 Tuplestorestate

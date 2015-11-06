@@ -21,11 +21,11 @@
 extern DestReceiver *CreateTupleQueueDestReceiver(shm_mq_handle *handle);
 
 /* Use these to receive tuples from a shm_mq. */
-typedef struct TupleQueueFunnel TupleQueueFunnel;
-extern TupleQueueFunnel *CreateTupleQueueFunnel(void);
-extern void DestroyTupleQueueFunnel(TupleQueueFunnel *funnel);
-extern void RegisterTupleQueueOnFunnel(TupleQueueFunnel *, shm_mq_handle *);
-extern HeapTuple TupleQueueFunnelNext(TupleQueueFunnel *, bool nowait,
-					 bool *done);
+typedef struct TupleQueueReader TupleQueueReader;
+extern TupleQueueReader *CreateTupleQueueReader(shm_mq_handle *handle,
+					   TupleDesc tupledesc);
+extern void DestroyTupleQueueReader(TupleQueueReader *funnel);
+extern HeapTuple TupleQueueReaderNext(TupleQueueReader *,
+					 bool nowait, bool *done);
 
 #endif   /* TQUEUE_H */
