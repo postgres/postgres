@@ -1,0 +1,37 @@
+SELECT size, pg_size_pretty(size), pg_size_pretty(-1 * size) FROM
+    (VALUES (10::bigint), (1000::bigint), (1000000::bigint),
+            (1000000000::bigint), (1000000000000::bigint),
+            (1000000000000000::bigint)) x(size);
+       size       | pg_size_pretty | pg_size_pretty 
+------------------+----------------+----------------
+               10 | 10 bytes       | -10 bytes
+             1000 | 1000 bytes     | -1000 bytes
+          1000000 | 977 kB         | -977 kB
+       1000000000 | 954 MB         | -954 MB
+    1000000000000 | 931 GB         | -931 GB
+ 1000000000000000 | 909 TB         | -909 TB
+(6 rows)
+
+SELECT size, pg_size_pretty(size), pg_size_pretty(-1 * size) FROM
+    (VALUES (10::numeric), (1000::numeric), (1000000::numeric),
+            (1000000000::numeric), (1000000000000::numeric),
+            (1000000000000000::numeric),
+            (10.5::numeric), (1000.5::numeric), (1000000.5::numeric),
+            (1000000000.5::numeric), (1000000000000.5::numeric),
+            (1000000000000000.5::numeric)) x(size);
+        size        | pg_size_pretty | pg_size_pretty 
+--------------------+----------------+----------------
+                 10 | 10 bytes       | -10 bytes
+               1000 | 1000 bytes     | -1000 bytes
+            1000000 | 977 kB         | -977 kB
+         1000000000 | 954 MB         | -954 MB
+      1000000000000 | 931 GB         | -931 GB
+   1000000000000000 | 909 TB         | -909 TB
+               10.5 | 10.5 bytes     | -10.5 bytes
+             1000.5 | 1000.5 bytes   | -1000.5 bytes
+          1000000.5 | 977 kB         | -977 kB
+       1000000000.5 | 954 MB         | -954 MB
+    1000000000000.5 | 931 GB         | -931 GB
+ 1000000000000000.5 | 909 TB         | -909 TB
+(12 rows)
+

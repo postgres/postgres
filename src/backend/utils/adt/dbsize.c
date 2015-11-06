@@ -31,6 +31,8 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
+/* Divide by two and round towards positive infinity. */
+#define half_rounded(x)   (((x) + ((x) < 0 ? 0 : 1)) / 2)
 
 /* Return physical size of directory contents, or 0 if dir doesn't exist */
 static int64
@@ -534,31 +536,31 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 	int64		limit = 10 * 1024;
 	int64		limit2 = limit * 2 - 1;
 
-	if (size < limit)
+	if (Abs(size) < limit)
 		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
 	else
 	{
 		size >>= 9;				/* keep one extra bit for rounding */
-		if (size < limit2)
+		if (Abs(size) < limit2)
 			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
-					 (size + 1) / 2);
+					 half_rounded(size));
 		else
 		{
 			size >>= 10;
-			if (size < limit2)
+			if (Abs(size) < limit2)
 				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
-						 (size + 1) / 2);
+						 half_rounded(size));
 			else
 			{
 				size >>= 10;
-				if (size < limit2)
+				if (Abs(size) < limit2)
 					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
-							 (size + 1) / 2);
+							 half_rounded(size));
 				else
 				{
 					size >>= 10;
 					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
-							 (size + 1) / 2);
+							 half_rounded(size));
 				}
 			}
 		}
@@ -593,17 +595,34 @@ numeric_is_less(Numeric a, Numeric b)
 }
 
 static Numeric
-numeric_plus_one_over_two(Numeric n)
+numeric_absolute(Numeric n)
 {
 	Datum		d = NumericGetDatum(n);
+	Datum		result;
+
+	result = DirectFunctionCall1(numeric_abs, d);
+	return DatumGetNumeric(result);
+}
+
+static Numeric
+numeric_half_rounded(Numeric n)
+{
+	Datum		d = NumericGetDatum(n);
+	Datum		zero;
 	Datum		one;
 	Datum		two;
 	Datum		result;
 
+	zero = DirectFunctionCall1(int8_numeric, Int64GetDatum(0));
 	one = DirectFunctionCall1(int8_numeric, Int64GetDatum(1));
 	two = DirectFunctionCall1(int8_numeric, Int64GetDatum(2));
-	result = DirectFunctionCall2(numeric_add, d, one);
-	result = DirectFunctionCall2(numeric_div_trunc, result, two);
+
+	if (DatumGetBool(DirectFunctionCall2(numeric_ge, d, zero)))
+		d = DirectFunctionCall2(numeric_add, d, one);
+	else
+		d = DirectFunctionCall2(numeric_sub, d, one);
+
+	result = DirectFunctionCall2(numeric_div_trunc, d, two);
 	return DatumGetNumeric(result);
 }
 
@@ -632,7 +651,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 	limit = int64_to_numeric(10 * 1024);
 	limit2 = int64_to_numeric(10 * 1024 * 2 - 1);
 
-	if (numeric_is_less(size, limit))
+	if (numeric_is_less(numeric_absolute(size), limit))
 	{
 		result = psprintf("%s bytes", numeric_to_cstring(size));
 	}
@@ -642,20 +661,18 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 		/* size >>= 9 */
 		size = numeric_shift_right(size, 9);
 
-		if (numeric_is_less(size, limit2))
+		if (numeric_is_less(numeric_absolute(size), limit2))
 		{
-			/* size = (size + 1) / 2 */
-			size = numeric_plus_one_over_two(size);
+			size = numeric_half_rounded(size);
 			result = psprintf("%s kB", numeric_to_cstring(size));
 		}
 		else
 		{
 			/* size >>= 10 */
 			size = numeric_shift_right(size, 10);
-			if (numeric_is_less(size, limit2))
+			if (numeric_is_less(numeric_absolute(size), limit2))
 			{
-				/* size = (size + 1) / 2 */
-				size = numeric_plus_one_over_two(size);
+				size = numeric_half_rounded(size);
 				result = psprintf("%s MB", numeric_to_cstring(size));
 			}
 			else
@@ -663,18 +680,16 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 				/* size >>= 10 */
 				size = numeric_shift_right(size, 10);
 
-				if (numeric_is_less(size, limit2))
+				if (numeric_is_less(numeric_absolute(size), limit2))
 				{
-					/* size = (size + 1) / 2 */
-					size = numeric_plus_one_over_two(size);
+					size = numeric_half_rounded(size);
 					result = psprintf("%s GB", numeric_to_cstring(size));
 				}
 				else
 				{
 					/* size >>= 10 */
 					size = numeric_shift_right(size, 10);
-					/* size = (size + 1) / 2 */
-					size = numeric_plus_one_over_two(size);
+					size = numeric_half_rounded(size);
 					result = psprintf("%s TB", numeric_to_cstring(size));
 				}
 			}
