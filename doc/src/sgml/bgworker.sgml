@@ -278,6 +278,18 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
+   If a background worker sends asynchronous notifications with the
+   <command>NOTIFY</command> command via the Server Programming Interface
+   (<acronym>SPI</acronym>), it should call
+   <function>ProcessCompletedNotifies</function> explicitly after committing
+   the enclosing transaction so that any notifications can be delivered.  If a
+   background worker registers to receive asynchronous notifications with
+   the <command>LISTEN</command> through <acronym>SPI</acronym>, the worker
+   will log those notifications, but there is no programmatic way for the
+   worker to intercept and respond to those notifications.
+  </para>
+
+  <para>
    The <filename>worker_spi</> contrib module contains a working example,
    which demonstrates some useful techniques.
   </para>
