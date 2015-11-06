@@ -1174,6 +1174,7 @@ extern Datum uuid_ge(PG_FUNCTION_ARGS);
 extern Datum uuid_gt(PG_FUNCTION_ARGS);
 extern Datum uuid_ne(PG_FUNCTION_ARGS);
 extern Datum uuid_cmp(PG_FUNCTION_ARGS);
+extern Datum uuid_sortsupport(PG_FUNCTION_ARGS);
 extern Datum uuid_hash(PG_FUNCTION_ARGS);
 
 /* windowfuncs.c */

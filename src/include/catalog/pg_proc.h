@@ -4467,6 +4467,8 @@ DATA(insert OID = 2958 (  uuid_gt		   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0
 DATA(insert OID = 2959 (  uuid_ne		   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "2950 2950" _null_ _null_ _null_ _null_ _null_ uuid_ne _null_ _null_ _null_ ));
 DATA(insert OID = 2960 (  uuid_cmp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 23 "2950 2950" _null_ _null_ _null_ _null_ _null_ uuid_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3300 (  uuid_sortsupport PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ uuid_sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 2961 (  uuid_recv		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2950 "2281" _null_ _null_ _null_ _null_ _null_ uuid_recv _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2962 (  uuid_send		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 17 "2950" _null_ _null_ _null_ _null_ _null_ uuid_send _null_ _null_ _null_ ));
