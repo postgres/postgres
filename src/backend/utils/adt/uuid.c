@@ -380,7 +380,7 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 	pg_uuid_t				   *authoritative = DatumGetUUIDP(original);
 	Datum						res;
 
-	memcpy((char *) &res, authoritative->data, sizeof(Datum));
+	memcpy(&res, authoritative->data, sizeof(Datum));
 	uss->input_count += 1;
 
 	if (uss->estimating)
