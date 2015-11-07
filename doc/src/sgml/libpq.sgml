@@ -1873,7 +1873,7 @@ int PQsslInUse(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsslAttribute">
+    <varlistentry id="libpq-pqsslattribute">
      <term><function>PQsslAttribute</function><indexterm><primary>PQsslAttribute</></></term>
      <listitem>
       <para>
@@ -1947,13 +1947,13 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsslattributes">
-     <term><function>PQsslAttributes</function><indexterm><primary>PQsslAttributes</></></term>
+    <varlistentry id="libpq-pqsslattributenames">
+     <term><function>PQsslAttributeNames</function><indexterm><primary>PQsslAttributeNames</></></term>
      <listitem>
       <para>
        Return an array of SSL attribute names available. The array is terminated by a NULL pointer.
 <synopsis>
-const char **PQsslAttributes(const PGconn *conn);
+const char * const * PQsslAttributeNames(const PGconn *conn);
 </synopsis>
       </para>
      </listitem>
@@ -1963,15 +1963,15 @@ const char **PQsslAttributes(const PGconn *conn);
      <term><function>PQsslStruct</function><indexterm><primary>PQsslStruct</></></term>
      <listitem>
       <para>
-       Return a pointer to an SSL-implementation specific object describing
+       Return a pointer to an SSL-implementation-specific object describing
        the connection.
 <synopsis>
 void *PQsslStruct(const PGconn *conn, const char *struct_name);
 </synopsis>
       </para>
       <para>
-       The structs available depends on the SSL implementation in use.
-       For OpenSSL, there is one struct, under the name "OpenSSL",
+       The struct(s) available depend on the SSL implementation in use.
+       For OpenSSL, there is one struct, available under the name "OpenSSL",
        and it returns a pointer to the OpenSSL <literal>SSL</literal> struct.
        To use this function, code along the following lines could be used:
 <programlisting><![CDATA[

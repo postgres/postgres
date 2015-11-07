@@ -608,18 +608,22 @@ FIXME: Add Andres
 2015-02-03 [91fa7b4] Heikki..: Add API functions to libpq to interrogate SSL ..
 -->
        <para>
-        Add <application>libpq</> function <link
-        linkend="libpq-pqsslAttribute"><function>PQsslAttribute()</></>
-        that returns <acronym>SSL</> information (Heikki Linnakangas)
+        Add <application>libpq</> functions to return <acronym>SSL</>
+        information in an implementation-independent way (Heikki Linnakangas)
        </para>
 
        <para>
-        While <link linkend="libpq-pqgetssl"><function>PQgetssl()</></>
-        can still be used to call <productname>OpenSSL</>
-        functions, <function>PQsslAttribute()</> returns <acronym>SSL</>
-        information in an <acronym>SSL</>-implementation-independent way.
-        (Future versions of libpq might support other <acronym>SSL</>
-        implementations.)
+        While <link linkend="libpq-pqgetssl"><function>PQgetssl()</></> can
+        still be used to call <productname>OpenSSL</> functions, it is now
+        considered deprecated because future versions
+        of <application>libpq</> might support other <acronym>SSL</>
+        implementations.  When possible, use the new
+        functions <link
+        linkend="libpq-pqsslattribute"><function>PQsslAttribute()</></>, <link
+        linkend="libpq-pqsslattributenames"><function>PQsslAttributeNames()</></>,
+        and <link linkend="libpq-pqsslinuse"><function>PQsslInUse()</></>
+        to obtain <acronym>SSL</> information in
+        an <acronym>SSL</>-implementation-independent way.
        </para>
       </listitem>
 
