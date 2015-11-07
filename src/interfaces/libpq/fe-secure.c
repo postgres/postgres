@@ -408,10 +408,10 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 	return NULL;
 }
 
-const char **
-PQsslAttributes(PGconn *conn)
+const char *const *
+PQsslAttributeNames(PGconn *conn)
 {
-	static const char *result[] = {NULL};
+	static const char *const result[] = {NULL};
 
 	return result;
 }

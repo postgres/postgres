@@ -329,7 +329,7 @@ extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 extern int	PQsslInUse(PGconn *conn);
 extern void *PQsslStruct(PGconn *conn, const char *struct_name);
 extern const char *PQsslAttribute(PGconn *conn, const char *attribute_name);
-extern const char **PQsslAttributes(PGconn *conn);
+extern const char *const * PQsslAttributeNames(PGconn *conn);
 
 /* Get the OpenSSL structure associated with a connection. Returns NULL for
  * unencrypted connections or if any other TLS library is in use. */

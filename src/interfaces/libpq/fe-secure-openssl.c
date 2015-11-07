@@ -1532,10 +1532,10 @@ PQsslStruct(PGconn *conn, const char *struct_name)
 	return NULL;
 }
 
-const char **
-PQsslAttributes(PGconn *conn)
+const char *const *
+PQsslAttributeNames(PGconn *conn)
 {
-	static const char *result[] = {
+	static const char *const result[] = {
 		"library",
 		"key_bits",
 		"cipher",
