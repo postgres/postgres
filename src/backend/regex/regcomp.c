@@ -951,7 +951,7 @@ parseqatom(struct vars * v,
 			EMPTYARC(lp, s);
 			EMPTYARC(s2, rp);
 			NOERR();
-			atom = parse(v, ')', PLAIN, s, s2);
+			atom = parse(v, ')', type, s, s2);
 			assert(SEE(')') || ISERR());
 			NEXT();
 			NOERR();
