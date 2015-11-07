@@ -1216,12 +1216,21 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER INDEX <foo> SET|RESET ( */
 	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev4_wd, "INDEX") == 0 &&
-			 (pg_strcasecmp(prev2_wd, "SET") == 0 ||
-			  pg_strcasecmp(prev2_wd, "RESET") == 0) &&
+			 pg_strcasecmp(prev2_wd, "RESET") == 0 &&
 			 pg_strcasecmp(prev_wd, "(") == 0)
 	{
 		static const char *const list_INDEXOPTIONS[] =
 		{"fillfactor", "fastupdate", "gin_pending_list_limit", NULL};
+
+		COMPLETE_WITH_LIST(list_INDEXOPTIONS);
+	}
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "INDEX") == 0 &&
+			 pg_strcasecmp(prev2_wd, "SET") == 0 &&
+			 pg_strcasecmp(prev_wd, "(") == 0)
+	{
+		static const char *const list_INDEXOPTIONS[] =
+		{"fillfactor =", "fastupdate =", "gin_pending_list_limit =", NULL};
 
 		COMPLETE_WITH_LIST(list_INDEXOPTIONS);
 	}
