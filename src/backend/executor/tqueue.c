@@ -661,6 +661,8 @@ TupleQueueRemap(TupleQueueReader *reader, RemapClass remapclass, Datum value)
 		case TQUEUE_REMAP_RECORD:
 			return TupleQueueRemapRecord(reader, value);
 	}
+
+	elog(ERROR, "unknown remap class: %d", (int) remapclass);
 }
 
 /*
