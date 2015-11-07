@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2015-??-??</simpara>
-   <simpara>Current as of 2015-10-03</simpara>
+   <simpara>Current as of 2015-11-07</simpara>
   </note>
 
   <sect2>
@@ -170,10 +170,11 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
 
     <listitem>
 <!--
+2015-10-20 [b06f1f2] Robert..: Put back ssl_renegotiation_limit parameter, bu..
 2015-07-28 [6087d95] Andres..: Remove ssl renegotiation support.
 -->
      <para>
-      Remove server configuration
+      Disable server configuration
       parameter <varname>ssl_renegotiation_limit</>, which was deprecated
       in earlier releases (Andres Freund)
      </para>
@@ -183,6 +184,9 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
       bugs to be considered a net negative in practice, and it is due to be
       removed from future versions of the relevant standards.  We have
       therefore removed support for it from <productname>PostgreSQL</>.
+      The <varname>ssl_renegotiation_limit</> parameter still exists, but
+      cannot be set to anything but zero (disabled).  It's not documented
+      anymore, either.
      </para>
     </listitem>
 
