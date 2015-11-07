@@ -144,10 +144,14 @@ DESCR("prepend element onto front of array");
 DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f f 2277 2277 2277 0 0 array_cat	   -	   -	 ));
 DESCR("concatenate");
 
-DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16 352	 0 xideq eqsel eqjoinsel ));
+DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16	352	  3315 xideq eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	 0	 0 xideqint4 eqsel eqjoinsel ));
+DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	0	  3316 xideqint4 eqsel eqjoinsel ));
 DESCR("equal");
+DATA(insert OID = 3315 (  "<>"	   PGNSP PGUID b f f	28	28	16	3315   352 xidneq neqsel neqjoinsel ));
+DESCR("not equal");
+DATA(insert OID = 3316 (  "<>"	   PGNSP PGUID b f f	28	23	16	0	   353 xidneqint4 neqsel neqjoinsel ));
+DESCR("not equal");
 DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f f	20	 0	1700  0  0 numeric_fac - - ));
 DESCR("factorial");
 DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f f	 0	20	1700  0  0 numeric_fac - - ));

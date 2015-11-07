@@ -641,6 +641,8 @@ uuid_eq(uuid,uuid)
 uuid_ge(uuid,uuid)
 uuid_gt(uuid,uuid)
 uuid_ne(uuid,uuid)
+xidneq(xid,xid)
+xidneqint4(xid,integer)
 -- restore normal output mode
 \a\t
 -- List of functions used by libpq's fe-lobj.c

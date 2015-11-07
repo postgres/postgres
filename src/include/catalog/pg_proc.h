@@ -212,6 +212,7 @@ DATA(insert OID =  65 (  int4eq			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 
 DATA(insert OID =  66 (  int4lt			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "23 23" _null_ _null_ _null_ _null_ _null_ int4lt _null_ _null_ _null_ ));
 DATA(insert OID =  67 (  texteq			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "25 25" _null_ _null_ _null_ _null_ _null_ texteq _null_ _null_ _null_ ));
 DATA(insert OID =  68 (  xideq			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "28 28" _null_ _null_ _null_ _null_ _null_ xideq _null_ _null_ _null_ ));
+DATA(insert OID = 3308 (  xidneq		   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "28 28" _null_ _null_ _null_ _null_ _null_ xidneq _null_ _null_ _null_ ));
 DATA(insert OID =  69 (  cideq			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "29 29" _null_ _null_ _null_ _null_ _null_ cideq _null_ _null_ _null_ ));
 DATA(insert OID =  70 (  charne			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "18 18" _null_ _null_ _null_ _null_ _null_ charne _null_ _null_ _null_ ));
 DATA(insert OID = 1246 (  charlt		   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "18 18" _null_ _null_ _null_ _null_ _null_ charlt _null_ _null_ _null_ ));
@@ -1515,6 +1516,7 @@ DATA(insert OID = 1318 (  length			 PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2
 DESCR("character length");
 
 DATA(insert OID = 1319 (  xideqint4			 PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "28 23" _null_ _null_ _null_ _null_ _null_ xideq _null_ _null_ _null_ ));
+DATA(insert OID = 3309 (  xidneqint4		 PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "28 23" _null_ _null_ _null_ _null_ _null_ xidneq _null_ _null_ _null_ ));
 
 DATA(insert OID = 1326 (  interval_div		 PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1186 "1186 701" _null_ _null_ _null_ _null_ _null_	interval_div _null_ _null_ _null_ ));
 
