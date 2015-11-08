@@ -121,7 +121,6 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
 	TupleDesc	tupledesc = slot->tts_tupleDescriptor;
 	HeapTuple	tuple;
-	HeapTupleHeader tup;
 
 	/*
 	 * Test to see whether the tupledesc has changed; if so, set up for the
@@ -140,7 +139,6 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 	}
 
 	tuple = ExecMaterializeSlot(slot);
-	tup = tuple->t_data;
 
 	/*
 	 * When, because of the types being transmitted, no record typemod mapping
@@ -609,7 +607,6 @@ TupleQueueRemapTuple(TupleQueueReader *reader, TupleDesc tupledesc,
 {
 	Datum	   *values;
 	bool	   *isnull;
-	bool		dirty = false;
 	int			i;
 
 	/*
@@ -631,7 +628,6 @@ TupleQueueRemapTuple(TupleQueueReader *reader, TupleDesc tupledesc,
 		if (isnull[i] || remapinfo->mapping[i] == TQUEUE_REMAP_NONE)
 			continue;
 		values[i] = TupleQueueRemap(reader, remapinfo->mapping[i], values[i]);
-		dirty = true;
 	}
 
 	/* Reform the modified tuple. */
