@@ -647,9 +647,22 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 							return PQPING_NO_ATTEMPT;
 						}
 
-						/* If postmaster is listening on "*", use localhost */
+						/*
+						 * Map listen-only addresses to counterparts usable
+						 * for establishing a connection.  connect() to "::"
+						 * or "0.0.0.0" is not portable to OpenBSD 5.0 or to
+						 * Windows Server 2008, and connect() to "::" is
+						 * additionally not portable to NetBSD 6.0.  (Cygwin
+						 * does handle both addresses, though.)
+						 */
 						if (strcmp(host_str, "*") == 0)
 							strcpy(host_str, "localhost");
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(WIN32)
+						else if (strcmp(host_str, "0.0.0.0") == 0)
+							strcpy(host_str, "127.0.0.1");
+						else if (strcmp(host_str, "::") == 0)
+							strcpy(host_str, "::1");
+#endif
 
 						/*
 						 * We need to set connect_timeout otherwise on Windows
