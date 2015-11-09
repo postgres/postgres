@@ -2141,11 +2141,12 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	scan_plan->fs_relids = best_path->path.parent->relids;
 
 	/*
-	 * Replace any outer-relation variables with nestloop params in the qual
-	 * and fdw_exprs expressions.  We do this last so that the FDW doesn't
-	 * have to be involved.  (Note that parts of fdw_exprs could have come
-	 * from join clauses, so doing this beforehand on the scan_clauses
-	 * wouldn't work.)  We assume fdw_scan_tlist contains no such variables.
+	 * Replace any outer-relation variables with nestloop params in the qual,
+	 * fdw_exprs and fdw_recheck_quals expressions.  We do this last so that
+	 * the FDW doesn't have to be involved.  (Note that parts of fdw_exprs
+	 * or fdw_recheck_quals could have come from join clauses, so doing this
+	 * beforehand on the scan_clauses wouldn't work.)  We assume
+	 * fdw_scan_tlist contains no such variables.
 	 */
 	if (best_path->path.param_info)
 	{
