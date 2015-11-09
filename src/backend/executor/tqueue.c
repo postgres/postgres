@@ -659,6 +659,7 @@ TupleQueueRemap(TupleQueueReader *reader, RemapClass remapclass, Datum value)
 	}
 
 	elog(ERROR, "unknown remap class: %d", (int) remapclass);
+	return (Datum) 0;
 }
 
 /*
