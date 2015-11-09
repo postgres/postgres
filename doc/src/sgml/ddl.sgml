@@ -3246,6 +3246,15 @@ ANALYZE measurement;
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      <command>INSERT</command> statements with <literal>ON CONFLICT</>
+      clauses are unlikely to work as expected, as the <literal>ON CONFLICT</>
+      action is only taken in case of unique violations on the specified
+      target relation, not its child relations.
+     </para>
+    </listitem>
+
    </itemizedlist>
    </para>
 
