@@ -341,7 +341,7 @@ gather_readnext(GatherState *gatherstate)
 			--gatherstate->nreaders;
 			if (gatherstate->nreaders == 0)
 			{
-				ExecShutdownGather(gatherstate);
+				ExecShutdownGatherWorkers(gatherstate);
 				return NULL;
 			}
 			else
