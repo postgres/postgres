@@ -23,10 +23,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-07-22 00:13+0000\n"
-"PO-Revision-Date: 2015-07-22 17:02+0300\n"
+"POT-Creation-Date: 2015-10-17 05:43+0000\n"
+"PO-Revision-Date: 2015-10-17 23:07+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language-Team: Russian <pgsql-translators@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr ""
 "X-Poedit-Country: RUSSIAN FEDERATION\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Lokalize 2.0\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -1003,8 +1003,9 @@ msgstr "  -s, --system              переиндексировать сист�
 
 #: reindexdb.c:401
 #, c-format
-msgid "  -S, --schema=SCHEMA       recreate specific schema(s) only\n"
-msgstr "  -S, --schema=СХЕМА        пересоздать только указанную схему(ы)\n"
+msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
+msgstr ""
+"  -S, --schema=СХЕМА        переиндексировать только указанную схему(ы)\n"
 
 #: reindexdb.c:402
 #, c-format
@@ -1120,42 +1121,6 @@ msgstr ""
 
 #: vacuumdb.c:939
 #, c-format
-msgid "  -q, --quiet                     don't write any messages\n"
-msgstr "  -q, --quiet                     не выводить сообщения\n"
-
-#: vacuumdb.c:940
-#, c-format
-msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
-msgstr ""
-"  -t, --table='ТАБЛ[(КОЛОНКИ)]'   очистить только указанную таблицу(ы)\n"
-
-#: vacuumdb.c:941
-#, c-format
-msgid "  -v, --verbose                   write a lot of output\n"
-msgstr "  -v, --verbose                   выводить исчерпывающие сообщения\n"
-
-#: vacuumdb.c:942
-#, c-format
-msgid ""
-"  -V, --version                   output version information, then exit\n"
-msgstr "  -V, --version                   показать версию и выйти\n"
-
-#: vacuumdb.c:943
-#, c-format
-msgid "  -z, --analyze                   update optimizer statistics\n"
-msgstr "  -z, --analyze                   обновить статистику оптимизатора\n"
-
-#: vacuumdb.c:944
-#, c-format
-msgid ""
-"  -Z, --analyze-only              only update optimizer statistics;  no "
-"vacuum\n"
-msgstr ""
-"  -Z, --analyze-only              только обновить статистику оптимизатора, не "
-"очищать БД\n"
-
-#: vacuumdb.c:945
-#, c-format
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
 "vacuum\n"
@@ -1163,12 +1128,48 @@ msgstr ""
 "  -j, --jobs=ЧИСЛО                запускать для очистки заданное число "
 "заданий\n"
 
+#: vacuumdb.c:940
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     не выводить сообщения\n"
+
+#: vacuumdb.c:941
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
+msgstr ""
+"  -t, --table='ТАБЛ[(КОЛОНКИ)]'   очистить только указанную таблицу(ы)\n"
+
+#: vacuumdb.c:942
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   выводить исчерпывающие сообщения\n"
+
+#: vacuumdb.c:943
+#, c-format
+msgid ""
+"  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                   показать версию и выйти\n"
+
+#: vacuumdb.c:944
+#, c-format
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                   обновить статистику оптимизатора\n"
+
+#: vacuumdb.c:945
+#, c-format
+msgid ""
+"  -Z, --analyze-only              only update optimizer statistics; no "
+"vacuum\n"
+msgstr ""
+"  -Z, --analyze-only              только обновить статистику оптимизатора,\n"
+"                                  не очищать БД\n"
+
 #: vacuumdb.c:946
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in "
 "multiple\n"
-"                                  stages for faster results;  no vacuum\n"
+"                                  stages for faster results; no vacuum\n"
 msgstr ""
 "      --analyze-in-stages         только пересчитать статистику для "
 "оптимизатора\n"

@@ -9,24 +9,54 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-11 03:39+0000\n"
-"PO-Revision-Date: 2012-02-18 14:39+0400\n"
+"POT-Creation-Date: 2015-09-19 03:07+0000\n"
+"PO-Revision-Date: 2015-10-16 21:38+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language-Team: Russian <pgsql-translators@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 2.0\n"
 
-#: pltcl.c:1150
+#: pltcl.c:555
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "модуль \"unknown\" не найден в pltcl_modules"
+
+#: pltcl.c:591
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "загрузить модуль \"unknown\" не удалось: %s"
+
+#: pltcl.c:1047
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "разложить возвращаемое из триггера значение не удалось: %s"
+
+#: pltcl.c:1058
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "в возвращаемом триггером списке должно быть чётное число элементов"
+
+#: pltcl.c:1094
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "нераспознанный атрибут \"%s\""
+
+#: pltcl.c:1099
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "установить системный атрибут \"%s\" нельзя"
+
+#: pltcl.c:1222 pltcl.c:1648
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1151
+#: pltcl.c:1223
 #, c-format
 msgid ""
 "%s\n"
@@ -35,27 +65,32 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1255 pltcl.c:1262
+#: pltcl.c:1331 pltcl.c:1338
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: pltcl.c:1309
+#: pltcl.c:1386
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1318
+#: pltcl.c:1395
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
 
-#: pltcl.c:1330
+#: pltcl.c:1407
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "функции PL/Tcl не могут возвращать составные типы"
 
-#: pltcl.c:1369
+#: pltcl.c:1446
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
+
+#: pltcl.c:1564
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"
