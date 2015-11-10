@@ -392,7 +392,7 @@ gather_readnext(GatherState *gatherstate)
  *		accounted.
  * ----------------------------------------------------------------
  */
-void
+static void
 ExecShutdownGatherWorkers(GatherState *node)
 {
 	/* Shut down tuple queue readers before shutting down workers. */
