@@ -4910,6 +4910,12 @@ load_relcache_init_file(bool shared)
 	 * get the right number of nailed items?  This is a useful crosscheck in
 	 * case the set of critical rels or indexes changes.  However, that should
 	 * not happen in a normally-running system, so let's bleat if it does.
+	 *
+	 * For the shared init file, we're called before client authentication is
+	 * done, which means that elog(WARNING) will go only to the postmaster
+	 * log, where it's easily missed.  To ensure that developers notice bad
+	 * values of NUM_CRITICAL_SHARED_RELS/NUM_CRITICAL_SHARED_INDEXES, we put
+	 * an Assert(false) there.
 	 */
 	if (shared)
 	{
@@ -4919,6 +4925,9 @@ load_relcache_init_file(bool shared)
 			elog(WARNING, "found %d nailed shared rels and %d nailed shared indexes in init file, but expected %d and %d respectively",
 				 nailed_rels, nailed_indexes,
 				 NUM_CRITICAL_SHARED_RELS, NUM_CRITICAL_SHARED_INDEXES);
+			/* Make sure we get developers' attention about this */
+			Assert(false);
+			/* In production builds, recover by bootstrapping the relcache */
 			goto read_failed;
 		}
 	}
@@ -4930,6 +4939,7 @@ load_relcache_init_file(bool shared)
 			elog(WARNING, "found %d nailed rels and %d nailed indexes in init file, but expected %d and %d respectively",
 				 nailed_rels, nailed_indexes,
 				 NUM_CRITICAL_LOCAL_RELS, NUM_CRITICAL_LOCAL_INDEXES);
+			/* We don't need an Assert() in this case */
 			goto read_failed;
 		}
 	}
