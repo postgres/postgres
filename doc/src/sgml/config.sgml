@@ -5234,8 +5234,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
      <para>
       These settings control the behavior of the <firstterm>autovacuum</>
-      feature.  Refer to <xref linkend="autovacuum"> for
-      more information.
+      feature.  Refer to <xref linkend="autovacuum"> for more information.
+      Note that many of these settings can be overridden on a per-table
+      basis; see <xref linkend="sql-createtable-storage-parameters"
+      endterm="sql-createtable-storage-parameters-title">.
      </para>
 
     <variablelist>
@@ -5253,7 +5255,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <xref linkend="guc-track-counts"> must also be enabled for
         autovacuum to work.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        file or on the server command line; however, autovacuuming can be
+        disabled for individual tables by changing table storage parameters.
        </para>
        <para>
         Note that even when this parameter is disabled, the system
@@ -5281,8 +5284,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         set to any value other than <literal>-1</literal>, a message will be
         logged if an autovacuum action is skipped due to the existence of a
         conflicting lock.  Enabling this parameter can be helpful
-        in tracking autovacuum activity.  This setting can only be set in
-        the <filename>postgresql.conf</> file or on the server command line.
+        in tracking autovacuum activity.  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5296,7 +5301,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the maximum number of autovacuum processes (other than the
-        autovacuum launcher) which may be running at any one time.  The default
+        autovacuum launcher) that may be running at any one time.  The default
         is three.  This parameter can only be set at server start.
        </para>
       </listitem>
@@ -5333,9 +5338,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         to trigger a <command>VACUUM</> in any one table.
         The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5352,9 +5357,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         needed to trigger an <command>ANALYZE</> in any one table.
         The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5372,9 +5377,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         when deciding whether to trigger a <command>VACUUM</>.
         The default is 0.2 (20% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5392,9 +5397,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         when deciding whether to trigger an <command>ANALYZE</>.
         The default is 0.1 (10% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5421,7 +5426,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         is a relatively low 200 million transactions.
         This parameter can only be set at server start, but the setting
         can be reduced for individual tables by
-        changing storage parameters.
+        changing table storage parameters.
         For more information see <xref linkend="vacuum-for-wraparound">.
        </para>
       </listitem>
@@ -5448,8 +5453,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <filename>pg_multixact/members</> and <filename>pg_multixact/offsets</>
         subdirectories, which is why the default is a relatively low
         400 million multixacts.
-        This parameter can only be set at server start, but the setting
-        can be reduced for individual tables by changing storage parameters.
+        This parameter can only be set at server start, but the setting can
+        be reduced for individual tables by changing table storage parameters.
         For more information see <xref linkend="vacuum-for-multixact-wraparound">.
        </para>
       </listitem>
@@ -5468,9 +5473,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <xref linkend="guc-vacuum-cost-delay"> value will be used.
         The default value is 20 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5488,12 +5493,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         default), the regular
         <xref linkend="guc-vacuum-cost-limit"> value will be used.  Note that
         the value is distributed proportionally among the running autovacuum
-        workers, if there is more than one, so that the sum of the limits of
-        each worker never exceeds the limit on this variable.
+        workers, if there is more than one, so that the sum of the limits for
+        each worker does not exceed the value of this variable.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -6072,7 +6077,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         the entries in it to the main GIN data structure in bulk.
         The default is four megabytes (<literal>4MB</>). This setting
         can be overridden for individual GIN indexes by changing
-        storage parameters.
+        index storage parameters.
          See <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
          for more information.
        </para>
