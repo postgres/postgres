@@ -1100,14 +1100,15 @@ SELECT '52093.89'::money::numeric::float8;
     stored and displayed that way.  However, trailing spaces are treated as
     semantically insignificant and disregarded when comparing two values
     of type <type>character</type>.  In collations where whitespace
-    is significant, this behavior can produce unexpected results,
-    e.g. <command>SELECT 'a '::CHAR(2) collate "C" &lt;
-    'a\n'::CHAR(2)</command> returns true.
+    is significant, this behavior can produce unexpected results;
+    for example <command>SELECT 'a '::CHAR(2) collate "C" &lt;
+    E'a\n'::CHAR(2)</command> returns true, even though <literal>C</>
+    locale would consider a space to be greater than a newline.
     Trailing spaces are removed when converting a <type>character</type> value
     to one of the other string types.  Note that trailing spaces
     <emphasis>are</> semantically significant in
     <type>character varying</type> and <type>text</type> values, and
-    when using pattern matching, e.g. <literal>LIKE</>,
+    when using pattern matching, that is <literal>LIKE</> and
     regular expressions.
    </para>
 
