@@ -1882,6 +1882,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_INT_FIELD(width);
 	WRITE_BOOL_FIELD(consider_startup);
 	WRITE_BOOL_FIELD(consider_param_startup);
+	WRITE_BOOL_FIELD(consider_parallel);
 	WRITE_NODE_FIELD(reltargetlist);
 	WRITE_NODE_FIELD(pathlist);
 	WRITE_NODE_FIELD(ppilist);

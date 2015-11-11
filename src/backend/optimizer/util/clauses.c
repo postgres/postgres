@@ -21,6 +21,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -87,6 +88,11 @@ typedef struct
 	char	   *prosrc;
 } inline_error_callback_arg;
 
+typedef struct
+{
+	bool		allow_restricted;
+} has_parallel_hazard_arg;
+
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool count_agg_clauses_walker(Node *node,
 						 count_agg_clauses_context *context);
@@ -96,7 +102,11 @@ static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
-static bool contain_parallel_unsafe_walker(Node *node, void *context);
+static bool has_parallel_hazard_walker(Node *node,
+				has_parallel_hazard_arg *context);
+static bool parallel_too_dangerous(char proparallel,
+				has_parallel_hazard_arg *context);
+static bool typeid_is_temp(Oid typeid);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_leaked_vars_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
@@ -1200,63 +1210,159 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 }
 
 /*****************************************************************************
- *		Check queries for parallel-unsafe constructs
+ *		Check queries for parallel unsafe and/or restricted constructs
  *****************************************************************************/
 
+/*
+ * Check whether a node tree contains parallel hazards.  This is used both
+ * on the entire query tree, to see whether the query can be parallelized at
+ * all, and also to evaluate whether a particular expression is safe to
+ * run in a parallel worker.  We could separate these concerns into two
+ * different functions, but there's enough overlap that it doesn't seem
+ * worthwhile.
+ */
 bool
-contain_parallel_unsafe(Node *node)
+has_parallel_hazard(Node *node, bool allow_restricted)
 {
-	return contain_parallel_unsafe_walker(node, NULL);
+	has_parallel_hazard_arg	context;
+
+	context.allow_restricted = allow_restricted;
+	return has_parallel_hazard_walker(node, &context);
 }
 
 static bool
-contain_parallel_unsafe_walker(Node *node, void *context)
+has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 {
 	if (node == NULL)
 		return false;
+
+	/*
+	 * When we're first invoked on a completely unplanned tree, we must
+	 * recurse through Query objects to as to locate parallel-unsafe
+	 * constructs anywhere in the tree.
+	 *
+	 * Later, we'll be called again for specific quals, possibly after
+	 * some planning has been done, we may encounter SubPlan, SubLink,
+	 * or AlternativeSubLink nodes.  Currently, there's no need to recurse
+	 * through these; they can't be unsafe, since we've already cleared
+	 * the entire query of unsafe operations, and they're definitely
+	 * parallel-restricted.
+	 */
+	if (IsA(node, Query))
+	{
+		Query *query = (Query *) node;
+
+		if (query->rowMarks != NULL)
+			return true;
+
+		/* Recurse into subselects */
+		return query_tree_walker(query,
+								 has_parallel_hazard_walker,
+								 context, 0);
+	}
+	else if (IsA(node, SubPlan) || IsA(node, SubLink) ||
+			 IsA(node, AlternativeSubPlan) || IsA(node, Param))
+	{
+		/*
+		 * Since we don't have the ability to push subplans down to workers
+		 * at present, we treat subplan references as parallel-restricted.
+		 */
+		if (!context->allow_restricted)
+			return true;
+	}
+
+	/* This is just a notational convenience for callers. */
+	if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) node;
+		return has_parallel_hazard_walker((Node *) rinfo->clause, context);
+	}
+
+	/*
+	 * It is an error for a parallel worker to touch a temporary table in any
+	 * way, so we can't handle nodes whose type is the rowtype of such a table.
+	 */
+	if (!context->allow_restricted)
+	{
+		switch (nodeTag(node))
+		{
+			case T_Var:
+			case T_Const:
+			case T_Param:
+			case T_Aggref:
+			case T_WindowFunc:
+			case T_ArrayRef:
+			case T_FuncExpr:
+			case T_NamedArgExpr:
+			case T_OpExpr:
+			case T_DistinctExpr:
+			case T_NullIfExpr:
+			case T_FieldSelect:
+			case T_FieldStore:
+			case T_RelabelType:
+			case T_CoerceViaIO:
+			case T_ArrayCoerceExpr:
+			case T_ConvertRowtypeExpr:
+			case T_CaseExpr:
+			case T_CaseTestExpr:
+			case T_ArrayExpr:
+			case T_RowExpr:
+			case T_CoalesceExpr:
+			case T_MinMaxExpr:
+			case T_CoerceToDomain:
+			case T_CoerceToDomainValue:
+			case T_SetToDefault:
+				if (typeid_is_temp(exprType(node)))
+					return true;
+				break;
+			default:
+				break;
+		}
+	}
+
+	/*
+	 * For each node that might potentially call a function, we need to
+	 * examine the pg_proc.proparallel marking for that function to see
+	 * whether it's safe enough for the current value of allow_restricted.
+	 */
 	if (IsA(node, FuncExpr))
 	{
 		FuncExpr   *expr = (FuncExpr *) node;
 
-		if (func_parallel(expr->funcid) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(expr->funcid), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, OpExpr))
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
 		set_opfuncid(expr);
-		if (func_parallel(expr->opfuncid) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, DistinctExpr))
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 
 		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_parallel(expr->opfuncid) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, NullIfExpr))
 	{
 		NullIfExpr *expr = (NullIfExpr *) node;
 
 		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_parallel(expr->opfuncid) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
 		set_sa_opfuncid(expr);
-		if (func_parallel(expr->opfuncid) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, CoerceViaIO))
 	{
@@ -1268,52 +1374,59 @@ contain_parallel_unsafe_walker(Node *node, void *context)
 		/* check the result type's input function */
 		getTypeInputInfo(expr->resulttype,
 						 &iofunc, &typioparam);
-		if (func_parallel(iofunc) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(iofunc), context))
 			return true;
 		/* check the input type's output function */
 		getTypeOutputInfo(exprType((Node *) expr->arg),
 						  &iofunc, &typisvarlena);
-		if (func_parallel(iofunc) == PROPARALLEL_UNSAFE)
+		if (parallel_too_dangerous(func_parallel(iofunc), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
 		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 
 		if (OidIsValid(expr->elemfuncid) &&
-			func_parallel(expr->elemfuncid) == PROPARALLEL_UNSAFE)
+			parallel_too_dangerous(func_parallel(expr->elemfuncid), context))
 			return true;
-		/* else fall through to check args */
 	}
 	else if (IsA(node, RowCompareExpr))
 	{
-		/* RowCompare probably can't have volatile ops, but check anyway */
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 		ListCell   *opid;
 
 		foreach(opid, rcexpr->opnos)
 		{
-			if (op_volatile(lfirst_oid(opid)) == PROPARALLEL_UNSAFE)
+			Oid	opfuncid = get_opcode(lfirst_oid(opid));
+			if (parallel_too_dangerous(func_parallel(opfuncid), context))
 				return true;
 		}
-		/* else fall through to check args */
 	}
-	else if (IsA(node, Query))
-	{
-		Query *query = (Query *) node;
 
-		if (query->rowMarks != NULL)
-			return true;
-
-		/* Recurse into subselects */
-		return query_tree_walker(query,
-								 contain_parallel_unsafe_walker,
-								 context, 0);
-	}
+	/* ... and recurse to check substructure */
 	return expression_tree_walker(node,
-								  contain_parallel_unsafe_walker,
+								  has_parallel_hazard_walker,
 								  context);
+}
+
+static bool
+parallel_too_dangerous(char proparallel, has_parallel_hazard_arg *context)
+{
+	if (context->allow_restricted)
+		return proparallel == PROPARALLEL_UNSAFE;
+	else
+		return proparallel != PROPARALLEL_SAFE;
+}
+
+static bool
+typeid_is_temp(Oid typeid)
+{
+	Oid				relid = get_typ_typrelid(typeid);
+
+	if (!OidIsValid(relid))
+		return false;
+
+	return (get_rel_persistence(relid) == RELPERSISTENCE_TEMP);
 }
 
 /*****************************************************************************

@@ -20,6 +20,7 @@
  */
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/orclauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -69,6 +70,17 @@ query_planner(PlannerInfo *root, List *tlist,
 	{
 		/* We need a dummy joinrel to describe the empty set of baserels */
 		final_rel = build_empty_join_rel(root);
+
+		/*
+		 * If query allows parallelism in general, check whether the quals
+		 * are parallel-restricted.  There's currently no real benefit to
+		 * setting this flag correctly because we can't yet reference subplans
+		 * from parallel workers.  But that might change someday, so set this
+		 * correctly anyway.
+		 */
+		if (root->glob->parallelModeOK)
+			final_rel->consider_parallel =
+				!has_parallel_hazard(parse->jointree->quals, false);
 
 		/* The only path for it is a trivial Result path */
 		add_path(final_rel, (Path *)

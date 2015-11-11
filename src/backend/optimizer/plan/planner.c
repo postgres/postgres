@@ -204,7 +204,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	/*
 	 * Assess whether it's feasible to use parallel mode for this query.
 	 * We can't do this in a standalone backend, or if the command will
-	 * try to modify any data, or if this is a cursor operation, or if any
+	 * try to modify any data, or if this is a cursor operation, or if
+	 * GUCs are set to values that don't permit parallelism, or if
 	 * parallel-unsafe functions are present in the query tree.
 	 *
 	 * For now, we don't try to use parallel mode if we're running inside
@@ -223,9 +224,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
 		parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
-		parse->utilityStmt == NULL && !IsParallelWorker() &&
-		!IsolationIsSerializable() &&
-		!contain_parallel_unsafe((Node *) parse);
+		parse->utilityStmt == NULL && max_parallel_degree > 0 &&
+		!IsParallelWorker() && !IsolationIsSerializable() &&
+		!has_parallel_hazard((Node *) parse, true);
 
 	/*
 	 * glob->parallelModeOK should tell us whether it's necessary to impose

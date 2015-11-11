@@ -452,6 +452,7 @@ typedef struct RelOptInfo
 	/* per-relation planner control flags */
 	bool		consider_startup;		/* keep cheap-startup-cost paths? */
 	bool		consider_param_startup; /* ditto, for parameterized paths? */
+	bool		consider_parallel;		/* consider parallel paths? */
 
 	/* materialization information */
 	List	   *reltargetlist;	/* Vars to be output by scan of relation */
