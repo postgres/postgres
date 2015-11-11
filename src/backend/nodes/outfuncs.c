@@ -1754,6 +1754,18 @@ _outUniquePath(StringInfo str, const UniquePath *node)
 }
 
 static void
+_outGatherPath(StringInfo str, const GatherPath *node)
+{
+	WRITE_NODE_TYPE("GATHERPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_INT_FIELD(num_workers);
+	WRITE_BOOL_FIELD(single_copy);
+}
+
+static void
 _outNestPath(StringInfo str, const NestPath *node)
 {
 	WRITE_NODE_TYPE("NESTPATH");
@@ -3292,6 +3304,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_UniquePath:
 				_outUniquePath(str, obj);
+				break;
+			case T_GatherPath:
+				_outGatherPath(str, obj);
 				break;
 			case T_NestPath:
 				_outNestPath(str, obj);
