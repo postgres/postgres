@@ -1248,11 +1248,15 @@ typedef struct ScanState
 	TupleTableSlot *ss_ScanTupleSlot;
 } ScanState;
 
-/*
- * SeqScan uses a bare ScanState as its state node, since it needs
- * no additional fields.
+/* ----------------
+ *	 SeqScanState information
+ * ----------------
  */
-typedef ScanState SeqScanState;
+typedef struct SeqScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	Size		pscan_len;		/* size of parallel heap scan descriptor */
+} SeqScanState;
 
 /* ----------------
  *	 SampleScanState information

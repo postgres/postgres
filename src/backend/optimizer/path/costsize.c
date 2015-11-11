@@ -181,10 +181,13 @@ clamp_row_est(double nrows)
  *
  * 'baserel' is the relation to be scanned
  * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
+ * 'nworkers' are the number of workers among which the work will be
+ *			distributed if the scan is parallel scan
  */
 void
 cost_seqscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, ParamPathInfo *param_info)
+			 RelOptInfo *baserel, ParamPathInfo *param_info,
+			 int nworkers)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -221,6 +224,16 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
+
+	/*
+	 * Primitive parallel cost model.  Assume the leader will do half as much
+	 * work as a regular worker, because it will also need to read the tuples
+	 * returned by the workers when they percolate up to the gather ndoe.
+	 * This is almost certainly not exactly the right way to model this, so
+	 * this will probably need to be changed at some point...
+	 */
+	if (nworkers > 0)
+		run_cost = run_cost / (nworkers + 0.5);
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;

@@ -271,6 +271,7 @@ _outPlanInfo(StringInfo str, const Plan *node)
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");
 	WRITE_FLOAT_FIELD(plan_rows, "%.0f");
 	WRITE_INT_FIELD(plan_width);
+	WRITE_BOOL_FIELD(parallel_aware);
 	WRITE_INT_FIELD(plan_node_id);
 	WRITE_NODE_FIELD(targetlist);
 	WRITE_NODE_FIELD(qual);
@@ -1585,6 +1586,7 @@ _outPathInfo(StringInfo str, const Path *node)
 		_outBitmapset(str, node->param_info->ppi_req_outer);
 	else
 		_outBitmapset(str, NULL);
+	WRITE_BOOL_FIELD(parallel_aware);
 	WRITE_FLOAT_FIELD(rows, "%.0f");
 	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");

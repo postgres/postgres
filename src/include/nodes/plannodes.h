@@ -109,6 +109,11 @@ typedef struct Plan
 	int			plan_width;		/* average row width in bytes */
 
 	/*
+	 * information needed for parallel query
+	 */
+	bool		parallel_aware; /* engage parallel-aware logic? */
+
+	/*
 	 * Common structural data for all Plan types.
 	 */
 	int			plan_node_id;	/* unique across entire final plan tree */

@@ -1412,6 +1412,7 @@ ReadCommonPlan(Plan *local_node)
 	READ_FLOAT_FIELD(total_cost);
 	READ_FLOAT_FIELD(plan_rows);
 	READ_INT_FIELD(plan_width);
+	READ_BOOL_FIELD(parallel_aware);
 	READ_INT_FIELD(plan_node_id);
 	READ_NODE_FIELD(targetlist);
 	READ_NODE_FIELD(qual);

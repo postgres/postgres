@@ -753,6 +753,7 @@ typedef struct Path
 
 	RelOptInfo *parent;			/* the relation this path can build */
 	ParamPathInfo *param_info;	/* parameterization info, or NULL if none */
+	bool		parallel_aware; /* engage parallel-aware logic? */
 
 	/* estimated size/costs for path (see costsize.c for more info) */
 	double		rows;			/* estimated number of result tuples */

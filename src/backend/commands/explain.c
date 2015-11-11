@@ -984,6 +984,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			appendStringInfoString(es->str, "->  ");
 			es->indent += 2;
 		}
+		if (plan->parallel_aware)
+			appendStringInfoString(es->str, "Parallel ");
 		appendStringInfoString(es->str, pname);
 		es->indent++;
 	}
@@ -1000,6 +1002,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyText("Subplan Name", plan_name, es);
 		if (custom_name)
 			ExplainPropertyText("Custom Plan Provider", custom_name, es);
+		if (plan->parallel_aware)
+			ExplainPropertyText("Parallel Aware", "true", es);
 	}
 
 	switch (nodeTag(plan))

@@ -439,6 +439,15 @@ ExecSupportsBackwardScan(Plan *node)
 	if (node == NULL)
 		return false;
 
+	/*
+	 * Parallel-aware nodes return a subset of the tuples in each worker,
+	 * and in general we can't expect to have enough bookkeeping state to
+	 * know which ones we returned in this worker as opposed to some other
+	 * worker.
+	 */
+	if (node->parallel_aware)
+		return false;
+
 	switch (nodeTag(node))
 	{
 		case T_Result:
