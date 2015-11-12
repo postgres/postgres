@@ -23,7 +23,50 @@
 
     <listitem>
      <para>
-      ... to be filled in ...
+      Allow <link linkend="sql-on-conflict"><command>INSERTS</></>
+      that would generate constraint conflicts to be turned into
+      <command>UPDATE</>s or ignored
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>GROUP BY</> analysis functions <link
+      linkend="queries-grouping-sets"><literal>GROUPING SETS</></>,
+      <link linkend="queries-grouping-sets"><literal>CUBE</></> and
+      <link linkend="queries-grouping-sets"><literal>ROLLUP</></>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add row-level security control
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <link linkend="pg-replication-origin-create">labeling</> of
+      the origin of logical replication changes, and provide mechanisms
+      for tracking the progress of replication
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <link linkend="BRIN">Block Range Indexes</> (<acronym>BRIN</>)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Substantial performance improvements for sorting
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Substantial performance improvements for multi-CPU machines
      </para>
     </listitem>
 
@@ -87,6 +130,11 @@
      <para>
       Change <application>pg_ctl</>'s default shutdown mode from
       <literal>smart</> to <literal>fast</> (Bruce Momjian)
+     </para>
+
+     <para>
+      This means the default behavior will be to forcibly cancel existing
+      database sessions, not simply wait for them to exit.
      </para>
     </listitem>
 
@@ -255,8 +303,10 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
        </para>
 
        <para>
-        <acronym>BRIN</> indexes are very compact and cheap to update by
-        storing min/max values for a range of heap blocks.
+        <acronym>BRIN</> indexes store only summary data (such as minimum
+        and maximum values) for ranges of heap blocks.  They are therefore
+        very compact and cheap to update; but if the data is naturally
+        clustered, they can still provide substantial speedup of searches.
        </para>
       </listitem>
 
@@ -273,9 +323,9 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
 
        <para>
         Previously, a common table expression was required to return a
-        large number of rows ordered by bounding-box distance, and then
-        filtered further with a more accurate non-bounding-box distance
-        calculation.
+        large number of rows ordered by bounding-box distance, and the
+        result then had to be filtered further with a more accurate
+        non-bounding-box distance calculation.
        </para>
       </listitem>
 
@@ -335,9 +385,9 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-05-13 [78efd5c] Robert..: Extend abbreviated key infrastructure to datum ..
 -->
        <para>
-        Improve the speed of sorting <type>VARCHAR</>, <type>TEXT</>,
-        and <type>NUMERIC</> fields (Peter Geoghegan, Andrew Gierth,
-        Robert Haas)
+        Improve the speed of sorting of <type>varchar</>, <type>text</>,
+        and <type>numeric</> fields via <quote>abbreviated</> keys
+        (Peter Geoghegan, Andrew Gierth, Robert Haas)
        </para>
       </listitem>
 
@@ -358,10 +408,9 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-09-10 [45f6240] Heikki..: Pack tuples in a hash join batch densely, to sa..
 2014-09-12 [8cce08f] Robert..: Change NTUP_PER_BUCKET to 1 to improve hash joi..
 2014-10-13 [30d7ae3] Kevin ..: Increase number of hash join buckets for undere..
-FIXME: bad description? Should talk about hash joins
 -->
        <para>
-        Improve in-memory hash performance (Tomas Vondra, Robert Haas)
+        Improve performance of hash joins (Tomas Vondra, Robert Haas)
        </para>
       </listitem>
 
@@ -369,11 +418,10 @@ FIXME: bad description? Should talk about hash joins
 <!--
 2014-09-25 [5d7962c] Robert..: Change locking regimen around buffer replacement.
 2014-12-25 [d72731a] Andres..: Lockless StrategyGetBuffer clock sweep hot path.
-FIXME: Add Andres
 -->
        <para>
         Improve concurrency of shared buffer replacement
-        (Robert Haas, Amit Kapila)
+        (Robert Haas, Amit Kapila, Andres Freund)
        </para>
       </listitem>
 
@@ -397,12 +445,8 @@ FIXME: Add Andres
 2015-01-19 [2d115e4] Andres..: Fix various shortcomings of the new PrivateRefC..
 -->
        <para>
-        Make backend local tracking of buffer pins memory efficient (Andres Freund)
-       </para>
-
-       <para>
-        Previously each session allocated an array with space for every buffer
-        in <link linkend="guc-shared-buffers"><varname>shared_buffers</></link>.
+        Make per-backend tracking of buffer pins more memory-efficient
+        (Andres Freund)
        </para>
       </listitem>
 
@@ -425,8 +469,8 @@ FIXME: Add Andres
 2014-07-15 [f15821e] Tom Lane: Allow join removal in some cases involving a le..
 -->
        <para>
-        Allow the optimizer to remove unnecessary references to left
-        outer join subqueries (David Rowley)
+        Allow the optimizer to remove unnecessary references to left-joined
+        subqueries (David Rowley)
        </para>
       </listitem>
 
@@ -435,7 +479,7 @@ FIXME: Add Andres
 2014-06-27 [d222585] Tom Lane: Allow pushdown of WHERE quals into subqueries w..
 -->
        <para>
-        Allow pushdown of query restrictions into <link
+        Allow pushdown of query restrictions into subqueries with <link
         linkend="functions-window">window functions</>, where appropriate
         (David Rowley)
        </para>
@@ -498,19 +542,20 @@ FIXME: Add Andres
       </listitem>
 
       <listitem>
-       <para>
 <!--
 2014-07-01 [9f03ca9] Robert..: Avoid copying index tuples when building an ind..
 -->
-        Speed up CREATE INDEX by avoiding unnecessary memory copies (Robert Haas)
+       <para>
+        Speed up <command>CREATE INDEX</> by avoiding unnecessary memory
+        copies (Robert Haas)
        </para>
       </listitem>
 
       <listitem>
-       <para>
 <!--
 2014-10-02 [3acc10c9] Robert..: Increase the number of buffer mapping partitio..
 -->
+       <para>
         Increase the number of buffer mapping partitions (Amit Kapila,
         Andres Freund, Robert Haas)
        </para>
@@ -534,12 +579,9 @@ FIXME: Add Andres
 2015-04-03 [4ff695b1] Alvaro..: Add log_min_autovacuum_duration per-table option
 -->
        <para>
-        Add per-table autovacuum logging control via
-        <varname>log_min_autovacuum_duration</> (Michael Paquier)
-       </para>
-
-       <para>
-        NOT DOCUMENTED?
+        Add per-table autovacuum logging control via new
+        <varname>log_min_autovacuum_duration</> storage parameter
+        (Michael Paquier)
        </para>
       </listitem>
 
@@ -677,17 +719,6 @@ FIXME: Add docs about restartpoint behaviour change
 
       <listitem>
 <!--
-2015-03-11 [57aa5b2] Fujii ..: Add GUC to enable compression of full page imag..
--->
-       <para>
-        Add configuration parameter <xref linkend="guc-wal-compression"> to
-        control compression of full page images stored in <acronym>WAL</>
-        (Rahila Syed, Michael Paquier)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2014-12-03 [73c986a] Alvaro..: Keep track of transaction commit timestamps
 -->
        <para>
@@ -736,7 +767,7 @@ FIXME: Add docs about restartpoint behaviour change
        <para>
         This means that assertions can no longer be turned
         off if they were enabled at compile time, allowing for more
-        efficient code optimization.  This change also removed the <link
+        efficient code optimization.  This change also removes the <link
         linkend="app-postgres-options">postgres</> <option>-A</> option.
        </para>
       </listitem>
@@ -789,7 +820,8 @@ FIXME: Add docs about restartpoint behaviour change
        <para>
         Add <structname>pending_restart</> to the system view <link
         linkend="view-pg-settings"><structname>pg_settings</></> to
-        indicate a change is pending a restart (Peter Eisentraut)
+        indicate a change has been made but will not take effect until a
+        database restart (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -804,7 +836,8 @@ FIXME: Add docs about restartpoint behaviour change
        </para>
 
        <para>
-        This command removes the setting from <filename>postgresql.auto.conf</>.
+        This command removes the specified setting
+        from <filename>postgresql.auto.conf</>.
        </para>
       </listitem>
 
@@ -881,6 +914,23 @@ FIXME: Add docs about restartpoint behaviour change
 
       <listitem>
 <!--
+2015-03-11 [57aa5b2] Fujii ..: Add GUC to enable compression of full page imag..
+-->
+       <para>
+        Allow compression of full-page images stored in <acronym>WAL</>
+        (Rahila Syed, Michael Paquier)
+       </para>
+
+       <para>
+        This feature reduces WAL volume, at the cost of more CPU time spent
+        on WAL logging and WAL replay.  It is controlled by a new
+        configuration parameter <xref linkend="guc-wal-compression">, which
+        currently is off by default.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-05-08 [de76884] Heikki..: At promotion, archive last segment from old tim..
 -->
        <para>
@@ -910,12 +960,11 @@ FIXME: Add docs about restartpoint behaviour change
       <listitem>
 <!--
 2015-04-29 [5aa2350] Andres..: Introduce replication progress tracking infrast..
-2015-03-15 [4f1b890] Andres..: Merge the various forms of transaction commit &..
-FIXME: Correct description
 -->
        <para>
         Allow <link linkend="pg-replication-origin-create">labeling</> of
-        the origin progress of logical replication changes (Andres Freund)
+        the origin of logical replication changes, and provide mechanisms
+        for tracking the progress of replication (Andres Freund)
        </para>
 
        <para>
@@ -925,7 +974,6 @@ FIXME: Correct description
 
       <listitem>
 <!--
-2015-04-21 [d811c03] Andres..: Add 'active_in' column to pg_replication_slots.
 2015-04-21 [d811c03] Andres..: Add 'active_in' column to pg_replication_slots.
 -->
        <para>
@@ -1013,7 +1061,7 @@ FIXME: Correct description
 2014-10-07 [df630b0] Alvaro..: Implement SKIP LOCKED for row-level locks
 -->
        <para>
-        Add new <link linkend="SQL-SELECT"><command>SELECT</></> option
+        Add <link linkend="SQL-SELECT"><command>SELECT</></> option
         <literal>SKIP LOCKED</> to skip locked rows (Thomas Munro)
        </para>
 
@@ -1216,12 +1264,11 @@ FIXME: Correct description
        </para>
 
        <para>
-        Commands include <link linkend="SQL-ALTERUSER"><command>ALTER
-        USER</></>,
-       <link linkend="SQL-ALTERGROUP"><command>ALTER
+        This includes <link linkend="SQL-ALTERUSER"><command>ALTER
+        USER</></>, <link linkend="SQL-ALTERGROUP"><command>ALTER
         GROUP</></>, <link linkend="SQL-ALTERROLE"><command>ALTER
         ROLE</></>, <link linkend="SQL-GRANT"><command>GRANT</></>,
-        and various <command>ALTER OBJECT / OWNER TO</> commands.
+        and various <command>ALTER <replaceable>object</> OWNER TO</> commands.
        </para>
       </listitem>
 
@@ -1256,8 +1303,8 @@ FIXME: Correct description
        </para>
 
        <para>
-        Previously only <command>UPDATE</>, <command>DELETE</>, and
-        <command>TRUNCATE</> privileges allowed this.
+        Previously this required <command>UPDATE</>, <command>DELETE</>, or
+        <command>TRUNCATE</> privileges.
        </para>
       </listitem>
 
@@ -1440,7 +1487,7 @@ FIXME: Better description?
 2014-09-09 [57b1085] Peter ..: Allow empty content in xml type
 -->
       <para>
-       Allow the <link linkend="datatype-xml"><type>XML</></> data type
+       Allow the <link linkend="datatype-xml"><type>xml</></> data type
        to accept empty or all-whitespace values (Peter Eisentraut)
       </para>
 
@@ -1455,7 +1502,7 @@ FIXME: Better description?
 2014-10-21 [6f04368] Peter ..: Allow input format xxxx-xxxx-xxxx for macaddr ..
 -->
       <para>
-       Allow <link linkend="datatype-macaddr"><type>MACADDR</></> input
+       Allow <link linkend="datatype-macaddr"><type>macaddr</></> input
        using the format <literal>xxxx-xxxx-xxxx</> (Herwin Weststrate)
       </para>
      </listitem>
@@ -1467,7 +1514,7 @@ FIXME: Add more specifics?
 -->
       <para>
        Tighten syntax of <link
-       linkend="datatype-interval-input"><type>INTERVAL</></> precision
+       linkend="datatype-interval-input"><type>interval</></> precision
        specifications (Bruce Momjian)
       </para>
 
@@ -1483,9 +1530,23 @@ FIXME: Add more specifics?
 -->
       <para>
        Add selectivity estimators for <link
-       linkend="datatype-inet"><type>INET</></>/<link
-       linkend="datatype-cidr"><type>CIDR</></> operators and improve
+       linkend="datatype-inet"><type>inet</></>/<link
+       linkend="datatype-cidr"><type>cidr</></> operators and improve
        estimators for text search functions (Emre Hasegeli, Tom Lane)
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
+2015-05-09 [0c90f67] Andrew..: Add new OID alias type regrole
+2015-05-09 [cb9fa80] Andrew..: Add new OID alias type regnamespace
+-->
+      <para>
+       Add data
+       types <link linkend="datatype-oid-table"><type>regrole</></link>
+       and <link linkend="datatype-oid-table"><type>regnamespace</></link>
+       that simplify pretty-printing the <type>OID</> of a role or
+       namespace (Kyotaro Horiguchi)
       </para>
      </listitem>
 
@@ -1515,8 +1576,8 @@ FIXME: Add more specifics?
 2014-12-12 [7e354ab] Andrew..: Add several generator functions for jsonb that ..
 -->
        <para>
-        Add several generator functions for <type>JSONB</> that already
-        existed for <type>JSON</> (Andrew Dunstan)
+        Add several generator functions for <type>jsonb</> that already
+        existed for <type>json</> (Andrew Dunstan)
        </para>
 
        <para>
@@ -1541,8 +1602,8 @@ FIXME: Add more specifics?
 -->
        <para>
         Reduce casting requirements to/from <link
-        linkend="datatype-json"><type>JSON</></> and <link
-        linkend="datatype-json"><type>JSONB</></> (Tom Lane)
+        linkend="datatype-json"><type>json</></> and <link
+        linkend="datatype-json"><type>jsonb</></> (Tom Lane)
        </para>
       </listitem>
 
@@ -1551,9 +1612,9 @@ FIXME: Add more specifics?
 2015-06-11 [908e234] Andrew..: Rename jsonb - text[] operator to #- to avoid a..
 -->
        <para>
-        Allow <type>TEXT</>, <type>TEXT</> array, and <type>INTEGER</>
+        Allow <type>text</>, <type>text</> array, and <type>integer</>
         values to be <link linkend="functions-jsonb-op-table">subtracted</>
-        from <type>JSONB</> documents (Dmitry Dolgov, Andrew Dunstan)
+        from <type>jsonb</> documents (Dmitry Dolgov, Andrew Dunstan)
        </para>
       </listitem>
 
@@ -1562,8 +1623,8 @@ FIXME: Add more specifics?
 2015-05-12 [c694701] Andrew..: Additional functions and operators for jsonb
 -->
        <para>
-        Add <type>JSONB</> <link
-        linkend="functions-jsonb-op-table">operator</> <literal>||</>
+        Add <type>jsonb</> <link
+        linkend="functions-jsonb-op-table"><literal>||</></> operator
         (Dmitry Dolgov, Andrew Dunstan)
        </para>
       </listitem>
@@ -1577,7 +1638,7 @@ FIXME: Add more specifics?
         linkend="functions-json-processing-table"><function>json_strip_nulls()</></>
         and <link
         linkend="functions-json-processing-table"><function>jsonb_strip_nulls()</></>
-        functions to remove <type>JSON</> null values from documents
+        functions to remove <type>json</> null values from documents
         (Andrew Dunstan)
        </para>
       </listitem>
@@ -1599,7 +1660,7 @@ FIXME: Add more specifics?
 -->
        <para>
         Add <link linkend="functions-srf"><function>generate_series()</></>
-        for <type>NUMERIC</> values (Plato Malugin)
+        for <type>numeric</> values (Plato Malugin)
        </para>
       </listitem>
 
@@ -1759,7 +1820,7 @@ FIXME: Add more specifics?
        </para>
 
        <para>
-        This represents the last time the snapshot files was written to
+        This represents the last time the snapshot file was written to
         the file system.
        </para>
       </listitem>
@@ -1772,18 +1833,6 @@ FIXME: Add more specifics?
         Add <link
         linkend="vacuum-for-multixact-wraparound"><function>mxid_age()</></>
         to compute multi-xid age (Bruce Momjian)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-05-09 [0c90f67] Andrew..: Add new OID alias type regrole
-2015-05-09 [cb9fa80] Andrew..: Add new OID alias type regnamespace
--->
-       <para>
-        Add data types <link
-        linkend="datatype-oid-table"><type>regrole</> <type>regnamespace</></> that returns
-        the <type>OID</> of a role (Kyotaro Horiguchi)
        </para>
       </listitem>
      </itemizedlist>
@@ -1800,9 +1849,9 @@ FIXME: Add more specifics?
 2014-08-28 [6c40f83] Tom Lane: Add min and max aggregates for inet/cidr data t..
 -->
        <para>
-        Add <function>MIN()</>/<function>MAX()</> aggregates
-        for <link linkend="datatype-inet"><type>INET</></>/<link
-        linkend="datatype-cidr"><type>CIDR</></> data types (Haribabu
+        Add <function>min()</>/<function>max()</> aggregates
+        for <link linkend="datatype-inet"><type>inet</></>/<link
+        linkend="datatype-cidr"><type>cidr</></> data types (Haribabu
         Kommi)
        </para>
       </listitem>
@@ -1813,8 +1862,8 @@ FIXME: Add more specifics?
 2015-03-20 [959277a] Andres..: Use 128-bit math to accelerate some aggregation..
 -->
        <para>
-        Use 128-bit integers, where supported, as aggregate accumulators
-        (Andreas Karlsson)
+        Use 128-bit integers, where supported, as accumulators for some
+        aggregate functions (Andreas Karlsson)
        </para>
       </listitem>
 
@@ -1851,7 +1900,7 @@ FIXME: Add more specifics?
 -->
       <para>
        Reduce lossiness of <link
-       linkend="plpython"><application>PL/Python</></> floating value
+       linkend="plpython"><application>PL/Python</></> floating-point value
        conversions (Marko Kreen)
       </para>
      </listitem>
@@ -1943,6 +1992,11 @@ FIXME: Add more specifics?
        and <link linkend="pgxlogdump"><application>pg_xlogdump</></>
        from <filename>contrib</> to <filename>src/bin</> (Peter Eisentraut)
       </para>
+
+      <para>
+       This should result in these programs being installed by default in
+       most installations.
+      </para>
      </listitem>
 
      <listitem>
@@ -1977,14 +2031,14 @@ FIXME: Add more specifics?
 2014-11-18 [c4f99d2] Fujii ..: Add &#8211;&#8211;synchronous option to pg_receivexlog, for..
 -->
       <para>
-       Allow the <link
+       Allow <link
        linkend="app-pgreceivexlog"><application>pg_receivexlog</></>
-       to synchronously flush <acronym>WAL</> to storage using
-       <option>--synchronous</> (Furuya Osamu, Fujii Masao)
+       to synchronously flush <acronym>WAL</> to storage using new
+       <option>--synchronous</> option (Furuya Osamu, Fujii Masao)
       </para>
 
       <para>
-       Without this, <acronym>WAL</> files are fsynced only on close.
+       Without this, <acronym>WAL</> files are fsync'ed only on close.
       </para>
      </listitem>
 
@@ -1994,7 +2048,7 @@ FIXME: Add more specifics?
 -->
       <para>
        Allow <link linkend="APP-VACUUMDB"><application>vacuumdb</></> to
-       vacuum in parallel using <option>--jobs</> (Dilip Kumar)
+       vacuum in parallel using new <option>--jobs</> option (Dilip Kumar)
       </para>
      </listitem>
 
@@ -2084,9 +2138,9 @@ FIXME: Add more specifics?
 2014-09-02 [51bb795] Andres..: Add psql PROMPT variable showing which line of ..
 -->
         <para>
-         Add <application>psql</> <link
-         linkend="APP-PSQL-variables"><envar>PROMPT</></> variables option
-         (<literal>%l</>) to display the multiline statement line number
+         Add new option <literal>%l</> in <application>psql</>'s <link
+         linkend="APP-PSQL-variables"><envar>PROMPT</></> variables
+         to display the current multiline statement line number
          (Sawada Masahiko)
         </para>
        </listitem>
@@ -2153,7 +2207,7 @@ FIXME: Add more specifics?
         </para>
 
         <para>
-         <literal>variables</> outputs <application>psql</> variables
+         <literal>variables</> shows <application>psql</>'s special variables
          and <literal>options</> shows command-line options.
          <command>\? commands</> is the default output. This help
          information can also be output via <literal>--help=section</>.
@@ -2249,9 +2303,8 @@ FIXME: Add more specifics?
        <para>
         The remote snapshot must have been exported by
         <function>pg_export_snapshot()</> or logical replication slot
-        creation.  This can be used by another <application>pg_dump</> to
-        use a share a consistent snapshot across <application>pg_dump</>
-        processes.
+        creation.  This can be used to share a consistent snapshot
+        across multiple <application>pg_dump</> processes.
        </para>
       </listitem>
 
@@ -2480,6 +2533,16 @@ FIXME: Improve description, link
 
       <listitem>
 <!--
+2015-03-15 [4f1b890] Andres..: Merge the various forms of transaction commit &..
+-->
+       <para>
+        Improve the representation of transaction commit and abort WAL
+        records (Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2014-09-25 [b64d92f] Andres..: Add a basic atomic ops API abstracting away pla..
 -->
        <para>
@@ -2666,8 +2729,8 @@ FIXME: Improve description, link
 2014-07-12 [8d9a0e8] Magnus..: Support &#8211;&#8211;with-extra-version equivalent functi..
 -->
        <para>
-        Allow <link linkend="install-procedure">configure's
-        <option>--with-extra-version</></> to be honored by the
+        Allow <link linkend="install-procedure">configure</>'s
+        <option>--with-extra-version</> option to be honored by the
         <productname>MSVC</> build (Michael Paquier)
        </para>
       </listitem>
