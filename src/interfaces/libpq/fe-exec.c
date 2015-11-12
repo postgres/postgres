@@ -1553,8 +1553,10 @@ sendFailed:
 /*
  * pqHandleSendFailure: try to clean up after failure to send command.
  *
- * Primarily, what we want to accomplish here is to process any messages that
- * the backend might have sent just before it died.
+ * Primarily, what we want to accomplish here is to process any ERROR or
+ * NOTICE messages that the backend might have sent just before it died.
+ * Since we're in IDLE state, all such messages will get sent to the notice
+ * processor.
  *
  * NOTE: this routine should only be called in PGASYNC_IDLE state.
  */
@@ -1562,16 +1564,17 @@ void
 pqHandleSendFailure(PGconn *conn)
 {
 	/*
-	 * Accept and parse any available input data.  Note that if pqReadData
-	 * decides the backend has closed the channel, it will close our side of
-	 * the socket --- that's just what we want here.
+	 * Accept and parse any available input data, ignoring I/O errors.  Note
+	 * that if pqReadData decides the backend has closed the channel, it will
+	 * close our side of the socket --- that's just what we want here.
 	 */
 	while (pqReadData(conn) > 0)
 		parseInput(conn);
 
 	/*
-	 * Make one attempt to parse available input messages even if we read no
-	 * data.
+	 * Be sure to parse available input messages even if we read no data.
+	 * (Note: calling parseInput within the above loop isn't really necessary,
+	 * but it prevents buffer bloat if there's a lot of data available.)
 	 */
 	parseInput(conn);
 }
