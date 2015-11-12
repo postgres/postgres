@@ -52,19 +52,24 @@ handle_help_version_opts(int argc, char *argv[],
 
 
 /*
- * Make a database connection with the given parameters.  An
- * interactive password prompt is automatically issued if required.
+ * Make a database connection with the given parameters.
+ *
+ * A password can be given, but if not (or if user forces us to) we prompt
+ * interactively for one, unless caller prohibited us from doing so.
  */
 PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, enum trivalue prompt_password,
-				const char *progname, bool fail_ok)
+				const char *pguser, const char *pgpassword,
+				enum trivalue prompt_password, const char *progname,
+				bool fail_ok)
 {
 	PGconn	   *conn;
-	char	   *password = NULL;
+	char	   *password;
 	bool		new_pass;
 
-	if (prompt_password == TRI_YES)
+	password = pgpassword ? strdup(pgpassword) : NULL;
+
+	if (prompt_password == TRI_YES && !pgpassword)
 		password = simple_prompt("Password: ", 100, false);
 
 	/*
@@ -95,22 +100,26 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		new_pass = false;
 		conn = PQconnectdbParams(keywords, values, true);
 
-		free(keywords);
-		free(values);
-
 		if (!conn)
 		{
-			fprintf(stderr, _("%s: could not connect to database %s\n"),
+			fprintf(stderr, _("%s: could not connect to database %s: out of memory\n"),
 					progname, dbname);
 			exit(1);
 		}
 
+		pg_free(keywords);
+		pg_free(values);
+
+		/*
+		 * No luck?  Trying asking (again) for a password.
+		 */
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL &&
 			prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
+			if (password)
+				free(password);
 			password = simple_prompt("Password: ", 100, false);
 			new_pass = true;
 		}
@@ -148,14 +157,14 @@ connectMaintenanceDatabase(const char *maintenance_db, const char *pghost,
 
 	/* If a maintenance database name was specified, just connect to it. */
 	if (maintenance_db)
-		return connectDatabase(maintenance_db, pghost, pgport, pguser,
+		return connectDatabase(maintenance_db, pghost, pgport, pguser, NULL,
 							   prompt_password, progname, false);
 
 	/* Otherwise, try postgres first and then template1. */
-	conn = connectDatabase("postgres", pghost, pgport, pguser, prompt_password,
-						   progname, true);
+	conn = connectDatabase("postgres", pghost, pgport, pguser, NULL,
+						   prompt_password, progname, true);
 	if (!conn)
-		conn = connectDatabase("template1", pghost, pgport, pguser,
+		conn = connectDatabase("template1", pghost, pgport, pguser, NULL,
 							   prompt_password, progname, false);
 
 	return conn;

@@ -203,7 +203,7 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 		appendPQExpBuffer(&sql, " %s", table);
 	appendPQExpBufferChar(&sql, ';');
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
+	conn = connectDatabase(dbname, host, port, username, NULL, prompt_password,
 						   progname, false);
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
