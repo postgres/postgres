@@ -613,10 +613,11 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	WRITE_NODE_FIELD(custom_private);
 	WRITE_NODE_FIELD(custom_scan_tlist);
 	WRITE_BITMAPSET_FIELD(custom_relids);
+	/* Dump library and symbol name instead of raw pointer */
 	appendStringInfoString(str, " :methods ");
-	_outToken(str, node->methods->CustomName);
-	if (node->methods->TextOutCustomScan)
-		node->methods->TextOutCustomScan(str, node);
+	_outToken(str, node->methods->LibraryName);
+	appendStringInfoChar(str, ' ');
+	_outToken(str, node->methods->SymbolName);
 }
 
 static void

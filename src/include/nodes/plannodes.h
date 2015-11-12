@@ -557,12 +557,11 @@ struct CustomScan;
 typedef struct CustomScanMethods
 {
 	const char *CustomName;
+	const char *LibraryName;
+	const char *SymbolName;
 
 	/* Create execution state (CustomScanState) from a CustomScan plan node */
 	Node	   *(*CreateCustomScanState) (struct CustomScan *cscan);
-	/* Optional: print custom_xxx fields in some special way */
-	void		(*TextOutCustomScan) (StringInfo str,
-											  const struct CustomScan *node);
 } CustomScanMethods;
 
 typedef struct CustomScan
