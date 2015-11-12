@@ -446,8 +446,8 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
 	/* build an error result holding the error message */
 	pqSaveErrorResult(conn);
 	conn->asyncStatus = PGASYNC_READY;	/* drop out of GetResult wait loop */
-
-	pqDropConnection(conn);
+	/* flush input data since we're giving up on processing it */
+	pqDropConnection(conn, true);
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 }
 
