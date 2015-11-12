@@ -1838,10 +1838,10 @@ MultiXactShmemInit(void)
 	MultiXactMemberCtl->PagePrecedes = MultiXactMemberPagePrecedes;
 
 	SimpleLruInit(MultiXactOffsetCtl,
-				  "MultiXactOffset Ctl", NUM_MXACTOFFSET_BUFFERS, 0,
+				  "multixact_offset", NUM_MXACTOFFSET_BUFFERS, 0,
 				  MultiXactOffsetControlLock, "pg_multixact/offsets");
 	SimpleLruInit(MultiXactMemberCtl,
-				  "MultiXactMember Ctl", NUM_MXACTMEMBER_BUFFERS, 0,
+				  "multixact_member", NUM_MXACTMEMBER_BUFFERS, 0,
 				  MultiXactMemberControlLock, "pg_multixact/members");
 
 	/* Initialize our shared state struct */

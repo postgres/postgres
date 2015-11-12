@@ -456,7 +456,7 @@ void
 CLOGShmemInit(void)
 {
 	ClogCtl->PagePrecedes = CLOGPagePrecedes;
-	SimpleLruInit(ClogCtl, "CLOG Ctl", CLOGShmemBuffers(), CLOG_LSNS_PER_PAGE,
+	SimpleLruInit(ClogCtl, "clog", CLOGShmemBuffers(), CLOG_LSNS_PER_PAGE,
 				  CLogControlLock, "pg_clog");
 }
 

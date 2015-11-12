@@ -479,7 +479,7 @@ AsyncShmemInit(void)
 	 * Set up SLRU management of the pg_notify data.
 	 */
 	AsyncCtl->PagePrecedes = asyncQueuePagePrecedes;
-	SimpleLruInit(AsyncCtl, "Async Ctl", NUM_ASYNC_BUFFERS, 0,
+	SimpleLruInit(AsyncCtl, "async", NUM_ASYNC_BUFFERS, 0,
 				  AsyncCtlLock, "pg_notify");
 	/* Override default assumption that writes should be fsync'd */
 	AsyncCtl->do_fsync = false;

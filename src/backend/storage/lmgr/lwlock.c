@@ -76,11 +76,6 @@
  */
 #include "postgres.h"
 
-#include "access/clog.h"
-#include "access/commit_ts.h"
-#include "access/multixact.h"
-#include "access/subtrans.h"
-#include "commands/async.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "postmaster/postmaster.h"
@@ -363,24 +358,6 @@ NumLWLocks(void)
 
 	/* proc.c needs one for each backend or auxiliary process */
 	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
-
-	/* clog.c needs one per CLOG buffer */
-	numLocks += CLOGShmemBuffers();
-
-	/* commit_ts.c needs one per CommitTs buffer */
-	numLocks += CommitTsShmemBuffers();
-
-	/* subtrans.c needs one per SubTrans buffer */
-	numLocks += NUM_SUBTRANS_BUFFERS;
-
-	/* multixact.c needs two SLRU areas */
-	numLocks += NUM_MXACTOFFSET_BUFFERS + NUM_MXACTMEMBER_BUFFERS;
-
-	/* async.c needs one per Async buffer */
-	numLocks += NUM_ASYNC_BUFFERS;
-
-	/* predicate.c needs one per old serializable xid buffer */
-	numLocks += NUM_OLDSERXID_BUFFERS;
 
 	/* slot.c needs one for each slot */
 	numLocks += max_replication_slots;

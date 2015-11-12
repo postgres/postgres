@@ -152,7 +152,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	sz += MAXALIGN(nslots * sizeof(bool));		/* page_dirty[] */
 	sz += MAXALIGN(nslots * sizeof(int));		/* page_number[] */
 	sz += MAXALIGN(nslots * sizeof(int));		/* page_lru_count[] */
-	sz += MAXALIGN(nslots * sizeof(LWLock *));	/* buffer_locks[] */
+	sz += MAXALIGN(nslots * sizeof(LWLockPadded)); /* buffer_locks[] */
 
 	if (nlsns > 0)
 		sz += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));	/* group_lsn[] */
@@ -203,8 +203,6 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		offset += MAXALIGN(nslots * sizeof(int));
 		shared->page_lru_count = (int *) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(int));
-		shared->buffer_locks = (LWLock **) (ptr + offset);
-		offset += MAXALIGN(nslots * sizeof(LWLock *));
 
 		if (nlsns > 0)
 		{
@@ -212,19 +210,34 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			offset += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));
 		}
 
+		/* Initialize LWLocks */
+		shared->buffer_locks = (LWLockPadded *) ShmemAlloc(sizeof(LWLockPadded) * nslots);
+
+		Assert(strlen(name) + 1 < SLRU_MAX_NAME_LENGTH);
+		strlcpy(shared->lwlock_tranche_name, name, SLRU_MAX_NAME_LENGTH);
+		shared->lwlock_tranche_id = LWLockNewTrancheId();
+		shared->lwlock_tranche.name = shared->lwlock_tranche_name;
+		shared->lwlock_tranche.array_base = shared->buffer_locks;
+		shared->lwlock_tranche.array_stride = sizeof(LWLockPadded);
+
 		ptr += BUFFERALIGN(offset);
 		for (slotno = 0; slotno < nslots; slotno++)
 		{
+			LWLockInitialize(&shared->buffer_locks[slotno].lock,
+				shared->lwlock_tranche_id);
+
 			shared->page_buffer[slotno] = ptr;
 			shared->page_status[slotno] = SLRU_PAGE_EMPTY;
 			shared->page_dirty[slotno] = false;
 			shared->page_lru_count[slotno] = 0;
-			shared->buffer_locks[slotno] = LWLockAssign();
 			ptr += BLCKSZ;
 		}
 	}
 	else
 		Assert(found);
+
+	/* Register SLRU tranche in the main tranches array */
+	LWLockRegisterTranche(shared->lwlock_tranche_id, &shared->lwlock_tranche);
 
 	/*
 	 * Initialize the unshared control struct, including directory path. We
@@ -308,8 +321,8 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 
 	/* See notes at top of file */
 	LWLockRelease(shared->ControlLock);
-	LWLockAcquire(shared->buffer_locks[slotno], LW_SHARED);
-	LWLockRelease(shared->buffer_locks[slotno]);
+	LWLockAcquire(&shared->buffer_locks[slotno].lock, LW_SHARED);
+	LWLockRelease(&shared->buffer_locks[slotno].lock);
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
 	/*
@@ -323,7 +336,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 	if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS ||
 		shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS)
 	{
-		if (LWLockConditionalAcquire(shared->buffer_locks[slotno], LW_SHARED))
+		if (LWLockConditionalAcquire(&shared->buffer_locks[slotno].lock, LW_SHARED))
 		{
 			/* indeed, the I/O must have failed */
 			if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
@@ -333,7 +346,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 				shared->page_status[slotno] = SLRU_PAGE_VALID;
 				shared->page_dirty[slotno] = true;
 			}
-			LWLockRelease(shared->buffer_locks[slotno]);
+			LWLockRelease(&shared->buffer_locks[slotno].lock);
 		}
 	}
 }
@@ -402,7 +415,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 		shared->page_dirty[slotno] = false;
 
 		/* Acquire per-buffer lock (cannot deadlock, see notes at top) */
-		LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
+		LWLockAcquire(&shared->buffer_locks[slotno].lock, LW_EXCLUSIVE);
 
 		/* Release control lock while doing I/O */
 		LWLockRelease(shared->ControlLock);
@@ -422,7 +435,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 
 		shared->page_status[slotno] = ok ? SLRU_PAGE_VALID : SLRU_PAGE_EMPTY;
 
-		LWLockRelease(shared->buffer_locks[slotno]);
+		LWLockRelease(&shared->buffer_locks[slotno].lock);
 
 		/* Now it's okay to ereport if we failed */
 		if (!ok)
@@ -518,7 +531,7 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	shared->page_dirty[slotno] = false;
 
 	/* Acquire per-buffer lock (cannot deadlock, see notes at top) */
-	LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
+	LWLockAcquire(&shared->buffer_locks[slotno].lock, LW_EXCLUSIVE);
 
 	/* Release control lock while doing I/O */
 	LWLockRelease(shared->ControlLock);
@@ -547,7 +560,7 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 
 	shared->page_status[slotno] = SLRU_PAGE_VALID;
 
-	LWLockRelease(shared->buffer_locks[slotno]);
+	LWLockRelease(&shared->buffer_locks[slotno].lock);
 
 	/* Now it's okay to ereport if we failed */
 	if (!ok)

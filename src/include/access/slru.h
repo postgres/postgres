@@ -36,6 +36,9 @@
  */
 #define SLRU_PAGES_PER_SEGMENT	32
 
+/* Maximum length of an SLRU name */
+#define SLRU_MAX_NAME_LENGTH	32
+
 /*
  * Page status codes.  Note that these do not include the "dirty" bit.
  * page_dirty can be TRUE only in the VALID or WRITE_IN_PROGRESS states;
@@ -69,7 +72,6 @@ typedef struct SlruSharedData
 	bool	   *page_dirty;
 	int		   *page_number;
 	int		   *page_lru_count;
-	LWLock	  **buffer_locks;
 
 	/*
 	 * Optional array of WAL flush LSNs associated with entries in the SLRU
@@ -99,6 +101,12 @@ typedef struct SlruSharedData
 	 * the latest page.
 	 */
 	int			latest_page_number;
+
+	/* LWLocks */
+	int			lwlock_tranche_id;
+	LWLockTranche lwlock_tranche;
+	char		lwlock_tranche_name[SLRU_MAX_NAME_LENGTH];
+	LWLockPadded *buffer_locks;
 } SlruSharedData;
 
 typedef SlruSharedData *SlruShared;
