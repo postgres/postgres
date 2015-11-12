@@ -297,8 +297,8 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(name));
 	appendPQExpBufferChar(&sql, ';');
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+	conn = connectDatabase(dbname, host, port, username, NULL,
+						   prompt_password, progname, false);
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
@@ -372,8 +372,8 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 
 	appendPQExpBuffer(&sql, " SYSTEM %s;", dbname);
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+	conn = connectDatabase(dbname, host, port, username, NULL,
+						   prompt_password, progname, false);
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		fprintf(stderr, _("%s: reindexing of system catalogs failed: %s"),
