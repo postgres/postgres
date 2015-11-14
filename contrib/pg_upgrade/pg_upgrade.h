@@ -35,7 +35,6 @@
 #define DB_DUMP_FILE		"pg_upgrade_dump_db.sql"
 
 #ifndef WIN32
-#define pg_copy_file		copy_file
 #define pg_mv_file			rename
 #define pg_link_file		link
 #define PATH_SEPARATOR      '/'
@@ -43,7 +42,6 @@
 #define RMDIR_CMD			"rm -rf"
 #define SCRIPT_EXT			"sh"
 #else
-#define pg_copy_file		CopyFile
 #define pg_mv_file			pgrename
 #define pg_link_file		win32_pghardlink
 #define sleep(x)			Sleep(x * 1000)
