@@ -34,7 +34,11 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 {
 	if (pageConverter == NULL)
 	{
-		if (pg_copy_file(src, dst, force) == -1)
+#ifndef WIN32
+		if (copy_file(src, dst, force) == -1)
+#else
+		if (CopyFile(src, dst, force) == 0)
+#endif
 			return getErrorText(errno);
 		else
 			return NULL;
