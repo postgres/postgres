@@ -860,6 +860,57 @@ select 10.0 ^ -2147483647 as rounds_to_zero;
 select 10.0 ^ 2147483647 as overflows;
 select 117743296169.0 ^ 1000000000 as overflows;
 
+-- cases that used to return inaccurate results
+select 3.789 ^ 21;
+select 3.789 ^ 35;
+select 1.2 ^ 345;
+select 0.12 ^ (-20);
+
+-- cases that used to error out
+select 0.12 ^ (-25);
+select 0.5678 ^ (-85);
+
+--
+-- Tests for raising to non-integer powers
+--
+
+-- special cases
+select 0.0 ^ 0.0;
+select (-12.34) ^ 0.0;
+select 12.34 ^ 0.0;
+select 0.0 ^ 12.34;
+
+-- invalid inputs
+select 0.0 ^ (-12.34);
+select (-12.34) ^ 1.2;
+
+-- cases that used to generate inaccurate results
+select 32.1 ^ 9.8;
+select 32.1 ^ (-9.8);
+select 12.3 ^ 45.6;
+select 12.3 ^ (-45.6);
+
+-- big test
+select 1.234 ^ 5678;
+
+--
+-- Tests for EXP()
+--
+
+-- special cases
+select exp(0.0);
+select exp(1.0);
+select exp(1.0::numeric(71,70));
+
+-- cases that used to generate inaccurate results
+select exp(32.999);
+select exp(-32.999);
+select exp(123.456);
+select exp(-123.456);
+
+-- big test
+select exp(1234.5678);
+
 --
 -- Tests for generate_series
 --
@@ -880,3 +931,55 @@ select (i / (10::numeric ^ 131071))::numeric(1,0)
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(i,3) j;
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,i) j;
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,5,i) j;
+
+--
+-- Tests for LN()
+--
+
+-- Invalid inputs
+select ln(-12.34);
+select ln(0.0);
+
+-- Some random tests
+select ln(1.2345678e-28);
+select ln(0.0456789);
+select ln(0.349873948359354029493948309745709580730482050975);
+select ln(0.99949452);
+select ln(1.00049687395);
+select ln(1234.567890123456789);
+select ln(5.80397490724e5);
+select ln(9.342536355e34);
+
+--
+-- Tests for LOG() (base 10)
+--
+
+-- invalid inputs
+select log(-12.34);
+select log(0.0);
+
+-- some random tests
+select log(1.234567e-89);
+select log(3.4634998359873254962349856073435545);
+select log(9.999999999999999999);
+select log(10.00000000000000000);
+select log(10.00000000000000001);
+select log(590489.45235237);
+
+--
+-- Tests for LOG() (arbitrary base)
+--
+
+-- invalid inputs
+select log(-12.34, 56.78);
+select log(-12.34, -56.78);
+select log(12.34, -56.78);
+select log(0.0, 12.34);
+select log(12.34, 0.0);
+select log(1.0, 12.34);
+
+-- some random tests
+select log(1.23e-89, 6.4689e45);
+select log(0.99923, 4.58934e34);
+select log(1.000016, 8.452010e18);
+select log(3.1954752e47, 9.4792021e-73);
