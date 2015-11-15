@@ -288,50 +288,67 @@ SELECT relname, relkind, reloptions FROM pg_class
  mysecview4 | v       | {security_barrier=false}
 (4 rows)
 
+-- check display of whole-row variables in some corner cases
+create type nestedcomposite as (x int8_tbl);
+create view tt15v as select row(i)::nestedcomposite from int8_tbl i;
+select * from tt15v;
+                   row                    
+------------------------------------------
+ ("(123,456)")
+ ("(123,4567890123456789)")
+ ("(4567890123456789,123)")
+ ("(4567890123456789,4567890123456789)")
+ ("(4567890123456789,-4567890123456789)")
+(5 rows)
+
+select pg_get_viewdef('tt15v', true);
+                    pg_get_viewdef                    
+------------------------------------------------------
+  SELECT ROW(i.*::int8_tbl)::nestedcomposite AS "row"+
+    FROM int8_tbl i;
+(1 row)
+
+select row(i.*::int8_tbl)::nestedcomposite from int8_tbl i;
+                   row                    
+------------------------------------------
+ ("(123,456)")
+ ("(123,4567890123456789)")
+ ("(4567890123456789,123)")
+ ("(4567890123456789,4567890123456789)")
+ ("(4567890123456789,-4567890123456789)")
+(5 rows)
+
+create view tt17v as select * from int8_tbl i where i in (values(i));
+select * from tt17v;
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+select pg_get_viewdef('tt17v', true);
+               pg_get_viewdef                
+---------------------------------------------
+  SELECT i.q1, i.q2                         +
+    FROM int8_tbl i                         +
+   WHERE (i.* IN ( VALUES (i.*::int8_tbl)));
+(1 row)
+
+select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+-- clean up all the random objects we made above
+set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
-NOTICE:  drop cascades to 22 other objects
-DETAIL:  drop cascades to table temp_view_test.base_table
-drop cascades to view v7_temp
-drop cascades to view v10_temp
-drop cascades to view v11_temp
-drop cascades to view v12_temp
-drop cascades to view v2_temp
-drop cascades to view v4_temp
-drop cascades to view v6_temp
-drop cascades to view v8_temp
-drop cascades to view v9_temp
-drop cascades to table temp_view_test.base_table2
-drop cascades to view v5_temp
-drop cascades to view temp_view_test.v1
-drop cascades to view temp_view_test.v2
-drop cascades to view temp_view_test.v3
-drop cascades to view temp_view_test.v4
-drop cascades to view temp_view_test.v5
-drop cascades to view temp_view_test.v6
-drop cascades to view temp_view_test.v7
-drop cascades to view temp_view_test.v8
-drop cascades to sequence temp_view_test.seq1
-drop cascades to view temp_view_test.v9
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 20 other objects
-DETAIL:  drop cascades to table t1
-drop cascades to view temporal1
-drop cascades to view temporal2
-drop cascades to view temporal3
-drop cascades to view temporal4
-drop cascades to table t2
-drop cascades to view nontemp1
-drop cascades to view nontemp2
-drop cascades to view nontemp3
-drop cascades to view nontemp4
-drop cascades to table tbl1
-drop cascades to table tbl2
-drop cascades to table tbl3
-drop cascades to table tbl4
-drop cascades to view mytempview
-drop cascades to view pubview
-drop cascades to view mysecview1
-drop cascades to view mysecview2
-drop cascades to view mysecview3
-drop cascades to view mysecview4
 SET search_path to public;
