@@ -892,9 +892,6 @@ BuildRemapInfo(TupleDesc tupledesc)
 	Size		size;
 	AttrNumber	i;
 	bool		noop = true;
-	StringInfoData buf;
-
-	initStringInfo(&buf);
 
 	size = offsetof(RemapInfo, mapping) +
 		sizeof(RemapClass) * tupledesc->natts;
@@ -917,7 +914,6 @@ BuildRemapInfo(TupleDesc tupledesc)
 
 	if (noop)
 	{
-		appendStringInfo(&buf, "noop");
 		pfree(remapinfo);
 		remapinfo = NULL;
 	}
