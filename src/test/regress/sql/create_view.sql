@@ -191,6 +191,21 @@ AND NOT EXISTS (SELECT g FROM tbl4 LEFT JOIN tmptbl ON tbl4.h = tmptbl.j);
 SELECT count(*) FROM pg_class where relname LIKE 'mytempview'
 And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%');
 
+-- check display of whole-row variables in some corner cases
+
+create type nestedcomposite as (x int8_tbl);
+create view tt15v as select row(i)::nestedcomposite from int8_tbl i;
+select * from tt15v;
+select pg_get_viewdef('tt15v', true);
+select row(i.*::int8_tbl)::nestedcomposite from int8_tbl i;
+
+create view tt17v as select * from int8_tbl i where i in (values(i));
+select * from tt17v;
+select pg_get_viewdef('tt17v', true);
+select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
+
+-- clean up all the random objects we made above
+set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
 DROP SCHEMA testviewschm2 CASCADE;
 
