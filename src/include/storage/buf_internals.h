@@ -194,11 +194,6 @@ typedef union BufferDescPadded
 /*
  * Macros for acquiring/releasing a shared buffer header's spinlock.
  * Do not apply these to local buffers!
- *
- * Note: as a general coding rule, if you are using these then you probably
- * need to be using a volatile-qualified pointer to the buffer header, to
- * ensure that the compiler doesn't rearrange accesses to the header to
- * occur before or after the spinlock is acquired/released.
  */
 #define LockBufHdr(bufHdr)		SpinLockAcquire(&(bufHdr)->buf_hdr_lock)
 #define UnlockBufHdr(bufHdr)	SpinLockRelease(&(bufHdr)->buf_hdr_lock)
@@ -216,10 +211,10 @@ extern BufferDesc *LocalBufferDescriptors;
  */
 
 /* freelist.c */
-extern volatile BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy);
-extern void StrategyFreeBuffer(volatile BufferDesc *buf);
+extern BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy);
+extern void StrategyFreeBuffer(BufferDesc *buf);
 extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
-					 volatile BufferDesc *buf);
+					 BufferDesc *buf);
 
 extern int	StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc);
 extern void StrategyNotifyBgWriter(int bgwprocno);
