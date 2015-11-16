@@ -38,6 +38,7 @@
 #include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -55,6 +56,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
@@ -267,6 +269,15 @@ typedef struct
 #define deparse_columns_fetch(rangetable_index, dpns) \
 	((deparse_columns *) list_nth((dpns)->rtable_columns, (rangetable_index)-1))
 
+/*
+ * Entry in set_rtable_names' hash table
+ */
+typedef struct
+{
+	char		name[NAMEDATALEN];		/* Hash key --- must be first */
+	int			counter;		/* Largest addition used so far for name */
+} NameHashEntry;
+
 
 /* ----------
  * Global data
@@ -312,8 +323,6 @@ static void print_function_rettype(StringInfo buf, HeapTuple proctup);
 static void print_function_trftypes(StringInfo buf, HeapTuple proctup);
 static void set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
 				 Bitmapset *rels_used);
-static bool refname_is_unique(char *refname, deparse_namespace *dpns,
-				  List *parent_namespaces);
 static void set_deparse_for_query(deparse_namespace *dpns, Query *query,
 					  List *parent_namespaces);
 static void set_simple_column_names(deparse_namespace *dpns);
@@ -2676,14 +2685,60 @@ static void
 set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
 				 Bitmapset *rels_used)
 {
+	HASHCTL		hash_ctl;
+	HTAB	   *names_hash;
+	NameHashEntry *hentry;
+	bool		found;
+	int			rtindex;
 	ListCell   *lc;
-	int			rtindex = 1;
 
 	dpns->rtable_names = NIL;
+	/* nothing more to do if empty rtable */
+	if (dpns->rtable == NIL)
+		return;
+
+	/*
+	 * We use a hash table to hold known names, so that this process is O(N)
+	 * not O(N^2) for N names.
+	 */
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = NAMEDATALEN;
+	hash_ctl.entrysize = sizeof(NameHashEntry);
+	hash_ctl.hcxt = CurrentMemoryContext;
+	names_hash = hash_create("set_rtable_names names",
+							 list_length(dpns->rtable),
+							 &hash_ctl,
+							 HASH_ELEM | HASH_CONTEXT);
+	/* Preload the hash table with names appearing in parent_namespaces */
+	foreach(lc, parent_namespaces)
+	{
+		deparse_namespace *olddpns = (deparse_namespace *) lfirst(lc);
+		ListCell   *lc2;
+
+		foreach(lc2, olddpns->rtable_names)
+		{
+			char	   *oldname = (char *) lfirst(lc2);
+
+			if (oldname == NULL)
+				continue;
+			hentry = (NameHashEntry *) hash_search(names_hash,
+												   oldname,
+												   HASH_ENTER,
+												   &found);
+			/* we do not complain about duplicate names in parent namespaces */
+			hentry->counter = 0;
+		}
+	}
+
+	/* Now we can scan the rtable */
+	rtindex = 1;
 	foreach(lc, dpns->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 		char	   *refname;
+
+		/* Just in case this takes an unreasonable amount of time ... */
+		CHECK_FOR_INTERRUPTS();
 
 		if (rels_used && !bms_is_member(rtindex, rels_used))
 		{
@@ -2712,56 +2767,62 @@ set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
 		}
 
 		/*
-		 * If the selected name isn't unique, append digits to make it so
+		 * If the selected name isn't unique, append digits to make it so, and
+		 * make a new hash entry for it once we've got a unique name.  For a
+		 * very long input name, we might have to truncate to stay within
+		 * NAMEDATALEN.
 		 */
-		if (refname &&
-			!refname_is_unique(refname, dpns, parent_namespaces))
+		if (refname)
 		{
-			char	   *modname = (char *) palloc(strlen(refname) + 32);
-			int			i = 0;
-
-			do
+			hentry = (NameHashEntry *) hash_search(names_hash,
+												   refname,
+												   HASH_ENTER,
+												   &found);
+			if (found)
 			{
-				sprintf(modname, "%s_%d", refname, ++i);
-			} while (!refname_is_unique(modname, dpns, parent_namespaces));
-			refname = modname;
+				/* Name already in use, must choose a new one */
+				int			refnamelen = strlen(refname);
+				char	   *modname = (char *) palloc(refnamelen + 16);
+				NameHashEntry *hentry2;
+
+				do
+				{
+					hentry->counter++;
+					for (;;)
+					{
+						/*
+						 * We avoid using %.*s here because it can misbehave
+						 * if the data is not valid in what libc thinks is the
+						 * prevailing encoding.
+						 */
+						memcpy(modname, refname, refnamelen);
+						sprintf(modname + refnamelen, "_%d", hentry->counter);
+						if (strlen(modname) < NAMEDATALEN)
+							break;
+						/* drop chars from refname to keep all the digits */
+						refnamelen = pg_mbcliplen(refname, refnamelen,
+												  refnamelen - 1);
+					}
+					hentry2 = (NameHashEntry *) hash_search(names_hash,
+															modname,
+															HASH_ENTER,
+															&found);
+				} while (found);
+				hentry2->counter = 0;	/* init new hash entry */
+				refname = modname;
+			}
+			else
+			{
+				/* Name not previously used, need only initialize hentry */
+				hentry->counter = 0;
+			}
 		}
 
 		dpns->rtable_names = lappend(dpns->rtable_names, refname);
 		rtindex++;
 	}
-}
 
-/*
- * refname_is_unique: is refname distinct from all already-chosen RTE names?
- */
-static bool
-refname_is_unique(char *refname, deparse_namespace *dpns,
-				  List *parent_namespaces)
-{
-	ListCell   *lc;
-
-	foreach(lc, dpns->rtable_names)
-	{
-		char	   *oldname = (char *) lfirst(lc);
-
-		if (oldname && strcmp(oldname, refname) == 0)
-			return false;
-	}
-	foreach(lc, parent_namespaces)
-	{
-		deparse_namespace *olddpns = (deparse_namespace *) lfirst(lc);
-		ListCell   *lc2;
-
-		foreach(lc2, olddpns->rtable_names)
-		{
-			char	   *oldname = (char *) lfirst(lc2);
-
-			if (oldname && strcmp(oldname, refname) == 0)
-				return false;
-		}
-	}
-	return true;
+	hash_destroy(names_hash);
 }
 
 /*
@@ -3589,16 +3650,34 @@ make_colname_unique(char *colname, deparse_namespace *dpns,
 					deparse_columns *colinfo)
 {
 	/*
-	 * If the selected name isn't unique, append digits to make it so
+	 * If the selected name isn't unique, append digits to make it so.  For a
+	 * very long input name, we might have to truncate to stay within
+	 * NAMEDATALEN.
 	 */
 	if (!colname_is_unique(colname, dpns, colinfo))
 	{
-		char	   *modname = (char *) palloc(strlen(colname) + 32);
+		int			colnamelen = strlen(colname);
+		char	   *modname = (char *) palloc(colnamelen + 16);
 		int			i = 0;
 
 		do
 		{
-			sprintf(modname, "%s_%d", colname, ++i);
+			i++;
+			for (;;)
+			{
+				/*
+				 * We avoid using %.*s here because it can misbehave if the
+				 * data is not valid in what libc thinks is the prevailing
+				 * encoding.
+				 */
+				memcpy(modname, colname, colnamelen);
+				sprintf(modname + colnamelen, "_%d", i);
+				if (strlen(modname) < NAMEDATALEN)
+					break;
+				/* drop chars from colname to keep all the digits */
+				colnamelen = pg_mbcliplen(colname, colnamelen,
+										  colnamelen - 1);
+			}
 		} while (!colname_is_unique(modname, dpns, colinfo));
 		colname = modname;
 	}
