@@ -9,9 +9,12 @@ our @EXPORT = qw(
   tempdir
   tempdir_short
   standard_initdb
+  configure_hba_for_replication
   start_test_server
   restart_test_server
   psql
+  slurp_dir
+  slurp_file
   system_or_bail
   system_log
   run_log
@@ -121,34 +124,75 @@ sub tempdir_short
 	return File::Temp::tempdir(CLEANUP => 1);
 }
 
+# Initialize a new cluster for testing.
+#
+# The PGHOST environment variable is set to connect to the new cluster.
+#
+# Authentication is set up so that only the current OS user can access the
+# cluster. On Unix, we use Unix domain socket connections, with the socket in
+# a directory that's only accessible to the current user to ensure that.
+# On Windows, we use SSPI authentication to ensure the same (by pg_regress
+# --config-auth).
 sub standard_initdb
 {
 	my $pgdata = shift;
 	system_or_bail('initdb', '-D', "$pgdata", '-A' , 'trust', '-N');
-	system_or_bail("$ENV{top_builddir}/src/test/regress/pg_regress",
-		'--config-auth', $pgdata);
+	system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata);
+
+	my $tempdir_short = tempdir_short;
 
 	open CONF, ">>$pgdata/postgresql.conf";
 	print CONF "\n# Added by TestLib.pm)\n";
 	print CONF "fsync = off\n";
+	if ($windows_os)
+	{
+		print CONF "listen_addresses = '127.0.0.1'\n";
+	}
+	else
+	{
+		print CONF "unix_socket_directories = '$tempdir_short'\n";
+		print CONF "listen_addresses = ''\n";
+	}
 	close CONF;
+
+	$ENV{PGHOST}         = $windows_os ? "127.0.0.1" : $tempdir_short;
+}
+
+# Set up the cluster to allow replication connections, in the same way that
+# standard_initdb does for normal connections.
+sub configure_hba_for_replication
+{
+	my $pgdata = shift;
+
+	open HBA, ">>$pgdata/pg_hba.conf";
+	print HBA "\n# Allow replication (set up by TestLib.pm)\n";
+	if (! $windows_os)
+	{
+		print HBA "local replication all trust\n";
+	}
+	else
+	{
+		print HBA "host replication all 127.0.0.1/32 sspi include_realm=1 map=regress\n";
+	}
+	close HBA;
 }
 
 my ($test_server_datadir, $test_server_logfile);
 
+
+# Initialize a new cluster for testing in given directory, and start it.
 sub start_test_server
 {
 	my ($tempdir) = @_;
 	my $ret;
 
-	my $tempdir_short = tempdir_short;
-
 	print("### Starting test server in $tempdir\n");
 	standard_initdb "$tempdir/pgdata";
+
 	$ret = system_log('pg_ctl', '-D', "$tempdir/pgdata", '-w', '-l',
-	  "$log_path/postmaster.log", '-o',
-"-k \"$tempdir_short\" --listen-addresses='' --log-statement=all",
-					'start');
+	  "$log_path/postmaster.log", '-o', "--log-statement=all",
+	  'start');
+
 	if ($ret != 0)
 	{
 		print "# pg_ctl failed; logfile:\n";
@@ -156,7 +200,6 @@ sub start_test_server
 		BAIL_OUT("pg_ctl failed");
 	}
 
-	$ENV{PGHOST}         = $tempdir_short;
 	$test_server_datadir = "$tempdir/pgdata";
 	$test_server_logfile = "$log_path/postmaster.log";
 }
@@ -180,8 +223,30 @@ END
 sub psql
 {
 	my ($dbname, $sql) = @_;
+	my ($stdout, $stderr);
 	print("# Running SQL command: $sql\n");
-	run [ 'psql', '-X', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql or die;
+	run [ 'psql', '-X', '-A', '-t', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql, '>', \$stdout, '2>', \$stderr or die;
+	chomp $stdout;
+	$stdout =~ s/\r//g if $Config{osname} eq 'msys';
+	return $stdout;
+}
+
+sub slurp_dir
+{
+	my ($dir) = @_;
+	opendir(my $dh, $dir) or die;
+	my @direntries = readdir $dh;
+	closedir $dh;
+	return @direntries;
+}
+
+sub slurp_file
+{
+	local $/;
+	local @ARGV = @_;
+	my $contents = <>;
+	$contents =~ s/\r//g if $Config{osname} eq 'msys';
+	return $contents;
 }
 
 sub system_or_bail
@@ -230,7 +295,17 @@ sub command_exit_is
 	print("# Running: " . join(" ", @{$cmd}) ."\n");
 	my $h = start $cmd;
 	$h->finish();
-	is($h->result(0), $expected, $test_name);
+
+	# On Windows, the exit status of the process is returned directly as the
+	# process's exit code, while on Unix, it's returned in the high bits
+	# of the exit code (see WEXITSTATUS macro in the standard <sys/wait.h>
+	# header file). IPC::Run's result function always returns exit code >> 8,
+	# assuming the Unix convention, which will always return 0 on Windows as
+	# long as the process was not terminated by an exception. To work around
+	# that, use $h->full_result on Windows instead.
+	my $result = ($Config{osname} eq "MSWin32") ?
+		($h->full_results)[0] : $h->result(0);
+	is($result, $expected, $test_name);
 }
 
 sub program_help_ok
@@ -283,7 +358,7 @@ sub issues_sql_like
 	truncate $test_server_logfile, 0;
 	my $result = run_log($cmd);
 	ok($result, "@$cmd exit code 0");
-	my $log = `cat '$test_server_logfile'`;
+	my $log = slurp_file($test_server_logfile);
 	like($log, $expected_sql, "$test_name: SQL found in server log");
 }
 

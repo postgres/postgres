@@ -88,6 +88,13 @@ if exist src\test\regress\regress.dll del /q src\test\regress\regress.dll
 if exist src\test\regress\refint.dll del /q src\test\regress\refint.dll
 if exist src\test\regress\autoinc.dll del /q src\test\regress\autoinc.dll
 
+if exist src\bin\initdb\tmp_check rd /s /q src\bin\initdb\tmp_check
+if exist src\bin\pg_basebackup\tmp_check rd /s /q src\bin\pg_basebackup\tmp_check
+if exist src\bin\pg_config\tmp_check rd /s /q src\bin\pg_config\tmp_check
+if exist src\bin\pg_ctl\tmp_check rd /s /q src\bin\pg_ctl\tmp_check
+if exist src\bin\pg_rewind\tmp_check rd /s /q src\bin\pg_rewind\tmp_check
+if exist src\bin\scripts\tmp_check rd /s /q src\bin\scripts\tmp_check
+
 REM Clean up datafiles built with contrib
 REM cd contrib
 REM for /r %%f in (*.sql) do if exist %%f.in del %%f

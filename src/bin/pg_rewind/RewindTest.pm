@@ -40,8 +40,9 @@ use warnings;
 use TestLib;
 use Test::More;
 
+use Config;
 use File::Copy;
-use File::Path qw(remove_tree);
+use File::Path qw(rmtree);
 use IPC::Run qw(run start);
 
 use Exporter 'import';
@@ -71,8 +72,6 @@ our $test_standby_datadir = "$tmp_check/data_standby";
 # Define non-conflicting ports for both nodes.
 my $port_master  = $ENV{PGPORT};
 my $port_standby = $port_master + 1;
-
-my $tempdir_short;
 
 my $connstr_master  = "port=$port_master";
 my $connstr_standby = "port=$port_standby";
@@ -121,6 +120,7 @@ sub check_query
 	}
 	else
 	{
+		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
 }
@@ -140,6 +140,7 @@ sub poll_query_until
 		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
 
 		chomp($stdout);
+		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		if ($stdout eq "t")
 		{
 			return 1;
@@ -167,10 +168,8 @@ sub append_to_file
 
 sub setup_cluster
 {
-	$tempdir_short = tempdir_short;
-
 	# Initialize master, data checksums are mandatory
-	remove_tree($test_master_datadir);
+	rmtree($test_master_datadir);
 	standard_initdb($test_master_datadir);
 
 	# Custom parameters for master's postgresql.conf
@@ -188,10 +187,7 @@ max_connections = 10
 ));
 
 	# Accept replication connections on master
-	append_to_file(
-		"$test_master_datadir/pg_hba.conf", qq(
-local replication all trust
-));
+	configure_hba_for_replication $test_master_datadir;
 }
 
 sub start_master
@@ -199,19 +195,17 @@ sub start_master
 	system_or_bail('pg_ctl' , '-w',
 				   '-D' , $test_master_datadir,
 				   '-l',  "$log_path/master.log",
-				   "-o", "-k $tempdir_short --listen-addresses='' -p $port_master",
-				   'start');
+				   "-o", "-p $port_master", 'start');
 
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
-	$ENV{PGHOST} = $tempdir_short;
 }
 
 sub create_standby
 {
 
 	# Set up standby with necessary parameter
-	remove_tree $test_standby_datadir;
+	rmtree $test_standby_datadir;
 
 	# Base backup is taken with xlog files included
 	system_or_bail('pg_basebackup', '-D', $test_standby_datadir,
@@ -226,8 +220,7 @@ recovery_target_timeline='latest'
 	# Start standby
 	system_or_bail('pg_ctl', '-w', '-D', $test_standby_datadir,
 				   '-l', "$log_path/standby.log",
-				   '-o', "-k $tempdir_short --listen-addresses='' -p $port_standby",
-				   'start');
+				   '-o', "-p $port_standby", 'start');
 
 	# The standby may have WAL to apply before it matches the primary.  That
 	# is fine, because no test examines the standby before promotion.
@@ -265,7 +258,7 @@ sub run_pg_rewind
 	my $test_mode = shift;
 
 	# Stop the master and be ready to perform the rewind
-	system_or_bail('pg_ctl', '-D', $test_master_datadir, 'stop', '-m', 'fast');
+	system_or_bail('pg_ctl', '-D', $test_master_datadir, '-m', 'fast', 'stop');
 
 	# At this point, the rewind processing is ready to run.
 	# We now have a very simple scenario with a few diverged WAL record.
@@ -282,8 +275,8 @@ sub run_pg_rewind
 	{
 		# Do rewind using a local pgdata as source
 		# Stop the master and be ready to perform the rewind
-		system_or_bail('pg_ctl', '-D', $test_standby_datadir, 'stop',
-					   '-m', 'fast');
+		system_or_bail('pg_ctl', '-D', $test_standby_datadir,
+					   '-m', 'fast', 'stop');
 		command_ok(['pg_rewind',
 					"--debug",
 					"--source-pgdata=$test_standby_datadir",
@@ -294,6 +287,7 @@ sub run_pg_rewind
 	{
 		# Do rewind using a remote connection as source
 		command_ok(['pg_rewind',
+					"--debug",
 					"--source-server",
 					"port=$port_standby dbname=postgres",
 					"--target-pgdata=$test_master_datadir"],
@@ -321,8 +315,7 @@ recovery_target_timeline='latest'
 	# Restart the master to check that rewind went correctly
 	system_or_bail('pg_ctl', '-w', '-D', $test_master_datadir,
 				   '-l', "$log_path/master.log",
-				   '-o', "-k $tempdir_short --listen-addresses='' -p $port_master",
-				   'start');
+				   '-o', "-p $port_master", 'start');
 
 	#### Now run the test-specific parts to check the result
 }
