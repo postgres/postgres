@@ -369,6 +369,41 @@ fi
       <filename>contrib/start-scripts/linux</filename> in the
       <productname>PostgreSQL</productname> source distribution.
      </para>
+
+     <para>
+      When using <application>systemd</application>, you can use the following
+      service unit file (e.g.,
+      at <filename>/etc/systemd/system/postgresql.service</filename>):<indexterm><primary>systemd</primary></indexterm>
+<programlisting>
+[Unit]
+Description=PostgreSQL database server
+Documentation=man:postgres(1)
+
+[Service]
+Type=notify
+User=postgres
+ExecStart=/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutSec=0
+
+[Install]
+WantedBy=multi-user.target
+</programlisting>
+      Using <literal>Type=notify</literal> requires that the server binary was
+      built with <literal>configure --with-systemd</literal>.
+     </para>
+
+     <para>
+      Consider carefully the timeout
+      setting.  <application>systemd</application> has a default timeout of 90
+      seconds as of this writing and will kill a process that does not notify
+      readiness within that time.  But a <productname>PostgreSQL</productname>
+      server that might have to perform crash recovery at startup could take
+      much longer to become ready.  The suggested value of 0 disables the
+      timeout logic.
+     </para>
     </listitem>
 
     <listitem>

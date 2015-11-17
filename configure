@@ -709,6 +709,7 @@ with_libxml
 XML2_CONFIG
 UUID_EXTRA_OBJS
 with_uuid
+with_systemd
 with_selinux
 with_openssl
 krb_srvtab
@@ -830,6 +831,7 @@ with_ldap
 with_bonjour
 with_openssl
 with_selinux
+with_systemd
 with_readline
 with_libedit_preferred
 with_uuid
@@ -1518,6 +1520,7 @@ Optional Packages:
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
   --with-selinux          build with SELinux support
+  --with-systemd          build with systemd support
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
   --with-libedit-preferred
                           prefer BSD Libedit over GNU Readline
@@ -5693,6 +5696,41 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_selinux" >&5
 $as_echo "$with_selinux" >&6; }
+
+#
+# Systemd
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with systemd support" >&5
+$as_echo_n "checking whether to build with systemd support... " >&6; }
+
+
+
+# Check whether --with-systemd was given.
+if test "${with_systemd+set}" = set; then :
+  withval=$with_systemd;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_SYSTEMD 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-systemd option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_systemd=no
+
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_systemd" >&5
+$as_echo "$with_systemd" >&6; }
 
 #
 # Readline
@@ -10472,6 +10510,17 @@ done
 fi
 
 done
+
+fi
+
+if test "$with_systemd" = yes ; then
+  ac_fn_c_check_header_mongrel "$LINENO" "systemd/sd-daemon.h" "ac_cv_header_systemd_sd_daemon_h" "$ac_includes_default"
+if test "x$ac_cv_header_systemd_sd_daemon_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <systemd/sd-daemon.h> is required for systemd support" "$LINENO" 5
+fi
+
 
 fi
 

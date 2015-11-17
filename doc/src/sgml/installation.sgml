@@ -813,6 +813,22 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-systemd</option></term>
+       <listitem>
+        <para>
+         Build with support
+         for <application>systemd</application><indexterm><primary>systemd</primary></indexterm>
+         service notifications.  This improves integration if the server binary
+         is started under <application>systemd</application> but has no impact
+         otherwise; see <xref linkend="server-start"> for more
+         information.  <application>libsystemd</application> and the
+         associated header files need to be installed to be able to use this
+         option.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--without-readline</option></term>
        <listitem>
         <para>

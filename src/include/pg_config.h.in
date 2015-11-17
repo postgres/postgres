@@ -833,6 +833,9 @@
 /* Define to 1 to use Intel SSSE 4.2 CRC instructions with a runtime check. */
 #undef USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
 
+/* Define to build with systemd support. (--with-systemd) */
+#undef USE_SYSTEMD
+
 /* Define to select SysV-style semaphores. */
 #undef USE_SYSV_SEMAPHORES
 

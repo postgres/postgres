@@ -87,6 +87,10 @@
 #include <dns_sd.h>
 #endif
 
+#ifdef USE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 #include <pthread.h>
 #endif
@@ -2533,6 +2537,9 @@ pmdie(SIGNAL_ARGS)
 			Shutdown = SmartShutdown;
 			ereport(LOG,
 					(errmsg("received smart shutdown request")));
+#ifdef USE_SYSTEMD
+			sd_notify(0, "STOPPING=1");
+#endif
 
 			if (pmState == PM_RUN || pmState == PM_RECOVERY ||
 				pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
@@ -2585,6 +2592,9 @@ pmdie(SIGNAL_ARGS)
 			Shutdown = FastShutdown;
 			ereport(LOG,
 					(errmsg("received fast shutdown request")));
+#ifdef USE_SYSTEMD
+			sd_notify(0, "STOPPING=1");
+#endif
 
 			if (StartupPID != 0)
 				signal_child(StartupPID, SIGTERM);
@@ -2645,6 +2655,9 @@ pmdie(SIGNAL_ARGS)
 			Shutdown = ImmediateShutdown;
 			ereport(LOG,
 					(errmsg("received immediate shutdown request")));
+#ifdef USE_SYSTEMD
+			sd_notify(0, "STOPPING=1");
+#endif
 
 			TerminateChildren(SIGQUIT);
 			pmState = PM_WAIT_BACKENDS;
@@ -2786,6 +2799,10 @@ reaper(SIGNAL_ARGS)
 			/* at this point we are really open for business */
 			ereport(LOG,
 				 (errmsg("database system is ready to accept connections")));
+
+#ifdef USE_SYSTEMD
+			sd_notify(0, "READY=1");
+#endif
 
 			continue;
 		}
@@ -4916,6 +4933,11 @@ sigusr1_handler(SIGNAL_ARGS)
 		if (XLogArchivingAlways())
 			PgArchPID = pgarch_start();
 
+#ifdef USE_SYSTEMD
+		if (!EnableHotStandby)
+			sd_notify(0, "READY=1");
+#endif
+
 		pmState = PM_RECOVERY;
 	}
 	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
@@ -4929,6 +4951,10 @@ sigusr1_handler(SIGNAL_ARGS)
 
 		ereport(LOG,
 		(errmsg("database system is ready to accept read only connections")));
+
+#ifdef USE_SYSTEMD
+		sd_notify(0, "READY=1");
+#endif
 
 		pmState = PM_HOT_STANDBY;
 		/* Some workers may be scheduled to start now */

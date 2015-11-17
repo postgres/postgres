@@ -700,6 +700,15 @@ AC_SUBST(with_selinux)
 AC_MSG_RESULT([$with_selinux])
 
 #
+# Systemd
+#
+AC_MSG_CHECKING([whether to build with systemd support])
+PGAC_ARG_BOOL(with, systemd, no, [build with systemd support],
+              [AC_DEFINE([USE_SYSTEMD], 1, [Define to build with systemd support. (--with-systemd)])])
+AC_SUBST(with_systemd)
+AC_MSG_RESULT([$with_systemd])
+
+#
 # Readline
 #
 PGAC_ARG_BOOL(with, readline, yes,
@@ -1247,6 +1256,10 @@ if test "$with_pam" = yes ; then
   AC_CHECK_HEADERS(security/pam_appl.h, [],
                    [AC_CHECK_HEADERS(pam/pam_appl.h, [],
                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
+fi
+
+if test "$with_systemd" = yes ; then
+  AC_CHECK_HEADER(systemd/sd-daemon.h, [], [AC_MSG_ERROR([header file <systemd/sd-daemon.h> is required for systemd support])])
 fi
 
 if test "$with_libxml" = yes ; then
