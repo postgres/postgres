@@ -2674,7 +2674,7 @@ COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
 ERROR:  insufficient privilege to bypass row-level security
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-ERROR:  COPY FROM not supported with row-level security.
+ERROR:  COPY FROM not supported with row-level security
 HINT:  Use INSERT statements instead.
 -- Check COPY FROM as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
