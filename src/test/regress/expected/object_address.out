@@ -253,11 +253,11 @@ WARNING:  error for policy,{addr_nsp,zwei},{integer}: relation "addr_nsp" does n
 WARNING:  error for policy,{eins,zwei,drei},{}: schema "eins" does not exist
 WARNING:  error for policy,{eins,zwei,drei},{integer}: schema "eins" does not exist
 WARNING:  error for user mapping,{eins},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{eins},{integer}: user mapping for user "eins" in server "integer" does not exist
+WARNING:  error for user mapping,{eins},{integer}: user mapping for user "eins" on server "integer" does not exist
 WARNING:  error for user mapping,{addr_nsp,zwei},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for user "addr_nsp" in server "integer" does not exist
+WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for user "addr_nsp" on server "integer" does not exist
 WARNING:  error for user mapping,{eins,zwei,drei},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" in server "integer" does not exist
+WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" on server "integer" does not exist
 WARNING:  error for default acl,{eins},{}: argument list length must be exactly 1
 WARNING:  error for default acl,{eins},{integer}: unrecognized default ACL object type i
 WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be exactly 1

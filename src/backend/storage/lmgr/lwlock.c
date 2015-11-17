@@ -187,7 +187,7 @@ PRINT_LWDEBUG(const char *where, LWLock *lock, LWLockMode mode)
 		ereport(LOG,
 				(errhidestmt(true),
 				 errhidecontext(true),
-				 errmsg("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
+				 errmsg_internal("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
 						MyProcPid,
 						where, T_NAME(lock), T_ID(lock),
 						!!(state & LW_VAL_EXCLUSIVE),
@@ -207,7 +207,7 @@ LOG_LWDEBUG(const char *where, LWLock *lock, const char *msg)
 		ereport(LOG,
 				(errhidestmt(true),
 				 errhidecontext(true),
-				 errmsg("%s(%s %d): %s", where,
+				 errmsg_internal("%s(%s %d): %s", where,
 						T_NAME(lock), T_ID(lock), msg)));
 	}
 }

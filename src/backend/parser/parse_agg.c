@@ -979,7 +979,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		if (!gsets)
 			ereport(ERROR,
 					(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
-					 errmsg("too many grouping sets present (max 4096)"),
+					 errmsg("too many grouping sets present (maximum 4096)"),
 					 parser_errposition(pstate,
 										qry->groupClause
 									? exprLocation((Node *) qry->groupClause)

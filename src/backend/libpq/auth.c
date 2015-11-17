@@ -668,8 +668,7 @@ recv_password_packet(Port *port)
 				 errmsg("invalid password packet size")));
 
 	/* Do not echo password to logs, for security. */
-	ereport(DEBUG5,
-			(errmsg("received password packet")));
+	elog(DEBUG5, "received password packet");
 
 	/*
 	 * Return the received string.  Note we do not attempt to do any
