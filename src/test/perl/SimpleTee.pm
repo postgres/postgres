@@ -20,6 +20,7 @@ sub PRINT {
 	my $ok = 1;
 	for my $fh (@$self) {
 		print $fh @_ or $ok = 0;
+		$fh->flush or $ok = 0;
 	}
 	return $ok;
 }

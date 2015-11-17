@@ -7,7 +7,9 @@ use strict;
 our $config;
 
 use Cwd;
+use File::Basename;
 use File::Copy;
+use File::Find ();
 
 use Install qw(Install);
 
@@ -31,7 +33,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-/^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck|upgradecheck)$/i
+/^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck|upgradecheck|tapcheck)$/i
   )
 {
 	$what = uc $what;
@@ -58,7 +60,7 @@ unless ($schedule)
 	$schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
 }
 
-$ENV{PERL5LIB} = "$topdir/src/tools/msvc";
+$ENV{PERL5LIB} = "$topdir/src/tools/msvc;$ENV{PERL5LIB}";
 
 my $maxconn = "";
 $maxconn = "--max_connections=$ENV{MAX_CONNECTIONS}"
@@ -77,6 +79,7 @@ my %command = (
 	ECPGCHECK      => \&ecpgcheck,
 	CONTRIBCHECK   => \&contribcheck,
 	ISOLATIONCHECK => \&isolationcheck,
+	TAPCHECK       => \&tapcheck,
 	UPGRADECHECK   => \&upgradecheck,);
 
 my $proc = $command{$what};
@@ -160,6 +163,44 @@ sub isolationcheck
 	system(@args);
 	my $status = $? >> 8;
 	exit $status if $status;
+}
+
+sub tapcheck
+{
+	my @args = ( "prove", "--verbose", "t/*.pl");
+	my $mstat = 0;
+
+	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
+	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
+
+	# Find out all the existing TAP tests by looking for t/ directories
+	# in the tree.
+	my $tap_dirs = [];
+	my @top_dir = ($topdir);
+	File::Find::find(
+		{   wanted => sub {
+				/^t\z/s
+				  && push(@$tap_dirs, $File::Find::name);
+			  }
+		},
+		@top_dir);
+
+	# Process each test
+	foreach my $test_path (@$tap_dirs)
+	{
+		my $dir = dirname($test_path);
+		my $tmp_root = "$dir/tmp_check";
+		(mkdir $tmp_root || die $!) unless -d $tmp_root;
+		my $tmp_install = "$tmp_root/install";
+		Install($tmp_install, "all", $config);
+		chdir $dir;
+		# Reset those values, they may have been changed by another test.
+		$ENV{TESTDIR} = "$dir";
+		system(@args);
+		my $status = $? >> 8;
+		$mstat ||= $status;
+	}
+	exit $mstat if $mstat;
 }
 
 sub plcheck
