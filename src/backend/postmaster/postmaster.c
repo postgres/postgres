@@ -2047,8 +2047,10 @@ retry1:
 				else if (!parse_bool(valptr, &am_walsender))
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					   errmsg("invalid value for parameter \"replication\""),
-							 errhint("Valid values are: false, 0, true, 1, database.")));
+							 errmsg("invalid value for parameter \"%s\": \"%s\"",
+									"replication",
+									valptr),
+							 errhint("Valid values are: \"false\", 0, \"true\", 1, \"database\".")));
 			}
 			else
 			{

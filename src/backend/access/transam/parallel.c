@@ -907,12 +907,12 @@ ParallelWorkerMain(Datum main_arg)
 	if (seg == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("unable to map dynamic shared memory segment")));
+				 errmsg("could not map dynamic shared memory segment")));
 	toc = shm_toc_attach(PARALLEL_MAGIC, dsm_segment_address(seg));
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			   errmsg("bad magic number in dynamic shared memory segment")));
+			   errmsg("invalid magic number in dynamic shared memory segment")));
 
 	/* Look up fixed parallel state. */
 	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED);
@@ -1063,7 +1063,7 @@ ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc)
 static void
 ParallelErrorContext(void *arg)
 {
-	errcontext("parallel worker, pid %d", *(int32 *) arg);
+	errcontext("parallel worker, PID %d", *(int32 *) arg);
 }
 
 /*

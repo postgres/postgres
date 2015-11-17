@@ -1652,7 +1652,7 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 			if (!missing_ok)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("user mapping for user \"%s\" in server \"%s\" does not exist",
+						 errmsg("user mapping for user \"%s\" on server \"%s\" does not exist",
 								username, servername)));
 			return address;
 		}
@@ -1678,7 +1678,7 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("user mapping for user \"%s\" in server \"%s\" does not exist",
+					 errmsg("user mapping for user \"%s\" on server \"%s\" does not exist",
 							username, servername)));
 		return address;
 	}

@@ -551,7 +551,7 @@ create table atacc1 ( test int );
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test1>3);
 ERROR:  column "test1" does not exist
-HINT:  Perhaps you meant to reference the column "atacc1"."test".
+HINT:  Perhaps you meant to reference the column "atacc1.test".
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int, test3 int);
@@ -1358,7 +1358,7 @@ select f1 from c1;
 ERROR:  column "f1" does not exist
 LINE 1: select f1 from c1;
                ^
-HINT:  Perhaps you meant to reference the column "c1"."f2".
+HINT:  Perhaps you meant to reference the column "c1.f2".
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
@@ -1372,7 +1372,7 @@ select f1 from c1;
 ERROR:  column "f1" does not exist
 LINE 1: select f1 from c1;
                ^
-HINT:  Perhaps you meant to reference the column "c1"."f2".
+HINT:  Perhaps you meant to reference the column "c1.f2".
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
@@ -2601,8 +2601,7 @@ CREATE UNLOGGED TABLE unlogged2(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES unl
 CREATE UNLOGGED TABLE unlogged3(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES unlogged3); -- self-referencing foreign key
 ALTER TABLE unlogged3 SET LOGGED; -- skip self-referencing foreign key
 ALTER TABLE unlogged2 SET LOGGED; -- fails because a foreign key to an unlogged table exists
-ERROR:  cannot change status of table unlogged2 to logged
-DETAIL:  Table unlogged2 references unlogged table unlogged1.
+ERROR:  could not change table "unlogged2" to logged because it references unlogged table "unlogged1"
 ALTER TABLE unlogged1 SET LOGGED;
 -- check relpersistence of an unlogged table after changing to permament
 SELECT relname, relkind, relpersistence FROM pg_class WHERE relname ~ '^unlogged1'
@@ -2645,8 +2644,7 @@ ORDER BY relname;
 CREATE TABLE logged2(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES logged1); -- foreign key
 CREATE TABLE logged3(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES logged3); -- self-referencing foreign key
 ALTER TABLE logged1 SET UNLOGGED; -- fails because a foreign key from a permanent table exists
-ERROR:  cannot change status of table logged1 to unlogged
-DETAIL:  Logged table logged2 is referenced by table logged1.
+ERROR:  could not change table "logged1" to unlogged because it references logged table "logged2"
 ALTER TABLE logged3 SET UNLOGGED; -- skip self-referencing foreign key
 ALTER TABLE logged2 SET UNLOGGED;
 ALTER TABLE logged1 SET UNLOGGED;

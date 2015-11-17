@@ -226,7 +226,7 @@ insert into insertconflicttest values (1, 'Apple') on conflict do update set fru
 ERROR:  ON CONFLICT DO UPDATE requires inference specification or constraint name
 LINE 1: ...nsert into insertconflicttest values (1, 'Apple') on conflic...
                                                              ^
-HINT:  For example, ON CONFLICT (<column>).
+HINT:  For example, ON CONFLICT (column_name).
 -- inference succeeds:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruit;
 insert into insertconflicttest values (2, 'Orange') on conflict (key, key, key) do update set fruit = excluded.fruit;
@@ -246,13 +246,13 @@ insert into insertconflicttest values (1, 'Apple') on conflict (keyy) do update 
 ERROR:  column "keyy" does not exist
 LINE 1: ...nsertconflicttest values (1, 'Apple') on conflict (keyy) do ...
                                                              ^
-HINT:  Perhaps you meant to reference the column "insertconflicttest"."key".
+HINT:  Perhaps you meant to reference the column "insertconflicttest.key".
 -- Have useful HINT for EXCLUDED.* RTE within UPDATE:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruitt;
 ERROR:  column excluded.fruitt does not exist
 LINE 1: ... 'Apple') on conflict (key) do update set fruit = excluded.f...
                                                              ^
-HINT:  Perhaps you meant to reference the column "excluded"."fruit".
+HINT:  Perhaps you meant to reference the column "excluded.fruit".
 -- inference fails:
 insert into insertconflicttest values (3, 'Kiwi') on conflict (key, fruit) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification

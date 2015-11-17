@@ -1373,7 +1373,7 @@ SELECT jsonb_build_object(1,2);
 
 -- keys must be scalar and not null
 SELECT jsonb_build_object(null,2);
-ERROR:  arg 1: key cannot be null
+ERROR:  argument 1: key must not be null
 SELECT jsonb_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
 ERROR:  key value must be scalar, not array, composite, or json
 SELECT jsonb_build_object(json '{"a":1,"b":2}', 3);

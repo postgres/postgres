@@ -11213,10 +11213,8 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 		case RELPERSISTENCE_TEMP:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot change logged status of table %s",
+					 errmsg("cannot change logged status of table \"%s\" because it is temporary",
 							RelationGetRelationName(rel)),
-					 errdetail("Table %s is temporary.",
-							   RelationGetRelationName(rel)),
 					 errtable(rel)));
 			break;
 		case RELPERSISTENCE_PERMANENT:
@@ -11274,11 +11272,9 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 				if (foreignrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("cannot change status of table %s to logged",
-								RelationGetRelationName(rel)),
-						  errdetail("Table %s references unlogged table %s.",
-									RelationGetRelationName(rel),
-									RelationGetRelationName(foreignrel)),
+						 errmsg("could not change table \"%s\" to logged because it references unlogged table \"%s\"",
+								RelationGetRelationName(rel),
+								RelationGetRelationName(foreignrel)),
 							 errtableconstraint(rel, NameStr(con->conname))));
 			}
 			else
@@ -11286,11 +11282,9 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 				if (foreignrel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					   errmsg("cannot change status of table %s to unlogged",
-							  RelationGetRelationName(rel)),
-					  errdetail("Logged table %s is referenced by table %s.",
-								RelationGetRelationName(foreignrel),
-								RelationGetRelationName(rel)),
+					   errmsg("could not change table \"%s\" to unlogged because it references logged table \"%s\"",
+							  RelationGetRelationName(rel),
+							  RelationGetRelationName(foreignrel)),
 							 errtableconstraint(rel, NameStr(con->conname))));
 			}
 

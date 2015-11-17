@@ -186,7 +186,7 @@ _dosmaperr(unsigned long e)
 					(errmsg_internal("mapped win32 error code %lu to %d",
 									 e, doserr)));
 #elif FRONTEND_DEBUG
-			fprintf(stderr, _("mapped win32 error code %lu to %d"), e, doserr);
+			fprintf(stderr, "mapped win32 error code %lu to %d", e, doserr);
 #endif
 			errno = doserr;
 			return;
@@ -198,7 +198,7 @@ _dosmaperr(unsigned long e)
 			(errmsg_internal("unrecognized win32 error code: %lu",
 							 e)));
 #else
-	fprintf(stderr, _("unrecognized win32 error code: %lu"), e);
+	fprintf(stderr, "unrecognized win32 error code: %lu", e);
 #endif
 
 	errno = EINVAL;

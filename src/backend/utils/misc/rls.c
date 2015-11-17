@@ -122,7 +122,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	if (!row_security && !noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("insufficient privilege to bypass row security.")));
+				 errmsg("insufficient privilege to bypass row-level security")));
 
 	/* RLS should be fully enabled for this relation. */
 	return RLS_ENABLED;

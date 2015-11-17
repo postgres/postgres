@@ -3111,7 +3111,7 @@ read_whole_file(const char *filename, int *length)
 	if (fst.st_size > (MaxAllocSize - 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("file too large")));
+				 errmsg("file \"%s\" is too large", filename)));
 	bytes_to_read = (size_t) fst.st_size;
 
 	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)

@@ -874,7 +874,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			if (is_from)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("COPY FROM not supported with row level security."),
+				  errmsg("COPY FROM not supported with row-level security."),
 						 errhint("Use INSERT statements instead.")));
 
 			/* Build target list */

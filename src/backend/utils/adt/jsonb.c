@@ -1179,7 +1179,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 	if (nargs % 2 != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid number or arguments: object must be matched key value pairs")));
+				 errmsg("invalid number of arguments: object must be matched key value pairs")));
 
 	memset(&result, 0, sizeof(JsonbInState));
 
@@ -1193,7 +1193,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(i))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: key cannot be null", i + 1)));
+					 errmsg("argument %d: key must not be null", i + 1)));
 		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
 
 		/*
@@ -1215,7 +1215,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: could not determine data type", i + 1)));
+					 errmsg("argument %d: could not determine data type", i + 1)));
 
 		add_jsonb(arg, false, &result, val_type, true);
 
