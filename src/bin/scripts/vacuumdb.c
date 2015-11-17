@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 				concurrentCons = atoi(optarg);
 				if (concurrentCons <= 0)
 				{
-					fprintf(stderr, _("%s: number of parallel \"jobs\" must be at least 1\n"),
+					fprintf(stderr, _("%s: number of parallel jobs must be at least 1\n"),
 							progname);
 					exit(1);
 				}
