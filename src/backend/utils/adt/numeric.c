@@ -6266,8 +6266,14 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	/*
 	 * maxdiv tracks the maximum possible absolute value of any div[] entry;
 	 * when this threatens to exceed INT_MAX, we take the time to propagate
-	 * carries.  To avoid overflow in maxdiv itself, it actually represents
-	 * the max possible abs. value divided by NBASE-1.
+	 * carries.  Furthermore, we need to ensure that overflow doesn't occur
+	 * during the carry propagation passes either.  The carry values may have
+	 * an absolute value as high as INT_MAX/NBASE + 1, so really we must
+	 * normalize when digits threaten to exceed INT_MAX - INT_MAX/NBASE - 1.
+	 *
+	 * To avoid overflow in maxdiv itself, it represents the max absolute
+	 * value divided by NBASE-1, ie, at the top of the loop it is known that
+	 * no div[] entry has an absolute value exceeding maxdiv * (NBASE-1).
 	 */
 	maxdiv = 1;
 
@@ -6293,7 +6299,7 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 		{
 			/* Do we need to normalize now? */
 			maxdiv += Abs(qdigit);
-			if (maxdiv > INT_MAX / (NBASE - 1))
+			if (maxdiv > (INT_MAX - INT_MAX / NBASE - 1) / (NBASE - 1))
 			{
 				/* Yes, do it */
 				carry = 0;
