@@ -4463,6 +4463,17 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	else
 		configdir = make_absolute_path(getenv("PGDATA"));
 
+	if (configdir && stat(configdir, &stat_buf) != 0)
+	{
+		write_stderr("%s: could not access \"%s\": %s\n",
+					 progname,
+					 configdir,
+					 strerror(errno));
+		if (errno == ENOENT)
+			write_stderr("Run initdb or pg_basebackup to initialize a PostgreSQL data directory.\n");
+		return false;
+	}
+
 	/*
 	 * Find the configuration file: if config_file was specified on the
 	 * command line, use it, else use configdir/postgresql.conf.  In any case
@@ -4498,7 +4509,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 */
 	if (stat(ConfigFileName, &stat_buf) != 0)
 	{
-		write_stderr("%s cannot access the server configuration file \"%s\": %s\n",
+		write_stderr("%s: could not access the server configuration file \"%s\": %s\n",
 					 progname, ConfigFileName, strerror(errno));
 		free(configdir);
 		return false;
