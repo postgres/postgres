@@ -902,8 +902,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 							 retrieved_attrs);
 
 	/*
-	 * Create the ForeignScan node from target list, local filtering
-	 * expressions, remote parameter expressions, and FDW private information.
+	 * Create the ForeignScan node from target list, filtering expressions,
+	 * remote parameter expressions, and FDW private information.
 	 *
 	 * Note that the remote parameter expressions are stored in the fdw_exprs
 	 * field of the finished plan node; we can't keep them in private state
