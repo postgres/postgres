@@ -277,13 +277,15 @@ ExecParallelSetupTupleQueues(ParallelContext *pcxt, bool reinitialize)
 }
 
 /*
- * Re-initialize the response queues for backend workers to return tuples
- * to the main backend and start the workers.
+ * Re-initialize the parallel executor info such that it can be reused by
+ * workers.
  */
-shm_mq_handle **
-ExecParallelReinitializeTupleQueues(ParallelContext *pcxt)
+void
+ExecParallelReinitialize(ParallelExecutorInfo *pei)
 {
-	return ExecParallelSetupTupleQueues(pcxt, true);
+	ReinitializeParallelDSM(pei->pcxt);
+	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);
+	pei->finished = false;
 }
 
 /*
@@ -308,6 +310,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 
 	/* Allocate object for return value. */
 	pei = palloc0(sizeof(ParallelExecutorInfo));
+	pei->finished = false;
 	pei->planstate = planstate;
 
 	/* Fix up and serialize plan to be sent to workers. */
@@ -469,6 +472,9 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 {
 	int		i;
 
+	if (pei->finished)
+		return;
+
 	/* First, wait for the workers to finish. */
 	WaitForParallelWorkersToFinish(pei->pcxt);
 
@@ -480,6 +486,8 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 	if (pei->instrumentation)
 		ExecParallelRetrieveInstrumentation(pei->planstate,
 											pei->instrumentation);
+
+	pei->finished = true;
 }
 
 /*

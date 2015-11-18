@@ -456,11 +456,7 @@ ExecReScanGather(GatherState *node)
 	node->initialized = false;
 
 	if (node->pei)
-	{
-		ReinitializeParallelDSM(node->pei->pcxt);
-		node->pei->tqueue =
-				ExecParallelReinitializeTupleQueues(node->pei->pcxt);
-	}
+		ExecParallelReinitialize(node->pei);
 
 	ExecReScan(node->ps.lefttree);
 }
