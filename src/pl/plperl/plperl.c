@@ -640,9 +640,9 @@ select_perl_context(bool trusted)
 		else
 			plperl_untrusted_init();
 #else
-		errmsg(ERROR,
-			   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot allocate multiple Perl interpreters on this platform")));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot allocate multiple Perl interpreters on this platform")));
 #endif
 	}
 
