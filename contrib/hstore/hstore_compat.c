@@ -149,7 +149,7 @@ hstoreValidNewFormat(HStore *hs)
 
 	for (i = 1; i < count; ++i)
 	{
-		if (HS_KEYLEN(entries, i) < HS_KEYLEN(entries, i - 1))
+		if (HSTORE_KEYLEN(entries, i) < HSTORE_KEYLEN(entries, i - 1))
 			return 0;
 		if (HSE_ISNULL(entries[2 * i]))
 			return 0;
