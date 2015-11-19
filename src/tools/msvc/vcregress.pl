@@ -208,7 +208,7 @@ sub bincheck
 	my @bin_dirs = glob("$topdir/src/bin/*");
 
 	# Process each test
-	foreach my $dir (@$bin_dirs)
+	foreach my $dir (@bin_dirs)
 	{
 		next unless -d "$dir/t";
 		my $status = tap_check($dir);
