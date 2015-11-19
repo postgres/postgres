@@ -11350,7 +11350,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 	nspOid = RangeVarGetAndCheckCreationNamespace(newrv, NoLock, NULL);
 
 	/* common checks on switching namespaces */
-	CheckSetNamespace(oldNspOid, nspOid, RelationRelationId, relid);
+	CheckSetNamespace(oldNspOid, nspOid);
 
 	objsMoved = new_object_addresses();
 	AlterTableNamespaceInternal(rel, oldNspOid, nspOid, objsMoved);
@@ -11418,6 +11418,7 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 	HeapTuple	classTup;
 	Form_pg_class classForm;
 	ObjectAddress thisobj;
+	bool		already_done = false;
 
 	classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(classTup))
@@ -11431,9 +11432,12 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 	thisobj.objectSubId = 0;
 
 	/*
-	 * Do nothing when there's nothing to do.
+	 * If the object has already been moved, don't move it again.  If it's
+	 * already in the right place, don't move it, but still fire the object
+	 * access hook.
 	 */
-	if (!object_address_present(&thisobj, objsMoved))
+	already_done = object_address_present(&thisobj, objsMoved);
+	if (!already_done && oldNspOid != newNspOid)
 	{
 		/* check for duplicate name (more friendly than unique-index failure) */
 		if (get_relname_relid(NameStr(classForm->relname),
@@ -11459,7 +11463,9 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 								newNspOid) != 1)
 			elog(ERROR, "failed to change schema dependency for relation \"%s\"",
 				 NameStr(classForm->relname));
-
+	}
+	if (!already_done)
+	{
 		add_exact_object_address(&thisobj, objsMoved);
 
 		InvokeObjectPostAlterHook(RelationRelationId, relOid, 0);

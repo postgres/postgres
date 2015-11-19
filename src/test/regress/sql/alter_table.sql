@@ -1465,6 +1465,7 @@ create text search dictionary alter1.dict(template = alter1.tmpl);
 insert into alter1.t1(f2) values(11);
 insert into alter1.t1(f2) values(12);
 
+alter table alter1.t1 set schema alter1; -- no-op, same schema
 alter table alter1.t1 set schema alter2;
 alter table alter1.v1 set schema alter2;
 alter function alter1.plus1(int) set schema alter2;
@@ -1473,6 +1474,7 @@ alter operator class alter1.ctype_hash_ops using hash set schema alter2;
 alter operator family alter1.ctype_hash_ops using hash set schema alter2;
 alter operator alter1.=(alter1.ctype, alter1.ctype) set schema alter2;
 alter function alter1.same(alter1.ctype, alter1.ctype) set schema alter2;
+alter type alter1.ctype set schema alter1; -- no-op, same schema
 alter type alter1.ctype set schema alter2;
 alter conversion alter1.ascii_to_utf8 set schema alter2;
 alter text search parser alter1.prs set schema alter2;
@@ -1704,7 +1706,7 @@ ALTER TABLE new_system_table SET SCHEMA pg_catalog;
 
 -- XXX: it's currently impossible to move relations out of pg_catalog
 ALTER TABLE new_system_table SET SCHEMA public;
--- move back, will currently error out, already there
+-- move back, will be ignored -- already there
 ALTER TABLE new_system_table SET SCHEMA pg_catalog;
 ALTER TABLE new_system_table RENAME TO old_system_table;
 CREATE INDEX old_system_table__othercol ON old_system_table (othercol);

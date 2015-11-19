@@ -3520,18 +3520,22 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	oldNspOid = typform->typnamespace;
 	arrayOid = typform->typarray;
 
-	/* common checks on switching namespaces */
-	CheckSetNamespace(oldNspOid, nspOid, TypeRelationId, typeOid);
+	/* If the type is already there, we scan skip these next few checks. */
+	if (oldNspOid != nspOid)
+	{
+		/* common checks on switching namespaces */
+		CheckSetNamespace(oldNspOid, nspOid);
 
-	/* check for duplicate name (more friendly than unique-index failure) */
-	if (SearchSysCacheExists2(TYPENAMENSP,
-							  CStringGetDatum(NameStr(typform->typname)),
-							  ObjectIdGetDatum(nspOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("type \"%s\" already exists in schema \"%s\"",
-						NameStr(typform->typname),
-						get_namespace_name(nspOid))));
+		/* check for duplicate name (more friendly than unique-index failure) */
+		if (SearchSysCacheExists2(TYPENAMENSP,
+								  CStringGetDatum(NameStr(typform->typname)),
+								  ObjectIdGetDatum(nspOid)))
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("type \"%s\" already exists in schema \"%s\"",
+							NameStr(typform->typname),
+							get_namespace_name(nspOid))));
+	}
 
 	/* Detect whether type is a composite type (but not a table rowtype) */
 	isCompositeType =
@@ -3547,13 +3551,16 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						format_type_be(typeOid)),
 				 errhint("Use ALTER TABLE instead.")));
 
-	/* OK, modify the pg_type row */
+	if (oldNspOid != nspOid)
+	{
+		/* OK, modify the pg_type row */
 
-	/* tup is a copy, so we can scribble directly on it */
-	typform->typnamespace = nspOid;
+		/* tup is a copy, so we can scribble directly on it */
+		typform->typnamespace = nspOid;
 
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
+		simple_heap_update(rel, &tup->t_self, tup);
+		CatalogUpdateIndexes(rel, tup);
+	}
 
 	/*
 	 * Composite types have pg_class entries.
@@ -3592,7 +3599,8 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	 * Update dependency on schema, if any --- a table rowtype has not got
 	 * one, and neither does an implicit array.
 	 */
-	if ((isCompositeType || typform->typtype != TYPTYPE_COMPOSITE) &&
+	if (oldNspOid != nspOid &&
+		(isCompositeType || typform->typtype != TYPTYPE_COMPOSITE) &&
 		!isImplicitArray)
 		if (changeDependencyFor(TypeRelationId, typeOid,
 								NamespaceRelationId, oldNspOid, nspOid) != 1)

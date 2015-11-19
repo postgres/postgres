@@ -726,7 +726,8 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 		if (object_address_present(&thisobj, objsMoved))
 			continue;
 
-		if (conform->connamespace == oldNspId)
+		/* Don't update if the object is already part of the namespace */
+		if (conform->connamespace == oldNspId && oldNspId != newNspId)
 		{
 			tup = heap_copytuple(tup);
 			conform = (Form_pg_constraint) GETSTRUCT(tup);
