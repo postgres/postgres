@@ -27,8 +27,11 @@ hstore_to_plperl(PG_FUNCTION_ARGS)
 		const char *key;
 		SV		   *value;
 
-		key = pnstrdup(HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
-		value = HS_VALISNULL(entries, i) ? newSV(0) : cstr2sv(pnstrdup(HS_VAL(entries, base, i), HS_VALLEN(entries, i)));
+		key = pnstrdup(HSTORE_KEY(entries, base, i),
+					   HSTORE_KEYLEN(entries, i));
+		value = HSTORE_VALISNULL(entries, i) ? newSV(0) :
+			cstr2sv(pnstrdup(HSTORE_VAL(entries, base, i),
+							 HSTORE_VALLEN(entries, i)));
 
 		(void) hv_store(hv, key, strlen(key), value, 0);
 	}

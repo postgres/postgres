@@ -59,14 +59,16 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 	{
 		text	   *item;
 
-		item = makeitem(HS_KEY(hsent, ptr, i), HS_KEYLEN(hsent, i),
+		item = makeitem(HSTORE_KEY(hsent, ptr, i),
+						HSTORE_KEYLEN(hsent, i),
 						KEYFLAG);
 		entries[2 * i] = PointerGetDatum(item);
 
-		if (HS_VALISNULL(hsent, i))
+		if (HSTORE_VALISNULL(hsent, i))
 			item = makeitem(NULL, 0, NULLFLAG);
 		else
-			item = makeitem(HS_VAL(hsent, ptr, i), HS_VALLEN(hsent, i),
+			item = makeitem(HSTORE_VAL(hsent, ptr, i),
+							HSTORE_VALLEN(hsent, i),
 							VALFLAG);
 		entries[2 * i + 1] = PointerGetDatum(item);
 	}

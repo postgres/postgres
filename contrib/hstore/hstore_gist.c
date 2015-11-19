@@ -129,11 +129,13 @@ ghstore_compress(PG_FUNCTION_ARGS)
 		{
 			int			h;
 
-			h = crc32_sz((char *) HS_KEY(hsent, ptr, i), HS_KEYLEN(hsent, i));
+			h = crc32_sz((char *) HSTORE_KEY(hsent, ptr, i),
+						 HSTORE_KEYLEN(hsent, i));
 			HASH(GETSIGN(res), h);
-			if (!HS_VALISNULL(hsent, i))
+			if (!HSTORE_VALISNULL(hsent, i))
 			{
-				h = crc32_sz((char *) HS_VAL(hsent, ptr, i), HS_VALLEN(hsent, i));
+				h = crc32_sz((char *) HSTORE_VAL(hsent, ptr, i),
+							 HSTORE_VALLEN(hsent, i));
 				HASH(GETSIGN(res), h);
 			}
 		}
@@ -524,13 +526,15 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 		for (i = 0; res && i < count; ++i)
 		{
-			int			crc = crc32_sz((char *) HS_KEY(qe, qv, i), HS_KEYLEN(qe, i));
+			int			crc = crc32_sz((char *) HSTORE_KEY(qe, qv, i),
+									   HSTORE_KEYLEN(qe, i));
 
 			if (GETBIT(sign, HASHVAL(crc)))
 			{
-				if (!HS_VALISNULL(qe, i))
+				if (!HSTORE_VALISNULL(qe, i))
 				{
-					crc = crc32_sz((char *) HS_VAL(qe, qv, i), HS_VALLEN(qe, i));
+					crc = crc32_sz((char *) HSTORE_VAL(qe, qv, i),
+								   HSTORE_VALLEN(qe, i));
 					if (!GETBIT(sign, HASHVAL(crc)))
 						res = false;
 				}
