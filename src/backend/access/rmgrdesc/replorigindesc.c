@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * replorigindesc.c
- *	  rmgr descriptor routines for replication/logical/replication_origin.c
+ *	  rmgr descriptor routines for replication/logical/origin.c
  *
  * Portions Copyright (c) 2015, PostgreSQL Global Development Group
  *
