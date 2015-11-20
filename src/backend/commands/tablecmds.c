@@ -3058,7 +3058,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_ReAddConstraint:	/* Re-add pre-existing check constraint */
 			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-								false, true, lockmode);
+								true, true, lockmode);
 			break;
 		case AT_AddIndexConstraint:		/* ADD CONSTRAINT USING INDEX */
 			ATExecAddIndexConstraint(tab, rel, (IndexStmt *) cmd->def, lockmode);
@@ -5322,13 +5322,6 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
  * AddRelationNewConstraints would normally assign different names to the
  * child constraints.  To fix that, we must capture the name assigned at
  * the parent table and pass that down.
- *
- * When re-adding a previously existing constraint (during ALTER COLUMN TYPE),
- * we don't need to recurse here, because recursion will be carried out at a
- * higher level; the constraint name issue doesn't apply because the names
- * have already been assigned and are just being re-used.  We need a separate
- * "is_readd" flag for that; just setting recurse=false would result in an
- * error if there are child tables.
  */
 static void
 ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
@@ -5356,7 +5349,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	newcons = AddRelationNewConstraints(rel, NIL,
 										list_make1(copyObject(constr)),
-										recursing, !recursing);
+										recursing | is_readd,	/* allow_merge */
+										!recursing);	/* is_local */
 
 	/* Add each constraint to Phase 3's queue */
 	foreach(lcon, newcons)
@@ -5390,13 +5384,6 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * incorrect value for coninhcount.
 	 */
 	if (newcons == NIL)
-		return;
-
-	/*
-	 * Also, in a re-add operation, we don't need to recurse (that will be
-	 * handled at higher levels).
-	 */
-	if (is_readd)
 		return;
 
 	/*
@@ -7214,11 +7201,31 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 	forboth(oid_item, tab->changedConstraintOids,
 			def_item, tab->changedConstraintDefs)
 	{
-		Oid		oldId = lfirst_oid(oid_item);
-		Oid		relid;
-		Oid		confrelid;
+		Oid			oldId = lfirst_oid(oid_item);
+		HeapTuple	tup;
+		Form_pg_constraint con;
+		Oid			relid;
+		Oid			confrelid;
+		bool		conislocal;
 
-		get_constraint_relation_oids(oldId, &relid, &confrelid);
+		tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(oldId));
+		if (!HeapTupleIsValid(tup))		/* should not happen */
+			elog(ERROR, "cache lookup failed for constraint %u", oldId);
+		con = (Form_pg_constraint) GETSTRUCT(tup);
+		relid = con->conrelid;
+		confrelid = con->confrelid;
+		conislocal = con->conislocal;
+		ReleaseSysCache(tup);
+
+		/*
+		 * If the constraint is inherited (only), we don't want to inject a
+		 * new definition here; it'll get recreated when ATAddCheckConstraint
+		 * recurses from adding the parent table's constraint.  But we had to
+		 * carry the info this far so that we can drop the constraint below.
+		 */
+		if (!conislocal)
+			continue;
+
 		ATPostAlterTypeParse(relid, confrelid,
 							 (char *) lfirst(def_item),
 							 wqueue, lockmode);
