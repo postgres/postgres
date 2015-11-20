@@ -190,7 +190,7 @@ ExecGather(GatherState *node)
 
 			/* No workers?  Then never mind. */
 			if (!got_any_worker)
-				ExecShutdownGather(node);
+				ExecShutdownGatherWorkers(node);
 		}
 
 		/* Run plan locally if no workers or not single-copy. */
@@ -402,6 +402,8 @@ ExecShutdownGatherWorkers(GatherState *node)
 
 		for (i = 0; i < node->nreaders; ++i)
 			DestroyTupleQueueReader(node->reader[i]);
+
+		pfree(node->reader);
 		node->reader = NULL;
 	}
 
