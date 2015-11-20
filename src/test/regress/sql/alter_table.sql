@@ -1253,12 +1253,40 @@ select reltoastrelid <> 0 as has_toast_table
 from pg_class
 where oid = 'test_storage'::regclass;
 
--- ALTER TYPE with a check constraint and a child table (bug before Nov 2012)
-CREATE TABLE test_inh_check (a float check (a > 10.2));
+-- ALTER COLUMN TYPE with a check constraint and a child table (bug #13779)
+CREATE TABLE test_inh_check (a float check (a > 10.2), b float);
 CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
+\d test_inh_check
+\d test_inh_check_child
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
 ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 \d test_inh_check
 \d test_inh_check_child
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+-- also try noinherit, local, and local+inherited cases
+ALTER TABLE test_inh_check ADD CONSTRAINT bnoinherit CHECK (b > 100) NO INHERIT;
+ALTER TABLE test_inh_check_child ADD CONSTRAINT blocal CHECK (b < 1000);
+ALTER TABLE test_inh_check_child ADD CONSTRAINT bmerged CHECK (b > 1);
+ALTER TABLE test_inh_check ADD CONSTRAINT bmerged CHECK (b > 1);
+\d test_inh_check
+\d test_inh_check_child
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+ALTER TABLE test_inh_check ALTER COLUMN b TYPE numeric;
+\d test_inh_check
+\d test_inh_check_child
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
 
 -- check for rollback of ANALYZE corrupting table property flags (bug #11638)
 CREATE TABLE check_fk_presence_1 (id int PRIMARY KEY, t text);

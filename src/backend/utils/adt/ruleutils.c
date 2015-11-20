@@ -433,6 +433,7 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
+static char *generate_qualified_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs,
 					   List *argnames, Oid *argtypes,
 					   bool has_variadic, bool *use_variadic_p,
@@ -1314,9 +1315,11 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 															  prettyFlags)));
 }
 
-/* Internal version that returns a palloc'd C string; no pretty-printing */
+/*
+ * Internal version that returns a full ALTER TABLE ... ADD CONSTRAINT command
+ */
 char *
-pg_get_constraintdef_string(Oid constraintId)
+pg_get_constraintdef_command(Oid constraintId)
 {
 	return pg_get_constraintdef_worker(constraintId, true, 0);
 }
@@ -1363,10 +1366,16 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 	initStringInfo(&buf);
 
-	if (fullCommand && OidIsValid(conForm->conrelid))
+	if (fullCommand)
 	{
-		appendStringInfo(&buf, "ALTER TABLE ONLY %s ADD CONSTRAINT %s ",
-						 generate_relation_name(conForm->conrelid, NIL),
+		/*
+		 * Currently, callers want ALTER TABLE (without ONLY) for CHECK
+		 * constraints, and other types of constraints don't inherit anyway so
+		 * it doesn't matter whether we say ONLY or not.  Someday we might
+		 * need to let callers specify whether to put ONLY in the command.
+		 */
+		appendStringInfo(&buf, "ALTER TABLE %s ADD CONSTRAINT %s ",
+						 generate_qualified_relation_name(conForm->conrelid),
 						 quote_identifier(NameStr(conForm->conname)));
 	}
 
@@ -1890,28 +1899,9 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 
 	if (OidIsValid(sequenceId))
 	{
-		HeapTuple	classtup;
-		Form_pg_class classtuple;
-		char	   *nspname;
 		char	   *result;
 
-		/* Get the sequence's pg_class entry */
-		classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(sequenceId));
-		if (!HeapTupleIsValid(classtup))
-			elog(ERROR, "cache lookup failed for relation %u", sequenceId);
-		classtuple = (Form_pg_class) GETSTRUCT(classtup);
-
-		/* Get the namespace */
-		nspname = get_namespace_name(classtuple->relnamespace);
-		if (!nspname)
-			elog(ERROR, "cache lookup failed for namespace %u",
-				 classtuple->relnamespace);
-
-		/* And construct the result string */
-		result = quote_qualified_identifier(nspname,
-											NameStr(classtuple->relname));
-
-		ReleaseSysCache(classtup);
+		result = generate_qualified_relation_name(sequenceId);
 
 		PG_RETURN_TEXT_P(string_to_text(result));
 	}
@@ -9569,6 +9559,39 @@ generate_relation_name(Oid relid, List *namespaces)
 		nspname = get_namespace_name(reltup->relnamespace);
 	else
 		nspname = NULL;
+
+	result = quote_qualified_identifier(nspname, relname);
+
+	ReleaseSysCache(tp);
+
+	return result;
+}
+
+/*
+ * generate_qualified_relation_name
+ *		Compute the name to display for a relation specified by OID
+ *
+ * As above, but unconditionally schema-qualify the name.
+ */
+static char *
+generate_qualified_relation_name(Oid relid)
+{
+	HeapTuple	tp;
+	Form_pg_class reltup;
+	char	   *relname;
+	char	   *nspname;
+	char	   *result;
+
+	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	reltup = (Form_pg_class) GETSTRUCT(tp);
+	relname = NameStr(reltup->relname);
+
+	nspname = get_namespace_name(reltup->relnamespace);
+	if (!nspname)
+		elog(ERROR, "cache lookup failed for namespace %u",
+			 reltup->relnamespace);
 
 	result = quote_qualified_identifier(nspname, relname);
 
