@@ -3519,7 +3519,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 										 * constraint */
 			address =
 				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-									false, true, lockmode);
+									true, true, lockmode);
 			break;
 		case AT_ReAddComment:	/* Re-add existing comment */
 			address = CommentObject((CommentStmt *) cmd->def);
@@ -6072,13 +6072,6 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
  * AddRelationNewConstraints would normally assign different names to the
  * child constraints.  To fix that, we must capture the name assigned at
  * the parent table and pass that down.
- *
- * When re-adding a previously existing constraint (during ALTER COLUMN TYPE),
- * we don't need to recurse here, because recursion will be carried out at a
- * higher level; the constraint name issue doesn't apply because the names
- * have already been assigned and are just being re-used.  We need a separate
- * "is_readd" flag for that; just setting recurse=false would result in an
- * error if there are child tables.
  */
 static ObjectAddress
 ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
@@ -6107,7 +6100,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 */
 	newcons = AddRelationNewConstraints(rel, NIL,
 										list_make1(copyObject(constr)),
-										recursing,		/* allow_merge */
+										recursing | is_readd,	/* allow_merge */
 										!recursing,		/* is_local */
 										is_readd);		/* is_internal */
 
@@ -6156,10 +6149,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * If adding a NO INHERIT constraint, no need to find our children.
-	 * Likewise, in a re-add operation, we don't need to recurse (that will be
-	 * handled at higher levels).
 	 */
-	if (constr->is_no_inherit || is_readd)
+	if (constr->is_no_inherit)
 		return address;
 
 	/*
@@ -8191,7 +8182,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				if (!list_member_oid(tab->changedConstraintOids,
 									 foundObject.objectId))
 				{
-					char	   *defstring = pg_get_constraintdef_string(foundObject.objectId);
+					char	   *defstring = pg_get_constraintdef_command(foundObject.objectId);
 
 					/*
 					 * Put NORMAL dependencies at the front of the list and
@@ -8566,10 +8557,30 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 			def_item, tab->changedConstraintDefs)
 	{
 		Oid			oldId = lfirst_oid(oid_item);
+		HeapTuple	tup;
+		Form_pg_constraint con;
 		Oid			relid;
 		Oid			confrelid;
+		bool		conislocal;
 
-		get_constraint_relation_oids(oldId, &relid, &confrelid);
+		tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(oldId));
+		if (!HeapTupleIsValid(tup))		/* should not happen */
+			elog(ERROR, "cache lookup failed for constraint %u", oldId);
+		con = (Form_pg_constraint) GETSTRUCT(tup);
+		relid = con->conrelid;
+		confrelid = con->confrelid;
+		conislocal = con->conislocal;
+		ReleaseSysCache(tup);
+
+		/*
+		 * If the constraint is inherited (only), we don't want to inject a
+		 * new definition here; it'll get recreated when ATAddCheckConstraint
+		 * recurses from adding the parent table's constraint.  But we had to
+		 * carry the info this far so that we can drop the constraint below.
+		 */
+		if (!conislocal)
+			continue;
+
 		ATPostAlterTypeParse(oldId, relid, confrelid,
 							 (char *) lfirst(def_item),
 							 wqueue, lockmode, tab->rewrite);
@@ -8743,7 +8754,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 											 rel, con->conname);
 				}
 				else
-					elog(ERROR, "unexpected statement type: %d",
+					elog(ERROR, "unexpected statement subtype: %d",
 						 (int) cmd->subtype);
 			}
 		}
@@ -11254,9 +11265,9 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 				if (foreignrel->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("could not change table \"%s\" to logged because it references unlogged table \"%s\"",
-								RelationGetRelationName(rel),
-								RelationGetRelationName(foreignrel)),
+							 errmsg("could not change table \"%s\" to logged because it references unlogged table \"%s\"",
+									RelationGetRelationName(rel),
+									RelationGetRelationName(foreignrel)),
 							 errtableconstraint(rel, NameStr(con->conname))));
 			}
 			else
@@ -11264,9 +11275,9 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 				if (foreignrel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					   errmsg("could not change table \"%s\" to unlogged because it references logged table \"%s\"",
-							  RelationGetRelationName(rel),
-							  RelationGetRelationName(foreignrel)),
+							 errmsg("could not change table \"%s\" to unlogged because it references logged table \"%s\"",
+									RelationGetRelationName(rel),
+									RelationGetRelationName(foreignrel)),
 							 errtableconstraint(rel, NameStr(con->conname))));
 			}
 
