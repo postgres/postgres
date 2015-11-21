@@ -18,6 +18,7 @@ my $startdir = getcwd();
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
 my $topdir = getcwd();
+my $tmp_installdir = "$topdir/tmp_install";
 
 require 'src/tools/msvc/config_default.pl';
 require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
@@ -463,6 +464,12 @@ sub GetTests
 		return $1;
 	}
 	return "";
+}
+
+sub InstallTemp
+{
+   print "Setting up temp install\n\n";
+   Install("$tmp_installdir", "all", $config);
 }
 
 sub usage
