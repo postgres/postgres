@@ -698,7 +698,7 @@ SendBackupHeader(List *tablespaces)
 		}
 		else
 		{
-			Size	len;
+			Size		len;
 
 			len = strlen(ti->oid);
 			pq_sendint(&buf, len, 4);
@@ -1132,13 +1132,6 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 
 /*
- * Maximum file size for a tar member: The limit inherent in the
- * format is 2^33-1 bytes (nearly 8 GB).  But we don't want to exceed
- * what we can represent in pgoff_t.
- */
-#define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(pgoff_t)*8 - 1)) - 1)
-
-/*
  * Given the member, write the TAR header & send the file.
  *
  * If 'missing_ok' is true, will not throw an error if the file is not found.
@@ -1165,15 +1158,6 @@ sendFile(char *readfilename, char *tarfilename, struct stat * statbuf,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", readfilename)));
 	}
-
-	/*
-	 * Some compilers will throw a warning knowing this test can never be true
-	 * because pgoff_t can't exceed the compared maximum on their platform.
-	 */
-	if (statbuf->st_size > MAX_TAR_MEMBER_FILELEN)
-		ereport(ERROR,
-				(errmsg("archive member \"%s\" too large for tar format",
-						tarfilename)));
 
 	_tarWriteHeader(tarfilename, NULL, statbuf);
 
