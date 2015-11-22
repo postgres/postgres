@@ -11,5 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
-extern void tarCreateHeader(char *h, const char *filename, const char *linktarget, size_t size, mode_t mode, uid_t uid, gid_t gid, time_t mtime);
+extern void tarCreateHeader(char *h, const char *filename, const char *linktarget,
+				pgoff_t size, mode_t mode, uid_t uid, gid_t gid, time_t mtime);
+extern uint64 read_tar_number(const char *s, int len);
 extern int	tarChecksum(char *header);
