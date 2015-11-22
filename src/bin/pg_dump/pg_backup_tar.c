@@ -28,6 +28,7 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_tar.h"
+#include "pgtar.h"
 
 #include <sys/stat.h>
 #include <ctype.h>
@@ -76,13 +77,6 @@ typedef struct
 	ArchiveHandle *AH;
 } TAR_MEMBER;
 
-/*
- * Maximum file size for a tar member: The limit inherent in the
- * format is 2^33-1 bytes (nearly 8 GB).  But we don't want to exceed
- * what we can represent in pgoff_t.
- */
-#define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(pgoff_t)*8 - 1)) - 1)
-
 typedef struct
 {
 	int			hasSeek;
@@ -115,7 +109,6 @@ static char *tarGets(char *buf, size_t len, TAR_MEMBER *th);
 static int	tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...);
 
 static void _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th);
-static int	_tarChecksum(char *th);
 static TAR_MEMBER *_tarPositionTo(ArchiveHandle *AH, const char *filename);
 static size_t tarRead(void *buf, size_t len, TAR_MEMBER *th);
 static size_t tarWrite(const void *buf, size_t len, TAR_MEMBER *th);
@@ -1017,31 +1010,13 @@ tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...)
 	return cnt;
 }
 
-static int
-_tarChecksum(char *header)
-{
-	int			i,
-				sum;
-
-	/*
-	 * Per POSIX, the checksum is the simple sum of all bytes in the header,
-	 * treating the bytes as unsigned, and treating the checksum field (at
-	 * offset 148) as though it contained 8 spaces.
-	 */
-	sum = 8 * ' ';				/* presumed value for checksum field */
-	for (i = 0; i < 512; i++)
-		if (i < 148 || i >= 156)
-			sum += 0xFF & header[i];
-	return sum;
-}
-
 bool
 isValidTarHeader(char *header)
 {
 	int			sum;
-	int			chk = _tarChecksum(header);
+	int			chk = tarChecksum(header);
 
-	sscanf(&header[148], "%8o", &sum);
+	sum = read_tar_number(&header[148], 8);
 
 	if (sum != chk)
 		return false;
@@ -1079,13 +1054,6 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
 	fseeko(tmp, 0, SEEK_SET);
-
-	/*
-	 * Some compilers will throw a warning knowing this test can never be true
-	 * because pgoff_t can't exceed the compared maximum on their platform.
-	 */
-	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
-		die_horribly(AH, modulename, "archive member too large for tar format\n");
 
 	_tarWriteHeader(th);
 
@@ -1212,11 +1180,10 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		h[512];
-	char		tag[100];
+	char		tag[100 + 1];
 	int			sum,
 				chk;
-	size_t		len;
-	unsigned long ullen;
+	pgoff_t		len;
 	pgoff_t		hPos;
 	bool		gotBlock = false;
 
@@ -1252,8 +1219,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 						 (unsigned long) len);
 
 		/* Calc checksum */
-		chk = _tarChecksum(h);
-		sscanf(&h[148], "%8o", &sum);
+		chk = tarChecksum(h);
+		sum = read_tar_number(&h[148], 8);
 
 		/*
 		 * If the checksum failed, see if it is a null block. If so, silently
@@ -1276,27 +1243,31 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		}
 	}
 
-	sscanf(&h[0], "%99s", tag);
-	sscanf(&h[124], "%12lo", &ullen);
-	len = (size_t) ullen;
+	/* Name field is 100 bytes, might not be null-terminated */
+	strlcpy(tag, &h[0], 100 + 1);
+
+	len = read_tar_number(&h[124], 12);
 
 	{
-		char		buf[100];
+		char		posbuf[32];
+		char		lenbuf[32];
 
-		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) hPos);
-		ahlog(AH, 3, "TOC Entry %s at %s (length %lu, checksum %d)\n",
-			  tag, buf, (unsigned long) len, sum);
+		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT, (uint64) hPos);
+		snprintf(lenbuf, sizeof(lenbuf), UINT64_FORMAT, (uint64) len);
+		ahlog(AH, 3, "TOC Entry %s at %s (length %s, checksum %d)\n",
+			  tag, posbuf, lenbuf, sum);
 	}
 
 	if (chk != sum)
 	{
-		char		buf[100];
+		char		posbuf[32];
 
-		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) ftello(ctx->tarFH));
+		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT,
+				 (uint64) ftello(ctx->tarFH));
 		die_horribly(AH, modulename,
 					 "corrupt tar header found in %s "
 					 "(expected %d, computed %d) file position %s\n",
-					 tag, sum, chk, buf);
+					 tag, sum, chk, posbuf);
 	}
 
 	th->targetFile = strdup(tag);
@@ -1306,86 +1277,16 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 }
 
 
-/*
- * Utility routine to print possibly larger than 32 bit integers in a
- * portable fashion.  Filled with zeros.
- */
-static void
-print_val(char *s, uint64 val, unsigned int base, size_t len)
-{
-	int			i;
-
-	for (i = len; i > 0; i--)
-	{
-		int			digit = val % base;
-
-		s[i - 1] = '0' + digit;
-		val = val / base;
-	}
-}
-
-
 static void
 _tarWriteHeader(TAR_MEMBER *th)
 {
 	char		h[512];
-	int			lastSum = 0;
-	int			sum;
 
-	memset(h, 0, sizeof(h));
+	tarCreateHeader(h, th->targetFile, NULL, th->fileLen,
+					0600, 04000, 02000, time(NULL),
+					true /* backwards compatible format */);
 
-	/* Name 100 */
-	sprintf(&h[0], "%.99s", th->targetFile);
-
-	/* Mode 8 */
-	sprintf(&h[100], "100600 ");
-
-	/* User ID 8 */
-	sprintf(&h[108], "004000 ");
-
-	/* Group 8 */
-	sprintf(&h[116], "002000 ");
-
-	/* File size 12 - 11 digits, 1 space, no NUL */
-	print_val(&h[124], th->fileLen, 8, 11);
-	sprintf(&h[135], " ");
-
-	/* Mod Time 12 */
-	sprintf(&h[136], "%011o ", (int) time(NULL));
-
-	/* Checksum 8 */
-	sprintf(&h[148], "%06o ", lastSum);
-
-	/* Type - regular file */
-	sprintf(&h[156], "0");
-
-	/* Link tag 100 (NULL) */
-
-	/* Magic 6 + Version 2 */
-	sprintf(&h[257], "ustar00");
-
-#if 0
-	/* User 32 */
-	sprintf(&h[265], "%.31s", "");		/* How do I get username reliably? Do
-										 * I need to? */
-
-	/* Group 32 */
-	sprintf(&h[297], "%.31s", "");		/* How do I get group reliably? Do I
-										 * need to? */
-
-	/* Maj Dev 8 */
-	sprintf(&h[329], "%6o ", 0);
-
-	/* Min Dev 8 */
-	sprintf(&h[337], "%6o ", 0);
-#endif
-
-	while ((sum = _tarChecksum(h)) != lastSum)
-	{
-		sprintf(&h[148], "%06o ", sum);
-		lastSum = sum;
-	}
-
+	/* Now write the completed header. */
 	if (fwrite(h, 1, 512, th->tarFH) != 512)
 		die_horribly(th->AH, modulename, "could not write to output file: %s\n", strerror(errno));
 }
