@@ -19,6 +19,7 @@
 #define FRONTEND 1
 #include "postgres.h"
 #include "libpq-fe.h"
+#include "pgtar.h"
 
 #include <unistd.h>
 #include <dirent.h>
@@ -757,7 +758,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 {
 	char		current_path[MAXPGPATH];
 	char		filename[MAXPGPATH];
-	int			current_len_left;
+	pgoff_t		current_len_left = 0;
 	int			current_padding = 0;
 	char	   *copybuf = NULL;
 	FILE	   *file = NULL;
@@ -822,20 +823,10 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			}
 			totaldone += 512;
 
-			if (sscanf(copybuf + 124, "%11o", &current_len_left) != 1)
-			{
-				fprintf(stderr, _("%s: could not parse file size\n"),
-						progname);
-				disconnect_and_exit(1);
-			}
+			current_len_left = read_tar_number(&copybuf[124], 12);
 
 			/* Set permissions on the file */
-			if (sscanf(&copybuf[100], "%07o ", &filemode) != 1)
-			{
-				fprintf(stderr, _("%s: could not parse file mode\n"),
-						progname);
-				disconnect_and_exit(1);
-			}
+			filemode = read_tar_number(&copybuf[100], 8);
 
 			/*
 			 * All files are padded up to 512 bytes
