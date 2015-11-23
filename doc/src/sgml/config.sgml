@@ -3054,6 +3054,17 @@ include_dir 'conf.d'
         <filename>postgresql.conf</> file or on the server command line.
         The default value is 5 seconds. Units are milliseconds if not specified.
        </para>
+       <para>
+        This parameter is useful in configurations where a node in recovery
+        needs to control the amount of time to wait for new WAL data to be
+        available. For example, in archive recovery, it is possible to
+        make the recovery more responsive in the detection of a new WAL
+        log file by reducing the value of this parameter. On a system with
+        low WAL activity, increasing it reduces the amount of requests necessary
+        to access WAL archives, something useful for example in cloud
+        environments where the amount of times an infrastructure is accessed
+        is taken into account.
+       </para>
       </listitem>
      </varlistentry>
 
