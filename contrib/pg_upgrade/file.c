@@ -37,7 +37,7 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 #ifndef WIN32
 		if (copy_file(src, dst, force) == -1)
 #else
-		if (CopyFile(src, dst, force) == 0)
+		if (CopyFile(src, dst, !force) == 0)
 #endif
 			return getErrorText(errno);
 		else
