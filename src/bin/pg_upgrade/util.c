@@ -235,18 +235,15 @@ get_user_info(char **user_name_p)
 /*
  * getErrorText()
  *
- *	Returns the text of the error message for the given error number
- *
- *	This feature is factored into a separate function because it is
- *	system-dependent.
+ *	Returns the text of the most recent error
  */
 const char *
-getErrorText(int errNum)
+getErrorText(void)
 {
 #ifdef WIN32
 	_dosmaperr(GetLastError());
 #endif
-	return pg_strdup(strerror(errNum));
+	return pg_strdup(strerror(errno));
 }
 
 
