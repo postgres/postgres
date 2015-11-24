@@ -119,7 +119,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	if ((output = popen(cmd, "r")) == NULL)
 		pg_fatal("Could not get control data using %s: %s\n",
-				 cmd, getErrorText(errno));
+				 cmd, getErrorText());
 
 	/* Only pre-8.4 has these so if they are not set below we will check later */
 	cluster->controldata.lc_collate = NULL;
