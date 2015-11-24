@@ -90,11 +90,8 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <term><replaceable class="parameter">using_expression</replaceable></term>
     <listitem>
      <para>
-      The USING expression for the policy.  This expression will be added as a
-      security-barrier qualification to queries which use the table
-      automatically.  If multiple policies are being applied for a given
-      table then they are all combined and added using OR.  The USING
-      expression applies to records which are being retrieved from the table.
+      The <literal>USING</literal> expression for the policy.
+      See <xref linkend="sql-createpolicy"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -103,11 +100,8 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <term><replaceable class="parameter">check_expression</replaceable></term>
     <listitem>
      <para>
-      The with-check expression for the policy.  This expression will be
-      added as a WITH CHECK OPTION qualification to queries which use the
-      table automatically.  If multiple policies are being applied for a
-      given table then they are all combined and added using OR.  The WITH
-      CHECK expression applies to records which are being added to the table.
+      The <literal>WITH CHECK</literal> expression for the policy.
+      See <xref linkend="sql-createpolicy"> for details.
      </para>
     </listitem>
    </varlistentry>
