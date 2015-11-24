@@ -229,6 +229,8 @@ getErrorText(int errNum)
 {
 #ifdef WIN32
 	_dosmaperr(GetLastError());
+	/* _dosmaperr sets errno, so we copy errno here */
+	errNum = errno;
 #endif
 	return strdup(strerror(errNum));
 }
