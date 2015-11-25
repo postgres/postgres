@@ -6169,6 +6169,12 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
  *	exactly.  We compute DIV_GUARD_DIGITS extra digits, but there is
  *	no certainty that that's enough.  We use this only in the transcendental
  *	function calculation routines, where everything is approximate anyway.
+ *
+ *	Although we provide a "round" argument for consistency with div_var,
+ *	it is unwise to use this function with round=false.  In truncation mode
+ *	it is possible to get a result with no significant digits, for example
+ *	with rscale=0 we might compute 0.99999... and truncate that to 0 when
+ *	the correct answer is 1.
  */
 static void
 div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
@@ -6251,8 +6257,9 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 
 	/*
 	 * We estimate each quotient digit using floating-point arithmetic, taking
-	 * the first four digits of the (current) dividend and divisor. This must
-	 * be float to avoid overflow.
+	 * the first four digits of the (current) dividend and divisor.  This must
+	 * be float to avoid overflow.  The quotient digits will generally be off
+	 * by no more than one from the exact answer.
 	 */
 	fdivisor = (double) var2digits[0];
 	for (i = 1; i < 4; i++)
@@ -6274,6 +6281,11 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * To avoid overflow in maxdiv itself, it represents the max absolute
 	 * value divided by NBASE-1, ie, at the top of the loop it is known that
 	 * no div[] entry has an absolute value exceeding maxdiv * (NBASE-1).
+	 *
+	 * Actually, though, that holds good only for div[] entries after div[qi];
+	 * the adjustment done at the bottom of the loop may cause div[qi + 1] to
+	 * exceed the maxdiv limit, so that div[qi] in the next iteration is
+	 * beyond the limit.  This does not cause problems, as explained below.
 	 */
 	maxdiv = 1;
 
@@ -6325,10 +6337,10 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 
 				/*
 				 * All the div[] digits except possibly div[qi] are now in the
-				 * range 0..NBASE-1.
+				 * range 0..NBASE-1.  We do not need to consider div[qi] in
+				 * the maxdiv value anymore, so we can reset maxdiv to 1.
 				 */
-				maxdiv = Abs(newdig) / (NBASE - 1);
-				maxdiv = Max(maxdiv, 1);
+				maxdiv = 1;
 
 				/*
 				 * Recompute the quotient digit since new info may have
@@ -6348,7 +6360,16 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 				maxdiv += Abs(qdigit);
 			}
 
-			/* Subtract off the appropriate multiple of the divisor */
+			/*
+			 * Subtract off the appropriate multiple of the divisor.
+			 *
+			 * The digits beyond div[qi] cannot overflow, because we know they
+			 * will fall within the maxdiv limit.  As for div[qi] itself, note
+			 * that qdigit is approximately trunc(div[qi] / vardigits[0]),
+			 * which would make the new value simply div[qi] mod vardigits[0].
+			 * The lower-order terms in qdigit can change this result by not
+			 * more than about twice INT_MAX/NBASE, so overflow is impossible.
+			 */
 			if (qdigit != 0)
 			{
 				int			istop = Min(var2ndigits, div_ndigits - qi + 1);
@@ -6360,9 +6381,25 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 
 		/*
 		 * The dividend digit we are about to replace might still be nonzero.
-		 * Fold it into the next digit position.  We don't need to worry about
-		 * overflow here since this should nearly cancel with the subtraction
-		 * of the divisor.
+		 * Fold it into the next digit position.
+		 *
+		 * There is no risk of overflow here, although proving that requires
+		 * some care.  Much as with the argument for div[qi] not overflowing,
+		 * if we consider the first two terms in the numerator and denominator
+		 * of qdigit, we can see that the final value of div[qi + 1] will be
+		 * approximately a remainder mod (vardigits[0]*NBASE + vardigits[1]).
+		 * Accounting for the lower-order terms is a bit complicated but ends
+		 * up adding not much more than INT_MAX/NBASE to the possible range.
+		 * Thus, div[qi + 1] cannot overflow here, and in its role as div[qi]
+		 * in the next loop iteration, it can't be large enough to cause
+		 * overflow in the carry propagation step (if any), either.
+		 *
+		 * But having said that: div[qi] can be more than INT_MAX/NBASE, as
+		 * noted above, which means that the product div[qi] * NBASE *can*
+		 * overflow.  When that happens, adding it to div[qi + 1] will always
+		 * cause a cancelling overflow so that the end result is correct.  We
+		 * could avoid the intermediate overflow by doing the multiplication
+		 * and addition in int64 arithmetic, but so far there appears no need.
 		 */
 		div[qi + 1] += div[qi] * NBASE;
 
@@ -6381,9 +6418,12 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	div[qi] = qdigit;
 
 	/*
-	 * Now we do a final carry propagation pass to normalize the result, which
-	 * we combine with storing the result digits into the output. Note that
-	 * this is still done at full precision w/guard digits.
+	 * Because the quotient digits might be off by one, some of them might be
+	 * -1 or NBASE at this point.  The represented value is correct in a
+	 * mathematical sense, but it doesn't look right.  We do a final carry
+	 * propagation pass to normalize the digits, which we combine with storing
+	 * the result digits into the output.  Note that this is still done at
+	 * full precision w/guard digits.
 	 */
 	alloc_var(result, div_ndigits + 1);
 	res_digits = result->digits;
