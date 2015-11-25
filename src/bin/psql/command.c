@@ -1750,14 +1750,17 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	/*
 	 * Any change in the parameters read above makes us discard the password.
 	 * We also discard it if we're to use a conninfo rather than the
-	 * positional syntax.
+	 * positional syntax.  Note that currently, PQhost() can return NULL for a
+	 * default Unix-socket connection, so we have to allow NULL for host.
 	 */
-	keep_password =
-		(o_conn &&
-		 (strcmp(user, PQuser(o_conn)) == 0) &&
-		 (!host || strcmp(host, PQhost(o_conn)) == 0) &&
-		 (strcmp(port, PQport(o_conn)) == 0) &&
-		 !has_connection_string);
+	if (has_connection_string)
+		keep_password = false;
+	else
+		keep_password =
+			(user && PQuser(o_conn) && strcmp(user, PQuser(o_conn)) == 0) &&
+			((host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) ||
+			 (host == NULL && PQhost(o_conn) == NULL)) &&
+			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
 
 	/*
 	 * Grab dbname from old connection unless supplied by caller.  No password
@@ -1769,8 +1772,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	/*
 	 * If the user asked to be prompted for a password, ask for one now. If
 	 * not, use the password from the old connection, provided the username
-	 * has not changed. Otherwise, try to connect without a password first,
-	 * and then ask for a password if needed.
+	 * etc have not changed. Otherwise, try to connect without a password
+	 * first, and then ask for a password if needed.
 	 *
 	 * XXX: this behavior leads to spurious connection attempts recorded in
 	 * the postmaster's log.  But libpq offers no API that would let us obtain
