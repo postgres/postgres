@@ -5,7 +5,8 @@
 # src/backend/utils/mb/Unicode/UCS_to_GB18030.pl
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
-# "gb-18030-2000.xml"
+# "gb-18030-2000.xml", obtained from
+# http://source.icu-project.org/repos/icu/data/trunk/charset/data/xml/
 #
 # The lines we care about in the source file look like
 #    <a u="009A" b="81 30 83 36"/>
