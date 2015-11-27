@@ -112,10 +112,17 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select"> or
-      <xref linkend="sql-values"> command
-      whose results are to be copied.
-      Note that parentheses are required around the query.
+      A <xref linkend="sql-select">, <xref linkend="sql-values">,
+      <xref linkend="sql-insert">, <xref linkend="sql-update"> or
+      <xref linkend="sql-delete"> command whose results are to be
+      copied.  Note that parentheses are required around the query.
+     </para>
+     <para>
+      For <command>INSERT</>, <command>UPDATE</> and
+      <command>DELETE</> queries a RETURNING clause must be provided,
+      and the target relation must not have a conditional rule, nor
+      an <literal>ALSO</> rule, nor an <literal>INSTEAD</> rule
+      that expands to multiple statements.
      </para>
     </listitem>
    </varlistentry>

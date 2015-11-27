@@ -57,6 +57,7 @@ test: create_table
 test: create_function_2
 test: copy
 test: copyselect
+test: copydml
 test: create_misc
 test: create_operator
 test: create_index

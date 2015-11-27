@@ -48,7 +48,7 @@ test: create_function_2
 # execute two copy tests parallel, to check that copy itself
 # is concurrent safe.
 # ----------
-test: copy copyselect
+test: copy copyselect copydml
 
 # ----------
 # More groups of parallel tests
