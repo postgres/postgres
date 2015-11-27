@@ -5353,7 +5353,10 @@ PQhost(const PGconn *conn)
 	else
 	{
 #ifdef HAVE_UNIX_SOCKETS
-		return conn->pgunixsocket;
+		if (conn->pgunixsocket != NULL && conn->pgunixsocket[0] != '\0')
+			return conn->pgunixsocket;
+		else
+			return DEFAULT_PGSOCKET_DIR;
 #else
 		return DefaultHost;
 #endif

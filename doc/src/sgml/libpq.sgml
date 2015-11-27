@@ -1463,6 +1463,10 @@ char *PQpass(const PGconn *conn);
      <listitem>
       <para>
        Returns the server host name of the connection.
+       This can be a host name, an IP address, or a directory path if the
+       connection is via Unix socket.  (The path case can be distinguished
+       because it will always be an absolute path, beginning
+       with <literal>/</>.)
 <synopsis>
 char *PQhost(const PGconn *conn);
 </synopsis>

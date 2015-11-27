@@ -322,8 +322,6 @@ exec_command(const char *cmd,
 			PQconninfoOption *option;
 
 			host = PQhost(pset.db);
-			if (host == NULL)
-				host = DEFAULT_PGSOCKET_DIR;
 			/* A usable "hostaddr" overrides the basic sense of host. */
 			connOptions = PQconninfo(pset.db);
 			if (connOptions == NULL)
@@ -1750,16 +1748,14 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	/*
 	 * Any change in the parameters read above makes us discard the password.
 	 * We also discard it if we're to use a conninfo rather than the
-	 * positional syntax.  Note that currently, PQhost() can return NULL for a
-	 * default Unix-socket connection, so we have to allow NULL for host.
+	 * positional syntax.
 	 */
 	if (has_connection_string)
 		keep_password = false;
 	else
 		keep_password =
 			(user && PQuser(o_conn) && strcmp(user, PQuser(o_conn)) == 0) &&
-			((host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) ||
-			 (host == NULL && PQhost(o_conn) == NULL)) &&
+			(host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) &&
 			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
 
 	/*
@@ -1890,8 +1886,6 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		{
 			char	   *host = PQhost(pset.db);
 
-			if (host == NULL)
-				host = DEFAULT_PGSOCKET_DIR;
 			/* If the host is an absolute path, the connection is via socket */
 			if (is_absolute_path(host))
 				printf(_("You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
