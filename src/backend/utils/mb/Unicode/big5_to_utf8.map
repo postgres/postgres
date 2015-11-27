@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/big5_to_utf8.map */
+
 static const pg_local_to_utf LUmapBIG5[ 13717 ] = {
   {0xa140, 0xe38080},
   {0xa141, 0xefbc8c},

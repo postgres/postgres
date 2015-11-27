@@ -56,6 +56,8 @@ close(FILE);
 
 $file = "utf8_to_gb18030.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_utf_to_local ULmapGB18030[ $count ] = {\n";
 
 $cc = $count;
@@ -83,6 +85,8 @@ close(FILE);
 
 $file = "gb18030_to_utf8.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_local_to_utf LUmapGB18030[ $count ] = {\n";
 
 $cc = $count;

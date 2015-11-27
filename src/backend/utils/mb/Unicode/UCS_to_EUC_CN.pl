@@ -55,6 +55,8 @@ close(FILE);
 
 $file = "utf8_to_euc_cn.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_utf_to_local ULmapEUC_CN[ $count ] = {\n";
 
 for $index (sort { $a <=> $b } keys(%array))
@@ -109,6 +111,8 @@ close(FILE);
 
 $file = "euc_cn_to_utf8.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_local_to_utf LUmapEUC_CN[ $count ] = {\n";
 for $index (sort { $a <=> $b } keys(%array))
 {

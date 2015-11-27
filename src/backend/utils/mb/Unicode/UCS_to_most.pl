@@ -88,6 +88,8 @@ foreach $charset (@charsets)
 
 	$file = lc("utf8_to_${charset}.map");
 	open(FILE, "> $file") || die("cannot open $file");
+
+	print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 	print FILE "static const pg_utf_to_local ULmap${charset}[ $count ] = {\n";
 
 	for $index (sort { $a <=> $b } keys(%array))
@@ -140,6 +142,8 @@ foreach $charset (@charsets)
 
 	$file = lc("${charset}_to_utf8.map");
 	open(FILE, "> $file") || die("cannot open $file");
+
+	print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 	print FILE "static const pg_local_to_utf LUmap${charset}[ $count ] = {\n";
 	for $index (sort { $a <=> $b } keys(%array))
 	{

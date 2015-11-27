@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/win874_to_utf8.map */
+
 static const pg_local_to_utf LUmapWIN874[ 97 ] = {
   {0x0080, 0xe282ac},
   {0x0085, 0xe280a6},
