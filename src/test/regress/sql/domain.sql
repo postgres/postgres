@@ -516,6 +516,30 @@ drop function dom_check(int);
 drop domain di;
 
 --
+-- Check use of a (non-inline-able) SQL function in a domain constraint;
+-- this has caused issues in the past
+--
+
+create function sql_is_distinct_from(anyelement, anyelement)
+returns boolean language sql
+as 'select $1 is distinct from $2 limit 1';
+
+create domain inotnull int
+  check (sql_is_distinct_from(value, null));
+
+select 1::inotnull;
+select null::inotnull;
+
+create table dom_table (x inotnull);
+insert into dom_table values ('1');
+insert into dom_table values (1);
+insert into dom_table values (null);
+
+drop table dom_table;
+drop domain inotnull;
+drop function sql_is_distinct_from(anyelement, anyelement);
+
+--
 -- Renaming
 --
 

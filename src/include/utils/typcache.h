@@ -130,6 +130,7 @@ typedef struct TypeCacheEntry
 typedef struct DomainConstraintRef
 {
 	List	   *constraints;	/* list of DomainConstraintState nodes */
+	MemoryContext refctx;		/* context holding DomainConstraintRef */
 
 	/* Management data --- treat these fields as private to typcache.c */
 	TypeCacheEntry *tcache;		/* owning typcache entry */
