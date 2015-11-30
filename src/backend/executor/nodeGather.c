@@ -11,7 +11,8 @@
  * or have not started up yet.  It then merges all of the results it produces
  * and the results from the workers into a single output stream.  Therefore,
  * it will normally be used with a plan where running multiple copies of the
- * same plan does not produce duplicate output, such as PartialSeqScan.
+ * same plan does not produce duplicate output, such as parallel-aware
+ * SeqScan.
  *
  * Alternatively, a Gather node can be configured to use just one worker
  * and the single-copy flag can be set.  In this case, the Gather node will
