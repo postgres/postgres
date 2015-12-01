@@ -7260,32 +7260,33 @@ gincostestimate(PG_FUNCTION_ARGS)
 	qinfos = deconstruct_indexquals(path);
 
 	/*
-	 * Obtain statistic information from the meta page
+	 * Obtain statistical information from the meta page, if possible.  Else
+	 * set ginStats to zeroes, and we'll cope below.
 	 */
-	indexRel = index_open(index->indexoid, AccessShareLock);
-	ginGetStats(indexRel, &ginStats);
-	index_close(indexRel, AccessShareLock);
-
-	numEntryPages = ginStats.nEntryPages;
-	numDataPages = ginStats.nDataPages;
-	numPendingPages = ginStats.nPendingPages;
-	numEntries = ginStats.nEntries;
-
-	/*
-	 * nPendingPages can be trusted, but the other fields are as of the last
-	 * VACUUM.  Scale them by the ratio numPages / nTotalPages to account for
-	 * growth since then.  If the fields are zero (implying no VACUUM at all,
-	 * and an index created pre-9.1), assume all pages are entry pages.
-	 */
-	if (ginStats.nTotalPages == 0 || ginStats.nEntryPages == 0)
+	if (!index->hypothetical)
 	{
-		numEntryPages = numPages;
-		numDataPages = 0;
-		numEntries = numTuples; /* bogus, but no other info available */
+		indexRel = index_open(index->indexoid, AccessShareLock);
+		ginGetStats(indexRel, &ginStats);
+		index_close(indexRel, AccessShareLock);
 	}
 	else
 	{
+		memset(&ginStats, 0, sizeof(ginStats));
+	}
+
+	if (ginStats.nTotalPages > 0 && ginStats.nEntryPages > 0 && numPages > 0)
+	{
+		/*
+		 * We got valid stats.  nPendingPages can be trusted, but the other
+		 * fields are data as of the last VACUUM.  Scale them by the ratio
+		 * numPages / nTotalPages to account for growth since then.
+		 */
 		double		scale = numPages / ginStats.nTotalPages;
+
+		numEntryPages = ginStats.nEntryPages;
+		numDataPages = ginStats.nDataPages;
+		numPendingPages = ginStats.nPendingPages;
+		numEntries = ginStats.nEntries;
 
 		numEntryPages = ceil(numEntryPages * scale);
 		numDataPages = ceil(numDataPages * scale);
@@ -7293,6 +7294,23 @@ gincostestimate(PG_FUNCTION_ARGS)
 		/* ensure we didn't round up too much */
 		numEntryPages = Min(numEntryPages, numPages);
 		numDataPages = Min(numDataPages, numPages - numEntryPages);
+	}
+	else
+	{
+		/*
+		 * It's a hypothetical index, or perhaps an index created pre-9.1 and
+		 * never vacuumed since upgrading.  Invent some plausible internal
+		 * statistics based on the index page count.  We estimate that 90% of
+		 * the index is entry pages, and the rest is data pages.  Estimate 100
+		 * entries per entry page; this is rather bogus since it'll depend on
+		 * the size of the keys, but it's more robust than trying to predict
+		 * the number of entries per heap tuple.
+		 */
+		numPages = Max(numPages, 10);
+		numEntryPages = floor(numPages * 0.90);
+		numDataPages = numPages - numEntryPages;
+		numPendingPages = 0;
+		numEntries = floor(numEntryPages * 100);
 	}
 
 	/* In an empty index, numEntries could be zero.  Avoid divide-by-zero */
