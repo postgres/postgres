@@ -2198,34 +2198,34 @@ execute q;
 
 \pset format wrapped
 execute q;
-* Record 1                             
+* Record 1                          
 0123456789abcdef xx
 0123456789       yyyyyyyyyyyyyyyyyy
-* Record 2                             
+* Record 2                          
 0123456789abcdef xxxx
 0123456789       yyyyyyyyyyyyyyyy
-* Record 3                             
+* Record 3                          
 0123456789abcdef xxxxxx
 0123456789       yyyyyyyyyyyyyy
-* Record 4                             
+* Record 4                          
 0123456789abcdef xxxxxxxx
 0123456789       yyyyyyyyyyyy
-* Record 5                             
+* Record 5                          
 0123456789abcdef xxxxxxxxxx
 0123456789       yyyyyyyyyy
-* Record 6                             
+* Record 6                          
 0123456789abcdef xxxxxxxxxxxx
 0123456789       yyyyyyyy
-* Record 7                             
+* Record 7                          
 0123456789abcdef xxxxxxxxxxxxxx
 0123456789       yyyyyy
-* Record 8                             
+* Record 8                          
 0123456789abcdef xxxxxxxxxxxxxxxx
 0123456789       yyyy
-* Record 9                             
+* Record 9                          
 0123456789abcdef xxxxxxxxxxxxxxxxxx
 0123456789       yy
-* Record 10                            
+* Record 10                         
 0123456789abcdef xxxxxxxxxxxxxxxxxxxx
 0123456789       
 
@@ -2296,34 +2296,34 @@ execute q;
 
 \pset format wrapped
 execute q;
--[ RECORD 1 ]----+----------------------
+-[ RECORD 1 ]----+---------------------
 0123456789abcdef | xx
 0123456789       | yyyyyyyyyyyyyyyyyy
--[ RECORD 2 ]----+----------------------
+-[ RECORD 2 ]----+---------------------
 0123456789abcdef | xxxx
 0123456789       | yyyyyyyyyyyyyyyy
--[ RECORD 3 ]----+----------------------
+-[ RECORD 3 ]----+---------------------
 0123456789abcdef | xxxxxx
 0123456789       | yyyyyyyyyyyyyy
--[ RECORD 4 ]----+----------------------
+-[ RECORD 4 ]----+---------------------
 0123456789abcdef | xxxxxxxx
 0123456789       | yyyyyyyyyyyy
--[ RECORD 5 ]----+----------------------
+-[ RECORD 5 ]----+---------------------
 0123456789abcdef | xxxxxxxxxx
 0123456789       | yyyyyyyyyy
--[ RECORD 6 ]----+----------------------
+-[ RECORD 6 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxx
 0123456789       | yyyyyyyy
--[ RECORD 7 ]----+----------------------
+-[ RECORD 7 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxxxx
 0123456789       | yyyyyy
--[ RECORD 8 ]----+----------------------
+-[ RECORD 8 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxxxxxx
 0123456789       | yyyy
--[ RECORD 9 ]----+----------------------
+-[ RECORD 9 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxxxxxxxx
 0123456789       | yy
--[ RECORD 10 ]---+----------------------
+-[ RECORD 10 ]---+---------------------
 0123456789abcdef | xxxxxxxxxxxxxxxxxxxx
 0123456789       | 
 
