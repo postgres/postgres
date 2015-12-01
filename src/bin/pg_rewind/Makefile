@@ -8,7 +8,7 @@
 #
 #-------------------------------------------------------------------------
 
-PGFILEDESC = "pg_rewind - repurpose an old master server as standby"
+PGFILEDESC = "pg_rewind - synchronize a data directory with another one forked from"
 PGAPPICON = win32
 
 subdir = src/bin/pg_rewind
