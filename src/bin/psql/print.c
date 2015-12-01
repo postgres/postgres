@@ -1265,7 +1265,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	/*
 	 * Deal with the pager here instead of in printTable(), because we could
 	 * get here via print_aligned_text() in expanded auto mode, and so we have
-	 * to recalcuate the pager requirement based on vertical output.
+	 * to recalculate the pager requirement based on vertical output.
 	 */
 	IsPagerNeeded(cont, 0, true, &fout, &is_pager);
 
@@ -1400,7 +1400,8 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		/* Determine width required for record header lines */
 		if (!opt_tuples_only)
 		{
-			rwidth = 1 + log10(cont->nrows);
+			if (cont->nrows > 0)
+				rwidth = 1 + (int) log10(cont->nrows);
 			if (opt_border == 0)
 				rwidth += 9;	/* "* RECORD " */
 			else if (opt_border == 1)
@@ -1412,33 +1413,46 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		/* We might need to do the rest of the calculation twice */
 		for (;;)
 		{
-			unsigned int width,
-						min_width;
+			unsigned int width;
 
 			/* Total width required to not wrap data */
 			width = hwidth + swidth + dwidth;
+			/* ... and not the header lines, either */
+			if (width < rwidth)
+				width = rwidth;
 
-			/* Minimum acceptable width: room for just 3 columns of data */
-			min_width = hwidth + swidth + 3;
-			/* ... but not less than what the record header lines need */
-			if (rwidth > min_width)
-				min_width = rwidth;
+			if (output_columns > 0)
+			{
+				unsigned int min_width;
 
-			if (width < min_width ||
-				(output_columns > 0 && output_columns < min_width))
-			{
-				/* Set data width to match min_width */
-				newdwidth = min_width - hwidth - swidth;
-			}
-			else if (output_columns > 0)
-			{
-				/* Set data width to match output_columns */
-				newdwidth = output_columns - hwidth - swidth;
+				/* Minimum acceptable width: room for just 3 columns of data */
+				min_width = hwidth + swidth + 3;
+				/* ... but not less than what the record header lines need */
+				if (min_width < rwidth)
+					min_width = rwidth;
+
+				if (output_columns >= width)
+				{
+					/* Plenty of room, use native data width */
+					/* (but at least enough for the record header lines) */
+					newdwidth = width - hwidth - swidth;
+				}
+				else if (output_columns < min_width)
+				{
+					/* Set data width to match min_width */
+					newdwidth = min_width - hwidth - swidth;
+				}
+				else
+				{
+					/* Set data width to match output_columns */
+					newdwidth = output_columns - hwidth - swidth;
+				}
 			}
 			else
 			{
-				/* Use native data width */
-				newdwidth = dwidth;
+				/* Don't know the wrap limit, so use native data width */
+				/* (but at least enough for the record header lines) */
+				newdwidth = width - hwidth - swidth;
 			}
 
 			/*
