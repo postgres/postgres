@@ -1424,7 +1424,8 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			if (rwidth > min_width)
 				min_width = rwidth;
 
-			if (width < min_width || output_columns < min_width)
+			if (width < min_width ||
+				(output_columns > 0 && output_columns < min_width))
 			{
 				/* Set data width to match min_width */
 				newdwidth = min_width - hwidth - swidth;
