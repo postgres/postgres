@@ -184,9 +184,10 @@ extern void printTableAddFooter(printTableContent *const content,
 extern void printTableSetFooter(printTableContent *const content,
 					const char *footer);
 extern void printTableCleanup(printTableContent *const content);
-extern void printTable(const printTableContent *cont, FILE *fout, FILE *flog);
+extern void printTable(const printTableContent *cont,
+		   FILE *fout, bool is_pager, FILE *flog);
 extern void printQuery(const PGresult *result, const printQueryOpt *opt,
-		   FILE *fout, FILE *flog);
+		   FILE *fout, bool is_pager, FILE *flog);
 
 extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);

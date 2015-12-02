@@ -9,6 +9,7 @@
 #include "common.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */
@@ -537,7 +538,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt)
 	switch (PQresultStatus(res))
 	{
 		case PGRES_TUPLES_OK:
-			printQuery(res, opt, pset.queryFout, pset.logfile);
+			printQuery(res, opt, pset.queryFout, false, pset.logfile);
 			break;
 
 		case PGRES_COMMAND_OK:
@@ -624,7 +625,7 @@ PrintQueryTuples(const PGresult *results)
 			return false;
 		}
 
-		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
+		printQuery(results, &my_popt, pset.queryFout, false, pset.logfile);
 
 		/* close file/pipe, restore old setting */
 		setQFout(NULL);
@@ -633,7 +634,7 @@ PrintQueryTuples(const PGresult *results)
 		pset.queryFoutPipe = queryFoutPipe_copy;
 	}
 	else
-		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
+		printQuery(results, &my_popt, pset.queryFout, false, pset.logfile);
 
 	return true;
 }
@@ -1336,11 +1337,11 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			 * If query requires multiple result sets, hack to ensure that
 			 * only one pager instance is used for the whole mess
 			 */
-			pset.queryFout = PageOutput(100000, &(my_popt.topt));
+			pset.queryFout = PageOutput(INT_MAX, &(my_popt.topt));
 			did_pager = true;
 		}
 
-		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
+		printQuery(results, &my_popt, pset.queryFout, did_pager, pset.logfile);
 
 		PQclear(results);
 
