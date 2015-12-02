@@ -4,6 +4,7 @@
 
 use strict;
 use warnings;
+use PostgresNode;
 use TestLib;
 use Test::More tests => 14;
 

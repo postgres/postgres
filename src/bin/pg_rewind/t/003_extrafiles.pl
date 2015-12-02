@@ -17,7 +17,7 @@ sub run_test
 	RewindTest::setup_cluster();
 	RewindTest::start_master();
 
-	my $test_master_datadir = $RewindTest::test_master_datadir;
+	my $test_master_datadir = $node_master->data_dir;
 
 	# Create a subdir and files that will be present in both
 	mkdir "$test_master_datadir/tst_both_dir";
@@ -30,6 +30,7 @@ sub run_test
 	RewindTest::create_standby();
 
 	# Create different subdirs and files in master and standby
+	my $test_standby_datadir = $node_standby->data_dir;
 
 	mkdir "$test_standby_datadir/tst_standby_dir";
 	append_to_file "$test_standby_datadir/tst_standby_dir/standby_file1",

@@ -23,10 +23,12 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	my $master_xlogdir = "$tmp_check/xlog_master";
+	my $master_xlogdir = "${TestLib::tmp_check}/xlog_master";
 
 	rmtree($master_xlogdir);
 	RewindTest::setup_cluster();
+
+	my $test_master_datadir = $node_master->data_dir;
 
 	# turn pg_xlog into a symlink
 	print("moving $test_master_datadir/pg_xlog to $master_xlogdir\n");
