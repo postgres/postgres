@@ -2771,6 +2771,10 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			ptype = "Unique";
 			subpath = ((UniquePath *) path)->subpath;
 			break;
+		case T_GatherPath:
+			ptype = "Gather";
+			subpath = ((GatherPath *) path)->subpath;
+			break;
 		case T_NestPath:
 			ptype = "NestLoop";
 			join = true;
