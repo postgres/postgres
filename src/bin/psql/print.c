@@ -191,10 +191,11 @@ const unicodeStyleFormat unicode_style = {
 
 /* Local functions */
 static int	strlen_max_width(unsigned char *str, int *target_width, int encoding);
-static void IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expanded,
+static void IsPagerNeeded(const printTableContent *cont, int extra_lines, bool expanded,
 			  FILE **fout, bool *is_pager);
 
-static void print_aligned_vertical(const printTableContent *cont, FILE *fout);
+static void print_aligned_vertical(const printTableContent *cont,
+					   FILE *fout, bool is_pager);
 
 
 /* Count number of digits in integral part of number */
@@ -570,7 +571,7 @@ _print_horizontal_line(const unsigned int ncolumns, const unsigned int *widths,
  *	Print pretty boxes around cells.
  */
 static void
-print_aligned_text(const printTableContent *cont, FILE *fout)
+print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	int			encoding = cont->opt->encoding;
@@ -605,7 +606,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	int		   *bytes_output;	/* Bytes output for column value */
 	printTextLineWrap *wrap;	/* Wrap status for each column */
 	int			output_columns = 0;		/* Width of interactive console */
-	bool		is_pager = false;
+	bool		is_local_pager = false;
 
 	if (cancel_pressed)
 		return;
@@ -813,7 +814,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	if (cont->opt->expanded == 2 && output_columns > 0 &&
 		(output_columns < total_header_width || output_columns < width_total))
 	{
-		print_aligned_vertical(cont, fout);
+		print_aligned_vertical(cont, fout, is_pager);
 		goto cleanup;
 	}
 
@@ -822,11 +823,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		(output_columns < total_header_width || output_columns < width_total))
 	{
 		fout = PageOutput(INT_MAX, cont->opt);	/* force pager */
-		is_pager = true;
+		is_pager = is_local_pager = true;
 	}
 
 	/* Check if newlines or our wrapping now need the pager */
-	if (!is_pager)
+	if (!is_pager && fout == stdout)
 	{
 		/* scan all cells, find maximum width, compute cell_count */
 		for (i = 0, ptr = cont->cells; *ptr; ptr++, cell_count++)
@@ -862,6 +863,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			}
 		}
 		IsPagerNeeded(cont, extra_output_lines, false, &fout, &is_pager);
+		is_local_pager = is_pager;
 	}
 
 	/* time to output */
@@ -1153,7 +1155,7 @@ cleanup:
 	free(bytes_output);
 	free(wrap);
 
-	if (is_pager)
+	if (is_local_pager)
 		ClosePager(fout);
 }
 
@@ -1215,7 +1217,8 @@ print_aligned_vertical_line(const printTextFormat *format,
 }
 
 static void
-print_aligned_vertical(const printTableContent *cont, FILE *fout)
+print_aligned_vertical(const printTableContent *cont,
+					   FILE *fout, bool is_pager)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
@@ -1233,7 +1236,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				dformatsize = 0;
 	struct lineptr *hlineptr,
 			   *dlineptr;
-	bool		is_pager = false,
+	bool		is_local_pager = false,
 				hmultiline = false,
 				dmultiline = false;
 	int			output_columns = 0;		/* Width of interactive console */
@@ -1267,7 +1270,11 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	 * get here via print_aligned_text() in expanded auto mode, and so we have
 	 * to recalculate the pager requirement based on vertical output.
 	 */
-	IsPagerNeeded(cont, 0, true, &fout, &is_pager);
+	if (!is_pager)
+	{
+		IsPagerNeeded(cont, 0, true, &fout, &is_pager);
+		is_local_pager = is_pager;
+	}
 
 	/* Find the maximum dimensions for the headers */
 	for (i = 0; i < cont->ncolumns; i++)
@@ -1714,7 +1721,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	free(hlineptr);
 	free(dlineptr);
 
-	if (is_pager)
+	if (is_local_pager)
 		ClosePager(fout);
 }
 
@@ -3075,8 +3082,8 @@ printTableCleanup(printTableContent *const content)
  * Setup pager if required
  */
 static void
-IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expanded, FILE **fout,
-			  bool *is_pager)
+IsPagerNeeded(const printTableContent *cont, int extra_lines, bool expanded,
+			  FILE **fout, bool *is_pager)
 {
 	if (*fout == stdout)
 	{
@@ -3107,12 +3114,18 @@ IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expande
 }
 
 /*
- * Use this to print just any table in the supported formats.
+ * Use this to print any table in the supported formats.
+ *
+ * cont: table data and formatting options
+ * fout: where to print to
+ * is_pager: true if caller has already redirected fout to be a pager pipe
+ * flog: if not null, also print the table there (for --log-file option)
  */
 void
-printTable(const printTableContent *cont, FILE *fout, FILE *flog)
+printTable(const printTableContent *cont,
+		   FILE *fout, bool is_pager, FILE *flog)
 {
-	bool		is_pager = false;
+	bool		is_local_pager = false;
 
 	if (cancel_pressed)
 		return;
@@ -3120,15 +3133,19 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 	if (cont->opt->format == PRINT_NOTHING)
 		return;
 
-	/* print_aligned_*() handles the pager themselves */
-	if (cont->opt->format != PRINT_ALIGNED &&
+	/* print_aligned_*() handle the pager themselves */
+	if (!is_pager &&
+		cont->opt->format != PRINT_ALIGNED &&
 		cont->opt->format != PRINT_WRAPPED)
+	{
 		IsPagerNeeded(cont, 0, (cont->opt->expanded == 1), &fout, &is_pager);
+		is_local_pager = is_pager;
+	}
 
 	/* print the stuff */
 
 	if (flog)
-		print_aligned_text(cont, flog);
+		print_aligned_text(cont, flog, false);
 
 	switch (cont->opt->format)
 	{
@@ -3140,10 +3157,17 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 			break;
 		case PRINT_ALIGNED:
 		case PRINT_WRAPPED:
-			if (cont->opt->expanded == 1)
-				print_aligned_vertical(cont, fout);
+
+			/*
+			 * In expanded-auto mode, force vertical if a pager is passed in;
+			 * else we may make different decisions for different hunks of the
+			 * query result.
+			 */
+			if (cont->opt->expanded == 1 ||
+				(cont->opt->expanded == 2 && is_pager))
+				print_aligned_vertical(cont, fout, is_pager);
 			else
-				print_aligned_text(cont, fout);
+				print_aligned_text(cont, fout, is_pager);
 			break;
 		case PRINT_HTML:
 			if (cont->opt->expanded == 1)
@@ -3181,17 +3205,22 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 			exit(EXIT_FAILURE);
 	}
 
-	if (is_pager)
+	if (is_local_pager)
 		ClosePager(fout);
 }
 
 /*
  * Use this to print query results
  *
- * It calls printTable with all the things set straight.
+ * result: result of a successful query
+ * opt: formatting options
+ * fout: where to print to
+ * is_pager: true if caller has already redirected fout to be a pager pipe
+ * flog: if not null, also print the data there (for --log-file option)
  */
 void
-printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *flog)
+printQuery(const PGresult *result, const printQueryOpt *opt,
+		   FILE *fout, bool is_pager, FILE *flog)
 {
 	printTableContent cont;
 	int			i,
@@ -3271,7 +3300,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			printTableAddFooter(&cont, *footer);
 	}
 
-	printTable(&cont, fout, flog);
+	printTable(&cont, fout, is_pager, flog);
 	printTableCleanup(&cont);
 }
 
