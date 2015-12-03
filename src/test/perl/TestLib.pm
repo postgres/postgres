@@ -143,7 +143,7 @@ sub system_or_bail
 sub run_log
 {
 	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
-	return run(@_);
+	return IPC::Run::run(@_);
 }
 
 sub slurp_dir
