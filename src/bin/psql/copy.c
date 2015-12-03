@@ -310,9 +310,7 @@ do_copy(const char *args)
 				fflush(stdout);
 				fflush(stderr);
 				errno = 0;
-#ifndef WIN32
-				pqsignal(SIGPIPE, SIG_IGN);
-#endif
+				disable_sigpipe_trap();
 				copystream = popen(options->file, PG_BINARY_W);
 			}
 			else
@@ -397,9 +395,7 @@ do_copy(const char *args)
 				}
 				success = false;
 			}
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_DFL);
-#endif
+			restore_sigpipe_trap();
 		}
 		else
 		{

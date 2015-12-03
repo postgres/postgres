@@ -167,6 +167,10 @@ extern const printTextFormat pg_asciiformat_old;
 extern const printTextFormat pg_utf8format;
 
 
+extern void disable_sigpipe_trap(void);
+extern void restore_sigpipe_trap(void);
+extern void set_sigpipe_trap_state(bool ignore);
+
 extern FILE *PageOutput(int lines, const printTableOpt *topt);
 extern void ClosePager(FILE *pagerpipe);
 
