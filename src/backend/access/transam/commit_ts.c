@@ -106,6 +106,7 @@ static void SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 					 RepOriginId nodeid, int pageno);
 static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
 						 RepOriginId nodeid, int slotno);
+static void error_commit_ts_disabled(void);
 static int	ZeroCommitTsPage(int pageno, bool writeXlog);
 static bool CommitTsPagePrecedes(int page1, int page2);
 static void ActivateCommitTs(void);
@@ -297,11 +298,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 
 	/* Error if module not enabled */
 	if (!commitTsShared->commitTsActive)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("could not get commit timestamp data"),
-			  errhint("Make sure the configuration parameter \"%s\" is set.",
-					  "track_commit_timestamp")));
+		error_commit_ts_disabled();
 
 	/*
 	 * If we're asked for the cached value, return that.  Otherwise, fall
@@ -368,11 +365,7 @@ GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 
 	/* Error if module not enabled */
 	if (!commitTsShared->commitTsActive)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("could not get commit timestamp data"),
-			  errhint("Make sure the configuration parameter \"%s\" is set.",
-					  "track_commit_timestamp")));
+		error_commit_ts_disabled();
 
 	xid = commitTsShared->xidLastCommit;
 	if (ts)
@@ -382,6 +375,19 @@ GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 	LWLockRelease(CommitTsLock);
 
 	return xid;
+}
+
+static void
+error_commit_ts_disabled(void)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			 errmsg("could not get commit timestamp data"),
+			 RecoveryInProgress() ?
+			 errhint("Make sure the configuration parameter \"%s\" is set in the master server.",
+					 "track_commit_timestamp") :
+			 errhint("Make sure the configuration parameter \"%s\" is set.",
+					 "track_commit_timestamp")));
 }
 
 /*
@@ -510,7 +516,7 @@ BootStrapCommitTs(void)
 	/*
 	 * Nothing to do here at present, unlike most other SLRU modules; segments
 	 * are created when the server is started with this module enabled. See
-	 * StartupCommitTs.
+	 * ActivateCommitTs.
 	 */
 }
 
@@ -544,13 +550,13 @@ ZeroCommitTsPage(int pageno, bool writeXlog)
  * configuration.
  */
 void
-StartupCommitTs(bool force_enable)
+StartupCommitTs(bool enabled)
 {
 	/*
 	 * If the module is not enabled, there's nothing to do here.  The module
 	 * could still be activated from elsewhere.
 	 */
-	if (track_commit_timestamp || force_enable)
+	if (enabled)
 		ActivateCommitTs();
 }
 

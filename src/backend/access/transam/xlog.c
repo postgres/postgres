@@ -6568,6 +6568,10 @@ StartupXLOG(void)
 			 * Startup commit log, commit timestamp and subtrans only.
 			 * MultiXact has already been started up and other SLRUs are not
 			 * maintained during recovery and need not be started yet.
+			 *
+			 * For commit timestamps, we do this based on the control file
+			 * info: in a standby, we want to drive it off the state of the
+			 * master, not local configuration.
 			 */
 			StartupCLOG();
 			StartupCommitTs(ControlFile->track_commit_timestamp);
@@ -7339,7 +7343,7 @@ StartupXLOG(void)
 	if (standbyState == STANDBY_DISABLED)
 	{
 		StartupCLOG();
-		StartupCommitTs(false);
+		StartupCommitTs(track_commit_timestamp);
 		StartupSUBTRANS(oldestActiveXID);
 	}
 
