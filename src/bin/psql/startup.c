@@ -461,7 +461,8 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				options->no_readline = true;
 				break;
 			case 'o':
-				setQFout(optarg);
+				if (!setQFout(optarg))
+					exit(EXIT_FAILURE);
 				break;
 			case 'p':
 				options->port = pg_strdup(optarg);

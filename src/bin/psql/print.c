@@ -39,6 +39,13 @@
  */
 volatile bool cancel_pressed = false;
 
+/*
+ * Likewise, the sigpipe_trap and pager open/close functions are here rather
+ * than in common.c so that this file can be used by non-psql programs.
+ */
+static bool always_ignore_sigpipe = false;
+
+
 /* info for locale-aware numeric formatting; set up by setDecimalLocale() */
 static char *decimal_point;
 static int	groupdigits;
@@ -2775,8 +2782,59 @@ print_troff_ms_vertical(const printTableContent *cont, FILE *fout)
 
 
 /********************************/
-/* Public functions		*/
+/* Public functions				*/
 /********************************/
+
+
+/*
+ * disable_sigpipe_trap
+ *
+ * Turn off SIGPIPE interrupt --- call this before writing to a temporary
+ * query output file that is a pipe.
+ *
+ * No-op on Windows, where there's no SIGPIPE interrupts.
+ */
+void
+disable_sigpipe_trap(void)
+{
+#ifndef WIN32
+	pqsignal(SIGPIPE, SIG_IGN);
+#endif
+}
+
+/*
+ * restore_sigpipe_trap
+ *
+ * Restore normal SIGPIPE interrupt --- call this when done writing to a
+ * temporary query output file that was (or might have been) a pipe.
+ *
+ * Note: within psql, we enable SIGPIPE interrupts unless the permanent query
+ * output file is a pipe, in which case they should be kept off.  This
+ * approach works only because psql is not currently complicated enough to
+ * have nested usages of short-lived output files.  Otherwise we'd probably
+ * need a genuine save-and-restore-state approach; but for now, that would be
+ * useless complication.  In non-psql programs, this always enables SIGPIPE.
+ *
+ * No-op on Windows, where there's no SIGPIPE interrupts.
+ */
+void
+restore_sigpipe_trap(void)
+{
+#ifndef WIN32
+	pqsignal(SIGPIPE, always_ignore_sigpipe ? SIG_IGN : SIG_DFL);
+#endif
+}
+
+/*
+ * set_sigpipe_trap_state
+ *
+ * Set the trap state that restore_sigpipe_trap should restore to.
+ */
+void
+set_sigpipe_trap_state(bool ignore)
+{
+	always_ignore_sigpipe = ignore;
+}
 
 
 /*
@@ -2792,9 +2850,6 @@ PageOutput(int lines, const printTableOpt *topt)
 	/* check whether we need / can / are supposed to use pager */
 	if (topt && topt->pager && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	{
-		const char *pagerprog;
-		FILE	   *pagerpipe;
-
 #ifdef TIOCGWINSZ
 		unsigned short int pager = topt->pager;
 		int			min_lines = topt->pager_min_lines;
@@ -2807,20 +2862,19 @@ PageOutput(int lines, const printTableOpt *topt)
 		if (result == -1
 			|| (lines >= screen_size.ws_row && lines >= min_lines)
 			|| pager > 1)
-		{
 #endif
+		{
+			const char *pagerprog;
+			FILE	   *pagerpipe;
+
 			pagerprog = getenv("PAGER");
 			if (!pagerprog)
 				pagerprog = DEFAULT_PAGER;
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_IGN);
-#endif
+			disable_sigpipe_trap();
 			pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)
 				return pagerpipe;
-#ifdef TIOCGWINSZ
 		}
-#endif
 	}
 
 	return stdout;
@@ -2848,9 +2902,7 @@ ClosePager(FILE *pagerpipe)
 			fprintf(pagerpipe, _("Interrupted\n"));
 
 		pclose(pagerpipe);
-#ifndef WIN32
-		pqsignal(SIGPIPE, SIG_DFL);
-#endif
+		restore_sigpipe_trap();
 	}
 }
 

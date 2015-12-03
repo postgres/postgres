@@ -1531,6 +1531,7 @@ exec_command(const char *cmd,
 				if (fname[0] == '|')
 				{
 					is_pipe = true;
+					disable_sigpipe_trap();
 					fd = popen(&fname[1], "w");
 				}
 				else
@@ -1564,6 +1565,9 @@ exec_command(const char *cmd,
 				success = false;
 			}
 		}
+
+		if (is_pipe)
+			restore_sigpipe_trap();
 
 		free(fname);
 	}
