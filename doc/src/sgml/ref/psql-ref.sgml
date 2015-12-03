@@ -2183,7 +2183,7 @@ lo_import 152801
           <listitem>
           <para>
           Sets the border line drawing style to one
-          of <literal>ascii</literal>, <literal>old-ascii</literal>
+          of <literal>ascii</literal>, <literal>old-ascii</literal>,
           or <literal>unicode</literal>.
           Unique abbreviations are allowed.  (That would mean one
           letter is enough.)
