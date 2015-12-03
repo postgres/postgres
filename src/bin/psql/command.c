@@ -2412,7 +2412,7 @@ _align2string(enum printFormat in)
 }
 
 /*
- * Parse entered unicode linestyle.  If ok, update *linestyle and return
+ * Parse entered Unicode linestyle.  If ok, update *linestyle and return
  * true, else return false.
  */
 static bool
@@ -2515,7 +2515,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			refresh_utf8format(&(popt->topt));
 		else
 		{
-			psql_error("\\pset: allowed unicode border linestyles are single, double\n");
+			psql_error("\\pset: allowed Unicode border line styles are single, double\n");
 			return false;
 		}
 	}
@@ -2530,7 +2530,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			refresh_utf8format(&(popt->topt));
 		else
 		{
-			psql_error("\\pset: allowed unicode column linestyles are single, double\n");
+			psql_error("\\pset: allowed Unicode column line styles are single, double\n");
 			return false;
 		}
 	}
@@ -2545,7 +2545,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			refresh_utf8format(&(popt->topt));
 		else
 		{
-			psql_error("\\pset: allowed unicode header linestyles are single, double\n");
+			psql_error("\\pset: allowed Unicode header line styles are single, double\n");
 			return false;
 		}
 	}
@@ -2855,22 +2855,22 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Tuples only is off.\n"));
 	}
 
-	/* unicode style formatting */
+	/* Unicode style formatting */
 	else if (strcmp(param, "unicode_border_linestyle") == 0)
 	{
-		printf(_("Unicode border linestyle is \"%s\".\n"),
+		printf(_("Unicode border line style is \"%s\".\n"),
 			 _unicode_linestyle2string(popt->topt.unicode_border_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_column_linestyle") == 0)
 	{
-		printf(_("Unicode column linestyle is \"%s\".\n"),
+		printf(_("Unicode column line style is \"%s\".\n"),
 			 _unicode_linestyle2string(popt->topt.unicode_column_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_header_linestyle") == 0)
 	{
-		printf(_("Unicode header linestyle is \"%s\".\n"),
+		printf(_("Unicode header line style is \"%s\".\n"),
 			 _unicode_linestyle2string(popt->topt.unicode_header_linestyle));
 	}
 
