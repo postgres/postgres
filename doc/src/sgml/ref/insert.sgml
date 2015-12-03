@@ -29,7 +29,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
 
 <phrase>where <replaceable class="parameter">conflict_target</replaceable> can be one of:</phrase>
 
-    ( { <replaceable class="parameter">column_name_index</replaceable> | ( <replaceable class="parameter">expression_index</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) [ WHERE <replaceable class="PARAMETER">index_predicate</replaceable> ]
+    ( { <replaceable class="parameter">index_column_name</replaceable> | ( <replaceable class="parameter">index_expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) [ WHERE <replaceable class="PARAMETER">index_predicate</replaceable> ]
     ON CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
 
 <phrase>and <replaceable class="parameter">conflict_action</replaceable> is one of:</phrase>
@@ -293,8 +293,8 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
     <parameter>conflict_target</parameter> can perform
     <emphasis>unique index inference</emphasis>.  When performing
     inference, it consists of one or more <replaceable
-    class="PARAMETER">column_name_index</replaceable> columns and/or
-    <replaceable class="PARAMETER">expression_index</replaceable>
+    class="PARAMETER">index_column_name</replaceable> columns and/or
+    <replaceable class="PARAMETER">index_expression</replaceable>
     expressions, and an optional <replaceable class="PARAMETER">
     index_predicate</replaceable>.  All <replaceable
     class="PARAMETER">table_name</replaceable> unique indexes that,
@@ -321,7 +321,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
 
     <variablelist>
      <varlistentry>
-      <term><literal>conflict_target</literal></term>
+      <term><replaceable class="parameter">conflict_target</replaceable></term>
       <listitem>
        <para>
         Specifies which conflicts <literal>ON CONFLICT</literal> takes
@@ -339,7 +339,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>conflict_action</literal></term>
+      <term><replaceable class="parameter">conflict_action</replaceable></term>
       <listitem>
        <para>
         <parameter>conflict_action</parameter> specifies an
@@ -366,31 +366,31 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column_name_index</replaceable></term>
+      <term><replaceable class="PARAMETER">index_column_name</replaceable></term>
       <listitem>
        <para>
         The name of a <replaceable
         class="PARAMETER">table_name</replaceable> column.  Used to
         infer arbiter indexes.  Follows <command>CREATE
         INDEX</command> format.  <literal>SELECT</> privilege on
-        <replaceable class="PARAMETER">column_name_index</replaceable>
+        <replaceable class="PARAMETER">index_column_name</replaceable>
         is required.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">expression_index</replaceable></term>
+      <term><replaceable class="PARAMETER">index_expression</replaceable></term>
       <listitem>
        <para>
         Similar to <replaceable
-        class="PARAMETER">column_name_index</replaceable>, but used to
+        class="PARAMETER">index_column_name</replaceable>, but used to
         infer expressions on <replaceable
         class="PARAMETER">table_name</replaceable> columns appearing
         within index definitions (not simple columns).  Follows
         <command>CREATE INDEX</command> format.  <literal>SELECT</>
         privilege on any column appearing within <replaceable
-        class="PARAMETER">expression_index</replaceable> is required.
+        class="PARAMETER">index_expression</replaceable> is required.
        </para>
       </listitem>
      </varlistentry>
@@ -400,8 +400,8 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
       <listitem>
        <para>
         When specified, mandates that corresponding <replaceable
-        class="PARAMETER">column_name_index</replaceable> or
-        <replaceable class="PARAMETER">expression_index</replaceable>
+        class="PARAMETER">index_column_name</replaceable> or
+        <replaceable class="PARAMETER">index_expression</replaceable>
         use a particular collation in order to be matched during
         inference.  Typically this is omitted, as collations usually
         do not affect whether or not a constraint violation occurs.
@@ -415,8 +415,8 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
       <listitem>
        <para>
         When specified, mandates that corresponding <replaceable
-        class="PARAMETER">column_name_index</replaceable> or
-        <replaceable class="PARAMETER">expression_index</replaceable>
+        class="PARAMETER">index_column_name</replaceable> or
+        <replaceable class="PARAMETER">index_expression</replaceable>
         use particular operator class in order to be matched during
         inference.  Typically this is omitted,  as the
         <emphasis>equality</emphasis> semantics are often equivalent
