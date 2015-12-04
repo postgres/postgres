@@ -431,17 +431,23 @@ ALTER TABLE bobs_table OWNER TO alice;
 </programlisting>
    Alternatively, the <xref linkend="sql-reassign-owned"> command can be
    used to reassign ownership of all objects owned by the role-to-be-dropped
-   to a single other role.  Because <command>REASSIGN OWNED</> can only
-   access objects in the current database, it is necessary to run it in each
-   database that contains objects owned by the role.
+   to a single other role.  Because <command>REASSIGN OWNED</> cannot access
+   objects in other databases, it is necessary to run it in each database
+   that contains objects owned by the role.  (Note that the first
+   such <command>REASSIGN OWNED</> will change the ownership of any
+   shared-across-databases objects, that is databases or tablespaces, that
+   are owned by the role-to-be-dropped.)
   </para>
 
   <para>
    Once any valuable objects have been transferred to new owners, any
    remaining objects owned by the role-to-be-dropped can be dropped with
-   the <xref linkend="sql-drop-owned"> command.  Again, this command can
-   only access objects in the current database, so it is necessary to run it
-   in each database that contains objects owned by the role.
+   the <xref linkend="sql-drop-owned"> command.  Again, this command cannot
+   access objects in other databases, so it is necessary to run it in each
+   database that contains objects owned by the role.  Also, <command>DROP
+   OWNED</> will not drop entire databases or tablespaces, so it is
+   necessary to do that manually if the role owns any databases or
+   tablespaces that have not been transferred to new owners.
   </para>
 
   <para>
@@ -456,7 +462,6 @@ ALTER TABLE bobs_table OWNER TO alice;
   <para>
    In short then, the most general recipe for removing a role that has been
    used to own objects is:
-
   </para>
 <programlisting>
 REASSIGN OWNED BY doomed_role TO successor_role;
@@ -464,6 +469,12 @@ DROP OWNED BY doomed_role;
 -- repeat the above commands in each database of the cluster
 DROP ROLE doomed_role;
 </programlisting>
+
+  <para>
+   When not all owned objects are to be transferred to the same successor
+   owner, it's best to handle the exceptions manually and then perform
+   the above steps to mop up.
+  </para>
 
   <para>
    If <command>DROP ROLE</> is attempted while dependent objects still
