@@ -216,41 +216,46 @@ main(int argc, char **argv)
 	 * do.
 	 */
 	if (ControlFile_target.checkPointCopy.ThisTimeLineID == ControlFile_source.checkPointCopy.ThisTimeLineID)
-		pg_fatal("source and target cluster are on the same timeline\n");
-
-	findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
-	printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
-		   (uint32) (divergerec >> 32), (uint32) divergerec,
-		   targetHistory[lastcommontliIndex].tli);
-
-	/*
-	 * Check for the possibility that the target is in fact a direct ancestor
-	 * of the source. In that case, there is no divergent history in the
-	 * target that needs rewinding.
-	 */
-	if (ControlFile_target.checkPoint >= divergerec)
 	{
-		rewind_needed = true;
+		printf(_("source and target cluster are on the same timeline\n"));
+		rewind_needed = false;
 	}
 	else
 	{
-		XLogRecPtr	chkptendrec;
-
-		/* Read the checkpoint record on the target to see where it ends. */
-		chkptendrec = readOneRecord(datadir_target,
-									ControlFile_target.checkPoint,
-									targetNentries - 1);
+		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
+		printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
+			   (uint32) (divergerec >> 32), (uint32) divergerec,
+			   targetHistory[lastcommontliIndex].tli);
 
 		/*
-		 * If the histories diverged exactly at the end of the shutdown
-		 * checkpoint record on the target, there are no WAL records in the
-		 * target that don't belong in the source's history, and no rewind is
-		 * needed.
+		 * Check for the possibility that the target is in fact a direct ancestor
+		 * of the source. In that case, there is no divergent history in the
+		 * target that needs rewinding.
 		 */
-		if (chkptendrec == divergerec)
-			rewind_needed = false;
-		else
+		if (ControlFile_target.checkPoint >= divergerec)
+		{
 			rewind_needed = true;
+		}
+		else
+		{
+			XLogRecPtr	chkptendrec;
+
+			/* Read the checkpoint record on the target to see where it ends. */
+			chkptendrec = readOneRecord(datadir_target,
+										ControlFile_target.checkPoint,
+										targetNentries - 1);
+
+			/*
+			 * If the histories diverged exactly at the end of the shutdown
+			 * checkpoint record on the target, there are no WAL records in the
+			 * target that don't belong in the source's history, and no rewind is
+			 * needed.
+			 */
+			if (chkptendrec == divergerec)
+				rewind_needed = false;
+			else
+				rewind_needed = true;
+		}
 	}
 
 	if (!rewind_needed)
