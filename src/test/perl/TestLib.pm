@@ -112,7 +112,7 @@ sub tempdir
 {
 	return File::Temp::tempdir(
 		'tmp_testXXXX',
-		DIR => $ENV{TESTDIR} || cwd(),
+		DIR => $tmp_check,
 		CLEANUP => 1);
 }
 
