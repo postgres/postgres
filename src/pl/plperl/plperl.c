@@ -2111,8 +2111,10 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 	PUSHMARK(SP);
 	EXTEND(sp, desc->nargs);
 
+	/* Get signature for true functions; inline blocks have no args. */
 	if (fcinfo->flinfo->fn_oid)
 		get_func_signature(fcinfo->flinfo->fn_oid, &argtypes, &nargs);
+	Assert(nargs == desc->nargs);
 
 	for (i = 0; i < desc->nargs; i++)
 	{
