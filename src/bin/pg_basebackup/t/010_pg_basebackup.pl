@@ -168,13 +168,14 @@ my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
 
 # using a character class for the final "'" here works around an apparent
 # bug in several version of the Msys DTK perl
+my $port = $node->port;
 like(
 	$recovery_conf,
 	qr/^standby_mode = 'on[']$/m,
 	'recovery.conf sets standby_mode');
 like(
 	$recovery_conf,
-	qr/^primary_conninfo = '.*port=$ENV{PGPORT}.*'$/m,
+	qr/^primary_conninfo = '.*port=$port.*'$/m,
 	'recovery.conf sets primary_conninfo');
 
 $node->command_ok(

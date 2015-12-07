@@ -27,9 +27,8 @@ our @EXPORT = qw(
 
 our ($test_pghost, $last_port_assigned, @all_nodes);
 
-BEGIN
+INIT
 {
-
 	# PGHOST is set once and for all through a single series of tests when
 	# this module is loaded.
 	$test_pghost =
@@ -38,11 +37,7 @@ BEGIN
 	$ENV{PGDATABASE} = 'postgres';
 
 	# Tracking of last port value assigned to accelerate free port lookup.
-	# XXX: Should this use PG_VERSION_NUM?
-	$last_port_assigned = 90600 % 16384 + 49152;
-
-	# Node tracking
-	@all_nodes = ();
+	$last_port_assigned = int(rand() * 16384) + 49152;
 }
 
 sub new
@@ -50,12 +45,14 @@ sub new
 	my $class  = shift;
 	my $pghost = shift;
 	my $pgport = shift;
+	my $testname = basename($0);
+	$testname =~ s/\.[^.]+$//;
 	my $self   = {
 		_port     => $pgport,
 		_host     => $pghost,
 		_basedir  => TestLib::tempdir,
 		_applname => "node_$pgport",
-		_logfile  => "$TestLib::log_path/node_$pgport.log" };
+		_logfile  => "$TestLib::log_path/${testname}_node_${pgport}.log" };
 
 	bless $self, $class;
 	$self->dump_info;
@@ -297,17 +294,16 @@ sub _update_pid
 	# If we can open the PID file, read its first line and that's the PID we
 	# want.  If the file cannot be opened, presumably the server is not
 	# running; don't be noisy in that case.
-	open my $pidfile, $self->data_dir . "/postmaster.pid";
-	if (not defined $pidfile)
+	if (open my $pidfile, $self->data_dir . "/postmaster.pid")
 	{
-		$self->{_pid} = undef;
-		print "# No postmaster PID\n";
+		chomp($self->{_pid} = <$pidfile>);
+		print "# Postmaster PID is $self->{_pid}\n";
+		close $pidfile;
 		return;
 	}
 
-	$self->{_pid} = <$pidfile>;
-	print "# Postmaster PID is $self->{_pid}\n";
-	close $pidfile;
+	$self->{_pid} = undef;
+	print "# No postmaster PID\n";
 }
 
 #
@@ -327,7 +323,6 @@ sub get_new_node
 	{
 		$port++;
 		print "# Checking for port $port\n";
-		my $devnull = $TestLib::windows_os ? "nul" : "/dev/null";
 		if (!TestLib::run_log([ 'pg_isready', '-p', $port ]))
 		{
 			$found = 1;
@@ -360,7 +355,7 @@ sub DESTROY
 	my $self = shift;
 	return if not defined $self->{_pid};
 	print "# signalling QUIT to $self->{_pid}\n";
-	kill 'QUIT', $self->{_pid};
+	TestLib::system_log('pg_ctl', 'kill', 'QUIT', $self->{_pid});
 }
 
 sub teardown_node

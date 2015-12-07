@@ -13,7 +13,6 @@ command_fails([ 'pg_controldata', 'nonexistent' ],
 
 my $node = get_new_node();
 $node->init;
-$node->start;
 
 command_like([ 'pg_controldata', $node->data_dir ],
 	qr/checkpoint/, 'pg_controldata produces output');
