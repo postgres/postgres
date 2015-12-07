@@ -1116,6 +1116,25 @@ select * from
   on i8.q1 = i4.f1;
 
 --
+-- test for appropriate join order in the presence of lateral references
+--
+
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss
+where t1.f1 = ss.f1;
+
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss
+where t1.f1 = ss.f1;
+
+--
 -- test ability to push constants through outer join clauses
 --
 
