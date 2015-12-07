@@ -321,7 +321,8 @@ sub get_new_node
 
 	while ($found == 0)
 	{
-		$port++;
+		# wrap correctly around range end
+		$port = 49152 if ++$port >= 65536;
 		print "# Checking for port $port\n";
 		if (!TestLib::run_log([ 'pg_isready', '-p', $port ]))
 		{
