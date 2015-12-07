@@ -1891,13 +1891,13 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(cheapest_total_path);
 	WRITE_NODE_FIELD(cheapest_unique_path);
 	WRITE_NODE_FIELD(cheapest_parameterized_paths);
+	WRITE_BITMAPSET_FIELD(lateral_relids);
 	WRITE_UINT_FIELD(relid);
 	WRITE_OID_FIELD(reltablespace);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
 	WRITE_INT_FIELD(min_attr);
 	WRITE_INT_FIELD(max_attr);
 	WRITE_NODE_FIELD(lateral_vars);
-	WRITE_BITMAPSET_FIELD(lateral_relids);
 	WRITE_BITMAPSET_FIELD(lateral_referencers);
 	WRITE_NODE_FIELD(indexlist);
 	WRITE_UINT_FIELD(pages);

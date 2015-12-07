@@ -103,7 +103,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	rel->consider_startup = (root->tuple_fraction > 0);
 	rel->consider_param_startup = false;		/* might get changed later */
-	rel->consider_parallel = false;				/* might get changed later */
+	rel->consider_parallel = false;		/* might get changed later */
 	rel->reltargetlist = NIL;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
@@ -111,11 +111,11 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
+	rel->lateral_relids = NULL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
 	rel->lateral_vars = NIL;
-	rel->lateral_relids = NULL;
 	rel->lateral_referencers = NULL;
 	rel->indexlist = NIL;
 	rel->pages = 0;
@@ -373,6 +373,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
+	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids);
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;
@@ -380,7 +381,6 @@ build_join_rel(PlannerInfo *root,
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
 	joinrel->lateral_vars = NIL;
-	joinrel->lateral_relids = NULL;
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
@@ -448,15 +448,15 @@ build_join_rel(PlannerInfo *root,
 	 * Set the consider_parallel flag if this joinrel could potentially be
 	 * scanned within a parallel worker.  If this flag is false for either
 	 * inner_rel or outer_rel, then it must be false for the joinrel also.
-	 * Even if both are true, there might be parallel-restricted quals at
-	 * our level.
+	 * Even if both are true, there might be parallel-restricted quals at our
+	 * level.
 	 *
-	 * Note that if there are more than two rels in this relation, they
-	 * could be divided between inner_rel and outer_rel in any arbitary
-	 * way.  We assume this doesn't matter, because we should hit all the
-	 * same baserels and joinclauses while building up to this joinrel no
-	 * matter which we take; therefore, we should make the same decision
-	 * here however we get here.
+	 * Note that if there are more than two rels in this relation, they could
+	 * be divided between inner_rel and outer_rel in any arbitary way.  We
+	 * assume this doesn't matter, because we should hit all the same baserels
+	 * and joinclauses while building up to this joinrel no matter which we
+	 * take; therefore, we should make the same decision here however we get
+	 * here.
 	 */
 	if (inner_rel->consider_parallel && outer_rel->consider_parallel &&
 		!has_parallel_hazard((Node *) restrictlist, false))
