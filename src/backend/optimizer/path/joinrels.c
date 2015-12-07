@@ -334,6 +334,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	bool		must_be_leftjoin;
 	bool		lateral_fwd;
 	bool		lateral_rev;
+	Relids		join_lateral_rels;
 	ListCell   *l;
 
 	/*
@@ -566,6 +567,35 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				 unique_ified ||
 				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
+		}
+	}
+
+	/*
+	 * LATERAL references could also cause problems later on if we accept this
+	 * join: if the join's minimum parameterization includes any rels that
+	 * would have to be on the inside of an outer join with this join rel,
+	 * then it's never going to be possible to build the complete query using
+	 * this join.  We should reject this join not only because it'll save
+	 * work, but because if we don't, the clauseless-join heuristics might
+	 * think that legality of this join means that some other join rel need
+	 * not be formed, and that could lead to failure to find any plan at all.
+	 * It seems best not to merge this check into the main loop above, because
+	 * it is concerned with SJs that are not otherwise relevant to this join.
+	 */
+	join_lateral_rels = min_join_parameterization(root, joinrelids);
+	if (join_lateral_rels)
+	{
+		foreach(l, root->join_info_list)
+		{
+			SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(l);
+
+			if (bms_overlap(sjinfo->min_righthand, join_lateral_rels) &&
+				bms_overlap(sjinfo->min_lefthand, joinrelids))
+				return false;	/* will not be able to join to min_righthand */
+			if (sjinfo->jointype == JOIN_FULL &&
+				bms_overlap(sjinfo->min_lefthand, join_lateral_rels) &&
+				bms_overlap(sjinfo->min_righthand, joinrelids))
+				return false;	/* will not be able to join to min_lefthand */
 		}
 	}
 
