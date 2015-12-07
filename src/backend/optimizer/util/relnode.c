@@ -500,6 +500,47 @@ build_join_rel(PlannerInfo *root,
 }
 
 /*
+ * min_join_parameterization
+ *
+ * Determine the minimum possible parameterization of a joinrel, that is, the
+ * set of other rels it contains LATERAL references to.  We save this value in
+ * the join's RelOptInfo.  This function is split out of build_join_rel()
+ * because join_is_legal() needs the value to check a prospective join.
+ */
+Relids
+min_join_parameterization(PlannerInfo *root, Relids joinrelids)
+{
+	Relids		result;
+	ListCell   *lc;
+
+	/* Easy if there are no lateral references */
+	if (root->lateral_info_list == NIL)
+		return NULL;
+
+	/*
+	 * Scan lateral_info_list to find all the lateral references occurring in
+	 * or below this join.
+	 */
+	result = NULL;
+	foreach(lc, root->lateral_info_list)
+	{
+		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
+
+		if (bms_is_subset(ljinfo->lateral_rhs, joinrelids))
+			result = bms_add_members(result, ljinfo->lateral_lhs);
+	}
+
+	/* Remove any rels that are already included in the join */
+	result = bms_del_members(result, joinrelids);
+
+	/* Maintain invariant that result is exactly NULL if empty */
+	if (bms_is_empty(result))
+		result = NULL;
+
+	return result;
+}
+
+/*
  * build_joinrel_tlist
  *	  Builds a join relation's target list from an input relation.
  *	  (This is invoked twice to handle the two input relations.)

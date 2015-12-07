@@ -3580,6 +3580,47 @@ select * from
 (2 rows)
 
 --
+-- test for appropriate join order in the presence of lateral references
+--
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss
+where t1.f1 = ss.f1;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Nested Loop
+   Output: t1.f1, i8.q1, i8.q2, (i8.q1), t2.f1
+   Join Filter: (t1.f1 = t2.f1)
+   ->  Nested Loop Left Join
+         Output: t1.f1, i8.q1, i8.q2
+         ->  Seq Scan on public.text_tbl t1
+               Output: t1.f1
+         ->  Materialize
+               Output: i8.q1, i8.q2
+               ->  Seq Scan on public.int8_tbl i8
+                     Output: i8.q1, i8.q2
+                     Filter: (i8.q2 = 123)
+   ->  Limit
+         Output: (i8.q1), t2.f1
+         ->  Seq Scan on public.text_tbl t2
+               Output: i8.q1, t2.f1
+(16 rows)
+
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss
+where t1.f1 = ss.f1;
+  f1  |        q1        | q2  |        q1        |  f1  
+------+------------------+-----+------------------+------
+ doh! | 4567890123456789 | 123 | 4567890123456789 | doh!
+(1 row)
+
+--
 -- test ability to push constants through outer join clauses
 --
 explain (costs off)
