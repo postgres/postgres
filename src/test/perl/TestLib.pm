@@ -242,9 +242,12 @@ sub slurp_dir
 
 sub slurp_file
 {
+	my ($filename) = @_;
 	local $/;
-	local @ARGV = @_;
-	my $contents = <>;
+	open(my $in, '<', $filename)
+	  or die "could not read \"$filename\": $!";
+	my $contents = <$in>;
+	close $in;
 	$contents =~ s/\r//g if $Config{osname} eq 'msys';
 	return $contents;
 }
