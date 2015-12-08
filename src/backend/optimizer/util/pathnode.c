@@ -1462,6 +1462,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						double rows, Cost startup_cost, Cost total_cost,
 						List *pathkeys,
 						Relids required_outer,
+						Path *fdw_outerpath,
 						List *fdw_private)
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
@@ -1475,6 +1476,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.total_cost = total_cost;
 	pathnode->path.pathkeys = pathkeys;
 
+	pathnode->fdw_outerpath = fdw_outerpath;
 	pathnode->fdw_private = fdw_private;
 
 	return pathnode;

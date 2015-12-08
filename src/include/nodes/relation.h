@@ -894,6 +894,7 @@ typedef struct TidPath
 typedef struct ForeignPath
 {
 	Path		path;
+	Path	   *fdw_outerpath;
 	List	   *fdw_private;
 } ForeignPath;
 

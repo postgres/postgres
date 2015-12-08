@@ -121,7 +121,8 @@ static ForeignScan *fileGetForeignPlan(PlannerInfo *root,
 				   Oid foreigntableid,
 				   ForeignPath *best_path,
 				   List *tlist,
-				   List *scan_clauses);
+				   List *scan_clauses,
+				   Plan *outer_plan);
 static void fileExplainForeignScan(ForeignScanState *node, ExplainState *es);
 static void fileBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *fileIterateForeignScan(ForeignScanState *node);
@@ -525,6 +526,7 @@ fileGetForeignPaths(PlannerInfo *root,
 									 total_cost,
 									 NIL,		/* no pathkeys */
 									 NULL,		/* no outer rel either */
+									 NULL,		/* no extra plan */
 									 coptions));
 
 	/*
@@ -544,7 +546,8 @@ fileGetForeignPlan(PlannerInfo *root,
 				   Oid foreigntableid,
 				   ForeignPath *best_path,
 				   List *tlist,
-				   List *scan_clauses)
+				   List *scan_clauses,
+				   Plan *outer_plan)
 {
 	Index		scan_relid = baserel->relid;
 
@@ -564,7 +567,8 @@ fileGetForeignPlan(PlannerInfo *root,
 							NIL,	/* no expressions to evaluate */
 							best_path->fdw_private,
 							NIL,	/* no custom tlist */
-							NIL /* no remote quals */ );
+							NIL,	/* no remote quals */
+							outer_plan);
 }
 
 /*
