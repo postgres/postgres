@@ -38,9 +38,10 @@ PostgreSQL documentation
      <productname>PostgreSQL</productname>. It enables you to type in
      queries interactively, issue them to
      <productname>PostgreSQL</productname>, and see the query results.
-     Alternatively, input can be from a file. In addition, it provides a
-     number of meta-commands and various shell-like features to
-     facilitate writing scripts and automating a wide variety of tasks.
+     Alternatively, input can be from a file or from command line
+     arguments. In addition, it provides a number of meta-commands and various
+     shell-like features to facilitate writing scripts and automating a wide
+     variety of tasks.
     </para>
  </refsect1>
 
@@ -89,11 +90,10 @@ PostgreSQL documentation
       <term><option>--command=<replaceable class="parameter">command</replaceable></></term>
       <listitem>
       <para>
-      Specifies that <application>psql</application> is to execute one
-      command string, <replaceable class="parameter">command</replaceable>,
-      and then exit. This is useful in shell scripts. Start-up files
-      (<filename>psqlrc</filename> and <filename>~/.psqlrc</filename>) are
-      ignored with this option.
+      Specifies that <application>psql</application> is to execute the given
+      command string, <replaceable class="parameter">command</replaceable>.
+      This option can be repeated and combined in any order with
+      the <option>-f</option> option.
       </para>
       <para>
       <replaceable class="parameter">command</replaceable> must be either
@@ -102,25 +102,34 @@ PostgreSQL documentation
       or a single backslash command. Thus you cannot mix
       <acronym>SQL</acronym> and <application>psql</application>
       meta-commands with this option. To achieve that, you could
-      pipe the string into <application>psql</application>, for example:
+      use repeated <option>-c</option> options or pipe the string
+      into <application>psql</application>, for example:
+      <literal>psql -c '\x' -c 'SELECT * FROM foo;'</literal> or
       <literal>echo '\x \\ SELECT * FROM foo;' | psql</literal>.
       (<literal>\\</> is the separator meta-command.)
       </para>
       <para>
-       If the command string contains multiple SQL commands, they are
-       processed in a single transaction, unless there are explicit
-       <command>BEGIN</>/<command>COMMIT</> commands included in the
-       string to divide it into multiple transactions.  This is
-       different from the behavior when the same string is fed to
-       <application>psql</application>'s standard input.  Also, only
-       the result of the last SQL command is returned.
+       Each command string passed to <option>-c</option> is sent to the server
+       as a single query. Because of this, the server executes it as a single
+       transaction, even if a command string contains
+       multiple <acronym>SQL</acronym> commands, unless there are
+       explicit <command>BEGIN</>/<command>COMMIT</> commands included in the
+       string to divide it into multiple transactions.  Also, the server only
+       returns the result of the last <acronym>SQL</acronym> command to the
+       client.  This is different from the behavior when the same string with
+       multiple <acronym>SQL</acronym> commands is fed
+       to <application>psql</application>'s standard input because
+       then <application>psql</application> sends each <acronym>SQL</acronym>
+       command separately.
       </para>
       <para>
-       Because of these legacy behaviors, putting more than one command in
-       the <option>-c</option> string often has unexpected results.  It's
-       better to feed multiple commands to <application>psql</application>'s
-       standard input, either using <application>echo</application> as
-       illustrated above, or via a shell here-document, for example:
+       Putting more than one command in the <option>-c</option> string often
+       has unexpected results.  This is a result of the fact that the whole
+       string is sent to the server as a single query.
+       It's better to use repeated <option>-c</option> commands or feed
+       multiple commands to <application>psql</application>'s standard input,
+       either using <application>echo</application> as illustrated above, or
+       via a shell here-document, for example:
 <programlisting>
 psql &lt;&lt;EOF
 \x
@@ -185,9 +194,11 @@ EOF
       <para>
       Use the file <replaceable class="parameter">filename</replaceable>
       as the source of commands instead of reading commands interactively.
-      After the file is processed, <application>psql</application>
-      terminates. This is in many ways equivalent to the meta-command
-      <command>\i</command>.
+      This option can be repeated and combined in any order with
+      the <option>-c</option> option.  After the commands in
+      every <option>-c</option> command string and <option>-f</option> file
+      are processed, <application>psql</application> terminates.  This option
+      is in many ways equivalent to the meta-command <command>\i</command>.
       </para>
 
       <para>
@@ -539,20 +550,21 @@ EOF
       <term><option>--single-transaction</option></term>
       <listitem>
        <para>
-        When <application>psql</application> executes a script, adding
-        this option wraps <command>BEGIN</>/<command>COMMIT</> around the
-        script to execute it as a single transaction.  This ensures that
-        either all the commands complete successfully, or no changes are
-        applied.
+        When <application>psql</application> executes commands from a script
+        and/or a <option>-c</option> option, adding this option
+        wraps <command>BEGIN</>/<command>COMMIT</> around all of those
+        commands as a whole to execute them as a single transaction.  This
+        ensures that either all the commands complete successfully, or no
+        changes are applied.
        </para>
 
        <para>
-        If the script itself uses <command>BEGIN</>, <command>COMMIT</>,
+        If the commands themselves
+        contain <command>BEGIN</>, <command>COMMIT</>,
         or <command>ROLLBACK</>, this option will not have the desired
-        effects.
-        Also, if the script contains any command that cannot be executed
-        inside a transaction block, specifying this option will cause that
-        command (and hence the whole transaction) to fail.
+        effects.  Also, if an individual command cannot be executed inside a
+        transaction block, specifying this option will cause the whole
+        transaction to fail.
        </para>
       </listitem>
      </varlistentry>
@@ -3725,7 +3737,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
    <term><filename>psqlrc</filename> and <filename>~/.psqlrc</filename></term>
    <listitem>
     <para>
-     Unless it is passed an <option>-X</option> or <option>-c</option> option,
+     Unless it is passed an <option>-X</option> option,
      <application>psql</application> attempts to read and execute commands
      from the system-wide startup file (<filename>psqlrc</filename>) and then
      the user's personal startup file (<filename>~/.psqlrc</filename>), after
@@ -3819,6 +3831,12 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
       </para>
       </listitem>
 
+      <listitem>
+      <para>
+       Before <productname>PostgreSQL</productname> 9.6, <option>-c</option>
+       implied <option>-X</option>; this is no longer the case.
+      </para>
+      </listitem>
     </itemizedlist>
  </refsect1>
 

@@ -400,7 +400,7 @@ sub poll_query_until
 	while ($attempts < $max_attempts)
 	{
 		my $cmd =
-		  [ 'psql', '-At', '-c', $query, '-d', $self->connstr($dbname) ];
+		  [ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
 		my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 
 		chomp($stdout);

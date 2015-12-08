@@ -916,7 +916,7 @@ exec_command(const char *cmd,
 			include_relative = (strcmp(cmd, "ir") == 0
 								|| strcmp(cmd, "include_relative") == 0);
 			expand_tilde(&fname);
-			success = (process_file(fname, false, include_relative) == EXIT_SUCCESS);
+			success = (process_file(fname, include_relative) == EXIT_SUCCESS);
 			free(fname);
 		}
 	}
@@ -2288,13 +2288,12 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
  * the file from where the currently processed file (if any) is located.
  */
 int
-process_file(char *filename, bool single_txn, bool use_relative_path)
+process_file(char *filename, bool use_relative_path)
 {
 	FILE	   *fd;
 	int			result;
 	char	   *oldfilename;
 	char		relpath[MAXPGPATH];
-	PGresult   *res;
 
 	if (!filename)
 	{
@@ -2339,37 +2338,8 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 	oldfilename = pset.inputfile;
 	pset.inputfile = filename;
 
-	if (single_txn)
-	{
-		if ((res = PSQLexec("BEGIN")) == NULL)
-		{
-			if (pset.on_error_stop)
-			{
-				result = EXIT_USER;
-				goto error;
-			}
-		}
-		else
-			PQclear(res);
-	}
-
 	result = MainLoop(fd);
 
-	if (single_txn)
-	{
-		if ((res = PSQLexec("COMMIT")) == NULL)
-		{
-			if (pset.on_error_stop)
-			{
-				result = EXIT_USER;
-				goto error;
-			}
-		}
-		else
-			PQclear(res);
-	}
-
-error:
 	if (fd != stdin)
 		fclose(fd);
 

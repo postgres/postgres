@@ -50,12 +50,23 @@ PsqlSettings pset;
  */
 enum _actions
 {
-	ACT_NOTHING = 0,
-	ACT_SINGLE_SLASH,
-	ACT_LIST_DB,
 	ACT_SINGLE_QUERY,
+	ACT_SINGLE_SLASH,
 	ACT_FILE
 };
+
+typedef struct SimpleActionListCell
+{
+	struct SimpleActionListCell *next;
+	int         action;
+	char       *val;
+} SimpleActionListCell;
+
+typedef struct SimpleActionList
+{
+	SimpleActionListCell *head;
+	SimpleActionListCell *tail;
+} SimpleActionList;
 
 struct adhoc_opts
 {
@@ -64,11 +75,11 @@ struct adhoc_opts
 	char	   *port;
 	char	   *username;
 	char	   *logfilename;
-	enum _actions action;
-	char	   *action_string;
 	bool		no_readline;
 	bool		no_psqlrc;
 	bool		single_txn;
+	bool		list_dbs;
+	SimpleActionList actions;
 };
 
 static void parse_psql_options(int argc, char *argv[],
@@ -76,6 +87,8 @@ static void parse_psql_options(int argc, char *argv[],
 static void process_psqlrc(char *argv0);
 static void process_psqlrc_file(char *filename);
 static void showVersion(void);
+static void simple_action_list_append(SimpleActionList *list,
+									  int action, const char *val);
 static void EstablishVariableSpace(void);
 
 #define NOPAGER		0
@@ -159,6 +172,9 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
 
+	options.actions.head = NULL;
+	options.actions.tail = NULL;
+
 	parse_psql_options(argc, argv, &options);
 
 	/*
@@ -166,14 +182,11 @@ main(int argc, char *argv[])
 	 * as if the user had specified "-f -".  This lets single-transaction mode
 	 * work in this case.
 	 */
-	if (options.action == ACT_NOTHING && pset.notty)
-	{
-		options.action = ACT_FILE;
-		options.action_string = NULL;
-	}
+	if (options.actions.head == NULL && pset.notty)
+		simple_action_list_append(&options.actions, ACT_FILE, NULL);
 
 	/* Bail out if -1 was specified but will be ignored. */
-	if (options.single_txn && options.action != ACT_FILE && options.action == ACT_NOTHING)
+	if (options.single_txn && options.actions.head == NULL)
 	{
 		fprintf(stderr, _("%s: -1 can only be used in non-interactive mode\n"), pset.progname);
 		exit(EXIT_FAILURE);
@@ -217,8 +230,7 @@ main(int argc, char *argv[])
 		keywords[3] = "password";
 		values[3] = password;
 		keywords[4] = "dbname";
-		values[4] = (options.action == ACT_LIST_DB &&
-					 options.dbname == NULL) ?
+		values[4] = (options.list_dbs && options.dbname == NULL) ?
 			"postgres" : options.dbname;
 		keywords[5] = "fallback_application_name";
 		values[5] = pset.progname;
@@ -259,7 +271,7 @@ main(int argc, char *argv[])
 
 	SyncVariables();
 
-	if (options.action == ACT_LIST_DB)
+	if (options.list_dbs)
 	{
 		int			success;
 
@@ -279,52 +291,91 @@ main(int argc, char *argv[])
 					pset.progname, options.logfilename, strerror(errno));
 	}
 
-	/*
-	 * Now find something to do
-	 */
+	if (!options.no_psqlrc)
+		process_psqlrc(argv[0]);
 
 	/*
-	 * process file given by -f
+	 * If any actions were given by caller, process them in the order in
+	 * which they were specified.
 	 */
-	if (options.action == ACT_FILE)
+	if (options.actions.head != NULL)
 	{
-		if (!options.no_psqlrc)
-			process_psqlrc(argv[0]);
+		PGresult		*res;
+		SimpleActionListCell	*cell;
 
-		successResult = process_file(options.action_string, options.single_txn, false);
-	}
+		successResult = EXIT_SUCCESS;	/* silence compiler */
 
-	/*
-	 * process slash command if one was given to -c
-	 */
-	else if (options.action == ACT_SINGLE_SLASH)
-	{
-		PsqlScanState scan_state;
+		if (options.single_txn)
+		{
+			if ((res = PSQLexec("BEGIN")) == NULL)
+			{
+				if (pset.on_error_stop)
+				{
+					successResult = EXIT_USER;
+					goto error;
+				}
+			}
+			else
+				PQclear(res);
+		}
 
-		if (pset.echo == PSQL_ECHO_ALL)
-			puts(options.action_string);
+		for (cell = options.actions.head; cell; cell = cell->next)
+		{
+			if (cell->action == ACT_SINGLE_QUERY)
+			{
+				if (pset.echo == PSQL_ECHO_ALL)
+					puts(cell->val);
 
-		scan_state = psql_scan_create();
-		psql_scan_setup(scan_state,
-						options.action_string,
-						strlen(options.action_string));
+				successResult = SendQuery(cell->val)
+					? EXIT_SUCCESS : EXIT_FAILURE;
+			}
+			else if (cell->action == ACT_SINGLE_SLASH)
+			{
+				PsqlScanState scan_state;
 
-		successResult = HandleSlashCmds(scan_state, NULL) != PSQL_CMD_ERROR
-			? EXIT_SUCCESS : EXIT_FAILURE;
+				if (pset.echo == PSQL_ECHO_ALL)
+					puts(cell->val);
 
-		psql_scan_destroy(scan_state);
-	}
+				scan_state = psql_scan_create();
+				psql_scan_setup(scan_state,
+							cell->val,
+							strlen(cell->val));
 
-	/*
-	 * If the query given to -c was a normal one, send it
-	 */
-	else if (options.action == ACT_SINGLE_QUERY)
-	{
-		if (pset.echo == PSQL_ECHO_ALL)
-			puts(options.action_string);
+				successResult = HandleSlashCmds(scan_state, NULL) != PSQL_CMD_ERROR
+					? EXIT_SUCCESS : EXIT_FAILURE;
 
-		successResult = SendQuery(options.action_string)
-			? EXIT_SUCCESS : EXIT_FAILURE;
+				psql_scan_destroy(scan_state);
+			}
+			else if (cell->action == ACT_FILE)
+			{
+				successResult = process_file(cell->val, false);
+			}
+			else
+			{
+				/* should never come here */
+				Assert(0);
+			}
+
+			if (successResult != EXIT_SUCCESS && pset.on_error_stop)
+				break;
+		}
+
+		if (options.single_txn)
+		{
+			if ((res = PSQLexec("COMMIT")) == NULL)
+			{
+				if (pset.on_error_stop)
+				{
+					successResult = EXIT_USER;
+					goto error;
+				}
+			}
+			else
+				PQclear(res);
+		}
+
+error:
+		;
 	}
 
 	/*
@@ -332,9 +383,6 @@ main(int argc, char *argv[])
 	 */
 	else
 	{
-		if (!options.no_psqlrc)
-			process_psqlrc(argv[0]);
-
 		connection_warnings(true);
 		if (!pset.quiet)
 			printf(_("Type \"help\" for help.\n\n"));
@@ -419,14 +467,14 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				SetVariable(pset.vars, "ECHO", "errors");
 				break;
 			case 'c':
-				options->action_string = pg_strdup(optarg);
 				if (optarg[0] == '\\')
-				{
-					options->action = ACT_SINGLE_SLASH;
-					options->action_string++;
-				}
+					simple_action_list_append(&options->actions,
+											  ACT_SINGLE_SLASH,
+											  pstrdup(optarg + 1));
 				else
-					options->action = ACT_SINGLE_QUERY;
+					simple_action_list_append(&options->actions,
+											  ACT_SINGLE_QUERY,
+											  pstrdup(optarg));
 				break;
 			case 'd':
 				options->dbname = pg_strdup(optarg);
@@ -438,8 +486,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				SetVariableBool(pset.vars, "ECHO_HIDDEN");
 				break;
 			case 'f':
-				options->action = ACT_FILE;
-				options->action_string = pg_strdup(optarg);
+				simple_action_list_append(&options->actions,
+									ACT_FILE,
+									pg_strdup(optarg));
 				break;
 			case 'F':
 				pset.popt.topt.fieldSep.separator = pg_strdup(optarg);
@@ -452,7 +501,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				pset.popt.topt.format = PRINT_HTML;
 				break;
 			case 'l':
-				options->action = ACT_LIST_DB;
+				options->list_dbs = true;
 				break;
 			case 'L':
 				options->logfilename = pg_strdup(optarg);
@@ -675,11 +724,11 @@ process_psqlrc_file(char *filename)
 
 	/* check for minor version first, then major, then no version */
 	if (access(psqlrc_minor, R_OK) == 0)
-		(void) process_file(psqlrc_minor, false, false);
+		(void) process_file(psqlrc_minor, false);
 	else if (access(psqlrc_major, R_OK) == 0)
-		(void) process_file(psqlrc_major, false, false);
+		(void) process_file(psqlrc_major, false);
 	else if (access(filename, R_OK) == 0)
-		(void) process_file(filename, false, false);
+		(void) process_file(filename, false);
 
 	free(psqlrc_minor);
 	free(psqlrc_major);
@@ -892,6 +941,39 @@ show_context_hook(const char *newval)
 		PQsetErrorContextVisibility(pset.db, pset.show_context);
 }
 
+
+/*
+ * Support for list of actions. SimpleStringList cannot be used due possible
+ * combination different actions with the requirement to save the order.
+ */
+static void
+simple_action_list_append(SimpleActionList *list, int action, const char *val)
+{
+	SimpleActionListCell   *cell;
+	size_t					vallen = 0;
+
+	if (val)
+		vallen = strlen(val);
+
+	cell = (SimpleActionListCell *)
+		pg_malloc(offsetof(SimpleActionListCell, val) + vallen + 1);
+
+	cell->next = NULL;
+	cell->action = action;
+	if (val)
+	{
+		cell->val = pg_malloc(vallen + 1);
+		strcpy(cell->val, val);
+	}
+	else
+		cell->val = NULL;
+
+	if (list->tail)
+		list->tail->next = cell;
+	else
+		list->head = cell;
+	list->tail = cell;
+}
 
 static void
 EstablishVariableSpace(void)
