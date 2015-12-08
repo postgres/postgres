@@ -168,7 +168,8 @@ GetForeignPlan (PlannerInfo *root,
                 Oid foreigntableid,
                 ForeignPath *best_path,
                 List *tlist,
-                List *scan_clauses);
+                List *scan_clauses,
+                Plan *outer_plan);
 </programlisting>
 
      Create a <structname>ForeignScan</> plan node from the selected foreign
@@ -765,6 +766,35 @@ RefetchForeignRow (EState *estate,
      See <xref linkend="fdw-row-locking"> for more information.
     </para>
 
+    <para>
+<programlisting>
+bool
+RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
+</programlisting>
+     Recheck that a previously-returned tuple still matches the relevant
+     scan and join qualifiers, and possibly provide a modified version of
+     the tuple.  For foreign data wrappers which do not perform join pushdown,
+     it will typically be more convenient to set this to <literal>NULL</> and
+     instead set <structfield>fdw_recheck_quals</structfield> appropriately.
+     When outer joins are pushed down, however, it isn't sufficient to
+     reapply the checks relevant to all the base tables to the result tuple,
+     even if all needed attributes are present, because failure to match some
+     qualifier might result in some attributes going to NULL, rather than in
+     no tuple being returned.  <literal>RecheckForeignScan</> can recheck
+     qualifiers and return true if they are still satisfied and false
+     otherwise, but it can also store a replacement tuple into the supplied
+     slot.
+    </para>
+
+    <para>
+     To implement join pushdown, a foreign data wrapper will typically
+     construct an alternative local join plan which is used only for
+     rechecks; this will become the outer subplan of the
+     <literal>ForeignScan</>.  When a recheck is required, this subplan
+     can be executed and the resulting tuple can be stored in the slot.
+     This plan need not be efficient since no base table will return more
+     that one row; for example, it may implement all joins as nested loops.
+    </para>
    </sect2>
 
    <sect2 id="fdw-callbacks-explain">
@@ -1137,11 +1167,17 @@ GetForeignServerByName(const char *name, bool missing_ok);
 
     <para>
      Any clauses removed from the plan node's qual list must instead be added
-     to <literal>fdw_recheck_quals</> in order to ensure correct behavior
+     to <literal>fdw_recheck_quals</> or rechecked by
+     <literal>RecheckForeignScan</> in order to ensure correct behavior
      at the <literal>READ COMMITTED</> isolation level.  When a concurrent
      update occurs for some other table involved in the query, the executor
      may need to verify that all of the original quals are still satisfied for
-     the tuple, possibly against a different set of parameter values.
+     the tuple, possibly against a different set of parameter values.  Using
+     <literal>fdw_recheck_quals</> is typically easier than implementing checks
+     inside <literal>RecheckForeignScan</>, but this method will be
+     insufficient when outer joins have been pushed down, since the join tuples
+     in that case might have some fields go to NULL without rejecting the
+     tuple entirely.
     </para>
 
     <para>

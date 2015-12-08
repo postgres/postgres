@@ -36,12 +36,16 @@ typedef ForeignScan *(*GetForeignPlan_function) (PlannerInfo *root,
 														  Oid foreigntableid,
 													  ForeignPath *best_path,
 															 List *tlist,
-														 List *scan_clauses);
+														  List *scan_clauses,
+														   Plan *outer_plan);
 
 typedef void (*BeginForeignScan_function) (ForeignScanState *node,
 													   int eflags);
 
 typedef TupleTableSlot *(*IterateForeignScan_function) (ForeignScanState *node);
+
+typedef bool (*RecheckForeignScan_function) (ForeignScanState *node,
+													   TupleTableSlot *slot);
 
 typedef void (*ReScanForeignScan_function) (ForeignScanState *node);
 
@@ -162,6 +166,7 @@ typedef struct FdwRoutine
 	/* Functions for SELECT FOR UPDATE/SHARE row locking */
 	GetForeignRowMarkType_function GetForeignRowMarkType;
 	RefetchForeignRow_function RefetchForeignRow;
+	RecheckForeignScan_function RecheckForeignScan;
 
 	/* Support functions for EXPLAIN */
 	ExplainForeignScan_function ExplainForeignScan;

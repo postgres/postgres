@@ -1683,6 +1683,7 @@ _outForeignPath(StringInfo str, const ForeignPath *node)
 
 	_outPathInfo(str, (const Path *) node);
 
+	WRITE_NODE_FIELD(fdw_outerpath);
 	WRITE_NODE_FIELD(fdw_private);
 }
 
