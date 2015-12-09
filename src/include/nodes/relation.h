@@ -344,6 +344,7 @@ typedef struct PlannerInfo
  *			(no duplicates) output from relation; NULL if not yet requested
  *		cheapest_parameterized_paths - best paths for their parameterizations;
  *			always includes cheapest_total_path, even if that's unparameterized
+ *		lateral_relids - required outer rels for LATERAL, as a Relids set
  *
  * If the relation is a base relation it will have these fields set:
  *
@@ -358,8 +359,6 @@ typedef struct PlannerInfo
  *					  zero means not computed yet
  *		lateral_vars - lateral cross-references of rel, if any (list of
  *					   Vars and PlaceHolderVars)
- *		lateral_relids - required outer rels for LATERAL, as a Relids set
- *						 (for child rels this can be more than lateral_vars)
  *		lateral_referencers - relids of rels that reference this one laterally
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
@@ -375,7 +374,7 @@ typedef struct PlannerInfo
  *		set_subquery_pathlist processes the object.
  *
  *		For otherrels that are appendrel members, these fields are filled
- *		in just as for a baserel.
+ *		in just as for a baserel, except we don't bother with lateral_vars.
  *
  * If the relation is either a foreign table or a join of foreign tables that
  * all belong to the same foreign server, these fields will be set:
@@ -449,6 +448,10 @@ typedef struct RelOptInfo
 	struct Path *cheapest_unique_path;
 	List	   *cheapest_parameterized_paths;
 
+	/* parameterization information needed for both base rels and join rels */
+	/* (see also lateral_vars and lateral_referencers) */
+	Relids		lateral_relids; /* minimum parameterization of rel */
+
 	/* information about a base rel (not set for join rels!) */
 	Index		relid;
 	Oid			reltablespace;	/* containing tablespace */
@@ -458,7 +461,6 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
-	Relids		lateral_relids; /* minimum parameterization of rel */
 	Relids		lateral_referencers;	/* rels that reference me laterally */
 	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
@@ -1690,7 +1692,6 @@ typedef struct SemiAntiJoinFactors
  * sjinfo is extra info about special joins for selectivity estimation
  * semifactors is as shown above (only valid for SEMI or ANTI joins)
  * param_source_rels are OK targets for parameterization of result paths
- * extra_lateral_rels are additional parameterization for result paths
  */
 typedef struct JoinPathExtraData
 {
@@ -1699,7 +1700,6 @@ typedef struct JoinPathExtraData
 	SpecialJoinInfo *sjinfo;
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
-	Relids		extra_lateral_rels;
 } JoinPathExtraData;
 
 /*

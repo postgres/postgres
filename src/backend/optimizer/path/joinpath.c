@@ -86,7 +86,6 @@ add_paths_to_joinrel(PlannerInfo *root,
 	extra.mergeclause_list = NIL;
 	extra.sjinfo = sjinfo;
 	extra.param_source_rels = NULL;
-	extra.extra_lateral_rels = NULL;
 
 	/*
 	 * Find potential mergejoin clauses.  We can skip this if we are not
@@ -151,60 +150,14 @@ add_paths_to_joinrel(PlannerInfo *root,
 	}
 
 	/*
-	 * However, when a LATERAL subquery is involved, we have to be a bit
-	 * laxer, because there will simply not be any paths for the joinrel that
-	 * aren't parameterized by whatever the subquery is parameterized by,
-	 * unless its parameterization is resolved within the joinrel.  Hence, add
-	 * to param_source_rels anything that is laterally referenced in either
-	 * input and is not in the join already.
+	 * However, when a LATERAL subquery is involved, there will simply not be
+	 * any paths for the joinrel that aren't parameterized by whatever the
+	 * subquery is parameterized by, unless its parameterization is resolved
+	 * within the joinrel.  So we might as well allow additional dependencies
+	 * on whatever residual lateral dependencies the joinrel will have.
 	 */
-	foreach(lc, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
-
-		if (bms_is_subset(ljinfo->lateral_rhs, joinrel->relids))
-			extra.param_source_rels = bms_join(extra.param_source_rels,
-										  bms_difference(ljinfo->lateral_lhs,
-														 joinrel->relids));
-	}
-
-	/*
-	 * Another issue created by LATERAL references is that PlaceHolderVars
-	 * that need to be computed at this join level might contain lateral
-	 * references to rels not in the join, meaning that the paths for the join
-	 * would need to be marked as parameterized by those rels, independently
-	 * of all other considerations.  Set extra_lateral_rels to the set of such
-	 * rels.  This will not affect our decisions as to which paths to
-	 * generate; we merely add these rels to their required_outer sets.
-	 */
-	foreach(lc, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-
-		/* PHVs without lateral refs can be skipped over quickly */
-		if (phinfo->ph_lateral == NULL)
-			continue;
-		/* Is it due to be evaluated at this join, and not in either input? */
-		if (bms_is_subset(phinfo->ph_eval_at, joinrel->relids) &&
-			!bms_is_subset(phinfo->ph_eval_at, outerrel->relids) &&
-			!bms_is_subset(phinfo->ph_eval_at, innerrel->relids))
-		{
-			/* Yes, remember its lateral rels */
-			extra.extra_lateral_rels = bms_add_members(extra.extra_lateral_rels,
-													   phinfo->ph_lateral);
-		}
-	}
-
-	/*
-	 * Make sure extra_lateral_rels doesn't list anything within the join, and
-	 * that it's NULL if empty.  (This allows us to use bms_add_members to add
-	 * it to required_outer below, while preserving the property that
-	 * required_outer is exactly NULL if empty.)
-	 */
-	extra.extra_lateral_rels = bms_del_members(extra.extra_lateral_rels,
-											   joinrel->relids);
-	if (bms_is_empty(extra.extra_lateral_rels))
-		extra.extra_lateral_rels = NULL;
+	extra.param_source_rels = bms_add_members(extra.param_source_rels,
+											  joinrel->lateral_relids);
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
@@ -386,9 +339,13 @@ try_nestloop_path(PlannerInfo *root,
 
 	/*
 	 * Independently of that, add parameterization needed for any
-	 * PlaceHolderVars that need to be computed at the join.
+	 * PlaceHolderVars that need to be computed at the join.  We can handle
+	 * that just by adding joinrel->lateral_relids; that might include some
+	 * rels that are already in required_outer, but no harm done.  (Note that
+	 * lateral_relids is exactly NULL if empty, so this will not break the
+	 * property that required_outer is too.)
 	 */
-	required_outer = bms_add_members(required_outer, extra->extra_lateral_rels);
+	required_outer = bms_add_members(required_outer, joinrel->lateral_relids);
 
 	/*
 	 * Do a precheck to quickly eliminate obviously-inferior paths.  We
@@ -465,7 +422,7 @@ try_mergejoin_path(PlannerInfo *root,
 	 * Independently of that, add parameterization needed for any
 	 * PlaceHolderVars that need to be computed at the join.
 	 */
-	required_outer = bms_add_members(required_outer, extra->extra_lateral_rels);
+	required_outer = bms_add_members(required_outer, joinrel->lateral_relids);
 
 	/*
 	 * If the given paths are already well enough ordered, we can skip doing
@@ -547,7 +504,7 @@ try_hashjoin_path(PlannerInfo *root,
 	 * Independently of that, add parameterization needed for any
 	 * PlaceHolderVars that need to be computed at the join.
 	 */
-	required_outer = bms_add_members(required_outer, extra->extra_lateral_rels);
+	required_outer = bms_add_members(required_outer, joinrel->lateral_relids);
 
 	/*
 	 * See comments in try_nestloop_path().  Also note that hashjoin paths

@@ -109,11 +109,11 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
+	rel->lateral_relids = NULL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
 	rel->lateral_vars = NIL;
-	rel->lateral_relids = NULL;
 	rel->lateral_referencers = NULL;
 	rel->indexlist = NIL;
 	rel->pages = 0;
@@ -370,6 +370,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
+	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids);
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;
@@ -377,7 +378,6 @@ build_join_rel(PlannerInfo *root,
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
 	joinrel->lateral_vars = NIL;
-	joinrel->lateral_relids = NULL;
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
