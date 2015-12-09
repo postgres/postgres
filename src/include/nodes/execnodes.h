@@ -1029,6 +1029,7 @@ typedef struct PlanState
 								 * top-level plan */
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
+	WorkerInstrumentation *worker_instrument; /* per-worker instrumentation */
 
 	/*
 	 * Common structural data for all Plan types.  These links to subsidiary
