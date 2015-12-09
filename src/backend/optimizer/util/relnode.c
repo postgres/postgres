@@ -376,7 +376,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
 	joinrel->lateral_vars = NIL;
-	joinrel->lateral_relids = NULL;
+	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids);
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;

@@ -343,7 +343,7 @@ typedef struct PlannerInfo
  *		lateral_vars - lateral cross-references of rel, if any (list of
  *					   Vars and PlaceHolderVars)
  *		lateral_relids - required outer rels for LATERAL, as a Relids set
- *						 (for child rels this can be more than lateral_vars)
+ *			(this is now used for join rels too, but we won't move it till 9.5)
  *		lateral_referencers - relids of rels that reference this one laterally
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
@@ -362,7 +362,7 @@ typedef struct PlannerInfo
  *		and fdw_private are filled during initial path creation.
  *
  *		For otherrels that are appendrel members, these fields are filled
- *		in just as for a baserel.
+ *		in just as for a baserel, except we don't bother with lateral_vars.
  *
  * The presence of the remaining fields depends on the restrictions
  * and joins that the relation participates in:
