@@ -1703,7 +1703,7 @@ create function upsert_after_func()
 $$
 begin
   if (TG_OP = 'UPDATE') then
-    raise warning 'after update (old): %', new.*::text;
+    raise warning 'after update (old): %', old.*::text;
     raise warning 'after update (new): %', new.*::text;
   elsif (TG_OP = 'INSERT') then
     raise warning 'after insert (new): %', new.*::text;
@@ -1724,7 +1724,7 @@ insert into upsert values(3, 'orange') on conflict (key) do update set color = '
 WARNING:  before insert (new): (3,orange)
 WARNING:  before update (old): (3,"red trig modified")
 WARNING:  before update (new): (3,"updated red trig modified")
-WARNING:  after update (old): (3,"updated red trig modified")
+WARNING:  after update (old): (3,"red trig modified")
 WARNING:  after update (new): (3,"updated red trig modified")
 insert into upsert values(4, 'green') on conflict (key) do update set color = 'updated ' || upsert.color;
 WARNING:  before insert (new): (4,green)
@@ -1734,7 +1734,7 @@ insert into upsert values(5, 'purple') on conflict (key) do update set color = '
 WARNING:  before insert (new): (5,purple)
 WARNING:  before update (old): (5,"green trig modified")
 WARNING:  before update (new): (5,"updated green trig modified")
-WARNING:  after update (old): (5,"updated green trig modified")
+WARNING:  after update (old): (5,"green trig modified")
 WARNING:  after update (new): (5,"updated green trig modified")
 insert into upsert values(6, 'white') on conflict (key) do update set color = 'updated ' || upsert.color;
 WARNING:  before insert (new): (6,white)
@@ -1744,7 +1744,7 @@ insert into upsert values(7, 'pink') on conflict (key) do update set color = 'up
 WARNING:  before insert (new): (7,pink)
 WARNING:  before update (old): (7,"white trig modified")
 WARNING:  before update (new): (7,"updated white trig modified")
-WARNING:  after update (old): (7,"updated white trig modified")
+WARNING:  after update (old): (7,"white trig modified")
 WARNING:  after update (new): (7,"updated white trig modified")
 insert into upsert values(8, 'yellow') on conflict (key) do update set color = 'updated ' || upsert.color;
 WARNING:  before insert (new): (8,yellow)
