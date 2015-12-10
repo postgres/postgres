@@ -1875,8 +1875,9 @@ ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 'a' L
 WITH aa AS (SELECT 1 a, 2 b)
 INSERT INTO z VALUES(1, (SELECT b || ' insert' FROM aa WHERE a = 1 ))
 ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
--- This shows an attempt to update an invisible row, which should really be
--- reported as a cardinality violation, but it doesn't seem worth fixing:
+-- Update a row more than once, in different parts of a wCTE. That is
+-- an allowed, presumably very rare, edge case, but since it was
+-- broken in the past, having a test seems worthwhile.
 WITH simpletup AS (
   SELECT 2 k, 'Green' v),
 upsert_cte AS (
@@ -1886,7 +1887,10 @@ upsert_cte AS (
 INSERT INTO z VALUES(2, 'Red') ON CONFLICT (k) DO
 UPDATE SET (k, v) = (SELECT k, v FROM upsert_cte WHERE upsert_cte.k = z.k)
 RETURNING k, v;
-ERROR:  attempted to update invisible tuple
+ k | v 
+---+---
+(0 rows)
+
 DROP TABLE z;
 -- check that run to completion happens in proper ordering
 TRUNCATE TABLE y;
