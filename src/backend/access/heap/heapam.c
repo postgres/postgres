@@ -7175,6 +7175,16 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	MarkBufferDirty(buffer);
+
+	/*
+	 * At the end of crash recovery the init forks of unlogged relations are
+	 * copied, without going through shared buffers. So we need to force the
+	 * on-disk state of init forks to always be in sync with the state in
+	 * shared buffers.
+	 */
+	if (xlrec->forknum == INIT_FORKNUM)
+		FlushOneBuffer(buffer);
+
 	UnlockReleaseBuffer(buffer);
 }
 
