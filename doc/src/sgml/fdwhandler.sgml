@@ -793,7 +793,7 @@ RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
      <literal>ForeignScan</>.  When a recheck is required, this subplan
      can be executed and the resulting tuple can be stored in the slot.
      This plan need not be efficient since no base table will return more
-     that one row; for example, it may implement all joins as nested loops.
+     than one row; for example, it may implement all joins as nested loops.
     </para>
    </sect2>
 
