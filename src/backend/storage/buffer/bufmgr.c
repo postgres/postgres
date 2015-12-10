@@ -2238,6 +2238,27 @@ FlushDatabaseBuffers(Oid dbid)
 }
 
 /*
+ * Flush a previously, shared or exclusively, locked and pinned buffer to the
+ * OS.
+ */
+void
+FlushOneBuffer(Buffer buffer)
+{
+	volatile BufferDesc *bufHdr;
+
+	/* currently not needed, but no fundamental reason not to support */
+	Assert(!BufferIsLocal(buffer));
+
+	Assert(BufferIsPinned(buffer));
+
+	bufHdr = &BufferDescriptors[buffer - 1];
+
+	LWLockHeldByMe(bufHdr->content_lock);
+
+	FlushBuffer(bufHdr, NULL);
+}
+
+/*
  * ReleaseBuffer -- release the pin on a buffer
  */
 void
