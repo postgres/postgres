@@ -349,8 +349,10 @@ typedef struct PlannerInfo
  *		lateral_vars - lateral cross-references of rel, if any (list of
  *					   Vars and PlaceHolderVars)
  *		lateral_relids - required outer rels for LATERAL, as a Relids set
+ *			(includes both direct and indirect lateral references)
  *			(this is now used for join rels too, but we won't move it till 9.5)
  *		lateral_referencers - relids of rels that reference this one laterally
+ *				(includes both direct and indirect lateral references)
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
