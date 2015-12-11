@@ -6339,6 +6339,14 @@ StartupXLOG(void)
 	StartupMultiXact();
 
 	/*
+	 * Ditto commit timestamps.  In a standby, we do it if setting is enabled
+	 * in ControlFile; in a master we base the decision on the GUC itself.
+	 */
+	if (ArchiveRecoveryRequested ?
+		ControlFile->track_commit_timestamp : track_commit_timestamp)
+		StartupCommitTs();
+
+	/*
 	 * Recover knowledge about replay progress of known replication partners.
 	 */
 	StartupReplicationOrigin();
@@ -6565,16 +6573,11 @@ StartupXLOG(void)
 			ProcArrayInitRecovery(ShmemVariableCache->nextXid);
 
 			/*
-			 * Startup commit log, commit timestamp and subtrans only.
-			 * MultiXact has already been started up and other SLRUs are not
+			 * Startup commit log and subtrans only.  MultiXact and commit
+			 * timestamp have already been started up and other SLRUs are not
 			 * maintained during recovery and need not be started yet.
-			 *
-			 * For commit timestamps, we do this based on the control file
-			 * info: in a standby, we want to drive it off the state of the
-			 * master, not local configuration.
 			 */
 			StartupCLOG();
-			StartupCommitTs(ControlFile->track_commit_timestamp);
 			StartupSUBTRANS(oldestActiveXID);
 
 			/*
@@ -7337,13 +7340,12 @@ StartupXLOG(void)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Start up the commit log, commit timestamp and subtrans, if not already
-	 * done for hot standby.
+	 * Start up the commit log and subtrans, if not already done for hot
+	 * standby.  (commit timestamps are started below, if necessary.)
 	 */
 	if (standbyState == STANDBY_DISABLED)
 	{
 		StartupCLOG();
-		StartupCommitTs(track_commit_timestamp);
 		StartupSUBTRANS(oldestActiveXID);
 	}
 
