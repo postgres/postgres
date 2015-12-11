@@ -50,6 +50,7 @@
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
+#include "commands/policy.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
@@ -1244,6 +1245,18 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					RemoveRoleFromObjectACL(roleid,
 											sdepForm->classid,
 											sdepForm->objid);
+					break;
+				case SHARED_DEPENDENCY_POLICY:
+					/* If unable to remove role from policy, remove policy. */
+					if (!RemoveRoleFromObjectPolicy(roleid,
+													sdepForm->classid,
+													sdepForm->objid))
+					{
+						obj.classId = sdepForm->classid;
+						obj.objectId = sdepForm->objid;
+						obj.objectSubId = sdepForm->objsubid;
+						add_exact_object_address(&obj, deleteobjs);
+					}
 					break;
 				case SHARED_DEPENDENCY_OWNER:
 					/* If a local object, save it for deletion below */
