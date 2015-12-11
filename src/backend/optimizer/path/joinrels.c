@@ -231,7 +231,7 @@ join_search_one_level(PlannerInfo *root, int level)
 		 */
 		if (joinrels[level] == NIL &&
 			root->join_info_list == NIL &&
-			root->lateral_info_list == NIL)
+			!root->hasLateralRTEs)
 			elog(ERROR, "failed to build any %d-way joins", level);
 	}
 }
@@ -559,15 +559,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
 			/* check there is a direct reference from rel2 to rel1 */
-			foreach(l, root->lateral_info_list)
-			{
-				LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
-
-				if (bms_is_subset(ljinfo->lateral_rhs, rel2->relids) &&
-					bms_is_subset(ljinfo->lateral_lhs, rel1->relids))
-					break;
-			}
-			if (l == NULL)
+			if (!bms_overlap(rel1->relids, rel2->direct_lateral_relids))
 				return false;	/* only indirect refs, so reject */
 			/* check we won't have a dangerous PHV */
 			if (have_dangerous_phv(root, rel1->relids, rel2->lateral_relids))
@@ -582,15 +574,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
 			/* check there is a direct reference from rel1 to rel2 */
-			foreach(l, root->lateral_info_list)
-			{
-				LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
-
-				if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
-					bms_is_subset(ljinfo->lateral_lhs, rel2->relids))
-					break;
-			}
-			if (l == NULL)
+			if (!bms_overlap(rel2->relids, rel1->direct_lateral_relids))
 				return false;	/* only indirect refs, so reject */
 			/* check we won't have a dangerous PHV */
 			if (have_dangerous_phv(root, rel2->relids, rel1->lateral_relids))
@@ -922,17 +906,9 @@ have_join_order_restriction(PlannerInfo *root,
 	 * If either side has a direct lateral reference to the other, attempt the
 	 * join regardless of outer-join considerations.
 	 */
-	foreach(l, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
-
-		if (bms_is_subset(ljinfo->lateral_rhs, rel2->relids) &&
-			bms_overlap(ljinfo->lateral_lhs, rel1->relids))
-			return true;
-		if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
-			bms_overlap(ljinfo->lateral_lhs, rel2->relids))
-			return true;
-	}
+	if (bms_overlap(rel1->relids, rel2->direct_lateral_relids) ||
+		bms_overlap(rel2->relids, rel1->direct_lateral_relids))
+		return true;
 
 	/*
 	 * Likewise, if both rels are needed to compute some PlaceHolderVar,
