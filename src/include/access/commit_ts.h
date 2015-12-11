@@ -34,7 +34,7 @@ extern Size CommitTsShmemBuffers(void);
 extern Size CommitTsShmemSize(void);
 extern void CommitTsShmemInit(void);
 extern void BootStrapCommitTs(void);
-extern void StartupCommitTs(bool enabled);
+extern void StartupCommitTs(void);
 extern void CommitTsParameterChange(bool xlrecvalue, bool pgcontrolvalue);
 extern void CompleteCommitTsInitialization(void);
 extern void ShutdownCommitTs(void);

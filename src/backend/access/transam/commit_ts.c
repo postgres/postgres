@@ -545,19 +545,11 @@ ZeroCommitTsPage(int pageno, bool writeXlog)
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
  * after StartupXLOG has initialized ShmemVariableCache->nextXid.
- *
- * Caller may choose to enable the feature even when it is turned off in the
- * configuration.
  */
 void
-StartupCommitTs(bool enabled)
+StartupCommitTs(void)
 {
-	/*
-	 * If the module is not enabled, there's nothing to do here.  The module
-	 * could still be activated from elsewhere.
-	 */
-	if (enabled)
-		ActivateCommitTs();
+	ActivateCommitTs();
 }
 
 /*
@@ -570,9 +562,17 @@ CompleteCommitTsInitialization(void)
 	/*
 	 * If the feature is not enabled, turn it off for good.  This also removes
 	 * any leftover data.
+	 *
+	 * Conversely, we activate the module if the feature is enabled.  This is
+	 * not necessary in a master system because we already did it earlier, but
+	 * if we're in a standby server that got promoted which had the feature
+	 * enabled and was following a master that had the feature disabled, this
+	 * is where we turn it on locally.
 	 */
 	if (!track_commit_timestamp)
 		DeactivateCommitTs();
+	else
+		ActivateCommitTs();
 }
 
 /*
@@ -591,6 +591,9 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 	 *
 	 * If the module is disabled in the master, disable it here too, unless
 	 * the module is enabled locally.
+	 *
+	 * Note this only runs in the recovery process, so an unlocked read is
+	 * fine.
 	 */
 	if (newvalue)
 	{
@@ -620,8 +623,20 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 static void
 ActivateCommitTs(void)
 {
-	TransactionId xid = ShmemVariableCache->nextXid;
-	int			pageno = TransactionIdToCTsPage(xid);
+	TransactionId xid;
+	int			pageno;
+
+	/* If we've done this already, there's nothing to do */
+	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
+	if (commitTsShared->commitTsActive)
+	{
+		LWLockRelease(CommitTsLock);
+		return;
+	}
+	LWLockRelease(CommitTsLock);
+
+	xid = ShmemVariableCache->nextXid;
+	pageno = TransactionIdToCTsPage(xid);
 
 	/*
 	 * Re-Initialize our idea of the latest page number.
