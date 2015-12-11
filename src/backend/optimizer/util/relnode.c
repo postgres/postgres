@@ -373,7 +373,8 @@ build_join_rel(PlannerInfo *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
-	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids);
+	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids,
+														outer_rel, inner_rel);
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;
@@ -508,29 +509,27 @@ build_join_rel(PlannerInfo *root,
  * because join_is_legal() needs the value to check a prospective join.
  */
 Relids
-min_join_parameterization(PlannerInfo *root, Relids joinrelids)
+min_join_parameterization(PlannerInfo *root,
+						  Relids joinrelids,
+						  RelOptInfo *outer_rel,
+						  RelOptInfo *inner_rel)
 {
 	Relids		result;
-	ListCell   *lc;
-
-	/* Easy if there are no lateral references */
-	if (root->lateral_info_list == NIL)
-		return NULL;
 
 	/*
-	 * Scan lateral_info_list to find all the lateral references occurring in
-	 * or below this join.
+	 * Basically we just need the union of the inputs' lateral_relids, less
+	 * whatever is already in the join.
+	 *
+	 * It's not immediately obvious that this is a valid way to compute the
+	 * result, because it might seem that we're ignoring possible lateral refs
+	 * of PlaceHolderVars that are due to be computed at the join but not in
+	 * either input.  However, because create_lateral_join_info() already
+	 * charged all such PHV refs to each member baserel of the join, they'll
+	 * be accounted for already in the inputs' lateral_relids.  Likewise, we
+	 * do not need to worry about doing transitive closure here, because that
+	 * was already accounted for in the original baserel lateral_relids.
 	 */
-	result = NULL;
-	foreach(lc, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
-
-		if (bms_is_subset(ljinfo->lateral_rhs, joinrelids))
-			result = bms_add_members(result, ljinfo->lateral_lhs);
-	}
-
-	/* Remove any rels that are already included in the join */
+	result = bms_union(outer_rel->lateral_relids, inner_rel->lateral_relids);
 	result = bms_del_members(result, joinrelids);
 
 	/* Maintain invariant that result is exactly NULL if empty */

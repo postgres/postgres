@@ -3620,6 +3620,159 @@ where t1.f1 = ss.f1;
  doh! | 4567890123456789 | 123 | 4567890123456789 | doh!
 (1 row)
 
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss1,
+  lateral (select ss1.* from text_tbl t3 limit 1) as ss2
+where t1.f1 = ss2.f1;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Nested Loop
+   Output: t1.f1, i8.q1, i8.q2, (i8.q1), t2.f1, ((i8.q1)), (t2.f1)
+   Join Filter: (t1.f1 = (t2.f1))
+   ->  Nested Loop
+         Output: t1.f1, i8.q1, i8.q2, (i8.q1), t2.f1
+         ->  Nested Loop Left Join
+               Output: t1.f1, i8.q1, i8.q2
+               ->  Seq Scan on public.text_tbl t1
+                     Output: t1.f1
+               ->  Materialize
+                     Output: i8.q1, i8.q2
+                     ->  Seq Scan on public.int8_tbl i8
+                           Output: i8.q1, i8.q2
+                           Filter: (i8.q2 = 123)
+         ->  Limit
+               Output: (i8.q1), t2.f1
+               ->  Seq Scan on public.text_tbl t2
+                     Output: i8.q1, t2.f1
+   ->  Limit
+         Output: ((i8.q1)), (t2.f1)
+         ->  Seq Scan on public.text_tbl t3
+               Output: (i8.q1), t2.f1
+(22 rows)
+
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss1,
+  lateral (select ss1.* from text_tbl t3 limit 1) as ss2
+where t1.f1 = ss2.f1;
+  f1  |        q1        | q2  |        q1        |  f1  |        q1        |  f1  
+------+------------------+-----+------------------+------+------------------+------
+ doh! | 4567890123456789 | 123 | 4567890123456789 | doh! | 4567890123456789 | doh!
+(1 row)
+
+explain (verbose, costs off)
+select 1 from
+  text_tbl as tt1
+  inner join text_tbl as tt2 on (tt1.f1 = 'foo')
+  left join text_tbl as tt3 on (tt3.f1 = 'foo')
+  left join text_tbl as tt4 on (tt3.f1 = tt4.f1),
+  lateral (select tt4.f1 as c0 from text_tbl as tt5 limit 1) as ss1
+where tt1.f1 = ss1.c0;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Nested Loop
+   Output: 1
+   ->  Nested Loop Left Join
+         Output: tt1.f1, tt4.f1
+         ->  Nested Loop
+               Output: tt1.f1
+               ->  Seq Scan on public.text_tbl tt1
+                     Output: tt1.f1
+                     Filter: (tt1.f1 = 'foo'::text)
+               ->  Seq Scan on public.text_tbl tt2
+                     Output: tt2.f1
+         ->  Materialize
+               Output: tt4.f1
+               ->  Nested Loop Left Join
+                     Output: tt4.f1
+                     Join Filter: (tt3.f1 = tt4.f1)
+                     ->  Seq Scan on public.text_tbl tt3
+                           Output: tt3.f1
+                           Filter: (tt3.f1 = 'foo'::text)
+                     ->  Seq Scan on public.text_tbl tt4
+                           Output: tt4.f1
+                           Filter: (tt4.f1 = 'foo'::text)
+   ->  Subquery Scan on ss1
+         Output: ss1.c0
+         Filter: (ss1.c0 = 'foo'::text)
+         ->  Limit
+               Output: (tt4.f1)
+               ->  Seq Scan on public.text_tbl tt5
+                     Output: tt4.f1
+(29 rows)
+
+select 1 from
+  text_tbl as tt1
+  inner join text_tbl as tt2 on (tt1.f1 = 'foo')
+  left join text_tbl as tt3 on (tt3.f1 = 'foo')
+  left join text_tbl as tt4 on (tt3.f1 = tt4.f1),
+  lateral (select tt4.f1 as c0 from text_tbl as tt5 limit 1) as ss1
+where tt1.f1 = ss1.c0;
+ ?column? 
+----------
+(0 rows)
+
+--
+-- check a case in which a PlaceHolderVar forces join order
+--
+explain (verbose, costs off)
+select ss2.* from
+  int4_tbl i41
+  left join int8_tbl i8
+    join (select i42.f1 as c1, i43.f1 as c2, 42 as c3
+          from int4_tbl i42, int4_tbl i43) ss1
+    on i8.q1 = ss1.c2
+  on i41.f1 = ss1.c1,
+  lateral (select i41.*, i8.*, ss1.* from text_tbl limit 1) ss2
+where ss1.c2 = 0;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Nested Loop
+   Output: (i41.f1), (i8.q1), (i8.q2), (i42.f1), (i43.f1), ((42))
+   ->  Hash Join
+         Output: i41.f1, i42.f1, i8.q1, i8.q2, i43.f1, 42
+         Hash Cond: (i41.f1 = i42.f1)
+         ->  Nested Loop
+               Output: i8.q1, i8.q2, i43.f1, i41.f1
+               ->  Nested Loop
+                     Output: i8.q1, i8.q2, i43.f1
+                     ->  Seq Scan on public.int8_tbl i8
+                           Output: i8.q1, i8.q2
+                           Filter: (i8.q1 = 0)
+                     ->  Seq Scan on public.int4_tbl i43
+                           Output: i43.f1
+                           Filter: (i43.f1 = 0)
+               ->  Seq Scan on public.int4_tbl i41
+                     Output: i41.f1
+         ->  Hash
+               Output: i42.f1
+               ->  Seq Scan on public.int4_tbl i42
+                     Output: i42.f1
+   ->  Limit
+         Output: (i41.f1), (i8.q1), (i8.q2), (i42.f1), (i43.f1), ((42))
+         ->  Seq Scan on public.text_tbl
+               Output: i41.f1, i8.q1, i8.q2, i42.f1, i43.f1, (42)
+(25 rows)
+
+select ss2.* from
+  int4_tbl i41
+  left join int8_tbl i8
+    join (select i42.f1 as c1, i43.f1 as c2, 42 as c3
+          from int4_tbl i42, int4_tbl i43) ss1
+    on i8.q1 = ss1.c2
+  on i41.f1 = ss1.c1,
+  lateral (select i41.*, i8.*, ss1.* from text_tbl limit 1) ss2
+where ss1.c2 = 0;
+ f1 | q1 | q2 | c1 | c2 | c3 
+----+----+----+----+----+----
+(0 rows)
+
 --
 -- test ability to push constants through outer join clauses
 --
@@ -4741,14 +4894,12 @@ select * from
          Output: a.q1, a.q2
    ->  Nested Loop
          Output: b.q1, c.q1, LEAST(a.q1, b.q1, c.q1)
-         Join Filter: (a.q2 = b.q1)
          ->  Seq Scan on public.int8_tbl b
                Output: b.q1, b.q2
-         ->  Materialize
-               Output: c.q1
-               ->  Seq Scan on public.int8_tbl c
-                     Output: c.q1
-(13 rows)
+               Filter: (a.q2 = b.q1)
+         ->  Seq Scan on public.int8_tbl c
+               Output: c.q1, c.q2
+(11 rows)
 
 select * from
   int8_tbl a left join lateral

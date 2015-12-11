@@ -255,54 +255,6 @@ allow_star_schema_join(PlannerInfo *root,
 }
 
 /*
- * There's a pitfall for creating parameterized nestloops: suppose the inner
- * rel (call it A) has a parameter that is a PlaceHolderVar, and that PHV's
- * minimum eval_at set includes the outer rel (B) and some third rel (C).
- * We might think we could create a B/A nestloop join that's parameterized by
- * C.  But we would end up with a plan in which the PHV's expression has to be
- * evaluated as a nestloop parameter at the B/A join; and the executor is only
- * set up to handle simple Vars as NestLoopParams.  Rather than add complexity
- * and overhead to the executor for such corner cases, it seems better to
- * forbid the join.  (Note that existence of such a PHV probably means there
- * is a join order constraint that will cause us to consider joining B and C
- * directly; so we can still make use of A's parameterized path with B+C.)
- * So we check whether any PHVs used in the query could pose such a hazard.
- * We don't have any simple way of checking whether a risky PHV would actually
- * be used in the inner plan, and the case is so unusual that it doesn't seem
- * worth working very hard on it.
- *
- * This case can occur whether or not the join's remaining parameterization
- * overlaps param_source_rels, so we have to check for it separately from
- * allow_star_schema_join, even though it looks much like a star-schema case.
- */
-static inline bool
-check_hazardous_phv(PlannerInfo *root,
-					Path *outer_path,
-					Path *inner_path)
-{
-	Relids		innerparams = PATH_REQ_OUTER(inner_path);
-	Relids		outerrelids = outer_path->parent->relids;
-	ListCell   *lc;
-
-	foreach(lc, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-
-		if (!bms_is_subset(phinfo->ph_eval_at, innerparams))
-			continue;			/* ignore, could not be a nestloop param */
-		if (!bms_overlap(phinfo->ph_eval_at, outerrelids))
-			continue;			/* ignore, not relevant to this join */
-		if (bms_is_subset(phinfo->ph_eval_at, outerrelids))
-			continue;			/* safe, it can be eval'd within outerrel */
-		/* Otherwise, it's potentially unsafe, so reject the join */
-		return false;
-	}
-
-	/* OK to perform the join */
-	return true;
-}
-
-/*
  * try_nestloop_path
  *	  Consider a nestloop join path; if it appears useful, push it into
  *	  the joinrel's pathlist via add_path().
@@ -322,30 +274,23 @@ try_nestloop_path(PlannerInfo *root,
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
 	 * parameterization wouldn't be sensible --- unless allow_star_schema_join
-	 * says to allow it anyway.  Also, we must reject if check_hazardous_phv
-	 * doesn't like the look of it.
+	 * says to allow it anyway.  Also, we must reject if have_dangerous_phv
+	 * doesn't like the look of it, which could only happen if the nestloop is
+	 * still parameterized.
 	 */
 	required_outer = calc_nestloop_required_outer(outer_path,
 												  inner_path);
 	if (required_outer &&
 		((!bms_overlap(required_outer, extra->param_source_rels) &&
 		  !allow_star_schema_join(root, outer_path, inner_path)) ||
-		 !check_hazardous_phv(root, outer_path, inner_path)))
+		 have_dangerous_phv(root,
+							outer_path->parent->relids,
+							PATH_REQ_OUTER(inner_path))))
 	{
 		/* Waste no memory when we reject a path here */
 		bms_free(required_outer);
 		return;
 	}
-
-	/*
-	 * Independently of that, add parameterization needed for any
-	 * PlaceHolderVars that need to be computed at the join.  We can handle
-	 * that just by adding joinrel->lateral_relids; that might include some
-	 * rels that are already in required_outer, but no harm done.  (Note that
-	 * lateral_relids is exactly NULL if empty, so this will not break the
-	 * property that required_outer is too.)
-	 */
-	required_outer = bms_add_members(required_outer, joinrel->lateral_relids);
 
 	/*
 	 * Do a precheck to quickly eliminate obviously-inferior paths.  We
@@ -417,12 +362,6 @@ try_mergejoin_path(PlannerInfo *root,
 		bms_free(required_outer);
 		return;
 	}
-
-	/*
-	 * Independently of that, add parameterization needed for any
-	 * PlaceHolderVars that need to be computed at the join.
-	 */
-	required_outer = bms_add_members(required_outer, joinrel->lateral_relids);
 
 	/*
 	 * If the given paths are already well enough ordered, we can skip doing
@@ -499,12 +438,6 @@ try_hashjoin_path(PlannerInfo *root,
 		bms_free(required_outer);
 		return;
 	}
-
-	/*
-	 * Independently of that, add parameterization needed for any
-	 * PlaceHolderVars that need to be computed at the join.
-	 */
-	required_outer = bms_add_members(required_outer, joinrel->lateral_relids);
 
 	/*
 	 * See comments in try_nestloop_path().  Also note that hashjoin paths
