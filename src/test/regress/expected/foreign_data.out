@@ -1743,6 +1743,14 @@ ERROR:  foreign table "no_table" does not exist
 DROP FOREIGN TABLE IF EXISTS no_table;
 NOTICE:  foreign table "no_table" does not exist, skipping
 DROP FOREIGN TABLE foreign_schema.foreign_table_1;
+-- REASSIGN OWNED/DROP OWNED of foreign objects
+REASSIGN OWNED BY regress_test_role TO regress_test_role2;
+DROP OWNED BY regress_test_role2;
+ERROR:  cannot drop desired object(s) because other objects depend on them
+DETAIL:  user mapping for regress_test_role on server s5 depends on server s5
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP OWNED BY regress_test_role2 CASCADE;
+NOTICE:  drop cascades to user mapping for regress_test_role on server s5
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
@@ -1750,14 +1758,8 @@ ERROR:  role "regress_test_role" cannot be dropped because some objects depend o
 DETAIL:  privileges for server s4
 privileges for foreign-data wrapper foo
 owner of user mapping for regress_test_role on server s6
-owner of user mapping for regress_test_role on server s5
-owner of server s5
-owner of server t2
-DROP SERVER s5 CASCADE;
-NOTICE:  drop cascades to user mapping for regress_test_role on server s5
 DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public on server t1
-DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 -- This test causes some order dependent cascade detail output,
 -- so switch to terse mode for it.
