@@ -3289,6 +3289,20 @@ SELECT count(*) = 0 FROM pg_depend
  t
 (1 row)
 
+-- DROP OWNED BY testing
+RESET SESSION AUTHORIZATION;
+CREATE ROLE dob_role1;
+CREATE ROLE dob_role2;
+CREATE TABLE dob_t1 (c1 int);
+CREATE POLICY p1 ON dob_t1 TO dob_role1 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should fail, already gone
+ERROR:  policy "p1" for table "dob_t1" does not exist
+CREATE POLICY p1 ON dob_t1 TO dob_role1,dob_role2 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should succeed
+DROP USER dob_role1;
+DROP USER dob_role2;
 --
 -- Clean up objects
 --

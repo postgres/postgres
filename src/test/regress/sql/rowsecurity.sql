@@ -1520,6 +1520,24 @@ SELECT count(*) = 0 FROM pg_depend
 				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
 					 AND refobjid = (SELECT oid FROM pg_class WHERE relname = 'dep2');
 
+-- DROP OWNED BY testing
+RESET SESSION AUTHORIZATION;
+
+CREATE ROLE dob_role1;
+CREATE ROLE dob_role2;
+
+CREATE TABLE dob_t1 (c1 int);
+
+CREATE POLICY p1 ON dob_t1 TO dob_role1 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should fail, already gone
+
+CREATE POLICY p1 ON dob_t1 TO dob_role1,dob_role2 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should succeed
+
+DROP USER dob_role1;
+DROP USER dob_role2;
 
 --
 -- Clean up objects
