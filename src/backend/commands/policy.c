@@ -766,6 +766,35 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		replaces[Anum_pg_policy_polroles - 1] = true;
 		values[Anum_pg_policy_polroles - 1] = PointerGetDatum(role_ids);
 	}
+	else
+	{
+		Oid        *roles;
+		Datum		roles_datum;
+		bool		attr_isnull;
+		ArrayType  *policy_roles;
+
+		/*
+		 * We need to pull the set of roles this policy applies to from
+		 * what's in the catalog, so that we can recreate the dependencies
+		 * correctly for the policy.
+		 */
+
+		roles_datum = heap_getattr(policy_tuple, Anum_pg_policy_polroles,
+								   RelationGetDescr(pg_policy_rel),
+								   &attr_isnull);
+		Assert(!attr_isnull);
+
+		policy_roles = DatumGetArrayTypePCopy(roles_datum);
+
+		roles = (Oid *) ARR_DATA_PTR(policy_roles);
+
+		nitems = ARR_DIMS(policy_roles)[0];
+
+		role_oids = (Datum *) palloc(nitems * sizeof(Datum));
+
+		for (i = 0; i < nitems; i++)
+			role_oids[i] = ObjectIdGetDatum(roles[i]);
+	}
 
 	if (qual != NULL)
 	{
@@ -773,12 +802,80 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		values[Anum_pg_policy_polqual - 1]
 			= CStringGetTextDatum(nodeToString(qual));
 	}
+	else
+	{
+		Datum	value_datum;
+		bool	attr_isnull;
+
+		/*
+		 * We need to pull the USING expression and build the range table for
+		 * the policy from what's in the catalog, so that we can recreate
+		 * the dependencies correctly for the policy.
+		 */
+
+		/* Check if the policy has a USING expr */
+		value_datum = heap_getattr(policy_tuple, Anum_pg_policy_polqual,
+								   RelationGetDescr(pg_policy_rel),
+								   &attr_isnull);
+		if (!attr_isnull)
+		{
+			char	   *qual_value;
+			ParseState *qual_pstate = make_parsestate(NULL);
+
+			/* parsestate is built just to build the range table */
+			qual_pstate = make_parsestate(NULL);
+
+			qual_value = TextDatumGetCString(value_datum);
+			qual = stringToNode(qual_value);
+
+			/* Add this rel to the parsestate's rangetable, for dependencies */
+			addRangeTableEntryForRelation(qual_pstate, target_table, NULL,
+										  false, false);
+
+			qual_parse_rtable = qual_pstate->p_rtable;
+			free_parsestate(qual_pstate);
+		}
+	}
 
 	if (with_check_qual != NULL)
 	{
 		replaces[Anum_pg_policy_polwithcheck - 1] = true;
 		values[Anum_pg_policy_polwithcheck - 1]
 			= CStringGetTextDatum(nodeToString(with_check_qual));
+	}
+	else
+	{
+		Datum	value_datum;
+		bool	attr_isnull;
+
+		/*
+		 * We need to pull the WITH CHECK expression and build the range table
+		 * for the policy from what's in the catalog, so that we can recreate
+		 * the dependencies correctly for the policy.
+		 */
+
+		/* Check if the policy has a WITH CHECK expr */
+		value_datum = heap_getattr(policy_tuple, Anum_pg_policy_polwithcheck,
+								   RelationGetDescr(pg_policy_rel),
+								   &attr_isnull);
+		if (!attr_isnull)
+		{
+			char	   *with_check_value;
+			ParseState *with_check_pstate = make_parsestate(NULL);
+
+			/* parsestate is built just to build the range table */
+			with_check_pstate = make_parsestate(NULL);
+
+			with_check_value = TextDatumGetCString(value_datum);
+			with_check_qual = stringToNode(with_check_value);
+
+			/* Add this rel to the parsestate's rangetable, for dependencies */
+			addRangeTableEntryForRelation(with_check_pstate, target_table, NULL,
+										  false, false);
+
+			with_check_parse_rtable = with_check_pstate->p_rtable;
+			free_parsestate(with_check_pstate);
+		}
 	}
 
 	new_tuple = heap_modify_tuple(policy_tuple,
