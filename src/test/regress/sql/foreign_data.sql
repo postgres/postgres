@@ -679,12 +679,15 @@ DROP FOREIGN TABLE no_table;                                    -- ERROR
 DROP FOREIGN TABLE IF EXISTS no_table;
 DROP FOREIGN TABLE foreign_schema.foreign_table_1;
 
+-- REASSIGN OWNED/DROP OWNED of foreign objects
+REASSIGN OWNED BY regress_test_role TO regress_test_role2;
+DROP OWNED BY regress_test_role2;
+DROP OWNED BY regress_test_role2 CASCADE;
+
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
-DROP SERVER s5 CASCADE;
 DROP SERVER t1 CASCADE;
-DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 -- This test causes some order dependent cascade detail output,
 -- so switch to terse mode for it.
