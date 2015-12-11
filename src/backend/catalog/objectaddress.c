@@ -1901,7 +1901,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		if (list_length(name) < 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("name list must be of length at least %d", 1)));
+					 errmsg("name list length must be at least %d", 1)));
 	}
 
 	/*

@@ -1238,7 +1238,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: could not determine data type", i + 2)));
+					 errmsg("argument %d: could not determine data type", i + 2)));
 		add_jsonb(arg, PG_ARGISNULL(i + 1), &result, val_type, false);
 
 	}
@@ -1300,7 +1300,7 @@ jsonb_build_array(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("arg %d: could not determine data type", i + 1)));
+					 errmsg("argument %d: could not determine data type", i + 1)));
 		add_jsonb(arg, PG_ARGISNULL(i), &result, val_type, false);
 	}
 

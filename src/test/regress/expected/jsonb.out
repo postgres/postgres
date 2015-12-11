@@ -3173,7 +3173,7 @@ select '[]'::jsonb - 'a';
 select '"a"'::jsonb - 1; -- error
 ERROR:  cannot delete from scalar
 select '{}'::jsonb -  1; -- error
-ERROR:  cannot delete from object using integer subscript
+ERROR:  cannot delete from object using integer index
 select '[]'::jsonb - 1;
  ?column? 
 ----------

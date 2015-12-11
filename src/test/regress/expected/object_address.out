@@ -39,7 +39,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
 SELECT pg_get_object_address('table', '{}', '{}');
-ERROR:  name list must be of length at least 1
+ERROR:  name list length must be at least 1
 SELECT pg_get_object_address('table', '{NULL}', '{}');
 ERROR:  name or argument lists may not contain nulls
 -- unrecognized object types
