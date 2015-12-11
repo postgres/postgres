@@ -47,7 +47,6 @@ typedef struct PostponedQual
 
 static void extract_lateral_references(PlannerInfo *root, RelOptInfo *brel,
 						   Index rtindex);
-static void add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs);
 static List *deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 					bool below_outer_join,
 					Relids *qualscope, Relids *inner_join_rels,
@@ -382,11 +381,8 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 
 /*
  * create_lateral_join_info
- *	  For each unflattened LATERAL subquery, create LateralJoinInfo(s) and add
- *	  them to root->lateral_info_list, and fill in the per-rel lateral_relids
- *	  and lateral_referencers sets.  Also generate LateralJoinInfo(s) to
- *	  represent any lateral references within PlaceHolderVars (this part deals
- *	  with the effects of flattened LATERAL subqueries).
+ *	  Fill in the per-base-relation direct_lateral_relids, lateral_relids
+ *	  and lateral_referencers sets.
  *
  * This has to run after deconstruct_jointree, because we need to know the
  * final ph_eval_at values for PlaceHolderVars.
@@ -394,6 +390,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 void
 create_lateral_join_info(PlannerInfo *root)
 {
+	bool		found_laterals = false;
 	Index		rti;
 	ListCell   *lc;
 
@@ -430,8 +427,7 @@ create_lateral_join_info(PlannerInfo *root)
 			{
 				Var		   *var = (Var *) node;
 
-				add_lateral_info(root, bms_make_singleton(var->varno),
-								 brel->relids);
+				found_laterals = true;
 				lateral_relids = bms_add_member(lateral_relids,
 												var->varno);
 			}
@@ -441,7 +437,7 @@ create_lateral_join_info(PlannerInfo *root)
 				PlaceHolderInfo *phinfo = find_placeholder_info(root, phv,
 																false);
 
-				add_lateral_info(root, phinfo->ph_eval_at, brel->relids);
+				found_laterals = true;
 				lateral_relids = bms_add_members(lateral_relids,
 												 phinfo->ph_eval_at);
 			}
@@ -449,69 +445,54 @@ create_lateral_join_info(PlannerInfo *root)
 				Assert(false);
 		}
 
-		/* We now have all the direct lateral refs from this rel */
-		brel->lateral_relids = lateral_relids;
+		/* We now have all the simple lateral refs from this rel */
+		brel->direct_lateral_relids = lateral_relids;
+		brel->lateral_relids = bms_copy(lateral_relids);
 	}
 
 	/*
-	 * Now check for lateral references within PlaceHolderVars, and make
-	 * LateralJoinInfos describing each such reference.  Unlike references in
-	 * unflattened LATERAL RTEs, the referencing location could be a join.
+	 * Now check for lateral references within PlaceHolderVars, and mark their
+	 * eval_at rels as having lateral references to the source rels.
 	 *
-	 * For a PHV that is due to be evaluated at a join, we mark each of the
-	 * join's member baserels as having the PHV's lateral references too. Even
-	 * though the baserels could be scanned without considering those lateral
-	 * refs, we will never be able to form the join except as a path
-	 * parameterized by the lateral refs, so there is no point in considering
-	 * unparameterized paths for the baserels; and we mustn't try to join any
-	 * of those baserels to the lateral refs too soon, either.
+	 * For a PHV that is due to be evaluated at a baserel, mark its source(s)
+	 * as direct lateral dependencies of the baserel (adding onto the ones
+	 * recorded above).  If it's due to be evaluated at a join, mark its
+	 * source(s) as indirect lateral dependencies of each baserel in the join,
+	 * ie put them into lateral_relids but not direct_lateral_relids.  This is
+	 * appropriate because we can't put any such baserel on the outside of a
+	 * join to one of the PHV's lateral dependencies, but on the other hand we
+	 * also can't yet join it directly to the dependency.
 	 */
 	foreach(lc, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
 		Relids		eval_at = phinfo->ph_eval_at;
+		int			varno;
 
-		if (phinfo->ph_lateral != NULL)
+		if (phinfo->ph_lateral == NULL)
+			continue;			/* PHV is uninteresting if no lateral refs */
+
+		found_laterals = true;
+
+		if (bms_get_singleton_member(eval_at, &varno))
 		{
-			List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
-											   PVC_RECURSE_AGGREGATES,
-											   PVC_INCLUDE_PLACEHOLDERS);
-			ListCell   *lc2;
-			int			ev_at;
+			/* Evaluation site is a baserel */
+			RelOptInfo *brel = find_base_rel(root, varno);
 
-			foreach(lc2, vars)
+			brel->direct_lateral_relids =
+				bms_add_members(brel->direct_lateral_relids,
+								phinfo->ph_lateral);
+			brel->lateral_relids =
+				bms_add_members(brel->lateral_relids,
+								phinfo->ph_lateral);
+		}
+		else
+		{
+			/* Evaluation site is a join */
+			varno = -1;
+			while ((varno = bms_next_member(eval_at, varno)) >= 0)
 			{
-				Node	   *node = (Node *) lfirst(lc2);
-
-				if (IsA(node, Var))
-				{
-					Var		   *var = (Var *) node;
-
-					if (!bms_is_member(var->varno, eval_at))
-						add_lateral_info(root,
-										 bms_make_singleton(var->varno),
-										 eval_at);
-				}
-				else if (IsA(node, PlaceHolderVar))
-				{
-					PlaceHolderVar *other_phv = (PlaceHolderVar *) node;
-					PlaceHolderInfo *other_phi;
-
-					other_phi = find_placeholder_info(root, other_phv,
-													  false);
-					if (!bms_is_subset(other_phi->ph_eval_at, eval_at))
-						add_lateral_info(root, other_phi->ph_eval_at, eval_at);
-				}
-				else
-					Assert(false);
-			}
-
-			list_free(vars);
-
-			ev_at = -1;
-			while ((ev_at = bms_next_member(eval_at, ev_at)) >= 0)
-			{
-				RelOptInfo *brel = find_base_rel(root, ev_at);
+				RelOptInfo *brel = find_base_rel(root, varno);
 
 				brel->lateral_relids = bms_add_members(brel->lateral_relids,
 													   phinfo->ph_lateral);
@@ -519,17 +500,22 @@ create_lateral_join_info(PlannerInfo *root)
 		}
 	}
 
-	/* If we found no lateral references, we're done. */
-	if (root->lateral_info_list == NIL)
+	/*
+	 * If we found no actual lateral references, we're done; but reset the
+	 * hasLateralRTEs flag to avoid useless work later.
+	 */
+	if (!found_laterals)
+	{
+		root->hasLateralRTEs = false;
 		return;
+	}
 
 	/*
-	 * At this point the lateral_relids sets represent only direct lateral
-	 * references.  Replace them by their transitive closure, so that they
-	 * describe both direct and indirect lateral references.  If relation X
-	 * references Y laterally, and Y references Z laterally, then we will have
-	 * to scan X on the inside of a nestloop with Z, so for all intents and
-	 * purposes X is laterally dependent on Z too.
+	 * Calculate the transitive closure of the lateral_relids sets, so that
+	 * they describe both direct and indirect lateral references.  If relation
+	 * X references Y laterally, and Y references Z laterally, then we will
+	 * have to scan X on the inside of a nestloop with Z, so for all intents
+	 * and purposes X is laterally dependent on Z too.
 	 *
 	 * This code is essentially Warshall's algorithm for transitive closure.
 	 * The outer loop considers each baserel, and propagates its lateral
@@ -632,6 +618,8 @@ create_lateral_join_info(PlannerInfo *root)
 					continue;
 				childrel = root->simple_rel_array[appinfo->child_relid];
 				Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+				Assert(childrel->direct_lateral_relids == NULL);
+				childrel->direct_lateral_relids = brel->direct_lateral_relids;
 				Assert(childrel->lateral_relids == NULL);
 				childrel->lateral_relids = brel->lateral_relids;
 				Assert(childrel->lateral_referencers == NULL);
@@ -639,46 +627,6 @@ create_lateral_join_info(PlannerInfo *root)
 			}
 		}
 	}
-}
-
-/*
- * add_lateral_info
- *		Add a LateralJoinInfo to root->lateral_info_list, if needed
- *
- * We suppress redundant list entries.  The passed Relids are copied if saved.
- */
-static void
-add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs)
-{
-	LateralJoinInfo *ljinfo;
-	ListCell   *lc;
-
-	/* Sanity-check the input */
-	Assert(!bms_is_empty(lhs));
-	Assert(!bms_is_empty(rhs));
-	Assert(!bms_overlap(lhs, rhs));
-
-	/*
-	 * The input is redundant if it has the same RHS and an LHS that is a
-	 * subset of an existing entry's.  If an existing entry has the same RHS
-	 * and an LHS that is a subset of the new one, it's redundant, but we
-	 * don't trouble to get rid of it.  The only case that is really worth
-	 * worrying about is identical entries, and we handle that well enough
-	 * with this simple logic.
-	 */
-	foreach(lc, root->lateral_info_list)
-	{
-		ljinfo = (LateralJoinInfo *) lfirst(lc);
-		if (bms_equal(rhs, ljinfo->lateral_rhs) &&
-			bms_is_subset(lhs, ljinfo->lateral_lhs))
-			return;
-	}
-
-	/* Not there, so make a new entry */
-	ljinfo = makeNode(LateralJoinInfo);
-	ljinfo->lateral_lhs = bms_copy(lhs);
-	ljinfo->lateral_rhs = bms_copy(rhs);
-	root->lateral_info_list = lappend(root->lateral_info_list, ljinfo);
 }
 
 

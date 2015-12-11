@@ -114,7 +114,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
-	root->lateral_info_list = NIL;
 	root->placeholder_list = NIL;
 	root->initial_rels = NIL;
 
@@ -201,9 +200,8 @@ query_planner(PlannerInfo *root, List *tlist,
 	add_placeholders_to_base_rels(root);
 
 	/*
-	 * Create the LateralJoinInfo list now that we have finalized
-	 * PlaceHolderVar eval levels and made any necessary additions to the
-	 * lateral_vars lists for lateral references within PlaceHolderVars.
+	 * Construct the lateral reference sets now that we have finalized
+	 * PlaceHolderVar eval levels.
 	 */
 	create_lateral_join_info(root);
 

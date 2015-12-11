@@ -111,6 +111,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
+	rel->direct_lateral_relids = NULL;
 	rel->lateral_relids = NULL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
@@ -373,6 +374,10 @@ build_join_rel(PlannerInfo *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
+	/* init direct_lateral_relids from children; we'll finish it up below */
+	joinrel->direct_lateral_relids =
+		bms_union(outer_rel->direct_lateral_relids,
+				  inner_rel->direct_lateral_relids);
 	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids,
 														outer_rel, inner_rel);
 	joinrel->relid = 0;			/* indicates not a baserel */
@@ -421,6 +426,18 @@ build_join_rel(PlannerInfo *root,
 	build_joinrel_tlist(root, joinrel, outer_rel);
 	build_joinrel_tlist(root, joinrel, inner_rel);
 	add_placeholders_to_joinrel(root, joinrel);
+
+	/*
+	 * add_placeholders_to_joinrel also took care of adding the ph_lateral
+	 * sets of any PlaceHolderVars computed here to direct_lateral_relids, so
+	 * now we can finish computing that.  This is much like the computation of
+	 * the transitively-closed lateral_relids in min_join_parameterization,
+	 * except that here we *do* have to consider the added PHVs.
+	 */
+	joinrel->direct_lateral_relids =
+		bms_del_members(joinrel->direct_lateral_relids, joinrel->relids);
+	if (bms_is_empty(joinrel->direct_lateral_relids))
+		joinrel->direct_lateral_relids = NULL;
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The

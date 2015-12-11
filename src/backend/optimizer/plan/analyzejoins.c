@@ -439,9 +439,6 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, relid);
 	}
 
-	/* There shouldn't be any LATERAL info to translate, as yet */
-	Assert(root->lateral_info_list == NIL);
-
 	/*
 	 * Likewise remove references from PlaceHolderVar data structures,
 	 * removing any no-longer-needed placeholders entirely.

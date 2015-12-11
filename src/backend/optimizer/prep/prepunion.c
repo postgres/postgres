@@ -1786,7 +1786,6 @@ adjust_appendrel_attrs_mutator(Node *node,
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
-	Assert(!IsA(node, LateralJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
