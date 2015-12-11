@@ -167,8 +167,8 @@ policy_role_list_to_array(List *roles, int *num_roles)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("ignoring roles specified other than public"),
-					  errhint("All roles are members of the public role.")));
+						 errmsg("ignoring specified roles other than PUBLIC"),
+					  errhint("All roles are members of the PUBLIC role.")));
 				*num_roles = 1;
 			}
 			role_oids[0] = ObjectIdGetDatum(ACL_ID_PUBLIC);

@@ -144,7 +144,7 @@ ExecCustomMarkPos(CustomScanState *node)
 	if (!node->methods->MarkPosCustomScan)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("custom-scan \"%s\" does not support MarkPos",
+				 errmsg("custom scan \"%s\" does not support MarkPos",
 						node->methods->CustomName)));
 	node->methods->MarkPosCustomScan(node);
 }
@@ -155,7 +155,7 @@ ExecCustomRestrPos(CustomScanState *node)
 	if (!node->methods->RestrPosCustomScan)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("custom-scan \"%s\" does not support MarkPos",
+				 errmsg("custom scan \"%s\" does not support MarkPos",
 						node->methods->CustomName)));
 	node->methods->RestrPosCustomScan(node);
 }

@@ -384,7 +384,7 @@ error_commit_ts_disabled(void)
 			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			 errmsg("could not get commit timestamp data"),
 			 RecoveryInProgress() ?
-			 errhint("Make sure the configuration parameter \"%s\" is set in the master server.",
+			 errhint("Make sure the configuration parameter \"%s\" is set on the master server.",
 					 "track_commit_timestamp") :
 			 errhint("Make sure the configuration parameter \"%s\" is set.",
 					 "track_commit_timestamp")));
