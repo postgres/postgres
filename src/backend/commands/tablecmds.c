@@ -8049,6 +8049,15 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		if (smgrexists(rel->rd_smgr, forkNum))
 		{
 			smgrcreate(dstrel, forkNum, false);
+
+			/*
+			 * WAL log creation if the relation is persistent, or this is the
+			 * init fork of an unlogged relation.
+			 */
+			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
+				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
+				 forkNum == INIT_FORKNUM))
+				log_smgrcreate(&newrnode, forkNum);
 			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
 							   rel->rd_rel->relpersistence);
 		}
@@ -8090,6 +8099,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	char	   *buf;
 	Page		page;
 	bool		use_wal;
+	bool		copying_initfork;
 	BlockNumber nblocks;
 	BlockNumber blkno;
 
@@ -8103,10 +8113,19 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	page = (Page) buf;
 
 	/*
+	 * The init fork for an unlogged relation in many respects has to be
+	 * treated the same as normal relation, changes need to be WAL logged and
+	 * it needs to be synced to disk.
+	 */
+	copying_initfork = relpersistence == RELPERSISTENCE_UNLOGGED &&
+		forkNum == INIT_FORKNUM;
+
+	/*
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
 	 * enabled AND it's a permanent relation.
 	 */
-	use_wal = XLogIsNeeded() && relpersistence == RELPERSISTENCE_PERMANENT;
+	use_wal = XLogIsNeeded() &&
+		(relpersistence == RELPERSISTENCE_PERMANENT || copying_initfork);
 
 	nblocks = smgrnblocks(src, forkNum);
 
@@ -8145,7 +8164,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	 * wouldn't replay our earlier WAL entries. If we do not fsync those pages
 	 * here, they might still not be on disk when the crash occurs.
 	 */
-	if (relpersistence == RELPERSISTENCE_PERMANENT)
+	if (relpersistence == RELPERSISTENCE_PERMANENT || copying_initfork)
 		smgrimmedsync(dst, forkNum);
 }
 
