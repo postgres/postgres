@@ -1195,6 +1195,9 @@ InitWalSenderSlot(void)
 			 */
 			walsnd->pid = MyProcPid;
 			walsnd->sentPtr = InvalidXLogRecPtr;
+			walsnd->write = InvalidXLogRecPtr;
+			walsnd->flush = InvalidXLogRecPtr;
+			walsnd->apply = InvalidXLogRecPtr;
 			walsnd->state = WALSNDSTATE_STARTUP;
 			SpinLockRelease(&walsnd->mutex);
 			/* don't need the lock anymore */
@@ -1994,19 +1997,19 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 					 (uint32) (sentPtr >> 32), (uint32) sentPtr);
 			values[2] = CStringGetTextDatum(location);
 
-			if (write == 0)
+			if (XLogRecPtrIsInvalid(write))
 				nulls[3] = true;
 			snprintf(location, sizeof(location), "%X/%X",
 					 (uint32) (write >> 32), (uint32) write);
 			values[3] = CStringGetTextDatum(location);
 
-			if (flush == 0)
+			if (XLogRecPtrIsInvalid(flush))
 				nulls[4] = true;
 			snprintf(location, sizeof(location), "%X/%X",
 					 (uint32) (flush >> 32), (uint32) flush);
 			values[4] = CStringGetTextDatum(location);
 
-			if (apply == 0)
+			if (XLogRecPtrIsInvalid(apply))
 				nulls[5] = true;
 			snprintf(location, sizeof(location), "%X/%X",
 					 (uint32) (apply >> 32), (uint32) apply);
