@@ -231,7 +231,7 @@
    contains several extensions, which are described in
    <xref linkend="contrib">.  Other extensions are developed
    independently, like <application><ulink
-   url="http://www.postgis.org/">PostGIS</ulink></>.  Even
+   url="http://postgis.net/">PostGIS</ulink></>.  Even
    <productname>PostgreSQL</> replication solutions can be developed
    externally. For example, <application> <ulink
    url="http://www.slony.info">Slony-I</ulink></> is a popular
