@@ -58,8 +58,8 @@ enum _actions
 typedef struct SimpleActionListCell
 {
 	struct SimpleActionListCell *next;
-	int         action;
-	char       *val;
+	enum _actions action;
+	char	   *val;
 } SimpleActionListCell;
 
 typedef struct SimpleActionList
@@ -84,11 +84,11 @@ struct adhoc_opts
 
 static void parse_psql_options(int argc, char *argv[],
 				   struct adhoc_opts * options);
+static void simple_action_list_append(SimpleActionList *list,
+						  enum _actions action, const char *val);
 static void process_psqlrc(char *argv0);
 static void process_psqlrc_file(char *filename);
 static void showVersion(void);
-static void simple_action_list_append(SimpleActionList *list,
-									  int action, const char *val);
 static void EstablishVariableSpace(void);
 
 #define NOPAGER		0
@@ -171,9 +171,6 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
-
-	options.actions.head = NULL;
-	options.actions.tail = NULL;
 
 	parse_psql_options(argc, argv, &options);
 
@@ -298,13 +295,13 @@ main(int argc, char *argv[])
 		process_psqlrc(argv[0]);
 
 	/*
-	 * If any actions were given by caller, process them in the order in
-	 * which they were specified.
+	 * If any actions were given by user, process them in the order in which
+	 * they were specified.  Note single_txn is only effective in this mode.
 	 */
 	if (options.actions.head != NULL)
 	{
-		PGresult		*res;
-		SimpleActionListCell	*cell;
+		PGresult   *res;
+		SimpleActionListCell *cell;
 
 		successResult = EXIT_SUCCESS;	/* silence compiler */
 
@@ -341,8 +338,8 @@ main(int argc, char *argv[])
 
 				scan_state = psql_scan_create();
 				psql_scan_setup(scan_state,
-							cell->val,
-							strlen(cell->val));
+								cell->val,
+								strlen(cell->val));
 
 				successResult = HandleSlashCmds(scan_state, NULL) != PSQL_CMD_ERROR
 					? EXIT_SUCCESS : EXIT_FAILURE;
@@ -356,7 +353,7 @@ main(int argc, char *argv[])
 			else
 			{
 				/* should never come here */
-				Assert(0);
+				Assert(false);
 			}
 
 			if (successResult != EXIT_SUCCESS && pset.on_error_stop)
@@ -473,11 +470,11 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				if (optarg[0] == '\\')
 					simple_action_list_append(&options->actions,
 											  ACT_SINGLE_SLASH,
-											  pstrdup(optarg + 1));
+											  optarg + 1);
 				else
 					simple_action_list_append(&options->actions,
 											  ACT_SINGLE_QUERY,
-											  pstrdup(optarg));
+											  optarg);
 				break;
 			case 'd':
 				options->dbname = pg_strdup(optarg);
@@ -490,8 +487,8 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'f':
 				simple_action_list_append(&options->actions,
-									ACT_FILE,
-									pg_strdup(optarg));
+										  ACT_FILE,
+										  optarg);
 				break;
 			case 'F':
 				pset.popt.topt.fieldSep.separator = pg_strdup(optarg);
@@ -669,6 +666,33 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 		optind++;
 	}
+}
+
+
+/*
+ * Append a new item to the end of the SimpleActionList.
+ * Note that "val" is copied if it's not NULL.
+ */
+static void
+simple_action_list_append(SimpleActionList *list,
+						  enum _actions action, const char *val)
+{
+	SimpleActionListCell *cell;
+
+	cell = (SimpleActionListCell *) pg_malloc(sizeof(SimpleActionListCell));
+
+	cell->next = NULL;
+	cell->action = action;
+	if (val)
+		cell->val = pg_strdup(val);
+	else
+		cell->val = NULL;
+
+	if (list->tail)
+		list->tail->next = cell;
+	else
+		list->head = cell;
+	list->tail = cell;
 }
 
 
@@ -944,39 +968,6 @@ show_context_hook(const char *newval)
 		PQsetErrorContextVisibility(pset.db, pset.show_context);
 }
 
-
-/*
- * Support for list of actions. SimpleStringList cannot be used due possible
- * combination different actions with the requirement to save the order.
- */
-static void
-simple_action_list_append(SimpleActionList *list, int action, const char *val)
-{
-	SimpleActionListCell   *cell;
-	size_t					vallen = 0;
-
-	if (val)
-		vallen = strlen(val);
-
-	cell = (SimpleActionListCell *)
-		pg_malloc(offsetof(SimpleActionListCell, val) + vallen + 1);
-
-	cell->next = NULL;
-	cell->action = action;
-	if (val)
-	{
-		cell->val = pg_malloc(vallen + 1);
-		strcpy(cell->val, val);
-	}
-	else
-		cell->val = NULL;
-
-	if (list->tail)
-		list->tail->next = cell;
-	else
-		list->head = cell;
-	list->tail = cell;
-}
 
 static void
 EstablishVariableSpace(void)
