@@ -2826,6 +2826,9 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		else
 		{
 			values[1] = CStringGetTextDatum(WalSndGetStateString(state));
+
+			if (XLogRecPtrIsInvalid(sentPtr))
+				nulls[2] = true;
 			values[2] = LSNGetDatum(sentPtr);
 
 			if (XLogRecPtrIsInvalid(write))
