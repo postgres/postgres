@@ -20,6 +20,7 @@
 #include <ctype.h>
 
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 
@@ -3926,6 +3927,8 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 	for (i = start; i < poly->npts && res; i++)
 	{
 		Point	   *interpt;
+
+		CHECK_FOR_INTERRUPTS();
 
 		s.p[1] = poly->p[i];
 
