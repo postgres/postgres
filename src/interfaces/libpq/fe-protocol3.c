@@ -45,7 +45,7 @@
 
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn, int msgLength);
-static int	getParamDescriptions(PGconn *conn);
+static int	getParamDescriptions(PGconn *conn, int msgLength);
 static int	getAnotherTuple(PGconn *conn, int msgLength);
 static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
@@ -278,8 +278,17 @@ pqParseInput3(PGconn *conn)
 						return;
 					break;
 				case 'T':		/* Row Description */
-					if (conn->result == NULL ||
-						conn->queryclass == PGQUERY_DESCRIBE)
+					if (conn->result != NULL &&
+						conn->result->resultStatus == PGRES_FATAL_ERROR)
+					{
+						/*
+						 * We've already choked for some reason.  Just discard
+						 * the data till we get to the end of the query.
+						 */
+						conn->inCursor += msgLength;
+					}
+					else if (conn->result == NULL ||
+							 conn->queryclass == PGQUERY_DESCRIBE)
 					{
 						/* First 'T' in a query sequence */
 						if (getRowDescriptions(conn, msgLength))
@@ -329,9 +338,10 @@ pqParseInput3(PGconn *conn)
 					}
 					break;
 				case 't':		/* Parameter Description */
-					if (getParamDescriptions(conn))
+					if (getParamDescriptions(conn, msgLength))
 						return;
-					break;
+					/* getParamDescriptions() moves inStart itself */
+					continue;
 				case 'D':		/* Data Row */
 					if (conn->result != NULL &&
 						conn->result->resultStatus == PGRES_TUPLES_OK)
@@ -637,20 +647,21 @@ advance_and_error:
  * that shouldn't happen often, since 't' messages usually fit in a packet.
  */
 static int
-getParamDescriptions(PGconn *conn)
+getParamDescriptions(PGconn *conn, int msgLength)
 {
 	PGresult   *result;
 	int			nparams;
 	int			i;
+	const char *errmsg = NULL;
 
 	result = PQmakeEmptyPGresult(conn, PGRES_COMMAND_OK);
 	if (!result)
-		goto failure;
+		goto advance_and_error;
 
 	/* parseInput already read the 't' label and message length. */
 	/* the next two bytes are the number of parameters */
 	if (pqGetInt(&(result->numParameters), 2, conn))
-		goto failure;
+		goto not_enough_data;
 	nparams = result->numParameters;
 
 	/* allocate space for the parameter descriptors */
@@ -659,7 +670,7 @@ getParamDescriptions(PGconn *conn)
 		result->paramDescs = (PGresParamDesc *)
 			pqResultAlloc(result, nparams * sizeof(PGresParamDesc), TRUE);
 		if (!result->paramDescs)
-			goto failure;
+			goto advance_and_error;
 		MemSet(result->paramDescs, 0, nparams * sizeof(PGresParamDesc));
 	}
 
@@ -669,17 +680,48 @@ getParamDescriptions(PGconn *conn)
 		int			typid;
 
 		if (pqGetInt(&typid, 4, conn))
-			goto failure;
+			goto not_enough_data;
 		result->paramDescs[i].typid = typid;
 	}
 
 	/* Success! */
 	conn->result = result;
+
+	/* Advance inStart to show that the "t" message has been processed. */
+	conn->inStart = conn->inCursor;
+
 	return 0;
 
-failure:
+not_enough_data:
 	PQclear(result);
 	return EOF;
+
+advance_and_error:
+	/* Discard unsaved result, if any */
+	if (result && result != conn->result)
+		PQclear(result);
+
+	/* Discard the failed message by pretending we read it */
+	conn->inStart += 5 + msgLength;
+
+	/*
+	 * Replace partially constructed result with an error result. First
+	 * discard the old result to try to win back some memory.
+	 */
+	pqClearAsyncResult(conn);
+
+	/*
+	 * If preceding code didn't provide an error message, assume "out of
+	 * memory" was meant.  The advantage of having this special case is that
+	 * freeing the old result first greatly improves the odds that gettext()
+	 * will succeed in providing a translation.
+	 */
+	if (!errmsg)
+		errmsg = libpq_gettext("out of memory");
+	printfPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
+	pqSaveErrorResult(conn);
+
+	return 0;
 }
 
 /*
