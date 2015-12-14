@@ -212,40 +212,45 @@ main(int argc, char **argv)
 	 * do.
 	 */
 	if (ControlFile_target.checkPointCopy.ThisTimeLineID == ControlFile_source.checkPointCopy.ThisTimeLineID)
-		pg_fatal("source and target cluster are on the same timeline\n");
-
-	findCommonAncestorTimeline(&divergerec, &lastcommontli);
-	printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
-		   (uint32) (divergerec >> 32), (uint32) divergerec, lastcommontli);
-
-	/*
-	 * Check for the possibility that the target is in fact a direct ancestor
-	 * of the source. In that case, there is no divergent history in the
-	 * target that needs rewinding.
-	 */
-	if (ControlFile_target.checkPoint >= divergerec)
 	{
-		rewind_needed = true;
+		printf(_("source and target cluster are on the same timeline\n"));
+		rewind_needed = false;
 	}
 	else
 	{
-		XLogRecPtr	chkptendrec;
-
-		/* Read the checkpoint record on the target to see where it ends. */
-		chkptendrec = readOneRecord(datadir_target,
-									ControlFile_target.checkPoint,
-						   ControlFile_target.checkPointCopy.ThisTimeLineID);
+		findCommonAncestorTimeline(&divergerec, &lastcommontli);
+		printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
+			   (uint32) (divergerec >> 32), (uint32) divergerec, lastcommontli);
 
 		/*
-		 * If the histories diverged exactly at the end of the shutdown
-		 * checkpoint record on the target, there are no WAL records in the
-		 * target that don't belong in the source's history, and no rewind is
-		 * needed.
+		 * Check for the possibility that the target is in fact a direct ancestor
+		 * of the source. In that case, there is no divergent history in the
+		 * target that needs rewinding.
 		 */
-		if (chkptendrec == divergerec)
-			rewind_needed = false;
-		else
+		if (ControlFile_target.checkPoint >= divergerec)
+		{
 			rewind_needed = true;
+		}
+		else
+		{
+			XLogRecPtr	chkptendrec;
+
+			/* Read the checkpoint record on the target to see where it ends. */
+			chkptendrec = readOneRecord(datadir_target,
+										ControlFile_target.checkPoint,
+						   ControlFile_target.checkPointCopy.ThisTimeLineID);
+
+			/*
+			 * If the histories diverged exactly at the end of the shutdown
+			 * checkpoint record on the target, there are no WAL records in the
+			 * target that don't belong in the source's history, and no rewind is
+			 * needed.
+			 */
+			if (chkptendrec == divergerec)
+				rewind_needed = false;
+			else
+				rewind_needed = true;
+		}
 	}
 
 	if (!rewind_needed)
@@ -374,10 +379,11 @@ sanityChecks(void)
 	/*
 	 * Target cluster better not be running. This doesn't guard against
 	 * someone starting the cluster concurrently. Also, this is probably more
-	 * strict than necessary; it's OK if the master was not shut down cleanly,
-	 * as long as it isn't running at the moment.
+	 * strict than necessary; it's OK if the target node was not shut down
+	 * cleanly, as long as it isn't running at the moment.
 	 */
-	if (ControlFile_target.state != DB_SHUTDOWNED)
+	if (ControlFile_target.state != DB_SHUTDOWNED &&
+		ControlFile_target.state != DB_SHUTDOWNED_IN_RECOVERY)
 		pg_fatal("target server must be shut down cleanly\n");
 
 	/*
@@ -385,7 +391,9 @@ sanityChecks(void)
 	 * server is shut down. There isn't any very strong reason for this
 	 * limitation, but better safe than sorry.
 	 */
-	if (datadir_source && ControlFile_source.state != DB_SHUTDOWNED)
+	if (datadir_source &&
+		ControlFile_source.state != DB_SHUTDOWNED &&
+		ControlFile_source.state != DB_SHUTDOWNED_IN_RECOVERY)
 		pg_fatal("source data directory must be shut down cleanly\n");
 }
 
