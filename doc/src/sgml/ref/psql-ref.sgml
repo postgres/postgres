@@ -180,7 +180,10 @@ EOF
 
       <para>
        If <replaceable>filename</replaceable> is <literal>-</literal>
-       (hyphen), then standard input is read.
+       (hyphen), then standard input is read until an EOF indication
+       or <command>\q</> meta-command.  Note however that Readline
+       is not used in this case (much as if <option>-n</option> had been
+       specified).
       </para>
 
       <para>
@@ -1751,6 +1754,13 @@ hello 10
         Reads input from the file <replaceable
         class="parameter">filename</replaceable> and executes it as
         though it had been typed on the keyboard.
+        </para>
+        <para>
+        If <replaceable>filename</replaceable> is <literal>-</literal>
+        (hyphen), then standard input is read until an EOF indication
+        or <command>\q</> meta-command.  This can be used to intersperse
+        interactive input with input from files.  Note that Readline behavior
+        will be used only if it is active at the outermost level.
         </para>
         <note>
         <para>
