@@ -3004,7 +3004,7 @@ FlushOneBuffer(Buffer buffer)
 
 	bufHdr = GetBufferDescriptor(buffer - 1);
 
-	LWLockHeldByMe(bufHdr->content_lock);
+	Assert(LWLockHeldByMe(bufHdr->content_lock));
 
 	FlushBuffer(bufHdr, NULL);
 }
