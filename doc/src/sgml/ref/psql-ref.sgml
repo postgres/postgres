@@ -1838,6 +1838,13 @@ hello 10
         class="parameter">filename</replaceable> and executes it as
         though it had been typed on the keyboard.
         </para>
+        <para>
+        If <replaceable>filename</replaceable> is <literal>-</literal>
+        (hyphen), then standard input is read until an EOF indication
+        or <command>\q</> meta-command.  This can be used to intersperse
+        interactive input with input from files.  Note that Readline behavior
+        will be used only if it is active at the outermost level.
+        </para>
         <note>
         <para>
         If you want to see the lines on the screen as they are read you
