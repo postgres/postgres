@@ -7296,10 +7296,12 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <para>
-   In <literal>verify-full</> mode, the <literal>cn</> (Common Name) attribute
-   of the certificate is matched against the host name. If the <literal>cn</>
-   attribute starts with an asterisk (<literal>*</>), it will be treated as
-   a wildcard, and will match all characters <emphasis>except</> a dot
+   In <literal>verify-full</> mode, the host name is matched against the
+   certificate's Subject Alternative Name attribute(s), or against the
+   Common Name attribute if no Subject Alternative Name of type dNSName is
+   present.  If the certificate's name attribute starts with an asterisk
+   (<literal>*</>), the asterisk will be treated as
+   a wildcard, which will match all characters <emphasis>except</> a dot
    (<literal>.</>). This means the certificate will not match subdomains.
    If the connection is made using an IP address instead of a host name, the
    IP address will be matched (without doing any DNS lookups).
