@@ -629,8 +629,9 @@ INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel')
 --
 SET SESSION AUTHORIZATION rls_regress_user0;
 CREATE TABLE z1 (a int, b text);
+CREATE TABLE z2 (a int, b text);
 
-GRANT SELECT ON z1 TO rls_regress_group1, rls_regress_group2,
+GRANT SELECT ON z1,z2 TO rls_regress_group1, rls_regress_group2,
     rls_regress_user1, rls_regress_user2;
 
 INSERT INTO z1 VALUES
@@ -648,17 +649,38 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
+PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
+EXPLAIN EXECUTE plancache_test;
+
+PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
+EXPLAIN EXECUTE plancache_test2;
+
+PREPARE plancache_test3 AS WITH q AS (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
+EXPLAIN EXECUTE plancache_test3;
+
 SET ROLE rls_regress_group1;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+
+EXPLAIN EXECUTE plancache_test;
+EXPLAIN EXECUTE plancache_test2;
+EXPLAIN EXECUTE plancache_test3;
 
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
+EXPLAIN EXECUTE plancache_test;
+EXPLAIN EXECUTE plancache_test2;
+EXPLAIN EXECUTE plancache_test3;
+
 SET ROLE rls_regress_group2;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+
+EXPLAIN EXECUTE plancache_test;
+EXPLAIN EXECUTE plancache_test2;
+EXPLAIN EXECUTE plancache_test3;
 
 --
 -- Views should follow policy for view owner.
