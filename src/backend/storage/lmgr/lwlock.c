@@ -445,7 +445,7 @@ CreateLWLocks(void)
 
 		/* Initialize all LWLocks in main array */
 		for (id = 0, lock = MainLWLockArray; id < numLocks; id++, lock++)
-			LWLockInitialize(&lock->lock, 0);
+			LWLockInitialize(&lock->lock, LWTRANCHE_MAIN);
 
 		/*
 		 * Initialize the dynamic-allocation counters, which are stored just
@@ -457,7 +457,7 @@ CreateLWLocks(void)
 		LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
 		LWLockCounter[0] = NUM_FIXED_LWLOCKS;
 		LWLockCounter[1] = numLocks;
-		LWLockCounter[2] = 1;	/* 0 is the main array */
+		LWLockCounter[2] = LWTRANCHE_FIRST_USER_DEFINED;
 	}
 
 	if (LWLockTrancheArray == NULL)
@@ -466,12 +466,13 @@ CreateLWLocks(void)
 		LWLockTrancheArray = (LWLockTranche **)
 			MemoryContextAlloc(TopMemoryContext,
 						  LWLockTranchesAllocated * sizeof(LWLockTranche *));
+		Assert(LWLockTranchesAllocated >= LWTRANCHE_FIRST_USER_DEFINED);
 	}
 
 	MainLWLockTranche.name = "main";
 	MainLWLockTranche.array_base = MainLWLockArray;
 	MainLWLockTranche.array_stride = sizeof(LWLockPadded);
-	LWLockRegisterTranche(0, &MainLWLockTranche);
+	LWLockRegisterTranche(LWTRANCHE_MAIN, &MainLWLockTranche);
 }
 
 /*

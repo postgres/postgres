@@ -177,6 +177,17 @@ extern void LWLockRegisterTranche(int tranche_id, LWLockTranche *tranche);
 extern void LWLockInitialize(LWLock *lock, int tranche_id);
 
 /*
+ * We reserve a few predefined tranche IDs.  A call to LWLockNewTrancheId
+ * will never return a value less than LWTRANCHE_FIRST_USER_DEFINED.
+ */
+typedef enum BuiltinTrancheIds
+{
+	LWTRANCHE_MAIN,
+	LWTRANCHE_WAL_INSERT,
+	LWTRANCHE_FIRST_USER_DEFINED
+}	BuiltinTrancheIds;
+
+/*
  * Prior to PostgreSQL 9.4, we used an enum type called LWLockId to refer
  * to LWLocks.  New code should instead use LWLock *.  However, for the
  * convenience of third-party code, we include the following typedef.
