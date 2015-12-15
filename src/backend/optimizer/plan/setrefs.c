@@ -2401,7 +2401,8 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		ListCell   *lc;
 
 		/* Collect row security information */
-		context->glob->hasRowSecurity = query->hasRowSecurity;
+		if (query->hasRowSecurity)
+			context->glob->hasRowSecurity = true;
 
 		if (query->commandType == CMD_UTILITY)
 		{

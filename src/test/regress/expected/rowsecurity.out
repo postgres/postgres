@@ -1649,7 +1649,8 @@ ERROR:  new row violates row-level security policy for table "document"
 --
 SET SESSION AUTHORIZATION rls_regress_user0;
 CREATE TABLE z1 (a int, b text);
-GRANT SELECT ON z1 TO rls_regress_group1, rls_regress_group2,
+CREATE TABLE z2 (a int, b text);
+GRANT SELECT ON z1,z2 TO rls_regress_group1, rls_regress_group2,
     rls_regress_user1, rls_regress_user2;
 INSERT INTO z1 VALUES
     (1, 'aaa'),
@@ -1678,6 +1679,46 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
          Filter: ((a % 2) = 0)
 (4 rows)
 
+PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
+EXPLAIN EXECUTE plancache_test;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
+EXPLAIN EXECUTE plancache_test2;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop  (cost=29.11..86.78 rows=2540 width=72)
+   CTE q
+     ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+           Filter: f_leak(z1.b)
+           ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                 Filter: ((a % 2) = 0)
+   ->  CTE Scan on q  (cost=0.00..0.04 rows=2 width=36)
+   ->  Materialize  (cost=0.00..29.05 rows=1270 width=36)
+         ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+(9 rows)
+
+PREPARE plancache_test3 AS WITH q AS (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
+EXPLAIN EXECUTE plancache_test3;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop  (cost=22.70..108.97 rows=2540 width=72)
+   CTE q
+     ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+   ->  CTE Scan on q  (cost=0.00..25.40 rows=1270 width=36)
+   ->  Materialize  (cost=0.00..29.12 rows=2 width=36)
+         ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+               Filter: f_leak(z1.b)
+               ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                     Filter: ((a % 2) = 0)
+(9 rows)
+
 SET ROLE rls_regress_group1;
 SELECT * FROM z1 WHERE f_leak(b);
 NOTICE:  f_leak => bbb
@@ -1696,6 +1737,43 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
    ->  Seq Scan on z1 z1_1
          Filter: ((a % 2) = 0)
 (4 rows)
+
+EXPLAIN EXECUTE plancache_test;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+         Filter: ((a % 2) = 0)
+(4 rows)
+
+EXPLAIN EXECUTE plancache_test2;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop  (cost=29.11..86.78 rows=2540 width=72)
+   CTE q
+     ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+           Filter: f_leak(z1.b)
+           ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                 Filter: ((a % 2) = 0)
+   ->  CTE Scan on q  (cost=0.00..0.04 rows=2 width=36)
+   ->  Materialize  (cost=0.00..29.05 rows=1270 width=36)
+         ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+(9 rows)
+
+EXPLAIN EXECUTE plancache_test3;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop  (cost=22.70..108.97 rows=2540 width=72)
+   CTE q
+     ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+   ->  CTE Scan on q  (cost=0.00..25.40 rows=1270 width=36)
+   ->  Materialize  (cost=0.00..29.12 rows=2 width=36)
+         ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+               Filter: f_leak(z1.b)
+               ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                     Filter: ((a % 2) = 0)
+(9 rows)
 
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM z1 WHERE f_leak(b);
@@ -1716,6 +1794,43 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
          Filter: ((a % 2) = 1)
 (4 rows)
 
+EXPLAIN EXECUTE plancache_test;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+         Filter: ((a % 2) = 1)
+(4 rows)
+
+EXPLAIN EXECUTE plancache_test2;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop  (cost=29.11..86.78 rows=2540 width=72)
+   CTE q
+     ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+           Filter: f_leak(z1.b)
+           ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                 Filter: ((a % 2) = 1)
+   ->  CTE Scan on q  (cost=0.00..0.04 rows=2 width=36)
+   ->  Materialize  (cost=0.00..29.05 rows=1270 width=36)
+         ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+(9 rows)
+
+EXPLAIN EXECUTE plancache_test3;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop  (cost=22.70..108.97 rows=2540 width=72)
+   CTE q
+     ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+   ->  CTE Scan on q  (cost=0.00..25.40 rows=1270 width=36)
+   ->  Materialize  (cost=0.00..29.12 rows=2 width=36)
+         ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+               Filter: f_leak(z1.b)
+               ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                     Filter: ((a % 2) = 1)
+(9 rows)
+
 SET ROLE rls_regress_group2;
 SELECT * FROM z1 WHERE f_leak(b);
 NOTICE:  f_leak => aaa
@@ -1734,6 +1849,43 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
    ->  Seq Scan on z1 z1_1
          Filter: ((a % 2) = 1)
 (4 rows)
+
+EXPLAIN EXECUTE plancache_test;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+   Filter: f_leak(z1.b)
+   ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+         Filter: ((a % 2) = 1)
+(4 rows)
+
+EXPLAIN EXECUTE plancache_test2;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop  (cost=29.11..86.78 rows=2540 width=72)
+   CTE q
+     ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+           Filter: f_leak(z1.b)
+           ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                 Filter: ((a % 2) = 1)
+   ->  CTE Scan on q  (cost=0.00..0.04 rows=2 width=36)
+   ->  Materialize  (cost=0.00..29.05 rows=1270 width=36)
+         ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+(9 rows)
+
+EXPLAIN EXECUTE plancache_test3;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop  (cost=22.70..108.97 rows=2540 width=72)
+   CTE q
+     ->  Seq Scan on z2  (cost=0.00..22.70 rows=1270 width=36)
+   ->  CTE Scan on q  (cost=0.00..25.40 rows=1270 width=36)
+   ->  Materialize  (cost=0.00..29.12 rows=2 width=36)
+         ->  Subquery Scan on z1  (cost=0.00..29.11 rows=2 width=36)
+               Filter: f_leak(z1.b)
+               ->  Seq Scan on z1 z1_1  (cost=0.00..29.05 rows=6 width=36)
+                     Filter: ((a % 2) = 1)
+(9 rows)
 
 --
 -- Views should follow policy for view owner.
