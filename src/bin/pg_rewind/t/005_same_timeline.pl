@@ -12,3 +12,5 @@ RewindTest::setup_cluster();
 RewindTest::start_master();
 RewindTest::create_standby();
 RewindTest::run_pg_rewind('local');
+RewindTest::clean_rewind_test();
+exit(0);
