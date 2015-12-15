@@ -217,12 +217,18 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>SELECT</literal> for a policy means that it will apply
-         to <literal>SELECT</literal> commands.  The result is that only those
-         records from the relation that pass the <literal>SELECT</literal>
-         policy will be returned, even if other records exist in the relation.
-         The <literal>SELECT</literal> policy only accepts the <literal>USING</literal> expression
-         as it only ever applies in cases where records are being retrieved from
-         the relation.
+         to <literal>SELECT</literal> queries and whenever
+         <literal>SELECT</literal> permissions are required on the relation the
+         policy is defined for.  The result is that only those records from the
+         relation that pass the <literal>SELECT</literal> policy will be
+         returned during a <literal>SELECT</literal> query, even if other
+         records exist in the relation and that queries which require
+         <literal>SELECT</literal> permissions, such as
+         <literal>UPDATE</literal>, will also only see those records
+         which are allowed by the <literal>SELECT</literal> policy.
+         The <literal>SELECT</literal> policy only accepts the
+         <literal>USING</literal> expression as it only applies in cases where
+         records are being retrieved from the relation.
        </para>
       </listitem>
      </varlistentry>
@@ -235,15 +241,15 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          to <literal>INSERT</literal> commands.  Rows being inserted that do
          not pass this policy will result in a policy violation error, and the
          entire <literal>INSERT</literal> command will be aborted.  The
-         <literal>INSERT</literal> policy only accepts the <literal>WITH CHECK</literal> expression
-         as it only ever applies in cases where records are being added to the
-         relation.
+         <literal>INSERT</literal> policy only accepts the
+         <literal>WITH CHECK</literal> expression as it only applies in cases
+         where records are being added to the relation.
        </para>
        <para>
          Note that <literal>INSERT</literal> with <literal>ON CONFLICT DO
          UPDATE</literal> requires that any <literal>INSERT</literal> policy
-         <literal>WITH CHECK</literal> expression passes for any rows appended to the relation by
-         the <literal>INSERT</literal> path only.
+         <literal>WITH CHECK</literal> expression passes for any rows appended
+         to the relation by the <literal>INSERT</literal> path only.
        </para>
       </listitem>
      </varlistentry>
@@ -259,17 +265,41 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          record and then making changes to some portion (but possibly not all)
          of the record, the <literal>UPDATE</literal> policy accepts both a
          <literal>USING</literal> expression and a <literal>WITH CHECK</literal>
-         expression.  The <literal>USING</literal> expression will be used to
+         expression.
+       </para>
+         
+       <para>
+         The <literal>USING</literal> expression will be used to
          determine which records the <literal>UPDATE</literal> command will see
          to operate against, while the <literal>WITH CHECK</literal> expression
          defines what rows are allowed to be added back into the relation
-         (similar to the <literal>INSERT</literal> policy).  Any rows whose
-         resulting values do not pass the <literal>WITH CHECK</literal>
-         expression will cause an error, and the entire command will be aborted.
-         Note that if only a <literal>USING</literal> clause is specified, then
-         that clause will be used for both <literal>USING</literal> and
-         <literal>WITH CHECK</literal> cases.
+         (similar to the <literal>INSERT</literal> policy).  
        </para>
+
+       <para>
+         When an <literal>UPDATE</literal> command is used with a
+         <literal>WHERE</literal> clause or a <literal>RETURNING</literal>
+         clause, <literal>SELECT</literal> rights are also required on the
+         relation being updated and the appropriate <literal>SELECT</literal>
+         and <literal>ALL</literal> policies will be combined (using OR for any
+         overlapping <literal>SELECT</literal> related policies found) with the
+         <literal>USING</literal> clause of the <literal>UPDATE</literal> policy
+         using AND.  Therefore, in order for a user to be able to
+         <literal>UPDATE</literal> a specific set of rows using a
+         <literal>WHERE</literal> clause, the user must have access to the
+         row(s) through a <literal>SELECT</literal> or <literal>ALL</literal>
+         policy and the row(s) must be pass the <literal>UPDATE USING</literal>
+         expression.
+       </para>
+         
+       <para>
+         Any rows whose resulting values do not pass the
+         <literal>WITH CHECK</literal> expression will cause an error, and the
+         entire command will be aborted.  If only a <literal>USING</literal>
+         clause is specified, then that clause will be used for both
+         <literal>USING</literal> and <literal>WITH CHECK</literal> cases.
+       </para>
+
        <para>
          Note, however, that <literal>INSERT</literal> with <literal>ON CONFLICT
          DO UPDATE</literal> requires that an <literal>UPDATE</literal> policy
@@ -295,15 +325,32 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <para>
          Using <literal>DELETE</literal> for a policy means that it will apply
          to <literal>DELETE</literal> commands.  Only rows that pass this
-         policy will be seen by a <literal>DELETE</literal> command.  There can be rows
-         that are visible through a <literal>SELECT</literal> that are not seen by a
-         <literal>DELETE</literal>, if they do not pass the <literal>USING</literal> expression
-         for the <literal>DELETE</literal>.  Conversely, there can be rows that are not visible
-         through the <literal>SELECT</literal> policy but may be deleted if they
-         pass the <literal>DELETE</literal> <literal>USING</literal> policy.  The
-         <literal>DELETE</literal> policy only accepts the <literal>USING</literal> expression as
-         it only ever applies in cases where records are being extracted from
-         the relation for deletion.
+         policy will be seen by a <literal>DELETE</literal> command.  There can
+         be rows that are visible through a <literal>SELECT</literal> that are
+         not seen by a <literal>DELETE</literal>, if they do not pass the
+         <literal>USING</literal> expression for the <literal>DELETE</literal>.
+       </para>
+
+       <para>
+         When a <literal>DELETE</literal> command is used with a
+         <literal>WHERE</literal> clause or a <literal>RETURNING</literal>
+         clause, <literal>SELECT</literal> rights are also required on the
+         relation being updated and the appropriate <literal>SELECT</literal>
+         and <literal>ALL</literal> policies will be combined (using OR for any
+         overlapping <literal>SELECT</literal> related policies found) with the
+         <literal>USING</literal> clause of the <literal>DELETE</literal> policy
+         using AND.  Therefore, in order for a user to be able to
+         <literal>DELETE</literal> a specific set of rows using a
+         <literal>WHERE</literal> clause, the user must have access to the
+         row(s) through a <literal>SELECT</literal> or <literal>ALL</literal>
+         policy and the row(s) must be pass the <literal>DELETE USING</literal>
+         expression.
+       </para>
+         
+       <para>
+         The <literal>DELETE</literal> policy only accepts the
+         <literal>USING</literal> expression as it only applies in cases where
+         records are being extracted from the relation for deletion.
        </para>
       </listitem>
      </varlistentry>
@@ -349,6 +396,18 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    policies for the tables which are referenced by a view will use the view
    owner's rights and any policies which apply to the view owner.
   </para>
+
+  <para>
+   When reducing the set of rows which a user has access to, through
+   modifications to relations referenced by Row-Level Security Policies or
+   Security Barrier Views, be aware that users with a currently open transaction
+   may be able to see updates to the rows that they are no longer allowed
+   access.  Therefore, the best practice to avoid any possible leak of
+   information when altering conditions that determine the visibility of
+   specific rows is to ensure that affected users do not have any open
+   transactions, perhaps by ensuring they have no concurrent sessions running.
+  </para>
+
  </refsect1>
 
  <refsect1>
