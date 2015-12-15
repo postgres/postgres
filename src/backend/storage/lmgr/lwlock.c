@@ -344,17 +344,14 @@ NumLWLocks(void)
 	int			numLocks;
 
 	/*
-	 * Possibly this logic should be spread out among the affected modules,
-	 * the same way that shmem space estimation is done.  But for now, there
-	 * are few enough users of LWLocks that we can get away with just keeping
-	 * the knowledge here.
+	 * Many users of LWLocks no longer reserve space in the main array here,
+	 * but instead allocate separate tranches.  The latter approach has the
+	 * advantage of allowing LWLOCK_STATS and LOCK_DEBUG output to produce
+	 * more useful output.
 	 */
 
 	/* Predefined LWLocks */
 	numLocks = NUM_FIXED_LWLOCKS;
-
-	/* bufmgr.c needs two for each shared buffer */
-	numLocks += 2 * NBuffers;
 
 	/* proc.c needs one for each backend or auxiliary process */
 	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
@@ -422,6 +419,10 @@ CreateLWLocks(void)
 {
 	StaticAssertExpr(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
 					 "MAX_BACKENDS too big for lwlock.c");
+
+	StaticAssertExpr(sizeof(LWLock) <= LWLOCK_MINIMAL_SIZE &&
+					 sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
+					 "Miscalculated LWLock padding");
 
 	if (!IsUnderPostmaster)
 	{

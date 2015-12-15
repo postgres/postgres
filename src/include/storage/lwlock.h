@@ -25,6 +25,12 @@
 struct PGPROC;
 
 /*
+ * Prior to PostgreSQL 9.4, every lightweight lock in the system was stored
+ * in a single array.  For convenience and for compatibility with past
+ * releases, we still have a main array, but it's now also permissible to
+ * store LWLocks elsewhere in the main shared memory segment or in a dynamic
+ * shared memory segment.  Each array of lwlocks forms a separate "tranche".
+ *
  * It's occasionally necessary to identify a particular LWLock "by name"; e.g.
  * because we wish to report the lock to dtrace.  We could store a name or
  * other identifying information in the lock itself, but since it's common
@@ -65,30 +71,51 @@ typedef struct LWLock
 } LWLock;
 
 /*
- * Prior to PostgreSQL 9.4, every lightweight lock in the system was stored
- * in a single array.  For convenience and for compatibility with past
- * releases, we still have a main array, but it's now also permissible to
- * store LWLocks elsewhere in the main shared memory segment or in a dynamic
- * shared memory segment.  In the main array, we force the array stride to
- * be a power of 2, which saves a few cycles in indexing, but more importantly
- * also ensures that individual LWLocks don't cross cache line boundaries.
- * This reduces cache contention problems, especially on AMD Opterons.
- * (Of course, we have to also ensure that the array start address is suitably
- * aligned.)
+ * In most cases, it's desirable to force each tranche of LWLocks to be aligned
+ * on a cache line boundary and make the array stride a power of 2.  This saves
+ * a few cycles in indexing, but more importantly ensures that individual
+ * LWLocks don't cross cache line boundaries.  This reduces cache contention
+ * problems, especially on AMD Opterons.  In some cases, it's useful to add
+ * even more padding so that each LWLock takes up an entire cache line; this is
+ * useful, for example, in the main LWLock array, where the overall number of
+ * locks is small but some are heavily contended.
  *
- * On a 32-bit platforms a LWLock will these days fit into 16 bytes, but since
- * that didn't use to be the case and cramming more lwlocks into a cacheline
- * might be detrimental performancewise we still use 32 byte alignment
- * there. So, both on 32 and 64 bit platforms, it should fit into 32 bytes
- * unless slock_t is really big.  We allow for that just in case.
+ * When allocating a tranche that contains data other than LWLocks, it is
+ * probably best to include a bare LWLock and then pad the resulting structure
+ * as necessary for performance.  For an array that contains only LWLocks,
+ * LWLockMinimallyPadded can be used for cases where we just want to ensure
+ * that we don't cross cache line boundaries within a single lock, while
+ * LWLockPadded can be used for cases where we want each lock to be an entire
+ * cache line.
+ *
+ * On 32-bit platforms, an LWLockMinimallyPadded might actually contain more
+ * than the absolute minimum amount of padding required to keep a lock from
+ * crossing a cache line boundary, because an unpadded LWLock might fit into
+ * 16 bytes.  We ignore that possibility when determining the minimal amount
+ * of padding.  Older releases had larger LWLocks, so 32 really was the
+ * minimum, and packing them in tighter might hurt performance.
+ *
+ * LWLOCK_MINIMAL_SIZE should be 32 on basically all common platforms, but
+ * because slock_t is more than 2 bytes on some obscure platforms, we allow
+ * for the possibility that it might be 64.
  */
-#define LWLOCK_PADDED_SIZE	(sizeof(LWLock) <= 32 ? 32 : 64)
+#define LWLOCK_PADDED_SIZE	PG_CACHE_LINE_SIZE
+#define LWLOCK_MINIMAL_SIZE (sizeof(LWLock) <= 32 ? 32 : 64)
 
+/* LWLock, padded to a full cache line size */
 typedef union LWLockPadded
 {
 	LWLock		lock;
 	char		pad[LWLOCK_PADDED_SIZE];
 } LWLockPadded;
+
+/* LWLock, minimally padded */
+typedef union LWLockMinimallyPadded
+{
+	LWLock		lock;
+	char		pad[LWLOCK_MINIMAL_SIZE];
+} LWLockMinimallyPadded;
+
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 extern char *MainLWLockNames[];
 
@@ -184,6 +211,8 @@ typedef enum BuiltinTrancheIds
 {
 	LWTRANCHE_MAIN,
 	LWTRANCHE_WAL_INSERT,
+	LWTRANCHE_BUFFER_CONTENT,
+	LWTRANCHE_BUFFER_IO_IN_PROGRESS,
 	LWTRANCHE_FIRST_USER_DEFINED
 }	BuiltinTrancheIds;
 

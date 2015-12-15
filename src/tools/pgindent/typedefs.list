@@ -1008,6 +1008,7 @@ LSEG
 LVRelStats
 LWLock
 LWLockHandle
+LWLockMinimallyPadded
 LWLockMode
 LWLockPadded
 LWLockTranche

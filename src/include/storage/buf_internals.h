@@ -115,8 +115,8 @@ typedef struct buftag
  * Note: buf_hdr_lock must be held to examine or change the tag, flags,
  * usage_count, refcount, or wait_backend_pid fields.  buf_id field never
  * changes after initialization, so does not need locking.  freeNext is
- * protected by the buffer_strategy_lock not buf_hdr_lock.  The LWLocks can take
- * care of themselves.  The buf_hdr_lock is *not* used to control access to
+ * protected by the buffer_strategy_lock not buf_hdr_lock.  The LWLock can
+ * take care of itself.  The buf_hdr_lock is *not* used to control access to
  * the data in the buffer!
  *
  * An exception is that if we have the buffer pinned, its tag can't change
@@ -133,22 +133,24 @@ typedef struct buftag
  *
  * We use this same struct for local buffer headers, but the lock fields
  * are not used and not all of the flag bits are useful either.
+ *
+ * Be careful to avoid increasing the size of the struct when adding or
+ * reordering members.  Keeping it below 64 bytes (the most common CPU
+ * cache line size) is fairly important for performance.
  */
 typedef struct BufferDesc
 {
 	BufferTag	tag;			/* ID of page contained in buffer */
 	BufFlags	flags;			/* see bit definitions above */
-	uint16		usage_count;	/* usage counter for clock sweep code */
+	uint8		usage_count;	/* usage counter for clock sweep code */
+	slock_t		buf_hdr_lock;	/* protects a subset of fields, see above */
 	unsigned	refcount;		/* # of backends holding pins on buffer */
 	int			wait_backend_pid;		/* backend PID of pin-count waiter */
-
-	slock_t		buf_hdr_lock;	/* protects the above fields */
 
 	int			buf_id;			/* buffer's index number (from 0) */
 	int			freeNext;		/* link in freelist chain */
 
-	LWLock	   *io_in_progress_lock;	/* to wait for I/O to complete */
-	LWLock	   *content_lock;	/* to lock access to buffer contents */
+	LWLock		content_lock;	/* to lock access to buffer contents */
 } BufferDesc;
 
 /*
@@ -183,6 +185,13 @@ typedef union BufferDescPadded
 #define GetLocalBufferDescriptor(id) (&LocalBufferDescriptors[(id)])
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
+
+#define BufferDescriptorGetIOLock(bdesc) \
+	(&(BufferIOLWLockArray[(bdesc)->buf_id]).lock)
+#define BufferDescriptorGetContentLock(bdesc) \
+	((LWLock*) (&(bdesc)->content_lock))
+
+extern PGDLLIMPORT LWLockMinimallyPadded *BufferIOLWLockArray;
 
 /*
  * The freeNext field is either the index of the next freelist entry,

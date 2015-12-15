@@ -738,7 +738,8 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			if (!isLocalBuf)
 			{
 				if (mode == RBM_ZERO_AND_LOCK)
-					LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
+					LWLockAcquire(BufferDescriptorGetContentLock(bufHdr),
+								  LW_EXCLUSIVE);
 				else if (mode == RBM_ZERO_AND_CLEANUP_LOCK)
 					LockBufferForCleanup(BufferDescriptorGetBuffer(bufHdr));
 			}
@@ -879,7 +880,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	if ((mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK) &&
 		!isLocalBuf)
 	{
-		LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
+		LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_EXCLUSIVE);
 	}
 
 	if (isLocalBuf)
@@ -1045,7 +1046,8 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			 * happens to be trying to split the page the first one got from
 			 * StrategyGetBuffer.)
 			 */
-			if (LWLockConditionalAcquire(buf->content_lock, LW_SHARED))
+			if (LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf),
+										 LW_SHARED))
 			{
 				/*
 				 * If using a nondefault strategy, and writing the buffer
@@ -1067,7 +1069,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 						StrategyRejectBuffer(strategy, buf))
 					{
 						/* Drop lock/pin and loop around for another buffer */
-						LWLockRelease(buf->content_lock);
+						LWLockRelease(BufferDescriptorGetContentLock(buf));
 						UnpinBuffer(buf, true);
 						continue;
 					}
@@ -1080,7 +1082,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
-				LWLockRelease(buf->content_lock);
+				LWLockRelease(BufferDescriptorGetContentLock(buf));
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
 											   smgr->smgr_rnode.node.spcNode,
@@ -1395,7 +1397,7 @@ MarkBufferDirty(Buffer buffer)
 
 	Assert(BufferIsPinned(buffer));
 	/* unfortunately we can't check if the lock is held exclusively */
-	Assert(LWLockHeldByMe(bufHdr->content_lock));
+	Assert(LWLockHeldByMe(BufferDescriptorGetContentLock(bufHdr)));
 
 	LockBufHdr(bufHdr);
 
@@ -1595,8 +1597,8 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 	if (ref->refcount == 0)
 	{
 		/* I'd better not still hold any locks on the buffer */
-		Assert(!LWLockHeldByMe(buf->content_lock));
-		Assert(!LWLockHeldByMe(buf->io_in_progress_lock));
+		Assert(!LWLockHeldByMe(BufferDescriptorGetContentLock(buf)));
+		Assert(!LWLockHeldByMe(BufferDescriptorGetIOLock(buf)));
 
 		LockBufHdr(buf);
 
@@ -2116,11 +2118,11 @@ SyncOneBuffer(int buf_id, bool skip_recently_used)
 	 * buffer is clean by the time we've locked it.)
 	 */
 	PinBuffer_Locked(bufHdr);
-	LWLockAcquire(bufHdr->content_lock, LW_SHARED);
+	LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 
 	FlushBuffer(bufHdr, NULL);
 
-	LWLockRelease(bufHdr->content_lock);
+	LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
 	UnpinBuffer(bufHdr, true);
 
 	return result | BUF_WRITTEN;
@@ -2926,9 +2928,9 @@ FlushRelationBuffers(Relation rel)
 			(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
-			LWLockAcquire(bufHdr->content_lock, LW_SHARED);
+			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 			FlushBuffer(bufHdr, rel->rd_smgr);
-			LWLockRelease(bufHdr->content_lock);
+			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
 			UnpinBuffer(bufHdr, true);
 		}
 		else
@@ -2978,9 +2980,9 @@ FlushDatabaseBuffers(Oid dbid)
 			(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
-			LWLockAcquire(bufHdr->content_lock, LW_SHARED);
+			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 			FlushBuffer(bufHdr, NULL);
-			LWLockRelease(bufHdr->content_lock);
+			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
 			UnpinBuffer(bufHdr, true);
 		}
 		else
@@ -3004,7 +3006,7 @@ FlushOneBuffer(Buffer buffer)
 
 	bufHdr = GetBufferDescriptor(buffer - 1);
 
-	Assert(LWLockHeldByMe(bufHdr->content_lock));
+	Assert(LWLockHeldByMe(BufferDescriptorGetContentLock(bufHdr)));
 
 	FlushBuffer(bufHdr, NULL);
 }
@@ -3101,7 +3103,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 
 	Assert(GetPrivateRefCount(buffer) > 0);
 	/* here, either share or exclusive lock is OK */
-	Assert(LWLockHeldByMe(bufHdr->content_lock));
+	Assert(LWLockHeldByMe(BufferDescriptorGetContentLock(bufHdr)));
 
 	/*
 	 * This routine might get called many times on the same page, if we are
@@ -3254,11 +3256,11 @@ LockBuffer(Buffer buffer, int mode)
 	buf = GetBufferDescriptor(buffer - 1);
 
 	if (mode == BUFFER_LOCK_UNLOCK)
-		LWLockRelease(buf->content_lock);
+		LWLockRelease(BufferDescriptorGetContentLock(buf));
 	else if (mode == BUFFER_LOCK_SHARE)
-		LWLockAcquire(buf->content_lock, LW_SHARED);
+		LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_SHARED);
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
-		LWLockAcquire(buf->content_lock, LW_EXCLUSIVE);
+		LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_EXCLUSIVE);
 	else
 		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
 }
@@ -3279,7 +3281,8 @@ ConditionalLockBuffer(Buffer buffer)
 
 	buf = GetBufferDescriptor(buffer - 1);
 
-	return LWLockConditionalAcquire(buf->content_lock, LW_EXCLUSIVE);
+	return LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf),
+									LW_EXCLUSIVE);
 }
 
 /*
@@ -3489,8 +3492,8 @@ WaitIO(BufferDesc *buf)
 		UnlockBufHdr(buf);
 		if (!(sv_flags & BM_IO_IN_PROGRESS))
 			break;
-		LWLockAcquire(buf->io_in_progress_lock, LW_SHARED);
-		LWLockRelease(buf->io_in_progress_lock);
+		LWLockAcquire(BufferDescriptorGetIOLock(buf), LW_SHARED);
+		LWLockRelease(BufferDescriptorGetIOLock(buf));
 	}
 }
 
@@ -3523,7 +3526,7 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 		 * Grab the io_in_progress lock so that other processes can wait for
 		 * me to finish the I/O.
 		 */
-		LWLockAcquire(buf->io_in_progress_lock, LW_EXCLUSIVE);
+		LWLockAcquire(BufferDescriptorGetIOLock(buf), LW_EXCLUSIVE);
 
 		LockBufHdr(buf);
 
@@ -3537,7 +3540,7 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 		 * him to get unwedged.
 		 */
 		UnlockBufHdr(buf);
-		LWLockRelease(buf->io_in_progress_lock);
+		LWLockRelease(BufferDescriptorGetIOLock(buf));
 		WaitIO(buf);
 	}
 
@@ -3547,7 +3550,7 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 	{
 		/* someone else already did the I/O */
 		UnlockBufHdr(buf);
-		LWLockRelease(buf->io_in_progress_lock);
+		LWLockRelease(BufferDescriptorGetIOLock(buf));
 		return false;
 	}
 
@@ -3595,7 +3598,7 @@ TerminateBufferIO(BufferDesc *buf, bool clear_dirty, int set_flag_bits)
 
 	InProgressBuf = NULL;
 
-	LWLockRelease(buf->io_in_progress_lock);
+	LWLockRelease(BufferDescriptorGetIOLock(buf));
 }
 
 /*
@@ -3620,7 +3623,7 @@ AbortBufferIO(void)
 		 * we can use TerminateBufferIO. Anyone who's executing WaitIO on the
 		 * buffer will be in a busy spin until we succeed in doing this.
 		 */
-		LWLockAcquire(buf->io_in_progress_lock, LW_EXCLUSIVE);
+		LWLockAcquire(BufferDescriptorGetIOLock(buf), LW_EXCLUSIVE);
 
 		LockBufHdr(buf);
 		Assert(buf->flags & BM_IO_IN_PROGRESS);
