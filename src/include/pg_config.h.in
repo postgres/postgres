@@ -428,6 +428,9 @@
 /* Define to 1 if you have the `rl_filename_completion_function' function. */
 #undef HAVE_RL_FILENAME_COMPLETION_FUNCTION
 
+/* Define to 1 if you have the `rl_reset_screen_size' function. */
+#undef HAVE_RL_RESET_SCREEN_SIZE
+
 /* Define to 1 if you have the <security/pam_appl.h> header file. */
 #undef HAVE_SECURITY_PAM_APPL_H
 
