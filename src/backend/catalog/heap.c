@@ -2349,7 +2349,7 @@ AddRelationNewConstraints(Relation rel,
 		 * OK, store it.
 		 */
 		constrOid =
-			StoreRelCheck(rel, ccname, expr, !cdef->skip_validation, is_local,
+			StoreRelCheck(rel, ccname, expr, cdef->initially_valid, is_local,
 						  is_local ? 0 : 1, cdef->is_no_inherit, is_internal);
 
 		numchecks++;

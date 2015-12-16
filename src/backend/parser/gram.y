@@ -3080,6 +3080,8 @@ ColConstraintElem:
 					n->is_no_inherit = $5;
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
+					n->skip_validation = false;
+					n->initially_valid = true;
 					$$ = (Node *)n;
 				}
 			| DEFAULT b_expr

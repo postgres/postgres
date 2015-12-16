@@ -120,6 +120,8 @@ static IndexStmt *transformIndexConstraint(Constraint *constraint,
 static void transformFKConstraints(CreateStmtContext *cxt,
 					   bool skipValidation,
 					   bool isAddConstraint);
+static void transformCheckConstraints(CreateStmtContext *cxt,
+						bool skipValidation);
 static void transformConstraintAttrs(CreateStmtContext *cxt,
 						 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
@@ -318,6 +320,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * Postprocess foreign-key constraints.
 	 */
 	transformFKConstraints(&cxt, true, false);
+
+	/*
+	 * Postprocess check constraints.
+	 */
+	transformCheckConstraints(&cxt, true);
 
 	/*
 	 * Output results.
@@ -1915,6 +1922,40 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 }
 
 /*
+ * transformCheckConstraints
+ *		handle CHECK constraints
+ *
+ * Right now, there's nothing to do here when called from ALTER TABLE,
+ * but the other constraint-transformation functions are called in both
+ * the CREATE TABLE and ALTER TABLE paths, so do the same here, and just
+ * don't do anything if we're not authorized to skip validation.
+ */
+static void
+transformCheckConstraints(CreateStmtContext *cxt, bool skipValidation)
+{
+	ListCell   *ckclist;
+
+	if (cxt->ckconstraints == NIL)
+		return;
+
+	/*
+	 * If creating a new table, we can safely skip validation of check
+	 * constraints, and nonetheless mark them valid.  (This will override
+	 * any user-supplied NOT VALID flag.)
+	 */
+	if (skipValidation)
+	{
+		foreach(ckclist, cxt->ckconstraints)
+		{
+			Constraint *constraint = (Constraint *) lfirst(ckclist);
+
+			constraint->skip_validation = true;
+			constraint->initially_valid = true;
+		}
+	}
+}
+
+/*
  * transformFKConstraints
  *		handle FOREIGN KEY constraints
  */
@@ -2567,10 +2608,10 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	save_alist = cxt.alist;
 	cxt.alist = NIL;
 
-	/* Postprocess index and FK constraints */
+	/* Postprocess constraints */
 	transformIndexConstraints(&cxt);
-
 	transformFKConstraints(&cxt, skipValidation, true);
+	transformCheckConstraints(&cxt, false);
 
 	/*
 	 * Push any index-creation commands into the ALTER, so that they can be

@@ -380,7 +380,16 @@ DROP TABLE tmp2;
 -- NOT VALID with plan invalidation -- ensure we don't use a constraint for
 -- exclusion until validated
 set constraint_exclusion TO 'partition';
-create table nv_parent (d date);
+create table nv_parent (d date, check (false) no inherit not valid);
+-- not valid constraint added at creation time should automatically become valid
+\d nv_parent
+ Table "public.nv_parent"
+ Column | Type | Modifiers 
+--------+------+-----------
+ d      | date | 
+Check constraints:
+    "nv_parent_check" CHECK (false) NO INHERIT
+
 create table nv_child_2010 () inherits (nv_parent);
 create table nv_child_2011 () inherits (nv_parent);
 alter table nv_child_2010 add check (d between '2010-01-01'::date and '2010-12-31'::date) not valid;
