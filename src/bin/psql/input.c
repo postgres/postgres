@@ -65,6 +65,17 @@ gets_interactive(const char *prompt)
 	{
 		char	   *result;
 
+		/*
+		 * Some versions of readline don't notice SIGWINCH signals that arrive
+		 * when not actively reading input.  The simplest fix is to always
+		 * re-read the terminal size.  This leaves a window for SIGWINCH to be
+		 * missed between here and where readline() enables libreadline's
+		 * signal handler, but that's probably short enough to be ignored.
+		 */
+#ifdef HAVE_RL_RESET_SCREEN_SIZE
+		rl_reset_screen_size();
+#endif
+
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
 
@@ -330,6 +341,7 @@ initializeInput(int flags)
 		char		home[MAXPGPATH];
 
 		useReadline = true;
+		rl_initialize();
 		initialize_readline();
 
 		useHistory = true;
