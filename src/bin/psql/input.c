@@ -346,8 +346,10 @@ initializeInput(int flags)
 		char		home[MAXPGPATH];
 
 		useReadline = true;
-		rl_initialize();
+
+		/* these two things must be done in this order: */
 		initialize_readline();
+		rl_initialize();
 
 		useHistory = true;
 		using_history();
