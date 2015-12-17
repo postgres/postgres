@@ -9057,8 +9057,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		 * Also change the ownership of the table's row type, if it has one
 		 */
 		if (tuple_class->relkind != RELKIND_INDEX)
-			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId,
-							 tuple_class->relkind == RELKIND_COMPOSITE_TYPE);
+			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId);
 
 		/*
 		 * If we are operating on a table or materialized view, also change

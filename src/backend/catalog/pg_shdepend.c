@@ -1365,7 +1365,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			switch (sdepForm->classid)
 			{
 				case TypeRelationId:
-					AlterTypeOwnerInternal(sdepForm->objid, newrole, true);
+					AlterTypeOwner_oid(sdepForm->objid, newrole, true);
 					break;
 
 				case NamespaceRelationId:
