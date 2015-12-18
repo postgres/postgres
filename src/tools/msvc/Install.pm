@@ -365,7 +365,7 @@ sub GenerateConversionScript
 		$sql .=
 "CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
 		$sql .=
-"COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n";
+"COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n\n";
 	}
 	open($F, ">$target/share/conversion_create.sql")
 	  || die "Could not write to conversion_create.sql\n";

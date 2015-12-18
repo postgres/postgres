@@ -181,6 +181,7 @@ $(SQLSCRIPT): Makefile
 		echo "DROP CONVERSION pg_catalog.$$name;"; \
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	        echo "COMMENT ON CONVERSION pg_catalog.$$name IS 'conversion for $$se to $$de';"; \
+		echo; \
 	done > $@
 
 $(REGRESSION_SCRIPT): Makefile
