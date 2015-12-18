@@ -788,7 +788,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | { gaussian | exponential } <replaceable>threshold</> ]</literal>
+     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | { gaussian | exponential } <replaceable>parameter</> ]</literal>
      </term>
 
     <listitem>
@@ -804,54 +804,63 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       By default, or when <literal>uniform</> is specified, all values in the
       range are drawn with equal probability.  Specifying <literal>gaussian</>
       or  <literal>exponential</> options modifies this behavior; each
-      requires a mandatory threshold which determines the precise shape of the
+      requires a mandatory parameter which determines the precise shape of the
       distribution.
      </para>
 
      <para>
       For a Gaussian distribution, the interval is mapped onto a standard
       normal distribution (the classical bell-shaped Gaussian curve) truncated
-      at <literal>-threshold</> on the left and <literal>+threshold</>
+      at <literal>-parameter</> on the left and <literal>+parameter</>
       on the right.
+      Values in the middle of the interval are more likely to be drawn.
       To be precise, if <literal>PHI(x)</> is the cumulative distribution
       function of the standard normal distribution, with mean <literal>mu</>
-      defined as <literal>(max + min) / 2.0</>, then value <replaceable>i</>
-      between <replaceable>min</> and <replaceable>max</> inclusive is drawn
-      with probability:
-      <literal>
-        (PHI(2.0 * threshold * (i - min - mu + 0.5) / (max - min + 1)) -
-         PHI(2.0 * threshold * (i - min - mu - 0.5) / (max - min + 1))) /
-         (2.0 * PHI(threshold) - 1.0)</>.
-      Intuitively, the larger the <replaceable>threshold</>, the more
+      defined as <literal>(max + min) / 2.0</>, with
+<literallayout>
+ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
+        (2.0 * PHI(parameter) - 1.0)
+</literallayout>
+      then value <replaceable>i</> between <replaceable>min</> and
+      <replaceable>max</> inclusive is drawn with probability:
+      <literal>f(i + 0.5) - f(i - 0.5)</>.
+      Intuitively, the larger <replaceable>parameter</>, the more
       frequently values close to the middle of the interval are drawn, and the
       less frequently values close to the <replaceable>min</> and
-      <replaceable>max</> bounds.
-      About 67% of values are drawn from the middle <literal>1.0 / threshold</>
-      and 95% in the middle <literal>2.0 / threshold</>; for instance, if
-      <replaceable>threshold</> is 4.0, 67% of values are drawn from the middle
-      quarter and 95% from the middle half of the interval.
-      The minimum <replaceable>threshold</> is 2.0 for performance of
-      the Box-Muller transform.
+      <replaceable>max</> bounds. About 67% of values are drawn from the
+      middle <literal>1.0 / parameter</>, that is a relative
+      <literal>0.5 / parameter</> around the mean, and 95% in the middle
+      <literal>2.0 / parameter</>, that is a relative
+      <literal>1.0 / parameter</> around the mean; for instance, if
+      <replaceable>parameter</> is 4.0, 67% of values are drawn from the
+      middle quarter (1.0 / 4.0) of the interval (i.e. from
+      <literal>3.0 / 8.0</> to <literal>5.0 / 8.0</>) and 95% from
+      the middle half (<literal>2.0 / 4.0</>) of the interval (second and
+      third quartiles). The minimum <replaceable>parameter</> is 2.0 for
+      performance of the Box-Muller transform.
      </para>
 
      <para>
-      For an exponential distribution, the <replaceable>threshold</>
-      parameter controls the distribution by truncating a quickly-decreasing
-      exponential distribution at <replaceable>threshold</>, and then
+      For an exponential distribution, <replaceable>parameter</>
+      controls the distribution by truncating a quickly-decreasing
+      exponential distribution at <replaceable>parameter</>, and then
       projecting onto integers between the bounds.
-      To be precise, value <replaceable>i</> between <replaceable>min</> and
+      To be precise, with
+<literallayout>
+f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1.0 - exp(-parameter))
+</literallayout>
+      Then value <replaceable>i</> between <replaceable>min</> and
       <replaceable>max</> inclusive is drawn with probability:
-      <literal>(exp(-threshold*(i-min)/(max+1-min)) -
-       exp(-threshold*(i+1-min)/(max+1-min))) / (1.0 - exp(-threshold))</>.
-      Intuitively, the larger the <replaceable>threshold</>, the more
+      <literal>f(x) - f(x + 1)</>.
+      Intuitively, the larger <replaceable>parameter</>, the more
       frequently values close to <replaceable>min</> are accessed, and the
       less frequently values close to <replaceable>max</> are accessed.
-      The closer to 0 the threshold, the flatter (more uniform) the access
-      distribution.
+      The closer to 0 <replaceable>parameter</>, the flatter (more uniform)
+      the access distribution.
       A crude approximation of the distribution is that the most frequent 1%
       values in the range, close to <replaceable>min</>, are drawn
-      <replaceable>threshold</>%  of the time.
-      The <replaceable>threshold</> value must be strictly positive.
+      <replaceable>parameter</>% of the time.
+      <replaceable>parameter</> value must be strictly positive.
      </para>
 
      <para>
