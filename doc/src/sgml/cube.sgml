@@ -75,6 +75,8 @@
    entered in.  The <type>cube</> functions
    automatically swap values if needed to create a uniform
    <quote>lower left &mdash; upper right</> internal representation.
+   When corners coincide cube stores only one corner along with a
+   special flag in order to reduce size wasted.
   </para>
 
   <para>
@@ -131,6 +133,19 @@
       <entry><literal>a &lt;@ b</></entry>
       <entry>The cube a is contained in the cube b.</entry>
      </row>
+
+     <row>
+      <entry><literal>a -&gt; n</></entry>
+      <entry>Get n-th coordinate of cube.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a ~&gt; n</></entry>
+      <entry>
+        Get n-th coordinate in 'normalized' cube representation. Noramlization
+        means coordinate rearrangement to form (lower left, upper right).
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -142,6 +157,87 @@
    are reversed from the convention formerly followed by the core geometric
    data types!)
   </para>
+
+  <para>
+   GiST index can be used to retrieve nearest neighbours via several metric
+   operators. As always any of them can be used as ordinary function.
+  </para>
+
+  <table id="cube-gistknn-operators">
+   <title>Cube GiST-kNN Operators</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Operator</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>a &lt;-&gt; b</></entry>
+      <entry>Euclidean distance between a and b</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &lt;#&gt; b</></entry>
+      <entry>Taxicab (L-1 metric) distance between a and b</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &lt;=&gt; b</></entry>
+      <entry>Chebyshev (L-inf metric) distance between a and b</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Selection of nearing neigbours can be done in the following way:
+  </para>
+<programlisting>
+SELECT c FROM test 
+ORDER BY cube(array[0.5,0.5,0.5])<->c 
+LIMIT 1;
+</programlisting>
+
+
+  <para>
+   Also kNN framework allows us to cheat with metrics in order to get results
+   sorted by selected coodinate directly from the index without extra sorting
+   step. That technique significantly faster on small values of LIMIT, however
+   with bigger values of LIMIT planner will switch automatically to standart
+   index scan and sort.
+   That behavior can be achieved using coordinate operator
+   (cube c)~&gt;(int offset).
+  </para>
+<programlisting>
+=> select cube(array[0.41,0.42,0.43])~>2 as coord;
+ coord 
+-------
+  0.42
+(1 row)
+</programlisting>
+
+  <para>
+   So using that operator as kNN metric we can obtain cubes sorted by it's
+   coordinate.
+  </para>
+  <para>
+   To get cubes ordered by first coordinate of lower left corner ascending
+   one can use the following query:
+  </para>
+<programlisting>
+SELECT c FROM test ORDER BY c~>1 LIMIT 5;
+</programlisting>
+  <para>
+   And to get cubes descending by first coordinate of upper right corner
+   of 2d-cube:
+  </para>
+<programlisting>
+SELECT c FROM test ORDER BY c~>3 DESC LIMIT 5;
+</programlisting>
+
+
 
   <para>
    The standard B-tree operators are also provided, for example
