@@ -311,7 +311,7 @@ transformArraySubscripts(ParseState *pstate,
 		elementType = transformArrayType(&arrayType, &arrayTypMod);
 
 	/*
-	 * A list containing only single subscripts (uidx) refers to a single array
+	 * A list containing only single subscripts refers to a single array
 	 * element.  If any of the items are double subscripts (lower:upper), then
 	 * the subscript expression means an array slice operation. In this case,
 	 * we supply a default lower bound of 1 for any items that contain only a
@@ -322,7 +322,7 @@ transformArraySubscripts(ParseState *pstate,
 	{
 		A_Indices  *ai = (A_Indices *) lfirst(idx);
 
-		if (ai->lidx != NULL || ai->lidx_default)
+		if (ai->lidx != NULL)
 		{
 			isSlice = true;
 			break;
@@ -335,17 +335,9 @@ transformArraySubscripts(ParseState *pstate,
 	foreach(idx, indirection)
 	{
 		A_Indices  *ai = (A_Indices *) lfirst(idx);
-		Node	   *subexpr = NULL;
+		Node	   *subexpr;
 
 		Assert(IsA(ai, A_Indices));
-		if ((ai->uidx_default || ai->lidx_default) && assignFrom != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("array subscript must have both boundaries"),
-					 errhint("You can't omit the upper or lower"
-							 " boundaries when updating or inserting"),
-					 parser_errposition(pstate, exprLocation(arrayBase))));
-
 		if (isSlice)
 		{
 			if (ai->lidx)
@@ -364,7 +356,7 @@ transformArraySubscripts(ParseState *pstate,
 							 errmsg("array subscript must have type integer"),
 						parser_errposition(pstate, exprLocation(ai->lidx))));
 			}
-			else if (ai->lidx_default == false)
+			else
 			{
 				/* Make a constant 1 */
 				subexpr = (Node *) makeConst(INT4OID,
@@ -377,26 +369,19 @@ transformArraySubscripts(ParseState *pstate,
 			}
 			lowerIndexpr = lappend(lowerIndexpr, subexpr);
 		}
-
-		if (ai->uidx_default == false)
-		{
-			subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
-			/* If it's not int4 already, try to coerce */
-			subexpr = coerce_to_target_type(pstate,
-											subexpr, exprType(subexpr),
-											INT4OID, -1,
-											COERCION_ASSIGNMENT,
-											COERCE_IMPLICIT_CAST,
-											-1);
-			if (subexpr == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("array subscript must have type integer"),
-						 parser_errposition(pstate, exprLocation(ai->uidx))));
-		}
-		else
-			subexpr = NULL;
-
+		subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
+		/* If it's not int4 already, try to coerce */
+		subexpr = coerce_to_target_type(pstate,
+										subexpr, exprType(subexpr),
+										INT4OID, -1,
+										COERCION_ASSIGNMENT,
+										COERCE_IMPLICIT_CAST,
+										-1);
+		if (subexpr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("array subscript must have type integer"),
+					 parser_errposition(pstate, exprLocation(ai->uidx))));
 		upperIndexpr = lappend(upperIndexpr, subexpr);
 	}
 

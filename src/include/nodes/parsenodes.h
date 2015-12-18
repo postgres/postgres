@@ -358,8 +358,6 @@ typedef struct A_Indices
 	NodeTag		type;
 	Node	   *lidx;			/* NULL if it's a single subscript */
 	Node	   *uidx;
-	bool		lidx_default;
-	bool		uidx_default;
 } A_Indices;
 
 /*

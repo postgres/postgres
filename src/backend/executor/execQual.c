@@ -268,12 +268,10 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	bool		eisnull;
 	ListCell   *l;
 	int			i = 0,
-				j = 0,
-				indexexpr;
+				j = 0;
 	IntArray	upper,
 				lower;
 	int		   *lIndex;
-	AnyArrayType *arrays;
 
 	array_source = ExecEvalExpr(astate->refexpr,
 								econtext,
@@ -295,7 +293,6 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	foreach(l, astate->refupperindexpr)
 	{
 		ExprState  *eltstate = (ExprState *) lfirst(l);
-		eisnull = false;
 
 		if (i >= MAXDIM)
 			ereport(ERROR,
@@ -303,23 +300,10 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 							i + 1, MAXDIM)));
 
-		if (eltstate == NULL && astate->refattrlength <= 0)
-		{
-			if (isAssignment)
-				ereport(ERROR,
-					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("cannot determine upper index for empty array")));
-			arrays = (AnyArrayType *)DatumGetArrayTypeP(array_source);
-			indexexpr = AARR_LBOUND(arrays)[i] + AARR_DIMS(arrays)[i] - 1;
-		}
-		else
-			indexexpr = DatumGetInt32(ExecEvalExpr(eltstate,
-												   econtext,
-												   &eisnull,
-												   NULL));
-
-		upper.indx[i++] = indexexpr;
-
+		upper.indx[i++] = DatumGetInt32(ExecEvalExpr(eltstate,
+													 econtext,
+													 &eisnull,
+													 NULL));
 		/* If any index expr yields NULL, result is NULL or error */
 		if (eisnull)
 		{
@@ -337,7 +321,6 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		foreach(l, astate->reflowerindexpr)
 		{
 			ExprState  *eltstate = (ExprState *) lfirst(l);
-			eisnull = false;
 
 			if (j >= MAXDIM)
 				ereport(ERROR,
@@ -345,19 +328,10 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 						 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 								j + 1, MAXDIM)));
 
-			if (eltstate == NULL)
-			{
-				arrays = (AnyArrayType *)DatumGetArrayTypeP(array_source);
-				indexexpr = AARR_LBOUND(arrays)[j];
-			}
-			else
-				indexexpr = DatumGetInt32(ExecEvalExpr(eltstate,
-													   econtext,
-													   &eisnull,
-													   NULL));
-
-			lower.indx[j++] = indexexpr;
-
+			lower.indx[j++] = DatumGetInt32(ExecEvalExpr(eltstate,
+														 econtext,
+														 &eisnull,
+														 NULL));
 			/* If any index expr yields NULL, result is NULL or error */
 			if (eisnull)
 			{

@@ -257,26 +257,6 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 (1 row)
 </programlisting>
 
-  Possible to skip the <literal><replaceable>lower-bound</replaceable></literal> or
-  <literal><replaceable>upper-bound</replaceable></literal>
-  for get first or last element in slice.
-
-<programlisting>
-SELECT schedule[:][:] FROM sal_emp WHERE name = 'Bill';
-
-        schedule
-------------------------
- {{meeting,lunch},{training,presentation}}
-(1 row)
-
-SELECT schedule[:2][2:] FROM sal_emp WHERE name = 'Bill';
-
-        schedule
-------------------------
- {{lunch},{presentation}}
-(1 row)
-</programlisting>
-
   If any dimension is written as a slice, i.e., contains a colon, then all
   dimensions are treated as slices.  Any dimension that has only a single
   number (no colon) is treated as being from 1

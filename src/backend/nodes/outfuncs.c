@@ -2765,8 +2765,6 @@ _outA_Indices(StringInfo str, const A_Indices *node)
 
 	WRITE_NODE_FIELD(lidx);
 	WRITE_NODE_FIELD(uidx);
-	WRITE_BOOL_FIELD(lidx_default);
-	WRITE_BOOL_FIELD(uidx_default);
 }
 
 static void
