@@ -535,7 +535,7 @@ TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 		void	   *data;
 
 		/* Attempt to read a message. */
-		result = shm_mq_receive(reader->queue, &nbytes, &data, true);
+		result = shm_mq_receive(reader->queue, &nbytes, &data, nowait);
 
 		/* If queue is detached, set *done and return NULL. */
 		if (result == SHM_MQ_DETACHED)
