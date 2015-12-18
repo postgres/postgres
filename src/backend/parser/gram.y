@@ -13193,6 +13193,35 @@ indirection_el:
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = NULL;
 					ai->uidx = $2;
+					ai->lidx_default = false;
+					ai->uidx_default = false;
+					$$ = (Node *) ai;
+				}
+			| '[' ':' ']'
+				{
+					A_Indices *ai = makeNode(A_Indices);
+					ai->lidx = NULL;
+					ai->uidx = NULL;
+					ai->lidx_default = true;
+					ai->uidx_default = true;
+					$$ = (Node *) ai;
+				}
+			| '[' ':' a_expr ']'
+				{
+					A_Indices *ai = makeNode(A_Indices);
+					ai->lidx = NULL;
+					ai->uidx = $3;
+					ai->lidx_default = true;
+					ai->uidx_default = false;
+					$$ = (Node *) ai;
+				}
+			| '[' a_expr ':' ']'
+				{
+					A_Indices *ai = makeNode(A_Indices);
+					ai->lidx = $2;
+					ai->uidx = NULL;
+					ai->lidx_default = false;
+					ai->uidx_default = true;
 					$$ = (Node *) ai;
 				}
 			| '[' a_expr ':' a_expr ']'
@@ -13200,6 +13229,8 @@ indirection_el:
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = $2;
 					ai->uidx = $4;
+					ai->lidx_default = false;
+					ai->uidx_default = false;
 					$$ = (Node *) ai;
 				}
 		;

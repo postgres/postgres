@@ -2153,6 +2153,8 @@ _equalAIndices(const A_Indices *a, const A_Indices *b)
 {
 	COMPARE_NODE_FIELD(lidx);
 	COMPARE_NODE_FIELD(uidx);
+	COMPARE_SCALAR_FIELD(lidx_default);
+	COMPARE_SCALAR_FIELD(uidx_default);
 
 	return true;
 }

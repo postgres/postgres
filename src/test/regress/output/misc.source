@@ -586,6 +586,7 @@ SELECT user_relns() AS user_relns
  array_index_op_test
  array_op_test
  arrtest
+ arrtest_s
  b
  b_star
  bb
@@ -710,7 +711,7 @@ SELECT user_relns() AS user_relns
  tvvmv
  varchar_tbl
  xacttest
-(132 rows)
+(133 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

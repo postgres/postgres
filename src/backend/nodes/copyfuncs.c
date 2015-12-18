@@ -2403,6 +2403,8 @@ _copyAIndices(const A_Indices *from)
 
 	COPY_NODE_FIELD(lidx);
 	COPY_NODE_FIELD(uidx);
+	COPY_SCALAR_FIELD(lidx_default);
+	COPY_SCALAR_FIELD(uidx_default);
 
 	return newnode;
 }
