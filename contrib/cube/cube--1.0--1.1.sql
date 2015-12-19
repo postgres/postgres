@@ -57,4 +57,3 @@ ALTER OPERATOR FAMILY gist_cube_ops USING gist ADD
 	OPERATOR	17	<-> (cube, cube) FOR ORDER BY float_ops,
 	OPERATOR	18	<=> (cube, cube) FOR ORDER BY float_ops,
 	FUNCTION	8	(cube, cube)	g_cube_distance (internal, cube, smallint, oid);
-
