@@ -2063,16 +2063,16 @@ describeOneTableDetails(const char *schemaname,
 				printTableAddFooter(&cont, _("Policies:"));
 
 			if (tableinfo.rowsecurity && tableinfo.forcerowsecurity && tuples > 0)
-				printTableAddFooter(&cont, _("Policies (Forced Row Security Enabled):"));
+				printTableAddFooter(&cont, _("Policies (forced row security enabled):"));
 
 			if (tableinfo.rowsecurity && !tableinfo.forcerowsecurity && tuples == 0)
-				printTableAddFooter(&cont, _("Policies (Row Security Enabled): (None)"));
+				printTableAddFooter(&cont, _("Policies (row security enabled): (none)"));
 
 			if (tableinfo.rowsecurity && tableinfo.forcerowsecurity && tuples == 0)
-				printTableAddFooter(&cont, _("Policies (Forced Row Security Enabled): (None)"));
+				printTableAddFooter(&cont, _("Policies (forced row security enabled): (none)"));
 
 			if (!tableinfo.rowsecurity && tuples > 0)
-				printTableAddFooter(&cont, _("Policies (Row Security Disabled):"));
+				printTableAddFooter(&cont, _("Policies (row security disabled):"));
 
 			/* Might be an empty set - that's ok */
 			for (i = 0; i < tuples; i++)
