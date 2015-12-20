@@ -53,12 +53,17 @@ static void finishInput(void);
  * gets_interactive()
  *
  * Gets a line of interactive input, using readline if desired.
+ *
+ * prompt: the prompt string to be used
+ * query_buf: buffer containing lines already read in the current command
+ * (query_buf is not modified here, but may be consulted for tab completion)
+ *
  * The result is a malloc'd string.
  *
  * Caller *must* have set up sigint_interrupt_jmp before calling.
  */
 char *
-gets_interactive(const char *prompt)
+gets_interactive(const char *prompt, PQExpBuffer query_buf)
 {
 #ifdef USE_READLINE
 	if (useReadline)
@@ -76,6 +81,9 @@ gets_interactive(const char *prompt)
 		rl_reset_screen_size();
 #endif
 
+		/* Make current query_buf available to tab completion callback */
+		tab_completion_query_buf = query_buf;
+
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
 
@@ -84,6 +92,9 @@ gets_interactive(const char *prompt)
 
 		/* Disable SIGINT again */
 		sigint_interrupt_enabled = false;
+
+		/* Pure neatnik-ism */
+		tab_completion_query_buf = NULL;
 
 		return result;
 	}

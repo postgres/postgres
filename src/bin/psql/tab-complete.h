@@ -8,8 +8,10 @@
 #ifndef TAB_COMPLETE_H
 #define TAB_COMPLETE_H
 
-#include "postgres_fe.h"
+#include "pqexpbuffer.h"
 
-void		initialize_readline(void);
+extern PQExpBuffer tab_completion_query_buf;
 
-#endif
+extern void initialize_readline(void);
+
+#endif   /* TAB_COMPLETE_H */

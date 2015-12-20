@@ -24,19 +24,10 @@
  *	 set disable-completion on
  *	 $endif
  *
- * See `man 3 readline' or `info readline' for the full details. Also,
- * hence the
+ * See `man 3 readline' or `info readline' for the full details.
  *
  * BUGS:
- *
- * - If you split your queries across lines, this whole thing gets
- *	 confused. (To fix this, one would have to read psql's query
- *	 buffer rather than readline's line buffer, which would require
- *	 some major revisions of things.)
- *
- * - Table or attribute names with spaces in it may confuse it.
- *
- * - Quotes, parenthesis, and other funny characters are not handled
+ * - Quotes, parentheses, and other funny characters are not handled
  *	 all that gracefully.
  *----------------------------------------------------------------------
  */
@@ -68,6 +59,13 @@ extern char *filename_completion_function();
 
 /* word break characters */
 #define WORD_BREAKS		"\t\n@$><=;|&{() "
+
+/*
+ * Since readline doesn't let us pass any state through to the tab completion
+ * callback, we have to use this global variable to let get_previous_words()
+ * get at the previous lines of the current command.  Ick.
+ */
+PQExpBuffer tab_completion_query_buf = NULL;
 
 /*
  * This struct is used to define "schema queries", which are custom-built
@@ -923,7 +921,7 @@ static char *pg_strdup_keyword_case(const char *s, const char *ref);
 static char *escape_string(const char *text);
 static PGresult *exec_query(const char *query);
 
-static int	get_previous_words(int point, char **previous_words, int nwords);
+static char **get_previous_words(int point, char **buffer, int *nwords);
 
 static char *get_guctype(const char *varname);
 
@@ -1027,13 +1025,22 @@ psql_completion(const char *text, int start, int end)
 	/* This is the variable we'll return. */
 	char	  **matches = NULL;
 
-	/* This array will contain some scannage of the input line. */
-	char	   *previous_words[9];
+	/* Workspace for parsed words. */
+	char	   *words_buffer;
+
+	/* This array will contain pointers to parsed words. */
+	char	  **previous_words;
 
 	/* The number of words found on the input line. */
 	int			previous_words_count;
 
-	/* For compactness, we use these macros to reference previous_words[]. */
+	/*
+	 * For compactness, we use these macros to reference previous_words[].
+	 * Caution: do not access a previous_words[] entry without having checked
+	 * previous_words_count to be sure it's valid.  In most cases below, that
+	 * check is implicit in a TailMatches() or similar macro, but in some
+	 * places we have to check it explicitly.
+	 */
 #define prev_wd   (previous_words[0])
 #define prev2_wd  (previous_words[1])
 #define prev3_wd  (previous_words[2])
@@ -1133,9 +1140,7 @@ psql_completion(const char *text, int start, int end)
 
 	/*
 	 * Macros for matching N words at the start of the line, regardless of
-	 * what is after them.  These are pretty broken because they can only look
-	 * back lengthof(previous_words) words, but we'll worry about improving
-	 * their implementation some other day.
+	 * what is after them.
 	 */
 #define HeadMatches1(p1) \
 	(previous_words_count >= 1 && \
@@ -1194,13 +1199,13 @@ psql_completion(const char *text, int start, int end)
 	completion_info_charp2 = NULL;
 
 	/*
-	 * Scan the input line before our current position for the last few words.
+	 * Scan the input line to extract the words before our current position.
 	 * According to those we'll make some smart decisions on what the user is
 	 * probably intending to type.
 	 */
-	previous_words_count = get_previous_words(start,
-											  previous_words,
-											  lengthof(previous_words));
+	previous_words = get_previous_words(start,
+										&words_buffer,
+										&previous_words_count);
 
 	/* If current word is a backslash command, offer completions for that */
 	if (text[0] == '\\')
@@ -1692,7 +1697,7 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_TABLEOPTIONS);
 	}
-	else if (TailMatches4("REPLICA", "IDENTITY", "USING", "INDEX"))
+	else if (TailMatches5(MatchAny, "REPLICA", "IDENTITY", "USING", "INDEX"))
 	{
 		completion_info_charp = prev5_wd;
 		COMPLETE_WITH_QUERY(Query_for_index_of_table);
@@ -2806,7 +2811,9 @@ psql_completion(const char *text, int start, int end)
 		if (!recognized_connection_string(text))
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	}
-	else if (strcmp(prev2_wd, "\\connect") == 0 || strcmp(prev2_wd, "\\c") == 0)
+	else if (previous_words_count >= 2 &&
+			 (strcmp(prev2_wd, "\\connect") == 0 ||
+			  strcmp(prev2_wd, "\\c") == 0))
 	{
 		if (!recognized_connection_string(prev_wd))
 			COMPLETE_WITH_QUERY(Query_for_list_of_roles);
@@ -2891,7 +2898,8 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
-	else if (strcmp(prev2_wd, "\\pset") == 0)
+	else if (previous_words_count >= 2 &&
+			 strcmp(prev2_wd, "\\pset") == 0)
 	{
 		if (strcmp(prev_wd, "format") == 0)
 		{
@@ -2927,7 +2935,8 @@ psql_completion(const char *text, int start, int end)
 	{
 		matches = complete_from_variables(text, "", "", false);
 	}
-	else if (strcmp(prev2_wd, "\\set") == 0)
+	else if (previous_words_count >= 2 &&
+			 strcmp(prev2_wd, "\\set") == 0)
 	{
 		static const char *const boolean_value_list[] =
 		{"on", "off", NULL};
@@ -3048,12 +3057,8 @@ psql_completion(const char *text, int start, int end)
 	}
 
 	/* free storage */
-	{
-		int			i;
-
-		for (i = 0; i < lengthof(previous_words); i++)
-			free(previous_words[i]);
-	}
+	free(previous_words);
+	free(words_buffer);
 
 	/* Return our Grand List O' Matches */
 	return matches;
@@ -3632,30 +3637,80 @@ exec_query(const char *query)
 
 
 /*
- * Return the nwords word(s) before point.  Words are returned right to left,
- * that is, previous_words[0] gets the last word before point.
- * If we run out of words, remaining array elements are set to empty strings.
- * Each array element is filled with a malloc'd string.
- * Returns the number of words that were actually found (up to nwords).
+ * Parse all the word(s) before point.
+ *
+ * Returns a malloc'd array of character pointers that point into the malloc'd
+ * data array returned to *buffer; caller must free() both of these when done.
+ * *nwords receives the number of words found, ie, the valid length of the
+ * return array.
+ *
+ * Words are returned right to left, that is, previous_words[0] gets the last
+ * word before point, previous_words[1] the next-to-last, etc.
  */
-static int
-get_previous_words(int point, char **previous_words, int nwords)
+static char **
+get_previous_words(int point, char **buffer, int *nwords)
 {
-	const char *buf = rl_line_buffer;	/* alias */
+	char	  **previous_words;
+	char	   *buf;
+	int			buflen;
 	int			words_found = 0;
 	int			i;
 
-	/* first we look for a non-word char before the current point */
-	for (i = point - 1; i >= 0; i--)
-		if (strchr(WORD_BREAKS, buf[i]))
-			break;
+	/*
+	 * Construct a writable buffer including both preceding and current lines
+	 * of the query, up to "point" which is where the currently completable
+	 * word begins.  Because our definition of "word" is such that a non-word
+	 * character must end each word, we can use this buffer to return the word
+	 * data as-is, by placing a '\0' after each word.
+	 */
+	buflen = point + 1;
+	if (tab_completion_query_buf)
+		buflen += tab_completion_query_buf->len + 1;
+	*buffer = buf = pg_malloc(buflen);
+	i = 0;
+	if (tab_completion_query_buf)
+	{
+		memcpy(buf, tab_completion_query_buf->data,
+			   tab_completion_query_buf->len);
+		i += tab_completion_query_buf->len;
+		buf[i++] = '\n';
+	}
+	memcpy(buf + i, rl_line_buffer, point);
+	i += point;
+	buf[i] = '\0';
+
+	/* Readjust point to reference appropriate offset in buf */
 	point = i;
 
-	while (nwords-- > 0)
+	/*
+	 * Allocate array of word start points.  There can be at most length/2 + 1
+	 * words in the buffer.
+	 */
+	previous_words = (char **) pg_malloc((point / 2 + 1) * sizeof(char *));
+
+	/*
+	 * First we look for a non-word char before the current point.  (This is
+	 * probably useless, if readline is on the same page as we are about what
+	 * is a word, but if so it's cheap.)
+	 */
+	for (i = point - 1; i >= 0; i--)
+	{
+		if (strchr(WORD_BREAKS, buf[i]))
+			break;
+	}
+	point = i;
+
+	/*
+	 * Now parse words, working backwards, until we hit start of line.  The
+	 * backwards scan has some interesting but intentional properties
+	 * concerning parenthesis handling.
+	 */
+	while (point >= 0)
 	{
 		int			start,
 					end;
-		char	   *s;
+		bool		inquotes = false;
+		int			parentheses = 0;
 
 		/* now find the first non-space which then constitutes the end */
 		end = -1;
@@ -3667,59 +3722,46 @@ get_previous_words(int point, char **previous_words, int nwords)
 				break;
 			}
 		}
+		/* if no end found, we're done */
+		if (end < 0)
+			break;
 
 		/*
-		 * If no end found we return an empty string, because there is no word
-		 * before the point
+		 * Otherwise we now look for the start.  The start is either the last
+		 * character before any word-break character going backwards from the
+		 * end, or it's simply character 0.  We also handle open quotes and
+		 * parentheses.
 		 */
-		if (end < 0)
+		for (start = end; start > 0; start--)
 		{
-			point = end;
-			s = pg_strdup("");
-		}
-		else
-		{
-			/*
-			 * Otherwise we now look for the start. The start is either the
-			 * last character before any word-break character going backwards
-			 * from the end, or it's simply character 0. We also handle open
-			 * quotes and parentheses.
-			 */
-			bool		inquotes = false;
-			int			parentheses = 0;
-
-			for (start = end; start > 0; start--)
+			if (buf[start] == '"')
+				inquotes = !inquotes;
+			if (!inquotes)
 			{
-				if (buf[start] == '"')
-					inquotes = !inquotes;
-				if (!inquotes)
+				if (buf[start] == ')')
+					parentheses++;
+				else if (buf[start] == '(')
 				{
-					if (buf[start] == ')')
-						parentheses++;
-					else if (buf[start] == '(')
-					{
-						if (--parentheses <= 0)
-							break;
-					}
-					else if (parentheses == 0 &&
-							 strchr(WORD_BREAKS, buf[start - 1]))
+					if (--parentheses <= 0)
 						break;
 				}
+				else if (parentheses == 0 &&
+						 strchr(WORD_BREAKS, buf[start - 1]))
+					break;
 			}
-
-			point = start - 1;
-
-			/* make a copy of chars from start to end inclusive */
-			s = pg_malloc(end - start + 2);
-			strlcpy(s, &buf[start], end - start + 2);
-
-			words_found++;
 		}
 
-		*previous_words++ = s;
+		/* Return the word located at start to end inclusive */
+		previous_words[words_found] = &buf[start];
+		buf[end + 1] = '\0';
+		words_found++;
+
+		/* Continue searching */
+		point = start - 1;
 	}
 
-	return words_found;
+	*nwords = words_found;
+	return previous_words;
 }
 
 /*
