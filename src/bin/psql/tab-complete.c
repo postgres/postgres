@@ -2154,7 +2154,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_updatables, NULL);
 	/* Complete DELETE FROM <table> */
 	else if (TailMatches3("DELETE", "FROM", MatchAny))
-		COMPLETE_WITH_LIST3("USING", "WHERE", "SET");
+		COMPLETE_WITH_LIST2("USING", "WHERE");
 	/* XXX: implement tab completion for DELETE ... USING */
 
 /* DISCARD */
