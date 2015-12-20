@@ -2759,7 +2759,7 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "FROM") == 0)
 	{
 		static const char *const list_DELETE[] =
-		{"USING", "WHERE", "SET", NULL};
+		{"USING", "WHERE", NULL};
 
 		COMPLETE_WITH_LIST(list_DELETE);
 	}
