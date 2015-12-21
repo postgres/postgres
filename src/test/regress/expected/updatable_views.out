@@ -1163,3 +1163,70 @@ DROP TABLE base_tbl_parent, base_tbl_child CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view rw_view1
 drop cascades to view rw_view2
+CREATE TABLE tx1 (a integer);
+CREATE TABLE tx2 (b integer);
+CREATE TABLE tx3 (c integer);
+CREATE VIEW vx1 AS SELECT a FROM tx1 WHERE EXISTS(SELECT 1 FROM tx2 JOIN tx3 ON b=c);
+INSERT INTO vx1 values (1);
+SELECT * FROM tx1;
+ a 
+---
+ 1
+(1 row)
+
+SELECT * FROM vx1;
+ a 
+---
+(0 rows)
+
+DROP VIEW vx1;
+DROP TABLE tx1;
+DROP TABLE tx2;
+DROP TABLE tx3;
+CREATE TABLE tx1 (a integer);
+CREATE TABLE tx2 (b integer);
+CREATE TABLE tx3 (c integer);
+CREATE VIEW vx1 AS SELECT a FROM tx1 WHERE EXISTS(SELECT 1 FROM tx2 JOIN tx3 ON b=c);
+INSERT INTO vx1 VALUES (1);
+INSERT INTO vx1 VALUES (1);
+SELECT * FROM tx1;
+ a 
+---
+ 1
+ 1
+(2 rows)
+
+SELECT * FROM vx1;
+ a 
+---
+(0 rows)
+
+DROP VIEW vx1;
+DROP TABLE tx1;
+DROP TABLE tx2;
+DROP TABLE tx3;
+CREATE TABLE tx1 (a integer, b integer);
+CREATE TABLE tx2 (b integer, c integer);
+CREATE TABLE tx3 (c integer, d integer);
+ALTER TABLE tx1 DROP COLUMN b;
+ALTER TABLE tx2 DROP COLUMN c;
+ALTER TABLE tx3 DROP COLUMN d;
+CREATE VIEW vx1 AS SELECT a FROM tx1 WHERE EXISTS(SELECT 1 FROM tx2 JOIN tx3 ON b=c);
+INSERT INTO vx1 VALUES (1);
+INSERT INTO vx1 VALUES (1);
+SELECT * FROM tx1;
+ a 
+---
+ 1
+ 1
+(2 rows)
+
+SELECT * FROM vx1;
+ a 
+---
+(0 rows)
+
+DROP VIEW vx1;
+DROP TABLE tx1;
+DROP TABLE tx2;
+DROP TABLE tx3;

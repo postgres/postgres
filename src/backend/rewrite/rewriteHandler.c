@@ -1893,6 +1893,9 @@ fireRules(Query *parsetree,
  *
  * Caller should have verified that the relation is a view, and therefore
  * we should find an ON SELECT action.
+ *
+ * Note that the pointer returned is into the relcache and therefore must
+ * be treated as read-only to the caller and not modified or scribbled on.
  */
 static Query *
 get_view_query(Relation view)
@@ -2377,8 +2380,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 	/*
 	 * If we get here, view_is_auto_updatable() has verified that the view
 	 * contains a single base relation.
+	 *
+	 * Get the Query from the view's ON SELECT rule.  We're going to munge the
+	 * Query to change the view's base relation into the target relation,
+	 * along with various other changes along the way, so we need to make a
+	 * copy of it (get_view_query() returns a pointer into the relcache, so we
+	 * have to treat it as read-only).
 	 */
-	viewquery = get_view_query(view);
+	viewquery = copyObject(get_view_query(view));
 
 	Assert(list_length(viewquery->jointree->fromlist) == 1);
 	rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
@@ -2427,7 +2436,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * outer query.  Perhaps someday we should refactor things enough so that
 	 * we can share code with the planner.)
 	 */
-	new_rte = (RangeTblEntry *) copyObject(base_rte);
+	new_rte = (RangeTblEntry *) base_rte;
 	parsetree->rtable = lappend(parsetree->rtable, new_rte);
 	new_rt_index = list_length(parsetree->rtable);
 
@@ -2439,14 +2448,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 		new_rte->inh = false;
 
 	/*
-	 * Make a copy of the view's targetlist, adjusting its Vars to reference
-	 * the new target RTE, ie make their varnos be new_rt_index instead of
-	 * base_rt_index.  There can be no Vars for other rels in the tlist, so
-	 * this is sufficient to pull up the tlist expressions for use in the
-	 * outer query.  The tlist will provide the replacement expressions used
-	 * by ReplaceVarsFromTargetList below.
+	 * Adjust the view's targetlist Vars to reference the new target RTE, ie
+	 * make their varnos be new_rt_index instead of base_rt_index.  There can
+	 * be no Vars for other rels in the tlist, so this is sufficient to pull
+	 * up the tlist expressions for use in the outer query.  The tlist will
+	 * provide the replacement expressions used by ReplaceVarsFromTargetList
+	 * below.
 	 */
-	view_targetlist = copyObject(viewquery->targetList);
+	view_targetlist = viewquery->targetList;
 
 	ChangeVarNodes((Node *) view_targetlist,
 				   base_rt_index,
@@ -2581,7 +2590,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	if (parsetree->commandType != CMD_INSERT &&
 		viewquery->jointree->quals != NULL)
 	{
-		Node	   *viewqual = (Node *) copyObject(viewquery->jointree->quals);
+		Node	   *viewqual = (Node *) viewquery->jointree->quals;
 
 		ChangeVarNodes(viewqual, base_rt_index, new_rt_index, 0);
 		AddQual(parsetree, (Node *) viewqual);
