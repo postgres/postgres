@@ -74,19 +74,36 @@ DROP OWNED BY regression_user1;
 
 -- Test REASSIGN OWNED
 GRANT ALL ON deptest1 TO regression_user1;
+GRANT CREATE ON DATABASE regression TO regression_user1;
 
 SET SESSION AUTHORIZATION regression_user1;
+CREATE SCHEMA deptest;
 CREATE TABLE deptest (a serial primary key, b text);
+ALTER DEFAULT PRIVILEGES FOR ROLE regression_user1 IN SCHEMA deptest
+  GRANT ALL ON TABLES TO regression_user2;
+CREATE FUNCTION deptest_func() RETURNS void LANGUAGE plpgsql
+  AS $$ BEGIN END; $$;
+CREATE TYPE deptest_enum AS ENUM ('red');
+CREATE TYPE deptest_range AS RANGE (SUBTYPE = int4);
 
 CREATE TABLE deptest2 (f1 int);
 -- make a serial column the hard way
 CREATE SEQUENCE ss1;
 ALTER TABLE deptest2 ALTER f1 SET DEFAULT nextval('ss1');
 ALTER SEQUENCE ss1 OWNED BY deptest2.f1;
-RESET SESSION AUTHORIZATION;
 
+-- When reassigning ownership of a composite type, its pg_class entry
+-- should match
+CREATE TYPE deptest_t AS (a int);
+SELECT typowner = relowner
+FROM pg_type JOIN pg_class c ON typrelid = c.oid WHERE typname = 'deptest_t';
+
+RESET SESSION AUTHORIZATION;
 REASSIGN OWNED BY regression_user1 TO regression_user2;
 \dt deptest
+
+SELECT typowner = relowner
+FROM pg_type JOIN pg_class c ON typrelid = c.oid WHERE typname = 'deptest_t';
 
 -- doesn't work: grant still exists
 DROP USER regression_user1;
