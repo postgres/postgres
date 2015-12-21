@@ -3652,41 +3652,39 @@ get_previous_words(int point, char **buffer, int *nwords)
 {
 	char	  **previous_words;
 	char	   *buf;
-	int			buflen;
+	char	   *outptr;
 	int			words_found = 0;
 	int			i;
 
 	/*
-	 * Construct a writable buffer including both preceding and current lines
-	 * of the query, up to "point" which is where the currently completable
-	 * word begins.  Because our definition of "word" is such that a non-word
-	 * character must end each word, we can use this buffer to return the word
-	 * data as-is, by placing a '\0' after each word.
+	 * If we have anything in tab_completion_query_buf, paste it together with
+	 * rl_line_buffer to construct the full query.  Otherwise we can just use
+	 * rl_line_buffer as the input string.
 	 */
-	buflen = point + 1;
-	if (tab_completion_query_buf)
-		buflen += tab_completion_query_buf->len + 1;
-	*buffer = buf = pg_malloc(buflen);
-	i = 0;
-	if (tab_completion_query_buf)
+	if (tab_completion_query_buf && tab_completion_query_buf->len > 0)
 	{
-		memcpy(buf, tab_completion_query_buf->data,
-			   tab_completion_query_buf->len);
-		i += tab_completion_query_buf->len;
+		i = tab_completion_query_buf->len;
+		buf = pg_malloc(point + i + 2);
+		memcpy(buf, tab_completion_query_buf->data, i);
 		buf[i++] = '\n';
+		memcpy(buf + i, rl_line_buffer, point);
+		i += point;
+		buf[i] = '\0';
+		/* Readjust point to reference appropriate offset in buf */
+		point = i;
 	}
-	memcpy(buf + i, rl_line_buffer, point);
-	i += point;
-	buf[i] = '\0';
-
-	/* Readjust point to reference appropriate offset in buf */
-	point = i;
+	else
+		buf = rl_line_buffer;
 
 	/*
-	 * Allocate array of word start points.  There can be at most length/2 + 1
-	 * words in the buffer.
+	 * Allocate an array of string pointers and a buffer to hold the strings
+	 * themselves.  The worst case is that the line contains only
+	 * non-whitespace WORD_BREAKS characters, making each one a separate word.
+	 * This is usually much more space than we need, but it's cheaper than
+	 * doing a separate malloc() for each word.
 	 */
-	previous_words = (char **) pg_malloc((point / 2 + 1) * sizeof(char *));
+	previous_words = (char **) pg_malloc(point * sizeof(char *));
+	*buffer = outptr = (char *) pg_malloc(point * 2);
 
 	/*
 	 * First we look for a non-word char before the current point.  (This is
@@ -3752,13 +3750,19 @@ get_previous_words(int point, char **buffer, int *nwords)
 		}
 
 		/* Return the word located at start to end inclusive */
-		previous_words[words_found] = &buf[start];
-		buf[end + 1] = '\0';
-		words_found++;
+		previous_words[words_found++] = outptr;
+		i = end - start + 1;
+		memcpy(outptr, &buf[start], i);
+		outptr += i;
+		*outptr++ = '\0';
 
 		/* Continue searching */
 		point = start - 1;
 	}
+
+	/* Release parsing input workspace, if we made one above */
+	if (buf != rl_line_buffer)
+		free(buf);
 
 	*nwords = words_found;
 	return previous_words;
