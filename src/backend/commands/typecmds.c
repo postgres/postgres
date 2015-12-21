@@ -3319,6 +3319,8 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
  *
  * hasDependEntry should be TRUE if type is expected to have a pg_shdepend
  * entry (ie, it's not a table rowtype nor an array type).
+ * is_primary_ops should be TRUE if this function is invoked with user's
+ * direct operation (e.g, shdepReassignOwned). Elsewhere, 
  */
 void
 AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
@@ -3374,6 +3376,8 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 	/* If it has an array type, update that too */
 	if (OidIsValid(typTup->typarray))
 		AlterTypeOwnerInternal(typTup->typarray, newOwnerId, false);
+
+	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
 
 	/* Clean up */
 	heap_close(rel, RowExclusiveLock);
