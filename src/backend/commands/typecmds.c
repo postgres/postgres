@@ -2717,33 +2717,7 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 							   get_namespace_name(typTup->typnamespace));
 		}
 
-		/*
-		 * If it's a composite type, invoke ATExecChangeOwner so that we fix
-		 * up the pg_class entry properly.  That will call back to
-		 * AlterTypeOwnerInternal to take care of the pg_type entry(s).
-		 */
-		if (typTup->typtype == TYPTYPE_COMPOSITE)
-			ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
-		else
-		{
-			/*
-			 * We can just apply the modification directly.
-			 *
-			 * okay to scribble on typTup because it's a copy
-			 */
-			typTup->typowner = newOwnerId;
-
-			simple_heap_update(rel, &tup->t_self, tup);
-
-			CatalogUpdateIndexes(rel, tup);
-
-			/* Update owner dependency reference */
-			changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
-
-			/* If it has an array type, update that too */
-			if (OidIsValid(typTup->typarray))
-				AlterTypeOwnerInternal(typTup->typarray, newOwnerId, false);
-		}
+		AlterTypeOwner_oid(typeOid, newOwnerId, true);
 	}
 
 	/* Clean up */
@@ -2751,19 +2725,56 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 }
 
 /*
- * AlterTypeOwnerInternal - change type owner unconditionally
+ * AlterTypeOwner_oid - change type owner unconditionally
  *
- * This is currently only used to propagate ALTER TABLE/TYPE OWNER to a
- * table's rowtype or an array type, and to implement REASSIGN OWNED BY.
- * It assumes the caller has done all needed checks.  The function will
- * automatically recurse to an array type if the type has one.
+ * This function recurses to handle a pg_class entry, if necessary.  It
+ * invokes any necessary access object hooks.  If hasDependEntry is TRUE, this
+ * function modifies the pg_shdepend entry appropriately (this should be
+ * passed as FALSE only for table rowtypes and array types).
  *
- * hasDependEntry should be TRUE if type is expected to have a pg_shdepend
- * entry (ie, it's not a table rowtype nor an array type).
+ * This is used by ALTER TABLE/TYPE OWNER commands, as well as by REASSIGN
+ * OWNED BY.  It assumes the caller has done all needed check.
  */
 void
-AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
-					   bool hasDependEntry)
+AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
+{
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_type typTup;
+
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
+
+	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
+	typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/*
+	 * If it's a composite type, invoke ATExecChangeOwner so that we fix up the
+	 * pg_class entry properly.  That will call back to AlterTypeOwnerInternal
+	 * to take care of the pg_type entry(s).
+	 */
+	if (typTup->typtype == TYPTYPE_COMPOSITE)
+		ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
+	else
+		AlterTypeOwnerInternal(typeOid, newOwnerId);
+
+	/* Update owner dependency reference */
+	if (hasDependEntry)
+		changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
+
+	ReleaseSysCache(tup);
+	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * AlterTypeOwnerInternal - bare-bones type owner change.
+ *
+ * This routine simply modifies the owner of a pg_type entry, and recurses
+ * to handle a possible array type.
+ */
+void
+AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
 {
 	Relation	rel;
 	HeapTuple	tup;
@@ -2785,13 +2796,9 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 
 	CatalogUpdateIndexes(rel, tup);
 
-	/* Update owner dependency reference, if it has one */
-	if (hasDependEntry)
-		changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
-
 	/* If it has an array type, update that too */
 	if (OidIsValid(typTup->typarray))
-		AlterTypeOwnerInternal(typTup->typarray, newOwnerId, false);
+		AlterTypeOwnerInternal(typTup->typarray, newOwnerId);
 
 	/* Clean up */
 	heap_close(rel, RowExclusiveLock);
