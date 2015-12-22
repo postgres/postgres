@@ -259,6 +259,9 @@ static bool postgresAnalyzeForeignTable(Relation relation,
 							BlockNumber *totalpages);
 static List *postgresImportForeignSchema(ImportForeignSchemaStmt *stmt,
 							Oid serverOid);
+static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
+								 RelOptInfo *rel);
+static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * Helper functions
@@ -509,6 +512,197 @@ postgresGetForeignRelSize(PlannerInfo *root,
 }
 
 /*
+ * get_useful_ecs_for_relation
+ *		Determine which EquivalenceClasses might be involved in useful
+ *		orderings of this relation.
+ *
+ * This function is in some respects a mirror image of the core function
+ * pathkeys_useful_for_merging: for a regular table, we know what indexes
+ * we have and want to test whether any of them are useful.  For a foreign
+ * table, we don't know what indexes are present on the remote side but
+ * want to speculate about which ones we'd like to use if they existed.
+ */
+static List *
+get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *useful_eclass_list = NIL;
+	ListCell   *lc;
+	Relids		relids;
+
+	/*
+	 * First, consider whether any active EC is potentially useful for a
+	 * merge join against this relation.
+	 */
+	if (rel->has_eclass_joins)
+	{
+		foreach(lc, root->eq_classes)
+		{
+			EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc);
+
+			if (eclass_useful_for_merging(root, cur_ec, rel))
+				useful_eclass_list = lappend(useful_eclass_list, cur_ec);
+		}
+	}
+
+	/*
+	 * Next, consider whether there are any non-EC derivable join clauses that
+	 * are merge-joinable.  If the joininfo list is empty, we can exit
+	 * quickly.
+	 */
+	if (rel->joininfo == NIL)
+		return useful_eclass_list;
+
+	/* If this is a child rel, we must use the topmost parent rel to search. */
+	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		relids = find_childrel_top_parent(root, rel)->relids;
+	else
+		relids = rel->relids;
+
+	/* Check each join clause in turn. */
+	foreach(lc, rel->joininfo)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(lc);
+
+		/* Consider only mergejoinable clauses */
+		if (restrictinfo->mergeopfamilies == NIL)
+			continue;
+
+		/* Make sure we've got canonical ECs. */
+		update_mergeclause_eclasses(root, restrictinfo);
+
+		/*
+		 * restrictinfo->mergeopfamilies != NIL is sufficient to guarantee
+		 * that left_ec and right_ec will be initialized, per comments in
+		 * distribute_qual_to_rels, and rel->joininfo should only contain ECs
+		 * where this relation appears on one side or the other.
+		 */
+		if (bms_is_subset(restrictinfo->right_ec->ec_relids, relids))
+			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
+													 restrictinfo->right_ec);
+		else
+		{
+			Assert(bms_is_subset(restrictinfo->left_ec->ec_relids, relids));
+			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
+													  restrictinfo->left_ec);
+		}
+	}
+
+	return useful_eclass_list;
+}
+
+/*
+ * get_useful_pathkeys_for_relation
+ *		Determine which orderings of a relation might be useful.
+ *
+ * Getting data in sorted order can be useful either because the requested
+ * order matches the final output ordering for the overall query we're
+ * planning, or because it enables an efficient merge join.  Here, we try
+ * to figure out which pathkeys to consider.
+ */
+static List *
+get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *useful_pathkeys_list = NIL;
+	List	   *useful_eclass_list;
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
+	EquivalenceClass *query_ec = NULL;
+	ListCell   *lc;
+
+	/*
+	 * Pushing the query_pathkeys to the remote server is always worth
+	 * considering, because it might let us avoid a local sort.
+	 */
+	if (root->query_pathkeys)
+	{
+		bool		query_pathkeys_ok = true;
+
+		foreach(lc, root->query_pathkeys)
+		{
+			PathKey    *pathkey = (PathKey *) lfirst(lc);
+			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
+			Expr	   *em_expr;
+
+			/*
+			 * The planner and executor don't have any clever strategy for
+			 * taking data sorted by a prefix of the query's pathkeys and
+			 * getting it to be sorted by all of those pathkeys. We'll just
+			 * end up resorting the entire data set.  So, unless we can push
+			 * down all of the query pathkeys, forget it.
+			 *
+			 * is_foreign_expr would detect volatile expressions as well, but
+			 * checking ec_has_volatile here saves some cycles.
+			 */
+			if (pathkey_ec->ec_has_volatile ||
+				!(em_expr = find_em_expr_for_rel(pathkey_ec, rel)) ||
+				!is_foreign_expr(root, rel, em_expr))
+			{
+				query_pathkeys_ok = false;
+				break;
+			}
+		}
+
+		if (query_pathkeys_ok)
+			useful_pathkeys_list = list_make1(list_copy(root->query_pathkeys));
+	}
+
+	/*
+	 * Even if we're not using remote estimates, having the remote side do
+	 * the sort generally won't be any worse than doing it locally, and it
+	 * might be much better if the remote side can generate data in the right
+	 * order without needing a sort at all.  However, what we're going to do
+	 * next is try to generate pathkeys that seem promising for possible merge
+	 * joins, and that's more speculative.  A wrong choice might hurt quite a
+	 * bit, so bail out if we can't use remote estimates.
+	 */
+	if (!fpinfo->use_remote_estimate)
+		return useful_pathkeys_list;
+
+	/* Get the list of interesting EquivalenceClasses. */
+	useful_eclass_list = get_useful_ecs_for_relation(root, rel);
+
+	/* Extract unique EC for query, if any, so we don't consider it again. */
+	if (list_length(root->query_pathkeys) == 1)
+	{
+		PathKey    *query_pathkey = linitial(root->query_pathkeys);
+
+		query_ec = query_pathkey->pk_eclass;
+	}
+
+	/*
+	 * As a heuristic, the only pathkeys we consider here are those of length
+	 * one.  It's surely possible to consider more, but since each one we
+	 * choose to consider will generate a round-trip to the remote side, we
+	 * need to be a bit cautious here.  It would sure be nice to have a local
+	 * cache of information about remote index definitions...
+	 */
+	foreach(lc, useful_eclass_list)
+	{
+		EquivalenceClass *cur_ec = lfirst(lc);
+		Expr	   *em_expr;
+		PathKey    *pathkey;
+
+		/* If redundant with what we did above, skip it. */
+		if (cur_ec == query_ec)
+			continue;
+
+		/* If no pushable expression for this rel, skip it. */
+		em_expr = find_em_expr_for_rel(cur_ec, rel);
+		if (em_expr == NULL || !is_foreign_expr(root, rel, em_expr))
+			continue;
+
+		/* Looks like we can generate a pathkey, so let's do it. */
+		pathkey = make_canonical_pathkey(root, cur_ec,
+										 linitial_oid(cur_ec->ec_opfamilies),
+										 BTLessStrategyNumber,
+										 false);
+		useful_pathkeys_list = lappend(useful_pathkeys_list,
+									   list_make1(pathkey));
+	}
+
+	return useful_pathkeys_list;
+}
+
+/*
  * postgresGetForeignPaths
  *		Create possible scan paths for a scan on the foreign table
  */
@@ -521,7 +715,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 	ForeignPath *path;
 	List	   *ppi_list;
 	ListCell   *lc;
-	List	   *usable_pathkeys = NIL;
+	List	   *useful_pathkeys_list = NIL;		/* List of all pathkeys */
 
 	/*
 	 * Create simplest ForeignScan path node and add it to baserel.  This path
@@ -540,48 +734,18 @@ postgresGetForeignPaths(PlannerInfo *root,
 								   NIL);		/* no fdw_private list */
 	add_path(baserel, (Path *) path);
 
-	/*
-	 * Determine whether we can potentially push query pathkeys to the remote
-	 * side, avoiding a local sort.
-	 */
-	foreach(lc, root->query_pathkeys)
-	{
-		PathKey    *pathkey = (PathKey *) lfirst(lc);
-		EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
-		Expr	   *em_expr;
+	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, baserel);
 
-		/*
-		 * is_foreign_expr would detect volatile expressions as well, but
-		 * ec_has_volatile saves some cycles.
-		 */
-		if (!pathkey_ec->ec_has_volatile &&
-			(em_expr = find_em_expr_for_rel(pathkey_ec, baserel)) &&
-			is_foreign_expr(root, baserel, em_expr))
-			usable_pathkeys = lappend(usable_pathkeys, pathkey);
-		else
-		{
-			/*
-			 * The planner and executor don't have any clever strategy for
-			 * taking data sorted by a prefix of the query's pathkeys and
-			 * getting it to be sorted by all of those pathekeys.  We'll just
-			 * end up resorting the entire data set.  So, unless we can push
-			 * down all of the query pathkeys, forget it.
-			 */
-			list_free(usable_pathkeys);
-			usable_pathkeys = NIL;
-			break;
-		}
-	}
-
-	/* Create a path with useful pathkeys, if we found one. */
-	if (usable_pathkeys != NULL)
+	/* Create one path for each set of pathkeys we found above. */
+	foreach(lc, useful_pathkeys_list)
 	{
 		double		rows;
 		int			width;
 		Cost		startup_cost;
 		Cost		total_cost;
+		List	   *useful_pathkeys = lfirst(lc);
 
-		estimate_path_cost_size(root, baserel, NIL, usable_pathkeys,
+		estimate_path_cost_size(root, baserel, NIL, useful_pathkeys,
 								&rows, &width, &startup_cost, &total_cost);
 
 		add_path(baserel, (Path *)
@@ -589,7 +753,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 										 rows,
 										 startup_cost,
 										 total_cost,
-										 usable_pathkeys,
+										 useful_pathkeys,
 										 NULL,
 										 NULL,
 										 NIL));
