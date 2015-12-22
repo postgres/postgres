@@ -930,7 +930,14 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	state->sortKeys->ssup_collation = sortCollation;
 	state->sortKeys->ssup_nulls_first = nullsFirstFlag;
 
-	/* abbreviation is possible here only for by-reference types */
+	/*
+	 * Abbreviation is possible here only for by-reference types.  In theory,
+	 * a pass-by-value datatype could have an abbreviated form that is cheaper
+	 * to compare.  In a tuple sort, we could support that, because we can
+	 * always extract the original datum from the tuple is needed.  Here, we
+	 * can't, because a datum sort only stores a single copy of the datum;
+	 * the "tuple" field of each sortTuple is NULL.
+	 */
 	state->sortKeys->abbreviate = !typbyval;
 
 	PrepareSortSupportFromOrderingOp(sortOperator, state->sortKeys);
@@ -1271,7 +1278,7 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup.datum1 = original;
@@ -3155,7 +3162,7 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup->datum1 = original;
@@ -3397,7 +3404,7 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup->datum1 = original;
@@ -3701,7 +3708,7 @@ copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup->datum1 = original;
