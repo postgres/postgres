@@ -112,7 +112,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	PGconn	   *newConn;
 	const char *newdb;
 	const char *newuser;
-	char	   *password = AH->savedPassword;
+	char	   *password;
 	bool		new_pass;
 
 	if (!reqdb)
@@ -128,6 +128,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	ahlog(AH, 1, "connecting to database \"%s\" as user \"%s\"\n",
 		  newdb, newuser);
 
+	password = AH->savedPassword ? pg_strdup(AH->savedPassword) : NULL;
+
 	if (AH->promptPassword == TRI_YES && password == NULL)
 	{
 		password = simple_prompt("Password: ", 100, false);
@@ -137,9 +139,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-#define PARAMS_ARRAY_SIZE	7
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char *keywords[7];
+		const char *values[7];
 
 		keywords[0] = "host";
 		values[0] = PQhost(AH->connection);
@@ -158,9 +159,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 		new_pass = false;
 		newConn = PQconnectdbParams(keywords, values, true);
-
-		free(keywords);
-		free(values);
 
 		if (!newConn)
 			exit_horribly(modulename, "failed to reconnect to database\n");
@@ -192,7 +190,18 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		}
 	} while (new_pass);
 
-	AH->savedPassword = password;
+	/*
+	 * We want to remember connection's actual password, whether or not we got
+	 * it by prompting.  So we don't just store the password variable.
+	 */
+	if (PQconnectionUsedPassword(newConn))
+	{
+		if (AH->savedPassword)
+			free(AH->savedPassword);
+		AH->savedPassword = pg_strdup(PQpass(newConn));
+	}
+	if (password)
+		free(password);
 
 	/* check for version mismatch */
 	_check_database_version(AH);
@@ -221,11 +230,13 @@ ConnectDatabase(Archive *AHX,
 				trivalue prompt_password)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	char	   *password = AH->savedPassword;
+	char	   *password;
 	bool		new_pass;
 
 	if (AH->connection)
 		exit_horribly(modulename, "already connected to a database\n");
+
+	password = AH->savedPassword ? pg_strdup(AH->savedPassword) : NULL;
 
 	if (prompt_password == TRI_YES && password == NULL)
 	{
@@ -241,9 +252,8 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-#define PARAMS_ARRAY_SIZE	7
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char *keywords[7];
+		const char *values[7];
 
 		keywords[0] = "host";
 		values[0] = pghost;
@@ -263,9 +273,6 @@ ConnectDatabase(Archive *AHX,
 		new_pass = false;
 		AH->connection = PQconnectdbParams(keywords, values, true);
 
-		free(keywords);
-		free(values);
-
 		if (!AH->connection)
 			exit_horribly(modulename, "failed to connect to database\n");
 
@@ -282,13 +289,24 @@ ConnectDatabase(Archive *AHX,
 		}
 	} while (new_pass);
 
-	AH->savedPassword = password;
-
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		exit_horribly(modulename, "connection to database \"%s\" failed: %s",
 					  PQdb(AH->connection) ? PQdb(AH->connection) : "",
 					  PQerrorMessage(AH->connection));
+
+	/*
+	 * We want to remember connection's actual password, whether or not we got
+	 * it by prompting.  So we don't just store the password variable.
+	 */
+	if (PQconnectionUsedPassword(AH->connection))
+	{
+		if (AH->savedPassword)
+			free(AH->savedPassword);
+		AH->savedPassword = pg_strdup(PQpass(AH->connection));
+	}
+	if (password)
+		free(password);
 
 	/* check for version mismatch */
 	_check_database_version(AH);
