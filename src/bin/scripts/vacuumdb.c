@@ -43,8 +43,7 @@ static void vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 					const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					int concurrentCons,
-					const char *progname, bool echo, bool quiet,
-					char **password);
+					const char *progname, bool echo, bool quiet);
 
 static void vacuum_all_databases(vacuumingOptions *vacopts,
 					 bool analyze_in_stages,
@@ -276,8 +275,6 @@ main(int argc, char *argv[])
 	}
 	else
 	{
-		char *password = NULL;
-
 		if (dbname == NULL)
 		{
 			if (getenv("PGDATABASE"))
@@ -299,8 +296,7 @@ main(int argc, char *argv[])
 									&tables,
 									host, port, username, prompt_password,
 									concurrentCons,
-									progname, echo, quiet,
-									&password);
+									progname, echo, quiet);
 			}
 		}
 		else
@@ -309,10 +305,7 @@ main(int argc, char *argv[])
 								&tables,
 								host, port, username, prompt_password,
 								concurrentCons,
-								progname, echo, quiet,
-								&password);
-
-		pg_free(password);
+								progname, echo, quiet);
 	}
 
 	exit(0);
@@ -330,21 +323,15 @@ main(int argc, char *argv[])
  * If concurrentCons is > 1, multiple connections are used to vacuum tables
  * in parallel.  In this case and if the table list is empty, we first obtain
  * a list of tables from the database.
- *
- * 'password' is both an input and output parameter.  If one is not passed,
- * then whatever is used in a connection is returned so that caller can
- * reuse it in future connections.
  */
 static void
 vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 					int stage,
 					SimpleStringList *tables,
 					const char *host, const char *port,
-					const char *username,
-					enum trivalue prompt_password,
+					const char *username, enum trivalue prompt_password,
 					int concurrentCons,
-					const char *progname, bool echo, bool quiet,
-					char **password)
+					const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
 	PGconn	   *conn;
@@ -378,15 +365,8 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		fflush(stdout);
 	}
 
-	conn = connectDatabase(dbname, host, port, username, *password,
-						   prompt_password, progname, false);
-
-	/*
-	 * If no password was not specified by caller and the connection required
-	 * one, remember it; this suppresses further password prompts.
-	 */
-	if (PQconnectionUsedPassword(conn) && *password == NULL)
-		*password = pg_strdup(PQpass(conn));
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, false, true);
 
 	initPQExpBuffer(&sql);
 
@@ -444,20 +424,10 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	init_slot(slots, conn);
 	if (parallel)
 	{
-		const char *pqpass;
-
-		/*
-		 * If a password was supplied for the initial connection, use it for
-		 * subsequent ones too.  (Note that since we're connecting to the same
-		 * database with the same user, there's no need to update the stored
-		 * password any further.)
-		 */
-		pqpass = PQpass(conn);
-
 		for (i = 1; i < concurrentCons; i++)
 		{
-			conn = connectDatabase(dbname, host, port, username, pqpass,
-								   prompt_password, progname, false);
+			conn = connectDatabase(dbname, host, port, username, prompt_password,
+								   progname, false, true);
 			init_slot(slots + i, conn);
 		}
 	}
@@ -572,23 +542,12 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	PGresult   *result;
 	int			stage;
 	int			i;
-	char	   *password = NULL;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
 									  username, prompt_password, progname);
-
 	result = executeQuery(conn,
 			"SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  progname, echo);
-
-	/*
-	 * Remember the password for further connections.  If no password was
-	 * required for the maintenance db connection, this gets updated for the
-	 * first connection that does.
-	 */
-	if (PQconnectionUsedPassword(conn))
-		password = pg_strdup(PQpass(conn));
-
 	PQfinish(conn);
 
 	if (analyze_in_stages)
@@ -613,8 +572,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 									NULL,
 									host, port, username, prompt_password,
 									concurrentCons,
-									progname, echo, quiet,
-									&password);
+									progname, echo, quiet);
 			}
 		}
 	}
@@ -630,13 +588,11 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 								NULL,
 								host, port, username, prompt_password,
 								concurrentCons,
-								progname, echo, quiet,
-								&password);
+								progname, echo, quiet);
 		}
 	}
 
 	PQclear(result);
-	pg_free(password);
 }
 
 /*

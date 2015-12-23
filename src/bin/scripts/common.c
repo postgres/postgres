@@ -54,22 +54,31 @@ handle_help_version_opts(int argc, char *argv[],
 /*
  * Make a database connection with the given parameters.
  *
- * A password can be given, but if not (or if user forces us to) we prompt
- * interactively for one, unless caller prohibited us from doing so.
+ * An interactive password prompt is automatically issued if needed and
+ * allowed by prompt_password.
+ *
+ * If allow_password_reuse is true, we will try to re-use any password
+ * given during previous calls to this routine.  (Callers should not pass
+ * allow_password_reuse=true unless reconnecting to the same database+user
+ * as before, else we might create password exposure hazards.)
  */
 PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, const char *pgpassword,
-				enum trivalue prompt_password, const char *progname,
-				bool fail_ok)
+				const char *pguser, enum trivalue prompt_password,
+				const char *progname, bool fail_ok, bool allow_password_reuse)
 {
 	PGconn	   *conn;
-	char	   *password;
+	static char *password = NULL;
 	bool		new_pass;
 
-	password = pgpassword ? strdup(pgpassword) : NULL;
+	if (!allow_password_reuse)
+	{
+		if (password)
+			free(password);
+		password = NULL;
+	}
 
-	if (prompt_password == TRI_YES && !pgpassword)
+	if (password == NULL && prompt_password == TRI_YES)
 		password = simple_prompt("Password: ", 100, false);
 
 	/*
@@ -78,9 +87,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 */
 	do
 	{
-#define PARAMS_ARRAY_SIZE	7
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char *keywords[7];
+		const char *values[7];
 
 		keywords[0] = "host";
 		values[0] = pghost;
@@ -107,9 +115,6 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			exit(1);
 		}
 
-		pg_free(keywords);
-		pg_free(values);
-
 		/*
 		 * No luck?  Trying asking (again) for a password.
 		 */
@@ -124,9 +129,6 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			new_pass = true;
 		}
 	} while (new_pass);
-
-	if (password)
-		free(password);
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
@@ -157,15 +159,15 @@ connectMaintenanceDatabase(const char *maintenance_db, const char *pghost,
 
 	/* If a maintenance database name was specified, just connect to it. */
 	if (maintenance_db)
-		return connectDatabase(maintenance_db, pghost, pgport, pguser, NULL,
-							   prompt_password, progname, false);
+		return connectDatabase(maintenance_db, pghost, pgport, pguser,
+							   prompt_password, progname, false, false);
 
 	/* Otherwise, try postgres first and then template1. */
-	conn = connectDatabase("postgres", pghost, pgport, pguser, NULL,
-						   prompt_password, progname, true);
+	conn = connectDatabase("postgres", pghost, pgport, pguser, prompt_password,
+						   progname, true, false);
 	if (!conn)
-		conn = connectDatabase("template1", pghost, pgport, pguser, NULL,
-							   prompt_password, progname, false);
+		conn = connectDatabase("template1", pghost, pgport, pguser,
+							   prompt_password, progname, false, false);
 
 	return conn;
 }
