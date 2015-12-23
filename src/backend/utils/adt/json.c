@@ -2415,7 +2415,7 @@ escape_json(StringInfo buf, const char *str)
 {
 	const char *p;
 
-	appendStringInfoCharMacro(buf, '\"');
+	appendStringInfoCharMacro(buf, '"');
 	for (p = str; *p; p++)
 	{
 		switch (*p)
@@ -2449,7 +2449,7 @@ escape_json(StringInfo buf, const char *str)
 				break;
 		}
 	}
-	appendStringInfoCharMacro(buf, '\"');
+	appendStringInfoCharMacro(buf, '"');
 }
 
 /*

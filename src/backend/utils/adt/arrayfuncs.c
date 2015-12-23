@@ -515,7 +515,7 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							  errmsg("malformed array literal: \"%s\"", str),
 								 errdetail("Unexpected end of input.")));
 					break;
-				case '\"':
+				case '"':
 
 					/*
 					 * A quote must be after a level start, after a quoted
@@ -799,7 +799,7 @@ ReadArrayStr(char *arrayStr,
 					dstendptr = dstptr;
 					hasquoting = true;	/* can't be a NULL marker */
 					break;
-				case '\"':
+				case '"':
 					in_quotes = !in_quotes;
 					if (in_quotes)
 						leadingspace = false;

@@ -216,11 +216,11 @@ record_in(PG_FUNCTION_ARGS)
 								 errdetail("Unexpected end of input.")));
 					appendStringInfoChar(&buf, *ptr++);
 				}
-				else if (ch == '\"')
+				else if (ch == '"')
 				{
 					if (!inquote)
 						inquote = true;
-					else if (*ptr == '\"')
+					else if (*ptr == '"')
 					{
 						/* doubled quote within quote sequence */
 						appendStringInfoChar(&buf, *ptr++);

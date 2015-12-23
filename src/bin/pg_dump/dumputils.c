@@ -130,7 +130,7 @@ fmtId(const char *rawid)
 	}
 	else
 	{
-		appendPQExpBufferChar(id_return, '\"');
+		appendPQExpBufferChar(id_return, '"');
 		for (cp = rawid; *cp; cp++)
 		{
 			/*
@@ -138,11 +138,11 @@ fmtId(const char *rawid)
 			 * double double-quote per SQL99. Before, we put in a
 			 * backslash/double-quote pair. - thomas 2000-08-05
 			 */
-			if (*cp == '\"')
-				appendPQExpBufferChar(id_return, '\"');
+			if (*cp == '"')
+				appendPQExpBufferChar(id_return, '"');
 			appendPQExpBufferChar(id_return, *cp);
 		}
-		appendPQExpBufferChar(id_return, '\"');
+		appendPQExpBufferChar(id_return, '"');
 	}
 
 	return id_return->data;
