@@ -32,7 +32,7 @@
       target relation's name (optionally schema-qualified) or OID.
       For example:
 <programlisting>
-test=> SELECT * FROM pgstattuple('pg_catalog.pg_proc');
+test=&gt; SELECT * FROM pgstattuple('pg_catalog.pg_proc');
 -[ RECORD 1 ]------+-------
 table_len          | 458752
 tuple_count        | 1470
@@ -150,7 +150,7 @@ free_percent       | 1.95
       <function>pgstatindex</function> returns a record showing information
       about a B-tree index.  For example:
 <programlisting>
-test=> SELECT * FROM pgstatindex('pg_cast_oid_index');
+test=&gt; SELECT * FROM pgstatindex('pg_cast_oid_index');
 -[ RECORD 1 ]------+------
 version            | 2
 tree_level         | 0
@@ -280,7 +280,7 @@ leaf_fragmentation | 0
       <function>pgstatginindex</function> returns a record showing information
       about a GIN index.  For example:
 <programlisting>
-test=> SELECT * FROM pgstatginindex('test_gin_index');
+test=&gt; SELECT * FROM pgstatginindex('test_gin_index');
 -[ RECORD 1 ]--+--
 version        | 1
 pending_pages  | 0
@@ -373,7 +373,7 @@ pending_tuples | 0
       The argument is the target relation's OID.
       For example:
 <programlisting>
-test=> SELECT * FROM pgstattuple_approx('pg_catalog.pg_proc'::regclass);
+test=&gt; SELECT * FROM pgstattuple_approx('pg_catalog.pg_proc'::regclass);
 -[ RECORD 1 ]--------+-------
 table_len            | 573440
 scanned_percent      | 2

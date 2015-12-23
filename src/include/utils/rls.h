@@ -14,15 +14,7 @@
 #define RLS_H
 
 /* GUC variable */
-extern int	row_security;
-
-/* Possible values for row_security GUC */
-typedef enum RowSecurityConfigType
-{
-	ROW_SECURITY_OFF,			/* RLS never applied- error thrown if no priv */
-	ROW_SECURITY_ON,			/* normal case, RLS applied for regular users */
-	ROW_SECURITY_FORCE			/* RLS applied for superusers and table owners */
-}	RowSecurityConfigType;
+extern bool row_security;
 
 /*
  * Used by callers of check_enable_rls.
@@ -30,7 +22,7 @@ typedef enum RowSecurityConfigType
  * RLS could be completely disabled on the tables involved in the query,
  * which is the simple case, or it may depend on the current environment
  * (the role which is running the query or the value of the row_security
- * GUC- on, off, or force), or it might be simply enabled as usual.
+ * GUC), or it might be simply enabled as usual.
  *
  * If RLS isn't on the table involved then RLS_NONE is returned to indicate
  * that we don't need to worry about invalidating the query plan for RLS

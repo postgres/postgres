@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/utf8_to_iso8859_5.map */
+
 static const pg_utf_to_local ULmapISO8859_5[ 128 ] = {
   {0xc280, 0x0080},
   {0xc281, 0x0081},

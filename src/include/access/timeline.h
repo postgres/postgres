@@ -26,7 +26,8 @@ typedef struct
 {
 	TimeLineID	tli;
 	XLogRecPtr	begin;			/* inclusive */
-	XLogRecPtr	end;			/* exclusive, 0 means infinity */
+	XLogRecPtr	end;			/* exclusive, InvalidXLogRecPtr means
+								 * infinity */
 } TimeLineHistoryEntry;
 
 extern List *readTimeLineHistory(TimeLineID targetTLI);

@@ -7,11 +7,7 @@ SELECT '"abc
 def"'::json;					-- ERROR, unescaped newline in string constant
 SELECT '"\n\"\\"'::json;		-- OK, legal escapes
 SELECT '"\v"'::json;			-- ERROR, not a valid JSON escape
-SELECT '"\u"'::json;			-- ERROR, incomplete escape
-SELECT '"\u00"'::json;			-- ERROR, incomplete escape
-SELECT '"\u000g"'::json;		-- ERROR, g is not a hex digit
-SELECT '"\u0000"'::json;		-- OK, legal escape
-SELECT '"\uaBcD"'::json;		-- OK, uppercase and lower case both OK
+-- see json_encoding test for input with unicode escapes
 
 -- Numbers.
 SELECT '1'::json;				-- OK
@@ -44,6 +40,12 @@ SELECT '{"abc"::1}'::json;		-- ERROR, another wrong separator
 SELECT '{"abc":1,"def":2,"ghi":[3,4],"hij":{"klm":5,"nop":[6]}}'::json; -- OK
 SELECT '{"abc":1:2}'::json;		-- ERROR, colon in wrong spot
 SELECT '{"abc":1,3}'::json;		-- ERROR, no value
+
+-- Recursion.
+SET max_stack_depth = '100kB';
+SELECT repeat('[', 10000)::json;
+SELECT repeat('{"a":', 10000)::json;
+RESET max_stack_depth;
 
 -- Miscellaneous stuff.
 SELECT 'true'::json;			-- OK
@@ -114,8 +116,11 @@ COMMIT;
 select to_json(date '2014-05-28');
 
 select to_json(date 'Infinity');
+select to_json(date '-Infinity');
 select to_json(timestamp 'Infinity');
+select to_json(timestamp '-Infinity');
 select to_json(timestamptz 'Infinity');
+select to_json(timestamptz '-Infinity');
 
 --json_agg
 
@@ -398,28 +403,6 @@ select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
-
--- handling of unicode surrogate pairs
-
-select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
-select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
-select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
-select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
-select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
-
---handling of simple unicode escapes
-
-select json '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
-select json '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
-select json '{ "a":  "dollar \\u0024 character" }' as not_an_escape;
-select json '{ "a":  "null \u0000 escape" }' as not_unescaped;
-select json '{ "a":  "null \\u0000 escape" }' as not_an_escape;
-
-select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
-select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
-select json '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
-select json '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
-select json '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
 
 --json_typeof() function
 select value, json_typeof(value)

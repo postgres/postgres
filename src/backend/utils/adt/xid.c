@@ -88,6 +88,18 @@ xideq(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		xidneq			- are two xids different?
+ */
+Datum
+xidneq(PG_FUNCTION_ARGS)
+{
+	TransactionId xid1 = PG_GETARG_TRANSACTIONID(0);
+	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
+
+	PG_RETURN_BOOL(!TransactionIdEquals(xid1, xid2));
+}
+
+/*
  *		xid_age			- compute age of an XID (relative to latest stable xid)
  */
 Datum

@@ -1619,7 +1619,7 @@ find_expr_references_walker(Node *node,
 				case REGROLEOID:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("constant of the type \'regrole\' cannot be used here")));
+							 errmsg("constant of the type \"regrole\" cannot be used here")));
 					break;
 			}
 		}

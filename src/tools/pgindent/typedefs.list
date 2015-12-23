@@ -707,6 +707,9 @@ FunctionParameterMode
 FunctionScan
 FunctionScanPerFuncState
 FunctionScanState
+Gather
+GatherPath
+GatherState
 FuzzyAttrMatchState
 GBT_NUMKEY
 GBT_NUMKEY_R
@@ -1005,6 +1008,7 @@ LSEG
 LVRelStats
 LWLock
 LWLockHandle
+LWLockMinimallyPadded
 LWLockMode
 LWLockPadded
 LWLockTranche
@@ -1195,6 +1199,7 @@ OverrideSearchPath
 OverrideStackEntry
 PACE_HEADER
 PACL
+ParallelExecutorInfo
 PATH
 PBOOL
 PCtxtHandle
@@ -2014,6 +2019,7 @@ TupleHashEntry
 TupleHashEntryData
 TupleHashIterator
 TupleHashTable
+TupleQueueReader
 TupleTableSlot
 Tuplesortstate
 Tuplestorestate
@@ -2749,6 +2755,7 @@ xl_invalid_page
 xl_invalid_page_key
 xl_multi_insert_tuple
 xl_multixact_create
+xl_multixact_truncate
 xl_parameter_change
 xl_relmap_update
 xl_replorigin_drop

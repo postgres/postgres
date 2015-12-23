@@ -601,7 +601,7 @@ PostgreSQL documentation
   <para>
    Tablespaces will in plain format by default be backed up to the same path
    they have on the server, unless the
-   option <replaceable>--tablespace-mapping</replaceable> is used.  Without
+   option <literal>--tablespace-mapping</literal> is used.  Without
    this option, running a plain format base backup on the same host as the
    server will not work if tablespaces are in use, because the backup would
    have to be written to the same directory locations as the original
@@ -610,18 +610,18 @@ PostgreSQL documentation
 
   <para>
    When tar format mode is used, it is the user's responsibility to unpack each
-   tar file before starting postgres. If there are additional tablespaces, the
+   tar file before starting the PostgreSQL server. If there are additional tablespaces, the
    tar files for them need to be unpacked in the correct locations. In this
-   case the symbolic links for those tablespaces will be created by Postgres
+   case the symbolic links for those tablespaces will be created by the server
    according to the contents of the <filename>tablespace_map</> file that is
    included in the <filename>base.tar</> file.
   </para>
 
   <para>
    <application>pg_basebackup</application> works with servers of the same
-   or an older major version, down to 9.1. However, WAL streaming mode (-X
-   stream) only works with server version 9.3 and later, and tar format mode
-   (--format=tar) of the current version only works with server version 9.5
+   or an older major version, down to 9.1. However, WAL streaming mode (<literal>-X
+   stream</literal>) only works with server version 9.3 and later, and tar format mode
+   (<literal>--format=tar</literal>) of the current version only works with server version 9.5
    or later.
   </para>
 

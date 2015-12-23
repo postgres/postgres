@@ -267,30 +267,33 @@ SELECT '{"reading": 1.230e-5}'::json, '{"reading": 1.230e-5}'::jsonb;
   </para>
 <programlisting>
 -- Simple scalar/primitive values contain only the identical value:
-SELECT '"foo"'::jsonb @> '"foo"'::jsonb;
+SELECT '"foo"'::jsonb @&gt; '"foo"'::jsonb;
 
 -- The array on the right side is contained within the one on the left:
-SELECT '[1, 2, 3]'::jsonb @> '[1, 3]'::jsonb;
+SELECT '[1, 2, 3]'::jsonb @&gt; '[1, 3]'::jsonb;
 
 -- Order of array elements is not significant, so this is also true:
-SELECT '[1, 2, 3]'::jsonb @> '[3, 1]'::jsonb;
+SELECT '[1, 2, 3]'::jsonb @&gt; '[3, 1]'::jsonb;
 
 -- Duplicate array elements don't matter either:
-SELECT '[1, 2, 3]'::jsonb @> '[1, 2, 2]'::jsonb;
+SELECT '[1, 2, 3]'::jsonb @&gt; '[1, 2, 2]'::jsonb;
 
 -- The object with a single pair on the right side is contained
 -- within the object on the left side:
-SELECT '{"product": "PostgreSQL", "version": 9.4, "jsonb":true}'::jsonb @> '{"version":9.4}'::jsonb;
+SELECT '{"product": "PostgreSQL", "version": 9.4, "jsonb": true}'::jsonb @&gt; '{"version": 9.4}'::jsonb;
 
 -- The array on the right side is <emphasis>not</> considered contained within the
 -- array on the left, even though a similar array is nested within it:
-SELECT '[1, 2, [1, 3]]'::jsonb @> '[1, 3]'::jsonb;  -- yields false
+SELECT '[1, 2, [1, 3]]'::jsonb @&gt; '[1, 3]'::jsonb;  -- yields false
 
 -- But with a layer of nesting, it is contained:
-SELECT '[1, 2, [1, 3]]'::jsonb @> '[[1, 3]]'::jsonb;
+SELECT '[1, 2, [1, 3]]'::jsonb @&gt; '[[1, 3]]'::jsonb;
 
 -- Similarly, containment is not reported here:
-SELECT '{"foo": {"bar": "baz"}}'::jsonb @> '{"bar": "baz"}'::jsonb;  -- yields false
+SELECT '{"foo": {"bar": "baz"}}'::jsonb @&gt; '{"bar": "baz"}'::jsonb;  -- yields false
+
+-- A top-level key and an empty object is contained:
+SELECT '{"foo": {"bar": "baz"}}'::jsonb @&gt; '{"foo": {}}'::jsonb;
 </programlisting>
 
   <para>
@@ -309,10 +312,10 @@ SELECT '{"foo": {"bar": "baz"}}'::jsonb @> '{"bar": "baz"}'::jsonb;  -- yields f
   </para>
 <programlisting>
 -- This array contains the primitive string value:
-SELECT '["foo", "bar"]'::jsonb @> '"bar"'::jsonb;
+SELECT '["foo", "bar"]'::jsonb @&gt; '"bar"'::jsonb;
 
 -- This exception is not reciprocal -- non-containment is reported here:
-SELECT '"bar"'::jsonb @> '["bar"]'::jsonb;  -- yields false
+SELECT '"bar"'::jsonb @&gt; '["bar"]'::jsonb;  -- yields false
 </programlisting>
 
   <para>
@@ -346,6 +349,34 @@ SELECT '"foo"'::jsonb ? 'foo';
     need to be searched linearly.
   </para>
 
+  <tip>
+   <para>
+    Because JSON containment is nested, an appropriate query can skip
+    explicit selection of sub-objects.  As an example, suppose that we have
+    a <structfield>doc</> column containing objects at the top level, with
+    most objects containing <literal>tags</> fields that contain arrays of
+    sub-objects.  This query finds entries in which sub-objects containing
+    both <literal>"term":"paris"</> and <literal>"term":"food"</> appear,
+    while ignoring any such keys outside the <literal>tags</> array:
+<programlisting>
+SELECT doc-&gt;'site_name' FROM websites
+  WHERE doc @&gt; '{"tags":[{"term":"paris"}, {"term":"food"}]}';
+</programlisting>
+    One could accomplish the same thing with, say,
+<programlisting>
+SELECT doc-&gt;'site_name' FROM websites
+  WHERE doc-&gt;'tags' @&gt; '[{"term":"paris"}, {"term":"food"}]';
+</programlisting>
+    but that approach is less flexible, and often less efficient as well.
+   </para>
+
+   <para>
+    On the other hand, the JSON existence operator is not nested: it will
+    only look for the specified key or array element at top level of the
+    JSON value.
+   </para>
+  </tip>
+
   <para>
     The various containment and existence operators, along with all other
     JSON operators and functions are documented
@@ -369,8 +400,9 @@ SELECT '"foo"'::jsonb ? 'foo';
   </para>
   <para>
     The default GIN operator class for <type>jsonb</> supports queries with
-    the <literal>@&gt;</>, <literal>?</>, <literal>?&amp;</>
-    and <literal>?|</> operators.
+    top-level key-exists operators <literal>?</>, <literal>?&amp;</>
+    and <literal>?|</> operators and path/value-exists operator
+    <literal>@&gt;</>.
     (For details of the semantics that these operators
     implement, see <xref linkend="functions-jsonb-op-table">.)
     An example of creating an index with this operator class is:

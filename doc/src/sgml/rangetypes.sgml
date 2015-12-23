@@ -79,7 +79,7 @@ INSERT INTO reservation VALUES
     (1108, '[2010-01-01 14:30, 2010-01-01 15:30)');
 
 -- Containment
-SELECT int4range(10, 20) @> 3;
+SELECT int4range(10, 20) @&gt; 3;
 
 -- Overlaps
 SELECT numrange(11.1, 22.2) &amp;&amp; numrange(20.0, 30.0);
@@ -345,6 +345,12 @@ SELECT '[1.234, 5.678]'::floatrange;
   </para>
 
   <para>
+   Defining your own range type also allows you to specify a different
+   subtype B-tree operator class or collation to use, so as to change the sort
+   ordering that determines which values fall into a given range.
+  </para>
+
+  <para>
    If the subtype is considered to have discrete rather than continuous
    values, the <command>CREATE TYPE</> command should specify a
    <literal>canonical</> function.
@@ -365,28 +371,39 @@ SELECT '[1.234, 5.678]'::floatrange;
   </para>
 
   <para>
-   Defining your own range type also allows you to specify a different
-   subtype B-tree operator class or collation to use, so as to change the sort
-   ordering that determines which values fall into a given range.
+   In addition, any range type that is meant to be used with GiST or SP-GiST
+   indexes should define a subtype difference, or <literal>subtype_diff</>,
+   function.  (The index will still work without <literal>subtype_diff</>,
+   but it is likely to be considerably less efficient than if a difference
+   function is provided.)  The subtype difference function takes two input
+   values of the subtype, and returns their difference
+   (i.e., <replaceable>X</> minus <replaceable>Y</>) represented as
+   a <type>float8</> value.  In our example above, the
+   function <function>float8mi</> that underlies the regular <type>float8</>
+   minus operator can be used; but for any other subtype, some type
+   conversion would be necessary.  Some creative thought about how to
+   represent differences as numbers might be needed, too.  To the greatest
+   extent possible, the <literal>subtype_diff</> function should agree with
+   the sort ordering implied by the selected operator class and collation;
+   that is, its result should be positive whenever its first argument is
+   greater than its second according to the sort ordering.
   </para>
 
   <para>
-   In addition, any range type that is meant to be used with GiST or SP-GiST indexes
-   should define a subtype difference, or <literal>subtype_diff</>, function.
-   (the index will still work without <literal>subtype_diff</>, but it is
-   likely to be considerably less efficient than if a difference function is
-   provided.)  The subtype difference function takes two input values of the
-   subtype, and returns their difference (i.e., <replaceable>X</> minus
-   <replaceable>Y</>) represented as a <type>float8</> value.  In our example
-   above, the function that underlies the regular <type>float8</> minus
-   operator can be used; but for any other subtype, some type conversion would
-   be necessary.  Some creative thought about how to represent differences as
-   numbers might be needed, too.  To the greatest extent possible, the
-   <literal>subtype_diff</> function should agree with the sort ordering
-   implied by the selected operator class and collation; that is, its result
-   should be positive whenever its first argument is greater than its second
-   according to the sort ordering.
+   A less-oversimplified example of a <literal>subtype_diff</> function is:
   </para>
+
+<programlisting>
+CREATE FUNCTION time_subtype_diff(x time, y time) RETURNS float8 AS
+'SELECT EXTRACT(EPOCH FROM (x - y))' LANGUAGE sql STRICT IMMUTABLE;
+
+CREATE TYPE timerange AS RANGE (
+    subtype = time,
+    subtype_diff = time_subtype_diff
+);
+
+SELECT '[11:10, 23:00]'::timerange;
+</programlisting>
 
   <para>
    See <xref linkend="SQL-CREATETYPE"> for more information about creating

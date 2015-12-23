@@ -614,7 +614,6 @@ DO $$
   elog(NOTICE, $a);
 $$ LANGUAGE plperl;
 NOTICE:  This is a test
-CONTEXT:  PL/Perl anonymous code block
 -- check that restricted operations are rejected in a plperl DO block
 DO $$ system("/nonesuch"); $$ LANGUAGE plperl;
 ERROR:  'system' trapped by operation mask at line 1.
@@ -628,7 +627,6 @@ CONTEXT:  PL/Perl anonymous code block
 -- check that eval is allowed and eval'd restricted ops are caught
 DO $$ eval q{chdir '.';}; warn "Caught: $@"; $$ LANGUAGE plperl;
 WARNING:  Caught: 'chdir' trapped by operation mask at line 1.
-CONTEXT:  PL/Perl anonymous code block
 -- check that compiling do (dofile opcode) is allowed
 -- but that executing it for a file not already loaded (via require) dies
 DO $$ warn do "/dev/null"; $$ LANGUAGE plperl;

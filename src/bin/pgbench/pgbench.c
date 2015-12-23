@@ -55,6 +55,8 @@
 
 #include "pgbench.h"
 
+#define ERRCODE_UNDEFINED_TABLE  "42P01"
+
 /*
  * Multi-platform pthread implementations
  */
@@ -88,7 +90,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
-#define MIN_GAUSSIAN_THRESHOLD		2.0 /* minimum threshold for gauss */
+#define MIN_GAUSSIAN_PARAM		2.0 /* minimum parameter for gauss */
 
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
@@ -163,6 +165,7 @@ bool		use_quiet;			/* quiet logging onto stderr */
 int			agg_interval;		/* log aggregates instead of individual
 								 * transactions */
 int			progress = 0;		/* thread progress report every this seconds */
+bool		progress_timestamp = false; /* progress report with Unix time */
 int			progress_nclients = 0;		/* number of clients for progress
 										 * report */
 int			progress_nthreads = 0;		/* number of threads for progress
@@ -371,8 +374,7 @@ usage(void)
 		 "  -f, --file=FILENAME      read transaction script from FILENAME\n"
 		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
 		   "  -l, --log                write transaction times to log file\n"
-	"  -L, --latency-limit=NUM  count transactions lasting more than NUM ms\n"
-		   "                           as late.\n"
+	"  -L, --latency-limit=NUM  count transactions lasting more than NUM ms as late\n"
 		   "  -M, --protocol=simple|extended|prepared\n"
 		   "                           protocol for submitting queries (default: simple)\n"
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
@@ -387,6 +389,7 @@ usage(void)
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g. 0.01 for 1%%)\n"
+		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
 	  "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -485,47 +488,47 @@ getrand(TState *thread, int64 min, int64 max)
 
 /*
  * random number generator: exponential distribution from min to max inclusive.
- * the threshold is so that the density of probability for the last cut-off max
- * value is exp(-threshold).
+ * the parameter is so that the density of probability for the last cut-off max
+ * value is exp(-parameter).
  */
 static int64
-getExponentialRand(TState *thread, int64 min, int64 max, double threshold)
+getExponentialRand(TState *thread, int64 min, int64 max, double parameter)
 {
 	double		cut,
 				uniform,
 				rand;
 
-	Assert(threshold > 0.0);
-	cut = exp(-threshold);
+	Assert(parameter > 0.0);
+	cut = exp(-parameter);
 	/* erand in [0, 1), uniform in (0, 1] */
 	uniform = 1.0 - pg_erand48(thread->random_state);
 
 	/*
-	 * inner expresion in (cut, 1] (if threshold > 0), rand in [0, 1)
+	 * inner expresion in (cut, 1] (if parameter > 0), rand in [0, 1)
 	 */
 	Assert((1.0 - cut) != 0.0);
-	rand = -log(cut + (1.0 - cut) * uniform) / threshold;
+	rand = -log(cut + (1.0 - cut) * uniform) / parameter;
 	/* return int64 random number within between min and max */
 	return min + (int64) ((max - min + 1) * rand);
 }
 
 /* random number generator: gaussian distribution from min to max inclusive */
 static int64
-getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
+getGaussianRand(TState *thread, int64 min, int64 max, double parameter)
 {
 	double		stdev;
 	double		rand;
 
 	/*
-	 * Get user specified random number from this loop, with -threshold <
-	 * stdev <= threshold
+	 * Get user specified random number from this loop,
+	 * with -parameter < stdev <= parameter
 	 *
 	 * This loop is executed until the number is in the expected range.
 	 *
-	 * As the minimum threshold is 2.0, the probability of looping is low:
+	 * As the minimum parameter is 2.0, the probability of looping is low:
 	 * sqrt(-2 ln(r)) <= 2 => r >= e^{-2} ~ 0.135, then when taking the
 	 * average sinus multiplier as 2/pi, we have a 8.6% looping probability in
-	 * the worst case. For a 5.0 threshold value, the looping probability is
+	 * the worst case. For a parameter value of 5.0, the looping probability is
 	 * about e^{-5} * 2 / pi ~ 0.43%.
 	 */
 	do
@@ -550,10 +553,10 @@ getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
 		 * over.
 		 */
 	}
-	while (stdev < -threshold || stdev >= threshold);
+	while (stdev < -parameter || stdev >= parameter);
 
-	/* stdev is in [-threshold, threshold), normalization to [0,1) */
-	rand = (stdev + threshold) / (threshold * 2.0);
+	/* stdev is in [-parameter, parameter), normalization to [0,1) */
+	rand = (stdev + parameter) / (parameter * 2.0);
 
 	/* return int64 random number within between min and max */
 	return min + (int64) ((max - min + 1) * rand);
@@ -1480,7 +1483,7 @@ top:
 			char	   *var;
 			int64		min,
 						max;
-			double		threshold = 0;
+			double		parameter = 0;
 			char		res[64];
 
 			if (*argv[2] == ':')
@@ -1551,41 +1554,49 @@ top:
 				{
 					if ((var = getVariable(st, argv[5] + 1)) == NULL)
 					{
-						fprintf(stderr, "%s: invalid threshold number: \"%s\"\n",
+						fprintf(stderr, "%s: invalid parameter: \"%s\"\n",
 								argv[0], argv[5]);
 						st->ecnt++;
 						return true;
 					}
-					threshold = strtod(var, NULL);
+					parameter = strtod(var, NULL);
 				}
 				else
-					threshold = strtod(argv[5], NULL);
+					parameter = strtod(argv[5], NULL);
 
 				if (pg_strcasecmp(argv[4], "gaussian") == 0)
 				{
-					if (threshold < MIN_GAUSSIAN_THRESHOLD)
+					if (parameter < MIN_GAUSSIAN_PARAM)
 					{
-						fprintf(stderr, "gaussian threshold must be at least %f (not \"%s\")\n", MIN_GAUSSIAN_THRESHOLD, argv[5]);
+						fprintf(stderr, "gaussian parameter must be at least %f (not \"%s\")\n", MIN_GAUSSIAN_PARAM, argv[5]);
 						st->ecnt++;
 						return true;
 					}
 #ifdef DEBUG
-					printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n", min, max, getGaussianRand(thread, min, max, threshold));
+					printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n",
+						   min, max,
+						   getGaussianRand(thread, min, max, parameter));
 #endif
-					snprintf(res, sizeof(res), INT64_FORMAT, getGaussianRand(thread, min, max, threshold));
+					snprintf(res, sizeof(res), INT64_FORMAT,
+							 getGaussianRand(thread, min, max, parameter));
 				}
 				else if (pg_strcasecmp(argv[4], "exponential") == 0)
 				{
-					if (threshold <= 0.0)
+					if (parameter <= 0.0)
 					{
-						fprintf(stderr, "exponential threshold must be greater than zero (not \"%s\")\n", argv[5]);
+						fprintf(stderr,
+							"exponential parameter must be greater than zero (not \"%s\")\n",
+							argv[5]);
 						st->ecnt++;
 						return true;
 					}
 #ifdef DEBUG
-					printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n", min, max, getExponentialRand(thread, min, max, threshold));
+					printf("min: " INT64_FORMAT " max: " INT64_FORMAT " random: " INT64_FORMAT "\n",
+						   min, max,
+						   getExponentialRand(thread, min, max, parameter));
 #endif
-					snprintf(res, sizeof(res), INT64_FORMAT, getExponentialRand(thread, min, max, threshold));
+					snprintf(res, sizeof(res), INT64_FORMAT,
+							 getExponentialRand(thread, min, max, parameter));
 				}
 			}
 			else	/* this means an error somewhere in the parsing phase... */
@@ -2196,7 +2207,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 	return true;
 }
 
-void
+void pg_attribute_noreturn()
 syntax_error(const char *source, const int lineno,
 			 const char *line, const char *command,
 			 const char *msg, const char *more, const int column)
@@ -2279,8 +2290,9 @@ process_commands(char *buf, const char *source, const int lineno)
 		if (pg_strcasecmp(my_commands->argv[0], "setrandom") == 0)
 		{
 			/*
-			 * parsing: \setrandom variable min max [uniform] \setrandom
-			 * variable min max (gaussian|exponential) threshold
+			 * parsing:
+			 *   \setrandom variable min max [uniform]
+			 *   \setrandom variable min max (gaussian|exponential) parameter
 			 */
 
 			if (my_commands->argc < 4)
@@ -2305,7 +2317,7 @@ process_commands(char *buf, const char *source, const int lineno)
 				if (my_commands->argc < 6)
 				{
 					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-					 "missing threshold argument", my_commands->argv[4], -1);
+					 "missing parameter", my_commands->argv[4], -1);
 				}
 				else if (my_commands->argc > 6)
 				{
@@ -2613,7 +2625,7 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	time_include = INSTR_TIME_GET_DOUBLE(total_time);
 	tps_include = normal_xacts / time_include;
 	tps_exclude = normal_xacts / (time_include -
-						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nthreads));
+						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
 	if (ttype == 0)
 		s = "TPC-B (sort of)";
@@ -2772,6 +2784,7 @@ main(int argc, char **argv)
 		{"aggregate-interval", required_argument, NULL, 5},
 		{"rate", required_argument, NULL, 'R'},
 		{"latency-limit", required_argument, NULL, 'L'},
+		{"progress-timestamp", no_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3108,6 +3121,10 @@ main(int argc, char **argv)
 				}
 #endif
 				break;
+			case 6:
+				progress_timestamp = true;
+				benchmarking_option_set = true;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -3252,7 +3269,14 @@ main(int argc, char **argv)
 		res = PQexec(con, "select count(*) from pgbench_branches");
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
+			char	   *sqlState = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+
 			fprintf(stderr, "%s", PQerrorMessage(con));
+			if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) == 0)
+			{
+				fprintf(stderr, "Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\"\n", PQdb(con));
+			}
+
 			exit(1);
 		}
 		scale = atoi(PQgetvalue(res, 0, 0));
@@ -3447,8 +3471,8 @@ main(int argc, char **argv)
 
 		/* thread level stats */
 		throttle_lag += thread->throttle_lag;
-		throttle_latency_skipped = threads->throttle_latency_skipped;
-		latency_late = thread->latency_late;
+		throttle_latency_skipped += threads->throttle_latency_skipped;
+		latency_late += thread->latency_late;
 		if (throttle_lag_max > thread->throttle_lag_max)
 			throttle_lag_max = thread->throttle_lag_max;
 		INSTR_TIME_ADD(conn_total_time, thread->conn_time);
@@ -3646,7 +3670,7 @@ threadRun(void *arg)
 		}
 
 		/* also wake up to print the next progress report on time */
-		if (progress && min_usec > 0)
+		if (progress && min_usec > 0 && thread->tid == 0)
 		{
 			/* get current time if needed */
 			if (now_usec == 0)
@@ -3739,6 +3763,7 @@ threadRun(void *arg)
 							sqlat,
 							lag,
 							stdev;
+				char		tbuf[64];
 
 				/*
 				 * Add up the statistics of all threads.
@@ -3759,7 +3784,10 @@ threadRun(void *arg)
 				}
 
 				for (i = 0; i < progress_nthreads; i++)
+				{
+					skipped += thread[i].throttle_latency_skipped;
 					lags += thread[i].throttle_lag;
+				}
 
 				total_run = (now - thread_start) / 1000000.0;
 				tps = 1000000.0 * (count - last_count) / run;
@@ -3767,17 +3795,23 @@ threadRun(void *arg)
 				sqlat = 1.0 * (sqlats - last_sqlats) / (count - last_count);
 				stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
 				lag = 0.001 * (lags - last_lags) / (count - last_count);
-				skipped = thread->throttle_latency_skipped - last_skipped;
+
+				if (progress_timestamp)
+					sprintf(tbuf, "%.03f s",
+							INSTR_TIME_GET_MILLISEC(now_time) / 1000.0);
+				else
+					sprintf(tbuf, "%.1f s", total_run);
 
 				fprintf(stderr,
-						"progress: %.1f s, %.1f tps, "
-						"lat %.3f ms stddev %.3f",
-						total_run, tps, latency, stdev);
+						"progress: %s, %.1f tps, lat %.3f ms stddev %.3f",
+						tbuf, tps, latency, stdev);
+
 				if (throttle_delay)
 				{
 					fprintf(stderr, ", lag %.3f ms", lag);
 					if (latency_limit)
-						fprintf(stderr, ", " INT64_FORMAT " skipped", skipped);
+						fprintf(stderr, ", " INT64_FORMAT " skipped",
+								skipped - last_skipped);
 				}
 				fprintf(stderr, "\n");
 
@@ -3786,7 +3820,7 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-				last_skipped = thread->throttle_latency_skipped;
+				last_skipped = skipped;
 
 				/*
 				 * Ensure that the next report is in the future, in case

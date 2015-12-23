@@ -643,7 +643,7 @@ INSERT INTO deferred_excl VALUES(1); -- fail
 ERROR:  conflicting key value violates exclusion constraint "deferred_excl_con"
 DETAIL:  Key (f1)=(1) conflicts with existing key (f1)=(1).
 INSERT INTO deferred_excl VALUES(1) ON CONFLICT ON CONSTRAINT deferred_excl_con DO NOTHING; -- fail
-ERROR:  ON CONFLICT does not support deferred unique constraints/exclusion constraints as arbiters
+ERROR:  ON CONFLICT does not support deferrable unique constraints/exclusion constraints as arbiters
 BEGIN;
 INSERT INTO deferred_excl VALUES(2); -- no fail here
 COMMIT; -- should fail here

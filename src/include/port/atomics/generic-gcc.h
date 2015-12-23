@@ -25,14 +25,9 @@
 #endif
 
 /*
- * icc provides all the same intrinsics but doesn't understand gcc's inline asm
+ * An empty asm block should be a sufficient compiler barrier.
  */
-#if defined(__INTEL_COMPILER)
-/* NB: Yes, __memory_barrier() is actually just a compiler barrier */
-#define pg_compiler_barrier_impl()	__memory_barrier()
-#else
 #define pg_compiler_barrier_impl()	__asm__ __volatile__("" ::: "memory")
-#endif
 
 /*
  * If we're on GCC 4.1.0 or higher, we should be able to get a memory barrier
@@ -56,6 +51,7 @@
 /* release semantics include write barrier semantics */
 #		define pg_write_barrier_impl()		__atomic_thread_fence(__ATOMIC_RELEASE)
 #endif
+
 
 #ifdef HAVE_ATOMICS
 
@@ -102,11 +98,6 @@ typedef struct pg_atomic_uint64
 } pg_atomic_uint64;
 
 #endif /* defined(HAVE_GCC__ATOMIC_INT64_CAS) || defined(HAVE_GCC__SYNC_INT64_CAS) */
-
-/*
- * Implementation follows. Inlined or directly included from atomics.c
- */
-#if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
 
 #ifdef PG_HAVE_ATOMIC_FLAG_SUPPORT
 
@@ -230,7 +221,5 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 #endif
 
 #endif /* !defined(PG_DISABLE_64_BIT_ATOMICS) */
-
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */
 
 #endif /* defined(HAVE_ATOMICS) */

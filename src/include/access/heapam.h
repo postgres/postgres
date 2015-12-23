@@ -96,8 +96,9 @@ extern Relation heap_openrv_extended(const RangeVar *relation,
 
 #define heap_close(r,l)  relation_close(r,l)
 
-/* struct definition appears in relscan.h */
+/* struct definitions appear in relscan.h */
 typedef struct HeapScanDescData *HeapScanDesc;
+typedef struct ParallelHeapScanDescData *ParallelHeapScanDesc;
 
 /*
  * HeapScanIsValid
@@ -125,6 +126,11 @@ extern void heap_rescan_set_params(HeapScanDesc scan, ScanKey key,
 					 bool allow_strat, bool allow_sync, bool allow_pagemode);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
+
+extern Size heap_parallelscan_estimate(Snapshot snapshot);
+extern void heap_parallelscan_initialize(ParallelHeapScanDesc target,
+							 Relation relation, Snapshot snapshot);
+extern HeapScanDesc heap_beginscan_parallel(Relation, ParallelHeapScanDesc);
 
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,

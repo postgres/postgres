@@ -66,10 +66,14 @@ main(int argc, char **argv)
 {
 	const char *conninfo;
 	TestSpec   *testspec;
-	int			i;
+	int			i,
+				j;
+	int			n;
 	PGresult   *res;
 	PQExpBufferData wait_query;
 	int			opt;
+	int			nallsteps;
+	Step	  **allsteps;
 
 	while ((opt = getopt(argc, argv, "nV")) != -1)
 	{
@@ -108,6 +112,36 @@ main(int argc, char **argv)
 	/* Read the test spec from stdin */
 	spec_yyparse();
 	testspec = &parseresult;
+
+	/* Create a lookup table of all steps. */
+	nallsteps = 0;
+	for (i = 0; i < testspec->nsessions; i++)
+		nallsteps += testspec->sessions[i]->nsteps;
+
+	allsteps = malloc(nallsteps * sizeof(Step *));
+
+	n = 0;
+	for (i = 0; i < testspec->nsessions; i++)
+	{
+		for (j = 0; j < testspec->sessions[i]->nsteps; j++)
+			allsteps[n++] = testspec->sessions[i]->steps[j];
+	}
+
+	qsort(allsteps, nallsteps, sizeof(Step *), &step_qsort_cmp);
+	testspec->nallsteps = nallsteps;
+	testspec->allsteps = allsteps;
+
+	/* Verify that all step names are unique */
+	for (i = 1; i < testspec->nallsteps; i++)
+	{
+		if (strcmp(testspec->allsteps[i - 1]->name,
+				   testspec->allsteps[i]->name) == 0)
+		{
+			fprintf(stderr, "duplicate step name: %s\n",
+					testspec->allsteps[i]->name);
+			exit_nicely();
+		}
+	}
 
 	/*
 	 * In dry-run mode, just print the permutations that would be run, and
@@ -367,25 +401,6 @@ run_named_permutations(TestSpec *testspec)
 {
 	int			i,
 				j;
-	int			n;
-	int			nallsteps;
-	Step	  **allsteps;
-
-	/* First create a lookup table of all steps */
-	nallsteps = 0;
-	for (i = 0; i < testspec->nsessions; i++)
-		nallsteps += testspec->sessions[i]->nsteps;
-
-	allsteps = malloc(nallsteps * sizeof(Step *));
-
-	n = 0;
-	for (i = 0; i < testspec->nsessions; i++)
-	{
-		for (j = 0; j < testspec->sessions[i]->nsteps; j++)
-			allsteps[n++] = testspec->sessions[i]->steps[j];
-	}
-
-	qsort(allsteps, nallsteps, sizeof(Step *), &step_qsort_cmp);
 
 	for (i = 0; i < testspec->npermutations; i++)
 	{
@@ -397,8 +412,10 @@ run_named_permutations(TestSpec *testspec)
 		/* Find all the named steps using the lookup table */
 		for (j = 0; j < p->nsteps; j++)
 		{
-			Step	  **this = (Step **) bsearch(p->stepnames[j], allsteps,
-												 nallsteps, sizeof(Step *),
+			Step	  **this = (Step **) bsearch(p->stepnames[j],
+												 testspec->allsteps,
+												 testspec->nallsteps,
+												 sizeof(Step *),
 												 &step_bsearch_cmp);
 
 			if (this == NULL)

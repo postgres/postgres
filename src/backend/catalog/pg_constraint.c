@@ -726,7 +726,8 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 		if (object_address_present(&thisobj, objsMoved))
 			continue;
 
-		if (conform->connamespace == oldNspId)
+		/* Don't update if the object is already part of the namespace */
+		if (conform->connamespace == oldNspId && oldNspId != newNspId)
 		{
 			tup = heap_copytuple(tup);
 			conform = (Form_pg_constraint) GETSTRUCT(tup);
@@ -751,25 +752,6 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 	systable_endscan(scan);
 
 	heap_close(conRel, RowExclusiveLock);
-}
-
-/*
- * get_constraint_relation_oids
- *		Find the IDs of the relations to which a constraint refers.
- */
-void
-get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid)
-{
-	HeapTuple	tup;
-	Form_pg_constraint con;
-
-	tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(constraint_oid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for constraint %u", constraint_oid);
-	con = (Form_pg_constraint) GETSTRUCT(tup);
-	*conrelid = con->conrelid;
-	*confrelid = con->confrelid;
-	ReleaseSysCache(tup);
 }
 
 /*

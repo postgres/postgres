@@ -83,13 +83,11 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 		/* Delete old tuples */
 		if (xldata->ntodelete > 0)
 		{
-			int			i;
 			OffsetNumber *todelete = (OffsetNumber *) data;
 
 			data += sizeof(OffsetNumber) * xldata->ntodelete;
 
-			for (i = 0; i < xldata->ntodelete; i++)
-				PageIndexTupleDelete(page, todelete[i]);
+			PageIndexMultiDelete(page, todelete, xldata->ntodelete);
 			if (GistPageIsLeaf(page))
 				GistMarkTuplesDeleted(page);
 		}

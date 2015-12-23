@@ -78,13 +78,6 @@ typedef struct
 	ArchiveHandle *AH;
 } TAR_MEMBER;
 
-/*
- * Maximum file size for a tar member: The limit inherent in the
- * format is 2^33-1 bytes (nearly 8 GB).  But we don't want to exceed
- * what we can represent in pgoff_t.
- */
-#define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(pgoff_t)*8 - 1)) - 1)
-
 typedef struct
 {
 	int			hasSeek;
@@ -379,7 +372,17 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	}
 	else
 	{
+		int			old_umask;
+
 		tm = pg_malloc0(sizeof(TAR_MEMBER));
+
+		/*
+		 * POSIX does not require, but permits, tmpfile() to restrict file
+		 * permissions.  Given an OS crash after we write data, the filesystem
+		 * might retain the data but forget tmpfile()'s unlink().  If so, the
+		 * file mode protects confidentiality of the data written.
+		 */
+		old_umask = umask(S_IRWXG | S_IRWXO);
 
 #ifndef WIN32
 		tm->tmpFH = tmpfile();
@@ -414,6 +417,8 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 		if (tm->tmpFH == NULL)
 			exit_horribly(modulename, "could not generate temporary file name: %s\n", strerror(errno));
+
+		umask(old_umask);
 
 #ifdef HAVE_LIBZ
 
@@ -1037,7 +1042,7 @@ isValidTarHeader(char *header)
 	int			sum;
 	int			chk = tarChecksum(header);
 
-	sscanf(&header[148], "%8o", &sum);
+	sum = read_tar_number(&header[148], 8);
 
 	if (sum != chk)
 		return false;
@@ -1078,13 +1083,6 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
 					  strerror(errno));
 	fseeko(tmp, 0, SEEK_SET);
-
-	/*
-	 * Some compilers will throw a warning knowing this test can never be true
-	 * because pgoff_t can't exceed the compared maximum on their platform.
-	 */
-	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
-		exit_horribly(modulename, "archive member too large for tar format\n");
 
 	_tarWriteHeader(th);
 
@@ -1210,11 +1208,10 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		h[512];
-	char		tag[100];
+	char		tag[100 + 1];
 	int			sum,
 				chk;
-	size_t		len;
-	unsigned long ullen;
+	pgoff_t		len;
 	pgoff_t		hPos;
 	bool		gotBlock = false;
 
@@ -1237,7 +1234,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 
 		/* Calc checksum */
 		chk = tarChecksum(h);
-		sscanf(&h[148], "%8o", &sum);
+		sum = read_tar_number(&h[148], 8);
 
 		/*
 		 * If the checksum failed, see if it is a null block. If so, silently
@@ -1260,27 +1257,31 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		}
 	}
 
-	sscanf(&h[0], "%99s", tag);
-	sscanf(&h[124], "%12lo", &ullen);
-	len = (size_t) ullen;
+	/* Name field is 100 bytes, might not be null-terminated */
+	strlcpy(tag, &h[0], 100 + 1);
+
+	len = read_tar_number(&h[124], 12);
 
 	{
-		char		buf[100];
+		char		posbuf[32];
+		char		lenbuf[32];
 
-		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) hPos);
-		ahlog(AH, 3, "TOC Entry %s at %s (length %lu, checksum %d)\n",
-			  tag, buf, (unsigned long) len, sum);
+		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT, (uint64) hPos);
+		snprintf(lenbuf, sizeof(lenbuf), UINT64_FORMAT, (uint64) len);
+		ahlog(AH, 3, "TOC Entry %s at %s (length %s, checksum %d)\n",
+			  tag, posbuf, lenbuf, sum);
 	}
 
 	if (chk != sum)
 	{
-		char		buf[100];
+		char		posbuf[32];
 
-		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) ftello(ctx->tarFH));
+		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT,
+				 (uint64) ftello(ctx->tarFH));
 		exit_horribly(modulename,
 					  "corrupt tar header found in %s "
 					  "(expected %d, computed %d) file position %s\n",
-					  tag, sum, chk, buf);
+					  tag, sum, chk, posbuf);
 	}
 
 	th->targetFile = pg_strdup(tag);
@@ -1295,7 +1296,8 @@ _tarWriteHeader(TAR_MEMBER *th)
 {
 	char		h[512];
 
-	tarCreateHeader(h, th->targetFile, NULL, th->fileLen, 0600, 04000, 02000, time(NULL));
+	tarCreateHeader(h, th->targetFile, NULL, th->fileLen,
+					0600, 04000, 02000, time(NULL));
 
 	/* Now write the completed header. */
 	if (fwrite(h, 1, 512, th->tarFH) != 512)

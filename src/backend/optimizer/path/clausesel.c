@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_operator.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -568,18 +567,8 @@ clause_selectivity(PlannerInfo *root,
 		if (var->varlevelsup == 0 &&
 			(varRelid == 0 || varRelid == (int) var->varno))
 		{
-			/*
-			 * A Var at the top of a clause must be a bool Var. This is
-			 * equivalent to the clause reln.attribute = 't', so we compute
-			 * the selectivity as if that is what we have.
-			 */
-			s1 = restriction_selectivity(root,
-										 BooleanEqualOperator,
-										 list_make2(var,
-													makeBoolConst(true,
-																  false)),
-										 InvalidOid,
-										 varRelid);
+			/* Use the restriction selectivity function for a bool Var */
+			s1 = boolvarsel(root, (Node *) var, varRelid);
 		}
 	}
 	else if (IsA(clause, Const))
@@ -680,25 +669,6 @@ clause_selectivity(PlannerInfo *root,
 		if (IsA(clause, DistinctExpr))
 			s1 = 1.0 - s1;
 	}
-	else if (is_funcclause(clause))
-	{
-		/*
-		 * This is not an operator, so we guess at the selectivity. THIS IS A
-		 * HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
-		 * SELECTIVITIES THEMSELVES.       -- JMH 7/9/92
-		 */
-		s1 = (Selectivity) 0.3333333;
-	}
-#ifdef NOT_USED
-	else if (IsA(clause, SubPlan) ||
-			 IsA(clause, AlternativeSubPlan))
-	{
-		/*
-		 * Just for the moment! FIX ME! - vadim 02/04/98
-		 */
-		s1 = (Selectivity) 0.5;
-	}
-#endif
 	else if (IsA(clause, ScalarArrayOpExpr))
 	{
 		/* Use node specific selectivity calculation function */
@@ -765,6 +735,17 @@ clause_selectivity(PlannerInfo *root,
 								varRelid,
 								jointype,
 								sjinfo);
+	}
+	else
+	{
+		/*
+		 * For anything else, see if we can consider it as a boolean variable.
+		 * This only works if it's an immutable expression in Vars of a single
+		 * relation; but there's no point in us checking that here because
+		 * boolvarsel() will do it internally, and return a suitable default
+		 * selectivity if not.
+		 */
+		s1 = boolvarsel(root, clause, varRelid);
 	}
 
 	/* Cache the result if possible */

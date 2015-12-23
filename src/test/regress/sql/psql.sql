@@ -194,6 +194,33 @@ execute q;
 execute q;
 
 \pset expanded on
+\pset columns 30
+
+\pset border 0
+\pset format unaligned
+execute q;
+\pset format aligned
+execute q;
+\pset format wrapped
+execute q;
+
+\pset border 1
+\pset format unaligned
+execute q;
+\pset format aligned
+execute q;
+\pset format wrapped
+execute q;
+
+\pset border 2
+\pset format unaligned
+execute q;
+\pset format aligned
+execute q;
+\pset format wrapped
+execute q;
+
+\pset expanded on
 \pset columns 20
 
 \pset border 0
@@ -301,3 +328,26 @@ execute q;
 execute q;
 
 deallocate q;
+
+-- SHOW_CONTEXT
+
+\set SHOW_CONTEXT never
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+
+\set SHOW_CONTEXT errors
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+
+\set SHOW_CONTEXT always
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;

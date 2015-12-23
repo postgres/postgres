@@ -22,7 +22,6 @@ extern Datum brinbuild(PG_FUNCTION_ARGS);
 extern Datum brinbuildempty(PG_FUNCTION_ARGS);
 extern Datum brininsert(PG_FUNCTION_ARGS);
 extern Datum brinbeginscan(PG_FUNCTION_ARGS);
-extern Datum bringettuple(PG_FUNCTION_ARGS);
 extern Datum bringetbitmap(PG_FUNCTION_ARGS);
 extern Datum brinrescan(PG_FUNCTION_ARGS);
 extern Datum brinendscan(PG_FUNCTION_ARGS);
@@ -30,7 +29,6 @@ extern Datum brinmarkpos(PG_FUNCTION_ARGS);
 extern Datum brinrestrpos(PG_FUNCTION_ARGS);
 extern Datum brinbulkdelete(PG_FUNCTION_ARGS);
 extern Datum brinvacuumcleanup(PG_FUNCTION_ARGS);
-extern Datum brincanreturn(PG_FUNCTION_ARGS);
 extern Datum brincostestimate(PG_FUNCTION_ARGS);
 extern Datum brinoptions(PG_FUNCTION_ARGS);
 

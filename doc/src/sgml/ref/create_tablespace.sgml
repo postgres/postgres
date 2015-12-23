@@ -104,14 +104,15 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
       <listitem>
        <para>
         A tablespace parameter to be set or reset.  Currently, the only
-        available parameters are <varname>seq_page_cost</> and
-        <varname>random_page_cost</>.  Setting either value for a particular
-        tablespace will override the planner's usual estimate of the cost of
-        reading pages from tables in that tablespace, as established by
-        the configuration parameters of the same name (see
-        <xref linkend="guc-seq-page-cost">,
-        <xref linkend="guc-random-page-cost">).  This may be useful if one
-        tablespace is located on a disk which is faster or slower than the
+        available parameters are <varname>seq_page_cost</>,
+        <varname>random_page_cost</> and <varname>effective_io_concurrency</>.
+        Setting either value for a particular tablespace will override the
+        planner's usual estimate of the cost of reading pages from tables in
+        that tablespace, as established by the configuration parameters of the
+        same name (see <xref linkend="guc-seq-page-cost">,
+        <xref linkend="guc-random-page-cost">,
+        <xref linkend="guc-effective-io-concurrency">).  This may be useful if
+        one tablespace is located on a disk which is faster or slower than the
         remainder of the I/O subsystem.
        </para>
       </listitem>

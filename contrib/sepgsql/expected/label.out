@@ -136,7 +136,6 @@ SET client_min_messages = log;
 SELECT f1();			-- normal procedure
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="public.f1()"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.sepgsql_getcon()"
-CONTEXT:  SQL function "f1" statement 1
                          f1                          
 -----------------------------------------------------
  unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0
@@ -147,7 +146,6 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_re
 LOG:  SELinux: allowed { entrypoint } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_trusted_proc_exec_t:s0 tclass=db_procedure name="function f2()"
 LOG:  SELinux: allowed { transition } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=unconfined_u:unconfined_r:sepgsql_trusted_proc_t:s0 tclass=process
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_trusted_proc_t:s0 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.sepgsql_getcon()"
-CONTEXT:  SQL function "f2" statement 1
                          f2                          
 -----------------------------------------------------
  unconfined_u:unconfined_r:sepgsql_trusted_proc_t:s0
@@ -158,6 +156,7 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_re
 LOG:  SELinux: allowed { entrypoint } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_trusted_proc_exec_t:s0 tclass=db_procedure name="function f3()"
 LOG:  SELinux: allowed { transition } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=unconfined_u:unconfined_r:sepgsql_trusted_proc_t:s0 tclass=process
 ERROR:  an exception from f3()
+CONTEXT:  PL/pgSQL function f3() line 2 at RAISE
 SELECT f4();			-- failed on domain transition
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_nosuch_trusted_proc_exec_t:s0 tclass=db_procedure name="public.f4()"
 LOG:  SELinux: allowed { entrypoint } scontext=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0 tcontext=system_u:object_r:sepgsql_nosuch_trusted_proc_exec_t:s0 tclass=db_procedure name="function f4()"
@@ -175,138 +174,138 @@ LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_re
 --
 -- validation of transaction aware dynamic-transition
 SELECT sepgsql_getcon();	-- confirm client privilege
-                  sepgsql_getcon                  
---------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c25
+                         sepgsql_getcon                          
+-----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c25
 (1 row)
 
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c15');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c15');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                  sepgsql_getcon                  
---------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c15
+                         sepgsql_getcon                          
+-----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c15
 (1 row)
 
 SELECT sepgsql_setcon(NULL);	-- failed to reset
 ERROR:  SELinux: security policy violation
 SELECT sepgsql_getcon();
-                  sepgsql_getcon                  
---------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c15
+                         sepgsql_getcon                          
+-----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c15
 (1 row)
 
 BEGIN;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c12');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c12');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                  sepgsql_getcon                  
---------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c12
+                         sepgsql_getcon                          
+-----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c12
 (1 row)
 
 SAVEPOINT svpt_1;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c9');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c9');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c9
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c9
 (1 row)
 
 SAVEPOINT svpt_2;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c6');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c6
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c6
 (1 row)
 
 SAVEPOINT svpt_3;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c3');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c3');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c3
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c3
 (1 row)
 
 ROLLBACK TO SAVEPOINT svpt_2;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c9'
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c9
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c9
 (1 row)
 
 ROLLBACK TO SAVEPOINT svpt_1;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c12'
-                  sepgsql_getcon                  
---------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c12
+                         sepgsql_getcon                          
+-----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c12
 (1 row)
 
 ABORT;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c15'
-                  sepgsql_getcon                  
---------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c15
+                         sepgsql_getcon                          
+-----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c15
 (1 row)
 
 BEGIN;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c8');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c8');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c8
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c8
 (1 row)
 
 SAVEPOINT svpt_1;
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c4');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c4');
  sepgsql_setcon 
 ----------------
  t
 (1 row)
 
 SELECT sepgsql_getcon();
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c4
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c4
 (1 row)
 
 ROLLBACK TO SAVEPOINT svpt_1;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c8'
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c8
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c8
 (1 row)
 
-SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c6');
  sepgsql_setcon 
 ----------------
  t
@@ -314,9 +313,9 @@ SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
 
 COMMIT;
 SELECT sepgsql_getcon();		-- should be 's0:c0.c6'
-                 sepgsql_getcon                  
--------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0:c0.c6
+                         sepgsql_getcon                         
+----------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0:c0.c6
 (1 row)
 
 -- sepgsql_regtest_user_t is not available dynamic-transition,
@@ -493,9 +492,9 @@ SELECT sepgsql_getcon();
 -- Clean up
 --
 SELECT sepgsql_getcon();	-- confirm client privilege
-                    sepgsql_getcon                    
-------------------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c255
+                           sepgsql_getcon                            
+---------------------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0-s0:c0.c255
 (1 row)
 
 DROP TABLE IF EXISTS t1 CASCADE;

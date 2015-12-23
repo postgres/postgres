@@ -9,6 +9,13 @@
  * IDENTIFICATION
  *	  src/backend/rewrite/rewriteHandler.c
  *
+ * NOTES
+ *	  Some of the terms used in this file are of historic nature: "retrieve"
+ *	  was the PostQUEL keyword for what today is SELECT. "RIR" stands for
+ *	  "Retrieve-Instead-Retrieve", that is an ON SELECT DO INSTEAD SELECT rule
+ *	  (which has to be unconditional and where only one rule can exist on each
+ *	  relation).
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -1779,14 +1786,16 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		/*
 		 * Fetch any new security quals that must be applied to this RTE.
 		 */
-		get_row_security_policies(parsetree, parsetree->commandType, rte,
-								  rt_index, &securityQuals, &withCheckOptions,
+		get_row_security_policies(parsetree, rte, rt_index,
+								  &securityQuals, &withCheckOptions,
 								  &hasRowSecurity, &hasSubLinks);
 
 		if (securityQuals != NIL || withCheckOptions != NIL)
 		{
 			if (hasSubLinks)
 			{
+				acquireLocksOnSubLinks_context context;
+
 				/*
 				 * Recursively process the new quals, checking for infinite
 				 * recursion.
@@ -1799,6 +1808,23 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
 
+				/*
+				 * get_row_security_policies just passed back securityQuals
+				 * and/or withCheckOptions, and there were SubLinks, make sure
+				 * we lock any relations which are referenced.
+				 *
+				 * These locks would normally be acquired by the parser, but
+				 * securityQuals and withCheckOptions are added post-parsing.
+				 */
+				context.for_execute = true;
+				(void) acquireLocksOnSubLinks((Node *) securityQuals, &context);
+				(void) acquireLocksOnSubLinks((Node *) withCheckOptions,
+											  &context);
+
+				/*
+				 * Now that we have the locks on anything added by
+				 * get_row_security_policies, fire any RIR rules for them.
+				 */
 				expression_tree_walker((Node *) securityQuals,
 									   fireRIRonSubLink, (void *) activeRIRs);
 
@@ -2007,6 +2033,9 @@ fireRules(Query *parsetree,
  *
  * Caller should have verified that the relation is a view, and therefore
  * we should find an ON SELECT action.
+ *
+ * Note that the pointer returned is into the relcache and therefore must
+ * be treated as read-only to the caller and not modified or scribbled on.
  */
 Query *
 get_view_query(Relation view)
@@ -2594,9 +2623,16 @@ rewriteTargetView(Query *parsetree, Relation view)
 	List	   *view_targetlist;
 	ListCell   *lc;
 
-	/* The view must be updatable, else fail */
-	viewquery = get_view_query(view);
+	/*
+	 * Get the Query from the view's ON SELECT rule.  We're going to munge the
+	 * Query to change the view's base relation into the target relation,
+	 * along with various other changes along the way, so we need to make a
+	 * copy of it (get_view_query() returns a pointer into the relcache, so we
+	 * have to treat it as read-only).
+	 */
+	viewquery = copyObject(get_view_query(view));
 
+	/* The view must be updatable, else fail */
 	auto_update_detail =
 		view_query_is_auto_updatable(viewquery,
 									 parsetree->commandType != CMD_DELETE);
@@ -2739,13 +2775,28 @@ rewriteTargetView(Query *parsetree, Relation view)
 	heap_close(base_rel, NoLock);
 
 	/*
+	 * If the view query contains any sublink subqueries then we need to also
+	 * acquire locks on any relations they refer to.  We know that there won't
+	 * be any subqueries in the range table or CTEs, so we can skip those, as
+	 * in AcquireRewriteLocks.
+	 */
+	if (viewquery->hasSubLinks)
+	{
+		acquireLocksOnSubLinks_context context;
+
+		context.for_execute = true;
+		query_tree_walker(viewquery, acquireLocksOnSubLinks, &context,
+						  QTW_IGNORE_RC_SUBQUERIES);
+	}
+
+	/*
 	 * Create a new target RTE describing the base relation, and add it to the
 	 * outer query's rangetable.  (What's happening in the next few steps is
 	 * very much like what the planner would do to "pull up" the view into the
 	 * outer query.  Perhaps someday we should refactor things enough so that
 	 * we can share code with the planner.)
 	 */
-	new_rte = (RangeTblEntry *) copyObject(base_rte);
+	new_rte = (RangeTblEntry *) base_rte;
 	parsetree->rtable = lappend(parsetree->rtable, new_rte);
 	new_rt_index = list_length(parsetree->rtable);
 
@@ -2757,14 +2808,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 		new_rte->inh = false;
 
 	/*
-	 * Make a copy of the view's targetlist, adjusting its Vars to reference
-	 * the new target RTE, ie make their varnos be new_rt_index instead of
-	 * base_rt_index.  There can be no Vars for other rels in the tlist, so
-	 * this is sufficient to pull up the tlist expressions for use in the
-	 * outer query.  The tlist will provide the replacement expressions used
-	 * by ReplaceVarsFromTargetList below.
+	 * Adjust the view's targetlist Vars to reference the new target RTE, ie
+	 * make their varnos be new_rt_index instead of base_rt_index.  There can
+	 * be no Vars for other rels in the tlist, so this is sufficient to pull
+	 * up the tlist expressions for use in the outer query.  The tlist will
+	 * provide the replacement expressions used by ReplaceVarsFromTargetList
+	 * below.
 	 */
-	view_targetlist = copyObject(viewquery->targetList);
+	view_targetlist = viewquery->targetList;
 
 	ChangeVarNodes((Node *) view_targetlist,
 				   base_rt_index,
@@ -2915,7 +2966,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	if (parsetree->commandType != CMD_INSERT &&
 		viewquery->jointree->quals != NULL)
 	{
-		Node	   *viewqual = (Node *) copyObject(viewquery->jointree->quals);
+		Node	   *viewqual = (Node *) viewquery->jointree->quals;
 
 		ChangeVarNodes(viewqual, base_rt_index, new_rt_index, 0);
 
@@ -2985,6 +3036,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 			wco = makeNode(WithCheckOption);
 			wco->kind = WCO_VIEW_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(view));
+			wco->polname = NULL;
 			wco->qual = NULL;
 			wco->cascaded = cascaded;
 
@@ -2993,7 +3045,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 			if (viewquery->jointree->quals != NULL)
 			{
-				wco->qual = (Node *) copyObject(viewquery->jointree->quals);
+				wco->qual = (Node *) viewquery->jointree->quals;
 				ChangeVarNodes(wco->qual, base_rt_index, new_rt_index, 0);
 
 				/*

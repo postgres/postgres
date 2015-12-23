@@ -155,9 +155,9 @@ createdb <replaceable class="parameter">dbname</replaceable>
   </note>
 
   <para>
-   Sometimes you want to create a database for someone else, and have him
-   become the owner of the new database, so he can
-   configure and manage it himself.  To achieve that, use one of the
+   Sometimes you want to create a database for someone else, and have them
+   become the owner of the new database, so they can
+   configure and manage it themselves.  To achieve that, use one of the
    following commands:
 <programlisting>
 CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>rolename</>;
@@ -389,7 +389,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
      database cluster or backed up individually.  Similarly, if you lose
      a tablespace (file deletion, disk failure, etc), the database cluster
      might become unreadable or unable to start.  Placing a tablespace
-     on a temporary file system like a ramdisk risks the reliability of
+     on a temporary file system like a RAM disk risks the reliability of
      the entire cluster.
    </para>
   </warning>

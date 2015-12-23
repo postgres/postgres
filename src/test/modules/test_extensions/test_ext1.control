@@ -1,0 +1,5 @@
+comment = 'Test extension 1'
+default_version = '1.0'
+schema = 'test_ext1'
+relocatable = false
+requires = 'test_ext2,test_ext4'

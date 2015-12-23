@@ -613,6 +613,52 @@ fetch from foo;
 (1 row)
 
 abort;
+-- Test for proper cleanup after a failure in a cursor portal
+-- that was created in an outer subtransaction
+CREATE FUNCTION invert(x float8) RETURNS float8 LANGUAGE plpgsql AS
+$$ begin return 1/x; end $$;
+CREATE FUNCTION create_temp_tab() RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  CREATE TEMP TABLE new_table (f1 float8);
+  -- case of interest is that we fail while holding an open
+  -- relcache reference to new_table
+  INSERT INTO new_table SELECT invert(0.0);
+  RETURN 'foo';
+END $$;
+BEGIN;
+DECLARE ok CURSOR FOR SELECT * FROM int8_tbl;
+DECLARE ctt CURSOR FOR SELECT create_temp_tab();
+FETCH ok;
+ q1  | q2  
+-----+-----
+ 123 | 456
+(1 row)
+
+SAVEPOINT s1;
+FETCH ok;  -- should work
+ q1  |        q2        
+-----+------------------
+ 123 | 4567890123456789
+(1 row)
+
+FETCH ctt; -- error occurs here
+ERROR:  division by zero
+CONTEXT:  PL/pgSQL function invert(double precision) line 1 at RETURN
+SQL statement "INSERT INTO new_table SELECT invert(0.0)"
+PL/pgSQL function create_temp_tab() line 6 at SQL statement
+ROLLBACK TO s1;
+FETCH ok;  -- should work
+        q1        | q2  
+------------------+-----
+ 4567890123456789 | 123
+(1 row)
+
+FETCH ctt; -- must be rejected
+ERROR:  portal "ctt" cannot be run
+COMMIT;
+DROP FUNCTION create_temp_tab();
+DROP FUNCTION invert(x float8);
 -- Test for successful cleanup of an aborted transaction at session exit.
 -- THIS MUST BE THE LAST TEST IN THIS FILE.
 begin;

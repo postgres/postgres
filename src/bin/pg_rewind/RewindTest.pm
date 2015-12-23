@@ -9,9 +9,9 @@ package RewindTest;
 # To run a test, the test script (in t/ subdirectory) calls the functions
 # in this module. These functions should be called in this sequence:
 #
-# 1. init_rewind_test - sets up log file etc.
+# 1. setup_cluster - creates a PostgreSQL cluster that runs as the master
 #
-# 2. setup_cluster - creates a PostgreSQL cluster that runs as the master
+# 2. start_master - starts the master server
 #
 # 3. create_standby - runs pg_basebackup to initialize a standby server, and
 #    sets it up to follow the master.
@@ -35,68 +35,49 @@ package RewindTest;
 use strict;
 use warnings;
 
+use Config;
+use Exporter 'import';
+use File::Copy;
+use File::Path qw(rmtree);
+use IPC::Run qw(run);
+use PostgresNode;
 use TestLib;
 use Test::More;
 
-use File::Copy;
-use File::Path qw(remove_tree);
-use IPC::Run qw(run start);
-
-use Exporter 'import';
 our @EXPORT = qw(
-  $connstr_master
-  $connstr_standby
-  $test_master_datadir
-  $test_standby_datadir
+  $node_master
+  $node_standby
 
-  append_to_file
   master_psql
   standby_psql
   check_query
 
-  init_rewind_test
   setup_cluster
+  start_master
   create_standby
   promote_standby
   run_pg_rewind
   clean_rewind_test
 );
 
-# A temporary directory created with 'tempdir' is deleted automatically at
-# the end of the tests. You can change it to a constant if you need to keep it
-# for debugging purposes,
-my $testroot = tempdir;
-
-our $test_master_datadir  = "$testroot/data_master";
-our $test_standby_datadir = "$testroot/data_standby";
-
-mkdir $testroot;
-
-# Define non-conflicting ports for both nodes.
-my $port_master  = $ENV{PGPORT};
-my $port_standby = $port_master + 1;
-
-my $tempdir_short;
-
-my $connstr_master  = "port=$port_master";
-my $connstr_standby = "port=$port_standby";
-
-$ENV{PGDATABASE} = "postgres";
+# Our nodes.
+our $node_master;
+our $node_standby;
 
 sub master_psql
 {
 	my $cmd = shift;
 
-	system_or_bail 'psql', '-q', '--no-psqlrc', '-d', $connstr_master,
-	  '-c', "$cmd";
+	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
+	  $node_master->connstr('postgres'), '-c', "$cmd";
 }
 
 sub standby_psql
 {
 	my $cmd = shift;
 
-	system_or_bail 'psql', '-q', '--no-psqlrc', '-d', $connstr_standby,
-	  '-c', "$cmd";
+	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
+	  $node_standby->connstr('postgres'), '-c', "$cmd";
 }
 
 # Run a query against the master, and check that the output matches what's
@@ -108,8 +89,9 @@ sub check_query
 
 	# we want just the output, no formatting
 	my $result = run [
-		'psql',          '-q', '-A', '-t', '--no-psqlrc', '-d',
-		$connstr_master, '-c', $query ],
+		'psql', '-q', '-A', '-t', '--no-psqlrc', '-d',
+		$node_master->connstr('postgres'),
+		'-c', $query ],
 	  '>', \$stdout, '2>', \$stderr;
 
 	# We don't use ok() for the exit code and stderr, because we want this
@@ -125,61 +107,21 @@ sub check_query
 	}
 	else
 	{
+		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
 }
 
-# Run a query once a second, until it returns 't' (i.e. SQL boolean true).
-sub poll_query_until
-{
-	my ($query, $connstr) = @_;
-
-	my $max_attempts = 30;
-	my $attempts     = 0;
-	my ($stdout, $stderr);
-
-	while ($attempts < $max_attempts)
-	{
-		my $cmd = [ 'psql', '-At', '-c', "$query", '-d', "$connstr" ];
-		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
-
-		chomp($stdout);
-		if ($stdout eq "t")
-		{
-			return 1;
-		}
-
-		# Wait a second before retrying.
-		sleep 1;
-		$attempts++;
-	}
-
-	# The query result didn't change in 30 seconds. Give up. Print the stderr
-	# from the last attempt, hopefully that's useful for debugging.
-	diag $stderr;
-	return 0;
-}
-
-sub append_to_file
-{
-	my ($filename, $str) = @_;
-
-	open my $fh, ">>", $filename or die "could not open file $filename";
-	print $fh $str;
-	close $fh;
-}
-
 sub setup_cluster
 {
-	$tempdir_short = tempdir_short;
 
 	# Initialize master, data checksums are mandatory
-	remove_tree($test_master_datadir);
-	standard_initdb($test_master_datadir);
+	$node_master = get_new_node();
+	$node_master->init;
 
 	# Custom parameters for master's postgresql.conf
-	append_to_file(
-		"$test_master_datadir/postgresql.conf", qq(
+	$node_master->append_conf(
+		"postgresql.conf", qq(
 wal_level = hot_standby
 max_wal_senders = 2
 wal_keep_segments = 20
@@ -190,14 +132,11 @@ hot_standby = on
 autovacuum = off
 max_connections = 10
 ));
+}
 
-	# Accept replication connections on master
-	configure_hba_for_replication $test_master_datadir;
-
-	system_or_bail('pg_ctl' , '-w',
-				   '-D' , $test_master_datadir,
-				   '-l',  "$log_path/master.log",
-				   "-o", "-p $port_master", 'start');
+sub start_master
+{
+	$node_master->start;
 
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
@@ -205,31 +144,23 @@ max_connections = 10
 
 sub create_standby
 {
+	$node_standby = get_new_node();
+	$node_master->backup('my_backup');
+	$node_standby->init_from_backup($node_master, 'my_backup');
+	my $connstr_master = $node_master->connstr('postgres');
 
-	# Set up standby with necessary parameter
-	remove_tree $test_standby_datadir;
-
-	# Base backup is taken with xlog files included
-	system_or_bail('pg_basebackup', '-D', $test_standby_datadir,
-				   '-p', $port_master, '-x');
-	append_to_file(
-		"$test_standby_datadir/recovery.conf", qq(
+	$node_standby->append_conf(
+		"recovery.conf", qq(
 primary_conninfo='$connstr_master application_name=rewind_standby'
 standby_mode=on
 recovery_target_timeline='latest'
 ));
 
 	# Start standby
-	system_or_bail('pg_ctl', '-w', '-D', $test_standby_datadir,
-				   '-l', "$log_path/standby.log",
-				   '-o', "-p $port_standby", 'start');
+	$node_standby->start;
 
-	# Wait until the standby has caught up with the primary, by polling
-	# pg_stat_replication.
-	my $caughtup_query =
-"SELECT pg_current_xlog_location() = replay_location FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
-	poll_query_until($caughtup_query, $connstr_master)
-	  or die "Timed out while waiting for standby to catch up";
+	# The standby may have WAL to apply before it matches the primary.  That
+	# is fine, because no test examines the standby before promotion.
 }
 
 sub promote_standby
@@ -237,11 +168,18 @@ sub promote_standby
 	#### Now run the test-specific parts to run after standby has been started
 	# up standby
 
+	# Wait for the standby to receive and write all WAL.
+	my $wal_received_query =
+"SELECT pg_current_xlog_location() = write_location FROM pg_stat_replication WHERE application_name = 'rewind_standby';";
+	$node_master->poll_query_until('postgres', $wal_received_query)
+	  or die "Timed out while waiting for standby to receive and write WAL";
+
 	# Now promote slave and insert some new data on master, this will put
 	# the master out-of-sync with the standby. Wait until the standby is
 	# out of recovery mode, and is ready to accept read-write connections.
-	system_or_bail('pg_ctl', '-w', '-D', $test_standby_datadir, 'promote');
-	poll_query_until("SELECT NOT pg_is_in_recovery()", $connstr_standby)
+	system_or_bail('pg_ctl', '-w', '-D', $node_standby->data_dir, 'promote');
+	$node_standby->poll_query_until('postgres',
+		"SELECT NOT pg_is_in_recovery()")
 	  or die "Timed out while waiting for promotion of standby";
 
 	# Force a checkpoint after the promotion. pg_rewind looks at the control
@@ -255,10 +193,14 @@ sub promote_standby
 
 sub run_pg_rewind
 {
-	my $test_mode = shift;
+	my $test_mode       = shift;
+	my $master_pgdata   = $node_master->data_dir;
+	my $standby_pgdata  = $node_standby->data_dir;
+	my $standby_connstr = $node_standby->connstr('postgres');
+	my $tmp_folder      = TestLib::tempdir;
 
 	# Stop the master and be ready to perform the rewind
-	system_or_bail('pg_ctl', '-D', $test_master_datadir, '-m', 'fast', 'stop');
+	$node_master->stop;
 
 	# At this point, the rewind processing is ready to run.
 	# We now have a very simple scenario with a few diverged WAL record.
@@ -268,31 +210,32 @@ sub run_pg_rewind
 	# Keep a temporary postgresql.conf for master node or it would be
 	# overwritten during the rewind.
 	copy(
-		"$test_master_datadir/postgresql.conf",
-		"$testroot/master-postgresql.conf.tmp");
+		"$master_pgdata/postgresql.conf",
+		"$tmp_folder/master-postgresql.conf.tmp");
 
 	# Now run pg_rewind
 	if ($test_mode eq "local")
 	{
+
 		# Do rewind using a local pgdata as source
 		# Stop the master and be ready to perform the rewind
-		system_or_bail('pg_ctl', '-D', $test_standby_datadir,
-					   '-m', 'fast', 'stop');
-		command_ok(['pg_rewind',
-					"--debug",
-					"--source-pgdata=$test_standby_datadir",
-					"--target-pgdata=$test_master_datadir"],
-				   'pg_rewind local');
+		$node_standby->stop;
+		command_ok(
+			[   'pg_rewind',
+				"--debug",
+				"--source-pgdata=$standby_pgdata",
+				"--target-pgdata=$master_pgdata" ],
+			'pg_rewind local');
 	}
 	elsif ($test_mode eq "remote")
 	{
+
 		# Do rewind using a remote connection as source
-		command_ok(['pg_rewind',
-					"--debug",
-					"--source-server",
-					"port=$port_standby dbname=postgres",
-					"--target-pgdata=$test_master_datadir"],
-				   'pg_rewind remote');
+		command_ok(
+			[   'pg_rewind',       "--debug",
+				"--source-server", $standby_connstr,
+				"--target-pgdata=$master_pgdata" ],
+			'pg_rewind remote');
 	}
 	else
 	{
@@ -303,21 +246,20 @@ sub run_pg_rewind
 
 	# Now move back postgresql.conf with old settings
 	move(
-		"$testroot/master-postgresql.conf.tmp",
-		"$test_master_datadir/postgresql.conf");
+		"$tmp_folder/master-postgresql.conf.tmp",
+		"$master_pgdata/postgresql.conf");
 
 	# Plug-in rewound node to the now-promoted standby node
-	append_to_file(
-		"$test_master_datadir/recovery.conf", qq(
+	my $port_standby = $node_standby->port;
+	$node_master->append_conf(
+		'recovery.conf', qq(
 primary_conninfo='port=$port_standby'
 standby_mode=on
 recovery_target_timeline='latest'
 ));
 
 	# Restart the master to check that rewind went correctly
-	system_or_bail('pg_ctl', '-w', '-D', $test_master_datadir,
-				   '-l', "$log_path/master.log",
-				   '-o', "-p $port_master", 'start');
+	$node_master->start;
 
 	#### Now run the test-specific parts to check the result
 }
@@ -325,22 +267,8 @@ recovery_target_timeline='latest'
 # Clean up after the test. Stop both servers, if they're still running.
 sub clean_rewind_test
 {
-	if ($test_master_datadir)
-	{
-		system
-		  'pg_ctl', '-D', $test_master_datadir, '-m', 'immediate', 'stop';
-	}
-	if ($test_standby_datadir)
-	{
-		system
-		  'pg_ctl', '-D', $test_standby_datadir, '-m', 'immediate', 'stop';
-	}
+	$node_master->teardown_node  if defined $node_master;
+	$node_standby->teardown_node if defined $node_standby;
 }
 
-# Stop the test servers, just in case they're still running.
-END
-{
-	my $save_rc = $?;
-	clean_rewind_test();
-	$? = $save_rc;
-}
+1;

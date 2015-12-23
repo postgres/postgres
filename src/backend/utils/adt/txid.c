@@ -334,8 +334,11 @@ parse_snapshot(const char *str)
 	return buf_finalize(buf);
 
 bad_format:
-	elog(ERROR, "invalid input for txid_snapshot: \"%s\"", str_start);
-	return NULL;
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for type txid_snapshot: \"%s\"",
+					str_start)));
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -526,8 +529,10 @@ txid_snapshot_recv(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(snap);
 
 bad_format:
-	elog(ERROR, "invalid snapshot data");
-	return (Datum) NULL;
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+			 errmsg("invalid external txid_snapshot data")));
+	PG_RETURN_POINTER(NULL);	/* keep compiler quiet */
 }
 
 /*

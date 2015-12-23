@@ -193,7 +193,7 @@ REVOKE [ ADMIN OPTION FOR ]
    Instead, user A could revoke the grant option from user B and use
    the <literal>CASCADE</literal> option so that the privilege is
    in turn revoked from user C.  For another example, if both A and B
-   have granted the same privilege to C, A can revoke his own grant
+   have granted the same privilege to C, A can revoke their own grant
    but not B's grant, so C will still effectively have the privilege.
   </para>
 

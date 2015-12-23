@@ -76,11 +76,10 @@ relates to what you'll see in the code.  Here's what really happens:
 of states approximately proportional to the length of the regexp.
 
 * The NFA is then optimized into a "compact NFA" representation, which is
-basically the same data but without fields that are not going to be needed
-at runtime.  We do a little bit of cleanup too, such as removing
-unreachable states that might be created as a result of the rather naive
-transformation done by initial parsing.  The cNFA representation is what
-is passed from regcomp to regexec.
+basically the same idea but without fields that are not going to be needed
+at runtime.  It is simplified too: the compact format only allows "plain"
+and "LACON" arc types.  The cNFA representation is what is passed from
+regcomp to regexec.
 
 * Unlike traditional NFA-based regex engines, we do not execute directly
 from the NFA representation, as that would require backtracking and so be
@@ -139,12 +138,13 @@ a possible division of the input string that allows its two child nodes to
 each match their part of the string (and although this specific case can
 only succeed when the division is at the middle, the code does not know
 that, nor would it be true in general).  However, we can first run the DFA
-and quickly reject any input that doesn't contain two a's and some number
-of b's and c's.  If the DFA doesn't match, there is no need to recurse to
-the two child nodes for each possible string division point.  In many
-cases, this prefiltering makes the search run much faster than a pure NFA
-engine could do.  It is this behavior that justifies using the phrase
-"hybrid DFA/NFA engine" to describe Spencer's library.
+and quickly reject any input that doesn't start with an "a" and contain
+one more "a" plus some number of b's and c's.  If the DFA doesn't match,
+there is no need to recurse to the two child nodes for each possible
+string division point.  In many cases, this prefiltering makes the search
+run much faster than a pure NFA engine could do.  It is this behavior that
+justifies using the phrase "hybrid DFA/NFA engine" to describe Spencer's
+library.
 
 
 Colors and colormapping
@@ -296,3 +296,76 @@ character classes are somehow processed "symbolically" without making a
 full expansion of their contents at parse time.  This would mean that we'd
 have to be ready to call iswalpha() at runtime, but if that only happens
 for high-code-value characters, it shouldn't be a big performance hit.
+
+
+Detailed semantics of an NFA
+----------------------------
+
+When trying to read dumped-out NFAs, it's helpful to know these facts:
+
+State 0 (additionally marked with "@" in dumpnfa's output) is always the
+goal state, and state 1 (additionally marked with ">") is the start state.
+(The code refers to these as the post state and pre state respectively.)
+
+The possible arc types are:
+
+    PLAIN arcs, which specify matching of any character of a given "color"
+    (see above).  These are dumped as "[color_number]->to_state".
+
+    EMPTY arcs, which specify a no-op transition to another state.  These
+    are dumped as "->to_state".
+
+    AHEAD constraints, which represent a "next character must be of this
+    color" constraint.  AHEAD differs from a PLAIN arc in that the input
+    character is not consumed when crossing the arc.  These are dumped as
+    ">color_number>->to_state".
+
+    BEHIND constraints, which represent a "previous character must be of
+    this color" constraint, which likewise consumes no input.  These are
+    dumped as "<color_number<->to_state".
+
+    '^' arcs, which specify a beginning-of-input constraint.  These are
+    dumped as "^0->to_state" or "^1->to_state" for beginning-of-string and
+    beginning-of-line constraints respectively.
+
+    '$' arcs, which specify an end-of-input constraint.  These are dumped
+    as "$0->to_state" or "$1->to_state" for end-of-string and end-of-line
+    constraints respectively.
+
+    LACON constraints, which represent "(?=re)", "(?!re)", "(?<=re)", and
+    "(?<!re)" constraints, i.e. the input starting/ending at this point must
+    match (or not match) a given sub-RE, but the matching input is not
+    consumed.  These are dumped as ":subtree_number:->to_state".
+
+If you see anything else (especially any question marks) in the display of
+an arc, it's dumpnfa() trying to tell you that there's something fishy
+about the arc; see the source code.
+
+The regex executor can only handle PLAIN and LACON transitions.  The regex
+optimize() function is responsible for transforming the parser's output
+to get rid of all the other arc types.  In particular, ^ and $ arcs that
+are not dropped as impossible will always end up adjacent to the pre or
+post state respectively, and then will be converted into PLAIN arcs that
+mention the special "colors" for BOS, BOL, EOS, or EOL.
+
+To decide whether a thus-transformed NFA matches a given substring of the
+input string, the executor essentially follows these rules:
+1. Start the NFA "looking at" the character *before* the given substring,
+or if the substring is at the start of the input, prepend an imaginary BOS
+character instead.
+2. Run the NFA until it has consumed the character *after* the given
+substring, or an imaginary following EOS character if the substring is at
+the end of the input.
+3. If the NFA is (or can be) in the goal state at this point, it matches.
+
+So one can mentally execute an untransformed NFA by taking ^ and $ as
+ordinary constraints that match at start and end of input; but plain
+arcs out of the start state should be taken as matches for the character
+before the target substring, and similarly, plain arcs leading to the
+post state are matches for the character after the target substring.
+This definition is necessary to support regexes that begin or end with
+constraints such as \m and \M, which imply requirements on the adjacent
+character if any.  NFAs for simple unanchored patterns will usually have
+pre-state outarcs for all possible character colors as well as BOS and
+BOL, and post-state inarcs for all possible character colors as well as
+EOS and EOL, so that the executor's behavior will work.

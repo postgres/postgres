@@ -272,12 +272,12 @@ PostgreSQL documentation
          <listitem>
           <para>
            Output a <command>tar</command>-format archive suitable for input
-           into <application>pg_restore</application>. The tar-format is
-           compatible with the directory-format; extracting a tar-format
+           into <application>pg_restore</application>. The tar format is
+           compatible with the directory format: extracting a tar-format
            archive produces a valid directory-format archive.
-           However, the tar-format does not support compression and has a
-           limit of 8 GB on the size of individual tables. Also, the relative
-           order of table data items cannot be changed during restore.
+           However, the tar format does not support compression. Also, when
+           using tar format the relative order of table data items cannot be
+           changed during restore.
           </para>
          </listitem>
         </varlistentry>
@@ -545,6 +545,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--strict-names</></term>
+      <listitem>
+       <para>
+        Require that each schema (-n / --schema) and table (-t / --table)
+        qualifier match at least one schema/table in the database to be dumped.
+        Note that if none of the schema/table qualifiers find matches pg_dump
+        will generate an error even without --strict-names.
+       </para>
+       <para>
+        This option has no effect on -N/--exclude-schema, -T/--exclude_table
+        or --exclude-table-date. An exclude pattern failing to match
+        any objects is not considered an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable class="parameter">table</replaceable></option></term>
       <term><option>--exclude-table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
@@ -690,13 +707,13 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option is relevant only when dumping the contents of a table
-        which has row security.  By default, pg_dump will set
-        <literal>ROW_SECURITY</literal> to <literal>OFF</literal>, to ensure
+        which has row security.  By default, <application>pg_dump</application> will set
+        <xref linkend="guc-row-security"> to off, to ensure
         that all data is dumped from the table.  If the user does not have
         sufficient privileges to bypass row security, then an error is thrown.
         This parameter instructs <application>pg_dump</application> to set
-        row_security to 'ON' instead, allowing the user to dump the contents
-        of the table which they have access to.
+        <xref linkend="guc-row-security"> to on instead, allowing the user
+        to dump the parts of the contents of the table that they have access to.
        </para>
 
       </listitem>
@@ -846,27 +863,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>--snapshot=<replaceable class="parameter">snapshotname</replaceable></option></term>
-       <listitem>
-         <para>
-          Use the specifed synchronized snapshot when making a dump of the
-          database (see
-          <xref linkend="functions-snapshot-synchronization-table"> for more
-          details).
-         </para>
-         <para>
-          This option is useful when needing to synchronize the dump with
-          a logical replication slot (see <xref linkend="logicaldecoding">)
-          or with a concurrent session.
-         </para>
-         <para>
-          In the case of a parallel dump, the snapshot name defined by this
-          option is used rather than taking a new snapshot.
-         </para>
-       </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--serializable-deferrable</option></term>
       <listitem>
        <para>
@@ -899,6 +895,27 @@ PostgreSQL documentation
         without the switch is the same.
        </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>--snapshot=<replaceable class="parameter">snapshotname</replaceable></option></term>
+       <listitem>
+         <para>
+          Use the specified synchronized snapshot when making a dump of the
+          database (see
+          <xref linkend="functions-snapshot-synchronization-table"> for more
+          details).
+         </para>
+         <para>
+          This option is useful when needing to synchronize the dump with
+          a logical replication slot (see <xref linkend="logicaldecoding">)
+          or with a concurrent session.
+         </para>
+         <para>
+          In the case of a parallel dump, the snapshot name defined by this
+          option is used rather than taking a new snapshot.
+         </para>
+       </listitem>
      </varlistentry>
 
      <varlistentry>
@@ -1121,15 +1138,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    and then commands to re-enable them after the data has been
    inserted.  If the restore is stopped in the middle, the system
    catalogs might be left in the wrong state.
-  </para>
-
-  <para>
-   Members of tar archives are limited to a size less than 8 GB.
-   (This is an inherent limitation of the tar file format.)  Therefore
-   this format cannot be used if the textual representation of any one table
-   exceeds that size.  The total size of a tar archive and any of the
-   other output formats is not limited, except possibly by the
-   operating system.
   </para>
 
   <para>

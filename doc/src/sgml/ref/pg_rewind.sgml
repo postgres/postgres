@@ -61,13 +61,17 @@ PostgreSQL documentation
    <application>pg_rewind</> examines the timeline histories of the source
    and target clusters to determine the point where they diverged, and
    expects to find WAL in the target cluster's <filename>pg_xlog</> directory
-   reaching all the way back to the point of divergence. In the typical
-   failover scenario where the target cluster was shut down soon after the
-   divergence, that is not a problem, but if the target cluster had run for a
-   long time after the divergence, the old WAL files might not be present
-   anymore. In that case, they can be manually copied from the WAL archive to
-   the <filename>pg_xlog</> directory. Fetching missing files from a WAL
-   archive automatically is currently not supported.
+   reaching all the way back to the point of divergence. The point of divergence
+   could be found either on target timeline, source timeline or their common
+   ancestor. In the typical failover scenario where the target cluster was
+   shut down soon after the divergence, that is not a problem, but if the
+   target cluster had run for a long time after the divergence, the old WAL
+   files might not be present anymore. In that case, they can be manually
+   copied from the WAL archive to the <filename>pg_xlog</> directory. Fetching
+   missing files from a WAL archive automatically is currently not supported.
+   Besides, <application>pg_rewind</> use cases are not limited by failover.
+   For instance, standby server could be promoted, run some writes and
+   then be returned back as stanby. 
   </para>
 
   <para>
@@ -80,6 +84,16 @@ PostgreSQL documentation
    target server is started up. That can be done by creating a
    <filename>recovery.conf</> file in the target data directory with a
    suitable <varname>restore_command</>.
+  </para>
+
+  <para>
+   <application>pg_rewind</> requires that the target server either has
+   the <xref linkend="guc-wal-log-hints"> option is enabled
+   in <filename>postgresql.conf</> or that data checksums were enabled when
+   the cluster was initialized with <application>initdb</>.  Neither of these
+   are currently on by default.
+   <xref linkend="guc-full-page-writes"> must also be enabled.  That is the
+   default.
   </para>
  </refsect1>
 
@@ -120,7 +134,9 @@ PostgreSQL documentation
        <para>
         Specifies a libpq connection string to connect to the source
         <productname>PostgreSQL</> server to synchronize the target with.
-        The server must be up and running, and must not be in recovery mode.
+        The connection must be a normal (non-replication) connection 
+        with superuser access. The server must be up and running, 
+        and must not be in recovery mode.
        </para>
       </listitem>
      </varlistentry>
@@ -159,13 +175,13 @@ PostgreSQL documentation
      <varlistentry>
       <term><option>-V</option></term>
       <term><option>--version</option></term>
-      <listitem><para>Display version information, then exit</para></listitem>
+      <listitem><para>Display version information, then exit.</para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
-      <listitem><para>Show help, then exit</para></listitem>
+      <listitem><para>Show help, then exit.</para></listitem>
      </varlistentry>
 
     </variablelist>
@@ -184,13 +200,6 @@ PostgreSQL documentation
 
  <refsect1>
   <title>Notes</title>
-
-  <para>
-   <application>pg_rewind</> requires that the <varname>wal_log_hints</>
-   option is enabled in <filename>postgresql.conf</>, or that data checksums
-   were enabled when the cluster was initialized with <application>initdb</>.
-   <varname>full_page_writes</> must also be enabled.
-  </para>
 
   <refsect2>
    <title>How it works</title>
@@ -217,8 +226,8 @@ PostgreSQL documentation
     </step>
     <step>
      <para>
-      Copy all other files like clog, conf files etc. from the new cluster
-      to old cluster. Everything except the relation files.
+      Copy all other files such as <filename>clog</filename> and configuration files from the new cluster
+      to the old cluster, everything except the relation files.
      </para>
     </step>
     <step>

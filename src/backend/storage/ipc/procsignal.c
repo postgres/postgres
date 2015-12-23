@@ -59,14 +59,6 @@ typedef struct
  */
 #define NumProcSignalSlots	(MaxBackends + NUM_AUXPROCTYPES)
 
-/*
- * If this flag is set, the process latch will be set whenever SIGUSR1
- * is received.  This is useful when waiting for a signal from the postmaster.
- * Spurious wakeups must be expected.  Make sure that the flag is cleared
- * in the error path.
- */
-bool		set_latch_on_sigusr1;
-
 static ProcSignalSlot *ProcSignalSlots = NULL;
 static volatile ProcSignalSlot *MyProcSignalSlot = NULL;
 
@@ -296,8 +288,7 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
 
-	if (set_latch_on_sigusr1)
-		SetLatch(MyLatch);
+	SetLatch(MyLatch);
 
 	latch_sigusr1_handler();
 

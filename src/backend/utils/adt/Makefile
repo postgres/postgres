@@ -8,13 +8,6 @@ subdir = src/backend/utils/adt
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-# seems to be required for some date/time stuff 1999/07/22 bjm
-ifeq "$(findstring alpha,$(host_cpu))" "alpha"
-ifeq "$(GCC)" "yes"
-override CFLAGS+= -mieee
-endif
-endif
-
 # keep this list arranged alphabetically or it gets to be a mess
 OBJS = acl.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	array_typanalyze.o array_userfuncs.o arrayutils.o ascii.o \

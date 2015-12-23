@@ -164,6 +164,7 @@ extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
 extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
 extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
 
+extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
 			Node *arg, int varRelid,
 			JoinType jointype, SpecialJoinInfo *sjinfo);

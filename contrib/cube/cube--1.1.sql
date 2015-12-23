@@ -1,4 +1,4 @@
-/* contrib/cube/cube--1.0.sql */
+/* contrib/cube/cube--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION cube" to load this file. \quit
@@ -140,6 +140,16 @@ RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION distance_chebyshev(cube, cube)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION distance_taxicab(cube, cube)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
 -- Extracting elements functions
 
 CREATE FUNCTION cube_dim(cube)
@@ -153,6 +163,16 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION cube_ur_coord(cube, int4)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION cube_coord(cube, int4)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION cube_coord_llur(cube, int4)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -246,6 +266,29 @@ CREATE OPERATOR <@ (
 	RESTRICT = contsel, JOIN = contjoinsel
 );
 
+CREATE OPERATOR -> (
+	LEFTARG = cube, RIGHTARG = int, PROCEDURE = cube_coord
+);
+
+CREATE OPERATOR ~> (
+	LEFTARG = cube, RIGHTARG = int, PROCEDURE = cube_coord_llur
+);
+
+CREATE OPERATOR <#> (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = distance_taxicab,
+	COMMUTATOR = '<#>'
+);
+
+CREATE OPERATOR <-> (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_distance,
+	COMMUTATOR = '<->'
+);
+
+CREATE OPERATOR <=> (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = distance_chebyshev,
+	COMMUTATOR = '<=>'
+);
+
 -- these are obsolete/deprecated:
 CREATE OPERATOR @ (
 	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_contains,
@@ -296,6 +339,10 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION g_cube_distance (internal, cube, smallint, oid)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
 
 -- Create the operator classes for indexing
 
@@ -316,10 +363,16 @@ CREATE OPERATOR CLASS gist_cube_ops
 	OPERATOR	8	<@ ,
 	OPERATOR	13	@ ,
 	OPERATOR	14	~ ,
+	OPERATOR	15	~> (cube, int) FOR ORDER BY float_ops,
+	OPERATOR	16	<#> (cube, cube) FOR ORDER BY float_ops,
+	OPERATOR	17	<-> (cube, cube) FOR ORDER BY float_ops,
+	OPERATOR	18	<=> (cube, cube) FOR ORDER BY float_ops,
+
 	FUNCTION	1	g_cube_consistent (internal, cube, int, oid, internal),
 	FUNCTION	2	g_cube_union (internal, internal),
 	FUNCTION	3	g_cube_compress (internal),
 	FUNCTION	4	g_cube_decompress (internal),
 	FUNCTION	5	g_cube_penalty (internal, internal, internal),
 	FUNCTION	6	g_cube_picksplit (internal, internal),
-	FUNCTION	7	g_cube_same (cube, cube, internal);
+	FUNCTION	7	g_cube_same (cube, cube, internal),
+	FUNCTION	8	g_cube_distance (internal, cube, smallint, oid);

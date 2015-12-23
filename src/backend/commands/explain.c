@@ -55,10 +55,7 @@ static void ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				ExplainState *es);
 static double elapsed_time(instr_time *starttime);
-static void ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used);
-static void ExplainPreScanMemberNodes(List *plans, PlanState **planstates,
-						  Bitmapset **rels_used);
-static void ExplainPreScanSubPlans(List *plans, Bitmapset **rels_used);
+static bool ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used);
 static void ExplainNode(PlanState *planstate, List *ancestors,
 			const char *relationship, const char *plan_name,
 			ExplainState *es);
@@ -106,6 +103,7 @@ static void show_instrumentation_count(const char *qlabel, int which,
 						   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
+static void show_buffer_usage(ExplainState *es, const BufferUsage *usage);
 static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
 						ExplainState *es);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
@@ -348,7 +346,7 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		INSTR_TIME_SET_CURRENT(planstart);
 
 		/* plan the query */
-		plan = pg_plan_query(query, 0, params);
+		plan = pg_plan_query(query, CURSOR_OPT_PARALLEL_OK, params);
 
 		INSTR_TIME_SET_CURRENT(planduration);
 		INSTR_TIME_SUBTRACT(planduration, planstart);
@@ -724,7 +722,7 @@ elapsed_time(instr_time *starttime)
  * This ensures that we don't confusingly assign un-suffixed aliases to RTEs
  * that never appear in the EXPLAIN output (such as inheritance parents).
  */
-static void
+static bool
 ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 {
 	Plan	   *plan = planstate->plan;
@@ -764,91 +762,7 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			break;
 	}
 
-	/* initPlan-s */
-	if (planstate->initPlan)
-		ExplainPreScanSubPlans(planstate->initPlan, rels_used);
-
-	/* lefttree */
-	if (outerPlanState(planstate))
-		ExplainPreScanNode(outerPlanState(planstate), rels_used);
-
-	/* righttree */
-	if (innerPlanState(planstate))
-		ExplainPreScanNode(innerPlanState(planstate), rels_used);
-
-	/* special child plans */
-	switch (nodeTag(plan))
-	{
-		case T_ModifyTable:
-			ExplainPreScanMemberNodes(((ModifyTable *) plan)->plans,
-								  ((ModifyTableState *) planstate)->mt_plans,
-									  rels_used);
-			break;
-		case T_Append:
-			ExplainPreScanMemberNodes(((Append *) plan)->appendplans,
-									((AppendState *) planstate)->appendplans,
-									  rels_used);
-			break;
-		case T_MergeAppend:
-			ExplainPreScanMemberNodes(((MergeAppend *) plan)->mergeplans,
-								((MergeAppendState *) planstate)->mergeplans,
-									  rels_used);
-			break;
-		case T_BitmapAnd:
-			ExplainPreScanMemberNodes(((BitmapAnd *) plan)->bitmapplans,
-								 ((BitmapAndState *) planstate)->bitmapplans,
-									  rels_used);
-			break;
-		case T_BitmapOr:
-			ExplainPreScanMemberNodes(((BitmapOr *) plan)->bitmapplans,
-								  ((BitmapOrState *) planstate)->bitmapplans,
-									  rels_used);
-			break;
-		case T_SubqueryScan:
-			ExplainPreScanNode(((SubqueryScanState *) planstate)->subplan,
-							   rels_used);
-			break;
-		default:
-			break;
-	}
-
-	/* subPlan-s */
-	if (planstate->subPlan)
-		ExplainPreScanSubPlans(planstate->subPlan, rels_used);
-}
-
-/*
- * Prescan the constituent plans of a ModifyTable, Append, MergeAppend,
- * BitmapAnd, or BitmapOr node.
- *
- * Note: we don't actually need to examine the Plan list members, but
- * we need the list in order to determine the length of the PlanState array.
- */
-static void
-ExplainPreScanMemberNodes(List *plans, PlanState **planstates,
-						  Bitmapset **rels_used)
-{
-	int			nplans = list_length(plans);
-	int			j;
-
-	for (j = 0; j < nplans; j++)
-		ExplainPreScanNode(planstates[j], rels_used);
-}
-
-/*
- * Prescan a list of SubPlans (or initPlans, which also use SubPlan nodes).
- */
-static void
-ExplainPreScanSubPlans(List *plans, Bitmapset **rels_used)
-{
-	ListCell   *lst;
-
-	foreach(lst, plans)
-	{
-		SubPlanState *sps = (SubPlanState *) lfirst(lst);
-
-		ExplainPreScanNode(sps->planstate, rels_used);
-	}
+	return planstate_tree_walker(planstate, ExplainPreScanNode, rels_used);
 }
 
 /*
@@ -939,6 +853,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_SampleScan:
 			pname = sname = "Sample Scan";
+			break;
+		case T_Gather:
+			pname = sname = "Gather";
 			break;
 		case T_IndexScan:
 			pname = sname = "Index Scan";
@@ -1068,6 +985,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			appendStringInfoString(es->str, "->  ");
 			es->indent += 2;
 		}
+		if (plan->parallel_aware)
+			appendStringInfoString(es->str, "Parallel ");
 		appendStringInfoString(es->str, pname);
 		es->indent++;
 	}
@@ -1084,6 +1003,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyText("Subplan Name", plan_name, es);
 		if (custom_name)
 			ExplainPropertyText("Custom Plan Provider", custom_name, es);
+		if (plan->parallel_aware)
+			ExplainPropertyText("Parallel Aware", "true", es);
 	}
 
 	switch (nodeTag(plan))
@@ -1363,6 +1284,22 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			break;
+		case T_Gather:
+			{
+				Gather *gather = (Gather *) plan;
+
+				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+				if (plan->qual)
+					show_instrumentation_count("Rows Removed by Filter", 1,
+											   planstate, es);
+				ExplainPropertyInteger("Number of Workers",
+									   gather->num_workers, es);
+				if (gather->single_copy)
+					ExplainPropertyText("Single Copy",
+										gather->single_copy ? "true" : "false",
+										es);
+			}
+			break;
 		case T_FunctionScan:
 			if (es->verbose)
 			{
@@ -1501,108 +1438,73 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	/* Show buffer usage */
 	if (es->buffers && planstate->instrument)
+		show_buffer_usage(es, &planstate->instrument->bufusage);
+
+	/* Show worker detail */
+	if (es->analyze && es->verbose && planstate->worker_instrument)
 	{
-		const BufferUsage *usage = &planstate->instrument->bufusage;
+		WorkerInstrumentation *w = planstate->worker_instrument;
+		bool		opened_group = false;
+		int			n;
 
-		if (es->format == EXPLAIN_FORMAT_TEXT)
+		for (n = 0; n < w->num_workers; ++n)
 		{
-			bool		has_shared = (usage->shared_blks_hit > 0 ||
-									  usage->shared_blks_read > 0 ||
-									  usage->shared_blks_dirtied > 0 ||
-									  usage->shared_blks_written > 0);
-			bool		has_local = (usage->local_blks_hit > 0 ||
-									 usage->local_blks_read > 0 ||
-									 usage->local_blks_dirtied > 0 ||
-									 usage->local_blks_written > 0);
-			bool		has_temp = (usage->temp_blks_read > 0 ||
-									usage->temp_blks_written > 0);
-			bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->blk_read_time) ||
-								 !INSTR_TIME_IS_ZERO(usage->blk_write_time));
+			Instrumentation *instrument = &w->instrument[n];
+			double		nloops = instrument->nloops;
+			double		startup_sec;
+			double		total_sec;
+			double		rows;
 
-			/* Show only positive counter values. */
-			if (has_shared || has_local || has_temp)
+			if (nloops <= 0)
+				continue;
+			startup_sec = 1000.0 * instrument->startup / nloops;
+			total_sec = 1000.0 * instrument->total / nloops;
+			rows = instrument->ntuples / nloops;
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
 			{
 				appendStringInfoSpaces(es->str, es->indent * 2);
-				appendStringInfoString(es->str, "Buffers:");
-
-				if (has_shared)
-				{
-					appendStringInfoString(es->str, " shared");
-					if (usage->shared_blks_hit > 0)
-						appendStringInfo(es->str, " hit=%ld",
-										 usage->shared_blks_hit);
-					if (usage->shared_blks_read > 0)
-						appendStringInfo(es->str, " read=%ld",
-										 usage->shared_blks_read);
-					if (usage->shared_blks_dirtied > 0)
-						appendStringInfo(es->str, " dirtied=%ld",
-										 usage->shared_blks_dirtied);
-					if (usage->shared_blks_written > 0)
-						appendStringInfo(es->str, " written=%ld",
-										 usage->shared_blks_written);
-					if (has_local || has_temp)
-						appendStringInfoChar(es->str, ',');
-				}
-				if (has_local)
-				{
-					appendStringInfoString(es->str, " local");
-					if (usage->local_blks_hit > 0)
-						appendStringInfo(es->str, " hit=%ld",
-										 usage->local_blks_hit);
-					if (usage->local_blks_read > 0)
-						appendStringInfo(es->str, " read=%ld",
-										 usage->local_blks_read);
-					if (usage->local_blks_dirtied > 0)
-						appendStringInfo(es->str, " dirtied=%ld",
-										 usage->local_blks_dirtied);
-					if (usage->local_blks_written > 0)
-						appendStringInfo(es->str, " written=%ld",
-										 usage->local_blks_written);
-					if (has_temp)
-						appendStringInfoChar(es->str, ',');
-				}
-				if (has_temp)
-				{
-					appendStringInfoString(es->str, " temp");
-					if (usage->temp_blks_read > 0)
-						appendStringInfo(es->str, " read=%ld",
-										 usage->temp_blks_read);
-					if (usage->temp_blks_written > 0)
-						appendStringInfo(es->str, " written=%ld",
-										 usage->temp_blks_written);
-				}
-				appendStringInfoChar(es->str, '\n');
+				appendStringInfo(es->str, "Worker %d: ", n);
+				if (es->timing)
+					appendStringInfo(es->str,
+							"actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
+								 startup_sec, total_sec, rows, nloops);
+				else
+					appendStringInfo(es->str,
+									 "actual rows=%.0f loops=%.0f\n",
+									 rows, nloops);
+				es->indent++;
+				if (es->buffers)
+					show_buffer_usage(es, &instrument->bufusage);
+				es->indent--;
 			}
-
-			/* As above, show only positive counter values. */
-			if (has_timing)
+			else
 			{
-				appendStringInfoSpaces(es->str, es->indent * 2);
-				appendStringInfoString(es->str, "I/O Timings:");
-				if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
-					appendStringInfo(es->str, " read=%0.3f",
-							  INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
-				if (!INSTR_TIME_IS_ZERO(usage->blk_write_time))
-					appendStringInfo(es->str, " write=%0.3f",
-							 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
-				appendStringInfoChar(es->str, '\n');
+				if (!opened_group)
+				{
+					ExplainOpenGroup("Workers", "Workers", false, es);
+					opened_group = true;
+				}
+				ExplainOpenGroup("Worker", NULL, true, es);
+				ExplainPropertyInteger("Worker Number", n, es);
+
+				if (es->timing)
+				{
+					ExplainPropertyFloat("Actual Startup Time", startup_sec, 3, es);
+					ExplainPropertyFloat("Actual Total Time", total_sec, 3, es);
+				}
+				ExplainPropertyFloat("Actual Rows", rows, 0, es);
+				ExplainPropertyFloat("Actual Loops", nloops, 0, es);
+
+				if (es->buffers)
+					show_buffer_usage(es, &instrument->bufusage);
+
+				ExplainCloseGroup("Worker", NULL, true, es);
 			}
 		}
-		else
-		{
-			ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
-			ExplainPropertyLong("Shared Read Blocks", usage->shared_blks_read, es);
-			ExplainPropertyLong("Shared Dirtied Blocks", usage->shared_blks_dirtied, es);
-			ExplainPropertyLong("Shared Written Blocks", usage->shared_blks_written, es);
-			ExplainPropertyLong("Local Hit Blocks", usage->local_blks_hit, es);
-			ExplainPropertyLong("Local Read Blocks", usage->local_blks_read, es);
-			ExplainPropertyLong("Local Dirtied Blocks", usage->local_blks_dirtied, es);
-			ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
-			ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
-			ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);
-			ExplainPropertyFloat("I/O Read Time", INSTR_TIME_GET_MILLISEC(usage->blk_read_time), 3, es);
-			ExplainPropertyFloat("I/O Write Time", INSTR_TIME_GET_MILLISEC(usage->blk_write_time), 3, es);
-		}
+
+		if (opened_group)
+			ExplainCloseGroup("Workers", "Workers", false, es);
 	}
 
 	/* Get ready to display the child plans */
@@ -2338,6 +2240,113 @@ explain_get_index_name(Oid indexId)
 		result = quote_identifier(result);
 	}
 	return result;
+}
+
+/*
+ * Show buffer usage details.
+ */
+static void
+show_buffer_usage(ExplainState *es, const BufferUsage *usage)
+{
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		bool		has_shared = (usage->shared_blks_hit > 0 ||
+								  usage->shared_blks_read > 0 ||
+								  usage->shared_blks_dirtied > 0 ||
+								  usage->shared_blks_written > 0);
+		bool		has_local = (usage->local_blks_hit > 0 ||
+								 usage->local_blks_read > 0 ||
+								 usage->local_blks_dirtied > 0 ||
+								 usage->local_blks_written > 0);
+		bool		has_temp = (usage->temp_blks_read > 0 ||
+								usage->temp_blks_written > 0);
+		bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->blk_read_time) ||
+								 !INSTR_TIME_IS_ZERO(usage->blk_write_time));
+
+		/* Show only positive counter values. */
+		if (has_shared || has_local || has_temp)
+		{
+			appendStringInfoSpaces(es->str, es->indent * 2);
+			appendStringInfoString(es->str, "Buffers:");
+
+			if (has_shared)
+			{
+				appendStringInfoString(es->str, " shared");
+				if (usage->shared_blks_hit > 0)
+					appendStringInfo(es->str, " hit=%ld",
+									 usage->shared_blks_hit);
+				if (usage->shared_blks_read > 0)
+					appendStringInfo(es->str, " read=%ld",
+									 usage->shared_blks_read);
+				if (usage->shared_blks_dirtied > 0)
+					appendStringInfo(es->str, " dirtied=%ld",
+									 usage->shared_blks_dirtied);
+				if (usage->shared_blks_written > 0)
+					appendStringInfo(es->str, " written=%ld",
+									 usage->shared_blks_written);
+				if (has_local || has_temp)
+					appendStringInfoChar(es->str, ',');
+			}
+			if (has_local)
+			{
+				appendStringInfoString(es->str, " local");
+				if (usage->local_blks_hit > 0)
+					appendStringInfo(es->str, " hit=%ld",
+									 usage->local_blks_hit);
+				if (usage->local_blks_read > 0)
+					appendStringInfo(es->str, " read=%ld",
+									 usage->local_blks_read);
+				if (usage->local_blks_dirtied > 0)
+					appendStringInfo(es->str, " dirtied=%ld",
+									 usage->local_blks_dirtied);
+				if (usage->local_blks_written > 0)
+					appendStringInfo(es->str, " written=%ld",
+									 usage->local_blks_written);
+				if (has_temp)
+					appendStringInfoChar(es->str, ',');
+			}
+			if (has_temp)
+			{
+				appendStringInfoString(es->str, " temp");
+				if (usage->temp_blks_read > 0)
+					appendStringInfo(es->str, " read=%ld",
+									 usage->temp_blks_read);
+				if (usage->temp_blks_written > 0)
+					appendStringInfo(es->str, " written=%ld",
+									 usage->temp_blks_written);
+			}
+			appendStringInfoChar(es->str, '\n');
+		}
+
+		/* As above, show only positive counter values. */
+		if (has_timing)
+		{
+			appendStringInfoSpaces(es->str, es->indent * 2);
+			appendStringInfoString(es->str, "I/O Timings:");
+			if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
+				appendStringInfo(es->str, " read=%0.3f",
+						  INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
+			if (!INSTR_TIME_IS_ZERO(usage->blk_write_time))
+				appendStringInfo(es->str, " write=%0.3f",
+						 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
+			appendStringInfoChar(es->str, '\n');
+		}
+	}
+	else
+	{
+		ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
+		ExplainPropertyLong("Shared Read Blocks", usage->shared_blks_read, es);
+		ExplainPropertyLong("Shared Dirtied Blocks", usage->shared_blks_dirtied, es);
+		ExplainPropertyLong("Shared Written Blocks", usage->shared_blks_written, es);
+		ExplainPropertyLong("Local Hit Blocks", usage->local_blks_hit, es);
+		ExplainPropertyLong("Local Read Blocks", usage->local_blks_read, es);
+		ExplainPropertyLong("Local Dirtied Blocks", usage->local_blks_dirtied, es);
+		ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
+		ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
+		ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);
+		ExplainPropertyFloat("I/O Read Time", INSTR_TIME_GET_MILLISEC(usage->blk_read_time), 3, es);
+		ExplainPropertyFloat("I/O Write Time", INSTR_TIME_GET_MILLISEC(usage->blk_write_time), 3, es);
+	}
 }
 
 /*

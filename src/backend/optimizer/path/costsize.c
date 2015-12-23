@@ -11,6 +11,8 @@
  *	cpu_tuple_cost		Cost of typical CPU time to process a tuple
  *	cpu_index_tuple_cost  Cost of typical CPU time to process an index tuple
  *	cpu_operator_cost	Cost of CPU time to execute an operator or function
+ *	parallel_tuple_cost Cost of CPU time to pass a tuple from worker to master backend
+ *	parallel_setup_cost Cost of setting up shared memory for parallelism
  *
  * We expect that the kernel will typically do some amount of read-ahead
  * optimization; this in conjunction with seek costs means that seq_page_cost
@@ -102,10 +104,14 @@ double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
 double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
+double		parallel_tuple_cost = DEFAULT_PARALLEL_TUPLE_COST;
+double		parallel_setup_cost = DEFAULT_PARALLEL_SETUP_COST;
 
 int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 1.0e10;
+
+int			max_parallel_degree = 0;
 
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
@@ -175,10 +181,13 @@ clamp_row_est(double nrows)
  *
  * 'baserel' is the relation to be scanned
  * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
+ * 'nworkers' are the number of workers among which the work will be
+ *			distributed if the scan is parallel scan
  */
 void
 cost_seqscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, ParamPathInfo *param_info)
+			 RelOptInfo *baserel, ParamPathInfo *param_info,
+			 int nworkers)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -215,6 +224,16 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
+
+	/*
+	 * Primitive parallel cost model.  Assume the leader will do half as much
+	 * work as a regular worker, because it will also need to read the tuples
+	 * returned by the workers when they percolate up to the gather ndoe.
+	 * This is almost certainly not exactly the right way to model this, so
+	 * this will probably need to be changed at some point...
+	 */
+	if (nworkers > 0)
+		run_cost = run_cost / (nworkers + 0.5);
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -287,6 +306,38 @@ cost_samplescan(Path *path, PlannerInfo *root,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * cost_gather
+ *	  Determines and returns the cost of gather path.
+ *
+ * 'rel' is the relation to be operated upon
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
+ */
+void
+cost_gather(GatherPath *path, PlannerInfo *root,
+			RelOptInfo *rel, ParamPathInfo *param_info)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->path.rows = param_info->ppi_rows;
+	else
+		path->path.rows = rel->rows;
+
+	startup_cost = path->subpath->startup_cost;
+
+	run_cost = path->subpath->total_cost - path->subpath->startup_cost;
+
+	/* Parallel setup and communication cost. */
+	startup_cost += parallel_setup_cost;
+	run_cost += parallel_tuple_cost * path->path.rows;
+
+	path->path.startup_cost = startup_cost;
+	path->path.total_cost = (startup_cost + run_cost);
 }
 
 /*
@@ -1039,7 +1090,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	/*
 	 * The TID qual expressions will be computed once, any other baserestrict
-	 * quals once per retrived tuple.
+	 * quals once per retrieved tuple.
 	 */
 	cost_qual_eval(&tid_qual_cost, tidquals, root);
 

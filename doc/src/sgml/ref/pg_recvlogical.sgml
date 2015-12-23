@@ -111,7 +111,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Write received and decoded transaction data into this
-        file. Use <literal>-</> for stdout.
+        file. Use <literal>-</> for <systemitem>stdout</systemitem>.
        </para>
       </listitem>
      </varlistentry>
@@ -236,7 +236,7 @@ PostgreSQL documentation
 
    <para>
     The following command-line options control the database connection parameters.
- 
+
     <variablelist>
       <varlistentry>
        <term><option>-d <replaceable>database</replaceable></option></term>
@@ -244,7 +244,7 @@ PostgreSQL documentation
        <listitem>
         <para>
          The database to connect to.  See the description of the actions for
-         what this means in detail.  This can be a libpq connection string;
+         what this means in detail.  This can be a <application>libpq</application> connection string;
          see <xref linkend="LIBPQ-CONNSTRING"> for more information.  Defaults
          to user name.
         </para>
@@ -283,7 +283,7 @@ PostgreSQL documentation
        <term><option>--username=<replaceable>user</replaceable></option></term>
        <listitem>
         <para>
-         Username to connect as.  Defaults to current operating system user
+         User name to connect as.  Defaults to current operating system user
          name.
         </para>
        </listitem>

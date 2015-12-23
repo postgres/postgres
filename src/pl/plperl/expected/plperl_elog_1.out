@@ -7,7 +7,6 @@ create or replace function perl_elog(text) returns void language plperl as $$
 $$;
 select perl_elog('explicit elog');
 NOTICE:  explicit elog
-CONTEXT:  PL/Perl function "perl_elog"
  perl_elog 
 -----------
  
@@ -21,7 +20,6 @@ create or replace function perl_warn(text) returns void language plperl as $$
 $$;
 select perl_warn('implicit elog via warn');
 WARNING:  implicit elog via warn at line 4.
-CONTEXT:  PL/Perl function "perl_warn"
  perl_warn 
 -----------
  
@@ -61,7 +59,6 @@ select uses_global();
 -- make sure we don't choke on readonly values
 do language plperl $$ elog(NOTICE, ${^TAINT}); $$;
 NOTICE:  0
-CONTEXT:  PL/Perl anonymous code block
 -- test recovery after "die"
 create or replace function just_die() returns void language plperl AS $$
 die "just die";
@@ -94,13 +91,22 @@ return $a + $b;
 $$;
 select indirect_die_caller();
 NOTICE:  caught die
-CONTEXT:  SQL statement "SELECT die_caller() AS fx"
-PL/Perl function "indirect_die_caller"
 NOTICE:  caught die
-CONTEXT:  SQL statement "SELECT die_caller() AS fx"
-PL/Perl function "indirect_die_caller"
  indirect_die_caller 
 ---------------------
                    2
 (1 row)
 
+-- Test non-ASCII error messages
+--
+-- Note: this test case is known to fail if the database encoding is
+-- EUC_CN, EUC_JP, EUC_KR, or EUC_TW, for lack of any equivalent to
+-- U+00A0 (no-break space) in those encodings.  However, testing with
+-- plain ASCII data would be rather useless, so we must live with that.
+SET client_encoding TO UTF8;
+create or replace function error_with_nbsp() returns void language plperl as $$
+  elog(ERROR, "this message contains a no-break space");
+$$;
+select error_with_nbsp();
+ERROR:  this message contains a no-break space at line 2.
+CONTEXT:  PL/Perl function "error_with_nbsp"

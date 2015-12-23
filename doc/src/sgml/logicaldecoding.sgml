@@ -62,10 +62,10 @@ postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', '
  regression_slot | 0/16B1970
 (1 row)
 
-postgres=# SELECT slot_name, plugin, slot_type, database, active, restart_lsn FROM pg_replication_slots;
-    slot_name    |    plugin     | slot_type | database | active | restart_lsn
------------------+---------------+-----------+----------+--------+-------------
- regression_slot | test_decoding | logical   | postgres | f      | 0/16A4408
+postgres=# SELECT slot_name, plugin, slot_type, database, active, restart_lsn, confirmed_flush_lsn FROM pg_replication_slots;
+    slot_name    |    plugin     | slot_type | database | active | restart_lsn | confirmed_flush_lsn
+-----------------+---------------+-----------+----------+--------+-------------+-----------------
+ regression_slot | test_decoding | logical   | postgres | f      | 0/16A4408   | 0/16A4440
 (1 row)
 
 postgres=# -- There are no changes to see yet
@@ -577,7 +577,7 @@ typedef void (*LogicalDecodeChangeCB) (
 
      <para>
        The optional <function>filter_by_origin_cb</function> callback
-       is called to determine wheter data that has been replayed
+       is called to determine whether data that has been replayed
        from <parameter>origin_id</parameter> is of interest to the
        output plugin.
 <programlisting>
@@ -594,7 +594,7 @@ typedef bool (*LogicalDecodeChangeCB) (
       for transactions and changes that have been filtered away.
      </para>
      <para>
-       This is useful when implementing cascading or multi directional
+       This is useful when implementing cascading or multidirectional
        replication solutions. Filtering by the origin allows to
        prevent replicating the same changes back and forth in such
        setups.  While transactions and changes also carry information

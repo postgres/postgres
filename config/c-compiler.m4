@@ -17,40 +17,6 @@ fi])# PGAC_C_SIGNED
 
 
 
-# PGAC_C_INLINE
-# -------------
-# Check if the C compiler understands inline functions without being
-# noisy about unused static inline functions. Some older compilers
-# understand inline functions (as tested by AC_C_INLINE) but warn about
-# them if they aren't used in a translation unit.
-#
-# This test used to just define an inline function, but some compilers
-# (notably clang) got too smart and now warn about unused static
-# inline functions when defined inside a .c file, but not when defined
-# in an included header. Since the latter is what we want to use, test
-# to see if the warning appears when the function is in a header file.
-# Not pretty, but it works.
-#
-# Defines: inline, PG_USE_INLINE
-AC_DEFUN([PGAC_C_INLINE],
-[AC_C_INLINE
-AC_CACHE_CHECK([for quiet inline (no complaint if unreferenced)], pgac_cv_c_inline_quietly,
-  [pgac_cv_c_inline_quietly=no
-  if test "$ac_cv_c_inline" != no; then
-    pgac_c_inline_save_werror=$ac_c_werror_flag
-    ac_c_werror_flag=yes
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include "$srcdir/config/test_quiet_include.h"],[])],
-                   [pgac_cv_c_inline_quietly=yes])
-    ac_c_werror_flag=$pgac_c_inline_save_werror
-  fi])
-if test "$pgac_cv_c_inline_quietly" != no; then
-  AC_DEFINE_UNQUOTED([PG_USE_INLINE], 1,
-    [Define to 1 if "static inline" works without unwanted warnings from ]
-    [compilations where static inline functions are defined but not called.])
-fi
-])# PGAC_C_INLINE
-
-
 # PGAC_C_PRINTF_ARCHETYPE
 # -----------------------
 # Set the format archetype used by gcc to check printf type functions.  We
@@ -245,6 +211,24 @@ if test x"$pgac_cv__builtin_bswap32" = xyes ; then
 AC_DEFINE(HAVE__BUILTIN_BSWAP32, 1,
           [Define to 1 if your compiler understands __builtin_bswap32.])
 fi])# PGAC_C_BUILTIN_BSWAP32
+
+
+
+# PGAC_C_BUILTIN_BSWAP64
+# -------------------------
+# Check if the C compiler understands __builtin_bswap64(),
+# and define HAVE__BUILTIN_BSWAP64 if so.
+AC_DEFUN([PGAC_C_BUILTIN_BSWAP64],
+[AC_CACHE_CHECK(for __builtin_bswap64, pgac_cv__builtin_bswap64,
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[static unsigned long int x = __builtin_bswap64(0xaabbccddeeff0011);]
+)],
+[pgac_cv__builtin_bswap64=yes],
+[pgac_cv__builtin_bswap64=no])])
+if test x"$pgac_cv__builtin_bswap64" = xyes ; then
+AC_DEFINE(HAVE__BUILTIN_BSWAP64, 1,
+          [Define to 1 if your compiler understands __builtin_bswap64.])
+fi])# PGAC_C_BUILTIN_BSWAP64
 
 
 
@@ -490,15 +474,14 @@ AC_DEFUN([PGAC_SSE42_CRC32_INTRINSICS],
 AC_CACHE_CHECK([for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=$1], [Ac_cachevar],
 [pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS $1"
-ac_save_c_werror_flag=$ac_c_werror_flag
-ac_c_werror_flag=yes
 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nmmintrin.h>],
   [unsigned int crc = 0;
    crc = _mm_crc32_u8(crc, 0);
-   crc = _mm_crc32_u32(crc, 0);])],
+   crc = _mm_crc32_u32(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;])],
   [Ac_cachevar=yes],
   [Ac_cachevar=no])
-ac_c_werror_flag=$ac_save_c_werror_flag
 CFLAGS="$pgac_save_CFLAGS"])
 if test x"$Ac_cachevar" = x"yes"; then
   CFLAGS_SSE42="$1"

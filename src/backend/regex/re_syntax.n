@@ -196,10 +196,18 @@ where a substring matching \fIre\fR begins
 \fB(?!\fIre\fB)\fR
 \fInegative lookahead\fR (AREs only), matches at any point
 where no substring matching \fIre\fR begins
+.TP
+\fB(?<=\fIre\fB)\fR
+\fIpositive lookbehind\fR (AREs only), matches at any point
+where a substring matching \fIre\fR ends
+.TP
+\fB(?<!\fIre\fB)\fR
+\fInegative lookbehind\fR (AREs only), matches at any point
+where no substring matching \fIre\fR ends
 .RE
 .PP
-The lookahead constraints may not contain back references (see later),
-and all parentheses within them are considered non-capturing.
+Lookahead and lookbehind constraints may not contain back references
+(see later), and all parentheses within them are considered non-capturing.
 .PP
 An RE may not end with `\fB\e\fR'.
 
@@ -856,7 +864,8 @@ Incompatibilities of note include `\fB\eb\fR', `\fB\eB\fR',
 the lack of special treatment for a trailing newline,
 the addition of complemented bracket expressions to the things
 affected by newline-sensitive matching,
-the restrictions on parentheses and back references in lookahead constraints,
+the restrictions on parentheses and back references in lookahead/lookbehind
+constraints,
 and the longest/shortest-match (rather than first-match) matching semantics.
 .PP
 The matching rules for REs containing both normal and non-greedy quantifiers

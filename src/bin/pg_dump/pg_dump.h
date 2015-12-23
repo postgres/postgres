@@ -127,7 +127,7 @@ typedef struct _typeInfo
 	char		typtype;		/* 'b', 'c', etc */
 	bool		isArray;		/* true if auto-generated array type */
 	bool		isDefined;		/* true if typisdefined */
-	/* If it's a dumpable base type, we create a "shell type" entry for it */
+	/* If needed, we'll create a "shell type" entry for it; link that here: */
 	struct _shellTypeInfo *shellType;	/* shell-type entry, or NULL */
 	/* If it's a domain, we store links to its constraints here: */
 	int			nDomChecks;
@@ -202,7 +202,7 @@ typedef struct _tableInfo
 	char		relkind;
 	char		relpersistence; /* relation persistence */
 	bool		relispopulated; /* relation is populated */
-	bool		relreplident;	/* replica identifier */
+	char		relreplident;	/* replica identifier */
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
 	char	   *checkoption;	/* WITH CHECK OPTION */
@@ -211,6 +211,7 @@ typedef struct _tableInfo
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
 	bool		rowsec;			/* is row security enabled? */
+	bool		forcerowsec;	/* is row security forced? */
 	bool		hasoids;		/* does it have OIDs? */
 	uint32		frozenxid;		/* for restore frozen xid */
 	uint32		minmxid;		/* for restore min multi xid */

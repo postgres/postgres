@@ -40,8 +40,6 @@
 typedef pg_atomic_uint32 pg_atomic_flag;
 #endif
 
-#if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
-
 #ifndef PG_HAVE_ATOMIC_READ_U32
 #define PG_HAVE_ATOMIC_READ_U32
 static inline uint32
@@ -383,5 +381,3 @@ pg_atomic_sub_fetch_u64_impl(volatile pg_atomic_uint64 *ptr, int64 sub_)
 #endif
 
 #endif /* PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64 */
-
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

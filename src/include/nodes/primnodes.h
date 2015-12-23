@@ -341,6 +341,9 @@ typedef struct WindowFunc
  * reflowerindexpr must be the same length as refupperindexpr when it
  * is not NIL.
  *
+ * In the slice case, individual expressions in the subscript lists can be
+ * NULL, meaning "substitute the array's current lower or upper bound".
+ *
  * Note: the result datatype is the element type when fetching a single
  * element; but it is the array type when doing subarray fetch or either
  * type of store.
@@ -360,7 +363,7 @@ typedef struct ArrayRef
 	List	   *refupperindexpr;/* expressions that evaluate to upper array
 								 * indexes */
 	List	   *reflowerindexpr;/* expressions that evaluate to lower array
-								 * indexes */
+								 * indexes, or NIL for single array element */
 	Expr	   *refexpr;		/* the expression that evaluates to an array
 								 * value */
 	Expr	   *refassgnexpr;	/* expression for the source value, or NULL if

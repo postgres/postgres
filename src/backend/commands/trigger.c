@@ -3226,7 +3226,7 @@ static SetConstraintState SetConstraintStateAddItem(SetConstraintState state,
  * Gets the current query fdw tuplestore and initializes it if necessary
  */
 static Tuplestorestate *
-GetCurrentFDWTuplestore()
+GetCurrentFDWTuplestore(void)
 {
 	Tuplestorestate *ret;
 
@@ -4126,7 +4126,7 @@ AfterTriggerEndXact(bool isCommit)
 
 
 	/*
-	 * Forget the query stack and constrant-related state information.  As
+	 * Forget the query stack and constraint-related state information.  As
 	 * with the subtransaction state information, we don't bother freeing the
 	 * memory here.
 	 */

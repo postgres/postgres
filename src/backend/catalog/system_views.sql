@@ -4,6 +4,14 @@
  * Copyright (c) 1996-2015, PostgreSQL Global Development Group
  *
  * src/backend/catalog/system_views.sql
+ *
+ * Note: this file is read in single-user -j mode, which means that the
+ * command terminator is semicolon-newline-newline; whenever the backend
+ * sees that, it stops and executes what it's got.  If you write a lot of
+ * statements without empty lines between, they'll all get quoted to you
+ * in any error message about one of them, so don't do that.  Also, you
+ * cannot write a semicolon immediately followed by an empty line in a
+ * string literal (including a function body!) or a multiline comment.
  */
 
 CREATE VIEW pg_roles AS
@@ -676,7 +684,8 @@ CREATE VIEW pg_replication_slots AS
             L.active_pid,
             L.xmin,
             L.catalog_xmin,
-            L.restart_lsn
+            L.restart_lsn,
+            L.confirmed_flush_lsn
     FROM pg_get_replication_slots() AS L
             LEFT JOIN pg_database D ON (L.datoid = D.oid);
 
@@ -915,6 +924,13 @@ RETURNS SETOF RECORD
 LANGUAGE INTERNAL
 VOLATILE ROWS 1000 COST 1000
 AS 'pg_logical_slot_peek_binary_changes';
+
+CREATE OR REPLACE FUNCTION pg_create_physical_replication_slot(
+    IN slot_name name, IN immediately_reserve boolean DEFAULT false,
+    OUT slot_name name, OUT xlog_position pg_lsn)
+RETURNS RECORD
+LANGUAGE INTERNAL
+AS 'pg_create_physical_replication_slot';
 
 CREATE OR REPLACE FUNCTION
   make_interval(years int4 DEFAULT 0, months int4 DEFAULT 0, weeks int4 DEFAULT 0,

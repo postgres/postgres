@@ -112,7 +112,10 @@ struct vars
 	chr		   *search_start;	/* search start of string */
 	chr		   *stop;			/* just past end of string */
 	int			err;			/* error code if any (0 none) */
-	struct dfa **subdfas;		/* per-subre DFAs */
+	struct dfa **subdfas;		/* per-tree-subre DFAs */
+	struct dfa **ladfas;		/* per-lacon-subre DFAs */
+	struct sset **lblastcss;	/* per-lacon-subre lookbehind restart data */
+	chr		  **lblastcp;		/* per-lacon-subre lookbehind restart data */
 	struct smalldfa dfa1;
 	struct smalldfa dfa2;
 };
@@ -132,6 +135,7 @@ struct vars
  */
 /* === regexec.c === */
 static struct dfa *getsubdfa(struct vars *, struct subre *);
+static struct dfa *getladfa(struct vars *, int);
 static int	find(struct vars *, struct cnfa *, struct colormap *);
 static int	cfind(struct vars *, struct cnfa *, struct colormap *);
 static int	cfindloop(struct vars *, struct cnfa *, struct colormap *, struct dfa *, struct dfa *, chr **);
@@ -149,6 +153,7 @@ static int	creviterdissect(struct vars *, struct subre *, chr *, chr *);
 /* === rege_dfa.c === */
 static chr *longest(struct vars *, struct dfa *, chr *, chr *, int *);
 static chr *shortest(struct vars *, struct dfa *, chr *, chr *, chr *, chr **, int *);
+static int	matchuntil(struct vars *, struct dfa *, chr *, struct sset **, chr **);
 static chr *lastcold(struct vars *, struct dfa *);
 static struct dfa *newdfa(struct vars *, struct cnfa *, struct colormap *, struct smalldfa *);
 static void freedfa(struct dfa *);
@@ -226,20 +231,53 @@ pg_regexec(regex_t *re,
 	v->search_start = (chr *) string + search_start;
 	v->stop = (chr *) string + len;
 	v->err = 0;
+	v->subdfas = NULL;
+	v->ladfas = NULL;
+	v->lblastcss = NULL;
+	v->lblastcp = NULL;
+	/* below this point, "goto cleanup" will behave sanely */
+
 	assert(v->g->ntree >= 0);
 	n = (size_t) v->g->ntree;
 	if (n <= LOCALDFAS)
 		v->subdfas = subdfas;
 	else
-		v->subdfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
-	if (v->subdfas == NULL)
 	{
-		if (v->pmatch != pmatch && v->pmatch != mat)
-			FREE(v->pmatch);
-		return REG_ESPACE;
+		v->subdfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
+		if (v->subdfas == NULL)
+		{
+			st = REG_ESPACE;
+			goto cleanup;
+		}
 	}
 	for (i = 0; i < n; i++)
 		v->subdfas[i] = NULL;
+
+	assert(v->g->nlacons >= 0);
+	n = (size_t) v->g->nlacons;
+	if (n > 0)
+	{
+		v->ladfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
+		if (v->ladfas == NULL)
+		{
+			st = REG_ESPACE;
+			goto cleanup;
+		}
+		for (i = 0; i < n; i++)
+			v->ladfas[i] = NULL;
+		v->lblastcss = (struct sset **) MALLOC(n * sizeof(struct sset *));
+		v->lblastcp = (chr **) MALLOC(n * sizeof(chr *));
+		if (v->lblastcss == NULL || v->lblastcp == NULL)
+		{
+			st = REG_ESPACE;
+			goto cleanup;
+		}
+		for (i = 0; i < n; i++)
+		{
+			v->lblastcss[i] = NULL;
+			v->lblastcp[i] = NULL;
+		}
+	}
 
 	/* do it */
 	assert(v->g->tree != NULL);
@@ -257,22 +295,40 @@ pg_regexec(regex_t *re,
 	}
 
 	/* clean up */
+cleanup:
 	if (v->pmatch != pmatch && v->pmatch != mat)
 		FREE(v->pmatch);
-	n = (size_t) v->g->ntree;
-	for (i = 0; i < n; i++)
+	if (v->subdfas != NULL)
 	{
-		if (v->subdfas[i] != NULL)
-			freedfa(v->subdfas[i]);
+		n = (size_t) v->g->ntree;
+		for (i = 0; i < n; i++)
+		{
+			if (v->subdfas[i] != NULL)
+				freedfa(v->subdfas[i]);
+		}
+		if (v->subdfas != subdfas)
+			FREE(v->subdfas);
 	}
-	if (v->subdfas != subdfas)
-		FREE(v->subdfas);
+	if (v->ladfas != NULL)
+	{
+		n = (size_t) v->g->nlacons;
+		for (i = 0; i < n; i++)
+		{
+			if (v->ladfas[i] != NULL)
+				freedfa(v->ladfas[i]);
+		}
+		FREE(v->ladfas);
+	}
+	if (v->lblastcss != NULL)
+		FREE(v->lblastcss);
+	if (v->lblastcp != NULL)
+		FREE(v->lblastcp);
 
 	return st;
 }
 
 /*
- * getsubdfa - create or re-fetch the DFA for a subre node
+ * getsubdfa - create or re-fetch the DFA for a tree subre node
  *
  * We only need to create the DFA once per overall regex execution.
  * The DFA will be freed by the cleanup step in pg_regexec().
@@ -288,6 +344,28 @@ getsubdfa(struct vars * v,
 			return NULL;
 	}
 	return v->subdfas[t->id];
+}
+
+/*
+ * getladfa - create or re-fetch the DFA for a LACON subre node
+ *
+ * Same as above, but for LACONs.
+ */
+static struct dfa *
+getladfa(struct vars * v,
+		 int n)
+{
+	assert(n > 0 && n < v->g->nlacons && v->g->lacons != NULL);
+
+	if (v->ladfas[n] == NULL)
+	{
+		struct subre *sub = &v->g->lacons[n];
+
+		v->ladfas[n] = newdfa(v, &sub->cnfa, &v->g->cmap, DOMALLOC);
+		if (ISERR())
+			return NULL;
+	}
+	return v->ladfas[n];
 }
 
 /*
@@ -348,7 +426,11 @@ find(struct vars * v,
 						   (chr **) NULL, &hitend);
 		else
 			end = longest(v, d, begin, v->stop, &hitend);
-		NOERR();
+		if (ISERR())
+		{
+			freedfa(d);
+			return v->err;
+		}
 		if (hitend && cold == NULL)
 			cold = begin;
 		if (end != NULL)
@@ -444,13 +526,20 @@ cfindloop(struct vars * v,
 	close = v->search_start;
 	do
 	{
+		/* Search with the search RE for match range at/beyond "close" */
 		MDEBUG(("\ncsearch at %ld\n", LOFF(close)));
 		close = shortest(v, s, close, close, v->stop, &cold, (int *) NULL);
+		if (ISERR())
+		{
+			*coldp = cold;
+			return v->err;
+		}
 		if (close == NULL)
-			break;				/* NOTE BREAK */
+			break;				/* no more possible match anywhere */
 		assert(cold != NULL);
 		open = cold;
 		cold = NULL;
+		/* Search for matches starting between "open" and "close" inclusive */
 		MDEBUG(("cbetween %ld and %ld\n", LOFF(open), LOFF(close)));
 		for (begin = open; begin <= close; begin++)
 		{
@@ -459,17 +548,24 @@ cfindloop(struct vars * v,
 			estop = v->stop;
 			for (;;)
 			{
+				/* Here we use the top node's detailed RE */
 				if (shorter)
 					end = shortest(v, d, begin, estart,
 								   estop, (chr **) NULL, &hitend);
 				else
 					end = longest(v, d, begin, estop,
 								  &hitend);
+				if (ISERR())
+				{
+					*coldp = cold;
+					return v->err;
+				}
 				if (hitend && cold == NULL)
 					cold = begin;
 				if (end == NULL)
-					break;		/* NOTE BREAK OUT */
+					break;		/* no match with this begin point, try next */
 				MDEBUG(("tentative end %ld\n", LOFF(end)));
+				/* Dissect the potential match to see if it really matches */
 				zapallsubs(v->pmatch, v->nmatch);
 				er = cdissect(v, v->g->tree, begin, end);
 				if (er == REG_OKAY)
@@ -488,21 +584,28 @@ cfindloop(struct vars * v,
 					*coldp = cold;
 					return er;
 				}
-				/* try next shorter/longer match with same begin point */
+				/* Try next longer/shorter match with same begin point */
 				if (shorter)
 				{
 					if (end == estop)
-						break;	/* NOTE BREAK OUT */
+						break;	/* no more, so try next begin point */
 					estart = end + 1;
 				}
 				else
 				{
 					if (end == begin)
-						break;	/* NOTE BREAK OUT */
+						break;	/* no more, so try next begin point */
 					estop = end - 1;
 				}
 			}					/* end loop over endpoint positions */
 		}						/* end loop over beginning positions */
+
+		/*
+		 * If we get here, there is no possible match starting at or before
+		 * "close", so consider matches beyond that.  We'll do a fresh search
+		 * with the search RE to find a new promising match range.
+		 */
+		close++;
 	} while (close < v->stop);
 
 	*coldp = cold;
@@ -599,6 +702,9 @@ cdissect(struct vars * v,
 	/* handy place to check for operation cancel */
 	if (CANCEL_REQUESTED(v->re))
 		return REG_CANCEL;
+	/* ... and stack overrun */
+	if (STACK_TOO_DEEP(v->re))
+		return REG_ETOOBIG;
 
 	switch (t->op)
 	{
@@ -677,6 +783,7 @@ ccondissect(struct vars * v,
 
 	/* pick a tentative midpoint */
 	mid = longest(v, d, begin, end, (int *) NULL);
+	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
 	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
@@ -701,6 +808,7 @@ ccondissect(struct vars * v,
 			if (er != REG_NOMATCH)
 				return er;
 		}
+		NOERR();
 
 		/* that midpoint didn't work, find a new one */
 		if (mid == begin)
@@ -710,6 +818,7 @@ ccondissect(struct vars * v,
 			return REG_NOMATCH;
 		}
 		mid = longest(v, d, begin, mid - 1, (int *) NULL);
+		NOERR();
 		if (mid == NULL)
 		{
 			/* failed to find a new one */
@@ -752,6 +861,7 @@ crevcondissect(struct vars * v,
 
 	/* pick a tentative midpoint */
 	mid = shortest(v, d, begin, begin, end, (chr **) NULL, (int *) NULL);
+	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
 	MDEBUG(("tentative midpoint %ld\n", LOFF(mid)));
@@ -776,6 +886,7 @@ crevcondissect(struct vars * v,
 			if (er != REG_NOMATCH)
 				return er;
 		}
+		NOERR();
 
 		/* that midpoint didn't work, find a new one */
 		if (mid == end)
@@ -785,6 +896,7 @@ crevcondissect(struct vars * v,
 			return REG_NOMATCH;
 		}
 		mid = shortest(v, d, begin, mid + 1, end, (chr **) NULL, (int *) NULL);
+		NOERR();
 		if (mid == NULL)
 		{
 			/* failed to find a new one */
@@ -865,7 +977,7 @@ cbrdissect(struct vars * v,
 	if (tlen % brlen != 0)
 		return REG_NOMATCH;
 	numreps = tlen / brlen;
-	if (numreps < min || (numreps > max && max != INFINITY))
+	if (numreps < min || (numreps > max && max != DUPINF))
 		return REG_NOMATCH;
 
 	/* okay, compare the actual string contents */
@@ -910,6 +1022,7 @@ caltdissect(struct vars * v,
 			if (er != REG_NOMATCH)
 				return er;
 		}
+		NOERR();
 
 		t = t->right;
 	}
@@ -942,17 +1055,17 @@ citerdissect(struct vars * v,
 	assert(begin <= end);
 
 	/*
-	 * If zero matches are allowed, and target string is empty, just declare
-	 * victory.  OTOH, if target string isn't empty, zero matches can't work
-	 * so we pretend the min is 1.
+	 * For the moment, assume the minimum number of matches is 1.  If zero
+	 * matches are allowed, and the target string is empty, we are allowed to
+	 * match regardless of the contents of the iter node --- but we would
+	 * prefer to match once, so that capturing parens get set.  (An example of
+	 * the concern here is a pattern like "()*\1", which historically this
+	 * code has allowed to succeed.)  Therefore, we deal with the zero-matches
+	 * case at the bottom, after failing to find any other way to match.
 	 */
 	min_matches = t->min;
 	if (min_matches <= 0)
-	{
-		if (begin == end)
-			return REG_OKAY;
 		min_matches = 1;
-	}
 
 	/*
 	 * We need workspace to track the endpoints of each sub-match.  Normally
@@ -964,7 +1077,7 @@ citerdissect(struct vars * v,
 	 * sub-match endpoints in endpts[1..max_matches].
 	 */
 	max_matches = end - begin;
-	if (max_matches > t->max && t->max != INFINITY)
+	if (max_matches > t->max && t->max != DUPINF)
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
@@ -1001,6 +1114,11 @@ citerdissect(struct vars * v,
 	{
 		/* try to find an endpoint for the k'th sub-match */
 		endpts[k] = longest(v, d, endpts[k - 1], limit, (int *) NULL);
+		if (ISERR())
+		{
+			FREE(endpts);
+			return v->err;
+		}
 		if (endpts[k] == NULL)
 		{
 			/* no match possible, so see if we can shorten previous one */
@@ -1097,8 +1215,19 @@ backtrack:
 	}
 
 	/* all possibilities exhausted */
-	MDEBUG(("%d failed\n", t->id));
 	FREE(endpts);
+
+	/*
+	 * Now consider the possibility that we can match to a zero-length string
+	 * by using zero repetitions.
+	 */
+	if (t->min == 0 && begin == end)
+	{
+		MDEBUG(("%d allowing zero matches\n", t->id));
+		return REG_OKAY;
+	}
+
+	MDEBUG(("%d failed\n", t->id));
 	return REG_NOMATCH;
 }
 
@@ -1149,7 +1278,7 @@ creviterdissect(struct vars * v,
 	 * sub-match endpoints in endpts[1..max_matches].
 	 */
 	max_matches = end - begin;
-	if (max_matches > t->max && t->max != INFINITY)
+	if (max_matches > t->max && t->max != DUPINF)
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
@@ -1197,6 +1326,11 @@ creviterdissect(struct vars * v,
 		/* try to find an endpoint for the k'th sub-match */
 		endpts[k] = shortest(v, d, endpts[k - 1], limit, end,
 							 (chr **) NULL, (int *) NULL);
+		if (ISERR())
+		{
+			FREE(endpts);
+			return v->err;
+		}
 		if (endpts[k] == NULL)
 		{
 			/* no match possible, so see if we can lengthen previous one */

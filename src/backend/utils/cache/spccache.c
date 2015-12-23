@@ -23,6 +23,7 @@
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
+#include "storage/bufmgr.h"
 #include "utils/catcache.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
@@ -197,4 +198,15 @@ get_tablespace_page_costs(Oid spcid,
 		else
 			*spc_seq_page_cost = spc->opts->seq_page_cost;
 	}
+}
+
+int
+get_tablespace_io_concurrency(Oid spcid)
+{
+	TableSpaceCacheEntry *spc = get_tablespace(spcid);
+
+	if (!spc->opts || spc->opts->effective_io_concurrency < 0)
+		return effective_io_concurrency;
+	else
+		return spc->opts->effective_io_concurrency;
 }

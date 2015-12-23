@@ -1186,6 +1186,338 @@ execute q;
 (10 rows)
 
 \pset expanded on
+\pset columns 30
+\pset border 0
+\pset format unaligned
+execute q;
+0123456789abcdef|xx
+0123456789|yyyyyyyyyyyyyyyyyy
+
+0123456789abcdef|xxxx
+0123456789|yyyyyyyyyyyyyyyy
+
+0123456789abcdef|xxxxxx
+0123456789|yyyyyyyyyyyyyy
+
+0123456789abcdef|xxxxxxxx
+0123456789|yyyyyyyyyyyy
+
+0123456789abcdef|xxxxxxxxxx
+0123456789|yyyyyyyyyy
+
+0123456789abcdef|xxxxxxxxxxxx
+0123456789|yyyyyyyy
+
+0123456789abcdef|xxxxxxxxxxxxxx
+0123456789|yyyyyy
+
+0123456789abcdef|xxxxxxxxxxxxxxxx
+0123456789|yyyy
+
+0123456789abcdef|xxxxxxxxxxxxxxxxxx
+0123456789|yy
+
+0123456789abcdef|xxxxxxxxxxxxxxxxxxxx
+0123456789|
+\pset format aligned
+execute q;
+* Record 1                          
+0123456789abcdef xx
+0123456789       yyyyyyyyyyyyyyyyyy
+* Record 2                          
+0123456789abcdef xxxx
+0123456789       yyyyyyyyyyyyyyyy
+* Record 3                          
+0123456789abcdef xxxxxx
+0123456789       yyyyyyyyyyyyyy
+* Record 4                          
+0123456789abcdef xxxxxxxx
+0123456789       yyyyyyyyyyyy
+* Record 5                          
+0123456789abcdef xxxxxxxxxx
+0123456789       yyyyyyyyyy
+* Record 6                          
+0123456789abcdef xxxxxxxxxxxx
+0123456789       yyyyyyyy
+* Record 7                          
+0123456789abcdef xxxxxxxxxxxxxx
+0123456789       yyyyyy
+* Record 8                          
+0123456789abcdef xxxxxxxxxxxxxxxx
+0123456789       yyyy
+* Record 9                          
+0123456789abcdef xxxxxxxxxxxxxxxxxx
+0123456789       yy
+* Record 10                         
+0123456789abcdef xxxxxxxxxxxxxxxxxxxx
+0123456789       
+
+\pset format wrapped
+execute q;
+* Record 1                  
+0123456789abcdef xx
+0123456789       yyyyyyyyyyyy.
+                .yyyyyy
+* Record 2                  
+0123456789abcdef xxxx
+0123456789       yyyyyyyyyyyy.
+                .yyyy
+* Record 3                  
+0123456789abcdef xxxxxx
+0123456789       yyyyyyyyyyyy.
+                .yy
+* Record 4                  
+0123456789abcdef xxxxxxxx
+0123456789       yyyyyyyyyyyy
+* Record 5                  
+0123456789abcdef xxxxxxxxxx
+0123456789       yyyyyyyyyy
+* Record 6                  
+0123456789abcdef xxxxxxxxxxxx
+0123456789       yyyyyyyy
+* Record 7                  
+0123456789abcdef xxxxxxxxxxxx.
+                .xx
+0123456789       yyyyyy
+* Record 8                  
+0123456789abcdef xxxxxxxxxxxx.
+                .xxxx
+0123456789       yyyy
+* Record 9                  
+0123456789abcdef xxxxxxxxxxxx.
+                .xxxxxx
+0123456789       yy
+* Record 10                 
+0123456789abcdef xxxxxxxxxxxx.
+                .xxxxxxxx
+0123456789       
+
+\pset border 1
+\pset format unaligned
+execute q;
+0123456789abcdef|xx
+0123456789|yyyyyyyyyyyyyyyyyy
+
+0123456789abcdef|xxxx
+0123456789|yyyyyyyyyyyyyyyy
+
+0123456789abcdef|xxxxxx
+0123456789|yyyyyyyyyyyyyy
+
+0123456789abcdef|xxxxxxxx
+0123456789|yyyyyyyyyyyy
+
+0123456789abcdef|xxxxxxxxxx
+0123456789|yyyyyyyyyy
+
+0123456789abcdef|xxxxxxxxxxxx
+0123456789|yyyyyyyy
+
+0123456789abcdef|xxxxxxxxxxxxxx
+0123456789|yyyyyy
+
+0123456789abcdef|xxxxxxxxxxxxxxxx
+0123456789|yyyy
+
+0123456789abcdef|xxxxxxxxxxxxxxxxxx
+0123456789|yy
+
+0123456789abcdef|xxxxxxxxxxxxxxxxxxxx
+0123456789|
+\pset format aligned
+execute q;
+-[ RECORD 1 ]----+---------------------
+0123456789abcdef | xx
+0123456789       | yyyyyyyyyyyyyyyyyy
+-[ RECORD 2 ]----+---------------------
+0123456789abcdef | xxxx
+0123456789       | yyyyyyyyyyyyyyyy
+-[ RECORD 3 ]----+---------------------
+0123456789abcdef | xxxxxx
+0123456789       | yyyyyyyyyyyyyy
+-[ RECORD 4 ]----+---------------------
+0123456789abcdef | xxxxxxxx
+0123456789       | yyyyyyyyyyyy
+-[ RECORD 5 ]----+---------------------
+0123456789abcdef | xxxxxxxxxx
+0123456789       | yyyyyyyyyy
+-[ RECORD 6 ]----+---------------------
+0123456789abcdef | xxxxxxxxxxxx
+0123456789       | yyyyyyyy
+-[ RECORD 7 ]----+---------------------
+0123456789abcdef | xxxxxxxxxxxxxx
+0123456789       | yyyyyy
+-[ RECORD 8 ]----+---------------------
+0123456789abcdef | xxxxxxxxxxxxxxxx
+0123456789       | yyyy
+-[ RECORD 9 ]----+---------------------
+0123456789abcdef | xxxxxxxxxxxxxxxxxx
+0123456789       | yy
+-[ RECORD 10 ]---+---------------------
+0123456789abcdef | xxxxxxxxxxxxxxxxxxxx
+0123456789       | 
+
+\pset format wrapped
+execute q;
+-[ RECORD 1 ]----+-----------
+0123456789abcdef | xx
+0123456789       | yyyyyyyyyy.
+                 |.yyyyyyyy
+-[ RECORD 2 ]----+-----------
+0123456789abcdef | xxxx
+0123456789       | yyyyyyyyyy.
+                 |.yyyyyy
+-[ RECORD 3 ]----+-----------
+0123456789abcdef | xxxxxx
+0123456789       | yyyyyyyyyy.
+                 |.yyyy
+-[ RECORD 4 ]----+-----------
+0123456789abcdef | xxxxxxxx
+0123456789       | yyyyyyyyyy.
+                 |.yy
+-[ RECORD 5 ]----+-----------
+0123456789abcdef | xxxxxxxxxx
+0123456789       | yyyyyyyyyy
+-[ RECORD 6 ]----+-----------
+0123456789abcdef | xxxxxxxxxx.
+                 |.xx
+0123456789       | yyyyyyyy
+-[ RECORD 7 ]----+-----------
+0123456789abcdef | xxxxxxxxxx.
+                 |.xxxx
+0123456789       | yyyyyy
+-[ RECORD 8 ]----+-----------
+0123456789abcdef | xxxxxxxxxx.
+                 |.xxxxxx
+0123456789       | yyyy
+-[ RECORD 9 ]----+-----------
+0123456789abcdef | xxxxxxxxxx.
+                 |.xxxxxxxx
+0123456789       | yy
+-[ RECORD 10 ]---+-----------
+0123456789abcdef | xxxxxxxxxx.
+                 |.xxxxxxxxxx
+0123456789       | 
+
+\pset border 2
+\pset format unaligned
+execute q;
+0123456789abcdef|xx
+0123456789|yyyyyyyyyyyyyyyyyy
+
+0123456789abcdef|xxxx
+0123456789|yyyyyyyyyyyyyyyy
+
+0123456789abcdef|xxxxxx
+0123456789|yyyyyyyyyyyyyy
+
+0123456789abcdef|xxxxxxxx
+0123456789|yyyyyyyyyyyy
+
+0123456789abcdef|xxxxxxxxxx
+0123456789|yyyyyyyyyy
+
+0123456789abcdef|xxxxxxxxxxxx
+0123456789|yyyyyyyy
+
+0123456789abcdef|xxxxxxxxxxxxxx
+0123456789|yyyyyy
+
+0123456789abcdef|xxxxxxxxxxxxxxxx
+0123456789|yyyy
+
+0123456789abcdef|xxxxxxxxxxxxxxxxxx
+0123456789|yy
+
+0123456789abcdef|xxxxxxxxxxxxxxxxxxxx
+0123456789|
+\pset format aligned
+execute q;
++-[ RECORD 1 ]-----+----------------------+
+| 0123456789abcdef | xx                   |
+| 0123456789       | yyyyyyyyyyyyyyyyyy   |
++-[ RECORD 2 ]-----+----------------------+
+| 0123456789abcdef | xxxx                 |
+| 0123456789       | yyyyyyyyyyyyyyyy     |
++-[ RECORD 3 ]-----+----------------------+
+| 0123456789abcdef | xxxxxx               |
+| 0123456789       | yyyyyyyyyyyyyy       |
++-[ RECORD 4 ]-----+----------------------+
+| 0123456789abcdef | xxxxxxxx             |
+| 0123456789       | yyyyyyyyyyyy         |
++-[ RECORD 5 ]-----+----------------------+
+| 0123456789abcdef | xxxxxxxxxx           |
+| 0123456789       | yyyyyyyyyy           |
++-[ RECORD 6 ]-----+----------------------+
+| 0123456789abcdef | xxxxxxxxxxxx         |
+| 0123456789       | yyyyyyyy             |
++-[ RECORD 7 ]-----+----------------------+
+| 0123456789abcdef | xxxxxxxxxxxxxx       |
+| 0123456789       | yyyyyy               |
++-[ RECORD 8 ]-----+----------------------+
+| 0123456789abcdef | xxxxxxxxxxxxxxxx     |
+| 0123456789       | yyyy                 |
++-[ RECORD 9 ]-----+----------------------+
+| 0123456789abcdef | xxxxxxxxxxxxxxxxxx   |
+| 0123456789       | yy                   |
++-[ RECORD 10 ]----+----------------------+
+| 0123456789abcdef | xxxxxxxxxxxxxxxxxxxx |
+| 0123456789       |                      |
++------------------+----------------------+
+
+\pset format wrapped
+execute q;
++-[ RECORD 1 ]-----+---------+
+| 0123456789abcdef | xx      |
+| 0123456789       | yyyyyyy.|
+|                  |.yyyyyyy.|
+|                  |.yyyy    |
++-[ RECORD 2 ]-----+---------+
+| 0123456789abcdef | xxxx    |
+| 0123456789       | yyyyyyy.|
+|                  |.yyyyyyy.|
+|                  |.yy      |
++-[ RECORD 3 ]-----+---------+
+| 0123456789abcdef | xxxxxx  |
+| 0123456789       | yyyyyyy.|
+|                  |.yyyyyyy |
++-[ RECORD 4 ]-----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.x       |
+| 0123456789       | yyyyyyy.|
+|                  |.yyyyy   |
++-[ RECORD 5 ]-----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.xxx     |
+| 0123456789       | yyyyyyy.|
+|                  |.yyy     |
++-[ RECORD 6 ]-----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.xxxxx   |
+| 0123456789       | yyyyyyy.|
+|                  |.y       |
++-[ RECORD 7 ]-----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.xxxxxxx |
+| 0123456789       | yyyyyy  |
++-[ RECORD 8 ]-----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.xxxxxxx.|
+|                  |.xx      |
+| 0123456789       | yyyy    |
++-[ RECORD 9 ]-----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.xxxxxxx.|
+|                  |.xxxx    |
+| 0123456789       | yy      |
++-[ RECORD 10 ]----+---------+
+| 0123456789abcdef | xxxxxxx.|
+|                  |.xxxxxxx.|
+|                  |.xxxxxx  |
+| 0123456789       |         |
++------------------+---------+
+
+\pset expanded on
 \pset columns 20
 \pset border 0
 \pset format unaligned
@@ -1254,115 +1586,88 @@ execute q;
 
 \pset format wrapped
 execute q;
-* Record 1        
+* Record 1         
 0123456789abcdef xx
-0123456789       yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
+0123456789       yyy.
+                .yyy.
+                .yyy.
+                .yyy.
+                .yyy.
+                .yyy
+* Record 2         
+0123456789abcdef xxx.
+                .x
+0123456789       yyy.
+                .yyy.
+                .yyy.
+                .yyy.
+                .yyy.
+                .y
+* Record 3         
+0123456789abcdef xxx.
+                .xxx
+0123456789       yyy.
+                .yyy.
+                .yyy.
+                .yyy.
                 .yy
-* Record 2        
-0123456789abcdef xx.
+* Record 4         
+0123456789abcdef xxx.
+                .xxx.
                 .xx
-0123456789       yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
+0123456789       yyy.
+                .yyy.
+                .yyy.
+                .yyy
+* Record 5         
+0123456789abcdef xxx.
+                .xxx.
+                .xxx.
+                .x
+0123456789       yyy.
+                .yyy.
+                .yyy.
+                .y
+* Record 6         
+0123456789abcdef xxx.
+                .xxx.
+                .xxx.
+                .xxx
+0123456789       yyy.
+                .yyy.
                 .yy
-* Record 3        
-0123456789abcdef xx.
-                .xx.
+* Record 7         
+0123456789abcdef xxx.
+                .xxx.
+                .xxx.
+                .xxx.
                 .xx
-0123456789       yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy
-* Record 4        
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx
-0123456789       yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy
-* Record 5        
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx
-0123456789       yy.
-                .yy.
-                .yy.
-                .yy.
-                .yy
-* Record 6        
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx
-0123456789       yy.
-                .yy.
-                .yy.
-                .yy
-* Record 7        
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx
-0123456789       yy.
-                .yy.
-                .yy
-* Record 8        
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx
-0123456789       yy.
-                .yy
-* Record 9        
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx
+0123456789       yyy.
+                .yyy
+* Record 8         
+0123456789abcdef xxx.
+                .xxx.
+                .xxx.
+                .xxx.
+                .xxx.
+                .x
+0123456789       yyy.
+                .y
+* Record 9         
+0123456789abcdef xxx.
+                .xxx.
+                .xxx.
+                .xxx.
+                .xxx.
+                .xxx
 0123456789       yy
-* Record 10       
-0123456789abcdef xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
-                .xx.
+* Record 10        
+0123456789abcdef xxx.
+                .xxx.
+                .xxx.
+                .xxx.
+                .xxx.
+                .xxx.
                 .xx
 0123456789       
 
@@ -1893,34 +2198,34 @@ execute q;
 
 \pset format wrapped
 execute q;
-* Record 1                             
+* Record 1                          
 0123456789abcdef xx
 0123456789       yyyyyyyyyyyyyyyyyy
-* Record 2                             
+* Record 2                          
 0123456789abcdef xxxx
 0123456789       yyyyyyyyyyyyyyyy
-* Record 3                             
+* Record 3                          
 0123456789abcdef xxxxxx
 0123456789       yyyyyyyyyyyyyy
-* Record 4                             
+* Record 4                          
 0123456789abcdef xxxxxxxx
 0123456789       yyyyyyyyyyyy
-* Record 5                             
+* Record 5                          
 0123456789abcdef xxxxxxxxxx
 0123456789       yyyyyyyyyy
-* Record 6                             
+* Record 6                          
 0123456789abcdef xxxxxxxxxxxx
 0123456789       yyyyyyyy
-* Record 7                             
+* Record 7                          
 0123456789abcdef xxxxxxxxxxxxxx
 0123456789       yyyyyy
-* Record 8                             
+* Record 8                          
 0123456789abcdef xxxxxxxxxxxxxxxx
 0123456789       yyyy
-* Record 9                             
+* Record 9                          
 0123456789abcdef xxxxxxxxxxxxxxxxxx
 0123456789       yy
-* Record 10                            
+* Record 10                         
 0123456789abcdef xxxxxxxxxxxxxxxxxxxx
 0123456789       
 
@@ -1991,34 +2296,34 @@ execute q;
 
 \pset format wrapped
 execute q;
--[ RECORD 1 ]----+----------------------
+-[ RECORD 1 ]----+---------------------
 0123456789abcdef | xx
 0123456789       | yyyyyyyyyyyyyyyyyy
--[ RECORD 2 ]----+----------------------
+-[ RECORD 2 ]----+---------------------
 0123456789abcdef | xxxx
 0123456789       | yyyyyyyyyyyyyyyy
--[ RECORD 3 ]----+----------------------
+-[ RECORD 3 ]----+---------------------
 0123456789abcdef | xxxxxx
 0123456789       | yyyyyyyyyyyyyy
--[ RECORD 4 ]----+----------------------
+-[ RECORD 4 ]----+---------------------
 0123456789abcdef | xxxxxxxx
 0123456789       | yyyyyyyyyyyy
--[ RECORD 5 ]----+----------------------
+-[ RECORD 5 ]----+---------------------
 0123456789abcdef | xxxxxxxxxx
 0123456789       | yyyyyyyyyy
--[ RECORD 6 ]----+----------------------
+-[ RECORD 6 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxx
 0123456789       | yyyyyyyy
--[ RECORD 7 ]----+----------------------
+-[ RECORD 7 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxxxx
 0123456789       | yyyyyy
--[ RECORD 8 ]----+----------------------
+-[ RECORD 8 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxxxxxx
 0123456789       | yyyy
--[ RECORD 9 ]----+----------------------
+-[ RECORD 9 ]----+---------------------
 0123456789abcdef | xxxxxxxxxxxxxxxxxx
 0123456789       | yy
--[ RECORD 10 ]---+----------------------
+-[ RECORD 10 ]---+---------------------
 0123456789abcdef | xxxxxxxxxxxxxxxxxxxx
 0123456789       | 
 
@@ -2332,3 +2637,31 @@ execute q;
 <l|int >l|11
 |====
 deallocate q;
+-- SHOW_CONTEXT
+\set SHOW_CONTEXT never
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+NOTICE:  foo
+ERROR:  bar
+\set SHOW_CONTEXT errors
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+NOTICE:  foo
+ERROR:  bar
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at RAISE
+\set SHOW_CONTEXT always
+do $$
+begin
+  raise notice 'foo';
+  raise exception 'bar';
+end $$;
+NOTICE:  foo
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+ERROR:  bar
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at RAISE

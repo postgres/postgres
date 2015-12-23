@@ -343,7 +343,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    BRIN can support many different indexing strategies,
    and the particular operators with which a BRIN index can be used
    vary depending on the indexing strategy.
-   For datatypes that have a linear sort order, the indexed data
+   For data types that have a linear sort order, the indexed data
    corresponds to the minimum and maximum values of the
    values in the column for each block range,
    which support indexed queries using these operators:
@@ -655,11 +655,7 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
   <note>
    <para>
-    The preferred way to add a unique constraint to a table is
-    <literal>ALTER TABLE ... ADD CONSTRAINT</literal>.  The use of
-    indexes to enforce unique constraints could be considered an
-    implementation detail that should not be accessed directly.
-    One should, however, be aware that there's no need to manually
+    There's no need to manually
     create indexes on unique columns; doing so would just duplicate
     the automatically-created index.
    </para>

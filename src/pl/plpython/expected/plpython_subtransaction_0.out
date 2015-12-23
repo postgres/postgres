@@ -19,7 +19,7 @@ try:
         if what_error == "SPI":
             plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
         elif what_error == "Python":
-            plpy.attribute_error
+            raise Exception("Python exception")
     except:
         exc = False
         subxact.__exit__(*sys.exc_info())
@@ -58,10 +58,10 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_test('Python');
-ERROR:  AttributeError: 'module' object has no attribute 'attribute_error'
+ERROR:  Exception: Python exception
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_test", line 13, in <module>
-    plpy.attribute_error
+    raise Exception("Python exception")
 PL/Python function "subtransaction_test"
 SELECT * FROM subtransaction_tbl;
  i 
@@ -78,7 +78,7 @@ with plpy.subtransaction():
     if what_error == "SPI":
         plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
     elif what_error == "Python":
-        plpy.attribute_error
+        raise Exception("Python exception")
 $$ LANGUAGE plpythonu;
 ERROR:  could not compile PL/Python function "subtransaction_ctx_test"
 DETAIL:  SyntaxError: invalid syntax (line 3)
@@ -235,7 +235,6 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "subtransaction_exit_without_enter"
 SELECT subtransaction_enter_without_exit();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_without_exit"
  subtransaction_enter_without_exit 
 -----------------------------------
  
@@ -243,7 +242,6 @@ CONTEXT:  PL/Python function "subtransaction_enter_without_exit"
 
 SELECT subtransaction_exit_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_exit_twice"
 ERROR:  ValueError: this subtransaction has not been entered
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_exit_twice", line 3, in <module>
@@ -251,9 +249,7 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "subtransaction_exit_twice"
 SELECT subtransaction_enter_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_twice"
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_twice"
  subtransaction_enter_twice 
 ----------------------------
  
@@ -267,7 +263,6 @@ CONTEXT:  Traceback (most recent call last):
 PL/Python function "subtransaction_exit_same_subtransaction_twice"
 SELECT subtransaction_enter_same_subtransaction_twice();
 WARNING:  forcibly aborting a subtransaction that has not been exited
-CONTEXT:  PL/Python function "subtransaction_enter_same_subtransaction_twice"
 ERROR:  ValueError: this subtransaction has already been entered
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "subtransaction_enter_same_subtransaction_twice", line 4, in <module>

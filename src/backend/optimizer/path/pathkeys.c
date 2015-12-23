@@ -28,9 +28,6 @@
 #include "utils/lsyscache.h"
 
 
-static PathKey *make_canonical_pathkey(PlannerInfo *root,
-					   EquivalenceClass *eclass, Oid opfamily,
-					   int strategy, bool nulls_first);
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 
@@ -50,7 +47,7 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
  * equivclass.c will complain if a merge occurs after root->canon_pathkeys
  * has become nonempty.)
  */
-static PathKey *
+PathKey *
 make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first)
@@ -1373,7 +1370,7 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 		 * surely possible to generate a mergejoin clause using them.
 		 */
 		if (rel->has_eclass_joins &&
-			eclass_useful_for_merging(pathkey->pk_eclass, rel))
+			eclass_useful_for_merging(root, pathkey->pk_eclass, rel))
 			matched = true;
 		else
 		{

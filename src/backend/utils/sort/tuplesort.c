@@ -356,9 +356,9 @@ struct Tuplesortstate
 
 	/*
 	 * Additional state for managing "abbreviated key" sortsupport routines
-	 * (which currently may be used by all cases except the Datum sort case
-	 * and hash index case).  Tracks the intervals at which the optimization's
-	 * effectiveness is tested.
+	 * (which currently may be used by all cases except the hash index case).
+	 * Tracks the intervals at which the optimization's effectiveness is
+	 * tested.
 	 */
 	int64		abbrevNext;		/* Tuple # at which to next check
 								 * applicability */
@@ -577,7 +577,14 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	state->tapeset = NULL;
 
 	state->memtupcount = 0;
-	state->memtupsize = 1024;	/* initial guess */
+
+	/*
+	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
+	 * see comments in grow_memtuples().
+	 */
+	state->memtupsize = Max(1024,
+						ALLOCSET_SEPARATE_THRESHOLD / sizeof(SortTuple) + 1);
+
 	state->growmemtuples = true;
 	state->memtuples = (SortTuple *) palloc(state->memtupsize * sizeof(SortTuple));
 
@@ -923,7 +930,14 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	state->sortKeys->ssup_collation = sortCollation;
 	state->sortKeys->ssup_nulls_first = nullsFirstFlag;
 
-	/* abbreviation is possible here only for by-reference types */
+	/*
+	 * Abbreviation is possible here only for by-reference types.  In theory,
+	 * a pass-by-value datatype could have an abbreviated form that is cheaper
+	 * to compare.  In a tuple sort, we could support that, because we can
+	 * always extract the original datum from the tuple is needed.  Here, we
+	 * can't, because a datum sort only stores a single copy of the datum;
+	 * the "tuple" field of each sortTuple is NULL.
+	 */
 	state->sortKeys->abbreviate = !typbyval;
 
 	PrepareSortSupportFromOrderingOp(sortOperator, state->sortKeys);
@@ -1165,10 +1179,10 @@ grow_memtuples(Tuplesortstate *state)
 	 * never generate a dangerous request, but to be safe, check explicitly
 	 * that the array growth fits within availMem.  (We could still cause
 	 * LACKMEM if the memory chunk overhead associated with the memtuples
-	 * array were to increase.  That shouldn't happen with any sane value of
-	 * allowedMem, because at any array size large enough to risk LACKMEM,
-	 * palloc would be treating both old and new arrays as separate chunks.
-	 * But we'll check LACKMEM explicitly below just in case.)
+	 * array were to increase.  That shouldn't happen because we chose the
+	 * initial array size large enough to ensure that palloc will be treating
+	 * both old and new arrays as separate chunks.  But we'll check LACKMEM
+	 * explicitly below just in case.)
 	 */
 	if (state->availMem < (int64) ((newmemtupsize - memtupsize) * sizeof(SortTuple)))
 		goto noalloc;
@@ -1181,7 +1195,7 @@ grow_memtuples(Tuplesortstate *state)
 					  state->memtupsize * sizeof(SortTuple));
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 	if (LACKMEM(state))
-		elog(ERROR, "unexpected out-of-memory situation during sort");
+		elog(ERROR, "unexpected out-of-memory situation in tuplesort");
 	return true;
 
 noalloc:
@@ -1264,7 +1278,7 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup.datum1 = original;
@@ -1287,8 +1301,10 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
@@ -1366,8 +1382,10 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 			 *
 			 * Alter datum1 representation in already-copied tuples, so as to
 			 * ensure a consistent representation (current tuple was just
-			 * handled). Note that we rely on all tuples copied so far
-			 * actually being contained within memtuples array.
+			 * handled).  It does not matter if some dumped tuples are
+			 * already sorted on tape, since serialized tuples lack
+			 * abbreviated keys (TSS_BUILDRUNS state prevents control
+			 * reaching here in any case).
 			 */
 			for (i = 0; i < state->memtupcount; i++)
 			{
@@ -3144,7 +3162,7 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup->datum1 = original;
@@ -3167,8 +3185,10 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
@@ -3384,7 +3404,7 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup->datum1 = original;
@@ -3407,8 +3427,10 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{
@@ -3686,7 +3708,7 @@ copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 * Store ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to "void" representation (to be
+		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent).
 		 */
 		stup->datum1 = original;
@@ -3709,8 +3731,10 @@ copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup)
 		 *
 		 * Alter datum1 representation in already-copied tuples, so as to
 		 * ensure a consistent representation (current tuple was just
-		 * handled). Note that we rely on all tuples copied so far actually
-		 * being contained within memtuples array.
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any
+		 * case).
 		 */
 		for (i = 0; i < state->memtupcount; i++)
 		{

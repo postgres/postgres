@@ -106,8 +106,8 @@ BW	-2439+02555	Africa/Gaborone
 BY	+5354+02734	Europe/Minsk
 BZ	+1730-08812	America/Belize
 CA	+4734-05243	America/St_Johns	Newfoundland Time, including SE Labrador
-CA	+4439-06336	America/Halifax	Atlantic Time - Nova Scotia (most places), PEI
-CA	+4612-05957	America/Glace_Bay	Atlantic Time - Nova Scotia - places that did not observe DST 1966-1971
+CA	+4439-06336	America/Halifax	Atlantic Time - Nova Scotia (peninsula), PEI
+CA	+4612-05957	America/Glace_Bay	Atlantic Time - Nova Scotia (Cape Breton)
 CA	+4606-06447	America/Moncton	Atlantic Time - New Brunswick
 CA	+5320-06025	America/Goose_Bay	Atlantic Time - Labrador - most locations
 CA	+5125-05707	America/Blanc-Sablon	Atlantic Standard Time - Quebec - Lower North Shore
@@ -129,6 +129,7 @@ CA	+6227-11421	America/Yellowknife	Mountain Time - central Northwest Territories
 CA	+682059-1334300	America/Inuvik	Mountain Time - west Northwest Territories
 CA	+4906-11631	America/Creston	Mountain Standard Time - Creston, British Columbia
 CA	+5946-12014	America/Dawson_Creek	Mountain Standard Time - Dawson Creek & Fort Saint John, British Columbia
+CA	+5848-12242	America/Fort_Nelson	Mountain Standard Time - Fort Nelson, British Columbia
 CA	+4916-12307	America/Vancouver	Pacific Time - west British Columbia
 CA	+6043-13503	America/Whitehorse	Pacific Time - south Yukon
 CA	+6404-13925	America/Dawson	Pacific Time - north Yukon

@@ -1652,7 +1652,7 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 			if (!missing_ok)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("user mapping for user \"%s\" in server \"%s\" does not exist",
+						 errmsg("user mapping for user \"%s\" on server \"%s\" does not exist",
 								username, servername)));
 			return address;
 		}
@@ -1678,7 +1678,7 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("user mapping for user \"%s\" in server \"%s\" does not exist",
+					 errmsg("user mapping for user \"%s\" on server \"%s\" does not exist",
 							username, servername)));
 		return address;
 	}
@@ -1740,7 +1740,7 @@ get_object_address_defacl(List *objname, List *objargs, bool missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				  errmsg("unrecognized default ACL object type %c", objtype),
-				 errhint("Valid object types are 'r', 'S', 'f', and 'T'.")));
+				 errhint("Valid object types are \"r\", \"S\", \"f\", and \"T\".")));
 	}
 
 	/*
@@ -1901,7 +1901,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		if (list_length(name) < 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("name list must be of length at least %d", 1)));
+					 errmsg("name list length must be at least %d", 1)));
 	}
 
 	/*

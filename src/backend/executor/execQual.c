@@ -271,6 +271,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				j = 0;
 	IntArray	upper,
 				lower;
+	bool		upperProvided[MAXDIM],
+				lowerProvided[MAXDIM];
 	int		   *lIndex;
 
 	array_source = ExecEvalExpr(astate->refexpr,
@@ -300,6 +302,15 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 							i + 1, MAXDIM)));
 
+		if (eltstate == NULL)
+		{
+			/* Slice bound is omitted, so use array's upper bound */
+			Assert(astate->reflowerindexpr != NIL);
+			upperProvided[i++] = false;
+			continue;
+		}
+		upperProvided[i] = true;
+
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr(eltstate,
 													 econtext,
 													 &eisnull,
@@ -327,6 +338,14 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 								j + 1, MAXDIM)));
+
+			if (eltstate == NULL)
+			{
+				/* Slice bound is omitted, so use array's lower bound */
+				lowerProvided[j++] = false;
+				continue;
+			}
+			lowerProvided[j] = true;
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr(eltstate,
 														 econtext,
@@ -398,6 +417,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				econtext->caseValue_datum =
 					array_get_slice(array_source, i,
 									upper.indx, lower.indx,
+									upperProvided, lowerProvided,
 									astate->refattrlength,
 									astate->refelemlength,
 									astate->refelembyval,
@@ -456,6 +476,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		else
 			return array_set_slice(array_source, i,
 								   upper.indx, lower.indx,
+								   upperProvided, lowerProvided,
 								   sourceData,
 								   eisnull,
 								   astate->refattrlength,
@@ -475,6 +496,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	else
 		return array_get_slice(array_source, i,
 							   upper.indx, lower.indx,
+							   upperProvided, lowerProvided,
 							   astate->refattrlength,
 							   astate->refelemlength,
 							   astate->refelembyval,
@@ -631,7 +653,8 @@ ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 		{
 			if (variable->vartype != attr->atttypid)
 				ereport(ERROR,
-						(errmsg("attribute %d has wrong type", attnum),
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("attribute %d has wrong type", attnum),
 						 errdetail("Table has type %s, but query expects %s.",
 								   format_type_be(attr->atttypid),
 								   format_type_be(variable->vartype))));
@@ -4111,7 +4134,8 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 	/* As in ExecEvalScalarVar, we should but can't check typmod */
 	if (fselect->resulttype != attr->atttypid)
 		ereport(ERROR,
-				(errmsg("attribute %d has wrong type", fieldnum),
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("attribute %d has wrong type", fieldnum),
 				 errdetail("Table has type %s, but query expects %s.",
 						   format_type_be(attr->atttypid),
 						   format_type_be(fselect->resulttype))));
@@ -4485,35 +4509,15 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_Aggref:
 			{
-				Aggref	   *aggref = (Aggref *) node;
 				AggrefExprState *astate = makeNode(AggrefExprState);
 
 				astate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalAggref;
 				if (parent && IsA(parent, AggState))
 				{
 					AggState   *aggstate = (AggState *) parent;
-					int			naggs;
 
 					aggstate->aggs = lcons(astate, aggstate->aggs);
-					naggs = ++aggstate->numaggs;
-
-					astate->aggdirectargs = (List *) ExecInitExpr((Expr *) aggref->aggdirectargs,
-																  parent);
-					astate->args = (List *) ExecInitExpr((Expr *) aggref->args,
-														 parent);
-					astate->aggfilter = ExecInitExpr(aggref->aggfilter,
-													 parent);
-
-					/*
-					 * Complain if the aggregate's arguments contain any
-					 * aggregates; nested agg functions are semantically
-					 * nonsensical.  (This should have been caught earlier,
-					 * but we defend against it here anyway.)
-					 */
-					if (naggs != aggstate->numaggs)
-						ereport(ERROR,
-								(errcode(ERRCODE_GROUPING_ERROR),
-						errmsg("aggregate function calls cannot be nested")));
+					aggstate->numaggs++;
 				}
 				else
 				{

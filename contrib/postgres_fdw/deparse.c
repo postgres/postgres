@@ -17,11 +17,12 @@
  * We do not consider that it is ever safe to send COLLATE expressions to
  * the remote server: it might not have the same collation names we do.
  * (Later we might consider it safe to send COLLATE "C", but even that would
- * fail on old remote servers.)  An expression is considered safe to send only
- * if all collations used in it are traceable to Var(s) of the foreign table.
- * That implies that if the remote server gets a different answer than we do,
- * the foreign table's columns are not marked with collations that match the
- * remote table's columns, which we can consider to be user error.
+ * fail on old remote servers.)  An expression is considered safe to send
+ * only if all operator/function input collations used in it are traceable to
+ * Var(s) of the foreign table.  That implies that if the remote server gets
+ * a different answer than we do, the foreign table's columns are not marked
+ * with collations that match the remote table's columns, which we can
+ * consider to be user error.
  *
  * Portions Copyright (c) 2012-2015, PostgreSQL Global Development Group
  *
@@ -37,7 +38,6 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
-#include "access/transam.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
@@ -69,9 +69,12 @@ typedef struct foreign_glob_cxt
  */
 typedef enum
 {
-	FDW_COLLATE_NONE,			/* expression is of a noncollatable type */
+	FDW_COLLATE_NONE,			/* expression is of a noncollatable type, or
+								 * it has default collation that is not
+								 * traceable to a foreign Var */
 	FDW_COLLATE_SAFE,			/* collation derives from a foreign Var */
-	FDW_COLLATE_UNSAFE			/* collation derives from something else */
+	FDW_COLLATE_UNSAFE			/* collation is non-default and derives from
+								 * something other than a foreign Var */
 } FDWCollateState;
 
 typedef struct foreign_loc_cxt
@@ -98,7 +101,7 @@ typedef struct deparse_expr_cxt
 static bool foreign_expr_walker(Node *node,
 					foreign_glob_cxt *glob_cxt,
 					foreign_loc_cxt *outer_cxt);
-static bool is_builtin(Oid procid);
+static char *deparse_type_name(Oid type_oid, int32 typemod);
 
 /*
  * Functions to construct string representation of a node tree.
@@ -189,9 +192,12 @@ is_foreign_expr(PlannerInfo *root,
 	if (!foreign_expr_walker((Node *) expr, &glob_cxt, &loc_cxt))
 		return false;
 
-	/* Expressions examined here should be boolean, ie noncollatable */
-	Assert(loc_cxt.collation == InvalidOid);
-	Assert(loc_cxt.state == FDW_COLLATE_NONE);
+	/*
+	 * If the expression has a valid collation that does not arise from a
+	 * foreign var, the expression can not be sent over.
+	 */
+	if (loc_cxt.state == FDW_COLLATE_UNSAFE)
+		return false;
 
 	/*
 	 * An expression which includes any mutable functions can't be sent over
@@ -213,11 +219,12 @@ is_foreign_expr(PlannerInfo *root,
  * In addition, *outer_cxt is updated with collation information.
  *
  * We must check that the expression contains only node types we can deparse,
- * that all types/functions/operators are safe to send (which we approximate
- * as being built-in), and that all collations used in the expression derive
- * from Vars of the foreign table.  Because of the latter, the logic is
- * pretty close to assign_collations_walker() in parse_collate.c, though we
- * can assume here that the given expression is valid.
+ * that all types/functions/operators are safe to send (they are "shippable"),
+ * and that all collations used in the expression derive from Vars of the
+ * foreign table.  Because of the latter, the logic is pretty close to
+ * assign_collations_walker() in parse_collate.c, though we can assume here
+ * that the given expression is valid.  Note function mutability is not
+ * currently considered here.
  */
 static bool
 foreign_expr_walker(Node *node,
@@ -225,6 +232,7 @@ foreign_expr_walker(Node *node,
 					foreign_loc_cxt *outer_cxt)
 {
 	bool		check_type = true;
+	PgFdwRelationInfo *fpinfo;
 	foreign_loc_cxt inner_cxt;
 	Oid			collation;
 	FDWCollateState state;
@@ -232,6 +240,9 @@ foreign_expr_walker(Node *node,
 	/* Need do nothing for empty subexpressions */
 	if (node == NULL)
 		return true;
+
+	/* May need server info from baserel's fdw_private struct */
+	fpinfo = (PgFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
 
 	/* Set up inner_cxt for possible recursion to child nodes */
 	inner_cxt.collation = InvalidOid;
@@ -272,13 +283,24 @@ foreign_expr_walker(Node *node,
 				else
 				{
 					/* Var belongs to some other table */
-					if (var->varcollid != InvalidOid &&
-						var->varcollid != DEFAULT_COLLATION_OID)
-						return false;
-
-					/* We can consider that it doesn't set collation */
-					collation = InvalidOid;
-					state = FDW_COLLATE_NONE;
+					collation = var->varcollid;
+					if (collation == InvalidOid ||
+						collation == DEFAULT_COLLATION_OID)
+					{
+						/*
+						 * It's noncollatable, or it's safe to combine with a
+						 * collatable foreign Var, so set state to NONE.
+						 */
+						state = FDW_COLLATE_NONE;
+					}
+					else
+					{
+						/*
+						 * Do not fail right away, since the Var might appear
+						 * in a collation-insensitive context.
+						 */
+						state = FDW_COLLATE_UNSAFE;
+					}
 				}
 			}
 			break;
@@ -288,16 +310,16 @@ foreign_expr_walker(Node *node,
 
 				/*
 				 * If the constant has nondefault collation, either it's of a
-				 * non-builtin type, or it reflects folding of a CollateExpr;
-				 * either way, it's unsafe to send to the remote.
+				 * non-builtin type, or it reflects folding of a CollateExpr.
+				 * It's unsafe to send to the remote unless it's used in a
+				 * non-collation-sensitive context.
 				 */
-				if (c->constcollid != InvalidOid &&
-					c->constcollid != DEFAULT_COLLATION_OID)
-					return false;
-
-				/* Otherwise, we can consider that it doesn't set collation */
-				collation = InvalidOid;
-				state = FDW_COLLATE_NONE;
+				collation = c->constcollid;
+				if (collation == InvalidOid ||
+					collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
+				else
+					state = FDW_COLLATE_UNSAFE;
 			}
 			break;
 		case T_Param:
@@ -305,14 +327,14 @@ foreign_expr_walker(Node *node,
 				Param	   *p = (Param *) node;
 
 				/*
-				 * Collation handling is same as for Consts.
+				 * Collation rule is same as for Consts and non-foreign Vars.
 				 */
-				if (p->paramcollid != InvalidOid &&
-					p->paramcollid != DEFAULT_COLLATION_OID)
-					return false;
-
-				collation = InvalidOid;
-				state = FDW_COLLATE_NONE;
+				collation = p->paramcollid;
+				if (collation == InvalidOid ||
+					collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
+				else
+					state = FDW_COLLATE_UNSAFE;
 			}
 			break;
 		case T_ArrayRef:
@@ -348,6 +370,8 @@ foreign_expr_walker(Node *node,
 				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
 						 collation == inner_cxt.collation)
 					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
 				else
 					state = FDW_COLLATE_UNSAFE;
 			}
@@ -357,11 +381,11 @@ foreign_expr_walker(Node *node,
 				FuncExpr   *fe = (FuncExpr *) node;
 
 				/*
-				 * If function used by the expression is not built-in, it
+				 * If function used by the expression is not shippable, it
 				 * can't be sent to remote because it might have incompatible
 				 * semantics on remote side.
 				 */
-				if (!is_builtin(fe->funcid))
+				if (!is_shippable(fe->funcid, ProcedureRelationId, fpinfo))
 					return false;
 
 				/*
@@ -393,6 +417,8 @@ foreign_expr_walker(Node *node,
 				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
 						 collation == inner_cxt.collation)
 					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
 				else
 					state = FDW_COLLATE_UNSAFE;
 			}
@@ -403,11 +429,11 @@ foreign_expr_walker(Node *node,
 				OpExpr	   *oe = (OpExpr *) node;
 
 				/*
-				 * Similarly, only built-in operators can be sent to remote.
-				 * (If the operator is, surely its underlying function is
-				 * too.)
+				 * Similarly, only shippable operators can be sent to remote.
+				 * (If the operator is shippable, we assume its underlying
+				 * function is too.)
 				 */
-				if (!is_builtin(oe->opno))
+				if (!is_shippable(oe->opno, OperatorRelationId, fpinfo))
 					return false;
 
 				/*
@@ -434,6 +460,8 @@ foreign_expr_walker(Node *node,
 				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
 						 collation == inner_cxt.collation)
 					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
 				else
 					state = FDW_COLLATE_UNSAFE;
 			}
@@ -443,9 +471,9 @@ foreign_expr_walker(Node *node,
 				ScalarArrayOpExpr *oe = (ScalarArrayOpExpr *) node;
 
 				/*
-				 * Again, only built-in operators can be sent to remote.
+				 * Again, only shippable operators can be sent to remote.
 				 */
-				if (!is_builtin(oe->opno))
+				if (!is_shippable(oe->opno, OperatorRelationId, fpinfo))
 					return false;
 
 				/*
@@ -483,7 +511,7 @@ foreign_expr_walker(Node *node,
 
 				/*
 				 * RelabelType must not introduce a collation not derived from
-				 * an input foreign Var.
+				 * an input foreign Var (same logic as for a real function).
 				 */
 				collation = r->resultcollid;
 				if (collation == InvalidOid)
@@ -491,6 +519,8 @@ foreign_expr_walker(Node *node,
 				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
 						 collation == inner_cxt.collation)
 					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
 				else
 					state = FDW_COLLATE_UNSAFE;
 			}
@@ -540,7 +570,7 @@ foreign_expr_walker(Node *node,
 
 				/*
 				 * ArrayExpr must not introduce a collation not derived from
-				 * an input foreign Var.
+				 * an input foreign Var (same logic as for a function).
 				 */
 				collation = a->array_collid;
 				if (collation == InvalidOid)
@@ -548,6 +578,8 @@ foreign_expr_walker(Node *node,
 				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
 						 collation == inner_cxt.collation)
 					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
 				else
 					state = FDW_COLLATE_UNSAFE;
 			}
@@ -588,10 +620,10 @@ foreign_expr_walker(Node *node,
 	}
 
 	/*
-	 * If result type of given expression is not built-in, it can't be sent to
-	 * remote because it might have incompatible semantics on remote side.
+	 * If result type of given expression is not shippable, it can't be sent
+	 * to remote because it might have incompatible semantics on remote side.
 	 */
-	if (check_type && !is_builtin(exprType(node)))
+	if (check_type && !is_shippable(exprType(node), TypeRelationId, fpinfo))
 		return false;
 
 	/*
@@ -644,27 +676,23 @@ foreign_expr_walker(Node *node,
 }
 
 /*
- * Return true if given object is one of PostgreSQL's built-in objects.
+ * Convert type OID + typmod info into a type name we can ship to the remote
+ * server.  Someplace else had better have verified that this type name is
+ * expected to be known on the remote end.
  *
- * We use FirstBootstrapObjectId as the cutoff, so that we only consider
- * objects with hand-assigned OIDs to be "built in", not for instance any
- * function or type defined in the information_schema.
- *
- * Our constraints for dealing with types are tighter than they are for
- * functions or operators: we want to accept only types that are in pg_catalog,
- * else format_type might incorrectly fail to schema-qualify their names.
- * (This could be fixed with some changes to format_type, but for now there's
- * no need.)  Thus we must exclude information_schema types.
- *
- * XXX there is a problem with this, which is that the set of built-in
- * objects expands over time.  Something that is built-in to us might not
- * be known to the remote server, if it's of an older version.  But keeping
- * track of that would be a huge exercise.
+ * This is almost just format_type_with_typemod(), except that if left to its
+ * own devices, that function will make schema-qualification decisions based
+ * on the local search_path, which is wrong.  We must schema-qualify all
+ * type names that are not in pg_catalog.  We assume here that built-in types
+ * are all in pg_catalog and need not be qualified; otherwise, qualify.
  */
-static bool
-is_builtin(Oid oid)
+static char *
+deparse_type_name(Oid type_oid, int32 typemod)
 {
-	return (oid < FirstBootstrapObjectId);
+	if (is_builtin(type_oid))
+		return format_type_with_typemod(type_oid, typemod);
+	else
+		return format_type_with_typemod_qualified(type_oid, typemod);
 }
 
 
@@ -1330,8 +1358,8 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 	{
 		appendStringInfoString(buf, "NULL");
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->consttype,
-												  node->consttypmod));
+						 deparse_type_name(node->consttype,
+										   node->consttypmod));
 		return;
 	}
 
@@ -1404,8 +1432,8 @@ deparseConst(Const *node, deparse_expr_cxt *context)
 	}
 	if (needlabel)
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->consttype,
-												  node->consttypmod));
+						 deparse_type_name(node->consttype,
+										   node->consttypmod));
 }
 
 /*
@@ -1530,7 +1558,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 
 		deparseExpr((Expr *) linitial(node->args), context);
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(rettype, coercedTypmod));
+						 deparse_type_name(rettype, coercedTypmod));
 		return;
 	}
 
@@ -1725,8 +1753,8 @@ deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 	deparseExpr(node->arg, context);
 	if (node->relabelformat != COERCE_IMPLICIT_CAST)
 		appendStringInfo(context->buf, "::%s",
-						 format_type_with_typemod(node->resulttype,
-												  node->resulttypmod));
+						 deparse_type_name(node->resulttype,
+										   node->resulttypmod));
 }
 
 /*
@@ -1806,7 +1834,7 @@ deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context)
 	/* If the array is empty, we need an explicit cast to the array type. */
 	if (node->elements == NIL)
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->array_typeid, -1));
+						 deparse_type_name(node->array_typeid, -1));
 }
 
 /*
@@ -1822,7 +1850,7 @@ printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
 				 deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
+	char	   *ptypename = deparse_type_name(paramtype, paramtypmod);
 
 	appendStringInfo(buf, "$%d::%s", paramindex, ptypename);
 }
@@ -1848,7 +1876,54 @@ printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
 					   deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
+	char	   *ptypename = deparse_type_name(paramtype, paramtypmod);
 
 	appendStringInfo(buf, "((SELECT null::%s)::%s)", ptypename, ptypename);
+}
+
+/*
+ * Deparse ORDER BY clause according to the given pathkeys for given base
+ * relation. From given pathkeys expressions belonging entirely to the given
+ * base relation are obtained and deparsed.
+ */
+void
+appendOrderByClause(StringInfo buf, PlannerInfo *root, RelOptInfo *baserel,
+					List *pathkeys)
+{
+	ListCell   *lcell;
+	deparse_expr_cxt context;
+	int			nestlevel;
+	char	   *delim = " ";
+
+	/* Set up context struct for recursion */
+	context.root = root;
+	context.foreignrel = baserel;
+	context.buf = buf;
+	context.params_list = NULL;
+
+	/* Make sure any constants in the exprs are printed portably */
+	nestlevel = set_transmission_modes();
+
+	appendStringInfo(buf, " ORDER BY");
+	foreach(lcell, pathkeys)
+	{
+		PathKey    *pathkey = lfirst(lcell);
+		Expr	   *em_expr;
+
+		em_expr = find_em_expr_for_rel(pathkey->pk_eclass, baserel);
+		Assert(em_expr != NULL);
+
+		appendStringInfoString(buf, delim);
+		deparseExpr(em_expr, &context);
+		if (pathkey->pk_strategy == BTLessStrategyNumber)
+			appendStringInfoString(buf, " ASC");
+		else
+			appendStringInfoString(buf, " DESC");
+
+		if (pathkey->pk_nulls_first)
+			appendStringInfoString(buf, " NULLS FIRST");
+
+		delim = ", ";
+	}
+	reset_transmission_modes(nestlevel);
 }

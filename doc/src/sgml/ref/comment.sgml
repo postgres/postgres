@@ -43,6 +43,7 @@ COMMENT ON
   OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
   OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  POLICY <replaceable class="PARAMETER">policy_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
   ROLE <replaceable class="PARAMETER">object_name</replaceable> |
   RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
@@ -113,6 +114,7 @@ COMMENT ON
     <term><replaceable class="parameter">constraint_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
     <term><replaceable class="parameter">operator_name</replaceable></term>
+    <term><replaceable class="parameter">policy_name</replaceable></term>
     <term><replaceable class="parameter">rule_name</replaceable></term>
     <term><replaceable class="parameter">trigger_name</replaceable></term>
     <listitem>
@@ -133,9 +135,9 @@ COMMENT ON
     <term><replaceable class="parameter">domain_name</replaceable></term>
     <listitem>
      <para>
-      When creating a comment on a constraint on a table or a domain, these
-      parameteres specify the name of the table or domain on which the
-      constraint is defined.
+      When creating a comment on a constraint, a table, a domain or
+      a policy these parameters specify the name of the table or domain on
+      which the constraint is defined.
      </para>
     </listitem>
    </varlistentry>
@@ -315,6 +317,7 @@ COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
 COMMENT ON OPERATOR - (NONE, integer) IS 'Unary minus';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
 COMMENT ON OPERATOR FAMILY integer_ops USING btree IS 'all integer operators for btrees';
+COMMENT ON POLICY my_policy ON mytable IS 'Filter rows by users';
 COMMENT ON ROLE my_role IS 'Administration group for finance tables';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';

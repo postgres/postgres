@@ -112,9 +112,9 @@
  *
  * With the current parameters, request sizes up to 8K are treated as chunks,
  * larger requests go into dedicated blocks.  Change ALLOCSET_NUM_FREELISTS
- * to adjust the boundary point.  (But in contexts with small maxBlockSize,
- * we may set the allocChunkLimit to less than 8K, so as to avoid space
- * wastage.)
+ * to adjust the boundary point; and adjust ALLOCSET_SEPARATE_THRESHOLD in
+ * memutils.h to agree.  (Note: in contexts with small maxBlockSize, we may
+ * set the allocChunkLimit to less than 8K, so as to avoid space wastage.)
  *--------------------
  */
 
@@ -253,7 +253,8 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
-static void AllocSetStats(MemoryContext context, int level);
+static void AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
@@ -476,7 +477,12 @@ AllocSetContextCreate(MemoryContext parent,
 	 * We have to have allocChunkLimit a power of two, because the requested
 	 * and actually-allocated sizes of any chunk must be on the same side of
 	 * the limit, else we get confused about whether the chunk is "big".
+	 *
+	 * Also, allocChunkLimit must not exceed ALLOCSET_SEPARATE_THRESHOLD.
 	 */
+	StaticAssertStmt(ALLOC_CHUNK_LIMIT == ALLOCSET_SEPARATE_THRESHOLD,
+					 "ALLOC_CHUNK_LIMIT != ALLOCSET_SEPARATE_THRESHOLD");
+
 	set->allocChunkLimit = ALLOC_CHUNK_LIMIT;
 	while ((Size) (set->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
 		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
@@ -1223,20 +1229,23 @@ AllocSetIsEmpty(MemoryContext context)
 
 /*
  * AllocSetStats
- *		Displays stats about memory consumption of an allocset.
+ *		Compute stats about memory consumption of an allocset.
+ *
+ * level: recursion level (0 at top level); used for print indentation.
+ * print: true to print stats to stderr.
+ * totals: if not NULL, add stats about this allocset into *totals.
  */
 static void
-AllocSetStats(MemoryContext context, int level)
+AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals)
 {
 	AllocSet	set = (AllocSet) context;
 	Size		nblocks = 0;
-	Size		nchunks = 0;
+	Size		freechunks = 0;
 	Size		totalspace = 0;
 	Size		freespace = 0;
 	AllocBlock	block;
-	AllocChunk	chunk;
 	int			fidx;
-	int			i;
 
 	for (block = set->blocks; block != NULL; block = block->next)
 	{
@@ -1246,21 +1255,35 @@ AllocSetStats(MemoryContext context, int level)
 	}
 	for (fidx = 0; fidx < ALLOCSET_NUM_FREELISTS; fidx++)
 	{
+		AllocChunk	chunk;
+
 		for (chunk = set->freelist[fidx]; chunk != NULL;
 			 chunk = (AllocChunk) chunk->aset)
 		{
-			nchunks++;
+			freechunks++;
 			freespace += chunk->size + ALLOC_CHUNKHDRSZ;
 		}
 	}
 
-	for (i = 0; i < level; i++)
-		fprintf(stderr, "  ");
+	if (print)
+	{
+		int			i;
 
-	fprintf(stderr,
+		for (i = 0; i < level; i++)
+			fprintf(stderr, "  ");
+		fprintf(stderr,
 			"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
-			set->header.name, totalspace, nblocks, freespace, nchunks,
-			totalspace - freespace);
+				set->header.name, totalspace, nblocks, freespace, freechunks,
+				totalspace - freespace);
+	}
+
+	if (totals)
+	{
+		totals->nblocks += nblocks;
+		totals->freechunks += freechunks;
+		totals->totalspace += totalspace;
+		totals->freespace += freespace;
+	}
 }
 
 

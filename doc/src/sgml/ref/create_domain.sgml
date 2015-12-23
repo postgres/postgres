@@ -209,8 +209,8 @@ INSERT INTO tab (domcol) VALUES ((SELECT domcol FROM tab WHERE false));
 
   <para>
    It is very difficult to avoid such problems, because of SQL's general
-   assumption that NULL is a valid value of every datatype.  Best practice
-   therefore is to design a domain's constraints so that NULL is allowed,
+   assumption that a null value is a valid value of every data type.  Best practice
+   therefore is to design a domain's constraints so that a null value is allowed,
    and then to apply column <literal>NOT NULL</> constraints to columns of
    the domain type as needed, rather than directly to the domain type.
   </para>

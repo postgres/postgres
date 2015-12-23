@@ -340,7 +340,9 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	{
 		const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 
-		if (slot_exists_ok && strcmp(sqlstate, ERRCODE_DUPLICATE_OBJECT) == 0)
+		if (slot_exists_ok &&
+			sqlstate &&
+			strcmp(sqlstate, ERRCODE_DUPLICATE_OBJECT) == 0)
 		{
 			destroyPQExpBuffer(query);
 			PQclear(res);

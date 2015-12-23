@@ -121,8 +121,17 @@ ALTER SERVER testserver1 OPTIONS (
 	-- gsslib 'value',
 	--replication 'value'
 );
+
+-- Error, invalid list syntax
+ALTER SERVER testserver1 OPTIONS (ADD extensions 'foo; bar');
+
+-- OK but gets a warning
+ALTER SERVER testserver1 OPTIONS (ADD extensions 'foo, bar');
+ALTER SERVER testserver1 OPTIONS (DROP extensions);
+
 ALTER USER MAPPING FOR public SERVER testserver1
 	OPTIONS (DROP user, DROP password);
+
 ALTER FOREIGN TABLE ft1 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
@@ -138,11 +147,12 @@ ALTER FOREIGN TABLE ft2 OPTIONS (use_remote_estimate 'true');
 -- ===================================================================
 -- simple queries
 -- ===================================================================
--- single table, with/without alias
+-- single table without alias
 EXPLAIN (COSTS false) SELECT * FROM ft1 ORDER BY c3, c1 OFFSET 100 LIMIT 10;
 SELECT * FROM ft1 ORDER BY c3, c1 OFFSET 100 LIMIT 10;
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
-SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+-- single table with alias - also test that tableoid sort is not pushed to remote side
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1, t1.tableoid OFFSET 100 LIMIT 10;
+SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1, t1.tableoid OFFSET 100 LIMIT 10;
 -- whole-row reference
 EXPLAIN (VERBOSE, COSTS false) SELECT t1 FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
 SELECT t1 FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
@@ -168,23 +178,20 @@ SELECT * FROM ft1 t1 WHERE t1.c3 = (SELECT MAX(c3) FROM ft2 t2) ORDER BY c1;
 WITH t1 AS (SELECT * FROM ft1 WHERE c1 <= 10) SELECT t2.c1, t2.c2, t2.c3, t2.c4 FROM t1, ft2 t2 WHERE t1.c1 = t2.c1 ORDER BY t1.c1;
 -- fixed values
 SELECT 'fixed', NULL FROM ft1 t1 WHERE c1 = 1;
--- user-defined operator/function
-CREATE FUNCTION postgres_fdw_abs(int) RETURNS int AS $$
-BEGIN
-RETURN abs($1);
-END
-$$ LANGUAGE plpgsql IMMUTABLE;
-CREATE OPERATOR === (
-    LEFTARG = int,
-    RIGHTARG = int,
-    PROCEDURE = int4eq,
-    COMMUTATOR = ===,
-    NEGATOR = !==
-);
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2;
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = t1.c2;
+-- Test forcing the remote server to produce sorted data for a merge join.
+SET enable_hashjoin TO false;
+SET enable_nestloop TO false;
+-- inner join; expressions in the clauses appear in the equivalence class list
+EXPLAIN (VERBOSE, COSTS false)
+	SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
+-- outer join; expressions in the clauses do not appear in equivalence class
+-- list but no output change as compared to the previous query
+EXPLAIN (VERBOSE, COSTS false)
+	SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
+RESET enable_hashjoin;
+RESET enable_nestloop;
 
 -- ===================================================================
 -- WHERE with remotely-executable conditions
@@ -214,6 +221,54 @@ WHERE a.c2 = 6 AND b.c1 = a.c1 AND a.c8 = 'foo' AND b.c7 = upper(a.c7);
 -- bug before 9.3.5 due to sloppy handling of remote-estimate parameters
 SELECT * FROM ft1 WHERE c1 = ANY (ARRAY(SELECT c1 FROM ft2 WHERE c1 < 5));
 SELECT * FROM ft2 WHERE c1 = ANY (ARRAY(SELECT c1 FROM ft1 WHERE c1 < 5));
+-- we should not push order by clause with volatile expressions or unsafe
+-- collations
+EXPLAIN (VERBOSE, COSTS false)
+	SELECT * FROM ft2 ORDER BY ft2.c1, random();
+EXPLAIN (VERBOSE, COSTS false)
+	SELECT * FROM ft2 ORDER BY ft2.c1, ft2.c3 collate "C";
+
+-- user-defined operator/function
+CREATE FUNCTION postgres_fdw_abs(int) RETURNS int AS $$
+BEGIN
+RETURN abs($1);
+END
+$$ LANGUAGE plpgsql IMMUTABLE;
+CREATE OPERATOR === (
+    LEFTARG = int,
+    RIGHTARG = int,
+    PROCEDURE = int4eq,
+    COMMUTATOR = ===
+);
+
+-- built-in operators and functions can be shipped for remote execution
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
+
+-- by default, user-defined ones cannot
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+
+-- but let's put them in an extension ...
+ALTER EXTENSION postgres_fdw ADD FUNCTION postgres_fdw_abs(int);
+ALTER EXTENSION postgres_fdw ADD OPERATOR === (int, int);
+ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
+
+-- ... now they can be shipped
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
+EXPLAIN (VERBOSE, COSTS false)
+  SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
 
 -- ===================================================================
 -- parameterized queries
@@ -316,19 +371,24 @@ COMMIT;
 -- ===================================================================
 -- test handling of collations
 -- ===================================================================
-create table loct3 (f1 text collate "C", f2 text);
-create foreign table ft3 (f1 text collate "C", f2 text)
-  server loopback options (table_name 'loct3');
+create table loct3 (f1 text collate "C" unique, f2 text, f3 varchar(10) unique);
+create foreign table ft3 (f1 text collate "C", f2 text, f3 varchar(10))
+  server loopback options (table_name 'loct3', use_remote_estimate 'true');
 
 -- can be sent to remote
 explain (verbose, costs off) select * from ft3 where f1 = 'foo';
 explain (verbose, costs off) select * from ft3 where f1 COLLATE "C" = 'foo';
 explain (verbose, costs off) select * from ft3 where f2 = 'foo';
+explain (verbose, costs off) select * from ft3 where f3 = 'foo';
+explain (verbose, costs off) select * from ft3 f, loct3 l
+  where f.f3 = l.f3 and l.f1 = 'foo';
 -- can't be sent to remote
 explain (verbose, costs off) select * from ft3 where f1 COLLATE "POSIX" = 'foo';
 explain (verbose, costs off) select * from ft3 where f1 = 'foo' COLLATE "C";
 explain (verbose, costs off) select * from ft3 where f2 COLLATE "C" = 'foo';
 explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
+explain (verbose, costs off) select * from ft3 f, loct3 l
+  where f.f3 = l.f3 COLLATE "POSIX" and l.f1 = 'foo';
 
 -- ===================================================================
 -- test writable foreign table stuff
@@ -765,6 +825,32 @@ from
 where bar.f1 = ss.f1;
 
 select tableoid::regclass, * from bar order by 1,2;
+
+-- Test forcing the remote server to produce sorted data for a merge join,
+-- but the foreign table is an inheritance child.
+truncate table loct1;
+truncate table only foo;
+\set num_rows_foo 2000
+insert into loct1 select generate_series(0, :num_rows_foo, 2), generate_series(0, :num_rows_foo, 2), generate_series(0, :num_rows_foo, 2);
+insert into foo select generate_series(1, :num_rows_foo, 2), generate_series(1, :num_rows_foo, 2);
+SET enable_hashjoin to false;
+SET enable_nestloop to false;
+alter foreign table foo2 options (use_remote_estimate 'true');
+create index i_loct1_f1 on loct1(f1);
+create index i_foo_f1 on foo(f1);
+analyze foo;
+analyze loct1;
+-- inner join; expressions in the clauses appear in the equivalence class list
+explain (verbose, costs off)
+	select foo.f1, loct1.f1 from foo join loct1 on (foo.f1 = loct1.f1) order by foo.f2 offset 10 limit 10;
+select foo.f1, loct1.f1 from foo join loct1 on (foo.f1 = loct1.f1) order by foo.f2 offset 10 limit 10;
+-- outer join; expressions in the clauses do not appear in equivalence class
+-- list but no output change as compared to the previous query
+explain (verbose, costs off)
+	select foo.f1, loct1.f1 from foo left join loct1 on (foo.f1 = loct1.f1) order by foo.f2 offset 10 limit 10;
+select foo.f1, loct1.f1 from foo left join loct1 on (foo.f1 = loct1.f1) order by foo.f2 offset 10 limit 10;
+RESET enable_hashjoin;
+RESET enable_nestloop;
 
 -- Test that WHERE CURRENT OF is not supported
 begin;

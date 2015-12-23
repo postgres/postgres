@@ -108,6 +108,9 @@ static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
 static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
 static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
 
+static void StrictNamesCheck(RestoreOptions *ropt);
+
+
 /*
  * Allocate a new DumpOptions block containing all default values.
  */
@@ -284,6 +287,10 @@ SetArchiveRestoreOptions(Archive *AHX, RestoreOptions *ropt)
 
 		te->reqs = _tocEntryRequired(te, curSection, ropt);
 	}
+
+	/* Enforce strict names checking */
+	if (ropt->strict_names)
+		StrictNamesCheck(ropt);
 }
 
 /* Public */
@@ -624,7 +631,7 @@ RestoreArchive(Archive *AHX)
 		{
 			/* Show namespace if available */
 			if (te->namespace)
-				ahlog(AH, 1, "setting owner and privileges for %s \"%s\".\"%s\"\n",
+				ahlog(AH, 1, "setting owner and privileges for %s \"%s.%s\"\n",
 					  te->desc, te->namespace, te->tag);
 			else
 				ahlog(AH, 1, "setting owner and privileges for %s \"%s\"\n",
@@ -704,7 +711,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 	{
 		/* Show namespace if available */
 		if (te->namespace)
-			ahlog(AH, 1, "creating %s \"%s\".\"%s\"\n",
+			ahlog(AH, 1, "creating %s \"%s.%s\"\n",
 				  te->desc, te->namespace, te->tag);
 		else
 			ahlog(AH, 1, "creating %s \"%s\"\n", te->desc, te->tag);
@@ -800,7 +807,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					_becomeOwner(AH, te);
 					_selectOutputSchema(AH, te->namespace);
 
-					ahlog(AH, 1, "processing data for table \"%s\".\"%s\"\n",
+					ahlog(AH, 1, "processing data for table \"%s.%s\"\n",
 						  te->namespace, te->tag);
 
 					/*
@@ -1103,6 +1110,10 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 			ahprintf(AH, "\n");
 		}
 	}
+
+	/* Enforce strict names checking */
+	if (ropt->strict_names)
+		StrictNamesCheck(ropt);
 
 	if (ropt->filename)
 		RestoreOutput(AH, sav);
@@ -2610,6 +2621,49 @@ processStdStringsEntry(ArchiveHandle *AH, TocEntry *te)
 	else
 		exit_horribly(modulename, "invalid STDSTRINGS item: %s\n",
 					  te->defn);
+}
+
+static void
+StrictNamesCheck(RestoreOptions *ropt)
+{
+	const char *missing_name;
+
+	Assert(ropt->strict_names);
+
+	if (ropt->schemaNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->schemaNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "Schema \"%s\" not found.\n", missing_name);
+	}
+
+	if (ropt->tableNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->tableNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "Table \"%s\" not found.\n", missing_name);
+	}
+
+	if (ropt->indexNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->indexNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "Index \"%s\" not found.\n", missing_name);
+	}
+
+	if (ropt->functionNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->functionNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "Function \"%s\" not found.\n", missing_name);
+	}
+
+	if (ropt->triggerNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->triggerNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "Trigger \"%s\" not found.\n", missing_name);
+	}
 }
 
 static teReqs

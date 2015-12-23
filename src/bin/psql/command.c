@@ -322,8 +322,6 @@ exec_command(const char *cmd,
 			PQconninfoOption *option;
 
 			host = PQhost(pset.db);
-			if (host == NULL)
-				host = DEFAULT_PGSOCKET_DIR;
 			/* A usable "hostaddr" overrides the basic sense of host. */
 			connOptions = PQconninfo(pset.db);
 			if (connOptions == NULL)
@@ -918,7 +916,7 @@ exec_command(const char *cmd,
 			include_relative = (strcmp(cmd, "ir") == 0
 								|| strcmp(cmd, "include_relative") == 0);
 			expand_tilde(&fname);
-			success = (process_file(fname, false, include_relative) == EXIT_SUCCESS);
+			success = (process_file(fname, include_relative) == EXIT_SUCCESS);
 			free(fname);
 		}
 	}
@@ -1533,6 +1531,7 @@ exec_command(const char *cmd,
 				if (fname[0] == '|')
 				{
 					is_pipe = true;
+					disable_sigpipe_trap();
 					fd = popen(&fname[1], "w");
 				}
 				else
@@ -1566,6 +1565,9 @@ exec_command(const char *cmd,
 				success = false;
 			}
 		}
+
+		if (is_pipe)
+			restore_sigpipe_trap();
 
 		free(fname);
 	}
@@ -1752,12 +1754,13 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * We also discard it if we're to use a conninfo rather than the
 	 * positional syntax.
 	 */
-	keep_password =
-		(o_conn &&
-		 (strcmp(user, PQuser(o_conn)) == 0) &&
-		 (!host || strcmp(host, PQhost(o_conn)) == 0) &&
-		 (strcmp(port, PQport(o_conn)) == 0) &&
-		 !has_connection_string);
+	if (has_connection_string)
+		keep_password = false;
+	else
+		keep_password =
+			(user && PQuser(o_conn) && strcmp(user, PQuser(o_conn)) == 0) &&
+			(host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) &&
+			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
 
 	/*
 	 * Grab dbname from old connection unless supplied by caller.  No password
@@ -1769,8 +1772,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	/*
 	 * If the user asked to be prompted for a password, ask for one now. If
 	 * not, use the password from the old connection, provided the username
-	 * has not changed. Otherwise, try to connect without a password first,
-	 * and then ask for a password if needed.
+	 * etc have not changed. Otherwise, try to connect without a password
+	 * first, and then ask for a password if needed.
 	 *
 	 * XXX: this behavior leads to spurious connection attempts recorded in
 	 * the postmaster's log.  But libpq offers no API that would let us obtain
@@ -1887,8 +1890,6 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		{
 			char	   *host = PQhost(pset.db);
 
-			if (host == NULL)
-				host = DEFAULT_PGSOCKET_DIR;
 			/* If the host is an absolute path, the connection is via socket */
 			if (is_absolute_path(host))
 				printf(_("You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
@@ -2029,6 +2030,7 @@ SyncVariables(void)
 
 	/* send stuff to it, too */
 	PQsetErrorVerbosity(pset.db, pset.verbosity);
+	PQsetErrorContextVisibility(pset.db, pset.show_context);
 }
 
 /*
@@ -2286,13 +2288,12 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
  * the file from where the currently processed file (if any) is located.
  */
 int
-process_file(char *filename, bool single_txn, bool use_relative_path)
+process_file(char *filename, bool use_relative_path)
 {
 	FILE	   *fd;
 	int			result;
 	char	   *oldfilename;
 	char		relpath[MAXPGPATH];
-	PGresult   *res;
 
 	if (!filename)
 	{
@@ -2337,37 +2338,8 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 	oldfilename = pset.inputfile;
 	pset.inputfile = filename;
 
-	if (single_txn)
-	{
-		if ((res = PSQLexec("BEGIN")) == NULL)
-		{
-			if (pset.on_error_stop)
-			{
-				result = EXIT_USER;
-				goto error;
-			}
-		}
-		else
-			PQclear(res);
-	}
-
 	result = MainLoop(fd);
 
-	if (single_txn)
-	{
-		if ((res = PSQLexec("COMMIT")) == NULL)
-		{
-			if (pset.on_error_stop)
-			{
-				result = EXIT_USER;
-				goto error;
-			}
-		}
-		else
-			PQclear(res);
-	}
-
-error:
 	if (fd != stdin)
 		fclose(fd);
 
@@ -2414,11 +2386,11 @@ _align2string(enum printFormat in)
 }
 
 /*
- * Parse entered unicode linestyle. Returns true, when entered string is
- * known linestyle: single, double else returns false.
+ * Parse entered Unicode linestyle.  If ok, update *linestyle and return
+ * true, else return false.
  */
 static bool
-set_unicode_line_style(printQueryOpt *popt, const char *value, size_t vallen,
+set_unicode_line_style(const char *value, size_t vallen,
 					   unicode_linestyle *linestyle)
 {
 	if (pg_strncasecmp("single", value, vallen) == 0)
@@ -2427,10 +2399,6 @@ set_unicode_line_style(printQueryOpt *popt, const char *value, size_t vallen,
 		*linestyle = UNICODE_LINESTYLE_DOUBLE;
 	else
 		return false;
-
-	/* input is ok, generate new unicode style */
-	refresh_utf8format(&(popt->topt));
-
 	return true;
 }
 
@@ -2486,7 +2454,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.format = PRINT_TROFF_MS;
 		else
 		{
-			psql_error("\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, troff-ms\n");
+			psql_error("\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n");
 			return false;
 		}
 
@@ -2516,10 +2484,12 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (!value)
 			;
-		else if (!set_unicode_line_style(popt, value, vallen,
-									   &popt->topt.unicode_border_linestyle))
+		else if (set_unicode_line_style(value, vallen,
+										&popt->topt.unicode_border_linestyle))
+			refresh_utf8format(&(popt->topt));
+		else
 		{
-			psql_error("\\pset: allowed unicode border linestyle are single, double\n");
+			psql_error("\\pset: allowed Unicode border line styles are single, double\n");
 			return false;
 		}
 	}
@@ -2529,10 +2499,12 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (!value)
 			;
-		else if (!set_unicode_line_style(popt, value, vallen,
-									   &popt->topt.unicode_column_linestyle))
+		else if (set_unicode_line_style(value, vallen,
+										&popt->topt.unicode_column_linestyle))
+			refresh_utf8format(&(popt->topt));
+		else
 		{
-			psql_error("\\pset: allowed unicode column linestyle are single, double\n");
+			psql_error("\\pset: allowed Unicode column line styles are single, double\n");
 			return false;
 		}
 	}
@@ -2542,10 +2514,12 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (!value)
 			;
-		else if (!set_unicode_line_style(popt, value, vallen,
-									   &popt->topt.unicode_header_linestyle))
+		else if (set_unicode_line_style(value, vallen,
+										&popt->topt.unicode_header_linestyle))
+			refresh_utf8format(&(popt->topt));
+		else
 		{
-			psql_error("\\pset: allowed unicode header linestyle are single, double\n");
+			psql_error("\\pset: allowed Unicode header line styles are single, double\n");
 			return false;
 		}
 	}
@@ -2636,7 +2610,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	}
 
 	/* set title override */
-	else if (strcmp(param, "title") == 0)
+	else if (strcmp(param, "C") == 0 || strcmp(param, "title") == 0)
 	{
 		free(popt->title);
 		if (!value)
@@ -2804,7 +2778,9 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	/* show minimum lines for pager use */
 	else if (strcmp(param, "pager_min_lines") == 0)
 	{
-		printf(_("Pager won't be used for less than %d lines\n"),
+		printf(ngettext("Pager won't be used for less than %d line.\n",
+						"Pager won't be used for less than %d lines.\n",
+						popt->topt.pager_min_lines),
 			   popt->topt.pager_min_lines);
 	}
 
@@ -2836,7 +2812,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	}
 
 	/* show title override */
-	else if (strcmp(param, "title") == 0)
+	else if (strcmp(param, "C") == 0 || strcmp(param, "title") == 0)
 	{
 		if (popt->title)
 			printf(_("Title is \"%s\".\n"), popt->title);
@@ -2853,22 +2829,22 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Tuples only is off.\n"));
 	}
 
-	/* unicode style formatting */
+	/* Unicode style formatting */
 	else if (strcmp(param, "unicode_border_linestyle") == 0)
 	{
-		printf(_("Unicode border linestyle is \"%s\".\n"),
+		printf(_("Unicode border line style is \"%s\".\n"),
 			 _unicode_linestyle2string(popt->topt.unicode_border_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_column_linestyle") == 0)
 	{
-		printf(_("Unicode column linestyle is \"%s\".\n"),
+		printf(_("Unicode column line style is \"%s\".\n"),
 			 _unicode_linestyle2string(popt->topt.unicode_column_linestyle));
 	}
 
 	else if (strcmp(param, "unicode_header_linestyle") == 0)
 	{
-		printf(_("Unicode border linestyle is \"%s\".\n"),
+		printf(_("Unicode header line style is \"%s\".\n"),
 			 _unicode_linestyle2string(popt->topt.unicode_header_linestyle));
 	}
 

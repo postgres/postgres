@@ -650,7 +650,7 @@ transformAssignmentIndirection(ParseState *pstate,
 		if (IsA(n, A_Indices))
 		{
 			subscripts = lappend(subscripts, n);
-			if (((A_Indices *) n)->lidx != NULL)
+			if (((A_Indices *) n)->is_slice)
 				isSlice = true;
 		}
 		else if (IsA(n, A_Star))

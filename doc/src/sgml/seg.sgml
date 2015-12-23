@@ -40,7 +40,7 @@
    when you fetch it? Watch:
 
 <screen>
-test=> select 6.50 :: float8 as "pH";
+test=&gt; select 6.50 :: float8 as "pH";
  pH
 ---
 6.5
@@ -66,7 +66,7 @@ test=> select 6.50 :: float8 as "pH";
    Check this out:
 
 <screen>
-test=> select '6.25 .. 6.50'::seg as "pH";
+test=&gt; select '6.25 .. 6.50'::seg as "pH";
           pH
 ------------
 6.25 .. 6.50
@@ -359,7 +359,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
    boundary if the resulting interval includes a power of ten:
 
 <screen>
-postgres=> select '10(+-)1'::seg as seg;
+postgres=&gt; select '10(+-)1'::seg as seg;
       seg
 ---------
 9.0 .. 11             -- should be: 9 .. 11

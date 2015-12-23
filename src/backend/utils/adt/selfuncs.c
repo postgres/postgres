@@ -105,6 +105,7 @@
 #include "access/sysattr.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -1437,6 +1438,50 @@ Datum
 icnlikesel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like_IC, true));
+}
+
+/*
+ *		boolvarsel		- Selectivity of Boolean variable.
+ *
+ * This can actually be called on any boolean-valued expression.  If it
+ * involves only Vars of the specified relation, and if there are statistics
+ * about the Var or expression (the latter is possible if it's indexed) then
+ * we'll produce a real estimate; otherwise it's just a default.
+ */
+Selectivity
+boolvarsel(PlannerInfo *root, Node *arg, int varRelid)
+{
+	VariableStatData vardata;
+	double		selec;
+
+	examine_variable(root, arg, varRelid, &vardata);
+	if (HeapTupleIsValid(vardata.statsTuple))
+	{
+		/*
+		 * A boolean variable V is equivalent to the clause V = 't', so we
+		 * compute the selectivity as if that is what we have.
+		 */
+		selec = var_eq_const(&vardata, BooleanEqualOperator,
+							 BoolGetDatum(true), false, true);
+	}
+	else if (is_funcclause(arg))
+	{
+		/*
+		 * If we have no stats and it's a function call, estimate 0.3333333.
+		 * This seems a pretty unprincipled choice, but Postgres has been
+		 * using that estimate for function calls since 1992.  The hoariness
+		 * of this behavior suggests that we should not be in too much hurry
+		 * to use another value.
+		 */
+		selec = 0.3333333;
+	}
+	else
+	{
+		/* Otherwise, the default estimate is 0.5 */
+		selec = 0.5;
+	}
+	ReleaseVariableStats(vardata);
+	return selec;
 }
 
 /*
@@ -3861,10 +3906,16 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 		return 0.0;				/* empty string has scalar value 0 */
 
 	/*
-	 * Since base is at least 10, need not consider more than about 20 chars
+	 * There seems little point in considering more than a dozen bytes from
+	 * the string.  Since base is at least 10, that will give us nominal
+	 * resolution of at least 12 decimal digits, which is surely far more
+	 * precision than this estimation technique has got anyway (especially in
+	 * non-C locales).  Also, even with the maximum possible base of 256, this
+	 * ensures denom cannot grow larger than 256^13 = 2.03e31, which will not
+	 * overflow on any known machine.
 	 */
-	if (slen > 20)
-		slen = 20;
+	if (slen > 12)
+		slen = 12;
 
 	/* Convert initial characters to fraction */
 	base = rangehi - rangelo + 1;
@@ -7209,32 +7260,33 @@ gincostestimate(PG_FUNCTION_ARGS)
 	qinfos = deconstruct_indexquals(path);
 
 	/*
-	 * Obtain statistic information from the meta page
+	 * Obtain statistical information from the meta page, if possible.  Else
+	 * set ginStats to zeroes, and we'll cope below.
 	 */
-	indexRel = index_open(index->indexoid, AccessShareLock);
-	ginGetStats(indexRel, &ginStats);
-	index_close(indexRel, AccessShareLock);
-
-	numEntryPages = ginStats.nEntryPages;
-	numDataPages = ginStats.nDataPages;
-	numPendingPages = ginStats.nPendingPages;
-	numEntries = ginStats.nEntries;
-
-	/*
-	 * nPendingPages can be trusted, but the other fields are as of the last
-	 * VACUUM.  Scale them by the ratio numPages / nTotalPages to account for
-	 * growth since then.  If the fields are zero (implying no VACUUM at all,
-	 * and an index created pre-9.1), assume all pages are entry pages.
-	 */
-	if (ginStats.nTotalPages == 0 || ginStats.nEntryPages == 0)
+	if (!index->hypothetical)
 	{
-		numEntryPages = numPages;
-		numDataPages = 0;
-		numEntries = numTuples; /* bogus, but no other info available */
+		indexRel = index_open(index->indexoid, AccessShareLock);
+		ginGetStats(indexRel, &ginStats);
+		index_close(indexRel, AccessShareLock);
 	}
 	else
 	{
+		memset(&ginStats, 0, sizeof(ginStats));
+	}
+
+	if (ginStats.nTotalPages > 0 && ginStats.nEntryPages > 0 && numPages > 0)
+	{
+		/*
+		 * We got valid stats.  nPendingPages can be trusted, but the other
+		 * fields are data as of the last VACUUM.  Scale them by the ratio
+		 * numPages / nTotalPages to account for growth since then.
+		 */
 		double		scale = numPages / ginStats.nTotalPages;
+
+		numEntryPages = ginStats.nEntryPages;
+		numDataPages = ginStats.nDataPages;
+		numPendingPages = ginStats.nPendingPages;
+		numEntries = ginStats.nEntries;
 
 		numEntryPages = ceil(numEntryPages * scale);
 		numDataPages = ceil(numDataPages * scale);
@@ -7242,6 +7294,23 @@ gincostestimate(PG_FUNCTION_ARGS)
 		/* ensure we didn't round up too much */
 		numEntryPages = Min(numEntryPages, numPages);
 		numDataPages = Min(numDataPages, numPages - numEntryPages);
+	}
+	else
+	{
+		/*
+		 * It's a hypothetical index, or perhaps an index created pre-9.1 and
+		 * never vacuumed since upgrading.  Invent some plausible internal
+		 * statistics based on the index page count.  We estimate that 90% of
+		 * the index is entry pages, and the rest is data pages.  Estimate 100
+		 * entries per entry page; this is rather bogus since it'll depend on
+		 * the size of the keys, but it's more robust than trying to predict
+		 * the number of entries per heap tuple.
+		 */
+		numPages = Max(numPages, 10);
+		numEntryPages = floor(numPages * 0.90);
+		numDataPages = numPages - numEntryPages;
+		numPendingPages = 0;
+		numEntries = floor(numEntryPages * 100);
 	}
 
 	/* In an empty index, numEntries could be zero.  Avoid divide-by-zero */

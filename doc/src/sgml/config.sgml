@@ -1901,7 +1901,10 @@ include_dir 'conf.d'
         </para>
 
         <para>
-         The default is 1 on supported systems, otherwise 0.
+         The default is 1 on supported systems, otherwise 0.  This value can
+         be overridden for tables in a particular tablespace by setting the
+         tablespace parameter of the same name (see
+         <xref linkend="sql-altertablespace">).
         </para>
        </listitem>
       </varlistentry>
@@ -1922,6 +1925,22 @@ include_dir 'conf.d'
          When running a standby server, you must set this parameter to the
          same or higher value than on the master server. Otherwise, queries
          will not be allowed in the standby server.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-max-parallel-degree" xreflabel="max_parallel_degree">
+       <term><varname>max_parallel_degree</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>max_parallel_degree</> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Sets the maximum degree of parallelism for an individual parallel
+         operation.  Note that the requested number of workers may not actually
+         be available at runtime.  Parallel workers are taken from the pool
+         of processes established by <xref linkend="guc-max-worker-processes">.
         </para>
        </listitem>
       </varlistentry>
@@ -1990,7 +2009,7 @@ include_dir 'conf.d'
        <para>
         In <literal>logical</> level, the same information is logged as
         with <literal>hot_standby</>, plus information needed to allow
-        extracting logical changesets from the WAL. Using a level of
+        extracting logical change sets from the WAL. Using a level of
         <literal>logical</> will increase the WAL volume, particularly if many
         tables are configured for <literal>REPLICA IDENTITY FULL</literal> and
         many <command>UPDATE</> and <command>DELETE</> statements are
@@ -2398,27 +2417,6 @@ include_dir 'conf.d'
      <title>Checkpoints</title>
 
     <variablelist>
-     <varlistentry id="guc-max-wal-size" xreflabel="max_wal_size">
-      <term><varname>max_wal_size</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>max_wal_size</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Maximum size to let the WAL grow to between automatic WAL
-        checkpoints. This is a soft limit; WAL size can exceed
-        <varname>max_wal_size</> under special circumstances, like
-        under heavy load, a failing <varname>archive_command</>, or a high
-        <varname>wal_keep_segments</> setting. The default is 1 GB.
-        Increasing this parameter can increase the amount of time needed for
-        crash recovery.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-checkpoint-timeout" xreflabel="checkpoint_timeout">
       <term><varname>checkpoint_timeout</varname> (<type>integer</type>)
       <indexterm>
@@ -2475,6 +2473,27 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-max-wal-size" xreflabel="max_wal_size">
+      <term><varname>max_wal_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>max_wal_size</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Maximum size to let the WAL grow to between automatic WAL
+        checkpoints. This is a soft limit; WAL size can exceed
+        <varname>max_wal_size</> under special circumstances, like
+        under heavy load, a failing <varname>archive_command</>, or a high
+        <varname>wal_keep_segments</> setting. The default is 1 GB.
+        Increasing this parameter can increase the amount of time needed for
+        crash recovery.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-min-wal-size" xreflabel="min_wal_size">
       <term><varname>min_wal_size</varname> (<type>integer</type>)
       <indexterm>
@@ -2518,7 +2537,7 @@ include_dir 'conf.d'
         mode. In <literal>always</> mode, all files restored from the archive
         or streamed with streaming replication will be archived (again). See
         <xref linkend="continuous-archiving-in-standby"> for details.
-       </para>  
+       </para>
        <para>
         <varname>archive_mode</> and <varname>archive_command</> are
         separate variables so that <varname>archive_command</> can be
@@ -3035,6 +3054,17 @@ include_dir 'conf.d'
         <filename>postgresql.conf</> file or on the server command line.
         The default value is 5 seconds. Units are milliseconds if not specified.
        </para>
+       <para>
+        This parameter is useful in configurations where a node in recovery
+        needs to control the amount of time to wait for new WAL data to be
+        available. For example, in archive recovery, it is possible to
+        make the recovery more responsive in the detection of a new WAL
+        log file by reducing the value of this parameter. On a system with
+        low WAL activity, increasing it reduces the amount of requests necessary
+        to access WAL archives, something useful for example in cloud
+        environments where the amount of times an infrastructure is accessed
+        is taken into account.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -3391,6 +3421,36 @@ include_dir 'conf.d'
         Sets the planner's estimate of the cost of processing each
         operator or function executed during a query.
         The default is 0.0025.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="parallel-tuple-cost" xreflabel="parallel_tuple_cost">
+      <term><varname>parallel_tuple_cost</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>parallel_tuple_cost</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of transferring a tuple
+        from a parallel worker process to another process.
+        The default is 0.1.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="parallel-setup-cost" xreflabel="parallel_setup_cost">
+      <term><varname>parallel_setup_cost</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>parallel_setup_cost</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of launching parallel worker
+        processes.
+        The default is 1000.
        </para>
       </listitem>
      </varlistentry>
@@ -3906,7 +3966,7 @@ local0.*    /var/log/postgresql
         listed in the Open Group's <ulink
         url="http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html">strftime
         </ulink> specification.
-        Note that the system's <systemitem>strftime</systemitem> is not used
+        Note that the system's <function>strftime</function> is not used
         directly, so platform-specific (nonstandard) extensions do not work.
         The default is <literal>postgresql-%Y-%m-%d_%H%M%S.log</literal>.
        </para>
@@ -4345,30 +4405,6 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-cluster-name" xreflabel="cluster_name">
-      <term><varname>cluster_name</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>cluster_name</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Sets the cluster name that appears in the process title for all
-        processes in this cluster. The name can be any string of less than
-        <symbol>NAMEDATALEN</> characters (64 characters in a standard
-        build). Only printable ASCII characters may be used in the
-        <varname>cluster_name</varname> value. Other characters will be
-        replaced with question marks (<literal>?</literal>).  No name is shown
-        if this parameter is set to the empty string <literal>''</> (which is
-        the default). This parameter can only be set at server start.
-       </para>
-       <para>
-        The process title is typically viewed using programs like
-        <application>ps</> or, on Windows, <application>Process Explorer</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry>
       <term><varname>debug_print_parse</varname> (<type>boolean</type>)
       <indexterm>
@@ -4627,6 +4663,11 @@ local0.*    /var/log/postgresql
             <row>
              <entry><literal>%m</literal></entry>
              <entry>Time stamp with milliseconds</entry>
+             <entry>no</entry>
+            </row>
+            <row>
+             <entry><literal>%n</literal></entry>
+             <entry>Time stamp with milliseconds (as a Unix epoch)</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -4956,9 +4997,61 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </listitem>
         </orderedlist>
       </para>
-
     </sect2>
-   </sect1>
+
+   <sect2>
+    <title>Process Title</title>
+
+    <para>
+     These settings control how the process title as seen
+     by <command>ps</command> is modified.  See <xref linkend="monitoring-ps">
+     for details.
+    </para>
+
+    <variablelist>
+     <varlistentry id="guc-cluster-name" xreflabel="cluster_name">
+      <term><varname>cluster_name</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>cluster_name</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the cluster name that appears in the process title for all
+        processes in this cluster. The name can be any string of less than
+        <symbol>NAMEDATALEN</> characters (64 characters in a standard
+        build). Only printable ASCII characters may be used in the
+        <varname>cluster_name</varname> value. Other characters will be
+        replaced with question marks (<literal>?</literal>).  No name is shown
+        if this parameter is set to the empty string <literal>''</> (which is
+        the default). This parameter can only be set at server start.
+       </para>
+       <para>
+        The process title is typically viewed using programs like
+        <application>ps</> or, on Windows, <application>Process Explorer</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-update-process-title" xreflabel="update_process_title">
+      <term><varname>update_process_title</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>update_process_title</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables updating of the process title every time a new SQL command
+        is received by the server.  The process title is typically viewed
+        by the <command>ps</> command,
+        or in Windows by using the <application>Process Explorer</>.
+        Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </sect2>
+  </sect1>
 
    <sect1 id="runtime-config-statistics">
     <title>Run-time Statistics</title>
@@ -5076,23 +5169,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-update-process-title" xreflabel="update_process_title">
-      <term><varname>update_process_title</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>update_process_title</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables updating of the process title every time a new SQL command
-        is received by the server.  The process title is typically viewed
-        by the <command>ps</> command,
-        or in Windows by using the <application>Process Explorer</>.
-        Only superusers can change this setting.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-stats-temp-directory" xreflabel="stats_temp_directory">
       <term><varname>stats_temp_directory</varname> (<type>string</type>)
       <indexterm>
@@ -5169,8 +5245,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
      <para>
       These settings control the behavior of the <firstterm>autovacuum</>
-      feature.  Refer to <xref linkend="autovacuum"> for
-      more information.
+      feature.  Refer to <xref linkend="autovacuum"> for more information.
+      Note that many of these settings can be overridden on a per-table
+      basis; see <xref linkend="sql-createtable-storage-parameters"
+      endterm="sql-createtable-storage-parameters-title">.
      </para>
 
     <variablelist>
@@ -5188,7 +5266,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <xref linkend="guc-track-counts"> must also be enabled for
         autovacuum to work.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        file or on the server command line; however, autovacuuming can be
+        disabled for individual tables by changing table storage parameters.
        </para>
        <para>
         Note that even when this parameter is disabled, the system
@@ -5216,8 +5295,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         set to any value other than <literal>-1</literal>, a message will be
         logged if an autovacuum action is skipped due to the existence of a
         conflicting lock.  Enabling this parameter can be helpful
-        in tracking autovacuum activity.  This setting can only be set in
-        the <filename>postgresql.conf</> file or on the server command line.
+        in tracking autovacuum activity.  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5231,7 +5312,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the maximum number of autovacuum processes (other than the
-        autovacuum launcher) which may be running at any one time.  The default
+        autovacuum launcher) that may be running at any one time.  The default
         is three.  This parameter can only be set at server start.
        </para>
       </listitem>
@@ -5268,9 +5349,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         to trigger a <command>VACUUM</> in any one table.
         The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5287,9 +5368,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         needed to trigger an <command>ANALYZE</> in any one table.
         The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5307,9 +5388,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         when deciding whether to trigger a <command>VACUUM</>.
         The default is 0.2 (20% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5327,9 +5408,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         when deciding whether to trigger an <command>ANALYZE</>.
         The default is 0.1 (10% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5356,7 +5437,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         is a relatively low 200 million transactions.
         This parameter can only be set at server start, but the setting
         can be reduced for individual tables by
-        changing storage parameters.
+        changing table storage parameters.
         For more information see <xref linkend="vacuum-for-wraparound">.
        </para>
       </listitem>
@@ -5383,8 +5464,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <filename>pg_multixact/members</> and <filename>pg_multixact/offsets</>
         subdirectories, which is why the default is a relatively low
         400 million multixacts.
-        This parameter can only be set at server start, but the setting
-        can be reduced for individual tables by changing storage parameters.
+        This parameter can only be set at server start, but the setting can
+        be reduced for individual tables by changing table storage parameters.
         For more information see <xref linkend="vacuum-for-multixact-wraparound">.
        </para>
       </listitem>
@@ -5403,9 +5484,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <xref linkend="guc-vacuum-cost-delay"> value will be used.
         The default value is 20 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5423,12 +5504,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         default), the regular
         <xref linkend="guc-vacuum-cost-limit"> value will be used.  Note that
         the value is distributed proportionally among the running autovacuum
-        workers, if there is more than one, so that the sum of the limits of
-        each worker never exceeds the limit on this variable.
+        workers, if there is more than one, so that the sum of the limits for
+        each worker does not exceed the value of this variable.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-        This setting can be overridden for individual tables by
-        changing storage parameters.
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -5530,38 +5611,22 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-row-security" xreflabel="row_security">
-      <term><varname>row_security</varname> (<type>enum</type>)
+      <term><varname>row_security</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>row_security</> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        This variable controls if row security policies are to be applied
-        to queries which are run against tables that have row security enabled.
-        The default is <literal>on</>.  When set to <literal>on</>, all users,
-        except superusers and the owner of the table, will have the row
-        policies for the table applied to their queries. The table owner and
-        superuser can request that row policies be applied to their queries by
-        setting this to <literal>force</>. Lastly, this can also be set to
-        <literal>off</> which will bypass row policies for the table, if
-        possible, and error if not.
-       </para>
-
-       <para>
-        For a user who is not a superuser and not the table owner to bypass
-        row policies for the table, they must have the <literal>BYPASSRLS</>
-        role attribute. If this is set to <literal>off</> and the user queries
-        a table which has row policies enabled and the user does not have the
-        right to bypass row policies then a permission denied error will be
-        returned.
-       </para>
-
-       <para>
-        The allowed values of <varname>row_security</> are
-        <literal>on</> (apply normally - not to superuser or table owner),
-        <literal>off</> (fail if row security would be applied), and
-        <literal>force</> (apply always - even to superuser and table owner).
+        This variable controls whether to raise an error in lieu of applying a
+        row security policy.  When set to <literal>on</>, policies apply
+        normally.  When set to <literal>off</>, queries fail which would
+        otherwise apply at least one policy.  The default is <literal>on</>.
+        Change to <literal>off</> where limited row visibility could cause
+        incorrect results; for example, <application>pg_dump</> makes that
+        change by default.  This variable has no effect on roles which bypass
+        every row security policy, to wit, superusers and roles with
+        the <literal>BYPASSRLS</> attribute.
        </para>
 
        <para>
@@ -6023,7 +6088,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         the entries in it to the main GIN data structure in bulk.
         The default is four megabytes (<literal>4MB</>). This setting
         can be overridden for individual GIN indexes by changing
-        storage parameters.
+        index storage parameters.
          See <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
          for more information.
        </para>

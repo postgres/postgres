@@ -93,6 +93,11 @@ gistbeginscan(PG_FUNCTION_ARGS)
 		memset(scan->xs_orderbynulls, true, sizeof(bool) * scan->numberOfOrderBys);
 	}
 
+	so->killedItems = NULL;		/* until needed */
+	so->numKilled = 0;
+	so->curBlkno = InvalidBlockNumber;
+	so->curPageLSN = InvalidXLogRecPtr;
+
 	scan->opaque = so;
 
 	/*

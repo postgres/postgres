@@ -3600,6 +3600,28 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     </para>
    </tip>
 
+   <caution>
+    <para>
+     While most regular-expression searches can be executed very quickly,
+     regular expressions can be contrived that take arbitrary amounts of
+     time and memory to process.  Be wary of accepting regular-expression
+     search patterns from hostile sources.  If you must do so, it is
+     advisable to impose a statement timeout.
+    </para>
+
+    <para>
+     Searches using <function>SIMILAR TO</function> patterns have the same
+     security hazards, since <function>SIMILAR TO</function> provides many
+     of the same capabilities as <acronym>POSIX</acronym>-style regular
+     expressions.
+    </para>
+
+    <para>
+     <function>LIKE</function> searches, being much simpler than the other
+     two options, are safer to use with possibly-hostile pattern sources.
+    </para>
+   </caution>
+
   <sect2 id="functions-like">
    <title><function>LIKE</function></title>
 
@@ -4455,13 +4477,27 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        where no substring matching <replaceable>re</> begins
        (AREs only) </entry>
        </row>
+
+       <row>
+       <entry> <literal>(?&lt;=</><replaceable>re</><literal>)</> </entry>
+       <entry> <firstterm>positive lookbehind</> matches at any point
+       where a substring matching <replaceable>re</> ends
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?&lt;!</><replaceable>re</><literal>)</> </entry>
+       <entry> <firstterm>negative lookbehind</> matches at any point
+       where no substring matching <replaceable>re</> ends
+       (AREs only) </entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
-    Lookahead constraints cannot contain <firstterm>back references</>
-    (see <xref linkend="posix-escape-sequences">),
+    Lookahead and lookbehind constraints cannot contain <firstterm>back
+    references</> (see <xref linkend="posix-escape-sequences">),
     and all parentheses within them are considered non-capturing.
    </para>
    </sect3>
@@ -4620,16 +4656,6 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     Non-capturing parentheses do not define subexpressions.
    </para>
 
-   <note>
-    <para>
-     Keep in mind that an escape's leading <literal>\</> will need to be
-     doubled when entering the pattern as an SQL string constant.  For example:
-<programlisting>
-'123' ~ E'^\\d{3}' <lineannotation>true</lineannotation>
-</programlisting>
-    </para>
-   </note>
-
    <table id="posix-character-entry-escapes-table">
     <title>Regular Expression Character-entry Escapes</title>
 
@@ -4669,7 +4695,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> <literal>\e</> </entry>
        <entry> the character whose collating-sequence name
        is <literal>ESC</>,
-       or failing that, the character with octal value 033 </entry>
+       or failing that, the character with octal value <literal>033</> </entry>
        </row>
 
        <row>
@@ -4695,15 +4721,17 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <row>
        <entry> <literal>\u</><replaceable>wxyz</> </entry>
        <entry> (where <replaceable>wxyz</> is exactly four hexadecimal digits)
-       the UTF16 (Unicode, 16-bit) character <literal>U+</><replaceable>wxyz</>
-       in the local byte ordering </entry>
+       the character whose hexadecimal value is
+       <literal>0x</><replaceable>wxyz</>
+       </entry>
        </row>
 
        <row>
        <entry> <literal>\U</><replaceable>stuvwxyz</> </entry>
        <entry> (where <replaceable>stuvwxyz</> is exactly eight hexadecimal
        digits)
-       reserved for a hypothetical Unicode extension to 32 bits
+       the character whose hexadecimal value is
+       <literal>0x</><replaceable>stuvwxyz</>
        </entry>
        </row>
 
@@ -4750,6 +4778,17 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     Hexadecimal digits are <literal>0</>-<literal>9</>,
     <literal>a</>-<literal>f</>, and <literal>A</>-<literal>F</>.
     Octal digits are <literal>0</>-<literal>7</>.
+   </para>
+
+   <para>
+    Numeric character-entry escapes specifying values outside the ASCII range
+    (0-127) have meanings dependent on the database encoding.  When the
+    encoding is UTF-8, escape values are equivalent to Unicode code points,
+    for example <literal>\u1234</> means the character <literal>U+1234</>.
+    For other multibyte encodings, character-entry escapes usually just
+    specify the concatenation of the byte values for the character.  If the
+    escape value does not correspond to any legal character in the database
+    encoding, no error will be raised, but it will never match any data.
    </para>
 
    <para>
@@ -5203,10 +5242,37 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     The quantifiers <literal>{1,1}</> and <literal>{1,1}?</>
     can be used to force greediness or non-greediness, respectively,
     on a subexpression or a whole RE.
+    This is useful when you need the whole RE to have a greediness attribute
+    different from what's deduced from its elements.  As an example,
+    suppose that we are trying to separate a string containing some digits
+    into the digits and the parts before and after them.  We might try to
+    do that like this:
+<screen>
+SELECT regexp_matches('abc01234xyz', '(.*)(\d+)(.*)');
+<lineannotation>Result: </lineannotation><computeroutput>{abc0123,4,xyz}</computeroutput>
+</screen>
+    That didn't work: the first <literal>.*</> is greedy so
+    it <quote>eats</> as much as it can, leaving the <literal>\d+</> to
+    match at the last possible place, the last digit.  We might try to fix
+    that by making it non-greedy:
+<screen>
+SELECT regexp_matches('abc01234xyz', '(.*?)(\d+)(.*)');
+<lineannotation>Result: </lineannotation><computeroutput>{abc,0,""}</computeroutput>
+</screen>
+    That didn't work either, because now the RE as a whole is non-greedy
+    and so it ends the overall match as soon as possible.  We can get what
+    we want by forcing the RE as a whole to be greedy:
+<screen>
+SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
+<lineannotation>Result: </lineannotation><computeroutput>{abc,01234,xyz}</computeroutput>
+</screen>
+    Controlling the RE's overall greediness separately from its components'
+    greediness allows great flexibility in handling variable-length patterns.
    </para>
 
    <para>
-    Match lengths are measured in characters, not collating elements.
+    When deciding what is a longer or shorter match,
+    match lengths are measured in characters, not collating elements.
     An empty string is considered longer than no match at all.
     For example:
     <literal>bb*</>
@@ -5293,7 +5359,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     the lack of special treatment for a trailing newline,
     the addition of complemented bracket expressions to the things
     affected by newline-sensitive matching,
-    the restrictions on parentheses and back references in lookahead
+    the restrictions on parentheses and back references in lookahead/lookbehind
     constraints, and the longest/shortest-match (rather than first-match)
     matching semantics.
    </para>
@@ -6090,12 +6156,14 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
-       <literal>V</literal> effectively
+       <literal>V</literal> with <function>to_char</function>
        multiplies the input values by
        <literal>10^<replaceable>n</replaceable></literal>, where
        <replaceable>n</replaceable> is the number of digits following
-       <literal>V</literal>.
-       <function>to_char</function> does not support the use of
+       <literal>V</literal>.  <literal>V</literal> with
+       <function>to_number</function> divides in a similar manner.
+       <function>to_char</function> and <function>to_number</function>
+       do not support the use of
        <literal>V</literal> combined with a decimal point
        (e.g., <literal>99.9V99</literal> is not allowed).
       </para>
@@ -6272,7 +6340,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>to_char(485, 'L999')</literal></entry>
-        <entry><literal>'DM&nbsp;485</literal></entry>
+        <entry><literal>'DM&nbsp;485'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, 'RN')</literal></entry>
@@ -6786,7 +6854,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
          Create interval from years, months, weeks, days, hours, minutes and
          seconds fields
         </entry>
-        <entry><literal>make_interval(days => 10)</literal></entry>
+        <entry><literal>make_interval(days =&gt; 10)</literal></entry>
         <entry><literal>10 days</literal></entry>
        </row>
 
@@ -10269,38 +10337,42 @@ table2-mapping
        <row>
         <entry><literal>@&gt;</literal></entry>
         <entry><type>jsonb</type></entry>
-        <entry>Does the left JSON value contain within it the right value?</entry>
+        <entry>Does the left JSON value contain the right JSON
+        path/value entries at the top level?</entry>
         <entry><literal>'{"a":1, "b":2}'::jsonb &#64;&gt; '{"b":2}'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>&lt;@</literal></entry>
         <entry><type>jsonb</type></entry>
-        <entry>Is the left JSON value contained within the right value?</entry>
+        <entry>Are the left JSON path/value entries contained at the top level within
+        the right JSON value?</entry>
         <entry><literal>'{"b":2}'::jsonb &lt;@ '{"a":1, "b":2}'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>?</literal></entry>
         <entry><type>text</type></entry>
-        <entry>Does the key/element <emphasis>string</emphasis> exist within
-        the JSON value?</entry>
+        <entry>Does the <emphasis>string</emphasis> exist as a top-level
+        key within the JSON value?</entry>
         <entry><literal>'{"a":1, "b":2}'::jsonb ? 'b'</literal></entry>
        </row>
        <row>
         <entry><literal>?|</literal></entry>
         <entry><type>text[]</type></entry>
-        <entry>Do any of these key/element <emphasis>strings</emphasis> exist?</entry>
+        <entry>Do any of these array <emphasis>strings</emphasis>
+        exist as top-level keys?</entry>
         <entry><literal>'{"a":1, "b":2, "c":3}'::jsonb ?| array['b', 'c']</literal></entry>
        </row>
        <row>
         <entry><literal>?&amp;</literal></entry>
         <entry><type>text[]</type></entry>
-        <entry>Do all of these key/element <emphasis>strings</emphasis> exist?</entry>
+        <entry>Do all of these array <emphasis>strings</emphasis> exist
+        as top-level keys?</entry>
         <entry><literal>'["a", "b"]'::jsonb ?&amp; array['a', 'b']</literal></entry>
        </row>
        <row>
         <entry><literal>||</literal></entry>
         <entry><type>jsonb</type></entry>
-        <entry>Concatentate two jsonb values into a new jsonb value</entry>
+        <entry>Concatenate two <type>jsonb</type> values into a new <type>jsonb</type> value</entry>
         <entry><literal>'["a", "b"]'::jsonb || '["c", "d"]'::jsonb</literal></entry>
        </row>
        <row>
@@ -10884,16 +10956,16 @@ table2-mapping
        </entry>
        <entry><literal>jsonb_pretty('[{"f1":1,"f2":null},2,null,3]')</literal></entry>
        <entry>
-<programlisting>                    
- [
-     {
-         "f1": 1,
-         "f2": null
-     },
-     2,
-     null,
-     3
- ]
+<programlisting>
+[
+    {
+        "f1": 1,
+        "f2": null
+    },
+    2,
+    null,
+    3
+]
 </programlisting>
         </entry>
        </row>
@@ -10959,7 +11031,7 @@ table2-mapping
       If the argument to <literal>json_strip_nulls</> contains duplicate
       field names in any object, the result could be semantically somewhat
       different, depending on the order in which they occur. This is not an
-      issue for <literal>jsonb_strip_nulls</> since jsonb values never have
+      issue for <literal>jsonb_strip_nulls</> since <type>jsonb</type> values never have
       duplicate object field names.
     </para>
   </note>
@@ -13406,7 +13478,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        <type>integer</type>
       </entry>
       <entry>
-       Integer bitmask indicating which arguments are not being included in the current
+       Integer bit mask indicating which arguments are not being included in the current
        grouping set
       </entry>
      </row>
@@ -13579,9 +13651,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
         <primary>lag</primary>
        </indexterm>
        <function>
-         lag(<replaceable class="parameter">value</replaceable> <type>any</>
+         lag(<replaceable class="parameter">value</replaceable> <type>anyelement</>
              [, <replaceable class="parameter">offset</replaceable> <type>integer</>
-             [, <replaceable class="parameter">default</replaceable> <type>any</> ]])
+             [, <replaceable class="parameter">default</replaceable> <type>anyelement</> ]])
        </function>
       </entry>
       <entry>
@@ -13591,7 +13663,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        returns <replaceable class="parameter">value</replaceable> evaluated at
        the row that is <replaceable class="parameter">offset</replaceable>
        rows before the current row within the partition; if there is no such
-       row, instead return <replaceable class="parameter">default</replaceable>.
+       row, instead return <replaceable class="parameter">default</replaceable>
+       (which must be of the same type as
+       <replaceable class="parameter">value</replaceable>).
        Both <replaceable class="parameter">offset</replaceable> and
        <replaceable class="parameter">default</replaceable> are evaluated
        with respect to the current row.  If omitted,
@@ -13606,9 +13680,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
         <primary>lead</primary>
        </indexterm>
        <function>
-         lead(<replaceable class="parameter">value</replaceable> <type>any</>
+         lead(<replaceable class="parameter">value</replaceable> <type>anyelement</>
               [, <replaceable class="parameter">offset</replaceable> <type>integer</>
-              [, <replaceable class="parameter">default</replaceable> <type>any</> ]])
+              [, <replaceable class="parameter">default</replaceable> <type>anyelement</> ]])
        </function>
       </entry>
       <entry>
@@ -13618,7 +13692,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        returns <replaceable class="parameter">value</replaceable> evaluated at
        the row that is <replaceable class="parameter">offset</replaceable>
        rows after the current row within the partition; if there is no such
-       row, instead return <replaceable class="parameter">default</replaceable>.
+       row, instead return <replaceable class="parameter">default</replaceable>
+       (which must be of the same type as
+       <replaceable class="parameter">value</replaceable>).
        Both <replaceable class="parameter">offset</replaceable> and
        <replaceable class="parameter">default</replaceable> are evaluated
        with respect to the current row.  If omitted,
@@ -16602,7 +16678,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>boolean</type></entry>
        <entry>Cancel a backend's current query.  This is also allowed if the
-        calling role is a member of the role whose backend is being cancelled,
+        calling role is a member of the role whose backend is being canceled,
         however only superusers can cancel superuser backends.
         </entry>
       </row>
@@ -17184,17 +17260,22 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_physical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type>)</function></literal>
+        <literal><function>pg_create_physical_replication_slot(<parameter>slot_name</parameter> <type>name</type> <optional>, <parameter>immediately_reserve</> <type>boolean</> </optional>)</function></literal>
        </entry>
        <entry>
         (<parameter>slot_name</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new physical replication slot named
-        <parameter>slot_name</parameter>. Streaming changes from a physical slot
-        is only possible with the streaming-replication protocol - see <xref
-        linkend="protocol-replication">. Corresponds to the replication protocol
-        command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>.
+        <parameter>slot_name</parameter>. The optional second parameter,
+        when <literal>true</>, specifies that the <acronym>LSN</> for this
+        replication slot be reserved immediately; otherwise
+        the <acronym>LSN</> is reserved on first connection from a streaming
+        replication client. Streaming changes from a physical slot is only
+        possible with the streaming-replication protocol &mdash;
+        see <xref linkend="protocol-replication">. This function corresponds
+        to the replication protocol command <literal>CREATE_REPLICATION_SLOT
+        ... PHYSICAL</literal>.
        </entry>
       </row>
       <row>
@@ -17365,7 +17446,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_replication_origin_session_setup</primary>
         </indexterm>
-        <literal><function>pg_replication_origin_setup_session(<parameter>node_name</parameter> <type>text</type>)</function></literal>
+        <literal><function>pg_replication_origin_session_setup(<parameter>node_name</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
         void
@@ -17414,7 +17495,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_replication_origin_session_progress</primary>
         </indexterm>
-        <literal><function>pg_replication_origin_progress(<parameter>flush</parameter> <type>bool</type>)</function></literal>
+        <literal><function>pg_replication_origin_session_progress(<parameter>flush</parameter> <type>bool</type>)</function></literal>
        </entry>
        <entry>
         pg_lsn
@@ -18564,7 +18645,7 @@ CREATE EVENT TRIGGER test_event_trigger_for_drops
         <literal><function>pg_event_trigger_table_rewrite_oid()</function></literal>
        </entry>
        <entry><type>Oid</type></entry>
-       <entry>The Oid of the table about to be rewritten.</entry>
+       <entry>The OID of the table about to be rewritten.</entry>
       </row>
 
       <row>

@@ -421,12 +421,12 @@ ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b));
-ERROR:  FORCE NOT NULL column "b" not referenced by COPY
+ERROR:  FORCE_NOT_NULL column "b" not referenced by COPY
 ROLLBACK;
 -- should fail with "not referenced by COPY" error
 BEGIN;
 COPY forcetest (d, e) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b));
-ERROR:  FORCE NULL column "b" not referenced by COPY
+ERROR:  FORCE_NULL column "b" not referenced by COPY
 ROLLBACK;
 \pset null ''
 -- test case with whole-row Var in a check constraint
@@ -447,12 +447,9 @@ Check constraints:
 
 copy check_con_tbl from stdin;
 NOTICE:  input = {"f1":1}
-CONTEXT:  COPY check_con_tbl, line 1: "1"
 NOTICE:  input = {"f1":null}
-CONTEXT:  COPY check_con_tbl, line 2: "\N"
 copy check_con_tbl from stdin;
 NOTICE:  input = {"f1":0}
-CONTEXT:  COPY check_con_tbl, line 1: "0"
 ERROR:  new row for relation "check_con_tbl" violates check constraint "check_con_tbl_check"
 DETAIL:  Failing row contains (0).
 CONTEXT:  COPY check_con_tbl, line 1: "0"

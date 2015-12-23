@@ -61,6 +61,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
     DISABLE ROW LEVEL SECURITY
     ENABLE ROW LEVEL SECURITY
+    FORCE ROW LEVEL SECURITY
+    NO FORCE ROW LEVEL SECURITY
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITH OIDS
@@ -434,6 +436,21 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
+    <term><literal>NO FORCE</literal>/<literal>FORCE ROW LEVEL SECURITY</literal></term>
+    <listitem>
+     <para>
+      These forms control the application of row security policies belonging
+      to the table when the user is the table owner.  If enabled, row level
+      security policies will be applied when the user is the table owner.  If
+      disabled (the default) then row level security will not be applied when
+      the user is the table owner.
+      See also
+      <xref linkend="SQL-CREATEPOLICY">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>CLUSTER ON</literal></term>
     <listitem>
      <para>
@@ -543,6 +560,10 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       of <command>ALTER TABLE</> that forces a table rewrite.
      </para>
 
+     <para>
+      Changing autovacuum storage parameters acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+     </para>
+
      <note>
       <para>
        While <command>CREATE TABLE</> allows <literal>OIDS</> to be specified
@@ -648,7 +669,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       This form changes the information which is written to the write-ahead log
       to identify rows which are updated or deleted.  This option has no effect
       except when logical replication is in use.  <literal>DEFAULT</>
-      (the default for non-system tables) records the 
+      (the default for non-system tables) records the
       old values of the columns of the primary key, if any.  <literal>USING INDEX</>
       records the old values of the columns covered by the named index, which
       must be unique, not partial, not deferrable, and include only columns marked
@@ -950,7 +971,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
 
    <para>
     Adding a <literal>CHECK</> or <literal>NOT NULL</> constraint requires
-    scanning the table to verify that existing rows meet the constraint.
+    scanning the table to verify that existing rows meet the constraint,
+    but does not require a table rewrite.
    </para>
 
    <para>
@@ -972,11 +994,17 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </para>
 
    <para>
-    To force an immediate rewrite of the table, you can use
-    <link linkend="SQL-VACUUM">VACUUM FULL</>, <xref linkend="SQL-CLUSTER">
-    or one of the forms of ALTER TABLE that forces a rewrite.  This results in
-    no semantically-visible change in the table, but gets rid of
-    no-longer-useful data.
+    To force immediate reclamation of space occupied by a dropped column,
+    you can execute one of the forms of <command>ALTER TABLE</> that
+    performs a rewrite of the whole table.  This results in reconstructing
+    each row with the dropped column replaced by a null value.
+   </para>
+
+   <para>
+    The rewriting forms of <command>ALTER TABLE</> are not MVCC-safe.
+    After a table rewrite, the table will appear empty to concurrent
+    transactions, if they are using a snapshot taken before the rewrite
+    occurred.  See <xref linkend="mvcc-caveats"> for more details.
    </para>
 
    <para>
@@ -1061,7 +1089,7 @@ ALTER TABLE distributors
   </para>
 
   <para>
-   To change an integer column containing UNIX timestamps to <type>timestamp
+   To change an integer column containing Unix timestamps to <type>timestamp
    with time zone</type> via a <literal>USING</literal> clause:
 <programlisting>
 ALTER TABLE foo

@@ -1,5 +1,4 @@
-CREATE EXTENSION plpython2u;
-CREATE EXTENSION hstore_plpython2u;
+CREATE EXTENSION hstore_plpython2u CASCADE;
 
 
 -- test hstore -> python

@@ -35,7 +35,7 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
 
   <para>
    The owner of a foreign server can drop user mappings for that server
-   for any user.  Also, a user can drop a user mapping for his own
+   for any user.  Also, a user can drop a user mapping for their own
    user name if <literal>USAGE</> privilege on the server has been
    granted to the user.
   </para>

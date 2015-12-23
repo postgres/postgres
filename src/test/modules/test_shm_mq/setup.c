@@ -255,51 +255,38 @@ static void
 wait_for_workers_to_become_ready(worker_state *wstate,
 								 volatile test_shm_mq_header *hdr)
 {
-	bool		save_set_latch_on_sigusr1;
 	bool		result = false;
 
-	save_set_latch_on_sigusr1 = set_latch_on_sigusr1;
-	set_latch_on_sigusr1 = true;
-
-	PG_TRY();
+	for (;;)
 	{
-		for (;;)
+		int			workers_ready;
+
+		/* If all the workers are ready, we have succeeded. */
+		SpinLockAcquire(&hdr->mutex);
+		workers_ready = hdr->workers_ready;
+		SpinLockRelease(&hdr->mutex);
+		if (workers_ready >= wstate->nworkers)
 		{
-			int			workers_ready;
-
-			/* If all the workers are ready, we have succeeded. */
-			SpinLockAcquire(&hdr->mutex);
-			workers_ready = hdr->workers_ready;
-			SpinLockRelease(&hdr->mutex);
-			if (workers_ready >= wstate->nworkers)
-			{
-				result = true;
-				break;
-			}
-
-			/* If any workers (or the postmaster) have died, we have failed. */
-			if (!check_worker_status(wstate))
-			{
-				result = false;
-				break;
-			}
-
-			/* Wait to be signalled. */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
-
-			/* An interrupt may have occurred while we were waiting. */
-			CHECK_FOR_INTERRUPTS();
-
-			/* Reset the latch so we don't spin. */
-			ResetLatch(MyLatch);
+			result = true;
+			break;
 		}
+
+		/* If any workers (or the postmaster) have died, we have failed. */
+		if (!check_worker_status(wstate))
+		{
+			result = false;
+			break;
+		}
+
+		/* Wait to be signalled. */
+		WaitLatch(MyLatch, WL_LATCH_SET, 0);
+
+		/* An interrupt may have occurred while we were waiting. */
+		CHECK_FOR_INTERRUPTS();
+
+		/* Reset the latch so we don't spin. */
+		ResetLatch(MyLatch);
 	}
-	PG_CATCH();
-	{
-		set_latch_on_sigusr1 = save_set_latch_on_sigusr1;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
 	if (!result)
 		ereport(ERROR,

@@ -119,3 +119,16 @@ DROP SEQUENCE ctlseq1;
 DROP TYPE ctlty1;
 DROP VIEW ctlv1;
 DROP TABLE IF EXISTS ctlt4, ctlt10, ctlt11, ctlt11a, ctlt12;
+
+/* LIKE WITH OIDS */
+CREATE TABLE has_oid (x INTEGER) WITH OIDS;
+CREATE TABLE no_oid (y INTEGER);
+CREATE TABLE like_test (z INTEGER, LIKE has_oid);
+SELECT oid FROM like_test;
+CREATE TABLE like_test2 (z INTEGER, LIKE no_oid);
+SELECT oid FROM like_test2; -- fail
+CREATE TABLE like_test3 (z INTEGER, LIKE has_oid, LIKE no_oid);
+SELECT oid FROM like_test3;
+CREATE TABLE like_test4 (z INTEGER, PRIMARY KEY(oid), LIKE has_oid);
+SELECT oid FROM like_test4;
+DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3, like_test4;

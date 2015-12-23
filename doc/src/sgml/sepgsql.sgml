@@ -570,7 +570,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
 
    <para>
     In this case, a regular user cannot reference <literal>customer.credit</>
-    directly, but a trusted procedure <literal>show_credit</> allows him
+    directly, but a trusted procedure <literal>show_credit</> allows the user
     to print the credit card numbers of customers with some of the digits
     masked out.
    </para>
@@ -726,8 +726,8 @@ ERROR:  SELinux: security policy violation
     <term>Row-level access control</term>
     <listitem>
      <para>
-      <productname>PostgreSQL</> does not support row-level access; therefore,
-      <filename>sepgsql</filename> does not support it either.
+      <productname>PostgreSQL</> supports row-level access, but
+      <filename>sepgsql</filename> does not.
      </para>
     </listitem>
    </varlistentry>

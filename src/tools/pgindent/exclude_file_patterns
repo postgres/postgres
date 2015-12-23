@@ -1,4 +1,4 @@
-#list of file patterns to exclude from pg_indent runs
+#list of file patterns to exclude from pgindent runs
 /s_lock\.h$
 /atomics/
 /ecpg/test/expected/

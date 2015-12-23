@@ -254,8 +254,8 @@ jsonb_hash(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	JsonbIterator *it;
-	int32		r;
 	JsonbValue	v;
+	JsonbIteratorToken r;
 	uint32		hash = 0;
 
 	if (JB_ROOT_COUNT(jb) == 0)
@@ -283,7 +283,7 @@ jsonb_hash(PG_FUNCTION_ARGS)
 			case WJB_END_OBJECT:
 				break;
 			default:
-				elog(ERROR, "invalid JsonbIteratorNext rc: %d", r);
+				elog(ERROR, "invalid JsonbIteratorNext rc: %d", (int) r);
 		}
 	}
 

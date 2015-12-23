@@ -21,6 +21,10 @@ unset MAKELEVEL
 # authentication configuration.
 standard_initdb() {
 	"$1" -N
+	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
+	then
+		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
+	fi
 	../../test/regress/pg_regress --config-auth "$PGDATA"
 }
 

@@ -432,6 +432,16 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>--strict-names</></term>
+      <listitem>
+       <para>
+        Require that each schema (-n / --schema) and table (-t / --table)
+        qualifier match at least one schema/table in the backup file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable class="parameter">trigger</replaceable></option></term>
       <term><option>--trigger=<replaceable class="parameter">trigger</replaceable></option></term>
       <listitem>
@@ -510,25 +520,25 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>--enable-row-security</></term>                                                          <listitem>
+      <term><option>--enable-row-security</></term>
+      <listitem>
        <para>
         This option is relevant only when restoring the contents of a table
-        which has row security.  By default, pg_restore will set
-        <literal>ROW_SECURITY</literal> to <literal>OFF</literal>, to ensure
+        which has row security.  By default, <application>pg_restore</application> will set
+        <xref linkend="guc-row-security"> to off, to ensure
         that all data is restored in to the table.  If the user does not have
         sufficient privileges to bypass row security, then an error is thrown.
         This parameter instructs <application>pg_restore</application> to set
-        row_security to 'ON' instead, allowing the user to attempt to restore
-        the contents of the table with row security enabled.  This may still
+        <xref linkend="guc-row-security"> to on instead, allowing the user to attempt to restore
+        the contents of the table with row security enabled.  This might still
         fail if the user does not have the right to insert the rows from the
         dump into the table.
        </para>
 
        <para>
-        Note that this option currently also requires the dump be in INSERT
-        format as COPY TO does not support row security.
+        Note that this option currently also requires the dump be in <command>INSERT</command>
+        format, as <command>COPY TO</command> does not support row security.
        </para>
-
       </listitem>
      </varlistentry>
 

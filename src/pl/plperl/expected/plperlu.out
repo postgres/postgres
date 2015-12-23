@@ -6,7 +6,6 @@ LOAD 'plperl';
 SET plperl.on_plperlu_init = '$_SHARED{init} = 42';
 DO $$ warn $_SHARED{init} $$ language plperlu;
 WARNING:  42 at line 1.
-CONTEXT:  PL/Perl anonymous code block
 --
 -- Test compilation of unicode regex - regardless of locale.
 -- This code fails in plain plperl in a non-UTF8 database.

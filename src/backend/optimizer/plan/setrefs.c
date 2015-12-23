@@ -174,6 +174,8 @@ static bool extract_query_dependencies_walker(Node *node,
  * Currently, relations and user-defined functions are the only types of
  * objects that are explicitly tracked this way.
  *
+ * 7. We assign every plan node in the tree a unique ID.
+ *
  * We also perform one final optimization step, which is to delete
  * SubqueryScan plan nodes that aren't doing anything useful (ie, have
  * no qual and a no-op targetlist).  The reason for doing this last is that
@@ -436,6 +438,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 	if (plan == NULL)
 		return NULL;
 
+	/* Assign this node a unique ID. */
+	plan->plan_node_id = root->glob->lastPlanNodeId++;
+
 	/*
 	 * Plan-type-specific fixes
 	 */
@@ -595,6 +600,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_MergeJoin:
 		case T_HashJoin:
 			set_join_references(root, (Join *) plan, rtoffset);
+			break;
+
+		case T_Gather:
+			set_upper_references(root, plan, rtoffset);
 			break;
 
 		case T_Hash:
@@ -1120,6 +1129,12 @@ set_foreignscan_references(PlannerInfo *root,
 						   itlist,
 						   INDEX_VAR,
 						   rtoffset);
+		fscan->fdw_recheck_quals = (List *)
+			fix_upper_expr(root,
+						   (Node *) fscan->fdw_recheck_quals,
+						   itlist,
+						   INDEX_VAR,
+						   rtoffset);
 		pfree(itlist);
 		/* fdw_scan_tlist itself just needs fix_scan_list() adjustments */
 		fscan->fdw_scan_tlist =
@@ -1127,13 +1142,15 @@ set_foreignscan_references(PlannerInfo *root,
 	}
 	else
 	{
-		/* Adjust tlist, qual, fdw_exprs in the standard way */
+		/* Adjust tlist, qual, fdw_exprs, etc. in the standard way */
 		fscan->scan.plan.targetlist =
 			fix_scan_list(root, fscan->scan.plan.targetlist, rtoffset);
 		fscan->scan.plan.qual =
 			fix_scan_list(root, fscan->scan.plan.qual, rtoffset);
 		fscan->fdw_exprs =
 			fix_scan_list(root, fscan->fdw_exprs, rtoffset);
+		fscan->fdw_recheck_quals =
+			fix_scan_list(root, fscan->fdw_recheck_quals, rtoffset);
 	}
 
 	/* Adjust fs_relids if needed */
@@ -1243,7 +1260,7 @@ copyVar(Var *var)
  * This is code that is common to all variants of expression-fixing.
  * We must look up operator opcode info for OpExpr and related nodes,
  * add OIDs from regclass Const nodes into root->glob->relationOids, and
- * add catalog TIDs for user-defined functions into root->glob->invalItems.
+ * add PlanInvalItems for user-defined functions into root->glob->invalItems.
  * We also fill in column index lists for GROUPING() expressions.
  *
  * We assume it's okay to update opcode info in-place.  So this could possibly
@@ -1929,16 +1946,21 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  *	   relation target lists.  Also perform opcode lookup and add
  *	   regclass OIDs to root->glob->relationOids.
  *
- * This is used in two different scenarios: a normal join clause, where all
- * the Vars in the clause *must* be replaced by OUTER_VAR or INNER_VAR
- * references; and a RETURNING clause, which may contain both Vars of the
- * target relation and Vars of other relations.  In the latter case we want
- * to replace the other-relation Vars by OUTER_VAR references, while leaving
- * target Vars alone.
- *
- * For a normal join, acceptable_rel should be zero so that any failure to
- * match a Var will be reported as an error.  For the RETURNING case, pass
- * inner_itlist = NULL and acceptable_rel = the ID of the target relation.
+ * This is used in three different scenarios:
+ * 1) a normal join clause, where all the Vars in the clause *must* be
+ *	  replaced by OUTER_VAR or INNER_VAR references.  In this case
+ *	  acceptable_rel should be zero so that any failure to match a Var will be
+ *	  reported as an error.
+ * 2) RETURNING clauses, which may contain both Vars of the target relation
+ *	  and Vars of other relations. In this case we want to replace the
+ *	  other-relation Vars by OUTER_VAR references, while leaving target Vars
+ *	  alone. Thus inner_itlist = NULL and acceptable_rel = the ID of the
+ *	  target relation should be passed.
+ * 3) ON CONFLICT UPDATE SET/WHERE clauses.  Here references to EXCLUDED are
+ *	  to be replaced with INNER_VAR references, while leaving target Vars (the
+ *	  to-be-updated relation) alone. Correspondingly inner_itlist is to be
+ *	  EXCLUDED elements, outer_itlist = NULL and acceptable_rel the target
+ *	  relation.
  *
  * 'clauses' is the targetlist or list of join clauses
  * 'outer_itlist' is the indexed target list of the outer join relation,
@@ -1981,7 +2003,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	{
 		Var		   *var = (Var *) node;
 
-		/* First look for the var in the input tlists */
+		/* Look for the var in the input tlists, first in the outer */
 		if (context->outer_itlist)
 		{
 			newvar = search_indexed_tlist_for_var(var,
@@ -1992,7 +2014,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 				return (Node *) newvar;
 		}
 
-		/* Then in the outer */
+		/* then in the inner. */
 		if (context->inner_itlist)
 		{
 			newvar = search_indexed_tlist_for_var(var,
@@ -2379,7 +2401,8 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		ListCell   *lc;
 
 		/* Collect row security information */
-		context->glob->hasRowSecurity = query->hasRowSecurity;
+		if (query->hasRowSecurity)
+			context->glob->hasRowSecurity = true;
 
 		if (query->commandType == CMD_UTILITY)
 		{

@@ -183,7 +183,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		/*
 		 * If a wait for synchronous replication is pending, we can neither
 		 * acknowledge the commit nor raise ERROR or FATAL.  The latter would
-		 * lead the client to believe that that the transaction aborted, which
+		 * lead the client to believe that the transaction aborted, which
 		 * is not true: it's already committed locally. The former is no good
 		 * either: the client has requested synchronous replication, and is
 		 * entitled to assume that an acknowledged commit is also replicated,

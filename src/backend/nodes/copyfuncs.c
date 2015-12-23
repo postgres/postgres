@@ -94,6 +94,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_NODE_FIELD(invalItems);
 	COPY_SCALAR_FIELD(nParamExec);
 	COPY_SCALAR_FIELD(hasRowSecurity);
+	COPY_SCALAR_FIELD(parallelModeNeeded);
 
 	return newnode;
 }
@@ -111,6 +112,8 @@ CopyPlanFields(const Plan *from, Plan *newnode)
 	COPY_SCALAR_FIELD(total_cost);
 	COPY_SCALAR_FIELD(plan_rows);
 	COPY_SCALAR_FIELD(plan_width);
+	COPY_SCALAR_FIELD(parallel_aware);
+	COPY_SCALAR_FIELD(plan_node_id);
 	COPY_NODE_FIELD(targetlist);
 	COPY_NODE_FIELD(qual);
 	COPY_NODE_FIELD(lefttree);
@@ -308,6 +311,28 @@ _copyBitmapOr(const BitmapOr *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(bitmapplans);
+
+	return newnode;
+}
+
+/*
+ * _copyGather
+ */
+static Gather *
+_copyGather(const Gather *from)
+{
+	Gather	   *newnode = makeNode(Gather);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((const Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(num_workers);
+	COPY_SCALAR_FIELD(single_copy);
 
 	return newnode;
 }
@@ -624,6 +649,7 @@ _copyForeignScan(const ForeignScan *from)
 	COPY_NODE_FIELD(fdw_exprs);
 	COPY_NODE_FIELD(fdw_private);
 	COPY_NODE_FIELD(fdw_scan_tlist);
+	COPY_NODE_FIELD(fdw_recheck_quals);
 	COPY_BITMAPSET_FIELD(fs_relids);
 	COPY_SCALAR_FIELD(fsSystemCol);
 
@@ -647,6 +673,7 @@ _copyCustomScan(const CustomScan *from)
 	 * copy remainder of node
 	 */
 	COPY_SCALAR_FIELD(flags);
+	COPY_NODE_FIELD(custom_plans);
 	COPY_NODE_FIELD(custom_exprs);
 	COPY_NODE_FIELD(custom_private);
 	COPY_NODE_FIELD(custom_scan_tlist);
@@ -1925,9 +1952,9 @@ _copyOnConflictExpr(const OnConflictExpr *from)
 	COPY_SCALAR_FIELD(action);
 	COPY_NODE_FIELD(arbiterElems);
 	COPY_NODE_FIELD(arbiterWhere);
+	COPY_SCALAR_FIELD(constraint);
 	COPY_NODE_FIELD(onConflictSet);
 	COPY_NODE_FIELD(onConflictWhere);
-	COPY_SCALAR_FIELD(constraint);
 	COPY_SCALAR_FIELD(exclRelIndex);
 	COPY_NODE_FIELD(exclRelTlist);
 
@@ -2035,20 +2062,6 @@ _copySpecialJoinInfo(const SpecialJoinInfo *from)
 	COPY_SCALAR_FIELD(semi_can_hash);
 	COPY_NODE_FIELD(semi_operators);
 	COPY_NODE_FIELD(semi_rhs_exprs);
-
-	return newnode;
-}
-
-/*
- * _copyLateralJoinInfo
- */
-static LateralJoinInfo *
-_copyLateralJoinInfo(const LateralJoinInfo *from)
-{
-	LateralJoinInfo *newnode = makeNode(LateralJoinInfo);
-
-	COPY_BITMAPSET_FIELD(lateral_lhs);
-	COPY_BITMAPSET_FIELD(lateral_rhs);
 
 	return newnode;
 }
@@ -2167,6 +2180,7 @@ _copyWithCheckOption(const WithCheckOption *from)
 
 	COPY_SCALAR_FIELD(kind);
 	COPY_STRING_FIELD(relname);
+	COPY_STRING_FIELD(polname);
 	COPY_NODE_FIELD(qual);
 	COPY_SCALAR_FIELD(cascaded);
 
@@ -2387,6 +2401,7 @@ _copyAIndices(const A_Indices *from)
 {
 	A_Indices  *newnode = makeNode(A_Indices);
 
+	COPY_SCALAR_FIELD(is_slice);
 	COPY_NODE_FIELD(lidx);
 	COPY_NODE_FIELD(uidx);
 
@@ -2699,7 +2714,6 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);
-	COPY_NODE_FIELD(withCheckOptions);
 	COPY_NODE_FIELD(onConflict);
 	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(groupClause);
@@ -2713,6 +2727,7 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(constraintDeps);
+	COPY_NODE_FIELD(withCheckOptions);
 
 	return newnode;
 }
@@ -4082,7 +4097,7 @@ _copyCreatePolicyStmt(const CreatePolicyStmt *from)
 
 	COPY_STRING_FIELD(policy_name);
 	COPY_NODE_FIELD(table);
-	COPY_SCALAR_FIELD(cmd);
+	COPY_STRING_FIELD(cmd_name);
 	COPY_NODE_FIELD(roles);
 	COPY_NODE_FIELD(qual);
 	COPY_NODE_FIELD(with_check);
@@ -4230,6 +4245,9 @@ copyObject(const void *from)
 			break;
 		case T_Scan:
 			retval = _copyScan(from);
+			break;
+		case T_Gather:
+			retval = _copyGather(from);
 			break;
 		case T_SeqScan:
 			retval = _copySeqScan(from);
@@ -4487,9 +4505,6 @@ copyObject(const void *from)
 			break;
 		case T_SpecialJoinInfo:
 			retval = _copySpecialJoinInfo(from);
-			break;
-		case T_LateralJoinInfo:
-			retval = _copyLateralJoinInfo(from);
 			break;
 		case T_AppendRelInfo:
 			retval = _copyAppendRelInfo(from);

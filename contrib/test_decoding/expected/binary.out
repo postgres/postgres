@@ -7,22 +7,22 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 (1 row)
 
 -- succeeds, textual plugin, textual consumer
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1');
  data 
 ------
 (0 rows)
 
 -- fails, binary plugin, textual consumer
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '1');
-ERROR:  logical decoding output plugin "test_decoding" produces binary output, but "pg_logical_slot_get_changes(name,pg_lsn,integer,text[])" expects textual data
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '1', 'skip-empty-xacts', '1');
+ERROR:  logical decoding output plugin "test_decoding" produces binary output, but function "pg_logical_slot_get_changes(name,pg_lsn,integer,text[])" expects textual data
 -- succeeds, textual plugin, binary consumer
-SELECT data FROM pg_logical_slot_get_binary_changes('regression_slot', NULL, NULL, 'force-binary', '0');
+SELECT data FROM pg_logical_slot_get_binary_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1');
  data 
 ------
 (0 rows)
 
 -- succeeds, binary plugin, binary consumer
-SELECT data FROM pg_logical_slot_get_binary_changes('regression_slot', NULL, NULL, 'force-binary', '1');
+SELECT data FROM pg_logical_slot_get_binary_changes('regression_slot', NULL, NULL, 'force-binary', '1', 'skip-empty-xacts', '1');
  data 
 ------
 (0 rows)

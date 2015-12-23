@@ -288,7 +288,7 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 		bool		skipNested = false;
 		JsonbIterator *it;
 		JsonbValue	v;
-		int			r;
+		JsonbIteratorToken r;
 
 		if (JB_ROOT_IS_SCALAR(jb))
 			ereport(ERROR,
@@ -1283,7 +1283,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 		if (jbvp->type == jbvBinary)
 		{
 			JsonbIterator *it = JsonbIteratorInit((JsonbContainer *) jbvp->val.binary.data);
-			int			r;
+			JsonbIteratorToken r;
 
 			r = JsonbIteratorNext(&it, &tv, true);
 			container = (JsonbContainer *) jbvp->val.binary.data;
@@ -1456,7 +1456,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	bool		skipNested = false;
 	JsonbIterator *it;
 	JsonbValue	v;
-	int			r;
+	JsonbIteratorToken r;
 
 	if (!JB_ROOT_IS_OBJECT(jb))
 		ereport(ERROR,
@@ -1775,7 +1775,7 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 	bool		skipNested = false;
 	JsonbIterator *it;
 	JsonbValue	v;
-	int			r;
+	JsonbIteratorToken r;
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		ereport(ERROR,
@@ -2792,7 +2792,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		JsonbIterator *it;
 		JsonbValue	v;
 		bool		skipNested = false;
-		int			r;
+		JsonbIteratorToken r;
 
 		Assert(jtype == JSONBOID);
 
@@ -3230,9 +3230,9 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
 	JsonbIterator *it;
 	JsonbParseState *parseState = NULL;
 	JsonbValue *res = NULL;
-	int			type;
 	JsonbValue	v,
 				k;
+	JsonbIteratorToken type;
 	bool		last_was_key = false;
 
 	if (JB_ROOT_IS_SCALAR(jb))
@@ -3290,8 +3290,8 @@ addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb)
 {
 	JsonbIterator *it;
 	JsonbValue *o = &(*jbps)->contVal;
-	int			type;
 	JsonbValue	v;
+	JsonbIteratorToken type;
 
 	it = JsonbIteratorInit(&jb->root);
 
@@ -3359,12 +3359,18 @@ jsonb_concat(PG_FUNCTION_ARGS)
 			   *it2;
 
 	/*
-	 * If one of the jsonb is empty, just return other.
+	 * If one of the jsonb is empty, just return the other if it's not
+	 * scalar and both are of the same kind.  If it's a scalar or they are
+	 * of different kinds we need to perform the concatenation even if one is
+	 * empty.
 	 */
-	if (JB_ROOT_COUNT(jb1) == 0)
-		PG_RETURN_JSONB(jb2);
-	else if (JB_ROOT_COUNT(jb2) == 0)
-		PG_RETURN_JSONB(jb1);
+	if (JB_ROOT_IS_OBJECT(jb1) == JB_ROOT_IS_OBJECT(jb2))
+	{
+		if (JB_ROOT_COUNT(jb1) == 0 && !JB_ROOT_IS_SCALAR(jb2))
+			PG_RETURN_JSONB(jb2);
+		else if (JB_ROOT_COUNT(jb2) == 0 && !JB_ROOT_IS_SCALAR(jb1))
+			PG_RETURN_JSONB(jb1);
+	}
 
 	it1 = JsonbIteratorInit(&jb1->root);
 	it2 = JsonbIteratorInit(&jb2->root);
@@ -3392,10 +3398,10 @@ jsonb_delete(PG_FUNCTION_ARGS)
 	int			keylen = VARSIZE_ANY_EXHDR(key);
 	JsonbParseState *state = NULL;
 	JsonbIterator *it;
-	uint32		r;
 	JsonbValue	v,
 			   *res = NULL;
 	bool		skipNested = false;
+	JsonbIteratorToken r;
 
 	if (JB_ROOT_IS_SCALAR(in))
 		ereport(ERROR,
@@ -3444,11 +3450,11 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	int			idx = PG_GETARG_INT32(1);
 	JsonbParseState *state = NULL;
 	JsonbIterator *it;
-	uint32		r,
-				i = 0,
+	uint32		i = 0,
 				n;
 	JsonbValue	v,
 			   *res = NULL;
+	JsonbIteratorToken r;
 
 	if (JB_ROOT_IS_SCALAR(in))
 		ereport(ERROR,
@@ -3458,7 +3464,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	if (JB_ROOT_IS_OBJECT(in))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot delete from object using integer subscript")));
+				 errmsg("cannot delete from object using integer index")));
 
 	if (JB_ROOT_COUNT(in) == 0)
 		PG_RETURN_JSONB(in);
@@ -3600,13 +3606,13 @@ static JsonbValue *
 IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 			   JsonbParseState **state)
 {
-	uint32		r1,
-				r2,
-				rk1,
-				rk2;
 	JsonbValue	v1,
 				v2,
 			   *res = NULL;
+	JsonbIteratorToken r1,
+				r2,
+				rk1,
+				rk2;
 
 	r1 = rk1 = JsonbIteratorNext(it1, &v1, false);
 	r2 = rk2 = JsonbIteratorNext(it2, &v2, false);
@@ -3715,8 +3721,13 @@ setPath(JsonbIterator **it, Datum *path_elems,
 		JsonbParseState **st, int level, Jsonb *newval, bool create)
 {
 	JsonbValue	v;
+	JsonbIteratorToken r;
 	JsonbValue *res = NULL;
-	int			r;
+
+	check_stack_depth();
+
+	if (path_nulls[level])
+		elog(ERROR, "path element at the position %d is NULL", level + 1);
 
 	r = JsonbIteratorNext(it, &v, false);
 
@@ -3782,7 +3793,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 
 	for (i = 0; i < npairs; i++)
 	{
-		int			r = JsonbIteratorNext(it, &k, true);
+		JsonbIteratorToken r = JsonbIteratorNext(it, &k, true);
 
 		Assert(r == WJB_KEY);
 
@@ -3869,7 +3880,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		lindex = strtol(c, &badp, 10);
 		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
 			lindex < INT_MIN)
-			idx = nelems;
+			elog(ERROR, "path element at the position %d is not an integer", level + 1);
 		else
 			idx = lindex;
 	}
@@ -3903,7 +3914,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	/* iterate over the array elements */
 	for (i = 0; i < nelems; i++)
 	{
-		int			r;
+		JsonbIteratorToken r;
 
 		if (i == idx && level < path_len)
 		{

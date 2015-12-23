@@ -164,12 +164,6 @@ SET row_security TO ON;
 SELECT * FROM document;
 SELECT * FROM category;
 
--- database superuser does not bypass RLS policy when FORCE enabled.
-RESET SESSION AUTHORIZATION;
-SET row_security TO FORCE;
-SELECT * FROM document;
-SELECT * FROM category;
-
 -- database superuser does bypass RLS policy when disabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
@@ -179,12 +173,6 @@ SELECT * FROM category;
 -- database non-superuser with bypass privilege can bypass RLS policy when disabled
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
 SET row_security TO OFF;
-SELECT * FROM document;
-SELECT * FROM category;
-
--- RLS policy applies to table owner when FORCE enabled.
-SET SESSION AUTHORIZATION rls_regress_user0;
-SET row_security TO FORCE;
 SELECT * FROM document;
 SELECT * FROM category;
 
@@ -266,6 +254,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
 
 SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
+
+-- union all query
+SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
 
 -- superuser is allowed to bypass RLS checks
 RESET SESSION AUTHORIZATION;
@@ -637,8 +629,9 @@ INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel')
 --
 SET SESSION AUTHORIZATION rls_regress_user0;
 CREATE TABLE z1 (a int, b text);
+CREATE TABLE z2 (a int, b text);
 
-GRANT SELECT ON z1 TO rls_regress_group1, rls_regress_group2,
+GRANT SELECT ON z1,z2 TO rls_regress_group1, rls_regress_group2,
     rls_regress_user1, rls_regress_user2;
 
 INSERT INTO z1 VALUES
@@ -656,17 +649,38 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
+PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+
+PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+
+PREPARE plancache_test3 AS WITH q AS (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
+
 SET ROLE rls_regress_group1;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
+
 SET ROLE rls_regress_group2;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 --
 -- Views should follow policy for view owner.
@@ -966,17 +980,6 @@ SET SESSION AUTHORIZATION rls_regress_user0;
 SELECT * FROM t1;
 EXPLAIN (COSTS OFF) SELECT * FROM t1;
 
--- Check that default deny does apply to superuser when RLS force.
-SET row_security TO FORCE;
-RESET SESSION AUTHORIZATION;
-SELECT * FROM t1;
-EXPLAIN (COSTS OFF) SELECT * FROM t1;
-
--- Check that default deny does apply to table owner when RLS force.
-SET SESSION AUTHORIZATION rls_regress_user0;
-SELECT * FROM t1;
-EXPLAIN (COSTS OFF) SELECT * FROM t1;
-
 -- Check that default deny applies to non-owner/non-superuser when RLS on.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO ON;
@@ -1007,16 +1010,12 @@ SET row_security TO OFF;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
-SET row_security TO FORCE;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
 
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
 SET row_security TO ON;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
-SET row_security TO FORCE;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 
 -- Check COPY TO as user with permissions and BYPASSRLS
@@ -1025,16 +1024,12 @@ SET row_security TO OFF;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
-SET row_security TO FORCE;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION rls_regress_user2;
 SET row_security TO OFF;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
 SET row_security TO ON;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - permission denied
-SET row_security TO FORCE;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - permission denied
 
 -- Check COPY relation TO; keep it just one row to avoid reordering issues
@@ -1055,16 +1050,12 @@ SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
-SET row_security TO FORCE;
-COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
 
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
 SET row_security TO ON;
-COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
-SET row_security TO FORCE;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 
 -- Check COPY TO as user with permissions and BYPASSRLS
@@ -1073,16 +1064,12 @@ SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
-SET row_security TO FORCE;
-COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION rls_regress_user2;
 SET row_security TO OFF;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - permission denied
 SET row_security TO ON;
-COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - permission denied
-SET row_security TO FORCE;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - permission denied
 
 -- Check COPY FROM as Superuser/owner.
@@ -1101,8 +1088,6 @@ COPY copy_t FROM STDIN; --ok
 3	cde
 4	def
 \.
-SET row_security TO FORCE;
-COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
 -- Check COPY FROM as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
@@ -1110,30 +1095,22 @@ SET row_security TO OFF;
 COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-SET row_security TO FORCE;
-COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
--- Check COPY TO as user with permissions and BYPASSRLS
+-- Check COPY FROM as user with permissions and BYPASSRLS
 SET SESSION AUTHORIZATION rls_regress_exempt_user;
-SET row_security TO OFF;
+SET row_security TO ON;
 COPY copy_t FROM STDIN; --ok
 1	abc
 2	bcd
 3	cde
 4	def
 \.
-SET row_security TO ON;
-COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
-SET row_security TO FORCE;
-COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
 -- Check COPY FROM as user without permissions.
 SET SESSION AUTHORIZATION rls_regress_user2;
 SET row_security TO OFF;
 COPY copy_t FROM STDIN; --fail - permission denied.
 SET row_security TO ON;
-COPY copy_t FROM STDIN; --fail - permission denied.
-SET row_security TO FORCE;
 COPY copy_t FROM STDIN; --fail - permission denied.
 
 RESET SESSION AUTHORIZATION;
@@ -1212,11 +1189,12 @@ SELECT attname, most_common_vals FROM pg_stats
 -- Collation support
 --
 BEGIN;
-SET row_security TO FORCE;
 CREATE TABLE coll_t (c) AS VALUES ('bar'::text);
 CREATE POLICY coll_p ON coll_t USING (c < ('foo'::text COLLATE "C"));
 ALTER TABLE coll_t ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON coll_t TO rls_regress_user0;
 SELECT (string_to_array(polqual, ':'))[7] AS inputcollid FROM pg_policy WHERE polrelid = 'coll_t'::regclass;
+SET SESSION AUTHORIZATION rls_regress_user0;
 SELECT * FROM coll_t;
 ROLLBACK;
 
@@ -1268,7 +1246,6 @@ ROLLBACK; -- cleanup
 -- Converting table to view
 --
 BEGIN;
-SET ROW_SECURITY = FORCE;
 CREATE TABLE t (c int);
 CREATE POLICY p ON t USING (c % 2 = 1);
 ALTER TABLE t ENABLE ROW LEVEL SECURITY;
@@ -1293,7 +1270,6 @@ ROLLBACK;
 -- Policy expression handling
 --
 BEGIN;
-SET row_security = FORCE;
 CREATE TABLE t (c) AS VALUES ('bar'::text);
 CREATE POLICY p ON t USING (max(c)); -- fails: aggregate functions are not allowed in policy expressions
 ROLLBACK;
@@ -1339,6 +1315,253 @@ DROP TABLE r1;
 DROP TABLE r2;
 
 --
+-- FORCE ROW LEVEL SECURITY applies RLS to owners but
+-- only when row_security = on
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+INSERT INTO r1 VALUES (10), (20);
+
+CREATE POLICY p1 ON r1 USING (false);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- No error, but no rows
+TABLE r1;
+
+-- RLS error
+INSERT INTO r1 VALUES (1);
+
+-- No error (unable to see any rows to update)
+UPDATE r1 SET a = 1;
+TABLE r1;
+
+-- No error (unable to see any rows to delete)
+DELETE FROM r1;
+TABLE r1;
+
+SET row_security = off;
+-- Shows all rows
+TABLE r1;
+
+-- Update all rows
+UPDATE r1 SET a = 1;
+TABLE r1;
+
+-- Delete all rows
+DELETE FROM r1;
+TABLE r1;
+
+DROP TABLE r1;
+
+--
+-- FORCE ROW LEVEL SECURITY does not break RI
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int PRIMARY KEY);
+CREATE TABLE r2 (a int REFERENCES r1);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+-- Create policies on r2 which prevent the
+-- owner from seeing any rows, but RI should
+-- still see them.
+CREATE POLICY p1 ON r2 USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
+
+-- Errors due to rows in r2
+DELETE FROM r1;
+
+-- Reset r2 to no-RLS
+DROP POLICY p1 ON r2;
+ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE r2 DISABLE ROW LEVEL SECURITY;
+
+-- clean out r2 for INSERT test below
+DELETE FROM r2;
+
+-- Change r1 to not allow rows to be seen
+CREATE POLICY p1 ON r1 USING (false);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- No rows seen
+TABLE r1;
+
+-- No error, RI still sees that row exists in r1
+INSERT INTO r2 VALUES (10);
+
+DROP TABLE r2;
+DROP TABLE r1;
+
+-- Ensure cascaded DELETE works
+CREATE TABLE r1 (a int PRIMARY KEY);
+CREATE TABLE r2 (a int REFERENCES r1 ON DELETE CASCADE);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+-- Create policies on r2 which prevent the
+-- owner from seeing any rows, but RI should
+-- still see them.
+CREATE POLICY p1 ON r2 USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
+
+-- Deletes all records from both
+DELETE FROM r1;
+
+-- Remove FORCE from r2
+ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
+
+-- As owner, we now bypass RLS
+-- verify no rows in r2 now
+TABLE r2;
+
+DROP TABLE r2;
+DROP TABLE r1;
+
+-- Ensure cascaded UPDATE works
+CREATE TABLE r1 (a int PRIMARY KEY);
+CREATE TABLE r2 (a int REFERENCES r1 ON UPDATE CASCADE);
+INSERT INTO r1 VALUES (10), (20);
+INSERT INTO r2 VALUES (10), (20);
+
+-- Create policies on r2 which prevent the
+-- owner from seeing any rows, but RI should
+-- still see them.
+CREATE POLICY p1 ON r2 USING (false);
+ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
+
+-- Updates records in both
+UPDATE r1 SET a = a+5;
+
+-- Remove FORCE from r2
+ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
+
+-- As owner, we now bypass RLS
+-- verify records in r2 updated
+TABLE r2;
+
+DROP TABLE r2;
+DROP TABLE r1;
+
+--
+-- Test INSERT+RETURNING applies SELECT policies as
+-- WithCheckOptions (meaning an error is thrown)
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+
+CREATE POLICY p1 ON r1 FOR SELECT USING (false);
+CREATE POLICY p2 ON r1 FOR INSERT WITH CHECK (true);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- Works fine
+INSERT INTO r1 VALUES (10), (20);
+
+-- No error, but no rows
+TABLE r1;
+
+SET row_security = off;
+-- Rows shown now
+TABLE r1;
+
+SET row_security = on;
+
+-- Error
+INSERT INTO r1 VALUES (10), (20) RETURNING *;
+
+DROP TABLE r1;
+
+--
+-- Test UPDATE+RETURNING applies SELECT policies as
+-- WithCheckOptions (meaning an error is thrown)
+--
+SET SESSION AUTHORIZATION rls_regress_user0;
+SET row_security = on;
+CREATE TABLE r1 (a int);
+
+CREATE POLICY p1 ON r1 FOR SELECT USING (a < 20);
+CREATE POLICY p2 ON r1 FOR UPDATE USING (a < 20) WITH CHECK (true);
+INSERT INTO r1 VALUES (10);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+
+-- Works fine
+UPDATE r1 SET a = 30;
+
+-- Show updated rows
+SET row_security = off;
+TABLE r1;
+-- reset value in r1 for test with RETURNING
+UPDATE r1 SET a = 10;
+
+-- Verify row reset
+TABLE r1;
+
+SET row_security = on;
+
+-- Error
+UPDATE r1 SET a = 30 RETURNING *;
+
+DROP TABLE r1;
+
+-- Check dependency handling
+RESET SESSION AUTHORIZATION;
+CREATE TABLE dep1 (c1 int);
+CREATE TABLE dep2 (c1 int);
+
+CREATE POLICY dep_p1 ON dep1 TO rls_regress_user1 USING (c1 > (select max(dep2.c1) from dep2));
+ALTER POLICY dep_p1 ON dep1 TO rls_regress_user1,rls_regress_user2;
+
+-- Should return one
+SELECT count(*) = 1 FROM pg_depend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_class WHERE relname = 'dep2');
+
+ALTER POLICY dep_p1 ON dep1 USING (true);
+
+-- Should return one
+SELECT count(*) = 1 FROM pg_shdepend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_authid WHERE rolname = 'rls_regress_user1');
+
+-- Should return one
+SELECT count(*) = 1 FROM pg_shdepend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_authid WHERE rolname = 'rls_regress_user2');
+
+-- Should return zero
+SELECT count(*) = 0 FROM pg_depend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_class WHERE relname = 'dep2');
+
+-- DROP OWNED BY testing
+RESET SESSION AUTHORIZATION;
+
+CREATE ROLE dob_role1;
+CREATE ROLE dob_role2;
+
+CREATE TABLE dob_t1 (c1 int);
+
+CREATE POLICY p1 ON dob_t1 TO dob_role1 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should fail, already gone
+
+CREATE POLICY p1 ON dob_t1 TO dob_role1,dob_role2 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should succeed
+
+DROP USER dob_role1;
+DROP USER dob_role2;
+
+--
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
@@ -1355,3 +1578,21 @@ DROP USER rls_regress_user2;
 DROP USER rls_regress_exempt_user;
 DROP ROLE rls_regress_group1;
 DROP ROLE rls_regress_group2;
+
+-- Arrange to have a few policies left over, for testing
+-- pg_dump/pg_restore
+CREATE SCHEMA rls_regress_schema;
+CREATE TABLE rls_tbl (c1 int);
+ALTER TABLE rls_tbl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p1 ON rls_tbl USING (c1 > 5);
+CREATE POLICY p2 ON rls_tbl FOR SELECT USING (c1 <= 3);
+CREATE POLICY p3 ON rls_tbl FOR UPDATE USING (c1 <= 3) WITH CHECK (c1 > 5);
+CREATE POLICY p4 ON rls_tbl FOR DELETE USING (c1 <= 3);
+
+CREATE TABLE rls_tbl_force (c1 int);
+ALTER TABLE rls_tbl_force ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_tbl_force FORCE ROW LEVEL SECURITY;
+CREATE POLICY p1 ON rls_tbl_force USING (c1 = 5) WITH CHECK (c1 < 5);
+CREATE POLICY p2 ON rls_tbl_force FOR SELECT USING (c1 = 8);
+CREATE POLICY p3 ON rls_tbl_force FOR UPDATE USING (c1 = 8) WITH CHECK (c1 >= 5);
+CREATE POLICY p4 ON rls_tbl_force FOR DELETE USING (c1 = 8);

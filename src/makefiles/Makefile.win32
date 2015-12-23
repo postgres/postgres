@@ -62,12 +62,18 @@ ifneq (,$(PGAPPICON))
 PGICOSTR = $(subst /,\/,IDI_ICON ICON \"$(top_builddir)/src/port/$(PGAPPICON).ico\")
 endif
 
+# We do not install src/port/win32ver.rc, its content being specific to
+# PostgreSQL Global Development Group software.  Any module can ship a
+# win32ver.rc or furnish a rule for generating one.  Set $(PGFILEDESC) to
+# signal win32ver.rc availability to the dll build rule below.
+ifndef PGXS
 win32ver.rc: $(top_srcdir)/src/port/win32ver.rc
 	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $< >$@
+endif
 
 win32ver.o: win32ver.rc
 	$(WINDRES) -i $< -o $@ --include-dir=$(top_builddir)/src/include --include-dir=$(srcdir)
 
 # Rule for building a shared library from a single .o file
-%.dll: %.o $(WIN32RES)
+%.dll: %.o $(if $(PGFILEDESC),$(WIN32RES))
 	$(CC) $(CFLAGS) -shared -static-libgcc -o $@ $^ -Wl,--export-all-symbols $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)

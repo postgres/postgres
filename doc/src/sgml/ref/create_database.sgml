@@ -28,9 +28,9 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
-           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ] ]
+           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -149,17 +149,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-       <term><replaceable class="parameter">istemplate</replaceable></term>
-       <listitem>
-        <para>
-         If true, then this database can be cloned by any user with CREATEDB
-         privileges; if false (the default), then only superusers or the owner
-         of the database can clone it.
-        </para>
-       </listitem>
-      </varlistentry>
- 
       <varlistentry>
        <term><replaceable class="parameter">allowconn</replaceable></term>
        <listitem>
@@ -170,7 +159,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
         </para>
        </listitem>
       </varlistentry>
- 
+
       <varlistentry>
       <term><replaceable class="parameter">connlimit</replaceable></term>
       <listitem>
@@ -180,6 +169,17 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+      <varlistentry>
+       <term><replaceable class="parameter">istemplate</replaceable></term>
+       <listitem>
+        <para>
+         If true, then this database can be cloned by any user with <literal>CREATEDB</literal>
+         privileges; if false (the default), then only superusers or the owner
+         of the database can clone it.
+        </para>
+       </listitem>
+      </varlistentry>
     </variablelist>
 
   <para>

@@ -51,11 +51,11 @@ plpgsql_ns_init(void)
  * ----------
  */
 void
-plpgsql_ns_push(const char *label)
+plpgsql_ns_push(const char *label, enum PLpgSQL_label_types label_type)
 {
 	if (label == NULL)
 		label = "";
-	plpgsql_ns_additem(PLPGSQL_NSTYPE_LABEL, 0, label);
+	plpgsql_ns_additem(PLPGSQL_NSTYPE_LABEL, (int) label_type, label);
 }
 
 
@@ -206,6 +206,25 @@ plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur, const char *name)
 }
 
 
+/* ----------
+ * plpgsql_ns_find_nearest_loop		Find innermost loop label in namespace chain
+ * ----------
+ */
+PLpgSQL_nsitem *
+plpgsql_ns_find_nearest_loop(PLpgSQL_nsitem *ns_cur)
+{
+	while (ns_cur != NULL)
+	{
+		if (ns_cur->itemtype == PLPGSQL_NSTYPE_LABEL &&
+			ns_cur->itemno == PLPGSQL_LABEL_LOOP)
+			return ns_cur;
+		ns_cur = ns_cur->prev;
+	}
+
+	return NULL;				/* no loop found */
+}
+
+
 /*
  * Statement type as a string, for use in error messages etc.
  */
@@ -235,7 +254,7 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 		case PLPGSQL_STMT_FOREACH_A:
 			return _("FOREACH over array");
 		case PLPGSQL_STMT_EXIT:
-			return "EXIT";
+			return ((PLpgSQL_stmt_exit *) stmt)->is_exit ? "EXIT" : "CONTINUE";
 		case PLPGSQL_STMT_RETURN:
 			return "RETURN";
 		case PLPGSQL_STMT_RETURN_NEXT:
@@ -249,15 +268,16 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 		case PLPGSQL_STMT_EXECSQL:
 			return _("SQL statement");
 		case PLPGSQL_STMT_DYNEXECUTE:
-			return _("EXECUTE statement");
+			return "EXECUTE";
 		case PLPGSQL_STMT_DYNFORS:
 			return _("FOR over EXECUTE statement");
 		case PLPGSQL_STMT_GETDIAG:
-			return "GET DIAGNOSTICS";
+			return ((PLpgSQL_stmt_getdiag *) stmt)->is_stacked ?
+				"GET STACKED DIAGNOSTICS" : "GET DIAGNOSTICS";
 		case PLPGSQL_STMT_OPEN:
 			return "OPEN";
 		case PLPGSQL_STMT_FETCH:
-			return "FETCH";
+			return ((PLpgSQL_stmt_fetch *) stmt)->is_move ? "MOVE" : "FETCH";
 		case PLPGSQL_STMT_CLOSE:
 			return "CLOSE";
 		case PLPGSQL_STMT_PERFORM:

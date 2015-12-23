@@ -1454,7 +1454,7 @@
       <entry><structfield>rolbypassrls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>
-       Role can bypass row level security policies, see
+       Role bypasses every row level security policy, see
        <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>
@@ -1967,6 +1967,16 @@
       <entry></entry>
       <entry>
        True if table has row level security enabled; see
+       <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>relforcerowsecurity</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if row level security (when enabled) will also apply to table owner; see
        <link linkend="catalog-pg-policy"><structname>pg_policy</structname></link> catalog
       </entry>
      </row>
@@ -4995,6 +5005,23 @@
      </row>
 
      <row>
+      <entry><structfield>proparallel</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>proparallel</structfield> tells whether the function
+       can be safely run in parallel mode.
+       It is <literal>s</literal> for functions which are safe to run in
+       parallel mode without restriction.
+       It is <literal>r</literal> for functions which can be run in parallel
+       mode, but their execution is restricted to the parallel group leader;
+       parallel worker processes cannot invoke these functions.
+       It is <literal>u</literal> for functions which are unsafe in parallel
+       mode; the presence of such a function forces a serial execution plan.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>pronargs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
@@ -5450,10 +5477,11 @@
       <entry><structfield>local_lsn</structfield></entry>
       <entry><type>pg_lsn</type></entry>
       <entry></entry>
-      <entry>This node's LSN that at
-      which <literal>remote_lsn</literal> has been replicated. Used to
-      flush commit records before persisting data to disk when using
-      asynchronous commits.</entry>
+      <entry>
+       This node's LSN at which <literal>remote_lsn</literal> has
+       been replicated. Used to flush commit records before persisting
+       data to disk when using asynchronous commits.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -5576,6 +5604,17 @@
       automatically removed during checkpoints.
       </entry>
      </row>
+
+     <row>
+      <entry><structfield>confirmed_flush_lsn</structfield></entry>
+      <entry><type>pg_lsn</type></entry>
+      <entry></entry>
+      <entry>The address (<literal>LSN</literal>) up to which the logical
+      slot's consumer has confirmed receiving data. Data older than this is
+      not available anymore. <literal>NULL</> for physical slots.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -7934,7 +7973,7 @@
     <row>
      <entry><structfield>sourcefile</structfield></entry>
      <entry><structfield>text</structfield></entry>
-     <entry>Full pathname of the configuration file</entry>
+     <entry>Full path name of the configuration file</entry>
     </row>
     <row>
      <entry><structfield>sourceline</structfield></entry>
@@ -9245,7 +9284,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <filename>postgresql.conf</filename> without restarting the server.
       They can also be set for a particular session in the connection request
       packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
-      environment variable); any user can make such a change for his session.
+      environment variable); any user can make such a change for their session.
       However, these settings never change in a session after it is started.
       If you change them in <filename>postgresql.conf</filename>, send a
       <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
@@ -9274,7 +9313,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
       or within a session via the <command>SET</> command.  Any user is
-      allowed to change his session-local value.  Changes in
+      allowed to change their session-local value.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</>.
      </para>
@@ -9384,7 +9423,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       User can bypass row level security policies, see
+       User bypasses every row level security policy, see
        <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>
@@ -9859,7 +9898,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>usebypassrls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>
-       User can bypass row level security policies, see
+       User bypasses every row level security policy, see
        <xref linkend="ddl-rowsecurity"> for more information.
       </entry>
      </row>

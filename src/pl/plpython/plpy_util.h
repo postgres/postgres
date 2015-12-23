@@ -6,11 +6,6 @@
 #ifndef PLPY_UTIL_H
 #define PLPY_UTIL_H
 
-extern void *PLy_malloc(size_t bytes);
-extern void *PLy_malloc0(size_t bytes);
-extern char *PLy_strdup(const char *str);
-extern void PLy_free(void *ptr);
-
 extern PyObject *PLyUnicode_Bytes(PyObject *unicode);
 extern char *PLyUnicode_AsString(PyObject *unicode);
 

@@ -57,6 +57,7 @@ test: create_table
 test: create_function_2
 test: copy
 test: copyselect
+test: copydml
 test: create_misc
 test: create_operator
 test: create_index
@@ -73,6 +74,7 @@ test: vacuum
 test: drop_if_exists
 test: updatable_views
 test: rolenames
+test: roleattributes
 test: sanity_check
 test: errors
 test: select
@@ -116,6 +118,7 @@ test: alter_operator
 test: misc
 test: psql
 test: async
+test: dbsize
 test: rules
 test: select_views
 test: portals_p2
@@ -134,6 +137,7 @@ test: functional_deps
 test: advisory_lock
 test: json
 test: jsonb
+test: json_encoding
 test: indirect_toast
 test: equivclass
 test: plancache

@@ -58,10 +58,16 @@ extern int	target_prefetch_pages;
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;
 
+/* in guc.c */
+extern int	effective_io_concurrency;
+
 /* in localbuf.c */
 extern PGDLLIMPORT int NLocBuffer;
 extern PGDLLIMPORT Block *LocalBufferBlockPointers;
 extern PGDLLIMPORT int32 *LocalRefCount;
+
+/* upper limit for effective_io_concurrency */
+#define MAX_IO_CONCURRENCY 1000
 
 /* special block number for ReadBuffer() */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
@@ -144,6 +150,7 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 /*
  * prototypes for functions in bufmgr.c
  */
+extern bool ComputeIoConcurrency(int io_concurrency, double *target);
 extern void PrefetchBuffer(Relation reln, ForkNumber forkNum,
 			   BlockNumber blockNum);
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
@@ -169,6 +176,7 @@ extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
 								ForkNumber forkNum);
+extern void FlushOneBuffer(Buffer buffer);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushDatabaseBuffers(Oid dbid);
 extern void DropRelFileNodeBuffers(RelFileNodeBackend rnode,

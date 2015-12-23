@@ -23,7 +23,7 @@ try:
         if what_error == "SPI":
             plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
         elif what_error == "Python":
-            plpy.attribute_error
+            raise Exception("Python exception")
     except:
         exc = False
         subxact.__exit__(*sys.exc_info())
@@ -53,7 +53,7 @@ with plpy.subtransaction():
     if what_error == "SPI":
         plpy.execute("INSERT INTO subtransaction_tbl VALUES ('oops')")
     elif what_error == "Python":
-        plpy.attribute_error
+        raise Exception("Python exception")
 $$ LANGUAGE plpythonu;
 
 SELECT subtransaction_ctx_test();

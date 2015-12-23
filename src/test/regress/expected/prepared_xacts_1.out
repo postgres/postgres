@@ -198,13 +198,14 @@ SELECT gid FROM pg_prepared_xacts;
 (0 rows)
 
 -- pxtest3 should be locked because of the pending DROP
+begin;
 set statement_timeout to 2000;
 SELECT * FROM pxtest3;
  fff 
 -----
 (0 rows)
 
-reset statement_timeout;
+rollback;
 -- Disconnect, we will continue testing in a different backend
 \c -
 -- There should still be two prepared transactions
@@ -214,13 +215,14 @@ SELECT gid FROM pg_prepared_xacts;
 (0 rows)
 
 -- pxtest3 should still be locked because of the pending DROP
+begin;
 set statement_timeout to 2000;
 SELECT * FROM pxtest3;
  fff 
 -----
 (0 rows)
 
-reset statement_timeout;
+rollback;
 -- Commit table creation
 COMMIT PREPARED 'regress-one';
 ERROR:  prepared transaction with identifier "regress-one" does not exist

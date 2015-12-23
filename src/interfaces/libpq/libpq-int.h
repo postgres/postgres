@@ -302,10 +302,9 @@ struct pg_conn
 	char	   *pghostaddr;		/* the numeric IP address of the machine on
 								 * which the server is running.  Takes
 								 * precedence over above. */
-	char	   *pgport;			/* the server's communication port */
-	char	   *pgunixsocket;	/* the Unix-domain socket that the server is
-								 * listening on; if NULL, uses a default
-								 * constructed from pgport */
+	char	   *pgport;			/* the server's communication port number */
+	char	   *pgunixsocket;	/* the directory of the server's Unix-domain
+								 * socket; if NULL, use DEFAULT_PGSOCKET_DIR */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
@@ -394,6 +393,7 @@ struct pg_conn
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
 	PGVerbosity verbosity;		/* error/notice message verbosity */
+	PGContextVisibility show_context;	/* whether to show CONTEXT field */
 	PGlobjfuncs *lobjfuncs;		/* private state for large-object access fns */
 
 	/* Buffer for data received from backend and not yet processed */
@@ -514,7 +514,7 @@ extern char *const pgresStatus[];
 
 /* === in fe-connect.c === */
 
-extern void pqDropConnection(PGconn *conn);
+extern void pqDropConnection(PGconn *conn, bool flushInput);
 extern int pqPacketSend(PGconn *conn, char pack_type,
 			 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);

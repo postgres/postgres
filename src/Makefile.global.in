@@ -320,12 +320,14 @@ check: temp-install
 .PHONY: temp-install
 temp-install:
 ifndef NO_TEMP_INSTALL
+ifneq ($(abs_top_builddir),)
 ifeq ($(MAKELEVEL),0)
 	rm -rf '$(abs_top_builddir)'/tmp_install
 	$(MKDIR_P) '$(abs_top_builddir)'/tmp_install/log
 	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
 endif
 	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install >>'$(abs_top_builddir)'/tmp_install/log/install.log || exit; done)
+endif
 endif
 
 PROVE = @PROVE@
@@ -349,6 +351,7 @@ endef
 ifeq ($(enable_tap_tests),yes)
 
 define prove_installcheck
+rm -rf $(CURDIR)/tmp_check/log
 cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
 endef
 
@@ -431,9 +434,6 @@ host_cpu = @host_cpu@
 
 # Make HAVE_IPV6 available for initdb script creation
 HAVE_IPV6= @HAVE_IPV6@
-
-# The HP-UX port makefile, for one, needs access to this symbol
-HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
 
 # This is mainly for use on FreeBSD, where we have both a.out and elf
 # systems now.  May be applicable to other systems to?

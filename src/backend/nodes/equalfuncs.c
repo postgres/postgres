@@ -759,9 +759,9 @@ _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 	COMPARE_SCALAR_FIELD(action);
 	COMPARE_NODE_FIELD(arbiterElems);
 	COMPARE_NODE_FIELD(arbiterWhere);
+	COMPARE_SCALAR_FIELD(constraint);
 	COMPARE_NODE_FIELD(onConflictSet);
 	COMPARE_NODE_FIELD(onConflictWhere);
-	COMPARE_SCALAR_FIELD(constraint);
 	COMPARE_SCALAR_FIELD(exclRelIndex);
 	COMPARE_NODE_FIELD(exclRelTlist);
 
@@ -846,15 +846,6 @@ _equalSpecialJoinInfo(const SpecialJoinInfo *a, const SpecialJoinInfo *b)
 }
 
 static bool
-_equalLateralJoinInfo(const LateralJoinInfo *a, const LateralJoinInfo *b)
-{
-	COMPARE_BITMAPSET_FIELD(lateral_lhs);
-	COMPARE_BITMAPSET_FIELD(lateral_rhs);
-
-	return true;
-}
-
-static bool
 _equalAppendRelInfo(const AppendRelInfo *a, const AppendRelInfo *b)
 {
 	COMPARE_SCALAR_FIELD(parent_relid);
@@ -906,7 +897,6 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(targetList);
-	COMPARE_NODE_FIELD(withCheckOptions);
 	COMPARE_NODE_FIELD(onConflict);
 	COMPARE_NODE_FIELD(returningList);
 	COMPARE_NODE_FIELD(groupClause);
@@ -920,6 +910,7 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_NODE_FIELD(rowMarks);
 	COMPARE_NODE_FIELD(setOperations);
 	COMPARE_NODE_FIELD(constraintDeps);
+	COMPARE_NODE_FIELD(withCheckOptions);
 
 	return true;
 }
@@ -1868,8 +1859,8 @@ _equalCreateEventTrigStmt(const CreateEventTrigStmt *a, const CreateEventTrigStm
 {
 	COMPARE_STRING_FIELD(trigname);
 	COMPARE_STRING_FIELD(eventname);
-	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(whenclause);
+	COMPARE_NODE_FIELD(funcname);
 
 	return true;
 }
@@ -2074,7 +2065,7 @@ _equalCreatePolicyStmt(const CreatePolicyStmt *a, const CreatePolicyStmt *b)
 {
 	COMPARE_STRING_FIELD(policy_name);
 	COMPARE_NODE_FIELD(table);
-	COMPARE_SCALAR_FIELD(cmd);
+	COMPARE_STRING_FIELD(cmd_name);
 	COMPARE_NODE_FIELD(roles);
 	COMPARE_NODE_FIELD(qual);
 	COMPARE_NODE_FIELD(with_check);
@@ -2160,6 +2151,7 @@ _equalAStar(const A_Star *a, const A_Star *b)
 static bool
 _equalAIndices(const A_Indices *a, const A_Indices *b)
 {
+	COMPARE_SCALAR_FIELD(is_slice);
 	COMPARE_NODE_FIELD(lidx);
 	COMPARE_NODE_FIELD(uidx);
 
@@ -2455,6 +2447,7 @@ _equalWithCheckOption(const WithCheckOption *a, const WithCheckOption *b)
 {
 	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_STRING_FIELD(relname);
+	COMPARE_STRING_FIELD(polname);
 	COMPARE_NODE_FIELD(qual);
 	COMPARE_SCALAR_FIELD(cascaded);
 
@@ -2858,9 +2851,6 @@ equal(const void *a, const void *b)
 			break;
 		case T_SpecialJoinInfo:
 			retval = _equalSpecialJoinInfo(a, b);
-			break;
-		case T_LateralJoinInfo:
-			retval = _equalLateralJoinInfo(a, b);
 			break;
 		case T_AppendRelInfo:
 			retval = _equalAppendRelInfo(a, b);

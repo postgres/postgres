@@ -140,8 +140,8 @@ main(int argc, char *argv[])
 		printQueryOpt popt;
 		static const bool translate_columns[] = {false, true};
 
-		conn = connectDatabase(dbname, host, port, username, prompt_password,
-							   progname, false);
+		conn = connectDatabase(dbname, host, port, username, NULL,
+							   prompt_password, progname, false);
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
 				"(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 		popt.translate_columns = translate_columns;
 		popt.n_translate_columns = lengthof(translate_columns);
 
-		printQuery(result, &popt, stdout, NULL);
+		printQuery(result, &popt, stdout, false, NULL);
 
 		PQfinish(conn);
 		exit(0);
@@ -180,8 +180,8 @@ main(int argc, char *argv[])
 		if (*p >= 'A' && *p <= 'Z')
 			*p += ('a' - 'A');
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+	conn = connectDatabase(dbname, host, port, username, NULL,
+						   prompt_password, progname, false);
 
 	/*
 	 * Make sure the language isn't already installed

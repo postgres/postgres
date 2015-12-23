@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -102,6 +103,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	rel->consider_startup = (root->tuple_fraction > 0);
 	rel->consider_param_startup = false;		/* might get changed later */
+	rel->consider_parallel = false;		/* might get changed later */
 	rel->reltargetlist = NIL;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
@@ -109,11 +111,12 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
+	rel->direct_lateral_relids = NULL;
+	rel->lateral_relids = NULL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
 	rel->lateral_vars = NIL;
-	rel->lateral_relids = NULL;
 	rel->lateral_referencers = NULL;
 	rel->indexlist = NIL;
 	rel->pages = 0;
@@ -363,6 +366,7 @@ build_join_rel(PlannerInfo *root,
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	joinrel->consider_startup = (root->tuple_fraction > 0);
 	joinrel->consider_param_startup = false;
+	joinrel->consider_parallel = false;
 	joinrel->reltargetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
@@ -370,6 +374,12 @@ build_join_rel(PlannerInfo *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
+	/* init direct_lateral_relids from children; we'll finish it up below */
+	joinrel->direct_lateral_relids =
+		bms_union(outer_rel->direct_lateral_relids,
+				  inner_rel->direct_lateral_relids);
+	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids,
+														outer_rel, inner_rel);
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;
@@ -377,7 +387,6 @@ build_join_rel(PlannerInfo *root,
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
 	joinrel->lateral_vars = NIL;
-	joinrel->lateral_relids = NULL;
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
@@ -419,6 +428,18 @@ build_join_rel(PlannerInfo *root,
 	add_placeholders_to_joinrel(root, joinrel);
 
 	/*
+	 * add_placeholders_to_joinrel also took care of adding the ph_lateral
+	 * sets of any PlaceHolderVars computed here to direct_lateral_relids, so
+	 * now we can finish computing that.  This is much like the computation of
+	 * the transitively-closed lateral_relids in min_join_parameterization,
+	 * except that here we *do* have to consider the added PHVs.
+	 */
+	joinrel->direct_lateral_relids =
+		bms_del_members(joinrel->direct_lateral_relids, joinrel->relids);
+	if (bms_is_empty(joinrel->direct_lateral_relids))
+		joinrel->direct_lateral_relids = NULL;
+
+	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The
 	 * caller might or might not need the restrictlist, but I need it anyway
 	 * for set_joinrel_size_estimates().)
@@ -440,6 +461,24 @@ build_join_rel(PlannerInfo *root,
 	 */
 	set_joinrel_size_estimates(root, joinrel, outer_rel, inner_rel,
 							   sjinfo, restrictlist);
+
+	/*
+	 * Set the consider_parallel flag if this joinrel could potentially be
+	 * scanned within a parallel worker.  If this flag is false for either
+	 * inner_rel or outer_rel, then it must be false for the joinrel also.
+	 * Even if both are true, there might be parallel-restricted quals at our
+	 * level.
+	 *
+	 * Note that if there are more than two rels in this relation, they could
+	 * be divided between inner_rel and outer_rel in any arbitary way.  We
+	 * assume this doesn't matter, because we should hit all the same baserels
+	 * and joinclauses while building up to this joinrel no matter which we
+	 * take; therefore, we should make the same decision here however we get
+	 * here.
+	 */
+	if (inner_rel->consider_parallel && outer_rel->consider_parallel &&
+		!has_parallel_hazard((Node *) restrictlist, false))
+		joinrel->consider_parallel = true;
 
 	/*
 	 * Add the joinrel to the query's joinrel list, and store it into the
@@ -476,6 +515,45 @@ build_join_rel(PlannerInfo *root,
 	}
 
 	return joinrel;
+}
+
+/*
+ * min_join_parameterization
+ *
+ * Determine the minimum possible parameterization of a joinrel, that is, the
+ * set of other rels it contains LATERAL references to.  We save this value in
+ * the join's RelOptInfo.  This function is split out of build_join_rel()
+ * because join_is_legal() needs the value to check a prospective join.
+ */
+Relids
+min_join_parameterization(PlannerInfo *root,
+						  Relids joinrelids,
+						  RelOptInfo *outer_rel,
+						  RelOptInfo *inner_rel)
+{
+	Relids		result;
+
+	/*
+	 * Basically we just need the union of the inputs' lateral_relids, less
+	 * whatever is already in the join.
+	 *
+	 * It's not immediately obvious that this is a valid way to compute the
+	 * result, because it might seem that we're ignoring possible lateral refs
+	 * of PlaceHolderVars that are due to be computed at the join but not in
+	 * either input.  However, because create_lateral_join_info() already
+	 * charged all such PHV refs to each member baserel of the join, they'll
+	 * be accounted for already in the inputs' lateral_relids.  Likewise, we
+	 * do not need to worry about doing transitive closure here, because that
+	 * was already accounted for in the original baserel lateral_relids.
+	 */
+	result = bms_union(outer_rel->lateral_relids, inner_rel->lateral_relids);
+	result = bms_del_members(result, joinrelids);
+
+	/* Maintain invariant that result is exactly NULL if empty */
+	if (bms_is_empty(result))
+		result = NULL;
+
+	return result;
 }
 
 /*

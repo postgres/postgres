@@ -696,7 +696,8 @@ add_path_precheck(RelOptInfo *parent_rel,
  *	  pathnode.
  */
 Path *
-create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
+create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
+					Relids required_outer, int nworkers)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -704,9 +705,10 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = nworkers > 0 ? true : false;
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
 
-	cost_seqscan(pathnode, root, rel, pathnode->param_info);
+	cost_seqscan(pathnode, root, rel, pathnode->param_info, nworkers);
 
 	return pathnode;
 }
@@ -724,6 +726,7 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = false;
 	pathnode->pathkeys = NIL;	/* samplescan has unordered result */
 
 	cost_samplescan(pathnode, root, rel, pathnode->param_info);
@@ -777,6 +780,7 @@ create_index_path(PlannerInfo *root,
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = pathkeys;
 
 	/* Convert clauses to indexquals the executor can handle */
@@ -822,6 +826,7 @@ create_bitmap_heap_path(PlannerInfo *root,
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->bitmapqual = bitmapqual;
@@ -847,6 +852,7 @@ create_bitmap_and_path(PlannerInfo *root,
 	pathnode->path.pathtype = T_BitmapAnd;
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = NULL;	/* not used in bitmap trees */
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->bitmapquals = bitmapquals;
@@ -871,6 +877,7 @@ create_bitmap_or_path(PlannerInfo *root,
 	pathnode->path.pathtype = T_BitmapOr;
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = NULL;	/* not used in bitmap trees */
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->bitmapquals = bitmapquals;
@@ -895,6 +902,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->tidquals = tidquals;
@@ -922,6 +930,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer)
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = get_appendrel_parampathinfo(rel,
 															required_outer);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = NIL;		/* result is always considered
 										 * unsorted */
 	pathnode->subpaths = subpaths;
@@ -975,6 +984,7 @@ create_merge_append_path(PlannerInfo *root,
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = get_appendrel_parampathinfo(rel,
 															required_outer);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpaths = subpaths;
 
@@ -1049,6 +1059,7 @@ create_result_path(List *quals)
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = NULL;
 	pathnode->path.param_info = NULL;	/* there are no other rels... */
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = NIL;
 	pathnode->quals = quals;
 
@@ -1082,6 +1093,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 	pathnode->path.pathtype = T_Material;
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = subpath->param_info;
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = subpath->pathkeys;
 
 	pathnode->subpath = subpath;
@@ -1142,6 +1154,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathtype = T_Unique;
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = subpath->param_info;
+	pathnode->path.parallel_aware = false;
 
 	/*
 	 * Assume the output is unsorted, since we don't necessarily have pathkeys
@@ -1308,6 +1321,33 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 }
 
 /*
+ * create_gather_path
+ *
+ *	  Creates a path corresponding to a gather scan, returning the
+ *	  pathnode.
+ */
+GatherPath *
+create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+				   Relids required_outer, int nworkers)
+{
+	GatherPath *pathnode = makeNode(GatherPath);
+
+	pathnode->path.pathtype = T_Gather;
+	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
+	pathnode->path.parallel_aware = false;
+	pathnode->path.pathkeys = NIL;		/* Gather has unordered result */
+
+	pathnode->subpath = subpath;
+	pathnode->num_workers = nworkers;
+
+	cost_gather(pathnode, root, rel, pathnode->path.param_info);
+
+	return pathnode;
+}
+
+/*
  * translate_sub_tlist - get subquery column numbers represented by tlist
  *
  * The given targetlist usually contains only Vars referencing the given relid.
@@ -1352,6 +1392,7 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = false;
 	pathnode->pathkeys = pathkeys;
 
 	cost_subqueryscan(pathnode, root, rel, pathnode->param_info);
@@ -1374,6 +1415,7 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = false;
 	pathnode->pathkeys = pathkeys;
 
 	cost_functionscan(pathnode, root, rel, pathnode->param_info);
@@ -1396,6 +1438,7 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = false;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	cost_valuesscan(pathnode, root, rel, pathnode->param_info);
@@ -1417,6 +1460,7 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = false;
 	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
 
 	cost_ctescan(pathnode, root, rel, pathnode->param_info);
@@ -1439,6 +1483,7 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->parallel_aware = false;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	/* Cost is the same as for a regular CTE scan */
@@ -1449,19 +1494,20 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * create_foreignscan_path
- *	  Creates a path corresponding to a scan of a foreign table,
- *	  returning the pathnode.
+ *	  Creates a path corresponding to a scan of a foreign table or
+ *	  a foreign join, returning the pathnode.
  *
  * This function is never called from core Postgres; rather, it's expected
- * to be called by the GetForeignPaths function of a foreign data wrapper.
- * We make the FDW supply all fields of the path, since we do not have any
- * way to calculate them in core.
+ * to be called by the GetForeignPaths or GetForeignJoinPaths function of
+ * a foreign data wrapper.  We make the FDW supply all fields of the path,
+ * since we do not have any way to calculate them in core.
  */
 ForeignPath *
 create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						double rows, Cost startup_cost, Cost total_cost,
 						List *pathkeys,
 						Relids required_outer,
+						Path *fdw_outerpath,
 						List *fdw_private)
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
@@ -1470,11 +1516,13 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.parent = rel;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.rows = rows;
 	pathnode->path.startup_cost = startup_cost;
 	pathnode->path.total_cost = total_cost;
 	pathnode->path.pathkeys = pathkeys;
 
+	pathnode->fdw_outerpath = fdw_outerpath;
 	pathnode->fdw_private = fdw_private;
 
 	return pathnode;
@@ -1604,6 +1652,7 @@ create_nestloop_path(PlannerInfo *root,
 								  sjinfo,
 								  required_outer,
 								  &restrict_clauses);
+	pathnode->path.parallel_aware = false;
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->jointype = jointype;
 	pathnode->outerjoinpath = outer_path;
@@ -1661,6 +1710,7 @@ create_mergejoin_path(PlannerInfo *root,
 								  sjinfo,
 								  required_outer,
 								  &restrict_clauses);
+	pathnode->jpath.path.parallel_aware = false;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->jpath.jointype = jointype;
 	pathnode->jpath.outerjoinpath = outer_path;
@@ -1717,6 +1767,7 @@ create_hashjoin_path(PlannerInfo *root,
 								  sjinfo,
 								  required_outer,
 								  &restrict_clauses);
+	pathnode->jpath.path.parallel_aware = false;
 
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
@@ -1772,7 +1823,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 	switch (path->pathtype)
 	{
 		case T_SeqScan:
-			return create_seqscan_path(root, rel, required_outer);
+			return create_seqscan_path(root, rel, required_outer, 0);
 		case T_SampleScan:
 			return (Path *) create_samplescan_path(root, rel, required_outer);
 		case T_IndexScan:

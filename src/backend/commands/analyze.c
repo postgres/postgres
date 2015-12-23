@@ -1689,10 +1689,14 @@ typedef struct
 } CompareScalarsContext;
 
 
-static void compute_minimal_stats(VacAttrStatsP stats,
+static void compute_trivial_stats(VacAttrStatsP stats,
 					  AnalyzeAttrFetchFunc fetchfunc,
 					  int samplerows,
 					  double totalrows);
+static void compute_distinct_stats(VacAttrStatsP stats,
+					   AnalyzeAttrFetchFunc fetchfunc,
+					   int samplerows,
+					   double totalrows);
 static void compute_scalar_stats(VacAttrStatsP stats,
 					 AnalyzeAttrFetchFunc fetchfunc,
 					 int samplerows,
@@ -1723,21 +1727,17 @@ std_typanalyze(VacAttrStats *stats)
 							 &ltopr, &eqopr, NULL,
 							 NULL);
 
-	/* If column has no "=" operator, we can't do much of anything */
-	if (!OidIsValid(eqopr))
-		return false;
-
 	/* Save the operator info for compute_stats routines */
 	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
 	mystats->eqopr = eqopr;
-	mystats->eqfunc = get_opcode(eqopr);
+	mystats->eqfunc = OidIsValid(eqopr) ? get_opcode(eqopr) : InvalidOid;
 	mystats->ltopr = ltopr;
 	stats->extra_data = mystats;
 
 	/*
 	 * Determine which standard statistics algorithm to use
 	 */
-	if (OidIsValid(ltopr))
+	if (OidIsValid(eqopr) && OidIsValid(ltopr))
 	{
 		/* Seems to be a scalar datatype */
 		stats->compute_stats = compute_scalar_stats;
@@ -1762,10 +1762,17 @@ std_typanalyze(VacAttrStats *stats)
 		 */
 		stats->minrows = 300 * attr->attstattarget;
 	}
+	else if (OidIsValid(eqopr))
+	{
+		/* We can still recognize distinct values */
+		stats->compute_stats = compute_distinct_stats;
+		/* Might as well use the same minrows as above */
+		stats->minrows = 300 * attr->attstattarget;
+	}
 	else
 	{
-		/* Can't do much but the minimal stuff */
-		stats->compute_stats = compute_minimal_stats;
+		/* Can't do much but the trivial stuff */
+		stats->compute_stats = compute_trivial_stats;
 		/* Might as well use the same minrows as above */
 		stats->minrows = 300 * attr->attstattarget;
 	}
@@ -1773,8 +1780,91 @@ std_typanalyze(VacAttrStats *stats)
 	return true;
 }
 
+
 /*
- *	compute_minimal_stats() -- compute minimal column statistics
+ *	compute_trivial_stats() -- compute very basic column statistics
+ *
+ *	We use this when we cannot find a hash "=" operator for the datatype.
+ *
+ *	We determine the fraction of non-null rows and the average datum width.
+ */
+static void
+compute_trivial_stats(VacAttrStatsP stats,
+					  AnalyzeAttrFetchFunc fetchfunc,
+					  int samplerows,
+					  double totalrows)
+{
+	int			i;
+	int			null_cnt = 0;
+	int			nonnull_cnt = 0;
+	double		total_width = 0;
+	bool		is_varlena = (!stats->attrtype->typbyval &&
+							  stats->attrtype->typlen == -1);
+	bool		is_varwidth = (!stats->attrtype->typbyval &&
+							   stats->attrtype->typlen < 0);
+
+	for (i = 0; i < samplerows; i++)
+	{
+		Datum		value;
+		bool		isnull;
+
+		vacuum_delay_point();
+
+		value = fetchfunc(stats, i, &isnull);
+
+		/* Check for null/nonnull */
+		if (isnull)
+		{
+			null_cnt++;
+			continue;
+		}
+		nonnull_cnt++;
+
+		/*
+		 * If it's a variable-width field, add up widths for average width
+		 * calculation.  Note that if the value is toasted, we use the toasted
+		 * width.  We don't bother with this calculation if it's a fixed-width
+		 * type.
+		 */
+		if (is_varlena)
+		{
+			total_width += VARSIZE_ANY(DatumGetPointer(value));
+		}
+		else if (is_varwidth)
+		{
+			/* must be cstring */
+			total_width += strlen(DatumGetCString(value)) + 1;
+		}
+	}
+
+	/* We can only compute average width if we found some non-null values. */
+	if (nonnull_cnt > 0)
+	{
+		stats->stats_valid = true;
+		/* Do the simple null-frac and width stats */
+		stats->stanullfrac = (double) null_cnt / (double) samplerows;
+		if (is_varwidth)
+			stats->stawidth = total_width / (double) nonnull_cnt;
+		else
+			stats->stawidth = stats->attrtype->typlen;
+		stats->stadistinct = 0.0;		/* "unknown" */
+	}
+	else if (null_cnt > 0)
+	{
+		/* We found only nulls; assume the column is entirely null */
+		stats->stats_valid = true;
+		stats->stanullfrac = 1.0;
+		if (is_varwidth)
+			stats->stawidth = 0;	/* "unknown" */
+		else
+			stats->stawidth = stats->attrtype->typlen;
+		stats->stadistinct = 0.0;		/* "unknown" */
+	}
+}
+
+
+/*
+ *	compute_distinct_stats() -- compute column statistics including ndistinct
  *
  *	We use this when we can find only an "=" operator for the datatype.
  *
@@ -1789,10 +1879,10 @@ std_typanalyze(VacAttrStats *stats)
  *	depend mainly on the length of the list we are willing to keep.
  */
 static void
-compute_minimal_stats(VacAttrStatsP stats,
-					  AnalyzeAttrFetchFunc fetchfunc,
-					  int samplerows,
-					  double totalrows)
+compute_distinct_stats(VacAttrStatsP stats,
+					   AnalyzeAttrFetchFunc fetchfunc,
+					   int samplerows,
+					   double totalrows)
 {
 	int			i;
 	int			null_cnt = 0;

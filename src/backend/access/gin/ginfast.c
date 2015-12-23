@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "storage/indexfsm.h"
 
 /* GUC parameter */
 int			gin_pending_list_limit = 0;
@@ -433,7 +434,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	END_CRIT_SECTION();
 
 	if (needCleanup)
-		ginInsertCleanup(ginstate, false, NULL);
+		ginInsertCleanup(ginstate, false, true, NULL);
 }
 
 /*
@@ -504,7 +505,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
  */
 static bool
 shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
-		  IndexBulkDeleteResult *stats)
+		  bool fill_fsm, IndexBulkDeleteResult *stats)
 {
 	Page		metapage;
 	GinMetaPageData *metadata;
@@ -521,10 +522,12 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 		int64		nDeletedHeapTuples = 0;
 		ginxlogDeleteListPages data;
 		Buffer		buffers[GIN_NDELETE_AT_ONCE];
+		BlockNumber	freespace[GIN_NDELETE_AT_ONCE];
 
 		data.ndeleted = 0;
 		while (data.ndeleted < GIN_NDELETE_AT_ONCE && blknoToDelete != newHead)
 		{
+			freespace[data.ndeleted] = blknoToDelete;
 			buffers[data.ndeleted] = ReadBuffer(index, blknoToDelete);
 			LockBuffer(buffers[data.ndeleted], GIN_EXCLUSIVE);
 			page = BufferGetPage(buffers[data.ndeleted]);
@@ -609,6 +612,10 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 			UnlockReleaseBuffer(buffers[i]);
 
 		END_CRIT_SECTION();
+
+		for (i = 0; fill_fsm && i < data.ndeleted; i++)
+			RecordFreeIndexPage(index, freespace[i]);
+
 	} while (blknoToDelete != newHead);
 
 	return false;
@@ -725,13 +732,19 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  * action of removing a page from the pending list really needs exclusive
  * lock.
  *
- * vac_delay indicates that ginInsertCleanup is called from vacuum process,
- * so call vacuum_delay_point() periodically.
+ * vac_delay indicates that ginInsertCleanup should call
+ * vacuum_delay_point() periodically.
+ *
+ * fill_fsm indicates that ginInsertCleanup should add deleted pages
+ * to FSM otherwise caller is responsible to put deleted pages into
+ * FSM.
+ *
  * If stats isn't null, we count deleted pending pages into the counts.
  */
 void
 ginInsertCleanup(GinState *ginstate,
-				 bool vac_delay, IndexBulkDeleteResult *stats)
+				 bool vac_delay, bool fill_fsm,
+				 IndexBulkDeleteResult *stats)
 {
 	Relation	index = ginstate->index;
 	Buffer		metabuffer,
@@ -744,6 +757,7 @@ ginInsertCleanup(GinState *ginstate,
 	BuildAccumulator accum;
 	KeyArray	datums;
 	BlockNumber blkno;
+	bool		fsm_vac = false;
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	LockBuffer(metabuffer, GIN_SHARE);
@@ -793,6 +807,7 @@ ginInsertCleanup(GinState *ginstate,
 		{
 			/* another cleanup process is running concurrently */
 			UnlockReleaseBuffer(buffer);
+			fsm_vac = false;
 			break;
 		}
 
@@ -801,8 +816,7 @@ ginInsertCleanup(GinState *ginstate,
 		 */
 		processPendingPage(&accum, &datums, page, FirstOffsetNumber);
 
-		if (vac_delay)
-			vacuum_delay_point();
+		vacuum_delay_point();
 
 		/*
 		 * Is it time to flush memory to disk?	Flush if we are at the end of
@@ -814,7 +828,7 @@ ginInsertCleanup(GinState *ginstate,
 		 */
 		if (GinPageGetOpaque(page)->rightlink == InvalidBlockNumber ||
 			(GinPageHasFullRow(page) &&
-			 (accum.allocatedMemory >= maintenance_work_mem * 1024L)))
+			 (accum.allocatedMemory >= (Size)maintenance_work_mem * 1024L)))
 		{
 			ItemPointerData *list;
 			uint32		nlist;
@@ -842,8 +856,7 @@ ginInsertCleanup(GinState *ginstate,
 			{
 				ginEntryInsert(ginstate, attnum, key, category,
 							   list, nlist, NULL);
-				if (vac_delay)
-					vacuum_delay_point();
+				vacuum_delay_point();
 			}
 
 			/*
@@ -857,6 +870,7 @@ ginInsertCleanup(GinState *ginstate,
 				/* another cleanup process is running concurrently */
 				UnlockReleaseBuffer(buffer);
 				LockBuffer(metabuffer, GIN_UNLOCK);
+				fsm_vac = false;
 				break;
 			}
 
@@ -888,15 +902,19 @@ ginInsertCleanup(GinState *ginstate,
 												 * locking */
 
 			/*
-			 * remove readed pages from pending list, at this point all
-			 * content of readed pages is in regular structure
+			 * remove read pages from pending list, at this point all
+			 * content of read pages is in regular structure
 			 */
-			if (shiftList(index, metabuffer, blkno, stats))
+			if (shiftList(index, metabuffer, blkno, fill_fsm, stats))
 			{
 				/* another cleanup process is running concurrently */
 				LockBuffer(metabuffer, GIN_UNLOCK);
+				fsm_vac = false;
 				break;
 			}
+
+			/* At this point, some pending pages have been freed up */
+			fsm_vac = true;
 
 			Assert(blkno == metadata->head);
 			LockBuffer(metabuffer, GIN_UNLOCK);
@@ -923,13 +941,22 @@ ginInsertCleanup(GinState *ginstate,
 		/*
 		 * Read next page in pending list
 		 */
-		CHECK_FOR_INTERRUPTS();
+		vacuum_delay_point();
 		buffer = ReadBuffer(index, blkno);
 		LockBuffer(buffer, GIN_SHARE);
 		page = BufferGetPage(buffer);
 	}
 
 	ReleaseBuffer(metabuffer);
+
+	/*
+	 * As pending list pages can have a high churn rate, it is
+	 * desirable to recycle them immediately to the FreeSpace Map when
+	 * ordinary backends clean the list.
+	 */
+	if (fsm_vac && fill_fsm)
+		IndexFreeSpaceMapVacuum(index);
+
 
 	/* Clean up temporary space */
 	MemoryContextSwitchTo(oldCtx);

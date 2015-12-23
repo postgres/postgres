@@ -167,5 +167,6 @@ lo_truncate64             164
 PQconninfo                165
 PQsslInUse                166
 PQsslStruct               167
-PQsslAttributes           168
+PQsslAttributeNames       168
 PQsslAttribute            169
+PQsetErrorContextVisibility 170

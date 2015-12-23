@@ -35,12 +35,6 @@ typedef struct pg_atomic_uint64
 
 #endif /* __64BIT__ */
 
-#endif /* defined(HAVE_ATOMICS) */
-
-#if defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS)
-
-#if defined(HAVE_ATOMICS)
-
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
 static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
@@ -91,5 +85,3 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 #endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
 
 #endif /* defined(HAVE_ATOMICS) */
-
-#endif /* defined(PG_USE_INLINE) || defined(ATOMICS_INCLUDE_DEFINITIONS) */

@@ -25,6 +25,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
     [ WITH ] [ SCHEMA <replaceable class="parameter">schema_name</replaceable> ]
              [ VERSION <replaceable class="parameter">version</replaceable> ]
              [ FROM <replaceable class="parameter">old_version</replaceable> ]
+             [ CASCADE ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -95,6 +96,35 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         schema either, the current default object creation schema is used.
        </para>
        <para>
+        If the extension specifies <literal>schema</> in its control file,
+        the schema cannot be overriden with <literal>SCHEMA</> clause.
+        The <literal>SCHEMA</> clause in this case works as follows:
+        <itemizedlist>
+         <listitem>
+          <para>
+           If <replaceable class="parameter">schema_name</replaceable> matches
+           the schema in control file, it will be used normally as there is no
+           conflict.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If the <literal>CASCADE</> clause is given, the
+           <replaceable class="parameter">schema_name</replaceable> will only
+           be used for the missing required extensions which do not specify
+           <literal>schema</> in their control files.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If <replaceable class="parameter">schema_name</replaceable> is not
+           the same as the one in extension's control file and the
+           <literal>CASCADE</> clause is not given, error will be thrown.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+       <para>
         Remember that the extension itself is not considered to be within any
         schema: extensions have unqualified names that must be unique
         database-wide.  But objects belonging to the extension can be within
@@ -136,6 +166,18 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         <productname>PostgreSQL</productname>, use <literal>unpackaged</>
         for <replaceable class="parameter">old_version</replaceable> when
         updating a module to extension style.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CASCADE</></term>
+      <listitem>
+       <para>
+        Try to install extension including the required dependencies
+        recursively. The <literal>SCHEMA</> option will be propagated
+        to the required extensions.  Other options are not recursively
+        applied when using this clause.
        </para>
       </listitem>
      </varlistentry>

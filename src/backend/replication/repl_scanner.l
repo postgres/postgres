@@ -95,6 +95,7 @@ CREATE_REPLICATION_SLOT		{ return K_CREATE_REPLICATION_SLOT; }
 DROP_REPLICATION_SLOT		{ return K_DROP_REPLICATION_SLOT; }
 TIMELINE_HISTORY	{ return K_TIMELINE_HISTORY; }
 PHYSICAL			{ return K_PHYSICAL; }
+RESERVE_WAL			{ return K_RESERVE_WAL; }
 LOGICAL				{ return K_LOGICAL; }
 SLOT				{ return K_SLOT; }
 
@@ -237,7 +238,7 @@ replication_scanner_init(const char *str)
 }
 
 void
-replication_scanner_finish()
+replication_scanner_finish(void)
 {
 	yy_delete_buffer(scanbufhandle);
 	scanbufhandle = NULL;

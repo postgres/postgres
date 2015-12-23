@@ -8,6 +8,7 @@
 
 #include "access/xact.h"
 #include "executor/spi.h"
+#include "utils/memutils.h"
 
 #include "plpython.h"
 
@@ -132,15 +133,21 @@ PLy_subtransaction_enter(PyObject *self, PyObject *unused)
 	subxact->started = true;
 	oldcontext = CurrentMemoryContext;
 
-	subxactdata = PLy_malloc(sizeof(*subxactdata));
+	subxactdata = (PLySubtransactionData *)
+		MemoryContextAlloc(TopTransactionContext,
+						   sizeof(PLySubtransactionData));
+
 	subxactdata->oldcontext = oldcontext;
 	subxactdata->oldowner = CurrentResourceOwner;
 
 	BeginInternalSubTransaction(NULL);
-	/* Do not want to leave the previous memory context */
-	MemoryContextSwitchTo(oldcontext);
 
+	/* Be sure that cells of explicit_subtransactions list are long-lived */
+	MemoryContextSwitchTo(TopTransactionContext);
 	explicit_subtransactions = lcons(subxactdata, explicit_subtransactions);
+
+	/* Caller wants to stay in original memory context */
+	MemoryContextSwitchTo(oldcontext);
 
 	Py_INCREF(self);
 	return self;
@@ -204,7 +211,7 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 
 	MemoryContextSwitchTo(subxactdata->oldcontext);
 	CurrentResourceOwner = subxactdata->oldowner;
-	PLy_free(subxactdata);
+	pfree(subxactdata);
 
 	/*
 	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in

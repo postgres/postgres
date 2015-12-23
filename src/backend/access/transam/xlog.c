@@ -512,7 +512,6 @@ typedef struct XLogCtlInsert
 	 */
 	WALInsertLockPadded *WALInsertLocks;
 	LWLockTranche WALInsertLockTranche;
-	int			WALInsertLockTrancheId;
 } XLogCtlInsert;
 
 /*
@@ -1408,9 +1407,7 @@ WALInsertLockAcquire(void)
 	 * The insertingAt value is initially set to 0, as we don't know our
 	 * insert location yet.
 	 */
-	immed = LWLockAcquireWithVar(&WALInsertLocks[MyLockNo].l.lock,
-								 &WALInsertLocks[MyLockNo].l.insertingAt,
-								 0);
+	immed = LWLockAcquire(&WALInsertLocks[MyLockNo].l.lock, LW_EXCLUSIVE);
 	if (!immed)
 	{
 		/*
@@ -1435,26 +1432,28 @@ WALInsertLockAcquireExclusive(void)
 	int			i;
 
 	/*
-	 * When holding all the locks, we only update the last lock's insertingAt
-	 * indicator.  The others are set to 0xFFFFFFFFFFFFFFFF, which is higher
-	 * than any real XLogRecPtr value, to make sure that no-one blocks waiting
-	 * on those.
+	 * When holding all the locks, all but the last lock's insertingAt
+	 * indicator is set to 0xFFFFFFFFFFFFFFFF, which is higher than any real
+	 * XLogRecPtr value, to make sure that no-one blocks waiting on those.
 	 */
 	for (i = 0; i < NUM_XLOGINSERT_LOCKS - 1; i++)
 	{
-		LWLockAcquireWithVar(&WALInsertLocks[i].l.lock,
-							 &WALInsertLocks[i].l.insertingAt,
-							 PG_UINT64_MAX);
+		LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
+		LWLockUpdateVar(&WALInsertLocks[i].l.lock,
+						&WALInsertLocks[i].l.insertingAt,
+						PG_UINT64_MAX);
 	}
-	LWLockAcquireWithVar(&WALInsertLocks[i].l.lock,
-						 &WALInsertLocks[i].l.insertingAt,
-						 0);
+	/* Variable value reset to 0 at release */
+	LWLockAcquire(&WALInsertLocks[i].l.lock, LW_EXCLUSIVE);
 
 	holdingAllLocks = true;
 }
 
 /*
  * Release our insertion lock (or locks, if we're holding them all).
+ *
+ * NB: Reset all variables to 0, so they cause LWLockWaitForVar to block the
+ * next time the lock is acquired.
  */
 static void
 WALInsertLockRelease(void)
@@ -1464,13 +1463,17 @@ WALInsertLockRelease(void)
 		int			i;
 
 		for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
-			LWLockRelease(&WALInsertLocks[i].l.lock);
+			LWLockReleaseClearVar(&WALInsertLocks[i].l.lock,
+								  &WALInsertLocks[i].l.insertingAt,
+								  0);
 
 		holdingAllLocks = false;
 	}
 	else
 	{
-		LWLockRelease(&WALInsertLocks[MyLockNo].l.lock);
+		LWLockReleaseClearVar(&WALInsertLocks[MyLockNo].l.lock,
+							  &WALInsertLocks[MyLockNo].l.insertingAt,
+							  0);
 	}
 }
 
@@ -1660,11 +1663,32 @@ GetXLogBuffer(XLogRecPtr ptr)
 	endptr = XLogCtl->xlblocks[idx];
 	if (expectedEndPtr != endptr)
 	{
+		XLogRecPtr	initializedUpto;
+
 		/*
-		 * Let others know that we're finished inserting the record up to the
-		 * page boundary.
+		 * Before calling AdvanceXLInsertBuffer(), which can block, let others
+		 * know how far we're finished with inserting the record.
+		 *
+		 * NB: If 'ptr' points to just after the page header, advertise a
+		 * position at the beginning of the page rather than 'ptr' itself. If
+		 * there are no other insertions running, someone might try to flush
+		 * up to our advertised location. If we advertised a position after
+		 * the page header, someone might try to flush the page header, even
+		 * though page might actually not be initialized yet. As the first
+		 * inserter on the page, we are effectively responsible for making
+		 * sure that it's initialized, before we let insertingAt to move past
+		 * the page header.
 		 */
-		WALInsertLockUpdateInsertingAt(expectedEndPtr - XLOG_BLCKSZ);
+		if (ptr % XLOG_BLCKSZ == SizeOfXLogShortPHD &&
+			ptr % XLOG_SEG_SIZE > XLOG_BLCKSZ)
+			initializedUpto = ptr - SizeOfXLogShortPHD;
+		else if (ptr % XLOG_BLCKSZ == SizeOfXLogLongPHD &&
+				 ptr % XLOG_SEG_SIZE < XLOG_BLCKSZ)
+			initializedUpto = ptr - SizeOfXLogLongPHD;
+		else
+			initializedUpto = ptr;
+
+		WALInsertLockUpdateInsertingAt(initializedUpto);
 
 		AdvanceXLInsertBuffer(ptr, false);
 		endptr = XLogCtl->xlblocks[idx];
@@ -4628,7 +4652,7 @@ XLOGShmemInit(void)
 
 		/* Initialize local copy of WALInsertLocks and register the tranche */
 		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
-		LWLockRegisterTranche(XLogCtl->Insert.WALInsertLockTrancheId,
+		LWLockRegisterTranche(LWTRANCHE_WAL_INSERT,
 							  &XLogCtl->Insert.WALInsertLockTranche);
 		return;
 	}
@@ -4652,17 +4676,14 @@ XLOGShmemInit(void)
 		(WALInsertLockPadded *) allocptr;
 	allocptr += sizeof(WALInsertLockPadded) * NUM_XLOGINSERT_LOCKS;
 
-	XLogCtl->Insert.WALInsertLockTrancheId = LWLockNewTrancheId();
-
 	XLogCtl->Insert.WALInsertLockTranche.name = "WALInsertLocks";
 	XLogCtl->Insert.WALInsertLockTranche.array_base = WALInsertLocks;
 	XLogCtl->Insert.WALInsertLockTranche.array_stride = sizeof(WALInsertLockPadded);
 
-	LWLockRegisterTranche(XLogCtl->Insert.WALInsertLockTrancheId, &XLogCtl->Insert.WALInsertLockTranche);
+	LWLockRegisterTranche(LWTRANCHE_WAL_INSERT, &XLogCtl->Insert.WALInsertLockTranche);
 	for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
 	{
-		LWLockInitialize(&WALInsertLocks[i].l.lock,
-						 XLogCtl->Insert.WALInsertLockTrancheId);
+		LWLockInitialize(&WALInsertLocks[i].l.lock, LWTRANCHE_WAL_INSERT);
 		WALInsertLocks[i].l.insertingAt = InvalidXLogRecPtr;
 	}
 
@@ -4951,9 +4972,10 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for recovery parameter \"%s\"",
-								"recovery_target_action"),
-						 errhint("The allowed values are \"pause\", \"promote\" and \"shutdown\".")));
+						 errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
+								"recovery_target_action",
+								item->value),
+						 errhint("Valid values are \"pause\", \"promote\", and \"shutdown\".")));
 
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target_action = '%s'",
@@ -5033,7 +5055,9 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for recovery parameter \"recovery_target\""),
+						 errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
+								"recovery_target",
+								item->value),
 					   errhint("The only allowed value is \"immediate\".")));
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target = '%s'",
@@ -5801,22 +5825,13 @@ do { \
 						minValue))); \
 } while(0)
 
-#define RecoveryRequiresBoolParameter(param_name, currValue, masterValue) \
-do { \
-	bool _currValue = (currValue); \
-	bool _masterValue = (masterValue); \
-	if (_currValue != _masterValue) \
-		ereport(ERROR, \
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
-				 errmsg("hot standby is not possible because it requires \"%s\" to be same on master and standby (master has \"%s\", standby has \"%s\")", \
-						param_name, \
-						_masterValue ? "true" : "false", \
-						_currValue ? "true" : "false"))); \
-} while(0)
-
 /*
  * Check to see if required parameters are set high enough on this server
  * for various aspects of recovery operation.
+ *
+ * Note that all the parameters which this function tests need to be
+ * listed in Administrator's Overview section in high-availability.sgml.
+ * If you change them, don't forget to update the list.
  */
 static void
 CheckRequiredParameterValues(void)
@@ -5856,9 +5871,6 @@ CheckRequiredParameterValues(void)
 		RecoveryRequiresIntParameter("max_locks_per_transaction",
 									 max_locks_per_xact,
 									 ControlFile->max_locks_per_xact);
-		RecoveryRequiresBoolParameter("track_commit_timestamp",
-									  track_commit_timestamp,
-									  ControlFile->track_commit_timestamp);
 	}
 }
 
@@ -5887,6 +5899,7 @@ StartupXLOG(void)
 	XLogReaderState *xlogreader;
 	XLogPageReadPrivate private;
 	bool		fast_promoted = false;
+	struct stat st;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -6114,6 +6127,33 @@ StartupXLOG(void)
 	else
 	{
 		/*
+		 * If tablespace_map file is present without backup_label file, there
+		 * is no use of such file.  There is no harm in retaining it, but it
+		 * is better to get rid of the map file so that we don't have any
+		 * redundant file in data directory and it will avoid any sort of
+		 * confusion.  It seems prudent though to just rename the file out
+		 * of the way rather than delete it completely, also we ignore any
+		 * error that occurs in rename operation as even if map file is
+		 * present without backup_label file, it is harmless.
+		 */
+		if (stat(TABLESPACE_MAP, &st) == 0)
+		{
+			unlink(TABLESPACE_MAP_OLD);
+			if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) == 0)
+				ereport(LOG,
+					(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
+							TABLESPACE_MAP, BACKUP_LABEL_FILE),
+					 errdetail("File \"%s\" was renamed to \"%s\".",
+							   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+			else
+				ereport(LOG,
+						(errmsg("ignoring \"%s\" file because no \"%s\" file exists",
+								TABLESPACE_MAP, BACKUP_LABEL_FILE),
+						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
+								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+		}
+
+		/*
 		 * It's possible that archive recovery was requested, but we don't
 		 * know how far we need to replay the WAL before we reach consistency.
 		 * This can happen for example if a base backup is taken from a
@@ -6240,24 +6280,24 @@ StartupXLOG(void)
 	LastRec = RecPtr = checkPointLoc;
 
 	ereport(DEBUG1,
-			(errmsg("redo record is at %X/%X; shutdown %s",
+			(errmsg_internal("redo record is at %X/%X; shutdown %s",
 				  (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
 					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(DEBUG1,
-			(errmsg("next transaction ID: %u/%u; next OID: %u",
+			(errmsg_internal("next transaction ID: %u/%u; next OID: %u",
 					checkPoint.nextXidEpoch, checkPoint.nextXid,
 					checkPoint.nextOid)));
 	ereport(DEBUG1,
-			(errmsg("next MultiXactId: %u; next MultiXactOffset: %u",
+			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
 					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
 	ereport(DEBUG1,
-			(errmsg("oldest unfrozen transaction ID: %u, in database %u",
+			(errmsg_internal("oldest unfrozen transaction ID: %u, in database %u",
 					checkPoint.oldestXid, checkPoint.oldestXidDB)));
 	ereport(DEBUG1,
-			(errmsg("oldest MultiXactId: %u, in database %u",
+			(errmsg_internal("oldest MultiXactId: %u, in database %u",
 					checkPoint.oldestMulti, checkPoint.oldestMultiDB)));
 	ereport(DEBUG1,
-			(errmsg("commit timestamp Xid oldest/newest: %u/%u",
+			(errmsg_internal("commit timestamp Xid oldest/newest: %u/%u",
 					checkPoint.oldestCommitTs,
 					checkPoint.newestCommitTs)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
@@ -6273,7 +6313,6 @@ StartupXLOG(void)
 	SetMultiXactIdLimit(checkPoint.oldestMulti, checkPoint.oldestMultiDB);
 	SetCommitTsLimit(checkPoint.oldestCommitTs,
 					 checkPoint.newestCommitTs);
-	MultiXactSetSafeTruncate(checkPoint.oldestMulti);
 	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
 	XLogCtl->ckptXid = checkPoint.nextXid;
 
@@ -6290,12 +6329,18 @@ StartupXLOG(void)
 	StartupReorderBuffer();
 
 	/*
-	 * Startup MultiXact.  We need to do this early for two reasons: one is
-	 * that we might try to access multixacts when we do tuple freezing, and
-	 * the other is we need its state initialized because we attempt
-	 * truncation during restartpoints.
+	 * Startup MultiXact. We need to do this early to be able to replay
+	 * truncations.
 	 */
 	StartupMultiXact();
+
+	/*
+	 * Ditto commit timestamps.  In a standby, we do it if setting is enabled
+	 * in ControlFile; in a master we base the decision on the GUC itself.
+	 */
+	if (ArchiveRecoveryRequested ?
+		ControlFile->track_commit_timestamp : track_commit_timestamp)
+		StartupCommitTs();
 
 	/*
 	 * Recover knowledge about replay progress of known replication partners.
@@ -6524,12 +6569,11 @@ StartupXLOG(void)
 			ProcArrayInitRecovery(ShmemVariableCache->nextXid);
 
 			/*
-			 * Startup commit log, commit timestamp and subtrans only.
-			 * MultiXact has already been started up and other SLRUs are not
+			 * Startup commit log and subtrans only.  MultiXact and commit
+			 * timestamp have already been started up and other SLRUs are not
 			 * maintained during recovery and need not be started yet.
 			 */
 			StartupCLOG();
-			StartupCommitTs();
 			StartupSUBTRANS(oldestActiveXID);
 
 			/*
@@ -7292,13 +7336,12 @@ StartupXLOG(void)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Start up the commit log, commit timestamp and subtrans, if not already
-	 * done for hot standby.
+	 * Start up the commit log and subtrans, if not already done for hot
+	 * standby.  (commit timestamps are started below, if necessary.)
 	 */
 	if (standbyState == STANDBY_DISABLED)
 	{
 		StartupCLOG();
-		StartupCommitTs();
 		StartupSUBTRANS(oldestActiveXID);
 	}
 
@@ -8451,12 +8494,6 @@ CreateCheckPoint(int flags)
 	END_CRIT_SECTION();
 
 	/*
-	 * Now that the checkpoint is safely on disk, we can update the point to
-	 * which multixact can be truncated.
-	 */
-	MultiXactSetSafeTruncate(checkPoint.oldestMulti);
-
-	/*
 	 * Let smgr do post-checkpoint cleanup (eg, deleting old files).
 	 */
 	smgrpostckpt();
@@ -8494,11 +8531,6 @@ CreateCheckPoint(int flags)
 	 */
 	if (!RecoveryInProgress())
 		TruncateSUBTRANS(GetOldestXmin(NULL, false));
-
-	/*
-	 * Truncate pg_multixact too.
-	 */
-	TruncateMultiXact();
 
 	/* Real work is done, but log and update stats before releasing lock. */
 	LogCheckpointEnd(false);
@@ -8828,21 +8860,6 @@ CreateRestartPoint(int flags)
 		if (RecoveryInProgress())
 			ThisTimeLineID = 0;
 	}
-
-	/*
-	 * Due to a historical accident multixact truncations are not WAL-logged,
-	 * but just performed everytime the mxact horizon is increased. So, unless
-	 * we explicitly execute truncations on a standby it will never clean out
-	 * /pg_multixact which obviously is bad, both because it uses space and
-	 * because we can wrap around into pre-existing data...
-	 *
-	 * We can only do the truncation here, after the UpdateControlFile()
-	 * above, because we've now safely established a restart point.  That
-	 * guarantees we will not need to access those multis.
-	 *
-	 * It's probably worth improving this.
-	 */
-	TruncateMultiXact();
 
 	/*
 	 * Truncate pg_subtrans if possible.  We can throw away all data before
@@ -9204,9 +9221,10 @@ xlog_redo(XLogReaderState *record)
 		LWLockRelease(OidGenLock);
 		MultiXactSetNextMXact(checkPoint.nextMulti,
 							  checkPoint.nextMultiOffset);
+
+		MultiXactAdvanceOldest(checkPoint.oldestMulti,
+							   checkPoint.oldestMultiDB);
 		SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
-		SetMultiXactIdLimit(checkPoint.oldestMulti, checkPoint.oldestMultiDB);
-		MultiXactSetSafeTruncate(checkPoint.oldestMulti);
 
 		/*
 		 * If we see a shutdown checkpoint while waiting for an end-of-backup
@@ -9296,14 +9314,17 @@ xlog_redo(XLogReaderState *record)
 		LWLockRelease(OidGenLock);
 		MultiXactAdvanceNextMXact(checkPoint.nextMulti,
 								  checkPoint.nextMultiOffset);
+
+		/*
+		 * NB: This may perform multixact truncation when replaying WAL
+		 * generated by an older primary.
+		 */
+		MultiXactAdvanceOldest(checkPoint.oldestMulti,
+							   checkPoint.oldestMultiDB);
 		if (TransactionIdPrecedes(ShmemVariableCache->oldestXid,
 								  checkPoint.oldestXid))
 			SetTransactionIdLimit(checkPoint.oldestXid,
 								  checkPoint.oldestXidDB);
-		MultiXactAdvanceOldest(checkPoint.oldestMulti,
-							   checkPoint.oldestMultiDB);
-		MultiXactSetSafeTruncate(checkPoint.oldestMulti);
-
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
 		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
@@ -9440,25 +9461,9 @@ xlog_redo(XLogReaderState *record)
 			ControlFile->minRecoveryPointTLI = ThisTimeLineID;
 		}
 
-		/*
-		 * Update the commit timestamp tracking. If there was a change it
-		 * needs to be activated or deactivated accordingly.
-		 */
-		if (track_commit_timestamp != xlrec.track_commit_timestamp)
-		{
-			track_commit_timestamp = xlrec.track_commit_timestamp;
-			ControlFile->track_commit_timestamp = track_commit_timestamp;
-			if (track_commit_timestamp)
-				ActivateCommitTs();
-			else
-
-				/*
-				 * We can't create a new WAL record here, but that's OK as
-				 * master did the WAL logging already and we will replay the
-				 * record from master in case we crash.
-				 */
-				DeactivateCommitTs(false);
-		}
+		CommitTsParameterChange(xlrec.track_commit_timestamp,
+								ControlFile->track_commit_timestamp);
+		ControlFile->track_commit_timestamp = xlrec.track_commit_timestamp;
 
 		UpdateControlFile();
 		LWLockRelease(ControlFileLock);
@@ -10854,32 +10859,32 @@ CancelBackup(void)
 {
 	struct stat stat_buf;
 
-	/* if the file is not there, return */
+	/* if the backup_label file is not there, return */
 	if (stat(BACKUP_LABEL_FILE, &stat_buf) < 0)
 		return;
 
 	/* remove leftover file from previously canceled backup if it exists */
 	unlink(BACKUP_LABEL_OLD);
 
-	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) == 0)
-	{
-		ereport(LOG,
-				(errmsg("online backup mode canceled"),
-				 errdetail("\"%s\" was renamed to \"%s\".",
-						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
-	}
-	else
+	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) != 0)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("online backup mode was not canceled"),
-				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
+				 errdetail("File \"%s\" could not be renamed to \"%s\": %m.",
 						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+		return;
 	}
 
 	/* if the tablespace_map file is not there, return */
 	if (stat(TABLESPACE_MAP, &stat_buf) < 0)
+	{
+		ereport(LOG,
+				(errmsg("online backup mode canceled"),
+				 errdetail("File \"%s\" was renamed to \"%s\".",
+						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 		return;
+	}
 
 	/* remove leftover file from previously canceled backup if it exists */
 	unlink(TABLESPACE_MAP_OLD);
@@ -10888,15 +10893,19 @@ CancelBackup(void)
 	{
 		ereport(LOG,
 				(errmsg("online backup mode canceled"),
-				 errdetail("\"%s\" was renamed to \"%s\".",
-						   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+				 errdetail("Files \"%s\" and \"%s\" were renamed to "
+						   "\"%s\" and \"%s\", respectively.",
+						   BACKUP_LABEL_FILE, TABLESPACE_MAP,
+						   BACKUP_LABEL_OLD, TABLESPACE_MAP_OLD)));
 	}
 	else
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("online backup mode was not canceled"),
-				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
+				 errmsg("online backup mode canceled"),
+				 errdetail("File \"%s\" was renamed to \"%s\", but "
+						   "file \"%s\" could not be renamed to \"%s\": %m.",
+						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD,
 						   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 	}
 }
@@ -11528,6 +11537,16 @@ CheckForStandbyTrigger(void)
 						TriggerFile)));
 
 	return false;
+}
+
+/*
+ * Remove the files signaling a standby promotion request.
+ */
+void
+RemovePromoteSignalFiles(void)
+{
+	unlink(PROMOTE_SIGNAL_FILE);
+	unlink(FALLBACK_PROMOTE_SIGNAL_FILE);
 }
 
 /*

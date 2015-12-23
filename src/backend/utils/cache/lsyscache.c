@@ -1540,6 +1540,25 @@ func_volatile(Oid funcid)
 }
 
 /*
+ * func_parallel
+ *		Given procedure id, return the function's proparallel flag.
+ */
+char
+func_parallel(Oid funcid)
+{
+	HeapTuple	tp;
+	char		result;
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->proparallel;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
  * get_func_leakproof
  *	   Given procedure id, return the function's leakproof field.
  */
@@ -1766,6 +1785,28 @@ get_rel_tablespace(Oid relid)
 	}
 	else
 		return InvalidOid;
+}
+
+/*
+ * get_rel_persistence
+ *
+ *		Returns the relpersistence associated with a given relation.
+ */
+char
+get_rel_persistence(Oid relid)
+{
+	HeapTuple		tp;
+	Form_pg_class	reltup;
+	char 			result;
+
+	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	reltup = (Form_pg_class) GETSTRUCT(tp);
+	result = reltup->relpersistence;
+	ReleaseSysCache(tp);
+
+	return result;
 }
 
 

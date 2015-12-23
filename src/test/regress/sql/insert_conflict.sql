@@ -223,8 +223,44 @@ insert into insertconflicttest values (23, 'Blackberry') on conflict (fruit) whe
 
 drop index partial_key_index;
 
+--
+-- Test that wholerow references to ON CONFLICT's EXCLUDED work
+--
+create unique index plain on insertconflicttest(key);
+
+-- Succeeds, updates existing row:
+insert into insertconflicttest as i values (23, 'Jackfruit') on conflict (key) do update set fruit = excluded.fruit
+  where i.* != excluded.* returning *;
+-- No update this time, though:
+insert into insertconflicttest as i values (23, 'Jackfruit') on conflict (key) do update set fruit = excluded.fruit
+  where i.* != excluded.* returning *;
+-- Predicate changed to require match rather than non-match, so updates once more:
+insert into insertconflicttest as i values (23, 'Jackfruit') on conflict (key) do update set fruit = excluded.fruit
+  where i.* = excluded.* returning *;
+-- Assign:
+insert into insertconflicttest as i values (23, 'Avocado') on conflict (key) do update set fruit = excluded.*::text
+  returning *;
+-- deparse whole row var in WHERE and SET clauses:
+explain (costs off) insert into insertconflicttest as i values (23, 'Avocado') on conflict (key) do update set fruit = excluded.fruit where excluded.* is null;
+explain (costs off) insert into insertconflicttest as i values (23, 'Avocado') on conflict (key) do update set fruit = excluded.*::text;
+
+drop index plain;
+
 -- Cleanup
 drop table insertconflicttest;
+
+
+--
+-- Verify that EXCLUDED does not allow system column references. These
+-- do not make sense because EXCLUDED isn't an already stored tuple
+-- (and thus doesn't have a ctid, oids are not assigned yet, etc).
+--
+create table syscolconflicttest(key int4, data text) WITH OIDS;
+insert into syscolconflicttest values (1);
+insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.ctid::text;
+insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.oid::text;
+drop table syscolconflicttest;
+
 
 -- ******************************************************************
 -- *                                                                *
@@ -295,3 +331,57 @@ insert into excluded values(1, '2') on conflict (key) do update set data = 3 RET
 
 -- clean up
 drop table excluded;
+
+
+-- Check tables w/o oids are handled correctly
+create table testoids(key int primary key, data text) without oids;
+-- first without oids
+insert into testoids values(1, '1') on conflict (key) do update set data = excluded.data RETURNING *;
+insert into testoids values(1, '2') on conflict (key) do update set data = excluded.data RETURNING *;
+-- add oids
+alter table testoids set with oids;
+-- update existing row, that didn't have an oid
+insert into testoids values(1, '3') on conflict (key) do update set data = excluded.data RETURNING *;
+-- insert a new row
+insert into testoids values(2, '1') on conflict (key) do update set data = excluded.data RETURNING *;
+-- and update it
+insert into testoids values(2, '2') on conflict (key) do update set data = excluded.data RETURNING *;
+-- remove oids again, test
+alter table testoids set without oids;
+insert into testoids values(1, '4') on conflict (key) do update set data = excluded.data RETURNING *;
+insert into testoids values(3, '1') on conflict (key) do update set data = excluded.data RETURNING *;
+insert into testoids values(3, '2') on conflict (key) do update set data = excluded.data RETURNING *;
+
+DROP TABLE testoids;
+
+
+-- check that references to columns after dropped columns are handled correctly
+create table dropcol(key int primary key, drop1 int, keep1 text, drop2 numeric, keep2 float);
+insert into dropcol(key, drop1, keep1, drop2, keep2) values(1, 1, '1', '1', 1);
+-- set using excluded
+insert into dropcol(key, drop1, keep1, drop2, keep2) values(1, 2, '2', '2', 2) on conflict(key)
+    do update set drop1 = excluded.drop1, keep1 = excluded.keep1, drop2 = excluded.drop2, keep2 = excluded.keep2
+    where excluded.drop1 is not null and excluded.keep1 is not null and excluded.drop2 is not null and excluded.keep2 is not null
+          and dropcol.drop1 is not null and dropcol.keep1 is not null and dropcol.drop2 is not null and dropcol.keep2 is not null
+    returning *;
+;
+-- set using existing table
+insert into dropcol(key, drop1, keep1, drop2, keep2) values(1, 3, '3', '3', 3) on conflict(key)
+    do update set drop1 = dropcol.drop1, keep1 = dropcol.keep1, drop2 = dropcol.drop2, keep2 = dropcol.keep2
+    returning *;
+;
+alter table dropcol drop column drop1, drop column drop2;
+-- set using excluded
+insert into dropcol(key, keep1, keep2) values(1, '4', 4) on conflict(key)
+    do update set keep1 = excluded.keep1, keep2 = excluded.keep2
+    where excluded.keep1 is not null and excluded.keep2 is not null
+          and dropcol.keep1 is not null and dropcol.keep2 is not null
+    returning *;
+;
+-- set using existing table
+insert into dropcol(key, keep1, keep2) values(1, '5', 5) on conflict(key)
+    do update set keep1 = dropcol.keep1, keep2 = dropcol.keep2
+    returning *;
+;
+
+DROP TABLE dropcol;

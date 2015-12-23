@@ -333,7 +333,7 @@ static const pg_local_to_utf LUmapEUC_JIS_2004[] = {
   {0x00a2ac, 0x00e28691},	/* U+2191	 UPWARDS ARROW */
   {0x00a2ad, 0x00e28693},	/* U+2193	 DOWNWARDS ARROW */
   {0x00a2ae, 0x00e38093},	/* U+3013	 GETA MARK */
-  {0x00a2af, 0x00efbc87},	/* U+FF07	 FULLWIDTH APOSTROPHE */
+  {0x00a2af, 0x00efbc87},	/* U+FF07	 FULLWIDTH APOSTROPHE	[2000] */
   {0x00a2b0, 0x00efbc82},	/* U+FF02	 FULLWIDTH QUOTATION MARK	[2000] */
   {0x00a2b1, 0x00efbc8d},	/* U+FF0D	 FULLWIDTH HYPHEN-MINUS	[2000] */
   {0x00a2b2, 0x00efbd9e},	/* U+FF5E	 FULLWIDTH TILDE	[2000] */

@@ -40,7 +40,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    As you see, <application>pg_dump</> writes its result to the
    standard output. We will see below how this can be useful.
    While the above command creates a text file, <application>pg_dump</>
-   can create files in other formats that allow for parallism and more
+   can create files in other formats that allow for parallelism and more
    fine-grained control of object restoration.
   </para>
 
@@ -221,7 +221,7 @@ psql -f <replaceable class="parameter">infile</replaceable> postgres
     roles, tablespaces, and empty databases, then invoking
     <application>pg_dump</> for each database.  This means that while
     each database will be internally consistent, the snapshots of
-    different databases are not sychronized.
+    different databases are not synchronized.
    </para>
 
    <para>

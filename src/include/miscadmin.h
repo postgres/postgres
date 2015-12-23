@@ -268,6 +268,7 @@ typedef char *pg_stack_base_t;
 extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
+extern bool stack_is_too_deep(void);
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);
@@ -286,7 +287,7 @@ extern int	trace_recovery(int trace_level);
 /* flags to be OR'd to form sec_context */
 #define SECURITY_LOCAL_USERID_CHANGE	0x0001
 #define SECURITY_RESTRICTED_OPERATION	0x0002
-#define SECURITY_ROW_LEVEL_DISABLED		0x0004
+#define SECURITY_NOFORCE_RLS			0x0004
 
 extern char *DatabasePath;
 
@@ -305,7 +306,7 @@ extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
 extern void SetUserIdAndSecContext(Oid userid, int sec_context);
 extern bool InLocalUserIdChange(void);
 extern bool InSecurityRestrictedOperation(void);
-extern bool InRowLevelSecurityDisabled(void);
+extern bool InNoForceRLSOperation(void);
 extern void GetUserIdAndContext(Oid *userid, bool *sec_def_context);
 extern void SetUserIdAndContext(Oid userid, bool sec_def_context);
 extern void InitializeSessionUserId(const char *rolename, Oid useroid);
@@ -452,6 +453,7 @@ extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster,
 					 const char *socketDir);
 extern void TouchSocketLockFiles(void);
 extern void AddToDataDirLockFile(int target_line, const char *str);
+extern bool RecheckDataDirLockFile(void);
 extern void ValidatePgVersion(const char *path);
 extern void process_shared_preload_libraries(void);
 extern void process_session_preload_libraries(void);

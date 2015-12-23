@@ -379,29 +379,17 @@ order by 1, 2;
 
 --
 -- regression test: check a case where join_clause_is_movable_into() gives
--- an imprecise result
+-- an imprecise result, causing an assertion failure
 --
-analyze pg_enum;
-explain (costs off)
-select anname, outname, enumtypid
+select count(*)
 from
-  (select pa.proname as anname, coalesce(po.proname, typname) as outname
-   from pg_type t
-     left join pg_proc po on po.oid = t.typoutput
-     join pg_proc pa on pa.oid = t.typanalyze) ss,
-  pg_enum,
-  pg_type t2
-where anname = enumlabel and outname = t2.typname and enumtypid = t2.oid;
-
-select anname, outname, enumtypid
-from
-  (select pa.proname as anname, coalesce(po.proname, typname) as outname
-   from pg_type t
-     left join pg_proc po on po.oid = t.typoutput
-     join pg_proc pa on pa.oid = t.typanalyze) ss,
-  pg_enum,
-  pg_type t2
-where anname = enumlabel and outname = t2.typname and enumtypid = t2.oid;
+  (select t3.tenthous as x1, coalesce(t1.stringu1, t2.stringu1) as x2
+   from tenk1 t1
+   left join tenk1 t2 on t1.unique1 = t2.unique1
+   join tenk1 t3 on t1.unique2 = t3.unique2) ss,
+  tenk1 t4,
+  tenk1 t5
+where t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
 
 
 --
@@ -844,6 +832,55 @@ select * from
 where thousand = a.q1 and tenthous = b.q1 and a.q2 = 1 and b.q2 = 2;
 
 --
+-- test a corner case in which we shouldn't apply the star-schema optimization
+--
+
+explain (costs off)
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+-- variant that isn't quite a star-schema case
+
+select ss1.d1 from
+  tenk1 as t1
+  inner join tenk1 as t2
+  on t1.tenthous = t2.ten
+  inner join
+    int8_tbl as i8
+    left join int4_tbl as i4
+      inner join (select 64::information_schema.cardinal_number as d1
+                  from tenk1 t3,
+                       lateral (select abs(t3.unique1) + random()) ss0(x)
+                  where t3.fivethous < 0) as ss1
+      on i4.f1 = ss1.d1
+    on i8.q1 = i4.f1
+  on t1.tenthous = ss1.d1
+where t1.unique1 < i4.f1;
+
+--
 -- test extraction of restriction OR clauses from join OR clause
 -- (we used to only do this for indexable clauses)
 --
@@ -983,6 +1020,178 @@ left join
    using (join_key)
   ) foo3
 using (join_key);
+
+--
+-- test successful handling of nested outer joins with degenerate join quals
+--
+
+explain (verbose, costs off)
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+
+explain (verbose, costs off)
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+
+explain (verbose, costs off)
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2
+                 where q1 = f1) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+
+select t1.* from
+  text_tbl t1
+  left join (select *, '***'::text as d1 from int8_tbl i8b1) b1
+    left join int8_tbl i8
+      left join (select *, null::int as d2 from int8_tbl i8b2, int4_tbl i4b2
+                 where q1 = f1) b2
+      on (i8.q1 = b2.q1)
+    on (b2.d2 = b1.q2)
+  on (t1.f1 = b1.d1)
+  left join int4_tbl i4
+  on (i8.q2 = i4.f1);
+
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  inner join int8_tbl i8
+  on i8.q2 = 456
+  right join text_tbl t2
+  on t1.f1 = 'doh!'
+  left join int4_tbl i4
+  on i8.q1 = i4.f1;
+
+select * from
+  text_tbl t1
+  inner join int8_tbl i8
+  on i8.q2 = 456
+  right join text_tbl t2
+  on t1.f1 = 'doh!'
+  left join int4_tbl i4
+  on i8.q1 = i4.f1;
+
+--
+-- test for appropriate join order in the presence of lateral references
+--
+
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss
+where t1.f1 = ss.f1;
+
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss
+where t1.f1 = ss.f1;
+
+explain (verbose, costs off)
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss1,
+  lateral (select ss1.* from text_tbl t3 limit 1) as ss2
+where t1.f1 = ss2.f1;
+
+select * from
+  text_tbl t1
+  left join int8_tbl i8
+  on i8.q2 = 123,
+  lateral (select i8.q1, t2.f1 from text_tbl t2 limit 1) as ss1,
+  lateral (select ss1.* from text_tbl t3 limit 1) as ss2
+where t1.f1 = ss2.f1;
+
+explain (verbose, costs off)
+select 1 from
+  text_tbl as tt1
+  inner join text_tbl as tt2 on (tt1.f1 = 'foo')
+  left join text_tbl as tt3 on (tt3.f1 = 'foo')
+  left join text_tbl as tt4 on (tt3.f1 = tt4.f1),
+  lateral (select tt4.f1 as c0 from text_tbl as tt5 limit 1) as ss1
+where tt1.f1 = ss1.c0;
+
+select 1 from
+  text_tbl as tt1
+  inner join text_tbl as tt2 on (tt1.f1 = 'foo')
+  left join text_tbl as tt3 on (tt3.f1 = 'foo')
+  left join text_tbl as tt4 on (tt3.f1 = tt4.f1),
+  lateral (select tt4.f1 as c0 from text_tbl as tt5 limit 1) as ss1
+where tt1.f1 = ss1.c0;
+
+--
+-- check a case in which a PlaceHolderVar forces join order
+--
+
+explain (verbose, costs off)
+select ss2.* from
+  int4_tbl i41
+  left join int8_tbl i8
+    join (select i42.f1 as c1, i43.f1 as c2, 42 as c3
+          from int4_tbl i42, int4_tbl i43) ss1
+    on i8.q1 = ss1.c2
+  on i41.f1 = ss1.c1,
+  lateral (select i41.*, i8.*, ss1.* from text_tbl limit 1) ss2
+where ss1.c2 = 0;
+
+select ss2.* from
+  int4_tbl i41
+  left join int8_tbl i8
+    join (select i42.f1 as c1, i43.f1 as c2, 42 as c3
+          from int4_tbl i42, int4_tbl i43) ss1
+    on i8.q1 = ss1.c2
+  on i41.f1 = ss1.c1,
+  lateral (select i41.*, i8.*, ss1.* from text_tbl limit 1) ss2
+where ss1.c2 = 0;
 
 --
 -- test ability to push constants through outer join clauses
@@ -1138,6 +1347,46 @@ SELECT * FROM
     (SELECT q1, q2, COALESCE(dat1, q1) AS y
      FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss2
   ON true;
+
+rollback;
+
+-- another join removal bug: we must clean up correctly when removing a PHV
+begin;
+
+create temp table uniquetbl (f1 text unique);
+
+explain (costs off)
+select t1.* from
+  uniquetbl as t1
+  left join (select *, '***'::text as d1 from uniquetbl) t2
+  on t1.f1 = t2.f1
+  left join uniquetbl t3
+  on t2.d1 = t3.f1;
+
+explain (costs off)
+select t0.*
+from
+ text_tbl t0
+ left join
+   (select case t1.ten when 0 then 'doh!'::text else null::text end as case1,
+           t1.stringu2
+     from tenk1 t1
+     join int4_tbl i4 ON i4.f1 = t1.unique2
+     left join uniquetbl u1 ON u1.f1 = t1.string4) ss
+  on t0.f1 = ss.case1
+where ss.stringu2 !~* ss.case1;
+
+select t0.*
+from
+ text_tbl t0
+ left join
+   (select case t1.ten when 0 then 'doh!'::text else null::text end as case1,
+           t1.stringu2
+     from tenk1 t1
+     join int4_tbl i4 ON i4.f1 = t1.unique2
+     left join uniquetbl u1 ON u1.f1 = t1.string4) ss
+  on t0.f1 = ss.case1
+where ss.stringu2 !~* ss.case1;
 
 rollback;
 
@@ -1364,6 +1613,40 @@ select * from
   left join lateral (
     select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
+
+-- check we don't try to do a unique-ified semijoin with LATERAL
+explain (verbose, costs off)
+select * from
+  (values (0,9998), (1,1000)) v(id,x),
+  lateral (select f1 from int4_tbl
+           where f1 = any (select unique1 from tenk1
+                           where unique2 = v.x offset 0)) ss;
+select * from
+  (values (0,9998), (1,1000)) v(id,x),
+  lateral (select f1 from int4_tbl
+           where f1 = any (select unique1 from tenk1
+                           where unique2 = v.x offset 0)) ss;
+
+-- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
+-- but we can make the test case much more compact with LATERAL)
+explain (verbose, costs off)
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
 
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;

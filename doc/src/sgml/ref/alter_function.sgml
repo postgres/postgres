@@ -35,6 +35,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
     CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+    PARALLEL { UNSAFE | RESTRICTED | SAFE }
     COST <replaceable class="parameter">execution_cost</replaceable>
     ROWS <replaceable class="parameter">result_rows</replaceable>
     SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
@@ -187,6 +188,17 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
       key word <literal>EXTERNAL</literal> is ignored for SQL
       conformance. See <xref linkend="sql-createfunction"> for more information about
       this capability.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PARALLEL</literal></term>
+
+    <listitem>
+     <para>
+      Change whether the function is deemed safe for parallelism.
+      See <xref linkend="sql-createfunction"> for details.
      </para>
     </listitem>
    </varlistentry>

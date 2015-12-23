@@ -30,6 +30,7 @@ CREATE [ OR REPLACE ] FUNCTION
     | IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+    | PARALLEL { UNSAFE | RESTRICTED | SAFE }
     | COST <replaceable class="parameter">execution_cost</replaceable>
     | ROWS <replaceable class="parameter">result_rows</replaceable>
     | SET <replaceable class="parameter">configuration_parameter</replaceable> { TO <replaceable class="parameter">value</replaceable> | = <replaceable class="parameter">value</replaceable> | FROM CURRENT }
@@ -359,7 +360,7 @@ CREATE [ OR REPLACE ] FUNCTION
        prevent the inadvertent exposure of data.  Functions and operators
        marked as leakproof are assumed to be trustworthy, and may be executed
        before conditions from security policies and security barrier views.
-       In addtion, functions which do not take arguments or which are not
+       In addition, functions which do not take arguments or which are not
        passed any arguments from the security barrier view or table do not have
        to be marked as leakproof to be executed before security conditions.  See
        <xref linkend="sql-createview"> and <xref linkend="rules-privileges">.
@@ -407,6 +408,43 @@ CREATE [ OR REPLACE ] FUNCTION
       The key word <literal>EXTERNAL</literal> is allowed for SQL
       conformance, but it is optional since, unlike in SQL, this feature
       applies to all functions not only external ones.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PARALLEL</literal></term>
+
+    <listitem>
+     <para><literal>PARALLEL UNSAFE</literal> indicates that the function
+      can't be executed in parallel mode and the presence of such a
+      function in an SQL statement forces a serial execution plan.  This is
+      the default.  <literal>PARALLEL RESTRICTED</literal> indicates that
+      the function can be executed in parallel mode, but the execution is
+      restricted to parallel group leader.  <literal>PARALLEL SAFE</literal>
+      indicates that the function is safe to run in parallel mode without
+      restriction.
+     </para>
+
+     <para>
+      Functions should be labeled parallel unsafe if they modify any database
+      state, or if they make changes to the transaction such as using
+      sub-transactions, or if they access sequences or attempt to make
+      persistent changes to settings (e.g. <literal>setval</>).  They should
+      be labeled as parallel restricted if they access temporary tables,
+      client connection state, cursors, prepared statements, or miscellaneous
+      backend-local state which the system cannot synchronize in parallel mode
+      (e.g.  <literal>setseed</> cannot be executed other than by the group
+      leader because a change made by another process would not be reflected
+      in the leader).  In general, if a function is labeled as being safe when
+      it is restricted or unsafe, or if it is labeled as being restricted when
+      it is in fact unsafe, it may throw errors or produce wrong answers
+      when used in a parallel query.  C-language functions could in theory
+      exhibit totally undefined behavior if mislabeled, since there is no way
+      for the system to protect itself against arbitrary C code, but in most
+      likely cases the result will be no worse than for any other function.
+      If in doubt, functions should be labeled as <literal>UNSAFE</>, which is
+      the default.
      </para>
     </listitem>
    </varlistentry>

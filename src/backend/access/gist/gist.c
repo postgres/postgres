@@ -36,6 +36,7 @@ static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 				 bool unlockbuf, bool unlockleftchild);
 static void gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 				GISTSTATE *giststate, List *splitinfo, bool releasebuf);
+static void gistvacuumpage(Relation rel, Page page, Buffer buffer);
 
 
 #define ROTATEDIST(d) do { \
@@ -209,6 +210,17 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	 * because the tuple vector passed to gistSplit won't include this tuple.
 	 */
 	is_split = gistnospace(page, itup, ntup, oldoffnum, freespace);
+
+	/*
+	 * If leaf page is full, try at first to delete dead tuples. And then
+	 * check again.
+	 */
+	if (is_split && GistPageIsLeaf(page) && GistPageHasGarbage(page))
+	{
+		gistvacuumpage(rel, page, buffer);
+		is_split = gistnospace(page, itup, ntup, oldoffnum, freespace);
+	}
+
 	if (is_split)
 	{
 		/* no space for insertion */
@@ -454,6 +466,11 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		 */
 		START_CRIT_SECTION();
 
+		/*
+		 * While we delete only one tuple at once we could mix calls
+		 * PageIndexTupleDelete() here and PageIndexMultiDelete() in
+		 * gistRedoPageUpdateRecord()
+		 */
 		if (OffsetNumberIsValid(oldoffnum))
 			PageIndexTupleDelete(page, oldoffnum);
 		gistfillbuffer(page, itup, ntup, InvalidOffsetNumber);
@@ -1439,4 +1456,74 @@ freeGISTstate(GISTSTATE *giststate)
 {
 	/* It's sufficient to delete the scanCxt */
 	MemoryContextDelete(giststate->scanCxt);
+}
+
+/*
+ * gistvacuumpage() -- try to remove LP_DEAD items from the given page.
+ * Function assumes that buffer is exclusively locked.
+ */
+static void
+gistvacuumpage(Relation rel, Page page, Buffer buffer)
+{
+	OffsetNumber deletable[MaxIndexTuplesPerPage];
+	int			 ndeletable = 0;
+	OffsetNumber offnum, maxoff;
+
+	Assert(GistPageIsLeaf(page));
+
+	/*
+	 * Scan over all items to see which ones need to be deleted according to
+	 * LP_DEAD flags.
+	 */
+	maxoff = PageGetMaxOffsetNumber(page);
+	for (offnum = FirstOffsetNumber;
+		 offnum <= maxoff;
+		 offnum = OffsetNumberNext(offnum))
+	{
+		ItemId		itemId = PageGetItemId(page, offnum);
+
+		if (ItemIdIsDead(itemId))
+			deletable[ndeletable++] = offnum;
+	}
+
+	if (ndeletable > 0)
+	{
+		START_CRIT_SECTION();
+
+		PageIndexMultiDelete(page, deletable, ndeletable);
+
+		/*
+		 * Mark the page as not containing any LP_DEAD items.  This is not
+		 * certainly true (there might be some that have recently been marked,
+		 * but weren't included in our target-item list), but it will almost
+		 * always be true and it doesn't seem worth an additional page scan to
+		 * check it. Remember that F_HAS_GARBAGE is only a hint anyway.
+		 */
+		GistClearPageHasGarbage(page);
+
+		MarkBufferDirty(buffer);
+
+		/* XLOG stuff */
+		if (RelationNeedsWAL(rel))
+		{
+			XLogRecPtr	recptr;
+
+			recptr = gistXLogUpdate(rel->rd_node, buffer,
+									deletable, ndeletable,
+									NULL, 0, InvalidBuffer);
+
+			PageSetLSN(page, recptr);
+		}
+		else
+			PageSetLSN(page, gistGetFakeLSN(rel));
+
+		END_CRIT_SECTION();
+	}
+
+	/*
+	 * Note: if we didn't find any LP_DEAD items, then the page's
+	 * F_HAS_GARBAGE hint bit is falsely set.  We do not bother expending a
+	 * separate write to clear it, however.  We will clear it when we split
+	 * the page.
+	 */
 }

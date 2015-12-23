@@ -544,7 +544,7 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		/* Yes, so initialize stats to zeroes */
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		/* and cleanup any pending inserts */
-		ginInsertCleanup(&gvs.ginstate, true, stats);
+		ginInsertCleanup(&gvs.ginstate, true, false, stats);
 	}
 
 	/* we'll re-count the tuples each time */
@@ -659,7 +659,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		if (IsAutoVacuumWorkerProcess())
 		{
 			initGinState(&ginstate, index);
-			ginInsertCleanup(&ginstate, true, stats);
+			ginInsertCleanup(&ginstate, true, true, stats);
 		}
 		PG_RETURN_POINTER(stats);
 	}
@@ -672,7 +672,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	{
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		initGinState(&ginstate, index);
-		ginInsertCleanup(&ginstate, true, stats);
+		ginInsertCleanup(&ginstate, true, false, stats);
 	}
 
 	memset(&idxStat, 0, sizeof(idxStat));

@@ -25,9 +25,9 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <rep
 
 <phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
 
-    IS_TEMPLATE <replaceable class="PARAMETER">istemplate</replaceable>
     ALLOW_CONNECTIONS <replaceable class="PARAMETER">allowconn</replaceable>
     CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
+    IS_TEMPLATE <replaceable class="PARAMETER">istemplate</replaceable>
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
@@ -110,17 +110,6 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-       <term><replaceable class="parameter">istemplate</replaceable></term>
-       <listitem>
-        <para>
-         If true, then this database can be cloned by any user with CREATEDB
-         privileges; if false, then only superusers or the owner of the
-         database can clone it.
-        </para>
-       </listitem>
-      </varlistentry>
- 
       <varlistentry>
        <term><replaceable class="parameter">allowconn</replaceable></term>
        <listitem>
@@ -129,7 +118,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
         </para>
        </listitem>
       </varlistentry>
- 
+
       <varlistentry>
       <term><replaceable class="parameter">connlimit</replaceable></term>
       <listitem>
@@ -139,6 +128,17 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+       <term><replaceable class="parameter">istemplate</replaceable></term>
+       <listitem>
+        <para>
+         If true, then this database can be cloned by any user with <literal>CREATEDB</literal>
+         privileges; if false, then only superusers or the owner of the
+         database can clone it.
+        </para>
+       </listitem>
+      </varlistentry>
 
    <varlistentry>
     <term><replaceable>new_name</replaceable></term>

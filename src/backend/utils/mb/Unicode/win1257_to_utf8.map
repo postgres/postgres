@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/win1257_to_utf8.map */
+
 static const pg_local_to_utf LUmapWIN1257[ 116 ] = {
   {0x0080, 0xe282ac},
   {0x0082, 0xe2809a},

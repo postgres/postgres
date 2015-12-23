@@ -167,6 +167,10 @@ extern const printTextFormat pg_asciiformat_old;
 extern const printTextFormat pg_utf8format;
 
 
+extern void disable_sigpipe_trap(void);
+extern void restore_sigpipe_trap(void);
+extern void set_sigpipe_trap_state(bool ignore);
+
 extern FILE *PageOutput(int lines, const printTableOpt *topt);
 extern void ClosePager(FILE *pagerpipe);
 
@@ -184,9 +188,10 @@ extern void printTableAddFooter(printTableContent *const content,
 extern void printTableSetFooter(printTableContent *const content,
 					const char *footer);
 extern void printTableCleanup(printTableContent *const content);
-extern void printTable(const printTableContent *cont, FILE *fout, FILE *flog);
+extern void printTable(const printTableContent *cont,
+		   FILE *fout, bool is_pager, FILE *flog);
 extern void printQuery(const PGresult *result, const printQueryOpt *opt,
-		   FILE *fout, FILE *flog);
+		   FILE *fout, bool is_pager, FILE *flog);
 
 extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);

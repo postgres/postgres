@@ -50,10 +50,10 @@ pg_prewarm(regclass, mode text default 'buffer', fork text default 'main',
    using <literal>buffer</literal> &mdash; will likely result in lower-numbered
    blocks being evicted as higher numbered blocks are read in.  Prewarmed data
    also enjoys no special protection from cache evictions, so it is possible
-   for other system activity may evict the newly prewarmed blocks shortly after
-   they are read; conversely, prewarming may also evict other data from cache.
-   For these reasons, prewarming is typically most useful at startup, when
-   caches are largely empty.
+   that other system activity may evict the newly prewarmed blocks shortly
+   after they are read; conversely, prewarming may also evict other data from
+   cache. For these reasons, prewarming is typically most useful at startup,
+   when caches are largely empty.
   </para>
  </sect2>
 

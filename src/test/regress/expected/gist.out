@@ -61,16 +61,16 @@ select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5));
 -- Also test an index-only knn-search
 explain (costs off)
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by p <-> point(0.2, 0.2);
+order by p <-> point(0.201, 0.201);
                        QUERY PLAN                       
 --------------------------------------------------------
  Index Only Scan using gist_tbl_point_index on gist_tbl
    Index Cond: (p <@ '(0.5,0.5),(0,0)'::box)
-   Order By: (p <-> '(0.2,0.2)'::point)
+   Order By: (p <-> '(0.201,0.201)'::point)
 (3 rows)
 
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by p <-> point(0.2, 0.2);
+order by p <-> point(0.201, 0.201);
       p      
 -------------
  (0.2,0.2)
@@ -80,8 +80,8 @@ order by p <-> point(0.2, 0.2);
  (0.1,0.1)
  (0.35,0.35)
  (0.05,0.05)
- (0,0)
  (0.4,0.4)
+ (0,0)
  (0.45,0.45)
  (0.5,0.5)
 (11 rows)
@@ -89,23 +89,23 @@ order by p <-> point(0.2, 0.2);
 -- Check commuted case as well
 explain (costs off)
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by point(0.1, 0.1) <-> p;
+order by point(0.101, 0.101) <-> p;
                        QUERY PLAN                       
 --------------------------------------------------------
  Index Only Scan using gist_tbl_point_index on gist_tbl
    Index Cond: (p <@ '(0.5,0.5),(0,0)'::box)
-   Order By: (p <-> '(0.1,0.1)'::point)
+   Order By: (p <-> '(0.101,0.101)'::point)
 (3 rows)
 
 select p from gist_tbl where p <@ box(point(0,0), point(0.5, 0.5))
-order by point(0.1, 0.1) <-> p;
+order by point(0.101, 0.101) <-> p;
       p      
 -------------
  (0.1,0.1)
  (0.15,0.15)
  (0.05,0.05)
- (0,0)
  (0.2,0.2)
+ (0,0)
  (0.25,0.25)
  (0.3,0.3)
  (0.35,0.35)

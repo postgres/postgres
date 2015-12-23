@@ -582,6 +582,8 @@ next(struct vars * v)
 			{
 				NOTE(REG_UNONPOSIX);
 				v->now++;
+				if (ATEOS())
+					FAILW(REG_BADRPT);
 				switch (*v->now++)
 				{
 					case CHR(':'):		/* non-capturing paren */
@@ -596,12 +598,31 @@ next(struct vars * v)
 						return next(v);
 						break;
 					case CHR('='):		/* positive lookahead */
-						NOTE(REG_ULOOKAHEAD);
-						RETV(LACON, 1);
+						NOTE(REG_ULOOKAROUND);
+						RETV(LACON, LATYPE_AHEAD_POS);
 						break;
 					case CHR('!'):		/* negative lookahead */
-						NOTE(REG_ULOOKAHEAD);
-						RETV(LACON, 0);
+						NOTE(REG_ULOOKAROUND);
+						RETV(LACON, LATYPE_AHEAD_NEG);
+						break;
+					case CHR('<'):
+						if (ATEOS())
+							FAILW(REG_BADRPT);
+						switch (*v->now++)
+						{
+							case CHR('='):		/* positive lookbehind */
+								NOTE(REG_ULOOKAROUND);
+								RETV(LACON, LATYPE_BEHIND_POS);
+								break;
+							case CHR('!'):		/* negative lookbehind */
+								NOTE(REG_ULOOKAROUND);
+								RETV(LACON, LATYPE_BEHIND_NEG);
+								break;
+							default:
+								FAILW(REG_BADRPT);
+								break;
+						}
+						assert(NOTREACHED);
 						break;
 					default:
 						FAILW(REG_BADRPT);
@@ -860,6 +881,12 @@ lexescape(struct vars * v)
 			c = lexdigits(v, 8, 1, 3);
 			if (ISERR())
 				FAILW(REG_EESCAPE);
+			if (c > 0xff)
+			{
+				/* out of range, so we handled one digit too much */
+				v->now--;
+				c >>= 3;
+			}
 			RETV(PLAIN, c);
 			break;
 		default:

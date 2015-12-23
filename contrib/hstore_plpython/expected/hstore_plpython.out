@@ -1,5 +1,5 @@
-CREATE EXTENSION plpython2u;
-CREATE EXTENSION hstore_plpython2u;
+CREATE EXTENSION hstore_plpython2u CASCADE;
+NOTICE:  installing required extension "plpython2u"
 -- test hstore -> python
 CREATE FUNCTION test1(val hstore) RETURNS int
 LANGUAGE plpythonu
@@ -13,7 +13,6 @@ return len(val)
 $$;
 SELECT test1('aa=>bb, cc=>NULL'::hstore);
 INFO:  [('aa', 'bb'), ('cc', None)]
-CONTEXT:  PL/Python function "test1"
  test1 
 -------
      2
@@ -32,7 +31,6 @@ return len(val)
 $$;
 SELECT test1n('aa=>bb, cc=>NULL'::hstore);
 INFO:  [('aa', 'bb'), ('cc', None)]
-CONTEXT:  PL/Python function "test1n"
  test1n 
 --------
       2

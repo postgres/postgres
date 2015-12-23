@@ -62,17 +62,11 @@ plpy.error('error')
 $$ LANGUAGE plpythonu;
 SELECT elog_test();
 INFO:  info
-CONTEXT:  PL/Python function "elog_test"
 INFO:  37
-CONTEXT:  PL/Python function "elog_test"
 INFO:  ()
-CONTEXT:  PL/Python function "elog_test"
 INFO:  ('info', 37, [1, 2, 3])
-CONTEXT:  PL/Python function "elog_test"
 NOTICE:  notice
-CONTEXT:  PL/Python function "elog_test"
 WARNING:  warning
-CONTEXT:  PL/Python function "elog_test"
 ERROR:  plpy.Error: error
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "elog_test", line 10, in <module>

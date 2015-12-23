@@ -44,6 +44,7 @@ ALTER FUNCTION alt_func1(int) RENAME TO alt_func2;  -- failed (name conflict)
 ALTER FUNCTION alt_func1(int) RENAME TO alt_func3;  -- OK
 ALTER FUNCTION alt_func2(int) OWNER TO regtest_alter_user2;  -- failed (no role membership)
 ALTER FUNCTION alt_func2(int) OWNER TO regtest_alter_user3;  -- OK
+ALTER FUNCTION alt_func2(int) SET SCHEMA alt_nsp1;  -- OK, already there
 ALTER FUNCTION alt_func2(int) SET SCHEMA alt_nsp2;  -- OK
 
 ALTER AGGREGATE alt_agg1(int) RENAME TO alt_agg2;   -- failed (name conflict)

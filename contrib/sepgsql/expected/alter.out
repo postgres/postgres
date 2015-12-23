@@ -8,9 +8,9 @@ DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
 DROP USER IF EXISTS regtest_sepgsql_test_user;
 RESET client_min_messages;
 SELECT sepgsql_getcon();	-- confirm client privilege
-              sepgsql_getcon               
--------------------------------------------
- unconfined_u:unconfined_r:unconfined_t:s0
+                      sepgsql_getcon                      
+----------------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0
 (1 row)
 
 --
@@ -40,141 +40,136 @@ SET client_min_messages = LOG;
 --      owner is not actually changed.
 --
 ALTER DATABASE regtest_sepgsql_test_database_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database_1"
 ALTER DATABASE regtest_sepgsql_test_database_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database_1"
 ALTER SCHEMA regtest_schema_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
 ALTER SCHEMA regtest_schema_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
 ALTER TABLE regtest_table_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
 ALTER TABLE regtest_table_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
 ALTER SEQUENCE regtest_seq_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
 ALTER SEQUENCE regtest_seq_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
 ALTER VIEW regtest_view_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_1.regtest_view_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_1.regtest_view_1"
 ALTER VIEW regtest_view_1 OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_1.regtest_view_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_1.regtest_view_1"
 ALTER FUNCTION regtest_func_1(text) OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_1.regtest_func_1(pg_catalog.text)"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_1.regtest_func_1(pg_catalog.text)"
 ALTER FUNCTION regtest_func_1(text) OWNER TO regtest_sepgsql_test_user;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_1.regtest_func_1(pg_catalog.text)"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_1.regtest_func_1(pg_catalog.text)"
 --
 -- ALTER xxx SET SCHEMA
 --
 ALTER TABLE regtest_table_1 SET SCHEMA regtest_schema_2;
-LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
-LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_1.regtest_table_1"
 ALTER SEQUENCE regtest_seq_1 SET SCHEMA regtest_schema_2;
-LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
-LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_1.regtest_seq_1"
 ALTER VIEW regtest_view_1 SET SCHEMA regtest_schema_2;
-LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
-LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_1.regtest_view_1"
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_1.regtest_view_1"
 ALTER FUNCTION regtest_func_1(text) SET SCHEMA regtest_schema_2;
-LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
-LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_1.regtest_func_1(pg_catalog.text)"
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_1.regtest_func_1(pg_catalog.text)"
 --
 -- ALTER xxx RENAME TO
 --
 ALTER DATABASE regtest_sepgsql_test_database_1 RENAME TO regtest_sepgsql_test_database;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database_1"
 ALTER SCHEMA regtest_schema_1 RENAME TO regtest_schema;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_1"
 ALTER TABLE regtest_table_1 RENAME TO regtest_table;
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
-LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table_1"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
+LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table_1"
 ALTER SEQUENCE regtest_seq_1 RENAME TO regtest_seq;
-LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_2.regtest_seq_1"
+LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_2.regtest_seq_1"
 ALTER VIEW regtest_view_1 RENAME TO regtest_view;
-LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_2.regtest_view_1"
+LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_2.regtest_view_1"
 ALTER FUNCTION regtest_func_1(text) RENAME TO regtest_func;
-LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_2.regtest_func_1(pg_catalog.text)"
+LOG:  SELinux: allowed { add_name remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema_2.regtest_func_1(pg_catalog.text)"
 SET search_path = regtest_schema, regtest_schema_2, public;
 --
 -- misc ALTER commands
 --
 ALTER DATABASE regtest_sepgsql_test_database CONNECTION LIMIT 999;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database"
 ALTER DATABASE regtest_sepgsql_test_database SET search_path TO regtest_schema, public; -- not supported yet
 ALTER TABLE regtest_table ADD COLUMN d float;
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.d"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.d"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LINE 1: ALTER TABLE regtest_table ADD COLUMN d float;
+                                               ^
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.d"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.d"
 ALTER TABLE regtest_table DROP COLUMN d;
-LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.d"
-LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.d"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.d"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.d"
 ALTER TABLE regtest_table ALTER b SET DEFAULT 'abcd';   -- not supported yet
 ALTER TABLE regtest_table ALTER b SET DEFAULT 'XYZ';    -- not supported yet
 ALTER TABLE regtest_table ALTER b DROP DEFAULT;         -- not supported yet
 ALTER TABLE regtest_table ALTER b SET NOT NULL;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
 ALTER TABLE regtest_table ALTER b DROP NOT NULL;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
 ALTER TABLE regtest_table ALTER b SET STATISTICS -1;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
 ALTER TABLE regtest_table ALTER b SET (n_distinct = 999);
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
 ALTER TABLE regtest_table ALTER b SET STORAGE PLAIN;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.b"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.b"
 ALTER TABLE regtest_table ADD CONSTRAINT test_fk FOREIGN KEY (a) REFERENCES regtest_table_3(x); -- not supported
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table column a"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table_3"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table_3 column x"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table column a"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table_3"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table_3 column x"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema_2"
 LINE 1: SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" f...
                                 ^
 QUERY:  SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LINE 1: ...schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_s...
                                                              ^
 QUERY:  SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-CONTEXT:  SQL statement "SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)"
-LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
-CONTEXT:  SQL statement "SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
-CONTEXT:  SQL statement "SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table column a"
-CONTEXT:  SQL statement "SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table_3"
-CONTEXT:  SQL statement "SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)"
-LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table_3 column x"
-CONTEXT:  SQL statement "SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)"
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LINE 1: ..."regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(p...
+                                                             ^
+QUERY:  SELECT fk."a" FROM ONLY "regtest_schema_2"."regtest_table" fk LEFT OUTER JOIN ONLY "regtest_schema"."regtest_table_3" pk ON ( pk."x" OPERATOR(pg_catalog.=) fk."a") WHERE pk."x" IS NULL AND (fk."a" IS NOT NULL)
+LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table column a"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table_3"
+LOG:  SELinux: allowed { select } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="table regtest_table_3 column x"
 ALTER TABLE regtest_table ADD CONSTRAINT test_ck CHECK (b like '%abc%') NOT VALID;      -- not supported
 ALTER TABLE regtest_table VALIDATE CONSTRAINT test_ck;  -- not supported
 ALTER TABLE regtest_table DROP CONSTRAINT test_ck;      -- not supported
@@ -186,23 +181,23 @@ CREATE RULE regtest_test_rule AS ON INSERT TO regtest_table_3 DO ALSO NOTHING;
 ALTER TABLE regtest_table_3 DISABLE RULE regtest_test_rule;     -- not supported
 ALTER TABLE regtest_table_3 ENABLE RULE regtest_test_rule;      -- not supported
 ALTER TABLE regtest_table SET WITH OIDS;
-LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.oid"
-LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.oid"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.oid"
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.oid"
 ALTER TABLE regtest_table SET WITHOUT OIDS;
-LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.oid"
-LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.oid"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_2.oid"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema_2.regtest_table.oid"
 ALTER TABLE regtest_table SET (fillfactor = 75);
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
 ALTER TABLE regtest_table RESET (fillfactor);
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
 ALTER TABLE regtest_table_2 NO INHERIT regtest_table;   -- not supported
 ALTER TABLE regtest_table_2 INHERIT regtest_table;      -- not supported
 ALTER TABLE regtest_table SET TABLESPACE pg_default;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
 ALTER VIEW regtest_view SET (security_barrier);
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_2.regtest_view"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_view_t:s0 tclass=db_view name="regtest_schema_2.regtest_view"
 ALTER SEQUENCE regtest_seq INCREMENT BY 10 START WITH 1000;
-LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:unconfined_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_2.regtest_seq"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema_2.regtest_seq"
 --
 -- clean-up objects
 --

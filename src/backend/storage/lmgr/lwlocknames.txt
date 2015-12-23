@@ -1,0 +1,48 @@
+# Some commonly-used locks have predefined positions within MainLWLockArray;
+# these are defined here.  If you add a lock, add it to the end to avoid
+# renumbering the existing locks; if you remove a lock, consider leaving a gap
+# in the numbering sequence for the benefit of DTrace and other external
+# debugging scripts.
+
+# 0 is available; was formerly BufFreelistLock
+ShmemIndexLock						1
+OidGenLock							2
+XidGenLock							3
+ProcArrayLock						4
+SInvalReadLock						5
+SInvalWriteLock						6
+WALBufMappingLock					7
+WALWriteLock						8
+ControlFileLock						9
+CheckpointLock						10
+CLogControlLock						11
+SubtransControlLock					12
+MultiXactGenLock					13
+MultiXactOffsetControlLock			14
+MultiXactMemberControlLock			15
+RelCacheInitLock					16
+CheckpointerCommLock				17
+TwoPhaseStateLock					18
+TablespaceCreateLock				19
+BtreeVacuumLock						20
+AddinShmemInitLock					21
+AutovacuumLock						22
+AutovacuumScheduleLock				23
+SyncScanLock						24
+RelationMappingLock					25
+AsyncCtlLock						26
+AsyncQueueLock						27
+SerializableXactHashLock			28
+SerializableFinishedListLock		29
+SerializablePredicateLockListLock	30
+OldSerXidLock						31
+SyncRepLock							32
+BackgroundWorkerLock				33
+DynamicSharedMemoryControlLock		34
+AutoFileLock						35
+ReplicationSlotAllocationLock		36
+ReplicationSlotControlLock			37
+CommitTsControlLock					38
+CommitTsLock						39
+ReplicationOriginLock				40
+MultiXactTruncationLock				41

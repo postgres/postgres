@@ -1023,7 +1023,6 @@ GRANT regressgroup2 TO regressuser5; -- fails: no ADMIN OPTION
 ERROR:  must have admin option on role "regressgroup2"
 SELECT dogrant_ok();			-- ok: SECURITY DEFINER conveys ADMIN
 NOTICE:  role "regressuser5" is already a member of role "regressgroup2"
-CONTEXT:  SQL function "dogrant_ok" statement 1
  dogrant_ok 
 ------------
  

@@ -146,7 +146,7 @@ next_insert(char *text, int pos, bool questionmarks)
 }
 
 static bool
-ecpg_type_infocache_push(struct ECPGtype_information_cache ** cache, int oid, bool isarray, int lineno)
+ecpg_type_infocache_push(struct ECPGtype_information_cache ** cache, int oid, enum ARRAY_TYPE isarray, int lineno)
 {
 	struct ECPGtype_information_cache *new_entry
 	= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
@@ -752,18 +752,8 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 				{
 					strcpy(mallocedval, "{");
 
-					if (var->offset == sizeof(char))
-						for (element = 0; element < asize; element++)
-							sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
-
-					/*
-					 * this is necessary since sizeof(C++'s bool)==sizeof(int)
-					 */
-					else if (var->offset == sizeof(int))
-						for (element = 0; element < asize; element++)
-							sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
-					else
-						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
+					for (element = 0; element < asize; element++)
+						sprintf(mallocedval + strlen(mallocedval), "%c,", (((bool *) var->value)[element]) ? 't' : 'f');
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "}");
 				}

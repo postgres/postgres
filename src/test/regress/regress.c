@@ -549,8 +549,10 @@ ttdummy(PG_FUNCTION_ARGS)
 			elog(ERROR, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
 
 		if (oldon != newon || oldoff != newoff)
-			elog(ERROR, "ttdummy (%s): you cannot change %s and/or %s columns (use set_ttdummy)",
-				 relname, args[0], args[1]);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("ttdummy (%s): you cannot change %s and/or %s columns (use set_ttdummy)",
+							relname, args[0], args[1])));
 
 		if (newoff != TTDUMMY_INFINITY)
 		{

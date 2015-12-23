@@ -28,7 +28,6 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
-    | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
     | REPLICATION | NOREPLICATION
@@ -125,19 +124,6 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATEUSER</literal></term>
-      <term><literal>NOCREATEUSER</literal></term>
-      <listitem>
-       <para>
-        These clauses are an obsolete, but still accepted, spelling of
-        <literal>SUPERUSER</literal> and <literal>NOSUPERUSER</literal>.
-        Note that they are <emphasis>not</> equivalent to
-        <literal>CREATEROLE</literal> as one might naively expect!
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><literal>INHERIT</literal></term>
       <term><literal>NOINHERIT</literal></term>
       <listitem>
@@ -196,16 +182,13 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       <term><literal>NOBYPASSRLS</literal></term>
       <listitem>
        <para>
-        These clauses determine whether a role is allowed to bypass row-security
-        policies.  A role having the <literal>BYPASSRLS</literal> attribute will
-        be allowed to bypass row-security policies by setting
-        <literal>row_security</literal> to
-        <literal>OFF</literal>. <literal>NOBYPASSRLS</literal> is the default.
+        These clauses determine whether a role bypasses every row-level
+        security (RLS) policy.  <literal>NOBYPASSRLS</literal> is the default.
         Note that pg_dump will set <literal>row_security</literal> to
         <literal>OFF</literal> by default, to ensure all contents of a table are
         dumped out.  If the user running pg_dump does not have appropriate
         permissions, an error will be returned.  The superuser and owner of the
-        table being dumped are considered to always have the right to bypass RLS.
+        table being dumped always bypass RLS.
        </para>
       </listitem>
      </varlistentry>

@@ -493,7 +493,7 @@ AlterRole(AlterRoleStmt *stmt)
 	char	   *validUntil = NULL;		/* time the login is valid until */
 	Datum		validUntil_datum;		/* same, as timestamptz Datum */
 	bool		validUntil_null;
-	bool		bypassrls = -1;
+	int			bypassrls = -1;
 	DefElem    *dpassword = NULL;
 	DefElem    *dissuper = NULL;
 	DefElem    *dinherit = NULL;
@@ -959,7 +959,7 @@ DropRole(DropRoleStmt *stmt)
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot use special role specifier in \"%s\"", "DROP ROLE")));
+					 errmsg("cannot use special role specifier in DROP ROLE")));
 		role = rolspec->rolename;
 
 		tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(role));

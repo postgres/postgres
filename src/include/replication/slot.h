@@ -125,6 +125,9 @@ typedef struct ReplicationSlot
 	XLogRecPtr	candidate_restart_lsn;
 } ReplicationSlot;
 
+#define SlotIsPhysical(slot) (slot->data.database == InvalidOid)
+#define SlotIsLogical(slot) (slot->data.database != InvalidOid)
+
 /*
  * Shared memory control area for all of replication slots.
  */
@@ -163,6 +166,7 @@ extern void ReplicationSlotMarkDirty(void);
 
 /* misc stuff */
 extern bool ReplicationSlotValidateName(const char *name, int elevel);
+extern void ReplicationSlotReserveWal(void);
 extern void ReplicationSlotsComputeRequiredXmin(bool already_locked);
 extern void ReplicationSlotsComputeRequiredLSN(void);
 extern XLogRecPtr ReplicationSlotsComputeLogicalRestartLSN(void);

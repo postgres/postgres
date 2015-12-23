@@ -1,5 +1,5 @@
-CREATE EXTENSION plpython2u;
-CREATE EXTENSION ltree_plpython2u;
+CREATE EXTENSION ltree_plpython2u CASCADE;
+NOTICE:  installing required extension "plpython2u"
 CREATE FUNCTION test1(val ltree) RETURNS int
 LANGUAGE plpythonu
 TRANSFORM FOR TYPE ltree
@@ -9,7 +9,6 @@ return len(val)
 $$;
 SELECT test1('aa.bb.cc'::ltree);
 INFO:  ['aa', 'bb', 'cc']
-CONTEXT:  PL/Python function "test1"
  test1 
 -------
      3
@@ -24,7 +23,6 @@ return len(val)
 $$;
 SELECT test1n('aa.bb.cc'::ltree);
 INFO:  ['aa', 'bb', 'cc']
-CONTEXT:  PL/Python function "test1n"
  test1n 
 --------
       3

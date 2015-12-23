@@ -110,6 +110,13 @@ typedef enum
 	PQERRORS_VERBOSE			/* all the facts, ma'am */
 } PGVerbosity;
 
+typedef enum
+{
+	PQSHOW_CONTEXT_NEVER,		/* never show CONTEXT field */
+	PQSHOW_CONTEXT_ERRORS,		/* show CONTEXT for errors only (default) */
+	PQSHOW_CONTEXT_ALWAYS		/* always show CONTEXT field */
+} PGContextVisibility;
+
 /*
  * PGPing - The ordering of this enum should not be altered because the
  * values are exposed externally via pg_isready.
@@ -322,7 +329,7 @@ extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 extern int	PQsslInUse(PGconn *conn);
 extern void *PQsslStruct(PGconn *conn, const char *struct_name);
 extern const char *PQsslAttribute(PGconn *conn, const char *attribute_name);
-extern const char **PQsslAttributes(PGconn *conn);
+extern const char *const * PQsslAttributeNames(PGconn *conn);
 
 /* Get the OpenSSL structure associated with a connection. Returns NULL for
  * unencrypted connections or if any other TLS library is in use. */
@@ -336,6 +343,10 @@ extern void PQinitOpenSSL(int do_ssl, int do_crypto);
 
 /* Set verbosity for PQerrorMessage and PQresultErrorMessage */
 extern PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
+
+/* Set CONTEXT visibility for PQerrorMessage and PQresultErrorMessage */
+extern PGContextVisibility PQsetErrorContextVisibility(PGconn *conn,
+							PGContextVisibility show_context);
 
 /* Enable/disable tracing */
 extern void PQtrace(PGconn *conn, FILE *debug_port);

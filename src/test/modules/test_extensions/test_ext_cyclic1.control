@@ -1,0 +1,4 @@
+comment = 'Test extension cyclic 1'
+default_version = '1.0'
+relocatable = true
+requires = 'test_ext_cyclic2'

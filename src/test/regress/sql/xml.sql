@@ -71,7 +71,6 @@ SELECT xmlparse(content '<relativens xmlns=''relative''/>');
 SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
 SELECT xmlparse(content '<nosuchprefix:tag/>');
 
-SELECT xmlparse(document '');
 SELECT xmlparse(document '   ');
 SELECT xmlparse(document 'abc');
 SELECT xmlparse(document '<abc>x</abc>');

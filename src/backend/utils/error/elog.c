@@ -143,9 +143,13 @@ static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
 static int	recursion_depth = 0;	/* to detect actual recursion */
 
-/* buffers for formatted timestamps that might be used by both
- * log_line_prefix and csv logs.
+/*
+ * Saved timeval and buffers for formatted timestamps that might be used by
+ * both log_line_prefix and csv logs.
  */
+
+static struct timeval	saved_timeval;
+static bool				saved_timeval_set = false;
 
 #define FORMATTED_TS_LEN 128
 static char formatted_start_time[FORMATTED_TS_LEN];
@@ -2195,12 +2199,16 @@ write_console(const char *line, int len)
 static void
 setup_formatted_log_time(void)
 {
-	struct timeval tv;
 	pg_time_t	stamp_time;
 	char		msbuf[8];
 
-	gettimeofday(&tv, NULL);
-	stamp_time = (pg_time_t) tv.tv_sec;
+	if (!saved_timeval_set)
+	{
+		gettimeofday(&saved_timeval, NULL);
+		saved_timeval_set = true;
+	}
+
+	stamp_time = (pg_time_t) saved_timeval.tv_sec;
 
 	/*
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
@@ -2213,7 +2221,7 @@ setup_formatted_log_time(void)
 				pg_localtime(&stamp_time, log_timezone));
 
 	/* 'paste' milliseconds into place... */
-	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
+	sprintf(msbuf, ".%03d", (int) (saved_timeval.tv_usec / 1000));
 	memcpy(formatted_log_time + 19, msbuf, 4);
 }
 
@@ -2432,6 +2440,25 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 					pg_strftime(strfbuf, sizeof(strfbuf),
 								"%Y-%m-%d %H:%M:%S %Z",
 								pg_localtime(&stamp_time, log_timezone));
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, strfbuf);
+					else
+						appendStringInfoString(buf, strfbuf);
+				}
+				break;
+			case 'n':
+				{
+					char	strfbuf[128];
+
+					if (!saved_timeval_set)
+					{
+						gettimeofday(&saved_timeval, NULL);
+						saved_timeval_set = true;
+					}
+
+					sprintf(strfbuf, "%ld.%03d", saved_timeval.tv_sec,
+							(int)(saved_timeval.tv_usec / 1000));
+
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, strfbuf);
 					else
@@ -2811,6 +2838,7 @@ send_message_to_server_log(ErrorData *edata)
 
 	initStringInfo(&buf);
 
+	saved_timeval_set = false;
 	formatted_log_time[0] = '\0';
 
 	log_line_prefix(&buf, edata);

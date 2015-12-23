@@ -746,7 +746,7 @@ array_position_common(FunctionCallInfo fcinfo)
 		if (PG_ARGISNULL(2))
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("initial position should not be NULL")));
+					 errmsg("initial position must not be null")));
 
 		position_min = PG_GETARG_INT32(2);
 	}

@@ -423,7 +423,7 @@ adjust_data_dir(ClusterInfo *cluster)
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
 		pg_fatal("Could not get data directory using %s: %s\n",
-				 cmd, getErrorText(errno));
+				 cmd, getErrorText());
 
 	pclose(output);
 

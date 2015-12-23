@@ -245,7 +245,7 @@ nodeTokenType(char *token, int length)
 		retval = RIGHT_PAREN;
 	else if (*token == '{')
 		retval = LEFT_BRACE;
-	else if (*token == '\"' && length > 1 && token[length - 1] == '\"')
+	else if (*token == '"' && length > 1 && token[length - 1] == '"')
 		retval = T_String;
 	else if (*token == 'b')
 		retval = T_BitString;

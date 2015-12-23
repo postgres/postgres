@@ -15,9 +15,6 @@
  */
 #include "postgres.h"
 
-/* see pg_list.h */
-#define PG_LIST_INCLUDE_DEFINITIONS
-
 #include "nodes/pg_list.h"
 
 

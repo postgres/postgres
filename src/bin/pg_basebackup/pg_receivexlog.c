@@ -67,7 +67,7 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
-	printf(_("      --if-not-exists    do not treat naming conflicts as an error when creating a slot\n"));
+	printf(_("      --if-not-exists    do not error if slot already exists when creating a slot\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
@@ -508,7 +508,7 @@ main(int argc, char **argv)
 	/*
 	 * Required arguments
 	 */
-	if (basedir == NULL && !do_drop_slot)
+	if (basedir == NULL && !do_drop_slot && !do_create_slot)
 	{
 		fprintf(stderr, _("%s: no target directory specified\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
@@ -519,7 +519,7 @@ main(int argc, char **argv)
 	/*
 	 * Check existence of destination folder.
 	 */
-	if (!do_drop_slot)
+	if (!do_drop_slot && !do_create_slot)
 	{
 		DIR		   *dir = get_destination_dir(basedir);
 
@@ -584,6 +584,7 @@ main(int argc, char **argv)
 		if (!CreateReplicationSlot(conn, replication_slot, NULL, true,
 								   slot_exists_ok))
 			disconnect_and_exit(1);
+		disconnect_and_exit(0);
 	}
 
 	/*

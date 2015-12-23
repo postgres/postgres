@@ -2285,9 +2285,11 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
  * from actually being generated.
  */
 bool
-eclass_useful_for_merging(EquivalenceClass *eclass,
+eclass_useful_for_merging(PlannerInfo *root,
+						  EquivalenceClass *eclass,
 						  RelOptInfo *rel)
 {
+	Relids		relids;
 	ListCell   *lc;
 
 	Assert(!eclass->ec_merged);
@@ -2305,8 +2307,14 @@ eclass_useful_for_merging(EquivalenceClass *eclass,
 	 * possibly-overoptimistic heuristic.
 	 */
 
+	/* If specified rel is a child, we must consider the topmost parent rel */
+	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		relids = find_childrel_top_parent(root, rel)->relids;
+	else
+		relids = rel->relids;
+
 	/* If rel already includes all members of eclass, no point in searching */
-	if (bms_is_subset(eclass->ec_relids, rel->relids))
+	if (bms_is_subset(eclass->ec_relids, relids))
 		return false;
 
 	/* To join, we need a member not in the given rel */
@@ -2317,7 +2325,7 @@ eclass_useful_for_merging(EquivalenceClass *eclass,
 		if (cur_em->em_is_child)
 			continue;			/* ignore children here */
 
-		if (!bms_overlap(cur_em->em_relids, rel->relids))
+		if (!bms_overlap(cur_em->em_relids, relids))
 			return true;
 	}
 

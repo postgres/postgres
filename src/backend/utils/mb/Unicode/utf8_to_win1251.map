@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/utf8_to_win1251.map */
+
 static const pg_utf_to_local ULmapWIN1251[ 127 ] = {
   {0xc2a0, 0x00a0},
   {0xc2a4, 0x00a4},

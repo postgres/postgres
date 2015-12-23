@@ -39,8 +39,16 @@
  */
 volatile bool cancel_pressed = false;
 
+/*
+ * Likewise, the sigpipe_trap and pager open/close functions are here rather
+ * than in common.c so that this file can be used by non-psql programs.
+ */
+static bool always_ignore_sigpipe = false;
+
+
+/* info for locale-aware numeric formatting; set up by setDecimalLocale() */
 static char *decimal_point;
-static char *grouping;
+static int	groupdigits;
 static char *thousands_sep;
 
 static char default_footer[100];
@@ -190,104 +198,110 @@ const unicodeStyleFormat unicode_style = {
 
 /* Local functions */
 static int	strlen_max_width(unsigned char *str, int *target_width, int encoding);
-static void IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expanded,
+static void IsPagerNeeded(const printTableContent *cont, int extra_lines, bool expanded,
 			  FILE **fout, bool *is_pager);
 
-static void print_aligned_vertical(const printTableContent *cont, FILE *fout);
+static void print_aligned_vertical(const printTableContent *cont,
+					   FILE *fout, bool is_pager);
 
 
+/* Count number of digits in integral part of number */
 static int
 integer_digits(const char *my_str)
 {
-	int			frac_len;
-
-	if (my_str[0] == '-')
+	/* ignoring any sign ... */
+	if (my_str[0] == '-' || my_str[0] == '+')
 		my_str++;
-
-	frac_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
-
-	return strlen(my_str) - frac_len;
+	/* ... count initial integral digits */
+	return strspn(my_str, "0123456789");
 }
 
-/* Return additional length required for locale-aware numeric output */
+/* Compute additional length required for locale-aware numeric output */
 static int
 additional_numeric_locale_len(const char *my_str)
 {
 	int			int_len = integer_digits(my_str),
 				len = 0;
-	int			groupdigits = atoi(grouping);
 
-	if (int_len > 0)
-		/* Don't count a leading separator */
-		len = (int_len / groupdigits - (int_len % groupdigits == 0)) *
-			strlen(thousands_sep);
+	/* Account for added thousands_sep instances */
+	if (int_len > groupdigits)
+		len += ((int_len - 1) / groupdigits) * strlen(thousands_sep);
 
+	/* Account for possible additional length of decimal_point */
 	if (strchr(my_str, '.') != NULL)
-		len += strlen(decimal_point) - strlen(".");
+		len += strlen(decimal_point) - 1;
 
 	return len;
 }
 
-static int
-strlen_with_numeric_locale(const char *my_str)
-{
-	return strlen(my_str) + additional_numeric_locale_len(my_str);
-}
-
 /*
+ * Format a numeric value per current LC_NUMERIC locale setting
+ *
  * Returns the appropriately formatted string in a new allocated block,
- * caller must free
+ * caller must free.
+ *
+ * setDecimalLocale() must have been called earlier.
  */
 static char *
 format_numeric_locale(const char *my_str)
 {
-	int			i,
-				j,
-				int_len = integer_digits(my_str),
-				leading_digits;
-	int			groupdigits = atoi(grouping);
-	int			new_str_start = 0;
-	char	   *new_str = pg_malloc(strlen_with_numeric_locale(my_str) + 1);
+	char	   *new_str;
+	int			new_len,
+				int_len,
+				leading_digits,
+				i,
+				new_str_pos;
 
-	leading_digits = (int_len % groupdigits != 0) ?
-		int_len % groupdigits : groupdigits;
+	/*
+	 * If the string doesn't look like a number, return it unchanged.  This
+	 * check is essential to avoid mangling already-localized "money" values.
+	 */
+	if (strspn(my_str, "0123456789+-.eE") != strlen(my_str))
+		return pg_strdup(my_str);
 
-	if (my_str[0] == '-')		/* skip over sign, affects grouping
-								 * calculations */
+	new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
+	new_str = pg_malloc(new_len + 1);
+	new_str_pos = 0;
+	int_len = integer_digits(my_str);
+
+	/* number of digits in first thousands group */
+	leading_digits = int_len % groupdigits;
+	if (leading_digits == 0)
+		leading_digits = groupdigits;
+
+	/* process sign */
+	if (my_str[0] == '-' || my_str[0] == '+')
 	{
-		new_str[0] = my_str[0];
+		new_str[new_str_pos++] = my_str[0];
 		my_str++;
-		new_str_start = 1;
 	}
 
-	for (i = 0, j = new_str_start;; i++, j++)
+	/* process integer part of number */
+	for (i = 0; i < int_len; i++)
 	{
-		/* Hit decimal point? */
-		if (my_str[i] == '.')
+		/* Time to insert separator? */
+		if (i > 0 && --leading_digits == 0)
 		{
-			strcpy(&new_str[j], decimal_point);
-			j += strlen(decimal_point);
-			/* add fractional part */
-			strcpy(&new_str[j], &my_str[i] + 1);
-			break;
+			strcpy(&new_str[new_str_pos], thousands_sep);
+			new_str_pos += strlen(thousands_sep);
+			leading_digits = groupdigits;
 		}
-
-		/* End of string? */
-		if (my_str[i] == '\0')
-		{
-			new_str[j] = '\0';
-			break;
-		}
-
-		/* Add separator? */
-		if (i != 0 && (i - leading_digits) % groupdigits == 0)
-		{
-			strcpy(&new_str[j], thousands_sep);
-			j += strlen(thousands_sep);
-		}
-
-		new_str[j] = my_str[i];
+		new_str[new_str_pos++] = my_str[i];
 	}
+
+	/* handle decimal point if any */
+	if (my_str[i] == '.')
+	{
+		strcpy(&new_str[new_str_pos], decimal_point);
+		new_str_pos += strlen(decimal_point);
+		i++;
+	}
+
+	/* copy the rest (fractional digits and/or exponent, and \0 terminator) */
+	strcpy(&new_str[new_str_pos], &my_str[i]);
+
+	/* assert we didn't underestimate new_len (an overestimate is OK) */
+	Assert(strlen(new_str) <= new_len);
 
 	return new_str;
 }
@@ -564,7 +578,7 @@ _print_horizontal_line(const unsigned int ncolumns, const unsigned int *widths,
  *	Print pretty boxes around cells.
  */
 static void
-print_aligned_text(const printTableContent *cont, FILE *fout)
+print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	int			encoding = cont->opt->encoding;
@@ -599,7 +613,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	int		   *bytes_output;	/* Bytes output for column value */
 	printTextLineWrap *wrap;	/* Wrap status for each column */
 	int			output_columns = 0;		/* Width of interactive console */
-	bool		is_pager = false;
+	bool		is_local_pager = false;
 
 	if (cancel_pressed)
 		return;
@@ -807,7 +821,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	if (cont->opt->expanded == 2 && output_columns > 0 &&
 		(output_columns < total_header_width || output_columns < width_total))
 	{
-		print_aligned_vertical(cont, fout);
+		print_aligned_vertical(cont, fout, is_pager);
 		goto cleanup;
 	}
 
@@ -816,11 +830,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		(output_columns < total_header_width || output_columns < width_total))
 	{
 		fout = PageOutput(INT_MAX, cont->opt);	/* force pager */
-		is_pager = true;
+		is_pager = is_local_pager = true;
 	}
 
 	/* Check if newlines or our wrapping now need the pager */
-	if (!is_pager)
+	if (!is_pager && fout == stdout)
 	{
 		/* scan all cells, find maximum width, compute cell_count */
 		for (i = 0, ptr = cont->cells; *ptr; ptr++, cell_count++)
@@ -856,6 +870,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			}
 		}
 		IsPagerNeeded(cont, extra_output_lines, false, &fout, &is_pager);
+		is_local_pager = is_pager;
 	}
 
 	/* time to output */
@@ -1147,7 +1162,7 @@ cleanup:
 	free(bytes_output);
 	free(wrap);
 
-	if (is_pager)
+	if (is_local_pager)
 		ClosePager(fout);
 }
 
@@ -1209,7 +1224,8 @@ print_aligned_vertical_line(const printTextFormat *format,
 }
 
 static void
-print_aligned_vertical(const printTableContent *cont, FILE *fout)
+print_aligned_vertical(const printTableContent *cont,
+					   FILE *fout, bool is_pager)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
@@ -1227,7 +1243,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				dformatsize = 0;
 	struct lineptr *hlineptr,
 			   *dlineptr;
-	bool		is_pager = false,
+	bool		is_local_pager = false,
 				hmultiline = false,
 				dmultiline = false;
 	int			output_columns = 0;		/* Width of interactive console */
@@ -1259,9 +1275,13 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	/*
 	 * Deal with the pager here instead of in printTable(), because we could
 	 * get here via print_aligned_text() in expanded auto mode, and so we have
-	 * to recalcuate the pager requirement based on vertical output.
+	 * to recalculate the pager requirement based on vertical output.
 	 */
-	IsPagerNeeded(cont, 0, true, &fout, &is_pager);
+	if (!is_pager)
+	{
+		IsPagerNeeded(cont, 0, true, &fout, &is_pager);
+		is_local_pager = is_pager;
+	}
 
 	/* Find the maximum dimensions for the headers */
 	for (i = 0; i < cont->ncolumns; i++)
@@ -1340,88 +1360,130 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 #endif
 	}
 
+	/*
+	 * Calculate available width for data in wrapped mode
+	 */
 	if (cont->opt->format == PRINT_WRAPPED)
 	{
-		/*
-		 * Separators width
-		 */
-		unsigned int width,
-					min_width,
-					swidth,
-					iwidth = 0;
+		unsigned int swidth,
+					rwidth = 0,
+					newdwidth;
 
 		if (opt_border == 0)
 		{
 			/*
-			 * For border = 0, one space in the middle.
+			 * For border = 0, one space in the middle.  (If we discover we
+			 * need to wrap, the spacer column will be replaced by a wrap
+			 * marker, and we'll make room below for another wrap marker at
+			 * the end of the line.  But for now, assume no wrap is needed.)
 			 */
 			swidth = 1;
+
+			/* We might need a column for header newline markers, too */
+			if (hmultiline)
+				swidth++;
 		}
 		else if (opt_border == 1)
 		{
 			/*
-			 * For border = 1, one for the pipe (|) in the middle between the
-			 * two spaces.
+			 * For border = 1, two spaces and a vrule in the middle.  (As
+			 * above, we might need one more column for a wrap marker.)
 			 */
 			swidth = 3;
+
+			/* We might need a column for left header newline markers, too */
+			if (hmultiline && (format == &pg_asciiformat_old))
+				swidth++;
 		}
 		else
-
-			/*
-			 * For border = 2, two more for the pipes (|) at the beginning and
-			 * at the end of the lines.
-			 */
-			swidth = 7;
-
-		if ((opt_border < 2) &&
-			((hmultiline &&
-			  (format == &pg_asciiformat_old)) ||
-			 (dmultiline &&
-			  (format != &pg_asciiformat_old))))
-			iwidth++;			/* for newline indicators */
-
-		min_width = hwidth + iwidth + swidth + 3;
-
-		/*
-		 * Record header width
-		 */
-		if (!opt_tuples_only)
 		{
 			/*
-			 * Record number
+			 * For border = 2, two more for the vrules at the beginning and
+			 * end of the lines, plus spacer columns adjacent to these.  (We
+			 * won't need extra columns for wrap/newline markers, we'll just
+			 * repurpose the spacers.)
 			 */
-			unsigned int rwidth = 1 + log10(cont->nrows);
+			swidth = 7;
+		}
 
+		/* Reserve a column for data newline indicators, too, if needed */
+		if (dmultiline &&
+			opt_border < 2 && format != &pg_asciiformat_old)
+			swidth++;
+
+		/* Determine width required for record header lines */
+		if (!opt_tuples_only)
+		{
+			if (cont->nrows > 0)
+				rwidth = 1 + (int) log10(cont->nrows);
 			if (opt_border == 0)
 				rwidth += 9;	/* "* RECORD " */
 			else if (opt_border == 1)
 				rwidth += 12;	/* "-[ RECORD  ]" */
 			else
 				rwidth += 15;	/* "+-[ RECORD  ]-+" */
-
-			if (rwidth > min_width)
-				min_width = rwidth;
 		}
 
-		/* Wrap to minimum width */
-		width = hwidth + iwidth + swidth + dwidth;
-		if ((width < min_width) || (output_columns < min_width))
-			width = min_width - hwidth - iwidth - swidth;
-		else if (output_columns > 0)
+		/* We might need to do the rest of the calculation twice */
+		for (;;)
+		{
+			unsigned int width;
+
+			/* Total width required to not wrap data */
+			width = hwidth + swidth + dwidth;
+			/* ... and not the header lines, either */
+			if (width < rwidth)
+				width = rwidth;
+
+			if (output_columns > 0)
+			{
+				unsigned int min_width;
+
+				/* Minimum acceptable width: room for just 3 columns of data */
+				min_width = hwidth + swidth + 3;
+				/* ... but not less than what the record header lines need */
+				if (min_width < rwidth)
+					min_width = rwidth;
+
+				if (output_columns >= width)
+				{
+					/* Plenty of room, use native data width */
+					/* (but at least enough for the record header lines) */
+					newdwidth = width - hwidth - swidth;
+				}
+				else if (output_columns < min_width)
+				{
+					/* Set data width to match min_width */
+					newdwidth = min_width - hwidth - swidth;
+				}
+				else
+				{
+					/* Set data width to match output_columns */
+					newdwidth = output_columns - hwidth - swidth;
+				}
+			}
+			else
+			{
+				/* Don't know the wrap limit, so use native data width */
+				/* (but at least enough for the record header lines) */
+				newdwidth = width - hwidth - swidth;
+			}
 
 			/*
-			 * Wrap to maximum width
+			 * If we will need to wrap data and didn't already allocate a data
+			 * newline/wrap marker column, do so and recompute.
 			 */
-			width = output_columns - hwidth - iwidth - swidth;
-
-		if ((width < dwidth) || (dheight > 1))
-		{
-			dmultiline = true;
-			if ((opt_border == 0) &&
-				(format != &pg_asciiformat_old))
-				width--;		/* for wrap indicators */
+			if (newdwidth < dwidth && !dmultiline &&
+				opt_border < 2 && format != &pg_asciiformat_old)
+			{
+				dmultiline = true;
+				swidth++;
+			}
+			else
+				break;
 		}
-		dwidth = width;
+
+		dwidth = newdwidth;
 	}
 
 	/* print records */
@@ -1552,12 +1614,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			{
 				if (offset)
 					fputs(format->midvrule_wrap, fout);
-				else if (!dline)
+				else if (dline == 0)
 					fputs(dformat->midvrule, fout);
-				else if (dline)
-					fputs(format->midvrule_nl, fout);
 				else
-					fputs(format->midvrule_blank, fout);
+					fputs(format->midvrule_nl, fout);
 			}
 
 			/* Data */
@@ -1568,9 +1628,9 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 							swidth = dwidth;
 
 				/*
-				 * Left spacer on wrap indicator
+				 * Left spacer or wrap indicator
 				 */
-				fputs(!dcomplete && !offset ? " " : format->wrap_left, fout);
+				fputs(offset == 0 ? " " : format->wrap_left, fout);
 
 				/*
 				 * Data text
@@ -1668,7 +1728,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	free(hlineptr);
 	free(dlineptr);
 
-	if (is_pager)
+	if (is_local_pager)
 		ClosePager(fout);
 }
 
@@ -2722,8 +2782,59 @@ print_troff_ms_vertical(const printTableContent *cont, FILE *fout)
 
 
 /********************************/
-/* Public functions		*/
+/* Public functions				*/
 /********************************/
+
+
+/*
+ * disable_sigpipe_trap
+ *
+ * Turn off SIGPIPE interrupt --- call this before writing to a temporary
+ * query output file that is a pipe.
+ *
+ * No-op on Windows, where there's no SIGPIPE interrupts.
+ */
+void
+disable_sigpipe_trap(void)
+{
+#ifndef WIN32
+	pqsignal(SIGPIPE, SIG_IGN);
+#endif
+}
+
+/*
+ * restore_sigpipe_trap
+ *
+ * Restore normal SIGPIPE interrupt --- call this when done writing to a
+ * temporary query output file that was (or might have been) a pipe.
+ *
+ * Note: within psql, we enable SIGPIPE interrupts unless the permanent query
+ * output file is a pipe, in which case they should be kept off.  This
+ * approach works only because psql is not currently complicated enough to
+ * have nested usages of short-lived output files.  Otherwise we'd probably
+ * need a genuine save-and-restore-state approach; but for now, that would be
+ * useless complication.  In non-psql programs, this always enables SIGPIPE.
+ *
+ * No-op on Windows, where there's no SIGPIPE interrupts.
+ */
+void
+restore_sigpipe_trap(void)
+{
+#ifndef WIN32
+	pqsignal(SIGPIPE, always_ignore_sigpipe ? SIG_IGN : SIG_DFL);
+#endif
+}
+
+/*
+ * set_sigpipe_trap_state
+ *
+ * Set the trap state that restore_sigpipe_trap should restore to.
+ */
+void
+set_sigpipe_trap_state(bool ignore)
+{
+	always_ignore_sigpipe = ignore;
+}
 
 
 /*
@@ -2739,12 +2850,9 @@ PageOutput(int lines, const printTableOpt *topt)
 	/* check whether we need / can / are supposed to use pager */
 	if (topt && topt->pager && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	{
-		const char *pagerprog;
-		FILE	   *pagerpipe;
+#ifdef TIOCGWINSZ
 		unsigned short int pager = topt->pager;
 		int			min_lines = topt->pager_min_lines;
-
-#ifdef TIOCGWINSZ
 		int			result;
 		struct winsize screen_size;
 
@@ -2754,20 +2862,19 @@ PageOutput(int lines, const printTableOpt *topt)
 		if (result == -1
 			|| (lines >= screen_size.ws_row && lines >= min_lines)
 			|| pager > 1)
-		{
 #endif
+		{
+			const char *pagerprog;
+			FILE	   *pagerpipe;
+
 			pagerprog = getenv("PAGER");
 			if (!pagerprog)
 				pagerprog = DEFAULT_PAGER;
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_IGN);
-#endif
+			disable_sigpipe_trap();
 			pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)
 				return pagerpipe;
-#ifdef TIOCGWINSZ
 		}
-#endif
 	}
 
 	return stdout;
@@ -2795,9 +2902,7 @@ ClosePager(FILE *pagerpipe)
 			fprintf(pagerpipe, _("Interrupted\n"));
 
 		pclose(pagerpipe);
-#ifndef WIN32
-		pqsignal(SIGPIPE, SIG_DFL);
-#endif
+		restore_sigpipe_trap();
 	}
 }
 
@@ -3029,8 +3134,8 @@ printTableCleanup(printTableContent *const content)
  * Setup pager if required
  */
 static void
-IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expanded, FILE **fout,
-			  bool *is_pager)
+IsPagerNeeded(const printTableContent *cont, int extra_lines, bool expanded,
+			  FILE **fout, bool *is_pager)
 {
 	if (*fout == stdout)
 	{
@@ -3061,12 +3166,18 @@ IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expande
 }
 
 /*
- * Use this to print just any table in the supported formats.
+ * Use this to print any table in the supported formats.
+ *
+ * cont: table data and formatting options
+ * fout: where to print to
+ * is_pager: true if caller has already redirected fout to be a pager pipe
+ * flog: if not null, also print the table there (for --log-file option)
  */
 void
-printTable(const printTableContent *cont, FILE *fout, FILE *flog)
+printTable(const printTableContent *cont,
+		   FILE *fout, bool is_pager, FILE *flog)
 {
-	bool		is_pager = false;
+	bool		is_local_pager = false;
 
 	if (cancel_pressed)
 		return;
@@ -3074,15 +3185,19 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 	if (cont->opt->format == PRINT_NOTHING)
 		return;
 
-	/* print_aligned_*() handles the pager themselves */
-	if (cont->opt->format != PRINT_ALIGNED &&
+	/* print_aligned_*() handle the pager themselves */
+	if (!is_pager &&
+		cont->opt->format != PRINT_ALIGNED &&
 		cont->opt->format != PRINT_WRAPPED)
+	{
 		IsPagerNeeded(cont, 0, (cont->opt->expanded == 1), &fout, &is_pager);
+		is_local_pager = is_pager;
+	}
 
 	/* print the stuff */
 
 	if (flog)
-		print_aligned_text(cont, flog);
+		print_aligned_text(cont, flog, false);
 
 	switch (cont->opt->format)
 	{
@@ -3094,10 +3209,17 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 			break;
 		case PRINT_ALIGNED:
 		case PRINT_WRAPPED:
-			if (cont->opt->expanded == 1)
-				print_aligned_vertical(cont, fout);
+
+			/*
+			 * In expanded-auto mode, force vertical if a pager is passed in;
+			 * else we may make different decisions for different hunks of the
+			 * query result.
+			 */
+			if (cont->opt->expanded == 1 ||
+				(cont->opt->expanded == 2 && is_pager))
+				print_aligned_vertical(cont, fout, is_pager);
 			else
-				print_aligned_text(cont, fout);
+				print_aligned_text(cont, fout, is_pager);
 			break;
 		case PRINT_HTML:
 			if (cont->opt->expanded == 1)
@@ -3135,17 +3257,22 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 			exit(EXIT_FAILURE);
 	}
 
-	if (is_pager)
+	if (is_local_pager)
 		ClosePager(fout);
 }
 
 /*
  * Use this to print query results
  *
- * It calls printTable with all the things set straight.
+ * result: result of a successful query
+ * opt: formatting options
+ * fout: where to print to
+ * is_pager: true if caller has already redirected fout to be a pager pipe
+ * flog: if not null, also print the data there (for --log-file option)
  */
 void
-printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *flog)
+printQuery(const PGresult *result, const printQueryOpt *opt,
+		   FILE *fout, bool is_pager, FILE *flog)
 {
 	printTableContent cont;
 	int			i,
@@ -3225,7 +3352,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			printTableAddFooter(&cont, *footer);
 	}
 
-	printTable(&cont, fout, flog);
+	printTable(&cont, fout, is_pager, flog);
 	printTableCleanup(&cont);
 }
 
@@ -3237,15 +3364,24 @@ setDecimalLocale(void)
 
 	extlconv = localeconv();
 
+	/* Don't accept an empty decimal_point string */
 	if (*extlconv->decimal_point)
 		decimal_point = pg_strdup(extlconv->decimal_point);
 	else
 		decimal_point = ".";	/* SQL output standard */
-	if (*extlconv->grouping && atoi(extlconv->grouping) > 0)
-		grouping = pg_strdup(extlconv->grouping);
-	else
-		grouping = "3";			/* most common */
 
+	/*
+	 * Although the Open Group standard allows locales to supply more than one
+	 * group width, we consider only the first one, and we ignore any attempt
+	 * to suppress grouping by specifying CHAR_MAX.  As in the backend's
+	 * cash.c, we must apply a range check to avoid being fooled by variant
+	 * CHAR_MAX values.
+	 */
+	groupdigits = *extlconv->grouping;
+	if (groupdigits <= 0 || groupdigits > 6)
+		groupdigits = 3;		/* most common */
+
+	/* Don't accept an empty thousands_sep string, either */
 	/* similar code exists in formatting.c */
 	if (*extlconv->thousands_sep)
 		thousands_sep = pg_strdup(extlconv->thousands_sep);

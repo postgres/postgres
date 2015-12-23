@@ -192,9 +192,7 @@ WalReceiverMain(void)
 	TimeLineID	startpointTLI;
 	TimeLineID	primaryTLI;
 	bool		first_stream;
-
-	/* use volatile pointer to prevent code rearrangement */
-	volatile WalRcvData *walrcv = WalRcv;
+	WalRcvData *walrcv = WalRcv;
 	TimestampTz last_recv_timestamp;
 	bool		ping_sent;
 
@@ -559,8 +557,7 @@ WalReceiverMain(void)
 static void
 WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile WalRcvData *walrcv = WalRcv;
+	WalRcvData *walrcv = WalRcv;
 	int			state;
 
 	SpinLockAcquire(&walrcv->mutex);
@@ -693,8 +690,7 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 static void
 WalRcvDie(int code, Datum arg)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile WalRcvData *walrcv = WalRcv;
+	WalRcvData *walrcv = WalRcv;
 
 	/* Ensure that all WAL records received are flushed to disk */
 	XLogWalRcvFlush(true);
@@ -974,8 +970,7 @@ XLogWalRcvFlush(bool dying)
 {
 	if (LogstreamResult.Flush < LogstreamResult.Write)
 	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile WalRcvData *walrcv = WalRcv;
+		WalRcvData *walrcv = WalRcv;
 
 		issue_xlog_fsync(recvFile, recvSegNo);
 
@@ -1179,8 +1174,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 static void
 ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile WalRcvData *walrcv = WalRcv;
+	WalRcvData *walrcv = WalRcv;
 
 	TimestampTz lastMsgReceiptTime = GetCurrentTimestamp();
 

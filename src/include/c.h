@@ -101,6 +101,19 @@
 #include "pg_config_os.h"
 #endif
 
+/*
+ * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
+ * to work around compiler bugs and might also be useful for investigatory
+ * purposes by defining the symbol in the platform's header..
+ *
+ * This is done early (in slightly the wrong section) as functionality later
+ * in this file might want to rely on inline functions.
+ */
+#ifdef PG_FORCE_DISABLE_INLINE
+#undef inline
+#define inline
+#endif
+
 /* Must be before gettext() games below */
 #include <locale.h>
 
@@ -319,11 +332,6 @@ typedef unsigned PG_INT128_TYPE uint128;
 /* Select timestamp representation (float8 or int64) */
 #ifdef USE_INTEGER_DATETIMES
 #define HAVE_INT64_TIMESTAMP
-#endif
-
-/* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
-#ifndef HAVE_SIG_ATOMIC_T
-typedef int sig_atomic_t;
 #endif
 
 /*
@@ -920,34 +928,6 @@ typedef NameData *Name;
 #endif
 
 
-/*
- * Function inlining support -- Allow modules to define functions that may be
- * inlined, if the compiler supports it.
- *
- * The function bodies must be defined in the module header prefixed by
- * STATIC_IF_INLINE, protected by a cpp symbol that the module's .c file must
- * define.  If the compiler doesn't support inline functions, the function
- * definitions are pulled in by the .c file as regular (not inline) symbols.
- *
- * The header must also declare the functions' prototypes, protected by
- * !PG_USE_INLINE.
- */
-
-/* declarations which are only visible when not inlining and in the .c file */
-#ifdef PG_USE_INLINE
-#define STATIC_IF_INLINE static inline
-#else
-#define STATIC_IF_INLINE
-#endif   /* PG_USE_INLINE */
-
-/* declarations which are marked inline when inlining, extern otherwise */
-#ifdef PG_USE_INLINE
-#define STATIC_IF_INLINE_DECLARE static inline
-#else
-#define STATIC_IF_INLINE_DECLARE extern
-#endif   /* PG_USE_INLINE */
-
-
 /* ----------------------------------------------------------------
  *				Section 8:	random stuff
  * ----------------------------------------------------------------
@@ -1071,9 +1051,9 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 /*
  * When there is no sigsetjmp, its functionality is provided by plain
  * setjmp. Incidentally, nothing provides setjmp's functionality in
- * that case.
+ * that case.  We now support the case only on Windows.
  */
-#ifndef HAVE_SIGSETJMP
+#ifdef WIN32
 #define sigjmp_buf jmp_buf
 #define sigsetjmp(x,y) setjmp(x)
 #define siglongjmp longjmp

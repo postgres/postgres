@@ -71,6 +71,7 @@ typedef struct MultiXactMember
 #define XLOG_MULTIXACT_ZERO_OFF_PAGE	0x00
 #define XLOG_MULTIXACT_ZERO_MEM_PAGE	0x10
 #define XLOG_MULTIXACT_CREATE_ID		0x20
+#define XLOG_MULTIXACT_TRUNCATE_ID		0x30
 
 typedef struct xl_multixact_create
 {
@@ -81,6 +82,21 @@ typedef struct xl_multixact_create
 } xl_multixact_create;
 
 #define SizeOfMultiXactCreate (offsetof(xl_multixact_create, members))
+
+typedef struct xl_multixact_truncate
+{
+	Oid			oldestMultiDB;
+
+	/* to-be-truncated range of multixact offsets */
+	MultiXactId startTruncOff;	/* just for completeness' sake */
+	MultiXactId endTruncOff;
+
+	/* to-be-truncated range of multixact members */
+	MultiXactOffset startTruncMemb;
+	MultiXactOffset endTruncMemb;
+} xl_multixact_truncate;
+
+#define SizeOfMultiXactTruncate (sizeof(xl_multixact_truncate))
 
 
 extern MultiXactId MultiXactIdCreate(TransactionId xid1,
@@ -119,13 +135,12 @@ extern void MultiXactGetCheckptMulti(bool is_shutdown,
 						 Oid *oldestMultiDB);
 extern void CheckPointMultiXact(void);
 extern MultiXactId GetOldestMultiXactId(void);
-extern void TruncateMultiXact(void);
+extern void TruncateMultiXact(MultiXactId oldestMulti, Oid oldestMultiDB);
 extern void MultiXactSetNextMXact(MultiXactId nextMulti,
 					  MultiXactOffset nextMultiOffset);
 extern void MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset);
 extern void MultiXactAdvanceOldest(MultiXactId oldestMulti, Oid oldestMultiDB);
-extern void MultiXactSetSafeTruncate(MultiXactId safeTruncateMulti);
 extern int	MultiXactMemberFreezeThreshold(void);
 
 extern void multixact_twophase_recover(TransactionId xid, uint16 info,

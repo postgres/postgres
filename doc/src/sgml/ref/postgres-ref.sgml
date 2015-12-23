@@ -529,7 +529,9 @@ PostgreSQL documentation
     </indexterm>
 
     <para>
-     The following options only apply to the single-user mode.
+     The following options only apply to the single-user mode
+     (see <xref linkend="app-postgres-single-user"
+     endterm="app-postgres-single-user-title">).
     </para>
 
     <variablelist>
@@ -558,7 +560,7 @@ PostgreSQL documentation
       <term><option>-E</option></term>
       <listitem>
        <para>
-        Echo all commands.
+        Echo all commands to standard output before executing them.
        </para>
       </listitem>
      </varlistentry>
@@ -567,7 +569,8 @@ PostgreSQL documentation
       <term><option>-j</option></term>
       <listitem>
        <para>
-        Disables use of newline as a statement delimiter.
+        Use semicolon followed by two newlines, rather than just newline,
+        as the command entry terminator.
        </para>
       </listitem>
      </varlistentry>
@@ -760,8 +763,8 @@ PostgreSQL documentation
   </para>
  </refsect1>
 
- <refsect1>
-  <title>Usage</title>
+ <refsect1 id="app-postgres-single-user">
+  <title id="app-postgres-single-user-title">Single-User Mode</title>
 
    <para>
     To start a single-user mode server, use a command like
@@ -778,30 +781,40 @@ PostgreSQL documentation
     entry terminator; there is no intelligence about semicolons,
     as there is in <application>psql</>.  To continue a command
     across multiple lines, you must type backslash just before each
-    newline except the last one.
+    newline except the last one.  The backslash and adjacent newline are
+    both dropped from the input command.  Note that this will happen even
+    when within a string literal or comment.
    </para>
 
    <para>
-    But if you use the <option>-j</> command line switch, then newline does
-    not terminate command entry.  In this case, the server will read the standard input
-    until the end-of-file (<acronym>EOF</>) marker, then
-    process the input as a single command string.  Backslash-newline is not
-    treated specially in this case.
+    But if you use the <option>-j</> command line switch, a single newline
+    does not terminate command entry; instead, the sequence
+    semicolon-newline-newline does.  That is, type a semicolon immediately
+    followed by a completely empty line.  Backslash-newline is not
+    treated specially in this mode.  Again, there is no intelligence about
+    such a sequence appearing within a string literal or comment.
+   </para>
+
+   <para>
+    In either input mode, if you type a semicolon that is not just before or
+    part of a command entry terminator, it is considered a command separator.
+    When you do type a command entry terminator, the multiple statements
+    you've entered will be executed as a single transaction.
    </para>
 
    <para>
     To quit the session, type <acronym>EOF</acronym>
     (<keycombo action="simul"><keycap>Control</><keycap>D</></>, usually).
-    If you've
-    used <option>-j</>, two consecutive <acronym>EOF</>s are needed to exit.
+    If you've entered any text since the last command entry terminator,
+    then <acronym>EOF</acronym> will be taken as a command entry terminator,
+    and another <acronym>EOF</> will be needed to exit.
    </para>
 
    <para>
     Note that the single-user mode server does not provide sophisticated
     line-editing features (no command history, for example).
-    Single-User mode also does not do any background processing, like
-    automatic checkpoints.
-
+    Single-user mode also does not do any background processing, such as
+    automatic checkpoints or replication.
    </para>
  </refsect1>
 

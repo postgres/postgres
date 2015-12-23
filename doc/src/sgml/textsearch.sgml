@@ -2681,7 +2681,7 @@ SELECT ts_lexize('norwegian_ispell', 'sjokoladefabrikk');
     The <application>Snowball</> dictionary template is based on a project
     by Martin Porter, inventor of the popular Porter's stemming algorithm
     for the English language.  Snowball now provides stemming algorithms for
-    many languages (see the <ulink url="http://snowball.tartarus.org">Snowball
+    many languages (see the <ulink url="http://snowballstem.org/">Snowball
     site</ulink> for more information).  Each algorithm understands how to
     reduce common variant forms of words to a base, or stem, spelling within
     its language.  A Snowball dictionary requires a <literal>language</>
@@ -3192,7 +3192,7 @@ SELECT plainto_tsquery('supernovae stars');
  </sect1>
 
  <sect1 id="textsearch-indexes">
-  <title>GiST and GIN Index Types</title>
+  <title>GIN and GiST Index Types</title>
 
   <indexterm zone="textsearch-indexes">
    <primary>text search</primary>
@@ -3207,6 +3207,26 @@ SELECT plainto_tsquery('supernovae stars');
    usually desirable.
 
    <variablelist>
+
+    <varlistentry>
+
+     <term>
+     <indexterm zone="textsearch-indexes">
+      <primary>index</primary>
+      <secondary>GIN</secondary>
+      <tertiary>text search</tertiary>
+     </indexterm>
+
+      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING GIN (<replaceable>column</replaceable>);</literal>
+     </term>
+
+     <listitem>
+      <para>
+       Creates a GIN (Generalized Inverted Index)-based index.
+       The <replaceable>column</replaceable> must be of <type>tsvector</> type.
+      </para>
+     </listitem>
+    </varlistentry>
 
     <varlistentry>
 
@@ -3229,37 +3249,22 @@ SELECT plainto_tsquery('supernovae stars');
      </listitem>
     </varlistentry>
 
-    <varlistentry>
-
-     <term>
-     <indexterm zone="textsearch-indexes">
-      <primary>index</primary>
-      <secondary>GIN</secondary>
-      <tertiary>text search</tertiary>
-     </indexterm>
-
-      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING GIN (<replaceable>column</replaceable>);</literal>
-     </term>
-
-     <listitem>
-      <para>
-       Creates a GIN (Generalized Inverted Index)-based index.
-       The <replaceable>column</replaceable> must be of <type>tsvector</> type.
-      </para>
-     </listitem>
-    </varlistentry>
-
    </variablelist>
   </para>
 
   <para>
-   There are substantial performance differences between the two index types,
-   so it is important to understand their characteristics.
+   GIN indexes are the preferred text search index type.  As inverted
+   indexes, they contain an index entry for each word (lexeme), with a
+   compressed list of matching locations.  Multi-word searches can find
+   the first match, then use the index to remove rows that are lacking
+   additional words.  GIN indexes store only the words (lexemes) of
+   <type>tsvector</> values, and not their weight labels.  Thus a table
+   row recheck is needed when using a query that involves weights.
   </para>
 
   <para>
    A GiST index is <firstterm>lossy</firstterm>, meaning that the index
-   may produce false matches, and it is necessary
+   might produce false matches, and it is necessary
    to check the actual table row to eliminate such false matches.
    (<productname>PostgreSQL</productname> does this automatically when needed.)
    GiST indexes are lossy because each document is represented in the
@@ -3281,53 +3286,6 @@ SELECT plainto_tsquery('supernovae stars');
   </para>
 
   <para>
-   GIN indexes are not lossy for standard queries, but their performance
-   depends logarithmically on the number of unique words.
-   (However, GIN indexes store only the words (lexemes) of <type>tsvector</>
-   values, and not their weight labels.  Thus a table row recheck is needed
-   when using a query that involves weights.)
-  </para>
-
-  <para>
-   In choosing which index type to use, GiST or GIN, consider these
-   performance differences:
-
-   <itemizedlist  spacing="compact" mark="bullet">
-    <listitem>
-     <para>
-      GIN index lookups are about three times faster than GiST
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      GIN indexes take about three times longer to build than GiST
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      GIN indexes are moderately slower to update than GiST indexes, but
-      about 10 times slower if fast-update support was disabled
-      (see <xref linkend="gin-fast-update"> for details)
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      GIN indexes are two-to-three times larger than GiST indexes
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   As a rule of thumb, <acronym>GIN</acronym> indexes are best for static data
-   because lookups are faster.  For dynamic data, GiST indexes are
-   faster to update.  Specifically, <acronym>GiST</acronym> indexes are very
-   good for dynamic data and fast if the number of unique words (lexemes) is
-   under 100,000, while <acronym>GIN</acronym> indexes will handle 100,000+
-   lexemes better but are slower to update.
-  </para>
-
-  <para>
    Note that <acronym>GIN</acronym> index build time can often be improved
    by increasing <xref linkend="guc-maintenance-work-mem">, while
    <acronym>GiST</acronym> index build time is not sensitive to that
@@ -3335,7 +3293,7 @@ SELECT plainto_tsquery('supernovae stars');
   </para>
 
   <para>
-   Partitioning of big collections and the proper use of GiST and GIN indexes
+   Partitioning of big collections and the proper use of GIN and GiST indexes
    allows the implementation of very fast searches with online update.
    Partitioning can be done at the database level using table inheritance,
    or by distributing documents over

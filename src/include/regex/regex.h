@@ -58,7 +58,7 @@ typedef struct
 	size_t		re_nsub;		/* number of subexpressions */
 	long		re_info;		/* information about RE */
 #define  REG_UBACKREF		 000001
-#define  REG_ULOOKAHEAD		 000002
+#define  REG_ULOOKAROUND	 000002
 #define  REG_UBOUNDS	 000004
 #define  REG_UBRACES	 000010
 #define  REG_UBSALNUM		 000020
@@ -152,7 +152,7 @@ typedef struct
 #define REG_INVARG	16			/* invalid argument to regex function */
 #define REG_MIXED	17			/* character widths of regex and string differ */
 #define REG_BADOPT	18			/* invalid embedded option */
-#define REG_ETOOBIG 19			/* nfa has too many states */
+#define REG_ETOOBIG 19			/* regular expression is too complex */
 #define REG_ECOLORS 20			/* too many colors */
 #define REG_CANCEL	21			/* operation cancelled */
 /* two specials for debugging and testing */

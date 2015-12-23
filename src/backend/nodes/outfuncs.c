@@ -13,9 +13,11 @@
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
  *	  have an output function defined here (as well as an input function
- *	  in readfuncs.c).  For use in debugging, we also provide output
- *	  functions for nodes that appear in raw parsetrees, path, and plan trees.
- *	  These nodes however need not have input functions.
+ *	  in readfuncs.c).  In addition, plan nodes should have input and
+ *	  output functions so that they can be sent to parallel workers.
+ *	  For use in debugging, we also provide output functions for nodes
+ *	  that appear in raw parsetrees and path.  These nodes however need
+ *	  not have input functions.
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +124,7 @@ _outToken(StringInfo str, const char *s)
 	 */
 	/* These characters only need to be quoted at the start of the string */
 	if (*s == '<' ||
-		*s == '\"' ||
+		*s == '"' ||
 		isdigit((unsigned char) *s) ||
 		((*s == '+' || *s == '-') &&
 		 (isdigit((unsigned char) s[1]) || s[1] == '.')))
@@ -256,6 +258,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_INT_FIELD(nParamExec);
 	WRITE_BOOL_FIELD(hasRowSecurity);
+	WRITE_BOOL_FIELD(parallelModeNeeded);
 }
 
 /*
@@ -268,6 +271,8 @@ _outPlanInfo(StringInfo str, const Plan *node)
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");
 	WRITE_FLOAT_FIELD(plan_rows, "%.0f");
 	WRITE_INT_FIELD(plan_width);
+	WRITE_BOOL_FIELD(parallel_aware);
+	WRITE_INT_FIELD(plan_node_id);
 	WRITE_NODE_FIELD(targetlist);
 	WRITE_NODE_FIELD(qual);
 	WRITE_NODE_FIELD(lefttree);
@@ -341,7 +346,7 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_NODE_FIELD(arbiterIndexes);
 	WRITE_NODE_FIELD(onConflictSet);
 	WRITE_NODE_FIELD(onConflictWhere);
-	WRITE_INT_FIELD(exclRelRTI);
+	WRITE_UINT_FIELD(exclRelRTI);
 	WRITE_NODE_FIELD(exclRelTlist);
 }
 
@@ -426,6 +431,17 @@ _outBitmapOr(StringInfo str, const BitmapOr *node)
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_NODE_FIELD(bitmapplans);
+}
+
+static void
+_outGather(StringInfo str, const Gather *node)
+{
+	WRITE_NODE_TYPE("GATHER");
+
+	_outPlanInfo(str, (const Plan *) node);
+
+	WRITE_INT_FIELD(num_workers);
+	WRITE_BOOL_FIELD(single_copy);
 }
 
 static void
@@ -579,6 +595,7 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 	WRITE_NODE_FIELD(fdw_exprs);
 	WRITE_NODE_FIELD(fdw_private);
 	WRITE_NODE_FIELD(fdw_scan_tlist);
+	WRITE_NODE_FIELD(fdw_recheck_quals);
 	WRITE_BITMAPSET_FIELD(fs_relids);
 	WRITE_BOOL_FIELD(fsSystemCol);
 }
@@ -591,14 +608,16 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	_outScanInfo(str, (const Scan *) node);
 
 	WRITE_UINT_FIELD(flags);
+	WRITE_NODE_FIELD(custom_plans);
 	WRITE_NODE_FIELD(custom_exprs);
 	WRITE_NODE_FIELD(custom_private);
 	WRITE_NODE_FIELD(custom_scan_tlist);
 	WRITE_BITMAPSET_FIELD(custom_relids);
+	/* Dump library and symbol name instead of raw pointer */
 	appendStringInfoString(str, " :methods ");
-	_outToken(str, node->methods->CustomName);
-	if (node->methods->TextOutCustomScan)
-		node->methods->TextOutCustomScan(str, node);
+	_outToken(str, node->methods->LibraryName);
+	appendStringInfoChar(str, ' ');
+	_outToken(str, node->methods->SymbolName);
 }
 
 static void
@@ -647,7 +666,7 @@ _outMergeJoin(StringInfo str, const MergeJoin *node)
 
 	appendStringInfoString(str, " :mergeNullsFirst");
 	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %d", (int) node->mergeNullsFirst[i]);
+		appendStringInfo(str, " %s", booltostr(node->mergeNullsFirst[i]));
 }
 
 static void
@@ -1016,7 +1035,7 @@ _outGroupingFunc(StringInfo str, const GroupingFunc *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(refs);
 	WRITE_NODE_FIELD(cols);
-	WRITE_INT_FIELD(agglevelsup);
+	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1532,9 +1551,9 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 	WRITE_ENUM_FIELD(action, OnConflictAction);
 	WRITE_NODE_FIELD(arbiterElems);
 	WRITE_NODE_FIELD(arbiterWhere);
+	WRITE_OID_FIELD(constraint);
 	WRITE_NODE_FIELD(onConflictSet);
 	WRITE_NODE_FIELD(onConflictWhere);
-	WRITE_OID_FIELD(constraint);
 	WRITE_INT_FIELD(exclRelIndex);
 	WRITE_NODE_FIELD(exclRelTlist);
 }
@@ -1568,6 +1587,7 @@ _outPathInfo(StringInfo str, const Path *node)
 		_outBitmapset(str, node->param_info->ppi_req_outer);
 	else
 		_outBitmapset(str, NULL);
+	WRITE_BOOL_FIELD(parallel_aware);
 	WRITE_FLOAT_FIELD(rows, "%.0f");
 	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");
@@ -1663,6 +1683,7 @@ _outForeignPath(StringInfo str, const ForeignPath *node)
 
 	_outPathInfo(str, (const Path *) node);
 
+	WRITE_NODE_FIELD(fdw_outerpath);
 	WRITE_NODE_FIELD(fdw_private);
 }
 
@@ -1674,6 +1695,7 @@ _outCustomPath(StringInfo str, const CustomPath *node)
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_UINT_FIELD(flags);
+	WRITE_NODE_FIELD(custom_paths);
 	WRITE_NODE_FIELD(custom_private);
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);
@@ -1736,6 +1758,18 @@ _outUniquePath(StringInfo str, const UniquePath *node)
 }
 
 static void
+_outGatherPath(StringInfo str, const GatherPath *node)
+{
+	WRITE_NODE_TYPE("GATHERPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_INT_FIELD(num_workers);
+	WRITE_BOOL_FIELD(single_copy);
+}
+
+static void
 _outNestPath(StringInfo str, const NestPath *node)
 {
 	WRITE_NODE_TYPE("NESTPATH");
@@ -1785,6 +1819,8 @@ _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
 	WRITE_UINT_FIELD(lastRowMarkId);
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_BOOL_FIELD(hasRowSecurity);
+	WRITE_BOOL_FIELD(parallelModeOK);
+	WRITE_BOOL_FIELD(parallelModeNeeded);
 }
 
 static void
@@ -1797,6 +1833,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_NODE_FIELD(glob);
 	WRITE_UINT_FIELD(query_level);
 	WRITE_NODE_FIELD(plan_params);
+	WRITE_BITMAPSET_FIELD(outer_params);
 	WRITE_BITMAPSET_FIELD(all_baserels);
 	WRITE_BITMAPSET_FIELD(nullable_baserels);
 	WRITE_NODE_FIELD(join_rel_list);
@@ -1810,7 +1847,6 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_NODE_FIELD(right_join_clauses);
 	WRITE_NODE_FIELD(full_join_clauses);
 	WRITE_NODE_FIELD(join_info_list);
-	WRITE_NODE_FIELD(lateral_info_list);
 	WRITE_NODE_FIELD(append_rel_list);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(placeholder_list);
@@ -1847,6 +1883,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_INT_FIELD(width);
 	WRITE_BOOL_FIELD(consider_startup);
 	WRITE_BOOL_FIELD(consider_param_startup);
+	WRITE_BOOL_FIELD(consider_parallel);
 	WRITE_NODE_FIELD(reltargetlist);
 	WRITE_NODE_FIELD(pathlist);
 	WRITE_NODE_FIELD(ppilist);
@@ -1854,13 +1891,14 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(cheapest_total_path);
 	WRITE_NODE_FIELD(cheapest_unique_path);
 	WRITE_NODE_FIELD(cheapest_parameterized_paths);
+	WRITE_BITMAPSET_FIELD(direct_lateral_relids);
+	WRITE_BITMAPSET_FIELD(lateral_relids);
 	WRITE_UINT_FIELD(relid);
 	WRITE_OID_FIELD(reltablespace);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
 	WRITE_INT_FIELD(min_attr);
 	WRITE_INT_FIELD(max_attr);
 	WRITE_NODE_FIELD(lateral_vars);
-	WRITE_BITMAPSET_FIELD(lateral_relids);
 	WRITE_BITMAPSET_FIELD(lateral_referencers);
 	WRITE_NODE_FIELD(indexlist);
 	WRITE_UINT_FIELD(pages);
@@ -2016,15 +2054,6 @@ _outSpecialJoinInfo(StringInfo str, const SpecialJoinInfo *node)
 	WRITE_BOOL_FIELD(semi_can_hash);
 	WRITE_NODE_FIELD(semi_operators);
 	WRITE_NODE_FIELD(semi_rhs_exprs);
-}
-
-static void
-_outLateralJoinInfo(StringInfo str, const LateralJoinInfo *node)
-{
-	WRITE_NODE_TYPE("LATERALJOININFO");
-
-	WRITE_BITMAPSET_FIELD(lateral_lhs);
-	WRITE_BITMAPSET_FIELD(lateral_rhs);
 }
 
 static void
@@ -2377,7 +2406,6 @@ _outQuery(StringInfo str, const Query *node)
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);
-	WRITE_NODE_FIELD(withCheckOptions);
 	WRITE_NODE_FIELD(onConflict);
 	WRITE_NODE_FIELD(returningList);
 	WRITE_NODE_FIELD(groupClause);
@@ -2400,6 +2428,7 @@ _outWithCheckOption(StringInfo str, const WithCheckOption *node)
 
 	WRITE_ENUM_FIELD(kind, WCOKind);
 	WRITE_STRING_FIELD(relname);
+	WRITE_STRING_FIELD(polname);
 	WRITE_NODE_FIELD(qual);
 	WRITE_BOOL_FIELD(cascaded);
 }
@@ -2734,6 +2763,7 @@ _outA_Indices(StringInfo str, const A_Indices *node)
 {
 	WRITE_NODE_TYPE("A_INDICES");
 
+	WRITE_BOOL_FIELD(is_slice);
 	WRITE_NODE_FIELD(lidx);
 	WRITE_NODE_FIELD(uidx);
 }
@@ -2989,6 +3019,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_BitmapOr:
 				_outBitmapOr(str, obj);
+				break;
+			case T_Gather:
+				_outGather(str, obj);
 				break;
 			case T_Scan:
 				_outScan(str, obj);
@@ -3269,6 +3302,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_UniquePath:
 				_outUniquePath(str, obj);
 				break;
+			case T_GatherPath:
+				_outGatherPath(str, obj);
+				break;
 			case T_NestPath:
 				_outNestPath(str, obj);
 				break;
@@ -3310,9 +3346,6 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_SpecialJoinInfo:
 				_outSpecialJoinInfo(str, obj);
-				break;
-			case T_LateralJoinInfo:
-				_outLateralJoinInfo(str, obj);
 				break;
 			case T_AppendRelInfo:
 				_outAppendRelInfo(str, obj);

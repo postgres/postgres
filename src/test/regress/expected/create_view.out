@@ -1384,6 +1384,124 @@ select * from tt14v;
  foo |    | quux
 (1 row)
 
+-- check display of whole-row variables in some corner cases
+create type nestedcomposite as (x int8_tbl);
+create view tt15v as select row(i)::nestedcomposite from int8_tbl i;
+select * from tt15v;
+                   row                    
+------------------------------------------
+ ("(123,456)")
+ ("(123,4567890123456789)")
+ ("(4567890123456789,123)")
+ ("(4567890123456789,4567890123456789)")
+ ("(4567890123456789,-4567890123456789)")
+(5 rows)
+
+select pg_get_viewdef('tt15v', true);
+                    pg_get_viewdef                    
+------------------------------------------------------
+  SELECT ROW(i.*::int8_tbl)::nestedcomposite AS "row"+
+    FROM int8_tbl i;
+(1 row)
+
+select row(i.*::int8_tbl)::nestedcomposite from int8_tbl i;
+                   row                    
+------------------------------------------
+ ("(123,456)")
+ ("(123,4567890123456789)")
+ ("(4567890123456789,123)")
+ ("(4567890123456789,4567890123456789)")
+ ("(4567890123456789,-4567890123456789)")
+(5 rows)
+
+create view tt16v as select * from int8_tbl i, lateral(values(i)) ss;
+select * from tt16v;
+        q1        |        q2         |               column1                
+------------------+-------------------+--------------------------------------
+              123 |               456 | (123,456)
+              123 |  4567890123456789 | (123,4567890123456789)
+ 4567890123456789 |               123 | (4567890123456789,123)
+ 4567890123456789 |  4567890123456789 | (4567890123456789,4567890123456789)
+ 4567890123456789 | -4567890123456789 | (4567890123456789,-4567890123456789)
+(5 rows)
+
+select pg_get_viewdef('tt16v', true);
+              pg_get_viewdef               
+-------------------------------------------
+  SELECT i.q1,                            +
+     i.q2,                                +
+     ss.column1                           +
+    FROM int8_tbl i,                      +
+     LATERAL ( VALUES (i.*::int8_tbl)) ss;
+(1 row)
+
+select * from int8_tbl i, lateral(values(i.*::int8_tbl)) ss;
+        q1        |        q2         |               column1                
+------------------+-------------------+--------------------------------------
+              123 |               456 | (123,456)
+              123 |  4567890123456789 | (123,4567890123456789)
+ 4567890123456789 |               123 | (4567890123456789,123)
+ 4567890123456789 |  4567890123456789 | (4567890123456789,4567890123456789)
+ 4567890123456789 | -4567890123456789 | (4567890123456789,-4567890123456789)
+(5 rows)
+
+create view tt17v as select * from int8_tbl i where i in (values(i));
+select * from tt17v;
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+select pg_get_viewdef('tt17v', true);
+               pg_get_viewdef                
+---------------------------------------------
+  SELECT i.q1,                              +
+     i.q2                                   +
+    FROM int8_tbl i                         +
+   WHERE (i.* IN ( VALUES (i.*::int8_tbl)));
+(1 row)
+
+select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+-- check unique-ification of overlength names
+create view tt18v as
+  select * from int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy
+  union all
+  select * from int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxz;
+NOTICE:  identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy" will be truncated to "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+NOTICE:  identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxz" will be truncated to "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+select pg_get_viewdef('tt18v', true);
+                                  pg_get_viewdef                                   
+-----------------------------------------------------------------------------------
+  SELECT xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.q1,      +
+     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.q2           +
+    FROM int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx +
+ UNION ALL                                                                        +
+  SELECT xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.q1,      +
+     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.q2           +
+    FROM int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+(1 row)
+
+explain (costs off) select * from tt18v;
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Append
+   ->  Seq Scan on int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ->  Seq Scan on int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_1
+(3 rows)
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

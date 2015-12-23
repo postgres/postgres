@@ -671,6 +671,8 @@ SELECT user_relns() AS user_relns
  random_tbl
  real_city
  reltime_tbl
+ rls_tbl
+ rls_tbl_force
  road
  shighway
  slow_emp4000
@@ -708,7 +710,7 @@ SELECT user_relns() AS user_relns
  tvvmv
  varchar_tbl
  xacttest
-(130 rows)
+(132 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

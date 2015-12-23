@@ -226,7 +226,7 @@ insert into insertconflicttest values (1, 'Apple') on conflict do update set fru
 ERROR:  ON CONFLICT DO UPDATE requires inference specification or constraint name
 LINE 1: ...nsert into insertconflicttest values (1, 'Apple') on conflic...
                                                              ^
-HINT:  For example, ON CONFLICT (<column>).
+HINT:  For example, ON CONFLICT (column_name).
 -- inference succeeds:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruit;
 insert into insertconflicttest values (2, 'Orange') on conflict (key, key, key) do update set fruit = excluded.fruit;
@@ -246,13 +246,13 @@ insert into insertconflicttest values (1, 'Apple') on conflict (keyy) do update 
 ERROR:  column "keyy" does not exist
 LINE 1: ...nsertconflicttest values (1, 'Apple') on conflict (keyy) do ...
                                                              ^
-HINT:  Perhaps you meant to reference the column "insertconflicttest"."key".
+HINT:  Perhaps you meant to reference the column "insertconflicttest.key".
 -- Have useful HINT for EXCLUDED.* RTE within UPDATE:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruitt;
 ERROR:  column excluded.fruitt does not exist
 LINE 1: ... 'Apple') on conflict (key) do update set fruit = excluded.f...
                                                              ^
-HINT:  Perhaps you meant to reference the column "excluded"."fruit".
+HINT:  Perhaps you meant to reference the column "excluded.fruit".
 -- inference fails:
 insert into insertconflicttest values (3, 'Kiwi') on conflict (key, fruit) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
@@ -380,8 +380,80 @@ ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT spec
 insert into insertconflicttest values (23, 'Blackberry') on conflict (fruit) where fruit like '%berry' do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 drop index partial_key_index;
+--
+-- Test that wholerow references to ON CONFLICT's EXCLUDED work
+--
+create unique index plain on insertconflicttest(key);
+-- Succeeds, updates existing row:
+insert into insertconflicttest as i values (23, 'Jackfruit') on conflict (key) do update set fruit = excluded.fruit
+  where i.* != excluded.* returning *;
+ key |   fruit   
+-----+-----------
+  23 | Jackfruit
+(1 row)
+
+-- No update this time, though:
+insert into insertconflicttest as i values (23, 'Jackfruit') on conflict (key) do update set fruit = excluded.fruit
+  where i.* != excluded.* returning *;
+ key | fruit 
+-----+-------
+(0 rows)
+
+-- Predicate changed to require match rather than non-match, so updates once more:
+insert into insertconflicttest as i values (23, 'Jackfruit') on conflict (key) do update set fruit = excluded.fruit
+  where i.* = excluded.* returning *;
+ key |   fruit   
+-----+-----------
+  23 | Jackfruit
+(1 row)
+
+-- Assign:
+insert into insertconflicttest as i values (23, 'Avocado') on conflict (key) do update set fruit = excluded.*::text
+  returning *;
+ key |    fruit     
+-----+--------------
+  23 | (23,Avocado)
+(1 row)
+
+-- deparse whole row var in WHERE and SET clauses:
+explain (costs off) insert into insertconflicttest as i values (23, 'Avocado') on conflict (key) do update set fruit = excluded.fruit where excluded.* is null;
+               QUERY PLAN                
+-----------------------------------------
+ Insert on insertconflicttest i
+   Conflict Resolution: UPDATE
+   Conflict Arbiter Indexes: plain
+   Conflict Filter: (excluded.* IS NULL)
+   ->  Result
+(5 rows)
+
+explain (costs off) insert into insertconflicttest as i values (23, 'Avocado') on conflict (key) do update set fruit = excluded.*::text;
+            QUERY PLAN             
+-----------------------------------
+ Insert on insertconflicttest i
+   Conflict Resolution: UPDATE
+   Conflict Arbiter Indexes: plain
+   ->  Result
+(4 rows)
+
+drop index plain;
 -- Cleanup
 drop table insertconflicttest;
+--
+-- Verify that EXCLUDED does not allow system column references. These
+-- do not make sense because EXCLUDED isn't an already stored tuple
+-- (and thus doesn't have a ctid, oids are not assigned yet, etc).
+--
+create table syscolconflicttest(key int4, data text) WITH OIDS;
+insert into syscolconflicttest values (1);
+insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.ctid::text;
+ERROR:  column excluded.ctid does not exist
+LINE 1: ...values (1) on conflict (key) do update set data = excluded.c...
+                                                             ^
+insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.oid::text;
+ERROR:  column excluded.oid does not exist
+LINE 1: ...values (1) on conflict (key) do update set data = excluded.o...
+                                                             ^
+drop table syscolconflicttest;
 -- ******************************************************************
 -- *                                                                *
 -- * Test inheritance (example taken from tutorial)                 *
@@ -507,3 +579,111 @@ insert into excluded values(1, '2') on conflict (key) do update set data = 3 RET
 
 -- clean up
 drop table excluded;
+-- Check tables w/o oids are handled correctly
+create table testoids(key int primary key, data text) without oids;
+-- first without oids
+insert into testoids values(1, '1') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   1 | 1
+(1 row)
+
+insert into testoids values(1, '2') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   1 | 2
+(1 row)
+
+-- add oids
+alter table testoids set with oids;
+-- update existing row, that didn't have an oid
+insert into testoids values(1, '3') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   1 | 3
+(1 row)
+
+-- insert a new row
+insert into testoids values(2, '1') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   2 | 1
+(1 row)
+
+-- and update it
+insert into testoids values(2, '2') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   2 | 2
+(1 row)
+
+-- remove oids again, test
+alter table testoids set without oids;
+insert into testoids values(1, '4') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   1 | 4
+(1 row)
+
+insert into testoids values(3, '1') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   3 | 1
+(1 row)
+
+insert into testoids values(3, '2') on conflict (key) do update set data = excluded.data RETURNING *;
+ key | data 
+-----+------
+   3 | 2
+(1 row)
+
+DROP TABLE testoids;
+-- check that references to columns after dropped columns are handled correctly
+create table dropcol(key int primary key, drop1 int, keep1 text, drop2 numeric, keep2 float);
+insert into dropcol(key, drop1, keep1, drop2, keep2) values(1, 1, '1', '1', 1);
+-- set using excluded
+insert into dropcol(key, drop1, keep1, drop2, keep2) values(1, 2, '2', '2', 2) on conflict(key)
+    do update set drop1 = excluded.drop1, keep1 = excluded.keep1, drop2 = excluded.drop2, keep2 = excluded.keep2
+    where excluded.drop1 is not null and excluded.keep1 is not null and excluded.drop2 is not null and excluded.keep2 is not null
+          and dropcol.drop1 is not null and dropcol.keep1 is not null and dropcol.drop2 is not null and dropcol.keep2 is not null
+    returning *;
+ key | drop1 | keep1 | drop2 | keep2 
+-----+-------+-------+-------+-------
+   1 |     2 | 2     |     2 |     2
+(1 row)
+
+;
+-- set using existing table
+insert into dropcol(key, drop1, keep1, drop2, keep2) values(1, 3, '3', '3', 3) on conflict(key)
+    do update set drop1 = dropcol.drop1, keep1 = dropcol.keep1, drop2 = dropcol.drop2, keep2 = dropcol.keep2
+    returning *;
+ key | drop1 | keep1 | drop2 | keep2 
+-----+-------+-------+-------+-------
+   1 |     2 | 2     |     2 |     2
+(1 row)
+
+;
+alter table dropcol drop column drop1, drop column drop2;
+-- set using excluded
+insert into dropcol(key, keep1, keep2) values(1, '4', 4) on conflict(key)
+    do update set keep1 = excluded.keep1, keep2 = excluded.keep2
+    where excluded.keep1 is not null and excluded.keep2 is not null
+          and dropcol.keep1 is not null and dropcol.keep2 is not null
+    returning *;
+ key | keep1 | keep2 
+-----+-------+-------
+   1 | 4     |     4
+(1 row)
+
+;
+-- set using existing table
+insert into dropcol(key, keep1, keep2) values(1, '5', 5) on conflict(key)
+    do update set keep1 = dropcol.keep1, keep2 = dropcol.keep2
+    returning *;
+ key | keep1 | keep2 
+-----+-------+-------
+   1 | 4     |     4
+(1 row)
+
+;
+DROP TABLE dropcol;

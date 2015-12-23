@@ -143,8 +143,7 @@
 
    <para>
     Possibly, your site administrator has already created a database
-    for your use.  He should have told you what the name of your
-    database is.  In that case you can omit this step and skip ahead
+    for your use.  In that case you can omit this step and skip ahead
     to the next section.
    </para>
 

@@ -129,6 +129,7 @@ typedef struct _psqlSettings
 	const char *prompt2;
 	const char *prompt3;
 	PGVerbosity verbosity;		/* current error verbosity level */
+	PGContextVisibility show_context;	/* current context display level */
 } PsqlSettings;
 
 extern PsqlSettings pset;

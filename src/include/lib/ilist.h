@@ -268,40 +268,13 @@ extern void slist_check(slist_head *head);
 #define slist_check(head)	((void) (head))
 #endif   /* ILIST_DEBUG */
 
+/* doubly linked list implementation */
 
-/*
- * We want the functions below to be inline; but if the compiler doesn't
- * support that, fall back on providing them as regular functions.  See
- * STATIC_IF_INLINE in c.h.
- */
-#ifndef PG_USE_INLINE
-extern void dlist_init(dlist_head *head);
-extern bool dlist_is_empty(dlist_head *head);
-extern void dlist_push_head(dlist_head *head, dlist_node *node);
-extern void dlist_push_tail(dlist_head *head, dlist_node *node);
-extern void dlist_insert_after(dlist_node *after, dlist_node *node);
-extern void dlist_insert_before(dlist_node *before, dlist_node *node);
-extern void dlist_delete(dlist_node *node);
-extern dlist_node *dlist_pop_head_node(dlist_head *head);
-extern void dlist_move_head(dlist_head *head, dlist_node *node);
-extern bool dlist_has_next(dlist_head *head, dlist_node *node);
-extern bool dlist_has_prev(dlist_head *head, dlist_node *node);
-extern dlist_node *dlist_next_node(dlist_head *head, dlist_node *node);
-extern dlist_node *dlist_prev_node(dlist_head *head, dlist_node *node);
-extern dlist_node *dlist_head_node(dlist_head *head);
-extern dlist_node *dlist_tail_node(dlist_head *head);
-
-/* dlist macro support functions */
-extern void *dlist_tail_element_off(dlist_head *head, size_t off);
-extern void *dlist_head_element_off(dlist_head *head, size_t off);
-#endif   /* !PG_USE_INLINE */
-
-#if defined(PG_USE_INLINE) || defined(ILIST_INCLUDE_DEFINITIONS)
 /*
  * Initialize a doubly linked list.
  * Previous state will be thrown away without any cleanup.
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_init(dlist_head *head)
 {
 	head->head.next = head->head.prev = &head->head;
@@ -312,7 +285,7 @@ dlist_init(dlist_head *head)
  *
  * An empty list has either its first 'next' pointer set to NULL, or to itself.
  */
-STATIC_IF_INLINE bool
+static inline bool
 dlist_is_empty(dlist_head *head)
 {
 	dlist_check(head);
@@ -323,7 +296,7 @@ dlist_is_empty(dlist_head *head)
 /*
  * Insert a node at the beginning of the list.
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_push_head(dlist_head *head, dlist_node *node)
 {
 	if (head->head.next == NULL)	/* convert NULL header to circular */
@@ -340,7 +313,7 @@ dlist_push_head(dlist_head *head, dlist_node *node)
 /*
  * Insert a node at the end of the list.
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_push_tail(dlist_head *head, dlist_node *node)
 {
 	if (head->head.next == NULL)	/* convert NULL header to circular */
@@ -357,7 +330,7 @@ dlist_push_tail(dlist_head *head, dlist_node *node)
 /*
  * Insert a node after another *in the same list*
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_insert_after(dlist_node *after, dlist_node *node)
 {
 	node->prev = after;
@@ -369,7 +342,7 @@ dlist_insert_after(dlist_node *after, dlist_node *node)
 /*
  * Insert a node before another *in the same list*
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_insert_before(dlist_node *before, dlist_node *node)
 {
 	node->prev = before->prev;
@@ -381,7 +354,7 @@ dlist_insert_before(dlist_node *before, dlist_node *node)
 /*
  * Delete 'node' from its list (it must be in one).
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_delete(dlist_node *node)
 {
 	node->prev->next = node->next;
@@ -391,7 +364,7 @@ dlist_delete(dlist_node *node)
 /*
  * Remove and return the first node from a list (there must be one).
  */
-STATIC_IF_INLINE dlist_node *
+static inline dlist_node *
 dlist_pop_head_node(dlist_head *head)
 {
 	dlist_node *node;
@@ -408,7 +381,7 @@ dlist_pop_head_node(dlist_head *head)
  *
  * Undefined behaviour if 'node' is not already part of the list.
  */
-STATIC_IF_INLINE void
+static inline void
 dlist_move_head(dlist_head *head, dlist_node *node)
 {
 	/* fast path if it's already at the head */
@@ -425,7 +398,7 @@ dlist_move_head(dlist_head *head, dlist_node *node)
  * Check whether 'node' has a following node.
  * Caution: unreliable if 'node' is not in the list.
  */
-STATIC_IF_INLINE bool
+static inline bool
 dlist_has_next(dlist_head *head, dlist_node *node)
 {
 	return node->next != &head->head;
@@ -435,7 +408,7 @@ dlist_has_next(dlist_head *head, dlist_node *node)
  * Check whether 'node' has a preceding node.
  * Caution: unreliable if 'node' is not in the list.
  */
-STATIC_IF_INLINE bool
+static inline bool
 dlist_has_prev(dlist_head *head, dlist_node *node)
 {
 	return node->prev != &head->head;
@@ -444,7 +417,7 @@ dlist_has_prev(dlist_head *head, dlist_node *node)
 /*
  * Return the next node in the list (there must be one).
  */
-STATIC_IF_INLINE dlist_node *
+static inline dlist_node *
 dlist_next_node(dlist_head *head, dlist_node *node)
 {
 	Assert(dlist_has_next(head, node));
@@ -454,7 +427,7 @@ dlist_next_node(dlist_head *head, dlist_node *node)
 /*
  * Return previous node in the list (there must be one).
  */
-STATIC_IF_INLINE dlist_node *
+static inline dlist_node *
 dlist_prev_node(dlist_head *head, dlist_node *node)
 {
 	Assert(dlist_has_prev(head, node));
@@ -462,7 +435,7 @@ dlist_prev_node(dlist_head *head, dlist_node *node)
 }
 
 /* internal support function to get address of head element's struct */
-STATIC_IF_INLINE void *
+static inline void *
 dlist_head_element_off(dlist_head *head, size_t off)
 {
 	Assert(!dlist_is_empty(head));
@@ -472,14 +445,14 @@ dlist_head_element_off(dlist_head *head, size_t off)
 /*
  * Return the first node in the list (there must be one).
  */
-STATIC_IF_INLINE dlist_node *
+static inline dlist_node *
 dlist_head_node(dlist_head *head)
 {
 	return (dlist_node *) dlist_head_element_off(head, 0);
 }
 
 /* internal support function to get address of tail element's struct */
-STATIC_IF_INLINE void *
+static inline void *
 dlist_tail_element_off(dlist_head *head, size_t off)
 {
 	Assert(!dlist_is_empty(head));
@@ -489,12 +462,11 @@ dlist_tail_element_off(dlist_head *head, size_t off)
 /*
  * Return the last node in the list (there must be one).
  */
-STATIC_IF_INLINE dlist_node *
+static inline dlist_node *
 dlist_tail_node(dlist_head *head)
 {
 	return (dlist_node *) dlist_tail_element_off(head, 0);
 }
-#endif   /* PG_USE_INLINE || ILIST_INCLUDE_DEFINITIONS */
 
 /*
  * Return the containing struct of 'type' where 'membername' is the dlist_node
@@ -572,32 +544,13 @@ dlist_tail_node(dlist_head *head)
 		 (iter).cur = (iter).cur->prev)
 
 
-/*
- * We want the functions below to be inline; but if the compiler doesn't
- * support that, fall back on providing them as regular functions.  See
- * STATIC_IF_INLINE in c.h.
- */
-#ifndef PG_USE_INLINE
-extern void slist_init(slist_head *head);
-extern bool slist_is_empty(slist_head *head);
-extern void slist_push_head(slist_head *head, slist_node *node);
-extern void slist_insert_after(slist_node *after, slist_node *node);
-extern slist_node *slist_pop_head_node(slist_head *head);
-extern bool slist_has_next(slist_head *head, slist_node *node);
-extern slist_node *slist_next_node(slist_head *head, slist_node *node);
-extern slist_node *slist_head_node(slist_head *head);
-extern void slist_delete_current(slist_mutable_iter *iter);
+/* singly linked list implementation */
 
-/* slist macro support function */
-extern void *slist_head_element_off(slist_head *head, size_t off);
-#endif
-
-#if defined(PG_USE_INLINE) || defined(ILIST_INCLUDE_DEFINITIONS)
 /*
  * Initialize a singly linked list.
  * Previous state will be thrown away without any cleanup.
  */
-STATIC_IF_INLINE void
+static inline void
 slist_init(slist_head *head)
 {
 	head->head.next = NULL;
@@ -606,7 +559,7 @@ slist_init(slist_head *head)
 /*
  * Is the list empty?
  */
-STATIC_IF_INLINE bool
+static inline bool
 slist_is_empty(slist_head *head)
 {
 	slist_check(head);
@@ -617,7 +570,7 @@ slist_is_empty(slist_head *head)
 /*
  * Insert a node at the beginning of the list.
  */
-STATIC_IF_INLINE void
+static inline void
 slist_push_head(slist_head *head, slist_node *node)
 {
 	node->next = head->head.next;
@@ -629,7 +582,7 @@ slist_push_head(slist_head *head, slist_node *node)
 /*
  * Insert a node after another *in the same list*
  */
-STATIC_IF_INLINE void
+static inline void
 slist_insert_after(slist_node *after, slist_node *node)
 {
 	node->next = after->next;
@@ -639,7 +592,7 @@ slist_insert_after(slist_node *after, slist_node *node)
 /*
  * Remove and return the first node from a list (there must be one).
  */
-STATIC_IF_INLINE slist_node *
+static inline slist_node *
 slist_pop_head_node(slist_head *head)
 {
 	slist_node *node;
@@ -654,7 +607,7 @@ slist_pop_head_node(slist_head *head)
 /*
  * Check whether 'node' has a following node.
  */
-STATIC_IF_INLINE bool
+static inline bool
 slist_has_next(slist_head *head, slist_node *node)
 {
 	slist_check(head);
@@ -665,7 +618,7 @@ slist_has_next(slist_head *head, slist_node *node)
 /*
  * Return the next node in the list (there must be one).
  */
-STATIC_IF_INLINE slist_node *
+static inline slist_node *
 slist_next_node(slist_head *head, slist_node *node)
 {
 	Assert(slist_has_next(head, node));
@@ -673,7 +626,7 @@ slist_next_node(slist_head *head, slist_node *node)
 }
 
 /* internal support function to get address of head element's struct */
-STATIC_IF_INLINE void *
+static inline void *
 slist_head_element_off(slist_head *head, size_t off)
 {
 	Assert(!slist_is_empty(head));
@@ -683,7 +636,7 @@ slist_head_element_off(slist_head *head, size_t off)
 /*
  * Return the first node in the list (there must be one).
  */
-STATIC_IF_INLINE slist_node *
+static inline slist_node *
 slist_head_node(slist_head *head)
 {
 	return (slist_node *) slist_head_element_off(head, 0);
@@ -695,7 +648,7 @@ slist_head_node(slist_head *head)
  * Caution: this modifies iter->cur, so don't use that again in the current
  * loop iteration.
  */
-STATIC_IF_INLINE void
+static inline void
 slist_delete_current(slist_mutable_iter *iter)
 {
 	/*
@@ -711,7 +664,6 @@ slist_delete_current(slist_mutable_iter *iter)
 	 */
 	iter->cur = iter->prev;
 }
-#endif   /* PG_USE_INLINE || ILIST_INCLUDE_DEFINITIONS */
 
 /*
  * Return the containing struct of 'type' where 'membername' is the slist_node

@@ -381,7 +381,7 @@ b
       <entry><type>hstore</type></entry>
       <entry>delete pair with matching key</entry>
       <entry><literal>delete('a=&gt;1,b=&gt;2','b')</literal></entry>
-      <entry><literal>"a"=>"1"</literal></entry>
+      <entry><literal>"a"=&gt;"1"</literal></entry>
      </row>
 
      <row>
@@ -389,7 +389,7 @@ b
       <entry><type>hstore</type></entry>
       <entry>delete pairs with matching keys</entry>
       <entry><literal>delete('a=&gt;1,b=&gt;2,c=&gt;3',ARRAY['a','b'])</literal></entry>
-      <entry><literal>"c"=>"3"</literal></entry>
+      <entry><literal>"c"=&gt;"3"</literal></entry>
      </row>
 
      <row>
@@ -397,7 +397,7 @@ b
       <entry><type>hstore</type></entry>
       <entry>delete pairs matching those in the second argument</entry>
       <entry><literal>delete('a=&gt;1,b=&gt;2','a=&gt;4,b=&gt;2'::hstore)</literal></entry>
-      <entry><literal>"a"=>"1"</literal></entry>
+      <entry><literal>"a"=&gt;"1"</literal></entry>
      </row>
 
      <row>

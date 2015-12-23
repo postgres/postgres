@@ -263,17 +263,6 @@ SELECT xmlparse(content '<nosuchprefix:tag/>');
  <nosuchprefix:tag/>
 (1 row)
 
-SELECT xmlparse(document '');
-ERROR:  invalid XML document
-DETAIL:  line 1: switching encoding : no input
-
-^
-line 1: Document is empty
-
-^
-line 1: Start tag expected, '<' not found
-
-^
 SELECT xmlparse(document '   ');
 ERROR:  invalid XML document
 DETAIL:  line 1: Start tag expected, '<' not found
@@ -934,7 +923,6 @@ SELECT xpath('/*', '<relativens xmlns=''relative''/>');
 WARNING:  line 1: xmlns: URI relative is not absolute
 <relativens xmlns='relative'/>
                             ^
-CONTEXT:  SQL function "xpath" statement 1
                 xpath                 
 --------------------------------------
  {"<relativens xmlns=\"relative\"/>"}

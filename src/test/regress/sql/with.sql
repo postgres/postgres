@@ -838,8 +838,9 @@ WITH aa AS (SELECT 1 a, 2 b)
 INSERT INTO z VALUES(1, (SELECT b || ' insert' FROM aa WHERE a = 1 ))
 ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
 
--- This shows an attempt to update an invisible row, which should really be
--- reported as a cardinality violation, but it doesn't seem worth fixing:
+-- Update a row more than once, in different parts of a wCTE. That is
+-- an allowed, presumably very rare, edge case, but since it was
+-- broken in the past, having a test seems worthwhile.
 WITH simpletup AS (
   SELECT 2 k, 'Green' v),
 upsert_cte AS (

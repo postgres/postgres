@@ -225,6 +225,7 @@ extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern Node *MultiExecProcNode(PlanState *node);
 extern void ExecEndNode(PlanState *node);
+extern bool ExecShutdownNode(PlanState *node);
 
 /*
  * prototypes from functions in execQual.c
@@ -344,7 +345,6 @@ extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 extern void ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc);
 extern void ExecFreeExprContext(PlanState *planstate);
-extern TupleDesc ExecGetScanType(ScanState *scanstate);
 extern void ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc);
 extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 

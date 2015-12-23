@@ -15,9 +15,6 @@
 
 #include "postgres.h"
 
-/* See sortsupport.h */
-#define SORTSUPPORT_INCLUDE_DEFINITIONS
-
 #include "access/nbtree.h"
 #include "fmgr.h"
 #include "utils/lsyscache.h"

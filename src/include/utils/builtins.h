@@ -860,6 +860,7 @@ extern Datum xidout(PG_FUNCTION_ARGS);
 extern Datum xidrecv(PG_FUNCTION_ARGS);
 extern Datum xidsend(PG_FUNCTION_ARGS);
 extern Datum xideq(PG_FUNCTION_ARGS);
+extern Datum xidneq(PG_FUNCTION_ARGS);
 extern Datum xid_age(PG_FUNCTION_ARGS);
 extern Datum mxid_age(PG_FUNCTION_ARGS);
 extern int	xidComparator(const void *arg1, const void *arg2);
@@ -1105,6 +1106,7 @@ extern Datum format_type(PG_FUNCTION_ARGS);
 extern char *format_type_be(Oid type_oid);
 extern char *format_type_be_qualified(Oid type_oid);
 extern char *format_type_with_typemod(Oid type_oid, int32 typemod);
+extern char *format_type_with_typemod_qualified(Oid type_oid, int32 typemod);
 extern Datum oidvectortypes(PG_FUNCTION_ARGS);
 extern int32 type_maximum_size(Oid type_oid, int32 typemod);
 
@@ -1173,6 +1175,7 @@ extern Datum uuid_ge(PG_FUNCTION_ARGS);
 extern Datum uuid_gt(PG_FUNCTION_ARGS);
 extern Datum uuid_ne(PG_FUNCTION_ARGS);
 extern Datum uuid_cmp(PG_FUNCTION_ARGS);
+extern Datum uuid_sortsupport(PG_FUNCTION_ARGS);
 extern Datum uuid_hash(PG_FUNCTION_ARGS);
 
 /* windowfuncs.c */

@@ -168,7 +168,8 @@ GetForeignPlan (PlannerInfo *root,
                 Oid foreigntableid,
                 ForeignPath *best_path,
                 List *tlist,
-                List *scan_clauses);
+                List *scan_clauses,
+                Plan *outer_plan);
 </programlisting>
 
      Create a <structname>ForeignScan</> plan node from the selected foreign
@@ -239,7 +240,7 @@ IterateForeignScan (ForeignScanState *node);
 
     <para>
      The rows returned must match the <structfield>fdw_scan_tlist</> target
-     list if one was supplied, otherwise they must match the rowtype of the
+     list if one was supplied, otherwise they must match the row type of the
      foreign table being scanned.  If you choose to optimize away fetching
      columns that are not needed, you should insert nulls in those column
      positions, or else generate a <structfield>fdw_scan_tlist</> list with
@@ -333,7 +334,7 @@ GetForeignJoinPaths (PlannerInfo *root,
      remote join cannot be found from the system catalogs, the FDW must
      fill <structfield>fdw_scan_tlist</> with an appropriate list
      of <structfield>TargetEntry</> nodes, representing the set of columns
-     it will supply at runtime in the tuples it returns.
+     it will supply at run time in the tuples it returns.
     </para>
 
     <para>
@@ -752,7 +753,7 @@ RefetchForeignRow (EState *estate,
      for the row to be re-fetched.  Although the <literal>rowid</> value is
      passed as a <type>Datum</>, it can currently only be a <type>tid</>.  The
      function API is chosen in hopes that it may be possible to allow other
-     datatypes for row IDs in future.
+     data types for row IDs in future.
     </para>
 
     <para>
@@ -765,6 +766,35 @@ RefetchForeignRow (EState *estate,
      See <xref linkend="fdw-row-locking"> for more information.
     </para>
 
+    <para>
+<programlisting>
+bool
+RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
+</programlisting>
+     Recheck that a previously-returned tuple still matches the relevant
+     scan and join qualifiers, and possibly provide a modified version of
+     the tuple.  For foreign data wrappers which do not perform join pushdown,
+     it will typically be more convenient to set this to <literal>NULL</> and
+     instead set <structfield>fdw_recheck_quals</structfield> appropriately.
+     When outer joins are pushed down, however, it isn't sufficient to
+     reapply the checks relevant to all the base tables to the result tuple,
+     even if all needed attributes are present, because failure to match some
+     qualifier might result in some attributes going to NULL, rather than in
+     no tuple being returned.  <literal>RecheckForeignScan</> can recheck
+     qualifiers and return true if they are still satisfied and false
+     otherwise, but it can also store a replacement tuple into the supplied
+     slot.
+    </para>
+
+    <para>
+     To implement join pushdown, a foreign data wrapper will typically
+     construct an alternative local join plan which is used only for
+     rechecks; this will become the outer subplan of the
+     <literal>ForeignScan</>.  When a recheck is required, this subplan
+     can be executed and the resulting tuple can be stored in the slot.
+     This plan need not be efficient since no base table will return more
+     than one row; for example, it may implement all joins as nested loops.
+    </para>
    </sect2>
 
    <sect2 id="fdw-callbacks-explain">
@@ -1136,12 +1166,27 @@ GetForeignServerByName(const char *name, bool missing_ok);
     </para>
 
     <para>
+     Any clauses removed from the plan node's qual list must instead be added
+     to <literal>fdw_recheck_quals</> or rechecked by
+     <literal>RecheckForeignScan</> in order to ensure correct behavior
+     at the <literal>READ COMMITTED</> isolation level.  When a concurrent
+     update occurs for some other table involved in the query, the executor
+     may need to verify that all of the original quals are still satisfied for
+     the tuple, possibly against a different set of parameter values.  Using
+     <literal>fdw_recheck_quals</> is typically easier than implementing checks
+     inside <literal>RecheckForeignScan</>, but this method will be
+     insufficient when outer joins have been pushed down, since the join tuples
+     in that case might have some fields go to NULL without rejecting the
+     tuple entirely.
+    </para>
+
+    <para>
      Another <structname>ForeignScan</> field that can be filled by FDWs
      is <structfield>fdw_scan_tlist</>, which describes the tuples returned by
      the FDW for this plan node.  For simple foreign table scans this can be
      set to <literal>NIL</>, implying that the returned tuples have the
-     rowtype declared for the foreign table.  A non-NIL value must be a
-     targetlist (list of <structname>TargetEntry</>s) containing Vars and/or
+     row type declared for the foreign table.  A non-<symbol>NIL</symbol> value must be a
+     target list (list of <structname>TargetEntry</>s) containing Vars and/or
      expressions representing the returned columns.  This might be used, for
      example, to show that the FDW has omitted some columns that it noticed
      won't be needed for the query.  Also, if the FDW can compute expressions
@@ -1196,9 +1241,10 @@ GetForeignServerByName(const char *name, bool missing_ok);
 
     <para>
      <command>INSERT</> with an <literal>ON CONFLICT</> clause does not
-     support specifying the conflict target, as remote constraints are not
-     locally known. This in turn implies that <literal>ON CONFLICT DO
-     UPDATE</> is not supported, since the specification is mandatory there.
+     support specifying the conflict target, as unique constraints or
+     exclusion constraints on remote tables are not locally known. This
+     in turn implies that <literal>ON CONFLICT DO UPDATE</> is not supported,
+     since the specification is mandatory there.
     </para>
 
    </sect1>

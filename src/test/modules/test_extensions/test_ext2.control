@@ -1,0 +1,4 @@
+comment = 'Test extension 2'
+default_version = '1.0'
+relocatable = true
+requires = 'test_ext3,test_ext5'

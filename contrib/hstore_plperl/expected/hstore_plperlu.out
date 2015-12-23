@@ -1,6 +1,6 @@
-CREATE EXTENSION hstore;
-CREATE EXTENSION plperlu;
-CREATE EXTENSION hstore_plperlu;
+CREATE EXTENSION hstore_plperlu CASCADE;
+NOTICE:  installing required extension "hstore"
+NOTICE:  installing required extension "plperlu"
 SELECT transforms.udt_schema, transforms.udt_name,
        routine_schema, routine_name,
        group_name, transform_type
@@ -29,7 +29,6 @@ INFO:  $VAR1 = {
           'cc' => undef
         };
 
-CONTEXT:  PL/Perl function "test1"
  test1 
 -------
      2
@@ -46,7 +45,6 @@ $$;
 SELECT test1none('aa=>bb, cc=>NULL'::hstore);
 INFO:  $VAR1 = '"aa"=>"bb", "cc"=>NULL';
 
-CONTEXT:  PL/Perl function "test1none"
  test1none 
 -----------
          0
@@ -67,7 +65,6 @@ INFO:  $VAR1 = {
           'cc' => undef
         };
 
-CONTEXT:  PL/Perl function "test1list"
  test1list 
 -----------
          2
@@ -92,7 +89,6 @@ $VAR2 = {
           'dd' => 'ee'
         };
 
-CONTEXT:  PL/Perl function "test1arr"
  test1arr 
 ----------
         2
@@ -120,10 +116,8 @@ INFO:  $VAR1 = {
           'cc' => undef
         };
 
-CONTEXT:  PL/Perl function "test3"
 INFO:  $VAR1 = '"a"=>"1", "b"=>"boo", "c"=>NULL';
 
-CONTEXT:  PL/Perl function "test3"
  test3 
 -------
  
@@ -161,7 +155,6 @@ INFO:  $VAR1 = {
                }
         };
 
-CONTEXT:  PL/Perl function "test4"
 SELECT * FROM test1;
  a |                b                
 ---+---------------------------------

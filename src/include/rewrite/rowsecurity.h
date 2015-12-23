@@ -19,7 +19,6 @@
 
 typedef struct RowSecurityPolicy
 {
-	Oid			policy_id;		/* OID of the policy */
 	char	   *policy_name;	/* Name of the policy */
 	char		polcmd;			/* Type of command policy is for */
 	ArrayType  *roles;			/* Array of roles policy is for */
@@ -41,7 +40,7 @@ extern PGDLLIMPORT row_security_policy_hook_type row_security_policy_hook_permis
 
 extern PGDLLIMPORT row_security_policy_hook_type row_security_policy_hook_restrictive;
 
-extern void get_row_security_policies(Query *root, CmdType commandType,
+extern void get_row_security_policies(Query *root,
 						  RangeTblEntry *rte, int rt_index,
 						  List **securityQuals, List **withCheckOptions,
 						  bool *hasRowSecurity, bool *hasSubLinks);

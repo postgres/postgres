@@ -34,6 +34,7 @@
 #include "commands/createas.h"
 #include "commands/matview.h"
 #include "executor/functions.h"
+#include "executor/tqueue.h"
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -129,6 +130,9 @@ CreateDestReceiver(CommandDest dest)
 
 		case DestTransientRel:
 			return CreateTransientRelDestReceiver(InvalidOid);
+
+		case DestTupleQueue:
+			return CreateTupleQueueDestReceiver(NULL);
 	}
 
 	/* should never get here */
@@ -162,6 +166,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 		case DestCopyOut:
 		case DestSQLFunction:
 		case DestTransientRel:
+		case DestTupleQueue:
 			break;
 	}
 }
@@ -204,6 +209,7 @@ NullCommand(CommandDest dest)
 		case DestCopyOut:
 		case DestSQLFunction:
 		case DestTransientRel:
+		case DestTupleQueue:
 			break;
 	}
 }
@@ -248,6 +254,7 @@ ReadyForQuery(CommandDest dest)
 		case DestCopyOut:
 		case DestSQLFunction:
 		case DestTransientRel:
+		case DestTupleQueue:
 			break;
 	}
 }

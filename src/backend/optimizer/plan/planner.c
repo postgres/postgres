@@ -19,6 +19,8 @@
 #include <math.h>
 
 #include "access/htup_details.h"
+#include "access/parallel.h"
+#include "access/xact.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "foreign/fdwapi.h"
@@ -43,6 +45,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_agg.h"
 #include "rewrite/rewriteManip.h"
+#include "storage/dsm_impl.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
 
@@ -194,8 +197,61 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->nParamExec = 0;
 	glob->lastPHId = 0;
 	glob->lastRowMarkId = 0;
+	glob->lastPlanNodeId = 0;
 	glob->transientPlan = false;
 	glob->hasRowSecurity = false;
+
+	/*
+	 * Assess whether it's feasible to use parallel mode for this query.
+	 * We can't do this in a standalone backend, or if the command will
+	 * try to modify any data, or if this is a cursor operation, or if
+	 * GUCs are set to values that don't permit parallelism, or if
+	 * parallel-unsafe functions are present in the query tree.
+	 *
+	 * For now, we don't try to use parallel mode if we're running inside
+	 * a parallel worker.  We might eventually be able to relax this
+	 * restriction, but for now it seems best not to have parallel workers
+	 * trying to create their own parallel workers.
+	 *
+	 * We can't use parallelism in serializable mode because the predicate
+	 * locking code is not parallel-aware.  It's not catastrophic if someone
+	 * tries to run a parallel plan in serializable mode; it just won't get
+	 * any workers and will run serially.  But it seems like a good heuristic
+	 * to assume that the same serialization level will be in effect at plan
+	 * time and execution time, so don't generate a parallel plan if we're
+	 * in serializable mode.
+	 */
+	glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
+		IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
+		parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
+		parse->utilityStmt == NULL && max_parallel_degree > 0 &&
+		!IsParallelWorker() && !IsolationIsSerializable() &&
+		!has_parallel_hazard((Node *) parse, true);
+
+	/*
+	 * glob->parallelModeOK should tell us whether it's necessary to impose
+	 * the parallel mode restrictions, but we don't actually want to impose
+	 * them unless we choose a parallel plan, so that people who mislabel
+	 * their functions but don't use parallelism anyway aren't harmed.
+	 * However, it's useful for testing purposes to be able to force the
+	 * restrictions to be imposed whenever a parallel plan is actually chosen
+	 * or not.
+	 *
+	 * (It's been suggested that we should always impose these restrictions
+	 * whenever glob->parallelModeOK is true, so that it's easier to notice
+	 * incorrectly-labeled functions sooner.  That might be the right thing
+	 * to do, but for now I've taken this approach.  We could also control
+	 * this with a GUC.)
+	 *
+	 * FIXME: It's assumed that code further down will set parallelModeNeeded
+	 * to true if a parallel path is actually chosen.  Since the core
+	 * parallelism code isn't committed yet, this currently never happens.
+	 */
+#ifdef FORCE_PARALLEL_MODE
+	glob->parallelModeNeeded = glob->parallelModeOK;
+#else
+	glob->parallelModeNeeded = false;
+#endif
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (cursorOptions & CURSOR_OPT_FAST_PLAN)
@@ -239,6 +295,25 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 			top_plan = materialize_finished_plan(top_plan);
 	}
 
+	/*
+	 * If any Params were generated, run through the plan tree and compute
+	 * each plan node's extParam/allParam sets.  Ideally we'd merge this into
+	 * set_plan_references' tree traversal, but for now it has to be separate
+	 * because we need to visit subplans before not after main plan.
+	 */
+	if (glob->nParamExec > 0)
+	{
+		Assert(list_length(glob->subplans) == list_length(glob->subroots));
+		forboth(lp, glob->subplans, lr, glob->subroots)
+		{
+			Plan	   *subplan = (Plan *) lfirst(lp);
+			PlannerInfo *subroot = (PlannerInfo *) lfirst(lr);
+
+			SS_finalize_plan(subroot, subplan);
+		}
+		SS_finalize_plan(root, top_plan);
+	}
+
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
@@ -274,6 +349,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->invalItems = glob->invalItems;
 	result->nParamExec = glob->nParamExec;
 	result->hasRowSecurity = glob->hasRowSecurity;
+	result->parallelModeNeeded = glob->parallelModeNeeded;
 
 	return result;
 }
@@ -312,7 +388,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				 bool hasRecursion, double tuple_fraction,
 				 PlannerInfo **subroot)
 {
-	int			num_old_subplans = list_length(glob->subplans);
 	PlannerInfo *root;
 	Plan	   *plan;
 	List	   *newWithCheckOptions;
@@ -327,6 +402,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->query_level = parent_root ? parent_root->query_level + 1 : 1;
 	root->parent_root = parent_root;
 	root->plan_params = NIL;
+	root->outer_params = NULL;
 	root->planner_cxt = CurrentMemoryContext;
 	root->init_plans = NIL;
 	root->cte_plan_ids = NIL;
@@ -656,13 +732,17 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	}
 
 	/*
-	 * If any subplans were generated, or if there are any parameters to worry
-	 * about, build initPlan list and extParam/allParam sets for plan nodes,
-	 * and attach the initPlans to the top plan node.
+	 * Capture the set of outer-level param IDs we have access to, for use in
+	 * extParam/allParam calculations later.
 	 */
-	if (list_length(glob->subplans) != num_old_subplans ||
-		root->glob->nParamExec > 0)
-		SS_finalize_plan(root, plan, true);
+	SS_identify_outer_params(root);
+
+	/*
+	 * If any initPlans were created in this query level, attach them to the
+	 * topmost plan node for the level, and increment that node's cost to
+	 * account for them.
+	 */
+	SS_attach_initplans(root, plan);
 
 	/* Return internal info if caller wants it */
 	if (subroot)
@@ -1052,9 +1132,8 @@ inheritance_planner(PlannerInfo *root)
 			}
 		}
 
-		/* There shouldn't be any OJ or LATERAL info to translate, as yet */
+		/* There shouldn't be any OJ info to translate, as yet */
 		Assert(subroot.join_info_list == NIL);
-		Assert(subroot.lateral_info_list == NIL);
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot.placeholder_list == NIL);
 		/* hack to mark target relation as an inheritance partition */
@@ -1450,7 +1529,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * This may add new security barrier subquery RTEs to the rangetable.
 		 */
 		expand_security_quals(root, tlist);
-		root->glob->hasRowSecurity = parse->hasRowSecurity;
+		if (parse->hasRowSecurity)
+			root->glob->hasRowSecurity = true;
 
 		/*
 		 * Locate any window functions in the tlist.  (We don't need to look
@@ -4611,7 +4691,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	comparisonCost = 2.0 * (indexExprCost.startup + indexExprCost.per_tuple);
 
 	/* Estimate the cost of seq scan + sort */
-	seqScanPath = create_seqscan_path(root, rel, NULL);
+	seqScanPath = create_seqscan_path(root, rel, NULL, 0);
 	cost_sort(&seqScanAndSortPath, root, NIL,
 			  seqScanPath->total_cost, rel->tuples, rel->width,
 			  comparisonCost, maintenance_work_mem, -1.0);

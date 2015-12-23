@@ -14,7 +14,7 @@
 #define OBJECTADDRESS_H
 
 #include "nodes/pg_list.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 #include "utils/acl.h"
 #include "utils/relcache.h"
 

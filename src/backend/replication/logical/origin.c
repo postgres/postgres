@@ -148,9 +148,9 @@ typedef struct ReplicationStateCtl
 } ReplicationStateCtl;
 
 /* external variables */
-RepOriginId replorigin_sesssion_origin = InvalidRepOriginId;	/* assumed identity */
-XLogRecPtr	replorigin_sesssion_origin_lsn = InvalidXLogRecPtr;
-TimestampTz replorigin_sesssion_origin_timestamp = 0;
+RepOriginId replorigin_session_origin = InvalidRepOriginId;	/* assumed identity */
+XLogRecPtr	replorigin_session_origin_lsn = InvalidXLogRecPtr;
+TimestampTz replorigin_session_origin_timestamp = 0;
 
 /*
  * Base address into a shared memory array of replication states of size
@@ -313,7 +313,7 @@ replorigin_create(char *roname)
 	if (tuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("no free replication oid could be found")));
+				 errmsg("could not find free replication origin OID")));
 
 	heap_freetuple(tuple);
 	return roident;
@@ -350,7 +350,7 @@ replorigin_drop(RepOriginId roident)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_IN_USE),
-						 errmsg("cannot drop replication origin with oid %d, in use by pid %d",
+						 errmsg("could not drop replication origin with OID %d, in use by PID %d",
 								state->roident,
 								state->acquired_by)));
 			}
@@ -375,6 +375,10 @@ replorigin_drop(RepOriginId roident)
 	LWLockRelease(ReplicationOriginLock);
 
 	tuple = SearchSysCache1(REPLORIGIDENT, ObjectIdGetDatum(roident));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for replication origin with oid %u",
+			 roident);
+
 	simple_heap_delete(rel, &tuple->t_self);
 	ReleaseSysCache(tuple);
 
@@ -437,7 +441,7 @@ ReplicationOriginShmemSize(void)
 	Size		size = 0;
 
 	/*
-	 * XXX: max_replication_slots is arguablethe wrong thing to use here, here
+	 * XXX: max_replication_slots is arguably the wrong thing to use, as here
 	 * we keep the replay state of *remote* transactions. But for now it seems
 	 * sufficient to reuse it, lest we introduce a separate guc.
 	 */
@@ -523,7 +527,7 @@ CheckPointReplicationOrigin(void)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
-						path)));
+						tmppath)));
 
 	/*
 	 * no other backend can perform this at the same time, we're protected by
@@ -724,7 +728,7 @@ StartupReplicationOrigin(void)
 		if (last_state == max_replication_slots)
 			ereport(PANIC,
 					(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-					 errmsg("no free replication state could be found, increase max_replication_slots")));
+					 errmsg("could not find free replication state, increase max_replication_slots")));
 
 		/* copy data to shared memory */
 		replication_states[last_state].roident = disk_state.roident;
@@ -742,7 +746,7 @@ StartupReplicationOrigin(void)
 	if (file_crc != crc)
 		ereport(PANIC,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("replication_slot_checkpoint has wrong checksum %u, expected %u",
+				 errmsg("replication slot checkpoint has wrong checksum %u, expected %u",
 						crc, file_crc)));
 
 	CloseTransientFile(fd);
@@ -799,12 +803,12 @@ replorigin_redo(XLogReaderState *record)
  * Tell the replication origin progress machinery that a commit from 'node'
  * that originated at the LSN remote_commit on the remote node was replayed
  * successfully and that we don't need to do so again. In combination with
- * setting up replorigin_sesssion_origin_lsn and replorigin_sesssion_origin that ensures we
- * won't loose knowledge about that after a crash if the transaction had a
- * persistent effect (think of asynchronous commits).
+ * setting up replorigin_session_origin_lsn and replorigin_session_origin
+ * that ensures we won't loose knowledge about that after a crash if the
+ * transaction had a persistent effect (think of asynchronous commits).
  *
  * local_commit needs to be a local LSN of the commit so that we can make sure
- * uppon a checkpoint that enough WAL has been persisted to disk.
+ * upon a checkpoint that enough WAL has been persisted to disk.
  *
  * Needs to be called with a RowExclusiveLock on pg_replication_origin,
  * unless running in recovery.
@@ -866,7 +870,7 @@ replorigin_advance(RepOriginId node,
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("replication origin with oid %d is already active for pid %d",
+					 errmsg("replication origin with OID %d is already active for PID %d",
 							replication_state->roident,
 							replication_state->acquired_by)));
 		}
@@ -877,7 +881,7 @@ replorigin_advance(RepOriginId node,
 	if (replication_state == NULL && free_state == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("no free replication state slot could be found for replication origin with oid %u",
+				 errmsg("could not find free replication state slot for replication origin with OID %u",
 						node),
 				 errhint("Increase max_replication_slots and try again.")));
 
@@ -1045,7 +1049,7 @@ replorigin_session_setup(RepOriginId node)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			 errmsg("replication identiefer %d is already active for pid %d",
+			 errmsg("replication identifier %d is already active for PID %d",
 					curstate->roident, curstate->acquired_by)));
 		}
 
@@ -1057,7 +1061,7 @@ replorigin_session_setup(RepOriginId node)
 	if (session_replication_state == NULL && free_slot == -1)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("no free replication state slot could be found for replication origin with oid %u",
+				 errmsg("could not find free replication state slot for replication origin with OID %u",
 						node),
 				 errhint("Increase max_replication_slots and try again.")));
 	else if (session_replication_state == NULL)
@@ -1232,7 +1236,7 @@ pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 	origin = replorigin_by_name(name, false);
 	replorigin_session_setup(origin);
 
-	replorigin_sesssion_origin = origin;
+	replorigin_session_origin = origin;
 
 	pfree(name);
 
@@ -1249,10 +1253,9 @@ pg_replication_origin_session_reset(PG_FUNCTION_ARGS)
 
 	replorigin_session_reset();
 
-	/* FIXME */
-	replorigin_sesssion_origin = InvalidRepOriginId;
-	replorigin_sesssion_origin_lsn = InvalidXLogRecPtr;
-	replorigin_sesssion_origin_timestamp = 0;
+	replorigin_session_origin = InvalidRepOriginId;
+	replorigin_session_origin_lsn = InvalidXLogRecPtr;
+	replorigin_session_origin_timestamp = 0;
 
 	PG_RETURN_VOID();
 }
@@ -1265,7 +1268,7 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
 {
 	replorigin_check_prerequisites(false, false);
 
-	PG_RETURN_BOOL(replorigin_sesssion_origin != InvalidRepOriginId);
+	PG_RETURN_BOOL(replorigin_session_origin != InvalidRepOriginId);
 }
 
 
@@ -1309,8 +1312,8 @@ pg_replication_origin_xact_setup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("no replication origin is configured")));
 
-	replorigin_sesssion_origin_lsn = location;
-	replorigin_sesssion_origin_timestamp = PG_GETARG_TIMESTAMPTZ(1);
+	replorigin_session_origin_lsn = location;
+	replorigin_session_origin_timestamp = PG_GETARG_TIMESTAMPTZ(1);
 
 	PG_RETURN_VOID();
 }
@@ -1320,8 +1323,8 @@ pg_replication_origin_xact_reset(PG_FUNCTION_ARGS)
 {
 	replorigin_check_prerequisites(true, false);
 
-	replorigin_sesssion_origin_lsn = InvalidXLogRecPtr;
-	replorigin_sesssion_origin_timestamp = 0;
+	replorigin_session_origin_lsn = InvalidXLogRecPtr;
+	replorigin_session_origin_timestamp = 0;
 
 	PG_RETURN_VOID();
 }

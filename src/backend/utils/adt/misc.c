@@ -168,7 +168,7 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a member of the role whose query is being cancelled"))));
+				 (errmsg("must be a member of the role whose query is being canceled"))));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }

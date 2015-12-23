@@ -127,7 +127,7 @@ brinRevmapExtend(BrinRevmap *revmap, BlockNumber heapBlk)
  * it's not long enough.
  *
  * The returned buffer is also recorded in the revmap struct; finishing that
- * releases the buffer, therefore the caller needn't do it explicitely.
+ * releases the buffer, therefore the caller needn't do it explicitly.
  */
 Buffer
 brinLockRevmapPageForUpdate(BrinRevmap *revmap, BlockNumber heapBlk)
@@ -314,7 +314,7 @@ revmap_get_blkno(BrinRevmap *revmap, BlockNumber heapBlk)
  * Obtain and return a buffer containing the revmap page for the given heap
  * page.  The revmap must have been previously extended to cover that page.
  * The returned buffer is also recorded in the revmap struct; finishing that
- * releases the buffer, therefore the caller needn't do it explicitely.
+ * releases the buffer, therefore the caller needn't do it explicitly.
  */
 static Buffer
 revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk)
@@ -432,6 +432,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 			if (needLock)
 				UnlockRelationForExtension(irel, ExclusiveLock);
 			LockBuffer(revmap->rm_metaBuf, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buf);
 			return;
 		}
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);

@@ -130,13 +130,9 @@ else:
 $$ LANGUAGE plpythonu;
 SELECT result_metadata_test($$SELECT 1 AS foo, '11'::text AS bar UNION SELECT 2, '22'$$);
 INFO:  True
-CONTEXT:  PL/Python function "result_metadata_test"
 INFO:  ['foo', 'bar']
-CONTEXT:  PL/Python function "result_metadata_test"
 INFO:  [23, 25]
-CONTEXT:  PL/Python function "result_metadata_test"
 INFO:  [-1, -1]
-CONTEXT:  PL/Python function "result_metadata_test"
  result_metadata_test 
 ----------------------
                     2
@@ -144,7 +140,6 @@ CONTEXT:  PL/Python function "result_metadata_test"
 
 SELECT result_metadata_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);
 INFO:  True
-CONTEXT:  PL/Python function "result_metadata_test"
 ERROR:  plpy.Error: command did not produce a result set
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "result_metadata_test", line 6, in <module>
@@ -234,15 +229,10 @@ else:
 $$ LANGUAGE plpythonu;
 SELECT result_subscript_test();
 INFO:  2
-CONTEXT:  PL/Python function "result_subscript_test"
 INFO:  4
-CONTEXT:  PL/Python function "result_subscript_test"
 INFO:  [2, 3]
-CONTEXT:  PL/Python function "result_subscript_test"
 INFO:  [1, 3]
-CONTEXT:  PL/Python function "result_subscript_test"
 INFO:  [10, 100, 3, 1000]
-CONTEXT:  PL/Python function "result_subscript_test"
  result_subscript_test 
 -----------------------
  
@@ -257,7 +247,6 @@ plpy.info(result[:])
 $$ LANGUAGE plpythonu;
 SELECT result_empty_test();
 INFO:  []
-CONTEXT:  PL/Python function "result_empty_test"
  result_empty_test 
 -------------------
  

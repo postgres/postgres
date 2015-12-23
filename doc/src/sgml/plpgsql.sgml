@@ -3617,10 +3617,10 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
 ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <replaceable class="parameter">message</replaceable> </optional>;
 </synopsis>
 
-    The <replaceable class="parameter">condition</replaceable> is a boolean
-    expression that is expected to always evaluate to TRUE; if it does,
+    The <replaceable class="parameter">condition</replaceable> is a Boolean
+    expression that is expected to always evaluate to true; if it does,
     the <command>ASSERT</command> statement does nothing further.  If the
-    result is FALSE or NULL, then an <literal>ASSERT_FAILURE</> exception
+    result is false or null, then an <literal>ASSERT_FAILURE</> exception
     is raised.  (If an error occurs while evaluating
     the <replaceable class="parameter">condition</replaceable>, it is
     reported as a normal error.)
@@ -3637,7 +3637,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
 
    <para>
     Testing of assertions can be enabled or disabled via the configuration
-    parameter <literal>plpgsql.check_asserts</>, which takes a boolean
+    parameter <literal>plpgsql.check_asserts</>, which takes a Boolean
     value; the default is <literal>on</>.  If this parameter
     is <literal>off</> then <command>ASSERT</> statements do nothing.
    </para>
@@ -3904,7 +3904,7 @@ CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
             RAISE EXCEPTION '% cannot have null salary', NEW.empname;
         END IF;
 
-        -- Who works for us when she must pay for it?
+        -- Who works for us when they must pay for it?
         IF NEW.salary &lt; 0 THEN
             RAISE EXCEPTION '% cannot have a negative salary', NEW.empname;
         END IF;

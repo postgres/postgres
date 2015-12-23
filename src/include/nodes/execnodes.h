@@ -609,9 +609,6 @@ typedef struct WholeRowVarExprState
 typedef struct AggrefExprState
 {
 	ExprState	xprstate;
-	List	   *aggdirectargs;	/* states of direct-argument expressions */
-	List	   *args;			/* states of aggregated-argument expressions */
-	ExprState  *aggfilter;		/* state of FILTER expression, if any */
 	int			aggno;			/* ID number for agg within its plan node */
 } AggrefExprState;
 
@@ -1032,6 +1029,7 @@ typedef struct PlanState
 								 * top-level plan */
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
+	WorkerInstrumentation *worker_instrument; /* per-worker instrumentation */
 
 	/*
 	 * Common structural data for all Plan types.  These links to subsidiary
@@ -1251,11 +1249,15 @@ typedef struct ScanState
 	TupleTableSlot *ss_ScanTupleSlot;
 } ScanState;
 
-/*
- * SeqScan uses a bare ScanState as its state node, since it needs
- * no additional fields.
+/* ----------------
+ *	 SeqScanState information
+ * ----------------
  */
-typedef ScanState SeqScanState;
+typedef struct SeqScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	Size		pscan_len;		/* size of parallel heap scan descriptor */
+} SeqScanState;
 
 /* ----------------
  *	 SampleScanState information
@@ -1427,7 +1429,8 @@ typedef struct BitmapIndexScanState
  *		lossy_pages		   total number of lossy pages retrieved
  *		prefetch_iterator  iterator for prefetching ahead of current page
  *		prefetch_pages	   # pages prefetch iterator is ahead of current
- *		prefetch_target    target prefetch distance
+ *		prefetch_target    current target prefetch distance
+ *		prefetch_maximum   maximum value for prefetch_target
  * ----------------
  */
 typedef struct BitmapHeapScanState
@@ -1442,6 +1445,7 @@ typedef struct BitmapHeapScanState
 	TBMIterator *prefetch_iterator;
 	int			prefetch_pages;
 	int			prefetch_target;
+	int			prefetch_maximum;
 } BitmapHeapScanState;
 
 /* ----------------
@@ -1580,6 +1584,7 @@ typedef struct WorkTableScanState
 typedef struct ForeignScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
+	List	   *fdw_recheck_quals;	/* original quals not in ss.ps.qual */
 	/* use struct pointer to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
 	void	   *fdw_state;		/* foreign-data wrapper can keep state here */
@@ -1825,6 +1830,7 @@ typedef struct GroupState
  */
 /* these structs are private in nodeAgg.c: */
 typedef struct AggStatePerAggData *AggStatePerAgg;
+typedef struct AggStatePerTransData *AggStatePerTrans;
 typedef struct AggStatePerGroupData *AggStatePerGroup;
 typedef struct AggStatePerPhaseData *AggStatePerPhase;
 
@@ -1833,14 +1839,16 @@ typedef struct AggState
 	ScanState	ss;				/* its first field is NodeTag */
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
+	int			numtrans;		/* number of pertrans items */
 	AggStatePerPhase phase;		/* pointer to current phase data */
 	int			numphases;		/* number of phases */
 	int			current_phase;	/* current phase number */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	AggStatePerAgg peragg;		/* per-Aggref information */
+	AggStatePerTrans pertrans;	/* per-Trans state information */
 	ExprContext **aggcontexts;	/* econtexts for long-lived data (per GS) */
 	ExprContext *tmpcontext;	/* econtext for input expressions */
-	AggStatePerAgg curperagg;	/* identifies currently active aggregate */
+	AggStatePerTrans curpertrans;	/* currently active trans state */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
 	int			projected_set;	/* The last projected grouping set */
@@ -1947,6 +1955,25 @@ typedef struct UniqueState
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 } UniqueState;
+
+/* ----------------
+ * GatherState information
+ *
+ *		Gather nodes launch 1 or more parallel workers, run a subplan
+ *		in those workers, and collect the results.
+ * ----------------
+ */
+typedef struct GatherState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	bool		initialized;
+	struct ParallelExecutorInfo *pei;
+	int			nreaders;
+	int			nextreader;
+	struct TupleQueueReader **reader;
+	TupleTableSlot *funnel_slot;
+	bool		need_to_scan_locally;
+} GatherState;
 
 /* ----------------
  *	 HashState information

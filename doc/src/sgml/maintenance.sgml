@@ -661,7 +661,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
      <xref linkend="guc-autovacuum-multixact-freeze-max-age">.  Whole-table
      vacuum scans will also occur progressively for all tables, starting with
      those that have the oldest multixact-age, if the amount of used member
-     storage space exceeds the amount 50% of the addressible storage space.
+     storage space exceeds the amount 50% of the addressable storage space.
      Both of these kinds of whole-table scans will occur even if autovacuum is
      nominally disabled.
     </para>
@@ -705,15 +705,15 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     the next database will be processed as soon as the first worker finishes.
     Each worker process will check each table within its database and
     execute <command>VACUUM</> and/or <command>ANALYZE</> as needed.
-    <varname>log_autovacuum_min_duration</varname> can be used to monitor
-    autovacuum activity.
+    <xref linkend="guc-log-autovacuum-min-duration"> can be set to monitor
+    autovacuum workers' activity.
    </para>
 
    <para>
     If several large tables all become eligible for vacuuming in a short
     amount of time, all autovacuum workers might become occupied with
     vacuuming those tables for a long period.  This would result
-    in other tables and databases not being vacuumed until a worker became
+    in other tables and databases not being vacuumed until a worker becomes
     available. There is no limit on how many workers might be in a
     single database, but workers do try to avoid repeating work that has
     already been done by other workers. Note that the number of running
@@ -767,45 +767,24 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <para>
     The default thresholds and scale factors are taken from
     <filename>postgresql.conf</filename>, but it is possible to override them
-    on a table-by-table basis; see
+    (and many other autovacuum control parameters) on a per-table basis; see
     <xref linkend="sql-createtable-storage-parameters"
     endterm="sql-createtable-storage-parameters-title"> for more information.
-    If a setting
-    has been changed via storage parameters, that value is used; otherwise the
-    global settings are used. See <xref linkend="runtime-config-autovacuum"> for
-    more details on the global settings.
+    If a setting has been changed via a table's storage parameters, that value
+    is used when processing that table; otherwise the global settings are
+    used. See <xref linkend="runtime-config-autovacuum"> for more details on
+    the global settings.
    </para>
 
    <para>
-    Besides the base threshold values and scale factors, there are six
-    more autovacuum parameters that can be set for each table via
-    storage parameters.
-    The first parameter, <literal>autovacuum_enabled</>,
-    can be set to <literal>false</literal> to instruct the autovacuum daemon
-    to skip that particular table entirely.  In this case
-    autovacuum will only touch the table if it must do so
-    to prevent transaction ID wraparound.
-    Another two parameters,
-    <varname>autovacuum_vacuum_cost_delay</> and
-    <varname>autovacuum_vacuum_cost_limit</>, are used to set
-    table-specific values for the cost-based vacuum delay feature
-    (see <xref linkend="runtime-config-resource-vacuum-cost">).
-    <varname>autovacuum_freeze_min_age</>,
-    <varname>autovacuum_freeze_max_age</> and
-    <varname>autovacuum_freeze_table_age</> are used to set
-    values for <xref linkend="guc-vacuum-freeze-min-age">,
-    <xref linkend="guc-autovacuum-freeze-max-age"> and
-    <xref linkend="guc-vacuum-freeze-table-age"> respectively.
-   </para>
-
-   <para>
-    When multiple workers are running, the cost delay parameters are
+    When multiple workers are running, the autovacuum cost delay parameters
+    (see <xref linkend="runtime-config-resource-vacuum-cost">) are
     <quote>balanced</quote> among all the running workers, so that the
     total I/O impact on the system is the same regardless of the number
     of workers actually running.  However, any workers processing tables whose
-    <literal>autovacuum_vacuum_cost_delay</> or
-    <literal>autovacuum_vacuum_cost_limit</> have been set are not considered
-    in the balancing algorithm.
+    per-table <literal>autovacuum_vacuum_cost_delay</> or
+    <literal>autovacuum_vacuum_cost_limit</> storage parameters have been set
+    are not considered in the balancing algorithm.
    </para>
   </sect2>
  </sect1>
@@ -861,7 +840,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    and <xref linkend="sql-dropindex">. When an index is used to enforce
    uniqueness or other constraints, <xref linkend="sql-altertable"> might
    be necessary to swap the existing constraint with one enforced by
-   the new index. Review this alternate multi-step rebuild approach
+   the new index. Review this alternate multistep rebuild approach
    carefully before using it as there are limitations on which
    indexes can be reindexed this way, and errors must be handled.
   </para>

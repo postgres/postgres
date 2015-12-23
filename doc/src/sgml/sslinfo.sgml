@@ -96,7 +96,7 @@
      Returns serial number of current client certificate.  The combination of
      certificate serial number and certificate issuer is guaranteed to
      uniquely identify a certificate (but not its owner &mdash; the owner
-     ought to regularly change his keys, and get new certificates from the
+     ought to regularly change their keys, and get new certificates from the
      issuer).
     </para>
 
@@ -219,6 +219,21 @@ emailAddress
     </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>ssl_extension_info() returns setof record</function>
+     <indexterm>
+      <primary>ssl_extension_info</primary>
+     </indexterm>
+    </term>
+    <listitem>
+    <para>
+     Provide information about extensions of client certificate: extension name,
+     extension value, and if it is a critical extension.
+    </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 
@@ -227,6 +242,10 @@ emailAddress
 
   <para>
    Victor Wagner <email>vitus@cryptocom.ru</email>, Cryptocom LTD
+  </para>
+
+  <para>
+   Dmitry Voronin <email>carriingfate92@yandex.ru</email>
   </para>
 
   <para>

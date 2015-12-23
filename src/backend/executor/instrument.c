@@ -18,7 +18,9 @@
 #include "executor/instrument.h"
 
 BufferUsage pgBufferUsage;
+static BufferUsage save_pgBufferUsage;
 
+static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
 static void BufferUsageAccumDiff(BufferUsage *dst,
 					 const BufferUsage *add, const BufferUsage *sub);
 
@@ -45,6 +47,15 @@ InstrAlloc(int n, int instrument_options)
 	}
 
 	return instr;
+}
+
+/* Initialize an pre-allocated instrumentation structure. */
+void
+InstrInit(Instrumentation *instr, int instrument_options)
+{
+	memset(instr, 0, sizeof(Instrumentation));
+	instr->need_bufusage = (instrument_options & INSTRUMENT_BUFFERS) != 0;
+	instr->need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 }
 
 /* Entry to a plan node */
@@ -125,6 +136,73 @@ InstrEndLoop(Instrumentation *instr)
 	INSTR_TIME_SET_ZERO(instr->counter);
 	instr->firsttuple = 0;
 	instr->tuplecount = 0;
+}
+
+/* aggregate instrumentation information */
+void
+InstrAggNode(Instrumentation *dst, Instrumentation *add)
+{
+	if (!dst->running && add->running)
+	{
+		dst->running = true;
+		dst->firsttuple = add->firsttuple;
+	}
+	else if (dst->running && add->running && dst->firsttuple > add->firsttuple)
+		dst->firsttuple = add->firsttuple;
+
+	INSTR_TIME_ADD(dst->counter, add->counter);
+
+	dst->tuplecount += add->tuplecount;
+	dst->startup += add->startup;
+	dst->total += add->total;
+	dst->ntuples += add->ntuples;
+	dst->nloops += add->nloops;
+	dst->nfiltered1 += add->nfiltered1;
+	dst->nfiltered2 += add->nfiltered2;
+
+	/* Add delta of buffer usage since entry to node's totals */
+	if (dst->need_bufusage)
+		BufferUsageAdd(&dst->bufusage, &add->bufusage);
+}
+
+/* note current values during parallel executor startup */
+void
+InstrStartParallelQuery(void)
+{
+	save_pgBufferUsage = pgBufferUsage;
+}
+
+/* report usage after parallel executor shutdown */
+void
+InstrEndParallelQuery(BufferUsage *result)
+{
+	memset(result, 0, sizeof(BufferUsage));
+	BufferUsageAccumDiff(result, &pgBufferUsage, &save_pgBufferUsage);
+}
+
+/* accumulate work done by workers in leader's stats */
+void
+InstrAccumParallelQuery(BufferUsage *result)
+{
+	BufferUsageAdd(&pgBufferUsage, result);
+}
+
+/* dst += add */
+static void
+BufferUsageAdd(BufferUsage *dst, const BufferUsage *add)
+{
+	dst->shared_blks_hit += add->shared_blks_hit;
+	dst->shared_blks_read += add->shared_blks_read;
+	dst->shared_blks_dirtied += add->shared_blks_dirtied;
+	dst->shared_blks_written += add->shared_blks_written;
+	dst->local_blks_hit += add->local_blks_hit;
+	dst->local_blks_read += add->local_blks_read;
+	dst->local_blks_dirtied += add->local_blks_dirtied;
+	dst->local_blks_written += add->local_blks_written;
+	dst->temp_blks_read += add->temp_blks_read;
+	dst->temp_blks_written += add->temp_blks_written;
+	INSTR_TIME_ADD(dst->blk_read_time, add->blk_read_time);
+	INSTR_TIME_ADD(dst->blk_write_time, add->blk_write_time);
 }
 
 /* dst += add - sub */

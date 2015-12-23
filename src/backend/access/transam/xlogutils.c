@@ -368,6 +368,15 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 
 		MarkBufferDirty(*buf);
 
+		/*
+		 * At the end of crash recovery the init forks of unlogged relations
+		 * are copied, without going through shared buffers. So we need to
+		 * force the on-disk state of init forks to always be in sync with the
+		 * state in shared buffers.
+		 */
+		if (forknum == INIT_FORKNUM)
+			FlushOneBuffer(*buf);
+
 		return BLK_RESTORED;
 	}
 	else

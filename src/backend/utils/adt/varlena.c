@@ -26,6 +26,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "port/pg_bswap.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
@@ -61,6 +62,10 @@ typedef struct
 	char	   *buf2;			/* 2nd string, or abbreviation strxfrm() buf */
 	int			buflen1;
 	int			buflen2;
+	int			last_len1;		/* Length of last buf1 string/strxfrm() input */
+	int			last_len2;		/* Length of last buf2 string/strxfrm() blob */
+	int			last_returned;	/* Last comparison result (cache) */
+	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
 	bool		collate_c;
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
@@ -1831,9 +1836,29 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 		tss->buflen1 = TEXTBUFLEN;
 		tss->buf2 = palloc(TEXTBUFLEN);
 		tss->buflen2 = TEXTBUFLEN;
+		/* Start with invalid values */
+		tss->last_len1 = -1;
+		tss->last_len2 = -1;
+		/* Initialize */
+		tss->last_returned = 0;
 #ifdef HAVE_LOCALE_T
 		tss->locale = locale;
 #endif
+		/*
+		 * To avoid somehow confusing a strxfrm() blob and an original string,
+		 * constantly keep track of the variety of data that buf1 and buf2
+		 * currently contain.
+		 *
+		 * Comparisons may be interleaved with conversion calls.  Frequently,
+		 * conversions and comparisons are batched into two distinct phases,
+		 * but the correctness of caching cannot hinge upon this.  For
+		 * comparison caching, buffer state is only trusted if cache_blob is
+		 * found set to false, whereas strxfrm() caching only trusts the state
+		 * when cache_blob is found set to true.
+		 *
+		 * Arbitrarily initialize cache_blob to true.
+		 */
+		tss->cache_blob = true;
 		tss->collate_c = collate_c;
 		ssup->ssup_extra = tss;
 
@@ -1896,6 +1921,7 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 {
 	text	   *arg1 = DatumGetTextPP(x);
 	text	   *arg2 = DatumGetTextPP(y);
+	bool		arg1_match;
 	TextSortSupport *tss = (TextSortSupport *) ssup->ssup_extra;
 
 	/* working state */
@@ -1914,6 +1940,11 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	/* Fast pre-check for equality, as discussed in varstr_cmp() */
 	if (len1 == len2 && memcmp(a1p, a2p, len1) == 0)
 	{
+		/*
+		 * No change in buf1 or buf2 contents, so avoid changing last_len1 or
+		 * last_len2.  Existing contents of buffers might still be used by next
+		 * call.
+		 */
 		result = 0;
 		goto done;
 	}
@@ -1931,10 +1962,43 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 		tss->buf2 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen2);
 	}
 
-	memcpy(tss->buf1, a1p, len1);
-	tss->buf1[len1] = '\0';
-	memcpy(tss->buf2, a2p, len2);
-	tss->buf2[len2] = '\0';
+	/*
+	 * We're likely to be asked to compare the same strings repeatedly, and
+	 * memcmp() is so much cheaper than strcoll() that it pays to try to cache
+	 * comparisons, even though in general there is no reason to think that
+	 * that will work out (every text datum may be unique).  Caching does not
+	 * slow things down measurably when it doesn't work out, and can speed
+	 * things up by rather a lot when it does.  In part, this is because the
+	 * memcmp() compares data from cachelines that are needed in L1 cache even
+	 * when the last comparison's result cannot be reused.
+	 */
+	arg1_match = true;
+	if (len1 != tss->last_len1 || memcmp(tss->buf1, a1p, len1) != 0)
+	{
+		arg1_match = false;
+		memcpy(tss->buf1, a1p, len1);
+		tss->buf1[len1] = '\0';
+		tss->last_len1 = len1;
+	}
+
+	/*
+	 * If we're comparing the same two strings as last time, we can return the
+	 * same answer without calling strcoll() again.  This is more likely than
+	 * it seems (at least with moderate to low cardinality sets), because
+	 * quicksort compares the same pivot against many values.
+	 */
+	if (len2 != tss->last_len2 || memcmp(tss->buf2, a2p, len2) != 0)
+	{
+		memcpy(tss->buf2, a2p, len2);
+		tss->buf2[len2] = '\0';
+		tss->last_len2 = len2;
+	}
+	else if (arg1_match && !tss->cache_blob)
+	{
+		/* Use result cached following last actual strcoll() call */
+		result = tss->last_returned;
+		goto done;
+	}
 
 #ifdef HAVE_LOCALE_T
 	if (tss->locale)
@@ -1951,6 +2015,9 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	if (result == 0)
 		result = strcmp(tss->buf1, tss->buf2);
 
+	/* Cache result, perhaps saving an expensive strcoll() call next time */
+	tss->cache_blob = false;
+	tss->last_returned = result;
 done:
 	/* We can't afford to leak memory here. */
 	if (PointerGetDatum(arg1) != x)
@@ -1967,25 +2034,25 @@ done:
 static int
 bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup)
 {
-	char	   *a = (char *) &x;
-	char	   *b = (char *) &y;
-	int			result;
-
-	result = memcmp(a, b, sizeof(Datum));
-
 	/*
-	 * When result = 0, the core system will call bttextfastcmp_c() or
+	 * When 0 is returned, the core system will call bttextfastcmp_c() or
 	 * bttextfastcmp_locale().  Even a strcmp() on two non-truncated strxfrm()
 	 * blobs cannot indicate *equality* authoritatively, for the same reason
 	 * that there is a strcoll() tie-breaker call to strcmp() in varstr_cmp().
 	 */
-	return result;
+	if (x > y)
+		return 1;
+	else if (x == y)
+		return 0;
+	else
+		return -1;
 }
 
 /*
  * Conversion routine for sortsupport.  Converts original text to abbreviated
  * key representation.  Our encoding strategy is simple -- pack the first 8
- * bytes of a strxfrm() blob into a Datum.
+ * bytes of a strxfrm() blob into a Datum (on little-endian machines, the 8
+ * bytes are stored in reverse order), and treat it as an unsigned integer.
  */
 static Datum
 bttext_abbrev_convert(Datum original, SortSupport ssup)
@@ -2000,10 +2067,6 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	int			len;
 	uint32		hash;
 
-	/*
-	 * Abbreviated key representation is a pass-by-value Datum that is treated
-	 * as a char array by the specialized comparator bttextcmp_abbrev().
-	 */
 	pres = (char *) &res;
 	/* memset(), so any non-overwritten bytes are NUL */
 	memset(pres, 0, sizeof(Datum));
@@ -2033,9 +2096,19 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 			tss->buf1 = palloc(tss->buflen1);
 		}
 
+		/* Might be able to reuse strxfrm() blob from last call */
+		if (tss->last_len1 == len && tss->cache_blob &&
+			memcmp(tss->buf1, authoritative_data, len) == 0)
+		{
+			memcpy(pres, tss->buf2, Min(sizeof(Datum), tss->last_len2));
+			/* No change affecting cardinality, so no hashing required */
+			goto done;
+		}
+
 		/* Just like strcoll(), strxfrm() expects a NUL-terminated string */
 		memcpy(tss->buf1, authoritative_data, len);
 		tss->buf1[len] = '\0';
+		tss->last_len1 = len;
 
 		for (;;)
 		{
@@ -2047,6 +2120,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 #endif
 				bsize = strxfrm(tss->buf2, tss->buf1, tss->buflen2);
 
+			tss->last_len2 = bsize;
 			if (bsize < tss->buflen2)
 				break;
 
@@ -2103,6 +2177,19 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 #endif
 
 	addHyperLogLog(&tss->abbr_card, hash);
+
+	/* Cache result, perhaps saving an expensive strxfrm() call next time */
+	tss->cache_blob = true;
+done:
+	/*
+	 * Byteswap on little-endian machines.
+	 *
+	 * This is needed so that bttextcmp_abbrev() (an unsigned integer 3-way
+	 * comparator) works correctly on all platforms.  If we didn't do this,
+	 * the comparator would have to call memcmp() with a pair of pointers to
+	 * the first byte of each abbreviated key, which is slower.
+	 */
+	res = DatumBigEndianToNative(res);
 
 	/* Don't leak memory here */
 	if (PointerGetDatum(authoritative) != original)
@@ -2920,16 +3007,16 @@ SplitIdentifierString(char *rawstring, char separator,
 		char	   *curname;
 		char	   *endp;
 
-		if (*nextp == '\"')
+		if (*nextp == '"')
 		{
 			/* Quoted name --- collapse quote-quote pairs, no downcasing */
 			curname = nextp + 1;
 			for (;;)
 			{
-				endp = strchr(nextp + 1, '\"');
+				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
 					return false;		/* mismatched quotes */
-				if (endp[1] != '\"')
+				if (endp[1] != '"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
 				memmove(endp, endp + 1, strlen(endp));
@@ -3045,16 +3132,16 @@ SplitDirectoriesString(char *rawstring, char separator,
 		char	   *curname;
 		char	   *endp;
 
-		if (*nextp == '\"')
+		if (*nextp == '"')
 		{
 			/* Quoted name --- collapse quote-quote pairs */
 			curname = nextp + 1;
 			for (;;)
 			{
-				endp = strchr(nextp + 1, '\"');
+				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
 					return false;		/* mismatched quotes */
-				if (endp[1] != '\"')
+				if (endp[1] != '"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
 				memmove(endp, endp + 1, strlen(endp));

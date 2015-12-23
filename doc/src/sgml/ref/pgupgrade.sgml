@@ -310,8 +310,21 @@ NET STOP postgresql-9.0
     </para>
 
     <para>
-     Streaming replication and log-shipping standby servers can remain running until
-     a later step.
+     Streaming replication and log-shipping standby servers can
+     remain running until a later step.
+    </para>
+   </step>
+
+   <step>
+    <title>Verify standby servers</title>
+
+    <para>
+     If you are upgrading Streaming Replication and Log-Shipping standby
+     servers, verify that the old standby servers are caught up by running
+     <application>pg_controldata</> against the old primary and standby
+     clusters.  Verify that the <quote>Latest checkpoint location</>
+     values match in all clusters.  (There will be a mismatch if old
+     standby servers were shut down before the old primary.)
     </para>
    </step>
 
@@ -390,7 +403,7 @@ pg_upgrade.exe
      exit and you will have to revert to the old cluster as outlined in <xref linkend="pgupgrade-step-revert">
      below. To try <command>pg_upgrade</command> again, you will need to modify the old
      cluster so the pg_upgrade schema restore succeeds. If the problem is a
-     contrib module, you might need to uninstall the contrib module from
+     <filename>contrib</filename> module, you might need to uninstall the <filename>contrib</filename> module from
      the old cluster and install it in the new cluster after the upgrade,
      assuming the module is not being used to store user data.
     </para>
@@ -401,13 +414,15 @@ pg_upgrade.exe
     servers</title>
 
     <para>
-     If you have Streaming Replication (<xref
-     linkend="streaming-replication">) or Log-Shipping (<xref
+     If you have Streaming Replication (see <xref
+     linkend="streaming-replication">) or Log-Shipping (see <xref
      linkend="warm-standby">) standby servers, follow these steps to
-     upgrade them (before starting any servers):
+     upgrade them.  You will not be running <application>pg_upgrade</>
+     on the standby servers, but rather <application>rsync</>.  Do not
+     start any servers yet.
     </para>
 
-    <procedure>
+    <substeps>
 
      <step>
       <title>Install the new PostgreSQL binaries on standby servers</title>
@@ -448,18 +463,6 @@ pg_upgrade.exe
      </step>
 
      <step>
-      <title>Verify standby servers</title>
-
-      <para>
-       To prevent old standby servers from being modified, run
-       <application>pg_controldata</> against the primary and standby
-       clusters and verify that the <quote>Latest checkpoint location</>
-       values match in all clusters.  (This requires the standbys to be
-       shut down after the primary.)
-      </para>
-     </step>
-
-     <step>
       <title>Save configuration files</title>
 
       <para>
@@ -487,7 +490,7 @@ pg_upgrade.exe
        directories, run this for each slave:
 
 <programlisting>
-       rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
+rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
 </programlisting>
 
        where <option>old_pgdata</> and <option>new_pgdata</> are relative
@@ -522,7 +525,7 @@ pg_upgrade.exe
       </para>
      </step>
 
-    </procedure>
+    </substeps>
 
    </step>
 
