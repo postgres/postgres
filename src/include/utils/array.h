@@ -377,9 +377,11 @@ extern Datum array_set_element(Datum arraydatum, int nSubscripts, int *indx,
 				  int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 extern Datum array_get_slice(Datum arraydatum, int nSubscripts,
 				int *upperIndx, int *lowerIndx,
+				bool *upperProvided, bool *lowerProvided,
 				int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 extern Datum array_set_slice(Datum arraydatum, int nSubscripts,
 				int *upperIndx, int *lowerIndx,
+				bool *upperProvided, bool *lowerProvided,
 				Datum srcArrayDatum, bool isNull,
 				int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
