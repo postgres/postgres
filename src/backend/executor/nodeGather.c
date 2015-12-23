@@ -359,13 +359,19 @@ gather_readnext(GatherState *gatherstate)
 			continue;
 		}
 
-		/* Advance nextreader pointer in round-robin fashion. */
-		gatherstate->nextreader =
-			(gatherstate->nextreader + 1) % gatherstate->nreaders;
-
 		/* If we got a tuple, return it. */
 		if (tup)
 			return tup;
+
+		/*
+		 * Advance nextreader pointer in round-robin fashion.  Note that we
+		 * only reach this code if we weren't able to get a tuple from the
+		 * current worker.  We used to advance the nextreader pointer after
+		 * every tuple, but it turns out to be much more efficient to keep
+		 * reading from the same queue until that would require blocking.
+		 */
+		gatherstate->nextreader =
+			(gatherstate->nextreader + 1) % gatherstate->nreaders;
 
 		/* Have we visited every TupleQueueReader? */
 		if (gatherstate->nextreader == waitpos)
