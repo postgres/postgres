@@ -2130,7 +2130,7 @@ make_template0(FILE *cmdfd)
 		/*
 		 * Finally vacuum to clean up dead rows in pg_database
 		 */
-		"VACUUM FULL pg_database;\n\n",
+		"VACUUM pg_database;\n\n",
 		NULL
 	};
 
