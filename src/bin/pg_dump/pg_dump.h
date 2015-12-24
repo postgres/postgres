@@ -245,11 +245,11 @@ typedef struct _tableInfo
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
 	bool		hasoids;		/* does it have OIDs? */
-	uint32		frozenxid;		/* for restore frozen xid */
-	uint32		minmxid;		/* for restore min multi xid */
-	Oid			toast_oid;		/* for restore toast frozen xid */
-	uint32		toast_frozenxid;	/* for restore toast frozen xid */
-	uint32		toast_minmxid;	/* for restore toast min multi xid */
+	uint32		frozenxid;		/* table's relfrozenxid */
+	uint32		minmxid;		/* table's relminmxid */
+	Oid			toast_oid;		/* toast table's OID, or 0 if none */
+	uint32		toast_frozenxid;	/* toast table's relfrozenxid, if any */
+	uint32		toast_minmxid;	/* toast table's relminmxid */
 	int			ncheck;			/* # of CHECK expressions */
 	char	   *reloftype;		/* underlying type for typed table */
 	/* these two are set only if table is a sequence owned by a column: */
