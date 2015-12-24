@@ -17478,9 +17478,9 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
       <row>
        <entry>
         <indexterm>
-         <primary>pg_replication_session_is_setup</primary>
+         <primary>pg_replication_origin_session_is_setup</primary>
         </indexterm>
-        <literal><function>pg_replication_session_is_setup()</function></literal>
+        <literal><function>pg_replication_origin_session_is_setup()</function></literal>
        </entry>
        <entry>
         bool
