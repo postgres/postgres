@@ -71,7 +71,7 @@ PostgreSQL documentation
    missing files from a WAL archive automatically is currently not supported.
    Besides, <application>pg_rewind</> use cases are not limited by failover.
    For instance, standby server could be promoted, run some writes and
-   then be returned back as stanby. 
+   then be returned back as standby. 
   </para>
 
   <para>
