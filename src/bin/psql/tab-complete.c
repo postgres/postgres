@@ -2587,9 +2587,10 @@ psql_completion(const char *text, int start, int end)
 			 TailMatches5("SECURITY", "LABEL", "FOR", MatchAny, "ON"))
 	{
 		static const char *const list_SECURITY_LABEL[] =
-		{"LANGUAGE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
-			"MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION", "DOMAIN",
-		"LARGE OBJECT", NULL};
+		{"TABLE", "COLUMN", "AGGREGATE", "DATABASE", "DOMAIN",
+			 "EVENT TRIGGER", "FOREIGN TABLE", "FUNCTION", "LARGE OBJECT",
+			 "MATERIALIZED VIEW", "LANGUAGE", "ROLE", "SCHEMA",
+		 "SEQUENCE", "TABLESPACE", "TYPE", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_SECURITY_LABEL);
 	}
