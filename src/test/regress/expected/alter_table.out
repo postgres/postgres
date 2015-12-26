@@ -1270,6 +1270,27 @@ select * from child;
 
 drop table child;
 drop table parent;
+-- check error cases for inheritance column merging
+create table parent (a float8, b numeric(10,4), c text collate "C");
+create table child (a float4) inherits (parent); -- fail
+NOTICE:  merging column "a" with inherited definition
+ERROR:  column "a" has a type conflict
+DETAIL:  double precision versus real
+create table child (b decimal(10,7)) inherits (parent); -- fail
+NOTICE:  moving and merging column "b" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  column "b" has a type conflict
+DETAIL:  numeric(10,4) versus numeric(10,7)
+create table child (c text collate "POSIX") inherits (parent); -- fail
+NOTICE:  moving and merging column "c" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  column "c" has a collation conflict
+DETAIL:  "C" versus "POSIX"
+create table child (a double precision, b decimal(10,4)) inherits (parent);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "b" with inherited definition
+drop table child;
+drop table parent;
 -- test copy in/out
 create table test (a int4, b int4, c int4);
 insert into test values (1,2,3);

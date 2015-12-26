@@ -1613,8 +1613,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 						errmsg("inherited column \"%s\" has a type conflict",
 							   attributeName),
 							 errdetail("%s versus %s",
-									   TypeNameToString(def->typeName),
-									   format_type_be(attribute->atttypid))));
+									   format_type_with_typemod(defTypeId,
+																deftypmod),
+								format_type_with_typemod(attribute->atttypid,
+													attribute->atttypmod))));
 				defCollId = GetColumnDefCollation(NULL, def, defTypeId);
 				if (defCollId != attribute->attcollation)
 					ereport(ERROR,
@@ -1832,8 +1834,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							 errmsg("column \"%s\" has a type conflict",
 									attributeName),
 							 errdetail("%s versus %s",
-									   TypeNameToString(def->typeName),
-									   TypeNameToString(newdef->typeName))));
+									   format_type_with_typemod(defTypeId,
+																deftypmod),
+									   format_type_with_typemod(newTypeId,
+																newtypmod))));
 				defcollid = GetColumnDefCollation(NULL, def, defTypeId);
 				newcollid = GetColumnDefCollation(NULL, newdef, newTypeId);
 				if (defcollid != newcollid)

@@ -906,6 +906,17 @@ select * from child;
 drop table child;
 drop table parent;
 
+-- check error cases for inheritance column merging
+create table parent (a float8, b numeric(10,4), c text collate "C");
+
+create table child (a float4) inherits (parent); -- fail
+create table child (b decimal(10,7)) inherits (parent); -- fail
+create table child (c text collate "POSIX") inherits (parent); -- fail
+create table child (a double precision, b decimal(10,4)) inherits (parent);
+
+drop table child;
+drop table parent;
+
 -- test copy in/out
 create table test (a int4, b int4, c int4);
 insert into test values (1,2,3);
