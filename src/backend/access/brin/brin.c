@@ -787,14 +787,50 @@ Datum
 brin_summarize_new_values(PG_FUNCTION_ARGS)
 {
 	Oid			indexoid = PG_GETARG_OID(0);
+	Oid			heapoid;
 	Relation	indexRel;
 	Relation	heapRel;
 	double		numSummarized = 0;
 
-	heapRel = heap_open(IndexGetRelation(indexoid, false),
-						ShareUpdateExclusiveLock);
+	/*
+	 * We must lock table before index to avoid deadlocks.  However, if the
+	 * passed indexoid isn't an index then IndexGetRelation() will fail.
+	 * Rather than emitting a not-very-helpful error message, postpone
+	 * complaining, expecting that the is-it-an-index test below will fail.
+	 */
+	heapoid = IndexGetRelation(indexoid, true);
+	if (OidIsValid(heapoid))
+		heapRel = heap_open(heapoid, ShareUpdateExclusiveLock);
+	else
+		heapRel = NULL;
+
 	indexRel = index_open(indexoid, ShareUpdateExclusiveLock);
 
+	/* Must be a BRIN index */
+	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||
+		indexRel->rd_rel->relam != BRIN_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a BRIN index",
+						RelationGetRelationName(indexRel))));
+
+	/* User must own the index (comparable to privileges needed for VACUUM) */
+	if (!pg_class_ownercheck(indexoid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(indexRel));
+
+	/*
+	 * Since we did the IndexGetRelation call above without any lock, it's
+	 * barely possible that a race against an index drop/recreation could have
+	 * netted us the wrong table.  Recheck.
+	 */
+	if (heapRel == NULL || heapoid != IndexGetRelation(indexoid, false))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("could not open parent table of index %s",
+						RelationGetRelationName(indexRel))));
+
+	/* OK, do it */
 	brinsummarize(indexRel, heapRel, &numSummarized, NULL);
 
 	relation_close(indexRel, ShareUpdateExclusiveLock);
@@ -962,7 +998,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	 */
 	state->bs_currRangeStart = heapBlk;
 	scanNumBlks = heapBlk + state->bs_pagesPerRange <= heapNumBlks ?
-						state->bs_pagesPerRange : heapNumBlks - heapBlk;
+		state->bs_pagesPerRange : heapNumBlks - heapBlk;
 	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false, true,
 							heapBlk, scanNumBlks,
 							brinbuildCallback, (void *) state);

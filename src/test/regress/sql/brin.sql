@@ -416,3 +416,8 @@ VACUUM brintest;  -- force a summarization cycle in brinidx
 
 UPDATE brintest SET int8col = int8col * int4col;
 UPDATE brintest SET textcol = '' WHERE textcol IS NOT NULL;
+
+-- Tests for brin_summarize_new_values
+SELECT brin_summarize_new_values('brintest'); -- error, not an index
+SELECT brin_summarize_new_values('tenk1_unique1'); -- error, not a BRIN index
+SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected

@@ -407,3 +407,14 @@ FROM tenk1 ORDER BY unique2 LIMIT 5 OFFSET 5;
 VACUUM brintest;  -- force a summarization cycle in brinidx
 UPDATE brintest SET int8col = int8col * int4col;
 UPDATE brintest SET textcol = '' WHERE textcol IS NOT NULL;
+-- Tests for brin_summarize_new_values
+SELECT brin_summarize_new_values('brintest'); -- error, not an index
+ERROR:  "brintest" is not an index
+SELECT brin_summarize_new_values('tenk1_unique1'); -- error, not a BRIN index
+ERROR:  "tenk1_unique1" is not a BRIN index
+SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected
+ brin_summarize_new_values 
+---------------------------
+                         0
+(1 row)
+
