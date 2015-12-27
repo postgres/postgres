@@ -61,6 +61,7 @@
  */
 
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "px-crypt.h"
 
@@ -540,6 +541,8 @@ do_des(uint32 l_in, uint32 r_in, uint32 *l_out, uint32 *r_out, int count)
 
 	while (count--)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * Do each round.
 		 */
