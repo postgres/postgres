@@ -33,6 +33,7 @@
  */
 
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "px-crypt.h"
 #include "px.h"
@@ -670,6 +671,8 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		data.ctx.P[0] ^= data.expanded_key[0];
 		data.ctx.P[1] ^= data.expanded_key[1];
 		data.ctx.P[2] ^= data.expanded_key[2];
