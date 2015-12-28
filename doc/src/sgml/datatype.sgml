@@ -4617,6 +4617,14 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>event_trigger</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>pg_ddl_command</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>language_handler</primary>
    </indexterm>
 
@@ -4729,12 +4737,22 @@ SELECT * FROM pg_attribute
 
        <row>
         <entry><type>record</></entry>
-        <entry>Identifies a function returning an unspecified row type.</entry>
+        <entry>Identifies a function taking or returning an unspecified row type.</entry>
        </row>
 
        <row>
         <entry><type>trigger</></entry>
         <entry>A trigger function is declared to return <type>trigger.</></entry>
+       </row>
+
+       <row>
+        <entry><type>event_trigger</></entry>
+        <entry>An event trigger function is declared to return <type>event_trigger.</></entry>
+       </row>
+
+       <row>
+        <entry><type>pg_ddl_command</></entry>
+        <entry>Identifies a represention of DDL commands that is available to event triggers.</entry>
        </row>
 
        <row>
@@ -4759,10 +4777,11 @@ SELECT * FROM pg_attribute
 
    <para>
     Functions coded in procedural languages can use pseudo-types only as
-    allowed by their implementation languages.  At present the procedural
-    languages all forbid use of a pseudo-type as argument type, and allow
+    allowed by their implementation languages.  At present most procedural
+    languages forbid use of a pseudo-type as an argument type, and allow
     only <type>void</> and <type>record</> as a result type (plus
-    <type>trigger</> when the function is used as a trigger).  Some also
+    <type>trigger</> or <type>event_trigger</> when the function is used
+    as a trigger or event trigger).  Some also
     support polymorphic functions using the types <type>anyelement</>,
     <type>anyarray</>, <type>anynonarray</>, <type>anyenum</>, and
     <type>anyrange</>.
