@@ -126,8 +126,8 @@ typedef struct VariableCacheData
 	/*
 	 * These fields are protected by CommitTsLock
 	 */
-	TransactionId oldestCommitTs;
-	TransactionId newestCommitTs;
+	TransactionId oldestCommitTsXid;
+	TransactionId newestCommitTsXid;
 
 	/*
 	 * These fields are protected by ProcArrayLock.
