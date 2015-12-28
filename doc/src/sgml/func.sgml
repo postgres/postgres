@@ -17912,6 +17912,48 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
   </sect2>
 
+  <sect2 id="functions-admin-index">
+   <title>Index Maintenance Functions</title>
+
+   <indexterm>
+    <primary>brin_summarize_new_values</primary>
+   </indexterm>
+
+   <para>
+    <xref linkend="functions-admin-index-table"> shows the functions
+    available for index maintenance tasks.
+   </para>
+
+   <table id="functions-admin-index-table">
+    <title>Index Maintenance Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>brin_summarize_new_values(<parameter>index_oid</> <type>regclass</>)</function></literal>
+       </entry>
+       <entry><type>integer</type></entry>
+       <entry>summarize page ranges not already summarized</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>brin_summarize_new_values</> receives a BRIN index OID as
+    argument and inspects the index to find page ranges in the base table
+    that are not currently summarized by the index; for any such range
+    it creates a new summary index tuple by scanning the table pages.
+    It returns the number of new page range summaries that were inserted
+    into the index.
+   </para>
+
+  </sect2>
+
   <sect2 id="functions-admin-genfile">
    <title>Generic File Access Functions</title>
 
