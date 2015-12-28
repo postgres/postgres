@@ -75,8 +75,8 @@
    entered in.  The <type>cube</> functions
    automatically swap values if needed to create a uniform
    <quote>lower left &mdash; upper right</> internal representation.
-   When corners coincide cube stores only one corner along with a
-   special flag in order to reduce size wasted.
+   When the corners coincide, <type>cube</> stores only one corner
+   along with an <quote>is point</> flag to avoid wasting space.
   </para>
 
   <para>
@@ -98,17 +98,17 @@
   <title>Usage</title>
 
   <para>
-   The <filename>cube</> module includes a GiST index operator class for
-   <type>cube</> values.
-   The operators supported by the GiST operator class are shown in <xref linkend="cube-gist-operators">.
+   <xref linkend="cube-operators"> shows the operators provided for type
+   <type>cube</>.
   </para>
 
-  <table id="cube-gist-operators">
-   <title>Cube GiST Operators</title>
-   <tgroup cols="2">
+  <table id="cube-operators">
+   <title>Cube Operators</title>
+   <tgroup cols="3">
     <thead>
      <row>
       <entry>Operator</entry>
+      <entry>Result</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -116,36 +116,93 @@
     <tbody>
      <row>
       <entry><literal>a = b</></entry>
+      <entry><type>boolean</></entry>
       <entry>The cubes a and b are identical.</entry>
      </row>
 
      <row>
       <entry><literal>a &amp;&amp; b</></entry>
+      <entry><type>boolean</></entry>
       <entry>The cubes a and b overlap.</entry>
      </row>
 
      <row>
       <entry><literal>a @&gt; b</></entry>
+      <entry><type>boolean</></entry>
       <entry>The cube a contains the cube b.</entry>
      </row>
 
      <row>
       <entry><literal>a &lt;@ b</></entry>
+      <entry><type>boolean</></entry>
       <entry>The cube a is contained in the cube b.</entry>
      </row>
 
      <row>
+      <entry><literal>a &lt; b</></entry>
+      <entry><type>boolean</></entry>
+      <entry>The cube a is less than the cube b.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &lt;= b</></entry>
+      <entry><type>boolean</></entry>
+      <entry>The cube a is less than or equal to the cube b.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &gt; b</></entry>
+      <entry><type>boolean</></entry>
+      <entry>The cube a is greater than the cube b.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &gt;= b</></entry>
+      <entry><type>boolean</></entry>
+      <entry>The cube a is greater than or equal to the cube b.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &lt;&gt; b</></entry>
+      <entry><type>boolean</></entry>
+      <entry>The cube a is not equal to the cube b.</entry>
+     </row>
+
+     <row>
       <entry><literal>a -&gt; n</></entry>
-      <entry>Get n-th coordinate of cube.</entry>
+      <entry><type>float8</></entry>
+      <entry>Get <replaceable>n</>-th coordinate of cube (counting from 1).</entry>
      </row>
 
      <row>
       <entry><literal>a ~&gt; n</></entry>
+      <entry><type>float8</></entry>
       <entry>
-        Get n-th coordinate in 'normalized' cube representation. Noramlization
-        means coordinate rearrangement to form (lower left, upper right).
+        Get <replaceable>n</>-th coordinate in <quote>normalized</> cube
+        representation, in which the coordinates have been rearranged into
+        the form <quote>lower left &mdash; upper right</>; that is, the
+        smaller endpoint along each dimension appears first.
       </entry>
      </row>
+
+     <row>
+      <entry><literal>a &lt;-&gt; b</></entry>
+      <entry><type>float8</></entry>
+      <entry>Euclidean distance between a and b.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &lt;#&gt; b</></entry>
+      <entry><type>float8</></entry>
+      <entry>Taxicab (L-1 metric) distance between a and b.</entry>
+     </row>
+
+     <row>
+      <entry><literal>a &lt;=&gt; b</></entry>
+      <entry><type>float8</></entry>
+      <entry>Chebyshev (L-inf metric) distance between a and b.</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -159,117 +216,49 @@
   </para>
 
   <para>
-   GiST index can be used to retrieve nearest neighbours via several metric
-   operators. As always any of them can be used as ordinary function.
+   The scalar ordering operators (<literal>&lt;</>, <literal>&gt;=</>, etc)
+   do not make a lot of sense for any practical purpose but sorting.  These
+   operators first compare the first coordinates, and if those are equal,
+   compare the second coordinates, etc.  They exist mainly to support the
+   b-tree index operator class for <type>cube</>, which can be useful for
+   example if you would like a UNIQUE constraint on a <type>cube</> column.
   </para>
-
-  <table id="cube-gistknn-operators">
-   <title>Cube GiST-kNN Operators</title>
-   <tgroup cols="2">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><literal>a &lt;-&gt; b</></entry>
-      <entry>Euclidean distance between a and b</entry>
-     </row>
-
-     <row>
-      <entry><literal>a &lt;#&gt; b</></entry>
-      <entry>Taxicab (L-1 metric) distance between a and b</entry>
-     </row>
-
-     <row>
-      <entry><literal>a &lt;=&gt; b</></entry>
-      <entry>Chebyshev (L-inf metric) distance between a and b</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
 
   <para>
-   Selection of nearing neigbours can be done in the following way:
+   The <filename>cube</> module also provides a GiST index operator class for
+   <type>cube</> values.
+   A <type>cube</> GiST index can be used to search for values using the
+   <literal>=</>, <literal>&amp;&amp;</>, <literal>@&gt;</>, and
+   <literal>&lt;@</> operators in <literal>WHERE</> clauses.
   </para>
+
+  <para>
+   In addition, a <type>cube</> GiST index can be used to find nearest
+   neighbors using the metric operators
+   <literal>&lt;-&gt;</>, <literal>&lt;#&gt;</>, and
+   <literal>&lt;=&gt;</> in <literal>ORDER BY</> clauses.
+   For example, the nearest neighbor of the 3-D point (0.5, 0.5, 0.5)
+   could be found efficiently with:
 <programlisting>
-SELECT c FROM test 
-ORDER BY cube(array[0.5,0.5,0.5])<->c 
+SELECT c FROM test
+ORDER BY cube(array[0.5,0.5,0.5]) <-> c
 LIMIT 1;
 </programlisting>
-
+  </para>
 
   <para>
-   Also kNN framework allows us to cheat with metrics in order to get results
-   sorted by selected coodinate directly from the index without extra sorting
-   step. That technique significantly faster on small values of LIMIT, however
-   with bigger values of LIMIT planner will switch automatically to standart
-   index scan and sort.
-   That behavior can be achieved using coordinate operator
-   (cube c)~&gt;(int offset).
-  </para>
+   The <literal>~&gt;</> operator can also be used in this way to
+   efficiently retrieve the first few values sorted by a selected coordinate.
+   For example, to get the first few cubes ordered by the first coordinate
+   (lower left corner) ascending one could use the following query:
 <programlisting>
-=> select cube(array[0.41,0.42,0.43])~>2 as coord;
- coord 
--------
-  0.42
-(1 row)
+SELECT c FROM test ORDER BY c ~> 1 LIMIT 5;
 </programlisting>
-
-  <para>
-   So using that operator as kNN metric we can obtain cubes sorted by it's
-   coordinate.
-  </para>
-  <para>
-   To get cubes ordered by first coordinate of lower left corner ascending
-   one can use the following query:
-  </para>
+   And to get 2-D cubes ordered by the first coordinate of the upper right
+   corner descending:
 <programlisting>
-SELECT c FROM test ORDER BY c~>1 LIMIT 5;
+SELECT c FROM test ORDER BY c ~> 3 DESC LIMIT 5;
 </programlisting>
-  <para>
-   And to get cubes descending by first coordinate of upper right corner
-   of 2d-cube:
-  </para>
-<programlisting>
-SELECT c FROM test ORDER BY c~>3 DESC LIMIT 5;
-</programlisting>
-
-
-
-  <para>
-   The standard B-tree operators are also provided, for example
-
-   <informaltable>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>Operator</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry><literal>[a, b] &lt; [c, d]</literal></entry>
-       <entry>Less than</entry>
-      </row>
-
-      <row>
-       <entry><literal>[a, b] &gt; [c, d]</literal></entry>
-       <entry>Greater than</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </informaltable>
-
-   These operators do not make a lot of sense for any practical
-   purpose but sorting. These operators first compare (a) to (c),
-   and if these are equal, compare (b) to (d). That results in
-   reasonably good sorting in most cases, which is useful if
-   you want to use ORDER BY with this type.
   </para>
 
   <para>

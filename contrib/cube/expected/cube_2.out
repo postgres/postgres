@@ -1458,13 +1458,13 @@ SELECT cube(array[10,20,30], array[40,50,60])->6;
 (1 row)
 
 SELECT cube(array[10,20,30], array[40,50,60])->0;
-ERROR:  Cube index out of bounds
+ERROR:  cube index 0 is out of bounds
 SELECT cube(array[10,20,30], array[40,50,60])->7;
-ERROR:  Cube index out of bounds
+ERROR:  cube index 7 is out of bounds
 SELECT cube(array[10,20,30], array[40,50,60])->-1;
-ERROR:  Cube index out of bounds
+ERROR:  cube index -1 is out of bounds
 SELECT cube(array[10,20,30], array[40,50,60])->-6;
-ERROR:  Cube index out of bounds
+ERROR:  cube index -6 is out of bounds
 SELECT cube(array[10,20,30])->3;
  ?column? 
 ----------
@@ -1478,7 +1478,7 @@ SELECT cube(array[10,20,30])->6;
 (1 row)
 
 SELECT cube(array[10,20,30])->-6;
-ERROR:  Cube index out of bounds
+ERROR:  cube index -6 is out of bounds
 -- "normalized" coordinate access
 SELECT cube(array[10,20,30], array[40,50,60])~>1;
  ?column? 
@@ -1517,7 +1517,7 @@ SELECT cube(array[40,50,60], array[10,20,30])~>3;
 (1 row)
 
 SELECT cube(array[40,50,60], array[10,20,30])~>0;
-ERROR:  Cube index out of bounds
+ERROR:  cube index 0 is out of bounds
 SELECT cube(array[40,50,60], array[10,20,30])~>4;
  ?column? 
 ----------
@@ -1525,7 +1525,7 @@ SELECT cube(array[40,50,60], array[10,20,30])~>4;
 (1 row)
 
 SELECT cube(array[40,50,60], array[10,20,30])~>(-1);
-ERROR:  Cube index out of bounds
+ERROR:  cube index -1 is out of bounds
 -- Load some example data and build the index
 --
 CREATE TABLE test_cube (c cube);
