@@ -505,7 +505,7 @@
 
       <row>
        <entry> <literal>^</literal> </entry>
-       <entry>exponentiation</entry>
+       <entry>exponentiation (associates left to right)</entry>
        <entry><literal>2.0 ^ 3.0</literal></entry>
        <entry><literal>8</literal></entry>
       </row>
