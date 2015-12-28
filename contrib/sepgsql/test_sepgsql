@@ -233,7 +233,7 @@ echo "ok"
 
 # loadable module must be installed and not configured to permissive mode
 echo -n "checking sepgsql installation       ... "
-VAL="`${CMD_PSQL} -t -c 'SHOW sepgsql.permissive' template1 2>/dev/null`"
+VAL="`${CMD_PSQL} -X -t -c 'SHOW sepgsql.permissive' template1 2>/dev/null`"
 RETVAL="$?"
 if [ $RETVAL -eq 2 ]; then
     echo "failed"
@@ -266,7 +266,7 @@ echo "ok"
 # NOTE: this test is wrong; we really ought to be checking template0.
 # But we can't connect to that without extra pushups, and it's not worth it.
 echo -n "checking for labels in template1    ... "
-NUM=`${CMD_PSQL} -At -c 'SELECT count(*) FROM pg_catalog.pg_seclabel' template1 2>/dev/null`
+NUM=`${CMD_PSQL} -XAt -c 'SELECT count(*) FROM pg_catalog.pg_seclabel' template1 2>/dev/null`
 if [ -z "${NUM}" ]; then
     echo "failed"
     echo ""

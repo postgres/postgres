@@ -37,7 +37,7 @@ sub run_test_psql
 	my $logstring = $_[1];
 
 	my $cmd = [
-		'psql', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
+		'psql', '-X', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
 		'-d', "$connstr" ];
 
 	my $result = run_log($cmd);
