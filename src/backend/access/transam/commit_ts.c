@@ -217,8 +217,8 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 	commitTsShared->dataLastCommit.nodeid = nodeid;
 
 	/* and move forwards our endpoint, if needed */
-	if (TransactionIdPrecedes(ShmemVariableCache->newestCommitTs, newestXact))
-		ShmemVariableCache->newestCommitTs = newestXact;
+	if (TransactionIdPrecedes(ShmemVariableCache->newestCommitTsXid, newestXact))
+		ShmemVariableCache->newestCommitTsXid = newestXact;
 	LWLockRelease(CommitTsLock);
 }
 
@@ -285,8 +285,8 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 	int			entryno = TransactionIdToCTsEntry(xid);
 	int			slotno;
 	CommitTimestampEntry entry;
-	TransactionId oldestCommitTs;
-	TransactionId newestCommitTs;
+	TransactionId oldestCommitTsXid;
+	TransactionId newestCommitTsXid;
 
 	/* error if the given Xid doesn't normally commit */
 	if (!TransactionIdIsNormal(xid))
@@ -314,18 +314,18 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		return *ts != 0;
 	}
 
-	oldestCommitTs = ShmemVariableCache->oldestCommitTs;
-	newestCommitTs = ShmemVariableCache->newestCommitTs;
+	oldestCommitTsXid = ShmemVariableCache->oldestCommitTsXid;
+	newestCommitTsXid = ShmemVariableCache->newestCommitTsXid;
 	/* neither is invalid, or both are */
-	Assert(TransactionIdIsValid(oldestCommitTs) == TransactionIdIsValid(newestCommitTs));
+	Assert(TransactionIdIsValid(oldestCommitTsXid) == TransactionIdIsValid(newestCommitTsXid));
 	LWLockRelease(CommitTsLock);
 
 	/*
 	 * Return empty if the requested value is outside our valid range.
 	 */
-	if (!TransactionIdIsValid(oldestCommitTs) ||
-		TransactionIdPrecedes(xid, oldestCommitTs) ||
-		TransactionIdPrecedes(newestCommitTs, xid))
+	if (!TransactionIdIsValid(oldestCommitTsXid) ||
+		TransactionIdPrecedes(xid, oldestCommitTsXid) ||
+		TransactionIdPrecedes(newestCommitTsXid, xid))
 	{
 		*ts = 0;
 		if (nodeid)
@@ -655,14 +655,14 @@ ActivateCommitTs(void)
 	 * enabled again?  It doesn't look like it does, because there should be a
 	 * checkpoint that sets the value to InvalidTransactionId at end of
 	 * recovery; and so any chance of injecting new transactions without
-	 * CommitTs values would occur after the oldestCommitTs has been set to
+	 * CommitTs values would occur after the oldestCommitTsXid has been set to
 	 * Invalid temporarily.
 	 */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTs == InvalidTransactionId)
+	if (ShmemVariableCache->oldestCommitTsXid == InvalidTransactionId)
 	{
-		ShmemVariableCache->oldestCommitTs =
-			ShmemVariableCache->newestCommitTs = ReadNewTransactionId();
+		ShmemVariableCache->oldestCommitTsXid =
+			ShmemVariableCache->newestCommitTsXid = ReadNewTransactionId();
 	}
 	LWLockRelease(CommitTsLock);
 
@@ -711,8 +711,8 @@ DeactivateCommitTs(void)
 	TIMESTAMP_NOBEGIN(commitTsShared->dataLastCommit.time);
 	commitTsShared->dataLastCommit.nodeid = InvalidRepOriginId;
 
-	ShmemVariableCache->oldestCommitTs = InvalidTransactionId;
-	ShmemVariableCache->newestCommitTs = InvalidTransactionId;
+	ShmemVariableCache->oldestCommitTsXid = InvalidTransactionId;
+	ShmemVariableCache->newestCommitTsXid = InvalidTransactionId;
 
 	LWLockRelease(CommitTsLock);
 
@@ -832,16 +832,16 @@ SetCommitTsLimit(TransactionId oldestXact, TransactionId newestXact)
 	 * "future" or signal a disabled committs.
 	 */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTs != InvalidTransactionId)
+	if (ShmemVariableCache->oldestCommitTsXid != InvalidTransactionId)
 	{
-		if (TransactionIdPrecedes(ShmemVariableCache->oldestCommitTs, oldestXact))
-			ShmemVariableCache->oldestCommitTs = oldestXact;
-		if (TransactionIdPrecedes(newestXact, ShmemVariableCache->newestCommitTs))
-			ShmemVariableCache->newestCommitTs = newestXact;
+		if (TransactionIdPrecedes(ShmemVariableCache->oldestCommitTsXid, oldestXact))
+			ShmemVariableCache->oldestCommitTsXid = oldestXact;
+		if (TransactionIdPrecedes(newestXact, ShmemVariableCache->newestCommitTsXid))
+			ShmemVariableCache->newestCommitTsXid = newestXact;
 	}
 	else
 	{
-		Assert(ShmemVariableCache->newestCommitTs == InvalidTransactionId);
+		Assert(ShmemVariableCache->newestCommitTsXid == InvalidTransactionId);
 	}
 	LWLockRelease(CommitTsLock);
 }
@@ -850,12 +850,12 @@ SetCommitTsLimit(TransactionId oldestXact, TransactionId newestXact)
  * Move forwards the oldest commitTS value that can be consulted
  */
 void
-AdvanceOldestCommitTs(TransactionId oldestXact)
+AdvanceOldestCommitTsXid(TransactionId oldestXact)
 {
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTs != InvalidTransactionId &&
-		TransactionIdPrecedes(ShmemVariableCache->oldestCommitTs, oldestXact))
-		ShmemVariableCache->oldestCommitTs = oldestXact;
+	if (ShmemVariableCache->oldestCommitTsXid != InvalidTransactionId &&
+		TransactionIdPrecedes(ShmemVariableCache->oldestCommitTsXid, oldestXact))
+		ShmemVariableCache->oldestCommitTsXid = oldestXact;
 	LWLockRelease(CommitTsLock);
 }
 

@@ -43,7 +43,7 @@ extern void ExtendCommitTs(TransactionId newestXact);
 extern void TruncateCommitTs(TransactionId oldestXact);
 extern void SetCommitTsLimit(TransactionId oldestXact,
 				 TransactionId newestXact);
-extern void AdvanceOldestCommitTs(TransactionId oldestXact);
+extern void AdvanceOldestCommitTsXid(TransactionId oldestXact);
 
 /* XLOG stuff */
 #define COMMIT_TS_ZEROPAGE		0x00
