@@ -2968,6 +2968,13 @@ rewriteTargetView(Query *parsetree, Relation view)
 	{
 		Node	   *viewqual = (Node *) viewquery->jointree->quals;
 
+		/*
+		 * Even though we copied viewquery already at the top of this
+		 * function, we must duplicate the viewqual again here, because we may
+		 * need to use the quals again below for a WithCheckOption clause.
+		 */
+		viewqual = copyObject(viewqual);
+
 		ChangeVarNodes(viewqual, base_rt_index, new_rt_index, 0);
 
 		if (RelationIsSecurityView(view))
