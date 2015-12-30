@@ -666,10 +666,22 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * to use lazy_check_needs_freeze() for both situations, though.
 			 */
 			LockBuffer(buf, BUFFER_LOCK_SHARE);
-			if (!lazy_check_needs_freeze(buf, &hastup) || !scan_all)
+			if (!lazy_check_needs_freeze(buf, &hastup))
 			{
 				UnlockReleaseBuffer(buf);
 				vacrelstats->scanned_pages++;
+				vacrelstats->pinskipped_pages++;
+				if (hastup)
+					vacrelstats->nonempty_pages = blkno + 1;
+				continue;
+			}
+			if (!scan_all)
+			{
+				/*
+				 * Here, we must not advance scanned_pages; that would amount
+				 * to claiming that the page contains no freezable tuples.
+				 */
+				UnlockReleaseBuffer(buf);
 				vacrelstats->pinskipped_pages++;
 				if (hastup)
 					vacrelstats->nonempty_pages = blkno + 1;
