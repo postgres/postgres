@@ -1,5 +1,8 @@
-CREATE OR REPLACE FUNCTION alter_op_test_fn(boolean, boolean)
+CREATE FUNCTION alter_op_test_fn(boolean, boolean)
 RETURNS boolean AS $$ SELECT NULL::BOOLEAN; $$ LANGUAGE sql IMMUTABLE;
+
+CREATE FUNCTION customcontsel(internal, oid, internal, integer)
+RETURNS float8 AS 'contsel' LANGUAGE internal STABLE STRICT;
 
 CREATE OPERATOR === (
     LEFTARG = boolean,
@@ -7,10 +10,16 @@ CREATE OPERATOR === (
     PROCEDURE = alter_op_test_fn,
     COMMUTATOR = ===,
     NEGATOR = !==,
-    RESTRICT = contsel,
+    RESTRICT = customcontsel,
     JOIN = contjoinsel,
     HASHES, MERGES
 );
+
+SELECT pg_describe_object(refclassid,refobjid,refobjsubid) as ref, deptype
+FROM pg_depend
+WHERE classid = 'pg_operator'::regclass AND
+      objid = '===(bool,bool)'::regoperator
+ORDER BY 1;
 
 --
 -- Reset and set params
@@ -22,21 +31,45 @@ ALTER OPERATOR === (boolean, boolean) SET (JOIN = NONE);
 SELECT oprrest, oprjoin FROM pg_operator WHERE oprname = '==='
   AND oprleft = 'boolean'::regtype AND oprright = 'boolean'::regtype;
 
+SELECT pg_describe_object(refclassid,refobjid,refobjsubid) as ref, deptype
+FROM pg_depend
+WHERE classid = 'pg_operator'::regclass AND
+      objid = '===(bool,bool)'::regoperator
+ORDER BY 1;
+
 ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = contsel);
 ALTER OPERATOR === (boolean, boolean) SET (JOIN = contjoinsel);
 
 SELECT oprrest, oprjoin FROM pg_operator WHERE oprname = '==='
   AND oprleft = 'boolean'::regtype AND oprright = 'boolean'::regtype;
 
+SELECT pg_describe_object(refclassid,refobjid,refobjsubid) as ref, deptype
+FROM pg_depend
+WHERE classid = 'pg_operator'::regclass AND
+      objid = '===(bool,bool)'::regoperator
+ORDER BY 1;
+
 ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = NONE, JOIN = NONE);
 
 SELECT oprrest, oprjoin FROM pg_operator WHERE oprname = '==='
   AND oprleft = 'boolean'::regtype AND oprright = 'boolean'::regtype;
 
-ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = contsel, JOIN = contjoinsel);
+SELECT pg_describe_object(refclassid,refobjid,refobjsubid) as ref, deptype
+FROM pg_depend
+WHERE classid = 'pg_operator'::regclass AND
+      objid = '===(bool,bool)'::regoperator
+ORDER BY 1;
+
+ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = customcontsel, JOIN = contjoinsel);
 
 SELECT oprrest, oprjoin FROM pg_operator WHERE oprname = '==='
   AND oprleft = 'boolean'::regtype AND oprright = 'boolean'::regtype;
+
+SELECT pg_describe_object(refclassid,refobjid,refobjsubid) as ref, deptype
+FROM pg_depend
+WHERE classid = 'pg_operator'::regclass AND
+      objid = '===(bool,bool)'::regoperator
+ORDER BY 1;
 
 --
 -- Test invalid options.
@@ -60,3 +93,5 @@ ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = NONE);
 RESET SESSION AUTHORIZATION;
 DROP USER regtest_alter_user;
 DROP OPERATOR === (boolean, boolean);
+DROP FUNCTION customcontsel(internal, oid, internal, integer);
+DROP FUNCTION alter_op_test_fn(boolean, boolean);

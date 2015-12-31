@@ -40,6 +40,7 @@
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_operator_fn.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/defrem.h"
@@ -500,9 +501,9 @@ AlterOperator(AlterOperatorStmt *stmt)
 	simple_heap_update(catalog, &tup->t_self, tup);
 	CatalogUpdateIndexes(catalog, tup);
 
-	InvokeObjectPostAlterHook(OperatorRelationId, oprId, 0);
+	address = makeOperatorDependencies(tup, true);
 
-	ObjectAddressSet(address, OperatorRelationId, oprId);
+	InvokeObjectPostAlterHook(OperatorRelationId, oprId, 0);
 
 	heap_close(catalog, NoLock);
 

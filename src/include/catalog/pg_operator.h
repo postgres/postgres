@@ -23,8 +23,6 @@
 #define PG_OPERATOR_H
 
 #include "catalog/genbki.h"
-#include "catalog/objectaddress.h"
-#include "nodes/pg_list.h"
 
 /* ----------------
  *		pg_operator definition.  cpp turns this into
@@ -1825,20 +1823,5 @@ DATA(insert OID = 3286 (  "-"	   PGNSP PGUID b f f 3802 23 3802 0 0 3303 - - ));
 DESCR("delete array element");
 DATA(insert OID = 3287 (  "#-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 jsonb_delete_path - - ));
 DESCR("delete path");
-
-/*
- * function prototypes
- */
-extern ObjectAddress OperatorCreate(const char *operatorName,
-			   Oid operatorNamespace,
-			   Oid leftTypeId,
-			   Oid rightTypeId,
-			   Oid procedureId,
-			   List *commutatorName,
-			   List *negatorName,
-			   Oid restrictionId,
-			   Oid joinId,
-			   bool canMerge,
-			   bool canHash);
 
 #endif   /* PG_OPERATOR_H */
