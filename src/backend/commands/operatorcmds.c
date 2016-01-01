@@ -39,6 +39,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_operator_fn.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/defrem.h"
