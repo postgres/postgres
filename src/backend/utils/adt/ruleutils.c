@@ -9858,18 +9858,59 @@ flatten_reloptions(Oid relid)
 								 Anum_pg_class_reloptions, &isnull);
 	if (!isnull)
 	{
-		Datum		sep,
-					txt;
+		StringInfoData buf;
+		Datum	   *options;
+		int			noptions;
+		int			i;
 
-		/*
-		 * We want to use array_to_text(reloptions, ', ') --- but
-		 * DirectFunctionCall2(array_to_text) does not work, because
-		 * array_to_text() relies on flinfo to be valid.  So use
-		 * OidFunctionCall2.
-		 */
-		sep = CStringGetTextDatum(", ");
-		txt = OidFunctionCall2(F_ARRAY_TO_TEXT, reloptions, sep);
-		result = TextDatumGetCString(txt);
+		initStringInfo(&buf);
+
+		deconstruct_array(DatumGetArrayTypeP(reloptions),
+						  TEXTOID, -1, false, 'i',
+						  &options, NULL, &noptions);
+
+		for (i = 0; i < noptions; i++)
+		{
+			char	   *option = TextDatumGetCString(options[i]);
+			char	   *name;
+			char	   *separator;
+			char	   *value;
+
+			/*
+			 * Each array element should have the form name=value.  If the "="
+			 * is missing for some reason, treat it like an empty value.
+			 */
+			name = option;
+			separator = strchr(option, '=');
+			if (separator)
+			{
+				*separator = '\0';
+				value = separator + 1;
+			}
+			else
+				value = "";
+
+			if (i > 0)
+				appendStringInfoString(&buf, ", ");
+			appendStringInfo(&buf, "%s=", quote_identifier(name));
+
+			/*
+			 * In general we need to quote the value; but to avoid unnecessary
+			 * clutter, do not quote if it is an identifier that would not
+			 * need quoting.  (We could also allow numbers, but that is a bit
+			 * trickier than it looks --- for example, are leading zeroes
+			 * significant?  We don't want to assume very much here about what
+			 * custom reloptions might mean.)
+			 */
+			if (quote_identifier(value) == value)
+				appendStringInfoString(&buf, value);
+			else
+				simple_quote_literal(&buf, value);
+
+			pfree(option);
+		}
+
+		result = buf.data;
 	}
 
 	ReleaseSysCache(tuple);
