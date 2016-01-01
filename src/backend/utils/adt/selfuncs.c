@@ -7246,6 +7246,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 				numEntries;
 	GinQualCounts counts;
 	bool		matchPossible;
+	double		partialScale;
 	double		entryPagesFetched,
 				dataPagesFetched,
 				dataPagesFetchedBySel;
@@ -7274,42 +7275,59 @@ gincostestimate(PG_FUNCTION_ARGS)
 		memset(&ginStats, 0, sizeof(ginStats));
 	}
 
-	if (ginStats.nTotalPages > 0 && ginStats.nEntryPages > 0 && numPages > 0)
+	/*
+	 * Assuming we got valid (nonzero) stats at all, nPendingPages can be
+	 * trusted, but the other fields are data as of the last VACUUM.  We can
+	 * scale them up to account for growth since then, but that method only
+	 * goes so far; in the worst case, the stats might be for a completely
+	 * empty index, and scaling them will produce pretty bogus numbers.
+	 * Somewhat arbitrarily, set the cutoff for doing scaling at 4X growth; if
+	 * it's grown more than that, fall back to estimating things only from the
+	 * assumed-accurate index size.  But we'll trust nPendingPages in any case
+	 * so long as it's not clearly insane, ie, more than the index size.
+	 */
+	if (ginStats.nPendingPages < numPages)
+		numPendingPages = ginStats.nPendingPages;
+	else
+		numPendingPages = 0;
+
+	if (numPages > 0 && ginStats.nTotalPages <= numPages &&
+		ginStats.nTotalPages > numPages / 4 &&
+		ginStats.nEntryPages > 0 && ginStats.nEntries > 0)
 	{
 		/*
-		 * We got valid stats.  nPendingPages can be trusted, but the other
-		 * fields are data as of the last VACUUM.  Scale them by the ratio
-		 * numPages / nTotalPages to account for growth since then.
+		 * OK, the stats seem close enough to sane to be trusted.  But we
+		 * still need to scale them by the ratio numPages / nTotalPages to
+		 * account for growth since the last VACUUM.
 		 */
 		double		scale = numPages / ginStats.nTotalPages;
 
-		numEntryPages = ginStats.nEntryPages;
-		numDataPages = ginStats.nDataPages;
-		numPendingPages = ginStats.nPendingPages;
-		numEntries = ginStats.nEntries;
-
-		numEntryPages = ceil(numEntryPages * scale);
-		numDataPages = ceil(numDataPages * scale);
-		numEntries = ceil(numEntries * scale);
+		numEntryPages = ceil(ginStats.nEntryPages * scale);
+		numDataPages = ceil(ginStats.nDataPages * scale);
+		numEntries = ceil(ginStats.nEntries * scale);
 		/* ensure we didn't round up too much */
-		numEntryPages = Min(numEntryPages, numPages);
-		numDataPages = Min(numDataPages, numPages - numEntryPages);
+		numEntryPages = Min(numEntryPages, numPages - numPendingPages);
+		numDataPages = Min(numDataPages,
+						   numPages - numPendingPages - numEntryPages);
 	}
 	else
 	{
 		/*
-		 * It's a hypothetical index, or perhaps an index created pre-9.1 and
-		 * never vacuumed since upgrading.  Invent some plausible internal
-		 * statistics based on the index page count.  We estimate that 90% of
-		 * the index is entry pages, and the rest is data pages.  Estimate 100
-		 * entries per entry page; this is rather bogus since it'll depend on
-		 * the size of the keys, but it's more robust than trying to predict
-		 * the number of entries per heap tuple.
+		 * We might get here because it's a hypothetical index, or an index
+		 * created pre-9.1 and never vacuumed since upgrading (in which case
+		 * its stats would read as zeroes), or just because it's grown too
+		 * much since the last VACUUM for us to put our faith in scaling.
+		 *
+		 * Invent some plausible internal statistics based on the index page
+		 * count (and clamp that to at least 10 pages, just in case).  We
+		 * estimate that 90% of the index is entry pages, and the rest is data
+		 * pages.  Estimate 100 entries per entry page; this is rather bogus
+		 * since it'll depend on the size of the keys, but it's more robust
+		 * than trying to predict the number of entries per heap tuple.
 		 */
 		numPages = Max(numPages, 10);
-		numEntryPages = floor(numPages * 0.90);
-		numDataPages = numPages - numEntryPages;
-		numPendingPages = 0;
+		numEntryPages = floor((numPages - numPendingPages) * 0.90);
+		numDataPages = numPages - numPendingPages - numEntryPages;
 		numEntries = floor(numEntryPages * 100);
 	}
 
@@ -7435,16 +7453,21 @@ gincostestimate(PG_FUNCTION_ARGS)
 	/*
 	 * Add an estimate of entry pages read by partial match algorithm. It's a
 	 * scan over leaf pages in entry tree.  We haven't any useful stats here,
-	 * so estimate it as proportion.
+	 * so estimate it as proportion.  Because counts.partialEntries is really
+	 * pretty bogus (see code above), it's possible that it is more than
+	 * numEntries; clamp the proportion to ensure sanity.
 	 */
-	entryPagesFetched += ceil(numEntryPages * counts.partialEntries / numEntries);
+	partialScale = counts.partialEntries / numEntries;
+	partialScale = Min(partialScale, 1.0);
+
+	entryPagesFetched += ceil(numEntryPages * partialScale);
 
 	/*
 	 * Partial match algorithm reads all data pages before doing actual scan,
-	 * so it's a startup cost. Again, we haven't any useful stats here, so,
-	 * estimate it as proportion
+	 * so it's a startup cost.  Again, we haven't any useful stats here, so
+	 * estimate it as proportion.
 	 */
-	dataPagesFetched = ceil(numDataPages * counts.partialEntries / numEntries);
+	dataPagesFetched = ceil(numDataPages * partialScale);
 
 	/*
 	 * Calculate cache effects if more than one scan due to nestloops or array
