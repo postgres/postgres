@@ -1245,6 +1245,18 @@ default:\
   <sect2 id="linux-memory-overcommit">
    <title>Linux Memory Overcommit</title>
 
+   <indexterm>
+    <primary>memory overcommit</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>OOM</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>overcommit</primary>
+   </indexterm>
+
    <para>
     In Linux 2.4 and later, the default virtual memory behavior is not
     optimal for <productname>PostgreSQL</productname>. Because of the
@@ -1306,7 +1318,7 @@ sysctl -w vm.overcommit_memory=2
     or placing an equivalent entry in <filename>/etc/sysctl.conf</>.
     You might also wish to modify the related setting
     <varname>vm.overcommit_ratio</>.  For details see the kernel documentation
-    file <filename>Documentation/vm/overcommit-accounting</>.
+    file <ulink url="https://www.kernel.org/doc/Documentation/vm/overcommit-accounting"></ulink>.
    </para>
 
    <para>
