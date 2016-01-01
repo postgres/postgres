@@ -1428,7 +1428,7 @@ $ <userinput>sysctl -w vm.nr_hugepages=3170</userinput>
    <para>
     For a detailed description of the <productname>Linux</productname> huge
     pages feature have a look
-    at <ulink url="https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt">https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt</ulink>.
+    at <ulink url="https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt"></ulink>.
    </para>
 
   </sect2>
