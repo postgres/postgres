@@ -5,7 +5,7 @@
  *
  * XXX keep this in sync with src/include/catalog/pg_type.h
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/ecpg/ecpglib/pg_type.h

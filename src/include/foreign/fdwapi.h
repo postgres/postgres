@@ -3,7 +3,7 @@
  * fdwapi.h
  *	  API for foreign-data wrappers
  *
- * Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *
  * src/include/foreign/fdwapi.h
  *

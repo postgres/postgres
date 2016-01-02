@@ -3,7 +3,7 @@
  *
  * A Pairing Heap implementation
  *
- * Portions Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * src/include/lib/pairingheap.h
  */

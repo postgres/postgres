@@ -6,7 +6,7 @@
  * These definitions are needed by both frontend and backend code to work
  * with MD5-encrypted passwords.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/md5.h

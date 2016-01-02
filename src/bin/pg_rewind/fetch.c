@@ -10,7 +10,7 @@
  * connection (libpq_fetch.c)
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

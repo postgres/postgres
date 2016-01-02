@@ -3,7 +3,7 @@
  * hyperloglog.c
  *	  HyperLogLog cardinality estimator
  *
- * Portions Copyright (c) 2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2014-2016, PostgreSQL Global Development Group
  *
  * Based on Hideaki Ohno's C++ implementation.  This is probably not ideally
  * suited to estimating the cardinality of very large sets;  in particular, we

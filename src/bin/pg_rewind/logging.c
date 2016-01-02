@@ -3,7 +3,7 @@
  * logging.c
  *	 logging functions
  *
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

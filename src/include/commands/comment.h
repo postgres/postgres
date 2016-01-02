@@ -7,7 +7,7 @@
  *
  * Prototypes for functions in commands/comment.c
  *
- * Copyright (c) 1999-2015, PostgreSQL Global Development Group
+ * Copyright (c) 1999-2016, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

@@ -17,7 +17,7 @@
  * any database access.
  *
  *
- * Copyright (c) 2006-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/cache/ts_cache.c

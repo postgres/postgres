@@ -4,7 +4,7 @@
  *
  * Routines corresponding to schema objects
  *
- * Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */

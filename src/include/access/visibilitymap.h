@@ -4,7 +4,7 @@
  *		visibility map interface
  *
  *
- * Portions Copyright (c) 2007-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2007-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/visibilitymap.h

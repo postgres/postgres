@@ -16,7 +16,7 @@
  * PHP 4.0.6 distribution for inspiration.  Configurable penalty costs
  * extension is introduced by Volkan YAZICI <volkan.yazici@gmail.com.
  *
- * Copyright (c) 2001-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	src/backend/utils/adt/levenshtein.c
