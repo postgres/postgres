@@ -6,8 +6,7 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2015-12-15</simpara>
+   <simpara>2016-01-07</simpara>
   </note>
 
   <sect2>
@@ -40,15 +39,16 @@
 
     <listitem>
      <para>
-      Add row-level security control
+      Add <link linkend="ddl-rowsecurity">row-level security control</>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow <link linkend="pg-replication-origin-create">labeling</> of
-      the origin of logical replication changes, and provide mechanisms
-      for tracking the progress of replication
+      Create mechanisms for tracking
+      the <link linkend="replication-origins">progress of replication</>,
+      including methods for identifying the origin of individual changes
+      during logical replication
      </para>
     </listitem>
 
@@ -128,7 +128,7 @@
 2015-03-31 [0badb06] Bruce ..: pg_ctl:  change default shutdown mode from 'sma..
 -->
      <para>
-      Change <application>pg_ctl</>'s default shutdown mode from
+      Change <xref linkend="app-pg-ctl">'s default shutdown mode from
       <literal>smart</> to <literal>fast</> (Bruce Momjian)
      </para>
 
@@ -190,18 +190,6 @@
 
     <listitem>
 <!--
-2015-01-22 [59367fd] Bruce ..: adjust ACL owners for REASSIGN and ALTER OWNER..
--->
-     <para>
-      Fix <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN OWNED</></>
-      and <link linkend="SQL-ALTERTYPE"><command>ALTER OWNER TO</></>
-      to properly update permissions lists (ACLs) when changing ownership of
-      types, foreign data wrappers, and foreign servers (Bruce Momjian)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 2015-02-23 [88e9823] Heikki..: Replace checkpoint_segments with min_wal_size a..
 2015-03-15 [a0f5954] Andres..: Increase max_wal_size's default from 128MB to 1..
 2015-06-29 [d661532] Heikki..: Also trigger restartpoints based on max_wal_siz..
@@ -223,6 +211,22 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
       to be, so adjusting it might no longer be necessary.
      </para>
     </listitem>
+
+      <listitem>
+<!--
+2014-06-18 [df8b7bc] Tom Lane: Improve our mechanism for controlling the Linux..
+-->
+       <para>
+        Control the Linux <acronym>OOM</> killer via new environment
+        variables <link
+        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_FILE</></>
+        and <link
+        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_VALUE</></>,
+        instead of compile-time options <literal>LINUX_OOM_SCORE_ADJ</> and
+        <literal>LINUX_OOM_ADJ</>
+        (Gurjeet Singh)
+       </para>
+      </listitem>
 
     <listitem>
 <!--
@@ -507,7 +511,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Allow pushdown of query restrictions into subqueries with <link
-        linkend="functions-window">window functions</>, where appropriate
+        linkend="tutorial-window">window functions</>, where appropriate
         (David Rowley)
        </para>
       </listitem>
@@ -517,9 +521,9 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-04-27 [dcbf594]  Stephe..: Improve qual pushdown for RLS and SB views
 -->
        <para>
-        Allow non-leakproof functions to be passed into security barrier
-        views if the function does not reference any table columns
-        (Dean Rasheed)
+        Allow a non-leakproof function to be pushed down into a security
+        barrier view if the function does not receive any view output
+        columns (Dean Rasheed)
        </para>
       </listitem>
 
@@ -749,6 +753,27 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
       <listitem>
 <!--
+2014-06-18 [df8b7bc] Tom Lane: Improve our mechanism for controlling the Linux..
+-->
+       <para>
+        Control the Linux <acronym>OOM</> killer via new environment
+        variables <link
+        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_FILE</></>
+        and <link
+        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_VALUE</></>
+        (Gurjeet Singh)
+       </para>
+
+       <para>
+        The previous <acronym>OOM</> control infrastructure involved
+        compile-time options <literal>LINUX_OOM_SCORE_ADJ</> and
+        <literal>LINUX_OOM_ADJ</>, which are no longer supported.
+        The new behavior is available in all builds.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2014-12-03 [73c986a] Alvaro..: Keep track of transaction commit timestamps
 -->
        <para>
@@ -815,24 +840,6 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
       <listitem>
 <!--
-2014-06-18 [df8b7bc] Tom Lane: Improve our mechanism for controlling the Linux..
--->
-       <para>
-        Add environment variables <link
-        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_FILE</></>
-        and <link
-        linkend="linux-memory-overcommit"><envar>PG_OOM_ADJUST_VALUE</></>
-        to help control the Linux <acronym>OOM</> killer (Gurjeet Singh)
-       </para>
-
-       <para>
-        The previous <acronym>OOM</> control infrastructure involved a
-        compile-time option.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2015-05-08 [a97e0c3] Stephe..: Add pg_file_settings view and function
 2015-06-28 [62d16c7] Tom Lane: Improve design and implementation of pg_file_se..
 -->
@@ -882,6 +889,22 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
     <title>Replication and Recovery</title>
 
      <itemizedlist>
+
+      <listitem>
+<!--
+2015-04-29 [5aa2350] Andres..: Introduce replication progress tracking infrast..
+-->
+       <para>
+        Create mechanisms for tracking
+        the <link linkend="replication-origins">progress of replication</>,
+        including methods for identifying the origin of individual changes
+        during logical replication (Andres Freund)
+       </para>
+
+       <para>
+        This is helpful when implementing replication solutions.
+       </para>
+      </listitem>
 
       <listitem>
 <!--
@@ -985,21 +1008,6 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
         linkend="protocol-replication"><literal>IDENTIFY_SYSTEM</></>,
         are not logged, even when <xref linkend="guc-log-statement"> is set
         to <literal>all</>.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-04-29 [5aa2350] Andres..: Introduce replication progress tracking infrast..
--->
-       <para>
-        Allow <link linkend="pg-replication-origin-create">labeling</> of
-        the origin of logical replication changes, and provide mechanisms
-        for tracking the progress of replication (Andres Freund)
-       </para>
-
-       <para>
-        This is helpful when implementing replication solutions.
        </para>
       </listitem>
 
@@ -1111,6 +1119,13 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
         <literal>TABLESAMPLE</> to return a subset of a table (Petr
         Jel&iacute;nek)
        </para>
+
+       <para>
+        This feature supports the SQL-standard table sampling methods.
+        In addition, there are provisions
+        for <link linkend="tablesample-method">user-defined
+        table sampling methods</>.
+       </para>
       </listitem>
 
       <listitem>
@@ -1153,7 +1168,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-12-18 [35192f0] Alvaro..: Have VACUUM log number of skipped pages due to ..
 -->
        <para>
-        Have <link linkend="SQL-VACUUM"><command>VACUUM</></> log the
+        Make <link linkend="SQL-VACUUM"><command>VACUUM</></> log the
         number of pages skipped due to pins (Jim Nasby)
        </para>
       </listitem>
@@ -1163,7 +1178,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-02-20 [d42358e] Alvaro..: Have TRUNCATE update pgstat tuple counters
 -->
        <para>
-        Have <link linkend="SQL-TRUNCATE"><command>TRUNCATE</></> properly
+        Make <link linkend="SQL-TRUNCATE"><command>TRUNCATE</></> properly
         update the <literal>pg_stat</>* tuple counters (Alexander Shulgin)
        </para>
       </listitem>
@@ -1231,8 +1246,9 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-09-19 [491c029] Stephe..: Row-Level Security Policies (RLS)
 -->
        <para>
-        Add row-level security control (Craig Ringer, KaiGai Kohei,
-        Adam Brightwell, Dean Rasheed, Stephen Frost)
+        Add  <link linkend="ddl-rowsecurity">row-level security control</>
+        (Craig Ringer, KaiGai Kohei, Adam Brightwell, Dean Rasheed,
+        Stephen Frost)
        </para>
 
        <para>
@@ -1290,17 +1306,17 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-03-09 [31eae60] Alvaro..: Allow CURRENT/SESSION_USER to be used in certai..
 -->
        <para>
-        Allow <literal>CURRENT</><literal>/SESSION_USER</> to specify the
-        current user in some commands (Kyotaro Horiguchi, &Aacute;lvaro
-        Herrera)
+        Allow some DDL commands to accept <literal>CURRENT_USER</>
+        or <literal>SESSION_USER</>, meaning the current user or session
+        user, in place of a specific user name (Kyotaro Horiguchi,
+        &Aacute;lvaro Herrera)
        </para>
 
        <para>
-        This includes <link linkend="SQL-ALTERUSER"><command>ALTER
-        USER</></>, <link linkend="SQL-ALTERGROUP"><command>ALTER
-        GROUP</></>, <link linkend="SQL-ALTERROLE"><command>ALTER
-        ROLE</></>, <link linkend="SQL-GRANT"><command>GRANT</></>,
-        and various <command>ALTER <replaceable>object</> OWNER TO</> commands.
+        This feature is now supported in
+        <xref linkend="SQL-ALTERUSER">, <xref linkend="SQL-ALTERGROUP">,
+        <xref linkend="SQL-ALTERROLE">, <xref linkend="SQL-GRANT">,
+        and <command>ALTER <replaceable>object</> OWNER TO</> commands.
        </para>
       </listitem>
 
@@ -1330,8 +1346,8 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Allow <link linkend="SQL-LOCK"><command>LOCK TABLE ... ROW EXCLUSIVE
-        MODE</></> for those with <command>INSERT</> privileges (Stephen
-        Frost)
+        MODE</></> for those with <command>INSERT</> privileges on the
+        target table (Stephen Frost)
        </para>
 
        <para>
@@ -1345,12 +1361,12 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-03-23 [e5f455f] Tom Lane: Apply table and domain CHECK constraints in nam.
 -->
        <para>
-        Apply table and domain <literal>CHECK</> constraints in name order
+        Apply table and domain <literal>CHECK</> constraints in order by name
         (Tom Lane)
        </para>
 
        <para>
-        The previous order was indeterminate.
+        The previous ordering was indeterminate.
        </para>
       </listitem>
 
@@ -1378,7 +1394,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
      </itemizedlist>
 
      <sect4>
-      <title><xref linkend="SQL-CREATEFOREIGNDATAWRAPPER"></title>
+      <title><link linkend="ddl-foreign-data">Foreign Tables</link></title>
 
       <itemizedlist>
 
@@ -1387,9 +1403,8 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-07-10 [59efda3] Tom Lane: Implement IMPORT FOREIGN SCHEMA.
 -->
        <para>
-        Add support for <link
-        linkend="SQL-IMPORTFOREIGNSCHEMA"><command>IMPORT FOREIGN
-        SCHEMA</></> (Ronan Dunklau, Michael Paquier, Tom Lane)
+        Add support for <xref linkend="SQL-IMPORTFOREIGNSCHEMA">
+        (Ronan Dunklau, Michael Paquier, Tom Lane)
        </para>
 
        <para>
@@ -1449,7 +1464,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
      </sect4>
 
      <sect4>
-      <title><xref linkend="SQL-CREATEEVENTTRIGGER"></title>
+      <title><link linkend="event-triggers">Event Triggers</link></title>
 
       <itemizedlist>
 
@@ -1587,7 +1602,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        Add data
        types <link linkend="datatype-oid-table"><type>regrole</></link>
        and <link linkend="datatype-oid-table"><type>regnamespace</></link>
-       that simplify entering and pretty-printing the <type>OID</> of a role
+       to simplify entering and pretty-printing the <type>OID</> of a role
        or namespace (Kyotaro Horiguchi)
       </para>
      </listitem>
@@ -1736,9 +1751,9 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-12-15 [4520ba6] Heikki..: Add point <-> polygon distance operator.
 -->
        <para>
-        Add a <link
-        linkend="gist-builtin-opclasses-table"><type>point</>-to-<type>polygon</></>
-        distance operator (&lt;-&gt;) (Alexander Korotkov)
+        Add a <type>point</>-to-<type>polygon</> distance operator
+        <link linkend="functions-geometry-op-table">&lt;-&gt;</>
+        (Alexander Korotkov)
        </para>
       </listitem>
 
@@ -2203,7 +2218,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-03-28 [7655f4c] Andrew..: Add a pager_min_lines setting to psql
 -->
         <para>
-         Add <application>psql</> setting <link
+         Add <literal>\pset</> option <link
          linkend="APP-PSQL-meta-commands"><varname>pager_min_lines</></>
          to control pager invocation (Andrew Dunstan)
         </para>
