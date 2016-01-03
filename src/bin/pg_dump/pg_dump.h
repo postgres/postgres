@@ -205,7 +205,7 @@ typedef struct _tableInfo
 	char		relreplident;	/* replica identifier */
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
-	char	   *checkoption;	/* WITH CHECK OPTION */
+	char	   *checkoption;	/* WITH CHECK OPTION, if any */
 	char	   *toast_reloptions;		/* WITH options for the TOAST table */
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
@@ -282,7 +282,7 @@ typedef struct _indxInfo
 	TableInfo  *indextable;		/* link to table the index is for */
 	char	   *indexdef;
 	char	   *tablespace;		/* tablespace in which index is stored */
-	char	   *options;		/* options specified by WITH (...) */
+	char	   *indreloptions;	/* options specified by WITH (...) */
 	int			indnkeys;
 	Oid		   *indkeys;
 	bool		indisclustered;
