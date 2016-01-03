@@ -261,6 +261,9 @@ static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 								const char *objlabel);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
+static bool nonemptyReloptions(const char *reloptions);
+static void fmtReloptionsArray(Archive *fout, PQExpBuffer buffer,
+				   const char *reloptions, const char *prefix);
 static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 
 
@@ -3965,8 +3968,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						"array_to_string(c.reloptions, ', ') AS reloptions, "
-						  "array_to_string(array(SELECT 'toast.' || x FROM unnest(tc.reloptions) x), ', ') AS toast_reloptions "
+						  "c.reloptions AS reloptions, "
+						  "tc.reloptions AS toast_reloptions "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -4001,8 +4004,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						"array_to_string(c.reloptions, ', ') AS reloptions, "
-						  "array_to_string(array(SELECT 'toast.' || x FROM unnest(tc.reloptions) x), ', ') AS toast_reloptions "
+						  "c.reloptions AS reloptions, "
+						  "tc.reloptions AS toast_reloptions "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -4036,8 +4039,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						"array_to_string(c.reloptions, ', ') AS reloptions, "
-						  "array_to_string(array(SELECT 'toast.' || x FROM unnest(tc.reloptions) x), ', ') AS toast_reloptions "
+						  "c.reloptions AS reloptions, "
+						  "tc.reloptions AS toast_reloptions "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -4071,7 +4074,7 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						"array_to_string(c.reloptions, ', ') AS reloptions, "
+						  "c.reloptions AS reloptions, "
 						  "NULL AS toast_reloptions "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
@@ -4507,7 +4510,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_conoid,
 				i_condef,
 				i_tablespace,
-				i_options;
+				i_indreloptions;
 	int			ntups;
 
 	for (i = 0; i < numTables; i++)
@@ -4559,7 +4562,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "c.oid AS conoid, "
 				  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							"array_to_string(t.reloptions, ', ') AS options "
+							  "t.reloptions AS indreloptions "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_constraint c "
@@ -4585,7 +4588,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "c.oid AS conoid, "
 							  "null AS condef, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							"array_to_string(t.reloptions, ', ') AS options "
+							  "t.reloptions AS indreloptions "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_depend d "
@@ -4614,7 +4617,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "c.oid AS conoid, "
 							  "null AS condef, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "null AS options "
+							  "null AS indreloptions "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_depend d "
@@ -4642,7 +4645,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "c.oid AS conoid, "
 							  "null AS condef, "
 							  "NULL AS tablespace, "
-							  "null AS options "
+							  "null AS indreloptions "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_depend d "
@@ -4673,7 +4676,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "t.oid AS conoid, "
 							  "null AS condef, "
 							  "NULL AS tablespace, "
-							  "null AS options "
+							  "null AS indreloptions "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%u'::oid "
@@ -4699,7 +4702,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "t.oid AS conoid, "
 							  "null AS condef, "
 							  "NULL AS tablespace, "
-							  "null AS options "
+							  "null AS indreloptions "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%u'::oid "
@@ -4726,7 +4729,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		i_conoid = PQfnumber(res, "conoid");
 		i_condef = PQfnumber(res, "condef");
 		i_tablespace = PQfnumber(res, "tablespace");
-		i_options = PQfnumber(res, "options");
+		i_indreloptions = PQfnumber(res, "indreloptions");
 
 		indxinfo = (IndxInfo *) pg_malloc(ntups * sizeof(IndxInfo));
 		constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
@@ -4745,7 +4748,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			indxinfo[j].indexdef = pg_strdup(PQgetvalue(res, j, i_indexdef));
 			indxinfo[j].indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
 			indxinfo[j].tablespace = pg_strdup(PQgetvalue(res, j, i_tablespace));
-			indxinfo[j].options = pg_strdup(PQgetvalue(res, j, i_options));
+			indxinfo[j].indreloptions = pg_strdup(PQgetvalue(res, j, i_indreloptions));
 
 			/*
 			 * In pre-7.4 releases, indkeys may contain more entries than
@@ -12382,8 +12385,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 											 tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE VIEW %s", fmtId(tbinfo->dobj.name));
-		if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
-			appendPQExpBuffer(q, " WITH (%s)", tbinfo->reloptions);
+		if (nonemptyReloptions(tbinfo->reloptions))
+		{
+			appendPQExpBufferStr(q, " WITH (");
+			fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
+			appendPQExpBufferChar(q, ')');
+		}
 		appendPQExpBuffer(q, " AS\n    %s\n", viewdef);
 
 		appendPQExpBuffer(labelq, "VIEW %s",
@@ -12610,23 +12617,24 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
 			appendPQExpBuffer(q, "\nSERVER %s", fmtId(srvname));
 
-		if ((tbinfo->reloptions && strlen(tbinfo->reloptions) > 0) ||
-		  (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0))
+		if (nonemptyReloptions(tbinfo->reloptions) ||
+			nonemptyReloptions(tbinfo->toast_reloptions))
 		{
 			bool		addcomma = false;
 
-			appendPQExpBuffer(q, "\nWITH (");
-			if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
+			appendPQExpBufferStr(q, "\nWITH (");
+			if (nonemptyReloptions(tbinfo->reloptions))
 			{
 				addcomma = true;
-				appendPQExpBuffer(q, "%s", tbinfo->reloptions);
+				fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
 			}
-			if (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0)
+			if (nonemptyReloptions(tbinfo->toast_reloptions))
 			{
-				appendPQExpBuffer(q, "%s%s", addcomma ? ", " : "",
-								  tbinfo->toast_reloptions);
+				if (addcomma)
+					appendPQExpBufferStr(q, ", ");
+				fmtReloptionsArray(fout, q, tbinfo->toast_reloptions, "toast.");
 			}
-			appendPQExpBuffer(q, ")");
+			appendPQExpBufferChar(q, ')');
 		}
 
 		/* Dump generic options if any */
@@ -13134,8 +13142,12 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 			appendPQExpBuffer(q, ")");
 
-			if (indxinfo->options && strlen(indxinfo->options) > 0)
-				appendPQExpBuffer(q, " WITH (%s)", indxinfo->options);
+			if (nonemptyReloptions(indxinfo->indreloptions))
+			{
+				appendPQExpBufferStr(q, " WITH (");
+				fmtReloptionsArray(fout, q, indxinfo->indreloptions, "");
+				appendPQExpBufferChar(q, ')');
+			}
 
 			if (coninfo->condeferrable)
 			{
@@ -13917,11 +13929,12 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	/*
 	 * Apply view's reloptions when its ON SELECT rule is separate.
 	 */
-	if (rinfo->reloptions && strlen(rinfo->reloptions) > 0)
+	if (nonemptyReloptions(rinfo->reloptions))
 	{
-		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (%s);\n",
-						  fmtId(tbinfo->dobj.name),
-						  rinfo->reloptions);
+		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (",
+						  fmtId(tbinfo->dobj.name));
+		fmtReloptionsArray(fout, cmd, rinfo->reloptions, "");
+		appendPQExpBufferStr(cmd, ");\n");
 	}
 
 	/*
@@ -14825,6 +14838,83 @@ fmtCopyColumnList(const TableInfo *ti)
 
 	appendPQExpBuffer(q, ")");
 	return q->data;
+}
+
+/*
+ * Check if a reloptions array is nonempty.
+ */
+static bool
+nonemptyReloptions(const char *reloptions)
+{
+	/* Don't want to print it if it's just "{}" */
+	return (reloptions != NULL && strlen(reloptions) > 2);
+}
+
+/*
+ * Format a reloptions array and append it to the given buffer.
+ *
+ * "prefix" is prepended to the option names; typically it's "" or "toast.".
+ *
+ * Note: this logic should generally match the backend's flatten_reloptions()
+ * (in adt/ruleutils.c).
+ */
+static void
+fmtReloptionsArray(Archive *fout, PQExpBuffer buffer, const char *reloptions,
+				   const char *prefix)
+{
+	char	  **options;
+	int			noptions;
+	int			i;
+
+	if (!parsePGArray(reloptions, &options, &noptions))
+	{
+		write_msg(NULL, "WARNING: could not parse reloptions array\n");
+		if (options)
+			free(options);
+		return;
+	}
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *option = options[i];
+		char	   *name;
+		char	   *separator;
+		char	   *value;
+
+		/*
+		 * Each array element should have the form name=value.  If the "=" is
+		 * missing for some reason, treat it like an empty value.
+		 */
+		name = option;
+		separator = strchr(option, '=');
+		if (separator)
+		{
+			*separator = '\0';
+			value = separator + 1;
+		}
+		else
+			value = "";
+
+		if (i > 0)
+			appendPQExpBufferStr(buffer, ", ");
+		appendPQExpBuffer(buffer, "%s%s=", prefix, fmtId(name));
+
+		/*
+		 * In general we need to quote the value; but to avoid unnecessary
+		 * clutter, do not quote if it is an identifier that would not need
+		 * quoting.  (We could also allow numbers, but that is a bit trickier
+		 * than it looks --- for example, are leading zeroes significant?  We
+		 * don't want to assume very much here about what custom reloptions
+		 * might mean.)
+		 */
+		if (strcmp(fmtId(value), value) == 0)
+			appendPQExpBufferStr(buffer, value);
+		else
+			appendStringLiteralAH(buffer, value, fout);
+	}
+
+	if (options)
+		free(options);
 }
 
 /*
