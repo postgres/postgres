@@ -98,7 +98,7 @@ msgstr "при выполнении plperl.on_plperlu_init"
 #: plperl.c:1081 plperl.c:1710
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
-msgstr "Perl-хэш содержит несуществующую колонку \"%s\""
+msgstr "Perl-хеш содержит несуществующий столбец \"%s\""
 
 #: plperl.c:1166
 #, c-format
@@ -121,7 +121,7 @@ msgstr "Perl-массив нельзя преобразовать в тип не
 #: plperl.c:1332
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
-msgstr "Perl-хэш нельзя преобразовать в не составной тип %s"
+msgstr "Perl-хеш нельзя преобразовать в не составной тип %s"
 
 #: plperl.c:1343
 #, c-format
@@ -133,7 +133,7 @@ msgstr ""
 #: plperl.c:1358
 #, c-format
 msgid "PL/Perl function must return reference to hash or array"
-msgstr "функция PL/Perl должна возвращать ссылку на хэш или массив"
+msgstr "функция PL/Perl должна возвращать ссылку на хеш или массив"
 
 #: plperl.c:1395
 #, c-format
@@ -148,7 +148,7 @@ msgstr "$_TD->{new} не существует"
 #: plperl.c:1691
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
-msgstr "$_TD->{new} - не ссылка на хэш"
+msgstr "$_TD->{new} - не ссылка на хеш"
 
 #: plperl.c:1944 plperl.c:2776
 #, c-format
@@ -231,7 +231,7 @@ msgid ""
 "reference to hash"
 msgstr ""
 "функция PL/Perl, возвращающая составное множество, должна вызывать "
-"return_next со ссылкой на хэш"
+"return_next со ссылкой на хеш"
 
 #: plperl.c:3934
 #, c-format

@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-03-15 18:13+0000\n"
-"PO-Revision-Date: 2014-12-18 15:49+0700\n"
+"PO-Revision-Date: 2015-11-12 15:44-0300\n"
 "Last-Translator: \n"
 "Language-Team: Equnix Business Solution, PT\n"
 "Language: id_ID\n"
@@ -2751,12 +2751,12 @@ msgstr "tidak mendapatkan 'lock' pada relasi« %s »"
 #: catalog/namespace.c:412 parser/parse_relation.c:962
 #, c-format
 msgid "relation \"%s.%s\" does not exist"
-msgstr "relasi « %s.%s » sudah ada"
+msgstr "relasi « %s.%s » tidak ada"
 
 #: catalog/namespace.c:417 parser/parse_relation.c:975 parser/parse_relation.c:983 utils/adt/regproc.c:853
 #, c-format
 msgid "relation \"%s\" does not exist"
-msgstr "relasi « %s » sudah ada"
+msgstr "relasi « %s » tidak ada"
 
 #: catalog/namespace.c:485 catalog/namespace.c:2834 commands/extension.c:1400 commands/extension.c:1406
 #, c-format
@@ -2826,7 +2826,7 @@ msgstr "tidak dapat memindahkan kedalam atau keluar dari skema TOAST"
 #: catalog/namespace.c:2855 commands/schemacmds.c:212 commands/schemacmds.c:288
 #, c-format
 msgid "schema \"%s\" does not exist"
-msgstr "skema « %s » sudah ada"
+msgstr "skema « %s » tidak ada"
 
 #: catalog/namespace.c:2886
 #, c-format
@@ -2841,7 +2841,7 @@ msgstr "'collation'  « %s » untuk enkoding « %s » tidak ada"
 #: catalog/namespace.c:3382
 #, c-format
 msgid "conversion \"%s\" does not exist"
-msgstr "konversi  « %s » sudah ada"
+msgstr "konversi  « %s » tidak ada"
 
 #: catalog/namespace.c:3590
 #, c-format
@@ -3871,7 +3871,7 @@ msgstr "collation « %s » sudah ada pada skema « %s »"
 #: commands/comment.c:62 commands/dbcommands.c:797 commands/dbcommands.c:946 commands/dbcommands.c:1049 commands/dbcommands.c:1222 commands/dbcommands.c:1411 commands/dbcommands.c:1506 commands/dbcommands.c:1946 utils/init/postinit.c:775 utils/init/postinit.c:843 utils/init/postinit.c:860
 #, c-format
 msgid "database \"%s\" does not exist"
-msgstr "database « %s » sudah ada"
+msgstr "database « %s » tidak ada"
 
 #: commands/comment.c:101 commands/seclabel.c:114 parser/parse_utilcmd.c:693
 #, c-format

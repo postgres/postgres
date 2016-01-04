@@ -27,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-17 05:43+0000\n"
-"PO-Revision-Date: 2015-10-18 17:58+0400\n"
+"POT-Creation-Date: 2015-12-08 22:43+0000\n"
+"PO-Revision-Date: 2015-12-09 13:39+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-translators@postgresql.org>\n"
 "Language: ru\n"
@@ -251,12 +251,12 @@ msgstr "поиск связей наследования\n"
 #: common.c:232
 #, c-format
 msgid "reading column info for interesting tables\n"
-msgstr "чтение информации о колонках интересующих таблиц\n"
+msgstr "чтение информации о столбцах интересующих таблиц\n"
 
 #: common.c:236
 #, c-format
 msgid "flagging inherited columns in subtables\n"
-msgstr "пометка наследованных колонок в подтаблицах\n"
+msgstr "пометка наследованных столбцов в подтаблицах\n"
 
 #: common.c:240
 #, c-format
@@ -340,13 +340,13 @@ msgid "could not close compression library: %s\n"
 msgstr "не удалось закрыть библиотеку сжатия: %s\n"
 
 #: compress_io.c:606 compress_io.c:642 pg_backup_custom.c:591
-#: pg_backup_tar.c:567
+#: pg_backup_tar.c:560
 #, c-format
 msgid "could not read from input file: %s\n"
 msgstr "не удалось прочитать входной файл: %s\n"
 
 #: compress_io.c:645 pg_backup_custom.c:588 pg_backup_directory.c:552
-#: pg_backup_tar.c:803 pg_backup_tar.c:827
+#: pg_backup_tar.c:796 pg_backup_tar.c:820
 #, c-format
 msgid "could not read from input file: end of file\n"
 msgstr "не удалось прочитать входной файл: конец файла\n"
@@ -617,7 +617,7 @@ msgstr[0] "восстановлен %d большой объект\n"
 msgstr[1] "восстановлено %d больших объекта\n"
 msgstr[2] "восстановлено %d больших объектов\n"
 
-#: pg_backup_archiver.c:1197 pg_backup_tar.c:745
+#: pg_backup_archiver.c:1197 pg_backup_tar.c:738
 #, c-format
 msgid "restoring large object with OID %u\n"
 msgstr "восстановление большого объекта с OID %u\n"
@@ -1027,7 +1027,7 @@ msgid "unrecognized data block type %d while restoring archive\n"
 msgstr "нераспознанный тип блока данных %d при восстановлении архива\n"
 
 #: pg_backup_custom.c:709 pg_backup_custom.c:759 pg_backup_custom.c:908
-#: pg_backup_tar.c:1090
+#: pg_backup_tar.c:1083
 #, c-format
 msgid "could not determine seek position in archive file: %s\n"
 msgstr "не удалось определить позицию в файле архива: %s\n"
@@ -1244,106 +1244,101 @@ msgid "this format cannot be read\n"
 msgstr "этот формат нельзя прочитать\n"
 
 #. translator: this is a module name
-#: pg_backup_tar.c:108
+#: pg_backup_tar.c:101
 msgid "tar archiver"
 msgstr "архиватор tar"
 
-#: pg_backup_tar.c:189
+#: pg_backup_tar.c:182
 #, c-format
 msgid "could not open TOC file \"%s\" for output: %s\n"
 msgstr "не удалось открыть для записи файл оглавления \"%s\": %s\n"
 
-#: pg_backup_tar.c:197
+#: pg_backup_tar.c:190
 #, c-format
 msgid "could not open TOC file for output: %s\n"
 msgstr "не удалось открыть для записи файл оглавления: %s\n"
 
-#: pg_backup_tar.c:218 pg_backup_tar.c:374
+#: pg_backup_tar.c:211 pg_backup_tar.c:367
 #, c-format
 msgid "compression is not supported by tar archive format\n"
 msgstr "формат архива tar не поддерживает сжатие\n"
 
-#: pg_backup_tar.c:226
+#: pg_backup_tar.c:219
 #, c-format
 msgid "could not open TOC file \"%s\" for input: %s\n"
 msgstr "не удалось открыть для чтения файл оглавления \"%s\": %s\n"
 
-#: pg_backup_tar.c:233
+#: pg_backup_tar.c:226
 #, c-format
 msgid "could not open TOC file for input: %s\n"
 msgstr "не удалось открыть для чтения файл оглавления: %s\n"
 
-#: pg_backup_tar.c:360
+#: pg_backup_tar.c:353
 #, c-format
 msgid "could not find file \"%s\" in archive\n"
 msgstr "не удалось найти файл \"%s\" в архиве\n"
 
-#: pg_backup_tar.c:426
+#: pg_backup_tar.c:419
 #, c-format
 msgid "could not generate temporary file name: %s\n"
 msgstr "не удалось создать временный файл: %s\n"
 
-#: pg_backup_tar.c:437
+#: pg_backup_tar.c:430
 #, c-format
 msgid "could not open temporary file\n"
 msgstr "не удалось открыть временный файл\n"
 
-#: pg_backup_tar.c:464
+#: pg_backup_tar.c:457
 #, c-format
 msgid "could not close tar member\n"
 msgstr "не удалось закрыть компонент tar-архива\n"
 
-#: pg_backup_tar.c:577
+#: pg_backup_tar.c:570
 #, c-format
 msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
 msgstr "внутренняя ошибка -- в tarReadRaw() не указан ни th, ни fh\n"
 
-#: pg_backup_tar.c:700
+#: pg_backup_tar.c:693
 #, c-format
 msgid "unexpected COPY statement syntax: \"%s\"\n"
 msgstr "недопустимый синтаксис оператора COPY: \"%s\"\n"
 
-#: pg_backup_tar.c:962
+#: pg_backup_tar.c:955
 #, c-format
 msgid "invalid OID for large object (%u)\n"
 msgstr "неверный OID для большого объекта (%u)\n"
 
 #: pg_backup_tar.c:1099
 #, c-format
-msgid "archive member too large for tar format\n"
-msgstr "компонент архива слишком велик для формата tar\n"
-
-#: pg_backup_tar.c:1113
-#, c-format
 msgid "could not close temporary file: %s\n"
 msgstr "не удалось закрыть временный файл: %s\n"
 
-#: pg_backup_tar.c:1123
+#: pg_backup_tar.c:1109
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "действительная длина файла (%s) не равна ожидаемой (%s)\n"
 
-#: pg_backup_tar.c:1160
+#: pg_backup_tar.c:1146
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "переход от позиции %s к следующему компоненту в позиции %s\n"
 
-#: pg_backup_tar.c:1171
+#: pg_backup_tar.c:1157
 #, c-format
 msgid "now at file position %s\n"
 msgstr "текущая позиция в файле %s\n"
 
-#: pg_backup_tar.c:1180 pg_backup_tar.c:1210
+#: pg_backup_tar.c:1166 pg_backup_tar.c:1196
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive\n"
 msgstr "в архиве tar не найден заголовок для файла \"%s\"\n"
 
-#: pg_backup_tar.c:1194
+#: pg_backup_tar.c:1180
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "пропускается компонент tar %s\n"
 
-#: pg_backup_tar.c:1198
+#: pg_backup_tar.c:1184
 #, c-format
 msgid ""
 "restoring data out of order is not supported in this archive format: \"%s\" "
@@ -1353,7 +1348,7 @@ msgstr ""
 "поддерживается: требуется компонент \"%s\", но в файле архива прежде идёт "
 "\"%s\".\n"
 
-#: pg_backup_tar.c:1245
+#: pg_backup_tar.c:1230
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
@@ -1361,12 +1356,12 @@ msgstr[0] "найден неполный tar-заголовок (размер %l
 msgstr[1] "найден неполный tar-заголовок (размер %lu байта)\n"
 msgstr[2] "найден неполный tar-заголовок (размер %lu байтов)\n"
 
-#: pg_backup_tar.c:1283
+#: pg_backup_tar.c:1271
 #, c-format
-msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
-msgstr "Запись оглавления %s в %s (длина: %lu, контр. сумма: %d)\n"
+msgid "TOC Entry %s at %s (length %s, checksum %d)\n"
+msgstr "Запись оглавления %s в %s (длина: %s, контр. сумма: %d)\n"
 
-#: pg_backup_tar.c:1293
+#: pg_backup_tar.c:1282
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
@@ -1662,7 +1657,7 @@ msgid ""
 "names\n"
 msgstr ""
 "  --column-inserts             выгружать данные в виде INSERT с именами "
-"колонок\n"
+"столбцов\n"
 
 #: pg_dump.c:894 pg_dumpall.c:569
 #, c-format
@@ -2031,12 +2026,12 @@ msgstr ""
 #: pg_dump.c:6765
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\"\n"
-msgstr "поиск колонок и типов таблицы \"%s.%s\"\n"
+msgstr "поиск столбцов и типов таблицы \"%s.%s\"\n"
 
 #: pg_dump.c:6944
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
-msgstr "неверная нумерация колонок в таблице \"%s\"\n"
+msgstr "неверная нумерация столбцов в таблице \"%s\"\n"
 
 #: pg_dump.c:6978
 #, c-format
@@ -2188,7 +2183,7 @@ msgstr "определение представления \"%s\" пустое (�
 #: pg_dump.c:14493
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
-msgstr "неверный номер колонки %d для таблицы \"%s\"\n"
+msgstr "неверный номер столбца %d для таблицы \"%s\"\n"
 
 #: pg_dump.c:14617
 #, c-format
@@ -2782,6 +2777,9 @@ msgstr ""
 "Если имя входного файла не указано, используется стандартное устройство "
 "ввода.\n"
 "\n"
+
+#~ msgid "archive member too large for tar format\n"
+#~ msgstr "компонент архива слишком велик для формата tar\n"
 
 #~ msgid "Schema \"%s\" not found.\n"
 #~ msgstr "Схема \"%s\" не найдена.\n"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-25 04:14+0000\n"
-"PO-Revision-Date: 2015-09-25 09:06-0400\n"
+"POT-Creation-Date: 2016-01-04 02:14+0000\n"
+"PO-Revision-Date: 2016-01-03 21:29-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -281,13 +281,13 @@ msgstr "DB des oldestMulti des letzten Checkpoints:  %u\n"
 
 #: pg_controldata.c:274
 #, c-format
-msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "oldestCommitTs des letzten Checkpoints:      %u\n"
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "oldestCommitTsXid des letzten Checkpoints:   %u\n"
 
 #: pg_controldata.c:276
 #, c-format
-msgid "Latest checkpoint's newestCommitTs:   %u\n"
-msgstr "newestCommitTs des letzten Checkpoints:      %u\n"
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "newestCommitTsXid des letzten Checkpoints:   %u\n"
 
 #: pg_controldata.c:278
 #, c-format

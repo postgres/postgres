@@ -178,7 +178,7 @@ msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
 "row"
 msgstr ""
-"ключу \"%s\", найденному в TD[\"new\"], не соответствует колонка в строке, "
+"ключу \"%s\", найденному в TD[\"new\"], не соответствует столбец в строке, "
 "обрабатываемой триггером"
 
 #: plpy_exec.c:777
@@ -438,13 +438,13 @@ msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr ""
-"Чтобы присвоить колонке NULL, добавьте в сопоставление значение None с "
-"ключом-именем колонки."
+"Чтобы присвоить столбцу NULL, добавьте в сопоставление значение None с "
+"ключом-именем столбца."
 
 #: plpy_typeio.c:979
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
-msgstr "длина возвращённой последовательности не равна числу колонок в строке"
+msgstr "длина возвращённой последовательности не равна числу столбцов в строке"
 
 #: plpy_typeio.c:1087
 #, c-format
@@ -457,8 +457,8 @@ msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
 msgstr ""
-"Чтобы присвоить колонке NULL, присвойте возвращаемому значению атрибут с "
-"именем колонки и значением None."
+"Чтобы присвоить столбцу NULL, присвойте возвращаемому значению атрибут с "
+"именем столбца и значением None."
 
 #: plpy_util.c:72
 #, c-format

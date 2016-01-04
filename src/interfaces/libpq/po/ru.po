@@ -406,8 +406,8 @@ msgstr "синтаксическая ошибка в файле определе
 msgid ""
 "nested service specifications not supported in service file \"%s\", line %d\n"
 msgstr ""
-"рекурсивные определения служб не поддерживаются (файл определения служб \"%"
-"s\", строка %d)\n"
+"рекурсивные определения служб не поддерживаются (файл определения служб \"%s"
+"\", строка %d)\n"
 
 #: fe-connect.c:4745
 #, c-format
@@ -476,8 +476,7 @@ msgid ""
 "be u=rw (0600) or less\n"
 msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: к файлу паролей \"%s\" имеют доступ все или группа; права "
-"должны "
-"быть u=rw (0600) или более ограниченные\n"
+"должны быть u=rw (0600) или более ограниченные\n"
 
 #: fe-connect.c:5838
 #, c-format
@@ -558,7 +557,7 @@ msgstr "неверный код ExecStatusType"
 #: fe-exec.c:2650 fe-exec.c:2673
 #, c-format
 msgid "column number %d is out of range 0..%d"
-msgstr "номер колонки %d вне диапазона 0..%d"
+msgstr "номер столбца %d вне диапазона 0..%d"
 
 #: fe-exec.c:2666
 #, c-format
@@ -846,7 +845,7 @@ msgstr "ТАБЛИЦА:  %s\n"
 #: fe-protocol3.c:954
 #, c-format
 msgid "COLUMN NAME:  %s\n"
-msgstr "КОЛОНКА:  %s\n"
+msgstr "СТОЛБЕЦ:  %s\n"
 
 #: fe-protocol3.c:958
 #, c-format

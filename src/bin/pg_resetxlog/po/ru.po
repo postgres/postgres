@@ -29,8 +29,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-17 05:43+0000\n"
-"PO-Revision-Date: 2015-10-18 18:01+0400\n"
+"POT-Creation-Date: 2015-12-29 22:13+0000\n"
+"PO-Revision-Date: 2015-12-31 14:56+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-translators@postgresql.org>\n"
 "Language: ru\n"
@@ -321,13 +321,13 @@ msgstr "БД с oldestMulti последней к.т.:      %u\n"
 
 #: pg_resetxlog.c:668
 #, c-format
-msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "oldestCommitTs последней конт. точки: %u\n"
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "oldestCommitTsXid последней к. т.:    %u\n"
 
 #: pg_resetxlog.c:670
 #, c-format
-msgid "Latest checkpoint's newestCommitTs:   %u\n"
-msgstr "newestCommitTs последней конт. точки: %u\n"
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "newestCommitTsXid последней к. т.:    %u\n"
 
 #: pg_resetxlog.c:672
 #, c-format
@@ -362,7 +362,7 @@ msgstr "Максимальная длина идентификаторов:   %u
 #: pg_resetxlog.c:685
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Максимальное число колонок в индексе: %u\n"
+msgstr "Максимальное число столбцов в индексе: %u\n"
 
 #: pg_resetxlog.c:687
 #, c-format
@@ -475,13 +475,13 @@ msgstr "Эпоха NextXID:                        %u\n"
 
 #: pg_resetxlog.c:756
 #, c-format
-msgid "oldestCommitTs:                       %u\n"
-msgstr "oldestCommitTs:                       %u\n"
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "oldestCommitTsXid:                    %u\n"
 
 #: pg_resetxlog.c:761
 #, c-format
-msgid "newestCommitTs:                       %u\n"
-msgstr "newestCommitTs:                       %u\n"
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "newestCommitTsXid:                    %u\n"
 
 #: pg_resetxlog.c:827
 #, c-format

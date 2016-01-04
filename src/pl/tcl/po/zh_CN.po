@@ -7,21 +7,58 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:39+0000\n"
-"PO-Revision-Date: 2013-09-03 23:28-0400\n"
-"Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
+"POT-Creation-Date: 2015-11-26 18:37+0000\n"
+"PO-Revision-Date: 2015-12-02 14:52+0800\n"
+"Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
 "Language-Team: Weibin <ssmei_2000@yahoo.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.5.7\n"
 
-#: pltcl.c:1150
+#: pltcl.c:555
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "在pltcl_modules中没有找到模块\"unknown\""
+
+#: pltcl.c:591
+#, c-format
+#| msgid "could not load library \"%s\": %s"
+msgid "could not load module \"unknown\": %s"
+msgstr "无法载入模块\"unknown\"：%s"
+
+# fe-exec.c:2325
+#: pltcl.c:1047
+#, c-format
+#| msgid "could not interpret result from server: %s"
+msgid "could not split return value from trigger: %s"
+msgstr "无法分离来自触发器的返回值：%s"
+
+#: pltcl.c:1058
+#, c-format
+#| msgid "argument list must have even number of elements"
+msgid "trigger's return list must have even number of elements"
+msgstr "触发器的返回列表必须具有偶数个元素"
+
+#: pltcl.c:1094
+#, c-format
+#| msgid "unrecognized parameter \"%s\""
+msgid "unrecognized attribute \"%s\""
+msgstr "未识别的属性\"%s\""
+
+#: pltcl.c:1099
+#, c-format
+#| msgid "cannot move system relation \"%s\""
+msgid "cannot set system attribute \"%s\""
+msgstr "不能设置系统属性\"%s\""
+
+#: pltcl.c:1222 pltcl.c:1648
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1151
+#: pltcl.c:1223
 #, c-format
 msgid ""
 "%s\n"
@@ -30,27 +67,33 @@ msgstr ""
 "%s\n"
 "在PL/Tcl函数\"%s\"中"
 
-#: pltcl.c:1255 pltcl.c:1262
+#: pltcl.c:1331 pltcl.c:1338
 #, c-format
 msgid "out of memory"
 msgstr "内存用尽"
 
-#: pltcl.c:1309
+#: pltcl.c:1386
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: pltcl.c:1318
+#: pltcl.c:1395
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl函数不能返回类型%s"
 
-#: pltcl.c:1330
+#: pltcl.c:1407
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "PL/Tcl 函数不能返回组合类型"
 
-#: pltcl.c:1369
+#: pltcl.c:1446
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl行数不能使用类型 %s"
+
+#: pltcl.c:1564
+#, c-format
+#| msgid "could not create locale \"%s\": %m"
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "无法创建内部过程\"%s\"：%s"

@@ -1,6 +1,6 @@
 # src/pl/plpython/nls.mk
 CATALOG_NAME     = plpython
-AVAIL_LANGUAGES  = cs de es fr it ja pl pt_BR ru zh_CN
+AVAIL_LANGUAGES  = cs de es fr it ja ko pl pt_BR ru zh_CN
 GETTEXT_FILES    = plpy_cursorobject.c plpy_elog.c plpy_exec.c plpy_main.c plpy_planobject.c plpy_plpymodule.c \
                    plpy_procedure.c plpy_resultobject.c plpy_spi.c plpy_subxactobject.c plpy_typeio.c plpy_util.c
 GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) PLy_elog:2 PLy_exception_set:2 PLy_exception_set_plural:2,3

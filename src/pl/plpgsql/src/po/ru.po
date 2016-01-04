@@ -80,12 +80,12 @@ msgstr "имя параметра \"%s\" указано неоднократно
 #: pl_comp.c:1077
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
-msgstr "неоднозначная ссылка на колонку \"%s\""
+msgstr "неоднозначная ссылка на столбец \"%s\""
 
 #: pl_comp.c:1079
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
-msgstr "Подразумевается ссылка на переменную PL/pgSQL или колонку таблицы."
+msgstr "Подразумевается ссылка на переменную PL/pgSQL или столбец таблицы."
 
 #: pl_comp.c:1259 pl_comp.c:1287 pl_exec.c:4394 pl_exec.c:4743 pl_exec.c:4828
 #: pl_exec.c:4919
@@ -840,7 +840,7 @@ msgid ""
 "names."
 msgstr ""
 "Выбирает режим разрешения конфликтов между именами переменных PL/pgSQL и "
-"именами колонок таблиц."
+"именами столбцов таблиц."
 
 #: pl_handler.c:158
 msgid ""
