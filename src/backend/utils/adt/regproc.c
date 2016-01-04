@@ -1642,12 +1642,18 @@ regroleout(PG_FUNCTION_ARGS)
 
 	result = GetUserNameFromId(roleoid, true);
 
-	if (!result)
+	if (result)
+	{
+		/* pstrdup is not really necessary, but it avoids a compiler warning */
+		result = pstrdup(quote_identifier(result));
+	}
+	else
 	{
 		/* If OID doesn't match any role, return it numerically */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", roleoid);
 	}
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -1757,12 +1763,18 @@ regnamespaceout(PG_FUNCTION_ARGS)
 
 	result = get_namespace_name(nspid);
 
-	if (!result)
+	if (result)
+	{
+		/* pstrdup is not really necessary, but it avoids a compiler warning */
+		result = pstrdup(quote_identifier(result));
+	}
+	else
 	{
 		/* If OID doesn't match any namespace, return it numerically */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", nspid);
 	}
+
 	PG_RETURN_CSTRING(result);
 }
 
