@@ -414,16 +414,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   </para>
 
   <para>
-   When reducing the set of rows which users have access to, through
-   modifications to row-level security policies or security-barrier views,
-   be aware that users with a currently open transaction may be able to see
-   updates to rows that they are theoretically no longer allowed access to,
-   as the new policies may not be absorbed into existing query plans
-   immediately.  Therefore, the best practice to avoid any possible leak of
-   information when altering conditions that determine the visibility of
-   specific rows is to ensure that affected users do not have any open
-   transactions, perhaps by ensuring they have no concurrent sessions
-   running.
+   Additional discussion and practical examples can be found
+   in <xref linkend="ddl-rowsecurity">.
   </para>
 
  </refsect1>
