@@ -1782,6 +1782,120 @@ UPDATE 1
   </para>
 
   <para>
+   In the examples above, the policy expressions consider only the current
+   values in the row to be accessed or updated.  This is the simplest and
+   best-performing case; when possible, it's best to design row security
+   applications to work this way.  If it is necessary to consult other rows
+   or other tables to make a policy decision, that can be accomplished using
+   sub-<command>SELECT</>s, or functions that contain <command>SELECT</>s,
+   in the policy expressions.  Be aware however that such accesses can
+   create race conditions that could allow information leakage if care is
+   not taken.  As an example, consider the following table design:
+  </para>
+
+<programlisting>
+-- definition of privilege groups
+CREATE TABLE groups (group_id int PRIMARY KEY,
+                     group_name text NOT NULL);
+
+INSERT INTO groups VALUES
+  (1, 'low'),
+  (2, 'medium'),
+  (5, 'high');
+
+GRANT ALL ON groups TO alice;  -- alice is the administrator
+GRANT SELECT ON groups TO public;
+
+-- definition of users' privilege levels
+CREATE TABLE users (user_name text PRIMARY KEY,
+                    group_id int NOT NULL REFERENCES groups);
+
+INSERT INTO users VALUES
+  ('alice', 5),
+  ('bob', 2),
+  ('mallory', 2);
+
+GRANT ALL ON users TO alice;
+GRANT SELECT ON users TO public;
+
+-- table holding the information to be protected
+CREATE TABLE information (info text,
+                          group_id int NOT NULL REFERENCES groups);
+
+INSERT INTO information VALUES
+  ('barely secret', 1),
+  ('slightly secret', 2),
+  ('very secret', 5);
+
+ALTER TABLE information ENABLE ROW LEVEL SECURITY;
+
+-- a row should be visible to/updatable by users whose security group_id is
+-- greater than or equal to the row's group_id
+CREATE POLICY fp_s ON information FOR SELECT
+  USING (group_id &lt;= (SELECT group_id FROM users WHERE user_name = current_user));
+CREATE POLICY fp_u ON information FOR UPDATE
+  USING (group_id &lt;= (SELECT group_id FROM users WHERE user_name = current_user));
+
+-- we rely only on RLS to protect the information table
+GRANT ALL ON information TO public;
+</programlisting>
+
+  <para>
+   Now suppose that <literal>alice</> wishes to change the <quote>slightly
+   secret</> information, but decides that <literal>mallory</> should not
+   be trusted with the new content of that row, so she does:
+  </para>
+
+<programlisting>
+BEGIN;
+UPDATE users SET group_id = 1 WHERE user_name = 'mallory';
+UPDATE information SET info = 'secret from mallory' WHERE group_id = 2;
+COMMIT;
+</programlisting>
+
+  <para>
+   That looks safe; there is no window wherein <literal>mallory</> should be
+   able to see the <quote>secret from mallory</> string.  However, there is
+   a race condition here.  If <literal>mallory</> is concurrently doing,
+   say,
+<programlisting>
+SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
+</programlisting>
+   and her transaction is in <literal>READ COMMITTED</> mode, it is possible
+   for her to see <quote>secret from mallory</>.  That happens if her
+   transaction reaches the <structname>information</> row just
+   after <literal>alice</>'s does.  It blocks waiting
+   for <literal>alice</>'s transaction to commit, then fetches the updated
+   row contents thanks to the <literal>FOR UPDATE</> clause.  However, it
+   does <emphasis>not</> fetch an updated row for the
+   implicit <command>SELECT</> from <structname>users</>, because that
+   sub-<command>SELECT</> did not have <literal>FOR UPDATE</>; instead
+   the <structname>users</> row is read with the snapshot taken at the start
+   of the query.  Therefore, the policy expression tests the old value
+   of <literal>mallory</>'s privilege level and allows her to see the
+   updated row.
+  </para>
+
+  <para>
+   There are several ways around this problem.  One simple answer is to use
+   <literal>SELECT ... FOR SHARE</> in sub-<command>SELECT</>s in row
+   security policies.  However, that requires granting <literal>UPDATE</>
+   privilege on the referenced table (here <structname>users</>) to the
+   affected users, which might be undesirable.  (But another row security
+   policy could be applied to prevent them from actually exercising that
+   privilege; or the sub-<command>SELECT</> could be embedded into a security
+   definer function.)  Also, heavy concurrent use of row share locks on the
+   referenced table could pose a performance problem, especially if updates
+   of it are frequent.  Another solution, practical if updates of the
+   referenced table are infrequent, is to take an exclusive lock on the
+   referenced table when updating it, so that no concurrent transactions
+   could be examining old row values.  Or one could just wait for all
+   concurrent transactions to end after committing an update of the
+   referenced table and before making changes that rely on the new security
+   situation.
+  </para>
+
+  <para>
    For additional details see <xref linkend="sql-createpolicy">
    and <xref linkend="sql-altertable">.
   </para>
