@@ -17,17 +17,16 @@
 #include "access/htup.h"
 #include "access/htup_details.h"
 #include "access/transam.h"
-#include "catalog/pg_class.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_class.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+#include "utils/lsyscache.h"
 #include "utils/rls.h"
 #include "utils/syscache.h"
 
-
-extern int	check_enable_rls(Oid relid, Oid checkAsUser, bool noError);
 
 /*
  * check_enable_rls
@@ -52,20 +51,21 @@ extern int	check_enable_rls(Oid relid, Oid checkAsUser, bool noError);
 int
 check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 {
+	Oid			user_id = checkAsUser ? checkAsUser : GetUserId();
 	HeapTuple	tuple;
 	Form_pg_class classform;
 	bool		relrowsecurity;
 	bool		relforcerowsecurity;
-	Oid			user_id = checkAsUser ? checkAsUser : GetUserId();
+	bool		amowner;
 
 	/* Nothing to do for built-in relations */
-	if (relid < FirstNormalObjectId)
+	if (relid < (Oid) FirstNormalObjectId)
 		return RLS_NONE;
 
+	/* Fetch relation's relrowsecurity and relforcerowsecurity flags */
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		return RLS_NONE;
-
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	relrowsecurity = classform->relrowsecurity;
@@ -88,41 +88,45 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 		return RLS_NONE_ENV;
 
 	/*
-	 * Table owners generally bypass RLS, except if row_security=true and the
-	 * table has been set (by an owner) to FORCE ROW SECURITY, and this is not
-	 * a referential integrity check.
+	 * Table owners generally bypass RLS, except if the table has been set (by
+	 * an owner) to FORCE ROW SECURITY, and this is not a referential
+	 * integrity check.
 	 *
 	 * Return RLS_NONE_ENV to indicate that this decision depends on the
 	 * environment (in this case, the user_id).
 	 */
-	if (pg_class_ownercheck(relid, user_id))
+	amowner = pg_class_ownercheck(relid, user_id);
+	if (amowner)
 	{
 		/*
-		 * If row_security=true and FORCE ROW LEVEL SECURITY has been set on
-		 * the relation then we return RLS_ENABLED to indicate that RLS should
-		 * still be applied.  If we are in a SECURITY_NOFORCE_RLS context or if
-		 * row_security=false then we return RLS_NONE_ENV.
+		 * If FORCE ROW LEVEL SECURITY has been set on the relation then we
+		 * should return RLS_ENABLED to indicate that RLS should be applied.
+		 * If not, or if we are in an InNoForceRLSOperation context, we return
+		 * RLS_NONE_ENV.
 		 *
-		 * The SECURITY_NOFORCE_RLS indicates that we should not apply RLS even
-		 * if the table has FORCE RLS set- IF the current user is the owner.
-		 * This is specifically to ensure that referential integrity checks are
-		 * able to still run correctly.
+		 * InNoForceRLSOperation indicates that we should not apply RLS even
+		 * if the table has FORCE RLS set - IF the current user is the owner.
+		 * This is specifically to ensure that referential integrity checks
+		 * are able to still run correctly.
 		 *
 		 * This is intentionally only done after we have checked that the user
 		 * is the table owner, which should always be the case for referential
 		 * integrity checks.
 		 */
-		if (row_security && relforcerowsecurity && !InNoForceRLSOperation())
-			return RLS_ENABLED;
-		else
+		if (!relforcerowsecurity || InNoForceRLSOperation())
 			return RLS_NONE_ENV;
 	}
 
-	/* row_security GUC says to bypass RLS, but user lacks permission */
+	/*
+	 * We should apply RLS.  However, the user may turn off the row_security
+	 * GUC to get a forced error instead.
+	 */
 	if (!row_security && !noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("insufficient privilege to bypass row-level security")));
+				 errmsg("query would be affected by row-level security policy for table \"%s\"",
+						get_rel_name(relid)),
+				 amowner ? errhint("To disable the policy for the table's owner, use ALTER TABLE NO FORCE ROW LEVEL SECURITY.") : 0));
 
 	/* RLS should be fully enabled for this relation. */
 	return RLS_ENABLED;

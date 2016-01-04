@@ -2728,8 +2728,8 @@ COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
-ERROR:  insufficient privilege to bypass row-level security
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - would be affected by RLS
+ERROR:  query would be affected by row-level security policy for table "copy_t"
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 0,cfcd208495d565ef66e7dff9f98764da
@@ -2769,8 +2769,8 @@ COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION rls_regress_user2;
 SET row_security TO OFF;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
-ERROR:  insufficient privilege to bypass row-level security
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - would be affected by RLS
+ERROR:  query would be affected by row-level security policy for table "copy_t"
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - permission denied
 ERROR:  permission denied for relation copy_t
@@ -2793,8 +2793,8 @@ COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
-COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
-ERROR:  insufficient privilege to bypass row-level security
+COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - would be affected by RLS
+ERROR:  query would be affected by row-level security policy for table "copy_rel_to"
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 -- Check COPY TO as user with permissions and BYPASSRLS
@@ -2822,8 +2822,8 @@ COPY copy_t FROM STDIN; --ok
 -- Check COPY FROM as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
-COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
-ERROR:  insufficient privilege to bypass row-level security
+COPY copy_t FROM STDIN; --fail - would be affected by RLS.
+ERROR:  query would be affected by row-level security policy for table "copy_t"
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 ERROR:  COPY FROM not supported with row-level security
@@ -3181,8 +3181,7 @@ SET SESSION AUTHORIZATION rls_regress_user0;
 DROP TABLE r1;
 DROP TABLE r2;
 --
--- FORCE ROW LEVEL SECURITY applies RLS to owners but
--- only when row_security = on
+-- FORCE ROW LEVEL SECURITY applies RLS to owners too
 --
 SET SESSION AUTHORIZATION rls_regress_user0;
 SET row_security = on;
@@ -3215,30 +3214,16 @@ TABLE r1;
 (0 rows)
 
 SET row_security = off;
--- Shows all rows
+-- these all fail, would be affected by RLS
 TABLE r1;
- a  
-----
- 10
- 20
-(2 rows)
-
--- Update all rows
+ERROR:  query would be affected by row-level security policy for table "r1"
+HINT:  To disable the policy for the table's owner, use ALTER TABLE NO FORCE ROW LEVEL SECURITY.
 UPDATE r1 SET a = 1;
-TABLE r1;
- a 
----
- 1
- 1
-(2 rows)
-
--- Delete all rows
+ERROR:  query would be affected by row-level security policy for table "r1"
+HINT:  To disable the policy for the table's owner, use ALTER TABLE NO FORCE ROW LEVEL SECURITY.
 DELETE FROM r1;
-TABLE r1;
- a 
----
-(0 rows)
-
+ERROR:  query would be affected by row-level security policy for table "r1"
+HINT:  To disable the policy for the table's owner, use ALTER TABLE NO FORCE ROW LEVEL SECURITY.
 DROP TABLE r1;
 --
 -- FORCE ROW LEVEL SECURITY does not break RI
@@ -3349,14 +3334,10 @@ TABLE r1;
 (0 rows)
 
 SET row_security = off;
--- Rows shown now
+-- fail, would be affected by RLS
 TABLE r1;
- a  
-----
- 10
- 20
-(2 rows)
-
+ERROR:  query would be affected by row-level security policy for table "r1"
+HINT:  To disable the policy for the table's owner, use ALTER TABLE NO FORCE ROW LEVEL SECURITY.
 SET row_security = on;
 -- Error
 INSERT INTO r1 VALUES (10), (20) RETURNING *;
@@ -3377,7 +3358,7 @@ ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
 -- Works fine
 UPDATE r1 SET a = 30;
 -- Show updated rows
-SET row_security = off;
+ALTER TABLE r1 NO FORCE ROW LEVEL SECURITY;
 TABLE r1;
  a  
 ----
@@ -3393,7 +3374,7 @@ TABLE r1;
  10
 (1 row)
 
-SET row_security = on;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
 -- Error
 UPDATE r1 SET a = 30 RETURNING *;
 ERROR:  new row violates row-level security policy for table "r1"

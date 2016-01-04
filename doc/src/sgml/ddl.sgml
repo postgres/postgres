@@ -1572,11 +1572,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    bypass the row security system when accessing a table.  Table owners
    normally bypass row security as well, though a table owner can choose to
    be subject to row security with <link linkend="sql-altertable">ALTER
-   TABLE ... FORCE ROW LEVEL SECURITY</>.  Even in a table with that option
-   selected, the table owner will bypass row security if the
-   <xref linkend="guc-row-security"> configuration parameter is set
-   to <literal>off</>; this setting is typically used for purposes such as
-   backup and restore.
+   TABLE ... FORCE ROW LEVEL SECURITY</>.
   </para>
 
   <para>
@@ -1604,14 +1600,6 @@ REVOKE ALL ON accounts FROM PUBLIC;
    <literal>OR</literal>, so that a row is accessible if any policy allows
    it.  This is similar to the rule that a given role has the privileges
    of all roles that they are a member of.
-  </para>
-
-  <para>
-   Referential integrity checks, such as unique or primary key constraints
-   and foreign key references, always bypass row security to ensure that
-   data integrity is maintained.  Care must be taken when developing
-   schemas and row level policies to avoid <quote>covert channel</> leaks of
-   information through such referential integrity checks.
   </para>
 
   <para>
@@ -1772,6 +1760,26 @@ ERROR:  permission denied for relation passwd
 postgres=&gt; update passwd set pwhash = 'abc';
 UPDATE 1
 </programlisting>
+
+  <para>
+   Referential integrity checks, such as unique or primary key constraints
+   and foreign key references, always bypass row security to ensure that
+   data integrity is maintained.  Care must be taken when developing
+   schemas and row level policies to avoid <quote>covert channel</> leaks of
+   information through such referential integrity checks.
+  </para>
+
+  <para>
+   In some contexts it is important to be sure that row security is
+   not being applied.  For example, when taking a backup, it could be
+   disastrous if row security silently caused some rows to be omitted
+   from the backup.  In such a situation, you can set the
+   <xref linkend="guc-row-security"> configuration parameter
+   to <literal>off</>.  This does not in itself bypass row security;
+   what it does is throw an error if any query's results would get filtered
+   by a policy.  The reason for the error can then be investigated and
+   fixed.
+  </para>
 
   <para>
    For additional details see <xref linkend="sql-createpolicy">
