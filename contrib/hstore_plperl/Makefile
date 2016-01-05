@@ -32,7 +32,7 @@ endif
 ifeq ($(PORTNAME), win32)
 # these settings are the same as for plperl
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
-SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plperl/libperl*.a)
+SHLIB_LINK += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
 endif
 
 ifeq ($(PORTNAME), cygwin)

@@ -27,10 +27,10 @@ endif
 # dependency.  This does preclude pgxs builds.
 ifeq ($(PORTNAME), aix)
 rpathdir = $(pkglibdir):$(python_libdir)
-SHLIB_LINK += ../hstore/libhstore.exp $(python_libspec) $(python_additional_libs) $(wildcard ../../src/pl/plpython/libplpython*.exp)
+SHLIB_LINK += ../hstore/libhstore.exp $(python_libspec) $(python_additional_libs) $(sort $(wildcard ../../src/pl/plpython/libplpython*.exp))
 endif
 ifeq ($(PORTNAME), win32)
-SHLIB_LINK += ../hstore/libhstore.a $(wildcard ../../src/pl/plpython/libpython*.a) $(wildcard ../../src/pl/plpython/libplpython*.a)
+SHLIB_LINK += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plpython/libpython*.a)) $(sort $(wildcard ../../src/pl/plpython/libplpython*.a))
 endif
 
 ifeq ($(PORTNAME), cygwin)
