@@ -113,7 +113,7 @@ CREATE [ OR REPLACE ] TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAG
        type <type>internal</type> and return type <type>internal</type>.  The
        actual argument will be of the type for the transform, and the function
        should be coded as if it were.  (But it is not allowed to declare an
-       SQL-level function function returning <type>internal</type> without at
+       SQL-level function returning <type>internal</type> without at
        least one argument of type <type>internal</type>.)  The actual return
        value will be something specific to the language implementation.
       </para>
