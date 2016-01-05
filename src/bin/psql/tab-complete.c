@@ -286,6 +286,33 @@ do { \
 } while (0)
 
 /*
+ * Likewise for COMPLETE_WITH_LIST_CS.
+ */
+#define COMPLETE_WITH_LIST_CS2(s1, s2) \
+do { \
+	static const char *const list[] = { s1, s2, NULL }; \
+	COMPLETE_WITH_LIST_CS(list); \
+} while (0)
+
+#define COMPLETE_WITH_LIST_CS3(s1, s2, s3) \
+do { \
+	static const char *const list[] = { s1, s2, s3, NULL }; \
+	COMPLETE_WITH_LIST_CS(list); \
+} while (0)
+
+#define COMPLETE_WITH_LIST_CS4(s1, s2, s3, s4) \
+do { \
+	static const char *const list[] = { s1, s2, s3, s4, NULL }; \
+	COMPLETE_WITH_LIST_CS(list); \
+} while (0)
+
+#define COMPLETE_WITH_LIST_CS5(s1, s2, s3, s4, s5) \
+do { \
+	static const char *const list[] = { s1, s2, s3, s4, s5, NULL }; \
+	COMPLETE_WITH_LIST_CS(list); \
+} while (0)
+
+/*
  * Assembly instructions for schema queries
  */
 
@@ -952,21 +979,29 @@ initialize_readline(void)
 
 /*
  * Check if 'word' matches any of the '|'-separated strings in 'pattern',
- * using case-insensitive comparisons.
+ * using case-insensitive or case-sensitive comparisons.
+ *
  * If pattern is NULL, it's a wild card that matches any word.
- * If pattern begins with "!", the result is negated, ie we check that 'word'
+ * If pattern begins with '!', the result is negated, ie we check that 'word'
  * does *not* match any alternative appearing in the rest of 'pattern'.
+ * Any alternative can end with '*' which is a wild card, i.e., it means
+ * match any word that matches the characters so far.  (We do not currently
+ * support '*' elsewhere than the end of an alternative.)
  *
  * For readability, callers should use the macros MatchAny and MatchAnyExcept
- * to invoke the two special cases for 'pattern'.
+ * to invoke those two special cases for 'pattern'.  (But '|' and '*' must
+ * just be written directly in patterns.)
  */
 #define MatchAny  NULL
 #define MatchAnyExcept(pattern)  ("!" pattern)
 
 static bool
-word_matches(const char *pattern, const char *word)
+word_matches_internal(const char *pattern,
+					  const char *word,
+					  bool case_sensitive)
 {
-	size_t		wordlen;
+	size_t		wordlen,
+				patternlen;
 
 	/* NULL pattern matches anything. */
 	if (pattern == NULL)
@@ -974,7 +1009,7 @@ word_matches(const char *pattern, const char *word)
 
 	/* Handle negated patterns from the MatchAnyExcept macro. */
 	if (*pattern == '!')
-		return !word_matches(pattern + 1, word);
+		return !word_matches_internal(pattern + 1, word, case_sensitive);
 
 	/* Else consider each alternative in the pattern. */
 	wordlen = strlen(word);
@@ -986,10 +1021,27 @@ word_matches(const char *pattern, const char *word)
 		c = pattern;
 		while (*c != '\0' && *c != '|')
 			c++;
-		/* Match? */
-		if (wordlen == (c - pattern) &&
-			pg_strncasecmp(word, pattern, wordlen) == 0)
-			return true;
+		/* Was there a wild card?  (Assumes first alternative is not empty) */
+		if (c[-1] == '*')
+		{
+			/* Yes, wildcard match? */
+			patternlen = c - pattern - 1;
+			if (wordlen >= patternlen &&
+				(case_sensitive ?
+				 strncmp(word, pattern, patternlen) == 0 :
+				 pg_strncasecmp(word, pattern, patternlen) == 0))
+				return true;
+		}
+		else
+		{
+			/* No, plain match? */
+			patternlen = c - pattern;
+			if (wordlen == patternlen &&
+				(case_sensitive ?
+				 strncmp(word, pattern, wordlen) == 0 :
+				 pg_strncasecmp(word, pattern, wordlen) == 0))
+				return true;
+		}
 		/* Out of alternatives? */
 		if (*c == '\0')
 			break;
@@ -998,6 +1050,27 @@ word_matches(const char *pattern, const char *word)
 	}
 
 	return false;
+}
+
+/*
+ * There are enough matching calls below that it seems worth having these two
+ * interface routines rather than including a third parameter in every call.
+ *
+ * word_matches --- match case-insensitively.
+ */
+static bool
+word_matches(const char *pattern, const char *word)
+{
+	return word_matches_internal(pattern, word, false);
+}
+
+/*
+ * word_matches_cs --- match case-sensitively.
+ */
+static bool
+word_matches_cs(const char *pattern, const char *word)
+{
+	return word_matches_internal(pattern, word, true);
 }
 
 /*
@@ -1051,7 +1124,7 @@ psql_completion(const char *text, int start, int end)
 #define prev8_wd  (previous_words[7])
 #define prev9_wd  (previous_words[8])
 
-	/* Macros for matching the last N words before point. */
+	/* Macros for matching the last N words before point, case-insensitively. */
 #define TailMatches1(p1) \
 	(previous_words_count >= 1 && \
 	 word_matches(p1, prev_wd))
@@ -1124,7 +1197,19 @@ psql_completion(const char *text, int start, int end)
 	 word_matches(p8, prev8_wd) && \
 	 word_matches(p9, prev9_wd))
 
-	/* Macros for matching N words beginning at the start of the line. */
+	/* Macros for matching the last N words before point, case-sensitively. */
+#define TailMatchesCS1(p1) \
+	(previous_words_count >= 1 && \
+	 word_matches_cs(p1, prev_wd))
+#define TailMatchesCS2(p2, p1) \
+	(previous_words_count >= 2 && \
+	 word_matches_cs(p1, prev_wd) && \
+	 word_matches_cs(p2, prev2_wd))
+
+	/*
+	 * Macros for matching N words beginning at the start of the line,
+	 * case-insensitively.
+	 */
 #define Matches1(p1) \
 	(previous_words_count == 1 && \
 	 TailMatches1(p1))
@@ -1155,7 +1240,7 @@ psql_completion(const char *text, int start, int end)
 
 	/*
 	 * Macros for matching N words at the start of the line, regardless of
-	 * what is after them.
+	 * what is after them, case-insensitively.
 	 */
 #define HeadMatches1(p1) \
 	(previous_words_count >= 1 && \
@@ -2778,95 +2863,86 @@ psql_completion(const char *text, int start, int end)
 
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
-	else if (strcmp(prev_wd, "\\?") == 0)
-	{
-		static const char *const my_list[] =
-		{"commands", "options", "variables", NULL};
-
-		COMPLETE_WITH_LIST_CS(my_list);
-	}
-	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
+	else if (TailMatchesCS1("\\?"))
+		COMPLETE_WITH_LIST_CS3("commands", "options", "variables");
+	else if (TailMatchesCS1("\\connect|\\c"))
 	{
 		if (!recognized_connection_string(text))
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	}
-	else if (previous_words_count >= 2 &&
-			 (strcmp(prev2_wd, "\\connect") == 0 ||
-			  strcmp(prev2_wd, "\\c") == 0))
+	else if (TailMatchesCS2("\\connect|\\c", MatchAny))
 	{
 		if (!recognized_connection_string(prev_wd))
 			COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	}
-	else if (strncmp(prev_wd, "\\da", strlen("\\da")) == 0)
+	else if (TailMatchesCS1("\\da*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);
-	else if (strncmp(prev_wd, "\\db", strlen("\\db")) == 0)
+	else if (TailMatchesCS1("\\db*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
-	else if (strncmp(prev_wd, "\\dD", strlen("\\dD")) == 0)
+	else if (TailMatchesCS1("\\dD*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_domains, NULL);
-	else if (strncmp(prev_wd, "\\des", strlen("\\des")) == 0)
+	else if (TailMatchesCS1("\\des*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_servers);
-	else if (strncmp(prev_wd, "\\deu", strlen("\\deu")) == 0)
+	else if (TailMatchesCS1("\\deu*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_user_mappings);
-	else if (strncmp(prev_wd, "\\dew", strlen("\\dew")) == 0)
+	else if (TailMatchesCS1("\\dew*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_fdws);
-
-	else if (strncmp(prev_wd, "\\df", strlen("\\df")) == 0)
+	else if (TailMatchesCS1("\\df*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
-	else if (strncmp(prev_wd, "\\dFd", strlen("\\dFd")) == 0)
+
+	else if (TailMatchesCS1("\\dFd*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_dictionaries);
-	else if (strncmp(prev_wd, "\\dFp", strlen("\\dFp")) == 0)
+	else if (TailMatchesCS1("\\dFp*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_parsers);
-	else if (strncmp(prev_wd, "\\dFt", strlen("\\dFt")) == 0)
+	else if (TailMatchesCS1("\\dFt*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_templates);
-	/* must be at end of \dF */
-	else if (strncmp(prev_wd, "\\dF", strlen("\\dF")) == 0)
+	/* must be at end of \dF alternatives: */
+	else if (TailMatchesCS1("\\dF*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_configurations);
 
-	else if (strncmp(prev_wd, "\\di", strlen("\\di")) == 0)
+	else if (TailMatchesCS1("\\di*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
-	else if (strncmp(prev_wd, "\\dL", strlen("\\dL")) == 0)
+	else if (TailMatchesCS1("\\dL*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_languages);
-	else if (strncmp(prev_wd, "\\dn", strlen("\\dn")) == 0)
+	else if (TailMatchesCS1("\\dn*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
-	else if (strncmp(prev_wd, "\\dp", strlen("\\dp")) == 0
-			 || strncmp(prev_wd, "\\z", strlen("\\z")) == 0)
+	else if (TailMatchesCS1("\\dp") || TailMatchesCS1("\\z"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
-	else if (strncmp(prev_wd, "\\ds", strlen("\\ds")) == 0)
+	else if (TailMatchesCS1("\\ds*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
-	else if (strncmp(prev_wd, "\\dt", strlen("\\dt")) == 0)
+	else if (TailMatchesCS1("\\dt*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	else if (strncmp(prev_wd, "\\dT", strlen("\\dT")) == 0)
+	else if (TailMatchesCS1("\\dT*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
-	else if (strncmp(prev_wd, "\\du", strlen("\\du")) == 0
-			 || (strncmp(prev_wd, "\\dg", strlen("\\dg")) == 0))
+	else if (TailMatchesCS1("\\du*") || TailMatchesCS1("\\dg*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
-	else if (strncmp(prev_wd, "\\dv", strlen("\\dv")) == 0)
+	else if (TailMatchesCS1("\\dv*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
-	else if (strncmp(prev_wd, "\\dx", strlen("\\dx")) == 0)
+	else if (TailMatchesCS1("\\dx*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_extensions);
-	else if (strncmp(prev_wd, "\\dm", strlen("\\dm")) == 0)
+	else if (TailMatchesCS1("\\dm*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
-	else if (strncmp(prev_wd, "\\dE", strlen("\\dE")) == 0)
+	else if (TailMatchesCS1("\\dE*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_foreign_tables, NULL);
-	else if (strncmp(prev_wd, "\\dy", strlen("\\dy")) == 0)
+	else if (TailMatchesCS1("\\dy*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_event_triggers);
 
-	/* must be at end of \d list */
-	else if (strncmp(prev_wd, "\\d", strlen("\\d")) == 0)
+	/* must be at end of \d alternatives: */
+	else if (TailMatchesCS1("\\d*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_relations, NULL);
 
-	else if (strcmp(prev_wd, "\\ef") == 0)
+	else if (TailMatchesCS1("\\ef"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
-	else if (strcmp(prev_wd, "\\ev") == 0)
+	else if (TailMatchesCS1("\\ev"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 
-	else if (strcmp(prev_wd, "\\encoding") == 0)
+	else if (TailMatchesCS1("\\encoding"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_encodings);
-	else if (strcmp(prev_wd, "\\h") == 0 || strcmp(prev_wd, "\\help") == 0)
+	else if (TailMatchesCS1("\\h") || TailMatchesCS1("\\help"))
 		COMPLETE_WITH_LIST(sql_commands);
-	else if (strcmp(prev_wd, "\\password") == 0)
+	else if (TailMatchesCS1("\\password"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
-	else if (strcmp(prev_wd, "\\pset") == 0)
+	else if (TailMatchesCS1("\\pset"))
 	{
 		static const char *const my_list[] =
 		{"border", "columns", "expanded", "fieldsep", "fieldsep_zero",
@@ -2877,10 +2953,9 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
-	else if (previous_words_count >= 2 &&
-			 strcmp(prev2_wd, "\\pset") == 0)
+	else if (TailMatchesCS2("\\pset", MatchAny))
 	{
-		if (strcmp(prev_wd, "format") == 0)
+		if (TailMatchesCS1("format"))
 		{
 			static const char *const my_list[] =
 			{"unaligned", "aligned", "wrapped", "html", "asciidoc",
@@ -2888,112 +2963,50 @@ psql_completion(const char *text, int start, int end)
 
 			COMPLETE_WITH_LIST_CS(my_list);
 		}
-		else if (strcmp(prev_wd, "linestyle") == 0)
-		{
-			static const char *const my_list[] =
-			{"ascii", "old-ascii", "unicode", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "unicode_border_linestyle") == 0 ||
-				 strcmp(prev_wd, "unicode_column_linestyle") == 0 ||
-				 strcmp(prev_wd, "unicode_header_linestyle") == 0)
-		{
-			static const char *const my_list[] =
-			{"single", "double", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-
-		}
+		else if (TailMatchesCS1("linestyle"))
+			COMPLETE_WITH_LIST_CS3("ascii", "old-ascii", "unicode");
+		else if (TailMatchesCS1("unicode_border_linestyle|"
+								"unicode_column_linestyle|"
+								"unicode_header_linestyle"))
+			COMPLETE_WITH_LIST_CS2("single", "double");
 	}
-	else if (strcmp(prev_wd, "\\unset") == 0)
+	else if (TailMatchesCS1("\\unset"))
 	{
 		matches = complete_from_variables(text, "", "", true);
 	}
-	else if (strcmp(prev_wd, "\\set") == 0)
+	else if (TailMatchesCS1("\\set"))
 	{
 		matches = complete_from_variables(text, "", "", false);
 	}
-	else if (previous_words_count >= 2 &&
-			 strcmp(prev2_wd, "\\set") == 0)
+	else if (TailMatchesCS2("\\set", MatchAny))
 	{
-		static const char *const boolean_value_list[] =
-		{"on", "off", NULL};
-
-		if (strcmp(prev_wd, "AUTOCOMMIT") == 0)
-			COMPLETE_WITH_LIST_CS(boolean_value_list);
-		else if (strcmp(prev_wd, "COMP_KEYWORD_CASE") == 0)
-		{
-			static const char *const my_list[] =
-			{"lower", "upper", "preserve-lower", "preserve-upper", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "ECHO") == 0)
-		{
-			static const char *const my_list[] =
-			{"errors", "queries", "all", "none", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "ECHO_HIDDEN") == 0)
-		{
-			static const char *const my_list[] =
-			{"noexec", "off", "on", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "HISTCONTROL") == 0)
-		{
-			static const char *const my_list[] =
-			{"ignorespace", "ignoredups", "ignoreboth", "none", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "ON_ERROR_ROLLBACK") == 0)
-		{
-			static const char *const my_list[] =
-			{"on", "off", "interactive", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "ON_ERROR_STOP") == 0)
-			COMPLETE_WITH_LIST_CS(boolean_value_list);
-		else if (strcmp(prev_wd, "QUIET") == 0)
-			COMPLETE_WITH_LIST_CS(boolean_value_list);
-		else if (strcmp(prev_wd, "SHOW_CONTEXT") == 0)
-		{
-			static const char *const my_list[] =
-			{"never", "errors", "always", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
-		else if (strcmp(prev_wd, "SINGLELINE") == 0)
-			COMPLETE_WITH_LIST_CS(boolean_value_list);
-		else if (strcmp(prev_wd, "SINGLESTEP") == 0)
-			COMPLETE_WITH_LIST_CS(boolean_value_list);
-		else if (strcmp(prev_wd, "VERBOSITY") == 0)
-		{
-			static const char *const my_list[] =
-			{"default", "verbose", "terse", NULL};
-
-			COMPLETE_WITH_LIST_CS(my_list);
-		}
+		if (TailMatchesCS1("AUTOCOMMIT|ON_ERROR_STOP|QUIET|"
+						   "SINGLELINE|SINGLESTEP"))
+			COMPLETE_WITH_LIST_CS2("on", "off");
+		else if (TailMatchesCS1("COMP_KEYWORD_CASE"))
+			COMPLETE_WITH_LIST_CS4("lower", "upper",
+								   "preserve-lower", "preserve-upper");
+		else if (TailMatchesCS1("ECHO"))
+			COMPLETE_WITH_LIST_CS4("errors", "queries", "all", "none");
+		else if (TailMatchesCS1("ECHO_HIDDEN"))
+			COMPLETE_WITH_LIST_CS3("noexec", "off", "on");
+		else if (TailMatchesCS1("HISTCONTROL"))
+			COMPLETE_WITH_LIST_CS4("ignorespace", "ignoredups",
+								   "ignoreboth", "none");
+		else if (TailMatchesCS1("ON_ERROR_ROLLBACK"))
+			COMPLETE_WITH_LIST_CS3("on", "off", "interactive");
+		else if (TailMatchesCS1("SHOW_CONTEXT"))
+			COMPLETE_WITH_LIST_CS3("never", "errors", "always");
+		else if (TailMatchesCS1("VERBOSITY"))
+			COMPLETE_WITH_LIST_CS3("default", "verbose", "terse");
 	}
-	else if (strcmp(prev_wd, "\\sf") == 0 || strcmp(prev_wd, "\\sf+") == 0)
+	else if (TailMatchesCS1("\\sf*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
-	else if (strcmp(prev_wd, "\\sv") == 0 || strcmp(prev_wd, "\\sv+") == 0)
+	else if (TailMatchesCS1("\\sv*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
-	else if (strcmp(prev_wd, "\\cd") == 0 ||
-			 strcmp(prev_wd, "\\e") == 0 || strcmp(prev_wd, "\\edit") == 0 ||
-			 strcmp(prev_wd, "\\g") == 0 ||
-		  strcmp(prev_wd, "\\i") == 0 || strcmp(prev_wd, "\\include") == 0 ||
-			 strcmp(prev_wd, "\\ir") == 0 || strcmp(prev_wd, "\\include_relative") == 0 ||
-			 strcmp(prev_wd, "\\o") == 0 || strcmp(prev_wd, "\\out") == 0 ||
-			 strcmp(prev_wd, "\\s") == 0 ||
-			 strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0 ||
-			 strcmp(prev_wd, "\\lo_import") == 0
-		)
+	else if (TailMatchesCS1("\\cd|\\e|\\edit|\\g|\\i|\\include|"
+							"\\ir|\\include_relative|\\o|\\out|"
+							"\\s|\\w|\\write|\\lo_import"))
 	{
 		completion_charp = "\\";
 		matches = completion_matches(text, complete_from_files);
