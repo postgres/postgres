@@ -12,7 +12,7 @@ OBJS = pg_xlogdump.o compat.o xlogreader.o rmgrdesc.o \
 
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 
-RMGRDESCSOURCES = $(notdir $(wildcard $(top_srcdir)/src/backend/access/rmgrdesc/*desc.c))
+RMGRDESCSOURCES = $(sort $(notdir $(wildcard $(top_srcdir)/src/backend/access/rmgrdesc/*desc.c)))
 RMGRDESCOBJS = $(patsubst %.c,%.o,$(RMGRDESCSOURCES))
 
 
