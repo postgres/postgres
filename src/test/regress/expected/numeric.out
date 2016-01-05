@@ -1852,3 +1852,60 @@ select log(3.1954752e47, 9.4792021e-73);
  -1.51613372350688302142917386143459361608600157692779164475351842333265418126982165
 (1 row)
 
+--
+-- Tests for scale()
+--
+select scale(numeric 'NaN');
+ scale 
+-------
+      
+(1 row)
+
+select scale(NULL::numeric);
+ scale 
+-------
+      
+(1 row)
+
+select scale(1.12);
+ scale 
+-------
+     2
+(1 row)
+
+select scale(0);
+ scale 
+-------
+     0
+(1 row)
+
+select scale(0.00);
+ scale 
+-------
+     2
+(1 row)
+
+select scale(1.12345);
+ scale 
+-------
+     5
+(1 row)
+
+select scale(110123.12475871856128);
+ scale 
+-------
+    14
+(1 row)
+
+select scale(-1123.12471856128);
+ scale 
+-------
+    11
+(1 row)
+
+select scale(-13.000000000000000);
+ scale 
+-------
+    15
+(1 row)
+

@@ -2825,6 +2825,23 @@ numeric_power(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(res);
 }
 
+/*
+ * numeric_scale() -
+ *
+ *	Returns the scale, i.e. the count of decimal digits in the fractional part
+ */
+Datum
+numeric_scale(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+
+	if (NUMERIC_IS_NAN(num))
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(NUMERIC_DSCALE(num));
+}
+
+
 
 /* ----------------------------------------------------------------------
  *

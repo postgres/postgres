@@ -983,3 +983,17 @@ select log(1.23e-89, 6.4689e45);
 select log(0.99923, 4.58934e34);
 select log(1.000016, 8.452010e18);
 select log(3.1954752e47, 9.4792021e-73);
+
+--
+-- Tests for scale()
+--
+
+select scale(numeric 'NaN');
+select scale(NULL::numeric);
+select scale(1.12);
+select scale(0);
+select scale(0.00);
+select scale(1.12345);
+select scale(110123.12475871856128);
+select scale(-1123.12471856128);
+select scale(-13.000000000000000);

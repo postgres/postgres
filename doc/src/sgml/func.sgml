@@ -852,6 +852,19 @@
       <row>
        <entry>
         <indexterm>
+         <primary>scale</primary>
+        </indexterm>
+        <literal><function>scale(<type>numeric</type>)</function></literal>
+       </entry>
+       <entry><type>numeric</type></entry>
+       <entry>scale of the argument (the number of decimal digits in the fractional part)</entry>
+       <entry><literal>scale(8.41)</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>sign</primary>
         </indexterm>
         <literal><function>sign(<type>dp</type> or <type>numeric</type>)</function></literal>

@@ -2361,6 +2361,8 @@ DESCR("exponentiation");
 DATA(insert OID = 2169 ( power					PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_ _null_	numeric_power _null_ _null_ _null_ ));
 DESCR("exponentiation");
 DATA(insert OID = 1739 ( numeric_power			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1700 "1700 1700" _null_ _null_ _null_ _null_ _null_	numeric_power _null_ _null_ _null_ ));
+DATA(insert OID = 8888 ( scale					PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1700" _null_ _null_ _null_ _null_ _null_ numeric_scale _null_ _null_ _null_ ));
+DESCR("number of decimal digits in the fractional part");
 DATA(insert OID = 1740 ( numeric				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 1700 "23" _null_ _null_ _null_ _null_ _null_ int4_numeric _null_ _null_ _null_ ));
 DESCR("convert int4 to numeric");
 DATA(insert OID = 1741 ( log					PGNSP PGUID 14 1 0 0 0 f f f f t f i s 1 0 1700 "1700" _null_ _null_ _null_ _null_ _null_ "select pg_catalog.log(10, $1)" _null_ _null_ _null_ ));
