@@ -16173,7 +16173,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
    <function>to_regoperator</function>, <function>to_regtype</function>,
    <function>to_regnamespace</function>, and <function>to_regrole</function>
    functions translate relation, function, operator, type, schema, and role
-   names to objects of
+   names (given as <type>text</>) to objects of
    type <type>regclass</>, <type>regproc</>, <type>regprocedure</type>,
    <type>regoper</>, <type>regoperator</type>, <type>regtype</>,
    <type>regnamespace</>, and <type>regrole</>

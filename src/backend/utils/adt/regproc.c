@@ -161,7 +161,7 @@ regprocin(PG_FUNCTION_ARGS)
 Datum
 to_regproc(PG_FUNCTION_ARGS)
 {
-	char	   *pro_name = PG_GETARG_CSTRING(0);
+	char	   *pro_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	List	   *names;
 	FuncCandidateList clist;
 
@@ -331,7 +331,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 Datum
 to_regprocedure(PG_FUNCTION_ARGS)
 {
-	char	   *pro_name = PG_GETARG_CSTRING(0);
+	char	   *pro_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
@@ -620,7 +620,7 @@ regoperin(PG_FUNCTION_ARGS)
 Datum
 to_regoper(PG_FUNCTION_ARGS)
 {
-	char	   *opr_name = PG_GETARG_CSTRING(0);
+	char	   *opr_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	List	   *names;
 	FuncCandidateList clist;
 
@@ -797,7 +797,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 Datum
 to_regoperator(PG_FUNCTION_ARGS)
 {
-	char	   *opr_name_or_oid = PG_GETARG_CSTRING(0);
+	char	   *opr_name_or_oid = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
 	int			nargs;
@@ -1061,7 +1061,7 @@ regclassin(PG_FUNCTION_ARGS)
 Datum
 to_regclass(PG_FUNCTION_ARGS)
 {
-	char	   *class_name = PG_GETARG_CSTRING(0);
+	char	   *class_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
 
@@ -1249,7 +1249,7 @@ regtypein(PG_FUNCTION_ARGS)
 Datum
 to_regtype(PG_FUNCTION_ARGS)
 {
-	char	   *typ_name = PG_GETARG_CSTRING(0);
+	char	   *typ_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	int32		typmod;
 
@@ -1606,7 +1606,7 @@ regrolein(PG_FUNCTION_ARGS)
 Datum
 to_regrole(PG_FUNCTION_ARGS)
 {
-	char	   *role_name = PG_GETARG_CSTRING(0);
+	char	   *role_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
 
@@ -1727,7 +1727,7 @@ regnamespacein(PG_FUNCTION_ARGS)
 Datum
 to_regnamespace(PG_FUNCTION_ARGS)
 {
-	char	   *nsp_name = PG_GETARG_CSTRING(0);
+	char	   *nsp_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Oid			result;
 	List	   *names;
 
