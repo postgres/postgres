@@ -1,7 +1,7 @@
 --
 -- OPR_SANITY
 -- Sanity checks for common errors in making operator/procedure system tables:
--- pg_operator, pg_proc, pg_cast, pg_aggregate, pg_am,
+-- pg_operator, pg_proc, pg_cast, pg_conversion, pg_aggregate, pg_am,
 -- pg_amop, pg_amproc, pg_opclass, pg_opfamily, pg_index.
 --
 -- Every test failure in this file should be closely inspected.
@@ -250,6 +250,36 @@ WHERE p1.prorettype IN
      'anyrange'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
 
+-- Look for functions that accept cstring and are neither datatype input
+-- functions nor encoding conversion functions.  It's almost never a good
+-- idea to use cstring input for a function meant to be called from SQL;
+-- text should be used instead, because cstring lacks suitable casts.
+-- As of 9.6 this query should find only cstring_out and cstring_send.
+-- However, we must manually exclude shell_in, which might or might not be
+-- rejected by the EXISTS clause depending on whether there are currently
+-- any shell types.
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE 'cstring'::regtype = ANY (p1.proargtypes)
+    AND NOT EXISTS(SELECT 1 FROM pg_type WHERE typinput = p1.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_conversion WHERE conproc = p1.oid)
+    AND p1.oid != 'shell_in(cstring)'::regprocedure
+ORDER BY 1;
+
+-- Likewise, look for functions that return cstring and aren't datatype output
+-- functions nor typmod output functions.
+-- As of 9.6 this query should find only cstring_in and cstring_recv.
+-- However, we must manually exclude shell_out.
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE  p1.prorettype = 'cstring'::regtype
+    AND NOT EXISTS(SELECT 1 FROM pg_type WHERE typoutput = p1.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_type WHERE typmodout = p1.oid)
+    AND p1.oid != 'shell_out(opaque)'::regprocedure
+ORDER BY 1;
+
 -- Check for length inconsistencies between the various argument-info arrays.
 
 SELECT p1.oid, p1.proname
@@ -425,6 +455,47 @@ WHERE c.castmethod = 'b' AND
                 WHERE k.castmethod = 'b' AND
                     k.castsource = c.casttarget AND
                     k.casttarget = c.castsource);
+
+
+-- **************** pg_conversion ****************
+
+-- Look for illegal values in pg_conversion fields.
+
+SELECT p1.oid, p1.conname
+FROM pg_conversion as p1
+WHERE p1.conproc = 0 OR
+    pg_encoding_to_char(conforencoding) = '' OR
+    pg_encoding_to_char(contoencoding) = '';
+
+-- Look for conprocs that don't have the expected signature.
+
+SELECT p.oid, p.proname, c.oid, c.conname
+FROM pg_proc p, pg_conversion c
+WHERE p.oid = c.conproc AND
+    (p.prorettype != 'void'::regtype OR p.proretset OR
+     p.pronargs != 5 OR
+     p.proargtypes[0] != 'int4'::regtype OR
+     p.proargtypes[1] != 'int4'::regtype OR
+     p.proargtypes[2] != 'cstring'::regtype OR
+     p.proargtypes[3] != 'internal'::regtype OR
+     p.proargtypes[4] != 'int4'::regtype);
+
+-- Check for conprocs that don't perform the specific conversion that
+-- pg_conversion alleges they do, by trying to invoke each conversion
+-- on some simple ASCII data.  (The conproc should throw an error if
+-- it doesn't accept the encodings that are passed to it.)
+-- Unfortunately, we can't test non-default conprocs this way, because
+-- there is no way to ask convert() to invoke them, and we cannot call
+-- them directly from SQL.  But there are no non-default built-in
+-- conversions anyway.
+-- (Similarly, this doesn't cope with any search path issues.)
+
+SELECT p1.oid, p1.conname
+FROM pg_conversion as p1
+WHERE condefault AND
+    convert('ABC'::bytea, pg_encoding_to_char(conforencoding),
+            pg_encoding_to_char(contoencoding)) != 'ABC';
+
 
 -- **************** pg_operator ****************
 
