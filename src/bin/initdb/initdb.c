@@ -1781,6 +1781,13 @@ setup_description(FILE *cmdfd)
 				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
 				"  NOT EXISTS (SELECT 1 FROM pg_description "
 		"    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n\n");
+
+	/*
+	 * Even though the tables are temp, drop them explicitly so they don't get
+	 * copied into template0/postgres databases.
+	 */
+	PG_CMD_PUTS("DROP TABLE tmp_pg_description;\n\n");
+	PG_CMD_PUTS("DROP TABLE tmp_pg_shdescription;\n\n");
 }
 
 #ifdef HAVE_LOCALE_T
@@ -1940,6 +1947,12 @@ setup_collation(FILE *cmdfd)
 				"  FROM tmp_pg_collation"
 				"  WHERE NOT EXISTS (SELECT 1 FROM pg_collation WHERE collname = tmp_pg_collation.collname)"
 	 "  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n\n");
+
+	/*
+	 * Even though the table is temp, drop it explicitly so it doesn't get
+	 * copied into template0/postgres databases.
+	 */
+	PG_CMD_PUTS("DROP TABLE tmp_pg_collation;\n\n");
 
 	pclose(locale_a_handle);
 
