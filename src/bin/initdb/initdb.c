@@ -2623,6 +2623,7 @@ main(int argc, char *argv[])
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
 	char		bin_dir[MAXPGPATH];
+	char	   *xlogsubdirloc;
 	char	   *pg_data_native;
 	int			user_enc;
 
@@ -2631,7 +2632,6 @@ main(int argc, char *argv[])
 #endif
 	static const char *subdirs[] = {
 		"global",
-		"pg_xlog",
 		"pg_xlog/archive_status",
 		"pg_clog",
 		"pg_notify",
@@ -3167,11 +3167,12 @@ main(int argc, char *argv[])
 			exit_nicely();
 	}
 
-	/* Create transaction log symlink, if required */
+	/* Create transaction log directory, and symlink if required */
+	xlogsubdirloc = (char *) pg_malloc(strlen(pg_data) + 8 + 1);
+	sprintf(xlogsubdirloc, "%s/pg_xlog", pg_data);
+
 	if (strcmp(xlog_dir, "") != 0)
 	{
-		char	   *linkloc;
-
 		/* clean up xlog directory name, check it's absolute */
 		canonicalize_path(xlog_dir);
 		if (!is_absolute_path(xlog_dir))
@@ -3237,15 +3238,11 @@ main(int argc, char *argv[])
 				exit_nicely();
 		}
 
-		/* form name of the place where the symlink must go */
-		linkloc = (char *) pg_malloc(strlen(pg_data) + 8 + 1);
-		sprintf(linkloc, "%s/pg_xlog", pg_data);
-
 #ifdef HAVE_SYMLINK
-		if (symlink(xlog_dir, linkloc) != 0)
+		if (symlink(xlog_dir, xlogsubdirloc) != 0)
 		{
 			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
-					progname, linkloc, strerror(errno));
+					progname, xlogsubdirloc, strerror(errno));
 			exit_nicely();
 		}
 #else
@@ -3253,8 +3250,18 @@ main(int argc, char *argv[])
 		exit_nicely();
 #endif
 	}
+	else
+	{
+		/* Without -X option, just make the subdirectory normally */
+		if (mkdir(xlogsubdirloc, S_IRWXU) < 0)
+		{
+			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+					progname, xlogsubdirloc, strerror(errno));
+			exit_nicely();
+		}
+	}
 
-	/* Create required subdirectories */
+	/* Create required subdirectories (other than pg_xlog) */
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
