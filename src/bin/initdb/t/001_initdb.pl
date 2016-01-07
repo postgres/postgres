@@ -25,7 +25,7 @@ command_ok([ 'initdb', '-X', "$tempdir/pgxlog", "$tempdir/data" ],
 
 system_or_bail "rm -rf '$tempdir'/*";
 command_fails(
-	[ 'initdb', "$tempdir/data", '-X', 'pgxlog' ],
+	[ 'initdb', '-X', 'pgxlog', "$tempdir/data" ],
 	'relative xlog directory not allowed');
 
 system_or_bail "rm -rf '$tempdir'/*";
