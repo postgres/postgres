@@ -382,9 +382,6 @@ int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
 
 extern int	pgwin32_noblock;
 
-/* in backend/port/win32/security.c */
-extern int	pgwin32_is_admin(void);
-extern int	pgwin32_is_service(void);
 #endif
 
 /* in backend/port/win32_shmem.c */
@@ -399,6 +396,10 @@ extern void _dosmaperr(unsigned long);
 /* in port/win32env.c */
 extern int	pgwin32_putenv(const char *);
 extern void pgwin32_unsetenv(const char *);
+
+/* in port/win32security.c */
+extern int	pgwin32_is_service(void);
+extern int	pgwin32_is_admin(void);
 
 #define putenv(x) pgwin32_putenv(x)
 #define unsetenv(x) pgwin32_unsetenv(x)
