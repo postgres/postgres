@@ -81,8 +81,6 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 		return STATUS_ERROR;	/* empty password */
 	}
 
-	CHECK_FOR_INTERRUPTS();
-
 	/*
 	 * Compare with the encrypted or plain password depending on the
 	 * authentication method being used for this connection.  (We do not
