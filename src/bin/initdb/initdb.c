@@ -196,6 +196,7 @@ const char *subdirs[] = {
 	"pg_snapshots",
 	"pg_subtrans",
 	"pg_twophase",
+	"pg_multixact",
 	"pg_multixact/members",
 	"pg_multixact/offsets",
 	"base",
@@ -229,7 +230,6 @@ static FILE *popen_check(const char *command, const char *mode);
 static void exit_nicely(void);
 static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
-static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void write_version_file(char *extrapath);
@@ -952,32 +952,6 @@ find_matching_ts_config(const char *lc_type)
 
 	free(langname);
 	return NULL;
-}
-
-
-/*
- * make the data directory (or one of its subdirectories if subdir is not NULL)
- */
-static bool
-mkdatadir(const char *subdir)
-{
-	char	   *path;
-
-	path = pg_malloc(strlen(pg_data) + 2 +
-					 (subdir == NULL ? 0 : strlen(subdir)));
-
-	if (subdir != NULL)
-		sprintf(path, "%s/%s", pg_data, subdir);
-	else
-		strcpy(path, pg_data);
-
-	if (pg_mkdir_p(path, S_IRWXU) == 0)
-		return true;
-
-	fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
-			progname, path, strerror(errno));
-
-	return false;
 }
 
 
@@ -3220,8 +3194,12 @@ create_data_directory(void)
 				   pg_data);
 			fflush(stdout);
 
-			if (!mkdatadir(NULL))
+			if (pg_mkdir_p(pg_data, S_IRWXU) != 0)
+			{
+				fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+						progname, pg_data, strerror(errno));
 				exit_nicely();
+			}
 			else
 				check_ok();
 
@@ -3403,10 +3381,25 @@ initialize_data_directory(void)
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
-	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
+	for (i = 0; i < lengthof(subdirs); i++)
 	{
-		if (!mkdatadir(subdirs[i]))
+		char	   *path;
+
+		path = pg_malloc(strlen(pg_data) + strlen(subdirs[i]) + 2);
+		sprintf(path, "%s/%s", pg_data, subdirs[i]);
+
+		/*
+		 * The parent directory already exists, so we only need mkdir() not
+		 * pg_mkdir_p() here, which avoids some failure modes; cf bug #13853.
+		 */
+		if (mkdir(path, S_IRWXU) < 0)
+		{
+			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+					progname, path, strerror(errno));
 			exit_nicely();
+		}
+
+		free(path);
 	}
 
 	check_ok();
