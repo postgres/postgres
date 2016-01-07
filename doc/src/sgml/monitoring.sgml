@@ -301,6 +301,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_wal_receiver</><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
+      <entry>Only one row, showing statistics about the WAL receiver from
+       that receiver's connected server.
+       See <xref linkend="pg-stat-wal-receiver-view"> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_ssl</><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
@@ -831,6 +839,89 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    per WAL sender process, showing statistics about replication to that
    sender's connected standby server.  Only directly connected standbys are
    listed; no information is available about downstream standby servers.
+  </para>
+
+  <table id="pg-stat-wal-receiver-view" xreflabel="pg_stat_wal_receiver">
+   <title><structname>pg_stat_wal_receiver</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of the WAL receiver process</entry>
+    </row>
+    <row>
+     <entry><structfield>status</></entry>
+     <entry><type>text</></entry>
+     <entry>Activity status of the WAL receiver process</entry>
+    </row>
+    <row>
+     <entry><structfield>receive_start_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>First transaction log position used when WAL receiver is
+      started</entry>
+    </row>
+    <row>
+     <entry><structfield>receive_start_tli</></entry>
+     <entry><type>integer</></entry>
+     <entry>First timeline number used when WAL receiver is started</entry>
+    </row>
+    <row>
+     <entry><structfield>received_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position already received and flushed to
+      disk, the initial value of this field being the first log position used
+      when WAL receiver is started</entry>
+    </row>
+    <row>
+     <entry><structfield>received_tli</></entry>
+     <entry><type>integer</></entry>
+     <entry>Timeline number of last transaction log position received and
+      flushed to disk, the initial value of this field being the timeline
+      number of the first log position used when WAL receiver is started
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_send_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Send time of last message received from origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_receipt_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Receipt time of last message received from origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position reported to origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Time of last transaction log position reported to origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>slot_name</></entry>
+     <entry><type>text</></entry>
+     <entry>Replication slot name used by this WAL receiver</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_wal_receiver</structname> view will contain only
+   one row, showing statistics about the WAL receiver from that receiver's
+   connected server.
   </para>
 
   <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">
