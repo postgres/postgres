@@ -34,7 +34,7 @@ log_error(const char *fmt,...)
 {
 	va_list		ap;
 
-	va_start(fmt, ap);
+	va_start(ap, fmt);
 #ifndef FRONTEND
 	write_stderr(fmt, ap);
 #else
