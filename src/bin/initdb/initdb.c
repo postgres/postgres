@@ -188,7 +188,6 @@ char	   *restrict_env;
 #endif
 const char *subdirs[] = {
 	"global",
-	"pg_xlog",
 	"pg_xlog/archive_status",
 	"pg_clog",
 	"pg_notify",
@@ -270,7 +269,7 @@ void		setup_locale_encoding(void);
 void		setup_signals(void);
 void		setup_text_search(void);
 void		create_data_directory(void);
-void		create_xlog_symlink(void);
+void		create_xlog_or_symlink(void);
 void		warn_on_mount_point(int error);
 void		initialize_data_directory(void);
 
@@ -3250,13 +3249,18 @@ create_data_directory(void)
 }
 
 
+/* Create transaction log directory, and symlink if required */
 void
-create_xlog_symlink(void)
+create_xlog_or_symlink(void)
 {
-	/* Create transaction log symlink, if required */
+	char	   *subdirloc;
+
+	/* form name of the place for the subdirectory or symlink */
+	subdirloc = (char *) pg_malloc(strlen(pg_data) + 8 + 1);
+	sprintf(subdirloc, "%s/pg_xlog", pg_data);
+
 	if (strcmp(xlog_dir, "") != 0)
 	{
-		char	   *linkloc;
 		int			ret;
 
 		/* clean up xlog directory name, check it's absolute */
@@ -3329,15 +3333,11 @@ create_xlog_symlink(void)
 				exit_nicely();
 		}
 
-		/* form name of the place where the symlink must go */
-		linkloc = (char *) pg_malloc(strlen(pg_data) + 8 + 1);
-		sprintf(linkloc, "%s/pg_xlog", pg_data);
-
 #ifdef HAVE_SYMLINK
-		if (symlink(xlog_dir, linkloc) != 0)
+		if (symlink(xlog_dir, subdirloc) != 0)
 		{
 			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
-					progname, linkloc, strerror(errno));
+					progname, subdirloc, strerror(errno));
 			exit_nicely();
 		}
 #else
@@ -3345,6 +3345,18 @@ create_xlog_symlink(void)
 		exit_nicely();
 #endif
 	}
+	else
+	{
+		/* Without -X option, just make the subdirectory normally */
+		if (mkdir(subdirloc, S_IRWXU) < 0)
+		{
+			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+					progname, subdirloc, strerror(errno));
+			exit_nicely();
+		}
+	}
+
+	free(subdirloc);
 }
 
 
@@ -3375,9 +3387,9 @@ initialize_data_directory(void)
 
 	create_data_directory();
 
-	create_xlog_symlink();
+	create_xlog_or_symlink();
 
-	/* Create required subdirectories */
+	/* Create required subdirectories (other than pg_xlog) */
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
