@@ -13075,12 +13075,6 @@ if test "$PORTNAME" = "cygwin"; then
  ;;
 esac
 
-  case " $LIBOBJS " in
-  *" win32security.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS win32security.$ac_objext"
- ;;
-esac
-
 fi
 
 ac_fn_c_check_decl "$LINENO" "sys_siglist" "ac_cv_have_decl_sys_siglist" "#include <signal.h>

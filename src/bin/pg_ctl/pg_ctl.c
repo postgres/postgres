@@ -212,6 +212,15 @@ write_stderr(const char *fmt,...)
 	vfprintf(stderr, fmt, ap);
 #else
 
+/*
+ * On Cygwin, we don't yet have a reliable mechanism to detect when
+ * we're being run as a service, so fall back to the old (and broken)
+ * stderr test.
+ */
+#ifdef __CYGWIN__
+#define	pgwin32_is_service()	(isatty(fileno(stderr)))
+#endif
+
 	/*
 	 * On Win32, we print to stderr if running on a console, or write to
 	 * eventlog if running as a service

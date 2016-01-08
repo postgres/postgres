@@ -1596,7 +1596,6 @@ fi
 # Cygwin needs only a bit of that
 if test "$PORTNAME" = "cygwin"; then
   AC_LIBOBJ(dirmod)
-  AC_LIBOBJ(win32security)
 fi
 
 AC_CHECK_DECLS([sys_siglist], [], [],
