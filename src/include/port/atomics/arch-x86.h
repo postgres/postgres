@@ -67,7 +67,7 @@ typedef struct pg_atomic_uint32
 
 /*
  * It's too complicated to write inline asm for 64bit types on 32bit and the
- * 468 can't do it anyway.
+ * 486 can't do it anyway.
  */
 #ifdef __x86_64__
 #define PG_HAVE_ATOMIC_U64_SUPPORT
