@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use TestLib;
 use Test::More tests => 38;
 use ServerSetup;
 use File::Copy;
