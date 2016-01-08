@@ -202,14 +202,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->hasRowSecurity = false;
 
 	/*
-	 * Assess whether it's feasible to use parallel mode for this query.
-	 * We can't do this in a standalone backend, or if the command will
-	 * try to modify any data, or if this is a cursor operation, or if
-	 * GUCs are set to values that don't permit parallelism, or if
-	 * parallel-unsafe functions are present in the query tree.
+	 * Assess whether it's feasible to use parallel mode for this query. We
+	 * can't do this in a standalone backend, or if the command will try to
+	 * modify any data, or if this is a cursor operation, or if GUCs are set
+	 * to values that don't permit parallelism, or if parallel-unsafe
+	 * functions are present in the query tree.
 	 *
-	 * For now, we don't try to use parallel mode if we're running inside
-	 * a parallel worker.  We might eventually be able to relax this
+	 * For now, we don't try to use parallel mode if we're running inside a
+	 * parallel worker.  We might eventually be able to relax this
 	 * restriction, but for now it seems best not to have parallel workers
 	 * trying to create their own parallel workers.
 	 *
@@ -218,8 +218,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * tries to run a parallel plan in serializable mode; it just won't get
 	 * any workers and will run serially.  But it seems like a good heuristic
 	 * to assume that the same serialization level will be in effect at plan
-	 * time and execution time, so don't generate a parallel plan if we're
-	 * in serializable mode.
+	 * time and execution time, so don't generate a parallel plan if we're in
+	 * serializable mode.
 	 */
 	glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
@@ -239,9 +239,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 *
 	 * (It's been suggested that we should always impose these restrictions
 	 * whenever glob->parallelModeOK is true, so that it's easier to notice
-	 * incorrectly-labeled functions sooner.  That might be the right thing
-	 * to do, but for now I've taken this approach.  We could also control
-	 * this with a GUC.)
+	 * incorrectly-labeled functions sooner.  That might be the right thing to
+	 * do, but for now I've taken this approach.  We could also control this
+	 * with a GUC.)
 	 *
 	 * FIXME: It's assumed that code further down will set parallelModeNeeded
 	 * to true if a parallel path is actually chosen.  Since the core
@@ -1425,7 +1425,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		List	   *activeWindows = NIL;
 		OnConflictExpr *onconfl;
 		int			maxref = 0;
-		int		   *tleref_to_colnum_map;
 		List	   *rollup_lists = NIL;
 		List	   *rollup_groupclauses = NIL;
 		standard_qp_extra qp_extra;
@@ -1439,14 +1438,19 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/* A recursive query should always have setOperations */
 		Assert(!root->hasRecursion);
 
-		/* Preprocess Grouping set, if any */
+		/* Preprocess grouping sets, if any */
 		if (parse->groupingSets)
+		{
+			int		   *tleref_to_colnum_map;
+			List	   *sets;
+			ListCell   *lc;
+			ListCell   *lc2;
+			ListCell   *lc_set;
+
 			parse->groupingSets = expand_grouping_sets(parse->groupingSets, -1);
 
-		if (parse->groupClause)
-		{
-			ListCell   *lc;
-
+			/* Identify max SortGroupRef in groupClause, for array sizing */
+			/* (note this value will be used again later) */
 			foreach(lc, parse->groupClause)
 			{
 				SortGroupClause *gc = lfirst(lc);
@@ -1454,25 +1458,38 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				if (gc->tleSortGroupRef > maxref)
 					maxref = gc->tleSortGroupRef;
 			}
-		}
 
-		tleref_to_colnum_map = palloc((maxref + 1) * sizeof(int));
+			/* Allocate workspace array for remapping */
+			tleref_to_colnum_map = (int *) palloc((maxref + 1) * sizeof(int));
 
-		if (parse->groupingSets)
-		{
-			ListCell   *lc;
-			ListCell   *lc2;
-			ListCell   *lc_set;
-			List	   *sets = extract_rollup_sets(parse->groupingSets);
+			/* Examine the rollup sets */
+			sets = extract_rollup_sets(parse->groupingSets);
 
 			foreach(lc_set, sets)
 			{
-				List	   *current_sets = reorder_grouping_sets(lfirst(lc_set),
-													  (list_length(sets) == 1
-													   ? parse->sortClause
-													   : NIL));
-				List	   *groupclause = preprocess_groupclause(root, linitial(current_sets));
-				int			ref = 0;
+				List	   *current_sets = (List *) lfirst(lc_set);
+				List	   *groupclause;
+				int			ref;
+
+				/*
+				 * Reorder the current list of grouping sets into correct
+				 * prefix order.  If only one aggregation pass is needed, try
+				 * to make the list match the ORDER BY clause; if more than
+				 * one pass is needed, we don't bother with that.
+				 */
+				current_sets = reorder_grouping_sets(current_sets,
+													 (list_length(sets) == 1
+													  ? parse->sortClause
+													  : NIL));
+
+				/*
+				 * Order the groupClause appropriately.  If the first grouping
+				 * set is empty, this can match regular GROUP BY
+				 * preprocessing, otherwise we have to force the groupClause
+				 * to match that grouping set's order.
+				 */
+				groupclause = preprocess_groupclause(root,
+													 linitial(current_sets));
 
 				/*
 				 * Now that we've pinned down an order for the groupClause for
@@ -1481,7 +1498,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * (0-based) into the groupClause for this collection of
 				 * grouping sets.
 				 */
-
+				ref = 0;
 				foreach(lc, groupclause)
 				{
 					SortGroupClause *gc = lfirst(lc);
@@ -1497,6 +1514,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					}
 				}
 
+				/* Save the reordered sets and corresponding groupclauses */
 				rollup_lists = lcons(current_sets, rollup_lists);
 				rollup_groupclauses = lcons(groupclause, rollup_groupclauses);
 			}
@@ -1953,10 +1971,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/*
 			 * groupColIdx is now cast in stone, so record a mapping from
-			 * tleSortGroupRef to column index. setrefs.c needs this to
+			 * tleSortGroupRef to column index.  setrefs.c will need this to
 			 * finalize GROUPING() operations.
 			 */
-
 			if (parse->groupingSets)
 			{
 				AttrNumber *grouping_map = palloc0(sizeof(AttrNumber) * (maxref + 1));
@@ -1996,9 +2013,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				/* Hashed aggregation produces randomly-ordered results */
 				current_pathkeys = NIL;
 			}
-			else if (parse->hasAggs || (parse->groupingSets && parse->groupClause))
+			else if (parse->hasAggs ||
+					 (parse->groupingSets && parse->groupClause))
 			{
 				/*
+				 * Aggregation and/or non-degenerate grouping sets.
+				 *
 				 * Output is in sorted order by group_pathkeys if, and only
 				 * if, there is a single rollup operation on a non-empty list
 				 * of grouping expressions.
@@ -3473,7 +3493,8 @@ extract_rollup_sets(List *groupingSets)
  * prefix relationships.
  *
  * The input must be ordered with smallest sets first; the result is returned
- * with largest sets first.
+ * with largest sets first.  Note that the result shares no list substructure
+ * with the input, so it's safe for the caller to modify it later.
  *
  * If we're passed in a sortclause, we follow its order of columns to the
  * extent possible, to minimize the chance that we add unnecessary sorts.
