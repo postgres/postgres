@@ -137,7 +137,7 @@ add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
 /*
  * build_base_rel_tlists
  *	  Add targetlist entries for each var needed in the query's final tlist
- *	  to the appropriate base relations.
+ *	  (and HAVING clause, if any) to the appropriate base relations.
  *
  * We mark such vars as needed by "relation 0" to ensure that they will
  * propagate up through all join plan steps.
@@ -153,6 +153,23 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 	{
 		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0), true);
 		list_free(tlist_vars);
+	}
+
+	/*
+	 * If there's a HAVING clause, we'll need the Vars it uses, too.
+	 */
+	if (root->parse->havingQual)
+	{
+		List	   *having_vars = pull_var_clause(root->parse->havingQual,
+												  PVC_RECURSE_AGGREGATES,
+												  PVC_INCLUDE_PLACEHOLDERS);
+
+		if (having_vars != NIL)
+		{
+			add_vars_to_targetlist(root, having_vars,
+								   bms_make_singleton(0), true);
+			list_free(having_vars);
+		}
 	}
 }
 

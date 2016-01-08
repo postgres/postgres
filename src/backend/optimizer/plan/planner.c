@@ -1415,9 +1415,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	else
 	{
 		/* No set operations, do regular planning */
-		List	   *sub_tlist;
-		AttrNumber *groupColIdx = NULL;
-		bool		need_tlist_eval = true;
 		long		numGroups = 0;
 		AggClauseCosts agg_costs;
 		int			numGroupCols;
@@ -1549,13 +1546,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		}
 
 		/*
-		 * Generate appropriate target list for subplan; may be different from
-		 * tlist if grouping or aggregation is needed.
-		 */
-		sub_tlist = make_subplanTargetList(root, tlist,
-										   &groupColIdx, &need_tlist_eval);
-
-		/*
 		 * Do aggregate preprocessing, if the query has any aggs.
 		 *
 		 * Note: think not that we can turn off hasAggs if we find no aggs. It
@@ -1612,7 +1602,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * standard_qp_callback) pathkey representations of the query's sort
 		 * clause, distinct clause, etc.
 		 */
-		final_rel = query_planner(root, sub_tlist,
+		final_rel = query_planner(root, tlist,
 								  standard_qp_callback, &qp_extra);
 
 		/*
@@ -1888,6 +1878,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * Normal case --- create a plan according to query_planner's
 			 * results.
 			 */
+			List	   *sub_tlist;
+			AttrNumber *groupColIdx = NULL;
+			bool		need_tlist_eval = true;
 			bool		need_sort_for_grouping = false;
 
 			result_plan = create_plan(root, best_path);
@@ -1896,23 +1889,27 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			/* Detect if we'll need an explicit sort for grouping */
 			if (parse->groupClause && !use_hashed_grouping &&
 			  !pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
-			{
 				need_sort_for_grouping = true;
 
-				/*
-				 * Always override create_plan's tlist, so that we don't sort
-				 * useless data from a "physical" tlist.
-				 */
-				need_tlist_eval = true;
-			}
+			/*
+			 * Generate appropriate target list for scan/join subplan; may be
+			 * different from tlist if grouping or aggregation is needed.
+			 */
+			sub_tlist = make_subplanTargetList(root, tlist,
+											   &groupColIdx,
+											   &need_tlist_eval);
 
 			/*
 			 * create_plan returns a plan with just a "flat" tlist of required
 			 * Vars.  Usually we need to insert the sub_tlist as the tlist of
 			 * the top plan node.  However, we can skip that if we determined
 			 * that whatever create_plan chose to return will be good enough.
+			 *
+			 * If we need_sort_for_grouping, always override create_plan's
+			 * tlist, so that we don't sort useless data from a "physical"
+			 * tlist.
 			 */
-			if (need_tlist_eval)
+			if (need_tlist_eval || need_sort_for_grouping)
 			{
 				/*
 				 * If the top-level plan node is one that cannot do expression
