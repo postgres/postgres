@@ -48,7 +48,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_vacuum *xlrec = (xl_btree_vacuum *) rec;
 
-				appendStringInfo(buf, "lastBlockVacuumed %u",
+				appendStringInfo(buf, "lastBlockVacuumed %d",
 								 xlrec->lastBlockVacuumed);
 				break;
 			}

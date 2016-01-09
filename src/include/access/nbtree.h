@@ -331,8 +331,10 @@ typedef struct xl_btree_reuse_page
  * The WAL record can represent deletion of any number of index tuples on a
  * single index page when executed by VACUUM.
  *
- * The correctness requirement for applying these changes during recovery is
- * that we must do one of these two things for every block in the index:
+ * For MVCC scans, lastBlockVacuumed will be set to InvalidBlockNumber.
+ * For a non-MVCC index scans there is an additional correctness requirement
+ * for applying these changes during recovery, which is that we must do one
+ * of these two things for every block in the index:
  *		* lock the block for cleanup and apply any required changes
  *		* EnsureBlockUnpinned()
  * The purpose of this is to ensure that no index scans started before we
