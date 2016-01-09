@@ -74,32 +74,32 @@ CREATE FUNCTION user_relns()
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;
+   LANGUAGE C STRICT;
 
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;
+   LANGUAGE C STRICT;
 
 CREATE FUNCTION boxarea(box)
    RETURNS float8
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;
+   LANGUAGE C STRICT;
 
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;
+   LANGUAGE C STRICT;
 
 CREATE FUNCTION reverse_name(name)
    RETURNS name
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;
+   LANGUAGE C STRICT;
 
 CREATE FUNCTION oldstyle_length(int4, text)
    RETURNS int4
    AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C;
+   LANGUAGE C;  -- intentionally not strict
 
 --
 -- Function dynamic loading
