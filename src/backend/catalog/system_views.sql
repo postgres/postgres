@@ -946,6 +946,7 @@ CREATE OR REPLACE FUNCTION pg_create_physical_replication_slot(
     OUT slot_name name, OUT xlog_position pg_lsn)
 RETURNS RECORD
 LANGUAGE INTERNAL
+STRICT VOLATILE
 AS 'pg_create_physical_replication_slot';
 
 CREATE OR REPLACE FUNCTION
