@@ -1999,7 +1999,8 @@ psql_completion(const char *text, int start, int end)
 	/* First off we complete CREATE UNIQUE with "INDEX" */
 	else if (TailMatches2("CREATE", "UNIQUE"))
 		COMPLETE_WITH_CONST("INDEX");
-	/* If we have CREATE|UNIQUE INDEX, then add "ON" and existing indexes */
+	/* If we have CREATE|UNIQUE INDEX, then add "ON", "CONCURRENTLY",
+	   and existing indexes */
 	else if (TailMatches2("CREATE|UNIQUE", "INDEX"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
 								   " UNION SELECT 'ON'"
