@@ -2009,13 +2009,12 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches3("INDEX", MatchAny, "ON") ||
 			 TailMatches2("INDEX|CONCURRENTLY", "ON"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
-	/* If we have CREATE|UNIQUE INDEX <sth> CONCURRENTLY, then add "ON" */
-	else if (TailMatches3("INDEX", MatchAny, "CONCURRENTLY") ||
-			 TailMatches2("INDEX", "CONCURRENTLY"))
+	/* If we have CREATE|UNIQUE INDEX CONCURRENTLY, then add "ON" */
+	else if (TailMatches2("INDEX", "CONCURRENTLY"))
 		COMPLETE_WITH_CONST("ON");
-	/* If we have CREATE|UNIQUE INDEX <sth>, then add "ON" or "CONCURRENTLY" */
+	/* If we have CREATE|UNIQUE INDEX <sth>, then add "ON" */
 	else if (TailMatches3("CREATE|UNIQUE", "INDEX", MatchAny))
-		COMPLETE_WITH_LIST2("CONCURRENTLY", "ON");
+		COMPLETE_WITH_CONST("ON");
 
 	/*
 	 * Complete INDEX <name> ON <table> with a list of table columns (which
