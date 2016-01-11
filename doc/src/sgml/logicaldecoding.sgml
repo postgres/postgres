@@ -581,7 +581,7 @@ typedef void (*LogicalDecodeChangeCB) (
        from <parameter>origin_id</parameter> is of interest to the
        output plugin.
 <programlisting>
-typedef bool (*LogicalDecodeChangeCB) (
+typedef bool (*LogicalDecodeFilterByOriginCB) (
     struct LogicalDecodingContext *ctx,
     RepNodeId origin_id
 );
