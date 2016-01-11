@@ -242,10 +242,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * incorrectly-labeled functions sooner.  That might be the right thing to
 	 * do, but for now I've taken this approach.  We could also control this
 	 * with a GUC.)
-	 *
-	 * FIXME: It's assumed that code further down will set parallelModeNeeded
-	 * to true if a parallel path is actually chosen.  Since the core
-	 * parallelism code isn't committed yet, this currently never happens.
 	 */
 #ifdef FORCE_PARALLEL_MODE
 	glob->parallelModeNeeded = glob->parallelModeOK;
