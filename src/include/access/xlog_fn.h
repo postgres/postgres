@@ -19,6 +19,7 @@ extern Datum pg_switch_xlog(PG_FUNCTION_ARGS);
 extern Datum pg_create_restore_point(PG_FUNCTION_ARGS);
 extern Datum pg_current_xlog_location(PG_FUNCTION_ARGS);
 extern Datum pg_current_xlog_insert_location(PG_FUNCTION_ARGS);
+extern Datum pg_current_xlog_flush_location(PG_FUNCTION_ARGS);
 extern Datum pg_last_xlog_receive_location(PG_FUNCTION_ARGS);
 extern Datum pg_last_xlog_replay_location(PG_FUNCTION_ARGS);
 extern Datum pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS);

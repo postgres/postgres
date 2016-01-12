@@ -16789,6 +16789,9 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_create_restore_point</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_current_xlog_flush_location</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_current_xlog_insert_location</primary>
    </indexterm>
    <indexterm>
@@ -16842,6 +16845,13 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Create a named point for performing restore (restricted to superusers)</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_current_xlog_flush_location()</function></literal>
+        </entry>
+       <entry><type>pg_lsn</type></entry>
+       <entry>Get current transaction log flush location</entry>
       </row>
       <row>
        <entry>
@@ -16977,13 +16987,14 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_current_xlog_location</> displays the current transaction log write
     location in the same format used by the above functions.  Similarly,
     <function>pg_current_xlog_insert_location</> displays the current transaction log
-    insertion point.  The insertion point is the <quote>logical</> end
-    of the transaction log
-    at any instant, while the write location is the end of what has actually
-    been written out from the server's internal buffers.  The write location
-    is the end of what can be examined from outside the server, and is usually
+    insertion point and <function>pg_current_xlog_flush_location</> displays the
+    current transaction log flush point. The insertion point is the <quote>logical</>
+    end of the transaction log at any instant, while the write location is the end of
+    what has actually been written out from the server's internal buffers and flush
+    location is the location guaranteed to be written to durable storage. The write
+    location is the end of what can be examined from outside the server, and is usually
     what you want if you are interested in archiving partially-complete transaction log
-    files.  The insertion point is made available primarily for server
+    files.  The insertion and flush points are made available primarily for server
     debugging purposes.  These are both read-only operations and do not
     require superuser permissions.
    </para>

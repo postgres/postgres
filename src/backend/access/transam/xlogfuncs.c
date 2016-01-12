@@ -216,6 +216,27 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Report the current WAL flush location (same format as pg_start_backup etc)
+ *
+ * This function is mostly for debugging purposes.
+ */
+Datum
+pg_current_xlog_flush_location(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	current_recptr;
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
+
+	current_recptr = GetFlushRecPtr();
+
+	PG_RETURN_LSN(current_recptr);
+}
+
+/*
  * Report the last WAL receive location (same format as pg_start_backup etc)
  *
  * This is useful for determining how much of WAL is guaranteed to be received
