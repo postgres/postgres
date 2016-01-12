@@ -1,5 +1,5 @@
 -- make sure the prerequisite libraries are loaded
-DO '' LANGUAGE plperlu;
+LOAD 'plperl';
 SELECT NULL::hstore;
 
 

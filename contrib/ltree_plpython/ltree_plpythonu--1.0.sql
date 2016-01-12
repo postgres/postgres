@@ -1,5 +1,5 @@
 -- make sure the prerequisite libraries are loaded
-DO '1' LANGUAGE plpythonu;
+LOAD 'plpython2';  -- change to plpython3 if that ever becomes the default
 SELECT NULL::ltree;
 
 

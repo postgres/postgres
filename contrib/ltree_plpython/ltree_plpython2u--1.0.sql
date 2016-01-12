@@ -1,5 +1,5 @@
 -- make sure the prerequisite libraries are loaded
-DO '1' LANGUAGE plpython2u;
+LOAD 'plpython2';
 SELECT NULL::ltree;
 
 
