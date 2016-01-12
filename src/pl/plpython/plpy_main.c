@@ -63,6 +63,9 @@ static void PLy_init_interp(void);
 static PLyExecutionContext *PLy_push_execution_context(void);
 static void PLy_pop_execution_context(void);
 
+/* static state for Python library conflict detection */
+static int *plpython_version_bitmask_ptr = NULL;
+static int	plpython_version_bitmask = 0;
 static const int plpython_python_version = PY_MAJOR_VERSION;
 
 /* initialize global variables */
@@ -75,28 +78,81 @@ static PLyExecutionContext *PLy_execution_contexts = NULL;
 void
 _PG_init(void)
 {
-	/* Be sure we do initialization only once (should be redundant now) */
-	static bool inited = false;
+	int		  **bitmask_ptr;
 	const int **version_ptr;
 
-	if (inited)
-		return;
+	/*
+	 * Set up a shared bitmask variable telling which Python version(s) are
+	 * loaded into this process's address space.  If there's more than one, we
+	 * cannot call into libpython for fear of causing crashes.  But postpone
+	 * the actual failure for later, so that operations like pg_restore can
+	 * load more than one plpython library so long as they don't try to do
+	 * anything much with the language.
+	 */
+	bitmask_ptr = (int **) find_rendezvous_variable("plpython_version_bitmask");
+	if (!(*bitmask_ptr))		/* am I the first? */
+		*bitmask_ptr = &plpython_version_bitmask;
+	/* Retain pointer to the agreed-on shared variable ... */
+	plpython_version_bitmask_ptr = *bitmask_ptr;
+	/* ... and announce my presence */
+	*plpython_version_bitmask_ptr |= (1 << PY_MAJOR_VERSION);
 
-	/* Be sure we don't run Python 2 and 3 in the same session (might crash) */
+	/*
+	 * This should be safe even in the presence of conflicting plpythons, and
+	 * it's necessary to do it here for the next error to be localized.
+	 */
+	pg_bindtextdomain(TEXTDOMAIN);
+
+	/*
+	 * We used to have a scheme whereby PL/Python would fail immediately if
+	 * loaded into a session in which a conflicting libpython is already
+	 * present.  We don't like to do that anymore, but it seems possible that
+	 * a plpython library adhering to the old convention is present in the
+	 * session, in which case we have to fail.  We detect an old library if
+	 * plpython_python_version is already defined but the indicated version
+	 * isn't reflected in plpython_version_bitmask.  Otherwise, set the
+	 * variable so that the right thing happens if an old library is loaded
+	 * later.
+	 */
 	version_ptr = (const int **) find_rendezvous_variable("plpython_python_version");
 	if (!(*version_ptr))
 		*version_ptr = &plpython_python_version;
 	else
 	{
-		if (**version_ptr != plpython_python_version)
+		if ((*plpython_version_bitmask_ptr & (1 << **version_ptr)) == 0)
 			ereport(FATAL,
 					(errmsg("Python major version mismatch in session"),
 					 errdetail("This session has previously used Python major version %d, and it is now attempting to use Python major version %d.",
 							   **version_ptr, plpython_python_version),
 					 errhint("Start a new session to use a different Python major version.")));
 	}
+}
 
-	pg_bindtextdomain(TEXTDOMAIN);
+/*
+ * Perform one-time setup of PL/Python, after checking for a conflict
+ * with other versions of Python.
+ */
+static void
+PLy_initialize(void)
+{
+	static bool inited = false;
+
+	/*
+	 * Check for multiple Python libraries before actively doing anything with
+	 * libpython.  This must be repeated on each entry to PL/Python, in case a
+	 * conflicting library got loaded since we last looked.
+	 *
+	 * It is attractive to weaken this error from FATAL to ERROR, but there
+	 * would be corner cases, so it seems best to be conservative.
+	 */
+	if (*plpython_version_bitmask_ptr != (1 << PY_MAJOR_VERSION))
+		ereport(FATAL,
+				(errmsg("multiple Python libraries are present in session"),
+				 errdetail("Only one Python major version can be used in one session.")));
+
+	/* The rest should only be done once per session */
+	if (inited)
+		return;
 
 #if PY_MAJOR_VERSION >= 3
 	PyImport_AppendInittab("plpy", PyInit_plpy);
@@ -120,7 +176,7 @@ _PG_init(void)
 }
 
 /*
- * This should only be called once from _PG_init. Initialize the Python
+ * This should be called only once, from PLy_initialize. Initialize the Python
  * interpreter and global data.
  */
 static void
@@ -155,9 +211,10 @@ plpython_validator(PG_FUNCTION_ARGS)
 		PG_RETURN_VOID();
 
 	if (!check_function_bodies)
-	{
 		PG_RETURN_VOID();
-	}
+
+	/* Do this only after making sure we need to do something */
+	PLy_initialize();
 
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
@@ -190,6 +247,8 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
+
+	PLy_initialize();
 
 	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -265,6 +324,8 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	PLyProcedure proc;
 	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
+
+	PLy_initialize();
 
 	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
 	if (SPI_connect() != SPI_OK_CONNECT)
