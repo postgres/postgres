@@ -7862,13 +7862,11 @@ GetInsertRecPtr(void)
 XLogRecPtr
 GetFlushRecPtr(void)
 {
-	XLogRecPtr	recptr;
-
 	SpinLockAcquire(&XLogCtl->info_lck);
-	recptr = XLogCtl->LogwrtResult.Flush;
+	LogwrtResult = XLogCtl->LogwrtResult;
 	SpinLockRelease(&XLogCtl->info_lck);
 
-	return recptr;
+	return LogwrtResult.Flush;
 }
 
 /*
