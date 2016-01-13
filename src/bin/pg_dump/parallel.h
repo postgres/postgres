@@ -76,9 +76,7 @@ extern int	ReapWorkerStatus(ParallelState *pstate, int *status);
 extern void EnsureIdleWorker(ArchiveHandle *AH, ParallelState *pstate);
 extern void EnsureWorkersFinished(ArchiveHandle *AH, ParallelState *pstate);
 
-extern ParallelState *ParallelBackupStart(ArchiveHandle *AH,
-					DumpOptions *dopt,
-					RestoreOptions *ropt);
+extern ParallelState *ParallelBackupStart(ArchiveHandle *AH);
 extern void DispatchJobForTocEntry(ArchiveHandle *AH,
 					   ParallelState *pstate,
 					   TocEntry *te, T_Action act);
