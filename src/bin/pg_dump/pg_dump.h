@@ -483,6 +483,16 @@ typedef struct _blobInfo
 	char	   *blobacl;
 } BlobInfo;
 
+/*
+ * We build an array of these with an entry for each object that is an
+ * extension member according to pg_depend.
+ */
+typedef struct _extensionMemberId
+{
+	CatalogId	catId;			/* tableoid+oid of some member object */
+	ExtensionInfo *ext;			/* owning extension */
+} ExtensionMemberId;
+
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
 extern bool g_verbose;			/* verbose flag */
@@ -526,6 +536,10 @@ extern FuncInfo *findFuncByOid(Oid oid);
 extern OprInfo *findOprByOid(Oid oid);
 extern CollInfo *findCollationByOid(Oid oid);
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
+extern ExtensionInfo *findExtensionByOid(Oid oid);
+
+extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
+extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
 
 extern void simple_oid_list_append(SimpleOidList *list, Oid val);
 extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
@@ -572,6 +586,8 @@ extern ForeignServerInfo *getForeignServers(Archive *fout,
 				  int *numForeignServers);
 extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
+					   int numExtensions);
+extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 
