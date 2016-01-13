@@ -38,8 +38,8 @@ typedef struct SimpleOidList
 typedef struct SimpleStringListCell
 {
 	struct SimpleStringListCell *next;
-	bool		touched;				/* true, when this string was searched
-										   and touched */
+	bool		touched;		/* true, when this string was searched and
+								 * touched */
 	char		val[FLEXIBLE_ARRAY_MEMBER];		/* null-terminated string here */
 } SimpleStringListCell;
 

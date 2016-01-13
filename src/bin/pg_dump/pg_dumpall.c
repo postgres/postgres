@@ -1415,8 +1415,8 @@ dumpCreateDB(PGconn *conn)
 		else if (strcmp(dbtablespace, "pg_default") != 0 && !no_tablespaces)
 		{
 			/*
-			 * Cannot change tablespace of the database we're connected to,
-			 * so to move "postgres" to another tablespace, we connect to
+			 * Cannot change tablespace of the database we're connected to, so
+			 * to move "postgres" to another tablespace, we connect to
 			 * "template1", and vice versa.
 			 */
 			if (strcmp(dbname, "postgres") == 0)

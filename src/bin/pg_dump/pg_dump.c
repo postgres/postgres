@@ -921,7 +921,7 @@ help(const char *progname)
 	printf(_("  --serializable-deferrable    wait until the dump can run without anomalies\n"));
 	printf(_("  --snapshot=SNAPSHOT          use given snapshot for the dump\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"
-			 "                               match at least one entity each\n"));
+		 "                               match at least one entity each\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
@@ -1216,8 +1216,8 @@ expand_table_name_patterns(Archive *fout,
 	query = createPQExpBuffer();
 
 	/*
-	 * this might sometimes result in duplicate entries in the OID list,
-	 * but we don't care.
+	 * this might sometimes result in duplicate entries in the OID list, but
+	 * we don't care.
 	 */
 
 	for (cell = patterns->head; cell; cell = cell->next)
