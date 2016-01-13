@@ -81,7 +81,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  *	  Collect information about all potentially dumpable objects
  */
 TableInfo *
-getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
+getSchemaData(Archive *fout, int *numTablesPtr)
 {
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
@@ -118,7 +118,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined tables\n");
-	tblinfo = getTables(fout, dopt, &numTables);
+	tblinfo = getTables(fout, &numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
 	/* Do this after we've built tblinfoindex */
@@ -126,11 +126,11 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(fout, dopt, &numExtensions);
+	extinfo = getExtensions(fout, &numExtensions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
-	funinfo = getFuncs(fout, dopt, &numFuncs);
+	funinfo = getFuncs(fout, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
 	/* this must be after getTables and getFuncs */
@@ -146,7 +146,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined aggregate functions\n");
-	getAggregates(fout, dopt, &numAggregates);
+	getAggregates(fout, &numAggregates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operators\n");
@@ -187,7 +187,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
-	getDefaultACLs(fout, dopt, &numDefaultACLs);
+	getDefaultACLs(fout, &numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
@@ -200,7 +200,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
-	getCasts(fout, dopt, &numCasts);
+	getCasts(fout, &numCasts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading transforms\n");
@@ -221,7 +221,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "finding extension members\n");
-	getExtensionMembership(fout, dopt, extinfo, numExtensions);
+	getExtensionMembership(fout, extinfo, numExtensions);
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
@@ -230,11 +230,11 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading column info for interesting tables\n");
-	getTableAttrs(fout, dopt, tblinfo, numTables);
+	getTableAttrs(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "flagging inherited columns in subtables\n");
-	flagInhAttrs(dopt, tblinfo, numTables);
+	flagInhAttrs(fout->dopt, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading indexes\n");

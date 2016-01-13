@@ -42,9 +42,9 @@ static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
-static void _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt);
+static void _CloseArchive(ArchiveHandle *AH);
 static void _ReopenArchive(ArchiveHandle *AH);
-static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
+static void _PrintTocData(ArchiveHandle *AH, TocEntry *te);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _ReadExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _PrintExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -419,7 +419,7 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
  * Print data for a given TOC entry
  */
 static void
-_PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
+_PrintTocData(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
@@ -500,7 +500,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			break;
 
 		case BLK_BLOBS:
-			_LoadBlobs(AH, ropt->dropSchema);
+			_LoadBlobs(AH, AH->public.ropt->dropSchema);
 			break;
 
 		default:				/* Always have a default */
@@ -695,7 +695,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
  *
  */
 static void
-_CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
+_CloseArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	pgoff_t		tpos;
@@ -710,7 +710,7 @@ _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
 						  strerror(errno));
 		WriteToc(AH);
 		ctx->dataStart = _getFilePos(AH, ctx);
-		WriteDataChunks(AH, dopt, NULL);
+		WriteDataChunks(AH, NULL);
 
 		/*
 		 * If possible, re-write the TOC in order to update the data offset

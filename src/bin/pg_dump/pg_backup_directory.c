@@ -72,9 +72,9 @@ static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
-static void _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt);
+static void _CloseArchive(ArchiveHandle *AH);
 static void _ReopenArchive(ArchiveHandle *AH);
-static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
+static void _PrintTocData(ArchiveHandle *AH, TocEntry *te);
 
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _ReadExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -84,7 +84,7 @@ static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
 static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
+static void _LoadBlobs(ArchiveHandle *AH);
 
 static void _Clone(ArchiveHandle *AH);
 static void _DeClone(ArchiveHandle *AH);
@@ -93,7 +93,7 @@ static char *_MasterStartParallelItem(ArchiveHandle *AH, TocEntry *te, T_Action 
 static int _MasterEndParallelItem(ArchiveHandle *AH, TocEntry *te,
 					   const char *str, T_Action act);
 static char *_WorkerJobRestoreDirectory(ArchiveHandle *AH, TocEntry *te);
-static char *_WorkerJobDumpDirectory(ArchiveHandle *AH, DumpOptions *dopt, TocEntry *te);
+static char *_WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te);
 
 static void setFilePath(ArchiveHandle *AH, char *buf,
 			const char *relativeFilename);
@@ -386,7 +386,7 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
  * Print data for a given file (can be a BLOB as well)
  */
 static void
-_PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
+_PrintFileData(ArchiveHandle *AH, char *filename)
 {
 	size_t		cnt;
 	char	   *buf;
@@ -418,7 +418,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
  * Print data for a given TOC entry
 */
 static void
-_PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
+_PrintTocData(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
@@ -426,18 +426,18 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		return;
 
 	if (strcmp(te->desc, "BLOBS") == 0)
-		_LoadBlobs(AH, ropt);
+		_LoadBlobs(AH);
 	else
 	{
 		char		fname[MAXPGPATH];
 
 		setFilePath(AH, fname, tctx->filename);
-		_PrintFileData(AH, fname, ropt);
+		_PrintFileData(AH, fname);
 	}
 }
 
 static void
-_LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
+_LoadBlobs(ArchiveHandle *AH)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
@@ -465,9 +465,9 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 			exit_horribly(modulename, "invalid line in large object TOC file \"%s\": \"%s\"\n",
 						  fname, line);
 
-		StartRestoreBlob(AH, oid, ropt->dropSchema);
+		StartRestoreBlob(AH, oid, AH->public.ropt->dropSchema);
 		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, fname);
-		_PrintFileData(AH, path, ropt);
+		_PrintFileData(AH, path);
 		EndRestoreBlob(AH, oid);
 	}
 	if (!cfeof(ctx->blobsTocFH))
@@ -567,7 +567,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
  *		WriteDataChunks		to save all DATA & BLOBs.
  */
 static void
-_CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
+_CloseArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
@@ -579,7 +579,7 @@ _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
 		setFilePath(AH, fname, "toc.dat");
 
 		/* this will actually fork the processes for a parallel backup */
-		ctx->pstate = ParallelBackupStart(AH, dopt, NULL);
+		ctx->pstate = ParallelBackupStart(AH);
 
 		/* The TOC is always created uncompressed */
 		tocFH = cfopen_write(fname, PG_BINARY_W, 0);
@@ -600,7 +600,7 @@ _CloseArchive(ArchiveHandle *AH, DumpOptions *dopt)
 		if (cfclose(tocFH) != 0)
 			exit_horribly(modulename, "could not close TOC file: %s\n",
 						  strerror(errno));
-		WriteDataChunks(AH, dopt, ctx->pstate);
+		WriteDataChunks(AH, ctx->pstate);
 
 		ParallelBackupEnd(AH, ctx->pstate);
 	}
@@ -791,7 +791,7 @@ _MasterStartParallelItem(ArchiveHandle *AH, TocEntry *te, T_Action act)
  * function of the respective dump format.
  */
 static char *
-_WorkerJobDumpDirectory(ArchiveHandle *AH, DumpOptions *dopt, TocEntry *te)
+_WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te)
 {
 	/*
 	 * short fixed-size string + some ID so far, this needs to be malloc'ed
@@ -810,7 +810,7 @@ _WorkerJobDumpDirectory(ArchiveHandle *AH, DumpOptions *dopt, TocEntry *te)
 	 * succeed... A failure will be detected by the parent when the child dies
 	 * unexpectedly.
 	 */
-	WriteDataChunksForTocEntry(AH, dopt, te);
+	WriteDataChunksForTocEntry(AH, te);
 
 	snprintf(buf, buflen, "OK DUMP %d", te->dumpId);
 
