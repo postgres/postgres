@@ -1468,6 +1468,8 @@ pg_SSPI_recvauth(Port *port)
 				(errmsg_internal("could not get user token: error code %d",
 								 (int) GetLastError())));
 
+	CloseHandle(token);
+
 	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
 						  domainname, &domainnamesize, &accountnameuse))
 		ereport(ERROR,
