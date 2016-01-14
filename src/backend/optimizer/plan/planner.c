@@ -2035,13 +2035,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												   &agg_costs,
 												   numGroups,
 												   result_plan);
-
-				/*
-				 * these are destroyed by build_grouping_chain, so make sure
-				 * we don't try and touch them again
-				 */
-				rollup_groupclauses = NIL;
-				rollup_lists = NIL;
 			}
 			else if (parse->groupClause)
 			{
@@ -2461,10 +2454,10 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
 
 /*
  * Build Agg and Sort nodes to implement sorted grouping with one or more
- * grouping sets. (A plain GROUP BY or just the presence of aggregates counts
+ * grouping sets.  A plain GROUP BY or just the presence of aggregates counts
  * for this purpose as a single grouping set; the calling code is responsible
- * for providing a non-empty rollup_groupclauses list for such cases, though
- * rollup_lists may be null.)
+ * for providing a single-element rollup_groupclauses list for such cases,
+ * though rollup_lists may be nil.
  *
  * The last entry in rollup_groupclauses (which is the one the input is sorted
  * on, if at all) is the one used for the returned Agg node. Any additional
@@ -2473,8 +2466,6 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
  * participate in the plan directly, but they are both a convenient way to
  * represent the required data and a convenient way to account for the costs
  * of execution.
- *
- * rollup_groupclauses and rollup_lists are destroyed by this function.
  */
 static Plan *
 build_grouping_chain(PlannerInfo *root,
@@ -2514,62 +2505,71 @@ build_grouping_chain(PlannerInfo *root,
 	 * Generate the side nodes that describe the other sort and group
 	 * operations besides the top one.
 	 */
-	while (list_length(rollup_groupclauses) > 1)
+	if (list_length(rollup_groupclauses) > 1)
 	{
-		List	   *groupClause = linitial(rollup_groupclauses);
-		List	   *gsets = linitial(rollup_lists);
-		AttrNumber *new_grpColIdx;
-		Plan	   *sort_plan;
-		Plan	   *agg_plan;
+		ListCell   *lc,
+				   *lc2;
 
-		Assert(groupClause);
-		Assert(gsets);
+		Assert(list_length(rollup_groupclauses) == list_length(rollup_lists));
+		forboth(lc, rollup_groupclauses, lc2, rollup_lists)
+		{
+			List	   *groupClause = (List *) lfirst(lc);
+			List	   *gsets = (List *) lfirst(lc2);
+			AttrNumber *new_grpColIdx;
+			Plan	   *sort_plan;
+			Plan	   *agg_plan;
 
-		new_grpColIdx = remap_groupColIdx(root, groupClause);
+			/* We want to iterate over all but the last rollup list elements */
+			if (lnext(lc) == NULL)
+				break;
 
-		sort_plan = (Plan *)
-			make_sort_from_groupcols(root,
-									 groupClause,
-									 new_grpColIdx,
-									 result_plan);
+			new_grpColIdx = remap_groupColIdx(root, groupClause);
 
-		/*
-		 * sort_plan includes the cost of result_plan over again, which is not
-		 * what we want (since it's not actually running that plan). So
-		 * correct the cost figures.
-		 */
+			sort_plan = (Plan *)
+				make_sort_from_groupcols(root,
+										 groupClause,
+										 new_grpColIdx,
+										 result_plan);
 
-		sort_plan->startup_cost -= result_plan->total_cost;
-		sort_plan->total_cost -= result_plan->total_cost;
+			/*
+			 * sort_plan includes the cost of result_plan, which is not what
+			 * we want (since we'll not actually run that plan again).  So
+			 * correct the cost figures.
+			 */
+			sort_plan->startup_cost -= result_plan->total_cost;
+			sort_plan->total_cost -= result_plan->total_cost;
 
-		agg_plan = (Plan *) make_agg(root,
-									 tlist,
-									 (List *) parse->havingQual,
-									 AGG_SORTED,
-									 agg_costs,
-									 list_length(linitial(gsets)),
-									 new_grpColIdx,
-									 extract_grouping_ops(groupClause),
-									 gsets,
-									 numGroups,
-									 sort_plan);
+			agg_plan = (Plan *) make_agg(root,
+										 tlist,
+										 (List *) parse->havingQual,
+										 AGG_SORTED,
+										 agg_costs,
+										 list_length(linitial(gsets)),
+										 new_grpColIdx,
+										 extract_grouping_ops(groupClause),
+										 gsets,
+										 numGroups,
+										 sort_plan);
 
-		sort_plan->lefttree = NULL;
+			/*
+			 * Nuke stuff we don't need to avoid bloating debug output.
+			 */
+			sort_plan->targetlist = NIL;
+			sort_plan->lefttree = NULL;
 
-		chain = lappend(chain, agg_plan);
+			agg_plan->targetlist = NIL;
+			agg_plan->qual = NIL;
 
-		if (rollup_lists)
-			rollup_lists = list_delete_first(rollup_lists);
-
-		rollup_groupclauses = list_delete_first(rollup_groupclauses);
+			chain = lappend(chain, agg_plan);
+		}
 	}
 
 	/*
 	 * Now make the final Agg node
 	 */
 	{
-		List	   *groupClause = linitial(rollup_groupclauses);
-		List	   *gsets = rollup_lists ? linitial(rollup_lists) : NIL;
+		List	   *groupClause = (List *) llast(rollup_groupclauses);
+		List	   *gsets = rollup_lists ? (List *) llast(rollup_lists) : NIL;
 		int			numGroupCols;
 		ListCell   *lc;
 
@@ -2601,14 +2601,6 @@ build_grouping_chain(PlannerInfo *root,
 			Plan	   *subplan = lfirst(lc);
 
 			result_plan->total_cost += subplan->total_cost;
-
-			/*
-			 * Nuke stuff we don't need to avoid bloating debug output.
-			 */
-
-			subplan->targetlist = NIL;
-			subplan->qual = NIL;
-			subplan->lefttree->targetlist = NIL;
 		}
 	}
 
