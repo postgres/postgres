@@ -138,7 +138,7 @@ ExecGather(GatherState *node)
 	/*
 	 * Initialize the parallel context and workers on first execution. We do
 	 * this on first execution rather than during node initialization, as it
-	 * needs to allocate large dynamic segement, so it is better to do if it
+	 * needs to allocate large dynamic segment, so it is better to do if it
 	 * is really needed.
 	 */
 	if (!node->initialized)
