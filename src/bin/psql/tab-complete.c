@@ -2009,8 +2009,8 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches3("INDEX|CONCURRENTLY", MatchAny, "ON") ||
 			 TailMatches2("INDEX|CONCURRENTLY", "ON"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
-	/* Complete ... INDEX CONCURRENTLY with "ON" and existing indexes */
-	else if (TailMatches2("INDEX", "CONCURRENTLY"))
+	/* Complete CREATE|UNIQUE INDEX CONCURRENTLY with "ON" and existing indexes */
+	else if (TailMatches3("CREATE|UNIQUE", "INDEX", "CONCURRENTLY"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
 								   " UNION SELECT 'ON'");
 	/* Complete CREATE|UNIQUE INDEX [CONCURRENTLY] <sth> with "ON" */
@@ -2247,7 +2247,7 @@ psql_completion(const char *text, int start, int end)
 /* DROP */
 	/* Complete DROP object with CASCADE / RESTRICT */
 	else if (Matches3("DROP",
-					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|INDEX|LANGUAGE|SCHEMA|SEQUENCE|SERVER|TABLE|TYPE|VIEW",
+					  "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|SCHEMA|SEQUENCE|SERVER|TABLE|TYPE|VIEW",
 					  MatchAny) ||
 			 (Matches4("DROP", "AGGREGATE|FUNCTION", MatchAny, MatchAny) &&
 			  ends_with(prev_wd, ')')) ||
@@ -2264,6 +2264,17 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	else if (Matches2("DROP", "FOREIGN"))
 		COMPLETE_WITH_LIST2("DATA WRAPPER", "TABLE");
+
+	/* DROP INDEX */
+	else if (Matches2("DROP", "INDEX"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
+								   " UNION SELECT 'CONCURRENTLY'");
+	else if (Matches3("DROP", "INDEX", "CONCURRENTLY"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
+	else if (Matches3("DROP", "INDEX", MatchAny))
+		COMPLETE_WITH_LIST2("CASCADE", "RESTRICT");
+	else if (Matches4("DROP", "INDEX", "CONCURRENTLY", MatchAny))
+		COMPLETE_WITH_LIST2("CASCADE", "RESTRICT");
 
 	/* DROP MATERIALIZED VIEW */
 	else if (Matches2("DROP", "MATERIALIZED"))
