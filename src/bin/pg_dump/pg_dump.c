@@ -617,9 +617,6 @@ main(int argc, char **argv)
 	/* Register the cleanup hook */
 	on_exit_close_archive(fout);
 
-	if (fout == NULL)
-		exit_horribly(NULL, "could not open output file \"%s\" for writing\n", filename);
-
 	/* Let the archiver know how noisy to be */
 	fout->verbose = g_verbose;
 
