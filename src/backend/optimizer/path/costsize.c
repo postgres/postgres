@@ -419,9 +419,10 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * Call index-access-method-specific code to estimate the processing cost
 	 * for scanning the index, as well as the selectivity of the index (ie,
 	 * the fraction of main-table tuples we will have to retrieve) and its
-	 * correlation to the main-table tuple order.
+	 * correlation to the main-table tuple order.  We need a cast here because
+	 * relation.h uses a weak function type to avoid including amapi.h.
 	 */
-	amcostestimate = index->amcostestimate;		/* cast to proper type */
+	amcostestimate = (amcostestimate_function) index->amcostestimate;
 	amcostestimate(root, path, loop_count,
 				   &indexStartupCost, &indexTotalCost,
 				   &indexSelectivity, &indexCorrelation);
