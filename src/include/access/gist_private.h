@@ -122,10 +122,10 @@ typedef struct GISTSearchHeapItem
 {
 	ItemPointerData heapPtr;
 	bool		recheck;		/* T if quals must be rechecked */
-	bool		recheckDistances;	/* T if distances must be rechecked */
+	bool		recheckDistances;		/* T if distances must be rechecked */
 	IndexTuple	ftup;			/* data fetched back from the index, used in
 								 * index-only scans */
-	OffsetNumber	offnum;		/* track offset in page to mark tuple as
+	OffsetNumber offnum;		/* track offset in page to mark tuple as
 								 * LP_DEAD */
 } GISTSearchHeapItem;
 
@@ -165,10 +165,10 @@ typedef struct GISTScanOpaqueData
 	double	   *distances;		/* output area for gistindex_keytest */
 
 	/* info about killed items if any (killedItems is NULL if never used) */
-	OffsetNumber *killedItems;		/* offset numbers of killed items */
+	OffsetNumber *killedItems;	/* offset numbers of killed items */
 	int			numKilled;		/* number of currently stored items */
 	BlockNumber curBlkno;		/* current number of block */
-	GistNSN		curPageLSN;	/* pos in the WAL stream when page was read */
+	GistNSN		curPageLSN;		/* pos in the WAL stream when page was read */
 
 	/* In a non-ordered search, returnable heap items are stored here: */
 	GISTSearchHeapItem pageData[BLCKSZ / sizeof(IndexTupleData)];

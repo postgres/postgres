@@ -2381,8 +2381,8 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 				case HEAPTUPLE_INSERT_IN_PROGRESS:
 
 					/*
-					 * In "anyvisible" mode, this tuple is visible and we don't
-					 * need any further checks.
+					 * In "anyvisible" mode, this tuple is visible and we
+					 * don't need any further checks.
 					 */
 					if (anyvisible)
 					{
@@ -2437,8 +2437,8 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 
 					/*
 					 * As with INSERT_IN_PROGRESS case, this is unexpected
-					 * unless it's our own deletion or a system catalog;
-					 * but in anyvisible mode, this tuple is visible.
+					 * unless it's our own deletion or a system catalog; but
+					 * in anyvisible mode, this tuple is visible.
 					 */
 					if (anyvisible)
 					{
@@ -2892,9 +2892,9 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 static inline int64
 itemptr_encode(ItemPointer itemptr)
 {
-	BlockNumber		block = ItemPointerGetBlockNumber(itemptr);
-	OffsetNumber	offset = ItemPointerGetOffsetNumber(itemptr);
-	int64			encoded;
+	BlockNumber block = ItemPointerGetBlockNumber(itemptr);
+	OffsetNumber offset = ItemPointerGetOffsetNumber(itemptr);
+	int64		encoded;
 
 	/*
 	 * Use the 16 least significant bits for the offset.  32 adjacent bits are
@@ -2913,8 +2913,8 @@ itemptr_encode(ItemPointer itemptr)
 static inline void
 itemptr_decode(ItemPointer itemptr, int64 encoded)
 {
-	BlockNumber		block = (BlockNumber) (encoded >> 16);
-	OffsetNumber	offset = (OffsetNumber) (encoded & 0xFFFF);
+	BlockNumber block = (BlockNumber) (encoded >> 16);
+	OffsetNumber offset = (OffsetNumber) (encoded & 0xFFFF);
 
 	ItemPointerSet(itemptr, block, offset);
 }
@@ -2960,7 +2960,7 @@ validate_index_heapscan(Relation heapRelation,
 
 	/* state variables for the merge */
 	ItemPointer indexcursor = NULL;
-	ItemPointerData		decoded;
+	ItemPointerData decoded;
 	bool		tuplesort_empty = false;
 
 	/*

@@ -228,9 +228,9 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	/*
 	 * Primitive parallel cost model.  Assume the leader will do half as much
 	 * work as a regular worker, because it will also need to read the tuples
-	 * returned by the workers when they percolate up to the gather ndoe.
-	 * This is almost certainly not exactly the right way to model this, so
-	 * this will probably need to be changed at some point...
+	 * returned by the workers when they percolate up to the gather node. This
+	 * is almost certainly not exactly the right way to model this, so this
+	 * will probably need to be changed at some point...
 	 */
 	if (nworkers > 0)
 		run_cost = run_cost / (nworkers + 0.5);
