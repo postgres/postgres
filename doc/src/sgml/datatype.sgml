@@ -4761,7 +4761,7 @@ SELECT * FROM pg_attribute
 
        <row>
         <entry><type>pg_ddl_command</></entry>
-        <entry>Identifies a represention of DDL commands that is available to event triggers.</entry>
+        <entry>Identifies a representation of DDL commands that is available to event triggers.</entry>
        </row>
 
        <row>
