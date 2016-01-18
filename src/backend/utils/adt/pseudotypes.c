@@ -374,6 +374,33 @@ fdw_handler_out(PG_FUNCTION_ARGS)
 
 
 /*
+ * index_am_handler_in		- input routine for pseudo-type INDEX_AM_HANDLER.
+ */
+Datum
+index_am_handler_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type index_am_handler")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * index_am_handler_out		- output routine for pseudo-type INDEX_AM_HANDLER.
+ */
+Datum
+index_am_handler_out(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type index_am_handler")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
  * tsm_handler_in		- input routine for pseudo-type TSM_HANDLER.
  */
 Datum

@@ -10,7 +10,7 @@
 #ifndef GIN_PRIVATE_H
 #define GIN_PRIVATE_H
 
-#include "access/genam.h"
+#include "access/amapi.h"
 #include "access/gin.h"
 #include "access/itup.h"
 #include "fmgr.h"
@@ -593,7 +593,8 @@ typedef struct ginxlogDeleteListPages
 
 
 /* ginutil.c */
-extern Datum ginoptions(PG_FUNCTION_ARGS);
+extern Datum ginhandler(PG_FUNCTION_ARGS);
+extern bytea *ginoptions(Datum reloptions, bool validate);
 extern void initGinState(GinState *state, Relation index);
 extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);
@@ -614,9 +615,12 @@ extern Datum gintuple_get_key(GinState *ginstate, IndexTuple tuple,
 				 GinNullCategory *category);
 
 /* gininsert.c */
-extern Datum ginbuild(PG_FUNCTION_ARGS);
-extern Datum ginbuildempty(PG_FUNCTION_ARGS);
-extern Datum gininsert(PG_FUNCTION_ARGS);
+extern IndexBuildResult *ginbuild(Relation heap, Relation index,
+		 struct IndexInfo *indexInfo);
+extern void ginbuildempty(Relation index);
+extern bool gininsert(Relation index, Datum *values, bool *isnull,
+		  ItemPointer ht_ctid, Relation heapRel,
+		  IndexUniqueCheck checkUnique);
 extern void ginEntryInsert(GinState *ginstate,
 			   OffsetNumber attnum, Datum key, GinNullCategory category,
 			   ItemPointerData *items, uint32 nitem,
@@ -867,25 +871,31 @@ typedef struct GinScanOpaqueData
 
 typedef GinScanOpaqueData *GinScanOpaque;
 
-extern Datum ginbeginscan(PG_FUNCTION_ARGS);
-extern Datum ginendscan(PG_FUNCTION_ARGS);
-extern Datum ginrescan(PG_FUNCTION_ARGS);
-extern Datum ginmarkpos(PG_FUNCTION_ARGS);
-extern Datum ginrestrpos(PG_FUNCTION_ARGS);
+extern IndexScanDesc ginbeginscan(Relation rel, int nkeys, int norderbys);
+extern void ginendscan(IndexScanDesc scan);
+extern void ginrescan(IndexScanDesc scan, ScanKey key, int nscankeys,
+		  ScanKey orderbys, int norderbys);
 extern void ginNewScanKey(IndexScanDesc scan);
 extern void ginFreeScanKeys(GinScanOpaque so);
 
 /* ginget.c */
-extern Datum gingetbitmap(PG_FUNCTION_ARGS);
+extern int64 gingetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
 
 /* ginlogic.c */
 extern void ginInitConsistentFunction(GinState *ginstate, GinScanKey key);
 
 /* ginvacuum.c */
-extern Datum ginbulkdelete(PG_FUNCTION_ARGS);
-extern Datum ginvacuumcleanup(PG_FUNCTION_ARGS);
+extern IndexBulkDeleteResult *ginbulkdelete(IndexVacuumInfo *info,
+			  IndexBulkDeleteResult *stats,
+			  IndexBulkDeleteCallback callback,
+			  void *callback_state);
+extern IndexBulkDeleteResult *ginvacuumcleanup(IndexVacuumInfo *info,
+				 IndexBulkDeleteResult *stats);
 extern ItemPointer ginVacuumItemPointers(GinVacuumState *gvs,
 					  ItemPointerData *items, int nitem, int *nremaining);
+
+/* ginvalidate.c */
+extern bool ginvalidate(Oid opclassoid);
 
 /* ginbulk.c */
 typedef struct GinEntryAccumulator

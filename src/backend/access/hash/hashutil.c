@@ -217,18 +217,10 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 	}
 }
 
-Datum
-hashoptions(PG_FUNCTION_ARGS)
+bytea *
+hashoptions(Datum reloptions, bool validate)
 {
-	Datum		reloptions = PG_GETARG_DATUM(0);
-	bool		validate = PG_GETARG_BOOL(1);
-	bytea	   *result;
-
-	result = default_reloptions(reloptions, validate, RELOPT_KIND_HASH);
-
-	if (result)
-		PG_RETURN_BYTEA_P(result);
-	PG_RETURN_NULL();
+	return default_reloptions(reloptions, validate, RELOPT_KIND_HASH);
 }
 
 /*

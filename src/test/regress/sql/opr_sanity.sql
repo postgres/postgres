@@ -50,6 +50,7 @@ SELECT ($1 = $2) OR
   (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
 $$ language sql strict stable;
 
+
 -- **************** pg_proc ****************
 
 -- Look for illegal values in pg_proc fields.
@@ -1001,6 +1002,7 @@ SELECT p.oid, proname
 FROM pg_proc AS p JOIN pg_aggregate AS a ON a.aggfnoid = p.oid
 WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
 
+
 -- **************** pg_opfamily ****************
 
 -- Look for illegal values in pg_opfamily fields
@@ -1008,6 +1010,7 @@ WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
 SELECT p1.oid
 FROM pg_opfamily as p1
 WHERE p1.opfmethod = 0 OR p1.opfnamespace = 0;
+
 
 -- **************** pg_opclass ****************
 
@@ -1032,6 +1035,29 @@ FROM pg_opclass AS p1, pg_opclass AS p2
 WHERE p1.oid != p2.oid AND
     p1.opcmethod = p2.opcmethod AND p1.opcintype = p2.opcintype AND
     p1.opcdefault AND p2.opcdefault;
+
+-- Ask access methods to validate opclasses
+
+SELECT oid, opcname FROM pg_opclass WHERE NOT amvalidate(oid);
+
+
+-- **************** pg_am ****************
+
+-- Look for illegal values in pg_am fields
+
+SELECT p1.oid, p1.amname
+FROM pg_am AS p1
+WHERE p1.amhandler = 0;
+
+-- Check for amhandler functions with the wrong signature
+
+SELECT p1.oid, p1.amname, p2.oid, p2.proname
+FROM pg_am AS p1, pg_proc AS p2
+WHERE p2.oid = p1.amhandler AND
+    (p2.prorettype != 'index_am_handler'::regtype OR p2.proretset
+     OR p2.pronargs != 1
+     OR p2.proargtypes[0] != 'internal'::regtype);
+
 
 -- **************** pg_amop ****************
 
@@ -1067,41 +1093,6 @@ FROM pg_amop AS p1
 WHERE p1.amopsortfamily <> 0 AND NOT EXISTS
     (SELECT 1 from pg_opfamily op WHERE op.oid = p1.amopsortfamily
      AND op.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'btree'));
-
--- check for ordering operators not supported by parent AM
-
-SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.amname
-FROM pg_amop AS p1, pg_am AS p2
-WHERE p1.amopmethod = p2.oid AND
-    p1.amoppurpose = 'o' AND NOT p2.amcanorderbyop;
-
--- Cross-check amopstrategy index against parent AM
-
-SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.amname
-FROM pg_amop AS p1, pg_am AS p2
-WHERE p1.amopmethod = p2.oid AND
-    p1.amopstrategy > p2.amstrategies AND p2.amstrategies <> 0;
-
--- Detect missing pg_amop entries: should have as many strategy operators
--- as AM expects for each datatype combination supported by the opfamily.
--- We can't check this for AMs with variable strategy sets.
-
-SELECT p1.amname, p2.amoplefttype, p2.amoprighttype
-FROM pg_am AS p1, pg_amop AS p2
-WHERE p2.amopmethod = p1.oid AND
-    p1.amstrategies <> 0 AND
-    p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
-                        WHERE p3.amopfamily = p2.amopfamily AND
-                              p3.amoplefttype = p2.amoplefttype AND
-                              p3.amoprighttype = p2.amoprighttype AND
-                              p3.amoppurpose = 's');
-
--- Currently, none of the AMs with fixed strategy sets support ordering ops.
-
-SELECT p1.amname, p2.amopfamily, p2.amopstrategy
-FROM pg_am AS p1, pg_amop AS p2
-WHERE p2.amopmethod = p1.oid AND
-    p1.amstrategies <> 0 AND p2.amoppurpose <> 's';
 
 -- Check that amopopr points at a reasonable-looking operator, ie a binary
 -- operator.  If it's a search operator it had better yield boolean,
@@ -1249,59 +1240,6 @@ FROM pg_amproc as p1
 WHERE p1.amprocfamily = 0 OR p1.amproclefttype = 0 OR p1.amprocrighttype = 0
     OR p1.amprocnum < 1 OR p1.amproc = 0;
 
--- Cross-check amprocnum index against parent AM
-
-SELECT p1.amprocfamily, p1.amprocnum, p2.oid, p2.amname
-FROM pg_amproc AS p1, pg_am AS p2, pg_opfamily AS p3
-WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
-    p1.amprocnum > p2.amsupport;
-
--- Detect missing pg_amproc entries: should have as many support functions
--- as AM expects for each datatype combination supported by the opfamily.
-
-SELECT * FROM (
-  SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype,
-         array_agg(p3.amprocnum ORDER BY amprocnum) AS procnums
-  FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
-  WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid
-  GROUP BY p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
-) AS t
-WHERE NOT (
-  -- btree has one mandatory and one optional support function.
-  -- hash has one support function, which is mandatory.
-  -- GiST has eight support functions, one of which is optional.
-  -- GIN has six support functions. 1-3 are mandatory, 5 is optional, and
-  --   at least one of 4 and 6 must be given.
-  -- SP-GiST has five support functions, all mandatory
-  -- BRIN has four mandatory support functions, and a bunch of optionals
-  amname = 'btree' AND procnums @> '{1}' OR
-  amname = 'hash' AND procnums = '{1}' OR
-  amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
-  amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
-  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}' OR
-  amname = 'brin' AND procnums @> '{1, 2, 3, 4}'
-);
-
--- Also, check if there are any pg_opclass entries that don't seem to have
--- pg_amproc support.
-
-SELECT * FROM (
-  SELECT amname, opcname, array_agg(amprocnum ORDER BY amprocnum) as procnums
-  FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
-       LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
-           amproclefttype = amprocrighttype AND amproclefttype = opcintype
-  GROUP BY amname, opcname, amprocfamily
-) AS t
-WHERE NOT (
-  -- same per-AM rules as above
-  amname = 'btree' AND procnums @> '{1}' OR
-  amname = 'hash' AND procnums = '{1}' OR
-  amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
-  amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
-  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}' OR
-  amname = 'brin' AND procnums @> '{1, 2, 3, 4}'
-);
-
 -- Unfortunately, we can't check the amproc link very well because the
 -- signature of the function may be different for different support routines
 -- or different base data types.
@@ -1394,6 +1332,7 @@ FROM pg_amproc AS p1, pg_proc AS p2
 WHERE p1.amproc = p2.oid AND
     p1.amproclefttype != p1.amprocrighttype AND
     p2.provolatile = 'v';
+
 
 -- **************** pg_index ****************
 

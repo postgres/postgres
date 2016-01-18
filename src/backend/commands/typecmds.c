@@ -37,6 +37,7 @@
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"

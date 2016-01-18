@@ -4633,6 +4633,10 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>index_am_handler</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>tsm_handler</primary>
    </indexterm>
 
@@ -4728,6 +4732,11 @@ SELECT * FROM pg_attribute
        <row>
         <entry><type>fdw_handler</></entry>
         <entry>A foreign-data wrapper handler is declared to return <type>fdw_handler</>.</entry>
+       </row>
+
+       <row>
+        <entry><type>index_am_handler</></entry>
+        <entry>An index access method handler is declared to return <type>index_am_handler</>.</entry>
        </row>
 
        <row>

@@ -2420,7 +2420,7 @@ extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_MATVIEW ||
 		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_TOASTVALUE);
 
-	relopts = extractRelOptions(tup, pg_class_desc, InvalidOid);
+	relopts = extractRelOptions(tup, pg_class_desc, NULL);
 	if (relopts == NULL)
 		return NULL;
 

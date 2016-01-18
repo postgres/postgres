@@ -566,6 +566,8 @@ extern Datum language_handler_in(PG_FUNCTION_ARGS);
 extern Datum language_handler_out(PG_FUNCTION_ARGS);
 extern Datum fdw_handler_in(PG_FUNCTION_ARGS);
 extern Datum fdw_handler_out(PG_FUNCTION_ARGS);
+extern Datum index_am_handler_in(PG_FUNCTION_ARGS);
+extern Datum index_am_handler_out(PG_FUNCTION_ARGS);
 extern Datum tsm_handler_in(PG_FUNCTION_ARGS);
 extern Datum tsm_handler_out(PG_FUNCTION_ARGS);
 extern Datum internal_in(PG_FUNCTION_ARGS);

@@ -13,6 +13,6 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = nbtcompare.o nbtinsert.o nbtpage.o nbtree.o nbtsearch.o \
-       nbtutils.o nbtsort.o nbtxlog.o
+       nbtutils.o nbtsort.o nbtvalidate.o nbtxlog.o
 
 include $(top_srcdir)/src/backend/common.mk

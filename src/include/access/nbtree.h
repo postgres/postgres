@@ -14,7 +14,7 @@
 #ifndef NBTREE_H
 #define NBTREE_H
 
-#include "access/genam.h"
+#include "access/amapi.h"
 #include "access/itup.h"
 #include "access/sdir.h"
 #include "access/xlogreader.h"
@@ -654,20 +654,28 @@ typedef BTScanOpaqueData *BTScanOpaque;
 /*
  * prototypes for functions in nbtree.c (external entry points for btree)
  */
-extern Datum btbuild(PG_FUNCTION_ARGS);
-extern Datum btbuildempty(PG_FUNCTION_ARGS);
-extern Datum btinsert(PG_FUNCTION_ARGS);
-extern Datum btbeginscan(PG_FUNCTION_ARGS);
-extern Datum btgettuple(PG_FUNCTION_ARGS);
-extern Datum btgetbitmap(PG_FUNCTION_ARGS);
-extern Datum btrescan(PG_FUNCTION_ARGS);
-extern Datum btendscan(PG_FUNCTION_ARGS);
-extern Datum btmarkpos(PG_FUNCTION_ARGS);
-extern Datum btrestrpos(PG_FUNCTION_ARGS);
-extern Datum btbulkdelete(PG_FUNCTION_ARGS);
-extern Datum btvacuumcleanup(PG_FUNCTION_ARGS);
-extern Datum btcanreturn(PG_FUNCTION_ARGS);
-extern Datum btoptions(PG_FUNCTION_ARGS);
+extern Datum bthandler(PG_FUNCTION_ARGS);
+extern IndexBuildResult *btbuild(Relation heap, Relation index,
+		struct IndexInfo *indexInfo);
+extern void btbuildempty(Relation index);
+extern bool btinsert(Relation rel, Datum *values, bool *isnull,
+		 ItemPointer ht_ctid, Relation heapRel,
+		 IndexUniqueCheck checkUnique);
+extern IndexScanDesc btbeginscan(Relation rel, int nkeys, int norderbys);
+extern bool btgettuple(IndexScanDesc scan, ScanDirection dir);
+extern int64 btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
+extern void btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
+		 ScanKey orderbys, int norderbys);
+extern void btendscan(IndexScanDesc scan);
+extern void btmarkpos(IndexScanDesc scan);
+extern void btrestrpos(IndexScanDesc scan);
+extern IndexBulkDeleteResult *btbulkdelete(IndexVacuumInfo *info,
+			 IndexBulkDeleteResult *stats,
+			 IndexBulkDeleteCallback callback,
+			 void *callback_state);
+extern IndexBulkDeleteResult *btvacuumcleanup(IndexVacuumInfo *info,
+				IndexBulkDeleteResult *stats);
+extern bool btcanreturn(Relation index, int attno);
 
 /*
  * prototypes for functions in nbtinsert.c
@@ -738,6 +746,12 @@ extern void _bt_end_vacuum(Relation rel);
 extern void _bt_end_vacuum_callback(int code, Datum arg);
 extern Size BTreeShmemSize(void);
 extern void BTreeShmemInit(void);
+extern bytea *btoptions(Datum reloptions, bool validate);
+
+/*
+ * prototypes for functions in nbtvalidate.c
+ */
+extern bool btvalidate(Oid opclassoid);
 
 /*
  * prototypes for functions in nbtsort.c

@@ -73,131 +73,11 @@ WHERE	aggmtranstype != 0 AND
 ------+---------------
 (0 rows)
 
-SELECT	ctid, amkeytype
+SELECT	ctid, amhandler
 FROM	pg_catalog.pg_am fk
-WHERE	amkeytype != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amkeytype);
- ctid | amkeytype 
-------+-----------
-(0 rows)
-
-SELECT	ctid, aminsert
-FROM	pg_catalog.pg_am fk
-WHERE	aminsert != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aminsert);
- ctid | aminsert 
-------+----------
-(0 rows)
-
-SELECT	ctid, ambeginscan
-FROM	pg_catalog.pg_am fk
-WHERE	ambeginscan != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambeginscan);
- ctid | ambeginscan 
-------+-------------
-(0 rows)
-
-SELECT	ctid, amgettuple
-FROM	pg_catalog.pg_am fk
-WHERE	amgettuple != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amgettuple);
- ctid | amgettuple 
-------+------------
-(0 rows)
-
-SELECT	ctid, amgetbitmap
-FROM	pg_catalog.pg_am fk
-WHERE	amgetbitmap != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amgetbitmap);
- ctid | amgetbitmap 
-------+-------------
-(0 rows)
-
-SELECT	ctid, amrescan
-FROM	pg_catalog.pg_am fk
-WHERE	amrescan != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amrescan);
- ctid | amrescan 
-------+----------
-(0 rows)
-
-SELECT	ctid, amendscan
-FROM	pg_catalog.pg_am fk
-WHERE	amendscan != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amendscan);
- ctid | amendscan 
-------+-----------
-(0 rows)
-
-SELECT	ctid, ammarkpos
-FROM	pg_catalog.pg_am fk
-WHERE	ammarkpos != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ammarkpos);
- ctid | ammarkpos 
-------+-----------
-(0 rows)
-
-SELECT	ctid, amrestrpos
-FROM	pg_catalog.pg_am fk
-WHERE	amrestrpos != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amrestrpos);
- ctid | amrestrpos 
-------+------------
-(0 rows)
-
-SELECT	ctid, ambuild
-FROM	pg_catalog.pg_am fk
-WHERE	ambuild != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambuild);
- ctid | ambuild 
-------+---------
-(0 rows)
-
-SELECT	ctid, ambuildempty
-FROM	pg_catalog.pg_am fk
-WHERE	ambuildempty != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambuildempty);
- ctid | ambuildempty 
-------+--------------
-(0 rows)
-
-SELECT	ctid, ambulkdelete
-FROM	pg_catalog.pg_am fk
-WHERE	ambulkdelete != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambulkdelete);
- ctid | ambulkdelete 
-------+--------------
-(0 rows)
-
-SELECT	ctid, amvacuumcleanup
-FROM	pg_catalog.pg_am fk
-WHERE	amvacuumcleanup != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amvacuumcleanup);
- ctid | amvacuumcleanup 
-------+-----------------
-(0 rows)
-
-SELECT	ctid, amcanreturn
-FROM	pg_catalog.pg_am fk
-WHERE	amcanreturn != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amcanreturn);
- ctid | amcanreturn 
-------+-------------
-(0 rows)
-
-SELECT	ctid, amcostestimate
-FROM	pg_catalog.pg_am fk
-WHERE	amcostestimate != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amcostestimate);
- ctid | amcostestimate 
-------+----------------
-(0 rows)
-
-SELECT	ctid, amoptions
-FROM	pg_catalog.pg_am fk
-WHERE	amoptions != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amoptions);
- ctid | amoptions 
+WHERE	amhandler != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amhandler);
+ ctid | amhandler 
 ------+-----------
 (0 rows)
 
@@ -806,6 +686,14 @@ FROM	pg_catalog.pg_opfamily fk
 WHERE	opfowner != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.opfowner);
  ctid | opfowner 
+------+----------
+(0 rows)
+
+SELECT	ctid, polrelid
+FROM	pg_catalog.pg_policy fk
+WHERE	polrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.polrelid);
+ ctid | polrelid 
 ------+----------
 (0 rows)
 

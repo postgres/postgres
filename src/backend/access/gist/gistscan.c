@@ -54,12 +54,9 @@ pairingheap_GISTSearchItem_cmp(const pairingheap_node *a, const pairingheap_node
  * Index AM API functions for scanning GiST indexes
  */
 
-Datum
-gistbeginscan(PG_FUNCTION_ARGS)
+IndexScanDesc
+gistbeginscan(Relation r, int nkeys, int norderbys)
 {
-	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	int			nkeys = PG_GETARG_INT32(1);
-	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
 	GISTSTATE  *giststate;
 	GISTScanOpaque so;
@@ -107,16 +104,13 @@ gistbeginscan(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(oldCxt);
 
-	PG_RETURN_POINTER(scan);
+	return scan;
 }
 
-Datum
-gistrescan(PG_FUNCTION_ARGS)
+void
+gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
+		   ScanKey orderbys, int norderbys)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
-	ScanKey		orderbys = (ScanKey) PG_GETARG_POINTER(3);
-
 	/* nkeys and norderbys arguments are ignored */
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	bool		first_time;
@@ -314,28 +308,11 @@ gistrescan(PG_FUNCTION_ARGS)
 		if (!first_time)
 			pfree(fn_extras);
 	}
-
-	PG_RETURN_VOID();
 }
 
-Datum
-gistmarkpos(PG_FUNCTION_ARGS)
+void
+gistendscan(IndexScanDesc scan)
 {
-	elog(ERROR, "GiST does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-gistrestrpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "GiST does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-gistendscan(PG_FUNCTION_ARGS)
-{
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
 	/*
@@ -343,6 +320,4 @@ gistendscan(PG_FUNCTION_ARGS)
 	 * as well as the queueCxt if there is a separate context for it.
 	 */
 	freeGISTstate(so->giststate);
-
-	PG_RETURN_VOID();
 }

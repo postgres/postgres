@@ -34,13 +34,13 @@
 #include "access/multixact.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
-#include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_authid.h"
@@ -267,6 +267,7 @@ static void AttrDefaultFetch(Relation relation);
 static void CheckConstraintFetch(Relation relation);
 static int	CheckConstraintCmp(const void *a, const void *b);
 static List *insert_ordered_oid(List *list, Oid datum);
+static void InitIndexAmRoutine(Relation relation);
 static void IndexSupportInitialize(oidvector *indclass,
 					   RegProcedure *indexSupport,
 					   Oid *opFamily,
@@ -417,7 +418,7 @@ AllocateRelationDesc(Form_pg_class relp)
  *
  * tuple is the real pg_class tuple (not rd_rel!) for relation
  *
- * Note: rd_rel and (if an index) rd_am must be valid already
+ * Note: rd_rel and (if an index) rd_amroutine must be valid already
  */
 static void
 RelationParseRelOptions(Relation relation, HeapTuple tuple)
@@ -447,7 +448,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	options = extractRelOptions(tuple,
 								GetPgClassDescriptor(),
 								relation->rd_rel->relkind == RELKIND_INDEX ?
-								relation->rd_am->amoptions : InvalidOid);
+								relation->rd_amroutine->amoptions : NULL);
 
 	/*
 	 * Copy parsed data into CacheMemoryContext.  To guard against the
@@ -1162,6 +1163,32 @@ RelationInitPhysicalAddr(Relation relation)
 }
 
 /*
+ * Fill in the IndexAmRoutine for an index relation.
+ *
+ * relation's rd_amhandler and rd_indexcxt must be valid already.
+ */
+static void
+InitIndexAmRoutine(Relation relation)
+{
+	IndexAmRoutine *cached,
+			   *tmp;
+
+	/*
+	 * Call the amhandler in current, short-lived memory context, just in case
+	 * it leaks anything (it probably won't, but let's be paranoid).
+	 */
+	tmp = GetIndexAmRoutine(relation->rd_amhandler);
+
+	/* OK, now transfer the data into relation's rd_indexcxt. */
+	cached = (IndexAmRoutine *) MemoryContextAlloc(relation->rd_indexcxt,
+												   sizeof(IndexAmRoutine));
+	memcpy(cached, tmp, sizeof(IndexAmRoutine));
+	relation->rd_amroutine = cached;
+
+	pfree(tmp);
+}
+
+/*
  * Initialize index-access-method support data for an index relation
  */
 void
@@ -1198,22 +1225,20 @@ RelationInitIndexAccessInfo(Relation relation)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Make a copy of the pg_am entry for the index's access method
+	 * Look up the index's access method, save the OID of its handler function
 	 */
 	tuple = SearchSysCache1(AMOID, ObjectIdGetDatum(relation->rd_rel->relam));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for access method %u",
 			 relation->rd_rel->relam);
-	aform = (Form_pg_am) MemoryContextAlloc(CacheMemoryContext, sizeof *aform);
-	memcpy(aform, GETSTRUCT(tuple), sizeof *aform);
+	aform = (Form_pg_am) GETSTRUCT(tuple);
+	relation->rd_amhandler = aform->amhandler;
 	ReleaseSysCache(tuple);
-	relation->rd_am = aform;
 
 	natts = relation->rd_rel->relnatts;
 	if (natts != relation->rd_index->indnatts)
 		elog(ERROR, "relnatts disagrees with indnatts for index %u",
 			 RelationGetRelid(relation));
-	amsupport = aform->amsupport;
 
 	/*
 	 * Make the private context to hold index access info.  The reason we need
@@ -1231,16 +1256,19 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_indexcxt = indexcxt;
 
 	/*
+	 * Now we can fetch the index AM's API struct
+	 */
+	InitIndexAmRoutine(relation);
+
+	/*
 	 * Allocate arrays to hold data
 	 */
-	relation->rd_aminfo = (RelationAmInfo *)
-		MemoryContextAllocZero(indexcxt, sizeof(RelationAmInfo));
-
 	relation->rd_opfamily = (Oid *)
 		MemoryContextAllocZero(indexcxt, natts * sizeof(Oid));
 	relation->rd_opcintype = (Oid *)
 		MemoryContextAllocZero(indexcxt, natts * sizeof(Oid));
 
+	amsupport = relation->rd_amroutine->amsupport;
 	if (amsupport > 0)
 	{
 		int			nsupport = natts * amsupport;
@@ -2011,8 +2039,6 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		pfree(relation->rd_options);
 	if (relation->rd_indextuple)
 		pfree(relation->rd_indextuple);
-	if (relation->rd_am)
-		pfree(relation->rd_am);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
@@ -4746,7 +4772,6 @@ load_relcache_init_file(bool shared)
 		/* If it's an index, there's more to do */
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
 		{
-			Form_pg_am	am;
 			MemoryContext indexcxt;
 			Oid		   *opfamily;
 			Oid		   *opcintype;
@@ -4771,15 +4796,6 @@ load_relcache_init_file(bool shared)
 			rel->rd_indextuple->t_data = (HeapTupleHeader) ((char *) rel->rd_indextuple + HEAPTUPLESIZE);
 			rel->rd_index = (Form_pg_index) GETSTRUCT(rel->rd_indextuple);
 
-			/* next, read the access method tuple form */
-			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
-				goto read_failed;
-
-			am = (Form_pg_am) palloc(len);
-			if (fread(am, 1, len, fp) != len)
-				goto read_failed;
-			rel->rd_am = am;
-
 			/*
 			 * prepare index info context --- parameters should match
 			 * RelationInitIndexAccessInfo
@@ -4790,6 +4806,14 @@ load_relcache_init_file(bool shared)
 											 ALLOCSET_SMALL_INITSIZE,
 											 ALLOCSET_SMALL_MAXSIZE);
 			rel->rd_indexcxt = indexcxt;
+
+			/*
+			 * Now we can fetch the index AM's API struct.  (We can't store
+			 * that in the init file, since it contains function pointers that
+			 * might vary across server executions.  Fortunately, it should be
+			 * safe to call the amhandler even while bootstrapping indexes.)
+			 */
+			InitIndexAmRoutine(rel);
 
 			/* next, read the vector of opfamily OIDs */
 			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
@@ -4840,10 +4864,8 @@ load_relcache_init_file(bool shared)
 
 			rel->rd_indoption = indoption;
 
-			/* set up zeroed fmgr-info vectors */
-			rel->rd_aminfo = (RelationAmInfo *)
-				MemoryContextAllocZero(indexcxt, sizeof(RelationAmInfo));
-			nsupport = relform->relnatts * am->amsupport;
+			/* set up zeroed fmgr-info vector */
+			nsupport = relform->relnatts * rel->rd_amroutine->amsupport;
 			rel->rd_supportinfo = (FmgrInfo *)
 				MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
 		}
@@ -4855,9 +4877,8 @@ load_relcache_init_file(bool shared)
 
 			Assert(rel->rd_index == NULL);
 			Assert(rel->rd_indextuple == NULL);
-			Assert(rel->rd_am == NULL);
 			Assert(rel->rd_indexcxt == NULL);
-			Assert(rel->rd_aminfo == NULL);
+			Assert(rel->rd_amroutine == NULL);
 			Assert(rel->rd_opfamily == NULL);
 			Assert(rel->rd_opcintype == NULL);
 			Assert(rel->rd_support == NULL);
@@ -5101,16 +5122,11 @@ write_relcache_init_file(bool shared)
 		/* If it's an index, there's more to do */
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
 		{
-			Form_pg_am	am = rel->rd_am;
-
 			/* write the pg_index tuple */
 			/* we assume this was created by heap_copytuple! */
 			write_item(rel->rd_indextuple,
 					   HEAPTUPLESIZE + rel->rd_indextuple->t_len,
 					   fp);
-
-			/* next, write the access method tuple form */
-			write_item(am, sizeof(FormData_pg_am), fp);
 
 			/* next, write the vector of opfamily OIDs */
 			write_item(rel->rd_opfamily,
@@ -5124,7 +5140,7 @@ write_relcache_init_file(bool shared)
 
 			/* next, write the vector of support procedure OIDs */
 			write_item(rel->rd_support,
-				  relform->relnatts * (am->amsupport * sizeof(RegProcedure)),
+					   relform->relnatts * (rel->rd_amroutine->amsupport * sizeof(RegProcedure)),
 					   fp);
 
 			/* next, write the vector of collation OIDs */
