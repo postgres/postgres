@@ -39,13 +39,6 @@
 #include "getopt_long.h"
 #include "miscadmin.h"
 
-#if defined(__CYGWIN__)
-#include <sys/cygwin.h>
-#include <windows.h>
-/* Cygwin defines WIN32 in windows.h, but we don't want it. */
-#undef WIN32
-#endif
-
 /* PID can be negative for standalone backend */
 typedef long pgpid_t;
 
@@ -105,7 +98,7 @@ static char backup_file[MAXPGPATH];
 static char recovery_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
@@ -133,7 +126,7 @@ static void do_kill(pgpid_t pid);
 static void print_msg(const char *msg);
 static void adjust_data_dir(void);
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 #if (_MSC_VER >= 1800)
 #include <versionhelpers.h>
 #else
@@ -165,7 +158,7 @@ static void unlimit_core_size(void);
 #endif
 
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 static void
 write_eventlog(int level, const char *line)
 {
@@ -207,19 +200,10 @@ write_stderr(const char *fmt,...)
 	va_list		ap;
 
 	va_start(ap, fmt);
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#ifndef WIN32
 	/* On Unix, we just fprintf to stderr */
 	vfprintf(stderr, fmt, ap);
 #else
-
-/*
- * On Cygwin, we don't yet have a reliable mechanism to detect when
- * we're being run as a service, so fall back to the old (and broken)
- * stderr test.
- */
-#ifdef __CYGWIN__
-#define	pgwin32_is_service()	(isatty(fileno(stderr)))
-#endif
 
 	/*
 	 * On Win32, we print to stderr if running on a console, or write to
@@ -718,7 +702,7 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 #endif
 
 		/* No response, or startup still in process; wait */
-#if defined(WIN32)
+#ifdef WIN32
 		if (do_checkpoint)
 		{
 			/*
@@ -1342,7 +1326,7 @@ do_kill(pgpid_t pid)
 	}
 }
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 
 #if (_MSC_VER < 1800)
 static bool
@@ -1407,20 +1391,6 @@ pgwin32_CommandLine(bool registration)
 			exit(1);
 		}
 	}
-
-#ifdef __CYGWIN__
-	/* need to convert to windows path */
-	{
-		char		buf[MAXPGPATH];
-
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
-		cygwin_conv_path(CCP_POSIX_TO_WIN_A, cmdPath, buf, sizeof(buf));
-#else
-		cygwin_conv_to_full_win32_path(cmdPath, buf);
-#endif
-		strcpy(cmdPath, buf);
-	}
-#endif
 
 	/* if path does not end in .exe, append it */
 	if (strlen(cmdPath) < 4 ||
@@ -1775,10 +1745,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
 		/*
-		 * Most Windows targets make DWORD a 32-bit unsigned long.  Cygwin
-		 * x86_64, an LP64 target, makes it a 32-bit unsigned int.  In code
-		 * built for Cygwin as well as for native Windows targets, cast DWORD
-		 * before printing.
+		 * Most Windows targets make DWORD a 32-bit unsigned long, but
+		 * in case it doesn't cast DWORD before printing.
 		 */
 		write_stderr(_("%s: could not open process token: error code %lu\n"),
 					 progname, (unsigned long) GetLastError());
@@ -1819,10 +1787,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 		return 0;
 	}
 
-#ifndef __CYGWIN__
 	AddUserToTokenDacl(restrictedToken);
-#endif
-
 	r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
 
 	Kernel32Handle = LoadLibrary("KERNEL32.DLL");
@@ -1926,7 +1891,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	 */
 	return r;
 }
-#endif   /* defined(WIN32) || defined(__CYGWIN__) */
+#endif   /* WIN32 */
 
 static void
 do_advice(void)
@@ -1950,7 +1915,7 @@ do_help(void)
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s promote [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 			 "                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
@@ -1958,7 +1923,7 @@ do_help(void)
 
 	printf(_("\nCommon options:\n"));
 	printf(_("  -D, --pgdata=DATADIR   location of the database storage area\n"));
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 	printf(_("  -e SOURCE              event source for logging when running as a service\n"));
 #endif
 	printf(_("  -s, --silent           only print errors, no informational messages\n"));
@@ -1991,7 +1956,7 @@ do_help(void)
 	printf(_("\nAllowed signal names for kill:\n"));
 	printf("  ABRT HUP INT QUIT TERM USR1 USR2\n");
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 	printf(_("\nOptions for register and unregister:\n"));
 	printf(_("  -N SERVICENAME  service name with which to register PostgreSQL server\n"));
 	printf(_("  -P PASSWORD     password of account to register PostgreSQL server\n"));
@@ -2067,7 +2032,7 @@ set_sig(char *signame)
 }
 
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 static void
 set_starttype(char *starttypeopt)
 {
@@ -2167,7 +2132,7 @@ main(int argc, char **argv)
 	int			c;
 	pgpid_t		killproc = 0;
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 	setvbuf(stderr, NULL, _IONBF, 0);
 #endif
 
@@ -2280,7 +2245,7 @@ main(int argc, char **argv)
 					silent_mode = true;
 					break;
 				case 'S':
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 					set_starttype(optarg);
 #else
 					write_stderr(_("%s: -S option not supported on this platform\n"),
@@ -2353,7 +2318,7 @@ main(int argc, char **argv)
 				set_sig(argv[++optind]);
 				killproc = atol(argv[++optind]);
 			}
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 			else if (strcmp(argv[optind], "register") == 0)
 				ctl_command = REGISTER_COMMAND;
 			else if (strcmp(argv[optind], "unregister") == 0)
@@ -2457,7 +2422,7 @@ main(int argc, char **argv)
 		case KILL_COMMAND:
 			do_kill(killproc);
 			break;
-#if defined(WIN32) || defined(__CYGWIN__)
+#ifdef WIN32
 		case REGISTER_COMMAND:
 			pgwin32_doRegister();
 			break;
