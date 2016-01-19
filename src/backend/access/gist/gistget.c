@@ -217,7 +217,7 @@ gistindex_keytest(IndexScanDesc scan,
 									 key->sk_collation,
 									 PointerGetDatum(&de),
 									 key->sk_argument,
-									 Int32GetDatum(key->sk_strategy),
+									 Int16GetDatum(key->sk_strategy),
 									 ObjectIdGetDatum(key->sk_subtype),
 									 PointerGetDatum(&recheck));
 
@@ -280,7 +280,7 @@ gistindex_keytest(IndexScanDesc scan,
 									 key->sk_collation,
 									 PointerGetDatum(&de),
 									 key->sk_argument,
-									 Int32GetDatum(key->sk_strategy),
+									 Int16GetDatum(key->sk_strategy),
 									 ObjectIdGetDatum(key->sk_subtype),
 									 PointerGetDatum(&recheck));
 			*recheck_distances_p |= recheck;

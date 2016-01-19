@@ -359,9 +359,20 @@ my_consistent(PG_FUNCTION_ARGS)
        the value being looked up in the index. The <literal>StrategyNumber</>
        parameter indicates which operator of your operator class is being
        applied &mdash; it matches one of the operator numbers in the
-       <command>CREATE OPERATOR CLASS</> command.  Depending on what operators
-       you have included in the class, the data type of <varname>query</> could
-       vary with the operator, but the above skeleton assumes it doesn't.
+       <command>CREATE OPERATOR CLASS</> command.
+      </para>
+
+      <para>
+       Depending on which operators you have included in the class, the data
+       type of <varname>query</> could vary with the operator, since it will
+       be whatever type is on the righthand side of the operator, which might
+       be different from the indexed data type appearing on the lefthand side.
+       (The above code skeleton assumes that only one type is possible; if
+       not, fetching the <varname>query</> argument value would have to depend
+       on the operator.)  It is recommended that the SQL declaration of
+       the <function>consistent</> function use the opclass's indexed data
+       type for the <varname>query</> argument, even though the actual type
+       might be something else depending on the operator.
       </para>
 
      </listitem>
@@ -381,7 +392,7 @@ my_consistent(PG_FUNCTION_ARGS)
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_union(internal, internal)
-RETURNS internal
+RETURNS storage_type
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 </programlisting>
@@ -434,9 +445,21 @@ my_union(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-        The <function>union</> implementation function should return a
-        pointer to newly <function>palloc()</>ed memory. You can't just
-        return whatever the input is.
+        The result of the <function>union</> function must be a value of the
+        index's storage type, whatever that is (it might or might not be
+        different from the indexed column's type).  The <function>union</>
+        function should return a pointer to newly <function>palloc()</>ed
+        memory. You can't just return the input value as-is, even if there is
+        no type change.
+      </para>
+
+      <para>
+       As shown above, the <function>union</> function's
+       first <type>internal</> argument is actually
+       a <structname>GistEntryVector</> pointer.  The second argument is a
+       pointer to an integer variable, which can be ignored.  (It used to be
+       required that the <function>union</> function store the size of its
+       result value into that variable, but this is no longer necessary.)
       </para>
      </listitem>
     </varlistentry>
@@ -576,6 +599,12 @@ my_penalty(PG_FUNCTION_ARGS)
     PG_RETURN_POINTER(penalty);
 }
 </programlisting>
+
+        For historical reasons, the <function>penalty</> function doesn't
+        just return a <type>float</> result; instead it has to store the value
+        at the location indicated by the third argument.  The return
+        value per se is ignored, though it's conventional to pass back the
+        address of that argument.
       </para>
 
       <para>
@@ -615,9 +644,9 @@ Datum
 my_picksplit(PG_FUNCTION_ARGS)
 {
     GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+    GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
     OffsetNumber maxoff = entryvec-&gt;n - 1;
     GISTENTRY  *ent = entryvec-&gt;vector;
-    GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
     int         i,
                 nbytes;
     OffsetNumber *left,
@@ -683,6 +712,11 @@ my_picksplit(PG_FUNCTION_ARGS)
     PG_RETURN_POINTER(v);
 }
 </programlisting>
+
+       Notice that the <function>picksplit</> function's result is delivered
+       by modifying the passed-in <structname>v</> structure.  The return
+       value per se is ignored, though it's conventional to pass back the
+       address of <structname>v</>.
       </para>
 
       <para>
@@ -700,13 +734,15 @@ my_picksplit(PG_FUNCTION_ARGS)
      <listitem>
       <para>
        Returns true if two index entries are identical, false otherwise.
+       (An <quote>index entry</> is a value of the index's storage type,
+       not necessarily the original indexed column's type.)
       </para>
 
       <para>
         The <acronym>SQL</> declaration of the function must look like this:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION my_same(internal, internal, internal)
+CREATE OR REPLACE FUNCTION my_same(storage_type, storage_type, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -731,7 +767,9 @@ my_same(PG_FUNCTION_ARGS)
 
         For historical reasons, the <function>same</> function doesn't
         just return a Boolean result; instead it has to store the flag
-        at the location indicated by the third argument.
+        at the location indicated by the third argument.  The return
+        value per se is ignored, though it's conventional to pass back the
+        address of that argument.
       </para>
      </listitem>
     </varlistentry>
@@ -756,7 +794,7 @@ my_same(PG_FUNCTION_ARGS)
         The <acronym>SQL</> declaration of the function must look like this:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION my_distance(internal, data_type, smallint, oid)
+CREATE OR REPLACE FUNCTION my_distance(internal, data_type, smallint, oid, internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -824,7 +862,7 @@ my_distance(PG_FUNCTION_ARGS)
      <term><function>fetch</></term>
      <listitem>
       <para>
-       Converts the compressed index representation of the data item into the
+       Converts the compressed index representation of a data item into the
        original data type, for index-only scans. The returned data must be an
        exact, non-lossy copy of the originally indexed value.
       </para>
@@ -840,11 +878,12 @@ LANGUAGE C STRICT;
 </programlisting>
 
         The argument is a pointer to a <structname>GISTENTRY</> struct. On
-        entry, its 'key' field contains a non-NULL leaf datum in its
+        entry, its <structfield>key</> field contains a non-NULL leaf datum in
         compressed form. The return value is another <structname>GISTENTRY</>
-        struct, whose 'key' field contains the same datum in the original,
-        uncompressed form. If the opclass' compress function does nothing for
-        leaf entries, the fetch method can return the argument as is.
+        struct, whose <structfield>key</> field contains the same datum in its
+        original, uncompressed form. If the opclass's compress function does
+        nothing for leaf entries, the <function>fetch</> method can return the
+        argument as-is.
        </para>
 
        <para>
@@ -879,8 +918,8 @@ my_fetch(PG_FUNCTION_ARGS)
 
       <para>
        If the compress method is lossy for leaf entries, the operator class
-       cannot support index-only scans, and must not define a 'fetch'
-       function.
+       cannot support index-only scans, and must not define
+       a <function>fetch</> function.
       </para>
 
      </listitem>

@@ -217,7 +217,7 @@ DATA(insert (	2595   718 718 4 2580 ));
 DATA(insert (	2595   718 718 5 2581 ));
 DATA(insert (	2595   718 718 6 2582 ));
 DATA(insert (	2595   718 718 7 2584 ));
-DATA(insert (	2595   718 718 8 3288 ));
+DATA(insert (	2595   718 718 8 3280 ));
 DATA(insert (	3655   3614 3614 1 3654 ));
 DATA(insert (	3655   3614 3614 2 3651 ));
 DATA(insert (	3655   3614 3614 3 3648 ));

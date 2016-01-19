@@ -237,8 +237,8 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 
 -- Look for functions that return a polymorphic type and do not have any
 -- polymorphic argument.  Calls of such functions would be unresolvable
--- at parse time.  As of 9.4 this query should find only some input functions
--- associated with these pseudotypes.
+-- at parse time.  As of 9.6 this query should find only some input functions
+-- and GiST support functions associated with these pseudotypes.
 
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1

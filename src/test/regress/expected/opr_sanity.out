@@ -291,8 +291,8 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 
 -- Look for functions that return a polymorphic type and do not have any
 -- polymorphic argument.  Calls of such functions would be unresolvable
--- at parse time.  As of 9.4 this query should find only some input functions
--- associated with these pseudotypes.
+-- at parse time.  As of 9.6 this query should find only some input functions
+-- and GiST support functions associated with these pseudotypes.
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prorettype IN
@@ -305,8 +305,8 @@ WHERE p1.prorettype IN
      'anyenum'::regtype = ANY (p1.proargtypes) OR
      'anyrange'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
- oid  |    proname     
-------+----------------
+ oid  |     proname      
+------+------------------
  2296 | anyarray_in
  2502 | anyarray_recv
  2312 | anyelement_in
@@ -317,9 +317,10 @@ ORDER BY 2;
  2400 | array_recv
  3506 | enum_in
  3532 | enum_recv
+ 3876 | range_gist_union
  3834 | range_in
  3836 | range_recv
-(12 rows)
+(13 rows)
 
 -- Look for functions that accept cstring and are neither datatype input
 -- functions nor encoding conversion functions.  It's almost never a good

@@ -304,7 +304,7 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE FUNCTION g_cube_consistent(internal,cube,int,oid,internal)
+CREATE FUNCTION g_cube_consistent(internal,cube,smallint,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -339,8 +339,8 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION g_cube_distance (internal, cube, smallint, oid)
-RETURNS internal
+CREATE FUNCTION g_cube_distance (internal, cube, smallint, oid, internal)
+RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
@@ -368,11 +368,11 @@ CREATE OPERATOR CLASS gist_cube_ops
 	OPERATOR	17	<-> (cube, cube) FOR ORDER BY float_ops,
 	OPERATOR	18	<=> (cube, cube) FOR ORDER BY float_ops,
 
-	FUNCTION	1	g_cube_consistent (internal, cube, int, oid, internal),
+	FUNCTION	1	g_cube_consistent (internal, cube, smallint, oid, internal),
 	FUNCTION	2	g_cube_union (internal, internal),
 	FUNCTION	3	g_cube_compress (internal),
 	FUNCTION	4	g_cube_decompress (internal),
 	FUNCTION	5	g_cube_penalty (internal, internal, internal),
 	FUNCTION	6	g_cube_picksplit (internal, internal),
 	FUNCTION	7	g_cube_same (cube, cube, internal),
-	FUNCTION	8	g_cube_distance (internal, cube, smallint, oid);
+	FUNCTION	8	g_cube_distance (internal, cube, smallint, oid, internal);

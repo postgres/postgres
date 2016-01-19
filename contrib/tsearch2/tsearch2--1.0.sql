@@ -389,7 +389,7 @@ CREATE OPERATOR CLASS gist_tsvector_ops
 FOR TYPE tsvector USING gist
 AS
         OPERATOR        1       @@ (tsvector, tsquery),
-        FUNCTION        1       gtsvector_consistent (internal, gtsvector, int, oid, internal),
+        FUNCTION        1       gtsvector_consistent (internal, tsvector, smallint, oid, internal),
         FUNCTION        2       gtsvector_union (internal, internal),
         FUNCTION        3       gtsvector_compress (internal),
         FUNCTION        4       gtsvector_decompress (internal),
@@ -536,7 +536,7 @@ FOR TYPE tsquery USING gist
 AS
         OPERATOR        7       @> (tsquery, tsquery),
         OPERATOR        8       <@ (tsquery, tsquery),
-        FUNCTION        1       gtsquery_consistent (internal, internal, int, oid, internal),
+        FUNCTION        1       gtsquery_consistent (internal, tsquery, smallint, oid, internal),
         FUNCTION        2       gtsquery_union (internal, internal),
         FUNCTION        3       gtsquery_compress (internal),
         FUNCTION        4       gtsquery_decompress (internal),

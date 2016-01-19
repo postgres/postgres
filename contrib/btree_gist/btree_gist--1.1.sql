@@ -244,7 +244,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_oid_distance(internal,oid,int2,oid)
+CREATE FUNCTION gbt_oid_distance(internal,oid,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -284,12 +284,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_oid_union(bytea, internal)
+CREATE FUNCTION gbt_oid_union(internal, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_oid_same(internal, internal, internal)
+CREATE FUNCTION gbt_oid_same(gbtreekey8, gbtreekey8, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -304,12 +304,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_oid_consistent (internal, oid, int2, oid, internal),
-	FUNCTION	2	gbt_oid_union (bytea, internal),
+	FUNCTION	2	gbt_oid_union (internal, internal),
 	FUNCTION	3	gbt_oid_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_oid_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_oid_picksplit (internal, internal),
-	FUNCTION	7	gbt_oid_same (internal, internal, internal),
+	FUNCTION	7	gbt_oid_same (gbtreekey8, gbtreekey8, internal),
 	STORAGE		gbtreekey8;
 
 -- Add operators that are new in 9.1.  We do it like this, leaving them
@@ -318,7 +318,7 @@ AS
 ALTER OPERATOR FAMILY gist_oid_ops USING gist ADD
 	OPERATOR	6	<> (oid, oid) ,
 	OPERATOR	15	<-> (oid, oid) FOR ORDER BY pg_catalog.oid_ops ,
-	FUNCTION	8 (oid, oid) gbt_oid_distance (internal, oid, int2, oid) ,
+	FUNCTION	8 (oid, oid) gbt_oid_distance (internal, oid, int2, oid, internal) ,
 	-- Also add support function for index-only-scans, added in 9.5.
 	FUNCTION	9 (oid, oid) gbt_oid_fetch (internal) ;
 
@@ -336,7 +336,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int2_distance(internal,int2,int2,oid)
+CREATE FUNCTION gbt_int2_distance(internal,int2,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -361,12 +361,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int2_union(bytea, internal)
+CREATE FUNCTION gbt_int2_union(internal, internal)
 RETURNS gbtreekey4
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int2_same(internal, internal, internal)
+CREATE FUNCTION gbt_int2_same(gbtreekey4, gbtreekey4, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -381,18 +381,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_int2_consistent (internal, int2, int2, oid, internal),
-	FUNCTION	2	gbt_int2_union (bytea, internal),
+	FUNCTION	2	gbt_int2_union (internal, internal),
 	FUNCTION	3	gbt_int2_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_int2_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_int2_picksplit (internal, internal),
-	FUNCTION	7	gbt_int2_same (internal, internal, internal),
+	FUNCTION	7	gbt_int2_same (gbtreekey4, gbtreekey4, internal),
 	STORAGE		gbtreekey4;
 
 ALTER OPERATOR FAMILY gist_int2_ops USING gist ADD
 	OPERATOR	6	<> (int2, int2) ,
 	OPERATOR	15	<-> (int2, int2) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (int2, int2) gbt_int2_distance (internal, int2, int2, oid) ,
+	FUNCTION	8 (int2, int2) gbt_int2_distance (internal, int2, int2, oid, internal) ,
 	FUNCTION	9 (int2, int2) gbt_int2_fetch (internal) ;
 
 --
@@ -408,7 +408,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int4_distance(internal,int4,int2,oid)
+CREATE FUNCTION gbt_int4_distance(internal,int4,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -433,12 +433,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int4_union(bytea, internal)
+CREATE FUNCTION gbt_int4_union(internal, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int4_same(internal, internal, internal)
+CREATE FUNCTION gbt_int4_same(gbtreekey8, gbtreekey8, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -453,18 +453,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_int4_consistent (internal, int4, int2, oid, internal),
-	FUNCTION	2	gbt_int4_union (bytea, internal),
+	FUNCTION	2	gbt_int4_union (internal, internal),
 	FUNCTION	3	gbt_int4_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_int4_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_int4_picksplit (internal, internal),
-	FUNCTION	7	gbt_int4_same (internal, internal, internal),
+	FUNCTION	7	gbt_int4_same (gbtreekey8, gbtreekey8, internal),
 	STORAGE		gbtreekey8;
 
 ALTER OPERATOR FAMILY gist_int4_ops USING gist ADD
 	OPERATOR	6	<> (int4, int4) ,
 	OPERATOR	15	<-> (int4, int4) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (int4, int4) gbt_int4_distance (internal, int4, int2, oid) ,
+	FUNCTION	8 (int4, int4) gbt_int4_distance (internal, int4, int2, oid, internal) ,
 	FUNCTION	9 (int4, int4) gbt_int4_fetch (internal) ;
 
 
@@ -481,7 +481,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int8_distance(internal,int8,int2,oid)
+CREATE FUNCTION gbt_int8_distance(internal,int8,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -506,12 +506,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int8_union(bytea, internal)
+CREATE FUNCTION gbt_int8_union(internal, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_int8_same(internal, internal, internal)
+CREATE FUNCTION gbt_int8_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -526,18 +526,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_int8_consistent (internal, int8, int2, oid, internal),
-	FUNCTION	2	gbt_int8_union (bytea, internal),
+	FUNCTION	2	gbt_int8_union (internal, internal),
 	FUNCTION	3	gbt_int8_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_int8_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_int8_picksplit (internal, internal),
-	FUNCTION	7	gbt_int8_same (internal, internal, internal),
+	FUNCTION	7	gbt_int8_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_int8_ops USING gist ADD
 	OPERATOR	6	<> (int8, int8) ,
 	OPERATOR	15	<-> (int8, int8) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (int8, int8) gbt_int8_distance (internal, int8, int2, oid) ,
+	FUNCTION	8 (int8, int8) gbt_int8_distance (internal, int8, int2, oid, internal) ,
 	FUNCTION	9 (int8, int8) gbt_int8_fetch (internal) ;
 
 --
@@ -553,7 +553,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_float4_distance(internal,float4,int2,oid)
+CREATE FUNCTION gbt_float4_distance(internal,float4,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -578,12 +578,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_float4_union(bytea, internal)
+CREATE FUNCTION gbt_float4_union(internal, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_float4_same(internal, internal, internal)
+CREATE FUNCTION gbt_float4_same(gbtreekey8, gbtreekey8, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -598,18 +598,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_float4_consistent (internal, float4, int2, oid, internal),
-	FUNCTION	2	gbt_float4_union (bytea, internal),
+	FUNCTION	2	gbt_float4_union (internal, internal),
 	FUNCTION	3	gbt_float4_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_float4_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_float4_picksplit (internal, internal),
-	FUNCTION	7	gbt_float4_same (internal, internal, internal),
+	FUNCTION	7	gbt_float4_same (gbtreekey8, gbtreekey8, internal),
 	STORAGE		gbtreekey8;
 
 ALTER OPERATOR FAMILY gist_float4_ops USING gist ADD
 	OPERATOR	6	<> (float4, float4) ,
 	OPERATOR	15	<-> (float4, float4) FOR ORDER BY pg_catalog.float_ops ,
-	FUNCTION	8 (float4, float4) gbt_float4_distance (internal, float4, int2, oid) ,
+	FUNCTION	8 (float4, float4) gbt_float4_distance (internal, float4, int2, oid, internal) ,
 	FUNCTION	9 (float4, float4) gbt_float4_fetch (internal) ;
 
 --
@@ -625,7 +625,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_float8_distance(internal,float8,int2,oid)
+CREATE FUNCTION gbt_float8_distance(internal,float8,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -650,12 +650,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_float8_union(bytea, internal)
+CREATE FUNCTION gbt_float8_union(internal, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_float8_same(internal, internal, internal)
+CREATE FUNCTION gbt_float8_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -670,18 +670,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_float8_consistent (internal, float8, int2, oid, internal),
-	FUNCTION	2	gbt_float8_union (bytea, internal),
+	FUNCTION	2	gbt_float8_union (internal, internal),
 	FUNCTION	3	gbt_float8_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_float8_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_float8_picksplit (internal, internal),
-	FUNCTION	7	gbt_float8_same (internal, internal, internal),
+	FUNCTION	7	gbt_float8_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_float8_ops USING gist ADD
 	OPERATOR	6	<> (float8, float8) ,
 	OPERATOR	15	<-> (float8, float8) FOR ORDER BY pg_catalog.float_ops ,
-	FUNCTION	8 (float8, float8) gbt_float8_distance (internal, float8, int2, oid) ,
+	FUNCTION	8 (float8, float8) gbt_float8_distance (internal, float8, int2, oid, internal) ,
 	FUNCTION	9 (float8, float8) gbt_float8_fetch (internal) ;
 
 --
@@ -697,7 +697,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_ts_distance(internal,timestamp,int2,oid)
+CREATE FUNCTION gbt_ts_distance(internal,timestamp,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -707,7 +707,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_tstz_distance(internal,timestamptz,int2,oid)
+CREATE FUNCTION gbt_tstz_distance(internal,timestamptz,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -737,12 +737,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_ts_union(bytea, internal)
+CREATE FUNCTION gbt_ts_union(internal, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_ts_same(internal, internal, internal)
+CREATE FUNCTION gbt_ts_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -757,18 +757,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_ts_consistent (internal, timestamp, int2, oid, internal),
-	FUNCTION	2	gbt_ts_union (bytea, internal),
+	FUNCTION	2	gbt_ts_union (internal, internal),
 	FUNCTION	3	gbt_ts_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_ts_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_ts_picksplit (internal, internal),
-	FUNCTION	7	gbt_ts_same (internal, internal, internal),
+	FUNCTION	7	gbt_ts_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_timestamp_ops USING gist ADD
 	OPERATOR	6	<> (timestamp, timestamp) ,
 	OPERATOR	15	<-> (timestamp, timestamp) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (timestamp, timestamp) gbt_ts_distance (internal, timestamp, int2, oid) ,
+	FUNCTION	8 (timestamp, timestamp) gbt_ts_distance (internal, timestamp, int2, oid, internal) ,
 	FUNCTION	9 (timestamp, timestamp) gbt_ts_fetch (internal) ;
 
 -- Create the operator class
@@ -781,18 +781,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_tstz_consistent (internal, timestamptz, int2, oid, internal),
-	FUNCTION	2	gbt_ts_union (bytea, internal),
+	FUNCTION	2	gbt_ts_union (internal, internal),
 	FUNCTION	3	gbt_tstz_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_ts_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_ts_picksplit (internal, internal),
-	FUNCTION	7	gbt_ts_same (internal, internal, internal),
+	FUNCTION	7	gbt_ts_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_timestamptz_ops USING gist ADD
 	OPERATOR	6	<> (timestamptz, timestamptz) ,
 	OPERATOR	15	<-> (timestamptz, timestamptz) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (timestamptz, timestamptz) gbt_tstz_distance (internal, timestamptz, int2, oid) ,
+	FUNCTION	8 (timestamptz, timestamptz) gbt_tstz_distance (internal, timestamptz, int2, oid, internal) ,
 	FUNCTION	9 (timestamptz, timestamptz) gbt_ts_fetch (internal) ;
 
 --
@@ -808,7 +808,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_time_distance(internal,time,int2,oid)
+CREATE FUNCTION gbt_time_distance(internal,time,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -843,12 +843,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_time_union(bytea, internal)
+CREATE FUNCTION gbt_time_union(internal, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_time_same(internal, internal, internal)
+CREATE FUNCTION gbt_time_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -863,18 +863,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_time_consistent (internal, time, int2, oid, internal),
-	FUNCTION	2	gbt_time_union (bytea, internal),
+	FUNCTION	2	gbt_time_union (internal, internal),
 	FUNCTION	3	gbt_time_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_time_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_time_picksplit (internal, internal),
-	FUNCTION	7	gbt_time_same (internal, internal, internal),
+	FUNCTION	7	gbt_time_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_time_ops USING gist ADD
 	OPERATOR	6	<> (time, time) ,
 	OPERATOR	15	<-> (time, time) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (time, time) gbt_time_distance (internal, time, int2, oid) ,
+	FUNCTION	8 (time, time) gbt_time_distance (internal, time, int2, oid, internal) ,
 	FUNCTION	9 (time, time) gbt_time_fetch (internal) ;
 
 
@@ -887,12 +887,12 @@ AS
 	OPERATOR	4	>=  ,
 	OPERATOR	5	>   ,
 	FUNCTION	1	gbt_timetz_consistent (internal, timetz, int2, oid, internal),
-	FUNCTION	2	gbt_time_union (bytea, internal),
+	FUNCTION	2	gbt_time_union (internal, internal),
 	FUNCTION	3	gbt_timetz_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_time_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_time_picksplit (internal, internal),
-	FUNCTION	7	gbt_time_same (internal, internal, internal),
+	FUNCTION	7	gbt_time_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_timetz_ops USING gist ADD
@@ -913,7 +913,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_date_distance(internal,date,int2,oid)
+CREATE FUNCTION gbt_date_distance(internal,date,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -938,12 +938,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_date_union(bytea, internal)
+CREATE FUNCTION gbt_date_union(internal, internal)
 RETURNS gbtreekey8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_date_same(internal, internal, internal)
+CREATE FUNCTION gbt_date_same(gbtreekey8, gbtreekey8, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -958,18 +958,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_date_consistent (internal, date, int2, oid, internal),
-	FUNCTION	2	gbt_date_union (bytea, internal),
+	FUNCTION	2	gbt_date_union (internal, internal),
 	FUNCTION	3	gbt_date_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_date_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_date_picksplit (internal, internal),
-	FUNCTION	7	gbt_date_same (internal, internal, internal),
+	FUNCTION	7	gbt_date_same (gbtreekey8, gbtreekey8, internal),
 	STORAGE		gbtreekey8;
 
 ALTER OPERATOR FAMILY gist_date_ops USING gist ADD
 	OPERATOR	6	<> (date, date) ,
 	OPERATOR	15	<-> (date, date) FOR ORDER BY pg_catalog.integer_ops ,
-	FUNCTION	8 (date, date) gbt_date_distance (internal, date, int2, oid) ,
+	FUNCTION	8 (date, date) gbt_date_distance (internal, date, int2, oid, internal) ,
 	FUNCTION	9 (date, date) gbt_date_fetch (internal) ;
 
 
@@ -986,7 +986,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_intv_distance(internal,interval,int2,oid)
+CREATE FUNCTION gbt_intv_distance(internal,interval,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1016,12 +1016,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_intv_union(bytea, internal)
+CREATE FUNCTION gbt_intv_union(internal, internal)
 RETURNS gbtreekey32
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_intv_same(internal, internal, internal)
+CREATE FUNCTION gbt_intv_same(gbtreekey32, gbtreekey32, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1036,18 +1036,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gbt_intv_consistent (internal, interval, int2, oid, internal),
-	FUNCTION	2	gbt_intv_union (bytea, internal),
+	FUNCTION	2	gbt_intv_union (internal, internal),
 	FUNCTION	3	gbt_intv_compress (internal),
 	FUNCTION	4	gbt_intv_decompress (internal),
 	FUNCTION	5	gbt_intv_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_intv_picksplit (internal, internal),
-	FUNCTION	7	gbt_intv_same (internal, internal, internal),
+	FUNCTION	7	gbt_intv_same (gbtreekey32, gbtreekey32, internal),
 	STORAGE		gbtreekey32;
 
 ALTER OPERATOR FAMILY gist_interval_ops USING gist ADD
 	OPERATOR	6	<> (interval, interval) ,
 	OPERATOR	15	<-> (interval, interval) FOR ORDER BY pg_catalog.interval_ops ,
-	FUNCTION	8 (interval, interval) gbt_intv_distance (internal, interval, int2, oid) ,
+	FUNCTION	8 (interval, interval) gbt_intv_distance (internal, interval, int2, oid, internal) ,
 	FUNCTION	9 (interval, interval) gbt_intv_fetch (internal) ;
 
 
@@ -1064,7 +1064,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_cash_distance(internal,money,int2,oid)
+CREATE FUNCTION gbt_cash_distance(internal,money,int2,oid,internal)
 RETURNS float8
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1089,12 +1089,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_cash_union(bytea, internal)
-RETURNS gbtreekey8
+CREATE FUNCTION gbt_cash_union(internal, internal)
+RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_cash_same(internal, internal, internal)
+CREATE FUNCTION gbt_cash_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1109,18 +1109,18 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gbt_cash_consistent (internal, money, int2, oid, internal),
-	FUNCTION	2	gbt_cash_union (bytea, internal),
+	FUNCTION	2	gbt_cash_union (internal, internal),
 	FUNCTION	3	gbt_cash_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_cash_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_cash_picksplit (internal, internal),
-	FUNCTION	7	gbt_cash_same (internal, internal, internal),
+	FUNCTION	7	gbt_cash_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_cash_ops USING gist ADD
 	OPERATOR	6	<> (money, money) ,
 	OPERATOR	15	<-> (money, money) FOR ORDER BY pg_catalog.money_ops ,
-	FUNCTION	8 (money, money) gbt_cash_distance (internal, money, int2, oid) ,
+	FUNCTION	8 (money, money) gbt_cash_distance (internal, money, int2, oid, internal) ,
 	FUNCTION	9 (money, money) gbt_cash_fetch (internal) ;
 
 
@@ -1157,12 +1157,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_macad_union(bytea, internal)
+CREATE FUNCTION gbt_macad_union(internal, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_macad_same(internal, internal, internal)
+CREATE FUNCTION gbt_macad_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1177,12 +1177,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gbt_macad_consistent (internal, macaddr, int2, oid, internal),
-	FUNCTION	2	gbt_macad_union (bytea, internal),
+	FUNCTION	2	gbt_macad_union (internal, internal),
 	FUNCTION	3	gbt_macad_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_macad_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_macad_picksplit (internal, internal),
-	FUNCTION	7	gbt_macad_same (internal, internal, internal),
+	FUNCTION	7	gbt_macad_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_macaddr_ops USING gist ADD
@@ -1228,12 +1228,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_text_union(bytea, internal)
+CREATE FUNCTION gbt_text_union(internal, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_text_same(internal, internal, internal)
+CREATE FUNCTION gbt_text_same(gbtreekey_var, gbtreekey_var, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1248,12 +1248,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_text_consistent (internal, text, int2, oid, internal),
-	FUNCTION	2	gbt_text_union (bytea, internal),
+	FUNCTION	2	gbt_text_union (internal, internal),
 	FUNCTION	3	gbt_text_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_text_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_text_picksplit (internal, internal),
-	FUNCTION	7	gbt_text_same (internal, internal, internal),
+	FUNCTION	7	gbt_text_same (gbtreekey_var, gbtreekey_var, internal),
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_text_ops USING gist ADD
@@ -1271,12 +1271,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_bpchar_consistent (internal, bpchar , int2, oid, internal),
-	FUNCTION	2	gbt_text_union (bytea, internal),
+	FUNCTION	2	gbt_text_union (internal, internal),
 	FUNCTION	3	gbt_bpchar_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_text_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_text_picksplit (internal, internal),
-	FUNCTION	7	gbt_text_same (internal, internal, internal),
+	FUNCTION	7	gbt_text_same (gbtreekey_var, gbtreekey_var, internal),
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_bpchar_ops USING gist ADD
@@ -1310,12 +1310,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_bytea_union(bytea, internal)
+CREATE FUNCTION gbt_bytea_union(internal, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_bytea_same(internal, internal, internal)
+CREATE FUNCTION gbt_bytea_same(gbtreekey_var, gbtreekey_var, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1330,12 +1330,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_bytea_consistent (internal, bytea, int2, oid, internal),
-	FUNCTION	2	gbt_bytea_union (bytea, internal),
+	FUNCTION	2	gbt_bytea_union (internal, internal),
 	FUNCTION	3	gbt_bytea_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_bytea_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bytea_picksplit (internal, internal),
-	FUNCTION	7	gbt_bytea_same (internal, internal, internal),
+	FUNCTION	7	gbt_bytea_same (gbtreekey_var, gbtreekey_var, internal),
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_bytea_ops USING gist ADD
@@ -1371,12 +1371,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_numeric_union(bytea, internal)
+CREATE FUNCTION gbt_numeric_union(internal, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_numeric_same(internal, internal, internal)
+CREATE FUNCTION gbt_numeric_same(gbtreekey_var, gbtreekey_var, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1391,12 +1391,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_numeric_consistent (internal, numeric, int2, oid, internal),
-	FUNCTION	2	gbt_numeric_union (bytea, internal),
+	FUNCTION	2	gbt_numeric_union (internal, internal),
 	FUNCTION	3	gbt_numeric_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_numeric_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_numeric_picksplit (internal, internal),
-	FUNCTION	7	gbt_numeric_same (internal, internal, internal),
+	FUNCTION	7	gbt_numeric_same (gbtreekey_var, gbtreekey_var, internal),
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_numeric_ops USING gist ADD
@@ -1431,12 +1431,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_bit_union(bytea, internal)
+CREATE FUNCTION gbt_bit_union(internal, internal)
 RETURNS gbtreekey_var
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_bit_same(internal, internal, internal)
+CREATE FUNCTION gbt_bit_same(gbtreekey_var, gbtreekey_var, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1451,12 +1451,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_bit_consistent (internal, bit, int2, oid, internal),
-	FUNCTION	2	gbt_bit_union (bytea, internal),
+	FUNCTION	2	gbt_bit_union (internal, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_bit_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bit_picksplit (internal, internal),
-	FUNCTION	7	gbt_bit_same (internal, internal, internal),
+	FUNCTION	7	gbt_bit_same (gbtreekey_var, gbtreekey_var, internal),
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_bit_ops USING gist ADD
@@ -1474,12 +1474,12 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	>  ,
 	FUNCTION	1	gbt_bit_consistent (internal, bit, int2, oid, internal),
-	FUNCTION	2	gbt_bit_union (bytea, internal),
+	FUNCTION	2	gbt_bit_union (internal, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
 	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_bit_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bit_picksplit (internal, internal),
-	FUNCTION	7	gbt_bit_same (internal, internal, internal),
+	FUNCTION	7	gbt_bit_same (gbtreekey_var, gbtreekey_var, internal),
 	STORAGE			gbtreekey_var;
 
 ALTER OPERATOR FAMILY gist_vbit_ops USING gist ADD
@@ -1515,12 +1515,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_inet_union(bytea, internal)
+CREATE FUNCTION gbt_inet_union(internal, internal)
 RETURNS gbtreekey16
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_inet_same(internal, internal, internal)
+CREATE FUNCTION gbt_inet_same(gbtreekey16, gbtreekey16, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -1535,12 +1535,12 @@ AS
 	OPERATOR	4	>=  ,
 	OPERATOR	5	>   ,
 	FUNCTION	1	gbt_inet_consistent (internal, inet, int2, oid, internal),
-	FUNCTION	2	gbt_inet_union (bytea, internal),
+	FUNCTION	2	gbt_inet_union (internal, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_inet_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_inet_picksplit (internal, internal),
-	FUNCTION	7	gbt_inet_same (internal, internal, internal),
+	FUNCTION	7	gbt_inet_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_inet_ops USING gist ADD
@@ -1557,12 +1557,12 @@ AS
 	OPERATOR	4	>= (inet, inet)  ,
 	OPERATOR	5	>  (inet, inet)  ,
 	FUNCTION	1	gbt_inet_consistent (internal, inet, int2, oid, internal),
-	FUNCTION	2	gbt_inet_union (bytea, internal),
+	FUNCTION	2	gbt_inet_union (internal, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_inet_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_inet_picksplit (internal, internal),
-	FUNCTION	7	gbt_inet_same (internal, internal, internal),
+	FUNCTION	7	gbt_inet_same (gbtreekey16, gbtreekey16, internal),
 	STORAGE		gbtreekey16;
 
 ALTER OPERATOR FAMILY gist_cidr_ops USING gist ADD

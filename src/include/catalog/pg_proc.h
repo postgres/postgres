@@ -2156,9 +2156,9 @@ DATA(insert OID = 4063 (  inet_merge		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0
 DESCR("the smallest network which includes both of the given networks");
 
 /* GiST support for inet and cidr */
-DATA(insert OID = 3553 (  inet_gist_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 869 23 26 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 3553 (  inet_gist_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 869 21 26 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 3554 (  inet_gist_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_union _null_ _null_ _null_ ));
+DATA(insert OID = 3554 (  inet_gist_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 869 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_union _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 3555 (  inet_gist_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ inet_gist_compress _null_ _null_ _null_ ));
 DESCR("GiST support");
@@ -4072,7 +4072,7 @@ DATA(insert OID = 2587 (  circle_overbelow		PGNSP PGUID 12 1 0 0 0 f f f f t f i
 DATA(insert OID = 2588 (  circle_overabove		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "718 718" _null_ _null_ _null_ _null_  _null_ circle_overabove _null_ _null_ _null_ ));
 
 /* support functions for GiST r-tree emulation */
-DATA(insert OID = 2578 (  gist_box_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 603 23 26 2281" _null_ _null_ _null_ _null_ _null_	gist_box_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 2578 (  gist_box_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 603 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_box_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2579 (  gist_box_compress		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gist_box_compress _null_ _null_ _null_ ));
 DESCR("GiST support");
@@ -4088,11 +4088,11 @@ DATA(insert OID = 2583 (  gist_box_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s
 DESCR("GiST support");
 DATA(insert OID = 2584 (  gist_box_same			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "603 603 2281" _null_ _null_ _null_ _null_ _null_ gist_box_same _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 2585 (  gist_poly_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 604 23 26 2281" _null_ _null_ _null_ _null_ _null_	gist_poly_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 2585 (  gist_poly_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 604 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_poly_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2586 (  gist_poly_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gist_poly_compress _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 2591 (  gist_circle_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 718 23 26 2281" _null_ _null_ _null_ _null_ _null_	gist_circle_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 2591 (  gist_circle_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 718 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_circle_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2592 (  gist_circle_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gist_circle_compress _null_ _null_ _null_ ));
 DESCR("GiST support");
@@ -4100,11 +4100,13 @@ DATA(insert OID = 1030 (  gist_point_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f
 DESCR("GiST support");
 DATA(insert OID = 3282 (  gist_point_fetch	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ gist_point_fetch _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 2179 (  gist_point_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 600 23 26 2281" _null_ _null_ _null_ _null_ _null_	gist_point_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 2179 (  gist_point_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 600 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_point_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 3064 (  gist_point_distance	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 4 0 701 "2281 600 23 26" _null_ _null_ _null_ _null_ _null_	gist_point_distance _null_ _null_ _null_ ));
+DATA(insert OID = 3064 (  gist_point_distance	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 701 "2281 600 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_point_distance _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 3288 (  gist_bbox_distance	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 4 0 701 "2281 600 23 26" _null_ _null_ _null_ _null_ _null_	gist_bbox_distance _null_ _null_ _null_ ));
+DATA(insert OID = 3280 (  gist_circle_distance	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 701 "2281 718 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_circle_distance _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3288 (  gist_poly_distance	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 701 "2281 604 21 26 2281" _null_ _null_ _null_ _null_ _null_	gist_poly_distance _null_ _null_ _null_ ));
 DESCR("GiST support");
 
 /* GIN array support */
@@ -4470,13 +4472,13 @@ DATA(insert OID = 3649 (  gtsvector_decompress	PGNSP PGUID 12 1 0 0 0 f f f f t 
 DESCR("GiST tsvector support");
 DATA(insert OID = 3650 (  gtsvector_picksplit	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_picksplit _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
-DATA(insert OID = 3651 (  gtsvector_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_union _null_ _null_ _null_ ));
+DATA(insert OID = 3651 (  gtsvector_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 3642 "2281 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_union _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
 DATA(insert OID = 3652 (  gtsvector_same		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "3642 3642 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_same _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
 DATA(insert OID = 3653 (  gtsvector_penalty		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_penalty _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
-DATA(insert OID = 3654 (  gtsvector_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 3642 23 26 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 3654 (  gtsvector_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 3614 21 26 2281" _null_ _null_ _null_ _null_ _null_ gtsvector_consistent _null_ _null_ _null_ ));
 DESCR("GiST tsvector support");
 
 DATA(insert OID = 3656 (  gin_extract_tsvector	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "3614 2281 2281" _null_ _null_ _null_ _null_ _null_	gin_extract_tsvector _null_ _null_ _null_ ));
@@ -4530,13 +4532,13 @@ DATA(insert OID = 3696 (  gtsquery_decompress			PGNSP PGUID 12 1 0 0 0 f f f f t
 DESCR("GiST tsquery support");
 DATA(insert OID = 3697 (  gtsquery_picksplit			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_picksplit _null_ _null_ _null_ ));
 DESCR("GiST tsquery support");
-DATA(insert OID = 3698 (  gtsquery_union				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_union _null_ _null_ _null_ ));
+DATA(insert OID = 3698 (  gtsquery_union				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "2281 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_union _null_ _null_ _null_ ));
 DESCR("GiST tsquery support");
 DATA(insert OID = 3699 (  gtsquery_same					PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "20 20 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_same _null_ _null_ _null_ ));
 DESCR("GiST tsquery support");
 DATA(insert OID = 3700 (  gtsquery_penalty				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_penalty _null_ _null_ _null_ ));
 DESCR("GiST tsquery support");
-DATA(insert OID = 3701 (  gtsquery_consistent			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 2281 23 26 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 3701 (  gtsquery_consistent			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 3615 21 26 2281" _null_ _null_ _null_ _null_ _null_ gtsquery_consistent _null_ _null_ _null_ ));
 DESCR("GiST tsquery support");
 
 DATA(insert OID = 3686 (  tsmatchsel		PGNSP PGUID 12 1 0 0 0 f f f f t f s s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ _null_ tsmatchsel _null_ _null_ _null_ ));
@@ -4923,9 +4925,9 @@ DATA(insert OID = 3871 (  range_lt	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16
 DATA(insert OID = 3872 (  range_le	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_le _null_ _null_ _null_ ));
 DATA(insert OID = 3873 (  range_ge	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_ge _null_ _null_ _null_ ));
 DATA(insert OID = 3874 (  range_gt	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_gt _null_ _null_ _null_ ));
-DATA(insert OID = 3875 (  range_gist_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 3831 23 26 2281" _null_ _null_ _null_ _null_ _null_ range_gist_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 3875 (  range_gist_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 5 0 16 "2281 3831 21 26 2281" _null_ _null_ _null_ _null_ _null_ range_gist_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
-DATA(insert OID = 3876 (  range_gist_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ _null_ range_gist_union _null_ _null_ _null_ ));
+DATA(insert OID = 3876 (  range_gist_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 3831 "2281 2281" _null_ _null_ _null_ _null_ _null_ range_gist_union _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 3877 (  range_gist_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ range_gist_compress _null_ _null_ _null_ ));
 DESCR("GiST support");

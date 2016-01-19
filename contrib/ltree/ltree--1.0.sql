@@ -496,7 +496,7 @@ CREATE TYPE ltree_gist (
 );
 
 
-CREATE FUNCTION ltree_consistent(internal,internal,int2,oid,internal)
+CREATE FUNCTION ltree_consistent(internal,ltree,int2,oid,internal)
 RETURNS bool as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION ltree_compress(internal)
@@ -512,9 +512,9 @@ CREATE FUNCTION ltree_picksplit(internal, internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION ltree_union(internal, internal)
-RETURNS int4 as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
+RETURNS ltree_gist as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION ltree_same(internal, internal, internal)
+CREATE FUNCTION ltree_same(ltree_gist, ltree_gist, internal)
 RETURNS internal as 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR CLASS gist_ltree_ops
@@ -532,13 +532,13 @@ CREATE OPERATOR CLASS gist_ltree_ops
 	OPERATOR	15	@ (ltxtquery, ltree) ,
 	OPERATOR	16	? (ltree, _lquery) ,
 	OPERATOR	17	? (_lquery, ltree) ,
-	FUNCTION	1	ltree_consistent (internal, internal, int2, oid, internal),
+	FUNCTION	1	ltree_consistent (internal, ltree, int2, oid, internal),
 	FUNCTION	2	ltree_union (internal, internal),
 	FUNCTION	3	ltree_compress (internal),
 	FUNCTION	4	ltree_decompress (internal),
 	FUNCTION	5	ltree_penalty (internal, internal, internal),
 	FUNCTION	6	ltree_picksplit (internal, internal),
-	FUNCTION	7	ltree_same (internal, internal, internal),
+	FUNCTION	7	ltree_same (ltree_gist, ltree_gist, internal),
 	STORAGE		ltree_gist;
 
 
@@ -822,7 +822,7 @@ CREATE OPERATOR ?@ (
 );
 
 --GiST support for ltree[]
-CREATE FUNCTION _ltree_consistent(internal,internal,int2,oid,internal)
+CREATE FUNCTION _ltree_consistent(internal,_ltree,int2,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -843,11 +843,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION _ltree_union(internal, internal)
-RETURNS int4
+RETURNS ltree_gist
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION _ltree_same(internal, internal, internal)
+CREATE FUNCTION _ltree_same(ltree_gist, ltree_gist, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -862,11 +862,11 @@ CREATE OPERATOR CLASS gist__ltree_ops
 	OPERATOR	15	@ (ltxtquery, _ltree),
 	OPERATOR	16	? (_ltree, _lquery),
 	OPERATOR	17	? (_lquery, _ltree),
-	FUNCTION	1	_ltree_consistent (internal, internal, int2, oid, internal),
+	FUNCTION	1	_ltree_consistent (internal, _ltree, int2, oid, internal),
 	FUNCTION	2	_ltree_union (internal, internal),
 	FUNCTION	3	_ltree_compress (internal),
 	FUNCTION	4	ltree_decompress (internal),
 	FUNCTION	5	_ltree_penalty (internal, internal, internal),
 	FUNCTION	6	_ltree_picksplit (internal, internal),
-	FUNCTION	7	_ltree_same (internal, internal, internal),
+	FUNCTION	7	_ltree_same (ltree_gist, ltree_gist, internal),
 	STORAGE		ltree_gist;
