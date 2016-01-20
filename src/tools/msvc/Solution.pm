@@ -301,6 +301,14 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			'src/include/storage/lwlocknames.h');
 	}
 
+	if (IsNewer(
+			'src/include/dynloader.h',
+			'src/backend/port/dynloader/win32.h'))
+	{
+		copyFile('src/backend/port/dynloader/win32.h',
+			'src/include/dynloader.h');
+	}
+
 	if (IsNewer('src/include/utils/probes.h', 'src/backend/utils/probes.d'))
 	{
 		print "Generating probes.h...\n";

@@ -16,11 +16,7 @@
 
 #include <sys/stat.h>
 
-#ifndef WIN32_ONLY_COMPILER
 #include "dynloader.h"
-#else
-#include "port/dynloader/win32.h"
-#endif
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/shmem.h"
