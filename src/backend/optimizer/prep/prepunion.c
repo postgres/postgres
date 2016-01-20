@@ -775,6 +775,8 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 extract_grouping_ops(groupList),
 								 NIL,
 								 numGroups,
+								 false,
+								 true,
 								 plan);
 		/* Hashed aggregation produces randomly-ordered results */
 		*sortClauses = NIL;

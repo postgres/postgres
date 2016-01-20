@@ -909,24 +909,36 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_Agg:
 			sname = "Aggregate";
-			switch (((Agg *) plan)->aggstrategy)
 			{
-				case AGG_PLAIN:
-					pname = "Aggregate";
-					strategy = "Plain";
-					break;
-				case AGG_SORTED:
-					pname = "GroupAggregate";
-					strategy = "Sorted";
-					break;
-				case AGG_HASHED:
-					pname = "HashAggregate";
-					strategy = "Hashed";
-					break;
-				default:
-					pname = "Aggregate ???";
-					strategy = "???";
-					break;
+				Agg		   *agg = (Agg *) plan;
+
+				if (agg->finalizeAggs == false)
+					operation = "Partial";
+				else if (agg->combineStates == true)
+					operation = "Finalize";
+
+				switch (agg->aggstrategy)
+				{
+					case AGG_PLAIN:
+						pname = "Aggregate";
+						strategy = "Plain";
+						break;
+					case AGG_SORTED:
+						pname = "GroupAggregate";
+						strategy = "Sorted";
+						break;
+					case AGG_HASHED:
+						pname = "HashAggregate";
+						strategy = "Hashed";
+						break;
+					default:
+						pname = "Aggregate ???";
+						strategy = "???";
+						break;
+				}
+
+				if (operation != NULL)
+					pname = psprintf("%s %s", operation, pname);
 			}
 			break;
 		case T_WindowAgg:

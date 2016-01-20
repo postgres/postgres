@@ -1054,6 +1054,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 								 groupOperators,
 								 NIL,
 								 numGroups,
+								 false,
+								 true,
 								 subplan);
 	}
 	else
@@ -4557,9 +4559,8 @@ Agg *
 make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 List *groupingSets,
-		 long numGroups,
-		 Plan *lefttree)
+		 List *groupingSets, long numGroups, bool combineStates,
+		 bool finalizeAggs, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 	Plan	   *plan = &node->plan;
@@ -4568,6 +4569,8 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 
 	node->aggstrategy = aggstrategy;
 	node->numCols = numGroupCols;
+	node->combineStates = combineStates;
+	node->finalizeAggs = finalizeAggs;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
 	node->numGroups = numGroups;

@@ -12383,6 +12383,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	PGresult   *res;
 	int			i_aggtransfn;
 	int			i_aggfinalfn;
+	int			i_aggcombinefn;
 	int			i_aggmtransfn;
 	int			i_aggminvtransfn;
 	int			i_aggmfinalfn;
@@ -12399,6 +12400,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_convertok;
 	const char *aggtransfn;
 	const char *aggfinalfn;
+	const char *aggcombinefn;
 	const char *aggmtransfn;
 	const char *aggminvtransfn;
 	const char *aggmfinalfn;
@@ -12429,7 +12431,26 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	selectSourceSchema(fout, agginfo->aggfn.dobj.namespace->dobj.name);
 
 	/* Get aggregate-specific details */
-	if (fout->remoteVersion >= 90400)
+	if (fout->remoteVersion >= 90600)
+	{
+		appendPQExpBuffer(query, "SELECT aggtransfn, "
+			"aggfinalfn, aggtranstype::pg_catalog.regtype, "
+			"aggcombinefn, aggmtransfn, "
+			"aggminvtransfn, aggmfinalfn, aggmtranstype::pg_catalog.regtype, "
+			"aggfinalextra, aggmfinalextra, "
+			"aggsortop::pg_catalog.regoperator, "
+			"(aggkind = 'h') AS hypothetical, "
+			"aggtransspace, agginitval, "
+			"aggmtransspace, aggminitval, "
+			"true AS convertok, "
+			"pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
+			"pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
+			"FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
+			"WHERE a.aggfnoid = p.oid "
+			"AND p.oid = '%u'::pg_catalog.oid",
+			agginfo->aggfn.dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 90400)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
@@ -12539,6 +12560,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	i_aggtransfn = PQfnumber(res, "aggtransfn");
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
+	i_aggcombinefn = PQfnumber(res, "aggcombinefn");
 	i_aggmtransfn = PQfnumber(res, "aggmtransfn");
 	i_aggminvtransfn = PQfnumber(res, "aggminvtransfn");
 	i_aggmfinalfn = PQfnumber(res, "aggmfinalfn");
@@ -12556,6 +12578,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	aggtransfn = PQgetvalue(res, 0, i_aggtransfn);
 	aggfinalfn = PQgetvalue(res, 0, i_aggfinalfn);
+	aggcombinefn = PQgetvalue(res, 0, i_aggcombinefn);
 	aggmtransfn = PQgetvalue(res, 0, i_aggmtransfn);
 	aggminvtransfn = PQgetvalue(res, 0, i_aggminvtransfn);
 	aggmfinalfn = PQgetvalue(res, 0, i_aggmfinalfn);
@@ -12642,6 +12665,11 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  aggfinalfn);
 		if (aggfinalextra)
 			appendPQExpBufferStr(details, ",\n    FINALFUNC_EXTRA");
+	}
+
+	if (strcmp(aggcombinefn, "-") != 0)
+	{
+		appendPQExpBuffer(details, ",\n    COMBINEFUNC = %s",	aggcombinefn);
 	}
 
 	if (strcmp(aggmtransfn, "-") != 0)

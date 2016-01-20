@@ -695,6 +695,9 @@ _outAgg(StringInfo str, const Agg *node)
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->grpColIdx[i]);
 
+	WRITE_BOOL_FIELD(combineStates);
+	WRITE_BOOL_FIELD(finalizeAggs);
+
 	appendStringInfoString(str, " :grpOperators");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %u", node->grpOperators[i]);

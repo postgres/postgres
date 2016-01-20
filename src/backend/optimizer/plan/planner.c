@@ -2005,6 +2005,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 									extract_grouping_ops(parse->groupClause),
 												NIL,
 												numGroups,
+												false,
+												true,
 												result_plan);
 				/* Hashed aggregation produces randomly-ordered results */
 				current_pathkeys = NIL;
@@ -2312,6 +2314,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 								 extract_grouping_ops(parse->distinctClause),
 											NIL,
 											numDistinctRows,
+											false,
+											true,
 											result_plan);
 			/* Hashed aggregation produces randomly-ordered results */
 			current_pathkeys = NIL;
@@ -2549,6 +2553,8 @@ build_grouping_chain(PlannerInfo *root,
 										 extract_grouping_ops(groupClause),
 										 gsets,
 										 numGroups,
+										 false,
+										 true,
 										 sort_plan);
 
 			/*
@@ -2588,6 +2594,8 @@ build_grouping_chain(PlannerInfo *root,
 										extract_grouping_ops(groupClause),
 										gsets,
 										numGroups,
+										false,
+										true,
 										result_plan);
 
 		((Agg *) result_plan)->chain = chain;

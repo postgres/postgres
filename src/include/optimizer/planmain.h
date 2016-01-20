@@ -60,9 +60,8 @@ extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 List *groupingSets,
-		 long numGroups,
-		 Plan *lefttree);
+		 List *groupingSets, long numGroups, bool combineStates,
+		 bool finalizeAggs, Plan *lefttree);
 extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,

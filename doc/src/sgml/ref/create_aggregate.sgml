@@ -27,6 +27,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
+    [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
@@ -45,6 +46,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
+    [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , HYPOTHETICAL ]
 )
@@ -58,6 +60,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
+    [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
@@ -105,12 +108,15 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    functions:
    a state transition function
    <replaceable class="PARAMETER">sfunc</replaceable>,
-   and an optional final calculation function
-   <replaceable class="PARAMETER">ffunc</replaceable>.
+   an optional final calculation function
+   <replaceable class="PARAMETER">ffunc</replaceable>,
+   and an optional combine function
+   <replaceable class="PARAMETER">combinefunc</replaceable>.
    These are used as follows:
 <programlisting>
 <replaceable class="PARAMETER">sfunc</replaceable>( internal-state, next-data-values ) ---> next-internal-state
 <replaceable class="PARAMETER">ffunc</replaceable>( internal-state ) ---> aggregate-value
+<replaceable class="PARAMETER">combinefunc</replaceable>( internal-state, internal-state ) ---> next-internal-state
 </programlisting>
   </para>
 
@@ -125,6 +131,12 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    the final function is invoked once to calculate the aggregate's return
    value.  If there is no final function then the ending state value
    is returned as-is.
+  </para>
+
+  <para>
+   An aggregate function may also supply a combining function, which allows
+   the aggregation process to be broken down into multiple steps.  This
+   facilitates query optimization techniques such as parallel query.
   </para>
 
   <para>
