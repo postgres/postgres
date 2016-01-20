@@ -84,7 +84,8 @@ query_planner(PlannerInfo *root, List *tlist,
 
 		/* The only path for it is a trivial Result path */
 		add_path(final_rel, (Path *)
-				 create_result_path((List *) parse->jointree->quals));
+				 create_result_path(final_rel,
+									(List *) parse->jointree->quals));
 
 		/* Select cheapest path (pretty easy in this case...) */
 		set_cheapest(final_rel);

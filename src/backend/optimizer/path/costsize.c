@@ -187,11 +187,11 @@ clamp_row_est(double nrows)
  */
 void
 cost_seqscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, ParamPathInfo *param_info,
-			 int nworkers)
+			 RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
-	Cost		run_cost = 0;
+	Cost		cpu_run_cost;
+	Cost		disk_run_cost;
 	double		spc_seq_page_cost;
 	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
@@ -217,27 +217,58 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	/*
 	 * disk costs
 	 */
-	run_cost += spc_seq_page_cost * baserel->pages;
+	disk_run_cost = spc_seq_page_cost * baserel->pages;
 
 	/* CPU costs */
 	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
 
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
-	run_cost += cpu_per_tuple * baserel->tuples;
+	cpu_run_cost = cpu_per_tuple * baserel->tuples;
 
-	/*
-	 * Primitive parallel cost model.  Assume the leader will do half as much
-	 * work as a regular worker, because it will also need to read the tuples
-	 * returned by the workers when they percolate up to the gather node. This
-	 * is almost certainly not exactly the right way to model this, so this
-	 * will probably need to be changed at some point...
-	 */
-	if (nworkers > 0)
-		run_cost = run_cost / (nworkers + 0.5);
+	/* Adjust costing for parallelism, if used. */
+	if (path->parallel_degree > 0)
+	{
+		double	parallel_divisor = path->parallel_degree;
+		double	leader_contribution;
+
+		/*
+		 * Early experience with parallel query suggests that when there is
+		 * only one worker, the leader often makes a very substantial
+		 * contribution to executing the parallel portion of the plan, but as
+		 * more workers are added, it does less and less, because it's busy
+		 * reading tuples from the workers and doing whatever non-paralell
+		 * post-processing is needed.  By the time we reach 4 workers, the
+		 * leader no longer makes a meaningful contribution.  Thus, for now,
+		 * estimate that the leader spends 30% of its time servicing each
+		 * worker, and the remainder executing the parallel plan.
+		 */
+		leader_contribution = 1.0 - (0.3 * path->parallel_degree);
+		if (leader_contribution > 0)
+			parallel_divisor += leader_contribution;
+
+		/*
+		 * In the case of a parallel plan, the row count needs to represent
+		 * the number of tuples processed per worker.  Otherwise, higher-level
+		 * plan nodes that appear below the gather will be costed incorrectly,
+		 * because they'll anticipate receiving more rows than any given copy
+		 * will actually get.
+		 */
+		path->rows /= parallel_divisor;
+
+		/* The CPU cost is divided among all the workers. */
+		cpu_run_cost /= parallel_divisor;
+
+		/*
+		 * It may be possible to amortize some of the I/O cost, but probably
+		 * not very much, because most operating systems already do aggressive
+		 * prefetching.  For now, we assume that the disk run cost can't be
+		 * amortized at all.
+		 */
+	}
 
 	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + run_cost;
+	path->total_cost = startup_cost + cpu_run_cost + disk_run_cost;
 }
 
 /*

@@ -1130,7 +1130,7 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 
 	gather_plan = make_gather(subplan->targetlist,
 							  NIL,
-							  best_path->num_workers,
+							  best_path->path.parallel_degree,
 							  best_path->single_copy,
 							  subplan);
 

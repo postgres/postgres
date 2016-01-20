@@ -167,25 +167,25 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 	e->nnodes++;
 
 	/* Call estimators for parallel-aware nodes. */
-	switch (nodeTag(planstate))
+	if (planstate->plan->parallel_aware)
 	{
-		case T_SeqScanState:
-			ExecSeqScanEstimate((SeqScanState *) planstate,
-								e->pcxt);
-			break;
-		default:
-			break;
+		switch (nodeTag(planstate))
+		{
+			case T_SeqScanState:
+				ExecSeqScanEstimate((SeqScanState *) planstate,
+									e->pcxt);
+				break;
+			default:
+				break;
+		}
 	}
 
 	return planstate_tree_walker(planstate, ExecParallelEstimate, e);
 }
 
 /*
- * Ordinary plan nodes won't do anything here, but parallel-aware plan nodes
- * may need to initialize shared state in the DSM before parallel workers
- * are available.  They can allocate the space they previous estimated using
- * shm_toc_allocate, and add the keys they previously estimated using
- * shm_toc_insert, in each case targeting pcxt->toc.
+ * Initialize the dynamic shared memory segment that will be used to control
+ * parallel execution.
  */
 static bool
 ExecParallelInitializeDSM(PlanState *planstate,
@@ -202,15 +202,26 @@ ExecParallelInitializeDSM(PlanState *planstate,
 	/* Count this node. */
 	d->nnodes++;
 
-	/* Call initializers for parallel-aware plan nodes. */
-	switch (nodeTag(planstate))
+	/*
+	 * Call initializers for parallel-aware plan nodes.
+	 *
+	 * Ordinary plan nodes won't do anything here, but parallel-aware plan
+	 * nodes may need to initialize shared state in the DSM before parallel
+	 * workers are available.  They can allocate the space they previously
+	 * estimated using shm_toc_allocate, and add the keys they previously
+	 * estimated using shm_toc_insert, in each case targeting pcxt->toc.
+	 */
+	if (planstate->plan->parallel_aware)
 	{
-		case T_SeqScanState:
-			ExecSeqScanInitializeDSM((SeqScanState *) planstate,
-									 d->pcxt);
-			break;
-		default:
-			break;
+		switch (nodeTag(planstate))
+		{
+			case T_SeqScanState:
+				ExecSeqScanInitializeDSM((SeqScanState *) planstate,
+										 d->pcxt);
+				break;
+			default:
+				break;
+		}
 	}
 
 	return planstate_tree_walker(planstate, ExecParallelInitializeDSM, d);
@@ -623,13 +634,16 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 		return false;
 
 	/* Call initializers for parallel-aware plan nodes. */
-	switch (nodeTag(planstate))
+	if (planstate->plan->parallel_aware)
 	{
-		case T_SeqScanState:
-			ExecSeqScanInitializeWorker((SeqScanState *) planstate, toc);
-			break;
-		default:
-			break;
+		switch (nodeTag(planstate))
+		{
+			case T_SeqScanState:
+				ExecSeqScanInitializeWorker((SeqScanState *) planstate, toc);
+				break;
+			default:
+				break;
+		}
 	}
 
 	return planstate_tree_walker(planstate, ExecParallelInitializeWorker, toc);

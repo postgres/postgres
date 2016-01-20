@@ -72,6 +72,7 @@ static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				   RangeTblEntry *rte);
+static void create_parallel_paths(PlannerInfo *root, RelOptInfo *rel);
 static void set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 						  RangeTblEntry *rte);
 static bool function_rte_parallel_ok(RangeTblEntry *rte);
@@ -612,7 +613,6 @@ static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	Relids		required_outer;
-	int			parallel_threshold = 1000;
 
 	/*
 	 * We don't support pushing join clauses into the quals of a seqscan, but
@@ -624,45 +624,63 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Consider sequential scan */
 	add_path(rel, create_seqscan_path(root, rel, required_outer, 0));
 
-	/* Consider parallel sequential scan */
-	if (rel->consider_parallel && rel->pages > parallel_threshold &&
-		required_outer == NULL)
-	{
-		Path *path;
-		int parallel_degree = 1;
-
-		/*
-		 * Limit the degree of parallelism logarithmically based on the size
-		 * of the relation.  This probably needs to be a good deal more
-		 * sophisticated, but we need something here for now.
-		 */
-		while (rel->pages > parallel_threshold * 3 &&
-			   parallel_degree < max_parallel_degree)
-		{
-			parallel_degree++;
-			parallel_threshold *= 3;
-			if (parallel_threshold >= PG_INT32_MAX / 3)
-				break;
-		}
-
-		/*
-		 * Ideally we should consider postponing the gather operation until
-		 * much later, after we've pushed joins and so on atop the parallel
-		 * sequential scan path.  But we don't have the infrastructure for
-		 * that yet, so just do this for now.
-		 */
-		path = create_seqscan_path(root, rel, required_outer, parallel_degree);
-		path = (Path *)
-			create_gather_path(root, rel, path, required_outer,
-							   parallel_degree);
-		add_path(rel, path);
-	}
+	/* If appropriate, consider parallel sequential scan */
+	if (rel->consider_parallel && required_outer == NULL)
+		create_parallel_paths(root, rel);
 
 	/* Consider index scans */
 	create_index_paths(root, rel);
 
 	/* Consider TID scans */
 	create_tidscan_paths(root, rel);
+}
+
+/*
+ * create_parallel_paths
+ *	  Build parallel access paths for a plain relation
+ */
+static void
+create_parallel_paths(PlannerInfo *root, RelOptInfo *rel)
+{
+	int		parallel_threshold = 1000;
+	int		parallel_degree = 1;
+
+	/*
+	 * If this relation is too small to be worth a parallel scan, just return
+	 * without doing anything ... unless it's an inheritance child.  In that case,
+	 * we want to generate a parallel path here anyway.  It might not be worthwhile
+	 * just for this relation, but when combined with all of its inheritance siblings
+	 * it may well pay off.
+	 */
+	if (rel->pages < parallel_threshold && rel->reloptkind == RELOPT_BASEREL)
+		return;
+
+	/*
+	 * Limit the degree of parallelism logarithmically based on the size of the
+	 * relation.  This probably needs to be a good deal more sophisticated, but we
+	 * need something here for now.
+	 */
+	while (rel->pages > parallel_threshold * 3 &&
+		   parallel_degree < max_parallel_degree)
+	{
+		parallel_degree++;
+		parallel_threshold *= 3;
+		if (parallel_threshold >= PG_INT32_MAX / 3)
+			break;
+	}
+
+	/* Add an unordered partial path based on a parallel sequential scan. */
+	add_partial_path(rel, create_seqscan_path(root, rel, NULL, parallel_degree));
+
+	/*
+	 * If this is a baserel, consider gathering any partial paths we may have
+	 * just created.  If we gathered an inheritance child, we could end up
+	 * with a very large number of gather nodes, each trying to grab its own
+	 * pool of workers, so don't do this in that case.  Instead, we'll
+	 * consider gathering partial paths for the appendrel.
+	 */
+	if (rel->reloptkind == RELOPT_BASEREL)
+		generate_gather_paths(root, rel);
 }
 
 /*
@@ -1039,6 +1057,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	List	   *live_childrels = NIL;
 	List	   *subpaths = NIL;
 	bool		subpaths_valid = true;
+	List	   *partial_subpaths = NIL;
+	bool		partial_subpaths_valid = true;
 	List	   *all_child_pathkeys = NIL;
 	List	   *all_child_outers = NIL;
 	ListCell   *l;
@@ -1092,6 +1112,13 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 											  childrel->cheapest_total_path);
 		else
 			subpaths_valid = false;
+
+		/* Same idea, but for a partial plan. */
+		if (childrel->partial_pathlist != NIL)
+			partial_subpaths = accumulate_append_subpath(partial_subpaths,
+									   linitial(childrel->partial_pathlist));
+		else
+			partial_subpaths_valid = false;
 
 		/*
 		 * Collect lists of all the available path orderings and
@@ -1164,7 +1191,39 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * if we have zero or one live subpath due to constraint exclusion.)
 	 */
 	if (subpaths_valid)
-		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL));
+		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL, 0));
+
+	/*
+	 * Consider an append of partial unordered, unparameterized partial paths.
+	 */
+	if (partial_subpaths_valid)
+	{
+		AppendPath *appendpath;
+		ListCell   *lc;
+		int			parallel_degree = 0;
+
+		/*
+		 * Decide what parallel degree to request for this append path.  For
+		 * now, we just use the maximum parallel degree of any member.  It
+		 * might be useful to use a higher number if the Append node were
+		 * smart enough to spread out the workers, but it currently isn't.
+		 */
+		foreach(lc, partial_subpaths)
+		{
+			Path	   *path = lfirst(lc);
+
+			parallel_degree = Max(parallel_degree, path->parallel_degree);
+		}
+		Assert(parallel_degree > 0);
+
+		/* Generate a partial append path. */
+		appendpath = create_append_path(rel, partial_subpaths, NULL,
+										parallel_degree);
+		add_partial_path(rel, (Path *) appendpath);
+
+		/* Consider gathering it. */
+		generate_gather_paths(root, rel);
+	}
 
 	/*
 	 * Also build unparameterized MergeAppend paths based on the collected
@@ -1214,7 +1273,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		if (subpaths_valid)
 			add_path(rel, (Path *)
-					 create_append_path(rel, subpaths, required_outer));
+					 create_append_path(rel, subpaths, required_outer, 0));
 	}
 }
 
@@ -1440,8 +1499,9 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 
 	/* Discard any pre-existing paths; no further need for them */
 	rel->pathlist = NIL;
+	rel->partial_pathlist = NIL;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
 
 	/*
 	 * We set the cheapest path immediately, to ensure that IS_DUMMY_REL()
@@ -1841,6 +1901,36 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Generate appropriate path */
 	add_path(rel, create_worktablescan_path(root, rel, required_outer));
+}
+
+/*
+ * generate_gather_paths
+ *		Generate parallel access paths for a relation by pushing a Gather on
+ *		top of a partial path.
+ */
+void
+generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
+{
+	Path	   *cheapest_partial_path;
+	Path	   *simple_gather_path;
+
+	/* If there are no partial paths, there's nothing to do here. */
+	if (rel->partial_pathlist == NIL)
+		return;
+
+	/*
+	 * The output of Gather is currently always unsorted, so there's only one
+	 * partial path of interest: the cheapest one.
+	 *
+	 * Eventually, we should have a Gather Merge operation that can merge
+	 * multiple tuple streams together while preserving their ordering.  We
+	 * could usefully generate such a path from each partial path that has
+	 * non-NIL pathkeys.
+	 */
+	cheapest_partial_path = linitial(rel->partial_pathlist);
+	simple_gather_path = (Path *)
+		create_gather_path(root, rel, cheapest_partial_path, NULL);
+	add_path(rel, simple_gather_path);
 }
 
 /*
