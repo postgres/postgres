@@ -493,12 +493,12 @@ AS
 
 --GIN
 
-CREATE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal, internal, internal)
+CREATE FUNCTION ginint4_queryextract(_int4, internal, int2, internal, internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal, internal, internal)
+CREATE FUNCTION ginint4_consistent(internal, int2, _int4, int4, internal, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -515,6 +515,6 @@ AS
 	OPERATOR	20	@@ (_int4, query_int),
 	FUNCTION	1	btint4cmp (int4, int4),
 	FUNCTION	2	ginarrayextract (anyarray, internal, internal),
-	FUNCTION	3	ginint4_queryextract (internal, internal, int2, internal, internal, internal, internal),
-	FUNCTION	4	ginint4_consistent (internal, int2, internal, int4, internal, internal, internal, internal),
+	FUNCTION	3	ginint4_queryextract (_int4, internal, int2, internal, internal, internal, internal),
+	FUNCTION	4	ginint4_consistent (internal, int2, _int4, int4, internal, internal, internal, internal),
 	STORAGE		int4;

@@ -521,17 +521,17 @@ AS
 
 -- GIN support
 
-CREATE FUNCTION gin_extract_hstore(internal, internal)
+CREATE FUNCTION gin_extract_hstore(hstore, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gin_extract_hstore_query(internal, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_hstore_query(hstore, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gin_consistent_hstore(internal, int2, internal, int4, internal, internal)
+CREATE FUNCTION gin_consistent_hstore(internal, int2, hstore, int4, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -544,7 +544,7 @@ AS
 	OPERATOR        10      ?|(hstore,text[]),
 	OPERATOR        11      ?&(hstore,text[]),
 	FUNCTION        1       bttextcmp(text,text),
-	FUNCTION        2       gin_extract_hstore(internal, internal),
-	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2, internal, internal),
-	FUNCTION        4       gin_consistent_hstore(internal, int2, internal, int4, internal, internal),
+	FUNCTION        2       gin_extract_hstore(hstore, internal),
+	FUNCTION        3       gin_extract_hstore_query(hstore, internal, int2, internal, internal),
+	FUNCTION        4       gin_consistent_hstore(internal, int2, hstore, int4, internal, internal),
 	STORAGE         text;

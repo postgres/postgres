@@ -552,8 +552,8 @@ AS
         OPERATOR        2       @@@ (tsvector, tsquery),
         FUNCTION        1       bttextcmp(text, text),
         FUNCTION        2       gin_extract_tsvector(tsvector,internal,internal),
-        FUNCTION        3       gin_extract_tsquery(tsquery,internal,smallint,internal,internal,internal,internal),
-        FUNCTION        4       gin_tsquery_consistent(internal,smallint,tsquery,int,internal,internal,internal,internal),
+        FUNCTION        3       gin_extract_tsquery(tsvector,internal,smallint,internal,internal,internal,internal),
+        FUNCTION        4       gin_tsquery_consistent(internal,smallint,tsvector,int,internal,internal,internal,internal),
         FUNCTION        5       gin_cmp_prefix(text,text,smallint,internal),
         STORAGE         text;
 
