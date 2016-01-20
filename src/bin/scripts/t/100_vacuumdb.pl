@@ -9,7 +9,7 @@ program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
 program_options_handling_ok('vacuumdb');
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

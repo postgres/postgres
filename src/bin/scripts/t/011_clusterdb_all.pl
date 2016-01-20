@@ -5,7 +5,7 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 2;
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

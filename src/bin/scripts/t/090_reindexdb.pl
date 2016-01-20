@@ -9,7 +9,7 @@ program_help_ok('reindexdb');
 program_version_ok('reindexdb');
 program_options_handling_ok('reindexdb');
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

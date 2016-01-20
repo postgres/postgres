@@ -9,7 +9,7 @@ program_help_ok('createuser');
 program_version_ok('createuser');
 program_options_handling_ok('createuser');
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

@@ -9,7 +9,7 @@ program_help_ok('droplang');
 program_version_ok('droplang');
 program_options_handling_ok('droplang');
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

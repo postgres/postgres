@@ -43,6 +43,7 @@ INIT
 sub new
 {
 	my $class  = shift;
+	my $name   = shift;
 	my $pghost = shift;
 	my $pgport = shift;
 	my $testname = basename($0);
@@ -51,8 +52,8 @@ sub new
 		_port     => $pgport,
 		_host     => $pghost,
 		_basedir  => TestLib::tempdir,
-		_applname => "node_$pgport",
-		_logfile  => "$TestLib::log_path/${testname}_node_${pgport}.log" };
+		_name     => $name,
+		_logfile  => "$TestLib::log_path/${testname}_${name}.log" };
 
 	bless $self, $class;
 	$self->dump_info;
@@ -78,10 +79,10 @@ sub basedir
 	return $self->{_basedir};
 }
 
-sub applname
+sub name
 {
 	my ($self) = @_;
-	return $self->{_applname};
+	return $self->{_name};
 }
 
 sub logfile
@@ -127,11 +128,11 @@ sub backup_dir
 sub dump_info
 {
 	my ($self) = @_;
+	print "Name: " . $self->name . "\n";
 	print "Data directory: " . $self->data_dir . "\n";
 	print "Backup directory: " . $self->backup_dir . "\n";
 	print "Archive directory: " . $self->archive_dir . "\n";
 	print "Connection string: " . $self->connstr . "\n";
-	print "Application name: " . $self->applname . "\n";
 	print "Log file: " . $self->logfile . "\n";
 }
 
@@ -178,7 +179,7 @@ sub init
 	TestLib::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata);
 
 	open my $conf, ">>$pgdata/postgresql.conf";
-	print $conf "\n# Added by PostgresNode.pm)\n";
+	print $conf "\n# Added by PostgresNode.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "log_statement = all\n";
 	print $conf "port = $port\n";
@@ -210,8 +211,9 @@ sub backup
 	my ($self, $backup_name) = @_;
 	my $backup_path = $self->backup_dir . '/' . $backup_name;
 	my $port        = $self->port;
+	my $name        = $self->name;
 
-	print "# Taking backup $backup_name from node with port $port\n";
+	print "# Taking backup $backup_name from node \"$name\"\n";
 	TestLib::system_or_bail("pg_basebackup -D $backup_path -p $port -x");
 	print "# Backup finished\n";
 }
@@ -221,11 +223,13 @@ sub init_from_backup
 	my ($self, $root_node, $backup_name) = @_;
 	my $backup_path = $root_node->backup_dir . '/' . $backup_name;
 	my $port        = $self->port;
-	my $root_port   = $root_node->port;
+	my $node_name   = $self->name;
+	my $root_name   = $root_node->name;
 
 	print
-"Initializing node $port from backup \"$backup_name\" of node $root_port\n";
-	die "Backup $backup_path does not exist" unless -d $backup_path;
+"# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
+	die "Backup \"$backup_name\" does not exist at $backup_path"
+	  unless -d $backup_path;
 
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
@@ -249,7 +253,8 @@ sub start
 	my ($self) = @_;
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
-	print("### Starting test server in $pgdata\n");
+	my $name   = $self->name;
+	print("### Starting node \"$name\"\n");
 	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
 		$self->logfile, 'start');
 
@@ -261,7 +266,6 @@ sub start
 	}
 
 	$self->_update_pid;
-
 }
 
 sub stop
@@ -269,8 +273,9 @@ sub stop
 	my ($self, $mode) = @_;
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
+	my $name   = $self->name;
 	$mode = 'fast' if (!defined($mode));
-	print "### Stopping node in $pgdata with port $port using mode $mode\n";
+	print "### Stopping node \"$name\" using mode $mode\n";
 	TestLib::system_log('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->{_pid} = undef;
 	$self->_update_pid;
@@ -282,6 +287,8 @@ sub restart
 	my $port    = $self->port;
 	my $pgdata  = $self->data_dir;
 	my $logfile = $self->logfile;
+	my $name    = $self->name;
+	print "### Restarting node \"$name\"\n";
 	TestLib::system_log('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
 		'restart');
 	$self->_update_pid;
@@ -290,6 +297,7 @@ sub restart
 sub _update_pid
 {
 	my $self = shift;
+	my $name = $self->name;
 
 	# If we can open the PID file, read its first line and that's the PID we
 	# want.  If the file cannot be opened, presumably the server is not
@@ -297,7 +305,7 @@ sub _update_pid
 	if (open my $pidfile, $self->data_dir . "/postmaster.pid")
 	{
 		chomp($self->{_pid} = <$pidfile>);
-		print "# Postmaster PID is $self->{_pid}\n";
+		print "# Postmaster PID for node \"$name\" is $self->{_pid}\n";
 		close $pidfile;
 		return;
 	}
@@ -316,6 +324,7 @@ sub _update_pid
 # for another node even when this one is not active.
 sub get_new_node
 {
+	my $name  = shift;
 	my $found = 0;
 	my $port  = $last_port_assigned;
 
@@ -340,7 +349,7 @@ sub get_new_node
 	print "# Found free port $port\n";
 
 	# Lock port number found by creating a new node
-	my $node = new PostgresNode($test_pghost, $port);
+	my $node = new PostgresNode($name, $test_pghost, $port);
 
 	# Add node to list of nodes
 	push(@all_nodes, $node);
@@ -354,8 +363,9 @@ sub get_new_node
 sub DESTROY
 {
 	my $self = shift;
+	my $name = $self->name;
 	return if not defined $self->{_pid};
-	print "# signalling QUIT to $self->{_pid}\n";
+	print "### Signalling QUIT to $self->{_pid} for node \"$name\"\n";
 	TestLib::system_log('pg_ctl', 'kill', 'QUIT', $self->{_pid});
 }
 
@@ -371,7 +381,8 @@ sub psql
 	my ($self, $dbname, $sql) = @_;
 
 	my ($stdout, $stderr);
-	print("# Running SQL command: $sql\n");
+	my $name = $self->name;
+	print("### Running SQL command on node \"$name\": $sql\n");
 
 	IPC::Run::run [ 'psql', '-XAtq', '-d', $self->connstr($dbname), '-f',
 		'-' ], '<', \$sql, '>', \$stdout, '2>', \$stderr

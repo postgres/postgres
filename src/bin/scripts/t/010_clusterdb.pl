@@ -9,7 +9,7 @@ program_help_ok('clusterdb');
 program_version_ok('clusterdb');
 program_options_handling_ok('clusterdb');
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

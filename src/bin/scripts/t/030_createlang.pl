@@ -9,7 +9,7 @@ program_help_ok('createlang');
 program_version_ok('createlang');
 program_options_handling_ok('createlang');
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

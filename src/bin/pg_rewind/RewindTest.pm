@@ -116,7 +116,7 @@ sub setup_cluster
 {
 
 	# Initialize master, data checksums are mandatory
-	$node_master = get_new_node();
+	$node_master = get_new_node('master');
 	$node_master->init;
 
 	# Custom parameters for master's postgresql.conf
@@ -144,7 +144,7 @@ sub start_master
 
 sub create_standby
 {
-	$node_standby = get_new_node();
+	$node_standby = get_new_node('standby');
 	$node_master->backup('my_backup');
 	$node_standby->init_from_backup($node_master, 'my_backup');
 	my $connstr_master = $node_master->connstr('postgres');

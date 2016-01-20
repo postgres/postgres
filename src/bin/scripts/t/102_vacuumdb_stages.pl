@@ -4,7 +4,7 @@ use warnings;
 use PostgresNode;
 use Test::More tests => 4;
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 $node->init;
 $node->start;
 

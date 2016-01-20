@@ -12,7 +12,7 @@ program_options_handling_ok('pg_basebackup');
 
 my $tempdir = TestLib::tempdir;
 
-my $node = get_new_node();
+my $node = get_new_node('main');
 
 # Initialize node without replication settings
 $node->init(hba_permit_replication => 0);
