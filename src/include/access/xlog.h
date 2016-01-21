@@ -86,6 +86,7 @@ typedef enum
 	RECOVERY_TARGET_IMMEDIATE
 } RecoveryTargetType;
 
+extern XLogRecPtr ProcLastRecPtr;
 extern XLogRecPtr XactLastRecEnd;
 extern PGDLLIMPORT XLogRecPtr XactLastCommitEnd;
 
