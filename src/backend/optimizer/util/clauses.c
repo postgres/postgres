@@ -4886,7 +4886,8 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
 	 *
 	 * Also, if it's varlena, forcibly detoast it.  This protects us against
 	 * storing TOAST pointers into plans that might outlive the referenced
-	 * data.
+	 * data.  (makeConst would handle detoasting anyway, but it's worth a few
+	 * extra lines here so that we can do the copy and detoast in one step.)
 	 */
 	if (!const_is_null)
 	{
