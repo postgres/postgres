@@ -434,7 +434,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	END_CRIT_SECTION();
 
 	if (needCleanup)
-		ginInsertCleanup(ginstate, false, true, NULL);
+		ginInsertCleanup(ginstate, true, NULL);
 }
 
 /*
@@ -732,9 +732,6 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  * action of removing a page from the pending list really needs exclusive
  * lock.
  *
- * vac_delay indicates that ginInsertCleanup should call
- * vacuum_delay_point() periodically.
- *
  * fill_fsm indicates that ginInsertCleanup should add deleted pages
  * to FSM otherwise caller is responsible to put deleted pages into
  * FSM.
@@ -743,8 +740,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  */
 void
 ginInsertCleanup(GinState *ginstate,
-				 bool vac_delay, bool fill_fsm,
-				 IndexBulkDeleteResult *stats)
+				 bool fill_fsm, IndexBulkDeleteResult *stats)
 {
 	Relation	index = ginstate->index;
 	Buffer		metabuffer,
