@@ -1934,11 +1934,18 @@ psql_completion(const char *text, int start, int end)
 /* COPY */
 
 	/*
-	 * If we have COPY [BINARY] (which you'd have to type yourself), offer
-	 * list of tables (Also cover the analogous backslash command)
+	 * If we have COPY, offer list of tables or "(" (Also cover the analogous
+	 * backslash command).
 	 */
-	else if (Matches1("COPY|\\copy") || Matches2("COPY", "BINARY"))
+	else if (Matches1("COPY|\\copy"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION ALL SELECT '('");
+	/* If we have COPY BINARY, complete with list of tables */
+	else if (Matches2("COPY", "BINARY"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+	/* If we have COPY (, complete it with legal commands */
+	else if (Matches2("COPY|\\copy", "("))
+		COMPLETE_WITH_LIST7("SELECT", "TABLE", "VALUES", "INSERT", "UPDATE", "DELETE", "WITH");
 	/* If we have COPY [BINARY] <sth>, complete it with "TO" or "FROM" */
 	else if (Matches2("COPY|\\copy", MatchAny) ||
 			 Matches3("COPY", "BINARY", MatchAny))
