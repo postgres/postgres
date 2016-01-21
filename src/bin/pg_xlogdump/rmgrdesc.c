@@ -27,7 +27,7 @@
 #include "commands/tablespace.h"
 #include "replication/origin.h"
 #include "rmgrdesc.h"
-#include "storage/standby.h"
+#include "storage/standbydefs.h"
 #include "utils/relmapper.h"
 
 #define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup) \

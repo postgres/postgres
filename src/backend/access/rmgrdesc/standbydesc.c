@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "storage/standby.h"
+#include "storage/standbydefs.h"
 
 static void
 standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
