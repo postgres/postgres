@@ -13,12 +13,16 @@
  */
 #include "postgres.h"
 
+#include "access/amvalidate.h"
 #include "access/gin_private.h"
 #include "access/htup_details.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
-#include "utils/catcache.h"
+#include "catalog/pg_opfamily.h"
+#include "catalog/pg_type.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -28,15 +32,22 @@
 bool
 ginvalidate(Oid opclassoid)
 {
+	bool		result = true;
 	HeapTuple	classtup;
 	Form_pg_opclass classform;
 	Oid			opfamilyoid;
 	Oid			opcintype;
-	int			numclassops;
-	int32		classfuncbits;
+	Oid			opckeytype;
+	char	   *opclassname;
+	HeapTuple	familytup;
+	Form_pg_opfamily familyform;
+	char	   *opfamilyname;
 	CatCList   *proclist,
 			   *oprlist;
+	List	   *grouplist;
+	OpFamilyOpFuncGroup *opclassgroup;
 	int			i;
+	ListCell   *lc;
 
 	/* Fetch opclass information */
 	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
@@ -46,100 +57,212 @@ ginvalidate(Oid opclassoid)
 
 	opfamilyoid = classform->opcfamily;
 	opcintype = classform->opcintype;
+	opckeytype = classform->opckeytype;
+	if (!OidIsValid(opckeytype))
+		opckeytype = opcintype;
+	opclassname = NameStr(classform->opcname);
 
-	ReleaseSysCache(classtup);
+	/* Fetch opfamily information */
+	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
+	if (!HeapTupleIsValid(familytup))
+		elog(ERROR, "cache lookup failed for operator family %u", opfamilyoid);
+	familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
+
+	opfamilyname = NameStr(familyform->opfname);
 
 	/* Fetch all operators and support functions of the opfamily */
 	oprlist = SearchSysCacheList1(AMOPSTRATEGY, ObjectIdGetDatum(opfamilyoid));
 	proclist = SearchSysCacheList1(AMPROCNUM, ObjectIdGetDatum(opfamilyoid));
 
-	/* We'll track the ops and functions belonging to the named opclass */
-	numclassops = 0;
-	classfuncbits = 0;
-
-	/* Check support functions */
+	/* Check individual support functions */
 	for (i = 0; i < proclist->n_members; i++)
 	{
 		HeapTuple	proctup = &proclist->members[i]->tuple;
 		Form_pg_amproc procform = (Form_pg_amproc) GETSTRUCT(proctup);
+		bool		ok;
 
-		/* Check that only allowed procedure numbers exist */
-		if (procform->amprocnum < 1 ||
-			procform->amprocnum > GINNProcs)
-			ereport(ERROR,
+		/*
+		 * All GIN support functions should be registered with matching
+		 * left/right types
+		 */
+		if (procform->amproclefttype != procform->amprocrighttype)
+		{
+			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %u contains invalid support number %d for procedure %u",
-							opfamilyoid,
-							procform->amprocnum, procform->amproc)));
+					 errmsg("gin opfamily %s contains support procedure %s with cross-type registration",
+							opfamilyname,
+							format_procedure(procform->amproc))));
+			result = false;
+		}
 
-		/* Remember functions that are specifically for the named opclass */
-		if (procform->amproclefttype == opcintype &&
-			procform->amprocrighttype == opcintype)
-			classfuncbits |= (1 << procform->amprocnum);
+		/*
+		 * We can't check signatures except within the specific opclass, since
+		 * we need to know the associated opckeytype in many cases.
+		 */
+		if (procform->amproclefttype != opcintype)
+			continue;
+
+		/* Check procedure numbers and function signatures */
+		switch (procform->amprocnum)
+		{
+			case GIN_COMPARE_PROC:
+				ok = check_amproc_signature(procform->amproc, INT4OID, false,
+											2, 2, opckeytype, opckeytype);
+				break;
+			case GIN_EXTRACTVALUE_PROC:
+				/* Some opclasses omit nullFlags */
+				ok = check_amproc_signature(procform->amproc, INTERNALOID, false,
+											2, 3, opcintype, INTERNALOID,
+											INTERNALOID);
+				break;
+			case GIN_EXTRACTQUERY_PROC:
+				/* Some opclasses omit nullFlags and searchMode */
+				ok = check_amproc_signature(procform->amproc, INTERNALOID, false,
+											5, 7, opcintype, INTERNALOID,
+											INT2OID, INTERNALOID, INTERNALOID,
+											INTERNALOID, INTERNALOID);
+				break;
+			case GIN_CONSISTENT_PROC:
+				/* Some opclasses omit queryKeys and nullFlags */
+				ok = check_amproc_signature(procform->amproc, BOOLOID, false,
+											6, 8, INTERNALOID, INT2OID,
+											opcintype, INT4OID,
+											INTERNALOID, INTERNALOID,
+											INTERNALOID, INTERNALOID);
+				break;
+			case GIN_COMPARE_PARTIAL_PROC:
+				ok = check_amproc_signature(procform->amproc, INT4OID, false,
+											4, 4, opckeytype, opckeytype,
+											INT2OID, INTERNALOID);
+				break;
+			case GIN_TRICONSISTENT_PROC:
+				ok = check_amproc_signature(procform->amproc, CHAROID, false,
+											7, 7, INTERNALOID, INT2OID,
+											opcintype, INT4OID,
+											INTERNALOID, INTERNALOID,
+											INTERNALOID);
+				break;
+			default:
+				ereport(INFO,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("gin opfamily %s contains function %s with invalid support number %d",
+								opfamilyname,
+								format_procedure(procform->amproc),
+								procform->amprocnum)));
+				result = false;
+				continue;		/* don't want additional message */
+		}
+
+		if (!ok)
+		{
+			ereport(INFO,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("gin opfamily %s contains function %s with wrong signature for support number %d",
+							opfamilyname,
+							format_procedure(procform->amproc),
+							procform->amprocnum)));
+			result = false;
+		}
 	}
 
-	/* Check operators */
+	/* Check individual operators */
 	for (i = 0; i < oprlist->n_members; i++)
 	{
 		HeapTuple	oprtup = &oprlist->members[i]->tuple;
 		Form_pg_amop oprform = (Form_pg_amop) GETSTRUCT(oprtup);
 
 		/* TODO: Check that only allowed strategy numbers exist */
-		if (oprform->amopstrategy < 1)
-			ereport(ERROR,
+		if (oprform->amopstrategy < 1 || oprform->amopstrategy > 63)
+		{
+			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %u contains invalid strategy number %d for operator %u",
-							opfamilyoid,
-							oprform->amopstrategy, oprform->amopopr)));
+					 errmsg("gin opfamily %s contains operator %s with invalid strategy number %d",
+							opfamilyname,
+							format_operator(oprform->amopopr),
+							oprform->amopstrategy)));
+			result = false;
+		}
 
 		/* gin doesn't support ORDER BY operators */
 		if (oprform->amoppurpose != AMOP_SEARCH ||
 			OidIsValid(oprform->amopsortfamily))
-			ereport(ERROR,
+		{
+			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %u contains invalid ORDER BY specification for operator %u",
-							opfamilyoid, oprform->amopopr)));
+					 errmsg("gin opfamily %s contains invalid ORDER BY specification for operator %s",
+							opfamilyname,
+							format_operator(oprform->amopopr))));
+			result = false;
+		}
 
-		/* Count operators that are specifically for the named opclass */
-		if (oprform->amoplefttype == opcintype &&
-			oprform->amoprighttype == opcintype)
-			numclassops++;
+		/* Check operator signature --- same for all gin strategies */
+		if (!check_amop_signature(oprform->amopopr, BOOLOID,
+								  oprform->amoplefttype,
+								  oprform->amoprighttype))
+		{
+			ereport(INFO,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("gin opfamily %s contains operator %s with wrong signature",
+							opfamilyname,
+							format_operator(oprform->amopopr))));
+			result = false;
+		}
 	}
 
-	/* Check that the named opclass is complete */
+	/* Now check for inconsistent groups of operators/functions */
+	grouplist = identify_opfamily_groups(oprlist, proclist);
+	opclassgroup = NULL;
+	foreach(lc, grouplist)
+	{
+		OpFamilyOpFuncGroup *thisgroup = (OpFamilyOpFuncGroup *) lfirst(lc);
 
-	/* XXX needs work: we need to detect applicability of ANYARRAY operators */
-#ifdef NOT_USED
-	if (numclassops == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gin opclass %u is missing operator(s)",
-						opclassoid)));
-#endif
+		/* Remember the group exactly matching the test opclass */
+		if (thisgroup->lefttype == opcintype &&
+			thisgroup->righttype == opcintype)
+			opclassgroup = thisgroup;
 
+		/*
+		 * There is not a lot we can do to check the operator sets, since each
+		 * GIN opclass is more or less a law unto itself, and some contain
+		 * only operators that are binary-compatible with the opclass datatype
+		 * (meaning that empty operator sets can be OK).  That case also means
+		 * that we shouldn't insist on nonempty function sets except for the
+		 * opclass's own group.
+		 */
+	}
+
+	/* Check that the originally-named opclass is complete */
 	for (i = 1; i <= GINNProcs; i++)
 	{
-		if ((classfuncbits & (1 << i)) != 0)
+		if (opclassgroup && (opclassgroup->functionset & (1 << i)) != 0)
 			continue;			/* got it */
 		if (i == GIN_COMPARE_PARTIAL_PROC)
 			continue;			/* optional method */
 		if (i == GIN_CONSISTENT_PROC || i == GIN_TRICONSISTENT_PROC)
-			continue;			/* don't need to have both, see check below
-								 * loop */
-		ereport(ERROR,
+			continue;			/* don't need both, see check below loop */
+		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("gin opclass %u is missing required support function %d",
-					opclassoid, i)));
+				 errmsg("gin opclass %s is missing support function %d",
+						opclassname, i)));
+		result = false;
 	}
-	if ((classfuncbits & (1 << GIN_CONSISTENT_PROC)) == 0 &&
-		(classfuncbits & (1 << GIN_TRICONSISTENT_PROC)) == 0)
-		ereport(ERROR,
+	if (!opclassgroup ||
+		((opclassgroup->functionset & (1 << GIN_CONSISTENT_PROC)) == 0 &&
+		 (opclassgroup->functionset & (1 << GIN_TRICONSISTENT_PROC)) == 0))
+	{
+		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gin opclass %u is missing required support function",
-						opclassoid)));
+				 errmsg("gin opclass %s is missing support function %d or %d",
+						opclassname,
+						GIN_CONSISTENT_PROC, GIN_TRICONSISTENT_PROC)));
+		result = false;
+	}
+
 
 	ReleaseCatCacheList(proclist);
 	ReleaseCatCacheList(oprlist);
+	ReleaseSysCache(familytup);
+	ReleaseSysCache(classtup);
 
-	return true;
+	return result;
 }

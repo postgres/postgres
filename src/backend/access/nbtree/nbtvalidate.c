@@ -13,13 +13,15 @@
  */
 #include "postgres.h"
 
+#include "access/amvalidate.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_opfamily.h"
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/syscache.h"
 
 
@@ -34,19 +36,22 @@
 bool
 btvalidate(Oid opclassoid)
 {
+	bool		result = true;
 	HeapTuple	classtup;
 	Form_pg_opclass classform;
 	Oid			opfamilyoid;
 	Oid			opcintype;
-	int			numclassops;
-	int32		classfuncbits;
+	char	   *opclassname;
+	HeapTuple	familytup;
+	Form_pg_opfamily familyform;
+	char	   *opfamilyname;
 	CatCList   *proclist,
 			   *oprlist;
-	Oid			lastlefttype,
-				lastrighttype;
-	int			numOps;
-	int			i,
-				j;
+	List	   *grouplist;
+	OpFamilyOpFuncGroup *opclassgroup;
+	List	   *familytypes;
+	int			i;
+	ListCell   *lc;
 
 	/* Fetch opclass information */
 	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
@@ -56,45 +61,63 @@ btvalidate(Oid opclassoid)
 
 	opfamilyoid = classform->opcfamily;
 	opcintype = classform->opcintype;
+	opclassname = NameStr(classform->opcname);
 
-	ReleaseSysCache(classtup);
+	/* Fetch opfamily information */
+	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
+	if (!HeapTupleIsValid(familytup))
+		elog(ERROR, "cache lookup failed for operator family %u", opfamilyoid);
+	familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
+
+	opfamilyname = NameStr(familyform->opfname);
 
 	/* Fetch all operators and support functions of the opfamily */
 	oprlist = SearchSysCacheList1(AMOPSTRATEGY, ObjectIdGetDatum(opfamilyoid));
 	proclist = SearchSysCacheList1(AMPROCNUM, ObjectIdGetDatum(opfamilyoid));
 
-	/* We rely on the oprlist to be ordered */
-	if (!oprlist->ordered)
-		elog(ERROR, "cannot validate btree opclass without ordered data");
-
-	/* We'll track the ops and functions belonging to the named opclass */
-	numclassops = 0;
-	classfuncbits = 0;
-
-	/* Check support functions */
+	/* Check individual support functions */
 	for (i = 0; i < proclist->n_members; i++)
 	{
 		HeapTuple	proctup = &proclist->members[i]->tuple;
 		Form_pg_amproc procform = (Form_pg_amproc) GETSTRUCT(proctup);
+		bool		ok;
 
-		/* Check that only allowed procedure numbers exist */
-		if (procform->amprocnum != BTORDER_PROC &&
-			procform->amprocnum != BTSORTSUPPORT_PROC)
-			ereport(ERROR,
+		/* Check procedure numbers and function signatures */
+		switch (procform->amprocnum)
+		{
+			case BTORDER_PROC:
+				ok = check_amproc_signature(procform->amproc, INT4OID, true,
+											2, 2, procform->amproclefttype,
+											procform->amprocrighttype);
+				break;
+			case BTSORTSUPPORT_PROC:
+				ok = check_amproc_signature(procform->amproc, VOIDOID, true,
+											1, 1, INTERNALOID);
+				break;
+			default:
+				ereport(INFO,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree opfamily %s contains function %s with invalid support number %d",
+								opfamilyname,
+								format_procedure(procform->amproc),
+								procform->amprocnum)));
+				result = false;
+				continue;		/* don't want additional message */
+		}
+
+		if (!ok)
+		{
+			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree opfamily %u contains invalid support number %d for procedure %u",
-							opfamilyoid,
-							procform->amprocnum, procform->amproc)));
-
-		/* Remember functions that are specifically for the named opclass */
-		if (procform->amproclefttype == opcintype &&
-			procform->amprocrighttype == opcintype)
-			classfuncbits |= (1 << procform->amprocnum);
+					 errmsg("btree opfamily %s contains function %s with wrong signature for support number %d",
+							opfamilyname,
+							format_procedure(procform->amproc),
+							procform->amprocnum)));
+			result = false;
+		}
 	}
 
-	/* Check operators */
-	lastlefttype = lastrighttype = InvalidOid;
-	numOps = 0;
+	/* Check individual operators */
 	for (i = 0; i < oprlist->n_members; i++)
 	{
 		HeapTuple	oprtup = &oprlist->members[i]->tuple;
@@ -103,102 +126,127 @@ btvalidate(Oid opclassoid)
 		/* Check that only allowed strategy numbers exist */
 		if (oprform->amopstrategy < 1 ||
 			oprform->amopstrategy > BTMaxStrategyNumber)
-			ereport(ERROR,
+		{
+			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree opfamily %u contains invalid strategy number %d for operator %u",
-							opfamilyoid,
-							oprform->amopstrategy, oprform->amopopr)));
-
-		/*
-		 * Check that we have all strategies for each supported datatype
-		 * combination.  This is easy since the list will be sorted in
-		 * datatype order and there can't be duplicate strategy numbers.
-		 */
-		if (oprform->amoplefttype == lastlefttype &&
-			oprform->amoprighttype == lastrighttype)
-			numOps++;
-		else
-		{
-			/* reached a group boundary, so check ... */
-			if (numOps > 0 && numOps != BTMaxStrategyNumber)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree opfamily %u has a partial set of operators for datatypes %s and %s",
-								opfamilyoid,
-								format_type_be(lastlefttype),
-								format_type_be(lastrighttype))));
-			/* ... and reset for new group */
-			lastlefttype = oprform->amoplefttype;
-			lastrighttype = oprform->amoprighttype;
-			numOps = 1;
-		}
-
-		/*
-		 * There should be a relevant support function for each operator, but
-		 * we only need to check this once per pair of datatypes.
-		 */
-		if (numOps == 1)
-		{
-			bool		found = false;
-
-			for (j = 0; j < proclist->n_members; j++)
-			{
-				HeapTuple	proctup = &proclist->members[j]->tuple;
-				Form_pg_amproc procform = (Form_pg_amproc) GETSTRUCT(proctup);
-
-				if (procform->amprocnum == BTORDER_PROC &&
-					procform->amproclefttype == oprform->amoplefttype &&
-					procform->amprocrighttype == oprform->amoprighttype)
-				{
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree opfamily %u lacks support function for operator %u",
-								opfamilyoid, oprform->amopopr)));
+					 errmsg("btree opfamily %s contains operator %s with invalid strategy number %d",
+							opfamilyname,
+							format_operator(oprform->amopopr),
+							oprform->amopstrategy)));
+			result = false;
 		}
 
 		/* btree doesn't support ORDER BY operators */
 		if (oprform->amoppurpose != AMOP_SEARCH ||
 			OidIsValid(oprform->amopsortfamily))
-			ereport(ERROR,
+		{
+			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree opfamily %u contains invalid ORDER BY specification for operator %u",
-							opfamilyoid, oprform->amopopr)));
+					 errmsg("btree opfamily %s contains invalid ORDER BY specification for operator %s",
+							opfamilyname,
+							format_operator(oprform->amopopr))));
+			result = false;
+		}
 
-		/* Count operators that are specifically for the named opclass */
-		if (oprform->amoplefttype == opcintype &&
-			oprform->amoprighttype == opcintype)
-			numclassops++;
+		/* Check operator signature --- same for all btree strategies */
+		if (!check_amop_signature(oprform->amopopr, BOOLOID,
+								  oprform->amoplefttype,
+								  oprform->amoprighttype))
+		{
+			ereport(INFO,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("btree opfamily %s contains operator %s with wrong signature",
+							opfamilyname,
+							format_operator(oprform->amopopr))));
+			result = false;
+		}
 	}
 
-	/* don't forget to check the last batch of operators for completeness */
-	if (numOps > 0 && numOps != BTMaxStrategyNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree opfamily %u has a partial set of operators for datatypes %s and %s",
-						opfamilyoid,
-						format_type_be(lastlefttype),
-						format_type_be(lastrighttype))));
+	/* Now check for inconsistent groups of operators/functions */
+	grouplist = identify_opfamily_groups(oprlist, proclist);
+	opclassgroup = NULL;
+	familytypes = NIL;
+	foreach(lc, grouplist)
+	{
+		OpFamilyOpFuncGroup *thisgroup = (OpFamilyOpFuncGroup *) lfirst(lc);
 
-	/* Check that the named opclass is complete */
-	if (numclassops != BTMaxStrategyNumber)
-		ereport(ERROR,
+		/* Remember the group exactly matching the test opclass */
+		if (thisgroup->lefttype == opcintype &&
+			thisgroup->righttype == opcintype)
+			opclassgroup = thisgroup;
+
+		/*
+		 * Identify all distinct data types handled in this opfamily.  This
+		 * implementation is O(N^2), but there aren't likely to be enough
+		 * types in the family for it to matter.
+		 */
+		familytypes = list_append_unique_oid(familytypes, thisgroup->lefttype);
+		familytypes = list_append_unique_oid(familytypes, thisgroup->righttype);
+
+		/*
+		 * Complain if there seems to be an incomplete set of either operators
+		 * or support functions for this datatype pair.  The only thing that
+		 * is considered optional is the sortsupport function.
+		 */
+		if (thisgroup->operatorset !=
+			((1 << BTLessStrategyNumber) |
+			 (1 << BTLessEqualStrategyNumber) |
+			 (1 << BTEqualStrategyNumber) |
+			 (1 << BTGreaterEqualStrategyNumber) |
+			 (1 << BTGreaterStrategyNumber)))
+		{
+			ereport(INFO,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("btree opfamily %s is missing operator(s) for types %s and %s",
+							opfamilyname,
+							format_type_be(thisgroup->lefttype),
+							format_type_be(thisgroup->righttype))));
+			result = false;
+		}
+		if ((thisgroup->functionset & (1 << BTORDER_PROC)) == 0)
+		{
+			ereport(INFO,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("btree opfamily %s is missing support function for types %s and %s",
+							opfamilyname,
+							format_type_be(thisgroup->lefttype),
+							format_type_be(thisgroup->righttype))));
+			result = false;
+		}
+	}
+
+	/* Check that the originally-named opclass is supported */
+	/* (if group is there, we already checked it adequately above) */
+	if (!opclassgroup)
+	{
+		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree opclass %u is missing operator(s)",
-						opclassoid)));
-	if ((classfuncbits & (1 << BTORDER_PROC)) == 0)
-		ereport(ERROR,
+				 errmsg("btree opclass %s is missing operator(s)",
+						opclassname)));
+		result = false;
+	}
+
+	/*
+	 * Complain if the opfamily doesn't have entries for all possible
+	 * combinations of its supported datatypes.  While missing cross-type
+	 * operators are not fatal, they do limit the planner's ability to derive
+	 * additional qual clauses from equivalence classes, so it seems
+	 * reasonable to insist that all built-in btree opfamilies be complete.
+	 */
+	if (list_length(grouplist) !=
+		list_length(familytypes) * list_length(familytypes))
+	{
+		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			  errmsg("btree opclass %u is missing required support function",
-					 opclassoid)));
+				 errmsg("btree opfamily %s is missing cross-type operator(s)",
+						opfamilyname)));
+		result = false;
+	}
 
 	ReleaseCatCacheList(proclist);
 	ReleaseCatCacheList(oprlist);
+	ReleaseSysCache(familytup);
+	ReleaseSysCache(classtup);
 
-	return true;
+	return result;
 }
