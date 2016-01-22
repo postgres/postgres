@@ -7521,6 +7521,17 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
     </variablelist>
    </para>
 
+   <note>
+    <para>
+     When the input value is +/-Infinity, <function>extract</> returns
+     +/-Infinity for monotonically-increasing fields (<literal>epoch</>,
+     <literal>julian</>, <literal>year</>, <literal>isoyear</>,
+     <literal>decade</>, <literal>century</>, and <literal>millennium</>).
+     For other fields, NULL is returned.  <productname>PostgreSQL</>
+     versions before 9.6 returned zero for all cases of infinite input.
+    </para>
+   </note>
+
    <para>
     The <function>extract</function> function is primarily intended
     for computational processing.  For formatting date/time values for
