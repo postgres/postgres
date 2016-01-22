@@ -1524,18 +1524,23 @@ dacos(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
 	/*
-	 * We use errno here because the trigonometric functions are cyclic and
-	 * hard to check for underflow.
+	 * The principal branch of the inverse cosine function maps values in the
+	 * range [-1, 1] to values in the range [0, Pi], so we should reject any
+	 * inputs outside that range and the result will always be finite.
 	 */
-	errno = 0;
-	result = acos(arg1);
-	if (errno != 0)
+	if (arg1 < -1.0 || arg1 > 1.0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
-	CHECKFLOATVAL(result, isinf(arg1), true);
+	result = acos(arg1);
+
+	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1549,14 +1554,23 @@ dasin(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;
-	result = asin(arg1);
-	if (errno != 0)
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/*
+	 * The principal branch of the inverse sine function maps values in the
+	 * range [-1, 1] to values in the range [-Pi/2, Pi/2], so we should reject
+	 * any inputs outside that range and the result will always be finite.
+	 */
+	if (arg1 < -1.0 || arg1 > 1.0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
-	CHECKFLOATVAL(result, isinf(arg1), true);
+	result = asin(arg1);
+
+	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1570,14 +1584,18 @@ datan(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;
-	result = atan(arg1);
-	if (errno != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("input is out of range")));
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
 
-	CHECKFLOATVAL(result, isinf(arg1), true);
+	/*
+	 * The principal branch of the inverse tangent function maps all inputs to
+	 * values in the range [-Pi/2, Pi/2], so the result should always be
+	 * finite, even if the input is infinite.
+	 */
+	result = atan(arg1);
+
+	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1592,14 +1610,17 @@ datan2(PG_FUNCTION_ARGS)
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 	float8		result;
 
-	errno = 0;
-	result = atan2(arg1, arg2);
-	if (errno != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("input is out of range")));
+	/* Per the POSIX spec, return NaN if either input is NaN */
+	if (isnan(arg1) || isnan(arg2))
+		PG_RETURN_FLOAT8(get_float8_nan());
 
-	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), true);
+	/*
+	 * atan2 maps all inputs to values in the range [-Pi, Pi], so the result
+	 * should always be finite, even if the inputs are infinite.
+	 */
+	result = atan2(arg1, arg2);
+
+	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1613,14 +1634,33 @@ dcos(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/*
+	 * cos() is periodic and so theoretically can work for all finite inputs,
+	 * but some implementations may choose to throw error if the input is so
+	 * large that there are no significant digits in the result.  So we should
+	 * check for errors.  POSIX allows an error to be reported either via
+	 * errno or via fetestexcept(), but currently we only support checking
+	 * errno.  (fetestexcept() is rumored to report underflow unreasonably
+	 * early on some platforms, so it's not clear that believing it would be a
+	 * net improvement anyway.)
+	 *
+	 * For infinite inputs, POSIX specifies that the trigonometric functions
+	 * should return a domain error; but we won't notice that unless the
+	 * platform reports via errno, so also explicitly test for infinite
+	 * inputs.
+	 */
 	errno = 0;
 	result = cos(arg1);
-	if (errno != 0)
+	if (errno != 0 || isinf(arg1))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
-	CHECKFLOATVAL(result, isinf(arg1), true);
+	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1634,15 +1674,20 @@ dcot(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/* Be sure to throw an error if the input is infinite --- see dcos() */
 	errno = 0;
 	result = tan(arg1);
-	if (errno != 0)
+	if (errno != 0 || isinf(arg1))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
 	result = 1.0 / result;
-	CHECKFLOATVAL(result, true /* cotan(pi/2) == inf */ , true);
+	CHECKFLOATVAL(result, true /* cot(0) == Inf */ , true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1656,14 +1701,19 @@ dsin(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/* Be sure to throw an error if the input is infinite --- see dcos() */
 	errno = 0;
 	result = sin(arg1);
-	if (errno != 0)
+	if (errno != 0 || isinf(arg1))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
-	CHECKFLOATVAL(result, isinf(arg1), true);
+	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1677,9 +1727,14 @@ dtan(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/* Be sure to throw an error if the input is infinite --- see dcos() */
 	errno = 0;
 	result = tan(arg1);
-	if (errno != 0)
+	if (errno != 0 || isinf(arg1))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
