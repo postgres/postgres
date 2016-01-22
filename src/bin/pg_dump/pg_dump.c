@@ -9592,7 +9592,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 		appendPQExpBuffer(labelq, "CONSTRAINT %s ",
 						  fmtId(domcheck->dobj.name));
 		appendPQExpBuffer(labelq, "ON DOMAIN %s",
-						  fmtId(qtypname));
+						  qtypname);
 		dumpComment(fout, labelq->data,
 					tyinfo->dobj.namespace->dobj.name,
 					tyinfo->rolname,
