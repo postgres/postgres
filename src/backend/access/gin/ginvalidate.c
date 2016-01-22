@@ -234,7 +234,8 @@ ginvalidate(Oid opclassoid)
 	/* Check that the originally-named opclass is complete */
 	for (i = 1; i <= GINNProcs; i++)
 	{
-		if (opclassgroup && (opclassgroup->functionset & (1 << i)) != 0)
+		if (opclassgroup &&
+			(opclassgroup->functionset & (((uint64) 1) << i)) != 0)
 			continue;			/* got it */
 		if (i == GIN_COMPARE_PARTIAL_PROC)
 			continue;			/* optional method */

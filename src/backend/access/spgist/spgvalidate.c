@@ -213,7 +213,7 @@ spgvalidate(Oid opclassoid)
 
 		for (i = 1; i <= SPGISTNProc; i++)
 		{
-			if ((thisgroup->functionset & (1 << i)) != 0)
+			if ((thisgroup->functionset & (((uint64) 1) << i)) != 0)
 				continue;		/* got it */
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

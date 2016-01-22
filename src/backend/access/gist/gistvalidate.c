@@ -254,7 +254,8 @@ gistvalidate(Oid opclassoid)
 	/* Check that the originally-named opclass is complete */
 	for (i = 1; i <= GISTNProcs; i++)
 	{
-		if (opclassgroup && (opclassgroup->functionset & (1 << i)) != 0)
+		if (opclassgroup &&
+			(opclassgroup->functionset & (((uint64) 1) << i)) != 0)
 			continue;			/* got it */
 		if (i == GIST_DISTANCE_PROC || i == GIST_FETCH_PROC)
 			continue;			/* optional methods */
