@@ -1793,6 +1793,24 @@ DATA(insert OID = 1606 (  tan				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 
 DESCR("tangent");
 DATA(insert OID = 1607 (  cot				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dcot _null_ _null_ _null_ ));
 DESCR("cotangent");
+
+DATA(insert OID = 2731 (  asind				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dasind _null_ _null_ _null_ ));
+DESCR("arcsine, degrees");
+DATA(insert OID = 2732 (  acosd				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dacosd _null_ _null_ _null_ ));
+DESCR("arccosine, degrees");
+DATA(insert OID = 2733 (  atand				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ datand _null_ _null_ _null_ ));
+DESCR("arctangent, degrees");
+DATA(insert OID = 2734 (  atan2d			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 701 "701 701" _null_ _null_ _null_ _null_ _null_ datan2d _null_ _null_ _null_ ));
+DESCR("arctangent, two arguments, degrees");
+DATA(insert OID = 2735 (  sind				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dsind _null_ _null_ _null_ ));
+DESCR("sine, degrees");
+DATA(insert OID = 2736 (  cosd				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dcosd _null_ _null_ _null_ ));
+DESCR("cosine, degrees");
+DATA(insert OID = 2737 (  tand				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dtand _null_ _null_ _null_ ));
+DESCR("tangent, degrees");
+DATA(insert OID = 2738 (  cotd				PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ dcotd _null_ _null_ _null_ ));
+DESCR("cotangent, degrees");
+
 DATA(insert OID = 1608 (  degrees			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ degrees _null_ _null_ _null_ ));
 DESCR("radians to degrees");
 DATA(insert OID = 1609 (  radians			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701 "701" _null_ _null_ _null_ _null_ _null_ radians _null_ _null_ _null_ ));

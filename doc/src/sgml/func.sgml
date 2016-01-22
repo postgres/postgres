@@ -1006,20 +1006,19 @@
    Finally, <xref linkend="functions-math-trig-table"> shows the
    available trigonometric functions.  All trigonometric functions
    take arguments and return values of type <type>double
-   precision</type>. Trigonometric functions arguments are expressed
-   in radians. Inverse functions return values are expressed in
-   radians.  See unit transformation functions
-   <literal><function>radians()</function></literal> and
-   <literal><function>degrees()</function></literal> above.
+   precision</type>.  Each of the trigonometric functions comes in
+   two variants, one that measures angles in radians and one that
+   measures angles in degrees.
   </para>
 
    <table id="functions-math-trig-table">
     <title>Trigonometric Functions</title>
 
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
-       <entry>Function</entry>
+       <entry>Function (radians)</entry>
+       <entry>Function (degrees)</entry>
        <entry>Description</entry>
       </row>
      </thead>
@@ -1031,6 +1030,11 @@
          <primary>acos</primary>
         </indexterm><literal><function>acos(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>acosd</primary>
+        </indexterm><literal><function>acosd(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>inverse cosine</entry>
       </row>
 
@@ -1040,6 +1044,12 @@
          <primary>asin</primary>
         </indexterm>
         <literal><function>asin(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>
+        <indexterm>
+         <primary>asind</primary>
+        </indexterm>
+        <literal><function>asind(<replaceable>x</replaceable>)</function></literal>
        </entry>
        <entry>inverse sine</entry>
       </row>
@@ -1051,6 +1061,12 @@
         </indexterm>
         <literal><function>atan(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>atand</primary>
+        </indexterm>
+        <literal><function>atand(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>inverse tangent</entry>
       </row>
 
@@ -1060,6 +1076,13 @@
          <primary>atan2</primary>
         </indexterm>
         <literal><function>atan2(<replaceable>y</replaceable>,
+        <replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>
+        <indexterm>
+         <primary>atan2d</primary>
+        </indexterm>
+        <literal><function>atan2d(<replaceable>y</replaceable>,
         <replaceable>x</replaceable>)</function></literal>
        </entry>
        <entry>inverse tangent of
@@ -1073,6 +1096,12 @@
         </indexterm>
         <literal><function>cos(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>cosd</primary>
+        </indexterm>
+        <literal><function>cosd(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>cosine</entry>
       </row>
 
@@ -1082,6 +1111,12 @@
          <primary>cot</primary>
         </indexterm>
         <literal><function>cot(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>
+        <indexterm>
+         <primary>cotd</primary>
+        </indexterm>
+        <literal><function>cotd(<replaceable>x</replaceable>)</function></literal>
        </entry>
        <entry>cotangent</entry>
       </row>
@@ -1093,6 +1128,12 @@
         </indexterm>
         <literal><function>sin(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>sind</primary>
+        </indexterm>
+        <literal><function>sind(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>sine</entry>
       </row>
 
@@ -1103,11 +1144,28 @@
         </indexterm>
         <literal><function>tan(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>tand</primary>
+        </indexterm>
+        <literal><function>tand(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>tangent</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
+
+  <note>
+   <para>
+    Another way to work with angles measured in degrees is to use the unit
+    transformation functions <literal><function>radians()</function></literal>
+    and <literal><function>degrees()</function></literal> shown earlier.
+    However, using the degree-based trigonometric functions is preferred,
+    as that way avoids roundoff error for special cases such
+    as <literal>sind(30)</>.
+   </para>
+  </note>
 
   </sect1>
 

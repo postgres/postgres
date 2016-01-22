@@ -1601,7 +1601,7 @@ datan(PG_FUNCTION_ARGS)
 
 
 /*
- *		atan2			- returns the arctan2 of arg1 (radians)
+ *		atan2			- returns the arctan of arg1/arg2 (radians)
  */
 Datum
 datan2(PG_FUNCTION_ARGS)
@@ -1740,6 +1740,441 @@ dtan(PG_FUNCTION_ARGS)
 				 errmsg("input is out of range")));
 
 	CHECKFLOATVAL(result, true /* tan(pi/2) == Inf */ , true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		asind_q1		- returns the inverse sine of x in degrees, for x in
+ *						  the range [0, 1].  The result is an angle in the
+ *						  first quadrant --- [0, 90] degrees.
+ *
+ *						  For the 3 special case inputs (0, 0.5 and 1), this
+ *						  function will return exact values (0, 30 and 90
+ *						  degrees respectively).
+ */
+static double
+asind_q1(double x)
+{
+	/*
+	 * Stitch together inverse sine and cosine functions for the ranges [0,
+	 * 0.5] and (0.5, 1].  Each expression below is guaranteed to return
+	 * exactly 30 for x=0.5, so the result is a continuous monotonic function
+	 * over the full range.
+	 */
+	if (x <= 0.5)
+		return (asin(x) / asin(0.5)) * 30.0;
+	else
+		return 90.0 - (acos(x) / acos(0.5)) * 60.0;
+}
+
+
+/*
+ *		acosd_q1		- returns the inverse cosine of x in degrees, for x in
+ *						  the range [0, 1].  The result is an angle in the
+ *						  first quadrant --- [0, 90] degrees.
+ *
+ *						  For the 3 special case inputs (0, 0.5 and 1), this
+ *						  function will return exact values (0, 60 and 90
+ *						  degrees respectively).
+ */
+static double
+acosd_q1(double x)
+{
+	/*
+	 * Stitch together inverse sine and cosine functions for the ranges [0,
+	 * 0.5] and (0.5, 1].  Each expression below is guaranteed to return
+	 * exactly 60 for x=0.5, so the result is a continuous monotonic function
+	 * over the full range.
+	 */
+	if (x <= 0.5)
+		return 90.0 - (asin(x) / asin(0.5)) * 30.0;
+	else
+		return (acos(x) / acos(0.5)) * 60.0;
+}
+
+
+/*
+ *		dacosd			- returns the arccos of arg1 (degrees)
+ */
+Datum
+dacosd(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/*
+	 * The principal branch of the inverse cosine function maps values in the
+	 * range [-1, 1] to values in the range [0, 180], so we should reject any
+	 * inputs outside that range and the result will always be finite.
+	 */
+	if (arg1 < -1.0 || arg1 > 1.0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	if (arg1 >= 0.0)
+		result = acosd_q1(arg1);
+	else
+		result = 90.0 + asind_q1(-arg1);
+
+	CHECKFLOATVAL(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		dasind			- returns the arcsin of arg1 (degrees)
+ */
+Datum
+dasind(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/*
+	 * The principal branch of the inverse sine function maps values in the
+	 * range [-1, 1] to values in the range [-90, 90], so we should reject any
+	 * inputs outside that range and the result will always be finite.
+	 */
+	if (arg1 < -1.0 || arg1 > 1.0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	if (arg1 >= 0.0)
+		result = asind_q1(arg1);
+	else
+		result = -asind_q1(-arg1);
+
+	CHECKFLOATVAL(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		datand			- returns the arctan of arg1 (degrees)
+ */
+Datum
+datand(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/* Per the POSIX spec, return NaN if the input is NaN */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/*
+	 * The principal branch of the inverse tangent function maps all inputs to
+	 * values in the range [-90, 90], so the result should always be finite,
+	 * even if the input is infinite.  Additionally, we take care to ensure
+	 * than when arg1 is 1, the result is exactly 45.
+	 */
+	result = (atan(arg1) / atan(1.0)) * 45.0;
+
+	CHECKFLOATVAL(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		atan2d			- returns the arctan of arg1/arg2 (degrees)
+ */
+Datum
+datan2d(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+	float8		result;
+
+	/* Per the POSIX spec, return NaN if either input is NaN */
+	if (isnan(arg1) || isnan(arg2))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	/*
+	 * atan2d maps all inputs to values in the range [-180, 180], so the
+	 * result should always be finite, even if the inputs are infinite.
+	 */
+	result = (atan2(arg1, arg2) / atan(1.0)) * 45.0;
+
+	CHECKFLOATVAL(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		sind_0_to_30	- returns the sine of an angle that lies between 0 and
+ *						  30 degrees.  This will return exactly 0 when x is 0,
+ *						  and exactly 0.5 when x is 30 degrees.
+ */
+static double
+sind_0_to_30(double x)
+{
+	return (sin(x * (M_PI / 180.0)) / sin(30.0 * (M_PI / 180.0))) / 2.0;
+}
+
+
+/*
+ *		cosd_0_to_60	- returns the cosine of an angle that lies between 0
+ *						  and 60 degrees.  This will return exactly 1 when x
+ *						  is 0, and exactly 0.5 when x is 60 degrees.
+ */
+static double
+cosd_0_to_60(double x)
+{
+	return 1.0 - ((1.0 - cos(x * (M_PI / 180.0))) /
+				  (1.0 - cos(60.0 * (M_PI / 180.0)))) / 2.0;
+}
+
+
+/*
+ *		sind_q1			- returns the sine of an angle in the first quadrant
+ *						  (0 to 90 degrees).
+ */
+static double
+sind_q1(double x)
+{
+	/*
+	 * Stitch together the sine and cosine functions for the ranges [0, 30]
+	 * and (30, 90].  These guarantee to return exact answers at their
+	 * endpoints, so the overall result is a continuous monotonic function
+	 * that gives exact results when x = 0, 30 and 90 degrees.
+	 */
+	if (x <= 30.0)
+		return sind_0_to_30(x);
+	else
+		return cosd_0_to_60(90.0 - x);
+}
+
+
+/*
+ *		cosd_q1			- returns the cosine of an angle in the first quadrant
+ *						  (0 to 90 degrees).
+ */
+static double
+cosd_q1(double x)
+{
+	/*
+	 * Stitch together the sine and cosine functions for the ranges [0, 60]
+	 * and (60, 90].  These guarantee to return exact answers at their
+	 * endpoints, so the overall result is a continuous monotonic function
+	 * that gives exact results when x = 0, 60 and 90 degrees.
+	 */
+	if (x <= 60.0)
+		return cosd_0_to_60(x);
+	else
+		return sind_0_to_30(90.0 - x);
+}
+
+
+/*
+ *		dcosd			- returns the cosine of arg1 (degrees)
+ */
+Datum
+dcosd(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int			sign = 1;
+	float8		result;
+
+	/*
+	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
+	 * if the input is infinite.
+	 */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	if (isinf(arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	/* Reduce the range of the input to [0,90] degrees */
+	arg1 = fmod(arg1, 360.0);
+
+	if (arg1 < 0.0)
+		/* cosd(-x) = cosd(x) */
+		arg1 = -arg1;
+
+	if (arg1 > 180.0)
+		/* cosd(360-x) = cosd(x) */
+		arg1 = 360.0 - arg1;
+
+	if (arg1 > 90.0)
+	{
+		/* cosd(180-x) = -cosd(x) */
+		arg1 = 180.0 - arg1;
+		sign = -sign;
+	}
+
+	result = sign * cosd_q1(arg1);
+
+	CHECKFLOATVAL(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		dcotd			- returns the cotangent of arg1 (degrees)
+ */
+Datum
+dcotd(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int			sign = 1;
+	float8		result;
+
+	/*
+	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
+	 * if the input is infinite.
+	 */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	if (isinf(arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	/* Reduce the range of the input to [0,90] degrees */
+	arg1 = fmod(arg1, 360.0);
+
+	if (arg1 < 0.0)
+	{
+		/* cotd(-x) = -cotd(x) */
+		arg1 = -arg1;
+		sign = -sign;
+	}
+
+	if (arg1 > 180.0)
+	{
+		/* cotd(360-x) = -cotd(x) */
+		arg1 = 360.0 - arg1;
+		sign = -sign;
+	}
+
+	if (arg1 > 90.0)
+	{
+		/* cotd(180-x) = -cotd(x) */
+		arg1 = 180.0 - arg1;
+		sign = -sign;
+	}
+
+	result = sign * cosd_q1(arg1) / sind_q1(arg1);
+
+	CHECKFLOATVAL(result, true /* cotd(0) == Inf */ , true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		dsind			- returns the sine of arg1 (degrees)
+ */
+Datum
+dsind(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int			sign = 1;
+	float8		result;
+
+	/*
+	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
+	 * if the input is infinite.
+	 */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	if (isinf(arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	/* Reduce the range of the input to [0,90] degrees */
+	arg1 = fmod(arg1, 360.0);
+
+	if (arg1 < 0.0)
+	{
+		/* sind(-x) = -sind(x) */
+		arg1 = -arg1;
+		sign = -sign;
+	}
+
+	if (arg1 > 180.0)
+	{
+		/* sind(360-x) = -sind(x) */
+		arg1 = 360.0 - arg1;
+		sign = -sign;
+	}
+
+	if (arg1 > 90.0)
+		/* sind(180-x) = sind(x) */
+		arg1 = 180.0 - arg1;
+
+	result = sign * sind_q1(arg1);
+
+	CHECKFLOATVAL(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		dtand			- returns the tangent of arg1 (degrees)
+ */
+Datum
+dtand(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int			sign = 1;
+	float8		result;
+
+	/*
+	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
+	 * if the input is infinite.
+	 */
+	if (isnan(arg1))
+		PG_RETURN_FLOAT8(get_float8_nan());
+
+	if (isinf(arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	/* Reduce the range of the input to [0,90] degrees */
+	arg1 = fmod(arg1, 360.0);
+
+	if (arg1 < 0.0)
+	{
+		/* tand(-x) = -tand(x) */
+		arg1 = -arg1;
+		sign = -sign;
+	}
+
+	if (arg1 > 180.0)
+	{
+		/* tand(360-x) = -tand(x) */
+		arg1 = 360.0 - arg1;
+		sign = -sign;
+	}
+
+	if (arg1 > 90.0)
+	{
+		/* tand(180-x) = -tand(x) */
+		arg1 = 180.0 - arg1;
+		sign = -sign;
+	}
+
+	result = sign * sind_q1(arg1) / cosd_q1(arg1);
+
+	CHECKFLOATVAL(result, true /* tand(90) == Inf */ , true);
 	PG_RETURN_FLOAT8(result);
 }
 
