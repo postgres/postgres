@@ -31,6 +31,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+/* Radians per degree, a.k.a. PI / 180 */
+#define RADIANS_PER_DEGREE 0.0174532925199432957692
+
 /* Visual C++ etc lacks NAN, and won't accept 0.0/0.0.  NAN definition from
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclang/html/vclrfNotNumberNANItems.asp
  */
@@ -1919,7 +1922,7 @@ datan2d(PG_FUNCTION_ARGS)
 static double
 sind_0_to_30(double x)
 {
-	return (sin(x * (M_PI / 180.0)) / sin(30.0 * (M_PI / 180.0))) / 2.0;
+	return (sin(x * RADIANS_PER_DEGREE) / sin(30.0 * RADIANS_PER_DEGREE)) / 2.0;
 }
 
 
@@ -1931,8 +1934,8 @@ sind_0_to_30(double x)
 static double
 cosd_0_to_60(double x)
 {
-	return 1.0 - ((1.0 - cos(x * (M_PI / 180.0))) /
-				  (1.0 - cos(60.0 * (M_PI / 180.0)))) / 2.0;
+	return 1.0 - ((1.0 - cos(x * RADIANS_PER_DEGREE)) /
+				  (1.0 - cos(60.0 * RADIANS_PER_DEGREE))) / 2.0;
 }
 
 
@@ -2030,8 +2033,9 @@ Datum
 dcotd(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
-	int			sign = 1;
 	float8		result;
+	int			sign = 1;
+	static float8 cot45 = 0.0;
 
 	/*
 	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
@@ -2070,6 +2074,26 @@ dcotd(PG_FUNCTION_ARGS)
 	}
 
 	result = sign * cosd_q1(arg1) / sind_q1(arg1);
+
+	/*
+	 * We want cotd(45) to be exactly 1, but the above computation might've
+	 * produced something different, so scale to get the right result.  To
+	 * avoid redoing cosd_q1(45) / sind_q1(45) many times, and to prevent the
+	 * compiler from maybe rearranging the calculation, cache that value in a
+	 * static variable.
+	 */
+	if (cot45 == 0.0)
+		cot45 = cosd_q1(45.0) / sind_q1(45.0);
+
+	result /= cot45;
+
+	/*
+	 * On some machines, we get cotd(270) = minus zero, but this isn't always
+	 * true.  For portability, and because the user constituency for this
+	 * function probably doesn't want minus zero, force it to plain zero.
+	 */
+	if (result == 0.0)
+		result = 0.0;
 
 	CHECKFLOATVAL(result, true /* cotd(0) == Inf */ , true);
 	PG_RETURN_FLOAT8(result);
@@ -2133,8 +2157,9 @@ Datum
 dtand(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
-	int			sign = 1;
 	float8		result;
+	int			sign = 1;
+	static float8 tan45 = 0.0;
 
 	/*
 	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
@@ -2174,6 +2199,26 @@ dtand(PG_FUNCTION_ARGS)
 
 	result = sign * sind_q1(arg1) / cosd_q1(arg1);
 
+	/*
+	 * We want tand(45) to be exactly 1, but the above computation might've
+	 * produced something different, so scale to get the right result.  To
+	 * avoid redoing sind_q1(45) / cosd_q1(45) many times, and to prevent the
+	 * compiler from maybe rearranging the calculation, cache that value in a
+	 * static variable.
+	 */
+	if (tan45 == 0.0)
+		tan45 = sind_q1(45.0) / cosd_q1(45.0);
+
+	result /= tan45;
+
+	/*
+	 * On some machines, we get tand(180) = minus zero, but this isn't always
+	 * true.  For portability, and because the user constituency for this
+	 * function probably doesn't want minus zero, force it to plain zero.
+	 */
+	if (result == 0.0)
+		result = 0.0;
+
 	CHECKFLOATVAL(result, true /* tand(90) == Inf */ , true);
 	PG_RETURN_FLOAT8(result);
 }
@@ -2188,7 +2233,7 @@ degrees(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	result = arg1 * (180.0 / M_PI);
+	result = arg1 / RADIANS_PER_DEGREE;
 
 	CHECKFLOATVAL(result, isinf(arg1), arg1 == 0);
 	PG_RETURN_FLOAT8(result);
@@ -2214,7 +2259,7 @@ radians(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	result = arg1 * (M_PI / 180.0);
+	result = arg1 * RADIANS_PER_DEGREE;
 
 	CHECKFLOATVAL(result, isinf(arg1), arg1 == 0);
 	PG_RETURN_FLOAT8(result);
