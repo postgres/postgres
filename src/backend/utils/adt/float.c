@@ -83,6 +83,10 @@ static int	float8_cmp_internal(float8 a, float8 b);
 static double sind_q1(double x);
 static double cosd_q1(double x);
 
+/* This is INTENTIONALLY NOT STATIC.  Don't "fix" it. */
+void init_degree_constants(float8 thirty, float8 forty_five, float8 sixty,
+					  float8 one_half, float8 one);
+
 #ifndef HAVE_CBRT
 /*
  * Some machines (in particular, some versions of AIX) have an extern
@@ -1771,11 +1775,16 @@ dtan(PG_FUNCTION_ARGS)
  * want exact results, we must ensure that none of the scaling constants used
  * in the degree-based trig functions are computed that way.
  *
+ * The whole approach fails if init_degree_constants() gets inlined into the
+ * call sites, since then constant-folding can happen anyway.  Currently it
+ * seems sufficient to declare it non-static to prevent that.  We have no
+ * expectation that other files will call this, but don't tell gcc that.
+ *
  * Other hazards we are trying to forestall with this kluge include the
  * possibility that compilers will rearrange the expressions, or compute
  * some intermediate results in registers wider than a standard double.
  */
-static void
+void
 init_degree_constants(float8 thirty, float8 forty_five, float8 sixty,
 					  float8 one_half, float8 one)
 {
