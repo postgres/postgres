@@ -64,15 +64,24 @@ do {															\
 } while(0)
 
 
-/* ========== USER I/O ROUTINES ========== */
-
-
 /* Configurable GUC parameter */
 int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
 
+/* Cached constants for degree-based trig functions */
+static bool degree_consts_set = false;
+static float8 sin_30 = 0;
+static float8 one_minus_cos_60 = 0;
+static float8 asin_0_5 = 0;
+static float8 acos_0_5 = 0;
+static float8 atan_1_0 = 0;
+static float8 tan_45 = 0;
+static float8 cot_45 = 0;
 
+/* Local function prototypes */
 static int	float4_cmp_internal(float4 a, float4 b);
 static int	float8_cmp_internal(float8 a, float8 b);
+static double sind_q1(double x);
+static double cosd_q1(double x);
 
 #ifndef HAVE_CBRT
 /*
@@ -187,6 +196,9 @@ is_infinite(double val)
 	else
 		return -1;
 }
+
+
+/* ========== USER I/O ROUTINES ========== */
 
 
 /*
@@ -1747,6 +1759,43 @@ dtan(PG_FUNCTION_ARGS)
 }
 
 
+/* ========== DEGREE-BASED TRIGONOMETRIC FUNCTIONS ========== */
+
+
+/*
+ * Initialize the cached constants declared at the head of this file
+ * (sin_30 etc).  The fact that we need those at all, let alone need this
+ * Rube-Goldberg-worthy method of initializing them, is because there are
+ * compilers out there that will precompute expressions such as sin(constant)
+ * using a sin() function different from what will be used at runtime.  If we
+ * want exact results, we must ensure that none of the scaling constants used
+ * in the degree-based trig functions are computed that way.
+ *
+ * Other hazards we are trying to forestall with this kluge include the
+ * possibility that compilers will rearrange the expressions, or compute
+ * some intermediate results in registers wider than a standard double.
+ */
+static void
+init_degree_constants(float8 thirty, float8 forty_five, float8 sixty,
+					  float8 one_half, float8 one)
+{
+	sin_30 = sin(thirty * RADIANS_PER_DEGREE);
+	one_minus_cos_60 = 1.0 - cos(sixty * RADIANS_PER_DEGREE);
+	asin_0_5 = asin(one_half);
+	acos_0_5 = acos(one_half);
+	atan_1_0 = atan(one);
+	tan_45 = sind_q1(forty_five) / cosd_q1(forty_five);
+	cot_45 = cosd_q1(forty_five) / sind_q1(forty_five);
+	degree_consts_set = true;
+}
+
+#define INIT_DEGREE_CONSTANTS() \
+do { \
+	if (!degree_consts_set) \
+		init_degree_constants(30.0, 45.0, 60.0, 0.5, 1.0); \
+} while(0)
+
+
 /*
  *		asind_q1		- returns the inverse sine of x in degrees, for x in
  *						  the range [0, 1].  The result is an angle in the
@@ -1766,9 +1815,9 @@ asind_q1(double x)
 	 * over the full range.
 	 */
 	if (x <= 0.5)
-		return (asin(x) / asin(0.5)) * 30.0;
+		return (asin(x) / asin_0_5) * 30.0;
 	else
-		return 90.0 - (acos(x) / acos(0.5)) * 60.0;
+		return 90.0 - (acos(x) / acos_0_5) * 60.0;
 }
 
 
@@ -1791,9 +1840,9 @@ acosd_q1(double x)
 	 * over the full range.
 	 */
 	if (x <= 0.5)
-		return 90.0 - (asin(x) / asin(0.5)) * 30.0;
+		return 90.0 - (asin(x) / asin_0_5) * 30.0;
 	else
-		return (acos(x) / acos(0.5)) * 60.0;
+		return (acos(x) / acos_0_5) * 60.0;
 }
 
 
@@ -1809,6 +1858,8 @@ dacosd(PG_FUNCTION_ARGS)
 	/* Per the POSIX spec, return NaN if the input is NaN */
 	if (isnan(arg1))
 		PG_RETURN_FLOAT8(get_float8_nan());
+
+	INIT_DEGREE_CONSTANTS();
 
 	/*
 	 * The principal branch of the inverse cosine function maps values in the
@@ -1843,6 +1894,8 @@ dasind(PG_FUNCTION_ARGS)
 	if (isnan(arg1))
 		PG_RETURN_FLOAT8(get_float8_nan());
 
+	INIT_DEGREE_CONSTANTS();
+
 	/*
 	 * The principal branch of the inverse sine function maps values in the
 	 * range [-1, 1] to values in the range [-90, 90], so we should reject any
@@ -1876,13 +1929,15 @@ datand(PG_FUNCTION_ARGS)
 	if (isnan(arg1))
 		PG_RETURN_FLOAT8(get_float8_nan());
 
+	INIT_DEGREE_CONSTANTS();
+
 	/*
 	 * The principal branch of the inverse tangent function maps all inputs to
 	 * values in the range [-90, 90], so the result should always be finite,
 	 * even if the input is infinite.  Additionally, we take care to ensure
 	 * than when arg1 is 1, the result is exactly 45.
 	 */
-	result = (atan(arg1) / atan(1.0)) * 45.0;
+	result = (atan(arg1) / atan_1_0) * 45.0;
 
 	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
@@ -1903,11 +1958,13 @@ datan2d(PG_FUNCTION_ARGS)
 	if (isnan(arg1) || isnan(arg2))
 		PG_RETURN_FLOAT8(get_float8_nan());
 
+	INIT_DEGREE_CONSTANTS();
+
 	/*
 	 * atan2d maps all inputs to values in the range [-180, 180], so the
 	 * result should always be finite, even if the inputs are infinite.
 	 */
-	result = (atan2(arg1, arg2) / atan(1.0)) * 45.0;
+	result = (atan2(arg1, arg2) / atan_1_0) * 45.0;
 
 	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
@@ -1922,7 +1979,7 @@ datan2d(PG_FUNCTION_ARGS)
 static double
 sind_0_to_30(double x)
 {
-	return (sin(x * RADIANS_PER_DEGREE) / sin(30.0 * RADIANS_PER_DEGREE)) / 2.0;
+	return (sin(x * RADIANS_PER_DEGREE) / sin_30) / 2.0;
 }
 
 
@@ -1934,8 +1991,7 @@ sind_0_to_30(double x)
 static double
 cosd_0_to_60(double x)
 {
-	return 1.0 - ((1.0 - cos(x * RADIANS_PER_DEGREE)) /
-				  (1.0 - cos(60.0 * RADIANS_PER_DEGREE))) / 2.0;
+	return 1.0 - ((1.0 - cos(x * RADIANS_PER_DEGREE)) / one_minus_cos_60) / 2.0;
 }
 
 
@@ -1986,8 +2042,8 @@ Datum
 dcosd(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
-	int			sign = 1;
 	float8		result;
+	int			sign = 1;
 
 	/*
 	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
@@ -2001,16 +2057,22 @@ dcosd(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
 
+	INIT_DEGREE_CONSTANTS();
+
 	/* Reduce the range of the input to [0,90] degrees */
 	arg1 = fmod(arg1, 360.0);
 
 	if (arg1 < 0.0)
+	{
 		/* cosd(-x) = cosd(x) */
 		arg1 = -arg1;
+	}
 
 	if (arg1 > 180.0)
+	{
 		/* cosd(360-x) = cosd(x) */
 		arg1 = 360.0 - arg1;
+	}
 
 	if (arg1 > 90.0)
 	{
@@ -2035,7 +2097,6 @@ dcotd(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 	int			sign = 1;
-	static float8 cot45 = 0.0;
 
 	/*
 	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
@@ -2048,6 +2109,8 @@ dcotd(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
+
+	INIT_DEGREE_CONSTANTS();
 
 	/* Reduce the range of the input to [0,90] degrees */
 	arg1 = fmod(arg1, 360.0);
@@ -2073,22 +2136,10 @@ dcotd(PG_FUNCTION_ARGS)
 		sign = -sign;
 	}
 
-	result = sign * cosd_q1(arg1) / sind_q1(arg1);
+	result = sign * ((cosd_q1(arg1) / sind_q1(arg1)) / cot_45);
 
 	/*
-	 * We want cotd(45) to be exactly 1, but the above computation might've
-	 * produced something different, so scale to get the right result.  To
-	 * avoid redoing cosd_q1(45) / sind_q1(45) many times, and to prevent the
-	 * compiler from maybe rearranging the calculation, cache that value in a
-	 * static variable.
-	 */
-	if (cot45 == 0.0)
-		cot45 = cosd_q1(45.0) / sind_q1(45.0);
-
-	result /= cot45;
-
-	/*
-	 * On some machines, we get cotd(270) = minus zero, but this isn't always
+	 * On some machines we get cotd(270) = minus zero, but this isn't always
 	 * true.  For portability, and because the user constituency for this
 	 * function probably doesn't want minus zero, force it to plain zero.
 	 */
@@ -2107,8 +2158,8 @@ Datum
 dsind(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
-	int			sign = 1;
 	float8		result;
+	int			sign = 1;
 
 	/*
 	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
@@ -2121,6 +2172,8 @@ dsind(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
+
+	INIT_DEGREE_CONSTANTS();
 
 	/* Reduce the range of the input to [0,90] degrees */
 	arg1 = fmod(arg1, 360.0);
@@ -2140,8 +2193,10 @@ dsind(PG_FUNCTION_ARGS)
 	}
 
 	if (arg1 > 90.0)
+	{
 		/* sind(180-x) = sind(x) */
 		arg1 = 180.0 - arg1;
+	}
 
 	result = sign * sind_q1(arg1);
 
@@ -2159,7 +2214,6 @@ dtand(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 	int			sign = 1;
-	static float8 tan45 = 0.0;
 
 	/*
 	 * Per the POSIX spec, return NaN if the input is NaN and throw an error
@@ -2172,6 +2226,8 @@ dtand(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));
+
+	INIT_DEGREE_CONSTANTS();
 
 	/* Reduce the range of the input to [0,90] degrees */
 	arg1 = fmod(arg1, 360.0);
@@ -2197,22 +2253,10 @@ dtand(PG_FUNCTION_ARGS)
 		sign = -sign;
 	}
 
-	result = sign * sind_q1(arg1) / cosd_q1(arg1);
+	result = sign * ((sind_q1(arg1) / cosd_q1(arg1)) / tan_45);
 
 	/*
-	 * We want tand(45) to be exactly 1, but the above computation might've
-	 * produced something different, so scale to get the right result.  To
-	 * avoid redoing sind_q1(45) / cosd_q1(45) many times, and to prevent the
-	 * compiler from maybe rearranging the calculation, cache that value in a
-	 * static variable.
-	 */
-	if (tan45 == 0.0)
-		tan45 = sind_q1(45.0) / cosd_q1(45.0);
-
-	result /= tan45;
-
-	/*
-	 * On some machines, we get tand(180) = minus zero, but this isn't always
+	 * On some machines we get tand(180) = minus zero, but this isn't always
 	 * true.  For portability, and because the user constituency for this
 	 * function probably doesn't want minus zero, force it to plain zero.
 	 */
