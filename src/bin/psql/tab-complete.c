@@ -1417,7 +1417,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER FOREIGN DATA WRAPPER <name> */
 	else if (Matches5("ALTER", "FOREIGN", "DATA", "WRAPPER", MatchAny))
-		COMPLETE_WITH_LIST4("HANDLER", "VALIDATOR", "OPTIONS", "OWNER TO");
+		COMPLETE_WITH_LIST5("HANDLER", "VALIDATOR", "OPTIONS", "OWNER TO", "RENAME TO");
 
 	/* ALTER FOREIGN TABLE <name> */
 	else if (Matches4("ALTER", "FOREIGN", "TABLE", MatchAny))
@@ -1544,7 +1544,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST3("MINVALUE", "MAXVALUE", "CYCLE");
 	/* ALTER SERVER <name> */
 	else if (Matches3("ALTER", "SERVER", MatchAny))
-		COMPLETE_WITH_LIST3("VERSION", "OPTIONS", "OWNER TO");
+		COMPLETE_WITH_LIST4("VERSION", "OPTIONS", "OWNER TO", "RENAME TO");
+	/* ALTER SERVER <name> VERSION <version>*/
+	else if (Matches5("ALTER", "SERVER", MatchAny, "VERSION", MatchAny))
+		COMPLETE_WITH_CONST("OPTIONS");
 	/* ALTER SYSTEM SET, RESET, RESET ALL */
 	else if (Matches2("ALTER", "SYSTEM"))
 		COMPLETE_WITH_LIST2("SET", "RESET");
@@ -2000,7 +2003,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* CREATE FOREIGN DATA WRAPPER */
 	else if (Matches5("CREATE", "FOREIGN", "DATA", "WRAPPER", MatchAny))
-		COMPLETE_WITH_LIST2("HANDLER", "VALIDATOR");
+		COMPLETE_WITH_LIST3("HANDLER", "VALIDATOR", "OPTIONS");
 
 	/* CREATE INDEX --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
@@ -2379,6 +2382,10 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches3("FOREIGN", "DATA", "WRAPPER") &&
 			 !TailMatches4("CREATE", MatchAny, MatchAny, MatchAny))
 		COMPLETE_WITH_QUERY(Query_for_list_of_fdws);
+	/* applies in CREATE SERVER */
+	else if (TailMatches4("FOREIGN", "DATA", "WRAPPER", MatchAny) &&
+			 HeadMatches2("CREATE", "SERVER"))
+		COMPLETE_WITH_CONST("OPTIONS");
 
 /* FOREIGN TABLE */
 	else if (TailMatches2("FOREIGN", "TABLE") &&
@@ -2823,6 +2830,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_user_mappings);
 	else if (Matches5("CREATE|ALTER|DROP", "USER", "MAPPING", "FOR", MatchAny))
 		COMPLETE_WITH_CONST("SERVER");
+	else if (Matches7("CREATE|ALTER", "USER", "MAPPING", "FOR", MatchAny, "SERVER", MatchAny))
+		COMPLETE_WITH_CONST("OPTIONS");
 
 /*
  * VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]
