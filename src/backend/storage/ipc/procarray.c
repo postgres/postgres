@@ -2540,8 +2540,11 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 
 			/*
 			 * We ignore an invalid pxmin because this means that backend has
-			 * no snapshot and cannot get another one while we hold exclusive
-			 * lock.
+			 * no snapshot currently. We hold a Share lock to avoid contention
+			 * with users taking snapshots.  That is not a problem because
+			 * the current xmin is always at least one higher than the latest
+			 * removed xid, so any new snapshot would never conflict with the
+			 * test here.
 			 */
 			if (!TransactionIdIsValid(limitXmin) ||
 				(TransactionIdIsValid(pxmin) && !TransactionIdFollows(pxmin, limitXmin)))
