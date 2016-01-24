@@ -2000,7 +2000,9 @@ sind_0_to_30(double x)
 static double
 cosd_0_to_60(double x)
 {
-	return 1.0 - ((1.0 - cos(x * RADIANS_PER_DEGREE)) / one_minus_cos_60) / 2.0;
+	float8		one_minus_cos_x = 1.0 - cos(x * RADIANS_PER_DEGREE);
+
+	return 1.0 - (one_minus_cos_x / one_minus_cos_60) / 2.0;
 }
 
 
