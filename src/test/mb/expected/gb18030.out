@@ -2,6 +2,7 @@ drop table 計算機用語;
 create table 計算機用語 (用語 text, 分類コード varchar, 備考1Aだよ char(16));
 create index 計算機用語index1 on 計算機用語 using btree (用語);
 create index 計算機用語index2 on 計算機用語 using hash (分類コード);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
 insert into 計算機用語 values('コンピュータディスプレイ','機A01上');
 insert into 計算機用語 values('コンピュータグラフィックス','分B10中');
 insert into 計算機用語 values('コンピュータプログラマー','人Z01下');
