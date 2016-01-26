@@ -297,6 +297,9 @@ hashvarlena(PG_FUNCTION_ARGS)
  * of 2.  There is no need to do mod a prime (mod is sooo slow!).
  * If you need less than 32 bits, use a bitmask.
  *
+ * This procedure must never throw elog(ERROR); the ResourceOwner code
+ * relies on this not to fail.
+ *
  * Note: we could easily change this function to return a 64-bit hash value
  * by using the final values of both b and c.  b is perhaps a little less
  * well mixed than c, however.
