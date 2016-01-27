@@ -90,7 +90,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
-#define MIN_GAUSSIAN_PARAM		2.0 /* minimum parameter for gauss */
+#define MIN_GAUSSIAN_PARAM		2.0		/* minimum parameter for gauss */
 
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
@@ -201,16 +201,15 @@ typedef struct
 	PGconn	   *con;			/* connection handle to DB */
 	int			id;				/* client No. */
 	int			state;			/* state No. */
-	int			listen;			/* 0 indicates that an async query has been
-								 * sent */
-	int			sleeping;		/* 1 indicates that the client is napping */
+	bool		listen;			/* whether an async query has been sent */
+	bool		is_throttled;	/* whether transaction throttling is done */
+	bool		sleeping;		/* whether the client is napping */
 	bool		throttling;		/* whether nap is for throttling */
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
-	bool		is_throttled;	/* whether transaction throttling is done */
 	int			use_file;		/* index in sql_files for this client */
 	bool		prepared[MAX_FILES];
 
@@ -374,7 +373,7 @@ usage(void)
 		 "  -f, --file=FILENAME      read transaction script from FILENAME\n"
 		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
 		   "  -l, --log                write transaction times to log file\n"
-	"  -L, --latency-limit=NUM  count transactions lasting more than NUM ms as late\n"
+		   "  -L, --latency-limit=NUM  count transactions lasting more than NUM ms as late\n"
 		   "  -M, --protocol=simple|extended|prepared\n"
 		   "                           protocol for submitting queries (default: simple)\n"
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
@@ -389,7 +388,7 @@ usage(void)
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g. 0.01 for 1%%)\n"
-		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
+		"  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
 	  "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -520,16 +519,16 @@ getGaussianRand(TState *thread, int64 min, int64 max, double parameter)
 	double		rand;
 
 	/*
-	 * Get user specified random number from this loop,
-	 * with -parameter < stdev <= parameter
+	 * Get user specified random number from this loop, with -parameter <
+	 * stdev <= parameter
 	 *
 	 * This loop is executed until the number is in the expected range.
 	 *
 	 * As the minimum parameter is 2.0, the probability of looping is low:
 	 * sqrt(-2 ln(r)) <= 2 => r >= e^{-2} ~ 0.135, then when taking the
 	 * average sinus multiplier as 2/pi, we have a 8.6% looping probability in
-	 * the worst case. For a parameter value of 5.0, the looping probability is
-	 * about e^{-5} * 2 / pi ~ 0.43%.
+	 * the worst case. For a parameter value of 5.0, the looping probability
+	 * is about e^{-5} * 2 / pi ~ 0.43%.
 	 */
 	do
 	{
@@ -1191,7 +1190,7 @@ top:
 			}
 		}
 
-		st->sleeping = 1;
+		st->sleeping = true;
 		st->throttling = true;
 		st->is_throttled = true;
 		if (debug)
@@ -1208,7 +1207,8 @@ top:
 		now_us = INSTR_TIME_GET_MICROSEC(now);
 		if (st->txn_scheduled <= now_us)
 		{
-			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
+			/* Done sleeping, go ahead with next command */
+			st->sleeping = false;
 			if (st->throttling)
 			{
 				/* Measure lag of throttled transaction relative to target */
@@ -1337,9 +1337,9 @@ top:
 			 * nothing to listen to right now.  When throttling rate limits
 			 * are active, a sleep will happen next, as the next transaction
 			 * starts.  And then in any case the next SQL command will set
-			 * listen back to 1.
+			 * listen back to true.
 			 */
-			st->listen = 0;
+			st->listen = false;
 			trans_needs_throttle = (throttle_delay > 0);
 		}
 	}
@@ -1462,7 +1462,7 @@ top:
 			st->ecnt++;
 		}
 		else
-			st->listen = 1;		/* flags that should be listened */
+			st->listen = true;		/* flags that should be listened */
 	}
 	else if (commands[st->state]->type == META_COMMAND)
 	{
@@ -1585,8 +1585,8 @@ top:
 					if (parameter <= 0.0)
 					{
 						fprintf(stderr,
-							"exponential parameter must be greater than zero (not \"%s\")\n",
-							argv[5]);
+								"exponential parameter must be greater than zero (not \"%s\")\n",
+								argv[5]);
 						st->ecnt++;
 						return true;
 					}
@@ -1613,7 +1613,7 @@ top:
 				return true;
 			}
 
-			st->listen = 1;
+			st->listen = true;
 		}
 		else if (pg_strcasecmp(argv[0], "set") == 0)
 		{
@@ -1634,7 +1634,7 @@ top:
 				return true;
 			}
 
-			st->listen = 1;
+			st->listen = true;
 		}
 		else if (pg_strcasecmp(argv[0], "sleep") == 0)
 		{
@@ -1668,9 +1668,9 @@ top:
 
 			INSTR_TIME_SET_CURRENT(now);
 			st->txn_scheduled = INSTR_TIME_GET_MICROSEC(now) + usec;
-			st->sleeping = 1;
+			st->sleeping = true;
 
-			st->listen = 1;
+			st->listen = true;
 		}
 		else if (pg_strcasecmp(argv[0], "setshell") == 0)
 		{
@@ -1684,7 +1684,7 @@ top:
 				return true;
 			}
 			else	/* succeeded */
-				st->listen = 1;
+				st->listen = true;
 		}
 		else if (pg_strcasecmp(argv[0], "shell") == 0)
 		{
@@ -1698,7 +1698,7 @@ top:
 				return true;
 			}
 			else	/* succeeded */
-				st->listen = 1;
+				st->listen = true;
 		}
 		goto top;
 	}
@@ -2207,7 +2207,8 @@ parseQuery(Command *cmd, const char *raw_sql)
 	return true;
 }
 
-void pg_attribute_noreturn()
+void
+pg_attribute_noreturn()
 syntax_error(const char *source, const int lineno,
 			 const char *line, const char *command,
 			 const char *msg, const char *more, const int column)
@@ -2289,10 +2290,10 @@ process_commands(char *buf, const char *source, const int lineno)
 
 		if (pg_strcasecmp(my_commands->argv[0], "setrandom") == 0)
 		{
-			/*
+			/*--------
 			 * parsing:
-			 *   \setrandom variable min max [uniform]
-			 *   \setrandom variable min max (gaussian|exponential) parameter
+			 *	 \setrandom variable min max [uniform]
+			 *	 \setrandom variable min max (gaussian|exponential) parameter
 			 */
 
 			if (my_commands->argc < 4)
@@ -2317,7 +2318,7 @@ process_commands(char *buf, const char *source, const int lineno)
 				if (my_commands->argc < 6)
 				{
 					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-					 "missing parameter", my_commands->argv[4], -1);
+							  "missing parameter", my_commands->argv[4], -1);
 				}
 				else if (my_commands->argc > 6)
 				{
@@ -2762,12 +2763,14 @@ main(int argc, char **argv)
 		{"initialize", no_argument, NULL, 'i'},
 		{"jobs", required_argument, NULL, 'j'},
 		{"log", no_argument, NULL, 'l'},
+		{"latency-limit", required_argument, NULL, 'L'},
 		{"no-vacuum", no_argument, NULL, 'n'},
 		{"port", required_argument, NULL, 'p'},
 		{"progress", required_argument, NULL, 'P'},
 		{"protocol", required_argument, NULL, 'M'},
 		{"quiet", no_argument, NULL, 'q'},
 		{"report-latencies", no_argument, NULL, 'r'},
+		{"rate", required_argument, NULL, 'R'},
 		{"scale", required_argument, NULL, 's'},
 		{"select-only", no_argument, NULL, 'S'},
 		{"skip-some-updates", no_argument, NULL, 'N'},
@@ -2782,8 +2785,6 @@ main(int argc, char **argv)
 		{"unlogged-tables", no_argument, &unlogged_tables, 1},
 		{"sampling-rate", required_argument, NULL, 4},
 		{"aggregate-interval", required_argument, NULL, 5},
-		{"rate", required_argument, NULL, 'R'},
-		{"latency-limit", required_argument, NULL, 'L'},
 		{"progress-timestamp", no_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
@@ -3627,7 +3628,7 @@ threadRun(void *arg)
 				{
 					/* interrupt client which has not started a transaction */
 					remains--;
-					st->sleeping = 0;
+					st->sleeping = false;
 					st->throttling = false;
 					PQfinish(st->con);
 					st->con = NULL;
