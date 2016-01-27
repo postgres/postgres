@@ -48,7 +48,7 @@
   Typical output from <application>pgbench</application> looks like:
 
 <screen>
-transaction type: TPC-B (sort of)
+transaction type: &lt;builtin: TPC-B (sort of)&gt;
 scaling factor: 10
 query mode: simple
 number of clients: 10
@@ -261,6 +261,20 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
     benchmarking arguments:
 
     <variablelist>
+     <varlistentry>
+      <term><option>-b</> <replaceable>scriptname</></term>
+      <term><option>--builtin</> <replaceable>scriptname</></term>
+      <listitem>
+       <para>
+        Add the specified builtin script to the list of executed scripts.
+        Available builtin scripts are: <literal>tpcb-like</>,
+        <literal>simple-update</> and <literal>select-only</>.
+        With special name <literal>list</>, show the list of builtin scripts
+        and exit immediately.
+       </para>
+      </listitem>
+     </varlistentry>
+
 
      <varlistentry>
       <term><option>-c</option> <replaceable>clients</></term>
@@ -307,14 +321,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-f</option> <replaceable>filename</></term>
-      <term><option>--file=</option><replaceable>filename</></term>
+      <term><option>-f</> <replaceable>filename</></term>
+      <term><option>--file=</><replaceable>filename</></term>
       <listitem>
        <para>
-        Read transaction script from <replaceable>filename</>.
+        Add a transaction script read from <replaceable>filename</> to
+        the list of executed scripts.
         See below for details.
-        <option>-N</option>, <option>-S</option>, and <option>-f</option>
-        are mutually exclusive.
        </para>
       </listitem>
      </varlistentry>
@@ -404,10 +417,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--skip-some-updates</option></term>
       <listitem>
        <para>
-        Do not update <structname>pgbench_tellers</> and
-        <structname>pgbench_branches</>.
-        This will avoid update contention on these tables, but
-        it makes the test case even less like TPC-B.
+        Run builtin simple-update script.
+        Shorthand for <option>-b simple-update</>.
        </para>
       </listitem>
      </varlistentry>
@@ -512,9 +523,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         Report the specified scale factor in <application>pgbench</>'s
         output.  With the built-in tests, this is not necessary; the
         correct scale factor will be detected by counting the number of
-        rows in the <structname>pgbench_branches</> table.  However, when testing
-        custom benchmarks (<option>-f</> option), the scale factor
-        will be reported as 1 unless this option is used.
+        rows in the <structname>pgbench_branches</> table.
+        However, when testing only custom benchmarks (<option>-f</> option),
+        the scale factor will be reported as 1 unless this option is used.
        </para>
       </listitem>
      </varlistentry>
@@ -524,7 +535,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--select-only</option></term>
       <listitem>
        <para>
-        Perform select-only transactions instead of TPC-B-like test.
+        Run built-in select-only script.
+        Shorthand for <option>-b select-only</>.
        </para>
       </listitem>
      </varlistentry>
@@ -674,7 +686,17 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <title>What is the <quote>Transaction</> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
-   The default transaction script issues seven commands per transaction:
+   Pgbench executes test scripts chosen randomly from a specified list.
+   They include built-in scripts with <option>-b</> and
+   user-provided custom scripts with <option>-f</>.
+ </para>
+
+  <para>
+   The default builtin transaction script (also invoked with <option>-b tpcb-like</>)
+   issues seven commands per transaction over randomly chosen <literal>aid</>,
+   <literal>tid</>, <literal>bid</> and <literal>balance</>.
+   The scenario is inspired by the TPC-B benchmark, but is not actually TPC-B,
+   hence the name.
   </para>
 
   <orderedlist>
@@ -688,9 +710,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </orderedlist>
 
   <para>
-   If you specify <option>-N</>, steps 4 and 5 aren't included in the
-   transaction.  If you specify <option>-S</>, only the <command>SELECT</> is
-   issued.
+   If you select the <literal>simple-update</> builtin (also <option>-N</>),
+   steps 4 and 5 aren't included in the transaction.
+   This will avoid update contention on these tables, but
+   it makes the test case even less like TPC-B.
+  </para>
+
+  <para>
+   If you select the <literal>select-only</> builtin (also <option>-S</>),
+   only the <command>SELECT</> is issued.
   </para>
  </refsect2>
 
@@ -702,10 +730,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    benchmark scenarios by replacing the default transaction script
    (described above) with a transaction script read from a file
    (<option>-f</option> option).  In this case a <quote>transaction</>
-   counts as one execution of a script file.  You can even specify
-   multiple scripts (multiple <option>-f</option> options), in which
-   case a random one of the scripts is chosen each time a client session
-   starts a new transaction.
+   counts as one execution of a script file.
   </para>
 
   <para>
@@ -1103,7 +1128,7 @@ END;
    For the default script, the output will look similar to this:
 <screen>
 starting vacuum...end.
-transaction type: TPC-B (sort of)
+transaction type: &lt;builtin: TPC-B (sort of)&gt;
 scaling factor: 1
 query mode: simple
 number of clients: 10
@@ -1112,7 +1137,8 @@ number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
 tps = 618.764555 (including connections establishing)
 tps = 622.977698 (excluding connections establishing)
-statement latencies in milliseconds:
+SQL script 1: &lt;builtin: TPC-B (sort of)&gt;
+ - statement latencies in milliseconds:
         0.004386        \set nbranches 1 * :scale
         0.001343        \set ntellers 10 * :scale
         0.001212        \set naccounts 100000 * :scale

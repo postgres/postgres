@@ -189,13 +189,12 @@ typedef struct
 	char	   *value;			/* its value */
 } Variable;
 
-#define MAX_FILES		128		/* max number of SQL script files allowed */
+#define MAX_SCRIPTS		128		/* max number of SQL scripts allowed */
 #define SHELL_COMMAND_SIZE	256 /* maximum size allowed for shell command */
 
 /*
- * structures used in custom query mode
+ * Connection state
  */
-
 typedef struct
 {
 	PGconn	   *con;			/* connection handle to DB */
@@ -210,8 +209,8 @@ typedef struct
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
-	int			use_file;		/* index in sql_files for this client */
-	bool		prepared[MAX_FILES];
+	int			use_file;		/* index in sql_scripts for this client */
+	bool		prepared[MAX_SCRIPTS];	/* whether client prepared the script */
 
 	/* per client collected stats */
 	int			cnt;			/* xacts count */
@@ -295,51 +294,69 @@ typedef struct
 	double		sum2_lag;		/* sum(lag*lag) */
 } AggVals;
 
-static Command **sql_files[MAX_FILES];	/* SQL script files */
-static int	num_files;			/* number of script files */
+static struct
+{
+	const char *name;
+	Command	 **commands;
+} sql_script[MAX_SCRIPTS];		/* SQL script files */
+static int	num_scripts;		/* number of scripts in sql_script[] */
 static int	num_commands = 0;	/* total number of Command structs */
 static int	debug = 0;			/* debug flag */
 
-/* default scenario */
-static char *tpc_b = {
-	"\\set nbranches " CppAsString2(nbranches) " * :scale\n"
-	"\\set ntellers " CppAsString2(ntellers) " * :scale\n"
-	"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
-	"\\setrandom aid 1 :naccounts\n"
-	"\\setrandom bid 1 :nbranches\n"
-	"\\setrandom tid 1 :ntellers\n"
-	"\\setrandom delta -5000 5000\n"
-	"BEGIN;\n"
-	"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
-	"UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
-	"UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
-	"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
-	"END;\n"
+/* Define builtin test scripts */
+#define N_BUILTIN 3
+static struct
+{
+	char	   *name;			/* very short name for -b ... */
+	char	   *desc;			/* short description */
+	char	   *commands;		/* actual pgbench script */
+}
+
+			builtin_script[] =
+{
+	{
+		"tpcb-like",
+		"<builtin: TPC-B (sort of)>",
+		"\\set nbranches " CppAsString2(nbranches) " * :scale\n"
+		"\\set ntellers " CppAsString2(ntellers) " * :scale\n"
+		"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
+		"\\setrandom aid 1 :naccounts\n"
+		"\\setrandom bid 1 :nbranches\n"
+		"\\setrandom tid 1 :ntellers\n"
+		"\\setrandom delta -5000 5000\n"
+		"BEGIN;\n"
+		"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+		"UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
+		"UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
+		"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+		"END;\n"
+	},
+	{
+		"simple-update",
+		"<builtin: simple update>",
+		"\\set nbranches " CppAsString2(nbranches) " * :scale\n"
+		"\\set ntellers " CppAsString2(ntellers) " * :scale\n"
+		"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
+		"\\setrandom aid 1 :naccounts\n"
+		"\\setrandom bid 1 :nbranches\n"
+		"\\setrandom tid 1 :ntellers\n"
+		"\\setrandom delta -5000 5000\n"
+		"BEGIN;\n"
+		"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+		"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+		"END;\n"
+	},
+	{
+		"select-only",
+		"<builtin: select only>",
+		"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
+		"\\setrandom aid 1 :naccounts\n"
+		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+	}
 };
 
-/* -N case */
-static char *simple_update = {
-	"\\set nbranches " CppAsString2(nbranches) " * :scale\n"
-	"\\set ntellers " CppAsString2(ntellers) " * :scale\n"
-	"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
-	"\\setrandom aid 1 :naccounts\n"
-	"\\setrandom bid 1 :nbranches\n"
-	"\\setrandom tid 1 :ntellers\n"
-	"\\setrandom delta -5000 5000\n"
-	"BEGIN;\n"
-	"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
-	"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
-	"END;\n"
-};
-
-/* -S case */
-static char *select_only = {
-	"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
-	"\\setrandom aid 1 :naccounts\n"
-	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
-};
 
 /* Function prototypes */
 static void setalarm(int seconds);
@@ -365,24 +382,29 @@ usage(void)
 	"                           create indexes in the specified tablespace\n"
 	 "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
 		   "  --unlogged-tables        create tables as unlogged tables\n"
+		   "\nOptions to select what to run:\n"
+		   "  -b, --builtin=NAME       add buitin script (use \"-b list\" to display\n"
+		   "                           available scripts)\n"
+		   "  -f, --file=FILENAME      add transaction script from FILENAME\n"
+		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
+		   "                           (same as \"-b simple-update\")\n"
+		   "  -S, --select-only        perform SELECT-only transactions\n"
+		   "                           (same as \"-b select-only\")\n"
 		   "\nBenchmarking options:\n"
 		   "  -c, --client=NUM         number of concurrent database clients (default: 1)\n"
 		   "  -C, --connect            establish new connection for each transaction\n"
 		   "  -D, --define=VARNAME=VALUE\n"
 	  "                           define variable for use by custom script\n"
-		 "  -f, --file=FILENAME      read transaction script from FILENAME\n"
 		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
 		   "  -l, --log                write transaction times to log file\n"
 		   "  -L, --latency-limit=NUM  count transactions lasting more than NUM ms as late\n"
 		   "  -M, --protocol=simple|extended|prepared\n"
 		   "                           protocol for submitting queries (default: simple)\n"
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
-		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
 		   "  -P, --progress=NUM       show thread progress report every NUM seconds\n"
 		   "  -r, --report-latencies   report average latency per command\n"
 		"  -R, --rate=NUM           target rate in transactions per second\n"
 		   "  -s, --scale=NUM          report this scale factor in output\n"
-		   "  -S, --select-only        perform SELECT-only transactions\n"
 		   "  -t, --transactions=NUM   number of transactions each client runs (default: 10)\n"
 		 "  -T, --time=NUM           duration of benchmark test in seconds\n"
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
@@ -1123,6 +1145,15 @@ agg_vals_init(AggVals *aggs, instr_time start)
 	aggs->start_time = INSTR_TIME_GET_DOUBLE(start);
 }
 
+static int
+chooseScript(TState *thread)
+{
+	if (num_scripts == 1)
+		return 0;
+
+	return getrand(thread, 0, num_scripts - 1);
+}
+
 /* return false iff client should be disconnected */
 static bool
 doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile, AggVals *agg)
@@ -1143,7 +1174,7 @@ doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile, AggVa
 top:
 	INSTR_TIME_SET_ZERO(now);
 
-	commands = sql_files[st->use_file];
+	commands = sql_script[st->use_file].commands;
 
 	/*
 	 * Handle throttling once per transaction by sleeping.  It is simpler to
@@ -1328,8 +1359,11 @@ top:
 		if (commands[st->state] == NULL)
 		{
 			st->state = 0;
-			st->use_file = (int) getrand(thread, 0, num_files - 1);
-			commands = sql_files[st->use_file];
+			st->use_file = chooseScript(thread);
+			commands = sql_script[st->use_file].commands;
+			if (debug)
+				fprintf(stderr, "client %d executing script \"%s\"\n", st->id,
+						sql_script[st->use_file].name);
 			st->is_throttled = false;
 
 			/*
@@ -2239,7 +2273,6 @@ static Command *
 process_commands(char *buf, const char *source, const int lineno)
 {
 	const char	delim[] = " \f\n\r\t\v";
-
 	Command    *my_commands;
 	int			j;
 	char	   *p,
@@ -2489,7 +2522,11 @@ read_line_from_file(FILE *fd)
 	return NULL;
 }
 
-static int
+/*
+ * Given a file name, read it and return the array of Commands contained
+ * therein.  "-" means to read stdin.
+ */
+static Command **
 process_file(char *filename)
 {
 #define COMMANDS_ALLOC_NUM 128
@@ -2501,12 +2538,6 @@ process_file(char *filename)
 	char	   *buf;
 	int			alloc_num;
 
-	if (num_files >= MAX_FILES)
-	{
-		fprintf(stderr, "at most %d SQL files are allowed\n", MAX_FILES);
-		exit(1);
-	}
-
 	alloc_num = COMMANDS_ALLOC_NUM;
 	my_commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
 
@@ -2517,7 +2548,7 @@ process_file(char *filename)
 		fprintf(stderr, "could not open file \"%s\": %s\n",
 				filename, strerror(errno));
 		pg_free(my_commands);
-		return false;
+		return NULL;
 	}
 
 	lineno = 0;
@@ -2549,13 +2580,11 @@ process_file(char *filename)
 
 	my_commands[index] = NULL;
 
-	sql_files[num_files++] = my_commands;
-
-	return true;
+	return my_commands;
 }
 
 static Command **
-process_builtin(char *tb, const char *source)
+process_builtin(const char *tb, const char *source)
 {
 #define COMMANDS_ALLOC_NUM 128
 
@@ -2609,9 +2638,60 @@ process_builtin(char *tb, const char *source)
 	return my_commands;
 }
 
+static void
+listAvailableScripts(void)
+{
+	int		i;
+
+	fprintf(stderr, "Available builtin scripts:\n");
+	for (i = 0; i < N_BUILTIN; i++)
+		fprintf(stderr, "\t%s\n", builtin_script[i].name);
+	fprintf(stderr, "\n");
+}
+
+static char *
+findBuiltin(const char *name, char **desc)
+{
+	int			i;
+
+	for (i = 0; i < N_BUILTIN; i++)
+	{
+		if (strncmp(builtin_script[i].name, name,
+					strlen(builtin_script[i].name)) == 0)
+		{
+			*desc = builtin_script[i].desc;
+			return builtin_script[i].commands;
+		}
+	}
+
+	fprintf(stderr, "no builtin script found for name \"%s\"\n", name);
+	listAvailableScripts();
+	exit(1);
+}
+
+static void
+addScript(const char *name, Command **commands)
+{
+	if (commands == NULL)
+	{
+		fprintf(stderr, "empty command list for script \"%s\"\n", name);
+		exit(1);
+	}
+
+	if (num_scripts >= MAX_SCRIPTS)
+	{
+		fprintf(stderr, "at most %d SQL scripts are allowed\n", MAX_SCRIPTS);
+		exit(1);
+	}
+
+	sql_script[num_scripts].name = name;
+	sql_script[num_scripts].commands = commands;
+	num_scripts++;
+}
+
 /* print out results */
 static void
-printResults(int ttype, int64 normal_xacts, int nclients,
+printResults(int64 normal_xacts, int nclients,
 			 TState *threads, int nthreads,
 			 instr_time total_time, instr_time conn_total_time,
 			 int64 total_latencies, int64 total_sqlats,
@@ -2621,23 +2701,14 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	double		time_include,
 				tps_include,
 				tps_exclude;
-	char	   *s;
 
 	time_include = INSTR_TIME_GET_DOUBLE(total_time);
 	tps_include = normal_xacts / time_include;
 	tps_exclude = normal_xacts / (time_include -
 						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
-	if (ttype == 0)
-		s = "TPC-B (sort of)";
-	else if (ttype == 2)
-		s = "Update only pgbench_accounts";
-	else if (ttype == 1)
-		s = "SELECT only";
-	else
-		s = "Custom query";
-
-	printf("transaction type: %s\n", s);
+	printf("transaction type: %s\n",
+		   num_scripts == 1 ? sql_script[0].name : "multiple scripts");
 	printf("scaling factor: %d\n", scale);
 	printf("query mode: %s\n", QUERYMODE[querymode]);
 	printf("number of clients: %d\n", nclients);
@@ -2706,16 +2777,14 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	{
 		int			i;
 
-		for (i = 0; i < num_files; i++)
+		for (i = 0; i < num_scripts; i++)
 		{
 			Command   **commands;
 
-			if (num_files > 1)
-				printf("statement latencies in milliseconds, file %d:\n", i + 1);
-			else
-				printf("statement latencies in milliseconds:\n");
+			printf("SQL script %d: %s\n", i + 1, sql_script[i].name);
+			printf(" - statement latencies in milliseconds:\n");
 
-			for (commands = sql_files[i]; *commands != NULL; commands++)
+			for (commands = sql_script[i].commands; *commands != NULL; commands++)
 			{
 				Command    *command = *commands;
 				int			cnum = command->command_num;
@@ -2753,6 +2822,7 @@ main(int argc, char **argv)
 {
 	static struct option long_options[] = {
 		/* systematic long/short named options */
+		{"tpc-b", no_argument, NULL, 'b'},
 		{"client", required_argument, NULL, 'c'},
 		{"connect", no_argument, NULL, 'C'},
 		{"debug", no_argument, NULL, 'd'},
@@ -2795,14 +2865,12 @@ main(int argc, char **argv)
 	int			is_init_mode = 0;		/* initialize mode? */
 	int			is_no_vacuum = 0;		/* no vacuum at all before testing? */
 	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
-	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
-								 * 2: skip update of branches and tellers */
 	int			optindex;
-	char	   *filename = NULL;
 	bool		scale_given = false;
 
 	bool		benchmarking_option_set = false;
 	bool		initialization_option_set = false;
+	bool		internal_script_used = false;
 
 	CState	   *state;			/* status of clients */
 	TState	   *threads;		/* array of thread */
@@ -2817,6 +2885,7 @@ main(int argc, char **argv)
 	int64		throttle_lag_max = 0;
 	int64		throttle_latency_skipped = 0;
 	int64		latency_late = 0;
+	char	   *desc;
 
 	int			i;
 	int			nclients_dealt;
@@ -2862,7 +2931,7 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ih:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -2883,14 +2952,6 @@ main(int argc, char **argv)
 				break;
 			case 'd':
 				debug++;
-				break;
-			case 'S':
-				ttype = 1;
-				benchmarking_option_set = true;
-				break;
-			case 'N':
-				ttype = 2;
-				benchmarking_option_set = true;
 				break;
 			case 'c':
 				benchmarking_option_set = true;
@@ -2994,12 +3055,36 @@ main(int argc, char **argv)
 				initialization_option_set = true;
 				use_quiet = true;
 				break;
-			case 'f':
+
+			case 'b':
+				if (strcmp(optarg, "list") == 0)
+				{
+					listAvailableScripts();
+					exit(0);
+				}
+
+				addScript(desc,
+						  process_builtin(findBuiltin(optarg, &desc), desc));
 				benchmarking_option_set = true;
-				ttype = 3;
-				filename = pg_strdup(optarg);
-				if (process_file(filename) == false || *sql_files[num_files - 1] == NULL)
-					exit(1);
+				internal_script_used = true;
+				break;
+			case 'S':
+				addScript(desc,
+						  process_builtin(findBuiltin("select-only", &desc),
+										 desc));
+				benchmarking_option_set = true;
+				internal_script_used = true;
+				break;
+			case 'N':
+				addScript(desc,
+						  process_builtin(findBuiltin("simple-update", &desc),
+										 desc));
+				benchmarking_option_set = true;
+				internal_script_used = true;
+				break;
+			case 'f':
+				addScript(optarg, process_file(optarg));
+				benchmarking_option_set = true;
 				break;
 			case 'D':
 				{
@@ -3030,9 +3115,9 @@ main(int argc, char **argv)
 				break;
 			case 'M':
 				benchmarking_option_set = true;
-				if (num_files > 0)
+				if (num_scripts > 0)
 				{
-					fprintf(stderr, "query mode (-M) should be specified before any transaction scripts (-f)\n");
+					fprintf(stderr, "query mode (-M) should be specified before any transaction scripts (-f or -b)\n");
 					exit(1);
 				}
 				for (querymode = 0; querymode < NUM_QUERYMODE; querymode++)
@@ -3131,6 +3216,15 @@ main(int argc, char **argv)
 				exit(1);
 				break;
 		}
+	}
+
+	/* set default script if none */
+	if (num_scripts == 0 && !is_init_mode)
+	{
+		addScript(desc,
+				  process_builtin(findBuiltin("tpcb-like", &desc), desc));
+		benchmarking_option_set = true;
+		internal_script_used = true;
 	}
 
 	/*
@@ -3261,7 +3355,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (ttype != 3)
+	if (internal_script_used)
 	{
 		/*
 		 * get the scaling factor that should be same as count(*) from
@@ -3344,31 +3438,6 @@ main(int argc, char **argv)
 	/* set random seed */
 	INSTR_TIME_SET_CURRENT(start_time);
 	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
-
-	/* process builtin SQL scripts */
-	switch (ttype)
-	{
-		case 0:
-			sql_files[0] = process_builtin(tpc_b,
-										   "<builtin: TPC-B (sort of)>");
-			num_files = 1;
-			break;
-
-		case 1:
-			sql_files[0] = process_builtin(select_only,
-										   "<builtin: select only>");
-			num_files = 1;
-			break;
-
-		case 2:
-			sql_files[0] = process_builtin(simple_update,
-										   "<builtin: simple update>");
-			num_files = 1;
-			break;
-
-		default:
-			break;
-	}
 
 	/* set up thread data structures */
 	threads = (TState *) pg_malloc(sizeof(TState) * nthreads);
@@ -3500,7 +3569,7 @@ main(int argc, char **argv)
 	 */
 	INSTR_TIME_SET_CURRENT(total_time);
 	INSTR_TIME_SUBTRACT(total_time, start_time);
-	printResults(ttype, total_xacts, nclients, threads, nthreads,
+	printResults(total_xacts, nclients, threads, nthreads,
 				 total_time, conn_total_time, total_latencies, total_sqlats,
 				 throttle_lag, throttle_lag_max, throttle_latency_skipped,
 				 latency_late);
@@ -3584,10 +3653,14 @@ threadRun(void *arg)
 	for (i = 0; i < nstate; i++)
 	{
 		CState	   *st = &state[i];
-		Command   **commands = sql_files[st->use_file];
 		int			prev_ecnt = st->ecnt;
+		Command   **commands;
 
-		st->use_file = getrand(thread, 0, num_files - 1);
+		st->use_file = chooseScript(thread);
+		commands = sql_script[st->use_file].commands;
+		if (debug)
+			fprintf(stderr, "client %d executing script \"%s\"\n", st->id,
+					sql_script[st->use_file].name);
 		if (!doCustom(thread, st, &thread->conn_time, logfile, &aggs))
 			remains--;			/* I've aborted */
 
@@ -3615,7 +3688,7 @@ threadRun(void *arg)
 		for (i = 0; i < nstate; i++)
 		{
 			CState	   *st = &state[i];
-			Command   **commands = sql_files[st->use_file];
+			Command   **commands = sql_script[st->use_file].commands;
 			int			sock;
 
 			if (st->con == NULL)
@@ -3721,7 +3794,7 @@ threadRun(void *arg)
 		for (i = 0; i < nstate; i++)
 		{
 			CState	   *st = &state[i];
-			Command   **commands = sql_files[st->use_file];
+			Command   **commands = sql_script[st->use_file].commands;
 			int			prev_ecnt = st->ecnt;
 
 			if (st->con && (FD_ISSET(PQsocket(st->con), &input_mask)
