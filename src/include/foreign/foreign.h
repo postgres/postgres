@@ -55,6 +55,7 @@ typedef struct ForeignServer
 
 typedef struct UserMapping
 {
+	Oid			umid;			/* Oid of user mapping */
 	Oid			userid;			/* local user Oid */
 	Oid			serverid;		/* server Oid */
 	List	   *options;		/* useoptions as DefElem list */

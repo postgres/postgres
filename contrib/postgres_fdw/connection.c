@@ -24,9 +24,11 @@
 /*
  * Connection cache hash table entry
  *
- * The lookup key in this hash table is the foreign server OID plus the user
- * mapping OID.  (We use just one connection per user per foreign server,
- * so that we can ensure all scans use the same snapshot during a query.)
+ * The lookup key in this hash table is the user mapping OID. We use just one
+ * connection per user mapping ID, which ensures that all the scans use the
+ * same snapshot during a query.  Using the user mapping OID rather than
+ * the foreign server OID + user OID avoids creating multiple connections when
+ * the public user mapping applies to all user OIDs.
  *
  * The "conn" pointer can be NULL if we don't currently have a live connection.
  * When we do have a connection, xact_depth tracks the current depth of
@@ -35,11 +37,7 @@
  * ourselves, so that rolling back a subtransaction will kill the right
  * queries and not the wrong ones.
  */
-typedef struct ConnCacheKey
-{
-	Oid			serverid;		/* OID of foreign server */
-	Oid			userid;			/* OID of local user whose mapping we use */
-} ConnCacheKey;
+typedef Oid ConnCacheKey;
 
 typedef struct ConnCacheEntry
 {
@@ -94,8 +92,7 @@ static void pgfdw_subxact_callback(SubXactEvent event,
  * mid-transaction anyway.
  */
 PGconn *
-GetConnection(ForeignServer *server, UserMapping *user,
-			  bool will_prep_stmt)
+GetConnection(UserMapping *user, bool will_prep_stmt)
 {
 	bool		found;
 	ConnCacheEntry *entry;
@@ -127,8 +124,7 @@ GetConnection(ForeignServer *server, UserMapping *user,
 	xact_got_connection = true;
 
 	/* Create hash key for the entry.  Assume no pad bytes in key struct */
-	key.serverid = server->serverid;
-	key.userid = user->userid;
+	key = user->umid;
 
 	/*
 	 * Find or create cached entry for requested connection.
@@ -156,12 +152,15 @@ GetConnection(ForeignServer *server, UserMapping *user,
 	 */
 	if (entry->conn == NULL)
 	{
+		ForeignServer *server = GetForeignServer(user->serverid);
+
 		entry->xact_depth = 0;	/* just to be sure */
 		entry->have_prep_stmt = false;
 		entry->have_error = false;
 		entry->conn = connect_pg_server(server, user);
-		elog(DEBUG3, "new postgres_fdw connection %p for server \"%s\"",
-			 entry->conn, server->servername);
+
+		elog(DEBUG3, "new postgres_fdw connection %p for server \"%s\ (user mapping oid %d, userid %d)",
+			 entry->conn, server->servername, user->umid, user->userid);
 	}
 
 	/*

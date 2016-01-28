@@ -193,6 +193,7 @@ GetUserMapping(Oid userid, Oid serverid)
 						MappingUserName(userid))));
 
 	um = (UserMapping *) palloc(sizeof(UserMapping));
+	um->umid = HeapTupleGetOid(tp);
 	um->userid = userid;
 	um->serverid = serverid;
 
