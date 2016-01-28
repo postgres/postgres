@@ -45,7 +45,9 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
+#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
@@ -805,6 +807,64 @@ deparseTargetList(StringInfo buf,
 	/* Don't generate bad syntax if no undropped columns */
 	if (first)
 		appendStringInfoString(buf, "NULL");
+}
+
+/*
+ * Deparse the appropriate locking clause (FOR SELECT or FOR SHARE) for a
+ * given relation.
+ */
+void
+deparseLockingClause(StringInfo buf, PlannerInfo *root, RelOptInfo *rel)
+{
+	/*
+	 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
+	 * initial row fetch, rather than later on as is done for local tables.
+	 * The extra roundtrips involved in trying to duplicate the local
+	 * semantics exactly don't seem worthwhile (see also comments for
+	 * RowMarkType).
+	 *
+	 * Note: because we actually run the query as a cursor, this assumes that
+	 * DECLARE CURSOR ... FOR UPDATE is supported, which it isn't before 8.3.
+	 */
+	if (rel->relid == root->parse->resultRelation &&
+		(root->parse->commandType == CMD_UPDATE ||
+		 root->parse->commandType == CMD_DELETE))
+	{
+		/* Relation is UPDATE/DELETE target, so use FOR UPDATE */
+		appendStringInfoString(buf, " FOR UPDATE");
+	}
+	else
+	{
+		PlanRowMark *rc = get_plan_rowmark(root->rowMarks, rel->relid);
+
+		if (rc)
+		{
+			/*
+			 * Relation is specified as a FOR UPDATE/SHARE target, so handle
+			 * that.  (But we could also see LCS_NONE, meaning this isn't a
+			 * target relation after all.)
+			 *
+			 * For now, just ignore any [NO] KEY specification, since (a) it's
+			 * not clear what that means for a remote table that we don't have
+			 * complete information about, and (b) it wouldn't work anyway on
+			 * older remote servers.  Likewise, we don't worry about NOWAIT.
+			 */
+			switch (rc->strength)
+			{
+				case LCS_NONE:
+					/* No locking needed */
+					break;
+				case LCS_FORKEYSHARE:
+				case LCS_FORSHARE:
+					appendStringInfoString(buf, " FOR SHARE");
+					break;
+				case LCS_FORNOKEYUPDATE:
+				case LCS_FORUPDATE:
+					appendStringInfoString(buf, " FOR UPDATE");
+					break;
+			}
+		}
+	}
 }
 
 /*

@@ -88,6 +88,8 @@ extern void deparseSelectSql(StringInfo buf,
 				 RelOptInfo *baserel,
 				 Bitmapset *attrs_used,
 				 List **retrieved_attrs);
+extern void deparseLockingClause(StringInfo buf,
+					 PlannerInfo *root, RelOptInfo *rel);
 extern void appendWhereClause(StringInfo buf,
 				  PlannerInfo *root,
 				  RelOptInfo *baserel,
