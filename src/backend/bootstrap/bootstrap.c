@@ -204,7 +204,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	 * process command arguments
 	 */
 
-	/* Set defaults, to be overriden by explicit options below */
+	/* Set defaults, to be overridden by explicit options below */
 	if (!IsUnderPostmaster)
 		InitializeGUCOptions();
 
