@@ -1259,6 +1259,7 @@ consider_parallel_nestloop(PlannerInfo *root,
 					continue;
 				innerpath = (Path *) create_unique_path(root, innerrel,
 											   innerpath, extra->sjinfo);
+				Assert(innerpath);
 			}
 
 			try_partial_nestloop_path(root, joinrel, outerpath, innerpath,
