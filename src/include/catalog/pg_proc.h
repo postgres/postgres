@@ -4517,6 +4517,8 @@ DATA(insert OID = 3087 (  gin_extract_tsquery	PGNSP PGUID 12 1 0 0 0 f f f f t f
 DESCR("GIN tsvector support (obsolete)");
 DATA(insert OID = 3088 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 6 0 16 "2281 21 3615 23 2281 2281" _null_ _null_ _null_ _null_ _null_ gin_tsquery_consistent_6args _null_ _null_ _null_ ));
 DESCR("GIN tsvector support (obsolete)");
+DATA(insert OID = 3789 (  gin_clean_pending_list PGNSP PGUID 12 1 0 0 0 f f f f t f v s 1 0 20 "2205" _null_ _null_ _null_ _null_ _null_ gin_clean_pending_list _null_ _null_ _null_ ));
+DESCR("clean up GIN pending list");
 
 DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ _null_ tsquery_lt _null_ _null_ _null_ ));
 DATA(insert OID = 3663 (  tsquery_le			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ _null_ tsquery_le _null_ _null_ _null_ ));

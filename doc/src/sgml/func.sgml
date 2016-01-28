@@ -18036,9 +18036,16 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <primary>brin_summarize_new_values</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>gin_clean_pending_list</primary>
+   </indexterm>
+
    <para>
     <xref linkend="functions-admin-index-table"> shows the functions
     available for index maintenance tasks.
+    These functions cannot be executed during recovery.
+    Use of these functions is restricted to superusers and the owner
+    of the given index.
    </para>
 
    <table id="functions-admin-index-table">
@@ -18056,6 +18063,13 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>integer</type></entry>
        <entry>summarize page ranges not already summarized</entry>
       </row>
+      <row>
+       <entry>
+        <literal><function>gin_clean_pending_list(<parameter>index</> <type>regclass</>)</function></literal>
+       </entry>
+       <entry><type>bigint</type></entry>
+       <entry>move GIN pending list entries into main index structure</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -18067,6 +18081,18 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     it creates a new summary index tuple by scanning the table pages.
     It returns the number of new page range summaries that were inserted
     into the index.
+   </para>
+
+   <para>
+    <function>gin_clean_pending_list</> accepts the OID or name of
+    a GIN index and cleans up the pending list of the specified GIN index
+    by moving entries in it to the main GIN data structure in bulk.
+    It returns the number of pages cleaned up from the pending list.
+    Note that if the argument is a GIN index built with <literal>fastupdate</>
+    option disabled, the cleanup does not happen and the return value is 0
+    because the index doesn't have a pending list.
+    Please see <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
+    for details of the pending list and <literal>fastupdate</> option.
    </para>
 
   </sect2>

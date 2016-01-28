@@ -881,6 +881,9 @@ extern void ginFreeScanKeys(GinScanOpaque so);
 /* ginget.c */
 extern int64 gingetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
 
+/* ginfast.c */
+extern Datum gin_clean_pending_list(PG_FUNCTION_ARGS);
+
 /* ginlogic.c */
 extern void ginInitConsistentFunction(GinState *ginstate, GinScanKey key);
 

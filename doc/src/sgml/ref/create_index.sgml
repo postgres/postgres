@@ -362,8 +362,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       Turning <literal>fastupdate</> off via <command>ALTER INDEX</> prevents
       future insertions from going into the list of pending index entries,
       but does not in itself flush previous entries.  You might want to
-      <command>VACUUM</> the table afterward to ensure the pending list is
-      emptied.
+      <command>VACUUM</> the table or call <function>gin_clean_pending_list</>
+      function afterward to ensure the pending list is emptied.
      </para>
     </note>
     </listitem>

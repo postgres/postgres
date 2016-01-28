@@ -20,10 +20,13 @@
 
 #include "access/gin_private.h"
 #include "access/xloginsert.h"
+#include "access/xlog.h"
 #include "commands/vacuum.h"
+#include "catalog/pg_am.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/acl.h"
 #include "storage/indexfsm.h"
 
 /* GUC parameter */
@@ -957,4 +960,53 @@ ginInsertCleanup(GinState *ginstate,
 	/* Clean up temporary space */
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextDelete(opCtx);
+}
+
+/*
+ * SQL-callable function to clean the insert pending list
+ */
+Datum
+gin_clean_pending_list(PG_FUNCTION_ARGS)
+{
+	Oid			indexoid = PG_GETARG_OID(0);
+	Relation	indexRel = index_open(indexoid, AccessShareLock);
+	IndexBulkDeleteResult stats;
+	GinState	ginstate;
+
+	if (RecoveryInProgress())
+ 		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("GIN pending list cannot be cleaned up during recovery.")));
+
+	/* Must be a GIN index */
+	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||
+		indexRel->rd_rel->relam != GIN_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a GIN index",
+						RelationGetRelationName(indexRel))));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(indexRel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("cannot access temporary indexes of other sessions")));
+
+	/* User must own the index (comparable to privileges needed for VACUUM) */
+	if (!pg_class_ownercheck(indexoid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(indexRel));
+
+	memset(&stats, 0, sizeof(stats));
+	initGinState(&ginstate, indexRel);
+	ginInsertCleanup(&ginstate, true, &stats);
+
+	index_close(indexRel, AccessShareLock);
+
+	PG_RETURN_INT64((int64) stats.pages_deleted);
 }
