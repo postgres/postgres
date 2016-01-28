@@ -2152,6 +2152,15 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	scan_plan->fs_relids = best_path->path.parent->relids;
 
 	/*
+	 * If a join between foreign relations was pushed down, remember it. The
+	 * push-down safety of the join depends upon the server and user mapping
+	 * being same. That can change between planning and execution time, in which
+	 * case the plan should be invalidated.
+	 */
+	if (scan_relid == 0)
+		root->glob->hasForeignJoin = true;
+
+	/*
 	 * Replace any outer-relation variables with nestloop params in the qual,
 	 * fdw_exprs and fdw_recheck_quals expressions.  We do this last so that
 	 * the FDW doesn't have to be involved.  (Note that parts of fdw_exprs

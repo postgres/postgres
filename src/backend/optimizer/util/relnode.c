@@ -14,6 +14,9 @@
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
+#include "catalog/pg_class.h"
+#include "foreign/foreign.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -127,6 +130,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->subroot = NULL;
 	rel->subplan_params = NIL;
 	rel->serverid = InvalidOid;
+	rel->umid = InvalidOid;
 	rel->fdwroutine = NULL;
 	rel->fdw_private = NULL;
 	rel->baserestrictinfo = NIL;
@@ -165,6 +169,26 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 				 (int) rte->rtekind);
 			break;
 	}
+
+	/* For foreign tables get the user mapping */
+	if (rte->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/*
+		 * This should match what ExecCheckRTEPerms() does.
+		 *
+		 * Note that if the plan ends up depending on the user OID in any
+		 * way - e.g. if it depends on the computed user mapping OID - we must
+		 * ensure that it gets invalidated in the case of a user OID change.
+		 * See RevalidateCachedQuery and more generally the hasForeignJoin
+		 * flags in PlannerGlobal and PlannedStmt.
+		 */
+		Oid		userid;
+
+		userid = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
+		rel->umid = GetUserMappingId(userid, rel->serverid);
+	}
+	else
+		rel->umid = InvalidOid;
 
 	/* Save the finished struct in the query's simple_rel_array */
 	root->simple_rel_array[relid] = rel;
@@ -398,6 +422,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->subroot = NULL;
 	joinrel->subplan_params = NIL;
 	joinrel->serverid = InvalidOid;
+	joinrel->umid = InvalidOid;
 	joinrel->fdwroutine = NULL;
 	joinrel->fdw_private = NULL;
 	joinrel->baserestrictinfo = NIL;
@@ -408,12 +433,19 @@ build_join_rel(PlannerInfo *root,
 
 	/*
 	 * Set up foreign-join fields if outer and inner relation are foreign
-	 * tables (or joins) belonging to the same server.
+	 * tables (or joins) belonging to the same server and using the same
+	 * user mapping.
+	 *
+	 * Otherwise those fields are left invalid, so FDW API will not be called
+	 * for the join relation.
 	 */
 	if (OidIsValid(outer_rel->serverid) &&
-		inner_rel->serverid == outer_rel->serverid)
+		inner_rel->serverid == outer_rel->serverid &&
+		inner_rel->umid == outer_rel->umid)
 	{
+		Assert(OidIsValid(outer_rel->umid));
 		joinrel->serverid = outer_rel->serverid;
+		joinrel->umid = outer_rel->umid;
 		joinrel->fdwroutine = outer_rel->fdwroutine;
 	}
 

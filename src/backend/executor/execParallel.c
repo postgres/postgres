@@ -143,6 +143,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
 	pstmt->hasRowSecurity = false;
+	pstmt->hasForeignJoin = false;
 
 	/* Return serialized copy of our dummy PlannedStmt. */
 	return nodeToString(pstmt);

@@ -1396,6 +1396,7 @@ _readPlannedStmt(void)
 	READ_INT_FIELD(nParamExec);
 	READ_BOOL_FIELD(hasRowSecurity);
 	READ_BOOL_FIELD(parallelModeNeeded);
+	READ_BOOL_FIELD(hasForeignJoin);
 
 	READ_DONE();
 }

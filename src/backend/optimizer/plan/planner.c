@@ -200,6 +200,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->lastPlanNodeId = 0;
 	glob->transientPlan = false;
 	glob->hasRowSecurity = false;
+	glob->hasForeignJoin = false;
 
 	/*
 	 * Assess whether it's feasible to use parallel mode for this query. We
@@ -346,6 +347,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->nParamExec = glob->nParamExec;
 	result->hasRowSecurity = glob->hasRowSecurity;
 	result->parallelModeNeeded = glob->parallelModeNeeded;
+	result->hasForeignJoin = glob->hasForeignJoin;
 
 	return result;
 }
