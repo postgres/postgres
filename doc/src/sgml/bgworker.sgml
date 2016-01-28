@@ -290,7 +290,8 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   The <filename>worker_spi</> contrib module contains a working example,
+   The <filename>src/test/modules/worker_spi</> module
+   contains a working example,
    which demonstrates some useful techniques.
   </para>
 
