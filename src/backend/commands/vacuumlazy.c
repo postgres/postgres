@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * vacuumlazy.c hi
+ * vacuumlazy.c hii
  *	  Concurrent ("lazy") vacuuming.
  *
  *
