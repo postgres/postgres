@@ -4412,7 +4412,8 @@ listForeignTables(const char *pattern, bool verbose)
 							 "d.objoid = c.oid AND d.objsubid = 0\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
-						  NULL, "n.nspname", "c.relname", NULL);
+						  "n.nspname", "c.relname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 

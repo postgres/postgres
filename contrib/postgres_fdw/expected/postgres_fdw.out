@@ -3734,7 +3734,7 @@ CREATE TABLE import_source."x 5" (c1 float8);
 ALTER TABLE import_source."x 5" DROP COLUMN c1;
 CREATE SCHEMA import_dest1;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
-\det+ import_dest1
+\det+ import_dest1.*
                                      List of foreign tables
     Schema    | Table |  Server  |                   FDW Options                   | Description 
 --------------+-------+----------+-------------------------------------------------+-------------
@@ -3790,7 +3790,7 @@ FDW Options: (schema_name 'import_source', table_name 'x 5')
 CREATE SCHEMA import_dest2;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
   OPTIONS (import_default 'true');
-\det+ import_dest2
+\det+ import_dest2.*
                                      List of foreign tables
     Schema    | Table |  Server  |                   FDW Options                   | Description 
 --------------+-------+----------+-------------------------------------------------+-------------
@@ -3845,7 +3845,7 @@ FDW Options: (schema_name 'import_source', table_name 'x 5')
 CREATE SCHEMA import_dest3;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
   OPTIONS (import_collate 'false', import_not_null 'false');
-\det+ import_dest3
+\det+ import_dest3.*
                                      List of foreign tables
     Schema    | Table |  Server  |                   FDW Options                   | Description 
 --------------+-------+----------+-------------------------------------------------+-------------
@@ -3901,7 +3901,7 @@ FDW Options: (schema_name 'import_source', table_name 'x 5')
 CREATE SCHEMA import_dest4;
 IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
   FROM SERVER loopback INTO import_dest4;
-\det+ import_dest4
+\det+ import_dest4.*
                                      List of foreign tables
     Schema    | Table |  Server  |                  FDW Options                   | Description 
 --------------+-------+----------+------------------------------------------------+-------------
@@ -3910,7 +3910,7 @@ IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
 
 IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch)
   FROM SERVER loopback INTO import_dest4;
-\det+ import_dest4
+\det+ import_dest4.*
                                      List of foreign tables
     Schema    | Table |  Server  |                   FDW Options                   | Description 
 --------------+-------+----------+-------------------------------------------------+-------------

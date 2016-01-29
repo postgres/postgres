@@ -879,29 +879,29 @@ ALTER TABLE import_source."x 5" DROP COLUMN c1;
 
 CREATE SCHEMA import_dest1;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
-\det+ import_dest1
+\det+ import_dest1.*
 \d import_dest1.*
 
 -- Options
 CREATE SCHEMA import_dest2;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
   OPTIONS (import_default 'true');
-\det+ import_dest2
+\det+ import_dest2.*
 \d import_dest2.*
 CREATE SCHEMA import_dest3;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
   OPTIONS (import_collate 'false', import_not_null 'false');
-\det+ import_dest3
+\det+ import_dest3.*
 \d import_dest3.*
 
 -- Check LIMIT TO and EXCEPT
 CREATE SCHEMA import_dest4;
 IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
   FROM SERVER loopback INTO import_dest4;
-\det+ import_dest4
+\det+ import_dest4.*
 IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch)
   FROM SERVER loopback INTO import_dest4;
-\det+ import_dest4
+\det+ import_dest4.*
 
 -- Assorted error cases
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest4;
