@@ -109,7 +109,7 @@ typedef struct ReplicationSlot
 	ReplicationSlotPersistentData data;
 
 	/* is somebody performing io on this slot? */
-	LWLock	   *io_in_progress_lock;
+	LWLock		io_in_progress_lock;
 
 	/* all the remaining data is only used for logical slots */
 

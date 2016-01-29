@@ -353,9 +353,6 @@ NumLWLocks(void)
 	/* Predefined LWLocks */
 	numLocks = NUM_FIXED_LWLOCKS;
 
-	/* slot.c needs one for each slot */
-	numLocks += max_replication_slots;
-
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility
 	 * reasons, allocate at least NUM_USER_DEFINED_LWLOCKS of them even if
