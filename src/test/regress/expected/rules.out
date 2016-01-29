@@ -1848,6 +1848,16 @@ pg_stat_user_tables| SELECT pg_stat_all_tables.relid,
     pg_stat_all_tables.autoanalyze_count
    FROM pg_stat_all_tables
   WHERE ((pg_stat_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_tables.schemaname !~ '^pg_toast'::text));
+pg_stat_vacuum_progress| SELECT s.pid,
+	s.relid,
+	s.phase,
+	s.total_heap_pages,
+	s.scanned_heap_pages,
+	s.percent_complete,
+	s.total_index_pages,
+	s.scanned_index_pages,
+	s.index_scan_count
+	FROM pg_stat_get_vacuum_progress() s(pid, relid, phase, total_heap_pages, scanned_heap_pages, percent_complete, total_index_pages, scanned_index_pages, index_scan_count);	
 pg_stat_wal_receiver| SELECT s.pid,
     s.status,
     s.receive_start_lsn,

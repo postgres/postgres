@@ -639,6 +639,19 @@ CREATE VIEW pg_stat_activity AS
     WHERE S.datid = D.oid AND
             S.usesysid = U.oid;
 
+CREATE VIEW pg_stat_vacuum_progress AS
+	SELECT
+			S.pid,
+			S.relid,
+			S.phase,
+			S.total_heap_blks,
+			S.current_heap_blkno,
+			S.total_index_pages,
+			S.scanned_index_pages,
+			S.index_scan_count,
+			S.percent_complete
+	FROM pg_stat_get_command_progress() AS S;
+
 CREATE VIEW pg_stat_replication AS
     SELECT
             S.pid,

@@ -2851,6 +2851,109 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	pgstat_increment_changecount_after(beentry);
 }
 
+/*-----------
+ * pgstat_report_progress_update_counter()-
+ *
+ * Called to update different values of VACUUM progress
+ *-----------
+ */
+void
+pgstat_report_progress_update_counter(int index, uint32 counter)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	if(!beentry)
+		return;
+
+	if (!pgstat_track_activities)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_progress_param[index] = counter;
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*-----------
+ * pgstat_report_progress_update_message()-
+ *
+ *Called to update phase of VACUUM progress
+ *-----------
+ */
+void
+pgstat_report_progress_update_message(int index, char msg[N_PROGRESS_PARAM][PROGRESS_MESSAGE_LENGTH])
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	if(!beentry)
+		return;
+
+	if (!pgstat_track_activities)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	strcpy((char *)beentry->st_progress_message[index], msg[index]);
+	pgstat_increment_changecount_after(beentry);
+}
+/* ----------
+ *	pgstat_report_progress_set_command_target() -
+ *
+ *	Called to update command target relation oid.
+ * ----------
+ */
+void
+pgstat_report_progress_set_command_target(Oid relid)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	if (!beentry)
+		return;
+
+	if (!pgstat_track_activities)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_relid = relid;
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*-----------
+ * pgstat_report_progress_set_command()-
+ *
+ * Called to update command the backend is about to start running.
+ *-----------
+ */
+void
+pgstat_report_progress_set_command(int16 commandId)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	if (!beentry)
+		return;
+
+	if (!pgstat_track_activities)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_command = commandId;
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*--------
+ * pgstat_reset_local_progress()-
+ *
+ * Reset local backend's progress parameters. Resetting st_command will do.
+ *--------
+ */
+void
+pgstat_reset_local_progress(void)
+{
+	PgBackendStatus *beentry = MyBEEntry;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_command = 0;
+	pgstat_increment_changecount_after(beentry);
+}
+
 /* ----------
  * pgstat_report_appname() -
  *

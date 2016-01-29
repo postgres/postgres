@@ -507,6 +507,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       yet included in <structname>pg_stat_user_functions</>).</entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_vacuum_progress</><indexterm><primary>pg_stat_vacuum_progress</primary></indexterm></entry>
+      <entry>One row for each backend (including autovacuum worker processes) running
+      <command>VACUUM</>, showing current progress in terms of heap pages it
+      has finished processing. Backends running <command>VACUUM FULL</> are
+      not included.</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -1820,6 +1827,74 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    one row for each tracked function, showing statistics about executions of
    that function.  The <xref linkend="guc-track-functions"> parameter
    controls exactly which functions are tracked.
+  </para>
+
+  <table id="pg-stat-vacuum-progress" xreflabel="pg_stat_vacuum_progress">
+   <title><structname>pg_stat_vacuum_progress</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of backend</entry>
+    </row>
+    <row>
+     <entry><structfield>relid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of a table</entry>
+    </row>
+    <row>
+     <entry><structfield>phase</></entry>
+     <entry><type>name</></entry>
+     <entry>Phase of vacuum</entry>
+    </row>
+    <row>
+     <entry><structfield>total_heap_pages</></entry>
+     <entry><type>integer</></entry>
+     <entry>Total number of pages in this table</entry>
+    </row>
+    <row>
+     <entry><structfield>current_heap_blkno</></entry>
+     <entry><type>integer</></entry>
+     <entry>Current heap block number</entry>
+    </row>
+    <row>
+     <entry><structfield>total_index_pages</></entry>
+     <entry><type>integer</></entry>
+     <entry>Total number of index pages in this table</entry>
+    </row>
+    <row>
+     <entry><structfield>scanned_index_pages</></entry>
+     <entry><type>integer</></entry>
+     <entry>Number of index pages processed</entry>
+    </row>
+    <row>
+     <entry><structfield>index_scan_count</></entry>
+     <entry><type>integer</></entry>
+     <entry>Number of times index scan has been performed so far</entry>
+    </row>
+    <row>
+     <entry><structfield>percent_complete</></entry>
+     <entry><type>double precision</></entry>
+     <entry>Amount of work done in percent</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_vacuum_progress</structname> view will contain
+   one row for each backend (including autovacuum worker processes), showing
+   progress of <command>VACUUM</> running in it. Note that the backends
+   running <command>VACUUM FULL</> are not shown.
   </para>
 
  </sect2>
