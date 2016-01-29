@@ -353,9 +353,6 @@ NumLWLocks(void)
 	/* Predefined LWLocks */
 	numLocks = NUM_FIXED_LWLOCKS;
 
-	/* proc.c needs one for each backend or auxiliary process */
-	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
-
 	/* slot.c needs one for each slot */
 	numLocks += max_replication_slots;
 

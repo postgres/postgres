@@ -106,6 +106,9 @@ static TransactionId *KnownAssignedXids;
 static bool *KnownAssignedXidsValid;
 static TransactionId latestObservedXid = InvalidTransactionId;
 
+/* LWLock tranche for backend locks */
+static LWLockTranche ProcLWLockTranche;
+
 /*
  * If we're in STANDBY_SNAPSHOT_PENDING state, standbySnapshotPendingXmin is
  * the highest xid that might still be running that we don't have in
@@ -261,6 +264,13 @@ CreateSharedProcArray(void)
 							mul_size(sizeof(bool), TOTAL_MAX_CACHED_SUBXIDS),
 							&found);
 	}
+
+	/* Register and initialize fields of ProcLWLockTranche */
+	ProcLWLockTranche.name = "proc";
+	ProcLWLockTranche.array_base = (char *) (ProcGlobal->allProcs) +
+		offsetof(PGPROC, backendLock);
+	ProcLWLockTranche.array_stride = sizeof(PGPROC);
+	LWLockRegisterTranche(LWTRANCHE_PROC, &ProcLWLockTranche);
 }
 
 /*

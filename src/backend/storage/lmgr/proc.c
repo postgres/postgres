@@ -226,7 +226,7 @@ InitProcGlobal(void)
 		{
 			PGSemaphoreCreate(&(procs[i].sem));
 			InitSharedLatch(&(procs[i].procLatch));
-			procs[i].backendLock = LWLockAssign();
+			LWLockInitialize(&(procs[i].backendLock), LWTRANCHE_PROC);
 		}
 		procs[i].pgprocno = i;
 
