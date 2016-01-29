@@ -3804,7 +3804,8 @@ listForeignTables(const char *pattern, bool verbose)
 	appendPQExpBuffer(&buf, "\nAND n.oid = c.relnamespace\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
-						  NULL, "n.nspname", "c.relname", NULL);
+						  "n.nspname", "c.relname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
