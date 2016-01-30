@@ -1003,19 +1003,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * expressions to be sent as parameters.
 	 */
 	initStringInfo(&sql);
-	deparseSelectSql(&sql, root, baserel, fpinfo->attrs_used,
-					 &retrieved_attrs);
-	if (remote_conds)
-		appendWhereClause(&sql, root, baserel, remote_conds,
-						  true, &params_list);
-
-	/* Add ORDER BY clause if we found any useful pathkeys */
-	if (best_path->path.pathkeys)
-		appendOrderByClause(&sql, root, baserel, best_path->path.pathkeys);
-
-	/* Add any necessary FOR UPDATE/SHARE. */
-	deparseLockingClause(&sql, root, baserel);
-
+	deparseSelectStmtForRel(&sql, root, baserel, remote_conds,
+							best_path->path.pathkeys, &retrieved_attrs,
+							&params_list);
 	/*
 	 * Build the fdw_private list that will be available to the executor.
 	 * Items in the list must match enum FdwScanPrivateIndex, above.
@@ -1909,6 +1899,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		PGconn	   *conn;
 		Selectivity local_sel;
 		QualCost	local_cost;
+		List	   *remote_conds;
 
 		/*
 		 * join_conds might contain both clauses that are safe to send across,
@@ -1918,23 +1909,22 @@ estimate_path_cost_size(PlannerInfo *root,
 						   &remote_join_conds, &local_join_conds);
 
 		/*
+		 * The complete list of remote conditions includes everything from
+		 * baserestrictinfo plus any extra join_conds relevant to this
+		 * particular path.
+		 */
+		remote_conds = list_concat(list_copy(remote_join_conds),
+								   fpinfo->remote_conds);
+
+		/*
 		 * Construct EXPLAIN query including the desired SELECT, FROM, and
 		 * WHERE clauses.  Params and other-relation Vars are replaced by
 		 * dummy values.
 		 */
 		initStringInfo(&sql);
 		appendStringInfoString(&sql, "EXPLAIN ");
-		deparseSelectSql(&sql, root, baserel, fpinfo->attrs_used,
-						 &retrieved_attrs);
-		if (fpinfo->remote_conds)
-			appendWhereClause(&sql, root, baserel, fpinfo->remote_conds,
-							  true, NULL);
-		if (remote_join_conds)
-			appendWhereClause(&sql, root, baserel, remote_join_conds,
-							  (fpinfo->remote_conds == NIL), NULL);
-
-		if (pathkeys)
-			appendOrderByClause(&sql, root, baserel, pathkeys);
+		deparseSelectStmtForRel(&sql, root, baserel, remote_conds, pathkeys,
+								&retrieved_attrs, NULL);
 
 		/* Get the remote estimate */
 		conn = GetConnection(fpinfo->user, false);

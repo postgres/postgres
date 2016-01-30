@@ -83,19 +83,6 @@ extern void classifyConditions(PlannerInfo *root,
 extern bool is_foreign_expr(PlannerInfo *root,
 				RelOptInfo *baserel,
 				Expr *expr);
-extern void deparseSelectSql(StringInfo buf,
-				 PlannerInfo *root,
-				 RelOptInfo *baserel,
-				 Bitmapset *attrs_used,
-				 List **retrieved_attrs);
-extern void deparseLockingClause(StringInfo buf,
-					 PlannerInfo *root, RelOptInfo *rel);
-extern void appendWhereClause(StringInfo buf,
-				  PlannerInfo *root,
-				  RelOptInfo *baserel,
-				  List *exprs,
-				  bool is_first,
-				  List **params);
 extern void deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, bool doNothing, List *returningList,
@@ -113,8 +100,9 @@ extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
-extern void appendOrderByClause(StringInfo buf, PlannerInfo *root,
-					RelOptInfo *baserel, List *pathkeys);
+extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
+					 RelOptInfo *baserel, List *remote_conds, List *pathkeys,
+						List **retrieved_attrs, List **params_list);
 
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
