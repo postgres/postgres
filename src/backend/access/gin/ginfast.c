@@ -974,7 +974,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 	GinState	ginstate;
 
 	if (RecoveryInProgress())
- 		ereport(ERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
 				 errhint("GIN pending list cannot be cleaned up during recovery.")));
