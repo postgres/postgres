@@ -2626,7 +2626,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
      from <ulink url="http://mingw-w64.sourceforge.net/"></ulink>, put its bin
      directory in the <envar>PATH</envar>, and run
      <command>configure</command> with the
-     <command>--host=x86_64-w64-mingw</command> option.
+     <command>--host=x86_64-w64-mingw32</command> option.
    </para>
 
    <para>
