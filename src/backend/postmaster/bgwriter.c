@@ -301,7 +301,7 @@ BackgroundWriterMain(void)
 		 * check whether there has been any WAL inserted since the last time
 		 * we've logged a running xacts.
 		 *
-		 * We do this logging in the bgwriter as its the only process thats
+		 * We do this logging in the bgwriter as its the only process that is
 		 * run regularly and returns to its mainloop all the time. E.g.
 		 * Checkpointer, when active, is barely ever in its mainloop and thus
 		 * makes it hard to log regularly.

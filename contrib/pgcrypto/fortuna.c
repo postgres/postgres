@@ -304,7 +304,7 @@ get_rand_pool(FState *st)
 	unsigned	rnd;
 
 	/*
-	 * This slightly prefers lower pools - thats OK.
+	 * This slightly prefers lower pools - that is OK.
 	 */
 	rnd = st->key[st->rnd_pos] % NUM_POOLS;
 

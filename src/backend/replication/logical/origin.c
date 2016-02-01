@@ -677,7 +677,7 @@ StartupReplicationOrigin(void)
 				 errmsg("could not open file \"%s\": %m",
 						path)));
 
-	/* verify magic, thats written even if nothing was active */
+	/* verify magic, that is written even if nothing was active */
 	readBytes = read(fd, &magic, sizeof(magic));
 	if (readBytes != sizeof(magic))
 		ereport(PANIC,

@@ -612,7 +612,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 void
 SnapBuildClearExportedSnapshot(void)
 {
-	/* nothing exported, thats the usual case */
+	/* nothing exported, that is the usual case */
 	if (!ExportInProgress)
 		return;
 
