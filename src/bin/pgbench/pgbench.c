@@ -1047,7 +1047,29 @@ evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
 							fprintf(stderr, "division by zero\n");
 							return false;
 						}
-						*retval = lval / rval;
+
+						/*
+						 * INT64_MIN / -1 is problematic, since the result
+						 * can't be represented on a two's-complement machine.
+						 * Some machines produce INT64_MIN, some produce zero,
+						 * some throw an exception. We can dodge the problem
+						 * by recognizing that division by -1 is the same as
+						 * negation.
+						 */
+						if (rval == -1)
+						{
+							*retval = -lval;
+
+							/* overflow check (needed for INT64_MIN) */
+							if (lval == PG_INT64_MIN)
+							{
+								fprintf(stderr, "bigint out of range\n");
+								return false;
+							}
+						}
+						else
+							*retval = lval / rval;
+
 						return true;
 
 					case '%':
@@ -1056,7 +1078,17 @@ evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
 							fprintf(stderr, "division by zero\n");
 							return false;
 						}
-						*retval = lval % rval;
+
+						/*
+						 * Some machines throw a floating-point exception for
+						 * INT64_MIN % -1.  Dodge that problem by noting that
+						 * any value modulo -1 is 0.
+						 */
+						if (rval == -1)
+							*retval = 0;
+						else
+							*retval = lval % rval;
+
 						return true;
 				}
 
