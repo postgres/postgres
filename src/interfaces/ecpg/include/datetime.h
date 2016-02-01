@@ -5,8 +5,8 @@
 
 #include <ecpg_informix.h>
 
-#ifndef _ECPGLIB_H				/* source created by ecpg which defines these
-								 * symbols */
+/* source created by ecpg which defines these symbols */
+#ifndef _ECPGLIB_H
 typedef timestamp dtime_t;
 typedef interval intrvl_t;
 #endif   /* ndef _ECPGLIB_H */
