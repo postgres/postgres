@@ -1553,7 +1553,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches2("ALTER", "SYSTEM"))
 		COMPLETE_WITH_LIST2("SET", "RESET");
 	/* ALTER SYSTEM SET|RESET <name> */
-	else if (Matches4("ALTER", "SYSTEM", "SET|RESET", MatchAny))
+	else if (Matches3("ALTER", "SYSTEM", "SET|RESET"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
 	/* ALTER VIEW <name> */
 	else if (Matches3("ALTER", "VIEW", MatchAny))
@@ -1754,6 +1754,9 @@ psql_completion(const char *text, int start, int end)
 	 */
 	else if (Matches5("ALTER", "TABLE", MatchAny, "SET", "TABLESPACE"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
+	/* If we have ALTER TABLE <sth> SET WITH provide OIDS */
+	else if (Matches5("ALTER", "TABLE", MatchAny, "SET", "WITH"))
+		COMPLETE_WITH_CONST("OIDS");
 	/* If we have ALTER TABLE <sth> SET WITHOUT provide CLUSTER or OIDS */
 	else if (Matches5("ALTER", "TABLE", MatchAny, "SET", "WITHOUT"))
 		COMPLETE_WITH_LIST2("CLUSTER", "OIDS");
@@ -2702,7 +2705,7 @@ psql_completion(const char *text, int start, int end)
 
 /* SET, RESET, SHOW */
 	/* Complete with a variable name */
-	else if (Matches1("SET|RESET"))
+	else if (TailMatches1("SET|RESET") && !TailMatches3("UPDATE", MatchAny, "SET"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_set_vars);
 	else if (Matches1("SHOW"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_show_vars);
@@ -2743,8 +2746,12 @@ psql_completion(const char *text, int start, int end)
 	/* Complete SET <var> with "TO" */
 	else if (Matches2("SET", MatchAny))
 		COMPLETE_WITH_CONST("TO");
+	/* Complete ALTER DATABASE|FUNCTION|ROLE|USER ... SET <name> */
+	else if (HeadMatches2("ALTER", "DATABASE|FUNCTION|ROLE|USER") &&
+			 TailMatches2("SET", MatchAny))
+		COMPLETE_WITH_LIST2("FROM CURRENT", "TO");
 	/* Suggest possible variable values */
-	else if (Matches3("SET", MatchAny, "TO|="))
+	else if (TailMatches3("SET", MatchAny, "TO|="))
 	{
 		/* special cased code for individual GUCs */
 		if (TailMatches2("DateStyle", "TO|="))
