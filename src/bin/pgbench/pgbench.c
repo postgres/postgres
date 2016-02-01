@@ -164,6 +164,7 @@ bool		use_log;			/* log transaction latencies to a file */
 bool		use_quiet;			/* quiet logging onto stderr */
 int			agg_interval;		/* log aggregates instead of individual
 								 * transactions */
+bool		per_script_stats = false;	/* whether to collect stats per script */
 int			progress = 0;		/* thread progress report every this seconds */
 bool		progress_timestamp = false; /* progress report with Unix time */
 int			nclients = 1;		/* number of clients */
@@ -206,8 +207,8 @@ typedef struct SimpleStats
 } SimpleStats;
 
 /*
- * Data structure to hold various statistics: per-thread stats are maintained
- * and merged together.
+ * Data structure to hold various statistics: per-thread and per-script stats
+ * are maintained and merged together.
  */
 typedef struct StatsData
 {
@@ -299,6 +300,7 @@ static struct
 {
 	const char *name;
 	Command   **commands;
+	StatsData stats;
 }	sql_script[MAX_SCRIPTS];	/* SQL script files */
 static int	num_scripts;		/* number of scripts in sql_script[] */
 static int	num_commands = 0;	/* total number of Command structs */
@@ -1358,7 +1360,8 @@ top:
 		/* transaction finished: calculate latency and log the transaction */
 		if (commands[st->state + 1] == NULL)
 		{
-			if (progress || throttle_delay || latency_limit || logfile)
+			if (progress || throttle_delay || latency_limit ||
+				per_script_stats || logfile)
 				processXactStats(thread, st, &now, false, logfile, agg);
 			else
 				thread->stats.cnt++;
@@ -1451,7 +1454,7 @@ top:
 	}
 
 	/* Record transaction start time under logging, progress or throttling */
-	if ((logfile || progress || throttle_delay || latency_limit) && st->state == 0)
+	if ((logfile || progress || throttle_delay || latency_limit || per_script_stats) && st->state == 0)
 	{
 		INSTR_TIME_SET_CURRENT(st->txn_begin);
 
@@ -1904,6 +1907,10 @@ processXactStats(TState *thread, CState *st, instr_time *now,
 
 	if (use_log)
 		doLog(thread, st, logfile, now, agg, skipped, latency, lag);
+
+	/* XXX could use a mutex here, but we choose not to */
+	if (per_script_stats)
+		accumStats(&sql_script[st->use_file].stats, skipped, latency, lag);
 }
 
 
@@ -2693,6 +2700,7 @@ addScript(const char *name, Command **commands)
 
 	sql_script[num_scripts].name = name;
 	sql_script[num_scripts].commands = commands;
+	initStats(&sql_script[num_scripts].stats, 0.0);
 	num_scripts++;
 }
 
@@ -2776,22 +2784,43 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	printf("tps = %f (including connections establishing)\n", tps_include);
 	printf("tps = %f (excluding connections establishing)\n", tps_exclude);
 
-	/* Report per-command latencies */
-	if (is_latencies)
+	/* Report per-command statistics */
+	if (per_script_stats)
 	{
 		int			i;
 
 		for (i = 0; i < num_scripts; i++)
 		{
-			Command   **commands;
+			printf("SQL script %d: %s\n"
+			" - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
+				   i + 1, sql_script[i].name,
+				   sql_script[i].stats.cnt,
+				   100.0 * sql_script[i].stats.cnt / total->cnt,
+				   sql_script[i].stats.cnt / time_include);
 
-			printf("SQL script %d: %s\n", i + 1, sql_script[i].name);
-			printf(" - statement latencies in milliseconds:\n");
+			if (latency_limit)
+				printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
+					   sql_script[i].stats.skipped,
+					   100.0 * sql_script[i].stats.skipped /
+					(sql_script[i].stats.skipped + sql_script[i].stats.cnt));
 
-			for (commands = sql_script[i].commands; *commands != NULL; commands++)
-				printf("   %11.3f  %s\n",
-				  1000.0 * (*commands)->stats.sum / (*commands)->stats.count,
-					   (*commands)->line);
+			printSimpleStats(" - latency", &sql_script[i].stats.latency);
+
+			/* Report per-command latencies */
+			if (is_latencies)
+			{
+				Command   **commands;
+
+				printf(" - statement latencies in milliseconds:\n");
+
+				for (commands = sql_script[i].commands;
+					 *commands != NULL;
+					 commands++)
+					printf("   %11.3f  %s\n",
+						   1000.0 * (*commands)->stats.sum /
+						   (*commands)->stats.count,
+						   (*commands)->line);
+			}
 		}
 	}
 }
@@ -2977,6 +3006,7 @@ main(int argc, char **argv)
 				break;
 			case 'r':
 				benchmarking_option_set = true;
+				per_script_stats = true;
 				is_latencies = true;
 				break;
 			case 's':
@@ -3199,6 +3229,10 @@ main(int argc, char **argv)
 		benchmarking_option_set = true;
 		internal_script_used = true;
 	}
+
+	/* show per script stats if several scripts are used */
+	if (num_scripts > 1)
+		per_script_stats = true;
 
 	/*
 	 * Don't need more threads than there are clients.  (This is not merely an
