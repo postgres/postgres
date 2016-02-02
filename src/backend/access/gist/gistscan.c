@@ -229,6 +229,10 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		{
 			ScanKey		skey = scan->keyData + i;
 
+			/*
+			 * Copy consistent support function to ScanKey structure
+			 * instead of function implementing filtering operator.
+			 */
 			fmgr_info_copy(&(skey->sk_func),
 						   &(so->giststate->consistentFn[skey->sk_attno - 1]),
 						   so->giststate->scanCxt);
@@ -284,8 +288,6 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 					 GIST_DISTANCE_PROC, skey->sk_attno,
 					 RelationGetRelationName(scan->indexRelation));
 
-			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
-
 			/*
 			 * Look up the datatype returned by the original ordering
 			 * operator. GiST always uses a float8 for the distance function,
@@ -299,6 +301,12 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 			 * first time.
 			 */
 			so->orderByTypes[i] = get_func_rettype(skey->sk_func.fn_oid);
+
+			/*
+			 * Copy distance support function to ScanKey structure
+			 * instead of function implementing ordering operator.
+			 */
+			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
 
 			/* Restore prior fn_extra pointers, if not first time */
 			if (!first_time)
