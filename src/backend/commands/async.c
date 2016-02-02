@@ -480,7 +480,7 @@ AsyncShmemInit(void)
 	 */
 	AsyncCtl->PagePrecedes = asyncQueuePagePrecedes;
 	SimpleLruInit(AsyncCtl, "async", NUM_ASYNC_BUFFERS, 0,
-				  AsyncCtlLock, "pg_notify");
+				  AsyncCtlLock, "pg_notify", LWTRANCHE_ASYNC_BUFFERS);
 	/* Override default assumption that writes should be fsync'd */
 	AsyncCtl->do_fsync = false;
 

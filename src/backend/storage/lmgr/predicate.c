@@ -795,7 +795,8 @@ OldSerXidInit(void)
 	 */
 	OldSerXidSlruCtl->PagePrecedes = OldSerXidPagePrecedesLogically;
 	SimpleLruInit(OldSerXidSlruCtl, "oldserxid",
-				  NUM_OLDSERXID_BUFFERS, 0, OldSerXidLock, "pg_serial");
+				  NUM_OLDSERXID_BUFFERS, 0, OldSerXidLock, "pg_serial",
+				  LWTRANCHE_OLDSERXID_BUFFERS);
 	/* Override default assumption that writes should be fsync'd */
 	OldSerXidSlruCtl->do_fsync = false;
 

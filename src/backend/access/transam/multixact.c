@@ -1831,10 +1831,12 @@ MultiXactShmemInit(void)
 
 	SimpleLruInit(MultiXactOffsetCtl,
 				  "multixact_offset", NUM_MXACTOFFSET_BUFFERS, 0,
-				  MultiXactOffsetControlLock, "pg_multixact/offsets");
+				  MultiXactOffsetControlLock, "pg_multixact/offsets",
+				  LWTRANCHE_MXACTOFFSET_BUFFERS);
 	SimpleLruInit(MultiXactMemberCtl,
 				  "multixact_member", NUM_MXACTMEMBER_BUFFERS, 0,
-				  MultiXactMemberControlLock, "pg_multixact/members");
+				  MultiXactMemberControlLock, "pg_multixact/members",
+				  LWTRANCHE_MXACTMEMBER_BUFFERS);
 
 	/* Initialize our shared state struct */
 	MultiXactState = ShmemInitStruct("Shared MultiXact State",

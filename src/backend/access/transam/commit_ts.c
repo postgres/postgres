@@ -485,7 +485,8 @@ CommitTsShmemInit(void)
 
 	CommitTsCtl->PagePrecedes = CommitTsPagePrecedes;
 	SimpleLruInit(CommitTsCtl, "commit_timestamp", CommitTsShmemBuffers(), 0,
-				  CommitTsControlLock, "pg_commit_ts");
+				  CommitTsControlLock, "pg_commit_ts",
+				  LWTRANCHE_COMMITTS_BUFFERS);
 
 	commitTsShared = ShmemInitStruct("CommitTs shared",
 									 sizeof(CommitTimestampShared),

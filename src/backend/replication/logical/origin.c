@@ -473,7 +473,7 @@ ReplicationOriginShmemInit(void)
 	{
 		int			i;
 
-		replication_states_ctl->tranche_id = LWLockNewTrancheId();
+		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN;
 		replication_states_ctl->tranche.name = "ReplicationOrigins";
 		replication_states_ctl->tranche.array_base =
 			&replication_states[0].lock;
