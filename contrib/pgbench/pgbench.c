@@ -59,6 +59,10 @@
 #ifndef INT64_MAX
 #define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
 #endif
+#ifndef INT32_MIN
+#define INT32_MIN	(-0x7FFFFFFF-1)
+#endif
+
 
 /*
  * Multi-platform pthread implementations
@@ -1112,13 +1116,37 @@ top:
 					snprintf(res, sizeof(res), "%d", ope1 * ope2);
 				else if (strcmp(argv[3], "/") == 0)
 				{
+					int		operes;
+
 					if (ope2 == 0)
 					{
 						fprintf(stderr, "%s: division by zero\n", argv[0]);
 						st->ecnt++;
 						return true;
 					}
-					snprintf(res, sizeof(res), "%d", ope1 / ope2);
+					/*
+					 * INT32_MIN / -1 is problematic, since the result can't
+					 * be represented on a two's-complement machine. Some
+					 * machines produce INT32_MIN, some produce zero, some
+					 * throw an exception. We can dodge the problem by
+					 * recognizing that division by -1 is the same as
+					 * negation.
+					 */
+					if (ope2 == -1)
+					{
+						operes = -ope1;
+
+						/* overflow check (needed for INT32_MIN) */
+						if (ope1 == INT32_MIN)
+						{
+							fprintf(stderr, "integer out of range\n");
+							st->ecnt++;
+							return true;
+						}
+					}
+					else
+						operes = ope1 / ope2;
+					snprintf(res, sizeof(res), "%d", operes);
 				}
 				else
 				{
