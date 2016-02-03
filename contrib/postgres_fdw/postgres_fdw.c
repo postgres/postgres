@@ -53,12 +53,6 @@ PG_MODULE_MAGIC;
 /*
  * Indexes of FDW-private information stored in fdw_private lists.
  *
- * We store various information in ForeignScan.fdw_private to pass it from
- * planner to executor.  Currently we store:
- *
- * 1) SELECT statement text to be sent to the remote server
- * 2) Integer list of attribute numbers retrieved by the SELECT
- *
  * These items are indexed with the enum FdwScanPrivateIndex, so an item
  * can be fetched with list_nth().  For example, to get the SELECT statement:
  *		sql = strVal(list_nth(fdw_private, FdwScanPrivateSelectSql));
@@ -1016,8 +1010,6 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * Build the fdw_private list that will be available to the executor.
 	 * Items in the list must match enum FdwScanPrivateIndex, above.
 	 */
-	fdw_private = list_make2(makeString(sql.data),
-							 retrieved_attrs);
 	fdw_private = list_make3(makeString(sql.data),
 							 retrieved_attrs,
 							 makeInteger(fpinfo->fetch_size));
