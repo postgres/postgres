@@ -52,6 +52,10 @@
 #ifndef INT64_MAX
 #define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
 #endif
+#ifndef INT64_MIN
+#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#endif
+
 
 /*
  * Multi-platform pthread implementations
@@ -1510,13 +1514,37 @@ top:
 					snprintf(res, sizeof(res), INT64_FORMAT, ope1 * ope2);
 				else if (strcmp(argv[3], "/") == 0)
 				{
+					int64	operes;
+
 					if (ope2 == 0)
 					{
 						fprintf(stderr, "%s: division by zero\n", argv[0]);
 						st->ecnt++;
 						return true;
 					}
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 / ope2);
+					/*
+					 * INT64_MIN / -1 is problematic, since the result can't
+					 * be represented on a two's-complement machine. Some
+					 * machines produce INT64_MIN, some produce zero, some
+					 * throw an exception. We can dodge the problem by
+					 * recognizing that division by -1 is the same as
+					 * negation.
+					 */
+					if (ope2 == -1)
+					{
+						operes = -ope1;
+
+						/* overflow check (needed for INT64_MIN) */
+						if (ope1 == INT64_MIN)
+						{
+							fprintf(stderr, "bigint out of range\n");
+							st->ecnt++;
+							return true;
+						}
+					}
+					else
+						operes = ope1 / ope2;
+					snprintf(res, sizeof(res), INT64_FORMAT, operes);
 				}
 				else
 				{
