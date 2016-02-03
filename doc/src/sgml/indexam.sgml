@@ -22,7 +22,7 @@
    pages so that they can use the regular storage manager and buffer manager
    to access the index contents.  (All the existing index access methods
    furthermore use the standard page layout described in <xref
-   linkend="storage-page-layout">, and they all use the same format for index
+   linkend="storage-page-layout">, and most use the same format for index
    tuple headers; but these decisions are not forced on an access method.)
   </para>
 
@@ -43,24 +43,96 @@
    are reclaimed.
   </para>
 
- <sect1 id="index-catalog">
-  <title>Catalog Entries for Indexes</title>
+ <sect1 id="index-api">
+  <title>Basic API Structure for Indexes</title>
 
   <para>
    Each index access method is described by a row in the
-   <structname>pg_am</structname> system catalog (see
-   <xref linkend="catalog-pg-am">).  The principal contents of a
-   <structname>pg_am</structname> row are references to
-   <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>
-   entries that identify the index access
-   functions supplied by the access method.  The APIs for these functions
-   are defined later in this chapter.  In addition, the
-   <structname>pg_am</structname> row specifies a few fixed properties of
-   the access method, such as whether it can support multicolumn indexes.
-   There is not currently any special support
+   <link linkend="catalog-pg-am"><structname>pg_am</structname></link>
+   system catalog.  The <structname>pg_am</structname> entry
+   specifies a name and a <firstterm>handler function</> for the access
+   method.  There is not currently any special support
    for creating or deleting <structname>pg_am</structname> entries;
    anyone able to write a new access method is expected to be competent
    to insert an appropriate row for themselves.
+  </para>
+
+  <para>
+   An index access method handler function must be declared to accept a
+   single argument of type <type>internal</> and to return the
+   pseudo-type <type>index_am_handler</>.  The argument is a dummy value that
+   simply serves to prevent handler functions from being called directly from
+   SQL commands.  The result of the function must be a palloc'd struct of
+   type <structname>IndexAmRoutine</structname>, which contains everything
+   that the core code needs to know to make use of the index access method.
+   The <structname>IndexAmRoutine</structname> struct, also called the access
+   method's <firstterm>API struct</>, includes fields specifying assorted
+   fixed properties of the access method, such as whether it can support
+   multicolumn indexes.  More importantly, it contains pointers to support
+   functions for the access method, which do all of the real work to access
+   indexes.  These support functions are plain C functions and are not
+   visible or callable at the SQL level.  The support functions are described
+   in <xref linkend="index-functions">.
+  </para>
+
+  <para>
+   The structure <structname>IndexAmRoutine</structname> is defined thus:
+<programlisting>
+typedef struct IndexAmRoutine
+{
+    NodeTag     type;
+
+    /*
+     * Total number of strategies (operators) by which we can traverse/search
+     * this AM.  Zero if AM does not have a fixed set of strategy assignments.
+     */
+    uint16      amstrategies;
+    /* total number of support functions that this AM uses */
+    uint16      amsupport;
+    /* does AM support ORDER BY indexed column's value? */
+    bool        amcanorder;
+    /* does AM support ORDER BY result of an operator on indexed column? */
+    bool        amcanorderbyop;
+    /* does AM support backward scanning? */
+    bool        amcanbackward;
+    /* does AM support UNIQUE indexes? */
+    bool        amcanunique;
+    /* does AM support multi-column indexes? */
+    bool        amcanmulticol;
+    /* does AM require scans to have a constraint on the first index column? */
+    bool        amoptionalkey;
+    /* does AM handle ScalarArrayOpExpr quals? */
+    bool        amsearcharray;
+    /* does AM handle IS NULL/IS NOT NULL quals? */
+    bool        amsearchnulls;
+    /* can index storage data type differ from column data type? */
+    bool        amstorage;
+    /* can an index of this type be clustered on? */
+    bool        amclusterable;
+    /* does AM handle predicate locks? */
+    bool        ampredlocks;
+    /* type of data stored in index, or InvalidOid if variable */
+    Oid         amkeytype;
+
+    /* interface functions */
+    ambuild_function ambuild;
+    ambuildempty_function ambuildempty;
+    aminsert_function aminsert;
+    ambulkdelete_function ambulkdelete;
+    amvacuumcleanup_function amvacuumcleanup;
+    amcanreturn_function amcanreturn;   /* can be NULL */
+    amcostestimate_function amcostestimate;
+    amoptions_function amoptions;
+    amvalidate_function amvalidate;
+    ambeginscan_function ambeginscan;
+    amrescan_function amrescan;
+    amgettuple_function amgettuple;     /* can be NULL */
+    amgetbitmap_function amgetbitmap;   /* can be NULL */
+    amendscan_function amendscan;
+    ammarkpos_function ammarkpos;       /* can be NULL */
+    amrestrpos_function amrestrpos;     /* can be NULL */
+} IndexAmRoutine;
+</programlisting>
   </para>
 
   <para>
@@ -96,7 +168,7 @@
   </para>
 
   <para>
-   Some of the flag columns of <structname>pg_am</structname> have nonobvious
+   Some of the flag fields of <structname>IndexAmRoutine</> have nonobvious
    implications.  The requirements of <structfield>amcanunique</structfield>
    are discussed in <xref linkend="index-unique-checks">.
    The <structfield>amcanmulticol</structfield> flag asserts that the
@@ -143,7 +215,7 @@
 
   <para>
    The index construction and maintenance functions that an index access
-   method must provide are:
+   method must provide in <structname>IndexAmRoutine</structname> are:
   </para>
 
   <para>
@@ -169,7 +241,7 @@ void
 ambuildempty (Relation indexRelation);
 </programlisting>
    Build an empty index, and write it to the initialization fork (<symbol>INIT_FORKNUM</symbol>)
-   of the given relation.  This method is called only for unlogged tables; the
+   of the given relation.  This method is called only for unlogged indexes; the
    empty index written to the initialization fork will be copied over the main
    relation fork on each server restart.
   </para>
@@ -188,7 +260,7 @@ aminsert (Relation indexRelation,
    <literal>isnull</> arrays give the key values to be indexed, and
    <literal>heap_tid</> is the TID to be indexed.
    If the access method supports unique indexes (its
-   <structname>pg_am</>.<structfield>amcanunique</> flag is true) then
+   <structfield>amcanunique</> flag is true) then
    <literal>checkUnique</> indicates the type of uniqueness check to
    perform.  This varies depending on whether the unique constraint is
    deferrable; see <xref linkend="index-unique-checks"> for details.
@@ -281,8 +353,8 @@ amcanreturn (Relation indexRelation, int attno);
    the form of an <structname>IndexTuple</structname>.  The attribute number
    is 1-based, i.e. the first columns attno is 1. Returns TRUE if supported,
    else FALSE.  If the access method does not support index-only scans at all,
-   the <structfield>amcanreturn</> field in its <structname>pg_am</> row can
-   be set to zero.
+   the <structfield>amcanreturn</> field in its <structname>IndexAmRoutine</>
+   struct can be set to NULL.
   </para>
 
   <para>
@@ -324,6 +396,19 @@ amoptions (ArrayType *reloptions,
    that case ignoring obsolete entries is appropriate.)
    It is OK to return NULL if default behavior is wanted.
   </para>
+
+  <para>
+<programlisting>
+bool
+amvalidate (Oid opclassoid);
+</programlisting>
+   Validate the catalog entries for the specified operator class, so far as
+   the access method can reasonably do that.  For example, this might include
+   testing that all required support functions are provided.
+   The <function>amvalidate</> function must return false if the opclass is
+   invalid.  Problems should be reported with <function>ereport</> messages.
+  </para>
+
 
   <para>
    The purpose of an index, of course, is to support scans for tuples matching
@@ -414,8 +499,8 @@ amgettuple (IndexScanDesc scan,
   <para>
    The <function>amgettuple</> function need only be provided if the access
    method supports <quote>plain</> index scans.  If it doesn't, the
-   <structfield>amgettuple</> field in its <structname>pg_am</> row must
-   be set to zero.
+   <structfield>amgettuple</> field in its <structname>IndexAmRoutine</>
+   struct must be set to NULL.
   </para>
 
   <para>
@@ -445,8 +530,8 @@ amgetbitmap (IndexScanDesc scan,
   <para>
    The <function>amgetbitmap</> function need only be provided if the access
    method supports <quote>bitmap</> index scans.  If it doesn't, the
-   <structfield>amgetbitmap</> field in its <structname>pg_am</> row must
-   be set to zero.
+   <structfield>amgetbitmap</> field in its <structname>IndexAmRoutine</>
+   struct must be set to NULL.
   </para>
 
   <para>
@@ -469,6 +554,13 @@ ammarkpos (IndexScanDesc scan);
   </para>
 
   <para>
+   The <function>ammarkpos</> function need only be provided if the access
+   method supports ordered scans.  If it doesn't,
+   the <structfield>ammarkpos</> field in its <structname>IndexAmRoutine</>
+   struct may be set to NULL.
+  </para>
+
+  <para>
 <programlisting>
 void
 amrestrpos (IndexScanDesc scan);
@@ -477,18 +569,11 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   By convention, the <literal>pg_proc</literal> entry for an index
-   access method function should show the correct number of arguments,
-   but declare them all as type <type>internal</> (since most of the arguments
-   have types that are not known to SQL, and we don't want users calling
-   the functions directly anyway).  The return type is declared as
-   <type>void</>, <type>internal</>, or <type>boolean</> as appropriate.
-   The only exception is <function>amoptions</>, which should be correctly
-   declared as taking <type>text[]</> and <type>bool</> and returning
-   <type>bytea</>.  This provision allows client code to execute
-   <function>amoptions</> to test validity of options settings.
+   The <function>amrestrpos</> function need only be provided if the access
+   method supports ordered scans.  If it doesn't,
+   the <structfield>amrestrpos</> field in its <structname>IndexAmRoutine</>
+   struct may be set to NULL.
   </para>
-
  </sect1>
 
  <sect1 id="index-scanning">
@@ -548,7 +633,7 @@ amrestrpos (IndexScanDesc scan);
       <para>
        Access methods that always return entries in the natural ordering
        of their data (such as btree) should set
-       <structname>pg_am</>.<structfield>amcanorder</> to true.
+       <structfield>amcanorder</> to true.
        Currently, such access methods must use btree-compatible strategy
        numbers for their equality and ordering operators.
       </para>
@@ -556,7 +641,7 @@ amrestrpos (IndexScanDesc scan);
      <listitem>
       <para>
        Access methods that support ordering operators should set
-       <structname>pg_am</>.<structfield>amcanorderbyop</> to true.
+       <structfield>amcanorderbyop</> to true.
        This indicates that the index is capable of returning entries in
        an order satisfying <literal>ORDER BY</> <replaceable>index_key</>
        <replaceable>operator</> <replaceable>constant</>.  Scan modifiers
@@ -579,7 +664,7 @@ amrestrpos (IndexScanDesc scan);
    methods that set <structfield>amcanorder</> to true.)  After the
    first call, <function>amgettuple</> must be prepared to advance the scan in
    either direction from the most recently returned entry.  (But if
-   <structname>pg_am</>.<structfield>amcanbackward</> is false, all subsequent
+   <structfield>amcanbackward</> is false, all subsequent
    calls will have the same direction as the first one.)
   </para>
 
@@ -588,10 +673,10 @@ amrestrpos (IndexScanDesc scan);
    position in a scan and later returning to the marked position.  The same
    position might be restored multiple times.  However, only one position need
    be remembered per scan; a new <function>ammarkpos</> call overrides the
-   previously marked position.  An access method that does not support
-   ordered scans should still provide mark and restore functions in
-   <structname>pg_am</>, but it is sufficient to have them throw errors if
-   called.
+   previously marked position.  An access method that does not support ordered
+   scans need not provide <function>ammarkpos</> and <function>amrestrpos</>
+   functions in <structname>IndexAmRoutine</>; set those pointers to NULL
+   instead.
   </para>
 
   <para>
@@ -766,7 +851,7 @@ amrestrpos (IndexScanDesc scan);
    <productname>PostgreSQL</productname> enforces SQL uniqueness constraints
    using <firstterm>unique indexes</>, which are indexes that disallow
    multiple entries with identical keys.  An access method that supports this
-   feature sets <structname>pg_am</>.<structfield>amcanunique</> true.
+   feature sets <structfield>amcanunique</> true.
    (At present, only b-tree supports it.)
   </para>
 

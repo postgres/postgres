@@ -16,7 +16,7 @@
  * PHP 4.0.6 distribution for inspiration.  Configurable penalty costs
  * extension is introduced by Volkan YAZICI <volkan.yazici@gmail.com.
  *
- * Copyright (c) 2001-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	src/backend/utils/adt/levenshtein.c
@@ -26,9 +26,16 @@
 #define MAX_LEVENSHTEIN_STRLEN		255
 
 /*
- * Calculates Levenshtein distance metric between supplied csrings, which are
- * not necessarily null-terminated.  Generally (1, 1, 1) penalty costs suffices
- * for common cases, but your mileage may vary.
+ * Calculates Levenshtein distance metric between supplied strings, which are
+ * not necessarily null-terminated.
+ *
+ * source: source string, of length slen bytes.
+ * target: target string, of length tlen bytes.
+ * ins_c, del_c, sub_c: costs to charge for character insertion, deletion,
+ *		and substitution respectively; (1, 1, 1) costs suffice for common
+ *		cases, but your mileage may vary.
+ * max_d: if provided and >= 0, maximum distance we care about; see below.
+ * trusted: caller is trusted and need not obey MAX_LEVENSHTEIN_STRLEN.
  *
  * One way to compute Levenshtein distance is to incrementally construct
  * an (m+1)x(n+1) matrix where cell (i, j) represents the minimum number
@@ -43,7 +50,7 @@
  * array.
  *
  * If max_d >= 0, we only need to provide an accurate answer when that answer
- * is less than or equal to the bound.  From any cell in the matrix, there is
+ * is less than or equal to max_d.  From any cell in the matrix, there is
  * theoretical "minimum residual distance" from that cell to the last column
  * of the final row.  This minimum residual distance is zero when the
  * untransformed portions of the strings are of equal length (because we might
@@ -58,12 +65,15 @@
  */
 int
 #ifdef LEVENSHTEIN_LESS_EQUAL
-varstr_levenshtein_less_equal(const char *source, int slen, const char *target,
-							  int tlen, int ins_c, int del_c, int sub_c,
-							  int max_d)
+varstr_levenshtein_less_equal(const char *source, int slen,
+							  const char *target, int tlen,
+							  int ins_c, int del_c, int sub_c,
+							  int max_d, bool trusted)
 #else
-varstr_levenshtein(const char *source, int slen, const char *target, int tlen,
-				   int ins_c, int del_c, int sub_c)
+varstr_levenshtein(const char *source, int slen,
+				   const char *target, int tlen,
+				   int ins_c, int del_c, int sub_c,
+				   bool trusted)
 #endif
 {
 	int			m,
@@ -95,15 +105,7 @@ varstr_levenshtein(const char *source, int slen, const char *target, int tlen,
 #define STOP_COLUMN m
 #endif
 
-	/*
-	 * A common use for Levenshtein distance is to match attributes when
-	 * building diagnostic, user-visible messages.  Restrict the size of
-	 * MAX_LEVENSHTEIN_STRLEN at compile time so that this is guaranteed to
-	 * work.
-	 */
-	StaticAssertStmt(NAMEDATALEN <= MAX_LEVENSHTEIN_STRLEN,
-					 "Levenshtein hinting mechanism restricts NAMEDATALEN");
-
+	/* Convert string lengths (in bytes) to lengths in characters */
 	m = pg_mbstrlen_with_len(source, slen);
 	n = pg_mbstrlen_with_len(target, tlen);
 
@@ -118,14 +120,18 @@ varstr_levenshtein(const char *source, int slen, const char *target, int tlen,
 
 	/*
 	 * For security concerns, restrict excessive CPU+RAM usage. (This
-	 * implementation uses O(m) memory and has O(mn) complexity.)
+	 * implementation uses O(m) memory and has O(mn) complexity.)  If
+	 * "trusted" is true, caller is responsible for not making excessive
+	 * requests, typically by using a small max_d along with strings that are
+	 * bounded, though not necessarily to MAX_LEVENSHTEIN_STRLEN exactly.
 	 */
-	if (m > MAX_LEVENSHTEIN_STRLEN ||
-		n > MAX_LEVENSHTEIN_STRLEN)
+	if (!trusted &&
+		(m > MAX_LEVENSHTEIN_STRLEN ||
+		 n > MAX_LEVENSHTEIN_STRLEN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("argument exceeds the maximum length of %d bytes",
-						MAX_LEVENSHTEIN_STRLEN)));
+		errmsg("levenshtein argument exceeds maximum length of %d characters",
+			   MAX_LEVENSHTEIN_STRLEN)));
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
 	/* Initialize start and stop columns. */

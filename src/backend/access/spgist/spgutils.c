@@ -4,7 +4,7 @@
  *	  various support functions for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,7 +15,6 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/reloptions.h"
 #include "access/spgist_private.h"
 #include "access/transam.h"
@@ -23,8 +22,53 @@
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/index_selfuncs.h"
 #include "utils/lsyscache.h"
 
+
+/*
+ * SP-GiST handler function: return IndexAmRoutine with access method parameters
+ * and callbacks.
+ */
+Datum
+spghandler(PG_FUNCTION_ARGS)
+{
+	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+
+	amroutine->amstrategies = 0;
+	amroutine->amsupport = 5;
+	amroutine->amcanorder = false;
+	amroutine->amcanorderbyop = false;
+	amroutine->amcanbackward = false;
+	amroutine->amcanunique = false;
+	amroutine->amcanmulticol = false;
+	amroutine->amoptionalkey = true;
+	amroutine->amsearcharray = false;
+	amroutine->amsearchnulls = true;
+	amroutine->amstorage = false;
+	amroutine->amclusterable = false;
+	amroutine->ampredlocks = false;
+	amroutine->amkeytype = InvalidOid;
+
+	amroutine->ambuild = spgbuild;
+	amroutine->ambuildempty = spgbuildempty;
+	amroutine->aminsert = spginsert;
+	amroutine->ambulkdelete = spgbulkdelete;
+	amroutine->amvacuumcleanup = spgvacuumcleanup;
+	amroutine->amcanreturn = spgcanreturn;
+	amroutine->amcostestimate = spgcostestimate;
+	amroutine->amoptions = spgoptions;
+	amroutine->amvalidate = spgvalidate;
+	amroutine->ambeginscan = spgbeginscan;
+	amroutine->amrescan = spgrescan;
+	amroutine->amgettuple = spggettuple;
+	amroutine->amgetbitmap = spggetbitmap;
+	amroutine->amendscan = spgendscan;
+	amroutine->ammarkpos = NULL;
+	amroutine->amrestrpos = NULL;
+
+	PG_RETURN_POINTER(amroutine);
+}
 
 /* Fill in a SpGistTypeDesc struct with info about the specified data type */
 static void
@@ -489,18 +533,10 @@ SpGistInitMetapage(Page page)
 /*
  * reloptions processing for SPGiST
  */
-Datum
-spgoptions(PG_FUNCTION_ARGS)
+bytea *
+spgoptions(Datum reloptions, bool validate)
 {
-	Datum		reloptions = PG_GETARG_DATUM(0);
-	bool		validate = PG_GETARG_BOOL(1);
-	bytea	   *result;
-
-	result = default_reloptions(reloptions, validate, RELOPT_KIND_SPGIST);
-
-	if (result)
-		PG_RETURN_BYTEA_P(result);
-	PG_RETURN_NULL();
+	return default_reloptions(reloptions, validate, RELOPT_KIND_SPGIST);
 }
 
 /*

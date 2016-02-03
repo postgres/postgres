@@ -3,7 +3,7 @@
  * allpaths.c
  *	  Routines to find possible search paths for processing a query
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -21,6 +21,7 @@
 #include "access/tsmapi.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "foreign/fdwapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -71,6 +72,10 @@ static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				   RangeTblEntry *rte);
+static void create_parallel_paths(PlannerInfo *root, RelOptInfo *rel);
+static void set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
+						  RangeTblEntry *rte);
+static bool function_rte_parallel_ok(RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_tablesample_rel_size(PlannerInfo *root, RelOptInfo *rel,
@@ -158,7 +163,8 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 	set_base_rel_consider_startup(root);
 
 	/*
-	 * Generate access paths for the base rels.
+	 * Generate access paths for the base rels.  set_base_rel_sizes also
+	 * sets the consider_parallel flag for each baserel, if appropriate.
 	 */
 	set_base_rel_sizes(root);
 	set_base_rel_pathlists(root);
@@ -222,9 +228,12 @@ set_base_rel_consider_startup(PlannerInfo *root)
 /*
  * set_base_rel_sizes
  *	  Set the size estimates (rows and widths) for each base-relation entry.
+ *    Also determine whether to consider parallel paths for base relations.
  *
  * We do this in a separate pass over the base rels so that rowcount
- * estimates are available for parameterized path generation.
+ * estimates are available for parameterized path generation, and also so
+ * that the consider_parallel flag is set correctly before we begin to
+ * generate paths.
  */
 static void
 set_base_rel_sizes(PlannerInfo *root)
@@ -234,6 +243,7 @@ set_base_rel_sizes(PlannerInfo *root)
 	for (rti = 1; rti < root->simple_rel_array_size; rti++)
 	{
 		RelOptInfo *rel = root->simple_rel_array[rti];
+		RangeTblEntry *rte;
 
 		/* there may be empty slots corresponding to non-baserel RTEs */
 		if (rel == NULL)
@@ -245,7 +255,19 @@ set_base_rel_sizes(PlannerInfo *root)
 		if (rel->reloptkind != RELOPT_BASEREL)
 			continue;
 
-		set_rel_size(root, rel, rti, root->simple_rte_array[rti]);
+		rte = root->simple_rte_array[rti];
+
+		/*
+		 * If parallelism is allowable for this query in general, see whether
+		 * it's allowable for this rel in particular.  We have to do this
+		 * before set_rel_size, because that if this is an inheritance parent,
+		 * set_append_rel_size will pass the consider_parallel flag down to
+		 * inheritance children.
+		 */
+		if (root->glob->parallelModeOK)
+			set_rel_consider_parallel(root, rel, rte);
+
+		set_rel_size(root, rel, rti, rte);
 	}
 }
 
@@ -459,6 +481,131 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 }
 
 /*
+ * If this relation could possibly be scanned from within a worker, then set
+ * the consider_parallel flag.  The flag has previously been initialized to
+ * false, so we just bail out if it becomes clear that we can't safely set it.
+ */
+static void
+set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
+						  RangeTblEntry *rte)
+{
+	/* Don't call this if parallelism is disallowed for the entire query. */
+	Assert(root->glob->parallelModeOK);
+
+	/* Don't call this for non-baserels. */
+	Assert(rel->reloptkind == RELOPT_BASEREL);
+
+	/* Assorted checks based on rtekind. */
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+			/*
+			 * Currently, parallel workers can't access the leader's temporary
+			 * tables.  We could possibly relax this if the wrote all of its
+			 * local buffers at the start of the query and made no changes
+			 * thereafter (maybe we could allow hint bit changes), and if we
+			 * taught the workers to read them.  Writing a large number of
+			 * temporary buffers could be expensive, though, and we don't have
+			 * the rest of the necessary infrastructure right now anyway.  So
+			 * for now, bail out if we see a temporary table.
+			 */
+			if (get_rel_persistence(rte->relid) == RELPERSISTENCE_TEMP)
+				return;
+
+			/*
+			 * Table sampling can be pushed down to workers if the sample
+			 * function and its arguments are safe.
+			 */
+			if (rte->tablesample != NULL)
+			{
+				Oid	proparallel = func_parallel(rte->tablesample->tsmhandler);
+
+				if (proparallel != PROPARALLEL_SAFE)
+					return;
+				if (has_parallel_hazard((Node *) rte->tablesample->args,
+										false))
+					return;
+				return;
+			}
+			break;
+
+		case RTE_SUBQUERY:
+			/*
+			 * Subplans currently aren't passed to workers.  Even if they
+			 * were, the subplan might be using parallelism internally, and
+			 * we can't support nested Gather nodes at present.  Finally,
+			 * we don't have a good way of knowing whether the subplan
+			 * involves any parallel-restricted operations.  It would be
+			 * nice to relax this restriction some day, but it's going to
+			 * take a fair amount of work.
+			 */
+			return;
+
+		case RTE_JOIN:
+			/* Shouldn't happen; we're only considering baserels here. */
+			Assert(false);
+			return;
+
+		case RTE_FUNCTION:
+			/* Check for parallel-restricted functions. */
+			if (!function_rte_parallel_ok(rte))
+				return;
+			break;
+
+		case RTE_VALUES:
+			/*
+			 * The data for a VALUES clause is stored in the plan tree itself,
+			 * so scanning it in a worker is fine.
+			 */
+			break;
+
+		case RTE_CTE:
+			/*
+			 * CTE tuplestores aren't shared among parallel workers, so we
+			 * force all CTE scans to happen in the leader.  Also, populating
+			 * the CTE would require executing a subplan that's not available
+			 * in the worker, might be parallel-restricted, and must get
+			 * executed only once.
+			 */
+			return;
+	}
+
+	/*
+	 * If there's anything in baserestrictinfo that's parallel-restricted,
+	 * we give up on parallelizing access to this relation.  We could consider
+	 * instead postponing application of the restricted quals until we're
+	 * above all the parallelism in the plan tree, but it's not clear that
+	 * this would be a win in very many cases, and it might be tricky to make
+	 * outer join clauses work correctly.
+	 */
+	if (has_parallel_hazard((Node *) rel->baserestrictinfo, false))
+		return;
+
+	/* We have a winner. */
+	rel->consider_parallel = true;
+}
+
+/*
+ * Check whether a function RTE is scanning something parallel-restricted.
+ */
+static bool
+function_rte_parallel_ok(RangeTblEntry *rte)
+{
+	ListCell   *lc;
+
+	foreach(lc, rte->functions)
+	{
+		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+
+		Assert(IsA(rtfunc, RangeTblFunction));
+		if (has_parallel_hazard(rtfunc->funcexpr, false))
+			return false;
+	}
+
+	return true;
+}
+
+/*
  * set_plain_rel_pathlist
  *	  Build access paths for a plain relation (no subquery, no inheritance)
  */
@@ -475,13 +622,65 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	required_outer = rel->lateral_relids;
 
 	/* Consider sequential scan */
-	add_path(rel, create_seqscan_path(root, rel, required_outer));
+	add_path(rel, create_seqscan_path(root, rel, required_outer, 0));
+
+	/* If appropriate, consider parallel sequential scan */
+	if (rel->consider_parallel && required_outer == NULL)
+		create_parallel_paths(root, rel);
 
 	/* Consider index scans */
 	create_index_paths(root, rel);
 
 	/* Consider TID scans */
 	create_tidscan_paths(root, rel);
+}
+
+/*
+ * create_parallel_paths
+ *	  Build parallel access paths for a plain relation
+ */
+static void
+create_parallel_paths(PlannerInfo *root, RelOptInfo *rel)
+{
+	int		parallel_threshold = 1000;
+	int		parallel_degree = 1;
+
+	/*
+	 * If this relation is too small to be worth a parallel scan, just return
+	 * without doing anything ... unless it's an inheritance child.  In that case,
+	 * we want to generate a parallel path here anyway.  It might not be worthwhile
+	 * just for this relation, but when combined with all of its inheritance siblings
+	 * it may well pay off.
+	 */
+	if (rel->pages < parallel_threshold && rel->reloptkind == RELOPT_BASEREL)
+		return;
+
+	/*
+	 * Limit the degree of parallelism logarithmically based on the size of the
+	 * relation.  This probably needs to be a good deal more sophisticated, but we
+	 * need something here for now.
+	 */
+	while (rel->pages > parallel_threshold * 3 &&
+		   parallel_degree < max_parallel_degree)
+	{
+		parallel_degree++;
+		parallel_threshold *= 3;
+		if (parallel_threshold >= PG_INT32_MAX / 3)
+			break;
+	}
+
+	/* Add an unordered partial path based on a parallel sequential scan. */
+	add_partial_path(rel, create_seqscan_path(root, rel, NULL, parallel_degree));
+
+	/*
+	 * If this is a baserel, consider gathering any partial paths we may have
+	 * just created.  If we gathered an inheritance child, we could end up
+	 * with a very large number of gather nodes, each trying to grab its own
+	 * pool of workers, so don't do this in that case.  Instead, we'll
+	 * consider gathering partial paths for the appendrel.
+	 */
+	if (rel->reloptkind == RELOPT_BASEREL)
+		generate_gather_paths(root, rel);
 }
 
 /*
@@ -714,6 +913,9 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			continue;
 		}
 
+		/* Copy consider_parallel flag from parent. */
+		childrel->consider_parallel = rel->consider_parallel;
+
 		/*
 		 * CE failed, so finish copying/modifying targetlist and join quals.
 		 *
@@ -855,6 +1057,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	List	   *live_childrels = NIL;
 	List	   *subpaths = NIL;
 	bool		subpaths_valid = true;
+	List	   *partial_subpaths = NIL;
+	bool		partial_subpaths_valid = true;
 	List	   *all_child_pathkeys = NIL;
 	List	   *all_child_outers = NIL;
 	ListCell   *l;
@@ -908,6 +1112,13 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 											  childrel->cheapest_total_path);
 		else
 			subpaths_valid = false;
+
+		/* Same idea, but for a partial plan. */
+		if (childrel->partial_pathlist != NIL)
+			partial_subpaths = accumulate_append_subpath(partial_subpaths,
+									   linitial(childrel->partial_pathlist));
+		else
+			partial_subpaths_valid = false;
 
 		/*
 		 * Collect lists of all the available path orderings and
@@ -980,7 +1191,39 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * if we have zero or one live subpath due to constraint exclusion.)
 	 */
 	if (subpaths_valid)
-		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL));
+		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL, 0));
+
+	/*
+	 * Consider an append of partial unordered, unparameterized partial paths.
+	 */
+	if (partial_subpaths_valid)
+	{
+		AppendPath *appendpath;
+		ListCell   *lc;
+		int			parallel_degree = 0;
+
+		/*
+		 * Decide what parallel degree to request for this append path.  For
+		 * now, we just use the maximum parallel degree of any member.  It
+		 * might be useful to use a higher number if the Append node were
+		 * smart enough to spread out the workers, but it currently isn't.
+		 */
+		foreach(lc, partial_subpaths)
+		{
+			Path	   *path = lfirst(lc);
+
+			parallel_degree = Max(parallel_degree, path->parallel_degree);
+		}
+		Assert(parallel_degree > 0);
+
+		/* Generate a partial append path. */
+		appendpath = create_append_path(rel, partial_subpaths, NULL,
+										parallel_degree);
+		add_partial_path(rel, (Path *) appendpath);
+
+		/* Consider gathering it. */
+		generate_gather_paths(root, rel);
+	}
 
 	/*
 	 * Also build unparameterized MergeAppend paths based on the collected
@@ -1030,7 +1273,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		if (subpaths_valid)
 			add_path(rel, (Path *)
-					 create_append_path(rel, subpaths, required_outer));
+					 create_append_path(rel, subpaths, required_outer, 0));
 	}
 }
 
@@ -1256,8 +1499,9 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 
 	/* Discard any pre-existing paths; no further need for them */
 	rel->pathlist = NIL;
+	rel->partial_pathlist = NIL;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
 
 	/*
 	 * We set the cheapest path immediately, to ensure that IS_DUMMY_REL()
@@ -1657,6 +1901,36 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Generate appropriate path */
 	add_path(rel, create_worktablescan_path(root, rel, required_outer));
+}
+
+/*
+ * generate_gather_paths
+ *		Generate parallel access paths for a relation by pushing a Gather on
+ *		top of a partial path.
+ */
+void
+generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
+{
+	Path	   *cheapest_partial_path;
+	Path	   *simple_gather_path;
+
+	/* If there are no partial paths, there's nothing to do here. */
+	if (rel->partial_pathlist == NIL)
+		return;
+
+	/*
+	 * The output of Gather is currently always unsorted, so there's only one
+	 * partial path of interest: the cheapest one.
+	 *
+	 * Eventually, we should have a Gather Merge operation that can merge
+	 * multiple tuple streams together while preserving their ordering.  We
+	 * could usefully generate such a path from each partial path that has
+	 * non-NIL pathkeys.
+	 */
+	cheapest_partial_path = linitial(rel->partial_pathlist);
+	simple_gather_path = (Path *)
+		create_gather_path(root, rel, cheapest_partial_path, NULL);
+	add_path(rel, simple_gather_path);
 }
 
 /*
@@ -2586,6 +2860,10 @@ print_path(PlannerInfo *root, Path *path, int indent)
 		case T_UniquePath:
 			ptype = "Unique";
 			subpath = ((UniquePath *) path)->subpath;
+			break;
+		case T_GatherPath:
+			ptype = "Gather";
+			subpath = ((GatherPath *) path)->subpath;
 			break;
 		case T_NestPath:
 			ptype = "NestLoop";

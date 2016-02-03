@@ -2,7 +2,7 @@
  * slot.h
  *	   Replication slot management.
  *
- * Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ typedef struct ReplicationSlot
 	ReplicationSlotPersistentData data;
 
 	/* is somebody performing io on this slot? */
-	LWLock	   *io_in_progress_lock;
+	LWLock		io_in_progress_lock;
 
 	/* all the remaining data is only used for logical slots */
 

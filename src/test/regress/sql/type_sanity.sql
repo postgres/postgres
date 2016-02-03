@@ -339,7 +339,9 @@ ORDER BY 1;
 
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 'c', 't', 'v', 'f');
+WHERE relkind NOT IN ('r', 'i', 's', 'S', 'c', 't', 'v', 'f') OR
+    relpersistence NOT IN ('p', 'u', 't') OR
+    relreplident NOT IN ('d', 'n', 'f', 'i');
 
 -- Indexes should have an access method, others not.
 

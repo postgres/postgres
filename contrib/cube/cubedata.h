@@ -47,6 +47,11 @@ typedef struct NDBOX
 #define PG_GETARG_NDBOX(x)	DatumGetNDBOX(PG_GETARG_DATUM(x))
 #define PG_RETURN_NDBOX(x)	PG_RETURN_POINTER(x)
 
+#define CubeKNNDistanceCoord			15		/* ~> */
+#define CubeKNNDistanceTaxicab			16		/* <#> */
+#define CubeKNNDistanceEuclid			17		/* <-> */
+#define CubeKNNDistanceChebyshev		18		/* <=> */
+
 /* in cubescan.l */
 extern int	cube_yylex(void);
 extern void cube_yyerror(NDBOX **result, const char *message) pg_attribute_noreturn();

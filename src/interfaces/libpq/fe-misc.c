@@ -19,7 +19,7 @@
  * routines.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -815,7 +815,8 @@ definitelyEOF:
 
 	/* Come here if lower-level code already set a suitable errorMessage */
 definitelyFailed:
-	pqDropConnection(conn);
+	/* Do *not* drop any already-read data; caller still wants it */
+	pqDropConnection(conn, false);
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 	return -1;
 }

@@ -12,7 +12,7 @@
  * uint32_t and uint64_t respectively (these are also the respective return
  * types).  Use caution when using these wrapper macros with signed integers.
  *
- * Copyright (c) 2015, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2016, PostgreSQL Global Development Group
  *
  * src/include/port/pg_bswap.h
  *

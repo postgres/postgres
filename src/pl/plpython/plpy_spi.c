@@ -61,12 +61,21 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	if ((plan = (PLyPlanObject *) PLy_plan_new()) == NULL)
 		return NULL;
 
+	plan->mcxt = AllocSetContextCreate(TopMemoryContext,
+									   "PL/Python plan context",
+									   ALLOCSET_DEFAULT_MINSIZE,
+									   ALLOCSET_DEFAULT_INITSIZE,
+									   ALLOCSET_DEFAULT_MAXSIZE);
+	oldcontext = MemoryContextSwitchTo(plan->mcxt);
+
 	nargs = list ? PySequence_Length(list) : 0;
 
 	plan->nargs = nargs;
-	plan->types = nargs ? PLy_malloc(sizeof(Oid) * nargs) : NULL;
-	plan->values = nargs ? PLy_malloc(sizeof(Datum) * nargs) : NULL;
-	plan->args = nargs ? PLy_malloc(sizeof(PLyTypeInfo) * nargs) : NULL;
+	plan->types = nargs ? palloc(sizeof(Oid) * nargs) : NULL;
+	plan->values = nargs ? palloc(sizeof(Datum) * nargs) : NULL;
+	plan->args = nargs ? palloc(sizeof(PLyTypeInfo) * nargs) : NULL;
+
+	MemoryContextSwitchTo(oldcontext);
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
@@ -84,7 +93,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 		 */
 		for (i = 0; i < nargs; i++)
 		{
-			PLy_typeinfo_init(&plan->args[i]);
+			PLy_typeinfo_init(&plan->args[i], plan->mcxt);
 			plan->values[i] = PointerGetDatum(NULL);
 		}
 
@@ -391,10 +400,17 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 	{
 		PLyTypeInfo args;
 		int			i;
+		MemoryContext cxt;
 
 		Py_DECREF(result->nrows);
 		result->nrows = PyInt_FromLong(rows);
-		PLy_typeinfo_init(&args);
+
+		cxt = AllocSetContextCreate(CurrentMemoryContext,
+									"PL/Python temp context",
+									ALLOCSET_DEFAULT_MINSIZE,
+									ALLOCSET_DEFAULT_INITSIZE,
+									ALLOCSET_DEFAULT_MAXSIZE);
+		PLy_typeinfo_init(&args, cxt);
 
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
@@ -432,13 +448,13 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 		PG_CATCH();
 		{
 			MemoryContextSwitchTo(oldcontext);
-			PLy_typeinfo_dealloc(&args);
+			MemoryContextDelete(cxt);
 			Py_DECREF(result);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
 
-		PLy_typeinfo_dealloc(&args);
+		MemoryContextDelete(cxt);
 		SPI_freetuptable(tuptable);
 	}
 

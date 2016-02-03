@@ -30,7 +30,7 @@
  * Domain constraint changes are also tracked properly.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -47,6 +47,7 @@
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_operator.h"
@@ -94,6 +95,13 @@ static TypeCacheEntry *firstDomainTypeEntry = NULL;
  * Data stored about a domain type's constraints.  Note that we do not create
  * this struct for the common case of a constraint-less domain; we just set
  * domainData to NULL to indicate that.
+ *
+ * Within a DomainConstraintCache, we abuse the DomainConstraintState node
+ * type a bit: check_expr fields point to expression plan trees, not plan
+ * state trees.  When needed, expression state trees are built by flat-copying
+ * the DomainConstraintState nodes and applying ExecInitExpr to check_expr.
+ * Such a state tree is not part of the DomainConstraintCache, but is
+ * considered to belong to a DomainConstraintRef.
  */
 struct DomainConstraintCache
 {
@@ -152,6 +160,7 @@ static void load_domaintype_info(TypeCacheEntry *typentry);
 static int	dcs_cmp(const void *a, const void *b);
 static void decr_dcc_refcount(DomainConstraintCache *dcc);
 static void dccref_deletion_callback(void *arg);
+static List *prep_domain_constraints(List *constraints, MemoryContext execctx);
 static bool array_element_has_equality(TypeCacheEntry *typentry);
 static bool array_element_has_compare(TypeCacheEntry *typentry);
 static bool array_element_has_hashing(TypeCacheEntry *typentry);
@@ -762,13 +771,14 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 			check_expr = (Expr *) stringToNode(constring);
 
-			/* ExecInitExpr assumes we've planned the expression */
+			/* ExecInitExpr will assume we've planned the expression */
 			check_expr = expression_planner(check_expr);
 
 			r = makeNode(DomainConstraintState);
 			r->constrainttype = DOM_CONSTRAINT_CHECK;
 			r->name = pstrdup(NameStr(c->conname));
-			r->check_expr = ExecInitExpr(check_expr, NULL);
+			/* Must cast here because we're not storing an expr state node */
+			r->check_expr = (ExprState *) check_expr;
 
 			MemoryContextSwitchTo(oldcxt);
 
@@ -914,6 +924,40 @@ dccref_deletion_callback(void *arg)
 }
 
 /*
+ * prep_domain_constraints --- prepare domain constraints for execution
+ *
+ * The expression trees stored in the DomainConstraintCache's list are
+ * converted to executable expression state trees stored in execctx.
+ */
+static List *
+prep_domain_constraints(List *constraints, MemoryContext execctx)
+{
+	List	   *result = NIL;
+	MemoryContext oldcxt;
+	ListCell   *lc;
+
+	oldcxt = MemoryContextSwitchTo(execctx);
+
+	foreach(lc, constraints)
+	{
+		DomainConstraintState *r = (DomainConstraintState *) lfirst(lc);
+		DomainConstraintState *newr;
+
+		newr = makeNode(DomainConstraintState);
+		newr->constrainttype = r->constrainttype;
+		newr->name = r->name;
+		/* Must cast here because cache items contain expr plan trees */
+		newr->check_expr = ExecInitExpr((Expr *) r->check_expr, NULL);
+
+		result = lappend(result, newr);
+	}
+
+	MemoryContextSwitchTo(oldcxt);
+
+	return result;
+}
+
+/*
  * InitDomainConstraintRef --- initialize a DomainConstraintRef struct
  *
  * Caller must tell us the MemoryContext in which the DomainConstraintRef
@@ -926,6 +970,7 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 	/* Look up the typcache entry --- we assume it survives indefinitely */
 	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
 	/* For safety, establish the callback before acquiring a refcount */
+	ref->refctx = refctx;
 	ref->dcc = NULL;
 	ref->callback.func = dccref_deletion_callback;
 	ref->callback.arg = (void *) ref;
@@ -935,7 +980,8 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 	{
 		ref->dcc = ref->tcache->domainData;
 		ref->dcc->dccRefCount++;
-		ref->constraints = ref->dcc->constraints;
+		ref->constraints = prep_domain_constraints(ref->dcc->constraints,
+												   ref->refctx);
 	}
 	else
 		ref->constraints = NIL;
@@ -969,6 +1015,14 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 
 		if (dcc)
 		{
+			/*
+			 * Note: we just leak the previous list of executable domain
+			 * constraints.  Alternatively, we could keep those in a child
+			 * context of ref->refctx and free that context at this point.
+			 * However, in practice this code path will be taken so seldom
+			 * that the extra bookkeeping for a child context doesn't seem
+			 * worthwhile; we'll just allow a leak for the lifespan of refctx.
+			 */
 			ref->constraints = NIL;
 			ref->dcc = NULL;
 			decr_dcc_refcount(dcc);
@@ -978,7 +1032,8 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 		{
 			ref->dcc = dcc;
 			dcc->dccRefCount++;
-			ref->constraints = dcc->constraints;
+			ref->constraints = prep_domain_constraints(dcc->constraints,
+													   ref->refctx);
 		}
 	}
 }

@@ -4,7 +4,7 @@
  *	  routines for managing the buffer pool's replacement strategy.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -98,9 +98,9 @@ typedef struct BufferAccessStrategyData
 
 
 /* Prototypes for internal functions */
-static volatile BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy);
+static BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy);
 static void AddBufferToRing(BufferAccessStrategy strategy,
-				volatile BufferDesc *buf);
+				BufferDesc *buf);
 
 /*
  * ClockSweepTick - Helper routine for StrategyGetBuffer()
@@ -179,10 +179,10 @@ ClockSweepTick(void)
  *	To ensure that no one else can pin the buffer before we do, we must
  *	return the buffer with the buffer header spinlock still held.
  */
-volatile BufferDesc *
+BufferDesc *
 StrategyGetBuffer(BufferAccessStrategy strategy)
 {
-	volatile BufferDesc *buf;
+	BufferDesc *buf;
 	int			bgwprocno;
 	int			trycounter;
 
@@ -338,7 +338,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
  * StrategyFreeBuffer: put a buffer on the freelist
  */
 void
-StrategyFreeBuffer(volatile BufferDesc *buf)
+StrategyFreeBuffer(BufferDesc *buf)
 {
 	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
 
@@ -584,10 +584,10 @@ FreeAccessStrategy(BufferAccessStrategy strategy)
  *
  * The bufhdr spin lock is held on the returned buffer.
  */
-static volatile BufferDesc *
+static BufferDesc *
 GetBufferFromRing(BufferAccessStrategy strategy)
 {
-	volatile BufferDesc *buf;
+	BufferDesc *buf;
 	Buffer		bufnum;
 
 	/* Advance to next ring slot */
@@ -639,7 +639,7 @@ GetBufferFromRing(BufferAccessStrategy strategy)
  * is called with the spinlock held, it had better be quite cheap.
  */
 static void
-AddBufferToRing(BufferAccessStrategy strategy, volatile BufferDesc *buf)
+AddBufferToRing(BufferAccessStrategy strategy, BufferDesc *buf)
 {
 	strategy->buffers[strategy->current] = BufferDescriptorGetBuffer(buf);
 }
@@ -656,7 +656,7 @@ AddBufferToRing(BufferAccessStrategy strategy, volatile BufferDesc *buf)
  * if this buffer should be written and re-used.
  */
 bool
-StrategyRejectBuffer(BufferAccessStrategy strategy, volatile BufferDesc *buf)
+StrategyRejectBuffer(BufferAccessStrategy strategy, BufferDesc *buf)
 {
 	/* We only do this in bulkread mode */
 	if (strategy->btype != BAS_BULKREAD)

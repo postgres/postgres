@@ -6,7 +6,7 @@
  * access control decisions recently used, and reduce number of kernel
  * invocations to avoid unnecessary performance hit.
  *
- * Copyright (c) 2011-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2011-2016, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */

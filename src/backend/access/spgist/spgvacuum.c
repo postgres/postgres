@@ -4,7 +4,7 @@
  *	  vacuum for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -881,13 +881,10 @@ spgvacuumscan(spgBulkDeleteState *bds)
  *
  * Result: a palloc'd struct containing statistical info for VACUUM displays.
  */
-Datum
-spgbulkdelete(PG_FUNCTION_ARGS)
+IndexBulkDeleteResult *
+spgbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
+			  IndexBulkDeleteCallback callback, void *callback_state)
 {
-	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
-	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
 	spgBulkDeleteState bds;
 
 	/* allocate stats if first time through, else re-use existing struct */
@@ -900,7 +897,7 @@ spgbulkdelete(PG_FUNCTION_ARGS)
 
 	spgvacuumscan(&bds);
 
-	PG_RETURN_POINTER(stats);
+	return stats;
 }
 
 /* Dummy callback to delete no tuples during spgvacuumcleanup */
@@ -915,17 +912,15 @@ dummy_callback(ItemPointer itemptr, void *state)
  *
  * Result: a palloc'd struct containing statistical info for VACUUM displays.
  */
-Datum
-spgvacuumcleanup(PG_FUNCTION_ARGS)
+IndexBulkDeleteResult *
+spgvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 {
-	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	Relation	index = info->index;
 	spgBulkDeleteState bds;
 
 	/* No-op in ANALYZE ONLY mode */
 	if (info->analyze_only)
-		PG_RETURN_POINTER(stats);
+		return stats;
 
 	/*
 	 * We don't need to scan the index if there was a preceding bulkdelete
@@ -959,5 +954,5 @@ spgvacuumcleanup(PG_FUNCTION_ARGS)
 			stats->num_index_tuples = info->num_heap_tuples;
 	}
 
-	PG_RETURN_POINTER(stats);
+	return stats;
 }

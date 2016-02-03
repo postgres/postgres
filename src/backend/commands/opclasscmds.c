@@ -4,7 +4,7 @@
  *
  *	  Routines for opclass (and opfamily) manipulation commands
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,6 +26,7 @@
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/opfam_internal.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_namespace.h"
@@ -334,7 +335,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	ListCell   *l;
 	Relation	rel;
 	HeapTuple	tup;
-	Form_pg_am	pg_am;
+	IndexAmRoutine *amroutine;
 	Datum		values[Natts_pg_opclass];
 	bool		nulls[Natts_pg_opclass];
 	AclResult	aclresult;
@@ -361,17 +362,17 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						stmt->amname)));
 
 	amoid = HeapTupleGetOid(tup);
-	pg_am = (Form_pg_am) GETSTRUCT(tup);
-	maxOpNumber = pg_am->amstrategies;
+	amroutine = GetIndexAmRoutineByAmId(amoid);
+	ReleaseSysCache(tup);
+
+	maxOpNumber = amroutine->amstrategies;
 	/* if amstrategies is zero, just enforce that op numbers fit in int16 */
 	if (maxOpNumber <= 0)
 		maxOpNumber = SHRT_MAX;
-	maxProcNumber = pg_am->amsupport;
-	amstorage = pg_am->amstorage;
+	maxProcNumber = amroutine->amsupport;
+	amstorage = amroutine->amstorage;
 
 	/* XXX Should we make any privilege check against the AM? */
-
-	ReleaseSysCache(tup);
 
 	/*
 	 * The question of appropriate permissions for CREATE OPERATOR CLASS is
@@ -776,7 +777,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 	int			maxOpNumber,	/* amstrategies value */
 				maxProcNumber;	/* amsupport value */
 	HeapTuple	tup;
-	Form_pg_am	pg_am;
+	IndexAmRoutine *amroutine;
 
 	/* Get necessary info about access method */
 	tup = SearchSysCache1(AMNAME, CStringGetDatum(stmt->amname));
@@ -787,16 +788,16 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 						stmt->amname)));
 
 	amoid = HeapTupleGetOid(tup);
-	pg_am = (Form_pg_am) GETSTRUCT(tup);
-	maxOpNumber = pg_am->amstrategies;
+	amroutine = GetIndexAmRoutineByAmId(amoid);
+	ReleaseSysCache(tup);
+
+	maxOpNumber = amroutine->amstrategies;
 	/* if amstrategies is zero, just enforce that op numbers fit in int16 */
 	if (maxOpNumber <= 0)
 		maxOpNumber = SHRT_MAX;
-	maxProcNumber = pg_am->amsupport;
+	maxProcNumber = amroutine->amsupport;
 
 	/* XXX Should we make any privilege check against the AM? */
-
-	ReleaseSysCache(tup);
 
 	/* Look up the opfamily */
 	opfamilyoid = get_opfamily_oid(amoid, stmt->opfamilyname, false);
@@ -1099,21 +1100,13 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 		 * the family has been created but not yet populated with the required
 		 * operators.)
 		 */
-		HeapTuple	amtup;
-		Form_pg_am	pg_am;
+		IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid);
 
-		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amoid));
-		if (amtup == NULL)
-			elog(ERROR, "cache lookup failed for access method %u", amoid);
-		pg_am = (Form_pg_am) GETSTRUCT(amtup);
-
-		if (!pg_am->amcanorderbyop)
+		if (!amroutine->amcanorderbyop)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 			errmsg("access method \"%s\" does not support ordering operators",
-				   NameStr(pg_am->amname))));
-
-		ReleaseSysCache(amtup);
+				   get_am_name(amoid))));
 	}
 	else
 	{

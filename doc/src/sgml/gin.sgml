@@ -556,10 +556,11 @@
   matches the query. It comes in two flavors, a boolean <function>consistent</>
   function, and a ternary <function>triConsistent</> function.
   <function>triConsistent</> covers the functionality of both, so providing
-  triConsistent alone is sufficient. However, if the boolean variant is
-  significantly cheaper to calculate, it can be advantageous to provide both.
-  If only the boolean variant is provided, some optimizations that depend on
-  refuting index items before fetching all the keys are disabled.
+  <function>triConsistent</> alone is sufficient. However, if the boolean
+  variant is significantly cheaper to calculate, it can be advantageous to
+  provide both.  If only the boolean variant is provided, some optimizations
+  that depend on refuting index items before fetching all the keys are
+  disabled.
 
   <variablelist>
     <varlistentry>
@@ -620,23 +621,26 @@
      <listitem>
       <para>
        <function>triConsistent</> is similar to <function>consistent</>,
-       but instead of a boolean <literal>check[]</>, there are three possible
-       values for each key: <literal>GIN_TRUE</>, <literal>GIN_FALSE</> and
+       but instead of booleans in the <literal>check</> vector, there are
+       three possible values for each
+       key: <literal>GIN_TRUE</>, <literal>GIN_FALSE</> and
        <literal>GIN_MAYBE</>. <literal>GIN_FALSE</> and <literal>GIN_TRUE</>
-       have the same meaning as regular boolean values.
+       have the same meaning as regular boolean values, while
        <literal>GIN_MAYBE</> means that the presence of that key is not known.
        When <literal>GIN_MAYBE</> values are present, the function should only
-       return GIN_TRUE if the item matches whether or not the index item
-       contains the corresponding query keys. Likewise, the function must
-       return GIN_FALSE only if the item does not match, whether or not it
-       contains the GIN_MAYBE keys. If the result depends on the GIN_MAYBE
-       entries, i.e. the match cannot be confirmed or refuted based on the
-       known query keys, the function must return GIN_MAYBE.
+       return <literal>GIN_TRUE</> if the item certainly matches whether or
+       not the index item contains the corresponding query keys. Likewise, the
+       function must return <literal>GIN_FALSE</> only if the item certainly
+       does not match, whether or not it contains the <literal>GIN_MAYBE</>
+       keys. If the result depends on the <literal>GIN_MAYBE</> entries, i.e.,
+       the match cannot be confirmed or refuted based on the known query keys,
+       the function must return <literal>GIN_MAYBE</>.
       </para>
       <para>
-       When there are no GIN_MAYBE values in the <literal>check</> vector,
-       <literal>GIN_MAYBE</> return value is equivalent of setting
-       <literal>recheck</> flag in the boolean <function>consistent</> function.
+       When there are no <literal>GIN_MAYBE</> values in the <literal>check</>
+       vector, a <literal>GIN_MAYBE</> return value is the equivalent of
+       setting the <literal>recheck</> flag in the
+       boolean <function>consistent</> function.
       </para>
      </listitem>
     </varlistentry>
@@ -682,11 +686,13 @@
   <function>extractValue</> are always of the operator class's input type, and
   all key values must be of the class's <literal>STORAGE</> type.  The type of
   the <literal>query</> argument passed to <function>extractQuery</>,
-  <function>consistent</> and <function>triConsistent</> is whatever is
-  specified as the right-hand input
-  type of the class member operator identified by the strategy number.
-  This need not be the same as the item type, so long as key values of the
-  correct type can be extracted from it.
+  <function>consistent</> and <function>triConsistent</> is whatever is the
+  right-hand input type of the class member operator identified by the
+  strategy number.  This need not be the same as the indexed type, so long as
+  key values of the correct type can be extracted from it.  However, it is
+  recommended that the SQL declarations of these three support functions use
+  the opclass's indexed data type for the <literal>query</> argument, even
+  though the actual type might be something else depending on the operator.
  </para>
 
 </sect1>
@@ -728,7 +734,9 @@
    from the indexed item). As of <productname>PostgreSQL</productname> 8.4,
    <acronym>GIN</> is capable of postponing much of this work by inserting
    new tuples into a temporary, unsorted list of pending entries.
-   When the table is vacuumed, or if the pending list becomes larger than
+   When the table is vacuumed or autoanalyzed, or when 
+   <function>gin_clean_pending_list</function> function is called, or if the
+   pending list becomes larger than
    <xref linkend="guc-gin-pending-list-limit">, the entries are moved to the
    main <acronym>GIN</acronym> data structure using the same bulk insert
    techniques used during initial index creation.  This greatly improves

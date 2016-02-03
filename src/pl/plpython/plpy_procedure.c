@@ -112,8 +112,9 @@ PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
 		else if (!PLy_procedure_valid(proc, procTup))
 		{
 			/* Found it, but it's invalid, free and reuse the cache entry */
-			PLy_procedure_delete(proc);
-			PLy_free(proc);
+			entry->proc = NULL;
+			if (proc)
+				PLy_procedure_delete(proc);
 			proc = PLy_procedure_create(procTup, fn_oid, is_trigger);
 			entry->proc = proc;
 		}
@@ -142,11 +143,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	char		procName[NAMEDATALEN + 256];
 	Form_pg_proc procStruct;
 	PLyProcedure *volatile proc;
-	char	   *volatile procSource = NULL;
-	Datum		prosrcdatum;
-	bool		isnull;
-	int			i,
-				rv;
+	MemoryContext cxt;
+	MemoryContext oldcxt;
+	int			rv;
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	rv = snprintf(procName, sizeof(procName),
@@ -156,38 +155,48 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	if (rv >= sizeof(procName) || rv < 0)
 		elog(ERROR, "procedure name would overrun buffer");
 
-	proc = PLy_malloc(sizeof(PLyProcedure));
-	proc->proname = PLy_strdup(NameStr(procStruct->proname));
-	proc->pyname = PLy_strdup(procName);
-	proc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
-	proc->fn_tid = procTup->t_self;
-	/* Remember if function is STABLE/IMMUTABLE */
-	proc->fn_readonly =
-		(procStruct->provolatile != PROVOLATILE_VOLATILE);
-	PLy_typeinfo_init(&proc->result);
-	for (i = 0; i < FUNC_MAX_ARGS; i++)
-		PLy_typeinfo_init(&proc->args[i]);
-	proc->nargs = 0;
-	proc->langid = procStruct->prolang;
-	{
-		MemoryContext oldcxt;
+	cxt = AllocSetContextCreate(TopMemoryContext,
+								procName,
+								ALLOCSET_DEFAULT_MINSIZE,
+								ALLOCSET_DEFAULT_INITSIZE,
+								ALLOCSET_DEFAULT_MAXSIZE);
 
-		Datum		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
-										  Anum_pg_proc_protrftypes, &isnull);
+	oldcxt = MemoryContextSwitchTo(cxt);
 
-		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-		proc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
-		MemoryContextSwitchTo(oldcxt);
-	}
-	proc->code = proc->statics = NULL;
-	proc->globals = NULL;
-	proc->is_setof = procStruct->proretset;
-	proc->setof = NULL;
-	proc->src = NULL;
-	proc->argnames = NULL;
+	proc = (PLyProcedure *) palloc0(sizeof(PLyProcedure));
+	proc->mcxt = cxt;
 
 	PG_TRY();
 	{
+		Datum		protrftypes_datum;
+		Datum		prosrcdatum;
+		bool		isnull;
+		char	   *procSource;
+		int			i;
+
+		proc->proname = pstrdup(NameStr(procStruct->proname));
+		proc->pyname = pstrdup(procName);
+		proc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
+		proc->fn_tid = procTup->t_self;
+		/* Remember if function is STABLE/IMMUTABLE */
+		proc->fn_readonly =
+			(procStruct->provolatile != PROVOLATILE_VOLATILE);
+		PLy_typeinfo_init(&proc->result, proc->mcxt);
+		for (i = 0; i < FUNC_MAX_ARGS; i++)
+			PLy_typeinfo_init(&proc->args[i], proc->mcxt);
+		proc->nargs = 0;
+		proc->langid = procStruct->prolang;
+		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
+											Anum_pg_proc_protrftypes,
+											&isnull);
+		proc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
+		proc->code = proc->statics = NULL;
+		proc->globals = NULL;
+		proc->is_setof = procStruct->proretset;
+		proc->setof = NULL;
+		proc->src = NULL;
+		proc->argnames = NULL;
+
 		/*
 		 * get information required for output conversion of the return value,
 		 * but only if this isn't a trigger.
@@ -250,8 +259,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 			Oid		   *types;
 			char	  **names,
 					   *modes;
-			int			i,
-						pos,
+			int			pos,
 						total;
 
 			/* extract argument type info from the pg_proc tuple */
@@ -271,7 +279,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				}
 			}
 
-			proc->argnames = (char **) PLy_malloc0(sizeof(char *) * proc->nargs);
+			proc->argnames = (char **) palloc0(sizeof(char *) * proc->nargs);
 			for (i = pos = 0; i < total; i++)
 			{
 				HeapTuple	argTypeTup;
@@ -314,7 +322,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				}
 
 				/* get argument name */
-				proc->argnames[pos] = names ? PLy_strdup(names[i]) : NULL;
+				proc->argnames[pos] = names ? pstrdup(names[i]) : NULL;
 
 				ReleaseSysCache(argTypeTup);
 
@@ -334,18 +342,16 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		PLy_procedure_compile(proc, procSource);
 
 		pfree(procSource);
-		procSource = NULL;
 	}
 	PG_CATCH();
 	{
+		MemoryContextSwitchTo(oldcxt);
 		PLy_procedure_delete(proc);
-		if (procSource)
-			pfree(procSource);
-
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
+	MemoryContextSwitchTo(oldcxt);
 	return proc;
 }
 
@@ -372,7 +378,7 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	 */
 	msrc = PLy_procedure_munge_source(proc->pyname, src);
 	/* Save the mangled source for later inclusion in tracebacks */
-	proc->src = PLy_strdup(msrc);
+	proc->src = MemoryContextStrdup(proc->mcxt, msrc);
 	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
 	pfree(msrc);
 
@@ -404,31 +410,10 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 void
 PLy_procedure_delete(PLyProcedure *proc)
 {
-	int			i;
-
 	Py_XDECREF(proc->code);
 	Py_XDECREF(proc->statics);
 	Py_XDECREF(proc->globals);
-	if (proc->proname)
-		PLy_free(proc->proname);
-	if (proc->pyname)
-		PLy_free(proc->pyname);
-	for (i = 0; i < proc->nargs; i++)
-	{
-		if (proc->args[i].is_rowtype == 1)
-		{
-			if (proc->args[i].in.r.atts)
-				PLy_free(proc->args[i].in.r.atts);
-			if (proc->args[i].out.r.atts)
-				PLy_free(proc->args[i].out.r.atts);
-		}
-		if (proc->argnames && proc->argnames[i])
-			PLy_free(proc->argnames[i]);
-	}
-	if (proc->src)
-		PLy_free(proc->src);
-	if (proc->argnames)
-		PLy_free(proc->argnames);
+	MemoryContextDelete(proc->mcxt);
 }
 
 /*
@@ -479,7 +464,8 @@ PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup)
 	int			i;
 	bool		valid;
 
-	Assert(proc != NULL);
+	if (proc == NULL)
+		return false;
 
 	/* If the pg_proc tuple has changed, it's not valid */
 	if (!(proc->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&

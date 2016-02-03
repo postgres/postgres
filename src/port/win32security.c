@@ -1,22 +1,47 @@
 /*-------------------------------------------------------------------------
  *
- * security.c
+ * win32security.c
  *	  Microsoft Windows Win32 Security Support Functions
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/port/win32/security.c
+ *	  src/port/win32security.c
  *
  *-------------------------------------------------------------------------
  */
 
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 
 static BOOL pgwin32_get_dynamic_tokeninfo(HANDLE token,
-							TOKEN_INFORMATION_CLASS class, char **InfoBuffer,
-							  char *errbuf, int errsize);
+							  TOKEN_INFORMATION_CLASS class,
+							  char **InfoBuffer, char *errbuf, int errsize);
+
+
+/*
+ * Utility wrapper for frontend and backend when reporting an error
+ * message.
+ */
+static
+pg_attribute_printf(1, 2)
+void
+log_error(const char *fmt,...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+#ifndef FRONTEND
+	write_stderr(fmt, ap);
+#else
+	fprintf(stderr, fmt, ap);
+#endif
+	va_end(ap);
+}
 
 /*
  * Returns nonzero if the current user has administrative privileges,
@@ -40,15 +65,15 @@ pgwin32_is_admin(void)
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
 	{
-		write_stderr("could not open process token: error code %lu\n",
-					 GetLastError());
+		log_error("could not open process token: error code %lu\n",
+				  GetLastError());
 		exit(1);
 	}
 
 	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups,
 									   &InfoBuffer, errbuf, sizeof(errbuf)))
 	{
-		write_stderr("%s", errbuf);
+		log_error("%s", errbuf);
 		exit(1);
 	}
 
@@ -57,20 +82,22 @@ pgwin32_is_admin(void)
 	CloseHandle(AccessToken);
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
+								  SECURITY_BUILTIN_DOMAIN_RID,
+								  DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
 								  0, &AdministratorsSid))
 	{
-		write_stderr("could not get SID for Administrators group: error code %lu\n",
-					 GetLastError());
+		log_error("could not get SID for Administrators group: error code %lu\n",
+				  GetLastError());
 		exit(1);
 	}
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
+								  SECURITY_BUILTIN_DOMAIN_RID,
+								  DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &PowerUsersSid))
 	{
-		write_stderr("could not get SID for PowerUsers group: error code %lu\n",
-					 GetLastError());
+		log_error("could not get SID for PowerUsers group: error code %lu\n",
+				  GetLastError());
 		exit(1);
 	}
 
@@ -78,8 +105,10 @@ pgwin32_is_admin(void)
 
 	for (x = 0; x < Groups->GroupCount; x++)
 	{
-		if ((EqualSid(AdministratorsSid, Groups->Groups[x].Sid) && (Groups->Groups[x].Attributes & SE_GROUP_ENABLED)) ||
-			(EqualSid(PowerUsersSid, Groups->Groups[x].Sid) && (Groups->Groups[x].Attributes & SE_GROUP_ENABLED)))
+		if ((EqualSid(AdministratorsSid, Groups->Groups[x].Sid) &&
+			 (Groups->Groups[x].Attributes & SE_GROUP_ENABLED)) ||
+			(EqualSid(PowerUsersSid, Groups->Groups[x].Sid) &&
+			 (Groups->Groups[x].Attributes & SE_GROUP_ENABLED)))
 		{
 			success = TRUE;
 			break;
@@ -105,9 +134,10 @@ pgwin32_is_admin(void)
  *	 1 = Service
  *	-1 = Error
  *
- * Note: we can't report errors via either ereport (we're called too early)
- * or write_stderr (because that calls this).  We are therefore reduced to
- * writing directly on stderr, which sucks, but we have few alternatives.
+ * Note: we can't report errors via either ereport (we're called too early
+ * in the backend) or write_stderr (because that calls this).  We are
+ * therefore reduced to writing directly on stderr, which sucks, but we
+ * have few alternatives.
  */
 int
 pgwin32_is_service(void)
@@ -217,13 +247,15 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 
 	if (GetTokenInformation(token, class, NULL, 0, &InfoBufferSize))
 	{
-		snprintf(errbuf, errsize, "could not get token information: got zero size\n");
+		snprintf(errbuf, errsize,
+				 "could not get token information: got zero size\n");
 		return FALSE;
 	}
 
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
-		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",
+		snprintf(errbuf, errsize,
+				 "could not get token information: error code %lu\n",
 				 GetLastError());
 		return FALSE;
 	}
@@ -231,7 +263,8 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 	*InfoBuffer = malloc(InfoBufferSize);
 	if (*InfoBuffer == NULL)
 	{
-		snprintf(errbuf, errsize, "could not allocate %d bytes for token information\n",
+		snprintf(errbuf, errsize,
+				 "could not allocate %d bytes for token information\n",
 				 (int) InfoBufferSize);
 		return FALSE;
 	}
@@ -239,7 +272,8 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 	if (!GetTokenInformation(token, class, *InfoBuffer,
 							 InfoBufferSize, &InfoBufferSize))
 	{
-		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",
+		snprintf(errbuf, errsize,
+				 "could not get token information: error code %lu\n",
 				 GetLastError());
 		return FALSE;
 	}

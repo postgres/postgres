@@ -3,7 +3,7 @@
  * postgres.c
  *	  POSTGRES C Backend Interface
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -157,18 +157,8 @@ static CachedPlanSource *unnamed_stmt_psrc = NULL;
 
 /* assorted command-line switches */
 static const char *userDoption = NULL;	/* -D switch */
-
 static bool EchoQuery = false;	/* -E switch */
-
-/*
- * people who want to use EOF should #define DONTUSENEWLINE in
- * tcop/tcopdebug.h
- */
-#ifndef TCOP_DONTUSENEWLINE
-static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
-#else
-static int	UseNewLine = 0;		/* Use EOF as query delimiters */
-#endif   /* TCOP_DONTUSENEWLINE */
+static bool UseSemiNewlineNewline = false;		/* -j switch */
 
 /* whether or not, and why, we were canceled by conflict with recovery */
 static bool RecoveryConflictPending = false;
@@ -219,8 +209,6 @@ static int
 InteractiveBackend(StringInfo inBuf)
 {
 	int			c;				/* character read from getc() */
-	bool		end = false;	/* end-of-input flag */
-	bool		backslashSeen = false;	/* have we seen a \ ? */
 
 	/*
 	 * display a prompt and obtain input from the user
@@ -230,55 +218,56 @@ InteractiveBackend(StringInfo inBuf)
 
 	resetStringInfo(inBuf);
 
-	if (UseNewLine)
+	/*
+	 * Read characters until EOF or the appropriate delimiter is seen.
+	 */
+	while ((c = interactive_getc()) != EOF)
 	{
-		/*
-		 * if we are using \n as a delimiter, then read characters until the
-		 * \n.
-		 */
-		while ((c = interactive_getc()) != EOF)
+		if (c == '\n')
 		{
-			if (c == '\n')
+			if (UseSemiNewlineNewline)
 			{
-				if (backslashSeen)
+				/*
+				 * In -j mode, semicolon followed by two newlines ends the
+				 * command; otherwise treat newline as regular character.
+				 */
+				if (inBuf->len > 1 &&
+					inBuf->data[inBuf->len - 1] == '\n' &&
+					inBuf->data[inBuf->len - 2] == ';')
+				{
+					/* might as well drop the second newline */
+					break;
+				}
+			}
+			else
+			{
+				/*
+				 * In plain mode, newline ends the command unless preceded by
+				 * backslash.
+				 */
+				if (inBuf->len > 0 &&
+					inBuf->data[inBuf->len - 1] == '\\')
 				{
 					/* discard backslash from inBuf */
 					inBuf->data[--inBuf->len] = '\0';
-					backslashSeen = false;
+					/* discard newline too */
 					continue;
 				}
 				else
 				{
-					/* keep the newline character */
+					/* keep the newline character, but end the command */
 					appendStringInfoChar(inBuf, '\n');
 					break;
 				}
 			}
-			else if (c == '\\')
-				backslashSeen = true;
-			else
-				backslashSeen = false;
-
-			appendStringInfoChar(inBuf, (char) c);
 		}
 
-		if (c == EOF)
-			end = true;
-	}
-	else
-	{
-		/*
-		 * otherwise read characters until EOF.
-		 */
-		while ((c = interactive_getc()) != EOF)
-			appendStringInfoChar(inBuf, (char) c);
-
-		/* No input before EOF signal means time to quit. */
-		if (inBuf->len == 0)
-			end = true;
+		/* Not newline, or newline treated as regular character */
+		appendStringInfoChar(inBuf, (char) c);
 	}
 
-	if (end)
+	/* No input before EOF signal means time to quit. */
+	if (c == EOF && inBuf->len == 0)
 		return EOF;
 
 	/*
@@ -3391,7 +3380,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 
 			case 'j':
 				if (secure)
-					UseNewLine = 0;
+					UseSemiNewlineNewline = true;
 				break;
 
 			case 'k':
@@ -3901,7 +3890,7 @@ PostgresMain(int argc, char *argv[],
 		if (pq_is_reading_msg())
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-			errmsg("terminating connection because protocol synchronization was lost")));
+					 errmsg("terminating connection because protocol synchronization was lost")));
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();

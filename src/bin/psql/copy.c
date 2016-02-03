@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/copy.c
  */
@@ -32,10 +32,12 @@
  *
  * The documented syntax is:
  *	\copy tablename [(columnlist)] from|to filename [options]
- *	\copy ( select stmt ) to filename [options]
+ *	\copy ( query stmt ) to filename [options]
  *
  * where 'filename' can be one of the following:
  *	'<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
+ * and 'query' can be one of the following:
+ *	SELECT | UPDATE | INSERT | DELETE
  *
  * An undocumented fact is that you can still write BINARY before the
  * tablename; this is a hangover from the pre-7.3 syntax.  The options
@@ -118,7 +120,7 @@ parse_slash_copy(const char *args)
 			goto error;
 	}
 
-	/* Handle COPY (SELECT) case */
+	/* Handle COPY (query) case */
 	if (token[0] == '(')
 	{
 		int			parens = 1;
@@ -310,9 +312,7 @@ do_copy(const char *args)
 				fflush(stdout);
 				fflush(stderr);
 				errno = 0;
-#ifndef WIN32
-				pqsignal(SIGPIPE, SIG_IGN);
-#endif
+				disable_sigpipe_trap();
 				copystream = popen(options->file, PG_BINARY_W);
 			}
 			else
@@ -397,9 +397,7 @@ do_copy(const char *args)
 				}
 				success = false;
 			}
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_DFL);
-#endif
+			restore_sigpipe_trap();
 		}
 		else
 		{

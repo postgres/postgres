@@ -17,7 +17,7 @@ fi
 dropdb --if-exists utf8
 createdb -T template0 -l C -E UTF8 utf8 || exit 1
 
-PSQL="psql -n -e -q"
+PSQL="psql -X -n -e -q"
 
 # in the test list, client-only encodings must follow the server encoding
 # they're to be tested with; see hard-coded cases below

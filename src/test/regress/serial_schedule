@@ -57,6 +57,7 @@ test: create_table
 test: create_function_2
 test: copy
 test: copyselect
+test: copydml
 test: create_misc
 test: create_operator
 test: create_index
@@ -117,6 +118,7 @@ test: alter_operator
 test: misc
 test: psql
 test: async
+test: dbsize
 test: rules
 test: select_views
 test: portals_p2

@@ -2,7 +2,7 @@
  *
  *	  Utility functions for conversion procs.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -13,6 +13,51 @@
 #include "postgres.h"
 #include "mb/pg_wchar.h"
 
+
+/*
+ * local2local: a generic single byte charset encoding
+ * conversion between two ASCII-superset encodings.
+ *
+ * l points to the source string of length len
+ * p is the output area (must be large enough!)
+ * src_encoding is the PG identifier for the source encoding
+ * dest_encoding is the PG identifier for the target encoding
+ * tab holds conversion entries for the source charset
+ * starting from 128 (0x80). each entry in the table holds the corresponding
+ * code point for the target charset, or 0 if there is no equivalent code.
+ */
+void
+local2local(const unsigned char *l,
+			unsigned char *p,
+			int len,
+			int src_encoding,
+			int dest_encoding,
+			const unsigned char *tab)
+{
+	unsigned char c1,
+				c2;
+
+	while (len > 0)
+	{
+		c1 = *l;
+		if (c1 == 0)
+			report_invalid_encoding(src_encoding, (const char *) l, len);
+		if (!IS_HIGHBIT_SET(c1))
+			*p++ = c1;
+		else
+		{
+			c2 = tab[c1 - HIGHBIT];
+			if (c2)
+				*p++ = c2;
+			else
+				report_untranslatable_char(src_encoding, dest_encoding,
+										   (const char *) l, len);
+		}
+		l++;
+		len--;
+	}
+	*p = '\0';
+}
 
 /*
  * LATINn ---> MIC when the charset's local codes map directly to MIC
@@ -141,8 +186,8 @@ pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len)
  * lc is the mule character set id for the local encoding
  * encoding is the PG identifier for the local encoding
  * tab holds conversion entries for the local charset
- * starting from 128 (0x80). each entry in the table
- * holds the corresponding code point for the mule internal code.
+ * starting from 128 (0x80). each entry in the table holds the corresponding
+ * code point for the mule encoding, or 0 if there is no equivalent code.
  */
 void
 latin2mic_with_table(const unsigned char *l,
@@ -188,9 +233,9 @@ latin2mic_with_table(const unsigned char *l,
  * p is the output area (must be large enough!)
  * lc is the mule character set id for the local encoding
  * encoding is the PG identifier for the local encoding
- * tab holds conversion entries for the mule internal code's
- * second byte, starting from 128 (0x80). each entry in the table
- * holds the corresponding code point for the local charset.
+ * tab holds conversion entries for the mule internal code's second byte,
+ * starting from 128 (0x80). each entry in the table holds the corresponding
+ * code point for the local charset, or 0 if there is no equivalent code.
  */
 void
 mic2latin_with_table(const unsigned char *mic,

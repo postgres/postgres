@@ -4,7 +4,7 @@
  *	  definitions for run-time statistics collection
  *
  *
- * Copyright (c) 2001-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2016, PostgreSQL Global Development Group
  *
  * src/include/executor/instrument.h
  *
@@ -62,6 +62,12 @@ typedef struct Instrumentation
 	double		nfiltered2;		/* # tuples removed by "other" quals */
 	BufferUsage bufusage;		/* Total buffer usage */
 } Instrumentation;
+
+typedef struct WorkerInstrumentation
+{
+	int			num_workers;	/* # of structures that follow */
+	Instrumentation instrument[FLEXIBLE_ARRAY_MEMBER];
+} WorkerInstrumentation;
 
 extern PGDLLIMPORT BufferUsage pgBufferUsage;
 

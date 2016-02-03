@@ -2,7 +2,7 @@
  *
  *	  EUC_JIS_2004, SHIFT_JIS_2004
  *
- * Copyright (c) 2007-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/mb/conversion_procs/euc2004_sjis2004/euc2004_sjis2004.c

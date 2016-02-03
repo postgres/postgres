@@ -3,7 +3,7 @@
  * parse_target.c
  *	  handle target lists
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -650,7 +650,7 @@ transformAssignmentIndirection(ParseState *pstate,
 		if (IsA(n, A_Indices))
 		{
 			subscripts = lappend(subscripts, n);
-			if (((A_Indices *) n)->lidx != NULL)
+			if (((A_Indices *) n)->is_slice)
 				isSlice = true;
 		}
 		else if (IsA(n, A_Star))

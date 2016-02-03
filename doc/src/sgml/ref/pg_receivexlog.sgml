@@ -31,7 +31,7 @@ PostgreSQL documentation
    Description
   </title>
   <para>
-   <application>pg_receivexlog</application> is used to stream transaction log
+   <application>pg_receivexlog</application> is used to stream the transaction log
    from a running <productname>PostgreSQL</productname> cluster. The transaction
    log is streamed using the streaming replication protocol, and is written
    to a local directory of files. This directory can be used as the archive
@@ -49,19 +49,19 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Unlike the standby's WAL receiver, <application>pg_receivexlog</>
+   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivexlog</>
    by default flushes WAL data only when a WAL file is closed.
-   <literal>--synchronous</> option must be specified to flush WAL data
-   in real time and ensure it's safely flushed to disk.
+   The option <option>--synchronous</> must be specified to flush WAL data
+   in real time.
   </para>
 
   <para>
    The transaction log is streamed over a regular
-   <productname>PostgreSQL</productname> connection, and uses the replication
+   <productname>PostgreSQL</productname> connection and uses the replication
    protocol. The connection must be made with a superuser or a user
    having <literal>REPLICATION</literal> permissions (see
    <xref linkend="role-attributes">), and <filename>pg_hba.conf</filename>
-   must explicitly permit the replication connection. The server must also be
+   must permit the replication connection. The server must also be
    configured with <xref linkend="guc-max-wal-senders"> set high enough to
    leave at least one session available for the stream.
   </para>
@@ -137,10 +137,18 @@ PostgreSQL documentation
          When this option is used, <application>pg_receivexlog</> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
-         is not otherwise needed. <literal>--synchronous</literal> option must
-         be specified when making <application>pg_receivexlog</> run as
-         synchronous standby by using replication slot. Otherwise WAL data
-         cannot be flushed frequently enough for this to work correctly.
+         is not otherwise needed.
+        </para>
+
+        <para>
+         When the replication client
+         of <application>pg_receivexlog</application> is configured on the
+         server as a synchronous standby, then using a replication slot will
+         report the flush position to the server, but only when a WAL file is
+         closed.  Therefore, that configuration will cause transactions on the
+         primary to wait for a long time and effectively not work
+         satisfactorily.  The option <literal>--synchronous</literal> (see
+         below) must be specified in addition to make this work correctly.
         </para>
       </listitem>
      </varlistentry>
@@ -152,6 +160,13 @@ PostgreSQL documentation
         Flush the WAL data to disk immediately after it has been received. Also
         send a status packet back to the server immediately after flushing,
         regardless of <literal>--status-interval</>.
+       </para>
+
+       <para>
+        This option should be specified if the replication client
+        of <application>pg_receivexlog</application> is configured on the
+        server as a synchronous standby, to ensure that timely feedback is
+        sent to the server.
        </para>
       </listitem>
      </varlistentry>

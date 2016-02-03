@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.c
  */
@@ -9,6 +9,7 @@
 #include "common.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */
@@ -25,23 +26,66 @@
 #include "mbprint.h"
 
 
-
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);
 static bool command_no_begin(const char *query);
 static bool is_select_command(const char *query);
+
+
+/*
+ * openQueryOutputFile --- attempt to open a query output file
+ *
+ * fname == NULL selects stdout, else an initial '|' selects a pipe,
+ * else plain file.
+ *
+ * Returns output file pointer into *fout, and is-a-pipe flag into *is_pipe.
+ * Caller is responsible for adjusting SIGPIPE state if it's a pipe.
+ *
+ * On error, reports suitable error message and returns FALSE.
+ */
+bool
+openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe)
+{
+	if (!fname || fname[0] == '\0')
+	{
+		*fout = stdout;
+		*is_pipe = false;
+	}
+	else if (*fname == '|')
+	{
+		*fout = popen(fname + 1, "w");
+		*is_pipe = true;
+	}
+	else
+	{
+		*fout = fopen(fname, "w");
+		*is_pipe = false;
+	}
+
+	if (*fout == NULL)
+	{
+		psql_error("%s: %s\n", fname, strerror(errno));
+		return false;
+	}
+
+	return true;
+}
 
 /*
  * setQFout
  * -- handler for -o command line option and \o command
  *
- * Tries to open file fname (or pipe if fname starts with '|')
- * and stores the file handle in pset)
- * Upon failure, sets stdout and returns false.
+ * On success, updates pset with the new output file and returns true.
+ * On failure, returns false without changing pset state.
  */
 bool
 setQFout(const char *fname)
 {
-	bool		status = true;
+	FILE	   *fout;
+	bool		is_pipe;
+
+	/* First make sure we can open the new output file/pipe */
+	if (!openQueryOutputFile(fname, &fout, &is_pipe))
+		return false;
 
 	/* Close old file/pipe */
 	if (pset.queryFout && pset.queryFout != stdout && pset.queryFout != stderr)
@@ -52,45 +96,20 @@ setQFout(const char *fname)
 			fclose(pset.queryFout);
 	}
 
-	/* If no filename, set stdout */
-	if (!fname || fname[0] == '\0')
-	{
-		pset.queryFout = stdout;
-		pset.queryFoutPipe = false;
-	}
-	else if (*fname == '|')
-	{
-		pset.queryFout = popen(fname + 1, "w");
-		pset.queryFoutPipe = true;
-	}
-	else
-	{
-		pset.queryFout = fopen(fname, "w");
-		pset.queryFoutPipe = false;
-	}
+	pset.queryFout = fout;
+	pset.queryFoutPipe = is_pipe;
 
-	if (!(pset.queryFout))
-	{
-		psql_error("%s: %s\n", fname, strerror(errno));
-		pset.queryFout = stdout;
-		pset.queryFoutPipe = false;
-		status = false;
-	}
+	/* Adjust SIGPIPE handling appropriately: ignore signal if is_pipe */
+	set_sigpipe_trap_state(is_pipe);
+	restore_sigpipe_trap();
 
-	/* Direct signals */
-#ifndef WIN32
-	pqsignal(SIGPIPE, pset.queryFoutPipe ? SIG_IGN : SIG_DFL);
-#endif
-
-	return status;
+	return true;
 }
-
 
 
 /*
  * Error reporting for scripts. Errors should look like
  *	 psql:filename:lineno: message
- *
  */
 void
 psql_error(const char *fmt,...)
@@ -537,7 +556,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt)
 	switch (PQresultStatus(res))
 	{
 		case PGRES_TUPLES_OK:
-			printQuery(res, opt, pset.queryFout, pset.logfile);
+			printQuery(res, opt, pset.queryFout, false, pset.logfile);
 			break;
 
 		case PGRES_COMMAND_OK:
@@ -610,30 +629,26 @@ PrintQueryTuples(const PGresult *results)
 	/* write output to \g argument, if any */
 	if (pset.gfname)
 	{
-		/* keep this code in sync with ExecQueryUsingCursor */
-		FILE	   *queryFout_copy = pset.queryFout;
-		bool		queryFoutPipe_copy = pset.queryFoutPipe;
+		FILE	   *fout;
+		bool		is_pipe;
 
-		pset.queryFout = stdout;	/* so it doesn't get closed */
-
-		/* open file/pipe */
-		if (!setQFout(pset.gfname))
-		{
-			pset.queryFout = queryFout_copy;
-			pset.queryFoutPipe = queryFoutPipe_copy;
+		if (!openQueryOutputFile(pset.gfname, &fout, &is_pipe))
 			return false;
+		if (is_pipe)
+			disable_sigpipe_trap();
+
+		printQuery(results, &my_popt, fout, false, pset.logfile);
+
+		if (is_pipe)
+		{
+			pclose(fout);
+			restore_sigpipe_trap();
 		}
-
-		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
-
-		/* close file/pipe, restore old setting */
-		setQFout(NULL);
-
-		pset.queryFout = queryFout_copy;
-		pset.queryFoutPipe = queryFoutPipe_copy;
+		else
+			fclose(fout);
 	}
 	else
-		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
+		printQuery(results, &my_popt, pset.queryFout, false, pset.logfile);
 
 	return true;
 }
@@ -1198,10 +1213,10 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	PGresult   *results;
 	PQExpBufferData buf;
 	printQueryOpt my_popt = pset.popt;
-	FILE	   *queryFout_copy = pset.queryFout;
-	bool		queryFoutPipe_copy = pset.queryFoutPipe;
+	FILE	   *fout;
+	bool		is_pipe;
+	bool		is_pager = false;
 	bool		started_txn = false;
-	bool		did_pager = false;
 	int			ntuples;
 	int			fetch_count;
 	char		fetch_cmd[64];
@@ -1267,21 +1282,22 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	/* prepare to write output to \g argument, if any */
 	if (pset.gfname)
 	{
-		/* keep this code in sync with PrintQueryTuples */
-		pset.queryFout = stdout;	/* so it doesn't get closed */
-
-		/* open file/pipe */
-		if (!setQFout(pset.gfname))
+		if (!openQueryOutputFile(pset.gfname, &fout, &is_pipe))
 		{
-			pset.queryFout = queryFout_copy;
-			pset.queryFoutPipe = queryFoutPipe_copy;
 			OK = false;
 			goto cleanup;
 		}
+		if (is_pipe)
+			disable_sigpipe_trap();
+	}
+	else
+	{
+		fout = pset.queryFout;
+		is_pipe = false;		/* doesn't matter */
 	}
 
 	/* clear any pre-existing error indication on the output stream */
-	clearerr(pset.queryFout);
+	clearerr(fout);
 
 	for (;;)
 	{
@@ -1301,12 +1317,10 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		if (PQresultStatus(results) != PGRES_TUPLES_OK)
 		{
 			/* shut down pager before printing error message */
-			if (did_pager)
+			if (is_pager)
 			{
-				ClosePager(pset.queryFout);
-				pset.queryFout = queryFout_copy;
-				pset.queryFoutPipe = queryFoutPipe_copy;
-				did_pager = false;
+				ClosePager(fout);
+				is_pager = false;
 			}
 
 			OK = AcceptResult(results);
@@ -1330,17 +1344,17 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			/* this is the last result set, so allow footer decoration */
 			my_popt.topt.stop_table = true;
 		}
-		else if (pset.queryFout == stdout && !did_pager)
+		else if (fout == stdout && !is_pager)
 		{
 			/*
 			 * If query requires multiple result sets, hack to ensure that
 			 * only one pager instance is used for the whole mess
 			 */
-			pset.queryFout = PageOutput(100000, &(my_popt.topt));
-			did_pager = true;
+			fout = PageOutput(INT_MAX, &(my_popt.topt));
+			is_pager = true;
 		}
 
-		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
+		printQuery(results, &my_popt, fout, is_pager, pset.logfile);
 
 		PQclear(results);
 
@@ -1354,7 +1368,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		 * the pager dies/exits/etc, there's no sense throwing more data at
 		 * it.
 		 */
-		flush_error = fflush(pset.queryFout);
+		flush_error = fflush(fout);
 
 		/*
 		 * Check if we are at the end, if a cancel was pressed, or if there
@@ -1364,24 +1378,25 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		 * stop bothering to pull down more data.
 		 */
 		if (ntuples < fetch_count || cancel_pressed || flush_error ||
-			ferror(pset.queryFout))
+			ferror(fout))
 			break;
 	}
 
-	/* close \g argument file/pipe, restore old setting */
 	if (pset.gfname)
 	{
-		/* keep this code in sync with PrintQueryTuples */
-		setQFout(NULL);
-
-		pset.queryFout = queryFout_copy;
-		pset.queryFoutPipe = queryFoutPipe_copy;
+		/* close \g argument file/pipe */
+		if (is_pipe)
+		{
+			pclose(fout);
+			restore_sigpipe_trap();
+		}
+		else
+			fclose(fout);
 	}
-	else if (did_pager)
+	else if (is_pager)
 	{
-		ClosePager(pset.queryFout);
-		pset.queryFout = queryFout_copy;
-		pset.queryFoutPipe = queryFoutPipe_copy;
+		/* close transient pager */
+		ClosePager(fout);
 	}
 
 cleanup:

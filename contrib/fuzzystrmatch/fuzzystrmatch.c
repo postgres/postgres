@@ -6,7 +6,7 @@
  * Joe Conway <mail@joeconway.com>
  *
  * contrib/fuzzystrmatch/fuzzystrmatch.c
- * Copyright (c) 2001-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2016, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * metaphone()
@@ -171,12 +171,12 @@ levenshtein_with_costs(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	s_data = VARDATA_ANY(src);
 	t_data = VARDATA_ANY(dst);
-	/* Determine length of each string in bytes and characters */
+	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
 
-	PG_RETURN_INT32(varstr_levenshtein(s_data, s_bytes, t_data, t_bytes, ins_c,
-									   del_c, sub_c));
+	PG_RETURN_INT32(varstr_levenshtein(s_data, s_bytes, t_data, t_bytes,
+									   ins_c, del_c, sub_c, false));
 }
 
 
@@ -194,12 +194,12 @@ levenshtein(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	s_data = VARDATA_ANY(src);
 	t_data = VARDATA_ANY(dst);
-	/* Determine length of each string in bytes and characters */
+	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
 
-	PG_RETURN_INT32(varstr_levenshtein(s_data, s_bytes, t_data, t_bytes, 1, 1,
-									   1));
+	PG_RETURN_INT32(varstr_levenshtein(s_data, s_bytes, t_data, t_bytes,
+									   1, 1, 1, false));
 }
 
 
@@ -221,13 +221,14 @@ levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	s_data = VARDATA_ANY(src);
 	t_data = VARDATA_ANY(dst);
-	/* Determine length of each string in bytes and characters */
+	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
 
-	PG_RETURN_INT32(varstr_levenshtein_less_equal(s_data, s_bytes, t_data,
-												  t_bytes, ins_c, del_c,
-												  sub_c, max_d));
+	PG_RETURN_INT32(varstr_levenshtein_less_equal(s_data, s_bytes,
+												  t_data, t_bytes,
+												  ins_c, del_c, sub_c,
+												  max_d, false));
 }
 
 
@@ -246,12 +247,14 @@ levenshtein_less_equal(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	s_data = VARDATA_ANY(src);
 	t_data = VARDATA_ANY(dst);
-	/* Determine length of each string in bytes and characters */
+	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
 
-	PG_RETURN_INT32(varstr_levenshtein_less_equal(s_data, s_bytes, t_data,
-												  t_bytes, 1, 1, 1, max_d));
+	PG_RETURN_INT32(varstr_levenshtein_less_equal(s_data, s_bytes,
+												  t_data, t_bytes,
+												  1, 1, 1,
+												  max_d, false));
 }
 
 

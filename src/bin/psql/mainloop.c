@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/mainloop.c
  */
@@ -133,7 +133,7 @@ MainLoop(FILE *source)
 			/* May need to reset prompt, eg after \r command */
 			if (query_buf->len == 0)
 				prompt_status = PROMPT_READY;
-			line = gets_interactive(get_prompt(prompt_status));
+			line = gets_interactive(get_prompt(prompt_status), query_buf);
 		}
 		else
 		{

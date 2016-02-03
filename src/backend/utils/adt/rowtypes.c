@@ -3,7 +3,7 @@
  * rowtypes.c
  *	  I/O and comparison functions for generic composite types.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -216,11 +216,11 @@ record_in(PG_FUNCTION_ARGS)
 								 errdetail("Unexpected end of input.")));
 					appendStringInfoChar(&buf, *ptr++);
 				}
-				else if (ch == '\"')
+				else if (ch == '"')
 				{
 					if (!inquote)
 						inquote = true;
-					else if (*ptr == '\"')
+					else if (*ptr == '"')
 					{
 						/* doubled quote within quote sequence */
 						appendStringInfoChar(&buf, *ptr++);

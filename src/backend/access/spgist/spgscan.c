@@ -4,7 +4,7 @@
  *	  routines for scanning SP-GiST indexes
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -173,13 +173,9 @@ spgPrepareScanKeys(IndexScanDesc scan)
 	}
 }
 
-Datum
-spgbeginscan(PG_FUNCTION_ARGS)
+IndexScanDesc
+spgbeginscan(Relation rel, int keysz, int orderbysz)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			keysz = PG_GETARG_INT32(1);
-
-	/* ScanKey			scankey = (ScanKey) PG_GETARG_POINTER(2); */
 	IndexScanDesc scan;
 	SpGistScanOpaque so;
 
@@ -202,15 +198,14 @@ spgbeginscan(PG_FUNCTION_ARGS)
 
 	scan->opaque = so;
 
-	PG_RETURN_POINTER(scan);
+	return scan;
 }
 
-Datum
-spgrescan(PG_FUNCTION_ARGS)
+void
+spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
+		  ScanKey orderbys, int norderbys)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
 
 	/* copy scankeys into local storage */
 	if (scankey && scan->numberOfKeys > 0)
@@ -224,33 +219,14 @@ spgrescan(PG_FUNCTION_ARGS)
 
 	/* set up starting stack entries */
 	resetSpGistScanOpaque(so);
-
-	PG_RETURN_VOID();
 }
 
-Datum
-spgendscan(PG_FUNCTION_ARGS)
+void
+spgendscan(IndexScanDesc scan)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	MemoryContextDelete(so->tempCxt);
-
-	PG_RETURN_VOID();
-}
-
-Datum
-spgmarkpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "SPGiST does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-spgrestrpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "SPGiST does not support mark/restore");
-	PG_RETURN_VOID();
 }
 
 /*
@@ -571,11 +547,9 @@ storeBitmap(SpGistScanOpaque so, ItemPointer heapPtr,
 	so->ntids++;
 }
 
-Datum
-spggetbitmap(PG_FUNCTION_ARGS)
+int64
+spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	/* Copy want_itup to *so so we don't need to pass it around separately */
@@ -586,7 +560,7 @@ spggetbitmap(PG_FUNCTION_ARGS)
 
 	spgWalk(scan->indexRelation, so, true, storeBitmap);
 
-	PG_RETURN_INT64(so->ntids);
+	return so->ntids;
 }
 
 /* storeRes subroutine for gettuple case */
@@ -610,11 +584,9 @@ storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
 	so->nPtrs++;
 }
 
-Datum
-spggettuple(PG_FUNCTION_ARGS)
+bool
+spggettuple(IndexScanDesc scan, ScanDirection dir)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	if (dir != ForwardScanDirection)
@@ -632,7 +604,7 @@ spggettuple(PG_FUNCTION_ARGS)
 			scan->xs_recheck = so->recheck[so->iPtr];
 			scan->xs_itup = so->indexTups[so->iPtr];
 			so->iPtr++;
-			PG_RETURN_BOOL(true);
+			return true;
 		}
 
 		if (so->want_itup)
@@ -651,19 +623,16 @@ spggettuple(PG_FUNCTION_ARGS)
 			break;				/* must have completed scan */
 	}
 
-	PG_RETURN_BOOL(false);
+	return false;
 }
 
-Datum
-spgcanreturn(PG_FUNCTION_ARGS)
+bool
+spgcanreturn(Relation index, int attno)
 {
-	Relation	index = (Relation) PG_GETARG_POINTER(0);
-
-	/* int			i = PG_GETARG_INT32(1); */
 	SpGistCache *cache;
 
 	/* We can do it if the opclass config function says so */
 	cache = spgGetCache(index);
 
-	PG_RETURN_BOOL(cache->config.canReturnData);
+	return cache->config.canReturnData;
 }

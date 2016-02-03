@@ -3,6 +3,7 @@ ERROR:  table "Íªß©Ñ¦¿ë¾î" does not exist
 create table Íªß©Ñ¦¿ë¾î (¿ë¾î text, ÝÂ×¾ÄÚµå varchar, ºñ°í1A¶ó±¸ char(16));
 create index Íªß©Ñ¦¿ë¾îindex1 on Íªß©Ñ¦¿ë¾î using btree (¿ë¾î);
 create index Íªß©Ñ¦¿ë¾îindex2 on Íªß©Ñ¦¿ë¾î using hash (ÝÂ×¾ÄÚµå);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
 insert into Íªß©Ñ¦¿ë¾î values('ÄÄÇ»ÅÍµð½ºÇÃ·¹ÀÌ', 'Ñ¦A01ß¾');
 insert into Íªß©Ñ¦¿ë¾î values('ÄÄÇ»ÅÍ±×·¡ÇÈ½º', 'ÝÂB10ñé');
 insert into Íªß©Ñ¦¿ë¾î values('ÄÄÇ»ÅÍÇÁ·Î±×·¡¸Ó', 'ìÑZ01ù»');

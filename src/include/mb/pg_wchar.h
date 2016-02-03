@@ -3,7 +3,7 @@
  * pg_wchar.h
  *	  multibyte-character support
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/mb/pg_wchar.h
@@ -537,6 +537,8 @@ extern void report_invalid_encoding(int encoding, const char *mbstr, int len) pg
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
 						 const char *mbstr, int len) pg_attribute_noreturn();
 
+extern void local2local(const unsigned char *l, unsigned char *p, int len,
+			int src_encoding, int dest_encoding, const unsigned char *tab);
 extern void pg_ascii2mic(const unsigned char *l, unsigned char *p, int len);
 extern void pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len);
 extern void latin2mic(const unsigned char *l, unsigned char *p, int len,

@@ -4,7 +4,7 @@
  *	   routines for accessing the system catalogs
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -27,6 +27,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
+#include "catalog/pg_am.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -163,6 +164,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			Oid			indexoid = lfirst_oid(l);
 			Relation	indexRelation;
 			Form_pg_index index;
+			IndexAmRoutine *amroutine;
 			IndexOptInfo *info;
 			int			ncolumns;
 			int			i;
@@ -223,13 +225,17 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			}
 
 			info->relam = indexRelation->rd_rel->relam;
-			info->amcostestimate = indexRelation->rd_am->amcostestimate;
-			info->amcanorderbyop = indexRelation->rd_am->amcanorderbyop;
-			info->amoptionalkey = indexRelation->rd_am->amoptionalkey;
-			info->amsearcharray = indexRelation->rd_am->amsearcharray;
-			info->amsearchnulls = indexRelation->rd_am->amsearchnulls;
-			info->amhasgettuple = OidIsValid(indexRelation->rd_am->amgettuple);
-			info->amhasgetbitmap = OidIsValid(indexRelation->rd_am->amgetbitmap);
+
+			/* We copy just the fields we need, not all of rd_amroutine */
+			amroutine = indexRelation->rd_amroutine;
+			info->amcanorderbyop = amroutine->amcanorderbyop;
+			info->amoptionalkey = amroutine->amoptionalkey;
+			info->amsearcharray = amroutine->amsearcharray;
+			info->amsearchnulls = amroutine->amsearchnulls;
+			info->amhasgettuple = (amroutine->amgettuple != NULL);
+			info->amhasgetbitmap = (amroutine->amgetbitmap != NULL);
+			info->amcostestimate = amroutine->amcostestimate;
+			Assert(info->amcostestimate != NULL);
 
 			/*
 			 * Fetch the ordering information for the index, if any.
@@ -240,7 +246,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				 * If it's a btree index, we can use its opfamily OIDs
 				 * directly as the sort ordering opfamily OIDs.
 				 */
-				Assert(indexRelation->rd_am->amcanorder);
+				Assert(amroutine->amcanorder);
 
 				info->sortopfamily = info->opfamily;
 				info->reverse_sort = (bool *) palloc(sizeof(bool) * ncolumns);
@@ -254,7 +260,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 					info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
 				}
 			}
-			else if (indexRelation->rd_am->amcanorder)
+			else if (amroutine->amcanorder)
 			{
 				/*
 				 * Otherwise, identify the corresponding btree opfamilies by

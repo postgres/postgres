@@ -4,7 +4,7 @@
  *	  routines to convert a string (legal ascii representation of node) back
  *	  to nodes
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -245,7 +245,7 @@ nodeTokenType(char *token, int length)
 		retval = RIGHT_PAREN;
 	else if (*token == '{')
 		retval = LEFT_BRACE;
-	else if (*token == '\"' && length > 1 && token[length - 1] == '\"')
+	else if (*token == '"' && length > 1 && token[length - 1] == '"')
 		retval = T_String;
 	else if (*token == 'b')
 		retval = T_BitString;

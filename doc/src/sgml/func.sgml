@@ -505,7 +505,7 @@
 
       <row>
        <entry> <literal>^</literal> </entry>
-       <entry>exponentiation</entry>
+       <entry>exponentiation (associates left to right)</entry>
        <entry><literal>2.0 ^ 3.0</literal></entry>
        <entry><literal>8</literal></entry>
       </row>
@@ -852,6 +852,19 @@
       <row>
        <entry>
         <indexterm>
+         <primary>scale</primary>
+        </indexterm>
+        <literal><function>scale(<type>numeric</type>)</function></literal>
+       </entry>
+       <entry><type>numeric</type></entry>
+       <entry>scale of the argument (the number of decimal digits in the fractional part)</entry>
+       <entry><literal>scale(8.41)</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>sign</primary>
         </indexterm>
         <literal><function>sign(<type>dp</type> or <type>numeric</type>)</function></literal>
@@ -993,20 +1006,19 @@
    Finally, <xref linkend="functions-math-trig-table"> shows the
    available trigonometric functions.  All trigonometric functions
    take arguments and return values of type <type>double
-   precision</type>. Trigonometric functions arguments are expressed
-   in radians. Inverse functions return values are expressed in
-   radians.  See unit transformation functions
-   <literal><function>radians()</function></literal> and
-   <literal><function>degrees()</function></literal> above.
+   precision</type>.  Each of the trigonometric functions comes in
+   two variants, one that measures angles in radians and one that
+   measures angles in degrees.
   </para>
 
    <table id="functions-math-trig-table">
     <title>Trigonometric Functions</title>
 
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
-       <entry>Function</entry>
+       <entry>Function (radians)</entry>
+       <entry>Function (degrees)</entry>
        <entry>Description</entry>
       </row>
      </thead>
@@ -1018,6 +1030,11 @@
          <primary>acos</primary>
         </indexterm><literal><function>acos(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>acosd</primary>
+        </indexterm><literal><function>acosd(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>inverse cosine</entry>
       </row>
 
@@ -1027,6 +1044,12 @@
          <primary>asin</primary>
         </indexterm>
         <literal><function>asin(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>
+        <indexterm>
+         <primary>asind</primary>
+        </indexterm>
+        <literal><function>asind(<replaceable>x</replaceable>)</function></literal>
        </entry>
        <entry>inverse sine</entry>
       </row>
@@ -1038,6 +1061,12 @@
         </indexterm>
         <literal><function>atan(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>atand</primary>
+        </indexterm>
+        <literal><function>atand(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>inverse tangent</entry>
       </row>
 
@@ -1047,6 +1076,13 @@
          <primary>atan2</primary>
         </indexterm>
         <literal><function>atan2(<replaceable>y</replaceable>,
+        <replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>
+        <indexterm>
+         <primary>atan2d</primary>
+        </indexterm>
+        <literal><function>atan2d(<replaceable>y</replaceable>,
         <replaceable>x</replaceable>)</function></literal>
        </entry>
        <entry>inverse tangent of
@@ -1060,6 +1096,12 @@
         </indexterm>
         <literal><function>cos(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>cosd</primary>
+        </indexterm>
+        <literal><function>cosd(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>cosine</entry>
       </row>
 
@@ -1069,6 +1111,12 @@
          <primary>cot</primary>
         </indexterm>
         <literal><function>cot(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>
+        <indexterm>
+         <primary>cotd</primary>
+        </indexterm>
+        <literal><function>cotd(<replaceable>x</replaceable>)</function></literal>
        </entry>
        <entry>cotangent</entry>
       </row>
@@ -1080,6 +1128,12 @@
         </indexterm>
         <literal><function>sin(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>sind</primary>
+        </indexterm>
+        <literal><function>sind(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>sine</entry>
       </row>
 
@@ -1090,11 +1144,28 @@
         </indexterm>
         <literal><function>tan(<replaceable>x</replaceable>)</function></literal>
        </entry>
+       <entry>
+        <indexterm>
+         <primary>tand</primary>
+        </indexterm>
+        <literal><function>tand(<replaceable>x</replaceable>)</function></literal>
+       </entry>
        <entry>tangent</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
+
+  <note>
+   <para>
+    Another way to work with angles measured in degrees is to use the unit
+    transformation functions <literal><function>radians()</function></literal>
+    and <literal><function>degrees()</function></literal> shown earlier.
+    However, using the degree-based trigonometric functions is preferred,
+    as that way avoids roundoff error for special cases such
+    as <literal>sind(30)</>.
+   </para>
+  </note>
 
   </sect1>
 
@@ -7507,6 +7578,17 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
 
     </variablelist>
    </para>
+
+   <note>
+    <para>
+     When the input value is +/-Infinity, <function>extract</> returns
+     +/-Infinity for monotonically-increasing fields (<literal>epoch</>,
+     <literal>julian</>, <literal>year</>, <literal>isoyear</>,
+     <literal>decade</>, <literal>century</>, and <literal>millennium</>).
+     For other fields, NULL is returned.  <productname>PostgreSQL</>
+     versions before 9.6 returned zero for all cases of infinite input.
+    </para>
+   </note>
 
    <para>
     The <function>extract</function> function is primarily intended
@@ -15819,6 +15901,14 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>to_regtype</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>to_regnamespace</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>to_regrole</primary>
+   </indexterm>
+
   <para>
    <xref linkend="functions-info-catalog-table"> lists functions that
    extract information from the system catalogs.
@@ -16009,6 +16099,16 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>regtype</type></entry>
        <entry>get the OID of the named type</entry>
       </row>
+      <row>
+       <entry><literal><function>to_regnamespace(<parameter>schema_name</parameter>)</function></literal></entry>
+       <entry><type>regnamespace</type></entry>
+       <entry>get the OID of the named schema</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regrole(<parameter>role_name</parameter>)</function></literal></entry>
+       <entry><type>regrole</type></entry>
+       <entry>get the OID of the named role</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -16152,10 +16252,13 @@ SELECT collation for ('foo' COLLATE "de_DE");
   <para>
    The <function>to_regclass</function>, <function>to_regproc</function>,
    <function>to_regprocedure</function>, <function>to_regoper</function>,
-   <function>to_regoperator</function>, and <function>to_regtype</function>
-   functions translate relation, function, operator, and type names to objects
-   of type <type>regclass</>, <type>regproc</>, <type>regprocedure</type>,
-   <type>regoper</>, <type>regoperator</type>, and <type>regtype</>,
+   <function>to_regoperator</function>, <function>to_regtype</function>,
+   <function>to_regnamespace</function>, and <function>to_regrole</function>
+   functions translate relation, function, operator, type, schema, and role
+   names (given as <type>text</>) to objects of
+   type <type>regclass</>, <type>regproc</>, <type>regprocedure</type>,
+   <type>regoper</>, <type>regoperator</type>, <type>regtype</>,
+   <type>regnamespace</>, and <type>regrole</>
    respectively.  These functions differ from a cast from
    text in that they don't accept a numeric OID, and that they return null
    rather than throwing an error if the name is not found (or, for
@@ -16755,6 +16858,9 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_create_restore_point</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_current_xlog_flush_location</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_current_xlog_insert_location</primary>
    </indexterm>
    <indexterm>
@@ -16808,6 +16914,13 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>pg_lsn</type></entry>
        <entry>Create a named point for performing restore (restricted to superusers)</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_current_xlog_flush_location()</function></literal>
+        </entry>
+       <entry><type>pg_lsn</type></entry>
+       <entry>Get current transaction log flush location</entry>
       </row>
       <row>
        <entry>
@@ -16943,13 +17056,14 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_current_xlog_location</> displays the current transaction log write
     location in the same format used by the above functions.  Similarly,
     <function>pg_current_xlog_insert_location</> displays the current transaction log
-    insertion point.  The insertion point is the <quote>logical</> end
-    of the transaction log
-    at any instant, while the write location is the end of what has actually
-    been written out from the server's internal buffers.  The write location
-    is the end of what can be examined from outside the server, and is usually
+    insertion point and <function>pg_current_xlog_flush_location</> displays the
+    current transaction log flush point. The insertion point is the <quote>logical</>
+    end of the transaction log at any instant, while the write location is the end of
+    what has actually been written out from the server's internal buffers and flush
+    location is the location guaranteed to be written to durable storage. The write
+    location is the end of what can be examined from outside the server, and is usually
     what you want if you are interested in archiving partially-complete transaction log
-    files.  The insertion point is made available primarily for server
+    files.  The insertion and flush points are made available primarily for server
     debugging purposes.  These are both read-only operations and do not
     require superuser permissions.
    </para>
@@ -17228,7 +17342,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     in <xref linkend="functions-replication-table"> are for
     controlling and interacting with replication features.
     See <xref linkend="streaming-replication">,
-    <xref linkend="streaming-replication-slots">, <xref linkend="replication-origins">
+    <xref linkend="streaming-replication-slots">, and
+    <xref linkend="replication-origins">
     for information about the underlying features.  Use of these
     functions is restricted to superusers.
    </para>
@@ -17239,9 +17354,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
-    The functions described in <xref linkend="functions-snapshot-synchronization">, <xref
-    linkend="functions-recovery-control">, and <xref
-    linkend="functions-admin-backup"> are also relevant for replication.
+    The functions described in
+    <xref linkend="functions-admin-backup">,
+    <xref linkend="functions-recovery-control">, and
+    <xref linkend="functions-snapshot-synchronization">
+    are also relevant for replication.
    </para>
 
    <table id="functions-replication-table">
@@ -17401,11 +17518,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_create(<parameter>node_name</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
-        <parameter>internal_id</parameter> <type>oid</type>
+        <type>oid</type>
        </entry>
        <entry>
-        Create a replication origin with the passed in external
-        name, and create an internal id for it.
+        Create a replication origin with the given external
+        name, and return the internal id assigned to it.
        </entry>
       </row>
 
@@ -17420,7 +17537,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         void
        </entry>
        <entry>
-        Delete a previously created replication origin, including the
+        Delete a previously created replication origin, including any
         associated replay progress.
        </entry>
       </row>
@@ -17433,10 +17550,10 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_oid(<parameter>node_name</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
-        <parameter>internal_id</parameter> <type>oid</type>
+        <type>oid</type>
        </entry>
        <entry>
-        Lookup replication origin by name and return the internal id. If no
+        Lookup a replication origin by name and return the internal id. If no
         corresponding replication origin is found an error is thrown.
        </entry>
       </row>
@@ -17452,7 +17569,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         void
        </entry>
        <entry>
-        Configure the current session to be replaying from the passed in
+        Mark the current session as replaying from the given
         origin, allowing replay progress to be tracked.  Use
         <function>pg_replication_origin_session_reset</function> to revert.
         Can only be used if no previous origin is configured.
@@ -17478,12 +17595,12 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
       <row>
        <entry>
         <indexterm>
-         <primary>pg_replication_session_is_setup</primary>
+         <primary>pg_replication_origin_session_is_setup</primary>
         </indexterm>
-        <literal><function>pg_replication_session_is_setup()</function></literal>
+        <literal><function>pg_replication_origin_session_is_setup()</function></literal>
        </entry>
        <entry>
-        bool
+        <type>bool</type>
        </entry>
        <entry>
         Has a replication origin been configured in the current session?
@@ -17498,7 +17615,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_session_progress(<parameter>flush</parameter> <type>bool</type>)</function></literal>
        </entry>
        <entry>
-        pg_lsn
+        <type>pg_lsn</type>
        </entry>
        <entry>
         Return the replay position for the replication origin configured in
@@ -17519,8 +17636,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         void
        </entry>
        <entry>
-        Mark the current transaction to be replaying a transaction that has
-        committed at the passed in <acronym>LSN</acronym> and timestamp. Can
+        Mark the current transaction as replaying a transaction that has
+        committed at the given <acronym>LSN</acronym> and timestamp. Can
         only be called when a replication origin has previously been
         configured using
         <function>pg_replication_origin_session_setup()</function>.
@@ -17554,7 +17671,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         void
        </entry>
        <entry>
-        Set replication progress for the passed in node to the passed in
+        Set replication progress for the given node to the given
         position. This primarily is useful for setting up the initial position
         or a new position after configuration changes and similar. Be aware
         that careless use of this function can lead to inconsistently
@@ -17570,10 +17687,10 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_progress(<parameter>node_name</parameter> <type>text</type>, <parameter>flush</parameter> <type>bool</type>)</function></literal>
        </entry>
        <entry>
-        pg_lsn
+        <type>pg_lsn</type>
        </entry>
        <entry>
-        Return the replay position for the passed in replication origin. The
+        Return the replay position for the given replication origin. The
         parameter <parameter>flush</parameter> determines whether the
         corresponding local transaction will be guaranteed to have been
         flushed to disk or not.
@@ -17908,6 +18025,74 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <function>pg_relation_filenode</>. Given a <quote>tablespace</> OID and
     a <quote>filenode</>, it returns the associated relation's OID. For a table
     in the database's default tablespace, the tablespace can be specified as 0.
+   </para>
+
+  </sect2>
+
+  <sect2 id="functions-admin-index">
+   <title>Index Maintenance Functions</title>
+
+   <indexterm>
+    <primary>brin_summarize_new_values</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>gin_clean_pending_list</primary>
+   </indexterm>
+
+   <para>
+    <xref linkend="functions-admin-index-table"> shows the functions
+    available for index maintenance tasks.
+    These functions cannot be executed during recovery.
+    Use of these functions is restricted to superusers and the owner
+    of the given index.
+   </para>
+
+   <table id="functions-admin-index-table">
+    <title>Index Maintenance Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>brin_summarize_new_values(<parameter>index_oid</> <type>regclass</>)</function></literal>
+       </entry>
+       <entry><type>integer</type></entry>
+       <entry>summarize page ranges not already summarized</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>gin_clean_pending_list(<parameter>index</> <type>regclass</>)</function></literal>
+       </entry>
+       <entry><type>bigint</type></entry>
+       <entry>move GIN pending list entries into main index structure</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>brin_summarize_new_values</> receives a BRIN index OID as
+    argument and inspects the index to find page ranges in the base table
+    that are not currently summarized by the index; for any such range
+    it creates a new summary index tuple by scanning the table pages.
+    It returns the number of new page range summaries that were inserted
+    into the index.
+   </para>
+
+   <para>
+    <function>gin_clean_pending_list</> accepts the OID or name of
+    a GIN index and cleans up the pending list of the specified GIN index
+    by moving entries in it to the main GIN data structure in bulk.
+    It returns the number of pages cleaned up from the pending list.
+    Note that if the argument is a GIN index built with <literal>fastupdate</>
+    option disabled, the cleanup does not happen and the return value is 0
+    because the index doesn't have a pending list.
+    Please see <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
+    for details of the pending list and <literal>fastupdate</> option.
    </para>
 
   </sect2>

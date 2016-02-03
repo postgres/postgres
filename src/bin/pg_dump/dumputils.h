@@ -5,7 +5,7 @@
  *	Lately it's also being used by psql and bin/scripts/ ...
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/dumputils.h
@@ -38,8 +38,8 @@ typedef struct SimpleOidList
 typedef struct SimpleStringListCell
 {
 	struct SimpleStringListCell *next;
-	bool		touched;				/* true, when this string was searched
-										   and touched */
+	bool		touched;		/* true, when this string was searched and
+								 * touched */
 	char		val[FLEXIBLE_ARRAY_MEMBER];		/* null-terminated string here */
 } SimpleStringListCell;
 

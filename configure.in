@@ -23,7 +23,7 @@ m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.6
 Untested combinations of 'autoconf' and PostgreSQL versions are not
 recommended.  You can remove the check from 'configure.in' but it is then
 your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2015, PostgreSQL Global Development Group])
+AC_COPYRIGHT([Copyright (c) 1996-2016, PostgreSQL Global Development Group])
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
@@ -700,6 +700,15 @@ AC_SUBST(with_selinux)
 AC_MSG_RESULT([$with_selinux])
 
 #
+# Systemd
+#
+AC_MSG_CHECKING([whether to build with systemd support])
+PGAC_ARG_BOOL(with, systemd, no, [build with systemd support],
+              [AC_DEFINE([USE_SYSTEMD], 1, [Define to build with systemd support. (--with-systemd)])])
+AC_SUBST(with_systemd)
+AC_MSG_RESULT([$with_systemd])
+
+#
 # Readline
 #
 PGAC_ARG_BOOL(with, readline, yes,
@@ -1249,6 +1258,10 @@ if test "$with_pam" = yes ; then
                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
 fi
 
+if test "$with_systemd" = yes ; then
+  AC_CHECK_HEADER(systemd/sd-daemon.h, [], [AC_MSG_ERROR([header file <systemd/sd-daemon.h> is required for systemd support])])
+fi
+
 if test "$with_libxml" = yes ; then
   AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required for XML support])])
 fi
@@ -1577,6 +1590,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(system)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
+  AC_LIBOBJ(win32security)
   AC_LIBOBJ(win32setlocale)
   AC_DEFINE([HAVE_SYMLINK], 1,
             [Define to 1 if you have the `symlink' function.])
@@ -1635,7 +1649,7 @@ LIBS="$LIBS_including_readline"
 
 if test "$with_readline" = yes; then
   PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
-  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
+  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function rl_reset_screen_size])
   AC_CHECK_FUNCS([append_history history_truncate_file])
 fi
 

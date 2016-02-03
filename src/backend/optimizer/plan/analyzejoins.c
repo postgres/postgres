@@ -11,7 +11,7 @@
  * is that we have to work harder to clean up after ourselves when we modify
  * the query, since the derived data structures have to be updated too.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -438,9 +438,6 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		sjinfo->syn_lefthand = bms_del_member(sjinfo->syn_lefthand, relid);
 		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, relid);
 	}
-
-	/* There shouldn't be any LATERAL info to translate, as yet */
-	Assert(root->lateral_info_list == NIL);
 
 	/*
 	 * Likewise remove references from PlaceHolderVar data structures,

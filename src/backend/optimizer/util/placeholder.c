@@ -4,7 +4,7 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -363,12 +363,10 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
 
 /*
  * add_placeholders_to_base_rels
- *		Add any required PlaceHolderVars to base rels' targetlists, and
- *		update lateral_vars lists for lateral references contained in them.
+ *		Add any required PlaceHolderVars to base rels' targetlists.
  *
  * If any placeholder can be computed at a base rel and is needed above it,
- * add it to that rel's targetlist, and add any lateral references it requires
- * to the rel's lateral_vars list.  This might look like it could be merged
+ * add it to that rel's targetlist.  This might look like it could be merged
  * with fix_placeholder_input_needed_levels, but it must be separate because
  * join removal happens in between, and can change the ph_eval_at sets.  There
  * is essentially the same logic in add_placeholders_to_joinrel, but we can't
@@ -385,58 +383,22 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 		Relids		eval_at = phinfo->ph_eval_at;
 		int			varno;
 
-		if (bms_get_singleton_member(eval_at, &varno))
+		if (bms_get_singleton_member(eval_at, &varno) &&
+			bms_nonempty_difference(phinfo->ph_needed, eval_at))
 		{
 			RelOptInfo *rel = find_base_rel(root, varno);
 
-			/* add it to reltargetlist if needed above the rel scan level */
-			if (bms_nonempty_difference(phinfo->ph_needed, eval_at))
-				rel->reltargetlist = lappend(rel->reltargetlist,
-											 copyObject(phinfo->ph_var));
-			/* if there are lateral refs in it, add them to lateral_vars */
-			if (phinfo->ph_lateral != NULL)
-			{
-				List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
-												   PVC_RECURSE_AGGREGATES,
-												   PVC_INCLUDE_PLACEHOLDERS);
-				ListCell   *lc2;
-
-				foreach(lc2, vars)
-				{
-					Node	   *node = (Node *) lfirst(lc2);
-
-					if (IsA(node, Var))
-					{
-						Var		   *var = (Var *) node;
-
-						if (var->varno != varno)
-							rel->lateral_vars = lappend(rel->lateral_vars,
-														var);
-					}
-					else if (IsA(node, PlaceHolderVar))
-					{
-						PlaceHolderVar *other_phv = (PlaceHolderVar *) node;
-						PlaceHolderInfo *other_phi;
-
-						other_phi = find_placeholder_info(root, other_phv,
-														  false);
-						if (!bms_is_subset(other_phi->ph_eval_at, eval_at))
-							rel->lateral_vars = lappend(rel->lateral_vars,
-														other_phv);
-					}
-					else
-						Assert(false);
-				}
-
-				list_free(vars);
-			}
+			rel->reltargetlist = lappend(rel->reltargetlist,
+										 copyObject(phinfo->ph_var));
 		}
 	}
 }
 
 /*
  * add_placeholders_to_joinrel
- *		Add any required PlaceHolderVars to a join rel's targetlist.
+ *		Add any required PlaceHolderVars to a join rel's targetlist;
+ *		and if they contain lateral references, add those references to the
+ *		joinrel's direct_lateral_relids.
  *
  * A join rel should emit a PlaceHolderVar if (a) the PHV is needed above
  * this join level and (b) the PHV can be computed at or below this level.
@@ -463,6 +425,10 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel)
 				joinrel->reltargetlist = lappend(joinrel->reltargetlist,
 												 phinfo->ph_var);
 				joinrel->width += phinfo->ph_width;
+				/* Adjust joinrel's direct_lateral_relids as needed */
+				joinrel->direct_lateral_relids =
+					bms_add_members(joinrel->direct_lateral_relids,
+									phinfo->ph_lateral);
 			}
 		}
 	}

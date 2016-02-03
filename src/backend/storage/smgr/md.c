@@ -10,7 +10,7 @@
  * It doesn't matter whether the bits are on spinning rust or some other
  * storage technology.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -848,17 +848,15 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 		if (v->mdfd_chain == NULL)
 		{
 			/*
-			 * Because we pass O_CREAT, we will create the next segment (with
-			 * zero length) immediately, if the last segment is of length
-			 * RELSEG_SIZE.  While perhaps not strictly necessary, this keeps
-			 * the logic simple.
+			 * We used to pass O_CREAT here, but that's has the disadvantage
+			 * that it might create a segment which has vanished through some
+			 * operating system misadventure.  In such a case, creating the
+			 * segment here undermine _mdfd_getseg's attempts to notice and
+			 * report an error upon access to a missing segment.
 			 */
-			v->mdfd_chain = _mdfd_openseg(reln, forknum, segno, O_CREAT);
+			v->mdfd_chain = _mdfd_openseg(reln, forknum, segno, 0);
 			if (v->mdfd_chain == NULL)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\": %m",
-								_mdfd_segpath(reln, forknum, segno))));
+				return segno * ((BlockNumber) RELSEG_SIZE);
 		}
 
 		v = v->mdfd_chain;

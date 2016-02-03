@@ -3,7 +3,7 @@
  * parse_node.c
  *	  various routines that make nodes for querytrees
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -311,18 +311,18 @@ transformArraySubscripts(ParseState *pstate,
 		elementType = transformArrayType(&arrayType, &arrayTypMod);
 
 	/*
-	 * A list containing only single subscripts refers to a single array
-	 * element.  If any of the items are double subscripts (lower:upper), then
-	 * the subscript expression means an array slice operation. In this case,
-	 * we supply a default lower bound of 1 for any items that contain only a
-	 * single subscript.  We have to prescan the indirection list to see if
-	 * there are any double subscripts.
+	 * A list containing only simple subscripts refers to a single array
+	 * element.  If any of the items are slice specifiers (lower:upper), then
+	 * the subscript expression means an array slice operation.  In this case,
+	 * we convert any non-slice items to slices by treating the single
+	 * subscript as the upper bound and supplying an assumed lower bound of 1.
+	 * We have to prescan the list to see if there are any slice items.
 	 */
 	foreach(idx, indirection)
 	{
 		A_Indices  *ai = (A_Indices *) lfirst(idx);
 
-		if (ai->lidx != NULL)
+		if (ai->is_slice)
 		{
 			isSlice = true;
 			break;
@@ -356,7 +356,7 @@ transformArraySubscripts(ParseState *pstate,
 							 errmsg("array subscript must have type integer"),
 						parser_errposition(pstate, exprLocation(ai->lidx))));
 			}
-			else
+			else if (!ai->is_slice)
 			{
 				/* Make a constant 1 */
 				subexpr = (Node *) makeConst(INT4OID,
@@ -367,21 +367,38 @@ transformArraySubscripts(ParseState *pstate,
 											 false,
 											 true);		/* pass by value */
 			}
+			else
+			{
+				/* Slice with omitted lower bound, put NULL into the list */
+				subexpr = NULL;
+			}
 			lowerIndexpr = lappend(lowerIndexpr, subexpr);
 		}
-		subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
-		/* If it's not int4 already, try to coerce */
-		subexpr = coerce_to_target_type(pstate,
-										subexpr, exprType(subexpr),
-										INT4OID, -1,
-										COERCION_ASSIGNMENT,
-										COERCE_IMPLICIT_CAST,
-										-1);
-		if (subexpr == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("array subscript must have type integer"),
-					 parser_errposition(pstate, exprLocation(ai->uidx))));
+		else
+			Assert(ai->lidx == NULL && !ai->is_slice);
+
+		if (ai->uidx)
+		{
+			subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
+			/* If it's not int4 already, try to coerce */
+			subexpr = coerce_to_target_type(pstate,
+											subexpr, exprType(subexpr),
+											INT4OID, -1,
+											COERCION_ASSIGNMENT,
+											COERCE_IMPLICIT_CAST,
+											-1);
+			if (subexpr == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("array subscript must have type integer"),
+						 parser_errposition(pstate, exprLocation(ai->uidx))));
+		}
+		else
+		{
+			/* Slice with omitted upper bound, put NULL into the list */
+			Assert(isSlice && ai->is_slice);
+			subexpr = NULL;
+		}
 		upperIndexpr = lappend(upperIndexpr, subexpr);
 	}
 

@@ -4,7 +4,7 @@
  *	  Extract a common prefix, if any, from a compiled regex.
  *
  *
- * Portions Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1998, 1999 Henry Spencer
  *
  * IDENTIFICATION

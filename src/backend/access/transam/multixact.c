@@ -24,17 +24,21 @@
  * since it would get completely confused if someone inquired about a bogus
  * MultiXactId that pointed to an intermediate slot containing an XID.)
  *
- * XLOG interactions: this module generates an XLOG record whenever a new
- * OFFSETs or MEMBERs page is initialized to zeroes, as well as an XLOG record
- * whenever a new MultiXactId is defined.  This allows us to completely
- * rebuild the data entered since the last checkpoint during XLOG replay.
- * Because this is possible, we need not follow the normal rule of
- * "write WAL before data"; the only correctness guarantee needed is that
- * we flush and sync all dirty OFFSETs and MEMBERs pages to disk before a
- * checkpoint is considered complete.  If a page does make it to disk ahead
- * of corresponding WAL records, it will be forcibly zeroed before use anyway.
- * Therefore, we don't need to mark our pages with LSN information; we have
- * enough synchronization already.
+ * XLOG interactions: this module generates a record whenever a new OFFSETs or
+ * MEMBERs page is initialized to zeroes, as well as an
+ * XLOG_MULTIXACT_CREATE_ID record whenever a new MultiXactId is defined.
+ * This module ignores the WAL rule "write xlog before data," because it
+ * suffices that actions recording a MultiXactId in a heap xmax do follow that
+ * rule.  The only way for the MXID to be referenced from any data page is for
+ * heap_lock_tuple() or heap_update() to have put it there, and each generates
+ * an XLOG record that must follow ours.  The normal LSN interlock between the
+ * data page and that XLOG record will ensure that our XLOG record reaches
+ * disk first.  If the SLRU members/offsets data reaches disk sooner than the
+ * XLOG records, we do not care; after recovery, no xmax will refer to it.  On
+ * the flip side, to ensure that all referenced entries _do_ reach disk, this
+ * module's XLOG records completely rebuild the data entered since the last
+ * checkpoint.  We flush and sync all dirty OFFSETs and MEMBERs pages to disk
+ * before each checkpoint is considered complete.
  *
  * Like clog.c, and unlike subtrans.c, we have to preserve state across
  * crashes and ensure that MXID and offset numbering increases monotonically
@@ -55,7 +59,7 @@
  * counter does not fall within the wraparound horizon considering the global
  * minimum value.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/multixact.c
@@ -795,19 +799,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	 */
 	multi = GetNewMultiXactId(nmembers, &offset);
 
-	/*
-	 * Make an XLOG entry describing the new MXID.
-	 *
-	 * Note: we need not flush this XLOG entry to disk before proceeding. The
-	 * only way for the MXID to be referenced from any data page is for
-	 * heap_lock_tuple() to have put it there, and heap_lock_tuple() generates
-	 * an XLOG record that must follow ours.  The normal LSN interlock between
-	 * the data page and that XLOG record will ensure that our XLOG record
-	 * reaches disk first.  If the SLRU members/offsets data reaches disk
-	 * sooner than the XLOG record, we do not care because we'll overwrite it
-	 * with zeroes unless the XLOG record is there too; see notes at top of
-	 * this file.
-	 */
+	/* Make an XLOG entry describing the new MXID. */
 	xlrec.mid = multi;
 	xlrec.moff = offset;
 	xlrec.nmembers = nmembers;
@@ -1838,11 +1830,13 @@ MultiXactShmemInit(void)
 	MultiXactMemberCtl->PagePrecedes = MultiXactMemberPagePrecedes;
 
 	SimpleLruInit(MultiXactOffsetCtl,
-				  "MultiXactOffset Ctl", NUM_MXACTOFFSET_BUFFERS, 0,
-				  MultiXactOffsetControlLock, "pg_multixact/offsets");
+				  "multixact_offset", NUM_MXACTOFFSET_BUFFERS, 0,
+				  MultiXactOffsetControlLock, "pg_multixact/offsets",
+				  LWTRANCHE_MXACTOFFSET_BUFFERS);
 	SimpleLruInit(MultiXactMemberCtl,
-				  "MultiXactMember Ctl", NUM_MXACTMEMBER_BUFFERS, 0,
-				  MultiXactMemberControlLock, "pg_multixact/members");
+				  "multixact_member", NUM_MXACTMEMBER_BUFFERS, 0,
+				  MultiXactMemberControlLock, "pg_multixact/members",
+				  LWTRANCHE_MXACTMEMBER_BUFFERS);
 
 	/* Initialize our shared state struct */
 	MultiXactState = ShmemInitStruct("Shared MultiXact State",
@@ -2037,7 +2031,11 @@ TrimMultiXact(void)
 
 	/*
 	 * Zero out the remainder of the current offsets page.  See notes in
-	 * TrimCLOG() for motivation.
+	 * TrimCLOG() for background.  Unlike CLOG, some WAL record covers every
+	 * pg_multixact SLRU mutation.  Since, also unlike CLOG, we ignore the WAL
+	 * rule "write xlog before data," nextMXact successors may carry obsolete,
+	 * nonzero offset values.  Zero those so case 2 of GetMultiXactIdMembers()
+	 * operates normally.
 	 */
 	entryno = MultiXactIdToOffsetEntry(nextMXact);
 	if (entryno != 0)
@@ -2552,6 +2550,7 @@ SetOffsetVacuumLimit(void)
 	bool		oldestOffsetKnown = false;
 	bool		prevOldestOffsetKnown;
 	MultiXactOffset offsetStopLimit = 0;
+	MultiXactOffset prevOffsetStopLimit;
 
 	/*
 	 * NB: Have to prevent concurrent truncation, we might otherwise try to
@@ -2566,6 +2565,7 @@ SetOffsetVacuumLimit(void)
 	nextOffset = MultiXactState->nextOffset;
 	prevOldestOffsetKnown = MultiXactState->oldestOffsetKnown;
 	prevOldestOffset = MultiXactState->oldestOffset;
+	prevOffsetStopLimit = MultiXactState->offsetStopLimit;
 	Assert(MultiXactState->finishedStartup);
 	LWLockRelease(MultiXactGenLock);
 
@@ -2633,11 +2633,13 @@ SetOffsetVacuumLimit(void)
 	{
 		/*
 		 * If we failed to get the oldest offset this time, but we have a
-		 * value from a previous pass through this function, use the old value
-		 * rather than automatically forcing it.
+		 * value from a previous pass through this function, use the old
+		 * values rather than automatically forcing an emergency autovacuum
+		 * cycle again.
 		 */
 		oldestOffset = prevOldestOffset;
 		oldestOffsetKnown = true;
+		offsetStopLimit = prevOffsetStopLimit;
 	}
 
 	/* Install the computed values */

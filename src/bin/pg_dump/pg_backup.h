@@ -58,35 +58,6 @@ typedef enum _teSection
 	SECTION_POST_DATA			/* stuff to be processed after data */
 } teSection;
 
-/*
- *	We may want to have some more user-readable data, but in the mean
- *	time this gives us some abstraction and type checking.
- */
-typedef struct Archive
-{
-	int			verbose;
-	char	   *remoteVersionStr;		/* server's version string */
-	int			remoteVersion;	/* same in numeric form */
-
-	int			minRemoteVersion;		/* allowable range */
-	int			maxRemoteVersion;
-
-	int			numWorkers;		/* number of parallel processes */
-	char	   *sync_snapshot_id;		/* sync snapshot id for parallel
-										 * operation */
-
-	/* info needed for string escaping */
-	int			encoding;		/* libpq code for client_encoding */
-	bool		std_strings;	/* standard_conforming_strings */
-	char	   *use_role;		/* Issue SET ROLE to this */
-
-	/* error handling */
-	bool		exit_on_error;	/* whether to exit on SQL errors... */
-	int			n_errors;		/* number of errors (if no die) */
-
-	/* The rest is private */
-} Archive;
-
 typedef struct _restoreOptions
 {
 	int			createDB;		/* Issue commands to create the database */
@@ -190,6 +161,38 @@ typedef struct _dumpOptions
 	char	   *outputSuperuser;
 } DumpOptions;
 
+/*
+ *	We may want to have some more user-readable data, but in the mean
+ *	time this gives us some abstraction and type checking.
+ */
+typedef struct Archive
+{
+	DumpOptions *dopt;			/* options, if dumping */
+	RestoreOptions *ropt;		/* options, if restoring */
+
+	int			verbose;
+	char	   *remoteVersionStr;		/* server's version string */
+	int			remoteVersion;	/* same in numeric form */
+
+	int			minRemoteVersion;		/* allowable range */
+	int			maxRemoteVersion;
+
+	int			numWorkers;		/* number of parallel processes */
+	char	   *sync_snapshot_id;		/* sync snapshot id for parallel
+										 * operation */
+
+	/* info needed for string escaping */
+	int			encoding;		/* libpq code for client_encoding */
+	bool		std_strings;	/* standard_conforming_strings */
+	char	   *use_role;		/* Issue SET ROLE to this */
+
+	/* error handling */
+	bool		exit_on_error;	/* whether to exit on SQL errors... */
+	int			n_errors;		/* number of errors (if no die) */
+
+	/* The rest is private */
+} Archive;
+
 
 /*
  * pg_dump uses two different mechanisms for identifying database objects:
@@ -215,9 +218,9 @@ typedef struct
 
 typedef int DumpId;
 
-typedef int (*DataDumperPtr) (Archive *AH, DumpOptions *dopt, void *userArg);
+typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
 
-typedef void (*SetupWorkerPtr) (Archive *AH, DumpOptions *dopt, RestoreOptions *ropt);
+typedef void (*SetupWorkerPtr) (Archive *AH);
 
 /*
  * Main archiver interface.
@@ -250,9 +253,11 @@ extern void WriteData(Archive *AH, const void *data, size_t dLen);
 extern int	StartBlob(Archive *AH, Oid oid);
 extern int	EndBlob(Archive *AH, Oid oid);
 
-extern void CloseArchive(Archive *AH, DumpOptions *dopt);
+extern void CloseArchive(Archive *AH);
 
-extern void SetArchiveRestoreOptions(Archive *AH, RestoreOptions *ropt);
+extern void SetArchiveOptions(Archive *AH, DumpOptions *dopt, RestoreOptions *ropt);
+
+extern void ProcessArchiveRestoreOptions(Archive *AH);
 
 extern void RestoreArchive(Archive *AH);
 
@@ -265,7 +270,7 @@ extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 			  SetupWorkerPtr setupDumpWorker);
 
 /* The --list option */
-extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);
+extern void PrintTOCSummary(Archive *AH);
 
 extern RestoreOptions *NewRestoreOptions(void);
 
@@ -274,7 +279,7 @@ extern void InitDumpOptions(DumpOptions *opts);
 extern DumpOptions *dumpOptionsFromRestoreOptions(RestoreOptions *ropt);
 
 /* Rearrange and filter TOC entries */
-extern void SortTocFromFile(Archive *AHX, RestoreOptions *ropt);
+extern void SortTocFromFile(Archive *AHX);
 
 /* Convenience functions used only when writing DATA */
 extern void archputs(const char *s, Archive *AH);

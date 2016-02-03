@@ -12,7 +12,7 @@
  *		reduce_outer_joins
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1150,14 +1150,11 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 										subroot->append_rel_list);
 
 	/*
-	 * We don't have to do the equivalent bookkeeping for outer-join or
-	 * LATERAL info, because that hasn't been set up yet.  placeholder_list
-	 * likewise.
+	 * We don't have to do the equivalent bookkeeping for outer-join info,
+	 * because that hasn't been set up yet.  placeholder_list likewise.
 	 */
 	Assert(root->join_info_list == NIL);
 	Assert(subroot->join_info_list == NIL);
-	Assert(root->lateral_info_list == NIL);
-	Assert(subroot->lateral_info_list == NIL);
 	Assert(root->placeholder_list == NIL);
 	Assert(subroot->placeholder_list == NIL);
 
@@ -1642,7 +1639,6 @@ pull_up_simple_values(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	Assert(root->append_rel_list == NIL);
 	Assert(list_length(parse->rtable) == 1);
 	Assert(root->join_info_list == NIL);
-	Assert(root->lateral_info_list == NIL);
 	Assert(root->placeholder_list == NIL);
 
 	/*
@@ -2839,7 +2835,6 @@ substitute_multiple_relids_walker(Node *node,
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
-	Assert(!IsA(node, LateralJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));

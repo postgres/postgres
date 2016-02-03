@@ -3,7 +3,7 @@
  * nodeCustom.c
  *		Routines to handle execution of custom scan node
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * ------------------------------------------------------------------------
@@ -144,7 +144,7 @@ ExecCustomMarkPos(CustomScanState *node)
 	if (!node->methods->MarkPosCustomScan)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("custom-scan \"%s\" does not support MarkPos",
+				 errmsg("custom scan \"%s\" does not support MarkPos",
 						node->methods->CustomName)));
 	node->methods->MarkPosCustomScan(node);
 }
@@ -155,7 +155,7 @@ ExecCustomRestrPos(CustomScanState *node)
 	if (!node->methods->RestrPosCustomScan)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("custom-scan \"%s\" does not support MarkPos",
+				 errmsg("custom scan \"%s\" does not support MarkPos",
 						node->methods->CustomName)));
 	node->methods->RestrPosCustomScan(node);
 }

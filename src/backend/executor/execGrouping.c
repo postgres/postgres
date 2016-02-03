@@ -7,7 +7,7 @@
  * collation-sensitive, so the code in this file has no support for passing
  * collation settings through from callers.  That may have to change someday.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

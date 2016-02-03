@@ -3,7 +3,7 @@
  * postgres_fdw.c
  *		  Foreign-data wrapper for remote PostgreSQL servers
  *
- * Portions Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/postgres_fdw.c
@@ -214,7 +214,8 @@ static ForeignScan *postgresGetForeignPlan(PlannerInfo *root,
 					   Oid foreigntableid,
 					   ForeignPath *best_path,
 					   List *tlist,
-					   List *scan_clauses);
+					   List *scan_clauses,
+					   Plan *outer_plan);
 static void postgresBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *postgresIterateForeignScan(ForeignScanState *node);
 static void postgresReScanForeignScan(ForeignScanState *node);
@@ -258,6 +259,9 @@ static bool postgresAnalyzeForeignTable(Relation relation,
 							BlockNumber *totalpages);
 static List *postgresImportForeignSchema(ImportForeignSchemaStmt *stmt,
 							Oid serverOid);
+static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
+								 RelOptInfo *rel);
+static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * Helper functions
@@ -508,6 +512,197 @@ postgresGetForeignRelSize(PlannerInfo *root,
 }
 
 /*
+ * get_useful_ecs_for_relation
+ *		Determine which EquivalenceClasses might be involved in useful
+ *		orderings of this relation.
+ *
+ * This function is in some respects a mirror image of the core function
+ * pathkeys_useful_for_merging: for a regular table, we know what indexes
+ * we have and want to test whether any of them are useful.  For a foreign
+ * table, we don't know what indexes are present on the remote side but
+ * want to speculate about which ones we'd like to use if they existed.
+ */
+static List *
+get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *useful_eclass_list = NIL;
+	ListCell   *lc;
+	Relids		relids;
+
+	/*
+	 * First, consider whether any active EC is potentially useful for a
+	 * merge join against this relation.
+	 */
+	if (rel->has_eclass_joins)
+	{
+		foreach(lc, root->eq_classes)
+		{
+			EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc);
+
+			if (eclass_useful_for_merging(root, cur_ec, rel))
+				useful_eclass_list = lappend(useful_eclass_list, cur_ec);
+		}
+	}
+
+	/*
+	 * Next, consider whether there are any non-EC derivable join clauses that
+	 * are merge-joinable.  If the joininfo list is empty, we can exit
+	 * quickly.
+	 */
+	if (rel->joininfo == NIL)
+		return useful_eclass_list;
+
+	/* If this is a child rel, we must use the topmost parent rel to search. */
+	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		relids = find_childrel_top_parent(root, rel)->relids;
+	else
+		relids = rel->relids;
+
+	/* Check each join clause in turn. */
+	foreach(lc, rel->joininfo)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(lc);
+
+		/* Consider only mergejoinable clauses */
+		if (restrictinfo->mergeopfamilies == NIL)
+			continue;
+
+		/* Make sure we've got canonical ECs. */
+		update_mergeclause_eclasses(root, restrictinfo);
+
+		/*
+		 * restrictinfo->mergeopfamilies != NIL is sufficient to guarantee
+		 * that left_ec and right_ec will be initialized, per comments in
+		 * distribute_qual_to_rels, and rel->joininfo should only contain ECs
+		 * where this relation appears on one side or the other.
+		 */
+		if (bms_is_subset(restrictinfo->right_ec->ec_relids, relids))
+			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
+													 restrictinfo->right_ec);
+		else
+		{
+			Assert(bms_is_subset(restrictinfo->left_ec->ec_relids, relids));
+			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
+													  restrictinfo->left_ec);
+		}
+	}
+
+	return useful_eclass_list;
+}
+
+/*
+ * get_useful_pathkeys_for_relation
+ *		Determine which orderings of a relation might be useful.
+ *
+ * Getting data in sorted order can be useful either because the requested
+ * order matches the final output ordering for the overall query we're
+ * planning, or because it enables an efficient merge join.  Here, we try
+ * to figure out which pathkeys to consider.
+ */
+static List *
+get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *useful_pathkeys_list = NIL;
+	List	   *useful_eclass_list;
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
+	EquivalenceClass *query_ec = NULL;
+	ListCell   *lc;
+
+	/*
+	 * Pushing the query_pathkeys to the remote server is always worth
+	 * considering, because it might let us avoid a local sort.
+	 */
+	if (root->query_pathkeys)
+	{
+		bool		query_pathkeys_ok = true;
+
+		foreach(lc, root->query_pathkeys)
+		{
+			PathKey    *pathkey = (PathKey *) lfirst(lc);
+			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
+			Expr	   *em_expr;
+
+			/*
+			 * The planner and executor don't have any clever strategy for
+			 * taking data sorted by a prefix of the query's pathkeys and
+			 * getting it to be sorted by all of those pathkeys. We'll just
+			 * end up resorting the entire data set.  So, unless we can push
+			 * down all of the query pathkeys, forget it.
+			 *
+			 * is_foreign_expr would detect volatile expressions as well, but
+			 * checking ec_has_volatile here saves some cycles.
+			 */
+			if (pathkey_ec->ec_has_volatile ||
+				!(em_expr = find_em_expr_for_rel(pathkey_ec, rel)) ||
+				!is_foreign_expr(root, rel, em_expr))
+			{
+				query_pathkeys_ok = false;
+				break;
+			}
+		}
+
+		if (query_pathkeys_ok)
+			useful_pathkeys_list = list_make1(list_copy(root->query_pathkeys));
+	}
+
+	/*
+	 * Even if we're not using remote estimates, having the remote side do
+	 * the sort generally won't be any worse than doing it locally, and it
+	 * might be much better if the remote side can generate data in the right
+	 * order without needing a sort at all.  However, what we're going to do
+	 * next is try to generate pathkeys that seem promising for possible merge
+	 * joins, and that's more speculative.  A wrong choice might hurt quite a
+	 * bit, so bail out if we can't use remote estimates.
+	 */
+	if (!fpinfo->use_remote_estimate)
+		return useful_pathkeys_list;
+
+	/* Get the list of interesting EquivalenceClasses. */
+	useful_eclass_list = get_useful_ecs_for_relation(root, rel);
+
+	/* Extract unique EC for query, if any, so we don't consider it again. */
+	if (list_length(root->query_pathkeys) == 1)
+	{
+		PathKey    *query_pathkey = linitial(root->query_pathkeys);
+
+		query_ec = query_pathkey->pk_eclass;
+	}
+
+	/*
+	 * As a heuristic, the only pathkeys we consider here are those of length
+	 * one.  It's surely possible to consider more, but since each one we
+	 * choose to consider will generate a round-trip to the remote side, we
+	 * need to be a bit cautious here.  It would sure be nice to have a local
+	 * cache of information about remote index definitions...
+	 */
+	foreach(lc, useful_eclass_list)
+	{
+		EquivalenceClass *cur_ec = lfirst(lc);
+		Expr	   *em_expr;
+		PathKey    *pathkey;
+
+		/* If redundant with what we did above, skip it. */
+		if (cur_ec == query_ec)
+			continue;
+
+		/* If no pushable expression for this rel, skip it. */
+		em_expr = find_em_expr_for_rel(cur_ec, rel);
+		if (em_expr == NULL || !is_foreign_expr(root, rel, em_expr))
+			continue;
+
+		/* Looks like we can generate a pathkey, so let's do it. */
+		pathkey = make_canonical_pathkey(root, cur_ec,
+										 linitial_oid(cur_ec->ec_opfamilies),
+										 BTLessStrategyNumber,
+										 false);
+		useful_pathkeys_list = lappend(useful_pathkeys_list,
+									   list_make1(pathkey));
+	}
+
+	return useful_pathkeys_list;
+}
+
+/*
  * postgresGetForeignPaths
  *		Create possible scan paths for a scan on the foreign table
  */
@@ -520,7 +715,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 	ForeignPath *path;
 	List	   *ppi_list;
 	ListCell   *lc;
-	List	   *usable_pathkeys = NIL;
+	List	   *useful_pathkeys_list = NIL;		/* List of all pathkeys */
 
 	/*
 	 * Create simplest ForeignScan path node and add it to baserel.  This path
@@ -535,51 +730,22 @@ postgresGetForeignPaths(PlannerInfo *root,
 								   fpinfo->total_cost,
 								   NIL, /* no pathkeys */
 								   NULL,		/* no outer rel either */
+								   NULL,		/* no extra plan */
 								   NIL);		/* no fdw_private list */
 	add_path(baserel, (Path *) path);
 
-	/*
-	 * Determine whether we can potentially push query pathkeys to the remote
-	 * side, avoiding a local sort.
-	 */
-	foreach(lc, root->query_pathkeys)
-	{
-		PathKey    *pathkey = (PathKey *) lfirst(lc);
-		EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
-		Expr	   *em_expr;
+	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, baserel);
 
-		/*
-		 * is_foreign_expr would detect volatile expressions as well, but
-		 * ec_has_volatile saves some cycles.
-		 */
-		if (!pathkey_ec->ec_has_volatile &&
-			(em_expr = find_em_expr_for_rel(pathkey_ec, baserel)) &&
-			is_foreign_expr(root, baserel, em_expr))
-			usable_pathkeys = lappend(usable_pathkeys, pathkey);
-		else
-		{
-			/*
-			 * The planner and executor don't have any clever strategy for
-			 * taking data sorted by a prefix of the query's pathkeys and
-			 * getting it to be sorted by all of those pathekeys.  We'll just
-			 * end up resorting the entire data set.  So, unless we can push
-			 * down all of the query pathkeys, forget it.
-			 */
-			list_free(usable_pathkeys);
-			usable_pathkeys = NIL;
-			break;
-		}
-	}
-
-	/* Create a path with useful pathkeys, if we found one. */
-	if (usable_pathkeys != NULL)
+	/* Create one path for each set of pathkeys we found above. */
+	foreach(lc, useful_pathkeys_list)
 	{
 		double		rows;
 		int			width;
 		Cost		startup_cost;
 		Cost		total_cost;
+		List	   *useful_pathkeys = lfirst(lc);
 
-		estimate_path_cost_size(root, baserel, NIL, usable_pathkeys,
+		estimate_path_cost_size(root, baserel, NIL, useful_pathkeys,
 								&rows, &width, &startup_cost, &total_cost);
 
 		add_path(baserel, (Path *)
@@ -587,7 +753,8 @@ postgresGetForeignPaths(PlannerInfo *root,
 										 rows,
 										 startup_cost,
 										 total_cost,
-										 usable_pathkeys,
+										 useful_pathkeys,
+										 NULL,
 										 NULL,
 										 NIL));
 	}
@@ -756,6 +923,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 									   total_cost,
 									   NIL,		/* no pathkeys */
 									   param_info->ppi_req_outer,
+									   NULL,
 									   NIL);	/* no fdw_private list */
 		add_path(baserel, (Path *) path);
 	}
@@ -771,7 +939,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 					   Oid foreigntableid,
 					   ForeignPath *best_path,
 					   List *tlist,
-					   List *scan_clauses)
+					   List *scan_clauses,
+					   Plan *outer_plan)
 {
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) baserel->fdw_private;
 	Index		scan_relid = baserel->relid;
@@ -834,66 +1003,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * expressions to be sent as parameters.
 	 */
 	initStringInfo(&sql);
-	deparseSelectSql(&sql, root, baserel, fpinfo->attrs_used,
-					 &retrieved_attrs);
-	if (remote_conds)
-		appendWhereClause(&sql, root, baserel, remote_conds,
-						  true, &params_list);
-
-	/* Add ORDER BY clause if we found any useful pathkeys */
-	if (best_path->path.pathkeys)
-		appendOrderByClause(&sql, root, baserel, best_path->path.pathkeys);
-
-	/*
-	 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
-	 * initial row fetch, rather than later on as is done for local tables.
-	 * The extra roundtrips involved in trying to duplicate the local
-	 * semantics exactly don't seem worthwhile (see also comments for
-	 * RowMarkType).
-	 *
-	 * Note: because we actually run the query as a cursor, this assumes that
-	 * DECLARE CURSOR ... FOR UPDATE is supported, which it isn't before 8.3.
-	 */
-	if (baserel->relid == root->parse->resultRelation &&
-		(root->parse->commandType == CMD_UPDATE ||
-		 root->parse->commandType == CMD_DELETE))
-	{
-		/* Relation is UPDATE/DELETE target, so use FOR UPDATE */
-		appendStringInfoString(&sql, " FOR UPDATE");
-	}
-	else
-	{
-		PlanRowMark *rc = get_plan_rowmark(root->rowMarks, baserel->relid);
-
-		if (rc)
-		{
-			/*
-			 * Relation is specified as a FOR UPDATE/SHARE target, so handle
-			 * that.  (But we could also see LCS_NONE, meaning this isn't a
-			 * target relation after all.)
-			 *
-			 * For now, just ignore any [NO] KEY specification, since (a) it's
-			 * not clear what that means for a remote table that we don't have
-			 * complete information about, and (b) it wouldn't work anyway on
-			 * older remote servers.  Likewise, we don't worry about NOWAIT.
-			 */
-			switch (rc->strength)
-			{
-				case LCS_NONE:
-					/* No locking needed */
-					break;
-				case LCS_FORKEYSHARE:
-				case LCS_FORSHARE:
-					appendStringInfoString(&sql, " FOR SHARE");
-					break;
-				case LCS_FORNOKEYUPDATE:
-				case LCS_FORUPDATE:
-					appendStringInfoString(&sql, " FOR UPDATE");
-					break;
-			}
-		}
-	}
-
+	deparseSelectStmtForRel(&sql, root, baserel, remote_conds,
+							best_path->path.pathkeys, &retrieved_attrs,
+							&params_list);
 	/*
 	 * Build the fdw_private list that will be available to the executor.
 	 * Items in the list must match enum FdwScanPrivateIndex, above.
@@ -902,8 +1014,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 							 retrieved_attrs);
 
 	/*
-	 * Create the ForeignScan node from target list, local filtering
-	 * expressions, remote parameter expressions, and FDW private information.
+	 * Create the ForeignScan node from target list, filtering expressions,
+	 * remote parameter expressions, and FDW private information.
 	 *
 	 * Note that the remote parameter expressions are stored in the fdw_exprs
 	 * field of the finished plan node; we can't keep them in private state
@@ -915,7 +1027,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 							params_list,
 							fdw_private,
 							NIL,	/* no custom tlist */
-							remote_exprs);
+							remote_exprs,
+							outer_plan);
 }
 
 /*
@@ -931,7 +1044,6 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	RangeTblEntry *rte;
 	Oid			userid;
 	ForeignTable *table;
-	ForeignServer *server;
 	UserMapping *user;
 	int			numParams;
 	int			i;
@@ -959,14 +1071,13 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	/* Get info about foreign table. */
 	fsstate->rel = node->ss.ss_currentRelation;
 	table = GetForeignTable(RelationGetRelid(fsstate->rel));
-	server = GetForeignServer(table->serverid);
-	user = GetUserMapping(userid, server->serverid);
+	user = GetUserMapping(userid, table->serverid);
 
 	/*
 	 * Get connection to the foreign server.  Connection manager will
 	 * establish new connection if necessary.
 	 */
-	fsstate->conn = GetConnection(server, user, false);
+	fsstate->conn = GetConnection(user, false);
 
 	/* Assign a unique ID for my cursor */
 	fsstate->cursor_number = GetCursorNumber(fsstate->conn);
@@ -1333,7 +1444,6 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	RangeTblEntry *rte;
 	Oid			userid;
 	ForeignTable *table;
-	ForeignServer *server;
 	UserMapping *user;
 	AttrNumber	n_params;
 	Oid			typefnoid;
@@ -1360,11 +1470,10 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 
 	/* Get info about foreign table. */
 	table = GetForeignTable(RelationGetRelid(rel));
-	server = GetForeignServer(table->serverid);
-	user = GetUserMapping(userid, server->serverid);
+	user = GetUserMapping(userid, table->serverid);
 
 	/* Open connection; report that we'll create a prepared statement. */
-	fmstate->conn = GetConnection(server, user, true);
+	fmstate->conn = GetConnection(user, true);
 	fmstate->p_name = NULL;		/* prepared statement not made yet */
 
 	/* Deconstruct fdw_private data. */
@@ -1790,6 +1899,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		PGconn	   *conn;
 		Selectivity local_sel;
 		QualCost	local_cost;
+		List	   *remote_conds;
 
 		/*
 		 * join_conds might contain both clauses that are safe to send across,
@@ -1799,26 +1909,25 @@ estimate_path_cost_size(PlannerInfo *root,
 						   &remote_join_conds, &local_join_conds);
 
 		/*
+		 * The complete list of remote conditions includes everything from
+		 * baserestrictinfo plus any extra join_conds relevant to this
+		 * particular path.
+		 */
+		remote_conds = list_concat(list_copy(remote_join_conds),
+								   fpinfo->remote_conds);
+
+		/*
 		 * Construct EXPLAIN query including the desired SELECT, FROM, and
 		 * WHERE clauses.  Params and other-relation Vars are replaced by
 		 * dummy values.
 		 */
 		initStringInfo(&sql);
 		appendStringInfoString(&sql, "EXPLAIN ");
-		deparseSelectSql(&sql, root, baserel, fpinfo->attrs_used,
-						 &retrieved_attrs);
-		if (fpinfo->remote_conds)
-			appendWhereClause(&sql, root, baserel, fpinfo->remote_conds,
-							  true, NULL);
-		if (remote_join_conds)
-			appendWhereClause(&sql, root, baserel, remote_join_conds,
-							  (fpinfo->remote_conds == NIL), NULL);
-
-		if (pathkeys)
-			appendOrderByClause(&sql, root, baserel, pathkeys);
+		deparseSelectStmtForRel(&sql, root, baserel, remote_conds, pathkeys,
+								&retrieved_attrs, NULL);
 
 		/* Get the remote estimate */
-		conn = GetConnection(fpinfo->server, fpinfo->user, false);
+		conn = GetConnection(fpinfo->user, false);
 		get_remote_estimate(sql.data, conn, &rows, &width,
 							&startup_cost, &total_cost);
 		ReleaseConnection(conn);
@@ -2374,7 +2483,6 @@ postgresAnalyzeForeignTable(Relation relation,
 							BlockNumber *totalpages)
 {
 	ForeignTable *table;
-	ForeignServer *server;
 	UserMapping *user;
 	PGconn	   *conn;
 	StringInfoData sql;
@@ -2395,9 +2503,8 @@ postgresAnalyzeForeignTable(Relation relation,
 	 * owner, even if the ANALYZE was started by some other user.
 	 */
 	table = GetForeignTable(RelationGetRelid(relation));
-	server = GetForeignServer(table->serverid);
-	user = GetUserMapping(relation->rd_rel->relowner, server->serverid);
-	conn = GetConnection(server, user, false);
+	user = GetUserMapping(relation->rd_rel->relowner, table->serverid);
+	conn = GetConnection(user, false);
 
 	/*
 	 * Construct command to get page count for relation.
@@ -2456,7 +2563,6 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 {
 	PgFdwAnalyzeState astate;
 	ForeignTable *table;
-	ForeignServer *server;
 	UserMapping *user;
 	PGconn	   *conn;
 	unsigned int cursor_number;
@@ -2487,9 +2593,8 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	 * owner, even if the ANALYZE was started by some other user.
 	 */
 	table = GetForeignTable(RelationGetRelid(relation));
-	server = GetForeignServer(table->serverid);
-	user = GetUserMapping(relation->rd_rel->relowner, server->serverid);
-	conn = GetConnection(server, user, false);
+	user = GetUserMapping(relation->rd_rel->relowner, table->serverid);
+	conn = GetConnection(user, false);
 
 	/*
 	 * Construct cursor that retrieves whole rows from remote.
@@ -2690,7 +2795,7 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 	 */
 	server = GetForeignServer(serverOid);
 	mapping = GetUserMapping(GetUserId(), server->serverid);
-	conn = GetConnection(server, mapping, false);
+	conn = GetConnection(mapping, false);
 
 	/* Don't attempt to import collation if remote server hasn't got it */
 	if (PQserverVersion(conn) < 90100)
@@ -2722,7 +2827,11 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 
 		/*
 		 * Fetch all table data from this schema, possibly restricted by
-		 * EXCEPT or LIMIT TO.
+		 * EXCEPT or LIMIT TO.  (We don't actually need to pay any attention
+		 * to EXCEPT/LIMIT TO here, because the core code will filter the
+		 * statements we return according to those lists anyway.  But it
+		 * should save a few cycles to not process excluded tables in the
+		 * first place.)
 		 *
 		 * Note: because we run the connection with search_path restricted to
 		 * pg_catalog, the format_type() and pg_get_expr() outputs will always

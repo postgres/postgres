@@ -4,7 +4,7 @@
  *	  utilities routines for the postgres GiST index access method.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -808,11 +808,9 @@ gistNewBuffer(Relation r)
 	return buffer;
 }
 
-Datum
-gistoptions(PG_FUNCTION_ARGS)
+bytea *
+gistoptions(Datum reloptions, bool validate)
 {
-	Datum		reloptions = PG_GETARG_DATUM(0);
-	bool		validate = PG_GETARG_BOOL(1);
 	relopt_value *options;
 	GiSTOptions *rdopts;
 	int			numoptions;
@@ -826,7 +824,7 @@ gistoptions(PG_FUNCTION_ARGS)
 
 	/* if none set, we're done */
 	if (numoptions == 0)
-		PG_RETURN_NULL();
+		return NULL;
 
 	rdopts = allocateReloptStruct(sizeof(GiSTOptions), options, numoptions);
 
@@ -835,8 +833,7 @@ gistoptions(PG_FUNCTION_ARGS)
 
 	pfree(options);
 
-	PG_RETURN_BYTEA_P(rdopts);
-
+	return (bytea *) rdopts;
 }
 
 /*

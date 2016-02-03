@@ -37,8 +37,8 @@ for f in char varchar text; do
 
    dropdb testlocale >/dev/null 2>&1
    createdb testlocale || abort "createdb failed"
-   psql -d testlocale -c "CREATE TABLE wordlist (name_en char(20), name_de $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
-   psql testlocale < test-de.sql.in > test-de-$f.sql.out 2>/dev/null || abort "test query failed"
+   psql -X -d testlocale -c "CREATE TABLE wordlist (name_en char(20), name_de $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
+   psql -X testlocale < test-de.sql.in > test-de-$f.sql.out 2>/dev/null || abort "test query failed"
    diff expected/test-de-$f.sql.out test-de-$f.sql.out
 done
 
@@ -52,13 +52,13 @@ for f in char varchar text; do
 
    dropdb testlocale >/dev/null 2>&1
    createdb testlocale || abort "createdb failed"
-   psql -d testlocale -c "CREATE TABLE wordlist (name_en char(20), name_de $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
-   psql testlocale < test-de-upper.sql.in > test-de-upper-$f.sql.out 2>/dev/null || abort "test query failed"
+   psql -X -d testlocale -c "CREATE TABLE wordlist (name_en char(20), name_de $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
+   psql -X testlocale < test-de-upper.sql.in > test-de-upper-$f.sql.out 2>/dev/null || abort "test query failed"
    diff expected/test-de-upper-$f.sql.out test-de-upper-$f.sql.out
 done
 
 echo "Testing PgSQL: select on regexp..."
-psql testlocale < test-de-select.sql.in > test-de-select.sql.out 2>/dev/null || abort "select query failed"
+psql -X testlocale < test-de-select.sql.in > test-de-select.sql.out 2>/dev/null || abort "select query failed"
 diff expected/test-de-select.sql.out test-de-select.sql.out
 dropdb testlocale || abort "dropdb failed"
 echo "Finished."

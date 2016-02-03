@@ -3,7 +3,7 @@
  * encode.c
  *	  Various data encoding/decoding things.
  *
- * Copyright (c) 2001-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2016, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -304,7 +304,7 @@ b64_decode(const char *src, unsigned len, char *dst)
 			if (b < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid symbol '%c' while decoding base64 sequence", (int) c)));
+						 errmsg("invalid symbol \"%c\" while decoding base64 sequence", (int) c)));
 		}
 		/* add it to buffer */
 		buf = (buf << 6) + b;
@@ -325,7 +325,7 @@ b64_decode(const char *src, unsigned len, char *dst)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid base64 end sequence"),
-				 errhint("Input data is missing padding, truncated, or otherwise corrupted.")));
+				 errhint("Input data is missing padding, is truncated, or is otherwise corrupted.")));
 
 	return p - dst;
 }

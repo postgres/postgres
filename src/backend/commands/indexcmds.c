@@ -3,7 +3,7 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,12 +15,14 @@
 
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_tablespace.h"
@@ -125,6 +127,7 @@ CheckIndexCompatible(Oid oldId,
 	HeapTuple	tuple;
 	Form_pg_index indexForm;
 	Form_pg_am	accessMethodForm;
+	IndexAmRoutine *amRoutine;
 	bool		amcanorder;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
@@ -160,8 +163,10 @@ CheckIndexCompatible(Oid oldId,
 						accessMethodName)));
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
-	amcanorder = accessMethodForm->amcanorder;
+	amRoutine = GetIndexAmRoutine(accessMethodForm->amhandler);
 	ReleaseSysCache(tuple);
+
+	amcanorder = amRoutine->amcanorder;
 
 	/*
 	 * Compute the operator classes, collations, and exclusion operators for
@@ -315,8 +320,9 @@ DefineIndex(Oid relationId,
 	Relation	indexRelation;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
+	IndexAmRoutine *amRoutine;
 	bool		amcanorder;
-	RegProcedure amoptions;
+	amoptions_function amoptions;
 	Datum		reloptions;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
@@ -489,31 +495,33 @@ DefineIndex(Oid relationId,
 	}
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
+	amRoutine = GetIndexAmRoutine(accessMethodForm->amhandler);
 
 	if (strcmp(accessMethodName, "hash") == 0 &&
 		RelationNeedsWAL(rel))
 		ereport(WARNING,
 				(errmsg("hash indexes are not WAL-logged and their use is discouraged")));
 
-	if (stmt->unique && !accessMethodForm->amcanunique)
+	if (stmt->unique && !amRoutine->amcanunique)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			   errmsg("access method \"%s\" does not support unique indexes",
 					  accessMethodName)));
-	if (numberOfAttributes > 1 && !accessMethodForm->amcanmulticol)
+	if (numberOfAttributes > 1 && !amRoutine->amcanmulticol)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		  errmsg("access method \"%s\" does not support multicolumn indexes",
 				 accessMethodName)));
-	if (stmt->excludeOpNames && !OidIsValid(accessMethodForm->amgettuple))
+	if (stmt->excludeOpNames && amRoutine->amgettuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		errmsg("access method \"%s\" does not support exclusion constraints",
 			   accessMethodName)));
 
-	amcanorder = accessMethodForm->amcanorder;
-	amoptions = accessMethodForm->amoptions;
+	amcanorder = amRoutine->amcanorder;
+	amoptions = amRoutine->amoptions;
 
+	pfree(amRoutine);
 	ReleaseSysCache(tuple);
 
 	/*

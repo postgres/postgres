@@ -81,18 +81,20 @@ it won't be able to actually examine the page until it acquires shared
 or exclusive content lock.
 
 
-Rule #5 only affects VACUUM operations.  Obtaining the
-necessary lock is done by the bufmgr routine LockBufferForCleanup().
-It first gets an exclusive lock and then checks to see if the shared pin
-count is currently 1.  If not, it releases the exclusive lock (but not the
-caller's pin) and waits until signaled by another backend, whereupon it
-tries again.  The signal will occur when UnpinBuffer decrements the shared
-pin count to 1.  As indicated above, this operation might have to wait a
-good while before it acquires lock, but that shouldn't matter much for
-concurrent VACUUM.  The current implementation only supports a single
-waiter for pin-count-1 on any particular shared buffer.  This is enough
-for VACUUM's use, since we don't allow multiple VACUUMs concurrently on a
-single relation anyway.
+Obtaining the lock needed under rule #5 is done by the bufmgr routines
+LockBufferForCleanup() or ConditionalLockBufferForCleanup().  They first get
+an exclusive lock and then check to see if the shared pin count is currently
+1.  If not, ConditionalLockBufferForCleanup() releases the exclusive lock and
+then returns false, while LockBufferForCleanup() releases the exclusive lock
+(but not the caller's pin) and waits until signaled by another backend,
+whereupon it tries again.  The signal will occur when UnpinBuffer decrements
+the shared pin count to 1.  As indicated above, this operation might have to
+wait a good while before it acquires lock, but that shouldn't matter much for
+concurrent VACUUM.  The current implementation only supports a single waiter
+for pin-count-1 on any particular shared buffer.  This is enough for VACUUM's
+use, since we don't allow multiple VACUUMs concurrently on a single relation
+anyway.  Anyone wishing to obtain a cleanup lock outside of recovery or a
+VACUUM must use the conditional variant of the function.
 
 
 Buffer Manager's Internal Locking

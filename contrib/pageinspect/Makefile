@@ -5,9 +5,9 @@ OBJS		= rawpage.o heapfuncs.o btreefuncs.o fsmfuncs.o \
 		  brinfuncs.o ginfuncs.o $(WIN32RES)
 
 EXTENSION = pageinspect
-DATA = pageinspect--1.3.sql pageinspect--1.2--1.3.sql \
-	pageinspect--1.1--1.2.sql pageinspect--1.0--1.1.sql \
-	pageinspect--unpackaged--1.0.sql
+DATA = pageinspect--1.4.sql pageinspect--1.3--1.4.sql \
+	pageinspect--1.2--1.3.sql pageinspect--1.1--1.2.sql \
+	pageinspect--1.0--1.1.sql pageinspect--unpackaged--1.0.sql
 PGFILEDESC = "pageinspect - functions to inspect contents of database pages"
 
 ifdef USE_PGXS

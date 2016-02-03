@@ -3,7 +3,7 @@
  * pg_enum.c
  *	  routines to support manipulation of the pg_enum relation
  *
- * Copyright (c) 2006-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2016, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

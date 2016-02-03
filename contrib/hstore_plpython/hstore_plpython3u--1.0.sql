@@ -1,5 +1,5 @@
 -- make sure the prerequisite libraries are loaded
-DO '1' LANGUAGE plpython3u;
+LOAD 'plpython3';
 SELECT NULL::hstore;
 
 

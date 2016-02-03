@@ -3,7 +3,7 @@
  * varlena.c
  *	  Functions for the variable-length built-in types.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -3007,16 +3007,16 @@ SplitIdentifierString(char *rawstring, char separator,
 		char	   *curname;
 		char	   *endp;
 
-		if (*nextp == '\"')
+		if (*nextp == '"')
 		{
 			/* Quoted name --- collapse quote-quote pairs, no downcasing */
 			curname = nextp + 1;
 			for (;;)
 			{
-				endp = strchr(nextp + 1, '\"');
+				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
 					return false;		/* mismatched quotes */
-				if (endp[1] != '\"')
+				if (endp[1] != '"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
 				memmove(endp, endp + 1, strlen(endp));
@@ -3132,16 +3132,16 @@ SplitDirectoriesString(char *rawstring, char separator,
 		char	   *curname;
 		char	   *endp;
 
-		if (*nextp == '\"')
+		if (*nextp == '"')
 		{
 			/* Quoted name --- collapse quote-quote pairs */
 			curname = nextp + 1;
 			for (;;)
 			{
-				endp = strchr(nextp + 1, '\"');
+				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
 					return false;		/* mismatched quotes */
-				if (endp[1] != '\"')
+				if (endp[1] != '"')
 					break;		/* found end of quoted name */
 				/* Collapse adjacent quotes into one quote, and look again */
 				memmove(endp, endp + 1, strlen(endp));

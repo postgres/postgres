@@ -439,7 +439,7 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress modulescheck</userinput>
 <userinput>vcregress ecpgcheck</userinput>
 <userinput>vcregress isolationcheck</userinput>
-<userinput>vcregress tapcheck</userinput>
+<userinput>vcregress bincheck</userinput>
 <userinput>vcregress upgradecheck</userinput>
 </screen>
 
@@ -454,8 +454,8 @@ $ENV{CONFIG}="Debug";
   </para>
 
   <para>
-   Running the TAP regression tests, with "vcregress tapcheck", requires an
-   additional Perl module to be installed:
+   Running the regression tests on client programs, with "vcregress bincheck",
+   requires an additional Perl module to be installed:
    <variablelist>
     <varlistentry>
      <term><productname>IPC::Run</productname></term>

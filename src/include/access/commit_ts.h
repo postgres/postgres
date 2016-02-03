@@ -3,7 +3,7 @@
  *
  * PostgreSQL commit timestamp manager
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/commit_ts.h
@@ -34,7 +34,7 @@ extern Size CommitTsShmemBuffers(void);
 extern Size CommitTsShmemSize(void);
 extern void CommitTsShmemInit(void);
 extern void BootStrapCommitTs(void);
-extern void StartupCommitTs(bool force_enable);
+extern void StartupCommitTs(void);
 extern void CommitTsParameterChange(bool xlrecvalue, bool pgcontrolvalue);
 extern void CompleteCommitTsInitialization(void);
 extern void ShutdownCommitTs(void);
@@ -43,7 +43,7 @@ extern void ExtendCommitTs(TransactionId newestXact);
 extern void TruncateCommitTs(TransactionId oldestXact);
 extern void SetCommitTsLimit(TransactionId oldestXact,
 				 TransactionId newestXact);
-extern void AdvanceOldestCommitTs(TransactionId oldestXact);
+extern void AdvanceOldestCommitTsXid(TransactionId oldestXact);
 
 /* XLOG stuff */
 #define COMMIT_TS_ZEROPAGE		0x00

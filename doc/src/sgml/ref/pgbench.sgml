@@ -48,7 +48,7 @@
   Typical output from <application>pgbench</application> looks like:
 
 <screen>
-transaction type: TPC-B (sort of)
+transaction type: &lt;builtin: TPC-B (sort of)&gt;
 scaling factor: 10
 query mode: simple
 number of clients: 10
@@ -261,6 +261,20 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
     benchmarking arguments:
 
     <variablelist>
+     <varlistentry>
+      <term><option>-b</> <replaceable>scriptname</></term>
+      <term><option>--builtin</> <replaceable>scriptname</></term>
+      <listitem>
+       <para>
+        Add the specified builtin script to the list of executed scripts.
+        Available builtin scripts are: <literal>tpcb-like</>,
+        <literal>simple-update</> and <literal>select-only</>.
+        With special name <literal>list</>, show the list of builtin scripts
+        and exit immediately.
+       </para>
+      </listitem>
+     </varlistentry>
+
 
      <varlistentry>
       <term><option>-c</option> <replaceable>clients</></term>
@@ -307,14 +321,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-f</option> <replaceable>filename</></term>
-      <term><option>--file=</option><replaceable>filename</></term>
+      <term><option>-f</> <replaceable>filename</></term>
+      <term><option>--file=</><replaceable>filename</></term>
       <listitem>
        <para>
-        Read transaction script from <replaceable>filename</>.
+        Add a transaction script read from <replaceable>filename</> to
+        the list of executed scripts.
         See below for details.
-        <option>-N</option>, <option>-S</option>, and <option>-f</option>
-        are mutually exclusive.
        </para>
       </listitem>
      </varlistentry>
@@ -404,10 +417,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--skip-some-updates</option></term>
       <listitem>
        <para>
-        Do not update <structname>pgbench_tellers</> and
-        <structname>pgbench_branches</>.
-        This will avoid update contention on these tables, but
-        it makes the test case even less like TPC-B.
+        Run builtin simple-update script.
+        Shorthand for <option>-b simple-update</>.
        </para>
       </listitem>
      </varlistentry>
@@ -512,9 +523,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         Report the specified scale factor in <application>pgbench</>'s
         output.  With the built-in tests, this is not necessary; the
         correct scale factor will be detected by counting the number of
-        rows in the <structname>pgbench_branches</> table.  However, when testing
-        custom benchmarks (<option>-f</> option), the scale factor
-        will be reported as 1 unless this option is used.
+        rows in the <structname>pgbench_branches</> table.
+        However, when testing only custom benchmarks (<option>-f</> option),
+        the scale factor will be reported as 1 unless this option is used.
        </para>
       </listitem>
      </varlistentry>
@@ -524,7 +535,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--select-only</option></term>
       <listitem>
        <para>
-        Perform select-only transactions instead of TPC-B-like test.
+        Run built-in select-only script.
+        Shorthand for <option>-b select-only</>.
        </para>
       </listitem>
      </varlistentry>
@@ -674,7 +686,17 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <title>What is the <quote>Transaction</> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
-   The default transaction script issues seven commands per transaction:
+   Pgbench executes test scripts chosen randomly from a specified list.
+   They include built-in scripts with <option>-b</> and
+   user-provided custom scripts with <option>-f</>.
+ </para>
+
+  <para>
+   The default builtin transaction script (also invoked with <option>-b tpcb-like</>)
+   issues seven commands per transaction over randomly chosen <literal>aid</>,
+   <literal>tid</>, <literal>bid</> and <literal>balance</>.
+   The scenario is inspired by the TPC-B benchmark, but is not actually TPC-B,
+   hence the name.
   </para>
 
   <orderedlist>
@@ -688,9 +710,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </orderedlist>
 
   <para>
-   If you specify <option>-N</>, steps 4 and 5 aren't included in the
-   transaction.  If you specify <option>-S</>, only the <command>SELECT</> is
-   issued.
+   If you select the <literal>simple-update</> builtin (also <option>-N</>),
+   steps 4 and 5 aren't included in the transaction.
+   This will avoid update contention on these tables, but
+   it makes the test case even less like TPC-B.
+  </para>
+
+  <para>
+   If you select the <literal>select-only</> builtin (also <option>-S</>),
+   only the <command>SELECT</> is issued.
   </para>
  </refsect2>
 
@@ -702,10 +730,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    benchmark scenarios by replacing the default transaction script
    (described above) with a transaction script read from a file
    (<option>-f</option> option).  In this case a <quote>transaction</>
-   counts as one execution of a script file.  You can even specify
-   multiple scripts (multiple <option>-f</option> options), in which
-   case a random one of the scripts is chosen each time a client session
-   starts a new transaction.
+   counts as one execution of a script file.
   </para>
 
   <para>
@@ -788,7 +813,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | { gaussian | exponential } <replaceable>threshold</> ]</literal>
+     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | { gaussian | exponential } <replaceable>parameter</> ]</literal>
      </term>
 
     <listitem>
@@ -804,54 +829,63 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       By default, or when <literal>uniform</> is specified, all values in the
       range are drawn with equal probability.  Specifying <literal>gaussian</>
       or  <literal>exponential</> options modifies this behavior; each
-      requires a mandatory threshold which determines the precise shape of the
+      requires a mandatory parameter which determines the precise shape of the
       distribution.
      </para>
 
      <para>
       For a Gaussian distribution, the interval is mapped onto a standard
       normal distribution (the classical bell-shaped Gaussian curve) truncated
-      at <literal>-threshold</> on the left and <literal>+threshold</>
+      at <literal>-parameter</> on the left and <literal>+parameter</>
       on the right.
+      Values in the middle of the interval are more likely to be drawn.
       To be precise, if <literal>PHI(x)</> is the cumulative distribution
       function of the standard normal distribution, with mean <literal>mu</>
-      defined as <literal>(max + min) / 2.0</>, then value <replaceable>i</>
-      between <replaceable>min</> and <replaceable>max</> inclusive is drawn
-      with probability:
-      <literal>
-        (PHI(2.0 * threshold * (i - min - mu + 0.5) / (max - min + 1)) -
-         PHI(2.0 * threshold * (i - min - mu - 0.5) / (max - min + 1))) /
-         (2.0 * PHI(threshold) - 1.0)</>.
-      Intuitively, the larger the <replaceable>threshold</>, the more
+      defined as <literal>(max + min) / 2.0</>, with
+<literallayout>
+ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
+        (2.0 * PHI(parameter) - 1.0)
+</literallayout>
+      then value <replaceable>i</> between <replaceable>min</> and
+      <replaceable>max</> inclusive is drawn with probability:
+      <literal>f(i + 0.5) - f(i - 0.5)</>.
+      Intuitively, the larger <replaceable>parameter</>, the more
       frequently values close to the middle of the interval are drawn, and the
       less frequently values close to the <replaceable>min</> and
-      <replaceable>max</> bounds.
-      About 67% of values are drawn from the middle <literal>1.0 / threshold</>
-      and 95% in the middle <literal>2.0 / threshold</>; for instance, if
-      <replaceable>threshold</> is 4.0, 67% of values are drawn from the middle
-      quarter and 95% from the middle half of the interval.
-      The minimum <replaceable>threshold</> is 2.0 for performance of
-      the Box-Muller transform.
+      <replaceable>max</> bounds. About 67% of values are drawn from the
+      middle <literal>1.0 / parameter</>, that is a relative
+      <literal>0.5 / parameter</> around the mean, and 95% in the middle
+      <literal>2.0 / parameter</>, that is a relative
+      <literal>1.0 / parameter</> around the mean; for instance, if
+      <replaceable>parameter</> is 4.0, 67% of values are drawn from the
+      middle quarter (1.0 / 4.0) of the interval (i.e. from
+      <literal>3.0 / 8.0</> to <literal>5.0 / 8.0</>) and 95% from
+      the middle half (<literal>2.0 / 4.0</>) of the interval (second and
+      third quartiles). The minimum <replaceable>parameter</> is 2.0 for
+      performance of the Box-Muller transform.
      </para>
 
      <para>
-      For an exponential distribution, the <replaceable>threshold</>
-      parameter controls the distribution by truncating a quickly-decreasing
-      exponential distribution at <replaceable>threshold</>, and then
+      For an exponential distribution, <replaceable>parameter</>
+      controls the distribution by truncating a quickly-decreasing
+      exponential distribution at <replaceable>parameter</>, and then
       projecting onto integers between the bounds.
-      To be precise, value <replaceable>i</> between <replaceable>min</> and
+      To be precise, with
+<literallayout>
+f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1.0 - exp(-parameter))
+</literallayout>
+      Then value <replaceable>i</> between <replaceable>min</> and
       <replaceable>max</> inclusive is drawn with probability:
-      <literal>(exp(-threshold*(i-min)/(max+1-min)) -
-       exp(-threshold*(i+1-min)/(max+1-min))) / (1.0 - exp(-threshold))</>.
-      Intuitively, the larger the <replaceable>threshold</>, the more
+      <literal>f(x) - f(x + 1)</>.
+      Intuitively, the larger <replaceable>parameter</>, the more
       frequently values close to <replaceable>min</> are accessed, and the
       less frequently values close to <replaceable>max</> are accessed.
-      The closer to 0 the threshold, the flatter (more uniform) the access
-      distribution.
+      The closer to 0 <replaceable>parameter</>, the flatter (more uniform)
+      the access distribution.
       A crude approximation of the distribution is that the most frequent 1%
       values in the range, close to <replaceable>min</>, are drawn
-      <replaceable>threshold</>%  of the time.
-      The <replaceable>threshold</> value must be strictly positive.
+      <replaceable>parameter</>% of the time.
+      <replaceable>parameter</> value must be strictly positive.
      </para>
 
      <para>
@@ -1094,7 +1128,7 @@ END;
    For the default script, the output will look similar to this:
 <screen>
 starting vacuum...end.
-transaction type: TPC-B (sort of)
+transaction type: &lt;builtin: TPC-B (sort of)&gt;
 scaling factor: 1
 query mode: simple
 number of clients: 10
@@ -1103,7 +1137,11 @@ number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
 tps = 618.764555 (including connections establishing)
 tps = 622.977698 (excluding connections establishing)
-statement latencies in milliseconds:
+SQL script 1: &lt;builtin: TPC-B (sort of)&gt;
+ - 10000 transactions (100.0% of total, tps = 618.764555)
+ - latency average = 15.844 ms
+ - latency stddev = 2.715 ms
+ - statement latencies in milliseconds:
         0.004386        \set nbranches 1 * :scale
         0.001343        \set ntellers 10 * :scale
         0.001212        \set naccounts 100000 * :scale

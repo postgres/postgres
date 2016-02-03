@@ -9,7 +9,7 @@
  * context's MemoryContextMethods struct.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -331,21 +331,16 @@ MemoryContextSetParent(MemoryContext context, MemoryContext new_parent)
 	{
 		MemoryContext parent = context->parent;
 
-		if (context == parent->firstchild)
-			parent->firstchild = context->nextchild;
+		if (context->prevchild != NULL)
+			context->prevchild->nextchild = context->nextchild;
 		else
 		{
-			MemoryContext child;
-
-			for (child = parent->firstchild; child; child = child->nextchild)
-			{
-				if (context == child->nextchild)
-				{
-					child->nextchild = context->nextchild;
-					break;
-				}
-			}
+			Assert(parent->firstchild == context);
+			parent->firstchild = context->nextchild;
 		}
+
+		if (context->nextchild != NULL)
+			context->nextchild->prevchild = context->prevchild;
 	}
 
 	/* And relink */
@@ -353,12 +348,16 @@ MemoryContextSetParent(MemoryContext context, MemoryContext new_parent)
 	{
 		AssertArg(MemoryContextIsValid(new_parent));
 		context->parent = new_parent;
+		context->prevchild = NULL;
 		context->nextchild = new_parent->firstchild;
+		if (new_parent->firstchild != NULL)
+			new_parent->firstchild->prevchild = context;
 		new_parent->firstchild = context;
 	}
 	else
 	{
 		context->parent = NULL;
+		context->prevchild = NULL;
 		context->nextchild = NULL;
 	}
 }
@@ -714,6 +713,7 @@ MemoryContextCreate(NodeTag tag, Size size,
 	node->methods = methods;
 	node->parent = NULL;		/* for the moment */
 	node->firstchild = NULL;
+	node->prevchild = NULL;
 	node->nextchild = NULL;
 	node->isReset = true;
 	node->name = ((char *) node) + size;
@@ -728,6 +728,8 @@ MemoryContextCreate(NodeTag tag, Size size,
 	{
 		node->parent = parent;
 		node->nextchild = parent->firstchild;
+		if (parent->firstchild != NULL)
+			parent->firstchild->prevchild = node;
 		parent->firstchild = node;
 		/* inherit allowInCritSection flag from parent */
 		node->allowInCritSection = parent->allowInCritSection;

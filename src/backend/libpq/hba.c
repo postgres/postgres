@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and choosing authentication method based on it).
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1274,6 +1274,19 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		return NULL;
 	}
 
+	/*
+	 * For GSS and SSPI, set the default value of include_realm to true.
+	 * Having include_realm set to false is dangerous in multi-realm
+	 * situations and is generally considered bad practice.  We keep the
+	 * capability around for backwards compatibility, but we might want to
+	 * remove it at some point in the future.  Users who still need to strip
+	 * the realm off would be better served by using an appropriate regex in a
+	 * pg_ident.conf mapping.
+	 */
+	if (parsedline->auth_method == uaGSS ||
+		parsedline->auth_method == uaSSPI)
+		parsedline->include_realm = true;
+
 	/* Parse remaining arguments */
 	while ((field = lnext(field)) != NULL)
 	{
@@ -1375,19 +1388,6 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 #ifdef USE_LDAP
 	hbaline->ldapscope = LDAP_SCOPE_SUBTREE;
 #endif
-
-	/*
-	 * For GSS and SSPI, set the default value of include_realm to true.
-	 * Having include_realm set to false is dangerous in multi-realm
-	 * situations and is generally considered bad practice.  We keep the
-	 * capability around for backwards compatibility, but we might want to
-	 * remove it at some point in the future.  Users who still need to strip
-	 * the realm off would be better served by using an appropriate regex in a
-	 * pg_ident.conf mapping.
-	 */
-	if (hbaline->auth_method == uaGSS ||
-		hbaline->auth_method == uaSSPI)
-		hbaline->include_realm = true;
 
 	if (strcmp(name, "map") == 0)
 	{

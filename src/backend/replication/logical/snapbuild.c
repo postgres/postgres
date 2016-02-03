@@ -96,7 +96,7 @@
  * is a convenient point to initialize replication from, which is why we
  * export a snapshot at that point, which *can* be used to read normal data.
  *
- * Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/snapbuild.c
@@ -612,7 +612,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 void
 SnapBuildClearExportedSnapshot(void)
 {
-	/* nothing exported, thats the usual case */
+	/* nothing exported, that is the usual case */
 	if (!ExportInProgress)
 		return;
 

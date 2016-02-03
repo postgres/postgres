@@ -3,7 +3,7 @@
  * parallel.c
  *	  Infrastructure for launching parallel workers
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -76,10 +76,6 @@ typedef struct FixedParallelState
 
 	/* Mutex protects remaining fields. */
 	slock_t		mutex;
-
-	/* Track whether workers have attached. */
-	int			workers_expected;
-	int			workers_attached;
 
 	/* Maximum XactLastRecEnd of any worker. */
 	XLogRecPtr	last_xlog_end;
@@ -295,8 +291,6 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	fps->parallel_master_backend_id = MyBackendId;
 	fps->entrypoint = pcxt->entrypoint;
 	SpinLockInit(&fps->mutex);
-	fps->workers_expected = pcxt->nworkers;
-	fps->workers_attached = 0;
 	fps->last_xlog_end = 0;
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_FIXED, fps);
 
@@ -403,7 +397,6 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 
 	/* Reset a few bits of fixed parallel state to a clean state. */
 	fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED);
-	fps->workers_attached = 0;
 	fps->last_xlog_end = 0;
 
 	/* Recreate error queues. */
@@ -455,6 +448,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	worker.bgw_main = ParallelWorkerMain;
 	worker.bgw_main_arg = UInt32GetDatum(dsm_segment_handle(pcxt->seg));
 	worker.bgw_notify_pid = MyProcPid;
+	memset(&worker.bgw_extra, 0, BGW_EXTRALEN);
 
 	/*
 	 * Start workers.
@@ -466,6 +460,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	 */
 	for (i = 0; i < pcxt->nworkers; ++i)
 	{
+		memcpy(worker.bgw_extra, &i, sizeof(int));
 		if (!any_registrations_failed &&
 			RegisterDynamicBackgroundWorker(&worker,
 											&pcxt->worker[i].bgwhandle))
@@ -891,6 +886,10 @@ ParallelWorkerMain(Datum main_arg)
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
+	/* Determine and set our parallel worker number. */
+	Assert(ParallelWorkerNumber == -1);
+	memcpy(&ParallelWorkerNumber, MyBgworkerEntry->bgw_extra, sizeof(int));
+
 	/* Set up a memory context and resource owner. */
 	Assert(CurrentResourceOwner == NULL);
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "parallel toplevel");
@@ -908,25 +907,16 @@ ParallelWorkerMain(Datum main_arg)
 	if (seg == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("unable to map dynamic shared memory segment")));
+				 errmsg("could not map dynamic shared memory segment")));
 	toc = shm_toc_attach(PARALLEL_MAGIC, dsm_segment_address(seg));
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			   errmsg("bad magic number in dynamic shared memory segment")));
+			   errmsg("invalid magic number in dynamic shared memory segment")));
 
-	/* Determine and set our worker number. */
+	/* Look up fixed parallel state. */
 	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED);
 	Assert(fps != NULL);
-	Assert(ParallelWorkerNumber == -1);
-	SpinLockAcquire(&fps->mutex);
-	if (fps->workers_attached < fps->workers_expected)
-		ParallelWorkerNumber = fps->workers_attached++;
-	SpinLockRelease(&fps->mutex);
-	if (ParallelWorkerNumber < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("too many parallel workers already attached")));
 	MyFixedParallelState = fps;
 
 	/*
@@ -1073,7 +1063,7 @@ ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc)
 static void
 ParallelErrorContext(void *arg)
 {
-	errcontext("parallel worker, pid %d", *(int32 *) arg);
+	errcontext("parallel worker, PID %d", *(int32 *) arg);
 }
 
 /*

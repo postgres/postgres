@@ -31,7 +31,7 @@
  * different) code.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -74,6 +74,7 @@ typedef enum
 #define BGW_DEFAULT_RESTART_INTERVAL	60
 #define BGW_NEVER_RESTART				-1
 #define BGW_MAXLEN						64
+#define BGW_EXTRALEN					128
 
 typedef struct BackgroundWorker
 {
@@ -85,6 +86,7 @@ typedef struct BackgroundWorker
 	char		bgw_library_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	char		bgw_function_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	Datum		bgw_main_arg;
+	char		bgw_extra[BGW_EXTRALEN];
 	pid_t		bgw_notify_pid; /* SIGUSR1 this backend on start/stop */
 } BackgroundWorker;
 

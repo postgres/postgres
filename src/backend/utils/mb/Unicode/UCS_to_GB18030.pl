@@ -1,11 +1,12 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2007-2015, PostgreSQL Global Development Group
+# Copyright (c) 2007-2016, PostgreSQL Global Development Group
 #
 # src/backend/utils/mb/Unicode/UCS_to_GB18030.pl
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
-# "gb-18030-2000.xml"
+# "gb-18030-2000.xml", obtained from
+# http://source.icu-project.org/repos/icu/data/trunk/charset/data/xml/
 #
 # The lines we care about in the source file look like
 #    <a u="009A" b="81 30 83 36"/>
@@ -56,6 +57,8 @@ close(FILE);
 
 $file = "utf8_to_gb18030.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_utf_to_local ULmapGB18030[ $count ] = {\n";
 
 $cc = $count;
@@ -83,6 +86,8 @@ close(FILE);
 
 $file = "gb18030_to_utf8.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_local_to_utf LUmapGB18030[ $count ] = {\n";
 
 $cc = $count;

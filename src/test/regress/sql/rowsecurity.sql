@@ -629,8 +629,9 @@ INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel')
 --
 SET SESSION AUTHORIZATION rls_regress_user0;
 CREATE TABLE z1 (a int, b text);
+CREATE TABLE z2 (a int, b text);
 
-GRANT SELECT ON z1 TO rls_regress_group1, rls_regress_group2,
+GRANT SELECT ON z1,z2 TO rls_regress_group1, rls_regress_group2,
     rls_regress_user1, rls_regress_user2;
 
 INSERT INTO z1 VALUES
@@ -648,17 +649,38 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
+PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+
+PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+
+PREPARE plancache_test3 AS WITH q AS (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
+
 SET ROLE rls_regress_group1;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
+
 SET ROLE rls_regress_group2;
 SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
+
+EXPLAIN (COSTS OFF) EXECUTE plancache_test;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
+EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 --
 -- Views should follow policy for view owner.
@@ -992,7 +1014,7 @@ COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ',';
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - would be affected by RLS
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 
@@ -1006,7 +1028,7 @@ COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --ok
 -- Check COPY TO as user without permissions. SET row_security TO OFF;
 SET SESSION AUTHORIZATION rls_regress_user2;
 SET row_security TO OFF;
-COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
+COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - would be affected by RLS
 SET row_security TO ON;
 COPY (SELECT * FROM copy_t ORDER BY a ASC) TO STDOUT WITH DELIMITER ','; --fail - permission denied
 
@@ -1032,7 +1054,7 @@ COPY copy_rel_to TO STDOUT WITH DELIMITER ',';
 -- Check COPY TO as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
-COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - insufficient to bypass rls
+COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --fail - would be affected by RLS
 SET row_security TO ON;
 COPY copy_rel_to TO STDOUT WITH DELIMITER ','; --ok
 
@@ -1070,7 +1092,7 @@ COPY copy_t FROM STDIN; --ok
 -- Check COPY FROM as user with permissions.
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO OFF;
-COPY copy_t FROM STDIN; --fail - insufficient privilege to bypass rls.
+COPY copy_t FROM STDIN; --fail - would be affected by RLS.
 SET row_security TO ON;
 COPY copy_t FROM STDIN; --fail - COPY FROM not supported by RLS.
 
@@ -1293,8 +1315,7 @@ DROP TABLE r1;
 DROP TABLE r2;
 
 --
--- FORCE ROW LEVEL SECURITY applies RLS to owners but
--- only when row_security = on
+-- FORCE ROW LEVEL SECURITY applies RLS to owners too
 --
 SET SESSION AUTHORIZATION rls_regress_user0;
 SET row_security = on;
@@ -1320,16 +1341,10 @@ DELETE FROM r1;
 TABLE r1;
 
 SET row_security = off;
--- Shows all rows
+-- these all fail, would be affected by RLS
 TABLE r1;
-
--- Update all rows
 UPDATE r1 SET a = 1;
-TABLE r1;
-
--- Delete all rows
 DELETE FROM r1;
-TABLE r1;
 
 DROP TABLE r1;
 
@@ -1447,7 +1462,7 @@ INSERT INTO r1 VALUES (10), (20);
 TABLE r1;
 
 SET row_security = off;
--- Rows shown now
+-- fail, would be affected by RLS
 TABLE r1;
 
 SET row_security = on;
@@ -1475,7 +1490,7 @@ ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
 UPDATE r1 SET a = 30;
 
 -- Show updated rows
-SET row_security = off;
+ALTER TABLE r1 NO FORCE ROW LEVEL SECURITY;
 TABLE r1;
 -- reset value in r1 for test with RETURNING
 UPDATE r1 SET a = 10;
@@ -1483,12 +1498,61 @@ UPDATE r1 SET a = 10;
 -- Verify row reset
 TABLE r1;
 
-SET row_security = on;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
 
 -- Error
 UPDATE r1 SET a = 30 RETURNING *;
 
 DROP TABLE r1;
+
+-- Check dependency handling
+RESET SESSION AUTHORIZATION;
+CREATE TABLE dep1 (c1 int);
+CREATE TABLE dep2 (c1 int);
+
+CREATE POLICY dep_p1 ON dep1 TO rls_regress_user1 USING (c1 > (select max(dep2.c1) from dep2));
+ALTER POLICY dep_p1 ON dep1 TO rls_regress_user1,rls_regress_user2;
+
+-- Should return one
+SELECT count(*) = 1 FROM pg_depend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_class WHERE relname = 'dep2');
+
+ALTER POLICY dep_p1 ON dep1 USING (true);
+
+-- Should return one
+SELECT count(*) = 1 FROM pg_shdepend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_authid WHERE rolname = 'rls_regress_user1');
+
+-- Should return one
+SELECT count(*) = 1 FROM pg_shdepend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_authid WHERE rolname = 'rls_regress_user2');
+
+-- Should return zero
+SELECT count(*) = 0 FROM pg_depend
+				   WHERE objid = (SELECT oid FROM pg_policy WHERE polname = 'dep_p1')
+					 AND refobjid = (SELECT oid FROM pg_class WHERE relname = 'dep2');
+
+-- DROP OWNED BY testing
+RESET SESSION AUTHORIZATION;
+
+CREATE ROLE dob_role1;
+CREATE ROLE dob_role2;
+
+CREATE TABLE dob_t1 (c1 int);
+
+CREATE POLICY p1 ON dob_t1 TO dob_role1 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should fail, already gone
+
+CREATE POLICY p1 ON dob_t1 TO dob_role1,dob_role2 USING (true);
+DROP OWNED BY dob_role1;
+DROP POLICY p1 ON dob_t1; -- should succeed
+
+DROP USER dob_role1;
+DROP USER dob_role2;
 
 --
 -- Clean up objects

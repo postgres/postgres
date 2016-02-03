@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/command.h
  */
@@ -27,7 +27,7 @@ typedef enum _backslashResult
 extern backslashResult HandleSlashCmds(PsqlScanState scan_state,
 				PQExpBuffer query_buf);
 
-extern int	process_file(char *filename, bool single_txn, bool use_relative_path);
+extern int	process_file(char *filename, bool use_relative_path);
 
 extern bool do_pset(const char *param,
 		const char *value,

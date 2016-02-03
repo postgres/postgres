@@ -4,7 +4,7 @@
  *	  OpenSSL support
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1532,10 +1532,10 @@ PQsslStruct(PGconn *conn, const char *struct_name)
 	return NULL;
 }
 
-const char **
-PQsslAttributes(PGconn *conn)
+const char *const *
+PQsslAttributeNames(PGconn *conn)
 {
-	static const char *result[] = {
+	static const char *const result[] = {
 		"library",
 		"key_bits",
 		"cipher",

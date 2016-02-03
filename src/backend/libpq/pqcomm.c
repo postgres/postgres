@@ -27,7 +27,7 @@
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
  * All that remains is similarities of names to trap the unwary...
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/libpq/pqcomm.c
@@ -1168,7 +1168,7 @@ pq_startmsgread(void)
 	if (PqCommReadingMsg)
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-		   errmsg("terminating connection because protocol sync was lost")));
+		   errmsg("terminating connection because protocol synchronization was lost")));
 
 	PqCommReadingMsg = true;
 }

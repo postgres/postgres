@@ -58,6 +58,26 @@
   store more index entries), but at the same time the summary data stored can
   be more precise and more data blocks can be skipped during an index scan.
  </para>
+
+ <sect2 id="brin-operation">
+  <title>Index Maintenance</title>
+
+  <para>
+   At the time of creation, all existing index pages are scanned and a
+   summary index tuple is created for each range, including the
+   possibly-incomplete range at the end.
+   As new pages are filled with data, page ranges that are already
+   summarized will cause the summary information to be updated with data
+   from the new tuples.
+   When a new page is created that does not fall within the last
+   summarized range, that range does not automatically acquire a summary
+   tuple; those tuples remain unsummarized until a summarization run is
+   invoked later, creating initial summaries.
+   This process can be invoked manually using the
+   <function>brin_summarize_new_pages(regclass)</function> function,
+   or automatically when <command>VACUUM</command> processes the table.
+  </para>
+ </sect2>
 </sect1>
 
 <sect1 id="brin-builtin-opclasses">

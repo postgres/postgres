@@ -16,13 +16,14 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ALTER POLICY</refname>
-  <refpurpose>change the definition of a policy</refpurpose>
+  <refpurpose>change the definition of a row level security policy</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>
+ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+
 ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
-    [ RENAME TO <replaceable class="PARAMETER">new_name</replaceable> ]
     [ TO { <replaceable class="parameter">role_name</replaceable> | PUBLIC | CURRENT_USER | SESSION_USER } [, ...] ]
     [ USING ( <replaceable class="parameter">using_expression</replaceable> ) ]
     [ WITH CHECK ( <replaceable class="parameter">check_expression</replaceable> ) ]
@@ -33,13 +34,21 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
   <title>Description</title>
 
   <para>
-   <command>ALTER POLICY</command> changes the <replaceable class="parameter">
-   definition</replaceable> of an existing policy.
+   <command>ALTER POLICY</command> changes the definition of an existing
+   row-level security policy.
   </para>
 
   <para>
    To use <command>ALTER POLICY</command>, you must own the table that
    the policy applies to.
+  </para>
+
+  <para>
+   In the second form of <command>ALTER POLICY</command>, the role list,
+   <replaceable class="parameter">using_expression</replaceable>, and
+   <replaceable class="parameter">check_expression</replaceable> are replaced
+   independently if specified.  When one of those clauses is omitted, the
+   corresponding part of the policy is unchanged.
   </para>
  </refsect1>
 
@@ -79,9 +88,9 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <term><replaceable class="parameter">role_name</replaceable></term>
     <listitem>
      <para>
-      The role to which the policy applies.  Multiple roles can be specified at one time.
-      To apply the policy to all roles, use <literal>PUBLIC</literal>, which is also
-      the default.
+      The role(s) to which the policy applies.  Multiple roles can be
+      specified at one time.  To apply the policy to all roles,
+      use <literal>PUBLIC</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -90,11 +99,8 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <term><replaceable class="parameter">using_expression</replaceable></term>
     <listitem>
      <para>
-      The USING expression for the policy.  This expression will be added as a
-      security-barrier qualification to queries which use the table
-      automatically.  If multiple policies are being applied for a given
-      table then they are all combined and added using OR.  The USING
-      expression applies to records which are being retrieved from the table.
+      The <literal>USING</literal> expression for the policy.
+      See <xref linkend="sql-createpolicy"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -103,11 +109,8 @@ ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable c
     <term><replaceable class="parameter">check_expression</replaceable></term>
     <listitem>
      <para>
-      The with-check expression for the policy.  This expression will be
-      added as a WITH CHECK OPTION qualification to queries which use the
-      table automatically.  If multiple policies are being applied for a
-      given table then they are all combined and added using OR.  The WITH
-      CHECK expression applies to records which are being added to the table.
+      The <literal>WITH CHECK</literal> expression for the policy.
+      See <xref linkend="sql-createpolicy"> for details.
      </para>
     </listitem>
    </varlistentry>

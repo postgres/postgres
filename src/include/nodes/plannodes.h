@@ -4,7 +4,7 @@
  *	  definitions for query plan nodes
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/plannodes.h
@@ -73,6 +73,7 @@ typedef struct PlannedStmt
 	bool		hasRowSecurity; /* row security applied? */
 
 	bool		parallelModeNeeded; /* parallel mode required to execute? */
+	bool		hasForeignJoin;	/* Plan has a pushed down foreign join */
 } PlannedStmt;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -107,6 +108,11 @@ typedef struct Plan
 	 */
 	double		plan_rows;		/* number of rows plan is expected to emit */
 	int			plan_width;		/* average row width in bytes */
+
+	/*
+	 * information needed for parallel query
+	 */
+	bool		parallel_aware; /* engage parallel-aware logic? */
 
 	/*
 	 * Common structural data for all Plan types.
@@ -552,12 +558,11 @@ struct CustomScan;
 typedef struct CustomScanMethods
 {
 	const char *CustomName;
+	const char *LibraryName;
+	const char *SymbolName;
 
 	/* Create execution state (CustomScanState) from a CustomScan plan node */
 	Node	   *(*CreateCustomScanState) (struct CustomScan *cscan);
-	/* Optional: print custom_xxx fields in some special way */
-	void		(*TextOutCustomScan) (StringInfo str,
-											  const struct CustomScan *node);
 } CustomScanMethods;
 
 typedef struct CustomScan
@@ -722,6 +727,8 @@ typedef struct Agg
 	AggStrategy aggstrategy;
 	int			numCols;		/* number of grouping columns */
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
+	bool		combineStates;	/* input tuples contain transition states */
+	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
 	List	   *groupingSets;	/* grouping sets to use */

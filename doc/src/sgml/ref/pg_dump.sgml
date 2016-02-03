@@ -272,12 +272,12 @@ PostgreSQL documentation
          <listitem>
           <para>
            Output a <command>tar</command>-format archive suitable for input
-           into <application>pg_restore</application>. The tar-format is
-           compatible with the directory-format; extracting a tar-format
+           into <application>pg_restore</application>. The tar format is
+           compatible with the directory format: extracting a tar-format
            archive produces a valid directory-format archive.
-           However, the tar-format does not support compression and has a
-           limit of 8 GB on the size of individual tables. Also, the relative
-           order of table data items cannot be changed during restore.
+           However, the tar format does not support compression. Also, when
+           using tar format the relative order of table data items cannot be
+           changed during restore.
           </para>
          </listitem>
         </varlistentry>
@@ -1138,15 +1138,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    and then commands to re-enable them after the data has been
    inserted.  If the restore is stopped in the middle, the system
    catalogs might be left in the wrong state.
-  </para>
-
-  <para>
-   Members of tar archives are limited to a size less than 8 GB.
-   (This is an inherent limitation of the tar file format.)  Therefore
-   this format cannot be used if the textual representation of any one table
-   exceeds that size.  The total size of a tar archive and any of the
-   other output formats is not limited, except possibly by the
-   operating system.
   </para>
 
   <para>

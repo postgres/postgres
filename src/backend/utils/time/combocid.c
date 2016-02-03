@@ -30,7 +30,7 @@
  * destroyed at the end of each transaction.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -217,6 +217,13 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	{
 		HASHCTL		hash_ctl;
 
+		/* Make array first; existence of hash table asserts array exists */
+		comboCids = (ComboCidKeyData *)
+			MemoryContextAlloc(TopTransactionContext,
+							   sizeof(ComboCidKeyData) * CCID_ARRAY_SIZE);
+		sizeComboCids = CCID_ARRAY_SIZE;
+		usedComboCids = 0;
+
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(ComboCidKeyData);
 		hash_ctl.entrysize = sizeof(ComboCidEntryData);
@@ -226,12 +233,20 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 								CCID_HASH_SIZE,
 								&hash_ctl,
 								HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	}
+
+	/*
+	 * Grow the array if there's not at least one free slot.  We must do this
+	 * before possibly entering a new hashtable entry, else failure to
+	 * repalloc would leave a corrupt hashtable entry behind.
+	 */
+	if (usedComboCids >= sizeComboCids)
+	{
+		int			newsize = sizeComboCids * 2;
 
 		comboCids = (ComboCidKeyData *)
-			MemoryContextAlloc(TopTransactionContext,
-							   sizeof(ComboCidKeyData) * CCID_ARRAY_SIZE);
-		sizeComboCids = CCID_ARRAY_SIZE;
-		usedComboCids = 0;
+			repalloc(comboCids, sizeof(ComboCidKeyData) * newsize);
+		sizeComboCids = newsize;
 	}
 
 	/* Lookup or create a hash entry with the desired cmin/cmax */
@@ -250,20 +265,7 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 		return entry->combocid;
 	}
 
-	/*
-	 * We have to create a new combo cid. Check that there's room for it in
-	 * the array, and grow it if there isn't.
-	 */
-	if (usedComboCids >= sizeComboCids)
-	{
-		/* We need to grow the array */
-		int			newsize = sizeComboCids * 2;
-
-		comboCids = (ComboCidKeyData *)
-			repalloc(comboCids, sizeof(ComboCidKeyData) * newsize);
-		sizeComboCids = newsize;
-	}
-
+	/* We have to create a new combo cid; we already made room in the array */
 	combocid = usedComboCids;
 
 	comboCids[combocid].cmin = cmin;
@@ -327,8 +329,9 @@ SerializeComboCIDState(Size maxsize, char *start_address)
 		elog(ERROR, "not enough space to serialize ComboCID state");
 
 	/* Now, copy the actual cmin/cmax pairs. */
-	memcpy(start_address + sizeof(int), comboCids,
-		   (sizeof(ComboCidKeyData) * usedComboCids));
+	if (usedComboCids > 0)
+		memcpy(start_address + sizeof(int), comboCids,
+			   (sizeof(ComboCidKeyData) * usedComboCids));
 }
 
 /*

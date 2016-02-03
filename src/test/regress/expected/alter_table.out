@@ -380,7 +380,16 @@ DROP TABLE tmp2;
 -- NOT VALID with plan invalidation -- ensure we don't use a constraint for
 -- exclusion until validated
 set constraint_exclusion TO 'partition';
-create table nv_parent (d date);
+create table nv_parent (d date, check (false) no inherit not valid);
+-- not valid constraint added at creation time should automatically become valid
+\d nv_parent
+ Table "public.nv_parent"
+ Column | Type | Modifiers 
+--------+------+-----------
+ d      | date | 
+Check constraints:
+    "nv_parent_check" CHECK (false) NO INHERIT
+
 create table nv_child_2010 () inherits (nv_parent);
 create table nv_child_2011 () inherits (nv_parent);
 alter table nv_child_2010 add check (d between '2010-01-01'::date and '2010-12-31'::date) not valid;
@@ -551,7 +560,7 @@ create table atacc1 ( test int );
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test1>3);
 ERROR:  column "test1" does not exist
-HINT:  Perhaps you meant to reference the column "atacc1"."test".
+HINT:  Perhaps you meant to reference the column "atacc1.test".
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int, test3 int);
@@ -1261,6 +1270,27 @@ select * from child;
 
 drop table child;
 drop table parent;
+-- check error cases for inheritance column merging
+create table parent (a float8, b numeric(10,4), c text collate "C");
+create table child (a float4) inherits (parent); -- fail
+NOTICE:  merging column "a" with inherited definition
+ERROR:  column "a" has a type conflict
+DETAIL:  double precision versus real
+create table child (b decimal(10,7)) inherits (parent); -- fail
+NOTICE:  moving and merging column "b" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  column "b" has a type conflict
+DETAIL:  numeric(10,4) versus numeric(10,7)
+create table child (c text collate "POSIX") inherits (parent); -- fail
+NOTICE:  moving and merging column "c" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  column "c" has a collation conflict
+DETAIL:  "C" versus "POSIX"
+create table child (a double precision, b decimal(10,4)) inherits (parent);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "b" with inherited definition
+drop table child;
+drop table parent;
 -- test copy in/out
 create table test (a int4, b int4, c int4);
 insert into test values (1,2,3);
@@ -1358,7 +1388,7 @@ select f1 from c1;
 ERROR:  column "f1" does not exist
 LINE 1: select f1 from c1;
                ^
-HINT:  Perhaps you meant to reference the column "c1"."f2".
+HINT:  Perhaps you meant to reference the column "c1.f2".
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
@@ -1372,7 +1402,7 @@ select f1 from c1;
 ERROR:  column "f1" does not exist
 LINE 1: select f1 from c1;
                ^
-HINT:  Perhaps you meant to reference the column "c1"."f2".
+HINT:  Perhaps you meant to reference the column "c1.f2".
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
@@ -1810,16 +1840,125 @@ where oid = 'test_storage'::regclass;
  t
 (1 row)
 
--- ALTER TYPE with a check constraint and a child table (bug before Nov 2012)
-CREATE TABLE test_inh_check (a float check (a > 10.2));
+-- ALTER COLUMN TYPE with a check constraint and a child table (bug #13779)
+CREATE TABLE test_inh_check (a float check (a > 10.2), b float);
 CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
+\d test_inh_check
+     Table "public.test_inh_check"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ a      | double precision | 
+ b      | double precision | 
+Check constraints:
+    "test_inh_check_a_check" CHECK (a > 10.2::double precision)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d test_inh_check_child
+  Table "public.test_inh_check_child"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ a      | double precision | 
+ b      | double precision | 
+Check constraints:
+    "test_inh_check_a_check" CHECK (a > 10.2::double precision)
+Inherits: test_inh_check
+
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+       relname        |        conname         | coninhcount | conislocal | connoinherit 
+----------------------+------------------------+-------------+------------+--------------
+ test_inh_check       | test_inh_check_a_check |           0 | t          | f
+ test_inh_check_child | test_inh_check_a_check |           1 | f          | f
+(2 rows)
+
 ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
+\d test_inh_check
+     Table "public.test_inh_check"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ a      | numeric          | 
+ b      | double precision | 
+Check constraints:
+    "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d test_inh_check_child
+  Table "public.test_inh_check_child"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ a      | numeric          | 
+ b      | double precision | 
+Check constraints:
+    "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
+Inherits: test_inh_check
+
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+       relname        |        conname         | coninhcount | conislocal | connoinherit 
+----------------------+------------------------+-------------+------------+--------------
+ test_inh_check       | test_inh_check_a_check |           0 | t          | f
+ test_inh_check_child | test_inh_check_a_check |           1 | f          | f
+(2 rows)
+
+-- also try noinherit, local, and local+inherited cases
+ALTER TABLE test_inh_check ADD CONSTRAINT bnoinherit CHECK (b > 100) NO INHERIT;
+ALTER TABLE test_inh_check_child ADD CONSTRAINT blocal CHECK (b < 1000);
+ALTER TABLE test_inh_check_child ADD CONSTRAINT bmerged CHECK (b > 1);
+ALTER TABLE test_inh_check ADD CONSTRAINT bmerged CHECK (b > 1);
+NOTICE:  merging constraint "bmerged" with inherited definition
+\d test_inh_check
+     Table "public.test_inh_check"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ a      | numeric          | 
+ b      | double precision | 
+Check constraints:
+    "bmerged" CHECK (b > 1::double precision)
+    "bnoinherit" CHECK (b > 100::double precision) NO INHERIT
+    "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d test_inh_check_child
+  Table "public.test_inh_check_child"
+ Column |       Type       | Modifiers 
+--------+------------------+-----------
+ a      | numeric          | 
+ b      | double precision | 
+Check constraints:
+    "blocal" CHECK (b < 1000::double precision)
+    "bmerged" CHECK (b > 1::double precision)
+    "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
+Inherits: test_inh_check
+
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+       relname        |        conname         | coninhcount | conislocal | connoinherit 
+----------------------+------------------------+-------------+------------+--------------
+ test_inh_check       | bmerged                |           0 | t          | f
+ test_inh_check       | bnoinherit             |           0 | t          | t
+ test_inh_check       | test_inh_check_a_check |           0 | t          | f
+ test_inh_check_child | blocal                 |           0 | t          | f
+ test_inh_check_child | bmerged                |           1 | t          | f
+ test_inh_check_child | test_inh_check_a_check |           1 | f          | f
+(6 rows)
+
+ALTER TABLE test_inh_check ALTER COLUMN b TYPE numeric;
+NOTICE:  merging constraint "bmerged" with inherited definition
 \d test_inh_check
 Table "public.test_inh_check"
  Column |  Type   | Modifiers 
 --------+---------+-----------
  a      | numeric | 
+ b      | numeric | 
 Check constraints:
+    "bmerged" CHECK (b::double precision > 1::double precision)
+    "bnoinherit" CHECK (b::double precision > 100::double precision) NO INHERIT
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
 
@@ -1828,9 +1967,26 @@ Table "public.test_inh_check_child"
  Column |  Type   | Modifiers 
 --------+---------+-----------
  a      | numeric | 
+ b      | numeric | 
 Check constraints:
+    "blocal" CHECK (b::double precision < 1000::double precision)
+    "bmerged" CHECK (b::double precision > 1::double precision)
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
+
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+       relname        |        conname         | coninhcount | conislocal | connoinherit 
+----------------------+------------------------+-------------+------------+--------------
+ test_inh_check       | bmerged                |           0 | t          | f
+ test_inh_check       | bnoinherit             |           0 | t          | t
+ test_inh_check       | test_inh_check_a_check |           0 | t          | f
+ test_inh_check_child | blocal                 |           0 | t          | f
+ test_inh_check_child | bmerged                |           1 | t          | f
+ test_inh_check_child | test_inh_check_a_check |           1 | f          | f
+(6 rows)
 
 -- check for rollback of ANALYZE corrupting table property flags (bug #11638)
 CREATE TABLE check_fk_presence_1 (id int PRIMARY KEY, t text);
@@ -2133,6 +2289,7 @@ create text search template alter1.tmpl(init = dsimple_init, lexize = dsimple_le
 create text search dictionary alter1.dict(template = alter1.tmpl);
 insert into alter1.t1(f2) values(11);
 insert into alter1.t1(f2) values(12);
+alter table alter1.t1 set schema alter1; -- no-op, same schema
 alter table alter1.t1 set schema alter2;
 alter table alter1.v1 set schema alter2;
 alter function alter1.plus1(int) set schema alter2;
@@ -2141,6 +2298,7 @@ alter operator class alter1.ctype_hash_ops using hash set schema alter2;
 alter operator family alter1.ctype_hash_ops using hash set schema alter2;
 alter operator alter1.=(alter1.ctype, alter1.ctype) set schema alter2;
 alter function alter1.same(alter1.ctype, alter1.ctype) set schema alter2;
+alter type alter1.ctype set schema alter1; -- no-op, same schema
 alter type alter1.ctype set schema alter2;
 alter conversion alter1.ascii_to_utf8 set schema alter2;
 alter text search parser alter1.prs set schema alter2;
@@ -2567,9 +2725,8 @@ ALTER TABLE new_system_table SET SCHEMA pg_catalog;
 -- XXX: it's currently impossible to move relations out of pg_catalog
 ALTER TABLE new_system_table SET SCHEMA public;
 ERROR:  cannot remove dependency on schema pg_catalog because it is a system object
--- move back, will currently error out, already there
+-- move back, will be ignored -- already there
 ALTER TABLE new_system_table SET SCHEMA pg_catalog;
-ERROR:  table new_system_table is already in schema "pg_catalog"
 ALTER TABLE new_system_table RENAME TO old_system_table;
 CREATE INDEX old_system_table__othercol ON old_system_table (othercol);
 INSERT INTO old_system_table(othercol) VALUES ('somedata'), ('otherdata');
@@ -2601,8 +2758,7 @@ CREATE UNLOGGED TABLE unlogged2(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES unl
 CREATE UNLOGGED TABLE unlogged3(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES unlogged3); -- self-referencing foreign key
 ALTER TABLE unlogged3 SET LOGGED; -- skip self-referencing foreign key
 ALTER TABLE unlogged2 SET LOGGED; -- fails because a foreign key to an unlogged table exists
-ERROR:  cannot change status of table unlogged2 to logged
-DETAIL:  Table unlogged2 references unlogged table unlogged1.
+ERROR:  could not change table "unlogged2" to logged because it references unlogged table "unlogged1"
 ALTER TABLE unlogged1 SET LOGGED;
 -- check relpersistence of an unlogged table after changing to permament
 SELECT relname, relkind, relpersistence FROM pg_class WHERE relname ~ '^unlogged1'
@@ -2645,8 +2801,7 @@ ORDER BY relname;
 CREATE TABLE logged2(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES logged1); -- foreign key
 CREATE TABLE logged3(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES logged3); -- self-referencing foreign key
 ALTER TABLE logged1 SET UNLOGGED; -- fails because a foreign key from a permanent table exists
-ERROR:  cannot change status of table logged1 to unlogged
-DETAIL:  Logged table logged2 is referenced by table logged1.
+ERROR:  could not change table "logged1" to unlogged because it references logged table "logged2"
 ALTER TABLE logged3 SET UNLOGGED; -- skip self-referencing foreign key
 ALTER TABLE logged2 SET UNLOGGED;
 ALTER TABLE logged1 SET UNLOGGED;

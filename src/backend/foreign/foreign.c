@@ -3,7 +3,7 @@
  * foreign.c
  *		  support for foreign-data wrappers, servers and user mappings.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/foreign/foreign.c
@@ -31,6 +31,7 @@
 extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
 extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
+static HeapTuple find_user_mapping(Oid userid, Oid serverid);
 
 /*
  * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
@@ -174,25 +175,10 @@ GetUserMapping(Oid userid, Oid serverid)
 	bool		isnull;
 	UserMapping *um;
 
-	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
-						 ObjectIdGetDatum(userid),
-						 ObjectIdGetDatum(serverid));
-
-	if (!HeapTupleIsValid(tp))
-	{
-		/* Not found for the specific user -- try PUBLIC */
-		tp = SearchSysCache2(USERMAPPINGUSERSERVER,
-							 ObjectIdGetDatum(InvalidOid),
-							 ObjectIdGetDatum(serverid));
-	}
-
-	if (!HeapTupleIsValid(tp))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user mapping not found for \"%s\"",
-						MappingUserName(userid))));
+	tp = find_user_mapping(userid, serverid);
 
 	um = (UserMapping *) palloc(sizeof(UserMapping));
+	um->umid = HeapTupleGetOid(tp);
 	um->userid = userid;
 	um->serverid = serverid;
 
@@ -209,6 +195,61 @@ GetUserMapping(Oid userid, Oid serverid)
 	ReleaseSysCache(tp);
 
 	return um;
+}
+
+/*
+ * GetUserMappingId - look up the user mapping, and return its OID
+ *
+ * If no mapping is found for the supplied user, we also look for
+ * PUBLIC mappings (userid == InvalidOid).
+ */
+Oid
+GetUserMappingId(Oid userid, Oid serverid)
+{
+	HeapTuple	tp;
+	Oid			umid;
+
+	tp = find_user_mapping(userid, serverid);
+
+	/* Extract the Oid */
+	umid = HeapTupleGetOid(tp);
+
+	ReleaseSysCache(tp);
+
+	return umid;
+}
+
+
+/*
+ * find_user_mapping - Guts of GetUserMapping family.
+ *
+ * If no mapping is found for the supplied user, we also look for
+ * PUBLIC mappings (userid == InvalidOid).
+ */
+static HeapTuple
+find_user_mapping(Oid userid, Oid serverid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+						 ObjectIdGetDatum(userid),
+						 ObjectIdGetDatum(serverid));
+
+	if (HeapTupleIsValid(tp))
+		return tp;
+
+	/* Not found for the specific user -- try PUBLIC */
+	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+							 ObjectIdGetDatum(InvalidOid),
+							 ObjectIdGetDatum(serverid));
+
+	if (!HeapTupleIsValid(tp))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user mapping not found for \"%s\"",
+						MappingUserName(userid))));
+
+	return tp;
 }
 
 

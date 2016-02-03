@@ -38,7 +38,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/initdb/initdb.c
@@ -79,7 +79,8 @@
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
 
-static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", "ident", "radius",
+static const char *const auth_methods_host[] = {
+	"trust", "reject", "md5", "password", "ident", "radius",
 #ifdef ENABLE_GSS
 	"gss",
 #endif
@@ -95,15 +96,18 @@ static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", 
 #ifdef USE_SSL
 	"cert",
 #endif
-NULL};
-static const char *auth_methods_local[] = {"trust", "reject", "md5", "password", "peer", "radius",
+	NULL
+};
+static const char *const auth_methods_local[] = {
+	"trust", "reject", "md5", "password", "peer", "radius",
 #ifdef USE_PAM
 	"pam", "pam ",
 #endif
 #ifdef USE_LDAP
 	"ldap",
 #endif
-NULL};
+	NULL
+};
 
 /*
  * these values are passed in by makefile defines
@@ -185,11 +189,10 @@ static char *authwarning = NULL;
  * (no quoting to worry about).
  */
 static const char *boot_options = "-F";
-static const char *backend_options = "--single -F -O -c search_path=pg_catalog -c exit_on_error=true";
+static const char *backend_options = "--single -F -O -j -c search_path=pg_catalog -c exit_on_error=true";
 
-static const char *subdirs[] = {
+static const char *const subdirs[] = {
 	"global",
-	"pg_xlog",
 	"pg_xlog/archive_status",
 	"pg_clog",
 	"pg_commit_ts",
@@ -199,6 +202,7 @@ static const char *subdirs[] = {
 	"pg_snapshots",
 	"pg_subtrans",
 	"pg_twophase",
+	"pg_multixact",
 	"pg_multixact/members",
 	"pg_multixact/offsets",
 	"base",
@@ -236,7 +240,6 @@ static FILE *popen_check(const char *command, const char *mode);
 static void exit_nicely(void);
 static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
-static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void write_version_file(char *extrapath);
@@ -244,21 +247,21 @@ static void set_null_conf(void);
 static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
-static void setup_auth(void);
-static void get_set_pwd(void);
-static void setup_depend(void);
-static void setup_sysviews(void);
-static void setup_description(void);
-static void setup_collation(void);
-static void setup_conversion(void);
-static void setup_dictionary(void);
-static void setup_privileges(void);
+static void setup_auth(FILE *cmdfd);
+static void get_set_pwd(FILE *cmdfd);
+static void setup_depend(FILE *cmdfd);
+static void setup_sysviews(FILE *cmdfd);
+static void setup_description(FILE *cmdfd);
+static void setup_collation(FILE *cmdfd);
+static void setup_conversion(FILE *cmdfd);
+static void setup_dictionary(FILE *cmdfd);
+static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
-static void setup_schema(void);
-static void load_plpgsql(void);
-static void vacuum_db(void);
-static void make_template0(void);
-static void make_postgres(void);
+static void setup_schema(FILE *cmdfd);
+static void load_plpgsql(FILE *cmdfd);
+static void vacuum_db(FILE *cmdfd);
+static void make_template0(FILE *cmdfd);
+static void make_postgres(FILE *cmdfd);
 static void fsync_pgdata(void);
 static void trapsig(int signum);
 static void check_ok(void);
@@ -276,7 +279,7 @@ void		setup_locale_encoding(void);
 void		setup_signals(void);
 void		setup_text_search(void);
 void		create_data_directory(void);
-void		create_xlog_symlink(void);
+void		create_xlog_or_symlink(void);
 void		warn_on_mount_point(int error);
 void		initialize_data_directory(void);
 
@@ -925,29 +928,6 @@ find_matching_ts_config(const char *lc_type)
 
 
 /*
- * make the data directory (or one of its subdirectories if subdir is not NULL)
- */
-static bool
-mkdatadir(const char *subdir)
-{
-	char	   *path;
-
-	if (subdir)
-		path = psprintf("%s/%s", pg_data, subdir);
-	else
-		path = pg_strdup(pg_data);
-
-	if (pg_mkdir_p(path, S_IRWXU) == 0)
-		return true;
-
-	fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
-			progname, path, strerror(errno));
-
-	return false;
-}
-
-
-/*
  * set name of given input file variable under data directory
  */
 static void
@@ -1455,7 +1435,7 @@ bootstrap_template1(void)
 	char		headerline[MAXPGPATH];
 	char		buf[64];
 
-	printf(_("creating template1 database in %s/base/1 ... "), pg_data);
+	printf(_("running bootstrap script ... "));
 	fflush(stdout);
 
 	if (debug)
@@ -1545,45 +1525,28 @@ bootstrap_template1(void)
  * set up the shadow password table
  */
 static void
-setup_auth(void)
+setup_auth(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-	const char **line;
-	static const char *pg_authid_setup[] = {
+	const char *const * line;
+	static const char *const pg_authid_setup[] = {
 		/*
 		 * The authid table shouldn't be readable except through views, to
 		 * ensure passwords are not publicly visible.
 		 */
-		"REVOKE ALL on pg_authid FROM public;\n",
+		"REVOKE ALL on pg_authid FROM public;\n\n",
 		NULL
 	};
 
-	fputs(_("initializing pg_authid ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	for (line = pg_authid_setup; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
  * get the superuser password if required, and call postgres to set it
  */
 static void
-get_set_pwd(void)
+get_set_pwd(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-
 	char	   *pwd1,
 			   *pwd2;
 
@@ -1640,36 +1603,21 @@ get_set_pwd(void)
 		pwd1 = pg_strdup(pwdbuf);
 
 	}
-	printf(_("setting password ... "));
-	fflush(stdout);
 
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
-	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n",
+	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
 				   username, escape_quotes(pwd1));
 
-	/* MM: pwd1 is no longer needed, freeing it */
 	free(pwd1);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
  * set up pg_depend
  */
 static void
-setup_depend(void)
+setup_depend(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-	const char **line;
-	static const char *pg_depend_setup[] = {
+	const char *const * line;
+	static const char *const pg_depend_setup[] = {
 		/*
 		 * Make PIN entries in pg_depend for all objects made so far in the
 		 * tables that the dependency code handles.  This is overkill (the
@@ -1684,104 +1632,76 @@ setup_depend(void)
 		 * First delete any already-made entries; PINs override all else, and
 		 * must be the only entries for their objects.
 		 */
-		"DELETE FROM pg_depend;\n",
-		"VACUUM pg_depend;\n",
-		"DELETE FROM pg_shdepend;\n",
-		"VACUUM pg_shdepend;\n",
+		"DELETE FROM pg_depend;\n\n",
+		"VACUUM pg_depend;\n\n",
+		"DELETE FROM pg_shdepend;\n\n",
+		"VACUUM pg_shdepend;\n\n",
 
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_class;\n",
+		" FROM pg_class;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_proc;\n",
+		" FROM pg_proc;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_type;\n",
+		" FROM pg_type;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_cast;\n",
+		" FROM pg_cast;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_constraint;\n",
+		" FROM pg_constraint;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_attrdef;\n",
+		" FROM pg_attrdef;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_language;\n",
+		" FROM pg_language;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_operator;\n",
+		" FROM pg_operator;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_opclass;\n",
+		" FROM pg_opclass;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_opfamily;\n",
+		" FROM pg_opfamily;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_amop;\n",
+		" FROM pg_amop;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_amproc;\n",
+		" FROM pg_amproc;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_rewrite;\n",
+		" FROM pg_rewrite;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_trigger;\n",
+		" FROM pg_trigger;\n\n",
 
 		/*
 		 * restriction here to avoid pinning the public namespace
 		 */
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_namespace "
-		"    WHERE nspname LIKE 'pg%';\n",
+		"    WHERE nspname LIKE 'pg%';\n\n",
 
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_ts_parser;\n",
+		" FROM pg_ts_parser;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_ts_dict;\n",
+		" FROM pg_ts_dict;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_ts_template;\n",
+		" FROM pg_ts_template;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_ts_config;\n",
+		" FROM pg_ts_config;\n\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
-		" FROM pg_collation;\n",
+		" FROM pg_collation;\n\n",
 		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
-		" FROM pg_authid;\n",
+		" FROM pg_authid;\n\n",
 		NULL
 	};
 
-	fputs(_("initializing dependencies ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	for (line = pg_depend_setup; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
  * set up system views
  */
 static void
-setup_sysviews(void)
+setup_sysviews(FILE *cmdfd)
 {
-	PG_CMD_DECL;
 	char	  **line;
 	char	  **sysviews_setup;
 
-	fputs(_("creating system views ... "), stdout);
-	fflush(stdout);
-
 	sysviews_setup = readfile(system_views_file);
-
-	/*
-	 * We use -j here to avoid backslashing stuff in system_views.sql
-	 */
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
 
 	for (line = sysviews_setup; *line != NULL; line++)
 	{
@@ -1789,57 +1709,41 @@ setup_sysviews(void)
 		free(*line);
 	}
 
-	PG_CMD_CLOSE;
-
 	free(sysviews_setup);
-
-	check_ok();
 }
 
 /*
  * load description data
  */
 static void
-setup_description(void)
+setup_description(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-
-	fputs(_("loading system objects' descriptions ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_description ( "
 				"	objoid oid, "
 				"	classname name, "
 				"	objsubid int4, "
-				"	description text) WITHOUT OIDS;\n");
+				"	description text) WITHOUT OIDS;\n\n");
 
-	PG_CMD_PRINTF1("COPY tmp_pg_description FROM E'%s';\n",
+	PG_CMD_PRINTF1("COPY tmp_pg_description FROM E'%s';\n\n",
 				   escape_quotes(desc_file));
 
 	PG_CMD_PUTS("INSERT INTO pg_description "
 				" SELECT t.objoid, c.oid, t.objsubid, t.description "
 				"  FROM tmp_pg_description t, pg_class c "
-				"    WHERE c.relname = t.classname;\n");
+				"    WHERE c.relname = t.classname;\n\n");
 
 	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_shdescription ( "
 				" objoid oid, "
 				" classname name, "
-				" description text) WITHOUT OIDS;\n");
+				" description text) WITHOUT OIDS;\n\n");
 
-	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM E'%s';\n",
+	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM E'%s';\n\n",
 				   escape_quotes(shdesc_file));
 
 	PG_CMD_PUTS("INSERT INTO pg_shdescription "
 				" SELECT t.objoid, c.oid, t.description "
 				"  FROM tmp_pg_shdescription t, pg_class c "
-				"   WHERE c.relname = t.classname;\n");
+				"   WHERE c.relname = t.classname;\n\n");
 
 	/* Create default descriptions for operator implementation functions */
 	PG_CMD_PUTS("WITH funcdescs AS ( "
@@ -1852,11 +1756,14 @@ setup_description(void)
 				"  FROM funcdescs "
 				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
 				"  NOT EXISTS (SELECT 1 FROM pg_description "
-		  "    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n");
+		"    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n\n");
 
-	PG_CMD_CLOSE;
-
-	check_ok();
+	/*
+	 * Even though the tables are temp, drop them explicitly so they don't get
+	 * copied into template0/postgres databases.
+	 */
+	PG_CMD_PUTS("DROP TABLE tmp_pg_description;\n\n");
+	PG_CMD_PUTS("DROP TABLE tmp_pg_shdescription;\n\n");
 }
 
 #ifdef HAVE_LOCALE_T
@@ -1899,7 +1806,7 @@ normalize_locale_name(char *new, const char *old)
  * populate pg_collation
  */
 static void
-setup_collation(void)
+setup_collation(FILE *cmdfd)
 {
 #if defined(HAVE_LOCALE_T) && !defined(WIN32)
 	int			i;
@@ -1907,28 +1814,14 @@ setup_collation(void)
 	char		localebuf[NAMEDATALEN]; /* we assume ASCII so this is fine */
 	int			count = 0;
 
-	PG_CMD_DECL;
-#endif
-
-	fputs(_("creating collations ... "), stdout);
-	fflush(stdout);
-
-#if defined(HAVE_LOCALE_T) && !defined(WIN32)
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
 	locale_a_handle = popen_check("locale -a", "r");
 	if (!locale_a_handle)
 		return;					/* complaint already printed */
 
-	PG_CMD_OPEN;
-
 	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_collation ( "
 				"	collname name, "
 				"	locale name, "
-				"	encoding int) WITHOUT OIDS;\n");
+				"	encoding int) WITHOUT OIDS;\n\n");
 
 	while (fgets(localebuf, sizeof(localebuf), locale_a_handle))
 	{
@@ -1988,7 +1881,7 @@ setup_collation(void)
 
 		quoted_locale = escape_quotes(localebuf);
 
-		PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
+		PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n\n",
 					   quoted_locale, quoted_locale, enc);
 
 		/*
@@ -2000,7 +1893,7 @@ setup_collation(void)
 		{
 			char	   *quoted_alias = escape_quotes(alias);
 
-			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
+			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n\n",
 						   quoted_alias, quoted_locale, enc);
 			free(quoted_alias);
 		}
@@ -2008,7 +1901,7 @@ setup_collation(void)
 	}
 
 	/* Add an SQL-standard name */
-	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation VALUES ('ucs_basic', 'C', %d);\n", PG_UTF8);
+	PG_CMD_PRINTF1("INSERT INTO tmp_pg_collation VALUES ('ucs_basic', 'C', %d);\n\n", PG_UTF8);
 
 	/*
 	 * When copying collations to the final location, eliminate aliases that
@@ -2029,20 +1922,21 @@ setup_collation(void)
 				"   encoding, locale, locale "
 				"  FROM tmp_pg_collation"
 				"  WHERE NOT EXISTS (SELECT 1 FROM pg_collation WHERE collname = tmp_pg_collation.collname)"
-	   "  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n");
+	 "  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n\n");
+
+	/*
+	 * Even though the table is temp, drop it explicitly so it doesn't get
+	 * copied into template0/postgres databases.
+	 */
+	PG_CMD_PUTS("DROP TABLE tmp_pg_collation;\n\n");
 
 	pclose(locale_a_handle);
-	PG_CMD_CLOSE;
 
-	check_ok();
 	if (count == 0 && !debug)
 	{
 		printf(_("No usable system locales were found.\n"));
 		printf(_("Use the option \"--debug\" to see details.\n"));
 	}
-#else							/* not HAVE_LOCALE_T && not WIN32 */
-	printf(_("not supported on this platform\n"));
-	fflush(stdout);
 #endif   /* not HAVE_LOCALE_T  && not WIN32 */
 }
 
@@ -2050,21 +1944,10 @@ setup_collation(void)
  * load conversion functions
  */
 static void
-setup_conversion(void)
+setup_conversion(FILE *cmdfd)
 {
-	PG_CMD_DECL;
 	char	  **line;
 	char	  **conv_lines;
-
-	fputs(_("creating conversions ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
 
 	conv_lines = readfile(conversion_file);
 	for (line = conv_lines; *line != NULL; line++)
@@ -2075,34 +1958,16 @@ setup_conversion(void)
 	}
 
 	free(conv_lines);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
  * load extra dictionaries (Snowball stemmers)
  */
 static void
-setup_dictionary(void)
+setup_dictionary(FILE *cmdfd)
 {
-	PG_CMD_DECL;
 	char	  **line;
 	char	  **conv_lines;
-
-	fputs(_("creating dictionaries ... "), stdout);
-	fflush(stdout);
-
-	/*
-	 * We use -j here to avoid backslashing stuff
-	 */
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
 
 	conv_lines = readfile(dictionary_file);
 	for (line = conv_lines; *line != NULL; line++)
@@ -2112,10 +1977,6 @@ setup_dictionary(void)
 	}
 
 	free(conv_lines);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
@@ -2130,39 +1991,24 @@ setup_dictionary(void)
  * set (NOT NULL).
  */
 static void
-setup_privileges(void)
+setup_privileges(FILE *cmdfd)
 {
-	PG_CMD_DECL;
 	char	  **line;
 	char	  **priv_lines;
 	static char *privileges_setup[] = {
 		"UPDATE pg_class "
 		"  SET relacl = E'{\"=r/\\\\\"$POSTGRES_SUPERUSERNAME\\\\\"\"}' "
-		"  WHERE relkind IN ('r', 'v', 'm', 'S') AND relacl IS NULL;\n",
-		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n",
-		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n",
-		"REVOKE ALL ON pg_largeobject FROM PUBLIC;\n",
+		"  WHERE relkind IN ('r', 'v', 'm', 'S') AND relacl IS NULL;\n\n",
+		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n\n",
+		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n\n",
+		"REVOKE ALL ON pg_largeobject FROM PUBLIC;\n\n",
 		NULL
 	};
-
-	fputs(_("setting privileges on built-in objects ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
 
 	priv_lines = replace_token(privileges_setup, "$POSTGRES_SUPERUSERNAME",
 							   escape_quotes(username));
 	for (line = priv_lines; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
@@ -2197,26 +2043,12 @@ set_info_version(void)
  * load info schema and populate from features file
  */
 static void
-setup_schema(void)
+setup_schema(FILE *cmdfd)
 {
-	PG_CMD_DECL;
 	char	  **line;
 	char	  **lines;
 
-	fputs(_("creating information schema ... "), stdout);
-	fflush(stdout);
-
 	lines = readfile(info_schema_file);
-
-	/*
-	 * We use -j here to avoid backslashing stuff in information_schema.sql
-	 */
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
 
 	for (line = lines; *line != NULL; line++)
 	{
@@ -2226,165 +2058,90 @@ setup_schema(void)
 
 	free(lines);
 
-	PG_CMD_CLOSE;
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	PG_CMD_PRINTF1("UPDATE information_schema.sql_implementation_info "
 				   "  SET character_value = '%s' "
-				   "  WHERE implementation_info_name = 'DBMS VERSION';\n",
+				   "  WHERE implementation_info_name = 'DBMS VERSION';\n\n",
 				   infoversion);
 
 	PG_CMD_PRINTF1("COPY information_schema.sql_features "
 				   "  (feature_id, feature_name, sub_feature_id, "
 				   "  sub_feature_name, is_supported, comments) "
-				   " FROM E'%s';\n",
+				   " FROM E'%s';\n\n",
 				   escape_quotes(features_file));
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
  * load PL/pgsql server-side language
  */
 static void
-load_plpgsql(void)
+load_plpgsql(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-
-	fputs(_("loading PL/pgSQL server-side language ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
-	PG_CMD_PUTS("CREATE EXTENSION plpgsql;\n");
-
-	PG_CMD_CLOSE;
-
-	check_ok();
+	PG_CMD_PUTS("CREATE EXTENSION plpgsql;\n\n");
 }
 
 /*
  * clean everything up in template1
  */
 static void
-vacuum_db(void)
+vacuum_db(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-
-	fputs(_("vacuuming database template1 ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	/* Run analyze before VACUUM so the statistics are frozen. */
-	PG_CMD_PUTS("ANALYZE;\nVACUUM FREEZE;\n");
-
-	PG_CMD_CLOSE;
-
-	check_ok();
+	PG_CMD_PUTS("ANALYZE;\n\nVACUUM FREEZE;\n\n");
 }
 
 /*
  * copy template1 to template0
  */
 static void
-make_template0(void)
+make_template0(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-	const char **line;
-	static const char *template0_setup[] = {
-		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false;\n",
+	const char *const * line;
+	static const char *const template0_setup[] = {
+		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false;\n\n",
 
 		/*
 		 * We use the OID of template0 to determine lastsysoid
 		 */
 		"UPDATE pg_database SET datlastsysoid = "
 		"    (SELECT oid FROM pg_database "
-		"    WHERE datname = 'template0');\n",
+		"    WHERE datname = 'template0');\n\n",
 
 		/*
 		 * Explicitly revoke public create-schema and create-temp-table
 		 * privileges in template1 and template0; else the latter would be on
 		 * by default
 		 */
-		"REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;\n",
-		"REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;\n",
+		"REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;\n\n",
+		"REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;\n\n",
 
-		"COMMENT ON DATABASE template0 IS 'unmodifiable empty database';\n",
+		"COMMENT ON DATABASE template0 IS 'unmodifiable empty database';\n\n",
 
 		/*
 		 * Finally vacuum to clean up dead rows in pg_database
 		 */
-		"VACUUM FULL pg_database;\n",
+		"VACUUM pg_database;\n\n",
 		NULL
 	};
 
-	fputs(_("copying template1 to template0 ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	for (line = template0_setup; *line; line++)
 		PG_CMD_PUTS(*line);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
  * copy template1 to postgres
  */
 static void
-make_postgres(void)
+make_postgres(FILE *cmdfd)
 {
-	PG_CMD_DECL;
-	const char **line;
-	static const char *postgres_setup[] = {
-		"CREATE DATABASE postgres;\n",
-		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n",
+	const char *const * line;
+	static const char *const postgres_setup[] = {
+		"CREATE DATABASE postgres;\n\n",
+		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
 		NULL
 	};
 
-	fputs(_("copying template1 to postgres ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
 	for (line = postgres_setup; *line; line++)
 		PG_CMD_PUTS(*line);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
 }
 
 /*
@@ -2794,9 +2551,9 @@ check_authmethod_unspecified(const char **authmethod)
 }
 
 static void
-check_authmethod_valid(const char *authmethod, const char **valid_methods, const char *conntype)
+check_authmethod_valid(const char *authmethod, const char *const * valid_methods, const char *conntype)
 {
-	const char **p;
+	const char *const * p;
 
 	for (p = valid_methods; *p; p++)
 	{
@@ -3134,8 +2891,12 @@ create_data_directory(void)
 				   pg_data);
 			fflush(stdout);
 
-			if (!mkdatadir(NULL))
+			if (pg_mkdir_p(pg_data, S_IRWXU) != 0)
+			{
+				fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+						progname, pg_data, strerror(errno));
 				exit_nicely();
+			}
 			else
 				check_ok();
 
@@ -3186,13 +2947,17 @@ create_data_directory(void)
 }
 
 
+/* Create transaction log directory, and symlink if required */
 void
-create_xlog_symlink(void)
+create_xlog_or_symlink(void)
 {
-	/* Create transaction log symlink, if required */
+	char	   *subdirloc;
+
+	/* form name of the place for the subdirectory or symlink */
+	subdirloc = psprintf("%s/pg_xlog", pg_data);
+
 	if (strcmp(xlog_dir, "") != 0)
 	{
-		char	   *linkloc;
 		int			ret;
 
 		/* clean up xlog directory name, check it's absolute */
@@ -3265,22 +3030,30 @@ create_xlog_symlink(void)
 				exit_nicely();
 		}
 
-		/* form name of the place where the symlink must go */
-		linkloc = psprintf("%s/pg_xlog", pg_data);
-
 #ifdef HAVE_SYMLINK
-		if (symlink(xlog_dir, linkloc) != 0)
+		if (symlink(xlog_dir, subdirloc) != 0)
 		{
 			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
-					progname, linkloc, strerror(errno));
+					progname, subdirloc, strerror(errno));
 			exit_nicely();
 		}
 #else
 		fprintf(stderr, _("%s: symlinks are not supported on this platform"));
 		exit_nicely();
 #endif
-		free(linkloc);
 	}
+	else
+	{
+		/* Without -X option, just make the subdirectory normally */
+		if (mkdir(subdirloc, S_IRWXU) < 0)
+		{
+			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+					progname, subdirloc, strerror(errno));
+			exit_nicely();
+		}
+	}
+
+	free(subdirloc);
 }
 
 
@@ -3303,6 +3076,7 @@ warn_on_mount_point(int error)
 void
 initialize_data_directory(void)
 {
+	PG_CMD_DECL;
 	int			i;
 
 	setup_signals();
@@ -3311,16 +3085,30 @@ initialize_data_directory(void)
 
 	create_data_directory();
 
-	create_xlog_symlink();
+	create_xlog_or_symlink();
 
-	/* Create required subdirectories */
+	/* Create required subdirectories (other than pg_xlog) */
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
-	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
+	for (i = 0; i < lengthof(subdirs); i++)
 	{
-		if (!mkdatadir(subdirs[i]))
+		char	   *path;
+
+		path = psprintf("%s/%s", pg_data, subdirs[i]);
+
+		/*
+		 * The parent directory already exists, so we only need mkdir() not
+		 * pg_mkdir_p() here, which avoids some failure modes; cf bug #13853.
+		 */
+		if (mkdir(path, S_IRWXU) < 0)
+		{
+			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+					progname, path, strerror(errno));
 			exit_nicely();
+		}
+
+		free(path);
 	}
 
 	check_ok();
@@ -3343,35 +3131,51 @@ initialize_data_directory(void)
 	 */
 	write_version_file("base/1");
 
-	/* Create the stuff we don't need to use bootstrap mode for */
+	/*
+	 * Create the stuff we don't need to use bootstrap mode for, using a
+	 * backend running in simple standalone mode.
+	 */
+	fputs(_("performing post-bootstrap initialization ... "), stdout);
+	fflush(stdout);
 
-	setup_auth();
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s\" %s template1 >%s",
+			 backend_exec, backend_options,
+			 DEVNULL);
+
+	PG_CMD_OPEN;
+
+	setup_auth(cmdfd);
 	if (pwprompt || pwfilename)
-		get_set_pwd();
+		get_set_pwd(cmdfd);
 
-	setup_depend();
+	setup_depend(cmdfd);
 
-	setup_sysviews();
+	setup_sysviews(cmdfd);
 
-	setup_description();
+	setup_description(cmdfd);
 
-	setup_collation();
+	setup_collation(cmdfd);
 
-	setup_conversion();
+	setup_conversion(cmdfd);
 
-	setup_dictionary();
+	setup_dictionary(cmdfd);
 
-	setup_privileges();
+	setup_privileges(cmdfd);
 
-	setup_schema();
+	setup_schema(cmdfd);
 
-	load_plpgsql();
+	load_plpgsql(cmdfd);
 
-	vacuum_db();
+	vacuum_db(cmdfd);
 
-	make_template0();
+	make_template0(cmdfd);
 
-	make_postgres();
+	make_postgres(cmdfd);
+
+	PG_CMD_CLOSE;
+
+	check_ok();
 }
 
 

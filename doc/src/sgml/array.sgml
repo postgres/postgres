@@ -277,6 +277,29 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
  </para>
 
  <para>
+  It is possible to omit the <replaceable>lower-bound</replaceable> and/or
+  <replaceable>upper-bound</replaceable> of a slice specifier; the missing
+  bound is replaced by the lower or upper limit of the array's subscripts.
+  For example:
+
+<programlisting>
+SELECT schedule[:2][2:] FROM sal_emp WHERE name = 'Bill';
+
+        schedule
+------------------------
+ {{lunch},{presentation}}
+(1 row)
+
+SELECT schedule[:][1:1] FROM sal_emp WHERE name = 'Bill';
+
+        schedule
+------------------------
+ {{meeting},{training}}
+(1 row)
+</programlisting>
+ </para>
+
+ <para>
   An array subscript expression will return null if either the array itself or
   any of the subscript expressions are null.  Also, null is returned if a
   subscript is outside the array bounds (this case does not raise an error).
@@ -391,6 +414,10 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
     WHERE name = 'Carol';
 </programlisting>
 
+  The slice syntaxes with omitted <replaceable>lower-bound</replaceable> and/or
+  <replaceable>upper-bound</replaceable> can be used too, but only when
+  updating an array value that is not NULL or zero-dimensional (otherwise,
+  there is no existing subscript limit to substitute).
  </para>
 
  <para>

@@ -4,7 +4,7 @@
  *
  * Author: Magnus Hagander <magnus@hagander.net>
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/pg_basebackup.c
@@ -781,7 +781,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	bool		in_tarhdr = true;
 	bool		skip_file = false;
 	size_t		tarhdrsz = 0;
-	size_t		filesz = 0;
+	pgoff_t		filesz = 0;
 
 #ifdef HAVE_LIBZ
 	gzFile		ztarfile = NULL;
@@ -1046,7 +1046,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 
 						skip_file = (strcmp(&tarhdr[0], "recovery.conf") == 0);
 
-						sscanf(&tarhdr[124], "%11o", (unsigned int *) &filesz);
+						filesz = read_tar_number(&tarhdr[124], 12);
 
 						padding = ((filesz + 511) & ~511) - filesz;
 						filesz += padding;
@@ -1139,7 +1139,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	char		current_path[MAXPGPATH];
 	char		filename[MAXPGPATH];
 	const char *mapped_tblspc_path;
-	int			current_len_left;
+	pgoff_t		current_len_left = 0;
 	int			current_padding = 0;
 	bool		basetablespace;
 	char	   *copybuf = NULL;
@@ -1208,20 +1208,10 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			}
 			totaldone += 512;
 
-			if (sscanf(copybuf + 124, "%11o", &current_len_left) != 1)
-			{
-				fprintf(stderr, _("%s: could not parse file size\n"),
-						progname);
-				disconnect_and_exit(1);
-			}
+			current_len_left = read_tar_number(&copybuf[124], 12);
 
 			/* Set permissions on the file */
-			if (sscanf(&copybuf[100], "%07o ", &filemode) != 1)
-			{
-				fprintf(stderr, _("%s: could not parse file mode\n"),
-						progname);
-				disconnect_and_exit(1);
-			}
+			filemode = read_tar_number(&copybuf[100], 8);
 
 			/*
 			 * All files are padded up to 512 bytes
@@ -2180,7 +2170,7 @@ main(int argc, char **argv)
 	if (replication_slot && !streamwal)
 	{
 		fprintf(stderr,
-				_("%s: replication slots can only be used with WAL streaming\n"),
+			_("%s: replication slots can only be used with WAL streaming\n"),
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);

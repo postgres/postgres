@@ -20,7 +20,7 @@
  * step 2 ...
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_resetxlog/pg_resetxlog.c
@@ -64,8 +64,8 @@ static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
 static uint32 set_xid_epoch = (uint32) -1;
 static TransactionId set_xid = 0;
-static TransactionId set_oldest_commit_ts = 0;
-static TransactionId set_newest_commit_ts = 0;
+static TransactionId set_oldest_commit_ts_xid = 0;
+static TransactionId set_newest_commit_ts_xid = 0;
 static Oid	set_oid = 0;
 static MultiXactId set_mxid = 0;
 static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
@@ -164,14 +164,14 @@ main(int argc, char *argv[])
 				break;
 
 			case 'c':
-				set_oldest_commit_ts = strtoul(optarg, &endptr, 0);
+				set_oldest_commit_ts_xid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',')
 				{
 					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-c");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
-				set_newest_commit_ts = strtoul(endptr + 1, &endptr2, 0);
+				set_newest_commit_ts_xid = strtoul(endptr + 1, &endptr2, 0);
 				if (endptr2 == endptr + 1 || *endptr2 != '\0')
 				{
 					fprintf(stderr, _("%s: invalid argument for option %s\n"), progname, "-c");
@@ -179,15 +179,15 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 
-				if (set_oldest_commit_ts < 2 &&
-					set_oldest_commit_ts != 0)
+				if (set_oldest_commit_ts_xid < 2 &&
+					set_oldest_commit_ts_xid != 0)
 				{
 					fprintf(stderr, _("%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"), progname);
 					exit(1);
 				}
 
-				if (set_newest_commit_ts < 2 &&
-					set_newest_commit_ts != 0)
+				if (set_newest_commit_ts_xid < 2 &&
+					set_newest_commit_ts_xid != 0)
 				{
 					fprintf(stderr, _("%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"), progname);
 					exit(1);
@@ -383,10 +383,10 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
 	}
 
-	if (set_oldest_commit_ts != 0)
-		ControlFile.checkPointCopy.oldestCommitTs = set_oldest_commit_ts;
-	if (set_newest_commit_ts != 0)
-		ControlFile.checkPointCopy.newestCommitTs = set_newest_commit_ts;
+	if (set_oldest_commit_ts_xid != 0)
+		ControlFile.checkPointCopy.oldestCommitTsXid = set_oldest_commit_ts_xid;
+	if (set_newest_commit_ts_xid != 0)
+		ControlFile.checkPointCopy.newestCommitTsXid = set_newest_commit_ts_xid;
 
 	if (set_oid != 0)
 		ControlFile.checkPointCopy.nextOid = set_oid;
@@ -665,10 +665,10 @@ PrintControlValues(bool guessed)
 		   ControlFile.checkPointCopy.oldestMulti);
 	printf(_("Latest checkpoint's oldestMulti's DB: %u\n"),
 		   ControlFile.checkPointCopy.oldestMultiDB);
-	printf(_("Latest checkpoint's oldestCommitTs:   %u\n"),
-		   ControlFile.checkPointCopy.oldestCommitTs);
-	printf(_("Latest checkpoint's newestCommitTs:   %u\n"),
-		   ControlFile.checkPointCopy.newestCommitTs);
+	printf(_("Latest checkpoint's oldestCommitTsXid:%u\n"),
+		   ControlFile.checkPointCopy.oldestCommitTsXid);
+	printf(_("Latest checkpoint's newestCommitTsXid:%u\n"),
+		   ControlFile.checkPointCopy.newestCommitTsXid);
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */
@@ -751,15 +751,15 @@ PrintNewControlValues(void)
 			   ControlFile.checkPointCopy.nextXidEpoch);
 	}
 
-	if (set_oldest_commit_ts != 0)
+	if (set_oldest_commit_ts_xid != 0)
 	{
-		printf(_("oldestCommitTs:                       %u\n"),
-			   ControlFile.checkPointCopy.oldestCommitTs);
+		printf(_("oldestCommitTsXid:                    %u\n"),
+			   ControlFile.checkPointCopy.oldestCommitTsXid);
 	}
-	if (set_newest_commit_ts != 0)
+	if (set_newest_commit_ts_xid != 0)
 	{
-		printf(_("newestCommitTs:                       %u\n"),
-			   ControlFile.checkPointCopy.newestCommitTs);
+		printf(_("newestCommitTsXid:                    %u\n"),
+			   ControlFile.checkPointCopy.newestCommitTsXid);
 	}
 }
 

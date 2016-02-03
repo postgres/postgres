@@ -9,7 +9,7 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +20,7 @@
  */
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/orclauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -70,9 +71,21 @@ query_planner(PlannerInfo *root, List *tlist,
 		/* We need a dummy joinrel to describe the empty set of baserels */
 		final_rel = build_empty_join_rel(root);
 
+		/*
+		 * If query allows parallelism in general, check whether the quals
+		 * are parallel-restricted.  There's currently no real benefit to
+		 * setting this flag correctly because we can't yet reference subplans
+		 * from parallel workers.  But that might change someday, so set this
+		 * correctly anyway.
+		 */
+		if (root->glob->parallelModeOK)
+			final_rel->consider_parallel =
+				!has_parallel_hazard(parse->jointree->quals, false);
+
 		/* The only path for it is a trivial Result path */
 		add_path(final_rel, (Path *)
-				 create_result_path((List *) parse->jointree->quals));
+				 create_result_path(final_rel,
+									(List *) parse->jointree->quals));
 
 		/* Select cheapest path (pretty easy in this case...) */
 		set_cheapest(final_rel);
@@ -102,7 +115,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
-	root->lateral_info_list = NIL;
 	root->placeholder_list = NIL;
 	root->initial_rels = NIL;
 
@@ -189,9 +201,8 @@ query_planner(PlannerInfo *root, List *tlist,
 	add_placeholders_to_base_rels(root);
 
 	/*
-	 * Create the LateralJoinInfo list now that we have finalized
-	 * PlaceHolderVar eval levels and made any necessary additions to the
-	 * lateral_vars lists for lateral references within PlaceHolderVars.
+	 * Construct the lateral reference sets now that we have finalized
+	 * PlaceHolderVar eval levels.
 	 */
 	create_lateral_join_info(root);
 

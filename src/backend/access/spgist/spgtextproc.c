@@ -29,7 +29,7 @@
  * No new entries ever get pushed into a -2-labeled child, either.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -403,8 +403,9 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
 	bool		collate_is_c = lc_collate_is_c(PG_GET_COLLATION());
-	text	   *reconstrText = NULL;
-	int			maxReconstrLen = 0;
+	text	   *reconstructedValue;
+	text	   *reconstrText;
+	int			maxReconstrLen;
 	text	   *prefixText = NULL;
 	int			prefixSize = 0;
 	int			i;
@@ -420,8 +421,9 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	 * created by a previous invocation of this routine, and we always emit
 	 * long-format reconstructed values.
 	 */
-	Assert(in->level == 0 ? DatumGetPointer(in->reconstructedValue) == NULL :
-	VARSIZE_ANY_EXHDR(DatumGetPointer(in->reconstructedValue)) == in->level);
+	reconstructedValue = (text *) DatumGetPointer(in->reconstructedValue);
+	Assert(reconstructedValue == NULL ? in->level == 0 :
+		   VARSIZE_ANY_EXHDR(reconstructedValue) == in->level);
 
 	maxReconstrLen = in->level + 1;
 	if (in->hasPrefix)
@@ -436,7 +438,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 
 	if (in->level)
 		memcpy(VARDATA(reconstrText),
-			   VARDATA(DatumGetPointer(in->reconstructedValue)),
+			   VARDATA(reconstructedValue),
 			   in->level);
 	if (prefixSize)
 		memcpy(((char *) VARDATA(reconstrText)) + in->level,
@@ -560,7 +562,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	if (DatumGetPointer(in->reconstructedValue))
 		reconstrValue = DatumGetTextP(in->reconstructedValue);
 
-	Assert(level == 0 ? reconstrValue == NULL :
+	Assert(reconstrValue == NULL ? level == 0 :
 		   VARSIZE_ANY_EXHDR(reconstrValue) == level);
 
 	/* Reconstruct the full string represented by this leaf tuple */

@@ -4,7 +4,7 @@
  *	  Post-processing of a completed plan tree: fix references to subplan
  *	  vars, compute regproc values for operators, etc
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1126,6 +1126,12 @@ set_foreignscan_references(PlannerInfo *root,
 		fscan->fdw_exprs = (List *)
 			fix_upper_expr(root,
 						   (Node *) fscan->fdw_exprs,
+						   itlist,
+						   INDEX_VAR,
+						   rtoffset);
+		fscan->fdw_recheck_quals = (List *)
+			fix_upper_expr(root,
+						   (Node *) fscan->fdw_recheck_quals,
 						   itlist,
 						   INDEX_VAR,
 						   rtoffset);
@@ -2395,7 +2401,8 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		ListCell   *lc;
 
 		/* Collect row security information */
-		context->glob->hasRowSecurity = query->hasRowSecurity;
+		if (query->hasRowSecurity)
+			context->glob->hasRowSecurity = true;
 
 		if (query->commandType == CMD_UTILITY)
 		{

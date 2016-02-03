@@ -14,9 +14,6 @@ include $(top_builddir)/src/Makefile.global
 
 SQLSCRIPT = conversion_create.sql
 
-# This file can be placed as src/test/regress/sql/conversion.sql
-REGRESSION_SCRIPT = conversion.sql
-
 SUBDIRS = \
 	ascii_and_mic cyrillic_and_mic euc_cn_and_mic euc_jp_and_sjis \
 	euc_kr_and_mic euc_tw_and_big5 latin2_and_win1250 latin_and_mic \
@@ -181,24 +178,8 @@ $(SQLSCRIPT): Makefile
 		echo "DROP CONVERSION pg_catalog.$$name;"; \
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	        echo "COMMENT ON CONVERSION pg_catalog.$$name IS 'conversion for $$se to $$de';"; \
+		echo; \
 	done > $@
-
-$(REGRESSION_SCRIPT): Makefile
-	@set -e; \
-	cp regress_prolog $@; \
-	set $(CONVERSIONS) ; \
-	while [ "$$#" -gt 0 ] ; \
-	do \
-		name=$$1;shift; \
-		se=$$1;shift; \
-		de=$$1; shift; \
-		func=$$1; shift; \
-		obj=$$1; shift; \
-		echo "-- $$se --> $$de"; \
-		echo "SELECT CONVERT('foo' USING $$name);"; \
-		echo "SELECT CONVERT('foo', '$$se', '$$de');"; \
-	done >> $@; \
-	cat regress_epilogue >> $@;
 
 install: $(SQLSCRIPT) installdirs
 	$(INSTALL_DATA) $(SQLSCRIPT) '$(DESTDIR)$(datadir)'

@@ -640,9 +640,9 @@ select_perl_context(bool trusted)
 		else
 			plperl_untrusted_init();
 #else
-		errmsg(ERROR,
-			   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot allocate multiple Perl interpreters on this platform")));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot allocate multiple Perl interpreters on this platform")));
 #endif
 	}
 
@@ -2111,8 +2111,10 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 	PUSHMARK(SP);
 	EXTEND(sp, desc->nargs);
 
+	/* Get signature for true functions; inline blocks have no args. */
 	if (fcinfo->flinfo->fn_oid)
 		get_func_signature(fcinfo->flinfo->fn_oid, &argtypes, &nargs);
+	Assert(nargs == desc->nargs);
 
 	for (i = 0; i < desc->nargs; i++)
 	{

@@ -4,7 +4,7 @@
  *	  prototypes for various files in optimizer/path
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/paths.h
@@ -49,6 +49,8 @@ extern PGDLLIMPORT join_search_hook_type join_search_hook;
 extern RelOptInfo *make_one_rel(PlannerInfo *root, List *joinlist);
 extern RelOptInfo *standard_join_search(PlannerInfo *root, int levels_needed,
 					 List *initial_rels);
+
+extern void generate_gather_paths(PlannerInfo *root, RelOptInfo *rel);
 
 #ifdef OPTIMIZER_DEBUG
 extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
@@ -98,6 +100,8 @@ extern RelOptInfo *make_join_rel(PlannerInfo *root,
 			  RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool have_join_order_restriction(PlannerInfo *root,
 							RelOptInfo *rel1, RelOptInfo *rel2);
+extern bool have_dangerous_phv(PlannerInfo *root,
+				   Relids outer_relids, Relids inner_params);
 
 /*
  * equivclass.c
@@ -204,5 +208,8 @@ extern List *truncate_useless_pathkeys(PlannerInfo *root,
 						  RelOptInfo *rel,
 						  List *pathkeys);
 extern bool has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel);
+extern PathKey *make_canonical_pathkey(PlannerInfo *root,
+					   EquivalenceClass *eclass, Oid opfamily,
+					   int strategy, bool nulls_first);
 
 #endif   /* PATHS_H */

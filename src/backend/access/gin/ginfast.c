@@ -7,7 +7,7 @@
  *	  transfer pending entries into the regular index structure.  This
  *	  wins because bulk insertion is much more efficient than retail.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -20,10 +20,13 @@
 
 #include "access/gin_private.h"
 #include "access/xloginsert.h"
+#include "access/xlog.h"
 #include "commands/vacuum.h"
+#include "catalog/pg_am.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/acl.h"
 #include "storage/indexfsm.h"
 
 /* GUC parameter */
@@ -434,7 +437,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	END_CRIT_SECTION();
 
 	if (needCleanup)
-		ginInsertCleanup(ginstate, false, true, NULL);
+		ginInsertCleanup(ginstate, true, NULL);
 }
 
 /*
@@ -732,9 +735,6 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  * action of removing a page from the pending list really needs exclusive
  * lock.
  *
- * vac_delay indicates that ginInsertCleanup should call
- * vacuum_delay_point() periodically.
- *
  * fill_fsm indicates that ginInsertCleanup should add deleted pages
  * to FSM otherwise caller is responsible to put deleted pages into
  * FSM.
@@ -743,8 +743,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  */
 void
 ginInsertCleanup(GinState *ginstate,
-				 bool vac_delay, bool fill_fsm,
-				 IndexBulkDeleteResult *stats)
+				 bool fill_fsm, IndexBulkDeleteResult *stats)
 {
 	Relation	index = ginstate->index;
 	Buffer		metabuffer,
@@ -961,4 +960,53 @@ ginInsertCleanup(GinState *ginstate,
 	/* Clean up temporary space */
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextDelete(opCtx);
+}
+
+/*
+ * SQL-callable function to clean the insert pending list
+ */
+Datum
+gin_clean_pending_list(PG_FUNCTION_ARGS)
+{
+	Oid			indexoid = PG_GETARG_OID(0);
+	Relation	indexRel = index_open(indexoid, AccessShareLock);
+	IndexBulkDeleteResult stats;
+	GinState	ginstate;
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("GIN pending list cannot be cleaned up during recovery.")));
+
+	/* Must be a GIN index */
+	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||
+		indexRel->rd_rel->relam != GIN_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a GIN index",
+						RelationGetRelationName(indexRel))));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(indexRel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("cannot access temporary indexes of other sessions")));
+
+	/* User must own the index (comparable to privileges needed for VACUUM) */
+	if (!pg_class_ownercheck(indexoid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(indexRel));
+
+	memset(&stats, 0, sizeof(stats));
+	initGinState(&ginstate, indexRel);
+	ginInsertCleanup(&ginstate, true, &stats);
+
+	index_close(indexRel, AccessShareLock);
+
+	PG_RETURN_INT64((int64) stats.pages_deleted);
 }

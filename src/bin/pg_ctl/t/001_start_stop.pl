@@ -1,6 +1,8 @@
 use strict;
 use warnings;
+
 use Config;
+use PostgresNode;
 use TestLib;
 use Test::More tests => 17;
 
@@ -16,13 +18,11 @@ command_exit_is([ 'pg_ctl', 'start', '-D', "$tempdir/nonexistent" ],
 
 command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data", '-o', '-N' ],
 	'pg_ctl initdb');
-command_ok(
-	[ $ENV{PG_REGRESS}, '--config-auth',
-		"$tempdir/data" ],
+command_ok([ $ENV{PG_REGRESS}, '--config-auth', "$tempdir/data" ],
 	'configure authentication');
 open CONF, ">>$tempdir/data/postgresql.conf";
 print CONF "fsync = off\n";
-if (! $windows_os)
+if (!$windows_os)
 {
 	print CONF "listen_addresses = ''\n";
 	print CONF "unix_socket_directories = '$tempdir_short'\n";
@@ -34,6 +34,7 @@ else
 close CONF;
 command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w' ],
 	'pg_ctl start -w');
+
 # sleep here is because Windows builds can't check postmaster.pid exactly,
 # so they may mistake a pre-existing postmaster.pid for one created by the
 # postmaster they start.  Waiting more than the 2 seconds slop time allowed

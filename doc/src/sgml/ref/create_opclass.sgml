@@ -289,7 +289,7 @@ CREATE OPERATOR CLASS gist__int_ops
         OPERATOR        7       @&gt;,
         OPERATOR        8       &lt;@,
         OPERATOR        20      @@ (_int4, query_int),
-        FUNCTION        1       g_int_consistent (internal, _int4, int, oid, internal),
+        FUNCTION        1       g_int_consistent (internal, _int4, smallint, oid, internal),
         FUNCTION        2       g_int_union (internal, internal),
         FUNCTION        3       g_int_compress (internal),
         FUNCTION        4       g_int_decompress (internal),

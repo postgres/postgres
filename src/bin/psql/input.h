@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.h
  */
@@ -12,7 +12,7 @@
  * If some other file needs to have access to readline/history, include this
  * file and save yourself all this work.
  *
- * USE_READLINE is the definite pointers regarding existence or not.
+ * USE_READLINE is what to conditionalize readline-dependent code on.
  */
 #ifdef HAVE_LIBREADLINE
 #define USE_READLINE 1
@@ -38,14 +38,14 @@
 #include "pqexpbuffer.h"
 
 
-char	   *gets_interactive(const char *prompt);
-char	   *gets_fromFile(FILE *source);
+extern char *gets_interactive(const char *prompt, PQExpBuffer query_buf);
+extern char *gets_fromFile(FILE *source);
 
-void		initializeInput(int flags);
+extern void initializeInput(int flags);
 
-bool		printHistory(const char *fname, unsigned short int pager);
+extern bool printHistory(const char *fname, unsigned short int pager);
 
-void		pg_append_history(const char *s, PQExpBuffer history_buf);
-void		pg_send_history(PQExpBuffer history_buf);
+extern void pg_append_history(const char *s, PQExpBuffer history_buf);
+extern void pg_send_history(PQExpBuffer history_buf);
 
 #endif   /* INPUT_H */

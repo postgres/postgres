@@ -1253,8 +1253,8 @@ ROLLUP ( <replaceable>e1</>, <replaceable>e2</>, <replaceable>e3</>, ... )
 GROUPING SETS (
     ( <replaceable>e1</>, <replaceable>e2</>, <replaceable>e3</>, ... ),
     ...
-    ( <replaceable>e1</>, <replaceable>e2</> )
-    ( <replaceable>e1</> )
+    ( <replaceable>e1</>, <replaceable>e2</> ),
+    ( <replaceable>e1</> ),
     ( )
 )
 </programlisting>
@@ -1282,7 +1282,7 @@ GROUPING SETS (
     (    b, c ),
     (    b    ),
     (       c ),
-    (         ),
+    (         )
 )
 </programlisting>
    </para>
@@ -1294,27 +1294,27 @@ GROUPING SETS (
     units for the purposes of generating the individual grouping sets.
     For example:
 <programlisting>
-CUBE ( (a,b), (c,d) )
+CUBE ( (a, b), (c, d) )
 </programlisting>
     is equivalent to
 <programlisting>
 GROUPING SETS (
-    ( a, b, c, d )
-    ( a, b       )
-    (       c, d )
+    ( a, b, c, d ),
+    ( a, b       ),
+    (       c, d ),
     (            )
 )
 </programlisting>
     and
 <programlisting>
-ROLLUP ( a, (b,c), d )
+ROLLUP ( a, (b, c), d )
 </programlisting>
     is equivalent to
 <programlisting>
 GROUPING SETS (
-    ( a, b, c, d )
-    ( a, b, c    )
-    ( a          )
+    ( a, b, c, d ),
+    ( a, b, c    ),
+    ( a          ),
     (            )
 )
 </programlisting>
@@ -1333,27 +1333,27 @@ GROUPING SETS (
     clause, then the final list of grouping sets is the cross product of the
     individual items.  For example:
 <programlisting>
-GROUP BY a, CUBE(b,c), GROUPING SETS ((d), (e))
+GROUP BY a, CUBE (b, c), GROUPING SETS ((d), (e))
 </programlisting>
     is equivalent to
 <programlisting>
 GROUP BY GROUPING SETS (
-  (a,b,c,d), (a,b,c,e),
-  (a,b,d),   (a,b,e),
-  (a,c,d),   (a,c,e),
-  (a,d),     (a,e)
+    (a, b, c, d), (a, b, c, e),
+    (a, b, d),    (a, b, e),
+    (a, c, d),    (a, c, e),
+    (a, d),       (a, e)
 )
 </programlisting>
    </para>
 
   <note>
    <para>
-    The construct <literal>(a,b)</> is normally recognized in expressions as
+    The construct <literal>(a, b)</> is normally recognized in expressions as
     a <link linkend="sql-syntax-row-constructors">row constructor</link>.
     Within the <literal>GROUP BY</> clause, this does not apply at the top
-    levels of expressions, and <literal>(a,b)</> is parsed as a list of
+    levels of expressions, and <literal>(a, b)</> is parsed as a list of
     expressions as described above.  If for some reason you <emphasis>need</>
-    a row constructor in a grouping expression, use <literal>ROW(a,b)</>.
+    a row constructor in a grouping expression, use <literal>ROW(a, b)</>.
    </para>
   </note>
   </sect2>

@@ -3,7 +3,7 @@
  * nbtutils.c
  *	  Utility code for Postgres btree implementation.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -2058,15 +2058,8 @@ BTreeShmemInit(void)
 		Assert(found);
 }
 
-Datum
-btoptions(PG_FUNCTION_ARGS)
+bytea *
+btoptions(Datum reloptions, bool validate)
 {
-	Datum		reloptions = PG_GETARG_DATUM(0);
-	bool		validate = PG_GETARG_BOOL(1);
-	bytea	   *result;
-
-	result = default_reloptions(reloptions, validate, RELOPT_KIND_BTREE);
-	if (result)
-		PG_RETURN_BYTEA_P(result);
-	PG_RETURN_NULL();
+	return default_reloptions(reloptions, validate, RELOPT_KIND_BTREE);
 }

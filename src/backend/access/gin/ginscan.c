@@ -4,7 +4,7 @@
  *	  routines to manage scans of inverted index relations
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -21,12 +21,9 @@
 #include "utils/rel.h"
 
 
-Datum
-ginbeginscan(PG_FUNCTION_ARGS)
+IndexScanDesc
+ginbeginscan(Relation rel, int nkeys, int norderbys)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			nkeys = PG_GETARG_INT32(1);
-	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
 	GinScanOpaque so;
 
@@ -53,7 +50,7 @@ ginbeginscan(PG_FUNCTION_ARGS)
 
 	scan->opaque = so;
 
-	PG_RETURN_POINTER(scan);
+	return scan;
 }
 
 /*
@@ -417,13 +414,10 @@ ginNewScanKey(IndexScanDesc scan)
 	pgstat_count_index_scan(scan->indexRelation);
 }
 
-Datum
-ginrescan(PG_FUNCTION_ARGS)
+void
+ginrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
+		  ScanKey orderbys, int norderbys)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
-
-	/* remaining arguments are ignored */
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
 	ginFreeScanKeys(so);
@@ -433,15 +427,12 @@ ginrescan(PG_FUNCTION_ARGS)
 		memmove(scan->keyData, scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 	}
-
-	PG_RETURN_VOID();
 }
 
 
-Datum
-ginendscan(PG_FUNCTION_ARGS)
+void
+ginendscan(IndexScanDesc scan)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
 	ginFreeScanKeys(so);
@@ -450,20 +441,4 @@ ginendscan(PG_FUNCTION_ARGS)
 	MemoryContextDelete(so->keyCtx);
 
 	pfree(so);
-
-	PG_RETURN_VOID();
-}
-
-Datum
-ginmarkpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "GIN does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-ginrestrpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "GIN does not support mark/restore");
-	PG_RETURN_VOID();
 }

@@ -3,7 +3,7 @@
  *
  *	controldata functions
  *
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/controldata.c
  */
 
@@ -120,7 +120,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	if ((output = popen(cmd, "r")) == NULL)
 		pg_fatal("Could not get control data using %s: %s\n",
-				 cmd, getErrorText(errno));
+				 cmd, getErrorText());
 
 	/* Only in <= 9.2 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
@@ -539,7 +539,7 @@ check_control_data(ControlData *oldctrl,
 		pg_fatal("old and new pg_controldata block sizes are invalid or do not match\n");
 
 	if (oldctrl->largesz == 0 || oldctrl->largesz != newctrl->largesz)
-		pg_fatal("old and new pg_controldata maximum relation segement sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata maximum relation segment sizes are invalid or do not match\n");
 
 	if (oldctrl->walsz == 0 || oldctrl->walsz != newctrl->walsz)
 		pg_fatal("old and new pg_controldata WAL block sizes are invalid or do not match\n");

@@ -48,7 +48,7 @@ test: create_function_2
 # execute two copy tests parallel, to check that copy itself
 # is concurrent safe.
 # ----------
-test: copy copyselect
+test: copy copyselect copydml
 
 # ----------
 # More groups of parallel tests
@@ -89,7 +89,7 @@ test: brin gin gist spgist privileges security_label collate matview lock replic
 # ----------
 # Another group of parallel tests
 # ----------
-test: alter_generic alter_operator misc psql async
+test: alter_generic alter_operator misc psql async dbsize
 
 # rules cannot run concurrently with any test that creates a view
 test: rules

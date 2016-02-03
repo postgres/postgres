@@ -365,7 +365,7 @@ sub GenerateConversionScript
 		$sql .=
 "CREATE DEFAULT CONVERSION pg_catalog.$name FOR '$se' TO '$de' FROM $func;\n";
 		$sql .=
-"COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n";
+"COMMENT ON CONVERSION pg_catalog.$name IS 'conversion for $se to $de';\n\n";
 	}
 	open($F, ">$target/share/conversion_create.sql")
 	  || die "Could not write to conversion_create.sql\n";
@@ -582,7 +582,7 @@ sub CopyIncludeFiles
 		'Public headers', $target . '/include/',
 		'src/include/',   'postgres_ext.h',
 		'pg_config.h',    'pg_config_ext.h',
-		'pg_config_os.h', 'pg_config_manual.h');
+		'pg_config_os.h', 'dynloader.h', 'pg_config_manual.h');
 	lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
 	  || croak 'Could not copy libpq-fs.h';
 
@@ -605,7 +605,8 @@ sub CopyIncludeFiles
 	CopyFiles(
 		'Server headers',
 		$target . '/include/server/',
-		'src/include/', 'pg_config.h', 'pg_config_ext.h', 'pg_config_os.h');
+		'src/include/', 'pg_config.h', 'pg_config_ext.h', 'pg_config_os.h',
+		'dynloader.h');
 	CopyFiles(
 		'Grammar header',
 		$target . '/include/server/parser/',

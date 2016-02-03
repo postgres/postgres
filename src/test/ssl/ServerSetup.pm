@@ -18,6 +18,7 @@ package ServerSetup;
 
 use strict;
 use warnings;
+use PostgresNode;
 use TestLib;
 use File::Basename;
 use File::Copy;
@@ -45,17 +46,19 @@ sub copy_files
 
 sub configure_test_server_for_ssl
 {
-	my $tempdir    = $_[0];
+	my $node       = $_[0];
 	my $serverhost = $_[1];
 
+	my $pgdata = $node->data_dir;
+
 	# Create test users and databases
-	psql 'postgres', "CREATE USER ssltestuser";
-	psql 'postgres', "CREATE USER anotheruser";
-	psql 'postgres', "CREATE DATABASE trustdb";
-	psql 'postgres', "CREATE DATABASE certdb";
+	$node->psql('postgres', "CREATE USER ssltestuser");
+	$node->psql('postgres', "CREATE USER anotheruser");
+	$node->psql('postgres', "CREATE DATABASE trustdb");
+	$node->psql('postgres', "CREATE DATABASE certdb");
 
 	# enable logging etc.
-	open CONF, ">>$tempdir/pgdata/postgresql.conf";
+	open CONF, ">>$pgdata/postgresql.conf";
 	print CONF "fsync=off\n";
 	print CONF "log_connections=on\n";
 	print CONF "log_hostname=on\n";
@@ -68,17 +71,17 @@ sub configure_test_server_for_ssl
 	close CONF;
 
 # Copy all server certificates and keys, and client root cert, to the data dir
-	copy_files("ssl/server-*.crt", "$tempdir/pgdata");
-	copy_files("ssl/server-*.key", "$tempdir/pgdata");
-	chmod(0600, glob "$tempdir/pgdata/server-*.key") or die $!;
-	copy_files("ssl/root+client_ca.crt", "$tempdir/pgdata");
-	copy_files("ssl/root+client.crl",    "$tempdir/pgdata");
+	copy_files("ssl/server-*.crt", $pgdata);
+	copy_files("ssl/server-*.key", $pgdata);
+	chmod(0600, glob "$pgdata/server-*.key") or die $!;
+	copy_files("ssl/root+client_ca.crt", $pgdata);
+	copy_files("ssl/root+client.crl",    $pgdata);
 
   # Only accept SSL connections from localhost. Our tests don't depend on this
   # but seems best to keep it as narrow as possible for security reasons.
   #
   # When connecting to certdb, also check the client certificate.
-	open HBA, ">$tempdir/pgdata/pg_hba.conf";
+	open HBA, ">$pgdata/pg_hba.conf";
 	print HBA
 "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
 	print HBA
@@ -96,12 +99,13 @@ sub configure_test_server_for_ssl
 # the server so that the configuration takes effect.
 sub switch_server_cert
 {
-	my $tempdir  = $_[0];
+	my $node     = $_[0];
 	my $certfile = $_[1];
+	my $pgdata   = $node->data_dir;
 
 	diag "Restarting server with certfile \"$certfile\"...";
 
-	open SSLCONF, ">$tempdir/pgdata/sslconfig.conf";
+	open SSLCONF, ">$pgdata/sslconfig.conf";
 	print SSLCONF "ssl=on\n";
 	print SSLCONF "ssl_ca_file='root+client_ca.crt'\n";
 	print SSLCONF "ssl_cert_file='$certfile.crt'\n";
@@ -110,5 +114,5 @@ sub switch_server_cert
 	close SSLCONF;
 
 	# Stop and restart server to reload the new config.
-	restart_test_server();
+	$node->restart;
 }

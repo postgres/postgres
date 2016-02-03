@@ -6,7 +6,7 @@
  *	  message integrity and endpoint authentication.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -408,10 +408,10 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
 	return NULL;
 }
 
-const char **
-PQsslAttributes(PGconn *conn)
+const char *const *
+PQsslAttributeNames(PGconn *conn)
 {
-	static const char *result[] = {NULL};
+	static const char *const result[] = {NULL};
 
 	return result;
 }

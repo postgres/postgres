@@ -34,7 +34,7 @@
    regular access to tables is built into
    <productname>PostgreSQL</productname>, but all index methods are
    described in <classname>pg_am</classname>.  It is possible to add a
-   new index method by defining the required interface routines and
+   new index access method by writing the necessary code and
    then creating a row in <classname>pg_am</classname> &mdash; but that is
    beyond the scope of this chapter (see <xref linkend="indexam">).
   </para>
@@ -416,8 +416,8 @@
    </table>
 
   <para>
-   GiST indexes require seven support functions, with an optional eighth, as
-   shown in <xref linkend="xindex-gist-support-table">.
+   GiST indexes have nine support functions, two of which are optional,
+   as shown in <xref linkend="xindex-gist-support-table">.
    (For more information see <xref linkend="GiST">.)
   </para>
 
@@ -477,6 +477,12 @@
        <entry>determine distance from key to query value (optional)</entry>
        <entry>8</entry>
       </row>
+      <row>
+       <entry><function>fetch</></entry>
+       <entry>compute original representation of a compressed key for
+       index-only scans (optional)</entry>
+       <entry>9</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -530,8 +536,8 @@
    </table>
 
   <para>
-   GIN indexes require four support functions, with an optional fifth, as
-   shown in <xref linkend="xindex-gin-support-table">.
+   GIN indexes have six support functions, three of which are optional,
+   as shown in <xref linkend="xindex-gin-support-table">.
    (For more information see <xref linkend="GIN">.)
   </para>
 

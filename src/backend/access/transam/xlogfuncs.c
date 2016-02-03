@@ -7,7 +7,7 @@
  * This file contains WAL control and information functions.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xlogfuncs.c
@@ -211,6 +211,27 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
 	current_recptr = GetXLogInsertRecPtr();
+
+	PG_RETURN_LSN(current_recptr);
+}
+
+/*
+ * Report the current WAL flush location (same format as pg_start_backup etc)
+ *
+ * This function is mostly for debugging purposes.
+ */
+Datum
+pg_current_xlog_flush_location(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	current_recptr;
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
+
+	current_recptr = GetFlushRecPtr();
 
 	PG_RETURN_LSN(current_recptr);
 }

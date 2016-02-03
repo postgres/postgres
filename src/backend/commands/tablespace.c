@@ -35,7 +35,7 @@
  * and munge the system catalogs of the new database.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -800,7 +800,7 @@ remove_symlink:
 		/* Refuse to remove anything that's not a directory or symlink */
 		ereport(redo ? LOG : ERROR,
 				(ERRCODE_SYSTEM_ERROR,
-				 errmsg("not a directory or symbolic link: \"%s\"",
+				 errmsg("\"%s\" is not a directory or symbolic link",
 						linkloc)));
 	}
 
@@ -886,7 +886,7 @@ remove_tablespace_symlink(const char *linkloc)
 	{
 		/* Refuse to remove anything that's not a directory or symlink */
 		ereport(ERROR,
-				(errmsg("not a directory or symbolic link: \"%s\"",
+				(errmsg("\"%s\" is not a directory or symbolic link",
 						linkloc)));
 	}
 }

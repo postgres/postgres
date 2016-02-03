@@ -4,7 +4,7 @@
  *		PostgreSQL transaction log manager
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xlog.c
@@ -321,8 +321,7 @@ static TimeLineID curFileTLI;
  * stored here.  The parallel leader advances its own copy, when necessary,
  * in WaitForParallelWorkersToFinish.
  */
-static XLogRecPtr ProcLastRecPtr = InvalidXLogRecPtr;
-
+XLogRecPtr	ProcLastRecPtr = InvalidXLogRecPtr;
 XLogRecPtr	XactLastRecEnd = InvalidXLogRecPtr;
 XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
 
@@ -512,7 +511,6 @@ typedef struct XLogCtlInsert
 	 */
 	WALInsertLockPadded *WALInsertLocks;
 	LWLockTranche WALInsertLockTranche;
-	int			WALInsertLockTrancheId;
 } XLogCtlInsert;
 
 /*
@@ -4653,7 +4651,7 @@ XLOGShmemInit(void)
 
 		/* Initialize local copy of WALInsertLocks and register the tranche */
 		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
-		LWLockRegisterTranche(XLogCtl->Insert.WALInsertLockTrancheId,
+		LWLockRegisterTranche(LWTRANCHE_WAL_INSERT,
 							  &XLogCtl->Insert.WALInsertLockTranche);
 		return;
 	}
@@ -4677,17 +4675,14 @@ XLOGShmemInit(void)
 		(WALInsertLockPadded *) allocptr;
 	allocptr += sizeof(WALInsertLockPadded) * NUM_XLOGINSERT_LOCKS;
 
-	XLogCtl->Insert.WALInsertLockTrancheId = LWLockNewTrancheId();
-
 	XLogCtl->Insert.WALInsertLockTranche.name = "WALInsertLocks";
 	XLogCtl->Insert.WALInsertLockTranche.array_base = WALInsertLocks;
 	XLogCtl->Insert.WALInsertLockTranche.array_stride = sizeof(WALInsertLockPadded);
 
-	LWLockRegisterTranche(XLogCtl->Insert.WALInsertLockTrancheId, &XLogCtl->Insert.WALInsertLockTranche);
+	LWLockRegisterTranche(LWTRANCHE_WAL_INSERT, &XLogCtl->Insert.WALInsertLockTranche);
 	for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
 	{
-		LWLockInitialize(&WALInsertLocks[i].l.lock,
-						 XLogCtl->Insert.WALInsertLockTrancheId);
+		LWLockInitialize(&WALInsertLocks[i].l.lock, LWTRANCHE_WAL_INSERT);
 		WALInsertLocks[i].l.insertingAt = InvalidXLogRecPtr;
 	}
 
@@ -4786,8 +4781,8 @@ BootStrapXLOG(void)
 	checkPoint.oldestXidDB = TemplateDbOid;
 	checkPoint.oldestMulti = FirstMultiXactId;
 	checkPoint.oldestMultiDB = TemplateDbOid;
-	checkPoint.oldestCommitTs = InvalidTransactionId;
-	checkPoint.newestCommitTs = InvalidTransactionId;
+	checkPoint.oldestCommitTsXid = InvalidTransactionId;
+	checkPoint.newestCommitTsXid = InvalidTransactionId;
 	checkPoint.time = (pg_time_t) time(NULL);
 	checkPoint.oldestActiveXid = InvalidTransactionId;
 
@@ -4976,9 +4971,10 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for recovery parameter \"%s\"",
-								"recovery_target_action"),
-						 errhint("The allowed values are \"pause\", \"promote\", and \"shutdown\".")));
+						 errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
+								"recovery_target_action",
+								item->value),
+						 errhint("Valid values are \"pause\", \"promote\", and \"shutdown\".")));
 
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target_action = '%s'",
@@ -5058,7 +5054,9 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for recovery parameter \"recovery_target\""),
+						 errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
+								"recovery_target",
+								item->value),
 					   errhint("The only allowed value is \"immediate\".")));
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target = '%s'",
@@ -6142,7 +6140,7 @@ StartupXLOG(void)
 			unlink(TABLESPACE_MAP_OLD);
 			if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) == 0)
 				ereport(LOG,
-					(errmsg("ignoring \"%s\" file because no \"%s\" file exists",
+					(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
 							TABLESPACE_MAP, BACKUP_LABEL_FILE),
 					 errdetail("File \"%s\" was renamed to \"%s\".",
 							   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
@@ -6150,7 +6148,7 @@ StartupXLOG(void)
 				ereport(LOG,
 						(errmsg("ignoring \"%s\" file because no \"%s\" file exists",
 								TABLESPACE_MAP, BACKUP_LABEL_FILE),
-						 errdetail("File \"%s\" could not be renamed to \"%s\": %m.",
+						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
 								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 		}
 
@@ -6281,26 +6279,26 @@ StartupXLOG(void)
 	LastRec = RecPtr = checkPointLoc;
 
 	ereport(DEBUG1,
-			(errmsg("redo record is at %X/%X; shutdown %s",
+			(errmsg_internal("redo record is at %X/%X; shutdown %s",
 				  (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
 					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(DEBUG1,
-			(errmsg("next transaction ID: %u/%u; next OID: %u",
+			(errmsg_internal("next transaction ID: %u/%u; next OID: %u",
 					checkPoint.nextXidEpoch, checkPoint.nextXid,
 					checkPoint.nextOid)));
 	ereport(DEBUG1,
-			(errmsg("next MultiXactId: %u; next MultiXactOffset: %u",
+			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
 					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
 	ereport(DEBUG1,
-			(errmsg("oldest unfrozen transaction ID: %u, in database %u",
+			(errmsg_internal("oldest unfrozen transaction ID: %u, in database %u",
 					checkPoint.oldestXid, checkPoint.oldestXidDB)));
 	ereport(DEBUG1,
-			(errmsg("oldest MultiXactId: %u, in database %u",
+			(errmsg_internal("oldest MultiXactId: %u, in database %u",
 					checkPoint.oldestMulti, checkPoint.oldestMultiDB)));
 	ereport(DEBUG1,
-			(errmsg("commit timestamp Xid oldest/newest: %u/%u",
-					checkPoint.oldestCommitTs,
-					checkPoint.newestCommitTs)));
+			(errmsg_internal("commit timestamp Xid oldest/newest: %u/%u",
+					checkPoint.oldestCommitTsXid,
+					checkPoint.newestCommitTsXid)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
@@ -6312,8 +6310,8 @@ StartupXLOG(void)
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
 	SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
 	SetMultiXactIdLimit(checkPoint.oldestMulti, checkPoint.oldestMultiDB);
-	SetCommitTsLimit(checkPoint.oldestCommitTs,
-					 checkPoint.newestCommitTs);
+	SetCommitTsLimit(checkPoint.oldestCommitTsXid,
+					 checkPoint.newestCommitTsXid);
 	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
 	XLogCtl->ckptXid = checkPoint.nextXid;
 
@@ -6334,6 +6332,14 @@ StartupXLOG(void)
 	 * truncations.
 	 */
 	StartupMultiXact();
+
+	/*
+	 * Ditto commit timestamps.  In a standby, we do it if setting is enabled
+	 * in ControlFile; in a master we base the decision on the GUC itself.
+	 */
+	if (ArchiveRecoveryRequested ?
+		ControlFile->track_commit_timestamp : track_commit_timestamp)
+		StartupCommitTs();
 
 	/*
 	 * Recover knowledge about replay progress of known replication partners.
@@ -6562,12 +6568,11 @@ StartupXLOG(void)
 			ProcArrayInitRecovery(ShmemVariableCache->nextXid);
 
 			/*
-			 * Startup commit log, commit timestamp and subtrans only.
-			 * MultiXact has already been started up and other SLRUs are not
+			 * Startup commit log and subtrans only.  MultiXact and commit
+			 * timestamp have already been started up and other SLRUs are not
 			 * maintained during recovery and need not be started yet.
 			 */
 			StartupCLOG();
-			StartupCommitTs(ControlFile->track_commit_timestamp);
 			StartupSUBTRANS(oldestActiveXID);
 
 			/*
@@ -7330,13 +7335,12 @@ StartupXLOG(void)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Start up the commit log, commit timestamp and subtrans, if not already
-	 * done for hot standby.
+	 * Start up the commit log and subtrans, if not already done for hot
+	 * standby.  (commit timestamps are started below, if necessary.)
 	 */
 	if (standbyState == STANDBY_DISABLED)
 	{
 		StartupCLOG();
-		StartupCommitTs(false);
 		StartupSUBTRANS(oldestActiveXID);
 	}
 
@@ -7857,13 +7861,11 @@ GetInsertRecPtr(void)
 XLogRecPtr
 GetFlushRecPtr(void)
 {
-	XLogRecPtr	recptr;
-
 	SpinLockAcquire(&XLogCtl->info_lck);
-	recptr = XLogCtl->LogwrtResult.Flush;
+	LogwrtResult = XLogCtl->LogwrtResult;
 	SpinLockRelease(&XLogCtl->info_lck);
 
-	return recptr;
+	return LogwrtResult.Flush;
 }
 
 /*
@@ -8325,8 +8327,8 @@ CreateCheckPoint(int flags)
 	LWLockRelease(XidGenLock);
 
 	LWLockAcquire(CommitTsLock, LW_SHARED);
-	checkPoint.oldestCommitTs = ShmemVariableCache->oldestCommitTs;
-	checkPoint.newestCommitTs = ShmemVariableCache->newestCommitTs;
+	checkPoint.oldestCommitTsXid = ShmemVariableCache->oldestCommitTsXid;
+	checkPoint.newestCommitTsXid = ShmemVariableCache->newestCommitTsXid;
 	LWLockRelease(CommitTsLock);
 
 	/* Increase XID epoch if we've wrapped around since last checkpoint */

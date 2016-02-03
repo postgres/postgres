@@ -137,7 +137,7 @@ PostgreSQL documentation
       A safe value for the oldest transaction ID for which the commit time can
       be retrieved (first part of <option>-c</>) can be determined by looking
       for the numerically smallest file name in the directory
-      <filename>pg_committs</> under the data directory.  Conversely, a safe
+      <filename>pg_commit_ts</> under the data directory.  Conversely, a safe
       value for the newest transaction ID for which the commit time can be
       retrieved (second part of <option>-c</>) can be determined by looking for
       the numerically greatest file name in the same directory.  As above, the

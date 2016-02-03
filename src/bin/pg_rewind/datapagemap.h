@@ -2,7 +2,7 @@
  *
  * datapagemap.h
  *
- * Copyright (c) 2013-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2016, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,6 @@ struct datapagemap
 typedef struct datapagemap datapagemap_t;
 typedef struct datapagemap_iterator datapagemap_iterator_t;
 
-extern datapagemap_t *datapagemap_create(void);
-extern void datapagemap_destroy(datapagemap_t *map);
 extern void datapagemap_add(datapagemap_t *map, BlockNumber blkno);
 extern datapagemap_iterator_t *datapagemap_iterate(datapagemap_t *map);
 extern bool datapagemap_next(datapagemap_iterator_t *iter, BlockNumber *blkno);

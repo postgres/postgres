@@ -6,7 +6,7 @@
  *	   logical replication slots via SQL.
  *
  *
- * Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logicalfuncs.c
@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 
 #include "access/xlog_internal.h"
+#include "access/xlogutils.h"
 
 #include "catalog/pg_type.h"
 
@@ -100,108 +101,6 @@ LogicalOutputWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xi
 	p->returned_rows++;
 }
 
-/*
- * TODO: This is duplicate code with pg_xlogdump, similar to walsender.c, but
- * we currently don't have the infrastructure (elog!) to share it.
- */
-static void
-XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
-{
-	char	   *p;
-	XLogRecPtr	recptr;
-	Size		nbytes;
-
-	static int	sendFile = -1;
-	static XLogSegNo sendSegNo = 0;
-	static uint32 sendOff = 0;
-
-	p = buf;
-	recptr = startptr;
-	nbytes = count;
-
-	while (nbytes > 0)
-	{
-		uint32		startoff;
-		int			segbytes;
-		int			readbytes;
-
-		startoff = recptr % XLogSegSize;
-
-		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo))
-		{
-			char		path[MAXPGPATH];
-
-			/* Switch to another logfile segment */
-			if (sendFile >= 0)
-				close(sendFile);
-
-			XLByteToSeg(recptr, sendSegNo);
-
-			XLogFilePath(path, tli, sendSegNo);
-
-			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
-
-			if (sendFile < 0)
-			{
-				if (errno == ENOENT)
-					ereport(ERROR,
-							(errcode_for_file_access(),
-							 errmsg("requested WAL segment %s has already been removed",
-									path)));
-				else
-					ereport(ERROR,
-							(errcode_for_file_access(),
-							 errmsg("could not open file \"%s\": %m",
-									path)));
-			}
-			sendOff = 0;
-		}
-
-		/* Need to seek in the file? */
-		if (sendOff != startoff)
-		{
-			if (lseek(sendFile, (off_t) startoff, SEEK_SET) < 0)
-			{
-				char		path[MAXPGPATH];
-
-				XLogFilePath(path, tli, sendSegNo);
-
-				ereport(ERROR,
-						(errcode_for_file_access(),
-				  errmsg("could not seek in log segment %s to offset %u: %m",
-						 path, startoff)));
-			}
-			sendOff = startoff;
-		}
-
-		/* How many bytes are within this segment? */
-		if (nbytes > (XLogSegSize - startoff))
-			segbytes = XLogSegSize - startoff;
-		else
-			segbytes = nbytes;
-
-		readbytes = read(sendFile, p, segbytes);
-		if (readbytes <= 0)
-		{
-			char		path[MAXPGPATH];
-
-			XLogFilePath(path, tli, sendSegNo);
-
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read from log segment %s, offset %u, length %lu: %m",
-							path, sendOff, (unsigned long) segbytes)));
-		}
-
-		/* Update state for read */
-		recptr += readbytes;
-
-		sendOff += readbytes;
-		nbytes -= readbytes;
-		p += readbytes;
-	}
-}
-
 static void
 check_permissions(void)
 {
@@ -211,63 +110,12 @@ check_permissions(void)
 				 (errmsg("must be superuser or replication role to use replication slots"))));
 }
 
-/*
- * read_page callback for logical decoding contexts.
- *
- * Public because it would likely be very helpful for someone writing another
- * output method outside walsender, e.g. in a bgworker.
- *
- * TODO: The walsender has it's own version of this, but it relies on the
- * walsender's latch being set whenever WAL is flushed. No such infrastructure
- * exists for normal backends, so we have to do a check/sleep/repeat style of
- * loop for now.
- */
 int
 logical_read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 	int reqLen, XLogRecPtr targetRecPtr, char *cur_page, TimeLineID *pageTLI)
 {
-	XLogRecPtr	flushptr,
-				loc;
-	int			count;
-
-	loc = targetPagePtr + reqLen;
-	while (1)
-	{
-		/*
-		 * TODO: we're going to have to do something more intelligent about
-		 * timelines on standbys. Use readTimeLineHistory() and
-		 * tliOfPointInHistory() to get the proper LSN? For now we'll catch
-		 * that case earlier, but the code and TODO is left in here for when
-		 * that changes.
-		 */
-		if (!RecoveryInProgress())
-		{
-			*pageTLI = ThisTimeLineID;
-			flushptr = GetFlushRecPtr();
-		}
-		else
-			flushptr = GetXLogReplayRecPtr(pageTLI);
-
-		if (loc <= flushptr)
-			break;
-
-		CHECK_FOR_INTERRUPTS();
-		pg_usleep(1000L);
-	}
-
-	/* more than one block available */
-	if (targetPagePtr + XLOG_BLCKSZ <= flushptr)
-		count = XLOG_BLCKSZ;
-	/* not enough data there */
-	else if (targetPagePtr + reqLen > flushptr)
-		return -1;
-	/* part of the page available */
-	else
-		count = flushptr - targetPagePtr;
-
-	XLogRead(cur_page, *pageTLI, targetPagePtr, XLOG_BLCKSZ);
-
-	return count;
+	return read_local_xlog_page(state, targetPagePtr, reqLen,
+						 targetRecPtr, cur_page, pageTLI);
 }
 
 /*
@@ -276,24 +124,30 @@ logical_read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 static Datum
 pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool binary)
 {
-	Name		name = PG_GETARG_NAME(0);
+	Name		name;
 	XLogRecPtr	upto_lsn;
 	int32		upto_nchanges;
-
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
-
 	XLogRecPtr	end_of_wal;
 	XLogRecPtr	startptr;
-
 	LogicalDecodingContext *ctx;
-
 	ResourceOwner old_resowner = CurrentResourceOwner;
 	ArrayType  *arr;
 	Size		ndim;
 	List	   *options = NIL;
 	DecodingOutputState *p;
+
+	check_permissions();
+
+	CheckLogicalDecodingRequirements();
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("slot name must not be null")));
+	name = PG_GETARG_NAME(0);
 
 	if (PG_ARGISNULL(1))
 		upto_lsn = InvalidXLogRecPtr;
@@ -304,6 +158,12 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		upto_nchanges = InvalidXLogRecPtr;
 	else
 		upto_nchanges = PG_GETARG_INT32(2);
+
+	if (PG_ARGISNULL(3))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("options array must not be null")));
+	arr = PG_GETARG_ARRAYTYPE_P(3);
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -324,16 +184,11 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	if (get_call_result_type(fcinfo, NULL, &p->tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	check_permissions();
-
-	CheckLogicalDecodingRequirements();
-
-	arr = PG_GETARG_ARRAYTYPE_P(3);
-	ndim = ARR_NDIM(arr);
-
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
+	/* Deconstruct options array */
+	ndim = ARR_NDIM(arr);
 	if (ndim > 1)
 	{
 		ereport(ERROR,
@@ -382,7 +237,6 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	else
 		end_of_wal = GetXLogReplayRecPtr(NULL);
 
-	CheckLogicalDecodingRequirements();
 	ReplicationSlotAcquire(NameStr(*name));
 
 	PG_TRY();
@@ -444,6 +298,23 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 				break;
 			CHECK_FOR_INTERRUPTS();
 		}
+
+		tuplestore_donestoring(tupstore);
+
+		CurrentResourceOwner = old_resowner;
+
+		/*
+		 * Next time, start where we left off. (Hunting things, the family
+		 * business..)
+		 */
+		if (ctx->reader->EndRecPtr != InvalidXLogRecPtr && confirm)
+			LogicalConfirmReceivedLocation(ctx->reader->EndRecPtr);
+
+		/* free context, call shutdown callback */
+		FreeDecodingContext(ctx);
+
+		ReplicationSlotRelease();
+		InvalidateSystemCaches();
 	}
 	PG_CATCH();
 	{
@@ -454,23 +325,6 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	}
 	PG_END_TRY();
 
-	tuplestore_donestoring(tupstore);
-
-	CurrentResourceOwner = old_resowner;
-
-	/*
-	 * Next time, start where we left off. (Hunting things, the family
-	 * business..)
-	 */
-	if (ctx->reader->EndRecPtr != InvalidXLogRecPtr && confirm)
-		LogicalConfirmReceivedLocation(ctx->reader->EndRecPtr);
-
-	/* free context, call shutdown callback */
-	FreeDecodingContext(ctx);
-
-	ReplicationSlotRelease();
-	InvalidateSystemCaches();
-
 	return (Datum) 0;
 }
 
@@ -480,9 +334,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 Datum
 pg_logical_slot_get_changes(PG_FUNCTION_ARGS)
 {
-	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, true, false);
-
-	return ret;
+	return pg_logical_slot_get_changes_guts(fcinfo, true, false);
 }
 
 /*
@@ -491,9 +343,7 @@ pg_logical_slot_get_changes(PG_FUNCTION_ARGS)
 Datum
 pg_logical_slot_peek_changes(PG_FUNCTION_ARGS)
 {
-	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, false, false);
-
-	return ret;
+	return pg_logical_slot_get_changes_guts(fcinfo, false, false);
 }
 
 /*
@@ -502,9 +352,7 @@ pg_logical_slot_peek_changes(PG_FUNCTION_ARGS)
 Datum
 pg_logical_slot_get_binary_changes(PG_FUNCTION_ARGS)
 {
-	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, true, true);
-
-	return ret;
+	return pg_logical_slot_get_changes_guts(fcinfo, true, true);
 }
 
 /*
@@ -513,7 +361,5 @@ pg_logical_slot_get_binary_changes(PG_FUNCTION_ARGS)
 Datum
 pg_logical_slot_peek_binary_changes(PG_FUNCTION_ARGS)
 {
-	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, false, true);
-
-	return ret;
+	return pg_logical_slot_get_changes_guts(fcinfo, false, true);
 }

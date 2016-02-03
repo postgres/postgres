@@ -3,7 +3,7 @@
  * array_userfuncs.c
  *	  Misc user-visible array support functions
  *
- * Copyright (c) 2003-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/array_userfuncs.c
@@ -746,7 +746,7 @@ array_position_common(FunctionCallInfo fcinfo)
 		if (PG_ARGISNULL(2))
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("initial position should not be NULL")));
+					 errmsg("initial position must not be null")));
 
 		position_min = PG_GETARG_INT32(2);
 	}

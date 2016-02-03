@@ -3,7 +3,7 @@
  * relnode.c
  *	  Relation-node lookup/construction routines
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -14,6 +14,10 @@
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
+#include "catalog/pg_class.h"
+#include "foreign/foreign.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -102,18 +106,21 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	rel->consider_startup = (root->tuple_fraction > 0);
 	rel->consider_param_startup = false;		/* might get changed later */
+	rel->consider_parallel = false;		/* might get changed later */
 	rel->reltargetlist = NIL;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
+	rel->partial_pathlist = NIL;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
+	rel->direct_lateral_relids = NULL;
+	rel->lateral_relids = NULL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
 	rel->lateral_vars = NIL;
-	rel->lateral_relids = NULL;
 	rel->lateral_referencers = NULL;
 	rel->indexlist = NIL;
 	rel->pages = 0;
@@ -123,6 +130,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->subroot = NULL;
 	rel->subplan_params = NIL;
 	rel->serverid = InvalidOid;
+	rel->umid = InvalidOid;
 	rel->fdwroutine = NULL;
 	rel->fdw_private = NULL;
 	rel->baserestrictinfo = NIL;
@@ -161,6 +169,26 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 				 (int) rte->rtekind);
 			break;
 	}
+
+	/* For foreign tables get the user mapping */
+	if (rte->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/*
+		 * This should match what ExecCheckRTEPerms() does.
+		 *
+		 * Note that if the plan ends up depending on the user OID in any
+		 * way - e.g. if it depends on the computed user mapping OID - we must
+		 * ensure that it gets invalidated in the case of a user OID change.
+		 * See RevalidateCachedQuery and more generally the hasForeignJoin
+		 * flags in PlannerGlobal and PlannedStmt.
+		 */
+		Oid		userid;
+
+		userid = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
+		rel->umid = GetUserMappingId(userid, rel->serverid);
+	}
+	else
+		rel->umid = InvalidOid;
 
 	/* Save the finished struct in the query's simple_rel_array */
 	root->simple_rel_array[relid] = rel;
@@ -363,13 +391,21 @@ build_join_rel(PlannerInfo *root,
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	joinrel->consider_startup = (root->tuple_fraction > 0);
 	joinrel->consider_param_startup = false;
+	joinrel->consider_parallel = false;
 	joinrel->reltargetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
+	joinrel->partial_pathlist = NIL;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
+	/* init direct_lateral_relids from children; we'll finish it up below */
+	joinrel->direct_lateral_relids =
+		bms_union(outer_rel->direct_lateral_relids,
+				  inner_rel->direct_lateral_relids);
+	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids,
+														outer_rel, inner_rel);
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;
@@ -377,7 +413,6 @@ build_join_rel(PlannerInfo *root,
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
 	joinrel->lateral_vars = NIL;
-	joinrel->lateral_relids = NULL;
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
@@ -387,6 +422,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->subroot = NULL;
 	joinrel->subplan_params = NIL;
 	joinrel->serverid = InvalidOid;
+	joinrel->umid = InvalidOid;
 	joinrel->fdwroutine = NULL;
 	joinrel->fdw_private = NULL;
 	joinrel->baserestrictinfo = NIL;
@@ -397,12 +433,19 @@ build_join_rel(PlannerInfo *root,
 
 	/*
 	 * Set up foreign-join fields if outer and inner relation are foreign
-	 * tables (or joins) belonging to the same server.
+	 * tables (or joins) belonging to the same server and using the same
+	 * user mapping.
+	 *
+	 * Otherwise those fields are left invalid, so FDW API will not be called
+	 * for the join relation.
 	 */
 	if (OidIsValid(outer_rel->serverid) &&
-		inner_rel->serverid == outer_rel->serverid)
+		inner_rel->serverid == outer_rel->serverid &&
+		inner_rel->umid == outer_rel->umid)
 	{
+		Assert(OidIsValid(outer_rel->umid));
 		joinrel->serverid = outer_rel->serverid;
+		joinrel->umid = outer_rel->umid;
 		joinrel->fdwroutine = outer_rel->fdwroutine;
 	}
 
@@ -417,6 +460,18 @@ build_join_rel(PlannerInfo *root,
 	build_joinrel_tlist(root, joinrel, outer_rel);
 	build_joinrel_tlist(root, joinrel, inner_rel);
 	add_placeholders_to_joinrel(root, joinrel);
+
+	/*
+	 * add_placeholders_to_joinrel also took care of adding the ph_lateral
+	 * sets of any PlaceHolderVars computed here to direct_lateral_relids, so
+	 * now we can finish computing that.  This is much like the computation of
+	 * the transitively-closed lateral_relids in min_join_parameterization,
+	 * except that here we *do* have to consider the added PHVs.
+	 */
+	joinrel->direct_lateral_relids =
+		bms_del_members(joinrel->direct_lateral_relids, joinrel->relids);
+	if (bms_is_empty(joinrel->direct_lateral_relids))
+		joinrel->direct_lateral_relids = NULL;
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The
@@ -440,6 +495,24 @@ build_join_rel(PlannerInfo *root,
 	 */
 	set_joinrel_size_estimates(root, joinrel, outer_rel, inner_rel,
 							   sjinfo, restrictlist);
+
+	/*
+	 * Set the consider_parallel flag if this joinrel could potentially be
+	 * scanned within a parallel worker.  If this flag is false for either
+	 * inner_rel or outer_rel, then it must be false for the joinrel also.
+	 * Even if both are true, there might be parallel-restricted quals at our
+	 * level.
+	 *
+	 * Note that if there are more than two rels in this relation, they could
+	 * be divided between inner_rel and outer_rel in any arbitary way.  We
+	 * assume this doesn't matter, because we should hit all the same baserels
+	 * and joinclauses while building up to this joinrel no matter which we
+	 * take; therefore, we should make the same decision here however we get
+	 * here.
+	 */
+	if (inner_rel->consider_parallel && outer_rel->consider_parallel &&
+		!has_parallel_hazard((Node *) restrictlist, false))
+		joinrel->consider_parallel = true;
 
 	/*
 	 * Add the joinrel to the query's joinrel list, and store it into the
@@ -476,6 +549,45 @@ build_join_rel(PlannerInfo *root,
 	}
 
 	return joinrel;
+}
+
+/*
+ * min_join_parameterization
+ *
+ * Determine the minimum possible parameterization of a joinrel, that is, the
+ * set of other rels it contains LATERAL references to.  We save this value in
+ * the join's RelOptInfo.  This function is split out of build_join_rel()
+ * because join_is_legal() needs the value to check a prospective join.
+ */
+Relids
+min_join_parameterization(PlannerInfo *root,
+						  Relids joinrelids,
+						  RelOptInfo *outer_rel,
+						  RelOptInfo *inner_rel)
+{
+	Relids		result;
+
+	/*
+	 * Basically we just need the union of the inputs' lateral_relids, less
+	 * whatever is already in the join.
+	 *
+	 * It's not immediately obvious that this is a valid way to compute the
+	 * result, because it might seem that we're ignoring possible lateral refs
+	 * of PlaceHolderVars that are due to be computed at the join but not in
+	 * either input.  However, because create_lateral_join_info() already
+	 * charged all such PHV refs to each member baserel of the join, they'll
+	 * be accounted for already in the inputs' lateral_relids.  Likewise, we
+	 * do not need to worry about doing transitive closure here, because that
+	 * was already accounted for in the original baserel lateral_relids.
+	 */
+	result = bms_union(outer_rel->lateral_relids, inner_rel->lateral_relids);
+	result = bms_del_members(result, joinrelids);
+
+	/* Maintain invariant that result is exactly NULL if empty */
+	if (bms_is_empty(result))
+		result = NULL;
+
+	return result;
 }
 
 /*

@@ -184,6 +184,7 @@ with_python	= @with_python@
 with_tcl	= @with_tcl@
 with_openssl	= @with_openssl@
 with_selinux	= @with_selinux@
+with_systemd	= @with_systemd@
 with_libxml	= @with_libxml@
 with_libxslt	= @with_libxslt@
 with_system_tzdata = @with_system_tzdata@

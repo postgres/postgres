@@ -3,7 +3,7 @@
  * rewriteHandler.c
  *		Primary module of query rewriter.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2033,6 +2033,9 @@ fireRules(Query *parsetree,
  *
  * Caller should have verified that the relation is a view, and therefore
  * we should find an ON SELECT action.
+ *
+ * Note that the pointer returned is into the relcache and therefore must
+ * be treated as read-only to the caller and not modified or scribbled on.
  */
 Query *
 get_view_query(Relation view)
@@ -2620,9 +2623,16 @@ rewriteTargetView(Query *parsetree, Relation view)
 	List	   *view_targetlist;
 	ListCell   *lc;
 
-	/* The view must be updatable, else fail */
-	viewquery = get_view_query(view);
+	/*
+	 * Get the Query from the view's ON SELECT rule.  We're going to munge the
+	 * Query to change the view's base relation into the target relation,
+	 * along with various other changes along the way, so we need to make a
+	 * copy of it (get_view_query() returns a pointer into the relcache, so we
+	 * have to treat it as read-only).
+	 */
+	viewquery = copyObject(get_view_query(view));
 
+	/* The view must be updatable, else fail */
 	auto_update_detail =
 		view_query_is_auto_updatable(viewquery,
 									 parsetree->commandType != CMD_DELETE);
@@ -2786,7 +2796,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * outer query.  Perhaps someday we should refactor things enough so that
 	 * we can share code with the planner.)
 	 */
-	new_rte = (RangeTblEntry *) copyObject(base_rte);
+	new_rte = (RangeTblEntry *) base_rte;
 	parsetree->rtable = lappend(parsetree->rtable, new_rte);
 	new_rt_index = list_length(parsetree->rtable);
 
@@ -2798,14 +2808,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 		new_rte->inh = false;
 
 	/*
-	 * Make a copy of the view's targetlist, adjusting its Vars to reference
-	 * the new target RTE, ie make their varnos be new_rt_index instead of
-	 * base_rt_index.  There can be no Vars for other rels in the tlist, so
-	 * this is sufficient to pull up the tlist expressions for use in the
-	 * outer query.  The tlist will provide the replacement expressions used
-	 * by ReplaceVarsFromTargetList below.
+	 * Adjust the view's targetlist Vars to reference the new target RTE, ie
+	 * make their varnos be new_rt_index instead of base_rt_index.  There can
+	 * be no Vars for other rels in the tlist, so this is sufficient to pull
+	 * up the tlist expressions for use in the outer query.  The tlist will
+	 * provide the replacement expressions used by ReplaceVarsFromTargetList
+	 * below.
 	 */
-	view_targetlist = copyObject(viewquery->targetList);
+	view_targetlist = viewquery->targetList;
 
 	ChangeVarNodes((Node *) view_targetlist,
 				   base_rt_index,
@@ -2956,7 +2966,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 	if (parsetree->commandType != CMD_INSERT &&
 		viewquery->jointree->quals != NULL)
 	{
-		Node	   *viewqual = (Node *) copyObject(viewquery->jointree->quals);
+		Node	   *viewqual = (Node *) viewquery->jointree->quals;
+
+		/*
+		 * Even though we copied viewquery already at the top of this
+		 * function, we must duplicate the viewqual again here, because we may
+		 * need to use the quals again below for a WithCheckOption clause.
+		 */
+		viewqual = copyObject(viewqual);
 
 		ChangeVarNodes(viewqual, base_rt_index, new_rt_index, 0);
 
@@ -3035,7 +3052,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 			if (viewquery->jointree->quals != NULL)
 			{
-				wco->qual = (Node *) copyObject(viewquery->jointree->quals);
+				wco->qual = (Node *) viewquery->jointree->quals;
 				ChangeVarNodes(wco->qual, base_rt_index, new_rt_index, 0);
 
 				/*

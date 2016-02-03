@@ -2,7 +2,7 @@
 #################################################################
 # copyright.pl -- update copyright notices throughout the source tree, idempotently.
 #
-# Copyright (c) 2011-2015, PostgreSQL Global Development Group
+# Copyright (c) 2011-2016, PostgreSQL Global Development Group
 #
 # src/tools/copyright.pl
 #
@@ -17,7 +17,8 @@ use File::Basename;
 use Tie::File;
 
 my $pgdg = 'PostgreSQL Global Development Group';
-my $cc   = 'Copyright \(c\) ';
+my $cc   = 'Copyright \(c\)';
+my $ccliteral = 'Copyright (c)';
 
 # year-1900 is what localtime(time) puts in element 5
 my $year = 1900 + ${ [ localtime(time) ] }[5];
@@ -40,7 +41,7 @@ sub wanted
 
 	# skip file names with binary extensions
 	# How are these updated?  bjm 2012-01-02
-	return if ($_ =~ m/\.(ico|bin)$/);
+	return if ($_ =~ m/\.(ico|bin|po)$/);
 
 	my @lines;
 	tie @lines, "Tie::File", $File::Find::name;
@@ -49,16 +50,16 @@ sub wanted
 	{
 
 		# We only care about lines with a copyright notice.
-		next unless $line =~ m/$cc.*$pgdg/;
+		next unless $line =~ m/$cc.*$pgdg/i;
 
 		# Skip line if already matches the current year; if not
 		# we get $year-$year, e.g. 2012-2012
-		next if $line =~ m/$cc$year, $pgdg/;
+		next if $line =~ m/$cc $year, $pgdg/i;
 
 		# We process all lines because some files have copyright
 		# strings embedded in them, e.g. src/bin/psql/help.c
-		$line =~ s/($cc\d{4})(, $pgdg)/$1-$year$2/;
-		$line =~ s/($cc\d{4})-\d{4}(, $pgdg)/$1-$year$2/;
+		$line =~ s/$cc (\d{4})-\d{4}, $pgdg/$ccliteral $1-$year, $pgdg/i;
+		$line =~ s/$cc (\d{4}), $pgdg/$ccliteral $1-$year, $pgdg/i;
 	}
 	untie @lines;
 }

@@ -3,7 +3,7 @@
  * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -2349,7 +2349,7 @@ AddRelationNewConstraints(Relation rel,
 		 * OK, store it.
 		 */
 		constrOid =
-			StoreRelCheck(rel, ccname, expr, !cdef->skip_validation, is_local,
+			StoreRelCheck(rel, ccname, expr, cdef->initially_valid, is_local,
 						  is_local ? 0 : 1, cdef->is_no_inherit, is_internal);
 
 		numchecks++;

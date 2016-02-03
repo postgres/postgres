@@ -1008,6 +1008,7 @@ LSEG
 LVRelStats
 LWLock
 LWLockHandle
+LWLockMinimallyPadded
 LWLockMode
 LWLockPadded
 LWLockTranche
@@ -2018,7 +2019,7 @@ TupleHashEntry
 TupleHashEntryData
 TupleHashIterator
 TupleHashTable
-TupleQueueFunnel
+TupleQueueReader
 TupleTableSlot
 Tuplesortstate
 Tuplestorestate

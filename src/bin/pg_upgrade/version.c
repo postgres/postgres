@@ -3,7 +3,7 @@
  *
  *	Postgres-version-specific routines
  *
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/version.c
  */
 
@@ -49,7 +49,7 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText());
 				fprintf(script, "\\connect %s\n",
 						quote_identifier(active_db->db_name));
 				fprintf(script,
@@ -143,7 +143,7 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText());
 			if (!db_used)
 			{
 				fprintf(script, "Database: %s\n", active_db->db_name);

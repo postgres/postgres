@@ -1,12 +1,14 @@
 use strict;
 use warnings;
-use TestLib;
+
+use PostgresNode;
 use Test::More tests => 4;
 
-my $tempdir = tempdir;
-start_test_server $tempdir;
+my $node = get_new_node('main');
+$node->init;
+$node->start;
 
-issues_sql_like(
+$node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-in-stages', 'postgres' ],
 qr/.*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
                    .*statement:\ ANALYZE.*
@@ -16,8 +18,7 @@ qr/.*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
                    .*statement:\ ANALYZE/sx,
 	'analyze three times');
 
-
-issues_sql_like(
+$node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-in-stages', '--all' ],
 qr/.*statement:\ SET\ default_statistics_target=1;\ SET\ vacuum_cost_delay=0;
                    .*statement:\ ANALYZE.*

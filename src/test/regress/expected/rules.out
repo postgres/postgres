@@ -1848,6 +1848,19 @@ pg_stat_user_tables| SELECT pg_stat_all_tables.relid,
     pg_stat_all_tables.autoanalyze_count
    FROM pg_stat_all_tables
   WHERE ((pg_stat_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_tables.schemaname !~ '^pg_toast'::text));
+pg_stat_wal_receiver| SELECT s.pid,
+    s.status,
+    s.receive_start_lsn,
+    s.receive_start_tli,
+    s.received_lsn,
+    s.received_tli,
+    s.last_msg_send_time,
+    s.last_msg_receipt_time,
+    s.latest_end_lsn,
+    s.latest_end_time,
+    s.slot_name
+   FROM pg_stat_get_wal_receiver() s(pid, status, receive_start_lsn, receive_start_tli, received_lsn, received_tli, last_msg_send_time, last_msg_receipt_time, latest_end_lsn, latest_end_time, slot_name)
+  WHERE (s.pid IS NOT NULL);
 pg_stat_xact_all_tables| SELECT c.oid AS relid,
     n.nspname AS schemaname,
     c.relname,

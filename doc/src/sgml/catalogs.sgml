@@ -516,8 +516,8 @@
   <para>
    The catalog <structname>pg_am</structname> stores information about index
    access methods.  There is one row for each index access method supported by
-   the system.  The contents of this catalog are discussed in detail in
-   <xref linkend="indexam">.
+   the system.  The requirements for index access methods are discussed in
+   detail in <xref linkend="indexam">.
   </para>
 
   <table>
@@ -549,212 +549,13 @@
      </row>
 
      <row>
-      <entry><structfield>amstrategies</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>Number of operator strategies for this access method,
-       or zero if access method does not have a fixed set of operator
-       strategies</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amsupport</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>Number of support routines for this access method</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcanorder</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support ordered scans sorted by the
-       indexed column's value?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcanorderbyop</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support ordered scans sorted by the result
-       of an operator on the indexed column?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcanbackward</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support backward scanning?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcanunique</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support unique indexes?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcanmulticol</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support multicolumn indexes?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amoptionalkey</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support a scan without any constraint
-       for the first index column?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amsearcharray</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support <literal>ScalarArrayOpExpr</> searches?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amsearchnulls</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support <literal>IS NULL</>/<literal>NOT NULL</> searches?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amstorage</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Can index storage data type differ from column data type?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amclusterable</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Can an index of this type be clustered on?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>ampredlocks</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does an index of this type manage fine-grained predicate locks?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amkeytype</structfield></entry>
+      <entry><structfield>amhandler</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Type of data stored in index, or zero if not a fixed type</entry>
-     </row>
-
-     <row>
-      <entry><structfield>aminsert</structfield></entry>
-      <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Insert this tuple</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>ambeginscan</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Prepare for index scan</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amgettuple</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Next valid tuple</quote> function, or zero if none</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amgetbitmap</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Fetch all valid tuples</quote> function, or zero if none</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amrescan</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>(Re)start index scan</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amendscan</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Clean up after index scan</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>ammarkpos</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Mark current scan position</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amrestrpos</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Restore marked scan position</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>ambuild</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Build new index</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>ambuildempty</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Build empty index</quote> function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>ambulkdelete</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Bulk-delete function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amvacuumcleanup</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Post-<command>VACUUM</command> cleanup function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcanreturn</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Function to check whether an index column supports index-only
-       scans. Can be zero if index-only scans are never supported.</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amcostestimate</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Function to estimate cost of an index scan</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amoptions</structfield></entry>
-      <entry><type>regproc</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Function to parse and validate <structfield>reloptions</> for an index</entry>
+      <entry>
+       OID of a handler function that is responsible for supplying information
+       about the access method
+      </entry>
      </row>
 
     </tbody>

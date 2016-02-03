@@ -3,7 +3,7 @@
  * copy.c
  *		Implements the COPY utility command
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -121,7 +121,7 @@ typedef struct CopyStateData
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
 	List	   *force_quote;	/* list of column names */
-	bool		force_quote_all;	/* FORCE QUOTE *? */
+	bool		force_quote_all;	/* FORCE_QUOTE *? */
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
@@ -201,7 +201,7 @@ typedef struct CopyStateData
 	int			raw_buf_len;	/* total # of bytes stored */
 } CopyStateData;
 
-/* DestReceiver for COPY (SELECT) TO */
+/* DestReceiver for COPY (query) TO */
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
@@ -772,7 +772,8 @@ CopyLoadRawBuf(CopyState cstate)
  *
  * Either unload or reload contents of table <relation>, depending on <from>.
  * (<from> = TRUE means we are inserting into the table.)  In the "TO" case
- * we also support copying the output of an arbitrary SELECT query.
+ * we also support copying the output of an arbitrary SELECT, INSERT, UPDATE
+ * or DELETE query.
  *
  * If <pipe> is false, transfer is between the table and the file named
  * <filename>.  Otherwise, transfer is between the table and our regular
@@ -874,7 +875,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			if (is_from)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("COPY FROM not supported with row level security."),
+				  errmsg("COPY FROM not supported with row-level security"),
 						 errhint("Use INSERT statements instead.")));
 
 			/* Build target list */
@@ -1374,11 +1375,11 @@ BeginCopy(bool is_from,
 		Assert(!is_from);
 		cstate->rel = NULL;
 
-		/* Don't allow COPY w/ OIDs from a select */
+		/* Don't allow COPY w/ OIDs from a query */
 		if (cstate->oids)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY (SELECT) WITH OIDS is not supported")));
+					 errmsg("COPY (query) WITH OIDS is not supported")));
 
 		/*
 		 * Run parse analysis and rewrite.  Note this also acquires sufficient
@@ -1393,9 +1394,36 @@ BeginCopy(bool is_from,
 		rewritten = pg_analyze_and_rewrite((Node *) copyObject(raw_query),
 										   queryString, NULL, 0);
 
-		/* We don't expect more or less than one result query */
-		if (list_length(rewritten) != 1)
-			elog(ERROR, "unexpected rewrite result");
+		/* check that we got back something we can work with */
+		if (rewritten == NIL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("DO INSTEAD NOTHING rules are not supported for COPY")));
+		}
+		else if (list_length(rewritten) > 1)
+		{
+			ListCell *lc;
+
+			/* examine queries to determine which error message to issue */
+			foreach(lc, rewritten)
+			{
+				Query	  *q = (Query *) lfirst(lc);
+
+				if (q->querySource == QSRC_QUAL_INSTEAD_RULE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("conditional DO INSTEAD rules are not supported for COPY")));
+				if (q->querySource == QSRC_NON_INSTEAD_RULE)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("DO ALSO rules are not supported for the COPY")));
+			}
+
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("multi-statement DO INSTEAD rules are not supported for COPY")));
+		}
 
 		query = (Query *) linitial(rewritten);
 
@@ -1406,8 +1434,23 @@ BeginCopy(bool is_from,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY (SELECT INTO) is not supported")));
 
-		Assert(query->commandType == CMD_SELECT);
 		Assert(query->utilityStmt == NULL);
+
+		/*
+		 * Similarly the grammar doesn't enforce the presence of a RETURNING
+		 * clause, but this is required here.
+		 */
+		if (query->commandType != CMD_SELECT &&
+			query->returningList == NIL)
+		{
+			Assert(query->commandType == CMD_INSERT ||
+				   query->commandType == CMD_UPDATE ||
+				   query->commandType == CMD_DELETE);
+
+			ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("COPY query must have a RETURNING clause")));
+		}
 
 		/* plan the query */
 		plan = pg_plan_query(query, 0, NULL);
@@ -1469,7 +1512,7 @@ BeginCopy(bool is_from,
 
 	num_phys_attrs = tupDesc->natts;
 
-	/* Convert FORCE QUOTE name list to per-column flags, check validity */
+	/* Convert FORCE_QUOTE name list to per-column flags, check validity */
 	cstate->force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->force_quote_all)
 	{
@@ -1492,13 +1535,13 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				   errmsg("FORCE QUOTE column \"%s\" not referenced by COPY",
+				   errmsg("FORCE_QUOTE column \"%s\" not referenced by COPY",
 						  NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_quote_flags[attnum - 1] = true;
 		}
 	}
 
-	/* Convert FORCE NOT NULL name list to per-column flags, check validity */
+	/* Convert FORCE_NOT_NULL name list to per-column flags, check validity */
 	cstate->force_notnull_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->force_notnull)
 	{
@@ -1514,13 +1557,13 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				errmsg("FORCE NOT NULL column \"%s\" not referenced by COPY",
+				errmsg("FORCE_NOT_NULL column \"%s\" not referenced by COPY",
 					   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_notnull_flags[attnum - 1] = true;
 		}
 	}
 
-	/* Convert FORCE NULL name list to per-column flags, check validity */
+	/* Convert FORCE_NULL name list to per-column flags, check validity */
 	cstate->force_null_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (cstate->force_null)
 	{
@@ -1536,7 +1579,7 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("FORCE NULL column \"%s\" not referenced by COPY",
+					errmsg("FORCE_NULL column \"%s\" not referenced by COPY",
 						   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_null_flags[attnum - 1] = true;
 		}

@@ -12,7 +12,7 @@
  * postgresql.conf and recovery.conf.  An extension also has an installation
  * script file, containing SQL commands to create the extension's objects.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -3111,7 +3111,7 @@ read_whole_file(const char *filename, int *length)
 	if (fst.st_size > (MaxAllocSize - 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("file too large")));
+				 errmsg("file \"%s\" is too large", filename)));
 	bytes_to_read = (size_t) fst.st_size;
 
 	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)

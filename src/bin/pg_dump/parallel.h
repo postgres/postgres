@@ -4,7 +4,7 @@
  *
  *	Parallel support header file for the pg_dump archiver
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	The author is not responsible for loss or damages that may
@@ -76,9 +76,7 @@ extern int	ReapWorkerStatus(ParallelState *pstate, int *status);
 extern void EnsureIdleWorker(ArchiveHandle *AH, ParallelState *pstate);
 extern void EnsureWorkersFinished(ArchiveHandle *AH, ParallelState *pstate);
 
-extern ParallelState *ParallelBackupStart(ArchiveHandle *AH,
-					DumpOptions *dopt,
-					RestoreOptions *ropt);
+extern ParallelState *ParallelBackupStart(ArchiveHandle *AH);
 extern void DispatchJobForTocEntry(ArchiveHandle *AH,
 					   ParallelState *pstate,
 					   TocEntry *te, T_Action act);

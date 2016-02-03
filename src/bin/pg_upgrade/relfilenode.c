@@ -3,7 +3,7 @@
  *
  *	relfilenode functions
  *
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/relfilenode.c
  */
 
@@ -258,7 +258,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 				else
 					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 							 map->nspname, map->relname, old_file, new_file,
-							 getErrorText(errno));
+							 getErrorText());
 			}
 			close(fd);
 		}

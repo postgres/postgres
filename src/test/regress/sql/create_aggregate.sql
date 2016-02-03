@@ -115,6 +115,23 @@ CREATE AGGREGATE sumdouble (float8)
     minvfunc = float8mi
 );
 
+-- Test aggregate combine function
+
+-- ensure create aggregate works.
+CREATE AGGREGATE mysum (int)
+(
+	stype = int,
+	sfunc = int4pl,
+	combinefunc = int4pl
+);
+
+-- Ensure all these functions made it into the catalog
+SELECT aggfnoid,aggtransfn,aggcombinefn,aggtranstype
+FROM pg_aggregate
+WHERE aggfnoid = 'mysum'::REGPROC;
+
+DROP AGGREGATE mysum (int);
+
 -- invalid: nonstrict inverse with strict forward function
 
 CREATE FUNCTION float8mi_n(float8, float8) RETURNS float8 AS

@@ -24,7 +24,7 @@
  * the TID array, just enough to hold as many heap tuples as fit on one page.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -138,7 +138,7 @@ static BufferAccessStrategy vac_strategy;
 static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			   Relation *Irel, int nindexes, bool scan_all);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
-static bool lazy_check_needs_freeze(Buffer buf);
+static bool lazy_check_needs_freeze(Buffer buf, bool *hastup);
 static void lazy_vacuum_index(Relation indrel,
 				  IndexBulkDeleteResult **stats,
 				  LVRelStats *vacrelstats);
@@ -147,6 +147,7 @@ static void lazy_cleanup_index(Relation indrel,
 				   LVRelStats *vacrelstats);
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats, Buffer *vmbuffer);
+static bool should_attempt_truncation(LVRelStats *vacrelstats);
 static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
 static BlockNumber count_nondeletable_pages(Relation onerel,
 						 LVRelStats *vacrelstats);
@@ -175,7 +176,6 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
 	int			nindexes;
-	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
 	long		secs;
@@ -263,14 +263,8 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 
 	/*
 	 * Optionally truncate the relation.
-	 *
-	 * Don't even think about it unless we have a shot at releasing a goodly
-	 * number of pages.  Otherwise, the time taken isn't worth it.
 	 */
-	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
-	if (possibly_freeable > 0 &&
-		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
-		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION))
+	if (should_attempt_truncation(vacrelstats))
 		lazy_truncate_heap(onerel, vacrelstats);
 
 	/* Vacuum the Free Space Map */
@@ -510,6 +504,15 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * scan_all is not set, so no great harm done; the next vacuum will find
 	 * them.  If we make the reverse mistake and vacuum a page unnecessarily,
 	 * it'll just be a no-op.
+	 *
+	 * We will scan the table's last page, at least to the extent of
+	 * determining whether it has tuples or not, even if it should be skipped
+	 * according to the above rules; except when we've already determined that
+	 * it's not worth trying to truncate the table.  This avoids having
+	 * lazy_truncate_heap() take access-exclusive lock on the table to attempt
+	 * a truncation that just fails immediately because there are tuples in
+	 * the last page.  This is worth avoiding mainly because such a lock must
+	 * be replayed on any hot standby, where it can be disruptive.
 	 */
 	for (next_not_all_visible_block = 0;
 		 next_not_all_visible_block < nblocks;
@@ -540,6 +543,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		bool		has_dead_tuples;
 		TransactionId visibility_cutoff_xid = InvalidTransactionId;
 
+		/* see note above about forcing scanning of last page */
+#define FORCE_CHECK_PAGE() \
+		(blkno == nblocks - 1 && should_attempt_truncation(vacrelstats))
+
 		if (blkno == next_not_all_visible_block)
 		{
 			/* Time to advance next_not_all_visible_block */
@@ -567,7 +574,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		else
 		{
 			/* Current block is all-visible */
-			if (skipping_all_visible_blocks && !scan_all)
+			if (skipping_all_visible_blocks && !scan_all && !FORCE_CHECK_PAGE())
 				continue;
 			all_visible_according_to_vm = true;
 		}
@@ -631,10 +638,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		{
 			/*
 			 * If we're not scanning the whole relation to guard against XID
-			 * wraparound, it's OK to skip vacuuming a page.  The next vacuum
-			 * will clean it up.
+			 * wraparound, and we don't want to forcibly check the page, then
+			 * it's OK to skip vacuuming pages we get a lock conflict on. They
+			 * will be dealt with in some future vacuum.
 			 */
-			if (!scan_all)
+			if (!scan_all && !FORCE_CHECK_PAGE())
 			{
 				ReleaseBuffer(buf);
 				vacrelstats->pinskipped_pages++;
@@ -642,22 +650,41 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			}
 
 			/*
-			 * If this is a wraparound checking vacuum, then we read the page
-			 * with share lock to see if any xids need to be frozen. If the
-			 * page doesn't need attention we just skip and continue. If it
-			 * does, we wait for cleanup lock.
+			 * Read the page with share lock to see if any xids on it need to
+			 * be frozen.  If not we just skip the page, after updating our
+			 * scan statistics.  If there are some, we wait for cleanup lock.
 			 *
 			 * We could defer the lock request further by remembering the page
 			 * and coming back to it later, or we could even register
 			 * ourselves for multiple buffers and then service whichever one
 			 * is received first.  For now, this seems good enough.
+			 *
+			 * If we get here with scan_all false, then we're just forcibly
+			 * checking the page, and so we don't want to insist on getting
+			 * the lock; we only need to know if the page contains tuples, so
+			 * that we can update nonempty_pages correctly.  It's convenient
+			 * to use lazy_check_needs_freeze() for both situations, though.
 			 */
 			LockBuffer(buf, BUFFER_LOCK_SHARE);
-			if (!lazy_check_needs_freeze(buf))
+			if (!lazy_check_needs_freeze(buf, &hastup))
 			{
 				UnlockReleaseBuffer(buf);
 				vacrelstats->scanned_pages++;
 				vacrelstats->pinskipped_pages++;
+				if (hastup)
+					vacrelstats->nonempty_pages = blkno + 1;
+				continue;
+			}
+			if (!scan_all)
+			{
+				/*
+				 * Here, we must not advance scanned_pages; that would amount
+				 * to claiming that the page contains no freezable tuples.
+				 */
+				UnlockReleaseBuffer(buf);
+				vacrelstats->pinskipped_pages++;
+				if (hastup)
+					vacrelstats->nonempty_pages = blkno + 1;
 				continue;
 			}
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -1304,22 +1331,25 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
  *					 need to be cleaned to avoid wraparound
  *
  * Returns true if the page needs to be vacuumed using cleanup lock.
+ * Also returns a flag indicating whether page contains any tuples at all.
  */
 static bool
-lazy_check_needs_freeze(Buffer buf)
+lazy_check_needs_freeze(Buffer buf, bool *hastup)
 {
-	Page		page;
+	Page		page = BufferGetPage(buf);
 	OffsetNumber offnum,
 				maxoff;
 	HeapTupleHeader tupleheader;
 
-	page = BufferGetPage(buf);
+	*hastup = false;
 
-	if (PageIsNew(page) || PageIsEmpty(page))
-	{
-		/* PageIsNew probably shouldn't happen... */
+	/* If we hit an uninitialized page, we want to force vacuuming it. */
+	if (PageIsNew(page))
+		return true;
+
+	/* Quick out for ordinary empty page. */
+	if (PageIsEmpty(page))
 		return false;
-	}
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber;
@@ -1330,6 +1360,11 @@ lazy_check_needs_freeze(Buffer buf)
 
 		itemid = PageGetItemId(page, offnum);
 
+		/* this should match hastup test in count_nondeletable_pages() */
+		if (ItemIdIsUsed(itemid))
+			*hastup = true;
+
+		/* dead and redirect items never need freezing */
 		if (!ItemIdIsNormal(itemid))
 			continue;
 
@@ -1430,6 +1465,30 @@ lazy_cleanup_index(Relation indrel,
 					   pg_rusage_show(&ru0))));
 
 	pfree(stats);
+}
+
+/*
+ * should_attempt_truncation - should we attempt to truncate the heap?
+ *
+ * Don't even think about it unless we have a shot at releasing a goodly
+ * number of pages.  Otherwise, the time taken isn't worth it.
+ *
+ * This is split out so that we can test whether truncation is going to be
+ * called for before we actually do it.  If you change the logic here, be
+ * careful to depend only on fields that lazy_scan_heap updates on-the-fly.
+ */
+static bool
+should_attempt_truncation(LVRelStats *vacrelstats)
+{
+	BlockNumber possibly_freeable;
+
+	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
+	if (possibly_freeable > 0 &&
+		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
+		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION))
+		return true;
+	else
+		return false;
 }
 
 /*

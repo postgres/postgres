@@ -44,7 +44,7 @@ override CPPFLAGS+= -DUSE_DL_IMPORT
 endif
 
 # it is better to install shared-libraries anyway?
-# may be overriden with make MAKE_DLL=false install
+# may be overridden with make MAKE_DLL=false install
 ifndef MAKE_DLL
 MAKE_DLL	= true
 endif

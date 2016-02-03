@@ -14,6 +14,6 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = ginutil.o gininsert.o ginxlog.o ginentrypage.o gindatapage.o \
 	ginbtree.o ginscan.o ginget.o ginvacuum.o ginarrayproc.o \
-	ginbulk.o ginfast.o ginpostinglist.o ginlogic.o
+	ginbulk.o ginfast.o ginpostinglist.o ginlogic.o ginvalidate.o
 
 include $(top_srcdir)/src/backend/common.mk

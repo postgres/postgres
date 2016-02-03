@@ -4,7 +4,7 @@
  *	  Definitions for planner's internal data structures.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/relation.h
@@ -99,15 +99,16 @@ typedef struct PlannerGlobal
 
 	Index		lastRowMarkId;	/* highest PlanRowMark ID assigned */
 
-	int			lastPlanNodeId;	/* highest plan node ID assigned */
+	int			lastPlanNodeId; /* highest plan node ID assigned */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
 	bool		hasRowSecurity; /* row security applied? */
 
-	bool		parallelModeOK;	/* parallel mode potentially OK? */
+	bool		parallelModeOK; /* parallel mode potentially OK? */
 
-	bool		parallelModeNeeded;	/* parallel mode actually required? */
+	bool		parallelModeNeeded;		/* parallel mode actually required? */
+	bool		hasForeignJoin;	/* does have a pushed down foreign join */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -225,8 +226,6 @@ typedef struct PlannerInfo
 										 * mergejoinable full join clauses */
 
 	List	   *join_info_list; /* list of SpecialJoinInfos */
-
-	List	   *lateral_info_list;		/* list of LateralJoinInfos */
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 
@@ -357,6 +356,9 @@ typedef struct PlannerInfo
  *			(no duplicates) output from relation; NULL if not yet requested
  *		cheapest_parameterized_paths - best paths for their parameterizations;
  *			always includes cheapest_total_path, even if that's unparameterized
+ *		direct_lateral_relids - rels this rel has direct LATERAL references to
+ *		lateral_relids - required outer rels for LATERAL, as a Relids set
+ *			(includes both direct and indirect lateral references)
  *
  * If the relation is a base relation it will have these fields set:
  *
@@ -371,9 +373,8 @@ typedef struct PlannerInfo
  *					  zero means not computed yet
  *		lateral_vars - lateral cross-references of rel, if any (list of
  *					   Vars and PlaceHolderVars)
- *		lateral_relids - required outer rels for LATERAL, as a Relids set
- *						 (for child rels this can be more than lateral_vars)
  *		lateral_referencers - relids of rels that reference this one laterally
+ *				(includes both direct and indirect lateral references)
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
@@ -388,7 +389,7 @@ typedef struct PlannerInfo
  *		set_subquery_pathlist processes the object.
  *
  *		For otherrels that are appendrel members, these fields are filled
- *		in just as for a baserel.
+ *		in just as for a baserel, except we don't bother with lateral_vars.
  *
  * If the relation is either a foreign table or a join of foreign tables that
  * all belong to the same foreign server, these fields will be set:
@@ -452,15 +453,22 @@ typedef struct RelOptInfo
 	/* per-relation planner control flags */
 	bool		consider_startup;		/* keep cheap-startup-cost paths? */
 	bool		consider_param_startup; /* ditto, for parameterized paths? */
+	bool		consider_parallel;		/* consider parallel paths? */
 
 	/* materialization information */
 	List	   *reltargetlist;	/* Vars to be output by scan of relation */
 	List	   *pathlist;		/* Path structures */
 	List	   *ppilist;		/* ParamPathInfos used in pathlist */
+	List	   *partial_pathlist;	/* partial Paths */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
 	struct Path *cheapest_unique_path;
 	List	   *cheapest_parameterized_paths;
+
+	/* parameterization information needed for both base rels and join rels */
+	/* (see also lateral_vars and lateral_referencers) */
+	Relids		direct_lateral_relids;	/* rels directly laterally referenced */
+	Relids		lateral_relids; /* minimum parameterization of rel */
 
 	/* information about a base rel (not set for join rels!) */
 	Index		relid;
@@ -471,7 +479,6 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
-	Relids		lateral_relids; /* minimum parameterization of rel */
 	Relids		lateral_referencers;	/* rels that reference me laterally */
 	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
@@ -484,6 +491,7 @@ typedef struct RelOptInfo
 
 	/* Information about foreign tables and foreign joins */
 	Oid			serverid;		/* identifies server for the table or join */
+	Oid			umid;			/* identifies user mapping for the table or join */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
 	void	   *fdw_private;
@@ -549,8 +557,6 @@ typedef struct IndexOptInfo
 								 * index-only scan? */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
-	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
-
 	List	   *indexprs;		/* expressions for non-simple index columns */
 	List	   *indpred;		/* predicate if a partial index, else NIL */
 
@@ -560,12 +566,16 @@ typedef struct IndexOptInfo
 	bool		unique;			/* true if a unique index */
 	bool		immediate;		/* is uniqueness enforced immediately? */
 	bool		hypothetical;	/* true if index doesn't really exist */
+
+	/* Remaining fields are copied from the index AM's API struct: */
 	bool		amcanorderbyop; /* does AM support order by operator result? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearcharray;	/* can AM handle ScalarArrayOpExpr quals? */
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
+	/* Rather than include amapi.h here, we declare amcostestimate like this */
+	void		(*amcostestimate) ();	/* AM's cost estimator */
 } IndexOptInfo;
 
 
@@ -753,6 +763,9 @@ typedef struct Path
 
 	RelOptInfo *parent;			/* the relation this path can build */
 	ParamPathInfo *param_info;	/* parameterization info, or NULL if none */
+	bool		parallel_aware; /* engage parallel-aware logic? */
+	bool		parallel_safe;	/* OK to use as part of parallel plan? */
+	int			parallel_degree; /* desired parallel degree; 0 = not parallel */
 
 	/* estimated size/costs for path (see costsize.c for more info) */
 	double		rows;			/* estimated number of result tuples */
@@ -907,6 +920,7 @@ typedef struct TidPath
 typedef struct ForeignPath
 {
 	Path		path;
+	Path	   *fdw_outerpath;
 	List	   *fdw_private;
 } ForeignPath;
 
@@ -1055,7 +1069,6 @@ typedef struct GatherPath
 {
 	Path		path;
 	Path	   *subpath;		/* path for each worker */
-	int			num_workers;	/* number of workers sought to help */
 	bool		single_copy;	/* path must not be executed >1x */
 } GatherPath;
 
@@ -1455,43 +1468,6 @@ typedef struct SpecialJoinInfo
 } SpecialJoinInfo;
 
 /*
- * "Lateral join" info.
- *
- * Lateral references constrain the join order in a way that's somewhat like
- * outer joins, though different in detail.  We construct a LateralJoinInfo
- * for each lateral cross-reference, placing them in the PlannerInfo node's
- * lateral_info_list.
- *
- * For unflattened LATERAL RTEs, we generate LateralJoinInfo(s) in which
- * lateral_rhs is the relid of the LATERAL baserel, and lateral_lhs is a set
- * of relids of baserels it references, all of which must be present on the
- * LHS to compute a parameter needed by the RHS.  Typically, lateral_lhs is
- * a singleton, but it can include multiple rels if the RHS references a
- * PlaceHolderVar with a multi-rel ph_eval_at level.  We disallow joining to
- * only part of the LHS in such cases, since that would result in a join tree
- * with no convenient place to compute the PHV.
- *
- * When an appendrel contains lateral references (eg "LATERAL (SELECT x.col1
- * UNION ALL SELECT y.col2)"), the LateralJoinInfos reference the parent
- * baserel not the member otherrels, since it is the parent relid that is
- * considered for joining purposes.
- *
- * If any LATERAL RTEs were flattened into the parent query, it is possible
- * that the query now contains PlaceHolderVars containing lateral references,
- * representing expressions that need to be evaluated at particular spots in
- * the jointree but contain lateral references to Vars from elsewhere.  These
- * give rise to LateralJoinInfos in which lateral_rhs is the evaluation point
- * of a PlaceHolderVar and lateral_lhs is the set of lateral rels it needs.
- */
-
-typedef struct LateralJoinInfo
-{
-	NodeTag		type;
-	Relids		lateral_lhs;	/* rels needed to compute a lateral value */
-	Relids		lateral_rhs;	/* rel where lateral value is needed */
-} LateralJoinInfo;
-
-/*
  * Append-relation info.
  *
  * When we expand an inheritable table or a UNION-ALL subselect into an
@@ -1715,7 +1691,6 @@ typedef struct SemiAntiJoinFactors
  * sjinfo is extra info about special joins for selectivity estimation
  * semifactors is as shown above (only valid for SEMI or ANTI joins)
  * param_source_rels are OK targets for parameterization of result paths
- * extra_lateral_rels are additional parameterization for result paths
  */
 typedef struct JoinPathExtraData
 {
@@ -1724,7 +1699,6 @@ typedef struct JoinPathExtraData
 	SpecialJoinInfo *sjinfo;
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
-	Relids		extra_lateral_rels;
 } JoinPathExtraData;
 
 /*

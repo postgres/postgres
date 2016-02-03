@@ -2,7 +2,7 @@
  *
  * reindexdb
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  * src/bin/scripts/reindexdb.c
  *
@@ -298,7 +298,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	appendPQExpBufferChar(&sql, ';');
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+						   progname, false, false);
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
@@ -373,7 +373,7 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	appendPQExpBuffer(&sql, " SYSTEM %s;", dbname);
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false);
+						   progname, false, false);
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		fprintf(stderr, _("%s: reindexing of system catalogs failed: %s"),

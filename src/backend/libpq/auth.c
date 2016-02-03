@@ -3,7 +3,7 @@
  * auth.c
  *	  Routines to handle network authentication
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -668,8 +668,7 @@ recv_password_packet(Port *port)
 				 errmsg("invalid password packet size")));
 
 	/* Do not echo password to logs, for security. */
-	ereport(DEBUG5,
-			(errmsg("received password packet")));
+	elog(DEBUG5, "received password packet");
 
 	/*
 	 * Return the received string.  Note we do not attempt to do any
@@ -1253,6 +1252,8 @@ pg_SSPI_recvauth(Port *port)
 		ereport(ERROR,
 				(errmsg_internal("could not get user token: error code %lu",
 								 GetLastError())));
+
+	CloseHandle(token);
 
 	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
 						  domainname, &domainnamesize, &accountnameuse))

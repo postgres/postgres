@@ -3,7 +3,7 @@
  * dict_simple.c
  *		Simple dictionary: just lowercase and check for stopword
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

@@ -325,6 +325,41 @@ SELECT cube_inter('(1,2,3)'::cube, '(5,6,3)'::cube); -- point args
 SELECT cube_size('(4,8),(15,16)'::cube);
 SELECT cube_size('(42,137)'::cube);
 
+-- Test of distances
+--
+SELECT cube_distance('(1,1)'::cube, '(4,5)'::cube);
+SELECT '(1,1)'::cube <-> '(4,5)'::cube as d_e;
+SELECT distance_chebyshev('(1,1)'::cube, '(4,5)'::cube);
+SELECT '(1,1)'::cube <=> '(4,5)'::cube as d_c;
+SELECT distance_taxicab('(1,1)'::cube, '(4,5)'::cube);
+SELECT '(1,1)'::cube <#> '(4,5)'::cube as d_t;
+-- zero for overlapping
+SELECT cube_distance('(2,2),(10,10)'::cube, '(0,0),(5,5)'::cube);
+SELECT distance_chebyshev('(2,2),(10,10)'::cube, '(0,0),(5,5)'::cube);
+SELECT distance_taxicab('(2,2),(10,10)'::cube, '(0,0),(5,5)'::cube);
+-- coordinate access
+SELECT cube(array[10,20,30], array[40,50,60])->1;
+SELECT cube(array[40,50,60], array[10,20,30])->1;
+SELECT cube(array[10,20,30], array[40,50,60])->6;
+SELECT cube(array[10,20,30], array[40,50,60])->0;
+SELECT cube(array[10,20,30], array[40,50,60])->7;
+SELECT cube(array[10,20,30], array[40,50,60])->-1;
+SELECT cube(array[10,20,30], array[40,50,60])->-6;
+SELECT cube(array[10,20,30])->3;
+SELECT cube(array[10,20,30])->6;
+SELECT cube(array[10,20,30])->-6;
+-- "normalized" coordinate access
+SELECT cube(array[10,20,30], array[40,50,60])~>1;
+SELECT cube(array[40,50,60], array[10,20,30])~>1;
+SELECT cube(array[10,20,30], array[40,50,60])~>2;
+SELECT cube(array[40,50,60], array[10,20,30])~>2;
+SELECT cube(array[10,20,30], array[40,50,60])~>3;
+SELECT cube(array[40,50,60], array[10,20,30])~>3;
+
+SELECT cube(array[40,50,60], array[10,20,30])~>0;
+SELECT cube(array[40,50,60], array[10,20,30])~>4;
+SELECT cube(array[40,50,60], array[10,20,30])~>(-1);
+
 -- Load some example data and build the index
 --
 CREATE TABLE test_cube (c cube);
@@ -336,3 +371,21 @@ SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' ORDER BY c;
 
 -- Test sorting
 SELECT * FROM test_cube WHERE c && '(3000,1000),(0,0)' GROUP BY c ORDER BY c;
+
+-- kNN with index
+SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
+SELECT *, c <=> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <=> '(100, 100),(500, 500)'::cube LIMIT 5;
+SELECT *, c <#> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <#> '(100, 100),(500, 500)'::cube LIMIT 5;
+
+-- kNN-based sorting
+SELECT * FROM test_cube ORDER BY c~>1 LIMIT 15; -- ascending by 1st coordinate of lower left corner
+SELECT * FROM test_cube ORDER BY c~>4 LIMIT 15; -- ascending by 2nd coordinate or upper right corner
+SELECT * FROM test_cube ORDER BY c~>1 DESC LIMIT 15; -- descending by 1st coordinate of lower left corner
+SELECT * FROM test_cube ORDER BY c~>4 DESC LIMIT 15; -- descending by 2nd coordinate or upper right corner
+
+-- same thing for index with points
+CREATE TABLE test_point(c cube);
+INSERT INTO test_point(SELECT cube(array[c->1,c->2,c->3,c->4]) FROM test_cube);
+CREATE INDEX ON test_point USING gist(c);
+SELECT * FROM test_point ORDER BY c~>1, c~>2 LIMIT 15; -- ascending by 1st then by 2nd coordinate
+SELECT * FROM test_point ORDER BY c~>4 DESC LIMIT 15; -- descending by 1st coordinate

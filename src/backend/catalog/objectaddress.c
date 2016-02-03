@@ -3,7 +3,7 @@
  * objectaddress.c
  *	  functions for working with ObjectAddresses
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaddress.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
@@ -1652,7 +1653,7 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 			if (!missing_ok)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("user mapping for user \"%s\" in server \"%s\" does not exist",
+						 errmsg("user mapping for user \"%s\" on server \"%s\" does not exist",
 								username, servername)));
 			return address;
 		}
@@ -1678,7 +1679,7 @@ get_object_address_usermapping(List *objname, List *objargs, bool missing_ok)
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("user mapping for user \"%s\" in server \"%s\" does not exist",
+					 errmsg("user mapping for user \"%s\" on server \"%s\" does not exist",
 							username, servername)));
 		return address;
 	}
@@ -1901,7 +1902,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		if (list_length(name) < 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("name list must be of length at least %d", 1)));
+					 errmsg("name list length must be at least %d", 1)));
 	}
 
 	/*

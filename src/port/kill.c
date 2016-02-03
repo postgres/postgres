@@ -3,7 +3,7 @@
  * kill.c
  *	  kill()
  *
- * Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  *	This is a replacement version of kill for Win32 which sends
  *	signals that the backend can recognize.

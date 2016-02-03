@@ -4,7 +4,7 @@
  *	  Declarations for operations on built-in types.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/builtins.h
@@ -407,6 +407,14 @@ extern Datum dcos(PG_FUNCTION_ARGS);
 extern Datum dcot(PG_FUNCTION_ARGS);
 extern Datum dsin(PG_FUNCTION_ARGS);
 extern Datum dtan(PG_FUNCTION_ARGS);
+extern Datum dacosd(PG_FUNCTION_ARGS);
+extern Datum dasind(PG_FUNCTION_ARGS);
+extern Datum datand(PG_FUNCTION_ARGS);
+extern Datum datan2d(PG_FUNCTION_ARGS);
+extern Datum dcosd(PG_FUNCTION_ARGS);
+extern Datum dcotd(PG_FUNCTION_ARGS);
+extern Datum dsind(PG_FUNCTION_ARGS);
+extern Datum dtand(PG_FUNCTION_ARGS);
 extern Datum degrees(PG_FUNCTION_ARGS);
 extern Datum dpi(PG_FUNCTION_ARGS);
 extern Datum radians(PG_FUNCTION_ARGS);
@@ -566,6 +574,8 @@ extern Datum language_handler_in(PG_FUNCTION_ARGS);
 extern Datum language_handler_out(PG_FUNCTION_ARGS);
 extern Datum fdw_handler_in(PG_FUNCTION_ARGS);
 extern Datum fdw_handler_out(PG_FUNCTION_ARGS);
+extern Datum index_am_handler_in(PG_FUNCTION_ARGS);
+extern Datum index_am_handler_out(PG_FUNCTION_ARGS);
 extern Datum tsm_handler_in(PG_FUNCTION_ARGS);
 extern Datum tsm_handler_out(PG_FUNCTION_ARGS);
 extern Datum internal_in(PG_FUNCTION_ARGS);
@@ -808,11 +818,14 @@ extern Datum textoverlay_no_len(PG_FUNCTION_ARGS);
 extern Datum name_text(PG_FUNCTION_ARGS);
 extern Datum text_name(PG_FUNCTION_ARGS);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid);
-extern int varstr_levenshtein(const char *source, int slen, const char *target,
-				   int tlen, int ins_c, int del_c, int sub_c);
+extern int varstr_levenshtein(const char *source, int slen,
+				   const char *target, int tlen,
+				   int ins_c, int del_c, int sub_c,
+				   bool trusted);
 extern int varstr_levenshtein_less_equal(const char *source, int slen,
-							  const char *target, int tlen, int ins_c,
-							  int del_c, int sub_c, int max_d);
+							  const char *target, int tlen,
+							  int ins_c, int del_c, int sub_c,
+							  int max_d, bool trusted);
 extern List *textToQualifiedNameList(text *textval);
 extern bool SplitIdentifierString(char *rawstring, char separator,
 					  List **namelist);
@@ -860,6 +873,7 @@ extern Datum xidout(PG_FUNCTION_ARGS);
 extern Datum xidrecv(PG_FUNCTION_ARGS);
 extern Datum xidsend(PG_FUNCTION_ARGS);
 extern Datum xideq(PG_FUNCTION_ARGS);
+extern Datum xidneq(PG_FUNCTION_ARGS);
 extern Datum xid_age(PG_FUNCTION_ARGS);
 extern Datum mxid_age(PG_FUNCTION_ARGS);
 extern int	xidComparator(const void *arg1, const void *arg2);
@@ -1021,6 +1035,7 @@ extern Datum numeric_exp(PG_FUNCTION_ARGS);
 extern Datum numeric_ln(PG_FUNCTION_ARGS);
 extern Datum numeric_log(PG_FUNCTION_ARGS);
 extern Datum numeric_power(PG_FUNCTION_ARGS);
+extern Datum numeric_scale(PG_FUNCTION_ARGS);
 extern Datum int4_numeric(PG_FUNCTION_ARGS);
 extern Datum numeric_int4(PG_FUNCTION_ARGS);
 extern Datum int8_numeric(PG_FUNCTION_ARGS);
@@ -1174,6 +1189,7 @@ extern Datum uuid_ge(PG_FUNCTION_ARGS);
 extern Datum uuid_gt(PG_FUNCTION_ARGS);
 extern Datum uuid_ne(PG_FUNCTION_ARGS);
 extern Datum uuid_cmp(PG_FUNCTION_ARGS);
+extern Datum uuid_sortsupport(PG_FUNCTION_ARGS);
 extern Datum uuid_hash(PG_FUNCTION_ARGS);
 
 /* windowfuncs.c */

@@ -2,7 +2,7 @@
  *
  * rewriteManip.c
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -402,7 +402,6 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	/* Shouldn't need to handle other planner auxiliary nodes here */
 	Assert(!IsA(node, PlanRowMark));
 	Assert(!IsA(node, SpecialJoinInfo));
-	Assert(!IsA(node, LateralJoinInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
@@ -586,7 +585,6 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	}
 	/* Shouldn't need to handle other planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
-	Assert(!IsA(node, LateralJoinInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
@@ -868,7 +866,6 @@ rangeTableEntry_used_walker(Node *node,
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, PlanRowMark));
 	Assert(!IsA(node, SpecialJoinInfo));
-	Assert(!IsA(node, LateralJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));

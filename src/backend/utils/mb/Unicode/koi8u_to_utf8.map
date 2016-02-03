@@ -1,3 +1,5 @@
+/* src/backend/utils/mb/Unicode/koi8u_to_utf8.map */
+
 static const pg_local_to_utf LUmapKOI8U[ 128 ] = {
   {0x0080, 0xe29480},
   {0x0081, 0xe29482},

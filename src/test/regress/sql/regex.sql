@@ -117,3 +117,7 @@ select 'a' ~ '$()|^\1';
 select 'a' ~ '.. ()|\1';
 select 'a' ~ '()*\1';
 select 'a' ~ '()+\1';
+
+-- Error conditions
+select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
+select 'xyz' ~ 'x(\w)(?=(\1))';

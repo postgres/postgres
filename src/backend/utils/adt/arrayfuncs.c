@@ -3,7 +3,7 @@
  * arrayfuncs.c
  *	  Support functions for arrays.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -515,7 +515,7 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							  errmsg("malformed array literal: \"%s\"", str),
 								 errdetail("Unexpected end of input.")));
 					break;
-				case '\"':
+				case '"':
 
 					/*
 					 * A quote must be after a level start, after a quoted
@@ -799,7 +799,7 @@ ReadArrayStr(char *arrayStr,
 					dstendptr = dstptr;
 					hasquoting = true;	/* can't be a NULL marker */
 					break;
-				case '\"':
+				case '"':
 					in_quotes = !in_quotes;
 					if (in_quotes)
 						leadingspace = false;
@@ -1995,6 +1995,8 @@ array_get_element_expanded(Datum arraydatum,
  *	nSubscripts: number of subscripts supplied (must be same for upper/lower)
  *	upperIndx[]: the upper subscript values
  *	lowerIndx[]: the lower subscript values
+ *	upperProvided[]: true for provided upper subscript values
+ *	lowerProvided[]: true for provided lower subscript values
  *	arraytyplen: pg_type.typlen for the array type
  *	elmlen: pg_type.typlen for the array's element type
  *	elmbyval: pg_type.typbyval for the array's element type
@@ -2002,6 +2004,9 @@ array_get_element_expanded(Datum arraydatum,
  *
  * Outputs:
  *	The return value is the new array Datum (it's never NULL)
+ *
+ * Omitted upper and lower subscript values are replaced by the corresponding
+ * array bound.
  *
  * NOTE: we assume it is OK to scribble on the provided subscript arrays
  * lowerIndx[] and upperIndx[].  These are generally just temporaries.
@@ -2011,6 +2016,8 @@ array_get_slice(Datum arraydatum,
 				int nSubscripts,
 				int *upperIndx,
 				int *lowerIndx,
+				bool *upperProvided,
+				bool *lowerProvided,
 				int arraytyplen,
 				int elmlen,
 				bool elmbyval,
@@ -2081,9 +2088,9 @@ array_get_slice(Datum arraydatum,
 
 	for (i = 0; i < nSubscripts; i++)
 	{
-		if (lowerIndx[i] < lb[i])
+		if (!lowerProvided[i] || lowerIndx[i] < lb[i])
 			lowerIndx[i] = lb[i];
-		if (upperIndx[i] >= (dim[i] + lb[i]))
+		if (!upperProvided[i] || upperIndx[i] >= (dim[i] + lb[i]))
 			upperIndx[i] = dim[i] + lb[i] - 1;
 		if (lowerIndx[i] > upperIndx[i])
 			return PointerGetDatum(construct_empty_array(elemtype));
@@ -2708,6 +2715,8 @@ array_set_element_expanded(Datum arraydatum,
  *	nSubscripts: number of subscripts supplied (must be same for upper/lower)
  *	upperIndx[]: the upper subscript values
  *	lowerIndx[]: the lower subscript values
+ *	upperProvided[]: true for provided upper subscript values
+ *	lowerProvided[]: true for provided lower subscript values
  *	srcArrayDatum: the source for the inserted values
  *	isNull: indicates whether srcArrayDatum is NULL
  *	arraytyplen: pg_type.typlen for the array type
@@ -2718,6 +2727,9 @@ array_set_element_expanded(Datum arraydatum,
  * Result:
  *		  A new array is returned, just like the old except for the
  *		  modified range.  The original array object is not changed.
+ *
+ * Omitted upper and lower subscript values are replaced by the corresponding
+ * array bound.
  *
  * For one-dimensional arrays only, we allow the array to be extended
  * by assigning to positions outside the existing subscript range; any
@@ -2735,6 +2747,8 @@ array_set_slice(Datum arraydatum,
 				int nSubscripts,
 				int *upperIndx,
 				int *lowerIndx,
+				bool *upperProvided,
+				bool *lowerProvided,
 				Datum srcArrayDatum,
 				bool isNull,
 				int arraytyplen,
@@ -2806,6 +2820,13 @@ array_set_slice(Datum arraydatum,
 
 		for (i = 0; i < nSubscripts; i++)
 		{
+			if (!upperProvided[i] || !lowerProvided[i])
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				errmsg("array slice subscript must provide both boundaries"),
+				errdetail("When assigning to a slice of an empty array value,"
+						  " slice boundaries must be fully specified.")));
+
 			dim[i] = 1 + upperIndx[i] - lowerIndx[i];
 			lb[i] = lowerIndx[i];
 		}
@@ -2839,6 +2860,10 @@ array_set_slice(Datum arraydatum,
 	if (ndim == 1)
 	{
 		Assert(nSubscripts == 1);
+		if (!lowerProvided[0])
+			lowerIndx[0] = lb[0];
+		if (!upperProvided[0])
+			upperIndx[0] = dim[0] + lb[0] - 1;
 		if (lowerIndx[0] > upperIndx[0])
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
@@ -2867,6 +2892,10 @@ array_set_slice(Datum arraydatum,
 		 */
 		for (i = 0; i < nSubscripts; i++)
 		{
+			if (!lowerProvided[i])
+				lowerIndx[i] = lb[i];
+			if (!upperProvided[i])
+				upperIndx[i] = dim[i] + lb[i] - 1;
 			if (lowerIndx[i] > upperIndx[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),

@@ -58,6 +58,7 @@ typedef struct BackgroundWorker
     char        bgw_library_name[BGW_MAXLEN];   /* only if bgw_main is NULL */
     char        bgw_function_name[BGW_MAXLEN];  /* only if bgw_main is NULL */
     Datum       bgw_main_arg;
+    char        bgw_extra[BGW_EXTRALEN];
     int         bgw_notify_pid;
 } BackgroundWorker;
 </programlisting>
@@ -183,6 +184,13 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
+   <structfield>bgw_extra</structfield> can contain extra data to be passed
+   to the background worker.  Unlike <structfield>bgw_main_arg</>, this data
+   is not passed as an argument to the worker's main function, but it can be
+   accessed via <literal>MyBgworkerEntry</literal>, as discussed above.
+  </para>
+
+  <para>
    <structfield>bgw_notify_pid</structfield> is the PID of a PostgreSQL
    backend process to which the postmaster should send <literal>SIGUSR1</>
    when the process is started or exits.  It should be 0 for workers registered
@@ -270,7 +278,20 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   The <filename>worker_spi</> contrib module contains a working example,
+   If a background worker sends asynchronous notifications with the
+   <command>NOTIFY</command> command via the Server Programming Interface
+   (<acronym>SPI</acronym>), it should call
+   <function>ProcessCompletedNotifies</function> explicitly after committing
+   the enclosing transaction so that any notifications can be delivered.  If a
+   background worker registers to receive asynchronous notifications with
+   the <command>LISTEN</command> through <acronym>SPI</acronym>, the worker
+   will log those notifications, but there is no programmatic way for the
+   worker to intercept and respond to those notifications.
+  </para>
+
+  <para>
+   The <filename>src/test/modules/worker_spi</> module
+   contains a working example,
    which demonstrates some useful techniques.
   </para>
 

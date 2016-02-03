@@ -3,7 +3,7 @@
  * execQual.c
  *	  Routines to evaluate qualification and targetlist expressions
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -271,6 +271,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				j = 0;
 	IntArray	upper,
 				lower;
+	bool		upperProvided[MAXDIM],
+				lowerProvided[MAXDIM];
 	int		   *lIndex;
 
 	array_source = ExecEvalExpr(astate->refexpr,
@@ -300,6 +302,15 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 							i + 1, MAXDIM)));
 
+		if (eltstate == NULL)
+		{
+			/* Slice bound is omitted, so use array's upper bound */
+			Assert(astate->reflowerindexpr != NIL);
+			upperProvided[i++] = false;
+			continue;
+		}
+		upperProvided[i] = true;
+
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr(eltstate,
 													 econtext,
 													 &eisnull,
@@ -327,6 +338,14 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 								j + 1, MAXDIM)));
+
+			if (eltstate == NULL)
+			{
+				/* Slice bound is omitted, so use array's lower bound */
+				lowerProvided[j++] = false;
+				continue;
+			}
+			lowerProvided[j] = true;
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr(eltstate,
 														 econtext,
@@ -398,6 +417,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				econtext->caseValue_datum =
 					array_get_slice(array_source, i,
 									upper.indx, lower.indx,
+									upperProvided, lowerProvided,
 									astate->refattrlength,
 									astate->refelemlength,
 									astate->refelembyval,
@@ -456,6 +476,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		else
 			return array_set_slice(array_source, i,
 								   upper.indx, lower.indx,
+								   upperProvided, lowerProvided,
 								   sourceData,
 								   eisnull,
 								   astate->refattrlength,
@@ -475,6 +496,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	else
 		return array_get_slice(array_source, i,
 							   upper.indx, lower.indx,
+							   upperProvided, lowerProvided,
 							   astate->refattrlength,
 							   astate->refelemlength,
 							   astate->refelembyval,

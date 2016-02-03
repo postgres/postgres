@@ -3,7 +3,7 @@
  * pg_aggregate.c
  *	  routines to support manipulation of the pg_aggregate relation
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -57,6 +57,7 @@ AggregateCreate(const char *aggName,
 				Oid variadicArgType,
 				List *aggtransfnName,
 				List *aggfinalfnName,
+				List *aggcombinefnName,
 				List *aggmtransfnName,
 				List *aggminvtransfnName,
 				List *aggmfinalfnName,
@@ -77,6 +78,7 @@ AggregateCreate(const char *aggName,
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
+	Oid			combinefn = InvalidOid;	/* can be omitted */
 	Oid			mtransfn = InvalidOid;	/* can be omitted */
 	Oid			minvtransfn = InvalidOid;		/* can be omitted */
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
@@ -396,6 +398,30 @@ AggregateCreate(const char *aggName,
 	}
 	Assert(OidIsValid(finaltype));
 
+	/* handle the combinefn, if supplied */
+	if (aggcombinefnName)
+	{
+		Oid combineType;
+
+		/*
+		 * Combine function must have 2 argument, each of which is the
+		 * trans type
+		 */
+		fnArgs[0] = aggTransType;
+		fnArgs[1] = aggTransType;
+
+		combinefn = lookup_agg_function(aggcombinefnName, 2, fnArgs,
+										variadicArgType, &combineType);
+
+		/* Ensure the return type matches the aggregates trans type */
+		if (combineType != aggTransType)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+			errmsg("return type of combine function %s is not %s",
+				   NameListToString(aggcombinefnName),
+				   format_type_be(aggTransType))));
+	}
+
 	/*
 	 * If finaltype (i.e. aggregate return type) is polymorphic, inputs must
 	 * be polymorphic also, else parser will fail to deduce result type.
@@ -567,6 +593,7 @@ AggregateCreate(const char *aggName,
 	values[Anum_pg_aggregate_aggnumdirectargs - 1] = Int16GetDatum(numDirectArgs);
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
+	values[Anum_pg_aggregate_aggcombinefn - 1] = ObjectIdGetDatum(combinefn);
 	values[Anum_pg_aggregate_aggmtransfn - 1] = ObjectIdGetDatum(mtransfn);
 	values[Anum_pg_aggregate_aggminvtransfn - 1] = ObjectIdGetDatum(minvtransfn);
 	values[Anum_pg_aggregate_aggmfinalfn - 1] = ObjectIdGetDatum(mfinalfn);
@@ -618,6 +645,15 @@ AggregateCreate(const char *aggName,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
+	/* Depends on combine function, if any */
+	if (OidIsValid(combinefn))
+	{
+		referenced.classId = ProcedureRelationId;
+		referenced.objectId = combinefn;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
 	/* Depends on forward transition function, if any */
 	if (OidIsValid(mtransfn))
 	{
@@ -659,7 +695,7 @@ AggregateCreate(const char *aggName,
 
 /*
  * lookup_agg_function
- * common code for finding transfn, invtransfn and finalfn
+ * common code for finding transfn, invtransfn, finalfn, and combinefn
  *
  * Returns OID of function, and stores its return type into *rettype
  *

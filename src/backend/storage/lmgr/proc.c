@@ -3,7 +3,7 @@
  * proc.c
  *	  routines to manage per-process shared memory data structure
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -226,7 +226,7 @@ InitProcGlobal(void)
 		{
 			PGSemaphoreCreate(&(procs[i].sem));
 			InitSharedLatch(&(procs[i].procLatch));
-			procs[i].backendLock = LWLockAssign();
+			LWLockInitialize(&(procs[i].backendLock), LWTRANCHE_PROC);
 		}
 		procs[i].pgprocno = i;
 

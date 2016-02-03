@@ -17,7 +17,7 @@
  * scan all the rows anyway.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -433,9 +433,8 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	subroot->plan_params = NIL;
 	subroot->outer_params = NULL;
 	subroot->init_plans = NIL;
-	/* There shouldn't be any OJ or LATERAL info to translate, as yet */
+	/* There shouldn't be any OJ info to translate, as yet */
 	Assert(subroot->join_info_list == NIL);
-	Assert(subroot->lateral_info_list == NIL);
 	/* and we haven't created PlaceHolderInfos, either */
 	Assert(subroot->placeholder_list == NIL);
 

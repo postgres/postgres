@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use PostgresNode;
 use TestLib;
 use Test::More tests => 38;
 use ServerSetup;
@@ -25,8 +26,6 @@ BEGIN
 # postgresql-ssl-regression.test.
 my $SERVERHOSTADDR = '127.0.0.1';
 
-my $tempdir = TestLib::tempdir;
-
 # Define a couple of helper functions to test connecting to the server.
 
 my $common_connstr;
@@ -37,7 +36,7 @@ sub run_test_psql
 	my $logstring = $_[1];
 
 	my $cmd = [
-		'psql', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
+		'psql', '-X', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
 		'-d', "$connstr" ];
 
 	my $result = run_log($cmd);
@@ -74,10 +73,17 @@ chmod 0600, "ssl/client.key";
 
 #### Part 0. Set up the server.
 
-diag "setting up data directory in \"$tempdir\"...";
-start_test_server($tempdir);
-configure_test_server_for_ssl($tempdir, $SERVERHOSTADDR);
-switch_server_cert($tempdir, 'server-cn-only');
+diag "setting up data directory...";
+my $node = get_new_node('master');
+$node->init;
+
+# PGHOST is enforced here to set up the node, subsequent connections
+# will use a dedicated connection string.
+$ENV{PGHOST} = $node->host;
+$ENV{PGPORT} = $node->port;
+$node->start;
+configure_test_server_for_ssl($node, $SERVERHOSTADDR);
+switch_server_cert($node, 'server-cn-only');
 
 ### Part 1. Run client-side tests.
 ###
@@ -150,7 +156,7 @@ test_connect_ok("sslmode=verify-ca host=wronghost.test");
 test_connect_fails("sslmode=verify-full host=wronghost.test");
 
 # Test Subject Alternative Names.
-switch_server_cert($tempdir, 'server-multiple-alt-names');
+switch_server_cert($node, 'server-multiple-alt-names');
 
 diag "test hostname matching with X509 Subject Alternative Names";
 $common_connstr =
@@ -165,7 +171,7 @@ test_connect_fails("host=deep.subdomain.wildcard.pg-ssltest.test");
 
 # Test certificate with a single Subject Alternative Name. (this gives a
 # slightly different error message, that's all)
-switch_server_cert($tempdir, 'server-single-alt-name');
+switch_server_cert($node, 'server-single-alt-name');
 
 diag "test hostname matching with a single X509 Subject Alternative Name";
 $common_connstr =
@@ -178,7 +184,7 @@ test_connect_fails("host=deep.subdomain.wildcard.pg-ssltest.test");
 
 # Test server certificate with a CN and SANs. Per RFCs 2818 and 6125, the CN
 # should be ignored when the certificate has both.
-switch_server_cert($tempdir, 'server-cn-and-alt-names');
+switch_server_cert($node, 'server-cn-and-alt-names');
 
 diag "test certificate with both a CN and SANs";
 $common_connstr =
@@ -190,7 +196,7 @@ test_connect_fails("host=common-name.pg-ssltest.test");
 
 # Finally, test a server certificate that has no CN or SANs. Of course, that's
 # not a very sensible certificate, but libpq should handle it gracefully.
-switch_server_cert($tempdir, 'server-no-names');
+switch_server_cert($node, 'server-no-names');
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
@@ -199,7 +205,7 @@ test_connect_fails("sslmode=verify-full host=common-name.pg-ssltest.test");
 
 # Test that the CRL works
 diag "Testing client-side CRL";
-switch_server_cert($tempdir, 'server-revoked');
+switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
 "user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
@@ -233,7 +239,3 @@ test_connect_fails(
 test_connect_fails(
 "user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked.key"
 );
-
-
-# All done! Save the log, before the temporary installation is deleted
-copy("$tempdir/client-log", "./client-log");

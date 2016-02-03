@@ -48,10 +48,10 @@ hstoreFindKey(HStore *hs, int *lowbound, char *key, int keylen)
 
 		stopMiddle = stopLow + (stopHigh - stopLow) / 2;
 
-		if (HS_KEYLEN(entries, stopMiddle) == keylen)
-			difference = memcmp(HS_KEY(entries, base, stopMiddle), key, keylen);
+		if (HSTORE_KEYLEN(entries, stopMiddle) == keylen)
+			difference = memcmp(HSTORE_KEY(entries, base, stopMiddle), key, keylen);
 		else
-			difference = (HS_KEYLEN(entries, stopMiddle) > keylen) ? 1 : -1;
+			difference = (HSTORE_KEYLEN(entries, stopMiddle) > keylen) ? 1 : -1;
 
 		if (difference == 0)
 		{
@@ -137,11 +137,11 @@ hstore_fetchval(PG_FUNCTION_ARGS)
 	int			idx = hstoreFindKey(hs, NULL,
 									VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
-	if (idx < 0 || HS_VALISNULL(entries, idx))
+	if (idx < 0 || HSTORE_VALISNULL(entries, idx))
 		PG_RETURN_NULL();
 
-	out = cstring_to_text_with_len(HS_VAL(entries, STRPTR(hs), idx),
-								   HS_VALLEN(entries, idx));
+	out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
+								   HSTORE_VALLEN(entries, idx));
 
 	PG_RETURN_TEXT_P(out);
 }
@@ -237,7 +237,7 @@ hstore_defined(PG_FUNCTION_ARGS)
 	HEntry	   *entries = ARRPTR(hs);
 	int			idx = hstoreFindKey(hs, NULL,
 									VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
-	bool		res = (idx >= 0 && !HS_VALISNULL(entries, idx));
+	bool		res = (idx >= 0 && !HSTORE_VALISNULL(entries, idx));
 
 	PG_RETURN_BOOL(res);
 }
@@ -271,14 +271,15 @@ hstore_delete(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; ++i)
 	{
-		int			len = HS_KEYLEN(es, i);
-		char	   *ptrs = HS_KEY(es, bufs, i);
+		int			len = HSTORE_KEYLEN(es, i);
+		char	   *ptrs = HSTORE_KEY(es, bufs, i);
 
 		if (!(len == keylen && memcmp(ptrs, keyptr, keylen) == 0))
 		{
-			int			vallen = HS_VALLEN(es, i);
+			int			vallen = HSTORE_VALLEN(es, i);
 
-			HS_COPYITEM(ed, bufd, ptrd, ptrs, len, vallen, HS_VALISNULL(es, i));
+			HS_COPYITEM(ed, bufd, ptrd, ptrs, len, vallen,
+						HSTORE_VALISNULL(es, i));
 			++outcount;
 		}
 	}
@@ -338,10 +339,10 @@ hstore_delete_array(PG_FUNCTION_ARGS)
 			difference = -1;
 		else
 		{
-			int			skeylen = HS_KEYLEN(es, i);
+			int			skeylen = HSTORE_KEYLEN(es, i);
 
 			if (skeylen == key_pairs[j].keylen)
-				difference = memcmp(HS_KEY(es, ps, i),
+				difference = memcmp(HSTORE_KEY(es, ps, i),
 									key_pairs[j].key,
 									key_pairs[j].keylen);
 			else
@@ -355,8 +356,8 @@ hstore_delete_array(PG_FUNCTION_ARGS)
 		else
 		{
 			HS_COPYITEM(ed, bufd, pd,
-						HS_KEY(es, ps, i), HS_KEYLEN(es, i),
-						HS_VALLEN(es, i), HS_VALISNULL(es, i));
+						HSTORE_KEY(es, ps, i), HSTORE_KEYLEN(es, i),
+						HSTORE_VALLEN(es, i), HSTORE_VALISNULL(es, i));
 			++outcount;
 			++i;
 		}
@@ -421,12 +422,12 @@ hstore_delete_hstore(PG_FUNCTION_ARGS)
 			difference = -1;
 		else
 		{
-			int			skeylen = HS_KEYLEN(es, i);
-			int			s2keylen = HS_KEYLEN(es2, j);
+			int			skeylen = HSTORE_KEYLEN(es, i);
+			int			s2keylen = HSTORE_KEYLEN(es2, j);
 
 			if (skeylen == s2keylen)
-				difference = memcmp(HS_KEY(es, ps, i),
-									HS_KEY(es2, ps2, j),
+				difference = memcmp(HSTORE_KEY(es, ps, i),
+									HSTORE_KEY(es2, ps2, j),
 									skeylen);
 			else
 				difference = (skeylen > s2keylen) ? 1 : -1;
@@ -436,16 +437,17 @@ hstore_delete_hstore(PG_FUNCTION_ARGS)
 			++j;
 		else if (difference == 0)
 		{
-			int			svallen = HS_VALLEN(es, i);
-			int			snullval = HS_VALISNULL(es, i);
+			int			svallen = HSTORE_VALLEN(es, i);
+			int			snullval = HSTORE_VALISNULL(es, i);
 
-			if (snullval != HS_VALISNULL(es2, j)
-				|| (!snullval
-					&& (svallen != HS_VALLEN(es2, j)
-			|| memcmp(HS_VAL(es, ps, i), HS_VAL(es2, ps2, j), svallen) != 0)))
+			if (snullval != HSTORE_VALISNULL(es2, j) ||
+				(!snullval && (svallen != HSTORE_VALLEN(es2, j) ||
+							   memcmp(HSTORE_VAL(es, ps, i),
+									  HSTORE_VAL(es2, ps2, j),
+									  svallen) != 0)))
 			{
 				HS_COPYITEM(ed, bufd, pd,
-							HS_KEY(es, ps, i), HS_KEYLEN(es, i),
+							HSTORE_KEY(es, ps, i), HSTORE_KEYLEN(es, i),
 							svallen, snullval);
 				++outcount;
 			}
@@ -454,8 +456,8 @@ hstore_delete_hstore(PG_FUNCTION_ARGS)
 		else
 		{
 			HS_COPYITEM(ed, bufd, pd,
-						HS_KEY(es, ps, i), HS_KEYLEN(es, i),
-						HS_VALLEN(es, i), HS_VALISNULL(es, i));
+						HSTORE_KEY(es, ps, i), HSTORE_KEYLEN(es, i),
+						HSTORE_VALLEN(es, i), HSTORE_VALISNULL(es, i));
 			++outcount;
 			++i;
 		}
@@ -530,12 +532,12 @@ hstore_concat(PG_FUNCTION_ARGS)
 			difference = -1;
 		else
 		{
-			int			s1keylen = HS_KEYLEN(es1, s1idx);
-			int			s2keylen = HS_KEYLEN(es2, s2idx);
+			int			s1keylen = HSTORE_KEYLEN(es1, s1idx);
+			int			s2keylen = HSTORE_KEYLEN(es2, s2idx);
 
 			if (s1keylen == s2keylen)
-				difference = memcmp(HS_KEY(es1, ps1, s1idx),
-									HS_KEY(es2, ps2, s2idx),
+				difference = memcmp(HSTORE_KEY(es1, ps1, s1idx),
+									HSTORE_KEY(es2, ps2, s2idx),
 									s1keylen);
 			else
 				difference = (s1keylen > s2keylen) ? 1 : -1;
@@ -544,8 +546,8 @@ hstore_concat(PG_FUNCTION_ARGS)
 		if (difference >= 0)
 		{
 			HS_COPYITEM(ed, bufd, pd,
-						HS_KEY(es2, ps2, s2idx), HS_KEYLEN(es2, s2idx),
-						HS_VALLEN(es2, s2idx), HS_VALISNULL(es2, s2idx));
+					  HSTORE_KEY(es2, ps2, s2idx), HSTORE_KEYLEN(es2, s2idx),
+					HSTORE_VALLEN(es2, s2idx), HSTORE_VALISNULL(es2, s2idx));
 			++s2idx;
 			if (difference == 0)
 				++s1idx;
@@ -553,8 +555,8 @@ hstore_concat(PG_FUNCTION_ARGS)
 		else
 		{
 			HS_COPYITEM(ed, bufd, pd,
-						HS_KEY(es1, ps1, s1idx), HS_KEYLEN(es1, s1idx),
-						HS_VALLEN(es1, s1idx), HS_VALISNULL(es1, s1idx));
+					  HSTORE_KEY(es1, ps1, s1idx), HSTORE_KEYLEN(es1, s1idx),
+					HSTORE_VALLEN(es1, s1idx), HSTORE_VALISNULL(es1, s1idx));
 			++s1idx;
 		}
 	}
@@ -604,7 +606,7 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 		else
 			idx = hstoreFindKey(hs, NULL, VARDATA(key), VARSIZE(key) - VARHDRSZ);
 
-		if (idx < 0 || HS_VALISNULL(entries, idx))
+		if (idx < 0 || HSTORE_VALISNULL(entries, idx))
 		{
 			out_nulls[i] = true;
 			out_datums[i] = (Datum) 0;
@@ -612,8 +614,8 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 		else
 		{
 			out_datums[i] = PointerGetDatum(
-						  cstring_to_text_with_len(HS_VAL(entries, ptr, idx),
-												   HS_VALLEN(entries, idx)));
+					  cstring_to_text_with_len(HSTORE_VAL(entries, ptr, idx),
+											   HSTORE_VALLEN(entries, idx)));
 			out_nulls[i] = false;
 		}
 	}
@@ -671,9 +673,9 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 		{
 			out_pairs[out_count].key = key_pairs[i].key;
 			bufsiz += (out_pairs[out_count].keylen = key_pairs[i].keylen);
-			out_pairs[out_count].val = HS_VAL(entries, ptr, idx);
-			bufsiz += (out_pairs[out_count].vallen = HS_VALLEN(entries, idx));
-			out_pairs[out_count].isnull = HS_VALISNULL(entries, idx);
+			out_pairs[out_count].val = HSTORE_VAL(entries, ptr, idx);
+			bufsiz += (out_pairs[out_count].vallen = HSTORE_VALLEN(entries, idx));
+			out_pairs[out_count].isnull = HSTORE_VALISNULL(entries, idx);
 			out_pairs[out_count].needfree = false;
 			++out_count;
 		}
@@ -712,10 +714,10 @@ hstore_akeys(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; ++i)
 	{
-		text	   *item = cstring_to_text_with_len(HS_KEY(entries, base, i),
-													HS_KEYLEN(entries, i));
+		text	   *t = cstring_to_text_with_len(HSTORE_KEY(entries, base, i),
+												 HSTORE_KEYLEN(entries, i));
 
-		d[i] = PointerGetDatum(item);
+		d[i] = PointerGetDatum(t);
 	}
 
 	a = construct_array(d, count,
@@ -750,15 +752,15 @@ hstore_avals(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; ++i)
 	{
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			d[i] = (Datum) 0;
 			nulls[i] = true;
 		}
 		else
 		{
-			text	   *item = cstring_to_text_with_len(HS_VAL(entries, base, i),
-													  HS_VALLEN(entries, i));
+			text	   *item = cstring_to_text_with_len(HSTORE_VAL(entries, base, i),
+												  HSTORE_VALLEN(entries, i));
 
 			d[i] = PointerGetDatum(item);
 			nulls[i] = false;
@@ -795,21 +797,21 @@ hstore_to_array_internal(HStore *hs, int ndims)
 
 	for (i = 0; i < count; ++i)
 	{
-		text	   *key = cstring_to_text_with_len(HS_KEY(entries, base, i),
-												   HS_KEYLEN(entries, i));
+		text	   *key = cstring_to_text_with_len(HSTORE_KEY(entries, base, i),
+												   HSTORE_KEYLEN(entries, i));
 
 		out_datums[i * 2] = PointerGetDatum(key);
 		out_nulls[i * 2] = false;
 
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			out_datums[i * 2 + 1] = (Datum) 0;
 			out_nulls[i * 2 + 1] = true;
 		}
 		else
 		{
-			text	   *item = cstring_to_text_with_len(HS_VAL(entries, base, i),
-													  HS_VALLEN(entries, i));
+			text	   *item = cstring_to_text_with_len(HSTORE_VAL(entries, base, i),
+												  HSTORE_VALLEN(entries, i));
 
 			out_datums[i * 2 + 1] = PointerGetDatum(item);
 			out_nulls[i * 2 + 1] = false;
@@ -903,8 +905,8 @@ hstore_skeys(PG_FUNCTION_ARGS)
 		HEntry	   *entries = ARRPTR(hs);
 		text	   *item;
 
-		item = cstring_to_text_with_len(HS_KEY(entries, STRPTR(hs), i),
-										HS_KEYLEN(entries, i));
+		item = cstring_to_text_with_len(HSTORE_KEY(entries, STRPTR(hs), i),
+										HSTORE_KEYLEN(entries, i));
 
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(item));
 	}
@@ -936,7 +938,7 @@ hstore_svals(PG_FUNCTION_ARGS)
 	{
 		HEntry	   *entries = ARRPTR(hs);
 
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			ReturnSetInfo *rsi;
 
@@ -950,8 +952,8 @@ hstore_svals(PG_FUNCTION_ARGS)
 		{
 			text	   *item;
 
-			item = cstring_to_text_with_len(HS_VAL(entries, STRPTR(hs), i),
-											HS_VALLEN(entries, i));
+			item = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), i),
+											HSTORE_VALLEN(entries, i));
 
 			SRF_RETURN_NEXT(funcctx, PointerGetDatum(item));
 		}
@@ -986,17 +988,19 @@ hstore_contains(PG_FUNCTION_ARGS)
 	for (i = 0; res && i < tcount; ++i)
 	{
 		int			idx = hstoreFindKey(val, &lastidx,
-									  HS_KEY(te, tstr, i), HS_KEYLEN(te, i));
+										HSTORE_KEY(te, tstr, i),
+										HSTORE_KEYLEN(te, i));
 
 		if (idx >= 0)
 		{
-			bool		nullval = HS_VALISNULL(te, i);
-			int			vallen = HS_VALLEN(te, i);
+			bool		nullval = HSTORE_VALISNULL(te, i);
+			int			vallen = HSTORE_VALLEN(te, i);
 
-			if (nullval != HS_VALISNULL(ve, idx)
-				|| (!nullval
-					&& (vallen != HS_VALLEN(ve, idx)
-			 || memcmp(HS_VAL(te, tstr, i), HS_VAL(ve, vstr, idx), vallen))))
+			if (nullval != HSTORE_VALISNULL(ve, idx) ||
+				(!nullval && (vallen != HSTORE_VALLEN(ve, idx) ||
+							  memcmp(HSTORE_VAL(te, tstr, i),
+									 HSTORE_VAL(ve, vstr, idx),
+									 vallen) != 0)))
 				res = false;
 		}
 		else
@@ -1047,19 +1051,19 @@ hstore_each(PG_FUNCTION_ARGS)
 		text	   *item;
 		HeapTuple	tuple;
 
-		item = cstring_to_text_with_len(HS_KEY(entries, ptr, i),
-										HS_KEYLEN(entries, i));
+		item = cstring_to_text_with_len(HSTORE_KEY(entries, ptr, i),
+										HSTORE_KEYLEN(entries, i));
 		dvalues[0] = PointerGetDatum(item);
 
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			dvalues[1] = (Datum) 0;
 			nulls[1] = true;
 		}
 		else
 		{
-			item = cstring_to_text_with_len(HS_VAL(entries, ptr, i),
-											HS_VALLEN(entries, i));
+			item = cstring_to_text_with_len(HSTORE_VAL(entries, ptr, i),
+											HSTORE_VALLEN(entries, i));
 			dvalues[1] = PointerGetDatum(item);
 		}
 

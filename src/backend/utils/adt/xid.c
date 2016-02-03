@@ -3,7 +3,7 @@
  * xid.c
  *	  POSTGRES transaction identifier and command identifier datatypes.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -85,6 +85,18 @@ xideq(PG_FUNCTION_ARGS)
 	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
 
 	PG_RETURN_BOOL(TransactionIdEquals(xid1, xid2));
+}
+
+/*
+ *		xidneq			- are two xids different?
+ */
+Datum
+xidneq(PG_FUNCTION_ARGS)
+{
+	TransactionId xid1 = PG_GETARG_TRANSACTIONID(0);
+	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
+
+	PG_RETURN_BOOL(!TransactionIdEquals(xid1, xid2));
 }
 
 /*

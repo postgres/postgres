@@ -6,7 +6,7 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -434,7 +434,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	columnDef columnOptions
 %type <defelt>	def_elem reloption_elem old_aggr_elem operator_def_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
-				a_expr b_expr c_expr AexprConst indirection_el
+				a_expr b_expr c_expr AexprConst indirection_el opt_slice_bound
 				columnref in_expr having_clause func_table array_expr
 				ExclusionWhereClause
 %type <list>	rowsfrom_item rowsfrom_list opt_col_def_list
@@ -2561,9 +2561,12 @@ ClosePortalStmt:
  *
  *		QUERY :
  *				COPY relname [(columnList)] FROM/TO file [WITH] [(options)]
- *				COPY ( SELECT ... ) TO file	[WITH] [(options)]
+ *				COPY ( query ) TO file	[WITH] [(options)]
  *
- *				where 'file' can be one of:
+ *				where 'query' can be one of:
+ *				{ SELECT | UPDATE | INSERT | DELETE }
+ *
+ *				and 'file' can be one of:
  *				{ PROGRAM 'command' | STDIN | STDOUT | 'filename' }
  *
  *				In the preferred syntax the options are comma-separated
@@ -2574,7 +2577,7 @@ ClosePortalStmt:
  *				COPY [ BINARY ] table [ WITH OIDS ] FROM/TO file
  *					[ [ USING ] DELIMITERS 'delimiter' ] ]
  *					[ WITH NULL AS 'null string' ]
- *				This option placement is not supported with COPY (SELECT...).
+ *				This option placement is not supported with COPY (query...).
  *
  *****************************************************************************/
 
@@ -2607,16 +2610,16 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 						n->options = list_concat(n->options, $11);
 					$$ = (Node *)n;
 				}
-			| COPY select_with_parens TO opt_program copy_file_name opt_with copy_options
+			| COPY '(' PreparableStmt ')' TO opt_program copy_file_name opt_with copy_options
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = NULL;
-					n->query = $2;
+					n->query = $3;
 					n->attlist = NIL;
 					n->is_from = false;
-					n->is_program = $4;
-					n->filename = $5;
-					n->options = $7;
+					n->is_program = $6;
+					n->filename = $7;
+					n->options = $9;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
@@ -3077,6 +3080,8 @@ ColConstraintElem:
 					n->is_no_inherit = $5;
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
+					n->skip_validation = false;
+					n->initially_valid = true;
 					$$ = (Node *)n;
 				}
 			| DEFAULT b_expr
@@ -13186,17 +13191,24 @@ indirection_el:
 			| '[' a_expr ']'
 				{
 					A_Indices *ai = makeNode(A_Indices);
+					ai->is_slice = false;
 					ai->lidx = NULL;
 					ai->uidx = $2;
 					$$ = (Node *) ai;
 				}
-			| '[' a_expr ':' a_expr ']'
+			| '[' opt_slice_bound ':' opt_slice_bound ']'
 				{
 					A_Indices *ai = makeNode(A_Indices);
+					ai->is_slice = true;
 					ai->lidx = $2;
 					ai->uidx = $4;
 					$$ = (Node *) ai;
 				}
+		;
+
+opt_slice_bound:
+			a_expr									{ $$ = $1; }
+			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 indirection:

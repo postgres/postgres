@@ -82,8 +82,10 @@ typedef struct CustomPath
     by <literal>nodeToString</>, so that debugging routines that attempt to
     print the custom path will work as designed.  <structfield>methods</> must
     point to a (usually statically allocated) object implementing the required
-    custom path methods, of which there are currently only two, as further
-    detailed below.
+    custom path methods, of which there is currently only one.  The
+    <structfield>LibraryName</> and <structfield>SymbolName</> fields must also
+    be initialized so that the dynamic loader can resolve them to locate the
+    method table.
   </para>
 
   <para>
@@ -217,18 +219,6 @@ Node *(*CreateCustomScanState) (CustomScan *cscan);
     stage; after <function>ExecInitCustomScan</> performs basic initialization,
     the <function>BeginCustomScan</> callback will be invoked to give the
     custom scan provider a chance to do whatever else is needed.
-   </para>
-
-   <para>
-<programlisting>
-void (*TextOutCustomScan) (StringInfo str,
-                           const CustomScan *node);
-</programlisting>
-    Generate additional output when <function>nodeToString</> is invoked on
-    this custom plan node.  This callback is optional.  Since
-    <function>nodeToString</> will automatically dump all fields in the
-    structure, including the substructure of the <quote>custom</> fields,
-    there is usually not much need for this callback.
    </para>
   </sect2>
  </sect1>

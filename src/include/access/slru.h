@@ -3,7 +3,7 @@
  * slru.h
  *		Simple LRU buffering for transaction status logfiles
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/slru.h
@@ -35,6 +35,9 @@
  * for 32-bit TransactionIds).
  */
 #define SLRU_PAGES_PER_SEGMENT	32
+
+/* Maximum length of an SLRU name */
+#define SLRU_MAX_NAME_LENGTH	32
 
 /*
  * Page status codes.  Note that these do not include the "dirty" bit.
@@ -69,7 +72,6 @@ typedef struct SlruSharedData
 	bool	   *page_dirty;
 	int		   *page_number;
 	int		   *page_lru_count;
-	LWLock	  **buffer_locks;
 
 	/*
 	 * Optional array of WAL flush LSNs associated with entries in the SLRU
@@ -99,6 +101,12 @@ typedef struct SlruSharedData
 	 * the latest page.
 	 */
 	int			latest_page_number;
+
+	/* LWLocks */
+	int			lwlock_tranche_id;
+	LWLockTranche lwlock_tranche;
+	char		lwlock_tranche_name[SLRU_MAX_NAME_LENGTH];
+	LWLockPadded *buffer_locks;
 } SlruSharedData;
 
 typedef SlruSharedData *SlruShared;
@@ -136,7 +144,7 @@ typedef SlruCtlData *SlruCtl;
 
 extern Size SimpleLruShmemSize(int nslots, int nlsns);
 extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
-			  LWLock *ctllock, const char *subdir);
+			  LWLock *ctllock, const char *subdir, int tranche_id);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int pageno);
 extern int SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 				  TransactionId xid);

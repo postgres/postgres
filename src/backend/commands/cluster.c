@@ -6,7 +6,7 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -17,6 +17,7 @@
  */
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/rewriteheap.h"
@@ -24,6 +25,7 @@
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "access/xlog.h"
+#include "catalog/pg_am.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -433,7 +435,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 						RelationGetRelationName(OldHeap))));
 
 	/* Index AM must allow clustering */
-	if (!OldIndex->rd_am->amclusterable)
+	if (!OldIndex->rd_amroutine->amclusterable)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",

@@ -301,6 +301,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_wal_receiver</><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
+      <entry>Only one row, showing statistics about the WAL receiver from
+       that receiver's connected server.
+       See <xref linkend="pg-stat-wal-receiver-view"> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_ssl</><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
@@ -831,6 +839,89 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    per WAL sender process, showing statistics about replication to that
    sender's connected standby server.  Only directly connected standbys are
    listed; no information is available about downstream standby servers.
+  </para>
+
+  <table id="pg-stat-wal-receiver-view" xreflabel="pg_stat_wal_receiver">
+   <title><structname>pg_stat_wal_receiver</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of the WAL receiver process</entry>
+    </row>
+    <row>
+     <entry><structfield>status</></entry>
+     <entry><type>text</></entry>
+     <entry>Activity status of the WAL receiver process</entry>
+    </row>
+    <row>
+     <entry><structfield>receive_start_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>First transaction log position used when WAL receiver is
+      started</entry>
+    </row>
+    <row>
+     <entry><structfield>receive_start_tli</></entry>
+     <entry><type>integer</></entry>
+     <entry>First timeline number used when WAL receiver is started</entry>
+    </row>
+    <row>
+     <entry><structfield>received_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position already received and flushed to
+      disk, the initial value of this field being the first log position used
+      when WAL receiver is started</entry>
+    </row>
+    <row>
+     <entry><structfield>received_tli</></entry>
+     <entry><type>integer</></entry>
+     <entry>Timeline number of last transaction log position received and
+      flushed to disk, the initial value of this field being the timeline
+      number of the first log position used when WAL receiver is started
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_send_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Send time of last message received from origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_receipt_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Receipt time of last message received from origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last transaction log position reported to origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Time of last transaction log position reported to origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>slot_name</></entry>
+     <entry><type>text</></entry>
+     <entry>Replication slot name used by this WAL receiver</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_wal_receiver</structname> view will contain only
+   one row, showing statistics about the WAL receiver from that receiver's
+   connected server.
   </para>
 
   <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">
@@ -2077,217 +2168,217 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    <tbody>
 
     <row>
-     <entry>transaction-start</entry>
-     <entry>(LocalTransactionId)</entry>
+     <entry><literal>transaction-start</literal></entry>
+     <entry><literal>(LocalTransactionId)</literal></entry>
      <entry>Probe that fires at the start of a new transaction.
       arg0 is the transaction ID.</entry>
     </row>
     <row>
-     <entry>transaction-commit</entry>
-     <entry>(LocalTransactionId)</entry>
+     <entry><literal>transaction-commit</literal></entry>
+     <entry><literal>(LocalTransactionId)</literal></entry>
      <entry>Probe that fires when a transaction completes successfully.
       arg0 is the transaction ID.</entry>
     </row>
     <row>
-     <entry>transaction-abort</entry>
-     <entry>(LocalTransactionId)</entry>
+     <entry><literal>transaction-abort</literal></entry>
+     <entry><literal>(LocalTransactionId)</literal></entry>
      <entry>Probe that fires when a transaction completes unsuccessfully.
       arg0 is the transaction ID.</entry>
     </row>
     <row>
-     <entry>query-start</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>query-start</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires when the processing of a query is started.
       arg0 is the query string.</entry>
     </row>
     <row>
-     <entry>query-done</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>query-done</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires when the processing of a query is complete.
       arg0 is the query string.</entry>
     </row>
     <row>
-     <entry>query-parse-start</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>query-parse-start</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires when the parsing of a query is started.
       arg0 is the query string.</entry>
     </row>
     <row>
-     <entry>query-parse-done</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>query-parse-done</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires when the parsing of a query is complete.
       arg0 is the query string.</entry>
     </row>
     <row>
-     <entry>query-rewrite-start</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>query-rewrite-start</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires when the rewriting of a query is started.
       arg0 is the query string.</entry>
     </row>
     <row>
-     <entry>query-rewrite-done</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>query-rewrite-done</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires when the rewriting of a query is complete.
       arg0 is the query string.</entry>
     </row>
     <row>
-     <entry>query-plan-start</entry>
-     <entry>()</entry>
+     <entry><literal>query-plan-start</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when the planning of a query is started.</entry>
     </row>
     <row>
-     <entry>query-plan-done</entry>
-     <entry>()</entry>
+     <entry><literal>query-plan-done</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when the planning of a query is complete.</entry>
     </row>
     <row>
-     <entry>query-execute-start</entry>
-     <entry>()</entry>
+     <entry><literal>query-execute-start</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when the execution of a query is started.</entry>
     </row>
     <row>
-     <entry>query-execute-done</entry>
-     <entry>()</entry>
+     <entry><literal>query-execute-done</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when the execution of a query is complete.</entry>
     </row>
     <row>
-     <entry>statement-status</entry>
-     <entry>(const char *)</entry>
+     <entry><literal>statement-status</literal></entry>
+     <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires anytime the server process updates its
       <structname>pg_stat_activity</>.<structfield>status</>.
       arg0 is the new status string.</entry>
     </row>
     <row>
-     <entry>checkpoint-start</entry>
-     <entry>(int)</entry>
+     <entry><literal>checkpoint-start</literal></entry>
+     <entry><literal>(int)</literal></entry>
      <entry>Probe that fires when a checkpoint is started.
       arg0 holds the bitwise flags used to distinguish different checkpoint
       types, such as shutdown, immediate or force.</entry>
     </row>
     <row>
-     <entry>checkpoint-done</entry>
-     <entry>(int, int, int, int, int)</entry>
+     <entry><literal>checkpoint-done</literal></entry>
+     <entry><literal>(int, int, int, int, int)</literal></entry>
      <entry>Probe that fires when a checkpoint is complete.
       (The probes listed next fire in sequence during checkpoint processing.)
       arg0 is the number of buffers written. arg1 is the total number of
-      buffers. arg2, arg3 and arg4 contain the number of xlog file(s) added,
+      buffers. arg2, arg3 and arg4 contain the number of WAL files added,
       removed and recycled respectively.</entry>
     </row>
     <row>
-     <entry>clog-checkpoint-start</entry>
-     <entry>(bool)</entry>
+     <entry><literal>clog-checkpoint-start</literal></entry>
+     <entry><literal>(bool)</literal></entry>
      <entry>Probe that fires when the CLOG portion of a checkpoint is started.
       arg0 is true for normal checkpoint, false for shutdown
       checkpoint.</entry>
     </row>
     <row>
-     <entry>clog-checkpoint-done</entry>
-     <entry>(bool)</entry>
+     <entry><literal>clog-checkpoint-done</literal></entry>
+     <entry><literal>(bool)</literal></entry>
      <entry>Probe that fires when the CLOG portion of a checkpoint is
-      complete. arg0 has the same meaning as for clog-checkpoint-start.</entry>
+      complete. arg0 has the same meaning as for <literal>clog-checkpoint-start</literal>.</entry>
     </row>
     <row>
-     <entry>subtrans-checkpoint-start</entry>
-     <entry>(bool)</entry>
+     <entry><literal>subtrans-checkpoint-start</literal></entry>
+     <entry><literal>(bool)</literal></entry>
      <entry>Probe that fires when the SUBTRANS portion of a checkpoint is
       started.
       arg0 is true for normal checkpoint, false for shutdown
       checkpoint.</entry>
     </row>
     <row>
-     <entry>subtrans-checkpoint-done</entry>
-     <entry>(bool)</entry>
+     <entry><literal>subtrans-checkpoint-done</literal></entry>
+     <entry><literal>(bool)</literal></entry>
      <entry>Probe that fires when the SUBTRANS portion of a checkpoint is
       complete. arg0 has the same meaning as for
-      subtrans-checkpoint-start.</entry>
+      <literal>subtrans-checkpoint-start</literal>.</entry>
     </row>
     <row>
-     <entry>multixact-checkpoint-start</entry>
-     <entry>(bool)</entry>
+     <entry><literal>multixact-checkpoint-start</literal></entry>
+     <entry><literal>(bool)</literal></entry>
      <entry>Probe that fires when the MultiXact portion of a checkpoint is
       started.
       arg0 is true for normal checkpoint, false for shutdown
       checkpoint.</entry>
     </row>
     <row>
-     <entry>multixact-checkpoint-done</entry>
-     <entry>(bool)</entry>
+     <entry><literal>multixact-checkpoint-done</literal></entry>
+     <entry><literal>(bool)</literal></entry>
      <entry>Probe that fires when the MultiXact portion of a checkpoint is
       complete. arg0 has the same meaning as for
-      multixact-checkpoint-start.</entry>
+      <literal>multixact-checkpoint-start</literal>.</entry>
     </row>
     <row>
-     <entry>buffer-checkpoint-start</entry>
-     <entry>(int)</entry>
+     <entry><literal>buffer-checkpoint-start</literal></entry>
+     <entry><literal>(int)</literal></entry>
      <entry>Probe that fires when the buffer-writing portion of a checkpoint
       is started.
       arg0 holds the bitwise flags used to distinguish different checkpoint
       types, such as shutdown, immediate or force.</entry>
     </row>
     <row>
-     <entry>buffer-sync-start</entry>
-     <entry>(int, int)</entry>
+     <entry><literal>buffer-sync-start</literal></entry>
+     <entry><literal>(int, int)</literal></entry>
      <entry>Probe that fires when we begin to write dirty buffers during
       checkpoint (after identifying which buffers must be written).
       arg0 is the total number of buffers.
       arg1 is the number that are currently dirty and need to be written.</entry>
     </row>
     <row>
-     <entry>buffer-sync-written</entry>
-     <entry>(int)</entry>
+     <entry><literal>buffer-sync-written</literal></entry>
+     <entry><literal>(int)</literal></entry>
      <entry>Probe that fires after each buffer is written during checkpoint.
       arg0 is the ID number of the buffer.</entry>
     </row>
     <row>
-     <entry>buffer-sync-done</entry>
-     <entry>(int, int, int)</entry>
+     <entry><literal>buffer-sync-done</literal></entry>
+     <entry><literal>(int, int, int)</literal></entry>
      <entry>Probe that fires when all dirty buffers have been written.
       arg0 is the total number of buffers.
       arg1 is the number of buffers actually written by the checkpoint process.
       arg2 is the number that were expected to be written (arg1 of
-      buffer-sync-start); any difference reflects other processes flushing
+      <literal>buffer-sync-start</literal>); any difference reflects other processes flushing
       buffers during the checkpoint.</entry>
     </row>
     <row>
-     <entry>buffer-checkpoint-sync-start</entry>
-     <entry>()</entry>
+     <entry><literal>buffer-checkpoint-sync-start</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires after dirty buffers have been written to the
       kernel, and before starting to issue fsync requests.</entry>
     </row>
     <row>
-     <entry>buffer-checkpoint-done</entry>
-     <entry>()</entry>
+     <entry><literal>buffer-checkpoint-done</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when syncing of buffers to disk is
       complete.</entry>
     </row>
     <row>
-     <entry>twophase-checkpoint-start</entry>
-     <entry>()</entry>
+     <entry><literal>twophase-checkpoint-start</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when the two-phase portion of a checkpoint is
       started.</entry>
     </row>
     <row>
-     <entry>twophase-checkpoint-done</entry>
-     <entry>()</entry>
+     <entry><literal>twophase-checkpoint-done</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when the two-phase portion of a checkpoint is
       complete.</entry>
     </row>
     <row>
-     <entry>buffer-read-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool)</entry>
+     <entry><literal>buffer-read-start</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool)</literal></entry>
      <entry>Probe that fires when a buffer read is started.
       arg0 and arg1 contain the fork and block numbers of the page (but
       arg1 will be -1 if this is a relation extension request).
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or InvalidBackendId (-1) for a shared buffer.
+      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
       arg6 is true for a relation extension request, false for normal
       read.</entry>
     </row>
     <row>
-     <entry>buffer-read-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool, bool)</entry>
+     <entry><literal>buffer-read-done</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool, bool)</literal></entry>
      <entry>Probe that fires when a buffer read is complete.
       arg0 and arg1 contain the fork and block numbers of the page (if this
       is a relation extension request, arg1 now contains the block number
@@ -2295,14 +2386,14 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or InvalidBackendId (-1) for a shared buffer.
+      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
       arg6 is true for a relation extension request, false for normal
       read.
       arg7 is true if the buffer was found in the pool, false if not.</entry>
     </row>
     <row>
-     <entry>buffer-flush-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry><literal>buffer-flush-start</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
      <entry>Probe that fires before issuing any write request for a shared
       buffer.
       arg0 and arg1 contain the fork and block numbers of the page.
@@ -2310,102 +2401,102 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       identifying the relation.</entry>
     </row>
     <row>
-     <entry>buffer-flush-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry><literal>buffer-flush-done</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
      <entry>Probe that fires when a write request is complete.  (Note
       that this just reflects the time to pass the data to the kernel;
       it's typically not actually been written to disk yet.)
-      The arguments are the same as for buffer-flush-start.</entry>
+      The arguments are the same as for <literal>buffer-flush-start</literal>.</entry>
     </row>
     <row>
-     <entry>buffer-write-dirty-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry><literal>buffer-write-dirty-start</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
      <entry>Probe that fires when a server process begins to write a dirty
       buffer.  (If this happens often, it implies that
       <xref linkend="guc-shared-buffers"> is too
-      small or the bgwriter control parameters need adjustment.)
+      small or the background writer control parameters need adjustment.)
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.</entry>
     </row>
     <row>
-     <entry>buffer-write-dirty-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry><literal>buffer-write-dirty-done</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid)</literal></entry>
      <entry>Probe that fires when a dirty-buffer write is complete.
-      The arguments are the same as for buffer-write-dirty-start.</entry>
+      The arguments are the same as for <literal>buffer-write-dirty-start</literal>.</entry>
     </row>
     <row>
-     <entry>wal-buffer-write-dirty-start</entry>
-     <entry>()</entry>
+     <entry><literal>wal-buffer-write-dirty-start</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when a server process begins to write a
       dirty WAL buffer because no more WAL buffer space is available.
       (If this happens often, it implies that
       <xref linkend="guc-wal-buffers"> is too small.)</entry>
     </row>
     <row>
-     <entry>wal-buffer-write-dirty-done</entry>
-     <entry>()</entry>
+     <entry><literal>wal-buffer-write-dirty-done</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when a dirty WAL buffer write is complete.</entry>
     </row>
     <row>
-     <entry>xlog-insert</entry>
-     <entry>(unsigned char, unsigned char)</entry>
+     <entry><literal>xlog-insert</literal></entry>
+     <entry><literal>(unsigned char, unsigned char)</literal></entry>
      <entry>Probe that fires when a WAL record is inserted.
       arg0 is the resource manager (rmid) for the record.
       arg1 contains the info flags.</entry>
     </row>
     <row>
-     <entry>xlog-switch</entry>
-     <entry>()</entry>
+     <entry><literal>xlog-switch</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when a WAL segment switch is requested.</entry>
     </row>
     <row>
-     <entry>smgr-md-read-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int)</entry>
+     <entry><literal>smgr-md-read-start</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int)</literal></entry>
      <entry>Probe that fires when beginning to read a block from a relation.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or InvalidBackendId (-1) for a shared buffer.</entry>
+      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.</entry>
     </row>
     <row>
-     <entry>smgr-md-read-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</entry>
+     <entry><literal>smgr-md-read-done</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</literal></entry>
      <entry>Probe that fires when a block read is complete.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or InvalidBackendId (-1) for a shared buffer.
+      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
       arg6 is the number of bytes actually read, while arg7 is the number
       requested (if these are different it indicates trouble).</entry>
     </row>
     <row>
-     <entry>smgr-md-write-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int)</entry>
+     <entry><literal>smgr-md-write-start</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int)</literal></entry>
      <entry>Probe that fires when beginning to write a block to a relation.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or InvalidBackendId (-1) for a shared buffer.</entry>
+      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.</entry>
     </row>
     <row>
-     <entry>smgr-md-write-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</entry>
+     <entry><literal>smgr-md-write-done</literal></entry>
+     <entry><literal>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</literal></entry>
      <entry>Probe that fires when a block write is complete.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
       arg5 is the ID of the backend which created the temporary relation for a
-      local buffer, or InvalidBackendId (-1) for a shared buffer.
+      local buffer, or <symbol>InvalidBackendId</symbol> (-1) for a shared buffer.
       arg6 is the number of bytes actually written, while arg7 is the number
       requested (if these are different it indicates trouble).</entry>
     </row>
     <row>
-     <entry>sort-start</entry>
-     <entry>(int, bool, int, int, bool)</entry>
+     <entry><literal>sort-start</literal></entry>
+     <entry><literal>(int, bool, int, int, bool)</literal></entry>
      <entry>Probe that fires when a sort operation is started.
       arg0 indicates heap, index or datum sort.
       arg1 is true for unique-value enforcement.
@@ -2414,32 +2505,32 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg4 is true if random access to the sort result is required.</entry>
     </row>
     <row>
-     <entry>sort-done</entry>
-     <entry>(bool, long)</entry>
+     <entry><literal>sort-done</literal></entry>
+     <entry><literal>(bool, long)</literal></entry>
      <entry>Probe that fires when a sort is complete.
       arg0 is true for external sort, false for internal sort.
       arg1 is the number of disk blocks used for an external sort,
       or kilobytes of memory used for an internal sort.</entry>
     </row>
     <row>
-     <entry>lwlock-acquire</entry>
-     <entry>(char *, int, LWLockMode)</entry>
+     <entry><literal>lwlock-acquire</literal></entry>
+     <entry><literal>(char *, int, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock has been acquired.
       arg0 is the LWLock's tranche.
       arg1 is the LWLock's offset within its tranche.
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
-     <entry>lwlock-release</entry>
-     <entry>(char *, int)</entry>
+     <entry><literal>lwlock-release</literal></entry>
+     <entry><literal>(char *, int)</literal></entry>
      <entry>Probe that fires when an LWLock has been released (but note
       that any released waiters have not yet been awakened).
       arg0 is the LWLock's tranche.
       arg1 is the LWLock's offset within its tranche.</entry>
     </row>
     <row>
-     <entry>lwlock-wait-start</entry>
-     <entry>(char *, int, LWLockMode)</entry>
+     <entry><literal>lwlock-wait-start</literal></entry>
+     <entry><literal>(char *, int, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock was not immediately available and
       a server process has begun to wait for the lock to become available.
       arg0 is the LWLock's tranche.
@@ -2447,8 +2538,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
-     <entry>lwlock-wait-done</entry>
-     <entry>(char *, int, LWLockMode)</entry>
+     <entry><literal>lwlock-wait-done</literal></entry>
+     <entry><literal>(char *, int, LWLockMode)</literal></entry>
      <entry>Probe that fires when a server process has been released from its
       wait for an LWLock (it does not actually have the lock yet).
       arg0 is the LWLock's tranche.
@@ -2456,8 +2547,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
-     <entry>lwlock-condacquire</entry>
-     <entry>(char *, int, LWLockMode)</entry>
+     <entry><literal>lwlock-condacquire</literal></entry>
+     <entry><literal>(char *, int, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock was successfully acquired when the
       caller specified no waiting.
       arg0 is the LWLock's tranche.
@@ -2465,8 +2556,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
-     <entry>lwlock-condacquire-fail</entry>
-     <entry>(char *, int, LWLockMode)</entry>
+     <entry><literal>lwlock-condacquire-fail</literal></entry>
+     <entry><literal>(char *, int, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock was not successfully acquired when
       the caller specified no waiting.
       arg0 is the LWLock's tranche.
@@ -2474,8 +2565,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
-     <entry>lock-wait-start</entry>
-     <entry>(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE)</entry>
+     <entry><literal>lock-wait-start</literal></entry>
+     <entry><literal>(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE)</literal></entry>
      <entry>Probe that fires when a request for a heavyweight lock (lmgr lock)
       has begun to wait because the lock is not available.
       arg0 through arg3 are the tag fields identifying the object being
@@ -2483,15 +2574,15 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       arg5 indicates the lock type being requested.</entry>
     </row>
     <row>
-     <entry>lock-wait-done</entry>
-     <entry>(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE)</entry>
+     <entry><literal>lock-wait-done</literal></entry>
+     <entry><literal>(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE)</literal></entry>
      <entry>Probe that fires when a request for a heavyweight lock (lmgr lock)
       has finished waiting (i.e., has acquired the lock).
-      The arguments are the same as for lock-wait-start.</entry>
+      The arguments are the same as for <literal>lock-wait-start</literal>.</entry>
     </row>
     <row>
-     <entry>deadlock-found</entry>
-     <entry>()</entry>
+     <entry><literal>deadlock-found</literal></entry>
+     <entry><literal>()</literal></entry>
      <entry>Probe that fires when a deadlock is found by the deadlock
       detector.</entry>
     </row>
@@ -2513,32 +2604,32 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    <tbody>
 
     <row>
-     <entry>LocalTransactionId</entry>
-     <entry>unsigned int</entry>
+     <entry><type>LocalTransactionId</type></entry>
+     <entry><type>unsigned int</type></entry>
     </row>
     <row>
-     <entry>LWLockMode</entry>
-     <entry>int</entry>
+     <entry><type>LWLockMode</type></entry>
+     <entry><type>int</type></entry>
     </row>
     <row>
-     <entry>LOCKMODE</entry>
-     <entry>int</entry>
+     <entry><type>LOCKMODE</type></entry>
+     <entry><type>int</type></entry>
     </row>
     <row>
-     <entry>BlockNumber</entry>
-     <entry>unsigned int</entry>
+     <entry><type>BlockNumber</type></entry>
+     <entry><type>unsigned int</type></entry>
     </row>
     <row>
-     <entry>Oid</entry>
-     <entry>unsigned int</entry>
+     <entry><type>Oid</type></entry>
+     <entry><type>unsigned int</type></entry>
     </row>
     <row>
-     <entry>ForkNumber</entry>
-     <entry>int</entry>
+     <entry><type>ForkNumber</type></entry>
+     <entry><type>int</type></entry>
     </row>
     <row>
-     <entry>bool</entry>
-     <entry>char</entry>
+     <entry><type>bool</type></entry>
+     <entry><type>char</type></entry>
     </row>
 
    </tbody>
@@ -2658,7 +2749,7 @@ Total time (ns)                        2312105013
    <step>
     <para>
      Decide that the probe will be named <literal>transaction-start</> and
-     requires a parameter of type LocalTransactionId
+     requires a parameter of type <type>LocalTransactionId</type>
     </para>
    </step>
 

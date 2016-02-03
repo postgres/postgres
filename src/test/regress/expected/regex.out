@@ -490,3 +490,8 @@ select 'a' ~ '()+\1';
  t
 (1 row)
 
+-- Error conditions
+select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
+ERROR:  invalid regular expression: invalid backreference number
+select 'xyz' ~ 'x(\w)(?=(\1))';
+ERROR:  invalid regular expression: invalid backreference number

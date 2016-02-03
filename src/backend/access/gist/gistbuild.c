@@ -4,7 +4,7 @@
  *	  build algorithm for GiST indexes implementation.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -109,12 +109,9 @@ static BlockNumber gistGetParent(GISTBuildState *buildstate, BlockNumber child);
  * but switches to more efficient buffering build algorithm after a certain
  * number of tuples (unless buffering mode is disabled).
  */
-Datum
-gistbuild(PG_FUNCTION_ARGS)
+IndexBuildResult *
+gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 {
-	Relation	heap = (Relation) PG_GETARG_POINTER(0);
-	Relation	index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
 	IndexBuildResult *result;
 	double		reltuples;
 	GISTBuildState buildstate;
@@ -232,7 +229,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	result->heap_tuples = reltuples;
 	result->index_tuples = (double) buildstate.indtuples;
 
-	PG_RETURN_POINTER(result);
+	return result;
 }
 
 /*

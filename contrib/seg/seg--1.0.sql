@@ -326,7 +326,7 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE FUNCTION gseg_consistent(internal,seg,int,oid,internal)
+CREATE FUNCTION gseg_consistent(internal,seg,smallint,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -386,7 +386,7 @@ AS
 	OPERATOR	8	<@ ,
 	OPERATOR	13	@ ,
 	OPERATOR	14	~ ,
-	FUNCTION	1	gseg_consistent (internal, seg, int, oid, internal),
+	FUNCTION	1	gseg_consistent (internal, seg, smallint, oid, internal),
 	FUNCTION	2	gseg_union (internal, internal),
 	FUNCTION	3	gseg_compress (internal),
 	FUNCTION	4	gseg_decompress (internal),

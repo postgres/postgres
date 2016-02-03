@@ -4,7 +4,7 @@
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -17,6 +17,7 @@
 
 #include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
+#include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/lsyscache.h"
@@ -301,6 +302,14 @@ makeConst(Oid consttype,
 		  bool constbyval)
 {
 	Const	   *cnst = makeNode(Const);
+
+	/*
+	 * If it's a varlena value, force it to be in non-expanded (non-toasted)
+	 * format; this avoids any possible dependency on external values and
+	 * improves consistency of representation, which is important for equal().
+	 */
+	if (!constisnull && constlen == -1)
+		constvalue = PointerGetDatum(PG_DETOAST_DATUM(constvalue));
 
 	cnst->consttype = consttype;
 	cnst->consttypmod = consttypmod;

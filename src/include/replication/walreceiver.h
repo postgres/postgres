@@ -3,7 +3,7 @@
  * walreceiver.h
  *	  Exports from replication/walreceiverfuncs.c.
  *
- * Portions Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *
  * src/include/replication/walreceiver.h
  *
@@ -14,6 +14,7 @@
 
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
+#include "fmgr.h"
 #include "storage/latch.h"
 #include "storage/spin.h"
 #include "pgtime.h"
@@ -148,6 +149,7 @@ extern PGDLLIMPORT walrcv_disconnect_type walrcv_disconnect;
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) pg_attribute_noreturn();
+extern Datum pg_stat_get_wal_receiver(PG_FUNCTION_ARGS);
 
 /* prototypes for functions in walreceiverfuncs.c */
 extern Size WalRcvShmemSize(void);

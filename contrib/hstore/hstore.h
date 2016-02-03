@@ -76,11 +76,11 @@ typedef struct
 #define STRPTR(x)		( (char*)(ARRPTR(x) + HS_COUNT((HStore*)(x)) * 2) )
 
 /* note multiple/non evaluations */
-#define HS_KEY(arr_,str_,i_) ((str_) + HSE_OFF((arr_)[2*(i_)]))
-#define HS_VAL(arr_,str_,i_) ((str_) + HSE_OFF((arr_)[2*(i_)+1]))
-#define HS_KEYLEN(arr_,i_) (HSE_LEN((arr_)[2*(i_)]))
-#define HS_VALLEN(arr_,i_) (HSE_LEN((arr_)[2*(i_)+1]))
-#define HS_VALISNULL(arr_,i_) (HSE_ISNULL((arr_)[2*(i_)+1]))
+#define HSTORE_KEY(arr_,str_,i_)	((str_) + HSE_OFF((arr_)[2*(i_)]))
+#define HSTORE_VAL(arr_,str_,i_)	((str_) + HSE_OFF((arr_)[2*(i_)+1]))
+#define HSTORE_KEYLEN(arr_,i_)		(HSE_LEN((arr_)[2*(i_)]))
+#define HSTORE_VALLEN(arr_,i_)		(HSE_LEN((arr_)[2*(i_)+1]))
+#define HSTORE_VALISNULL(arr_,i_)	(HSE_ISNULL((arr_)[2*(i_)+1]))
 
 /*
  * currently, these following macros are the _only_ places that rely

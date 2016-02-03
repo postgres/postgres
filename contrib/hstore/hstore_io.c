@@ -1068,7 +1068,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 			column_info->column_type = column_type;
 		}
 
-		if (idx < 0 || HS_VALISNULL(entries, idx))
+		if (idx < 0 || HSTORE_VALISNULL(entries, idx))
 		{
 			/*
 			 * need InputFunctionCall to happen even for nulls, so that domain
@@ -1081,9 +1081,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			vallen = HS_VALLEN(entries, idx);
+			vallen = HSTORE_VALLEN(entries, idx);
 			value = palloc(1 + vallen);
-			memcpy(value, HS_VAL(entries, ptr, idx), vallen);
+			memcpy(value, HSTORE_VAL(entries, ptr, idx), vallen);
 			value[vallen] = 0;
 
 			values[i] = InputFunctionCall(&column_info->proc, value,
@@ -1144,11 +1144,11 @@ hstore_out(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; i++)
 	{
 		/* include "" and => and comma-space */
-		buflen += 6 + 2 * HS_KEYLEN(entries, i);
+		buflen += 6 + 2 * HSTORE_KEYLEN(entries, i);
 		/* include "" only if nonnull */
-		buflen += 2 + (HS_VALISNULL(entries, i)
+		buflen += 2 + (HSTORE_VALISNULL(entries, i)
 					   ? 2
-					   : 2 * HS_VALLEN(entries, i));
+					   : 2 * HSTORE_VALLEN(entries, i));
 	}
 
 	out = ptr = palloc(buflen);
@@ -1156,11 +1156,11 @@ hstore_out(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; i++)
 	{
 		*ptr++ = '"';
-		ptr = cpw(ptr, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
+		ptr = cpw(ptr, HSTORE_KEY(entries, base, i), HSTORE_KEYLEN(entries, i));
 		*ptr++ = '"';
 		*ptr++ = '=';
 		*ptr++ = '>';
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			*ptr++ = 'N';
 			*ptr++ = 'U';
@@ -1170,7 +1170,7 @@ hstore_out(PG_FUNCTION_ARGS)
 		else
 		{
 			*ptr++ = '"';
-			ptr = cpw(ptr, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+			ptr = cpw(ptr, HSTORE_VAL(entries, base, i), HSTORE_VALLEN(entries, i));
 			*ptr++ = '"';
 		}
 
@@ -1203,20 +1203,20 @@ hstore_send(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; i++)
 	{
-		int32		keylen = HS_KEYLEN(entries, i);
+		int32		keylen = HSTORE_KEYLEN(entries, i);
 
 		pq_sendint(&buf, keylen, 4);
-		pq_sendtext(&buf, HS_KEY(entries, base, i), keylen);
-		if (HS_VALISNULL(entries, i))
+		pq_sendtext(&buf, HSTORE_KEY(entries, base, i), keylen);
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			pq_sendint(&buf, -1, 4);
 		}
 		else
 		{
-			int32		vallen = HS_VALLEN(entries, i);
+			int32		vallen = HSTORE_VALLEN(entries, i);
 
 			pq_sendint(&buf, vallen, 4);
-			pq_sendtext(&buf, HS_VAL(entries, base, i), vallen);
+			pq_sendtext(&buf, HSTORE_VAL(entries, base, i), vallen);
 		}
 	}
 
@@ -1255,20 +1255,24 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; i++)
 	{
 		resetStringInfo(&tmp);
-		appendBinaryStringInfo(&tmp, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
+		appendBinaryStringInfo(&tmp, HSTORE_KEY(entries, base, i),
+							   HSTORE_KEYLEN(entries, i));
 		escape_json(&dst, tmp.data);
 		appendStringInfoString(&dst, ": ");
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 			appendStringInfoString(&dst, "null");
 		/* guess that values of 't' or 'f' are booleans */
-		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 't')
+		else if (HSTORE_VALLEN(entries, i) == 1 &&
+				 *(HSTORE_VAL(entries, base, i)) == 't')
 			appendStringInfoString(&dst, "true");
-		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 'f')
+		else if (HSTORE_VALLEN(entries, i) == 1 &&
+				 *(HSTORE_VAL(entries, base, i)) == 'f')
 			appendStringInfoString(&dst, "false");
 		else
 		{
 			resetStringInfo(&tmp);
-			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+			appendBinaryStringInfo(&tmp, HSTORE_VAL(entries, base, i),
+								   HSTORE_VALLEN(entries, i));
 			if (IsValidJsonNumber(tmp.data, tmp.len))
 				appendBinaryStringInfo(&dst, tmp.data, tmp.len);
 			else
@@ -1306,15 +1310,17 @@ hstore_to_json(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; i++)
 	{
 		resetStringInfo(&tmp);
-		appendBinaryStringInfo(&tmp, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
+		appendBinaryStringInfo(&tmp, HSTORE_KEY(entries, base, i),
+							   HSTORE_KEYLEN(entries, i));
 		escape_json(&dst, tmp.data);
 		appendStringInfoString(&dst, ": ");
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 			appendStringInfoString(&dst, "null");
 		else
 		{
 			resetStringInfo(&tmp);
-			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+			appendBinaryStringInfo(&tmp, HSTORE_VAL(entries, base, i),
+								   HSTORE_VALLEN(entries, i));
 			escape_json(&dst, tmp.data);
 		}
 
@@ -1346,20 +1352,20 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 					val;
 
 		key.type = jbvString;
-		key.val.string.len = HS_KEYLEN(entries, i);
-		key.val.string.val = HS_KEY(entries, base, i);
+		key.val.string.len = HSTORE_KEYLEN(entries, i);
+		key.val.string.val = HSTORE_KEY(entries, base, i);
 
 		(void) pushJsonbValue(&state, WJB_KEY, &key);
 
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			val.type = jbvNull;
 		}
 		else
 		{
 			val.type = jbvString;
-			val.val.string.len = HS_VALLEN(entries, i);
-			val.val.string.val = HS_VAL(entries, base, i);
+			val.val.string.len = HSTORE_VALLEN(entries, i);
+			val.val.string.val = HSTORE_VAL(entries, base, i);
 		}
 		(void) pushJsonbValue(&state, WJB_VALUE, &val);
 	}
@@ -1393,22 +1399,24 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 					val;
 
 		key.type = jbvString;
-		key.val.string.len = HS_KEYLEN(entries, i);
-		key.val.string.val = HS_KEY(entries, base, i);
+		key.val.string.len = HSTORE_KEYLEN(entries, i);
+		key.val.string.val = HSTORE_KEY(entries, base, i);
 
 		(void) pushJsonbValue(&state, WJB_KEY, &key);
 
-		if (HS_VALISNULL(entries, i))
+		if (HSTORE_VALISNULL(entries, i))
 		{
 			val.type = jbvNull;
 		}
 		/* guess that values of 't' or 'f' are booleans */
-		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 't')
+		else if (HSTORE_VALLEN(entries, i) == 1 &&
+				 *(HSTORE_VAL(entries, base, i)) == 't')
 		{
 			val.type = jbvBool;
 			val.val.boolean = true;
 		}
-		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 'f')
+		else if (HSTORE_VALLEN(entries, i) == 1 &&
+				 *(HSTORE_VAL(entries, base, i)) == 'f')
 		{
 			val.type = jbvBool;
 			val.val.boolean = false;
@@ -1418,7 +1426,8 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			is_number = false;
 			resetStringInfo(&tmp);
 
-			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+			appendBinaryStringInfo(&tmp, HSTORE_VAL(entries, base, i),
+								   HSTORE_VALLEN(entries, i));
 
 			/*
 			 * don't treat something with a leading zero followed by another
@@ -1461,14 +1470,14 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			{
 				val.type = jbvNumeric;
 				val.val.numeric = DatumGetNumeric(
-												  DirectFunctionCall3(numeric_in, CStringGetDatum(tmp.data), 0, -1));
-
+											  DirectFunctionCall3(numeric_in,
+										  CStringGetDatum(tmp.data), 0, -1));
 			}
 			else
 			{
 				val.type = jbvString;
-				val.val.string.len = HS_VALLEN(entries, i);
-				val.val.string.val = HS_VAL(entries, base, i);
+				val.val.string.len = HSTORE_VALLEN(entries, i);
+				val.val.string.val = HSTORE_VAL(entries, base, i);
 			}
 		}
 		(void) pushJsonbValue(&state, WJB_VALUE, &val);

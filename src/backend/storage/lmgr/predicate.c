@@ -125,7 +125,7 @@
  *		- Protects both PredXact and SerializableXidHash.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -794,8 +794,9 @@ OldSerXidInit(void)
 	 * Set up SLRU management of the pg_serial data.
 	 */
 	OldSerXidSlruCtl->PagePrecedes = OldSerXidPagePrecedesLogically;
-	SimpleLruInit(OldSerXidSlruCtl, "OldSerXid SLRU Ctl",
-				  NUM_OLDSERXID_BUFFERS, 0, OldSerXidLock, "pg_serial");
+	SimpleLruInit(OldSerXidSlruCtl, "oldserxid",
+				  NUM_OLDSERXID_BUFFERS, 0, OldSerXidLock, "pg_serial",
+				  LWTRANCHE_OLDSERXID_BUFFERS);
 	/* Override default assumption that writes should be fsync'd */
 	OldSerXidSlruCtl->do_fsync = false;
 

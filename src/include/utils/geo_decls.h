@@ -3,7 +3,7 @@
  * geo_decls.h - Declarations for various 2D constructs.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/geo_decls.h
@@ -417,12 +417,13 @@ extern Datum gist_box_same(PG_FUNCTION_ARGS);
 extern Datum gist_box_fetch(PG_FUNCTION_ARGS);
 extern Datum gist_poly_compress(PG_FUNCTION_ARGS);
 extern Datum gist_poly_consistent(PG_FUNCTION_ARGS);
+extern Datum gist_poly_distance(PG_FUNCTION_ARGS);
 extern Datum gist_circle_compress(PG_FUNCTION_ARGS);
 extern Datum gist_circle_consistent(PG_FUNCTION_ARGS);
+extern Datum gist_circle_distance(PG_FUNCTION_ARGS);
 extern Datum gist_point_compress(PG_FUNCTION_ARGS);
 extern Datum gist_point_consistent(PG_FUNCTION_ARGS);
 extern Datum gist_point_distance(PG_FUNCTION_ARGS);
-extern Datum gist_bbox_distance(PG_FUNCTION_ARGS);
 extern Datum gist_point_fetch(PG_FUNCTION_ARGS);
 
 

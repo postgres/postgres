@@ -8,6 +8,7 @@
 
 #include "access/xact.h"
 #include "mb/pg_wchar.h"
+#include "utils/memutils.h"
 
 #include "plpython.h"
 
@@ -111,7 +112,12 @@ PLy_cursor_query(const char *query)
 		return NULL;
 	cursor->portalname = NULL;
 	cursor->closed = false;
-	PLy_typeinfo_init(&cursor->result);
+	cursor->mcxt = AllocSetContextCreate(TopMemoryContext,
+										 "PL/Python cursor context",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
+	PLy_typeinfo_init(&cursor->result, cursor->mcxt);
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
@@ -139,7 +145,7 @@ PLy_cursor_query(const char *query)
 			elog(ERROR, "SPI_cursor_open() failed: %s",
 				 SPI_result_code_string(SPI_result));
 
-		cursor->portalname = PLy_strdup(portal->name);
+		cursor->portalname = MemoryContextStrdup(cursor->mcxt, portal->name);
 
 		PLy_spi_subtransaction_commit(oldcontext, oldowner);
 	}
@@ -200,7 +206,12 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		return NULL;
 	cursor->portalname = NULL;
 	cursor->closed = false;
-	PLy_typeinfo_init(&cursor->result);
+	cursor->mcxt = AllocSetContextCreate(TopMemoryContext,
+										 "PL/Python cursor context",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
+	PLy_typeinfo_init(&cursor->result, cursor->mcxt);
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
@@ -261,7 +272,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			elog(ERROR, "SPI_cursor_open() failed: %s",
 				 SPI_result_code_string(SPI_result));
 
-		cursor->portalname = PLy_strdup(portal->name);
+		cursor->portalname = MemoryContextStrdup(cursor->mcxt, portal->name);
 
 		PLy_spi_subtransaction_commit(oldcontext, oldowner);
 	}
@@ -315,12 +326,13 @@ PLy_cursor_dealloc(PyObject *arg)
 
 		if (PortalIsValid(portal))
 			SPI_cursor_close(portal);
+		cursor->closed = true;
 	}
-
-	PLy_free(cursor->portalname);
-	cursor->portalname = NULL;
-
-	PLy_typeinfo_dealloc(&cursor->result);
+	if (cursor->mcxt)
+	{
+		MemoryContextDelete(cursor->mcxt);
+		cursor->mcxt = NULL;
+	}
 	arg->ob_type->tp_free(arg);
 }
 

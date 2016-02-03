@@ -4,7 +4,7 @@
  *	  routines to manage scans on GiST index relations
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -54,12 +54,9 @@ pairingheap_GISTSearchItem_cmp(const pairingheap_node *a, const pairingheap_node
  * Index AM API functions for scanning GiST indexes
  */
 
-Datum
-gistbeginscan(PG_FUNCTION_ARGS)
+IndexScanDesc
+gistbeginscan(Relation r, int nkeys, int norderbys)
 {
-	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	int			nkeys = PG_GETARG_INT32(1);
-	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
 	GISTSTATE  *giststate;
 	GISTScanOpaque so;
@@ -107,16 +104,13 @@ gistbeginscan(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(oldCxt);
 
-	PG_RETURN_POINTER(scan);
+	return scan;
 }
 
-Datum
-gistrescan(PG_FUNCTION_ARGS)
+void
+gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
+		   ScanKey orderbys, int norderbys)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
-	ScanKey		orderbys = (ScanKey) PG_GETARG_POINTER(3);
-
 	/* nkeys and norderbys arguments are ignored */
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	bool		first_time;
@@ -235,6 +229,10 @@ gistrescan(PG_FUNCTION_ARGS)
 		{
 			ScanKey		skey = scan->keyData + i;
 
+			/*
+			 * Copy consistent support function to ScanKey structure
+			 * instead of function implementing filtering operator.
+			 */
 			fmgr_info_copy(&(skey->sk_func),
 						   &(so->giststate->consistentFn[skey->sk_attno - 1]),
 						   so->giststate->scanCxt);
@@ -290,8 +288,6 @@ gistrescan(PG_FUNCTION_ARGS)
 					 GIST_DISTANCE_PROC, skey->sk_attno,
 					 RelationGetRelationName(scan->indexRelation));
 
-			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
-
 			/*
 			 * Look up the datatype returned by the original ordering
 			 * operator. GiST always uses a float8 for the distance function,
@@ -306,6 +302,12 @@ gistrescan(PG_FUNCTION_ARGS)
 			 */
 			so->orderByTypes[i] = get_func_rettype(skey->sk_func.fn_oid);
 
+			/*
+			 * Copy distance support function to ScanKey structure
+			 * instead of function implementing ordering operator.
+			 */
+			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
+
 			/* Restore prior fn_extra pointers, if not first time */
 			if (!first_time)
 				skey->sk_func.fn_extra = fn_extras[i];
@@ -314,28 +316,11 @@ gistrescan(PG_FUNCTION_ARGS)
 		if (!first_time)
 			pfree(fn_extras);
 	}
-
-	PG_RETURN_VOID();
 }
 
-Datum
-gistmarkpos(PG_FUNCTION_ARGS)
+void
+gistendscan(IndexScanDesc scan)
 {
-	elog(ERROR, "GiST does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-gistrestrpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "GiST does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-gistendscan(PG_FUNCTION_ARGS)
-{
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
 	/*
@@ -343,6 +328,4 @@ gistendscan(PG_FUNCTION_ARGS)
 	 * as well as the queueCxt if there is a separate context for it.
 	 */
 	freeGISTstate(so->giststate);
-
-	PG_RETURN_VOID();
 }

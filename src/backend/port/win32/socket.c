@@ -3,7 +3,7 @@
  * socket.c
  *	  Microsoft Windows Win32 Socket Functions
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32/socket.c
@@ -323,12 +323,10 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	wbuf.buf = buf;
 
 	r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
-	if (r != SOCKET_ERROR && b > 0)
-		/* Read succeeded right away */
-		return b;
+	if (r != SOCKET_ERROR)
+		return b;				/* success */
 
-	if (r == SOCKET_ERROR &&
-		WSAGetLastError() != WSAEWOULDBLOCK)
+	if (WSAGetLastError() != WSAEWOULDBLOCK)
 	{
 		TranslateSocketError();
 		return -1;
@@ -344,7 +342,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 		return -1;
 	}
 
-	/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
+	/* We're in blocking mode, so wait for data */
 
 	for (n = 0; n < 5; n++)
 	{
@@ -353,25 +351,22 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 			return -1;			/* errno already set */
 
 		r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
-		if (r == SOCKET_ERROR)
+		if (r != SOCKET_ERROR)
+			return b;			/* success */
+		if (WSAGetLastError() != WSAEWOULDBLOCK)
 		{
-			if (WSAGetLastError() == WSAEWOULDBLOCK)
-			{
-				/*
-				 * There seem to be cases on win2k (at least) where WSARecv
-				 * can return WSAEWOULDBLOCK even when
-				 * pgwin32_waitforsinglesocket claims the socket is readable.
-				 * In this case, just sleep for a moment and try again. We try
-				 * up to 5 times - if it fails more than that it's not likely
-				 * to ever come back.
-				 */
-				pg_usleep(10000);
-				continue;
-			}
 			TranslateSocketError();
 			return -1;
 		}
-		return b;
+
+		/*
+		 * There seem to be cases on win2k (at least) where WSARecv can return
+		 * WSAEWOULDBLOCK even when pgwin32_waitforsinglesocket claims the
+		 * socket is readable.  In this case, just sleep for a moment and try
+		 * again.  We try up to 5 times - if it fails more than that it's not
+		 * likely to ever come back.
+		 */
+		pg_usleep(10000);
 	}
 	ereport(NOTICE,
 	  (errmsg_internal("could not read from ready socket (after retries)")));

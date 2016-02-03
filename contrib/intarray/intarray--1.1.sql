@@ -358,7 +358,7 @@ CREATE OPERATOR & (
 --------------
 
 -- define the GiST support methods
-CREATE FUNCTION g_int_consistent(internal,_int4,int,oid,internal)
+CREATE FUNCTION g_int_consistent(internal,_int4,smallint,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -405,7 +405,7 @@ DEFAULT FOR TYPE _int4 USING gist AS
 	OPERATOR	13	@,
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
-	FUNCTION	1	g_int_consistent (internal, _int4, int, oid, internal),
+	FUNCTION	1	g_int_consistent (internal, _int4, smallint, oid, internal),
 	FUNCTION	2	g_int_union (internal, internal),
 	FUNCTION	3	g_int_compress (internal),
 	FUNCTION	4	g_int_decompress (internal),
@@ -435,7 +435,7 @@ CREATE TYPE intbig_gkey (
         OUTPUT = _intbig_out
 );
 
-CREATE FUNCTION g_intbig_consistent(internal,internal,int,oid,internal)
+CREATE FUNCTION g_intbig_consistent(internal,_int4,smallint,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -461,11 +461,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION g_intbig_union(internal, internal)
-RETURNS _int4
+RETURNS intbig_gkey
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION g_intbig_same(internal, internal, internal)
+CREATE FUNCTION g_intbig_same(intbig_gkey, intbig_gkey, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -482,23 +482,23 @@ AS
 	OPERATOR	13	@,
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
-	FUNCTION	1	g_intbig_consistent (internal, internal, int, oid, internal),
+	FUNCTION	1	g_intbig_consistent (internal, _int4, smallint, oid, internal),
 	FUNCTION	2	g_intbig_union (internal, internal),
 	FUNCTION	3	g_intbig_compress (internal),
 	FUNCTION	4	g_intbig_decompress (internal),
 	FUNCTION	5	g_intbig_penalty (internal, internal, internal),
 	FUNCTION	6	g_intbig_picksplit (internal, internal),
-	FUNCTION	7	g_intbig_same (internal, internal, internal),
+	FUNCTION	7	g_intbig_same (intbig_gkey, intbig_gkey, internal),
 	STORAGE		intbig_gkey;
 
 --GIN
 
-CREATE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal, internal, internal)
+CREATE FUNCTION ginint4_queryextract(_int4, internal, int2, internal, internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal, internal, internal)
+CREATE FUNCTION ginint4_consistent(internal, int2, _int4, int4, internal, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -515,6 +515,6 @@ AS
 	OPERATOR	20	@@ (_int4, query_int),
 	FUNCTION	1	btint4cmp (int4, int4),
 	FUNCTION	2	ginarrayextract (anyarray, internal, internal),
-	FUNCTION	3	ginint4_queryextract (internal, internal, int2, internal, internal, internal, internal),
-	FUNCTION	4	ginint4_consistent (internal, int2, internal, int4, internal, internal, internal, internal),
+	FUNCTION	3	ginint4_queryextract (_int4, internal, int2, internal, internal, internal, internal),
+	FUNCTION	4	ginint4_consistent (internal, int2, _int4, int4, internal, internal, internal, internal),
 	STORAGE		int4;

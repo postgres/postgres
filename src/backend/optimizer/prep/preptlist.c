@@ -9,12 +9,25 @@
  * list and row ID information needed for SELECT FOR UPDATE locking and/or
  * EvalPlanQual checking.
  *
- * NOTE: the rewriter's rewriteTargetListIU and rewriteTargetListUD
- * routines also do preprocessing of the targetlist.  The division of labor
- * between here and there is a bit arbitrary and historical.
+ * The rewriter's rewriteTargetListIU and rewriteTargetListUD routines
+ * also do preprocessing of the targetlist.  The division of labor between
+ * here and there is partially historical, but it's not entirely arbitrary.
+ * In particular, consider an UPDATE across an inheritance tree.  What the
+ * rewriter does need be done only once (because it depends only on the
+ * properties of the parent relation).  What's done here has to be done over
+ * again for each child relation, because it depends on the column list of
+ * the child, which might have more columns and/or a different column order
+ * than the parent.
+ *
+ * The fact that rewriteTargetListIU sorts non-resjunk tlist entries by column
+ * position, which expand_targetlist depends on, violates the above comment
+ * because the sorting is only valid for the parent relation.  In inherited
+ * UPDATE cases, adjust_inherited_tlist runs in between to take care of fixing
+ * the tlists for child tables to keep expand_targetlist happy.  We do it like
+ * that because it's faster in typical non-inherited cases.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

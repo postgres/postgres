@@ -3,7 +3,7 @@
  * execParallel.c
  *	  Support routines for parallel execution.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * This file contains routines that are intended to support setting up,
@@ -25,6 +25,7 @@
 
 #include "executor/execParallel.h"
 #include "executor/executor.h"
+#include "executor/nodeSeqscan.h"
 #include "executor/tqueue.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
@@ -48,20 +49,18 @@
 #define PARALLEL_TUPLE_QUEUE_SIZE		65536
 
 /* DSM structure for accumulating per-PlanState instrumentation. */
-typedef struct SharedPlanStateInstrumentation
-{
-	int plan_node_id;
-	slock_t mutex;
-	Instrumentation	instr;
-} SharedPlanStateInstrumentation;
-
-/* DSM structure for accumulating per-PlanState instrumentation. */
 struct SharedExecutorInstrumentation
 {
 	int instrument_options;
-	int ps_ninstrument;			/* # of ps_instrument structures following */
-	SharedPlanStateInstrumentation ps_instrument[FLEXIBLE_ARRAY_MEMBER];
+	int instrument_offset;		/* offset of first Instrumentation struct */
+	int num_workers;							/* # of workers */
+	int num_plan_nodes;							/* # of plan nodes */
+	int plan_node_id[FLEXIBLE_ARRAY_MEMBER];	/* array of plan node IDs */
+	/* array of num_plan_nodes * num_workers Instrumentation objects follows */
 };
+#define GetInstrumentationArray(sei) \
+	(AssertVariableIsOfTypeMacro(sei, SharedExecutorInstrumentation *), \
+	 (Instrumentation *) (((char *) sei) + sei->instrument_offset))
 
 /* Context object for ExecParallelEstimate. */
 typedef struct ExecParallelEstimateContext
@@ -144,6 +143,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
 	pstmt->hasRowSecurity = false;
+	pstmt->hasForeignJoin = false;
 
 	/* Return serialized copy of our dummy PlannedStmt. */
 	return nodeToString(pstmt);
@@ -167,20 +167,26 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 	/* Count this node. */
 	e->nnodes++;
 
-	/*
-	 * XXX. Call estimators for parallel-aware nodes here, when we have
-	 * some.
-	 */
+	/* Call estimators for parallel-aware nodes. */
+	if (planstate->plan->parallel_aware)
+	{
+		switch (nodeTag(planstate))
+		{
+			case T_SeqScanState:
+				ExecSeqScanEstimate((SeqScanState *) planstate,
+									e->pcxt);
+				break;
+			default:
+				break;
+		}
+	}
 
 	return planstate_tree_walker(planstate, ExecParallelEstimate, e);
 }
 
 /*
- * Ordinary plan nodes won't do anything here, but parallel-aware plan nodes
- * may need to initialize shared state in the DSM before parallel workers
- * are available.  They can allocate the space they previous estimated using
- * shm_toc_allocate, and add the keys they previously estimated using
- * shm_toc_insert, in each case targeting pcxt->toc.
+ * Initialize the dynamic shared memory segment that will be used to control
+ * parallel execution.
  */
 static bool
 ExecParallelInitializeDSM(PlanState *planstate,
@@ -189,26 +195,35 @@ ExecParallelInitializeDSM(PlanState *planstate,
 	if (planstate == NULL)
 		return false;
 
-	/* If instrumentation is enabled, initialize array slot for this node. */
+	/* If instrumentation is enabled, initialize slot for this node. */
 	if (d->instrumentation != NULL)
-	{
-		SharedPlanStateInstrumentation *instrumentation;
-
-		instrumentation = &d->instrumentation->ps_instrument[d->nnodes];
-		Assert(d->nnodes < d->instrumentation->ps_ninstrument);
-		instrumentation->plan_node_id = planstate->plan->plan_node_id;
-		SpinLockInit(&instrumentation->mutex);
-		InstrInit(&instrumentation->instr,
-				  d->instrumentation->instrument_options);
-	}
+		d->instrumentation->plan_node_id[d->nnodes] =
+			planstate->plan->plan_node_id;
 
 	/* Count this node. */
 	d->nnodes++;
 
 	/*
-	 * XXX. Call initializers for parallel-aware plan nodes, when we have
-	 * some.
+	 * Call initializers for parallel-aware plan nodes.
+	 *
+	 * Ordinary plan nodes won't do anything here, but parallel-aware plan
+	 * nodes may need to initialize shared state in the DSM before parallel
+	 * workers are available.  They can allocate the space they previously
+	 * estimated using shm_toc_allocate, and add the keys they previously
+	 * estimated using shm_toc_insert, in each case targeting pcxt->toc.
 	 */
+	if (planstate->plan->parallel_aware)
+	{
+		switch (nodeTag(planstate))
+		{
+			case T_SeqScanState:
+				ExecSeqScanInitializeDSM((SeqScanState *) planstate,
+										 d->pcxt);
+				break;
+			default:
+				break;
+		}
+	}
 
 	return planstate_tree_walker(planstate, ExecParallelInitializeDSM, d);
 }
@@ -264,13 +279,15 @@ ExecParallelSetupTupleQueues(ParallelContext *pcxt, bool reinitialize)
 }
 
 /*
- * Re-initialize the response queues for backend workers to return tuples
- * to the main backend and start the workers.
+ * Re-initialize the parallel executor info such that it can be reused by
+ * workers.
  */
-shm_mq_handle **
-ExecParallelReinitializeTupleQueues(ParallelContext *pcxt)
+void
+ExecParallelReinitialize(ParallelExecutorInfo *pei)
 {
-	return ExecParallelSetupTupleQueues(pcxt, true);
+	ReinitializeParallelDSM(pei->pcxt);
+	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);
+	pei->finished = false;
 }
 
 /*
@@ -292,9 +309,11 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	int			pstmt_len;
 	int			param_len;
 	int			instrumentation_len = 0;
+	int			instrument_offset = 0;
 
 	/* Allocate object for return value. */
 	pei = palloc0(sizeof(ParallelExecutorInfo));
+	pei->finished = false;
 	pei->planstate = planstate;
 
 	/* Fix up and serialize plan to be sent to workers. */
@@ -348,8 +367,11 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	if (estate->es_instrument)
 	{
 		instrumentation_len =
-			offsetof(SharedExecutorInstrumentation, ps_instrument)
-			+ sizeof(SharedPlanStateInstrumentation) * e.nnodes;
+			offsetof(SharedExecutorInstrumentation, plan_node_id)
+			+ sizeof(int) * e.nnodes;
+		instrumentation_len = MAXALIGN(instrumentation_len);
+		instrument_offset = instrumentation_len;
+		instrumentation_len += sizeof(Instrumentation) * e.nnodes * nworkers;
 		shm_toc_estimate_chunk(&pcxt->estimator, instrumentation_len);
 		shm_toc_estimate_keys(&pcxt->estimator, 1);
 	}
@@ -391,9 +413,17 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	 */
 	if (estate->es_instrument)
 	{
+		Instrumentation *instrument;
+		int		i;
+
 		instrumentation = shm_toc_allocate(pcxt->toc, instrumentation_len);
 		instrumentation->instrument_options = estate->es_instrument;
-		instrumentation->ps_ninstrument = e.nnodes;
+		instrumentation->instrument_offset = instrument_offset;
+		instrumentation->num_workers = nworkers;
+		instrumentation->num_plan_nodes = e.nnodes;
+		instrument = GetInstrumentationArray(instrumentation);
+		for (i = 0; i < nworkers * e.nnodes; ++i)
+			InstrInit(&instrument[i], estate->es_instrument);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_INSTRUMENTATION,
 					   instrumentation);
 		pei->instrumentation = instrumentation;
@@ -428,20 +458,31 @@ static bool
 ExecParallelRetrieveInstrumentation(PlanState *planstate,
 						  SharedExecutorInstrumentation *instrumentation)
 {
+	Instrumentation *instrument;
 	int		i;
+	int		n;
+	int		ibytes;
 	int		plan_node_id = planstate->plan->plan_node_id;
-	SharedPlanStateInstrumentation *ps_instrument;
 
 	/* Find the instumentation for this node. */
-	for (i = 0; i < instrumentation->ps_ninstrument; ++i)
-		if (instrumentation->ps_instrument[i].plan_node_id == plan_node_id)
+	for (i = 0; i < instrumentation->num_plan_nodes; ++i)
+		if (instrumentation->plan_node_id[i] == plan_node_id)
 			break;
-	if (i >= instrumentation->ps_ninstrument)
+	if (i >= instrumentation->num_plan_nodes)
 		elog(ERROR, "plan node %d not found", plan_node_id);
 
-	/* No need to acquire the spinlock here; workers have exited already. */
-	ps_instrument = &instrumentation->ps_instrument[i];
-	InstrAggNode(planstate->instrument, &ps_instrument->instr);
+	/* Accumulate the statistics from all workers. */
+	instrument = GetInstrumentationArray(instrumentation);
+	instrument += i * instrumentation->num_workers;
+	for (n = 0; n < instrumentation->num_workers; ++n)
+		InstrAggNode(planstate->instrument, &instrument[n]);
+
+	/* Also store the per-worker detail. */
+	ibytes = instrumentation->num_workers * sizeof(Instrumentation);
+	planstate->worker_instrument =
+		palloc(offsetof(WorkerInstrumentation, instrument) + ibytes);
+	planstate->worker_instrument->num_workers = instrumentation->num_workers;
+	memcpy(&planstate->worker_instrument->instrument, instrument, ibytes);
 
 	return planstate_tree_walker(planstate, ExecParallelRetrieveInstrumentation,
 								 instrumentation);
@@ -456,6 +497,9 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 {
 	int		i;
 
+	if (pei->finished)
+		return;
+
 	/* First, wait for the workers to finish. */
 	WaitForParallelWorkersToFinish(pei->pcxt);
 
@@ -467,6 +511,8 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 	if (pei->instrumentation)
 		ExecParallelRetrieveInstrumentation(pei->planstate,
 											pei->instrumentation);
+
+	pei->finished = true;
 }
 
 /*
@@ -547,7 +593,9 @@ ExecParallelReportInstrumentation(PlanState *planstate,
 {
 	int		i;
 	int		plan_node_id = planstate->plan->plan_node_id;
-	SharedPlanStateInstrumentation *ps_instrument;
+	Instrumentation *instrument;
+
+	InstrEndLoop(planstate->instrument);
 
 	/*
 	 * If we shuffled the plan_node_id values in ps_instrument into sorted
@@ -555,23 +603,51 @@ ExecParallelReportInstrumentation(PlanState *planstate,
 	 * if we're pushing down sufficiently large plan trees.  For now, do it
 	 * the slow, dumb way.
 	 */
-	for (i = 0; i < instrumentation->ps_ninstrument; ++i)
-		if (instrumentation->ps_instrument[i].plan_node_id == plan_node_id)
+	for (i = 0; i < instrumentation->num_plan_nodes; ++i)
+		if (instrumentation->plan_node_id[i] == plan_node_id)
 			break;
-	if (i >= instrumentation->ps_ninstrument)
+	if (i >= instrumentation->num_plan_nodes)
 		elog(ERROR, "plan node %d not found", plan_node_id);
 
 	/*
-	 * There's one SharedPlanStateInstrumentation per plan_node_id, so we
-	 * must use a spinlock in case multiple workers report at the same time.
+	 * Add our statistics to the per-node, per-worker totals.  It's possible
+	 * that this could happen more than once if we relaunched workers.
 	 */
-	ps_instrument = &instrumentation->ps_instrument[i];
-	SpinLockAcquire(&ps_instrument->mutex);
-	InstrAggNode(&ps_instrument->instr, planstate->instrument);
-	SpinLockRelease(&ps_instrument->mutex);
+	instrument = GetInstrumentationArray(instrumentation);
+	instrument += i * instrumentation->num_workers;
+	Assert(IsParallelWorker());
+	Assert(ParallelWorkerNumber < instrumentation->num_workers);
+	InstrAggNode(&instrument[ParallelWorkerNumber], planstate->instrument);
 
 	return planstate_tree_walker(planstate, ExecParallelReportInstrumentation,
 								 instrumentation);
+}
+
+/*
+ * Initialize the PlanState and its descendents with the information
+ * retrieved from shared memory.  This has to be done once the PlanState
+ * is allocated and initialized by executor; that is, after ExecutorStart().
+ */
+static bool
+ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
+{
+	if (planstate == NULL)
+		return false;
+
+	/* Call initializers for parallel-aware plan nodes. */
+	if (planstate->plan->parallel_aware)
+	{
+		switch (nodeTag(planstate))
+		{
+			case T_SeqScanState:
+				ExecSeqScanInitializeWorker((SeqScanState *) planstate, toc);
+				break;
+			default:
+				break;
+		}
+	}
+
+	return planstate_tree_walker(planstate, ExecParallelInitializeWorker, toc);
 }
 
 /*
@@ -610,6 +686,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 
 	/* Start up the executor, have it run the plan, and then shut it down. */
 	ExecutorStart(queryDesc, 0);
+	ExecParallelInitializeWorker(queryDesc->planstate, toc);
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 	ExecutorFinish(queryDesc);
 

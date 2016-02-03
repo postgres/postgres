@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2001-2015, PostgreSQL Global Development Group
+# Copyright (c) 2001-2016, PostgreSQL Global Development Group
 #
 # src/backend/utils/mb/Unicode/UCS_to_SJIS.pl
 #
@@ -72,6 +72,8 @@ close(FILE);
 
 $file = "utf8_to_sjis.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_utf_to_local ULmapSJIS[ $count ] = {\n";
 
 for $index (sort { $a <=> $b } keys(%array))
@@ -122,6 +124,8 @@ close(FILE);
 
 $file = "sjis_to_utf8.map";
 open(FILE, "> $file") || die("cannot open $file");
+
+print FILE "/* src/backend/utils/mb/Unicode/$file */\n\n";
 print FILE "static const pg_local_to_utf LUmapSJIS[ $count ] = {\n";
 for $index (sort { $a <=> $b } keys(%array))
 {

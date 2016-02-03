@@ -3,7 +3,7 @@
  * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1553,8 +1553,10 @@ sendFailed:
 /*
  * pqHandleSendFailure: try to clean up after failure to send command.
  *
- * Primarily, what we want to accomplish here is to process an async
- * NOTICE message that the backend might have sent just before it died.
+ * Primarily, what we want to accomplish here is to process any ERROR or
+ * NOTICE messages that the backend might have sent just before it died.
+ * Since we're in IDLE state, all such messages will get sent to the notice
+ * processor.
  *
  * NOTE: this routine should only be called in PGASYNC_IDLE state.
  */
@@ -1562,16 +1564,17 @@ void
 pqHandleSendFailure(PGconn *conn)
 {
 	/*
-	 * Accept any available input data, ignoring errors.  Note that if
-	 * pqReadData decides the backend has closed the channel, it will close
-	 * our side of the socket --- that's just what we want here.
+	 * Accept and parse any available input data, ignoring I/O errors.  Note
+	 * that if pqReadData decides the backend has closed the channel, it will
+	 * close our side of the socket --- that's just what we want here.
 	 */
 	while (pqReadData(conn) > 0)
-		 /* loop until no more data readable */ ;
+		parseInput(conn);
 
 	/*
-	 * Parse any available input messages.  Since we are in PGASYNC_IDLE
-	 * state, only NOTICE and NOTIFY messages will be eaten.
+	 * Be sure to parse available input messages even if we read no data.
+	 * (Note: calling parseInput within the above loop isn't really necessary,
+	 * but it prevents buffer bloat if there's a lot of data available.)
 	 */
 	parseInput(conn);
 }

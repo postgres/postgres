@@ -1666,8 +1666,8 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
      <para>
       The most notable oversight was
-      that <varname>recovery_min_apply_delay</> failed to delay application
-      of a two-phase commit.
+      that <varname>recovery_target_xid</> could not be used to stop at
+      a two-phase commit.
      </para>
     </listitem>
 

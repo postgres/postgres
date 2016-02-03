@@ -20,7 +20,7 @@
  * appropriate value for a free lock.  The meaning of the variable is up to
  * the caller, the lightweight lock code just assigns and compares it.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -76,11 +76,6 @@
  */
 #include "postgres.h"
 
-#include "access/clog.h"
-#include "access/commit_ts.h"
-#include "access/multixact.h"
-#include "access/subtrans.h"
-#include "commands/async.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "postmaster/postmaster.h"
@@ -189,7 +184,7 @@ PRINT_LWDEBUG(const char *where, LWLock *lock, LWLockMode mode)
 			ereport(LOG,
 					(errhidestmt(true),
 					 errhidecontext(true),
-					 errmsg("%d: %s(%s): excl %u shared %u haswaiters %u waiters %u rOK %d",
+					 errmsg_internal("%d: %s(%s): excl %u shared %u haswaiters %u waiters %u rOK %d",
 							MyProcPid,
 							where, MainLWLockNames[id],
 							!!(state & LW_VAL_EXCLUSIVE),
@@ -201,7 +196,7 @@ PRINT_LWDEBUG(const char *where, LWLock *lock, LWLockMode mode)
 			ereport(LOG,
 					(errhidestmt(true),
 					 errhidecontext(true),
-					 errmsg("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
+					 errmsg_internal("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
 							MyProcPid,
 							where, T_NAME(lock), id,
 							!!(state & LW_VAL_EXCLUSIVE),
@@ -224,13 +219,13 @@ LOG_LWDEBUG(const char *where, LWLock *lock, const char *msg)
 			ereport(LOG,
 					(errhidestmt(true),
 					 errhidecontext(true),
-					 errmsg("%s(%s): %s", where,
+					 errmsg_internal("%s(%s): %s", where,
 							MainLWLockNames[id], msg)));
 		else
 			ereport(LOG,
 					(errhidestmt(true),
 					 errhidecontext(true),
-					 errmsg("%s(%s %d): %s", where,
+					 errmsg_internal("%s(%s %d): %s", where,
 							T_NAME(lock), id, msg)));
 	}
 }
@@ -349,41 +344,14 @@ NumLWLocks(void)
 	int			numLocks;
 
 	/*
-	 * Possibly this logic should be spread out among the affected modules,
-	 * the same way that shmem space estimation is done.  But for now, there
-	 * are few enough users of LWLocks that we can get away with just keeping
-	 * the knowledge here.
+	 * Many users of LWLocks no longer reserve space in the main array here,
+	 * but instead allocate separate tranches.  The latter approach has the
+	 * advantage of allowing LWLOCK_STATS and LOCK_DEBUG output to produce
+	 * more useful output.
 	 */
 
 	/* Predefined LWLocks */
 	numLocks = NUM_FIXED_LWLOCKS;
-
-	/* bufmgr.c needs two for each shared buffer */
-	numLocks += 2 * NBuffers;
-
-	/* proc.c needs one for each backend or auxiliary process */
-	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
-
-	/* clog.c needs one per CLOG buffer */
-	numLocks += CLOGShmemBuffers();
-
-	/* commit_ts.c needs one per CommitTs buffer */
-	numLocks += CommitTsShmemBuffers();
-
-	/* subtrans.c needs one per SubTrans buffer */
-	numLocks += NUM_SUBTRANS_BUFFERS;
-
-	/* multixact.c needs two SLRU areas */
-	numLocks += NUM_MXACTOFFSET_BUFFERS + NUM_MXACTMEMBER_BUFFERS;
-
-	/* async.c needs one per Async buffer */
-	numLocks += NUM_ASYNC_BUFFERS;
-
-	/* predicate.c needs one per old serializable xid buffer */
-	numLocks += NUM_OLDSERXID_BUFFERS;
-
-	/* slot.c needs one for each slot */
-	numLocks += max_replication_slots;
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility
@@ -446,6 +414,10 @@ CreateLWLocks(void)
 	StaticAssertExpr(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
 					 "MAX_BACKENDS too big for lwlock.c");
 
+	StaticAssertExpr(sizeof(LWLock) <= LWLOCK_MINIMAL_SIZE &&
+					 sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
+					 "Miscalculated LWLock padding");
+
 	if (!IsUnderPostmaster)
 	{
 		int			numLocks = NumLWLocks();
@@ -468,7 +440,7 @@ CreateLWLocks(void)
 
 		/* Initialize all LWLocks in main array */
 		for (id = 0, lock = MainLWLockArray; id < numLocks; id++, lock++)
-			LWLockInitialize(&lock->lock, 0);
+			LWLockInitialize(&lock->lock, LWTRANCHE_MAIN);
 
 		/*
 		 * Initialize the dynamic-allocation counters, which are stored just
@@ -480,7 +452,7 @@ CreateLWLocks(void)
 		LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
 		LWLockCounter[0] = NUM_FIXED_LWLOCKS;
 		LWLockCounter[1] = numLocks;
-		LWLockCounter[2] = 1;	/* 0 is the main array */
+		LWLockCounter[2] = LWTRANCHE_FIRST_USER_DEFINED;
 	}
 
 	if (LWLockTrancheArray == NULL)
@@ -489,12 +461,13 @@ CreateLWLocks(void)
 		LWLockTrancheArray = (LWLockTranche **)
 			MemoryContextAlloc(TopMemoryContext,
 						  LWLockTranchesAllocated * sizeof(LWLockTranche *));
+		Assert(LWLockTranchesAllocated >= LWTRANCHE_FIRST_USER_DEFINED);
 	}
 
 	MainLWLockTranche.name = "main";
 	MainLWLockTranche.array_base = MainLWLockArray;
 	MainLWLockTranche.array_stride = sizeof(LWLockPadded);
-	LWLockRegisterTranche(0, &MainLWLockTranche);
+	LWLockRegisterTranche(LWTRANCHE_MAIN, &MainLWLockTranche);
 }
 
 /*

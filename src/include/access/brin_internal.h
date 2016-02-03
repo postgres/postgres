@@ -2,7 +2,7 @@
  * brin_internal.h
  *		internal declarations for BRIN indexes
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -11,11 +11,8 @@
 #ifndef BRIN_INTERNAL_H
 #define BRIN_INTERNAL_H
 
-#include "fmgr.h"
-#include "storage/buf.h"
+#include "access/amapi.h"
 #include "storage/bufpage.h"
-#include "storage/off.h"
-#include "utils/relcache.h"
 #include "utils/typcache.h"
 
 
@@ -64,14 +61,17 @@ typedef struct BrinDesc
 
 /*
  * Globally-known function support numbers for BRIN indexes.  Individual
- * opclasses define their own function support numbers, which must not collide
- * with the definitions here.
+ * opclasses can define more function support numbers, which must fall into
+ * BRIN_FIRST_OPTIONAL_PROCNUM .. BRIN_LAST_OPTIONAL_PROCNUM.
  */
 #define BRIN_PROCNUM_OPCINFO		1
 #define BRIN_PROCNUM_ADDVALUE		2
 #define BRIN_PROCNUM_CONSISTENT		3
 #define BRIN_PROCNUM_UNION			4
+#define BRIN_MANDATORY_NPROCS		4
 /* procedure numbers up to 10 are reserved for BRIN future expansion */
+#define BRIN_FIRST_OPTIONAL_PROCNUM 11
+#define BRIN_LAST_OPTIONAL_PROCNUM	15
 
 #undef BRIN_DEBUG
 
@@ -84,6 +84,26 @@ typedef struct BrinDesc
 /* brin.c */
 extern BrinDesc *brin_build_desc(Relation rel);
 extern void brin_free_desc(BrinDesc *bdesc);
-extern Datum brin_summarize_new_values(PG_FUNCTION_ARGS);
+extern IndexBuildResult *brinbuild(Relation heap, Relation index,
+		  struct IndexInfo *indexInfo);
+extern void brinbuildempty(Relation index);
+extern bool brininsert(Relation idxRel, Datum *values, bool *nulls,
+		   ItemPointer heaptid, Relation heapRel,
+		   IndexUniqueCheck checkUnique);
+extern IndexScanDesc brinbeginscan(Relation r, int nkeys, int norderbys);
+extern int64 bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
+extern void brinrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
+		   ScanKey orderbys, int norderbys);
+extern void brinendscan(IndexScanDesc scan);
+extern IndexBulkDeleteResult *brinbulkdelete(IndexVacuumInfo *info,
+			   IndexBulkDeleteResult *stats,
+			   IndexBulkDeleteCallback callback,
+			   void *callback_state);
+extern IndexBulkDeleteResult *brinvacuumcleanup(IndexVacuumInfo *info,
+				  IndexBulkDeleteResult *stats);
+extern bytea *brinoptions(Datum reloptions, bool validate);
+
+/* brin_validate.c */
+extern bool brinvalidate(Oid opclassoid);
 
 #endif   /* BRIN_INTERNAL_H */

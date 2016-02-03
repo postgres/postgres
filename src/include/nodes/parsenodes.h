@@ -10,7 +10,7 @@
  * the location.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -157,9 +157,10 @@ typedef struct Query
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
-	List	   *withCheckOptions;	/* a list of WithCheckOption's, which are
-									 * only added during rewrite and therefore
-									 * are not written out as part of Query. */
+	List	   *withCheckOptions;		/* a list of WithCheckOption's, which
+										 * are only added during rewrite and
+										 * therefore are not written out as
+										 * part of Query. */
 } Query;
 
 
@@ -351,13 +352,17 @@ typedef struct A_Star
 } A_Star;
 
 /*
- * A_Indices - array subscript or slice bounds ([lidx:uidx] or [uidx])
+ * A_Indices - array subscript or slice bounds ([idx] or [lidx:uidx])
+ *
+ * In slice case, either or both of lidx and uidx can be NULL (omitted).
+ * In non-slice case, uidx holds the single subscript and lidx is always NULL.
  */
 typedef struct A_Indices
 {
 	NodeTag		type;
-	Node	   *lidx;			/* NULL if it's a single subscript */
-	Node	   *uidx;
+	bool		is_slice;		/* true if slice (i.e., colon present) */
+	Node	   *lidx;			/* slice lower bound, if any */
+	Node	   *uidx;			/* subscript, or slice upper bound if any */
 } A_Indices;
 
 /*
@@ -1680,7 +1685,8 @@ typedef struct CopyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
-	Node	   *query;			/* the SELECT query to copy */
+	Node	   *query;			/* the query (SELECT or DML statement with
+								 * RETURNING) to copy */
 	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */

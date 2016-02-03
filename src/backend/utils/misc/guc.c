@@ -6,7 +6,7 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -2461,7 +2461,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_retrieve_retry_interval", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Sets the time to wait before retrying to retrieve WAL"
+			gettext_noop("Sets the time to wait before retrying to retrieve WAL "
 						 "after a failed attempt."),
 			NULL,
 			GUC_UNIT_MS
@@ -2589,7 +2589,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
-			gettext_noop("SSL regenotiation is no longer supported; this can only be 0"),
+			gettext_noop("SSL regenotiation is no longer supported; this can only be 0."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE,
 		},
@@ -3417,7 +3417,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"cluster_name", PGC_POSTMASTER, PROCESS_TITLE,
-			gettext_noop("Sets the name of the cluster which is included in the process title."),
+			gettext_noop("Sets the name of the cluster, which is included in the process title."),
 			NULL,
 			GUC_IS_NAME
 		},
@@ -4463,6 +4463,17 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	else
 		configdir = make_absolute_path(getenv("PGDATA"));
 
+	if (configdir && stat(configdir, &stat_buf) != 0)
+	{
+		write_stderr("%s: could not access \"%s\": %s\n",
+					 progname,
+					 configdir,
+					 strerror(errno));
+		if (errno == ENOENT)
+			write_stderr("Run initdb or pg_basebackup to initialize a PostgreSQL data directory.\n");
+		return false;
+	}
+
 	/*
 	 * Find the configuration file: if config_file was specified on the
 	 * command line, use it, else use configdir/postgresql.conf.  In any case
@@ -4498,7 +4509,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 */
 	if (stat(ConfigFileName, &stat_buf) != 0)
 	{
-		write_stderr("%s cannot access the server configuration file \"%s\": %s\n",
+		write_stderr("%s: could not access the server configuration file \"%s\": %s\n",
 					 progname, ConfigFileName, strerror(errno));
 		free(configdir);
 		return false;

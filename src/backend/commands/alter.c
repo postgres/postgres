@@ -3,7 +3,7 @@
  * alter.c
  *	  Drivers for generic alter commands
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -592,8 +592,18 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	Assert(!isnull);
 	oldNspOid = DatumGetObjectId(namespace);
 
+	/*
+	 * If the object is already in the correct namespace, we don't need
+	 * to do anything except fire the object access hook.
+	 */
+	if (oldNspOid == nspOid)
+	{
+		InvokeObjectPostAlterHook(classId, objid, 0);
+		return oldNspOid;
+	}
+
 	/* Check basic namespace related issues */
-	CheckSetNamespace(oldNspOid, nspOid, classId, objid);
+	CheckSetNamespace(oldNspOid, nspOid);
 
 	/* Permission checks ... superusers can always do it */
 	if (!superuser())

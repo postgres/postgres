@@ -3,7 +3,7 @@
  * enum.c
  *	  I/O functions, operators, aggregates etc for enum types
  *
- * Copyright (c) 2006-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2016, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

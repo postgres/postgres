@@ -852,6 +852,6 @@ PLy_abort_open_subtransactions(int save_subxact_level)
 
 		MemoryContextSwitchTo(subtransactiondata->oldcontext);
 		CurrentResourceOwner = subtransactiondata->oldowner;
-		PLy_free(subtransactiondata);
+		pfree(subtransactiondata);
 	}
 }

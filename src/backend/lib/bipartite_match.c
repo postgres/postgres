@@ -7,7 +7,7 @@
  *
  * http://en.wikipedia.org/w/index.php?title=Hopcroft%E2%80%93Karp_algorithm&oldid=593898016
  *
- * Copyright (c) 2015, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/bipartite_match.c

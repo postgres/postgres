@@ -9,7 +9,7 @@
  * and implementing search-path-controlled searches.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -513,9 +513,9 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
  * As a side effect, this function acquires AccessShareLock on the target
  * namespace.  Without this, the namespace could be dropped before our
  * transaction commits, leaving behind relations with relnamespace pointing
- * to a no-longer-exstant namespace.
+ * to a no-longer-existent namespace.
  *
- * As a further side-effect, if the select namespace is a temporary namespace,
+ * As a further side-effect, if the selected namespace is a temporary namespace,
  * we mark the RangeVar as RELPERSISTENCE_TEMP.
  */
 Oid
@@ -2769,24 +2769,13 @@ LookupCreationNamespace(const char *nspname)
 /*
  * Common checks on switching namespaces.
  *
- * We complain if (1) the old and new namespaces are the same, (2) either the
- * old or new namespaces is a temporary schema (or temporary toast schema), or
- * (3) either the old or new namespaces is the TOAST schema.
+ * We complain if either the old or new namespaces is a temporary schema
+ * (or temporary toast schema), or if either the old or new namespaces is the
+ * TOAST schema.
  */
 void
-CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
+CheckSetNamespace(Oid oldNspOid, Oid nspOid)
 {
-	if (oldNspOid == nspOid)
-		ereport(ERROR,
-				(classid == RelationRelationId ?
-				 errcode(ERRCODE_DUPLICATE_TABLE) :
-				 classid == ProcedureRelationId ?
-				 errcode(ERRCODE_DUPLICATE_FUNCTION) :
-				 errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("%s is already in schema \"%s\"",
-						getObjectDescriptionOids(classid, objid),
-						get_namespace_name(nspOid))));
-
 	/* disallow renaming into or out of temp schemas */
 	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
 		ereport(ERROR,

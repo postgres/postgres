@@ -1,4 +1,21 @@
--- src/backend/snowball/snowball_func.sql.in$
+/*
+ * Create underlying C functions for Snowball stemmers
+ *
+ * Copyright (c) 2007-2016, PostgreSQL Global Development Group
+ *
+ * src/backend/snowball/snowball_func.sql.in
+ *
+ * This file is combined with multiple instances of snowball.sql.in to
+ * build snowball_create.sql, which is executed during initdb.
+ *
+ * Note: this file is read in single-user -j mode, which means that the
+ * command terminator is semicolon-newline-newline; whenever the backend
+ * sees that, it stops and executes what it's got.  If you write a lot of
+ * statements without empty lines between, they'll all get quoted to you
+ * in any error message about one of them, so don't do that.  Also, you
+ * cannot write a semicolon immediately followed by an empty line in a
+ * string literal (including a function body!) or a multiline comment.
+ */
 
 SET search_path = pg_catalog;
 

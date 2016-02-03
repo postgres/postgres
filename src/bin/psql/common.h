@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.h
  */
@@ -16,6 +16,7 @@
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
+extern bool openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe);
 extern bool setQFout(const char *fname);
 
 extern void psql_error(const char *fmt,...) pg_attribute_printf(1, 2);

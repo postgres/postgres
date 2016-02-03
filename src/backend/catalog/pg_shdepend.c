@@ -3,7 +3,7 @@
  * pg_shdepend.c
  *	  routines to support manipulation of the pg_shdepend relation
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -43,6 +43,7 @@
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_user_mapping.h"
 #include "commands/alter.h"
 #include "commands/dbcommands.h"
 #include "commands/collationcmds.h"
@@ -50,6 +51,7 @@
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
+#include "commands/policy.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
@@ -1245,6 +1247,18 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 											sdepForm->classid,
 											sdepForm->objid);
 					break;
+				case SHARED_DEPENDENCY_POLICY:
+					/* If unable to remove role from policy, remove policy. */
+					if (!RemoveRoleFromObjectPolicy(roleid,
+													sdepForm->classid,
+													sdepForm->objid))
+					{
+						obj.classId = sdepForm->classid;
+						obj.objectId = sdepForm->objid;
+						obj.objectSubId = sdepForm->objsubid;
+						add_exact_object_address(&obj, deleteobjs);
+					}
+					break;
 				case SHARED_DEPENDENCY_OWNER:
 					/* If a local object, save it for deletion below */
 					if (sdepForm->dbid == MyDatabaseId)
@@ -1351,7 +1365,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			switch (sdepForm->classid)
 			{
 				case TypeRelationId:
-					AlterTypeOwnerInternal(sdepForm->objid, newrole, true);
+					AlterTypeOwner_oid(sdepForm->objid, newrole, true);
 					break;
 
 				case NamespaceRelationId:
@@ -1374,6 +1388,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					 * Ignore default ACLs; they should be handled by DROP
 					 * OWNED, not REASSIGN OWNED.
 					 */
+					break;
+
+				case UserMappingRelationId:
+					/* ditto */
 					break;
 
 				case ForeignServerRelationId:

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Generate lwlocknames.h and lwlocknames.c from lwlocknames.txt
-# Copyright (c) 2000-2015, PostgreSQL Global Development Group
+# Copyright (c) 2000-2016, PostgreSQL Global Development Group
 
 use warnings;
 use strict;

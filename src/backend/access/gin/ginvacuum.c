@@ -4,7 +4,7 @@
  *	  delete & vacuum routines for the postgres GIN
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -513,13 +513,10 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 	return (tmppage == origpage) ? NULL : tmppage;
 }
 
-Datum
-ginbulkdelete(PG_FUNCTION_ARGS)
+IndexBulkDeleteResult *
+ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
+			  IndexBulkDeleteCallback callback, void *callback_state)
 {
-	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
-	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
 	Relation	index = info->index;
 	BlockNumber blkno = GIN_ROOT_BLKNO;
 	GinVacuumState gvs;
@@ -544,7 +541,7 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		/* Yes, so initialize stats to zeroes */
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		/* and cleanup any pending inserts */
-		ginInsertCleanup(&gvs.ginstate, true, false, stats);
+		ginInsertCleanup(&gvs.ginstate, false, stats);
 	}
 
 	/* we'll re-count the tuples each time */
@@ -634,14 +631,12 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 
 	MemoryContextDelete(gvs.tmpCxt);
 
-	PG_RETURN_POINTER(gvs.result);
+	return gvs.result;
 }
 
-Datum
-ginvacuumcleanup(PG_FUNCTION_ARGS)
+IndexBulkDeleteResult *
+ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 {
-	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	Relation	index = info->index;
 	bool		needLock;
 	BlockNumber npages,
@@ -659,9 +654,9 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		if (IsAutoVacuumWorkerProcess())
 		{
 			initGinState(&ginstate, index);
-			ginInsertCleanup(&ginstate, true, true, stats);
+			ginInsertCleanup(&ginstate, true, stats);
 		}
-		PG_RETURN_POINTER(stats);
+		return stats;
 	}
 
 	/*
@@ -672,7 +667,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	{
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 		initGinState(&ginstate, index);
-		ginInsertCleanup(&ginstate, true, false, stats);
+		ginInsertCleanup(&ginstate, false, stats);
 	}
 
 	memset(&idxStat, 0, sizeof(idxStat));
@@ -746,5 +741,5 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	if (needLock)
 		UnlockRelationForExtension(index, ExclusiveLock);
 
-	PG_RETURN_POINTER(stats);
+	return stats;
 }

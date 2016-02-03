@@ -6,7 +6,7 @@
  *
  * Original coding by Todd A. Brandys
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/libpq/crypt.c
@@ -50,7 +50,11 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	/* Get role info from pg_authid */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 	if (!HeapTupleIsValid(roleTup))
+	{
+		*logdetail = psprintf(_("Role \"%s\" does not exist."),
+							  role);
 		return STATUS_ERROR;	/* no such user */
+	}
 
 	datum = SysCacheGetAttr(AUTHNAME, roleTup,
 							Anum_pg_authid_rolpassword, &isnull);
@@ -71,13 +75,18 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	ReleaseSysCache(roleTup);
 
 	if (*shadow_pass == '\0')
+	{
+		*logdetail = psprintf(_("User \"%s\" has an empty password."),
+							  role);
 		return STATUS_ERROR;	/* empty password */
-
-	CHECK_FOR_INTERRUPTS();
+	}
 
 	/*
 	 * Compare with the encrypted or plain password depending on the
-	 * authentication method being used for this connection.
+	 * authentication method being used for this connection.  (We do not
+	 * bother setting logdetail for pg_md5_encrypt failure: the only possible
+	 * error is out-of-memory, which is unlikely, and if it did happen adding
+	 * a psprintf call would only make things worse.)
 	 */
 	switch (port->hba->auth_method)
 	{
@@ -154,6 +163,9 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 		else
 			retval = STATUS_OK;
 	}
+	else
+		*logdetail = psprintf(_("Password does not match for user \"%s\"."),
+							  role);
 
 	if (port->hba->auth_method == uaMD5)
 		pfree(crypt_pwd);

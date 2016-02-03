@@ -3,7 +3,7 @@
  * dfmgr.c
  *	  Dynamic function manager code.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,11 +16,7 @@
 
 #include <sys/stat.h>
 
-#ifndef WIN32_ONLY_COMPILER
 #include "dynloader.h"
-#else
-#include "port/dynloader/win32.h"
-#endif
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/shmem.h"

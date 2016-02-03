@@ -2,7 +2,7 @@
  * origin.h
  *	   Exports from replication/logical/origin.c
  *
- * Copyright (c) 2013-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2016, PostgreSQL Global Development Group
  *
  * src/include/replication/origin.h
  *-------------------------------------------------------------------------

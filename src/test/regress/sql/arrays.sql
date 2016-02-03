@@ -86,12 +86,53 @@ SELECT a[1:3],
           d[1:1][2:2]
    FROM arrtest;
 
+SELECT b[1:1][2][2],
+       d[1:1][2]
+   FROM arrtest;
+
 INSERT INTO arrtest(a) VALUES('{1,null,3}');
 SELECT a FROM arrtest;
 UPDATE arrtest SET a[4] = NULL WHERE a[2] IS NULL;
 SELECT a FROM arrtest WHERE a[2] IS NULL;
 DELETE FROM arrtest WHERE a[2] IS NULL AND b IS NULL;
 SELECT a,b,c FROM arrtest;
+
+-- test mixed slice/scalar subscripting
+select '{{1,2,3},{4,5,6},{7,8,9}}'::int[];
+select ('{{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
+select '[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[];
+select ('[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
+
+-- test slices with empty lower and/or upper index
+CREATE TEMP TABLE arrtest_s (
+  a       int2[],
+  b       int2[][]
+);
+INSERT INTO arrtest_s VALUES ('{1,2,3,4,5}', '{{1,2,3}, {4,5,6}, {7,8,9}}');
+INSERT INTO arrtest_s VALUES ('[0:4]={1,2,3,4,5}', '[0:2][0:2]={{1,2,3}, {4,5,6}, {7,8,9}}');
+
+SELECT * FROM arrtest_s;
+SELECT a[:3], b[:2][:2] FROM arrtest_s;
+SELECT a[2:], b[2:][2:] FROM arrtest_s;
+SELECT a[:], b[:] FROM arrtest_s;
+
+-- updates
+UPDATE arrtest_s SET a[:3] = '{11, 12, 13}', b[:2][:2] = '{{11,12}, {14,15}}'
+  WHERE array_lower(a,1) = 1;
+SELECT * FROM arrtest_s;
+UPDATE arrtest_s SET a[3:] = '{23, 24, 25}', b[2:][2:] = '{{25,26}, {28,29}}';
+SELECT * FROM arrtest_s;
+UPDATE arrtest_s SET a[:] = '{11, 12, 13, 14, 15}';
+SELECT * FROM arrtest_s;
+UPDATE arrtest_s SET a[:] = '{23, 24, 25}';  -- fail, too small
+INSERT INTO arrtest_s VALUES(NULL, NULL);
+UPDATE arrtest_s SET a[:] = '{11, 12, 13, 14, 15}';  -- fail, no good with null
+
+-- check with fixed-length-array type, such as point
+SELECT f1[0:1] FROM POINT_TBL;
+SELECT f1[0:] FROM POINT_TBL;
+SELECT f1[:1] FROM POINT_TBL;
+SELECT f1[:] FROM POINT_TBL;
 
 --
 -- test array extension

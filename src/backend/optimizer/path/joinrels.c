@@ -3,7 +3,7 @@
  * joinrels.c
  *	  Routines to determine which relations should be joined
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -231,7 +231,7 @@ join_search_one_level(PlannerInfo *root, int level)
 		 */
 		if (joinrels[level] == NIL &&
 			root->join_info_list == NIL &&
-			root->lateral_info_list == NIL)
+			!root->hasLateralRTEs)
 			elog(ERROR, "failed to build any %d-way joins", level);
 	}
 }
@@ -332,8 +332,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	bool		reversed;
 	bool		unique_ified;
 	bool		must_be_leftjoin;
-	bool		lateral_fwd;
-	bool		lateral_rev;
 	ListCell   *l;
 
 	/*
@@ -526,46 +524,110 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 	/*
 	 * We also have to check for constraints imposed by LATERAL references.
-	 * The proposed rels could each contain lateral references to the other,
-	 * in which case the join is impossible.  If there are lateral references
-	 * in just one direction, then the join has to be done with a nestloop
-	 * with the lateral referencer on the inside.  If the join matches an SJ
-	 * that cannot be implemented by such a nestloop, the join is impossible.
 	 */
-	lateral_fwd = lateral_rev = false;
-	foreach(l, root->lateral_info_list)
+	if (root->hasLateralRTEs)
 	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
+		bool		lateral_fwd;
+		bool		lateral_rev;
+		Relids		join_lateral_rels;
 
-		if (bms_is_subset(ljinfo->lateral_rhs, rel2->relids) &&
-			bms_overlap(ljinfo->lateral_lhs, rel1->relids))
+		/*
+		 * The proposed rels could each contain lateral references to the
+		 * other, in which case the join is impossible.  If there are lateral
+		 * references in just one direction, then the join has to be done with
+		 * a nestloop with the lateral referencer on the inside.  If the join
+		 * matches an SJ that cannot be implemented by such a nestloop, the
+		 * join is impossible.
+		 *
+		 * Also, if the lateral reference is only indirect, we should reject
+		 * the join; whatever rel(s) the reference chain goes through must be
+		 * joined to first.
+		 *
+		 * Another case that might keep us from building a valid plan is the
+		 * implementation restriction described by have_dangerous_phv().
+		 */
+		lateral_fwd = bms_overlap(rel1->relids, rel2->lateral_relids);
+		lateral_rev = bms_overlap(rel2->relids, rel1->lateral_relids);
+		if (lateral_fwd && lateral_rev)
+			return false;		/* have lateral refs in both directions */
+		if (lateral_fwd)
 		{
 			/* has to be implemented as nestloop with rel1 on left */
-			if (lateral_rev)
-				return false;	/* have lateral refs in both directions */
-			lateral_fwd = true;
-			if (!bms_is_subset(ljinfo->lateral_lhs, rel1->relids))
-				return false;	/* rel1 can't compute the required parameter */
 			if (match_sjinfo &&
 				(reversed ||
 				 unique_ified ||
 				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
+			/* check there is a direct reference from rel2 to rel1 */
+			if (!bms_overlap(rel1->relids, rel2->direct_lateral_relids))
+				return false;	/* only indirect refs, so reject */
+			/* check we won't have a dangerous PHV */
+			if (have_dangerous_phv(root, rel1->relids, rel2->lateral_relids))
+				return false;	/* might be unable to handle required PHV */
 		}
-		if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
-			bms_overlap(ljinfo->lateral_lhs, rel2->relids))
+		else if (lateral_rev)
 		{
 			/* has to be implemented as nestloop with rel2 on left */
-			if (lateral_fwd)
-				return false;	/* have lateral refs in both directions */
-			lateral_rev = true;
-			if (!bms_is_subset(ljinfo->lateral_lhs, rel2->relids))
-				return false;	/* rel2 can't compute the required parameter */
 			if (match_sjinfo &&
 				(!reversed ||
 				 unique_ified ||
 				 match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
+			/* check there is a direct reference from rel1 to rel2 */
+			if (!bms_overlap(rel2->relids, rel1->direct_lateral_relids))
+				return false;	/* only indirect refs, so reject */
+			/* check we won't have a dangerous PHV */
+			if (have_dangerous_phv(root, rel2->relids, rel1->lateral_relids))
+				return false;	/* might be unable to handle required PHV */
+		}
+
+		/*
+		 * LATERAL references could also cause problems later on if we accept
+		 * this join: if the join's minimum parameterization includes any rels
+		 * that would have to be on the inside of an outer join with this join
+		 * rel, then it's never going to be possible to build the complete
+		 * query using this join.  We should reject this join not only because
+		 * it'll save work, but because if we don't, the clauseless-join
+		 * heuristics might think that legality of this join means that some
+		 * other join rel need not be formed, and that could lead to failure
+		 * to find any plan at all.  We have to consider not only rels that
+		 * are directly on the inner side of an OJ with the joinrel, but also
+		 * ones that are indirectly so, so search to find all such rels.
+		 */
+		join_lateral_rels = min_join_parameterization(root, joinrelids,
+													  rel1, rel2);
+		if (join_lateral_rels)
+		{
+			Relids		join_plus_rhs = bms_copy(joinrelids);
+			bool		more;
+
+			do
+			{
+				more = false;
+				foreach(l, root->join_info_list)
+				{
+					SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(l);
+
+					if (bms_overlap(sjinfo->min_lefthand, join_plus_rhs) &&
+						!bms_is_subset(sjinfo->min_righthand, join_plus_rhs))
+					{
+						join_plus_rhs = bms_add_members(join_plus_rhs,
+													  sjinfo->min_righthand);
+						more = true;
+					}
+					/* full joins constrain both sides symmetrically */
+					if (sjinfo->jointype == JOIN_FULL &&
+						bms_overlap(sjinfo->min_righthand, join_plus_rhs) &&
+						!bms_is_subset(sjinfo->min_lefthand, join_plus_rhs))
+					{
+						join_plus_rhs = bms_add_members(join_plus_rhs,
+														sjinfo->min_lefthand);
+						more = true;
+					}
+				}
+			} while (more);
+			if (bms_overlap(join_plus_rhs, join_lateral_rels))
+				return false;	/* will not be able to join to some RHS rel */
 		}
 	}
 
@@ -822,8 +884,9 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
  * could be merged with that function, but it seems clearer to separate the
  * two concerns.  We need this test because there are degenerate cases where
  * a clauseless join must be performed to satisfy join-order restrictions.
- * Also, if one rel has a lateral reference to the other, we should consider
- * joining them even if the join would be clauseless.
+ * Also, if one rel has a lateral reference to the other, or both are needed
+ * to compute some PHV, we should consider joining them even if the join would
+ * be clauseless.
  *
  * Note: this is only a problem if one side of a degenerate outer join
  * contains multiple rels, or a clauseless join is required within an
@@ -840,18 +903,26 @@ have_join_order_restriction(PlannerInfo *root,
 	ListCell   *l;
 
 	/*
-	 * If either side has a lateral reference to the other, attempt the join
-	 * regardless of outer-join considerations.
+	 * If either side has a direct lateral reference to the other, attempt the
+	 * join regardless of outer-join considerations.
 	 */
-	foreach(l, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
+	if (bms_overlap(rel1->relids, rel2->direct_lateral_relids) ||
+		bms_overlap(rel2->relids, rel1->direct_lateral_relids))
+		return true;
 
-		if (bms_is_subset(ljinfo->lateral_rhs, rel2->relids) &&
-			bms_overlap(ljinfo->lateral_lhs, rel1->relids))
-			return true;
-		if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
-			bms_overlap(ljinfo->lateral_lhs, rel2->relids))
+	/*
+	 * Likewise, if both rels are needed to compute some PlaceHolderVar,
+	 * attempt the join regardless of outer-join considerations.  (This is not
+	 * very desirable, because a PHV with a large eval_at set will cause a lot
+	 * of probably-useless joins to be considered, but failing to do this can
+	 * cause us to fail to construct a plan at all.)
+	 */
+	foreach(l, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
+
+		if (bms_is_subset(rel1->relids, phinfo->ph_eval_at) &&
+			bms_is_subset(rel2->relids, phinfo->ph_eval_at))
 			return true;
 	}
 
@@ -930,7 +1001,7 @@ have_join_order_restriction(PlannerInfo *root,
  * has_join_restriction
  *		Detect whether the specified relation has join-order restrictions,
  *		due to being inside an outer join or an IN (sub-SELECT),
- *		or participating in any LATERAL references.
+ *		or participating in any LATERAL references or multi-rel PHVs.
  *
  * Essentially, this tests whether have_join_order_restriction() could
  * succeed with this rel and some other one.  It's OK if we sometimes
@@ -942,12 +1013,15 @@ has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
 {
 	ListCell   *l;
 
-	foreach(l, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
+	if (rel->lateral_relids != NULL || rel->lateral_referencers != NULL)
+		return true;
 
-		if (bms_is_subset(ljinfo->lateral_rhs, rel->relids) ||
-			bms_overlap(ljinfo->lateral_lhs, rel->relids))
+	foreach(l, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
+
+		if (bms_is_subset(rel->relids, phinfo->ph_eval_at) &&
+			!bms_equal(rel->relids, phinfo->ph_eval_at))
 			return true;
 	}
 
@@ -1029,6 +1103,57 @@ has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel)
 
 
 /*
+ * There's a pitfall for creating parameterized nestloops: suppose the inner
+ * rel (call it A) has a parameter that is a PlaceHolderVar, and that PHV's
+ * minimum eval_at set includes the outer rel (B) and some third rel (C).
+ * We might think we could create a B/A nestloop join that's parameterized by
+ * C.  But we would end up with a plan in which the PHV's expression has to be
+ * evaluated as a nestloop parameter at the B/A join; and the executor is only
+ * set up to handle simple Vars as NestLoopParams.  Rather than add complexity
+ * and overhead to the executor for such corner cases, it seems better to
+ * forbid the join.  (Note that we can still make use of A's parameterized
+ * path with pre-joined B+C as the outer rel.  have_join_order_restriction()
+ * ensures that we will consider making such a join even if there are not
+ * other reasons to do so.)
+ *
+ * So we check whether any PHVs used in the query could pose such a hazard.
+ * We don't have any simple way of checking whether a risky PHV would actually
+ * be used in the inner plan, and the case is so unusual that it doesn't seem
+ * worth working very hard on it.
+ *
+ * This needs to be checked in two places.  If the inner rel's minimum
+ * parameterization would trigger the restriction, then join_is_legal() should
+ * reject the join altogether, because there will be no workable paths for it.
+ * But joinpath.c has to check again for every proposed nestloop path, because
+ * the inner path might have more than the minimum parameterization, causing
+ * some PHV to be dangerous for it that otherwise wouldn't be.
+ */
+bool
+have_dangerous_phv(PlannerInfo *root,
+				   Relids outer_relids, Relids inner_params)
+{
+	ListCell   *lc;
+
+	foreach(lc, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
+
+		if (!bms_is_subset(phinfo->ph_eval_at, inner_params))
+			continue;			/* ignore, could not be a nestloop param */
+		if (!bms_overlap(phinfo->ph_eval_at, outer_relids))
+			continue;			/* ignore, not relevant to this join */
+		if (bms_is_subset(phinfo->ph_eval_at, outer_relids))
+			continue;			/* safe, it can be eval'd within outerrel */
+		/* Otherwise, it's potentially unsafe, so reject the join */
+		return true;
+	}
+
+	/* OK to perform the join */
+	return false;
+}
+
+
+/*
  * is_dummy_rel --- has relation been proven empty?
  */
 static bool
@@ -1069,9 +1194,10 @@ mark_dummy_rel(RelOptInfo *rel)
 
 	/* Evict any previously chosen paths */
 	rel->pathlist = NIL;
+	rel->partial_pathlist = NIL;
 
 	/* Set up the dummy path */
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
 
 	/* Set or update cheapest_total_path and related fields */
 	set_cheapest(rel);

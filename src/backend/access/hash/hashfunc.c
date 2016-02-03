@@ -3,7 +3,7 @@
  * hashfunc.c
  *	  Support functions for hash access method.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -296,6 +296,9 @@ hashvarlena(PG_FUNCTION_ARGS)
  * About 6*len+35 instructions. The best hash table sizes are powers
  * of 2.  There is no need to do mod a prime (mod is sooo slow!).
  * If you need less than 32 bits, use a bitmask.
+ *
+ * This procedure must never throw elog(ERROR); the ResourceOwner code
+ * relies on this not to fail.
  *
  * Note: we could easily change this function to return a 64-bit hash value
  * by using the final values of both b and c.  b is perhaps a little less

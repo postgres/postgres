@@ -3,7 +3,7 @@
  * hash.c
  *	  Implementation of Margo Seltzer's Hashing package for postgres.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,9 +22,8 @@
 #include "access/relscan.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
-#include "optimizer/cost.h"
 #include "optimizer/plancat.h"
-#include "storage/bufmgr.h"
+#include "utils/index_selfuncs.h"
 #include "utils/rel.h"
 
 
@@ -44,14 +43,55 @@ static void hashbuildCallback(Relation index,
 
 
 /*
- *	hashbuild() -- build a new hash index.
+ * Hash handler function: return IndexAmRoutine with access method parameters
+ * and callbacks.
  */
 Datum
-hashbuild(PG_FUNCTION_ARGS)
+hashhandler(PG_FUNCTION_ARGS)
 {
-	Relation	heap = (Relation) PG_GETARG_POINTER(0);
-	Relation	index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+
+	amroutine->amstrategies = 1;
+	amroutine->amsupport = 1;
+	amroutine->amcanorder = false;
+	amroutine->amcanorderbyop = false;
+	amroutine->amcanbackward = true;
+	amroutine->amcanunique = false;
+	amroutine->amcanmulticol = false;
+	amroutine->amoptionalkey = false;
+	amroutine->amsearcharray = false;
+	amroutine->amsearchnulls = false;
+	amroutine->amstorage = false;
+	amroutine->amclusterable = false;
+	amroutine->ampredlocks = false;
+	amroutine->amkeytype = INT4OID;
+
+	amroutine->ambuild = hashbuild;
+	amroutine->ambuildempty = hashbuildempty;
+	amroutine->aminsert = hashinsert;
+	amroutine->ambulkdelete = hashbulkdelete;
+	amroutine->amvacuumcleanup = hashvacuumcleanup;
+	amroutine->amcanreturn = NULL;
+	amroutine->amcostestimate = hashcostestimate;
+	amroutine->amoptions = hashoptions;
+	amroutine->amvalidate = hashvalidate;
+	amroutine->ambeginscan = hashbeginscan;
+	amroutine->amrescan = hashrescan;
+	amroutine->amgettuple = hashgettuple;
+	amroutine->amgetbitmap = hashgetbitmap;
+	amroutine->amendscan = hashendscan;
+	amroutine->ammarkpos = NULL;
+	amroutine->amrestrpos = NULL;
+
+	PG_RETURN_POINTER(amroutine);
+}
+
+/*
+ *	hashbuild() -- build a new hash index.
+ */
+IndexBuildResult *
+hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
+{
 	IndexBuildResult *result;
 	BlockNumber relpages;
 	double		reltuples;
@@ -112,20 +152,16 @@ hashbuild(PG_FUNCTION_ARGS)
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 
-	PG_RETURN_POINTER(result);
+	return result;
 }
 
 /*
  *	hashbuildempty() -- build an empty hash index in the initialization fork
  */
-Datum
-hashbuildempty(PG_FUNCTION_ARGS)
+void
+hashbuildempty(Relation index)
 {
-	Relation	index = (Relation) PG_GETARG_POINTER(0);
-
 	_hash_metapinit(index, 0, INIT_FORKNUM);
-
-	PG_RETURN_VOID();
 }
 
 /*
@@ -167,18 +203,11 @@ hashbuildCallback(Relation index,
  *	Hash on the heap tuple's key, form an index tuple with hash code.
  *	Find the appropriate location for the new tuple, and put it there.
  */
-Datum
-hashinsert(PG_FUNCTION_ARGS)
+bool
+hashinsert(Relation rel, Datum *values, bool *isnull,
+		   ItemPointer ht_ctid, Relation heapRel,
+		   IndexUniqueCheck checkUnique)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	Datum	   *values = (Datum *) PG_GETARG_POINTER(1);
-	bool	   *isnull = (bool *) PG_GETARG_POINTER(2);
-	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
-
-#ifdef NOT_USED
-	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
-	IndexUniqueCheck checkUnique = (IndexUniqueCheck) PG_GETARG_INT32(5);
-#endif
 	IndexTuple	itup;
 
 	/*
@@ -191,7 +220,7 @@ hashinsert(PG_FUNCTION_ARGS)
 	 * chosen in 1986, not of the way nulls are handled here.
 	 */
 	if (isnull[0])
-		PG_RETURN_BOOL(false);
+		return false;
 
 	/* generate an index tuple */
 	itup = _hash_form_tuple(rel, values, isnull);
@@ -201,18 +230,16 @@ hashinsert(PG_FUNCTION_ARGS)
 
 	pfree(itup);
 
-	PG_RETURN_BOOL(false);
+	return false;
 }
 
 
 /*
  *	hashgettuple() -- Get the next tuple in the scan.
  */
-Datum
-hashgettuple(PG_FUNCTION_ARGS)
+bool
+hashgettuple(IndexScanDesc scan, ScanDirection dir)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 	Buffer		buf;
@@ -314,18 +341,16 @@ hashgettuple(PG_FUNCTION_ARGS)
 	/* Return current heap TID on success */
 	scan->xs_ctup.t_self = so->hashso_heappos;
 
-	PG_RETURN_BOOL(res);
+	return res;
 }
 
 
 /*
  *	hashgetbitmap() -- get all tuples at once
  */
-Datum
-hashgetbitmap(PG_FUNCTION_ARGS)
+int64
+hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
 	int64		ntids = 0;
@@ -362,19 +387,16 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 		res = _hash_next(scan, ForwardScanDirection);
 	}
 
-	PG_RETURN_INT64(ntids);
+	return ntids;
 }
 
 
 /*
  *	hashbeginscan() -- start a scan on a hash index
  */
-Datum
-hashbeginscan(PG_FUNCTION_ARGS)
+IndexScanDesc
+hashbeginscan(Relation rel, int nkeys, int norderbys)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			nkeys = PG_GETARG_INT32(1);
-	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
 	HashScanOpaque so;
 
@@ -396,19 +418,16 @@ hashbeginscan(PG_FUNCTION_ARGS)
 	/* register scan in case we change pages it's using */
 	_hash_regscan(scan);
 
-	PG_RETURN_POINTER(scan);
+	return scan;
 }
 
 /*
  *	hashrescan() -- rescan an index relation
  */
-Datum
-hashrescan(PG_FUNCTION_ARGS)
+void
+hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
+		   ScanKey orderbys, int norderbys)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
-
-	/* remaining arguments are ignored */
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
@@ -434,17 +453,14 @@ hashrescan(PG_FUNCTION_ARGS)
 				scan->numberOfKeys * sizeof(ScanKeyData));
 		so->hashso_bucket_valid = false;
 	}
-
-	PG_RETURN_VOID();
 }
 
 /*
  *	hashendscan() -- close down a scan
  */
-Datum
-hashendscan(PG_FUNCTION_ARGS)
+void
+hashendscan(IndexScanDesc scan)
 {
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
@@ -463,28 +479,6 @@ hashendscan(PG_FUNCTION_ARGS)
 
 	pfree(so);
 	scan->opaque = NULL;
-
-	PG_RETURN_VOID();
-}
-
-/*
- *	hashmarkpos() -- save current scan position
- */
-Datum
-hashmarkpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "hash does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-/*
- *	hashrestrpos() -- restore scan to last saved position
- */
-Datum
-hashrestrpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "hash does not support mark/restore");
-	PG_RETURN_VOID();
 }
 
 /*
@@ -494,13 +488,10 @@ hashrestrpos(PG_FUNCTION_ARGS)
  *
  * Result: a palloc'd struct containing statistical info for VACUUM displays.
  */
-Datum
-hashbulkdelete(PG_FUNCTION_ARGS)
+IndexBulkDeleteResult *
+hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
+			   IndexBulkDeleteCallback callback, void *callback_state)
 {
-	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
-	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
 	Relation	rel = info->index;
 	double		tuples_removed;
 	double		num_index_tuples;
@@ -670,7 +661,7 @@ loop_top:
 	stats->tuples_removed += tuples_removed;
 	/* hashvacuumcleanup will fill in num_pages */
 
-	PG_RETURN_POINTER(stats);
+	return stats;
 }
 
 /*
@@ -678,24 +669,22 @@ loop_top:
  *
  * Result: a palloc'd struct containing statistical info for VACUUM displays.
  */
-Datum
-hashvacuumcleanup(PG_FUNCTION_ARGS)
+IndexBulkDeleteResult *
+hashvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 {
-	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	Relation	rel = info->index;
 	BlockNumber num_pages;
 
 	/* If hashbulkdelete wasn't called, return NULL signifying no change */
 	/* Note: this covers the analyze_only case too */
 	if (stats == NULL)
-		PG_RETURN_POINTER(NULL);
+		return NULL;
 
 	/* update statistics */
 	num_pages = RelationGetNumberOfBlocks(rel);
 	stats->num_pages = num_pages;
 
-	PG_RETURN_POINTER(stats);
+	return stats;
 }
 
 

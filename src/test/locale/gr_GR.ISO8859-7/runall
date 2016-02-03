@@ -38,12 +38,12 @@ for f in char varchar text; do
 
    dropdb testlocale >/dev/null 2>&1
    createdb testlocale || abort "createdb failed"
-   psql -d testlocale -c "CREATE TABLE usastates (abbrev char(2), name_en char(20), name_gr $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
-   psql testlocale < test-gr.sql.in > test-gr-$f.sql.out 2>/dev/null || abort "test query failed"
+   psql -X -d testlocale -c "CREATE TABLE usastates (abbrev char(2), name_en char(20), name_gr $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
+   psql -X testlocale < test-gr.sql.in > test-gr-$f.sql.out 2>/dev/null || abort "test query failed"
    diff expected/test-gr-$f.sql.out test-gr-$f.sql.out
 done
 echo "Testing PgSQL: select on regexp..."
-psql testlocale < test-gr-select.sql.in > test-gr-select.sql.out 2>/dev/null || abort "select query failed"
+psql -X testlocale < test-gr-select.sql.in > test-gr-select.sql.out 2>/dev/null || abort "select query failed"
 diff expected/test-gr-select.sql.out test-gr-select.sql.out
 dropdb testlocale || abort "dropdb failed"
 echo "Finished."

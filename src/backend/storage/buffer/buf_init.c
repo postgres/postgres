@@ -3,7 +3,7 @@
  * buf_init.c
  *	  buffer manager initialization routines
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +20,9 @@
 
 BufferDescPadded *BufferDescriptors;
 char	   *BufferBlocks;
+LWLockMinimallyPadded *BufferIOLWLockArray = NULL;
+LWLockTranche BufferIOLWLockTranche;
+LWLockTranche BufferContentLWLockTranche;
 
 
 /*
@@ -65,22 +68,45 @@ void
 InitBufferPool(void)
 {
 	bool		foundBufs,
-				foundDescs;
+				foundDescs,
+				foundIOLocks;
 
 	/* Align descriptors to a cacheline boundary. */
-	BufferDescriptors = (BufferDescPadded *) CACHELINEALIGN(
-										ShmemInitStruct("Buffer Descriptors",
-					NBuffers * sizeof(BufferDescPadded) + PG_CACHE_LINE_SIZE,
-														&foundDescs));
+	BufferDescriptors = (BufferDescPadded *)
+		CACHELINEALIGN(
+					   ShmemInitStruct("Buffer Descriptors",
+									   NBuffers * sizeof(BufferDescPadded)
+									   + PG_CACHE_LINE_SIZE,
+									   &foundDescs));
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
 						NBuffers * (Size) BLCKSZ, &foundBufs);
 
-	if (foundDescs || foundBufs)
+	/* Align lwlocks to cacheline boundary */
+	BufferIOLWLockArray = (LWLockMinimallyPadded *)
+		CACHELINEALIGN(ShmemInitStruct("Buffer IO Locks",
+							  NBuffers * (Size) sizeof(LWLockMinimallyPadded)
+									   + PG_CACHE_LINE_SIZE,
+									   &foundIOLocks));
+
+	BufferIOLWLockTranche.name = "Buffer IO Locks";
+	BufferIOLWLockTranche.array_base = BufferIOLWLockArray;
+	BufferIOLWLockTranche.array_stride = sizeof(LWLockMinimallyPadded);
+	LWLockRegisterTranche(LWTRANCHE_BUFFER_IO_IN_PROGRESS,
+						  &BufferIOLWLockTranche);
+
+	BufferContentLWLockTranche.name = "Buffer Content Locks";
+	BufferContentLWLockTranche.array_base =
+		((char *) BufferDescriptors) + offsetof(BufferDesc, content_lock);
+	BufferContentLWLockTranche.array_stride = sizeof(BufferDescPadded);
+	LWLockRegisterTranche(LWTRANCHE_BUFFER_CONTENT,
+						  &BufferContentLWLockTranche);
+
+	if (foundDescs || foundBufs || foundIOLocks)
 	{
-		/* both should be present or neither */
-		Assert(foundDescs && foundBufs);
+		/* should find all of these, or none of them */
+		Assert(foundDescs && foundBufs && foundIOLocks);
 		/* note: this path is only taken in EXEC_BACKEND case */
 	}
 	else
@@ -110,8 +136,11 @@ InitBufferPool(void)
 			 */
 			buf->freeNext = i + 1;
 
-			buf->io_in_progress_lock = LWLockAssign();
-			buf->content_lock = LWLockAssign();
+			LWLockInitialize(BufferDescriptorGetContentLock(buf),
+							 LWTRANCHE_BUFFER_CONTENT);
+
+			LWLockInitialize(BufferDescriptorGetIOLock(buf),
+							 LWTRANCHE_BUFFER_IO_IN_PROGRESS);
 		}
 
 		/* Correct last entry of linked list */
@@ -143,6 +172,18 @@ BufferShmemSize(void)
 
 	/* size of stuff controlled by freelist.c */
 	size = add_size(size, StrategyShmemSize());
+
+	/*
+	 * It would be nice to include the I/O locks in the BufferDesc, but that
+	 * would increase the size of a BufferDesc to more than one cache line, and
+	 * benchmarking has shown that keeping every BufferDesc aligned on a cache
+	 * line boundary is important for performance.  So, instead, the array of
+	 * I/O locks is allocated in a separate tranche.  Because those locks are
+	 * not highly contentended, we lay out the array with minimal padding.
+	 */
+	size = add_size(size, mul_size(NBuffers, sizeof(LWLockMinimallyPadded)));
+	/* to allow aligning the above */
+	size = add_size(size, PG_CACHE_LINE_SIZE);
 
 	return size;
 }

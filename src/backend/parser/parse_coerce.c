@@ -3,7 +3,7 @@
  * parse_coerce.c
  *		handle type coercions/conversions for parser
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,6 +26,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -307,6 +308,43 @@ coerce_type(ParseState *pstate, Node *node,
 			newcon->constvalue = stringTypeDatum(baseType,
 												 NULL,
 												 inputTypeMod);
+
+		/*
+		 * If it's a varlena value, force it to be in non-expanded
+		 * (non-toasted) format; this avoids any possible dependency on
+		 * external values and improves consistency of representation.
+		 */
+		if (!con->constisnull && newcon->constlen == -1)
+			newcon->constvalue =
+				PointerGetDatum(PG_DETOAST_DATUM(newcon->constvalue));
+
+#ifdef RANDOMIZE_ALLOCATED_MEMORY
+
+		/*
+		 * For pass-by-reference data types, repeat the conversion to see if
+		 * the input function leaves any uninitialized bytes in the result. We
+		 * can only detect that reliably if RANDOMIZE_ALLOCATED_MEMORY is
+		 * enabled, so we don't bother testing otherwise.  The reason we don't
+		 * want any instability in the input function is that comparison of
+		 * Const nodes relies on bytewise comparison of the datums, so if the
+		 * input function leaves garbage then subexpressions that should be
+		 * identical may not get recognized as such.  See pgsql-hackers
+		 * discussion of 2008-04-04.
+		 */
+		if (!con->constisnull && !newcon->constbyval)
+		{
+			Datum		val2;
+
+			val2 = stringTypeDatum(baseType,
+								   DatumGetCString(con->constvalue),
+								   inputTypeMod);
+			if (newcon->constlen == -1)
+				val2 = PointerGetDatum(PG_DETOAST_DATUM(val2));
+			if (!datumIsEqual(newcon->constvalue, val2, false, newcon->constlen))
+				elog(WARNING, "type %s has unstable input conversion for \"%s\"",
+				   typeTypeName(baseType), DatumGetCString(con->constvalue));
+		}
+#endif
 
 		cancel_parser_errposition_callback(&pcbstate);
 

@@ -851,4 +851,57 @@ lateral reference.  (Perhaps now that that stuff works, we could relax the
 pullup restriction?)
 
 
--- bjm & tgl
+Parallel Query and Partial Paths
+--------------------------------
+
+Parallel query involves dividing up the work that needs to be performed
+either by an entire query or some portion of the query in such a way that
+some of that work can be done by one or more worker processes, which are
+called parallel workers.  Parallel workers are a subtype of dynamic
+background workers; see src/backend/access/transam/README.parallel for a
+fuller description.  Academic literature on parallel query suggests that
+that parallel execution strategies can be divided into essentially two
+categories: pipelined parallelism, where the execution of the query is
+divided into multiple stages and each stage is handled by a separate
+process; and partitioning parallelism, where the data is split between
+multiple processes and each process handles a subset of it.  The
+literature, however, suggests that gains from pipeline parallelism are
+often very limited due to the difficulty of avoiding pipeline stalls.
+Consequently, we do not currently attempt to generate query plans that
+use this technique.
+
+Instead, we focus on partitioning paralellism, which does not require
+that the underlying table be partitioned.  It only requires that (1)
+there is some method of dividing the data from at least one of the base
+tables involved in the relation across multiple processes, (2) allowing
+each process to handle its own portion of the data, and then (3)
+collecting the results.  Requirements (2) and (3) is satisfied by the
+executor node Gather, which launches any number of worker processes and
+executes its single child plan in all of them (and perhaps in the leader
+also, if the children aren't generating enough data to keep the leader
+busy).  Requirement (1) is handled by the SeqScan node: when invoked
+with parallel_aware = true, this node will, in effect, partition the
+table on a block by block basis, returning a subset of the tuples from
+the relation in each worker where that SeqScan is executed.  A similar
+scheme could be (and probably should be) implemented for bitmap heap
+scans.
+
+Just as we do for non-parallel access methods, we build Paths to
+represent access strategies that can be used in a parallel plan.  These
+are, in essence, the same strategies that are available in the
+non-parallel plan, but there is an important difference: a path that
+will run beneath a Gather node returns only a subset of the query
+results in each worker, not all of them.  To form a path that can
+actually be executed, the (rather large) cost of the Gather node must be
+accounted for.  For this reason among others, paths intended to run
+beneath a Gather node - which we call "partial" paths since they return
+only a subset of the results in each worker - must be kept separate from
+ordinary paths (see RelOptInfo's partial_pathlist and the function
+add_partial_path).
+
+One of the keys to making parallel query effective is to run as much of
+the query in parallel as possible.  Therefore, we expect it to generally
+be desirable to postpone the Gather stage until as near to the top of the
+plan as possible.  Expanding the range of cases in which more work can be
+pushed below the Gather (and costly them accurately) is likely to keep us
+busy for a long time to come.

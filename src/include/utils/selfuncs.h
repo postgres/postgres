@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * selfuncs.h
- *	  Selectivity functions and index cost estimation functions for
- *	  standard operators and index access methods.
+ *	  Selectivity functions for standard operators, and assorted
+ *	  infrastructure for selectivity and cost estimation.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/selfuncs.h
@@ -190,13 +190,6 @@ extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 
 extern Selectivity estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey,
 						 double nbuckets);
-
-extern Datum brincostestimate(PG_FUNCTION_ARGS);
-extern Datum btcostestimate(PG_FUNCTION_ARGS);
-extern Datum hashcostestimate(PG_FUNCTION_ARGS);
-extern Datum gistcostestimate(PG_FUNCTION_ARGS);
-extern Datum spgcostestimate(PG_FUNCTION_ARGS);
-extern Datum gincostestimate(PG_FUNCTION_ARGS);
 
 /* Functions in array_selfuncs.c */
 

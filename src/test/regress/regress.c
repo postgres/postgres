@@ -6,7 +6,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/regress.c
@@ -249,34 +249,33 @@ WIDGET *
 widget_in(char *str)
 {
 	char	   *p,
-			   *coord[NARGS],
-				buf2[1000];
+			   *coord[NARGS];
 	int			i;
 	WIDGET	   *result;
 
-	if (str == NULL)
-		return NULL;
 	for (i = 0, p = str; *p && i < NARGS && *p != RDELIM; p++)
-		if (*p == ',' || (*p == LDELIM && !i))
+	{
+		if (*p == DELIM || (*p == LDELIM && i == 0))
 			coord[i++] = p + 1;
-	if (i < NARGS - 1)
-		return NULL;
+	}
+
+	if (i < NARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type widget: \"%s\"",
+						str)));
+
 	result = (WIDGET *) palloc(sizeof(WIDGET));
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
 
-	snprintf(buf2, sizeof(buf2), "widget_in: read (%f, %f, %f)\n",
-			 result->center.x, result->center.y, result->radius);
 	return result;
 }
 
 char *
 widget_out(WIDGET *widget)
 {
-	if (widget == NULL)
-		return NULL;
-
 	return psprintf("(%g,%g,%g)",
 					widget->center.x, widget->center.y, widget->radius);
 }

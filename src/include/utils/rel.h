@@ -4,7 +4,7 @@
  *	  POSTGRES relation descriptor (a/k/a relcache entry) definitions.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/rel.h
@@ -15,7 +15,6 @@
 #define REL_H
 
 #include "access/tupdesc.h"
-#include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_index.h"
 #include "fmgr.h"
@@ -45,23 +44,6 @@ typedef struct LockInfoData
 
 typedef LockInfoData *LockInfo;
 
-
-/*
- * Cached lookup information for the frequently used index access method
- * functions, defined by the pg_am row associated with an index relation.
- */
-typedef struct RelationAmInfo
-{
-	FmgrInfo	aminsert;
-	FmgrInfo	ambeginscan;
-	FmgrInfo	amgettuple;
-	FmgrInfo	amgetbitmap;
-	FmgrInfo	amrescan;
-	FmgrInfo	amendscan;
-	FmgrInfo	ammarkpos;
-	FmgrInfo	amrestrpos;
-	FmgrInfo	amcanreturn;
-} RelationAmInfo;
 
 /*
  * Here are the contents of a relation cache entry.
@@ -128,7 +110,6 @@ typedef struct RelationData
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
 	/* use "struct" here to avoid needing to include htup.h: */
 	struct HeapTupleData *rd_indextuple;		/* all of pg_index tuple */
-	Form_pg_am	rd_am;			/* pg_am tuple for index's AM */
 
 	/*
 	 * index access support info (used only for an index relation)
@@ -145,8 +126,10 @@ typedef struct RelationData
 	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
 	 * setting rd_amcache = NULL.
 	 */
+	Oid			rd_amhandler;	/* OID of index AM's handler function */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
-	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
+	/* use "struct" here to avoid needing to include amapi.h: */
+	struct IndexAmRoutine *rd_amroutine;		/* index AM's API struct */
 	Oid		   *rd_opfamily;	/* OIDs of op families for each index col */
 	Oid		   *rd_opcintype;	/* OIDs of opclass declared input data types */
 	RegProcedure *rd_support;	/* OIDs of support procedures */

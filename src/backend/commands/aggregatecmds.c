@@ -4,7 +4,7 @@
  *
  *	  Routines for aggregate-manipulation commands
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -61,6 +61,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	char		aggKind = AGGKIND_NORMAL;
 	List	   *transfuncName = NIL;
 	List	   *finalfuncName = NIL;
+	List	   *combinefuncName = NIL;
 	List	   *mtransfuncName = NIL;
 	List	   *minvtransfuncName = NIL;
 	List	   *mfinalfuncName = NIL;
@@ -124,6 +125,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			transfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "finalfunc") == 0)
 			finalfuncName = defGetQualifiedName(defel);
+		else if (pg_strcasecmp(defel->defname, "combinefunc") == 0)
+			combinefuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "msfunc") == 0)
 			mtransfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "minvfunc") == 0)
@@ -383,6 +386,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   variadicArgType,
 						   transfuncName,		/* step function name */
 						   finalfuncName,		/* final function name */
+						   combinefuncName,		/* combine function name */
 						   mtransfuncName,		/* fwd trans function name */
 						   minvtransfuncName,	/* inv trans function name */
 						   mfinalfuncName,		/* final function name */

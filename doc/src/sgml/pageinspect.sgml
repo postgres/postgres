@@ -93,9 +93,10 @@ test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
     <listitem>
      <para>
       <function>heap_page_items</function> shows all line pointers on a heap
-      page.  For those line pointers that are in use, tuple headers are also
-      shown. All tuples are shown, whether or not the tuples were visible to
-      an MVCC snapshot at the time the raw page was copied.
+      page.  For those line pointers that are in use, tuple headers as well
+      as tuple raw data are also shown. All tuples are shown, whether or not
+      the tuples were visible to an MVCC snapshot at the time the raw page
+      was copied.
      </para>
      <para>
       A heap page image obtained with <function>get_raw_page</function> should
@@ -110,6 +111,56 @@ test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>
+     <function>tuple_data_split(rel_oid, t_data bytea, t_infomask integer, t_infomask2 integer, t_bits text [, do_detoast bool]) returns bytea[]</function>
+     <indexterm>
+      <primary>tuple_data_split</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <function>tuple_data_split</function> splits tuple data into attributes
+      in the same way as backend internals.
+<screen>
+test=# SELECT tuple_data_split('pg_class'::regclass, t_data, t_infomask, t_infomask2, t_bits) FROM heap_page_items(get_raw_page('pg_class', 0));
+</screen>
+      This function should be called with the same arguments as the return
+      attributes of <function>heap_page_items</function>.
+     </para>
+     <para>
+      If <parameter>do_detoast</parameter> is <literal>true</literal>,
+      attribute that will be detoasted as needed. Default value is
+      <literal>false</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>heap_page_item_attrs(rel_oid, t_data bytea, [, do_detoast bool]) returns bytea[]</function>
+     <indexterm>
+      <primary>heap_page_item_attrs</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <function>heap_page_item_attrs</function> is equivalent to
+      <function>heap_page_items</function> except that it returns
+      tuple raw data as an array of attributes that can optionally
+      be detoasted by <parameter>do_detoast</parameter> which is
+      <literal>false</literal> by default.
+     </para>
+     <para>
+      A heap page image obtained with <function>get_raw_page</function> should
+      be passed as argument.  For example:
+<screen>
+test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class'::regclass);
+</screen>
+     </para>
+    </listitem>
+   </varlistentry>
+   
    <varlistentry>
     <term>
      <function>bt_metap(relname text) returns record</function>

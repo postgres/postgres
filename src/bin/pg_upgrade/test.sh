@@ -6,7 +6,7 @@
 # runs the regression tests (to put in some data), runs pg_dumpall,
 # runs pg_upgrade, runs pg_dumpall again, compares the dumps.
 #
-# Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 
 set -e
@@ -156,7 +156,7 @@ standard_initdb "$oldbindir"/initdb
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 	if [ "$newsrc" != "$oldsrc" ]; then
-		oldpgversion=`psql -A -t -d regression -c "SHOW server_version_num"`
+		oldpgversion=`psql -X -A -t -d regression -c "SHOW server_version_num"`
 		fix_sql=""
 		case $oldpgversion in
 			804??)
@@ -169,7 +169,7 @@ if "$MAKE" -C "$oldsrc" installcheck; then
 				fix_sql="UPDATE pg_proc SET probin = replace(probin, '$oldsrc', '$newsrc') WHERE probin LIKE '$oldsrc%';"
 				;;
 		esac
-		psql -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
+		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
 
 		mv "$temp_root"/dump1.sql "$temp_root"/dump1.sql.orig
 		sed "s;$oldsrc;$newsrc;g" "$temp_root"/dump1.sql.orig >"$temp_root"/dump1.sql

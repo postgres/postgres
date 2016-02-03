@@ -15,7 +15,7 @@
  * re-perform the status update on redo; so we need make no additional XLOG
  * entry here.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/commit_ts.c
@@ -106,6 +106,7 @@ static void SetXidCommitTsInPage(TransactionId xid, int nsubxids,
 					 RepOriginId nodeid, int pageno);
 static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
 						 RepOriginId nodeid, int slotno);
+static void error_commit_ts_disabled(void);
 static int	ZeroCommitTsPage(int pageno, bool writeXlog);
 static bool CommitTsPagePrecedes(int page1, int page2);
 static void ActivateCommitTs(void);
@@ -216,8 +217,8 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 	commitTsShared->dataLastCommit.nodeid = nodeid;
 
 	/* and move forwards our endpoint, if needed */
-	if (TransactionIdPrecedes(ShmemVariableCache->newestCommitTs, newestXact))
-		ShmemVariableCache->newestCommitTs = newestXact;
+	if (TransactionIdPrecedes(ShmemVariableCache->newestCommitTsXid, newestXact))
+		ShmemVariableCache->newestCommitTsXid = newestXact;
 	LWLockRelease(CommitTsLock);
 }
 
@@ -284,8 +285,8 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 	int			entryno = TransactionIdToCTsEntry(xid);
 	int			slotno;
 	CommitTimestampEntry entry;
-	TransactionId oldestCommitTs;
-	TransactionId newestCommitTs;
+	TransactionId oldestCommitTsXid;
+	TransactionId newestCommitTsXid;
 
 	/* error if the given Xid doesn't normally commit */
 	if (!TransactionIdIsNormal(xid))
@@ -297,11 +298,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 
 	/* Error if module not enabled */
 	if (!commitTsShared->commitTsActive)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("could not get commit timestamp data"),
-			  errhint("Make sure the configuration parameter \"%s\" is set.",
-					  "track_commit_timestamp")));
+		error_commit_ts_disabled();
 
 	/*
 	 * If we're asked for the cached value, return that.  Otherwise, fall
@@ -317,18 +314,18 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 		return *ts != 0;
 	}
 
-	oldestCommitTs = ShmemVariableCache->oldestCommitTs;
-	newestCommitTs = ShmemVariableCache->newestCommitTs;
+	oldestCommitTsXid = ShmemVariableCache->oldestCommitTsXid;
+	newestCommitTsXid = ShmemVariableCache->newestCommitTsXid;
 	/* neither is invalid, or both are */
-	Assert(TransactionIdIsValid(oldestCommitTs) == TransactionIdIsValid(newestCommitTs));
+	Assert(TransactionIdIsValid(oldestCommitTsXid) == TransactionIdIsValid(newestCommitTsXid));
 	LWLockRelease(CommitTsLock);
 
 	/*
 	 * Return empty if the requested value is outside our valid range.
 	 */
-	if (!TransactionIdIsValid(oldestCommitTs) ||
-		TransactionIdPrecedes(xid, oldestCommitTs) ||
-		TransactionIdPrecedes(newestCommitTs, xid))
+	if (!TransactionIdIsValid(oldestCommitTsXid) ||
+		TransactionIdPrecedes(xid, oldestCommitTsXid) ||
+		TransactionIdPrecedes(newestCommitTsXid, xid))
 	{
 		*ts = 0;
 		if (nodeid)
@@ -368,11 +365,7 @@ GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 
 	/* Error if module not enabled */
 	if (!commitTsShared->commitTsActive)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("could not get commit timestamp data"),
-			  errhint("Make sure the configuration parameter \"%s\" is set.",
-					  "track_commit_timestamp")));
+		error_commit_ts_disabled();
 
 	xid = commitTsShared->xidLastCommit;
 	if (ts)
@@ -382,6 +375,19 @@ GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 	LWLockRelease(CommitTsLock);
 
 	return xid;
+}
+
+static void
+error_commit_ts_disabled(void)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			 errmsg("could not get commit timestamp data"),
+			 RecoveryInProgress() ?
+			 errhint("Make sure the configuration parameter \"%s\" is set on the master server.",
+					 "track_commit_timestamp") :
+			 errhint("Make sure the configuration parameter \"%s\" is set.",
+					 "track_commit_timestamp")));
 }
 
 /*
@@ -478,8 +484,9 @@ CommitTsShmemInit(void)
 	bool		found;
 
 	CommitTsCtl->PagePrecedes = CommitTsPagePrecedes;
-	SimpleLruInit(CommitTsCtl, "CommitTs Ctl", CommitTsShmemBuffers(), 0,
-				  CommitTsControlLock, "pg_commit_ts");
+	SimpleLruInit(CommitTsCtl, "commit_timestamp", CommitTsShmemBuffers(), 0,
+				  CommitTsControlLock, "pg_commit_ts",
+				  LWTRANCHE_COMMITTS_BUFFERS);
 
 	commitTsShared = ShmemInitStruct("CommitTs shared",
 									 sizeof(CommitTimestampShared),
@@ -510,7 +517,7 @@ BootStrapCommitTs(void)
 	/*
 	 * Nothing to do here at present, unlike most other SLRU modules; segments
 	 * are created when the server is started with this module enabled. See
-	 * StartupCommitTs.
+	 * ActivateCommitTs.
 	 */
 }
 
@@ -539,19 +546,11 @@ ZeroCommitTsPage(int pageno, bool writeXlog)
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
  * after StartupXLOG has initialized ShmemVariableCache->nextXid.
- *
- * Caller may choose to enable the feature even when it is turned off in the
- * configuration.
  */
 void
-StartupCommitTs(bool force_enable)
+StartupCommitTs(void)
 {
-	/*
-	 * If the module is not enabled, there's nothing to do here.  The module
-	 * could still be activated from elsewhere.
-	 */
-	if (track_commit_timestamp || force_enable)
-		ActivateCommitTs();
+	ActivateCommitTs();
 }
 
 /*
@@ -564,9 +563,17 @@ CompleteCommitTsInitialization(void)
 	/*
 	 * If the feature is not enabled, turn it off for good.  This also removes
 	 * any leftover data.
+	 *
+	 * Conversely, we activate the module if the feature is enabled.  This is
+	 * not necessary in a master system because we already did it earlier, but
+	 * if we're in a standby server that got promoted which had the feature
+	 * enabled and was following a master that had the feature disabled, this
+	 * is where we turn it on locally.
 	 */
 	if (!track_commit_timestamp)
 		DeactivateCommitTs();
+	else
+		ActivateCommitTs();
 }
 
 /*
@@ -585,6 +592,9 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 	 *
 	 * If the module is disabled in the master, disable it here too, unless
 	 * the module is enabled locally.
+	 *
+	 * Note this only runs in the recovery process, so an unlocked read is
+	 * fine.
 	 */
 	if (newvalue)
 	{
@@ -614,8 +624,20 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 static void
 ActivateCommitTs(void)
 {
-	TransactionId xid = ShmemVariableCache->nextXid;
-	int			pageno = TransactionIdToCTsPage(xid);
+	TransactionId xid;
+	int			pageno;
+
+	/* If we've done this already, there's nothing to do */
+	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
+	if (commitTsShared->commitTsActive)
+	{
+		LWLockRelease(CommitTsLock);
+		return;
+	}
+	LWLockRelease(CommitTsLock);
+
+	xid = ShmemVariableCache->nextXid;
+	pageno = TransactionIdToCTsPage(xid);
 
 	/*
 	 * Re-Initialize our idea of the latest page number.
@@ -634,14 +656,14 @@ ActivateCommitTs(void)
 	 * enabled again?  It doesn't look like it does, because there should be a
 	 * checkpoint that sets the value to InvalidTransactionId at end of
 	 * recovery; and so any chance of injecting new transactions without
-	 * CommitTs values would occur after the oldestCommitTs has been set to
+	 * CommitTs values would occur after the oldestCommitTsXid has been set to
 	 * Invalid temporarily.
 	 */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTs == InvalidTransactionId)
+	if (ShmemVariableCache->oldestCommitTsXid == InvalidTransactionId)
 	{
-		ShmemVariableCache->oldestCommitTs =
-			ShmemVariableCache->newestCommitTs = ReadNewTransactionId();
+		ShmemVariableCache->oldestCommitTsXid =
+			ShmemVariableCache->newestCommitTsXid = ReadNewTransactionId();
 	}
 	LWLockRelease(CommitTsLock);
 
@@ -690,8 +712,8 @@ DeactivateCommitTs(void)
 	TIMESTAMP_NOBEGIN(commitTsShared->dataLastCommit.time);
 	commitTsShared->dataLastCommit.nodeid = InvalidRepOriginId;
 
-	ShmemVariableCache->oldestCommitTs = InvalidTransactionId;
-	ShmemVariableCache->newestCommitTs = InvalidTransactionId;
+	ShmemVariableCache->oldestCommitTsXid = InvalidTransactionId;
+	ShmemVariableCache->newestCommitTsXid = InvalidTransactionId;
 
 	LWLockRelease(CommitTsLock);
 
@@ -811,16 +833,16 @@ SetCommitTsLimit(TransactionId oldestXact, TransactionId newestXact)
 	 * "future" or signal a disabled committs.
 	 */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTs != InvalidTransactionId)
+	if (ShmemVariableCache->oldestCommitTsXid != InvalidTransactionId)
 	{
-		if (TransactionIdPrecedes(ShmemVariableCache->oldestCommitTs, oldestXact))
-			ShmemVariableCache->oldestCommitTs = oldestXact;
-		if (TransactionIdPrecedes(newestXact, ShmemVariableCache->newestCommitTs))
-			ShmemVariableCache->newestCommitTs = newestXact;
+		if (TransactionIdPrecedes(ShmemVariableCache->oldestCommitTsXid, oldestXact))
+			ShmemVariableCache->oldestCommitTsXid = oldestXact;
+		if (TransactionIdPrecedes(newestXact, ShmemVariableCache->newestCommitTsXid))
+			ShmemVariableCache->newestCommitTsXid = newestXact;
 	}
 	else
 	{
-		Assert(ShmemVariableCache->newestCommitTs == InvalidTransactionId);
+		Assert(ShmemVariableCache->newestCommitTsXid == InvalidTransactionId);
 	}
 	LWLockRelease(CommitTsLock);
 }
@@ -829,12 +851,12 @@ SetCommitTsLimit(TransactionId oldestXact, TransactionId newestXact)
  * Move forwards the oldest commitTS value that can be consulted
  */
 void
-AdvanceOldestCommitTs(TransactionId oldestXact)
+AdvanceOldestCommitTsXid(TransactionId oldestXact)
 {
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
-	if (ShmemVariableCache->oldestCommitTs != InvalidTransactionId &&
-		TransactionIdPrecedes(ShmemVariableCache->oldestCommitTs, oldestXact))
-		ShmemVariableCache->oldestCommitTs = oldestXact;
+	if (ShmemVariableCache->oldestCommitTsXid != InvalidTransactionId &&
+		TransactionIdPrecedes(ShmemVariableCache->oldestCommitTsXid, oldestXact))
+		ShmemVariableCache->oldestCommitTsXid = oldestXact;
 	LWLockRelease(CommitTsLock);
 }
 

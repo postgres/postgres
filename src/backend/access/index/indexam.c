@@ -3,7 +3,7 @@
  * indexam.c
  *	  general index access method routines
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -65,12 +65,12 @@
 
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "access/xlog.h"
-
-#include "catalog/index.h"
 #include "catalog/catalog.h"
+#include "catalog/index.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -94,7 +94,7 @@
 #define RELATION_CHECKS \
 ( \
 	AssertMacro(RelationIsValid(indexRelation)), \
-	AssertMacro(PointerIsValid(indexRelation->rd_am)), \
+	AssertMacro(PointerIsValid(indexRelation->rd_amroutine)), \
 	AssertMacro(!ReindexIsProcessingIndex(RelationGetRelid(indexRelation))) \
 )
 
@@ -102,38 +102,21 @@
 ( \
 	AssertMacro(IndexScanIsValid(scan)), \
 	AssertMacro(RelationIsValid(scan->indexRelation)), \
-	AssertMacro(PointerIsValid(scan->indexRelation->rd_am)) \
+	AssertMacro(PointerIsValid(scan->indexRelation->rd_amroutine)) \
 )
 
-#define GET_REL_PROCEDURE(pname) \
+#define CHECK_REL_PROCEDURE(pname) \
 do { \
-	procedure = &indexRelation->rd_aminfo->pname; \
-	if (!OidIsValid(procedure->fn_oid)) \
-	{ \
-		RegProcedure	procOid = indexRelation->rd_am->pname; \
-		if (!RegProcedureIsValid(procOid)) \
-			elog(ERROR, "invalid %s regproc", CppAsString(pname)); \
-		fmgr_info_cxt(procOid, procedure, indexRelation->rd_indexcxt); \
-	} \
+	if (indexRelation->rd_amroutine->pname == NULL) \
+		elog(ERROR, "function %s is not defined for index %s", \
+			 CppAsString(pname), RelationGetRelationName(indexRelation)); \
 } while(0)
 
-#define GET_UNCACHED_REL_PROCEDURE(pname) \
+#define CHECK_SCAN_PROCEDURE(pname) \
 do { \
-	if (!RegProcedureIsValid(indexRelation->rd_am->pname)) \
-		elog(ERROR, "invalid %s regproc", CppAsString(pname)); \
-	fmgr_info(indexRelation->rd_am->pname, &procedure); \
-} while(0)
-
-#define GET_SCAN_PROCEDURE(pname) \
-do { \
-	procedure = &scan->indexRelation->rd_aminfo->pname; \
-	if (!OidIsValid(procedure->fn_oid)) \
-	{ \
-		RegProcedure	procOid = scan->indexRelation->rd_am->pname; \
-		if (!RegProcedureIsValid(procOid)) \
-			elog(ERROR, "invalid %s regproc", CppAsString(pname)); \
-		fmgr_info_cxt(procOid, procedure, scan->indexRelation->rd_indexcxt); \
-	} \
+	if (scan->indexRelation->rd_amroutine->pname == NULL) \
+		elog(ERROR, "function %s is not defined for index %s", \
+			 CppAsString(pname), RelationGetRelationName(scan->indexRelation)); \
 } while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
@@ -210,26 +193,17 @@ index_insert(Relation indexRelation,
 			 Relation heapRelation,
 			 IndexUniqueCheck checkUnique)
 {
-	FmgrInfo   *procedure;
-
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(aminsert);
+	CHECK_REL_PROCEDURE(aminsert);
 
-	if (!(indexRelation->rd_am->ampredlocks))
+	if (!(indexRelation->rd_amroutine->ampredlocks))
 		CheckForSerializableConflictIn(indexRelation,
 									   (HeapTuple) NULL,
 									   InvalidBuffer);
 
-	/*
-	 * have the am's insert proc do all the work.
-	 */
-	return DatumGetBool(FunctionCall6(procedure,
-									  PointerGetDatum(indexRelation),
-									  PointerGetDatum(values),
-									  PointerGetDatum(isnull),
-									  PointerGetDatum(heap_t_ctid),
-									  PointerGetDatum(heapRelation),
-									  Int32GetDatum((int32) checkUnique)));
+	return indexRelation->rd_amroutine->aminsert(indexRelation, values, isnull,
+												 heap_t_ctid, heapRelation,
+												 checkUnique);
 }
 
 /*
@@ -288,13 +262,10 @@ static IndexScanDesc
 index_beginscan_internal(Relation indexRelation,
 						 int nkeys, int norderbys, Snapshot snapshot)
 {
-	IndexScanDesc scan;
-	FmgrInfo   *procedure;
-
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(ambeginscan);
+	CHECK_REL_PROCEDURE(ambeginscan);
 
-	if (!(indexRelation->rd_am->ampredlocks))
+	if (!(indexRelation->rd_amroutine->ampredlocks))
 		PredicateLockRelation(indexRelation, snapshot);
 
 	/*
@@ -305,13 +276,8 @@ index_beginscan_internal(Relation indexRelation,
 	/*
 	 * Tell the AM to open a scan.
 	 */
-	scan = (IndexScanDesc)
-		DatumGetPointer(FunctionCall3(procedure,
-									  PointerGetDatum(indexRelation),
-									  Int32GetDatum(nkeys),
-									  Int32GetDatum(norderbys)));
-
-	return scan;
+	return indexRelation->rd_amroutine->ambeginscan(indexRelation, nkeys,
+													norderbys);
 }
 
 /* ----------------
@@ -331,10 +297,8 @@ index_rescan(IndexScanDesc scan,
 			 ScanKey keys, int nkeys,
 			 ScanKey orderbys, int norderbys)
 {
-	FmgrInfo   *procedure;
-
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(amrescan);
+	CHECK_SCAN_PROCEDURE(amrescan);
 
 	Assert(nkeys == scan->numberOfKeys);
 	Assert(norderbys == scan->numberOfOrderBys);
@@ -350,12 +314,8 @@ index_rescan(IndexScanDesc scan,
 
 	scan->kill_prior_tuple = false;		/* for safety */
 
-	FunctionCall5(procedure,
-				  PointerGetDatum(scan),
-				  PointerGetDatum(keys),
-				  Int32GetDatum(nkeys),
-				  PointerGetDatum(orderbys),
-				  Int32GetDatum(norderbys));
+	scan->indexRelation->rd_amroutine->amrescan(scan, keys, nkeys,
+												orderbys, norderbys);
 }
 
 /* ----------------
@@ -365,10 +325,8 @@ index_rescan(IndexScanDesc scan,
 void
 index_endscan(IndexScanDesc scan)
 {
-	FmgrInfo   *procedure;
-
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(amendscan);
+	CHECK_SCAN_PROCEDURE(amendscan);
 
 	/* Release any held pin on a heap page */
 	if (BufferIsValid(scan->xs_cbuf))
@@ -378,7 +336,7 @@ index_endscan(IndexScanDesc scan)
 	}
 
 	/* End the AM's scan */
-	FunctionCall1(procedure, PointerGetDatum(scan));
+	scan->indexRelation->rd_amroutine->amendscan(scan);
 
 	/* Release index refcount acquired by index_beginscan */
 	RelationDecrementReferenceCount(scan->indexRelation);
@@ -394,12 +352,10 @@ index_endscan(IndexScanDesc scan)
 void
 index_markpos(IndexScanDesc scan)
 {
-	FmgrInfo   *procedure;
-
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(ammarkpos);
+	CHECK_SCAN_PROCEDURE(ammarkpos);
 
-	FunctionCall1(procedure, PointerGetDatum(scan));
+	scan->indexRelation->rd_amroutine->ammarkpos(scan);
 }
 
 /* ----------------
@@ -421,18 +377,16 @@ index_markpos(IndexScanDesc scan)
 void
 index_restrpos(IndexScanDesc scan)
 {
-	FmgrInfo   *procedure;
-
 	Assert(IsMVCCSnapshot(scan->xs_snapshot));
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(amrestrpos);
+	CHECK_SCAN_PROCEDURE(amrestrpos);
 
 	scan->xs_continue_hot = false;
 
 	scan->kill_prior_tuple = false;		/* for safety */
 
-	FunctionCall1(procedure, PointerGetDatum(scan));
+	scan->indexRelation->rd_amroutine->amrestrpos(scan);
 }
 
 /* ----------------
@@ -445,11 +399,10 @@ index_restrpos(IndexScanDesc scan)
 ItemPointer
 index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 {
-	FmgrInfo   *procedure;
 	bool		found;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(amgettuple);
+	CHECK_SCAN_PROCEDURE(amgettuple);
 
 	Assert(TransactionIdIsValid(RecentGlobalXmin));
 
@@ -459,9 +412,7 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 	 * scan->xs_recheck and possibly scan->xs_itup, though we pay no attention
 	 * to those fields here.
 	 */
-	found = DatumGetBool(FunctionCall2(procedure,
-									   PointerGetDatum(scan),
-									   Int32GetDatum(direction)));
+	found = scan->indexRelation->rd_amroutine->amgettuple(scan, direction);
 
 	/* Reset kill flag immediately for safety */
 	scan->kill_prior_tuple = false;
@@ -635,12 +586,10 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 int64
 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap)
 {
-	FmgrInfo   *procedure;
 	int64		ntids;
-	Datum		d;
 
 	SCAN_CHECKS;
-	GET_SCAN_PROCEDURE(amgetbitmap);
+	CHECK_SCAN_PROCEDURE(amgetbitmap);
 
 	/* just make sure this is false... */
 	scan->kill_prior_tuple = false;
@@ -648,16 +597,7 @@ index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap)
 	/*
 	 * have the am's getbitmap proc do all the work.
 	 */
-	d = FunctionCall2(procedure,
-					  PointerGetDatum(scan),
-					  PointerGetDatum(bitmap));
-
-	ntids = DatumGetInt64(d);
-
-	/* If int8 is pass-by-ref, must free the result to avoid memory leak */
-#ifndef USE_FLOAT8_BYVAL
-	pfree(DatumGetPointer(d));
-#endif
+	ntids = scan->indexRelation->rd_amroutine->amgetbitmap(scan, bitmap);
 
 	pgstat_count_index_tuples(scan->indexRelation, ntids);
 
@@ -680,20 +620,12 @@ index_bulk_delete(IndexVacuumInfo *info,
 				  void *callback_state)
 {
 	Relation	indexRelation = info->index;
-	FmgrInfo	procedure;
-	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
-	GET_UNCACHED_REL_PROCEDURE(ambulkdelete);
+	CHECK_REL_PROCEDURE(ambulkdelete);
 
-	result = (IndexBulkDeleteResult *)
-		DatumGetPointer(FunctionCall4(&procedure,
-									  PointerGetDatum(info),
-									  PointerGetDatum(stats),
-									  PointerGetDatum((Pointer) callback),
-									  PointerGetDatum(callback_state)));
-
-	return result;
+	return indexRelation->rd_amroutine->ambulkdelete(info, stats,
+												   callback, callback_state);
 }
 
 /* ----------------
@@ -707,18 +639,11 @@ index_vacuum_cleanup(IndexVacuumInfo *info,
 					 IndexBulkDeleteResult *stats)
 {
 	Relation	indexRelation = info->index;
-	FmgrInfo	procedure;
-	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
-	GET_UNCACHED_REL_PROCEDURE(amvacuumcleanup);
+	CHECK_REL_PROCEDURE(amvacuumcleanup);
 
-	result = (IndexBulkDeleteResult *)
-		DatumGetPointer(FunctionCall2(&procedure,
-									  PointerGetDatum(info),
-									  PointerGetDatum(stats)));
-
-	return result;
+	return indexRelation->rd_amroutine->amvacuumcleanup(info, stats);
 }
 
 /* ----------------
@@ -731,19 +656,13 @@ index_vacuum_cleanup(IndexVacuumInfo *info,
 bool
 index_can_return(Relation indexRelation, int attno)
 {
-	FmgrInfo   *procedure;
-
 	RELATION_CHECKS;
 
 	/* amcanreturn is optional; assume FALSE if not provided by AM */
-	if (!RegProcedureIsValid(indexRelation->rd_am->amcanreturn))
+	if (indexRelation->rd_amroutine->amcanreturn == NULL)
 		return false;
 
-	GET_REL_PROCEDURE(amcanreturn);
-
-	return DatumGetBool(FunctionCall2(procedure,
-									  PointerGetDatum(indexRelation),
-									  Int32GetDatum(attno)));
+	return indexRelation->rd_amroutine->amcanreturn(indexRelation, attno);
 }
 
 /* ----------------
@@ -781,7 +700,7 @@ index_getprocid(Relation irel,
 	int			nproc;
 	int			procindex;
 
-	nproc = irel->rd_am->amsupport;
+	nproc = irel->rd_amroutine->amsupport;
 
 	Assert(procnum > 0 && procnum <= (uint16) nproc);
 
@@ -815,7 +734,7 @@ index_getprocinfo(Relation irel,
 	int			nproc;
 	int			procindex;
 
-	nproc = irel->rd_am->amsupport;
+	nproc = irel->rd_amroutine->amsupport;
 
 	Assert(procnum > 0 && procnum <= (uint16) nproc);
 

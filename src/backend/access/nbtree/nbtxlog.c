@@ -4,7 +4,7 @@
  *	  WAL replay logic for btrees.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -391,6 +391,19 @@ btree_xlog_vacuum(XLogReaderState *record)
 	BTPageOpaque opaque;
 
 	/*
+	 * If we are running non-MVCC scans using this index we need to do some
+	 * additional work to ensure correctness, which is known as a "pin scan"
+	 * described in more detail in next paragraphs. We used to do the extra
+	 * work in all cases, whereas we now avoid that work except when the index
+	 * is a toast index, since toast scans aren't fully MVCC compliant.
+	 * If lastBlockVacuumed is set to InvalidBlockNumber then we skip the
+	 * additional work required for the pin scan.
+	 *
+	 * Avoiding this extra work is important since it requires us to touch
+	 * every page in the index, so is an O(N) operation. Worse, it is an
+	 * operation performed in the foreground during redo, so it delays
+	 * replication directly.
+	 *
 	 * If queries might be active then we need to ensure every leaf page is
 	 * unpinned between the lastBlockVacuumed and the current block, if there
 	 * are any.  This prevents replay of the VACUUM from reaching the stage of
@@ -412,7 +425,7 @@ btree_xlog_vacuum(XLogReaderState *record)
 	 * isn't yet consistent; so we need not fear reading still-corrupt blocks
 	 * here during crash recovery.
 	 */
-	if (HotStandbyActiveInReplay())
+	if (HotStandbyActiveInReplay() && BlockNumberIsValid(xlrec->lastBlockVacuumed))
 	{
 		RelFileNode thisrnode;
 		BlockNumber thisblkno;
@@ -433,7 +446,8 @@ btree_xlog_vacuum(XLogReaderState *record)
 			 * XXX we don't actually need to read the block, we just need to
 			 * confirm it is unpinned. If we had a special call into the
 			 * buffer manager we could optimise this so that if the block is
-			 * not in shared_buffers we confirm it as unpinned.
+			 * not in shared_buffers we confirm it as unpinned. Optimizing
+			 * this is now moot, since in most cases we avoid the scan.
 			 */
 			buffer = XLogReadBufferExtended(thisrnode, MAIN_FORKNUM, blkno,
 											RBM_NORMAL_NO_LOG);

@@ -3,7 +3,7 @@
  * parse_type.c
  *		handle type operations for parser
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,7 +23,6 @@
 #include "parser/parse_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -639,36 +638,8 @@ stringTypeDatum(Type tp, char *string, int32 atttypmod)
 	Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
 	Oid			typinput = typform->typinput;
 	Oid			typioparam = getTypeIOParam(tp);
-	Datum		result;
 
-	result = OidInputFunctionCall(typinput, string,
-								  typioparam, atttypmod);
-
-#ifdef RANDOMIZE_ALLOCATED_MEMORY
-
-	/*
-	 * For pass-by-reference data types, repeat the conversion to see if the
-	 * input function leaves any uninitialized bytes in the result.  We can
-	 * only detect that reliably if RANDOMIZE_ALLOCATED_MEMORY is enabled, so
-	 * we don't bother testing otherwise.  The reason we don't want any
-	 * instability in the input function is that comparison of Const nodes
-	 * relies on bytewise comparison of the datums, so if the input function
-	 * leaves garbage then subexpressions that should be identical may not get
-	 * recognized as such.  See pgsql-hackers discussion of 2008-04-04.
-	 */
-	if (string && !typform->typbyval)
-	{
-		Datum		result2;
-
-		result2 = OidInputFunctionCall(typinput, string,
-									   typioparam, atttypmod);
-		if (!datumIsEqual(result, result2, typform->typbyval, typform->typlen))
-			elog(WARNING, "type %s has unstable input conversion for \"%s\"",
-				 NameStr(typform->typname), string);
-	}
-#endif
-
-	return result;
+	return OidInputFunctionCall(typinput, string, typioparam, atttypmod);
 }
 
 /* given a typeid, return the type's typrelid (associated relation, if any) */

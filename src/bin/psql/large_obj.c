@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/bin/psql/large_obj.c
  */
@@ -308,7 +308,7 @@ do_lo_list(void)
 	myopt.title = _("Large objects");
 	myopt.translate_header = true;
 
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
 	PQclear(res);
 	return true;

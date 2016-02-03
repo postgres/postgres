@@ -9,7 +9,7 @@
  * of XLogRecData structs by a call to XLogRecordAssemble(). See
  * access/transam/README for details.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xloginsert.c
@@ -443,7 +443,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 		/*
 		 * Get values needed to decide whether to do full-page writes. Since
 		 * we don't yet have an insertion lock, these could change under us,
-		 * but XLogInsertRecData will recheck them once it has a lock.
+		 * but XLogInsertRecord will recheck them once it has a lock.
 		 */
 		GetFullPageWriteInfo(&RedoRecPtr, &doPageWrites);
 

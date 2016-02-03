@@ -97,7 +97,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
        </para>
        <para>
         If the extension specifies <literal>schema</> in its control file,
-        the schema cannot be overriden with <literal>SCHEMA</> clause.
+        the schema cannot be overridden with <literal>SCHEMA</> clause.
         The <literal>SCHEMA</> clause in this case works as follows:
         <itemizedlist>
          <listitem>

@@ -3,7 +3,7 @@
  * nodeModifyTable.c
  *	  routines to handle ModifyTable nodes.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1181,8 +1181,17 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	/* Project the new tuple version */
 	ExecProject(resultRelInfo->ri_onConflictSetProj, NULL);
 
+	/*
+	 * Note that it is possible that the target tuple has been modified in
+	 * this session, after the above heap_lock_tuple. We choose to not error
+	 * out in that case, in line with ExecUpdate's treatment of similar
+	 * cases. This can happen if an UPDATE is triggered from within
+	 * ExecQual(), ExecWithCheckOptions() or ExecProject() above, e.g. by
+	 * selecting from a wCTE in the ON CONFLICT's SET.
+	 */
+
 	/* Execute UPDATE with projection */
-	*returning = ExecUpdate(&tuple.t_data->t_ctid, NULL,
+	*returning = ExecUpdate(&tuple.t_self, NULL,
 							mtstate->mt_conflproj, planSlot,
 							&mtstate->mt_epqstate, mtstate->ps.state,
 							canSetTag);

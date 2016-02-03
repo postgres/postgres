@@ -4,7 +4,7 @@
  *	  per-process shared memory data structures
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/proc.h
@@ -147,7 +147,7 @@ struct PGPROC
 	TransactionId	backendLatestXid;
 
 	/* Per-backend LWLock.  Protects fields below. */
-	LWLock	   *backendLock;	/* protects the fields below */
+	LWLock		backendLock;
 
 	/* Lock manager data, recording fast-path locks taken by this backend. */
 	uint64		fpLockBits;		/* lock modes held for each fast-path slot */

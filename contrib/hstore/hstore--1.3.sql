@@ -486,16 +486,16 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION ghstore_union(internal, internal)
+RETURNS ghstore
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION ghstore_same(ghstore, ghstore, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION ghstore_same(internal, internal, internal)
-RETURNS internal
-AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
-
-CREATE FUNCTION ghstore_consistent(internal,internal,int,oid,internal)
+CREATE FUNCTION ghstore_consistent(internal,hstore,smallint,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -510,28 +510,28 @@ AS
         --OPERATOR        8       <@ ,
         OPERATOR        13      @ ,
         --OPERATOR        14      ~ ,
-        FUNCTION        1       ghstore_consistent (internal, internal, int, oid, internal),
+        FUNCTION        1       ghstore_consistent (internal, hstore, smallint, oid, internal),
         FUNCTION        2       ghstore_union (internal, internal),
         FUNCTION        3       ghstore_compress (internal),
         FUNCTION        4       ghstore_decompress (internal),
         FUNCTION        5       ghstore_penalty (internal, internal, internal),
         FUNCTION        6       ghstore_picksplit (internal, internal),
-        FUNCTION        7       ghstore_same (internal, internal, internal),
+        FUNCTION        7       ghstore_same (ghstore, ghstore, internal),
         STORAGE         ghstore;
 
 -- GIN support
 
-CREATE FUNCTION gin_extract_hstore(internal, internal)
+CREATE FUNCTION gin_extract_hstore(hstore, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gin_extract_hstore_query(internal, internal, int2, internal, internal)
+CREATE FUNCTION gin_extract_hstore_query(hstore, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gin_consistent_hstore(internal, int2, internal, int4, internal, internal)
+CREATE FUNCTION gin_consistent_hstore(internal, int2, hstore, int4, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -544,7 +544,7 @@ AS
 	OPERATOR        10      ?|(hstore,text[]),
 	OPERATOR        11      ?&(hstore,text[]),
 	FUNCTION        1       bttextcmp(text,text),
-	FUNCTION        2       gin_extract_hstore(internal, internal),
-	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2, internal, internal),
-	FUNCTION        4       gin_consistent_hstore(internal, int2, internal, int4, internal, internal),
+	FUNCTION        2       gin_extract_hstore(hstore, internal),
+	FUNCTION        3       gin_extract_hstore_query(hstore, internal, int2, internal, internal),
+	FUNCTION        4       gin_consistent_hstore(internal, int2, hstore, int4, internal, internal),
 	STORAGE         text;

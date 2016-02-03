@@ -280,7 +280,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
     The commands
     <itemizedlist>
      <listitem>
-      <para><literal>CREATE_REPLICATION_SLOT <replaceable>slot_name</replaceable> LOGICAL <replaceable>options</replaceable></literal></para>
+      <para><literal>CREATE_REPLICATION_SLOT <replaceable>slot_name</replaceable> LOGICAL <replaceable>output_plugin</replaceable></literal></para>
      </listitem>
 
      <listitem>
@@ -288,7 +288,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      </listitem>
 
      <listitem>
-      <para><literal>START_REPLICATION SLOT <replaceable>slot_name</replaceable> LOGICAL <replaceable>options</replaceable></literal></para>
+      <para><literal>START_REPLICATION SLOT <replaceable>slot_name</replaceable> LOGICAL ...</literal></para>
      </listitem>
     </itemizedlist>
     are used to create, drop, and stream changes from a replication
@@ -581,7 +581,7 @@ typedef void (*LogicalDecodeChangeCB) (
        from <parameter>origin_id</parameter> is of interest to the
        output plugin.
 <programlisting>
-typedef bool (*LogicalDecodeChangeCB) (
+typedef bool (*LogicalDecodeFilterByOriginCB) (
     struct LogicalDecodingContext *ctx,
     RepNodeId origin_id
 );

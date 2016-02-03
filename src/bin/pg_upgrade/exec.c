@@ -3,7 +3,7 @@
  *
  *	execution functions
  *
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/exec.c
  */
 
@@ -191,7 +191,7 @@ pid_lock_file_exists(const char *datadir)
 		/* ENOTDIR means we will throw a more useful error later */
 		if (errno != ENOENT && errno != ENOTDIR)
 			pg_fatal("could not open file \"%s\" for reading: %s\n",
-					 path, getErrorText(errno));
+					 path, getErrorText());
 
 		return false;
 	}
@@ -285,7 +285,7 @@ check_data_dir(const char *pg_data)
 
 		if (stat(subDirName, &statBuf) != 0)
 			report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
-						  subDirName, getErrorText(errno));
+						  subDirName, getErrorText());
 		else if (!S_ISDIR(statBuf.st_mode))
 			report_status(PG_FATAL, "%s is not a directory\n",
 						  subDirName);
@@ -309,7 +309,7 @@ check_bin_dir(ClusterInfo *cluster)
 	/* check bindir */
 	if (stat(cluster->bindir, &statBuf) != 0)
 		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
-					  cluster->bindir, getErrorText(errno));
+					  cluster->bindir, getErrorText());
 	else if (!S_ISDIR(statBuf.st_mode))
 		report_status(PG_FATAL, "%s is not a directory\n",
 					  cluster->bindir);
@@ -352,7 +352,7 @@ validate_exec(const char *dir, const char *cmdName)
 	 */
 	if (stat(path, &buf) < 0)
 		pg_fatal("check for \"%s\" failed: %s\n",
-				 path, getErrorText(errno));
+				 path, getErrorText());
 	else if (!S_ISREG(buf.st_mode))
 		pg_fatal("check for \"%s\" failed: not an executable file\n",
 				 path);
