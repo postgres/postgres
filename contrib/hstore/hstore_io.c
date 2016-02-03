@@ -1387,7 +1387,6 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 	JsonbParseState *state = NULL;
 	JsonbValue *res;
 	StringInfoData tmp;
-	bool		is_number;
 
 	initStringInfo(&tmp);
 
@@ -1423,50 +1422,10 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			is_number = false;
 			resetStringInfo(&tmp);
-
 			appendBinaryStringInfo(&tmp, HSTORE_VAL(entries, base, i),
 								   HSTORE_VALLEN(entries, i));
-
-			/*
-			 * don't treat something with a leading zero followed by another
-			 * digit as numeric - could be a zip code or similar
-			 */
-			if (tmp.len > 0 &&
-				!(tmp.data[0] == '0' &&
-				  isdigit((unsigned char) tmp.data[1])) &&
-				strspn(tmp.data, "+-0123456789Ee.") == tmp.len)
-			{
-				/*
-				 * might be a number. See if we can input it as a numeric
-				 * value. Ignore any actual parsed value.
-				 */
-				char	   *endptr = "junk";
-				long		lval;
-
-				lval = strtol(tmp.data, &endptr, 10);
-				(void) lval;
-				if (*endptr == '\0')
-				{
-					/*
-					 * strol man page says this means the whole string is
-					 * valid
-					 */
-					is_number = true;
-				}
-				else
-				{
-					/* not an int - try a double */
-					double		dval;
-
-					dval = strtod(tmp.data, &endptr);
-					(void) dval;
-					if (*endptr == '\0')
-						is_number = true;
-				}
-			}
-			if (is_number)
+			if (IsValidJsonNumber(tmp.data, tmp.len))
 			{
 				val.type = jbvNumeric;
 				val.val.numeric = DatumGetNumeric(
