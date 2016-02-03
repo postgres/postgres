@@ -303,6 +303,43 @@ void (*RestrPosCustomScan) (CustomScanState *node);
 
    <para>
 <programlisting>
+Size (*EstimateDSMCustomScan) (CustomScanState *node,
+                               ParallelContext *pcxt);
+</programlisting>
+    Estimate the amount of dynamic shared memory that will be required
+    for parallel operation.  This may be higher than the amount that will
+    actually be used, but it must not be lower.  The return value is in bytes.
+    This callback is optional, and need only be supplied if this custom
+    scan provider supports parallel execution.
+   </para>
+
+   <para>
+<programlisting>
+void (*InitializeDSMCustomScan) (CustomScanState *node,
+                                 ParallelContext *pcxt,
+                                 void *coordinate);
+</programlisting>
+    Initialize the dynamic shared memory that will be required for parallel
+    operation; <literal>coordinate</> points to an amount of allocated space
+    equal to the return value of <function>EstimateDSMCustomScan</>.
+    This callback is optional, and need only be supplied if this custom
+    scan provider supports parallel execution.
+   </para>
+
+   <para>
+<programlisting>
+void (*InitializeWorkerCustomScan) (CustomScanState *node,
+                                    shm_toc *toc,
+                                    void *coordinate);
+</programlisting>
+    Initialize a parallel worker's custom state based on the shared state
+    set up in the leader by <literal>InitializeDSMCustomScan</>.
+    This callback is optional, and needs only be supplied if this
+    custom path supports parallel execution.
+   </para>
+
+   <para>
+<programlisting>
 void (*ExplainCustomScan) (CustomScanState *node,
                            List *ancestors,
                            ExplainState *es);

@@ -955,6 +955,53 @@ ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
 
    </sect2>
 
+   <sect2 id="fdw-callbacks-parallel">
+    <title>FDW Routines for Parallel Execution</title>
+    <para>
+     A <structname>ForeignScan</> node can, optionally, support parallel
+     execution.  A parallel <structname>ForeignScan</> will be executed
+     in multiple processes and should return each row only once across
+     all cooperating processes.  To do this, processes can coordinate through
+     fixed size chunks of dynamic shared memory.  This shared memory is not
+     guaranteed to be mapped at the same address in every process, so pointers
+     may not be used.  The following callbacks are all optional in general,
+     but required if parallel execution is to be supported.
+    </para>
+
+    <para>
+<programlisting>
+Size
+EstimateDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt);
+</programlisting>
+    Estimate the amount of dynamic shared memory that will be required
+    for parallel operation.  This may be higher than the amount that will
+    actually be used, but it must not be lower.  The return value is in bytes.
+    </para>
+
+    <para>
+<programlisting>
+void
+InitializeDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt,
+                         void *coordinate);
+</programlisting>
+    Initialize the dynamic shared memory that will be required for parallel
+    operation; <literal>coordinate</> points to an amount of allocated space
+    equal to the return value of <function>EstimateDSMForeignScan</>.
+   </para>
+
+   <para>
+<programlisting>
+void
+InitializeWorkerForeignScan(ForeignScanState *node, shm_toc *toc,
+                            void *coordinate);
+</programlisting>
+    Initialize a parallel worker's custom state based on the shared state
+    set up in the leader by <literal>InitializeDSMForeignScan</>.
+    This callback is optional, and needs only be supplied if this
+    custom path supports parallel execution.
+   </para>
+   </sect2>
+
    </sect1>
 
    <sect1 id="fdw-helpers">

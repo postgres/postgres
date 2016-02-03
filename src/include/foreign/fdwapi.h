@@ -12,6 +12,7 @@
 #ifndef FDWAPI_H
 #define FDWAPI_H
 
+#include "access/parallel.h"
 #include "nodes/execnodes.h"
 #include "nodes/relation.h"
 
@@ -122,6 +123,14 @@ typedef bool (*AnalyzeForeignTable_function) (Relation relation,
 typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
 														   Oid serverOid);
 
+typedef Size (*EstimateDSMForeignScan_function) (ForeignScanState *node,
+												ParallelContext *pcxt);
+typedef void (*InitializeDSMForeignScan_function) (ForeignScanState *node,
+												   ParallelContext *pcxt,
+												   void *coordinate);
+typedef void (*InitializeWorkerForeignScan_function) (ForeignScanState *node,
+													  shm_toc *toc,
+													  void *coordinate);
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
  * function.  It provides pointers to the callback functions needed by the
@@ -177,6 +186,11 @@ typedef struct FdwRoutine
 
 	/* Support functions for IMPORT FOREIGN SCHEMA */
 	ImportForeignSchema_function ImportForeignSchema;
+
+	/* Support functions for parallelism under Gather node */
+	EstimateDSMForeignScan_function EstimateDSMForeignScan;
+	InitializeDSMForeignScan_function InitializeDSMForeignScan;
+	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
 } FdwRoutine;
 
 
