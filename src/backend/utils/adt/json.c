@@ -76,7 +76,8 @@ typedef struct JsonAggState
 
 static inline void json_lex(JsonLexContext *lex);
 static inline void json_lex_string(JsonLexContext *lex);
-static inline void json_lex_number(JsonLexContext *lex, char *s, bool *num_err);
+static inline void json_lex_number(JsonLexContext *lex, char *s,
+				bool *num_err, int *total_len);
 static inline void parse_scalar(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_object_field(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_object(JsonLexContext *lex, JsonSemAction *sem);
@@ -182,13 +183,20 @@ lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 	 (c) == '_' || \
 	 IS_HIGHBIT_SET(c))
 
-/* utility function to check if a string is a valid JSON number */
-extern bool
+/*
+ * Utility function to check if a string is a valid JSON number.
+ *
+ * str is of length len, and need not be null-terminated.
+ */
+bool
 IsValidJsonNumber(const char *str, int len)
 {
 	bool		numeric_error;
+	int			total_len;
 	JsonLexContext dummy_lex;
 
+	if (len <= 0)
+		return false;
 
 	/*
 	 * json_lex_number expects a leading  '-' to have been eaten already.
@@ -207,9 +215,9 @@ IsValidJsonNumber(const char *str, int len)
 		dummy_lex.input_length = len;
 	}
 
-	json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
+	json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error, &total_len);
 
-	return !numeric_error;
+	return (!numeric_error) && (total_len == dummy_lex.input_length);
 }
 
 /*
@@ -669,7 +677,7 @@ json_lex(JsonLexContext *lex)
 				break;
 			case '-':
 				/* Negative number. */
-				json_lex_number(lex, s + 1, NULL);
+				json_lex_number(lex, s + 1, NULL, NULL);
 				lex->token_type = JSON_TOKEN_NUMBER;
 				break;
 			case '0':
@@ -683,7 +691,7 @@ json_lex(JsonLexContext *lex)
 			case '8':
 			case '9':
 				/* Positive number. */
-				json_lex_number(lex, s, NULL);
+				json_lex_number(lex, s, NULL, NULL);
 				lex->token_type = JSON_TOKEN_NUMBER;
 				break;
 			default:
@@ -983,7 +991,7 @@ json_lex_string(JsonLexContext *lex)
 	lex->token_terminator = s + 1;
 }
 
-/*-------------------------------------------------------------------------
+/*
  * The next token in the input stream is known to be a number; lex it.
  *
  * In JSON, a number consists of four parts:
@@ -1004,29 +1012,30 @@ json_lex_string(JsonLexContext *lex)
  *	   followed by at least one digit.)
  *
  * The 's' argument to this function points to the ostensible beginning
- * of part 2 - i.e. the character after any optional minus sign, and the
+ * of part 2 - i.e. the character after any optional minus sign, or the
  * first character of the string if there is none.
  *
- *-------------------------------------------------------------------------
+ * If num_err is not NULL, we return an error flag to *num_err rather than
+ * raising an error for a badly-formed number.  Also, if total_len is not NULL
+ * the distance from lex->input to the token end+1 is returned to *total_len.
  */
 static inline void
-json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
+json_lex_number(JsonLexContext *lex, char *s,
+				bool *num_err, int *total_len)
 {
 	bool		error = false;
-	char	   *p;
-	int			len;
+	int			len = s - lex->input;
 
-	len = s - lex->input;
 	/* Part (1): leading sign indicator. */
 	/* Caller already did this for us; so do nothing. */
 
 	/* Part (2): parse main digit string. */
-	if (*s == '0')
+	if (len < lex->input_length && *s == '0')
 	{
 		s++;
 		len++;
 	}
-	else if (*s >= '1' && *s <= '9')
+	else if (len < lex->input_length && *s >= '1' && *s <= '9')
 	{
 		do
 		{
@@ -1081,18 +1090,23 @@ json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
-	for (p = s; len < lex->input_length && JSON_ALPHANUMERIC_CHAR(*p); p++, len++)
+	for (; len < lex->input_length && JSON_ALPHANUMERIC_CHAR(*s); s++, len++)
 		error = true;
+
+	if (total_len != NULL)
+		*total_len = len;
 
 	if (num_err != NULL)
 	{
-		/* let the caller handle the error */
+		/* let the caller handle any error */
 		*num_err = error;
 	}
 	else
 	{
+		/* return token endpoint */
 		lex->prev_token_terminator = lex->token_terminator;
-		lex->token_terminator = p;
+		lex->token_terminator = s;
+		/* handle error if any */
 		if (error)
 			report_invalid_token(lex);
 	}
