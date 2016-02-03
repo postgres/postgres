@@ -919,4 +919,48 @@ BEGIN;
 DROP TYPE "Colors" CASCADE;
 IMPORT FOREIGN SCHEMA import_source LIMIT TO (t5)
   FROM SERVER loopback INTO import_dest5;  -- ERROR
+
+ROLLBACK;
+
+BEGIN;
+
+
+CREATE SERVER fetch101 FOREIGN DATA WRAPPER postgres_fdw OPTIONS( fetch_size '101' );
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'fetch101'
+AND srvoptions @> array['fetch_size=101'];
+
+ALTER SERVER fetch101 OPTIONS( SET fetch_size '202' );
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'fetch101'
+AND srvoptions @> array['fetch_size=101'];
+
+SELECT count(*)
+FROM pg_foreign_server
+WHERE srvname = 'fetch101'
+AND srvoptions @> array['fetch_size=202'];
+
+CREATE FOREIGN TABLE table30000 ( x int ) SERVER fetch101 OPTIONS ( fetch_size '30000' );
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30000'::regclass
+AND ftoptions @> array['fetch_size=30000'];
+
+ALTER FOREIGN TABLE table30000 OPTIONS ( SET fetch_size '60000');
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30000'::regclass
+AND ftoptions @> array['fetch_size=30000'];
+
+SELECT COUNT(*)
+FROM pg_foreign_table
+WHERE ftrelid = 'table30000'::regclass
+AND ftoptions @> array['fetch_size=60000'];
+
 ROLLBACK;

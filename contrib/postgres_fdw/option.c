@@ -131,6 +131,17 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 			/* check list syntax, warn about uninstalled extensions */
 			(void) ExtractExtensionList(defGetString(def), true);
 		}
+		else if (strcmp(def->defname, "fetch_size") == 0)
+		{
+			int		fetch_size;
+
+			fetch_size = strtol(defGetString(def), NULL,10);
+			if (fetch_size <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("%s requires a non-negative integer value",
+								def->defname)));
+		}
 	}
 
 	PG_RETURN_VOID();
@@ -162,6 +173,9 @@ InitPgFdwOptions(void)
 		/* updatable is available on both server and table */
 		{"updatable", ForeignServerRelationId, false},
 		{"updatable", ForeignTableRelationId, false},
+		/* fetch_size is available on both server and table */
+		{"fetch_size", ForeignServerRelationId, false},
+		{"fetch_size", ForeignTableRelationId, false},
 		{NULL, InvalidOid, false}
 	};
 

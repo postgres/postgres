@@ -68,7 +68,9 @@ enum FdwScanPrivateIndex
 	/* SQL statement to execute remotely (as a String node) */
 	FdwScanPrivateSelectSql,
 	/* Integer list of attribute numbers retrieved by the SELECT */
-	FdwScanPrivateRetrievedAttrs
+	FdwScanPrivateRetrievedAttrs,
+	/* Integer representing the desired fetch_size */
+	FdwScanPrivateFetchSize
 };
 
 /*
@@ -126,6 +128,8 @@ typedef struct PgFdwScanState
 	/* working memory contexts */
 	MemoryContext batch_cxt;	/* context holding current batch of tuples */
 	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
+
+	int			fetch_size;		/* number of tuples per fetch */
 } PgFdwScanState;
 
 /*
@@ -380,6 +384,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	fpinfo->fdw_startup_cost = DEFAULT_FDW_STARTUP_COST;
 	fpinfo->fdw_tuple_cost = DEFAULT_FDW_TUPLE_COST;
 	fpinfo->shippable_extensions = NIL;
+	fpinfo->fetch_size = 100;
 
 	foreach(lc, fpinfo->server->options)
 	{
@@ -394,16 +399,17 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		else if (strcmp(def->defname, "extensions") == 0)
 			fpinfo->shippable_extensions =
 				ExtractExtensionList(defGetString(def), false);
+		else if (strcmp(def->defname, "fetch_size") == 0)
+			fpinfo->fetch_size = strtol(defGetString(def), NULL,10);
 	}
 	foreach(lc, fpinfo->table->options)
 	{
 		DefElem    *def = (DefElem *) lfirst(lc);
 
 		if (strcmp(def->defname, "use_remote_estimate") == 0)
-		{
 			fpinfo->use_remote_estimate = defGetBoolean(def);
-			break;				/* only need the one value */
-		}
+		else if (strcmp(def->defname, "fetch_size") == 0)
+			fpinfo->fetch_size = strtol(defGetString(def), NULL,10);
 	}
 
 	/*
@@ -1012,6 +1018,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 */
 	fdw_private = list_make2(makeString(sql.data),
 							 retrieved_attrs);
+	fdw_private = list_make3(makeString(sql.data),
+							 retrieved_attrs,
+							 makeInteger(fpinfo->fetch_size));
 
 	/*
 	 * Create the ForeignScan node from target list, filtering expressions,
@@ -1088,6 +1097,8 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 									 FdwScanPrivateSelectSql));
 	fsstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
 											   FdwScanPrivateRetrievedAttrs);
+	fsstate->fetch_size = intVal(list_nth(fsplan->fdw_private,
+								 FdwScanPrivateFetchSize));
 
 	/* Create contexts for batches of tuples and per-tuple temp workspace. */
 	fsstate->batch_cxt = AllocSetContextCreate(estate->es_query_cxt,
@@ -2214,15 +2225,11 @@ fetch_more_data(ForeignScanState *node)
 	{
 		PGconn	   *conn = fsstate->conn;
 		char		sql[64];
-		int			fetch_size;
 		int			numrows;
 		int			i;
 
-		/* The fetch size is arbitrary, but shouldn't be enormous. */
-		fetch_size = 100;
-
 		snprintf(sql, sizeof(sql), "FETCH %d FROM c%u",
-				 fetch_size, fsstate->cursor_number);
+				 fsstate->fetch_size, fsstate->cursor_number);
 
 		res = PQexec(conn, sql);
 		/* On error, report the original query, not the FETCH. */
@@ -2250,7 +2257,7 @@ fetch_more_data(ForeignScanState *node)
 			fsstate->fetch_ct_2++;
 
 		/* Must be EOF if we didn't get as many tuples as we asked for. */
-		fsstate->eof_reached = (numrows < fetch_size);
+		fsstate->eof_reached = (numrows < fsstate->fetch_size);
 
 		PQclear(res);
 		res = NULL;
@@ -2563,6 +2570,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 {
 	PgFdwAnalyzeState astate;
 	ForeignTable *table;
+	ForeignServer *server;
 	UserMapping *user;
 	PGconn	   *conn;
 	unsigned int cursor_number;
@@ -2593,6 +2601,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	 * owner, even if the ANALYZE was started by some other user.
 	 */
 	table = GetForeignTable(RelationGetRelid(relation));
+	server = GetForeignServer(table->serverid);
 	user = GetUserMapping(relation->rd_rel->relowner, table->serverid);
 	conn = GetConnection(user, false);
 
@@ -2620,6 +2629,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 			int			fetch_size;
 			int			numrows;
 			int			i;
+			ListCell   *lc;
 
 			/* Allow users to cancel long query */
 			CHECK_FOR_INTERRUPTS();
@@ -2632,6 +2642,26 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 
 			/* The fetch size is arbitrary, but shouldn't be enormous. */
 			fetch_size = 100;
+			foreach(lc, server->options)
+			{
+				DefElem    *def = (DefElem *) lfirst(lc);
+
+				if (strcmp(def->defname, "fetch_size") == 0)
+				{
+					fetch_size = strtol(defGetString(def), NULL,10);
+					break;
+				}
+			}
+			foreach(lc, table->options)
+			{
+				DefElem    *def = (DefElem *) lfirst(lc);
+
+				if (strcmp(def->defname, "fetch_size") == 0)
+				{
+					fetch_size = strtol(defGetString(def), NULL,10);
+					break;
+				}
+			}
 
 			/* Fetch some rows */
 			snprintf(fetch_sql, sizeof(fetch_sql), "FETCH %d FROM c%u",

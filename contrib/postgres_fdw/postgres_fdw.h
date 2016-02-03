@@ -53,6 +53,8 @@ typedef struct PgFdwRelationInfo
 	ForeignTable *table;
 	ForeignServer *server;
 	UserMapping *user;			/* only set in use_remote_estimate mode */
+
+	int			fetch_size;      /* fetch size for this remote table */
 } PgFdwRelationInfo;
 
 /* in postgres_fdw.c */
