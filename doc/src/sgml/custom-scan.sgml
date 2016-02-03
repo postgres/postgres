@@ -125,19 +125,6 @@ Plan *(*PlanCustomPath) (PlannerInfo *root,
     be a <literal>CustomScan</> object, which the callback must allocate and
     initialize.  See <xref linkend="custom-scan-plan"> for more details.
    </para>
-
-   <para>
-<programlisting>
-void (*TextOutCustomPath) (StringInfo str,
-                           const CustomPath *node);
-</programlisting>
-    Generate additional output when <function>nodeToString</> is invoked on
-    this custom path.  This callback is optional.  Since
-    <function>nodeToString</> will automatically dump all fields in the
-    structure that it can see, including <structfield>custom_private</>, this
-    is only useful if the <structname>CustomPath</> is actually embedded in a
-    larger struct containing additional fields.
-   </para>
   </sect2>
  </sect1>
 

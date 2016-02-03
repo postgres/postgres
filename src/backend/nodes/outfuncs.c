@@ -1705,8 +1705,6 @@ _outCustomPath(StringInfo str, const CustomPath *node)
 	WRITE_NODE_FIELD(custom_private);
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);
-	if (node->methods->TextOutCustomPath)
-		node->methods->TextOutCustomPath(str, node);
 }
 
 static void

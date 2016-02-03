@@ -958,9 +958,6 @@ typedef struct CustomPathMethods
 												List *tlist,
 												List *clauses,
 												List *custom_plans);
-	/* Optional: print additional fields besides "private" */
-	void		(*TextOutCustomPath) (StringInfo str,
-											  const struct CustomPath *node);
 } CustomPathMethods;
 
 typedef struct CustomPath
