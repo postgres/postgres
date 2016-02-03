@@ -40,6 +40,7 @@
 int			bytea_output = BYTEA_OUTPUT_HEX;
 
 typedef struct varlena unknown;
+typedef struct varlena string;
 
 typedef struct
 {
@@ -67,13 +68,14 @@ typedef struct
 	int			last_returned;	/* Last comparison result (cache) */
 	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
 	bool		collate_c;
+	bool		bpchar;			/* Sorting pbchar, not varchar/text/bytea? */
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
 	double		prop_card;		/* Required cardinality proportion */
 #ifdef HAVE_LOCALE_T
 	pg_locale_t locale;
 #endif
-} TextSortSupport;
+} StringSortSupport;
 
 /*
  * This should be large enough that most strings will fit, but small enough
@@ -87,12 +89,15 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-static void btsortsupport_worker(SortSupport ssup, Oid collid);
-static int	bttextfastcmp_c(Datum x, Datum y, SortSupport ssup);
-static int	bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup);
-static int	bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup);
-static Datum bttext_abbrev_convert(Datum original, SortSupport ssup);
-static bool bttext_abbrev_abort(int memtupcount, SortSupport ssup);
+#define DatumGetStringP(X)			((string *) PG_DETOAST_DATUM(X))
+#define DatumGetStringPP(X)			((string *) PG_DETOAST_DATUM_PACKED(X))
+
+static int	varstrfastcmp_c(Datum x, Datum y, SortSupport ssup);
+static int bpcharfastcmp_c(Datum x, Datum y, SortSupport ssup);
+static int	varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup);
+static int	varstrcmp_abbrev(Datum x, Datum y, SortSupport ssup);
+static Datum varstr_abbrev_convert(Datum original, SortSupport ssup);
+static bool varstr_abbrev_abort(int memtupcount, SortSupport ssup);
 static int32 text_length(Datum str);
 static text *text_catenate(text *t1, text *t2);
 static text *text_substring(Datum str,
@@ -1738,19 +1743,30 @@ bttextsortsupport(PG_FUNCTION_ARGS)
 
 	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-	btsortsupport_worker(ssup, collid);
+	/* Use generic string SortSupport */
+	varstr_sortsupport(ssup, collid, false);
 
 	MemoryContextSwitchTo(oldcontext);
 
 	PG_RETURN_VOID();
 }
 
-static void
-btsortsupport_worker(SortSupport ssup, Oid collid)
+/*
+ * Generic sortsupport interface for character type's operator classes.
+ * Includes locale support, and support for BpChar semantics (i.e. removing
+ * trailing spaces before comparison).
+ *
+ * Relies on the assumption that text, VarChar, BpChar, and bytea all have the
+ * same representation.  Callers that always use the C collation (e.g.
+ * non-collatable type callers like bytea) may have NUL bytes in their strings;
+ * this will not work with any other collation, though.
+ */
+void
+varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 {
 	bool		abbreviate = ssup->abbreviate;
 	bool		collate_c = false;
-	TextSortSupport *tss;
+	StringSortSupport *sss;
 
 #ifdef HAVE_LOCALE_T
 	pg_locale_t locale = 0;
@@ -1762,20 +1778,25 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 	 * overhead of a trip through the fmgr layer for every comparison, which
 	 * can be substantial.
 	 *
-	 * Most typically, we'll set the comparator to bttextfastcmp_locale, which
-	 * uses strcoll() to perform comparisons.  However, if LC_COLLATE = C, we
-	 * can make things quite a bit faster with bttextfastcmp_c, which uses
-	 * memcmp() rather than strcoll().
+	 * Most typically, we'll set the comparator to varstrfastcmp_locale, which
+	 * uses strcoll() to perform comparisons and knows about the special
+	 * requirements of BpChar callers.  However, if LC_COLLATE = C, we can make
+	 * things quite a bit faster with varstrfastcmp_c or bpcharfastcmp_c,
+	 * both of which use memcmp() rather than strcoll().
 	 *
 	 * There is a further exception on Windows.  When the database encoding is
 	 * UTF-8 and we are not using the C collation, complex hacks are required.
 	 * We don't currently have a comparator that handles that case, so we fall
-	 * back on the slow method of having the sort code invoke bttextcmp() via
-	 * the fmgr trampoline.
+	 * back on the slow method of having the sort code invoke bttextcmp() (in
+	 * the case of text) via the fmgr trampoline.
 	 */
 	if (lc_collate_is_c(collid))
 	{
-		ssup->comparator = bttextfastcmp_c;
+		if (!bpchar)
+			ssup->comparator = varstrfastcmp_c;
+		else
+			ssup->comparator = bpcharfastcmp_c;
+
 		collate_c = true;
 	}
 #ifdef WIN32
@@ -1784,7 +1805,7 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 #endif
 	else
 	{
-		ssup->comparator = bttextfastcmp_locale;
+		ssup->comparator = varstrfastcmp_locale;
 
 		/*
 		 * We need a collation-sensitive comparison.  To make things faster,
@@ -1825,24 +1846,25 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 
 	/*
 	 * If we're using abbreviated keys, or if we're using a locale-aware
-	 * comparison, we need to initialize a TextSortSupport object.  Both cases
-	 * will make use of the temporary buffers we initialize here for scratch
-	 * space, and the abbreviation case requires additional state.
+	 * comparison, we need to initialize a StringSortSupport object.  Both
+	 * cases will make use of the temporary buffers we initialize here for
+	 * scratch space (and to detect requirement for BpChar semantics from
+	 * caller), and the abbreviation case requires additional state.
 	 */
 	if (abbreviate || !collate_c)
 	{
-		tss = palloc(sizeof(TextSortSupport));
-		tss->buf1 = palloc(TEXTBUFLEN);
-		tss->buflen1 = TEXTBUFLEN;
-		tss->buf2 = palloc(TEXTBUFLEN);
-		tss->buflen2 = TEXTBUFLEN;
+		sss = palloc(sizeof(StringSortSupport));
+		sss->buf1 = palloc(TEXTBUFLEN);
+		sss->buflen1 = TEXTBUFLEN;
+		sss->buf2 = palloc(TEXTBUFLEN);
+		sss->buflen2 = TEXTBUFLEN;
 		/* Start with invalid values */
-		tss->last_len1 = -1;
-		tss->last_len2 = -1;
+		sss->last_len1 = -1;
+		sss->last_len2 = -1;
 		/* Initialize */
-		tss->last_returned = 0;
+		sss->last_returned = 0;
 #ifdef HAVE_LOCALE_T
-		tss->locale = locale;
+		sss->locale = locale;
 #endif
 		/*
 		 * To avoid somehow confusing a strxfrm() blob and an original string,
@@ -1858,9 +1880,10 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 		 *
 		 * Arbitrarily initialize cache_blob to true.
 		 */
-		tss->cache_blob = true;
-		tss->collate_c = collate_c;
-		ssup->ssup_extra = tss;
+		sss->cache_blob = true;
+		sss->collate_c = collate_c;
+		sss->bpchar = bpchar;
+		ssup->ssup_extra = sss;
 
 		/*
 		 * If possible, plan to use the abbreviated keys optimization.  The
@@ -1869,13 +1892,13 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 		 */
 		if (abbreviate)
 		{
-			tss->prop_card = 0.20;
-			initHyperLogLog(&tss->abbr_card, 10);
-			initHyperLogLog(&tss->full_card, 10);
+			sss->prop_card = 0.20;
+			initHyperLogLog(&sss->abbr_card, 10);
+			initHyperLogLog(&sss->full_card, 10);
 			ssup->abbrev_full_comparator = ssup->comparator;
-			ssup->comparator = bttextcmp_abbrev;
-			ssup->abbrev_converter = bttext_abbrev_convert;
-			ssup->abbrev_abort = bttext_abbrev_abort;
+			ssup->comparator = varstrcmp_abbrev;
+			ssup->abbrev_converter = varstr_abbrev_convert;
+			ssup->abbrev_abort = varstr_abbrev_abort;
 		}
 	}
 }
@@ -1884,10 +1907,10 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
  * sortsupport comparison func (for C locale case)
  */
 static int
-bttextfastcmp_c(Datum x, Datum y, SortSupport ssup)
+varstrfastcmp_c(Datum x, Datum y, SortSupport ssup)
 {
-	text	   *arg1 = DatumGetTextPP(x);
-	text	   *arg2 = DatumGetTextPP(y);
+	string	   *arg1 = DatumGetStringPP(x);
+	string	   *arg2 = DatumGetStringPP(y);
 	char	   *a1p,
 			   *a2p;
 	int			len1,
@@ -1914,15 +1937,52 @@ bttextfastcmp_c(Datum x, Datum y, SortSupport ssup)
 }
 
 /*
+ * sortsupport comparison func (for BpChar C locale case)
+ *
+ * BpChar outsources its sortsupport to this module.  Specialization for the
+ * varstr_sortsupport BpChar case, modeled on
+ * internal_bpchar_pattern_compare().
+ */
+static int
+bpcharfastcmp_c(Datum x, Datum y, SortSupport ssup)
+{
+	BpChar	   *arg1 = DatumGetBpCharPP(x);
+	BpChar	   *arg2 = DatumGetBpCharPP(y);
+	char	   *a1p,
+			   *a2p;
+	int			len1,
+				len2,
+				result;
+
+	a1p = VARDATA_ANY(arg1);
+	a2p = VARDATA_ANY(arg2);
+
+	len1 = bpchartruelen(a1p, VARSIZE_ANY_EXHDR(arg1));
+	len2 = bpchartruelen(a2p, VARSIZE_ANY_EXHDR(arg2));
+
+	result = memcmp(a1p, a2p, Min(len1, len2));
+	if ((result == 0) && (len1 != len2))
+		result = (len1 < len2) ? -1 : 1;
+
+	/* We can't afford to leak memory here. */
+	if (PointerGetDatum(arg1) != x)
+		pfree(arg1);
+	if (PointerGetDatum(arg2) != y)
+		pfree(arg2);
+
+	return result;
+}
+
+/*
  * sortsupport comparison func (for locale case)
  */
 static int
-bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
+varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 {
-	text	   *arg1 = DatumGetTextPP(x);
-	text	   *arg2 = DatumGetTextPP(y);
+	string	   *arg1 = DatumGetStringPP(x);
+	string	   *arg2 = DatumGetStringPP(y);
 	bool		arg1_match;
-	TextSortSupport *tss = (TextSortSupport *) ssup->ssup_extra;
+	StringSortSupport *sss = (StringSortSupport *) ssup->ssup_extra;
 
 	/* working state */
 	char	   *a1p,
@@ -1944,41 +2004,56 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 		 * No change in buf1 or buf2 contents, so avoid changing last_len1 or
 		 * last_len2.  Existing contents of buffers might still be used by next
 		 * call.
+		 *
+		 * It's fine to allow the comparison of BpChar padding bytes here, even
+		 * though that implies that the memcmp() will usually be performed for
+		 * BpChar callers (though multibyte characters could still prevent that
+		 * from occurring).  The memcmp() is still very cheap, and BpChar's
+		 * funny semantics have us remove trailing spaces (not limited to
+		 * padding), so we need make no distinction between padding space
+		 * characters and "real" space characters.
 		 */
 		result = 0;
 		goto done;
 	}
 
-	if (len1 >= tss->buflen1)
+	if (sss->bpchar)
 	{
-		pfree(tss->buf1);
-		tss->buflen1 = Max(len1 + 1, Min(tss->buflen1 * 2, MaxAllocSize));
-		tss->buf1 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen1);
+		/* Get true number of bytes, ignoring trailing spaces */
+		len1 = bpchartruelen(a1p, len1);
+		len2 = bpchartruelen(a2p, len2);
 	}
-	if (len2 >= tss->buflen2)
+
+	if (len1 >= sss->buflen1)
 	{
-		pfree(tss->buf2);
-		tss->buflen2 = Max(len2 + 1, Min(tss->buflen2 * 2, MaxAllocSize));
-		tss->buf2 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen2);
+		pfree(sss->buf1);
+		sss->buflen1 = Max(len1 + 1, Min(sss->buflen1 * 2, MaxAllocSize));
+		sss->buf1 = MemoryContextAlloc(ssup->ssup_cxt, sss->buflen1);
+	}
+	if (len2 >= sss->buflen2)
+	{
+		pfree(sss->buf2);
+		sss->buflen2 = Max(len2 + 1, Min(sss->buflen2 * 2, MaxAllocSize));
+		sss->buf2 = MemoryContextAlloc(ssup->ssup_cxt, sss->buflen2);
 	}
 
 	/*
 	 * We're likely to be asked to compare the same strings repeatedly, and
 	 * memcmp() is so much cheaper than strcoll() that it pays to try to cache
 	 * comparisons, even though in general there is no reason to think that
-	 * that will work out (every text datum may be unique).  Caching does not
+	 * that will work out (every string datum may be unique).  Caching does not
 	 * slow things down measurably when it doesn't work out, and can speed
 	 * things up by rather a lot when it does.  In part, this is because the
 	 * memcmp() compares data from cachelines that are needed in L1 cache even
 	 * when the last comparison's result cannot be reused.
 	 */
 	arg1_match = true;
-	if (len1 != tss->last_len1 || memcmp(tss->buf1, a1p, len1) != 0)
+	if (len1 != sss->last_len1 || memcmp(sss->buf1, a1p, len1) != 0)
 	{
 		arg1_match = false;
-		memcpy(tss->buf1, a1p, len1);
-		tss->buf1[len1] = '\0';
-		tss->last_len1 = len1;
+		memcpy(sss->buf1, a1p, len1);
+		sss->buf1[len1] = '\0';
+		sss->last_len1 = len1;
 	}
 
 	/*
@@ -1987,25 +2062,25 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	 * it seems (at least with moderate to low cardinality sets), because
 	 * quicksort compares the same pivot against many values.
 	 */
-	if (len2 != tss->last_len2 || memcmp(tss->buf2, a2p, len2) != 0)
+	if (len2 != sss->last_len2 || memcmp(sss->buf2, a2p, len2) != 0)
 	{
-		memcpy(tss->buf2, a2p, len2);
-		tss->buf2[len2] = '\0';
-		tss->last_len2 = len2;
+		memcpy(sss->buf2, a2p, len2);
+		sss->buf2[len2] = '\0';
+		sss->last_len2 = len2;
 	}
-	else if (arg1_match && !tss->cache_blob)
+	else if (arg1_match && !sss->cache_blob)
 	{
 		/* Use result cached following last actual strcoll() call */
-		result = tss->last_returned;
+		result = sss->last_returned;
 		goto done;
 	}
 
 #ifdef HAVE_LOCALE_T
-	if (tss->locale)
-		result = strcoll_l(tss->buf1, tss->buf2, tss->locale);
+	if (sss->locale)
+		result = strcoll_l(sss->buf1, sss->buf2, sss->locale);
 	else
 #endif
-		result = strcoll(tss->buf1, tss->buf2);
+		result = strcoll(sss->buf1, sss->buf2);
 
 	/*
 	 * In some locales strcoll() can claim that nonidentical strings are
@@ -2013,11 +2088,11 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	 * follow Perl's lead and sort "equal" strings according to strcmp().
 	 */
 	if (result == 0)
-		result = strcmp(tss->buf1, tss->buf2);
+		result = strcmp(sss->buf1, sss->buf2);
 
 	/* Cache result, perhaps saving an expensive strcoll() call next time */
-	tss->cache_blob = false;
-	tss->last_returned = result;
+	sss->cache_blob = false;
+	sss->last_returned = result;
 done:
 	/* We can't afford to leak memory here. */
 	if (PointerGetDatum(arg1) != x)
@@ -2032,13 +2107,14 @@ done:
  * Abbreviated key comparison func
  */
 static int
-bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup)
+varstrcmp_abbrev(Datum x, Datum y, SortSupport ssup)
 {
 	/*
-	 * When 0 is returned, the core system will call bttextfastcmp_c() or
-	 * bttextfastcmp_locale().  Even a strcmp() on two non-truncated strxfrm()
-	 * blobs cannot indicate *equality* authoritatively, for the same reason
-	 * that there is a strcoll() tie-breaker call to strcmp() in varstr_cmp().
+	 * When 0 is returned, the core system will call varstrfastcmp_c()
+	 * (bpcharfastcmp_c() in BpChar case) or varstrfastcmp_locale().  Even a
+	 * strcmp() on two non-truncated strxfrm() blobs cannot indicate *equality*
+	 * authoritatively, for the same reason that there is a strcoll()
+	 * tie-breaker call to strcmp() in varstr_cmp().
 	 */
 	if (x > y)
 		return 1;
@@ -2049,16 +2125,17 @@ bttextcmp_abbrev(Datum x, Datum y, SortSupport ssup)
 }
 
 /*
- * Conversion routine for sortsupport.  Converts original text to abbreviated
- * key representation.  Our encoding strategy is simple -- pack the first 8
- * bytes of a strxfrm() blob into a Datum (on little-endian machines, the 8
- * bytes are stored in reverse order), and treat it as an unsigned integer.
+ * Conversion routine for sortsupport.  Converts original to abbreviated key
+ * representation.  Our encoding strategy is simple -- pack the first 8 bytes
+ * of a strxfrm() blob into a Datum (on little-endian machines, the 8 bytes are
+ * stored in reverse order), and treat it as an unsigned integer.  When the "C"
+ * locale is used, or in case of bytea, just memcpy() from original instead.
  */
 static Datum
-bttext_abbrev_convert(Datum original, SortSupport ssup)
+varstr_abbrev_convert(Datum original, SortSupport ssup)
 {
-	TextSortSupport *tss = (TextSortSupport *) ssup->ssup_extra;
-	text	   *authoritative = DatumGetTextPP(original);
+	StringSortSupport *sss = (StringSortSupport *) ssup->ssup_extra;
+	string	   *authoritative = DatumGetStringPP(original);
 	char	   *authoritative_data = VARDATA_ANY(authoritative);
 
 	/* working state */
@@ -2072,13 +2149,38 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	memset(pres, 0, sizeof(Datum));
 	len = VARSIZE_ANY_EXHDR(authoritative);
 
+	/* Get number of bytes, ignoring trailing spaces */
+	if (sss->bpchar)
+		len = bpchartruelen(authoritative_data, len);
+
 	/*
 	 * If we're using the C collation, use memcmp(), rather than strxfrm(), to
 	 * abbreviate keys.  The full comparator for the C locale is always
-	 * memcmp(), and we can't risk having this give a different answer.
-	 * Besides, this should be faster, too.
+	 * memcmp().  It would be incorrect to allow bytea callers (callers that
+	 * always force the C collation -- bytea isn't a collatable type, but this
+	 * approach is convenient) to use strxfrm().  This is because bytea strings
+	 * may contain NUL bytes.  Besides, this should be faster, too.
+	 *
+	 * More generally, it's okay that bytea callers can have NUL bytes in
+	 * strings because varstrcmp_abbrev() need not make a distinction between
+	 * terminating NUL bytes, and NUL bytes representing actual NULs in the
+	 * authoritative representation.  Hopefully a comparison at or past one
+	 * abbreviated key's terminating NUL byte will resolve the comparison
+	 * without consulting the authoritative representation; specifically, some
+	 * later non-NUL byte in the longer string can resolve the comparison
+	 * against a subsequent terminating NUL in the shorter string.  There will
+	 * usually be what is effectively a "length-wise" resolution there and
+	 * then.
+	 *
+	 * If that doesn't work out -- if all bytes in the longer string positioned
+	 * at or past the offset of the smaller string's (first) terminating NUL
+	 * are actually representative of NUL bytes in the authoritative binary
+	 * string (perhaps with some *terminating* NUL bytes towards the end of the
+	 * longer string iff it happens to still be small) -- then an authoritative
+	 * tie-breaker will happen, and do the right thing: explicitly consider
+	 * string length.
 	 */
-	if (tss->collate_c)
+	if (sss->collate_c)
 		memcpy(pres, authoritative_data, Min(len, sizeof(Datum)));
 	else
 	{
@@ -2088,50 +2190,50 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 		 * We're not using the C collation, so fall back on strxfrm.
 		 */
 
-		/* By convention, we use buffer 1 to store and NUL-terminate text */
-		if (len >= tss->buflen1)
+		/* By convention, we use buffer 1 to store and NUL-terminate */
+		if (len >= sss->buflen1)
 		{
-			pfree(tss->buf1);
-			tss->buflen1 = Max(len + 1, Min(tss->buflen1 * 2, MaxAllocSize));
-			tss->buf1 = palloc(tss->buflen1);
+			pfree(sss->buf1);
+			sss->buflen1 = Max(len + 1, Min(sss->buflen1 * 2, MaxAllocSize));
+			sss->buf1 = palloc(sss->buflen1);
 		}
 
 		/* Might be able to reuse strxfrm() blob from last call */
-		if (tss->last_len1 == len && tss->cache_blob &&
-			memcmp(tss->buf1, authoritative_data, len) == 0)
+		if (sss->last_len1 == len && sss->cache_blob &&
+			memcmp(sss->buf1, authoritative_data, len) == 0)
 		{
-			memcpy(pres, tss->buf2, Min(sizeof(Datum), tss->last_len2));
+			memcpy(pres, sss->buf2, Min(sizeof(Datum), sss->last_len2));
 			/* No change affecting cardinality, so no hashing required */
 			goto done;
 		}
 
 		/* Just like strcoll(), strxfrm() expects a NUL-terminated string */
-		memcpy(tss->buf1, authoritative_data, len);
-		tss->buf1[len] = '\0';
-		tss->last_len1 = len;
+		memcpy(sss->buf1, authoritative_data, len);
+		sss->buf1[len] = '\0';
+		sss->last_len1 = len;
 
 		for (;;)
 		{
 #ifdef HAVE_LOCALE_T
-			if (tss->locale)
-				bsize = strxfrm_l(tss->buf2, tss->buf1,
-								  tss->buflen2, tss->locale);
+			if (sss->locale)
+				bsize = strxfrm_l(sss->buf2, sss->buf1,
+								  sss->buflen2, sss->locale);
 			else
 #endif
-				bsize = strxfrm(tss->buf2, tss->buf1, tss->buflen2);
+				bsize = strxfrm(sss->buf2, sss->buf1, sss->buflen2);
 
-			tss->last_len2 = bsize;
-			if (bsize < tss->buflen2)
+			sss->last_len2 = bsize;
+			if (bsize < sss->buflen2)
 				break;
 
 			/*
 			 * The C standard states that the contents of the buffer is now
 			 * unspecified.  Grow buffer, and retry.
 			 */
-			pfree(tss->buf2);
-			tss->buflen2 = Max(bsize + 1,
-							   Min(tss->buflen2 * 2, MaxAllocSize));
-			tss->buf2 = palloc(tss->buflen2);
+			pfree(sss->buf2);
+			sss->buflen2 = Max(bsize + 1,
+							   Min(sss->buflen2 * 2, MaxAllocSize));
+			sss->buf2 = palloc(sss->buflen2);
 		}
 
 		/*
@@ -2139,8 +2241,11 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 		 * strxfrm() blob is itself NUL terminated, leaving no danger of
 		 * misinterpreting any NUL bytes not intended to be interpreted as
 		 * logically representing termination.
+		 *
+		 * (Actually, even if there were NUL bytes in the blob it would be
+		 * okay.  See remarks on bytea case above.)
 		 */
-		memcpy(pres, tss->buf2, Min(sizeof(Datum), bsize));
+		memcpy(pres, sss->buf2, Min(sizeof(Datum), bsize));
 	}
 
 	/*
@@ -2148,7 +2253,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	 * authoritative keys using HyperLogLog.  Used as cheap insurance against
 	 * the worst case, where we do many string transformations for no saving
 	 * in full strcoll()-based comparisons.  These statistics are used by
-	 * bttext_abbrev_abort().
+	 * varstr_abbrev_abort().
 	 *
 	 * First, Hash key proper, or a significant fraction of it.  Mix in length
 	 * in order to compensate for cases where differences are past
@@ -2160,7 +2265,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	if (len > PG_CACHE_LINE_SIZE)
 		hash ^= DatumGetUInt32(hash_uint32((uint32) len));
 
-	addHyperLogLog(&tss->full_card, hash);
+	addHyperLogLog(&sss->full_card, hash);
 
 	/* Hash abbreviated key */
 #if SIZEOF_DATUM == 8
@@ -2176,15 +2281,15 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 	hash = DatumGetUInt32(hash_uint32((uint32) res));
 #endif
 
-	addHyperLogLog(&tss->abbr_card, hash);
+	addHyperLogLog(&sss->abbr_card, hash);
 
 	/* Cache result, perhaps saving an expensive strxfrm() call next time */
-	tss->cache_blob = true;
+	sss->cache_blob = true;
 done:
 	/*
 	 * Byteswap on little-endian machines.
 	 *
-	 * This is needed so that bttextcmp_abbrev() (an unsigned integer 3-way
+	 * This is needed so that varstrcmp_abbrev() (an unsigned integer 3-way
 	 * comparator) works correctly on all platforms.  If we didn't do this,
 	 * the comparator would have to call memcmp() with a pair of pointers to
 	 * the first byte of each abbreviated key, which is slower.
@@ -2204,9 +2309,9 @@ done:
  * should be aborted, based on its projected effectiveness.
  */
 static bool
-bttext_abbrev_abort(int memtupcount, SortSupport ssup)
+varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 {
-	TextSortSupport *tss = (TextSortSupport *) ssup->ssup_extra;
+	StringSortSupport *sss = (StringSortSupport *) ssup->ssup_extra;
 	double		abbrev_distinct,
 				key_distinct;
 
@@ -2216,8 +2321,8 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 	if (memtupcount < 100)
 		return false;
 
-	abbrev_distinct = estimateHyperLogLog(&tss->abbr_card);
-	key_distinct = estimateHyperLogLog(&tss->full_card);
+	abbrev_distinct = estimateHyperLogLog(&sss->abbr_card);
+	key_distinct = estimateHyperLogLog(&sss->full_card);
 
 	/*
 	 * Clamp cardinality estimates to at least one distinct value.  While
@@ -2240,10 +2345,10 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 	{
 		double		norm_abbrev_card = abbrev_distinct / (double) memtupcount;
 
-		elog(LOG, "bttext_abbrev: abbrev_distinct after %d: %f "
+		elog(LOG, "varstr_abbrev: abbrev_distinct after %d: %f "
 			 "(key_distinct: %f, norm_abbrev_card: %f, prop_card: %f)",
 			 memtupcount, abbrev_distinct, key_distinct, norm_abbrev_card,
-			 tss->prop_card);
+			 sss->prop_card);
 	}
 #endif
 
@@ -2263,7 +2368,7 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 	 * abbreviated comparison with a cheap memcmp()-based authoritative
 	 * resolution are equivalent.
 	 */
-	if (abbrev_distinct > key_distinct * tss->prop_card)
+	if (abbrev_distinct > key_distinct * sss->prop_card)
 	{
 		/*
 		 * When we have exceeded 10,000 tuples, decay required cardinality
@@ -2291,7 +2396,7 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 		 * apparent it's probably not worth aborting.
 		 */
 		if (memtupcount > 10000)
-			tss->prop_card *= 0.65;
+			sss->prop_card *= 0.65;
 
 		return false;
 	}
@@ -2309,9 +2414,9 @@ bttext_abbrev_abort(int memtupcount, SortSupport ssup)
 	 */
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "bttext_abbrev: aborted abbreviation at %d "
+		elog(LOG, "varstr_abbrev: aborted abbreviation at %d "
 			 "(abbrev_distinct: %f, key_distinct: %f, prop_card: %f)",
-			 memtupcount, abbrev_distinct, key_distinct, tss->prop_card);
+			 memtupcount, abbrev_distinct, key_distinct, sss->prop_card);
 #endif
 
 	return true;
@@ -2345,8 +2450,9 @@ text_smaller(PG_FUNCTION_ARGS)
 /*
  * The following operators support character-by-character comparison
  * of text datums, to allow building indexes suitable for LIKE clauses.
- * Note that the regular texteq/textne comparison operators are assumed
- * to be compatible with these!
+ * Note that the regular texteq/textne comparison operators, and regular
+ * support functions 1 and 2 with "C" collation are assumed to be
+ * compatible with these!
  */
 
 static int
@@ -2448,6 +2554,23 @@ bttext_pattern_cmp(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(arg2, 1);
 
 	PG_RETURN_INT32(result);
+}
+
+
+Datum
+bttext_pattern_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+	MemoryContext oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+
+	/* Use generic string SortSupport, forcing "C" collation */
+	varstr_sortsupport(ssup, C_COLLATION_OID, false);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_RETURN_VOID();
 }
 
 
@@ -3373,6 +3496,22 @@ byteacmp(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(arg2, 1);
 
 	PG_RETURN_INT32(cmp);
+}
+
+Datum
+bytea_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+	MemoryContext oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+
+	/* Use generic string SortSupport, forcing "C" collation */
+	varstr_sortsupport(ssup, C_COLLATION_OID, false);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_RETURN_VOID();
 }
 
 /*

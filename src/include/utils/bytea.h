@@ -42,6 +42,7 @@ extern Datum byteale(PG_FUNCTION_ARGS);
 extern Datum byteagt(PG_FUNCTION_ARGS);
 extern Datum byteage(PG_FUNCTION_ARGS);
 extern Datum byteacmp(PG_FUNCTION_ARGS);
+extern Datum bytea_sortsupport(PG_FUNCTION_ARGS);
 extern Datum byteacat(PG_FUNCTION_ARGS);
 extern Datum byteapos(PG_FUNCTION_ARGS);
 extern Datum bytea_substr(PG_FUNCTION_ARGS);

@@ -1140,8 +1140,7 @@ SELECT '52093.89'::money::numeric::float8;
      advantages in some other database systems, there is no such advantage in
      <productname>PostgreSQL</productname>; in fact
      <type>character(<replaceable>n</>)</type> is usually the slowest of
-     the three because of its additional storage costs and slower
-     sorting.  In most situations
+     the three because of its additional storage costs.  In most situations
      <type>text</type> or <type>character varying</type> should be used
      instead.
     </para>
