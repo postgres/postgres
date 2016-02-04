@@ -257,6 +257,8 @@ typedef struct _tableInfo
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
 	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
+	int			numTriggers;	/* number of triggers for table */
+	struct _triggerInfo *triggers;		/* array of TriggerInfo structs */
 } TableInfo;
 
 typedef struct _attrDefInfo
