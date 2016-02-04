@@ -3335,9 +3335,12 @@ void RequestAddinShmemSpace(int size)
     <para>
      LWLocks are reserved by calling:
 <programlisting>
-void RequestAddinLWLocks(int n)
+void RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 </programlisting>
-     from <function>_PG_init</>.
+     from <function>_PG_init</>.  This will ensure that an array of
+     <literal>num_lwlocks</> LWLocks is available under the name
+     <literal>tranche_name</>.  Use <function>GetNamedLWLockTranche</>
+     to get a pointer to this array.
     </para>
     <para>
      To avoid possible race-conditions, each backend should use the LWLock
@@ -3356,7 +3359,7 @@ if (!ptr)
         {
                 initialize contents of shmem area;
                 acquire any requested LWLocks using:
-                ptr->mylockid = LWLockAssign();
+                ptr->locks = GetNamedLWLockTranche("my tranche name");
         }
         LWLockRelease(AddinShmemInitLock);
 }

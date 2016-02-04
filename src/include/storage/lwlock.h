@@ -119,6 +119,16 @@ typedef union LWLockMinimallyPadded
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 extern char *MainLWLockNames[];
 
+/* struct for storing named tranche information */
+typedef struct NamedLWLockTranche
+{
+	LWLockTranche lwLockTranche;
+	int			trancheId;
+} NamedLWLockTranche;
+
+extern PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
+extern PGDLLIMPORT int NamedLWLockTrancheRequests;
+
 /* Names for fixed lwlocks */
 #include "storage/lwlocknames.h"
 
@@ -178,12 +188,14 @@ extern void CreateLWLocks(void);
 extern void InitLWLockAccess(void);
 
 /*
- * The traditional method for obtaining an lwlock for use by an extension is
- * to call RequestAddinLWLocks() during postmaster startup; this will reserve
- * space for the indicated number of locks in MainLWLockArray.  Subsequently,
- * a lock can be allocated using LWLockAssign.
+ * Extensions (or core code) can obtain an LWLocks by calling
+ * RequestNamedLWLockTranche() during postmaster startup.  Subsequently,
+ * call GetNamedLWLockTranche() and to obtain a pointer to an array
+ * containing the number of LWLocks requested.
  */
-extern void RequestAddinLWLocks(int n);
+extern void RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks);
+extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
+
 extern LWLock *LWLockAssign(void);
 
 /*
