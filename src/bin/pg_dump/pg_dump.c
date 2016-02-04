@@ -6261,6 +6261,9 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 
 		tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
 
+		tbinfo->numTriggers = ntups;
+		tbinfo->triggers = tginfo;
+
 		for (j = 0; j < ntups; j++)
 		{
 			tginfo[j].dobj.objType = DO_TRIGGER;
