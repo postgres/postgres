@@ -341,6 +341,21 @@ GetForeignJoinPaths (PlannerInfo *root,
      See <xref linkend="fdw-planning"> for additional information.
     </para>
 
+    <para>
+<programlisting>
+void
+GetExistingLocalJoinPath(RelOptInfo *joinrel)
+</programlisting>
+     The function returns copy of a local join path, which can be converted
+     into an alternative local join plan, which may be useful when
+     implementing a <literal>RecheckForeignScan</> method.  The function
+     searches for a parallel-safe, unparameterized path in the
+     <literal>pathlist</> of given <literal>joinrel</>. If it does not find
+     such a path, it returns NULL, in which case a foreign data wrapper may
+     build the local path by itself or may choose not to create access paths
+     for that join.
+    </para>
+
    </sect2>
 
    <sect2 id="fdw-callbacks-update">
@@ -794,6 +809,9 @@ RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
      can be executed and the resulting tuple can be stored in the slot.
      This plan need not be efficient since no base table will return more
      than one row; for example, it may implement all joins as nested loops.
+     <literal>GetExistingLocalJoinPath</> may be used to search existing paths
+     for a suitable local join path, which can be used as the alternative
+     local join plan.
     </para>
    </sect2>
 
@@ -1065,6 +1083,20 @@ GetForeignTable(Oid relid);
      the foreign table with the given OID.  A
      <structname>ForeignTable</structname> object contains properties of the
      foreign table (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
+UserMapping *
+GetUserMappingById(Oid umid);
+</programlisting>
+
+     This function returns the <structname>UserMapping</structname> object for
+     the given user mapping OID.  The OID of a user mapping for a foreign scan
+     is available in the <structname>RelOptInfo</structname>.
+     If there is no mapping for the OID, this function will throw an error.
+     A <structname>UserMapping</structname> object contains properties of the
+     user mapping (see <filename>foreign/foreign.h</filename> for details).
     </para>
 
     <para>

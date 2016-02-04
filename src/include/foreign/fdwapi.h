@@ -202,5 +202,6 @@ extern FdwRoutine *GetFdwRoutineByRelId(Oid relid);
 extern FdwRoutine *GetFdwRoutineForRelation(Relation relation, bool makecopy);
 extern bool IsImportableForeignTable(const char *tablename,
 						 ImportForeignSchemaStmt *stmt);
+extern Path *GetExistingLocalJoinPath(RelOptInfo *joinrel);
 
 #endif   /* FDWAPI_H */
