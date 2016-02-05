@@ -31,7 +31,7 @@
 
 # This file is not intended to be compiled standalone, as it
 # assumes rules from other files.  In the tz distribution, use
-# 'make posix_packrat' to compile this file.
+# 'make PACKRATDATA=backzone zones' to compile and install this file.
 
 # Zones are sorted by zone name.  Each zone is preceded by the
 # name of the country that the zone is in, along with any other
@@ -278,6 +278,11 @@ Zone America/Argentina/ComodRivadavia -4:30:00 - LMT	1894 Oct 31
 Zone	America/Aruba	-4:40:24 -	LMT	1912 Feb 12 # Oranjestad
 			-4:30	-	ANT	1965 # Netherlands Antilles Time
 			-4:00	-	AST
+
+# Cayman Is
+Zone	America/Cayman	-5:25:32 -	LMT	1890     # Georgetown
+			-5:07:11 -	KMT	1912 Feb # Kingston Mean Time
+			-5:00	-	EST
 
 # Canada
 Zone America/Coral_Harbour -5:32:40 -	LMT	1884
