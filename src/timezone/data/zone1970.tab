@@ -207,7 +207,6 @@ KI	-0308-17105	Pacific/Enderbury	Phoenix Islands
 KI	+0152-15720	Pacific/Kiritimati	Line Islands
 KP	+3901+12545	Asia/Pyongyang
 KR	+3733+12658	Asia/Seoul
-KY	+1918-08123	America/Cayman
 KZ	+4315+07657	Asia/Almaty	most locations
 KZ	+4448+06528	Asia/Qyzylorda	Qyzylorda (Kyzylorda, Kzyl-Orda)
 KZ	+5017+05710	Asia/Aqtobe	Aqtobe (Aktobe)
@@ -243,8 +242,7 @@ MX	+2313-10625	America/Mazatlan	Mountain Time - S Baja, Nayarit, Sinaloa
 MX	+2838-10605	America/Chihuahua	Mexican Mountain Time - Chihuahua away from US border
 MX	+2934-10425	America/Ojinaga	US Mountain Time - Chihuahua near US border
 MX	+2904-11058	America/Hermosillo	Mountain Standard Time - Sonora
-MX	+3232-11701	America/Tijuana	US Pacific Time - Baja California near US border
-MX	+3018-11452	America/Santa_Isabel	Mexican Pacific Time - Baja California away from US border
+MX	+3232-11701	America/Tijuana	US Pacific Time - Baja California state
 MX	+2048-10515	America/Bahia_Banderas	Mexican Central Time - Bahía de Banderas
 MY	+0310+10142	Asia/Kuala_Lumpur	peninsular Malaysia
 MY	+0133+11020	Asia/Kuching	Sabah & Sarawak
@@ -261,7 +259,7 @@ NR	-0031+16655	Pacific/Nauru
 NU	-1901-16955	Pacific/Niue
 NZ,AQ	-3652+17446	Pacific/Auckland	New Zealand time
 NZ	-4357-17633	Pacific/Chatham	Chatham Islands
-PA	+0858-07932	America/Panama
+PA,KY	+0858-07932	America/Panama
 PE	-1203-07703	America/Lima
 PF	-1732-14934	Pacific/Tahiti	Society Islands
 PF	-0900-13930	Pacific/Marquesas	Marquesas Islands
@@ -354,10 +352,10 @@ US	+394421-1045903	America/Denver	Mountain Time
 US	+433649-1161209	America/Boise	Mountain Time - south Idaho & east Oregon
 US	+332654-1120424	America/Phoenix	Mountain Standard Time - Arizona (except Navajo)
 US	+340308-1181434	America/Los_Angeles	Pacific Time
-US	+550737-1313435	America/Metlakatla	Pacific Standard Time - Annette Island, Alaska
 US	+611305-1495401	America/Anchorage	Alaska Time
 US	+581807-1342511	America/Juneau	Alaska Time - Alaska panhandle
 US	+571035-1351807	America/Sitka	Alaska Time - southeast Alaska panhandle
+US	+550737-1313435	America/Metlakatla	Alaska Time - Annette Island
 US	+593249-1394338	America/Yakutat	Alaska Time - Alaska panhandle neck
 US	+643004-1652423	America/Nome	Alaska Time - west Alaska
 US	+515248-1763929	America/Adak	Aleutian Islands
