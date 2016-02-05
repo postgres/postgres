@@ -2408,6 +2408,59 @@ SELECT c1,c2,c3,c4 FROM ft2 ORDER BY c1;
  1104 | 204 | ddd                | 
 (819 rows)
 
+EXPLAIN (verbose, costs off)
+INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Insert on public.ft2
+   Output: (tableoid)::regclass
+   Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   ->  Result
+         Output: 9999, 999, NULL::integer, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft2       '::character(10), NULL::user_enum
+(5 rows)
+
+INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
+ tableoid 
+----------
+ ft2
+(1 row)
+
+EXPLAIN (verbose, costs off)
+UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Update on public.ft2
+   Output: (tableoid)::regclass
+   Remote SQL: UPDATE "S 1"."T 1" SET c3 = $2 WHERE ctid = $1
+   ->  Foreign Scan on public.ft2
+         Output: c1, c2, NULL::integer, 'bar'::text, c4, c5, c6, c7, c8, ctid
+         Remote SQL: SELECT "C 1", c2, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" = 9999)) FOR UPDATE
+(6 rows)
+
+UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
+ tableoid 
+----------
+ ft2
+(1 row)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Delete on public.ft2
+   Output: (tableoid)::regclass
+   Remote SQL: DELETE FROM "S 1"."T 1" WHERE ctid = $1
+   ->  Foreign Scan on public.ft2
+         Output: ctid
+         Remote SQL: SELECT ctid FROM "S 1"."T 1" WHERE (("C 1" = 9999)) FOR UPDATE
+(6 rows)
+
+DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
+ tableoid 
+----------
+ ft2
+(1 row)
+
 -- Test that trigger on remote table works as expected
 CREATE OR REPLACE FUNCTION "S 1".F_BRTRIG() RETURNS trigger AS $$
 BEGIN

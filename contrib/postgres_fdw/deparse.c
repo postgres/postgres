@@ -112,6 +112,7 @@ static void deparseTargetList(StringInfo buf,
 				  PlannerInfo *root,
 				  Index rtindex,
 				  Relation rel,
+				  bool is_returning,
 				  Bitmapset *attrs_used,
 				  List **retrieved_attrs);
 static void deparseReturningList(StringInfo buf, PlannerInfo *root,
@@ -776,7 +777,7 @@ deparseSelectSql(Bitmapset *attrs_used, List **retrieved_attrs,
 	 * Construct SELECT list
 	 */
 	appendStringInfoString(buf, "SELECT ");
-	deparseTargetList(buf, root, foreignrel->relid, rel, attrs_used,
+	deparseTargetList(buf, root, foreignrel->relid, rel, false, attrs_used,
 					  retrieved_attrs);
 
 	/*
@@ -790,7 +791,8 @@ deparseSelectSql(Bitmapset *attrs_used, List **retrieved_attrs,
 
 /*
  * Emit a target list that retrieves the columns specified in attrs_used.
- * This is used for both SELECT and RETURNING targetlists.
+ * This is used for both SELECT and RETURNING targetlists; the is_returning
+ * parameter is true only for a RETURNING targetlist.
  *
  * The tlist text is appended to buf, and we also create an integer List
  * of the columns being retrieved, which is returned to *retrieved_attrs.
@@ -800,6 +802,7 @@ deparseTargetList(StringInfo buf,
 				  PlannerInfo *root,
 				  Index rtindex,
 				  Relation rel,
+				  bool is_returning,
 				  Bitmapset *attrs_used,
 				  List **retrieved_attrs)
 {
@@ -829,6 +832,8 @@ deparseTargetList(StringInfo buf,
 		{
 			if (!first)
 				appendStringInfoString(buf, ", ");
+			else if (is_returning)
+				appendStringInfoString(buf, " RETURNING ");
 			first = false;
 
 			deparseColumnRef(buf, rtindex, i, root);
@@ -846,6 +851,8 @@ deparseTargetList(StringInfo buf,
 	{
 		if (!first)
 			appendStringInfoString(buf, ", ");
+		else if (is_returning)
+			appendStringInfoString(buf, " RETURNING ");
 		first = false;
 
 		appendStringInfoString(buf, "ctid");
@@ -855,7 +862,7 @@ deparseTargetList(StringInfo buf,
 	}
 
 	/* Don't generate bad syntax if no undropped columns */
-	if (first)
+	if (first && !is_returning)
 		appendStringInfoString(buf, "NULL");
 }
 
@@ -1113,11 +1120,8 @@ deparseReturningList(StringInfo buf, PlannerInfo *root,
 	}
 
 	if (attrs_used != NULL)
-	{
-		appendStringInfoString(buf, " RETURNING ");
-		deparseTargetList(buf, root, rtindex, rel, attrs_used,
+		deparseTargetList(buf, root, rtindex, rel, true, attrs_used,
 						  retrieved_attrs);
-	}
 	else
 		*retrieved_attrs = NIL;
 }
