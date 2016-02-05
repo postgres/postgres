@@ -984,7 +984,7 @@ CreateSlotOnDisk(ReplicationSlot *slot)
 	/*
 	 * If we'd now fail - really unlikely - we wouldn't know whether this slot
 	 * would persist after an OS crash or not - so, force a restart. The
-	 * restart would try to fysnc this again till it works.
+	 * restart would try to fsync this again till it works.
 	 */
 	START_CRIT_SECTION();
 
