@@ -2154,7 +2154,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 		len = bpchartruelen(authoritative_data, len);
 
 	/*
-	 * If we're using the C collation, use memcmp(), rather than strxfrm(), to
+	 * If we're using the C collation, use memcpy(), rather than strxfrm(), to
 	 * abbreviate keys.  The full comparator for the C locale is always
 	 * memcmp().  It would be incorrect to allow bytea callers (callers that
 	 * always force the C collation -- bytea isn't a collatable type, but this
