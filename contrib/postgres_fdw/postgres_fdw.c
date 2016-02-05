@@ -394,7 +394,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 			fpinfo->shippable_extensions =
 				ExtractExtensionList(defGetString(def), false);
 		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL,10);
+			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
 	}
 	foreach(lc, fpinfo->table->options)
 	{
@@ -403,7 +403,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		if (strcmp(def->defname, "use_remote_estimate") == 0)
 			fpinfo->use_remote_estimate = defGetBoolean(def);
 		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL,10);
+			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
 	}
 
 	/*
@@ -530,8 +530,8 @@ get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	Relids		relids;
 
 	/*
-	 * First, consider whether any active EC is potentially useful for a
-	 * merge join against this relation.
+	 * First, consider whether any active EC is potentially useful for a merge
+	 * join against this relation.
 	 */
 	if (rel->has_eclass_joins)
 	{
@@ -646,13 +646,13 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	/*
-	 * Even if we're not using remote estimates, having the remote side do
-	 * the sort generally won't be any worse than doing it locally, and it
-	 * might be much better if the remote side can generate data in the right
-	 * order without needing a sort at all.  However, what we're going to do
-	 * next is try to generate pathkeys that seem promising for possible merge
-	 * joins, and that's more speculative.  A wrong choice might hurt quite a
-	 * bit, so bail out if we can't use remote estimates.
+	 * Even if we're not using remote estimates, having the remote side do the
+	 * sort generally won't be any worse than doing it locally, and it might
+	 * be much better if the remote side can generate data in the right order
+	 * without needing a sort at all.  However, what we're going to do next is
+	 * try to generate pathkeys that seem promising for possible merge joins,
+	 * and that's more speculative.  A wrong choice might hurt quite a bit, so
+	 * bail out if we can't use remote estimates.
 	 */
 	if (!fpinfo->use_remote_estimate)
 		return useful_pathkeys_list;
@@ -1006,6 +1006,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	deparseSelectStmtForRel(&sql, root, baserel, remote_conds,
 							best_path->path.pathkeys, &retrieved_attrs,
 							&params_list);
+
 	/*
 	 * Build the fdw_private list that will be available to the executor.
 	 * Items in the list must match enum FdwScanPrivateIndex, above.
@@ -1090,7 +1091,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	fsstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
 											   FdwScanPrivateRetrievedAttrs);
 	fsstate->fetch_size = intVal(list_nth(fsplan->fdw_private,
-								 FdwScanPrivateFetchSize));
+										  FdwScanPrivateFetchSize));
 
 	/* Create contexts for batches of tuples and per-tuple temp workspace. */
 	fsstate->batch_cxt = AllocSetContextCreate(estate->es_query_cxt,
@@ -2640,7 +2641,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 
 				if (strcmp(def->defname, "fetch_size") == 0)
 				{
-					fetch_size = strtol(defGetString(def), NULL,10);
+					fetch_size = strtol(defGetString(def), NULL, 10);
 					break;
 				}
 			}
@@ -2650,7 +2651,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 
 				if (strcmp(def->defname, "fetch_size") == 0)
 				{
-					fetch_size = strtol(defGetString(def), NULL,10);
+					fetch_size = strtol(defGetString(def), NULL, 10);
 					break;
 				}
 			}
