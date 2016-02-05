@@ -490,6 +490,8 @@ extern Datum pg_ls_dir(PG_FUNCTION_ARGS);
 extern Datum pg_ls_dir_1arg(PG_FUNCTION_ARGS);
 
 /* misc.c */
+extern Datum pg_num_nulls(PG_FUNCTION_ARGS);
+extern Datum pg_num_nonnulls(PG_FUNCTION_ARGS);
 extern Datum current_database(PG_FUNCTION_ARGS);
 extern Datum current_query(PG_FUNCTION_ARGS);
 extern Datum pg_cancel_backend(PG_FUNCTION_ARGS);
@@ -823,7 +825,7 @@ extern Datum textoverlay_no_len(PG_FUNCTION_ARGS);
 extern Datum name_text(PG_FUNCTION_ARGS);
 extern Datum text_name(PG_FUNCTION_ARGS);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid);
-extern void	varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar);
+extern void varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar);
 extern int varstr_levenshtein(const char *source, int slen,
 				   const char *target, int tlen,
 				   int ins_c, int del_c, int sub_c,

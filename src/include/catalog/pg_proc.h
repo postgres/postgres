@@ -686,6 +686,12 @@ DATA(insert OID = 422 (  hashinet		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0
 DESCR("hash");
 DATA(insert OID = 432 (  hash_numeric	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1700" _null_ _null_ _null_ _null_ _null_ hash_numeric _null_ _null_ _null_ ));
 DESCR("hash");
+
+DATA(insert OID = 438 (  num_nulls		   PGNSP PGUID 12 1 0 2276 0 f f f f f f i s 1 0 23 "2276" "{2276}" "{v}" _null_ _null_ _null_ pg_num_nulls _null_ _null_ _null_ ));
+DESCR("count the number of NULL arguments");
+DATA(insert OID = 440 (  num_nonnulls	   PGNSP PGUID 12 1 0 2276 0 f f f f f f i s 1 0 23 "2276" "{2276}" "{v}" _null_ _null_ _null_ pg_num_nonnulls _null_ _null_ _null_ ));
+DESCR("count the number of non-NULL arguments");
+
 DATA(insert OID = 458 (  text_larger	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 25 "25 25" _null_ _null_ _null_ _null_ _null_ text_larger _null_ _null_ _null_ ));
 DESCR("larger of two");
 DATA(insert OID = 459 (  text_smaller	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 25 "25 25" _null_ _null_ _null_ _null_ _null_ text_smaller _null_ _null_ _null_ ));

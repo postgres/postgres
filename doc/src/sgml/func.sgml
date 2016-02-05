@@ -182,7 +182,7 @@
   </sect1>
 
   <sect1 id="functions-comparison">
-   <title>Comparison Operators</title>
+   <title>Comparison Functions and Operators</title>
 
    <indexterm zone="functions-comparison">
     <primary>comparison</primary>
@@ -190,11 +190,11 @@
    </indexterm>
 
    <para>
-    The usual comparison operators are available, shown in <xref
-    linkend="functions-comparison-table">.
+    The usual comparison operators are available, as shown in <xref
+    linkend="functions-comparison-op-table">.
    </para>
 
-   <table id="functions-comparison-table">
+   <table id="functions-comparison-op-table">
     <title>Comparison Operators</title>
     <tgroup cols="2">
      <thead>
@@ -436,6 +436,49 @@
     type is one of the listed data types.
    </para>
 -->
+
+   <para>
+    Some comparison-related functions are also available, as shown in <xref
+    linkend="functions-comparison-func-table">.
+   </para>
+
+  <table id="functions-comparison-func-table">
+    <title>Comparison Functions</title>
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Example Result</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>num_nonnulls</primary>
+         </indexterm>
+         <literal>num_nonnulls(VARIADIC "any")</literal>
+       </entry>
+       <entry>returns the number of non-NULL arguments</entry>
+       <entry><literal>num_nonnulls(1, NULL, 2)</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>num_nulls</primary>
+         </indexterm>
+         <literal>num_nulls(VARIADIC "any")</literal>
+       </entry>
+       <entry>returns the number of NULL arguments</entry>
+       <entry><literal>num_nulls(1, NULL, 2)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   </sect1>
 
@@ -10389,7 +10432,7 @@ table2-mapping
   </note>
   <para>
    The standard comparison operators shown in  <xref
-   linkend="functions-comparison-table"> are available for
+   linkend="functions-comparison-op-table"> are available for
    <type>jsonb</type>, but not for <type>json</type>. They follow the
    ordering rules for B-tree operations outlined at <xref
    linkend="json-indexing">.

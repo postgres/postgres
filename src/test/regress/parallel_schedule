@@ -89,7 +89,7 @@ test: brin gin gist spgist privileges security_label collate matview lock replic
 # ----------
 # Another group of parallel tests
 # ----------
-test: alter_generic alter_operator misc psql async dbsize
+test: alter_generic alter_operator misc psql async dbsize misc_functions
 
 # rules cannot run concurrently with any test that creates a view
 test: rules
