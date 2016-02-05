@@ -308,6 +308,12 @@ ExecInsert(ModifyTableState *mtstate,
 		/* FDW might have changed tuple */
 		tuple = ExecMaterializeSlot(slot);
 
+		/*
+		 * AFTER ROW Triggers or RETURNING expressions might reference the
+		 * tableoid column, so initialize t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+
 		newId = InvalidOid;
 	}
 	else
@@ -561,6 +567,8 @@ ExecDelete(ItemPointer tupleid,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
+		HeapTuple	tuple;
+
 		/*
 		 * delete from foreign table: let the FDW do it
 		 *
@@ -579,6 +587,15 @@ ExecDelete(ItemPointer tupleid,
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
+
+		/*
+		 * RETURNING expressions might reference the tableoid column, so
+		 * initialize t_tableOid before evaluating them.
+		 */
+		if (slot->tts_isempty)
+			ExecStoreAllNullTuple(slot);
+		tuple = ExecMaterializeSlot(slot);
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 	}
 	else
 	{
@@ -838,6 +855,12 @@ ExecUpdate(ItemPointer tupleid,
 
 		/* FDW might have changed tuple */
 		tuple = ExecMaterializeSlot(slot);
+
+		/*
+		 * AFTER ROW Triggers or RETURNING expressions might reference the
+		 * tableoid column, so initialize t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 	}
 	else
 	{
