@@ -349,11 +349,10 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
      The function returns copy of a local join path, which can be converted
      into an alternative local join plan, which may be useful when
      implementing a <literal>RecheckForeignScan</> method.  The function
-     searches for a parallel-safe, unparameterized path in the
-     <literal>pathlist</> of given <literal>joinrel</>. If it does not find
-     such a path, it returns NULL, in which case a foreign data wrapper may
-     build the local path by itself or may choose not to create access paths
-     for that join.
+     searches for an unparameterized path in the <literal>pathlist</> of given
+     <literal>joinrel</>. If it does not find such a path, it returns NULL, in
+     which case a foreign data wrapper may build the local path by itself or
+     may choose not to create access paths for that join.
     </para>
 
    </sect2>

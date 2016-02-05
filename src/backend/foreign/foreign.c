@@ -801,9 +801,8 @@ get_foreign_server_oid(const char *servername, bool missing_ok)
  *
  * Since the plan created using this path will presumably only be used to
  * execute EPQ checks, efficiency of the path is not a concern. But since the
- * list passed is expected to be from RelOptInfo, it's anyway sorted by total
- * cost and hence we are likely to choose the most efficient path, which is
- * all for the best.
+ * path list in RelOptInfo is anyway sorted by total cost we are likely to
+ * choose the most efficient path, which is all for the best.
  */
 extern Path *
 GetExistingLocalJoinPath(RelOptInfo *joinrel)
@@ -817,8 +816,8 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 		Path	   *path = (Path *) lfirst(lc);
 		JoinPath   *joinpath = NULL;
 
-		/* Skip parameterised or non-parallel-safe paths. */
-		if (path->param_info != NULL || !path->parallel_safe)
+		/* Skip parameterised paths. */
+		if (path->param_info != NULL)
 			continue;
 
 		switch (path->pathtype)
