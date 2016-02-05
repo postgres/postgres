@@ -4465,7 +4465,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 
 	if (configdir && stat(configdir, &stat_buf) != 0)
 	{
-		write_stderr("%s: could not access \"%s\": %s\n",
+		write_stderr("%s: could not access directory \"%s\": %s\n",
 					 progname,
 					 configdir,
 					 strerror(errno));
