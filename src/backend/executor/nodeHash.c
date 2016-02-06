@@ -1121,12 +1121,13 @@ ExecScanHashBucket(HashJoinState *hjstate,
 void
 ExecPrepHashTableForUnmatched(HashJoinState *hjstate)
 {
-	/*
-	 * ---------- During this scan we use the HashJoinState fields as follows:
+	/*----------
+	 * During this scan we use the HashJoinState fields as follows:
 	 *
-	 * hj_CurBucketNo: next regular bucket to scan hj_CurSkewBucketNo: next
-	 * skew bucket (an index into skewBucketNums) hj_CurTuple: last tuple
-	 * returned, or NULL to start next bucket ----------
+	 * hj_CurBucketNo: next regular bucket to scan
+	 * hj_CurSkewBucketNo: next skew bucket (an index into skewBucketNums)
+	 * hj_CurTuple: last tuple returned, or NULL to start next bucket
+	 *----------
 	 */
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurSkewBucketNo = 0;
