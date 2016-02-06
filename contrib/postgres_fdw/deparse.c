@@ -757,7 +757,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
  * We also create an integer List of the columns being retrieved, which is
  * returned to *retrieved_attrs.
  */
-void
+static void
 deparseSelectSql(Bitmapset *attrs_used, List **retrieved_attrs,
 				 deparse_expr_cxt *context)
 {
