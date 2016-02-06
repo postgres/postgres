@@ -765,7 +765,14 @@ AtAbort_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		/* Any portal that was actually running has to be considered broken */
+		/*
+		 * See similar code in AtSubAbort_Portals().  This would fire if code
+		 * orchestrating multiple top-level transactions within a portal, such
+		 * as VACUUM, caught errors and continued under the same portal with a
+		 * fresh transaction.  No part of core PostgreSQL functions that way.
+		 * XXX Such code would wish the portal to remain ACTIVE, as in
+		 * PreCommit_Portals().
+		 */
 		if (portal->status == PORTAL_ACTIVE)
 			MarkPortalFailed(portal);
 
@@ -919,9 +926,10 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 				portal->activeSubid = parentSubid;
 
 				/*
-				 * Upper-level portals that failed while running in this
-				 * subtransaction must be forced into FAILED state, for the
-				 * same reasons discussed below.
+				 * A MarkPortalActive() caller ran an upper-level portal in
+				 * this subtransaction and left the portal ACTIVE.  This can't
+				 * happen, but force the portal into FAILED state for the same
+				 * reasons discussed below.
 				 *
 				 * We assume we can get away without forcing upper-level READY
 				 * portals to fail, even if they were run and then suspended.
@@ -961,6 +969,10 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * We have to do this because they might refer to objects created or
 		 * changed in the failed subtransaction, leading to crashes within
 		 * ExecutorEnd when portalcmds.c tries to close down the portal.
+		 * Currently, every MarkPortalActive() caller ensures it updates the
+		 * portal status again before relinquishing control, so ACTIVE can't
+		 * happen here.  If it does happen, dispose the portal like existing
+		 * MarkPortalActive() callers would.
 		 */
 		if (portal->status == PORTAL_READY ||
 			portal->status == PORTAL_ACTIVE)
