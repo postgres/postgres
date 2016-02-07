@@ -1575,8 +1575,19 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		if (batchno == hashtable->curbatch)
 		{
 			/* Move the tuple to the main hash table */
-			hashTuple->next = hashtable->buckets[bucketno];
-			hashtable->buckets[bucketno] = hashTuple;
+			HashJoinTuple copyTuple;
+
+			/*
+			 * We must copy the tuple into the dense storage, else it will not
+			 * be found by, eg, ExecHashIncreaseNumBatches.
+			 */
+			copyTuple = (HashJoinTuple) dense_alloc(hashtable, tupleSize);
+			memcpy(copyTuple, hashTuple, tupleSize);
+			pfree(hashTuple);
+
+			copyTuple->next = hashtable->buckets[bucketno];
+			hashtable->buckets[bucketno] = copyTuple;
+
 			/* We have reduced skew space, but overall space doesn't change */
 			hashtable->spaceUsedSkew -= tupleSize;
 		}
