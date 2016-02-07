@@ -379,6 +379,19 @@ static const struct config_enum_entry huge_pages_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry force_parallel_mode_options[] = {
+	{"off", FORCE_PARALLEL_OFF, false},
+	{"on", FORCE_PARALLEL_ON, false},
+	{"regress", FORCE_PARALLEL_REGRESS, false},
+	{"true", FORCE_PARALLEL_ON, true},
+	{"false", FORCE_PARALLEL_OFF, true},
+	{"yes", FORCE_PARALLEL_ON, true},
+	{"no", FORCE_PARALLEL_OFF, true},
+	{"1", FORCE_PARALLEL_ON, true},
+	{"0", FORCE_PARALLEL_OFF, true},
+	{NULL, 0, false}
+};
+
 /*
  * Options for enum values stored in other modules
  */
@@ -863,6 +876,7 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
+
 	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("Enables genetic query optimization."),
@@ -3669,6 +3683,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&huge_pages,
 		HUGE_PAGES_TRY, huge_pages_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"force_parallel_mode", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Forces use of parallel query facilities."),
+			gettext_noop("If possible, run query using a parallel worker and with parallel restrictions.")
+		},
+		&force_parallel_mode,
+		FORCE_PARALLEL_OFF, force_parallel_mode_options,
 		NULL, NULL, NULL
 	},
 

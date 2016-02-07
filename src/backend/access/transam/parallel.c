@@ -22,6 +22,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqmq.h"
 #include "miscadmin.h"
+#include "optimizer/planmain.h"
 #include "storage/ipc.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"
@@ -1079,7 +1080,8 @@ ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc)
 static void
 ParallelErrorContext(void *arg)
 {
-	errcontext("parallel worker, PID %d", *(int32 *) arg);
+	if (force_parallel_mode != FORCE_PARALLEL_REGRESS)
+		errcontext("parallel worker, PID %d", *(int32 *) arg);
 }
 
 /*

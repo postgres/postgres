@@ -334,6 +334,7 @@ _copyGather(const Gather *from)
 	 */
 	COPY_SCALAR_FIELD(num_workers);
 	COPY_SCALAR_FIELD(single_copy);
+	COPY_SCALAR_FIELD(invisible);
 
 	return newnode;
 }

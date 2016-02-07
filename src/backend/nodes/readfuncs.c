@@ -2053,6 +2053,7 @@ _readGather(void)
 
 	READ_INT_FIELD(num_workers);
 	READ_BOOL_FIELD(single_copy);
+	READ_BOOL_FIELD(invisible);
 
 	READ_DONE();
 }

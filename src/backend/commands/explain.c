@@ -23,6 +23,7 @@
 #include "foreign/fdwapi.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/tcopprot.h"
@@ -572,6 +573,7 @@ void
 ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
 	Bitmapset  *rels_used = NULL;
+	PlanState *ps;
 
 	Assert(queryDesc->plannedstmt != NULL);
 	es->pstmt = queryDesc->plannedstmt;
@@ -580,7 +582,17 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
 	es->deparse_cxt = deparse_context_for_plan_rtable(es->rtable,
 													  es->rtable_names);
-	ExplainNode(queryDesc->planstate, NIL, NULL, NULL, es);
+
+	/*
+	 * Sometimes we mark a Gather node as "invisible", which means that it's
+	 * not displayed in EXPLAIN output.  The purpose of this is to allow
+	 * running regression tests with force_parallel_mode=regress to get the
+	 * same results as running the same tests with force_parallel_mode=off.
+	 */
+	ps = queryDesc->planstate;
+	if (IsA(ps, GatherState) &&((Gather *) ps->plan)->invisible)
+		ps = outerPlanState(ps);
+	ExplainNode(ps, NIL, NULL, NULL, es);
 }
 
 /*

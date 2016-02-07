@@ -108,6 +108,9 @@ typedef struct PlannerGlobal
 	bool		parallelModeOK; /* parallel mode potentially OK? */
 
 	bool		parallelModeNeeded;		/* parallel mode actually required? */
+
+	bool		wholePlanParallelSafe;	/* is the entire plan parallel safe? */
+
 	bool		hasForeignJoin;	/* does have a pushed down foreign join */
 } PlannerGlobal;
 

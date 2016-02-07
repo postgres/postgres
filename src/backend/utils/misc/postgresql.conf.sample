@@ -313,6 +313,7 @@
 #from_collapse_limit = 8
 #join_collapse_limit = 8		# 1 disables collapsing of explicit
 					# JOIN clauses
+#force_parallel_mode = off
 
 
 #------------------------------------------------------------------------------

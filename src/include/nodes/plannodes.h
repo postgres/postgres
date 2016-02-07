@@ -775,6 +775,7 @@ typedef struct Gather
 	Plan		plan;
 	int			num_workers;
 	bool		single_copy;
+	bool		invisible;		/* suppress EXPLAIN display (for testing)? */
 } Gather;
 
 /* ----------------

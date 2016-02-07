@@ -212,6 +212,10 @@ create_plan(PlannerInfo *root, Path *best_path)
 	/* Recursively process the path tree */
 	plan = create_plan_recurse(root, best_path);
 
+	/* Update parallel safety information if needed. */
+	if (!best_path->parallel_safe)
+		root->glob->wholePlanParallelSafe = false;
+
 	/* Check we successfully assigned all NestLoopParams to plan nodes */
 	if (root->curOuterParams != NIL)
 		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");
@@ -4829,6 +4833,7 @@ make_gather(List *qptlist,
 	plan->righttree = NULL;
 	node->num_workers = nworkers;
 	node->single_copy = single_copy;
+	node->invisible	= false;
 
 	return node;
 }
