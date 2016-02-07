@@ -432,6 +432,9 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	if (pcxt->nworkers == 0)
 		return;
 
+	/* We need to be a lock group leader. */
+	BecomeLockGroupLeader();
+
 	/* If we do have workers, we'd better have a DSM segment. */
 	Assert(pcxt->seg != NULL);
 
@@ -950,6 +953,19 @@ ParallelWorkerMain(Datum main_arg)
 	 * Hooray! Primary initialization is complete.  Now, we need to set up our
 	 * backend-local state to match the original backend.
 	 */
+
+	/*
+	 * Join locking group.  We must do this before anything that could try
+	 * to acquire a heavyweight lock, because any heavyweight locks acquired
+	 * to this point could block either directly against the parallel group
+	 * leader or against some process which in turn waits for a lock that
+	 * conflicts with the parallel group leader, causing an undetected
+	 * deadlock.  (If we can't join the lock group, the leader has gone away,
+	 * so just exit quietly.)
+	 */
+	if (!BecomeLockGroupMember(fps->parallel_master_pgproc,
+							   fps->parallel_master_pid))
+		return;
 
 	/*
 	 * Load libraries that were loaded by original backend.  We want to do

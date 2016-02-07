@@ -155,6 +155,15 @@ struct PGPROC
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */
+
+	/*
+	 * Support for lock groups.  Use LockHashPartitionLockByProc to get the
+	 * LWLock protecting these fields.
+	 */
+	int			lockGroupLeaderIdentifier;	/* MyProcPid, if I'm a leader */
+	PGPROC	   *lockGroupLeader;	/* lock group leader, if I'm a follower */
+	dlist_head	lockGroupMembers;	/* list of members, if I'm a leader */
+	dlist_node  lockGroupLink;		/* my member link, if I'm a member */
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
@@ -271,5 +280,8 @@ extern void LockErrorCleanup(void);
 
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);
+
+extern void BecomeLockGroupLeader(void);
+extern bool BecomeLockGroupMember(PGPROC *leader, int pid);
 
 #endif   /* PROC_H */
