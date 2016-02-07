@@ -495,8 +495,8 @@ CREATE TABLE products (
    </indexterm>
 
    <para>
-    Unique constraints ensure that the data contained in a column or a
-    group of columns is unique with respect to all the rows in the
+    Unique constraints ensure that the data contained in a column, or a
+    group of columns, is unique among all the rows in the
     table.  The syntax is:
 <programlisting>
 CREATE TABLE products (
@@ -518,8 +518,8 @@ CREATE TABLE products (
    </para>
 
    <para>
-    If a unique constraint refers to a group of columns, the columns
-    are listed separated by commas:
+    To define a unique constraint for a group of columns, write it as a
+    table constraint with the column names separated by commas:
 <programlisting>
 CREATE TABLE example (
     a integer,
@@ -546,9 +546,10 @@ CREATE TABLE products (
 
    <para>
     Adding a unique constraint will automatically create a unique B-tree
-    index on the column or group of columns used in the constraint.
-    A uniqueness constraint on only some rows can be enforced by creating
-    a <link linkend="indexes-partial">partial index</link>.
+    index on the column or group of columns listed in the constraint.
+    A uniqueness restriction covering only some rows cannot be written as
+    a unique constraint, but it is possible to enforce such a restriction by
+    creating a unique <link linkend="indexes-partial">partial index</link>.
    </para>
 
    <indexterm>
@@ -557,10 +558,10 @@ CREATE TABLE products (
    </indexterm>
 
    <para>
-    In general, a unique constraint is violated when there is more than
+    In general, a unique constraint is violated if there is more than
     one row in the table where the values of all of the
     columns included in the constraint are equal.
-    However, two null values are not considered equal in this
+    However, two null values are never considered equal in this
     comparison.  That means even in the presence of a
     unique constraint it is possible to store duplicate
     rows that contain a null value in at least one of the constrained
@@ -584,8 +585,9 @@ CREATE TABLE products (
    </indexterm>
 
    <para>
-    Technically, a primary key constraint is simply a combination of a
-    unique constraint and a not-null constraint.  So, the following
+    A primary key constraint indicates that a column, or group of columns,
+    can be used as a unique identifier for rows in the table.  This
+    requires that the values be both unique and not null.  So, the following
     two table definitions accept the same data:
 <programlisting>
 CREATE TABLE products (
@@ -605,7 +607,7 @@ CREATE TABLE products (
    </para>
 
    <para>
-    Primary keys can also constrain more than one column; the syntax
+    Primary keys can span more than one column; the syntax
     is similar to unique constraints:
 <programlisting>
 CREATE TABLE example (
@@ -618,30 +620,30 @@ CREATE TABLE example (
    </para>
 
    <para>
-    A primary key indicates that a column or group of columns can be
-    used as a unique identifier for rows in the table.  (This is a
-    direct consequence of the definition of a primary key.  Note that
-    a unique constraint does not, by itself, provide a unique identifier
-    because it does not exclude null values.)  This is useful both for
-    documentation purposes and for client applications.  For example,
-    a GUI application that allows modifying row values probably needs
-    to know the primary key of a table to be able to identify rows
-    uniquely.
-   </para>
-
-   <para>
     Adding a primary key will automatically create a unique B-tree index
-    on the column or group of columns used in the primary key.
+    on the column or group of columns listed in the primary key, and will
+    force the column(s) to be marked <literal>NOT NULL</>.
    </para>
 
    <para>
     A table can have at most one primary key.  (There can be any number
-    of unique and not-null constraints, which are functionally the same
-    thing, but only one can be identified as the primary key.)
+    of unique and not-null constraints, which are functionally almost the
+    same thing, but only one can be identified as the primary key.)
     Relational database theory
     dictates that every table must have a primary key.  This rule is
     not enforced by <productname>PostgreSQL</productname>, but it is
     usually best to follow it.
+   </para>
+
+   <para>
+    Primary keys are useful both for
+    documentation purposes and for client applications.  For example,
+    a GUI application that allows modifying row values probably needs
+    to know the primary key of a table to be able to identify rows
+    uniquely.  There are also various ways in which the database system
+    makes use of a primary key if one has been declared; for example,
+    the primary key defines the default target column(s) for foreign keys
+    referencing its table.
    </para>
   </sect2>
 
