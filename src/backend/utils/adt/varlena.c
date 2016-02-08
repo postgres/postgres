@@ -40,7 +40,7 @@
 int			bytea_output = BYTEA_OUTPUT_HEX;
 
 typedef struct varlena unknown;
-typedef struct varlena string;
+typedef struct varlena VarString;
 
 typedef struct
 {
@@ -75,7 +75,7 @@ typedef struct
 #ifdef HAVE_LOCALE_T
 	pg_locale_t locale;
 #endif
-} StringSortSupport;
+} VarStringSortSupport;
 
 /*
  * This should be large enough that most strings will fit, but small enough
@@ -89,8 +89,8 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-#define DatumGetStringP(X)			((string *) PG_DETOAST_DATUM(X))
-#define DatumGetStringPP(X)			((string *) PG_DETOAST_DATUM_PACKED(X))
+#define DatumGetVarStringP(X)		((VarString *) PG_DETOAST_DATUM(X))
+#define DatumGetVarStringPP(X)		((VarString *) PG_DETOAST_DATUM_PACKED(X))
 
 static int	varstrfastcmp_c(Datum x, Datum y, SortSupport ssup);
 static int bpcharfastcmp_c(Datum x, Datum y, SortSupport ssup);
@@ -1766,7 +1766,7 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 {
 	bool		abbreviate = ssup->abbreviate;
 	bool		collate_c = false;
-	StringSortSupport *sss;
+	VarStringSortSupport *sss;
 
 #ifdef HAVE_LOCALE_T
 	pg_locale_t locale = 0;
@@ -1853,7 +1853,7 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 	 */
 	if (abbreviate || !collate_c)
 	{
-		sss = palloc(sizeof(StringSortSupport));
+		sss = palloc(sizeof(VarStringSortSupport));
 		sss->buf1 = palloc(TEXTBUFLEN);
 		sss->buflen1 = TEXTBUFLEN;
 		sss->buf2 = palloc(TEXTBUFLEN);
@@ -1909,8 +1909,8 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 static int
 varstrfastcmp_c(Datum x, Datum y, SortSupport ssup)
 {
-	string	   *arg1 = DatumGetStringPP(x);
-	string	   *arg2 = DatumGetStringPP(y);
+	VarString  *arg1 = DatumGetVarStringPP(x);
+	VarString  *arg2 = DatumGetVarStringPP(y);
 	char	   *a1p,
 			   *a2p;
 	int			len1,
@@ -1979,10 +1979,10 @@ bpcharfastcmp_c(Datum x, Datum y, SortSupport ssup)
 static int
 varstrfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 {
-	string	   *arg1 = DatumGetStringPP(x);
-	string	   *arg2 = DatumGetStringPP(y);
-	bool		arg1_match;
-	StringSortSupport *sss = (StringSortSupport *) ssup->ssup_extra;
+	VarString	   *arg1 = DatumGetVarStringPP(x);
+	VarString	   *arg2 = DatumGetVarStringPP(y);
+	bool			arg1_match;
+	VarStringSortSupport *sss = (VarStringSortSupport *) ssup->ssup_extra;
 
 	/* working state */
 	char	   *a1p,
@@ -2134,9 +2134,9 @@ varstrcmp_abbrev(Datum x, Datum y, SortSupport ssup)
 static Datum
 varstr_abbrev_convert(Datum original, SortSupport ssup)
 {
-	StringSortSupport *sss = (StringSortSupport *) ssup->ssup_extra;
-	string	   *authoritative = DatumGetStringPP(original);
-	char	   *authoritative_data = VARDATA_ANY(authoritative);
+	VarStringSortSupport *sss = (VarStringSortSupport *) ssup->ssup_extra;
+	VarString	   *authoritative = DatumGetVarStringPP(original);
+	char		   *authoritative_data = VARDATA_ANY(authoritative);
 
 	/* working state */
 	Datum		res;
@@ -2311,7 +2311,7 @@ done:
 static bool
 varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 {
-	StringSortSupport *sss = (StringSortSupport *) ssup->ssup_extra;
+	VarStringSortSupport *sss = (VarStringSortSupport *) ssup->ssup_extra;
 	double		abbrev_distinct,
 				key_distinct;
 
