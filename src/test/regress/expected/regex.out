@@ -495,3 +495,5 @@ select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
 ERROR:  invalid regular expression: invalid backreference number
 select 'xyz' ~ 'x(\w)(?=(\1))';
 ERROR:  invalid regular expression: invalid backreference number
+select 'a' ~ '\x7fffffff';  -- invalid chr code
+ERROR:  invalid regular expression: invalid escape \ sequence
