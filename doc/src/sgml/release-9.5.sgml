@@ -30,6 +30,29 @@
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3bb3f42f3] 2016-02-08 10:25:40 -0500
+Branch: REL9_5_STABLE [a61de2bc1] 2016-02-08 10:25:40 -0500
+Branch: REL9_4_STABLE [fdc3139e2] 2016-02-08 10:25:40 -0500
+Branch: REL9_3_STABLE [6403a6b74] 2016-02-08 10:25:40 -0500
+Branch: REL9_2_STABLE [e93516cf7] 2016-02-08 10:25:40 -0500
+Branch: REL9_1_STABLE [98d6b7305] 2016-02-08 10:25:40 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix infinite loops and buffer-overrun problems in regular expressions
+      (Tom Lane)
+     </para>
+
+     <para>
+      Very large character ranges in bracket expressions could cause
+      infinite loops in some cases, and memory overwrites in other cases.
+      (CVE-2016-0773)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [f867ce551] 2016-02-07 12:29:32 -0500
 Branch: REL9_5_STABLE [129db3cbe] 2016-02-07 12:29:17 -0500
 -->
@@ -38,6 +61,32 @@ Branch: REL9_5_STABLE [129db3cbe] 2016-02-07 12:29:17 -0500
      <para>
       Fix an oversight that caused hash joins to miss joining to some tuples
       of the inner relation in rare cases (Tomas Vondra, Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [a6897efab] 2016-02-08 11:03:31 +0100
+Branch: REL9_5_STABLE [87dbc72a7] 2016-02-08 11:03:37 +0100
+-->
+
+    <listitem>
+     <para>
+      Avoid pushdown of <literal>HAVING</> clauses when grouping sets are
+      used (Andrew Gierth)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [cc2ca9319] 2016-02-07 14:57:24 -0500
+Branch: REL9_5_STABLE [82406d6ff] 2016-02-07 14:57:24 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix deparsing of <literal>ON CONFLICT</> arbiter <literal>WHERE</>
+      clauses (Peter Geoghegan)
      </para>
     </listitem>
 
@@ -272,6 +321,8 @@ Branch: REL9_5_STABLE [40482e606] 2016-02-01 13:20:37 +0100
 Branch: REL9_3_STABLE [0b55fef39] 2016-02-01 13:19:10 +0100
 Branch: REL9_2_STABLE [d9ce5d201] 2016-02-01 13:19:34 +0100
 Branch: REL9_1_STABLE [79782b407] 2016-02-01 13:19:43 +0100
+Author: Andres Freund <andres@anarazel.de>
+Branch: REL9_4_STABLE [33b26426e] 2016-02-08 11:10:14 +0100
 -->
 
     <listitem>

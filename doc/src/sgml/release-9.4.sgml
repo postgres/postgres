@@ -65,6 +65,19 @@ Branch: REL9_4_STABLE [788e35ac0] 2015-11-05 18:15:48 -0500
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      Fix infinite loops and buffer-overrun problems in regular expressions
+      (Tom Lane)
+     </para>
+
+     <para>
+      Very large character ranges in bracket expressions could cause
+      infinite loops in some cases, and memory overwrites in other cases.
+      (CVE-2016-0773)
+     </para>
+    </listitem>
+
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [7e2a18a91] 2015-10-06 17:15:52 -0400
