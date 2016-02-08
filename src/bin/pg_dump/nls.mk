@@ -1,6 +1,6 @@
 # src/bin/pg_dump/nls.mk
 CATALOG_NAME     = pg_dump
-AVAIL_LANGUAGES  = cs de es fr it ja pl pt_BR ru zh_CN
+AVAIL_LANGUAGES  = cs de es fr it ja ko pl pt_BR ru zh_CN
 GETTEXT_FILES    = pg_backup_archiver.c pg_backup_db.c pg_backup_custom.c \
                    pg_backup_null.c pg_backup_tar.c \
                    pg_backup_directory.c dumputils.c compress_io.c \

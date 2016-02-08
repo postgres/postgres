@@ -1,0 +1,91 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2016 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL) 9.5\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2016-02-01 11:24+0900\n"
+"PO-Revision-Date: 2016-02-01 11:47+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ko\n"
+
+#: pltcl.c:555
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "pltcl_modules 안에 \"unknown\" 모듈을 찾을 수 없음"
+
+#: pltcl.c:591
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "\"unknown\" 모듈을 불러올 수 없음: %s"
+
+#: pltcl.c:1047
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "트리거에서 반환값을 분리할 수 없음: %s"
+
+#: pltcl.c:1058
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "트리거 반환 목록은 그 요소의 개수가 짝수여야 함"
+
+#: pltcl.c:1094
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "\"%s\" 속성을 알 수 없음"
+
+#: pltcl.c:1099
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "\"%s\" 시스템 속성을 지정할 수 없음"
+
+#: pltcl.c:1222 pltcl.c:1648
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1223
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"해당 PL/Tcl 함수: \"%s\""
+
+#: pltcl.c:1331 pltcl.c:1338
+#, c-format
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: pltcl.c:1386
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "트리거 함수는 트리거로만 호출될 수 있음"
+
+#: pltcl.c:1395
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl 함수는 %s 자료형을 반환할 수 없음"
+
+#: pltcl.c:1407
+#, c-format
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl 함수는 복합 자료형을 반환할 수 없음"
+
+#: pltcl.c:1446
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl 함수는 %s 자료형을 사용할 수 없음"
+
+#: pltcl.c:1564
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "\"%s\" 내부 프로시져를 만들 수 없음: %s"

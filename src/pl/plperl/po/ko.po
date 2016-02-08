@@ -1,0 +1,229 @@
+# LANGUAGE message translation file for plperl
+# Copyright (C) 2016 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plperl (PostgreSQL) 9.5\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2016-02-01 10:02+0900\n"
+"PO-Revision-Date: 2016-02-01 10:58+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ko\n"
+
+#: plperl.c:404
+msgid ""
+"If true, trusted and untrusted Perl code will be compiled in strict mode."
+msgstr "true로 지정하면, Perl 코드가 엄격한 구문 검사로 컴파일 됨"
+
+#: plperl.c:418
+msgid ""
+"Perl initialization code to execute when a Perl interpreter is initialized."
+msgstr "Perl 인터프리터가 초기화 될 때 실행할 Perl 초기화 코드"
+
+#: plperl.c:440
+msgid "Perl initialization code to execute once when plperl is first used."
+msgstr "plperl 모듈이 처음 사용될 때 실행할 Perl 초기화 코드"
+
+#: plperl.c:448
+msgid "Perl initialization code to execute once when plperlu is first used."
+msgstr "plperlu 모듈이 처음 사용될 때 실행할 Perl 초기화 코드"
+
+#: plperl.c:645
+#, c-format
+msgid "cannot allocate multiple Perl interpreters on this platform"
+msgstr "이 플랫폼에 여러 Perl 인터프리터를 사용할 수 없음"
+
+#: plperl.c:665 plperl.c:840 plperl.c:846 plperl.c:960 plperl.c:972
+#: plperl.c:1015 plperl.c:1036 plperl.c:2068 plperl.c:2177 plperl.c:2244
+#: plperl.c:2306
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plperl.c:666
+#, c-format
+msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
+msgstr "PostgreSQL::InServer::SPI::bootstrap 실행 중"
+
+#: plperl.c:841
+#, c-format
+msgid "while parsing Perl initialization"
+msgstr "Perl 초기화 구문 분석 중"
+
+#: plperl.c:847
+#, c-format
+msgid "while running Perl initialization"
+msgstr "Perl 초기화 실행 중"
+
+#: plperl.c:961
+#, c-format
+msgid "while executing PLC_TRUSTED"
+msgstr "PLC_TRUSTED 실행 중"
+
+#: plperl.c:973
+#, c-format
+msgid "while executing utf8fix"
+msgstr "utf8fix 실행 중"
+
+#: plperl.c:1016
+#, c-format
+msgid "while executing plperl.on_plperl_init"
+msgstr "plperl.on_plperl_init 실행 중"
+
+#: plperl.c:1037
+#, c-format
+msgid "while executing plperl.on_plperlu_init"
+msgstr "plperl.on_plperlu_init 실행 중"
+
+#: plperl.c:1081 plperl.c:1710
+#, c-format
+msgid "Perl hash contains nonexistent column \"%s\""
+msgstr "Perl 해시에 존재하지 않는 \"%s\" 칼럼이 포함되었습니다"
+
+#: plperl.c:1166
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "지정한 배열 크기(%d)가 최대치(%d)를 초과했습니다"
+
+#: plperl.c:1178 plperl.c:1195
+#, c-format
+msgid ""
+"multidimensional arrays must have array expressions with matching dimensions"
+msgstr "다차원 배열에는 일치하는 차원이 포함된 배열 식이 있어야 함"
+
+#: plperl.c:1230
+#, c-format
+msgid "cannot convert Perl array to non-array type %s"
+msgstr "Perl 배열형을 비배열형 %s 자료형으로 변환할 수 없음"
+
+#: plperl.c:1332
+#, c-format
+msgid "cannot convert Perl hash to non-composite type %s"
+msgstr "Perl 해시 자료형을 비복합 %s 자료형으로 변환할 수 없음"
+
+#: plperl.c:1343
+#, c-format
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr "반환 자료형이 record인데 함수가 그 자료형으로 반환하지 않음"
+
+#: plperl.c:1358
+#, c-format
+msgid "PL/Perl function must return reference to hash or array"
+msgstr "PL/Perl 함수는 해시나 배열 자료형을 참조하게 반환해야 함"
+
+#: plperl.c:1395
+#, c-format
+msgid "lookup failed for type %s"
+msgstr "%s 자료형 찾기 실패"
+
+#: plperl.c:1687
+#, c-format
+msgid "$_TD->{new} does not exist"
+msgstr "$_TD->{new} 없음"
+
+#: plperl.c:1691
+#, c-format
+msgid "$_TD->{new} is not a hash reference"
+msgstr "$_TD->{new} 자료형이 해시 참조가 아님"
+
+#: plperl.c:1944 plperl.c:2778
+#, c-format
+msgid "PL/Perl functions cannot return type %s"
+msgstr "PL/Perl 함수는 %s 자료형을 반환할 수 없음"
+
+#: plperl.c:1957 plperl.c:2823
+#, c-format
+msgid "PL/Perl functions cannot accept type %s"
+msgstr "PL/Perl 함수는 %s 자료형을 사용할 수 없음"
+
+#: plperl.c:2073
+#, c-format
+msgid "didn't get a CODE reference from compiling function \"%s\""
+msgstr "\"%s\" 함수를 컴파일 하면서 코드 참조를 구할 수 없음"
+
+#: plperl.c:2165
+#, c-format
+msgid "didn't get a return item from function"
+msgstr "함수에서 반환할 항목을 못 찾음"
+
+#: plperl.c:2208 plperl.c:2274
+#, c-format
+msgid "couldn't fetch $_TD"
+msgstr "$_TD 못 구함"
+
+#: plperl.c:2232 plperl.c:2294
+#, c-format
+msgid "didn't get a return item from trigger function"
+msgstr "트리거 함수에서 반환할 항목을 못 찾음"
+
+#: plperl.c:2351
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr ""
+"set-values 함수(테이블 리턴 함수)가 set 정의 없이 사용되었습니다 (테이블과 해"
+"당 열 alias 지정하세요)"
+
+#: plperl.c:2395
+#, c-format
+msgid ""
+"set-returning PL/Perl function must return reference to array or use "
+"return_next"
+msgstr ""
+"집합 반환 PL/Perl 함수는 배열 또는 return_next 를 사용해서 반환해야 함"
+
+#: plperl.c:2509
+#, c-format
+msgid "ignoring modified row in DELETE trigger"
+msgstr "DELETE 트리거에서는 변경된 로우는 무시 함"
+
+#: plperl.c:2517
+#, c-format
+msgid ""
+"result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
+msgstr "PL/Perl 트리거 함수의 결과는 undef, \"SKIP\", \"MODIFY\" 중 하나여야 함"
+
+#: plperl.c:2696 plperl.c:2706
+#, c-format
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: plperl.c:2770
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "트리거 함수는 트리거로만 호출될 수 있음"
+
+#: plperl.c:3146
+#, c-format
+msgid "cannot use return_next in a non-SETOF function"
+msgstr "SETOF 함수가 아닌 경우에는 return_next 구문을 쓸 수 없음"
+
+#: plperl.c:3202
+#, c-format
+msgid ""
+"SETOF-composite-returning PL/Perl function must call return_next with "
+"reference to hash"
+msgstr ""
+"SETOF-composite-returning PL/Perl 함수는 return_next 에서"
+" 해시 자료형을 참조해야 함"
+
+#: plperl.c:3936
+#, c-format
+msgid "PL/Perl function \"%s\""
+msgstr "\"%s\" PL/Perl 함수"
+
+#: plperl.c:3948
+#, c-format
+msgid "compilation of PL/Perl function \"%s\""
+msgstr "\"%s\" PL/Perl 함수 컴필레이션"
+
+#: plperl.c:3957
+#, c-format
+msgid "PL/Perl anonymous code block"
+msgstr "PL/Perl 익명 코드 블럭"
