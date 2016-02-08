@@ -1691,6 +1691,10 @@ BufferSync(int flags)
 		UnlockBufHdr(bufHdr);
 	}
 
+	elog(IsPostmasterEnvironment ? LOG : NOTICE,
+		 "BufferSync(%x) beginning to write %d buffers at %s",
+		 flags, num_to_write, current_time_as_str());
+
 	if (num_to_write == 0)
 		return;					/* nothing to do */
 
@@ -1745,6 +1749,11 @@ BufferSync(int flags)
 				if (num_written >= num_to_write)
 					break;
 
+				if ((num_written % 1024) == 0)
+					elog(IsPostmasterEnvironment ? LOG : NOTICE,
+						 "BufferSync(%x) wrote %d/%d buffers at %s",
+						 flags, num_written, num_to_write, current_time_as_str());
+
 				/*
 				 * Sleep to throttle our I/O rate.
 				 */
@@ -1755,6 +1764,10 @@ BufferSync(int flags)
 		if (++buf_id >= NBuffers)
 			buf_id = 0;
 	}
+
+	elog(IsPostmasterEnvironment ? LOG : NOTICE,
+		 "BufferSync(%x) done, wrote %d/%d buffers at %s",
+		 flags, num_written, num_to_write, current_time_as_str());
 
 	/*
 	 * Update checkpoint statistics. As noted above, this doesn't include

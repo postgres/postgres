@@ -448,6 +448,7 @@ extern char *local_preload_libraries_string;
 #define LOCK_FILE_LINE_LISTEN_ADDR	6
 #define LOCK_FILE_LINE_SHMEM_KEY	7
 
+extern const char *current_time_as_str(void);
 extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster,
 					 const char *socketDir);
