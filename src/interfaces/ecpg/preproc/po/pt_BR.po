@@ -293,7 +293,7 @@ msgid ""
 "internal error: unreachable state; please report this to <pgsql-"
 "bugs@postgresql.org>"
 msgstr ""
-"erro interno: estado inacessível; por favor relato isso a <psql-"
+"erro interno: estado inacessível; por favor relato isso a <pgsql-"
 "bugs@postgresql.org>"
 
 #: pgc.l:1340
