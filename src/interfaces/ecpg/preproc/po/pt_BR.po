@@ -303,7 +303,7 @@ msgstr "erro de sintaxe no comando EXEC SQL INCLUDE"
 #: pgc.l:1218
 #, c-format
 msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
-msgstr "erro interno: estado inacessível; por favor relato isso a <psql-bugs@postgresql.org>"
+msgstr "erro interno: estado inacessível; por favor relato isso a <pgsql-bugs@postgresql.org>"
 
 #: pgc.l:1343
 #, c-format

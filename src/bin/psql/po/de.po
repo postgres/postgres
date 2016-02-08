@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-09-19 09:47+0000\n"
-"PO-Revision-Date: 2015-09-19 22:53-0400\n"
+"PO-Revision-Date: 2015-12-10 22:34-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -1657,7 +1657,7 @@ msgstr "Allgemeine Optionen:\n"
 #: help.c:91
 #, c-format
 msgid "  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"
-msgstr "  -c, --command=ANWEISUNG   einzelne Anweisung ausführen und beenden\n"
+msgstr "  -c, --command=ANWEISUNG  einzelne Anweisung ausführen und beenden\n"
 
 #: help.c:92
 #, c-format
