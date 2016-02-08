@@ -36,6 +36,19 @@
 
     <listitem>
      <para>
+      Fix infinite loops and buffer-overrun problems in regular expressions
+      (Tom Lane)
+     </para>
+
+     <para>
+      Very large character ranges in bracket expressions could cause
+      infinite loops in some cases, and memory overwrites in other cases.
+      (CVE-2016-0773)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Perform an immediate shutdown if the <filename>postmaster.pid</> file
       is removed (Tom Lane)
      </para>
