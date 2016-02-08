@@ -607,6 +607,60 @@ having exists (select 1 from onek b where sum(distinct a.four) = b.four);
    9 |   3
 (25 rows)
 
+-- Tests around pushdown of HAVING clauses, partially testing against previous bugs
+select a,count(*) from gstest2 group by rollup(a) order by a;
+ a | count 
+---+-------
+ 1 |     8
+ 2 |     1
+   |     9
+(3 rows)
+
+select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 order by a;
+ a | count 
+---+-------
+ 2 |     1
+   |     9
+(2 rows)
+
+explain (costs off)
+  select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 order by a;
+            QUERY PLAN            
+----------------------------------
+ GroupAggregate
+   Group Key: a
+   Group Key: ()
+   Filter: (a IS DISTINCT FROM 1)
+   ->  Sort
+         Sort Key: a
+         ->  Seq Scan on gstest2
+(7 rows)
+
+select v.c, (select count(*) from gstest2 group by () having v.c)
+  from (values (false),(true)) v(c) order by v.c;
+ c | count 
+---+-------
+ f |      
+ t |     9
+(2 rows)
+
+explain (costs off)
+  select v.c, (select count(*) from gstest2 group by () having v.c)
+    from (values (false),(true)) v(c) order by v.c;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Sort
+   Sort Key: "*VALUES*".column1
+   ->  Values Scan on "*VALUES*"
+         SubPlan 1
+           ->  Aggregate
+                 Group Key: ()
+                 Filter: "*VALUES*".column1
+                 ->  Result
+                       One-Time Filter: "*VALUES*".column1
+                       ->  Seq Scan on gstest2
+(10 rows)
+
 -- HAVING with GROUPING queries
 select ten, grouping(ten) from onek
 group by grouping sets(ten) having grouping(ten) >= 0
