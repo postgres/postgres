@@ -653,13 +653,19 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * In some cases we may want to transfer a HAVING clause into WHERE. We
 	 * cannot do so if the HAVING clause contains aggregates (obviously) or
 	 * volatile functions (since a HAVING clause is supposed to be executed
-	 * only once per group).  Also, it may be that the clause is so expensive
-	 * to execute that we're better off doing it only once per group, despite
-	 * the loss of selectivity.  This is hard to estimate short of doing the
-	 * entire planning process twice, so we use a heuristic: clauses
-	 * containing subplans are left in HAVING.  Otherwise, we move or copy the
-	 * HAVING clause into WHERE, in hopes of eliminating tuples before
-	 * aggregation instead of after.
+	 * only once per group).  We also can't do this if there are any nonempty
+	 * grouping sets; moving such a clause into WHERE would potentially change
+	 * the results, if any referenced column isn't present in all the grouping
+	 * sets.  (If there are only empty grouping sets, then the HAVING clause
+	 * must be degenerate as discussed below.)
+	 *
+	 * Also, it may be that the clause is so expensive to execute that we're
+	 * better off doing it only once per group, despite the loss of
+	 * selectivity.  This is hard to estimate short of doing the entire
+	 * planning process twice, so we use a heuristic: clauses containing
+	 * subplans are left in HAVING.  Otherwise, we move or copy the HAVING
+	 * clause into WHERE, in hopes of eliminating tuples before aggregation
+	 * instead of after.
 	 *
 	 * If the query has explicit grouping then we can simply move such a
 	 * clause into WHERE; any group that fails the clause will not be in the
@@ -679,7 +685,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	{
 		Node	   *havingclause = (Node *) lfirst(l);
 
-		if (contain_agg_clause(havingclause) ||
+		if ((parse->groupClause && parse->groupingSets) ||
+			contain_agg_clause(havingclause) ||
 			contain_volatile_functions(havingclause) ||
 			contain_subplans(havingclause))
 		{
