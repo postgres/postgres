@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-11-08 02:10+0000\n"
-"PO-Revision-Date: 2014-11-10 22:52+0200\n"
+"PO-Revision-Date: 2015-12-22 21:45-0500\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -12645,7 +12645,7 @@ msgid ""
 "This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMMAX parameter, or possibly that it is less than your kernel's SHMMIN parameter.\n"
 "The PostgreSQL documentation contains more information about shared memory configuration."
 msgstr ""
-"Ten błąd zwykle oznacza, że ​​żądanie segmentu pamięci współdzielonej przez PostgreSQL przekracza wartość parametru jądra SHMMAX lub może być mniejsza niż parametr SHMMIN.\n"
+"Ten błąd zwykle oznacza, że żądanie segmentu pamięci współdzielonej przez PostgreSQL przekracza wartość parametru jądra SHMMAX lub może być mniejsza niż parametr SHMMIN.\n"
 "Dokumentacja PostgreSQL zawiera więcej informacji o konfiguracji pamięci współdzielonej."
 
 #: port/pg_shmem.c:153 port/sysv_shmem.c:153
@@ -12654,7 +12654,7 @@ msgid ""
 "This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMALL parameter.  You might need to reconfigure the kernel with larger SHMALL.\n"
 "The PostgreSQL documentation contains more information about shared memory configuration."
 msgstr ""
-"Ten błąd zwykle oznacza, że ​​żądanie segmentu pamięci współdzielonej przez PostgreSQL przekracza ilość dostępnej pamięci lub przestrzeni wymiany, albo przekroczony został parametr jądra SHMALL.  Można skonfigurować jądro z większym parametrem SHMALL.\n"
+"Ten błąd zwykle oznacza, że żądanie segmentu pamięci współdzielonej przez PostgreSQL przekracza ilość dostępnej pamięci lub przestrzeni wymiany, albo przekroczony został parametr jądra SHMALL.  Można skonfigurować jądro z większym parametrem SHMALL.\n"
 "Dokumentacja PostgreSQL zawiera więcej informacji o konfiguracji pamięci współdzielonej."
 
 #: port/pg_shmem.c:159 port/sysv_shmem.c:159
@@ -12679,14 +12679,8 @@ msgstr "nie można zmapować anonimowej pamięci współdzielonej: %m"
 
 #: port/pg_shmem.c:392 port/sysv_shmem.c:392
 #, c-format
-#| msgid "This error usually means that PostgreSQL's request for a shared memory segment exceeded available memory or swap space. To reduce the request size (currently %lu bytes), reduce PostgreSQL's shared memory usage, perhaps by reducing shared_buffers or max_connections."
 msgid "This error usually means that PostgreSQL's request for a shared memory segment exceeded available memory, swap space, or huge pages. To reduce the request size (currently %zu bytes), reduce PostgreSQL's shared memory usage, perhaps by reducing shared_buffers or max_connections."
-msgstr ""
-"Ten błąd zwykle oznacza, że ​​żądanie segmentu pamięci współdzielonej przez "
-"PostgreSQL przekracza ilość dostępnej pamięci, przestrzeni wymiany lub "
-"ogromnych stron. Aby zmniejszyć rozmiar żądania (obecnie %zu bajtów), "
-"zmniejsz zużycie pamięci współdzielonej przez PostgreSQL, być może poprzez "
-"zmniejszenie shared_buffers lub max_connections."
+msgstr "Ten błąd zwykle oznacza, że żądanie segmentu pamięci współdzielonej przez PostgreSQL przekracza ilość dostępnej pamięci, przestrzeni wymiany lub ogromnych stron. Aby zmniejszyć rozmiar żądania (obecnie %zu bajtów), zmniejsz zużycie pamięci współdzielonej przez PostgreSQL, być może poprzez zmniejszenie shared_buffers lub max_connections."
 
 #: port/pg_shmem.c:439 port/sysv_shmem.c:439 port/win32_shmem.c:136
 #, c-format
