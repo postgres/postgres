@@ -1,7 +1,7 @@
 # German message translation file for plpython
-# Copyright (C) 2009 - 2015 PostgreSQL Global Development Group
+# Copyright (C) 2009 - 2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2015.
+# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2016.
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-01-31 23:48+0000\n"
-"PO-Revision-Date: 2015-01-31 22:49-0500\n"
+"POT-Creation-Date: 2016-02-08 15:56+0000\n"
+"PO-Revision-Date: 2016-02-08 12:36-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -171,47 +171,57 @@ msgstr "beim Ändern der Triggerzeile"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "Abbruch einer Subtransaktion, die nicht beendet wurde, wird erzwungen"
 
-#: plpy_main.c:101
+#: plpy_main.c:132
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "unpassende Python-Hauptversion für diese Sitzung"
 
-#: plpy_main.c:102
+#: plpy_main.c:133
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Diese Sitzung hat zuvor Python-Hauptversion %d verwendet und versucht nun Python-Hauptversion %d zu verwenden."
 
-#: plpy_main.c:104
+#: plpy_main.c:135
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Starten Sie eine neue Sitzung, um eine andere Python-Hauptversion zu verwenden."
 
-#: plpy_main.c:119
+#: plpy_main.c:158
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "in dieser Sitzung sind mehrere Python-Bibliotheken präsent"
+
+#: plpy_main.c:159
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr "Nur eine Python-Hauptversion kann in einer Sitzung verwendet werden."
+
+#: plpy_main.c:175
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "nicht abgefangener Fehler bei der Initialisierung"
 
-#: plpy_main.c:142
+#: plpy_main.c:198
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "konnte Modul »__main__« nicht importieren"
 
-#: plpy_main.c:147
+#: plpy_main.c:203
 #, c-format
 msgid "could not create globals"
 msgstr "konnte globale Objekte nicht erzeugen"
 
-#: plpy_main.c:151
+#: plpy_main.c:207
 #, c-format
 msgid "could not initialize globals"
 msgstr "konnte globale Objekte nicht initialisieren"
 
-#: plpy_main.c:355
+#: plpy_main.c:416
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "PL/Python-Funktion »%s«"
 
-#: plpy_main.c:362
+#: plpy_main.c:423
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "anonymer PL/Python-Codeblock"
@@ -380,27 +390,27 @@ msgstr "konnte Python-Objekt nicht in cstring umwandeln: Python-Zeichenkettendar
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "Rückgabewert von Funktion mit Array-Rückgabetyp ist keine Python-Sequenz"
 
-#: plpy_typeio.c:886
+#: plpy_typeio.c:896
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "Schlüssel »%s« nicht in Mapping gefunden"
 
-#: plpy_typeio.c:887
+#: plpy_typeio.c:897
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss der Wert None mit einem nach der Spalte benannten Schlüssel in das Mapping eingefügt werden."
 
-#: plpy_typeio.c:935
+#: plpy_typeio.c:945
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "Länge der zurückgegebenen Sequenz hat nicht mit der Anzahl der Spalten in der Zeile übereingestimmt"
 
-#: plpy_typeio.c:1043
+#: plpy_typeio.c:1053
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "Attribut »%s« existiert nicht in Python-Objekt"
 
-#: plpy_typeio.c:1044
+#: plpy_typeio.c:1054
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss das zurückzugebende Objekt ein nach der Spalte benanntes Attribut mit dem Wert None haben."

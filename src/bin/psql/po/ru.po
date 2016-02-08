@@ -20,9 +20,9 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-04-24 23:58+0000\n"
-"PO-Revision-Date: 2015-07-27 22:24+0300\n"
+"PO-Revision-Date: 2015-10-19 09:39+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language-Team: Russian <pgsql-translators@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2904,7 +2904,7 @@ msgstr "значение_перезапуска"
 
 #: sql_help.c:636 sql_help.c:1654
 msgid "cache"
-msgstr "кэш"
+msgstr "кеш"
 
 #: sql_help.c:637 sql_help.c:892 sql_help.c:1026 sql_help.c:1066
 #: sql_help.c:1117 sql_help.c:1140 sql_help.c:1151 sql_help.c:1196
