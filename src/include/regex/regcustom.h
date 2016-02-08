@@ -65,7 +65,8 @@ typedef int celt;				/* type to hold chr, or NOCELT */
 #define DIGITVAL(c) ((c)-'0')	/* turn chr digit into its value */
 #define CHRBITS 32				/* bits in a chr; must not use sizeof */
 #define CHR_MIN 0x00000000		/* smallest and largest chr; the value */
-#define CHR_MAX 0xfffffffe		/* CHR_MAX-CHR_MIN+1 should fit in uchr */
+#define CHR_MAX 0x7ffffffe		/* CHR_MAX-CHR_MIN+1 must fit in an int, and
+								 * CHR_MAX+1 must fit in both chr and celt */
 
 /* functions operating on chr */
 #define iscalnum(x) pg_wc_isalnum(x)

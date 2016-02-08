@@ -1569,6 +1569,7 @@ dovec(struct vars * v,
 	{
 		ch = *p;
 		newarc(v->nfa, PLAIN, subcolor(v->cm, ch), lp, rp);
+		NOERR();
 	}
 
 	/* and the ranges */
@@ -1578,6 +1579,7 @@ dovec(struct vars * v,
 		to = *(p + 1);
 		if (from <= to)
 			subrange(v, from, to, lp, rp);
+		NOERR();
 	}
 }
 
