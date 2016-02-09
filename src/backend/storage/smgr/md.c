@@ -1314,6 +1314,11 @@ mdpostckpt(void)
 		if (entry->cycle_ctr == mdckpt_cycle_ctr)
 			break;
 
+		if ((list_length(pendingUnlinks) % 1024) == 0)
+			elog(IsPostmasterEnvironment ? LOG : NOTICE,
+				 "in mdpostckpt, %d unlinks remain to do at %s",
+				 list_length(pendingUnlinks), current_time_as_str());
+
 		/* Unlink the file */
 		path = relpathperm(entry->rnode, MAIN_FORKNUM);
 		if (unlink(path) < 0)
