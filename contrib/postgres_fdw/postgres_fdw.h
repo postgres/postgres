@@ -26,7 +26,25 @@
  */
 typedef struct PgFdwRelationInfo
 {
-	/* baserestrictinfo clauses, broken down into safe and unsafe subsets. */
+	/*
+	 * True means that the relation can be pushed down. Always true for simple
+	 * foreign scan.
+	 */
+	bool		pushdown_safe;
+
+	/*
+	 * Restriction clauses, divided into safe and unsafe to pushdown subsets.
+	 *
+	 * For a base foreign relation this is a list of clauses along-with
+	 * RestrictInfo wrapper. Keeping RestrictInfo wrapper helps while dividing
+	 * scan_clauses in postgresGetForeignPlan into safe and unsafe subsets.
+	 * Also it helps in estimating costs since RestrictInfo caches the
+	 * selectivity and qual cost for the clause in it.
+	 *
+	 * For a join relation, however, they are part of otherclause list
+	 * obtained from extract_actual_join_clauses, which strips RestrictInfo
+	 * construct. So, for a join relation they are list of bare clauses.
+	 */
 	List	   *remote_conds;
 	List	   *local_conds;
 
@@ -37,11 +55,17 @@ typedef struct PgFdwRelationInfo
 	QualCost	local_conds_cost;
 	Selectivity local_conds_sel;
 
-	/* Estimated size and cost for a scan with baserestrictinfo quals. */
+	/* Selectivity of join conditions */
+	Selectivity joinclause_sel;
+
+	/* Estimated size and cost for a scan or join. */
 	double		rows;
 	int			width;
 	Cost		startup_cost;
 	Cost		total_cost;
+	/* Costs excluding costs for transferring data from the foreign server */
+	Cost		rel_startup_cost;
+	Cost		rel_total_cost;
 
 	/* Options extracted from catalogs. */
 	bool		use_remote_estimate;
@@ -55,6 +79,19 @@ typedef struct PgFdwRelationInfo
 	UserMapping *user;			/* only set in use_remote_estimate mode */
 
 	int			fetch_size;      /* fetch size for this remote table */
+
+	/*
+	 * Name of the relation while EXPLAINing ForeignScan. It is used for join
+	 * relations but is set for all relations. For join relation, the name
+	 * indicates which foreign tables are being joined and the join type used.
+	 */
+	StringInfo	relation_name;
+
+	/* Join information */
+	RelOptInfo *outerrel;
+	RelOptInfo *innerrel;
+	JoinType	jointype;
+	List	   *joinclauses;
 } PgFdwRelationInfo;
 
 /* in postgres_fdw.c */
@@ -102,12 +139,15 @@ extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
+extern List *build_tlist_to_deparse(RelOptInfo *foreign_rel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
-					 RelOptInfo *baserel, List *remote_conds, List *pathkeys,
+						RelOptInfo *foreignrel, List *tlist,
+						List *remote_conds, List *pathkeys,
 						List **retrieved_attrs, List **params_list);
 
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
 extern bool is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo);
+extern const char *get_jointype_name(JoinType jointype);
 
 #endif   /* POSTGRES_FDW_H */

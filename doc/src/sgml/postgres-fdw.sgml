@@ -487,6 +487,16 @@
   </para>
 
   <para>
+   When <filename>postgres_fdw</> encounters a join between foreign tables on
+   the same foreign server, it sends the entire join to the foreign server,
+   unless for some reason it believes that it will be more efficient to fetch
+   rows from each table individually, or unless the table references involved
+   are subject to different user mappings.  While sending the <literal>JOIN</>
+   clauses, it takes the same precautions as mentioned above for the
+   <literal>WHERE</> clauses.
+  </para>
+
+  <para>
    The query that is actually sent to the remote server for execution can
    be examined using <command>EXPLAIN VERBOSE</>.
   </para>

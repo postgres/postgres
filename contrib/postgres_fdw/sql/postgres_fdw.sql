@@ -11,12 +11,17 @@ DO $d$
             OPTIONS (dbname '$$||current_database()||$$',
                      port '$$||current_setting('port')||$$'
             )$$;
+        EXECUTE $$CREATE SERVER loopback2 FOREIGN DATA WRAPPER postgres_fdw
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
     END;
 $d$;
 
 CREATE USER MAPPING FOR public SERVER testserver1
 	OPTIONS (user 'value', password 'value');
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
+CREATE USER MAPPING FOR CURRENT_USER SERVER loopback2;
 
 -- ===================================================================
 -- create objects used through FDW loopback server
@@ -39,6 +44,18 @@ CREATE TABLE "S 1"."T 2" (
 	c2 text,
 	CONSTRAINT t2_pkey PRIMARY KEY (c1)
 );
+CREATE TABLE "S 1"."T 3" (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text,
+	CONSTRAINT t3_pkey PRIMARY KEY (c1)
+);
+CREATE TABLE "S 1"."T 4" (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text,
+	CONSTRAINT t4_pkey PRIMARY KEY (c1)
+);
 
 INSERT INTO "S 1"."T 1"
 	SELECT id,
@@ -54,9 +71,23 @@ INSERT INTO "S 1"."T 2"
 	SELECT id,
 	       'AAA' || to_char(id, 'FM000')
 	FROM generate_series(1, 100) id;
+INSERT INTO "S 1"."T 3"
+	SELECT id,
+	       id + 1,
+	       'AAA' || to_char(id, 'FM000')
+	FROM generate_series(1, 100) id;
+DELETE FROM "S 1"."T 3" WHERE c1 % 2 != 0;	-- delete for outer join tests
+INSERT INTO "S 1"."T 4"
+	SELECT id,
+	       id + 1,
+	       'AAA' || to_char(id, 'FM000')
+	FROM generate_series(1, 100) id;
+DELETE FROM "S 1"."T 4" WHERE c1 % 3 != 0;	-- delete for outer join tests
 
 ANALYZE "S 1"."T 1";
 ANALYZE "S 1"."T 2";
+ANALYZE "S 1"."T 3";
+ANALYZE "S 1"."T 4";
 
 -- ===================================================================
 -- create foreign tables
@@ -86,6 +117,24 @@ CREATE FOREIGN TABLE ft2 (
 	c8 user_enum
 ) SERVER loopback;
 ALTER FOREIGN TABLE ft2 DROP COLUMN cx;
+
+CREATE FOREIGN TABLE ft4 (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text
+) SERVER loopback OPTIONS (schema_name 'S 1', table_name 'T 3');
+
+CREATE FOREIGN TABLE ft5 (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text
+) SERVER loopback OPTIONS (schema_name 'S 1', table_name 'T 4');
+
+CREATE FOREIGN TABLE ft6 (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text
+) SERVER loopback2 OPTIONS (schema_name 'S 1', table_name 'T 4');
 
 -- ===================================================================
 -- tests for validator
@@ -168,8 +217,6 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = 102 FOR SHARE;
 SELECT * FROM ft1 t1 WHERE c1 = 102 FOR SHARE;
 -- aggregate
 SELECT COUNT(*) FROM ft1 t1;
--- join two tables
-SELECT t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
 -- subquery
 SELECT * FROM ft1 t1 WHERE t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 <= 10) ORDER BY c1;
 -- subquery+MAX
@@ -208,10 +255,11 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = ANY(ARRAY[c2, 1, 
 EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = (ARRAY[c1,c2,3])[1]; -- ArrayRef
 EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c6 = E'foo''s\\bar';  -- check special chars
 EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c8 = 'foo';  -- can't be sent to remote
--- parameterized remote path
+-- parameterized remote path for foreign table
 EXPLAIN (VERBOSE, COSTS false)
-  SELECT * FROM ft2 a, ft2 b WHERE a.c1 = 47 AND b.c1 = a.c2;
+  SELECT * FROM "S 1"."T 1" a, ft2 b WHERE a."C 1" = 47 AND b.c1 = a.c2;
 SELECT * FROM ft2 a, ft2 b WHERE a.c1 = 47 AND b.c1 = a.c2;
+
 -- check both safe and unsafe join conditions
 EXPLAIN (VERBOSE, COSTS false)
   SELECT * FROM ft2 a, ft2 b
@@ -269,6 +317,158 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
 EXPLAIN (VERBOSE, COSTS false)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
 SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
+
+-- ===================================================================
+-- JOIN queries
+-- ===================================================================
+-- Analyze ft4 and ft5 so that we have better statistics. These tables do not
+-- have use_remote_estimate set.
+ANALYZE ft4;
+ANALYZE ft5;
+
+-- join two tables
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+-- join three tables
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) JOIN ft4 t3 ON (t3.c1 = t1.c1) ORDER BY t1.c3, t1.c1 OFFSET 10 LIMIT 10;
+SELECT t1.c1, t2.c2, t3.c3 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) JOIN ft4 t3 ON (t3.c1 = t1.c1) ORDER BY t1.c3, t1.c1 OFFSET 10 LIMIT 10;
+-- left outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+-- left outer join + placement of clauses.
+-- clauses within the nullable side are not pulled up, but top level clause on
+-- non-nullable side is pushed into non-nullable side
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE c1 < 10) t2 ON (t1.c1 = t2.c1) WHERE t1.c1 < 10;
+SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE c1 < 10) t2 ON (t1.c1 = t2.c1) WHERE t1.c1 < 10;
+-- clauses within the nullable side are not pulled up, but the top level clause
+-- on nullable side is not pushed down into nullable side
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE c1 < 10) t2 ON (t1.c1 = t2.c1)
+			WHERE (t2.c1 < 10 OR t2.c1 IS NULL) AND t1.c1 < 10;
+SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE c1 < 10) t2 ON (t1.c1 = t2.c1)
+			WHERE (t2.c1 < 10 OR t2.c1 IS NULL) AND t1.c1 < 10;
+-- right outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2.c1, t1.c1 OFFSET 10 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2.c1, t1.c1 OFFSET 10 LIMIT 10;
+-- full outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 45 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 45 LIMIT 10;
+-- full outer join + WHERE clause, only matched rows
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) WHERE (t1.c1 = t2.c1 OR t1.c1 IS NULL) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) WHERE (t1.c1 = t2.c1 OR t1.c1 IS NULL) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+-- join two tables with FOR UPDATE clause
+-- tests whole-row reference for row marks
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE OF t1;
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE OF t1;
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE;
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE;
+-- join two tables with FOR SHARE clause
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE OF t1;
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE OF t1;
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE;
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE;
+-- join in CTE
+EXPLAIN (COSTS false, VERBOSE)
+WITH t (c1_1, c1_3, c2_1) AS (SELECT t1.c1, t1.c3, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1)) SELECT c1_1, c2_1 FROM t ORDER BY c1_3, c1_1 OFFSET 100 LIMIT 10;
+WITH t (c1_1, c1_3, c2_1) AS (SELECT t1.c1, t1.c3, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1)) SELECT c1_1, c2_1 FROM t ORDER BY c1_3, c1_1 OFFSET 100 LIMIT 10;
+-- ctid with whole-row reference
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+-- SEMI JOIN, not pushed down
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
+-- ANTI JOIN, not pushed down
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c2) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c2) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
+-- CROSS JOIN, not pushed down
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 CROSS JOIN ft2 t2 ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft1 t1 CROSS JOIN ft2 t2 ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+-- different server, not pushed down. No result expected.
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+-- unsafe join conditions (c8 has a UDT), not pushed down. Practically a CROSS
+-- JOIN since c8 in both tables has same value.
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c8 = t2.c8) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c8 = t2.c8) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+-- unsafe conditions on one side (c8 has a UDT), not pushed down.
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = 'foo' ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = 'foo' ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+-- join where unsafe to pushdown condition in WHERE clause has a column not
+-- in the SELECT clause. In this test unsafe clause needs to have column
+-- references from both joining sides so that the clause is not pushed down
+-- into one of the joining sides.
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = t2.c8 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = t2.c8 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+-- Aggregate after UNION, for testing setrefs
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1c1, avg(t1c1 + t2c1) FROM (SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) UNION SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1)) AS t (t1c1, t2c1) GROUP BY t1c1 ORDER BY t1c1 OFFSET 100 LIMIT 10;
+SELECT t1c1, avg(t1c1 + t2c1) FROM (SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) UNION SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1)) AS t (t1c1, t2c1) GROUP BY t1c1 ORDER BY t1c1 OFFSET 100 LIMIT 10;
+-- join with lateral reference
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1."C 1" FROM "S 1"."T 1" t1, LATERAL (SELECT DISTINCT t2.c1, t3.c1 FROM ft1 t2, ft2 t3 WHERE t2.c1 = t3.c1 AND t2.c2 = t1.c2) q ORDER BY t1."C 1" OFFSET 10 LIMIT 10;
+SELECT t1."C 1" FROM "S 1"."T 1" t1, LATERAL (SELECT DISTINCT t2.c1, t3.c1 FROM ft1 t2, ft2 t3 WHERE t2.c1 = t3.c1 AND t2.c2 = t1.c2) q ORDER BY t1."C 1" OFFSET 10 LIMIT 10;
+
+-- create another user for permission, user mapping, effective user tests
+CREATE USER view_owner;
+-- grant privileges on ft4 and ft5 to view_owner
+GRANT ALL ON ft4 TO view_owner;
+GRANT ALL ON ft5 TO view_owner;
+-- prepare statement with current session user
+PREPARE join_stmt AS SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
+EXECUTE join_stmt;
+-- change the session user to view_owner and execute the statement. Because of
+-- change in session user, the plan should get invalidated and created again.
+-- While creating the plan, it should throw error since there is no user mapping
+-- available for view_owner.
+SET SESSION ROLE view_owner;
+EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
+EXECUTE join_stmt;
+RESET ROLE;
+DEALLOCATE join_stmt;
+
+CREATE VIEW v_ft5 AS SELECT * FROM ft5;
+-- change owner of v_ft5 to view_owner so that the effective user for scan on
+-- ft5 is view_owner and not the current user.
+ALTER VIEW v_ft5 OWNER TO view_owner;
+-- create a public user mapping for loopback server
+-- drop user mapping for current_user.
+DROP USER MAPPING FOR CURRENT_USER SERVER loopback;
+CREATE USER MAPPING FOR PUBLIC SERVER loopback;
+-- different effective user for permission check, but same user mapping for the
+-- joining sides, join pushed down, no result expected.
+PREPARE join_stmt AS SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
+EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
+EXECUTE join_stmt;
+-- create user mapping for view_owner and execute the prepared statement
+-- the join should not be pushed down since joining relations now use two
+-- different user mappings
+CREATE USER MAPPING FOR view_owner SERVER loopback;
+EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
+EXECUTE join_stmt;
+
+-- recreate the dropped user mapping for further tests
+CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
+DROP USER MAPPING FOR PUBLIC SERVER loopback;
 
 -- ===================================================================
 -- parameterized queries
@@ -348,6 +548,7 @@ DROP FUNCTION f_test(int);
 -- ===================================================================
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE int;
 SELECT * FROM ft1 WHERE c1 = 1;  -- ERROR
+SELECT  ft1.c1,  ft2.c2, ft1.c8 FROM ft1, ft2 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = 1; -- ERROR
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE user_enum;
 
 -- ===================================================================
@@ -973,3 +1174,7 @@ WHERE ftrelid = 'table30000'::regclass
 AND ftoptions @> array['fetch_size=60000'];
 
 ROLLBACK;
+
+-- Cleanup
+DROP OWNED BY view_owner;
+DROP USER view_owner;
