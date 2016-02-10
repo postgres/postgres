@@ -98,8 +98,6 @@ static int	on_proc_exit_index,
 void
 proc_exit(int code)
 {
-	bool noisy = AmCheckpointerProcess() || (getpid() == PostmasterPid);
-
 	/* Clean up everything that must be cleaned up */
 	proc_exit_prepare(code);
 
@@ -142,10 +140,6 @@ proc_exit(int code)
 
 	elog(DEBUG3, "exit(%d)", code);
 
-	if (noisy)
-		elog(LOG, "calling exit(%d) at %s",
-			 code, current_time_as_str());
-
 	exit(code);
 }
 
@@ -157,8 +151,6 @@ proc_exit(int code)
 static void
 proc_exit_prepare(int code)
 {
-	bool noisy = AmCheckpointerProcess() || (getpid() == PostmasterPid);
-
 	/*
 	 * Once we set this flag, we are committed to exit.  Any ereport() will
 	 * NOT send control back to the main loop, but right back here.
@@ -205,13 +197,8 @@ proc_exit_prepare(int code)
 	 * possible.
 	 */
 	while (--on_proc_exit_index >= 0)
-	{
-		if (noisy)
-			elog(LOG, "doing on_proc_exit %d at %s",
-				 on_proc_exit_index, current_time_as_str());
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
 								  on_proc_exit_list[on_proc_exit_index].arg);
-	}
 
 	on_proc_exit_index = 0;
 }
@@ -227,8 +214,6 @@ proc_exit_prepare(int code)
 void
 shmem_exit(int code)
 {
-	bool noisy = AmCheckpointerProcess() || (getpid() == PostmasterPid);
-
 	/*
 	 * Call before_shmem_exit callbacks.
 	 *
@@ -240,13 +225,8 @@ shmem_exit(int code)
 	elog(DEBUG3, "shmem_exit(%d): %d before_shmem_exit callbacks to make",
 		 code, before_shmem_exit_index);
 	while (--before_shmem_exit_index >= 0)
-	{
-		if (noisy)
-			elog(LOG, "doing before_shmem_exit %d at %s",
-				 before_shmem_exit_index, current_time_as_str());
 		(*before_shmem_exit_list[before_shmem_exit_index].function) (code,
 						before_shmem_exit_list[before_shmem_exit_index].arg);
-	}
 	before_shmem_exit_index = 0;
 
 	/*
@@ -278,13 +258,8 @@ shmem_exit(int code)
 	elog(DEBUG3, "shmem_exit(%d): %d on_shmem_exit callbacks to make",
 		 code, on_shmem_exit_index);
 	while (--on_shmem_exit_index >= 0)
-	{
-		if (noisy)
-			elog(LOG, "doing on_shmem_exit %d at %s",
-				 on_shmem_exit_index, current_time_as_str());
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
 								on_shmem_exit_list[on_shmem_exit_index].arg);
-	}
 	on_shmem_exit_index = 0;
 }
 

@@ -772,8 +772,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	/* Normal exit from the autovac launcher is here */
 shutdown:
 	ereport(LOG,
-			(errmsg("autovacuum launcher shutting down at %s",
-					current_time_as_str())));
+			(errmsg("autovacuum launcher shutting down")));
 	AutoVacuumShmem->av_launcherpid = 0;
 
 	proc_exit(0);				/* done */

@@ -2538,8 +2538,7 @@ pmdie(SIGNAL_ARGS)
 				break;
 			Shutdown = SmartShutdown;
 			ereport(LOG,
-					(errmsg("received smart shutdown request at %s",
-							current_time_as_str())));
+					(errmsg("received smart shutdown request")));
 #ifdef USE_SYSTEMD
 			sd_notify(0, "STOPPING=1");
 #endif
@@ -2594,8 +2593,7 @@ pmdie(SIGNAL_ARGS)
 				break;
 			Shutdown = FastShutdown;
 			ereport(LOG,
-					(errmsg("received fast shutdown request at %s",
-							current_time_as_str())));
+					(errmsg("received fast shutdown request")));
 #ifdef USE_SYSTEMD
 			sd_notify(0, "STOPPING=1");
 #endif
@@ -2658,8 +2656,7 @@ pmdie(SIGNAL_ARGS)
 				break;
 			Shutdown = ImmediateShutdown;
 			ereport(LOG,
-					(errmsg("received immediate shutdown request at %s",
-							current_time_as_str())));
+					(errmsg("received immediate shutdown request")));
 #ifdef USE_SYSTEMD
 			sd_notify(0, "STOPPING=1");
 #endif
@@ -2849,9 +2846,6 @@ reaper(SIGNAL_ARGS)
 				 * processes, tell them to send any remaining WAL and quit.
 				 */
 				Assert(Shutdown > NoShutdown);
-
-				elog(LOG, "checkpointer dead at %s",
-					 current_time_as_str());
 
 				/* Waken archiver for the last time */
 				if (PgArchPID != 0)
@@ -3713,9 +3707,6 @@ PostmasterStateMachine(void)
 			 */
 			if (ReachedNormalRunning)
 				CancelBackup();
-
-			elog(LOG, "all children dead at %s",
-				 current_time_as_str());
 
 			/* Normal exit from the postmaster is here */
 			ExitPostmaster(0);

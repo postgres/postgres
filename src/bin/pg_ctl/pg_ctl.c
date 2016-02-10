@@ -946,32 +946,6 @@ do_start(void)
 }
 
 
-/*
- * Quick hack.
- */
-const char *
-current_time_as_str(void)
-{
-	static char buf[128];
-	struct timeval now_timeval;
-	time_t	now;
-	char		msbuf[8];
-
-	gettimeofday(&now_timeval, NULL);
-	now = (time_t) now_timeval.tv_sec;
-
-	strftime(buf, sizeof(buf),
-			 /* leave room for milliseconds... */
-			 "%Y-%m-%d %H:%M:%S     %Z",
-			 localtime(&now));
-
-	/* 'paste' milliseconds into place... */
-	sprintf(msbuf, ".%03d", (int) (now_timeval.tv_usec / 1000));
-	memcpy(buf + 19, msbuf, 4);
-
-	return buf;
-}
-
 static void
 do_stop(void)
 {
@@ -1024,12 +998,7 @@ do_stop(void)
 						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
 		}
 
-		if (!silent_mode)
-		{
-			fprintf(stdout, _("waiting for server to shut down at %s..."),
-					current_time_as_str());
-			fflush(stdout);
-		}
+		print_msg(_("waiting for server to shut down..."));
 
 		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
@@ -1046,8 +1015,7 @@ do_stop(void)
 		{
 			print_msg(_(" failed\n"));
 
-			write_stderr(_("%s: server does not shut down at %s\n"),
-						 progname, current_time_as_str());
+			write_stderr(_("%s: server does not shut down\n"), progname);
 			if (shutdown_mode == SMART_MODE)
 				write_stderr(_("HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 						  "waiting for session-initiated disconnection.\n"));
