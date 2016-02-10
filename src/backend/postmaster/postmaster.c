@@ -2850,6 +2850,9 @@ reaper(SIGNAL_ARGS)
 				 */
 				Assert(Shutdown > NoShutdown);
 
+				elog(LOG, "checkpointer dead at %s",
+					 current_time_as_str());
+
 				/* Waken archiver for the last time */
 				if (PgArchPID != 0)
 					signal_child(PgArchPID, SIGUSR2);
@@ -3710,6 +3713,9 @@ PostmasterStateMachine(void)
 			 */
 			if (ReachedNormalRunning)
 				CancelBackup();
+
+			elog(LOG, "all children dead at %s",
+				 current_time_as_str());
 
 			/* Normal exit from the postmaster is here */
 			ExitPostmaster(0);
