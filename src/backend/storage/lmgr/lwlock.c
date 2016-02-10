@@ -91,7 +91,7 @@
 #endif
 
 
-/* We use the ShmemLock spinlock to protect LWLockAssign */
+/* We use the ShmemLock spinlock to protect LWLockCounter */
 extern slock_t *ShmemLock;
 
 #define LW_FLAG_HAS_WAITERS			((uint32) 1 << 30)
@@ -364,30 +364,6 @@ NumLWLocksByNamedTranches(void)
 }
 
 /*
- * Compute number of LWLocks to allocate in the main array.
- */
-static int
-NumLWLocks(void)
-{
-	int			numLocks;
-
-	/*
-	 * Many users of LWLocks no longer reserve space in the main array here,
-	 * but instead allocate separate tranches.  The latter approach has the
-	 * advantage of allowing LWLOCK_STATS and LOCK_DEBUG output to produce
-	 * more useful output.
-	 */
-
-	/* Predefined LWLocks */
-	numLocks = NUM_FIXED_LWLOCKS;
-
-	/* Disallow named LWLocks' requests after startup */
-	lock_named_request_allowed = false;
-
-	return numLocks;
-}
-
-/*
  * Compute shmem space needed for LWLocks and named tranches.
  */
 Size
@@ -395,7 +371,7 @@ LWLockShmemSize(void)
 {
 	Size		size;
 	int			i;
-	int			numLocks = NumLWLocks();
+	int			numLocks = NUM_FIXED_LWLOCKS;
 
 	numLocks += NumLWLocksByNamedTranches();
 
@@ -403,7 +379,7 @@ LWLockShmemSize(void)
 	size = mul_size(numLocks, sizeof(LWLockPadded));
 
 	/* Space for dynamic allocation counter, plus room for alignment. */
-	size = add_size(size, 3 * sizeof(int) + LWLOCK_PADDED_SIZE);
+	size = add_size(size, sizeof(int) + LWLOCK_PADDED_SIZE);
 
 	/* space for named tranches. */
 	size = add_size(size, mul_size(NamedLWLockTrancheRequests, sizeof(NamedLWLockTranche)));
@@ -411,6 +387,9 @@ LWLockShmemSize(void)
 	/* space for name of each tranche. */
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
 		size = add_size(size, strlen(NamedLWLockTrancheRequestArray[i].tranche_name) + 1);
+
+	/* Disallow named LWLocks' requests after startup */
+	lock_named_request_allowed = false;
 
 	return size;
 }
@@ -433,7 +412,7 @@ CreateLWLocks(void)
 
 	if (!IsUnderPostmaster)
 	{
-		int			numLocks = NumLWLocks();
+		int			numLocks = NUM_FIXED_LWLOCKS;
 		int			numNamedLocks = NumLWLocksByNamedTranches();
 		Size		spaceLocks = LWLockShmemSize();
 		LWLockPadded *lock;
@@ -445,8 +424,8 @@ CreateLWLocks(void)
 		/* Allocate space */
 		ptr = (char *) ShmemAlloc(spaceLocks);
 
-		/* Leave room for dynamic allocation of locks and tranches */
-		ptr += 3 * sizeof(int);
+		/* Leave room for dynamic allocation of tranches */
+		ptr += sizeof(int);
 
 		/* Ensure desired alignment of LWLock array */
 		ptr += LWLOCK_PADDED_SIZE - ((uintptr_t) ptr) % LWLOCK_PADDED_SIZE;
@@ -458,16 +437,11 @@ CreateLWLocks(void)
 			LWLockInitialize(&lock->lock, LWTRANCHE_MAIN);
 
 		/*
-		 * Initialize the dynamic-allocation counters, which are stored just
-		 * before the first LWLock.  LWLockCounter[0] is the allocation
-		 * counter for lwlocks, LWLockCounter[1] is the maximum number that
-		 * can be allocated from the main array, and LWLockCounter[2] is the
-		 * allocation counter for tranches.
+		 * Initialize the dynamic-allocation counter for tranches, which is
+		 * stored just before the first LWLock.
 		 */
-		LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
-		LWLockCounter[0] = NUM_FIXED_LWLOCKS;
-		LWLockCounter[1] = numLocks;
-		LWLockCounter[2] = LWTRANCHE_FIRST_USER_DEFINED;
+		LWLockCounter = (int *) ((char *) MainLWLockArray - sizeof(int));
+		*LWLockCounter = LWTRANCHE_FIRST_USER_DEFINED;
 
 		/* Initialize named tranches. */
 		if (NamedLWLockTrancheRequests > 0)
@@ -536,32 +510,6 @@ InitLWLockAccess(void)
 }
 
 /*
- * LWLockAssign - assign a dynamically-allocated LWLock number
- *
- * We interlock this using the same spinlock that is used to protect
- * ShmemAlloc().  Interlocking is not really necessary during postmaster
- * startup, but it is needed if any user-defined code tries to allocate
- * LWLocks after startup.
- */
-LWLock *
-LWLockAssign(void)
-{
-	LWLock	   *result;
-	int		   *LWLockCounter;
-
-	LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
-	SpinLockAcquire(ShmemLock);
-	if (LWLockCounter[0] >= LWLockCounter[1])
-	{
-		SpinLockRelease(ShmemLock);
-		elog(ERROR, "no more LWLocks available");
-	}
-	result = &MainLWLockArray[LWLockCounter[0]++].lock;
-	SpinLockRelease(ShmemLock);
-	return result;
-}
-
-/*
  * GetNamedLWLockTranche - returns the base address of LWLock from the
  *		specified tranche.
  *
@@ -574,16 +522,13 @@ GetNamedLWLockTranche(const char *tranche_name)
 {
 	int			lock_pos;
 	int			i;
-	int		   *LWLockCounter;
-
-	LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
 
 	/*
 	 * Obtain the position of base address of LWLock belonging to requested
 	 * tranche_name in MainLWLockArray.  LWLocks for named tranches are placed
-	 * in MainLWLockArray after LWLocks specified by LWLockCounter[1].
+	 * in MainLWLockArray after fixed locks.
 	 */
-	lock_pos = LWLockCounter[1];
+	lock_pos = NUM_FIXED_LWLOCKS;
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
 	{
 		if (strcmp(NamedLWLockTrancheRequestArray[i].tranche_name,
@@ -609,9 +554,9 @@ LWLockNewTrancheId(void)
 	int			result;
 	int		   *LWLockCounter;
 
-	LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
+	LWLockCounter = (int *) ((char *) MainLWLockArray - sizeof(int));
 	SpinLockAcquire(ShmemLock);
-	result = LWLockCounter[2]++;
+	result = (*LWLockCounter)++;
 	SpinLockRelease(ShmemLock);
 
 	return result;

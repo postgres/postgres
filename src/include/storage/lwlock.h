@@ -196,8 +196,6 @@ extern void InitLWLockAccess(void);
 extern void RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks);
 extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
 
-extern LWLock *LWLockAssign(void);
-
 /*
  * There is another, more flexible method of obtaining lwlocks. First, call
  * LWLockNewTrancheId just once to obtain a tranche ID; this allocates from
