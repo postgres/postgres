@@ -211,7 +211,8 @@ ERROR:  too few arguments for format
 select format('Hello %s');
 ERROR:  too few arguments for format
 select format('Hello %x', 20);
-ERROR:  unrecognized conversion type specifier "x"
+ERROR:  unrecognized format() type specifier "x"
+HINT:  For a single "%" use "%%".
 -- check literal and sql identifiers
 select format('INSERT INTO %I VALUES(%L,%L)', 'mytab', 10, 'Hello');
                  format                 
@@ -263,9 +264,11 @@ ERROR:  format specifies argument 0, but arguments are numbered from 1
 select format('%*0$s', 'Hello');
 ERROR:  format specifies argument 0, but arguments are numbered from 1
 select format('%1$', 1);
-ERROR:  unterminated format specifier
+ERROR:  unterminated format() type specifier
+HINT:  For a single "%" use "%%".
 select format('%1$1', 1);
-ERROR:  unterminated format specifier
+ERROR:  unterminated format() type specifier
+HINT:  For a single "%" use "%%".
 -- check mix of positional and ordered placeholders
 select format('Hello %s %1$s %s', 'World', 'Hello again');
             format             

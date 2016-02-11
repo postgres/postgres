@@ -4788,7 +4788,8 @@ text_reverse(PG_FUNCTION_ARGS)
 		if (++(ptr) >= (end_ptr)) \
 			ereport(ERROR, \
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
-					 errmsg("unterminated format specifier"))); \
+					 errmsg("unterminated format() type specifier"), \
+					 errhint("For a single \"%%\" use \"%%%%\"."))); \
 	} while (0)
 
 /*
@@ -4920,8 +4921,9 @@ text_format(PG_FUNCTION_ARGS)
 		if (strchr("sIL", *cp) == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized conversion type specifier \"%c\"",
-							*cp)));
+					 errmsg("unrecognized format() type specifier \"%c\"",
+							*cp),
+					 errhint("For a single \"%%\" use \"%%%%\".")));
 
 		/* If indirect width was specified, get its value */
 		if (widthpos >= 0)
@@ -4932,7 +4934,7 @@ text_format(PG_FUNCTION_ARGS)
 			if (arg >= nargs)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("too few arguments for format")));
+						 errmsg("too few arguments for format()")));
 
 			/* Get the value and type of the selected argument */
 			if (!funcvariadic)
@@ -5040,8 +5042,9 @@ text_format(PG_FUNCTION_ARGS)
 				/* should not get here, because of previous check */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("unrecognized conversion type specifier \"%c\"",
-							 *cp)));
+					  errmsg("unrecognized format() type specifier \"%c\"",
+							 *cp),
+					  errhint("For a single \"%%\" use \"%%%%\".")));
 				break;
 		}
 	}
