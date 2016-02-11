@@ -10,6 +10,10 @@ test: partial-index
 test: two-ids
 test: multiple-row-versions
 test: index-only-scan
+test: deadlock-simple
+test: deadlock-hard
+test: deadlock-soft
+test: deadlock-soft-2
 test: fk-contention
 test: fk-deadlock
 test: fk-deadlock2
