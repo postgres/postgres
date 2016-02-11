@@ -181,7 +181,7 @@ InitProcGlobal(void)
 	ProcGlobal->startupBufferPinWaitBufId = -1;
 	ProcGlobal->walwriterLatch = NULL;
 	ProcGlobal->checkpointerLatch = NULL;
-	pg_atomic_init_u32(&ProcGlobal->firstClearXidElem, INVALID_PGPROCNO);
+	pg_atomic_init_u32(&ProcGlobal->procArrayGroupFirst, INVALID_PGPROCNO);
 
 	/*
 	 * Create and initialize all the PGPROC structures we'll need.  There are
@@ -396,9 +396,9 @@ InitProcess(void)
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
 
 	/* Initialize fields for group XID clearing. */
-	MyProc->clearXid = false;
-	MyProc->backendLatestXid = InvalidTransactionId;
-	pg_atomic_init_u32(&MyProc->nextClearXidElem, INVALID_PGPROCNO);
+	MyProc->procArrayGroupMember = false;
+	MyProc->procArrayGroupMemberXid = InvalidTransactionId;
+	pg_atomic_init_u32(&MyProc->procArrayGroupNext, INVALID_PGPROCNO);
 
 	/* Check that group locking fields are in a proper initial state. */
 	Assert(MyProc->lockGroupLeaderIdentifier == 0);

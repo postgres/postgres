@@ -497,14 +497,14 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
 
 	/* Add ourselves to the list of processes needing a group XID clear. */
-	proc->clearXid = true;
-	proc->backendLatestXid = latestXid;
+	proc->procArrayGroupMember = true;
+	proc->procArrayGroupMemberXid = latestXid;
 	while (true)
 	{
-		nextidx = pg_atomic_read_u32(&procglobal->firstClearXidElem);
-		pg_atomic_write_u32(&proc->nextClearXidElem, nextidx);
+		nextidx = pg_atomic_read_u32(&procglobal->procArrayGroupFirst);
+		pg_atomic_write_u32(&proc->procArrayGroupNext, nextidx);
 
-		if (pg_atomic_compare_exchange_u32(&procglobal->firstClearXidElem,
+		if (pg_atomic_compare_exchange_u32(&procglobal->procArrayGroupFirst,
 										   &nextidx,
 										   (uint32) proc->pgprocno))
 			break;
@@ -523,12 +523,12 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 		{
 			/* acts as a read barrier */
 			PGSemaphoreLock(&proc->sem);
-			if (!proc->clearXid)
+			if (!proc->procArrayGroupMember)
 				break;
 			extraWaits++;
 		}
 
-		Assert(pg_atomic_read_u32(&proc->nextClearXidElem) == INVALID_PGPROCNO);
+		Assert(pg_atomic_read_u32(&proc->procArrayGroupNext) == INVALID_PGPROCNO);
 
 		/* Fix semaphore count for any absorbed wakeups */
 		while (extraWaits-- > 0)
@@ -546,8 +546,8 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	 */
 	while (true)
 	{
-		nextidx = pg_atomic_read_u32(&procglobal->firstClearXidElem);
-		if (pg_atomic_compare_exchange_u32(&procglobal->firstClearXidElem,
+		nextidx = pg_atomic_read_u32(&procglobal->procArrayGroupFirst);
+		if (pg_atomic_compare_exchange_u32(&procglobal->procArrayGroupFirst,
 										   &nextidx,
 										   INVALID_PGPROCNO))
 			break;
@@ -562,10 +562,10 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 		PGPROC	*proc = &allProcs[nextidx];
 		PGXACT	*pgxact = &allPgXact[nextidx];
 
-		ProcArrayEndTransactionInternal(proc, pgxact, proc->backendLatestXid);
+		ProcArrayEndTransactionInternal(proc, pgxact, proc->procArrayGroupMemberXid);
 
 		/* Move to next proc in list. */
-		nextidx = pg_atomic_read_u32(&proc->nextClearXidElem);
+		nextidx = pg_atomic_read_u32(&proc->procArrayGroupNext);
 	}
 
 	/* We're done with the lock now. */
@@ -582,13 +582,13 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	{
 		PGPROC	*proc = &allProcs[wakeidx];
 
-		wakeidx = pg_atomic_read_u32(&proc->nextClearXidElem);
-		pg_atomic_write_u32(&proc->nextClearXidElem, INVALID_PGPROCNO);
+		wakeidx = pg_atomic_read_u32(&proc->procArrayGroupNext);
+		pg_atomic_write_u32(&proc->procArrayGroupNext, INVALID_PGPROCNO);
 
 		/* ensure all previous writes are visible before follower continues. */
 		pg_write_barrier();
 
-		proc->clearXid = false;
+		proc->procArrayGroupMember = false;
 
 		if (proc != MyProc)
 			PGSemaphoreUnlock(&proc->sem);
