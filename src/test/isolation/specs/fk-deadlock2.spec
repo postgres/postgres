@@ -34,3 +34,15 @@ setup		{ BEGIN; SET deadlock_timeout = '10s'; }
 step "s2u1"	{ UPDATE B SET Col2 = 1 WHERE BID = 2; }
 step "s2u2"	{ UPDATE B SET Col2 = 1 WHERE BID = 2; }
 step "s2c"	{ COMMIT; }
+
+permutation "s1u1" "s1u2" "s1c" "s2u1" "s2u2" "s2c"
+permutation "s1u1" "s1u2" "s2u1" "s1c" "s2u2" "s2c"
+permutation "s1u1" "s2u1" "s1u2" "s2u2" "s2c" "s1c"
+permutation "s1u1" "s2u1" "s2u2" "s1u2" "s2c" "s1c"
+permutation "s1u1" "s2u1" "s2u2" "s2c" "s1u2" "s1c"
+permutation "s2u1" "s1u1" "s1u2" "s2u2" "s2c" "s1c"
+permutation "s2u1" "s1u1" "s2u2" "s1u2" "s2c" "s1c"
+permutation "s2u1" "s1u1" "s2u2" "s2c" "s1u2" "s1c"
+permutation "s2u1" "s2u2" "s1u1" "s1u2" "s2c" "s1c"
+permutation "s2u1" "s2u2" "s1u1" "s2c" "s1u2" "s1c"
+permutation "s2u1" "s2u2" "s2c" "s1u1" "s1u2" "s1c"

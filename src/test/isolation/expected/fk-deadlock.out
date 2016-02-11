@@ -25,13 +25,6 @@ step s1c: COMMIT;
 step s2u: <... completed>
 step s2c: COMMIT;
 
-starting permutation: s1i s1u s2i s2u s2c s1c
-step s1i: INSERT INTO child VALUES (1, 1);
-step s1u: UPDATE parent SET aux = 'bar';
-step s2i: INSERT INTO child VALUES (2, 1);
-step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
-invalid permutation detected
-
 starting permutation: s1i s2i s1u s1c s2u s2c
 step s1i: INSERT INTO child VALUES (1, 1);
 step s2i: INSERT INTO child VALUES (2, 1);
@@ -48,20 +41,6 @@ step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
 step s1c: COMMIT;
 step s2u: <... completed>
 step s2c: COMMIT;
-
-starting permutation: s1i s2i s1u s2u s2c s1c
-step s1i: INSERT INTO child VALUES (1, 1);
-step s2i: INSERT INTO child VALUES (2, 1);
-step s1u: UPDATE parent SET aux = 'bar';
-step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
-invalid permutation detected
-
-starting permutation: s1i s2i s2u s1u s1c s2c
-step s1i: INSERT INTO child VALUES (1, 1);
-step s2i: INSERT INTO child VALUES (2, 1);
-step s2u: UPDATE parent SET aux = 'baz';
-step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
-invalid permutation detected
 
 starting permutation: s1i s2i s2u s1u s2c s1c
 step s1i: INSERT INTO child VALUES (1, 1);
@@ -97,20 +76,6 @@ step s1c: COMMIT;
 step s2u: <... completed>
 step s2c: COMMIT;
 
-starting permutation: s2i s1i s1u s2u s2c s1c
-step s2i: INSERT INTO child VALUES (2, 1);
-step s1i: INSERT INTO child VALUES (1, 1);
-step s1u: UPDATE parent SET aux = 'bar';
-step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
-invalid permutation detected
-
-starting permutation: s2i s1i s2u s1u s1c s2c
-step s2i: INSERT INTO child VALUES (2, 1);
-step s1i: INSERT INTO child VALUES (1, 1);
-step s2u: UPDATE parent SET aux = 'baz';
-step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
-invalid permutation detected
-
 starting permutation: s2i s1i s2u s1u s2c s1c
 step s2i: INSERT INTO child VALUES (2, 1);
 step s1i: INSERT INTO child VALUES (1, 1);
@@ -127,13 +92,6 @@ step s2u: UPDATE parent SET aux = 'baz';
 step s2c: COMMIT;
 step s1u: UPDATE parent SET aux = 'bar';
 step s1c: COMMIT;
-
-starting permutation: s2i s2u s1i s1u s1c s2c
-step s2i: INSERT INTO child VALUES (2, 1);
-step s2u: UPDATE parent SET aux = 'baz';
-step s1i: INSERT INTO child VALUES (1, 1);
-step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
-invalid permutation detected
 
 starting permutation: s2i s2u s1i s1u s2c s1c
 step s2i: INSERT INTO child VALUES (2, 1);
