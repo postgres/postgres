@@ -478,9 +478,6 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	Step      **waiting;
 	Step      **errorstep;
 
-	waiting = malloc(sizeof(Step *) * testspec->nsessions);
-	errorstep = malloc(sizeof(Step *) * testspec->nsessions);
-
 	/*
 	 * In dry run mode, just display the permutation in the same format used
 	 * by spec files, and return.
@@ -493,6 +490,9 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		printf("\n");
 		return;
 	}
+
+	waiting = malloc(sizeof(Step *) * testspec->nsessions);
+	errorstep = malloc(sizeof(Step *) * testspec->nsessions);
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
@@ -548,14 +548,15 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		 * Check whether the session that needs to perform the next step
 		 * is still blocked on an earlier step.  If so, wait for it to finish.
 		 *
-		 * In older versions of this tool, when allowed precisely one session
-		 * to be waiting at a time.  If we reached a step which required that
+		 * (In older versions of this tool, we allowed precisely one session
+		 * to be waiting at a time.  If we reached a step that required that
 		 * session to execute the next command, we would declare the whole
-		 * permutation invalid, cancel everything, and move on to the next one.
-		 * Unfortunately, that made it impossible to test the deadlock detector
-		 * using this framework unless the numebr of processes involved in the
-		 * deadlock was precisely two.  We now assume that if we reach a step
-		 * that is still blocked, we need to wait for it to unblock itself.
+		 * permutation invalid, cancel everything, and move on to the next
+		 * one.  Unfortunately, that made it impossible to test the deadlock
+		 * detector using this framework, unless the number of processes
+		 * involved in the deadlock was precisely two.  We now assume that if
+		 * we reach a step that is still blocked, we need to wait for it to
+		 * unblock itself.)
 		 */
 		for (w = 0; w < nwaiting; ++w)
 		{
@@ -689,6 +690,9 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		}
 		PQclear(res);
 	}
+
+	free(waiting);
+	free(errorstep);
 }
 
 /*
@@ -786,12 +790,17 @@ try_complete_step(Step *step, int flags)
 			if (td > 60 * USECS_PER_SEC && !canceled)
 			{
 				PGcancel *cancel = PQgetCancel(conn);
-				char	buf[256];
 
-				if (cancel != NULL && !PQcancel(cancel, buf, sizeof(buf)))
-					fprintf(stderr, "PQcancel failed: %s\n", buf);
 				if (cancel != NULL)
+				{
+					char	buf[256];
+
+					if (PQcancel(cancel, buf, sizeof(buf)))
+						canceled = true;
+					else
+						fprintf(stderr, "PQcancel failed: %s\n", buf);
 					PQfreeCancel(cancel);
+				}
 			}
 
 			/*
