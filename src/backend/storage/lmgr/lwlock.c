@@ -125,6 +125,9 @@ static int	LWLockTranchesAllocated = 0;
  */
 LWLockPadded *MainLWLockArray = NULL;
 static LWLockTranche MainLWLockTranche;
+static LWLockTranche BufMappingLWLockTranche;
+static LWLockTranche LockManagerLWLockTranche;
+static LWLockTranche PredicateLockManagerLWLockTranche;
 
 /*
  * We use this structure to keep track of locked LWLocks for release
@@ -158,6 +161,9 @@ int			NamedLWLockTrancheRequests = 0;
 NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
 
 static bool lock_named_request_allowed = true;
+
+static void InitializeLWLocks(void);
+static void RegisterLWLockTranches(void);
 
 #ifdef LWLOCK_STATS
 typedef struct lwlock_stats_key
@@ -395,14 +401,12 @@ LWLockShmemSize(void)
 }
 
 /*
- * Allocate shmem space for the main LWLock array and named tranches and
- * initialize it.  We also register the main and named tranche here.
+ * Allocate shmem space for the main LWLock array and all tranches and
+ * initialize it.  We also register all the LWLock tranches here.
  */
 void
 CreateLWLocks(void)
 {
-	int			i;
-
 	StaticAssertExpr(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
 					 "MAX_BACKENDS too big for lwlock.c");
 
@@ -412,14 +416,9 @@ CreateLWLocks(void)
 
 	if (!IsUnderPostmaster)
 	{
-		int			numLocks = NUM_FIXED_LWLOCKS;
-		int			numNamedLocks = NumLWLocksByNamedTranches();
 		Size		spaceLocks = LWLockShmemSize();
-		LWLockPadded *lock;
 		int		   *LWLockCounter;
 		char	   *ptr;
-		int			id;
-		int			j;
 
 		/* Allocate space */
 		ptr = (char *) ShmemAlloc(spaceLocks);
@@ -432,10 +431,6 @@ CreateLWLocks(void)
 
 		MainLWLockArray = (LWLockPadded *) ptr;
 
-		/* Initialize all fixed LWLocks in main array */
-		for (id = 0, lock = MainLWLockArray; id < numLocks; id++, lock++)
-			LWLockInitialize(&lock->lock, LWTRANCHE_MAIN);
-
 		/*
 		 * Initialize the dynamic-allocation counter for tranches, which is
 		 * stored just before the first LWLock.
@@ -443,44 +438,92 @@ CreateLWLocks(void)
 		LWLockCounter = (int *) ((char *) MainLWLockArray - sizeof(int));
 		*LWLockCounter = LWTRANCHE_FIRST_USER_DEFINED;
 
-		/* Initialize named tranches. */
-		if (NamedLWLockTrancheRequests > 0)
+		/* Initialize all LWLocks */
+		InitializeLWLocks();
+	}
+
+	/* Register all LWLock tranches */
+	RegisterLWLockTranches();
+}
+
+/*
+ * Initialize LWLocks that are fixed and those belonging to named tranches.
+ */
+static void
+InitializeLWLocks(void)
+{
+	int			numNamedLocks = NumLWLocksByNamedTranches();
+	int			id;
+	int			i;
+	int			j;
+	LWLockPadded *lock;
+
+	/* Initialize all individual LWLocks in main array */
+	for (id = 0, lock = MainLWLockArray; id < NUM_INDIVIDUAL_LWLOCKS; id++, lock++)
+		LWLockInitialize(&lock->lock, LWTRANCHE_MAIN);
+
+	/* Initialize buffer mapping LWLocks in main array */
+	lock = MainLWLockArray + NUM_INDIVIDUAL_LWLOCKS;
+	for (id = 0; id < NUM_BUFFER_PARTITIONS; id++, lock++)
+		LWLockInitialize(&lock->lock, LWTRANCHE_BUFFER_MAPPING);
+
+	/* Initialize lmgrs' LWLocks in main array */
+	lock = MainLWLockArray + NUM_INDIVIDUAL_LWLOCKS + NUM_BUFFER_PARTITIONS;
+	for (id = 0; id < NUM_LOCK_PARTITIONS; id++, lock++)
+		LWLockInitialize(&lock->lock, LWTRANCHE_LOCK_MANAGER);
+
+	/* Initialize predicate lmgrs' LWLocks in main array */
+	lock = MainLWLockArray + NUM_INDIVIDUAL_LWLOCKS +
+		NUM_BUFFER_PARTITIONS + NUM_LOCK_PARTITIONS;
+	for (id = 0; id < NUM_PREDICATELOCK_PARTITIONS; id++, lock++)
+		LWLockInitialize(&lock->lock, LWTRANCHE_PREDICATE_LOCK_MANAGER);
+
+	/* Initialize named tranches. */
+	if (NamedLWLockTrancheRequests > 0)
+	{
+		char	   *trancheNames;
+
+		NamedLWLockTrancheArray = (NamedLWLockTranche *)
+			&MainLWLockArray[NUM_FIXED_LWLOCKS + numNamedLocks];
+
+		trancheNames = (char *) NamedLWLockTrancheArray +
+			(NamedLWLockTrancheRequests * sizeof(NamedLWLockTranche));
+		lock = &MainLWLockArray[NUM_FIXED_LWLOCKS];
+
+		for (i = 0; i < NamedLWLockTrancheRequests; i++)
 		{
-			char	   *trancheNames;
+			NamedLWLockTrancheRequest *request;
+			NamedLWLockTranche *tranche;
+			char	   *name;
 
-			NamedLWLockTrancheArray = (NamedLWLockTranche *)
-				&MainLWLockArray[numLocks + numNamedLocks];
+			request = &NamedLWLockTrancheRequestArray[i];
+			tranche = &NamedLWLockTrancheArray[i];
 
-			trancheNames = (char *) NamedLWLockTrancheArray +
-				(NamedLWLockTrancheRequests * sizeof(NamedLWLockTranche));
-			lock = &MainLWLockArray[numLocks];
+			name = trancheNames;
+			trancheNames += strlen(request->tranche_name) + 1;
+			strcpy(name, request->tranche_name);
+			tranche->lwLockTranche.name = name;
+			tranche->trancheId = LWLockNewTrancheId();
+			tranche->lwLockTranche.array_base = lock;
+			tranche->lwLockTranche.array_stride = sizeof(LWLockPadded);
 
-			for (i = 0; i < NamedLWLockTrancheRequests; i++)
-			{
-				NamedLWLockTrancheRequest *request;
-				NamedLWLockTranche *tranche;
-				char	   *name;
-
-				request = &NamedLWLockTrancheRequestArray[i];
-				tranche = &NamedLWLockTrancheArray[i];
-
-				name = trancheNames;
-				trancheNames += strlen(request->tranche_name) + 1;
-				strcpy(name, request->tranche_name);
-				tranche->lwLockTranche.name = name;
-				tranche->trancheId = LWLockNewTrancheId();
-				tranche->lwLockTranche.array_base = lock;
-				tranche->lwLockTranche.array_stride = sizeof(LWLockPadded);
-
-				for (j = 0; j < request->num_lwlocks; j++, lock++)
-					LWLockInitialize(&lock->lock, tranche->trancheId);
-			}
+			for (j = 0; j < request->num_lwlocks; j++, lock++)
+				LWLockInitialize(&lock->lock, tranche->trancheId);
 		}
 	}
+}
+
+/*
+ * Register named tranches and tranches for fixed LWLocks.
+ */
+static void
+RegisterLWLockTranches(void)
+{
+	int			i;
 
 	if (LWLockTrancheArray == NULL)
 	{
-		LWLockTranchesAllocated = 16;
+		LWLockTranchesAllocated = 32;
 		LWLockTrancheArray = (LWLockTranche **)
 			MemoryContextAlloc(TopMemoryContext,
 						  LWLockTranchesAllocated * sizeof(LWLockTranche *));
@@ -491,6 +534,23 @@ CreateLWLocks(void)
 	MainLWLockTranche.array_base = MainLWLockArray;
 	MainLWLockTranche.array_stride = sizeof(LWLockPadded);
 	LWLockRegisterTranche(LWTRANCHE_MAIN, &MainLWLockTranche);
+
+	BufMappingLWLockTranche.name = "buffer_mapping";
+	BufMappingLWLockTranche.array_base = MainLWLockArray + NUM_INDIVIDUAL_LWLOCKS;
+	BufMappingLWLockTranche.array_stride = sizeof(LWLockPadded);
+	LWLockRegisterTranche(LWTRANCHE_BUFFER_MAPPING, &BufMappingLWLockTranche);
+
+	LockManagerLWLockTranche.name = "lock_manager";
+	LockManagerLWLockTranche.array_base = MainLWLockArray + NUM_INDIVIDUAL_LWLOCKS +
+		NUM_BUFFER_PARTITIONS;
+	LockManagerLWLockTranche.array_stride = sizeof(LWLockPadded);
+	LWLockRegisterTranche(LWTRANCHE_LOCK_MANAGER, &LockManagerLWLockTranche);
+
+	PredicateLockManagerLWLockTranche.name = "predicate_lock_manager";
+	PredicateLockManagerLWLockTranche.array_base = MainLWLockArray + NUM_INDIVIDUAL_LWLOCKS +
+		NUM_BUFFER_PARTITIONS + NUM_LOCK_PARTITIONS;
+	PredicateLockManagerLWLockTranche.array_stride = sizeof(LWLockPadded);
+	LWLockRegisterTranche(LWTRANCHE_PREDICATE_LOCK_MANAGER, &PredicateLockManagerLWLockTranche);
 
 	/* Register named tranches. */
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
