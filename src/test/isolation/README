@@ -107,10 +107,11 @@ Each step may contain commands that block until further action has been taken
 (most likely, some other session runs a step that unblocks it or causes a
 deadlock).  A test that uses this ability must manually specify valid
 permutations, i.e. those that would not expect a blocked session to execute a
-command.  If the test fails to follow that rule, the test is aborted.
-
-Currently, at most one step can be waiting at a time.  As long as one
-step is waiting, subsequent steps are run to completion synchronously.
+command.  If a test fails to follow that rule, isolationtester will cancel it
+after 60 seconds.  If the cancel doesn't work, isolationtester will exit
+uncleanly after a total of 75 seconds of wait time.  Testing invalid
+permutations should be avoided because they can make the isolation tests take
+a very long time to run, and they serve no useful testing purpose.
 
 Note that isolationtester recognizes that a command has blocked by looking
 to see if it is shown as waiting in the pg_locks view; therefore, only
