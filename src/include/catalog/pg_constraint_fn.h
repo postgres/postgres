@@ -71,6 +71,9 @@ extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
 
+extern Bitmapset *get_primary_key_attnos(Oid relid, bool deferrableOk,
+					   Oid *constraintOid);
+
 extern bool check_functional_grouping(Oid relid,
 						  Index varno, Index varlevelsup,
 						  List *grouping_columns,

@@ -17,6 +17,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -869,6 +870,99 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 	heap_close(pg_constraint, AccessShareLock);
 
 	return conOid;
+}
+
+/*
+ * get_primary_key_attnos
+ *		Identify the columns in a relation's primary key, if any.
+ *
+ * Returns a Bitmapset of the column attnos of the primary key's columns,
+ * with attnos being offset by FirstLowInvalidHeapAttributeNumber so that
+ * system columns can be represented.
+ *
+ * If there is no primary key, return NULL.  We also return NULL if the pkey
+ * constraint is deferrable and deferrableOk is false.
+ *
+ * *constraintOid is set to the OID of the pkey constraint, or InvalidOid
+ * on failure.
+ */
+Bitmapset *
+get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
+{
+	Bitmapset  *pkattnos = NULL;
+	Relation	pg_constraint;
+	HeapTuple	tuple;
+	SysScanDesc scan;
+	ScanKeyData skey[1];
+
+	/* Set *constraintOid, to avoid complaints about uninitialized vars */
+	*constraintOid = InvalidOid;
+
+	/* Scan pg_constraint for constraints of the target rel */
+	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
+							  NULL, 1, skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+		Datum		adatum;
+		bool		isNull;
+		ArrayType  *arr;
+		int16	   *attnums;
+		int			numkeys;
+		int			i;
+
+		/* Skip constraints that are not PRIMARY KEYs */
+		if (con->contype != CONSTRAINT_PRIMARY)
+			continue;
+
+		/*
+		 * If the primary key is deferrable, but we've been instructed to
+		 * ignore deferrable constraints, then we might as well give up
+		 * searching, since there can only be a single primary key on a table.
+		 */
+		if (con->condeferrable && !deferrableOk)
+			break;
+
+		/* Extract the conkey array, ie, attnums of PK's columns */
+		adatum = heap_getattr(tuple, Anum_pg_constraint_conkey,
+							  RelationGetDescr(pg_constraint), &isNull);
+		if (isNull)
+			elog(ERROR, "null conkey for constraint %u",
+				 HeapTupleGetOid(tuple));
+		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
+		numkeys = ARR_DIMS(arr)[0];
+		if (ARR_NDIM(arr) != 1 ||
+			numkeys < 0 ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != INT2OID)
+			elog(ERROR, "conkey is not a 1-D smallint array");
+		attnums = (int16 *) ARR_DATA_PTR(arr);
+
+		/* Construct the result value */
+		for (i = 0; i < numkeys; i++)
+		{
+			pkattnos = bms_add_member(pkattnos,
+							attnums[i] - FirstLowInvalidHeapAttributeNumber);
+		}
+		*constraintOid = HeapTupleGetOid(tuple);
+
+		/* No need to search further */
+		break;
+	}
+
+	systable_endscan(scan);
+
+	heap_close(pg_constraint, AccessShareLock);
+
+	return pkattnos;
 }
 
 /*
