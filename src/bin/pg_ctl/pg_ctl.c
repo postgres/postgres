@@ -79,6 +79,7 @@ typedef enum
 static bool do_wait = false;
 static bool wait_set = false;
 static int	wait_seconds = DEFAULT_WAIT;
+static bool wait_seconds_arg = false;
 static bool silent_mode = false;
 static ShutdownMode shutdown_mode = SMART_MODE;
 static int	sig = SIGTERM;		/* default */
@@ -1379,7 +1380,8 @@ pgwin32_CommandLine(bool registration)
 	if (registration && do_wait)
 		appendPQExpBuffer(cmdLine, " -w");
 
-	if (registration && wait_seconds != DEFAULT_WAIT)
+	/* Don't propagate a value from an environment variable. */
+	if (registration && wait_seconds_arg && wait_seconds != DEFAULT_WAIT)
 		appendPQExpBuffer(cmdLine, " -t %d", wait_seconds);
 
 	if (registration && silent_mode)
@@ -2214,6 +2216,7 @@ main(int argc, char **argv)
 		{NULL, 0, NULL, 0}
 	};
 
+	char	   *env_wait;
 	int			option_index;
 	int			c;
 	pgpid_t		killproc = 0;
@@ -2264,6 +2267,10 @@ main(int argc, char **argv)
 		exit(1);
 	}
 #endif
+
+	env_wait = getenv("PGCTLTIMEOUT");
+	if (env_wait != NULL)
+		wait_seconds = atoi(env_wait);
 
 	/*
 	 * 'Action' can be before or after args so loop over both. Some
@@ -2334,6 +2341,7 @@ main(int argc, char **argv)
 					break;
 				case 't':
 					wait_seconds = atoi(optarg);
+					wait_seconds_arg = true;
 					break;
 				case 'U':
 					if (strchr(optarg, '\\'))
