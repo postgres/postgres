@@ -243,8 +243,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * Gather node on top of the entire plan.  However, it only needs to be
 	 * accurate when force_parallel_mode is 'on' or 'regress', so we don't
 	 * bother doing the work otherwise.  The value we set here is just a
-	 * preliminary guess; it may get changed from true to false later, but
-	 * not visca versa.
+	 * preliminary guess; it may get changed from true to false later, but not
+	 * vice versa.
 	 */
 	if (force_parallel_mode == FORCE_PARALLEL_OFF || !glob->parallelModeOK)
 	{
