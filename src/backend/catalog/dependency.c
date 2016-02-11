@@ -28,6 +28,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_collation_fn.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_database.h"

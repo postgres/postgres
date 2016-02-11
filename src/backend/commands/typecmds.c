@@ -41,6 +41,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_language.h"
