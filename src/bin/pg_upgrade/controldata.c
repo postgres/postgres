@@ -197,11 +197,18 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
 
-			p = strchr(p, '/');
+			if (strchr(p, '/') != NULL)
+				p = strchr(p, '/');
+			/* delimiter changed from '/' to ':' in 9.6 */
+			else if (GET_MAJOR_VERSION(cluster->major_version) >= 906)
+				p = strchr(p, ':');
+			else
+				p = NULL;
+
 			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
 
-			p++;				/* remove '/' char */
+			p++;				/* remove '/' or ':' char */
 			cluster->controldata.chkpnt_nxtxid = str2uint(p);
 			got_xid = true;
 		}
