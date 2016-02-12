@@ -2686,7 +2686,8 @@ findBuiltin(const char *name, char **desc)
 static void
 addScript(const char *name, Command **commands)
 {
-	if (commands == NULL)
+	if (commands == NULL ||
+		commands[0] == NULL)
 	{
 		fprintf(stderr, "empty command list for script \"%s\"\n", name);
 		exit(1);
