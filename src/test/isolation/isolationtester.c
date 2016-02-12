@@ -429,7 +429,7 @@ static void
 report_multiple_error_messages(Step *step, int nextra, Step **extrastep)
 {
 	PQExpBufferData buffer;
-	int		n;
+	int			n;
 
 	if (nextra == 0)
 	{
@@ -475,8 +475,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	int			w;
 	int			nwaiting = 0;
 	int			nerrorstep = 0;
-	Step      **waiting;
-	Step      **errorstep;
+	Step	  **waiting;
+	Step	  **errorstep;
 
 	/*
 	 * In dry run mode, just display the permutation in the same format used
@@ -540,13 +540,13 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	for (i = 0; i < nsteps; i++)
 	{
 		Step	   *step = steps[i];
-		Step       *oldstep = NULL;
+		Step	   *oldstep = NULL;
 		PGconn	   *conn = conns[1 + step->session];
 		bool		mustwait;
 
 		/*
-		 * Check whether the session that needs to perform the next step
-		 * is still blocked on an earlier step.  If so, wait for it to finish.
+		 * Check whether the session that needs to perform the next step is
+		 * still blocked on an earlier step.  If so, wait for it to finish.
 		 *
 		 * (In older versions of this tool, we allowed precisely one session
 		 * to be waiting at a time.  If we reached a step that required that
@@ -762,7 +762,7 @@ try_complete_step(Step *step, int flags)
 				ntuples = PQntuples(res);
 				PQclear(res);
 
-				if (ntuples >= 1)	/* waiting to acquire a lock */
+				if (ntuples >= 1)		/* waiting to acquire a lock */
 				{
 					if (!(flags & STEP_RETRY))
 						printf("step %s: %s <waiting ...>\n",
@@ -781,19 +781,19 @@ try_complete_step(Step *step, int flags)
 			/*
 			 * After 60 seconds, try to cancel the query.
 			 *
-			 * If the user tries to test an invalid permutation, we don't
-			 * want to hang forever, especially when this is running in the
+			 * If the user tries to test an invalid permutation, we don't want
+			 * to hang forever, especially when this is running in the
 			 * buildfarm.  So try to cancel it after a minute.  This will
 			 * presumably lead to this permutation failing, but remaining
 			 * permutations and tests should still be OK.
 			 */
 			if (td > 60 * USECS_PER_SEC && !canceled)
 			{
-				PGcancel *cancel = PQgetCancel(conn);
+				PGcancel   *cancel = PQgetCancel(conn);
 
 				if (cancel != NULL)
 				{
-					char	buf[256];
+					char		buf[256];
 
 					if (PQcancel(cancel, buf, sizeof(buf)))
 						canceled = true;
