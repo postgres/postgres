@@ -63,7 +63,7 @@ step "s7a8"	{ LOCK TABLE a8; }
 step "s7c"	{ COMMIT; }
 
 session "s8"
-setup		{ BEGIN; SET deadlock_timeout = '5s'; }
+setup		{ BEGIN; SET deadlock_timeout = '10s'; }
 step "s8a8"	{ LOCK TABLE a8; }
 step "s8a1"	{ LOCK TABLE a1; }
 step "s8c"	{ COMMIT; }
