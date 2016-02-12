@@ -1136,7 +1136,7 @@ deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
  * relation it just returns schema-qualified tablename, with the appropriate
  * alias if so requested.
  */
-void
+static void
 deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 					  bool use_alias, List **params_list)
 {
