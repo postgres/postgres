@@ -138,7 +138,7 @@ ReplicationSlotsShmemInit(void)
 		ShmemInitStruct("ReplicationSlot Ctl", ReplicationSlotsShmemSize(),
 						&found);
 
-	ReplSlotIOLWLockTranche.name = "Replication Slot IO Locks";
+	ReplSlotIOLWLockTranche.name = "replication_slot_io";
 	ReplSlotIOLWLockTranche.array_base =
 		((char *) ReplicationSlotCtl) + offsetof(ReplicationSlotCtlData, replication_slots) +offsetof(ReplicationSlot, io_in_progress_lock);
 	ReplSlotIOLWLockTranche.array_stride = sizeof(ReplicationSlot);

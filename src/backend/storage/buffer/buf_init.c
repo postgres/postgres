@@ -90,13 +90,13 @@ InitBufferPool(void)
 									   + PG_CACHE_LINE_SIZE,
 									   &foundIOLocks));
 
-	BufferIOLWLockTranche.name = "Buffer IO Locks";
+	BufferIOLWLockTranche.name = "buffer_io";
 	BufferIOLWLockTranche.array_base = BufferIOLWLockArray;
 	BufferIOLWLockTranche.array_stride = sizeof(LWLockMinimallyPadded);
 	LWLockRegisterTranche(LWTRANCHE_BUFFER_IO_IN_PROGRESS,
 						  &BufferIOLWLockTranche);
 
-	BufferContentLWLockTranche.name = "Buffer Content Locks";
+	BufferContentLWLockTranche.name = "buffer_content";
 	BufferContentLWLockTranche.array_base =
 		((char *) BufferDescriptors) + offsetof(BufferDesc, content_lock);
 	BufferContentLWLockTranche.array_stride = sizeof(BufferDescPadded);

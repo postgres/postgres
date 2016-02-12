@@ -4675,7 +4675,7 @@ XLOGShmemInit(void)
 		(WALInsertLockPadded *) allocptr;
 	allocptr += sizeof(WALInsertLockPadded) * NUM_XLOGINSERT_LOCKS;
 
-	XLogCtl->Insert.WALInsertLockTranche.name = "WALInsertLocks";
+	XLogCtl->Insert.WALInsertLockTranche.name = "wal_insert";
 	XLogCtl->Insert.WALInsertLockTranche.array_base = WALInsertLocks;
 	XLogCtl->Insert.WALInsertLockTranche.array_stride = sizeof(WALInsertLockPadded);
 
