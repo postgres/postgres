@@ -439,10 +439,10 @@ report_multiple_error_messages(Step *step, int nextra, Step **extrastep)
 
 	initPQExpBuffer(&buffer);
 	appendPQExpBufferStr(&buffer, step->name);
- 
+
 	for (n = 0; n < nextra; ++n)
 		appendPQExpBuffer(&buffer, " %s", extrastep[n]->name);
- 
+
 	if (step->errormsg)
 	{
 		fprintf(stdout, "error in steps %s: %s\n", buffer.data,
@@ -460,7 +460,7 @@ report_multiple_error_messages(Step *step, int nextra, Step **extrastep)
 		free(extrastep[n]->errormsg);
 		extrastep[n]->errormsg = NULL;
 	}
- 
+
 	termPQExpBuffer(&buffer);
 }
 
@@ -779,7 +779,7 @@ try_complete_step(Step *step, int flags)
 			td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
 
 			/*
-			 * After 60 seconds, try to cancel the query. 
+			 * After 60 seconds, try to cancel the query.
 			 *
 			 * If the user tries to test an invalid permutation, we don't
 			 * want to hang forever, especially when this is running in the
