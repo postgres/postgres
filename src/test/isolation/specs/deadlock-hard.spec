@@ -1,7 +1,9 @@
 # This is a straightforward deadlock scenario.  Since it involves more than
 # two processes, the main lock detector will find the problem and rollback
 # the session that first discovers it.  Set deadlock_timeout in each session
-# so that it's predictable which session fails.
+# so that it's predictable which session fails.  Also, when s8 fails and
+# rolls back, it unblocks s7, so that there is a race as to whether s7a8
+# or s8a1 will report first.  Add a delay in s7a8 to make that predictable.
 
 setup
 {
@@ -59,7 +61,7 @@ step "s6c"	{ COMMIT; }
 session "s7"
 setup		{ BEGIN; SET deadlock_timeout = '100s'; }
 step "s7a7"	{ LOCK TABLE a7; }
-step "s7a8"	{ LOCK TABLE a8; }
+step "s7a8"	{ LOCK TABLE a8; SELECT pg_sleep(5); }
 step "s7c"	{ COMMIT; }
 
 session "s8"
