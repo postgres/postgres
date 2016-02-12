@@ -540,8 +540,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	for (i = 0; i < nsteps; i++)
 	{
 		Step	   *step = steps[i];
-		Step	   *oldstep = NULL;
 		PGconn	   *conn = conns[1 + step->session];
+		Step	   *oldstep = NULL;
 		bool		mustwait;
 
 		/*
@@ -563,33 +563,30 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 			if (step->session == waiting[w]->session)
 			{
 				oldstep = waiting[w];
+
+				/* Wait for previous step on this connection. */
+				try_complete_step(oldstep, STEP_RETRY);
+
+				/* Remove that step from the waiting[] array. */
+				if (w + 1 < nwaiting)
+					memcpy(&waiting[w], &waiting[w + 1],
+						   (nwaiting - (w + 1)) * sizeof(Step *));
+				nwaiting--;
+
 				break;
 			}
 		}
 		if (oldstep != NULL)
 		{
-			/* Wait for previous step on this connection. */
-			try_complete_step(oldstep, STEP_RETRY);
-
 			/*
-			 * Attempt to complete any steps that were previously waiting.
-			 * Remove any that have completed, and also remove the one for
-			 * which we just waited.
+			 * Check for completion of any steps that were previously waiting.
+			 * Remove any that have completed from waiting[], and include them
+			 * in the list for report_multiple_error_messages().
 			 */
 			w = 0;
 			nerrorstep = 0;
 			while (w < nwaiting)
 			{
-				if (waiting[w] == oldstep)
-				{
-					/* We just waited for this; remove it. */
-					if (w + 1 < nwaiting)
-						memcpy(&waiting[w], &waiting[w + 1],
-							   (nwaiting - (w + 1)) * sizeof(Step *));
-					nwaiting--;
-					continue;
-				}
-
 				if (try_complete_step(waiting[w], STEP_NONBLOCK | STEP_RETRY))
 				{
 					/* Still blocked on a lock, leave it alone. */
@@ -621,7 +618,7 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		/* Try to complete this step without blocking.  */
 		mustwait = try_complete_step(step, STEP_NONBLOCK);
 
-		/* Attempt to complete any steps that were previously waiting. */
+		/* Check for completion of any steps that were previously waiting. */
 		w = 0;
 		nerrorstep = 0;
 		while (w < nwaiting)
@@ -646,7 +643,7 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 			waiting[nwaiting++] = step;
 	}
 
-	/* Finish any waiting query. */
+	/* Wait for any remaining queries. */
 	for (w = 0; w < nwaiting; ++w)
 	{
 		try_complete_step(waiting[w], STEP_RETRY);
@@ -702,9 +699,10 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
  * have executed additional steps in the permutation.
  *
  * When calling this function on behalf of a given step for a second or later
- * time, pass the STEP_RETRY flag.  This only affects the messages printed.
+ * time, pass the STEP_RETRY flag.  In this case we don't need to recheck
+ * whether it's waiting for a lock.
  *
- * If the connection returns an error, the message is saved in step->errormsg.
+ * If the query returns an error, the message is saved in step->errormsg.
  * Caller should call report_error_message shortly after this, to have it
  * printed and cleared.
  *
@@ -750,6 +748,14 @@ try_complete_step(Step *step, int flags)
 			{
 				int			ntuples;
 
+				/*
+				 * If this is a retry, assume without checking that the step
+				 * is still blocked.  This rule saves a lot of PREP_WAITING
+				 * queries and avoids any possible flappiness in the answer.
+				 */
+				if (flags & STEP_RETRY)
+					return true;
+
 				res = PQexecPrepared(conns[0], PREP_WAITING, 1,
 									 &backend_pids[step->session + 1],
 									 NULL, NULL, 0);
@@ -764,9 +770,8 @@ try_complete_step(Step *step, int flags)
 
 				if (ntuples >= 1)		/* waiting to acquire a lock */
 				{
-					if (!(flags & STEP_RETRY))
-						printf("step %s: %s <waiting ...>\n",
-							   step->name, step->sql);
+					printf("step %s: %s <waiting ...>\n",
+						   step->name, step->sql);
 					return true;
 				}
 				/* else, not waiting */
