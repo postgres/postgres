@@ -197,9 +197,14 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
 
+			/*
+			 * Delimiter changed from '/' to ':' in 9.6.  We don't test for
+			 * the catalog version of the change because the catalog version
+			 * is pulled from pg_controldata too, and it isn't worth adding
+			 * an order dependency for this --- we just check the string.
+			 */
 			if (strchr(p, '/') != NULL)
 				p = strchr(p, '/');
-			/* delimiter changed from '/' to ':' in 9.6 */
 			else if (GET_MAJOR_VERSION(cluster->major_version) >= 906)
 				p = strchr(p, ':');
 			else
