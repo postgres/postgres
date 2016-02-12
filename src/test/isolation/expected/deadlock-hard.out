@@ -15,15 +15,12 @@ step s3a4: LOCK TABLE a4; <waiting ...>
 step s4a5: LOCK TABLE a5; <waiting ...>
 step s5a6: LOCK TABLE a6; <waiting ...>
 step s6a7: LOCK TABLE a7; <waiting ...>
-step s7a8: LOCK TABLE a8; SELECT pg_sleep(5); <waiting ...>
+step s7a8: LOCK TABLE a8; <waiting ...>
 step s8a1: LOCK TABLE a1; <waiting ...>
 step s8a1: <... completed>
-ERROR:  deadlock detected
-step s8c: COMMIT;
 step s7a8: <... completed>
-pg_sleep       
-
-               
+error in steps s8a1 s7a8: ERROR:  deadlock detected
+step s8c: COMMIT;
 step s7c: COMMIT;
 step s6a7: <... completed>
 step s6c: COMMIT;
