@@ -699,8 +699,7 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
  * have executed additional steps in the permutation.
  *
  * When calling this function on behalf of a given step for a second or later
- * time, pass the STEP_RETRY flag.  In this case we don't need to recheck
- * whether it's waiting for a lock.
+ * time, pass the STEP_RETRY flag.  This only affects the messages printed.
  *
  * If the query returns an error, the message is saved in step->errormsg.
  * Caller should call report_error_message shortly after this, to have it
@@ -748,14 +747,6 @@ try_complete_step(Step *step, int flags)
 			{
 				int			ntuples;
 
-				/*
-				 * If this is a retry, assume without checking that the step
-				 * is still blocked.  This rule saves a lot of PREP_WAITING
-				 * queries and avoids any possible flappiness in the answer.
-				 */
-				if (flags & STEP_RETRY)
-					return true;
-
 				res = PQexecPrepared(conns[0], PREP_WAITING, 1,
 									 &backend_pids[step->session + 1],
 									 NULL, NULL, 0);
@@ -770,8 +761,9 @@ try_complete_step(Step *step, int flags)
 
 				if (ntuples >= 1)		/* waiting to acquire a lock */
 				{
-					printf("step %s: %s <waiting ...>\n",
-						   step->name, step->sql);
+					if (!(flags & STEP_RETRY))
+						printf("step %s: %s <waiting ...>\n",
+							   step->name, step->sql);
 					return true;
 				}
 				/* else, not waiting */
