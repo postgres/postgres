@@ -26,6 +26,7 @@
 #include <ctype.h>
 
 #include "lib/stringinfo.h"
+#include "nodes/extensible.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -140,6 +141,13 @@ _outToken(StringInfo str, const char *s)
 	}
 }
 
+/* for use by extensions which define extensible nodes */
+void
+outToken(StringInfo str, const char *s)
+{
+	_outToken(str, s);
+}
+
 static void
 _outList(StringInfo str, const List *node)
 {
@@ -194,6 +202,13 @@ _outBitmapset(StringInfo str, const Bitmapset *bms)
 	while ((x = bms_next_member(bms, x)) >= 0)
 		appendStringInfo(str, " %d", x);
 	appendStringInfoChar(str, ')');
+}
+
+/* for use by extensions which define extensible nodes */
+void
+outBitmapset(StringInfo str, const Bitmapset *bms)
+{
+	_outBitmapset(str, bms);
 }
 
 /*
@@ -2114,6 +2129,27 @@ _outPlannerParamItem(StringInfo str, const PlannerParamItem *node)
 
 /*****************************************************************************
  *
+ *	Stuff from extensible.h
+ *
+ *****************************************************************************/
+
+static void
+_outExtensibleNode(StringInfo str, const ExtensibleNode *node)
+{
+	const ExtensibleNodeMethods  *methods;
+
+	methods = GetExtensibleNodeMethods(node->extnodename, false);
+
+	WRITE_NODE_TYPE("EXTENSIBLENODE");
+
+	WRITE_STRING_FIELD(extnodename);
+
+	/* serialize the private fields */
+	methods->nodeOut(str, node);
+}
+
+/*****************************************************************************
+ *
  *	Stuff from parsenodes.h.
  *
  *****************************************************************************/
@@ -3365,6 +3401,10 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_PlannerParamItem:
 				_outPlannerParamItem(str, obj);
+				break;
+
+			case T_ExtensibleNode:
+				_outExtensibleNode(str, obj);
 				break;
 
 			case T_CreateStmt:

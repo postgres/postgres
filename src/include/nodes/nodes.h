@@ -276,6 +276,11 @@ typedef enum NodeTag
 	T_OidList,
 
 	/*
+	 * TAGS FOR EXTENSIBLE NODES (extensible.h)
+	 */
+	T_ExtensibleNode,
+
+	/*
 	 * TAGS FOR STATEMENT NODES (mostly in parsenodes.h)
 	 */
 	T_Query = 700,
@@ -527,10 +532,17 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
  */
 extern char *nodeToString(const void *obj);
 
+struct Bitmapset;		/* not to include bitmapset.h here */
+struct StringInfoData;	/* not to include stringinfo.h here */
+extern void outToken(struct StringInfoData *str, const char *s);
+extern void outBitmapset(struct StringInfoData *str,
+						 const struct Bitmapset *bms);
+
 /*
  * nodes/{readfuncs.c,read.c}
  */
 extern void *stringToNode(char *str);
+extern struct Bitmapset *readBitmapset(void);
 
 /*
  * nodes/copyfuncs.c

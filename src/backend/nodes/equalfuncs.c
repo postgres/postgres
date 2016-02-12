@@ -29,6 +29,7 @@
 
 #include "postgres.h"
 
+#include "nodes/extensible.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
 
@@ -871,6 +872,25 @@ _equalPlaceHolderInfo(const PlaceHolderInfo *a, const PlaceHolderInfo *b)
 	return true;
 }
 
+/*
+ * Stuff from extensible.h
+ */
+static bool
+_equalExtensibleNode(const ExtensibleNode *a, const ExtensibleNode *b)
+{
+	const ExtensibleNodeMethods  *methods;
+
+	COMPARE_STRING_FIELD(extnodename);
+
+	/* At this point, we know extnodename is the same for both nodes. */
+	methods = GetExtensibleNodeMethods(a->extnodename, false);
+
+	/* compare the private fields */
+	if (!methods->nodeEqual(a, b))
+		return false;
+
+	return true;
+}
 
 /*
  * Stuff from parsenodes.h
@@ -2871,6 +2891,13 @@ equal(const void *a, const void *b)
 		case T_BitString:
 		case T_Null:
 			retval = _equalValue(a, b);
+			break;
+
+			/*
+			 * EXTENSIBLE NODES
+			 */
+		case T_ExtensibleNode:
+			retval = _equalExtensibleNode(a, b);
 			break;
 
 			/*
