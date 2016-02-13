@@ -3371,10 +3371,11 @@ LockShmemSize(void)
  * GetLockStatusData - Return a summary of the lock manager's internal
  * status, for use in a user-level reporting function.
  *
- * The return data consists of an array of PROCLOCK objects, with the
- * associated PGPROC and LOCK objects for each.  Note that multiple
- * copies of the same PGPROC and/or LOCK objects are likely to appear.
- * It is the caller's responsibility to match up duplicates if wanted.
+ * The return data consists of an array of LockInstanceData objects,
+ * which are a lightly abstracted version of the PROCLOCK data structures,
+ * i.e. there is one entry for each unique lock and interested PGPROC.
+ * It is the caller's responsibility to match up related items (such as
+ * references to the same lockable object or PGPROC) if wanted.
  *
  * The design goal is to hold the LWLocks for as short a time as possible;
  * thus, this function simply makes a copy of the necessary data and releases
