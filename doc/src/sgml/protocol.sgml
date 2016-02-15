@@ -1468,7 +1468,7 @@ The commands accepted in walsender mode are:
        <term><literal>RESERVE_WAL</></term>
        <listitem>
         <para>
-         Specify that this physical replication reserves <acronym>WAL</>
+         Specify that this physical replication slot reserves <acronym>WAL</>
          immediately.  Otherwise, <acronym>WAL</> is only reserved upon
          connection from a streaming replication client.
         </para>
