@@ -813,13 +813,13 @@ lexescape(struct vars * v)
 			break;
 		case CHR('u'):
 			c = lexdigits(v, 16, 4, 4);
-			if (ISERR() || c < CHR_MIN || c > CHR_MAX)
+			if (ISERR() || !CHR_IS_IN_RANGE(c))
 				FAILW(REG_EESCAPE);
 			RETV(PLAIN, c);
 			break;
 		case CHR('U'):
 			c = lexdigits(v, 16, 8, 8);
-			if (ISERR() || c < CHR_MIN || c > CHR_MAX)
+			if (ISERR() || !CHR_IS_IN_RANGE(c))
 				FAILW(REG_EESCAPE);
 			RETV(PLAIN, c);
 			break;
@@ -837,7 +837,7 @@ lexescape(struct vars * v)
 		case CHR('x'):
 			NOTE(REG_UUNPORT);
 			c = lexdigits(v, 16, 1, 255);		/* REs >255 long outside spec */
-			if (ISERR() || c < CHR_MIN || c > CHR_MAX)
+			if (ISERR() || !CHR_IS_IN_RANGE(c))
 				FAILW(REG_EESCAPE);
 			RETV(PLAIN, c);
 			break;
