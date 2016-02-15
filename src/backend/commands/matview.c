@@ -217,6 +217,51 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 			 RelationGetRelationName(matviewRel));
 
 	/*
+	 * Check that there is a unique index with no WHERE clause on
+	 * one or more columns of the materialized view if CONCURRENTLY
+	 * is specified.
+	 */
+	if (concurrent)
+	{
+		List		*indexoidlist = RelationGetIndexList(matviewRel);
+		ListCell 	*indexoidscan;
+		bool		hasUniqueIndex = false;
+
+		foreach(indexoidscan, indexoidlist)
+		{
+			Oid			indexoid = lfirst_oid(indexoidscan);
+			Relation	indexRel;
+			Form_pg_index	indexStruct;
+
+			indexRel = index_open(indexoid, AccessShareLock);
+			indexStruct = indexRel->rd_index;
+
+			if (indexStruct->indisunique &&
+				IndexIsValid(indexStruct) &&
+				RelationGetIndexExpressions(indexRel) == NIL &&
+				RelationGetIndexPredicate(indexRel) == NIL &&
+				indexStruct->indnatts > 0)
+			{
+				hasUniqueIndex = true;
+				index_close(indexRel, AccessShareLock);
+				break;
+			}
+
+			index_close(indexRel, AccessShareLock);
+		}
+
+		list_free(indexoidlist);
+
+		if (!hasUniqueIndex)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cannot refresh materialized view \"%s\" concurrently",
+							quote_qualified_identifier(get_namespace_name(RelationGetNamespace(matviewRel)),
+													   RelationGetRelationName(matviewRel))),
+					 errhint("Create a unique index with no WHERE clause on one or more columns of the materialized view.")));
+	}
+
+	/*
 	 * The stored query was rewritten at the time of the MV definition, but
 	 * has not been scribbled on by the planner.
 	 */
@@ -695,12 +740,14 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 
 	list_free(indexoidlist);
 
-	if (!foundUniqueIndex)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			   errmsg("cannot refresh materialized view \"%s\" concurrently",
-					  matviewname),
-				 errhint("Create a unique index with no WHERE clause on one or more columns of the materialized view.")));
+	/*
+	 * There must be at least one unique index on the matview.
+	 *
+	 * ExecRefreshMatView() checks that after taking the exclusive lock on
+	 * the matview. So at least one unique index is guaranteed to exist here
+	 * because the lock is still being held.
+	 */
+	Assert(foundUniqueIndex);
 
 	appendStringInfoString(&querybuf,
 						   " AND newdata OPERATOR(pg_catalog.*=) mv) "
