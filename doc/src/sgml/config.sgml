@@ -2344,15 +2344,38 @@ include_dir 'conf.d'
       </indexterm>
       </term>
       <listitem>
-       <para>
-        Specifies the delay between activity rounds for the WAL writer.
-        In each round the writer will flush WAL to disk. It then sleeps for
-        <varname>wal_writer_delay</> milliseconds, and repeats.  The default
-        value is 200 milliseconds (<literal>200ms</>).  Note that on many
-        systems, the effective resolution of sleep delays is 10 milliseconds;
-        setting <varname>wal_writer_delay</> to a value that is not a multiple
-        of 10 might have the same results as setting it to the next higher
-        multiple of 10. This parameter can only be set in the
+      <para>
+        Specifies how often the WAL writer flushes WAL. After flushing WAL it
+        sleeps for <varname>wal_writer_delay</> milliseconds, unless woken up
+        by an asynchronously committing transaction. In case the last flush
+        happened less than <varname>wal_writer_delay</> milliseconds ago and
+        less than <varname>wal_writer_flush_after</> bytes of WAL have been
+        produced since, WAL is only written to the OS, not flushed to disk.
+        The default value is 200 milliseconds (<literal>200ms</>).  Note that
+        on many systems, the effective resolution of sleep delays is 10
+        milliseconds; setting <varname>wal_writer_delay</> to a value that is
+        not a multiple of 10 might have the same results as setting it to the
+        next higher multiple of 10. This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-writer-flush-after" xreflabel="wal_writer_flush_after">
+      <term><varname>wal_writer_flush_after</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>wal_writer_flush_after</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+      <para>
+        Specifies how often the WAL writer flushes WAL. In case the last flush
+        happened less than <varname>wal_writer_delay</> milliseconds ago and
+        less than <varname>wal_writer_flush_after</> bytes of WAL have been
+        produced since, WAL is only written to the OS, not flushed to disk.
+        If <varname>wal_writer_flush_after</> is set to <literal>0</> WAL is
+        flushed everytime the WAL writer has written WAL.  The default is
+        <literal>1MB</literal>. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>

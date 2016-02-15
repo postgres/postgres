@@ -2235,12 +2235,23 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_writer_delay", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("WAL writer sleep time between WAL flushes."),
+			gettext_noop("Time between WAL flushes performed in the WAL writer."),
 			NULL,
 			GUC_UNIT_MS
 		},
 		&WalWriterDelay,
 		200, 1, 10000,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"wal_writer_flush_after", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("Amount of WAL written out by WAL writer triggering a flush."),
+			NULL,
+			GUC_UNIT_XBLOCKS
+		},
+		&WalWriterFlushAfter,
+		128, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 

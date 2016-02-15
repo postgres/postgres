@@ -14,6 +14,7 @@
 
 /* GUC options */
 extern int	WalWriterDelay;
+extern int	WalWriterFlushAfter;
 
 extern void WalWriterMain(void) pg_attribute_noreturn();
 

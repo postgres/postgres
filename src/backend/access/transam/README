@@ -736,20 +736,24 @@ non-roll-backable side effects (such as filesystem changes) force sync
 commit to minimize the window in which the filesystem change has been made
 but the transaction isn't guaranteed committed.
 
-Every wal_writer_delay milliseconds, the walwriter process performs an
-XLogBackgroundFlush().  This checks the location of the last completely
-filled WAL page.  If that has moved forwards, then we write all the changed
-buffers up to that point, so that under full load we write only whole
-buffers.  If there has been a break in activity and the current WAL page is
-the same as before, then we find out the LSN of the most recent
-asynchronous commit, and flush up to that point, if required (i.e.,
-if it's in the current WAL page).  This arrangement in itself would
-guarantee that an async commit record reaches disk during at worst the
-second walwriter cycle after the transaction completes.  However, we also
-allow XLogFlush to flush full buffers "flexibly" (ie, not wrapping around
-at the end of the circular WAL buffer area), so as to minimize the number
-of writes issued under high load when multiple WAL pages are filled per
-walwriter cycle.  This makes the worst-case delay three walwriter cycles.
+The walwriter regularly wakes up (via wal_writer_delay) or is woken up
+(via its latch, which is set by backends committing asynchronously) and
+performs an XLogBackgroundFlush().  This checks the location of the last
+completely filled WAL page.  If that has moved forwards, then we write all
+the changed buffers up to that point, so that under full load we write
+only whole buffers.  If there has been a break in activity and the current
+WAL page is the same as before, then we find out the LSN of the most
+recent asynchronous commit, and write up to that point, if required (i.e.
+if it's in the current WAL page).  If more than wal_writer_delay has
+passed, or more than wal_writer_flush_after blocks have been written, since
+the last flush, WAL is also flushed up to the current location.  This
+arrangement in itself would guarantee that an async commit record reaches
+disk after at most two times wal_writer_delay after the transaction
+completes. However, we also allow XLogFlush to write/flush full buffers
+"flexibly" (ie, not wrapping around at the end of the circular WAL buffer
+area), so as to minimize the number of writes issued under high load when
+multiple WAL pages are filled per walwriter cycle. This makes the worst-case
+delay three wal_writer_delay cycles.
 
 There are some other subtle points to consider with asynchronous commits.
 First, for each page of CLOG we must remember the LSN of the latest commit
