@@ -9,7 +9,7 @@
  *
  * Documentation:
  * * Synchronization and atomic built-in functions
- *   http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/topic/com.ibm.xlcpp8l.doc/compiler/ref/bif_sync.htm
+ *   http://www-01.ibm.com/support/knowledgecenter/SSGH3R_13.1.2/com.ibm.xlcpp131.aix.doc/compiler_ref/bifs_sync_atomic.html
  *
  * src/include/port/atomics/generic-xlc.h
  *
