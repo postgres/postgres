@@ -89,12 +89,13 @@ static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
  * Set commit/abort hint bits on a tuple, if appropriate at this time.
  *
  * It is only safe to set a transaction-committed hint bit if we know the
- * transaction's commit record has been flushed to disk, or if the table is
- * temporary or unlogged and will be obliterated by a crash anyway.  We
- * cannot change the LSN of the page here because we may hold only a share
- * lock on the buffer, so we can't use the LSN to interlock this; we have to
- * just refrain from setting the hint bit until some future re-examination
- * of the tuple.
+ * transaction's commit record is guaranteed to be flushed to disk before the
+ * buffer, or if the table is temporary or unlogged and will be obliterated by
+ * a crash anyway.  We cannot change the LSN of the page here, because we may
+ * hold only a share lock on the buffer, so we can only use the LSN to
+ * interlock this if the buffer's LSN already is newer than the commit LSN;
+ * otherwise we have to just refrain from setting the hint bit until some
+ * future re-examination of the tuple.
  *
  * We can always set hint bits when marking a transaction aborted.  (Some
  * code in heapam.c relies on that!)
@@ -122,8 +123,12 @@ SetHintBits(HeapTupleHeader tuple, Buffer buffer,
 		/* NB: xid must be known committed here! */
 		XLogRecPtr	commitLSN = TransactionIdGetCommitLSN(xid);
 
-		if (XLogNeedsFlush(commitLSN) && BufferIsPermanent(buffer))
-			return;				/* not flushed yet, so don't set hint */
+		if (BufferIsPermanent(buffer) && XLogNeedsFlush(commitLSN) &&
+			BufferGetLSNAtomic(buffer) < commitLSN)
+		{
+			/* not flushed and no LSN interlock, so don't set hint */
+			return;
+		}
 	}
 
 	tuple->t_infomask |= infomask;
