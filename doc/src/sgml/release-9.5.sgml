@@ -1770,7 +1770,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
       <listitem>
 <!--
-2015-06-21 [ad89a5d] Alvaro..: Add transforms to pg_get_object_address and fr..
+2014-12-23 [7eca575] Alvaro..: get_object_address: separate domain constraints..
 -->
        <para>
         Support comments on <link linkend="SQL-CREATEDOMAIN">domain
