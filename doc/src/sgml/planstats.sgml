@@ -67,7 +67,7 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
     not requiring a table scan).  If that is different from
     <structfield>relpages</structfield> then
     <structfield>reltuples</structfield> is scaled accordingly to
-    arrive at a current number-of-rows estimate.  In this case the values
+    arrive at a current number-of-rows estimate.  In the example above, the values
     are correct so the rows estimate is the same as
     <structfield>reltuples</structfield>.
   </para>
