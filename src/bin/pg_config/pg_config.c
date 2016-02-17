@@ -121,7 +121,7 @@ show_item(const char *configname,
 	for (i = 0; i < configdata_len; i++)
 	{
 		if (strcmp(configname, configdata[i].name) == 0)
-			printf("%s = %s\n", configdata[i].name, configdata[i].setting);
+			printf("%s\n", configdata[i].setting);
 	}
 }
 
