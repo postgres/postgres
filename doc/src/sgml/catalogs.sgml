@@ -7350,6 +7350,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-config"><structname>pg_config</structname></link></entry>
+      <entry>compile-time configuration parameters</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
       <entry>open cursors</entry>
      </row>
@@ -7607,6 +7612,53 @@
    The <structname>pg_available_extension_versions</structname> view is read
    only.
   </para>
+ </sect1>
+
+ <sect1 id="view-pg-config">
+  <title><structname>pg_config</structname></title>
+
+  <indexterm zone="view-pg-config">
+   <primary>pg_config</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_config</structname> describes the
+   compile-time configuration parameters of the currently installed
+   version of <productname>PostgreSQL</>. It is intended, for example, to
+   be used by software packages that want to interface to
+   <productname>PostgreSQL</> to facilitate finding the required header
+   files and libraries. It provides the same basic information as the
+   <xref linkend="app-pgconfig"> <productname>PostgreSQL</> Client
+   Application.
+  </para>
+
+  <table>
+   <title><structname>pg_config</> Columns</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>The parameter name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>setting</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>The parameter value</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
  </sect1>
 
  <sect1 id="view-pg-cursors">

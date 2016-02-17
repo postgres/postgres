@@ -23,8 +23,21 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS_COMMON = exec.o pg_lzcompress.o pgfnames.o psprintf.o relpath.o \
-	rmtree.o string.o username.o wait_error.o
+# don't include subdirectory-path-dependent -I and -L switches
+STD_CPPFLAGS := $(filter-out -I$(top_srcdir)/src/include -I$(top_builddir)/src/include,$(CPPFLAGS))
+STD_LDFLAGS := $(filter-out -L$(top_builddir)/src/port,$(LDFLAGS))
+override CPPFLAGS += -DVAL_CONFIGURE="\"$(configure_args)\""
+override CPPFLAGS += -DVAL_CC="\"$(CC)\""
+override CPPFLAGS += -DVAL_CPPFLAGS="\"$(STD_CPPFLAGS)\""
+override CPPFLAGS += -DVAL_CFLAGS="\"$(CFLAGS)\""
+override CPPFLAGS += -DVAL_CFLAGS_SL="\"$(CFLAGS_SL)\""
+override CPPFLAGS += -DVAL_LDFLAGS="\"$(STD_LDFLAGS)\""
+override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
+override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
+override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
+
+OBJS_COMMON = config_info.o exec.o pg_lzcompress.o pgfnames.o psprintf.o \
+	relpath.o rmtree.o string.o username.o wait_error.o
 
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o restricted_token.o
 
@@ -61,7 +74,7 @@ libpgcommon_srv.a: $(OBJS_SRV)
 # a hack that might fail someday if there is a *_srv.o without a
 # corresponding *.o, but it works for now.
 %_srv.o: %.c %.o
-	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
+	$(CC) $(CFLAGS) $(subst -DFRONTEND ,, $(CPPFLAGS)) -c $< -o $@
 
 $(OBJS_SRV): | submake-errcodes
 

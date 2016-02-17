@@ -1147,6 +1147,9 @@ extern Datum set_config_by_name(PG_FUNCTION_ARGS);
 extern Datum show_all_settings(PG_FUNCTION_ARGS);
 extern Datum show_all_file_settings(PG_FUNCTION_ARGS);
 
+/* pg_config.c */
+extern Datum pg_config(PG_FUNCTION_ARGS);
+
 /* rls.c */
 extern Datum row_security_active(PG_FUNCTION_ARGS);
 extern Datum row_security_active_name(PG_FUNCTION_ARGS);

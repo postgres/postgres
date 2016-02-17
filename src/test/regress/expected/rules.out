@@ -1305,6 +1305,9 @@ pg_available_extensions| SELECT e.name,
     e.comment
    FROM (pg_available_extensions() e(name, default_version, comment)
      LEFT JOIN pg_extension x ON ((e.name = x.extname)));
+pg_config| SELECT pg_config.name,
+    pg_config.setting
+   FROM pg_config() pg_config(name, setting);
 pg_cursors| SELECT c.name,
     c.statement,
     c.is_holdable,
