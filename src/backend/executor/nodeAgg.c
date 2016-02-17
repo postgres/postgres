@@ -575,7 +575,8 @@ fetch_input_tuple(AggState *aggstate)
 
 	if (aggstate->sort_in)
 	{
-		if (!tuplesort_gettupleslot(aggstate->sort_in, true, aggstate->sort_slot))
+		if (!tuplesort_gettupleslot(aggstate->sort_in, true, aggstate->sort_slot,
+									NULL))
 			return NULL;
 		slot = aggstate->sort_slot;
 	}
@@ -1076,6 +1077,8 @@ process_ordered_aggregate_single(AggState *aggstate,
 	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	MemoryContext oldContext;
 	bool		isDistinct = (pertrans->numDistinctCols > 0);
+	Datum		newAbbrevVal = (Datum) 0;
+	Datum		oldAbbrevVal = (Datum) 0;
 	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
 	Datum	   *newVal;
 	bool	   *isNull;
@@ -1095,7 +1098,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 	 */
 
 	while (tuplesort_getdatum(pertrans->sortstates[aggstate->current_set],
-							  true, newVal, isNull))
+							  true, newVal, isNull, &newAbbrevVal))
 	{
 		/*
 		 * Clear and select the working context for evaluation of the equality
@@ -1113,6 +1116,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 			haveOldVal &&
 			((oldIsNull && *isNull) ||
 			 (!oldIsNull && !*isNull &&
+			  oldAbbrevVal == newAbbrevVal &&
 			  DatumGetBool(FunctionCall2(&pertrans->equalfns[0],
 										 oldVal, *newVal)))))
 		{
@@ -1128,6 +1132,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 				pfree(DatumGetPointer(oldVal));
 			/* and remember the new one for subsequent equality checks */
 			oldVal = *newVal;
+			oldAbbrevVal = newAbbrevVal;
 			oldIsNull = *isNull;
 			haveOldVal = true;
 		}
@@ -1165,6 +1170,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	TupleTableSlot *slot2 = pertrans->uniqslot;
 	int			numTransInputs = pertrans->numTransInputs;
 	int			numDistinctCols = pertrans->numDistinctCols;
+	Datum		newAbbrevVal = (Datum) 0;
+	Datum		oldAbbrevVal = (Datum) 0;
 	bool		haveOldValue = false;
 	int			i;
 
@@ -1175,7 +1182,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 		ExecClearTuple(slot2);
 
 	while (tuplesort_gettupleslot(pertrans->sortstates[aggstate->current_set],
-								  true, slot1))
+								  true, slot1, &newAbbrevVal))
 	{
 		/*
 		 * Extract the first numTransInputs columns as datums to pass to the
@@ -1186,6 +1193,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 
 		if (numDistinctCols == 0 ||
 			!haveOldValue ||
+			newAbbrevVal != oldAbbrevVal ||
 			!execTuplesMatch(slot1, slot2,
 							 numDistinctCols,
 							 pertrans->sortColIdx,
@@ -1209,6 +1217,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
 
 				slot2 = slot1;
 				slot1 = tmpslot;
+				/* avoid execTuplesMatch() calls by reusing abbreviated keys */
+				oldAbbrevVal = newAbbrevVal;
 				haveOldValue = true;
 			}
 		}
