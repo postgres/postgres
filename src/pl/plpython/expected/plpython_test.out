@@ -16,8 +16,8 @@ select stupidn();
  zarkon
 (1 row)
 
--- test multiple arguments
-CREATE FUNCTION argument_test_one(u users, a1 text, a2 text) RETURNS text
+-- test multiple arguments and odd characters in function name
+CREATE FUNCTION "Argument test #1"(u users, a1 text, a2 text) RETURNS text
 	AS
 'keys = list(u.keys())
 keys.sort()
@@ -27,8 +27,8 @@ for key in keys:
 words = a1 + " " + a2 + " => {" + ", ".join(out) + "}"
 return words'
 	LANGUAGE plpythonu;
-select argument_test_one(users, fname, lname) from users where lname = 'doe' order by 1;
-                           argument_test_one                           
+select "Argument test #1"(users, fname, lname) from users where lname = 'doe' order by 1;
+                           Argument test #1                            
 -----------------------------------------------------------------------
  jane doe => {fname: jane, lname: doe, userid: 1, username: j_doe}
  john doe => {fname: john, lname: doe, userid: 2, username: johnd}
