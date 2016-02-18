@@ -15,12 +15,26 @@ select * from pgstattuple('test'::regclass);
 select pgstattuple(oid) from pg_class where relname = 'test';
 select pgstattuple(relname) from pg_class where relname = 'test';
 
-select * from pgstatindex('test_pkey');
-select * from pgstatindex('test_pkey'::text);
-select * from pgstatindex('test_pkey'::name);
-select * from pgstatindex('test_pkey'::regclass);
-select pgstatindex(oid) from pg_class where relname = 'test_pkey';
-select pgstatindex(relname) from pg_class where relname = 'test_pkey';
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey');
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey'::text);
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey'::name);
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey'::regclass);
 
 select pg_relpages('test');
 select pg_relpages('test_pkey');

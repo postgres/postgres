@@ -41,40 +41,44 @@ select pgstattuple(relname) from pg_class where relname = 'test';
  (0,0,0,0,0,0,0,0,0)
 (1 row)
 
-select * from pgstatindex('test_pkey');
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey');
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
-select * from pgstatindex('test_pkey'::text);
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey'::text);
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
-select * from pgstatindex('test_pkey'::name);
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey'::name);
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
-select * from pgstatindex('test_pkey'::regclass);
+select version, tree_level,
+    index_size / current_setting('block_size')::int as index_size,
+    root_block_no, internal_pages, leaf_pages, empty_pages, deleted_pages,
+    avg_leaf_density, leaf_fragmentation
+    from pgstatindex('test_pkey'::regclass);
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
-       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
-(1 row)
-
-select pgstatindex(oid) from pg_class where relname = 'test_pkey';
-        pgstatindex        
----------------------------
- (2,0,0,0,0,0,0,0,NaN,NaN)
-(1 row)
-
-select pgstatindex(relname) from pg_class where relname = 'test_pkey';
-        pgstatindex        
----------------------------
- (2,0,0,0,0,0,0,0,NaN,NaN)
+       2 |          0 |          1 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
 (1 row)
 
 select pg_relpages('test');
