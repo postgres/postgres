@@ -352,7 +352,7 @@ ReplicationSlotAcquire(const char *name)
 	if (active_pid != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-			   errmsg("replication slot \"%s\" is already active for PID %d",
+			   errmsg("replication slot \"%s\" is active for PID %d",
 					  name, active_pid)));
 
 	/* We made this slot active, so it's ours now. */
