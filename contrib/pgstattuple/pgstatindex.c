@@ -72,7 +72,6 @@ typedef struct BTIndexStat
 	uint32		level;
 	BlockNumber root_blkno;
 
-	uint64		root_pages;
 	uint64		internal_pages;
 	uint64		leaf_pages;
 	uint64		empty_pages;
@@ -153,7 +152,6 @@ pgstatindex(PG_FUNCTION_ARGS)
 	}
 
 	/* -- init counters -- */
-	indexStat.root_pages = 0;
 	indexStat.internal_pages = 0;
 	indexStat.leaf_pages = 0;
 	indexStat.empty_pages = 0;
@@ -186,7 +184,11 @@ pgstatindex(PG_FUNCTION_ARGS)
 
 		/* Determine page type, and update totals */
 
-		if (P_ISLEAF(opaque))
+		if (P_ISDELETED(opaque))
+			indexStat.deleted_pages++;
+		else if (P_IGNORE(opaque))
+			indexStat.empty_pages++;	/* this is the "half dead" state */
+		else if (P_ISLEAF(opaque))
 		{
 			int			max_avail;
 
@@ -203,12 +205,6 @@ pgstatindex(PG_FUNCTION_ARGS)
 			if (opaque->btpo_next != P_NONE && opaque->btpo_next < blkno)
 				indexStat.fragments++;
 		}
-		else if (P_ISDELETED(opaque))
-			indexStat.deleted_pages++;
-		else if (P_IGNORE(opaque))
-			indexStat.empty_pages++;
-		else if (P_ISROOT(opaque))
-			indexStat.root_pages++;
 		else
 			indexStat.internal_pages++;
 
@@ -240,7 +236,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 		snprintf(values[j++], 32, "%d", indexStat.level);
 		values[j] = palloc(32);
 		snprintf(values[j++], 32, INT64_FORMAT,
-				 (indexStat.root_pages +
+				 (1 +		/* include the metapage in index_size */
 				  indexStat.leaf_pages +
 				  indexStat.internal_pages +
 				  indexStat.deleted_pages +
