@@ -2385,6 +2385,42 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"checkpoint_flush_after", PGC_SIGHUP, RESOURCES_ASYNCHRONOUS,
+			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&checkpoint_flush_after,
+		/* see bufmgr.h: OS dependant default */
+		DEFAULT_CHECKPOINT_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"backend_flush_after", PGC_USERSET, WAL_CHECKPOINTS,
+			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&backend_flush_after,
+		/* see bufmgr.h: OS dependant default */
+		DEFAULT_BACKEND_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"bgwriter_flush_after", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&bgwriter_flush_after,
+		/* see bufmgr.h: 16 on Linux, 0 otherwise */
+		DEFAULT_BGWRITER_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"max_worker_processes",
 			PGC_POSTMASTER,
 			RESOURCES_ASYNCHRONOUS,

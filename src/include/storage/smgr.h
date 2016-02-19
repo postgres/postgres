@@ -96,6 +96,8 @@ extern void smgrread(SMgrRelation reln, ForkNumber forknum,
 		 BlockNumber blocknum, char *buffer);
 extern void smgrwrite(SMgrRelation reln, ForkNumber forknum,
 		  BlockNumber blocknum, char *buffer, bool skipFsync);
+extern void smgrwriteback(SMgrRelation reln, ForkNumber forknum,
+			  BlockNumber blocknum, int nblocks);
 extern BlockNumber smgrnblocks(SMgrRelation reln, ForkNumber forknum);
 extern void smgrtruncate(SMgrRelation reln, ForkNumber forknum,
 			 BlockNumber nblocks);
@@ -122,6 +124,8 @@ extern void mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	   char *buffer);
 extern void mdwrite(SMgrRelation reln, ForkNumber forknum,
 		BlockNumber blocknum, char *buffer, bool skipFsync);
+extern void mdwriteback(SMgrRelation reln, ForkNumber forknum,
+			BlockNumber blocknum, int nblocks);
 extern BlockNumber mdnblocks(SMgrRelation reln, ForkNumber forknum);
 extern void mdtruncate(SMgrRelation reln, ForkNumber forknum,
 		   BlockNumber nblocks);

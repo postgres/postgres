@@ -53,6 +53,8 @@ typedef struct f_smgr
 										  BlockNumber blocknum, char *buffer);
 	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
 						 BlockNumber blocknum, char *buffer, bool skipFsync);
+	void		(*smgr_writeback) (SMgrRelation reln, ForkNumber forknum,
+										  BlockNumber blocknum, int nblocks);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
 											  BlockNumber nblocks);
@@ -66,8 +68,8 @@ typedef struct f_smgr
 static const f_smgr smgrsw[] = {
 	/* magnetic disk */
 	{mdinit, NULL, mdclose, mdcreate, mdexists, mdunlink, mdextend,
-		mdprefetch, mdread, mdwrite, mdnblocks, mdtruncate, mdimmedsync,
-		mdpreckpt, mdsync, mdpostckpt
+		mdprefetch, mdread, mdwrite, mdwriteback, mdnblocks, mdtruncate,
+		mdimmedsync, mdpreckpt, mdsync, mdpostckpt
 	}
 };
 
@@ -647,6 +649,19 @@ smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 {
 	(*(smgrsw[reln->smgr_which].smgr_write)) (reln, forknum, blocknum,
 											  buffer, skipFsync);
+}
+
+
+/*
+ *	smgrwriteback() -- Trigger kernel writeback for the supplied range of
+ *					   blocks.
+ */
+void
+smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+			  int nblocks)
+{
+	(*(smgrsw[reln->smgr_which].smgr_writeback)) (reln, forknum, blocknum,
+												  nblocks);
 }
 
 /*

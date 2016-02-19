@@ -45,15 +45,35 @@ typedef enum
 								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 
+/* forward declared, to avoid having to expose buf_internals.h here */
+struct WritebackContext;
+
 /* in globals.c ... this duplicates miscadmin.h */
 extern PGDLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
+#define WRITEBACK_MAX_PENDING_FLUSHES 256
+
+/* FIXME: Also default to on for mmap && msync(MS_ASYNC)? */
+#ifdef HAVE_SYNC_FILE_RANGE
+#define DEFAULT_CHECKPOINT_FLUSH_AFTER 32
+#define DEFAULT_BACKEND_FLUSH_AFTER 16
+#define DEFAULT_BGWRITER_FLUSH_AFTER 64
+#else
+#define DEFAULT_CHECKPOINT_FLUSH_AFTER 0
+#define DEFAULT_BACKEND_FLUSH_AFTER 0
+#define DEFAULT_BGWRITER_FLUSH_AFTER 0
+#endif   /* HAVE_SYNC_FILE_RANGE */
+
 extern bool zero_damaged_pages;
 extern int	bgwriter_lru_maxpages;
 extern double bgwriter_lru_multiplier;
 extern bool track_io_timing;
 extern int	target_prefetch_pages;
+
+extern int	checkpoint_flush_after;
+extern int	backend_flush_after;
+extern int	bgwriter_flush_after;
 
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;
@@ -209,7 +229,7 @@ extern bool HoldingBufferPinThatDelaysRecovery(void);
 extern void AbortBufferIO(void);
 
 extern void BufmgrCommit(void);
-extern bool BgBufferSync(void);
+extern bool BgBufferSync(struct WritebackContext *wb_context);
 
 extern void AtProcExit_LocalBuffers(void);
 

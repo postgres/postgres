@@ -23,6 +23,7 @@ char	   *BufferBlocks;
 LWLockMinimallyPadded *BufferIOLWLockArray = NULL;
 LWLockTranche BufferIOLWLockTranche;
 LWLockTranche BufferContentLWLockTranche;
+WritebackContext BackendWritebackContext;
 
 
 /*
@@ -149,6 +150,10 @@ InitBufferPool(void)
 
 	/* Init other shared buffer-management stuff */
 	StrategyInitialize(!foundDescs);
+
+	/* Initialize per-backend file flush context */
+	WritebackContextInit(&BackendWritebackContext,
+						 &backend_flush_after);
 }
 
 /*

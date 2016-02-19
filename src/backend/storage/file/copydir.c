@@ -190,9 +190,9 @@ copy_file(char *fromfile, char *tofile)
 		/*
 		 * We fsync the files later but first flush them to avoid spamming the
 		 * cache and hopefully get the kernel to start writing them out before
-		 * the fsync comes.  Ignore any error, since it's only a hint.
+		 * the fsync comes.
 		 */
-		(void) pg_flush_data(dstfd, offset, nbytes);
+		pg_flush_data(dstfd, offset, nbytes);
 	}
 
 	if (CloseTransientFile(dstfd))

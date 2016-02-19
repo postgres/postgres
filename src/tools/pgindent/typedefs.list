@@ -1411,6 +1411,7 @@ Pattern_Type
 PendingOperationEntry
 PendingRelDelete
 PendingUnlinkEntry
+PendingWriteback
 PerlInterpreter
 Perl_ppaddr_t
 Permutation
@@ -2142,6 +2143,7 @@ WriteBytePtr
 WriteDataPtr
 WriteExtraTocPtr
 WriteFunc
+WritebackContext
 X509
 X509_NAME
 X509_NAME_ENTRY

@@ -546,6 +546,17 @@
   </para>
 
   <para>
+   On Linux and POSIX platforms <xref linkend="guc-checkpoint-flush-after">
+   allows to force the OS that pages written by the checkpoint should be
+   flushed to disk after a configurable number of bytes.  Otherwise, these
+   pages may be kept in the OS's page cache, inducing a stall when
+   <literal>fsync</> is issued at the end of a checkpoint.  This setting will
+   often help to reduce transaction latency, but it also can an adverse effect
+   on performance; particularly for workloads that are bigger than
+   <xref linkend="guc-shared-buffers">, but smaller than the OS's page cache.
+  </para>
+
+  <para>
    The number of WAL segment files in <filename>pg_xlog</> directory depends on
    <varname>min_wal_size</>, <varname>max_wal_size</> and
    the amount of WAL generated in previous checkpoint cycles. When old log

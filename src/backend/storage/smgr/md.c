@@ -662,6 +662,56 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 #endif   /* USE_PREFETCH */
 }
 
+/*
+ * mdwriteback() -- Tell the kernel to write pages back to storage.
+ *
+ * This accepts a range of blocks because flushing several pages at once is
+ * considerably more efficient than doing so individually.
+ */
+void
+mdwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, int nblocks)
+{
+	/*
+	 * Issue flush requests in as few requests as possible; have to split at
+	 * segment boundaries though, since those are actually separate files.
+	 */
+	while (nblocks != 0)
+	{
+		int			nflush = nblocks;
+		off_t		seekpos;
+		MdfdVec    *v;
+		int			segnum_start,
+					segnum_end;
+
+		v = _mdfd_getseg(reln, forknum, blocknum, false,
+						 EXTENSION_RETURN_NULL);
+
+		/*
+		 * We might be flushing buffers of already removed relations, that's
+		 * ok, just ignore that case.
+		 */
+		if (!v)
+			return;
+
+		/* compute offset inside the current segment */
+		segnum_start = blocknum / RELSEG_SIZE;
+
+		/* compute number of desired writes within the current segment */
+		segnum_end = (blocknum + nblocks - 1) / RELSEG_SIZE;
+		if (segnum_start != segnum_end)
+			nflush = RELSEG_SIZE - (blocknum % ((BlockNumber) RELSEG_SIZE));
+
+		Assert(nflush >= 1);
+		Assert(nflush <= nblocks);
+
+		seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+
+		FileWriteback(v->mdfd_vfd, seekpos, BLCKSZ * nflush);
+
+		nblocks -= nflush;
+		blocknum += nflush;
+	}
+}
 
 /*
  *	mdread() -- Read the specified block from a relation.

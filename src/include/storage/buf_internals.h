@@ -16,6 +16,7 @@
 #define BUFMGR_INTERNALS_H
 
 #include "storage/buf.h"
+#include "storage/bufmgr.h"
 #include "storage/latch.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -208,16 +209,44 @@ extern PGDLLIMPORT LWLockMinimallyPadded *BufferIOLWLockArray;
 #define UnlockBufHdr(bufHdr)	SpinLockRelease(&(bufHdr)->buf_hdr_lock)
 
 
+/*
+ * The PendingWriteback & WritebackContext structure are used to keep
+ * information about pending flush requests to be issued to the OS.
+ */
+typedef struct PendingWriteback
+{
+	/* could store different types of pending flushes here */
+	BufferTag	tag;
+} PendingWriteback;
+
+/* struct forward declared in bufmgr.h */
+typedef struct WritebackContext
+{
+	/* pointer to the max number of writeback requests to coalesce */
+	int		   *max_pending;
+
+	/* current number of pending writeback requests */
+	int			nr_pending;
+
+	/* pending requests */
+	PendingWriteback pending_writebacks[WRITEBACK_MAX_PENDING_FLUSHES];
+} WritebackContext;
+
 /* in buf_init.c */
 extern PGDLLIMPORT BufferDescPadded *BufferDescriptors;
+extern PGDLLIMPORT WritebackContext BackendWritebackContext;
 
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;
 
 
 /*
- * Internal routines: only called by bufmgr
+ * Internal buffer management routines
  */
+/* bufmgr.c */
+extern void WritebackContextInit(WritebackContext *context, int *max_coalesce);
+extern void IssuePendingWritebacks(WritebackContext *context);
+extern void ScheduleBufferTagForWriteback(WritebackContext *context, BufferTag *tag);
 
 /* freelist.c */
 extern BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy);

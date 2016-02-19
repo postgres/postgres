@@ -61,6 +61,9 @@
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#ifndef WIN32
+#include <sys/mman.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #ifdef HAVE_SYS_RESOURCE_H
@@ -81,6 +84,8 @@
 
 /* Define PG_FLUSH_DATA_WORKS if we have an implementation for pg_flush_data */
 #if defined(HAVE_SYNC_FILE_RANGE)
+#define PG_FLUSH_DATA_WORKS 1
+#elif !defined(WIN32) && defined(MS_ASYNC)
 #define PG_FLUSH_DATA_WORKS 1
 #elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 #define PG_FLUSH_DATA_WORKS 1
@@ -383,29 +388,126 @@ pg_fdatasync(int fd)
 }
 
 /*
- * pg_flush_data --- advise OS that the data described won't be needed soon
+ * pg_flush_data --- advise OS that the described dirty data should be flushed
  *
- * Not all platforms have sync_file_range or posix_fadvise; treat as no-op
- * if not available.  Also, treat as no-op if enableFsync is off; this is
- * because the call isn't free, and some platforms such as Linux will actually
- * block the requestor until the write is scheduled.
+ * An offset of 0 with an nbytes 0 means that the entire file should be
+ * flushed.
  */
-int
-pg_flush_data(int fd, off_t offset, off_t amount)
+void
+pg_flush_data(int fd, off_t offset, off_t nbytes)
 {
-#ifdef PG_FLUSH_DATA_WORKS
-	if (enableFsync)
-	{
+	/*
+	 * Right now file flushing is primarily used to avoid making later
+	 * fsync()/fdatasync() calls have a less impact. Thus don't trigger
+	 * flushes if fsyncs are disabled - that's a decision we might want to
+	 * make configurable at some point.
+	 */
+	if (!enableFsync)
+		return;
+
+	/*
+	 * XXX: compile all alternatives, to find portability problems more easily
+	 */
 #if defined(HAVE_SYNC_FILE_RANGE)
-		return sync_file_range(fd, offset, amount, SYNC_FILE_RANGE_WRITE);
-#elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
-		return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
-#else
-#error PG_FLUSH_DATA_WORKS should not have been defined
-#endif
+	{
+		int			rc = 0;
+
+		/*
+		 * sync_file_range(SYNC_FILE_RANGE_WRITE), currently linux specific,
+		 * tells the OS that writeback for the passed in blocks should be
+		 * started, but that we don't want to wait for completion.  Note that
+		 * this call might block if too much dirty data exists in the range.
+		 * This is the preferrable method on OSs supporting it, as it works
+		 * reliably when available (contrast to msync()) and doesn't flush out
+		 * clean data (like FADV_DONTNEED).
+		 */
+		rc = sync_file_range(fd, offset, nbytes,
+							 SYNC_FILE_RANGE_WRITE);
+
+		/* don't error out, this is just a performance optimization */
+		if (rc != 0)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not flush dirty data: %m")));
+		}
+
+		return;
 	}
 #endif
-	return 0;
+#if !defined(WIN32) && defined(MS_ASYNC)
+	{
+		int			rc = 0;
+		void	   *p;
+
+		/*
+		 * On several OSs msync(MS_ASYNC) on a mmap'ed file triggers
+		 * writeback. On linux it only does so with MS_SYNC is specified, but
+		 * then it does the writeback synchronously. Luckily all common linux
+		 * systems have sync_file_range().  This is preferrable over
+		 * FADV_DONTNEED because it doesn't flush out clean data.
+		 *
+		 * We map the file (mmap()), tell the kernel to sync back the contents
+		 * (msync()), and then remove the mapping again (munmap()).
+		 */
+		p = mmap(NULL, nbytes,
+				 PROT_READ | PROT_WRITE, MAP_SHARED,
+				 fd, offset);
+		if (p == MAP_FAILED)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not mmap while flushing dirty data: %m")));
+			return;
+		}
+
+		rc = msync(p, nbytes, MS_ASYNC);
+		if (rc != 0)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not flush dirty data: %m")));
+			/* NB: need to fall through to munmap()! */
+		}
+
+		rc = munmap(p, nbytes);
+		if (rc != 0)
+		{
+			/* FATAL error because mapping would remain */
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not munmap while flushing blocks: %m")));
+		}
+
+		return;
+	}
+#endif
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+	{
+		int			rc = 0;
+
+		/*
+		 * Signal the kernel that the passed in range should not be cached
+		 * anymore. This has the, desired, side effect of writing out dirty
+		 * data, and the, undesired, side effect of likely discarding useful
+		 * clean cached blocks.  For the latter reason this is the least
+		 * preferrable method.
+		 */
+
+		rc = posix_fadvise(fd, offset, nbytes, POSIX_FADV_DONTNEED);
+
+		/* don't error out, this is just a performance optimization */
+		if (rc != 0)
+		{
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not flush dirty data: %m")));
+			return;
+		}
+
+		return;
+	}
+#endif
 }
 
 
@@ -1394,6 +1496,24 @@ FilePrefetch(File file, off_t offset, int amount)
 	Assert(FileIsValid(file));
 	return 0;
 #endif
+}
+
+void
+FileWriteback(File file, off_t offset, int amount)
+{
+	int			returnCode;
+
+	Assert(FileIsValid(file));
+
+	DO_DB(elog(LOG, "FileWriteback: %d (%s) " INT64_FORMAT " %d",
+			   file, VfdCache[file].fileName,
+			   (int64) offset, amount));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return;
+
+	pg_flush_data(VfdCache[file].fd, offset, amount);
 }
 
 int
@@ -2796,9 +2916,10 @@ pre_sync_fname(const char *fname, bool isdir, int elevel)
 	}
 
 	/*
-	 * We ignore errors from pg_flush_data() because this is only a hint.
+	 * pg_flush_data() ignores errors, which is ok because this is only a
+	 * hint.
 	 */
-	(void) pg_flush_data(fd, 0, 0);
+	pg_flush_data(fd, 0, 0);
 
 	(void) CloseTransientFile(fd);
 }

@@ -1843,6 +1843,35 @@ include_dir 'conf.d'
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry id="guc-bgwriter-flush-after" xreflabel="bgwriter_flush_after">
+       <term><varname>bgwriter_flush_after</varname> (<type>int</type>)
+       <indexterm>
+        <primary><varname>bgwriter_flush_after</> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Whenever more than <varname>bgwriter_flush_after</varname> bytes have
+         been written by the bgwriter, attempt to force the OS to issue these
+         writes to the underlying storage.  Doing so will limit the amount of
+         dirty data in the kernel's page cache, reducing the likelihood of
+         stalls when an fsync is issued at the end of a checkpoint, or when
+         the OS writes data back in larger batches in the background.  Often
+         that will result in greatly reduced transaction latency, but there
+         also are some cases, especially with workloads that are bigger than
+         <xref linkend="guc-shared-buffers">, but smaller than the OS's page
+         cache, where performance might degrade.  This setting may have no
+         effect on some platforms.  The valid range is between
+         <literal>0</literal>, which disables controlled writeback, and
+         <literal>2MB</literal>.  The default is <literal>512Kb</> on Linux,
+         <literal>0</> elsewhere.  (Non-default values of
+         <symbol>BLCKSZ</symbol> change the default and maximum.)
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
+        </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
 
      <para>
@@ -1941,6 +1970,35 @@ include_dir 'conf.d'
          operation.  Note that the requested number of workers may not actually
          be available at runtime.  Parallel workers are taken from the pool
          of processes established by <xref linkend="guc-max-worker-processes">.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-backend-flush-after" xreflabel="backend_flush_after">
+       <term><varname>backend_flush_after</varname> (<type>int</type>)
+       <indexterm>
+        <primary><varname>backend_flush_after</> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Whenever more than <varname>backend_flush_after</varname> bytes have
+         been written by a single backend, attempt to force the OS to issue
+         these writes to the underlying storage.  Doing so will limit the
+         amount of dirty data in the kernel's page cache, reducing the
+         likelihood of stalls when an fsync is issued at the end of a
+         checkpoint, or when the OS writes data back in larger batches in the
+         background.  Often that will result in greatly reduced transaction
+         latency, but there also are some cases, especially with workloads
+         that are bigger than <xref linkend="guc-shared-buffers">, but smaller
+         than the OS's page cache, where performance might degrade.  This
+         setting may have no effect on some platforms.  The valid range is
+         between <literal>0</literal>, which disables controlled writeback,
+         and <literal>2MB</literal>.  The default is <literal>128Kb</> on
+         Linux, <literal>0</> elsewhere.  (Non-default values of
+         <symbol>BLCKSZ</symbol> change the default and maximum.)
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -2469,6 +2527,35 @@ include_dir 'conf.d'
        <para>
         Specifies the target of checkpoint completion, as a fraction of
         total time between checkpoints. The default is 0.5.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-checkpoint-flush-after" xreflabel="checkpoint_flush_after">
+      <term><varname>checkpoint_flush_after</varname> (<type>int</type>)
+      <indexterm>
+       <primary><varname>checkpoint_flush_after</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Whenever more than <varname>checkpoint_flush_after</varname> bytes
+        have been written while performing a checkpoint, attempt to force the
+        OS to issue these writes to the underlying storage.  Doing so will
+        limit the amount of dirty data in the kernel's page cache, reducing
+        the likelihood of stalls when an fsync is issued at the end of the
+        checkpoint, or when the OS writes data back in larger batches in the
+        background.  Often that will result in greatly reduced transaction
+        latency, but there also are some cases, especially with workloads
+        that are bigger than <xref linkend="guc-shared-buffers">, but smaller
+        than the OS's page cache, where performance might degrade.  This
+        setting may have no effect on some platforms.  The valid range is
+        between <literal>0</literal>, which disables controlled writeback,
+        and <literal>2MB</literal>.  The default is <literal>128Kb</> on
+        Linux, <literal>0</> elsewhere.  (Non-default values of
+        <symbol>BLCKSZ</symbol> change the default and maximum.)
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
