@@ -283,6 +283,8 @@ CheckpointerRequest
 CheckpointerShmemStruct
 Chromosome
 City
+CkptSortItem
+CkptTsStatus
 ClientAuthentication_hook_type
 ClientData
 ClonePtr

@@ -24,6 +24,7 @@ LWLockMinimallyPadded *BufferIOLWLockArray = NULL;
 LWLockTranche BufferIOLWLockTranche;
 LWLockTranche BufferContentLWLockTranche;
 WritebackContext BackendWritebackContext;
+CkptSortItem *CkptBufferIds;
 
 
 /*
@@ -70,7 +71,8 @@ InitBufferPool(void)
 {
 	bool		foundBufs,
 				foundDescs,
-				foundIOLocks;
+				foundIOLocks,
+				foundBufCkpt;
 
 	/* Align descriptors to a cacheline boundary. */
 	BufferDescriptors = (BufferDescPadded *)
@@ -104,10 +106,21 @@ InitBufferPool(void)
 	LWLockRegisterTranche(LWTRANCHE_BUFFER_CONTENT,
 						  &BufferContentLWLockTranche);
 
-	if (foundDescs || foundBufs || foundIOLocks)
+	/*
+	 * The array used to sort to-be-checkpointed buffer ids is located in
+	 * shared memory, to avoid having to allocate significant amounts of
+	 * memory at runtime. As that'd be in the middle of a checkpoint, or when
+	 * the checkpointer is restarted, memory allocation failures would be
+	 * painful.
+	 */
+	CkptBufferIds = (CkptSortItem *)
+		ShmemInitStruct("Checkpoint BufferIds",
+						NBuffers * sizeof(CkptSortItem), &foundBufCkpt);
+
+	if (foundDescs || foundBufs || foundIOLocks || foundBufCkpt)
 	{
 		/* should find all of these, or none of them */
-		Assert(foundDescs && foundBufs && foundIOLocks);
+		Assert(foundDescs && foundBufs && foundIOLocks && foundBufCkpt);
 		/* note: this path is only taken in EXEC_BACKEND case */
 	}
 	else
@@ -189,6 +202,9 @@ BufferShmemSize(void)
 	size = add_size(size, mul_size(NBuffers, sizeof(LWLockMinimallyPadded)));
 	/* to allow aligning the above */
 	size = add_size(size, PG_CACHE_LINE_SIZE);
+
+	/* size of checkpoint sort array in bufmgr.c */
+	size = add_size(size, mul_size(NBuffers, sizeof(CkptSortItem)));
 
 	return size;
 }

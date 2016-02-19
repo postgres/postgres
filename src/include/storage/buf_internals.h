@@ -239,6 +239,24 @@ extern PGDLLIMPORT WritebackContext BackendWritebackContext;
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;
 
+/* in bufmgr.c */
+
+/*
+ * Structure to sort buffers per file on checkpoints.
+ *
+ * This structure is allocated per buffer in shared memory, so it should be
+ * kept as small as possible.
+ */
+typedef struct CkptSortItem
+{
+	Oid			tsId;
+	Oid			relNode;
+	ForkNumber	forkNum;
+	BlockNumber blockNum;
+	int			buf_id;
+} CkptSortItem;
+
+extern CkptSortItem *CkptBufferIds;
 
 /*
  * Internal buffer management routines

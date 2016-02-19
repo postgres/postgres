@@ -267,11 +267,6 @@ only needs to take the lock long enough to read the variable value, not
 while scanning the buffers.  (This is a very substantial improvement in
 the contention cost of the writer compared to PG 8.0.)
 
-During a checkpoint, the writer's strategy must be to write every dirty
-buffer (pinned or not!).  We may as well make it start this scan from
-nextVictimBuffer, however, so that the first-to-be-written pages are the
-ones that backends might otherwise have to write for themselves soon.
-
 The background writer takes shared content lock on a buffer while writing it
 out (and anyone else who flushes buffer contents to disk must do so too).
 This ensures that the page image transferred to disk is reasonably consistent.
