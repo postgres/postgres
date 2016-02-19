@@ -859,14 +859,14 @@ _MasterEndParallelItem(ArchiveHandle *AH, TocEntry *te, const char *str, T_Actio
 
 	if (act == ACT_DUMP)
 	{
-		sscanf(str, "%u%n", &dumpId, &nBytes);
+		sscanf(str, "%d%n", &dumpId, &nBytes);
 
 		Assert(dumpId == te->dumpId);
 		Assert(nBytes == strlen(str));
 	}
 	else if (act == ACT_RESTORE)
 	{
-		sscanf(str, "%u %u %u%n", &dumpId, &status, &n_errors, &nBytes);
+		sscanf(str, "%d %d %d%n", &dumpId, &status, &n_errors, &nBytes);
 
 		Assert(dumpId == te->dumpId);
 		Assert(nBytes == strlen(str));

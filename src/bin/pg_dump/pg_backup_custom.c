@@ -871,7 +871,7 @@ _MasterEndParallelItem(ArchiveHandle *AH, TocEntry *te, const char *str, T_Actio
 	/* no parallel dump in the custom archive */
 	Assert(act == ACT_RESTORE);
 
-	sscanf(str, "%u %u %u%n", &dumpId, &status, &n_errors, &nBytes);
+	sscanf(str, "%d %d %d%n", &dumpId, &status, &n_errors, &nBytes);
 
 	Assert(nBytes == strlen(str));
 	Assert(dumpId == te->dumpId);
