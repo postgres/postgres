@@ -1550,6 +1550,7 @@ bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel, Path *ipath)
 	bpath.path.type = T_BitmapHeapPath;
 	bpath.path.pathtype = T_BitmapHeapScan;
 	bpath.path.parent = rel;
+	bpath.path.pathtarget = &(rel->reltarget);
 	bpath.path.param_info = get_baserel_parampathinfo(root, rel,
 													  required_outer);
 	bpath.path.pathkeys = NIL;
@@ -1578,6 +1579,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	apath.path.type = T_BitmapAndPath;
 	apath.path.pathtype = T_BitmapAnd;
 	apath.path.parent = rel;
+	apath.path.pathtarget = &(rel->reltarget);
 	apath.path.param_info = NULL;		/* not used in bitmap trees */
 	apath.path.pathkeys = NIL;
 	apath.bitmapquals = paths;
@@ -1590,6 +1592,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	bpath.path.type = T_BitmapHeapPath;
 	bpath.path.pathtype = T_BitmapHeapScan;
 	bpath.path.parent = rel;
+	bpath.path.pathtarget = &(rel->reltarget);
 	bpath.path.param_info = get_baserel_parampathinfo(root, rel,
 													  required_outer);
 	bpath.path.pathkeys = NIL;
@@ -1809,10 +1812,10 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 
 	/*
 	 * Add all the attributes needed for joins or final output.  Note: we must
-	 * look at reltargetlist, not the attr_needed data, because attr_needed
+	 * look at rel's targetlist, not the attr_needed data, because attr_needed
 	 * isn't computed for inheritance child rels.
 	 */
-	pull_varattnos((Node *) rel->reltargetlist, rel->relid, &attrs_used);
+	pull_varattnos((Node *) rel->reltarget.exprs, rel->relid, &attrs_used);
 
 	/* Add all the attributes used by restriction clauses. */
 	foreach(lc, rel->baserestrictinfo)

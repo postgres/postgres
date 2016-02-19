@@ -1159,7 +1159,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      it contains restriction quals (<literal>WHERE</> clauses) that should be
      used to filter the rows to be fetched.  (The FDW itself is not required
      to enforce these quals, as the core executor can check them instead.)
-     <literal>baserel-&gt;reltargetlist</> can be used to determine which
+     <literal>baserel-&gt;reltarget.exprs</> can be used to determine which
      columns need to be fetched; but note that it only lists columns that
      have to be emitted by the <structname>ForeignScan</> plan node, not
      columns that are used in qual evaluation but not output by the query.

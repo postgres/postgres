@@ -102,12 +102,14 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->reloptkind = reloptkind;
 	rel->relids = bms_make_singleton(relid);
 	rel->rows = 0;
-	rel->width = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	rel->consider_startup = (root->tuple_fraction > 0);
 	rel->consider_param_startup = false;		/* might get changed later */
 	rel->consider_parallel = false;		/* might get changed later */
-	rel->reltargetlist = NIL;
+	rel->reltarget.exprs = NIL;
+	rel->reltarget.cost.startup = 0;
+	rel->reltarget.cost.per_tuple = 0;
+	rel->reltarget.width = 0;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
 	rel->partial_pathlist = NIL;
@@ -387,12 +389,14 @@ build_join_rel(PlannerInfo *root,
 	joinrel->reloptkind = RELOPT_JOINREL;
 	joinrel->relids = bms_copy(joinrelids);
 	joinrel->rows = 0;
-	joinrel->width = 0;
 	/* cheap startup cost is interesting iff not all tuples to be retrieved */
 	joinrel->consider_startup = (root->tuple_fraction > 0);
 	joinrel->consider_param_startup = false;
 	joinrel->consider_parallel = false;
-	joinrel->reltargetlist = NIL;
+	joinrel->reltarget.exprs = NIL;
+	joinrel->reltarget.cost.startup = 0;
+	joinrel->reltarget.cost.per_tuple = 0;
+	joinrel->reltarget.width = 0;
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
 	joinrel->partial_pathlist = NIL;
@@ -459,7 +463,7 @@ build_join_rel(PlannerInfo *root,
 	 */
 	build_joinrel_tlist(root, joinrel, outer_rel);
 	build_joinrel_tlist(root, joinrel, inner_rel);
-	add_placeholders_to_joinrel(root, joinrel);
+	add_placeholders_to_joinrel(root, joinrel, outer_rel, inner_rel);
 
 	/*
 	 * add_placeholders_to_joinrel also took care of adding the ph_lateral
@@ -609,7 +613,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 	Relids		relids = joinrel->relids;
 	ListCell   *vars;
 
-	foreach(vars, input_rel->reltargetlist)
+	foreach(vars, input_rel->reltarget.exprs)
 	{
 		Var		   *var = (Var *) lfirst(vars);
 		RelOptInfo *baserel;
@@ -628,7 +632,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 		 * rels, which will never be seen here.)
 		 */
 		if (!IsA(var, Var))
-			elog(ERROR, "unexpected node type in reltargetlist: %d",
+			elog(ERROR, "unexpected node type in rel targetlist: %d",
 				 (int) nodeTag(var));
 
 		/* Get the Var's original base rel */
@@ -639,8 +643,9 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 		if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
 		{
 			/* Yup, add it to the output */
-			joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
-			joinrel->width += baserel->attr_widths[ndx];
+			joinrel->reltarget.exprs = lappend(joinrel->reltarget.exprs, var);
+			/* Vars have cost zero, so no need to adjust reltarget.cost */
+			joinrel->reltarget.width += baserel->attr_widths[ndx];
 		}
 	}
 }
@@ -826,7 +831,6 @@ build_empty_join_rel(PlannerInfo *root)
 	joinrel->reloptkind = RELOPT_JOINREL;
 	joinrel->relids = NULL;		/* empty set */
 	joinrel->rows = 1;			/* we produce one row for such cases */
-	joinrel->width = 0;			/* it contains no Vars */
 	joinrel->rtekind = RTE_JOIN;
 
 	root->join_rel_list = lappend(root->join_rel_list, joinrel);

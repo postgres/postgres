@@ -98,14 +98,16 @@ static List *reorder_grouping_sets(List *groupingSets, List *sortclause);
 static void standard_qp_callback(PlannerInfo *root, void *extra);
 static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
-					   double path_rows, int path_width,
+					   double path_rows,
 					   Path *cheapest_path, Path *sorted_path,
 					   double dNumGroups, AggClauseCosts *agg_costs);
 static bool choose_hashed_distinct(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
-					   double path_rows, int path_width,
+					   double path_rows,
 					   Cost cheapest_startup_cost, Cost cheapest_total_cost,
+					   int cheapest_path_width,
 					   Cost sorted_startup_cost, Cost sorted_total_cost,
+					   int sorted_path_width,
 					   List *sorted_pathkeys,
 					   double dNumDistinctRows);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
@@ -1467,7 +1469,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		AggClauseCosts agg_costs;
 		int			numGroupCols;
 		double		path_rows;
-		int			path_width;
 		bool		use_hashed_grouping = false;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
@@ -1672,12 +1673,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 								  standard_qp_callback, &qp_extra);
 
 		/*
-		 * Extract rowcount and width estimates for use below.  If final_rel
-		 * has been proven dummy, its rows estimate will be zero; clamp it to
-		 * one to avoid zero-divide in subsequent calculations.
+		 * Extract rowcount estimate for use below.  If final_rel has been
+		 * proven dummy, its rows estimate will be zero; clamp it to one to
+		 * avoid zero-divide in subsequent calculations.
 		 */
 		path_rows = clamp_row_est(final_rel->rows);
-		path_width = final_rel->width;
 
 		/*
 		 * If there's grouping going on, estimate the number of result groups.
@@ -1849,7 +1849,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				/* Figure cost for sorting */
 				cost_sort(&sort_path, root, root->query_pathkeys,
 						  cheapest_path->total_cost,
-						  path_rows, path_width,
+						  path_rows, cheapest_path->pathtarget->width,
 						  0.0, work_mem, root->limit_tuples);
 			}
 
@@ -1881,7 +1881,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				use_hashed_grouping =
 					choose_hashed_grouping(root,
 										   tuple_fraction, limit_tuples,
-										   path_rows, path_width,
+										   path_rows,
 										   cheapest_path, sorted_path,
 										   dNumGroups, &agg_costs);
 			}
@@ -1900,11 +1900,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			use_hashed_distinct =
 				choose_hashed_distinct(root,
 									   tuple_fraction, limit_tuples,
-									   path_rows, path_width,
+									   path_rows,
 									   cheapest_path->startup_cost,
 									   cheapest_path->total_cost,
+									   cheapest_path->pathtarget->width,
 									   sorted_path->startup_cost,
 									   sorted_path->total_cost,
+									   sorted_path->pathtarget->width,
 									   sorted_path->pathkeys,
 									   dNumGroups);
 			tested_hashed_distinct = true;
@@ -2343,11 +2345,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				choose_hashed_distinct(root,
 									   tuple_fraction, limit_tuples,
 									   result_plan->plan_rows,
+									   result_plan->startup_cost,
+									   result_plan->total_cost,
 									   result_plan->plan_width,
 									   result_plan->startup_cost,
 									   result_plan->total_cost,
-									   result_plan->startup_cost,
-									   result_plan->total_cost,
+									   result_plan->plan_width,
 									   current_pathkeys,
 									   dNumDistinctRows);
 		}
@@ -2678,10 +2681,13 @@ build_grouping_chain(PlannerInfo *root,
  * any logic that uses plan_rows to, eg, estimate qual evaluation costs.)
  *
  * Note: during initial stages of planning, we mostly consider plan nodes with
- * "flat" tlists, containing just Vars.  So their evaluation cost is zero
- * according to the model used by cost_qual_eval() (or if you prefer, the cost
- * is factored into cpu_tuple_cost).  Thus we can avoid accounting for tlist
- * cost throughout query_planner() and subroutines.  But once we apply a
+ * "flat" tlists, containing just Vars and PlaceHolderVars.  The evaluation
+ * cost of Vars is zero according to the model used by cost_qual_eval() (or if
+ * you prefer, the cost is factored into cpu_tuple_cost).  The evaluation cost
+ * of a PHV's expression is charged as part of the scan cost of whichever plan
+ * node first computes it, and then subsequent references to the PHV can be
+ * taken as having cost zero.  Thus we can avoid worrying about tlist cost
+ * as such throughout query_planner() and subroutines.  But once we apply a
  * tlist that might contain actual operators, sub-selects, etc, we'd better
  * account for its cost.  Any set-returning functions in the tlist must also
  * affect the estimated rowcount.
@@ -3840,7 +3846,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 static bool
 choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
-					   double path_rows, int path_width,
+					   double path_rows,
 					   Path *cheapest_path, Path *sorted_path,
 					   double dNumGroups, AggClauseCosts *agg_costs)
 {
@@ -3853,6 +3859,7 @@ choose_hashed_grouping(PlannerInfo *root,
 	List	   *current_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
+	int			sorted_p_width;
 
 	/*
 	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
@@ -3890,7 +3897,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	 */
 
 	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(path_width) + MAXALIGN(SizeofMinimalTupleHeader);
+	hashentrysize = MAXALIGN(cheapest_path->pathtarget->width) +
+		MAXALIGN(SizeofMinimalTupleHeader);
 	/* plus space for pass-by-ref transition values... */
 	hashentrysize += agg_costs->transitionSpace;
 	/* plus the per-hash-entry overhead */
@@ -3935,25 +3943,27 @@ choose_hashed_grouping(PlannerInfo *root,
 	/* Result of hashed agg is always unsorted */
 	if (target_pathkeys)
 		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
-				  dNumGroups, path_width,
+				  dNumGroups, cheapest_path->pathtarget->width,
 				  0.0, work_mem, limit_tuples);
 
 	if (sorted_path)
 	{
 		sorted_p.startup_cost = sorted_path->startup_cost;
 		sorted_p.total_cost = sorted_path->total_cost;
+		sorted_p_width = sorted_path->pathtarget->width;
 		current_pathkeys = sorted_path->pathkeys;
 	}
 	else
 	{
 		sorted_p.startup_cost = cheapest_path->startup_cost;
 		sorted_p.total_cost = cheapest_path->total_cost;
+		sorted_p_width = cheapest_path->pathtarget->width;
 		current_pathkeys = cheapest_path->pathkeys;
 	}
 	if (!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 	{
 		cost_sort(&sorted_p, root, root->group_pathkeys, sorted_p.total_cost,
-				  path_rows, path_width,
+				  path_rows, sorted_p_width,
 				  0.0, work_mem, -1.0);
 		current_pathkeys = root->group_pathkeys;
 	}
@@ -3971,7 +3981,7 @@ choose_hashed_grouping(PlannerInfo *root,
 	if (target_pathkeys &&
 		!pathkeys_contained_in(target_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, target_pathkeys, sorted_p.total_cost,
-				  dNumGroups, path_width,
+				  dNumGroups, sorted_p_width,
 				  0.0, work_mem, limit_tuples);
 
 	/*
@@ -4008,9 +4018,11 @@ choose_hashed_grouping(PlannerInfo *root,
 static bool
 choose_hashed_distinct(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
-					   double path_rows, int path_width,
+					   double path_rows,
 					   Cost cheapest_startup_cost, Cost cheapest_total_cost,
+					   int cheapest_path_width,
 					   Cost sorted_startup_cost, Cost sorted_total_cost,
+					   int sorted_path_width,
 					   List *sorted_pathkeys,
 					   double dNumDistinctRows)
 {
@@ -4058,7 +4070,8 @@ choose_hashed_distinct(PlannerInfo *root,
 	 */
 
 	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(path_width) + MAXALIGN(SizeofMinimalTupleHeader);
+	hashentrysize = MAXALIGN(cheapest_path_width) +
+		MAXALIGN(SizeofMinimalTupleHeader);
 	/* plus the per-hash-entry overhead */
 	hashentrysize += hash_agg_entry_size(0);
 
@@ -4089,7 +4102,7 @@ choose_hashed_distinct(PlannerInfo *root,
 	 */
 	if (parse->sortClause)
 		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
-				  dNumDistinctRows, path_width,
+				  dNumDistinctRows, cheapest_path_width,
 				  0.0, work_mem, limit_tuples);
 
 	/*
@@ -4113,7 +4126,7 @@ choose_hashed_distinct(PlannerInfo *root,
 		else
 			current_pathkeys = root->sort_pathkeys;
 		cost_sort(&sorted_p, root, current_pathkeys, sorted_p.total_cost,
-				  path_rows, path_width,
+				  path_rows, sorted_path_width,
 				  0.0, work_mem, -1.0);
 	}
 	cost_group(&sorted_p, root, numDistinctCols, dNumDistinctRows,
@@ -4122,7 +4135,7 @@ choose_hashed_distinct(PlannerInfo *root,
 	if (parse->sortClause &&
 		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
-				  dNumDistinctRows, path_width,
+				  dNumDistinctRows, sorted_path_width,
 				  0.0, work_mem, limit_tuples);
 
 	/*
@@ -4896,7 +4909,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	 * set_baserel_size_estimates, just do a quick hack for rows and width.
 	 */
 	rel->rows = rel->tuples;
-	rel->width = get_relation_data_width(tableOid, NULL);
+	rel->reltarget.width = get_relation_data_width(tableOid, NULL);
 
 	root->total_table_pages = rel->pages;
 
@@ -4912,7 +4925,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	/* Estimate the cost of seq scan + sort */
 	seqScanPath = create_seqscan_path(root, rel, NULL, 0);
 	cost_sort(&seqScanAndSortPath, root, NIL,
-			  seqScanPath->total_cost, rel->tuples, rel->width,
+			  seqScanPath->total_cost, rel->tuples, rel->reltarget.width,
 			  comparisonCost, maintenance_work_mem, -1.0);
 
 	/* Estimate the cost of index scan */

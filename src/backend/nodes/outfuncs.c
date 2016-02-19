@@ -1589,6 +1589,7 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
  *
  * Note we do NOT print the parent, else we'd be in infinite recursion.
  * We can print the parent's relids for identification purposes, though.
+ * We print the pathtarget only if it's not the default one for the rel.
  * We also do not print the whole of param_info, since it's printed by
  * _outRelOptInfo; it's sufficient and less cluttering to print just the
  * required outer relids.
@@ -1598,10 +1599,14 @@ _outPathInfo(StringInfo str, const Path *node)
 {
 	WRITE_ENUM_FIELD(pathtype, NodeTag);
 	appendStringInfoString(str, " :parent_relids ");
-	if (node->parent)
-		_outBitmapset(str, node->parent->relids);
-	else
-		_outBitmapset(str, NULL);
+	_outBitmapset(str, node->parent->relids);
+	if (node->pathtarget != &(node->parent->reltarget))
+	{
+		WRITE_NODE_FIELD(pathtarget->exprs);
+		WRITE_FLOAT_FIELD(pathtarget->cost.startup, "%.2f");
+		WRITE_FLOAT_FIELD(pathtarget->cost.per_tuple, "%.2f");
+		WRITE_INT_FIELD(pathtarget->width);
+	}
 	appendStringInfoString(str, " :required_outer ");
 	if (node->param_info)
 		_outBitmapset(str, node->param_info->ppi_req_outer);
@@ -1901,11 +1906,13 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_ENUM_FIELD(reloptkind, RelOptKind);
 	WRITE_BITMAPSET_FIELD(relids);
 	WRITE_FLOAT_FIELD(rows, "%.0f");
-	WRITE_INT_FIELD(width);
 	WRITE_BOOL_FIELD(consider_startup);
 	WRITE_BOOL_FIELD(consider_param_startup);
 	WRITE_BOOL_FIELD(consider_parallel);
-	WRITE_NODE_FIELD(reltargetlist);
+	WRITE_NODE_FIELD(reltarget.exprs);
+	WRITE_FLOAT_FIELD(reltarget.cost.startup, "%.2f");
+	WRITE_FLOAT_FIELD(reltarget.cost.per_tuple, "%.2f");
+	WRITE_INT_FIELD(reltarget.width);
 	WRITE_NODE_FIELD(pathlist);
 	WRITE_NODE_FIELD(ppilist);
 	WRITE_NODE_FIELD(partial_pathlist);

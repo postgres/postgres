@@ -182,8 +182,6 @@ clamp_row_est(double nrows)
  *
  * 'baserel' is the relation to be scanned
  * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
- * 'nworkers' are the number of workers among which the work will be
- *			distributed if the scan is parallel scan
  */
 void
 cost_seqscan(Path *path, PlannerInfo *root,
@@ -225,6 +223,9 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	cpu_run_cost = cpu_per_tuple * baserel->tuples;
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	cpu_run_cost += path->pathtarget->cost.per_tuple * path->rows;
 
 	/* Adjust costing for parallelism, if used. */
 	if (path->parallel_degree > 0)
@@ -335,6 +336,9 @@ cost_samplescan(Path *path, PlannerInfo *root,
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -600,6 +604,10 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 
 	run_cost += cpu_per_tuple * tuples_fetched;
+
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->path.pathtarget->cost.startup;
+	run_cost += path->path.pathtarget->cost.per_tuple * path->path.rows;
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
@@ -910,6 +918,10 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 
 	run_cost += cpu_per_tuple * tuples_fetched;
 
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
+
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }
@@ -1141,6 +1153,10 @@ cost_tidscan(Path *path, PlannerInfo *root,
 		tid_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
+
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }
@@ -1184,6 +1200,10 @@ cost_subqueryscan(Path *path, PlannerInfo *root,
 	startup_cost = qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost = cpu_per_tuple * baserel->tuples;
+
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
 
 	path->startup_cost += startup_cost;
 	path->total_cost += startup_cost + run_cost;
@@ -1242,6 +1262,10 @@ cost_functionscan(Path *path, PlannerInfo *root,
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
+
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }
@@ -1285,6 +1309,10 @@ cost_valuesscan(Path *path, PlannerInfo *root,
 	cpu_per_tuple += cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
+
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }
@@ -1327,6 +1355,10 @@ cost_ctescan(Path *path, PlannerInfo *root,
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple += cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
+
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->pathtarget->cost.startup;
+	run_cost += path->pathtarget->cost.per_tuple * path->rows;
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -2080,6 +2112,10 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->path.pathtarget->cost.startup;
+	run_cost += path->path.pathtarget->cost.per_tuple * path->path.rows;
+
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
 }
@@ -2250,7 +2286,7 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 				  outersortkeys,
 				  outer_path->total_cost,
 				  outer_path_rows,
-				  outer_path->parent->width,
+				  outer_path->pathtarget->width,
 				  0.0,
 				  work_mem,
 				  -1.0);
@@ -2276,7 +2312,7 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 				  innersortkeys,
 				  inner_path->total_cost,
 				  inner_path_rows,
-				  inner_path->parent->width,
+				  inner_path->pathtarget->width,
 				  0.0,
 				  work_mem,
 				  -1.0);
@@ -2500,7 +2536,8 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	 * off.
 	 */
 	else if (enable_material && innersortkeys != NIL &&
-			 relation_byte_size(inner_path_rows, inner_path->parent->width) >
+			 relation_byte_size(inner_path_rows,
+								inner_path->pathtarget->width) >
 			 (work_mem * 1024L))
 		path->materialize_inner = true;
 	else
@@ -2538,6 +2575,10 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	startup_cost += qp_qual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * mergejointuples;
+
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->jpath.path.pathtarget->cost.startup;
+	run_cost += path->jpath.path.pathtarget->cost.per_tuple * path->jpath.path.rows;
 
 	path->jpath.path.startup_cost = startup_cost;
 	path->jpath.path.total_cost = startup_cost + run_cost;
@@ -2671,7 +2712,7 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	 * optimization in the cost estimate, but for now, we don't.
 	 */
 	ExecChooseHashTableSize(inner_path_rows,
-							inner_path->parent->width,
+							inner_path->pathtarget->width,
 							true,		/* useskew */
 							&numbuckets,
 							&numbatches,
@@ -2687,9 +2728,9 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	if (numbatches > 1)
 	{
 		double		outerpages = page_size(outer_path_rows,
-										   outer_path->parent->width);
+										   outer_path->pathtarget->width);
 		double		innerpages = page_size(inner_path_rows,
-										   inner_path->parent->width);
+										   inner_path->pathtarget->width);
 
 		startup_cost += seq_page_cost * innerpages;
 		run_cost += seq_page_cost * (innerpages + 2 * outerpages);
@@ -2919,6 +2960,10 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * hashjointuples;
 
+	/* tlist eval costs are paid per output row, not per tuple scanned */
+	startup_cost += path->jpath.path.pathtarget->cost.startup;
+	run_cost += path->jpath.path.pathtarget->cost.per_tuple * path->jpath.path.rows;
+
 	path->jpath.path.startup_cost = startup_cost;
 	path->jpath.path.total_cost = startup_cost + run_cost;
 }
@@ -3063,7 +3108,7 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 */
 				Cost		run_cost = cpu_tuple_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
-														path->parent->width);
+													path->pathtarget->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
@@ -3090,7 +3135,7 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 */
 				Cost		run_cost = cpu_operator_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
-														path->parent->width);
+													path->pathtarget->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
@@ -3355,6 +3400,20 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 
 		return cost_qual_eval_walker((Node *) linitial(asplan->subplans),
 									 context);
+	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		/*
+		 * A PlaceHolderVar should be given cost zero when considering general
+		 * expression evaluation costs.  The expense of doing the contained
+		 * expression is charged as part of the tlist eval costs of the scan
+		 * or join where the PHV is first computed (see set_rel_width and
+		 * add_placeholders_to_joinrel).  If we charged it again here, we'd be
+		 * double-counting the cost for each level of plan that the PHV
+		 * bubbles up through.  Hence, return without recursing into the
+		 * phexpr.
+		 */
+		return false;
 	}
 
 	/* recurse into children */
@@ -3751,7 +3810,7 @@ get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
  * anyway we must keep the rowcount estimate the same for all paths for the
  * joinrel.)
  *
- * We set only the rows field here.  The width field was already set by
+ * We set only the rows field here.  The reltarget field was already set by
  * build_joinrel_tlist, and baserestrictcost is not used for join rels.
  */
 void
@@ -4156,6 +4215,8 @@ set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  * that have to be calculated at this relation.  This is the amount of data
  * we'd need to pass upwards in case of a sort, hash, etc.
  *
+ * This function also sets reltarget.cost, so it's a bit misnamed now.
+ *
  * NB: this works best on plain relations because it prefers to look at
  * real Vars.  For subqueries, set_subquery_size_estimates will already have
  * copied up whatever per-column estimates were made within the subquery,
@@ -4174,12 +4235,16 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	bool		have_wholerow_var = false;
 	ListCell   *lc;
 
-	foreach(lc, rel->reltargetlist)
+	/* Vars are assumed to have cost zero, but other exprs do not */
+	rel->reltarget.cost.startup = 0;
+	rel->reltarget.cost.per_tuple = 0;
+
+	foreach(lc, rel->reltarget.exprs)
 	{
 		Node	   *node = (Node *) lfirst(lc);
 
 		/*
-		 * Ordinarily, a Var in a rel's reltargetlist must belong to that rel;
+		 * Ordinarily, a Var in a rel's targetlist must belong to that rel;
 		 * but there are corner cases involving LATERAL references where that
 		 * isn't so.  If the Var has the wrong varno, fall through to the
 		 * generic case (it doesn't seem worth the trouble to be any smarter).
@@ -4239,10 +4304,18 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		}
 		else if (IsA(node, PlaceHolderVar))
 		{
+			/*
+			 * We will need to evaluate the PHV's contained expression while
+			 * scanning this rel, so be sure to include it in reltarget.cost.
+			 */
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
 			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv, false);
+			QualCost	cost;
 
 			tuple_width += phinfo->ph_width;
+			cost_qual_eval_node(&cost, (Node *) phv->phexpr, root);
+			rel->reltarget.cost.startup += cost.startup;
+			rel->reltarget.cost.per_tuple += cost.per_tuple;
 		}
 		else
 		{
@@ -4252,10 +4325,15 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 			 * can using the expression type information.
 			 */
 			int32		item_width;
+			QualCost	cost;
 
 			item_width = get_typavgwidth(exprType(node), exprTypmod(node));
 			Assert(item_width > 0);
 			tuple_width += item_width;
+			/* Not entirely clear if we need to account for cost, but do so */
+			cost_qual_eval_node(&cost, node, root);
+			rel->reltarget.cost.startup += cost.startup;
+			rel->reltarget.cost.per_tuple += cost.per_tuple;
 		}
 	}
 
@@ -4292,7 +4370,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	Assert(tuple_width >= 0);
-	rel->width = tuple_width;
+	rel->reltarget.width = tuple_width;
 }
 
 /*

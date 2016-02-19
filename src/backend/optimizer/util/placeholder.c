@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "nodes/nodeFuncs.h"
+#include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
@@ -388,8 +389,9 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 		{
 			RelOptInfo *rel = find_base_rel(root, varno);
 
-			rel->reltargetlist = lappend(rel->reltargetlist,
-										 copyObject(phinfo->ph_var));
+			rel->reltarget.exprs = lappend(rel->reltarget.exprs,
+										   copyObject(phinfo->ph_var));
+			/* reltarget's cost and width fields will be updated later */
 		}
 	}
 }
@@ -402,11 +404,10 @@ add_placeholders_to_base_rels(PlannerInfo *root)
  *
  * A join rel should emit a PlaceHolderVar if (a) the PHV is needed above
  * this join level and (b) the PHV can be computed at or below this level.
- * At this time we do not need to distinguish whether the PHV will be
- * computed here or copied up from below.
  */
 void
-add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel)
+add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
+							RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 {
 	Relids		relids = joinrel->relids;
 	ListCell   *lc;
@@ -422,9 +423,32 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel)
 			if (bms_is_subset(phinfo->ph_eval_at, relids))
 			{
 				/* Yup, add it to the output */
-				joinrel->reltargetlist = lappend(joinrel->reltargetlist,
-												 phinfo->ph_var);
-				joinrel->width += phinfo->ph_width;
+				joinrel->reltarget.exprs = lappend(joinrel->reltarget.exprs,
+												   phinfo->ph_var);
+				joinrel->reltarget.width += phinfo->ph_width;
+
+				/*
+				 * Charge the cost of evaluating the contained expression if
+				 * the PHV can be computed here but not in either input.  This
+				 * is a bit bogus because we make the decision based on the
+				 * first pair of possible input relations considered for the
+				 * joinrel.  With other pairs, it might be possible to compute
+				 * the PHV in one input or the other, and then we'd be double
+				 * charging the PHV's cost for some join paths.  For now, live
+				 * with that; but we might want to improve it later by
+				 * refiguring the reltarget costs for each pair of inputs.
+				 */
+				if (!bms_is_subset(phinfo->ph_eval_at, outer_rel->relids) &&
+					!bms_is_subset(phinfo->ph_eval_at, inner_rel->relids))
+				{
+					QualCost	cost;
+
+					cost_qual_eval_node(&cost, (Node *) phinfo->ph_var->phexpr,
+										root);
+					joinrel->reltarget.cost.startup += cost.startup;
+					joinrel->reltarget.cost.per_tuple += cost.per_tuple;
+				}
+
 				/* Adjust joinrel's direct_lateral_relids as needed */
 				joinrel->direct_lateral_relids =
 					bms_add_members(joinrel->direct_lateral_relids,
