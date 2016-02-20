@@ -40,3 +40,9 @@ clean distclean:
 
 maintainer-clean: distclean
 	rm -f exprparse.c exprscan.c
+
+check:
+	$(prove_check)
+
+installcheck:
+	$(prove_installcheck)
