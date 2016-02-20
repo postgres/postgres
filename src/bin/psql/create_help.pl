@@ -59,8 +59,6 @@ print HFILE "/*
 #ifndef $define
 #define $define
 
-#define N_(x) (x)				/* gettext noop */
-
 #include \"postgres_fe.h\"
 #include \"pqexpbuffer.h\"
 
@@ -72,6 +70,7 @@ struct _helpStruct
 	int				nl_count;	/* number of newlines in syntax (for pager) */
 };
 
+extern const struct _helpStruct QL_HELP[];
 ";
 
 print CFILE "/*
@@ -82,6 +81,8 @@ print CFILE "/*
  *     $^X $0 @ARGV
  *
  */
+
+#define N_(x) (x)				/* gettext noop */
 
 #include \"$hfile\"
 
@@ -170,8 +171,7 @@ foreach (sort keys %entries)
 	$synopsis =~ s/\\n/\\n"\n$prefix"/g;
 	my @args =
 	  ("buf", $synopsis, map("_(\"$_\")", @{ $entries{$_}{params} }));
-	print HFILE "extern void sql_help_$id(PQExpBuffer buf);\n";
-	print CFILE "void
+	print CFILE "static void
 sql_help_$id(PQExpBuffer buf)
 {
 \tappendPQExpBuffer(" . join(",\n$prefix", @args) . ");
@@ -180,15 +180,14 @@ sql_help_$id(PQExpBuffer buf)
 ";
 }
 
-print HFILE "
-
-static const struct _helpStruct QL_HELP[] = {
+print CFILE "
+const struct _helpStruct QL_HELP[] = {
 ";
 foreach (sort keys %entries)
 {
 	my $id = $_;
 	$id =~ s/ /_/g;
-	print HFILE "    { \"$_\",
+	print CFILE "    { \"$_\",
       N_(\"$entries{$_}{cmddesc}\"),
       sql_help_$id,
       $entries{$_}{nl_count} },
@@ -196,11 +195,12 @@ foreach (sort keys %entries)
 ";
 }
 
-print HFILE "
+print CFILE "
     { NULL, NULL, NULL }    /* End of list marker */
 };
+";
 
-
+print HFILE "
 #define QL_HELP_COUNT	"
   . scalar(keys %entries) . "		/* number of help items */
 #define QL_MAX_CMD_LEN	$maxlen		/* largest strlen(cmd) */
