@@ -17767,6 +17767,9 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <primary>pg_relation_size</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_size_bytes</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_size_pretty</primary>
    </indexterm>
    <indexterm>
@@ -17834,6 +17837,15 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>bigint</type></entry>
        <entry>
         Shorthand for <literal>pg_relation_size(..., 'main')</literal>
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_size_bytes(<type>text</type>)</function></literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>
+         Converts a size in human-readable format with size units into bytes
        </entry>
       </row>
       <row>
@@ -17968,9 +17980,25 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     <function>pg_size_pretty</> can be used to format the result of one of
-    the other functions in a human-readable way, using kB, MB, GB or TB as
-    appropriate.
+    the other functions in a human-readable way, using bytes, kB, MB, GB or TB
+    as appropriate.
    </para>
+
+   <para>
+    <function>pg_size_bytes</> can be used to get the size in bytes from a
+    string in human-readable format. The input may have units of bytes, kB,
+    MB, GB or TB, and is parsed case-insensitively. If no units are specified,
+    bytes are assumed.
+   </para>
+
+   <note>
+    <para>
+     The units kB, MB, GB and TB used by the functions
+     <function>pg_size_pretty</> and <function>pg_size_bytes</> are defined
+     using powers of 2 rather than powers of 10, so 1kB is 1024 bytes, 1MB is
+     1024<superscript>2</> = 1048576 bytes, and so on.
+    </para>
+   </note>
 
    <para>
     The functions above that operate on tables or indexes accept a
