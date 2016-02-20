@@ -94,6 +94,7 @@ if exist src\bin\pg_basebackup\tmp_check rd /s /q src\bin\pg_basebackup\tmp_chec
 if exist src\bin\pg_config\tmp_check rd /s /q src\bin\pg_config\tmp_check
 if exist src\bin\pg_ctl\tmp_check rd /s /q src\bin\pg_ctl\tmp_check
 if exist src\bin\pg_rewind\tmp_check rd /s /q src\bin\pg_rewind\tmp_check
+if exist src\bin\pgbench\tmp_check rd /s /q src\bin\pgbench\tmp_check
 if exist src\bin\scripts\tmp_check rd /s /q src\bin\scripts\tmp_check
 
 REM Clean up datafiles built with contrib
