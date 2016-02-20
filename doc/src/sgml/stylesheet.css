@@ -94,3 +94,5 @@ PRE.LITERALLAYOUT, .SCREEN, .SYNOPSIS, .PROGRAMLISTING {
 VAR		{ font-family: monospace; font-style: italic; }
 /* Konqueror's standard style for ACRONYM is italic. */
 ACRONYM		{ font-style: inherit; }
+
+.OPTION		{ white-space: nowrap; }
