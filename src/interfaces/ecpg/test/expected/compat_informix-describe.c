@@ -362,7 +362,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 151 "describe.pgc"
 
 
-	if (sqlda1 == NULL || sqlda1 == NULL || sqlda2 == NULL)
+	if (sqlda1 == NULL || sqlda2 == NULL || sqlda3 == NULL)
 		exit(1);
 
 	strcpy(msg, "get descriptor");

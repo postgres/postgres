@@ -150,7 +150,7 @@ exec sql end declare section;
 	exec sql describe st_id2 using descriptor sqlda2;
 	exec sql describe st_id2 into sqlda3;
 
-	if (sqlda1 == NULL || sqlda1 == NULL || sqlda2 == NULL)
+	if (sqlda1 == NULL || sqlda2 == NULL || sqlda3 == NULL)
 		exit(1);
 
 	strcpy(msg, "get descriptor");
