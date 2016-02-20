@@ -813,15 +813,15 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 
 		/* Parse the unit case-insensitively */
 		if (pg_strcasecmp(strptr, "bytes") == 0)
-			multiplier = 1;
+			multiplier = (int64) 1;
 		else if (pg_strcasecmp(strptr, "kb") == 0)
-			multiplier = 1024;
+			multiplier = (int64) 1024;
 		else if (pg_strcasecmp(strptr, "mb") == 0)
-			multiplier = 1024 * 1024;
+			multiplier = (int64) 1024 * 1024;
 		else if (pg_strcasecmp(strptr, "gb") == 0)
-			multiplier = 1024 * 1024 * 1024;
+			multiplier = (int64) 1024 * 1024 * 1024;
 		else if (pg_strcasecmp(strptr, "tb") == 0)
-			multiplier = 1024 * 1024 * 1024 * 1024LL;
+			multiplier = (int64) 1024 * 1024 * 1024 * 1024;
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
