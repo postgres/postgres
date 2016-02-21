@@ -339,7 +339,7 @@ mydb=&gt;
 mydb=#
 </screen>
     That would mean you are a database superuser, which is most likely
-    the case if you installed <productname>PostgreSQL</productname>
+    the case if you installed the <productname>PostgreSQL</productname> instance
     yourself.  Being a superuser means that you are not subject to
     access controls.  For the purposes of this tutorial that is not
     important.
