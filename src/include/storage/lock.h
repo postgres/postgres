@@ -478,10 +478,11 @@ typedef enum
  * by one of the lock hash partition locks.  Since the deadlock detector
  * acquires all such locks anyway, this makes it safe for it to access these
  * fields without doing anything extra.  To avoid contention as much as
- * possible, we map different PGPROCs to different partition locks.
+ * possible, we map different PGPROCs to different partition locks.  The lock
+ * used for a given lock group is determined by the group leader's pgprocno.
  */
-#define LockHashPartitionLockByProc(p) \
-	LockHashPartitionLock((p)->pgprocno)
+#define LockHashPartitionLockByProc(leader_pgproc) \
+	LockHashPartitionLock((leader_pgproc)->pgprocno)
 
 /*
  * function prototypes

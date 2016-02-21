@@ -1004,7 +1004,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	int			i;
 
 	/*
-	 * If group locking is in use, locks held my members of my locking group
+	 * If group locking is in use, locks held by members of my locking group
 	 * need to be included in myHeldLocks.
 	 */
 	if (leader != NULL)
@@ -1050,7 +1050,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		{
 			/*
 			 * If we're part of the same locking group as this waiter, its
-			 * locks neither conflict with ours nor contribute to aheadRequsts.
+			 * locks neither conflict with ours nor contribute to
+			 * aheadRequests.
 			 */
 			if (leader != NULL && leader == proc->lockGroupLeader)
 			{
@@ -1797,9 +1798,17 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 	/* PID must be valid. */
 	Assert(pid != 0);
 
-	/* Try to join the group. */
+	/*
+	 * Get lock protecting the group fields.  Note LockHashPartitionLockByProc
+	 * accesses leader->pgprocno in a PGPROC that might be free.  This is safe
+	 * because all PGPROCs' pgprocno fields are set during shared memory
+	 * initialization and never change thereafter; so we will acquire the
+	 * correct lock even if the leader PGPROC is in process of being recycled.
+	 */
 	leader_lwlock = LockHashPartitionLockByProc(MyProc);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
+
+	/* Try to join the group */
 	if (leader->lockGroupLeaderIdentifier == pid)
 	{
 		ok = true;

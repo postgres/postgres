@@ -33,12 +33,21 @@
 #include "utils/memutils.h"
 
 
-/* One edge in the waits-for graph */
+/*
+ * One edge in the waits-for graph.
+ *
+ * waiter and blocker may or may not be members of a lock group, but if either
+ * is, it will be the leader rather than any other member of the lock group.
+ * The group leaders act as representatives of the whole group even though
+ * those particular processes need not be waiting at all.  There will be at
+ * least one member of the waiter's lock group on the wait queue for the given
+ * lock, maybe more.
+ */
 typedef struct
 {
-	PGPROC	   *waiter;			/* the waiting process */
-	PGPROC	   *blocker;		/* the process it is waiting for */
-	LOCK	   *lock;			/* the lock it is waiting for */
+	PGPROC	   *waiter;			/* the leader of the waiting lock group */
+	PGPROC	   *blocker;		/* the leader of the group it is waiting for */
+	LOCK	   *lock;			/* the lock being waited for */
 	int			pred;			/* workspace for TopoSort */
 	int			link;			/* workspace for TopoSort */
 } EDGE;
@@ -1006,8 +1015,8 @@ TopoSort(LOCK *lock,
 			return false;
 
 		/*
-		 * Output everything in the lock group.  There's no point in outputing
-		 * an ordering where members of the same lock group are not
+		 * Output everything in the lock group.  There's no point in
+		 * outputting an ordering where members of the same lock group are not
 		 * consecutive on the wait queue: if some other waiter is between two
 		 * requests that belong to the same group, then either it conflicts
 		 * with both of them and is certainly not a solution; or it conflicts
