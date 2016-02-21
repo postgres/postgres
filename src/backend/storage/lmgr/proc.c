@@ -1805,7 +1805,7 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 	 * initialization and never change thereafter; so we will acquire the
 	 * correct lock even if the leader PGPROC is in process of being recycled.
 	 */
-	leader_lwlock = LockHashPartitionLockByProc(MyProc);
+	leader_lwlock = LockHashPartitionLockByProc(leader);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
 
 	/* Try to join the group */
