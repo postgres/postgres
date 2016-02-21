@@ -1410,6 +1410,20 @@ INSERT INTO foo VALUES (999999, NULL, 'bar');
 SELECT jsonb_object_agg(name, type) FROM foo;
 ERROR:  field name must not be null
 -- jsonb_object
+-- empty object, one dimension
+SELECT jsonb_object('{}');
+ jsonb_object 
+--------------
+ {}
+(1 row)
+
+-- empty object, two dimensions
+SELECT jsonb_object('{}', '{}');
+ jsonb_object 
+--------------
+ {}
+(1 row)
+
 -- one dimension
 SELECT jsonb_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
                    jsonb_object                    

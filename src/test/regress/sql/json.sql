@@ -462,6 +462,12 @@ SELECT json_object_agg(name, type) FROM foo;
 
 -- json_object
 
+-- empty object, one dimension
+SELECT json_object('{}');
+
+-- empty object, two dimensions
+SELECT json_object('{}', '{}');
+
 -- one dimension
 SELECT json_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
 
