@@ -650,27 +650,16 @@ those cases so that they no longer use heavyweight locking in the first place
 (which is not a crazy idea, given that such lock acquisitions are not expected
 to deadlock and that heavyweight lock acquisition is fairly slow anyway).
 
-Group locking adds four new members to each PGPROC: lockGroupLeaderIdentifier,
-lockGroupLeader, lockGroupMembers, and lockGroupLink. The first is simply a
-safety mechanism. A newly started parallel worker has to try to join the
-leader's lock group, but it has no guarantee that the group leader is still
-alive by the time it gets started. We try to ensure that the parallel leader
-dies after all workers in normal cases, but also that the system could survive
-relatively intact if that somehow fails to happen. This is one of the
-precautions against such a scenario: the leader relays its PGPROC and also its
-PID to the worker, and the worker fails to join the lock group unless the
-given PGPROC still has the same PID. We assume that PIDs are not recycled
-quickly enough for this interlock to fail.
-
-A PGPROC's lockGroupLeader is NULL for processes not involved in parallel
-query. When a process wants to cooperate with parallel workers, it becomes a
-lock group leader, which means setting this field to point to its own
-PGPROC. When a parallel worker starts up, it points this field at the leader,
-with the above-mentioned interlock. The lockGroupMembers field is only used in
+Group locking adds three new members to each PGPROC: lockGroupLeader,
+lockGroupMembers, and lockGroupLink. A PGPROC's lockGroupLeader is NULL for
+processes not involved in parallel query. When a process wants to cooperate
+with parallel workers, it becomes a lock group leader, which means setting
+this field to point to its own PGPROC. When a parallel worker starts up, it
+points this field at the leader. The lockGroupMembers field is only used in
 the leader; it is a list of the member PGPROCs of the lock group (the leader
 and all workers). The lockGroupLink field is the list link for this list.
 
-All four of these fields are considered to be protected by a lock manager
+All three of these fields are considered to be protected by a lock manager
 partition lock.  The partition lock that protects these fields within a given
 lock group is chosen by taking the leader's pgprocno modulo the number of lock
 manager partitions.  This unusual arrangement has a major advantage: the
@@ -678,6 +667,18 @@ deadlock detector can count on the fact that no lockGroupLeader field can
 change while the deadlock detector is running, because it knows that it holds
 all the lock manager locks.  Also, holding this single lock allows safe
 manipulation of the lockGroupMembers list for the lock group.
+
+We need an additional interlock when setting these fields, because a newly
+started parallel worker has to try to join the leader's lock group, but it
+has no guarantee that the group leader is still alive by the time it gets
+started.  We try to ensure that the parallel leader dies after all workers
+in normal cases, but also that the system could survive relatively intact
+if that somehow fails to happen.  This is one of the precautions against
+such a scenario: the leader relays its PGPROC and also its PID to the
+worker, and the worker fails to join the lock group unless the given PGPROC
+still has the same PID and is still a lock group leader.  We assume that
+PIDs are not recycled quickly enough for this interlock to fail.
+
 
 User Locks (Advisory Locks)
 ---------------------------

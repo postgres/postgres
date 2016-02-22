@@ -401,7 +401,6 @@ InitProcess(void)
 	pg_atomic_init_u32(&MyProc->procArrayGroupNext, INVALID_PGPROCNO);
 
 	/* Check that group locking fields are in a proper initial state. */
-	Assert(MyProc->lockGroupLeaderIdentifier == 0);
 	Assert(MyProc->lockGroupLeader == NULL);
 	Assert(dlist_is_empty(&MyProc->lockGroupMembers));
 
@@ -565,7 +564,6 @@ InitAuxiliaryProcess(void)
 	SwitchToSharedLatch();
 
 	/* Check that group locking fields are in a proper initial state. */
-	Assert(MyProc->lockGroupLeaderIdentifier == 0);
 	Assert(MyProc->lockGroupLeader == NULL);
 	Assert(dlist_is_empty(&MyProc->lockGroupMembers));
 
@@ -822,7 +820,6 @@ ProcKill(int code, Datum arg)
 		dlist_delete(&MyProc->lockGroupLink);
 		if (dlist_is_empty(&leader->lockGroupMembers))
 		{
-			leader->lockGroupLeaderIdentifier = 0;
 			leader->lockGroupLeader = NULL;
 			if (leader != MyProc)
 			{
@@ -1771,7 +1768,6 @@ BecomeLockGroupLeader(void)
 	leader_lwlock = LockHashPartitionLockByProc(MyProc);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
 	MyProc->lockGroupLeader = MyProc;
-	MyProc->lockGroupLeaderIdentifier = MyProcPid;
 	dlist_push_head(&MyProc->lockGroupMembers, &MyProc->lockGroupLink);
 	LWLockRelease(leader_lwlock);
 }
@@ -1795,6 +1791,9 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 	/* Group leader can't become member of group */
 	Assert(MyProc != leader);
 
+	/* Can't already be a member of a group */
+	Assert(MyProc->lockGroupLeader == NULL);
+
 	/* PID must be valid. */
 	Assert(pid != 0);
 
@@ -1808,9 +1807,10 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 	leader_lwlock = LockHashPartitionLockByProc(leader);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
 
-	/* Try to join the group */
-	if (leader->lockGroupLeaderIdentifier == pid)
+	/* Is this the leader we're looking for? */
+	if (leader->pid == pid && leader->lockGroupLeader == leader)
 	{
+		/* OK, join the group */
 		ok = true;
 		MyProc->lockGroupLeader = leader;
 		dlist_push_tail(&leader->lockGroupMembers, &MyProc->lockGroupLink);

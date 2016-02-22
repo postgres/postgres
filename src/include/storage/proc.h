@@ -166,7 +166,6 @@ struct PGPROC
 	 * Support for lock groups.  Use LockHashPartitionLockByProc on the group
 	 * leader to get the LWLock protecting these fields.
 	 */
-	int			lockGroupLeaderIdentifier;	/* MyProcPid, if I'm a leader */
 	PGPROC	   *lockGroupLeader;	/* lock group leader, if I'm a member */
 	dlist_head	lockGroupMembers;	/* list of members, if I'm a leader */
 	dlist_node  lockGroupLink;		/* my member link, if I'm a member */
