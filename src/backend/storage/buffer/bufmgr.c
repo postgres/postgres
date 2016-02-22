@@ -2166,7 +2166,7 @@ InitBufferPoolAccess(void)
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(int32);
-	hash_ctl.entrysize = sizeof(PrivateRefCountArray);
+	hash_ctl.entrysize = sizeof(PrivateRefCountEntry);
 
 	PrivateRefCountHash = hash_create("PrivateRefCount", 100, &hash_ctl,
 									  HASH_ELEM | HASH_BLOBS);
