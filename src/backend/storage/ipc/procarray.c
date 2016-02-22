@@ -2313,14 +2313,35 @@ HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids)
 PGPROC *
 BackendPidGetProc(int pid)
 {
+	PGPROC	   *result;
+
+	if (pid == 0)				/* never match dummy PGPROCs */
+		return NULL;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	result = BackendPidGetProcWithLock(pid);
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
+}
+
+/*
+ * BackendPidGetProcWithLock -- get a backend's PGPROC given its PID
+ *
+ * Same as above, except caller must be holding ProcArrayLock.  The found
+ * entry, if any, can be assumed to be valid as long as the lock remains held.
+ */
+PGPROC *
+BackendPidGetProcWithLock(int pid)
+{
 	PGPROC	   *result = NULL;
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
 
 	if (pid == 0)				/* never match dummy PGPROCs */
 		return NULL;
-
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -2332,8 +2353,6 @@ BackendPidGetProc(int pid)
 			break;
 		}
 	}
-
-	LWLockRelease(ProcArrayLock);
 
 	return result;
 }
