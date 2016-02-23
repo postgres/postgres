@@ -293,6 +293,9 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 
 			if (options & VACOPT_VACUUM)
 			{
+				if (!(options & VACOPT_FULL))
+					pgstat_report_progress_set_command(COMMAND_LAZY_VACUUM);
+
 				if (!vacuum_rel(relid, relation, options, params))
 					continue;
 			}
@@ -325,6 +328,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	{
 		in_vacuum = false;
 		VacuumCostActive = false;
+		pgstat_reset_local_progress();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -355,6 +359,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 		vac_update_datfrozenxid();
 	}
 
+	pgstat_reset_local_progress();
 	/*
 	 * Clean up working storage --- note we must do this after
 	 * StartTransactionCommand, else we might be trying to delete the active

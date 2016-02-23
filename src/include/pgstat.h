@@ -205,6 +205,8 @@ typedef struct PgStat_MsgHdr
 #define PGSTAT_MAX_MSG_SIZE 1000
 #define PGSTAT_MSG_PAYLOAD	(PGSTAT_MAX_MSG_SIZE - sizeof(PgStat_MsgHdr))
 
+#define N_PROGRESS_PARAM 10
+#define PROGRESS_MESSAGE_LENGTH 30
 
 /* ----------
  * PgStat_MsgDummy				A dummy message, ignored by the collector
@@ -776,6 +778,20 @@ typedef struct PgBackendStatus
 
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;
+
+	/*
+	 * Information about the progress of activity/command being run by the backend.
+	 * The progress parameters indicate progress of a command. Different
+	 * commands can report different number of parameters of each type.
+	 *
+	 * st_command reports which activity/command is being run by the backend.
+	 * This is used in the SQL callable functions to display progress values
+	 * for respective commands.
+	 */
+	uint16		st_command;
+	uint32		st_progress_param[N_PROGRESS_PARAM];
+	char		st_progress_message[N_PROGRESS_PARAM][PROGRESS_MESSAGE_LENGTH];
+	Oid		st_relid;
 } PgBackendStatus;
 
 /*
@@ -815,6 +831,7 @@ typedef struct PgBackendStatus
 		save_changecount = beentry->st_changecount; \
 	} while (0)
 
+#define COMMAND_LAZY_VACUUM 0x01
 /* ----------
  * LocalPgBackendStatus
  *
@@ -928,6 +945,10 @@ extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
 extern void pgstat_report_activity(BackendState state, const char *cmd_str);
+extern void pgstat_report_progress_set_command(int16 commandId);
+extern void pgstat_reset_local_progress(void);
+extern void pgstat_report_progress_update_counter(int index, uint32 counter);
+extern void pgstat_report_progress_update_message(int index, char msg[N_PROGRESS_PARAM][PROGRESS_MESSAGE_LENGTH]);
 extern void pgstat_report_tempfile(size_t filesize);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
@@ -938,6 +959,7 @@ extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
+extern void pgstat_report_progress_set_command_target(Oid relid);
 
 extern void pgstat_initstats(Relation rel);
 

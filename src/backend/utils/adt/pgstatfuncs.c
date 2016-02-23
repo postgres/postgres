@@ -53,6 +53,7 @@ extern Datum pg_stat_get_function_self_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_activity(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_command_progress(PG_FUNCTION_ARGS);
 extern Datum pg_backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
@@ -523,7 +524,99 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 	}
 }
+/*
+ * Returns VACUUM progress values stored by each backend
+ * executing VACUUM.
+ */
+Datum
+pg_stat_get_command_progress(PG_FUNCTION_ARGS)
+{
+#define PG_STAT_GET_PROGRESS_COLS	30
+	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			curr_backend;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
 
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+	MemoryContextSwitchTo(oldcontext);
+
+	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
+	{
+		Datum		values[PG_STAT_GET_PROGRESS_COLS];
+		bool		nulls[PG_STAT_GET_PROGRESS_COLS];
+		LocalPgBackendStatus *local_beentry;
+		PgBackendStatus *beentry;
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, 0, sizeof(nulls));
+
+		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
+		if (!local_beentry)
+			continue;
+		beentry = &local_beentry->backendStatus;
+
+		/* Report values for only those backends which are running VACUUM */
+		if(!beentry || beentry->st_command != COMMAND_LAZY_VACUUM)
+			continue;
+
+		values[0] = Int32GetDatum(beentry->st_procpid);
+		values[1] = ObjectIdGetDatum(beentry->st_relid);
+
+		/*Progress can only be viewed by role member.*/
+		if (has_privs_of_role(GetUserId(), beentry->st_userid))
+		{
+			values[2] = CStringGetTextDatum(beentry->st_progress_message[0]);
+			values[3] = UInt32GetDatum(beentry->st_progress_param[0]);
+			values[4] = UInt32GetDatum(beentry->st_progress_param[1]);
+			values[5] = UInt32GetDatum(beentry->st_progress_param[2]);
+			values[6] = UInt32GetDatum(beentry->st_progress_param[3]);
+			values[7] = UInt32GetDatum(beentry->st_progress_param[4]);
+			if (beentry->st_progress_param[0] != 0)
+				values[8] = Float8GetDatum(beentry->st_progress_param[1] * 100 / beentry->st_progress_param[0]);
+			else
+				nulls[8] = true;
+		}
+		else
+		{
+			values[2] = CStringGetTextDatum("<insufficient privilege>");
+			nulls[3] = true;
+			nulls[4] = true;
+			nulls[5] = true;
+			nulls[6] = true;
+			nulls[7] = true;
+		}
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
+}
 /*
  * Returns activity of PG backends.
  */

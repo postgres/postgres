@@ -1,0 +1,30 @@
+--- src/test/perl/PostgresNode.pm
++++ src/test/perl/PostgresNode.pm
+@@ -236,11 +253,18 @@
+ 
+ sub init_from_backup
+ {
+-	my ($self, $root_node, $backup_name) = @_;
++	my ($self, $root_node, $backup_name, %params) = @_;
+ 	my $backup_path = $root_node->backup_dir . '/' . $backup_name;
+ 	my $port        = $self->port;
+ 	my $root_port   = $root_node->port;
+ 
++	$params{hba_permit_replication} = 1
++	   if (!defined($params{hba_permit_replication}));
++	$params{has_streaming} = 0
++	   if (!defined($params{has_streaming}));
++	$params{has_restoring} = 0
++	   if (!defined($params{has_restoring}));
++
+ 	print
+ "Initializing node $port from backup \"$backup_name\" of node $root_port\n";
+ 	die "Backup $backup_path does not exist" unless -d $backup_path;
+@@ -283,7 +310,6 @@
+ 	}
+ 
+ 	$self->_update_pid;
+-
+ }
+ 
+ sub stop

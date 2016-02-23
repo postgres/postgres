@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * vacuumlazy.c
+ * vacuumlazy.c hii
  *	  Concurrent ("lazy") vacuuming.
  *
  *
@@ -433,7 +433,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			   Relation *Irel, int nindexes, bool scan_all)
 {
 	BlockNumber nblocks,
-				blkno;
+				blkno,
+				total_heap_blks,
+				current_heap_blkno = 0,
+				total_index_pages = 0,
+				scanned_index_pages = 0;
 	HeapTupleData tuple;
 	char	   *relname;
 	BlockNumber empty_pages,
@@ -450,14 +454,21 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	bool		skipping_all_visible_blocks;
 	xl_heap_freeze_tuple *frozen;
 	StringInfoData buf;
+	char	progress_message[N_PROGRESS_PARAM][PROGRESS_MESSAGE_LENGTH];
+	const char *phase1="Scanning Heap";
+	const char *phase2="Vacuuming Index and Heap";
+	Oid	relid;
 
 	pg_rusage_init(&ru0);
 
 	relname = RelationGetRelationName(onerel);
+	relid = RelationGetRelid(onerel);
 	ereport(elevel,
 			(errmsg("vacuuming \"%s.%s\"",
 					get_namespace_name(RelationGetNamespace(onerel)),
 					relname)));
+	/* Report relid of the relation*/
+	pgstat_report_progress_set_command_target(relid);
 
 	empty_pages = vacuumed_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
@@ -465,7 +476,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	indstats = (IndexBulkDeleteResult **)
 		palloc0(nindexes * sizeof(IndexBulkDeleteResult *));
 
-	nblocks = RelationGetNumberOfBlocks(onerel);
+	total_heap_blks = nblocks = RelationGetNumberOfBlocks(onerel);
+
+	for (i = 0; i < nindexes; i++)
+		total_index_pages += RelationGetNumberOfBlocks(Irel[i]);
+
 	vacrelstats->rel_pages = nblocks;
 	vacrelstats->scanned_pages = 0;
 	vacrelstats->nonempty_pages = 0;
@@ -473,6 +488,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	lazy_space_alloc(vacrelstats, nblocks);
 	frozen = palloc(sizeof(xl_heap_freeze_tuple) * MaxHeapTuplesPerPage);
+
+	/* Report count of total heap blocks and total index pages of a relation*/
+	pgstat_report_progress_update_counter(0, total_heap_blks);
+	pgstat_report_progress_update_counter(2, total_index_pages);
 
 	/*
 	 * We want to skip pages that don't require vacuuming according to the
@@ -523,10 +542,16 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		vacuum_delay_point();
 	}
 	if (next_not_all_visible_block >= SKIP_PAGES_THRESHOLD)
+	{
 		skipping_all_visible_blocks = true;
+		/*if(!scan_all)
+			current_heap_blkno = current_heap_blkno + next_not_all_visible_block;*/
+	}
 	else
 		skipping_all_visible_blocks = false;
 
+	snprintf(progress_message[0], PROGRESS_MESSAGE_LENGTH, "%s", phase1);
+	pgstat_report_progress_update_message(0, progress_message);
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		Buffer		buf;
@@ -566,7 +591,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * following blocks.
 			 */
 			if (next_not_all_visible_block - blkno > SKIP_PAGES_THRESHOLD)
+			{
 				skipping_all_visible_blocks = true;
+				/*if(!scan_all)
+					current_heap_blkno = current_heap_blkno + next_not_all_visible_block;*/
+			}
 			else
 				skipping_all_visible_blocks = false;
 			all_visible_according_to_vm = false;
@@ -603,11 +632,19 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/* Log cleanup info before we touch indexes */
 			vacuum_log_cleanup_info(onerel, vacrelstats);
 
+			snprintf(progress_message[0], PROGRESS_MESSAGE_LENGTH, "%s", phase2);
+			pgstat_report_progress_update_message(0, progress_message);
+
 			/* Remove index entries */
 			for (i = 0; i < nindexes; i++)
+			{
 				lazy_vacuum_index(Irel[i],
 								  &indstats[i],
 								  vacrelstats);
+				scanned_index_pages += RelationGetNumberOfBlocks(Irel[i]);	
+				/* Update scanned index pages of a relation*/
+				pgstat_report_progress_update_counter(3, scanned_index_pages);
+			}
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
 
@@ -617,8 +654,13 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * valid.
 			 */
 			vacrelstats->num_dead_tuples = 0;
+			scanned_index_pages = 0;
 			vacrelstats->num_index_scans++;
+
+			pgstat_report_progress_update_counter(4, vacrelstats->num_index_scans);
 		}
+		snprintf(progress_message[0], PROGRESS_MESSAGE_LENGTH, "%s", phase1);
+		pgstat_report_progress_update_message(0, progress_message);
 
 		/*
 		 * Pin the visibility map page in case we need to mark the page
@@ -645,7 +687,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			if (!scan_all && !FORCE_CHECK_PAGE())
 			{
 				ReleaseBuffer(buf);
+				current_heap_blkno++;
 				vacrelstats->pinskipped_pages++;
+				/* Report current heap block number */
+				pgstat_report_progress_update_counter(1, current_heap_blkno);
 				continue;
 			}
 
@@ -670,9 +715,13 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			{
 				UnlockReleaseBuffer(buf);
 				vacrelstats->scanned_pages++;
+				current_heap_blkno++;
 				vacrelstats->pinskipped_pages++;
 				if (hastup)
 					vacrelstats->nonempty_pages = blkno + 1;
+
+				/* Report current heap block number*/
+				pgstat_report_progress_update_counter(1, current_heap_blkno);
 				continue;
 			}
 			if (!scan_all)
@@ -693,6 +742,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		}
 
 		vacrelstats->scanned_pages++;
+		current_heap_blkno++;
+		/* Report current heap block number */
+		pgstat_report_progress_update_counter(1, current_heap_blkno);
 
 		page = BufferGetPage(buf);
 
@@ -1089,8 +1141,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 */
 		if (vacrelstats->num_dead_tuples == prev_dead_count)
 			RecordPageWithFreeSpace(onerel, blkno, freespace);
-	}
 
+		if (blkno == nblocks - 1 && vacrelstats->num_dead_tuples == 0 && nindexes != 0
+			&& vacrelstats->num_index_scans == 0)
+			total_index_pages = 0;
+	}
 	pfree(frozen);
 
 	/* save stats for use later */
@@ -1120,16 +1175,25 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* Log cleanup info before we touch indexes */
 		vacuum_log_cleanup_info(onerel, vacrelstats);
 
+		snprintf(progress_message[0], PROGRESS_MESSAGE_LENGTH, "%s", phase2);
+		pgstat_report_progress_update_message(0, progress_message);
+
 		/* Remove index entries */
 		for (i = 0; i < nindexes; i++)
+		{
 			lazy_vacuum_index(Irel[i],
 							  &indstats[i],
 							  vacrelstats);
+			scanned_index_pages += RelationGetNumberOfBlocks(Irel[i]);
+			/* Update the scanned index pages and number of index scan */
+			pgstat_report_progress_update_counter(3, scanned_index_pages);
+			pgstat_report_progress_update_counter(4, vacrelstats->num_index_scans + 1);
+		}
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
 		vacrelstats->num_index_scans++;
+		scanned_index_pages = 0;
 	}
-
 	/* Do post-vacuum cleanup and statistics update for each index */
 	for (i = 0; i < nindexes; i++)
 		lazy_cleanup_index(Irel[i], indstats[i], vacrelstats);
