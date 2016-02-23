@@ -172,6 +172,36 @@ make_native_path(char *filename)
 
 
 /*
+ * This function cleans up the paths for use with either cmd.exe or Msys
+ * on Windows. We need them to use filenames without spaces, for which a
+ * short filename is the safest equivalent, eg:
+ *		C:/Progra~1/
+ */
+void
+cleanup_path(char *path)
+{
+#ifdef WIN32
+	char	   *ptr;
+
+	/*
+	 * GetShortPathName() will fail if the path does not exist, or short names
+	 * are disabled on this file system.  In both cases, we just return the
+	 * original path.  This is particularly useful for --sysconfdir, which
+	 * might not exist.
+	 */
+	GetShortPathName(path, path, MAXPGPATH - 1);
+
+	/* Replace '\' with '/' */
+	for (ptr = path; *ptr; ptr++)
+	{
+		if (*ptr == '\\')
+			*ptr = '/';
+	}
+#endif
+}
+
+
+/*
  * join_path_components - join two path components, inserting a slash
  *
  * We omit the slash if either given component is empty.

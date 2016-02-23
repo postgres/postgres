@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "fmgr.h"
+#include "nodes/extensible.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/readfuncs.h"
@@ -218,6 +219,14 @@ _readBitmapset(void)
 	return result;
 }
 
+/*
+ * for use by extensions which define extensible nodes
+ */
+Bitmapset *
+readBitmapset(void)
+{
+	return _readBitmapset();
+}
 
 /*
  * _readQuery
@@ -2053,6 +2062,7 @@ _readGather(void)
 
 	READ_INT_FIELD(num_workers);
 	READ_BOOL_FIELD(single_copy);
+	READ_BOOL_FIELD(invisible);
 
 	READ_DONE();
 }
@@ -2214,6 +2224,35 @@ _readAlternativeSubPlan(void)
 	READ_LOCALS(AlternativeSubPlan);
 
 	READ_NODE_FIELD(subplans);
+
+	READ_DONE();
+}
+
+/*
+ * _readExtensibleNode
+ */
+static ExtensibleNode *
+_readExtensibleNode(void)
+{
+	const ExtensibleNodeMethods *methods;
+	ExtensibleNode *local_node;
+	const char	   *extnodename;
+	READ_TEMP_LOCALS();
+
+	token = pg_strtok(&length);		/* skip: extnodename */
+	token = pg_strtok(&length);		/* get extnodename */
+
+	extnodename = nullable_string(token, length);
+	if (!extnodename)
+		elog(ERROR, "extnodename has to be supplied");
+	methods = GetExtensibleNodeMethods(extnodename, false);
+
+	local_node = (ExtensibleNode *) newNode(methods->node_size,
+											T_ExtensibleNode);
+	local_node->extnodename = extnodename;
+
+	/* deserialize the private fields */
+	methods->nodeRead(local_node);
 
 	READ_DONE();
 }
@@ -2446,6 +2485,8 @@ parseNodeString(void)
 		return_value = _readSubPlan();
 	else if (MATCH("ALTERNATIVESUBPLAN", 18))
 		return_value = _readAlternativeSubPlan();
+	else if (MATCH("EXTENSIBLENODE", 14))
+		return_value = _readExtensibleNode();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);

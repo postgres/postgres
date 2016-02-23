@@ -1455,7 +1455,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 				 errmsg("wrong number of array subscripts")));
 
 	if (nkdims == 0)
-		PG_RETURN_DATUM(CStringGetTextDatum("{}"));
+		goto close_object;
 
 	deconstruct_array(key_array,
 					  TEXTOID, -1, false, 'i',
@@ -1509,12 +1509,13 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 		(void) pushJsonbValue(&result.parseState, WJB_VALUE, &v);
 	}
 
-	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
-
 	pfree(key_datums);
 	pfree(key_nulls);
 	pfree(val_datums);
 	pfree(val_nulls);
+
+close_object:
+	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
 
 	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
 }

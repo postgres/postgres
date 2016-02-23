@@ -1,0 +1,135 @@
+--
+-- num_nulls()
+--
+SELECT num_nonnulls(NULL);
+ num_nonnulls 
+--------------
+            0
+(1 row)
+
+SELECT num_nonnulls('1');
+ num_nonnulls 
+--------------
+            1
+(1 row)
+
+SELECT num_nonnulls(NULL::text);
+ num_nonnulls 
+--------------
+            0
+(1 row)
+
+SELECT num_nonnulls(NULL::text, NULL::int);
+ num_nonnulls 
+--------------
+            0
+(1 row)
+
+SELECT num_nonnulls(1, 2, NULL::text, NULL::point, '', int8 '9', 1.0 / NULL);
+ num_nonnulls 
+--------------
+            4
+(1 row)
+
+SELECT num_nonnulls(VARIADIC '{1,2,NULL,3}'::int[]);
+ num_nonnulls 
+--------------
+            3
+(1 row)
+
+SELECT num_nonnulls(VARIADIC '{"1","2","3","4"}'::text[]);
+ num_nonnulls 
+--------------
+            4
+(1 row)
+
+SELECT num_nonnulls(VARIADIC ARRAY(SELECT CASE WHEN i <> 40 THEN i END FROM generate_series(1, 100) i));
+ num_nonnulls 
+--------------
+           99
+(1 row)
+
+SELECT num_nulls(NULL);
+ num_nulls 
+-----------
+         1
+(1 row)
+
+SELECT num_nulls('1');
+ num_nulls 
+-----------
+         0
+(1 row)
+
+SELECT num_nulls(NULL::text);
+ num_nulls 
+-----------
+         1
+(1 row)
+
+SELECT num_nulls(NULL::text, NULL::int);
+ num_nulls 
+-----------
+         2
+(1 row)
+
+SELECT num_nulls(1, 2, NULL::text, NULL::point, '', int8 '9', 1.0 / NULL);
+ num_nulls 
+-----------
+         3
+(1 row)
+
+SELECT num_nulls(VARIADIC '{1,2,NULL,3}'::int[]);
+ num_nulls 
+-----------
+         1
+(1 row)
+
+SELECT num_nulls(VARIADIC '{"1","2","3","4"}'::text[]);
+ num_nulls 
+-----------
+         0
+(1 row)
+
+SELECT num_nulls(VARIADIC ARRAY(SELECT CASE WHEN i <> 40 THEN i END FROM generate_series(1, 100) i));
+ num_nulls 
+-----------
+         1
+(1 row)
+
+-- special cases
+SELECT num_nonnulls(VARIADIC NULL::text[]);
+ num_nonnulls 
+--------------
+             
+(1 row)
+
+SELECT num_nonnulls(VARIADIC '{}'::int[]);
+ num_nonnulls 
+--------------
+            0
+(1 row)
+
+SELECT num_nulls(VARIADIC NULL::text[]);
+ num_nulls 
+-----------
+          
+(1 row)
+
+SELECT num_nulls(VARIADIC '{}'::int[]);
+ num_nulls 
+-----------
+         0
+(1 row)
+
+-- should fail, one or more arguments is required
+SELECT num_nonnulls();
+ERROR:  function num_nonnulls() does not exist
+LINE 1: SELECT num_nonnulls();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT num_nulls();
+ERROR:  function num_nulls() does not exist
+LINE 1: SELECT num_nulls();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.

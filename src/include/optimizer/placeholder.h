@@ -26,7 +26,7 @@ extern void update_placeholder_eval_levels(PlannerInfo *root,
 							   SpecialJoinInfo *new_sjinfo);
 extern void fix_placeholder_input_needed_levels(PlannerInfo *root);
 extern void add_placeholders_to_base_rels(PlannerInfo *root);
-extern void add_placeholders_to_joinrel(PlannerInfo *root,
-							RelOptInfo *joinrel);
+extern void add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
+							RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 
 #endif   /* PLACEHOLDER_H */

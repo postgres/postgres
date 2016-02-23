@@ -17,9 +17,18 @@
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 
+/* possible values for force_parallel_mode */
+typedef enum
+{
+	FORCE_PARALLEL_OFF,
+	FORCE_PARALLEL_ON,
+	FORCE_PARALLEL_REGRESS
+} ForceParallelMode;
+
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
 extern double cursor_tuple_fraction;
+extern int force_parallel_mode;
 
 /* query_planner callback to compute query_pathkeys */
 typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);

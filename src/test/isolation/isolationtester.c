@@ -15,6 +15,7 @@
 #include <sys/select.h>
 #endif
 
+#include "datatype/timestamp.h"
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 #include "pg_getopt.h"
@@ -226,75 +227,12 @@ main(int argc, char **argv)
 	 */
 	initPQExpBuffer(&wait_query);
 	appendPQExpBufferStr(&wait_query,
-						 "SELECT 1 FROM pg_locks holder, pg_locks waiter "
-						 "WHERE NOT waiter.granted AND waiter.pid = $1 "
-						 "AND holder.granted "
-						 "AND holder.pid <> $1 AND holder.pid IN (");
+						 "SELECT pg_catalog.pg_blocking_pids($1) && '{");
 	/* The spec syntax requires at least one session; assume that here. */
 	appendPQExpBufferStr(&wait_query, backend_pids[1]);
 	for (i = 2; i < nconns; i++)
-		appendPQExpBuffer(&wait_query, ", %s", backend_pids[i]);
-	appendPQExpBufferStr(&wait_query,
-						 ") "
-
-						 "AND holder.mode = ANY (CASE waiter.mode "
-						 "WHEN 'AccessShareLock' THEN ARRAY["
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'RowShareLock' THEN ARRAY["
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'RowExclusiveLock' THEN ARRAY["
-						 "'ShareLock',"
-						 "'ShareRowExclusiveLock',"
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'ShareUpdateExclusiveLock' THEN ARRAY["
-						 "'ShareUpdateExclusiveLock',"
-						 "'ShareLock',"
-						 "'ShareRowExclusiveLock',"
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'ShareLock' THEN ARRAY["
-						 "'RowExclusiveLock',"
-						 "'ShareUpdateExclusiveLock',"
-						 "'ShareRowExclusiveLock',"
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'ShareRowExclusiveLock' THEN ARRAY["
-						 "'RowExclusiveLock',"
-						 "'ShareUpdateExclusiveLock',"
-						 "'ShareLock',"
-						 "'ShareRowExclusiveLock',"
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'ExclusiveLock' THEN ARRAY["
-						 "'RowShareLock',"
-						 "'RowExclusiveLock',"
-						 "'ShareUpdateExclusiveLock',"
-						 "'ShareLock',"
-						 "'ShareRowExclusiveLock',"
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] "
-						 "WHEN 'AccessExclusiveLock' THEN ARRAY["
-						 "'AccessShareLock',"
-						 "'RowShareLock',"
-						 "'RowExclusiveLock',"
-						 "'ShareUpdateExclusiveLock',"
-						 "'ShareLock',"
-						 "'ShareRowExclusiveLock',"
-						 "'ExclusiveLock',"
-						 "'AccessExclusiveLock'] END) "
-
-				  "AND holder.locktype IS NOT DISTINCT FROM waiter.locktype "
-				  "AND holder.database IS NOT DISTINCT FROM waiter.database "
-				  "AND holder.relation IS NOT DISTINCT FROM waiter.relation "
-						 "AND holder.page IS NOT DISTINCT FROM waiter.page "
-						 "AND holder.tuple IS NOT DISTINCT FROM waiter.tuple "
-			  "AND holder.virtualxid IS NOT DISTINCT FROM waiter.virtualxid "
-		"AND holder.transactionid IS NOT DISTINCT FROM waiter.transactionid "
-					"AND holder.classid IS NOT DISTINCT FROM waiter.classid "
-						 "AND holder.objid IS NOT DISTINCT FROM waiter.objid "
-				"AND holder.objsubid IS NOT DISTINCT FROM waiter.objsubid ");
+		appendPQExpBuffer(&wait_query, ",%s", backend_pids[i]);
+	appendPQExpBufferStr(&wait_query, "}'::integer[]");
 
 	res = PQprepare(conns[0], PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -467,34 +405,48 @@ report_error_message(Step *step)
 }
 
 /*
- * As above, but reports messages possibly emitted by two steps.  This is
+ * As above, but reports messages possibly emitted by multiple steps.  This is
  * useful when we have a blocked command awakened by another one; we want to
- * report both messages identically, for the case where we don't care which
+ * report all messages identically, for the case where we don't care which
  * one fails due to a timeout such as deadlock timeout.
  */
 static void
-report_two_error_messages(Step *step1, Step *step2)
+report_multiple_error_messages(Step *step, int nextra, Step **extrastep)
 {
-	char	   *prefix;
+	PQExpBufferData buffer;
+	int			n;
 
-	prefix = psprintf("%s %s", step1->name, step2->name);
-
-	if (step1->errormsg)
+	if (nextra == 0)
 	{
-		fprintf(stdout, "error in steps %s: %s\n", prefix,
-				step1->errormsg);
-		free(step1->errormsg);
-		step1->errormsg = NULL;
-	}
-	if (step2->errormsg)
-	{
-		fprintf(stdout, "error in steps %s: %s\n", prefix,
-				step2->errormsg);
-		free(step2->errormsg);
-		step2->errormsg = NULL;
+		report_error_message(step);
+		return;
 	}
 
-	free(prefix);
+	initPQExpBuffer(&buffer);
+	appendPQExpBufferStr(&buffer, step->name);
+
+	for (n = 0; n < nextra; ++n)
+		appendPQExpBuffer(&buffer, " %s", extrastep[n]->name);
+
+	if (step->errormsg)
+	{
+		fprintf(stdout, "error in steps %s: %s\n", buffer.data,
+				step->errormsg);
+		free(step->errormsg);
+		step->errormsg = NULL;
+	}
+
+	for (n = 0; n < nextra; ++n)
+	{
+		if (extrastep[n]->errormsg == NULL)
+			continue;
+		fprintf(stdout, "error in steps %s: %s\n",
+				buffer.data, extrastep[n]->errormsg);
+		free(extrastep[n]->errormsg);
+		extrastep[n]->errormsg = NULL;
+	}
+
+	termPQExpBuffer(&buffer);
 }
 
 /*
@@ -505,7 +457,11 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 {
 	PGresult   *res;
 	int			i;
-	Step	   *waiting = NULL;
+	int			w;
+	int			nwaiting = 0;
+	int			nerrorstep = 0;
+	Step	  **waiting;
+	Step	  **errorstep;
 
 	/*
 	 * In dry run mode, just display the permutation in the same format used
@@ -519,6 +475,9 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		printf("\n");
 		return;
 	}
+
+	waiting = malloc(sizeof(Step *) * testspec->nsessions);
+	errorstep = malloc(sizeof(Step *) * testspec->nsessions);
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
@@ -567,53 +526,73 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	{
 		Step	   *step = steps[i];
 		PGconn	   *conn = conns[1 + step->session];
+		Step	   *oldstep = NULL;
+		bool		mustwait;
 
-		if (waiting != NULL && step->session == waiting->session)
+		/*
+		 * Check whether the session that needs to perform the next step is
+		 * still blocked on an earlier step.  If so, wait for it to finish.
+		 *
+		 * (In older versions of this tool, we allowed precisely one session
+		 * to be waiting at a time.  If we reached a step that required that
+		 * session to execute the next command, we would declare the whole
+		 * permutation invalid, cancel everything, and move on to the next
+		 * one.  Unfortunately, that made it impossible to test the deadlock
+		 * detector using this framework, unless the number of processes
+		 * involved in the deadlock was precisely two.  We now assume that if
+		 * we reach a step that is still blocked, we need to wait for it to
+		 * unblock itself.)
+		 */
+		for (w = 0; w < nwaiting; ++w)
 		{
-			PGcancel   *cancel;
-			PGresult   *res;
-			int			j;
-
-			/*
-			 * This permutation is invalid: it can never happen in real life.
-			 *
-			 * A session is blocked on an earlier step (waiting) and no
-			 * further steps from this session can run until it is unblocked,
-			 * but it can only be unblocked by running steps from other
-			 * sessions.
-			 */
-			fprintf(stderr, "invalid permutation detected\n");
-
-			/* Cancel the waiting statement from this session. */
-			cancel = PQgetCancel(conn);
-			if (cancel != NULL)
+			if (step->session == waiting[w]->session)
 			{
-				char		buf[256];
+				oldstep = waiting[w];
 
-				if (!PQcancel(cancel, buf, sizeof(buf)))
-					fprintf(stderr, "PQcancel failed: %s\n", buf);
+				/* Wait for previous step on this connection. */
+				try_complete_step(oldstep, STEP_RETRY);
 
-				/* Be sure to consume the error message. */
-				while ((res = PQgetResult(conn)) != NULL)
-					PQclear(res);
+				/* Remove that step from the waiting[] array. */
+				if (w + 1 < nwaiting)
+					memcpy(&waiting[w], &waiting[w + 1],
+						   (nwaiting - (w + 1)) * sizeof(Step *));
+				nwaiting--;
 
-				PQfreeCancel(cancel);
+				break;
+			}
+		}
+		if (oldstep != NULL)
+		{
+			/*
+			 * Check for completion of any steps that were previously waiting.
+			 * Remove any that have completed from waiting[], and include them
+			 * in the list for report_multiple_error_messages().
+			 */
+			w = 0;
+			nerrorstep = 0;
+			while (w < nwaiting)
+			{
+				if (try_complete_step(waiting[w], STEP_NONBLOCK | STEP_RETRY))
+				{
+					/* Still blocked on a lock, leave it alone. */
+					w++;
+				}
+				else
+				{
+					/* This one finished, too! */
+					errorstep[nerrorstep++] = waiting[w];
+					if (w + 1 < nwaiting)
+						memcpy(&waiting[w], &waiting[w + 1],
+							   (nwaiting - (w + 1)) * sizeof(Step *));
+					nwaiting--;
+				}
 			}
 
-			/*
-			 * Now we really have to complete all the running transactions to
-			 * make sure teardown doesn't block.
-			 */
-			for (j = 1; j < nconns; j++)
-			{
-				res = PQexec(conns[j], "ROLLBACK");
-				if (res != NULL)
-					PQclear(res);
-			}
-
-			goto teardown;
+			/* Report all errors together. */
+			report_multiple_error_messages(oldstep, nerrorstep, errorstep);
 		}
 
+		/* Send the query for this step. */
 		if (!PQsendQuery(conn, step->sql))
 		{
 			fprintf(stdout, "failed to send query for step %s: %s\n",
@@ -621,39 +600,41 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 			exit_nicely();
 		}
 
-		if (waiting != NULL)
-		{
-			/* Some other step is already waiting: just block. */
-			try_complete_step(step, 0);
+		/* Try to complete this step without blocking.  */
+		mustwait = try_complete_step(step, STEP_NONBLOCK);
 
-			/*
-			 * See if this step unblocked the waiting step; report both error
-			 * messages together if so.
-			 */
-			if (!try_complete_step(waiting, STEP_NONBLOCK | STEP_RETRY))
-			{
-				report_two_error_messages(step, waiting);
-				waiting = NULL;
-			}
+		/* Check for completion of any steps that were previously waiting. */
+		w = 0;
+		nerrorstep = 0;
+		while (w < nwaiting)
+		{
+			if (try_complete_step(waiting[w], STEP_NONBLOCK | STEP_RETRY))
+				w++;
 			else
-				report_error_message(step);
+			{
+				errorstep[nerrorstep++] = waiting[w];
+				if (w + 1 < nwaiting)
+					memcpy(&waiting[w], &waiting[w + 1],
+						   (nwaiting - (w + 1)) * sizeof(Step *));
+				nwaiting--;
+			}
 		}
-		else
-		{
-			if (try_complete_step(step, STEP_NONBLOCK))
-				waiting = step;
-			report_error_message(step);
-		}
+
+		/* Report any error from this step, and any steps that it unblocked. */
+		report_multiple_error_messages(step, nerrorstep, errorstep);
+
+		/* If this step is waiting, add it to the array of waiters. */
+		if (mustwait)
+			waiting[nwaiting++] = step;
 	}
 
-	/* Finish any waiting query. */
-	if (waiting != NULL)
+	/* Wait for any remaining queries. */
+	for (w = 0; w < nwaiting; ++w)
 	{
-		try_complete_step(waiting, STEP_RETRY);
-		report_error_message(waiting);
+		try_complete_step(waiting[w], STEP_RETRY);
+		report_error_message(waiting[w]);
 	}
 
-teardown:
 	/* Perform per-session teardown */
 	for (i = 0; i < testspec->nsessions; i++)
 	{
@@ -691,6 +672,9 @@ teardown:
 		}
 		PQclear(res);
 	}
+
+	free(waiting);
+	free(errorstep);
 }
 
 /*
@@ -702,7 +686,7 @@ teardown:
  * When calling this function on behalf of a given step for a second or later
  * time, pass the STEP_RETRY flag.  This only affects the messages printed.
  *
- * If the connection returns an error, the message is saved in step->errormsg.
+ * If the query returns an error, the message is saved in step->errormsg.
  * Caller should call report_error_message shortly after this, to have it
  * printed and cleared.
  *
@@ -714,14 +698,17 @@ try_complete_step(Step *step, int flags)
 {
 	PGconn	   *conn = conns[1 + step->session];
 	fd_set		read_set;
+	struct timeval start_time;
 	struct timeval timeout;
 	int			sock = PQsocket(conn);
 	int			ret;
 	PGresult   *res;
+	bool		canceled = false;
 
+	gettimeofday(&start_time, NULL);
 	FD_ZERO(&read_set);
 
-	while ((flags & STEP_NONBLOCK) && PQisBusy(conn))
+	while (PQisBusy(conn))
 	{
 		FD_SET(sock, &read_set);
 		timeout.tv_sec = 0;
@@ -737,28 +724,81 @@ try_complete_step(Step *step, int flags)
 		}
 		else if (ret == 0)		/* select() timeout: check for lock wait */
 		{
-			int			ntuples;
+			struct timeval current_time;
+			int64		td;
 
-			res = PQexecPrepared(conns[0], PREP_WAITING, 1,
-								 &backend_pids[step->session + 1],
-								 NULL, NULL, 0);
-			if (PQresultStatus(res) != PGRES_TUPLES_OK)
+			/* If it's OK for the step to block, check whether it has. */
+			if (flags & STEP_NONBLOCK)
 			{
-				fprintf(stderr, "lock wait query failed: %s",
-						PQerrorMessage(conn));
+				bool		waiting;
+
+				res = PQexecPrepared(conns[0], PREP_WAITING, 1,
+									 &backend_pids[step->session + 1],
+									 NULL, NULL, 0);
+				if (PQresultStatus(res) != PGRES_TUPLES_OK ||
+					PQntuples(res) != 1)
+				{
+					fprintf(stderr, "lock wait query failed: %s",
+							PQerrorMessage(conn));
+					exit_nicely();
+				}
+				waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
+				PQclear(res);
+
+				if (waiting)	/* waiting to acquire a lock */
+				{
+					if (!(flags & STEP_RETRY))
+						printf("step %s: %s <waiting ...>\n",
+							   step->name, step->sql);
+					return true;
+				}
+				/* else, not waiting */
+			}
+
+			/* Figure out how long we've been waiting for this step. */
+			gettimeofday(&current_time, NULL);
+			td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
+			td *= USECS_PER_SEC;
+			td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
+
+			/*
+			 * After 60 seconds, try to cancel the query.
+			 *
+			 * If the user tries to test an invalid permutation, we don't want
+			 * to hang forever, especially when this is running in the
+			 * buildfarm.  So try to cancel it after a minute.  This will
+			 * presumably lead to this permutation failing, but remaining
+			 * permutations and tests should still be OK.
+			 */
+			if (td > 60 * USECS_PER_SEC && !canceled)
+			{
+				PGcancel   *cancel = PQgetCancel(conn);
+
+				if (cancel != NULL)
+				{
+					char		buf[256];
+
+					if (PQcancel(cancel, buf, sizeof(buf)))
+						canceled = true;
+					else
+						fprintf(stderr, "PQcancel failed: %s\n", buf);
+					PQfreeCancel(cancel);
+				}
+			}
+
+			/*
+			 * After 75 seconds, just give up and die.
+			 *
+			 * Since cleanup steps won't be run in this case, this may cause
+			 * later tests to fail.  That stinks, but it's better than waiting
+			 * forever for the server to respond to the cancel.
+			 */
+			if (td > 75 * USECS_PER_SEC)
+			{
+				fprintf(stderr, "step %s timed out after 75 seconds\n",
+						step->name);
 				exit_nicely();
 			}
-			ntuples = PQntuples(res);
-			PQclear(res);
-
-			if (ntuples >= 1)	/* waiting to acquire a lock */
-			{
-				if (!(flags & STEP_RETRY))
-					printf("step %s: %s <waiting ...>\n",
-						   step->name, step->sql);
-				return true;
-			}
-			/* else, not waiting: give it more time */
 		}
 		else if (!PQconsumeInput(conn)) /* select(): data available */
 		{

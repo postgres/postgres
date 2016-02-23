@@ -1305,6 +1305,9 @@ pg_available_extensions| SELECT e.name,
     e.comment
    FROM (pg_available_extensions() e(name, default_version, comment)
      LEFT JOIN pg_extension x ON ((e.name = x.extname)));
+pg_config| SELECT pg_config.name,
+    pg_config.setting
+   FROM pg_config() pg_config(name, setting);
 pg_cursors| SELECT c.name,
     c.statement,
     c.is_holdable,
@@ -2856,7 +2859,7 @@ SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
  CREATE RULE hat_nosert AS                                                                  +
      ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)               +
    VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name COLLATE "C" bpchar_pattern_ops)+
-   WHERE (hat_data.hat_color = 'green'::bpchar) DO NOTHING                                  +
+   WHERE (hat_color = 'green'::bpchar) DO NOTHING                                           +
    RETURNING hat_data.hat_name,                                                             +
      hat_data.hat_color;
 (1 row)
@@ -2881,7 +2884,7 @@ SELECT tablename, rulename, definition FROM pg_rules
  hats      | hat_nosert | CREATE RULE hat_nosert AS                                                                  +
            |            |     ON INSERT TO hats DO INSTEAD  INSERT INTO hat_data (hat_name, hat_color)               +
            |            |   VALUES (new.hat_name, new.hat_color) ON CONFLICT(hat_name COLLATE "C" bpchar_pattern_ops)+
-           |            |   WHERE (hat_data.hat_color = 'green'::bpchar) DO NOTHING                                  +
+           |            |   WHERE (hat_color = 'green'::bpchar) DO NOTHING                                           +
            |            |   RETURNING hat_data.hat_name,                                                             +
            |            |     hat_data.hat_color;
 (1 row)

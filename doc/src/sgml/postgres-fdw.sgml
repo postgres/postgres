@@ -290,17 +290,30 @@
        be considered shippable to the remote server.
        This option can only be specified for foreign servers, not per-table.
       </para>
+
+      <para>
+       When using the <literal>extensions</literal> option, <emphasis>it is the
+       user's responsibility</> that the listed extensions exist and behave
+       identically on both the local and remote servers.  Otherwise, remote
+       queries may fail or behave unexpectedly.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>fetch_size</literal></term>
+     <listitem>
+      <para>
+       This option specifies the number of rows <filename>postgres_fdw</> 
+       should get in each fetch operation. It can be specified for a foreign
+       table or a foreign server. The option specified on a table overrides
+       an option specified for the server.
+       The default is <literal>100</>.
+      </para>
      </listitem>
     </varlistentry>
 
    </variablelist>
-
-   <para>
-    When using the <literal>extensions</literal> option, <emphasis>it is the
-    user's responsibility</> that the listed extensions exist and behave
-    identically on both the local and remote servers.  Otherwise, remote
-    queries may fail or behave unexpectedly.
-   </para>
 
   </sect3>
 
@@ -471,6 +484,16 @@
    extension that's listed in the foreign server's <literal>extensions</>
    option.  Operators and functions in such clauses must
    be <literal>IMMUTABLE</> as well.
+  </para>
+
+  <para>
+   When <filename>postgres_fdw</> encounters a join between foreign tables on
+   the same foreign server, it sends the entire join to the foreign server,
+   unless for some reason it believes that it will be more efficient to fetch
+   rows from each table individually, or unless the table references involved
+   are subject to different user mappings.  While sending the <literal>JOIN</>
+   clauses, it takes the same precautions as mentioned above for the
+   <literal>WHERE</> clauses.
   </para>
 
   <para>

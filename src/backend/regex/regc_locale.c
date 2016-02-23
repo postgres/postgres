@@ -408,8 +408,7 @@ range(struct vars * v,			/* context */
 	int			nchrs;
 	struct cvec *cv;
 	celt		c,
-				lc,
-				uc;
+				cc;
 
 	if (a != b && !before(a, b))
 	{
@@ -427,24 +426,51 @@ range(struct vars * v,			/* context */
 
 	/*
 	 * When case-independent, it's hard to decide when cvec ranges are usable,
-	 * so for now at least, we won't try.  We allocate enough space for two
-	 * case variants plus a little extra for the two title case variants.
+	 * so for now at least, we won't try.  We use a range for the originally
+	 * specified chrs and then add on any case-equivalents that are outside
+	 * that range as individual chrs.
+	 *
+	 * To ensure sane behavior if someone specifies a very large range, limit
+	 * the allocation size to 100000 chrs (arbitrary) and check for overrun
+	 * inside the loop below.
 	 */
+	nchrs = b - a + 1;
+	if (nchrs <= 0 || nchrs > 100000)
+		nchrs = 100000;
 
-	nchrs = (b - a + 1) * 2 + 4;
-
-	cv = getcvec(v, nchrs, 0);
+	cv = getcvec(v, nchrs, 1);
 	NOERRN();
+	addrange(cv, a, b);
 
 	for (c = a; c <= b; c++)
 	{
-		addchr(cv, c);
-		lc = pg_wc_tolower((chr) c);
-		if (c != lc)
-			addchr(cv, lc);
-		uc = pg_wc_toupper((chr) c);
-		if (c != uc)
-			addchr(cv, uc);
+		cc = pg_wc_tolower((chr) c);
+		if (cc != c &&
+			(before(cc, a) || before(b, cc)))
+		{
+			if (cv->nchrs >= cv->chrspace)
+			{
+				ERR(REG_ETOOBIG);
+				return NULL;
+			}
+			addchr(cv, cc);
+		}
+		cc = pg_wc_toupper((chr) c);
+		if (cc != c &&
+			(before(cc, a) || before(b, cc)))
+		{
+			if (cv->nchrs >= cv->chrspace)
+			{
+				ERR(REG_ETOOBIG);
+				return NULL;
+			}
+			addchr(cv, cc);
+		}
+		if (CANCEL_REQUESTED(v->re))
+		{
+			ERR(REG_CANCEL);
+			return NULL;
+		}
 	}
 
 	return cv;

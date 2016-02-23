@@ -680,13 +680,13 @@ psql: could not connect to server: No such file or directory
        <row>
         <entry><varname>SEMMNI</></>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</>
-        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + 4) / 16)</literal></>
+        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + max_worker_processes + 5) / 16)</literal></>
        </row>
 
        <row>
         <entry><varname>SEMMNS</></>
         <entry>Maximum number of semaphores system-wide</>
-        <entry><literal>ceil((max_connections + autovacuum_max_workers + 4) / 16) * 17</literal> plus room for other applications</>
+        <entry><literal>ceil((max_connections + autovacuum_max_workers + max_worker_processes + 5) / 16) * 17</literal> plus room for other applications</>
        </row>
 
        <row>
@@ -734,20 +734,22 @@ psql: could not connect to server: No such file or directory
 
    <para>
     <productname>PostgreSQL</> uses one semaphore per allowed connection
-    (<xref linkend="guc-max-connections">) and allowed autovacuum worker
-    process (<xref linkend="guc-autovacuum-max-workers">), in sets of 16.
+    (<xref linkend="guc-max-connections">), allowed autovacuum worker process
+    (<xref linkend="guc-autovacuum-max-workers">) and allowed background
+    process (<xref linkend="guc-max-worker-processes">), in sets of 16.
     Each such set will
     also contain a 17th semaphore which contains a <quote>magic
     number</quote>, to detect collision with semaphore sets used by
     other applications. The maximum number of semaphores in the system
     is set by <varname>SEMMNS</>, which consequently must be at least
     as high as <varname>max_connections</> plus
-    <varname>autovacuum_max_workers</>, plus one extra for each 16
+    <varname>autovacuum_max_workers</> plus <varname>max_worker_processes</>,
+    plus one extra for each 16
     allowed connections plus workers (see the formula in <xref
     linkend="sysvipc-parameters">).  The parameter <varname>SEMMNI</>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
-    least <literal>ceil((max_connections + autovacuum_max_workers + 4) / 16)</>.
+    least <literal>ceil((max_connections + autovacuum_max_workers + max_worker_processes + 5) / 16)</>.
     Lowering the number
     of allowed connections is a temporary workaround for failures,
     which are usually confusingly worded <quote>No space

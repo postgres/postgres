@@ -1,6 +1,1103 @@
 <!-- doc/src/sgml/release-9.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-4-6">
+  <title>Release 9.4.6</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-02-11</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.4.5.
+   For information about new features in the 9.4 major release, see
+   <xref linkend="release-9-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.4.6</title>
+
+   <para>
+    A dump/restore is not required for those running 9.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading an installation that contains any GIN
+    indexes that use the (non-default) <literal>jsonb_path_ops</> operator
+    class, see the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.4.4,
+    see <xref linkend="release-9-4-4">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b23af4587] 2015-11-05 18:15:48 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [4d867458f] 2015-11-05 18:15:48 -0500
+Branch: REL9_4_STABLE [788e35ac0] 2015-11-05 18:15:48 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix inconsistent hash calculations in <literal>jsonb_path_ops</> GIN
+      indexes (Tom Lane)
+     </para>
+
+     <para>
+      When processing <type>jsonb</> values that contain both scalars and
+      sub-objects at the same nesting level, for example an array containing
+      both scalars and sub-arrays, key hash values could be calculated
+      differently than they would be for the same key in a different context.
+      This could result in queries not finding entries that they should find.
+      Fixing this means that existing indexes may now be inconsistent with the
+      new hash calculation code.  Users
+      should <command>REINDEX</> <literal>jsonb_path_ops</> GIN indexes after
+      installing this update to make sure that all searches work as expected.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix infinite loops and buffer-overrun problems in regular expressions
+      (Tom Lane)
+     </para>
+
+     <para>
+      Very large character ranges in bracket expressions could cause
+      infinite loops in some cases, and memory overwrites in other cases.
+      (CVE-2016-0773)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7e2a18a91] 2015-10-06 17:15:52 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [02580df6c] 2015-10-06 17:15:27 -0400
+Branch: REL9_4_STABLE [3d701277f] 2015-10-06 17:15:27 -0400
+Branch: REL9_3_STABLE [31bc563b9] 2015-10-06 17:15:27 -0400
+Branch: REL9_2_STABLE [3d10f3970] 2015-10-06 17:15:27 -0400
+Branch: REL9_1_STABLE [dea6da132] 2015-10-06 17:15:27 -0400
+-->
+
+    <listitem>
+     <para>
+      Perform an immediate shutdown if the <filename>postmaster.pid</> file
+      is removed (Tom Lane)
+     </para>
+
+     <para>
+      The postmaster now checks every minute or so
+      that <filename>postmaster.pid</> is still there and still contains its
+      own PID.  If not, it performs an immediate shutdown, as though it had
+      received <systemitem>SIGQUIT</>.  The main motivation for this change
+      is to ensure that failed buildfarm runs will get cleaned up without
+      manual intervention; but it also serves to limit the bad effects if a
+      DBA forcibly removes <filename>postmaster.pid</> and then starts a new
+      postmaster.
+     </para>
+    </listitem>
+
+<!--
+Author: Kevin Grittner <kgrittn@postgresql.org>
+Branch: master [585e2a3b1] 2015-10-31 14:43:34 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [50ca917d9] 2015-10-31 14:42:46 -0500
+Branch: REL9_4_STABLE [1d95617f7] 2015-10-31 14:45:15 -0500
+Branch: REL9_3_STABLE [18479293c] 2015-10-31 14:46:57 -0500
+Branch: REL9_2_STABLE [caff7fc3f] 2015-10-31 14:36:37 -0500
+Branch: REL9_1_STABLE [08322daed] 2015-10-31 14:36:58 -0500
+-->
+
+    <listitem>
+     <para>
+      In <literal>SERIALIZABLE</> transaction isolation mode, serialization
+      anomalies could be missed due to race conditions during insertions
+      (Kevin Grittner, Thomas Munro)
+     </para>
+    </listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [f54d0629e] 2015-12-12 14:17:39 +0100
+Branch: REL9_5_STABLE Release: REL9_5_0 [ada9c09ae] 2015-12-12 14:19:19 +0100
+Branch: REL9_4_STABLE [d638aeef6] 2015-12-12 14:19:23 +0100
+Branch: REL9_3_STABLE [9037bdc88] 2015-12-12 14:19:25 +0100
+Branch: REL9_2_STABLE [a15ad6708] 2015-12-12 14:19:51 +0100
+Branch: REL9_1_STABLE [5f9a86b35] 2015-12-12 14:19:29 +0100
+-->
+
+    <listitem>
+     <para>
+      Fix failure to emit appropriate WAL records when doing <literal>ALTER
+      TABLE ... SET TABLESPACE</> for unlogged relations (Michael Paquier,
+      Andres Freund)
+     </para>
+
+     <para>
+      Even though the relation's data is unlogged, the move must be logged or
+      the relation will be inaccessible after a standby is promoted to master.
+     </para>
+    </listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [e3f4cfc7a] 2015-12-10 16:29:26 +0100
+Branch: REL9_5_STABLE Release: REL9_5_0 [5b51805fe] 2015-12-10 16:39:25 +0100
+Branch: REL9_4_STABLE [c6a67bbc7] 2015-12-10 16:29:26 +0100
+Branch: REL9_3_STABLE [b19405a44] 2015-12-10 16:29:27 +0100
+Branch: REL9_2_STABLE [2de281da2] 2015-12-10 16:29:27 +0100
+Branch: REL9_1_STABLE [3199c13fc] 2015-12-10 16:29:27 +0100
+-->
+
+    <listitem>
+     <para>
+      Fix possible misinitialization of unlogged relations at the end of
+      crash recovery (Andres Freund, Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Magnus Hagander <magnus@hagander.net>
+Branch: master [263c19572] 2015-12-13 16:46:56 +0100
+Branch: REL9_5_STABLE Release: REL9_5_0 [a9c56ff0e] 2015-12-13 16:43:35 +0100
+Branch: REL9_4_STABLE [61c7bee21] 2015-12-13 16:43:52 +0100
+Branch: REL9_3_STABLE [a1fb84990] 2015-12-13 16:44:04 +0100
+-->
+
+    <listitem>
+     <para>
+      Ensure walsender slots are fully re-initialized when being re-used
+      (Magnus Hagander)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [074c5cfbf] 2015-11-20 14:55:47 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [a35c5b7c1] 2015-11-20 14:55:28 -0500
+Branch: REL9_4_STABLE [47ea4614e] 2015-11-20 14:55:28 -0500
+Branch: REL9_3_STABLE [64349f1d2] 2015-11-20 14:55:29 -0500
+Branch: REL9_2_STABLE [c49279dfd] 2015-11-20 14:55:29 -0500
+Branch: REL9_1_STABLE [60ba32cb5] 2015-11-20 14:55:29 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix <command>ALTER COLUMN TYPE</> to reconstruct inherited check
+      constraints properly (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: REL9_4_STABLE [d07afa42d] 2015-12-21 19:49:15 -0300
+Branch: REL9_3_STABLE [bc72c3b3f] 2015-12-21 19:49:15 -0300
+Branch: REL9_2_STABLE [f9643d0d6] 2015-12-21 19:49:15 -0300
+Branch: REL9_1_STABLE [7e29e7f55] 2015-12-21 19:49:15 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix <command>REASSIGN OWNED</> to change ownership of composite types
+      properly (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: REL9_4_STABLE [2c8ae6442] 2015-12-21 19:16:15 -0300
+Branch: REL9_3_STABLE [62e6eba8d] 2015-12-21 19:16:15 -0300
+Branch: REL9_2_STABLE [7af3dd540] 2015-12-21 19:16:15 -0300
+Branch: REL9_1_STABLE [ab14c1383] 2015-12-21 19:16:15 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix <command>REASSIGN OWNED</> and <command>ALTER OWNER</> to correctly
+      update granted-permissions lists when changing owners of data types,
+      foreign data wrappers, or foreign servers (Bruce Momjian,
+      &Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [8c1615531] 2015-12-11 18:39:09 -0300
+Branch: REL9_5_STABLE Release: REL9_5_0 [31f88a12a] 2015-12-11 18:39:09 -0300
+Branch: REL9_4_STABLE [1f8757ad8] 2015-12-11 18:39:09 -0300
+Branch: REL9_3_STABLE [4626245bc] 2015-12-11 18:39:09 -0300
+Branch: REL9_2_STABLE [629842a8e] 2015-12-11 18:39:09 -0300
+Branch: REL9_1_STABLE [f44c5203b] 2015-12-11 18:39:09 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix <command>REASSIGN OWNED</> to ignore foreign user mappings,
+      rather than fail (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [6f8cb1e23] 2015-12-21 10:34:14 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [496943ec2] 2015-12-21 10:34:20 -0500
+Branch: REL9_4_STABLE [f02137da8] 2015-12-21 10:34:23 -0500
+Branch: REL9_3_STABLE [4271ed386] 2015-12-21 10:34:28 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix possible crash after doing query rewrite for an updatable view
+      (Stephen Frost)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [acfcd45ca] 2015-12-11 14:22:20 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [564c19e86] 2015-12-11 14:22:20 -0500
+Branch: REL9_4_STABLE [7ad696066] 2015-12-11 14:22:20 -0500
+Branch: REL9_3_STABLE [260590e6b] 2015-12-11 14:22:20 -0500
+Branch: master [7e19db0c0] 2015-12-07 17:42:11 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [25517ee14] 2015-12-07 17:41:45 -0500
+Branch: REL9_4_STABLE [0901d68ba] 2015-12-07 17:41:45 -0500
+Branch: REL9_3_STABLE [0a34ff7e9] 2015-12-07 17:41:45 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix planner's handling of <literal>LATERAL</> references (Tom
+      Lane)
+     </para>
+
+     <para>
+      This fixes some corner cases that led to <quote>failed to build any
+      N-way joins</> or <quote>could not devise a query plan</> planner
+      failures.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3c93a60f6] 2016-01-01 13:42:21 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [d932391fd] 2016-01-01 13:42:30 -0500
+Branch: REL9_4_STABLE [76eccf07b] 2016-01-01 13:42:35 -0500
+Branch: REL9_3_STABLE [94114469f] 2016-01-01 13:42:39 -0500
+Branch: REL9_2_STABLE [8e79b24c5] 2016-01-01 13:42:43 -0500
+Branch: REL9_1_STABLE [60f8cc91d] 2016-01-01 13:42:48 -0500
+-->
+
+    <listitem>
+     <para>
+      Add more defenses against bad planner cost estimates for GIN index
+      scans when the index's internal statistics are very out-of-date
+      (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7fb008c5e] 2015-12-01 16:24:34 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [e9986a811] 2015-12-01 16:24:34 -0500
+Branch: REL9_4_STABLE [ab14e0e4c] 2015-12-01 16:24:34 -0500
+Branch: REL9_3_STABLE [52774e52d] 2015-12-01 16:24:34 -0500
+Branch: REL9_2_STABLE [3d4bdd2f9] 2015-12-01 16:24:35 -0500
+Branch: REL9_1_STABLE [7882143dc] 2015-12-01 16:24:35 -0500
+-->
+
+    <listitem>
+     <para>
+      Make planner cope with hypothetical GIN indexes suggested by an index
+      advisor plug-in (Julien Rouhaud)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8004953b5] 2015-11-16 13:45:17 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [34d4f49bb] 2015-11-16 13:45:17 -0500
+Branch: REL9_4_STABLE [a6c4c07fc] 2015-11-16 13:45:17 -0500
+Branch: REL9_3_STABLE [faf18a905] 2015-11-16 13:45:17 -0500
+-->
+
+    <listitem>
+     <para>
+      Speed up generation of unique table aliases in <command>EXPLAIN</> and
+      rule dumping, and ensure that generated aliases do not
+      exceed <literal>NAMEDATALEN</> (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7745bc352] 2015-11-15 14:41:09 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [0489a048d] 2015-11-15 14:41:09 -0500
+Branch: REL9_4_STABLE [d33ab56b0] 2015-11-15 14:41:09 -0500
+Branch: REL9_3_STABLE [7d0e87208] 2015-11-15 14:41:09 -0500
+Branch: REL9_2_STABLE [ed824cf80] 2015-11-15 14:41:09 -0500
+Branch: REL9_1_STABLE [7b21d1bca] 2015-11-15 14:41:09 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix dumping of whole-row Vars in <literal>ROW()</>
+      and <literal>VALUES()</> lists (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d43554258] 2015-10-20 11:07:04 -0700
+Branch: REL9_5_STABLE Release: REL9_5_0 [5fb20a5ba] 2015-10-20 11:07:05 -0700
+Branch: REL9_4_STABLE [4f33572ee] 2015-10-20 11:06:24 -0700
+-->
+
+    <listitem>
+     <para>
+      Translation of minus-infinity dates and timestamps to <type>json</>
+      or <type>jsonb</> incorrectly rendered them as plus-infinity (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5f10b7a60] 2015-11-17 15:46:47 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [80be41979] 2015-11-17 15:46:54 -0500
+Branch: REL9_4_STABLE [cc95595e0] 2015-11-17 15:46:59 -0500
+Branch: REL9_3_STABLE [7df6dc405] 2015-11-17 15:47:03 -0500
+Branch: REL9_2_STABLE [c47bdb372] 2015-11-17 15:47:08 -0500
+Branch: REL9_1_STABLE [728a2ac21] 2015-11-17 15:47:12 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix possible internal overflow in <type>numeric</> division
+      (Dean Rasheed)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a43b4ab11] 2015-11-07 12:43:24 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [44fc25153] 2015-11-07 12:43:24 -0500
+Branch: REL9_4_STABLE [f69c01f2c] 2015-11-07 12:43:24 -0500
+Branch: REL9_3_STABLE [8db652359] 2015-11-07 12:43:24 -0500
+Branch: REL9_2_STABLE [bfb10db81] 2015-11-07 12:43:24 -0500
+Branch: REL9_1_STABLE [03ee6591d] 2015-11-07 12:43:24 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix enforcement of restrictions inside parentheses within regular
+      expression lookahead constraints (Tom Lane)
+     </para>
+
+     <para>
+      Lookahead constraints aren't allowed to contain backrefs, and
+      parentheses within them are always considered non-capturing, according
+      to the manual.  However, the code failed to handle these cases properly
+      inside a parenthesized subexpression, and would give unexpected
+      results.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9f1e642d5] 2015-10-19 13:54:53 -0700
+Branch: REL9_5_STABLE Release: REL9_5_0 [43e36f8dd] 2015-10-19 13:54:53 -0700
+Branch: REL9_4_STABLE [52f21c588] 2015-10-19 13:54:53 -0700
+Branch: REL9_3_STABLE [e69d4756e] 2015-10-19 13:54:54 -0700
+Branch: REL9_2_STABLE [05e62ff59] 2015-10-19 13:54:54 -0700
+Branch: REL9_1_STABLE [0ce829caf] 2015-10-19 13:54:54 -0700
+-->
+
+    <listitem>
+     <para>
+      Conversion of regular expressions to indexscan bounds could produce
+      incorrect bounds from regexps containing lookahead constraints
+      (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [48789c5d2] 2015-10-16 15:55:58 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [0889e1857] 2015-10-16 15:56:00 -0400
+Branch: REL9_4_STABLE [b6eb5fc40] 2015-10-16 14:14:41 -0400
+Branch: REL9_3_STABLE [6e4dda796] 2015-10-16 14:14:41 -0400
+Branch: REL9_2_STABLE [83c34825e] 2015-10-16 14:14:41 -0400
+Branch: REL9_1_STABLE [d394f12c0] 2015-10-16 14:14:41 -0400
+-->
+
+    <listitem>
+     <para>
+      Fix regular-expression compiler to handle loops of constraint arcs
+      (Tom Lane)
+     </para>
+
+     <para>
+      The code added for CVE-2007-4772 was both incomplete, in that it didn't
+      handle loops involving more than one state, and incorrect, in that it
+      could cause assertion failures (though there seem to be no bad
+      consequences of that in a non-assert build).  Multi-state loops would
+      cause the compiler to run until the query was canceled or it reached
+      the too-many-states error condition.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [538b3b8b3] 2015-10-16 15:55:59 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [e91cfdead] 2015-10-16 15:56:00 -0400
+Branch: REL9_4_STABLE [0ecf4a9e5] 2015-10-16 15:36:17 -0400
+Branch: REL9_3_STABLE [ad5e5a62a] 2015-10-16 15:36:17 -0400
+Branch: REL9_2_STABLE [4e4610a8a] 2015-10-16 15:36:17 -0400
+Branch: REL9_1_STABLE [b94c2b6a6] 2015-10-16 15:36:17 -0400
+-->
+
+    <listitem>
+     <para>
+      Improve memory-usage accounting in regular-expression compiler
+      (Tom Lane)
+     </para>
+
+     <para>
+      This causes the code to emit <quote>regular expression is too
+      complex</> errors in some cases that previously used unreasonable
+      amounts of time and memory.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6a7153661] 2015-10-16 15:55:59 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [1bb0fbca3] 2015-10-16 15:56:00 -0400
+Branch: REL9_4_STABLE [9774fda86] 2015-10-16 15:11:49 -0400
+Branch: REL9_3_STABLE [2a8d6e4d0] 2015-10-16 15:11:49 -0400
+Branch: REL9_2_STABLE [a257b808a] 2015-10-16 15:11:49 -0400
+Branch: REL9_1_STABLE [067f96fe3] 2015-10-16 15:11:49 -0400
+Branch: master [f5b7d103b] 2015-10-16 15:55:59 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [e9cf3dc30] 2015-10-16 15:56:00 -0400
+Branch: REL9_4_STABLE [8cf4eed0b] 2015-10-16 14:58:11 -0400
+Branch: REL9_3_STABLE [677e64cb8] 2015-10-16 14:58:11 -0400
+Branch: REL9_2_STABLE [18b032f8f] 2015-10-16 14:58:11 -0400
+Branch: REL9_1_STABLE [5503e6e0f] 2015-10-16 14:58:11 -0400
+Branch: master [579840ca0] 2015-10-16 15:55:59 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [cff9e0659] 2015-10-16 15:56:00 -0400
+Branch: REL9_4_STABLE [bdde29e1c] 2015-10-16 14:43:18 -0400
+Branch: REL9_3_STABLE [296241635] 2015-10-16 14:43:18 -0400
+Branch: REL9_2_STABLE [a2ad467ae] 2015-10-16 14:43:18 -0400
+Branch: REL9_1_STABLE [b00c79b5b] 2015-10-16 14:43:18 -0400
+-->
+
+    <listitem>
+     <para>
+      Improve performance of regular-expression compiler (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <literal>%h</> and <literal>%r</> escapes
+      in <varname>log_line_prefix</> work for messages emitted due
+      to <varname>log_connections</> (Tom Lane)
+     </para>
+
+     <para>
+      Previously, <literal>%h</>/<literal>%r</> started to work just after a
+      new session had emitted the <quote>connection received</> log message;
+      now they work for that message too.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [869f693a3] 2015-10-13 11:21:33 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [39ac29394] 2015-10-13 11:21:33 -0400
+Branch: REL9_4_STABLE [44a6e24fb] 2015-10-13 11:21:33 -0400
+Branch: REL9_3_STABLE [bc6b03bb8] 2015-10-13 11:21:33 -0400
+Branch: REL9_2_STABLE [39cd1bdb8] 2015-10-13 11:21:33 -0400
+Branch: REL9_1_STABLE [b0d858359] 2015-10-13 11:21:33 -0400
+-->
+
+    <listitem>
+     <para>
+      On Windows, ensure the shared-memory mapping handle gets closed in
+      child processes that don't need it (Tom Lane, Amit Kapila)
+     </para>
+
+     <para>
+      This oversight resulted in failure to recover from crashes
+      whenever <varname>logging_collector</> is turned on.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_4_STABLE [add6d821b] 2016-01-04 17:41:33 -0500
+Branch: REL9_3_STABLE [0f527f73b] 2016-01-04 17:41:33 -0500
+Branch: REL9_2_STABLE [9b2eacba7] 2016-01-04 17:41:33 -0500
+Branch: REL9_1_STABLE [d05103b77] 2016-01-04 17:41:33 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix possible failure to detect socket EOF in non-blocking mode on
+      Windows (Tom Lane)
+     </para>
+
+     <para>
+      It's not entirely clear whether this problem can happen in pre-9.5
+      branches, but if it did, the symptom would be that a walsender process
+      would wait indefinitely rather than noticing a loss of connection.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid leaking a token handle during SSPI authentication
+      (Christian Ullrich)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2ec477dc8] 2015-12-16 16:59:35 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [f1c152866] 2015-12-16 16:58:55 -0500
+Branch: REL9_4_STABLE [e168dfef6] 2015-12-16 16:58:55 -0500
+Branch: REL9_3_STABLE [9afe392dc] 2015-12-16 16:58:56 -0500
+Branch: REL9_2_STABLE [bcce4a5e3] 2015-12-16 16:58:56 -0500
+Branch: REL9_1_STABLE [03b138e90] 2015-12-16 16:58:56 -0500
+Branch: master [aee7705be] 2015-12-17 16:55:23 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [5ec0aad01] 2015-12-17 16:55:33 -0500
+Branch: REL9_4_STABLE [acb6c64f4] 2015-12-17 16:55:39 -0500
+Branch: REL9_3_STABLE [09b7abc27] 2015-12-17 16:55:43 -0500
+Branch: REL9_2_STABLE [b41777988] 2015-12-17 16:55:47 -0500
+Branch: REL9_1_STABLE [db462a44e] 2015-12-17 16:55:51 -0500
+-->
+
+    <listitem>
+     <para>
+      In <application>psql</>, ensure that <application>libreadline</>'s idea
+      of the screen size is updated when the terminal window size changes
+      (Merlin Moncure)
+     </para>
+
+     <para>
+      Previously, <application>libreadline</> did not notice if the window
+      was resized during query output, leading to strange behavior during
+      later input of multiline queries.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s <literal>\det</> command to interpret its
+      pattern argument the same way as other <literal>\d</> commands with
+      potentially schema-qualified patterns do (Reece Hart)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c5ef8ce53] 2015-11-25 17:31:53 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [55a2cc844] 2015-11-25 17:31:53 -0500
+Branch: REL9_4_STABLE [3d357b48f] 2015-11-25 17:31:53 -0500
+Branch: REL9_3_STABLE [64b7079e5] 2015-11-25 17:31:53 -0500
+Branch: REL9_2_STABLE [d44b4deaa] 2015-11-25 17:31:54 -0500
+Branch: REL9_1_STABLE [6430a11fa] 2015-11-25 17:31:54 -0500
+-->
+
+    <listitem>
+     <para>
+      Avoid possible crash in <application>psql</>'s <literal>\c</> command
+      when previous connection was via Unix socket and command specifies a
+      new hostname and same username (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6bcce2580] 2015-10-12 18:30:36 -0400
+Branch: REL9_5_STABLE Release: REL9_5_0 [a151a5c38] 2015-10-12 18:30:36 -0400
+Branch: REL9_4_STABLE [57f54b5e4] 2015-10-12 18:30:36 -0400
+Branch: REL9_3_STABLE [dfe572de0] 2015-10-12 18:30:37 -0400
+Branch: REL9_2_STABLE [250108b6f] 2015-10-12 18:30:37 -0400
+Branch: REL9_1_STABLE [c869a7d5b] 2015-10-12 18:30:37 -0400
+-->
+
+    <listitem>
+     <para>
+      In <literal>pg_ctl start -w</>, test child process status directly
+      rather than relying on heuristics (Tom Lane, Michael Paquier)
+     </para>
+
+     <para>
+      Previously, <application>pg_ctl</> relied on an assumption that the new
+      postmaster would always create <filename>postmaster.pid</> within five
+      seconds.  But that can fail on heavily-loaded systems,
+      causing <application>pg_ctl</> to report incorrectly that the
+      postmaster failed to start.
+     </para>
+
+     <para>
+      Except on Windows, this change also means that a <literal>pg_ctl start
+      -w</> done immediately after another such command will now reliably
+      fail, whereas previously it would report success if done within two
+      seconds of the first command.
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [fed19f312] 2015-11-08 17:28:53 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [bdb42bac3] 2015-11-08 17:29:47 -0500
+Branch: REL9_4_STABLE [24379a45c] 2015-11-08 17:31:21 -0500
+Branch: REL9_3_STABLE [34725292d] 2015-11-08 17:31:22 -0500
+Branch: REL9_2_STABLE [99027350e] 2015-11-08 17:31:23 -0500
+Branch: REL9_1_STABLE [87deb55a4] 2015-11-08 17:31:24 -0500
+-->
+
+    <listitem>
+     <para>
+      In <literal>pg_ctl start -w</>, don't attempt to use a wildcard listen
+      address to connect to the postmaster (Kondo Yuta)
+     </para>
+
+     <para>
+      On Windows, <application>pg_ctl</> would fail to detect postmaster
+      startup if <varname>listen_addresses</> is set to <literal>0.0.0.0</>
+      or <literal>::</>, because it would try to use that value verbatim as
+      the address to connect to, which doesn't work.  Instead assume
+      that <literal>127.0.0.1</> or <literal>::1</>, respectively, is the
+      right thing to use.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_ctl</> on Windows, check service status to decide
+      where to send output, rather than checking if standard output is a
+      terminal (Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [00cdd8352] 2015-11-21 20:21:31 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [5f5e68b08] 2015-11-21 20:21:32 -0500
+Branch: REL9_4_STABLE [7acad9546] 2015-11-21 20:22:39 -0500
+Branch: REL9_3_STABLE [0e6185283] 2015-11-21 20:21:32 -0500
+Branch: REL9_2_STABLE [b054ca031] 2015-11-21 20:21:32 -0500
+Branch: REL9_1_STABLE [8f1559aa5] 2015-11-21 20:21:32 -0500
+Branch: REL9_2_STABLE [05c9bc063] 2015-11-23 00:32:01 -0500
+Branch: REL9_1_STABLE [6df62ef43] 2015-11-23 00:32:01 -0500
+-->
+
+    <listitem>
+     <para>
+      In <application>pg_dump</> and <application>pg_basebackup</>, adopt
+      the GNU convention for handling tar-archive members exceeding 8GB
+      (Tom Lane)
+     </para>
+
+     <para>
+      The POSIX standard for <literal>tar</> file format does not allow
+      archive member files to exceed 8GB, but most modern implementations
+      of <application>tar</> support an extension that fixes that.  Adopt
+      this extension so that <application>pg_dump</> with <option>-Ft</> no
+      longer fails on tables with more than 8GB of data, and so
+      that <application>pg_basebackup</> can handle files larger than 8GB.
+      In addition, fix some portability issues that could cause failures for
+      members between 4GB and 8GB on some platforms.  Potentially these
+      problems could cause unrecoverable data loss due to unreadable backup
+      files.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assorted corner-case bugs in <application>pg_dump</>'s processing
+      of extension member objects (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_dump</> mark a view's triggers as needing to be
+      processed after its rule, to prevent possible failure during
+      parallel <application>pg_restore</> (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c7e27becd] 2016-01-01 15:27:53 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [404c45bac] 2016-01-01 15:27:53 -0500
+Branch: REL9_4_STABLE [f9b3b3fec] 2016-01-01 15:27:53 -0500
+Branch: REL9_3_STABLE [babf38e88] 2016-01-01 15:27:53 -0500
+Branch: REL9_2_STABLE [69cfe15b5] 2016-01-01 15:27:53 -0500
+Branch: REL9_1_STABLE [85dbc46bd] 2016-01-01 15:27:53 -0500
+Branch: master [b416c0bb6] 2016-01-02 19:04:45 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [b01828e97] 2016-01-02 19:04:45 -0500
+Branch: REL9_4_STABLE [aab4b73bd] 2016-01-02 19:04:45 -0500
+Branch: REL9_3_STABLE [6a0d63d35] 2016-01-02 19:04:45 -0500
+Branch: REL9_2_STABLE [1eb515ad7] 2016-01-02 19:04:45 -0500
+Branch: REL9_1_STABLE [e4959fb5c] 2016-01-02 19:04:45 -0500
+-->
+
+    <listitem>
+     <para>
+      Ensure that relation option values are properly quoted
+      in <application>pg_dump</> (Kouhei Sutou, Tom Lane)
+     </para>
+
+     <para>
+      A reloption value that isn't a simple identifier or number could lead
+      to dump/reload failures due to syntax errors in CREATE statements
+      issued by <application>pg_dump</>.  This is not an issue with any
+      reloption currently supported by core <productname>PostgreSQL</>, but
+      extensions could allow reloptions that cause the problem.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1aa41e3ea] 2015-12-23 14:25:53 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [a21994c1b] 2015-12-23 14:25:31 -0500
+Branch: REL9_4_STABLE [f56802a2d] 2015-12-23 14:25:31 -0500
+Branch: REL9_3_STABLE [534a4159c] 2015-12-23 14:25:31 -0500
+-->
+
+    <listitem>
+     <para>
+      Avoid repeated password prompts during parallel <application>pg_dump</>
+      (Zeus Kronion)
+     </para>
+    </listitem>
+
+<!--
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [025106e31] 2015-11-14 11:47:12 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [fae58d5be] 2015-11-14 11:47:11 -0500
+Branch: REL9_4_STABLE [87cdfeb18] 2015-11-14 11:47:11 -0500
+Branch: REL9_3_STABLE [a75efb483] 2015-11-14 11:47:11 -0500
+Branch: REL9_2_STABLE [b4c4220ed] 2015-11-14 11:47:11 -0500
+Branch: REL9_1_STABLE [bdcbc2b47] 2015-11-14 11:47:11 -0500
+Branch: master [13b30c16f] 2015-11-24 17:18:28 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [b17dbf262] 2015-11-24 17:18:28 -0500
+Branch: REL9_4_STABLE [f91c4e326] 2015-11-24 17:18:28 -0500
+Branch: REL9_3_STABLE [6638c9aaf] 2015-11-24 17:18:27 -0500
+Branch: REL9_2_STABLE [0ca3c51e5] 2015-11-24 17:18:27 -0500
+Branch: REL9_1_STABLE [c36064e43] 2015-11-24 17:18:27 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</>'s file-copying code to handle errors
+      properly on Windows (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Install guards in <application>pgbench</> against corner-case overflow
+      conditions during evaluation of script-specified division or modulo
+      operators (Fabien Coelho, Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [fc995bfdb] 2015-12-28 10:50:35 -0300
+Branch: REL9_5_STABLE Release: REL9_5_0 [c3e068b26] 2015-12-28 10:50:35 -0300
+Branch: REL9_4_STABLE [f98bc20dd] 2015-12-28 10:50:35 -0300
+Branch: REL9_3_STABLE [7533d5d35] 2015-12-28 10:50:35 -0300
+Branch: REL9_2_STABLE [4fb9e6109] 2015-12-28 10:50:35 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix failure to localize messages emitted
+      by <application>pg_receivexlog</> and <application>pg_recvlogical</>
+      (Ioseph Kim)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid dump/reload problems when using both <application>plpython2</>
+      and <application>plpython3</> (Tom Lane)
+     </para>
+
+     <para>
+      In principle, both versions of <application>PL/Python</> can be used in
+      the same database, though not in the same session (because the two
+      versions of <application>libpython</> cannot safely be used concurrently).
+      However, <application>pg_restore</> and <application>pg_upgrade</> both
+      do things that can fall foul of the same-session restriction.  Work
+      around that by changing the timing of the check.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>PL/Python</> regression tests to pass with Python 3.5
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c40591885] 2015-11-12 13:03:52 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [747854f01] 2015-11-12 13:03:52 -0500
+Branch: REL9_4_STABLE [40879a92b] 2015-11-12 13:03:52 -0500
+Branch: REL9_3_STABLE [db6e8e162] 2015-11-12 13:03:53 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix premature clearing of <application>libpq</>'s input buffer when
+      socket EOF is seen (Tom Lane)
+     </para>
+
+     <para>
+      This mistake caused <application>libpq</> to sometimes not report the
+      backend's final error message before reporting <quote>server closed the
+      connection unexpectedly</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent certain <application>PL/Java</> parameters from being set by
+      non-superusers (Noah Misch)
+     </para>
+
+     <para>
+      This change mitigates a <application>PL/Java</> security bug
+      (CVE-2016-0766), which was fixed in <application>PL/Java</> by marking
+      these parameters as superuser-only.  To fix the security hazard for
+      sites that update <productname>PostgreSQL</> more frequently
+      than <application>PL/Java</>, make the core code aware of them also.
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [7b96bf445] 2015-12-14 18:19:10 +0200
+Branch: REL9_5_STABLE Release: REL9_5_0 [34d136f92] 2015-12-14 18:24:58 +0200
+Branch: REL9_4_STABLE [affae5e98] 2015-12-14 18:40:51 +0200
+Branch: REL9_3_STABLE [dee1ed54f] 2015-12-14 18:52:29 +0200
+Branch: REL9_2_STABLE [1e23caae3] 2015-12-14 18:41:11 +0200
+Branch: REL9_1_STABLE [4b58ded74] 2015-12-14 18:48:49 +0200
+-->
+
+    <listitem>
+     <para>
+      Improve <application>libpq</>'s handling of out-of-memory situations
+      (Michael Paquier, Amit Kapila, Heikki Linnakangas)
+     </para>
+    </listitem>
+
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: REL9_5_STABLE Release: REL9_5_0 [937261454] 2015-10-18 10:15:18 +0200
+Branch: REL9_4_STABLE [a850d7136] 2015-10-18 10:16:36 +0200
+Branch: REL9_3_STABLE [defd2ecf4] 2015-10-18 10:16:49 +0200
+Branch: REL9_2_STABLE [8f67643be] 2015-10-18 10:17:01 +0200
+Branch: REL9_1_STABLE [a9bcd8370] 2015-10-18 10:17:12 +0200
+-->
+
+    <listitem>
+     <para>
+      Fix order of arguments
+      in <application>ecpg</>-generated <literal>typedef</> statements
+      (Michael Meskes)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [db4a5cfc7] 2015-12-01 11:42:25 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [c79bdc990] 2015-12-01 11:42:35 -0500
+Branch: REL9_4_STABLE [346cc2f01] 2015-12-01 11:42:39 -0500
+Branch: REL9_3_STABLE [3e6e98c5a] 2015-12-01 11:42:43 -0500
+Branch: REL9_2_STABLE [74cf6defa] 2015-12-01 11:42:47 -0500
+Branch: REL9_1_STABLE [84387496f] 2015-12-01 11:42:52 -0500
+-->
+
+    <listitem>
+     <para>
+      Use <literal>%g</> not <literal>%f</> format
+      in <application>ecpg</>'s <function>PGTYPESnumeric_from_double()</>
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>-supplied header files to not contain comments
+      continued from a preprocessor directive line onto the next line
+      (Michael Meskes)
+     </para>
+
+     <para>
+      Such a comment is rejected by <application>ecpg</>.  It's not yet clear
+      whether <application>ecpg</> itself should be changed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>hstore_to_json_loose()</>'s test for whether
+      an <type>hstore</> value can be converted to a JSON number (Tom Lane)
+     </para>
+
+     <para>
+      Previously this function could be fooled by non-alphanumeric trailing
+      characters, leading to emitting syntactically-invalid JSON.
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [743229a67] 2015-12-27 13:03:19 -0300
+Branch: REL9_5_STABLE Release: REL9_5_0 [c886c30cc] 2015-12-27 13:03:19 -0300
+Branch: REL9_4_STABLE [0a29cf693] 2015-12-27 13:03:19 -0300
+Branch: REL9_3_STABLE [0244677cf] 2015-12-27 13:03:19 -0300
+Branch: REL9_2_STABLE [51dd54ba7] 2015-12-27 13:03:19 -0300
+Branch: REL9_1_STABLE [1b6102eb7] 2015-12-27 13:03:19 -0300
+-->
+
+    <listitem>
+     <para>
+      Ensure that <filename>contrib/pgcrypto</>'s <function>crypt()</>
+      function can be interrupted by query cancel (Andreas Karlsson)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>contrib/postgres_fdw</>, fix bugs triggered by use
+      of <literal>tableoid</> in data-modifying commands (Etsuro Fujita,
+      Robert Haas)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [32f15d05c] 2015-11-18 17:45:05 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [659d47292] 2015-11-18 17:45:05 -0500
+Branch: REL9_4_STABLE [d5bb7c6f6] 2015-11-18 17:45:05 -0500
+Branch: REL9_3_STABLE [ae81d4fb1] 2015-11-18 17:45:05 -0500
+Branch: REL9_2_STABLE [6e1d26f1f] 2015-11-18 17:45:06 -0500
+Branch: REL9_1_STABLE [b4afc39f7] 2015-11-18 17:45:06 -0500
+Branch: master [9c779c49e] 2015-12-10 10:19:13 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [2355faae0] 2015-12-10 10:19:18 -0500
+Branch: REL9_4_STABLE [ee0df4d77] 2015-12-10 10:19:22 -0500
+Branch: REL9_3_STABLE [b3e377a00] 2015-12-10 10:19:27 -0500
+Branch: REL9_2_STABLE [7f94a5c10] 2015-12-10 10:19:31 -0500
+-->
+
+    <listitem>
+     <para>
+      Accept <application>flex</> versions later than 2.5.x
+      (Tom Lane, Michael Paquier)
+     </para>
+
+     <para>
+      Now that flex 2.6.0 has been released, the version checks in our build
+      scripts needed to be adjusted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve reproducibility of build output by ensuring filenames are given
+      to the linker in a fixed order (Christoph Berg)
+     </para>
+
+     <para>
+      This avoids possible bitwise differences in the produced executable
+      files from one build to the next.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [dccf8e9e6] 2015-12-11 16:15:05 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [6061aa8ed] 2015-12-11 16:15:06 -0500
+Branch: REL9_4_STABLE [423697e3d] 2015-12-11 16:14:36 -0500
+Branch: REL9_3_STABLE [1ebe75a2c] 2015-12-11 16:14:40 -0500
+Branch: REL9_2_STABLE [98467b35d] 2015-12-11 16:14:44 -0500
+Branch: REL9_1_STABLE [2a37a103b] 2015-12-11 16:14:48 -0500
+-->
+
+    <listitem>
+     <para>
+      Install our <filename>missing</> script where PGXS builds can find it
+      (Jim Nasby)
+     </para>
+
+     <para>
+      This allows sane behavior in a PGXS build done on a machine where build
+      tools such as <application>bison</> are missing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <filename>dynloader.h</> is included in the installed
+      header files in MSVC builds (Bruce Momjian, Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [085423e3e] 2015-12-11 19:09:04 -0500
+Branch: REL9_5_STABLE Release: REL9_5_0 [ea7f7d8b3] 2015-12-11 19:08:40 -0500
+Branch: REL9_4_STABLE [09824cd99] 2015-12-11 19:08:40 -0500
+Branch: REL9_3_STABLE [fee485815] 2015-12-11 19:08:40 -0500
+Branch: REL9_2_STABLE [f5eebea8d] 2015-12-11 19:08:40 -0500
+Branch: REL9_1_STABLE [386dcd539] 2015-12-11 19:08:40 -0500
+-->
+
+    <listitem>
+     <para>
+      Add variant regression test expected-output file to match behavior of
+      current <application>libxml2</> (Tom Lane)
+     </para>
+
+     <para>
+      The fix for <application>libxml2</>'s CVE-2015-7499 causes it not to
+      output error context reports in some cases where it used to do so.
+      This seems to be a bug, but we'll probably have to live with it for
+      some time, so work around it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016a for
+      DST law changes in Cayman Islands, Metlakatla, and Trans-Baikal
+      Territory (Zabaykalsky Krai), plus historical corrections for Pakistan.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-4-5">
   <title>Release 9.4.5</title>
 

@@ -182,7 +182,7 @@
   </sect1>
 
   <sect1 id="functions-comparison">
-   <title>Comparison Operators</title>
+   <title>Comparison Functions and Operators</title>
 
    <indexterm zone="functions-comparison">
     <primary>comparison</primary>
@@ -190,11 +190,11 @@
    </indexterm>
 
    <para>
-    The usual comparison operators are available, shown in <xref
-    linkend="functions-comparison-table">.
+    The usual comparison operators are available, as shown in <xref
+    linkend="functions-comparison-op-table">.
    </para>
 
-   <table id="functions-comparison-table">
+   <table id="functions-comparison-op-table">
     <title>Comparison Operators</title>
     <tgroup cols="2">
      <thead>
@@ -436,6 +436,49 @@
     type is one of the listed data types.
    </para>
 -->
+
+   <para>
+    Some comparison-related functions are also available, as shown in <xref
+    linkend="functions-comparison-func-table">.
+   </para>
+
+  <table id="functions-comparison-func-table">
+    <title>Comparison Functions</title>
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Example Result</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>num_nonnulls</primary>
+         </indexterm>
+         <literal>num_nonnulls(VARIADIC "any")</literal>
+       </entry>
+       <entry>returns the number of non-NULL arguments</entry>
+       <entry><literal>num_nonnulls(1, NULL, 2)</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>num_nulls</primary>
+         </indexterm>
+         <literal>num_nulls(VARIADIC "any")</literal>
+       </entry>
+       <entry>returns the number of NULL arguments</entry>
+       <entry><literal>num_nulls(1, NULL, 2)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   </sect1>
 
@@ -10389,7 +10432,7 @@ table2-mapping
   </note>
   <para>
    The standard comparison operators shown in  <xref
-   linkend="functions-comparison-table"> are available for
+   linkend="functions-comparison-op-table"> are available for
    <type>jsonb</type>, but not for <type>json</type>. They follow the
    ordering rules for B-tree operations outlined at <xref
    linkend="json-indexing">.
@@ -14954,9 +14997,21 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       </row>
 
       <row>
+       <entry><literal><function>pg_blocking_pids(<type>int</type>)</function></literal></entry>
+       <entry><type>int[]</type></entry>
+       <entry>Process ID(s) that are blocking specified server process ID</entry>
+      </row>
+
+      <row>
        <entry><literal><function>pg_conf_load_time()</function></literal></entry>
        <entry><type>timestamp with time zone</type></entry>
        <entry>configuration load time</entry>
+      </row>
+
+      <row>
+       <entry><literal><function>pg_my_temp_schema()</function></literal></entry>
+       <entry><type>oid</type></entry>
+       <entry>OID of session's temporary schema, or 0 if none</entry>
       </row>
 
       <row>
@@ -14975,12 +15030,6 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
        <entry><literal><function>pg_notification_queue_usage()</function></literal></entry>
        <entry><type>double</type></entry>
        <entry>fraction of the asynchronous notification queue currently occupied (0-1)</entry>
-      </row>
-
-      <row>
-       <entry><literal><function>pg_my_temp_schema()</function></literal></entry>
-       <entry><type>oid</type></entry>
-       <entry>OID of session's temporary schema, or 0 if none</entry>
       </row>
 
       <row>
@@ -15114,25 +15163,6 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </note>
 
    <indexterm>
-    <primary>pg_listening_channels</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>pg_notification_queue_usage</primary>
-   </indexterm>
-
-   <para>
-    <function>pg_listening_channels</function> returns a set of names of
-    asynchronous notification channels that the current session is listening
-    to.  <function>pg_notification_queue_usage</function> returns the
-    fraction of the total available space for notifications currently
-    occupied by notifications that are waiting to be processed, as a
-    <type>double</type> in the range 0-1.
-    See <xref linkend="sql-listen"> and <xref linkend="sql-notify">
-    for more information.
-   </para>
-
-   <indexterm>
     <primary>inet_client_addr</primary>
    </indexterm>
 
@@ -15160,6 +15190,43 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </para>
 
    <indexterm>
+    <primary>pg_blocking_pids</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_blocking_pids</function> returns an array of the process IDs
+    of the sessions that are blocking the server process with the specified
+    process ID, or an empty array if there is no such server process or it is
+    not blocked.  One server process blocks another if it either holds a lock
+    that conflicts with the blocked process's lock request (hard block), or is
+    waiting for a lock that would conflict with the blocked process's lock
+    request and is ahead of it in the wait queue (soft block).  When using
+    parallel queries the result always lists client-visible process IDs (that
+    is, <function>pg_backend_pid</> results) even if the actual lock is held
+    or awaited by a child worker process.  As a result of that, there may be
+    duplicated PIDs in the result.  Also note that when a prepared transaction
+    holds a conflicting lock, it will be represented by a zero process ID in
+    the result of this function.
+    Frequent calls to this function could have some impact on database
+    performance, because it needs exclusive access to the lock manager's
+    shared state for a short time.
+   </para>
+
+   <indexterm>
+    <primary>pg_conf_load_time</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_conf_load_time</function> returns the
+    <type>timestamp with time zone</type> when the
+    server configuration files were last loaded.
+    (If the current session was alive at the time, this will be the time
+    when the session itself re-read the configuration files, so the
+    reading will vary a little in different sessions.  Otherwise it is
+    the time when the postmaster process re-read the configuration files.)
+   </para>
+
+   <indexterm>
     <primary>pg_my_temp_schema</primary>
    </indexterm>
 
@@ -15178,6 +15245,25 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </para>
 
    <indexterm>
+    <primary>pg_listening_channels</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pg_notification_queue_usage</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_listening_channels</function> returns a set of names of
+    asynchronous notification channels that the current session is listening
+    to.  <function>pg_notification_queue_usage</function> returns the
+    fraction of the total available space for notifications currently
+    occupied by notifications that are waiting to be processed, as a
+    <type>double</type> in the range 0-1.
+    See <xref linkend="sql-listen"> and <xref linkend="sql-notify">
+    for more information.
+   </para>
+
+   <indexterm>
     <primary>pg_postmaster_start_time</primary>
    </indexterm>
 
@@ -15185,20 +15271,6 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     <function>pg_postmaster_start_time</function> returns the
     <type>timestamp with time zone</type> when the
     server started.
-   </para>
-
-   <indexterm>
-    <primary>pg_conf_load_time</primary>
-   </indexterm>
-
-   <para>
-    <function>pg_conf_load_time</function> returns the
-    <type>timestamp with time zone</type> when the
-    server configuration files were last loaded.
-    (If the current session was alive at the time, this will be the time
-    when the session itself re-read the configuration files, so the
-    reading will vary a little in different sessions.  Otherwise it is
-    the time when the postmaster process re-read the configuration files.)
    </para>
 
    <indexterm>
@@ -17724,6 +17796,9 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <primary>pg_relation_size</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_size_bytes</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_size_pretty</primary>
    </indexterm>
    <indexterm>
@@ -17791,6 +17866,15 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>bigint</type></entry>
        <entry>
         Shorthand for <literal>pg_relation_size(..., 'main')</literal>
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_size_bytes(<type>text</type>)</function></literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>
+         Converts a size in human-readable format with size units into bytes
        </entry>
       </row>
       <row>
@@ -17925,9 +18009,25 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     <function>pg_size_pretty</> can be used to format the result of one of
-    the other functions in a human-readable way, using kB, MB, GB or TB as
-    appropriate.
+    the other functions in a human-readable way, using bytes, kB, MB, GB or TB
+    as appropriate.
    </para>
+
+   <para>
+    <function>pg_size_bytes</> can be used to get the size in bytes from a
+    string in human-readable format. The input may have units of bytes, kB,
+    MB, GB or TB, and is parsed case-insensitively. If no units are specified,
+    bytes are assumed.
+   </para>
+
+   <note>
+    <para>
+     The units kB, MB, GB and TB used by the functions
+     <function>pg_size_pretty</> and <function>pg_size_bytes</> are defined
+     using powers of 2 rather than powers of 10, so 1kB is 1024 bytes, 1MB is
+     1024<superscript>2</> = 1048576 bytes, and so on.
+    </para>
+   </note>
 
    <para>
     The functions above that operate on tables or indexes accept a

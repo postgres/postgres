@@ -44,10 +44,12 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
+#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
@@ -96,6 +98,11 @@ typedef struct deparse_expr_cxt
 	List	  **params_list;	/* exprs that will become remote Params */
 } deparse_expr_cxt;
 
+#define REL_ALIAS_PREFIX	"r"
+/* Handy macro to add relation name qualification */
+#define ADD_REL_QUALIFIER(buf, varno)	\
+		appendStringInfo((buf), "%s%d.", REL_ALIAS_PREFIX, (varno))
+
 /*
  * Functions to determine whether an expression can be evaluated safely on
  * remote server.
@@ -112,15 +119,19 @@ static void deparseTargetList(StringInfo buf,
 				  PlannerInfo *root,
 				  Index rtindex,
 				  Relation rel,
+				  bool is_returning,
 				  Bitmapset *attrs_used,
+				  bool qualify_col,
 				  List **retrieved_attrs);
+static void deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
+						  deparse_expr_cxt *context);
 static void deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 Index rtindex, Relation rel,
 					 bool trig_after_row,
 					 List *returningList,
 					 List **retrieved_attrs);
 static void deparseColumnRef(StringInfo buf, int varno, int varattno,
-				 PlannerInfo *root);
+				 PlannerInfo *root, bool qualify_col);
 static void deparseRelation(StringInfo buf, Relation rel);
 static void deparseExpr(Expr *expr, deparse_expr_cxt *context);
 static void deparseVar(Var *node, deparse_expr_cxt *context);
@@ -141,11 +152,13 @@ static void printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
 				 deparse_expr_cxt *context);
 static void printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
 					   deparse_expr_cxt *context);
-static void deparseSelectSql(Bitmapset *attrs_used, List **retrieved_attrs,
+static void deparseSelectSql(List *tlist, List **retrieved_attrs,
 				 deparse_expr_cxt *context);
 static void deparseLockingClause(deparse_expr_cxt *context);
-static void appendWhereClause(List *exprs, deparse_expr_cxt *context);
 static void appendOrderByClause(List *pathkeys, deparse_expr_cxt *context);
+static void appendConditions(List *exprs, deparse_expr_cxt *context);
+static void deparseFromExprForRel(StringInfo buf, PlannerInfo *root,
+					RelOptInfo *joinrel, bool use_alias, List **params_list);
 
 
 /*
@@ -268,7 +281,7 @@ foreign_expr_walker(Node *node,
 				 * Param's collation, ie it's not safe for it to have a
 				 * non-default collation.
 				 */
-				if (var->varno == glob_cxt->foreignrel->relid &&
+				if (bms_is_member(var->varno, glob_cxt->foreignrel->relids) &&
 					var->varlevelsup == 0)
 				{
 					/* Var belongs to foreign table */
@@ -703,13 +716,38 @@ deparse_type_name(Oid type_oid, int32 typemod)
 }
 
 /*
+ * Build the targetlist for given relation to be deparsed as SELECT clause.
+ *
+ * The output targetlist contains the columns that need to be fetched from the
+ * foreign server for the given relation.
+ */
+List *
+build_tlist_to_deparse(RelOptInfo *foreignrel)
+{
+	List	   *tlist = NIL;
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+
+	/*
+	 * We require columns specified in foreignrel->reltarget.exprs and those
+	 * required for evaluating the local conditions.
+	 */
+	tlist = add_to_flat_tlist(tlist, foreignrel->reltarget.exprs);
+	tlist = add_to_flat_tlist(tlist,
+							  pull_var_clause((Node *) fpinfo->local_conds,
+											  PVC_REJECT_AGGREGATES,
+											  PVC_RECURSE_PLACEHOLDERS));
+
+	return tlist;
+}
+
+/*
  * Deparse SELECT statement for given relation into buf.
  *
+ * tlist contains the list of desired columns to be fetched from foreign server.
+ * For a base relation fpinfo->attrs_used is used to construct SELECT clause,
+ * hence the tlist is ignored for a base relation.
+ *
  * remote_conds is the list of conditions to be deparsed as WHERE clause.
- *
- * pathkeys is the list of pathkeys to order the result by.
- *
- * List of columns selected is returned in retrieved_attrs.
  *
  * If params_list is not NULL, it receives a list of Params and other-relation
  * Vars used in the clauses; these values must be transmitted to the remote
@@ -717,28 +755,40 @@ deparse_type_name(Oid type_oid, int32 typemod)
  *
  * If params_list is NULL, we're generating the query for EXPLAIN purposes,
  * so Params and other-relation Vars should be replaced by dummy values.
+ *
+ * pathkeys is the list of pathkeys to order the result by.
+ *
+ * List of columns selected is returned in retrieved_attrs.
  */
 extern void
 deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
-						List *remote_conds, List *pathkeys,
+						List *tlist, List *remote_conds, List *pathkeys,
 						List **retrieved_attrs, List **params_list)
 {
-	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
 	deparse_expr_cxt context;
 
-	/* Initialize params_list if caller needs one */
-	if (params_list)
-		*params_list = NIL;
+	/* We handle relations for foreign tables and joins between those */
+	Assert(rel->reloptkind == RELOPT_JOINREL ||
+		   rel->reloptkind == RELOPT_BASEREL ||
+		   rel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
+	/* Fill portions of context common to join and base relation */
 	context.buf = buf;
 	context.root = root;
 	context.foreignrel = rel;
 	context.params_list = params_list;
 
-	deparseSelectSql(fpinfo->attrs_used, retrieved_attrs, &context);
+	/* Construct SELECT clause and FROM clause */
+	deparseSelectSql(tlist, retrieved_attrs, &context);
 
+	/*
+	 * Construct WHERE clause
+	 */
 	if (remote_conds)
-		appendWhereClause(remote_conds, &context);
+	{
+		appendStringInfo(buf, " WHERE ");
+		appendConditions(remote_conds, &context);
+	}
 
 	/* Add ORDER BY clause if we found any useful pathkeys */
 	if (pathkeys)
@@ -751,56 +801,78 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 /*
  * Construct a simple SELECT statement that retrieves desired columns
  * of the specified foreign table, and append it to "buf".  The output
- * contains just "SELECT ... FROM tablename".
+ * contains just "SELECT ... FROM ....".
  *
  * We also create an integer List of the columns being retrieved, which is
  * returned to *retrieved_attrs.
+ *
+ * tlist is the list of desired columns. Read prologue of
+ * deparseSelectStmtForRel() for details.
  */
-void
-deparseSelectSql(Bitmapset *attrs_used, List **retrieved_attrs,
-				 deparse_expr_cxt *context)
+static void
+deparseSelectSql(List *tlist, List **retrieved_attrs, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	RelOptInfo *foreignrel = context->foreignrel;
 	PlannerInfo *root = context->root;
-	RangeTblEntry *rte = planner_rt_fetch(foreignrel->relid, root);
-	Relation	rel;
-
-	/*
-	 * Core code already has some lock on each rel being planned, so we can
-	 * use NoLock here.
-	 */
-	rel = heap_open(rte->relid, NoLock);
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/*
 	 * Construct SELECT list
 	 */
 	appendStringInfoString(buf, "SELECT ");
-	deparseTargetList(buf, root, foreignrel->relid, rel, attrs_used,
-					  retrieved_attrs);
+
+	if (foreignrel->reloptkind == RELOPT_JOINREL)
+	{
+		/* For a join relation use the input tlist */
+		deparseExplicitTargetList(tlist, retrieved_attrs, context);
+	}
+	else
+	{
+		/*
+		 * For a base relation fpinfo->attrs_used gives the list of columns
+		 * required to be fetched from the foreign server.
+		 */
+		RangeTblEntry *rte = planner_rt_fetch(foreignrel->relid, root);
+
+		/*
+		 * Core code already has some lock on each rel being planned, so we
+		 * can use NoLock here.
+		 */
+		Relation	rel = heap_open(rte->relid, NoLock);
+
+		deparseTargetList(buf, root, foreignrel->relid, rel, false,
+						  fpinfo->attrs_used, false, retrieved_attrs);
+		heap_close(rel, NoLock);
+	}
 
 	/*
 	 * Construct FROM clause
 	 */
 	appendStringInfoString(buf, " FROM ");
-	deparseRelation(buf, rel);
-
-	heap_close(rel, NoLock);
+	deparseFromExprForRel(buf, root, foreignrel,
+						  (foreignrel->reloptkind == RELOPT_JOINREL),
+						  context->params_list);
 }
 
 /*
  * Emit a target list that retrieves the columns specified in attrs_used.
- * This is used for both SELECT and RETURNING targetlists.
+ * This is used for both SELECT and RETURNING targetlists; the is_returning
+ * parameter is true only for a RETURNING targetlist.
  *
  * The tlist text is appended to buf, and we also create an integer List
  * of the columns being retrieved, which is returned to *retrieved_attrs.
+ *
+ * If qualify_col is true, add relation alias before the column name.
  */
 static void
 deparseTargetList(StringInfo buf,
 				  PlannerInfo *root,
 				  Index rtindex,
 				  Relation rel,
+				  bool is_returning,
 				  Bitmapset *attrs_used,
+				  bool qualify_col,
 				  List **retrieved_attrs)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
@@ -829,9 +901,11 @@ deparseTargetList(StringInfo buf,
 		{
 			if (!first)
 				appendStringInfoString(buf, ", ");
+			else if (is_returning)
+				appendStringInfoString(buf, " RETURNING ");
 			first = false;
 
-			deparseColumnRef(buf, rtindex, i, root);
+			deparseColumnRef(buf, rtindex, i, root, qualify_col);
 
 			*retrieved_attrs = lappend_int(*retrieved_attrs, i);
 		}
@@ -846,8 +920,12 @@ deparseTargetList(StringInfo buf,
 	{
 		if (!first)
 			appendStringInfoString(buf, ", ");
+		else if (is_returning)
+			appendStringInfoString(buf, " RETURNING ");
 		first = false;
 
+		if (qualify_col)
+			ADD_REL_QUALIFIER(buf, rtindex);
 		appendStringInfoString(buf, "ctid");
 
 		*retrieved_attrs = lappend_int(*retrieved_attrs,
@@ -855,7 +933,7 @@ deparseTargetList(StringInfo buf,
 	}
 
 	/* Don't generate bad syntax if no undropped columns */
-	if (first)
+	if (first && !is_returning)
 		appendStringInfoString(buf, "NULL");
 }
 
@@ -869,64 +947,81 @@ deparseLockingClause(deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	PlannerInfo *root = context->root;
 	RelOptInfo *rel = context->foreignrel;
+	int			relid = -1;
 
-	/*
-	 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
-	 * initial row fetch, rather than later on as is done for local tables.
-	 * The extra roundtrips involved in trying to duplicate the local
-	 * semantics exactly don't seem worthwhile (see also comments for
-	 * RowMarkType).
-	 *
-	 * Note: because we actually run the query as a cursor, this assumes that
-	 * DECLARE CURSOR ... FOR UPDATE is supported, which it isn't before 8.3.
-	 */
-	if (rel->relid == root->parse->resultRelation &&
-		(root->parse->commandType == CMD_UPDATE ||
-		 root->parse->commandType == CMD_DELETE))
+	while ((relid = bms_next_member(rel->relids, relid)) >= 0)
 	{
-		/* Relation is UPDATE/DELETE target, so use FOR UPDATE */
-		appendStringInfoString(buf, " FOR UPDATE");
-	}
-	else
-	{
-		PlanRowMark *rc = get_plan_rowmark(root->rowMarks, rel->relid);
-
-		if (rc)
+		/*
+		 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
+		 * initial row fetch, rather than later on as is done for local
+		 * tables. The extra roundtrips involved in trying to duplicate the
+		 * local semantics exactly don't seem worthwhile (see also comments
+		 * for RowMarkType).
+		 *
+		 * Note: because we actually run the query as a cursor, this assumes
+		 * that DECLARE CURSOR ... FOR UPDATE is supported, which it isn't
+		 * before 8.3.
+		 */
+		if (relid == root->parse->resultRelation &&
+			(root->parse->commandType == CMD_UPDATE ||
+			 root->parse->commandType == CMD_DELETE))
 		{
-			/*
-			 * Relation is specified as a FOR UPDATE/SHARE target, so handle
-			 * that.  (But we could also see LCS_NONE, meaning this isn't a
-			 * target relation after all.)
-			 *
-			 * For now, just ignore any [NO] KEY specification, since (a) it's
-			 * not clear what that means for a remote table that we don't have
-			 * complete information about, and (b) it wouldn't work anyway on
-			 * older remote servers.  Likewise, we don't worry about NOWAIT.
-			 */
-			switch (rc->strength)
+			/* Relation is UPDATE/DELETE target, so use FOR UPDATE */
+			appendStringInfoString(buf, " FOR UPDATE");
+
+			/* Add the relation alias if we are here for a join relation */
+			if (rel->reloptkind == RELOPT_JOINREL)
+				appendStringInfo(buf, " OF %s%d", REL_ALIAS_PREFIX, relid);
+		}
+		else
+		{
+			PlanRowMark *rc = get_plan_rowmark(root->rowMarks, relid);
+
+			if (rc)
 			{
-				case LCS_NONE:
-					/* No locking needed */
-					break;
-				case LCS_FORKEYSHARE:
-				case LCS_FORSHARE:
-					appendStringInfoString(buf, " FOR SHARE");
-					break;
-				case LCS_FORNOKEYUPDATE:
-				case LCS_FORUPDATE:
-					appendStringInfoString(buf, " FOR UPDATE");
-					break;
+				/*
+				 * Relation is specified as a FOR UPDATE/SHARE target, so
+				 * handle that.  (But we could also see LCS_NONE, meaning this
+				 * isn't a target relation after all.)
+				 *
+				 * For now, just ignore any [NO] KEY specification, since (a)
+				 * it's not clear what that means for a remote table that we
+				 * don't have complete information about, and (b) it wouldn't
+				 * work anyway on older remote servers.  Likewise, we don't
+				 * worry about NOWAIT.
+				 */
+				switch (rc->strength)
+				{
+					case LCS_NONE:
+						/* No locking needed */
+						break;
+					case LCS_FORKEYSHARE:
+					case LCS_FORSHARE:
+						appendStringInfoString(buf, " FOR SHARE");
+						break;
+					case LCS_FORNOKEYUPDATE:
+					case LCS_FORUPDATE:
+						appendStringInfoString(buf, " FOR UPDATE");
+						break;
+				}
+
+				/* Add the relation alias if we are here for a join relation */
+				if (rel->reloptkind == RELOPT_JOINREL &&
+					rc->strength != LCS_NONE)
+					appendStringInfo(buf, " OF %s%d", REL_ALIAS_PREFIX, relid);
 			}
 		}
 	}
 }
 
 /*
- * Deparse WHERE clauses in given list of RestrictInfos and append them to
- * context->buf.
+ * Deparse conditions from the provided list and append them to buf.
+ *
+ * The conditions in the list are assumed to be ANDed. This function is used to
+ * deparse both WHERE clauses and JOIN .. ON clauses.
  */
 static void
-appendWhereClause(List *exprs, deparse_expr_cxt *context)
+appendConditions(List *exprs, deparse_expr_cxt *context)
 {
 	int			nestlevel;
 	ListCell   *lc;
@@ -938,22 +1033,181 @@ appendWhereClause(List *exprs, deparse_expr_cxt *context)
 
 	foreach(lc, exprs)
 	{
-		RestrictInfo *ri = (RestrictInfo *) lfirst(lc);
+		Expr	   *expr = (Expr *) lfirst(lc);
+
+		/*
+		 * Extract clause from RestrictInfo, if required. See comments in
+		 * declaration of PgFdwRelationInfo for details.
+		 */
+		if (IsA(expr, RestrictInfo))
+		{
+			RestrictInfo *ri = (RestrictInfo *) expr;
+
+			expr = ri->clause;
+		}
 
 		/* Connect expressions with "AND" and parenthesize each condition. */
-		if (is_first)
-			appendStringInfoString(buf, " WHERE ");
-		else
+		if (!is_first)
 			appendStringInfoString(buf, " AND ");
 
 		appendStringInfoChar(buf, '(');
-		deparseExpr(ri->clause, context);
+		deparseExpr(expr, context);
 		appendStringInfoChar(buf, ')');
 
 		is_first = false;
 	}
 
 	reset_transmission_modes(nestlevel);
+}
+
+/* Output join name for given join type */
+extern const char *
+get_jointype_name(JoinType jointype)
+{
+	switch (jointype)
+	{
+		case JOIN_INNER:
+			return "INNER";
+
+		case JOIN_LEFT:
+			return "LEFT";
+
+		case JOIN_RIGHT:
+			return "RIGHT";
+
+		case JOIN_FULL:
+			return "FULL";
+
+		default:
+			/* Shouldn't come here, but protect from buggy code. */
+			elog(ERROR, "unsupported join type %d", jointype);
+	}
+
+	/* Keep compiler happy */
+	return NULL;
+}
+
+/*
+ * Deparse given targetlist and append it to context->buf.
+ *
+ * tlist is list of TargetEntry's which in turn contain Var nodes.
+ *
+ * retrieved_attrs is the list of continuously increasing integers starting
+ * from 1. It has same number of entries as tlist.
+ */
+static void
+deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
+						  deparse_expr_cxt *context)
+{
+	ListCell   *lc;
+	StringInfo	buf = context->buf;
+	int			i = 0;
+
+	*retrieved_attrs = NIL;
+
+	foreach(lc, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		Var		   *var;
+
+		/* Extract expression if TargetEntry node */
+		Assert(IsA(tle, TargetEntry));
+		var = (Var *) tle->expr;
+		/* We expect only Var nodes here */
+		Assert(IsA(var, Var));
+
+		if (i > 0)
+			appendStringInfoString(buf, ", ");
+		deparseVar(var, context);
+
+		*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
+
+		i++;
+	}
+
+	if (i == 0)
+		appendStringInfoString(buf, "NULL");
+}
+
+/*
+ * Construct FROM clause for given relation
+ *
+ * The function constructs ... JOIN ... ON ... for join relation. For a base
+ * relation it just returns schema-qualified tablename, with the appropriate
+ * alias if so requested.
+ */
+static void
+deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
+					  bool use_alias, List **params_list)
+{
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+
+	if (foreignrel->reloptkind == RELOPT_JOINREL)
+	{
+		RelOptInfo *rel_o = fpinfo->outerrel;
+		RelOptInfo *rel_i = fpinfo->innerrel;
+		StringInfoData join_sql_o;
+		StringInfoData join_sql_i;
+
+		/* Deparse outer relation */
+		initStringInfo(&join_sql_o);
+		deparseFromExprForRel(&join_sql_o, root, rel_o, true, params_list);
+
+		/* Deparse inner relation */
+		initStringInfo(&join_sql_i);
+		deparseFromExprForRel(&join_sql_i, root, rel_i, true, params_list);
+
+		/*
+		 * For a join relation FROM clause entry is deparsed as
+		 *
+		 * ((outer relation) <join type> (inner relation) ON (joinclauses)
+		 */
+		appendStringInfo(buf, "(%s %s JOIN %s ON ", join_sql_o.data,
+					   get_jointype_name(fpinfo->jointype), join_sql_i.data);
+
+		/* Append join clause; (TRUE) if no join clause */
+		if (fpinfo->joinclauses)
+		{
+			deparse_expr_cxt context;
+
+			context.buf = buf;
+			context.foreignrel = foreignrel;
+			context.root = root;
+			context.params_list = params_list;
+
+			appendStringInfo(buf, "(");
+			appendConditions(fpinfo->joinclauses, &context);
+			appendStringInfo(buf, ")");
+		}
+		else
+			appendStringInfoString(buf, "(TRUE)");
+
+		/* End the FROM clause entry. */
+		appendStringInfo(buf, ")");
+	}
+	else
+	{
+		RangeTblEntry *rte = planner_rt_fetch(foreignrel->relid, root);
+
+		/*
+		 * Core code already has some lock on each rel being planned, so we
+		 * can use NoLock here.
+		 */
+		Relation	rel = heap_open(rte->relid, NoLock);
+
+		deparseRelation(buf, rel);
+
+		/*
+		 * Add a unique alias to avoid any conflict in relation names due to
+		 * pulled up subqueries in the query being built for a pushed down
+		 * join.
+		 */
+		if (use_alias)
+			appendStringInfo(buf, " %s%d", REL_ALIAS_PREFIX, foreignrel->relid);
+
+		heap_close(rel, NoLock);
+	}
+	return;
 }
 
 /*
@@ -989,7 +1243,7 @@ deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				appendStringInfoString(buf, ", ");
 			first = false;
 
-			deparseColumnRef(buf, rtindex, attnum, root);
+			deparseColumnRef(buf, rtindex, attnum, root, false);
 		}
 
 		appendStringInfoString(buf, ") VALUES (");
@@ -1050,7 +1304,7 @@ deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 			appendStringInfoString(buf, ", ");
 		first = false;
 
-		deparseColumnRef(buf, rtindex, attnum, root);
+		deparseColumnRef(buf, rtindex, attnum, root, false);
 		appendStringInfo(buf, " = $%d", pindex);
 		pindex++;
 	}
@@ -1113,11 +1367,8 @@ deparseReturningList(StringInfo buf, PlannerInfo *root,
 	}
 
 	if (attrs_used != NULL)
-	{
-		appendStringInfoString(buf, " RETURNING ");
-		deparseTargetList(buf, root, rtindex, rel, attrs_used,
+		deparseTargetList(buf, root, rtindex, rel, true, attrs_used, false,
 						  retrieved_attrs);
-	}
 	else
 		*retrieved_attrs = NIL;
 }
@@ -1208,45 +1459,97 @@ deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 /*
  * Construct name to use for given column, and emit it into buf.
  * If it has a column_name FDW option, use that instead of attribute name.
+ *
+ * If qualify_col is true, qualify column name with the alias of relation.
  */
 static void
-deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root)
+deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root,
+				 bool qualify_col)
 {
 	RangeTblEntry *rte;
-	char	   *colname = NULL;
-	List	   *options;
-	ListCell   *lc;
 
-	/* varno must not be any of OUTER_VAR, INNER_VAR and INDEX_VAR. */
-	Assert(!IS_SPECIAL_VARNO(varno));
-
-	/* Get RangeTblEntry from array in PlannerInfo. */
-	rte = planner_rt_fetch(varno, root);
-
-	/*
-	 * If it's a column of a foreign table, and it has the column_name FDW
-	 * option, use that value.
-	 */
-	options = GetForeignColumnOptions(rte->relid, varattno);
-	foreach(lc, options)
+	/* varattno can be a whole-row reference, ctid or a regular table column */
+	if (varattno == SelfItemPointerAttributeNumber)
 	{
-		DefElem    *def = (DefElem *) lfirst(lc);
-
-		if (strcmp(def->defname, "column_name") == 0)
-		{
-			colname = defGetString(def);
-			break;
-		}
+		if (qualify_col)
+			ADD_REL_QUALIFIER(buf, varno);
+		appendStringInfoString(buf, "ctid");
 	}
+	else if (varattno == 0)
+	{
+		/* Whole row reference */
+		Relation	rel;
+		Bitmapset  *attrs_used;
 
-	/*
-	 * If it's a column of a regular table or it doesn't have column_name FDW
-	 * option, use attribute name.
-	 */
-	if (colname == NULL)
-		colname = get_relid_attribute_name(rte->relid, varattno);
+		/* Required only to be passed down to deparseTargetList(). */
+		List	   *retrieved_attrs;
 
-	appendStringInfoString(buf, quote_identifier(colname));
+		/* Get RangeTblEntry from array in PlannerInfo. */
+		rte = planner_rt_fetch(varno, root);
+
+		/*
+		 * The lock on the relation will be held by upper callers, so it's
+		 * fine to open it with no lock here.
+		 */
+		rel = heap_open(rte->relid, NoLock);
+
+		/*
+		 * The local name of the foreign table can not be recognized by the
+		 * foreign server and the table it references on foreign server might
+		 * have different column ordering or different columns than those
+		 * declared locally. Hence we have to deparse whole-row reference as
+		 * ROW(columns referenced locally). Construct this by deparsing a
+		 * "whole row" attribute.
+		 */
+		attrs_used = bms_add_member(NULL,
+									0 - FirstLowInvalidHeapAttributeNumber);
+		appendStringInfoString(buf, "ROW(");
+		deparseTargetList(buf, root, varno, rel, false, attrs_used, qualify_col,
+						  &retrieved_attrs);
+		appendStringInfoString(buf, ")");
+		heap_close(rel, NoLock);
+		bms_free(attrs_used);
+	}
+	else
+	{
+		char	   *colname = NULL;
+		List	   *options;
+		ListCell   *lc;
+
+		/* varno must not be any of OUTER_VAR, INNER_VAR and INDEX_VAR. */
+		Assert(!IS_SPECIAL_VARNO(varno));
+
+		/* Get RangeTblEntry from array in PlannerInfo. */
+		rte = planner_rt_fetch(varno, root);
+
+		/*
+		 * If it's a column of a foreign table, and it has the column_name FDW
+		 * option, use that value.
+		 */
+		options = GetForeignColumnOptions(rte->relid, varattno);
+		foreach(lc, options)
+		{
+			DefElem    *def = (DefElem *) lfirst(lc);
+
+			if (strcmp(def->defname, "column_name") == 0)
+			{
+				colname = defGetString(def);
+				break;
+			}
+		}
+
+		/*
+		 * If it's a column of a regular table or it doesn't have column_name
+		 * FDW option, use attribute name.
+		 */
+		if (colname == NULL)
+			colname = get_relid_attribute_name(rte->relid, varattno);
+
+		if (qualify_col)
+			ADD_REL_QUALIFIER(buf, varno);
+
+		appendStringInfoString(buf, quote_identifier(colname));
+	}
 }
 
 /*
@@ -1391,14 +1694,12 @@ deparseExpr(Expr *node, deparse_expr_cxt *context)
 static void
 deparseVar(Var *node, deparse_expr_cxt *context)
 {
-	StringInfo	buf = context->buf;
+	bool		qualify_col = (context->foreignrel->reloptkind == RELOPT_JOINREL);
 
-	if (node->varno == context->foreignrel->relid &&
+	if (bms_is_member(node->varno, context->foreignrel->relids) &&
 		node->varlevelsup == 0)
-	{
-		/* Var belongs to foreign table */
-		deparseColumnRef(buf, node->varno, node->varattno, context->root);
-	}
+		deparseColumnRef(context->buf, node->varno, node->varattno,
+						 context->root, qualify_col);
 	else
 	{
 		/* Treat like a Param */

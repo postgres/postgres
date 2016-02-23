@@ -29,3 +29,18 @@ session "s2"
 setup		{ BEGIN; }
 step "s2l"	{ SELECT * FROM foo FOR KEY SHARE; }
 step "s2c"	{ COMMIT; }
+
+permutation "s1s" "s1u" "s1r" "s1l" "s1c" "s2l" "s2c"
+permutation "s1s" "s1u" "s1r" "s1l" "s2l" "s1c" "s2c"
+permutation "s1s" "s1u" "s1r" "s1l" "s2l" "s2c" "s1c"
+permutation "s1s" "s1u" "s1r" "s2l" "s1l" "s1c" "s2c"
+permutation "s1s" "s1u" "s1r" "s2l" "s1l" "s2c" "s1c"
+permutation "s1s" "s1u" "s1r" "s2l" "s2c" "s1l" "s1c"
+permutation "s1s" "s1u" "s2l" "s1r" "s1l" "s1c" "s2c"
+permutation "s1s" "s1u" "s2l" "s1r" "s1l" "s2c" "s1c"
+permutation "s1s" "s1u" "s2l" "s1r" "s2c" "s1l" "s1c"
+permutation "s1s" "s2l" "s1u" "s2c" "s1r" "s1l" "s1c"
+permutation "s1s" "s2l" "s2c" "s1u" "s1r" "s1l" "s1c"
+permutation "s2l" "s1s" "s1u" "s2c" "s1r" "s1l" "s1c"
+permutation "s2l" "s1s" "s2c" "s1u" "s1r" "s1l" "s1c"
+permutation "s2l" "s2c" "s1s" "s1u" "s1r" "s1l" "s1c"

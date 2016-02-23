@@ -256,6 +256,7 @@ typedef struct
 	int			nstate;			/* length of state[] */
 	unsigned short random_state[3];		/* separate randomness for each thread */
 	int64		throttle_trigger;		/* previous/next throttling (us) */
+	FILE	   *logfile;		/* where to log, or NULL */
 
 	/* per thread collected stats */
 	instr_time	start_time;		/* thread start time */
@@ -366,8 +367,8 @@ static void setalarm(int seconds);
 static void *threadRun(void *arg);
 
 static void processXactStats(TState *thread, CState *st, instr_time *now,
-				 bool skipped, FILE *logfile, StatsData *agg);
-static void doLog(TState *thread, CState *st, FILE *logfile, instr_time *now,
+				 bool skipped, StatsData *agg);
+static void doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag);
 
 
@@ -1246,7 +1247,7 @@ chooseScript(TState *thread)
 
 /* return false iff client should be disconnected */
 static bool
-doCustom(TState *thread, CState *st, FILE *logfile, StatsData *agg)
+doCustom(TState *thread, CState *st, StatsData *agg)
 {
 	PGresult   *res;
 	Command   **commands;
@@ -1300,7 +1301,7 @@ top:
 			now_us = INSTR_TIME_GET_MICROSEC(now);
 			while (thread->throttle_trigger < now_us - latency_limit)
 			{
-				processXactStats(thread, st, &now, true, logfile, agg);
+				processXactStats(thread, st, &now, true, agg);
 				/* next rendez-vous */
 				wait = getPoissonRand(thread, throttle_delay);
 				thread->throttle_trigger += wait;
@@ -1361,8 +1362,8 @@ top:
 		if (commands[st->state + 1] == NULL)
 		{
 			if (progress || throttle_delay || latency_limit ||
-				per_script_stats || logfile)
-				processXactStats(thread, st, &now, false, logfile, agg);
+				per_script_stats || use_log)
+				processXactStats(thread, st, &now, false, agg);
 			else
 				thread->stats.cnt++;
 		}
@@ -1454,7 +1455,8 @@ top:
 	}
 
 	/* Record transaction start time under logging, progress or throttling */
-	if ((logfile || progress || throttle_delay || latency_limit || per_script_stats) && st->state == 0)
+	if ((use_log || progress || throttle_delay || latency_limit ||
+		 per_script_stats) && st->state == 0)
 	{
 		INSTR_TIME_SET_CURRENT(st->txn_begin);
 
@@ -1794,9 +1796,13 @@ top:
  * print log entry after completing one transaction.
  */
 static void
-doLog(TState *thread, CState *st, FILE *logfile, instr_time *now,
+doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag)
 {
+	FILE   *logfile = thread->logfile;
+
+	Assert(use_log);
+
 	/*
 	 * Skip the log entry if sampling is enabled and this row doesn't belong
 	 * to the random sample.
@@ -1879,7 +1885,7 @@ doLog(TState *thread, CState *st, FILE *logfile, instr_time *now,
  */
 static void
 processXactStats(TState *thread, CState *st, instr_time *now,
-				 bool skipped, FILE *logfile, StatsData *agg)
+				 bool skipped, StatsData *agg)
 {
 	double		latency = 0.0,
 				lag = 0.0;
@@ -1906,7 +1912,7 @@ processXactStats(TState *thread, CState *st, instr_time *now,
 		thread->stats.cnt++;
 
 	if (use_log)
-		doLog(thread, st, logfile, now, agg, skipped, latency, lag);
+		doLog(thread, st, now, agg, skipped, latency, lag);
 
 	/* XXX could use a mutex here, but we choose not to */
 	if (per_script_stats)
@@ -2686,7 +2692,8 @@ findBuiltin(const char *name, char **desc)
 static void
 addScript(const char *name, Command **commands)
 {
-	if (commands == NULL)
+	if (commands == NULL ||
+		commands[0] == NULL)
 	{
 		fprintf(stderr, "empty command list for script \"%s\"\n", name);
 		exit(1);
@@ -3288,7 +3295,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* --sampling-rate may must not be used with --aggregate-interval */
+	/* --sampling-rate may not be used with --aggregate-interval */
 	if (sample_rate > 0.0 && agg_interval > 0)
 	{
 		fprintf(stderr, "log sampling (--sampling-rate) and aggregation (--aggregate-interval) cannot be used at the same time\n");
@@ -3459,6 +3466,7 @@ main(int argc, char **argv)
 		thread->random_state[0] = random();
 		thread->random_state[1] = random();
 		thread->random_state[2] = random();
+		thread->logfile = NULL;		/* filled in later */
 		thread->latency_late = 0;
 		initStats(&thread->stats, 0.0);
 
@@ -3554,7 +3562,6 @@ threadRun(void *arg)
 {
 	TState	   *thread = (TState *) arg;
 	CState	   *state = thread->state;
-	FILE	   *logfile = NULL; /* per-thread log file */
 	instr_time	start,
 				end;
 	int			nstate = thread->nstate;
@@ -3588,9 +3595,9 @@ threadRun(void *arg)
 			snprintf(logpath, sizeof(logpath), "pgbench_log.%d", main_pid);
 		else
 			snprintf(logpath, sizeof(logpath), "pgbench_log.%d.%d", main_pid, thread->tid);
-		logfile = fopen(logpath, "w");
+		thread->logfile = fopen(logpath, "w");
 
-		if (logfile == NULL)
+		if (thread->logfile == NULL)
 		{
 			fprintf(stderr, "could not open logfile \"%s\": %s\n",
 					logpath, strerror(errno));
@@ -3627,7 +3634,7 @@ threadRun(void *arg)
 		if (debug)
 			fprintf(stderr, "client %d executing script \"%s\"\n", st->id,
 					sql_script[st->use_file].name);
-		if (!doCustom(thread, st, logfile, &aggs))
+		if (!doCustom(thread, st, &aggs))
 			remains--;			/* I've aborted */
 
 		if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
@@ -3699,7 +3706,7 @@ threadRun(void *arg)
 			sock = PQsocket(st->con);
 			if (sock < 0)
 			{
-				fprintf(stderr, "bad socket: %s\n", strerror(errno));
+				fprintf(stderr, "bad socket: %s", PQerrorMessage(st->con));
 				goto done;
 			}
 
@@ -3763,11 +3770,21 @@ threadRun(void *arg)
 			Command   **commands = sql_script[st->use_file].commands;
 			int			prev_ecnt = st->ecnt;
 
-			if (st->con && (FD_ISSET(PQsocket(st->con), &input_mask)
-							|| commands[st->state]->type == META_COMMAND))
+			if (st->con)
 			{
-				if (!doCustom(thread, st, logfile, &aggs))
-					remains--;	/* I've aborted */
+				int			sock = PQsocket(st->con);
+
+				if (sock < 0)
+				{
+					fprintf(stderr, "bad socket: %s", PQerrorMessage(st->con));
+					goto done;
+				}
+				if (FD_ISSET(sock, &input_mask) ||
+					commands[st->state]->type == META_COMMAND)
+				{
+					if (!doCustom(thread, st, &aggs))
+						remains--;		/* I've aborted */
+				}
 			}
 
 			if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
@@ -3870,14 +3887,14 @@ done:
 	disconnect_all(state, nstate);
 	INSTR_TIME_SET_CURRENT(end);
 	INSTR_TIME_ACCUM_DIFF(thread->conn_time, end, start);
-	if (logfile)
+	if (thread->logfile)
 	{
 		if (agg_interval)
 		{
 			/* log aggregated but not yet reported transactions */
-			doLog(thread, state, logfile, &end, &aggs, false, 0, 0);
+			doLog(thread, state, &end, &aggs, false, 0, 0);
 		}
-		fclose(logfile);
+		fclose(thread->logfile);
 	}
 	return NULL;
 }

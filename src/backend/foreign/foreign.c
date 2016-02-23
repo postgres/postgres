@@ -160,6 +160,54 @@ GetForeignServerByName(const char *srvname, bool missing_ok)
 	return GetForeignServer(serverid);
 }
 
+/*
+ * GetUserMappingById - look up the user mapping by its OID.
+ */
+UserMapping *
+GetUserMappingById(Oid umid)
+{
+	Datum		datum;
+	HeapTuple	tp;
+	bool		isnull;
+	UserMapping *um;
+
+	tp = SearchSysCache1(USERMAPPINGOID, ObjectIdGetDatum(umid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for user mapping %u", umid);
+
+	um = (UserMapping *) palloc(sizeof(UserMapping));
+	um->umid = umid;
+
+	/* Extract the umuser */
+	datum = SysCacheGetAttr(USERMAPPINGOID,
+							tp,
+							Anum_pg_user_mapping_umuser,
+							&isnull);
+	Assert(!isnull);
+	um->userid = DatumGetObjectId(datum);
+
+	/* Extract the umserver */
+	datum = SysCacheGetAttr(USERMAPPINGOID,
+							tp,
+							Anum_pg_user_mapping_umserver,
+							&isnull);
+	Assert(!isnull);
+	um->serverid = DatumGetObjectId(datum);
+
+	/* Extract the umoptions */
+	datum = SysCacheGetAttr(USERMAPPINGOID,
+							tp,
+							Anum_pg_user_mapping_umoptions,
+							&isnull);
+	if (isnull)
+		um->options = NIL;
+	else
+		um->options = untransformRelOptions(datum);
+
+	ReleaseSysCache(tp);
+
+	return um;
+}
 
 /*
  * GetUserMapping - look up the user mapping.
@@ -240,8 +288,8 @@ find_user_mapping(Oid userid, Oid serverid)
 
 	/* Not found for the specific user -- try PUBLIC */
 	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
-							 ObjectIdGetDatum(InvalidOid),
-							 ObjectIdGetDatum(serverid));
+						 ObjectIdGetDatum(InvalidOid),
+						 ObjectIdGetDatum(serverid));
 
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
@@ -731,4 +779,115 @@ get_foreign_server_oid(const char *servername, bool missing_ok)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("server \"%s\" does not exist", servername)));
 	return oid;
+}
+
+/*
+ * Get a copy of an existing local path for a given join relation.
+ *
+ * This function is usually helpful to obtain an alternate local path for EPQ
+ * checks.
+ *
+ * Right now, this function only supports unparameterized foreign joins, so we
+ * only search for unparameterized path in the given list of paths. Since we
+ * are searching for a path which can be used to construct an alternative local
+ * plan for a foreign join, we look for only MergeJoin, HashJoin or NestLoop
+ * paths.
+ *
+ * If the inner or outer subpath of the chosen path is a ForeignScan, we
+ * replace it with its outer subpath.  For this reason, and also because the
+ * planner might free the original path later, the path returned by this
+ * function is a shallow copy of the original.  There's no need to copy
+ * the substructure, so we don't.
+ *
+ * Since the plan created using this path will presumably only be used to
+ * execute EPQ checks, efficiency of the path is not a concern. But since the
+ * path list in RelOptInfo is anyway sorted by total cost we are likely to
+ * choose the most efficient path, which is all for the best.
+ */
+extern Path *
+GetExistingLocalJoinPath(RelOptInfo *joinrel)
+{
+	ListCell   *lc;
+
+	Assert(joinrel->reloptkind == RELOPT_JOINREL);
+
+	foreach(lc, joinrel->pathlist)
+	{
+		Path	   *path = (Path *) lfirst(lc);
+		JoinPath   *joinpath = NULL;
+
+		/* Skip parameterised paths. */
+		if (path->param_info != NULL)
+			continue;
+
+		switch (path->pathtype)
+		{
+			case T_HashJoin:
+				{
+					HashPath   *hash_path = makeNode(HashPath);
+
+					memcpy(hash_path, path, sizeof(HashPath));
+					joinpath = (JoinPath *) hash_path;
+				}
+				break;
+
+			case T_NestLoop:
+				{
+					NestPath   *nest_path = makeNode(NestPath);
+
+					memcpy(nest_path, path, sizeof(NestPath));
+					joinpath = (JoinPath *) nest_path;
+				}
+				break;
+
+			case T_MergeJoin:
+				{
+					MergePath  *merge_path = makeNode(MergePath);
+
+					memcpy(merge_path, path, sizeof(MergePath));
+					joinpath = (JoinPath *) merge_path;
+				}
+				break;
+
+			default:
+
+				/*
+				 * Just skip anything else. We don't know if corresponding
+				 * plan would build the output row from whole-row references
+				 * of base relations and execute the EPQ checks.
+				 */
+				break;
+		}
+
+		/* This path isn't good for us, check next. */
+		if (!joinpath)
+			continue;
+
+		/*
+		 * If either inner or outer path is a ForeignPath corresponding to a
+		 * pushed down join, replace it with the fdw_outerpath, so that we
+		 * maintain path for EPQ checks built entirely of local join
+		 * strategies.
+		 */
+		if (IsA(joinpath->outerjoinpath, ForeignPath))
+		{
+			ForeignPath *foreign_path;
+
+			foreign_path = (ForeignPath *) joinpath->outerjoinpath;
+			if (foreign_path->path.parent->reloptkind == RELOPT_JOINREL)
+				joinpath->outerjoinpath = foreign_path->fdw_outerpath;
+		}
+
+		if (IsA(joinpath->innerjoinpath, ForeignPath))
+		{
+			ForeignPath *foreign_path;
+
+			foreign_path = (ForeignPath *) joinpath->innerjoinpath;
+			if (foreign_path->path.parent->reloptkind == RELOPT_JOINREL)
+				joinpath->innerjoinpath = foreign_path->fdw_outerpath;
+		}
+
+		return (Path *) joinpath;
+	}
+	return NULL;
 }

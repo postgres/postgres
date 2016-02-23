@@ -146,6 +146,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	MemoryContext cxt;
 	MemoryContext oldcxt;
 	int			rv;
+	char	   *ptr;
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	rv = snprintf(procName, sizeof(procName),
@@ -154,6 +155,15 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				  fn_oid);
 	if (rv >= sizeof(procName) || rv < 0)
 		elog(ERROR, "procedure name would overrun buffer");
+
+	/* Replace any not-legal-in-Python-names characters with '_' */
+	for (ptr = procName; *ptr; ptr++)
+	{
+		if (!((*ptr >= 'A' && *ptr <= 'Z') ||
+			  (*ptr >= 'a' && *ptr <= 'z') ||
+			  (*ptr >= '0' && *ptr <= '9')))
+			*ptr = '_';
+	}
 
 	cxt = AllocSetContextCreate(TopMemoryContext,
 								procName,

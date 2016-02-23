@@ -26,6 +26,7 @@
 #include <ctype.h>
 
 #include "lib/stringinfo.h"
+#include "nodes/extensible.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -140,6 +141,13 @@ _outToken(StringInfo str, const char *s)
 	}
 }
 
+/* for use by extensions which define extensible nodes */
+void
+outToken(StringInfo str, const char *s)
+{
+	_outToken(str, s);
+}
+
 static void
 _outList(StringInfo str, const List *node)
 {
@@ -194,6 +202,13 @@ _outBitmapset(StringInfo str, const Bitmapset *bms)
 	while ((x = bms_next_member(bms, x)) >= 0)
 		appendStringInfo(str, " %d", x);
 	appendStringInfoChar(str, ')');
+}
+
+/* for use by extensions which define extensible nodes */
+void
+outBitmapset(StringInfo str, const Bitmapset *bms)
+{
+	_outBitmapset(str, bms);
 }
 
 /*
@@ -443,6 +458,7 @@ _outGather(StringInfo str, const Gather *node)
 
 	WRITE_INT_FIELD(num_workers);
 	WRITE_BOOL_FIELD(single_copy);
+	WRITE_BOOL_FIELD(invisible);
 }
 
 static void
@@ -1573,6 +1589,7 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
  *
  * Note we do NOT print the parent, else we'd be in infinite recursion.
  * We can print the parent's relids for identification purposes, though.
+ * We print the pathtarget only if it's not the default one for the rel.
  * We also do not print the whole of param_info, since it's printed by
  * _outRelOptInfo; it's sufficient and less cluttering to print just the
  * required outer relids.
@@ -1582,10 +1599,14 @@ _outPathInfo(StringInfo str, const Path *node)
 {
 	WRITE_ENUM_FIELD(pathtype, NodeTag);
 	appendStringInfoString(str, " :parent_relids ");
-	if (node->parent)
-		_outBitmapset(str, node->parent->relids);
-	else
-		_outBitmapset(str, NULL);
+	_outBitmapset(str, node->parent->relids);
+	if (node->pathtarget != &(node->parent->reltarget))
+	{
+		WRITE_NODE_FIELD(pathtarget->exprs);
+		WRITE_FLOAT_FIELD(pathtarget->cost.startup, "%.2f");
+		WRITE_FLOAT_FIELD(pathtarget->cost.per_tuple, "%.2f");
+		WRITE_INT_FIELD(pathtarget->width);
+	}
 	appendStringInfoString(str, " :required_outer ");
 	if (node->param_info)
 		_outBitmapset(str, node->param_info->ppi_req_outer);
@@ -1705,8 +1726,6 @@ _outCustomPath(StringInfo str, const CustomPath *node)
 	WRITE_NODE_FIELD(custom_private);
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);
-	if (node->methods->TextOutCustomPath)
-		node->methods->TextOutCustomPath(str, node);
 }
 
 static void
@@ -1826,6 +1845,7 @@ _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
 	WRITE_BOOL_FIELD(hasRowSecurity);
 	WRITE_BOOL_FIELD(parallelModeOK);
 	WRITE_BOOL_FIELD(parallelModeNeeded);
+	WRITE_BOOL_FIELD(wholePlanParallelSafe);
 	WRITE_BOOL_FIELD(hasForeignJoin);
 }
 
@@ -1886,11 +1906,13 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_ENUM_FIELD(reloptkind, RelOptKind);
 	WRITE_BITMAPSET_FIELD(relids);
 	WRITE_FLOAT_FIELD(rows, "%.0f");
-	WRITE_INT_FIELD(width);
 	WRITE_BOOL_FIELD(consider_startup);
 	WRITE_BOOL_FIELD(consider_param_startup);
 	WRITE_BOOL_FIELD(consider_parallel);
-	WRITE_NODE_FIELD(reltargetlist);
+	WRITE_NODE_FIELD(reltarget.exprs);
+	WRITE_FLOAT_FIELD(reltarget.cost.startup, "%.2f");
+	WRITE_FLOAT_FIELD(reltarget.cost.per_tuple, "%.2f");
+	WRITE_INT_FIELD(reltarget.width);
 	WRITE_NODE_FIELD(pathlist);
 	WRITE_NODE_FIELD(ppilist);
 	WRITE_NODE_FIELD(partial_pathlist);
@@ -2110,6 +2132,27 @@ _outPlannerParamItem(StringInfo str, const PlannerParamItem *node)
 
 	WRITE_NODE_FIELD(item);
 	WRITE_INT_FIELD(paramId);
+}
+
+/*****************************************************************************
+ *
+ *	Stuff from extensible.h
+ *
+ *****************************************************************************/
+
+static void
+_outExtensibleNode(StringInfo str, const ExtensibleNode *node)
+{
+	const ExtensibleNodeMethods  *methods;
+
+	methods = GetExtensibleNodeMethods(node->extnodename, false);
+
+	WRITE_NODE_TYPE("EXTENSIBLENODE");
+
+	WRITE_STRING_FIELD(extnodename);
+
+	/* serialize the private fields */
+	methods->nodeOut(str, node);
 }
 
 /*****************************************************************************
@@ -3365,6 +3408,10 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_PlannerParamItem:
 				_outPlannerParamItem(str, obj);
+				break;
+
+			case T_ExtensibleNode:
+				_outExtensibleNode(str, obj);
 				break;
 
 			case T_CreateStmt:

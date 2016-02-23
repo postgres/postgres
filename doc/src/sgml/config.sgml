@@ -2344,15 +2344,38 @@ include_dir 'conf.d'
       </indexterm>
       </term>
       <listitem>
-       <para>
-        Specifies the delay between activity rounds for the WAL writer.
-        In each round the writer will flush WAL to disk. It then sleeps for
-        <varname>wal_writer_delay</> milliseconds, and repeats.  The default
-        value is 200 milliseconds (<literal>200ms</>).  Note that on many
-        systems, the effective resolution of sleep delays is 10 milliseconds;
-        setting <varname>wal_writer_delay</> to a value that is not a multiple
-        of 10 might have the same results as setting it to the next higher
-        multiple of 10. This parameter can only be set in the
+      <para>
+        Specifies how often the WAL writer flushes WAL. After flushing WAL it
+        sleeps for <varname>wal_writer_delay</> milliseconds, unless woken up
+        by an asynchronously committing transaction. In case the last flush
+        happened less than <varname>wal_writer_delay</> milliseconds ago and
+        less than <varname>wal_writer_flush_after</> bytes of WAL have been
+        produced since, WAL is only written to the OS, not flushed to disk.
+        The default value is 200 milliseconds (<literal>200ms</>).  Note that
+        on many systems, the effective resolution of sleep delays is 10
+        milliseconds; setting <varname>wal_writer_delay</> to a value that is
+        not a multiple of 10 might have the same results as setting it to the
+        next higher multiple of 10. This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-writer-flush-after" xreflabel="wal_writer_flush_after">
+      <term><varname>wal_writer_flush_after</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>wal_writer_flush_after</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+      <para>
+        Specifies how often the WAL writer flushes WAL. In case the last flush
+        happened less than <varname>wal_writer_delay</> milliseconds ago and
+        less than <varname>wal_writer_flush_after</> bytes of WAL have been
+        produced since, WAL is only written to the OS, not flushed to disk.
+        If <varname>wal_writer_flush_after</> is set to <literal>0</> WAL is
+        flushed everytime the WAL writer has written WAL.  The default is
+        <literal>1MB</literal>. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
@@ -3798,6 +3821,51 @@ SELECT * FROM parent WHERE key = 2400;
         Setting this value to <xref linkend="guc-geqo-threshold"> or more
         may trigger use of the GEQO planner, resulting in non-optimal
         plans.  See <xref linkend="runtime-config-query-geqo">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-force-parallel-mode" xreflabel="force_parallel_mode">
+      <term><varname>force_parallel_mode</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>force_parallel_mode</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Allows the use of parallel queries for testing purposes even in cases
+        where no performance benefit is expected.
+        The allowed values of <varname>force_parallel_mode</> are
+        <literal>off</> (use parallel mode only when it is expected to improve
+        performance), <literal>on</> (force parallel query for all queries
+        for which it is thought to be safe), and <literal>regress</> (like
+        on, but with additional behavior changes to facilitate automated
+        regression testing).
+       </para>
+
+       <para>
+        More specifically, setting this value to <literal>on</> will add
+        a <literal>Gather</> node to the top of any query plan for which this
+        appears to be safe, so that the query runs inside of a parallel worker.
+        Even when a parallel worker is not available or cannot be used,
+        operations such as starting a subtransaction that would be prohibited
+        in a parallel query context will be prohibited unless the planner
+        believes that this will cause the query to fail.  If failures or
+        unexpected results occur when this option is set, some functions used
+        by the query may need to be marked <literal>PARALLEL UNSAFE</literal>
+        (or, possibly, <literal>PARALLEL RESTRICTED</literal>).
+       </para>
+
+       <para>
+        Setting this value to <literal>regress</> has all of the same effects
+        as setting it to <literal>on</> plus some additional effect that are
+        intended to facilitate automated regression testing.  Normally,
+        messages from a parallel worker are prefixed with a context line,
+        but a setting of <literal>regress</> suppresses this to guarantee
+        reproducible results.  Also, the <literal>Gather</> nodes added to
+        plans by this setting are hidden from the <literal>EXPLAIN</> output
+        so that the output matches what would be obtained if this setting
+        were turned <literal>off</>.
        </para>
       </listitem>
      </varlistentry>

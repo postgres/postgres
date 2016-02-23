@@ -1,6 +1,454 @@
 <!-- doc/src/sgml/release-9.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-5-1">
+  <title>Release 9.5.1</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-02-11</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.5.0.
+   For information about new features in the 9.5 major release, see
+   <xref linkend="release-9-5">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.5.1</title>
+
+   <para>
+    A dump/restore is not required for those running 9.5.X.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3bb3f42f3] 2016-02-08 10:25:40 -0500
+Branch: REL9_5_STABLE [a61de2bc1] 2016-02-08 10:25:40 -0500
+Branch: REL9_4_STABLE [fdc3139e2] 2016-02-08 10:25:40 -0500
+Branch: REL9_3_STABLE [6403a6b74] 2016-02-08 10:25:40 -0500
+Branch: REL9_2_STABLE [e93516cf7] 2016-02-08 10:25:40 -0500
+Branch: REL9_1_STABLE [98d6b7305] 2016-02-08 10:25:40 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix infinite loops and buffer-overrun problems in regular expressions
+      (Tom Lane)
+     </para>
+
+     <para>
+      Very large character ranges in bracket expressions could cause
+      infinite loops in some cases, and memory overwrites in other cases.
+      (CVE-2016-0773)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f867ce551] 2016-02-07 12:29:32 -0500
+Branch: REL9_5_STABLE [129db3cbe] 2016-02-07 12:29:17 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix an oversight that caused hash joins to miss joining to some tuples
+      of the inner relation in rare cases (Tomas Vondra, Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [a6897efab] 2016-02-08 11:03:31 +0100
+Branch: REL9_5_STABLE [87dbc72a7] 2016-02-08 11:03:37 +0100
+-->
+
+    <listitem>
+     <para>
+      Avoid pushdown of <literal>HAVING</> clauses when grouping sets are
+      used (Andrew Gierth)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [cc2ca9319] 2016-02-07 14:57:24 -0500
+Branch: REL9_5_STABLE [82406d6ff] 2016-02-07 14:57:24 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix deparsing of <literal>ON CONFLICT</> arbiter <literal>WHERE</>
+      clauses (Peter Geoghegan)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b8682a715] 2016-01-26 15:38:33 -0500
+Branch: REL9_5_STABLE [2acb682f6] 2016-01-26 15:38:33 -0500
+Branch: REL9_4_STABLE [2b3983158] 2016-01-26 15:38:33 -0500
+Branch: REL9_3_STABLE [9bbfca8fd] 2016-01-26 15:38:33 -0500
+Branch: REL9_2_STABLE [3a7af9d73] 2016-01-26 15:38:33 -0500
+Branch: REL9_1_STABLE [b043df093] 2016-01-26 15:38:33 -0500
+-->
+
+    <listitem>
+     <para>
+      Make <literal>%h</> and <literal>%r</> escapes
+      in <varname>log_line_prefix</> work for messages emitted due
+      to <varname>log_connections</> (Tom Lane)
+     </para>
+
+     <para>
+      Previously, <literal>%h</>/<literal>%r</> started to work just after a
+      new session had emitted the <quote>connection received</> log message;
+      now they work for that message too.
+     </para>
+    </listitem>
+
+<!--
+Author: Magnus Hagander <magnus@hagander.net>
+Branch: master [6a61d1ff9] 2016-01-14 13:06:03 +0100
+Branch: REL9_5_STABLE [3276ca303] 2016-01-14 13:07:20 +0100
+Branch: REL9_4_STABLE [ab49f87d5] 2016-01-14 13:07:35 +0100
+Branch: REL9_3_STABLE [77d8edcf5] 2016-01-14 13:07:45 +0100
+Branch: REL9_2_STABLE [df0bd5a0f] 2016-01-14 13:07:55 +0100
+Branch: REL9_1_STABLE [b1c0f92eb] 2016-01-14 13:08:10 +0100
+-->
+
+    <listitem>
+     <para>
+      Avoid leaking a token handle during SSPI authentication
+      (Christian Ullrich)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7e2247047] 2016-01-29 10:28:02 +0100
+Branch: REL9_5_STABLE [56251f396] 2016-01-29 10:28:02 +0100
+Branch: REL9_4_STABLE [5849b6e32] 2016-01-29 10:28:02 +0100
+Branch: REL9_3_STABLE [db678ca16] 2016-01-29 10:28:03 +0100
+Branch: REL9_2_STABLE [a362cc2e3] 2016-01-29 10:28:03 +0100
+Branch: REL9_1_STABLE [ed5f57218] 2016-01-29 10:28:03 +0100
+-->
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s <literal>\det</> command to interpret its
+      pattern argument the same way as other <literal>\d</> commands with
+      potentially schema-qualified patterns do (Reece Hart)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [a96761391] 2016-01-07 11:59:08 -0300
+Branch: REL9_5_STABLE [744d01c9a] 2016-01-07 11:59:08 -0300
+Branch: REL9_4_STABLE [c7aca3d45] 2016-01-07 11:59:08 -0300
+Branch: REL9_3_STABLE [74d4009b8] 2016-01-07 11:59:08 -0300
+Branch: REL9_2_STABLE [5c4cbd5d1] 2016-01-07 11:59:08 -0300
+Branch: REL9_1_STABLE [b96f6f444] 2016-01-07 11:59:08 -0300
+-->
+
+    <listitem>
+     <para>
+      In <application>pg_ctl</> on Windows, check service status to decide
+      where to send output, rather than checking if standard output is a
+      terminal (Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e72d7d853] 2016-01-13 18:55:27 -0500
+Branch: REL9_5_STABLE [c42df2d46] 2016-01-13 18:55:27 -0500
+Branch: REL9_4_STABLE [7393208b5] 2016-01-13 18:55:27 -0500
+Branch: REL9_3_STABLE [b87403f70] 2016-01-13 18:55:27 -0500
+Branch: REL9_2_STABLE [be2b27651] 2016-01-13 18:55:27 -0500
+Branch: REL9_1_STABLE [5108013db] 2016-01-13 18:55:27 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix assorted corner-case bugs in <application>pg_dump</>'s processing
+      of extension member objects (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [df43fcf45] 2016-01-22 20:04:35 -0300
+Branch: REL9_5_STABLE [1e910cf5b] 2016-01-22 20:04:35 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix improper quoting of domain constraint names
+      in <application>pg_dump</> (Elvis Pranskevichus)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0ed707e9b] 2016-02-04 00:26:10 -0500
+Branch: REL9_5_STABLE [b99dd7170] 2016-02-04 00:26:10 -0500
+Branch: REL9_4_STABLE [411e2b0d5] 2016-02-04 00:26:10 -0500
+Branch: REL9_3_STABLE [aefbc208b] 2016-02-04 00:26:10 -0500
+Branch: REL9_2_STABLE [4f58a7003] 2016-02-04 00:26:10 -0500
+Branch: REL9_1_STABLE [9c704632c] 2016-02-04 00:26:10 -0500
+-->
+
+    <listitem>
+     <para>
+      Make <application>pg_dump</> mark a view's triggers as needing to be
+      processed after its rule, to prevent possible failure during
+      parallel <application>pg_restore</> (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [64f5edca2] 2016-02-01 08:23:41 -0500
+Branch: REL9_5_STABLE [829757c8a] 2016-02-01 08:26:07 -0500
+Branch: REL9_4_STABLE [c33d1a8d5] 2016-02-03 09:15:29 -0500
+Branch: REL9_3_STABLE [014796aa3] 2016-02-03 09:19:58 -0500
+Branch: REL9_2_STABLE [b63a4f418] 2016-02-03 09:21:44 -0500
+Branch: REL9_1_STABLE [4c8b07d3c] 2016-02-03 09:25:34 -0500
+-->
+
+    <listitem>
+     <para>
+      Install guards in <application>pgbench</> against corner-case overflow
+      conditions during evaluation of script-specified division or modulo
+      operators (Fabien Coelho, Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [4aecd22d3] 2016-01-05 17:25:12 -0300
+Branch: REL9_5_STABLE [7ef311eb4] 2016-01-05 17:25:12 -0300
+-->
+
+    <listitem>
+     <para>
+      Suppress useless warning message when <application>pg_receivexlog</>
+      connects to a pre-9.4 server (Marco Nenciarini)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [866566a69] 2016-01-11 19:55:39 -0500
+Branch: REL9_5_STABLE [db8fa56d6] 2016-01-11 19:55:39 -0500
+Branch: REL9_4_STABLE [22815752e] 2016-01-11 19:55:40 -0500
+Branch: REL9_3_STABLE [0ddeaba7e] 2016-01-11 19:55:40 -0500
+Branch: REL9_2_STABLE [3843ba510] 2016-01-11 19:55:40 -0500
+Branch: master [fb6fcbd33] 2016-01-11 20:06:36 -0500
+Branch: REL9_5_STABLE [5ef26b8de] 2016-01-11 20:06:47 -0500
+-->
+
+    <listitem>
+     <para>
+      Avoid dump/reload problems when using both <application>plpython2</>
+      and <application>plpython3</> (Tom Lane)
+     </para>
+
+     <para>
+      In principle, both versions of <application>PL/Python</> can be used in
+      the same database, though not in the same session (because the two
+      versions of <application>libpython</> cannot safely be used concurrently).
+      However, <application>pg_restore</> and <application>pg_upgrade</> both
+      do things that can fall foul of the same-session restriction.  Work
+      around that by changing the timing of the check.
+     </para>
+    </listitem>
+
+<!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: REL9_4_STABLE [f1b898759] 2015-11-14 13:43:43 -0500
+Branch: REL9_3_STABLE [a37ab812c] 2015-11-14 13:44:09 -0500
+Branch: REL9_2_STABLE [82076c1e4] 2015-11-14 13:53:26 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_5_STABLE [a66c1fcdd] 2016-01-08 11:39:28 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix <application>PL/Python</> regression tests to pass with Python 3.5
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [f4aa3a18a] 2016-02-05 20:22:51 -0500
+Branch: REL9_5_STABLE [0089dd34a] 2016-02-05 20:23:04 -0500
+Branch: REL9_4_STABLE [ed6deeb7a] 2016-02-05 20:23:07 -0500
+Branch: REL9_3_STABLE [34e91736b] 2016-02-05 20:23:11 -0500
+Branch: REL9_2_STABLE [de9766d39] 2016-02-05 20:23:14 -0500
+Branch: REL9_1_STABLE [b1f591c50] 2016-02-05 20:23:19 -0500
+-->
+
+    <listitem>
+     <para>
+      Prevent certain <application>PL/Java</> parameters from being set by
+      non-superusers (Noah Misch)
+     </para>
+
+     <para>
+      This change mitigates a <application>PL/Java</> security bug
+      (CVE-2016-0766), which was fixed in <application>PL/Java</> by marking
+      these parameters as superuser-only.  To fix the security hazard for
+      sites that update <productname>PostgreSQL</> more frequently
+      than <application>PL/Java</>, make the core code aware of them also.
+     </para>
+    </listitem>
+
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [7a58d19b0] 2016-02-01 13:21:00 +0100
+Branch: REL9_5_STABLE [40482e606] 2016-02-01 13:20:37 +0100
+Branch: REL9_3_STABLE [0b55fef39] 2016-02-01 13:19:10 +0100
+Branch: REL9_2_STABLE [d9ce5d201] 2016-02-01 13:19:34 +0100
+Branch: REL9_1_STABLE [79782b407] 2016-02-01 13:19:43 +0100
+Author: Andres Freund <andres@anarazel.de>
+Branch: REL9_4_STABLE [33b26426e] 2016-02-08 11:10:14 +0100
+-->
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>-supplied header files to not contain comments
+      continued from a preprocessor directive line onto the next line
+      (Michael Meskes)
+     </para>
+
+     <para>
+      Such a comment is rejected by <application>ecpg</>.  It's not yet clear
+      whether <application>ecpg</> itself should be changed.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e6ecc93a1] 2016-02-03 01:39:48 -0500
+Branch: REL9_5_STABLE [1c291624b] 2016-02-03 01:39:08 -0500
+Branch: REL9_4_STABLE [aa223a037] 2016-02-03 01:39:08 -0500
+Branch: REL9_3_STABLE [1f2b195eb] 2016-02-03 01:39:08 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix <function>hstore_to_json_loose()</>'s test for whether
+      an <type>hstore</> value can be converted to a JSON number (Tom Lane)
+     </para>
+
+     <para>
+      Previously this function could be fooled by non-alphanumeric trailing
+      characters, leading to emitting syntactically-invalid JSON.
+     </para>
+    </listitem>
+
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [9418d79a7] 2016-02-04 21:17:53 -0500
+Branch: REL9_5_STABLE [453d40817] 2016-02-04 21:17:46 -0500
+Branch: REL9_4_STABLE [1f3294c22] 2016-02-04 21:15:57 -0500
+Branch: master [37c84570b] 2016-02-04 22:27:13 -0500
+Branch: REL9_5_STABLE [d160e2a34] 2016-02-04 22:27:38 -0500
+Branch: REL9_4_STABLE [2099b911d] 2016-02-04 22:27:47 -0500
+-->
+
+    <listitem>
+     <para>
+      In <filename>contrib/postgres_fdw</>, fix bugs triggered by use
+      of <literal>tableoid</> in data-modifying commands (Etsuro Fujita,
+      Robert Haas)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a396144ac] 2016-01-22 11:53:06 -0500
+Branch: REL9_5_STABLE [47acf3add] 2016-01-22 11:53:06 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix ill-advised restriction of <literal>NAMEDATALEN</> to be less
+      than 256 (Robert Haas, Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3343ea9e8] 2016-01-05 15:47:05 -0500
+Branch: REL9_5_STABLE [8805af088] 2016-01-05 15:47:05 -0500
+Branch: REL9_4_STABLE [8c558b2e9] 2016-01-05 15:47:05 -0500
+Branch: REL9_3_STABLE [6d899f098] 2016-01-05 15:47:05 -0500
+-->
+
+    <listitem>
+     <para>
+      Improve reproducibility of build output by ensuring filenames are given
+      to the linker in a fixed order (Christoph Berg)
+     </para>
+
+     <para>
+      This avoids possible bitwise differences in the produced executable
+      files from one build to the next.
+     </para>
+    </listitem>
+
+<!--
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [216d56843] 2016-01-19 23:30:29 -0500
+Branch: REL9_5_STABLE [34bda20ae] 2016-01-19 23:30:29 -0500
+Branch: REL9_4_STABLE [8b3d52801] 2016-01-19 23:30:29 -0500
+Branch: REL9_3_STABLE [7a47262ce] 2016-01-19 23:30:28 -0500
+Branch: REL9_2_STABLE [49d65e857] 2016-01-19 23:30:28 -0500
+Branch: REL9_1_STABLE [b1bc38144] 2016-01-19 23:30:28 -0500
+-->
+
+    <listitem>
+     <para>
+      Ensure that <filename>dynloader.h</> is included in the installed
+      header files in MSVC builds (Bruce Momjian, Michael Paquier)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a73311e52] 2016-02-05 10:59:09 -0500
+Branch: REL9_5_STABLE [37e694632] 2016-02-05 10:59:21 -0500
+Branch: REL9_4_STABLE [31b792f61] 2016-02-05 10:59:26 -0500
+Branch: REL9_3_STABLE [9a3475b84] 2016-02-05 10:59:31 -0500
+Branch: REL9_2_STABLE [32f17a2e7] 2016-02-05 10:59:35 -0500
+Branch: REL9_1_STABLE [6887d72d0] 2016-02-05 10:59:39 -0500
+-->
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016a for
+      DST law changes in Cayman Islands, Metlakatla, and Trans-Baikal
+      Territory (Zabaykalsky Krai), plus historical corrections for Pakistan.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-5">
   <title>Release 9.5</title>
 
@@ -1322,7 +1770,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
       <listitem>
 <!--
-2015-06-21 [ad89a5d] Alvaro..: Add transforms to pg_get_object_address and fr..
+2014-12-23 [7eca575] Alvaro..: get_object_address: separate domain constraints..
 -->
        <para>
         Support comments on <link linkend="SQL-CREATEDOMAIN">domain

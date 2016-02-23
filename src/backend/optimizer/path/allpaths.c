@@ -919,19 +919,20 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * CE failed, so finish copying/modifying targetlist and join quals.
 		 *
-		 * Note: the resulting childrel->reltargetlist may contain arbitrary
-		 * expressions, which otherwise would not occur in a reltargetlist.
+		 * Note: the resulting childrel->reltarget.exprs may contain arbitrary
+		 * expressions, which otherwise would not occur in a rel's targetlist.
 		 * Code that might be looking at an appendrel child must cope with
-		 * such.  (Normally, a reltargetlist would only include Vars and
-		 * PlaceHolderVars.)
+		 * such.  (Normally, a rel's targetlist would only include Vars and
+		 * PlaceHolderVars.)  XXX we do not bother to update the cost or width
+		 * fields of childrel->reltarget; not clear if that would be useful.
 		 */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->joininfo,
 								   appinfo);
-		childrel->reltargetlist = (List *)
+		childrel->reltarget.exprs = (List *)
 			adjust_appendrel_attrs(root,
-								   (Node *) rel->reltargetlist,
+								   (Node *) rel->reltarget.exprs,
 								   appinfo);
 
 		/*
@@ -976,7 +977,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		Assert(childrel->rows > 0);
 
 		parent_rows += childrel->rows;
-		parent_size += childrel->width * childrel->rows;
+		parent_size += childrel->reltarget.width * childrel->rows;
 
 		/*
 		 * Accumulate per-column estimates too.  We need not do anything for
@@ -984,10 +985,10 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * Var, or we didn't record a width estimate for it, we have to fall
 		 * back on a datatype-based estimate.
 		 *
-		 * By construction, child's reltargetlist is 1-to-1 with parent's.
+		 * By construction, child's targetlist is 1-to-1 with parent's.
 		 */
-		forboth(parentvars, rel->reltargetlist,
-				childvars, childrel->reltargetlist)
+		forboth(parentvars, rel->reltarget.exprs,
+				childvars, childrel->reltarget.exprs)
 		{
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Node	   *childvar = (Node *) lfirst(childvars);
@@ -1022,7 +1023,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 
 		Assert(parent_rows > 0);
 		rel->rows = parent_rows;
-		rel->width = rint(parent_size / parent_rows);
+		rel->reltarget.width = rint(parent_size / parent_rows);
 		for (i = 0; i < nattrs; i++)
 			rel->attr_widths[i] = rint(parent_attrsizes[i] / parent_rows);
 
@@ -1495,7 +1496,7 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 {
 	/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
 	rel->rows = 0;
-	rel->width = 0;
+	rel->reltarget.width = 0;
 
 	/* Discard any pre-existing paths; no further need for them */
 	rel->pathlist = NIL;
@@ -1728,11 +1729,11 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		ListCell   *lc;
 
 		/*
-		 * Is there a Var for it in reltargetlist?	If not, the query did not
-		 * reference the ordinality column, or at least not in any way that
-		 * would be interesting for sorting.
+		 * Is there a Var for it in rel's targetlist?  If not, the query did
+		 * not reference the ordinality column, or at least not in any way
+		 * that would be interesting for sorting.
 		 */
-		foreach(lc, rel->reltargetlist)
+		foreach(lc, rel->reltarget.exprs)
 		{
 			Var		   *node = (Var *) lfirst(lc);
 
@@ -2676,11 +2677,11 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 	 * query.
 	 *
 	 * Add all the attributes needed for joins or final output.  Note: we must
-	 * look at reltargetlist, not the attr_needed data, because attr_needed
+	 * look at rel's targetlist, not the attr_needed data, because attr_needed
 	 * isn't computed for inheritance child rels, cf set_append_rel_size().
 	 * (XXX might be worth changing that sometime.)
 	 */
-	pull_varattnos((Node *) rel->reltargetlist, rel->relid, &attrs_used);
+	pull_varattnos((Node *) rel->reltarget.exprs, rel->relid, &attrs_used);
 
 	/* Add all the attributes used by un-pushed-down restriction clauses. */
 	foreach(lc, rel->baserestrictinfo)

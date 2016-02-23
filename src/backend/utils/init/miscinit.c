@@ -724,6 +724,17 @@ UnlinkLockFiles(int status, Datum arg)
 	}
 	/* Since we're about to exit, no need to reclaim storage */
 	lock_files = NIL;
+
+	/*
+	 * Lock file removal should always be the last externally visible action
+	 * of a postmaster or standalone backend, while we won't come here at all
+	 * when exiting postmaster child processes.  Therefore, this is a good
+	 * place to log completion of shutdown.  We could alternatively teach
+	 * proc_exit() to do it, but that seems uglier.  In a standalone backend,
+	 * use NOTICE elevel to be less chatty.
+	 */
+	ereport(IsPostmasterEnvironment ? LOG : NOTICE,
+			(errmsg("database system is shut down")));
 }
 
 /*

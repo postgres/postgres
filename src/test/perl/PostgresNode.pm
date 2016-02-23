@@ -404,7 +404,7 @@ sub poll_query_until
 {
 	my ($self, $dbname, $query) = @_;
 
-	my $max_attempts = 30;
+	my $max_attempts = 90;
 	my $attempts     = 0;
 	my ($stdout, $stderr);
 
@@ -426,7 +426,7 @@ sub poll_query_until
 		$attempts++;
 	}
 
-	# The query result didn't change in 30 seconds. Give up. Print the stderr
+	# The query result didn't change in 90 seconds. Give up. Print the stderr
 	# from the last attempt, hopefully that's useful for debugging.
 	diag $stderr;
 	return 0;

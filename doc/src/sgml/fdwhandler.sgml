@@ -341,6 +341,20 @@ GetForeignJoinPaths (PlannerInfo *root,
      See <xref linkend="fdw-planning"> for additional information.
     </para>
 
+    <para>
+<programlisting>
+void
+GetExistingLocalJoinPath(RelOptInfo *joinrel)
+</programlisting>
+     The function returns copy of a local join path, which can be converted
+     into an alternative local join plan, which may be useful when
+     implementing a <literal>RecheckForeignScan</> method.  The function
+     searches for an unparameterized path in the <literal>pathlist</> of given
+     <literal>joinrel</>. If it does not find such a path, it returns NULL, in
+     which case a foreign data wrapper may build the local path by itself or
+     may choose not to create access paths for that join.
+    </para>
+
    </sect2>
 
    <sect2 id="fdw-callbacks-update">
@@ -794,6 +808,9 @@ RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
      can be executed and the resulting tuple can be stored in the slot.
      This plan need not be efficient since no base table will return more
      than one row; for example, it may implement all joins as nested loops.
+     <literal>GetExistingLocalJoinPath</> may be used to search existing paths
+     for a suitable local join path, which can be used as the alternative
+     local join plan.
     </para>
    </sect2>
 
@@ -955,6 +972,53 @@ ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
 
    </sect2>
 
+   <sect2 id="fdw-callbacks-parallel">
+    <title>FDW Routines for Parallel Execution</title>
+    <para>
+     A <structname>ForeignScan</> node can, optionally, support parallel
+     execution.  A parallel <structname>ForeignScan</> will be executed
+     in multiple processes and should return each row only once across
+     all cooperating processes.  To do this, processes can coordinate through
+     fixed size chunks of dynamic shared memory.  This shared memory is not
+     guaranteed to be mapped at the same address in every process, so pointers
+     may not be used.  The following callbacks are all optional in general,
+     but required if parallel execution is to be supported.
+    </para>
+
+    <para>
+<programlisting>
+Size
+EstimateDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt);
+</programlisting>
+    Estimate the amount of dynamic shared memory that will be required
+    for parallel operation.  This may be higher than the amount that will
+    actually be used, but it must not be lower.  The return value is in bytes.
+    </para>
+
+    <para>
+<programlisting>
+void
+InitializeDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt,
+                         void *coordinate);
+</programlisting>
+    Initialize the dynamic shared memory that will be required for parallel
+    operation; <literal>coordinate</> points to an amount of allocated space
+    equal to the return value of <function>EstimateDSMForeignScan</>.
+   </para>
+
+   <para>
+<programlisting>
+void
+InitializeWorkerForeignScan(ForeignScanState *node, shm_toc *toc,
+                            void *coordinate);
+</programlisting>
+    Initialize a parallel worker's custom state based on the shared state
+    set up in the leader by <literal>InitializeDSMForeignScan</>.
+    This callback is optional, and needs only be supplied if this
+    custom path supports parallel execution.
+   </para>
+   </sect2>
+
    </sect1>
 
    <sect1 id="fdw-helpers">
@@ -1022,6 +1086,20 @@ GetForeignTable(Oid relid);
 
     <para>
 <programlisting>
+UserMapping *
+GetUserMappingById(Oid umid);
+</programlisting>
+
+     This function returns the <structname>UserMapping</structname> object for
+     the given user mapping OID.  The OID of a user mapping for a foreign scan
+     is available in the <structname>RelOptInfo</structname>.
+     If there is no mapping for the OID, this function will throw an error.
+     A <structname>UserMapping</structname> object contains properties of the
+     user mapping (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
 List *
 GetForeignColumnOptions(Oid relid, AttrNumber attnum);
 </programlisting>
@@ -1081,7 +1159,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      it contains restriction quals (<literal>WHERE</> clauses) that should be
      used to filter the rows to be fetched.  (The FDW itself is not required
      to enforce these quals, as the core executor can check them instead.)
-     <literal>baserel-&gt;reltargetlist</> can be used to determine which
+     <literal>baserel-&gt;reltarget.exprs</> can be used to determine which
      columns need to be fetched; but note that it only lists columns that
      have to be emitted by the <structname>ForeignScan</> plan node, not
      columns that are used in qual evaluation but not output by the query.

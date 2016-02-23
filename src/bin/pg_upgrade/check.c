@@ -195,9 +195,10 @@ output_completion_banner(char *analyze_script_file_name,
 			   deletion_script_file_name);
 	else
 		pg_log(PG_REPORT,
-			   "Could not create a script to delete the old cluster's data\n"
-		  "files because user-defined tablespaces exist in the old cluster\n"
-		"directory.  The old cluster's contents must be deleted manually.\n");
+		  "Could not create a script to delete the old cluster's data files\n"
+		  "because user-defined tablespaces or the new cluster's data directory\n"
+		  "exist in the old cluster directory.  The old cluster's contents must\n"
+		  "be deleted manually.\n");
 }
 
 
@@ -496,18 +497,35 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 {
 	FILE	   *script = NULL;
 	int			tblnum;
-	char		old_cluster_pgdata[MAXPGPATH];
+	char		old_cluster_pgdata[MAXPGPATH], new_cluster_pgdata[MAXPGPATH];
 
 	*deletion_script_file_name = psprintf("%sdelete_old_cluster.%s",
 										  SCRIPT_PREFIX, SCRIPT_EXT);
+
+	strlcpy(old_cluster_pgdata, old_cluster.pgdata, MAXPGPATH);
+	canonicalize_path(old_cluster_pgdata);
+
+	strlcpy(new_cluster_pgdata, new_cluster.pgdata, MAXPGPATH);
+	canonicalize_path(new_cluster_pgdata);
+
+	/* Some people put the new data directory inside the old one. */
+	if (path_is_prefix_of_path(old_cluster_pgdata, new_cluster_pgdata))
+	{
+		pg_log(PG_WARNING,
+		   "\nWARNING:  new data directory should not be inside the old data directory, e.g. %s\n", old_cluster_pgdata);
+
+		/* Unlink file in case it is left over from a previous run. */
+		unlink(*deletion_script_file_name);
+		pg_free(*deletion_script_file_name);
+		*deletion_script_file_name = NULL;
+		return;
+	}
 
 	/*
 	 * Some users (oddly) create tablespaces inside the cluster data
 	 * directory.  We can't create a proper old cluster delete script in that
 	 * case.
 	 */
-	strlcpy(old_cluster_pgdata, old_cluster.pgdata, MAXPGPATH);
-	canonicalize_path(old_cluster_pgdata);
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
 	{
 		char		old_tablespace_dir[MAXPGPATH];

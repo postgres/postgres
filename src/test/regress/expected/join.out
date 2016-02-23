@@ -2331,6 +2331,34 @@ select tt1.*, tt2.* from tt2 right join tt1 on tt1.joincol = tt2.joincol;
 reset enable_hashjoin;
 reset enable_nestloop;
 --
+-- regression test for bug #13908 (hash join with skew tuples & nbatch increase)
+--
+set work_mem to '64kB';
+set enable_mergejoin to off;
+explain (costs off)
+select count(*) from tenk1 a, tenk1 b
+  where a.hundred = b.thousand and (b.fivethous % 10) < 10;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Aggregate
+   ->  Hash Join
+         Hash Cond: (a.hundred = b.thousand)
+         ->  Index Only Scan using tenk1_hundred on tenk1 a
+         ->  Hash
+               ->  Seq Scan on tenk1 b
+                     Filter: ((fivethous % 10) < 10)
+(7 rows)
+
+select count(*) from tenk1 a, tenk1 b
+  where a.hundred = b.thousand and (b.fivethous % 10) < 10;
+ count  
+--------
+ 100000
+(1 row)
+
+reset work_mem;
+reset enable_mergejoin;
+--
 -- regression test for 8.2 bug with improper re-ordering of left joins
 --
 create temp table tt3(f1 int, f2 text);
@@ -3915,12 +3943,14 @@ select d.* from d left join (select distinct * from b) s
 (1 row)
 
 -- join removal is not possible when the GROUP BY contains a column that is
--- not in the join condition
+-- not in the join condition.  (Note: as of 9.6, we notice that b.id is a
+-- primary key and so drop b.c_id from the GROUP BY of the resulting plan;
+-- but this happens too late for join removal in the outer plan level.)
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
-                 QUERY PLAN                  
----------------------------------------------
+              QUERY PLAN               
+---------------------------------------
  Merge Left Join
    Merge Cond: (d.a = s.id)
    ->  Sort
@@ -3930,7 +3960,7 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
          Sort Key: s.id
          ->  Subquery Scan on s
                ->  HashAggregate
-                     Group Key: b.id, b.c_id
+                     Group Key: b.id
                      ->  Seq Scan on b
 (11 rows)
 
@@ -4652,24 +4682,24 @@ select v.* from
   lateral (select x.q1,y.q1 union all select x.q2,y.q2) v(vx,vy);
         vx         |        vy         
 -------------------+-------------------
-               123 |                  
-               456 |                  
-               123 |  4567890123456789
-  4567890123456789 | -4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |  4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |               123
-  4567890123456789 |               123
-               123 |  4567890123456789
   4567890123456789 |               123
                123 |               456
-  4567890123456789 |  4567890123456789
-  4567890123456789 | -4567890123456789
-  4567890123456789 |  4567890123456789
-  4567890123456789 |  4567890123456789
+  4567890123456789 |               123
+               123 |  4567890123456789
   4567890123456789 |  4567890123456789
   4567890123456789 |               123
+               123 |  4567890123456789
+  4567890123456789 |               123
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+               123 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |                  
+               456 |                  
   4567890123456789 |                  
  -4567890123456789 |                  
 (20 rows)
@@ -4683,24 +4713,24 @@ select v.* from
   lateral (select x.q1,y.q1 from dual union all select x.q2,y.q2 from dual) v(vx,vy);
         vx         |        vy         
 -------------------+-------------------
-               123 |                  
-               456 |                  
-               123 |  4567890123456789
-  4567890123456789 | -4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |  4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |               123
-  4567890123456789 |               123
-               123 |  4567890123456789
   4567890123456789 |               123
                123 |               456
-  4567890123456789 |  4567890123456789
-  4567890123456789 | -4567890123456789
-  4567890123456789 |  4567890123456789
-  4567890123456789 |  4567890123456789
+  4567890123456789 |               123
+               123 |  4567890123456789
   4567890123456789 |  4567890123456789
   4567890123456789 |               123
+               123 |  4567890123456789
+  4567890123456789 |               123
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+               123 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |                  
+               456 |                  
   4567890123456789 |                  
  -4567890123456789 |                  
 (20 rows)

@@ -45,6 +45,127 @@
 
 
 /*
+ * Common subroutine for num_nulls() and num_nonnulls().
+ * Returns TRUE if successful, FALSE if function should return NULL.
+ * If successful, total argument count and number of nulls are
+ * returned into *nargs and *nulls.
+ */
+static bool
+count_nulls(FunctionCallInfo fcinfo,
+			int32 *nargs, int32 *nulls)
+{
+	int32		count = 0;
+	int			i;
+
+	/* Did we get a VARIADIC array argument, or separate arguments? */
+	if (get_fn_expr_variadic(fcinfo->flinfo))
+	{
+		ArrayType  *arr;
+		int			ndims,
+					nitems,
+				   *dims;
+		bits8	   *bitmap;
+
+		Assert(PG_NARGS() == 1);
+
+		/*
+		 * If we get a null as VARIADIC array argument, we can't say anything
+		 * useful about the number of elements, so return NULL.  This behavior
+		 * is consistent with other variadic functions - see concat_internal.
+		 */
+		if (PG_ARGISNULL(0))
+			return false;
+
+		/*
+		 * Non-null argument had better be an array.  We assume that any call
+		 * context that could let get_fn_expr_variadic return true will have
+		 * checked that a VARIADIC-labeled parameter actually is an array.  So
+		 * it should be okay to just Assert that it's an array rather than
+		 * doing a full-fledged error check.
+		 */
+		Assert(OidIsValid(get_base_element_type(get_fn_expr_argtype(fcinfo->flinfo, 0))));
+
+		/* OK, safe to fetch the array value */
+		arr = PG_GETARG_ARRAYTYPE_P(0);
+
+		/* Count the array elements */
+		ndims = ARR_NDIM(arr);
+		dims = ARR_DIMS(arr);
+		nitems = ArrayGetNItems(ndims, dims);
+
+		/* Count those that are NULL */
+		bitmap = ARR_NULLBITMAP(arr);
+		if (bitmap)
+		{
+			int			bitmask = 1;
+
+			for (i = 0; i < nitems; i++)
+			{
+				if ((*bitmap & bitmask) == 0)
+					count++;
+
+				bitmask <<= 1;
+				if (bitmask == 0x100)
+				{
+					bitmap++;
+					bitmask = 1;
+				}
+			}
+		}
+
+		*nargs = nitems;
+		*nulls = count;
+	}
+	else
+	{
+		/* Separate arguments, so just count 'em */
+		for (i = 0; i < PG_NARGS(); i++)
+		{
+			if (PG_ARGISNULL(i))
+				count++;
+		}
+
+		*nargs = PG_NARGS();
+		*nulls = count;
+	}
+
+	return true;
+}
+
+/*
+ * num_nulls()
+ *	Count the number of NULL arguments
+ */
+Datum
+pg_num_nulls(PG_FUNCTION_ARGS)
+{
+	int32		nargs,
+				nulls;
+
+	if (!count_nulls(fcinfo, &nargs, &nulls))
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(nulls);
+}
+
+/*
+ * num_nonnulls()
+ *	Count the number of non-NULL arguments
+ */
+Datum
+pg_num_nonnulls(PG_FUNCTION_ARGS)
+{
+	int32		nargs,
+				nulls;
+
+	if (!count_nulls(fcinfo, &nargs, &nulls))
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(nargs - nulls);
+}
+
+
+/*
  * current_database()
  *	Expose the current database to the user
  */

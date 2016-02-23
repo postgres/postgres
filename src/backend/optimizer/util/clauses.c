@@ -3489,7 +3489,7 @@ eval_const_expressions_mutator(Node *node,
 				 * can optimize field selection from a RowExpr construct.
 				 *
 				 * However, replacing a whole-row Var in this way has a
-				 * pitfall: if we've already built the reltargetlist for the
+				 * pitfall: if we've already built the rel targetlist for the
 				 * source relation, then the whole-row Var is scheduled to be
 				 * produced by the relation scan, but the simple Var probably
 				 * isn't, which will lead to a failure in setrefs.c.  This is

@@ -1,0 +1,36 @@
+Parsed test spec with 8 sessions
+
+starting permutation: s1a1 s2a2 s3a3 s4a4 s5a5 s6a6 s7a7 s8a8 s1a2 s2a3 s3a4 s4a5 s5a6 s6a7 s7a8 s8a1 s8c s7c s6c s5c s4c s3c s2c s1c
+step s1a1: LOCK TABLE a1;
+step s2a2: LOCK TABLE a2;
+step s3a3: LOCK TABLE a3;
+step s4a4: LOCK TABLE a4;
+step s5a5: LOCK TABLE a5;
+step s6a6: LOCK TABLE a6;
+step s7a7: LOCK TABLE a7;
+step s8a8: LOCK TABLE a8;
+step s1a2: LOCK TABLE a2; <waiting ...>
+step s2a3: LOCK TABLE a3; <waiting ...>
+step s3a4: LOCK TABLE a4; <waiting ...>
+step s4a5: LOCK TABLE a5; <waiting ...>
+step s5a6: LOCK TABLE a6; <waiting ...>
+step s6a7: LOCK TABLE a7; <waiting ...>
+step s7a8: LOCK TABLE a8; <waiting ...>
+step s8a1: LOCK TABLE a1; <waiting ...>
+step s8a1: <... completed>
+step s7a8: <... completed>
+error in steps s8a1 s7a8: ERROR:  deadlock detected
+step s8c: COMMIT;
+step s7c: COMMIT;
+step s6a7: <... completed>
+step s6c: COMMIT;
+step s5a6: <... completed>
+step s5c: COMMIT;
+step s4a5: <... completed>
+step s4c: COMMIT;
+step s3a4: <... completed>
+step s3c: COMMIT;
+step s2a3: <... completed>
+step s2c: COMMIT;
+step s1a2: <... completed>
+step s1c: COMMIT;

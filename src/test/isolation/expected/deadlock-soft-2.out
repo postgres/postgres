@@ -1,0 +1,17 @@
+Parsed test spec with 4 sessions
+
+starting permutation: s1a s2a s2b s3a s4a s1b s1c s2c s3c s4c
+step s1a: LOCK TABLE a1 IN SHARE UPDATE EXCLUSIVE MODE;
+step s2a: LOCK TABLE a2 IN ACCESS SHARE MODE;
+step s2b: LOCK TABLE a1 IN SHARE UPDATE EXCLUSIVE MODE; <waiting ...>
+step s3a: LOCK TABLE a2 IN ACCESS EXCLUSIVE MODE; <waiting ...>
+step s4a: LOCK TABLE a2 IN ACCESS EXCLUSIVE MODE; <waiting ...>
+step s1b: LOCK TABLE a2 IN SHARE UPDATE EXCLUSIVE MODE; <waiting ...>
+step s1b: <... completed>
+step s1c: COMMIT;
+step s2b: <... completed>
+step s2c: COMMIT;
+step s3a: <... completed>
+step s3c: COMMIT;
+step s4a: <... completed>
+step s4c: COMMIT;

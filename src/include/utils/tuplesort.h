@@ -93,13 +93,13 @@ extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
 extern void tuplesort_performsort(Tuplesortstate *state);
 
 extern bool tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
-					   TupleTableSlot *slot);
+					   TupleTableSlot *slot, Datum *abbrev);
 extern HeapTuple tuplesort_getheaptuple(Tuplesortstate *state, bool forward,
 					   bool *should_free);
 extern IndexTuple tuplesort_getindextuple(Tuplesortstate *state, bool forward,
 						bool *should_free);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
-				   Datum *val, bool *isNull);
+				   Datum *val, bool *isNull, Datum *abbrev);
 
 extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
 					 bool forward);

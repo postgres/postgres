@@ -23,6 +23,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "nodes/extensible.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -334,6 +335,7 @@ _copyGather(const Gather *from)
 	 */
 	COPY_SCALAR_FIELD(num_workers);
 	COPY_SCALAR_FIELD(single_copy);
+	COPY_SCALAR_FIELD(invisible);
 
 	return newnode;
 }
@@ -4165,6 +4167,27 @@ _copyList(const List *from)
 }
 
 /* ****************************************************************
+ *					extensible.h copy functions
+ * ****************************************************************
+ */
+static ExtensibleNode *
+_copyExtensibleNode(const ExtensibleNode *from)
+{
+	ExtensibleNode	   *newnode;
+	const ExtensibleNodeMethods *methods;
+
+	methods = GetExtensibleNodeMethods(from->extnodename, false);
+	newnode = (ExtensibleNode *) newNode(methods->node_size,
+										 T_ExtensibleNode);
+	COPY_STRING_FIELD(extnodename);
+
+	/* copy the private fields */
+	methods->nodeCopy(newnode, from);
+
+	return newnode;
+}
+
+/* ****************************************************************
  *					value.h copy functions
  * ****************************************************************
  */
@@ -4541,6 +4564,13 @@ copyObject(const void *from)
 		case T_IntList:
 		case T_OidList:
 			retval = list_copy(from);
+			break;
+
+			/*
+			 * EXTENSIBLE NODES
+			 */
+		case T_ExtensibleNode:
+			retval = _copyExtensibleNode(from);
 			break;
 
 			/*

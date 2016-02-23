@@ -586,6 +586,100 @@ The caller can then send a cancellation signal.  This implements the
 principle that autovacuum has a low locking priority (eg it must not block
 DDL on the table).
 
+Group Locking
+-------------
+
+As if all of that weren't already complicated enough, PostgreSQL now supports
+parallelism (see src/backend/access/transam/README.parallel), which means that
+we might need to resolve deadlocks that occur between gangs of related
+processes rather than individual processes.  This doesn't change the basic
+deadlock detection algorithm very much, but it makes the bookkeeping more
+complicated.
+
+We choose to regard locks held by processes in the same parallel group as
+non-conflicting.  This means that two processes in a parallel group can hold a
+self-exclusive lock on the same relation at the same time, or one process can
+acquire an AccessShareLock while the other already holds AccessExclusiveLock.
+This might seem dangerous and could be in some cases (more on that below), but
+if we didn't do this then parallel query would be extremely prone to
+self-deadlock.  For example, a parallel query against a relation on which the
+leader already had AccessExclusiveLock would hang, because the workers would
+try to lock the same relation and be blocked by the leader; yet the leader
+can't finish until it receives completion indications from all workers.  An
+undetected deadlock results.  This is far from the only scenario where such a
+problem happens.  The same thing will occur if the leader holds only
+AccessShareLock, the worker seeks AccessShareLock, but between the time the
+leader attempts to acquire the lock and the time the worker attempts to
+acquire it, some other process queues up waiting for an AccessExclusiveLock.
+In this case, too, an indefinite hang results.
+
+It might seem that we could predict which locks the workers will attempt to
+acquire and ensure before going parallel that those locks would be acquired
+successfully.  But this is very difficult to make work in a general way.  For
+example, a parallel worker's portion of the query plan could involve an
+SQL-callable function which generates a query dynamically, and that query
+might happen to hit a table on which the leader happens to hold
+AccessExclusiveLock.  By imposing enough restrictions on what workers can do,
+we could eventually create a situation where their behavior can be adequately
+restricted, but these restrictions would be fairly onerous, and even then, the
+system required to decide whether the workers will succeed at acquiring the
+necessary locks would be complex and possibly buggy.
+
+So, instead, we take the approach of deciding that locks within a lock group
+do not conflict.  This eliminates the possibility of an undetected deadlock,
+but also opens up some problem cases: if the leader and worker try to do some
+operation at the same time which would ordinarily be prevented by the
+heavyweight lock mechanism, undefined behavior might result.  In practice, the
+dangers are modest.  The leader and worker share the same transaction,
+snapshot, and combo CID hash, and neither can perform any DDL or, indeed,
+write any data at all.  Thus, for either to read a table locked exclusively by
+the other is safe enough.  Problems would occur if the leader initiated
+parallelism from a point in the code at which it had some backend-private
+state that made table access from another process unsafe, for example after
+calling SetReindexProcessing and before calling ResetReindexProcessing,
+catastrophe could ensue, because the worker won't have that state.  Similarly,
+problems could occur with certain kinds of non-relation locks, such as
+relation extension locks.  It's no safer for two related processes to extend
+the same relation at the time than for unrelated processes to do the same.
+However, since parallel mode is strictly read-only at present, neither this
+nor most of the similar cases can arise at present.  To allow parallel writes,
+we'll either need to (1) further enhance the deadlock detector to handle those
+types of locks in a different way than other types; or (2) have parallel
+workers use some other mutual exclusion method for such cases; or (3) revise
+those cases so that they no longer use heavyweight locking in the first place
+(which is not a crazy idea, given that such lock acquisitions are not expected
+to deadlock and that heavyweight lock acquisition is fairly slow anyway).
+
+Group locking adds three new members to each PGPROC: lockGroupLeader,
+lockGroupMembers, and lockGroupLink. A PGPROC's lockGroupLeader is NULL for
+processes not involved in parallel query. When a process wants to cooperate
+with parallel workers, it becomes a lock group leader, which means setting
+this field to point to its own PGPROC. When a parallel worker starts up, it
+points this field at the leader. The lockGroupMembers field is only used in
+the leader; it is a list of the member PGPROCs of the lock group (the leader
+and all workers). The lockGroupLink field is the list link for this list.
+
+All three of these fields are considered to be protected by a lock manager
+partition lock.  The partition lock that protects these fields within a given
+lock group is chosen by taking the leader's pgprocno modulo the number of lock
+manager partitions.  This unusual arrangement has a major advantage: the
+deadlock detector can count on the fact that no lockGroupLeader field can
+change while the deadlock detector is running, because it knows that it holds
+all the lock manager locks.  Also, holding this single lock allows safe
+manipulation of the lockGroupMembers list for the lock group.
+
+We need an additional interlock when setting these fields, because a newly
+started parallel worker has to try to join the leader's lock group, but it
+has no guarantee that the group leader is still alive by the time it gets
+started.  We try to ensure that the parallel leader dies after all workers
+in normal cases, but also that the system could survive relatively intact
+if that somehow fails to happen.  This is one of the precautions against
+such a scenario: the leader relays its PGPROC and also its PID to the
+worker, and the worker fails to join the lock group unless the given PGPROC
+still has the same PID and is still a lock group leader.  We assume that
+PIDs are not recycled quickly enough for this interlock to fail.
+
+
 User Locks (Advisory Locks)
 ---------------------------
 

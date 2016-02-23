@@ -159,7 +159,7 @@ GetConnection(UserMapping *user, bool will_prep_stmt)
 		entry->have_error = false;
 		entry->conn = connect_pg_server(server, user);
 
-		elog(DEBUG3, "new postgres_fdw connection %p for server \"%s\" (user mapping oid %d, userid %d)",
+		elog(DEBUG3, "new postgres_fdw connection %p for server \"%s\" (user mapping oid %u, userid %u)",
 			 entry->conn, server->servername, user->umid, user->userid);
 	}
 

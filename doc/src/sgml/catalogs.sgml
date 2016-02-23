@@ -7350,6 +7350,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-config"><structname>pg_config</structname></link></entry>
+      <entry>compile-time configuration parameters</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
       <entry>open cursors</entry>
      </row>
@@ -7371,7 +7376,7 @@
 
      <row>
       <entry><link linkend="view-pg-locks"><structname>pg_locks</structname></link></entry>
-      <entry>currently held locks</entry>
+      <entry>locks currently held or awaited</entry>
      </row>
 
      <row>
@@ -7607,6 +7612,53 @@
    The <structname>pg_available_extension_versions</structname> view is read
    only.
   </para>
+ </sect1>
+
+ <sect1 id="view-pg-config">
+  <title><structname>pg_config</structname></title>
+
+  <indexterm zone="view-pg-config">
+   <primary>pg_config</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_config</structname> describes the
+   compile-time configuration parameters of the currently installed
+   version of <productname>PostgreSQL</>. It is intended, for example, to
+   be used by software packages that want to interface to
+   <productname>PostgreSQL</> to facilitate finding the required header
+   files and libraries. It provides the same basic information as the
+   <xref linkend="app-pgconfig"> <productname>PostgreSQL</> Client
+   Application.
+  </para>
+
+  <table>
+   <title><structname>pg_config</> Columns</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>The parameter name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>setting</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>The parameter value</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
  </sect1>
 
  <sect1 id="view-pg-cursors">
@@ -7963,16 +8015,16 @@
 
   <para>
    The view <structname>pg_locks</structname> provides access to
-   information about the locks held by open transactions within the
+   information about the locks held by active processes within the
    database server.  See <xref linkend="mvcc"> for more discussion
    of locking.
   </para>
 
   <para>
    <structname>pg_locks</structname> contains one row per active lockable
-   object, requested lock mode, and relevant transaction.  Thus, the same
+   object, requested lock mode, and relevant process.  Thus, the same
    lockable object might
-   appear many times, if multiple transactions are holding or waiting
+   appear many times, if multiple processes are holding or waiting
    for locks on it.  However, an object that currently has no locks on it
    will not appear at all.
   </para>
@@ -8148,31 +8200,31 @@
 
   <para>
    <structfield>granted</structfield> is true in a row representing a lock
-   held by the indicated transaction.  False indicates that this transaction is
-   currently waiting to acquire this lock, which implies that some other
-   transaction is holding a conflicting lock mode on the same lockable object.
-   The waiting transaction will sleep until the other lock is released (or a
-   deadlock situation is detected). A single transaction can be waiting to
-   acquire at most one lock at a time.
+   held by the indicated process.  False indicates that this process is
+   currently waiting to acquire this lock, which implies that at least one
+   other process is holding or waiting for a conflicting lock mode on the same
+   lockable object.  The waiting process will sleep until the other lock is
+   released (or a deadlock situation is detected).  A single process can be
+   waiting to acquire at most one lock at a time.
   </para>
 
   <para>
-   Every transaction holds an exclusive lock on its virtual transaction ID for
-   its entire duration.  If a permanent ID is assigned to the transaction
-   (which normally happens only if the transaction changes the state of the
-   database), it also holds an exclusive lock on its permanent transaction ID
-   until it ends.  When one transaction finds it necessary to wait specifically
-   for another transaction, it does so by attempting to acquire share lock on
-   the other transaction ID (either virtual or permanent ID depending on the
-   situation). That will succeed only when the other transaction
-   terminates and releases its locks.
+   Throughout running a transaction, a server process holds an exclusive lock
+   on the transaction's virtual transaction ID.  If a permanent ID is assigned
+   to the transaction (which normally happens only if the transaction changes
+   the state of the database), it also holds an exclusive lock on the
+   transaction's permanent transaction ID until it ends.  When a process finds
+   it necessary to wait specifically for another transaction to end, it does
+   so by attempting to acquire share lock on the other transaction's ID
+   (either virtual or permanent ID depending on the situation). That will
+   succeed only when the other transaction terminates and releases its locks.
   </para>
 
   <para>
    Although tuples are a lockable type of object,
    information about row-level locks is stored on disk, not in memory,
    and therefore row-level locks normally do not appear in this view.
-   If a transaction is waiting for a
+   If a process is waiting for a
    row-level lock, it will usually appear in the view as waiting for the
    permanent transaction ID of the current holder of that row lock.
   </para>
@@ -8208,7 +8260,7 @@
    <structfield>pid</structfield> column of the <link
    linkend="pg-stat-activity-view"><structname>pg_stat_activity</structname></link>
    view to get more
-   information on the session holding or waiting to hold each lock,
+   information on the session holding or awaiting each lock,
    for example
 <programlisting>
 SELECT * FROM pg_locks pl LEFT JOIN pg_stat_activity psa
@@ -8226,6 +8278,20 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_stat_activity psa
 SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     ON pl.virtualtransaction = '-1/' || ppx.transaction;
 </programlisting>
+  </para>
+
+  <para>
+   While it is possible to obtain information about which processes block
+   which other processes by joining <structname>pg_locks</structname> against
+   itself, this is very difficult to get right in detail.  Such a query would
+   have to encode knowledge about which lock modes conflict with which
+   others.  Worse, the <structname>pg_locks</structname> view does not expose
+   information about which processes are ahead of which others in lock wait
+   queues, nor information about which processes are parallel workers running
+   on behalf of which other client sessions.  It is better to use
+   the <function>pg_blocking_pids()</> function
+   (see <xref linkend="functions-info-session-table">) to identify which
+   process(es) a waiting process is blocked behind.
   </para>
 
   <para>

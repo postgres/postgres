@@ -267,10 +267,6 @@ ExecHashTableCreate(Hash *node, List *hashOperators, bool keepNulls)
 							OidIsValid(node->skewTable),
 							&nbuckets, &nbatch, &num_skew_mcvs);
 
-#ifdef HJDEBUG
-	printf("nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
-#endif
-
 	/* nbuckets must be a power of 2 */
 	log2_nbuckets = my_log2(nbuckets);
 	Assert(nbuckets == (1 << log2_nbuckets));
@@ -310,6 +306,11 @@ ExecHashTableCreate(Hash *node, List *hashOperators, bool keepNulls)
 	hashtable->spaceAllowedSkew =
 		hashtable->spaceAllowed * SKEW_WORK_MEM_PERCENT / 100;
 	hashtable->chunks = NULL;
+
+#ifdef HJDEBUG
+	printf("Hashjoin %p: initial nbatch = %d, nbuckets = %d\n",
+		   hashtable, nbatch, nbuckets);
+#endif
 
 	/*
 	 * Get info about the hash functions to be used for each hash key. Also
@@ -615,8 +616,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	Assert(nbatch > 1);
 
 #ifdef HJDEBUG
-	printf("Increasing nbatch to %d because space = %lu\n",
-		   nbatch, (unsigned long) hashtable->spaceUsed);
+	printf("Hashjoin %p: increasing nbatch to %d because space = %zu\n",
+		   hashtable, nbatch, hashtable->spaceUsed);
 #endif
 
 	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
@@ -731,8 +732,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	}
 
 #ifdef HJDEBUG
-	printf("Freed %ld of %ld tuples, space now %lu\n",
-		   nfreed, ninmemory, (unsigned long) hashtable->spaceUsed);
+	printf("Hashjoin %p: freed %ld of %ld tuples, space now %zu\n",
+		   hashtable, nfreed, ninmemory, hashtable->spaceUsed);
 #endif
 
 	/*
@@ -747,7 +748,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	{
 		hashtable->growEnabled = false;
 #ifdef HJDEBUG
-		printf("Disabling further increase of nbatch\n");
+		printf("Hashjoin %p: disabling further increase of nbatch\n",
+			   hashtable);
 #endif
 	}
 }
@@ -767,8 +769,8 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 		return;
 
 #ifdef HJDEBUG
-	printf("Increasing nbuckets %d => %d\n",
-		   hashtable->nbuckets, hashtable->nbuckets_optimal);
+	printf("Hashjoin %p: increasing nbuckets %d => %d\n",
+		   hashtable, hashtable->nbuckets, hashtable->nbuckets_optimal);
 #endif
 
 	hashtable->nbuckets = hashtable->nbuckets_optimal;
@@ -814,11 +816,6 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 							HJTUPLE_MINTUPLE(hashTuple)->t_len);
 		}
 	}
-
-#ifdef HJDEBUG
-	printf("Nbuckets increased to %d, average items per bucket %.1f\n",
-		   hashtable->nbuckets, batchTuples / hashtable->nbuckets);
-#endif
 }
 
 
@@ -1124,12 +1121,13 @@ ExecScanHashBucket(HashJoinState *hjstate,
 void
 ExecPrepHashTableForUnmatched(HashJoinState *hjstate)
 {
-	/*
-	 * ---------- During this scan we use the HashJoinState fields as follows:
+	/*----------
+	 * During this scan we use the HashJoinState fields as follows:
 	 *
-	 * hj_CurBucketNo: next regular bucket to scan hj_CurSkewBucketNo: next
-	 * skew bucket (an index into skewBucketNums) hj_CurTuple: last tuple
-	 * returned, or NULL to start next bucket ----------
+	 * hj_CurBucketNo: next regular bucket to scan
+	 * hj_CurSkewBucketNo: next skew bucket (an index into skewBucketNums)
+	 * hj_CurTuple: last tuple returned, or NULL to start next bucket
+	 *----------
 	 */
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurSkewBucketNo = 0;
@@ -1577,8 +1575,19 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 		if (batchno == hashtable->curbatch)
 		{
 			/* Move the tuple to the main hash table */
-			hashTuple->next = hashtable->buckets[bucketno];
-			hashtable->buckets[bucketno] = hashTuple;
+			HashJoinTuple copyTuple;
+
+			/*
+			 * We must copy the tuple into the dense storage, else it will not
+			 * be found by, eg, ExecHashIncreaseNumBatches.
+			 */
+			copyTuple = (HashJoinTuple) dense_alloc(hashtable, tupleSize);
+			memcpy(copyTuple, hashTuple, tupleSize);
+			pfree(hashTuple);
+
+			copyTuple->next = hashtable->buckets[bucketno];
+			hashtable->buckets[bucketno] = copyTuple;
+
 			/* We have reduced skew space, but overall space doesn't change */
 			hashtable->spaceUsedSkew -= tupleSize;
 		}

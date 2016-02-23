@@ -301,6 +301,37 @@ select max(min(unique1)) from tenk1;
 select (select max(min(unique1)) from int8_tbl) from tenk1;
 
 --
+-- Test removal of redundant GROUP BY columns
+--
+
+create temp table t1 (a int, b int, c int, d int, primary key (a, b));
+create temp table t2 (x int, y int, z int, primary key (x, y));
+create temp table t3 (a int, b int, c int, primary key(a, b) deferrable);
+
+-- Non-primary-key columns can be removed from GROUP BY
+explain (costs off) select * from t1 group by a,b,c,d;
+
+-- No removal can happen if the complete PK is not present in GROUP BY
+explain (costs off) select a,c from t1 group by a,c,d;
+
+-- Test removal across multiple relations
+explain (costs off) select *
+from t1 inner join t2 on t1.a = t2.x and t1.b = t2.y
+group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.y,t2.z;
+
+-- Test case where t1 can be optimized but not t2
+explain (costs off) select t1.*,t2.x,t2.z
+from t1 inner join t2 on t1.a = t2.x and t1.b = t2.y
+group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.z;
+
+-- Cannot optimize when PK is deferrable
+explain (costs off) select * from t3 group by a,b,c;
+
+drop table t1;
+drop table t2;
+drop table t3;
+
+--
 -- Test combinations of DISTINCT and/or ORDER BY
 --
 

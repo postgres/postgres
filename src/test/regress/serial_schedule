@@ -119,6 +119,7 @@ test: misc
 test: psql
 test: async
 test: dbsize
+test: misc_functions
 test: rules
 test: select_views
 test: portals_p2

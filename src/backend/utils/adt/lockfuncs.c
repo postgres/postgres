@@ -18,6 +18,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/predicate_internals.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 
@@ -99,7 +100,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		/* this had better match pg_locks view in system_views.sql */
+		/* this had better match function's declaration in pg_proc.h */
 		tupdesc = CreateTemplateTupleDesc(NUM_LOCK_STATUS_COLUMNS, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
@@ -391,6 +392,128 @@ pg_lock_status(PG_FUNCTION_ARGS)
 	}
 
 	SRF_RETURN_DONE(funcctx);
+}
+
+
+/*
+ * pg_blocking_pids - produce an array of the PIDs blocking given PID
+ *
+ * The reported PIDs are those that hold a lock conflicting with blocked_pid's
+ * current request (hard block), or are requesting such a lock and are ahead
+ * of blocked_pid in the lock's wait queue (soft block).
+ *
+ * In parallel-query cases, we report all PIDs blocking any member of the
+ * given PID's lock group, and the reported PIDs are those of the blocking
+ * PIDs' lock group leaders.  This allows callers to compare the result to
+ * lists of clients' pg_backend_pid() results even during a parallel query.
+ *
+ * Parallel query makes it possible for there to be duplicate PIDs in the
+ * result (either because multiple waiters are blocked by same PID, or
+ * because multiple blockers have same group leader PID).  We do not bother
+ * to eliminate such duplicates from the result.
+ *
+ * We need not consider predicate locks here, since those don't block anything.
+ */
+Datum
+pg_blocking_pids(PG_FUNCTION_ARGS)
+{
+	int			blocked_pid = PG_GETARG_INT32(0);
+	Datum	   *arrayelems;
+	int			narrayelems;
+	BlockedProcsData *lockData; /* state data from lmgr */
+	int			i,
+				j;
+
+	/* Collect a snapshot of lock manager state */
+	lockData = GetBlockerStatusData(blocked_pid);
+
+	/* We can't need more output entries than there are reported PROCLOCKs */
+	arrayelems = (Datum *) palloc(lockData->nlocks * sizeof(Datum));
+	narrayelems = 0;
+
+	/* For each blocked proc in the lock group ... */
+	for (i = 0; i < lockData->nprocs; i++)
+	{
+		BlockedProcData *bproc = &lockData->procs[i];
+		LockInstanceData *instances = &lockData->locks[bproc->first_lock];
+		int		   *preceding_waiters = &lockData->waiter_pids[bproc->first_waiter];
+		LockInstanceData *blocked_instance;
+		LockMethod	lockMethodTable;
+		int			conflictMask;
+
+		/*
+		 * Locate the blocked proc's own entry in the LockInstanceData array.
+		 * There should be exactly one matching entry.
+		 */
+		blocked_instance = NULL;
+		for (j = 0; j < bproc->num_locks; j++)
+		{
+			LockInstanceData *instance = &(instances[j]);
+
+			if (instance->pid == bproc->pid)
+			{
+				Assert(blocked_instance == NULL);
+				blocked_instance = instance;
+			}
+		}
+		Assert(blocked_instance != NULL);
+
+		lockMethodTable = GetLockTagsMethodTable(&(blocked_instance->locktag));
+		conflictMask = lockMethodTable->conflictTab[blocked_instance->waitLockMode];
+
+		/* Now scan the PROCLOCK data for conflicting procs */
+		for (j = 0; j < bproc->num_locks; j++)
+		{
+			LockInstanceData *instance = &(instances[j]);
+
+			/* A proc never blocks itself, so ignore that entry */
+			if (instance == blocked_instance)
+				continue;
+			/* Members of same lock group never block each other, either */
+			if (instance->leaderPid == blocked_instance->leaderPid)
+				continue;
+
+			if (conflictMask & instance->holdMask)
+			{
+				/* hard block: blocked by lock already held by this entry */
+			}
+			else if (instance->waitLockMode != NoLock &&
+					 (conflictMask & LOCKBIT_ON(instance->waitLockMode)))
+			{
+				/* conflict in lock requests; who's in front in wait queue? */
+				bool		ahead = false;
+				int			k;
+
+				for (k = 0; k < bproc->num_waiters; k++)
+				{
+					if (preceding_waiters[k] == instance->pid)
+					{
+						/* soft block: this entry is ahead of blocked proc */
+						ahead = true;
+						break;
+					}
+				}
+				if (!ahead)
+					continue;	/* not blocked by this entry */
+			}
+			else
+			{
+				/* not blocked by this entry */
+				continue;
+			}
+
+			/* blocked by this entry, so emit a record */
+			arrayelems[narrayelems++] = Int32GetDatum(instance->leaderPid);
+		}
+	}
+
+	/* Assert we didn't overrun arrayelems[] */
+	Assert(narrayelems <= lockData->nlocks);
+
+	/* Construct array, using hardwired knowledge about int4 type */
+	PG_RETURN_ARRAYTYPE_P(construct_array(arrayelems, narrayelems,
+										  INT4OID,
+										  sizeof(int32), true, 'i'));
 }
 
 

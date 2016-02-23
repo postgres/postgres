@@ -700,6 +700,155 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Convert a human-readable size to a size in bytes
+ */
+Datum
+pg_size_bytes(PG_FUNCTION_ARGS)
+{
+	text	   *arg = PG_GETARG_TEXT_PP(0);
+	char	   *str,
+			   *strptr,
+			   *endptr;
+	char		saved_char;
+	Numeric		num;
+	int64		result;
+	bool		have_digits = false;
+
+	str = text_to_cstring(arg);
+
+	/* Skip leading whitespace */
+	strptr = str;
+	while (isspace((unsigned char) *strptr))
+		strptr++;
+
+	/* Check that we have a valid number and determine where it ends */
+	endptr = strptr;
+
+	/* Part (1): sign */
+	if (*endptr == '-' || *endptr == '+')
+		endptr++;
+
+	/* Part (2): main digit string */
+	if (isdigit((unsigned char) *endptr))
+	{
+		have_digits = true;
+		do
+			endptr++;
+		while (isdigit((unsigned char) *endptr));
+	}
+
+	/* Part (3): optional decimal point and fractional digits */
+	if (*endptr == '.')
+	{
+		endptr++;
+		if (isdigit((unsigned char) *endptr))
+		{
+			have_digits = true;
+			do
+				endptr++;
+			while (isdigit((unsigned char) *endptr));
+		}
+	}
+
+	/* Complain if we don't have a valid number at this point */
+	if (!have_digits)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid size: \"%s\"", str)));
+
+	/* Part (4): optional exponent */
+	if (*endptr == 'e' || *endptr == 'E')
+	{
+		long		exponent;
+		char	   *cp;
+
+		/*
+		 * Note we might one day support EB units, so if what follows isn't a
+		 * number, just treat it all as a unit to be parsed.
+		 */
+		exponent = strtol(endptr + 1, &cp, 10);
+		if (cp > endptr + 1)
+		{
+			if (exponent > NUMERIC_MAX_PRECISION ||
+				exponent < -NUMERIC_MAX_PRECISION)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid size: \"%s\"", str)));
+			endptr = cp;
+		}
+	}
+
+	/*
+	 * Parse the number, saving the next character, which may be the first
+	 * character of the unit string.
+	 */
+	saved_char = *endptr;
+	*endptr = '\0';
+
+	num = DatumGetNumeric(DirectFunctionCall3(numeric_in,
+											  CStringGetDatum(strptr),
+											  ObjectIdGetDatum(InvalidOid),
+											  Int32GetDatum(-1)));
+
+	*endptr = saved_char;
+
+	/* Skip whitespace between number and unit */
+	strptr = endptr;
+	while (isspace((unsigned char) *strptr))
+		strptr++;
+
+	/* Handle possible unit */
+	if (*strptr != '\0')
+	{
+		int64		multiplier = 0;
+
+		/* Trim any trailing whitespace */
+		endptr = str + VARSIZE_ANY_EXHDR(arg) - 1;
+
+		while (isspace((unsigned char) *endptr))
+			endptr--;
+
+		endptr++;
+		*endptr = '\0';
+
+		/* Parse the unit case-insensitively */
+		if (pg_strcasecmp(strptr, "bytes") == 0)
+			multiplier = (int64) 1;
+		else if (pg_strcasecmp(strptr, "kb") == 0)
+			multiplier = (int64) 1024;
+		else if (pg_strcasecmp(strptr, "mb") == 0)
+			multiplier = (int64) 1024 * 1024;
+		else if (pg_strcasecmp(strptr, "gb") == 0)
+			multiplier = (int64) 1024 * 1024 * 1024;
+		else if (pg_strcasecmp(strptr, "tb") == 0)
+			multiplier = (int64) 1024 * 1024 * 1024 * 1024;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid size: \"%s\"", text_to_cstring(arg)),
+					 errdetail("Invalid size unit: \"%s\".", strptr),
+					 errhint("Valid units are \"bytes\", \"kB\", \"MB\", \"GB\", and \"TB\".")));
+
+		if (multiplier > 1)
+		{
+			Numeric		mul_num;
+
+			mul_num = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+												 Int64GetDatum(multiplier)));
+
+			num = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
+													NumericGetDatum(mul_num),
+													  NumericGetDatum(num)));
+		}
+	}
+
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8,
+											   NumericGetDatum(num)));
+
+	PG_RETURN_INT64(result);
+}
+
+/*
  * Get the filenode of a relation
  *
  * This is expected to be used in queries like

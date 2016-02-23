@@ -27,3 +27,11 @@ session "s2"
 setup			{ BEGIN; }
 step "s2l"		{ SELECT * FROM foo FOR UPDATE; }
 step "s2c"		{ COMMIT; }
+
+permutation "s1l" "s1svp" "s1d" "s1r" "s1c" "s2l" "s2c"
+permutation "s1l" "s1svp" "s1d" "s1r" "s2l" "s1c" "s2c"
+permutation "s1l" "s1svp" "s1d" "s2l" "s1r" "s1c" "s2c"
+permutation "s1l" "s1svp" "s2l" "s1d" "s1r" "s1c" "s2c"
+permutation "s1l" "s2l" "s1svp" "s1d" "s1r" "s1c" "s2c"
+permutation "s2l" "s1l" "s2c" "s1svp" "s1d" "s1r" "s1c"
+permutation "s2l" "s2c" "s1l" "s1svp" "s1d" "s1r" "s1c"

@@ -138,39 +138,6 @@ key            value
 1              1              
 step s1c: COMMIT;
 
-starting permutation: s1s s1u s2l s2c s1r s1l s1c
-step s1s: SAVEPOINT f;
-step s1u: UPDATE foo SET key = 2;
-step s2l: SELECT * FROM foo FOR KEY SHARE; <waiting ...>
-invalid permutation detected
-
-starting permutation: s1s s2l s1u s1r s1l s1c s2c
-step s1s: SAVEPOINT f;
-step s2l: SELECT * FROM foo FOR KEY SHARE;
-key            value          
-
-1              1              
-step s1u: UPDATE foo SET key = 2; <waiting ...>
-invalid permutation detected
-
-starting permutation: s1s s2l s1u s1r s1l s2c s1c
-step s1s: SAVEPOINT f;
-step s2l: SELECT * FROM foo FOR KEY SHARE;
-key            value          
-
-1              1              
-step s1u: UPDATE foo SET key = 2; <waiting ...>
-invalid permutation detected
-
-starting permutation: s1s s2l s1u s1r s2c s1l s1c
-step s1s: SAVEPOINT f;
-step s2l: SELECT * FROM foo FOR KEY SHARE;
-key            value          
-
-1              1              
-step s1u: UPDATE foo SET key = 2; <waiting ...>
-invalid permutation detected
-
 starting permutation: s1s s2l s1u s2c s1r s1l s1c
 step s1s: SAVEPOINT f;
 step s2l: SELECT * FROM foo FOR KEY SHARE;
@@ -202,33 +169,6 @@ key            value
 
 1              1              
 step s1c: COMMIT;
-
-starting permutation: s2l s1s s1u s1r s1l s1c s2c
-step s2l: SELECT * FROM foo FOR KEY SHARE;
-key            value          
-
-1              1              
-step s1s: SAVEPOINT f;
-step s1u: UPDATE foo SET key = 2; <waiting ...>
-invalid permutation detected
-
-starting permutation: s2l s1s s1u s1r s1l s2c s1c
-step s2l: SELECT * FROM foo FOR KEY SHARE;
-key            value          
-
-1              1              
-step s1s: SAVEPOINT f;
-step s1u: UPDATE foo SET key = 2; <waiting ...>
-invalid permutation detected
-
-starting permutation: s2l s1s s1u s1r s2c s1l s1c
-step s2l: SELECT * FROM foo FOR KEY SHARE;
-key            value          
-
-1              1              
-step s1s: SAVEPOINT f;
-step s1u: UPDATE foo SET key = 2; <waiting ...>
-invalid permutation detected
 
 starting permutation: s2l s1s s1u s2c s1r s1l s1c
 step s2l: SELECT * FROM foo FOR KEY SHARE;

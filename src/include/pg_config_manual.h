@@ -52,11 +52,6 @@
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
- * Number of spare LWLocks to allocate for user-defined add-on code.
- */
-#define NUM_USER_DEFINED_LWLOCKS	4
-
-/*
  * When we don't have native spinlocks, we use semaphores to simulate them.
  * Decreasing this value reduces consumption of OS resources; increasing it
  * may improve performance, but supplying a real spinlock implementation is

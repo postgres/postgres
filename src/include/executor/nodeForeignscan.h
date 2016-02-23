@@ -14,11 +14,19 @@
 #ifndef NODEFOREIGNSCAN_H
 #define NODEFOREIGNSCAN_H
 
+#include "access/parallel.h"
 #include "nodes/execnodes.h"
 
 extern ForeignScanState *ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecForeignScan(ForeignScanState *node);
 extern void ExecEndForeignScan(ForeignScanState *node);
 extern void ExecReScanForeignScan(ForeignScanState *node);
+
+extern void ExecForeignScanEstimate(ForeignScanState *node,
+									ParallelContext *pcxt);
+extern void ExecForeignScanInitializeDSM(ForeignScanState *node,
+										 ParallelContext *pcxt);
+extern void ExecForeignScanInitializeWorker(ForeignScanState *node,
+											shm_toc *toc);
 
 #endif   /* NODEFOREIGNSCAN_H */

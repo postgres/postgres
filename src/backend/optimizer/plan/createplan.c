@@ -212,6 +212,10 @@ create_plan(PlannerInfo *root, Path *best_path)
 	/* Recursively process the path tree */
 	plan = create_plan_recurse(root, best_path);
 
+	/* Update parallel safety information if needed. */
+	if (!best_path->parallel_safe)
+		root->glob->wholePlanParallelSafe = false;
+
 	/* Check we successfully assigned all NestLoopParams to plan nodes */
 	if (root->curOuterParams != NIL)
 		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");
@@ -472,7 +476,7 @@ build_path_tlist(PlannerInfo *root, Path *path)
 	int			resno = 1;
 	ListCell   *v;
 
-	foreach(v, rel->reltargetlist)
+	foreach(v, rel->reltarget.exprs)
 	{
 		/* Do we really need to copy here?	Not sure */
 		Node	   *node = (Node *) copyObject(lfirst(v));
@@ -871,9 +875,8 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
 	List	   *tlist;
 	List	   *quals;
 
-	/* The tlist will be installed later, since we have no RelOptInfo */
-	Assert(best_path->path.parent == NULL);
-	tlist = NIL;
+	/* This is a bit useless currently, because rel will have empty tlist */
+	tlist = build_path_tlist(root, &best_path->path);
 
 	/* best_path->quals is just bare clauses */
 
@@ -2179,7 +2182,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	/*
 	 * If rel is a base relation, detect whether any system columns are
 	 * requested from the rel.  (If rel is a join relation, rel->relid will be
-	 * 0, but there can be no Var with relid 0 in the reltargetlist or the
+	 * 0, but there can be no Var with relid 0 in the rel's targetlist or the
 	 * restriction clauses, so we skip this in that case.  Note that any such
 	 * columns in base relations that were joined are assumed to be contained
 	 * in fdw_scan_tlist.)  This is a bit of a kluge and might go away someday,
@@ -2194,10 +2197,10 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 
 		/*
 		 * First, examine all the attributes needed for joins or final output.
-		 * Note: we must look at reltargetlist, not the attr_needed data,
+		 * Note: we must look at rel's targetlist, not the attr_needed data,
 		 * because attr_needed isn't computed for inheritance child rels.
 		 */
-		pull_varattnos((Node *) rel->reltargetlist, scan_relid, &attrs_used);
+		pull_varattnos((Node *) rel->reltarget.exprs, scan_relid, &attrs_used);
 
 		/* Add all the attributes used by restriction clauses. */
 		foreach(lc, rel->baserestrictinfo)
@@ -3451,7 +3454,7 @@ copy_generic_path_info(Plan *dest, Path *src)
 		dest->startup_cost = src->startup_cost;
 		dest->total_cost = src->total_cost;
 		dest->plan_rows = src->rows;
-		dest->plan_width = src->parent->width;
+		dest->plan_width = src->pathtarget->width;
 		dest->parallel_aware = src->parallel_aware;
 	}
 	else
@@ -4829,6 +4832,7 @@ make_gather(List *qptlist,
 	plan->righttree = NULL;
 	node->num_workers = nworkers;
 	node->single_copy = single_copy;
+	node->invisible	= false;
 
 	return node;
 }

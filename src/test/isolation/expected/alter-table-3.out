@@ -57,18 +57,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s1a s1b s1c s2a s2b s2c s2d s1d
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s1a s1b s2a s1c s1d s2b s2c s2d
 step s1a: BEGIN;
 step s1b: ALTER TABLE a DISABLE TRIGGER t;
@@ -112,18 +100,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s1a s1b s2a s1c s2b s2c s2d s1d
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2a: BEGIN;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s1a s1b s2a s2b s1c s1d s2c s2d
 step s1a: BEGIN;
 step s1b: ALTER TABLE a DISABLE TRIGGER t;
@@ -153,18 +129,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s1a s1b s2a s2b s1c s2c s2d s1d
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s1a s1b s2a s2b s2c s1c s1d s2d
 step s1a: BEGIN;
 step s1b: ALTER TABLE a DISABLE TRIGGER t;
@@ -179,29 +143,6 @@ step s1d: COMMIT;
 step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
-
-starting permutation: s1a s1b s2a s2b s2c s1c s2d s1d
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-invalid permutation detected
-
-starting permutation: s1a s1b s2a s2b s2c s2d s1c s1d
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
 
 starting permutation: s1a s2a s1b s1c s1d s2b s2c s2d
 step s1a: BEGIN;
@@ -246,18 +187,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s1a s2a s1b s1c s2b s2c s2d s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s1a s2a s1b s2b s1c s1d s2c s2d
 step s1a: BEGIN;
 step s2a: BEGIN;
@@ -287,18 +216,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s1a s2a s1b s2b s1c s2c s2d s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s1a s2a s1b s2b s2c s1c s1d s2d
 step s1a: BEGIN;
 step s2a: BEGIN;
@@ -313,29 +230,6 @@ step s1d: COMMIT;
 step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
-
-starting permutation: s1a s2a s1b s2b s2c s1c s2d s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-invalid permutation detected
-
-starting permutation: s1a s2a s1b s2b s2c s2d s1c s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
 
 starting permutation: s1a s2a s2b s1b s1c s1d s2c s2d
 step s1a: BEGIN;
@@ -366,18 +260,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s1a s2a s2b s1b s1c s2c s2d s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s1a s2a s2b s1b s2c s1c s1d s2d
 step s1a: BEGIN;
 step s2a: BEGIN;
@@ -392,29 +274,6 @@ step s1d: COMMIT;
 step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
-
-starting permutation: s1a s2a s2b s1b s2c s1c s2d s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-invalid permutation detected
-
-starting permutation: s1a s2a s2b s1b s2c s2d s1c s1d
-step s1a: BEGIN;
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
 
 starting permutation: s1a s2a s2b s2c s1b s1c s1d s2d
 step s1a: BEGIN;
@@ -515,18 +374,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s2a s1a s1b s1c s2b s2c s2d s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s2a s1a s1b s2b s1c s1d s2c s2d
 step s2a: BEGIN;
 step s1a: BEGIN;
@@ -556,18 +403,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s2a s1a s1b s2b s1c s2c s2d s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s2a s1a s1b s2b s2c s1c s1d s2d
 step s2a: BEGIN;
 step s1a: BEGIN;
@@ -582,29 +417,6 @@ step s1d: COMMIT;
 step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
-
-starting permutation: s2a s1a s1b s2b s2c s1c s2d s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-invalid permutation detected
-
-starting permutation: s2a s1a s1b s2b s2c s2d s1c s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
 
 starting permutation: s2a s1a s2b s1b s1c s1d s2c s2d
 step s2a: BEGIN;
@@ -635,18 +447,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s2a s1a s2b s1b s1c s2c s2d s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s2a s1a s2b s1b s2c s1c s1d s2d
 step s2a: BEGIN;
 step s1a: BEGIN;
@@ -661,29 +461,6 @@ step s1d: COMMIT;
 step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
-
-starting permutation: s2a s1a s2b s1b s2c s1c s2d s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-invalid permutation detected
-
-starting permutation: s2a s1a s2b s1b s2c s2d s1c s1d
-step s2a: BEGIN;
-step s1a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
 
 starting permutation: s2a s1a s2b s2c s1b s1c s1d s2d
 step s2a: BEGIN;
@@ -770,18 +547,6 @@ step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
 
-starting permutation: s2a s2b s1a s1b s1c s2c s2d s1d
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
-
 starting permutation: s2a s2b s1a s1b s2c s1c s1d s2d
 step s2a: BEGIN;
 step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
@@ -796,29 +561,6 @@ step s1d: COMMIT;
 step s2c: <... completed>
 error in steps s1d s2c: ERROR:  duplicate key value violates unique constraint "a_pkey"
 step s2d: COMMIT;
-
-starting permutation: s2a s2b s1a s1b s2c s1c s2d s1d
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-step s1c: ALTER TABLE a ENABLE TRIGGER t;
-invalid permutation detected
-
-starting permutation: s2a s2b s1a s1b s2c s2d s1c s1d
-step s2a: BEGIN;
-step s2b: SELECT * FROM a WHERE i = 1 LIMIT 1 FOR UPDATE;
-i              
-
-1              
-step s1a: BEGIN;
-step s1b: ALTER TABLE a DISABLE TRIGGER t;
-step s2c: INSERT INTO a VALUES (0); <waiting ...>
-invalid permutation detected
 
 starting permutation: s2a s2b s1a s2c s1b s1c s1d s2d
 step s2a: BEGIN;

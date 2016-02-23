@@ -25,6 +25,8 @@
 
 #include "executor/execParallel.h"
 #include "executor/executor.h"
+#include "executor/nodeCustom.h"
+#include "executor/nodeForeignscan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/tqueue.h"
 #include "nodes/nodeFuncs.h"
@@ -176,6 +178,14 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 				ExecSeqScanEstimate((SeqScanState *) planstate,
 									e->pcxt);
 				break;
+			case T_ForeignScanState:
+				ExecForeignScanEstimate((ForeignScanState *) planstate,
+										e->pcxt);
+				break;
+			case T_CustomScanState:
+				ExecCustomScanEstimate((CustomScanState *) planstate,
+									   e->pcxt);
+				break;
 			default:
 				break;
 		}
@@ -219,6 +229,14 @@ ExecParallelInitializeDSM(PlanState *planstate,
 			case T_SeqScanState:
 				ExecSeqScanInitializeDSM((SeqScanState *) planstate,
 										 d->pcxt);
+				break;
+			case T_ForeignScanState:
+				ExecForeignScanInitializeDSM((ForeignScanState *) planstate,
+											 d->pcxt);
+				break;
+			case T_CustomScanState:
+				ExecCustomScanInitializeDSM((CustomScanState *) planstate,
+											d->pcxt);
 				break;
 			default:
 				break;
@@ -641,6 +659,14 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 		{
 			case T_SeqScanState:
 				ExecSeqScanInitializeWorker((SeqScanState *) planstate, toc);
+				break;
+			case T_ForeignScanState:
+				ExecForeignScanInitializeWorker((ForeignScanState *) planstate,
+												toc);
+				break;
+			case T_CustomScanState:
+				ExecCustomScanInitializeWorker((CustomScanState *) planstate,
+											   toc);
 				break;
 			default:
 				break;

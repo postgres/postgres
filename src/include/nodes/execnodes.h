@@ -1585,6 +1585,7 @@ typedef struct ForeignScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	List	   *fdw_recheck_quals;	/* original quals not in ss.ps.qual */
+	Size		pscan_len;		/* size of parallel coordination information */
 	/* use struct pointer to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
 	void	   *fdw_state;		/* foreign-data wrapper can keep state here */
@@ -1603,6 +1604,8 @@ typedef struct ForeignScanState
  * the BeginCustomScan method.
  * ----------------
  */
+struct ParallelContext;			/* avoid including parallel.h here */
+struct shm_toc;					/* avoid including shm_toc.h here */
 struct ExplainState;			/* avoid including explain.h here */
 struct CustomScanState;
 
@@ -1619,7 +1622,15 @@ typedef struct CustomExecMethods
 	void		(*ReScanCustomScan) (struct CustomScanState *node);
 	void		(*MarkPosCustomScan) (struct CustomScanState *node);
 	void		(*RestrPosCustomScan) (struct CustomScanState *node);
-
+	/* Optional: parallel execution support */
+	Size		(*EstimateDSMCustomScan) (struct CustomScanState *node,
+											   struct ParallelContext *pcxt);
+	void		(*InitializeDSMCustomScan) (struct CustomScanState *node,
+												struct ParallelContext *pcxt,
+														void *coordinate);
+	void		(*InitializeWorkerCustomScan) (struct CustomScanState *node,
+														 struct shm_toc *toc,
+														   void *coordinate);
 	/* Optional: print additional information in EXPLAIN */
 	void		(*ExplainCustomScan) (struct CustomScanState *node,
 												  List *ancestors,
@@ -1631,6 +1642,7 @@ typedef struct CustomScanState
 	ScanState	ss;
 	uint32		flags;			/* mask of CUSTOMPATH_* flags, see relation.h */
 	List	   *custom_ps;		/* list of child PlanState nodes, if any */
+	Size		pscan_len;		/* size of parallel coordination information */
 	const CustomExecMethods *methods;
 } CustomScanState;
 

@@ -352,6 +352,12 @@ SELECT jsonb_object_agg(name, type) FROM foo;
 
 -- jsonb_object
 
+-- empty object, one dimension
+SELECT jsonb_object('{}');
+
+-- empty object, two dimensions
+SELECT jsonb_object('{}', '{}');
+
 -- one dimension
 SELECT jsonb_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
 
