@@ -122,5 +122,8 @@ ssl/root+client.crl: ssl/root.crl ssl/client.crl
 sslfiles-clean:
 	rm -f $(SSLFILES) ssl/client_ca.srl ssl/server_ca.srl ssl/client_ca-certindex* ssl/server_ca-certindex* ssl/root_ca-certindex* ssl/root_ca.srl ssl/temp_ca.crt ssl/temp_ca_signed.crt
 
+clean distclean maintainer-clean:
+	rm -rf tmp_check
+
 check:
 	$(prove_check)
