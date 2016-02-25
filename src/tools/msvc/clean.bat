@@ -92,6 +92,7 @@ if exist src\test\regress\autoinc.dll del /q src\test\regress\autoinc.dll
 if exist src\bin\initdb\tmp_check rd /s /q src\bin\initdb\tmp_check
 if exist src\bin\pg_basebackup\tmp_check rd /s /q src\bin\pg_basebackup\tmp_check
 if exist src\bin\pg_config\tmp_check rd /s /q src\bin\pg_config\tmp_check
+if exist src\bin\pg_controldata\tmp_check rd /s /q src\bin\pg_controldata\tmp_check
 if exist src\bin\pg_ctl\tmp_check rd /s /q src\bin\pg_ctl\tmp_check
 if exist src\bin\pg_rewind\tmp_check rd /s /q src\bin\pg_rewind\tmp_check
 if exist src\bin\pgbench\tmp_check rd /s /q src\bin\pgbench\tmp_check
