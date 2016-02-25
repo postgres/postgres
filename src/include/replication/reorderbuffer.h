@@ -78,8 +78,8 @@ typedef struct ReorderBufferChange
 	RepOriginId origin_id;
 
 	/*
-	 * Context data for the change, which part of the union is valid depends
-	 * on action/action_internal.
+	 * Context data for the change. Which part of the union is valid depends
+	 * on action.
 	 */
 	union
 	{
@@ -245,7 +245,7 @@ typedef struct ReorderBufferTXN
 	/* ---
 	 * Position in one of three lists:
 	 * * list of subtransactions if we are *known* to be subxact
-	 * * list of toplevel xacts (can be am as-yet unknown subxact)
+	 * * list of toplevel xacts (can be an as-yet unknown subxact)
 	 * * list of preallocated ReorderBufferTXNs
 	 * ---
 	 */
@@ -283,7 +283,7 @@ struct ReorderBuffer
 
 	/*
 	 * Transactions that could be a toplevel xact, ordered by LSN of the first
-	 * record bearing that xid..
+	 * record bearing that xid.
 	 */
 	dlist_head	toplevel_by_lsn;
 
@@ -295,7 +295,7 @@ struct ReorderBuffer
 	ReorderBufferTXN *by_txn_last_txn;
 
 	/*
-	 * Callacks to be called when a transactions commits.
+	 * Callbacks to be called when a transactions commits.
 	 */
 	ReorderBufferBeginCB begin;
 	ReorderBufferApplyChangeCB apply_change;
@@ -318,7 +318,7 @@ struct ReorderBuffer
 	 * overhead we cache some unused ones here.
 	 *
 	 * The maximum number of cached entries is controlled by const variables
-	 * ontop of reorderbuffer.c
+	 * on top of reorderbuffer.c
 	 */
 
 	/* cached ReorderBufferTXNs */
