@@ -159,7 +159,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 					   nargs,
 					   NULL,
 					   NULL,
-					   0,		/* default cursor options */
+					   CURSOR_OPT_PARALLEL_OK,	/* allow parallel mode */
 					   true);	/* fixed result */
 
 	/*
