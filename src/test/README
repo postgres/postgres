@@ -1,0 +1,38 @@
+PostgreSQL tests
+================
+
+This directory contains a variety of test infrastructure as well as some of the
+tests in PostgreSQL. Not all tests are here -- in particular, there are more in
+individual contrib/ modules and in src/bin.
+
+Not all these tests get run by "make check". Check src/test/Makefile to see
+which tests get run automatically.
+
+examples/
+  Demonstration programs for libpq that double as regression tests via
+  "make check"
+
+isolation/
+  Tests for concurrent behavior at the SQL level
+
+locale/
+  Sanity checks for locale data, encodings, etc
+
+mb/
+  Tests for multibyte encoding (UTF-8) support
+
+modules/
+  Extensions used only or mainly for test purposes, generally not suitable
+  for installing in production databases
+
+perl/
+  Infrastructure for Perl-based TAP tests
+
+regress/
+  PostgreSQL's main regression test suite, pg_regress
+
+ssl/
+  Tests to exercise and verify SSL certificate handling
+
+thread/
+  A thread-safety-testing utility used by configure
