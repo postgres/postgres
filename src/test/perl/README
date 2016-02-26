@@ -1,0 +1,53 @@
+Perl-based TAP tests
+====================
+
+src/test/perl/ contains shared infrastructure that's used by Perl-based tests
+across the source tree, particularly tests in src/bin and src/test. It's used
+to drive tests for backup and restore, replication, etc - anything that can't
+really be expressed using pg_regress or the isolation test framework.
+
+You should prefer to write tests using pg_regress in src/test/regress, or
+isolation tester specs in src/test/isolation, if possible. If not, check to
+see if your new tests make sense under an existing tree in src/test, like
+src/test/ssl, or should be added to one of the suites for an existing utility.
+
+Writing tests
+-------------
+
+Tests are written using Perl's Test::More with some PostgreSQL-specific
+infrastructure from src/test/perl providing node management, support for
+invoking 'psql' to run queries and get results, etc. You should read the
+documentation for Test::More before trying to write tests.
+
+Test scripts in the t/ subdirectory of a suite are executed in alphabetical
+order.
+
+Each test script should begin with:
+
+    use strict;
+    use warnings;
+    use PostgresNode;
+    use TestLib;
+    # Replace with the number of tests to execute:
+    use Test::More tests => 1;
+
+then it will generally need to set up one or more nodes, run commands
+against them and evaluate the results. For example:
+
+    my $node = get_new_node('master');
+    $node->init;
+    $node->start;
+
+    my $ret = $node->psql('postgres', 'SELECT 1');
+    is($ret, '1', 'SELECT 1 returns 1');
+
+    $node->stop('fast');
+
+Read the Test::More documentation for more on how to write tests:
+
+    perldoc Test::More
+
+For available PostgreSQL-specific test methods and some example tests read the
+perldoc for the test modules, e.g.:
+
+    perldoc src/test/perl/PostgresNode.pm
