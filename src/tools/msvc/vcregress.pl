@@ -34,7 +34,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck)$/i
+/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|recoverycheck)$/i
   )
 {
 	$what = uc $what;
@@ -89,6 +89,7 @@ my %command = (
 	MODULESCHECK   => \&modulescheck,
 	ISOLATIONCHECK => \&isolationcheck,
 	BINCHECK       => \&bincheck,
+	RECOVERYCHECK  => \&recoverycheck,
 	UPGRADECHECK   => \&upgradecheck,);
 
 my $proc = $command{$what};
@@ -358,6 +359,16 @@ sub modulescheck
 		$mstat ||= $status;
 	}
 	exit $mstat if $mstat;
+}
+
+sub recoverycheck
+{
+	InstallTemp();
+
+	my $mstat = 0;
+	my $dir = "$topdir/src/test/recovery";
+	my $status = tap_check($dir);
+	exit $status if $status;
 }
 
 # Run "initdb", then reconfigure authentication.

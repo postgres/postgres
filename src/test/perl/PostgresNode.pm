@@ -346,6 +346,9 @@ On Windows, we use SSPI authentication to ensure the same (by pg_regress
 pg_hba.conf is configured to allow replication connections. Pass the keyword
 parameter hba_permit_replication => 0 to disable this.
 
+WAL archiving can be enabled on this node by passing the keyword parameter
+has_archiving => 1. This is disabled by default.
+
 postgresql.conf can be set up for replication by passing the keyword
 parameter allows_streaming => 1. This is disabled by default.
 
@@ -364,6 +367,7 @@ sub init
 	$params{hba_permit_replication} = 1
 	  unless defined $params{hba_permit_replication};
 	$params{allows_streaming} = 0 unless defined $params{allows_streaming};
+	$params{has_archiving} = 0 unless defined $params{has_archiving};
 
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
@@ -401,6 +405,7 @@ sub init
 	close $conf;
 
 	$self->set_replication_conf if $params{hba_permit_replication};
+	$self->enable_archiving if $params{has_archiving};
 }
 
 =pod
@@ -458,12 +463,19 @@ Initialize a node from a backup, which may come from this node or a different
 node. root_node must be a PostgresNode reference, backup_name the string name
 of a backup previously created on that node with $node->backup.
 
-Does not start the node after init.
+Does not start the node after initializing it.
 
 A recovery.conf is not created.
 
+pg_hba.conf is configured to allow replication connections. Pass the keyword
+parameter hba_permit_replication => 0 to disable this.
+
 Streaming replication can be enabled on this node by passing the keyword
 parameter has_streaming => 1. This is disabled by default.
+
+Restoring WAL segments from archives using restore_command can be enabled
+by passiong the keyword parameter has_restoring => 1. This is disabled by
+default.
 
 The backup is copied, leaving the original unmodified. pg_hba.conf is
 unconditionally set to enable replication connections.
@@ -479,6 +491,10 @@ sub init_from_backup
 	my $root_name   = $root_node->name;
 
 	$params{has_streaming} = 0 unless defined $params{has_streaming};
+	$params{hba_permit_replication} = 1
+	   unless defined $params{hba_permit_replication};
+	$params{has_restoring} = 0 unless defined $params{has_restoring};
+
 	print
 "# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
 	die "Backup \"$backup_name\" does not exist at $backup_path"
@@ -498,8 +514,9 @@ sub init_from_backup
 		qq(
 port = $port
 ));
-	$self->set_replication_conf;
+	$self->set_replication_conf if $params{hba_permit_replication};
 	$self->enable_streaming($root_node) if $params{has_streaming};
+	$self->enable_restoring($root_node) if $params{has_restoring};
 }
 
 =pod
@@ -605,6 +622,59 @@ sub enable_streaming
 	$self->append_conf('recovery.conf', qq(
 primary_conninfo='$root_connstr application_name=$name'
 standby_mode=on
+));
+}
+
+# Internal routine to enable archive recovery command on a standby node
+sub enable_restoring
+{
+	my ($self, $root_node)  = @_;
+	my $path = $root_node->archive_dir;
+	my $name = $self->name;
+
+	print "### Enabling WAL restore for node \"$name\"\n";
+
+	# On Windows, the path specified in the restore command needs to use
+	# double back-slashes to work properly and to be able to detect properly
+	# the file targeted by the copy command, so the directory value used
+	# in this routine, using only one back-slash, need to be properly changed
+	# first. Paths also need to be double-quoted to prevent failures where
+	# the path contains spaces.
+	$path =~ s{\\}{\\\\}g if ($TestLib::windows_os);
+	my $copy_command = $TestLib::windows_os ?
+		qq{copy "$path\\\\%f" "%p"} :
+		qq{cp $path/%f %p};
+
+	$self->append_conf('recovery.conf', qq(
+restore_command = '$copy_command'
+standby_mode = on
+));
+}
+
+# Internal routine to enable archiving
+sub enable_archiving
+{
+	my ($self) = @_;
+	my $path   = $self->archive_dir;
+	my $name   = $self->name;
+
+	print "### Enabling WAL archiving for node \"$name\"\n";
+
+	# On Windows, the path specified in the restore command needs to use
+	# double back-slashes to work properly and to be able to detect properly
+	# the file targeted by the copy command, so the directory value used
+	# in this routine, using only one back-slash, need to be properly changed
+	# first. Paths also need to be double-quoted to prevent failures where
+	# the path contains spaces.
+	$path =~ s{\\}{\\\\}g if ($TestLib::windows_os);
+	my $copy_command = $TestLib::windows_os ?
+		qq{copy "%p" "$path\\\\%f"} :
+		qq{cp %p $path/%f};
+
+	# Enable archive_mode and archive_command on node
+	$self->append_conf('postgresql.conf', qq(
+archive_mode = on
+archive_command = '$copy_command'
 ));
 }
 
