@@ -38,11 +38,11 @@ $node_master->psql('postgres',
 my $applname_1 = $node_standby_1->name;
 my $applname_2 = $node_standby_2->name;
 my $caughtup_query =
-"SELECT pg_current_xlog_location() = write_location FROM pg_stat_replication WHERE application_name = '$applname_1';";
+"SELECT pg_current_xlog_location() <= write_location FROM pg_stat_replication WHERE application_name = '$applname_1';";
 $node_master->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for standby 1 to catch up";
 $caughtup_query =
-"SELECT pg_last_xlog_replay_location() = write_location FROM pg_stat_replication WHERE application_name = '$applname_2';";
+"SELECT pg_last_xlog_replay_location() <= write_location FROM pg_stat_replication WHERE application_name = '$applname_2';";
 $node_standby_1->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for standby 2 to catch up";
 

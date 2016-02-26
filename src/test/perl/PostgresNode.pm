@@ -474,7 +474,7 @@ Streaming replication can be enabled on this node by passing the keyword
 parameter has_streaming => 1. This is disabled by default.
 
 Restoring WAL segments from archives using restore_command can be enabled
-by passiong the keyword parameter has_restoring => 1. This is disabled by
+by passing the keyword parameter has_restoring => 1. This is disabled by
 default.
 
 The backup is copied, leaving the original unmodified. pg_hba.conf is
