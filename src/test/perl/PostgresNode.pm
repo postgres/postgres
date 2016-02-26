@@ -47,7 +47,7 @@ allowing to start, stop, backup and initialize it with various options.
 The set of nodes managed by a given test is also managed by this module.
 
 In addition to node management, PostgresNode instances have some wrappers
-around Test::More functions to run commands with an envronment set up to
+around Test::More functions to run commands with an environment set up to
 point to the instance.
 
 The IPC::Run module is required.
@@ -66,7 +66,6 @@ use File::Basename;
 use File::Spec;
 use File::Temp ();
 use IPC::Run;
-use PostgresNode;
 use RecursiveCopy;
 use Test::More;
 use TestLib ();
@@ -347,6 +346,9 @@ On Windows, we use SSPI authentication to ensure the same (by pg_regress
 pg_hba.conf is configured to allow replication connections. Pass the keyword
 parameter hba_permit_replication => 0 to disable this.
 
+postgresql.conf can be set up for replication by passing the keyword
+parameter allows_streaming => 1. This is disabled by default.
+
 The new node is set up in a fast but unsafe configuration where fsync is
 disabled.
 
@@ -360,7 +362,8 @@ sub init
 	my $host   = $self->host;
 
 	$params{hba_permit_replication} = 1
-	  if (!defined($params{hba_permit_replication}));
+	  unless defined $params{hba_permit_replication};
+	$params{allows_streaming} = 0 unless defined $params{allows_streaming};
 
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
@@ -373,6 +376,19 @@ sub init
 	print $conf "fsync = off\n";
 	print $conf "log_statement = all\n";
 	print $conf "port = $port\n";
+
+	if ($params{allows_streaming})
+	{
+		print $conf "wal_level = hot_standby\n";
+		print $conf "max_wal_senders = 5\n";
+		print $conf "wal_keep_segments = 20\n";
+		print $conf "max_wal_size = 128MB\n";
+		print $conf "shared_buffers = 1MB\n";
+		print $conf "wal_log_hints = on\n";
+		print $conf "hot_standby = on\n";
+		print $conf "max_connections = 10\n";
+	}
+
 	if ($TestLib::windows_os)
 	{
 		print $conf "listen_addresses = '$host'\n";
@@ -384,7 +400,7 @@ sub init
 	}
 	close $conf;
 
-	$self->set_replication_conf if ($params{hba_permit_replication});
+	$self->set_replication_conf if $params{hba_permit_replication};
 }
 
 =pod
@@ -446,6 +462,9 @@ Does not start the node after init.
 
 A recovery.conf is not created.
 
+Streaming replication can be enabled on this node by passing the keyword
+parameter has_streaming => 1. This is disabled by default.
+
 The backup is copied, leaving the original unmodified. pg_hba.conf is
 unconditionally set to enable replication connections.
 
@@ -453,12 +472,13 @@ unconditionally set to enable replication connections.
 
 sub init_from_backup
 {
-	my ($self, $root_node, $backup_name) = @_;
+	my ($self, $root_node, $backup_name, %params) = @_;
 	my $backup_path = $root_node->backup_dir . '/' . $backup_name;
 	my $port        = $self->port;
 	my $node_name   = $self->name;
 	my $root_name   = $root_node->name;
 
+	$params{has_streaming} = 0 unless defined $params{has_streaming};
 	print
 "# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
 	die "Backup \"$backup_name\" does not exist at $backup_path"
@@ -479,6 +499,7 @@ sub init_from_backup
 port = $port
 ));
 	$self->set_replication_conf;
+	$self->enable_streaming($root_node) if $params{has_streaming};
 }
 
 =pod
@@ -525,7 +546,7 @@ sub stop
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
-	$mode = 'fast' if (!defined($mode));
+	$mode = 'fast' unless defined $mode;
 	print "### Stopping node \"$name\" using mode $mode\n";
 	TestLib::system_log('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->{_pid} = undef;
@@ -536,7 +557,7 @@ sub stop
 
 =item $node->restart()
 
-wrapper for pg_ctl -w restart
+Wrapper for pg_ctl -w restart
 
 =cut
 
@@ -553,6 +574,39 @@ sub restart
 	$self->_update_pid;
 }
 
+=pod
+
+=item $node->promote()
+
+Wrapper for pg_ctl promote
+
+=cut
+
+sub promote
+{
+	my ($self)  = @_;
+	my $port    = $self->port;
+	my $pgdata  = $self->data_dir;
+	my $logfile = $self->logfile;
+	my $name    = $self->name;
+	print "### Promoting node \"$name\"\n";
+	TestLib::system_log('pg_ctl', '-D', $pgdata, '-l', $logfile,
+						'promote');
+}
+
+# Internal routine to enable streaming replication on a standby node.
+sub enable_streaming
+{
+	my ($self, $root_node)  = @_;
+	my $root_connstr = $root_node->connstr;
+	my $name    = $self->name;
+
+	print "### Enabling streaming replication for node \"$name\"\n";
+	$self->append_conf('recovery.conf', qq(
+primary_conninfo='$root_connstr application_name=$name'
+standby_mode=on
+));
+}
 
 # Internal method
 sub _update_pid
@@ -632,7 +686,7 @@ sub DESTROY
 {
 	my $self = shift;
 	my $name = $self->name;
-	return if not defined $self->{_pid};
+	return unless defined $self->{_pid};
 	print "### Signalling QUIT to $self->{_pid} for node \"$name\"\n";
 	TestLib::system_log('pg_ctl', 'kill', 'QUIT', $self->{_pid});
 }
@@ -789,6 +843,7 @@ Run a command on the node, then verify that $expected_sql appears in the
 server log file.
 
 Reads the whole log file so be careful when working with large log outputs.
+The log file is truncated prior to running the command, however.
 
 =cut
 
