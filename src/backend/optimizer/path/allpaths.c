@@ -527,6 +527,23 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 					return;
 				return;
 			}
+
+			/*
+			 * Ask FDWs whether they can support performing a ForeignScan
+			 * within a worker.  Most often, the answer will be no.  For
+			 * example, if the nature of the FDW is such that it opens a TCP
+			 * connection with a remote server, each parallel worker would end
+			 * up with a separate connection, and these connections might not
+			 * be appropriately coordinated between workers and the leader.
+			 */
+			if (rte->relkind == RELKIND_FOREIGN_TABLE)
+			{
+				Assert(rel->fdwroutine);
+				if (!rel->fdwroutine->IsForeignScanParallelSafe)
+					return;
+				if (!rel->fdwroutine->IsForeignScanParallelSafe(root, rel, rte))
+					return;
+			}
 			break;
 
 		case RTE_SUBQUERY:

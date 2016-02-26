@@ -131,6 +131,10 @@ typedef void (*InitializeDSMForeignScan_function) (ForeignScanState *node,
 typedef void (*InitializeWorkerForeignScan_function) (ForeignScanState *node,
 													  shm_toc *toc,
 													  void *coordinate);
+typedef bool (*IsForeignScanParallelSafe_function) (PlannerInfo *root,
+															 RelOptInfo *rel,
+														 RangeTblEntry *rte);
+
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
  * function.  It provides pointers to the callback functions needed by the
@@ -188,6 +192,7 @@ typedef struct FdwRoutine
 	ImportForeignSchema_function ImportForeignSchema;
 
 	/* Support functions for parallelism under Gather node */
+	IsForeignScanParallelSafe_function IsForeignScanParallelSafe;
 	EstimateDSMForeignScan_function EstimateDSMForeignScan;
 	InitializeDSMForeignScan_function InitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;

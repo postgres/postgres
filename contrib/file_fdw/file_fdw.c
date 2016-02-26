@@ -131,6 +131,8 @@ static void fileEndForeignScan(ForeignScanState *node);
 static bool fileAnalyzeForeignTable(Relation relation,
 						AcquireSampleRowsFunc *func,
 						BlockNumber *totalpages);
+static bool fileIsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
+										  RangeTblEntry *rte);
 
 /*
  * Helper functions
@@ -170,6 +172,7 @@ file_fdw_handler(PG_FUNCTION_ARGS)
 	fdwroutine->ReScanForeignScan = fileReScanForeignScan;
 	fdwroutine->EndForeignScan = fileEndForeignScan;
 	fdwroutine->AnalyzeForeignTable = fileAnalyzeForeignTable;
+	fdwroutine->IsForeignScanParallelSafe = fileIsForeignScanParallelSafe;
 
 	PG_RETURN_POINTER(fdwroutine);
 }
@@ -758,6 +761,18 @@ fileAnalyzeForeignTable(Relation relation,
 
 	*func = file_acquire_sample_rows;
 
+	return true;
+}
+
+/*
+ * fileIsForeignScanParallelSafe
+ * 		Reading a file in a parallel worker should work just the same as
+ * 		reading it in the leader, so mark scans safe.
+ */
+static bool
+fileIsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
+								  RangeTblEntry *rte)
+{
 	return true;
 }
 

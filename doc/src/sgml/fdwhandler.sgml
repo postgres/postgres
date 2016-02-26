@@ -988,6 +988,29 @@ ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
     <para>
 <programlisting>
 Size
+IsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
+                          RangeTblEntry *rte);
+</programlisting>
+    Test whether a scan can be performed within a parallel worker.  This
+    function will only be called when the planner believes that a parallel
+    plan might be possible, and should return true if it is safe for that scan
+    to run within a parallel worker.  This will generally not be the case if
+    the remote data source has transaction semantics, unless the worker's
+    connection to the data can somehow be made to share the same transaction
+    context as the leader.
+    </para>
+
+    <para>
+    If this callback is not defined, it is assumed that the scan must take
+    place within the parallel leader.  Note that returning true does not mean
+    that the scan itself can be done in parallel, only that the scan can be
+    performed within a parallel worker.  Therefore, it can be useful to define
+    this method even when parallel execution is not supported.
+    </para>
+
+    <para>
+<programlisting>
+Size
 EstimateDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt);
 </programlisting>
     Estimate the amount of dynamic shared memory that will be required
