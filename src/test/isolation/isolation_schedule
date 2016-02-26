@@ -31,6 +31,7 @@ test: multixact-no-deadlock
 test: multixact-no-forget
 test: propagate-lock-delete
 test: tuplelock-conflict
+test: tuplelock-update
 test: nowait
 test: nowait-2
 test: nowait-3
