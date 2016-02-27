@@ -4305,6 +4305,34 @@ local0.*    /var/log/postgresql
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-syslog-sequence-numbers" xreflabel="syslog_sequence_numbers">
+       <term><varname>syslog_sequence_numbers</varname> (<type>boolean</type>)
+        <indexterm>
+         <primary><varname>syslog_sequence_numbers</> configuration parameter</primary>
+        </indexterm>
+       </term>
+
+       <listitem>
+        <para>
+         When logging to <application>syslog</application> and this is on (the
+         default), then each message will be prefixed by an increasing
+         sequence number (such as <literal>[2]</literal>).  This circumvents
+         the <quote>--- last message repeated N times ---</quote> suppression
+         that many syslog implementations perform by default.  In more modern
+         syslog implementations, repeat message suppression can be configured
+         (for example, <literal>$RepeatedMsgReduction</literal>
+         in <productname>rsyslog</productname>), so this might not be
+         necessary.  Also, you could turn this off if you actually want to
+         suppress repeated messages.
+        </para>
+
+        <para>
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
+        </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-event-source" xreflabel="event_source">
       <term><varname>event_source</varname> (<type>string</type>)
       <indexterm>

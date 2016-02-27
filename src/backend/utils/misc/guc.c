@@ -1632,6 +1632,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"syslog_sequence_numbers", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Add sequence number to syslog messags to avoid duplicate suppression."),
+			NULL
+		},
+		&syslog_sequence_numbers,
+		true,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL
