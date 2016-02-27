@@ -78,11 +78,11 @@ endif
 REGRESS_OPTS = --dbname=regress1,connectdb --create-role=connectuser,connectdb $(EXTRA_REGRESS_OPTS)
 
 check: all
-	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule
+	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule
 
 # the same options, but with --listen-on-tcp
 checktcp: all
-	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --host=localhost
+	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --host=localhost
 
 installcheck: all
 	./pg_regress $(REGRESS_OPTS) --bindir='$(bindir)' $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule
