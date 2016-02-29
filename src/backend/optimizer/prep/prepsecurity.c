@@ -446,6 +446,7 @@ security_barrier_replace_vars_walker(Node *node,
 			/* New variable for subquery targetlist */
 			newvar = copyObject(var);
 			newvar->varno = newvar->varnoold = 1;
+			newvar->varlevelsup = 0;
 
 			attno = list_length(context->targetlist) + 1;
 			tle = makeTargetEntry((Expr *) newvar,
