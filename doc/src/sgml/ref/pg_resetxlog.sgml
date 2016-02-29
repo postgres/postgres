@@ -22,15 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetxlog</command>
-   <arg choice="opt"><option>-c</option> <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></arg>
    <arg choice="opt"><option>-f</option></arg>
    <arg choice="opt"><option>-n</option></arg>
-   <arg choice="opt"><option>-o</option> <replaceable class="parameter">oid</replaceable></arg>
-   <arg choice="opt"><option>-x</option> <replaceable class="parameter">xid</replaceable></arg>
-   <arg choice="opt"><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></arg>
-   <arg choice="opt"><option>-m</option> <replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></arg>
-   <arg choice="opt"><option>-O</option> <replaceable class="parameter">mxoff</replaceable></arg>
-   <arg choice="opt"><option>-l</option> <replaceable class="parameter">xlogfile</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg choice="req"><arg choice="opt"><option>-D</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -76,78 +70,108 @@ PostgreSQL documentation
    execute any data-modifying operations in the database before you dump,
    as any such action is likely to make the corruption worse.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><option>-f</option></term>
+    <listitem>
+     <para>
+      Force <command>pg_resetxlog</command> to proceed even if it cannot determine
+      valid data for <filename>pg_control</>, as explained above.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-n</option></term>
+    <listitem>
+     <para>
+      The <option>-n</> (no operation) option instructs
+      <command>pg_resetxlog</command> to print the values reconstructed from
+      <filename>pg_control</> and values about to be changed, and then exit
+      without modifying anything. This is mainly a debugging tool, but can be
+      useful as a sanity check before allowing <command>pg_resetxlog</command>
+      to proceed for real.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-V</option></term>
+    <term><option>--version</option></term>
+    <listitem><para>Display version information, then exit.</para></listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-?</option></term>
+    <term><option>--help</option></term>
+    <listitem><para>Show help, then exit.</para></listitem>
+   </varlistentry>
+  </variablelist>
 
   <para>
-   The <option>-o</>, <option>-x</>, <option>-e</>,
-   <option>-m</>, <option>-O</>,
-   <option>-c</>
-   and <option>-l</>
-   options allow the next OID, next transaction ID, next transaction ID's
-   epoch, next and oldest multitransaction ID, next multitransaction offset,
-   oldest and newest transaction IDs for which the commit time can be retrieved,
-   and WAL
-   starting address values to be set manually.  These are only needed when
+   The following options are only needed when
    <command>pg_resetxlog</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  Safe values can be determined as
-   follows:
+   described below.  For values that take numeric arguments, hexadecimal
+   values can be specified by using the prefix <literal>0x</literal>.
+  </para>
 
-   <itemizedlist>
+  <variablelist>
+   <varlistentry>
+    <term><option>-c</option> <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></term>
     <listitem>
      <para>
-      A safe value for the next transaction ID (<option>-x</>)
-      can be determined by looking for the numerically largest
-      file name in the directory <filename>pg_clog</> under the data directory,
-      adding one,
-      and then multiplying by 1048576.  Note that the file names are in
-      hexadecimal.  It is usually easiest to specify the option value in
-      hexadecimal too. For example, if <filename>0011</> is the largest entry
-      in <filename>pg_clog</>, <literal>-x 0x1200000</> will work (five
-      trailing zeroes provide the proper multiplier).
+      Manually set the oldest and newest transaction IDs for which the commit
+      time can be retrieved.
      </para>
-    </listitem>
 
-    <listitem>
-     <para>
-      A safe value for the next multitransaction ID (first part of <option>-m</>)
-      can be determined by looking for the numerically largest
-      file name in the directory <filename>pg_multixact/offsets</> under the
-      data directory, adding one, and then multiplying by 65536.
-      Conversely, a safe value for the oldest multitransaction ID (second part of
-      <option>-m</>)
-      can be determined by looking for the numerically smallest
-      file name in the same directory and multiplying by 65536.
-      As above, the file names are in hexadecimal, so the easiest way to do
-      this is to specify the option value in hexadecimal and append four zeroes.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      A safe value for the next multitransaction offset (<option>-O</>)
-      can be determined by looking for the numerically largest
-      file name in the directory <filename>pg_multixact/members</> under the
-      data directory, adding one, and then multiplying by 52352.  As above,
-      the file names are in hexadecimal.  There is no simple recipe such as
-      the ones above of appending zeroes.
-     </para>
-    </listitem>
-
-    <listitem>
      <para>
       A safe value for the oldest transaction ID for which the commit time can
-      be retrieved (first part of <option>-c</>) can be determined by looking
+      be retrieved (first part) can be determined by looking
       for the numerically smallest file name in the directory
       <filename>pg_commit_ts</> under the data directory.  Conversely, a safe
       value for the newest transaction ID for which the commit time can be
-      retrieved (second part of <option>-c</>) can be determined by looking for
-      the numerically greatest file name in the same directory.  As above, the
-      file names are in hexadecimal.
+      retrieved (second part) can be determined by looking for the numerically
+      greatest file name in the same directory.  The file names are in
+      hexadecimal.
      </para>
     </listitem>
+   </varlistentry>
 
+   <varlistentry>
+    <term><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></term>
     <listitem>
      <para>
-      The WAL starting address (<option>-l</>) should be
+      Manually set the next transaction ID's epoch.
+     </para>
+
+     <para>
+      The transaction ID epoch is not actually stored anywhere in the database
+      except in the field that is set by <command>pg_resetxlog</command>,
+      so any value will work so far as the database itself is concerned.
+      You might need to adjust this value to ensure that replication
+      systems such as <application>Slony-I</> and
+      <application>Skytools</> work correctly &mdash;
+      if so, an appropriate value should be obtainable from the state of
+      the downstream replicated database.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-l</option> <replaceable class="parameter">xlogfile</replaceable></term>
+    <listitem>
+     <para>
+      Manually set the WAL starting address.
+     </para>
+
+     <para>
+      The WAL starting address should be
       larger than any WAL segment file name currently existing in
       the directory <filename>pg_xlog</> under the data directory.
       These names are also in hexadecimal and have three parts.  The first
@@ -168,46 +192,81 @@ PostgreSQL documentation
       </para>
      </note>
     </listitem>
+   </varlistentry>
 
+   <varlistentry>
+    <term><option>-m</option> <replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></term>
     <listitem>
+     <para>
+      Manually set the next and oldest multitransaction ID.
+     </para>
+
+     <para>
+      A safe value for the next multitransaction ID (first part) can be
+      determined by looking for the numerically largest file name in the
+      directory <filename>pg_multixact/offsets</> under the data directory,
+      adding one, and then multiplying by 65536 (0x10000).  Conversely, a safe
+      value for the oldest multitransaction ID (second part of
+      <option>-m</>) can be determined by looking for the numerically smallest
+      file name in the same directory and multiplying by 65536.  The file
+      names are in hexadecimal, so the easiest way to do this is to specify
+      the option value in hexadecimal and append four zeroes.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-o</option> <replaceable class="parameter">oid</replaceable></term>
+    <listitem>
+     <para>
+      Manually set the next OID.
+     </para>
+
      <para>
       There is no comparably easy way to determine a next OID that's beyond
       the largest one in the database, but fortunately it is not critical to
       get the next-OID setting right.
      </para>
     </listitem>
+   </varlistentry>
 
+   <varlistentry>
+    <term><option>-O</option> <replaceable class="parameter">mxoff</replaceable></term>
     <listitem>
      <para>
-      The transaction ID epoch is not actually stored anywhere in the database
-      except in the field that is set by <command>pg_resetxlog</command>,
-      so any value will work so far as the database itself is concerned.
-      You might need to adjust this value to ensure that replication
-      systems such as <application>Slony-I</> and
-      <application>Skytools</> work correctly &mdash;
-      if so, an appropriate value should be obtainable from the state of
-      the downstream replicated database.
+      Manually set the next multitransaction offset.
+     </para>
+
+     <para>
+      A safe value can be determined by looking for the numerically largest
+      file name in the directory <filename>pg_multixact/members</> under the
+      data directory, adding one, and then multiplying by 52352 (0xCC80).
+      The file names are in hexadecimal.  There is no simple recipe such as
+      the ones for other options of appending zeroes.
      </para>
     </listitem>
-   </itemizedlist>
-  </para>
+   </varlistentry>
 
-  <para>
-   The <option>-n</> (no operation) option instructs
-   <command>pg_resetxlog</command> to print the values reconstructed from
-   <filename>pg_control</> and values about to be changed, and then exit
-   without modifying anything. This is mainly a debugging tool, but can be
-   useful as a sanity check before allowing <command>pg_resetxlog</command>
-   to proceed for real.
-  </para>
+   <varlistentry>
+    <term><option>-x</option> <replaceable class="parameter">xid</replaceable></term>
+    <listitem>
+     <para>
+      Manually set the next transaction ID.
+     </para>
 
-  <para>
-   The <option>-V</> and <option>--version</> options print
-   the <application>pg_resetxlog</application> version and exit.  The
-   options <option>-?</> and <option>--help</> show supported arguments,
-   and exit.
-  </para>
-
+     <para>
+      A safe value can be determined by looking for the numerically largest
+      file name in the directory <filename>pg_clog</> under the data directory,
+      adding one,
+      and then multiplying by 1048576 (0x100000).  Note that the file names are in
+      hexadecimal.  It is usually easiest to specify the option value in
+      hexadecimal too. For example, if <filename>0011</> is the largest entry
+      in <filename>pg_clog</>, <literal>-x 0x1200000</> will work (five
+      trailing zeroes provide the proper multiplier).
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
@@ -224,4 +283,11 @@ PostgreSQL documentation
   </para>
  </refsect1>
 
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-pgcontroldata"></member>
+  </simplelist>
+ </refsect1>
 </refentry>
