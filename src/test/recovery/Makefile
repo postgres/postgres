@@ -15,3 +15,6 @@ include $(top_builddir)/src/Makefile.global
 
 check:
 	$(prove_check)
+
+clean distclean maintainer-clean:
+	rm -rf tmp_check

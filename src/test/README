@@ -28,6 +28,9 @@ modules/
 perl/
   Infrastructure for Perl-based TAP tests
 
+recovery/
+  Test suite for recovery and replication
+
 regress/
   PostgreSQL's main regression test suite, pg_regress
 

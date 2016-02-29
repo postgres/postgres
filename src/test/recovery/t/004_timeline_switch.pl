@@ -1,5 +1,5 @@
 # Test for timeline switch
-# Ensure that a standby is able to follow a newly-promoted standby
+# Ensure that a cascading standby is able to follow a newly-promoted standby
 # on a new timeline.
 use strict;
 use warnings;

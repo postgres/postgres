@@ -3,11 +3,7 @@ src/test/recovery/README
 Regression tests for recovery and replication
 =============================================
 
-This directory contains a test suite for recovery and replication,
-testing mainly the interactions of recovery.conf with cluster
-instances by providing a simple set of routines that can be used
-to define a custom cluster for a test, including backup, archiving,
-and streaming configuration.
+This directory contains a test suite for recovery and replication.
 
 Running the tests
 =================

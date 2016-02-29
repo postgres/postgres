@@ -1,4 +1,4 @@
-# test for archiving with warm standby
+# test for archiving with hot standby
 use strict;
 use warnings;
 use PostgresNode;
