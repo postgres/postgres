@@ -363,9 +363,6 @@ assign_locale_messages(const char *newval, void *extra)
 static void
 free_struct_lconv(struct lconv * s)
 {
-	if (s == NULL)
-		return;
-
 	if (s->currency_symbol)
 		free(s->currency_symbol);
 	if (s->decimal_point)
@@ -419,6 +416,7 @@ struct lconv *
 PGLC_localeconv(void)
 {
 	static struct lconv CurrentLocaleConv;
+	static bool CurrentLocaleConvAllocated = false;
 	struct lconv *extlconv;
 	char	   *save_lc_monetary;
 	char	   *save_lc_numeric;
@@ -435,7 +433,12 @@ PGLC_localeconv(void)
 	if (CurrentLocaleConvValid)
 		return &CurrentLocaleConv;
 
-	free_struct_lconv(&CurrentLocaleConv);
+	/* Free any already-allocated storage */
+	if (CurrentLocaleConvAllocated)
+	{
+		free_struct_lconv(&CurrentLocaleConv);
+		CurrentLocaleConvAllocated = false;
+	}
 
 	/* Save user's values of monetary and numeric locales */
 	save_lc_monetary = setlocale(LC_MONETARY, NULL);
@@ -499,7 +502,9 @@ PGLC_localeconv(void)
 
 	/*
 	 * Must copy all values since restoring internal settings may overwrite
-	 * localeconv()'s results.
+	 * localeconv()'s results.  Note that if we were to fail within this
+	 * sequence before reaching "CurrentLocaleConvAllocated = true", we could
+	 * leak some memory --- but not much, so it's not worth agonizing over.
 	 */
 	CurrentLocaleConv = *extlconv;
 	CurrentLocaleConv.decimal_point = decimal_point;
@@ -512,6 +517,7 @@ PGLC_localeconv(void)
 	CurrentLocaleConv.mon_thousands_sep = db_encoding_strdup(encoding, extlconv->mon_thousands_sep);
 	CurrentLocaleConv.negative_sign = db_encoding_strdup(encoding, extlconv->negative_sign);
 	CurrentLocaleConv.positive_sign = db_encoding_strdup(encoding, extlconv->positive_sign);
+	CurrentLocaleConvAllocated = true;
 
 	/* Try to restore internal settings */
 	if (save_lc_monetary)
