@@ -498,7 +498,7 @@ InitializeMaxBackends(void)
 
 	/* the extra unit accounts for the autovacuum launcher */
 	MaxBackends = MaxConnections + autovacuum_max_workers + 1 +
-		+max_worker_processes;
+		max_worker_processes;
 
 	/* internal error because the values were all checked previously */
 	if (MaxBackends > MAX_BACKENDS)
