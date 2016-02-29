@@ -2957,7 +2957,7 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 
 	printf("RELOPTINFO (");
 	print_relids(rel->relids);
-	printf("): rows=%.0f width=%d\n", rel->rows, rel->width);
+	printf("): rows=%.0f width=%d\n", rel->rows, rel->reltarget.width);
 
 	if (rel->baserestrictinfo)
 	{
