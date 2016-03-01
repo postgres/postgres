@@ -45,7 +45,7 @@ RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *methods)
 		HASHCTL		ctl;
 
 		memset(&ctl, 0, sizeof(HASHCTL));
-		ctl.keysize = NAMEDATALEN;
+		ctl.keysize = EXTNODENAME_MAX_LEN;
 		ctl.entrysize = sizeof(ExtensibleNodeEntry);
 		extensible_node_methods = hash_create("Extensible Node Methods",
 											  100, &ctl, HASH_ELEM);
