@@ -5,7 +5,7 @@
 session "listener"
 step "listen"	{ LISTEN a; }
 step "begin"	{ BEGIN; }
-teardown		{ ROLLBACK; }
+teardown		{ ROLLBACK; UNLISTEN *; }
 
 session "notifier"
 step "check"	{ SELECT pg_notification_queue_usage() > 0 AS nonzero; }
