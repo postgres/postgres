@@ -786,7 +786,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </para>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id='pgbench-metacommand-set'>
     <term>
      <literal>\set <replaceable>varname</> <replaceable>expression</></literal>
     </term>
@@ -798,8 +798,10 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       The expression may contain integer constants such as <literal>5432</>,
       references to variables <literal>:</><replaceable>variablename</>,
       and expressions composed of unary (<literal>-</>) or binary operators
-      (<literal>+</>, <literal>-</>, <literal>*</>, <literal>/</>, <literal>%</>)
-      with their usual associativity, and parentheses.
+      (<literal>+</>, <literal>-</>, <literal>*</>, <literal>/</>,
+      <literal>%</>) with their usual associativity,
+      <link linkend="pgbench-builtin-functions">function calls</>, and
+      parentheses.
      </para>
 
      <para>
@@ -992,6 +994,62 @@ END;
    otherwise they'd not be independently touching different rows.)
   </para>
 
+ </refsect2>
+
+ <refsect2 id="pgbench-builtin-functions">
+  <title>Built-In Functions</title>
+
+   <para>
+     The following functions are built into <application>pgbench</> and
+     may be used in conjunction with
+     <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
+   </para>
+
+   <!-- list pgbench functions in alphabetical order -->
+   <table>
+    <title>pgbench Functions</title>
+    <tgroup cols="5">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Return Type</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Result</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><literal><function>abs(<replaceable>a</>)</></></>
+       <entry>same as <replaceable>a</></>
+       <entry>integer value</>
+       <entry><literal>abs(-17)</></>
+       <entry><literal>17</></>
+      </row>
+      <row>
+       <entry><literal><function>debug(<replaceable>a</>)</></></>
+       <entry>same as <replaceable>a</> </>
+       <entry>print to <systemitem>stderr</systemitem> the given argument</>
+       <entry><literal>debug(5432)</></>
+       <entry><literal>5432</></>
+      </row>
+      <row>
+       <entry><literal><function>max(<replaceable>i</> [, <replaceable>...</> ] )</></></>
+       <entry>integer</>
+       <entry>maximum value</>
+       <entry><literal>max(5, 4, 3, 2)</></>
+       <entry><literal>5</></>
+      </row>
+      <row>
+       <entry><literal><function>min(<replaceable>i</> [, <replaceable>...</> ] )</></></>
+       <entry>integer</>
+       <entry>minimum value</>
+       <entry><literal>min(5, 4, 3, 2)</></>
+       <entry><literal>2</></>
+      </row>
+     </tbody>
+     </tgroup>
+   </table>
  </refsect2>
 
  <refsect2>

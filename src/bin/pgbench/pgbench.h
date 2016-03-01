@@ -11,14 +11,31 @@
 #ifndef PGBENCH_H
 #define PGBENCH_H
 
+/* Types of expression nodes */
 typedef enum PgBenchExprType
 {
 	ENODE_INTEGER_CONSTANT,
 	ENODE_VARIABLE,
-	ENODE_OPERATOR
+	ENODE_FUNCTION
 } PgBenchExprType;
 
+/* List of operators and callable functions */
+typedef enum PgBenchFunction
+{
+	PGBENCH_ADD,
+	PGBENCH_SUB,
+	PGBENCH_MUL,
+	PGBENCH_DIV,
+	PGBENCH_MOD,
+	PGBENCH_DEBUG,
+	PGBENCH_ABS,
+	PGBENCH_MIN,
+	PGBENCH_MAX,
+} PgBenchFunction;
+
 typedef struct PgBenchExpr PgBenchExpr;
+typedef struct PgBenchExprLink PgBenchExprLink;
+typedef struct PgBenchExprList PgBenchExprList;
 
 struct PgBenchExpr
 {
@@ -35,11 +52,23 @@ struct PgBenchExpr
 		}			variable;
 		struct
 		{
-			char		operator;
-			PgBenchExpr *lexpr;
-			PgBenchExpr *rexpr;
-		}			operator;
+			PgBenchFunction function;
+			PgBenchExprLink *args;
+		}			function;
 	}			u;
+};
+
+/* List of expression nodes */
+struct PgBenchExprLink
+{
+	PgBenchExpr *expr;
+	PgBenchExprLink *next;
+};
+
+struct PgBenchExprList
+{
+	PgBenchExprLink *head;
+	PgBenchExprLink *tail;
 };
 
 extern PgBenchExpr *expr_parse_result;
@@ -47,6 +76,7 @@ extern PgBenchExpr *expr_parse_result;
 extern int	expr_yyparse(void);
 extern int	expr_yylex(void);
 extern void expr_yyerror(const char *str);
+extern void expr_yyerror_more(const char *str, const char *more);
 extern void expr_scanner_init(const char *str, const char *source,
 				  const int lineno, const char *line,
 				  const char *cmd, const int ecol);

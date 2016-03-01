@@ -372,6 +372,8 @@ static void doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag);
 
 
+static bool evaluateExpr(CState *, PgBenchExpr *, int64 *);
+
 static void
 usage(void)
 {
@@ -990,6 +992,150 @@ getQueryParams(CState *st, const Command *command, const char **params)
 		params[i] = getVariable(st, command->argv[i + 1]);
 }
 
+/* maximum number of function arguments */
+#define MAX_FARGS 16
+
+/*
+ * Recursive evaluation of functions
+ */
+static bool
+evalFunc(CState *st,
+		 PgBenchFunction func, PgBenchExprLink *args, int64 *retval)
+{
+	/* evaluate all function arguments */
+	int			nargs = 0;
+	int64		iargs[MAX_FARGS];
+	PgBenchExprLink *l = args;
+
+	for (nargs = 0; nargs < MAX_FARGS && l != NULL; nargs++, l = l->next)
+		if (!evaluateExpr(st, l->expr, &iargs[nargs]))
+			return false;
+
+	if (l != NULL)
+	{
+		fprintf(stderr,
+				"too many function arguments, maximum is %d\n", MAX_FARGS);
+		return false;
+	}
+
+	/* then evaluate function */
+	switch (func)
+	{
+		case PGBENCH_ADD:
+		case PGBENCH_SUB:
+		case PGBENCH_MUL:
+		case PGBENCH_DIV:
+		case PGBENCH_MOD:
+			{
+				int64		lval = iargs[0],
+							rval = iargs[1];
+
+				Assert(nargs == 2);
+
+				switch (func)
+				{
+					case PGBENCH_ADD:
+						*retval = lval + rval;
+						return true;
+
+					case PGBENCH_SUB:
+						*retval = lval - rval;
+						return true;
+
+					case PGBENCH_MUL:
+						*retval = lval * rval;
+						return true;
+
+					case PGBENCH_DIV:
+					case PGBENCH_MOD:
+						if (rval == 0)
+						{
+							fprintf(stderr, "division by zero\n");
+							return false;
+						}
+						/* special handling of -1 divisor */
+						if (rval == -1)
+						{
+							if (func == PGBENCH_DIV)
+							{
+								/* overflow check (needed for INT64_MIN) */
+								if (lval == PG_INT64_MIN)
+								{
+									fprintf(stderr, "bigint out of range\n");
+									return false;
+								}
+								else
+									*retval = -lval;
+							}
+							else
+								*retval = 0;
+							return true;
+						}
+						/* divisor is not -1 */
+						if (func == PGBENCH_DIV)
+							*retval = lval / rval;
+						else	/* func == PGBENCH_MOD */
+							*retval = lval % rval;
+						return true;
+
+					default:
+						/* cannot get here */
+						Assert(0);
+				}
+			}
+
+		case PGBENCH_ABS:
+			{
+				Assert(nargs == 1);
+
+				if (iargs[0] < 0)
+					*retval = -iargs[0];
+				else
+					*retval = iargs[0];
+
+				return true;
+			}
+
+		case PGBENCH_DEBUG:
+			{
+				Assert(nargs == 1);
+
+				fprintf(stderr, "debug(script=%d,command=%d): " INT64_FORMAT "\n",
+						st->use_file, st->state + 1, iargs[0]);
+
+				*retval = iargs[0];
+
+				return true;
+			}
+
+		case PGBENCH_MIN:
+		case PGBENCH_MAX:
+			{
+				int64		extremum = iargs[0];
+				int			i;
+
+				Assert(nargs >= 1);
+
+				for (i = 1; i < nargs; i++)
+				{
+					int64		ival = iargs[i];
+
+					if (func == PGBENCH_MIN)
+						extremum = extremum < ival ? extremum : ival;
+					else if (func == PGBENCH_MAX)
+						extremum = extremum > ival ? extremum : ival;
+				}
+
+				*retval = extremum;
+				return true;
+			}
+
+		default:
+			fprintf(stderr, "unexpected function tag: %d\n", func);
+			exit(1);
+	}
+}
+
 /*
  * Recursive evaluation of an expression in a pgbench script
  * using the current state of variables.
@@ -1021,86 +1167,16 @@ evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
 				return true;
 			}
 
-		case ENODE_OPERATOR:
-			{
-				int64		lval;
-				int64		rval;
-
-				if (!evaluateExpr(st, expr->u.operator.lexpr, &lval))
-					return false;
-				if (!evaluateExpr(st, expr->u.operator.rexpr, &rval))
-					return false;
-				switch (expr->u.operator.operator)
-				{
-					case '+':
-						*retval = lval + rval;
-						return true;
-
-					case '-':
-						*retval = lval - rval;
-						return true;
-
-					case '*':
-						*retval = lval * rval;
-						return true;
-
-					case '/':
-						if (rval == 0)
-						{
-							fprintf(stderr, "division by zero\n");
-							return false;
-						}
-
-						/*
-						 * INT64_MIN / -1 is problematic, since the result
-						 * can't be represented on a two's-complement machine.
-						 * Some machines produce INT64_MIN, some produce zero,
-						 * some throw an exception. We can dodge the problem
-						 * by recognizing that division by -1 is the same as
-						 * negation.
-						 */
-						if (rval == -1)
-						{
-							*retval = -lval;
-
-							/* overflow check (needed for INT64_MIN) */
-							if (lval == PG_INT64_MIN)
-							{
-								fprintf(stderr, "bigint out of range\n");
-								return false;
-							}
-						}
-						else
-							*retval = lval / rval;
-
-						return true;
-
-					case '%':
-						if (rval == 0)
-						{
-							fprintf(stderr, "division by zero\n");
-							return false;
-						}
-
-						/*
-						 * Some machines throw a floating-point exception for
-						 * INT64_MIN % -1.  Dodge that problem by noting that
-						 * any value modulo -1 is 0.
-						 */
-						if (rval == -1)
-							*retval = 0;
-						else
-							*retval = lval % rval;
-
-						return true;
-				}
-
-				fprintf(stderr, "bad operator\n");
-				return false;
-			}
+		case ENODE_FUNCTION:
+			return evalFunc(st,
+							expr->u.function.function,
+							expr->u.function.args,
+							retval);
 
 		default:
-			break;
+			fprintf(stderr, "unexpected enode type in evaluation: %d\n",
+					expr->etype);
+			exit(1);
 	}
 
 	fprintf(stderr, "bad expression\n");
@@ -1710,6 +1786,7 @@ top:
 				st->ecnt++;
 				return true;
 			}
+
 			sprintf(res, INT64_FORMAT, result);
 
 			if (!putVariable(st, argv[0], argv[1], res))

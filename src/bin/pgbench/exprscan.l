@@ -46,6 +46,7 @@ space			[ \t\r\f]
 "%"				{ yycol += yyleng; return '%'; }
 "("				{ yycol += yyleng; return '('; }
 ")"				{ yycol += yyleng; return ')'; }
+","				{ yycol += yyleng; return ','; }
 
 :[a-zA-Z0-9_]+	{
 					yycol += yyleng;
@@ -57,8 +58,14 @@ space			[ \t\r\f]
 					yylval.ival = strtoint64(yytext);
 					return INTEGER;
 				}
+[a-zA-Z0-9_]+   {
+					yycol += yyleng;
+					yylval.str = pg_strdup(yytext);
+					return FUNCTION;
+				}
 
 [\n]			{ yycol = 0; yyline++; }
+
 {space}+		{ yycol += yyleng; /* ignore */ }
 
 .				{
@@ -71,10 +78,16 @@ space			[ \t\r\f]
 %%
 
 void
-yyerror(const char *message)
+expr_yyerror_more(const char *message, const char *more)
 {
 	syntax_error(expr_source, expr_lineno, expr_full_line, expr_command,
-				 message, NULL, expr_col + yycol);
+				 message, more, expr_col + yycol);
+}
+
+void
+yyerror(const char *message)
+{
+	expr_yyerror_more(message, NULL);
 }
 
 /*
@@ -93,6 +106,9 @@ expr_scanner_init(const char *str, const char *source,
 	expr_full_line = (char *) line;
 	expr_command = (char *) cmd;
 	expr_col = (int) ecol;
+
+	/* reset column count for this scan */
+	yycol = 0;
 
 	/*
 	 * Might be left over after error
