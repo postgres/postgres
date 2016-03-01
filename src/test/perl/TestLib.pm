@@ -107,6 +107,12 @@ INIT
 	autoflush TESTLOG 1;
 }
 
+END
+{
+	# Preserve temporary directory for this test on failure
+	$File::Temp::KEEP_ALL = 1 unless Test::More->builder->is_passing;
+}
+
 #
 # Helper functions
 #
