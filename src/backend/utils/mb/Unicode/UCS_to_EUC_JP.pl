@@ -130,10 +130,6 @@ while (<FILE>)
 }
 close(FILE);
 
-#
-# first, generate UTF8 --> EUC_JP table
-#
-
 $file = "utf8_to_euc_jp.map";
 open(FILE, "> $file") || die("cannot open $file");
 

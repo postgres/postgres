@@ -49,10 +49,6 @@ while (<FILE>)
 }
 close(FILE);
 
-#
-# first, generate UTF8 --> EUC_KR table
-#
-
 $file = "utf8_to_euc_kr.map";
 open(FILE, "> $file") || die("cannot open $file");
 
@@ -77,7 +73,7 @@ print FILE "};\n";
 close(FILE);
 
 #
-# then generate EUC_JP --> UTF8 table
+# then generate EUC_KR --> UTF8 table
 #
 reset 'array';
 

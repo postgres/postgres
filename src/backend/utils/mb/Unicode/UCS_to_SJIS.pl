@@ -66,10 +66,6 @@ while (<FILE>)
 
 close(FILE);
 
-#
-# first, generate UTF8 --> SJIS table
-#
-
 $file = "utf8_to_sjis.map";
 open(FILE, "> $file") || die("cannot open $file");
 
