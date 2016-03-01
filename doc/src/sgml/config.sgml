@@ -2029,9 +2029,9 @@ include_dir 'conf.d'
         <varname>wal_level</> determines how much information is written
         to the WAL. The default value is <literal>minimal</>, which writes
         only the information needed to recover from a crash or immediate
-        shutdown. <literal>archive</> adds logging required for WAL archiving;
-        <literal>hot_standby</> further adds information required to run
-        read-only queries on a standby server; and, finally
+        shutdown. <literal>replica</> adds logging required for WAL
+        archiving as well as information required to run
+        read-only queries on a standby server.  Finally,
         <literal>logical</> adds information necessary to support logical
         decoding.  Each level includes the information logged at all lower
         levels.  This parameter can only be set at server start.
@@ -2049,29 +2049,23 @@ include_dir 'conf.d'
          transaction</member>
         </simplelist>
         But minimal WAL does not contain enough information to reconstruct the
-        data from a base backup and the WAL logs, so <literal>archive</> or
+        data from a base backup and the WAL logs, so <literal>replica</> or
         higher must be used to enable WAL archiving
         (<xref linkend="guc-archive-mode">) and streaming replication.
        </para>
        <para>
-        In <literal>hot_standby</> level, the same information is logged as
-        with <literal>archive</>, plus information needed to reconstruct
-        the status of running transactions from the WAL. To enable read-only
-        queries on a standby server, <varname>wal_level</> must be set to
-        <literal>hot_standby</> or higher on the primary, and
-        <xref linkend="guc-hot-standby"> must be enabled in the standby. It is
-        thought that there is little measurable difference in performance
-        between using <literal>hot_standby</> and <literal>archive</> levels,
-        so feedback is welcome if any production impacts are noticeable.
-       </para>
-       <para>
         In <literal>logical</> level, the same information is logged as
-        with <literal>hot_standby</>, plus information needed to allow
+        with <literal>replica</>, plus information needed to allow
         extracting logical change sets from the WAL. Using a level of
         <literal>logical</> will increase the WAL volume, particularly if many
         tables are configured for <literal>REPLICA IDENTITY FULL</literal> and
         many <command>UPDATE</> and <command>DELETE</> statements are
         executed.
+       </para>
+       <para>
+        In releases prior to 9.6, this parameter also allowed the
+        values <literal>archive</literal> and <literal>hot_standby</literal>.
+        These are still accepted but mapped to <literal>replica</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -2784,7 +2778,7 @@ include_dir 'conf.d'
         higher than the maximum number of expected clients so disconnected
         clients can immediately reconnect.  This parameter can only
         be set at server start. <varname>wal_level</> must be set to
-        <literal>archive</> or higher to allow connections from standby
+        <literal>replica</> or higher to allow connections from standby
         servers.
        </para>
        </listitem>
@@ -2803,7 +2797,7 @@ include_dir 'conf.d'
          can support. The default is zero.  This parameter can only be set at
          server start.
          <varname>wal_level</varname> must be set
-         to <literal>archive</literal> or higher to allow replication slots to
+         to <literal>replica</literal> or higher to allow replication slots to
          be used. Setting it to a lower value than the number of currently
          existing replication slots will prevent the server from starting.
         </para>

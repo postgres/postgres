@@ -1254,7 +1254,7 @@ RecordTransactionCommit(void)
 	 * this case, but we don't currently try to do that.  It would certainly
 	 * cause problems at least in Hot Standby mode, where the
 	 * KnownAssignedXids machinery requires tracking every XID assignment.  It
-	 * might be OK to skip it only when wal_level < hot_standby, but for now
+	 * might be OK to skip it only when wal_level < replica, but for now
 	 * we don't.)
 	 *
 	 * However, if we're doing cleanup of any non-temp rels or committing any

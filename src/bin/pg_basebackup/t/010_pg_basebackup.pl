@@ -43,7 +43,7 @@ $node->command_fails(
 open CONF, ">>$pgdata/postgresql.conf";
 print CONF "max_replication_slots = 10\n";
 print CONF "max_wal_senders = 10\n";
-print CONF "wal_level = archive\n";
+print CONF "wal_level = replica\n";
 close CONF;
 $node->restart;
 

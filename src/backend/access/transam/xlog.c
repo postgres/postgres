@@ -5866,7 +5866,7 @@ static void
 CheckRequiredParameterValues(void)
 {
 	/*
-	 * For archive recovery, the WAL must be generated with at least 'archive'
+	 * For archive recovery, the WAL must be generated with at least 'replica'
 	 * wal_level.
 	 */
 	if (ArchiveRecoveryRequested && ControlFile->wal_level == WAL_LEVEL_MINIMAL)
@@ -5877,15 +5877,15 @@ CheckRequiredParameterValues(void)
 	}
 
 	/*
-	 * For Hot Standby, the WAL must be generated with 'hot_standby' mode, and
+	 * For Hot Standby, the WAL must be generated with 'replica' mode, and
 	 * we must have at least as many backend slots as the primary.
 	 */
 	if (ArchiveRecoveryRequested && EnableHotStandby)
 	{
-		if (ControlFile->wal_level < WAL_LEVEL_HOT_STANDBY)
+		if (ControlFile->wal_level < WAL_LEVEL_REPLICA)
 			ereport(ERROR,
-					(errmsg("hot standby is not possible because wal_level was not set to \"hot_standby\" or higher on the master server"),
-					 errhint("Either set wal_level to \"hot_standby\" on the master, or turn off hot_standby here.")));
+					(errmsg("hot standby is not possible because wal_level was not set to \"replica\" or higher on the master server"),
+					 errhint("Either set wal_level to \"replica\" on the master, or turn off hot_standby here.")));
 
 		/* We ignore autovacuum_max_workers when we make this test. */
 		RecoveryRequiresIntParameter("max_connections",
@@ -9459,10 +9459,8 @@ xlog_redo(XLogReaderState *record)
 		/*
 		 * Update minRecoveryPoint to ensure that if recovery is aborted, we
 		 * recover back up to this point before allowing hot standby again.
-		 * This is particularly important if wal_level was set to 'archive'
-		 * before, and is now 'hot_standby', to ensure you don't run queries
-		 * against the WAL preceding the wal_level change. Same applies to
-		 * decreasing max_* settings.
+		 * This is important if the max_* settings are decreased, to ensure
+		 * you don't run queries against the WAL preceding the change.
 		 */
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
 		minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
@@ -9793,7 +9791,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			  errmsg("WAL level not sufficient for making an online backup"),
-				 errhint("wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start.")));
+				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
 
 	if (strlen(backupidstr) > MAXPGPATH)
 		ereport(ERROR,
@@ -10264,7 +10262,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			  errmsg("WAL level not sufficient for making an online backup"),
-				 errhint("wal_level must be set to \"archive\", \"hot_standby\", or \"logical\" at server start.")));
+				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
 
 	/*
 	 * OK to update backup counters and forcePageWrites

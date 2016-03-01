@@ -108,7 +108,7 @@ ALTER SYSTEM RESET ALL
   <para>
    Set the <literal>wal_level</>:
 <programlisting>
-ALTER SYSTEM SET wal_level = hot_standby;
+ALTER SYSTEM SET wal_level = replica;
 </programlisting>
   </para>
 

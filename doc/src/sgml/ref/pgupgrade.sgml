@@ -477,7 +477,7 @@ pg_upgrade.exe
 
       <para>
        In the new master cluster, change <varname>wal_level</> to
-       <literal>hot_standby</> in the <filename>postgresql.conf</> file
+       <literal>replica</> in the <filename>postgresql.conf</> file
        and then start and stop the cluster.
       </para>
      </step>

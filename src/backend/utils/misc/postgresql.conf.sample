@@ -173,7 +173,7 @@
 
 # - Settings -
 
-#wal_level = minimal			# minimal, archive, hot_standby, or logical
+#wal_level = minimal			# minimal, replica, or logical
 					# (change requires restart)
 #fsync = on				# turns forced synchronization on or off
 #synchronous_commit = on		# synchronization level;

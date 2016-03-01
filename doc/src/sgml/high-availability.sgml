@@ -1988,7 +1988,7 @@ LOG:  database system is ready to accept read only connections
     Consistency information is recorded once per checkpoint on the primary.
     It is not possible to enable hot standby when reading WAL
     written during a period when <varname>wal_level</> was not set to
-    <literal>hot_standby</> or <literal>logical</> on the primary.  Reaching
+    <literal>replica</> or <literal>logical</> on the primary.  Reaching
     a consistent state can also be delayed in the presence of both of these
     conditions:
 

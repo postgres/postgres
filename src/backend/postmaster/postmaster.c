@@ -858,7 +858,7 @@ PostmasterMain(int argc, char *argv[])
 				(errmsg("WAL archival cannot be enabled when wal_level is \"minimal\"")));
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
+				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"replica\" or \"logical\"")));
 
 	/*
 	 * Other one-time internal sanity checks can go here, if they are fast.

@@ -592,7 +592,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 
    <para>
     To enable WAL archiving, set the <xref linkend="guc-wal-level">
-    configuration parameter to <literal>archive</> or higher,
+    configuration parameter to <literal>replica</> or higher,
     <xref linkend="guc-archive-mode"> to <literal>on</>,
     and specify the shell command to use in the <xref
     linkend="guc-archive-command"> configuration parameter.  In practice
@@ -1285,7 +1285,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
       If more flexibility in copying the backup files is needed, a lower
       level process can be used for standalone hot backups as well.
       To prepare for low level standalone hot backups, set <varname>wal_level</> to
-      <literal>archive</> or higher, <varname>archive_mode</> to
+      <literal>replica</> or higher, <varname>archive_mode</> to
       <literal>on</>, and set up an <varname>archive_command</> that performs
       archiving only when a <emphasis>switch file</> exists.  For example:
 <programlisting>
