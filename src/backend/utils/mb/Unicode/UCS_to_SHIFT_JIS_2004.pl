@@ -168,9 +168,9 @@ while ($line = <FILE>)
 	if ($array{$code} ne "")
 	{
 		printf STDERR
-		  "Warning: duplicate UTF-8: %08x UCS: %04x Shift JIS: %04x\n", $utf,
+		  "Warning: duplicate UTF8: %08x UCS: %04x Shift JIS: %04x\n", $utf,
 		  $ucs, $code;
-		printf STDERR "Previous value: UTF-8: %08x\n", $array{$utf};
+		printf STDERR "Previous value: UTF8: %08x\n", $array{$utf};
 		next;
 	}
 	$count++;
