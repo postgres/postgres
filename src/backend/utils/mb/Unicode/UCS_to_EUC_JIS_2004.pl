@@ -9,7 +9,7 @@
 
 require "ucs2utf.pl";
 
-$TEST = 1;
+$TEST = 0;
 
 # first generate UTF-8 --> EUC_JIS_2004 table
 
