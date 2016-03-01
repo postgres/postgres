@@ -68,29 +68,29 @@ GENERICTEXTS = $(ISO8859TEXTS) $(WINTEXTS) \
 
 all: $(MAPS)
 
-$(GENERICMAPS) : $(GENERICTEXTS)
-	$(PERL) $(srcdir)/UCS_to_most.pl
+$(GENERICMAPS): UCS_to_most.pl $(GENERICTEXTS)
+	$(PERL) $<
 
-euc_jp_to_utf8.map utf8_to_euc_jp.map : JIS0201.TXT JIS0208.TXT JIS0212.TXT
-	$(PERL) $(srcdir)/UCS_to_EUC_JP.pl
+euc_jp_to_utf8.map utf8_to_euc_jp.map: UCS_to_EUC_JP.pl JIS0201.TXT JIS0208.TXT JIS0212.TXT
+	$(PERL) $<
 
-euc_cn_to_utf8.map utf8_to_euc_cn.map : GB2312.TXT
-	$(PERL) $(srcdir)/UCS_to_EUC_CN.pl
+euc_cn_to_utf8.map utf8_to_euc_cn.map: UCS_to_EUC_CN.pl GB2312.TXT
+	$(PERL) $<
 
-euc_kr_to_utf8.map utf8_to_euc_kr.map : KSX1001.TXT
-	$(PERL) $(srcdir)/UCS_to_EUC_KR.pl
+euc_kr_to_utf8.map utf8_to_euc_kr.map: UCS_to_EUC_KR.pl KSX1001.TXT
+	$(PERL) $<
 
-euc_tw_to_utf8.map utf8_to_euc_tw.map : CNS11643.TXT
-	$(PERL) $(srcdir)/UCS_to_EUC_TW.pl
+euc_tw_to_utf8.map utf8_to_euc_tw.map: UCS_to_EUC_TW.pl CNS11643.TXT
+	$(PERL) $<
 
-sjis_to_utf8.map utf8_to_sjis.map : CP932.TXT
-	$(PERL) $(srcdir)/UCS_to_SJIS.pl
+sjis_to_utf8.map utf8_to_sjis.map: UCS_to_SJIS.pl CP932.TXT
+	$(PERL) $<
 
-gb18030_to_utf8.map  utf8_to_gb18030.map : gb-18030-2000.xml
-	$(PERL) $(srcdir)/UCS_to_GB18030.pl
+gb18030_to_utf8.map utf8_to_gb18030.map: UCS_to_GB18030.pl gb-18030-2000.xml
+	$(PERL) $<
 
-big5_to_utf8.map  utf8_to_big5.map : BIG5.TXT CP950.TXT
-	$(PERL) $(srcdir)/UCS_to_BIG5.pl
+big5_to_utf8.map utf8_to_big5.map: UCS_to_BIG5.pl BIG5.TXT CP950.TXT
+	$(PERL) $<
 
 distclean: clean
 	rm -f $(TEXTS)
