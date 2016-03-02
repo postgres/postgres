@@ -13,16 +13,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* Hack to deal with Tcl 8.4 const-ification without losing compatibility */
-#ifndef CONST84
-#define CONST84
-#endif
-
-/* ... and for Tcl 8.6. */
-#ifndef CONST86
-#define CONST86
-#endif
-
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
@@ -47,16 +37,21 @@
 	((TCL_MAJOR_VERSION > maj) || \
 	 (TCL_MAJOR_VERSION == maj && TCL_MINOR_VERSION >= min))
 
-/* Insist on Tcl >= 8.0 */
-#if !HAVE_TCL_VERSION(8,0)
-#error PostgreSQL only supports Tcl 8.0 or later.
+/* Insist on Tcl >= 8.4 */
+#if !HAVE_TCL_VERSION(8,4)
+#error PostgreSQL only supports Tcl 8.4 or later.
+#endif
+
+/* Hack to deal with Tcl 8.6 const-ification without losing compatibility */
+#ifndef CONST86
+#define CONST86
 #endif
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("pltcl")
 
-#if defined(UNICODE_CONVERSION) && HAVE_TCL_VERSION(8,1)
+#if defined(UNICODE_CONVERSION)
 
 #include "mb/pg_wchar.h"
 
@@ -223,7 +218,7 @@ static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 static int pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 static int pltcl_process_SPI_result(Tcl_Interp *interp,
-						 CONST84 char *arrayname,
+						 const char *arrayname,
 						 Tcl_Obj *loop_body,
 						 int spi_rc,
 						 SPITupleTable *tuptable,
@@ -235,7 +230,7 @@ static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 
-static void pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
+static void pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
 static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
 
@@ -250,10 +245,7 @@ static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
  * from Postgres, so the notifier capabilities are initialized, but never
  * used.  Only InitNotifier and DeleteFileHandler ever seem to get called
  * within Postgres, but we implement all the functions for completeness.
- * We can only fix this with Tcl >= 8.4, when Tcl_SetNotifier() appeared.
  */
-#if HAVE_TCL_VERSION(8,4)
-
 static ClientData
 pltcl_InitNotifier(void)
 {
@@ -298,7 +290,6 @@ pltcl_WaitForEvent(CONST86 Tcl_Time *timePtr)
 {
 	return 0;
 }
-#endif   /* HAVE_TCL_VERSION(8,4) */
 
 
 /*
@@ -329,6 +320,7 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 void
 _PG_init(void)
 {
+	Tcl_NotifierProcs notifier;
 	HASHCTL		hash_ctl;
 
 	/* Be sure we do initialization only once (should be redundant now) */
@@ -342,25 +334,18 @@ _PG_init(void)
 	Tcl_FindExecutable("");
 #endif
 
-#if HAVE_TCL_VERSION(8,4)
-
 	/*
 	 * Override the functions in the Notifier subsystem.  See comments above.
 	 */
-	{
-		Tcl_NotifierProcs notifier;
-
-		notifier.setTimerProc = pltcl_SetTimer;
-		notifier.waitForEventProc = pltcl_WaitForEvent;
-		notifier.createFileHandlerProc = pltcl_CreateFileHandler;
-		notifier.deleteFileHandlerProc = pltcl_DeleteFileHandler;
-		notifier.initNotifierProc = pltcl_InitNotifier;
-		notifier.finalizeNotifierProc = pltcl_FinalizeNotifier;
-		notifier.alertNotifierProc = pltcl_AlertNotifier;
-		notifier.serviceModeHookProc = pltcl_ServiceModeHook;
-		Tcl_SetNotifier(&notifier);
-	}
-#endif
+	notifier.setTimerProc = pltcl_SetTimer;
+	notifier.waitForEventProc = pltcl_WaitForEvent;
+	notifier.createFileHandlerProc = pltcl_CreateFileHandler;
+	notifier.deleteFileHandlerProc = pltcl_DeleteFileHandler;
+	notifier.initNotifierProc = pltcl_InitNotifier;
+	notifier.finalizeNotifierProc = pltcl_FinalizeNotifier;
+	notifier.alertNotifierProc = pltcl_AlertNotifier;
+	notifier.serviceModeHookProc = pltcl_ServiceModeHook;
+	Tcl_SetNotifier(&notifier);
 
 	/************************************************************
 	 * Create the dummy hold interpreter to prevent close of
@@ -853,8 +838,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	Datum	   *modvalues;
 	char	   *modnulls;
 	int			ret_numvals;
-	CONST84 char *result;
-	CONST84 char **ret_values;
+	const char *result;
+	const char **ret_values;
 
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -1093,8 +1078,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 
 		for (i = 0; i < ret_numvals; i += 2)
 		{
-			CONST84 char *ret_name = ret_values[i];
-			CONST84 char *ret_value = ret_values[i + 1];
+			const char *ret_name = ret_values[i];
+			const char *ret_value = ret_values[i + 1];
 			int			attnum;
 			Oid			typinput;
 			Oid			typioparam;
@@ -1620,12 +1605,12 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	MemoryContext oldcontext;
 	int			priIndex;
 
-	static CONST84 char *logpriorities[] = {
+	static const char *logpriorities[] = {
 		"DEBUG", "LOG", "INFO", "NOTICE",
-		"WARNING", "ERROR", "FATAL", (char *) NULL
+		"WARNING", "ERROR", "FATAL", (const char *) NULL
 	};
 
-	static CONST84 int loglevels[] = {
+	static const int loglevels[] = {
 		DEBUG2, LOG, INFO, NOTICE,
 		WARNING, ERROR, FATAL
 	};
@@ -1934,7 +1919,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	int			i;
 	int			optIndex;
 	int			count = 0;
-	CONST84 char *volatile arrayname = NULL;
+	const char *volatile arrayname = NULL;
 	Tcl_Obj    *volatile loop_body = NULL;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -1944,8 +1929,8 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 		OPT_ARRAY, OPT_COUNT
 	};
 
-	static CONST84 char *options[] = {
-		"-array", "-count", (char *) NULL
+	static const char *options[] = {
+		"-array", "-count", (const char *) NULL
 	};
 
 	/************************************************************
@@ -2035,7 +2020,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
  */
 static int
 pltcl_process_SPI_result(Tcl_Interp *interp,
-						 CONST84 char *arrayname,
+						 const char *arrayname,
 						 Tcl_Obj *loop_body,
 						 int spi_rc,
 						 SPITupleTable *tuptable,
@@ -2282,7 +2267,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
 	const char *nulls = NULL;
-	CONST84 char *arrayname = NULL;
+	const char *arrayname = NULL;
 	Tcl_Obj    *loop_body = NULL;
 	int			count = 0;
 	int			callObjc;
@@ -2297,8 +2282,8 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		OPT_ARRAY, OPT_COUNT, OPT_NULLS
 	};
 
-	static CONST84 char *options[] = {
-		"-array", "-count", "-nulls", (char *) NULL
+	static const char *options[] = {
+		"-array", "-count", "-nulls", (const char *) NULL
 	};
 
 	/************************************************************
@@ -2500,19 +2485,19 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
  *				  of a given tuple
  **********************************************************************/
 static void
-pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
+pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
 	char	   *outputstr;
 	Datum		attr;
 	bool		isnull;
-	CONST84 char *attname;
+	const char *attname;
 	Oid			typoutput;
 	bool		typisvarlena;
-	CONST84 char **arrptr;
-	CONST84 char **nameptr;
-	CONST84 char *nullname = NULL;
+	const char **arrptr;
+	const char **nameptr;
+	const char *nullname = NULL;
 
 	/************************************************************
 	 * Prepare pointers for Tcl_SetVar2() below and in array
