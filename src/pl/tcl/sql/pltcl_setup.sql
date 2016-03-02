@@ -429,6 +429,24 @@ create trigger dta2_before before insert or update on T_dta2
 	check_primkey('ref1', 'ref2', 'T_pkey2', 'key1', 'key2');
 
 
+create function tcl_composite_arg_ref1(T_dta1) returns int as '
+    return $1(ref1)
+' language pltcl;
+
+create function tcl_composite_arg_ref2(T_dta1) returns text as '
+    return $1(ref2)
+' language pltcl;
+
+create function tcl_argisnull(text) returns bool as '
+    argisnull 1
+' language pltcl;
+
+create function tcl_lastoid(tabname text) returns int8 as '
+    spi_exec "insert into $1 default values"
+    spi_lastoid
+' language pltcl;
+
+
 create function tcl_int4add(int4,int4) returns int4 as '
     return [expr $1 + $2]
 ' language pltcl;
