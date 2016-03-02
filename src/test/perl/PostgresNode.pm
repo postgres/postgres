@@ -115,7 +115,7 @@ sub new
 	my $self   = {
 		_port     => $pgport,
 		_host     => $pghost,
-		_basedir  => TestLib::tempdir,
+		_basedir  => TestLib::tempdir("data_" . $name),
 		_name     => $name,
 		_logfile  => "$TestLib::log_path/${testname}_${name}.log" };
 

@@ -128,9 +128,11 @@ sub all_tests_passing
 #
 sub tempdir
 {
+	my ($prefix) = @_;
+	$prefix = "tmp_test" unless defined $prefix;
 	return File::Temp::tempdir(
-		'tmp_testXXXX',
-		DIR => $tmp_check,
+		$prefix . '_XXXX',
+		DIR     => $tmp_check,
 		CLEANUP => 1);
 }
 
