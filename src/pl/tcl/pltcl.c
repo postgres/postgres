@@ -21,6 +21,7 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "fmgr.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
@@ -32,6 +33,8 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+
+PG_MODULE_MAGIC;
 
 #define HAVE_TCL_VERSION(maj,min) \
 	((TCL_MAJOR_VERSION > maj) || \
@@ -51,43 +54,44 @@
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("pltcl")
 
-#if defined(UNICODE_CONVERSION)
 
-#include "mb/pg_wchar.h"
+/*
+ * Support for converting between UTF8 (which is what all strings going into
+ * or out of Tcl should be) and the database encoding.
+ *
+ * If you just use utf_u2e() or utf_e2u() directly, they will leak some
+ * palloc'd space when doing a conversion.  This is not worth worrying about
+ * if it only happens, say, once per PL/Tcl function call.  If it does seem
+ * worth worrying about, use the wrapper macros.
+ */
 
-static unsigned char *
-utf_u2e(unsigned char *src)
+static inline char *
+utf_u2e(const char *src)
 {
-	return (unsigned char *) pg_any_to_server((char *) src,
-											  strlen(src),
-											  PG_UTF8);
+	return pg_any_to_server(src, strlen(src), PG_UTF8);
 }
 
-static unsigned char *
-utf_e2u(unsigned char *src)
+static inline char *
+utf_e2u(const char *src)
 {
-	return (unsigned char *) pg_server_to_any((char *) src,
-											  strlen(src),
-											  PG_UTF8);
+	return pg_server_to_any(src, strlen(src), PG_UTF8);
 }
 
-#define PLTCL_UTF
-#define UTF_BEGIN	 do { \
-					unsigned char *_pltcl_utf_src; \
-					unsigned char *_pltcl_utf_dst
-#define UTF_END		 if (_pltcl_utf_src!=_pltcl_utf_dst) \
-					pfree(_pltcl_utf_dst); } while (0)
-#define UTF_U2E(x)	 (_pltcl_utf_dst=utf_u2e(_pltcl_utf_src=(x)))
-#define UTF_E2U(x)	 (_pltcl_utf_dst=utf_e2u(_pltcl_utf_src=(x)))
-#else							/* !PLTCL_UTF */
+#define UTF_BEGIN \
+	do { \
+		const char *_pltcl_utf_src = NULL; \
+		char *_pltcl_utf_dst = NULL
 
-#define  UTF_BEGIN
-#define  UTF_END
-#define  UTF_U2E(x)  (x)
-#define  UTF_E2U(x)  (x)
-#endif   /* PLTCL_UTF */
+#define UTF_END \
+	if (_pltcl_utf_src != (const char *) _pltcl_utf_dst) \
+			pfree(_pltcl_utf_dst); \
+	} while (0)
 
-PG_MODULE_MAGIC;
+#define UTF_U2E(x) \
+	(_pltcl_utf_dst = utf_u2e(_pltcl_utf_src = (x)))
+
+#define UTF_E2U(x) \
+	(_pltcl_utf_dst = utf_e2u(_pltcl_utf_src = (x)))
 
 
 /**********************************************************************
@@ -572,14 +576,10 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	SPI_freetuptable(SPI_tuptable);
 
 	if (tcl_rc != TCL_OK)
-	{
-		UTF_BEGIN;
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 				 errmsg("could not load module \"unknown\": %s",
-						UTF_U2E(Tcl_GetStringResult(interp)))));
-		UTF_END;
-	}
+						utf_u2e(Tcl_GetStringResult(interp)))));
 
 	relation_close(pmrel, AccessShareLock);
 }
@@ -804,14 +804,10 @@ pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted)
 								   prodesc->result_typioparam,
 								   -1);
 	else
-	{
-		UTF_BEGIN;
 		retval = InputFunctionCall(&prodesc->result_in_func,
-							   UTF_U2E((char *) Tcl_GetStringResult(interp)),
+								   utf_u2e(Tcl_GetStringResult(interp)),
 								   prodesc->result_typioparam,
 								   -1);
-		UTF_END;
-	}
 
 	return retval;
 }
@@ -866,13 +862,13 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 
 	PG_TRY();
 	{
-		/* The procedure name */
+		/* The procedure name (note this is all ASCII, so no utf_e2u) */
 		Tcl_ListObjAppendElement(NULL, tcl_cmd,
 							Tcl_NewStringObj(prodesc->internal_proname, -1));
 
 		/* The trigger name for argument TG_name */
 		Tcl_ListObjAppendElement(NULL, tcl_cmd,
-						 Tcl_NewStringObj(trigdata->tg_trigger->tgname, -1));
+				Tcl_NewStringObj(utf_e2u(trigdata->tg_trigger->tgname), -1));
 
 		/* The oid of the trigger relation for argument TG_relid */
 		/* Consider not converting to a string for more performance? */
@@ -885,13 +881,13 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 		/* The name of the table the trigger is acting on: TG_table_name */
 		stroid = SPI_getrelname(trigdata->tg_relation);
 		Tcl_ListObjAppendElement(NULL, tcl_cmd,
-								 Tcl_NewStringObj(stroid, -1));
+								 Tcl_NewStringObj(utf_e2u(stroid), -1));
 		pfree(stroid);
 
 		/* The schema of the table the trigger is acting on: TG_table_schema */
 		stroid = SPI_getnspname(trigdata->tg_relation);
 		Tcl_ListObjAppendElement(NULL, tcl_cmd,
-								 Tcl_NewStringObj(stroid, -1));
+								 Tcl_NewStringObj(utf_e2u(stroid), -1));
 		pfree(stroid);
 
 		/* A list of attribute names for argument TG_relatts */
@@ -903,7 +899,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 				Tcl_ListObjAppendElement(NULL, tcl_trigtup, Tcl_NewObj());
 			else
 				Tcl_ListObjAppendElement(NULL, tcl_trigtup,
-				  Tcl_NewStringObj(NameStr(tupdesc->attrs[i]->attname), -1));
+										 Tcl_NewStringObj(utf_e2u(NameStr(tupdesc->attrs[i]->attname)), -1));
 		}
 		Tcl_ListObjAppendElement(NULL, tcl_cmd, tcl_trigtup);
 
@@ -1001,7 +997,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 		/* Finally append the arguments from CREATE TRIGGER */
 		for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
 			Tcl_ListObjAppendElement(NULL, tcl_cmd,
-					  Tcl_NewStringObj(trigdata->tg_trigger->tgargs[i], -1));
+			 Tcl_NewStringObj(utf_e2u(trigdata->tg_trigger->tgargs[i]), -1));
 
 	}
 	PG_CATCH();
@@ -1048,14 +1044,10 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	 ************************************************************/
 	if (Tcl_SplitList(interp, result,
 					  &ret_numvals, &ret_values) != TCL_OK)
-	{
-		UTF_BEGIN;
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 				 errmsg("could not split return value from trigger: %s",
-						UTF_U2E(Tcl_GetStringResult(interp)))));
-		UTF_END;
-	}
+						utf_u2e(Tcl_GetStringResult(interp)))));
 
 	/* Use a TRY to ensure ret_values will get freed */
 	PG_TRY();
@@ -1078,8 +1070,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 
 		for (i = 0; i < ret_numvals; i += 2)
 		{
-			const char *ret_name = ret_values[i];
-			const char *ret_value = ret_values[i + 1];
+			char	   *ret_name = utf_u2e(ret_values[i]);
+			char	   *ret_value = utf_u2e(ret_values[i + 1]);
 			int			attnum;
 			Oid			typinput;
 			Oid			typioparam;
@@ -1123,13 +1115,11 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			/************************************************************
 			 * Set the attribute to NOT NULL and convert the contents
 			 ************************************************************/
-			modnulls[attnum - 1] = ' ';
-			UTF_BEGIN;
 			modvalues[attnum - 1] = InputFunctionCall(&finfo,
-												 (char *) UTF_U2E(ret_value),
+													  ret_value,
 													  typioparam,
 									  tupdesc->attrs[attnum - 1]->atttypmod);
-			UTF_END;
+			modnulls[attnum - 1] = ' ';
 		}
 
 		rettup = SPI_modifytuple(trigdata->tg_relation, rettup, tupdesc->natts,
@@ -1183,9 +1173,9 @@ pltcl_event_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	Tcl_ListObjAppendElement(NULL, tcl_cmd,
 							 Tcl_NewStringObj(prodesc->internal_proname, -1));
 	Tcl_ListObjAppendElement(NULL, tcl_cmd,
-							 Tcl_NewStringObj(tdata->event, -1));
+							 Tcl_NewStringObj(utf_e2u(tdata->event), -1));
 	Tcl_ListObjAppendElement(NULL, tcl_cmd,
-							 Tcl_NewStringObj(tdata->tag, -1));
+							 Tcl_NewStringObj(utf_e2u(tdata->tag), -1));
 
 	tcl_rc = Tcl_EvalObjEx(interp, tcl_cmd, (TCL_EVAL_DIRECT | TCL_EVAL_GLOBAL));
 
@@ -1217,18 +1207,13 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
 	char	   *emsg;
 	char	   *econtext;
 
-	UTF_BEGIN;
-	emsg = pstrdup(UTF_U2E(Tcl_GetStringResult(interp)));
-	UTF_END;
-	UTF_BEGIN;
-	econtext = UTF_U2E((char *) Tcl_GetVar(interp, "errorInfo",
-										   TCL_GLOBAL_ONLY));
+	emsg = pstrdup(utf_u2e(Tcl_GetStringResult(interp)));
+	econtext = utf_u2e(Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 			 errmsg("%s", emsg),
 			 errcontext("%s\nin PL/Tcl function \"%s\"",
 						econtext, proname)));
-	UTF_END;
 }
 
 
@@ -1315,7 +1300,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		/************************************************************
 		 * Build our internal proc name from the function's Oid.  Append
 		 * "_trigger" when appropriate to ensure the normal and trigger
-		 * cases are kept separate.
+		 * cases are kept separate.  Note name must be all-ASCII.
 		 ************************************************************/
 		if (!is_trigger && !is_event_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
@@ -1570,13 +1555,11 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 			free(prodesc->user_proname);
 			free(prodesc->internal_proname);
 			free(prodesc);
-			UTF_BEGIN;
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 					 errmsg("could not create internal procedure \"%s\": %s",
 							internal_proname,
-							UTF_U2E(Tcl_GetStringResult(interp)))));
-			UTF_END;
+							utf_u2e(Tcl_GetStringResult(interp)))));
 		}
 
 		/************************************************************
@@ -2212,7 +2195,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		 * Prepare the plan and check for errors
 		 ************************************************************/
 		UTF_BEGIN;
-		qdesc->plan = SPI_prepare(UTF_U2E(Tcl_GetString(objv[1])), nargs, qdesc->argtypes);
+		qdesc->plan = SPI_prepare(UTF_U2E(Tcl_GetString(objv[1])),
+								  nargs, qdesc->argtypes);
 		UTF_END;
 
 		if (qdesc->plan == NULL)
@@ -2434,7 +2418,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 			{
 				UTF_BEGIN;
 				argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
-								(char *) UTF_U2E(Tcl_GetString(callObjv[j])),
+										 UTF_U2E(Tcl_GetString(callObjv[j])),
 												 qdesc->argtypioparams[j],
 												 -1);
 				UTF_END;
@@ -2483,6 +2467,8 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 /**********************************************************************
  * pltcl_set_tuple_values() - Set variables for all attributes
  *				  of a given tuple
+ *
+ * Note: arrayname is presumed to be UTF8; it usually came from Tcl
  **********************************************************************/
 static void
 pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
@@ -2524,7 +2510,9 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
-		attname = NameStr(tupdesc->attrs[i]->attname);
+		UTF_BEGIN;
+		attname = pstrdup(UTF_E2U(NameStr(tupdesc->attrs[i]->attname)));
+		UTF_END;
 
 		/************************************************************
 		 * Get the attributes value
@@ -2552,6 +2540,8 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 		}
 		else
 			Tcl_UnsetVar2(interp, *arrptr, *nameptr, 0);
+
+		pfree((char *) attname);
 	}
 }
 
