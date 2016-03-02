@@ -377,3 +377,23 @@ gin_tsquery_consistent_6args(PG_FUNCTION_ARGS)
 		elog(ERROR, "gin_tsquery_consistent requires eight arguments");
 	return gin_tsquery_consistent(fcinfo);
 }
+
+/*
+ * Likewise, a stub version of gin_extract_tsquery declared with argument
+ * types that are no longer considered appropriate.
+ */
+Datum
+gin_extract_tsquery_oldsig(PG_FUNCTION_ARGS)
+{
+	return gin_extract_tsquery(fcinfo);
+}
+
+/*
+ * Likewise, a stub version of gin_tsquery_consistent declared with argument
+ * types that are no longer considered appropriate.
+ */
+Datum
+gin_tsquery_consistent_oldsig(PG_FUNCTION_ARGS)
+{
+	return gin_tsquery_consistent(fcinfo);
+}
