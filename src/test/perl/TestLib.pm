@@ -110,7 +110,17 @@ INIT
 END
 {
 	# Preserve temporary directory for this test on failure
-	$File::Temp::KEEP_ALL = 1 unless Test::More->builder->is_passing;
+	$File::Temp::KEEP_ALL = 1 unless all_tests_passing();
+}
+
+sub all_tests_passing
+{
+	my $fail_count = 0;
+	foreach my $status (Test::More->builder->summary)
+	{
+		return 0 unless $status;
+	}
+	return 1;
 }
 
 #
