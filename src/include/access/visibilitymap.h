@@ -19,15 +19,30 @@
 #include "storage/buf.h"
 #include "utils/relcache.h"
 
+#define BITS_PER_HEAPBLOCK 2
+#define HEAPBLOCKS_PER_BYTE (BITS_PER_BYTE / BITS_PER_HEAPBLOCK)
+
+/* Flags for bit map */
+#define VISIBILITYMAP_ALL_VISIBLE	0x01
+#define VISIBILITYMAP_ALL_FROZEN	0x02
+#define VISIBILITYMAP_VALID_BITS	0x03 /* OR of all valid visiblitymap flags bits */
+
+/* Macros for visibilitymap test */
+#define VM_ALL_VISIBLE(r, b, v) \
+	((visibilitymap_get_status((r), (b), (v)) & VISIBILITYMAP_ALL_VISIBLE) != 0)
+#define VM_ALL_FROZEN(r, b, v) \
+	((visibilitymap_get_status((r), (b), (v)) & VISIBILITYMAP_ALL_FROZEN) != 0)
+
 extern void visibilitymap_clear(Relation rel, BlockNumber heapBlk,
 					Buffer vmbuf);
 extern void visibilitymap_pin(Relation rel, BlockNumber heapBlk,
 				  Buffer *vmbuf);
 extern bool visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf);
 extern void visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
-				  XLogRecPtr recptr, Buffer vmBuf, TransactionId cutoff_xid);
-extern bool visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *vmbuf);
-extern BlockNumber visibilitymap_count(Relation rel);
+							  XLogRecPtr recptr, Buffer vmBuf, TransactionId cutoff_xid,
+							  uint8 flags);
+extern uint8 visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf);
+extern void visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen);
 extern void visibilitymap_truncate(Relation rel, BlockNumber nheapblocks);
 
 #endif   /* VISIBILITYMAP_H */

@@ -1920,7 +1920,7 @@ index_update_stats(Relation rel,
 		BlockNumber relallvisible;
 
 		if (rd_rel->relkind != RELKIND_INDEX)
-			relallvisible = visibilitymap_count(rel);
+			visibilitymap_count(rel, &relallvisible, NULL);
 		else	/* don't bother for indexes */
 			relallvisible = 0;
 

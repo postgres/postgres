@@ -623,7 +623,8 @@ can be used to examine the information stored in free space maps.
 <para>
 Each heap relation has a Visibility Map
 (VM) to keep track of which pages contain only tuples that are known to be
-visible to all active transactions. It's stored
+visible to all active transactions; it also keeps track of which pages contain
+only unfrozen tuples.  It's stored
 alongside the main relation data in a separate relation fork, named after the
 filenode number of the relation, plus a <literal>_vm</> suffix. For example,
 if the filenode of a relation is 12345, the VM is stored in a file called
@@ -632,11 +633,12 @@ Note that indexes do not have VMs.
 </para>
 
 <para>
-The visibility map simply stores one bit per heap page. A set bit means
-that all tuples on the page are known to be visible to all transactions.
-This means that the page does not contain any tuples that need to be vacuumed.
+The visibility map stores two bits per heap page.  The first bit, if set,
+indicates that the page is all-visible, or in other words that the page does
+not contain any tuples that need to be vacuumed.
 This information can also be used by <firstterm>index-only scans</> to answer
 queries using only the index tuple.
+The second bit, if set, means that all tuples on the page have been frozen.
 </para>
 
 <para>

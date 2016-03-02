@@ -320,9 +320,10 @@ typedef struct xl_heap_freeze_page
 typedef struct xl_heap_visible
 {
 	TransactionId cutoff_xid;
+	uint8		flags;
 } xl_heap_visible;
 
-#define SizeOfHeapVisible (offsetof(xl_heap_visible, cutoff_xid) + sizeof(TransactionId))
+#define SizeOfHeapVisible (offsetof(xl_heap_visible, flags) + sizeof(uint8))
 
 typedef struct xl_heap_new_cid
 {
@@ -389,6 +390,6 @@ extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
 						  xl_heap_freeze_tuple *xlrec_tp);
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
-				 Buffer vm_buffer, TransactionId cutoff_xid);
+				 Buffer vm_buffer, TransactionId cutoff_xid, uint8 flags);
 
 #endif   /* HEAPAM_XLOG_H */

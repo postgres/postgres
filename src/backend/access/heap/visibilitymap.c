@@ -15,39 +15,42 @@
  *		visibilitymap_pin	 - pin a map page for setting a bit
  *		visibilitymap_pin_ok - check whether correct map page is already pinned
  *		visibilitymap_set	 - set a bit in a previously pinned page
- *		visibilitymap_test	 - test if a bit is set
+ *		visibilitymap_get_status - get status of bits
  *		visibilitymap_count  - count number of bits set in visibility map
  *		visibilitymap_truncate	- truncate the visibility map
  *
  * NOTES
  *
- * The visibility map is a bitmap with one bit per heap page. A set bit means
- * that all tuples on the page are known visible to all transactions, and
- * therefore the page doesn't need to be vacuumed. The map is conservative in
- * the sense that we make sure that whenever a bit is set, we know the
- * condition is true, but if a bit is not set, it might or might not be true.
+ * The visibility map is a bitmap with two bits (all-visible and all-frozen)
+ * per heap page. A set all-visible bit means that all tuples on the page are
+ * known visible to all transactions, and therefore the page doesn't need to
+ * be vacuumed. A set all-frozen bit means that all tuples on the page are
+ * completely frozen, and therefore the page doesn't need to be vacuumed even
+ * if whole table scanning vacuum is required (e.g. anti-wraparound vacuum).
+ * The all-frozen bit must be set only when the page is already all-visible.
  *
- * Clearing a visibility map bit is not separately WAL-logged.  The callers
+ * The map is conservative in the sense that we make sure that whenever a bit
+ * is set, we know the condition is true, but if a bit is not set, it might or
+ * might not be true.
+ *
+ * Clearing both visibility map bits is not separately WAL-logged.  The callers
  * must make sure that whenever a bit is cleared, the bit is cleared on WAL
  * replay of the updating operation as well.
  *
  * When we *set* a visibility map during VACUUM, we must write WAL.  This may
  * seem counterintuitive, since the bit is basically a hint: if it is clear,
- * it may still be the case that every tuple on the page is visible to all
- * transactions; we just don't know that for certain.  The difficulty is that
- * there are two bits which are typically set together: the PD_ALL_VISIBLE bit
- * on the page itself, and the visibility map bit.  If a crash occurs after the
- * visibility map page makes it to disk and before the updated heap page makes
- * it to disk, redo must set the bit on the heap page.  Otherwise, the next
- * insert, update, or delete on the heap page will fail to realize that the
- * visibility map bit must be cleared, possibly causing index-only scans to
- * return wrong answers.
+ * it may still be the case that every tuple on the page is all-visible or
+ * all-frozen we just don't know that for certain.  The difficulty is that
+ * there are two bits which are typically set together: the PD_ALL_VISIBLE
+ * or PD_ALL_FROZEN bit on the page itself, and the corresponding visibility
+ * map bit.  If a crash occurs after the visibility map page makes it to disk
+ * and before the updated heap page makes it to disk, redo must set the bit on
+ * the heap page.  Otherwise, the next insert, update, or delete on the heap
+ * page will fail to realize that the visibility map bit must be cleared,
+ * possibly causing index-only scans to return wrong answers.
  *
  * VACUUM will normally skip pages for which the visibility map bit is set;
  * such pages can't contain any dead tuples and therefore don't need vacuuming.
- * The visibility map is not used for anti-wraparound vacuums, because
- * an anti-wraparound vacuum needs to freeze tuples and observe the latest xid
- * present in the table, even on pages that don't have any dead tuples.
  *
  * LOCKING
  *
@@ -101,38 +104,50 @@
  */
 #define MAPSIZE (BLCKSZ - MAXALIGN(SizeOfPageHeaderData))
 
-/* Number of bits allocated for each heap block. */
-#define BITS_PER_HEAPBLOCK 1
-
-/* Number of heap blocks we can represent in one byte. */
-#define HEAPBLOCKS_PER_BYTE 8
-
 /* Number of heap blocks we can represent in one visibility map page. */
 #define HEAPBLOCKS_PER_PAGE (MAPSIZE * HEAPBLOCKS_PER_BYTE)
 
 /* Mapping from heap block number to the right bit in the visibility map */
 #define HEAPBLK_TO_MAPBLOCK(x) ((x) / HEAPBLOCKS_PER_PAGE)
 #define HEAPBLK_TO_MAPBYTE(x) (((x) % HEAPBLOCKS_PER_PAGE) / HEAPBLOCKS_PER_BYTE)
-#define HEAPBLK_TO_MAPBIT(x) ((x) % HEAPBLOCKS_PER_BYTE)
+#define HEAPBLK_TO_MAPBIT(x) (((x) % HEAPBLOCKS_PER_BYTE) * BITS_PER_HEAPBLOCK)
 
-/* table for fast counting of set bits */
-static const uint8 number_of_ones[256] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+/* tables for fast counting of set bits for visible and frozen */
+static const uint8 number_of_ones_for_visible[256] = {
+	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4,
+	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4,
+	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
+	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4
+};
+static const uint8 number_of_ones_for_frozen[256] = {
+	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
+	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
+	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4,
+	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
+	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4,
+	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4
 };
 
 /* prototypes for internal routines */
@@ -141,7 +156,7 @@ static void vm_extend(Relation rel, BlockNumber nvmblocks);
 
 
 /*
- *	visibilitymap_clear - clear a bit in visibility map
+ *	visibilitymap_clear - clear all bits in visibility map
  *
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
@@ -153,7 +168,7 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf)
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	int			mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
 	int			mapBit = HEAPBLK_TO_MAPBIT(heapBlk);
-	uint8		mask = 1 << mapBit;
+	uint8		mask = VISIBILITYMAP_VALID_BITS << mapBit;
 	char	   *map;
 
 #ifdef TRACE_VISIBILITYMAP
@@ -186,7 +201,7 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf)
  * visibilitymap_set to actually set the bit.
  *
  * On entry, *buf should be InvalidBuffer or a valid buffer returned by
- * an earlier call to visibilitymap_pin or visibilitymap_test on the same
+ * an earlier call to visibilitymap_pin or visibilitymap_get_status on the same
  * relation. On return, *buf is a valid buffer with the map page containing
  * the bit for heapBlk.
  *
@@ -212,7 +227,7 @@ visibilitymap_pin(Relation rel, BlockNumber heapBlk, Buffer *buf)
  *	visibilitymap_pin_ok - do we already have the correct page pinned?
  *
  * On entry, buf should be InvalidBuffer or a valid buffer returned by
- * an earlier call to visibilitymap_pin or visibilitymap_test on the same
+ * an earlier call to visibilitymap_pin or visibilitymap_get_status on the same
  * relation.  The return value indicates whether the buffer covers the
  * given heapBlk.
  */
@@ -225,19 +240,22 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
 }
 
 /*
- *	visibilitymap_set - set a bit on a previously pinned page
+ *	visibilitymap_set - set bit(s) on a previously pinned page
  *
  * recptr is the LSN of the XLOG record we're replaying, if we're in recovery,
  * or InvalidXLogRecPtr in normal running.  The page LSN is advanced to the
  * one provided; in normal running, we generate a new XLOG record and set the
  * page LSN to that value.  cutoff_xid is the largest xmin on the page being
  * marked all-visible; it is needed for Hot Standby, and can be
- * InvalidTransactionId if the page contains no tuples.
+ * InvalidTransactionId if the page contains no tuples.  It can also be set
+ * to InvalidTransactionId when a page that is already all-visible is being
+ * marked all-frozen.
  *
- * Caller is expected to set the heap page's PD_ALL_VISIBLE bit before calling
- * this function. Except in recovery, caller should also pass the heap
- * buffer. When checksums are enabled and we're not in recovery, we must add
- * the heap buffer to the WAL chain to protect it from being torn.
+ * Caller is expected to set the heap page's PD_ALL_VISIBLE or PD_ALL_FROZEN
+ * bit before calling this function. Except in recovery, caller should also
+ * pass the heap buffer and flags which indicates what flag we want to set.
+ * When checksums are enabled and we're not in recovery, we must add the heap
+ * buffer to the WAL chain to protect it from being torn.
  *
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
@@ -245,13 +263,14 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
  */
 void
 visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
-				  XLogRecPtr recptr, Buffer vmBuf, TransactionId cutoff_xid)
+				  XLogRecPtr recptr, Buffer vmBuf, TransactionId cutoff_xid,
+				  uint8 flags)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
 	uint8		mapBit = HEAPBLK_TO_MAPBIT(heapBlk);
 	Page		page;
-	char	   *map;
+	uint8		*map;
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_set %s %d", RelationGetRelationName(rel), heapBlk);
@@ -259,6 +278,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 
 	Assert(InRecovery || XLogRecPtrIsInvalid(recptr));
 	Assert(InRecovery || BufferIsValid(heapBuf));
+	Assert(flags & VISIBILITYMAP_VALID_BITS);
 
 	/* Check that we have the right heap page pinned, if present */
 	if (BufferIsValid(heapBuf) && BufferGetBlockNumber(heapBuf) != heapBlk)
@@ -269,14 +289,14 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 		elog(ERROR, "wrong VM buffer passed to visibilitymap_set");
 
 	page = BufferGetPage(vmBuf);
-	map = PageGetContents(page);
+	map = (uint8 *)PageGetContents(page);
 	LockBuffer(vmBuf, BUFFER_LOCK_EXCLUSIVE);
 
-	if (!(map[mapByte] & (1 << mapBit)))
+	if (flags != (map[mapByte] >> mapBit & VISIBILITYMAP_VALID_BITS))
 	{
 		START_CRIT_SECTION();
 
-		map[mapByte] |= (1 << mapBit);
+		map[mapByte] |= (flags << mapBit);
 		MarkBufferDirty(vmBuf);
 
 		if (RelationNeedsWAL(rel))
@@ -285,7 +305,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 			{
 				Assert(!InRecovery);
 				recptr = log_heap_visible(rel->rd_node, heapBuf, vmBuf,
-										  cutoff_xid);
+										  cutoff_xid, flags);
 
 				/*
 				 * If data checksums are enabled (or wal_log_hints=on), we
@@ -295,8 +315,10 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				{
 					Page		heapPage = BufferGetPage(heapBuf);
 
-					/* caller is expected to set PD_ALL_VISIBLE first */
-					Assert(PageIsAllVisible(heapPage));
+					/* Caller is expected to set page-level bits first. */
+					Assert((flags & VISIBILITYMAP_ALL_VISIBLE) == 0 || PageIsAllVisible(heapPage));
+					Assert((flags & VISIBILITYMAP_ALL_FROZEN) == 0 || PageIsAllFrozen(heapPage));
+
 					PageSetLSN(heapPage, recptr);
 				}
 			}
@@ -310,15 +332,17 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 }
 
 /*
- *	visibilitymap_test - test if a bit is set
+ *	visibilitymap_get_status - get status of bits
  *
- * Are all tuples on heapBlk visible to all, according to the visibility map?
+ * Are all tuples on heapBlk visible to all or are marked frozen, according
+ * to the visibility map?
  *
  * On entry, *buf should be InvalidBuffer or a valid buffer returned by an
- * earlier call to visibilitymap_pin or visibilitymap_test on the same
+ * earlier call to visibilitymap_pin or visibilitymap_get_status on the same
  * relation. On return, *buf is a valid buffer with the map page containing
  * the bit for heapBlk, or InvalidBuffer. The caller is responsible for
- * releasing *buf after it's done testing and setting bits.
+ * releasing *buf after it's done testing and setting bits, and must pass flags
+ * for which it needs to check the value in visibility map.
  *
  * NOTE: This function is typically called without a lock on the heap page,
  * so somebody else could change the bit just after we look at it.  In fact,
@@ -327,17 +351,16 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
  * we might see the old value.  It is the caller's responsibility to deal with
  * all concurrency issues!
  */
-bool
-visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *buf)
+uint8
+visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *buf)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
 	uint8		mapBit = HEAPBLK_TO_MAPBIT(heapBlk);
-	bool		result;
 	char	   *map;
 
 #ifdef TRACE_VISIBILITYMAP
-	elog(DEBUG1, "vm_test %s %d", RelationGetRelationName(rel), heapBlk);
+	elog(DEBUG1, "vm_get_status %s %d", RelationGetRelationName(rel), heapBlk);
 #endif
 
 	/* Reuse the old pinned buffer if possible */
@@ -360,13 +383,11 @@ visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *buf)
 	map = PageGetContents(BufferGetPage(*buf));
 
 	/*
-	 * A single-bit read is atomic.  There could be memory-ordering effects
+	 * A single byte read is atomic.  There could be memory-ordering effects
 	 * here, but for performance reasons we make it the caller's job to worry
 	 * about that.
 	 */
-	result = (map[mapByte] & (1 << mapBit)) ? true : false;
-
-	return result;
+	return ((map[mapByte] >> mapBit) & VISIBILITYMAP_VALID_BITS);
 }
 
 /*
@@ -374,13 +395,19 @@ visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *buf)
  *
  * Note: we ignore the possibility of race conditions when the table is being
  * extended concurrently with the call.  New pages added to the table aren't
- * going to be marked all-visible, so they won't affect the result.
+ * going to be marked all-visible or all-frozen, so they won't affect the result.
  */
-BlockNumber
-visibilitymap_count(Relation rel)
+void
+visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen)
 {
-	BlockNumber result = 0;
 	BlockNumber mapBlock;
+
+	/* all_visible must be specified */
+	Assert(all_visible);
+
+	*all_visible = 0;
+	if (all_frozen)
+		*all_frozen = 0;
 
 	for (mapBlock = 0;; mapBlock++)
 	{
@@ -406,13 +433,13 @@ visibilitymap_count(Relation rel)
 
 		for (i = 0; i < MAPSIZE; i++)
 		{
-			result += number_of_ones[map[i]];
+			*all_visible += number_of_ones_for_visible[map[i]];
+			if (all_frozen)
+				*all_frozen += number_of_ones_for_frozen[map[i]];
 		}
 
 		ReleaseBuffer(mapBuffer);
 	}
-
-	return result;
 }
 
 /*

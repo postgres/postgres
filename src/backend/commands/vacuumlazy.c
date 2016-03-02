@@ -157,7 +157,7 @@ static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static int	vac_cmp_itemptr(const void *left, const void *right);
 static bool heap_page_is_all_visible(Relation rel, Buffer buf,
-						 TransactionId *visibility_cutoff_xid);
+						 TransactionId *visibility_cutoff_xid, bool *all_frozen);
 
 
 /*
@@ -295,7 +295,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 		new_rel_tuples = vacrelstats->old_rel_tuples;
 	}
 
-	new_rel_allvisible = visibilitymap_count(onerel);
+	visibilitymap_count(onerel, &new_rel_allvisible, NULL);
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
 
@@ -496,7 +496,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * maintain next_not_all_visible_block anyway, so as to set up the
 	 * all_visible_according_to_vm flag correctly for each page.
 	 *
-	 * Note: The value returned by visibilitymap_test could be slightly
+	 * Note: The value returned by visibilitymap_get_status could be slightly
 	 * out-of-date, since we make this test before reading the corresponding
 	 * heap page or locking the buffer.  This is OK.  If we mistakenly think
 	 * that the page is all-visible when in fact the flag's just been cleared,
@@ -518,7 +518,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 next_not_all_visible_block < nblocks;
 		 next_not_all_visible_block++)
 	{
-		if (!visibilitymap_test(onerel, next_not_all_visible_block, &vmbuffer))
+		if (!VM_ALL_VISIBLE(onerel, next_not_all_visible_block, &vmbuffer))
 			break;
 		vacuum_delay_point();
 	}
@@ -540,6 +540,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		Size		freespace;
 		bool		all_visible_according_to_vm;
 		bool		all_visible;
+		bool		all_frozen = true;	/* provided all_visible is also true */
 		bool		has_dead_tuples;
 		TransactionId visibility_cutoff_xid = InvalidTransactionId;
 
@@ -554,8 +555,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 next_not_all_visible_block < nblocks;
 				 next_not_all_visible_block++)
 			{
-				if (!visibilitymap_test(onerel, next_not_all_visible_block,
-										&vmbuffer))
+				if (!VM_ALL_VISIBLE(onerel, next_not_all_visible_block,	&vmbuffer))
 					break;
 				vacuum_delay_point();
 			}
@@ -743,7 +743,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			empty_pages++;
 			freespace = PageGetHeapFreeSpace(page);
 
-			/* empty pages are always all-visible */
+			/* empty pages are always all-visible and all-frozen */
 			if (!PageIsAllVisible(page))
 			{
 				START_CRIT_SECTION();
@@ -766,8 +766,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					log_newpage_buffer(buf, true);
 
 				PageSetAllVisible(page);
+				PageSetAllFrozen(page);
 				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
-								  vmbuffer, InvalidTransactionId);
+								  vmbuffer, InvalidTransactionId,
+								  VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
 				END_CRIT_SECTION();
 			}
 
@@ -954,6 +956,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				if (heap_prepare_freeze_tuple(tuple.t_data, FreezeLimit,
 										  MultiXactCutoff, &frozen[nfrozen]))
 					frozen[nfrozen++].offset = offnum;
+				else if (heap_tuple_needs_eventual_freeze(tuple.t_data))
+					all_frozen = false;
 			}
 		}						/* scan along page */
 
@@ -1018,6 +1022,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* mark page all-visible, if appropriate */
 		if (all_visible && !all_visible_according_to_vm)
 		{
+			uint8	flags = VISIBILITYMAP_ALL_VISIBLE;
+
 			/*
 			 * It should never be the case that the visibility map page is set
 			 * while the page-level bit is clear, but the reverse is allowed
@@ -1032,9 +1038,14 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * rare cases after a crash, it is not worth optimizing.
 			 */
 			PageSetAllVisible(page);
+			if (all_frozen)
+			{
+				PageSetAllFrozen(page);
+				flags |= VISIBILITYMAP_ALL_FROZEN;
+			}
 			MarkBufferDirty(buf);
 			visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
-							  vmbuffer, visibility_cutoff_xid);
+							  vmbuffer, visibility_cutoff_xid, flags);
 		}
 
 		/*
@@ -1045,7 +1056,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 * that something bad has happened.
 		 */
 		else if (all_visible_according_to_vm && !PageIsAllVisible(page)
-				 && visibilitymap_test(onerel, blkno, &vmbuffer))
+				 && VM_ALL_VISIBLE(onerel, blkno, &vmbuffer))
 		{
 			elog(WARNING, "page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
 				 relname, blkno);
@@ -1072,6 +1083,28 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			PageClearAllVisible(page);
 			MarkBufferDirty(buf);
 			visibilitymap_clear(onerel, blkno, vmbuffer);
+		}
+
+		/*
+		 * If the page is marked as all-visible but not all-frozen, we should
+		 * so mark it.  Note that all_frozen is only valid if all_visible is
+		 * true, so we must check both.
+		 */
+		else if (all_visible_according_to_vm && all_visible && all_frozen &&
+				 !VM_ALL_FROZEN(onerel, blkno, &vmbuffer))
+		{
+			/* Page is marked all-visible but should be all-frozen */
+			PageSetAllFrozen(page);
+			MarkBufferDirty(buf);
+
+			/*
+			 * We can pass InvalidTransactionId as the cutoff XID here,
+			 * because setting the all-frozen bit doesn't cause recovery
+			 * conflicts.
+			 */
+			visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
+							  vmbuffer, InvalidTransactionId,
+							  VISIBILITYMAP_ALL_FROZEN);
 		}
 
 		UnlockReleaseBuffer(buf);
@@ -1257,6 +1290,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	OffsetNumber unused[MaxOffsetNumber];
 	int			uncnt = 0;
 	TransactionId visibility_cutoff_xid;
+	bool		all_frozen;
 
 	START_CRIT_SECTION();
 
@@ -1308,19 +1342,34 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	 * dirty, exclusively locked, and, if needed, a full page image has been
 	 * emitted in the log_heap_clean() above.
 	 */
-	if (heap_page_is_all_visible(onerel, buffer, &visibility_cutoff_xid))
+	if (heap_page_is_all_visible(onerel, buffer, &visibility_cutoff_xid,
+								 &all_frozen))
+	{
 		PageSetAllVisible(page);
+		if (all_frozen)
+			PageSetAllFrozen(page);
+	}
 
 	/*
 	 * All the changes to the heap page have been done. If the all-visible
-	 * flag is now set, also set the VM bit.
+	 * flag is now set, also set the VM all-visible bit (and, if possible,
+	 * the all-frozen bit) unless this has already been done previously.
 	 */
-	if (PageIsAllVisible(page) &&
-		!visibilitymap_test(onerel, blkno, vmbuffer))
+	if (PageIsAllVisible(page))
 	{
+		uint8 vm_status = visibilitymap_get_status(onerel, blkno, vmbuffer);
+		uint8 flags = 0;
+
+		/* Set the VM all-frozen bit to flag, if needed */
+		if ((vm_status & VISIBILITYMAP_ALL_VISIBLE) == 0)
+			flags |= VISIBILITYMAP_ALL_VISIBLE;
+		if ((vm_status & VISIBILITYMAP_ALL_FROZEN) == 0 && all_frozen)
+			flags |= VISIBILITYMAP_ALL_FROZEN;
+
 		Assert(BufferIsValid(*vmbuffer));
-		visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr, *vmbuffer,
-						  visibility_cutoff_xid);
+		if (flags != 0)
+			visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr,
+							  *vmbuffer, visibility_cutoff_xid, flags);
 	}
 
 	return tupindex;
@@ -1842,10 +1891,13 @@ vac_cmp_itemptr(const void *left, const void *right)
 /*
  * Check if every tuple in the given page is visible to all current and future
  * transactions. Also return the visibility_cutoff_xid which is the highest
- * xmin amongst the visible tuples.
+ * xmin amongst the visible tuples.  Set *all_frozen to true if every tuple
+ * on this page is frozen.
  */
 static bool
-heap_page_is_all_visible(Relation rel, Buffer buf, TransactionId *visibility_cutoff_xid)
+heap_page_is_all_visible(Relation rel, Buffer buf,
+						 TransactionId *visibility_cutoff_xid,
+						 bool *all_frozen)
 {
 	Page		page = BufferGetPage(buf);
 	BlockNumber blockno = BufferGetBlockNumber(buf);
@@ -1854,6 +1906,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf, TransactionId *visibility_cut
 	bool		all_visible = true;
 
 	*visibility_cutoff_xid = InvalidTransactionId;
+	*all_frozen = true;
 
 	/*
 	 * This is a stripped down version of the line pointer scan in
@@ -1918,6 +1971,11 @@ heap_page_is_all_visible(Relation rel, Buffer buf, TransactionId *visibility_cut
 					/* Track newest xmin on page. */
 					if (TransactionIdFollows(xmin, *visibility_cutoff_xid))
 						*visibility_cutoff_xid = xmin;
+
+					/* Check whether this tuple is already frozen or not */
+					if (all_visible && *all_frozen &&
+						heap_tuple_needs_eventual_freeze(tuple.t_data))
+						*all_frozen = false;
 				}
 				break;
 
@@ -1933,6 +1991,15 @@ heap_page_is_all_visible(Relation rel, Buffer buf, TransactionId *visibility_cut
 				break;
 		}
 	}							/* scan along page */
+
+	/*
+	 * We don't bother clearing *all_frozen when the page is discovered not
+	 * to be all-visible, so do that now if necessary.  The page might fail
+	 * to be all-frozen for other reasons anyway, but if it's not all-visible,
+	 * then it definitely isn't all-frozen.
+	 */
+	if (!all_visible)
+		*all_frozen = false;
 
 	return all_visible;
 }

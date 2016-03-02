@@ -270,8 +270,10 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 	 * If we get passed InvalidTransactionId then we are a little surprised,
 	 * but it is theoretically possible in normal running. It also happens
 	 * when replaying already applied WAL records after a standby crash or
-	 * restart. If latestRemovedXid is invalid then there is no conflict. That
-	 * rule applies across all record types that suffer from this conflict.
+	 * restart, or when replaying an XLOG_HEAP2_VISIBLE record that marks as
+	 * frozen a page which was already all-visible.  If latestRemovedXid is
+	 * invalid then there is no conflict. That rule applies across all record
+	 * types that suffer from this conflict.
 	 */
 	if (!TransactionIdIsValid(latestRemovedXid))
 		return;

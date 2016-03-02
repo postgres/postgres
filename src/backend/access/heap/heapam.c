@@ -6952,6 +6952,55 @@ ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 }
 
 /*
+ * heap_tuple_needs_eventual_freeze
+ *
+ * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
+ * will eventually require freezing.  Similar to heap_tuple_needs_freeze,
+ * but there's no cutoff, since we're trying to figure out whether freezing
+ * will ever be needed, not whether it's needed now.
+ */
+bool
+heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple)
+{
+	TransactionId xid;
+
+	/*
+	 * If xmin is a normal transaction ID, this tuple is definitely not
+	 * frozen.
+	 */
+	xid = HeapTupleHeaderGetXmin(tuple);
+	if (TransactionIdIsNormal(xid))
+		return true;
+
+	/*
+	 * If xmax is a valid xact or multixact, this tuple is also not frozen.
+	 */
+	if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
+	{
+		MultiXactId multi;
+
+		multi = HeapTupleHeaderGetRawXmax(tuple);
+		if (MultiXactIdIsValid(multi))
+			return true;
+	}
+	else
+	{
+		xid = HeapTupleHeaderGetRawXmax(tuple);
+		if (TransactionIdIsNormal(xid))
+			return true;
+	}
+
+	if (tuple->t_infomask & HEAP_MOVED)
+	{
+		xid = HeapTupleHeaderGetXvac(tuple);
+		if (TransactionIdIsNormal(xid))
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * heap_tuple_needs_freeze
  *
  * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
@@ -7205,7 +7254,7 @@ log_heap_freeze(Relation reln, Buffer buffer, TransactionId cutoff_xid,
  */
 XLogRecPtr
 log_heap_visible(RelFileNode rnode, Buffer heap_buffer, Buffer vm_buffer,
-				 TransactionId cutoff_xid)
+				 TransactionId cutoff_xid, uint8 vmflags)
 {
 	xl_heap_visible xlrec;
 	XLogRecPtr	recptr;
@@ -7215,6 +7264,7 @@ log_heap_visible(RelFileNode rnode, Buffer heap_buffer, Buffer vm_buffer,
 	Assert(BufferIsValid(vm_buffer));
 
 	xlrec.cutoff_xid = cutoff_xid;
+	xlrec.flags = vmflags;
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, SizeOfHeapVisible);
 
@@ -7804,7 +7854,12 @@ heap_xlog_visible(XLogReaderState *record)
 		 * the subsequent update won't be replayed to clear the flag.
 		 */
 		page = BufferGetPage(buffer);
-		PageSetAllVisible(page);
+
+		if (xlrec->flags & VISIBILITYMAP_ALL_VISIBLE)
+			PageSetAllVisible(page);
+		if (xlrec->flags & VISIBILITYMAP_ALL_FROZEN)
+			PageSetAllFrozen(page);
+
 		MarkBufferDirty(buffer);
 	}
 	else if (action == BLK_RESTORED)
@@ -7856,7 +7911,7 @@ heap_xlog_visible(XLogReaderState *record)
 		 */
 		if (lsn > PageGetLSN(vmpage))
 			visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
-							  xlrec->cutoff_xid);
+							  xlrec->cutoff_xid, xlrec->flags);
 
 		ReleaseBuffer(vmbuffer);
 		FreeFakeRelcacheEntry(reln);

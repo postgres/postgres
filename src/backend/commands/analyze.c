@@ -569,14 +569,20 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	 * inherited stats.
 	 */
 	if (!inh)
+	{
+		BlockNumber		relallvisible;
+
+		visibilitymap_count(onerel, &relallvisible, NULL);
+
 		vac_update_relstats(onerel,
 							relpages,
 							totalrows,
-							visibilitymap_count(onerel),
+							relallvisible,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
 							in_outer_xact);
+	}
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of

@@ -87,7 +87,7 @@ statapprox_heap(Relation rel, output_type *stat)
 		 * If the page has only visible tuples, then we can find out the free
 		 * space from the FSM and move on.
 		 */
-		if (visibilitymap_test(rel, blkno, &vmbuffer))
+		if (VM_ALL_VISIBLE(rel, blkno, &vmbuffer))
 		{
 			freespace = GetRecordedFreeSpace(rel, blkno);
 			stat->tuple_len += BLCKSZ - freespace;
