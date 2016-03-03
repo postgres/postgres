@@ -84,7 +84,7 @@ my $recovery_name = "my_target";
 my $lsn4 =
   $node_master->psql('postgres', "SELECT pg_current_xlog_location();");
 $node_master->psql('postgres',
-	"SELECT pg_create_restore_point('$recovery_name'");
+	"SELECT pg_create_restore_point('$recovery_name');");
 
 # Force archiving of WAL file
 $node_master->psql('postgres', "SELECT pg_switch_xlog()");

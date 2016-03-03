@@ -3,7 +3,7 @@
 # on a new timeline.
 use strict;
 use warnings;
-use File::Path qw(remove_tree);
+use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
 use Test::More tests => 1;
@@ -46,7 +46,7 @@ $node_master->teardown_node;
 $node_standby_1->promote;
 
 # Switch standby 2 to replay from standby 1
-remove_tree($node_standby_2->data_dir . '/recovery.conf');
+rmtree($node_standby_2->data_dir . '/recovery.conf');
 my $connstr_1 = $node_standby_1->connstr;
 $node_standby_2->append_conf(
 	'recovery.conf', qq(
