@@ -1599,6 +1599,22 @@ select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":fa
  2 | {"d":"bar"} | f
 (2 rows)
 
+select *, c is null as c_is_null
+from json_to_record('{"a":1, "b":{"c":16, "d":2}, "x":8}'::json)
+    as t(a int, b json, c text, x int);
+ a |        b        | c | x | c_is_null 
+---+-----------------+---+---+-----------
+ 1 | {"c":16, "d":2} |   | 8 | t
+(1 row)
+
+select *, c is null as c_is_null
+from json_to_recordset('[{"a":1, "b":{"c":16, "d":2}, "x":8}]'::json)
+    as t(a int, b json, c text, x int);
+ a |        b        | c | x | c_is_null 
+---+-----------------+---+---+-----------
+ 1 | {"c":16, "d":2} |   | 8 | t
+(1 row)
+
 -- json_strip_nulls
 select json_strip_nulls(null);
  json_strip_nulls 
