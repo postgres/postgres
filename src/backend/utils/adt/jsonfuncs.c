@@ -2438,7 +2438,7 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 	/*
 	 * Ignore nested fields.
 	 */
-	if (_state->lex->lex_level > 2)
+	if (_state->lex->lex_level > 1)
 		return;
 
 	/*
