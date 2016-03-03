@@ -646,7 +646,6 @@ typedef BTScanOpaqueData *BTScanOpaque;
  */
 #define SK_BT_REQFWD	0x00010000		/* required to continue forward scan */
 #define SK_BT_REQBKWD	0x00020000		/* required to continue backward scan */
-#define SK_BT_MATCHED	0x00040000		/* required to skip further key match */
 #define SK_BT_INDOPTION_SHIFT  24		/* must clear the above bits */
 #define SK_BT_DESC			(INDOPTION_DESC << SK_BT_INDOPTION_SHIFT)
 #define SK_BT_NULLS_FIRST	(INDOPTION_NULLS_FIRST << SK_BT_INDOPTION_SHIFT)
