@@ -21,9 +21,24 @@ PostgresNode - class representing PostgreSQL server instance
   $node->append_conf('postgresql.conf', 'hot_standby = on');
   $node->restart('fast');
 
-  # run a query with psql
-  # like: psql -qAXt postgres -c 'SELECT 1;'
-  $psql_stdout = $node->psql('postgres', 'SELECT 1');
+  # run a query with psql, like:
+  #   echo 'SELECT 1' | psql -qAXt postgres -v ON_ERROR_STOP=1
+  $psql_stdout = $node->safe_psql('postgres', 'SELECT 1');
+
+  # Run psql with a timeout, capturing stdout and stderr
+  # as well as the psql exit code. Pass some extra psql
+  # options. If there's an error from psql raise an exception.
+  my ($stdout, $stderr, $timed_out);
+  my $cmdret = $node->psql('postgres', 'SELECT pg_sleep(60)',
+	  stdout => \$stdout, stderr => \$stderr,
+	  timeout => 30, timed_out => \$timed_out,
+	  extra_params => ['--single-transaction'],
+	  on_error_die => 1)
+  print "Sleep timed out" if $timed_out;
+
+  # Similar thing, more convenient in common cases
+  my ($cmdret, $stdout, $stderr) =
+      $node->psql('postgres', 'SELECT 1');
 
   # run query every second until it returns 't'
   # or times out
@@ -70,6 +85,7 @@ use IPC::Run;
 use RecursiveCopy;
 use Test::More;
 use TestLib ();
+use Scalar::Util qw(blessed);
 
 our @EXPORT = qw(
   get_new_node
@@ -780,37 +796,251 @@ sub teardown_node
 
 =pod
 
-=item $node->psql(dbname, sql)
+=item $node->safe_psql($dbname, $sql) => stdout
 
-Run a query with psql and return stdout, or on error print stderr.
+Invoke B<psql> to run B<sql> on B<dbname> and return its stdout on success.
+Die if the SQL produces an error. Runs with B<ON_ERROR_STOP> set.
 
-Executes a query/script with psql and returns psql's standard output.  psql is
-run in unaligned tuples-only quiet mode with psqlrc disabled so simple queries
-will just return the result row(s) with fields separated by commas.
+Takes optional extra params like timeout and timed_out parameters with the same
+options as psql.
+
+=cut
+
+sub safe_psql
+{
+	my ($self, $dbname, $sql, %params) = @_;
+
+	my ($stdout, $stderr);
+
+	my $ret = $self->psql(
+		$dbname, $sql,
+		%params,
+		stdout        => \$stdout,
+		stderr        => \$stderr,
+		on_error_die  => 1,
+		on_error_stop => 1);
+
+	# psql can emit stderr from NOTICEs etc
+	if ($stderr ne "")
+	{
+		print "#### Begin standard error\n";
+		print $stderr;
+		print "\n#### End standard error\n";
+	}
+
+	return $stdout;
+}
+
+=pod
+
+=item $node->psql($dbname, $sql, %params) => psql_retval
+
+Invoke B<psql> to execute B<$sql> on B<$dbname> and return the return value
+from B<psql>, which is run with on_error_stop by default so that it will
+stop running sql and return 3 if the passed SQL results in an error.
+
+As a convenience, if B<psql> is called in array context it returns an
+array containing ($retval, $stdout, $stderr).
+
+psql is invoked in tuples-only unaligned mode with reading of B<.psqlrc>
+disabled.  That may be overridden by passing extra psql parameters.
+
+stdout and stderr are transformed to UNIX line endings if on Windows. Any
+trailing newline is removed.
+
+Dies on failure to invoke psql but not if psql exits with a nonzero
+return code (unless on_error_die specified).
+
+If psql exits because of a signal, an exception is raised.
+
+=over
+
+=item stdout => \$stdout
+
+B<stdout>, if given, must be a scalar reference to which standard output is
+written.  If not given, standard output is not redirected and will be printed
+unless B<psql> is called in array context, in which case it's captured and
+returned.
+
+=item stderr => \$stderr
+
+Same as B<stdout> but gets standard error. If the same scalar is passed for
+both B<stdout> and B<stderr> the results may be interleaved unpredictably.
+
+=item on_error_stop => 1
+
+By default, the B<psql> method invokes the B<psql> program with ON_ERROR_STOP=1
+set, so SQL execution is stopped at the first error and exit code 2 is
+returned.  Set B<on_error_stop> to 0 to ignore errors instead.
+
+=item on_error_die => 0
+
+By default, this method returns psql's result code. Pass on_error_die to
+instead die with an informative message.
+
+=item timeout => 'interval'
+
+Set a timeout for the psql call as an interval accepted by B<IPC::Run::timer>
+(integer seconds is fine).  This method raises an exception on timeout, unless
+the B<timed_out> parameter is also given.
+
+=item timed_out => \$timed_out
+
+If B<timeout> is set and this parameter is given, the scalar it references
+is set to true if the psql call times out.
+
+=item extra_params => ['--single-transaction']
+
+If given, it must be an array reference containing additional parameters to B<psql>.
+
+=back
+
+e.g.
+
+	my ($stdout, $stderr, $timed_out);
+	my $cmdret = $node->psql('postgres', 'SELECT pg_sleep(60)',
+		stdout => \$stdout, stderr => \$stderr,
+		timeout => 30, timed_out => \$timed_out,
+		extra_params => ['--single-transaction'])
+
+will set $cmdret to undef and $timed_out to a true value.
+
+	$node->psql('postgres', $sql, on_error_die => 1);
+
+dies with an informative message if $sql fails.
 
 =cut
 
 sub psql
 {
-	my ($self, $dbname, $sql) = @_;
+	my ($self, $dbname, $sql, %params) = @_;
 
-	my ($stdout, $stderr);
-	my $name = $self->name;
-	print("### Running SQL command on node \"$name\": $sql\n");
+	my $stdout            = $params{stdout};
+	my $stderr            = $params{stderr};
+	my $timeout           = undef;
+	my $timeout_exception = 'psql timed out';
+	my @psql_params =
+	  ('psql', '-XAtq', '-d', $self->connstr($dbname), '-f', '-');
 
-	IPC::Run::run [ 'psql', '-XAtq', '-d', $self->connstr($dbname), '-f',
-		'-' ], '<', \$sql, '>', \$stdout, '2>', \$stderr
-	  or die;
-
-	if ($stderr ne "")
+	# If the caller wants an array and hasn't passed stdout/stderr
+	# references, allocate temporary ones to capture them so we
+	# can return them. Otherwise we won't redirect them at all.
+	if (wantarray)
 	{
-		print "#### Begin standard error\n";
-		print $stderr;
-		print "#### End standard error\n";
+		if (!defined($stdout))
+		{
+			my $temp_stdout = "";
+			$stdout = \$temp_stdout;
+		}
+		if (!defined($stderr))
+		{
+			my $temp_stderr = "";
+			$stderr = \$temp_stderr;
+		}
 	}
-	chomp $stdout;
-	$stdout =~ s/\r//g if $Config{osname} eq 'msys';
-	return $stdout;
+
+	$params{on_error_stop} = 1 unless defined $params{on_error_stop};
+	$params{on_error_die}  = 0 unless defined $params{on_error_die};
+
+	push @psql_params, '-v', 'ON_ERROR_STOP=1' if $params{on_error_stop};
+	push @psql_params, @{ $params{extra_params} }
+	  if defined $params{extra_params};
+
+	$timeout =
+	  IPC::Run::timeout($params{timeout}, exception => $timeout_exception)
+	  if (defined($params{timeout}));
+
+	# IPC::Run would otherwise append to existing contents:
+	$$stdout = "" if ref($stdout);
+	$$stderr = "" if ref($stderr);
+
+	my $ret;
+
+   # Run psql and capture any possible exceptions.  If the exception is
+   # because of a timeout and the caller requested to handle that, just return
+   # and set the flag.  Otherwise, and for any other exception, rethrow.
+   #
+   # For background, see
+   # http://search.cpan.org/~ether/Try-Tiny-0.24/lib/Try/Tiny.pm
+	do
+	{
+		local $@;
+		eval {
+			my @ipcrun_opts = (\@psql_params, '<', \$sql);
+			push @ipcrun_opts, '>',  $stdout if defined $stdout;
+			push @ipcrun_opts, '2>', $stderr if defined $stderr;
+			push @ipcrun_opts, $timeout if defined $timeout;
+
+			IPC::Run::run @ipcrun_opts;
+			$ret = $?;
+		};
+		my $exc_save = $@;
+		if ($exc_save)
+		{
+			# IPC::Run::run threw an exception. re-throw unless it's a
+			# timeout, which we'll handle by testing is_expired
+			die $exc_save
+			  if (blessed($exc_save) || $exc_save ne $timeout_exception);
+
+			$ret = undef;
+
+			die "Got timeout exception '$exc_save' but timer not expired?!"
+			  unless $timeout->is_expired;
+
+			if (defined($params{timed_out}))
+			{
+				${ $params{timed_out} } = 1;
+			}
+			else
+			{
+				die "psql timed out: stderr: '$$stderr'\n"
+				  . "while running '@psql_params'";
+			}
+		}
+	};
+
+	if (defined $$stdout)
+	{
+		chomp $$stdout;
+		$$stdout =~ s/\r//g if $TestLib::windows_os;
+	}
+
+	if (defined $$stderr)
+	{
+		chomp $$stderr;
+		$$stderr =~ s/\r//g if $TestLib::windows_os;
+	}
+
+	# See http://perldoc.perl.org/perlvar.html#%24CHILD_ERROR
+	# We don't use IPC::Run::Simple to limit dependencies.
+	#
+	# We always die on signal.
+	my $core = $ret & 128 ? " (core dumped)" : "";
+	die "psql exited with signal "
+	  . ($ret & 127)
+	  . "$core: '$$stderr' while running '@psql_params'"
+	  if $ret & 127;
+	$ret = $ret >> 8;
+
+	if ($ret && $params{on_error_die})
+	{
+		die "psql error: stderr: '$$stderr'\nwhile running '@psql_params'"
+		  if $ret == 1;
+		die "connection error: '$$stderr'\nwhile running '@psql_params'"
+		  if $ret == 2;
+		die "error running SQL: '$$stderr'\nwhile running '@psql_params'"
+		  if $ret == 3;
+		die "psql returns $ret: '$$stderr'\nwhile running '@psql_params'";
+	}
+
+	if (wantarray)
+	{
+		return ($ret, $$stdout, $$stderr);
+	}
+	else
+	{
+		return $ret;
+	}
 }
 
 =pod
@@ -837,7 +1067,7 @@ sub poll_query_until
 		my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 
 		chomp($stdout);
-		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
+		$stdout =~ s/\r//g if $TestLib::windows_os;
 		if ($stdout eq "t")
 		{
 			return 1;

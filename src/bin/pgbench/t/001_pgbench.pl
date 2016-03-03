@@ -12,7 +12,7 @@ use Test::More tests => 3;
 my $node = get_new_node('main');
 $node->init;
 $node->start;
-$node->psql('postgres',
+$node->safe_psql('postgres',
 	    'CREATE UNLOGGED TABLE oid_tbl () WITH OIDS; '
 	  . 'ALTER TABLE oid_tbl ADD UNIQUE (oid);');
 my $script = $node->basedir . '/pgbench_script';

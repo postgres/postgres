@@ -20,7 +20,7 @@ $node->issues_sql_like(
 	qr/statement: REINDEX DATABASE postgres;/,
 	'SQL REINDEX run');
 
-$node->psql('postgres',
+$node->safe_psql('postgres',
 	'CREATE TABLE test1 (a int); CREATE INDEX test1x ON test1 (a);');
 $node->issues_sql_like(
 	[ 'reindexdb', '-t', 'test1', 'postgres' ],

@@ -31,7 +31,7 @@ $node_standby_2->init_from_backup($node_standby_1, $backup_name,
 $node_standby_2->start;
 
 # Create some content on master and check its presence in standby 1
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1002) AS a");
 
 # Wait for standbys to catch up
@@ -47,24 +47,14 @@ $node_standby_1->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for standby 2 to catch up";
 
 my $result =
-  $node_standby_1->psql('postgres', "SELECT count(*) FROM tab_int");
+  $node_standby_1->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "standby 1: $result\n";
 is($result, qq(1002), 'check streamed content on standby 1');
 
-$result = $node_standby_2->psql('postgres', "SELECT count(*) FROM tab_int");
+$result = $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "standby 2: $result\n";
 is($result, qq(1002), 'check streamed content on standby 2');
 
 # Check that only READ-only queries can run on standbys
-$node_standby_1->command_fails(
-	[   'psql', '-A',
-		'-t',   '--no-psqlrc',
-		'-d',   $node_standby_1->connstr,
-		'-c',   "INSERT INTO tab_int VALUES (1)" ],
-	'Read-only queries on standby 1');
-$node_standby_2->command_fails(
-	[   'psql', '-A',
-		'-t',   '--no-psqlrc',
-		'-d',   $node_standby_2->connstr,
-		'-c',   "INSERT INTO tab_int VALUES (1)" ],
-	'Read-only queries on standby 2');
+is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'), 3, 'Read-only queries on standby 1');
+is($node_standby_2->psql('postgres', 'INSERT INTO tab_int VALUES (1)'), 3, 'Read-only queries on standby 2');

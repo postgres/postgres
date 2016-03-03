@@ -30,16 +30,16 @@ wal_retrieve_retry_interval = '100ms'
 $node_standby->start;
 
 # Create some content on master
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 my $current_lsn =
-  $node_master->psql('postgres', "SELECT pg_current_xlog_location();");
+  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
 
 # Force archiving of WAL file to make it present on master
-$node_master->psql('postgres', "SELECT pg_switch_xlog()");
+$node_master->safe_psql('postgres', "SELECT pg_switch_xlog()");
 
 # Add some more content, it should not be present on standby
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
 
 # Wait until necessary replay has been done on standby
@@ -48,5 +48,5 @@ my $caughtup_query =
 $node_standby->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for standby to catch up";
 
-my $result = $node_standby->psql('postgres', "SELECT count(*) FROM tab_int");
+my $result = $node_standby->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 is($result, qq(1000), 'check content from archives');

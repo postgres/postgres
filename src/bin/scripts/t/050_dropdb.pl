@@ -13,7 +13,7 @@ my $node = get_new_node('main');
 $node->init;
 $node->start;
 
-$node->psql('postgres', 'CREATE DATABASE foobar1');
+$node->safe_psql('postgres', 'CREATE DATABASE foobar1');
 $node->issues_sql_like(
 	[ 'dropdb', 'foobar1' ],
 	qr/statement: DROP DATABASE foobar1/,

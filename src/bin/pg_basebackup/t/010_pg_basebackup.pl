@@ -112,9 +112,9 @@ SKIP:
 	symlink "$tempdir", $shorter_tempdir;
 
 	mkdir "$tempdir/tblspc1";
-	$node->psql('postgres',
+	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';");
-	$node->psql('postgres', "CREATE TABLE test1 (a int) TABLESPACE tblspc1;");
+	$node->safe_psql('postgres', "CREATE TABLE test1 (a int) TABLESPACE tblspc1;");
 	$node->command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup2", '-Ft' ],
 		'tar format with tablespaces');
 	ok(-f "$tempdir/tarbackup2/base.tar", 'backup tar was created');
@@ -140,9 +140,9 @@ SKIP:
 	closedir $dh;
 
 	mkdir "$tempdir/tbl=spc2";
-	$node->psql('postgres', "DROP TABLE test1;");
-	$node->psql('postgres', "DROP TABLESPACE tblspc1;");
-	$node->psql('postgres',
+	$node->safe_psql('postgres', "DROP TABLE test1;");
+	$node->safe_psql('postgres', "DROP TABLESPACE tblspc1;");
+	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc2 LOCATION '$shorter_tempdir/tbl=spc2';");
 	$node->command_ok(
 		[   'pg_basebackup', '-D', "$tempdir/backup3", '-Fp',
@@ -150,15 +150,15 @@ SKIP:
 		'mapping tablespace with = sign in path');
 	ok(-d "$tempdir/tbackup/tbl=spc2",
 		'tablespace with = sign was relocated');
-	$node->psql('postgres', "DROP TABLESPACE tblspc2;");
+	$node->safe_psql('postgres', "DROP TABLESPACE tblspc2;");
 
 	mkdir "$tempdir/$superlongname";
-	$node->psql('postgres',
+	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc3 LOCATION '$tempdir/$superlongname';");
 	$node->command_ok(
 		[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
 		'pg_basebackup tar with long symlink target');
-	$node->psql('postgres', "DROP TABLESPACE tblspc3;");
+	$node->safe_psql('postgres', "DROP TABLESPACE tblspc3;");
 }
 
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
@@ -199,9 +199,9 @@ $node->command_fails(
 		'slot1' ],
 	'pg_basebackup fails with nonexistent replication slot');
 
-$node->psql('postgres',
+$node->safe_psql('postgres',
 	q{SELECT * FROM pg_create_physical_replication_slot('slot1')});
-my $lsn = $node->psql('postgres',
+my $lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
 );
 is($lsn, '', 'restart LSN of new slot is null');
@@ -209,7 +209,7 @@ $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X',
 		'stream',        '-S', 'slot1' ],
 	'pg_basebackup -X stream with replication slot runs');
-$lsn = $node->psql('postgres',
+$lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
 );
 like($lsn, qr!^0/[0-9A-Z]{7,8}$!, 'restart LSN of slot has advanced');

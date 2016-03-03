@@ -16,7 +16,7 @@ $node->start;
 $node->command_fails([ 'createlang', 'plpgsql' ],
 	'fails if language already exists');
 
-$node->psql('postgres', 'DROP EXTENSION plpgsql');
+$node->safe_psql('postgres', 'DROP EXTENSION plpgsql');
 $node->issues_sql_like(
 	[ 'createlang', 'plpgsql' ],
 	qr/statement: CREATE EXTENSION "plpgsql"/,

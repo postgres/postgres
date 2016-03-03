@@ -38,7 +38,7 @@ sub test_recovery_standby
 
 	# Create some content on master and check its presence in standby
 	my $result =
-	  $node_standby->psql('postgres', "SELECT count(*) FROM tab_int");
+	  $node_standby->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 	is($result, qq($num_rows), "check standby content for $test_name");
 
 	# Stop standby node
@@ -54,40 +54,40 @@ $node_master->start;
 
 # Create data before taking the backup, aimed at testing
 # recovery_target = 'immediate'
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 my $lsn1 =
-  $node_master->psql('postgres', "SELECT pg_current_xlog_location();");
+  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
 
 # Take backup from which all operations will be run
 $node_master->backup('my_backup');
 
 # Insert some data with used as a replay reference, with a recovery
 # target TXID.
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-my $recovery_txid = $node_master->psql('postgres', "SELECT txid_current()");
+my $recovery_txid = $node_master->safe_psql('postgres', "SELECT txid_current()");
 my $lsn2 =
-  $node_master->psql('postgres', "SELECT pg_current_xlog_location();");
+  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
 
 # More data, with recovery target timestamp
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(2001,3000))");
-my $recovery_time = $node_master->psql('postgres', "SELECT now()");
+my $recovery_time = $node_master->safe_psql('postgres', "SELECT now()");
 my $lsn3 =
-  $node_master->psql('postgres', "SELECT pg_current_xlog_location();");
+  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
 
 # Even more data, this time with a recovery target name
-$node_master->psql('postgres',
+$node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(3001,4000))");
 my $recovery_name = "my_target";
 my $lsn4 =
-  $node_master->psql('postgres', "SELECT pg_current_xlog_location();");
-$node_master->psql('postgres',
+  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
+$node_master->safe_psql('postgres',
 	"SELECT pg_create_restore_point('$recovery_name');");
 
 # Force archiving of WAL file
-$node_master->psql('postgres', "SELECT pg_switch_xlog()");
+$node_master->safe_psql('postgres', "SELECT pg_switch_xlog()");
 
 # Test recovery targets
 my @recovery_params = ("recovery_target = 'immediate'");

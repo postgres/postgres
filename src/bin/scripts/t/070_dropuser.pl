@@ -13,7 +13,7 @@ my $node = get_new_node('main');
 $node->init;
 $node->start;
 
-$node->psql('postgres', 'CREATE ROLE foobar1');
+$node->safe_psql('postgres', 'CREATE ROLE foobar1');
 $node->issues_sql_like(
 	[ 'dropuser', 'foobar1' ],
 	qr/statement: DROP ROLE foobar1/,
