@@ -1026,33 +1026,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (goback)
 		offnum = OffsetNumberPrev(offnum);
 
-	/*
-	 * By here the scan position is now set for the first key.  If all further
-	 * tuples are expected to match we set the SK_BT_MATCHED flag to avoid
-	 * re-checking the scan key later.  This is a big win for slow key matches
-	 * though is still significant even for fast datatypes.
-	 */
-	switch (startKeys[0]->sk_strategy)
-	{
-		case BTEqualStrategyNumber:
-			break;
-
-		case BTGreaterEqualStrategyNumber:
-		case BTGreaterStrategyNumber:
-			if (ScanDirectionIsForward(dir))
-				startKeys[0]->sk_flags |= SK_BT_MATCHED;
-			break;
-
-		case BTLessEqualStrategyNumber:
-		case BTLessStrategyNumber:
-			if (ScanDirectionIsBackward(dir))
-				startKeys[0]->sk_flags |= SK_BT_MATCHED;
-			break;
-
-		default:
-			break;
-	}
-
 	/* remember which buffer we have pinned, if any */
 	Assert(!BTScanPosIsValid(so->currPos));
 	so->currPos.buf = buf;
