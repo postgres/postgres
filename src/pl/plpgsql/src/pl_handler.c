@@ -52,7 +52,7 @@ int			plpgsql_extra_warnings;
 int			plpgsql_extra_errors;
 
 /* Hook for plugins */
-PLpgSQL_plugin **plugin_ptr = NULL;
+PLpgSQL_plugin **plpgsql_plugin_ptr = NULL;
 
 
 static bool
@@ -197,7 +197,7 @@ _PG_init(void)
 	RegisterSubXactCallback(plpgsql_subxact_cb, NULL);
 
 	/* Set up a rendezvous point with optional instrumentation plugin */
-	plugin_ptr = (PLpgSQL_plugin **) find_rendezvous_variable("PLpgSQL_plugin");
+	plpgsql_plugin_ptr = (PLpgSQL_plugin **) find_rendezvous_variable("PLpgSQL_plugin");
 
 	inited = true;
 }
