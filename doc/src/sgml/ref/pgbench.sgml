@@ -269,6 +269,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         Add the specified builtin script to the list of executed scripts.
         Available builtin scripts are: <literal>tpcb-like</>,
         <literal>simple-update</> and <literal>select-only</>.
+        Unambiguous prefixes of builtin names are accepted.
         With special name <literal>list</>, show the list of builtin scripts
         and exit immediately.
        </para>

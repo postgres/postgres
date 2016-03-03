@@ -2746,22 +2746,36 @@ listAvailableScripts(void)
 	fprintf(stderr, "\n");
 }
 
+/* return builtin script "name" if unambiguous */
 static char *
 findBuiltin(const char *name, char **desc)
 {
-	int			i;
+	int			i,
+				found = 0,
+				len = strlen(name);
+	char	   *commands = NULL;
 
 	for (i = 0; i < N_BUILTIN; i++)
 	{
-		if (strncmp(builtin_script[i].name, name,
-					strlen(builtin_script[i].name)) == 0)
+		if (strncmp(builtin_script[i].name, name, len) == 0)
 		{
 			*desc = builtin_script[i].desc;
-			return builtin_script[i].commands;
+			commands = builtin_script[i].commands;
+			found++;
 		}
 	}
 
-	fprintf(stderr, "no builtin script found for name \"%s\"\n", name);
+	/* ok, unambiguous result */
+	if (found == 1)
+		return commands;
+
+	/* error cases */
+	if (found == 0)
+		fprintf(stderr, "no builtin script found for name \"%s\"\n", name);
+	else	/* found > 1 */
+		fprintf(stderr,
+				"ambiguous builtin name: %d builtin scripts found for prefix \"%s\"\n", found, name);
+
 	listAvailableScripts();
 	exit(1);
 }
