@@ -449,7 +449,7 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 			 xl_xact_parsed_commit *parsed, TransactionId xid)
 {
 	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
-	XLogRecPtr	commit_time = InvalidXLogRecPtr;
+	TimestampTz	commit_time = parsed->xact_time;
 	XLogRecPtr	origin_id = XLogRecGetOrigin(buf->record);
 	int			i;
 
