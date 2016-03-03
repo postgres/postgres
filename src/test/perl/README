@@ -11,6 +11,9 @@ isolation tester specs in src/test/isolation, if possible. If not, check to
 see if your new tests make sense under an existing tree in src/test, like
 src/test/ssl, or should be added to one of the suites for an existing utility.
 
+Note that all tests and test tools should have perltidy run on them before
+patches are submitted, using perltidy --profile=src/tools/pgindent/perltidyrc
+
 Writing tests
 -------------
 
