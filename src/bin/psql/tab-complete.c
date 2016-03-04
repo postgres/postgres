@@ -4156,8 +4156,8 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		result = NULL;
 
 		/* Set up suitably-escaped copies of textual inputs */
-		e_text = pg_malloc(string_length * 2 + 1);
-		PQescapeString(e_text, text, string_length);
+		e_text = pg_malloc(byte_length * 2 + 1);
+		PQescapeString(e_text, text, byte_length);
 
 		if (completion_info_charp)
 		{
