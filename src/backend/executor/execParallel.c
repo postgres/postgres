@@ -522,7 +522,7 @@ ExecParallelFinish(ParallelExecutorInfo *pei)
 	WaitForParallelWorkersToFinish(pei->pcxt);
 
 	/* Next, accumulate buffer usage. */
-	for (i = 0; i < pei->pcxt->nworkers; ++i)
+	for (i = 0; i < pei->pcxt->nworkers_launched; ++i)
 		InstrAccumParallelQuery(&pei->buffer_usage[i]);
 
 	/* Finally, accumulate instrumentation, if any. */

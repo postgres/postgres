@@ -520,7 +520,7 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 		 */
 		CHECK_FOR_INTERRUPTS();
 
-		for (i = 0; i < pcxt->nworkers; ++i)
+		for (i = 0; i < pcxt->nworkers_launched; ++i)
 		{
 			if (pcxt->worker[i].error_mqh != NULL)
 			{
@@ -560,7 +560,7 @@ WaitForParallelWorkersToExit(ParallelContext *pcxt)
 	int			i;
 
 	/* Wait until the workers actually die. */
-	for (i = 0; i < pcxt->nworkers; ++i)
+	for (i = 0; i < pcxt->nworkers_launched; ++i)
 	{
 		BgwHandleStatus status;
 
@@ -610,7 +610,7 @@ DestroyParallelContext(ParallelContext *pcxt)
 	/* Kill each worker in turn, and forget their error queues. */
 	if (pcxt->worker != NULL)
 	{
-		for (i = 0; i < pcxt->nworkers; ++i)
+		for (i = 0; i < pcxt->nworkers_launched; ++i)
 		{
 			if (pcxt->worker[i].error_mqh != NULL)
 			{
@@ -708,7 +708,7 @@ HandleParallelMessages(void)
 		if (pcxt->worker == NULL)
 			continue;
 
-		for (i = 0; i < pcxt->nworkers; ++i)
+		for (i = 0; i < pcxt->nworkers_launched; ++i)
 		{
 			/*
 			 * Read as many messages as we can from each worker, but stop when
