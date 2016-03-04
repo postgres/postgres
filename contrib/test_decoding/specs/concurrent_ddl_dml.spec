@@ -14,6 +14,8 @@ teardown
 }
 
 session "s1"
+setup { SET synchronous_commit=on; }
+
 step "s1_init" { SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding'); }
 step "s1_begin" { BEGIN; }
 step "s1_insert_tbl1" { INSERT INTO tbl1 (val1, val2) VALUES (1, 1); }
@@ -23,6 +25,8 @@ step "s1_insert_tbl2_3col" { INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1
 step "s1_commit" { COMMIT; }
 
 session "s2"
+setup { SET synchronous_commit=on; }
+
 step "s2_alter_tbl1_float" { ALTER TABLE tbl1 ALTER COLUMN val2 TYPE float; }
 step "s2_alter_tbl1_char" { ALTER TABLE tbl1 ALTER COLUMN val2 TYPE character varying; }
 step "s2_alter_tbl1_text" { ALTER TABLE tbl1 ALTER COLUMN val2 TYPE text; }
