@@ -677,6 +677,18 @@ commit;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
 
+-- Above DMLs add data with c6 as NULL in ft1, so test ORDER BY NULLS LAST and NULLs
+-- FIRST behavior here.
+-- ORDER BY DESC NULLS LAST options
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795 LIMIT 10;
+SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795  LIMIT 10;
+-- ORDER BY DESC NULLS FIRST options
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+-- ORDER BY ASC NULLS FIRST options
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+
 -- ===================================================================
 -- test check constraints
 -- ===================================================================

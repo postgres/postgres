@@ -245,13 +245,13 @@ SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1, t1.tableoid OFFSET 100 LIMIT 10;
 
 -- whole-row reference
 EXPLAIN (VERBOSE, COSTS false) SELECT t1 FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.*, c3, c1
    ->  Foreign Scan on public.ft1 t1
          Output: t1.*, c3, c1
-         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" ORDER BY c3 ASC, "C 1" ASC
+         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" ORDER BY c3 ASC NULLS LAST, "C 1" ASC NULLS LAST
 (5 rows)
 
 SELECT t1 FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
@@ -382,8 +382,8 @@ SET enable_nestloop TO false;
 -- inner join; expressions in the clauses appear in the equivalence class list
 EXPLAIN (VERBOSE, COSTS false)
 	SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2."C 1"
    ->  Merge Join
@@ -391,7 +391,7 @@ EXPLAIN (VERBOSE, COSTS false)
          Merge Cond: (t1.c1 = t2."C 1")
          ->  Foreign Scan on public.ft2 t1
                Output: t1.c1
-               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC
+               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t2
                Output: t2."C 1"
 (10 rows)
@@ -415,8 +415,8 @@ SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFF
 -- list but no output change as compared to the previous query
 EXPLAIN (VERBOSE, COSTS false)
 	SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2."C 1"
    ->  Merge Left Join
@@ -424,7 +424,7 @@ EXPLAIN (VERBOSE, COSTS false)
          Merge Cond: (t1.c1 = t2."C 1")
          ->  Foreign Scan on public.ft2 t1
                Output: t1.c1
-               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC
+               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
          ->  Index Only Scan using t1_pkey on "S 1"."T 1" t2
                Output: t2."C 1"
 (10 rows)
@@ -1341,8 +1341,8 @@ SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER B
 -- SEMI JOIN, not pushed down
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
-                                    QUERY PLAN                                    
-----------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1
    ->  Merge Semi Join
@@ -1350,12 +1350,12 @@ SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1)
          Merge Cond: (t1.c1 = t2.c1)
          ->  Foreign Scan on public.ft1 t1
                Output: t1.c1
-               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC
+               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
          ->  Materialize
                Output: t2.c1
                ->  Foreign Scan on public.ft2 t2
                      Output: t2.c1
-                     Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC
+                     Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
 (13 rows)
 
 SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
@@ -1376,8 +1376,8 @@ SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1)
 -- ANTI JOIN, not pushed down
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c2) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Limit
    Output: t1.c1
    ->  Merge Anti Join
@@ -1385,12 +1385,12 @@ SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2
          Merge Cond: (t1.c1 = t2.c2)
          ->  Foreign Scan on public.ft1 t1
                Output: t1.c1
-               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC
+               Remote SQL: SELECT "C 1" FROM "S 1"."T 1" ORDER BY "C 1" ASC NULLS LAST
          ->  Materialize
                Output: t2.c2
                ->  Foreign Scan on public.ft2 t2
                      Output: t2.c2
-                     Remote SQL: SELECT c2 FROM "S 1"."T 1" ORDER BY c2 ASC
+                     Remote SQL: SELECT c2 FROM "S 1"."T 1" ORDER BY c2 ASC NULLS LAST
 (13 rows)
 
 SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c2) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
@@ -1448,8 +1448,8 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 CROSS JOIN ft2 t2 ORDER BY t1.c1, t2.c1 OFFSET 1
 -- different server, not pushed down. No result expected.
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1
    ->  Merge Join
@@ -1457,12 +1457,12 @@ SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t
          Merge Cond: (t2.c1 = t1.c1)
          ->  Foreign Scan on public.ft6 t2
                Output: t2.c1, t2.c2, t2.c3
-               Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC
+               Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC NULLS LAST
          ->  Materialize
                Output: t1.c1, t1.c2, t1.c3
                ->  Foreign Scan on public.ft5 t1
                      Output: t1.c1, t1.c2, t1.c3
-                     Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC
+                     Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC NULLS LAST
 (13 rows)
 
 SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
@@ -1746,8 +1746,8 @@ EXECUTE join_stmt;
 -- different user mappings
 CREATE USER MAPPING FOR view_owner SERVER loopback;
 EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, ft5.c1
    ->  Merge Join
@@ -1755,12 +1755,12 @@ EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
          Merge Cond: (t1.c1 = ft5.c1)
          ->  Foreign Scan on public.ft5 t1
                Output: t1.c1, t1.c2, t1.c3
-               Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC
+               Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC NULLS LAST
          ->  Materialize
                Output: ft5.c1, ft5.c2, ft5.c3
                ->  Foreign Scan on public.ft5
                      Output: ft5.c1, ft5.c2, ft5.c3
-                     Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC
+                     Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC NULLS LAST
 (13 rows)
 
 EXECUTE join_stmt;
@@ -3813,6 +3813,86 @@ select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
  407 |   100
 (13 rows)
 
+-- Above DMLs add data with c6 as NULL in ft1, so test ORDER BY NULLS LAST and NULLs
+-- FIRST behavior here.
+-- ORDER BY DESC NULLS LAST options
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795 LIMIT 10;
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   ->  Foreign Scan on public.ft1
+         Output: c1, c2, c3, c4, c5, c6, c7, c8
+         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" ORDER BY c6 DESC NULLS LAST, "C 1" ASC NULLS LAST
+(5 rows)
+
+SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795  LIMIT 10;
+  c1  | c2  |         c3         |              c4              |            c5            |  c6  |     c7     | c8  
+------+-----+--------------------+------------------------------+--------------------------+------+------------+-----
+  960 |  42 | 00960_trig_update  | Mon Mar 02 00:00:00 1970 PST | Mon Mar 02 00:00:00 1970 | 0    | 0          | foo
+  970 |  42 | 00970_trig_update  | Thu Mar 12 00:00:00 1970 PST | Thu Mar 12 00:00:00 1970 | 0    | 0          | foo
+  980 |  42 | 00980_trig_update  | Sun Mar 22 00:00:00 1970 PST | Sun Mar 22 00:00:00 1970 | 0    | 0          | foo
+  990 |  42 | 00990_trig_update  | Wed Apr 01 00:00:00 1970 PST | Wed Apr 01 00:00:00 1970 | 0    | 0          | foo
+ 1000 |  42 | 01000_trig_update  | Thu Jan 01 00:00:00 1970 PST | Thu Jan 01 00:00:00 1970 | 0    | 0          | foo
+ 1218 | 818 | ggg_trig_update    |                              |                          | (--; | ft2        | 
+ 1001 | 101 | 0000100001         |                              |                          |      | ft2        | 
+ 1003 | 403 | 0000300003_update3 |                              |                          |      | ft2        | 
+ 1004 | 104 | 0000400004         |                              |                          |      | ft2        | 
+ 1006 | 106 | 0000600006         |                              |                          |      | ft2        | 
+(10 rows)
+
+-- ORDER BY DESC NULLS FIRST options
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   ->  Foreign Scan on public.ft1
+         Output: c1, c2, c3, c4, c5, c6, c7, c8
+         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" ORDER BY c6 DESC NULLS FIRST, "C 1" ASC NULLS LAST
+(5 rows)
+
+SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+  c1  | c2  |       c3        |              c4              |            c5            | c6 |     c7     | c8  
+------+-----+-----------------+------------------------------+--------------------------+----+------------+-----
+ 1020 | 100 | 0002000020      |                              |                          |    | ft2        | 
+ 1101 | 201 | aaa             |                              |                          |    | ft2        | 
+ 1103 | 503 | ccc_update3     |                              |                          |    | ft2        | 
+ 1104 | 204 | ddd             |                              |                          |    | ft2        | 
+ 1208 | 818 | fff_trig_update |                              |                          |    | ft2        | 
+    9 | 509 | 00009_update9   | Sat Jan 10 00:00:00 1970 PST | Sat Jan 10 00:00:00 1970 | 9  | ft2        | foo
+   19 | 509 | 00019_update9   | Tue Jan 20 00:00:00 1970 PST | Tue Jan 20 00:00:00 1970 | 9  | ft2        | foo
+   29 | 509 | 00029_update9   | Fri Jan 30 00:00:00 1970 PST | Fri Jan 30 00:00:00 1970 | 9  | ft2        | foo
+   39 | 509 | 00039_update9   | Mon Feb 09 00:00:00 1970 PST | Mon Feb 09 00:00:00 1970 | 9  | ft2        | foo
+   49 | 509 | 00049_update9   | Thu Feb 19 00:00:00 1970 PST | Thu Feb 19 00:00:00 1970 | 9  | ft2        | foo
+(10 rows)
+
+-- ORDER BY ASC NULLS FIRST options
+EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   ->  Foreign Scan on public.ft1
+         Output: c1, c2, c3, c4, c5, c6, c7, c8
+         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" ORDER BY c6 ASC NULLS FIRST, "C 1" ASC NULLS LAST
+(5 rows)
+
+SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+  c1  | c2  |        c3         |              c4              |            c5            |  c6  |     c7     | c8  
+------+-----+-------------------+------------------------------+--------------------------+------+------------+-----
+ 1020 | 100 | 0002000020        |                              |                          |      | ft2        | 
+ 1101 | 201 | aaa               |                              |                          |      | ft2        | 
+ 1103 | 503 | ccc_update3       |                              |                          |      | ft2        | 
+ 1104 | 204 | ddd               |                              |                          |      | ft2        | 
+ 1208 | 818 | fff_trig_update   |                              |                          |      | ft2        | 
+ 1218 | 818 | ggg_trig_update   |                              |                          | (--; | ft2        | 
+   10 |  42 | 00010_trig_update | Sun Jan 11 00:00:00 1970 PST | Sun Jan 11 00:00:00 1970 | 0    | 0          | foo
+   20 |  42 | 00020_trig_update | Wed Jan 21 00:00:00 1970 PST | Wed Jan 21 00:00:00 1970 | 0    | 0          | foo
+   30 |  42 | 00030_trig_update | Sat Jan 31 00:00:00 1970 PST | Sat Jan 31 00:00:00 1970 | 0    | 0          | foo
+   40 |  42 | 00040_trig_update | Tue Feb 10 00:00:00 1970 PST | Tue Feb 10 00:00:00 1970 | 0    | 0          | foo
+(10 rows)
+
 -- ===================================================================
 -- test check constraints
 -- ===================================================================
@@ -4630,8 +4710,8 @@ analyze loct1;
 -- inner join; expressions in the clauses appear in the equivalence class list
 explain (verbose, costs off)
 	select foo.f1, loct1.f1 from foo join loct1 on (foo.f1 = loct1.f1) order by foo.f2 offset 10 limit 10;
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
  Limit
    Output: foo.f1, loct1.f1, foo.f2
    ->  Sort
@@ -4646,7 +4726,7 @@ explain (verbose, costs off)
                            Output: foo.f1, foo.f2
                      ->  Foreign Scan on public.foo2
                            Output: foo2.f1, foo2.f2
-                           Remote SQL: SELECT f1, f2 FROM public.loct1 ORDER BY f1 ASC
+                           Remote SQL: SELECT f1, f2 FROM public.loct1 ORDER BY f1 ASC NULLS LAST
                ->  Index Only Scan using i_loct1_f1 on public.loct1
                      Output: loct1.f1
 (17 rows)
@@ -4670,8 +4750,8 @@ select foo.f1, loct1.f1 from foo join loct1 on (foo.f1 = loct1.f1) order by foo.
 -- list but no output change as compared to the previous query
 explain (verbose, costs off)
 	select foo.f1, loct1.f1 from foo left join loct1 on (foo.f1 = loct1.f1) order by foo.f2 offset 10 limit 10;
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
  Limit
    Output: foo.f1, loct1.f1, foo.f2
    ->  Sort
@@ -4686,7 +4766,7 @@ explain (verbose, costs off)
                            Output: foo.f1, foo.f2
                      ->  Foreign Scan on public.foo2
                            Output: foo2.f1, foo2.f2
-                           Remote SQL: SELECT f1, f2 FROM public.loct1 ORDER BY f1 ASC
+                           Remote SQL: SELECT f1, f2 FROM public.loct1 ORDER BY f1 ASC NULLS LAST
                ->  Index Only Scan using i_loct1_f1 on public.loct1
                      Output: loct1.f1
 (17 rows)

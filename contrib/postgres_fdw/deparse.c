@@ -2308,6 +2308,8 @@ appendOrderByClause(List *pathkeys, deparse_expr_cxt *context)
 
 		if (pathkey->pk_nulls_first)
 			appendStringInfoString(buf, " NULLS FIRST");
+		else
+			appendStringInfoString(buf, " NULLS LAST");
 
 		delim = ", ";
 	}
