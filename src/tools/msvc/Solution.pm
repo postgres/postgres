@@ -643,6 +643,7 @@ sub GetFakeConfigure
 	$cfg .= ' --enable-integer-datetimes'
 	  if ($self->{options}->{integer_datetimes});
 	$cfg .= ' --enable-nls' if ($self->{options}->{nls});
+	$cfg .= ' --enable-tap-tests' if ($self->{options}->{tap_tests});
 	$cfg .= ' --with-ldap'  if ($self->{options}->{ldap});
 	$cfg .= ' --without-zlib' unless ($self->{options}->{zlib});
 	$cfg .= ' --with-extra-version' if ($self->{options}->{extraver});
