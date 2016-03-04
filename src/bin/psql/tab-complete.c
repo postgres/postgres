@@ -3689,9 +3689,8 @@ static char *
 _complete_from_query(int is_schema_query, const char *text, int state)
 {
 	static int	list_index,
-				string_length;
+				byte_length;
 	static PGresult *result = NULL;
-
 	/*
 	 * If this is the first time for this completion, we fetch a list of our
 	 * "things" from the backend.
@@ -3702,9 +3701,18 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		char	   *e_text;
 		char	   *e_info_charp;
 		char	   *e_info_charp2;
+		const char *pstr = text;
+		int			char_length = 0;
 
 		list_index = 0;
-		string_length = strlen(text);
+		byte_length = strlen(text);
+
+		/* Count length as number of characters (not bytes), for passing to substring */
+		while (*pstr)
+		{
+			char_length++;
+			pstr += PQmblen(pstr, pset.encoding);
+		}
 
 		/* Free any prior result */
 		PQclear(result);
@@ -3757,7 +3765,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 								  completion_squery->selcondition);
 			appendPQExpBuffer(&query_buffer, "substring(%s,1,%d)='%s'",
 							  completion_squery->result,
-							  string_length, e_text);
+							  char_length, e_text);
 			appendPQExpBuffer(&query_buffer, " AND %s",
 							  completion_squery->viscondition);
 
@@ -3784,13 +3792,13 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 						   "SELECT pg_catalog.quote_ident(n.nspname) || '.' "
 							  "FROM pg_catalog.pg_namespace n "
 							  "WHERE substring(pg_catalog.quote_ident(n.nspname) || '.',1,%d)='%s'",
-							  string_length, e_text);
+							  char_length, e_text);
 			appendPQExpBuffer(&query_buffer,
 							  " AND (SELECT pg_catalog.count(*)"
 							  " FROM pg_catalog.pg_namespace"
 			" WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d) ="
 							  " substring('%s',1,pg_catalog.length(pg_catalog.quote_ident(nspname))+1)) > 1",
-							  string_length, e_text);
+							  char_length, e_text);
 
 			/*
 			 * Add in matching qualified names, but only if there is exactly
@@ -3808,7 +3816,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 								  completion_squery->selcondition);
 			appendPQExpBuffer(&query_buffer, "substring(pg_catalog.quote_ident(n.nspname) || '.' || %s,1,%d)='%s'",
 							  qualresult,
-							  string_length, e_text);
+							  char_length, e_text);
 
 			/*
 			 * This condition exploits the single-matching-schema rule to
@@ -3817,13 +3825,13 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			appendPQExpBuffer(&query_buffer,
 			" AND substring(pg_catalog.quote_ident(n.nspname) || '.',1,%d) ="
 							  " substring('%s',1,pg_catalog.length(pg_catalog.quote_ident(n.nspname))+1)",
-							  string_length, e_text);
+							  char_length, e_text);
 			appendPQExpBuffer(&query_buffer,
 							  " AND (SELECT pg_catalog.count(*)"
 							  " FROM pg_catalog.pg_namespace"
 			" WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d) ="
 							  " substring('%s',1,pg_catalog.length(pg_catalog.quote_ident(nspname))+1)) = 1",
-							  string_length, e_text);
+							  char_length, e_text);
 
 			/* If an addon query was provided, use it */
 			if (completion_charp)
@@ -3833,7 +3841,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		{
 			/* completion_charp is an sprintf-style format string */
 			appendPQExpBuffer(&query_buffer, completion_charp,
-							  string_length, e_text,
+							  char_length, e_text,
 							  e_info_charp, e_info_charp,
 							  e_info_charp2, e_info_charp2);
 		}
@@ -3859,7 +3867,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 
 		while (list_index < PQntuples(result) &&
 			   (item = PQgetvalue(result, list_index++, 0)))
-			if (pg_strncasecmp(text, item, string_length) == 0)
+			if (pg_strncasecmp(text, item, byte_length) == 0)
 				return pg_strdup(item);
 	}
 
