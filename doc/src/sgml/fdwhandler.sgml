@@ -340,21 +340,6 @@ GetForeignJoinPaths (PlannerInfo *root,
     <para>
      See <xref linkend="fdw-planning"> for additional information.
     </para>
-
-    <para>
-<programlisting>
-void
-GetExistingLocalJoinPath(RelOptInfo *joinrel)
-</programlisting>
-     The function returns copy of a local join path, which can be converted
-     into an alternative local join plan, which may be useful when
-     implementing a <literal>RecheckForeignScan</> method.  The function
-     searches for an unparameterized path in the <literal>pathlist</> of given
-     <literal>joinrel</>. If it does not find such a path, it returns NULL, in
-     which case a foreign data wrapper may build the local path by itself or
-     may choose not to create access paths for that join.
-    </para>
-
    </sect2>
 
    <sect2 id="fdw-callbacks-update">
@@ -808,9 +793,13 @@ RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
      can be executed and the resulting tuple can be stored in the slot.
      This plan need not be efficient since no base table will return more
      than one row; for example, it may implement all joins as nested loops.
-     <literal>GetExistingLocalJoinPath</> may be used to search existing paths
-     for a suitable local join path, which can be used as the alternative
-     local join plan.
+     The function <literal>GetExistingLocalJoinPath</> may be used to search
+     existing paths for a suitable local join path, which can be used as the
+     alternative local join plan.  <literal>GetExistingLocalJoinPath</>
+     searches for an unparameterized path in the path list of the specified
+     join relation.  (If it does not find such a path, it returns NULL, in
+     which case a foreign data wrapper may build the local path by itself or
+     may choose not to create access paths for that join.)
     </para>
    </sect2>
 
