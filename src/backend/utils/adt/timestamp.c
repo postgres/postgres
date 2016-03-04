@@ -1592,7 +1592,7 @@ GetCurrentIntegerTimestamp(void)
 #endif
 
 /*
- * IntegetTimestampToTimestampTz -- convert an int64 timestamp to native format
+ * IntegerTimestampToTimestampTz -- convert an int64 timestamp to native format
  *
  * When compiled with --enable-integer-datetimes, this is implemented as a
  * no-op macro.
