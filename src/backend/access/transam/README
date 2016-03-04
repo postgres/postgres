@@ -61,23 +61,23 @@ sequence:
 
      /  StartTransactionCommand;
     /       StartTransaction;
-1) <        ProcessUtility;             << BEGIN
+1) <    ProcessUtility;                 << BEGIN
     \       BeginTransactionBlock;
      \  CommitTransactionCommand;
 
     /   StartTransactionCommand;
-2) /        ProcessQuery;               << SELECT ...
-   \        CommitTransactionCommand;
+2) /    PortalRunSelect;                << SELECT ...
+   \    CommitTransactionCommand;
     \       CommandCounterIncrement;
 
     /   StartTransactionCommand;
-3) /        ProcessQuery;               << INSERT ...
-   \        CommitTransactionCommand;
+3) /    ProcessQuery;                   << INSERT ...
+   \    CommitTransactionCommand;
     \       CommandCounterIncrement;
 
      /  StartTransactionCommand;
     /   ProcessUtility;                 << COMMIT
-4) <            EndTransactionBlock;
+4) <        EndTransactionBlock;
     \   CommitTransactionCommand;
      \      CommitTransaction;
 
