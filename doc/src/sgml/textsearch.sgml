@@ -2615,18 +2615,41 @@ SELECT plainto_tsquery('supernova star');
    </para>
 
    <para>
-    To create an <application>Ispell</> dictionary, use the built-in
-    <literal>ispell</literal> template and specify several parameters:
+    To create an <application>Ispell</> dictionary perform these steps:
    </para>
-
+   <itemizedlist spacing="compact" mark="bullet">
+    <listitem>
+     <para>
+      download dictionary configuration files. <productname>OpenOffice</>
+      extension files have the <filename>.oxt</> extension. It is necessary
+      to extract <filename>.aff</> and <filename>.dic</> files, change
+      extensions to <filename>.affix</> and <filename>.dict</>. For some
+      dictionary files it is also needed to convert characters to the UTF-8
+      encoding with commands (for example, for norwegian language dictionary):
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY english_ispell (
-    TEMPLATE = ispell,
-    DictFile = english,
-    AffFile = english,
-    StopWords = english
-);
+iconv -f ISO_8859-1 -t UTF-8 -o nn_no.affix nn_NO.aff
+iconv -f ISO_8859-1 -t UTF-8 -o nn_no.dict nn_NO.dic
 </programlisting>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      copy files to the <filename>$SHAREDIR/tsearch_data</> directory
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      load files into PostgreSQL with the following command:
+<programlisting>
+CREATE TEXT SEARCH DICTIONARY english_hunspell (
+    TEMPLATE = ispell,
+    DictFile = en_us,
+    AffFile = en_us,
+    Stopwords = english);
+</programlisting>
+     </para>
+    </listitem>
+   </itemizedlist>
 
    <para>
     Here, <literal>DictFile</>, <literal>AffFile</>, and <literal>StopWords</>
@@ -2640,6 +2663,56 @@ CREATE TEXT SEARCH DICTIONARY english_ispell (
     Ispell dictionaries usually recognize a limited set of words, so they
     should be followed by another broader dictionary; for
     example, a Snowball dictionary, which recognizes everything.
+   </para>
+
+   <para>
+    The <filename>.affix</> file of <application>Ispell</> has the following
+    structure:
+<programlisting>
+prefixes
+flag *A:
+    .           >   RE      # As in enter > reenter
+suffixes
+flag T:
+    E           >   ST      # As in late > latest
+    [^AEIOU]Y   >   -Y,IEST # As in dirty > dirtiest
+    [AEIOU]Y    >   EST     # As in gray > grayest
+    [^EY]       >   EST     # As in small > smallest
+</programlisting>
+   </para>
+   <para>
+    And the <filename>.dict</> file has the following structure:
+<programlisting>
+lapse/ADGRS
+lard/DGRS
+large/PRTY
+lark/MRS
+</programlisting>
+   </para>
+
+   <para>
+    Format of the <filename>.dict</> file is:
+<programlisting>
+basic_form/affix_class_name
+</programlisting>
+   </para>
+
+   <para>
+    In the <filename>.affix</> file every affix flag is described in the
+    following format:
+<programlisting>
+condition > [-stripping_letters,] adding_affix
+</programlisting>
+   </para>
+
+   <para>
+    Here, condition has a format similar to the format of regular expressions.
+    It can use groupings <literal>[...]</> and <literal>[^...]</>.
+    For example, <literal>[AEIOU]Y</> means that the last letter of the word
+    is <literal>"y"</> and the penultimate letter is <literal>"a"</>,
+    <literal>"e"</>, <literal>"i"</>, <literal>"o"</> or <literal>"u"</>.
+    <literal>[^EY]</> means that the last letter is neither <literal>"e"</>
+    nor <literal>"y"</>.
    </para>
 
    <para>
@@ -2660,6 +2733,65 @@ SELECT ts_lexize('norwegian_ispell', 'overbuljongterningpakkmesterassistent');
    {over,buljong,terning,pakk,mester,assistent}
 SELECT ts_lexize('norwegian_ispell', 'sjokoladefabrikk');
    {sjokoladefabrikk,sjokolade,fabrikk}
+</programlisting>
+   </para>
+
+   <para>
+    <application>MySpell</> format is a subset of <application>Hunspell</>.
+    The <filename>.affix</> file of <application>Hunspell</> has the following
+    structure:
+<programlisting>
+PFX A Y 1
+PFX A   0     re         .
+SFX T N 4
+SFX T   0     st         e
+SFX T   y     iest       [^aeiou]y
+SFX T   0     est        [aeiou]y
+SFX T   0     est        [^ey]
+</programlisting>
+   </para>
+
+   <para>
+    The first line of an affix class is the header. Fields of an affix rules are
+    listed after the header:
+   </para>
+   <itemizedlist spacing="compact" mark="bullet">
+    <listitem>
+     <para>
+      parameter name (PFX or SFX)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      flag (name of the affix class)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      stripping characters from beginning (at prefix) or end (at suffix) of the
+      word
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      adding affix
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      condition that has a format similar to the format of regular expressions.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   <para>
+    The <filename>.dict</> file looks like the <filename>.dict</> file of
+    <application>Ispell</>:
+<programlisting>
+larder/M
+lardy/RT
+large/RSPMYT
+largehearted
 </programlisting>
    </para>
 

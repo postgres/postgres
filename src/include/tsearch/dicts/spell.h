@@ -19,18 +19,18 @@
 #include "tsearch/ts_public.h"
 
 /*
- * Max length of a flag name. Names longer than this will be truncated
- * to the maximum.
+ * SPNode and SPNodeData are used to represent prefix tree (Trie) to store
+ * a words list.
  */
-#define MAXFLAGLEN 16
-
 struct SPNode;
 
 typedef struct
 {
 	uint32		val:8,
 				isword:1,
+				/* Stores compound flags listed below */
 				compoundflag:4,
+				/* Reference to an entry of the AffixData field */
 				affix:19;
 	struct SPNode *node;
 } SPNodeData;
@@ -43,7 +43,8 @@ typedef struct
 #define FF_COMPOUNDBEGIN	0x02
 #define FF_COMPOUNDMIDDLE	0x04
 #define FF_COMPOUNDLAST		0x08
-#define FF_COMPOUNDFLAG		( FF_COMPOUNDBEGIN | FF_COMPOUNDMIDDLE | FF_COMPOUNDLAST )
+#define FF_COMPOUNDFLAG		( FF_COMPOUNDBEGIN | FF_COMPOUNDMIDDLE | \
+							FF_COMPOUNDLAST )
 #define FF_DICTFLAGMASK		0x0f
 
 typedef struct SPNode
@@ -54,19 +55,24 @@ typedef struct SPNode
 
 #define SPNHDRSZ	(offsetof(SPNode,data))
 
-
+/*
+ * Represents an entry in a words list.
+ */
 typedef struct spell_struct
 {
 	union
 	{
 		/*
-		 * flag is filled in by NIImportDictionary. After NISortDictionary, d
-		 * is valid and flag is invalid.
+		 * flag is filled in by NIImportDictionary(). After NISortDictionary(),
+		 * d is used instead of flag.
 		 */
-		char		flag[MAXFLAGLEN];
+		char	   *flag;
+		/* d is used in mkSPNode() */
 		struct
 		{
+			/* Reference to an entry of the AffixData field */
 			int			affix;
+			/* Length of the word */
 			int			len;
 		}			d;
 	}			p;
@@ -75,10 +81,14 @@ typedef struct spell_struct
 
 #define SPELLHDRSZ	(offsetof(SPELL, word))
 
+/*
+ * Represents an entry in an affix list.
+ */
 typedef struct aff_struct
 {
-	uint32		flag:8,
-				type:1,
+	uint32		flag:16;
+				/* FF_SUFFIX or FF_PREFIX */
+	uint32		type:1,
 				flagflags:7,
 				issimple:1,
 				isregis:1,
@@ -106,6 +116,10 @@ typedef struct aff_struct
 #define FF_SUFFIX				1
 #define FF_PREFIX				0
 
+/*
+ * AffixNode and AffixNodeData are used to represent prefix tree (Trie) to store
+ * an affix list.
+ */
 struct AffixNode;
 
 typedef struct
@@ -132,6 +146,16 @@ typedef struct
 	bool		issuffix;
 } CMPDAffix;
 
+typedef enum
+{
+	FM_CHAR,
+	FM_LONG,
+	FM_NUM
+} FlagMode;
+
+#define FLAGCHAR_MAXSIZE	(1 << 8)
+#define FLAGNUM_MAXSIZE		(1 << 16)
+
 typedef struct
 {
 	int			maffixes;
@@ -142,14 +166,17 @@ typedef struct
 	AffixNode  *Prefix;
 
 	SPNode	   *Dictionary;
+	/* Array of sets of affixes */
 	char	  **AffixData;
 	int			lenAffixData;
 	int			nAffixData;
+	bool		useFlagAliases;
 
 	CMPDAffix  *CompoundAffix;
 
-	unsigned char flagval[256];
+	unsigned char flagval[FLAGNUM_MAXSIZE];
 	bool		usecompound;
+	FlagMode	flagMode;
 
 	/*
 	 * Remaining fields are only used during dictionary construction; they are

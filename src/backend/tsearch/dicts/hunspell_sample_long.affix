@@ -1,0 +1,35 @@
+FLAG long
+
+AF 7
+AF cZ		#1
+AF cL		#2
+AF sGsJpUsS	#3
+AF sSpB		#4
+AF cZsS		#5
+AF sScZs\	#6
+AF sA		#7
+
+COMPOUNDFLAG cZ
+ONLYINCOMPOUND cL
+
+PFX pB Y 1
+PFX pB   0	re	.
+
+PFX pU N 1
+PFX pU   0	un	.
+
+SFX sJ Y 1
+SFX sJ   0	INGS	[^E]
+
+SFX sG Y 1
+SFX sG   0	ING		[^E]
+
+SFX sS Y 1
+SFX sS   0	S	[^SXZHY]
+
+SFX sA Y 1
+SFX sA   Y	IES	[^AEIOU]Y
+
+SFX s\ N 1
+SFX s\   0	Y/2	[^Y]
+

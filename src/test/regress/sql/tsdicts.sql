@@ -48,6 +48,54 @@ SELECT ts_lexize('hunspell', 'footballklubber');
 SELECT ts_lexize('hunspell', 'ballyklubber');
 SELECT ts_lexize('hunspell', 'footballyklubber');
 
+-- Test ISpell dictionary with hunspell affix file with FLAG long parameter
+CREATE TEXT SEARCH DICTIONARY hunspell_long (
+                        Template=ispell,
+                        DictFile=hunspell_sample_long,
+                        AffFile=hunspell_sample_long
+);
+
+SELECT ts_lexize('hunspell_long', 'skies');
+SELECT ts_lexize('hunspell_long', 'bookings');
+SELECT ts_lexize('hunspell_long', 'booking');
+SELECT ts_lexize('hunspell_long', 'foot');
+SELECT ts_lexize('hunspell_long', 'foots');
+SELECT ts_lexize('hunspell_long', 'rebookings');
+SELECT ts_lexize('hunspell_long', 'rebooking');
+SELECT ts_lexize('hunspell_long', 'rebook');
+SELECT ts_lexize('hunspell_long', 'unbookings');
+SELECT ts_lexize('hunspell_long', 'unbooking');
+SELECT ts_lexize('hunspell_long', 'unbook');
+
+SELECT ts_lexize('hunspell_long', 'footklubber');
+SELECT ts_lexize('hunspell_long', 'footballklubber');
+SELECT ts_lexize('hunspell_long', 'ballyklubber');
+SELECT ts_lexize('hunspell_long', 'footballyklubber');
+
+-- Test ISpell dictionary with hunspell affix file with FLAG num parameter
+CREATE TEXT SEARCH DICTIONARY hunspell_num (
+                        Template=ispell,
+                        DictFile=hunspell_sample_num,
+                        AffFile=hunspell_sample_num
+);
+
+SELECT ts_lexize('hunspell_num', 'skies');
+SELECT ts_lexize('hunspell_num', 'bookings');
+SELECT ts_lexize('hunspell_num', 'booking');
+SELECT ts_lexize('hunspell_num', 'foot');
+SELECT ts_lexize('hunspell_num', 'foots');
+SELECT ts_lexize('hunspell_num', 'rebookings');
+SELECT ts_lexize('hunspell_num', 'rebooking');
+SELECT ts_lexize('hunspell_num', 'rebook');
+SELECT ts_lexize('hunspell_num', 'unbookings');
+SELECT ts_lexize('hunspell_num', 'unbooking');
+SELECT ts_lexize('hunspell_num', 'unbook');
+
+SELECT ts_lexize('hunspell_num', 'footklubber');
+SELECT ts_lexize('hunspell_num', 'footballklubber');
+SELECT ts_lexize('hunspell_num', 'ballyklubber');
+SELECT ts_lexize('hunspell_num', 'footballyklubber');
+
 -- Synonim dictionary
 CREATE TEXT SEARCH DICTIONARY synonym (
 						Template=synonym,
@@ -89,6 +137,22 @@ CREATE TEXT SEARCH CONFIGURATION hunspell_tst (
 
 ALTER TEXT SEARCH CONFIGURATION hunspell_tst ALTER MAPPING
 	REPLACE ispell WITH hunspell;
+
+SELECT to_tsvector('hunspell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
+SELECT to_tsquery('hunspell_tst', 'footballklubber');
+SELECT to_tsquery('hunspell_tst', 'footballyklubber:b & rebookings:A & sky');
+
+-- Test ispell dictionary with hunspell affix with FLAG long in configuration
+ALTER TEXT SEARCH CONFIGURATION hunspell_tst ALTER MAPPING
+	REPLACE hunspell WITH hunspell_long;
+
+SELECT to_tsvector('hunspell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
+SELECT to_tsquery('hunspell_tst', 'footballklubber');
+SELECT to_tsquery('hunspell_tst', 'footballyklubber:b & rebookings:A & sky');
+
+-- Test ispell dictionary with hunspell affix with FLAG num in configuration
+ALTER TEXT SEARCH CONFIGURATION hunspell_tst ALTER MAPPING
+	REPLACE hunspell_long WITH hunspell_num;
 
 SELECT to_tsvector('hunspell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
 SELECT to_tsquery('hunspell_tst', 'footballklubber');
