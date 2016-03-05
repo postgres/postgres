@@ -462,8 +462,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         are not visible until the corresponding commit record is applied.
        </para>
        <para>
-        The delay occurs until the standby is promoted or triggered. After that
-        the standby will end recovery without further waiting.
+        The delay occurs once the database in recovery has reached a consistent
+        state, until the standby is promoted or triggered. After that the standby
+        will end recovery without further waiting.
        </para>
        <para>
         This parameter is intended for use with streaming replication deployments;
