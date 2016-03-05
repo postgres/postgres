@@ -106,8 +106,8 @@ sub mkvcbuild
 	}
 
 	our @pgcommonallfiles = qw(
-	  config_info.c exec.c pg_lzcompress.c pgfnames.c psprintf.c
-	  relpath.c rmtree.c string.c username.c wait_error.c);
+	  config_info.c controldata_utils.c exec.c pg_lzcompress.c pgfnames.c
+	  psprintf.c relpath.c rmtree.c string.c username.c wait_error.c);
 
 	our @pgcommonfrontendfiles = (
 		@pgcommonallfiles, qw(fe_memutils.c

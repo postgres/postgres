@@ -16703,6 +16703,362 @@ SELECT collation for ('foo' COLLATE "de_DE");
     </tgroup>
    </table>
 
+   <para>
+    The functions shown in <xref linkend="functions-controldata">
+    print information initialized during <command>initdb</>, such
+    as the catalog version. They also show information about write-ahead
+    logging and checkpoint processing. This information is cluster-wide,
+    and not specific to any one database. They provide most of the same
+    information, from the same source, as
+    <xref linkend="APP-PGCONTROLDATA">, although in a form better suited
+    to <acronym>SQL</acronym> functions.
+   </para>
+
+   <table id="functions-controldata">
+    <title>Control Data Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <indexterm><primary>pg_control_checkpoint</primary></indexterm>
+        <literal><function>pg_control_checkpoint()</function></literal>
+       </entry>
+       <entry><type>record</type></entry>
+       <entry>
+        Returns information about current checkpoint state.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm><primary>pg_control_system</primary></indexterm>
+        <literal><function>pg_control_system()</function></literal>
+       </entry>
+       <entry><type>record</type></entry>
+       <entry>
+        Returns information about current controldata file state.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm><primary>pg_control_init</primary></indexterm>
+        <literal><function>pg_control_init()</function></literal>
+       </entry>
+       <entry><type>record</type></entry>
+       <entry>
+        Returns information about cluster initialization state.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm><primary>pg_control_recovery</primary></indexterm>
+        <literal><function>pg_control_recovery()</function></literal>
+       </entry>
+       <entry><type>record</type></entry>
+       <entry>
+        Returns information about recovery state.
+       </entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_control_checkpoint</> returns a record, shown in
+    <xref linkend="functions-pg-control-checkpoint">
+   </para>
+
+   <table id="functions-pg-control-checkpoint">
+    <title><function>pg_control_checkpoint</> Columns</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Column Name</entry>
+       <entry>Data Type</entry>
+      </row>
+     </thead>
+
+     <tbody>
+
+      <row>
+       <entry>checkpoint_location</entry>
+       <entry><type>pg_lsn</type></entry>
+      </row>
+
+      <row>
+       <entry>prior_location</entry>
+       <entry><type>pg_lsn</type></entry>
+      </row>
+
+      <row>
+       <entry>redo_location</entry>
+       <entry><type>pg_lsn</type></entry>
+      </row>
+
+      <row>
+       <entry>redo_wal_file</entry>
+       <entry><type>text</type></entry>
+      </row>
+
+      <row>
+       <entry>timeline_id</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>prev_timeline_id</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>full_page_writes</entry>
+       <entry><type>boolean</type></entry>
+      </row>
+
+      <row>
+       <entry>next_xid</entry>
+       <entry><type>text</type></entry>
+      </row>
+
+      <row>
+       <entry>next_oid</entry>
+       <entry><type>oid</type></entry>
+      </row>
+
+      <row>
+       <entry>next_multixact_id</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>next_multi_offset</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>oldest_xid</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>oldest_xid_dbid</entry>
+       <entry><type>oid</type></entry>
+      </row>
+
+      <row>
+       <entry>oldest_active_xid</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>oldest_multi_xid</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>oldest_multi_dbid</entry>
+       <entry><type>oid</type></entry>
+      </row>
+
+      <row>
+       <entry>oldest_commit_ts_xid</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>newest_commit_ts_xid</entry>
+       <entry><type>xid</type></entry>
+      </row>
+
+      <row>
+       <entry>checkpoint_time</entry>
+       <entry><type>timestamp with time zone</type></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_control_system</> returns a record, shown in
+    <xref linkend="functions-pg-control-system">
+   </para>
+
+   <table id="functions-pg-control-system">
+    <title><function>pg_control_system</> Columns</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Column Name</entry>
+       <entry>Data Type</entry>
+      </row>
+     </thead>
+
+     <tbody>
+
+      <row>
+       <entry>pg_control_version</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>catalog_version_no</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>system_identifier</entry>
+       <entry><type>bigint</type></entry>
+      </row>
+
+      <row>
+       <entry>pg_control_last_modified</entry>
+       <entry><type>timestamp with time zone</type></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_control_init</> returns a record, shown in
+    <xref linkend="functions-pg-control-init">
+   </para>
+
+   <table id="functions-pg-control-init">
+    <title><function>pg_control_init</> Columns</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Column Name</entry>
+       <entry>Data Type</entry>
+      </row>
+     </thead>
+
+     <tbody>
+
+      <row>
+       <entry>max_data_alignment</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>database_block_size</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>blocks_per_segment</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>wal_block_size</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>bytes_per_wal_segment</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>max_identifier_length</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>max_index_columns</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>max_toast_chunk_size</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>large_object_chunk_size</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>bigint_timestamps</entry>
+       <entry><type>boolean</type></entry>
+      </row>
+
+      <row>
+       <entry>float4_pass_by_value</entry>
+       <entry><type>boolean</type></entry>
+      </row>
+
+      <row>
+       <entry>float8_pass_by_value</entry>
+       <entry><type>boolean</type></entry>
+      </row>
+
+      <row>
+       <entry>data_page_checksum_version</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_control_recovery</> returns a record, shown in
+    <xref linkend="functions-pg-control-recovery">
+   </para>
+
+   <table id="functions-pg-control-recovery">
+    <title><function>pg_control_recovery</> Columns</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Column Name</entry>
+       <entry>Data Type</entry>
+      </row>
+     </thead>
+
+     <tbody>
+
+      <row>
+       <entry>min_recovery_end_location</entry>
+       <entry><type>pg_lsn</type></entry>
+      </row>
+
+      <row>
+       <entry>min_recovery_end_timeline</entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
+       <entry>backup_start_location</entry>
+       <entry><type>pg_lsn</type></entry>
+      </row>
+
+      <row>
+       <entry>backup_end_location</entry>
+       <entry><type>pg_lsn</type></entry>
+      </row>
+
+      <row>
+       <entry>end_of_backup_record_required</entry>
+       <entry><type>boolean</type></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
   </sect1>
 
   <sect1 id="functions-admin">

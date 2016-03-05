@@ -18,14 +18,12 @@
 
 #include "postgres.h"
 
-#include <unistd.h>
 #include <time.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
+#include "common/controldata_utils.h"
 #include "pg_getopt.h"
 
 
@@ -89,11 +87,8 @@ wal_level_str(WalLevel wal_level)
 int
 main(int argc, char *argv[])
 {
-	ControlFileData ControlFile;
-	int			fd;
-	char		ControlFilePath[MAXPGPATH];
+	ControlFileData *ControlFile;
 	char	   *DataDir = NULL;
-	pg_crc32c	crc;
 	time_t		time_tmp;
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
@@ -161,34 +156,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
-
-	if ((fd = open(ControlFilePath, O_RDONLY | PG_BINARY, 0)) == -1)
-	{
-		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
-				progname, ControlFilePath, strerror(errno));
-		exit(2);
-	}
-
-	if (read(fd, &ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
-	{
-		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
-				progname, ControlFilePath, strerror(errno));
-		exit(2);
-	}
-	close(fd);
-
-	/* Check the CRC. */
-	INIT_CRC32C(crc);
-	COMP_CRC32C(crc,
-				(char *) &ControlFile,
-				offsetof(ControlFileData, crc));
-	FIN_CRC32C(crc);
-
-	if (!EQ_CRC32C(crc, ControlFile.crc))
-		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
-				 "Either the file is corrupt, or it has a different layout than this program\n"
-				 "is expecting.  The results below are untrustworthy.\n\n"));
+	/* get a copy of the control file */
+	ControlFile = get_controlfile(DataDir, progname);
 
 	/*
 	 * This slightly-chintzy coding will work as long as the control file
@@ -199,10 +168,10 @@ main(int argc, char *argv[])
 	 * Use variable for format to suppress overly-anal-retentive gcc warning
 	 * about %c
 	 */
-	time_tmp = (time_t) ControlFile.time;
+	time_tmp = (time_t) ControlFile->time;
 	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
 			 localtime(&time_tmp));
-	time_tmp = (time_t) ControlFile.checkPointCopy.time;
+	time_tmp = (time_t) ControlFile->checkPointCopy.time;
 	strftime(ckpttime_str, sizeof(ckpttime_str), strftime_fmt,
 			 localtime(&time_tmp));
 
@@ -210,129 +179,124 @@ main(int argc, char *argv[])
 	 * Calculate name of the WAL file containing the latest checkpoint's REDO
 	 * start point.
 	 */
-	XLByteToSeg(ControlFile.checkPointCopy.redo, segno);
-	XLogFileName(xlogfilename, ControlFile.checkPointCopy.ThisTimeLineID, segno);
+	XLByteToSeg(ControlFile->checkPointCopy.redo, segno);
+	XLogFileName(xlogfilename, ControlFile->checkPointCopy.ThisTimeLineID, segno);
 
 	/*
 	 * Format system_identifier separately to keep platform-dependent format
 	 * code out of the translatable message string.
 	 */
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
-			 ControlFile.system_identifier);
+			 ControlFile->system_identifier);
 
 	printf(_("pg_control version number:            %u\n"),
-		   ControlFile.pg_control_version);
-	if (ControlFile.pg_control_version % 65536 == 0 && ControlFile.pg_control_version / 65536 != 0)
-		printf(_("WARNING: possible byte ordering mismatch\n"
-				 "The byte ordering used to store the pg_control file might not match the one\n"
-				 "used by this program.  In that case the results below would be incorrect, and\n"
-				 "the PostgreSQL installation would be incompatible with this data directory.\n"));
+		   ControlFile->pg_control_version);
 	printf(_("Catalog version number:               %u\n"),
-		   ControlFile.catalog_version_no);
+		   ControlFile->catalog_version_no);
 	printf(_("Database system identifier:           %s\n"),
 		   sysident_str);
 	printf(_("Database cluster state:               %s\n"),
-		   dbState(ControlFile.state));
+		   dbState(ControlFile->state));
 	printf(_("pg_control last modified:             %s\n"),
 		   pgctime_str);
 	printf(_("Latest checkpoint location:           %X/%X\n"),
-		   (uint32) (ControlFile.checkPoint >> 32),
-		   (uint32) ControlFile.checkPoint);
+		   (uint32) (ControlFile->checkPoint >> 32),
+		   (uint32) ControlFile->checkPoint);
 	printf(_("Prior checkpoint location:            %X/%X\n"),
-		   (uint32) (ControlFile.prevCheckPoint >> 32),
-		   (uint32) ControlFile.prevCheckPoint);
+		   (uint32) (ControlFile->prevCheckPoint >> 32),
+		   (uint32) ControlFile->prevCheckPoint);
 	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
-		   (uint32) (ControlFile.checkPointCopy.redo >> 32),
-		   (uint32) ControlFile.checkPointCopy.redo);
+		   (uint32) (ControlFile->checkPointCopy.redo >> 32),
+		   (uint32) ControlFile->checkPointCopy.redo);
 	printf(_("Latest checkpoint's REDO WAL file:    %s\n"),
 		   xlogfilename);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
-		   ControlFile.checkPointCopy.ThisTimeLineID);
+		   ControlFile->checkPointCopy.ThisTimeLineID);
 	printf(_("Latest checkpoint's PrevTimeLineID:   %u\n"),
-		   ControlFile.checkPointCopy.PrevTimeLineID);
+		   ControlFile->checkPointCopy.PrevTimeLineID);
 	printf(_("Latest checkpoint's full_page_writes: %s\n"),
-		   ControlFile.checkPointCopy.fullPageWrites ? _("on") : _("off"));
+		   ControlFile->checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u:%u\n"),
-		   ControlFile.checkPointCopy.nextXidEpoch,
-		   ControlFile.checkPointCopy.nextXid);
+		   ControlFile->checkPointCopy.nextXidEpoch,
+		   ControlFile->checkPointCopy.nextXid);
 	printf(_("Latest checkpoint's NextOID:          %u\n"),
-		   ControlFile.checkPointCopy.nextOid);
+		   ControlFile->checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
-		   ControlFile.checkPointCopy.nextMulti);
+		   ControlFile->checkPointCopy.nextMulti);
 	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
-		   ControlFile.checkPointCopy.nextMultiOffset);
+		   ControlFile->checkPointCopy.nextMultiOffset);
 	printf(_("Latest checkpoint's oldestXID:        %u\n"),
-		   ControlFile.checkPointCopy.oldestXid);
+		   ControlFile->checkPointCopy.oldestXid);
 	printf(_("Latest checkpoint's oldestXID's DB:   %u\n"),
-		   ControlFile.checkPointCopy.oldestXidDB);
+		   ControlFile->checkPointCopy.oldestXidDB);
 	printf(_("Latest checkpoint's oldestActiveXID:  %u\n"),
-		   ControlFile.checkPointCopy.oldestActiveXid);
+		   ControlFile->checkPointCopy.oldestActiveXid);
 	printf(_("Latest checkpoint's oldestMultiXid:   %u\n"),
-		   ControlFile.checkPointCopy.oldestMulti);
+		   ControlFile->checkPointCopy.oldestMulti);
 	printf(_("Latest checkpoint's oldestMulti's DB: %u\n"),
-		   ControlFile.checkPointCopy.oldestMultiDB);
+		   ControlFile->checkPointCopy.oldestMultiDB);
 	printf(_("Latest checkpoint's oldestCommitTsXid:%u\n"),
-		   ControlFile.checkPointCopy.oldestCommitTsXid);
+		   ControlFile->checkPointCopy.oldestCommitTsXid);
 	printf(_("Latest checkpoint's newestCommitTsXid:%u\n"),
-		   ControlFile.checkPointCopy.newestCommitTsXid);
+		   ControlFile->checkPointCopy.newestCommitTsXid);
 	printf(_("Time of latest checkpoint:            %s\n"),
 		   ckpttime_str);
 	printf(_("Fake LSN counter for unlogged rels:   %X/%X\n"),
-		   (uint32) (ControlFile.unloggedLSN >> 32),
-		   (uint32) ControlFile.unloggedLSN);
+		   (uint32) (ControlFile->unloggedLSN >> 32),
+		   (uint32) ControlFile->unloggedLSN);
 	printf(_("Minimum recovery ending location:     %X/%X\n"),
-		   (uint32) (ControlFile.minRecoveryPoint >> 32),
-		   (uint32) ControlFile.minRecoveryPoint);
+		   (uint32) (ControlFile->minRecoveryPoint >> 32),
+		   (uint32) ControlFile->minRecoveryPoint);
 	printf(_("Min recovery ending loc's timeline:   %u\n"),
-		   ControlFile.minRecoveryPointTLI);
+		   ControlFile->minRecoveryPointTLI);
 	printf(_("Backup start location:                %X/%X\n"),
-		   (uint32) (ControlFile.backupStartPoint >> 32),
-		   (uint32) ControlFile.backupStartPoint);
+		   (uint32) (ControlFile->backupStartPoint >> 32),
+		   (uint32) ControlFile->backupStartPoint);
 	printf(_("Backup end location:                  %X/%X\n"),
-		   (uint32) (ControlFile.backupEndPoint >> 32),
-		   (uint32) ControlFile.backupEndPoint);
+		   (uint32) (ControlFile->backupEndPoint >> 32),
+		   (uint32) ControlFile->backupEndPoint);
 	printf(_("End-of-backup record required:        %s\n"),
-		   ControlFile.backupEndRequired ? _("yes") : _("no"));
+		   ControlFile->backupEndRequired ? _("yes") : _("no"));
 	printf(_("wal_level setting:                    %s\n"),
-		   wal_level_str(ControlFile.wal_level));
+		   wal_level_str(ControlFile->wal_level));
 	printf(_("wal_log_hints setting:                %s\n"),
-		   ControlFile.wal_log_hints ? _("on") : _("off"));
+		   ControlFile->wal_log_hints ? _("on") : _("off"));
 	printf(_("max_connections setting:              %d\n"),
-		   ControlFile.MaxConnections);
+		   ControlFile->MaxConnections);
 	printf(_("max_worker_processes setting:         %d\n"),
-		   ControlFile.max_worker_processes);
+		   ControlFile->max_worker_processes);
 	printf(_("max_prepared_xacts setting:           %d\n"),
-		   ControlFile.max_prepared_xacts);
+		   ControlFile->max_prepared_xacts);
 	printf(_("max_locks_per_xact setting:           %d\n"),
-		   ControlFile.max_locks_per_xact);
+		   ControlFile->max_locks_per_xact);
 	printf(_("track_commit_timestamp setting:       %s\n"),
-		   ControlFile.track_commit_timestamp ? _("on") : _("off"));
+		   ControlFile->track_commit_timestamp ? _("on") : _("off"));
 	printf(_("Maximum data alignment:               %u\n"),
-		   ControlFile.maxAlign);
+		   ControlFile->maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */
 	printf(_("Database block size:                  %u\n"),
-		   ControlFile.blcksz);
+		   ControlFile->blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"),
-		   ControlFile.relseg_size);
+		   ControlFile->relseg_size);
 	printf(_("WAL block size:                       %u\n"),
-		   ControlFile.xlog_blcksz);
+		   ControlFile->xlog_blcksz);
 	printf(_("Bytes per WAL segment:                %u\n"),
-		   ControlFile.xlog_seg_size);
+		   ControlFile->xlog_seg_size);
 	printf(_("Maximum length of identifiers:        %u\n"),
-		   ControlFile.nameDataLen);
+		   ControlFile->nameDataLen);
 	printf(_("Maximum columns in an index:          %u\n"),
-		   ControlFile.indexMaxKeys);
+		   ControlFile->indexMaxKeys);
 	printf(_("Maximum size of a TOAST chunk:        %u\n"),
-		   ControlFile.toast_max_chunk_size);
+		   ControlFile->toast_max_chunk_size);
 	printf(_("Size of a large-object chunk:         %u\n"),
-		   ControlFile.loblksize);
+		   ControlFile->loblksize);
 	printf(_("Date/time type storage:               %s\n"),
-		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
+		   (ControlFile->enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
 	printf(_("Float4 argument passing:              %s\n"),
-		   (ControlFile.float4ByVal ? _("by value") : _("by reference")));
+		   (ControlFile->float4ByVal ? _("by value") : _("by reference")));
 	printf(_("Float8 argument passing:              %s\n"),
-		   (ControlFile.float8ByVal ? _("by value") : _("by reference")));
+		   (ControlFile->float8ByVal ? _("by value") : _("by reference")));
 	printf(_("Data page checksum version:           %u\n"),
-		   ControlFile.data_checksum_version);
+		   ControlFile->data_checksum_version);
 	return 0;
 }
