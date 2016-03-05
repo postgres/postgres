@@ -5856,6 +5856,10 @@ recoveryApplyDelay(XLogRecord *record)
 	if (recovery_min_apply_delay <= 0)
 		return false;
 
+	/* no delay is applied on a database not yet consistent */
+	if (!reachedConsistency)
+		return false;
+
 	/*
 	 * Is it a COMMIT record?
 	 *
