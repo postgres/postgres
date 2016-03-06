@@ -75,6 +75,22 @@
 	fun:ReorderBufferSerializeTXN
 }
 
+{
+	padding_twophase_prepare
+	Memcheck:Param
+	write(buf)
+
+	...
+	fun:EndPrepare
+}
+
+
+{
+	padding_twophase_CRC
+	Memcheck:Value8
+	fun:EndPrepare
+}
+
 
 # gcc on ppc64 can generate a four-byte read to fetch the final "char" fields
 # of a FormData_pg_cast.  This is valid compiler behavior, because a proper
