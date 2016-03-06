@@ -2335,18 +2335,6 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		case REORDER_BUFFER_CHANGE_UPDATE:
 		case REORDER_BUFFER_CHANGE_DELETE:
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
-			if (change->data.tp.newtuple)
-			{
-				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
-				((ReorderBufferTupleBuf *) data)->tuple.t_len;
-
-				change->data.tp.newtuple = ReorderBufferGetTupleBuf(rb);
-				memcpy(change->data.tp.newtuple, data, len);
-				change->data.tp.newtuple->tuple.t_data =
-					&change->data.tp.newtuple->t_data.header;
-				data += len;
-			}
-
 			if (change->data.tp.oldtuple)
 			{
 				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
@@ -2356,6 +2344,18 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				memcpy(change->data.tp.oldtuple, data, len);
 				change->data.tp.oldtuple->tuple.t_data =
 					&change->data.tp.oldtuple->t_data.header;
+				data += len;
+			}
+
+			if (change->data.tp.newtuple)
+			{
+				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
+				((ReorderBufferTupleBuf *) data)->tuple.t_len;
+
+				change->data.tp.newtuple = ReorderBufferGetTupleBuf(rb);
+				memcpy(change->data.tp.newtuple, data, len);
+				change->data.tp.newtuple->tuple.t_data =
+					&change->data.tp.newtuple->t_data.header;
 				data += len;
 			}
 			break;

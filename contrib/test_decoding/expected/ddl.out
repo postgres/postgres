@@ -240,6 +240,21 @@ ORDER BY 1,2;
  20467 | table public.tr_etoomuch: DELETE: id[integer]:1 | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
 (3 rows)
 
+-- check updates of primary keys work correctly
+BEGIN;
+CREATE TABLE spoolme AS SELECT g.i FROM generate_series(1, 5000) g(i);
+UPDATE tr_etoomuch SET id = -id WHERE id = 5000;
+DELETE FROM spoolme;
+DROP TABLE spoolme;
+COMMIT;
+SELECT data
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+WHERE data ~ 'UPDATE';
+                                                    data                                                     
+-------------------------------------------------------------------------------------------------------------
+ table public.tr_etoomuch: UPDATE: old-key: id[integer]:5000 new-tuple: id[integer]:-5000 data[integer]:5000
+(1 row)
+
 -- check that a large, spooled, upsert works
 INSERT INTO tr_etoomuch (id, data)
 SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
