@@ -26,11 +26,18 @@ typedef struct ReorderBufferTupleBuf
 	/* position in preallocated list */
 	slist_node	node;
 
-	/* tuple, stored sequentially */
+	/* tuple header, the interesting bit for users of logical decoding */
 	HeapTupleData tuple;
-	HeapTupleHeaderData header;
-	char		data[MaxHeapTupleSize];
+
+	/* pre-allocated size of tuple buffer, different from tuple size */
+	Size	alloc_tuple_size;
+
+	/* actual tuple data follows */
 } ReorderBufferTupleBuf;
+
+/* pointer to the data stored in a TupleBuf */
+#define ReorderBufferTupleBufData(p) \
+	((HeapTupleHeader) MAXALIGN(((char *) p) + sizeof(ReorderBufferTupleBuf)))
 
 /*
  * Types of the change passed to a 'change' callback.
@@ -327,7 +334,7 @@ struct ReorderBuffer
 ReorderBuffer *ReorderBufferAllocate(void);
 void		ReorderBufferFree(ReorderBuffer *);
 
-ReorderBufferTupleBuf *ReorderBufferGetTupleBuf(ReorderBuffer *);
+ReorderBufferTupleBuf *ReorderBufferGetTupleBuf(ReorderBuffer *, Size tuple_len);
 void		ReorderBufferReturnTupleBuf(ReorderBuffer *, ReorderBufferTupleBuf *tuple);
 ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *);
 void		ReorderBufferReturnChange(ReorderBuffer *, ReorderBufferChange *);
