@@ -265,4 +265,41 @@ ALTER TABLE toasted_copy ALTER COLUMN data SET STORAGE EXTERNAL;
 203	untoasted200
 \.
 SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
+-- test we can decode "old" tuples bigger than the max heap tuple size correctly
+DROP TABLE IF EXISTS toasted_several;
+CREATE TABLE toasted_several (
+    id serial unique not null,
+    toasted_key text primary key,
+    toasted_col1 text,
+    toasted_col2 text
+);
+ALTER TABLE toasted_several REPLICA IDENTITY FULL;
+ALTER TABLE toasted_several ALTER COLUMN toasted_key SET STORAGE EXTERNAL;
+ALTER TABLE toasted_several ALTER COLUMN toasted_col1 SET STORAGE EXTERNAL;
+ALTER TABLE toasted_several ALTER COLUMN toasted_col2 SET STORAGE EXTERNAL;
+
+INSERT INTO toasted_several(toasted_key) VALUES(repeat('9876543210', 2000));
+
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
+-- test update of a toasted key without changing it
+UPDATE toasted_several SET toasted_col1 = toasted_key;
+UPDATE toasted_several SET toasted_col2 = toasted_col1;
+
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
+/*
+ * update with large tuplebuf, in a transaction large enough to force to spool to disk
+ */
+BEGIN;
+INSERT INTO toasted_several(toasted_key) SELECT * FROM generate_series(1, 10234);
+UPDATE toasted_several SET toasted_col1 = toasted_col2 WHERE id = 1;
+DELETE FROM toasted_several WHERE id = 1;
+COMMIT;
+
+DROP TABLE toasted_several;
+
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+WHERE data NOT LIKE '%INSERT: %';
 SELECT pg_drop_replication_slot('regression_slot');
