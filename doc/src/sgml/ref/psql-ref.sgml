@@ -571,7 +571,7 @@ EOF
       explained: <literal>commands</> describes <application>psql</>'s
       backslash commands; <literal>options</> describes the command-line
       options that can be passed to <application>psql</>;
-      and <literal>variables</> shows help about about <application>psql</application> configuration
+      and <literal>variables</> shows help about <application>psql</application> configuration
       variables.
       </para>
       </listitem>
@@ -2663,7 +2663,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         explained: <literal>commands</> describes <application>psql</>'s
         backslash commands; <literal>options</> describes the command-line
         options that can be passed to <application>psql</>;
-        and <literal>variables</> shows help about about <application>psql</application> configuration
+        and <literal>variables</> shows help about <application>psql</application> configuration
         variables.
         </para>
         </listitem>
