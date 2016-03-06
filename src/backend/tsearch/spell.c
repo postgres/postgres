@@ -363,7 +363,7 @@ DecodeFlag(IspellDict *Conf, char *sflag, char **sflagnext)
 									 errmsg("non-ASCII affix flag \"%s\"",
 											sflag)));
 						}
-						else if (isdigit(*next))
+						else if (isdigit((unsigned char) *next))
 						{
 							if (!met_comma)
 								ereport(ERROR,
@@ -381,7 +381,7 @@ DecodeFlag(IspellDict *Conf, char *sflag, char **sflagnext)
 												sflag)));
 							met_comma = true;
 						}
-						else if (!isspace(*next))
+						else if (!isspace((unsigned char) *next))
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_CONFIG_FILE_ERROR),
