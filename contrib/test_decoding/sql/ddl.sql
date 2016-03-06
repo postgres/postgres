@@ -123,6 +123,18 @@ FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', 
 GROUP BY substring(data, 1, 24)
 ORDER BY 1,2;
 
+-- check updates of primary keys work correctly
+BEGIN;
+CREATE TABLE spoolme AS SELECT g.i FROM generate_series(1, 5000) g(i);
+UPDATE tr_etoomuch SET id = -id WHERE id = 5000;
+DELETE FROM spoolme;
+DROP TABLE spoolme;
+COMMIT;
+
+SELECT data
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+WHERE data ~ 'UPDATE';
+
 -- check that a large, spooled, upsert works
 INSERT INTO tr_etoomuch (id, data)
 SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
