@@ -2266,19 +2266,6 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		case REORDER_BUFFER_CHANGE_UPDATE:
 			/* fall through */
 		case REORDER_BUFFER_CHANGE_DELETE:
-			if (change->data.tp.newtuple)
-			{
-				Size		len = offsetof(ReorderBufferTupleBuf, data)
-				+((ReorderBufferTupleBuf *) data)->tuple.t_len
-				- offsetof(HeapTupleHeaderData, t_bits);
-
-				change->data.tp.newtuple = ReorderBufferGetTupleBuf(rb);
-				memcpy(change->data.tp.newtuple, data, len);
-				change->data.tp.newtuple->tuple.t_data =
-					&change->data.tp.newtuple->header;
-				data += len;
-			}
-
 			if (change->data.tp.oldtuple)
 			{
 				Size		len = offsetof(ReorderBufferTupleBuf, data)
@@ -2289,6 +2276,19 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				memcpy(change->data.tp.oldtuple, data, len);
 				change->data.tp.oldtuple->tuple.t_data =
 					&change->data.tp.oldtuple->header;
+				data += len;
+			}
+
+			if (change->data.tp.newtuple)
+			{
+				Size		len = offsetof(ReorderBufferTupleBuf, data)
+				+((ReorderBufferTupleBuf *) data)->tuple.t_len
+				- offsetof(HeapTupleHeaderData, t_bits);
+
+				change->data.tp.newtuple = ReorderBufferGetTupleBuf(rb);
+				memcpy(change->data.tp.newtuple, data, len);
+				change->data.tp.newtuple->tuple.t_data =
+					&change->data.tp.newtuple->header;
 				data += len;
 			}
 			break;
