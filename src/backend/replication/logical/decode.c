@@ -77,6 +77,14 @@ static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tup);
  * Take every XLogReadRecord()ed record and perform the actions required to
  * decode it using the output plugin already setup in the logical decoding
  * context.
+ *
+ * NB: Note that every record's xid needs to be processed by reorderbuffer
+ * (xids contained in the content of records are not relevant for this rule).
+ * That means that for records which'd otherwise not go through the
+ * reorderbuffer ReorderBufferProcessXid() has to be called. We don't want to
+ * call ReorderBufferProcessXid for each record type by default, because
+ * e.g. empty xacts can be handled more efficiently if there's no previous
+ * state for them.
  */
 void
 LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
@@ -132,6 +140,9 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
 		case RM_GIST_ID:
 		case RM_SEQ_ID:
 		case RM_SPGIST_ID:
+			/* just deal with xid, and done */
+			ReorderBufferProcessXid(ctx->reorder, record->xl_xid,
+									buf.origptr);
 			break;
 		case RM_NEXT_ID:
 			elog(ERROR, "unexpected RM_NEXT_ID rmgr_id: %u", (RmgrIds) buf.record.xl_rmid);
@@ -146,6 +157,9 @@ DecodeXLogOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
 	SnapBuild  *builder = ctx->snapshot_builder;
 	uint8		info = buf->record.xl_info & ~XLR_INFO_MASK;
+
+	ReorderBufferProcessXid(ctx->reorder, buf->record.xl_xid,
+							buf->origptr);
 
 	switch (info)
 	{
@@ -187,7 +201,12 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	XLogRecord *r = &buf->record;
 	uint8		info = r->xl_info & ~XLR_INFO_MASK;
 
-	/* no point in doing anything yet, data could not be decoded anyway */
+	/*
+	 * No point in doing anything yet, data could not be decoded anyway. It's
+	 * ok not to call ReorderBufferProcessXid() in that case, except in the
+	 * assignment case there'll not be any later records with the same xid;
+	 * and in the assignment case we'll not decode those xacts.
+	 */
 	if (SnapBuildCurrentState(builder) < SNAPBUILD_FULL_SNAPSHOT)
 		return;
 
@@ -302,6 +321,7 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			 * transactions in the changestream allowing for a kind of
 			 * distributed 2PC.
 			 */
+			ReorderBufferProcessXid(reorder, r->xl_xid, buf->origptr);
 			break;
 		default:
 			elog(ERROR, "unexpected RM_XACT_ID record type: %u", info);
@@ -317,6 +337,8 @@ DecodeStandbyOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	SnapBuild  *builder = ctx->snapshot_builder;
 	XLogRecord *r = &buf->record;
 	uint8		info = r->xl_info & ~XLR_INFO_MASK;
+
+	ReorderBufferProcessXid(ctx->reorder, r->xl_xid, buf->origptr);
 
 	switch (info)
 	{
@@ -354,6 +376,8 @@ DecodeHeap2Op(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	uint8		info = buf->record.xl_info & XLOG_HEAP_OPMASK;
 	TransactionId xid = buf->record.xl_xid;
 	SnapBuild  *builder = ctx->snapshot_builder;
+
+	ReorderBufferProcessXid(ctx->reorder, xid, buf->origptr);
 
 	/* no point in doing anything yet */
 	if (SnapBuildCurrentState(builder) < SNAPBUILD_FULL_SNAPSHOT)
@@ -407,6 +431,8 @@ DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	uint8		info = buf->record.xl_info & XLOG_HEAP_OPMASK;
 	TransactionId xid = buf->record.xl_xid;
 	SnapBuild  *builder = ctx->snapshot_builder;
+
+	ReorderBufferProcessXid(ctx->reorder, xid, buf->origptr);
 
 	/* no point in doing anything yet */
 	if (SnapBuildCurrentState(builder) < SNAPBUILD_FULL_SNAPSHOT)
