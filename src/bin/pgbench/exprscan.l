@@ -61,7 +61,7 @@ space			[ \t\r\f]
 					yylval.ival = strtoint64(yytext);
 					return INTEGER;
 				}
-{alpha}{alnum}+	{
+{alpha}{alnum}*	{
 					yycol += yyleng;
 					yylval.str = pg_strdup(yytext);
 					return FUNCTION;
