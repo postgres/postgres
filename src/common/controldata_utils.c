@@ -28,19 +28,6 @@
 #include "common/controldata_utils.h"
 #include "port/pg_crc32c.h"
 
-#ifndef FRONTEND
-/* NOTE: caller must provide gettext call around the format string */
-#define log_error(...)	\
-	elog(ERROR, __VA_ARGS__)
-#else
-#define log_error(...)	\
-	do { \
-			char *buf = psprintf(__VA_ARGS__); \
-			fprintf(stderr, "%s: %s\n", progname, buf); \
-			exit(2); \
-	} while (0)
-#endif
-
 /*
  * get_controlfile(char *DataDir, const char *progname)
  *
@@ -59,12 +46,31 @@ get_controlfile(char *DataDir, const char *progname)
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
 	if ((fd = open(ControlFilePath, O_RDONLY | PG_BINARY, 0)) == -1)
-		log_error(_("could not open file \"%s\" for reading: %s"),
-				  ControlFilePath, strerror(errno));
+#ifndef FRONTEND
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				errmsg("could not open file \"%s\" for reading: %m",
+					   ControlFilePath)));
+#else
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
+				progname, ControlFilePath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+#endif
 
 	if (read(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
-		log_error(_("could not read file \"%s\": %s"),
-				  ControlFilePath, strerror(errno));
+#ifndef FRONTEND
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				errmsg("could not read file \"%s\": %m", ControlFilePath)));
+#else
+	{
+		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
+				progname, ControlFilePath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+#endif
 
 	close(fd);
 
