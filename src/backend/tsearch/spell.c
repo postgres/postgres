@@ -169,6 +169,19 @@ findchar(char *str, int c)
 	return NULL;
 }
 
+static char *
+findchar2(char *str, int c1, int c2)
+{
+	while (*str)
+	{
+		if (t_iseq(str, c1) || t_iseq(str, c2))
+			return str;
+		str += pg_mblen(str);
+	}
+
+	return NULL;
+}
+
 
 /* backward string compare for suffix tree operations */
 static int
@@ -856,22 +869,20 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 
 			if (strlen(sflag) != 1 || flag != *sflag || flag == 0)
 				goto nextline;
-			prepl = lowerstr_ctx(Conf, repl);
-			/* Find position of '/' in lowercased string "prepl" */
-			if ((ptr = strchr(prepl, '/')) != NULL)
+			/* Get flags after '/' (flags are case sensitive) */
+			if ((ptr = strchr(repl, '/')) != NULL)
 			{
-				/*
-				 * Here we use non-lowercased string "repl". We need position
-				 * of '/' in "repl".
-				 */
-				*ptr = '\0';
-				ptr = repl + (ptr - prepl) + 1;
+				ptr++;
 				while (*ptr)
 				{
 					aflg |= Conf->flagval[*(unsigned char *) ptr];
 					ptr++;
 				}
 			}
+			/* Get lowercased version of string before '/' */
+			prepl = lowerstr_ctx(Conf, repl);
+			if ((ptr = strchr(prepl, '/')) != NULL)
+				*ptr = '\0';
 			pfind = lowerstr_ctx(Conf, find);
 			pmask = lowerstr_ctx(Conf, mask);
 			if (t_iseq(find, '0'))
@@ -939,12 +950,10 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 
 		if (STRNCMP(pstr, "compoundwords") == 0)
 		{
-			/* Find position in lowercased string "pstr" */
-			s = findchar(pstr, 'l');
+			/* Find case-insensitive L flag in non-lowercased string */
+			s = findchar2(recoded, 'l', 'L');
 			if (s)
 			{
-				/* Here we use non-lowercased string "recoded" */
-				s = recoded + (s - pstr);
 				while (*s && !t_isspace(s))
 					s += pg_mblen(s);
 				while (*s && t_isspace(s))
