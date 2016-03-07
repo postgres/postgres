@@ -210,7 +210,7 @@ write_stderr(const char *fmt,...)
 	 * On Win32, we print to stderr if running on a console, or write to
 	 * eventlog if running as a service
 	 */
-	if (!pgwin32_is_service())	/* Running as a service */
+	if (pgwin32_is_service())	/* Running as a service */
 	{
 		char		errbuf[2048];		/* Arbitrary size? */
 
