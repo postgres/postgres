@@ -1063,7 +1063,7 @@ create_bitmap_heap_path(PlannerInfo *root,
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
-	pathnode->path.parallel_safe = bitmapqual->parallel_safe;
+	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_degree = 0;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
@@ -1208,7 +1208,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
 	 * Compute rows and costs as sums of subplan rows and costs.  We charge
 	 * nothing extra for the Append itself, which perhaps is too optimistic,
 	 * but since it doesn't do any selection or projection, it is a pretty
-	 * cheap node.  If you change this, see also make_append().
+	 * cheap node.
 	 */
 	pathnode->path.rows = 0;
 	pathnode->path.startup_cost = 0;
@@ -1323,16 +1323,18 @@ create_merge_append_path(PlannerInfo *root,
 /*
  * create_result_path
  *	  Creates a path representing a Result-and-nothing-else plan.
- *	  This is only used for the case of a query with an empty jointree.
+ *
+ * This is only used for degenerate cases, such as a query with an empty
+ * jointree.
  */
 ResultPath *
-create_result_path(RelOptInfo *rel, List *quals)
+create_result_path(RelOptInfo *rel, PathTarget *target, List *quals)
 {
 	ResultPath *pathnode = makeNode(ResultPath);
 
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = rel;
-	pathnode->path.pathtarget = &(rel->reltarget);
+	pathnode->path.pathtarget = target;
 	pathnode->path.param_info = NULL;	/* there are no other rels... */
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
@@ -1342,8 +1344,9 @@ create_result_path(RelOptInfo *rel, List *quals)
 
 	/* Hardly worth defining a cost_result() function ... just do it */
 	pathnode->path.rows = 1;
-	pathnode->path.startup_cost = 0;
-	pathnode->path.total_cost = cpu_tuple_cost;
+	pathnode->path.startup_cost = target->cost.startup;
+	pathnode->path.total_cost = target->cost.startup +
+		cpu_tuple_cost + target->cost.per_tuple;
 
 	/*
 	 * In theory we should include the qual eval cost as well, but at present
@@ -1351,8 +1354,8 @@ create_result_path(RelOptInfo *rel, List *quals)
 	 * again in make_result; since this is only used for degenerate cases,
 	 * nothing interesting will be done with the path cost values.
 	 *
-	 * (Likewise, we don't worry about pathtarget->cost since that tlist will
-	 * be empty at this point.)
+	 * XXX should refactor so that make_result does not do costing work, at
+	 * which point this will need to do it honestly.
 	 */
 
 	return pathnode;
@@ -1375,8 +1378,9 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 	pathnode->path.pathtarget = &(rel->reltarget);
 	pathnode->path.param_info = subpath->param_info;
 	pathnode->path.parallel_aware = false;
-	pathnode->path.parallel_safe = subpath->parallel_safe;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
 	pathnode->path.pathkeys = subpath->pathkeys;
 
 	pathnode->subpath = subpath;
@@ -1439,8 +1443,9 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathtarget = &(rel->reltarget);
 	pathnode->path.param_info = subpath->param_info;
 	pathnode->path.parallel_aware = false;
-	pathnode->path.parallel_safe = subpath->parallel_safe;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
 
 	/*
 	 * Assume the output is unsorted, since we don't necessarily have pathkeys
@@ -1540,7 +1545,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 * Charge one cpu_operator_cost per comparison per input tuple. We
 		 * assume all columns get compared at most of the tuples. (XXX
 		 * probably this is an overestimate.)  This should agree with
-		 * make_unique.
+		 * create_upper_unique_path.
 		 */
 		sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
 	}
@@ -1607,8 +1612,37 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 }
 
 /*
- * create_gather_path
+ * translate_sub_tlist - get subquery column numbers represented by tlist
  *
+ * The given targetlist usually contains only Vars referencing the given relid.
+ * Extract their varattnos (ie, the column numbers of the subquery) and return
+ * as an integer List.
+ *
+ * If any of the tlist items is not a simple Var, we cannot determine whether
+ * the subquery's uniqueness condition (if any) matches ours, so punt and
+ * return NIL.
+ */
+static List *
+translate_sub_tlist(List *tlist, int relid)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, tlist)
+	{
+		Var		   *var = (Var *) lfirst(l);
+
+		if (!var || !IsA(var, Var) ||
+			var->varno != relid)
+			return NIL;			/* punt */
+
+		result = lappend_int(result, var->varattno);
+	}
+	return result;
+}
+
+/*
+ * create_gather_path
  *	  Creates a path corresponding to a gather scan, returning the
  *	  pathnode.
  */
@@ -1646,57 +1680,29 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 }
 
 /*
- * translate_sub_tlist - get subquery column numbers represented by tlist
- *
- * The given targetlist usually contains only Vars referencing the given relid.
- * Extract their varattnos (ie, the column numbers of the subquery) and return
- * as an integer List.
- *
- * If any of the tlist items is not a simple Var, we cannot determine whether
- * the subquery's uniqueness condition (if any) matches ours, so punt and
- * return NIL.
- */
-static List *
-translate_sub_tlist(List *tlist, int relid)
-{
-	List	   *result = NIL;
-	ListCell   *l;
-
-	foreach(l, tlist)
-	{
-		Var		   *var = (Var *) lfirst(l);
-
-		if (!var || !IsA(var, Var) ||
-			var->varno != relid)
-			return NIL;			/* punt */
-
-		result = lappend_int(result, var->varattno);
-	}
-	return result;
-}
-
-/*
  * create_subqueryscan_path
- *	  Creates a path corresponding to a sequential scan of a subquery,
+ *	  Creates a path corresponding to a scan of a subquery,
  *	  returning the pathnode.
  */
-Path *
-create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
+SubqueryScanPath *
+create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 						 List *pathkeys, Relids required_outer)
 {
-	Path	   *pathnode = makeNode(Path);
+	SubqueryScanPath *pathnode = makeNode(SubqueryScanPath);
 
-	pathnode->pathtype = T_SubqueryScan;
-	pathnode->parent = rel;
-	pathnode->pathtarget = &(rel->reltarget);
-	pathnode->param_info = get_baserel_parampathinfo(root, rel,
-													 required_outer);
-	pathnode->parallel_aware = false;
-	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = 0;
-	pathnode->pathkeys = pathkeys;
+	pathnode->path.pathtype = T_SubqueryScan;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = &(rel->reltarget);
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.pathkeys = pathkeys;
+	pathnode->subpath = subpath;
 
-	cost_subqueryscan(pathnode, root, rel, pathnode->param_info);
+	cost_subqueryscan(pathnode, root, rel, pathnode->path.param_info);
 
 	return pathnode;
 }
@@ -2035,7 +2041,8 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->jpath.path.parallel_aware = false;
 	pathnode->jpath.path.parallel_safe = joinrel->consider_parallel &&
 		outer_path->parallel_safe && inner_path->parallel_safe;
-	pathnode->jpath.path.parallel_degree = 0;
+	/* This is a foolish way to estimate parallel_degree, but for now... */
+	pathnode->jpath.path.parallel_degree = outer_path->parallel_degree;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->jpath.jointype = jointype;
 	pathnode->jpath.outerjoinpath = outer_path;
@@ -2124,6 +2131,911 @@ create_hashjoin_path(PlannerInfo *root,
 }
 
 /*
+ * create_projection_path
+ *	  Creates a pathnode that represents performing a projection.
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'target' is the PathTarget to be computed
+ */
+ProjectionPath *
+create_projection_path(PlannerInfo *root,
+					   RelOptInfo *rel,
+					   Path *subpath,
+					   PathTarget *target)
+{
+	ProjectionPath *pathnode = makeNode(ProjectionPath);
+
+	pathnode->path.pathtype = T_Result;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	/* Projection does not change the sort order */
+	pathnode->path.pathkeys = subpath->pathkeys;
+
+	pathnode->subpath = subpath;
+
+	/*
+	 * The Result node's cost is cpu_tuple_cost per row, plus the cost of
+	 * evaluating the tlist.
+	 */
+	pathnode->path.rows = subpath->rows;
+	pathnode->path.startup_cost = subpath->startup_cost + target->cost.startup;
+	pathnode->path.total_cost = subpath->total_cost + target->cost.startup +
+		(cpu_tuple_cost + target->cost.per_tuple) * subpath->rows;
+
+	return pathnode;
+}
+
+/*
+ * apply_projection_to_path
+ *	  Add a projection step, or just apply the target directly to given path.
+ *
+ * Most plan types include ExecProject, so we can implement a new projection
+ * without an extra plan node: just replace the given path's pathtarget with
+ * the desired one.  If the given path can't project, add a ProjectionPath.
+ *
+ * We can also short-circuit cases where the targetlist expressions are
+ * actually equal; this is not an uncommon case, since it may arise from
+ * trying to apply a PathTarget with sortgroupref labeling to a derived
+ * path without such labeling.
+ *
+ * This requires knowing that the source path won't be referenced for other
+ * purposes (e.g., other possible paths), since we modify it in-place.  Note
+ * also that we mustn't change the source path's parent link; so when it is
+ * add_path'd to "rel" things will be a bit inconsistent.  So far that has
+ * not caused any trouble.
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'path' is the path representing the source of data
+ * 'target' is the PathTarget to be computed
+ */
+Path *
+apply_projection_to_path(PlannerInfo *root,
+						 RelOptInfo *rel,
+						 Path *path,
+						 PathTarget *target)
+{
+	QualCost	oldcost;
+
+	/* Make a separate ProjectionPath if needed */
+	if (!is_projection_capable_path(path) &&
+		!equal(path->pathtarget->exprs, target->exprs))
+		return (Path *) create_projection_path(root, rel, path, target);
+
+	/*
+	 * We can just jam the desired tlist into the existing path, being sure to
+	 * update its cost estimates appropriately.
+	 */
+	oldcost = path->pathtarget->cost;
+	path->pathtarget = target;
+
+	path->startup_cost += target->cost.startup - oldcost.startup;
+	path->total_cost += target->cost.startup - oldcost.startup +
+		(target->cost.per_tuple - oldcost.per_tuple) * path->rows;
+
+	return path;
+}
+
+/*
+ * create_sort_path
+ *	  Creates a pathnode that represents performing an explicit sort.
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'pathkeys' represents the desired sort order
+ * 'limit_tuples' is the estimated bound on the number of output tuples,
+ *		or -1 if no LIMIT or couldn't estimate
+ */
+SortPath *
+create_sort_path(PlannerInfo *root,
+				 RelOptInfo *rel,
+				 Path *subpath,
+				 List *pathkeys,
+				 double limit_tuples)
+{
+	SortPath   *pathnode = makeNode(SortPath);
+
+	pathnode->path.pathtype = T_Sort;
+	pathnode->path.parent = rel;
+	/* Sort doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.pathkeys = pathkeys;
+
+	pathnode->subpath = subpath;
+
+	cost_sort(&pathnode->path, root, pathkeys,
+			  subpath->total_cost,
+			  subpath->rows,
+			  subpath->pathtarget->width,
+			  0.0,				/* XXX comparison_cost shouldn't be 0? */
+			  work_mem, limit_tuples);
+
+	return pathnode;
+}
+
+/*
+ * create_group_path
+ *	  Creates a pathnode that represents performing grouping of presorted input
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'target' is the PathTarget to be computed
+ * 'groupClause' is a list of SortGroupClause's representing the grouping
+ * 'qual' is the HAVING quals if any
+ * 'numGroups' is the estimated number of groups
+ */
+GroupPath *
+create_group_path(PlannerInfo *root,
+				  RelOptInfo *rel,
+				  Path *subpath,
+				  PathTarget *target,
+				  List *groupClause,
+				  List *qual,
+				  double numGroups)
+{
+	GroupPath  *pathnode = makeNode(GroupPath);
+
+	pathnode->path.pathtype = T_Group;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	/* Group doesn't change sort ordering */
+	pathnode->path.pathkeys = subpath->pathkeys;
+
+	pathnode->subpath = subpath;
+
+	pathnode->groupClause = groupClause;
+	pathnode->qual = qual;
+
+	cost_group(&pathnode->path, root,
+			   list_length(groupClause),
+			   numGroups,
+			   subpath->startup_cost, subpath->total_cost,
+			   subpath->rows);
+
+	/* add tlist eval cost for each output row */
+	pathnode->path.startup_cost += target->cost.startup;
+	pathnode->path.total_cost += target->cost.startup +
+		target->cost.per_tuple * pathnode->path.rows;
+
+	return pathnode;
+}
+
+/*
+ * create_upper_unique_path
+ *	  Creates a pathnode that represents performing an explicit Unique step
+ *	  on presorted input.
+ *
+ * This produces a Unique plan node, but the use-case is so different from
+ * create_unique_path that it doesn't seem worth trying to merge the two.
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'numCols' is the number of grouping columns
+ * 'numGroups' is the estimated number of groups
+ *
+ * The input path must be sorted on the grouping columns, plus possibly
+ * additional columns; so the first numCols pathkeys are the grouping columns
+ */
+UpperUniquePath *
+create_upper_unique_path(PlannerInfo *root,
+						 RelOptInfo *rel,
+						 Path *subpath,
+						 int numCols,
+						 double numGroups)
+{
+	UpperUniquePath *pathnode = makeNode(UpperUniquePath);
+
+	pathnode->path.pathtype = T_Unique;
+	pathnode->path.parent = rel;
+	/* Unique doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	/* Unique doesn't change the input ordering */
+	pathnode->path.pathkeys = subpath->pathkeys;
+
+	pathnode->subpath = subpath;
+	pathnode->numkeys = numCols;
+
+	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
+	 * all columns get compared at most of the tuples.  (XXX probably this is
+	 * an overestimate.)
+	 */
+	pathnode->path.startup_cost = subpath->startup_cost;
+	pathnode->path.total_cost = subpath->total_cost +
+		cpu_operator_cost * subpath->rows * numCols;
+	pathnode->path.rows = numGroups;
+
+	return pathnode;
+}
+
+/*
+ * create_agg_path
+ *	  Creates a pathnode that represents performing aggregation/grouping
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'target' is the PathTarget to be computed
+ * 'aggstrategy' is the Agg node's basic implementation strategy
+ * 'groupClause' is a list of SortGroupClause's representing the grouping
+ * 'qual' is the HAVING quals if any
+ * 'aggcosts' contains cost info about the aggregate functions to be computed
+ * 'numGroups' is the estimated number of groups (1 if not grouping)
+ */
+AggPath *
+create_agg_path(PlannerInfo *root,
+				RelOptInfo *rel,
+				Path *subpath,
+				PathTarget *target,
+				AggStrategy aggstrategy,
+				List *groupClause,
+				List *qual,
+				const AggClauseCosts *aggcosts,
+				double numGroups)
+{
+	AggPath    *pathnode = makeNode(AggPath);
+
+	pathnode->path.pathtype = T_Agg;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	if (aggstrategy == AGG_SORTED)
+		pathnode->path.pathkeys = subpath->pathkeys;	/* preserves order */
+	else
+		pathnode->path.pathkeys = NIL;	/* output is unordered */
+	pathnode->subpath = subpath;
+
+	pathnode->aggstrategy = aggstrategy;
+	pathnode->numGroups = numGroups;
+	pathnode->groupClause = groupClause;
+	pathnode->qual = qual;
+
+	cost_agg(&pathnode->path, root,
+			 aggstrategy, aggcosts,
+			 list_length(groupClause), numGroups,
+			 subpath->startup_cost, subpath->total_cost,
+			 subpath->rows);
+
+	/* add tlist eval cost for each output row */
+	pathnode->path.startup_cost += target->cost.startup;
+	pathnode->path.total_cost += target->cost.startup +
+		target->cost.per_tuple * pathnode->path.rows;
+
+	return pathnode;
+}
+
+/*
+ * create_groupingsets_path
+ *	  Creates a pathnode that represents performing GROUPING SETS aggregation
+ *
+ * GroupingSetsPath represents sorted grouping with one or more grouping sets.
+ * The input path's result must be sorted to match the last entry in
+ * rollup_groupclauses, and groupColIdx[] identifies its sort columns.
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'target' is the PathTarget to be computed
+ * 'having_qual' is the HAVING quals if any
+ * 'groupColIdx' is an array of indexes of grouping columns in the source data
+ * 'rollup_lists' is a list of grouping sets
+ * 'rollup_groupclauses' is a list of grouping clauses for grouping sets
+ * 'agg_costs' contains cost info about the aggregate functions to be computed
+ * 'numGroups' is the estimated number of groups
+ */
+GroupingSetsPath *
+create_groupingsets_path(PlannerInfo *root,
+						 RelOptInfo *rel,
+						 Path *subpath,
+						 PathTarget *target,
+						 List *having_qual,
+						 AttrNumber *groupColIdx,
+						 List *rollup_lists,
+						 List *rollup_groupclauses,
+						 const AggClauseCosts *agg_costs,
+						 double numGroups)
+{
+	GroupingSetsPath *pathnode = makeNode(GroupingSetsPath);
+	int			numGroupCols;
+
+	/* The topmost generated Plan node will be an Agg */
+	pathnode->path.pathtype = T_Agg;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	pathnode->path.param_info = subpath->param_info;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->subpath = subpath;
+
+	/*
+	 * Output will be in sorted order by group_pathkeys if, and only if, there
+	 * is a single rollup operation on a non-empty list of grouping
+	 * expressions.
+	 */
+	if (list_length(rollup_groupclauses) == 1 &&
+		((List *) linitial(rollup_groupclauses)) != NIL)
+		pathnode->path.pathkeys = root->group_pathkeys;
+	else
+		pathnode->path.pathkeys = NIL;
+
+	pathnode->groupColIdx = groupColIdx;
+	pathnode->rollup_groupclauses = rollup_groupclauses;
+	pathnode->rollup_lists = rollup_lists;
+	pathnode->qual = having_qual;
+
+	Assert(rollup_lists != NIL);
+	Assert(list_length(rollup_lists) == list_length(rollup_groupclauses));
+
+	/* Account for cost of the topmost Agg node */
+	numGroupCols = list_length((List *) linitial((List *) llast(rollup_lists)));
+
+	cost_agg(&pathnode->path, root,
+			 (numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
+			 agg_costs,
+			 numGroupCols,
+			 numGroups,
+			 subpath->startup_cost,
+			 subpath->total_cost,
+			 subpath->rows);
+
+	/*
+	 * Add in the costs and output rows of the additional sorting/aggregation
+	 * steps, if any.  Only total costs count, since the extra sorts aren't
+	 * run on startup.
+	 */
+	if (list_length(rollup_lists) > 1)
+	{
+		ListCell   *lc;
+
+		foreach(lc, rollup_lists)
+		{
+			List	   *gsets = (List *) lfirst(lc);
+			Path		sort_path;		/* dummy for result of cost_sort */
+			Path		agg_path;		/* dummy for result of cost_agg */
+
+			/* We must iterate over all but the last rollup_lists element */
+			if (lnext(lc) == NULL)
+				break;
+
+			/* Account for cost of sort, but don't charge input cost again */
+			cost_sort(&sort_path, root, NIL,
+					  0.0,
+					  subpath->rows,
+					  subpath->pathtarget->width,
+					  0.0,
+					  work_mem,
+					  -1.0);
+
+			/* Account for cost of aggregation */
+			numGroupCols = list_length((List *) linitial(gsets));
+
+			cost_agg(&agg_path, root,
+					 AGG_SORTED,
+					 agg_costs,
+					 numGroupCols,
+					 numGroups, /* XXX surely not right for all steps? */
+					 sort_path.startup_cost,
+					 sort_path.total_cost,
+					 sort_path.rows);
+
+			pathnode->path.total_cost += agg_path.total_cost;
+			pathnode->path.rows += agg_path.rows;
+		}
+	}
+
+	/* add tlist eval cost for each output row */
+	pathnode->path.startup_cost += target->cost.startup;
+	pathnode->path.total_cost += target->cost.startup +
+		target->cost.per_tuple * pathnode->path.rows;
+
+	return pathnode;
+}
+
+/*
+ * create_minmaxagg_path
+ *	  Creates a pathnode that represents computation of MIN/MAX aggregates
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'target' is the PathTarget to be computed
+ * 'mmaggregates' is a list of MinMaxAggInfo structs
+ * 'quals' is the HAVING quals if any
+ */
+MinMaxAggPath *
+create_minmaxagg_path(PlannerInfo *root,
+					  RelOptInfo *rel,
+					  PathTarget *target,
+					  List *mmaggregates,
+					  List *quals)
+{
+	MinMaxAggPath *pathnode = makeNode(MinMaxAggPath);
+	Cost		initplan_cost;
+	ListCell   *lc;
+
+	/* The topmost generated Plan node will be a Result */
+	pathnode->path.pathtype = T_Result;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	/* A MinMaxAggPath implies use of subplans, so cannot be parallel-safe */
+	pathnode->path.parallel_safe = false;
+	pathnode->path.parallel_degree = 0;
+	/* Result is one unordered row */
+	pathnode->path.rows = 1;
+	pathnode->path.pathkeys = NIL;
+
+	pathnode->mmaggregates = mmaggregates;
+	pathnode->quals = quals;
+
+	/* Calculate cost of all the initplans ... */
+	initplan_cost = 0;
+	foreach(lc, mmaggregates)
+	{
+		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
+
+		initplan_cost += mminfo->pathcost;
+	}
+
+	/* add tlist eval cost for each output row, plus cpu_tuple_cost */
+	pathnode->path.startup_cost = initplan_cost + target->cost.startup;
+	pathnode->path.total_cost = initplan_cost + target->cost.startup +
+		target->cost.per_tuple + cpu_tuple_cost;
+
+	return pathnode;
+}
+
+/*
+ * create_windowagg_path
+ *	  Creates a pathnode that represents computation of window functions
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'target' is the PathTarget to be computed
+ * 'windowFuncs' is a list of WindowFunc structs
+ * 'winclause' is a WindowClause that is common to all the WindowFuncs
+ * 'winpathkeys' is the pathkeys for the PARTITION keys + ORDER keys
+ *
+ * The actual sort order of the input must match winpathkeys, but might
+ * have additional keys after those.
+ */
+WindowAggPath *
+create_windowagg_path(PlannerInfo *root,
+					  RelOptInfo *rel,
+					  Path *subpath,
+					  PathTarget *target,
+					  List *windowFuncs,
+					  WindowClause *winclause,
+					  List *winpathkeys)
+{
+	WindowAggPath *pathnode = makeNode(WindowAggPath);
+
+	pathnode->path.pathtype = T_WindowAgg;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	/* WindowAgg preserves the input sort order */
+	pathnode->path.pathkeys = subpath->pathkeys;
+
+	pathnode->subpath = subpath;
+	pathnode->winclause = winclause;
+	pathnode->winpathkeys = winpathkeys;
+
+	/*
+	 * For costing purposes, assume that there are no redundant partitioning
+	 * or ordering columns; it's not worth the trouble to deal with that
+	 * corner case here.  So we just pass the unmodified list lengths to
+	 * cost_windowagg.
+	 */
+	cost_windowagg(&pathnode->path, root,
+				   windowFuncs,
+				   list_length(winclause->partitionClause),
+				   list_length(winclause->orderClause),
+				   subpath->startup_cost,
+				   subpath->total_cost,
+				   subpath->rows);
+
+	/* add tlist eval cost for each output row */
+	pathnode->path.startup_cost += target->cost.startup;
+	pathnode->path.total_cost += target->cost.startup +
+		target->cost.per_tuple * pathnode->path.rows;
+
+	return pathnode;
+}
+
+/*
+ * create_setop_path
+ *	  Creates a pathnode that represents computation of INTERSECT or EXCEPT
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'cmd' is the specific semantics (INTERSECT or EXCEPT, with/without ALL)
+ * 'strategy' is the implementation strategy (sorted or hashed)
+ * 'distinctList' is a list of SortGroupClause's representing the grouping
+ * 'flagColIdx' is the column number where the flag column will be, if any
+ * 'firstFlag' is the flag value for the first input relation when hashing;
+ *		or -1 when sorting
+ * 'numGroups' is the estimated number of distinct groups
+ * 'outputRows' is the estimated number of output rows
+ */
+SetOpPath *
+create_setop_path(PlannerInfo *root,
+				  RelOptInfo *rel,
+				  Path *subpath,
+				  SetOpCmd cmd,
+				  SetOpStrategy strategy,
+				  List *distinctList,
+				  AttrNumber flagColIdx,
+				  int firstFlag,
+				  double numGroups,
+				  double outputRows)
+{
+	SetOpPath  *pathnode = makeNode(SetOpPath);
+
+	pathnode->path.pathtype = T_SetOp;
+	pathnode->path.parent = rel;
+	/* SetOp doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	/* SetOp preserves the input sort order if in sort mode */
+	pathnode->path.pathkeys =
+		(strategy == SETOP_SORTED) ? subpath->pathkeys : NIL;
+
+	pathnode->subpath = subpath;
+	pathnode->cmd = cmd;
+	pathnode->strategy = strategy;
+	pathnode->distinctList = distinctList;
+	pathnode->flagColIdx = flagColIdx;
+	pathnode->firstFlag = firstFlag;
+	pathnode->numGroups = numGroups;
+
+	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
+	 * all columns get compared at most of the tuples.
+	 */
+	pathnode->path.startup_cost = subpath->startup_cost;
+	pathnode->path.total_cost = subpath->total_cost +
+		cpu_operator_cost * subpath->rows * list_length(distinctList);
+	pathnode->path.rows = outputRows;
+
+	return pathnode;
+}
+
+/*
+ * create_recursiveunion_path
+ *	  Creates a pathnode that represents a recursive UNION node
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'leftpath' is the source of data for the non-recursive term
+ * 'rightpath' is the source of data for the recursive term
+ * 'target' is the PathTarget to be computed
+ * 'distinctList' is a list of SortGroupClause's representing the grouping
+ * 'wtParam' is the ID of Param representing work table
+ * 'numGroups' is the estimated number of groups
+ *
+ * For recursive UNION ALL, distinctList is empty and numGroups is zero
+ */
+RecursiveUnionPath *
+create_recursiveunion_path(PlannerInfo *root,
+						   RelOptInfo *rel,
+						   Path *leftpath,
+						   Path *rightpath,
+						   PathTarget *target,
+						   List *distinctList,
+						   int wtParam,
+						   double numGroups)
+{
+	RecursiveUnionPath *pathnode = makeNode(RecursiveUnionPath);
+
+	pathnode->path.pathtype = T_RecursiveUnion;
+	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = target;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		leftpath->parallel_safe && rightpath->parallel_safe;
+	/* Foolish, but we'll do it like joins for now: */
+	pathnode->path.parallel_degree = leftpath->parallel_degree;
+	/* RecursiveUnion result is always unsorted */
+	pathnode->path.pathkeys = NIL;
+
+	pathnode->leftpath = leftpath;
+	pathnode->rightpath = rightpath;
+	pathnode->distinctList = distinctList;
+	pathnode->wtParam = wtParam;
+	pathnode->numGroups = numGroups;
+
+	cost_recursive_union(&pathnode->path, leftpath, rightpath);
+
+	return pathnode;
+}
+
+/*
+ * create_lockrows_path
+ *	  Creates a pathnode that represents acquiring row locks
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'rowMarks' is a list of PlanRowMark's
+ * 'epqParam' is the ID of Param for EvalPlanQual re-eval
+ */
+LockRowsPath *
+create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
+					 Path *subpath, List *rowMarks, int epqParam)
+{
+	LockRowsPath *pathnode = makeNode(LockRowsPath);
+
+	pathnode->path.pathtype = T_LockRows;
+	pathnode->path.parent = rel;
+	/* LockRows doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = false;
+	pathnode->path.parallel_degree = 0;
+	pathnode->path.rows = subpath->rows;
+
+	/*
+	 * The result cannot be assumed sorted, since locking might cause the sort
+	 * key columns to be replaced with new values.
+	 */
+	pathnode->path.pathkeys = NIL;
+
+	pathnode->subpath = subpath;
+	pathnode->rowMarks = rowMarks;
+	pathnode->epqParam = epqParam;
+
+	/*
+	 * We should charge something extra for the costs of row locking and
+	 * possible refetches, but it's hard to say how much.  For now, use
+	 * cpu_tuple_cost per row.
+	 */
+	pathnode->path.startup_cost = subpath->startup_cost;
+	pathnode->path.total_cost = subpath->total_cost +
+		cpu_tuple_cost * subpath->rows;
+
+	return pathnode;
+}
+
+/*
+ * create_modifytable_path
+ *	  Creates a pathnode that represents performing INSERT/UPDATE/DELETE mods
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'operation' is the operation type
+ * 'canSetTag' is true if we set the command tag/es_processed
+ * 'nominalRelation' is the parent RT index for use of EXPLAIN
+ * 'resultRelations' is an integer list of actual RT indexes of target rel(s)
+ * 'subpaths' is a list of Path(s) producing source data (one per rel)
+ * 'subroots' is a list of PlannerInfo structs (one per rel)
+ * 'withCheckOptionLists' is a list of WCO lists (one per rel)
+ * 'returningLists' is a list of RETURNING tlists (one per rel)
+ * 'rowMarks' is a list of PlanRowMarks (non-locking only)
+ * 'onconflict' is the ON CONFLICT clause, or NULL
+ * 'epqParam' is the ID of Param for EvalPlanQual re-eval
+ */
+ModifyTablePath *
+create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
+						CmdType operation, bool canSetTag,
+						Index nominalRelation,
+						List *resultRelations, List *subpaths,
+						List *subroots,
+						List *withCheckOptionLists, List *returningLists,
+						List *rowMarks, OnConflictExpr *onconflict,
+						int epqParam)
+{
+	ModifyTablePath *pathnode = makeNode(ModifyTablePath);
+	double		total_size;
+	ListCell   *lc;
+
+	Assert(list_length(resultRelations) == list_length(subpaths));
+	Assert(list_length(resultRelations) == list_length(subroots));
+	Assert(withCheckOptionLists == NIL ||
+		   list_length(resultRelations) == list_length(withCheckOptionLists));
+	Assert(returningLists == NIL ||
+		   list_length(resultRelations) == list_length(returningLists));
+
+	pathnode->path.pathtype = T_ModifyTable;
+	pathnode->path.parent = rel;
+	/* pathtarget is not interesting, just make it minimally valid */
+	pathnode->path.pathtarget = &(rel->reltarget);
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = false;
+	pathnode->path.parallel_degree = 0;
+	pathnode->path.pathkeys = NIL;
+
+	/*
+	 * Compute cost & rowcount as sum of subpath costs & rowcounts.
+	 *
+	 * Currently, we don't charge anything extra for the actual table
+	 * modification work, nor for the WITH CHECK OPTIONS or RETURNING
+	 * expressions if any.  It would only be window dressing, since
+	 * ModifyTable is always a top-level node and there is no way for the
+	 * costs to change any higher-level planning choices.  But we might want
+	 * to make it look better sometime.
+	 */
+	pathnode->path.startup_cost = 0;
+	pathnode->path.total_cost = 0;
+	pathnode->path.rows = 0;
+	total_size = 0;
+	foreach(lc, subpaths)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+
+		if (lc == list_head(subpaths))	/* first node? */
+			pathnode->path.startup_cost = subpath->startup_cost;
+		pathnode->path.total_cost += subpath->total_cost;
+		pathnode->path.rows += subpath->rows;
+		total_size += subpath->pathtarget->width * subpath->rows;
+	}
+
+	/*
+	 * Set width to the average width of the subpath outputs.  XXX this is
+	 * totally wrong: we should report zero if no RETURNING, else an average
+	 * of the RETURNING tlist widths.  But it's what happened historically,
+	 * and improving it is a task for another day.
+	 */
+	if (pathnode->path.rows > 0)
+		total_size /= pathnode->path.rows;
+	pathnode->path.pathtarget->width = rint(total_size);
+
+	pathnode->operation = operation;
+	pathnode->canSetTag = canSetTag;
+	pathnode->nominalRelation = nominalRelation;
+	pathnode->resultRelations = resultRelations;
+	pathnode->subpaths = subpaths;
+	pathnode->subroots = subroots;
+	pathnode->withCheckOptionLists = withCheckOptionLists;
+	pathnode->returningLists = returningLists;
+	pathnode->rowMarks = rowMarks;
+	pathnode->onconflict = onconflict;
+	pathnode->epqParam = epqParam;
+
+	return pathnode;
+}
+
+/*
+ * create_limit_path
+ *	  Creates a pathnode that represents performing LIMIT/OFFSET
+ *
+ * In addition to providing the actual OFFSET and LIMIT expressions,
+ * the caller must provide estimates of their values for costing purposes.
+ * The estimates are as computed by preprocess_limit(), ie, 0 represents
+ * the clause not being present, and -1 means it's present but we could
+ * not estimate its value.
+ *
+ * 'rel' is the parent relation associated with the result
+ * 'subpath' is the path representing the source of data
+ * 'limitOffset' is the actual OFFSET expression, or NULL
+ * 'limitCount' is the actual LIMIT expression, or NULL
+ * 'offset_est' is the estimated value of the OFFSET expression
+ * 'count_est' is the estimated value of the LIMIT expression
+ */
+LimitPath *
+create_limit_path(PlannerInfo *root, RelOptInfo *rel,
+				  Path *subpath,
+				  Node *limitOffset, Node *limitCount,
+				  int64 offset_est, int64 count_est)
+{
+	LimitPath  *pathnode = makeNode(LimitPath);
+
+	pathnode->path.pathtype = T_Limit;
+	pathnode->path.parent = rel;
+	/* Limit doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	/* For now, assume we are above any joins, so no parameterization */
+	pathnode->path.param_info = NULL;
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.rows = subpath->rows;
+	pathnode->path.startup_cost = subpath->startup_cost;
+	pathnode->path.total_cost = subpath->total_cost;
+	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->subpath = subpath;
+	pathnode->limitOffset = limitOffset;
+	pathnode->limitCount = limitCount;
+
+	/*
+	 * Adjust the output rows count and costs according to the offset/limit.
+	 * This is only a cosmetic issue if we are at top level, but if we are
+	 * building a subquery then it's important to report correct info to the
+	 * outer planner.
+	 *
+	 * When the offset or count couldn't be estimated, use 10% of the
+	 * estimated number of rows emitted from the subpath.
+	 *
+	 * XXX we don't bother to add eval costs of the offset/limit expressions
+	 * themselves to the path costs.  In theory we should, but in most cases
+	 * those expressions are trivial and it's just not worth the trouble.
+	 */
+	if (offset_est != 0)
+	{
+		double		offset_rows;
+
+		if (offset_est > 0)
+			offset_rows = (double) offset_est;
+		else
+			offset_rows = clamp_row_est(subpath->rows * 0.10);
+		if (offset_rows > pathnode->path.rows)
+			offset_rows = pathnode->path.rows;
+		if (subpath->rows > 0)
+			pathnode->path.startup_cost +=
+				(subpath->total_cost - subpath->startup_cost)
+				* offset_rows / subpath->rows;
+		pathnode->path.rows -= offset_rows;
+		if (pathnode->path.rows < 1)
+			pathnode->path.rows = 1;
+	}
+
+	if (count_est != 0)
+	{
+		double		count_rows;
+
+		if (count_est > 0)
+			count_rows = (double) count_est;
+		else
+			count_rows = clamp_row_est(subpath->rows * 0.10);
+		if (count_rows > pathnode->path.rows)
+			count_rows = pathnode->path.rows;
+		if (subpath->rows > 0)
+			pathnode->path.total_cost = pathnode->path.startup_cost +
+				(subpath->total_cost - subpath->startup_cost)
+				* count_rows / subpath->rows;
+		pathnode->path.rows = count_rows;
+		if (pathnode->path.rows < 1)
+			pathnode->path.rows = 1;
+	}
+
+	return pathnode;
+}
+
+
+/*
  * reparameterize_path
  *		Attempt to modify a Path to have greater parameterization
  *
@@ -2186,8 +3098,15 @@ reparameterize_path(PlannerInfo *root, Path *path,
 														loop_count);
 			}
 		case T_SubqueryScan:
-			return create_subqueryscan_path(root, rel, path->pathkeys,
-											required_outer);
+			{
+				SubqueryScanPath *spath = (SubqueryScanPath *) path;
+
+				return (Path *) create_subqueryscan_path(root,
+														 rel,
+														 spath->subpath,
+														 spath->path.pathkeys,
+														 required_outer);
+			}
 		default:
 			break;
 	}

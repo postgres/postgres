@@ -20,7 +20,7 @@ Paths and Join Pairs
 During the planning/optimizing process, we build "Path" trees representing
 the different ways of doing a query.  We select the cheapest Path that
 generates the desired relation and turn it into a Plan to pass to the
-executor.  (There is pretty much a one-to-one correspondence between the
+executor.  (There is pretty nearly a one-to-one correspondence between the
 Path and Plan trees, but Path nodes omit info that won't be needed during
 planning, and include info needed for planning that won't be needed by the
 executor.)
@@ -43,10 +43,8 @@ base rels of the query.
 
 Possible Paths for a primitive table relation include plain old sequential
 scan, plus index scans for any indexes that exist on the table, plus bitmap
-index scans using one or more indexes.  A subquery base relation just has
-one Path, a "SubqueryScan" path (which links to the subplan that was built
-by a recursive invocation of the planner).  Likewise a function-RTE base
-relation has only one possible Path.
+index scans using one or more indexes.  Specialized RTE types, such as
+function RTEs, may have only one possible Path.
 
 Joins always occur using two RelOptInfos.  One is outer, the other inner.
 Outers drive lookups of values in the inner.  In a nested loop, lookups of
@@ -59,9 +57,10 @@ hashjoin, the inner is scanned first and all its rows are entered in a
 hashtable, then the outer is scanned and for each row we lookup the join
 key in the hashtable.
 
-A Path for a join relation is actually a tree structure, with the top
-Path node representing the join method.  It has left and right subpaths
-that represent the scan or join methods used for the two input relations.
+A Path for a join relation is actually a tree structure, with the topmost
+Path node representing the last-applied join method.  It has left and right
+subpaths that represent the scan or join methods used for the two input
+relations.
 
 
 Join Tree Construction
@@ -292,8 +291,7 @@ Optimizer Functions
 The primary entry point is planner().
 
 planner()
- set up for recursive handling of subqueries
- do final cleanup after planning
+set up for recursive handling of subqueries
 -subquery_planner()
  pull up sublinks and subqueries from rangetable, if possible
  canonicalize qual
@@ -326,14 +324,15 @@ planner()
       Back at standard_join_search(), apply set_cheapest() to extract the
       cheapest path for each newly constructed joinrel.
       Loop back if this wasn't the top join level.
- Back at grouping_planner:
- convert Path tree returned by query_planner into a Plan tree
- do grouping(GROUP)
- do aggregates
- do window functions
- make unique(DISTINCT)
- make sort(ORDER BY)
- make limit(LIMIT/OFFSET)
+  Back at grouping_planner:
+  do grouping (GROUP BY) and aggregation
+  do window functions
+  make unique (DISTINCT)
+  do sorting (ORDER BY)
+  do limit (LIMIT/OFFSET)
+Back at planner():
+convert finished Path tree into a Plan tree
+do final cleanup after planning
 
 
 Optimizer Data Structures
@@ -355,12 +354,28 @@ RelOptInfo      - a relation or joined relations
   IndexPath     - index scan
   BitmapHeapPath - top of a bitmapped index scan
   TidPath       - scan by CTID
+  SubqueryScanPath - scan a subquery-in-FROM
   ForeignPath   - scan a foreign table
+  CustomPath    - for custom scan providers
   AppendPath    - append multiple subpaths together
   MergeAppendPath - merge multiple subpaths, preserving their common sort order
-  ResultPath    - a Result plan node (used for FROM-less SELECT)
+  ResultPath    - a childless Result plan node (used for FROM-less SELECT)
   MaterialPath  - a Material plan node
-  UniquePath    - remove duplicate rows
+  UniquePath    - remove duplicate rows (either by hashing or sorting)
+  GatherPath    - collect the results of parallel workers
+  ProjectionPath - a Result plan node with child (used for projection)
+  SortPath      - a Sort plan node applied to some sub-path
+  GroupPath     - a Group plan node applied to some sub-path
+  UpperUniquePath - a Unique plan node applied to some sub-path
+  AggPath       - an Agg plan node applied to some sub-path
+  GroupingSetsPath - an Agg plan node used to implement GROUPING SETS
+  MinMaxAggPath - a Result plan node with subplans performing MIN/MAX
+  WindowAggPath - a WindowAgg plan node applied to some sub-path
+  SetOpPath     - a SetOp plan node applied to some sub-path
+  RecursiveUnionPath - a RecursiveUnion plan node applied to two sub-paths
+  LockRowsPath  - a LockRows plan node applied to some sub-path
+  ModifyTablePath - a ModifyTable plan node applied to some sub-path(s)
+  LimitPath     - a Limit plan node applied to some sub-path
   NestPath      - nested-loop joins
   MergePath     - merge joins
   HashPath      - hash joins
@@ -849,6 +864,59 @@ PHV in the quals or targetlist of a plan node requires that node to appear
 on the inside of a nestloop join relative to the rel(s) supplying the
 lateral reference.  (Perhaps now that that stuff works, we could relax the
 pullup restriction?)
+
+
+Post scan/join planning
+-----------------------
+
+So far we have discussed only scan/join planning, that is, implementation
+of the FROM and WHERE clauses of a SQL query.  But the planner must also
+determine how to deal with GROUP BY, aggregation, and other higher-level
+features of queries; and in many cases there are multiple ways to do these
+steps and thus opportunities for optimization choices.  These steps, like
+scan/join planning, are handled by constructing Paths representing the
+different ways to do a step, then choosing the cheapest Path.
+
+Since all Paths require a RelOptInfo as "parent", we create RelOptInfos
+representing the outputs of these upper-level processing steps.  These
+RelOptInfos are mostly dummy, but their pathlist lists hold all the Paths
+considered useful for each step.  Currently, we may create these types of
+additional RelOptInfos during upper-level planning:
+
+UPPERREL_SETOP		result of UNION/INTERSECT/EXCEPT, if any
+UPPERREL_GROUP_AGG	result of grouping/aggregation, if any
+UPPERREL_WINDOW		result of window functions, if any
+UPPERREL_DISTINCT	result of "SELECT DISTINCT", if any
+UPPERREL_ORDERED	result of ORDER BY, if any
+UPPERREL_FINAL		result of any remaining top-level actions
+
+UPPERREL_FINAL is used to represent any final processing steps, currently
+LockRows (SELECT FOR UPDATE), LIMIT/OFFSET, and ModifyTable.  There is no
+flexibility about the order in which these steps are done, and thus no need
+to subdivide this stage more finely.
+
+These "upper relations" are identified by the UPPERREL enum values shown
+above, plus a relids set, which allows there to be more than one upperrel
+of the same kind.  We use NULL for the relids if there's no need for more
+than one upperrel of the same kind.  Currently, in fact, the relids set
+is vestigial because it's always NULL, but that's expected to change in
+future.  For example, in planning set operations, we might need the relids
+to denote which subset of the leaf SELECTs has been combined in a
+particular group of Paths that are competing with each other.
+
+The result of subquery_planner() is always returned as a set of Paths
+stored in the UPPERREL_FINAL rel with NULL relids.  The other types of
+upperrels are created only if needed for the particular query.
+
+The upper-relation infrastructure is designed so that things will work
+properly if a particular upper relation is created and Paths are added
+to it sooner than would normally happen.  This allows, for example,
+for an FDW's GetForeignPaths function to insert a Path representing
+remote aggregation into the UPPERREL_GROUP_AGG upperrel, if it notices
+that the query represents an aggregation that could be done entirely on
+the foreign server.  That Path will then compete with Paths representing
+local aggregation on a regular scan of the foreign table, once the core
+planner reaches the point of considering aggregation.
 
 
 Parallel Query and Partial Paths

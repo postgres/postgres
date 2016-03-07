@@ -907,9 +907,14 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->eq_classes = NIL;
 	subroot->append_rel_list = NIL;
 	subroot->rowMarks = NIL;
+	memset(subroot->upper_rels, 0, sizeof(subroot->upper_rels));
+	subroot->processed_tlist = NIL;
+	subroot->grouping_map = NULL;
+	subroot->minmax_aggs = NIL;
+	subroot->hasInheritedTarget = false;
 	subroot->hasRecursion = false;
 	subroot->wt_param_id = -1;
-	subroot->non_recursive_plan = NULL;
+	subroot->non_recursive_path = NULL;
 
 	/* No CTEs to worry about */
 	Assert(subquery->cteList == NIL);

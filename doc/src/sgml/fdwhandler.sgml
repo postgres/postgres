@@ -1317,6 +1317,40 @@ GetForeignServerByName(const char *name, bool missing_ok);
     </para>
 
     <para>
+     An FDW might additionally support direct execution of some plan actions
+     that are above the level of scans and joins, such as grouping or
+     aggregation.  To offer such options, the FDW should generate paths
+     (probably ForeignPaths or CustomPaths) and insert them into the
+     appropriate <firstterm>upper relation</>.  For example, a path
+     representing remote aggregation should be inserted into the relation
+     obtained from <literal>fetch_upper_rel(root, UPPERREL_GROUP_AGG,
+     NULL)</>, using <function>add_path</>.  This path will be compared on a
+     cost basis with local aggregation performed by reading a simple scan path
+     for the foreign relation (note that such a path must also be supplied,
+     else there will be an error at plan time).  If the remote-aggregation
+     path wins, which it usually would, it will be converted into a plan in
+     the usual way, by calling <function>GetForeignPlan</>.
+    </para>
+
+    <para>
+     <function>PlanForeignModify</> and the other callbacks described in
+     <xref linkend="fdw-callbacks-update"> are designed around the assumption
+     that the foreign relation will be scanned in the usual way and then
+     individual row updates will be driven by a local <literal>ModifyTable</>
+     plan node.  This approach is necessary for the general case where an
+     update requires reading local tables as well as foreign tables.
+     However, if the operation could be executed entirely by the foreign
+     server, the FDW could generate a path representing that and insert it
+     into the <literal>UPPERREL_FINAL</> upper relation, where it would
+     compete against the <literal>ModifyTable</> approach.  This approach
+     could also be used to implement remote <literal>SELECT FOR UPDATE</>,
+     rather than using the row locking callbacks described in
+     <xref linkend="fdw-callbacks-row-locking">.  Keep in mind that a path
+     inserted into <literal>UPPERREL_FINAL</> is responsible for
+     implementing <emphasis>all</> behavior of the query.
+    </para>
+
+    <para>
      When planning an <command>UPDATE</> or <command>DELETE</>,
      <function>PlanForeignModify</> can look up the <structname>RelOptInfo</>
      struct for the foreign table and make use of the

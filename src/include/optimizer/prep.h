@@ -53,8 +53,7 @@ extern PlanRowMark *get_plan_rowmark(List *rowmarks, Index rtindex);
 /*
  * prototypes for prepunion.c
  */
-extern Plan *plan_set_operations(PlannerInfo *root, double tuple_fraction,
-					List **sortClauses);
+extern RelOptInfo *plan_set_operations(PlannerInfo *root);
 
 extern void expand_inherited_tables(PlannerInfo *root);
 

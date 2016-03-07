@@ -229,18 +229,33 @@ typedef enum NodeTag
 	T_BitmapHeapPath,
 	T_BitmapAndPath,
 	T_BitmapOrPath,
+	T_TidPath,
+	T_SubqueryScanPath,
+	T_ForeignPath,
+	T_CustomPath,
 	T_NestPath,
 	T_MergePath,
 	T_HashPath,
-	T_TidPath,
-	T_ForeignPath,
-	T_CustomPath,
 	T_AppendPath,
 	T_MergeAppendPath,
 	T_ResultPath,
 	T_MaterialPath,
 	T_UniquePath,
 	T_GatherPath,
+	T_ProjectionPath,
+	T_SortPath,
+	T_GroupPath,
+	T_UpperUniquePath,
+	T_AggPath,
+	T_GroupingSetsPath,
+	T_MinMaxAggPath,
+	T_WindowAggPath,
+	T_SetOpPath,
+	T_RecursiveUnionPath,
+	T_LockRowsPath,
+	T_ModifyTablePath,
+	T_LimitPath,
+	/* these aren't subclasses of Path: */
 	T_EquivalenceClass,
 	T_EquivalenceMember,
 	T_PathKey,
@@ -652,6 +667,39 @@ typedef enum JoinType
 	   (1 << JOIN_FULL) | \
 	   (1 << JOIN_RIGHT) | \
 	   (1 << JOIN_ANTI))) != 0)
+
+/*
+ * AggStrategy -
+ *	  overall execution strategies for Agg plan nodes
+ *
+ * This is needed in both plannodes.h and relation.h, so put it here...
+ */
+typedef enum AggStrategy
+{
+	AGG_PLAIN,					/* simple agg across all input rows */
+	AGG_SORTED,					/* grouped agg, input must be sorted */
+	AGG_HASHED					/* grouped agg, use internal hashtable */
+} AggStrategy;
+
+/*
+ * SetOpCmd and SetOpStrategy -
+ *	  overall semantics and execution strategies for SetOp plan nodes
+ *
+ * This is needed in both plannodes.h and relation.h, so put it here...
+ */
+typedef enum SetOpCmd
+{
+	SETOPCMD_INTERSECT,
+	SETOPCMD_INTERSECT_ALL,
+	SETOPCMD_EXCEPT,
+	SETOPCMD_EXCEPT_ALL
+} SetOpCmd;
+
+typedef enum SetOpStrategy
+{
+	SETOP_SORTED,				/* input must be sorted */
+	SETOP_HASHED				/* use internal hashtable */
+} SetOpStrategy;
 
 /*
  * OnConflictAction -

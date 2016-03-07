@@ -44,24 +44,78 @@
 #include "utils/lsyscache.h"
 
 
-static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
-static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
+/*
+ * Flag bits that can appear in the flags argument of create_plan_recurse().
+ * These can be OR-ed together.
+ *
+ * CP_EXACT_TLIST specifies that the generated plan node must return exactly
+ * the tlist specified by the path's pathtarget (this overrides both
+ * CP_SMALL_TLIST and CP_LABEL_TLIST, if those are set).  Otherwise, the
+ * plan node is allowed to return just the Vars and PlaceHolderVars needed
+ * to evaluate the pathtarget.
+ *
+ * CP_SMALL_TLIST specifies that a narrower tlist is preferred.  This is
+ * passed down by parent nodes such as Sort and Hash, which will have to
+ * store the returned tuples.
+ *
+ * CP_LABEL_TLIST specifies that the plan node must return columns matching
+ * any sortgrouprefs specified in its pathtarget, with appropriate
+ * ressortgroupref labels.  This is passed down by parent nodes such as Sort
+ * and Group, which need these values to be available in their inputs.
+ */
+#define CP_EXACT_TLIST		0x0001		/* Plan must return specified tlist */
+#define CP_SMALL_TLIST		0x0002		/* Prefer narrower tlists */
+#define CP_LABEL_TLIST		0x0004		/* tlist must contain sortgrouprefs */
+
+
+static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path,
+					int flags);
+static Plan *create_scan_plan(PlannerInfo *root, Path *best_path,
+				 int flags);
 static List *build_path_tlist(PlannerInfo *root, Path *path);
-static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
-static void disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path);
-static Plan *create_gating_plan(PlannerInfo *root, Plan *plan, List *quals);
+static bool use_physical_tlist(PlannerInfo *root, Path *path, int flags);
+static List *get_gating_quals(PlannerInfo *root, List *quals);
+static Plan *create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
+				   List *gating_quals);
 static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
 static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path);
 static Plan *create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path);
 static Result *create_result_plan(PlannerInfo *root, ResultPath *best_path);
-static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path);
-static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
+static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path,
+					 int flags);
+static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path,
+				   int flags);
+static Gather *create_gather_plan(PlannerInfo *root, GatherPath *best_path);
+static Plan *create_projection_plan(PlannerInfo *root, ProjectionPath *best_path);
+static Sort *create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags);
+static Group *create_group_plan(PlannerInfo *root, GroupPath *best_path);
+static Unique *create_upper_unique_plan(PlannerInfo *root, UpperUniquePath *best_path,
+						 int flags);
+static Agg *create_agg_plan(PlannerInfo *root, AggPath *best_path);
+static Plan *create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path);
+static Result *create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path);
+static WindowAgg *create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path);
+static SetOp *create_setop_plan(PlannerInfo *root, SetOpPath *best_path,
+				  int flags);
+static RecursiveUnion *create_recursiveunion_plan(PlannerInfo *root, RecursiveUnionPath *best_path);
+static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
+						   List *tlist,
+						   int numSortCols, AttrNumber *sortColIdx,
+						   int *partNumCols,
+						   AttrNumber **partColIdx,
+						   Oid **partOperators,
+						   int *ordNumCols,
+						   AttrNumber **ordColIdx,
+						   Oid **ordOperators);
+static LockRows *create_lockrows_plan(PlannerInfo *root, LockRowsPath *best_path,
+					 int flags);
+static ModifyTable *create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path);
+static Limit *create_limit_plan(PlannerInfo *root, LimitPath *best_path,
+				  int flags);
 static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static SampleScan *create_samplescan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
-static Gather *create_gather_plan(PlannerInfo *root,
-				   GatherPath *best_path);
 static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses, bool indexonly);
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
@@ -71,7 +125,8 @@ static Plan *create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 					  List **qual, List **indexqual, List **indexECs);
 static TidScan *create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
-static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
+static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root,
+						 SubqueryScanPath *best_path,
 						 List *tlist, List *scan_clauses);
 static FunctionScan *create_functionscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
@@ -86,12 +141,9 @@ static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best
 static CustomScan *create_customscan_plan(PlannerInfo *root,
 					   CustomPath *best_path,
 					   List *tlist, List *scan_clauses);
-static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
-					 Plan *outer_plan, Plan *inner_plan);
-static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
-					  Plan *outer_plan, Plan *inner_plan);
-static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
-					 Plan *outer_plan, Plan *inner_plan);
+static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path);
+static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path);
+static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path);
 static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
 static void process_subquery_nestloop_params(PlannerInfo *root,
@@ -106,8 +158,6 @@ static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static SampleScan *make_samplescan(List *qptlist, List *qpqual, Index scanrelid,
 				TableSampleClause *tsc);
-static Gather *make_gather(List *qptlist, List *qpqual,
-			int nworkers, bool single_copy, Plan *subplan);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
 			   List *indexorderby, List *indexorderbyorig,
@@ -128,6 +178,10 @@ static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 					 Index scanrelid);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
+static SubqueryScan *make_subqueryscan(List *qptlist,
+				  List *qpqual,
+				  Index scanrelid,
+				  Plan *subplan);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid, List *functions, bool funcordinality);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
@@ -136,6 +190,13 @@ static CteScan *make_ctescan(List *qptlist, List *qpqual,
 			 Index scanrelid, int ctePlanId, int cteParam);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
+static Append *make_append(List *appendplans, List *tlist);
+static RecursiveUnion *make_recursive_union(List *tlist,
+					 Plan *lefttree,
+					 Plan *righttree,
+					 int wtParam,
+					 List *distinctList,
+					 long numGroups);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -179,7 +240,48 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 					   TargetEntry *tle,
 					   Relids relids);
+static Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
+						List *pathkeys, double limit_tuples);
+static Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
+						   Plan *lefttree);
+static Sort *make_sort_from_groupcols(PlannerInfo *root,
+						 List *groupcls,
+						 AttrNumber *grpColIdx,
+						 Plan *lefttree);
 static Material *make_material(Plan *lefttree);
+static Agg *make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
+		 bool combineStates, bool finalizeAggs,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 List *groupingSets, List *chain,
+		 double dNumGroups, Plan *lefttree);
+static WindowAgg *make_windowagg(List *tlist, Index winref,
+			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
+			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
+			   int frameOptions, Node *startOffset, Node *endOffset,
+			   Plan *lefttree);
+static Group *make_group(List *tlist, List *qual, int numGroupCols,
+		   AttrNumber *grpColIdx, Oid *grpOperators,
+		   Plan *lefttree);
+static Unique *make_unique_from_sortclauses(Plan *lefttree, List *distinctList);
+static Unique *make_unique_from_pathkeys(Plan *lefttree,
+						  List *pathkeys, int numCols);
+static Gather *make_gather(List *qptlist, List *qpqual,
+			int nworkers, bool single_copy, Plan *subplan);
+static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
+		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
+		   long numGroups);
+static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
+static Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
+static Result *make_result(PlannerInfo *root,
+			List *tlist,
+			Node *resconstantqual,
+			Plan *subplan);
+static ModifyTable *make_modifytable(PlannerInfo *root,
+				 CmdType operation, bool canSetTag,
+				 Index nominalRelation,
+				 List *resultRelations, List *subplans,
+				 List *withCheckOptionLists, List *returningLists,
+				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
 
 
 /*
@@ -209,8 +311,26 @@ create_plan(PlannerInfo *root, Path *best_path)
 	root->curOuterRels = NULL;
 	root->curOuterParams = NIL;
 
-	/* Recursively process the path tree */
-	plan = create_plan_recurse(root, best_path);
+	/* Recursively process the path tree, demanding the correct tlist result */
+	plan = create_plan_recurse(root, best_path, CP_EXACT_TLIST);
+
+	/*
+	 * Make sure the topmost plan node's targetlist exposes the original
+	 * column names and other decorative info.  Targetlists generated within
+	 * the planner don't bother with that stuff, but we must have it on the
+	 * top-level tlist seen at execution time.  However, ModifyTable plan
+	 * nodes don't have a tlist matching the querytree targetlist.
+	 */
+	if (!IsA(plan, ModifyTable))
+		apply_tlist_labeling(plan->targetlist, root->processed_tlist);
+
+	/*
+	 * Attach any initPlans created in this query level to the topmost plan
+	 * node.  (The initPlans could actually go in any plan node at or above
+	 * where they're referenced, but there seems no reason to put them any
+	 * lower than the topmost node for the query level.)
+	 */
+	SS_attach_initplans(root, plan);
 
 	/* Update parallel safety information if needed. */
 	if (!best_path->parallel_safe)
@@ -234,7 +354,7 @@ create_plan(PlannerInfo *root, Path *best_path)
  *	  Recursive guts of create_plan().
  */
 static Plan *
-create_plan_recurse(PlannerInfo *root, Path *best_path)
+create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 {
 	Plan	   *plan;
 
@@ -253,7 +373,7 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 		case T_WorkTableScan:
 		case T_ForeignScan:
 		case T_CustomScan:
-			plan = create_scan_plan(root, best_path);
+			plan = create_scan_plan(root, best_path, flags);
 			break;
 		case T_HashJoin:
 		case T_MergeJoin:
@@ -270,20 +390,93 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 											(MergeAppendPath *) best_path);
 			break;
 		case T_Result:
-			plan = (Plan *) create_result_plan(root,
-											   (ResultPath *) best_path);
+			if (IsA(best_path, ProjectionPath))
+			{
+				plan = create_projection_plan(root,
+											  (ProjectionPath *) best_path);
+			}
+			else if (IsA(best_path, MinMaxAggPath))
+			{
+				plan = (Plan *) create_minmaxagg_plan(root,
+												(MinMaxAggPath *) best_path);
+			}
+			else
+			{
+				Assert(IsA(best_path, ResultPath));
+				plan = (Plan *) create_result_plan(root,
+												   (ResultPath *) best_path);
+			}
 			break;
 		case T_Material:
 			plan = (Plan *) create_material_plan(root,
-												 (MaterialPath *) best_path);
+												 (MaterialPath *) best_path,
+												 flags);
 			break;
 		case T_Unique:
-			plan = create_unique_plan(root,
-									  (UniquePath *) best_path);
+			if (IsA(best_path, UpperUniquePath))
+			{
+				plan = (Plan *) create_upper_unique_plan(root,
+											   (UpperUniquePath *) best_path,
+														 flags);
+			}
+			else
+			{
+				Assert(IsA(best_path, UniquePath));
+				plan = create_unique_plan(root,
+										  (UniquePath *) best_path,
+										  flags);
+			}
 			break;
 		case T_Gather:
 			plan = (Plan *) create_gather_plan(root,
 											   (GatherPath *) best_path);
+			break;
+		case T_Sort:
+			plan = (Plan *) create_sort_plan(root,
+											 (SortPath *) best_path,
+											 flags);
+			break;
+		case T_Group:
+			plan = (Plan *) create_group_plan(root,
+											  (GroupPath *) best_path);
+			break;
+		case T_Agg:
+			if (IsA(best_path, GroupingSetsPath))
+				plan = create_groupingsets_plan(root,
+											 (GroupingSetsPath *) best_path);
+			else
+			{
+				Assert(IsA(best_path, AggPath));
+				plan = (Plan *) create_agg_plan(root,
+												(AggPath *) best_path);
+			}
+			break;
+		case T_WindowAgg:
+			plan = (Plan *) create_windowagg_plan(root,
+												(WindowAggPath *) best_path);
+			break;
+		case T_SetOp:
+			plan = (Plan *) create_setop_plan(root,
+											  (SetOpPath *) best_path,
+											  flags);
+			break;
+		case T_RecursiveUnion:
+			plan = (Plan *) create_recursiveunion_plan(root,
+										   (RecursiveUnionPath *) best_path);
+			break;
+		case T_LockRows:
+			plan = (Plan *) create_lockrows_plan(root,
+												 (LockRowsPath *) best_path,
+												 flags);
+			break;
+		case T_ModifyTable:
+			plan = (Plan *) create_modifytable_plan(root,
+											  (ModifyTablePath *) best_path);
+			break;
+		case T_Limit:
+			plan = (Plan *) create_limit_plan(root,
+											  (LimitPath *) best_path,
+											  flags);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -300,40 +493,13 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
  *	 Create a scan plan for the parent relation of 'best_path'.
  */
 static Plan *
-create_scan_plan(PlannerInfo *root, Path *best_path)
+create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 {
 	RelOptInfo *rel = best_path->parent;
-	List	   *tlist;
 	List	   *scan_clauses;
+	List	   *gating_clauses;
+	List	   *tlist;
 	Plan	   *plan;
-
-	/*
-	 * For table scans, rather than using the relation targetlist (which is
-	 * only those Vars actually needed by the query), we prefer to generate a
-	 * tlist containing all Vars in order.  This will allow the executor to
-	 * optimize away projection of the table tuples, if possible.  (Note that
-	 * planner.c may replace the tlist we generate here, forcing projection to
-	 * occur.)
-	 */
-	if (use_physical_tlist(root, rel))
-	{
-		if (best_path->pathtype == T_IndexOnlyScan)
-		{
-			/* For index-only scan, the preferred tlist is the index's */
-			tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
-		}
-		else
-		{
-			tlist = build_physical_tlist(root, rel);
-			/* if fail because of dropped cols, use regular method */
-			if (tlist == NIL)
-				tlist = build_path_tlist(root, best_path);
-		}
-	}
-	else
-	{
-		tlist = build_path_tlist(root, best_path);
-	}
 
 	/*
 	 * Extract the relevant restriction clauses from the parent relation. The
@@ -351,6 +517,50 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	if (best_path->param_info)
 		scan_clauses = list_concat(list_copy(scan_clauses),
 								   best_path->param_info->ppi_clauses);
+
+	/*
+	 * Detect whether we have any pseudoconstant quals to deal with.  Then, if
+	 * we'll need a gating Result node, it will be able to project, so there
+	 * are no requirements on the child's tlist.
+	 */
+	gating_clauses = get_gating_quals(root, scan_clauses);
+	if (gating_clauses)
+		flags = 0;
+
+	/*
+	 * For table scans, rather than using the relation targetlist (which is
+	 * only those Vars actually needed by the query), we prefer to generate a
+	 * tlist containing all Vars in order.  This will allow the executor to
+	 * optimize away projection of the table tuples, if possible.
+	 */
+	if (use_physical_tlist(root, best_path, flags))
+	{
+		if (best_path->pathtype == T_IndexOnlyScan)
+		{
+			/* For index-only scan, the preferred tlist is the index's */
+			tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
+			/* Transfer any sortgroupref data to the replacement tlist */
+			apply_pathtarget_labeling_to_tlist(tlist, best_path->pathtarget);
+		}
+		else
+		{
+			tlist = build_physical_tlist(root, rel);
+			if (tlist == NIL)
+			{
+				/* Failed because of dropped cols, so use regular method */
+				tlist = build_path_tlist(root, best_path);
+			}
+			else
+			{
+				/* Transfer any sortgroupref data to the replacement tlist */
+				apply_pathtarget_labeling_to_tlist(tlist, best_path->pathtarget);
+			}
+		}
+	}
+	else
+	{
+		tlist = build_path_tlist(root, best_path);
+	}
 
 	switch (best_path->pathtype)
 	{
@@ -400,7 +610,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 
 		case T_SubqueryScan:
 			plan = (Plan *) create_subqueryscan_plan(root,
-													 best_path,
+											  (SubqueryScanPath *) best_path,
 													 tlist,
 													 scan_clauses);
 			break;
@@ -459,27 +669,30 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	 * gating Result node that evaluates the pseudoconstants as one-time
 	 * quals.
 	 */
-	if (root->hasPseudoConstantQuals)
-		plan = create_gating_plan(root, plan, scan_clauses);
+	if (gating_clauses)
+		plan = create_gating_plan(root, best_path, plan, gating_clauses);
 
 	return plan;
 }
 
 /*
  * Build a target list (ie, a list of TargetEntry) for the Path's output.
+ *
+ * This is almost just make_tlist_from_pathtarget(), but we also have to
+ * deal with replacing nestloop params.
  */
 static List *
 build_path_tlist(PlannerInfo *root, Path *path)
 {
-	RelOptInfo *rel = path->parent;
 	List	   *tlist = NIL;
+	Index	   *sortgrouprefs = path->pathtarget->sortgrouprefs;
 	int			resno = 1;
 	ListCell   *v;
 
-	foreach(v, rel->reltarget.exprs)
+	foreach(v, path->pathtarget->exprs)
 	{
-		/* Do we really need to copy here?	Not sure */
-		Node	   *node = (Node *) copyObject(lfirst(v));
+		Node	   *node = (Node *) lfirst(v);
+		TargetEntry *tle;
 
 		/*
 		 * If it's a parameterized path, there might be lateral references in
@@ -490,10 +703,14 @@ build_path_tlist(PlannerInfo *root, Path *path)
 		if (path->param_info)
 			node = replace_nestloop_params(root, node);
 
-		tlist = lappend(tlist, makeTargetEntry((Expr *) node,
-											   resno,
-											   NULL,
-											   false));
+		tle = makeTargetEntry((Expr *) node,
+							  resno,
+							  NULL,
+							  false);
+		if (sortgrouprefs)
+			tle->ressortgroupref = sortgrouprefs[resno - 1];
+
+		tlist = lappend(tlist, tle);
 		resno++;
 	}
 	return tlist;
@@ -505,10 +722,17 @@ build_path_tlist(PlannerInfo *root, Path *path)
  *		rather than only those Vars actually referenced.
  */
 static bool
-use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
+use_physical_tlist(PlannerInfo *root, Path *path, int flags)
 {
+	RelOptInfo *rel = path->parent;
 	int			i;
 	ListCell   *lc;
+
+	/*
+	 * Forget it if either exact tlist or small tlist is demanded.
+	 */
+	if (flags & (CP_EXACT_TLIST | CP_SMALL_TLIST))
+		return false;
 
 	/*
 	 * We can do this for real relation scans, subquery scans, function scans,
@@ -523,7 +747,8 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 
 	/*
 	 * Can't do it with inheritance cases either (mainly because Append
-	 * doesn't project).
+	 * doesn't project; this test may be unnecessary now that
+	 * create_append_plan instructs its children to return an exact tlist).
 	 */
 	if (rel->reloptkind != RELOPT_BASEREL)
 		return false;
@@ -552,52 +777,60 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 			return false;
 	}
 
+	/*
+	 * Also, can't do it if CP_LABEL_TLIST is specified and path is requested
+	 * to emit any sort/group columns that are not simple Vars.  (If they are
+	 * simple Vars, they should appear in the physical tlist, and
+	 * apply_pathtarget_labeling_to_tlist will take care of getting them
+	 * labeled again.)
+	 */
+	if ((flags & CP_LABEL_TLIST) && path->pathtarget->sortgrouprefs)
+	{
+		i = 0;
+		foreach(lc, path->pathtarget->exprs)
+		{
+			Expr	   *expr = (Expr *) lfirst(lc);
+
+			if (path->pathtarget->sortgrouprefs[i])
+			{
+				if (expr && IsA(expr, Var))
+					 /* okay */ ;
+				else
+					return false;
+			}
+			i++;
+		}
+	}
+
 	return true;
 }
 
 /*
- * disuse_physical_tlist
- *		Switch a plan node back to emitting only Vars actually referenced.
+ * get_gating_quals
+ *	  See if there are pseudoconstant quals in a node's quals list
  *
- * If the plan node immediately above a scan would prefer to get only
- * needed Vars and not a physical tlist, it must call this routine to
- * undo the decision made by use_physical_tlist().  Currently, Hash, Sort,
- * Material, and Gather nodes want this, so they don't have to store or
- * transfer useless columns.
+ * If the node's quals list includes any pseudoconstant quals,
+ * return just those quals.
  */
-static void
-disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
+static List *
+get_gating_quals(PlannerInfo *root, List *quals)
 {
-	/* Only need to undo it for path types handled by create_scan_plan() */
-	switch (path->pathtype)
-	{
-		case T_SeqScan:
-		case T_SampleScan:
-		case T_IndexScan:
-		case T_IndexOnlyScan:
-		case T_BitmapHeapScan:
-		case T_TidScan:
-		case T_SubqueryScan:
-		case T_FunctionScan:
-		case T_ValuesScan:
-		case T_CteScan:
-		case T_WorkTableScan:
-		case T_ForeignScan:
-		case T_CustomScan:
-			plan->targetlist = build_path_tlist(root, path);
-			break;
-		default:
-			break;
-	}
+	/* No need to look if we know there are no pseudoconstants */
+	if (!root->hasPseudoConstantQuals)
+		return NIL;
+
+	/* Sort into desirable execution order while still in RestrictInfo form */
+	quals = order_qual_clauses(root, quals);
+
+	/* Pull out any pseudoconstant quals from the RestrictInfo list */
+	return extract_actual_clauses(quals, true);
 }
 
 /*
  * create_gating_plan
  *	  Deal with pseudoconstant qual clauses
  *
- * If the node's quals list includes any pseudoconstant quals, put them
- * into a gating Result node atop the already-built plan.  Otherwise,
- * return the plan as-is.
+ * Add a gating Result node atop the already-built plan.
  *
  * Note that we don't change cost or size estimates when doing gating.
  * The costs of qual eval were already folded into the plan's startup cost.
@@ -611,22 +844,19 @@ disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
  * qual being true.
  */
 static Plan *
-create_gating_plan(PlannerInfo *root, Plan *plan, List *quals)
+create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
+				   List *gating_quals)
 {
-	List	   *pseudoconstants;
+	Assert(gating_quals);
 
-	/* Sort into desirable execution order while still in RestrictInfo form */
-	quals = order_qual_clauses(root, quals);
-
-	/* Pull out any pseudoconstant quals from the RestrictInfo list */
-	pseudoconstants = extract_actual_clauses(quals, true);
-
-	if (!pseudoconstants)
-		return plan;
-
+	/*
+	 * Since we need a Result node anyway, always return the path's requested
+	 * tlist; that's never a wrong choice, even if the parent node didn't ask
+	 * for CP_EXACT_TLIST.
+	 */
 	return (Plan *) make_result(root,
-								plan->targetlist,
-								(Node *) pseudoconstants,
+								build_path_tlist(root, path),
+								(Node *) gating_quals,
 								plan);
 }
 
@@ -638,43 +868,22 @@ create_gating_plan(PlannerInfo *root, Plan *plan, List *quals)
 static Plan *
 create_join_plan(PlannerInfo *root, JoinPath *best_path)
 {
-	Plan	   *outer_plan;
-	Plan	   *inner_plan;
 	Plan	   *plan;
-	Relids		saveOuterRels = root->curOuterRels;
-
-	outer_plan = create_plan_recurse(root, best_path->outerjoinpath);
-
-	/* For a nestloop, include outer relids in curOuterRels for inner side */
-	if (best_path->path.pathtype == T_NestLoop)
-		root->curOuterRels = bms_union(root->curOuterRels,
-								   best_path->outerjoinpath->parent->relids);
-
-	inner_plan = create_plan_recurse(root, best_path->innerjoinpath);
+	List	   *gating_clauses;
 
 	switch (best_path->path.pathtype)
 	{
 		case T_MergeJoin:
 			plan = (Plan *) create_mergejoin_plan(root,
-												  (MergePath *) best_path,
-												  outer_plan,
-												  inner_plan);
+												  (MergePath *) best_path);
 			break;
 		case T_HashJoin:
 			plan = (Plan *) create_hashjoin_plan(root,
-												 (HashPath *) best_path,
-												 outer_plan,
-												 inner_plan);
+												 (HashPath *) best_path);
 			break;
 		case T_NestLoop:
-			/* Restore curOuterRels */
-			bms_free(root->curOuterRels);
-			root->curOuterRels = saveOuterRels;
-
 			plan = (Plan *) create_nestloop_plan(root,
-												 (NestPath *) best_path,
-												 outer_plan,
-												 inner_plan);
+												 (NestPath *) best_path);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -688,8 +897,10 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 	 * gating Result node that evaluates the pseudoconstants as one-time
 	 * quals.
 	 */
-	if (root->hasPseudoConstantQuals)
-		plan = create_gating_plan(root, plan, best_path->joinrestrictinfo);
+	gating_clauses = get_gating_quals(root, best_path->joinrestrictinfo);
+	if (gating_clauses)
+		plan = create_gating_plan(root, (Path *) best_path, plan,
+								  gating_clauses);
 
 #ifdef NOT_USED
 
@@ -745,8 +956,12 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	foreach(subpaths, best_path->subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
+		Plan	   *subplan;
 
-		subplans = lappend(subplans, create_plan_recurse(root, subpath));
+		/* Must insist that all children return the same tlist */
+		subplan = create_plan_recurse(root, subpath, CP_EXACT_TLIST);
+
+		subplans = lappend(subplans, subplan);
 	}
 
 	/*
@@ -817,7 +1032,8 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 		bool	   *nullsFirst;
 
 		/* Build the child plan */
-		subplan = create_plan_recurse(root, subpath);
+		/* Must insist that all children return the same tlist */
+		subplan = create_plan_recurse(root, subpath, CP_EXACT_TLIST);
 
 		/* Compute sort column info, and adjust subplan's tlist as needed */
 		subplan = prepare_sort_from_pathkeys(root, subplan, pathkeys,
@@ -893,15 +1109,18 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
  *	  Returns a Plan node.
  */
 static Material *
-create_material_plan(PlannerInfo *root, MaterialPath *best_path)
+create_material_plan(PlannerInfo *root, MaterialPath *best_path, int flags)
 {
 	Material   *plan;
 	Plan	   *subplan;
 
-	subplan = create_plan_recurse(root, best_path->subpath);
-
-	/* We don't want any excess columns in the materialized tuples */
-	disuse_physical_tlist(root, subplan, best_path->subpath);
+	/*
+	 * We don't want any excess columns in the materialized tuples, so request
+	 * a smaller tlist.  Otherwise, since Material doesn't project, tlist
+	 * requirements pass through.
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath,
+								  flags | CP_SMALL_TLIST);
 
 	plan = make_material(subplan);
 
@@ -918,7 +1137,7 @@ create_material_plan(PlannerInfo *root, MaterialPath *best_path)
  *	  Returns a Plan node.
  */
 static Plan *
-create_unique_plan(PlannerInfo *root, UniquePath *best_path)
+create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 {
 	Plan	   *plan;
 	Plan	   *subplan;
@@ -932,7 +1151,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	int			groupColPos;
 	ListCell   *l;
 
-	subplan = create_plan_recurse(root, best_path->subpath);
+	/* Unique doesn't project, so tlist requirements pass through */
+	subplan = create_plan_recurse(root, best_path->subpath, flags);
 
 	/* Done if we don't need to do any actual unique-ifying */
 	if (best_path->umethod == UNIQUE_PATH_NOOP)
@@ -1018,10 +1238,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 
 	if (best_path->umethod == UNIQUE_PATH_HASH)
 	{
-		long		numGroups;
 		Oid		   *groupOperators;
-
-		numGroups = (long) Min(best_path->path.rows, (double) LONG_MAX);
 
 		/*
 		 * Get the hashable equality operators for the Agg node to use.
@@ -1047,18 +1264,17 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		 * minimum output tlist, without any stuff we might have added to the
 		 * subplan tlist.
 		 */
-		plan = (Plan *) make_agg(root,
-								 build_path_tlist(root, &best_path->path),
+		plan = (Plan *) make_agg(build_path_tlist(root, &best_path->path),
 								 NIL,
 								 AGG_HASHED,
-								 NULL,
+								 false,
+								 true,
 								 numGroupCols,
 								 groupColIdx,
 								 groupOperators,
 								 NIL,
-								 numGroups,
-								 false,
-								 true,
+								 NIL,
+								 best_path->path.rows,
 								 subplan);
 	}
 	else
@@ -1106,11 +1322,11 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			groupColPos++;
 		}
 		plan = (Plan *) make_sort_from_sortclauses(root, sortList, subplan);
-		plan = (Plan *) make_unique(plan, sortList);
+		plan = (Plan *) make_unique_from_sortclauses(plan, sortList);
 	}
 
-	/* Adjust output size estimate (other fields should be OK already) */
-	plan->plan_rows = best_path->path.rows;
+	/* Copy cost data from Path to Plan */
+	copy_generic_path_info(plan, &best_path->path);
 
 	return plan;
 }
@@ -1127,9 +1343,8 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 	Gather	   *gather_plan;
 	Plan	   *subplan;
 
-	subplan = create_plan_recurse(root, best_path->subpath);
-
-	disuse_physical_tlist(root, subplan, best_path->subpath);
+	/* Must insist that all children return the same tlist */
+	subplan = create_plan_recurse(root, best_path->subpath, CP_EXACT_TLIST);
 
 	gather_plan = make_gather(subplan->targetlist,
 							  NIL,
@@ -1143,6 +1358,822 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 	root->glob->parallelModeNeeded = true;
 
 	return gather_plan;
+}
+
+/*
+ * create_projection_plan
+ *
+ *	  Create a Result node to do a projection step and (recursively) plans
+ *	  for its subpaths.
+ */
+static Plan *
+create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
+{
+	Plan	   *plan;
+	Plan	   *subplan;
+	List	   *tlist;
+
+	/* Since we intend to project, we don't need to constrain child tlist */
+	subplan = create_plan_recurse(root, best_path->subpath, 0);
+
+	tlist = build_path_tlist(root, &best_path->path);
+
+	/*
+	 * Although the ProjectionPath node wouldn't have been made unless its
+	 * pathtarget is different from the subpath's, it can still happen that
+	 * the constructed tlist matches the subplan's.  (An example is that
+	 * MergeAppend doesn't project, so we would have thought that we needed a
+	 * projection to attach resjunk sort columns to its output ... but
+	 * create_merge_append_plan might have added those same resjunk sort
+	 * columns to both MergeAppend and its children.)  So, if the desired
+	 * tlist is the same expression-wise as the subplan's, just jam it in
+	 * there.  We'll have charged for a Result that doesn't actually appear in
+	 * the plan, but that's better than having a Result we don't need.
+	 */
+	if (tlist_same_exprs(tlist, subplan->targetlist))
+	{
+		plan = subplan;
+		plan->targetlist = tlist;
+
+		/* Adjust cost to match what we thought during planning */
+		plan->startup_cost = best_path->path.startup_cost;
+		plan->total_cost = best_path->path.total_cost;
+		/* ... but be careful not to munge subplan's parallel-aware flag */
+	}
+	else
+	{
+		plan = (Plan *) make_result(root, tlist, NULL, subplan);
+
+		copy_generic_path_info(plan, (Path *) best_path);
+	}
+
+	return plan;
+}
+
+/*
+ * create_sort_plan
+ *
+ *	  Create a Sort plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Sort *
+create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags)
+{
+	Sort	   *plan;
+	Plan	   *subplan;
+
+	/*
+	 * We don't want any excess columns in the sorted tuples, so request a
+	 * smaller tlist.  Otherwise, since Sort doesn't project, tlist
+	 * requirements pass through.
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath,
+								  flags | CP_SMALL_TLIST);
+
+	/*
+	 * Don't need to have correct limit_tuples; that only affects the cost
+	 * estimate, which we'll overwrite.  (XXX should refactor so that we don't
+	 * have a useless cost_sort call in here.)
+	 */
+	plan = make_sort_from_pathkeys(root,
+								   subplan,
+								   best_path->path.pathkeys,
+								   -1.0);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_group_plan
+ *
+ *	  Create a Group plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Group *
+create_group_plan(PlannerInfo *root, GroupPath *best_path)
+{
+	Group	   *plan;
+	Plan	   *subplan;
+	List	   *tlist;
+	List	   *quals;
+
+	/*
+	 * Group can project, so no need to be terribly picky about child tlist,
+	 * but we do need grouping columns to be available
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+
+	tlist = build_path_tlist(root, &best_path->path);
+
+	quals = order_qual_clauses(root, best_path->qual);
+
+	plan = make_group(tlist,
+					  quals,
+					  list_length(best_path->groupClause),
+					  extract_grouping_cols(best_path->groupClause,
+											subplan->targetlist),
+					  extract_grouping_ops(best_path->groupClause),
+					  subplan);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_upper_unique_plan
+ *
+ *	  Create a Unique plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Unique *
+create_upper_unique_plan(PlannerInfo *root, UpperUniquePath *best_path, int flags)
+{
+	Unique	   *plan;
+	Plan	   *subplan;
+
+	/*
+	 * Unique doesn't project, so tlist requirements pass through; moreover we
+	 * need grouping columns to be labeled.
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath,
+								  flags | CP_LABEL_TLIST);
+
+	plan = make_unique_from_pathkeys(subplan,
+									 best_path->path.pathkeys,
+									 best_path->numkeys);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_agg_plan
+ *
+ *	  Create an Agg plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Agg *
+create_agg_plan(PlannerInfo *root, AggPath *best_path)
+{
+	Agg		   *plan;
+	Plan	   *subplan;
+	List	   *tlist;
+	List	   *quals;
+
+	/*
+	 * Agg can project, so no need to be terribly picky about child tlist, but
+	 * we do need grouping columns to be available
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+
+	tlist = build_path_tlist(root, &best_path->path);
+
+	quals = order_qual_clauses(root, best_path->qual);
+
+	plan = make_agg(tlist, quals,
+					best_path->aggstrategy,
+					false,
+					true,
+					list_length(best_path->groupClause),
+					extract_grouping_cols(best_path->groupClause,
+										  subplan->targetlist),
+					extract_grouping_ops(best_path->groupClause),
+					NIL,
+					NIL,
+					best_path->numGroups,
+					subplan);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * Given a groupclause for a collection of grouping sets, produce the
+ * corresponding groupColIdx.
+ *
+ * root->grouping_map maps the tleSortGroupRef to the actual column position in
+ * the input tuple. So we get the ref from the entries in the groupclause and
+ * look them up there.
+ */
+static AttrNumber *
+remap_groupColIdx(PlannerInfo *root, List *groupClause)
+{
+	AttrNumber *grouping_map = root->grouping_map;
+	AttrNumber *new_grpColIdx;
+	ListCell   *lc;
+	int			i;
+
+	Assert(grouping_map);
+
+	new_grpColIdx = palloc0(sizeof(AttrNumber) * list_length(groupClause));
+
+	i = 0;
+	foreach(lc, groupClause)
+	{
+		SortGroupClause *clause = lfirst(lc);
+
+		new_grpColIdx[i++] = grouping_map[clause->tleSortGroupRef];
+	}
+
+	return new_grpColIdx;
+}
+
+/*
+ * create_groupingsets_plan
+ *	  Create a plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ *
+ *	  What we emit is an Agg plan with some vestigial Agg and Sort nodes
+ *	  hanging off the side.  The top Agg implements the last grouping set
+ *	  specified in the GroupingSetsPath, and any additional grouping sets
+ *	  each give rise to a subsidiary Agg and Sort node in the top Agg's
+ *	  "chain" list.  These nodes don't participate in the plan directly,
+ *	  but they are a convenient way to represent the required data for
+ *	  the extra steps.
+ *
+ *	  Returns a Plan node.
+ */
+static Plan *
+create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
+{
+	Agg		   *plan;
+	Plan	   *subplan;
+	AttrNumber *groupColIdx = best_path->groupColIdx;
+	List	   *rollup_groupclauses = best_path->rollup_groupclauses;
+	List	   *rollup_lists = best_path->rollup_lists;
+	AttrNumber *grouping_map;
+	int			maxref;
+	List	   *chain;
+	int			i;
+	ListCell   *lc,
+			   *lc2;
+
+	/* Shouldn't get here without grouping sets */
+	Assert(root->parse->groupingSets);
+	Assert(rollup_lists != NIL);
+	Assert(list_length(rollup_lists) == list_length(rollup_groupclauses));
+
+	/*
+	 * Agg can project, so no need to be terribly picky about child tlist, but
+	 * we do need grouping columns to be available
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+
+	/*
+	 * Compute the mapping from tleSortGroupRef to column index.  First,
+	 * identify max SortGroupRef in groupClause, for array sizing.
+	 */
+	maxref = 0;
+	foreach(lc, root->parse->groupClause)
+	{
+		SortGroupClause *gc = (SortGroupClause *) lfirst(lc);
+
+		if (gc->tleSortGroupRef > maxref)
+			maxref = gc->tleSortGroupRef;
+	}
+
+	grouping_map = (AttrNumber *) palloc0((maxref + 1) * sizeof(AttrNumber));
+
+	i = 0;
+	foreach(lc, root->parse->groupClause)
+	{
+		SortGroupClause *gc = (SortGroupClause *) lfirst(lc);
+
+		grouping_map[gc->tleSortGroupRef] = groupColIdx[i++];
+	}
+
+	/*
+	 * During setrefs.c, we'll need the grouping_map to fix up the cols lists
+	 * in GroupingFunc nodes.  Save it for setrefs.c to use.
+	 *
+	 * This doesn't work if we're in an inheritance subtree (see notes in
+	 * create_modifytable_plan).  Fortunately we can't be because there would
+	 * never be grouping in an UPDATE/DELETE; but let's Assert that.
+	 */
+	Assert(!root->hasInheritedTarget);
+	Assert(root->grouping_map == NULL);
+	root->grouping_map = grouping_map;
+
+	/*
+	 * Generate the side nodes that describe the other sort and group
+	 * operations besides the top one.  Note that we don't worry about putting
+	 * accurate cost estimates in the side nodes; only the topmost Agg node's
+	 * costs will be shown by EXPLAIN.
+	 */
+	chain = NIL;
+	if (list_length(rollup_groupclauses) > 1)
+	{
+		forboth(lc, rollup_groupclauses, lc2, rollup_lists)
+		{
+			List	   *groupClause = (List *) lfirst(lc);
+			List	   *gsets = (List *) lfirst(lc2);
+			AttrNumber *new_grpColIdx;
+			Plan	   *sort_plan;
+			Plan	   *agg_plan;
+
+			/* We want to iterate over all but the last rollup list elements */
+			if (lnext(lc) == NULL)
+				break;
+
+			new_grpColIdx = remap_groupColIdx(root, groupClause);
+
+			sort_plan = (Plan *)
+				make_sort_from_groupcols(root,
+										 groupClause,
+										 new_grpColIdx,
+										 subplan);
+
+			agg_plan = (Plan *) make_agg(NIL,
+										 NIL,
+										 AGG_SORTED,
+										 false,
+										 true,
+									   list_length((List *) linitial(gsets)),
+										 new_grpColIdx,
+										 extract_grouping_ops(groupClause),
+										 gsets,
+										 NIL,
+										 0,		/* numGroups not needed */
+										 sort_plan);
+
+			/*
+			 * Nuke stuff we don't need to avoid bloating debug output.
+			 */
+			sort_plan->targetlist = NIL;
+			sort_plan->lefttree = NULL;
+
+			chain = lappend(chain, agg_plan);
+		}
+	}
+
+	/*
+	 * Now make the final Agg node
+	 */
+	{
+		List	   *groupClause = (List *) llast(rollup_groupclauses);
+		List	   *gsets = (List *) llast(rollup_lists);
+		AttrNumber *top_grpColIdx;
+		int			numGroupCols;
+
+		top_grpColIdx = remap_groupColIdx(root, groupClause);
+
+		numGroupCols = list_length((List *) linitial(gsets));
+
+		plan = make_agg(build_path_tlist(root, &best_path->path),
+						best_path->qual,
+						(numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
+						false,
+						true,
+						numGroupCols,
+						top_grpColIdx,
+						extract_grouping_ops(groupClause),
+						gsets,
+						chain,
+						0,		/* numGroups not needed */
+						subplan);
+
+		/* Copy cost data from Path to Plan */
+		copy_generic_path_info(&plan->plan, &best_path->path);
+	}
+
+	return (Plan *) plan;
+}
+
+/*
+ * create_minmaxagg_plan
+ *
+ *	  Create a Result plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Result *
+create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
+{
+	Result	   *plan;
+	List	   *tlist;
+	ListCell   *lc;
+
+	/* Prepare an InitPlan for each aggregate's subquery. */
+	foreach(lc, best_path->mmaggregates)
+	{
+		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
+		PlannerInfo *subroot = mminfo->subroot;
+		Query	   *subparse = subroot->parse;
+		Plan	   *plan;
+
+		/*
+		 * Generate the plan for the subquery. We already have a Path, but we
+		 * have to convert it to a Plan and attach a LIMIT node above it.
+		 * Since we are entering a different planner context (subroot),
+		 * recurse to create_plan not create_plan_recurse.
+		 */
+		plan = create_plan(subroot, mminfo->path);
+
+		plan = (Plan *) make_limit(plan,
+								   subparse->limitOffset,
+								   subparse->limitCount);
+
+		/* Must apply correct cost/width data to Limit node */
+		plan->startup_cost = mminfo->path->startup_cost;
+		plan->total_cost = mminfo->pathcost;
+		plan->plan_rows = 1;
+		plan->plan_width = mminfo->path->pathtarget->width;
+		plan->parallel_aware = false;
+
+		/* Convert the plan into an InitPlan in the outer query. */
+		SS_make_initplan_from_plan(root, subroot, plan, mminfo->param);
+	}
+
+	/* Generate the output plan --- basically just a Result */
+	tlist = build_path_tlist(root, &best_path->path);
+
+	plan = make_result(root, tlist, (Node *) best_path->quals, NULL);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	/*
+	 * During setrefs.c, we'll need to replace references to the Agg nodes
+	 * with InitPlan output params.  (We can't just do that locally in the
+	 * MinMaxAgg node, because path nodes above here may have Agg references
+	 * as well.)  Save the mmaggregates list to tell setrefs.c to do that.
+	 *
+	 * This doesn't work if we're in an inheritance subtree (see notes in
+	 * create_modifytable_plan).  Fortunately we can't be because there would
+	 * never be aggregates in an UPDATE/DELETE; but let's Assert that.
+	 */
+	Assert(!root->hasInheritedTarget);
+	Assert(root->minmax_aggs == NIL);
+	root->minmax_aggs = best_path->mmaggregates;
+
+	return plan;
+}
+
+/*
+ * create_windowagg_plan
+ *
+ *	  Create a WindowAgg plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static WindowAgg *
+create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
+{
+	WindowAgg  *plan;
+	WindowClause *wc = best_path->winclause;
+	Plan	   *subplan;
+	List	   *tlist;
+	int			numsortkeys;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
+	Oid		   *collations;
+	bool	   *nullsFirst;
+	int			partNumCols;
+	AttrNumber *partColIdx;
+	Oid		   *partOperators;
+	int			ordNumCols;
+	AttrNumber *ordColIdx;
+	Oid		   *ordOperators;
+
+	/*
+	 * WindowAgg can project, so no need to be terribly picky about child
+	 * tlist, but we do need grouping columns to be available
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+
+	tlist = build_path_tlist(root, &best_path->path);
+
+	/*
+	 * We shouldn't need to actually sort, but it's convenient to use
+	 * prepare_sort_from_pathkeys to identify the input's sort columns.
+	 */
+	subplan = prepare_sort_from_pathkeys(root,
+										 subplan,
+										 best_path->winpathkeys,
+										 NULL,
+										 NULL,
+										 false,
+										 &numsortkeys,
+										 &sortColIdx,
+										 &sortOperators,
+										 &collations,
+										 &nullsFirst);
+
+	/* Now deconstruct that into partition and ordering portions */
+	get_column_info_for_window(root,
+							   wc,
+							   subplan->targetlist,
+							   numsortkeys,
+							   sortColIdx,
+							   &partNumCols,
+							   &partColIdx,
+							   &partOperators,
+							   &ordNumCols,
+							   &ordColIdx,
+							   &ordOperators);
+
+	/* And finally we can make the WindowAgg node */
+	plan = make_windowagg(tlist,
+						  wc->winref,
+						  partNumCols,
+						  partColIdx,
+						  partOperators,
+						  ordNumCols,
+						  ordColIdx,
+						  ordOperators,
+						  wc->frameOptions,
+						  wc->startOffset,
+						  wc->endOffset,
+						  subplan);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * get_column_info_for_window
+ *		Get the partitioning/ordering column numbers and equality operators
+ *		for a WindowAgg node.
+ *
+ * This depends on the behavior of planner.c's make_pathkeys_for_window!
+ *
+ * We are given the target WindowClause and an array of the input column
+ * numbers associated with the resulting pathkeys.  In the easy case, there
+ * are the same number of pathkey columns as partitioning + ordering columns
+ * and we just have to copy some data around.  However, it's possible that
+ * some of the original partitioning + ordering columns were eliminated as
+ * redundant during the transformation to pathkeys.  (This can happen even
+ * though the parser gets rid of obvious duplicates.  A typical scenario is a
+ * window specification "PARTITION BY x ORDER BY y" coupled with a clause
+ * "WHERE x = y" that causes the two sort columns to be recognized as
+ * redundant.)	In that unusual case, we have to work a lot harder to
+ * determine which keys are significant.
+ *
+ * The method used here is a bit brute-force: add the sort columns to a list
+ * one at a time and note when the resulting pathkey list gets longer.  But
+ * it's a sufficiently uncommon case that a faster way doesn't seem worth
+ * the amount of code refactoring that'd be needed.
+ */
+static void
+get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
+						   int numSortCols, AttrNumber *sortColIdx,
+						   int *partNumCols,
+						   AttrNumber **partColIdx,
+						   Oid **partOperators,
+						   int *ordNumCols,
+						   AttrNumber **ordColIdx,
+						   Oid **ordOperators)
+{
+	int			numPart = list_length(wc->partitionClause);
+	int			numOrder = list_length(wc->orderClause);
+
+	if (numSortCols == numPart + numOrder)
+	{
+		/* easy case */
+		*partNumCols = numPart;
+		*partColIdx = sortColIdx;
+		*partOperators = extract_grouping_ops(wc->partitionClause);
+		*ordNumCols = numOrder;
+		*ordColIdx = sortColIdx + numPart;
+		*ordOperators = extract_grouping_ops(wc->orderClause);
+	}
+	else
+	{
+		List	   *sortclauses;
+		List	   *pathkeys;
+		int			scidx;
+		ListCell   *lc;
+
+		/* first, allocate what's certainly enough space for the arrays */
+		*partNumCols = 0;
+		*partColIdx = (AttrNumber *) palloc(numPart * sizeof(AttrNumber));
+		*partOperators = (Oid *) palloc(numPart * sizeof(Oid));
+		*ordNumCols = 0;
+		*ordColIdx = (AttrNumber *) palloc(numOrder * sizeof(AttrNumber));
+		*ordOperators = (Oid *) palloc(numOrder * sizeof(Oid));
+		sortclauses = NIL;
+		pathkeys = NIL;
+		scidx = 0;
+		foreach(lc, wc->partitionClause)
+		{
+			SortGroupClause *sgc = (SortGroupClause *) lfirst(lc);
+			List	   *new_pathkeys;
+
+			sortclauses = lappend(sortclauses, sgc);
+			new_pathkeys = make_pathkeys_for_sortclauses(root,
+														 sortclauses,
+														 tlist);
+			if (list_length(new_pathkeys) > list_length(pathkeys))
+			{
+				/* this sort clause is actually significant */
+				(*partColIdx)[*partNumCols] = sortColIdx[scidx++];
+				(*partOperators)[*partNumCols] = sgc->eqop;
+				(*partNumCols)++;
+				pathkeys = new_pathkeys;
+			}
+		}
+		foreach(lc, wc->orderClause)
+		{
+			SortGroupClause *sgc = (SortGroupClause *) lfirst(lc);
+			List	   *new_pathkeys;
+
+			sortclauses = lappend(sortclauses, sgc);
+			new_pathkeys = make_pathkeys_for_sortclauses(root,
+														 sortclauses,
+														 tlist);
+			if (list_length(new_pathkeys) > list_length(pathkeys))
+			{
+				/* this sort clause is actually significant */
+				(*ordColIdx)[*ordNumCols] = sortColIdx[scidx++];
+				(*ordOperators)[*ordNumCols] = sgc->eqop;
+				(*ordNumCols)++;
+				pathkeys = new_pathkeys;
+			}
+		}
+		/* complain if we didn't eat exactly the right number of sort cols */
+		if (scidx != numSortCols)
+			elog(ERROR, "failed to deconstruct sort operators into partitioning/ordering operators");
+	}
+}
+
+/*
+ * create_setop_plan
+ *
+ *	  Create a SetOp plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static SetOp *
+create_setop_plan(PlannerInfo *root, SetOpPath *best_path, int flags)
+{
+	SetOp	   *plan;
+	Plan	   *subplan;
+	long		numGroups;
+
+	/*
+	 * SetOp doesn't project, so tlist requirements pass through; moreover we
+	 * need grouping columns to be labeled.
+	 */
+	subplan = create_plan_recurse(root, best_path->subpath,
+								  flags | CP_LABEL_TLIST);
+
+	/* Convert numGroups to long int --- but 'ware overflow! */
+	numGroups = (long) Min(best_path->numGroups, (double) LONG_MAX);
+
+	plan = make_setop(best_path->cmd,
+					  best_path->strategy,
+					  subplan,
+					  best_path->distinctList,
+					  best_path->flagColIdx,
+					  best_path->firstFlag,
+					  numGroups);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_recursiveunion_plan
+ *
+ *	  Create a RecursiveUnion plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static RecursiveUnion *
+create_recursiveunion_plan(PlannerInfo *root, RecursiveUnionPath *best_path)
+{
+	RecursiveUnion *plan;
+	Plan	   *leftplan;
+	Plan	   *rightplan;
+	List	   *tlist;
+	long		numGroups;
+
+	/* Need both children to produce same tlist, so force it */
+	leftplan = create_plan_recurse(root, best_path->leftpath, CP_EXACT_TLIST);
+	rightplan = create_plan_recurse(root, best_path->rightpath, CP_EXACT_TLIST);
+
+	tlist = build_path_tlist(root, &best_path->path);
+
+	/* Convert numGroups to long int --- but 'ware overflow! */
+	numGroups = (long) Min(best_path->numGroups, (double) LONG_MAX);
+
+	plan = make_recursive_union(tlist,
+								leftplan,
+								rightplan,
+								best_path->wtParam,
+								best_path->distinctList,
+								numGroups);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_lockrows_plan
+ *
+ *	  Create a LockRows plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static LockRows *
+create_lockrows_plan(PlannerInfo *root, LockRowsPath *best_path,
+					 int flags)
+{
+	LockRows   *plan;
+	Plan	   *subplan;
+
+	/* LockRows doesn't project, so tlist requirements pass through */
+	subplan = create_plan_recurse(root, best_path->subpath, flags);
+
+	plan = make_lockrows(subplan, best_path->rowMarks, best_path->epqParam);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_modifytable_plan
+ *	  Create a ModifyTable plan for 'best_path'.
+ *
+ *	  Returns a Plan node.
+ */
+static ModifyTable *
+create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
+{
+	ModifyTable *plan;
+	List	   *subplans = NIL;
+	ListCell   *subpaths,
+			   *subroots;
+
+	/* Build the plan for each input path */
+	forboth(subpaths, best_path->subpaths,
+			subroots, best_path->subroots)
+	{
+		Path	   *subpath = (Path *) lfirst(subpaths);
+		PlannerInfo *subroot = (PlannerInfo *) lfirst(subroots);
+		Plan	   *subplan;
+
+		/*
+		 * In an inherited UPDATE/DELETE, reference the per-child modified
+		 * subroot while creating Plans from Paths for the child rel.  This is
+		 * a kluge, but otherwise it's too hard to ensure that Plan creation
+		 * functions (particularly in FDWs) don't depend on the contents of
+		 * "root" matching what they saw at Path creation time.  The main
+		 * downside is that creation functions for Plans that might appear
+		 * below a ModifyTable cannot expect to modify the contents of "root"
+		 * and have it "stick" for subsequent processing such as setrefs.c.
+		 * That's not great, but it seems better than the alternative.
+		 */
+		subplan = create_plan_recurse(subroot, subpath, CP_EXACT_TLIST);
+
+		/* Transfer resname/resjunk labeling, too, to keep executor happy */
+		apply_tlist_labeling(subplan->targetlist, subroot->processed_tlist);
+
+		subplans = lappend(subplans, subplan);
+	}
+
+	plan = make_modifytable(root,
+							best_path->operation,
+							best_path->canSetTag,
+							best_path->nominalRelation,
+							best_path->resultRelations,
+							subplans,
+							best_path->withCheckOptionLists,
+							best_path->returningLists,
+							best_path->rowMarks,
+							best_path->onconflict,
+							best_path->epqParam);
+
+	copy_generic_path_info(&plan->plan, &best_path->path);
+
+	return plan;
+}
+
+/*
+ * create_limit_plan
+ *
+ *	  Create a Limit plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ */
+static Limit *
+create_limit_plan(PlannerInfo *root, LimitPath *best_path, int flags)
+{
+	Limit	   *plan;
+	Plan	   *subplan;
+
+	/* Limit doesn't project, so tlist requirements pass through */
+	subplan = create_plan_recurse(root, best_path->subpath, flags);
+
+	plan = make_limit(subplan,
+					  best_path->limitOffset,
+					  best_path->limitCount);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
 }
 
 
@@ -1814,15 +2845,24 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SubqueryScan *
-create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
+create_subqueryscan_plan(PlannerInfo *root, SubqueryScanPath *best_path,
 						 List *tlist, List *scan_clauses)
 {
 	SubqueryScan *scan_plan;
-	Index		scan_relid = best_path->parent->relid;
+	RelOptInfo *rel = best_path->path.parent;
+	Index		scan_relid = rel->relid;
+	Plan	   *subplan;
 
 	/* it should be a subquery base rel... */
 	Assert(scan_relid > 0);
-	Assert(best_path->parent->rtekind == RTE_SUBQUERY);
+	Assert(rel->rtekind == RTE_SUBQUERY);
+
+	/*
+	 * Recursively create Plan from Path for subquery.  Since we are entering
+	 * a different planner context (subroot), recurse to create_plan not
+	 * create_plan_recurse.
+	 */
+	subplan = create_plan(rel->subroot, best_path->subpath);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1831,20 +2871,20 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Replace any outer-relation variables with nestloop params */
-	if (best_path->param_info)
+	if (best_path->path.param_info)
 	{
 		scan_clauses = (List *)
 			replace_nestloop_params(root, (Node *) scan_clauses);
 		process_subquery_nestloop_params(root,
-										 best_path->parent->subplan_params);
+										 rel->subplan_params);
 	}
 
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
-								  best_path->parent->subplan);
+								  subplan);
 
-	copy_generic_path_info(&scan_plan->scan.plan, best_path);
+	copy_generic_path_info(&scan_plan->scan.plan, &best_path->path);
 
 	return scan_plan;
 }
@@ -2108,7 +3148,8 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 
 	/* transform the child path if any */
 	if (best_path->fdw_outerpath)
-		outer_plan = create_plan_recurse(root, best_path->fdw_outerpath);
+		outer_plan = create_plan_recurse(root, best_path->fdw_outerpath,
+										 CP_EXACT_TLIST);
 
 	/*
 	 * If we're scanning a base relation, fetch its OID.  (Irrelevant if
@@ -2243,7 +3284,8 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 	/* Recursively transform child paths. */
 	foreach(lc, best_path->custom_paths)
 	{
-		Plan	   *plan = create_plan_recurse(root, (Path *) lfirst(lc));
+		Plan	   *plan = create_plan_recurse(root, (Path *) lfirst(lc),
+											   CP_EXACT_TLIST);
 
 		custom_plans = lappend(custom_plans, plan);
 	}
@@ -2303,20 +3345,34 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 
 static NestLoop *
 create_nestloop_plan(PlannerInfo *root,
-					 NestPath *best_path,
-					 Plan *outer_plan,
-					 Plan *inner_plan)
+					 NestPath *best_path)
 {
 	NestLoop   *join_plan;
+	Plan	   *outer_plan;
+	Plan	   *inner_plan;
 	List	   *tlist = build_path_tlist(root, &best_path->path);
 	List	   *joinrestrictclauses = best_path->joinrestrictinfo;
 	List	   *joinclauses;
 	List	   *otherclauses;
 	Relids		outerrelids;
 	List	   *nestParams;
+	Relids		saveOuterRels = root->curOuterRels;
 	ListCell   *cell;
 	ListCell   *prev;
 	ListCell   *next;
+
+	/* NestLoop can project, so no need to be picky about child tlists */
+	outer_plan = create_plan_recurse(root, best_path->outerjoinpath, 0);
+
+	/* For a nestloop, include outer relids in curOuterRels for inner side */
+	root->curOuterRels = bms_union(root->curOuterRels,
+								   best_path->outerjoinpath->parent->relids);
+
+	inner_plan = create_plan_recurse(root, best_path->innerjoinpath, 0);
+
+	/* Restore curOuterRels */
+	bms_free(root->curOuterRels);
+	root->curOuterRels = saveOuterRels;
 
 	/* Sort join qual clauses into best execution order */
 	joinrestrictclauses = order_qual_clauses(root, joinrestrictclauses);
@@ -2394,10 +3450,11 @@ create_nestloop_plan(PlannerInfo *root,
 
 static MergeJoin *
 create_mergejoin_plan(PlannerInfo *root,
-					  MergePath *best_path,
-					  Plan *outer_plan,
-					  Plan *inner_plan)
+					  MergePath *best_path)
 {
+	MergeJoin  *join_plan;
+	Plan	   *outer_plan;
+	Plan	   *inner_plan;
 	List	   *tlist = build_path_tlist(root, &best_path->jpath.path);
 	List	   *joinclauses;
 	List	   *otherclauses;
@@ -2409,11 +3466,22 @@ create_mergejoin_plan(PlannerInfo *root,
 	Oid		   *mergecollations;
 	int		   *mergestrategies;
 	bool	   *mergenullsfirst;
-	MergeJoin  *join_plan;
 	int			i;
 	ListCell   *lc;
 	ListCell   *lop;
 	ListCell   *lip;
+
+	/*
+	 * MergeJoin can project, so we don't have to demand exact tlists from the
+	 * inputs.  However, if we're intending to sort an input's result, it's
+	 * best to request a small tlist so we aren't sorting more data than
+	 * necessary.
+	 */
+	outer_plan = create_plan_recurse(root, best_path->jpath.outerjoinpath,
+					 (best_path->outersortkeys != NIL) ? CP_SMALL_TLIST : 0);
+
+	inner_plan = create_plan_recurse(root, best_path->jpath.innerjoinpath,
+					 (best_path->innersortkeys != NIL) ? CP_SMALL_TLIST : 0);
 
 	/* Sort join qual clauses into best execution order */
 	/* NB: do NOT reorder the mergeclauses */
@@ -2462,11 +3530,9 @@ create_mergejoin_plan(PlannerInfo *root,
 
 	/*
 	 * Create explicit sort nodes for the outer and inner paths if necessary.
-	 * Make sure there are no excess columns in the inputs if sorting.
 	 */
 	if (best_path->outersortkeys)
 	{
-		disuse_physical_tlist(root, outer_plan, best_path->jpath.outerjoinpath);
 		outer_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									outer_plan,
@@ -2479,7 +3545,6 @@ create_mergejoin_plan(PlannerInfo *root,
 
 	if (best_path->innersortkeys)
 	{
-		disuse_physical_tlist(root, inner_plan, best_path->jpath.innerjoinpath);
 		inner_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									inner_plan,
@@ -2689,10 +3754,12 @@ create_mergejoin_plan(PlannerInfo *root,
 
 static HashJoin *
 create_hashjoin_plan(PlannerInfo *root,
-					 HashPath *best_path,
-					 Plan *outer_plan,
-					 Plan *inner_plan)
+					 HashPath *best_path)
 {
+	HashJoin   *join_plan;
+	Hash	   *hash_plan;
+	Plan	   *outer_plan;
+	Plan	   *inner_plan;
 	List	   *tlist = build_path_tlist(root, &best_path->jpath.path);
 	List	   *joinclauses;
 	List	   *otherclauses;
@@ -2702,8 +3769,19 @@ create_hashjoin_plan(PlannerInfo *root,
 	bool		skewInherit = false;
 	Oid			skewColType = InvalidOid;
 	int32		skewColTypmod = -1;
-	HashJoin   *join_plan;
-	Hash	   *hash_plan;
+
+	/*
+	 * HashJoin can project, so we don't have to demand exact tlists from the
+	 * inputs.  However, it's best to request a small tlist from the inner
+	 * side, so that we aren't storing more data than necessary.  Likewise, if
+	 * we anticipate batching, request a small tlist from the outer side so
+	 * that we don't put extra data in the outer batch files.
+	 */
+	outer_plan = create_plan_recurse(root, best_path->jpath.outerjoinpath,
+						  (best_path->num_batches > 1) ? CP_SMALL_TLIST : 0);
+
+	inner_plan = create_plan_recurse(root, best_path->jpath.innerjoinpath,
+									 CP_SMALL_TLIST);
 
 	/* Sort join qual clauses into best execution order */
 	joinclauses = order_qual_clauses(root, best_path->jpath.joinrestrictinfo);
@@ -2748,13 +3826,6 @@ create_hashjoin_plan(PlannerInfo *root,
 	 */
 	hashclauses = get_switched_clauses(best_path->path_hashclauses,
 							 best_path->jpath.outerjoinpath->parent->relids);
-
-	/* We don't want any excess columns in the hashed tuples */
-	disuse_physical_tlist(root, inner_plan, best_path->jpath.innerjoinpath);
-
-	/* If we expect batching, suppress excess columns in outer tuples too */
-	if (best_path->num_batches > 1)
-		disuse_physical_tlist(root, outer_plan, best_path->jpath.outerjoinpath);
 
 	/*
 	 * If there is a single join clause and we can identify the outer variable
@@ -3661,7 +4732,7 @@ make_tidscan(List *qptlist,
 	return node;
 }
 
-SubqueryScan *
+static SubqueryScan *
 make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
@@ -3805,7 +4876,7 @@ make_foreignscan(List *qptlist,
 	return node;
 }
 
-Append *
+static Append *
 make_append(List *appendplans, List *tlist)
 {
 	Append	   *node = makeNode(Append);
@@ -3852,7 +4923,7 @@ make_append(List *appendplans, List *tlist)
 	return node;
 }
 
-RecursiveUnion *
+static RecursiveUnion *
 make_recursive_union(List *tlist,
 					 Plan *lefttree,
 					 Plan *righttree,
@@ -3863,8 +4934,6 @@ make_recursive_union(List *tlist,
 	RecursiveUnion *node = makeNode(RecursiveUnion);
 	Plan	   *plan = &node->plan;
 	int			numCols = list_length(distinctList);
-
-	cost_recursive_union(plan, lefttree, righttree);
 
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -4408,7 +5477,7 @@ find_ec_member_for_tle(EquivalenceClass *ec,
  *	  'limit_tuples' is the bound on the number of output tuples;
  *				-1 if no bound
  */
-Sort *
+static Sort *
 make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 						double limit_tuples)
 {
@@ -4442,7 +5511,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
  *	  'sortcls' is a list of SortGroupClauses
  *	  'lefttree' is the node which yields input tuples
  */
-Sort *
+static Sort *
 make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
 {
 	List	   *sub_tlist = lefttree->targetlist;
@@ -4491,7 +5560,7 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
  * appropriate to the grouping node.  So, only the sort ordering info
  * is used from the SortGroupClause entries.
  */
-Sort *
+static Sort *
 make_sort_from_groupcols(PlannerInfo *root,
 						 List *groupcls,
 						 AttrNumber *grpColIdx,
@@ -4552,7 +5621,7 @@ make_material(Plan *lefttree)
  * materialize_finished_plan: stick a Material node atop a completed plan
  *
  * There are a couple of places where we want to attach a Material node
- * after completion of subquery_planner(), without any MaterialPath path.
+ * after completion of create_plan(), without any MaterialPath path.
  */
 Plan *
 materialize_finished_plan(Plan *subplan)
@@ -4572,81 +5641,46 @@ materialize_finished_plan(Plan *subplan)
 	matplan->total_cost = matpath.total_cost;
 	matplan->plan_rows = subplan->plan_rows;
 	matplan->plan_width = subplan->plan_width;
+	matplan->parallel_aware = false;
 
 	return matplan;
 }
 
-Agg *
-make_agg(PlannerInfo *root, List *tlist, List *qual,
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
+static Agg *
+make_agg(List *tlist, List *qual,
+		 AggStrategy aggstrategy,
+		 bool combineStates, bool finalizeAggs,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 List *groupingSets, long numGroups, bool combineStates,
-		 bool finalizeAggs, Plan *lefttree)
+		 List *groupingSets, List *chain,
+		 double dNumGroups, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 	Plan	   *plan = &node->plan;
-	Path		agg_path;		/* dummy for result of cost_agg */
-	QualCost	qual_cost;
+	long		numGroups;
+
+	/* Reduce to long, but 'ware overflow! */
+	numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 
 	node->aggstrategy = aggstrategy;
-	node->numCols = numGroupCols;
 	node->combineStates = combineStates;
 	node->finalizeAggs = finalizeAggs;
+	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
 	node->numGroups = numGroups;
-
-	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-	cost_agg(&agg_path, root,
-			 aggstrategy, aggcosts,
-			 numGroupCols, numGroups,
-			 lefttree->startup_cost,
-			 lefttree->total_cost,
-			 lefttree->plan_rows);
-	plan->startup_cost = agg_path.startup_cost;
-	plan->total_cost = agg_path.total_cost;
-
-	/*
-	 * We will produce a single output tuple if not grouping, and a tuple per
-	 * group otherwise.
-	 */
-	if (aggstrategy == AGG_PLAIN)
-		plan->plan_rows = groupingSets ? list_length(groupingSets) : 1;
-	else
-		plan->plan_rows = numGroups;
-
 	node->groupingSets = groupingSets;
-
-	/*
-	 * We also need to account for the cost of evaluation of the qual (ie, the
-	 * HAVING clause) and the tlist.  Note that cost_qual_eval doesn't charge
-	 * anything for Aggref nodes; this is okay since they are really
-	 * comparable to Vars.
-	 *
-	 * See notes in add_tlist_costs_to_plan about why only make_agg,
-	 * make_windowagg and make_group worry about tlist eval cost.
-	 */
-	if (qual)
-	{
-		cost_qual_eval(&qual_cost, qual, root);
-		plan->startup_cost += qual_cost.startup;
-		plan->total_cost += qual_cost.startup;
-		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
-	}
-	add_tlist_costs_to_plan(root, plan, tlist);
+	node->chain = chain;
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
-
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 
 	return node;
 }
 
-WindowAgg *
-make_windowagg(PlannerInfo *root, List *tlist,
-			   List *windowFuncs, Index winref,
+static WindowAgg *
+make_windowagg(List *tlist, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
 			   int frameOptions, Node *startOffset, Node *endOffset,
@@ -4654,7 +5688,6 @@ make_windowagg(PlannerInfo *root, List *tlist,
 {
 	WindowAgg  *node = makeNode(WindowAgg);
 	Plan	   *plan = &node->plan;
-	Path		windowagg_path; /* dummy for result of cost_windowagg */
 
 	node->winref = winref;
 	node->partNumCols = partNumCols;
@@ -4667,23 +5700,6 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	node->startOffset = startOffset;
 	node->endOffset = endOffset;
 
-	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-	cost_windowagg(&windowagg_path, root,
-				   windowFuncs, partNumCols, ordNumCols,
-				   lefttree->startup_cost,
-				   lefttree->total_cost,
-				   lefttree->plan_rows);
-	plan->startup_cost = windowagg_path.startup_cost;
-	plan->total_cost = windowagg_path.total_cost;
-
-	/*
-	 * We also need to account for the cost of evaluation of the tlist.
-	 *
-	 * See notes in add_tlist_costs_to_plan about why only make_agg,
-	 * make_windowagg and make_group worry about tlist eval cost.
-	 */
-	add_tlist_costs_to_plan(root, plan, tlist);
-
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -4693,57 +5709,22 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	return node;
 }
 
-Group *
-make_group(PlannerInfo *root,
-		   List *tlist,
+static Group *
+make_group(List *tlist,
 		   List *qual,
 		   int numGroupCols,
 		   AttrNumber *grpColIdx,
 		   Oid *grpOperators,
-		   double numGroups,
 		   Plan *lefttree)
 {
 	Group	   *node = makeNode(Group);
 	Plan	   *plan = &node->plan;
-	Path		group_path;		/* dummy for result of cost_group */
-	QualCost	qual_cost;
+
+	/* caller must fill cost/size fields */
 
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
-
-	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-	cost_group(&group_path, root,
-			   numGroupCols, numGroups,
-			   lefttree->startup_cost,
-			   lefttree->total_cost,
-			   lefttree->plan_rows);
-	plan->startup_cost = group_path.startup_cost;
-	plan->total_cost = group_path.total_cost;
-
-	/* One output tuple per estimated result group */
-	plan->plan_rows = numGroups;
-
-	/*
-	 * We also need to account for the cost of evaluation of the qual (ie, the
-	 * HAVING clause) and the tlist.
-	 *
-	 * XXX this double-counts the cost of evaluation of any expressions used
-	 * for grouping, since in reality those will have been evaluated at a
-	 * lower plan level and will only be copied by the Group node. Worth
-	 * fixing?
-	 *
-	 * See notes in add_tlist_costs_to_plan about why only make_agg,
-	 * make_windowagg and make_group worry about tlist eval cost.
-	 */
-	if (qual)
-	{
-		cost_qual_eval(&qual_cost, qual, root);
-		plan->startup_cost += qual_cost.startup;
-		plan->total_cost += qual_cost.startup;
-		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
-	}
-	add_tlist_costs_to_plan(root, plan, tlist);
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
@@ -4758,8 +5739,8 @@ make_group(PlannerInfo *root,
  * that should be considered by the Unique filter.  The input path must
  * already be sorted accordingly.
  */
-Unique *
-make_unique(Plan *lefttree, List *distinctList)
+static Unique *
+make_unique_from_sortclauses(Plan *lefttree, List *distinctList)
 {
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
@@ -4768,21 +5749,6 @@ make_unique(Plan *lefttree, List *distinctList)
 	AttrNumber *uniqColIdx;
 	Oid		   *uniqOperators;
 	ListCell   *slitem;
-
-	copy_plan_costsize(plan, lefttree);
-
-	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
-	 * all columns get compared at most of the tuples.  (XXX probably this is
-	 * an overestimate.)
-	 */
-	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
-
-	/*
-	 * plan->plan_rows is left as a copy of the input subplan's plan_rows; ie,
-	 * we assume the filter removes nothing.  The caller must alter this if he
-	 * has a better idea.
-	 */
 
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
@@ -4805,6 +5771,111 @@ make_unique(Plan *lefttree, List *distinctList)
 		uniqColIdx[keyno] = tle->resno;
 		uniqOperators[keyno] = sortcl->eqop;
 		Assert(OidIsValid(uniqOperators[keyno]));
+		keyno++;
+	}
+
+	node->numCols = numCols;
+	node->uniqColIdx = uniqColIdx;
+	node->uniqOperators = uniqOperators;
+
+	return node;
+}
+
+/*
+ * as above, but use pathkeys to identify the sort columns and semantics
+ */
+static Unique *
+make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
+{
+	Unique	   *node = makeNode(Unique);
+	Plan	   *plan = &node->plan;
+	int			keyno = 0;
+	AttrNumber *uniqColIdx;
+	Oid		   *uniqOperators;
+	ListCell   *lc;
+
+	plan->targetlist = lefttree->targetlist;
+	plan->qual = NIL;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+
+	/*
+	 * Convert pathkeys list into arrays of attr indexes and equality
+	 * operators, as wanted by executor.  This has a lot in common with
+	 * prepare_sort_from_pathkeys ... maybe unify sometime?
+	 */
+	Assert(numCols >= 0 && numCols <= list_length(pathkeys));
+	uniqColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+	uniqOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+
+	foreach(lc, pathkeys)
+	{
+		PathKey    *pathkey = (PathKey *) lfirst(lc);
+		EquivalenceClass *ec = pathkey->pk_eclass;
+		EquivalenceMember *em;
+		TargetEntry *tle = NULL;
+		Oid			pk_datatype = InvalidOid;
+		Oid			eqop;
+		ListCell   *j;
+
+		/* Ignore pathkeys beyond the specified number of columns */
+		if (keyno >= numCols)
+			break;
+
+		if (ec->ec_has_volatile)
+		{
+			/*
+			 * If the pathkey's EquivalenceClass is volatile, then it must
+			 * have come from an ORDER BY clause, and we have to match it to
+			 * that same targetlist entry.
+			 */
+			if (ec->ec_sortref == 0)	/* can't happen */
+				elog(ERROR, "volatile EquivalenceClass has no sortref");
+			tle = get_sortgroupref_tle(ec->ec_sortref, plan->targetlist);
+			Assert(tle);
+			Assert(list_length(ec->ec_members) == 1);
+			pk_datatype = ((EquivalenceMember *) linitial(ec->ec_members))->em_datatype;
+		}
+		else
+		{
+			/*
+			 * Otherwise, we can use any non-constant expression listed in the
+			 * pathkey's EquivalenceClass.  For now, we take the first tlist
+			 * item found in the EC.
+			 */
+			foreach(j, plan->targetlist)
+			{
+				tle = (TargetEntry *) lfirst(j);
+				em = find_ec_member_for_tle(ec, tle, NULL);
+				if (em)
+				{
+					/* found expr already in tlist */
+					pk_datatype = em->em_datatype;
+					break;
+				}
+				tle = NULL;
+			}
+		}
+
+		if (!tle)
+			elog(ERROR, "could not find pathkey item to sort");
+
+		/*
+		 * Look up the correct equality operator from the PathKey's slightly
+		 * abstracted representation.
+		 */
+		eqop = get_opfamily_member(pathkey->pk_opfamily,
+								   pk_datatype,
+								   pk_datatype,
+								   BTEqualStrategyNumber);
+		if (!OidIsValid(eqop))	/* should not happen */
+			elog(ERROR, "could not find member %d(%u,%u) of opfamily %u",
+				 BTEqualStrategyNumber, pk_datatype, pk_datatype,
+				 pathkey->pk_opfamily);
+
+		uniqColIdx[keyno] = tle->resno;
+		uniqOperators[keyno] = eqop;
+
 		keyno++;
 	}
 
@@ -4842,10 +5913,10 @@ make_gather(List *qptlist,
  * items that should be considered by the SetOp filter.  The input path must
  * already be sorted accordingly.
  */
-SetOp *
+static SetOp *
 make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
-		   long numGroups, double outputRows)
+		   long numGroups)
 {
 	SetOp	   *node = makeNode(SetOp);
 	Plan	   *plan = &node->plan;
@@ -4854,15 +5925,6 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 	AttrNumber *dupColIdx;
 	Oid		   *dupOperators;
 	ListCell   *slitem;
-
-	copy_plan_costsize(plan, lefttree);
-	plan->plan_rows = outputRows;
-
-	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
-	 * all columns get compared at most of the tuples.
-	 */
-	plan->total_cost += cpu_operator_cost * lefttree->plan_rows * numCols;
 
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
@@ -4904,16 +5966,11 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
  * make_lockrows
  *	  Build a LockRows plan node
  */
-LockRows *
+static LockRows *
 make_lockrows(Plan *lefttree, List *rowMarks, int epqParam)
 {
 	LockRows   *node = makeNode(LockRows);
 	Plan	   *plan = &node->plan;
-
-	copy_plan_costsize(plan, lefttree);
-
-	/* charge cpu_tuple_cost to reflect locking costs (underestimate?) */
-	plan->total_cost += cpu_tuple_cost * plan->plan_rows;
 
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
@@ -4927,67 +5984,14 @@ make_lockrows(Plan *lefttree, List *rowMarks, int epqParam)
 }
 
 /*
- * Note: offset_est and count_est are passed in to save having to repeat
- * work already done to estimate the values of the limitOffset and limitCount
- * expressions.  Their values are as returned by preprocess_limit (0 means
- * "not relevant", -1 means "couldn't estimate").  Keep the code below in sync
- * with that function!
+ * make_limit
+ *	  Build a Limit plan node
  */
-Limit *
-make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
-		   int64 offset_est, int64 count_est)
+static Limit *
+make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
 {
 	Limit	   *node = makeNode(Limit);
 	Plan	   *plan = &node->plan;
-
-	copy_plan_costsize(plan, lefttree);
-
-	/*
-	 * Adjust the output rows count and costs according to the offset/limit.
-	 * This is only a cosmetic issue if we are at top level, but if we are
-	 * building a subquery then it's important to report correct info to the
-	 * outer planner.
-	 *
-	 * When the offset or count couldn't be estimated, use 10% of the
-	 * estimated number of rows emitted from the subplan.
-	 */
-	if (offset_est != 0)
-	{
-		double		offset_rows;
-
-		if (offset_est > 0)
-			offset_rows = (double) offset_est;
-		else
-			offset_rows = clamp_row_est(lefttree->plan_rows * 0.10);
-		if (offset_rows > plan->plan_rows)
-			offset_rows = plan->plan_rows;
-		if (plan->plan_rows > 0)
-			plan->startup_cost +=
-				(plan->total_cost - plan->startup_cost)
-				* offset_rows / plan->plan_rows;
-		plan->plan_rows -= offset_rows;
-		if (plan->plan_rows < 1)
-			plan->plan_rows = 1;
-	}
-
-	if (count_est != 0)
-	{
-		double		count_rows;
-
-		if (count_est > 0)
-			count_rows = (double) count_est;
-		else
-			count_rows = clamp_row_est(lefttree->plan_rows * 0.10);
-		if (count_rows > plan->plan_rows)
-			count_rows = plan->plan_rows;
-		if (plan->plan_rows > 0)
-			plan->total_cost = plan->startup_cost +
-				(plan->total_cost - plan->startup_cost)
-				* count_rows / plan->plan_rows;
-		plan->plan_rows = count_rows;
-		if (plan->plan_rows < 1)
-			plan->plan_rows = 1;
-	}
 
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
@@ -5008,8 +6012,9 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
  * were already factored into the subplan's startup cost, and just copy the
  * subplan cost.  If there's no subplan, we should include the qual eval
  * cost.  In either case, tlist eval cost is not to be included here.
+ * XXX really we don't want to be doing cost estimation here.
  */
-Result *
+static Result *
 make_result(PlannerInfo *root,
 			List *tlist,
 			Node *resconstantqual,
@@ -5049,14 +6054,8 @@ make_result(PlannerInfo *root,
 /*
  * make_modifytable
  *	  Build a ModifyTable plan node
- *
- * Currently, we don't charge anything extra for the actual table modification
- * work, nor for the WITH CHECK OPTIONS or RETURNING expressions if any.  It
- * would only be window dressing, since these are always top-level nodes and
- * there is no way for the costs to change any higher-level planning choices.
- * But we might want to make it look better sometime.
  */
-ModifyTable *
+static ModifyTable *
 make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation,
@@ -5065,10 +6064,7 @@ make_modifytable(PlannerInfo *root,
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
-	Plan	   *plan = &node->plan;
-	double		total_size;
 	List	   *fdw_private_list;
-	ListCell   *subnode;
 	ListCell   *lc;
 	int			i;
 
@@ -5077,28 +6073,6 @@ make_modifytable(PlannerInfo *root,
 		   list_length(resultRelations) == list_length(withCheckOptionLists));
 	Assert(returningLists == NIL ||
 		   list_length(resultRelations) == list_length(returningLists));
-
-	/*
-	 * Compute cost as sum of subplan costs.
-	 */
-	plan->startup_cost = 0;
-	plan->total_cost = 0;
-	plan->plan_rows = 0;
-	total_size = 0;
-	foreach(subnode, subplans)
-	{
-		Plan	   *subplan = (Plan *) lfirst(subnode);
-
-		if (subnode == list_head(subplans))		/* first node? */
-			plan->startup_cost = subplan->startup_cost;
-		plan->total_cost += subplan->total_cost;
-		plan->plan_rows += subplan->plan_rows;
-		total_size += subplan->plan_width * subplan->plan_rows;
-	}
-	if (plan->plan_rows > 0)
-		plan->plan_width = rint(total_size / plan->plan_rows);
-	else
-		plan->plan_width = 0;
 
 	node->plan.lefttree = NULL;
 	node->plan.righttree = NULL;
@@ -5191,6 +6165,42 @@ make_modifytable(PlannerInfo *root,
 	node->fdwPrivLists = fdw_private_list;
 
 	return node;
+}
+
+/*
+ * is_projection_capable_path
+ *		Check whether a given Path node is able to do projection.
+ */
+bool
+is_projection_capable_path(Path *path)
+{
+	/* Most plan types can project, so just list the ones that can't */
+	switch (path->pathtype)
+	{
+		case T_Hash:
+		case T_Material:
+		case T_Sort:
+		case T_Unique:
+		case T_SetOp:
+		case T_LockRows:
+		case T_Limit:
+		case T_ModifyTable:
+		case T_MergeAppend:
+		case T_RecursiveUnion:
+			return false;
+		case T_Append:
+
+			/*
+			 * Append can't project, but if it's being used to represent a
+			 * dummy path, claim that it can project.  This prevents us from
+			 * converting a rel from dummy to non-dummy status by applying a
+			 * projection to its dummy path.
+			 */
+			return IS_DUMMY_PATH(path);
+		default:
+			break;
+	}
+	return true;
 }
 
 /*

@@ -706,21 +706,19 @@ _outAgg(StringInfo str, const Agg *node)
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_ENUM_FIELD(aggstrategy, AggStrategy);
+	WRITE_BOOL_FIELD(combineStates);
+	WRITE_BOOL_FIELD(finalizeAggs);
 	WRITE_INT_FIELD(numCols);
 
 	appendStringInfoString(str, " :grpColIdx");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->grpColIdx[i]);
 
-	WRITE_BOOL_FIELD(combineStates);
-	WRITE_BOOL_FIELD(finalizeAggs);
-
 	appendStringInfoString(str, " :grpOperators");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %u", node->grpOperators[i]);
 
 	WRITE_LONG_FIELD(numGroups);
-
 	WRITE_NODE_FIELD(groupingSets);
 	WRITE_NODE_FIELD(chain);
 }
@@ -1603,6 +1601,15 @@ _outPathInfo(StringInfo str, const Path *node)
 	if (node->pathtarget != &(node->parent->reltarget))
 	{
 		WRITE_NODE_FIELD(pathtarget->exprs);
+		if (node->pathtarget->sortgrouprefs)
+		{
+			int			i;
+
+			appendStringInfoString(str, " :pathtarget->sortgrouprefs");
+			for (i = 0; i < list_length(node->pathtarget->exprs); i++)
+				appendStringInfo(str, " %u",
+								 node->pathtarget->sortgrouprefs[i]);
+		}
 		WRITE_FLOAT_FIELD(pathtarget->cost.startup, "%.2f");
 		WRITE_FLOAT_FIELD(pathtarget->cost.per_tuple, "%.2f");
 		WRITE_INT_FIELD(pathtarget->width);
@@ -1704,6 +1711,16 @@ _outTidPath(StringInfo str, const TidPath *node)
 }
 
 static void
+_outSubqueryScanPath(StringInfo str, const SubqueryScanPath *node)
+{
+	WRITE_NODE_TYPE("SUBQUERYSCANPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+}
+
+static void
 _outForeignPath(StringInfo str, const ForeignPath *node)
 {
 	WRITE_NODE_TYPE("FOREIGNPATH");
@@ -1794,6 +1811,174 @@ _outGatherPath(StringInfo str, const GatherPath *node)
 }
 
 static void
+_outProjectionPath(StringInfo str, const ProjectionPath *node)
+{
+	WRITE_NODE_TYPE("PROJECTIONPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+}
+
+static void
+_outSortPath(StringInfo str, const SortPath *node)
+{
+	WRITE_NODE_TYPE("SORTPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+}
+
+static void
+_outGroupPath(StringInfo str, const GroupPath *node)
+{
+	WRITE_NODE_TYPE("GROUPPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_NODE_FIELD(groupClause);
+	WRITE_NODE_FIELD(qual);
+}
+
+static void
+_outUpperUniquePath(StringInfo str, const UpperUniquePath *node)
+{
+	WRITE_NODE_TYPE("UPPERUNIQUEPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_INT_FIELD(numkeys);
+}
+
+static void
+_outAggPath(StringInfo str, const AggPath *node)
+{
+	WRITE_NODE_TYPE("AGGPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_ENUM_FIELD(aggstrategy, AggStrategy);
+	WRITE_FLOAT_FIELD(numGroups, "%.0f");
+	WRITE_NODE_FIELD(groupClause);
+	WRITE_NODE_FIELD(qual);
+}
+
+static void
+_outGroupingSetsPath(StringInfo str, const GroupingSetsPath *node)
+{
+	WRITE_NODE_TYPE("GROUPINGSETSPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	/* we don't bother to print groupColIdx */
+	WRITE_NODE_FIELD(rollup_groupclauses);
+	WRITE_NODE_FIELD(rollup_lists);
+	WRITE_NODE_FIELD(qual);
+}
+
+static void
+_outMinMaxAggPath(StringInfo str, const MinMaxAggPath *node)
+{
+	WRITE_NODE_TYPE("MINMAXAGGPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(mmaggregates);
+	WRITE_NODE_FIELD(quals);
+}
+
+static void
+_outWindowAggPath(StringInfo str, const WindowAggPath *node)
+{
+	WRITE_NODE_TYPE("WINDOWAGGPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_NODE_FIELD(winclause);
+	WRITE_NODE_FIELD(winpathkeys);
+}
+
+static void
+_outSetOpPath(StringInfo str, const SetOpPath *node)
+{
+	WRITE_NODE_TYPE("SETOPPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_ENUM_FIELD(cmd, SetOpCmd);
+	WRITE_ENUM_FIELD(strategy, SetOpStrategy);
+	WRITE_NODE_FIELD(distinctList);
+	WRITE_INT_FIELD(flagColIdx);
+	WRITE_INT_FIELD(firstFlag);
+	WRITE_FLOAT_FIELD(numGroups, "%.0f");
+}
+
+static void
+_outRecursiveUnionPath(StringInfo str, const RecursiveUnionPath *node)
+{
+	WRITE_NODE_TYPE("RECURSIVEUNIONPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(leftpath);
+	WRITE_NODE_FIELD(rightpath);
+	WRITE_NODE_FIELD(distinctList);
+	WRITE_INT_FIELD(wtParam);
+	WRITE_FLOAT_FIELD(numGroups, "%.0f");
+}
+
+static void
+_outLockRowsPath(StringInfo str, const LockRowsPath *node)
+{
+	WRITE_NODE_TYPE("LOCKROWSPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_NODE_FIELD(rowMarks);
+	WRITE_INT_FIELD(epqParam);
+}
+
+static void
+_outModifyTablePath(StringInfo str, const ModifyTablePath *node)
+{
+	WRITE_NODE_TYPE("MODIFYTABLEPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_ENUM_FIELD(operation, CmdType);
+	WRITE_BOOL_FIELD(canSetTag);
+	WRITE_UINT_FIELD(nominalRelation);
+	WRITE_NODE_FIELD(resultRelations);
+	WRITE_NODE_FIELD(subpaths);
+	WRITE_NODE_FIELD(subroots);
+	WRITE_NODE_FIELD(withCheckOptionLists);
+	WRITE_NODE_FIELD(returningLists);
+	WRITE_NODE_FIELD(rowMarks);
+	WRITE_NODE_FIELD(onconflict);
+	WRITE_INT_FIELD(epqParam);
+}
+
+static void
+_outLimitPath(StringInfo str, const LimitPath *node)
+{
+	WRITE_NODE_TYPE("LIMITPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_NODE_FIELD(limitOffset);
+	WRITE_NODE_FIELD(limitCount);
+}
+
+static void
 _outNestPath(StringInfo str, const NestPath *node)
 {
 	WRITE_NODE_TYPE("NESTPATH");
@@ -1881,6 +2066,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_NODE_FIELD(window_pathkeys);
 	WRITE_NODE_FIELD(distinct_pathkeys);
 	WRITE_NODE_FIELD(sort_pathkeys);
+	WRITE_NODE_FIELD(processed_tlist);
 	WRITE_NODE_FIELD(minmax_aggs);
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
 	WRITE_FLOAT_FIELD(tuple_fraction, "%.4f");
@@ -1910,6 +2096,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_BOOL_FIELD(consider_param_startup);
 	WRITE_BOOL_FIELD(consider_parallel);
 	WRITE_NODE_FIELD(reltarget.exprs);
+	/* reltarget.sortgrouprefs is never interesting, at present anyway */
 	WRITE_FLOAT_FIELD(reltarget.cost.startup, "%.2f");
 	WRITE_FLOAT_FIELD(reltarget.cost.per_tuple, "%.2f");
 	WRITE_INT_FIELD(reltarget.width);
@@ -1933,7 +2120,6 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_FLOAT_FIELD(allvisfrac, "%.6f");
-	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(subroot);
 	WRITE_NODE_FIELD(subplan_params);
 	WRITE_OID_FIELD(serverid);
@@ -3331,6 +3517,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_TidPath:
 				_outTidPath(str, obj);
 				break;
+			case T_SubqueryScanPath:
+				_outSubqueryScanPath(str, obj);
+				break;
 			case T_ForeignPath:
 				_outForeignPath(str, obj);
 				break;
@@ -3354,6 +3543,45 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_GatherPath:
 				_outGatherPath(str, obj);
+				break;
+			case T_ProjectionPath:
+				_outProjectionPath(str, obj);
+				break;
+			case T_SortPath:
+				_outSortPath(str, obj);
+				break;
+			case T_GroupPath:
+				_outGroupPath(str, obj);
+				break;
+			case T_UpperUniquePath:
+				_outUpperUniquePath(str, obj);
+				break;
+			case T_AggPath:
+				_outAggPath(str, obj);
+				break;
+			case T_GroupingSetsPath:
+				_outGroupingSetsPath(str, obj);
+				break;
+			case T_MinMaxAggPath:
+				_outMinMaxAggPath(str, obj);
+				break;
+			case T_WindowAggPath:
+				_outWindowAggPath(str, obj);
+				break;
+			case T_SetOpPath:
+				_outSetOpPath(str, obj);
+				break;
+			case T_RecursiveUnionPath:
+				_outRecursiveUnionPath(str, obj);
+				break;
+			case T_LockRowsPath:
+				_outLockRowsPath(str, obj);
+				break;
+			case T_ModifyTablePath:
+				_outModifyTablePath(str, obj);
+				break;
+			case T_LimitPath:
+				_outLimitPath(str, obj);
 				break;
 			case T_NestPath:
 				_outNestPath(str, obj);

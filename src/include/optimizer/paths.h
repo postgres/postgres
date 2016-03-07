@@ -47,6 +47,7 @@ extern PGDLLIMPORT join_search_hook_type join_search_hook;
 
 
 extern RelOptInfo *make_one_rel(PlannerInfo *root, List *joinlist);
+extern void set_dummy_rel_pathlist(RelOptInfo *rel);
 extern RelOptInfo *standard_join_search(PlannerInfo *root, int levels_needed,
 					 List *initial_rels);
 
@@ -137,10 +138,6 @@ extern void add_child_rel_equivalences(PlannerInfo *root,
 						   AppendRelInfo *appinfo,
 						   RelOptInfo *parent_rel,
 						   RelOptInfo *child_rel);
-extern void mutate_eclass_expressions(PlannerInfo *root,
-						  Node *(*mutator) (),
-						  void *context,
-						  bool include_child_exprs);
 extern List *generate_implied_equalities_for_column(PlannerInfo *root,
 									   RelOptInfo *rel,
 									   ec_matches_callback_type callback,
@@ -182,7 +179,8 @@ extern List *build_expression_pathkey(PlannerInfo *root, Expr *expr,
 						 Relids nullable_relids, Oid opno,
 						 Relids rel, bool create_it);
 extern List *convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
-						  List *subquery_pathkeys);
+						  List *subquery_pathkeys,
+						  List *subquery_tlist);
 extern List *build_join_pathkeys(PlannerInfo *root,
 					RelOptInfo *joinrel,
 					JoinType jointype,

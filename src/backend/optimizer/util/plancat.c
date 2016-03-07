@@ -1142,7 +1142,27 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	List	   *safe_constraints;
 	ListCell   *lc;
 
-	/* Skip the test if constraint exclusion is disabled for the rel */
+	/*
+	 * Regardless of the setting of constraint_exclusion, detect
+	 * constant-FALSE-or-NULL restriction clauses.  Because const-folding will
+	 * reduce "anything AND FALSE" to just "FALSE", any such case should
+	 * result in exactly one baserestrictinfo entry.  This doesn't fire very
+	 * often, but it seems cheap enough to be worth doing anyway.  (Without
+	 * this, we'd miss some optimizations that 9.5 and earlier found via much
+	 * more roundabout methods.)
+	 */
+	if (list_length(rel->baserestrictinfo) == 1)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) linitial(rel->baserestrictinfo);
+		Expr	   *clause = rinfo->clause;
+
+		if (clause && IsA(clause, Const) &&
+			(((Const *) clause)->constisnull ||
+			 !DatumGetBool(((Const *) clause)->constvalue)))
+			return true;
+	}
+
+	/* Skip further tests if constraint exclusion is disabled for the rel */
 	if (constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
 		(constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
 		 !(rel->reloptkind == RELOPT_OTHER_MEMBER_REL ||

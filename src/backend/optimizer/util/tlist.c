@@ -74,13 +74,12 @@ tlist_member_ignore_relabel(Node *node, List *targetlist)
 /*
  * tlist_member_match_var
  *	  Same as above, except that we match the provided Var on the basis
- *	  of varno/varattno/varlevelsup only, rather than using full equal().
+ *	  of varno/varattno/varlevelsup/vartype only, rather than full equal().
  *
  * This is needed in some cases where we can't be sure of an exact typmod
- * match.  It's probably a good idea to check the vartype anyway, but
- * we leave it to the caller to apply any suitable sanity checks.
+ * match.  For safety, though, we insist on vartype match.
  */
-TargetEntry *
+static TargetEntry *
 tlist_member_match_var(Var *var, List *targetlist)
 {
 	ListCell   *temp;
@@ -94,7 +93,8 @@ tlist_member_match_var(Var *var, List *targetlist)
 			continue;
 		if (var->varno == tlvar->varno &&
 			var->varattno == tlvar->varattno &&
-			var->varlevelsup == tlvar->varlevelsup)
+			var->varlevelsup == tlvar->varlevelsup &&
+			var->vartype == tlvar->vartype)
 			return tlentry;
 	}
 	return NULL;
@@ -316,6 +316,34 @@ tlist_same_collations(List *tlist, List *colCollations, bool junkOK)
 	return true;
 }
 
+/*
+ * apply_tlist_labeling
+ *		Apply the TargetEntry labeling attributes of src_tlist to dest_tlist
+ *
+ * This is useful for reattaching column names etc to a plan's final output
+ * targetlist.
+ */
+void
+apply_tlist_labeling(List *dest_tlist, List *src_tlist)
+{
+	ListCell   *ld,
+			   *ls;
+
+	Assert(list_length(dest_tlist) == list_length(src_tlist));
+	forboth(ld, dest_tlist, ls, src_tlist)
+	{
+		TargetEntry *dest_tle = (TargetEntry *) lfirst(ld);
+		TargetEntry *src_tle = (TargetEntry *) lfirst(ls);
+
+		Assert(dest_tle->resno == src_tle->resno);
+		dest_tle->resname = src_tle->resname;
+		dest_tle->ressortgroupref = src_tle->ressortgroupref;
+		dest_tle->resorigtbl = src_tle->resorigtbl;
+		dest_tle->resorigcol = src_tle->resorigcol;
+		dest_tle->resjunk = src_tle->resjunk;
+	}
+}
+
 
 /*
  * get_sortgroupref_tle
@@ -505,4 +533,120 @@ grouping_is_hashable(List *groupClause)
 			return false;
 	}
 	return true;
+}
+
+
+/*****************************************************************************
+ *		PathTarget manipulation functions
+ *
+ * PathTarget is a somewhat stripped-down version of a full targetlist; it
+ * omits all the TargetEntry decoration except (optionally) sortgroupref data,
+ * and it adds evaluation cost and output data width info.
+ *****************************************************************************/
+
+/*
+ * make_pathtarget_from_tlist
+ *	  Construct a PathTarget equivalent to the given targetlist.
+ *
+ * This leaves the cost and width fields as zeroes.  Most callers will want
+ * to use create_pathtarget(), so as to get those set.
+ */
+PathTarget *
+make_pathtarget_from_tlist(List *tlist)
+{
+	PathTarget *target = (PathTarget *) palloc0(sizeof(PathTarget));
+	int			i;
+	ListCell   *lc;
+
+	target->sortgrouprefs = (Index *) palloc(list_length(tlist) * sizeof(Index));
+
+	i = 0;
+	foreach(lc, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		target->exprs = lappend(target->exprs, tle->expr);
+		target->sortgrouprefs[i] = tle->ressortgroupref;
+		i++;
+	}
+
+	return target;
+}
+
+/*
+ * make_tlist_from_pathtarget
+ *	  Construct a targetlist from a PathTarget.
+ */
+List *
+make_tlist_from_pathtarget(PathTarget *target)
+{
+	List	   *tlist = NIL;
+	int			i;
+	ListCell   *lc;
+
+	i = 0;
+	foreach(lc, target->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+		TargetEntry *tle;
+
+		tle = makeTargetEntry(expr,
+							  i + 1,
+							  NULL,
+							  false);
+		if (target->sortgrouprefs)
+			tle->ressortgroupref = target->sortgrouprefs[i];
+		tlist = lappend(tlist, tle);
+		i++;
+	}
+
+	return tlist;
+}
+
+/*
+ * apply_pathtarget_labeling_to_tlist
+ *		Apply any sortgrouprefs in the PathTarget to matching tlist entries
+ *
+ * Here, we do not assume that the tlist entries are one-for-one with the
+ * PathTarget.  The intended use of this function is to deal with cases
+ * where createplan.c has decided to use some other tlist and we have
+ * to identify what matches exist.
+ */
+void
+apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
+{
+	int			i;
+	ListCell   *lc;
+
+	/* Nothing to do if PathTarget has no sortgrouprefs data */
+	if (target->sortgrouprefs == NULL)
+		return;
+
+	i = 0;
+	foreach(lc, target->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+		TargetEntry *tle;
+
+		if (target->sortgrouprefs[i])
+		{
+			/*
+			 * For Vars, use tlist_member_match_var's weakened matching rule;
+			 * this allows us to deal with some cases where a set-returning
+			 * function has been inlined, so that we now have more knowledge
+			 * about what it returns than we did when the original Var was
+			 * created.  Otherwise, use regular equal() to see if there's a
+			 * matching TLE.  (In current usage, only the Var case is actually
+			 * needed; but it seems best to have sane behavior here for
+			 * non-Vars too.)
+			 */
+			if (expr && IsA(expr, Var))
+				tle = tlist_member_match_var((Var *) expr, tlist);
+			else
+				tle = tlist_member((Node *) expr, tlist);
+			if (tle)
+				tle->ressortgroupref = target->sortgrouprefs[i];
+		}
+		i++;
+	}
 }

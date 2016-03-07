@@ -36,9 +36,7 @@
  * Since query_planner does not handle the toplevel processing (grouping,
  * sorting, etc) it cannot select the best path by itself.  Instead, it
  * returns the RelOptInfo for the top level of joining, and the caller
- * (grouping_planner) can choose one of the surviving paths for the rel.
- * Normally it would choose either the rel's cheapest path, or the cheapest
- * path for the desired sort order.
+ * (grouping_planner) can choose among the surviving paths for the rel.
  *
  * root describes the query to plan
  * tlist is the target list the query should produce
@@ -85,6 +83,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		/* The only path for it is a trivial Result path */
 		add_path(final_rel, (Path *)
 				 create_result_path(final_rel,
+									&(final_rel->reltarget),
 									(List *) parse->jointree->quals));
 
 		/* Select cheapest path (pretty easy in this case...) */
@@ -104,7 +103,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * Init planner lists to empty.
 	 *
 	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
-	 * here; eq_classes and minmax_aggs may contain data already, too.
+	 * here.
 	 */
 	root->join_rel_list = NIL;
 	root->join_rel_hash = NULL;

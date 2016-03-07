@@ -304,8 +304,8 @@ add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
 				 * in our query level.  In this case apply
 				 * flatten_unplanned_rtes.
 				 *
-				 * If it was planned but the plan is dummy, we assume that it
-				 * has been omitted from our plan tree (see
+				 * If it was planned but the result rel is dummy, we assume
+				 * that it has been omitted from our plan tree (see
 				 * set_subquery_pathlist), and recurse to pull up its RTEs.
 				 *
 				 * Otherwise, it should be represented by a SubqueryScan node
@@ -313,17 +313,16 @@ add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
 				 * we process that plan node.
 				 *
 				 * However, if we're recursing, then we should pull up RTEs
-				 * whether the subplan is dummy or not, because we've found
+				 * whether the subquery is dummy or not, because we've found
 				 * that some upper query level is treating this one as dummy,
 				 * and so we won't scan this level's plan tree at all.
 				 */
-				if (rel->subplan == NULL)
+				if (rel->subroot == NULL)
 					flatten_unplanned_rtes(glob, rte);
-				else if (recursing || is_dummy_plan(rel->subplan))
-				{
-					Assert(rel->subroot != NULL);
+				else if (recursing ||
+						 IS_DUMMY_REL(fetch_upper_rel(rel->subroot,
+													  UPPERREL_FINAL, NULL)))
 					add_rtes_to_flat_rtable(rel->subroot, true);
-				}
 			}
 		}
 		rti++;
@@ -979,7 +978,6 @@ set_subqueryscan_references(PlannerInfo *root,
 
 	/* Need to look up the subquery's RelOptInfo, since we need its subroot */
 	rel = find_base_rel(root, plan->scan.scanrelid);
-	Assert(rel->subplan == plan->subplan);
 
 	/* Recursively process the subplan */
 	plan->subplan = set_plan_references(rel->subroot, plan->subplan);
@@ -1386,6 +1384,7 @@ fix_param_node(PlannerInfo *root, Param *p)
  *
  * This consists of incrementing all Vars' varnos by rtoffset,
  * replacing PARAM_MULTIEXPR Params, expanding PlaceHolderVars,
+ * replacing Aggref nodes that should be replaced by initplan output Params,
  * looking up operator opcode info for OpExpr and related nodes,
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
  */
@@ -1399,7 +1398,8 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 
 	if (rtoffset != 0 ||
 		root->multiexpr_params != NIL ||
-		root->glob->lastPHId != 0)
+		root->glob->lastPHId != 0 ||
+		root->minmax_aggs != NIL)
 	{
 		return fix_scan_expr_mutator(node, &context);
 	}
@@ -1409,7 +1409,8 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 		 * If rtoffset == 0, we don't need to change any Vars, and if there
 		 * are no MULTIEXPR subqueries then we don't need to replace
 		 * PARAM_MULTIEXPR Params, and if there are no placeholders anywhere
-		 * we won't need to remove them.  Then it's OK to just scribble on the
+		 * we won't need to remove them, and if there are no minmax Aggrefs we
+		 * won't need to replace them.  Then it's OK to just scribble on the
 		 * input node tree instead of copying (since the only change, filling
 		 * in any unset opfuncid fields, is harmless).  This saves just enough
 		 * cycles to be noticeable on trivial queries.
@@ -1444,6 +1445,28 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 	}
 	if (IsA(node, Param))
 		return fix_param_node(context->root, (Param *) node);
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *aggref = (Aggref *) node;
+
+		/* See if the Aggref should be replaced by a Param */
+		if (context->root->minmax_aggs != NIL &&
+			list_length(aggref->args) == 1)
+		{
+			TargetEntry *curTarget = (TargetEntry *) linitial(aggref->args);
+			ListCell   *lc;
+
+			foreach(lc, context->root->minmax_aggs)
+			{
+				MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
+
+				if (mminfo->aggfnoid == aggref->aggfnoid &&
+					equal(mminfo->target, curTarget->expr))
+					return (Node *) copyObject(mminfo->param);
+			}
+		}
+		/* If no match, just fall through to process it normally */
+	}
 	if (IsA(node, CurrentOfExpr))
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
@@ -2091,8 +2114,9 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 /*
  * fix_upper_expr
  *		Modifies an expression tree so that all Var nodes reference outputs
- *		of a subplan.  Also performs opcode lookup, and adds regclass OIDs to
- *		root->glob->relationOids.
+ *		of a subplan.  Also looks for Aggref nodes that should be replaced
+ *		by initplan output Params.  Also performs opcode lookup, and adds
+ *		regclass OIDs to root->glob->relationOids.
  *
  * This is used to fix up target and qual expressions of non-join upper-level
  * plan nodes, as well as index-only scan nodes.
@@ -2169,6 +2193,28 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	}
 	if (IsA(node, Param))
 		return fix_param_node(context->root, (Param *) node);
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *aggref = (Aggref *) node;
+
+		/* See if the Aggref should be replaced by a Param */
+		if (context->root->minmax_aggs != NIL &&
+			list_length(aggref->args) == 1)
+		{
+			TargetEntry *curTarget = (TargetEntry *) linitial(aggref->args);
+			ListCell   *lc;
+
+			foreach(lc, context->root->minmax_aggs)
+			{
+				MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
+
+				if (mminfo->aggfnoid == aggref->aggfnoid &&
+					equal(mminfo->target, curTarget->expr))
+					return (Node *) copyObject(mminfo->param);
+			}
+		}
+		/* If no match, just fall through to process it normally */
+	}
 	/* Try matching more complex expressions too, if tlist has any */
 	if (context->subplan_itlist->has_non_vars)
 	{

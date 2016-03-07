@@ -1169,7 +1169,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
  * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  */
 void
-cost_subqueryscan(Path *path, PlannerInfo *root,
+cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost;
@@ -1183,17 +1183,18 @@ cost_subqueryscan(Path *path, PlannerInfo *root,
 
 	/* Mark the path with the correct row estimate */
 	if (param_info)
-		path->rows = param_info->ppi_rows;
+		path->path.rows = param_info->ppi_rows;
 	else
-		path->rows = baserel->rows;
+		path->path.rows = baserel->rows;
 
 	/*
 	 * Cost of path is cost of evaluating the subplan, plus cost of evaluating
-	 * any restriction clauses that will be attached to the SubqueryScan node,
-	 * plus cpu_tuple_cost to account for selection and projection overhead.
+	 * any restriction clauses and tlist that will be attached to the
+	 * SubqueryScan node, plus cpu_tuple_cost to account for selection and
+	 * projection overhead.
 	 */
-	path->startup_cost = baserel->subplan->startup_cost;
-	path->total_cost = baserel->subplan->total_cost;
+	path->path.startup_cost = path->subpath->startup_cost;
+	path->path.total_cost = path->subpath->total_cost;
 
 	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
 
@@ -1202,11 +1203,11 @@ cost_subqueryscan(Path *path, PlannerInfo *root,
 	run_cost = cpu_per_tuple * baserel->tuples;
 
 	/* tlist eval costs are paid per output row, not per tuple scanned */
-	startup_cost += path->pathtarget->cost.startup;
-	run_cost += path->pathtarget->cost.per_tuple * path->rows;
+	startup_cost += path->path.pathtarget->cost.startup;
+	run_cost += path->path.pathtarget->cost.per_tuple * path->path.rows;
 
-	path->startup_cost += startup_cost;
-	path->total_cost += startup_cost + run_cost;
+	path->path.startup_cost += startup_cost;
+	path->path.total_cost += startup_cost + run_cost;
 }
 
 /*
@@ -1369,14 +1370,10 @@ cost_ctescan(Path *path, PlannerInfo *root,
  *	  Determines and returns the cost of performing a recursive union,
  *	  and also the estimated output size.
  *
- * We are given Plans for the nonrecursive and recursive terms.
- *
- * Note that the arguments and output are Plans, not Paths as in most of
- * the rest of this module.  That's because we don't bother setting up a
- * Path representation for recursive union --- we have only one way to do it.
+ * We are given Paths for the nonrecursive and recursive terms.
  */
 void
-cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
+cost_recursive_union(Path *runion, Path *nrterm, Path *rterm)
 {
 	Cost		startup_cost;
 	Cost		total_cost;
@@ -1385,7 +1382,7 @@ cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
 	/* We probably have decent estimates for the non-recursive term */
 	startup_cost = nrterm->startup_cost;
 	total_cost = nrterm->total_cost;
-	total_rows = nrterm->plan_rows;
+	total_rows = nrterm->rows;
 
 	/*
 	 * We arbitrarily assume that about 10 recursive iterations will be
@@ -1394,7 +1391,7 @@ cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
 	 * hard to see how to do better.
 	 */
 	total_cost += 10 * rterm->total_cost;
-	total_rows += 10 * rterm->plan_rows;
+	total_rows += 10 * rterm->rows;
 
 	/*
 	 * Also charge cpu_tuple_cost per row to account for the costs of
@@ -1405,8 +1402,9 @@ cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
 
 	runion->startup_cost = startup_cost;
 	runion->total_cost = total_cost;
-	runion->plan_rows = total_rows;
-	runion->plan_width = Max(nrterm->plan_width, rterm->plan_width);
+	runion->rows = total_rows;
+	runion->pathtarget->width = Max(nrterm->pathtarget->width,
+									rterm->pathtarget->width);
 }
 
 /*
@@ -3996,8 +3994,8 @@ calc_joinrel_size_estimate(PlannerInfo *root,
  *		Set the size estimates for a base relation that is a subquery.
  *
  * The rel's targetlist and restrictinfo list must have been constructed
- * already, and the plan for the subquery must have been completed.
- * We look at the subquery's plan and PlannerInfo to extract data.
+ * already, and the Paths for the subquery must have been completed.
+ * We look at the subquery's PlannerInfo to extract data.
  *
  * We set the same fields as set_baserel_size_estimates.
  */
@@ -4005,6 +4003,7 @@ void
 set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
 	PlannerInfo *subroot = rel->subroot;
+	RelOptInfo *sub_final_rel;
 	RangeTblEntry *rte PG_USED_FOR_ASSERTS_ONLY;
 	ListCell   *lc;
 
@@ -4013,8 +4012,12 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_SUBQUERY);
 
-	/* Copy raw number of output rows from subplan */
-	rel->tuples = rel->subplan->plan_rows;
+	/*
+	 * Copy raw number of output rows from subquery.  All of its paths should
+	 * have the same output rowcount, so just look at cheapest-total.
+	 */
+	sub_final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+	rel->tuples = sub_final_rel->cheapest_total_path->rows;
 
 	/*
 	 * Compute per-output-column width estimates by examining the subquery's
@@ -4144,13 +4147,13 @@ set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  *		Set the size estimates for a base relation that is a CTE reference.
  *
  * The rel's targetlist and restrictinfo list must have been constructed
- * already, and we need the completed plan for the CTE (if a regular CTE)
- * or the non-recursive term (if a self-reference).
+ * already, and we need an estimate of the number of rows returned by the CTE
+ * (if a regular CTE) or the non-recursive term (if a self-reference).
  *
  * We set the same fields as set_baserel_size_estimates.
  */
 void
-set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan)
+set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, double cte_rows)
 {
 	RangeTblEntry *rte;
 
@@ -4165,12 +4168,12 @@ set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan)
 		 * In a self-reference, arbitrarily assume the average worktable size
 		 * is about 10 times the nonrecursive term's size.
 		 */
-		rel->tuples = 10 * cteplan->plan_rows;
+		rel->tuples = 10 * cte_rows;
 	}
 	else
 	{
-		/* Otherwise just believe the CTE plan's output estimate */
-		rel->tuples = cteplan->plan_rows;
+		/* Otherwise just believe the CTE's rowcount estimate */
+		rel->tuples = cte_rows;
 	}
 
 	/* Now estimate number of output rows, etc */
@@ -4225,7 +4228,7 @@ set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  * any better number.
  *
  * The per-attribute width estimates are cached for possible re-use while
- * building join relations.
+ * building join relations or post-scan/join pathtargets.
  */
 static void
 set_rel_width(PlannerInfo *root, RelOptInfo *rel)
@@ -4371,6 +4374,91 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 
 	Assert(tuple_width >= 0);
 	rel->reltarget.width = tuple_width;
+}
+
+/*
+ * set_pathtarget_cost_width
+ *		Set the estimated eval cost and output width of a PathTarget tlist.
+ *
+ * As a notational convenience, returns the same PathTarget pointer passed in.
+ *
+ * Most, though not quite all, uses of this function occur after we've run
+ * set_rel_width() for base relations; so we can usually obtain cached width
+ * estimates for Vars.  If we can't, fall back on datatype-based width
+ * estimates.  Present early-planning uses of PathTargets don't need accurate
+ * widths badly enough to justify going to the catalogs for better data.
+ */
+PathTarget *
+set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target)
+{
+	int32		tuple_width = 0;
+	ListCell   *lc;
+
+	/* Vars are assumed to have cost zero, but other exprs do not */
+	target->cost.startup = 0;
+	target->cost.per_tuple = 0;
+
+	foreach(lc, target->exprs)
+	{
+		Node	   *node = (Node *) lfirst(lc);
+
+		if (IsA(node, Var))
+		{
+			Var		   *var = (Var *) node;
+			int32		item_width;
+
+			/* We should not see any upper-level Vars here */
+			Assert(var->varlevelsup == 0);
+
+			/* Try to get data from RelOptInfo cache */
+			if (var->varno < root->simple_rel_array_size)
+			{
+				RelOptInfo *rel = root->simple_rel_array[var->varno];
+
+				if (rel != NULL &&
+					var->varattno >= rel->min_attr &&
+					var->varattno <= rel->max_attr)
+				{
+					int			ndx = var->varattno - rel->min_attr;
+
+					if (rel->attr_widths[ndx] > 0)
+					{
+						tuple_width += rel->attr_widths[ndx];
+						continue;
+					}
+				}
+			}
+
+			/*
+			 * No cached data available, so estimate using just the type info.
+			 */
+			item_width = get_typavgwidth(var->vartype, var->vartypmod);
+			Assert(item_width > 0);
+			tuple_width += item_width;
+		}
+		else
+		{
+			/*
+			 * Handle general expressions using type info.
+			 */
+			int32		item_width;
+			QualCost	cost;
+
+			item_width = get_typavgwidth(exprType(node), exprTypmod(node));
+			Assert(item_width > 0);
+			tuple_width += item_width;
+
+			/* Account for cost, too */
+			cost_qual_eval_node(&cost, node, root);
+			target->cost.startup += cost.startup;
+			target->cost.per_tuple += cost.per_tuple;
+		}
+	}
+
+	Assert(tuple_width >= 0);
+	target->width = tuple_width;
+
+	return target;
 }
 
 /*

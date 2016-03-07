@@ -407,17 +407,20 @@ ExecSupportsMarkRestore(Path *pathnode)
 		case T_Result:
 
 			/*
-			 * Although Result supports mark/restore if it has a child plan
-			 * that does, we presently come here only for ResultPath nodes,
-			 * which represent Result plans without a child plan.  So there is
-			 * nothing to recurse to and we can just say "false".  (This means
-			 * that Result's support for mark/restore is in fact dead code. We
-			 * keep it since it's not much code, and someday the planner might
-			 * be smart enough to use it.  That would require making this
-			 * function smarter too, of course.)
+			 * Result supports mark/restore iff it has a child plan that does.
+			 *
+			 * We have to be careful here because there is more than one Path
+			 * type that can produce a Result plan node.
 			 */
-			Assert(IsA(pathnode, ResultPath));
-			return false;
+			if (IsA(pathnode, ProjectionPath))
+				return ExecSupportsMarkRestore(((ProjectionPath *) pathnode)->subpath);
+			else if (IsA(pathnode, MinMaxAggPath))
+				return false;	/* childless Result */
+			else
+			{
+				Assert(IsA(pathnode, ResultPath));
+				return false;	/* childless Result */
+			}
 
 		default:
 			break;

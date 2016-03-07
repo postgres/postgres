@@ -867,9 +867,9 @@ _copyAgg(const Agg *from)
 	CopyPlanFields((const Plan *) from, (Plan *) newnode);
 
 	COPY_SCALAR_FIELD(aggstrategy);
-	COPY_SCALAR_FIELD(numCols);
 	COPY_SCALAR_FIELD(combineStates);
 	COPY_SCALAR_FIELD(finalizeAggs);
+	COPY_SCALAR_FIELD(numCols);
 	if (from->numCols > 0)
 	{
 		COPY_POINTER_FIELD(grpColIdx, from->numCols * sizeof(AttrNumber));

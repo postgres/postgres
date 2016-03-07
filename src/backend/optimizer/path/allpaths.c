@@ -37,6 +37,7 @@
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
+#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
@@ -97,7 +98,6 @@ static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
 									  RelOptInfo *rel,
 									  Relids required_outer);
 static List *accumulate_append_subpath(List *subpaths, Path *path);
-static void set_dummy_rel_pathlist(RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -1507,8 +1507,10 @@ accumulate_append_subpath(List *subpaths, Path *path)
  *
  * Rather than inventing a special "dummy" path type, we represent this as an
  * AppendPath with no members (see also IS_DUMMY_PATH/IS_DUMMY_REL macros).
+ *
+ * This is exported because inheritance_planner() has need for it.
  */
-static void
+void
 set_dummy_rel_pathlist(RelOptInfo *rel)
 {
 	/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
@@ -1554,15 +1556,15 @@ has_multiple_baserels(PlannerInfo *root)
 
 /*
  * set_subquery_pathlist
- *		Build the (single) access path for a subquery RTE
+ *		Generate SubqueryScan access paths for a subquery RTE
  *
  * We don't currently support generating parameterized paths for subqueries
  * by pushing join clauses down into them; it seems too expensive to re-plan
- * the subquery multiple times to consider different alternatives.  So the
- * subquery will have exactly one path.  (The path will be parameterized
- * if the subquery contains LATERAL references, otherwise not.)  Since there's
- * no freedom of action here, there's no need for a separate set_subquery_size
- * phase: we just make the path right away.
+ * the subquery multiple times to consider different alternatives.
+ * (XXX that could stand to be reconsidered, now that we use Paths.)
+ * So the paths made here will be parameterized if the subquery contains
+ * LATERAL references, otherwise not.  As long as that's true, there's no need
+ * for a separate set_subquery_size phase: just make the paths right away.
  */
 static void
 set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -1573,8 +1575,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	Relids		required_outer;
 	pushdown_safety_info safetyInfo;
 	double		tuple_fraction;
-	PlannerInfo *subroot;
-	List	   *pathkeys;
+	RelOptInfo *sub_final_rel;
+	ListCell   *lc;
 
 	/*
 	 * Must copy the Query so that planning doesn't mess up the RTE contents
@@ -1685,12 +1687,10 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/* plan_params should not be in use in current query level */
 	Assert(root->plan_params == NIL);
 
-	/* Generate the plan for the subquery */
-	rel->subplan = subquery_planner(root->glob, subquery,
+	/* Generate a subroot and Paths for the subquery */
+	rel->subroot = subquery_planner(root->glob, subquery,
 									root,
-									false, tuple_fraction,
-									&subroot);
-	rel->subroot = subroot;
+									false, tuple_fraction);
 
 	/* Isolate the params needed by this specific subplan */
 	rel->subplan_params = root->plan_params;
@@ -1698,23 +1698,44 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * It's possible that constraint exclusion proved the subquery empty. If
-	 * so, it's convenient to turn it back into a dummy path so that we will
+	 * so, it's desirable to produce an unadorned dummy path so that we will
 	 * recognize appropriate optimizations at this query level.
 	 */
-	if (is_dummy_plan(rel->subplan))
+	sub_final_rel = fetch_upper_rel(rel->subroot, UPPERREL_FINAL, NULL);
+
+	if (IS_DUMMY_REL(sub_final_rel))
 	{
 		set_dummy_rel_pathlist(rel);
 		return;
 	}
 
-	/* Mark rel with estimated output rows, width, etc */
+	/*
+	 * Mark rel with estimated output rows, width, etc.  Note that we have to
+	 * do this before generating outer-query paths, else cost_subqueryscan is
+	 * not happy.
+	 */
 	set_subquery_size_estimates(root, rel);
 
-	/* Convert subquery pathkeys to outer representation */
-	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
+	/*
+	 * For each Path that subquery_planner produced, make a SubqueryScanPath
+	 * in the outer query.
+	 */
+	foreach(lc, sub_final_rel->pathlist)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+		List	   *pathkeys;
 
-	/* Generate appropriate path */
-	add_path(rel, create_subqueryscan_path(root, rel, pathkeys, required_outer));
+		/* Convert subpath's pathkeys to outer representation */
+		pathkeys = convert_subquery_pathkeys(root,
+											 rel,
+											 subpath->pathkeys,
+							make_tlist_from_pathtarget(subpath->pathtarget));
+
+		/* Generate outer path using this subpath */
+		add_path(rel, (Path *)
+				 create_subqueryscan_path(root, rel, subpath,
+										  pathkeys, required_outer));
+	}
 }
 
 /*
@@ -1858,7 +1879,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	cteplan = (Plan *) list_nth(root->glob->subplans, plan_id - 1);
 
 	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, cteplan);
+	set_cte_size_estimates(root, rel, cteplan->plan_rows);
 
 	/*
 	 * We don't support pushing join clauses into the quals of a CTE scan, but
@@ -1881,13 +1902,13 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	Plan	   *cteplan;
+	Path	   *ctepath;
 	PlannerInfo *cteroot;
 	Index		levelsup;
 	Relids		required_outer;
 
 	/*
-	 * We need to find the non-recursive term's plan, which is in the plan
+	 * We need to find the non-recursive term's path, which is in the plan
 	 * level that's processing the recursive UNION, which is one level *below*
 	 * where the CTE comes from.
 	 */
@@ -1902,12 +1923,12 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		if (!cteroot)			/* shouldn't happen */
 			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
 	}
-	cteplan = cteroot->non_recursive_plan;
-	if (!cteplan)				/* shouldn't happen */
-		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
+	ctepath = cteroot->non_recursive_path;
+	if (!ctepath)				/* shouldn't happen */
+		elog(ERROR, "could not find path for CTE \"%s\"", rte->ctename);
 
 	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, cteplan);
+	set_cte_size_estimates(root, rel, ctepath->rows);
 
 	/*
 	 * We don't support pushing join clauses into the quals of a worktable
@@ -2859,6 +2880,9 @@ print_path(PlannerInfo *root, Path *path, int indent)
 		case T_TidPath:
 			ptype = "TidScan";
 			break;
+		case T_SubqueryScanPath:
+			ptype = "SubqueryScanScan";
+			break;
 		case T_ForeignPath:
 			ptype = "ForeignScan";
 			break;
@@ -2882,6 +2906,55 @@ print_path(PlannerInfo *root, Path *path, int indent)
 		case T_GatherPath:
 			ptype = "Gather";
 			subpath = ((GatherPath *) path)->subpath;
+			break;
+		case T_ProjectionPath:
+			ptype = "Projection";
+			subpath = ((ProjectionPath *) path)->subpath;
+			break;
+		case T_SortPath:
+			ptype = "Sort";
+			subpath = ((SortPath *) path)->subpath;
+			break;
+		case T_GroupPath:
+			ptype = "Group";
+			subpath = ((GroupPath *) path)->subpath;
+			break;
+		case T_UpperUniquePath:
+			ptype = "UpperUnique";
+			subpath = ((UpperUniquePath *) path)->subpath;
+			break;
+		case T_AggPath:
+			ptype = "Agg";
+			subpath = ((AggPath *) path)->subpath;
+			break;
+		case T_GroupingSetsPath:
+			ptype = "GroupingSets";
+			subpath = ((GroupingSetsPath *) path)->subpath;
+			break;
+		case T_MinMaxAggPath:
+			ptype = "MinMaxAgg";
+			break;
+		case T_WindowAggPath:
+			ptype = "WindowAgg";
+			subpath = ((WindowAggPath *) path)->subpath;
+			break;
+		case T_SetOpPath:
+			ptype = "SetOp";
+			subpath = ((SetOpPath *) path)->subpath;
+			break;
+		case T_RecursiveUnionPath:
+			ptype = "RecursiveUnion";
+			break;
+		case T_LockRowsPath:
+			ptype = "LockRows";
+			subpath = ((LockRowsPath *) path)->subpath;
+			break;
+		case T_ModifyTablePath:
+			ptype = "ModifyTable";
+			break;
+		case T_LimitPath:
+			ptype = "Limit";
+			subpath = ((LimitPath *) path)->subpath;
 			break;
 		case T_NestPath:
 			ptype = "NestLoop";

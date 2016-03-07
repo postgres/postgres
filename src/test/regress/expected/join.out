@@ -3949,39 +3949,34 @@ select d.* from d left join (select distinct * from b) s
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
-              QUERY PLAN               
----------------------------------------
- Merge Left Join
-   Merge Cond: (d.a = s.id)
+                QUERY PLAN                
+------------------------------------------
+ Merge Right Join
+   Merge Cond: (b.id = d.a)
+   ->  Group
+         Group Key: b.id
+         ->  Index Scan using b_pkey on b
    ->  Sort
          Sort Key: d.a
          ->  Seq Scan on d
-   ->  Sort
-         Sort Key: s.id
-         ->  Subquery Scan on s
-               ->  HashAggregate
-                     Group Key: b.id
-                     ->  Seq Scan on b
-(11 rows)
+(8 rows)
 
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
-                 QUERY PLAN                  
----------------------------------------------
- Merge Left Join
-   Merge Cond: (d.a = s.id)
+              QUERY PLAN              
+--------------------------------------
+ Merge Right Join
+   Merge Cond: (b.id = d.a)
+   ->  Unique
+         ->  Sort
+               Sort Key: b.id, b.c_id
+               ->  Seq Scan on b
    ->  Sort
          Sort Key: d.a
          ->  Seq Scan on d
-   ->  Sort
-         Sort Key: s.id
-         ->  Subquery Scan on s
-               ->  HashAggregate
-                     Group Key: b.id, b.c_id
-                     ->  Seq Scan on b
-(11 rows)
+(9 rows)
 
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION

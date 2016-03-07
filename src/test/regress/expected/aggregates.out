@@ -806,8 +806,7 @@ explain (costs off)
   select distinct min(f1), max(f1) from minmaxtest;
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
- HashAggregate
-   Group Key: $0, $1
+ Unique
    InitPlan 1 (returns $0)
      ->  Limit
            ->  Merge Append
@@ -832,8 +831,10 @@ explain (costs off)
                        Index Cond: (f1 IS NOT NULL)
                  ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
                        Index Cond: (f1 IS NOT NULL)
-   ->  Result
-(27 rows)
+   ->  Sort
+         Sort Key: ($0), ($1)
+         ->  Result
+(28 rows)
 
 select distinct min(f1), max(f1) from minmaxtest;
  min | max 

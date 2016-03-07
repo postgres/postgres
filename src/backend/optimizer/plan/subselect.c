@@ -478,8 +478,10 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	Query	   *subquery;
 	bool		simple_exists = false;
 	double		tuple_fraction;
-	Plan	   *plan;
 	PlannerInfo *subroot;
+	RelOptInfo *final_rel;
+	Path	   *best_path;
+	Plan	   *plan;
 	List	   *plan_params;
 	Node	   *result;
 
@@ -527,17 +529,23 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	/* plan_params should not be in use in current query level */
 	Assert(root->plan_params == NIL);
 
-	/*
-	 * Generate the plan for the subquery.
-	 */
-	plan = subquery_planner(root->glob, subquery,
-							root,
-							false, tuple_fraction,
-							&subroot);
+	/* Generate Paths for the subquery */
+	subroot = subquery_planner(root->glob, subquery,
+							   root,
+							   false, tuple_fraction);
 
 	/* Isolate the params needed by this specific subplan */
 	plan_params = root->plan_params;
 	root->plan_params = NIL;
+
+	/*
+	 * Select best Path and turn it into a Plan.  At least for now, there
+	 * seems no reason to postpone doing that.
+	 */
+	final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+	best_path = get_cheapest_fractional_path(final_rel, tuple_fraction);
+
+	plan = create_plan(subroot, best_path);
 
 	/* And convert to SubPlan or InitPlan format. */
 	result = build_subplan(root, plan, subroot, plan_params,
@@ -568,17 +576,23 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 										 &newtestexpr, &paramIds);
 		if (subquery)
 		{
-			/* Generate the plan for the ANY subquery; we'll need all rows */
-			plan = subquery_planner(root->glob, subquery,
-									root,
-									false, 0.0,
-									&subroot);
+			/* Generate Paths for the ANY subquery; we'll need all rows */
+			subroot = subquery_planner(root->glob, subquery,
+									   root,
+									   false, 0.0);
 
 			/* Isolate the params needed by this specific subplan */
 			plan_params = root->plan_params;
 			root->plan_params = NIL;
 
+			/* Select best Path and turn it into a Plan */
+			final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+			best_path = final_rel->cheapest_total_path;
+
+			plan = create_plan(subroot, best_path);
+
 			/* Now we can check if it'll fit in work_mem */
+			/* XXX can we check this at the Path stage? */
 			if (subplan_is_hashable(plan))
 			{
 				SubPlan    *hashplan;
@@ -1133,8 +1147,10 @@ SS_process_ctes(PlannerInfo *root)
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
 		CmdType		cmdType = ((Query *) cte->ctequery)->commandType;
 		Query	   *subquery;
-		Plan	   *plan;
 		PlannerInfo *subroot;
+		RelOptInfo *final_rel;
+		Path	   *best_path;
+		Plan	   *plan;
 		SubPlan    *splan;
 		int			paramid;
 
@@ -1158,13 +1174,12 @@ SS_process_ctes(PlannerInfo *root)
 		Assert(root->plan_params == NIL);
 
 		/*
-		 * Generate the plan for the CTE query.  Always plan for full
-		 * retrieval --- we don't have enough info to predict otherwise.
+		 * Generate Paths for the CTE query.  Always plan for full retrieval
+		 * --- we don't have enough info to predict otherwise.
 		 */
-		plan = subquery_planner(root->glob, subquery,
-								root,
-								cte->cterecursive, 0.0,
-								&subroot);
+		subroot = subquery_planner(root->glob, subquery,
+								   root,
+								   cte->cterecursive, 0.0);
 
 		/*
 		 * Since the current query level doesn't yet contain any RTEs, it
@@ -1173,6 +1188,15 @@ SS_process_ctes(PlannerInfo *root)
 		 */
 		if (root->plan_params)
 			elog(ERROR, "unexpected outer reference in CTE query");
+
+		/*
+		 * Select best Path and turn it into a Plan.  At least for now, there
+		 * seems no reason to postpone doing that.
+		 */
+		final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+		best_path = final_rel->cheapest_total_path;
+
+		plan = create_plan(subroot, best_path);
 
 		/*
 		 * Make a SubPlan node for it.  This is just enough unlike
@@ -2109,35 +2133,70 @@ SS_identify_outer_params(PlannerInfo *root)
 }
 
 /*
+ * SS_charge_for_initplans - account for cost of initplans in Path costs
+ *
+ * If any initPlans have been created in the current query level, they will
+ * get attached to the Plan tree created from whichever Path we select from
+ * the given rel; so increment all the rel's Paths' costs to account for them.
+ *
+ * This is separate from SS_attach_initplans because we might conditionally
+ * create more initPlans during create_plan(), depending on which Path we
+ * select.  However, Paths that would generate such initPlans are expected
+ * to have included their cost already.
+ */
+void
+SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
+{
+	Cost		initplan_cost;
+	ListCell   *lc;
+
+	/* Nothing to do if no initPlans */
+	if (root->init_plans == NIL)
+		return;
+
+	/*
+	 * Compute the cost increment just once, since it will be the same for all
+	 * Paths.  We assume each initPlan gets run once during top plan startup.
+	 * This is a conservative overestimate, since in fact an initPlan might be
+	 * executed later than plan startup, or even not at all.
+	 */
+	initplan_cost = 0;
+	foreach(lc, root->init_plans)
+	{
+		SubPlan    *initsubplan = (SubPlan *) lfirst(lc);
+
+		initplan_cost += initsubplan->startup_cost + initsubplan->per_call_cost;
+	}
+
+	/*
+	 * Now adjust the costs.
+	 */
+	foreach(lc, final_rel->pathlist)
+	{
+		Path	   *path = (Path *) lfirst(lc);
+
+		path->startup_cost += initplan_cost;
+		path->total_cost += initplan_cost;
+	}
+
+	/* We needn't do set_cheapest() here, caller will do it */
+}
+
+/*
  * SS_attach_initplans - attach initplans to topmost plan node
  *
- * Attach any initplans created in the current query level to the topmost plan
- * node for the query level, and increment that node's cost to account for
- * them.  (The initPlans could actually go in any node at or above where
- * they're referenced, but there seems no reason to put them any lower than
- * the topmost node for the query level.)
+ * Attach any initplans created in the current query level to the specified
+ * plan node, which should normally be the topmost node for the query level.
+ * (The initPlans could actually go in any node at or above where they're
+ * referenced; but there seems no reason to put them any lower than the
+ * topmost node, so we don't bother to track exactly where they came from.)
+ * We do not touch the plan node's cost; the initplans should have been
+ * accounted for in path costing.
  */
 void
 SS_attach_initplans(PlannerInfo *root, Plan *plan)
 {
-	ListCell   *lc;
-
 	plan->initPlan = root->init_plans;
-	foreach(lc, plan->initPlan)
-	{
-		SubPlan    *initsubplan = (SubPlan *) lfirst(lc);
-		Cost		initplan_cost;
-
-		/*
-		 * Assume each initPlan gets run once during top plan startup.  This
-		 * is a conservative overestimate, since in fact an initPlan might be
-		 * executed later than plan startup, or even not at all.
-		 */
-		initplan_cost = initsubplan->startup_cost + initsubplan->per_call_cost;
-
-		plan->startup_cost += initplan_cost;
-		plan->total_cost += initplan_cost;
-	}
 }
 
 /*
@@ -2298,7 +2357,6 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 
 				/* We must run SS_finalize_plan on the subquery */
 				rel = find_base_rel(root, sscan->scan.scanrelid);
-				Assert(rel->subplan == sscan->subplan);
 				SS_finalize_plan(rel->subroot, sscan->subplan);
 
 				/* Now we can add its extParams to the parent's params */
@@ -2740,21 +2798,35 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 }
 
 /*
- * SS_make_initplan_from_plan - given a plan tree, make it an InitPlan
+ * SS_make_initplan_output_param - make a Param for an initPlan's output
  *
  * The plan is expected to return a scalar value of the given type/collation.
- * We build an EXPR_SUBLINK SubPlan node and put it into the initplan
- * list for the outer query level.  A Param that represents the initplan's
- * output is returned.
+ *
+ * Note that in some cases the initplan may not ever appear in the finished
+ * plan tree.  If that happens, we'll have wasted a PARAM_EXEC slot, which
+ * is no big deal.
  */
 Param *
+SS_make_initplan_output_param(PlannerInfo *root,
+							  Oid resulttype, int32 resulttypmod,
+							  Oid resultcollation)
+{
+	return generate_new_param(root, resulttype, resulttypmod, resultcollation);
+}
+
+/*
+ * SS_make_initplan_from_plan - given a plan tree, make it an InitPlan
+ *
+ * We build an EXPR_SUBLINK SubPlan node and put it into the initplan
+ * list for the outer query level.  A Param that represents the initplan's
+ * output has already been assigned using SS_make_initplan_output_param.
+ */
+void
 SS_make_initplan_from_plan(PlannerInfo *root,
 						   PlannerInfo *subroot, Plan *plan,
-						   Oid resulttype, int32 resulttypmod,
-						   Oid resultcollation)
+						   Param *prm)
 {
 	SubPlan    *node;
-	Param	   *prm;
 
 	/*
 	 * Add the subplan and its PlannerInfo to the global lists.
@@ -2769,9 +2841,12 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	 */
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
+	node->plan_id = list_length(root->glob->subplans);
+	node->plan_name = psprintf("InitPlan %d (returns $%d)",
+							   node->plan_id, prm->paramid);
 	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod,
 					   &node->firstColCollation);
-	node->plan_id = list_length(root->glob->subplans);
+	node->setParam = list_make1_int(prm->paramid);
 
 	root->init_plans = lappend(root->init_plans, node);
 
@@ -2780,17 +2855,6 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	 * parParam and args lists remain empty.
 	 */
 
+	/* Set costs of SubPlan using info from the plan tree */
 	cost_subplan(subroot, node, plan);
-
-	/*
-	 * Make a Param that will be the subplan's output.
-	 */
-	prm = generate_new_param(root, resulttype, resulttypmod, resultcollation);
-	node->setParam = list_make1_int(prm->paramid);
-
-	/* Label the subplan for EXPLAIN purposes */
-	node->plan_name = psprintf("InitPlan %d (returns $%d)",
-							   node->plan_id, prm->paramid);
-
-	return prm;
 }

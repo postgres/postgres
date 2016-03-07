@@ -1997,10 +1997,10 @@ _readAgg(void)
 	ReadCommonPlan(&local_node->plan);
 
 	READ_ENUM_FIELD(aggstrategy, AggStrategy);
-	READ_INT_FIELD(numCols);
-	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
 	READ_BOOL_FIELD(combineStates);
 	READ_BOOL_FIELD(finalizeAggs);
+	READ_INT_FIELD(numCols);
+	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
 	READ_OID_ARRAY(grpOperators, local_node->numCols);
 	READ_LONG_FIELD(numGroups);
 	READ_NODE_FIELD(groupingSets);
