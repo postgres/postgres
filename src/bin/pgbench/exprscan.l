@@ -35,6 +35,9 @@ static int expr_col = 0;
 %option warn
 %option prefix="expr_yy"
 
+alpha			[a-zA-Z_]
+digit			[0-9]
+alnum			[a-zA-Z0-9_]
 space			[ \t\r\f]
 
 %%
@@ -48,17 +51,17 @@ space			[ \t\r\f]
 ")"				{ yycol += yyleng; return ')'; }
 ","				{ yycol += yyleng; return ','; }
 
-:[a-zA-Z0-9_]+	{
+:{alnum}+		{
 					yycol += yyleng;
 					yylval.str = pg_strdup(yytext + 1);
 					return VARIABLE;
 				}
-[0-9]+			{
+{digit}+		{
 					yycol += yyleng;
 					yylval.ival = strtoint64(yytext);
 					return INTEGER;
 				}
-[a-zA-Z0-9_]+   {
+{alpha}{alnum}+	{
 					yycol += yyleng;
 					yylval.str = pg_strdup(yytext);
 					return FUNCTION;
@@ -107,8 +110,8 @@ expr_scanner_init(const char *str, const char *source,
 	expr_command = (char *) cmd;
 	expr_col = (int) ecol;
 
-	/* reset column count for this scan */
-	yycol = 0;
+	/* reset error pointers for this scan */
+	yycol = yyline = 0;
 
 	/*
 	 * Might be left over after error
