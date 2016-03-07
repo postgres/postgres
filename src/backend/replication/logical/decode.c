@@ -625,7 +625,8 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
 	{
-		Size		tuplelen = r->xl_len - SizeOfHeapInsert;
+		Size		datalen = r->xl_len - SizeOfHeapInsert;
+		Size		tuplelen = datalen - SizeOfHeapHeader;
 
 		Assert(r->xl_len > (SizeOfHeapInsert + SizeOfHeapHeader));
 
@@ -633,7 +634,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapInsert,
-						tuplelen, change->data.tp.newtuple);
+						datalen, change->data.tp.newtuple);
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
@@ -670,6 +671,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
 	{
+		Size		datalen;
 		Size		tuplelen;
 		xl_heap_header_len xlhdr;
 
@@ -678,12 +680,13 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		memcpy(&xlhdr, data, sizeof(xlhdr));
 		data += offsetof(xl_heap_header_len, header);
 
-		tuplelen = xlhdr.t_len + SizeOfHeapHeader;
+		datalen = xlhdr.t_len + SizeOfHeapHeader;
+		tuplelen = xlhdr.t_len;
 
 		change->data.tp.newtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
-		DecodeXLogTuple(data, tuplelen, change->data.tp.newtuple);
+		DecodeXLogTuple(data, datalen, change->data.tp.newtuple);
 		/* skip over the rest of the tuple header */
 		data += SizeOfHeapHeader;
 		/* skip over the tuple data */
@@ -692,18 +695,20 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
 	{
+		Size		datalen;
 		Size		tuplelen;
 		xl_heap_header_len xlhdr;
 
 		memcpy(&xlhdr, data, sizeof(xlhdr));
 		data += offsetof(xl_heap_header_len, header);
 
-		tuplelen = xlhdr.t_len + SizeOfHeapHeader;
+		datalen = xlhdr.t_len + SizeOfHeapHeader;
+		tuplelen = xlhdr.t_len;
 
 		change->data.tp.oldtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
-		DecodeXLogTuple(data, tuplelen, change->data.tp.oldtuple);
+		DecodeXLogTuple(data, datalen, change->data.tp.oldtuple);
 #ifdef NOT_USED
 		data += SizeOfHeapHeader;
 		data += xlhdr.t_len;
@@ -741,15 +746,16 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	/* old primary key stored */
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
 	{
-		Size		len = r->xl_len - SizeOfHeapDelete;
+		Size		datalen = r->xl_len - SizeOfHeapDelete;
+		Size		tuplelen = datalen - SizeOfHeapHeader;
 
 		Assert(r->xl_len > (SizeOfHeapDelete + SizeOfHeapHeader));
 
 		change->data.tp.oldtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, len);
+			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapDelete,
-						len, change->data.tp.oldtuple);
+						datalen, change->data.tp.oldtuple);
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
