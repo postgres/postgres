@@ -607,13 +607,14 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	if (xlrec->flags & XLH_INSERT_CONTAINS_NEW_TUPLE)
 	{
-		Size		tuplelen;
-		char	   *tupledata = XLogRecGetBlockData(r, 0, &tuplelen);
+		Size		datalen;
+		char	   *tupledata = XLogRecGetBlockData(r, 0, &datalen);
+		Size		tuplelen = datalen - SizeOfHeapHeader;
 
 		change->data.tp.newtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
-		DecodeXLogTuple(tupledata, tuplelen, change->data.tp.newtuple);
+		DecodeXLogTuple(tupledata, datalen, change->data.tp.newtuple);
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
@@ -634,7 +635,6 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	xl_heap_update *xlrec;
 	ReorderBufferChange *change;
 	char	   *data;
-	Size		datalen;
 	RelFileNode target_node;
 
 	xlrec = (xl_heap_update *) XLogRecGetData(r);
@@ -655,22 +655,31 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	if (xlrec->flags & XLH_UPDATE_CONTAINS_NEW_TUPLE)
 	{
+		Size		datalen;
+		Size		tuplelen;
+
 		data = XLogRecGetBlockData(r, 0, &datalen);
 
+		tuplelen = datalen - SizeOfHeapHeader;
+
 		change->data.tp.newtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, datalen);
+			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple(data, datalen, change->data.tp.newtuple);
 	}
 
 	if (xlrec->flags & XLH_UPDATE_CONTAINS_OLD)
 	{
+		Size		datalen;
+		Size		tuplelen;
+
 		/* caution, remaining data in record is not aligned */
 		data = XLogRecGetData(r) + SizeOfHeapUpdate;
 		datalen = XLogRecGetDataLen(r) - SizeOfHeapUpdate;
+		tuplelen = datalen - SizeOfHeapHeader;
 
 		change->data.tp.oldtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, datalen);
+			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple(data, datalen, change->data.tp.oldtuple);
 	}
@@ -720,15 +729,16 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	/* old primary key stored */
 	if (xlrec->flags & XLH_DELETE_CONTAINS_OLD)
 	{
-		Size		len = XLogRecGetDataLen(r) - SizeOfHeapDelete;
+		Size		datalen = XLogRecGetDataLen(r) - SizeOfHeapDelete;
+		Size		tuplelen = datalen - SizeOfHeapHeader;
 
 		Assert(XLogRecGetDataLen(r) > (SizeOfHeapDelete + SizeOfHeapHeader));
 
 		change->data.tp.oldtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, len);
+			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapDelete,
-						len, change->data.tp.oldtuple);
+						datalen, change->data.tp.oldtuple);
 	}
 
 	change->data.tp.clear_toast_afterwards = true;

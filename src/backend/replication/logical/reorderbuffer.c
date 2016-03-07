@@ -471,12 +471,15 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 		rb->nr_cached_tuplebufs--;
 		tuple = slist_container(ReorderBufferTupleBuf, node,
 								slist_pop_head_node(&rb->cached_tuplebufs));
+		Assert(tuple->alloc_tuple_size == MaxHeapTupleSize);
 #ifdef USE_ASSERT_CHECKING
 		memset(&tuple->tuple, 0xa9, sizeof(HeapTupleData));
+		VALGRIND_MAKE_MEM_UNDEFINED(&tuple->tuple, sizeof(HeapTupleData));
 #endif
 		tuple->tuple.t_data = ReorderBufferTupleBufData(tuple);
 #ifdef USE_ASSERT_CHECKING
 		memset(tuple->tuple.t_data, 0xa8, tuple->alloc_tuple_size);
+		VALGRIND_MAKE_MEM_UNDEFINED(tuple->tuple.t_data, tuple->alloc_tuple_size);
 #endif
 	}
 	else
@@ -2152,7 +2155,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					data += sizeof(HeapTupleData);
 
 					memcpy(data, newtup->tuple.t_data, newlen);
-					data += oldlen;
+					data += newlen;
 				}
 				break;
 			}
