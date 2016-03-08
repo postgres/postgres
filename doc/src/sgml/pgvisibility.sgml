@@ -21,7 +21,7 @@
   until such time as a tuple is inserted, updated, deleted, or locked on
   that page.  The page-level <literal>PD_ALL_VISIBLE</literal> bit has the
   same meaning as the all-visible bit in the visibility map, but is stored
-  within the data page itself rather than a separate data tructure.  These
+  within the data page itself rather than a separate data structure.  These
   will normally agree, but the page-level bit can sometimes be set while the
   visibility map bit is clear after a crash recovery; or they can disagree
   because of a change which occurs after <literal>pg_visibility</> examines
