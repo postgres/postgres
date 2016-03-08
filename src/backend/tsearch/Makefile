@@ -13,11 +13,15 @@ include $(top_builddir)/src/Makefile.global
 
 DICTDIR=tsearch_data
 
-DICTFILES=dicts/synonym_sample.syn dicts/thesaurus_sample.ths \
-	dicts/hunspell_sample.affix \
-	dicts/ispell_sample.affix dicts/ispell_sample.dict \
-	dicts/hunspell_sample_long.affix dicts/hunspell_sample_long.dict \
-	dicts/hunspell_sample_num.affix dicts/hunspell_sample_num.dict
+# List of dictionaries files
+DICTFILES=synonym_sample.syn thesaurus_sample.ths \
+	hunspell_sample.affix \
+	ispell_sample.affix ispell_sample.dict \
+	hunspell_sample_long.affix hunspell_sample_long.dict \
+	hunspell_sample_num.affix hunspell_sample_num.dict
+
+# Local paths to dictionaries files
+DICTFILES_PATH=$(addprefix dicts/,$(DICTFILES))
 
 OBJS = ts_locale.o ts_parse.o wparser.o wparser_def.o dict.o \
 	dict_simple.o dict_synonym.o dict_thesaurus.o \
@@ -27,8 +31,8 @@ OBJS = ts_locale.o ts_parse.o wparser.o wparser_def.o dict.o \
 include $(top_srcdir)/src/backend/common.mk
 
 .PHONY: install-data
-install-data: $(DICTFILES) installdirs
-	$(INSTALL_DATA) $(addprefix $(srcdir)/,$(DICTFILES)) '$(DESTDIR)$(datadir)/$(DICTDIR)/'
+install-data: $(DICTFILES_PATH) installdirs
+	$(INSTALL_DATA) $(addprefix $(srcdir)/,$(DICTFILES_PATH)) '$(DESTDIR)$(datadir)/$(DICTDIR)/'
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(datadir)/$(DICTDIR)'
