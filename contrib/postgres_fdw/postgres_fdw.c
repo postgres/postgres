@@ -635,12 +635,12 @@ get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		 * distribute_qual_to_rels, and rel->joininfo should only contain ECs
 		 * where this relation appears on one side or the other.
 		 */
-		if (bms_is_subset(restrictinfo->right_ec->ec_relids, relids))
+		if (bms_is_subset(relids, restrictinfo->right_ec->ec_relids))
 			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
 													 restrictinfo->right_ec);
 		else
 		{
-			Assert(bms_is_subset(restrictinfo->left_ec->ec_relids, relids));
+			Assert(bms_is_subset(relids, restrictinfo->left_ec->ec_relids));
 			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
 													  restrictinfo->left_ec);
 		}
