@@ -350,7 +350,7 @@ queryin(char *buf)
 				 errmsg("ltxtquery is too large")));
 	commonlen = COMPUTESIZE(state.num, state.sumlen);
 
-	query = (ltxtquery *) palloc(commonlen);
+	query = (ltxtquery *) palloc0(commonlen);
 	SET_VARSIZE(query, commonlen);
 	query->size = state.num;
 	ptr = GETQUERY(query);
