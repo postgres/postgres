@@ -125,7 +125,8 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_visible *xlrec = (xl_heap_visible *) rec;
 
-		appendStringInfo(buf, "cutoff xid %u", xlrec->cutoff_xid);
+		appendStringInfo(buf, "cutoff xid %u flags %d",
+						 xlrec->cutoff_xid, xlrec->flags);
 	}
 	else if (info == XLOG_HEAP2_MULTI_INSERT)
 	{
