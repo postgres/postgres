@@ -75,6 +75,9 @@ extern int	FileSync(File file);
 extern off_t FileSeek(File file, off_t offset, int whence);
 extern int	FileTruncate(File file, off_t offset);
 extern char *FilePathName(File file);
+extern int	FileGetRawDesc(File file);
+extern int  FileGetRawFlags(File file);
+extern int	FileGetRawMode(File file);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
