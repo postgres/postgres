@@ -1450,17 +1450,25 @@ plperl_ref_from_pg_array(Datum arg, Oid typid)
 	info->ndims = ARR_NDIM(ar);
 	dims = ARR_DIMS(ar);
 
-	deconstruct_array(ar, elementtype, typlen, typbyval,
-					  typalign, &info->elements, &info->nulls,
-					  &nitems);
+	/* No dimensions? Return an empty array */
+	if (info->ndims == 0)
+	{
+		av = newRV_noinc((SV *) newAV());
+	}
+	else
+	{
+		deconstruct_array(ar, elementtype, typlen, typbyval,
+						  typalign, &info->elements, &info->nulls,
+						  &nitems);
 
-	/* Get total number of elements in each dimension */
-	info->nelems = palloc(sizeof(int) * info->ndims);
-	info->nelems[0] = nitems;
-	for (i = 1; i < info->ndims; i++)
-		info->nelems[i] = info->nelems[i - 1] / dims[i - 1];
+		/* Get total number of elements in each dimension */
+		info->nelems = palloc(sizeof(int) * info->ndims);
+		info->nelems[0] = nitems;
+		for (i = 1; i < info->ndims; i++)
+			info->nelems[i] = info->nelems[i - 1] / dims[i - 1];
 
-	av = split_array(info, 0, nitems, 0);
+		av = split_array(info, 0, nitems, 0);
+	}
 
 	hv = newHV();
 	(void) hv_store(hv, "array", 5, av, 0);
@@ -1478,6 +1486,9 @@ split_array(plperl_array_info *info, int first, int last, int nest)
 {
 	int			i;
 	AV		   *result;
+
+	/* we should only be called when we have something to split */
+	Assert(info->ndims > 0);
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
