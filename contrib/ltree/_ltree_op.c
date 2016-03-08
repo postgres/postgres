@@ -211,7 +211,7 @@ _ltree_extract_isparent(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	item = (ltree *) palloc(VARSIZE(found));
+	item = (ltree *) palloc0(VARSIZE(found));
 	memcpy(item, found, VARSIZE(found));
 
 	PG_FREE_IF_COPY(la, 0);
@@ -234,7 +234,7 @@ _ltree_extract_risparent(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	item = (ltree *) palloc(VARSIZE(found));
+	item = (ltree *) palloc0(VARSIZE(found));
 	memcpy(item, found, VARSIZE(found));
 
 	PG_FREE_IF_COPY(la, 0);
@@ -257,7 +257,7 @@ _ltq_extract_regex(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	item = (ltree *) palloc(VARSIZE(found));
+	item = (ltree *) palloc0(VARSIZE(found));
 	memcpy(item, found, VARSIZE(found));
 
 	PG_FREE_IF_COPY(la, 0);
@@ -280,7 +280,7 @@ _ltxtq_extract_exec(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	item = (ltree *) palloc(VARSIZE(found));
+	item = (ltree *) palloc0(VARSIZE(found));
 	memcpy(item, found, VARSIZE(found));
 
 	PG_FREE_IF_COPY(la, 0);

@@ -211,7 +211,7 @@ inner_subltree(ltree *t, int32 startpos, int32 endpos)
 		ptr = LEVEL_NEXT(ptr);
 	}
 
-	res = (ltree *) palloc(LTREE_HDRSIZE + (end - start));
+	res = (ltree *) palloc0(LTREE_HDRSIZE + (end - start));
 	SET_VARSIZE(res, LTREE_HDRSIZE + (end - start));
 	res->numlevel = endpos - startpos;
 
@@ -268,7 +268,7 @@ ltree_concat(ltree *a, ltree *b)
 {
 	ltree	   *r;
 
-	r = (ltree *) palloc(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
+	r = (ltree *) palloc0(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	SET_VARSIZE(r, VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	r->numlevel = a->numlevel + b->numlevel;
 
@@ -450,7 +450,7 @@ lca_inner(ltree **a, int len)
 		l1 = LEVEL_NEXT(l1);
 	}
 
-	res = (ltree *) palloc(reslen);
+	res = (ltree *) palloc0(reslen);
 	SET_VARSIZE(res, reslen);
 	res->numlevel = num;
 
