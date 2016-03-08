@@ -648,6 +648,11 @@ might not be true. Visibility map bits are only set by vacuum, but are
 cleared by any data-modifying operations on a page.
 </para>
 
+<para>
+The <xref linkend="pgvisibility"> module can be used to examine the
+information stored in the visibility map.
+</para>
+
 </sect1>
 
 <sect1 id="storage-init">

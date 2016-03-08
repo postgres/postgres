@@ -132,6 +132,7 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &pgstatstatements;
  &pgstattuple;
  &pgtrgm;
+ &pgvisibility;
  &postgres-fdw;
  &seg;
  &sepgsql;
