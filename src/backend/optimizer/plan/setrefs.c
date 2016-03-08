@@ -1106,7 +1106,10 @@ set_foreignscan_references(PlannerInfo *root,
 
 	if (fscan->fdw_scan_tlist != NIL || fscan->scan.scanrelid == 0)
 	{
-		/* Adjust tlist, qual, fdw_exprs to reference foreign scan tuple */
+		/*
+		 * Adjust tlist, qual, fdw_exprs, fdw_recheck_quals to reference
+		 * foreign scan tuple
+		 */
 		indexed_tlist *itlist = build_tlist_index(fscan->fdw_scan_tlist);
 
 		fscan->scan.plan.targetlist = (List *)
@@ -1140,7 +1143,10 @@ set_foreignscan_references(PlannerInfo *root,
 	}
 	else
 	{
-		/* Adjust tlist, qual, fdw_exprs, etc. in the standard way */
+		/*
+		 * Adjust tlist, qual, fdw_exprs, fdw_recheck_quals in the standard
+		 * way
+		 */
 		fscan->scan.plan.targetlist =
 			fix_scan_list(root, fscan->scan.plan.targetlist, rtoffset);
 		fscan->scan.plan.qual =
