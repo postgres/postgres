@@ -1328,7 +1328,8 @@ create_merge_append_path(PlannerInfo *root,
  * jointree.
  */
 ResultPath *
-create_result_path(RelOptInfo *rel, PathTarget *target, List *quals)
+create_result_path(PlannerInfo *root, RelOptInfo *rel,
+				   PathTarget *target, List *resconstantqual)
 {
 	ResultPath *pathnode = makeNode(ResultPath);
 
@@ -1340,23 +1341,22 @@ create_result_path(RelOptInfo *rel, PathTarget *target, List *quals)
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_degree = 0;
 	pathnode->path.pathkeys = NIL;
-	pathnode->quals = quals;
+	pathnode->quals = resconstantqual;
 
 	/* Hardly worth defining a cost_result() function ... just do it */
 	pathnode->path.rows = 1;
 	pathnode->path.startup_cost = target->cost.startup;
 	pathnode->path.total_cost = target->cost.startup +
 		cpu_tuple_cost + target->cost.per_tuple;
+	if (resconstantqual)
+	{
+		QualCost	qual_cost;
 
-	/*
-	 * In theory we should include the qual eval cost as well, but at present
-	 * that doesn't accomplish much except duplicate work that will be done
-	 * again in make_result; since this is only used for degenerate cases,
-	 * nothing interesting will be done with the path cost values.
-	 *
-	 * XXX should refactor so that make_result does not do costing work, at
-	 * which point this will need to do it honestly.
-	 */
+		cost_qual_eval(&qual_cost, resconstantqual, root);
+		/* resconstantqual is evaluated once at startup */
+		pathnode->path.startup_cost += qual_cost.startup + qual_cost.per_tuple;
+		pathnode->path.total_cost += qual_cost.startup + qual_cost.per_tuple;
+	}
 
 	return pathnode;
 }
@@ -2162,7 +2162,7 @@ create_projection_path(PlannerInfo *root,
 
 	/*
 	 * The Result node's cost is cpu_tuple_cost per row, plus the cost of
-	 * evaluating the tlist.
+	 * evaluating the tlist.  There is no qual to worry about.
 	 */
 	pathnode->path.rows = subpath->rows;
 	pathnode->path.startup_cost = subpath->startup_cost + target->cost.startup;

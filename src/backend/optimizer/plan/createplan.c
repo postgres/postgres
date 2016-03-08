@@ -87,6 +87,7 @@ static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path,
 				   int flags);
 static Gather *create_gather_plan(PlannerInfo *root, GatherPath *best_path);
 static Plan *create_projection_plan(PlannerInfo *root, ProjectionPath *best_path);
+static Plan *inject_projection_plan(Plan *subplan, List *tlist);
 static Sort *create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags);
 static Group *create_group_plan(PlannerInfo *root, GroupPath *best_path);
 static Unique *create_upper_unique_plan(PlannerInfo *root, UpperUniquePath *best_path,
@@ -155,6 +156,8 @@ static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_generic_path_info(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
+static void label_sort_with_costsize(PlannerInfo *root, Sort *plan,
+						 double limit_tuples);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static SampleScan *make_samplescan(List *qptlist, List *qpqual, Index scanrelid,
 				TableSampleClause *tsc);
@@ -223,12 +226,10 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   bool *mergenullsfirst,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
-static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
+static Sort *make_sort(Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators,
-		  Oid *collations, bool *nullsFirst,
-		  double limit_tuples);
-static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
-						   Plan *lefttree, List *pathkeys,
+		  Oid *collations, bool *nullsFirst);
+static Plan *prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 						   Relids relids,
 						   const AttrNumber *reqColIdx,
 						   bool adjust_tlist_in_place,
@@ -240,12 +241,9 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 					   TargetEntry *tle,
 					   Relids relids);
-static Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
-						List *pathkeys, double limit_tuples);
-static Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
-						   Plan *lefttree);
-static Sort *make_sort_from_groupcols(PlannerInfo *root,
-						 List *groupcls,
+static Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys);
+static Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
+static Sort *make_sort_from_groupcols(List *groupcls,
 						 AttrNumber *grpColIdx,
 						 Plan *lefttree);
 static Material *make_material(Plan *lefttree);
@@ -272,10 +270,7 @@ static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
 static Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
-static Result *make_result(PlannerInfo *root,
-			List *tlist,
-			Node *resconstantqual,
-			Plan *subplan);
+static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation,
@@ -831,22 +826,13 @@ get_gating_quals(PlannerInfo *root, List *quals)
  *	  Deal with pseudoconstant qual clauses
  *
  * Add a gating Result node atop the already-built plan.
- *
- * Note that we don't change cost or size estimates when doing gating.
- * The costs of qual eval were already folded into the plan's startup cost.
- * Leaving the size alone amounts to assuming that the gating qual will
- * succeed, which is the conservative estimate for planning upper queries.
- * We certainly don't want to assume the output size is zero (unless the
- * gating qual is actually constant FALSE, and that case is dealt with in
- * clausesel.c).  Interpolating between the two cases is silly, because
- * it doesn't reflect what will really happen at runtime, and besides which
- * in most cases we have only a very bad idea of the probability of the gating
- * qual being true.
  */
 static Plan *
 create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 				   List *gating_quals)
 {
+	Plan	   *gplan;
+
 	Assert(gating_quals);
 
 	/*
@@ -854,10 +840,25 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 	 * tlist; that's never a wrong choice, even if the parent node didn't ask
 	 * for CP_EXACT_TLIST.
 	 */
-	return (Plan *) make_result(root,
-								build_path_tlist(root, path),
-								(Node *) gating_quals,
-								plan);
+	gplan = (Plan *) make_result(build_path_tlist(root, path),
+								 (Node *) gating_quals,
+								 plan);
+
+	/*
+	 * Notice that we don't change cost or size estimates when doing gating.
+	 * The costs of qual eval were already included in the subplan's cost.
+	 * Leaving the size alone amounts to assuming that the gating qual will
+	 * succeed, which is the conservative estimate for planning upper queries.
+	 * We certainly don't want to assume the output size is zero (unless the
+	 * gating qual is actually constant FALSE, and that case is dealt with in
+	 * clausesel.c).  Interpolating between the two cases is silly, because it
+	 * doesn't reflect what will really happen at runtime, and besides which
+	 * in most cases we have only a very bad idea of the probability of the
+	 * gating qual being true.
+	 */
+	copy_plan_costsize(gplan, plan);
+
+	return gplan;
 }
 
 /*
@@ -945,11 +946,16 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	if (best_path->subpaths == NIL)
 	{
 		/* Generate a Result plan with constant-FALSE gating qual */
-		return (Plan *) make_result(root,
-									tlist,
+		Plan	   *plan;
+
+		plan = (Plan *) make_result(tlist,
 									(Node *) list_make1(makeBoolConst(false,
 																	  false)),
 									NULL);
+
+		copy_generic_path_info(plan, (Path *) best_path);
+
+		return plan;
 	}
 
 	/* Build the plan for each child */
@@ -972,6 +978,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	 */
 
 	plan = make_append(subplans, tlist);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
 	return (Plan *) plan;
 }
@@ -1006,7 +1014,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 	plan->righttree = NULL;
 
 	/* Compute sort column info, and adjust MergeAppend's tlist as needed */
-	(void) prepare_sort_from_pathkeys(root, plan, pathkeys,
+	(void) prepare_sort_from_pathkeys(plan, pathkeys,
 									  best_path->path.parent->relids,
 									  NULL,
 									  true,
@@ -1036,7 +1044,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 		subplan = create_plan_recurse(root, subpath, CP_EXACT_TLIST);
 
 		/* Compute sort column info, and adjust subplan's tlist as needed */
-		subplan = prepare_sort_from_pathkeys(root, subplan, pathkeys,
+		subplan = prepare_sort_from_pathkeys(subplan, pathkeys,
 											 subpath->parent->relids,
 											 node->sortColIdx,
 											 false,
@@ -1065,10 +1073,14 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 
 		/* Now, insert a Sort node if subplan isn't sufficiently ordered */
 		if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
-			subplan = (Plan *) make_sort(root, subplan, numsortkeys,
+		{
+			Sort	   *sort = make_sort(subplan, numsortkeys,
 										 sortColIdx, sortOperators,
-										 collations, nullsFirst,
-										 best_path->limit_tuples);
+										 collations, nullsFirst);
+
+			label_sort_with_costsize(root, sort, best_path->limit_tuples);
+			subplan = (Plan *) sort;
+		}
 
 		subplans = lappend(subplans, subplan);
 	}
@@ -1081,24 +1093,28 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 /*
  * create_result_plan
  *	  Create a Result plan for 'best_path'.
- *	  This is only used for the case of a query with an empty jointree.
+ *	  This is only used for degenerate cases, such as a query with an empty
+ *	  jointree.
  *
  *	  Returns a Plan node.
  */
 static Result *
 create_result_plan(PlannerInfo *root, ResultPath *best_path)
 {
+	Result	   *plan;
 	List	   *tlist;
 	List	   *quals;
 
-	/* This is a bit useless currently, because rel will have empty tlist */
 	tlist = build_path_tlist(root, &best_path->path);
 
 	/* best_path->quals is just bare clauses */
-
 	quals = order_qual_clauses(root, best_path->quals);
 
-	return make_result(root, tlist, (Node *) quals, NULL);
+	plan = make_result(tlist, (Node *) quals, NULL);
+
+	copy_generic_path_info(&plan->plan, (Path *) best_path);
+
+	return plan;
 }
 
 /*
@@ -1209,7 +1225,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 		 */
 		if (!is_projection_capable_plan(subplan) &&
 			!tlist_same_exprs(newtlist, subplan->targetlist))
-			subplan = (Plan *) make_result(root, newtlist, NULL, subplan);
+			subplan = inject_projection_plan(subplan, newtlist);
 		else
 			subplan->targetlist = newtlist;
 	}
@@ -1280,6 +1296,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 	else
 	{
 		List	   *sortList = NIL;
+		Sort	   *sort;
 
 		/* Create an ORDER BY list to sort the input compatibly */
 		groupColPos = 0;
@@ -1321,8 +1338,9 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 			sortList = lappend(sortList, sortcl);
 			groupColPos++;
 		}
-		plan = (Plan *) make_sort_from_sortclauses(root, sortList, subplan);
-		plan = (Plan *) make_unique_from_sortclauses(plan, sortList);
+		sort = make_sort_from_sortclauses(sortList, subplan);
+		label_sort_with_costsize(root, sort, -1.0);
+		plan = (Plan *) make_unique_from_sortclauses((Plan *) sort, sortList);
 	}
 
 	/* Copy cost data from Path to Plan */
@@ -1402,10 +1420,37 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
 	}
 	else
 	{
-		plan = (Plan *) make_result(root, tlist, NULL, subplan);
+		plan = (Plan *) make_result(tlist, NULL, subplan);
 
 		copy_generic_path_info(plan, (Path *) best_path);
 	}
+
+	return plan;
+}
+
+/*
+ * inject_projection_plan
+ *	  Insert a Result node to do a projection step.
+ *
+ * This is used in a few places where we decide on-the-fly that we need a
+ * projection step as part of the tree generated for some Path node.
+ * We should try to get rid of this in favor of doing it more honestly.
+ */
+static Plan *
+inject_projection_plan(Plan *subplan, List *tlist)
+{
+	Plan	   *plan;
+
+	plan = (Plan *) make_result(tlist, NULL, subplan);
+
+	/*
+	 * In principle, we should charge tlist eval cost plus cpu_per_tuple per
+	 * row for the Result node.  But the former has probably been factored in
+	 * already and the latter was not accounted for during Path construction,
+	 * so being formally correct might just make the EXPLAIN output look less
+	 * consistent not more so.  Hence, just copy the subplan's cost.
+	 */
+	copy_plan_costsize(plan, subplan);
 
 	return plan;
 }
@@ -1430,15 +1475,7 @@ create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags)
 	subplan = create_plan_recurse(root, best_path->subpath,
 								  flags | CP_SMALL_TLIST);
 
-	/*
-	 * Don't need to have correct limit_tuples; that only affects the cost
-	 * estimate, which we'll overwrite.  (XXX should refactor so that we don't
-	 * have a useless cost_sort call in here.)
-	 */
-	plan = make_sort_from_pathkeys(root,
-								   subplan,
-								   best_path->path.pathkeys,
-								   -1.0);
+	plan = make_sort_from_pathkeys(subplan, best_path->path.pathkeys);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -1683,8 +1720,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 			new_grpColIdx = remap_groupColIdx(root, groupClause);
 
 			sort_plan = (Plan *)
-				make_sort_from_groupcols(root,
-										 groupClause,
+				make_sort_from_groupcols(groupClause,
 										 new_grpColIdx,
 										 subplan);
 
@@ -1791,7 +1827,7 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 	/* Generate the output plan --- basically just a Result */
 	tlist = build_path_tlist(root, &best_path->path);
 
-	plan = make_result(root, tlist, (Node *) best_path->quals, NULL);
+	plan = make_result(tlist, (Node *) best_path->quals, NULL);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -1849,8 +1885,7 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	 * We shouldn't need to actually sort, but it's convenient to use
 	 * prepare_sort_from_pathkeys to identify the input's sort columns.
 	 */
-	subplan = prepare_sort_from_pathkeys(root,
-										 subplan,
+	subplan = prepare_sort_from_pathkeys(subplan,
 										 best_path->winpathkeys,
 										 NULL,
 										 NULL,
@@ -2646,6 +2681,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan->plan_rows =
 			clamp_row_est(apath->bitmapselectivity * apath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
+		plan->parallel_aware = false;
 		*qual = subquals;
 		*indexqual = subindexquals;
 		*indexECs = subindexECs;
@@ -2708,6 +2744,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			plan->plan_rows =
 				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
 			plan->plan_width = 0;		/* meaningless */
+			plan->parallel_aware = false;
 		}
 
 		/*
@@ -2745,11 +2782,13 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 											  iscan->indexid,
 											  iscan->indexqual,
 											  iscan->indexqualorig);
+		/* and set its cost/width fields appropriately */
 		plan->startup_cost = 0.0;
 		plan->total_cost = ipath->indextotalcost;
 		plan->plan_rows =
 			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
+		plan->parallel_aware = false;
 		*qual = get_actual_clauses(ipath->indexclauses);
 		*indexqual = get_actual_clauses(ipath->indexquals);
 		foreach(l, ipath->indexinfo->indpred)
@@ -3533,11 +3572,11 @@ create_mergejoin_plan(PlannerInfo *root,
 	 */
 	if (best_path->outersortkeys)
 	{
-		outer_plan = (Plan *)
-			make_sort_from_pathkeys(root,
-									outer_plan,
-									best_path->outersortkeys,
-									-1.0);
+		Sort	   *sort = make_sort_from_pathkeys(outer_plan,
+												   best_path->outersortkeys);
+
+		label_sort_with_costsize(root, sort, -1.0);
+		outer_plan = (Plan *) sort;
 		outerpathkeys = best_path->outersortkeys;
 	}
 	else
@@ -3545,11 +3584,11 @@ create_mergejoin_plan(PlannerInfo *root,
 
 	if (best_path->innersortkeys)
 	{
-		inner_plan = (Plan *)
-			make_sort_from_pathkeys(root,
-									inner_plan,
-									best_path->innersortkeys,
-									-1.0);
+		Sort	   *sort = make_sort_from_pathkeys(inner_plan,
+												   best_path->innersortkeys);
+
+		label_sort_with_costsize(root, sort, -1.0);
+		inner_plan = (Plan *) sort;
 		innerpathkeys = best_path->innersortkeys;
 	}
 	else
@@ -3870,6 +3909,14 @@ create_hashjoin_plan(PlannerInfo *root,
 						  skewInherit,
 						  skewColType,
 						  skewColTypmod);
+
+	/*
+	 * Set Hash node's startup & total costs equal to total cost of input
+	 * plan; this only affects EXPLAIN display not decisions.
+	 */
+	copy_plan_costsize(&hash_plan->plan, inner_plan);
+	hash_plan->plan.startup_cost = hash_plan->plan.total_cost;
+
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,
@@ -4514,28 +4561,16 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 /*
  * Copy cost and size info from a Path node to the Plan node created from it.
  * The executor usually won't use this info, but it's needed by EXPLAIN.
- *
- * Also copy the parallel-aware flag, which the executor will use.
+ * Also copy the parallel-aware flag, which the executor *will* use.
  */
 static void
 copy_generic_path_info(Plan *dest, Path *src)
 {
-	if (src)
-	{
-		dest->startup_cost = src->startup_cost;
-		dest->total_cost = src->total_cost;
-		dest->plan_rows = src->rows;
-		dest->plan_width = src->pathtarget->width;
-		dest->parallel_aware = src->parallel_aware;
-	}
-	else
-	{
-		dest->startup_cost = 0;
-		dest->total_cost = 0;
-		dest->plan_rows = 0;
-		dest->plan_width = 0;
-		dest->parallel_aware = false;
-	}
+	dest->startup_cost = src->startup_cost;
+	dest->total_cost = src->total_cost;
+	dest->plan_rows = src->rows;
+	dest->plan_width = src->pathtarget->width;
+	dest->parallel_aware = src->parallel_aware;
 }
 
 /*
@@ -4545,20 +4580,41 @@ copy_generic_path_info(Plan *dest, Path *src)
 static void
 copy_plan_costsize(Plan *dest, Plan *src)
 {
-	if (src)
-	{
-		dest->startup_cost = src->startup_cost;
-		dest->total_cost = src->total_cost;
-		dest->plan_rows = src->plan_rows;
-		dest->plan_width = src->plan_width;
-	}
-	else
-	{
-		dest->startup_cost = 0;
-		dest->total_cost = 0;
-		dest->plan_rows = 0;
-		dest->plan_width = 0;
-	}
+	dest->startup_cost = src->startup_cost;
+	dest->total_cost = src->total_cost;
+	dest->plan_rows = src->plan_rows;
+	dest->plan_width = src->plan_width;
+	/* Assume the inserted node is not parallel-aware. */
+	dest->parallel_aware = false;
+}
+
+/*
+ * Some places in this file build Sort nodes that don't have a directly
+ * corresponding Path node.  The cost of the sort is, or should have been,
+ * included in the cost of the Path node we're working from, but since it's
+ * not split out, we have to re-figure it using cost_sort().  This is just
+ * to label the Sort node nicely for EXPLAIN.
+ *
+ * limit_tuples is as for cost_sort (in particular, pass -1 if no limit)
+ */
+static void
+label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
+{
+	Plan	   *lefttree = plan->plan.lefttree;
+	Path		sort_path;		/* dummy for result of cost_sort */
+
+	cost_sort(&sort_path, root, NIL,
+			  lefttree->total_cost,
+			  lefttree->plan_rows,
+			  lefttree->plan_width,
+			  0.0,
+			  work_mem,
+			  limit_tuples);
+	plan->plan.startup_cost = sort_path.startup_cost;
+	plan->plan.total_cost = sort_path.total_cost;
+	plan->plan.plan_rows = lefttree->plan_rows;
+	plan->plan.plan_width = lefttree->plan_width;
+	plan->plan.parallel_aware = false;
 }
 
 
@@ -4566,8 +4622,13 @@ copy_plan_costsize(Plan *dest, Plan *src)
  *
  *	PLAN NODE BUILDING ROUTINES
  *
- * Some of these are exported because they are called to build plan nodes
- * in contexts where we're not deriving the plan node from a path node.
+ * In general, these functions are not passed the original Path and therefore
+ * leave it to the caller to fill in the cost/width fields from the Path,
+ * typically by calling copy_generic_path_info().  This convention is
+ * somewhat historical, but it does support a few places above where we build
+ * a plan node without having an exactly corresponding Path node.  Under no
+ * circumstances should one of these functions do its own cost calculations,
+ * as that would be redundant with calculations done while building Paths.
  *
  *****************************************************************************/
 
@@ -4579,7 +4640,6 @@ make_seqscan(List *qptlist,
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4598,7 +4658,6 @@ make_samplescan(List *qptlist,
 	SampleScan *node = makeNode(SampleScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4624,7 +4683,6 @@ make_indexscan(List *qptlist,
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4654,7 +4712,6 @@ make_indexonlyscan(List *qptlist,
 	IndexOnlyScan *node = makeNode(IndexOnlyScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4678,7 +4735,6 @@ make_bitmap_indexscan(Index scanrelid,
 	BitmapIndexScan *node = makeNode(BitmapIndexScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = NIL;		/* not used */
 	plan->qual = NIL;			/* not used */
 	plan->lefttree = NULL;
@@ -4701,7 +4757,6 @@ make_bitmap_heapscan(List *qptlist,
 	BitmapHeapScan *node = makeNode(BitmapHeapScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = lefttree;
@@ -4721,7 +4776,6 @@ make_tidscan(List *qptlist,
 	TidScan    *node = makeNode(TidScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4740,14 +4794,6 @@ make_subqueryscan(List *qptlist,
 {
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
-
-	/*
-	 * Cost is figured here for the convenience of prepunion.c.  Note this is
-	 * only correct for the case where qpqual is empty; otherwise caller
-	 * should overwrite cost with a better estimate.
-	 */
-	copy_plan_costsize(plan, subplan);
-	plan->total_cost += cpu_tuple_cost * subplan->plan_rows;
 
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -4769,7 +4815,6 @@ make_functionscan(List *qptlist,
 	FunctionScan *node = makeNode(FunctionScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4790,7 +4835,6 @@ make_valuesscan(List *qptlist,
 	ValuesScan *node = makeNode(ValuesScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4811,7 +4855,6 @@ make_ctescan(List *qptlist,
 	CteScan    *node = makeNode(CteScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4832,7 +4875,6 @@ make_worktablescan(List *qptlist,
 	WorkTableScan *node = makeNode(WorkTableScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -4881,38 +4923,6 @@ make_append(List *appendplans, List *tlist)
 {
 	Append	   *node = makeNode(Append);
 	Plan	   *plan = &node->plan;
-	double		total_size;
-	ListCell   *subnode;
-
-	/*
-	 * Compute cost as sum of subplan costs.  We charge nothing extra for the
-	 * Append itself, which perhaps is too optimistic, but since it doesn't do
-	 * any selection or projection, it is a pretty cheap node.
-	 *
-	 * If you change this, see also create_append_path().  Also, the size
-	 * calculations should match set_append_rel_pathlist().  It'd be better
-	 * not to duplicate all this logic, but some callers of this function
-	 * aren't working from an appendrel or AppendPath, so there's noplace to
-	 * copy the data from.
-	 */
-	plan->startup_cost = 0;
-	plan->total_cost = 0;
-	plan->plan_rows = 0;
-	total_size = 0;
-	foreach(subnode, appendplans)
-	{
-		Plan	   *subplan = (Plan *) lfirst(subnode);
-
-		if (subnode == list_head(appendplans))	/* first node? */
-			plan->startup_cost = subplan->startup_cost;
-		plan->total_cost += subplan->total_cost;
-		plan->plan_rows += subplan->plan_rows;
-		total_size += subplan->plan_width * subplan->plan_rows;
-	}
-	if (plan->plan_rows > 0)
-		plan->plan_width = rint(total_size / plan->plan_rows);
-	else
-		plan->plan_width = 0;
 
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -4981,7 +4991,6 @@ make_bitmap_and(List *bitmapplans)
 	BitmapAnd  *node = makeNode(BitmapAnd);
 	Plan	   *plan = &node->plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = NIL;
 	plan->qual = NIL;
 	plan->lefttree = NULL;
@@ -4997,7 +5006,6 @@ make_bitmap_or(List *bitmapplans)
 	BitmapOr   *node = makeNode(BitmapOr);
 	Plan	   *plan = &node->plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = NIL;
 	plan->qual = NIL;
 	plan->lefttree = NULL;
@@ -5019,7 +5027,6 @@ make_nestloop(List *tlist,
 	NestLoop   *node = makeNode(NestLoop);
 	Plan	   *plan = &node->join.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = tlist;
 	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
@@ -5043,7 +5050,6 @@ make_hashjoin(List *tlist,
 	HashJoin   *node = makeNode(HashJoin);
 	Plan	   *plan = &node->join.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = tlist;
 	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
@@ -5066,13 +5072,6 @@ make_hash(Plan *lefttree,
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
 
-	copy_plan_costsize(plan, lefttree);
-
-	/*
-	 * For plausibility, make startup & total costs equal total cost of input
-	 * plan; this only affects EXPLAIN display not decisions.
-	 */
-	plan->startup_cost = plan->total_cost;
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -5103,7 +5102,6 @@ make_mergejoin(List *tlist,
 	MergeJoin  *node = makeNode(MergeJoin);
 	Plan	   *plan = &node->join.plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = tlist;
 	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
@@ -5124,28 +5122,15 @@ make_mergejoin(List *tlist,
  *
  * Caller must have built the sortColIdx, sortOperators, collations, and
  * nullsFirst arrays already.
- * limit_tuples is as for cost_sort (in particular, pass -1 if no limit)
  */
 static Sort *
-make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
+make_sort(Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators,
-		  Oid *collations, bool *nullsFirst,
-		  double limit_tuples)
+		  Oid *collations, bool *nullsFirst)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
-	Path		sort_path;		/* dummy for result of cost_sort */
 
-	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-	cost_sort(&sort_path, root, NIL,
-			  lefttree->total_cost,
-			  lefttree->plan_rows,
-			  lefttree->plan_width,
-			  0.0,
-			  work_mem,
-			  limit_tuples);
-	plan->startup_cost = sort_path.startup_cost;
-	plan->total_cost = sort_path.total_cost;
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -5200,7 +5185,7 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
  * or a Result stacked atop lefttree).
  */
 static Plan *
-prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
+prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 						   Relids relids,
 						   const AttrNumber *reqColIdx,
 						   bool adjust_tlist_in_place,
@@ -5369,8 +5354,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			{
 				/* copy needed so we don't modify input's tlist below */
 				tlist = copyObject(tlist);
-				lefttree = (Plan *) make_result(root, tlist, NULL,
-												lefttree);
+				lefttree = inject_projection_plan(lefttree, tlist);
 			}
 
 			/* Don't bother testing is_projection_capable_plan again */
@@ -5474,12 +5458,9 @@ find_ec_member_for_tle(EquivalenceClass *ec,
  *
  *	  'lefttree' is the node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
- *	  'limit_tuples' is the bound on the number of output tuples;
- *				-1 if no bound
  */
 static Sort *
-make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
-						double limit_tuples)
+make_sort_from_pathkeys(Plan *lefttree, List *pathkeys)
 {
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -5488,7 +5469,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 	bool	   *nullsFirst;
 
 	/* Compute sort column info, and adjust lefttree as needed */
-	lefttree = prepare_sort_from_pathkeys(root, lefttree, pathkeys,
+	lefttree = prepare_sort_from_pathkeys(lefttree, pathkeys,
 										  NULL,
 										  NULL,
 										  false,
@@ -5499,9 +5480,9 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 										  &nullsFirst);
 
 	/* Now build the Sort node */
-	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, collations,
-					 nullsFirst, limit_tuples);
+	return make_sort(lefttree, numsortkeys,
+					 sortColIdx, sortOperators,
+					 collations, nullsFirst);
 }
 
 /*
@@ -5512,7 +5493,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
  *	  'lefttree' is the node which yields input tuples
  */
 static Sort *
-make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
+make_sort_from_sortclauses(List *sortcls, Plan *lefttree)
 {
 	List	   *sub_tlist = lefttree->targetlist;
 	ListCell   *l;
@@ -5542,9 +5523,9 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
 		numsortkeys++;
 	}
 
-	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, collations,
-					 nullsFirst, -1.0);
+	return make_sort(lefttree, numsortkeys,
+					 sortColIdx, sortOperators,
+					 collations, nullsFirst);
 }
 
 /*
@@ -5561,8 +5542,7 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
  * is used from the SortGroupClause entries.
  */
 static Sort *
-make_sort_from_groupcols(PlannerInfo *root,
-						 List *groupcls,
+make_sort_from_groupcols(List *groupcls,
 						 AttrNumber *grpColIdx,
 						 Plan *lefttree)
 {
@@ -5597,9 +5577,9 @@ make_sort_from_groupcols(PlannerInfo *root,
 		numsortkeys++;
 	}
 
-	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, collations,
-					 nullsFirst, -1.0);
+	return make_sort(lefttree, numsortkeys,
+					 sortColIdx, sortOperators,
+					 collations, nullsFirst);
 }
 
 static Material *
@@ -5608,7 +5588,6 @@ make_material(Plan *lefttree)
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -5622,6 +5601,8 @@ make_material(Plan *lefttree)
  *
  * There are a couple of places where we want to attach a Material node
  * after completion of create_plan(), without any MaterialPath path.
+ * Those places should probably be refactored someday to do this on the
+ * Path representation, but it's not worth the trouble yet.
  */
 Plan *
 materialize_finished_plan(Plan *subplan)
@@ -5719,8 +5700,6 @@ make_group(List *tlist,
 {
 	Group	   *node = makeNode(Group);
 	Plan	   *plan = &node->plan;
-
-	/* caller must fill cost/size fields */
 
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
@@ -5896,7 +5875,6 @@ make_gather(List *qptlist,
 	Gather	   *node = makeNode(Gather);
 	Plan	   *plan = &node->plan;
 
-	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = subplan;
@@ -6007,40 +5985,14 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
 /*
  * make_result
  *	  Build a Result plan node
- *
- * If we have a subplan, assume that any evaluation costs for the gating qual
- * were already factored into the subplan's startup cost, and just copy the
- * subplan cost.  If there's no subplan, we should include the qual eval
- * cost.  In either case, tlist eval cost is not to be included here.
- * XXX really we don't want to be doing cost estimation here.
  */
 static Result *
-make_result(PlannerInfo *root,
-			List *tlist,
+make_result(List *tlist,
 			Node *resconstantqual,
 			Plan *subplan)
 {
 	Result	   *node = makeNode(Result);
 	Plan	   *plan = &node->plan;
-
-	if (subplan)
-		copy_plan_costsize(plan, subplan);
-	else
-	{
-		plan->startup_cost = 0;
-		plan->total_cost = cpu_tuple_cost;
-		plan->plan_rows = 1;	/* wrong if we have a set-valued function? */
-		plan->plan_width = 0;	/* XXX is it worth being smarter? */
-		if (resconstantqual)
-		{
-			QualCost	qual_cost;
-
-			cost_qual_eval(&qual_cost, (List *) resconstantqual, root);
-			/* resconstantqual is evaluated once at startup */
-			plan->startup_cost += qual_cost.startup + qual_cost.per_tuple;
-			plan->total_cost += qual_cost.startup + qual_cost.per_tuple;
-		}
-	}
 
 	plan->targetlist = tlist;
 	plan->qual = NIL;

@@ -3143,7 +3143,7 @@ create_grouping_paths(PlannerInfo *root,
 			while (--nrows >= 0)
 			{
 				path = (Path *)
-					create_result_path(grouped_rel,
+					create_result_path(root, grouped_rel,
 									   target,
 									   (List *) parse->havingQual);
 				paths = lappend(paths, path);
@@ -3159,7 +3159,7 @@ create_grouping_paths(PlannerInfo *root,
 		{
 			/* No grouping sets, or just one, so one output row */
 			path = (Path *)
-				create_result_path(grouped_rel,
+				create_result_path(root, grouped_rel,
 								   target,
 								   (List *) parse->havingQual);
 		}
