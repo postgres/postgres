@@ -151,8 +151,8 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
     distribution.  This requires that client authentication is set up to allow
     replication connections
     (see <xref linkend="streaming-replication-authentication">) and
-    that <varname>max_wal_senders</varname> is set sufficiently high to an
-    additional connection.
+    that <varname>max_wal_senders</varname> is set sufficiently high to allow
+    an additional connection.
    </para>
 <programlisting>
 $ pg_recvlogical -d postgres --slot test --create-slot
