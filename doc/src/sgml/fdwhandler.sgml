@@ -178,7 +178,9 @@ GetForeignPlan (PlannerInfo *root,
      the selected <structname>ForeignPath</> (previously produced by
      <function>GetForeignPaths</> or <function>GetForeignJoinPaths</>),
      the target list to be emitted by the plan node,
-     and the restriction clauses to be enforced by the plan node.
+     the restriction clauses to be enforced by the plan node,
+     and the outer subplan of the <structname>ForeignScan</>,
+     which is used for rechecks performed by <function>RecheckForeignScan</>.
      (If the path is for a join rather than a base
      relation, <literal>foreigntableid</> is <literal>InvalidOid</>.)
     </para>
