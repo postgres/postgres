@@ -238,7 +238,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 		 * only one worker, the leader often makes a very substantial
 		 * contribution to executing the parallel portion of the plan, but as
 		 * more workers are added, it does less and less, because it's busy
-		 * reading tuples from the workers and doing whatever non-paralell
+		 * reading tuples from the workers and doing whatever non-parallel
 		 * post-processing is needed.  By the time we reach 4 workers, the
 		 * leader no longer makes a meaningful contribution.  Thus, for now,
 		 * estimate that the leader spends 30% of its time servicing each

@@ -938,7 +938,7 @@ often very limited due to the difficulty of avoiding pipeline stalls.
 Consequently, we do not currently attempt to generate query plans that
 use this technique.
 
-Instead, we focus on partitioning paralellism, which does not require
+Instead, we focus on partitioning parallelism, which does not require
 that the underlying table be partitioned.  It only requires that (1)
 there is some method of dividing the data from at least one of the base
 tables involved in the relation across multiple processes, (2) allowing
