@@ -260,8 +260,6 @@ prepare_new_cluster(void)
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 			  log_opts.verbose ? "--verbose" : "");
 	check_ok();
-
-	get_pg_database_relfilenode(&new_cluster);
 }
 
 

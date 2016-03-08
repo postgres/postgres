@@ -80,8 +80,6 @@ check_and_dump_old_cluster(bool live_check)
 	if (!live_check)
 		start_postmaster(&old_cluster, true);
 
-	get_pg_database_relfilenode(&old_cluster);
-
 	/* Extract a list of databases and tables from the old cluster */
 	get_db_and_rel_infos(&old_cluster);
 

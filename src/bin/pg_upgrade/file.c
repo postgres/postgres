@@ -23,17 +23,13 @@ static int	win32_pghardlink(const char *src, const char *dst);
 
 
 /*
- * copyAndUpdateFile()
+ * copyFile()
  *
- *	Copies a relation file from src to dst.  If pageConverter is non-NULL, this function
- *	uses that pageConverter to do a page-by-page conversion.
+ *	Copies a relation file from src to dst.
  */
 const char *
-copyAndUpdateFile(pageCnvCtx *pageConverter,
-				  const char *src, const char *dst, bool force)
+copyFile(const char *src, const char *dst, bool force)
 {
-	if (pageConverter == NULL)
-	{
 #ifndef WIN32
 		if (copy_file(src, dst, force) == -1)
 #else
@@ -42,70 +38,11 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 			return getErrorText();
 		else
 			return NULL;
-	}
-	else
-	{
-		/*
-		 * We have a pageConverter object - that implies that the
-		 * PageLayoutVersion differs between the two clusters so we have to
-		 * perform a page-by-page conversion.
-		 *
-		 * If the pageConverter can convert the entire file at once, invoke
-		 * that plugin function, otherwise, read each page in the relation
-		 * file and call the convertPage plugin function.
-		 */
-
-#ifdef PAGE_CONVERSION
-		if (pageConverter->convertFile)
-			return pageConverter->convertFile(pageConverter->pluginData,
-											  dst, src);
-		else
-#endif
-		{
-			int			src_fd;
-			int			dstfd;
-			char		buf[BLCKSZ];
-			ssize_t		bytesRead;
-			const char *msg = NULL;
-
-			if ((src_fd = open(src, O_RDONLY, 0)) < 0)
-				return "could not open source file";
-
-			if ((dstfd = open(dst, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
-			{
-				close(src_fd);
-				return "could not create destination file";
-			}
-
-			while ((bytesRead = read(src_fd, buf, BLCKSZ)) == BLCKSZ)
-			{
-#ifdef PAGE_CONVERSION
-				if ((msg = pageConverter->convertPage(pageConverter->pluginData, buf, buf)) != NULL)
-					break;
-#endif
-				if (write(dstfd, buf, BLCKSZ) != BLCKSZ)
-				{
-					msg = "could not write new page to destination";
-					break;
-				}
-			}
-
-			close(src_fd);
-			close(dstfd);
-
-			if (msg)
-				return msg;
-			else if (bytesRead != 0)
-				return "found partial page in source file";
-			else
-				return NULL;
-		}
-	}
 }
 
 
 /*
- * linkAndUpdateFile()
+ * linkFile()
  *
  * Creates a hard link between the given relation files. We use
  * this function to perform a true in-place update. If the on-disk
@@ -114,12 +51,8 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
  * instead of copying the data from the old cluster to the new cluster.
  */
 const char *
-linkAndUpdateFile(pageCnvCtx *pageConverter,
-				  const char *src, const char *dst)
+linkFile(const char *src, const char *dst)
 {
-	if (pageConverter != NULL)
-		return "Cannot in-place update this cluster, page-by-page conversion is required";
-
 	if (pg_link_file(src, dst) == -1)
 		return getErrorText();
 	else
