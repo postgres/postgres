@@ -39,15 +39,15 @@
  *
  * When we *set* a visibility map during VACUUM, we must write WAL.  This may
  * seem counterintuitive, since the bit is basically a hint: if it is clear,
- * it may still be the case that every tuple on the page is all-visible or
- * all-frozen we just don't know that for certain.  The difficulty is that
- * there are two bits which are typically set together: the PD_ALL_VISIBLE
- * or PD_ALL_FROZEN bit on the page itself, and the corresponding visibility
- * map bit.  If a crash occurs after the visibility map page makes it to disk
- * and before the updated heap page makes it to disk, redo must set the bit on
- * the heap page.  Otherwise, the next insert, update, or delete on the heap
- * page will fail to realize that the visibility map bit must be cleared,
- * possibly causing index-only scans to return wrong answers.
+ * it may still be the case that every tuple on the page is visible to all
+ * transactions; we just don't know that for certain.  The difficulty is that
+ * there are two bits which are typically set together: the PD_ALL_VISIBLE bit
+ * on the page itself, and the visibility map bit.  If a crash occurs after the
+ * visibility map page makes it to disk and before the updated heap page makes
+ * it to disk, redo must set the bit on the heap page.  Otherwise, the next
+ * insert, update, or delete on the heap page will fail to realize that the
+ * visibility map bit must be cleared, possibly causing index-only scans to
+ * return wrong answers.
  *
  * VACUUM will normally skip pages for which the visibility map bit is set;
  * such pages can't contain any dead tuples and therefore don't need vacuuming.
@@ -251,11 +251,10 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
  * to InvalidTransactionId when a page that is already all-visible is being
  * marked all-frozen.
  *
- * Caller is expected to set the heap page's PD_ALL_VISIBLE or PD_ALL_FROZEN
- * bit before calling this function. Except in recovery, caller should also
- * pass the heap buffer and flags which indicates what flag we want to set.
- * When checksums are enabled and we're not in recovery, we must add the heap
- * buffer to the WAL chain to protect it from being torn.
+ * Caller is expected to set the heap page's PD_ALL_VISIBLE bit before calling
+ * this function. Except in recovery, caller should also pass the heap
+ * buffer. When checksums are enabled and we're not in recovery, we must add
+ * the heap buffer to the WAL chain to protect it from being torn.
  *
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
@@ -315,10 +314,8 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				{
 					Page		heapPage = BufferGetPage(heapBuf);
 
-					/* Caller is expected to set page-level bits first. */
-					Assert((flags & VISIBILITYMAP_ALL_VISIBLE) == 0 || PageIsAllVisible(heapPage));
-					Assert((flags & VISIBILITYMAP_ALL_FROZEN) == 0 || PageIsAllFrozen(heapPage));
-
+					/* caller is expected to set PD_ALL_VISIBLE first */
+					Assert(PageIsAllVisible(heapPage));
 					PageSetLSN(heapPage, recptr);
 				}
 			}

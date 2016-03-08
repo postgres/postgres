@@ -766,7 +766,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					log_newpage_buffer(buf, true);
 
 				PageSetAllVisible(page);
-				PageSetAllFrozen(page);
 				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
 								  vmbuffer, InvalidTransactionId,
 								  VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
@@ -1024,6 +1023,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		{
 			uint8	flags = VISIBILITYMAP_ALL_VISIBLE;
 
+			if (all_frozen)
+				flags |= VISIBILITYMAP_ALL_FROZEN;
+
 			/*
 			 * It should never be the case that the visibility map page is set
 			 * while the page-level bit is clear, but the reverse is allowed
@@ -1038,11 +1040,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * rare cases after a crash, it is not worth optimizing.
 			 */
 			PageSetAllVisible(page);
-			if (all_frozen)
-			{
-				PageSetAllFrozen(page);
-				flags |= VISIBILITYMAP_ALL_FROZEN;
-			}
 			MarkBufferDirty(buf);
 			visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
 							  vmbuffer, visibility_cutoff_xid, flags);
@@ -1093,10 +1090,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		else if (all_visible_according_to_vm && all_visible && all_frozen &&
 				 !VM_ALL_FROZEN(onerel, blkno, &vmbuffer))
 		{
-			/* Page is marked all-visible but should be all-frozen */
-			PageSetAllFrozen(page);
-			MarkBufferDirty(buf);
-
 			/*
 			 * We can pass InvalidTransactionId as the cutoff XID here,
 			 * because setting the all-frozen bit doesn't cause recovery
@@ -1344,11 +1337,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	 */
 	if (heap_page_is_all_visible(onerel, buffer, &visibility_cutoff_xid,
 								 &all_frozen))
-	{
 		PageSetAllVisible(page);
-		if (all_frozen)
-			PageSetAllFrozen(page);
-	}
 
 	/*
 	 * All the changes to the heap page have been done. If the all-visible
