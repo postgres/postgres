@@ -482,11 +482,13 @@ show_log_timezone(void)
  * nothing since XactReadOnly will be reset by the next StartTransaction().
  * The IsTransactionState() test protects us against trying to check
  * RecoveryInProgress() in contexts where shared memory is not accessible.
+ * (Similarly, if we're restoring state in a parallel worker, just allow
+ * the change.)
  */
 bool
 check_transaction_read_only(bool *newval, void **extra, GucSource source)
 {
-	if (*newval == false && XactReadOnly && IsTransactionState())
+	if (*newval == false && XactReadOnly && IsTransactionState() && !InitializingParallelWorker)
 	{
 		/* Can't go to r/w mode inside a r/o transaction */
 		if (IsSubTransaction())
