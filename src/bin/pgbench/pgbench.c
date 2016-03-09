@@ -94,6 +94,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 
 int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
+int64		end_time = 0;		/* when to stop in micro seconds, under -T */
 
 /*
  * scaling factor. for example, scale = 10 will make 1000000 tuples in
@@ -1361,6 +1362,10 @@ top:
 
 		thread->throttle_trigger += wait;
 		st->txn_scheduled = thread->throttle_trigger;
+
+		/* stop client if next transaction is beyond pgbench end of execution */
+		if (duration > 0 && st->txn_scheduled > end_time)
+			return clientDone(st, true);
 
 		/*
 		 * If this --latency-limit is used, and this slot is already late so
@@ -3582,6 +3587,11 @@ main(int argc, char **argv)
 
 		INSTR_TIME_SET_CURRENT(thread->start_time);
 
+		/* compute when to stop */
+		if (duration > 0)
+			end_time = INSTR_TIME_GET_MICROSEC(thread->start_time) +
+				(int64) 1000000 * duration;
+
 		/* the first thread (i = 0) is executed by main thread */
 		if (i > 0)
 		{
@@ -3600,6 +3610,10 @@ main(int argc, char **argv)
 	}
 #else
 	INSTR_TIME_SET_CURRENT(threads[0].start_time);
+	/* compute when to stop */
+	if (duration > 0)
+		end_time = INSTR_TIME_GET_MICROSEC(threads[0].start_time) +
+			(int64) 1000000 * duration;
 	threads[0].thread = INVALID_THREAD;
 #endif   /* ENABLE_THREAD_SAFETY */
 
