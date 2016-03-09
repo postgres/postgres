@@ -1360,11 +1360,17 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 {
 	Gather	   *gather_plan;
 	Plan	   *subplan;
+	List	   *tlist;
 
-	/* Must insist that all children return the same tlist */
+	/*
+	 * Although the Gather node can project, we prefer to push down such work
+	 * to its child node, so demand an exact tlist from the child.
+	 */
 	subplan = create_plan_recurse(root, best_path->subpath, CP_EXACT_TLIST);
 
-	gather_plan = make_gather(subplan->targetlist,
+	tlist = build_path_tlist(root, &best_path->path);
+
+	gather_plan = make_gather(tlist,
 							  NIL,
 							  best_path->path.parallel_degree,
 							  best_path->single_copy,
