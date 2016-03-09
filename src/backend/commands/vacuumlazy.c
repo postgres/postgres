@@ -207,6 +207,9 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	else
 		elevel = DEBUG2;
 
+	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
+								  RelationGetRelid(onerel));
+
 	vac_strategy = bstrategy;
 
 	vacuum_set_xid_limits(onerel,
@@ -320,6 +323,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 						 onerel->rd_rel->relisshared,
 						 new_live_tuples,
 						 vacrelstats->new_dead_tuples);
+	pgstat_progress_end_command();
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)

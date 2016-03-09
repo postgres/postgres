@@ -2451,6 +2451,9 @@ AbortTransaction(void)
 	AbortBufferIO();
 	UnlockBuffers();
 
+	/* Clear command progress indicator */
+	pgstat_progress_end_command();
+
 	/* Reset WAL record construction state */
 	XLogResetInsertion();
 
@@ -4540,6 +4543,7 @@ AbortSubTransaction(void)
 
 	AbortBufferIO();
 	UnlockBuffers();
+	pgstat_progress_end_command();
 
 	/* Reset WAL record construction state */
 	XLogResetInsertion();

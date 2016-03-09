@@ -696,6 +696,18 @@ typedef enum BackendState
 } BackendState;
 
 /* ----------
+ * Command type for progress reporting purposes
+ * ----------
+ */
+typedef enum ProgressCommandType
+{
+	PROGRESS_COMMAND_INVALID,
+	PROGRESS_COMMAND_VACUUM,
+}	ProgressCommandType;
+
+#define PGSTAT_NUM_PROGRESS_PARAM	10
+
+/* ----------
  * Shared-memory data structures
  * ----------
  */
@@ -776,6 +788,19 @@ typedef struct PgBackendStatus
 
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;
+
+	/*
+	 * Command progress reporting.  Any command which wishes can advertise
+	 * that it is running by setting st_progress_command,
+	 * st_progress_command_target, and st_progress_command[].
+	 * st_progress_command_target should be the OID of the relation which the
+	 * command targets (we assume there's just one, as this is meant for
+	 * utility commands), but the meaning of each element in the
+	 * st_progress_param array is command-specific.
+	 */
+	ProgressCommandType st_progress_command;
+	Oid			st_progress_command_target;
+	int64		st_progress_param[PGSTAT_NUM_PROGRESS_PARAM];
 } PgBackendStatus;
 
 /*
@@ -935,6 +960,11 @@ extern void pgstat_report_waiting(bool waiting);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 									int buflen);
+
+extern void pgstat_progress_start_command(ProgressCommandType cmdtype,
+							  Oid relid);
+extern void pgstat_progress_update_param(int index, int64 val);
+extern void pgstat_progress_end_command(void);
 
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);

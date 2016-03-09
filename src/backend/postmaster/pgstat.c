@@ -2731,6 +2731,13 @@ pgstat_bestart(void)
 	beentry->st_clienthostname[NAMEDATALEN - 1] = '\0';
 	beentry->st_appname[NAMEDATALEN - 1] = '\0';
 	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
+	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
+	beentry->st_progress_command_target = InvalidOid;
+	/*
+	 * we don't zero st_progress_param here to save cycles; nobody should
+	 * examine it until st_progress_command has been set to something other
+	 * than PROGRESS_COMMAND_INVALID
+	 */
 
 	pgstat_increment_changecount_after(beentry);
 
@@ -2848,6 +2855,72 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 		beentry->st_activity_start_timestamp = start_timestamp;
 	}
 
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*-----------
+ * pgstat_progress_start_command() -
+ *
+ * Set st_command in own backend entry.  Also, zero-initialize
+ * st_progress_param array.
+ *-----------
+ */
+void
+pgstat_progress_start_command(ProgressCommandType cmdtype, Oid relid)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	if (!beentry || !pgstat_track_activities)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_progress_command = cmdtype;
+	beentry->st_progress_command_target = relid;
+	MemSet(&beentry->st_progress_param, 0, sizeof(beentry->st_progress_param));
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*-----------
+ * pgstat_progress_update_param() -
+ *
+ * Update index'th member in st_progress_param[] of own backend entry.
+ *-----------
+ */
+void
+pgstat_progress_update_param(int index, int64 val)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	Assert(index >= 0 && index < PGSTAT_NUM_PROGRESS_PARAM);
+
+	if (!beentry || !pgstat_track_activities)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_progress_param[index] = val;
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*-----------
+ * pgstat_progress_end_command() -
+ *
+ * Update index'th member in st_progress_param[] of own backend entry.
+ *-----------
+ */
+void
+pgstat_progress_end_command(void)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	if (!beentry)
+		return;
+	if (!pgstat_track_activities
+		&& beentry->st_progress_command == PROGRESS_COMMAND_INVALID)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
+	beentry->st_progress_command_target = InvalidOid;
 	pgstat_increment_changecount_after(beentry);
 }
 
