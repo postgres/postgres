@@ -46,7 +46,14 @@ PostgresNode - class representing PostgreSQL server instance
     or print "timed out";
 
   # Do an online pg_basebackup
-  my $ret = $node->backup('testbackup');
+  my $ret = $node->backup('testbackup1');
+
+  # Take a backup of a running server
+  my $ret = $node->backup_fs_hot('testbackup2');
+
+  # Take a backup of a stopped server
+  $node->stop;
+  my $ret = $node->backup_fs_cold('testbackup3')
 
   # Restore it to create a new independent node (not a replica)
   my $replica = get_new_node('replica');
@@ -448,11 +455,11 @@ sub append_conf
 
 =item $node->backup(backup_name)
 
-Create a hot backup with pg_basebackup in $node->backup_dir,
-including the transaction logs. xlogs are fetched at the
-end of the backup, not streamed.
+Create a hot backup with B<pg_basebackup> in subdirectory B<backup_name> of
+B<< $node->backup_dir >>, including the transaction logs. Transaction logs are
+fetched at the end of the backup, not streamed.
 
-You'll have to configure a suitable max_wal_senders on the
+You'll have to configure a suitable B<max_wal_senders> on the
 target server since it isn't done by default.
 
 =cut
@@ -464,10 +471,85 @@ sub backup
 	my $port        = $self->port;
 	my $name        = $self->name;
 
-	print "# Taking backup $backup_name from node \"$name\"\n";
+	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
 	TestLib::system_or_bail("pg_basebackup -D $backup_path -p $port -x");
 	print "# Backup finished\n";
 }
+
+=item $node->backup_fs_hot(backup_name)
+
+Create a backup with a filesystem level copy in subdirectory B<backup_name> of
+B<< $node->backup_dir >>, including transaction logs.
+
+Archiving must be enabled, as B<pg_start_backup()> and B<pg_stop_backup()> are
+used. This is not checked or enforced.
+
+The backup name is passed as the backup label to B<pg_start_backup()>.
+
+=cut
+
+sub backup_fs_hot
+{
+	my ($self, $backup_name) = @_;
+	$self->_backup_fs($backup_name, 1);
+}
+
+=item $node->backup_fs_cold(backup_name)
+
+Create a backup with a filesystem level copy in subdirectory B<backup_name> of
+B<< $node->backup_dir >>, including transaction logs. The server must be
+stopped as no attempt to handle concurrent writes is made.
+
+Use B<backup> or B<backup_fs_hot> if you want to back up a running server.
+
+=cut
+
+sub backup_fs_cold
+{
+	my ($self, $backup_name) = @_;
+	$self->_backup_fs($backup_name, 0);
+}
+
+
+# Common sub of backup_fs_hot and backup_fs_cold
+sub _backup_fs
+{
+	my ($self, $backup_name, $hot) = @_;
+	my $backup_path = $self->backup_dir . '/' . $backup_name;
+	my $port        = $self->port;
+	my $name        = $self->name;
+
+	print "# Taking filesystem backup $backup_name from node \"$name\"\n";
+
+	if ($hot)
+	{
+		my $stdout = $self->safe_psql('postgres',
+			"SELECT * FROM pg_start_backup('$backup_name');");
+		print "# pg_start_backup: $stdout\n";
+	}
+
+	RecursiveCopy::copypath(
+		$self->data_dir,
+		$backup_path,
+		filterfn => sub {
+			my $src = shift;
+			return ($src ne 'pg_log' and $src ne 'postmaster.pid');
+		});
+
+	if ($hot)
+	{
+		# We ignore pg_stop_backup's return value. We also assume archiving
+		# is enabled; otherwise the caller will have to copy the remaining
+		# segments.
+		my $stdout = $self->safe_psql('postgres',
+			'SELECT * FROM pg_stop_backup();');
+		print "# pg_stop_backup: $stdout\n";
+	}
+
+	print "# Backup finished\n";
+}
+
+
 
 =pod
 
