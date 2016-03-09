@@ -146,3 +146,69 @@
 	fun:pg_atomic_write_u64_impl
 	fun:pg_atomic_init_u64_impl
 }
+
+
+# Python's allocator does some low-level tricks for efficiency. Those
+# can be disabled for better instrumentation; but few people testing
+# postgres will have such a build of python. So add broad
+# suppressions of the resulting errors.
+# See also https://svn.python.org/projects/python/trunk/Misc/README.valgrind
+{
+   python_clever_allocator
+   Memcheck:Addr4
+   fun:PyObject_Free
+}
+
+{
+   python_clever_allocator
+   Memcheck:Addr8
+   fun:PyObject_Free
+}
+
+{
+   python_clever_allocator
+   Memcheck:Value4
+   fun:PyObject_Free
+}
+
+{
+   python_clever_allocator
+   Memcheck:Value8
+   fun:PyObject_Free
+}
+
+{
+   python_clever_allocator
+   Memcheck:Cond
+   fun:PyObject_Free
+}
+
+{
+   python_clever_allocator
+   Memcheck:Addr4
+   fun:PyObject_Realloc
+}
+
+{
+   python_clever_allocator
+   Memcheck:Addr8
+   fun:PyObject_Realloc
+}
+
+{
+   python_clever_allocator
+   Memcheck:Value4
+   fun:PyObject_Realloc
+}
+
+{
+   python_clever_allocator
+   Memcheck:Value8
+   fun:PyObject_Realloc
+}
+
+{
+   python_clever_allocator
+   Memcheck:Cond
+   fun:PyObject_Realloc
+}
