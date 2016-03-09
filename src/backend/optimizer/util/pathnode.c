@@ -2438,13 +2438,12 @@ create_agg_path(PlannerInfo *root,
  *
  * GroupingSetsPath represents sorted grouping with one or more grouping sets.
  * The input path's result must be sorted to match the last entry in
- * rollup_groupclauses, and groupColIdx[] identifies its sort columns.
+ * rollup_groupclauses.
  *
  * 'rel' is the parent relation associated with the result
  * 'subpath' is the path representing the source of data
  * 'target' is the PathTarget to be computed
  * 'having_qual' is the HAVING quals if any
- * 'groupColIdx' is an array of indexes of grouping columns in the source data
  * 'rollup_lists' is a list of grouping sets
  * 'rollup_groupclauses' is a list of grouping clauses for grouping sets
  * 'agg_costs' contains cost info about the aggregate functions to be computed
@@ -2456,7 +2455,6 @@ create_groupingsets_path(PlannerInfo *root,
 						 Path *subpath,
 						 PathTarget *target,
 						 List *having_qual,
-						 AttrNumber *groupColIdx,
 						 List *rollup_lists,
 						 List *rollup_groupclauses,
 						 const AggClauseCosts *agg_costs,
@@ -2487,7 +2485,6 @@ create_groupingsets_path(PlannerInfo *root,
 	else
 		pathnode->path.pathkeys = NIL;
 
-	pathnode->groupColIdx = groupColIdx;
 	pathnode->rollup_groupclauses = rollup_groupclauses;
 	pathnode->rollup_lists = rollup_lists;
 	pathnode->qual = having_qual;

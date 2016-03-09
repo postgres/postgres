@@ -1875,7 +1875,6 @@ _outGroupingSetsPath(StringInfo str, const GroupingSetsPath *node)
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_NODE_FIELD(subpath);
-	/* we don't bother to print groupColIdx */
 	WRITE_NODE_FIELD(rollup_groupclauses);
 	WRITE_NODE_FIELD(rollup_lists);
 	WRITE_NODE_FIELD(qual);

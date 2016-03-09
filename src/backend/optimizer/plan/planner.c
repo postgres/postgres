@@ -104,7 +104,6 @@ static double get_number_of_groups(PlannerInfo *root,
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
-					  AttrNumber *groupColIdx,
 					  List *rollup_lists,
 					  List *rollup_groupclauses);
 static RelOptInfo *create_window_paths(PlannerInfo *root,
@@ -125,9 +124,7 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 double limit_tuples);
-static PathTarget *make_scanjoin_target(PlannerInfo *root, List *tlist,
-					 AttrNumber **groupColIdx);
-static int	get_grouping_column_index(Query *parse, TargetEntry *tle);
+static PathTarget *make_scanjoin_target(PlannerInfo *root, List *tlist);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
 static List *make_windowInputTargetList(PlannerInfo *root,
@@ -1462,7 +1459,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	{
 		/* No set operations, do regular planning */
 		PathTarget *sub_target;
-		AttrNumber *groupColIdx;
 		double		tlist_rows;
 		List	   *grouping_tlist;
 		WindowFuncLists *wflists = NULL;
@@ -1656,8 +1652,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * because the target width estimates can use per-Var width numbers
 		 * that were obtained within query_planner().
 		 */
-		sub_target = make_scanjoin_target(root, tlist,
-										  &groupColIdx);
+		sub_target = make_scanjoin_target(root, tlist);
 
 		/*
 		 * Forcibly apply that tlist to all the Paths for the scan/join rel.
@@ -1714,7 +1709,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 												current_rel,
 												create_pathtarget(root,
 															 grouping_tlist),
-												groupColIdx,
 												rollup_lists,
 												rollup_groupclauses);
 		}
@@ -3077,7 +3071,6 @@ get_number_of_groups(PlannerInfo *root,
  *
  * input_rel: contains the source-data Paths
  * target: the pathtarget for the result Paths to compute
- * groupColIdx: array of indexes of grouping columns in the source data
  * rollup_lists: list of grouping sets, or NIL if not doing grouping sets
  * rollup_groupclauses: list of grouping clauses for grouping sets,
  *		or NIL if not doing grouping sets
@@ -3092,7 +3085,6 @@ static RelOptInfo *
 create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
-					  AttrNumber *groupColIdx,
 					  List *rollup_lists,
 					  List *rollup_groupclauses)
 {
@@ -3236,7 +3228,6 @@ create_grouping_paths(PlannerInfo *root,
 													  path,
 													  target,
 												  (List *) parse->havingQual,
-													  groupColIdx,
 													  rollup_lists,
 													  rollup_groupclauses,
 													  &agg_costs,
@@ -3766,24 +3757,19 @@ create_ordered_paths(PlannerInfo *root,
  * into PathTarget format, which is more compact and includes cost/width.
  *
  * 'tlist' is the query's target list.
- * 'groupColIdx' receives an array of column numbers for the GROUP BY
- *			expressions (if there are any) in the returned target list.
  *
  * The result is the PathTarget to be applied to the Paths returned from
  * query_planner().
  */
 static PathTarget *
 make_scanjoin_target(PlannerInfo *root,
-					 List *tlist,
-					 AttrNumber **groupColIdx)
+					 List *tlist)
 {
 	Query	   *parse = root->parse;
 	List	   *sub_tlist;
 	List	   *non_group_cols;
 	List	   *non_group_vars;
-	int			numCols;
-
-	*groupColIdx = NULL;
+	ListCell   *tl;
 
 	/*
 	 * If we're not grouping or aggregating or windowing, there's nothing to
@@ -3800,64 +3786,35 @@ make_scanjoin_target(PlannerInfo *root,
 	sub_tlist = NIL;
 	non_group_cols = NIL;
 
-	numCols = list_length(parse->groupClause);
-	if (numCols > 0)
+	foreach(tl, tlist)
 	{
-		/*
-		 * If grouping, create sub_tlist entries for all GROUP BY columns, and
-		 * make an array showing where the group columns are in the sub_tlist.
-		 *
-		 * Note: with this implementation, the array entries will always be
-		 * 1..N, but we don't want callers to assume that.
-		 */
-		AttrNumber *grpColIdx;
-		ListCell   *tl;
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
-		grpColIdx = (AttrNumber *) palloc0(sizeof(AttrNumber) * numCols);
-		*groupColIdx = grpColIdx;
-
-		foreach(tl, tlist)
+		if (tle->ressortgroupref && parse->groupClause &&
+			get_sortgroupref_clause_noerr(tle->ressortgroupref,
+										  parse->groupClause) != NULL)
 		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			int			colno;
+			/*
+			 * It's a grouping column, so add it to the result tlist as-is.
+			 */
+			TargetEntry *newtle;
 
-			colno = get_grouping_column_index(parse, tle);
-			if (colno >= 0)
-			{
-				/*
-				 * It's a grouping column, so add it to the result tlist and
-				 * remember its resno in grpColIdx[].
-				 */
-				TargetEntry *newtle;
-
-				newtle = makeTargetEntry(tle->expr,
-										 list_length(sub_tlist) + 1,
-										 NULL,
-										 false);
-				newtle->ressortgroupref = tle->ressortgroupref;
-				sub_tlist = lappend(sub_tlist, newtle);
-
-				Assert(grpColIdx[colno] == 0);	/* no dups expected */
-				grpColIdx[colno] = newtle->resno;
-			}
-			else
-			{
-				/*
-				 * Non-grouping column, so just remember the expression for
-				 * later call to pull_var_clause.  There's no need for
-				 * pull_var_clause to examine the TargetEntry node itself.
-				 */
-				non_group_cols = lappend(non_group_cols, tle->expr);
-			}
+			newtle = makeTargetEntry(tle->expr,
+									 list_length(sub_tlist) + 1,
+									 NULL,
+									 false);
+			newtle->ressortgroupref = tle->ressortgroupref;
+			sub_tlist = lappend(sub_tlist, newtle);
 		}
-	}
-	else
-	{
-		/*
-		 * With no grouping columns, just pass whole tlist to pull_var_clause.
-		 * Need (shallow) copy to avoid damaging input tlist below.
-		 */
-		non_group_cols = list_copy(tlist);
+		else
+		{
+			/*
+			 * Non-grouping column, so just remember the expression for later
+			 * call to pull_var_clause.  There's no need for pull_var_clause
+			 * to examine the TargetEntry node itself.
+			 */
+			non_group_cols = lappend(non_group_cols, tle->expr);
+		}
 	}
 
 	/*
@@ -3884,37 +3841,6 @@ make_scanjoin_target(PlannerInfo *root,
 	list_free(non_group_cols);
 
 	return create_pathtarget(root, sub_tlist);
-}
-
-/*
- * get_grouping_column_index
- *		Get the GROUP BY column position, if any, of a targetlist entry.
- *
- * Returns the index (counting from 0) of the TLE in the GROUP BY list, or -1
- * if it's not a grouping column.  Note: the result is unique because the
- * parser won't make multiple groupClause entries for the same TLE.
- */
-static int
-get_grouping_column_index(Query *parse, TargetEntry *tle)
-{
-	int			colno = 0;
-	Index		ressortgroupref = tle->ressortgroupref;
-	ListCell   *gl;
-
-	/* No need to search groupClause if TLE hasn't got a sortgroupref */
-	if (ressortgroupref == 0)
-		return -1;
-
-	foreach(gl, parse->groupClause)
-	{
-		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
-
-		if (grpcl->tleSortGroupRef == ressortgroupref)
-			return colno;
-		colno++;
-	}
-
-	return -1;
 }
 
 /*

@@ -445,6 +445,26 @@ get_sortgroupref_clause(Index sortref, List *clauses)
 }
 
 /*
+ * get_sortgroupref_clause_noerr
+ *		As above, but return NULL rather than throwing an error if not found.
+ */
+SortGroupClause *
+get_sortgroupref_clause_noerr(Index sortref, List *clauses)
+{
+	ListCell   *l;
+
+	foreach(l, clauses)
+	{
+		SortGroupClause *cl = (SortGroupClause *) lfirst(l);
+
+		if (cl->tleSortGroupRef == sortref)
+			return cl;
+	}
+
+	return NULL;
+}
+
+/*
  * extract_grouping_ops - make an array of the equality operator OIDs
  *		for a SortGroupClause list
  */

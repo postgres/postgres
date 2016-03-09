@@ -46,6 +46,8 @@ extern List *get_sortgrouplist_exprs(List *sgClauses,
 
 extern SortGroupClause *get_sortgroupref_clause(Index sortref,
 						List *clauses);
+extern SortGroupClause *get_sortgroupref_clause_noerr(Index sortref,
+							  List *clauses);
 
 extern Oid *extract_grouping_ops(List *groupClause);
 extern AttrNumber *extract_grouping_cols(List *groupClause, List *tlist);

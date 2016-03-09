@@ -1640,13 +1640,11 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 {
 	Agg		   *plan;
 	Plan	   *subplan;
-	AttrNumber *groupColIdx = best_path->groupColIdx;
 	List	   *rollup_groupclauses = best_path->rollup_groupclauses;
 	List	   *rollup_lists = best_path->rollup_lists;
 	AttrNumber *grouping_map;
 	int			maxref;
 	List	   *chain;
-	int			i;
 	ListCell   *lc,
 			   *lc2;
 
@@ -1662,8 +1660,9 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
 
 	/*
-	 * Compute the mapping from tleSortGroupRef to column index.  First,
-	 * identify max SortGroupRef in groupClause, for array sizing.
+	 * Compute the mapping from tleSortGroupRef to column index in the child's
+	 * tlist.  First, identify max SortGroupRef in groupClause, for array
+	 * sizing.
 	 */
 	maxref = 0;
 	foreach(lc, root->parse->groupClause)
@@ -1676,12 +1675,13 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 
 	grouping_map = (AttrNumber *) palloc0((maxref + 1) * sizeof(AttrNumber));
 
-	i = 0;
+	/* Now look up the column numbers in the child's tlist */
 	foreach(lc, root->parse->groupClause)
 	{
 		SortGroupClause *gc = (SortGroupClause *) lfirst(lc);
+		TargetEntry *tle = get_sortgroupclause_tle(gc, subplan->targetlist);
 
-		grouping_map[gc->tleSortGroupRef] = groupColIdx[i++];
+		grouping_map[gc->tleSortGroupRef] = tle->resno;
 	}
 
 	/*
