@@ -116,6 +116,21 @@ select thousand, tenthous from tenk1
 where (thousand, tenthous) >= (997, 5000)
 order by thousand, tenthous;
 
+-- Test case for bug #14010: indexed row comparisons fail with nulls
+create temp table test_table (a text, b text);
+insert into test_table values ('a', 'b');
+insert into test_table select 'a', null from generate_series(1,1000);
+insert into test_table values ('b', 'a');
+create index on test_table (a,b);
+set enable_sort = off;
+
+explain (costs off)
+select a,b from test_table where (a,b) > ('a','a') order by a,b;
+
+select a,b from test_table where (a,b) > ('a','a') order by a,b;
+
+reset enable_sort;
+
 -- Check row comparisons with IN
 select * from int8_tbl i8 where i8 in (row(123,456));  -- fail, type mismatch
 
