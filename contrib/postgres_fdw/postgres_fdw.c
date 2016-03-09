@@ -283,9 +283,6 @@ static void postgresGetForeignJoinPaths(PlannerInfo *root,
 							JoinPathExtraData *extra);
 static bool postgresRecheckForeignScan(ForeignScanState *node,
 						   TupleTableSlot *slot);
-static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
-								 RelOptInfo *rel);
-static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * Helper functions
@@ -331,6 +328,11 @@ static void conversion_error_callback(void *arg);
 static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel,
 				JoinType jointype, RelOptInfo *outerrel, RelOptInfo *innerrel,
 				JoinPathExtraData *extra);
+static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
+								 RelOptInfo *rel);
+static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
+static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
+								Path *epq_path);
 
 
 /*
@@ -501,6 +503,14 @@ postgresGetForeignRelSize(PlannerInfo *root,
 													 NULL);
 
 	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
+
+	/*
+	 * Set cached relation costs to some negative value, so that we can detect
+	 * when they are set to some sensible costs during one (usually the first)
+	 * of the calls to estimate_path_cost_size().
+	 */
+	fpinfo->rel_startup_cost = -1;
+	fpinfo->rel_total_cost = -1;
 
 	/*
 	 * If the table or the server is configured to use remote estimates,
@@ -774,7 +784,6 @@ postgresGetForeignPaths(PlannerInfo *root,
 	ForeignPath *path;
 	List	   *ppi_list;
 	ListCell   *lc;
-	List	   *useful_pathkeys_list = NIL;		/* List of all pathkeys */
 
 	/*
 	 * Create simplest ForeignScan path node and add it to baserel.  This path
@@ -793,30 +802,8 @@ postgresGetForeignPaths(PlannerInfo *root,
 								   NIL);		/* no fdw_private list */
 	add_path(baserel, (Path *) path);
 
-	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, baserel);
-
-	/* Create one path for each set of pathkeys we found above. */
-	foreach(lc, useful_pathkeys_list)
-	{
-		double		rows;
-		int			width;
-		Cost		startup_cost;
-		Cost		total_cost;
-		List	   *useful_pathkeys = lfirst(lc);
-
-		estimate_path_cost_size(root, baserel, NIL, useful_pathkeys,
-								&rows, &width, &startup_cost, &total_cost);
-
-		add_path(baserel, (Path *)
-				 create_foreignscan_path(root, baserel,
-										 rows,
-										 startup_cost,
-										 total_cost,
-										 useful_pathkeys,
-										 NULL,
-										 NULL,
-										 NIL));
-	}
+	/* Add paths with pathkeys */
+	add_paths_with_pathkeys_for_rel(root, baserel, NULL);
 
 	/*
 	 * If we're not using remote estimates, stop here.  We have no way to
@@ -2182,7 +2169,18 @@ estimate_path_cost_size(PlannerInfo *root,
 		/* Back into an estimate of the number of retrieved rows. */
 		retrieved_rows = clamp_row_est(rows / fpinfo->local_conds_sel);
 
-		if (foreignrel->reloptkind != RELOPT_JOINREL)
+		/*
+		 * We will come here again and again with different set of pathkeys
+		 * that caller wants to cost. We don't need to calculate the cost of
+		 * bare scan each time. Instead, use the costs if we have cached them
+		 * already.
+		 */
+		if (fpinfo->rel_startup_cost > 0 && fpinfo->rel_total_cost > 0)
+		{
+			startup_cost = fpinfo->rel_startup_cost;
+			run_cost = fpinfo->rel_total_cost - fpinfo->rel_startup_cost;
+		}
+		else if (foreignrel->reloptkind != RELOPT_JOINREL)
 		{
 			/* Clamp retrieved rows estimates to at most foreignrel->tuples. */
 			retrieved_rows = Min(retrieved_rows, foreignrel->tuples);
@@ -2284,13 +2282,19 @@ estimate_path_cost_size(PlannerInfo *root,
 	}
 
 	/*
-	 * Cache the costs prior to adding the costs for transferring data from
-	 * the foreign server. These costs are useful for costing the join between
-	 * this relation and another foreign relation, when the cost of join can
-	 * not be obtained from the foreign server.
+	 * Cache the costs for scans without any pathkeys or parameterization
+	 * before adding the costs for transferring data from the foreign server.
+	 * These costs are useful for costing the join between this relation and
+	 * another foreign relation or to calculate the costs of paths with
+	 * pathkeys for this relation, when the costs can not be obtained from the
+	 * foreign server. This function will be called at least once for every
+	 * foreign relation without pathkeys and parameterization.
 	 */
-	fpinfo->rel_startup_cost = startup_cost;
-	fpinfo->rel_total_cost = total_cost;
+	if (pathkeys == NIL && param_join_conds == NIL)
+	{
+		fpinfo->rel_startup_cost = startup_cost;
+		fpinfo->rel_total_cost = total_cost;
+	}
 
 	/*
 	 * Add some additional cost factors to account for connection overhead
@@ -3458,6 +3462,14 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	fpinfo->fdw_startup_cost = fpinfo_o->fdw_startup_cost;
 	fpinfo->fdw_tuple_cost = fpinfo_o->fdw_tuple_cost;
 
+	/*
+	 * Set cached relation costs to some negative value, so that we can detect
+	 * when they are set to some sensible costs, during one (usually the
+	 * first) of the calls to estimate_path_cost_size().
+	 */
+	fpinfo->rel_startup_cost = -1;
+	fpinfo->rel_total_cost = -1;
+
 	/* Mark that this join can be pushed down safely */
 	fpinfo->pushdown_safe = true;
 
@@ -3530,6 +3542,39 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 					 fpinfo_i->relation_name->data);
 
 	return true;
+}
+
+static void
+add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
+								Path *epq_path)
+{
+	List	   *useful_pathkeys_list = NIL;		/* List of all pathkeys */
+	ListCell   *lc;
+
+	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
+
+	/* Create one path for each set of pathkeys we found above. */
+	foreach(lc, useful_pathkeys_list)
+	{
+		double		rows;
+		int			width;
+		Cost		startup_cost;
+		Cost		total_cost;
+		List	   *useful_pathkeys = lfirst(lc);
+
+		estimate_path_cost_size(root, rel, NIL, useful_pathkeys,
+								&rows, &width, &startup_cost, &total_cost);
+
+		add_path(rel, (Path *)
+				 create_foreignscan_path(root, rel,
+										 rows,
+										 startup_cost,
+										 total_cost,
+										 useful_pathkeys,
+										 NULL,
+										 epq_path,
+										 NIL));
+	}
 }
 
 /*
@@ -3670,7 +3715,8 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	/* Add generated path into joinrel by add_path(). */
 	add_path(joinrel, (Path *) joinpath);
 
-	/* XXX Consider pathkeys for the join relation */
+	/* Consider pathkeys for the join relation */
+	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path);
 
 	/* XXX Consider parameterized paths for the join relation */
 }
@@ -3877,7 +3923,7 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 	{
 		EquivalenceMember *em = lfirst(lc_em);
 
-		if (bms_equal(em->em_relids, rel->relids))
+		if (bms_is_subset(em->em_relids, rel->relids))
 		{
 			/*
 			 * If there is more than one equivalence member whose Vars are

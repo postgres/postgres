@@ -444,6 +444,40 @@ SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1"
  110 | 110
 (10 rows)
 
+-- A join between local table and foreign join. ORDER BY clause is added to the
+-- foreign join so that the local table can be joined using merge join strategy.
+EXPLAIN (COSTS false, VERBOSE)
+	SELECT t1."C 1" FROM "S 1"."T 1" t1 left join ft1 t2 join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1."C 1"
+   ->  Merge Right Join
+         Output: t1."C 1"
+         Merge Cond: (t3.c1 = t1."C 1")
+         ->  Foreign Scan
+               Output: t3.c1
+               Relations: (public.ft1 t2) INNER JOIN (public.ft2 t3)
+               Remote SQL: SELECT r3."C 1" FROM ("S 1"."T 1" r2 INNER JOIN "S 1"."T 1" r3 ON (TRUE)) WHERE ((r2."C 1" = r3."C 1")) ORDER BY r2."C 1" ASC NULLS LAST
+         ->  Index Only Scan using t1_pkey on "S 1"."T 1" t1
+               Output: t1."C 1"
+(11 rows)
+
+SELECT t1."C 1" FROM "S 1"."T 1" t1 left join ft1 t2 join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
+ C 1 
+-----
+ 101
+ 102
+ 103
+ 104
+ 105
+ 106
+ 107
+ 108
+ 109
+ 110
+(10 rows)
+
 RESET enable_hashjoin;
 RESET enable_nestloop;
 -- ===================================================================
@@ -869,18 +903,15 @@ ANALYZE ft5;
 -- join two tables
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
-                                                                     QUERY PLAN                                                                     
-----------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                             QUERY PLAN                                                                                              
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1, t1.c3
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.c1, t2.c1, t1.c3
-         Sort Key: t1.c3, t1.c1
-         ->  Foreign Scan
-               Output: t1.c1, t2.c1, t1.c3
-               Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
-               Remote SQL: SELECT r1."C 1", r1.c3, r2."C 1" FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1"))
-(9 rows)
+         Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+         Remote SQL: SELECT r1."C 1", r1.c3, r2."C 1" FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) ORDER BY r1.c3 ASC NULLS LAST, r1."C 1" ASC NULLS LAST
+(6 rows)
 
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
  c1  | c1  
@@ -931,18 +962,15 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) JOIN ft4 t
 -- left outer join
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
-                                                     QUERY PLAN                                                      
----------------------------------------------------------------------------------------------------------------------
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.c1, t2.c1
-         Sort Key: t1.c1, t2.c1
-         ->  Foreign Scan
-               Output: t1.c1, t2.c1
-               Relations: (public.ft4 t1) LEFT JOIN (public.ft5 t2)
-               Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 LEFT JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1))))
-(9 rows)
+         Relations: (public.ft4 t1) LEFT JOIN (public.ft5 t2)
+         Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 LEFT JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) ORDER BY r1.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST
+(6 rows)
 
 SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
  c1 | c1 
@@ -1007,18 +1035,15 @@ SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE
 -- right outer join
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2.c1, t1.c1 OFFSET 10 LIMIT 10;
-                                                     QUERY PLAN                                                      
----------------------------------------------------------------------------------------------------------------------
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.c1, t2.c1
-         Sort Key: t2.c1, t1.c1
-         ->  Foreign Scan
-               Output: t1.c1, t2.c1
-               Relations: (public.ft4 t2) LEFT JOIN (public.ft5 t1)
-               Remote SQL: SELECT r2.c1, r1.c1 FROM ("S 1"."T 3" r2 LEFT JOIN "S 1"."T 4" r1 ON (((r1.c1 = r2.c1))))
-(9 rows)
+         Relations: (public.ft4 t2) LEFT JOIN (public.ft5 t1)
+         Remote SQL: SELECT r2.c1, r1.c1 FROM ("S 1"."T 3" r2 LEFT JOIN "S 1"."T 4" r1 ON (((r1.c1 = r2.c1)))) ORDER BY r2.c1 ASC NULLS LAST, r1.c1 ASC NULLS LAST
+(6 rows)
 
 SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2.c1, t1.c1 OFFSET 10 LIMIT 10;
  c1 | c1 
@@ -1038,18 +1063,15 @@ SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2
 -- full outer join
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 45 LIMIT 10;
-                                                     QUERY PLAN                                                      
----------------------------------------------------------------------------------------------------------------------
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.c1, t2.c1
-         Sort Key: t1.c1, t2.c1
-         ->  Foreign Scan
-               Output: t1.c1, t2.c1
-               Relations: (public.ft4 t1) FULL JOIN (public.ft5 t2)
-               Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 FULL JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1))))
-(9 rows)
+         Relations: (public.ft4 t1) FULL JOIN (public.ft5 t2)
+         Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 FULL JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) ORDER BY r1.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST
+(6 rows)
 
 SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 45 LIMIT 10;
  c1  | c1 
@@ -1101,35 +1123,32 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) WHERE (t1.c1
 -- tests whole-row reference for row marks
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE OF t1;
-                                                                                                                                                QUERY PLAN                                                                                                                                                 
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                                         QUERY PLAN                                                                                                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
    ->  LockRows
          Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-         ->  Sort
+         ->  Foreign Scan
                Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-               Sort Key: t1.c3, t1.c1
-               ->  Foreign Scan
-                     Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-                     Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
-                     Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) FOR UPDATE OF r1
-                     ->  Merge Join
-                           Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
-                           Merge Cond: (t1.c1 = t2.c1)
-                           ->  Sort
+               Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+               Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) ORDER BY r1.c3 ASC NULLS LAST, r1."C 1" ASC NULLS LAST FOR UPDATE OF r1
+               ->  Merge Join
+                     Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
+                     Merge Cond: (t1.c1 = t2.c1)
+                     ->  Sort
+                           Output: t1.c1, t1.c3, t1.*
+                           Sort Key: t1.c1
+                           ->  Foreign Scan on public.ft1 t1
                                  Output: t1.c1, t1.c3, t1.*
-                                 Sort Key: t1.c1
-                                 ->  Foreign Scan on public.ft1 t1
-                                       Output: t1.c1, t1.c3, t1.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
-                           ->  Sort
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
+                     ->  Sort
+                           Output: t2.c1, t2.*
+                           Sort Key: t2.c1
+                           ->  Foreign Scan on public.ft2 t2
                                  Output: t2.c1, t2.*
-                                 Sort Key: t2.c1
-                                 ->  Foreign Scan on public.ft2 t2
-                                       Output: t2.c1, t2.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
-(26 rows)
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
+(23 rows)
 
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE OF t1;
  c1  | c1  
@@ -1148,35 +1167,32 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
 
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE;
-                                                                                                                                                         QUERY PLAN                                                                                                                                                         
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                                                 QUERY PLAN                                                                                                                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
    ->  LockRows
          Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-         ->  Sort
+         ->  Foreign Scan
                Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-               Sort Key: t1.c3, t1.c1
-               ->  Foreign Scan
-                     Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-                     Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
-                     Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) FOR UPDATE OF r1 FOR UPDATE OF r2
-                     ->  Merge Join
-                           Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
-                           Merge Cond: (t1.c1 = t2.c1)
-                           ->  Sort
+               Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+               Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) ORDER BY r1.c3 ASC NULLS LAST, r1."C 1" ASC NULLS LAST FOR UPDATE OF r1 FOR UPDATE OF r2
+               ->  Merge Join
+                     Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
+                     Merge Cond: (t1.c1 = t2.c1)
+                     ->  Sort
+                           Output: t1.c1, t1.c3, t1.*
+                           Sort Key: t1.c1
+                           ->  Foreign Scan on public.ft1 t1
                                  Output: t1.c1, t1.c3, t1.*
-                                 Sort Key: t1.c1
-                                 ->  Foreign Scan on public.ft1 t1
-                                       Output: t1.c1, t1.c3, t1.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
-                           ->  Sort
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
+                     ->  Sort
+                           Output: t2.c1, t2.*
+                           Sort Key: t2.c1
+                           ->  Foreign Scan on public.ft2 t2
                                  Output: t2.c1, t2.*
-                                 Sort Key: t2.c1
-                                 ->  Foreign Scan on public.ft2 t2
-                                       Output: t2.c1, t2.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
-(26 rows)
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR UPDATE
+(23 rows)
 
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE;
  c1  | c1  
@@ -1196,35 +1212,32 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
 -- join two tables with FOR SHARE clause
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE OF t1;
-                                                                                                                                                QUERY PLAN                                                                                                                                                
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                                        QUERY PLAN                                                                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
    ->  LockRows
          Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-         ->  Sort
+         ->  Foreign Scan
                Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-               Sort Key: t1.c3, t1.c1
-               ->  Foreign Scan
-                     Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-                     Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
-                     Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) FOR SHARE OF r1
-                     ->  Merge Join
-                           Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
-                           Merge Cond: (t1.c1 = t2.c1)
-                           ->  Sort
+               Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+               Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) ORDER BY r1.c3 ASC NULLS LAST, r1."C 1" ASC NULLS LAST FOR SHARE OF r1
+               ->  Merge Join
+                     Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
+                     Merge Cond: (t1.c1 = t2.c1)
+                     ->  Sort
+                           Output: t1.c1, t1.c3, t1.*
+                           Sort Key: t1.c1
+                           ->  Foreign Scan on public.ft1 t1
                                  Output: t1.c1, t1.c3, t1.*
-                                 Sort Key: t1.c1
-                                 ->  Foreign Scan on public.ft1 t1
-                                       Output: t1.c1, t1.c3, t1.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR SHARE
-                           ->  Sort
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR SHARE
+                     ->  Sort
+                           Output: t2.c1, t2.*
+                           Sort Key: t2.c1
+                           ->  Foreign Scan on public.ft2 t2
                                  Output: t2.c1, t2.*
-                                 Sort Key: t2.c1
-                                 ->  Foreign Scan on public.ft2 t2
-                                       Output: t2.c1, t2.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
-(26 rows)
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
+(23 rows)
 
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE OF t1;
  c1  | c1  
@@ -1243,35 +1256,32 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
 
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE;
-                                                                                                                                                        QUERY PLAN                                                                                                                                                        
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                                                QUERY PLAN                                                                                                                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
    ->  LockRows
          Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-         ->  Sort
+         ->  Foreign Scan
                Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-               Sort Key: t1.c3, t1.c1
-               ->  Foreign Scan
-                     Output: t1.c1, t2.c1, t1.c3, t1.*, t2.*
-                     Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
-                     Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) FOR SHARE OF r1 FOR SHARE OF r2
-                     ->  Merge Join
-                           Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
-                           Merge Cond: (t1.c1 = t2.c1)
-                           ->  Sort
+               Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+               Remote SQL: SELECT r1."C 1", r1.c3, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r2."C 1", ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) ORDER BY r1.c3 ASC NULLS LAST, r1."C 1" ASC NULLS LAST FOR SHARE OF r1 FOR SHARE OF r2
+               ->  Merge Join
+                     Output: t1.c1, t1.c3, t1.*, t2.c1, t2.*
+                     Merge Cond: (t1.c1 = t2.c1)
+                     ->  Sort
+                           Output: t1.c1, t1.c3, t1.*
+                           Sort Key: t1.c1
+                           ->  Foreign Scan on public.ft1 t1
                                  Output: t1.c1, t1.c3, t1.*
-                                 Sort Key: t1.c1
-                                 ->  Foreign Scan on public.ft1 t1
-                                       Output: t1.c1, t1.c3, t1.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR SHARE
-                           ->  Sort
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR SHARE
+                     ->  Sort
+                           Output: t2.c1, t2.*
+                           Sort Key: t2.c1
+                           ->  Foreign Scan on public.ft2 t2
                                  Output: t2.c1, t2.*
-                                 Sort Key: t2.c1
-                                 ->  Foreign Scan on public.ft2 t2
-                                       Output: t2.c1, t2.*
-                                       Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR SHARE
-(26 rows)
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" FOR SHARE
+(23 rows)
 
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE;
  c1  | c1  
@@ -1325,18 +1335,15 @@ WITH t (c1_1, c1_3, c2_1) AS (SELECT t1.c1, t1.c3, t2.c1 FROM ft1 t1 JOIN ft2 t2
 -- ctid with whole-row reference
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
-                                                                                                                                    QUERY PLAN                                                                                                                                     
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                                             QUERY PLAN                                                                                                                                                             
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.ctid, t1.*, t2.*, t1.c1, t1.c3
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.ctid, t1.*, t2.*, t1.c1, t1.c3
-         Sort Key: t1.c3, t1.c1
-         ->  Foreign Scan
-               Output: t1.ctid, t1.*, t2.*, t1.c1, t1.c3
-               Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
-               Remote SQL: SELECT r1.ctid, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r1."C 1", r1.c3, ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1"))
-(9 rows)
+         Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+         Remote SQL: SELECT r1.ctid, ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8), r1."C 1", r1.c3, ROW(r2."C 1", r2.c2, r2.c3, r2.c4, r2.c5, r2.c6, r2.c7, r2.c8) FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) WHERE ((r1."C 1" = r2."C 1")) ORDER BY r1.c3 ASC NULLS LAST, r1."C 1" ASC NULLS LAST
+(6 rows)
 
 -- SEMI JOIN, not pushed down
 EXPLAIN (COSTS false, VERBOSE)
@@ -1672,18 +1679,15 @@ GRANT ALL ON ft5 TO view_owner;
 -- prepare statement with current session user
 PREPARE join_stmt AS SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
 EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
-                                                     QUERY PLAN                                                      
----------------------------------------------------------------------------------------------------------------------
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, t2.c1
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.c1, t2.c1
-         Sort Key: t1.c1, t2.c1
-         ->  Foreign Scan
-               Output: t1.c1, t2.c1
-               Relations: (public.ft4 t1) LEFT JOIN (public.ft5 t2)
-               Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 LEFT JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1))))
-(9 rows)
+         Relations: (public.ft4 t1) LEFT JOIN (public.ft5 t2)
+         Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 LEFT JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) ORDER BY r1.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST
+(6 rows)
 
 EXECUTE join_stmt;
  c1 | c1 
@@ -1723,18 +1727,15 @@ CREATE USER MAPPING FOR PUBLIC SERVER loopback;
 -- joining sides, join pushed down, no result expected.
 PREPARE join_stmt AS SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
 EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
-                                                           QUERY PLAN                                                            
----------------------------------------------------------------------------------------------------------------------------------
+                                                                       QUERY PLAN                                                                        
+---------------------------------------------------------------------------------------------------------------------------------------------------------
  Limit
    Output: t1.c1, ft5.c1
-   ->  Sort
+   ->  Foreign Scan
          Output: t1.c1, ft5.c1
-         Sort Key: t1.c1
-         ->  Foreign Scan
-               Output: t1.c1, ft5.c1
-               Relations: (public.ft5 t1) INNER JOIN (public.ft5)
-               Remote SQL: SELECT r1.c1, r6.c1 FROM ("S 1"."T 4" r1 INNER JOIN "S 1"."T 4" r6 ON (TRUE)) WHERE ((r1.c1 = r6.c1))
-(9 rows)
+         Relations: (public.ft5 t1) INNER JOIN (public.ft5)
+         Remote SQL: SELECT r1.c1, r6.c1 FROM ("S 1"."T 4" r1 INNER JOIN "S 1"."T 4" r6 ON (TRUE)) WHERE ((r1.c1 = r6.c1)) ORDER BY r1.c1 ASC NULLS LAST
+(6 rows)
 
 EXECUTE join_stmt;
  c1 | c1 
