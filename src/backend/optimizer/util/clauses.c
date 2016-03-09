@@ -672,9 +672,13 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
 		if (wfunc->winref > lists->maxWinRef)
 			elog(ERROR, "WindowFunc contains out-of-range winref %u",
 				 wfunc->winref);
-		lists->windowFuncs[wfunc->winref] =
-			lappend(lists->windowFuncs[wfunc->winref], wfunc);
-		lists->numWindowFuncs++;
+		/* eliminate duplicates, so that we avoid repeated computation */
+		if (!list_member(lists->windowFuncs[wfunc->winref], wfunc))
+		{
+			lists->windowFuncs[wfunc->winref] =
+				lappend(lists->windowFuncs[wfunc->winref], wfunc);
+			lists->numWindowFuncs++;
+		}
 
 		/*
 		 * We assume that the parser checked that there are no window

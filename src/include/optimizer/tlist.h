@@ -56,6 +56,9 @@ extern bool grouping_is_hashable(List *groupClause);
 
 extern PathTarget *make_pathtarget_from_tlist(List *tlist);
 extern List *make_tlist_from_pathtarget(PathTarget *target);
+extern PathTarget *copy_pathtarget(PathTarget *src);
+extern void add_column_to_pathtarget(PathTarget *target,
+						 Expr *expr, Index sortgroupref);
 extern void apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target);
 
 /* Convenience macro to get a PathTarget with valid cost/width fields */

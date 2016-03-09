@@ -50,6 +50,7 @@
 #include "storage/dsm_impl.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -108,14 +109,16 @@ static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  List *rollup_groupclauses);
 static RelOptInfo *create_window_paths(PlannerInfo *root,
 					RelOptInfo *input_rel,
-					List *base_tlist,
+					PathTarget *input_target,
+					PathTarget *output_target,
 					List *tlist,
 					WindowFuncLists *wflists,
 					List *activeWindows);
 static void create_one_window_path(PlannerInfo *root,
 					   RelOptInfo *window_rel,
 					   Path *path,
-					   List *base_tlist,
+					   PathTarget *input_target,
+					   PathTarget *output_target,
 					   List *tlist,
 					   WindowFuncLists *wflists,
 					   List *activeWindows);
@@ -124,11 +127,11 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 double limit_tuples);
-static PathTarget *make_scanjoin_target(PlannerInfo *root, List *tlist);
+static PathTarget *make_group_input_target(PlannerInfo *root, List *tlist);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
-static List *make_windowInputTargetList(PlannerInfo *root,
-						   List *tlist, List *activeWindows);
+static PathTarget *make_window_input_target(PlannerInfo *root,
+						 List *tlist, List *activeWindows);
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 						 List *tlist);
 
@@ -1458,9 +1461,11 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	else
 	{
 		/* No set operations, do regular planning */
-		PathTarget *sub_target;
+		PathTarget *final_target;
+		PathTarget *grouping_target;
+		PathTarget *scanjoin_target;
+		bool		have_grouping;
 		double		tlist_rows;
-		List	   *grouping_tlist;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
 		List	   *rollup_lists = NIL;
@@ -1643,19 +1648,41 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 									standard_qp_callback, &qp_extra);
 
 		/*
-		 * Now determine the tlist that we want the topmost scan/join plan
-		 * node to emit; this may be different from the final tlist if
-		 * grouping or aggregation is needed.  This is also a convenient spot
-		 * for conversion of the tlist to PathTarget format.
+		 * Convert the query's result tlist into PathTarget format.
 		 *
 		 * Note: it's desirable to not do this till after query_planner(),
 		 * because the target width estimates can use per-Var width numbers
 		 * that were obtained within query_planner().
 		 */
-		sub_target = make_scanjoin_target(root, tlist);
+		final_target = create_pathtarget(root, tlist);
 
 		/*
-		 * Forcibly apply that tlist to all the Paths for the scan/join rel.
+		 * If we have window functions to deal with, the output from any
+		 * grouping step needs to be what the window functions want;
+		 * otherwise, it should just be final_target.
+		 */
+		if (activeWindows)
+			grouping_target = make_window_input_target(root,
+													   tlist,
+													   activeWindows);
+		else
+			grouping_target = final_target;
+
+		/*
+		 * If we have grouping or aggregation to do, the topmost scan/join
+		 * plan node must emit what the grouping step wants; otherwise, if
+		 * there's window functions, it must emit what the window functions
+		 * want; otherwise, it should emit final_target.
+		 */
+		have_grouping = (parse->groupClause || parse->groupingSets ||
+						 parse->hasAggs || root->hasHavingQual);
+		if (have_grouping)
+			scanjoin_target = make_group_input_target(root, tlist);
+		else
+			scanjoin_target = grouping_target;
+
+		/*
+		 * Forcibly apply that target to all the Paths for the scan/join rel.
 		 *
 		 * In principle we should re-run set_cheapest() here to identify the
 		 * cheapest path, but it seems unlikely that adding the same tlist
@@ -1671,7 +1698,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 			Assert(subpath->param_info == NULL);
 			path = apply_projection_to_path(root, current_rel,
-											subpath, sub_target);
+											subpath, scanjoin_target);
 			/* If we had to add a Result, path is different from subpath */
 			if (path != subpath)
 			{
@@ -1684,31 +1711,15 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 
 		/*
-		 * Determine the tlist we need grouping paths to emit.  While we could
-		 * skip this if we're not going to call create_grouping_paths, it's
-		 * trivial unless we've got window functions, and then we have to do
-		 * the work anyway.  (XXX: refactor to work with PathTargets instead
-		 * of tlists)
-		 */
-		if (activeWindows)
-			grouping_tlist = make_windowInputTargetList(root,
-														tlist,
-														activeWindows);
-		else
-			grouping_tlist = tlist;
-
-		/*
 		 * If we have grouping and/or aggregation, consider ways to implement
 		 * that.  We build a new upperrel representing the output of this
 		 * phase.
 		 */
-		if (parse->groupClause || parse->groupingSets || parse->hasAggs ||
-			root->hasHavingQual)
+		if (have_grouping)
 		{
 			current_rel = create_grouping_paths(root,
 												current_rel,
-												create_pathtarget(root,
-															 grouping_tlist),
+												grouping_target,
 												rollup_lists,
 												rollup_groupclauses);
 		}
@@ -1721,7 +1732,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		{
 			current_rel = create_window_paths(root,
 											  current_rel,
-											  grouping_tlist,
+											  grouping_target,
+											  final_target,
 											  tlist,
 											  wflists,
 											  activeWindows);
@@ -3075,6 +3087,9 @@ get_number_of_groups(PlannerInfo *root,
  * rollup_groupclauses: list of grouping clauses for grouping sets,
  *		or NIL if not doing grouping sets
  *
+ * Note: all Paths in input_rel are expected to return the target computed
+ * by make_group_input_target.
+ *
  * We need to consider sorted and hashed aggregation in the same function,
  * because otherwise (1) it would be harder to throw an appropriate error
  * message if neither way works, and (2) we should not allow enable_hashagg or
@@ -3356,15 +3371,19 @@ create_grouping_paths(PlannerInfo *root,
  * Build a new upperrel containing Paths for window-function evaluation.
  *
  * input_rel: contains the source-data Paths
- * base_tlist: result of make_windowInputTargetList
- * tlist: query's final target list (which is what output paths should emit)
+ * input_target: result of make_window_input_target
+ * output_target: what the topmost WindowAggPath should return
+ * tlist: query's target list (needed to look up pathkeys)
  * wflists: result of find_window_functions
  * activeWindows: result of select_active_windows
+ *
+ * Note: all Paths in input_rel are expected to return input_target.
  */
 static RelOptInfo *
 create_window_paths(PlannerInfo *root,
 					RelOptInfo *input_rel,
-					List *base_tlist,
+					PathTarget *input_target,
+					PathTarget *output_target,
 					List *tlist,
 					WindowFuncLists *wflists,
 					List *activeWindows)
@@ -3389,7 +3408,8 @@ create_window_paths(PlannerInfo *root,
 			create_one_window_path(root,
 								   window_rel,
 								   path,
-								   base_tlist,
+								   input_target,
+								   output_target,
 								   tlist,
 								   wflists,
 								   activeWindows);
@@ -3406,9 +3426,10 @@ create_window_paths(PlannerInfo *root,
  * add the result to window_rel.
  *
  * window_rel: upperrel to contain result
- * path: input Path to use
- * base_tlist: result of make_windowInputTargetList
- * tlist: query's final target list (which is what output paths should emit)
+ * path: input Path to use (must return input_target)
+ * input_target: result of make_window_input_target
+ * output_target: what the topmost WindowAggPath should return
+ * tlist: query's target list (needed to look up pathkeys)
  * wflists: result of find_window_functions
  * activeWindows: result of select_active_windows
  */
@@ -3416,12 +3437,13 @@ static void
 create_one_window_path(PlannerInfo *root,
 					   RelOptInfo *window_rel,
 					   Path *path,
-					   List *base_tlist,
+					   PathTarget *input_target,
+					   PathTarget *output_target,
 					   List *tlist,
 					   WindowFuncLists *wflists,
 					   List *activeWindows)
 {
-	List	   *window_tlist;
+	PathTarget *window_target;
 	ListCell   *l;
 
 	/*
@@ -3430,32 +3452,16 @@ create_one_window_path(PlannerInfo *root,
 	 * needed.  (We assume that select_active_windows chose a good order for
 	 * executing the clauses in.)
 	 *
-	 * The "base" targetlist for all steps of the windowing process is a flat
-	 * tlist of all Vars and Aggs needed in the result.  (In some cases we
-	 * wouldn't need to propagate all of these all the way to the top, since
-	 * they might only be needed as inputs to WindowFuncs.  It's probably not
-	 * worth trying to optimize that though.)  We also add window partitioning
-	 * and sorting expressions to the base tlist, to ensure they're computed
-	 * only once at the bottom of the stack (that's critical for volatile
-	 * functions).  As we climb up the stack, we'll add outputs for the
-	 * WindowFuncs computed at each level.
+	 * input_target should contain all Vars and Aggs needed for the result.
+	 * (In some cases we wouldn't need to propagate all of these all the way
+	 * to the top, since they might only be needed as inputs to WindowFuncs.
+	 * It's probably not worth trying to optimize that though.)  It must also
+	 * contain all window partitioning and sorting expressions, to ensure
+	 * they're computed only once at the bottom of the stack (that's critical
+	 * for volatile functions).  As we climb up the stack, we'll add outputs
+	 * for the WindowFuncs computed at each level.
 	 */
-	window_tlist = base_tlist;
-
-	/*
-	 * Apply base_tlist to the given base path.  If that path node is one that
-	 * cannot do expression evaluation, we must insert a Result node to
-	 * project the desired tlist.  (In some cases this might not really be
-	 * required, but it's not worth trying to avoid it.)  If the query has
-	 * both grouping and windowing, base_tlist was already applied to the
-	 * input path, but apply_projection_to_path is smart about that.
-	 *
-	 * The seemingly redundant create_pathtarget() steps here are important to
-	 * ensure that each path node has a separately modifiable tlist.
-	 */
-	path = apply_projection_to_path(root, window_rel,
-									path,
-									create_pathtarget(root, base_tlist));
+	window_target = input_target;
 
 	foreach(l, activeWindows)
 	{
@@ -3477,19 +3483,34 @@ create_one_window_path(PlannerInfo *root,
 
 		if (lnext(l))
 		{
-			/* Add the current WindowFuncs to the running tlist */
-			window_tlist = add_to_flat_tlist(window_tlist,
-										   wflists->windowFuncs[wc->winref]);
+			/*
+			 * Add the current WindowFuncs to the output target for this
+			 * intermediate WindowAggPath.  We must copy window_target to
+			 * avoid changing the previous path's target.
+			 *
+			 * Note: a WindowFunc adds nothing to the target's eval costs; but
+			 * we do need to account for the increase in tlist width.
+			 */
+			ListCell   *lc2;
+
+			window_target = copy_pathtarget(window_target);
+			foreach(lc2, wflists->windowFuncs[wc->winref])
+			{
+				WindowFunc *wfunc = (WindowFunc *) lfirst(lc2);
+
+				Assert(IsA(wfunc, WindowFunc));
+				add_column_to_pathtarget(window_target, (Expr *) wfunc, 0);
+				window_target->width += get_typavgwidth(wfunc->wintype, -1);
+			}
 		}
 		else
 		{
-			/* Install the final tlist in the topmost WindowAgg */
-			window_tlist = tlist;
+			/* Install the goal target in the topmost WindowAgg */
+			window_target = output_target;
 		}
 
 		path = (Path *)
-			create_windowagg_path(root, window_rel, path,
-								  create_pathtarget(root, window_tlist),
+			create_windowagg_path(root, window_rel, path, window_target,
 								  wflists->windowFuncs[wc->winref],
 								  wc,
 								  window_pathkeys);
@@ -3731,14 +3752,13 @@ create_ordered_paths(PlannerInfo *root,
 
 
 /*
- * make_scanjoin_target
- *	  Generate appropriate PathTarget for the result of scan/join steps.
+ * make_group_input_target
+ *	  Generate appropriate PathTarget for initial input to grouping nodes.
  *
- * If there is grouping/aggregation or window functions, we typically want the
- * scan/join plan to emit a different target list than the upper plan nodes
- * will (in particular, it certainly can't include any aggregate or window
- * function calls).  This routine generates the correct target list for the
- * scan/join subplan.
+ * If there is grouping or aggregation, the scan/join subplan cannot emit
+ * the query's final targetlist; for example, it certainly can't emit any
+ * aggregate function calls.  This routine generates the correct target list
+ * for the scan/join subplan.
  *
  * The initial target list passed from the parser already contains entries
  * for all ORDER BY and GROUP BY expressions, but it will not have entries
@@ -3753,17 +3773,13 @@ create_ordered_paths(PlannerInfo *root,
  * where the a+b target will be used by the Sort/Group steps, and the
  * other targets will be used for computing the final results.
  *
- * We also convert from targetlist format (List of TargetEntry nodes)
- * into PathTarget format, which is more compact and includes cost/width.
+ * 'tlist' is the query's final target list.
  *
- * 'tlist' is the query's target list.
- *
- * The result is the PathTarget to be applied to the Paths returned from
+ * The result is the PathTarget to be computed by the Paths returned from
  * query_planner().
  */
 static PathTarget *
-make_scanjoin_target(PlannerInfo *root,
-					 List *tlist)
+make_group_input_target(PlannerInfo *root, List *tlist)
 {
 	Query	   *parse = root->parse;
 	List	   *sub_tlist;
@@ -3772,16 +3788,8 @@ make_scanjoin_target(PlannerInfo *root,
 	ListCell   *tl;
 
 	/*
-	 * If we're not grouping or aggregating or windowing, there's nothing to
-	 * do here except convert to PathTarget format.
-	 */
-	if (!parse->hasAggs && !parse->groupClause && !parse->groupingSets &&
-		!root->hasHavingQual && !parse->hasWindowFuncs)
-		return create_pathtarget(root, tlist);
-
-	/*
-	 * Otherwise, we must build a tlist containing all grouping columns, plus
-	 * any other Vars mentioned in the targetlist and HAVING qual.
+	 * We must build a tlist containing all grouping columns, plus any other
+	 * Vars mentioned in the targetlist and HAVING qual.
 	 */
 	sub_tlist = NIL;
 	non_group_cols = NIL;
@@ -3951,45 +3959,42 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 }
 
 /*
- * make_windowInputTargetList
- *	  Generate appropriate target list for initial input to WindowAgg nodes.
+ * make_window_input_target
+ *	  Generate appropriate PathTarget for initial input to WindowAgg nodes.
  *
  * When the query has window functions, this function computes the initial
  * target list to be computed by the node just below the first WindowAgg.
- * This list must contain all values needed to evaluate the window functions,
+ * This tlist must contain all values needed to evaluate the window functions,
  * compute the final target list, and perform any required final sort step.
  * If multiple WindowAggs are needed, each intermediate one adds its window
  * function results onto this tlist; only the topmost WindowAgg computes the
  * actual desired target list.
  *
- * This function is much like make_scanjoin_target, though not quite enough
+ * This function is much like make_group_input_target, though not quite enough
  * like it to share code.  As in that function, we flatten most expressions
  * into their component variables.  But we do not want to flatten window
  * PARTITION BY/ORDER BY clauses, since that might result in multiple
  * evaluations of them, which would be bad (possibly even resulting in
  * inconsistent answers, if they contain volatile functions).
  * Also, we must not flatten GROUP BY clauses that were left unflattened by
- * make_scanjoin_target, because we may no longer have access to the
+ * make_group_input_target, because we may no longer have access to the
  * individual Vars in them.
  *
- * Another key difference from make_scanjoin_target is that we don't flatten
- * Aggref expressions, since those are to be computed below the window
- * functions and just referenced like Vars above that.
- *
- * XXX another difference is that this produces targetlist format not a
- * PathTarget, but that should change sometime soon.
+ * Another key difference from make_group_input_target is that we don't
+ * flatten Aggref expressions, since those are to be computed below the
+ * window functions and just referenced like Vars above that.
  *
  * 'tlist' is the query's final target list.
  * 'activeWindows' is the list of active windows previously identified by
  *			select_active_windows.
  *
- * The result is the targetlist to be computed by the plan node immediately
+ * The result is the PathTarget to be computed by the plan node immediately
  * below the first WindowAgg node.
  */
-static List *
-make_windowInputTargetList(PlannerInfo *root,
-						   List *tlist,
-						   List *activeWindows)
+static PathTarget *
+make_window_input_target(PlannerInfo *root,
+						 List *tlist,
+						 List *activeWindows)
 {
 	Query	   *parse = root->parse;
 	Bitmapset  *sgrefs;
@@ -4091,7 +4096,7 @@ make_windowInputTargetList(PlannerInfo *root,
 	list_free(flattenable_vars);
 	list_free(flattenable_cols);
 
-	return new_tlist;
+	return create_pathtarget(root, new_tlist);
 }
 
 /*

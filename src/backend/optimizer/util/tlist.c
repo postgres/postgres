@@ -624,6 +624,66 @@ make_tlist_from_pathtarget(PathTarget *target)
 }
 
 /*
+ * copy_pathtarget
+ *	  Copy a PathTarget.
+ *
+ * The new PathTarget has its own List cells, but shares the underlying
+ * target expression trees with the old one.  We duplicate the List cells
+ * so that items can be added to one target without damaging the other.
+ */
+PathTarget *
+copy_pathtarget(PathTarget *src)
+{
+	PathTarget *dst = (PathTarget *) palloc(sizeof(PathTarget));
+
+	/* Copy scalar fields */
+	memcpy(dst, src, sizeof(PathTarget));
+	/* Shallow-copy the expression list */
+	dst->exprs = list_copy(src->exprs);
+	/* Duplicate sortgrouprefs if any (if not, the memcpy handled this) */
+	if (src->sortgrouprefs)
+	{
+		Size		nbytes = list_length(src->exprs) * sizeof(Index);
+
+		dst->sortgrouprefs = (Index *) palloc(nbytes);
+		memcpy(dst->sortgrouprefs, src->sortgrouprefs, nbytes);
+	}
+	return dst;
+}
+
+/*
+ * add_column_to_pathtarget
+ *		Append a target column to the PathTarget.
+ *
+ * As with make_pathtarget_from_tlist, we leave it to the caller to update
+ * the cost and width fields.
+ */
+void
+add_column_to_pathtarget(PathTarget *target, Expr *expr, Index sortgroupref)
+{
+	/* Updating the exprs list is easy ... */
+	target->exprs = lappend(target->exprs, expr);
+	/* ... the sortgroupref data, a bit less so */
+	if (target->sortgrouprefs)
+	{
+		int			nexprs = list_length(target->exprs);
+
+		/* This might look inefficient, but actually it's usually cheap */
+		target->sortgrouprefs = (Index *)
+			repalloc(target->sortgrouprefs, nexprs * sizeof(Index));
+		target->sortgrouprefs[nexprs - 1] = sortgroupref;
+	}
+	else if (sortgroupref)
+	{
+		/* Adding sortgroupref labeling to a previously unlabeled target */
+		int			nexprs = list_length(target->exprs);
+
+		target->sortgrouprefs = (Index *) palloc0(nexprs * sizeof(Index));
+		target->sortgrouprefs[nexprs - 1] = sortgroupref;
+	}
+}
+
+/*
  * apply_pathtarget_labeling_to_tlist
  *		Apply any sortgrouprefs in the PathTarget to matching tlist entries
  *
