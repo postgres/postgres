@@ -93,6 +93,33 @@
 	fun:EndPrepare
 }
 
+{
+	padding_bootstrap_initial_xlog_write
+	Memcheck:Param
+	write(buf)
+
+	...
+	fun:BootStrapXLOG
+}
+
+{
+	padding_bootstrap_control_file_write
+	Memcheck:Param
+	write(buf)
+
+	...
+	fun:WriteControlFile
+	fun:BootStrapXLOG
+}
+
+{
+	bootstrap_write_relmap_overlap
+	Memcheck:Overlap
+	fun:memcpy*
+	fun:write_relmap_file
+	fun:RelationMapFinishBootstrap
+}
+
 
 # gcc on ppc64 can generate a four-byte read to fetch the final "char" fields
 # of a FormData_pg_cast.  This is valid compiler behavior, because a proper
