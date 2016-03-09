@@ -55,6 +55,15 @@ select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=3'),
 	'key', 'expect-s2k-mode=3');
 
+-- s2k count change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-count=1024'),
+	'key', 'expect-s2k-count=1024');
+-- s2k_count rounds up
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-count=65000000'),
+	'key', 'expect-s2k-count=65000000');
+
 -- s2k digest change
 select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=md5'),

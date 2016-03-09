@@ -132,12 +132,10 @@ calc_s2k_iter_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 	unsigned	preload = 0;
 	unsigned	remain,
 				c,
-				cval,
 				curcnt,
 				count;
 
-	cval = s2k->iter;
-	count = ((unsigned) 16 + (cval & 15)) << ((cval >> 4) + 6);
+	count = s2k_decode_count(s2k->iter);
 
 	md_rlen = px_md_result_size(md);
 
@@ -195,21 +193,34 @@ calc_s2k_iter_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 }
 
 /*
- * Decide S2K_ISALTED iteration count
+ * Decide PGP_S2K_ISALTED iteration count (in OpenPGP one-byte representation)
  *
  * Too small: weak
  * Too big: slow
  * gpg defaults to 96 => 65536 iters
- * let it float a bit: 96 + 32 => 262144 iters
+ *
+ * For our default (count=-1) we let it float a bit: 96 + 32 => between 65536
+ * and 262144 iterations.
+ *
+ * Otherwise, find the smallest number which provides at least the specified
+ * iteration count.
  */
-static int
-decide_count(unsigned rand_byte)
+static uint8
+decide_s2k_iter(unsigned rand_byte, int count)
 {
-	return 96 + (rand_byte & 0x1F);
+	int			iter;
+
+	if (count == -1)
+		return 96 + (rand_byte & 0x1F);
+	/* this is a bit brute-force, but should be quick enough */
+	for (iter = 0; iter <= 255; iter++)
+		if (s2k_decode_count(iter) >= count)
+			return iter;
+	return 255;
 }
 
 int
-pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo)
+pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo, int count)
 {
 	int			res = 0;
 	uint8		tmp;
@@ -219,19 +230,19 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo)
 
 	switch (s2k->mode)
 	{
-		case 0:
+		case PGP_S2K_SIMPLE:
 			break;
-		case 1:
+		case PGP_S2K_SALTED:
 			res = px_get_pseudo_random_bytes(s2k->salt, PGP_S2K_SALT);
 			break;
-		case 3:
+		case PGP_S2K_ISALTED:
 			res = px_get_pseudo_random_bytes(s2k->salt, PGP_S2K_SALT);
 			if (res < 0)
 				break;
 			res = px_get_pseudo_random_bytes(&tmp, 1);
 			if (res < 0)
 				break;
-			s2k->iter = decide_count(tmp);
+			s2k->iter = decide_s2k_iter(tmp, count);
 			break;
 		default:
 			res = PXE_PGP_BAD_S2K_MODE;

@@ -181,6 +181,7 @@ struct debug_expect
 	int			expect;
 	int			cipher_algo;
 	int			s2k_mode;
+	int			s2k_count;
 	int			s2k_cipher_algo;
 	int			s2k_digest_algo;
 	int			compress_algo;
@@ -196,6 +197,7 @@ fill_expect(struct debug_expect * ex, int text_mode)
 	ex->expect = 0;
 	ex->cipher_algo = -1;
 	ex->s2k_mode = -1;
+	ex->s2k_count = -1;
 	ex->s2k_cipher_algo = -1;
 	ex->s2k_digest_algo = -1;
 	ex->compress_algo = -1;
@@ -218,6 +220,7 @@ check_expect(PGP_Context *ctx, struct debug_expect * ex)
 {
 	EX_CHECK(cipher_algo);
 	EX_CHECK(s2k_mode);
+	EX_CHECK(s2k_count);
 	EX_CHECK(s2k_digest_algo);
 	EX_CHECK(use_sess_key);
 	if (ctx->use_sess_key)
@@ -247,6 +250,8 @@ set_arg(PGP_Context *ctx, char *key, char *val,
 		res = pgp_set_sess_key(ctx, atoi(val));
 	else if (strcmp(key, "s2k-mode") == 0)
 		res = pgp_set_s2k_mode(ctx, atoi(val));
+	else if (strcmp(key, "s2k-count") == 0)
+		res = pgp_set_s2k_count(ctx, atoi(val));
 	else if (strcmp(key, "s2k-digest-algo") == 0)
 		res = pgp_set_s2k_digest_algo(ctx, val);
 	else if (strcmp(key, "s2k-cipher-algo") == 0)
@@ -285,6 +290,11 @@ set_arg(PGP_Context *ctx, char *key, char *val,
 	{
 		ex->expect = 1;
 		ex->s2k_mode = atoi(val);
+	}
+	else if (ex != NULL && strcmp(key, "expect-s2k-count") == 0)
+	{
+		ex->expect = 1;
+		ex->s2k_count = atoi(val);
 	}
 	else if (ex != NULL && strcmp(key, "expect-s2k-digest-algo") == 0)
 	{

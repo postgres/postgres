@@ -124,7 +124,7 @@ struct PGP_S2K
 	uint8		mode;
 	uint8		digest_algo;
 	uint8		salt[8];
-	uint8		iter;
+	uint8		iter;		/* encoded (one-octet) count */
 	/* calculated: */
 	uint8		key[PGP_MAX_KEY];
 	uint8		key_len;
@@ -138,6 +138,7 @@ struct PGP_Context
 	 */
 	PGP_S2K		s2k;
 	int			s2k_mode;
+	int			s2k_count;		/* 4-byte decoded count */
 	int			s2k_digest_algo;
 	int			s2k_cipher_algo;
 	int			cipher_algo;
@@ -170,6 +171,10 @@ struct PGP_Context
 	uint8		sess_key[PGP_MAX_KEY];
 	unsigned	sess_key_len;
 };
+
+/* from RFC 4880 3.7.1.3 */
+#define s2k_decode_count(cval) \
+	(((unsigned) 16 + (cval & 15)) << ((cval >> 4) + 6))
 
 struct PGP_MPI
 {
@@ -243,6 +248,7 @@ const char *pgp_get_cipher_name(int code);
 
 int			pgp_set_cipher_algo(PGP_Context *ctx, const char *name);
 int			pgp_set_s2k_mode(PGP_Context *ctx, int type);
+int			pgp_set_s2k_count(PGP_Context *ctx, int count);
 int			pgp_set_s2k_cipher_algo(PGP_Context *ctx, const char *name);
 int			pgp_set_s2k_digest_algo(PGP_Context *ctx, const char *name);
 int			pgp_set_convert_crlf(PGP_Context *ctx, int doit);
@@ -267,7 +273,7 @@ int			pgp_load_cipher(int c, PX_Cipher **res);
 int			pgp_get_cipher_key_size(int c);
 int			pgp_get_cipher_block_size(int c);
 
-int			pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo);
+int			pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo, int count);
 int			pgp_s2k_read(PullFilter *src, PGP_S2K *s2k);
 int			pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int klen);
 

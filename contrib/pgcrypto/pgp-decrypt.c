@@ -643,6 +643,7 @@ parse_symenc_sesskey(PGP_Context *ctx, PullFilter *src)
 	if (res < 0)
 		return res;
 	ctx->s2k_mode = ctx->s2k.mode;
+	ctx->s2k_count = s2k_decode_count(ctx->s2k.iter);
 	ctx->s2k_digest_algo = ctx->s2k.digest_algo;
 
 	/*

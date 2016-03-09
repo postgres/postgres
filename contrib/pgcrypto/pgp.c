@@ -40,6 +40,7 @@
 static int	def_cipher_algo = PGP_SYM_AES_128;
 static int	def_s2k_cipher_algo = -1;
 static int	def_s2k_mode = PGP_S2K_ISALTED;
+static int	def_s2k_count = -1;
 static int	def_s2k_digest_algo = PGP_DIGEST_SHA1;
 static int	def_compress_algo = PGP_COMPR_NONE;
 static int	def_compress_level = 6;
@@ -206,6 +207,7 @@ pgp_init(PGP_Context **ctx_p)
 	ctx->cipher_algo = def_cipher_algo;
 	ctx->s2k_cipher_algo = def_s2k_cipher_algo;
 	ctx->s2k_mode = def_s2k_mode;
+	ctx->s2k_count = def_s2k_count;
 	ctx->s2k_digest_algo = def_s2k_digest_algo;
 	ctx->compress_algo = def_compress_algo;
 	ctx->compress_level = def_compress_level;
@@ -267,6 +269,17 @@ pgp_set_s2k_mode(PGP_Context *ctx, int mode)
 			break;
 	}
 	return err;
+}
+
+int
+pgp_set_s2k_count(PGP_Context *ctx, int count)
+{
+	if (ctx->s2k_mode == PGP_S2K_ISALTED && count >= 1024 && count <= 65011712)
+	{
+		ctx->s2k_count = count;
+		return PXE_OK;
+	}
+	return PXE_ARGUMENT_ERROR;
 }
 
 int

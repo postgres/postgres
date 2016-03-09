@@ -859,6 +859,19 @@ Applies to: pgp_sym_encrypt
   </sect4>
 
   <sect4>
+   <title>s2k-count</title>
+
+   <para>
+    The number of iterations of the S2K algorithm to use.  It must
+    be a value between 1024 and 65011712, inclusive.
+   </para>
+<literallayout>
+Default: A random value bewteen 65536 and 253952
+Applies to: pgp_sym_encrypt, only with s2k-mode=3
+</literallayout>
+  </sect4>
+
+  <sect4>
    <title>s2k-digest-algo</title>
 
    <para>

@@ -103,6 +103,25 @@ select pgp_sym_decrypt(
  Secret.
 (1 row)
 
+-- s2k count change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-count=1024'),
+	'key', 'expect-s2k-count=1024');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- s2k_count rounds up
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-count=65000000'),
+	'key', 'expect-s2k-count=65000000');
+NOTICE:  pgp_decrypt: unexpected s2k_count: expected 65000000 got 65011712
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
 -- s2k digest change
 select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=md5'),
