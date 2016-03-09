@@ -2004,7 +2004,7 @@ alter_table_cmd:
 					n->def = (Node *) $5;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> RESET ( column_parameter = value [, ... ] ) */
 			| ALTER opt_column ColId RESET reloptions
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
