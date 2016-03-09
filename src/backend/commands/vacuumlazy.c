@@ -157,7 +157,7 @@ static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static int	vac_cmp_itemptr(const void *left, const void *right);
 static bool heap_page_is_all_visible(Relation rel, Buffer buf,
-						 TransactionId *visibility_cutoff_xid, bool *all_frozen);
+					 TransactionId *visibility_cutoff_xid, bool *all_frozen);
 
 
 /*
@@ -559,7 +559,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 next_not_all_visible_block < nblocks;
 				 next_not_all_visible_block++)
 			{
-				if (!VM_ALL_VISIBLE(onerel, next_not_all_visible_block,	&vmbuffer))
+				if (!VM_ALL_VISIBLE(onerel, next_not_all_visible_block, &vmbuffer))
 					break;
 				vacuum_delay_point();
 			}
@@ -772,7 +772,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				PageSetAllVisible(page);
 				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
 								  vmbuffer, InvalidTransactionId,
-								  VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
+					   VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
 				END_CRIT_SECTION();
 			}
 
@@ -1025,7 +1025,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* mark page all-visible, if appropriate */
 		if (all_visible && !all_visible_according_to_vm)
 		{
-			uint8	flags = VISIBILITYMAP_ALL_VISIBLE;
+			uint8		flags = VISIBILITYMAP_ALL_VISIBLE;
 
 			if (all_frozen)
 				flags |= VISIBILITYMAP_ALL_FROZEN;
@@ -1345,13 +1345,13 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 
 	/*
 	 * All the changes to the heap page have been done. If the all-visible
-	 * flag is now set, also set the VM all-visible bit (and, if possible,
-	 * the all-frozen bit) unless this has already been done previously.
+	 * flag is now set, also set the VM all-visible bit (and, if possible, the
+	 * all-frozen bit) unless this has already been done previously.
 	 */
 	if (PageIsAllVisible(page))
 	{
-		uint8 vm_status = visibilitymap_get_status(onerel, blkno, vmbuffer);
-		uint8 flags = 0;
+		uint8		vm_status = visibilitymap_get_status(onerel, blkno, vmbuffer);
+		uint8		flags = 0;
 
 		/* Set the VM all-frozen bit to flag, if needed */
 		if ((vm_status & VISIBILITYMAP_ALL_VISIBLE) == 0)
@@ -1986,10 +1986,10 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 	}							/* scan along page */
 
 	/*
-	 * We don't bother clearing *all_frozen when the page is discovered not
-	 * to be all-visible, so do that now if necessary.  The page might fail
-	 * to be all-frozen for other reasons anyway, but if it's not all-visible,
-	 * then it definitely isn't all-frozen.
+	 * We don't bother clearing *all_frozen when the page is discovered not to
+	 * be all-visible, so do that now if necessary.  The page might fail to be
+	 * all-frozen for other reasons anyway, but if it's not all-visible, then
+	 * it definitely isn't all-frozen.
 	 */
 	if (!all_visible)
 		*all_frozen = false;
