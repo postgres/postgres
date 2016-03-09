@@ -331,7 +331,7 @@ libpq_select(int timeout_ms)
 	if (PQsocket(streamConn) < 0)
 		ereport(ERROR,
 				(errcode_for_socket_access(),
-				 errmsg("socket not open")));
+				 errmsg("invalid socket: %s", PQerrorMessage(streamConn))));
 
 	/* We use poll(2) if available, otherwise select(2) */
 	{

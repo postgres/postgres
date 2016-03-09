@@ -3797,7 +3797,7 @@ threadRun(void *arg)
 			sock = PQsocket(st->con);
 			if (sock < 0)
 			{
-				fprintf(stderr, "bad socket: %s", PQerrorMessage(st->con));
+				fprintf(stderr, "invalid socket: %s", PQerrorMessage(st->con));
 				goto done;
 			}
 
@@ -3867,7 +3867,8 @@ threadRun(void *arg)
 
 				if (sock < 0)
 				{
-					fprintf(stderr, "bad socket: %s", PQerrorMessage(st->con));
+					fprintf(stderr, "invalid socket: %s",
+							PQerrorMessage(st->con));
 					goto done;
 				}
 				if (FD_ISSET(sock, &input_mask) ||

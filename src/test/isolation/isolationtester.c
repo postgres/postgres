@@ -705,6 +705,12 @@ try_complete_step(Step *step, int flags)
 	PGresult   *res;
 	bool		canceled = false;
 
+	if (sock < 0)
+	{
+		fprintf(stderr, "invalid socket: %s", PQerrorMessage(conn));
+		exit_nicely();
+	}
+
 	gettimeofday(&start_time, NULL);
 	FD_ZERO(&read_set);
 

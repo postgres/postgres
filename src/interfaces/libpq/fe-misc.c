@@ -1058,7 +1058,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 	if (conn->sock == PGINVALID_SOCKET)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("socket not open\n"));
+						  libpq_gettext("invalid socket\n"));
 		return -1;
 	}
 

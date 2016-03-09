@@ -956,7 +956,8 @@ CopyStreamPoll(PGconn *conn, long timeout_ms)
 
 	if (PQsocket(conn) < 0)
 	{
-		fprintf(stderr, _("%s: socket not open"), progname);
+		fprintf(stderr, _("%s: invalid socket: %s"), progname,
+				PQerrorMessage(conn));
 		return -1;
 	}
 

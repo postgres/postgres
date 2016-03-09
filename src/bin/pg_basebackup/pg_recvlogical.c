@@ -360,6 +360,14 @@ StreamLogicalLog(void)
 			struct timeval timeout;
 			struct timeval *timeoutptr = NULL;
 
+			if (PQsocket(conn) < 0)
+			{
+				fprintf(stderr,
+						_("%s: invalid socket: %s"),
+						progname, PQerrorMessage(conn));
+				goto error;
+			}
+
 			FD_ZERO(&input_mask);
 			FD_SET(PQsocket(conn), &input_mask);
 
