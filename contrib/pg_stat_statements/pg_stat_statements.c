@@ -588,11 +588,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 	/*
 	 * Rename file into place, so we atomically replace the old one.
 	 */
-	if (rename(PGSS_DUMP_FILE ".tmp", PGSS_DUMP_FILE) != 0)
-		ereport(LOG,
-				(errcode_for_file_access(),
-				 errmsg("could not rename pg_stat_statement file \"%s\": %m",
-						PGSS_DUMP_FILE ".tmp")));
+	(void) durable_rename(PGSS_DUMP_FILE ".tmp", PGSS_DUMP_FILE, LOG);
 
 	return;
 
