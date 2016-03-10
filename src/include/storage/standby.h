@@ -15,6 +15,7 @@
 #define STANDBY_H
 
 #include "storage/standbydefs.h"
+#include "storage/lock.h"
 #include "storage/procsignal.h"
 #include "storage/relfilenode.h"
 
@@ -31,10 +32,12 @@ extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid,
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
+extern void ResolveRecoveryConflictWithLock(LOCKTAG locktag);
 extern void ResolveRecoveryConflictWithBufferPin(void);
 extern void CheckRecoveryConflictDeadlock(void);
 extern void StandbyDeadLockHandler(void);
 extern void StandbyTimeoutHandler(void);
+extern void StandbyLockTimeoutHandler(void);
 
 /*
  * Standby Rmgr (RM_STANDBY_ID)

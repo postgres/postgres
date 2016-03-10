@@ -29,6 +29,7 @@ typedef enum TimeoutId
 	STATEMENT_TIMEOUT,
 	STANDBY_DEADLOCK_TIMEOUT,
 	STANDBY_TIMEOUT,
+	STANDBY_LOCK_TIMEOUT,
 	/* First user-definable timeout reason */
 	USER_TIMEOUT,
 	/* Maximum number of timeout reasons */
