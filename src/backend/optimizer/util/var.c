@@ -503,6 +503,13 @@ locate_var_of_level_walker(Node *node,
  *	  Vars within an Aggref's expression are included in the result only
  *	  when PVC_RECURSE_AGGREGATES is specified.
  *
+ *	  WindowFuncs are handled according to these bits in 'flags':
+ *		PVC_INCLUDE_WINDOWFUNCS		include WindowFuncs in output list
+ *		PVC_RECURSE_WINDOWFUNCS		recurse into WindowFunc arguments
+ *		neither flag				throw error if WindowFunc found
+ *	  Vars within a WindowFunc's expression are included in the result only
+ *	  when PVC_RECURSE_WINDOWFUNCS is specified.
+ *
  *	  PlaceHolderVars are handled according to these bits in 'flags':
  *		PVC_INCLUDE_PLACEHOLDERS	include PlaceHolderVars in output list
  *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar arguments
@@ -532,6 +539,8 @@ pull_var_clause(Node *node, int flags)
 	/* Assert that caller has not specified inconsistent flags */
 	Assert((flags & (PVC_INCLUDE_AGGREGATES | PVC_RECURSE_AGGREGATES))
 		   != (PVC_INCLUDE_AGGREGATES | PVC_RECURSE_AGGREGATES));
+	Assert((flags & (PVC_INCLUDE_WINDOWFUNCS | PVC_RECURSE_WINDOWFUNCS))
+		   != (PVC_INCLUDE_WINDOWFUNCS | PVC_RECURSE_WINDOWFUNCS));
 	Assert((flags & (PVC_INCLUDE_PLACEHOLDERS | PVC_RECURSE_PLACEHOLDERS))
 		   != (PVC_INCLUDE_PLACEHOLDERS | PVC_RECURSE_PLACEHOLDERS));
 
@@ -593,6 +602,22 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 		}
 		else
 			elog(ERROR, "GROUPING found where not expected");
+	}
+	else if (IsA(node, WindowFunc))
+	{
+		/* WindowFuncs have no levelsup field to check ... */
+		if (context->flags & PVC_INCLUDE_WINDOWFUNCS)
+		{
+			context->varlist = lappend(context->varlist, node);
+			/* we do NOT descend into the contained expressions */
+			return false;
+		}
+		else if (context->flags & PVC_RECURSE_WINDOWFUNCS)
+		{
+			/* fall through to recurse into the windowfunc's arguments */
+		}
+		else
+			elog(ERROR, "WindowFunc found where not expected");
 	}
 	else if (IsA(node, PlaceHolderVar))
 	{

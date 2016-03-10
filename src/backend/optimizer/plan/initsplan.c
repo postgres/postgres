@@ -147,6 +147,7 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 {
 	List	   *tlist_vars = pull_var_clause((Node *) final_tlist,
 											 PVC_RECURSE_AGGREGATES |
+											 PVC_RECURSE_WINDOWFUNCS |
 											 PVC_INCLUDE_PLACEHOLDERS);
 
 	if (tlist_vars != NIL)
@@ -156,7 +157,8 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 	}
 
 	/*
-	 * If there's a HAVING clause, we'll need the Vars it uses, too.
+	 * If there's a HAVING clause, we'll need the Vars it uses, too.  Note
+	 * that HAVING can contain Aggrefs but not WindowFuncs.
 	 */
 	if (root->parse->havingQual)
 	{
@@ -1788,6 +1790,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	{
 		List	   *vars = pull_var_clause(clause,
 										   PVC_RECURSE_AGGREGATES |
+										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
 		add_vars_to_targetlist(root, vars, relids, false);

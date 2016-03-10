@@ -3837,11 +3837,12 @@ make_group_input_target(PlannerInfo *root, List *tlist)
 	 * add them to the result tlist if not already present.  (A Var used
 	 * directly as a GROUP BY item will be present already.)  Note this
 	 * includes Vars used in resjunk items, so we are covering the needs of
-	 * ORDER BY and window specifications.  Vars used within Aggrefs will be
-	 * pulled out here, too.
+	 * ORDER BY and window specifications.  Vars used within Aggrefs and
+	 * WindowFuncs will be pulled out here, too.
 	 */
 	non_group_vars = pull_var_clause((Node *) non_group_cols,
 									 PVC_RECURSE_AGGREGATES |
+									 PVC_RECURSE_WINDOWFUNCS |
 									 PVC_INCLUDE_PLACEHOLDERS);
 	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
 
@@ -4086,10 +4087,12 @@ make_window_input_target(PlannerInfo *root,
 	 *
 	 * Note: it's essential to use PVC_INCLUDE_AGGREGATES here, so that the
 	 * Aggrefs are placed in the Agg node's tlist and not left to be computed
-	 * at higher levels.
+	 * at higher levels.  On the other hand, we should recurse into
+	 * WindowFuncs to make sure their input expressions are available.
 	 */
 	flattenable_vars = pull_var_clause((Node *) flattenable_cols,
 									   PVC_INCLUDE_AGGREGATES |
+									   PVC_RECURSE_WINDOWFUNCS |
 									   PVC_INCLUDE_PLACEHOLDERS);
 	new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
 

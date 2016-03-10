@@ -5307,7 +5307,8 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			 * that we treat Aggrefs as if they were variables; this is
 			 * necessary when attempting to sort the output from an Agg node
 			 * for use in a WindowFunc (since grouping_planner will have
-			 * treated the Aggrefs as variables, too).
+			 * treated the Aggrefs as variables, too).  Likewise, if we find a
+			 * WindowFunc in a sort expression, treat it as a variable.
 			 */
 			Expr	   *sortexpr = NULL;
 
@@ -5336,6 +5337,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 				sortexpr = em->em_expr;
 				exprvars = pull_var_clause((Node *) sortexpr,
 										   PVC_INCLUDE_AGGREGATES |
+										   PVC_INCLUDE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 				foreach(k, exprvars)
 				{
