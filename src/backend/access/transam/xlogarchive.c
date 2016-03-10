@@ -470,11 +470,7 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 		reload = true;
 	}
 
-	if (rename(path, xlogfpath) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						path, xlogfpath)));
+	durable_rename(path, xlogfpath, ERROR);
 
 	/*
 	 * Create .done file forcibly to prevent the restored segment from being
@@ -580,12 +576,7 @@ XLogArchiveForceDone(const char *xlog)
 	StatusFilePath(archiveReady, xlog, ".ready");
 	if (stat(archiveReady, &stat_buf) == 0)
 	{
-		if (rename(archiveReady, archiveDone) < 0)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not rename file \"%s\" to \"%s\": %m",
-							archiveReady, archiveDone)));
-
+		(void) durable_rename(archiveReady, archiveDone, WARNING);
 		return;
 	}
 

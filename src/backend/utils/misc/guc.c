@@ -7037,11 +7037,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 		 * at worst it can lose the parameters set by last ALTER SYSTEM
 		 * command.
 		 */
-		if (rename(AutoConfTmpFileName, AutoConfFileName) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not rename file \"%s\" to \"%s\": %m",
-							AutoConfTmpFileName, AutoConfFileName)));
+		durable_rename(AutoConfTmpFileName, AutoConfFileName, ERROR);
 	}
 	PG_CATCH();
 	{

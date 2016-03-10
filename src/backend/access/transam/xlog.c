@@ -3299,34 +3299,16 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 	}
 
 	/*
-	 * Prefer link() to rename() here just to be really sure that we don't
-	 * overwrite an existing logfile.  However, there shouldn't be one, so
-	 * rename() is an acceptable substitute except for the truly paranoid.
+	 * Perform the rename using link if available, paranoidly trying to avoid
+	 * overwriting an existing file (there shouldn't be one).
 	 */
-#if HAVE_WORKING_LINK
-	if (link(tmppath, path) < 0)
+	if (durable_link_or_rename(tmppath, path, LOG) != 0)
 	{
 		if (use_lock)
 			LWLockRelease(ControlFileLock);
-		ereport(LOG,
-				(errcode_for_file_access(),
-				 errmsg("could not link file \"%s\" to \"%s\" (initialization of log file): %m",
-						tmppath, path)));
+		/* durable_link_or_rename already emitted log message */
 		return false;
 	}
-	unlink(tmppath);
-#else
-	if (rename(tmppath, path) < 0)
-	{
-		if (use_lock)
-			LWLockRelease(ControlFileLock);
-		ereport(LOG,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\" (initialization of log file): %m",
-						tmppath, path)));
-		return false;
-	}
-#endif
 
 	if (use_lock)
 		LWLockRelease(ControlFileLock);
@@ -5339,11 +5321,7 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 	 * re-enter archive recovery mode in a subsequent crash.
 	 */
 	unlink(RECOVERY_COMMAND_DONE);
-	if (rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE) != 0)
-		ereport(FATAL,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE)));
+	durable_rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE, FATAL);
 
 	ereport(LOG,
 			(errmsg("archive recovery complete")));
@@ -6190,7 +6168,7 @@ StartupXLOG(void)
 		if (stat(TABLESPACE_MAP, &st) == 0)
 		{
 			unlink(TABLESPACE_MAP_OLD);
-			if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) == 0)
+			if (durable_rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD, DEBUG1) == 0)
 				ereport(LOG,
 					(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
 							TABLESPACE_MAP, BACKUP_LABEL_FILE),
@@ -6553,11 +6531,7 @@ StartupXLOG(void)
 		if (haveBackupLabel)
 		{
 			unlink(BACKUP_LABEL_OLD);
-			if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) != 0)
-				ereport(FATAL,
-						(errcode_for_file_access(),
-						 errmsg("could not rename file \"%s\" to \"%s\": %m",
-								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+			durable_rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD, FATAL);
 		}
 
 		/*
@@ -6570,11 +6544,7 @@ StartupXLOG(void)
 		if (haveTblspcMap)
 		{
 			unlink(TABLESPACE_MAP_OLD);
-			if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) != 0)
-				ereport(FATAL,
-						(errcode_for_file_access(),
-						 errmsg("could not rename file \"%s\" to \"%s\": %m",
-								TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+			durable_rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD, FATAL);
 		}
 
 		/* Check that the GUCs used to generate the WAL allow recovery */
@@ -7351,11 +7321,7 @@ StartupXLOG(void)
 				 */
 				XLogArchiveCleanup(partialfname);
 
-				if (rename(origpath, partialpath) != 0)
-					ereport(ERROR,
-							(errcode_for_file_access(),
-						 errmsg("could not rename file \"%s\" to \"%s\": %m",
-								origpath, partialpath)));
+				durable_rename(origpath, partialpath, ERROR);
 				XLogArchiveNotify(partialfname);
 			}
 		}
@@ -10911,7 +10877,7 @@ CancelBackup(void)
 	/* remove leftover file from previously canceled backup if it exists */
 	unlink(BACKUP_LABEL_OLD);
 
-	if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) != 0)
+	if (durable_rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD, DEBUG1) != 0)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
@@ -10934,7 +10900,7 @@ CancelBackup(void)
 	/* remove leftover file from previously canceled backup if it exists */
 	unlink(TABLESPACE_MAP_OLD);
 
-	if (rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD) == 0)
+	if (durable_rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD, DEBUG1) == 0)
 	{
 		ereport(LOG,
 				(errmsg("online backup mode canceled"),
