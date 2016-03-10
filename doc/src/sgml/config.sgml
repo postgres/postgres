@@ -5984,12 +5984,15 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        <command>VACUUM</> performs a whole-table scan if the table's
+        <command>VACUUM</> performs an aggressive scan if the table's
         <structname>pg_class</>.<structfield>relfrozenxid</> field has reached
-        the age specified by this setting.  The default is 150 million
-        transactions.  Although users can set this value anywhere from zero to
-        two billions, <command>VACUUM</> will silently limit the effective value
-        to 95% of <xref linkend="guc-autovacuum-freeze-max-age">, so that a
+        the age specified by this setting.  An aggressive scan differs from
+        a regular <command>VACUUM</> in that it visits every page that might
+        contain unfrozen XIDs or MXIDs, not just those that might contain dead
+        tuples.  The default is 150 million transactions.  Although users can
+        set this value anywhere from zero to two billions, <command>VACUUM</>
+        will silently limit the effective value to 95% of
+        <xref linkend="guc-autovacuum-freeze-max-age">, so that a
         periodical manual <command>VACUUM</> has a chance to run before an
         anti-wraparound autovacuum is launched for the table. For more
         information see
@@ -6028,9 +6031,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        <command>VACUUM</> performs a whole-table scan if the table's
+        <command>VACUUM</> performs an aggressive scan if the table's
         <structname>pg_class</>.<structfield>relminmxid</> field has reached
-        the age specified by this setting.  The default is 150 million multixacts.
+        the age specified by this setting.  An aggressive scan differs from
+        a regular <command>VACUUM</> in that it visits every page that might
+        contain unfrozen XIDs or MXIDs, not just those that might contain dead
+        tuples.  The default is 150 million multixacts.
         Although users can set this value anywhere from zero to two billions,
         <command>VACUUM</> will silently limit the effective value to 95% of
         <xref linkend="guc-autovacuum-multixact-freeze-max-age">, so that a
