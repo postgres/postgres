@@ -385,7 +385,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 
 		FreeDir(dbspace_dir);
 
-		fsync_fname((char *) dbspacedirname, true);
+		fsync_fname(dbspacedirname, true);
 	}
 }
 
