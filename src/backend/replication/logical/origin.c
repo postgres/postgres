@@ -625,7 +625,7 @@ CheckPointReplicationOrigin(void)
 						tmppath, path)));
 	}
 
-	fsync_fname((char *) path, false);
+	fsync_fname(path, false);
 	fsync_fname("pg_logical", true);
 }
 
