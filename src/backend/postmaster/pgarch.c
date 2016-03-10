@@ -728,9 +728,5 @@ pgarch_archiveDone(char *xlog)
 
 	StatusFilePath(rlogready, xlog, ".ready");
 	StatusFilePath(rlogdone, xlog, ".done");
-	if (rename(rlogready, rlogdone) < 0)
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						rlogready, rlogdone)));
+	(void) durable_rename(rlogready, rlogdone, WARNING);
 }
