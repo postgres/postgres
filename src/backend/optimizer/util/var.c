@@ -55,8 +55,7 @@ typedef struct
 typedef struct
 {
 	List	   *varlist;
-	PVCAggregateBehavior aggbehavior;
-	PVCPlaceHolderBehavior phbehavior;
+	int			flags;
 } pull_var_clause_context;
 
 typedef struct
@@ -497,17 +496,22 @@ locate_var_of_level_walker(Node *node,
  * pull_var_clause
  *	  Recursively pulls all Var nodes from an expression clause.
  *
- *	  Aggrefs are handled according to 'aggbehavior':
- *		PVC_REJECT_AGGREGATES		throw error if Aggref found
+ *	  Aggrefs are handled according to these bits in 'flags':
  *		PVC_INCLUDE_AGGREGATES		include Aggrefs in output list
  *		PVC_RECURSE_AGGREGATES		recurse into Aggref arguments
- *	  Vars within an Aggref's expression are included only in the last case.
+ *		neither flag				throw error if Aggref found
+ *	  Vars within an Aggref's expression are included in the result only
+ *	  when PVC_RECURSE_AGGREGATES is specified.
  *
- *	  PlaceHolderVars are handled according to 'phbehavior':
- *		PVC_REJECT_PLACEHOLDERS		throw error if PlaceHolderVar found
+ *	  PlaceHolderVars are handled according to these bits in 'flags':
  *		PVC_INCLUDE_PLACEHOLDERS	include PlaceHolderVars in output list
  *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar arguments
- *	  Vars within a PHV's expression are included only in the last case.
+ *		neither flag				throw error if PlaceHolderVar found
+ *	  Vars within a PHV's expression are included in the result only
+ *	  when PVC_RECURSE_PLACEHOLDERS is specified.
+ *
+ *	  GroupingFuncs are treated mostly like Aggrefs, and so do not need
+ *	  their own flag bits.
  *
  *	  CurrentOfExpr nodes are ignored in all cases.
  *
@@ -521,14 +525,18 @@ locate_var_of_level_walker(Node *node,
  * of sublinks to subplans!
  */
 List *
-pull_var_clause(Node *node, PVCAggregateBehavior aggbehavior,
-				PVCPlaceHolderBehavior phbehavior)
+pull_var_clause(Node *node, int flags)
 {
 	pull_var_clause_context context;
 
+	/* Assert that caller has not specified inconsistent flags */
+	Assert((flags & (PVC_INCLUDE_AGGREGATES | PVC_RECURSE_AGGREGATES))
+		   != (PVC_INCLUDE_AGGREGATES | PVC_RECURSE_AGGREGATES));
+	Assert((flags & (PVC_INCLUDE_PLACEHOLDERS | PVC_RECURSE_PLACEHOLDERS))
+		   != (PVC_INCLUDE_PLACEHOLDERS | PVC_RECURSE_PLACEHOLDERS));
+
 	context.varlist = NIL;
-	context.aggbehavior = aggbehavior;
-	context.phbehavior = phbehavior;
+	context.flags = flags;
 
 	pull_var_clause_walker(node, &context);
 	return context.varlist;
@@ -550,62 +558,58 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 	{
 		if (((Aggref *) node)->agglevelsup != 0)
 			elog(ERROR, "Upper-level Aggref found where not expected");
-		switch (context->aggbehavior)
+		if (context->flags & PVC_INCLUDE_AGGREGATES)
 		{
-			case PVC_REJECT_AGGREGATES:
-				elog(ERROR, "Aggref found where not expected");
-				break;
-			case PVC_INCLUDE_AGGREGATES:
-				context->varlist = lappend(context->varlist, node);
-				/* we do NOT descend into the contained expression */
-				return false;
-			case PVC_RECURSE_AGGREGATES:
-				/* ignore the aggregate, look at its argument instead */
-				break;
+			context->varlist = lappend(context->varlist, node);
+			/* we do NOT descend into the contained expression */
+			return false;
 		}
+		else if (context->flags & PVC_RECURSE_AGGREGATES)
+		{
+			/* fall through to recurse into the aggregate's arguments */
+		}
+		else
+			elog(ERROR, "Aggref found where not expected");
 	}
 	else if (IsA(node, GroupingFunc))
 	{
 		if (((GroupingFunc *) node)->agglevelsup != 0)
 			elog(ERROR, "Upper-level GROUPING found where not expected");
-		switch (context->aggbehavior)
+		if (context->flags & PVC_INCLUDE_AGGREGATES)
 		{
-			case PVC_REJECT_AGGREGATES:
-				elog(ERROR, "GROUPING found where not expected");
-				break;
-			case PVC_INCLUDE_AGGREGATES:
-				context->varlist = lappend(context->varlist, node);
-				/* we do NOT descend into the contained expression */
-				return false;
-			case PVC_RECURSE_AGGREGATES:
-
-				/*
-				 * we do NOT descend into the contained expression, even if
-				 * the caller asked for it, because we never actually evaluate
-				 * it - the result is driven entirely off the associated GROUP
-				 * BY clause, so we never need to extract the actual Vars
-				 * here.
-				 */
-				return false;
+			context->varlist = lappend(context->varlist, node);
+			/* we do NOT descend into the contained expression */
+			return false;
 		}
+		else if (context->flags & PVC_RECURSE_AGGREGATES)
+		{
+			/*
+			 * We do NOT descend into the contained expression, even if the
+			 * caller asked for it, because we never actually evaluate it -
+			 * the result is driven entirely off the associated GROUP BY
+			 * clause, so we never need to extract the actual Vars here.
+			 */
+			return false;
+		}
+		else
+			elog(ERROR, "GROUPING found where not expected");
 	}
 	else if (IsA(node, PlaceHolderVar))
 	{
 		if (((PlaceHolderVar *) node)->phlevelsup != 0)
 			elog(ERROR, "Upper-level PlaceHolderVar found where not expected");
-		switch (context->phbehavior)
+		if (context->flags & PVC_INCLUDE_PLACEHOLDERS)
 		{
-			case PVC_REJECT_PLACEHOLDERS:
-				elog(ERROR, "PlaceHolderVar found where not expected");
-				break;
-			case PVC_INCLUDE_PLACEHOLDERS:
-				context->varlist = lappend(context->varlist, node);
-				/* we do NOT descend into the contained expression */
-				return false;
-			case PVC_RECURSE_PLACEHOLDERS:
-				/* ignore the placeholder, look at its argument instead */
-				break;
+			context->varlist = lappend(context->varlist, node);
+			/* we do NOT descend into the contained expression */
+			return false;
 		}
+		else if (context->flags & PVC_RECURSE_PLACEHOLDERS)
+		{
+			/* fall through to recurse into the placeholder's expression */
+		}
+		else
+			elog(ERROR, "PlaceHolderVar found where not expected");
 	}
 	return expression_tree_walker(node, pull_var_clause_walker,
 								  (void *) context);

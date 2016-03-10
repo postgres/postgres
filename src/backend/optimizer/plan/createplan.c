@@ -5335,7 +5335,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 
 				sortexpr = em->em_expr;
 				exprvars = pull_var_clause((Node *) sortexpr,
-										   PVC_INCLUDE_AGGREGATES,
+										   PVC_INCLUDE_AGGREGATES |
 										   PVC_INCLUDE_PLACEHOLDERS);
 				foreach(k, exprvars)
 				{

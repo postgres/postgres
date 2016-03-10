@@ -14,14 +14,12 @@
 #ifndef TLIST_H
 #define TLIST_H
 
-#include "optimizer/var.h"
+#include "nodes/relation.h"
 
 
 extern TargetEntry *tlist_member(Node *node, List *targetlist);
 extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
 
-extern List *flatten_tlist(List *tlist, PVCAggregateBehavior aggbehavior,
-			  PVCPlaceHolderBehavior phbehavior);
 extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
 extern List *get_tlist_exprs(List *tlist, bool includeJunk);

@@ -16,19 +16,14 @@
 
 #include "nodes/relation.h"
 
-typedef enum
-{
-	PVC_REJECT_AGGREGATES,		/* throw error if Aggref found */
-	PVC_INCLUDE_AGGREGATES,		/* include Aggrefs in output list */
-	PVC_RECURSE_AGGREGATES		/* recurse into Aggref arguments */
-} PVCAggregateBehavior;
+/* Bits that can be OR'd into the flags argument of pull_var_clause() */
+#define PVC_INCLUDE_AGGREGATES	0x0001	/* include Aggrefs in output list */
+#define PVC_RECURSE_AGGREGATES	0x0002	/* recurse into Aggref arguments */
+#define PVC_INCLUDE_PLACEHOLDERS	0x0004		/* include PlaceHolderVars in
+												 * output list */
+#define PVC_RECURSE_PLACEHOLDERS	0x0008		/* recurse into PlaceHolderVar
+												 * arguments */
 
-typedef enum
-{
-	PVC_REJECT_PLACEHOLDERS,	/* throw error if PlaceHolderVar found */
-	PVC_INCLUDE_PLACEHOLDERS,	/* include PlaceHolderVars in output list */
-	PVC_RECURSE_PLACEHOLDERS	/* recurse into PlaceHolderVar arguments */
-} PVCPlaceHolderBehavior;
 
 extern Relids pull_varnos(Node *node);
 extern Relids pull_varnos_of_level(Node *node, int levelsup);
@@ -37,8 +32,7 @@ extern List *pull_vars_of_level(Node *node, int levelsup);
 extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern int	locate_var_of_level(Node *node, int levelsup);
-extern List *pull_var_clause(Node *node, PVCAggregateBehavior aggbehavior,
-				PVCPlaceHolderBehavior phbehavior);
+extern List *pull_var_clause(Node *node, int flags);
 extern Node *flatten_join_alias_vars(PlannerInfo *root, Node *node);
 
 #endif   /* VAR_H */

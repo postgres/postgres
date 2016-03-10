@@ -28,6 +28,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parser.h"

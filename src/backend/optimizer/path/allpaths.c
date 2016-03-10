@@ -2509,9 +2509,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 	 * Examine all Vars used in clause; since it's a restriction clause, all
 	 * such Vars must refer to subselect output columns.
 	 */
-	vars = pull_var_clause(qual,
-						   PVC_REJECT_AGGREGATES,
-						   PVC_INCLUDE_PLACEHOLDERS);
+	vars = pull_var_clause(qual, PVC_INCLUDE_PLACEHOLDERS);
 	foreach(vl, vars)
 	{
 		Var		   *var = (Var *) lfirst(vl);

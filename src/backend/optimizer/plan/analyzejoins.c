@@ -29,6 +29,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
 /* local functions */

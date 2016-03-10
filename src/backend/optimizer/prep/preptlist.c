@@ -44,6 +44,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
@@ -167,7 +168,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		ListCell   *l;
 
 		vars = pull_var_clause((Node *) parse->returningList,
-							   PVC_RECURSE_AGGREGATES,
+							   PVC_RECURSE_AGGREGATES |
 							   PVC_INCLUDE_PLACEHOLDERS);
 		foreach(l, vars)
 		{

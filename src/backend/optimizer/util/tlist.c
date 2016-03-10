@@ -101,34 +101,6 @@ tlist_member_match_var(Var *var, List *targetlist)
 }
 
 /*
- * flatten_tlist
- *	  Create a target list that only contains unique variables.
- *
- * Aggrefs and PlaceHolderVars in the input are treated according to
- * aggbehavior and phbehavior, for which see pull_var_clause().
- *
- * 'tlist' is the current target list
- *
- * Returns the "flattened" new target list.
- *
- * The result is entirely new structure sharing no nodes with the original.
- * Copying the Var nodes is probably overkill, but be safe for now.
- */
-List *
-flatten_tlist(List *tlist, PVCAggregateBehavior aggbehavior,
-			  PVCPlaceHolderBehavior phbehavior)
-{
-	List	   *vlist = pull_var_clause((Node *) tlist,
-										aggbehavior,
-										phbehavior);
-	List	   *new_tlist;
-
-	new_tlist = add_to_flat_tlist(NIL, vlist);
-	list_free(vlist);
-	return new_tlist;
-}
-
-/*
  * add_to_flat_tlist
  *		Add more items to a flattened tlist (if they're not already in it)
  *

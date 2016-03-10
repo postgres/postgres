@@ -43,6 +43,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_agg.h"
@@ -3840,7 +3841,7 @@ make_group_input_target(PlannerInfo *root, List *tlist)
 	 * pulled out here, too.
 	 */
 	non_group_vars = pull_var_clause((Node *) non_group_cols,
-									 PVC_RECURSE_AGGREGATES,
+									 PVC_RECURSE_AGGREGATES |
 									 PVC_INCLUDE_PLACEHOLDERS);
 	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
 
@@ -4088,7 +4089,7 @@ make_window_input_target(PlannerInfo *root,
 	 * at higher levels.
 	 */
 	flattenable_vars = pull_var_clause((Node *) flattenable_cols,
-									   PVC_INCLUDE_AGGREGATES,
+									   PVC_INCLUDE_AGGREGATES |
 									   PVC_INCLUDE_PLACEHOLDERS);
 	new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
 

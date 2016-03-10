@@ -734,7 +734,6 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 	tlist = add_to_flat_tlist(tlist, foreignrel->reltarget.exprs);
 	tlist = add_to_flat_tlist(tlist,
 							  pull_var_clause((Node *) fpinfo->local_conds,
-											  PVC_REJECT_AGGREGATES,
 											  PVC_RECURSE_PLACEHOLDERS));
 
 	return tlist;
