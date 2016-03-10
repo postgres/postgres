@@ -632,10 +632,56 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry><type>timestamp with time zone</></entry>
      <entry>Time when the <structfield>state</> was last changed</entry>
     </row>
+     <row>
+      <entry><structfield>wait_event_type</></entry>
+      <entry><type>text</></entry>
+      <entry>The type of event for which the backend is waiting, if any;
+       otherwise NULL. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>LWLockNamed</>: The backend is waiting for a specific named
+          lightweight lock.  Each such lock protects a particular data
+          structure in shared memory.  <literal>wait_event</> will contain
+          the name of the lightweight lock.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>LWLockTranche</>: The backend is waiting for one of a
+          group of related lightweight locks.  All locks in the group perform
+          a similar function; <literal>wait_event</> will identify the general
+          purpose of locks in that group.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Lock</>: The backend is waiting for a heavyweight lock.
+          Heayweight locks, also known as lock manager locks or simply locks,
+          primarily protect SQL-visible objects such as tables.  However,
+          they are also used to ensure mutual exclusion for certain internal
+          operations such as relation extension.  <literal>wait_event</> will
+          identify the type of lock awaited.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>BufferPin</>: The server process is waiting to access to
+          a data buffer during a period when no other process can be
+          examining that buffer.  Buffer pin waits can be protracted if
+          another process holds an open cursor which last read data from the
+          buffer in question.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </entry>
+     </row>
     <row>
-     <entry><structfield>waiting</></entry>
-     <entry><type>boolean</></entry>
-     <entry>True if this backend is currently waiting on a lock</entry>
+     <entry><structfield>wait_event</></entry>
+     <entry><type>text</></entry>
+     <entry>Wait event name if backend is currently waiting, otherwise NULL.
+     See <xref linkend="wait-event-table"> for details.
+     </entry>
     </row>
     <row>
      <entry><structfield>state</></entry>
@@ -712,15 +758,351 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <note>
    <para>
-    The <structfield>waiting</> and <structfield>state</> columns are
+    The <structfield>wait_event</> and <structfield>state</> columns are
     independent.  If a backend is in the <literal>active</> state,
-    it may or may not be <literal>waiting</>.  If the state is
-    <literal>active</> and <structfield>waiting</> is true, it means
-    that a query is being executed, but is being blocked by a lock
-    somewhere in the system.
+    it may or may not be <literal>waiting</> on some event.  If the state
+    is <literal>active</> and <structfield>wait_event</> is non-null, it
+    means that a query is being executed, but is being blocked somewhere
+    in the system.
    </para>
   </note>
 
+  <table id="wait-event-table" xreflabel="wait_event">
+   <title><structname>wait_event</structname> Description</title>
+
+    <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Wait Event Type</entry>
+        <entry>Wait Event Name</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry morerows="40"><literal>LWLockNamed</></entry>
+        <entry><literal>ShmemIndexLock</></entry>
+        <entry>Waiting to find or allocate space in shared memory.</entry>
+       </row>
+       <row>
+        <entry><literal>OidGenLock</></entry>
+        <entry>Waiting to allocate or assign an OID.</entry>
+       </row>
+        <row>
+         <entry><literal>XidGenLock</></entry>
+         <entry>Waiting to allocate or assign a transaction id.</entry>
+        </row>
+        <row>
+         <entry><literal>ProcArrayLock</></entry>
+         <entry>Waiting to get a snapshot or clearing a transaction id at
+         transaction end.</entry>
+        </row>
+        <row>
+         <entry><literal>SInvalReadLock</></entry>
+         <entry>Waiting to retrieve or remove messages from shared invalidation
+         queue.</entry>
+        </row>
+        <row>
+         <entry><literal>SInvalWriteLock</></entry>
+         <entry>Waiting to add a message in shared invalidation queue.</entry>
+        </row>
+        <row>
+         <entry><literal>WALBufMappingLock</></entry>
+         <entry>Waiting to replace a page in WAL buffers.</entry>
+        </row>
+        <row>
+         <entry><literal>WALWriteLock</></entry>
+         <entry>Waiting for WAL buffers to be written to disk.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileLock</></entry>
+         <entry>Waiting to read or update the control file or creation of a
+         new WAL file.</entry>
+        </row>
+        <row>
+         <entry><literal>CheckpointLock</></entry>
+         <entry>Waiting to perform checkpoint.</entry>
+        </row>
+        <row>
+         <entry><literal>CLogControlLock</></entry>
+         <entry>Waiting to read or update transaction status.</entry>
+        </row>
+        <row>
+         <entry><literal>SubtransControlLock</></entry>
+         <entry>Waiting to read or update sub-transaction information.</entry>
+        </row>
+        <row>
+         <entry><literal>MultiXactGenLock</></entry>
+         <entry>Waiting to read or update shared multixact state.</entry>
+        </row>
+        <row>
+         <entry><literal>MultiXactOffsetControlLock</></entry>
+         <entry>Waiting to read or update multixact offset mappings.</entry>
+        </row>
+        <row>
+         <entry><literal>MultiXactMemberControlLock</></entry>
+         <entry>Waiting to read or update multixact member mappings.</entry>
+        </row>
+        <row>
+         <entry><literal>RelCacheInitLock</></entry>
+         <entry>Waiting to read or write relation cache initialization
+         file.</entry>
+        </row>
+        <row>
+         <entry><literal>CheckpointerCommLock</></entry>
+         <entry>Waiting to manage fsync requests.</entry>
+        </row>
+        <row>
+         <entry><literal>TwoPhaseStateLock</></entry>
+         <entry>Waiting to read or update the state of prepared transactions.</entry>
+        </row>
+        <row>
+         <entry><literal>TablespaceCreateLock</></entry>
+         <entry>Waiting to create or drop the tablespace.</entry>
+        </row>
+        <row>
+         <entry><literal>BtreeVacuumLock</></entry>
+          <entry>Waiting to read or update vacuum-related information for a
+          Btree index.</entry>
+        </row>
+        <row>
+         <entry><literal>AddinShmemInitLock</></entry>
+         <entry>Waiting to manage space allocation in shared memory.</entry>
+        </row>
+        <row>
+         <entry><literal>AutovacuumLock</></entry>
+         <entry>Autovacuum worker or launcher waiting to update or
+         read the current state of autovacuum workers.</entry>
+        </row>
+        <row>
+         <entry><literal>AutovacuumScheduleLock</></entry>
+         <entry>Waiting to ensure that the table it has selected for a vacuum
+         still needs vacuuming.
+         </entry>
+        </row>
+        <row>
+         <entry><literal>SyncScanLock</></entry>
+         <entry>Waiting to get the start location of a scan on a table for
+         synchronized scans.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMappingLock</></entry>
+         <entry>Waiting to update the relation map file used to store catalog
+         to filenode mapping.
+         </entry>
+        </row>
+        <row>
+         <entry><literal>AsyncCtlLock</></entry>
+         <entry>Waiting to read or update shared notification state.</entry>
+        </row>
+        <row>
+         <entry><literal>AsyncQueueLock</></entry>
+          <entry>Waiting to read or update notification messages.</entry>
+        </row>
+        <row>
+         <entry><literal>SerializableXactHashLock</></entry>
+         <entry>Waiting to retrieve or store information about serializable
+         transactions.</entry>
+        </row>
+        <row>
+         <entry><literal>SerializableFinishedListLock</></entry>
+         <entry>Waiting to access the list of finished serializable
+         transactions.</entry>
+        </row>
+        <row>
+         <entry><literal>SerializablePredicateLockListLock</></entry>
+         <entry>Waiting to perform an operation on a list of locks held by
+         serializable transactions.</entry>
+        </row>
+        <row>
+         <entry><literal>OldSerXidLock</></entry>
+         <entry>Waiting to read or record conflicting serializable
+         transactions.</entry>
+        </row>
+        <row>
+         <entry><literal>SyncRepLock</></entry>
+         <entry>Waiting to read or update information about synchronous
+         replicas.</entry>
+        </row>
+        <row>
+         <entry><literal>BackgroundWorkerLock</></entry>
+         <entry>Waiting to read or update background worker state.</entry>
+        </row>
+        <row>
+         <entry><literal>DynamicSharedMemoryControlLock</></entry>
+         <entry>Waiting to read or update dynamic shared memory state.</entry>
+        </row>
+        <row>
+         <entry><literal>AutoFileLock</></entry>
+         <entry>Waiting to update the <filename>postgresql.auto.conf</> file.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotAllocationLock</></entry>
+         <entry>Waiting to allocate or free a replication slot.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotControlLock</></entry>
+         <entry>Waiting to read or update replication slot state.</entry>
+        </row>
+        <row>
+         <entry><literal>CommitTsControlLock</></entry>
+         <entry>Waiting to read or update transaction commit timestamps.</entry>
+        </row>
+        <row>
+         <entry><literal>CommitTsLock</></entry>
+         <entry>Waiting to read or update the last value set for the
+         transaction timestamp.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationOriginLock</></entry>
+         <entry>Waiting to setup, drop or use replication origin.</entry>
+        </row>
+        <row>
+         <entry><literal>MultiXactTruncationLock</></entry>
+         <entry>Waiting to read or truncate multixact information.</entry>
+        </row>
+        <row>
+         <entry morerows="15"><literal>LWLockTranche</></entry>
+         <entry><literal>clog</></entry>
+         <entry>Waiting for I/O on a clog (transcation status) buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>commit_timestamp</></entry>
+         <entry>Waiting for I/O on commit timestamp buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>subtrans</></entry>
+         <entry>Waiting for I/O a subtransaction buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>multixact_offset</></entry>
+         <entry>Waiting for I/O on a multixact offset buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>multixact_member</></entry>
+         <entry>Waiting for I/O on a multixact_member buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>async</></entry>
+         <entry>Waiting for I/O on an async (notify) buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>oldserxid</></entry>
+         <entry>Waiting to I/O on an oldserxid buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>wal_insert</></entry>
+         <entry>Waiting to insert WAL into a memory buffer.</entry>
+        </row>
+        <row>
+         <entry><literal>buffer_content</></entry>
+         <entry>Waiting to read or write a data page in memory.</entry>
+        </row>
+        <row>
+         <entry><literal>buffer_io</></entry>
+         <entry>Waiting for I/O on a data page.</entry>
+        </row>
+        <row>
+         <entry><literal>replication_origin</></entry>
+         <entry>Waiting to read or update the replication progress.</entry>
+        </row>
+        <row>
+         <entry><literal>replication_slot_io</></entry>
+         <entry>Waiting for I/O on a replication slot.</entry>
+        </row>
+        <row>
+         <entry><literal>proc</></entry>
+         <entry>Waiting to read or update the fast-path lock information.</entry>
+        </row>
+        <row>
+         <entry><literal>buffer_mapping</></entry>
+         <entry>Waiting to associate a data block with a buffer in the buffer
+         pool.</entry>
+        </row>
+        <row>
+         <entry><literal>lock_manager</></entry>
+         <entry>Waiting to add or examine locks for backends, or waiting to
+         join or exit a locking group (used by parallel query).</entry>
+        </row>
+        <row>
+         <entry><literal>predicate_lock_manager</></entry>
+         <entry>Waiting to add or examine predicate lock information.</entry>
+        </row>
+        <row>
+         <entry morerows="9"><literal>Lock</></entry>
+         <entry><literal>relation</></entry>
+         <entry>Waiting to acquire a lock on a relation.</entry>
+        </row>
+        <row>
+         <entry><literal>extend</></entry>
+         <entry>Waiting to extend a relation.</entry>
+        </row>
+        <row>
+         <entry><literal>page</></entry>
+         <entry>Waiting to acquire a lock on page of a relation.</entry>
+        </row>
+        <row>
+         <entry><literal>tuple</></entry>
+         <entry>Waiting to acquire a lock on a tuple.</entry>
+        </row>
+        <row>
+         <entry><literal>transactionid</></entry>
+         <entry>Waiting for a transaction to finish.</entry>
+        </row>
+        <row>
+         <entry><literal>virtualxid</></entry>
+         <entry>Waiting to acquire a virtual xid lock.</entry>
+        </row>
+        <row>
+         <entry><literal>speculative token</></entry>
+         <entry>Waiting to acquire a speculative insertion lock.</entry>
+        </row>
+        <row>
+         <entry><literal>object</></entry>
+         <entry>Waiting to acquire a lock on a non-relation database object.</entry>
+        </row>
+        <row>
+         <entry><literal>userlock</></entry>
+         <entry>Waiting to acquire a userlock.</entry>
+        </row>
+        <row>
+         <entry><literal>advisory</></entry>
+         <entry>Waiting to acquire an advisory user lock.</entry>
+        </row>
+        <row>
+         <entry><literal>BufferPin</></entry>
+         <entry><literal>BufferPin</></entry>
+         <entry>Waiting to acquire a pin on a buffer.</entry>
+        </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <note>
+    <para>
+     For tranches registered by extensions, the name is specified by extension
+     and this will be displayed as <structfield>wait_event</>.  It is quite
+     possible that user has registered the tranche in one of the backends (by
+     having allocation in dynamic shared memory) in which case other backends
+     won't have that information, so we display <literal>extension</> for such
+     cases.
+    </para>
+   </note>
+
+   <para>
+     Here is an example of how wait events can be viewed
+
+<programlisting>
+SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
+ pid  | wait_event_type |  wait_event
+------+-----------------+---------------
+ 2540 | Lock            | relation
+ 6644 | LWLockNamed     | ProcArrayLock
+(2 rows)
+</programlisting>
+   </para>
+   
   <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
    <title><structname>pg_stat_replication</structname> View</title>
    <tgroup cols="3">
@@ -2030,10 +2412,20 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry>OID of the user logged into this backend</entry>
      </row>
 
+      <row>
+       <entry><literal><function>pg_stat_get_backend_wait_event_type(integer)</function></literal></entry>
+       <entry><type>text</type></entry>
+        <entry>Wait event type name if backend is currently waiting, otherwise NULL.
+        See <xref linkend="wait-event-table"> for details.
+        </entry>
+      </row>
+      
      <row>
-      <entry><literal><function>pg_stat_get_backend_waiting(integer)</function></literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>True if this backend is currently waiting on a lock</entry>
+      <entry><literal><function>pg_stat_get_backend_wait_event(integer)</function></literal></entry>
+      <entry><type>text</type></entry>
+       <entry>Wait event name if backend is currently waiting, otherwise NULL.
+       See <xref linkend="wait-event-table"> for details.
+       </entry>
      </row>
 
      <row>

@@ -404,6 +404,9 @@ InitProcess(void)
 	Assert(MyProc->lockGroupLeader == NULL);
 	Assert(dlist_is_empty(&MyProc->lockGroupMembers));
 
+	/* Initialize wait event information. */
+	MyProc->wait_event_info = 0;
+
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch
 	 * on it.  That allows us to repoint the process latch, which so far

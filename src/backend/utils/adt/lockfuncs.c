@@ -23,7 +23,7 @@
 
 
 /* This must match enum LockTagType! */
-static const char *const LockTagTypeNames[] = {
+const char *const LockTagTypeNames[] = {
 	"relation",
 	"extend",
 	"page",

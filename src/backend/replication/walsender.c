@@ -55,6 +55,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/replnodes.h"
+#include "pgstat.h"
 #include "replication/basebackup.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
@@ -252,6 +253,7 @@ void
 WalSndErrorCleanup(void)
 {
 	LWLockReleaseAll();
+	pgstat_report_wait_end();
 
 	if (sendFile >= 0)
 	{

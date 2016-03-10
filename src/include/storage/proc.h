@@ -152,6 +152,8 @@ struct PGPROC
 	 */
 	TransactionId	procArrayGroupMemberXid;
 
+	uint32          wait_event_info;        /* proc's wait information */
+
 	/* Per-backend LWLock.  Protects fields below (but not group fields). */
 	LWLock		backendLock;
 

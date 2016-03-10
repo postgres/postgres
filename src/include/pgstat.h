@@ -17,6 +17,7 @@
 #include "portability/instr_time.h"
 #include "postmaster/pgarch.h"
 #include "storage/barrier.h"
+#include "storage/proc.h"
 #include "utils/hsearch.h"
 #include "utils/relcache.h"
 
@@ -695,6 +696,21 @@ typedef enum BackendState
 	STATE_DISABLED
 } BackendState;
 
+
+/* ----------
+ * Wait Classes
+ * ----------
+ */
+typedef enum WaitClass
+{
+	WAIT_UNDEFINED,
+	WAIT_LWLOCK_NAMED,
+	WAIT_LWLOCK_TRANCHE,
+	WAIT_LOCK,
+	WAIT_BUFFER_PIN
+}	WaitClass;
+
+
 /* ----------
  * Command type for progress reporting purposes
  * ----------
@@ -776,9 +792,6 @@ typedef struct PgBackendStatus
 	/* Information about SSL connection */
 	bool		st_ssl;
 	PgBackendSSLStatus *st_sslstatus;
-
-	/* Is backend currently waiting on an lmgr lock? */
-	bool		st_waiting;
 
 	/* current state */
 	BackendState st_state;
@@ -956,7 +969,8 @@ extern void pgstat_report_activity(BackendState state, const char *cmd_str);
 extern void pgstat_report_tempfile(size_t filesize);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
-extern void pgstat_report_waiting(bool waiting);
+extern const char *pgstat_get_wait_event(uint32 wait_event_info);
+extern const char *pgstat_get_wait_event_type(uint32 wait_event_info);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 									int buflen);
@@ -970,6 +984,65 @@ extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 extern void pgstat_initstats(Relation rel);
+
+/* ----------
+ * pgstat_report_wait_start() -
+ *
+ *	Called from places where server process needs to wait.  This is called
+ *	to report wait event information.  The wait information is stored
+ *	as 4-bytes where first byte repersents the wait event class (type of
+ *	wait, for different types of wait, refer WaitClass) and the next
+ *	3-bytes repersent the actual wait event.  Currently 2-bytes are used
+ *	for wait event which is sufficient for current usage, 1-byte is
+ *	reserved for future usage.
+ *
+ * NB: this *must* be able to survive being called before MyProc has been
+ * initialized.
+ * ----------
+ */
+static inline void
+pgstat_report_wait_start(uint8 classId, uint16 eventId)
+{
+	volatile PGPROC *proc = MyProc;
+	uint32		wait_event_val;
+
+	if (!pgstat_track_activities || !proc)
+		return;
+
+	wait_event_val = classId;
+	wait_event_val <<= 24;
+	wait_event_val |= eventId;
+
+	/*
+	 * Since this is a four-byte field which is always read and written as
+	 * four-bytes, updates are atomic.
+	 */
+	proc->wait_event_info = wait_event_val;
+}
+
+/* ----------
+ * pgstat_report_wait_end() -
+ *
+ *	Called to report end of a wait.
+ *
+ * NB: this *must* be able to survive being called before MyProc has been
+ * initialized.
+ * ----------
+ */
+static inline void
+pgstat_report_wait_end(void)
+{
+	volatile PGPROC *proc = MyProc;
+
+	if (!pgstat_track_activities || !proc)
+		return;
+
+	/*
+	 * Since this is a four-byte field which is always read and written as
+	 * four-bytes, updates are atomic.
+	 */
+	proc->wait_event_info = 0;
+}
 
 /* nontransactional event counts are simple enough to inline */
 

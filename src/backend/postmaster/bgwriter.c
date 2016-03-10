@@ -224,6 +224,9 @@ BackgroundWriterMain(void)
 		 * It's not clear we need it elsewhere, but shouldn't hurt.
 		 */
 		smgrcloseall();
+
+		/* Report wait end here, when there is no further possibility of wait */
+		pgstat_report_wait_end();
 	}
 
 	/* We can now handle ereport(ERROR) */

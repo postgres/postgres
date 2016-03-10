@@ -994,3 +994,26 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 			break;
 	}
 }
+
+/*
+ * GetLockNameFromTagType
+ *
+ *	Given locktag type, return the corresponding lock name.
+ */
+const char *
+GetLockNameFromTagType(uint16 locktag_type)
+{
+	const char *locktypename;
+	char		tnbuf[32];
+
+	if (locktag_type <= LOCKTAG_LAST_TYPE)
+		locktypename = LockTagTypeNames[locktag_type];
+	else
+	{
+		snprintf(tnbuf, sizeof(tnbuf), "unknown %d",
+				 (int) locktag_type);
+		locktypename = tnbuf;
+	}
+
+	return locktypename;
+}

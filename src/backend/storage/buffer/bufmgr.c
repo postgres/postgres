@@ -3351,6 +3351,9 @@ LockBufferForCleanup(Buffer buffer)
 		UnlockBufHdr(bufHdr);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
+		/* Report the wait */
+		pgstat_report_wait_start(WAIT_BUFFER_PIN, 0);
+
 		/* Wait to be signaled by UnpinBuffer() */
 		if (InHotStandby)
 		{
@@ -3363,6 +3366,8 @@ LockBufferForCleanup(Buffer buffer)
 		}
 		else
 			ProcWaitForSignal();
+
+		pgstat_report_wait_end();
 
 		/*
 		 * Remove flag marking us as waiter. Normally this will not be set
