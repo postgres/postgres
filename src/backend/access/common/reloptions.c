@@ -100,7 +100,7 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs table pages only to this percentage",
 			RELOPT_KIND_HEAP,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock /* since it applies only to later inserts */
 		},
 		HEAP_DEFAULT_FILLFACTOR, HEAP_MIN_FILLFACTOR, 100
 	},
@@ -109,7 +109,7 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs btree index pages only to this percentage",
 			RELOPT_KIND_BTREE,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock /* since it applies only to later inserts */
 		},
 		BTREE_DEFAULT_FILLFACTOR, BTREE_MIN_FILLFACTOR, 100
 	},
@@ -118,7 +118,7 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs hash index pages only to this percentage",
 			RELOPT_KIND_HASH,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock /* since it applies only to later inserts */
 		},
 		HASH_DEFAULT_FILLFACTOR, HASH_MIN_FILLFACTOR, 100
 	},
@@ -127,7 +127,7 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs gist index pages only to this percentage",
 			RELOPT_KIND_GIST,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock /* since it applies only to later inserts */
 		},
 		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
 	},
@@ -136,7 +136,7 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs spgist index pages only to this percentage",
 			RELOPT_KIND_SPGIST,
-			AccessExclusiveLock
+			ShareUpdateExclusiveLock /* since it applies only to later inserts */
 		},
 		SPGIST_DEFAULT_FILLFACTOR, SPGIST_MIN_FILLFACTOR, 100
 	},

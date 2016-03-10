@@ -561,7 +561,7 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </para>
 
      <para>
-      Changing autovacuum storage parameters acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+      Changing fillfactor and autovacuum storage parameters acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
      </para>
 
      <note>

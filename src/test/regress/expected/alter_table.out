@@ -2065,19 +2065,19 @@ select * from my_locks order by 1;
 commit;
 begin; alter table alterlock set (fillfactor = 100);
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock reset (fillfactor);
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
@@ -2110,10 +2110,10 @@ rollback;
 -- test that mixing options with different lock levels works as expected
 begin; alter table alterlock set (autovacuum_enabled = off, fillfactor = 80);
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
