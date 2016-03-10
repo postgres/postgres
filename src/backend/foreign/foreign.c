@@ -121,14 +121,14 @@ GetForeignServer(Oid serverid)
 							tp,
 							Anum_pg_foreign_server_srvtype,
 							&isnull);
-	server->servertype = isnull ? NULL : pstrdup(TextDatumGetCString(datum));
+	server->servertype = isnull ? NULL : TextDatumGetCString(datum);
 
 	/* Extract server version */
 	datum = SysCacheGetAttr(FOREIGNSERVEROID,
 							tp,
 							Anum_pg_foreign_server_srvversion,
 							&isnull);
-	server->serverversion = isnull ? NULL : pstrdup(TextDatumGetCString(datum));
+	server->serverversion = isnull ? NULL : TextDatumGetCString(datum);
 
 	/* Extract the srvoptions */
 	datum = SysCacheGetAttr(FOREIGNSERVEROID,
