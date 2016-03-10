@@ -172,7 +172,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       the input data type(s) of the function (for B-tree comparison functions
       and hash functions)
       or the class's data type (for B-tree sort support functions and all
-      functions in GiST, SP-GiST and GIN operator classes).  These defaults
+      functions in GiST, SP-GiST, GIN and BRIN operator classes).  These defaults
       are correct, and so <replaceable
       class="parameter">op_type</replaceable> need not be specified in
       <literal>FUNCTION</> clauses, except for the case of a B-tree sort
@@ -232,7 +232,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
      <para>
       The data type actually stored in the index.  Normally this is
       the same as the column data type, but some index methods
-      (currently GiST and GIN) allow it to be different.  The
+      (currently GiST, GIN and BRIN) allow it to be different.  The
       <literal>STORAGE</> clause must be omitted unless the index
       method allows a different type to be used.
      </para>
