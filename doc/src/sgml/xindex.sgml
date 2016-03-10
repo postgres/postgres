@@ -323,6 +323,49 @@
    </table>
 
   <para>
+   BRIN indexes are similar to GiST, SP-GiST and GIN indexes in that they
+   don't have a fixed set of strategies either.  Instead the support routines
+   of each operator class interpret the strategy numbers according to the
+   operator class's definition. As an example, the strategy numbers used by
+   the built-in <literal>Minmax</> operator classes are shown in
+   <xref linkend="xindex-brin-minmax-strat-table">.
+  </para>
+
+   <table tocentry="1" id="xindex-brin-minmax-strat-table">
+    <title>BRIN Minmax Strategies</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Strategy Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>less than</entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>less than or equal</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>equal</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry>greater than or equal</entry>
+       <entry>4</entry>
+      </row>
+      <row>
+       <entry>greater than</entry>
+       <entry>5</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
    Notice that all the operators listed above return Boolean values.  In
    practice, all operators defined as index method search operators must
    return type <type>boolean</type>, since they must appear at the top
@@ -602,6 +645,53 @@
    </table>
 
   <para>
+   BRIN indexes have four basic support functions, as shown in
+   <xref linkend="xindex-brin-support-table">; those basic functions
+   may require additional support functions to be provided.
+   (For more information see <xref linkend="brin-extensibility">.)
+  </para>
+
+   <table tocentry="1" id="xindex-brin-support-table">
+    <title>GIN Support Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Description</entry>
+       <entry>Support Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><function>opcInfo</></entry>
+       <entry>
+        return internal information describing the indexed columns'
+        summary data
+       </entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry><function>add_value</></entry>
+       <entry>add a new value to an existing summary index tuple</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry><function>consistent</></entry>
+       <entry>determine whether value matches query condition</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry><function>union</></entry>
+       <entry>
+        compute union of two summary tuples
+       </entry>
+       <entry>4</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
    Unlike search operators, support functions return whichever data
    type the particular index method expects; for example in the case
    of the comparison function for B-trees, a signed integer.  The number
@@ -609,7 +699,7 @@
    dependent on the index method.  For B-tree and hash the comparison and
    hashing support functions take the same input data types as do the
    operators included in the operator class, but this is not the case for
-   most GiST, SP-GiST, and GIN support functions.
+   most GiST, SP-GiST, GIN, and BRIN support functions.
   </para>
  </sect2>
 
@@ -994,6 +1084,14 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
    handle.
   </para>
 
+  <para>
+   In BRIN, the requirements depends on the framework that provides the
+   operator classes.  For operator classes based on <literal>minmax</>,
+   the behavior required is the same as for B-tree operator families:
+   all the operators in the family must sort compatibly, and casts must
+   not change the associated sort ordering.
+  </para>
+
   <note>
    <para>
     Prior to <productname>PostgreSQL</productname> 8.3, there was no concept
@@ -1178,7 +1276,7 @@ CREATE OPERATOR CLASS polygon_ops
         STORAGE box;
 </programlisting>
 
-   At present, only the GiST and GIN index methods support a
+   At present, only the GiST, GIN and BRIN index methods support a
    <literal>STORAGE</> type that's different from the column data type.
    The GiST <function>compress</> and <function>decompress</> support
    routines must deal with data-type conversion when <literal>STORAGE</>
@@ -1188,6 +1286,10 @@ CREATE OPERATOR CLASS polygon_ops
    integer-array columns might have keys that are just integers.  The
    GIN <function>extractValue</> and <function>extractQuery</> support
    routines are responsible for extracting keys from indexed values.
+   BRIN is similar to GIN: the <literal>STORAGE</> type identifies the
+   type of the stored summary values, and operator classes' support
+   procedures are responsible for interpreting the summary values
+   correctly.
   </para>
  </sect2>
 
