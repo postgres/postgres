@@ -614,7 +614,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		else
 		{
 			nulls[2] = true;
-			for (i = 1; i < PGSTAT_NUM_PROGRESS_PARAM + 1; i++)
+			for (i = 0; i < PGSTAT_NUM_PROGRESS_PARAM; i++)
 				nulls[i+3] = true;
 		}
 

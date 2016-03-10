@@ -2861,8 +2861,8 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 /*-----------
  * pgstat_progress_start_command() -
  *
- * Set st_command in own backend entry.  Also, zero-initialize
- * st_progress_param array.
+ * Set st_progress_command (and st_progress_command_target) in own backend
+ * entry.  Also, zero-initialize st_progress_param array.
  *-----------
  */
 void
@@ -2904,7 +2904,8 @@ pgstat_progress_update_param(int index, int64 val)
 /*-----------
  * pgstat_progress_end_command() -
  *
- * Update index'th member in st_progress_param[] of own backend entry.
+ * Reset st_progress_command (and st_progress_command_target) in own backend
+ * entry.  This signals the end of the command.
  *-----------
  */
 void
