@@ -203,6 +203,24 @@ LOAD 'auto_explain';
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>auto_explain.sample_ratio</varname> (<type>real</type>)
+     <indexterm>
+      <primary><varname>auto_explain.sample_ratio</> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <varname>auto_explain.sample_ratio</varname> (<type>floating point</type>)
+      causes auto_explain to only explain a fraction of the statements in each
+      session.  The default is 1, meaning explain all the queries.  In case
+      of nested statements, either all will be explained or none. Only
+      superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
 
   <para>

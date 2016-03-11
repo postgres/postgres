@@ -29,6 +29,7 @@ static bool auto_explain_log_triggers = false;
 static bool auto_explain_log_timing = true;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static bool auto_explain_log_nested_statements = false;
+static double auto_explain_sample_ratio = 1;
 
 static const struct config_enum_entry format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -46,6 +47,9 @@ static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+
+/* Is the current query sampled, per backend */
+static bool current_query_sampled = true;
 
 #define auto_explain_enabled() \
 	(auto_explain_log_min_duration >= 0 && \
@@ -159,6 +163,19 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
+	DefineCustomRealVariable("auto_explain.sample_ratio",
+							 "Fraction of queries to process.",
+							NULL,
+							&auto_explain_sample_ratio,
+							1.0,
+							0.0,
+							1.0,
+							PGC_SUSET,
+							0,
+							NULL,
+							NULL,
+							NULL);
+
 	EmitWarningsOnPlaceholders("auto_explain");
 
 	/* Install hooks. */
@@ -191,7 +208,15 @@ _PG_fini(void)
 static void
 explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-	if (auto_explain_enabled())
+	/*
+	 * For ratio sampling, randomly choose top-level statement. Either
+	 * all nested statements will be explained or none will.
+	 */
+	if (auto_explain_log_min_duration >= 0 && nesting_level == 0)
+		current_query_sampled = (random() < auto_explain_sample_ratio *
+				MAX_RANDOM_VALUE);
+
+	if (auto_explain_enabled() && current_query_sampled)
 	{
 		/* Enable per-node instrumentation iff log_analyze is required. */
 		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
@@ -210,7 +235,7 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	else
 		standard_ExecutorStart(queryDesc, eflags);
 
-	if (auto_explain_enabled())
+	if (auto_explain_enabled() && current_query_sampled)
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
@@ -280,7 +305,7 @@ explain_ExecutorFinish(QueryDesc *queryDesc)
 static void
 explain_ExecutorEnd(QueryDesc *queryDesc)
 {
-	if (queryDesc->totaltime && auto_explain_enabled())
+	if (queryDesc->totaltime && auto_explain_enabled() && current_query_sampled)
 	{
 		double		msec;
 
