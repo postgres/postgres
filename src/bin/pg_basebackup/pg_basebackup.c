@@ -372,10 +372,20 @@ typedef struct
 static int
 LogStreamerMain(logstreamer_param *param)
 {
-	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
-						   param->sysidentifier, param->xlogdir,
-						   reached_end_position, standby_message_timeout,
-						   NULL, false, true))
+	StreamCtl	stream;
+
+	MemSet(&stream, sizeof(stream), 0);
+	stream.startpos = param->startptr;
+	stream.timeline = param->timeline;
+	stream.sysidentifier = param->sysidentifier;
+	stream.stream_stop = reached_end_position;
+	stream.standby_message_timeout = standby_message_timeout;
+	stream.synchronous = false;
+	stream.mark_done = true;
+	stream.basedir = param->xlogdir;
+	stream.partial_suffix = NULL;
+
+	if (!ReceiveXlogStream(param->bgconn, &stream))
 
 		/*
 		 * Any errors will already have been reported in the function process,
