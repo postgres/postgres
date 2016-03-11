@@ -129,3 +129,132 @@ SELECT
  10
 (10 rows)
 
+--
+-- Test behavior of volatile and set-returning functions in conjunction
+-- with ORDER BY and LIMIT.
+--
+create temp sequence testseq;
+explain (verbose, costs off)
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by unique2 limit 10;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Limit
+   Output: unique1, unique2, (nextval('testseq'::regclass))
+   ->  Index Scan using tenk1_unique2 on public.tenk1
+         Output: unique1, unique2, nextval('testseq'::regclass)
+(4 rows)
+
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by unique2 limit 10;
+ unique1 | unique2 | nextval 
+---------+---------+---------
+    8800 |       0 |       1
+    1891 |       1 |       2
+    3420 |       2 |       3
+    9850 |       3 |       4
+    7164 |       4 |       5
+    8009 |       5 |       6
+    5057 |       6 |       7
+    6701 |       7 |       8
+    4321 |       8 |       9
+    3043 |       9 |      10
+(10 rows)
+
+select currval('testseq');
+ currval 
+---------
+      10
+(1 row)
+
+explain (verbose, costs off)
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by tenthous limit 10;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Limit
+   Output: unique1, unique2, (nextval('testseq'::regclass)), tenthous
+   ->  Result
+         Output: unique1, unique2, nextval('testseq'::regclass), tenthous
+         ->  Sort
+               Output: unique1, unique2, tenthous
+               Sort Key: tenk1.tenthous
+               ->  Seq Scan on public.tenk1
+                     Output: unique1, unique2, tenthous
+(9 rows)
+
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by tenthous limit 10;
+ unique1 | unique2 | nextval 
+---------+---------+---------
+       0 |    9998 |      11
+       1 |    2838 |      12
+       2 |    2716 |      13
+       3 |    5679 |      14
+       4 |    1621 |      15
+       5 |    5557 |      16
+       6 |    2855 |      17
+       7 |    8518 |      18
+       8 |    5435 |      19
+       9 |    4463 |      20
+(10 rows)
+
+select currval('testseq');
+ currval 
+---------
+      20
+(1 row)
+
+explain (verbose, costs off)
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by unique2 limit 7;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Limit
+   Output: unique1, unique2, (generate_series(1, 10))
+   ->  Index Scan using tenk1_unique2 on public.tenk1
+         Output: unique1, unique2, generate_series(1, 10)
+(4 rows)
+
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by unique2 limit 7;
+ unique1 | unique2 | generate_series 
+---------+---------+-----------------
+    8800 |       0 |               1
+    8800 |       0 |               2
+    8800 |       0 |               3
+    8800 |       0 |               4
+    8800 |       0 |               5
+    8800 |       0 |               6
+    8800 |       0 |               7
+(7 rows)
+
+explain (verbose, costs off)
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by tenthous limit 7;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Limit
+   Output: unique1, unique2, (generate_series(1, 10)), tenthous
+   ->  Result
+         Output: unique1, unique2, generate_series(1, 10), tenthous
+         ->  Sort
+               Output: unique1, unique2, tenthous
+               Sort Key: tenk1.tenthous
+               ->  Seq Scan on public.tenk1
+                     Output: unique1, unique2, tenthous
+(9 rows)
+
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by tenthous limit 7;
+ unique1 | unique2 | generate_series 
+---------+---------+-----------------
+       0 |    9998 |               1
+       0 |    9998 |               2
+       0 |    9998 |               3
+       0 |    9998 |               4
+       0 |    9998 |               5
+       0 |    9998 |               6
+       0 |    9998 |               7
+(7 rows)
+

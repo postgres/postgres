@@ -39,3 +39,42 @@ SELECT
           (SELECT n FROM generate_series(1,10) AS n
              ORDER BY n LIMIT 1 OFFSET s-1) AS y) AS z
   FROM generate_series(1,10) AS s;
+
+--
+-- Test behavior of volatile and set-returning functions in conjunction
+-- with ORDER BY and LIMIT.
+--
+
+create temp sequence testseq;
+
+explain (verbose, costs off)
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by unique2 limit 10;
+
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by unique2 limit 10;
+
+select currval('testseq');
+
+explain (verbose, costs off)
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by tenthous limit 10;
+
+select unique1, unique2, nextval('testseq')
+  from tenk1 order by tenthous limit 10;
+
+select currval('testseq');
+
+explain (verbose, costs off)
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by unique2 limit 7;
+
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by unique2 limit 7;
+
+explain (verbose, costs off)
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by tenthous limit 7;
+
+select unique1, unique2, generate_series(1,10)
+  from tenk1 order by tenthous limit 7;

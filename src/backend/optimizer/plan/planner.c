@@ -127,6 +127,7 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel);
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
+					 PathTarget *target,
 					 double limit_tuples);
 static PathTarget *make_group_input_target(PlannerInfo *root,
 						PathTarget *final_target);
@@ -137,6 +138,9 @@ static PathTarget *make_window_input_target(PlannerInfo *root,
 						 List *activeWindows);
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 						 List *tlist);
+static PathTarget *make_sort_input_target(PlannerInfo *root,
+					   PathTarget *final_target,
+					   bool *have_postponed_srfs);
 
 
 /*****************************************************************************
@@ -1381,6 +1385,9 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	int64		offset_est = 0;
 	int64		count_est = 0;
 	double		limit_tuples = -1.0;
+	bool		have_postponed_srfs = false;
+	double		tlist_rows;
+	PathTarget *final_target;
 	RelOptInfo *current_rel;
 	RelOptInfo *final_rel;
 	ListCell   *lc;
@@ -1440,6 +1447,9 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		/* Save aside the final decorated tlist */
 		root->processed_tlist = tlist;
 
+		/* Also extract the PathTarget form of the setop result tlist */
+		final_target = current_rel->cheapest_total_path->pathtarget;
+
 		/*
 		 * Can't handle FOR [KEY] UPDATE/SHARE here (parser should have
 		 * checked already, but let's make sure).
@@ -1464,11 +1474,10 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	else
 	{
 		/* No set operations, do regular planning */
-		PathTarget *final_target;
+		PathTarget *sort_input_target;
 		PathTarget *grouping_target;
 		PathTarget *scanjoin_target;
 		bool		have_grouping;
-		double		tlist_rows;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
 		List	   *rollup_lists = NIL;
@@ -1622,7 +1631,10 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * Figure out whether there's a hard limit on the number of rows that
 		 * query_planner's result subplan needs to return.  Even if we know a
 		 * hard limit overall, it doesn't apply if the query has any
-		 * grouping/aggregation operations.
+		 * grouping/aggregation operations.  (XXX it also doesn't apply if the
+		 * tlist contains any SRFs; but checking for that here seems more
+		 * costly than it's worth, since root->limit_tuples is only used for
+		 * cost estimates, and only in a small number of cases.)
 		 */
 		if (parse->groupClause ||
 			parse->groupingSets ||
@@ -1660,22 +1672,33 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		final_target = create_pathtarget(root, tlist);
 
 		/*
+		 * If ORDER BY was given, consider whether we should use a post-sort
+		 * projection, and compute the adjusted target for preceding steps if
+		 * so.
+		 */
+		if (parse->sortClause)
+			sort_input_target = make_sort_input_target(root,
+													   final_target,
+													   &have_postponed_srfs);
+		else
+			sort_input_target = final_target;
+
+		/*
 		 * If we have window functions to deal with, the output from any
 		 * grouping step needs to be what the window functions want;
-		 * otherwise, it should just be final_target.
+		 * otherwise, it should be sort_input_target.
 		 */
 		if (activeWindows)
 			grouping_target = make_window_input_target(root,
 													   final_target,
 													   activeWindows);
 		else
-			grouping_target = final_target;
+			grouping_target = sort_input_target;
 
 		/*
 		 * If we have grouping or aggregation to do, the topmost scan/join
-		 * plan node must emit what the grouping step wants; otherwise, if
-		 * there's window functions, it must emit what the window functions
-		 * want; otherwise, it should emit final_target.
+		 * plan node must emit what the grouping step wants; otherwise, it
+		 * should emit grouping_target.
 		 */
 		have_grouping = (parse->groupClause || parse->groupingSets ||
 						 parse->hasAggs || root->hasHavingQual);
@@ -1736,43 +1759,10 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			current_rel = create_window_paths(root,
 											  current_rel,
 											  grouping_target,
-											  final_target,
+											  sort_input_target,
 											  tlist,
 											  wflists,
 											  activeWindows);
-		}
-
-		/*
-		 * If there are set-returning functions in the tlist, scale up the
-		 * assumed output rowcounts of all surviving Paths to account for
-		 * that.  This is a bit of a kluge, but it's not clear how to account
-		 * for it in a more principled way.  We definitely don't want to apply
-		 * the multiplier more than once, which would happen if we tried to
-		 * fold it into PathTarget accounting.  And the expansion does happen
-		 * before any explicit DISTINCT or ORDER BY processing is done.
-		 */
-		tlist_rows = tlist_returns_set_rows(tlist);
-		if (tlist_rows > 1)
-		{
-			foreach(lc, current_rel->pathlist)
-			{
-				Path	   *path = (Path *) lfirst(lc);
-
-				/*
-				 * We assume that execution costs of the tlist as such were
-				 * already accounted for.  However, it still seems appropriate
-				 * to charge something more for the executor's general costs
-				 * of processing the added tuples.  The cost is probably less
-				 * than cpu_tuple_cost, though, so we arbitrarily use half of
-				 * that.
-				 */
-				path->total_cost += path->rows * (tlist_rows - 1) *
-					cpu_tuple_cost / 2;
-
-				path->rows *= tlist_rows;
-			}
-
-			/* There seems no need for a fresh set_cheapest comparison. */
 		}
 
 		/*
@@ -1789,14 +1779,48 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 	/*
 	 * If ORDER BY was given, consider ways to implement that, and generate a
-	 * new upperrel containing only paths that emit the correct ordering.  We
-	 * can apply the original limit_tuples limit in sorting now.
+	 * new upperrel containing only paths that emit the correct ordering and
+	 * project the correct final_target.  We can apply the original
+	 * limit_tuples limit in sort costing here, but only if there are no
+	 * postponed SRFs.
 	 */
 	if (parse->sortClause)
 	{
 		current_rel = create_ordered_paths(root,
 										   current_rel,
+										   final_target,
+										   have_postponed_srfs ? -1.0 :
 										   limit_tuples);
+	}
+
+	/*
+	 * If there are set-returning functions in the tlist, scale up the output
+	 * rowcounts of all surviving Paths to account for that.  Note that if any
+	 * SRFs appear in sorting or grouping columns, we'll have underestimated
+	 * the numbers of rows passing through earlier steps; but that's such a
+	 * weird usage that it doesn't seem worth greatly complicating matters to
+	 * account for it.
+	 */
+	tlist_rows = tlist_returns_set_rows(tlist);
+	if (tlist_rows > 1)
+	{
+		foreach(lc, current_rel->pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			/*
+			 * We assume that execution costs of the tlist as such were
+			 * already accounted for.  However, it still seems appropriate to
+			 * charge something more for the executor's general costs of
+			 * processing the added tuples.  The cost is probably less than
+			 * cpu_tuple_cost, though, so we arbitrarily use half of that.
+			 */
+			path->total_cost += path->rows * (tlist_rows - 1) *
+				cpu_tuple_cost / 2;
+
+			path->rows *= tlist_rows;
+		}
+		/* No need to run set_cheapest; we're keeping all paths anyway. */
 	}
 
 	/*
@@ -3707,12 +3731,14 @@ create_distinct_paths(PlannerInfo *root,
  * cheapest-total existing path.
  *
  * input_rel: contains the source-data Paths
+ * target: the output tlist the result Paths must emit
  * limit_tuples: estimated bound on the number of output tuples,
  *		or -1 if no LIMIT or couldn't estimate
  */
 static RelOptInfo *
 create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
+					 PathTarget *target,
 					 double limit_tuples)
 {
 	Path	   *cheapest_input_path = input_rel->cheapest_total_path;
@@ -3740,6 +3766,12 @@ create_ordered_paths(PlannerInfo *root,
 												 root->sort_pathkeys,
 												 limit_tuples);
 			}
+
+			/* Add projection step if needed */
+			if (path->pathtarget != target)
+				path = apply_projection_to_path(root, ordered_rel,
+												path, target);
+
 			add_path(ordered_rel, path);
 		}
 	}
@@ -4139,6 +4171,210 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 													tlist);
 	list_free(window_sortclauses);
 	return window_pathkeys;
+}
+
+/*
+ * make_sort_input_target
+ *	  Generate appropriate PathTarget for initial input to Sort step.
+ *
+ * If the query has ORDER BY, this function chooses the target to be computed
+ * by the node just below the Sort (and DISTINCT, if any, since Unique can't
+ * project) steps.  This might or might not be identical to the query's final
+ * output target.
+ *
+ * The main argument for keeping the sort-input tlist the same as the final
+ * is that we avoid a separate projection node (which will be needed if
+ * they're different, because Sort can't project).  However, there are also
+ * advantages to postponing tlist evaluation till after the Sort: it ensures
+ * a consistent order of evaluation for any volatile functions in the tlist,
+ * and if there's also a LIMIT, we can stop the query without ever computing
+ * tlist functions for later rows, which is beneficial for both volatile and
+ * expensive functions.
+ *
+ * Our current policy is to postpone volatile expressions till after the sort
+ * unconditionally (assuming that that's possible, ie they are in plain tlist
+ * columns and not ORDER BY/GROUP BY/DISTINCT columns).  We also postpone
+ * set-returning expressions unconditionally (if possible), because running
+ * them beforehand would bloat the sort dataset, and because it might cause
+ * unexpected output order if the sort isn't stable.  Expensive expressions
+ * are postponed if there is a LIMIT, or if root->tuple_fraction shows that
+ * partial evaluation of the query is possible (if neither is true, we expect
+ * to have to evaluate the expressions for every row anyway), or if there are
+ * any volatile or set-returning expressions (since once we've put in a
+ * projection at all, it won't cost any more to postpone more stuff).
+ *
+ * Another issue that could potentially be considered here is that
+ * evaluating tlist expressions could result in data that's either wider
+ * or narrower than the input Vars, thus changing the volume of data that
+ * has to go through the Sort.  However, we usually have only a very bad
+ * idea of the output width of any expression more complex than a Var,
+ * so for now it seems too risky to try to optimize on that basis.
+ *
+ * Note that if we do produce a modified sort-input target, and then the
+ * query ends up not using an explicit Sort, no particular harm is done:
+ * we'll initially use the modified target for the preceding path nodes,
+ * but then change them to the final target with apply_projection_to_path.
+ * Moreover, in such a case the guarantees about evaluation order of
+ * volatile functions still hold, since the rows are sorted already.
+ *
+ * This function has some things in common with make_group_input_target and
+ * make_window_input_target, though the detailed rules for what to do are
+ * different.  We never flatten/postpone any grouping or ordering columns;
+ * those are needed before the sort.  If we do flatten a particular
+ * expression, we leave Aggref and WindowFunc nodes alone, since those were
+ * computed earlier.
+ *
+ * 'final_target' is the query's final target list (in PathTarget form)
+ * 'have_postponed_srfs' is an output argument, see below
+ *
+ * The result is the PathTarget to be computed by the plan node immediately
+ * below the Sort step (and the Distinct step, if any).  This will be
+ * exactly final_target if we decide a projection step wouldn't be helpful.
+ *
+ * In addition, *have_postponed_srfs is set to TRUE if we choose to postpone
+ * any set-returning functions to after the Sort.
+ */
+static PathTarget *
+make_sort_input_target(PlannerInfo *root,
+					   PathTarget *final_target,
+					   bool *have_postponed_srfs)
+{
+	Query	   *parse = root->parse;
+	PathTarget *input_target;
+	int			ncols;
+	bool	   *postpone_col;
+	bool		have_srf;
+	bool		have_volatile;
+	bool		have_expensive;
+	List	   *postponable_cols;
+	List	   *postponable_vars;
+	int			i;
+	ListCell   *lc;
+
+	/* Shouldn't get here unless query has ORDER BY */
+	Assert(parse->sortClause);
+
+	*have_postponed_srfs = false;		/* default result */
+
+	/* Inspect tlist and collect per-column information */
+	ncols = list_length(final_target->exprs);
+	postpone_col = (bool *) palloc0(ncols * sizeof(bool));
+	have_srf = have_volatile = have_expensive = false;
+
+	i = 0;
+	foreach(lc, final_target->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+
+		/*
+		 * If the column has a sortgroupref, assume it has to be evaluated
+		 * before sorting.  Generally such columns would be ORDER BY, GROUP
+		 * BY, etc targets.  One exception is columns that were removed from
+		 * GROUP BY by remove_useless_groupby_columns() ... but those would
+		 * only be Vars anyway.  There don't seem to be any cases where it
+		 * would be worth the trouble to double-check.
+		 */
+		if (final_target->sortgrouprefs[i] == 0)
+		{
+			/*
+			 * If it returns a set or is volatile, that's an unconditional
+			 * reason to postpone.  Check the SRF case first because we must
+			 * know whether we have any postponed SRFs.
+			 */
+			if (expression_returns_set((Node *) expr))
+			{
+				postpone_col[i] = true;
+				have_srf = true;
+			}
+			else if (contain_volatile_functions((Node *) expr))
+			{
+				postpone_col[i] = true;
+				have_volatile = true;
+			}
+			else
+			{
+				/*
+				 * Else check the cost.  XXX it's annoying to have to do this
+				 * when set_pathtarget_cost_width() just did it.  Refactor to
+				 * allow sharing the work?
+				 */
+				QualCost	cost;
+
+				cost_qual_eval_node(&cost, (Node *) expr, root);
+
+				/*
+				 * We arbitrarily define "expensive" as "more than 10X
+				 * cpu_operator_cost".  Note this will take in any PL function
+				 * with default cost.
+				 */
+				if (cost.per_tuple > 10 * cpu_operator_cost)
+				{
+					postpone_col[i] = true;
+					have_expensive = true;
+				}
+			}
+		}
+
+		i++;
+	}
+
+	/*
+	 * If we don't need a post-sort projection, just return final_target.
+	 */
+	if (!(have_srf || have_volatile ||
+		  (have_expensive &&
+		   (parse->limitCount || root->tuple_fraction > 0))))
+		return final_target;
+
+	/*
+	 * Report whether the post-sort projection will contain set-returning
+	 * functions.  This is important because it affects whether the Sort can
+	 * rely on the query's LIMIT (if any) to bound the number of rows it needs
+	 * to return.
+	 */
+	*have_postponed_srfs = have_srf;
+
+	/*
+	 * Construct the sort-input target, taking all non-postponable columns and
+	 * then adding Vars, PlaceHolderVars, Aggrefs, and WindowFuncs found in
+	 * the postponable ones.
+	 */
+	input_target = create_empty_pathtarget();
+	postponable_cols = NIL;
+
+	i = 0;
+	foreach(lc, final_target->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+
+		if (postpone_col[i])
+			postponable_cols = lappend(postponable_cols, expr);
+		else
+			add_column_to_pathtarget(input_target, expr,
+									 final_target->sortgrouprefs[i]);
+
+		i++;
+	}
+
+	/*
+	 * Pull out all the Vars, Aggrefs, and WindowFuncs mentioned in
+	 * postponable columns, and add them to the sort-input target if not
+	 * already present.  (Some might be there already.)  We mustn't
+	 * deconstruct Aggrefs or WindowFuncs here, since the projection node
+	 * would be unable to recompute them.
+	 */
+	postponable_vars = pull_var_clause((Node *) postponable_cols,
+									   PVC_INCLUDE_AGGREGATES |
+									   PVC_INCLUDE_WINDOWFUNCS |
+									   PVC_INCLUDE_PLACEHOLDERS);
+	add_new_columns_to_pathtarget(input_target, postponable_vars);
+
+	/* clean up cruft */
+	list_free(postponable_vars);
+	list_free(postponable_cols);
+
+	/* XXX this represents even more redundant cost calculation ... */
+	return set_pathtarget_cost_width(root, input_target);
 }
 
 /*

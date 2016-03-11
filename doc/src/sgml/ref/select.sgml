@@ -993,6 +993,36 @@ UNBOUNDED FOLLOWING
     cases it is not possible to specify new names with <literal>AS</>;
     the output column names will be the same as the table columns' names.
    </para>
+
+   <para>
+    According to the SQL standard, the expressions in the output list should
+    be computed before applying <literal>DISTINCT</literal>, <literal>ORDER
+    BY</literal>, or <literal>LIMIT</literal>.  This is obviously necessary
+    when using <literal>DISTINCT</literal>, since otherwise it's not clear
+    what values are being made distinct.  However, in many cases it is
+    convenient if output expressions are computed after <literal>ORDER
+    BY</literal> and <literal>LIMIT</literal>; particularly if the output list
+    contains any volatile or expensive functions.  With that behavior, the
+    order of function evaluations is more intuitive and there will not be
+    evaluations corresponding to rows that never appear in the output.
+    <productname>PostgreSQL</> will effectively evaluate output expressions
+    after sorting and limiting, so long as those expressions are not
+    referenced in <literal>DISTINCT</literal>, <literal>ORDER BY</literal>
+    or <literal>GROUP BY</literal>.  (As a counterexample, <literal>SELECT
+    f(x) FROM tab ORDER BY 1</> clearly must evaluate <function>f(x)</>
+    before sorting.)  Output expressions that contain set-returning functions
+    are effectively evaluated after sorting and before limiting, so
+    that <literal>LIMIT</literal> will act to cut off the output from a
+    set-returning function.
+   </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</> versions before 9.6 did not provide any
+     guarantees about the timing of evaluation of output expressions versus
+     sorting and limiting; it depended on the form of the chosen query plan.
+    </para>
+   </note>
   </refsect2>
 
   <refsect2 id="sql-distinct">
