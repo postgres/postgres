@@ -141,7 +141,14 @@ extern Datum tsvector_cmp(PG_FUNCTION_ARGS);
 extern Datum tsvector_length(PG_FUNCTION_ARGS);
 extern Datum tsvector_strip(PG_FUNCTION_ARGS);
 extern Datum tsvector_setweight(PG_FUNCTION_ARGS);
+extern Datum tsvector_setweight_by_filter(PG_FUNCTION_ARGS);
 extern Datum tsvector_concat(PG_FUNCTION_ARGS);
+extern Datum tsvector_delete_str(PG_FUNCTION_ARGS);
+extern Datum tsvector_delete_arr(PG_FUNCTION_ARGS);
+extern Datum tsvector_unnest(PG_FUNCTION_ARGS);
+extern Datum tsvector_to_array(PG_FUNCTION_ARGS);
+extern Datum array_to_tsvector(PG_FUNCTION_ARGS);
+extern Datum tsvector_filter(PG_FUNCTION_ARGS);
 extern Datum tsvector_update_trigger_byid(PG_FUNCTION_ARGS);
 extern Datum tsvector_update_trigger_bycolumn(PG_FUNCTION_ARGS);
 

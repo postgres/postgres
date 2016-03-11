@@ -83,18 +83,6 @@ SELECT 'a:3A b:2a'::tsvector || 'ba:1234 a:1B';
  'a':3A,4B 'b':2A 'ba':1237
 (1 row)
 
-SELECT setweight('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd zxc:81,567,222A'::tsvector, 'c');
-                        setweight                         
-----------------------------------------------------------
- 'a':1C,3C 'asd':1C 'w':5C,6C,12C,13C 'zxc':81C,222C,567C
-(1 row)
-
-SELECT strip('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd'::tsvector);
-     strip     
----------------
- 'a' 'asd' 'w'
-(1 row)
-
 --Base tsquery test
 SELECT '1'::tsquery;
  tsquery 
@@ -625,3 +613,212 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
         0.1
 (1 row)
 
+-- tsvector editing operations
+SELECT strip('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd'::tsvector);
+     strip     
+---------------
+ 'a' 'asd' 'w'
+(1 row)
+
+SELECT strip('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
+                    strip                     
+----------------------------------------------
+ 'base' 'hidden' 'rebel' 'spaceship' 'strike'
+(1 row)
+
+SELECT strip('base hidden rebel spaceship strike'::tsvector);
+                    strip                     
+----------------------------------------------
+ 'base' 'hidden' 'rebel' 'spaceship' 'strike'
+(1 row)
+
+SELECT delete(to_tsvector('english', 'Rebel spaceships, striking from a hidden base'), 'spaceship');
+                  delete                  
+------------------------------------------
+ 'base':7 'hidden':6 'rebel':1 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, 'base');
+                            delete                            
+--------------------------------------------------------------
+ 'hidden':6 'rebel':1 'spaceship':2,33A,34B,35C,36 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, 'bas');
+                                delete                                 
+-----------------------------------------------------------------------
+ 'base':7 'hidden':6 'rebel':1 'spaceship':2,33A,34B,35C,36 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, 'bases');
+                                delete                                 
+-----------------------------------------------------------------------
+ 'base':7 'hidden':6 'rebel':1 'spaceship':2,33A,34B,35C,36 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, 'spaceship');
+                  delete                  
+------------------------------------------
+ 'base':7 'hidden':6 'rebel':1 'strike':3
+(1 row)
+
+SELECT delete('base hidden rebel spaceship strike'::tsvector, 'spaceship');
+              delete              
+----------------------------------
+ 'base' 'hidden' 'rebel' 'strike'
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, ARRAY['spaceship','rebel']);
+             delete             
+--------------------------------
+ 'base':7 'hidden':6 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, ARRAY['spaceships','rebel']);
+                           delete                            
+-------------------------------------------------------------
+ 'base':7 'hidden':6 'spaceship':2,33A,34B,35C,36 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, ARRAY['spaceshi','rebel']);
+                           delete                            
+-------------------------------------------------------------
+ 'base':7 'hidden':6 'spaceship':2,33A,34B,35C,36 'strike':3
+(1 row)
+
+SELECT delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, ARRAY['spaceship','leya','rebel']);
+             delete             
+--------------------------------
+ 'base':7 'hidden':6 'strike':3
+(1 row)
+
+SELECT delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel']);
+          delete          
+--------------------------
+ 'base' 'hidden' 'strike'
+(1 row)
+
+SELECT delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel', NULL]);
+ERROR:  lexeme array may not contain nulls
+SELECT unnest('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
+                   unnest                    
+---------------------------------------------
+ (base,{7},{D})
+ (hidden,{6},{D})
+ (rebel,{1},{D})
+ (spaceship,"{2,33,34,35,36}","{D,A,B,C,D}")
+ (strike,{3},{D})
+(5 rows)
+
+SELECT unnest('base hidden rebel spaceship strike'::tsvector);
+    unnest     
+---------------
+ (base,,)
+ (hidden,,)
+ (rebel,,)
+ (spaceship,,)
+ (strike,,)
+(5 rows)
+
+SELECT * FROM unnest('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
+  lexeme   |    positions    |   weights   
+-----------+-----------------+-------------
+ base      | {7}             | {D}
+ hidden    | {6}             | {D}
+ rebel     | {1}             | {D}
+ spaceship | {2,33,34,35,36} | {D,A,B,C,D}
+ strike    | {3}             | {D}
+(5 rows)
+
+SELECT * FROM unnest('base hidden rebel spaceship strike'::tsvector);
+  lexeme   | positions | weights 
+-----------+-----------+---------
+ base      |           | 
+ hidden    |           | 
+ rebel     |           | 
+ spaceship |           | 
+ strike    |           | 
+(5 rows)
+
+SELECT lexeme, positions[1] from unnest('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
+  lexeme   | positions 
+-----------+-----------
+ base      |         7
+ hidden    |         6
+ rebel     |         1
+ spaceship |         2
+ strike    |         3
+(5 rows)
+
+SELECT tsvector_to_array('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
+          tsvector_to_array           
+--------------------------------------
+ {base,hidden,rebel,spaceship,strike}
+(1 row)
+
+SELECT tsvector_to_array('base hidden rebel spaceship strike'::tsvector);
+          tsvector_to_array           
+--------------------------------------
+ {base,hidden,rebel,spaceship,strike}
+(1 row)
+
+SELECT array_to_tsvector(ARRAY['base','hidden','rebel','spaceship','strike']);
+              array_to_tsvector               
+----------------------------------------------
+ 'base' 'hidden' 'rebel' 'spaceship' 'strike'
+(1 row)
+
+SELECT array_to_tsvector(ARRAY['base','hidden','rebel','spaceship', NULL]);
+ERROR:  lexeme array may not contain nulls
+SELECT setweight('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd zxc:81,567,222A'::tsvector, 'c');
+                        setweight                         
+----------------------------------------------------------
+ 'a':1C,3C 'asd':1C 'w':5C,6C,12C,13C 'zxc':81C,222C,567C
+(1 row)
+
+SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c');
+                        setweight                         
+----------------------------------------------------------
+ 'a':1C,3C 'asd':1C 'w':5C,6C,12C,13C 'zxc':81C,222C,567C
+(1 row)
+
+SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c', '{a}');
+                      setweight                       
+------------------------------------------------------
+ 'a':1C,3C 'asd':1C 'w':5,6,12B,13A 'zxc':81,222A,567
+(1 row)
+
+SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c', '{a}');
+                      setweight                       
+------------------------------------------------------
+ 'a':1C,3C 'asd':1C 'w':5,6,12B,13A 'zxc':81,222A,567
+(1 row)
+
+SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c', '{a,zxc}');
+                       setweight                        
+--------------------------------------------------------
+ 'a':1C,3C 'asd':1C 'w':5,6,12B,13A 'zxc':81C,222C,567C
+(1 row)
+
+SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', '{a,zxc}');
+            setweight            
+---------------------------------
+ 'a' 'asd' 'w':5,6,12B,13A 'zxc'
+(1 row)
+
+SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', ARRAY['a', 'zxc', NULL]);
+ERROR:  lexeme array may not contain nulls
+SELECT filter('base:7A empir:17 evil:15 first:11 galact:16 hidden:6A rebel:1A spaceship:2A strike:3A victori:12 won:9'::tsvector, '{a}');
+                           filter                            
+-------------------------------------------------------------
+ 'base':7A 'hidden':6A 'rebel':1A 'spaceship':2A 'strike':3A
+(1 row)
+
+SELECT filter('base hidden rebel spaceship strike'::tsvector, '{a}');
+ filter 
+--------
+ 
+(1 row)
+
+SELECT filter('base hidden rebel spaceship strike'::tsvector, '{a,b,NULL}');
+ERROR:  weight array may not contain nulls

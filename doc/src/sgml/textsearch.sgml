@@ -1326,6 +1326,10 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
    </variablelist>
 
+   <para>
+    Full list of <type>tsvector</>-related functions available in <xref linkend="textsearch-functions-table">.
+   </para>
+
   </sect2>
 
   <sect2 id="textsearch-manipulate-tsquery">
