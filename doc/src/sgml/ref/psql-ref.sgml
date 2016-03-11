@@ -2119,8 +2119,9 @@ lo_import 152801
           column name on the left and the data on the right. This mode is
           useful if the data wouldn't fit on the screen in the
           normal <quote>horizontal</quote> mode.  In the auto setting, the
-          expanded mode is used whenever the query output is wider than the
-          screen, otherwise the regular mode is used.  The auto setting is only
+          expanded mode is used whenever the query output has more than one
+          column and is wider than the screen; otherwise, the regular mode is
+          used.  The auto setting is only
           effective in the aligned and wrapped formats.  In other formats, it
           always behaves as if the expanded mode is off.
           </para>

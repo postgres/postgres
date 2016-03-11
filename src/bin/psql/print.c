@@ -816,9 +816,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 	/*
 	 * If in expanded auto mode, we have now calculated the expected width, so
-	 * we can now escape to vertical mode if necessary.
+	 * we can now escape to vertical mode if necessary.  If the output has
+	 * only one column, the expanded format would be wider than the regular
+	 * format, so don't use it in that case.
 	 */
-	if (cont->opt->expanded == 2 && output_columns > 0 &&
+	if (cont->opt->expanded == 2 && output_columns > 0 && cont->ncolumns > 1 &&
 		(output_columns < total_header_width || output_columns < width_total))
 	{
 		print_aligned_vertical(cont, fout, is_pager);
