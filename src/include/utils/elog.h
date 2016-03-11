@@ -349,11 +349,12 @@ typedef struct ErrorData
 	const char *domain;			/* message domain */
 	const char *context_domain; /* message domain for context message */
 	int			sqlerrcode;		/* encoded ERRSTATE */
-	char	   *message;		/* primary error message */
+	char	   *message;		/* primary error message (translated) */
 	char	   *detail;			/* detail error message */
 	char	   *detail_log;		/* detail error message for server log only */
 	char	   *hint;			/* hint message */
 	char	   *context;		/* context message */
+	const char *message_id;		/* message id of .message (original English text) */
 	char	   *schema_name;	/* name of schema */
 	char	   *table_name;		/* name of table */
 	char	   *column_name;	/* name of column */
