@@ -1465,6 +1465,12 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 {
 	char	  **ptr;
 
+	/* Do not merge affix flags if one of affix flags is empty */
+	if (*Conf->AffixData[a1] == '\0')
+		return a2;
+	else if (*Conf->AffixData[a2] == '\0')
+		return a1;
+
 	while (Conf->nAffixData + 1 >= Conf->lenAffixData)
 	{
 		Conf->lenAffixData *= 2;
@@ -1473,10 +1479,20 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	}
 
 	ptr = Conf->AffixData + Conf->nAffixData;
-	*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
-				   strlen(Conf->AffixData[a2]) +
-				   1 /* space */ + 1 /* \0 */ );
-	sprintf(*ptr, "%s %s", Conf->AffixData[a1], Conf->AffixData[a2]);
+	if (Conf->flagMode == FM_NUM)
+	{
+		*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
+					   strlen(Conf->AffixData[a2]) +
+					   1 /* comma */ + 1 /* \0 */ );
+		sprintf(*ptr, "%s,%s", Conf->AffixData[a1], Conf->AffixData[a2]);
+	}
+	else
+	{
+		*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
+					   strlen(Conf->AffixData[a2]) +
+					   1 /* \0 */ );
+		sprintf(*ptr, "%s%s", Conf->AffixData[a1], Conf->AffixData[a2]);
+	}
 	ptr++;
 	*ptr = NULL;
 	Conf->nAffixData++;
