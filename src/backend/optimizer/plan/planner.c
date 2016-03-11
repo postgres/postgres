@@ -128,11 +128,13 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 double limit_tuples);
-static PathTarget *make_group_input_target(PlannerInfo *root, List *tlist);
+static PathTarget *make_group_input_target(PlannerInfo *root,
+						PathTarget *final_target);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
 static PathTarget *make_window_input_target(PlannerInfo *root,
-						 List *tlist, List *activeWindows);
+						 PathTarget *final_target,
+						 List *activeWindows);
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 						 List *tlist);
 
@@ -1664,7 +1666,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 */
 		if (activeWindows)
 			grouping_target = make_window_input_target(root,
-													   tlist,
+													   final_target,
 													   activeWindows);
 		else
 			grouping_target = final_target;
@@ -1678,7 +1680,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		have_grouping = (parse->groupClause || parse->groupingSets ||
 						 parse->hasAggs || root->hasHavingQual);
 		if (have_grouping)
-			scanjoin_target = make_group_input_target(root, tlist);
+			scanjoin_target = make_group_input_target(root, final_target);
 		else
 			scanjoin_target = grouping_target;
 
@@ -3758,10 +3760,10 @@ create_ordered_paths(PlannerInfo *root,
  *
  * If there is grouping or aggregation, the scan/join subplan cannot emit
  * the query's final targetlist; for example, it certainly can't emit any
- * aggregate function calls.  This routine generates the correct target list
+ * aggregate function calls.  This routine generates the correct target
  * for the scan/join subplan.
  *
- * The initial target list passed from the parser already contains entries
+ * The query target list passed from the parser already contains entries
  * for all ORDER BY and GROUP BY expressions, but it will not have entries
  * for variables used only in HAVING clauses; so we need to add those
  * variables to the subplan target list.  Also, we flatten all expressions
@@ -3774,56 +3776,52 @@ create_ordered_paths(PlannerInfo *root,
  * where the a+b target will be used by the Sort/Group steps, and the
  * other targets will be used for computing the final results.
  *
- * 'tlist' is the query's final target list.
+ * 'final_target' is the query's final target list (in PathTarget form)
  *
  * The result is the PathTarget to be computed by the Paths returned from
  * query_planner().
  */
 static PathTarget *
-make_group_input_target(PlannerInfo *root, List *tlist)
+make_group_input_target(PlannerInfo *root, PathTarget *final_target)
 {
 	Query	   *parse = root->parse;
-	List	   *sub_tlist;
+	PathTarget *input_target;
 	List	   *non_group_cols;
 	List	   *non_group_vars;
-	ListCell   *tl;
+	int			i;
+	ListCell   *lc;
 
 	/*
-	 * We must build a tlist containing all grouping columns, plus any other
-	 * Vars mentioned in the targetlist and HAVING qual.
+	 * We must build a target containing all grouping columns, plus any other
+	 * Vars mentioned in the query's targetlist and HAVING qual.
 	 */
-	sub_tlist = NIL;
+	input_target = create_empty_pathtarget();
 	non_group_cols = NIL;
 
-	foreach(tl, tlist)
+	i = 0;
+	foreach(lc, final_target->exprs)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Expr	   *expr = (Expr *) lfirst(lc);
+		Index		sgref = final_target->sortgrouprefs[i];
 
-		if (tle->ressortgroupref && parse->groupClause &&
-			get_sortgroupref_clause_noerr(tle->ressortgroupref,
-										  parse->groupClause) != NULL)
+		if (sgref && parse->groupClause &&
+			get_sortgroupref_clause_noerr(sgref, parse->groupClause) != NULL)
 		{
 			/*
-			 * It's a grouping column, so add it to the result tlist as-is.
+			 * It's a grouping column, so add it to the input target as-is.
 			 */
-			TargetEntry *newtle;
-
-			newtle = makeTargetEntry(tle->expr,
-									 list_length(sub_tlist) + 1,
-									 NULL,
-									 false);
-			newtle->ressortgroupref = tle->ressortgroupref;
-			sub_tlist = lappend(sub_tlist, newtle);
+			add_column_to_pathtarget(input_target, expr, sgref);
 		}
 		else
 		{
 			/*
 			 * Non-grouping column, so just remember the expression for later
-			 * call to pull_var_clause.  There's no need for pull_var_clause
-			 * to examine the TargetEntry node itself.
+			 * call to pull_var_clause.
 			 */
-			non_group_cols = lappend(non_group_cols, tle->expr);
+			non_group_cols = lappend(non_group_cols, expr);
 		}
+
+		i++;
 	}
 
 	/*
@@ -3834,7 +3832,7 @@ make_group_input_target(PlannerInfo *root, List *tlist)
 
 	/*
 	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
-	 * add them to the result tlist if not already present.  (A Var used
+	 * add them to the input target if not already present.  (A Var used
 	 * directly as a GROUP BY item will be present already.)  Note this
 	 * includes Vars used in resjunk items, so we are covering the needs of
 	 * ORDER BY and window specifications.  Vars used within Aggrefs and
@@ -3844,13 +3842,14 @@ make_group_input_target(PlannerInfo *root, List *tlist)
 									 PVC_RECURSE_AGGREGATES |
 									 PVC_RECURSE_WINDOWFUNCS |
 									 PVC_INCLUDE_PLACEHOLDERS);
-	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
+	add_new_columns_to_pathtarget(input_target, non_group_vars);
 
 	/* clean up cruft */
 	list_free(non_group_vars);
 	list_free(non_group_cols);
 
-	return create_pathtarget(root, sub_tlist);
+	/* XXX this causes some redundant cost calculation ... */
+	return set_pathtarget_cost_width(root, input_target);
 }
 
 /*
@@ -3964,13 +3963,13 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
  * make_window_input_target
  *	  Generate appropriate PathTarget for initial input to WindowAgg nodes.
  *
- * When the query has window functions, this function computes the initial
- * target list to be computed by the node just below the first WindowAgg.
+ * When the query has window functions, this function computes the desired
+ * target to be computed by the node just below the first WindowAgg.
  * This tlist must contain all values needed to evaluate the window functions,
  * compute the final target list, and perform any required final sort step.
  * If multiple WindowAggs are needed, each intermediate one adds its window
- * function results onto this tlist; only the topmost WindowAgg computes the
- * actual desired target list.
+ * function results onto this base tlist; only the topmost WindowAgg computes
+ * the actual desired target list.
  *
  * This function is much like make_group_input_target, though not quite enough
  * like it to share code.  As in that function, we flatten most expressions
@@ -3986,7 +3985,7 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
  * flatten Aggref expressions, since those are to be computed below the
  * window functions and just referenced like Vars above that.
  *
- * 'tlist' is the query's final target list.
+ * 'final_target' is the query's final target list (in PathTarget form)
  * 'activeWindows' is the list of active windows previously identified by
  *			select_active_windows.
  *
@@ -3995,14 +3994,15 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
  */
 static PathTarget *
 make_window_input_target(PlannerInfo *root,
-						 List *tlist,
+						 PathTarget *final_target,
 						 List *activeWindows)
 {
 	Query	   *parse = root->parse;
+	PathTarget *input_target;
 	Bitmapset  *sgrefs;
-	List	   *new_tlist;
 	List	   *flattenable_cols;
 	List	   *flattenable_vars;
+	int			i;
 	ListCell   *lc;
 
 	Assert(parse->hasWindowFuncs);
@@ -4040,52 +4040,49 @@ make_window_input_target(PlannerInfo *root,
 	}
 
 	/*
-	 * Construct a tlist containing all the non-flattenable tlist items, and
-	 * save aside the others for a moment.
+	 * Construct a target containing all the non-flattenable targetlist items,
+	 * and save aside the others for a moment.
 	 */
-	new_tlist = NIL;
+	input_target = create_empty_pathtarget();
 	flattenable_cols = NIL;
 
-	foreach(lc, tlist)
+	i = 0;
+	foreach(lc, final_target->exprs)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		Expr	   *expr = (Expr *) lfirst(lc);
+		Index		sgref = final_target->sortgrouprefs[i];
 
 		/*
 		 * Don't want to deconstruct window clauses or GROUP BY items.  (Note
 		 * that such items can't contain window functions, so it's okay to
 		 * compute them below the WindowAgg nodes.)
 		 */
-		if (tle->ressortgroupref != 0 &&
-			bms_is_member(tle->ressortgroupref, sgrefs))
+		if (sgref != 0 && bms_is_member(sgref, sgrefs))
 		{
-			/* Don't want to deconstruct this value, so add to new_tlist */
-			TargetEntry *newtle;
-
-			newtle = makeTargetEntry(tle->expr,
-									 list_length(new_tlist) + 1,
-									 NULL,
-									 false);
-			/* Preserve its sortgroupref marking, in case it's volatile */
-			newtle->ressortgroupref = tle->ressortgroupref;
-			new_tlist = lappend(new_tlist, newtle);
+			/*
+			 * Don't want to deconstruct this value, so add it to the input
+			 * target as-is.
+			 */
+			add_column_to_pathtarget(input_target, expr, sgref);
 		}
 		else
 		{
 			/*
 			 * Column is to be flattened, so just remember the expression for
-			 * later call to pull_var_clause.  There's no need for
-			 * pull_var_clause to examine the TargetEntry node itself.
+			 * later call to pull_var_clause.
 			 */
-			flattenable_cols = lappend(flattenable_cols, tle->expr);
+			flattenable_cols = lappend(flattenable_cols, expr);
 		}
+
+		i++;
 	}
 
 	/*
 	 * Pull out all the Vars and Aggrefs mentioned in flattenable columns, and
-	 * add them to the result tlist if not already present.  (Some might be
+	 * add them to the input target if not already present.  (Some might be
 	 * there already because they're used directly as window/group clauses.)
 	 *
-	 * Note: it's essential to use PVC_INCLUDE_AGGREGATES here, so that the
+	 * Note: it's essential to use PVC_INCLUDE_AGGREGATES here, so that any
 	 * Aggrefs are placed in the Agg node's tlist and not left to be computed
 	 * at higher levels.  On the other hand, we should recurse into
 	 * WindowFuncs to make sure their input expressions are available.
@@ -4094,13 +4091,14 @@ make_window_input_target(PlannerInfo *root,
 									   PVC_INCLUDE_AGGREGATES |
 									   PVC_RECURSE_WINDOWFUNCS |
 									   PVC_INCLUDE_PLACEHOLDERS);
-	new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
+	add_new_columns_to_pathtarget(input_target, flattenable_vars);
 
 	/* clean up cruft */
 	list_free(flattenable_vars);
 	list_free(flattenable_cols);
 
-	return create_pathtarget(root, new_tlist);
+	/* XXX this causes some redundant cost calculation ... */
+	return set_pathtarget_cost_width(root, input_target);
 }
 
 /*
