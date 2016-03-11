@@ -66,7 +66,7 @@ typedef struct
 #define STATHDRSIZE (offsetof(TSVectorStat, data))
 
 static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
-static int tsvector_bsearch(TSVector tsin, char *lexin, int lexin_len);
+static int tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len);
 
 /*
  * Order: haspos, len, word, for all positions (pos, weight)
@@ -684,9 +684,11 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 {
 	TSVector			tsin  = PG_GETARG_TSVECTOR(0);
 	WordEntry		   *arrin = ARRPTR(tsin);
-	Datum				elements[tsin->size];
+	Datum				*elements;
 	int					i;
 	ArrayType		   *array;
+
+	elements = palloc(tsin->size * sizeof(Datum));
 
 	for (i = 0; i < tsin->size; i++)
 	{
@@ -696,6 +698,8 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 	}
 
 	array = construct_array(elements, tsin->size, TEXTOID, -1, false, 'i');
+
+	pfree(elements);
 	PG_FREE_IF_COPY(tsin, 0);
 	PG_RETURN_POINTER(array);
 }
