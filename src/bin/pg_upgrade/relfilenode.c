@@ -11,12 +11,13 @@
 
 #include "pg_upgrade.h"
 
+#include <sys/stat.h>
 #include "catalog/pg_class.h"
 #include "access/transam.h"
 
 
 static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);
-static void transfer_relfile(FileNameMap *map, const char *suffix);
+static void transfer_relfile(FileNameMap *map, const char *suffix, bool vm_must_add_frozenbit);
 
 
 /*
@@ -132,6 +133,7 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 {
 	int			mapnum;
 	bool		vm_crashsafe_match = true;
+	bool		vm_must_add_frozenbit = false;
 
 	/*
 	 * Do the old and new cluster disagree on the crash-safetiness of the vm
@@ -141,13 +143,20 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_CRASHSAFE_CAT_VER)
 		vm_crashsafe_match = false;
 
+	/*
+	 * Do we need to rewrite visibilitymap?
+	 */
+	if (old_cluster.controldata.cat_ver < VISIBILITY_MAP_FROZEN_BIT_CAT_VER &&
+		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_FROZEN_BIT_CAT_VER)
+		vm_must_add_frozenbit = true;
+
 	for (mapnum = 0; mapnum < size; mapnum++)
 	{
 		if (old_tablespace == NULL ||
 			strcmp(maps[mapnum].old_tablespace, old_tablespace) == 0)
 		{
 			/* transfer primary file */
-			transfer_relfile(&maps[mapnum], "");
+			transfer_relfile(&maps[mapnum], "", vm_must_add_frozenbit);
 
 			/* fsm/vm files added in PG 8.4 */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
@@ -155,9 +164,9 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 				/*
 				 * Copy/link any fsm and vm files, if they exist
 				 */
-				transfer_relfile(&maps[mapnum], "_fsm");
+				transfer_relfile(&maps[mapnum], "_fsm", vm_must_add_frozenbit);
 				if (vm_crashsafe_match)
-					transfer_relfile(&maps[mapnum], "_vm");
+					transfer_relfile(&maps[mapnum], "_vm", vm_must_add_frozenbit);
 			}
 		}
 	}
@@ -167,17 +176,19 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 /*
  * transfer_relfile()
  *
- * Copy or link file from old cluster to new one.
+ * Copy or link file from old cluster to new one.  If vm_must_add_frozenbit
+ * is true, visibility map forks are converted and rewritten, even in link
+ * mode.
  */
 static void
-transfer_relfile(FileNameMap *map, const char *type_suffix)
+transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_frozenbit)
 {
 	const char *msg;
 	char		old_file[MAXPGPATH];
 	char		new_file[MAXPGPATH];
-	int			fd;
 	int			segno;
 	char		extent_suffix[65];
+	struct stat statbuf;
 
 	/*
 	 * Now copy/link any related segments as well. Remember, PG breaks large
@@ -210,7 +221,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix)
 		if (type_suffix[0] != '\0' || segno != 0)
 		{
 			/* Did file open fail? */
-			if ((fd = open(old_file, O_RDONLY, 0)) == -1)
+			if (stat(old_file, &statbuf) != 0)
 			{
 				/* File does not exist?  That's OK, just return */
 				if (errno == ENOENT)
@@ -220,7 +231,10 @@ transfer_relfile(FileNameMap *map, const char *type_suffix)
 							 map->nspname, map->relname, old_file, new_file,
 							 getErrorText());
 			}
-			close(fd);
+
+			/* If file is empty, just return */
+			if (statbuf.st_size == 0)
+				return;
 		}
 
 		unlink(new_file);
@@ -232,7 +246,13 @@ transfer_relfile(FileNameMap *map, const char *type_suffix)
 		{
 			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
 
-			if ((msg = copyFile(old_file, new_file, true)) != NULL)
+			/* Rewrite visibility map if needed */
+			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
+				msg = rewriteVisibilityMap(old_file, new_file, true);
+			else
+				msg = copyFile(old_file, new_file, true);
+
+			if (msg)
 				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 						 map->nspname, map->relname, old_file, new_file, msg);
 		}
@@ -240,7 +260,13 @@ transfer_relfile(FileNameMap *map, const char *type_suffix)
 		{
 			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
 
-			if ((msg = linkFile(old_file, new_file)) != NULL)
+			/* Rewrite visibility map if needed */
+			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
+				msg = rewriteVisibilityMap(old_file, new_file, true);
+			else
+				msg = linkFile(old_file, new_file);
+
+			if (msg)
 				pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 						 map->nspname, map->relname, old_file, new_file, msg);
 		}

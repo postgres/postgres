@@ -110,6 +110,10 @@ extern char *output_files[];
 #define VISIBILITY_MAP_CRASHSAFE_CAT_VER 201107031
 
 /*
+ * The format of visibility map is changed with this 9.6 commit,
+ */
+#define VISIBILITY_MAP_FROZEN_BIT_CAT_VER 201603011
+/*
  * pg_multixact format changed in 9.3 commit 0ac5ad5134f2769ccbaefec73844f85,
  * ("Improve concurrency of foreign key locking") which also updated catalog
  * version to this value.  pg_upgrade behavior depends on whether old and new
@@ -365,6 +369,8 @@ bool		pid_lock_file_exists(const char *datadir);
 
 const char *copyFile(const char *src, const char *dst, bool force);
 const char *linkFile(const char *src, const char *dst);
+const char *rewriteVisibilityMap(const char *fromfile, const char *tofile,
+								 bool force);
 
 void		check_hard_link(void);
 FILE	   *fopen_priv(const char *path, const char *mode);
