@@ -760,9 +760,8 @@ GetLWLockIdentifier(uint8 classId, uint16 eventId)
 
 	/*
 	 * It is quite possible that user has registered tranche in one of the
-	 * backends (e.g. by allocation lwlocks in dynamic shared memory) but not
-	 * all of them, so we can't assume the tranche is registered here.
-	 * extension for such cases.
+	 * backends (e.g. by allocating lwlocks in dynamic shared memory) but
+	 * not all of them, so we can't assume the tranche is registered here.
 	 */
 	if (eventId >= LWLockTranchesAllocated ||
 		LWLockTrancheArray[eventId]->name == NULL)

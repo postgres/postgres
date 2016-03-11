@@ -4655,9 +4655,6 @@ AbortSubTransaction(void)
 	 */
 	XactReadOnly = s->prevXactReadOnly;
 
-	/* Report wait end here, when there is no further possibility of wait */
-	pgstat_report_wait_end();
-
 	RESUME_INTERRUPTS();
 }
 
