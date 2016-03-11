@@ -1936,7 +1936,7 @@ BufferSync(int flags)
 	 */
 	CheckpointStats.ckpt_bufs_written += num_written;
 
-	TRACE_POSTGRESQL_BUFFER_SYNC_DONE(NBuffers, num_written, num_to_write);
+	TRACE_POSTGRESQL_BUFFER_SYNC_DONE(NBuffers, num_written, num_to_scan);
 }
 
 /*
