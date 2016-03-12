@@ -55,6 +55,14 @@ extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 extern Plan *materialize_finished_plan(Plan *subplan);
 extern bool is_projection_capable_path(Path *path);
 extern bool is_projection_capable_plan(Plan *plan);
+/* External use of these functions is deprecated: */
+extern Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
+extern Agg *make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
+		 bool combineStates, bool finalizeAggs,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 List *groupingSets, List *chain,
+		 double dNumGroups, Plan *lefttree);
+extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
 
 /*
  * prototypes for plan/initsplan.c

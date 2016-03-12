@@ -242,16 +242,10 @@ static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 					   TargetEntry *tle,
 					   Relids relids);
 static Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys);
-static Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
 static Sort *make_sort_from_groupcols(List *groupcls,
 						 AttrNumber *grpColIdx,
 						 Plan *lefttree);
 static Material *make_material(Plan *lefttree);
-static Agg *make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
-		 bool combineStates, bool finalizeAggs,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 List *groupingSets, List *chain,
-		 double dNumGroups, Plan *lefttree);
 static WindowAgg *make_windowagg(List *tlist, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
@@ -269,7 +263,6 @@ static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
 		   long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
-static Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
@@ -5500,7 +5493,7 @@ make_sort_from_pathkeys(Plan *lefttree, List *pathkeys)
  *	  'sortcls' is a list of SortGroupClauses
  *	  'lefttree' is the node which yields input tuples
  */
-static Sort *
+Sort *
 make_sort_from_sortclauses(List *sortcls, Plan *lefttree)
 {
 	List	   *sub_tlist = lefttree->targetlist;
@@ -5635,7 +5628,7 @@ materialize_finished_plan(Plan *subplan)
 	return matplan;
 }
 
-static Agg *
+Agg *
 make_agg(List *tlist, List *qual,
 		 AggStrategy aggstrategy,
 		 bool combineStates, bool finalizeAggs,
@@ -5973,7 +5966,7 @@ make_lockrows(Plan *lefttree, List *rowMarks, int epqParam)
  * make_limit
  *	  Build a Limit plan node
  */
-static Limit *
+Limit *
 make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
 {
 	Limit	   *node = makeNode(Limit);
