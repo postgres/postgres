@@ -6,6 +6,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
@@ -29,7 +31,8 @@
 
 static PyObject *PLy_spi_execute_query(char *query, long limit);
 static PyObject *PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit);
-static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status);
+static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable,
+							 uint64 rows, int status);
 static void PLy_spi_exception_set(PyObject *excclass, ErrorData *edata);
 
 
@@ -382,7 +385,7 @@ PLy_spi_execute_query(char *query, long limit)
 }
 
 static PyObject *
-PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
+PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 {
 	PLyResultObject *result;
 	volatile MemoryContext oldcontext;
@@ -394,16 +397,19 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 	if (status > 0 && tuptable == NULL)
 	{
 		Py_DECREF(result->nrows);
-		result->nrows = PyInt_FromLong(rows);
+		result->nrows = (rows > (uint64) LONG_MAX) ?
+			PyFloat_FromDouble((double) rows) :
+			PyInt_FromLong((long) rows);
 	}
 	else if (status > 0 && tuptable != NULL)
 	{
 		PLyTypeInfo args;
-		int			i;
 		MemoryContext cxt;
 
 		Py_DECREF(result->nrows);
-		result->nrows = PyInt_FromLong(rows);
+		result->nrows = (rows > (uint64) LONG_MAX) ?
+			PyFloat_FromDouble((double) rows) :
+			PyInt_FromLong((long) rows);
 
 		cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"PL/Python temp context",
@@ -419,6 +425,18 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 
 			if (rows)
 			{
+				uint64		i;
+
+				/*
+				 * PyList_New() and PyList_SetItem() use Py_ssize_t for list
+				 * size and list indices; so we cannot support a result larger
+				 * than PY_SSIZE_T_MAX.
+				 */
+				if (rows > (uint64) PY_SSIZE_T_MAX)
+					ereport(ERROR,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("query result has too many rows to fit in a Python list")));
+
 				Py_DECREF(result->rows);
 				result->rows = PyList_New(rows);
 

@@ -36,7 +36,7 @@
 #include "utils/typcache.h"
 
 
-uint32		SPI_processed = 0;
+uint64		SPI_processed = 0;
 Oid			SPI_lastoid = InvalidOid;
 SPITupleTable *SPI_tuptable = NULL;
 int			SPI_result;
@@ -56,12 +56,12 @@ static void _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan);
 
 static int _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-				  bool read_only, bool fire_triggers, long tcount);
+				  bool read_only, bool fire_triggers, uint64 tcount);
 
 static ParamListInfo _SPI_convert_params(int nargs, Oid *argtypes,
 					Datum *Values, const char *Nulls);
 
-static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount);
+static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount);
 
 static void _SPI_error_callback(void *arg);
 
@@ -1991,10 +1991,10 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
 static int
 _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-				  bool read_only, bool fire_triggers, long tcount)
+				  bool read_only, bool fire_triggers, uint64 tcount)
 {
 	int			my_res = 0;
-	uint32		my_processed = 0;
+	uint64		my_processed = 0;
 	Oid			my_lastoid = InvalidOid;
 	SPITupleTable *my_tuptable = NULL;
 	int			res = 0;
@@ -2218,8 +2218,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				if (IsA(stmt, CreateTableAsStmt))
 				{
 					Assert(strncmp(completionTag, "SELECT ", 7) == 0);
-					_SPI_current->processed = strtoul(completionTag + 7,
-													  NULL, 10);
+					_SPI_current->processed = pg_strtouint64(completionTag + 7,
+															 NULL, 10);
 
 					/*
 					 * For historical reasons, if CREATE TABLE AS was spelled
@@ -2231,8 +2231,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				else if (IsA(stmt, CopyStmt))
 				{
 					Assert(strncmp(completionTag, "COPY ", 5) == 0);
-					_SPI_current->processed = strtoul(completionTag + 5,
-													  NULL, 10);
+					_SPI_current->processed = pg_strtouint64(completionTag + 5,
+															 NULL, 10);
 				}
 			}
 
@@ -2348,7 +2348,7 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
+_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 {
 	int			operation = queryDesc->operation;
 	int			eflags;
@@ -2460,7 +2460,7 @@ static void
 _SPI_cursor_operation(Portal portal, FetchDirection direction, long count,
 					  DestReceiver *dest)
 {
-	long		nfetched;
+	uint64		nfetched;
 
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))
@@ -2563,7 +2563,7 @@ _SPI_end_call(bool procmem)
 static bool
 _SPI_checktuples(void)
 {
-	uint32		processed = _SPI_current->processed;
+	uint64		processed = _SPI_current->processed;
 	SPITupleTable *tuptable = _SPI_current->tuptable;
 	bool		failed = false;
 

@@ -226,7 +226,7 @@ static int pltcl_process_SPI_result(Tcl_Interp *interp,
 						 Tcl_Obj *loop_body,
 						 int spi_rc,
 						 SPITupleTable *tuptable,
-						 int ntuples);
+						 uint64 ntuples);
 static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
@@ -235,7 +235,7 @@ static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 
 static void pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
-					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
+					   uint64 tupno, HeapTuple tuple, TupleDesc tupdesc);
 static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
 
 
@@ -481,7 +481,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	int			tcl_rc;
 	Tcl_DString unknown_src;
 	char	   *part;
-	int			i;
+	uint64		i;
 	int			fno;
 
 	/************************************************************
@@ -2007,10 +2007,9 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 						 Tcl_Obj *loop_body,
 						 int spi_rc,
 						 SPITupleTable *tuptable,
-						 int ntuples)
+						 uint64 ntuples)
 {
 	int			my_rc = TCL_OK;
-	int			i;
 	int			loop_rc;
 	HeapTuple  *tuples;
 	TupleDesc	tupdesc;
@@ -2021,7 +2020,7 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
-			Tcl_SetObjResult(interp, Tcl_NewIntObj(ntuples));
+			Tcl_SetObjResult(interp, Tcl_NewWideIntObj(ntuples));
 			break;
 
 		case SPI_OK_UTILITY:
@@ -2060,6 +2059,8 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 				 * There is a loop body - process all tuples and evaluate the
 				 * body on each
 				 */
+				uint64		i;
+
 				for (i = 0; i < ntuples; i++)
 				{
 					pltcl_set_tuple_values(interp, arrayname, i,
@@ -2085,7 +2086,7 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 
 			if (my_rc == TCL_OK)
 			{
-				Tcl_SetObjResult(interp, Tcl_NewIntObj(ntuples));
+				Tcl_SetObjResult(interp, Tcl_NewWideIntObj(ntuples));
 			}
 			break;
 
@@ -2472,7 +2473,7 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static void
 pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
-					   int tupno, HeapTuple tuple, TupleDesc tupdesc)
+					   uint64 tupno, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
 	char	   *outputstr;
@@ -2498,7 +2499,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 	{
 		arrptr = &arrayname;
 		nameptr = &attname;
-		Tcl_SetVar2Ex(interp, arrayname, ".tupno", Tcl_NewIntObj(tupno), 0);
+		Tcl_SetVar2Ex(interp, arrayname, ".tupno", Tcl_NewWideIntObj(tupno), 0);
 	}
 
 	for (i = 0; i < tupdesc->natts; i++)

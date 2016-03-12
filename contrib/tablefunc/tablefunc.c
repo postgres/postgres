@@ -120,7 +120,7 @@ typedef struct
 typedef struct crosstab_cat_desc
 {
 	char	   *catname;		/* full category name */
-	int			attidx;			/* zero based */
+	uint64		attidx;			/* zero based */
 } crosstab_cat_desc;
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -174,8 +174,8 @@ Datum
 normal_rand(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
-	int			call_cntr;
-	int			max_calls;
+	uint64		call_cntr;
+	uint64		max_calls;
 	normal_rand_fctx *fctx;
 	float8		mean;
 	float8		stddev;
@@ -352,8 +352,8 @@ crosstab(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	Tuplestorestate *tupstore;
 	TupleDesc	tupdesc;
-	int			call_cntr;
-	int			max_calls;
+	uint64		call_cntr;
+	uint64		max_calls;
 	AttInMetadata *attinmeta;
 	SPITupleTable *spi_tuptable;
 	TupleDesc	spi_tupdesc;
@@ -364,7 +364,7 @@ crosstab(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	int			ret;
-	int			proc;
+	uint64		proc;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -389,7 +389,7 @@ crosstab(PG_FUNCTION_ARGS)
 	proc = SPI_processed;
 
 	/* If no qualifying tuples, fall out early */
-	if (ret != SPI_OK_SELECT || proc <= 0)
+	if (ret != SPI_OK_SELECT || proc == 0)
 	{
 		SPI_finish();
 		rsinfo->isDone = ExprEndResult;
@@ -708,7 +708,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	HTAB	   *crosstab_hash;
 	HASHCTL		ctl;
 	int			ret;
-	int			proc;
+	uint64		proc;
 	MemoryContext SPIcontext;
 
 	/* initialize the category hash table */
@@ -740,7 +740,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	{
 		SPITupleTable *spi_tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
-		int			i;
+		uint64		i;
 
 		/*
 		 * The provided categories SQL query must always return one column:
@@ -800,7 +800,7 @@ get_crosstab_tuplestore(char *sql,
 	char	  **values;
 	HeapTuple	tuple;
 	int			ret;
-	int			proc;
+	uint64		proc;
 
 	/* initialize our tuplestore (while still in query context!) */
 	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
@@ -823,8 +823,8 @@ get_crosstab_tuplestore(char *sql,
 		char	   *rowid;
 		char	   *lastrowid = NULL;
 		bool		firstpass = true;
-		int			i,
-					j;
+		uint64		i;
+		int			j;
 		int			result_ncols;
 
 		if (num_categories == 0)
@@ -1220,7 +1220,7 @@ build_tuplestore_recursively(char *key_fld,
 {
 	TupleDesc	tupdesc = attinmeta->tupdesc;
 	int			ret;
-	int			proc;
+	uint64		proc;
 	int			serial_column;
 	StringInfoData sql;
 	char	  **values;
@@ -1313,7 +1313,7 @@ build_tuplestore_recursively(char *key_fld,
 		HeapTuple	spi_tuple;
 		SPITupleTable *tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = tuptable->tupdesc;
-		int			i;
+		uint64		i;
 		StringInfoData branchstr;
 		StringInfoData chk_branchstr;
 		StringInfoData chk_current_key;

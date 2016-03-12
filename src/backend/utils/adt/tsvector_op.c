@@ -1682,7 +1682,6 @@ static TSVectorStat *
 ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 {
 	char	   *query = text_to_cstring(txt);
-	int			i;
 	TSVectorStat *stat;
 	bool		isnull;
 	Portal		portal;
@@ -1746,6 +1745,8 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 
 	while (SPI_processed > 0)
 	{
+		uint64		i;
+
 		for (i = 0; i < SPI_processed; i++)
 		{
 			Datum		data = SPI_getbinval(SPI_tuptable->vals[i], SPI_tuptable->tupdesc, 1, &isnull);

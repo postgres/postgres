@@ -820,7 +820,7 @@ typedef struct PLpgSQL_execstate
 
 	/* temporary state for results from evaluation of query or expr */
 	SPITupleTable *eval_tuptable;
-	uint32		eval_processed;
+	uint64		eval_processed;
 	Oid			eval_lastoid;
 	ExprContext *eval_econtext; /* for executing simple expressions */
 

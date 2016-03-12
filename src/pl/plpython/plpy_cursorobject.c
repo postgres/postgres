@@ -6,6 +6,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/xact.h"
 #include "mb/pg_wchar.h"
 #include "utils/memutils.h"
@@ -446,11 +448,23 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 		ret->status = PyInt_FromLong(SPI_OK_FETCH);
 
 		Py_DECREF(ret->nrows);
-		ret->nrows = PyInt_FromLong(SPI_processed);
+		ret->nrows = (SPI_processed > (uint64) LONG_MAX) ?
+			PyFloat_FromDouble((double) SPI_processed) :
+			PyInt_FromLong((long) SPI_processed);
 
 		if (SPI_processed != 0)
 		{
-			int			i;
+			uint64		i;
+
+			/*
+			 * PyList_New() and PyList_SetItem() use Py_ssize_t for list size
+			 * and list indices; so we cannot support a result larger than
+			 * PY_SSIZE_T_MAX.
+			 */
+			if (SPI_processed > (uint64) PY_SSIZE_T_MAX)
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("query result has too many rows to fit in a Python list")));
 
 			Py_DECREF(ret->rows);
 			ret->rows = PyList_New(SPI_processed);

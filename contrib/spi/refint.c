@@ -593,7 +593,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		else
 		{
 #ifdef REFINT_VERBOSE
-			elog(NOTICE, "%s: %d tuple(s) of %s are %s",
+			elog(NOTICE, "%s: " UINT64_FORMAT " tuple(s) of %s are %s",
 				 trigger->tgname, SPI_processed, relname,
 				 (action == 'c') ? "deleted" : "set to null");
 #endif

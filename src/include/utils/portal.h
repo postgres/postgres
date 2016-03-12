@@ -166,15 +166,14 @@ typedef struct PortalData
 	 * atStart, atEnd and portalPos indicate the current cursor position.
 	 * portalPos is zero before the first row, N after fetching N'th row of
 	 * query.  After we run off the end, portalPos = # of rows in query, and
-	 * atEnd is true.  If portalPos overflows, set posOverflow (this causes us
-	 * to stop relying on its value for navigation).  Note that atStart
-	 * implies portalPos == 0, but not the reverse (portalPos could have
-	 * overflowed).
+	 * atEnd is true.  Note that atStart implies portalPos == 0, but not the
+	 * reverse: we might have backed up only as far as the first row, not to
+	 * the start.  Also note that various code inspects atStart and atEnd, but
+	 * only the portal movement routines should touch portalPos.
 	 */
 	bool		atStart;
 	bool		atEnd;
-	bool		posOverflow;
-	long		portalPos;
+	uint64		portalPos;
 
 	/* Presentation data, primarily used by the pg_cursors system view */
 	TimestampTz creation_time;	/* time at which this portal was defined */

@@ -21,8 +21,8 @@
 typedef struct SPITupleTable
 {
 	MemoryContext tuptabcxt;	/* memory context of result table */
-	uint32		alloced;		/* # of alloced vals */
-	uint32		free;			/* # of free vals */
+	uint64		alloced;		/* # of alloced vals */
+	uint64		free;			/* # of free vals */
 	TupleDesc	tupdesc;		/* tuple descriptor */
 	HeapTuple  *vals;			/* tuples */
 	slist_node	next;			/* link for internal bookkeeping */
@@ -59,7 +59,7 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_OK_UPDATE_RETURNING 13
 #define SPI_OK_REWRITTEN		14
 
-extern PGDLLIMPORT uint32 SPI_processed;
+extern PGDLLIMPORT uint64 SPI_processed;
 extern PGDLLIMPORT Oid SPI_lastoid;
 extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
 extern PGDLLIMPORT int SPI_result;

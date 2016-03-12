@@ -21,7 +21,7 @@
 typedef struct
 {
 	/* current results */
-	uint32		processed;		/* by Executor */
+	uint64		processed;		/* by Executor */
 	Oid			lastoid;
 	SPITupleTable *tuptable;	/* tuptable currently being built */
 

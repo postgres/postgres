@@ -37,7 +37,7 @@ extern bool PortalRun(Portal portal, long count, bool isTopLevel,
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag);
 
-extern long PortalRunFetch(Portal portal,
+extern uint64 PortalRunFetch(Portal portal,
 			   FetchDirection fdirection,
 			   long count,
 			   DestReceiver *dest);

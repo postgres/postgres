@@ -260,7 +260,6 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	SPIPlanPtr	plan;
 	Portal		portal;
 	bool		isnull;
-	int			i;
 
 	if (query->size == 0)
 	{
@@ -294,6 +293,8 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 
 	while (SPI_processed > 0 && tree)
 	{
+		uint64		i;
+
 		for (i = 0; i < SPI_processed && tree; i++)
 		{
 			Datum		qdata = SPI_getbinval(SPI_tuptable->vals[i], SPI_tuptable->tupdesc, 1, &isnull);

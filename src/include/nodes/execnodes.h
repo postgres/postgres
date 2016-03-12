@@ -387,7 +387,7 @@ typedef struct EState
 
 	List	   *es_rowMarks;	/* List of ExecRowMarks */
 
-	uint32		es_processed;	/* # of tuples processed */
+	uint64		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 
 	int			es_top_eflags;	/* eflags passed to ExecutorStart */

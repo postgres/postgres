@@ -79,7 +79,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			bool use_parallel_mode,
 			CmdType operation,
 			bool sendTuples,
-			long numberTuples,
+			uint64 numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
@@ -278,7 +278,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
  */
 void
 ExecutorRun(QueryDesc *queryDesc,
-			ScanDirection direction, long count)
+			ScanDirection direction, uint64 count)
 {
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
@@ -288,7 +288,7 @@ ExecutorRun(QueryDesc *queryDesc,
 
 void
 standard_ExecutorRun(QueryDesc *queryDesc,
-					 ScanDirection direction, long count)
+					 ScanDirection direction, uint64 count)
 {
 	EState	   *estate;
 	CmdType		operation;
@@ -1521,12 +1521,12 @@ ExecutePlan(EState *estate,
 			bool use_parallel_mode,
 			CmdType operation,
 			bool sendTuples,
-			long numberTuples,
+			uint64 numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest)
 {
 	TupleTableSlot *slot;
-	long		current_tuple_count;
+	uint64		current_tuple_count;
 
 	/*
 	 * initialize local variables
@@ -1542,7 +1542,7 @@ ExecutePlan(EState *estate,
 	 * If a tuple count was supplied, we must force the plan to run without
 	 * parallelism, because we might exit early.
 	 */
-	if (numberTuples != 0)
+	if (numberTuples)
 		use_parallel_mode = false;
 
 	/*

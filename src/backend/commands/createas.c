@@ -197,7 +197,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* save the rowcount if we're given a completionTag to fill */
 	if (completionTag)
 		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-				 "SELECT %u", queryDesc->estate->es_processed);
+				 "SELECT " UINT64_FORMAT, queryDesc->estate->es_processed);
 
 	/* and clean up */
 	ExecutorFinish(queryDesc);

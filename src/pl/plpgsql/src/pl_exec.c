@@ -1601,8 +1601,8 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
 				exec_assign_value(estate, var,
-								  UInt32GetDatum(estate->eval_processed),
-								  false, INT4OID, -1);
+								  UInt64GetDatum(estate->eval_processed),
+								  false, INT8OID, -1);
 				break;
 
 			case PLPGSQL_GETDIAG_RESULT_OID:
@@ -2856,7 +2856,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 					   PLpgSQL_stmt_return_query *stmt)
 {
 	Portal		portal;
-	uint32		processed = 0;
+	uint64		processed = 0;
 	TupleConversionMap *tupmap;
 
 	if (!estate->retisset)
@@ -2887,7 +2887,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 
 	while (true)
 	{
-		int			i;
+		uint64			i;
 
 		SPI_cursor_fetch(portal, true, 50);
 		if (SPI_processed == 0)
@@ -3579,7 +3579,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	if (stmt->into)
 	{
 		SPITupleTable *tuptab = SPI_tuptable;
-		uint32		n = SPI_processed;
+		uint64		n = SPI_processed;
 		PLpgSQL_rec *rec = NULL;
 		PLpgSQL_row *row = NULL;
 
@@ -3769,7 +3769,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	if (stmt->into)
 	{
 		SPITupleTable *tuptab = SPI_tuptable;
-		uint32		n = SPI_processed;
+		uint64		n = SPI_processed;
 		PLpgSQL_rec *rec = NULL;
 		PLpgSQL_row *row = NULL;
 
@@ -4043,7 +4043,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 	SPITupleTable *tuptab;
 	Portal		portal;
 	char	   *curname;
-	uint32		n;
+	uint64		n;
 
 	/* ----------
 	 * Get the portal of the cursor by name
@@ -5151,7 +5151,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	SPITupleTable *tuptab;
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
-	int			n;
+	uint64		n;
 
 	/*
 	 * Determine if we assign to a record or a row
@@ -5182,7 +5182,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	 * If the query didn't return any rows, set the target to NULL and fall
 	 * through with found = false.
 	 */
-	if (n <= 0)
+	if (n == 0)
 	{
 		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
 		exec_eval_cleanup(estate);
@@ -5195,7 +5195,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	 */
 	while (n > 0)
 	{
-		int			i;
+		uint64		i;
 
 		for (i = 0; i < n; i++)
 		{

@@ -62,7 +62,7 @@ typedef struct FuncCallContext
 	 * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
 	 * incremented for you every time SRF_RETURN_NEXT() is called.
 	 */
-	uint32		call_cntr;
+	uint64		call_cntr;
 
 	/*
 	 * OPTIONAL maximum number of calls
@@ -71,7 +71,7 @@ typedef struct FuncCallContext
 	 * not set, you must provide alternative means to know when the function
 	 * is done.
 	 */
-	uint32		max_calls;
+	uint64		max_calls;
 
 	/*
 	 * OPTIONAL pointer to result slot
