@@ -98,7 +98,7 @@ const printTextFormat pg_asciiformat_old =
 };
 
 /* Default unicode linestyle format */
-const printTextFormat pg_utf8format;
+printTextFormat pg_utf8format;
 
 typedef struct unicodeStyleRowFormat
 {
@@ -3412,7 +3412,7 @@ get_line_style(const printTableOpt *opt)
 void
 refresh_utf8format(const printTableOpt *opt)
 {
-	printTextFormat *popt = (printTextFormat *) &pg_utf8format;
+	printTextFormat *popt = &pg_utf8format;
 
 	const unicodeStyleBorderFormat *border;
 	const unicodeStyleRowFormat *header;
