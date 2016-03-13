@@ -29,7 +29,7 @@ static bool auto_explain_log_triggers = false;
 static bool auto_explain_log_timing = true;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static bool auto_explain_log_nested_statements = false;
-static double auto_explain_sample_ratio = 1;
+static double auto_explain_sample_rate = 1;
 
 static const struct config_enum_entry format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -163,10 +163,10 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	DefineCustomRealVariable("auto_explain.sample_ratio",
+	DefineCustomRealVariable("auto_explain.sample_rate",
 							 "Fraction of queries to process.",
 							NULL,
-							&auto_explain_sample_ratio,
+							&auto_explain_sample_rate,
 							1.0,
 							0.0,
 							1.0,
@@ -209,11 +209,11 @@ static void
 explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	/*
-	 * For ratio sampling, randomly choose top-level statement. Either
+	 * For rate sampling, randomly choose top-level statement. Either
 	 * all nested statements will be explained or none will.
 	 */
 	if (auto_explain_log_min_duration >= 0 && nesting_level == 0)
-		current_query_sampled = (random() < auto_explain_sample_ratio *
+		current_query_sampled = (random() < auto_explain_sample_rate *
 				MAX_RANDOM_VALUE);
 
 	if (auto_explain_enabled() && current_query_sampled)
