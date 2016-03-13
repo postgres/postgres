@@ -1177,7 +1177,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 					ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("Ispell dictionary supports only default, "
-						 		"long and num flag value")));
+								"long and num flag value")));
 			}
 		}
 

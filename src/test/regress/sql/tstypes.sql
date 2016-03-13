@@ -157,4 +157,3 @@ SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', ARRAY['a', 'zxc', NUL
 SELECT filter('base:7A empir:17 evil:15 first:11 galact:16 hidden:6A rebel:1A spaceship:2A strike:3A victori:12 won:9'::tsvector, '{a}');
 SELECT filter('base hidden rebel spaceship strike'::tsvector, '{a}');
 SELECT filter('base hidden rebel spaceship strike'::tsvector, '{a,b,NULL}');
-

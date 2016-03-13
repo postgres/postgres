@@ -17,7 +17,6 @@ contrib/tsearch2/sql/tsearch2.sql		whitespace=space-before-tab,blank-at-eof,-bla
 contrib/pgcrypto/sql/pgp-armor.sql		whitespace=-blank-at-eol
 doc/bug.template				whitespace=space-before-tab,-blank-at-eof,blank-at-eol
 src/backend/catalog/sql_features.txt		whitespace=space-before-tab,blank-at-eof,-blank-at-eol
-src/backend/tsearch/hunspell_sample.affix	whitespace=-blank-at-eof
 
 # Test output files that contain extra whitespace
 *.out					-whitespace
