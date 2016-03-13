@@ -374,7 +374,7 @@ LogStreamerMain(logstreamer_param *param)
 {
 	StreamCtl	stream;
 
-	MemSet(&stream, sizeof(stream), 0);
+	MemSet(&stream, 0, sizeof(stream));
 	stream.startpos = param->startptr;
 	stream.timeline = param->timeline;
 	stream.sysidentifier = param->sysidentifier;
