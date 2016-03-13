@@ -226,9 +226,8 @@ su - postgres
      <para>
       To build the <application>PL/Tcl</application>
       procedural language, you of course need a <productname>Tcl</>
-      installation.  If you are using a pre-8.4 release of
-      <productname>Tcl</>, ensure that it was built without multithreading
-      support.
+      installation.  The minimum required version is
+      <productname>Tcl</productname> 8.4.
      </para>
     </listitem>
 
