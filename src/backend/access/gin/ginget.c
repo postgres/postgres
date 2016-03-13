@@ -302,6 +302,8 @@ restartScanEntry:
 	entry->buffer = InvalidBuffer;
 	ItemPointerSetMin(&entry->curItem);
 	entry->offset = InvalidOffsetNumber;
+	if (entry->list)
+		pfree(entry->list);
 	entry->list = NULL;
 	entry->nlist = 0;
 	entry->matchBitmap = NULL;

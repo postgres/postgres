@@ -246,6 +246,8 @@ ginFreeScanKeys(GinScanOpaque so)
 
 		if (entry->buffer != InvalidBuffer)
 			ReleaseBuffer(entry->buffer);
+		if (entry->list)
+			pfree(entry->list);
 		if (entry->matchIterator)
 			tbm_end_iterate(entry->matchIterator);
 		if (entry->matchBitmap)
@@ -285,7 +287,7 @@ ginNewScanKey(IndexScanDesc scan)
 	so->totalentries = 0;
 	so->allocentries = 32;
 	so->entries = (GinScanEntry *)
-		palloc0(so->allocentries * sizeof(GinScanEntry));
+		palloc(so->allocentries * sizeof(GinScanEntry));
 
 	so->isVoidRes = false;
 
