@@ -402,7 +402,7 @@ pg_ltostr(char *str, int32 value)
 uint64
 pg_strtouint64(const char *str, char **endptr, int base)
 {
-#ifdef WIN32
+#ifdef _MSC_VER					/* MSVC only */
 	return _strtoui64(str, endptr, base);
 #elif defined(HAVE_STRTOULL) && SIZEOF_LONG < 8
 	return strtoull(str, endptr, base);
