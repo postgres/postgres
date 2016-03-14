@@ -3104,9 +3104,9 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 processed,
 	hv_store_string(result, "status",
 					cstr2sv(SPI_result_code_string(status)));
 	hv_store_string(result, "processed",
-					(processed > (uint64) INT_MAX) ?
-					newSVnv((double) processed) :
-					newSViv((int) processed));
+					(processed > (uint64) UV_MAX) ?
+					newSVnv((NV) processed) :
+					newSVuv((UV) processed));
 
 	if (status > 0 && tuptable)
 	{
@@ -3114,12 +3114,8 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 processed,
 		SV		   *row;
 		uint64		i;
 
-		/*
-		 * av_extend's 2nd argument is declared I32.  It's possible we could
-		 * nonetheless push more than INT_MAX elements into a Perl array, but
-		 * let's just fail instead of trying.
-		 */
-		if (processed > (uint64) INT_MAX)
+		/* Prevent overflow in call to av_extend() */
+		if (processed > (uint64) AV_SIZE_MAX)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 			errmsg("query result has too many rows to fit in a Perl array")));
