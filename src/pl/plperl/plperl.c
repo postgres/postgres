@@ -3907,10 +3907,8 @@ hv_store_string(HV *hv, const char *key, SV *val)
 	hkey = pg_server_to_any(key, strlen(key), PG_UTF8);
 
 	/*
-	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
-	 * recognizes a negative klen parameter as meaning a UTF-8 encoded key. It
-	 * does not appear that hashes track UTF-8-ness of keys at all in Perl
-	 * 5.6.
+	 * hv_store() recognizes a negative klen parameter as meaning a UTF-8
+	 * encoded key.
 	 */
 	hlen = -(int) strlen(hkey);
 	ret = hv_store(hv, hkey, hlen, val, 0);
