@@ -3419,7 +3419,7 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "LABEL") == 0)
 	{
 		static const char *const list_SECURITY_LABEL_preposition[] =
-		{"ON", "FOR"};
+			{"ON", "FOR", NULL};
 
 		COMPLETE_WITH_LIST(list_SECURITY_LABEL_preposition);
 	}
