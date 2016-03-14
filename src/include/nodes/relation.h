@@ -263,6 +263,9 @@ typedef struct PlannerInfo
 	/* Use fetch_upper_rel() to get any particular upper rel */
 	List	   *upper_rels[UPPERREL_FINAL + 1]; /* upper-rel RelOptInfos */
 
+	/* Result tlists chosen by grouping_planner for upper-stage processing */
+	struct PathTarget *upper_targets[UPPERREL_FINAL + 1];
+
 	/*
 	 * grouping_planner passes back its final processed targetlist here, for
 	 * use in relabeling the topmost tlist of the finished Plan.

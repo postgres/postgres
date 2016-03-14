@@ -62,6 +62,9 @@ int			force_parallel_mode = FORCE_PARALLEL_OFF;
 /* Hook for plugins to get control in planner() */
 planner_hook_type planner_hook = NULL;
 
+/* Hook for plugins to get control before grouping_planner plans upper rels */
+create_upper_paths_hook_type create_upper_paths_hook = NULL;
+
 
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL			0
@@ -459,6 +462,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->append_rel_list = NIL;
 	root->rowMarks = NIL;
 	memset(root->upper_rels, 0, sizeof(root->upper_rels));
+	memset(root->upper_targets, 0, sizeof(root->upper_targets));
 	root->processed_tlist = NIL;
 	root->grouping_map = NULL;
 	root->minmax_aggs = NIL;
@@ -1735,6 +1739,28 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 					current_rel->cheapest_total_path = path;
 			}
 		}
+
+		/*
+		 * Save the various upper-rel PathTargets we just computed into
+		 * root->upper_targets[].  The core code doesn't use this, but it
+		 * provides a convenient place for extensions to get at the info.  For
+		 * consistency, we save all the intermediate targets, even though some
+		 * of the corresponding upperrels might not be needed for this query.
+		 */
+		root->upper_targets[UPPERREL_FINAL] = final_target;
+		root->upper_targets[UPPERREL_WINDOW] = sort_input_target;
+		root->upper_targets[UPPERREL_GROUP_AGG] = grouping_target;
+
+		/*
+		 * Let extensions, particularly CustomScan providers, consider
+		 * injecting extension Paths into the query's upperrels, where they
+		 * will compete with the Paths we create below.  We pass the final
+		 * scan/join rel because that's not so easily findable from the
+		 * PlannerInfo struct; anything else the hook wants to know should be
+		 * obtainable via "root".
+		 */
+		if (create_upper_paths_hook)
+			(*create_upper_paths_hook) (root, current_rel);
 
 		/*
 		 * If we have grouping and/or aggregation, consider ways to implement
