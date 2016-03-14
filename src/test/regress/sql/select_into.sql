@@ -66,7 +66,15 @@ SELECT make_table();
 
 SELECT * FROM created_table;
 
+-- Try EXPLAIN ANALYZE SELECT INTO, but hide the output since it won't
+-- be stable.
+DO $$
+BEGIN
+	EXECUTE 'EXPLAIN ANALYZE SELECT * INTO TABLE easi FROM int8_tbl';
+END$$;
+
 DROP TABLE created_table;
+DROP TABLE easi;
 
 --
 -- Disallowed uses of SELECT ... INTO.  All should fail
