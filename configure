@@ -3100,6 +3100,17 @@ _ACEOF
 
 
 
+# It's worth validating port; you can get very confusing errors otherwise
+if test x"$default_port" = x""; then
+  as_fn_error $? "invalid --with-pgport specification: empty string" "$LINENO" 5
+elif test ! x`echo "$default_port" | sed -e 's/[0-9]*//'` = x""; then
+  as_fn_error $? "invalid --with-pgport specification: must be a number" "$LINENO" 5
+elif test ! x`echo "$default_port" | sed -e 's/^0.//'` = x"$default_port"; then
+  as_fn_error $? "invalid --with-pgport specification: must not have leading 0" "$LINENO" 5
+elif test "$default_port" -lt "1" -o "$default_port" -gt "65535"; then
+  as_fn_error $? "invalid --with-pgport specification: must be between 1 and 65535" "$LINENO" 5
+fi
+
 #
 # '-rpath'-like feature can be disabled
 #

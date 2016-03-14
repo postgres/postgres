@@ -165,6 +165,17 @@ AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}",
                    [Define to the default TCP port number as a string constant.])
 AC_SUBST(default_port)
 
+# It's worth validating port; you can get very confusing errors otherwise
+if test x"$default_port" = x""; then
+  AC_MSG_ERROR([invalid --with-pgport specification: empty string])
+elif test ! x`echo "$default_port" | sed -e 's/[[0-9]]*//'` = x""; then
+  AC_MSG_ERROR([invalid --with-pgport specification: must be a number])
+elif test ! x`echo "$default_port" | sed -e 's/^0.//'` = x"$default_port"; then
+  AC_MSG_ERROR([invalid --with-pgport specification: must not have leading 0])
+elif test "$default_port" -lt "1" -o "$default_port" -gt "65535"; then
+  AC_MSG_ERROR([invalid --with-pgport specification: must be between 1 and 65535])
+fi
+
 #
 # '-rpath'-like feature can be disabled
 #
