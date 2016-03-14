@@ -51,7 +51,8 @@ RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *methods)
 											  100, &ctl, HASH_ELEM);
 	}
 
-	Assert(strlen(methods->extnodename) <= EXTNODENAME_MAX_LEN);
+	if (strlen(methods->extnodename) >= EXTNODENAME_MAX_LEN)
+		elog(ERROR, "extensible node name is too long");
 
 	entry = (ExtensibleNodeEntry *) hash_search(extensible_node_methods,
 												methods->extnodename,
