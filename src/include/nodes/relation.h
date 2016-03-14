@@ -62,34 +62,6 @@ typedef struct AggClauseCosts
 } AggClauseCosts;
 
 /*
- * This struct contains what we need to know during planning about the
- * targetlist (output columns) that a Path will compute.  Each RelOptInfo
- * includes a default PathTarget, which its individual Paths may merely point
- * to.  However, in some cases a Path may compute outputs different from other
- * Paths, and in that case we make a custom PathTarget struct for it.  For
- * example, an indexscan might return index expressions that would otherwise
- * need to be explicitly calculated.
- *
- * exprs contains bare expressions; they do not have TargetEntry nodes on top,
- * though those will appear in finished Plans.
- *
- * sortgrouprefs[] is an array of the same length as exprs, containing the
- * corresponding sort/group refnos, or zeroes for expressions not referenced
- * by sort/group clauses.  If sortgrouprefs is NULL (which it always is in
- * RelOptInfo.reltarget structs; only upper-level Paths contain this info), we
- * have not identified sort/group columns in this tlist.  This allows us to
- * deal with sort/group refnos when needed with less expense than including
- * TargetEntry nodes in the exprs list.
- */
-typedef struct PathTarget
-{
-	List	   *exprs;			/* list of expressions to be computed */
-	Index	   *sortgrouprefs;	/* corresponding sort/group refnos, or 0 */
-	QualCost	cost;			/* cost of evaluating the expressions */
-	int			width;			/* estimated avg width of result tuples */
-} PathTarget;
-
-/*
  * This enum identifies the different types of "upper" (post-scan/join)
  * relations that we might deal with during planning.
  */
@@ -514,7 +486,7 @@ typedef struct RelOptInfo
 	bool		consider_parallel;		/* consider parallel paths? */
 
 	/* default result targetlist for Paths scanning this relation */
-	PathTarget	reltarget;		/* list of Vars/Exprs, cost, width */
+	struct PathTarget *reltarget;		/* list of Vars/Exprs, cost, width */
 
 	/* materialization information */
 	List	   *pathlist;		/* Path structures */
@@ -766,6 +738,39 @@ typedef struct PathKey
 
 
 /*
+ * PathTarget
+ *
+ * This struct contains what we need to know during planning about the
+ * targetlist (output columns) that a Path will compute.  Each RelOptInfo
+ * includes a default PathTarget, which its individual Paths may simply
+ * reference.  However, in some cases a Path may compute outputs different
+ * from other Paths, and in that case we make a custom PathTarget for it.
+ * For example, an indexscan might return index expressions that would
+ * otherwise need to be explicitly calculated.  (Note also that "upper"
+ * relations generally don't have useful default PathTargets.)
+ *
+ * exprs contains bare expressions; they do not have TargetEntry nodes on top,
+ * though those will appear in finished Plans.
+ *
+ * sortgrouprefs[] is an array of the same length as exprs, containing the
+ * corresponding sort/group refnos, or zeroes for expressions not referenced
+ * by sort/group clauses.  If sortgrouprefs is NULL (which it generally is in
+ * RelOptInfo.reltarget targets; only upper-level Paths contain this info),
+ * we have not identified sort/group columns in this tlist.  This allows us to
+ * deal with sort/group refnos when needed with less expense than including
+ * TargetEntry nodes in the exprs list.
+ */
+typedef struct PathTarget
+{
+	NodeTag		type;
+	List	   *exprs;			/* list of expressions to be computed */
+	Index	   *sortgrouprefs;	/* corresponding sort/group refnos, or 0 */
+	QualCost	cost;			/* cost of evaluating the expressions */
+	int			width;			/* estimated avg width of result tuples */
+} PathTarget;
+
+
+/*
  * ParamPathInfo
  *
  * All parameterized paths for a given relation with given required outer rels
@@ -802,7 +807,7 @@ typedef struct ParamPathInfo
  * "parent" identifies the relation this Path scans, and "pathtarget"
  * describes the precise set of output columns the Path would compute.
  * In simple cases all Paths for a given rel share the same targetlist,
- * which we represent by having path->pathtarget point to parent->reltarget.
+ * which we represent by having path->pathtarget equal to parent->reltarget.
  *
  * "param_info", if not NULL, links to a ParamPathInfo that identifies outer
  * relation(s) that provide parameter values to each scan of this path.

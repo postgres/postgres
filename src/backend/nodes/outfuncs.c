@@ -1598,22 +1598,8 @@ _outPathInfo(StringInfo str, const Path *node)
 	WRITE_ENUM_FIELD(pathtype, NodeTag);
 	appendStringInfoString(str, " :parent_relids ");
 	_outBitmapset(str, node->parent->relids);
-	if (node->pathtarget != &(node->parent->reltarget))
-	{
-		WRITE_NODE_FIELD(pathtarget->exprs);
-		if (node->pathtarget->sortgrouprefs)
-		{
-			int			i;
-
-			appendStringInfoString(str, " :pathtarget->sortgrouprefs");
-			for (i = 0; i < list_length(node->pathtarget->exprs); i++)
-				appendStringInfo(str, " %u",
-								 node->pathtarget->sortgrouprefs[i]);
-		}
-		WRITE_FLOAT_FIELD(pathtarget->cost.startup, "%.2f");
-		WRITE_FLOAT_FIELD(pathtarget->cost.per_tuple, "%.2f");
-		WRITE_INT_FIELD(pathtarget->width);
-	}
+	if (node->pathtarget != node->parent->reltarget)
+		WRITE_NODE_FIELD(pathtarget);
 	appendStringInfoString(str, " :required_outer ");
 	if (node->param_info)
 		_outBitmapset(str, node->param_info->ppi_req_outer);
@@ -2094,11 +2080,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_BOOL_FIELD(consider_startup);
 	WRITE_BOOL_FIELD(consider_param_startup);
 	WRITE_BOOL_FIELD(consider_parallel);
-	WRITE_NODE_FIELD(reltarget.exprs);
-	/* reltarget.sortgrouprefs is never interesting, at present anyway */
-	WRITE_FLOAT_FIELD(reltarget.cost.startup, "%.2f");
-	WRITE_FLOAT_FIELD(reltarget.cost.per_tuple, "%.2f");
-	WRITE_INT_FIELD(reltarget.width);
+	WRITE_NODE_FIELD(reltarget);
 	WRITE_NODE_FIELD(pathlist);
 	WRITE_NODE_FIELD(ppilist);
 	WRITE_NODE_FIELD(partial_pathlist);
@@ -2199,6 +2181,25 @@ _outPathKey(StringInfo str, const PathKey *node)
 	WRITE_OID_FIELD(pk_opfamily);
 	WRITE_INT_FIELD(pk_strategy);
 	WRITE_BOOL_FIELD(pk_nulls_first);
+}
+
+static void
+_outPathTarget(StringInfo str, const PathTarget *node)
+{
+	WRITE_NODE_TYPE("PATHTARGET");
+
+	WRITE_NODE_FIELD(exprs);
+	if (node->sortgrouprefs)
+	{
+		int			i;
+
+		appendStringInfoString(str, " :sortgrouprefs");
+		for (i = 0; i < list_length(node->exprs); i++)
+			appendStringInfo(str, " %u", node->sortgrouprefs[i]);
+	}
+	WRITE_FLOAT_FIELD(cost.startup, "%.2f");
+	WRITE_FLOAT_FIELD(cost.per_tuple, "%.2f");
+	WRITE_INT_FIELD(width);
 }
 
 static void
@@ -3611,6 +3612,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_PathKey:
 				_outPathKey(str, obj);
+				break;
+			case T_PathTarget:
+				_outPathTarget(str, obj);
 				break;
 			case T_ParamPathInfo:
 				_outParamPathInfo(str, obj);

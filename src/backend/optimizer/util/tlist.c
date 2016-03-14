@@ -546,7 +546,7 @@ grouping_is_hashable(List *groupClause)
 PathTarget *
 make_pathtarget_from_tlist(List *tlist)
 {
-	PathTarget *target = (PathTarget *) palloc0(sizeof(PathTarget));
+	PathTarget *target = makeNode(PathTarget);
 	int			i;
 	ListCell   *lc;
 
@@ -606,7 +606,7 @@ make_tlist_from_pathtarget(PathTarget *target)
 PathTarget *
 copy_pathtarget(PathTarget *src)
 {
-	PathTarget *dst = (PathTarget *) palloc(sizeof(PathTarget));
+	PathTarget *dst = makeNode(PathTarget);
 
 	/* Copy scalar fields */
 	memcpy(dst, src, sizeof(PathTarget));
@@ -631,7 +631,7 @@ PathTarget *
 create_empty_pathtarget(void)
 {
 	/* This is easy, but we don't want callers to hard-wire this ... */
-	return (PathTarget *) palloc0(sizeof(PathTarget));
+	return makeNode(PathTarget);
 }
 
 /*

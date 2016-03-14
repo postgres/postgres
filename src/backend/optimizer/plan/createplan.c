@@ -3279,7 +3279,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 		 * Note: we must look at rel's targetlist, not the attr_needed data,
 		 * because attr_needed isn't computed for inheritance child rels.
 		 */
-		pull_varattnos((Node *) rel->reltarget.exprs, scan_relid, &attrs_used);
+		pull_varattnos((Node *) rel->reltarget->exprs, scan_relid, &attrs_used);
 
 		/* Add all the attributes used by restriction clauses. */
 		foreach(lc, rel->baserestrictinfo)

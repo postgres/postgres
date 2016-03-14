@@ -4218,7 +4218,7 @@ set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  * that have to be calculated at this relation.  This is the amount of data
  * we'd need to pass upwards in case of a sort, hash, etc.
  *
- * This function also sets reltarget.cost, so it's a bit misnamed now.
+ * This function also sets reltarget->cost, so it's a bit misnamed now.
  *
  * NB: this works best on plain relations because it prefers to look at
  * real Vars.  For subqueries, set_subquery_size_estimates will already have
@@ -4239,10 +4239,10 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *lc;
 
 	/* Vars are assumed to have cost zero, but other exprs do not */
-	rel->reltarget.cost.startup = 0;
-	rel->reltarget.cost.per_tuple = 0;
+	rel->reltarget->cost.startup = 0;
+	rel->reltarget->cost.per_tuple = 0;
 
-	foreach(lc, rel->reltarget.exprs)
+	foreach(lc, rel->reltarget->exprs)
 	{
 		Node	   *node = (Node *) lfirst(lc);
 
@@ -4309,7 +4309,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		{
 			/*
 			 * We will need to evaluate the PHV's contained expression while
-			 * scanning this rel, so be sure to include it in reltarget.cost.
+			 * scanning this rel, so be sure to include it in reltarget->cost.
 			 */
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
 			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv, false);
@@ -4317,8 +4317,8 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 
 			tuple_width += phinfo->ph_width;
 			cost_qual_eval_node(&cost, (Node *) phv->phexpr, root);
-			rel->reltarget.cost.startup += cost.startup;
-			rel->reltarget.cost.per_tuple += cost.per_tuple;
+			rel->reltarget->cost.startup += cost.startup;
+			rel->reltarget->cost.per_tuple += cost.per_tuple;
 		}
 		else
 		{
@@ -4335,8 +4335,8 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 			tuple_width += item_width;
 			/* Not entirely clear if we need to account for cost, but do so */
 			cost_qual_eval_node(&cost, node, root);
-			rel->reltarget.cost.startup += cost.startup;
-			rel->reltarget.cost.per_tuple += cost.per_tuple;
+			rel->reltarget->cost.startup += cost.startup;
+			rel->reltarget->cost.per_tuple += cost.per_tuple;
 		}
 	}
 
@@ -4373,7 +4373,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	Assert(tuple_width >= 0);
-	rel->reltarget.width = tuple_width;
+	rel->reltarget->width = tuple_width;
 }
 
 /*
