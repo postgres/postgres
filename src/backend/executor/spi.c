@@ -1800,7 +1800,7 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 		/* Double the size of the pointer array */
 		tuptable->free = tuptable->alloced;
 		tuptable->alloced += tuptable->free;
-		tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
+		tuptable->vals = (HeapTuple *) repalloc_huge(tuptable->vals,
 									  tuptable->alloced * sizeof(HeapTuple));
 	}
 
