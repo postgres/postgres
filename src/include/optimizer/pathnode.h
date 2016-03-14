@@ -87,6 +87,7 @@ extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 						  Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
+						PathTarget *target,
 						double rows, Cost startup_cost, Cost total_cost,
 						List *pathkeys,
 						Relids required_outer,

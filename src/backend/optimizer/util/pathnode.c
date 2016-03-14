@@ -1819,10 +1819,13 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
  * This function is never called from core Postgres; rather, it's expected
  * to be called by the GetForeignPaths or GetForeignJoinPaths function of
  * a foreign data wrapper.  We make the FDW supply all fields of the path,
- * since we do not have any way to calculate them in core.
+ * since we do not have any way to calculate them in core.  However, there
+ * is a sane default for the pathtarget (rel->reltarget), so we let a NULL
+ * for "target" select that.
  */
 ForeignPath *
 create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
+						PathTarget *target,
 						double rows, Cost startup_cost, Cost total_cost,
 						List *pathkeys,
 						Relids required_outer,
@@ -1833,7 +1836,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 
 	pathnode->path.pathtype = T_ForeignScan;
 	pathnode->path.parent = rel;
-	pathnode->path.pathtarget = rel->reltarget;
+	pathnode->path.pathtarget = target ? target : rel->reltarget;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
 	pathnode->path.parallel_aware = false;

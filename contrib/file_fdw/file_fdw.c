@@ -524,6 +524,7 @@ fileGetForeignPaths(PlannerInfo *root,
 	 */
 	add_path(baserel, (Path *)
 			 create_foreignscan_path(root, baserel,
+									 NULL,		/* default pathtarget */
 									 baserel->rows,
 									 startup_cost,
 									 total_cost,

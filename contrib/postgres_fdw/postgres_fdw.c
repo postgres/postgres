@@ -793,6 +793,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 	 * to estimate cost and size of this path.
 	 */
 	path = create_foreignscan_path(root, baserel,
+								   NULL,		/* default pathtarget */
 								   fpinfo->rows,
 								   fpinfo->startup_cost,
 								   fpinfo->total_cost,
@@ -964,6 +965,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 
 		/* Make the path */
 		path = create_foreignscan_path(root, baserel,
+									   NULL,	/* default pathtarget */
 									   rows,
 									   startup_cost,
 									   total_cost,
@@ -3565,6 +3567,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 
 		add_path(rel, (Path *)
 				 create_foreignscan_path(root, rel,
+										 NULL,
 										 rows,
 										 startup_cost,
 										 total_cost,
@@ -3702,6 +3705,7 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	 */
 	joinpath = create_foreignscan_path(root,
 									   joinrel,
+									   NULL,	/* default pathtarget */
 									   rows,
 									   startup_cost,
 									   total_cost,
