@@ -213,7 +213,8 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * 5. If inner and outer relations are foreign tables (or joins) belonging
-	 * to the same server, give the FDW a chance to push down joins.
+	 * to the same server and using the same user mapping, give the FDW a
+	 * chance to push down joins.
 	 */
 	if (joinrel->fdwroutine &&
 		joinrel->fdwroutine->GetForeignJoinPaths)

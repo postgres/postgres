@@ -3349,10 +3349,8 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
  *
  * 1) Join type is INNER or OUTER (one of LEFT/RIGHT/FULL)
  * 2) Both outer and inner portions are safe to push-down
- * 3) All foreign tables in the join belong to the same foreign server and use
- *	  the same user mapping.
- * 4) All join conditions are safe to push down
- * 5) No relation has local filter (this can be relaxed for INNER JOIN, if we
+ * 3) All join conditions are safe to push down
+ * 4) No relation has local filter (this can be relaxed for INNER JOIN, if we
  *	  can move unpushable clauses upwards in the join tree).
  */
 static bool

@@ -448,9 +448,11 @@ typedef struct PlannerInfo
  *		in just as for a baserel, except we don't bother with lateral_vars.
  *
  * If the relation is either a foreign table or a join of foreign tables that
- * all belong to the same foreign server, these fields will be set:
+ * all belong to the same foreign server and use the same user mapping, these
+ * fields will be set:
  *
  *		serverid - OID of foreign server, if foreign table (else InvalidOid)
+ *		umid - OID of user mapping, if foreign table (else InvalidOid)
  *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
  *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
