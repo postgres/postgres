@@ -10,6 +10,8 @@
 #ifndef COMMON_CONTROLDATA_UTILS_H
 #define COMMON_CONTROLDATA_UTILS_H
 
+#include "catalog/pg_control.h"
+
 extern ControlFileData *get_controlfile(char *DataDir, const char *progname);
 
 #endif   /* COMMON_CONTROLDATA_UTILS_H */
