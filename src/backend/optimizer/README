@@ -916,7 +916,10 @@ remote aggregation into the UPPERREL_GROUP_AGG upperrel, if it notices
 that the query represents an aggregation that could be done entirely on
 the foreign server.  That Path will then compete with Paths representing
 local aggregation on a regular scan of the foreign table, once the core
-planner reaches the point of considering aggregation.
+planner reaches the point of considering aggregation.  (In practice,
+it will usually be more convenient for FDWs to detect such cases in a
+GetForeignUpperPaths callback; but that still represents injecting a
+Path before the core code has touched the corresponding upperrel.)
 
 
 Parallel Query and Partial Paths

@@ -1813,15 +1813,15 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * create_foreignscan_path
- *	  Creates a path corresponding to a scan of a foreign table or
- *	  a foreign join, returning the pathnode.
+ *	  Creates a path corresponding to a scan of a foreign table, foreign join,
+ *	  or foreign upper-relation processing, returning the pathnode.
  *
  * This function is never called from core Postgres; rather, it's expected
- * to be called by the GetForeignPaths or GetForeignJoinPaths function of
- * a foreign data wrapper.  We make the FDW supply all fields of the path,
- * since we do not have any way to calculate them in core.  However, there
- * is a sane default for the pathtarget (rel->reltarget), so we let a NULL
- * for "target" select that.
+ * to be called by the GetForeignPaths, GetForeignJoinPaths, or
+ * GetForeignUpperPaths function of a foreign data wrapper.  We make the FDW
+ * supply all fields of the path, since we do not have any way to calculate
+ * them in core.  However, there is a usually-sane default for the pathtarget
+ * (rel->reltarget), so we let a NULL for "target" select that.
  */
 ForeignPath *
 create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,

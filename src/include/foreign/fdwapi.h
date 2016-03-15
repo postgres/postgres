@@ -59,6 +59,9 @@ typedef void (*GetForeignJoinPaths_function) (PlannerInfo *root,
 														  JoinType jointype,
 												   JoinPathExtraData *extra);
 
+typedef void (*GetForeignUpperPaths_function) (PlannerInfo *root,
+											   RelOptInfo *scan_join_rel);
+
 typedef void (*AddForeignUpdateTargets_function) (Query *parsetree,
 												   RangeTblEntry *target_rte,
 												   Relation target_relation);
@@ -165,6 +168,9 @@ typedef struct FdwRoutine
 
 	/* Functions for remote-join planning */
 	GetForeignJoinPaths_function GetForeignJoinPaths;
+
+	/* Functions for remote upper-relation (post scan/join) planning */
+	GetForeignUpperPaths_function GetForeignUpperPaths;
 
 	/* Functions for updating foreign tables */
 	AddForeignUpdateTargets_function AddForeignUpdateTargets;

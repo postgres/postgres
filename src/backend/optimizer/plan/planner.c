@@ -1752,13 +1752,17 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		root->upper_targets[UPPERREL_GROUP_AGG] = grouping_target;
 
 		/*
-		 * Let extensions, particularly CustomScan providers, consider
-		 * injecting extension Paths into the query's upperrels, where they
-		 * will compete with the Paths we create below.  We pass the final
-		 * scan/join rel because that's not so easily findable from the
-		 * PlannerInfo struct; anything else the hook wants to know should be
-		 * obtainable via "root".
+		 * Let extensions, particularly FDWs and CustomScan providers,
+		 * consider injecting extension Paths into the query's upperrels,
+		 * where they will compete with the Paths we create below.  We pass
+		 * the final scan/join rel because that's not so easily findable from
+		 * the PlannerInfo struct; anything else the hooks want to know should
+		 * be obtainable via "root".
 		 */
+		if (current_rel->fdwroutine &&
+			current_rel->fdwroutine->GetForeignUpperPaths)
+			current_rel->fdwroutine->GetForeignUpperPaths(root, current_rel);
+
 		if (create_upper_paths_hook)
 			(*create_upper_paths_hook) (root, current_rel);
 

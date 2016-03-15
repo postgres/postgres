@@ -176,7 +176,8 @@ GetForeignPlan (PlannerInfo *root,
      access path.  This is called at the end of query planning.
      The parameters are as for <function>GetForeignRelSize</>, plus
      the selected <structname>ForeignPath</> (previously produced by
-     <function>GetForeignPaths</> or <function>GetForeignJoinPaths</>),
+     <function>GetForeignPaths</>, <function>GetForeignJoinPaths</>,
+     or <function>GetForeignUpperPaths</>),
      the target list to be emitted by the plan node,
      the restriction clauses to be enforced by the plan node,
      and the outer subplan of the <structname>ForeignScan</>,
@@ -337,6 +338,38 @@ GetForeignJoinPaths (PlannerInfo *root,
      fill <structfield>fdw_scan_tlist</> with an appropriate list
      of <structfield>TargetEntry</> nodes, representing the set of columns
      it will supply at run time in the tuples it returns.
+    </para>
+
+    <para>
+     See <xref linkend="fdw-planning"> for additional information.
+    </para>
+   </sect2>
+
+   <sect2 id="fdw-callbacks-upper-planning">
+    <title>FDW Routines For Planning Post-Scan/Join Processing</title>
+
+    <para>
+     If an FDW supports performing remote post-scan/join processing, such as
+     remote aggregation, it should provide this callback function:
+    </para>
+
+    <para>
+<programlisting>
+void
+GetForeignUpperPaths (PlannerInfo *root,
+                      RelOptInfo *scan_join_rel);
+</programlisting>
+     Create possible access paths for <firstterm>upper relation</> processing,
+     which is the planner's term for all post-scan/join query processing, such
+     as aggregation, window functions, sorting, and table updates.  This
+     optional function is called during query planning.  Currently, it is
+     called only if all base relation(s) involved in the query belong to the
+     same FDW.  This function should generate <structname>ForeignPath</>
+     path(s) for the steps that the FDW knows how to perform remotely, and
+     call <function>add_path</> to add these paths to the appropriate upper
+     relation.  As with <function>GetForeignJoinPaths</>, it is not necessary
+     that this function succeed in creating any paths, since paths involving
+     local processing are always possible.
     </para>
 
     <para>
@@ -1160,7 +1193,8 @@ GetForeignServerByName(const char *name, bool missing_ok);
     <para>
      The FDW callback functions <function>GetForeignRelSize</>,
      <function>GetForeignPaths</>, <function>GetForeignPlan</>,
-     <function>PlanForeignModify</>, and <function>GetForeignJoinPaths</>
+     <function>PlanForeignModify</>, <function>GetForeignJoinPaths</>,
+     and <function>GetForeignUpperPaths</>
      must fit into the workings of the <productname>PostgreSQL</> planner.
      Here are some notes about what they must do.
     </para>
@@ -1322,7 +1356,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      An FDW might additionally support direct execution of some plan actions
      that are above the level of scans and joins, such as grouping or
      aggregation.  To offer such options, the FDW should generate paths
-     (probably ForeignPaths or CustomPaths) and insert them into the
+     and insert them into the
      appropriate <firstterm>upper relation</>.  For example, a path
      representing remote aggregation should be inserted into the relation
      obtained from <literal>fetch_upper_rel(root, UPPERREL_GROUP_AGG,
@@ -1332,6 +1366,9 @@ GetForeignServerByName(const char *name, bool missing_ok);
      else there will be an error at plan time).  If the remote-aggregation
      path wins, which it usually would, it will be converted into a plan in
      the usual way, by calling <function>GetForeignPlan</>.
+     Usually the most convenient place to generate such paths is in
+     the <function>GetForeignUpperPaths</> callback function, although
+     it can be done earlier if that seems appropriate.
     </para>
 
     <para>
