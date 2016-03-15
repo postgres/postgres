@@ -535,7 +535,7 @@ getExponentialRand(TState *thread, int64 min, int64 max, double parameter)
 	uniform = 1.0 - pg_erand48(thread->random_state);
 
 	/*
-	 * inner expresion in (cut, 1] (if parameter > 0), rand in [0, 1)
+	 * inner expression in (cut, 1] (if parameter > 0), rand in [0, 1)
 	 */
 	Assert((1.0 - cut) != 0.0);
 	rand = -log(cut + (1.0 - cut) * uniform) / parameter;

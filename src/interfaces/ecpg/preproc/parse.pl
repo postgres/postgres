@@ -632,7 +632,7 @@ sub preload_addons
 	my $filename = $path . "/ecpg.addons";
 	open(my $fh, '<', $filename) or die;
 
-  # there may be multple lines starting ECPG: and then multiple lines of code.
+  # there may be multiple lines starting ECPG: and then multiple lines of code.
   # the code need to be add to all prior ECPG records.
 	my (@needsRules, @code, $record);
 

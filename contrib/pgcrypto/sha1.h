@@ -63,7 +63,7 @@ extern void sha1_pad(struct sha1_ctxt *);
 extern void sha1_loop(struct sha1_ctxt *, const uint8 *, size_t);
 extern void sha1_result(struct sha1_ctxt *, uint8 *);
 
-/* compatibilty with other SHA1 source codes */
+/* compatibility with other SHA1 source codes */
 typedef struct sha1_ctxt SHA1_CTX;
 
 #define SHA1Init(x)		sha1_init((x))

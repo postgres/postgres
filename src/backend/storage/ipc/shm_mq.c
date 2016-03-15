@@ -1104,7 +1104,7 @@ shm_mq_inc_bytes_read(volatile shm_mq *mq, Size n)
 	sender = mq->mq_sender;
 	SpinLockRelease(&mq->mq_mutex);
 
-	/* We shoudn't have any bytes to read without a sender. */
+	/* We shouldn't have any bytes to read without a sender. */
 	Assert(sender != NULL);
 	SetLatch(&sender->procLatch);
 }

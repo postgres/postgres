@@ -113,7 +113,7 @@ int			effective_io_concurrency = 0;
 
 /*
  * GUC variables about triggering kernel writeback for buffers written; OS
- * dependant defaults are set via the GUC mechanism.
+ * dependent defaults are set via the GUC mechanism.
  */
 int			checkpoint_flush_after = 0;
 int			bgwriter_flush_after = 0;

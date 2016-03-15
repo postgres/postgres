@@ -34,7 +34,7 @@
  * substantially, but there should be few systems where we must make do
  * with such poor tools.
  *
- * As ever, Windows requires its own implemetation.
+ * As ever, Windows requires its own implementation.
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

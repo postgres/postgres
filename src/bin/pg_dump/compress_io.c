@@ -296,7 +296,7 @@ DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs, bool flush)
 			if (zp->avail_out < cs->zlibOutSize)
 			{
 				/*
-				 * Any write function shoud do its own error checking but to
+				 * Any write function should do its own error checking but to
 				 * make sure we do a check here as well...
 				 */
 				size_t		len = cs->zlibOutSize - zp->avail_out;

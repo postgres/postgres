@@ -838,7 +838,7 @@ pg_GSS_recvauth(Port *port)
 
 	/*
 	 * Loop through GSSAPI message exchange. This exchange can consist of
-	 * multiple messags sent in both directions. First message is always from
+	 * multiple messages sent in both directions. First message is always from
 	 * the client. All messages from client to server are password packets
 	 * (type 'p').
 	 */
@@ -1078,7 +1078,7 @@ pg_SSPI_recvauth(Port *port)
 
 	/*
 	 * Loop through SSPI message exchange. This exchange can consist of
-	 * multiple messags sent in both directions. First message is always from
+	 * multiple messages sent in both directions. First message is always from
 	 * the client. All messages from client to server are password packets
 	 * (type 'p').
 	 */

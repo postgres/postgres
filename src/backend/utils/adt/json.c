@@ -508,7 +508,7 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 	 */
 	lex->lex_level++;
 
-	/* we know this will succeeed, just clearing the token */
+	/* we know this will succeed, just clearing the token */
 	lex_expect(JSON_PARSE_OBJECT_START, lex, JSON_TOKEN_OBJECT_START);
 
 	tok = lex_peek(lex);

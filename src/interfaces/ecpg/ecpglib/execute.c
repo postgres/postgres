@@ -1,7 +1,7 @@
 /* src/interfaces/ecpg/ecpglib/execute.c */
 
 /*
- * The aim is to get a simpler inteface to the database routines.
+ * The aim is to get a simpler interface to the database routines.
  * All the tidieous messing around with tuples is supposed to be hidden
  * by this function.
  */

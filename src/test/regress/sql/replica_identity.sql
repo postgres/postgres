@@ -44,7 +44,7 @@ ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_iden
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 
 ----
--- Make sure index cases succeeed
+-- Make sure index cases succeed
 ----
 
 -- succeed, primary key

@@ -71,7 +71,7 @@ typedef struct ProcArrayStruct
 	 * Known assigned XIDs handling
 	 */
 	int			maxKnownAssignedXids;	/* allocated size of array */
-	int			numKnownAssignedXids;	/* currrent # of valid entries */
+	int			numKnownAssignedXids;	/* current # of valid entries */
 	int			tailKnownAssignedXids;	/* index of oldest valid element */
 	int			headKnownAssignedXids;	/* index of newest element, + 1 */
 	slock_t		known_assigned_xids_lck;		/* protects head/tail pointers */

@@ -446,7 +446,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
 				/*
-				 * If we created a varchar structure atomatically, counter is
+				 * If we created a varchar structure automatically, counter is
 				 * greater than 0.
 				 */
 				if (counter)

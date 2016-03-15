@@ -299,7 +299,7 @@ SELECT a.attrelid::regclass, a.attname, a.attinhcount, e.expected
 DROP TABLE inht1, inhs1 CASCADE;
 
 
--- Test non-inheritable indices [UNIQUE, EXCLUDE] contraints
+-- Test non-inheritable indices [UNIQUE, EXCLUDE] constraints
 CREATE TABLE test_constraints (id int, val1 varchar, val2 int, UNIQUE(val1, val2));
 CREATE TABLE test_constraints_inh () INHERITS (test_constraints);
 \d+ test_constraints
@@ -321,7 +321,7 @@ ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
 DROP TABLE test_ex_constraints_inh;
 DROP TABLE test_ex_constraints;
 
--- Test non-inheritable foreign key contraints
+-- Test non-inheritable foreign key constraints
 CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
 CREATE TABLE test_foreign_constraints(id1 int REFERENCES test_primary_constraints(id));
 CREATE TABLE test_foreign_constraints_inh () INHERITS (test_foreign_constraints);

@@ -67,7 +67,7 @@ rank_up(WindowObject winobj)
 			up = true;
 	}
 
-	/* We can advance the mark, but only *after* acccess to prior row */
+	/* We can advance the mark, but only *after* access to prior row */
 	WinSetMarkPosition(winobj, curpos);
 
 	return up;

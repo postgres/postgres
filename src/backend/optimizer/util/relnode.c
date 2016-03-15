@@ -501,7 +501,7 @@ build_join_rel(PlannerInfo *root,
 	 * level.
 	 *
 	 * Note that if there are more than two rels in this relation, they could
-	 * be divided between inner_rel and outer_rel in any arbitary way.  We
+	 * be divided between inner_rel and outer_rel in any arbitrary way.  We
 	 * assume this doesn't matter, because we should hit all the same baserels
 	 * and joinclauses while building up to this joinrel no matter which we
 	 * take; therefore, we should make the same decision here however we get

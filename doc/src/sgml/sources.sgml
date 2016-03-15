@@ -860,7 +860,7 @@ BETTER: unrecognized node type: 42
      Code in <productname>PostgreSQL</> should only rely on language
      features available in the C89 standard. That means a conforming
      C89 compiler has to be able to compile postgres, at least aside
-     from a few platform dependant pieces. Features from later
+     from a few platform dependent pieces. Features from later
      revision of the C standard or compiler specific features can be
      used, if a fallback is provided.
     </para>

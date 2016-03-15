@@ -381,7 +381,7 @@ check_required_directory(char **dirpath, char **configpath,
  * adjust_data_dir
  *
  * If a configuration-only directory was specified, find the real data dir
- * by quering the running server.  This has limited checking because we
+ * by querying the running server.  This has limited checking because we
  * can't check for a running server because we can't find postmaster.pid.
  */
 void
