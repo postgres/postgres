@@ -725,6 +725,7 @@ retry:
 	{
 		TransactionId xwait;
 		ItemPointerData ctid_wait;
+		XLTW_Oper		reason_wait;
 		Datum		existing_values[INDEX_MAX_KEYS];
 		bool		existing_isnull[INDEX_MAX_KEYS];
 		char	   *error_new;
@@ -783,13 +784,14 @@ retry:
 			  TransactionIdPrecedes(GetCurrentTransactionId(), xwait))))
 		{
 			ctid_wait = tup->t_data->t_ctid;
+			reason_wait = indexInfo->ii_ExclusionOps ?
+				XLTW_RecheckExclusionConstr : XLTW_InsertIndex;
 			index_endscan(index_scan);
 			if (DirtySnapshot.speculativeToken)
 				SpeculativeInsertionWait(DirtySnapshot.xmin,
 										 DirtySnapshot.speculativeToken);
 			else
-				XactLockTableWait(xwait, heap, &ctid_wait,
-								  XLTW_RecheckExclusionConstr);
+				XactLockTableWait(xwait, heap, &ctid_wait, reason_wait);
 			goto retry;
 		}
 
