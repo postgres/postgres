@@ -663,7 +663,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <listitem>
          <para>
           <literal>Lock</>: The backend is waiting for a heavyweight lock.
-          Heayweight locks, also known as lock manager locks or simply locks,
+          Heavyweight locks, also known as lock manager locks or simply locks,
           primarily protect SQL-visible objects such as tables.  However,
           they are also used to ensure mutual exclusion for certain internal
           operations such as relation extension.  <literal>wait_event</> will
@@ -971,7 +971,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry morerows="15"><literal>LWLockTranche</></entry>
          <entry><literal>clog</></entry>
-         <entry>Waiting for I/O on a clog (transcation status) buffer.</entry>
+         <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
         </row>
         <row>
          <entry><literal>commit_timestamp</></entry>
