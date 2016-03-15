@@ -3803,18 +3803,17 @@ make_tuple_from_result_row(PGresult *res,
 			valstr = PQgetvalue(res, row, j);
 
 		/* convert value to internal representation */
+		errpos.cur_attno = i;
 		if (i > 0)
 		{
 			/* ordinary column */
 			Assert(i <= tupdesc->natts);
 			nulls[i - 1] = (valstr == NULL);
 			/* Apply the input function even to nulls, to support domains */
-			errpos.cur_attno = i;
 			values[i - 1] = InputFunctionCall(&attinmeta->attinfuncs[i - 1],
 											  valstr,
 											  attinmeta->attioparams[i - 1],
 											  attinmeta->atttypmods[i - 1]);
-			errpos.cur_attno = 0;
 		}
 		else if (i == SelfItemPointerAttributeNumber)
 		{
@@ -3827,6 +3826,7 @@ make_tuple_from_result_row(PGresult *res,
 				ctid = (ItemPointer) DatumGetPointer(datum);
 			}
 		}
+		errpos.cur_attno = 0;
 
 		j++;
 	}
