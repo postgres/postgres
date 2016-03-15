@@ -978,6 +978,8 @@ extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 extern void pgstat_progress_start_command(ProgressCommandType cmdtype,
 							  Oid relid);
 extern void pgstat_progress_update_param(int index, int64 val);
+extern void pgstat_progress_update_multi_param(int nparam, const int *index,
+								   const int64 *val);
 extern void pgstat_progress_end_command(void);
 
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);

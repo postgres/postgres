@@ -2903,6 +2903,35 @@ pgstat_progress_update_param(int index, int64 val)
 }
 
 /*-----------
+ * pgstat_progress_update_params() -
+ *
+ * Automatically update multiple members in st_progress_param[] of own backend
+ * entry.
+ *-----------
+ */
+void
+pgstat_progress_update_multi_param(int nparam, const int *index,
+								   const int64 *val)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+	int		i;
+
+	if (!beentry || !pgstat_track_activities || nparam == 0)
+		return;
+
+	pgstat_increment_changecount_before(beentry);
+
+	for (i = 0; i < nparam; ++i)
+	{
+		Assert(index[i] >= 0 && index[i] < PGSTAT_NUM_PROGRESS_PARAM);
+
+		beentry->st_progress_param[index[i]] = val[i];
+	}
+
+	pgstat_increment_changecount_after(beentry);
+}
+
+/*-----------
  * pgstat_progress_end_command() -
  *
  * Reset st_progress_command (and st_progress_command_target) in own backend

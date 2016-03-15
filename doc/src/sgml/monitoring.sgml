@@ -507,6 +507,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       yet included in <structname>pg_stat_user_functions</>).</entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_progress_vacuum</><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
+      <entry>One row for each backend (including autovacuum worker processes) running
+      <command>VACUUM</>, showing current progress.
+      See <xref linkend='vacuum-progress-reporting'>.</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -2488,6 +2494,207 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    For more information on locking and managing concurrency with
    <productname>PostgreSQL</productname>, refer to <xref linkend="mvcc">.
   </para>
+ </sect1>
+
+ <sect1 id="progress-reporting">
+  <title>Progress Reporting</title>
+
+  <para>
+   <productname>PostgreSQL</> has the ability to report the progress of
+   certain commands during command execution.  Currently, the only command
+   which supports progress reporting is <command>VACUUM</>.  This may be
+   expanded in the future.
+  </para>
+
+ <sect2 id="vacuum-progress-reporting">
+  <title>VACUUM Progress Reporting</title>
+
+  <para>
+   Whenever <command>VACUUM</> is running, the
+   <structname>pg_stat_progress_vacuum</structname> view will contain
+   one row for each backend (including autovacuum worker processes) that is
+   currently vacuuming.  The tables below describe the information
+   that will be reported and provide information about how to interpret it.
+   Progress reporting is not currently supported for <command>VACUUM FULL</>
+   and backends running <command>VACUUM FULL</> will not be listed in this
+   view.
+  </para>
+
+  <table id="pg-stat-progress-vacuum" xreflabel="pg_stat_progress_vacuum">
+   <title><structname>pg_stat_progress_vacuum</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of backend.</entry>
+    </row>
+    <row>
+     <entry><structfield>datid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of the database to which this backend is connected.</entry>
+    </row>
+    <row>
+     <entry><structfield>datname</></entry>
+     <entry><type>name</></entry>
+     <entry>Name of the database to which this backend is connected.</entry>
+    </row>
+    <row>
+     <entry><structfield>relid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of the table being vacuumed.</entry>
+    </row>
+    <row>
+     <entry><structfield>phase</></entry>
+     <entry><type>text</></entry>
+     <entry>
+       Current processing phase of vacuum.  See <xref linkend='vacuum-phases'>.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>heap_blks_total</></entry>
+     <entry><type>bigint</></entry>
+     <entry>
+       Total number of heap blocks in the table.  This number is reported
+       as of the beginning of the scan; blocks added later will not be (and
+       need not be) visited by this <command>VACUUM</>.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>heap_blks_scanned</></entry>
+     <entry><type>bigint</></entry>
+     <entry>
+       Number of heap blocks scanned.  Because the
+       <link linkend="storage-vm">visibility map</> is used to optimize scans,
+       some blocks will be skipped without inspection; skipped blocks are
+       included this total, so that this number will eventually become
+       equal to <structfield>heap_blks_total</> when the vacuum is complete.
+       This counter only advances when the phase is <literal>scanning heap</>.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>heap_blks_vacuumed</></entry>
+     <entry><type>bigint</></entry>
+     <entry>
+       Number of heap blocks vacuumed.  Unless the table has no indexes, this
+       counter only advances when the phase is <literal>vacuuming heap</>.
+       Blocks that contain no dead tuples are skipped, so the counter may
+       sometimes skip forward in large increments.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>index_vacuum_count</></entry>
+     <entry><type>bigint</></entry>
+     <entry>
+       Number of completed index vacuums cycles.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>max_dead_tuples</></entry>
+     <entry><type>bigint</></entry>
+     <entry>
+      Number of dead tuples that we can store before needing to perform
+      an index vacuum cycle, based on
+      <xref linkend="guc-maintenance-work-mem">.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>num_dead_tuples</></entry>
+     <entry><type>bigint</></entry>
+     <entry>
+       Number of dead tuples collected since the last index vacuum cycle.
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <table id="vacuum-phases" xreflabel="VACUUM phases">
+   <title>VACUUM phases</title>
+   <tgroup cols="2">
+    <thead>
+    <row>
+      <entry>Phase</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><literal>initializing</literal></entry>
+     <entry>
+       <command>VACUUM</> is preparing to begin scanning the heap.  This
+       phase is expected to be very brief.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>scanning heap</literal></entry>
+     <entry>
+       <command>VACUUM</> is currently scanning the heap.  It will prune and
+       defragment each page if required, and possibly perform freezing
+       activity.  The <structfield>heap_blks_scanned</> column can be used
+       to monitor the progress of the scan.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>vacuuming indexes</literal></entry>
+     <entry>
+       <command>VACUUM</> is currently vacuuming the indexes.  If a table has
+       any indexes, this will happen at least once per vacuum, after the heap
+       has been completely scanned.  It may happen multiple times per vacuum
+       if <xref linkend="guc-maintenance-work-mem"> is insufficient to
+       store the number of dead tuples found.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>vacuuming heap</literal></entry>
+     <entry>
+       <command>VACUUM</> is currently vacuuming the heap.  Vacuuming the heap
+       is distinct from scanning the heap, and occurs after each instance of
+       vacuuming indexes.  If <structfield>heap_blks_scanned</> is less than
+       <structfield>heap_blks_total</>, the system will return to scanning
+       the heap after this phase is completed; otherwise, it will begin
+       cleaning up indexes after this phase is completed.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>cleaning up indexes</literal></entry>
+     <entry>
+       <command>VACUUM</> is currently cleaning up indexes.  This occurs after
+       the heap has been completely scanned and all vacuuming of the indexes
+       and the heap has been completed.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>truncating heap</literal></entry>
+     <entry>
+       <command>VACUUM</> is currently truncating the heap so as to return
+       empty pages at the end of the relation to the operating system.  This
+       occurs after cleaning up indexes.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>performing final cleanup</literal></entry>
+     <entry>
+       <command>VACUUM</> is performing final cleanup.  During this phase,
+       <command>VACUUM</> will vacuum the free space map, update statistics
+       in <literal>pg_class</>, and report statistics to the statistics
+       collector.  When this phase is completed, <command>VACUUM</> will end.
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
  </sect1>
 
  <sect1 id="dynamic-trace">

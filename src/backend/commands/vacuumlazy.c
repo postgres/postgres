@@ -48,6 +48,7 @@
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
 #include "commands/dbcommands.h"
+#include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -272,6 +273,10 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	if (should_attempt_truncation(vacrelstats))
 		lazy_truncate_heap(onerel, vacrelstats);
 
+	/* Report that we are now doing final cleanup */
+	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+								 PROGRESS_VACUUM_PHASE_FINAL_CLEANUP);
+
 	/* Vacuum the Free Space Map */
 	FreeSpaceMapVacuum(onerel);
 
@@ -457,6 +462,12 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	bool		skipping_blocks;
 	xl_heap_freeze_tuple *frozen;
 	StringInfoData buf;
+	const int	initprog_index[] = {
+		PROGRESS_VACUUM_PHASE,
+		PROGRESS_VACUUM_TOTAL_HEAP_BLKS,
+		PROGRESS_VACUUM_MAX_DEAD_TUPLES
+	};
+	int64		initprog_val[3];
 
 	pg_rusage_init(&ru0);
 
@@ -480,6 +491,12 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	lazy_space_alloc(vacrelstats, nblocks);
 	frozen = palloc(sizeof(xl_heap_freeze_tuple) * MaxHeapTuplesPerPage);
+
+	/* Report that we're scanning the heap, advertising total # of blocks */
+	initprog_val[0] = PROGRESS_VACUUM_PHASE_SCAN_HEAP;
+	initprog_val[1] = nblocks;
+	initprog_val[2] = vacrelstats->max_dead_tuples;
+	pgstat_progress_update_multi_param(3, initprog_index, initprog_val);
 
 	/*
 	 * Except when aggressive is set, we want to skip pages that are
@@ -572,6 +589,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 #define FORCE_CHECK_PAGE() \
 		(blkno == nblocks - 1 && should_attempt_truncation(vacrelstats))
 
+		pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_SCANNED, blkno);
+
 		if (blkno == next_unskippable_block)
 		{
 			/* Time to advance next_unskippable_block */
@@ -652,6 +671,12 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MaxHeapTuplesPerPage &&
 			vacrelstats->num_dead_tuples > 0)
 		{
+			const int	hvp_index[] = {
+				PROGRESS_VACUUM_PHASE,
+				PROGRESS_VACUUM_NUM_INDEX_VACUUMS
+			};
+			int64		hvp_val[2];
+
 			/*
 			 * Before beginning index vacuuming, we release any pin we may
 			 * hold on the visibility map page.  This isn't necessary for
@@ -667,11 +692,26 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/* Log cleanup info before we touch indexes */
 			vacuum_log_cleanup_info(onerel, vacrelstats);
 
+			/* Report that we are now vacuuming indexes */
+			pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+										 PROGRESS_VACUUM_PHASE_VACUUM_INDEX);
+
 			/* Remove index entries */
 			for (i = 0; i < nindexes; i++)
 				lazy_vacuum_index(Irel[i],
 								  &indstats[i],
 								  vacrelstats);
+
+			/*
+			 * Report that we are now vacuuming the heap.  We also increase
+			 * the number of index scans here; note that by using
+			 * pgstat_progress_update_multi_param we can update both
+			 * parameters atomically.
+			 */
+			hvp_val[0] = PROGRESS_VACUUM_PHASE_VACUUM_HEAP;
+			hvp_val[1] = vacrelstats->num_index_scans + 1;
+			pgstat_progress_update_multi_param(2, hvp_index, hvp_val);
+
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
 
@@ -682,6 +722,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 */
 			vacrelstats->num_dead_tuples = 0;
 			vacrelstats->num_index_scans++;
+
+			/* Report that we are once again scanning the heap */
+			pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+										 PROGRESS_VACUUM_PHASE_SCAN_HEAP);
 		}
 
 		/*
@@ -1182,6 +1226,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			RecordPageWithFreeSpace(onerel, blkno, freespace);
 	}
 
+	/* report that everything is scanned and vacuumed */
+	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_SCANNED, blkno);
+	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);
+
 	pfree(frozen);
 
 	/* save stats for use later */
@@ -1208,18 +1256,40 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	/* XXX put a threshold on min number of tuples here? */
 	if (vacrelstats->num_dead_tuples > 0)
 	{
+		const int	hvp_index[] = {
+			PROGRESS_VACUUM_PHASE,
+			PROGRESS_VACUUM_NUM_INDEX_VACUUMS
+		};
+		int64		hvp_val[2];
+
 		/* Log cleanup info before we touch indexes */
 		vacuum_log_cleanup_info(onerel, vacrelstats);
+
+		/* Report that we are now vacuuming indexes */
+		pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+									 PROGRESS_VACUUM_PHASE_VACUUM_INDEX);
 
 		/* Remove index entries */
 		for (i = 0; i < nindexes; i++)
 			lazy_vacuum_index(Irel[i],
 							  &indstats[i],
 							  vacrelstats);
+
+		/* Report that we are now vacuuming the heap */
+		hvp_val[0] = PROGRESS_VACUUM_PHASE_VACUUM_HEAP;
+		hvp_val[1] = vacrelstats->num_index_scans + 1;
+		pgstat_progress_update_multi_param(2, hvp_index, hvp_val);
+
 		/* Remove tuples from heap */
+		pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+									 PROGRESS_VACUUM_PHASE_VACUUM_HEAP);
 		lazy_vacuum_heap(onerel, vacrelstats);
 		vacrelstats->num_index_scans++;
 	}
+
+	/* report we're now in the cleanup phase */
+	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+								 PROGRESS_VACUUM_PHASE_INDEX_CLEANUP);
 
 	/* Do post-vacuum cleanup and statistics update for each index */
 	for (i = 0; i < nindexes; i++)
@@ -1349,6 +1419,8 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	int			uncnt = 0;
 	TransactionId visibility_cutoff_xid;
 	bool		all_frozen;
+
+	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);
 
 	START_CRIT_SECTION();
 
@@ -1606,6 +1678,10 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	int			lock_retry;
 
 	pg_rusage_init(&ru0);
+
+	/* Report that we are now truncating */
+	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+								 PROGRESS_VACUUM_PHASE_TRUNCATE);
 
 	/*
 	 * Loop until no more truncating can be done.
@@ -1887,6 +1963,8 @@ lazy_record_dead_tuple(LVRelStats *vacrelstats,
 	{
 		vacrelstats->dead_tuples[vacrelstats->num_dead_tuples] = *itemptr;
 		vacrelstats->num_dead_tuples++;
+		pgstat_progress_update_param(PROGRESS_VACUUM_NUM_DEAD_TUPLES,
+									 vacrelstats->num_dead_tuples);
 	}
 }
 

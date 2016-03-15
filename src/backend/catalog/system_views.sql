@@ -796,6 +796,24 @@ CREATE VIEW pg_stat_bgwriter AS
         pg_stat_get_buf_alloc() AS buffers_alloc,
         pg_stat_get_bgwriter_stat_reset_time() AS stats_reset;
 
+CREATE VIEW pg_stat_progress_vacuum AS
+	SELECT
+		S.pid AS pid, S.datid AS datid, D.datname AS datname,
+		S.relid AS relid,
+		CASE S.param1 WHEN 0 THEN 'initializing'
+					  WHEN 1 THEN 'scanning heap'
+					  WHEN 2 THEN 'vacuuming indexes'
+					  WHEN 3 THEN 'vacuuming heap'
+					  WHEN 4 THEN 'cleaning up indexes'
+					  WHEN 5 THEN 'truncating heap'
+					  WHEN 6 THEN 'performing final cleanup'
+					  END AS phase,
+		S.param2 AS heap_blks_total, S.param3 AS heap_blks_scanned,
+		S.param4 AS heap_blks_vacuumed, S.param5 AS index_vacuum_count,
+		S.param6 AS max_dead_tuples, S.param7 AS num_dead_tuples
+    FROM pg_stat_get_progress_info('VACUUM') AS S
+		 JOIN pg_database D ON S.datid = D.oid;
+
 CREATE VIEW pg_user_mappings AS
     SELECT
         U.oid       AS umid,
