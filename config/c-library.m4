@@ -316,4 +316,34 @@ fi
 if test "$pgac_cv_type_locale_t" = 'yes (in xlocale.h)'; then
   AC_DEFINE(LOCALE_T_IN_XLOCALE, 1,
             [Define to 1 if `locale_t' requires <xlocale.h>.])
-fi])])# PGAC_HEADER_XLOCALE
+fi])# PGAC_TYPE_LOCALE_T
+
+
+# PGAC_FUNC_WCSTOMBS_L
+# --------------------
+# Try to find a declaration for wcstombs_l().  It might be in stdlib.h
+# (following the POSIX requirement for wcstombs()), or in locale.h, or in
+# xlocale.h.  If it's in the latter, define WCSTOMBS_L_IN_XLOCALE.
+#
+AC_DEFUN([PGAC_FUNC_WCSTOMBS_L],
+[AC_CACHE_CHECK([for wcstombs_l declaration], pgac_cv_func_wcstombs_l,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[#include <stdlib.h>
+#include <locale.h>],
+[#ifndef wcstombs_l
+(void) wcstombs_l;
+#endif])],
+[pgac_cv_func_wcstombs_l='yes'],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[#include <stdlib.h>
+#include <locale.h>
+#include <xlocale.h>],
+[#ifndef wcstombs_l
+(void) wcstombs_l;
+#endif])],
+[pgac_cv_func_wcstombs_l='yes (in xlocale.h)'],
+[pgac_cv_func_wcstombs_l='no'])])])
+if test "$pgac_cv_func_wcstombs_l" = 'yes (in xlocale.h)'; then
+  AC_DEFINE(WCSTOMBS_L_IN_XLOCALE, 1,
+            [Define to 1 if `wcstombs_l' requires <xlocale.h>.])
+fi])# PGAC_FUNC_WCSTOMBS_L

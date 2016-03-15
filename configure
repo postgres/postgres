@@ -12364,6 +12364,59 @@ $as_echo "#define GETTIMEOFDAY_1ARG 1" >>confdefs.h
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for wcstombs_l declaration" >&5
+$as_echo_n "checking for wcstombs_l declaration... " >&6; }
+if ${pgac_cv_func_wcstombs_l+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+#include <locale.h>
+int
+main ()
+{
+#ifndef wcstombs_l
+(void) wcstombs_l;
+#endif
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_func_wcstombs_l='yes'
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+#include <locale.h>
+#include <xlocale.h>
+int
+main ()
+{
+#ifndef wcstombs_l
+(void) wcstombs_l;
+#endif
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_func_wcstombs_l='yes (in xlocale.h)'
+else
+  pgac_cv_func_wcstombs_l='no'
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_func_wcstombs_l" >&5
+$as_echo "$pgac_cv_func_wcstombs_l" >&6; }
+if test "$pgac_cv_func_wcstombs_l" = 'yes (in xlocale.h)'; then
+
+$as_echo "#define WCSTOMBS_L_IN_XLOCALE 1" >>confdefs.h
+
+fi
 
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending

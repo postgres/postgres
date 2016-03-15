@@ -657,6 +657,9 @@
 /* Define to select Win32-style semaphores. */
 #define USE_WIN32_SEMAPHORES 1
 
+/* Define to 1 if `wcstombs_l' requires <xlocale.h>. */
+/* #undef WCSTOMBS_L_IN_XLOCALE */
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
 
