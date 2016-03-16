@@ -95,7 +95,7 @@ def parse_cldr_latin_ascii_transliterator(latinAsciiFilePath):
         # to the characters.
         #
         # Group 1: plain "src" char. Empty if group 2 is not.
-        # Group 2: unicode-espaced "src" char (e.g. "\u0110"). Empty if group 1 is not.
+        # Group 2: unicode-escaped "src" char (e.g. "\u0110"). Empty if group 1 is not.
         #
         # Group 3: plain "trg" char. Empty if group 4 is not.
         # Group 4: plain "trg" char between quotes. Empty if group 3 is not.
