@@ -2594,7 +2594,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><structfield>index_vacuum_count</></entry>
      <entry><type>bigint</></entry>
      <entry>
-       Number of completed index vacuums cycles.
+       Number of completed index vacuum cycles.
      </entry>
     </row>
     <row>
