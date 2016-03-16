@@ -206,7 +206,9 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 			 * similarity is just c / len1.
 			 * So, independly on DIVUNION the upper bound formula is the same.
 			 */
-			res = (nkeys == 0) ? false : ((((((float4) ntrue) / ((float4) nkeys))) >= trgm_limit) ? true : false);
+			res = (nkeys == 0) ? false :
+				((((((float4) ntrue) / ((float4) nkeys))) >= similarity_threshold)
+					? true : false);
 			break;
 		case ILikeStrategyNumber:
 #ifndef IGNORECASE
@@ -283,7 +285,9 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 			/*
 			 * See comment in gin_trgm_consistent() about * upper bound formula
 			 */
-			res = (nkeys == 0) ? GIN_FALSE : (((((float4) ntrue) / ((float4) nkeys)) >= trgm_limit) ? GIN_MAYBE : GIN_FALSE);
+			res = (nkeys == 0) ? GIN_FALSE :
+				(((((float4) ntrue) / ((float4) nkeys)) >= similarity_threshold)
+					? GIN_MAYBE : GIN_FALSE);
 			break;
 		case ILikeStrategyNumber:
 #ifndef IGNORECASE

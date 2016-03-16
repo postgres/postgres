@@ -99,7 +99,8 @@
        Returns the current similarity threshold used by the <literal>%</>
        operator.  This sets the minimum similarity between
        two words for them to be considered similar enough to
-       be misspellings of each other, for example.
+       be misspellings of each other, for example
+       (<emphasis>deprecated</emphasis>).
       </entry>
      </row>
      <row>
@@ -108,7 +109,7 @@
       <entry>
        Sets the current similarity threshold that is used by the <literal>%</>
        operator.  The threshold must be between 0 and 1 (default is 0.3).
-       Returns the same value passed in.
+       Returns the same value passed in (<emphasis>deprecated</emphasis>).
       </entry>
      </row>
     </tbody>
@@ -133,7 +134,7 @@
       <entry>
        Returns <literal>true</> if its arguments have a similarity that is
        greater than the current similarity threshold set by
-       <function>set_limit</>.
+       <varname>pg_trgm.similarity_threshold</>.
       </entry>
      </row>
      <row>
@@ -147,6 +148,27 @@
     </tbody>
    </tgroup>
   </table>
+ </sect2>
+
+ <sect2>
+  <title>GUC Parameters</title>
+
+  <variablelist>
+   <varlistentry id="guc-pgtrgm-similarity-threshold" xreflabel="pg_trgm.similarity_threshold">
+    <term>
+     <varname>pg_trgm.similarity_threshold</> (<type>real</type>)
+     <indexterm>
+      <primary><varname>pg_trgm.similarity_threshold</> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Sets the current similarity threshold that is used by the <literal>%</>
+      operator.  The threshold must be between 0 and 1 (default is 0.3).
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </sect2>
 
  <sect2>

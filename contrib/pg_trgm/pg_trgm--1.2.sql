@@ -3,11 +3,13 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_trgm" to load this file. \quit
 
+-- Deprecated function
 CREATE FUNCTION set_limit(float4)
 RETURNS float4
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT VOLATILE;
 
+-- Deprecated function
 CREATE FUNCTION show_limit()
 RETURNS float4
 AS 'MODULE_PATHNAME'
@@ -26,7 +28,7 @@ LANGUAGE C STRICT IMMUTABLE;
 CREATE FUNCTION similarity_op(text,text)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT STABLE;  -- stable because depends on trgm_limit
+LANGUAGE C STRICT STABLE;  -- stable because depends on pg_trgm.similarity_threshold
 
 CREATE OPERATOR % (
         LEFTARG = text,

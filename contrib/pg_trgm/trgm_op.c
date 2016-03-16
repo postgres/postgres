@@ -14,7 +14,10 @@
 
 PG_MODULE_MAGIC;
 
-float4		trgm_limit = 0.3f;
+/* GUC variables */
+double		similarity_threshold = 0.3f;
+
+void		_PG_init(void);
 
 PG_FUNCTION_INFO_V1(set_limit);
 PG_FUNCTION_INFO_V1(show_limit);
@@ -23,22 +26,52 @@ PG_FUNCTION_INFO_V1(similarity);
 PG_FUNCTION_INFO_V1(similarity_dist);
 PG_FUNCTION_INFO_V1(similarity_op);
 
+/*
+ * Module load callback
+ */
+void
+_PG_init(void)
+{
+	/* Define custom GUC variables. */
+	DefineCustomRealVariable("pg_trgm.similarity_threshold",
+							"Sets the threshold used by the %% operator.",
+							"Valid range is 0.0 .. 1.0.",
+							&similarity_threshold,
+							0.3,
+							0.0,
+							1.0,
+							PGC_USERSET,
+							0,
+							NULL,
+							NULL,
+							NULL);
+}
 
+/*
+ * Deprecated function.
+ * Use "pg_trgm.similarity_threshold" GUC variable instead of this function
+ */
 Datum
 set_limit(PG_FUNCTION_ARGS)
 {
 	float4		nlimit = PG_GETARG_FLOAT4(0);
 
 	if (nlimit < 0 || nlimit > 1.0)
-		elog(ERROR, "wrong limit, should be between 0 and 1");
-	trgm_limit = nlimit;
-	PG_RETURN_FLOAT4(trgm_limit);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("wrong limit, should be between 0 and 1")));
+	similarity_threshold = nlimit;
+	PG_RETURN_FLOAT4(similarity_threshold);
 }
 
+/*
+ * Deprecated function.
+ * Use "pg_trgm.similarity_threshold" GUC variable instead of this function
+ */
 Datum
 show_limit(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_FLOAT4(trgm_limit);
+	PG_RETURN_FLOAT4(similarity_threshold);
 }
 
 static int
@@ -720,5 +753,5 @@ similarity_op(PG_FUNCTION_ARGS)
 														 PG_GETARG_DATUM(0),
 														 PG_GETARG_DATUM(1)));
 
-	PG_RETURN_BOOL(res >= trgm_limit);
+	PG_RETURN_BOOL(res >= similarity_threshold);
 }
