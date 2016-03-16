@@ -2978,6 +2978,18 @@ ProcessInterrupts(void)
 		}
 	}
 
+	if (IdleInTransactionSessionTimeoutPending)
+	{
+		/* Has the timeout setting changed since last we looked? */
+		if (IdleInTransactionSessionTimeout > 0)
+			ereport(FATAL,
+					(errcode(ERRCODE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT),
+					 errmsg("terminating connection due to idle-in-transaction timeout")));
+		else
+			IdleInTransactionSessionTimeoutPending = false;
+
+	}
+
 	if (ParallelMessagePending)
 		HandleParallelMessages();
 }
@@ -3553,6 +3565,7 @@ PostgresMain(int argc, char *argv[],
 	StringInfoData input_message;
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_ready_for_query = true;
+	bool		disable_idle_in_transaction_timeout = false;
 
 	/* Initialize startup process environment if necessary. */
 	if (!IsUnderPostmaster)
@@ -3942,11 +3955,27 @@ PostgresMain(int argc, char *argv[],
 			{
 				set_ps_display("idle in transaction (aborted)", false);
 				pgstat_report_activity(STATE_IDLEINTRANSACTION_ABORTED, NULL);
+
+				/* Start the idle-in-transaction timer */
+				if (IdleInTransactionSessionTimeout > 0)
+				{
+					disable_idle_in_transaction_timeout = true;
+					enable_timeout_after(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,
+										 IdleInTransactionSessionTimeout);
+				}
 			}
 			else if (IsTransactionOrTransactionBlock())
 			{
 				set_ps_display("idle in transaction", false);
 				pgstat_report_activity(STATE_IDLEINTRANSACTION, NULL);
+
+				/* Start the idle-in-transaction timer */
+				if (IdleInTransactionSessionTimeout > 0)
+				{
+					disable_idle_in_transaction_timeout = true;
+					enable_timeout_after(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,
+										 IdleInTransactionSessionTimeout);
+				}
 			}
 			else
 			{
@@ -3987,7 +4016,16 @@ PostgresMain(int argc, char *argv[],
 		DoingCommandRead = false;
 
 		/*
-		 * (5) check for any other interesting events that happened while we
+		 * (5) turn off the idle-in-transaction timeout
+		 */
+		if (disable_idle_in_transaction_timeout)
+		{
+			disable_timeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT, false);
+			disable_idle_in_transaction_timeout = false;
+		}
+
+		/*
+		 * (6) check for any other interesting events that happened while we
 		 * slept.
 		 */
 		if (got_SIGHUP)
@@ -3997,7 +4035,7 @@ PostgresMain(int argc, char *argv[],
 		}
 
 		/*
-		 * (6) process the command.  But ignore it if we're skipping till
+		 * (7) process the command.  But ignore it if we're skipping till
 		 * Sync.
 		 */
 		if (ignore_till_sync && firstchar != EOF)

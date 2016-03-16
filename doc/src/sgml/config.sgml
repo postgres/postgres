@@ -6063,6 +6063,26 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-idle-in-transaction-session-timeout" xreflabel="idle_in_transaction_session_timeout">
+      <term><varname>idle_in_transaction_session_timeout</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>idle_in_transaction_session_timeout</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+       Terminate any session with an open transaction that has been idle for
+       longer than the specified duration in milliseconds. This allows any
+       locks held by that session to be released and the connection slot to be reused;
+       it also allows tuples visible only to this transaction to be vacuumed.  See
+       <xref linkend="routine-vacuuming"> for more details about this.
+       </para>
+       <para>
+       The default value of 0 disables this feature.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-vacuum-freeze-table-age" xreflabel="vacuum_freeze_table_age">
       <term><varname>vacuum_freeze_table_age</varname> (<type>integer</type>)
       <indexterm>

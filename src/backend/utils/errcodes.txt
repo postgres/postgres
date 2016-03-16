@@ -229,6 +229,7 @@ Section: Class 25 - Invalid Transaction State
 25007    E    ERRCODE_SCHEMA_AND_DATA_STATEMENT_MIXING_NOT_SUPPORTED         schema_and_data_statement_mixing_not_supported
 25P01    E    ERRCODE_NO_ACTIVE_SQL_TRANSACTION                              no_active_sql_transaction
 25P02    E    ERRCODE_IN_FAILED_SQL_TRANSACTION                              in_failed_sql_transaction
+25P03    E    ERRCODE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT                    idle_in_transaction_session_timeout
 
 Section: Class 26 - Invalid SQL Statement Name
 

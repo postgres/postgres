@@ -725,7 +725,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      <listitem>
       <para>
        Don't leave connections dangling <quote>idle in transaction</quote>
-       longer than necessary.
+       longer than necessary.  The configuration parameter
+       <xref linkend="guc-idle-in-transaction-session-timeout"> may be used to
+       automatically disconnect lingering sessions.
       </para>
      </listitem>
      <listitem>
