@@ -447,6 +447,7 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 	}
 
 	ctx->slot->data.confirmed_flush = ctx->reader->EndRecPtr;
+	ReplicationSlotMarkDirty();
 }
 
 /*
@@ -891,10 +892,15 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 	{
 		bool		updated_xmin = false;
 		bool		updated_restart = false;
+		bool		updated_confirm = false;
 
 		SpinLockAcquire(&MyReplicationSlot->mutex);
 
-		MyReplicationSlot->data.confirmed_flush = lsn;
+		if (MyReplicationSlot->data.confirmed_flush != lsn)
+		{
+			MyReplicationSlot->data.confirmed_flush = lsn;
+			updated_confirm = true;
+		}
 
 		/* if we're past the location required for bumping xmin, do so */
 		if (MyReplicationSlot->candidate_xmin_lsn != InvalidXLogRecPtr &&
@@ -933,33 +939,50 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 		SpinLockRelease(&MyReplicationSlot->mutex);
 
 		/* first write new xmin to disk, so we know what's up after a crash */
-		if (updated_xmin || updated_restart)
+		if (updated_xmin || updated_restart || updated_confirm)
 		{
 			ReplicationSlotMarkDirty();
-			ReplicationSlotSave();
-			elog(DEBUG1, "updated xmin: %u restart: %u", updated_xmin, updated_restart);
-		}
 
-		/*
-		 * Now the new xmin is safely on disk, we can let the global value
-		 * advance. We do not take ProcArrayLock or similar since we only
-		 * advance xmin here and there's not much harm done by a concurrent
-		 * computation missing that.
-		 */
-		if (updated_xmin)
-		{
-			SpinLockAcquire(&MyReplicationSlot->mutex);
-			MyReplicationSlot->effective_catalog_xmin = MyReplicationSlot->data.catalog_xmin;
-			SpinLockRelease(&MyReplicationSlot->mutex);
+			/*
+			 * first write new xmin to disk, so we know whats up
+			 * after a crash.
+			 */
+			if (updated_xmin || updated_restart)
+			{
+				ReplicationSlotSave();
+				elog(DEBUG1, "updated xmin: %u restart: %u", updated_xmin, updated_restart);
+			}
 
-			ReplicationSlotsComputeRequiredXmin(false);
-			ReplicationSlotsComputeRequiredLSN();
+			/*
+			 * Now the new xmin is safely on disk, we can let the global value
+			 * advance. We do not take ProcArrayLock or similar since we only
+			 * advance xmin here and there's not much harm done by a concurrent
+			 * computation missing that.
+			 */
+			if (updated_xmin)
+			{
+				SpinLockAcquire(&MyReplicationSlot->mutex);
+				MyReplicationSlot->effective_catalog_xmin = MyReplicationSlot->data.catalog_xmin;
+				SpinLockRelease(&MyReplicationSlot->mutex);
+
+				ReplicationSlotsComputeRequiredXmin(false);
+				ReplicationSlotsComputeRequiredLSN();
+			}
 		}
 	}
 	else
 	{
+		bool dirtied = false;
+
 		SpinLockAcquire(&MyReplicationSlot->mutex);
-		MyReplicationSlot->data.confirmed_flush = lsn;
+		if (MyReplicationSlot->data.confirmed_flush != lsn)
+		{
+			MyReplicationSlot->data.confirmed_flush = lsn;
+			dirtied = true;
+		}
 		SpinLockRelease(&MyReplicationSlot->mutex);
+
+		if (dirtied)
+			ReplicationSlotMarkDirty();
 	}
 }
