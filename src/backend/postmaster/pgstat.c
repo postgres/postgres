@@ -2903,7 +2903,7 @@ pgstat_progress_update_param(int index, int64 val)
 }
 
 /*-----------
- * pgstat_progress_update_params() -
+ * pgstat_progress_update_multi_param() -
  *
  * Automatically update multiple members in st_progress_param[] of own backend
  * entry.

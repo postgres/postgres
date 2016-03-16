@@ -1228,7 +1228,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	/* report that everything is scanned and vacuumed */
 	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_SCANNED, blkno);
-	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);
 
 	pfree(frozen);
 
@@ -1287,7 +1286,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		vacrelstats->num_index_scans++;
 	}
 
-	/* report we're now in the cleanup phase */
+	/* report all blocks vacuumed; and that we're cleaning up */
+	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);
 	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
 								 PROGRESS_VACUUM_PHASE_INDEX_CLEANUP);
 
