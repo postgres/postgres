@@ -1,20 +1,33 @@
-#!/usr/bin/python
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
 #
 # This script builds unaccent.rules on standard output when given the
-# contents of UnicodeData.txt[1] on standard input.  Optionally includes
-# ligature expansion, if --expand-ligatures is given on the command line.
+# contents of UnicodeData.txt [1] and Latin-ASCII.xml [2] given as
+# arguments. Optionally includes ligature expansion and Unicode CLDR
+# Latin-ASCII transliterator, enabled by default, this can be disabled
+# with "--no-ligatures-expansion" command line option.
 #
 # The approach is to use the Unicode decomposition data to identify
 # precomposed codepoints that are equivalent to a ligature of several
 # letters, or a base letter with any number of diacritical marks.
-# There is also a small set of special cases for codepoints that we
-# traditionally support even though Unicode doesn't consider them to
-# be ligatures or letters with marks.
 #
-# [1] http://unicode.org/Public/7.0.0/ucd/UnicodeData.txt
+# This approach handles most letters with diacritical marks and some
+# ligatures.  However, several characters (notably a majority of
+# ligatures) don't have decomposition. To handle all these cases, one can
+# use a standard Unicode transliterator available in Common Locale Data
+# Repository (CLDR): Latin-ASCII.  This transliterator associates Unicode
+# characters to ASCII-range equivalent.  Unless "--no-ligatures-expansion"
+# option is enabled, the XML file of this transliterator [2] -- given as a
+# command line argument -- will be parsed and used.
+#
+# [1] http://unicode.org/Public/8.0.0/ucd/UnicodeData.txt
+# [2] http://unicode.org/cldr/trac/export/12304/tags/release-28/common/transforms/Latin-ASCII.xml
+
 
 import re
+import argparse
 import sys
+import xml.etree.ElementTree as ET
 
 def print_record(codepoint, letter):
     print (unichr(codepoint) + "\t" + letter).encode("UTF-8")
@@ -63,15 +76,73 @@ def get_plain_letters(codepoint, table):
     assert(is_ligature(codepoint, table))
     return [get_plain_letter(table[id], table) for id in codepoint.combining_ids]
 
-def main(expand_ligatures):
+def parse_cldr_latin_ascii_transliterator(latinAsciiFilePath):
+    """Parse the XML file and return a set of tuples (src, trg), where "src"
+    is the original character and "trg" the substitute."""
+    charactersSet = set()
+
+    # RegEx to parse rules
+    rulePattern = re.compile(ur'^(?:(.)|(\\u[0-9a-fA-F]{4})) \u2192 (?:\'(.+)\'|(.+)) ;')
+
+    # construct tree from XML
+    transliterationTree = ET.parse(latinAsciiFilePath)
+    transliterationTreeRoot = transliterationTree.getroot()
+
+    for rule in transliterationTreeRoot.findall("./transforms/transform/tRule"):
+        matches = rulePattern.search(rule.text)
+
+        # The regular expression capture four groups corresponding
+        # to the characters.
+        #
+        # Group 1: plain "src" char. Empty if group 2 is not.
+        # Group 2: unicode-espaced "src" char (e.g. "\u0110"). Empty if group 1 is not.
+        #
+        # Group 3: plain "trg" char. Empty if group 4 is not.
+        # Group 4: plain "trg" char between quotes. Empty if group 3 is not.
+        if matches is not None:
+            src = matches.group(1) if matches.group(1) is not None else matches.group(2).decode('unicode-escape')
+            trg = matches.group(3) if matches.group(3) is not None else matches.group(4)
+
+            # "'" and """ are escaped
+            trg = trg.replace("\\'", "'").replace('\\"', '"')
+
+            # the parser of unaccent only accepts non-whitespace characters
+            # for "src" and "trg" (see unaccent.c)
+            if not src.isspace() and not trg.isspace():
+                charactersSet.add((ord(src), trg))
+
+    return charactersSet
+
+def special_cases():
+    """Returns the special cases which are not handled by other methods"""
+    charactersSet = set()
+
+    # Cyrillic
+    charactersSet.add((0x0401, u"\u0415")) # CYRILLIC CAPITAL LETTER IO
+    charactersSet.add((0x0451, u"\u0435")) # CYRILLIC SMALL LETTER IO
+
+    # Symbols of "Letterlike Symbols" Unicode Block (U+2100 to U+214F)
+    charactersSet.add((0x2103, u"\xb0C")) # DEGREE CELSIUS
+    charactersSet.add((0x2109, u"\xb0F")) # DEGREE FAHRENHEIT
+    charactersSet.add((0x2117, "(P)")) # SOUND RECORDING COPYRIGHT
+
+    return charactersSet
+
+def main(args):
     # http://www.unicode.org/reports/tr44/tr44-14.html#Character_Decomposition_Mappings
     decomposition_type_pattern = re.compile(" *<[^>]*> *")
 
     table = {}
     all = []
 
+    # unordered set for ensure uniqueness
+    charactersSet = set()
+
+    # read file UnicodeData.txt
+    unicodeDataFile = open(args.unicodeDataFilePath, 'r')
+
     # read everything we need into memory
-    for line in sys.stdin.readlines():
+    for line in unicodeDataFile:
         fields = line.split(";")
         if len(fields) > 5:
             # http://www.unicode.org/reports/tr44/tr44-14.html#UnicodeData.txt
@@ -89,35 +160,34 @@ def main(expand_ligatures):
         if codepoint.general_category.startswith('L') and \
            len(codepoint.combining_ids) > 1:
             if is_letter_with_marks(codepoint, table):
-                print_record(codepoint.id,
-                             chr(get_plain_letter(codepoint, table).id))
-            elif expand_ligatures and is_ligature(codepoint, table):
-                print_record(codepoint.id,
+                charactersSet.add((codepoint.id,
+                             chr(get_plain_letter(codepoint, table).id)))
+            elif args.noLigaturesExpansion is False and is_ligature(codepoint, table):
+                charactersSet.add((codepoint.id,
                              "".join(unichr(combining_codepoint.id)
                                      for combining_codepoint \
-                                     in get_plain_letters(codepoint, table)))
+                                     in get_plain_letters(codepoint, table))))
 
-    # some special cases
-    print_record(0x00d8, "O") # LATIN CAPITAL LETTER O WITH STROKE
-    print_record(0x00f8, "o") # LATIN SMALL LETTER O WITH STROKE
-    print_record(0x0110, "D") # LATIN CAPITAL LETTER D WITH STROKE
-    print_record(0x0111, "d") # LATIN SMALL LETTER D WITH STROKE
-    print_record(0x0131, "i") # LATIN SMALL LETTER DOTLESS I
-    print_record(0x0126, "H") # LATIN CAPITAL LETTER H WITH STROKE
-    print_record(0x0127, "h") # LATIN SMALL LETTER H WITH STROKE
-    print_record(0x0141, "L") # LATIN CAPITAL LETTER L WITH STROKE
-    print_record(0x0142, "l") # LATIN SMALL LETTER L WITH STROKE
-    print_record(0x0149, "'n") # LATIN SMALL LETTER N PRECEDED BY APOSTROPHE
-    print_record(0x0166, "T") # LATIN CAPITAL LETTER T WITH STROKE
-    print_record(0x0167, "t") # LATIN SMALL LETTER t WITH STROKE
-    print_record(0x0401, u"\u0415") # CYRILLIC CAPITAL LETTER IO
-    print_record(0x0451, u"\u0435") # CYRILLIC SMALL LETTER IO
-    if expand_ligatures:
-        print_record(0x00c6, "AE") # LATIN CAPITAL LETTER AE
-        print_record(0x00df, "ss") # LATIN SMALL LETTER SHARP S
-        print_record(0x00e6, "ae") # LATIN SMALL LETTER AE
-        print_record(0x0152, "OE") # LATIN CAPITAL LIGATURE OE
-        print_record(0x0153, "oe") # LATIN SMALL LIGATURE OE
+    # add CLDR Latin-ASCII characters
+    if not args.noLigaturesExpansion:
+        charactersSet |= parse_cldr_latin_ascii_transliterator(args.latinAsciiFilePath)
+        charactersSet |= special_cases()
+
+    # sort for more convenient display
+    charactersList = sorted(charactersSet, key=lambda characterPair: characterPair[0])
+
+    for characterPair in charactersList:
+        print_record(characterPair[0], characterPair[1])
 
 if __name__ == "__main__":
-    main(len(sys.argv) == 2 and sys.argv[1] == "--expand-ligatures")
+    parser = argparse.ArgumentParser(description='This script builds unaccent.rules on standard output when given the contents of UnicodeData.txt and Latin-ASCII.xml given as arguments.')
+    parser.add_argument("--unicode-data-file", help="Path to formatted text file corresponding to UnicodeData.txt. See <http://unicode.org/Public/8.0.0/ucd/UnicodeData.txt>.", type=str, required=True, dest='unicodeDataFilePath')
+    parser.add_argument("--latin-ascii-file", help="Path to XML file from Unicode Common Locale Data Repository (CLDR) corresponding to Latin-ASCII transliterator (Latin-ASCII.xml). See <http://unicode.org/cldr/trac/export/12304/tags/release-28/common/transforms/Latin-ASCII.xml>.", type=str, dest='latinAsciiFilePath')
+    parser.add_argument("--no-ligatures-expansion", help="Do not expand ligatures and do not use Unicode CLDR Latin-ASCII transliterator. By default, this option is not enabled and \"--latin-ascii-file\" argument is required. If this option is enabled, \"--latin-ascii-file\" argument is optional and ignored.", action="store_true", dest='noLigaturesExpansion')
+    args = parser.parse_args()
+
+    if args.noLigaturesExpansion is False and args.latinAsciiFilePath is None:
+        sys.stderr.write('You must specify the path to Latin-ASCII transliterator file with \"--latin-ascii-file\" option or use \"--no-ligatures-expansion\" option. Use \"-h\" option for help.')
+        sys.exit(1)
+
+    main(args)
