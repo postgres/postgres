@@ -147,27 +147,86 @@ typedef struct
 /*
  * Julian date support.
  *
- * IS_VALID_JULIAN checks the minimum date exactly, but is a bit sloppy
- * about the maximum, since it's far enough out to not be especially
- * interesting.
+ * date2j() and j2date() nominally handle the Julian date range 0..INT_MAX,
+ * or 4714-11-24 BC to 5874898-06-03 AD.  In practice, date2j() will work and
+ * give correct negative Julian dates for dates before 4714-11-24 BC as well.
+ * We rely on it to do so back to 4714-11-01 BC.  Allowing at least one day's
+ * slop is necessary so that timestamp rotation doesn't produce dates that
+ * would be rejected on input.  For example, '4714-11-24 00:00 GMT BC' is a
+ * legal timestamptz value, but in zones east of Greenwich it would print as
+ * sometime in the afternoon of 4714-11-23 BC; if we couldn't process such a
+ * date we'd have a dump/reload failure.  So the idea is for IS_VALID_JULIAN
+ * to accept a slightly wider range of dates than we really support, and
+ * then we apply the exact checks in IS_VALID_DATE or IS_VALID_TIMESTAMP,
+ * after timezone rotation if any.  To save a few cycles, we can make
+ * IS_VALID_JULIAN check only to the month boundary, since its exact cutoffs
+ * are not very critical in this scheme.
+ *
+ * It is correct that JULIAN_MINYEAR is -4713, not -4714; it is defined to
+ * allow easy comparison to tm_year values, in which we follow the convention
+ * that tm_year <= 0 represents abs(tm_year)+1 BC.
  */
 
 #define JULIAN_MINYEAR (-4713)
 #define JULIAN_MINMONTH (11)
 #define JULIAN_MINDAY (24)
 #define JULIAN_MAXYEAR (5874898)
+#define JULIAN_MAXMONTH (6)
+#define JULIAN_MAXDAY (3)
 
 #define IS_VALID_JULIAN(y,m,d) \
-	(((y) > JULIAN_MINYEAR \
-	  || ((y) == JULIAN_MINYEAR && \
-		  ((m) > JULIAN_MINMONTH \
-		   || ((m) == JULIAN_MINMONTH && (d) >= JULIAN_MINDAY)))) \
-	 && (y) < JULIAN_MAXYEAR)
-
-#define JULIAN_MAX (2147483494) /* == date2j(JULIAN_MAXYEAR, 1, 1) */
+	(((y) > JULIAN_MINYEAR || \
+	  ((y) == JULIAN_MINYEAR && ((m) >= JULIAN_MINMONTH))) && \
+	 ((y) < JULIAN_MAXYEAR || \
+	  ((y) == JULIAN_MAXYEAR && ((m) < JULIAN_MAXMONTH))))
 
 /* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
 #define UNIX_EPOCH_JDATE		2440588 /* == date2j(1970, 1, 1) */
 #define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+
+/*
+ * Range limits for dates and timestamps.
+ *
+ * We have traditionally allowed Julian day zero as a valid datetime value,
+ * so that is the lower bound for both dates and timestamps.
+ *
+ * The upper limit for dates is 5874897-12-31, which is a bit less than what
+ * the Julian-date code can allow.  We use that same limit for timestamps when
+ * using floating-point timestamps (so that the timezone offset problem would
+ * exist here too if there were no slop).  For integer timestamps, the upper
+ * limit is 294276-12-31.  The int64 overflow limit would be a few days later;
+ * again, leaving some slop avoids worries about corner-case overflow, and
+ * provides a simpler user-visible definition.
+ */
+
+/* First allowed date, and first disallowed date, in Julian-date form */
+#define DATETIME_MIN_JULIAN (0)
+#define DATE_END_JULIAN (2147483494)	/* == date2j(JULIAN_MAXYEAR, 1, 1) */
+#ifdef HAVE_INT64_TIMESTAMP
+#define TIMESTAMP_END_JULIAN (109203528)		/* == date2j(294277, 1, 1) */
+#else
+#define TIMESTAMP_END_JULIAN DATE_END_JULIAN
+#endif
+
+/* Timestamp limits */
+#ifdef HAVE_INT64_TIMESTAMP
+#define MIN_TIMESTAMP	INT64CONST(-211813488000000000)
+/* == (DATETIME_MIN_JULIAN - POSTGRES_EPOCH_JDATE) * USECS_PER_DAY */
+#define END_TIMESTAMP	INT64CONST(9223371331200000000)
+/* == (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE) * USECS_PER_DAY */
+#else
+#define MIN_TIMESTAMP	(-211813488000.0)
+/* == (DATETIME_MIN_JULIAN - POSTGRES_EPOCH_JDATE) * SECS_PER_DAY */
+#define END_TIMESTAMP	185330760393600.0
+/* == (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE) * SECS_PER_DAY */
+#endif
+
+/* Range-check a date (given in Postgres, not Julian, numbering) */
+#define IS_VALID_DATE(d) \
+	((DATETIME_MIN_JULIAN - POSTGRES_EPOCH_JDATE) <= (d) && \
+	 (d) < (DATE_END_JULIAN - POSTGRES_EPOCH_JDATE))
+
+/* Range-check a timestamp */
+#define IS_VALID_TIMESTAMP(t)  (MIN_TIMESTAMP <= (t) && (t) < END_TIMESTAMP)
 
 #endif   /* DATATYPE_TIMESTAMP_H */

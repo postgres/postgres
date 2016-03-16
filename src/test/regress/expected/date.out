@@ -816,6 +816,27 @@ SELECT date '1999 08 01';
  1999-08-01
 (1 row)
 
+-- Check upper and lower limits of date range
+SELECT date '4714-11-24 BC';
+     date      
+---------------
+ 4714-11-24 BC
+(1 row)
+
+SELECT date '4714-11-23 BC';  -- out of range
+ERROR:  date out of range: "4714-11-23 BC"
+LINE 1: SELECT date '4714-11-23 BC';
+                    ^
+SELECT date '5874897-12-31';
+     date      
+---------------
+ 5874897-12-31
+(1 row)
+
+SELECT date '5874898-01-01';  -- out of range
+ERROR:  date out of range: "5874898-01-01"
+LINE 1: SELECT date '5874898-01-01';
+                    ^
 RESET datestyle;
 --
 -- Simple math

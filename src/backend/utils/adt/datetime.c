@@ -280,14 +280,16 @@ strtoi(const char *nptr, char **endptr, int base)
  *	and calendar date for all non-negative Julian days
  *	(i.e. from Nov 24, -4713 on).
  *
- * These routines will be used by other date/time packages
- * - thomas 97/02/25
- *
  * Rewritten to eliminate overflow problems. This now allows the
  * routines to work correctly for all Julian day counts from
  * 0 to 2147483647	(Nov 24, -4713 to Jun 3, 5874898) assuming
  * a 32-bit integer. Longer types should also work to the limits
  * of their precision.
+ *
+ * Actually, date2j() will work sanely, in the sense of producing
+ * valid negative Julian dates, significantly before Nov 24, -4713.
+ * We rely on it to do so back to Nov 1, -4713; see IS_VALID_JULIAN()
+ * and associated commentary in timestamp.h.
  */
 
 int

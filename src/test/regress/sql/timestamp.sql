@@ -143,6 +143,11 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
 
 SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
 
+-- Check behavior at the lower boundary of the timestamp range
+SELECT '4714-11-24 00:00:00 BC'::timestamp;
+SELECT '4714-11-23 23:59:59 BC'::timestamp;  -- out of range
+-- The upper boundary differs between integer and float timestamps, so no check
+
 -- Demonstrate functions and operators
 SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
    WHERE d1 > timestamp without time zone '1997-01-02';

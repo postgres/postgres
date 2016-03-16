@@ -3525,6 +3525,7 @@ to_date(PG_FUNCTION_ARGS)
 
 	do_to_timestamp(date_txt, fmt, &tm, &fsec);
 
+	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -3532,6 +3533,13 @@ to_date(PG_FUNCTION_ARGS)
 						text_to_cstring(date_txt))));
 
 	result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	/* Now check for just-out-of-range dates */
+	if (!IS_VALID_DATE(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: \"%s\"",
+						text_to_cstring(date_txt))));
 
 	PG_RETURN_DATEADT(result);
 }

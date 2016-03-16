@@ -162,6 +162,13 @@ SELECT 'Wed Jul 11 10:51:14 PST+03:00 2001'::timestamptz;
 
 SELECT '' AS "64", d1 FROM TIMESTAMPTZ_TBL;
 
+-- Check behavior at the lower boundary of the timestamp range
+SELECT '4714-11-24 00:00:00+00 BC'::timestamptz;
+SELECT '4714-11-23 16:00:00-08 BC'::timestamptz;
+SELECT 'Sun Nov 23 16:00:00 4714 PST BC'::timestamptz;
+SELECT '4714-11-23 23:59:59+00 BC'::timestamptz;  -- out of range
+-- The upper boundary differs between integer and float timestamps, so no check
+
 -- Demonstrate functions and operators
 SELECT '' AS "48", d1 FROM TIMESTAMPTZ_TBL
    WHERE d1 > timestamp with time zone '1997-01-02';

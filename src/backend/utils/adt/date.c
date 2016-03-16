@@ -160,12 +160,19 @@ date_in(PG_FUNCTION_ARGS)
 			break;
 	}
 
+	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range: \"%s\"", str)));
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	/* Now check for just-out-of-range dates */
+	if (!IS_VALID_DATE(date))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: \"%s\"", str)));
 
 	PG_RETURN_DATEADT(date);
 }
@@ -209,8 +216,7 @@ date_recv(PG_FUNCTION_ARGS)
 	/* Limit to the same range that date_in() accepts. */
 	if (DATE_NOT_FINITE(result))
 		 /* ok */ ;
-	else if (result < -POSTGRES_EPOCH_JDATE ||
-			 result >= JULIAN_MAX - POSTGRES_EPOCH_JDATE)
+	else if (!IS_VALID_DATE(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range")));
@@ -258,6 +264,7 @@ make_date(PG_FUNCTION_ARGS)
 				 errmsg("date field value out of range: %d-%02d-%02d",
 						tm.tm_year, tm.tm_mon, tm.tm_mday)));
 
+	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -265,6 +272,13 @@ make_date(PG_FUNCTION_ARGS)
 						tm.tm_year, tm.tm_mon, tm.tm_mday)));
 
 	date = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	/* Now check for just-out-of-range dates */
+	if (!IS_VALID_DATE(date))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: %d-%02d-%02d",
+						tm.tm_year, tm.tm_mon, tm.tm_mday)));
 
 	PG_RETURN_DATEADT(date);
 }
@@ -427,11 +441,21 @@ date_pli(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	int32		days = PG_GETARG_INT32(1);
+	DateADT		result;
 
 	if (DATE_NOT_FINITE(dateVal))
-		days = 0;				/* can't change infinity */
+		PG_RETURN_DATEADT(dateVal);		/* can't change infinity */
 
-	PG_RETURN_DATEADT(dateVal + days);
+	result = dateVal + days;
+
+	/* Check for integer overflow and out-of-allowed-range */
+	if ((days >= 0 ? (result < dateVal) : (result > dateVal)) ||
+		!IS_VALID_DATE(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range")));
+
+	PG_RETURN_DATEADT(result);
 }
 
 /* Subtract a number of days from a date, giving a new date.
@@ -441,11 +465,21 @@ date_mii(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	int32		days = PG_GETARG_INT32(1);
+	DateADT		result;
 
 	if (DATE_NOT_FINITE(dateVal))
-		days = 0;				/* can't change infinity */
+		PG_RETURN_DATEADT(dateVal);		/* can't change infinity */
 
-	PG_RETURN_DATEADT(dateVal - days);
+	result = dateVal - days;
+
+	/* Check for integer overflow and out-of-allowed-range */
+	if ((days >= 0 ? (result > dateVal) : (result < dateVal)) ||
+		!IS_VALID_DATE(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range")));
+
+	PG_RETURN_DATEADT(result);
 }
 
 /*
@@ -464,14 +498,18 @@ date2timestamp(DateADT dateVal)
 		TIMESTAMP_NOEND(result);
 	else
 	{
-#ifdef HAVE_INT64_TIMESTAMP
-		/* date is days since 2000, timestamp is microseconds since same... */
-		result = dateVal * USECS_PER_DAY;
-		/* Date's range is wider than timestamp's, so check for overflow */
-		if (result / USECS_PER_DAY != dateVal)
+		/*
+		 * Date's range is wider than timestamp's, so check for boundaries.
+		 * Since dates have the same minimum values as timestamps, only upper
+		 * boundary need be checked for overflow.
+		 */
+		if (dateVal >= (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("date out of range for timestamp")));
+#ifdef HAVE_INT64_TIMESTAMP
+		/* date is days since 2000, timestamp is microseconds since same... */
+		result = dateVal * USECS_PER_DAY;
 #else
 		/* date is days since 2000, timestamp is seconds since same... */
 		result = dateVal * (double) SECS_PER_DAY;
@@ -495,6 +533,16 @@ date2timestamptz(DateADT dateVal)
 		TIMESTAMP_NOEND(result);
 	else
 	{
+		/*
+		 * Date's range is wider than timestamp's, so check for boundaries.
+		 * Since dates have the same minimum values as timestamps, only upper
+		 * boundary need be checked for overflow.
+		 */
+		if (dateVal >= (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date out of range for timestamp")));
+
 		j2date(dateVal + POSTGRES_EPOCH_JDATE,
 			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 		tm->tm_hour = 0;
@@ -504,14 +552,18 @@ date2timestamptz(DateADT dateVal)
 
 #ifdef HAVE_INT64_TIMESTAMP
 		result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
-		/* Date's range is wider than timestamp's, so check for overflow */
-		if ((result - tz * USECS_PER_SEC) / USECS_PER_DAY != dateVal)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("date out of range for timestamp")));
 #else
 		result = dateVal * (double) SECS_PER_DAY + tz;
 #endif
+
+		/*
+		 * Since it is possible to go beyond allowed timestamptz range because
+		 * of time zone, check for allowed timestamp range after adding tz.
+		 */
+		if (!IS_VALID_TIMESTAMP(result))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date out of range for timestamp")));
 	}
 
 	return result;
@@ -1053,7 +1105,17 @@ abstime_date(PG_FUNCTION_ARGS)
 
 		default:
 			abstime2tm(abstime, &tz, tm, NULL);
+			/* Prevent overflow in Julian-day routines */
+			if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("abstime out of range for date")));
 			result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+			/* Now check for just-out-of-range dates */
+			if (!IS_VALID_DATE(result))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("abstime out of range for date")));
 			break;
 	}
 
@@ -1678,7 +1740,13 @@ datetime_timestamp(PG_FUNCTION_ARGS)
 
 	result = date2timestamp(date);
 	if (!TIMESTAMP_NOT_FINITE(result))
+	{
 		result += time;
+		if (!IS_VALID_TIMESTAMP(result))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+	}
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -2550,11 +2618,29 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 		TIMESTAMP_NOEND(result);
 	else
 	{
+		/*
+		 * Date's range is wider than timestamp's, so check for boundaries.
+		 * Since dates have the same minimum values as timestamps, only upper
+		 * boundary need be checked for overflow.
+		 */
+		if (date >= (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date out of range for timestamp")));
 #ifdef HAVE_INT64_TIMESTAMP
 		result = date * USECS_PER_DAY + time->time + time->zone * USECS_PER_SEC;
 #else
 		result = date * (double) SECS_PER_DAY + time->time + time->zone;
 #endif
+
+		/*
+		 * Since it is possible to go beyond allowed timestamptz range because
+		 * of time zone, check for allowed timestamp range after adding tz.
+		 */
+		if (!IS_VALID_TIMESTAMP(result))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("date out of range for timestamp")));
 	}
 
 	PG_RETURN_TIMESTAMP(result);

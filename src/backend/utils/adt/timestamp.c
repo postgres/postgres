@@ -261,7 +261,8 @@ timestamp_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamp_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0 ||
+			 !IS_VALID_TIMESTAMP(timestamp))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -645,6 +646,14 @@ make_timestamp_internal(int year, int month, int day,
 	result = date * SECS_PER_DAY + time;
 #endif
 
+	/* final range check catches just-out-of-range timestamps */
+	if (!IS_VALID_TIMESTAMP(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range: %d-%02d-%02d %d:%02d:%02g",
+						year, month, day,
+						hour, min, sec)));
+
 	return result;
 }
 
@@ -702,6 +711,7 @@ make_timestamptz_at_timezone(PG_FUNCTION_ARGS)
 	int32		min = PG_GETARG_INT32(4);
 	float8		sec = PG_GETARG_FLOAT8(5);
 	text	   *zone = PG_GETARG_TEXT_PP(6);
+	TimestampTz result;
 	Timestamp	timestamp;
 	struct pg_tm tt;
 	int			tz;
@@ -717,7 +727,14 @@ make_timestamptz_at_timezone(PG_FUNCTION_ARGS)
 
 	tz = parse_sane_timezone(&tt, zone);
 
-	PG_RETURN_TIMESTAMPTZ((TimestampTz) dt2local(timestamp, -tz));
+	result = dt2local(timestamp, -tz);
+
+	if (!IS_VALID_TIMESTAMP(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	PG_RETURN_TIMESTAMPTZ(result);
 }
 
 /* timestamptz_out()
@@ -778,7 +795,8 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+	else if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0 ||
+			 !IS_VALID_TIMESTAMP(timestamp))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1925,7 +1943,7 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	TimeOffset	date;
 	TimeOffset	time;
 
-	/* Julian day routines are not correct for negative Julian days */
+	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
 		*result = 0;			/* keep compiler quiet */
@@ -1956,6 +1974,13 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 #endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
+
+	/* final range check catches just-out-of-range timestamps */
+	if (!IS_VALID_TIMESTAMP(*result))
+	{
+		*result = 0;			/* keep compiler quiet */
+		return -1;
+	}
 
 	return 0;
 }
@@ -2982,6 +3007,12 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 		}
 
 		timestamp += span->time;
+
+		if (!IS_VALID_TIMESTAMP(timestamp))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
 		result = timestamp;
 	}
 
@@ -3086,6 +3117,12 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 		}
 
 		timestamp += span->time;
+
+		if (!IS_VALID_TIMESTAMP(timestamp))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
 		result = timestamp;
 	}
 
@@ -4397,6 +4434,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	text	   *units = PG_GETARG_TEXT_PP(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	float8		result;
+	Timestamp	epoch;
 	int			type,
 				val;
 	char	   *lowunits;
@@ -4575,10 +4613,15 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
+				epoch = SetEpochTimestamp();
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (timestamp - SetEpochTimestamp()) / 1000000.0;
+				/* try to avoid precision loss in subtraction */
+				if (timestamp < (PG_INT64_MAX + epoch))
+					result = (timestamp - epoch) / 1000000.0;
+				else
+					result = ((float8) timestamp - epoch) / 1000000.0;
 #else
-				result = timestamp - SetEpochTimestamp();
+				result = timestamp - epoch;
 #endif
 				break;
 
@@ -4611,6 +4654,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	text	   *units = PG_GETARG_TEXT_PP(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	float8		result;
+	Timestamp	epoch;
 	int			tz;
 	int			type,
 				val;
@@ -4792,10 +4836,15 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
+				epoch = SetEpochTimestamp();
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (timestamp - SetEpochTimestamp()) / 1000000.0;
+				/* try to avoid precision loss in subtraction */
+				if (timestamp < (PG_INT64_MAX + epoch))
+					result = (timestamp - epoch) / 1000000.0;
+				else
+					result = ((float8) timestamp - epoch) / 1000000.0;
 #else
-				result = timestamp - SetEpochTimestamp();
+				result = timestamp - epoch;
 #endif
 				break;
 
@@ -5107,9 +5156,8 @@ timestamp_zone(PG_FUNCTION_ARGS)
 			tz = DetermineTimeZoneOffset(&tm, tzp);
 			if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("could not convert to time zone \"%s\"",
-								tzname)));
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 		}
 		else
 		{
@@ -5119,6 +5167,11 @@ timestamp_zone(PG_FUNCTION_ARGS)
 			result = 0;			/* keep compiler quiet */
 		}
 	}
+
+	if (!IS_VALID_TIMESTAMP(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
@@ -5197,6 +5250,11 @@ timestamp_izone(PG_FUNCTION_ARGS)
 #endif
 
 	result = dt2local(timestamp, tz);
+
+	if (!IS_VALID_TIMESTAMP(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }	/* timestamp_izone() */
@@ -5337,9 +5395,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 						 errmsg("timestamp out of range")));
 			if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("could not convert to time zone \"%s\"",
-								tzname)));
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 		}
 		else
 		{
@@ -5349,6 +5406,11 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 			result = 0;			/* keep compiler quiet */
 		}
 	}
+
+	if (!IS_VALID_TIMESTAMP(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -5382,6 +5444,11 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 #endif
 
 	result = dt2local(timestamp, tz);
+
+	if (!IS_VALID_TIMESTAMP(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMP(result);
 }

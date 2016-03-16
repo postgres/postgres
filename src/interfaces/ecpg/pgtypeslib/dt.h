@@ -287,22 +287,32 @@ do { \
  */
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
-/* Julian date support for date2j() and j2date()
- *
- * IS_VALID_JULIAN checks the minimum date exactly, but is a bit sloppy
- * about the maximum, since it's far enough out to not be especially
- * interesting.
+/*
+ * Julian date support --- see comments in backend's timestamp.h.
  */
 
 #define JULIAN_MINYEAR (-4713)
 #define JULIAN_MINMONTH (11)
 #define JULIAN_MINDAY (24)
 #define JULIAN_MAXYEAR (5874898)
+#define JULIAN_MAXMONTH (6)
+#define JULIAN_MAXDAY (3)
 
-#define IS_VALID_JULIAN(y,m,d) ((((y) > JULIAN_MINYEAR) \
-  || (((y) == JULIAN_MINYEAR) && (((m) > JULIAN_MINMONTH) \
-  || (((m) == JULIAN_MINMONTH) && ((d) >= JULIAN_MINDAY))))) \
- && ((y) < JULIAN_MAXYEAR))
+#define IS_VALID_JULIAN(y,m,d) \
+	(((y) > JULIAN_MINYEAR || \
+	  ((y) == JULIAN_MINYEAR && ((m) >= JULIAN_MINMONTH))) && \
+	 ((y) < JULIAN_MAXYEAR || \
+	  ((y) == JULIAN_MAXYEAR && ((m) < JULIAN_MAXMONTH))))
+
+#ifdef HAVE_INT64_TIMESTAMP
+#define MIN_TIMESTAMP	INT64CONST(-211813488000000000)
+#define END_TIMESTAMP	INT64CONST(9223371331200000000)
+#else
+#define MIN_TIMESTAMP	(-211813488000.0)
+#define END_TIMESTAMP	185330760393600.0
+#endif
+
+#define IS_VALID_TIMESTAMP(t)  (MIN_TIMESTAMP <= (t) && (t) < END_TIMESTAMP)
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
