@@ -59,7 +59,7 @@ select similarity('---', '####---');
           0
 (1 row)
 
-CREATE TABLE test_trgm(t text);
+CREATE TABLE test_trgm(t text COLLATE "C");
 \copy test_trgm from 'data/trgm.data'
 select t,similarity(t,'qwertyu0988') as sml from test_trgm where t % 'qwertyu0988' order by sml desc, t;
       t      |   sml    
@@ -3467,7 +3467,7 @@ select t,similarity(t,'gwertyu1988') as sml from test_trgm where t % 'gwertyu198
  qwertyu0988 | 0.333333
 (1 row)
 
-create table test2(t text);
+create table test2(t text COLLATE "C");
 insert into test2 values ('abcdef');
 insert into test2 values ('quark');
 insert into test2 values ('  z foo bar');

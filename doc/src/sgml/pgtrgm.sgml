@@ -93,6 +93,21 @@
       </entry>
      </row>
      <row>
+      <entry>
+       <function>word_similarity(text, text)</function>
+       <indexterm><primary>word_similarity</primary></indexterm>
+      </entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Returns a number that indicates how similar the first string
+       to the most similar word of the second string. The function searches in
+       the second string a most similar word not a most similar substring.  The
+       range of the result is zero (indicating that the two strings are
+       completely dissimilar) to one (indicating that the first string is
+       identical to one of the word of the second string).
+      </entry>
+     </row>
+     <row>
       <entry><function>show_limit()</function><indexterm><primary>show_limit</primary></indexterm></entry>
       <entry><type>real</type></entry>
       <entry>
@@ -138,12 +153,32 @@
       </entry>
      </row>
      <row>
+       <entry><type>text</> <literal>%&gt;</literal> <type>text</></entry>
+       <entry><type>boolean</type></entry>
+       <entry>
+        Returns <literal>true</> if its first argument has the similar word in
+        the second argument and they have a similarity that is greater than the
+        current word similarity threshold set by
+        <varname>pg_trgm.word_similarity_threshold</> parameter.
+       </entry>
+      </row>
+     <row>
       <entry><type>text</> <literal>&lt;-&gt;</literal> <type>text</></entry>
       <entry><type>real</type></entry>
       <entry>
        Returns the <quote>distance</> between the arguments, that is
        one minus the <function>similarity()</> value.
       </entry>
+     </row>
+     <row>
+       <entry>
+        <type>text</> <literal>&lt;-&gt;&gt;</literal> <type>text</>
+       </entry>
+       <entry><type>real</type></entry>
+       <entry>
+        Returns the <quote>distance</> between the arguments, that is
+        one minus the <function>word_similarity()</> value.
+       </entry>
      </row>
     </tbody>
    </tgroup>
@@ -168,6 +203,23 @@
      </para>
     </listitem>
    </varlistentry>
+    <varlistentry id="guc-pgtrgm-word-similarity-threshold" xreflabel="pg_trgm.word_similarity_threshold">
+     <term>
+      <varname>pg_trgm.word_similarity_threshold</> (<type>real</type>)
+      <indexterm>
+       <primary>
+        <varname>pg_trgm.word_similarity_threshold</> configuration parameter
+       </primary>
+      </indexterm>
+     </term>
+     <listitem>
+      <para>
+       Sets the current word similarity threshold that is used by
+       the <literal>%&gt;</> operator.  The threshold must be between
+       0 and 1 (default is 0.6).
+      </para>
+     </listitem>
+    </varlistentry>
   </variablelist>
  </sect2>
 
@@ -224,6 +276,33 @@ SELECT t, t &lt;-&gt; '<replaceable>word</>' AS dist
    by GIN indexes.  It will usually beat the first formulation when only
    a small number of the closest matches is wanted.
   </para>
+
+  <para>
+   Also you can use an index on the <structfield>t</> column for word
+   similarity.  For example:
+<programlisting>
+SELECT t, word_similarity('<replaceable>word</>', t) AS sml
+  FROM test_trgm
+  WHERE t %&gt; '<replaceable>word</>'
+  ORDER BY sml DESC, t;
+</programlisting>
+   This will return all values in the text column that have a word
+   which sufficiently similar to <replaceable>word</>, sorted from best
+   match to worst.  The index will be used to make this a fast operation
+   even over very large data sets.
+  </para>
+
+  <para>
+   A variant of the above query is
+<programlisting>
+SELECT t, t &lt;-&gt;&gt; '<replaceable>word</>' AS dist
+  FROM test_trgm
+  ORDER BY dist LIMIT 10;
+</programlisting>
+   This can be implemented quite efficiently by GiST indexes, but not
+   by GIN indexes.
+  </para>
+
 
   <para>
    Beginning in <productname>PostgreSQL</> 9.1, these index types also support

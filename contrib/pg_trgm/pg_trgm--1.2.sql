@@ -39,6 +39,39 @@ CREATE OPERATOR % (
         JOIN = contjoinsel
 );
 
+CREATE FUNCTION word_similarity(text,text)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION word_similarity_op(text,text)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;  -- stable because depends on pg_trgm.word_similarity_threshold
+
+CREATE FUNCTION word_similarity_commutator_op(text,text)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT STABLE;  -- stable because depends on pg_trgm.word_similarity_threshold
+
+CREATE OPERATOR <% (
+        LEFTARG = text,
+        RIGHTARG = text,
+        PROCEDURE = word_similarity_op,
+        COMMUTATOR = '%>',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR %> (
+        LEFTARG = text,
+        RIGHTARG = text,
+        PROCEDURE = word_similarity_commutator_op,
+        COMMUTATOR = '<%',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
 CREATE FUNCTION similarity_dist(text,text)
 RETURNS float4
 AS 'MODULE_PATHNAME'
@@ -49,6 +82,30 @@ CREATE OPERATOR <-> (
         RIGHTARG = text,
         PROCEDURE = similarity_dist,
         COMMUTATOR = '<->'
+);
+
+CREATE FUNCTION word_similarity_dist_op(text,text)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION word_similarity_dist_commutator_op(text,text)
+RETURNS float4
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR <<-> (
+        LEFTARG = text,
+        RIGHTARG = text,
+        PROCEDURE = word_similarity_dist_op,
+        COMMUTATOR = '<->>'
+);
+
+CREATE OPERATOR <->> (
+        LEFTARG = text,
+        RIGHTARG = text,
+        PROCEDURE = word_similarity_dist_commutator_op,
+        COMMUTATOR = '<<->'
 );
 
 -- gist key
@@ -140,6 +197,12 @@ ALTER OPERATOR FAMILY gist_trgm_ops USING gist ADD
         OPERATOR        5       pg_catalog.~ (text, text),
         OPERATOR        6       pg_catalog.~* (text, text);
 
+-- Add operators that are new in 9.6 (pg_trgm 1.2).
+
+ALTER OPERATOR FAMILY gist_trgm_ops USING gist ADD
+        OPERATOR        7       %> (text, text),
+        OPERATOR        8       <->> (text, text) FOR ORDER BY pg_catalog.float_ops;
+
 -- support functions for gin
 CREATE FUNCTION gin_extract_value_trgm(text, internal)
 RETURNS internal
@@ -187,4 +250,5 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
+        OPERATOR        7       %> (text, text),
         FUNCTION        6      (text,text) gin_trgm_triconsistent (internal, int2, text, int4, internal, internal, internal);
