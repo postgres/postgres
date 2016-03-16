@@ -1642,6 +1642,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"syslog_split_messages", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Split messages sent to syslog by lines and to fit into 1024 bytes."),
+			NULL
+		},
+		&syslog_split_messages,
+		true,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL

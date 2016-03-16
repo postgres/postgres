@@ -359,6 +359,7 @@
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
 #syslog_sequence_numbers = on
+#syslog_split_messages = on
 
 # This is only relevant when logging to eventlog (win32):
 #event_source = 'PostgreSQL'

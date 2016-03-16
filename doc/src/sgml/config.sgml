@@ -4333,6 +4333,39 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-syslog-split-messages" xreflabel="syslog_split_messages">
+      <term><varname>syslog_split_messages</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>syslog_split_messages</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        When logging to <application>syslog</> is enabled, this parameter
+        determines how messages are delivered to syslog.  When on (the
+        default), messages are split by lines, and long lines are split so
+        that they will fit into 1024 bytes, which is a typical size limit for
+        traditional syslog implementations.  When off, PostgreSQL server log
+        messages are delivered to the syslog service as is, and it is up to
+        the syslog service to cope with the potentially bulky messages.
+       </para>
+
+       <para>
+        If syslog is ultimately logging to a text file, then the effect will
+        be the same either way, and it is best to leave the setting on, since
+        most syslog implementations either cannot handle large messages or
+        would need to be specially configured to handle them.  But if syslog
+        is ultimately writing into some other medium, it might be necessary or
+        more useful to keep messages logically together.
+       </para>
+
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-event-source" xreflabel="event_source">
       <term><varname>event_source</varname> (<type>string</type>)
       <indexterm>
