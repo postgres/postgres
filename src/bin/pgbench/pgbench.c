@@ -230,9 +230,9 @@ typedef struct
 	int			id;				/* client No. */
 	int			state;			/* state No. */
 	bool		listen;			/* whether an async query has been sent */
-	bool		is_throttled;	/* whether transaction throttling is done */
 	bool		sleeping;		/* whether the client is napping */
 	bool		throttling;		/* whether nap is for throttling */
+	bool		is_throttled;	/* whether transaction throttling is done */
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
@@ -1522,6 +1522,13 @@ top:
 		}
 		INSTR_TIME_SET_CURRENT(end);
 		INSTR_TIME_ACCUM_DIFF(thread->conn_time, end, start);
+
+		/* Reset session-local state */
+		st->listen = false;
+		st->sleeping = false;
+		st->throttling = false;
+		st->is_throttled = false;
+		memset(st->prepared, 0, sizeof(st->prepared));
 	}
 
 	/*
