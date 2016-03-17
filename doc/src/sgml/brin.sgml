@@ -74,7 +74,7 @@
    tuple; those tuples remain unsummarized until a summarization run is
    invoked later, creating initial summaries.
    This process can be invoked manually using the
-   <function>brin_summarize_new_pages(regclass)</function> function,
+   <function>brin_summarize_new_values(regclass)</function> function,
    or automatically when <command>VACUUM</command> processes the table.
   </para>
  </sect2>
