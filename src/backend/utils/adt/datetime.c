@@ -355,14 +355,13 @@ j2date(int jd, int *year, int *month, int *day)
 int
 j2day(int date)
 {
-	unsigned int day;
+	date += 1;
+	date %= 7;
+	/* Cope if division truncates towards zero, as it probably does */
+	if (date < 0)
+		date += 7;
 
-	day = date;
-
-	day += 1;
-	day %= 7;
-
-	return (int) day;
+	return date;
 }	/* j2day() */
 
 
