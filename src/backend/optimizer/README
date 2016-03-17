@@ -900,8 +900,8 @@ above, plus a relids set, which allows there to be more than one upperrel
 of the same kind.  We use NULL for the relids if there's no need for more
 than one upperrel of the same kind.  Currently, in fact, the relids set
 is vestigial because it's always NULL, but that's expected to change in
-future.  For example, in planning set operations, we might need the relids
-to denote which subset of the leaf SELECTs has been combined in a
+the future.  For example, in planning set operations, we might need the
+relids to denote which subset of the leaf SELECTs has been combined in a
 particular group of Paths that are competing with each other.
 
 The result of subquery_planner() is always returned as a set of Paths
@@ -974,5 +974,5 @@ One of the keys to making parallel query effective is to run as much of
 the query in parallel as possible.  Therefore, we expect it to generally
 be desirable to postpone the Gather stage until as near to the top of the
 plan as possible.  Expanding the range of cases in which more work can be
-pushed below the Gather (and costly them accurately) is likely to keep us
+pushed below the Gather (and costing them accurately) is likely to keep us
 busy for a long time to come.
