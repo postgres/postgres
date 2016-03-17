@@ -201,7 +201,7 @@ typedef struct
 	int			state;			/* state No. */
 	int			cnt;			/* xacts count */
 	int			ecnt;			/* error count */
-	int			listen;			/* 0 indicates that an async query has been
+	int			listen;			/* 1 indicates that an async query has been
 								 * sent */
 	int			sleeping;		/* 1 indicates that the client is napping */
 	int64		until;			/* napping until (usec) */
@@ -1115,6 +1115,11 @@ top:
 		}
 		INSTR_TIME_SET_CURRENT(end);
 		INSTR_TIME_ACCUM_DIFF(*conn_time, end, start);
+
+		/* Reset session-local state */
+		st->listen = 0;
+		st->sleeping = 0;
+		memset(st->prepared, 0, sizeof(st->prepared));
 	}
 
 	/* Record transaction start time if logging is enabled */
