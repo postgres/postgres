@@ -227,7 +227,7 @@ struct Tuplesortstate
 	int			maxTapes;		/* number of tapes (Knuth's T) */
 	int			tapeRange;		/* maxTapes-1 (Knuth's P) */
 	MemoryContext sortcontext;	/* memory context holding most sort data */
-	MemoryContext tuplecontext;	/* memory context holding tuple data */
+	MemoryContext tuplecontext;	/* sub-context of sortcontext for tuple data */
 	LogicalTapeSet *tapeset;	/* logtape.c object for tapes in a temp file */
 
 	/*
@@ -2536,8 +2536,11 @@ mergeonerun(Tuplesortstate *state)
 	}
 
 	/*
-	 * Reset tuple memory, now that no caller tuples are needed in memory.
-	 * This prevents fragmentation.
+	 * Reset tuple memory.  We've freed all of the tuples that we previously
+	 * allocated, but AllocSetFree will have put those chunks of memory on
+	 * particular free lists, bucketed by size class.  Thus, although all of
+	 * that memory is free, it is effectively fragmented.  Resetting the
+	 * context gets us out from under that problem.
 	 */
 	MemoryContextReset(state->tuplecontext);
 
@@ -2710,10 +2713,21 @@ beginmerge(Tuplesortstate *state, bool finalMergeBatch)
  * allocated slots.  However, though slots and tuple memory is in balance
  * following the last grow_memtuples() call, that's predicated on the observed
  * average tuple size for the "final" grow_memtuples() call, which includes
- * palloc overhead.
+ * palloc overhead.  During the final merge pass, where we will arrange to
+ * squeeze out the palloc overhead, we might need more slots in the memtuples
+ * array.
  *
- * This will perform an actual final grow_memtuples() call without any palloc()
- * overhead, rebalancing the use of memory between slots and tuples.
+ * To make that happen, arrange for the amount of remaining memory to be
+ * exactly equal to the palloc overhead multiplied by the current size of
+ * the memtuples array, force the grow_memtuples flag back to true (it's
+ * probably but not necessarily false on entry to this routine), and then
+ * call grow_memtuples.  This simulates loading enough tuples to fill the
+ * whole memtuples array and then having some space left over because of the
+ * elided palloc overhead.  We expect that grow_memtuples() will conclude that
+ * it can't double the size of the memtuples array but that it can increase
+ * it by some percentage; but if it does decide to double it, that just means
+ * that we've never managed to use many slots in the memtuples array, in which
+ * case doubling it shouldn't hurt anything anyway.
  */
 static void
 batchmemtuples(Tuplesortstate *state)
