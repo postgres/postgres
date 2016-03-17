@@ -1081,7 +1081,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		if (!attr_isnull)
 		{
 			char	   *qual_value;
-			ParseState *qual_pstate = make_parsestate(NULL);
+			ParseState *qual_pstate;
 
 			/* parsestate is built just to build the range table */
 			qual_pstate = make_parsestate(NULL);
@@ -1122,7 +1122,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		if (!attr_isnull)
 		{
 			char	   *with_check_value;
-			ParseState *with_check_pstate = make_parsestate(NULL);
+			ParseState *with_check_pstate;
 
 			/* parsestate is built just to build the range table */
 			with_check_pstate = make_parsestate(NULL);
