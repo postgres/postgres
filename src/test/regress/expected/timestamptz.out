@@ -1699,6 +1699,57 @@ SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
             | 2001 1 1 1 1 1 1
 (66 rows)
 
+-- Check OF with various zone offsets, particularly fractional hours
+SET timezone = '00:00';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ +00
+(1 row)
+
+SET timezone = '+02:00';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ -02
+(1 row)
+
+SET timezone = '-13:00';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ +13
+(1 row)
+
+SET timezone = '-00:30';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ +00:30
+(1 row)
+
+SET timezone = '00:30';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ -00:30
+(1 row)
+
+SET timezone = '-04:30';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ +04:30
+(1 row)
+
+SET timezone = '04:30';
+SELECT to_char(now(), 'OF');
+ to_char 
+---------
+ -04:30
+(1 row)
+
+RESET timezone;
 CREATE TABLE TIMESTAMPTZ_TST (a int , b timestamptz);
 -- Test year field value with len > 4
 INSERT INTO TIMESTAMPTZ_TST VALUES(1, 'Sat Mar 12 23:58:48 1000 IST');
