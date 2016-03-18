@@ -1396,18 +1396,21 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
 	tlist = build_path_tlist(root, &best_path->path);
 
 	/*
-	 * Although the ProjectionPath node wouldn't have been made unless its
-	 * pathtarget is different from the subpath's, it can still happen that
-	 * the constructed tlist matches the subplan's.  (An example is that
-	 * MergeAppend doesn't project, so we would have thought that we needed a
-	 * projection to attach resjunk sort columns to its output ... but
-	 * create_merge_append_plan might have added those same resjunk sort
-	 * columns to both MergeAppend and its children.)  So, if the desired
-	 * tlist is the same expression-wise as the subplan's, just jam it in
-	 * there.  We'll have charged for a Result that doesn't actually appear in
-	 * the plan, but that's better than having a Result we don't need.
+	 * We might not really need a Result node here.  There are several ways
+	 * that this can happen.  For example, MergeAppend doesn't project, so we
+	 * would have thought that we needed a projection to attach resjunk sort
+	 * columns to its output ... but create_merge_append_plan might have
+	 * added those same resjunk sort columns to both MergeAppend and its
+	 * children.  Alternatively, apply_projection_to_path might have created
+	 * a projection path as the subpath of a Gather node even though the
+	 * subpath was projection-capable.  So, if the subpath is capable of
+	 * projection or the desired tlist is the same expression-wise as the
+	 * subplan's, just jam it in there.  We'll have charged for a Result that
+	 * doesn't actually appear in the plan, but that's better than having a
+	 * Result we don't need.
 	 */
-	if (tlist_same_exprs(tlist, subplan->targetlist))
+	if (is_projection_capable_path(best_path->subpath) ||
+		tlist_same_exprs(tlist, subplan->targetlist))
 	{
 		plan = subplan;
 		plan->targetlist = tlist;
