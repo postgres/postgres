@@ -189,6 +189,7 @@ typedef struct ModifyTable
 	List	   *withCheckOptionLists;	/* per-target-table WCO lists */
 	List	   *returningLists; /* per-target-table RETURNING tlists */
 	List	   *fdwPrivLists;	/* per-target-table FDW private data lists */
+	Bitmapset  *fdwDirectModifyPlans;	/* indices of FDW DM plans */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
 	OnConflictAction onConflictAction;	/* ON CONFLICT action */
@@ -531,6 +532,7 @@ typedef struct WorkTableScan
 typedef struct ForeignScan
 {
 	Scan		scan;
+	CmdType		operation;		/* SELECT/INSERT/UPDATE/DELETE */
 	Oid			fs_server;		/* OID of foreign server */
 	List	   *fdw_exprs;		/* expressions that FDW may evaluate */
 	List	   *fdw_private;	/* private data for FDW */

@@ -698,6 +698,158 @@ IsForeignRelUpdatable (Relation rel);
      updatability for display in the <literal>information_schema</> views.)
     </para>
 
+    <para>
+     Some inserts, updates, and deletes to foreign tables can be optimized
+     by implementing an alternative set of interfaces.  The ordinary
+     interfaces for inserts, updates, and deletes fetch rows from the remote
+     server and then modify those rows one at a time.  In some cases, this
+     row-by-row approach is necessary, but it can be inefficient.  If it is
+     possible for the foreign server to determine which rows should be
+     modified without actually retrieving them, and if there are no local
+     triggers which would affect the operation, then it is possible to
+     arrange things so that the entire operation is performed on the remote
+     server.  The interfaces described below make this possible.
+    </para>
+
+    <para>
+<programlisting>
+bool
+PlanDirectModify (PlannerInfo *root,
+                  ModifyTable *plan,
+                  Index resultRelation,
+                  int subplan_index);
+</programlisting>
+
+     Decide whether it is safe to execute a direct modification
+     on the remote server.  If so, return <literal>true</> after performing
+     planning actions needed for that.  Otherwise, return <literal>false</>.
+     This optional function is called during query planning.
+     If this function succeeds, <function>BeginDirectModify</>,
+     <function>IterateDirectModify</> and <function>EndDirectModify</> will
+     be called at the execution stage, instead.  Otherwise, the table
+     modification will be executed using the table-updating functions
+     described above.
+     The parameters are the same as for <function>PlanForeignModify</>.
+    </para>
+
+    <para>
+     To execute the direct modification on the remote server, this function
+     must rewrite the target subplan with a <structname>ForeignScan</> plan
+     node that executes the direct modification on the remote server.  The
+     <structfield>operation</> field of the <structname>ForeignScan</> must
+     be set to the <literal>CmdType</> enumeration appropriately; that is,
+     <literal>CMD_UPDATE</> for <command>UPDATE</>,
+     <literal>CMD_INSERT</> for <command>INSERT</>, and
+     <literal>CMD_DELETE</> for <command>DELETE</>.
+    </para>
+
+    <para>
+     See <xref linkend="fdw-planning"> for additional information.
+    </para>
+
+    <para>
+     If the <function>PlanDirectModify</> pointer is set to
+     <literal>NULL</>, no attempts to execute a direct modification on the
+     remote server are taken.
+    </para>
+
+    <para>
+<programlisting>
+void
+BeginDirectModify (ForeignScanState *node,
+                   int eflags);
+</programlisting>
+
+     Prepare to execute a direct modification on the remote server.
+     This is called during executor startup.  It should perform any
+     initialization needed prior to the direct modification (that should be
+     done upon the first call to <function>IterateDirectModify</>).
+     The <structname>ForeignScanState</> node has already been created, but
+     its <structfield>fdw_state</> field is still NULL.  Information about
+     the table to modify is accessible through the
+     <structname>ForeignScanState</> node (in particular, from the underlying
+     <structname>ForeignScan</> plan node, which contains any FDW-private
+     information provided by <function>PlanDirectModify</>).
+     <literal>eflags</> contains flag bits describing the executor's
+     operating mode for this plan node.
+    </para>
+
+    <para>
+     Note that when <literal>(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</> is
+     true, this function should not perform any externally-visible actions;
+     it should only do the minimum required to make the node state valid
+     for <function>ExplainDirectModify</> and <function>EndDirectModify</>.
+    </para>
+
+    <para>
+     If the <function>BeginDirectModify</> pointer is set to
+     <literal>NULL</>, no attempts to execute a direct modification on the
+     remote server are taken.
+    </para>
+
+    <para>
+<programlisting>
+TupleTableSlot *
+IterateDirectModify (ForeignScanState *node);
+</programlisting>
+
+     When the <command>INSERT</>, <command>UPDATE</> or <command>DELETE</>
+     query doesn't have a <literal>RETURNING</> clause, just return NULL
+     after a direct modification on the remote server.
+     When the query has the clause, fetch one result containing the data
+     needed for the <literal>RETURNING</> calculation, returning it in a
+     tuple table slot (the node's <structfield>ScanTupleSlot</> should be
+     used for this purpose).  The data that was actually inserted, updated
+     or deleted must be stored in the
+     <literal>es_result_relation_info-&gt;ri_projectReturning-&gt;pi_exprContext-&gt;ecxt_scantuple</>
+     of the node's <structname>EState</>.
+     Return NULL if no more rows are available.
+     Note that this is called in a short-lived memory context that will be
+     reset between invocations.  Create a memory context in
+     <function>BeginDirectModify</> if you need longer-lived storage, or use
+     the <structfield>es_query_cxt</> of the node's <structname>EState</>.
+    </para>
+
+    <para>
+     The rows returned must match the <structfield>fdw_scan_tlist</> target
+     list if one was supplied, otherwise they must match the row type of the
+     foreign table being updated.  If you choose to optimize away fetching
+     columns that are not needed for the <literal>RETURNING</> calculation,
+     you should insert nulls in those column positions, or else generate a
+     <structfield>fdw_scan_tlist</> list with those columns omitted.
+    </para>
+
+    <para>
+     Whether the query has the clause or not, the query's reported row count 
+     must be incremented by the FDW itself.  When the query doesn't have the
+     clause, the FDW must also increment the row count for the
+     <structname>ForeignScanState</> node in the <command>EXPLAIN ANALYZE</>
+     case.
+    </para>
+
+    <para>
+     If the <function>IterateDirectModify</> pointer is set to
+     <literal>NULL</>, no attempts to execute a direct modification on the
+     remote server are taken.
+    </para>
+
+    <para>
+<programlisting>
+void
+EndDirectModify (ForeignScanState *node);
+</programlisting>
+
+     Clean up following a direc modification on the remote server.  It is
+     normally not important to release palloc'd memory, but for example open
+     files and connections to the remote server should be cleaned up.
+    </para>
+
+    <para>
+     If the <function>EndDirectModify</> pointer is set to
+     <literal>NULL</>, no attempts to execute a direct modification on the
+     remote server are taken.
+    </para>
+
    </sect2>
 
    <sect2 id="fdw-callbacks-row-locking">
@@ -885,6 +1037,29 @@ ExplainForeignModify (ModifyTableState *mtstate,
 
     <para>
      If the <function>ExplainForeignModify</> pointer is set to
+     <literal>NULL</>, no additional information is printed during
+     <command>EXPLAIN</>.
+    </para>
+
+    <para>
+<programlisting>
+void
+ExplainDirectModify (ForeignScanState *node,
+                     ExplainState *es);
+</programlisting>
+
+     Print additional <command>EXPLAIN</> output for a direct modification
+     on the remote server.
+     This function can call <function>ExplainPropertyText</> and
+     related functions to add fields to the <command>EXPLAIN</> output.
+     The flag fields in <literal>es</> can be used to determine what to
+     print, and the state of the <structname>ForeignScanState</> node
+     can be inspected to provide run-time statistics in the <command>EXPLAIN
+     ANALYZE</> case.
+    </para>
+
+    <para>
+     If the <function>ExplainDirectModify</> pointer is set to
      <literal>NULL</>, no additional information is printed during
      <command>EXPLAIN</>.
     </para>
@@ -1194,7 +1369,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      The FDW callback functions <function>GetForeignRelSize</>,
      <function>GetForeignPaths</>, <function>GetForeignPlan</>,
      <function>PlanForeignModify</>, <function>GetForeignJoinPaths</>,
-     and <function>GetForeignUpperPaths</>
+     <function>GetForeignUpperPaths</>, and <function>PlanDirectModify</>
      must fit into the workings of the <productname>PostgreSQL</> planner.
      Here are some notes about what they must do.
     </para>
@@ -1391,7 +1566,8 @@ GetForeignServerByName(const char *name, bool missing_ok);
 
     <para>
      When planning an <command>UPDATE</> or <command>DELETE</>,
-     <function>PlanForeignModify</> can look up the <structname>RelOptInfo</>
+     <function>PlanForeignModify</> and <function>PlanDirectModify</>
+     can look up the <structname>RelOptInfo</>
      struct for the foreign table and make use of the
      <literal>baserel-&gt;fdw_private</> data previously created by the
      scan-planning functions.  However, in <command>INSERT</> the target

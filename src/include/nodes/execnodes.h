@@ -311,6 +311,7 @@ typedef struct JunkFilter
  *		TrigInstrument			optional runtime measurements for triggers
  *		FdwRoutine				FDW callback functions, if foreign table
  *		FdwState				available to save private state of FDW
+ *		usesFdwDirectModify		true when modifying foreign table directly
  *		WithCheckOptions		list of WithCheckOption's to be checked
  *		WithCheckOptionExprs	list of WithCheckOption expr states
  *		ConstraintExprs			array of constraint-checking expr states
@@ -334,6 +335,7 @@ typedef struct ResultRelInfo
 	Instrumentation *ri_TrigInstrument;
 	struct FdwRoutine *ri_FdwRoutine;
 	void	   *ri_FdwState;
+	bool		ri_usesFdwDirectModify;
 	List	   *ri_WithCheckOptions;
 	List	   *ri_WithCheckOptionExprs;
 	List	  **ri_ConstraintExprs;

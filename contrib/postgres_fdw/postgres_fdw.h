@@ -130,10 +130,24 @@ extern void deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, List *returningList,
 				 List **retrieved_attrs);
+extern void deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
+								   Index rtindex, Relation rel,
+								   List *targetlist,
+								   List *targetAttrs,
+								   List *remote_conds,
+								   List **params_list,
+								   List *returningList,
+								   List **retrieved_attrs);
 extern void deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
 				 List *returningList,
 				 List **retrieved_attrs);
+extern void deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
+								   Index rtindex, Relation rel,
+								   List *remote_conds,
+								   List **params_list,
+								   List *returningList,
+								   List **retrieved_attrs);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);

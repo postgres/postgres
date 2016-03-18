@@ -484,6 +484,15 @@
    extension that's listed in the foreign server's <literal>extensions</>
    option.  Operators and functions in such clauses must
    be <literal>IMMUTABLE</> as well.
+   For an <command>UPDATE</> or <command>DELETE</> query,
+   <filename>postgres_fdw</> attempts to optimize the query execution by
+   sending the whole query to the remote server if there are no query
+   <literal>WHERE</> clauses that cannot be sent to the remote server,
+   no local joins for the query, and no row-level local <literal>BEFORE</> or
+   <literal>AFTER</> triggers on the target table.  In <command>UPDATE</>,
+   expressions to assign to target columns must use only built-in data types,
+   <literal>IMMUTABLE</> operators, or <literal>IMMUTABLE</> functions,
+   to reduce the risk of misexecution of the query.
   </para>
 
   <para>

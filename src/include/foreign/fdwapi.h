@@ -97,6 +97,18 @@ typedef void (*EndForeignModify_function) (EState *estate,
 
 typedef int (*IsForeignRelUpdatable_function) (Relation rel);
 
+typedef bool (*PlanDirectModify_function) (PlannerInfo *root,
+										   ModifyTable *plan,
+										   Index resultRelation,
+										   int subplan_index);
+
+typedef void (*BeginDirectModify_function) (ForeignScanState *node,
+											int eflags);
+
+typedef TupleTableSlot *(*IterateDirectModify_function) (ForeignScanState *node);
+
+typedef void (*EndDirectModify_function) (ForeignScanState *node);
+
 typedef RowMarkType (*GetForeignRowMarkType_function) (RangeTblEntry *rte,
 												LockClauseStrength strength);
 
@@ -112,6 +124,9 @@ typedef void (*ExplainForeignModify_function) (ModifyTableState *mtstate,
 														ResultRelInfo *rinfo,
 														   List *fdw_private,
 														   int subplan_index,
+													struct ExplainState *es);
+
+typedef void (*ExplainDirectModify_function) (ForeignScanState *node,
 													struct ExplainState *es);
 
 typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
@@ -181,6 +196,10 @@ typedef struct FdwRoutine
 	ExecForeignDelete_function ExecForeignDelete;
 	EndForeignModify_function EndForeignModify;
 	IsForeignRelUpdatable_function IsForeignRelUpdatable;
+	PlanDirectModify_function PlanDirectModify;
+	BeginDirectModify_function BeginDirectModify;
+	IterateDirectModify_function IterateDirectModify;
+	EndDirectModify_function EndDirectModify;
 
 	/* Functions for SELECT FOR UPDATE/SHARE row locking */
 	GetForeignRowMarkType_function GetForeignRowMarkType;
@@ -190,6 +209,7 @@ typedef struct FdwRoutine
 	/* Support functions for EXPLAIN */
 	ExplainForeignScan_function ExplainForeignScan;
 	ExplainForeignModify_function ExplainForeignModify;
+	ExplainDirectModify_function ExplainDirectModify;
 
 	/* Support functions for ANALYZE */
 	AnalyzeForeignTable_function AnalyzeForeignTable;

@@ -55,4 +55,6 @@ extern Selectivity join_selectivity(PlannerInfo *root,
 				 JoinType jointype,
 				 SpecialJoinInfo *sjinfo);
 
+extern bool has_row_triggers(PlannerInfo *root, Index rti, CmdType event);
+
 #endif   /* PLANCAT_H */

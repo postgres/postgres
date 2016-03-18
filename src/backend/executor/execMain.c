@@ -1245,6 +1245,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	else
 		resultRelInfo->ri_FdwRoutine = NULL;
 	resultRelInfo->ri_FdwState = NULL;
+	resultRelInfo->ri_usesFdwDirectModify = false;
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 	resultRelInfo->ri_projectReturning = NULL;

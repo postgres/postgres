@@ -4906,6 +4906,7 @@ make_foreignscan(List *qptlist,
 	plan->lefttree = outer_plan;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
+	node->operation = CMD_SELECT;
 	/* fs_server will be filled in by create_foreignscan_plan */
 	node->fs_server = InvalidOid;
 	node->fdw_exprs = fdw_exprs;
@@ -6021,6 +6022,7 @@ make_modifytable(PlannerInfo *root,
 {
 	ModifyTable *node = makeNode(ModifyTable);
 	List	   *fdw_private_list;
+	Bitmapset  *direct_modify_plans;
 	ListCell   *lc;
 	int			i;
 
@@ -6078,12 +6080,14 @@ make_modifytable(PlannerInfo *root,
 	 * construct private plan data, and accumulate it all into a list.
 	 */
 	fdw_private_list = NIL;
+	direct_modify_plans = NULL;
 	i = 0;
 	foreach(lc, resultRelations)
 	{
 		Index		rti = lfirst_int(lc);
 		FdwRoutine *fdwroutine;
 		List	   *fdw_private;
+		bool		direct_modify;
 
 		/*
 		 * If possible, we want to get the FdwRoutine from our RelOptInfo for
@@ -6110,7 +6114,23 @@ make_modifytable(PlannerInfo *root,
 				fdwroutine = NULL;
 		}
 
+		/*
+		 * If the target foreign table has any row-level triggers, we can't
+		 * modify the foreign table directly.
+		 */
+		direct_modify = false;
 		if (fdwroutine != NULL &&
+			fdwroutine->PlanDirectModify != NULL &&
+			fdwroutine->BeginDirectModify != NULL &&
+			fdwroutine->IterateDirectModify != NULL &&
+			fdwroutine->EndDirectModify != NULL &&
+			!has_row_triggers(root, rti, operation))
+			direct_modify = fdwroutine->PlanDirectModify(root, node, rti, i);
+		if (direct_modify)
+			direct_modify_plans = bms_add_member(direct_modify_plans, i);
+
+		if (!direct_modify &&
+			fdwroutine != NULL &&
 			fdwroutine->PlanForeignModify != NULL)
 			fdw_private = fdwroutine->PlanForeignModify(root, node, rti, i);
 		else
@@ -6119,6 +6139,7 @@ make_modifytable(PlannerInfo *root,
 		i++;
 	}
 	node->fdwPrivLists = fdw_private_list;
+	node->fdwDirectModifyPlans = direct_modify_plans;
 
 	return node;
 }

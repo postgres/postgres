@@ -900,7 +900,29 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			pname = sname = "WorkTable Scan";
 			break;
 		case T_ForeignScan:
-			pname = sname = "Foreign Scan";
+			sname = "Foreign Scan";
+			switch (((ForeignScan *) plan)->operation)
+			{
+				case CMD_SELECT:
+					pname = "Foreign Scan";
+					operation = "Select";
+					break;
+				case CMD_INSERT:
+					pname = "Foreign Insert";
+					operation = "Insert";
+					break;
+				case CMD_UPDATE:
+					pname = "Foreign Update";
+					operation = "Update";
+					break;
+				case CMD_DELETE:
+					pname = "Foreign Delete";
+					operation = "Delete";
+					break;
+				default:
+					pname = "???";
+					break;
+			}
 			break;
 		case T_CustomScan:
 			sname = "Custom Scan";
@@ -1648,6 +1670,19 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 		return;
 	if (IsA(plan, RecursiveUnion))
 		return;
+	/*
+	 * Likewise for ForeignScan that executes a direct INSERT/UPDATE/DELETE
+	 *
+	 * Note: the tlist for a ForeignScan that executes a direct INSERT/UPDATE
+	 * might contain subplan output expressions that are confusing in this
+	 * context.  The tlist for a ForeignScan that executes a direct UPDATE/
+	 * DELETE always contains "junk" target columns to identify the exact row
+	 * to update or delete, which would be confusing in this context.  So, we
+	 * suppress it in all the cases.
+	 */
+	if (IsA(plan, ForeignScan) &&
+		((ForeignScan *) plan)->operation != CMD_SELECT)
+		return;
 
 	/* Set up deparsing context */
 	context = set_deparse_context_planstate(es->deparse_cxt,
@@ -2236,8 +2271,16 @@ show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es)
 	FdwRoutine *fdwroutine = fsstate->fdwroutine;
 
 	/* Let the FDW emit whatever fields it wants */
-	if (fdwroutine->ExplainForeignScan != NULL)
-		fdwroutine->ExplainForeignScan(fsstate, es);
+	if (((ForeignScan *) fsstate->ss.ps.plan)->operation != CMD_SELECT)
+	{
+		if (fdwroutine->ExplainDirectModify != NULL)
+			fdwroutine->ExplainDirectModify(fsstate, es);
+	}
+	else
+	{
+		if (fdwroutine->ExplainForeignScan != NULL)
+			fdwroutine->ExplainForeignScan(fsstate, es);
+	}
 }
 
 /*
@@ -2623,8 +2666,10 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 			}
 		}
 
-		/* Give FDW a chance */
-		if (fdwroutine && fdwroutine->ExplainForeignModify != NULL)
+		/* Give FDW a chance if needed */
+		if (!resultRelInfo->ri_usesFdwDirectModify &&
+			fdwroutine != NULL &&
+			fdwroutine->ExplainForeignModify != NULL)
 		{
 			List	   *fdw_private = (List *) list_nth(node->fdwPrivLists, j);
 

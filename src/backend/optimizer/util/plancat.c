@@ -1540,3 +1540,50 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 	}
 	return false;
 }
+
+
+/*
+ * has_row_triggers
+ *
+ * Detect whether the specified relation has any row-level triggers for event.
+ */
+bool
+has_row_triggers(PlannerInfo *root, Index rti, CmdType event)
+{
+	RangeTblEntry *rte = planner_rt_fetch(rti, root);
+	Relation	relation;
+	TriggerDesc *trigDesc;
+	bool		result = false;
+
+	/* Assume we already have adequate lock */
+	relation = heap_open(rte->relid, NoLock);
+
+	trigDesc = relation->trigdesc;
+	switch (event)
+	{
+		case CMD_INSERT:
+			if (trigDesc &&
+				(trigDesc->trig_insert_after_row ||
+				 trigDesc->trig_insert_before_row))
+				result = true;
+			break;
+		case CMD_UPDATE:
+			if (trigDesc &&
+				(trigDesc->trig_update_after_row ||
+				 trigDesc->trig_update_before_row))
+				result = true;
+			break;
+		case CMD_DELETE:
+			if (trigDesc &&
+				(trigDesc->trig_delete_after_row ||
+				 trigDesc->trig_delete_before_row))
+				result = true;
+			break;
+		default:
+			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			break;
+	}
+
+	heap_close(relation, NoLock);
+	return result;
+}

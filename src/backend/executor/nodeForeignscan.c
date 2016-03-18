@@ -48,7 +48,10 @@ ForeignNext(ForeignScanState *node)
 
 	/* Call the Iterate function in short-lived context */
 	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-	slot = node->fdwroutine->IterateForeignScan(node);
+	if (plan->operation != CMD_SELECT)
+		slot = node->fdwroutine->IterateDirectModify(node);
+	else
+		slot = node->fdwroutine->IterateForeignScan(node);
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
@@ -226,7 +229,10 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	/*
 	 * Tell the FDW to initialize the scan.
 	 */
-	fdwroutine->BeginForeignScan(scanstate, eflags);
+	if (node->operation != CMD_SELECT)
+		fdwroutine->BeginDirectModify(scanstate, eflags);
+	else
+		fdwroutine->BeginForeignScan(scanstate, eflags);
 
 	return scanstate;
 }
@@ -240,8 +246,13 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 void
 ExecEndForeignScan(ForeignScanState *node)
 {
+	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
+
 	/* Let the FDW shut down */
-	node->fdwroutine->EndForeignScan(node);
+	if (plan->operation != CMD_SELECT)
+		node->fdwroutine->EndDirectModify(node);
+	else
+		node->fdwroutine->EndForeignScan(node);
 
 	/* Shut down any outer plan. */
 	if (outerPlanState(node))

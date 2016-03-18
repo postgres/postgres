@@ -1315,6 +1315,69 @@ deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 }
 
 /*
+ * deparse remote UPDATE statement
+ *
+ * The statement text is appended to buf, and we also create an integer List
+ * of the columns being retrieved by RETURNING (if any), which is returned
+ * to *retrieved_attrs.
+ */
+void
+deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
+					   Index rtindex, Relation rel,
+					   List *targetlist,
+					   List *targetAttrs,
+					   List *remote_conds,
+					   List **params_list,
+					   List *returningList,
+					   List **retrieved_attrs)
+{
+	RelOptInfo *baserel = root->simple_rel_array[rtindex];
+	deparse_expr_cxt context;
+	int			nestlevel;
+	bool		first;
+	ListCell   *lc;
+
+	/* Set up context struct for recursion */
+	context.root = root;
+	context.foreignrel = baserel;
+	context.buf = buf;
+	context.params_list = params_list;
+
+	appendStringInfoString(buf, "UPDATE ");
+	deparseRelation(buf, rel);
+	appendStringInfoString(buf, " SET ");
+
+	/* Make sure any constants in the exprs are printed portably */
+	nestlevel = set_transmission_modes();
+
+	first = true;
+	foreach(lc, targetAttrs)
+	{
+		int			attnum = lfirst_int(lc);
+		TargetEntry *tle = get_tle_by_resno(targetlist, attnum);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		deparseColumnRef(buf, rtindex, attnum, root, false);
+		appendStringInfoString(buf, " = ");
+		deparseExpr((Expr *) tle->expr, &context);
+	}
+
+	reset_transmission_modes(nestlevel);
+
+	if (remote_conds)
+	{
+		appendStringInfo(buf, " WHERE ");
+		appendConditions(remote_conds, &context);
+	}
+
+	deparseReturningList(buf, root, rtindex, rel, false,
+						 returningList, retrieved_attrs);
+}
+
+/*
  * deparse remote DELETE statement
  *
  * The statement text is appended to buf, and we also create an integer List
@@ -1333,6 +1396,43 @@ deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 
 	deparseReturningList(buf, root, rtindex, rel,
 					   rel->trigdesc && rel->trigdesc->trig_delete_after_row,
+						 returningList, retrieved_attrs);
+}
+
+/*
+ * deparse remote DELETE statement
+ *
+ * The statement text is appended to buf, and we also create an integer List
+ * of the columns being retrieved by RETURNING (if any), which is returned
+ * to *retrieved_attrs.
+ */
+void
+deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
+					   Index rtindex, Relation rel,
+					   List *remote_conds,
+					   List **params_list,
+					   List *returningList,
+					   List **retrieved_attrs)
+{
+	RelOptInfo *baserel = root->simple_rel_array[rtindex];
+	deparse_expr_cxt context;
+
+	/* Set up context struct for recursion */
+	context.root = root;
+	context.foreignrel = baserel;
+	context.buf = buf;
+	context.params_list = params_list;
+
+	appendStringInfoString(buf, "DELETE FROM ");
+	deparseRelation(buf, rel);
+
+	if (remote_conds)
+	{
+		appendStringInfo(buf, " WHERE ");
+		appendConditions(remote_conds, &context);
+	}
+
+	deparseReturningList(buf, root, rtindex, rel, false,
 						 returningList, retrieved_attrs);
 }
 

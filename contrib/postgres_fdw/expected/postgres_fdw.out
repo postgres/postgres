@@ -2259,7 +2259,26 @@ INSERT INTO ft2 (c1,c2,c3)
 (3 rows)
 
 INSERT INTO ft2 (c1,c2,c3) VALUES (1104,204,'ddd'), (1105,205,'eee');
+EXPLAIN (verbose, costs off)
+UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;              -- can be pushed down
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Update on public.ft2
+   ->  Foreign Update on public.ft2
+         Remote SQL: UPDATE "S 1"."T 1" SET c2 = (c2 + 300), c3 = (c3 || '_update3'::text) WHERE ((("C 1" % 10) = 3))
+(3 rows)
+
 UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;
+EXPLAIN (verbose, costs off)
+UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;  -- can be pushed down
+                                                                            QUERY PLAN                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Update on public.ft2
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   ->  Foreign Update on public.ft2
+         Remote SQL: UPDATE "S 1"."T 1" SET c2 = (c2 + 400), c3 = (c3 || '_update7'::text) WHERE ((("C 1" % 10) = 7)) RETURNING "C 1", c2, c3, c4, c5, c6, c7, c8
+(4 rows)
+
 UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;
   c1  | c2  |         c3         |              c4              |            c5            | c6 |     c7     | c8  
 ------+-----+--------------------+------------------------------+--------------------------+----+------------+-----
@@ -2369,7 +2388,7 @@ UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING 
 
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
-  FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
+  FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;                               -- can't be pushed down
                                                                                                                                         QUERY PLAN                                                                                                                                        
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Update on public.ft2
@@ -2394,16 +2413,14 @@ UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
 EXPLAIN (verbose, costs off)
-  DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
-                                       QUERY PLAN                                       
-----------------------------------------------------------------------------------------
+  DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;                               -- can be pushed down
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
  Delete on public.ft2
    Output: c1, c4
-   Remote SQL: DELETE FROM "S 1"."T 1" WHERE ctid = $1 RETURNING "C 1", c4
-   ->  Foreign Scan on public.ft2
-         Output: ctid
-         Remote SQL: SELECT ctid FROM "S 1"."T 1" WHERE ((("C 1" % 10) = 5)) FOR UPDATE
-(6 rows)
+   ->  Foreign Delete on public.ft2
+         Remote SQL: DELETE FROM "S 1"."T 1" WHERE ((("C 1" % 10) = 5)) RETURNING "C 1", c4
+(4 rows)
 
 DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
   c1  |              c4              
@@ -2514,7 +2531,7 @@ DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
 (103 rows)
 
 EXPLAIN (verbose, costs off)
-DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
+DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;                -- can't be pushed down
                                                                                                               QUERY PLAN                                                                                                              
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Delete on public.ft2
@@ -3379,16 +3396,14 @@ INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
 (1 row)
 
 EXPLAIN (verbose, costs off)
-UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
-                                                    QUERY PLAN                                                     
--------------------------------------------------------------------------------------------------------------------
+UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;             -- can be pushed down
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
  Update on public.ft2
    Output: (tableoid)::regclass
-   Remote SQL: UPDATE "S 1"."T 1" SET c3 = $2 WHERE ctid = $1
-   ->  Foreign Scan on public.ft2
-         Output: c1, c2, NULL::integer, 'bar'::text, c4, c5, c6, c7, c8, ctid
-         Remote SQL: SELECT "C 1", c2, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" = 9999)) FOR UPDATE
-(6 rows)
+   ->  Foreign Update on public.ft2
+         Remote SQL: UPDATE "S 1"."T 1" SET c3 = 'bar'::text WHERE (("C 1" = 9999))
+(4 rows)
 
 UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
  tableoid 
@@ -3397,16 +3412,14 @@ UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
 (1 row)
 
 EXPLAIN (verbose, costs off)
-DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
+DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;                       -- can be pushed down
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Delete on public.ft2
    Output: (tableoid)::regclass
-   Remote SQL: DELETE FROM "S 1"."T 1" WHERE ctid = $1
-   ->  Foreign Scan on public.ft2
-         Output: ctid
-         Remote SQL: SELECT ctid FROM "S 1"."T 1" WHERE (("C 1" = 9999)) FOR UPDATE
-(6 rows)
+   ->  Foreign Delete on public.ft2
+         Remote SQL: DELETE FROM "S 1"."T 1" WHERE (("C 1" = 9999))
+(4 rows)
 
 DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
  tableoid 
@@ -3560,7 +3573,7 @@ CONTEXT:  Remote SQL command: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6,
 UPDATE ft1 SET c2 = -c2 WHERE c1 = 1;  -- c2positive
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
 DETAIL:  Failing row contains (1, -1, 00001_trig_update, 1970-01-02 08:00:00+00, 1970-01-02 00:00:00, 1, 1         , foo).
-CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2 WHERE ctid = $1
+CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = (- c2) WHERE (("C 1" = 1))
 -- Test savepoint/rollback behavior
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
  c2  | count 
@@ -3719,7 +3732,7 @@ savepoint s3;
 update ft2 set c2 = -2 where c2 = 42 and c1 = 10; -- fail on remote side
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
 DETAIL:  Failing row contains (10, -2, 00010_trig_update_trig_update, 1970-01-11 08:00:00+00, 1970-01-11 00:00:00, 0, 0         , foo).
-CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2 WHERE ctid = $1
+CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = (-2) WHERE ((c2 = 42)) AND (("C 1" = 10))
 rollback to savepoint s3;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
  c2  | count 
@@ -3939,7 +3952,7 @@ CONTEXT:  Remote SQL command: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6,
 UPDATE ft1 SET c2 = -c2 WHERE c1 = 1;  -- c2positive
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
 DETAIL:  Failing row contains (1, -1, 00001_trig_update, 1970-01-02 08:00:00+00, 1970-01-02 00:00:00, 1, 1         , foo).
-CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2 WHERE ctid = $1
+CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = (- c2) WHERE (("C 1" = 1))
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c2positive;
 -- But inconsistent check constraints provide inconsistent results
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2negative CHECK (c2 < 0);
@@ -4332,6 +4345,199 @@ NOTICE:  NEW: (13,"test triggered !")
  (0,27)
 (1 row)
 
+-- cleanup
+DROP TRIGGER trig_row_before ON rem1;
+DROP TRIGGER trig_row_after ON rem1;
+DROP TRIGGER trig_local_before ON loc1;
+-- Test direct foreign table modification functionality
+-- Test with statement-level triggers
+CREATE TRIGGER trig_stmt_before
+	BEFORE DELETE OR INSERT OR UPDATE ON rem1
+	FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Update on public.rem1
+   ->  Foreign Update on public.rem1
+         Remote SQL: UPDATE public.loc1 SET f2 = ''::text
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+DROP TRIGGER trig_stmt_before ON rem1;
+CREATE TRIGGER trig_stmt_after
+	AFTER DELETE OR INSERT OR UPDATE ON rem1
+	FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Update on public.rem1
+   ->  Foreign Update on public.rem1
+         Remote SQL: UPDATE public.loc1 SET f2 = ''::text
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+DROP TRIGGER trig_stmt_after ON rem1;
+-- Test with row-level ON INSERT triggers
+CREATE TRIGGER trig_row_before_insert
+BEFORE INSERT ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Update on public.rem1
+   ->  Foreign Update on public.rem1
+         Remote SQL: UPDATE public.loc1 SET f2 = ''::text
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+DROP TRIGGER trig_row_before_insert ON rem1;
+CREATE TRIGGER trig_row_after_insert
+AFTER INSERT ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Update on public.rem1
+   ->  Foreign Update on public.rem1
+         Remote SQL: UPDATE public.loc1 SET f2 = ''::text
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+DROP TRIGGER trig_row_after_insert ON rem1;
+-- Test with row-level ON UPDATE triggers
+CREATE TRIGGER trig_row_before_update
+BEFORE UPDATE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can't be pushed down
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Update on public.rem1
+   Remote SQL: UPDATE public.loc1 SET f2 = $2 WHERE ctid = $1
+   ->  Foreign Scan on public.rem1
+         Output: f1, ''::text, ctid, rem1.*
+         Remote SQL: SELECT f1, f2, ctid FROM public.loc1 FOR UPDATE
+(5 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+DROP TRIGGER trig_row_before_update ON rem1;
+CREATE TRIGGER trig_row_after_update
+AFTER UPDATE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can't be pushed down
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Update on public.rem1
+   Remote SQL: UPDATE public.loc1 SET f2 = $2 WHERE ctid = $1 RETURNING f1, f2
+   ->  Foreign Scan on public.rem1
+         Output: f1, ''::text, ctid, rem1.*
+         Remote SQL: SELECT f1, f2, ctid FROM public.loc1 FOR UPDATE
+(5 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+DROP TRIGGER trig_row_after_update ON rem1;
+-- Test with row-level ON DELETE triggers
+CREATE TRIGGER trig_row_before_delete
+BEFORE DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Update on public.rem1
+   ->  Foreign Update on public.rem1
+         Remote SQL: UPDATE public.loc1 SET f2 = ''::text
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can't be pushed down
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Delete on public.rem1
+   Remote SQL: DELETE FROM public.loc1 WHERE ctid = $1
+   ->  Foreign Scan on public.rem1
+         Output: ctid, rem1.*
+         Remote SQL: SELECT f1, f2, ctid FROM public.loc1 FOR UPDATE
+(5 rows)
+
+DROP TRIGGER trig_row_before_delete ON rem1;
+CREATE TRIGGER trig_row_after_delete
+AFTER DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Update on public.rem1
+   ->  Foreign Update on public.rem1
+         Remote SQL: UPDATE public.loc1 SET f2 = ''::text
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can't be pushed down
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Delete on public.rem1
+   Remote SQL: DELETE FROM public.loc1 WHERE ctid = $1 RETURNING f1, f2
+   ->  Foreign Scan on public.rem1
+         Output: ctid, rem1.*
+         Remote SQL: SELECT f1, f2, ctid FROM public.loc1 FOR UPDATE
+(5 rows)
+
+DROP TRIGGER trig_row_after_delete ON rem1;
 -- ===================================================================
 -- test inheritance features
 -- ===================================================================
@@ -4801,6 +5007,56 @@ fetch from c;
 update bar set f2 = null where current of c;
 ERROR:  WHERE CURRENT OF is not supported for this table type
 rollback;
+explain (verbose, costs off)
+delete from foo where f1 < 5 returning *;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Delete on public.foo
+   Output: foo.f1, foo.f2
+   Delete on public.foo
+   Foreign Delete on public.foo2
+   ->  Index Scan using i_foo_f1 on public.foo
+         Output: foo.ctid
+         Index Cond: (foo.f1 < 5)
+   ->  Foreign Delete on public.foo2
+         Remote SQL: DELETE FROM public.loct1 WHERE ((f1 < 5)) RETURNING f1, f2
+(9 rows)
+
+delete from foo where f1 < 5 returning *;
+ f1 | f2 
+----+----
+  1 |  1
+  3 |  3
+  0 |  0
+  2 |  2
+  4 |  4
+(5 rows)
+
+explain (verbose, costs off)
+update bar set f2 = f2 + 100 returning *;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Update on public.bar
+   Output: bar.f1, bar.f2
+   Update on public.bar
+   Foreign Update on public.bar2
+   ->  Seq Scan on public.bar
+         Output: bar.f1, (bar.f2 + 100), bar.ctid
+   ->  Foreign Update on public.bar2
+         Remote SQL: UPDATE public.loct2 SET f2 = (f2 + 100) RETURNING f1, f2
+(8 rows)
+
+update bar set f2 = f2 + 100 returning *;
+ f1 | f2  
+----+-----
+  1 | 311
+  2 | 322
+  6 | 266
+  3 | 333
+  4 | 344
+  7 | 277
+(6 rows)
+
 drop table foo cascade;
 NOTICE:  drop cascades to foreign table foo2
 drop table bar cascade;

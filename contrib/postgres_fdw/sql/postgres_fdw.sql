@@ -604,28 +604,32 @@ INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 INSERT INTO ft2 (c1,c2,c3)
   VALUES (1101,201,'aaa'), (1102,202,'bbb'), (1103,203,'ccc') RETURNING *;
 INSERT INTO ft2 (c1,c2,c3) VALUES (1104,204,'ddd'), (1105,205,'eee');
+EXPLAIN (verbose, costs off)
+UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;              -- can be pushed down
 UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;
+EXPLAIN (verbose, costs off)
+UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;  -- can be pushed down
 UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
-  FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
+  FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;                               -- can't be pushed down
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
 EXPLAIN (verbose, costs off)
-  DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
+  DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;                               -- can be pushed down
 DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
 EXPLAIN (verbose, costs off)
-DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
+DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;                -- can't be pushed down
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
 SELECT c1,c2,c3,c4 FROM ft2 ORDER BY c1;
 EXPLAIN (verbose, costs off)
 INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
 INSERT INTO ft2 (c1,c2,c3) VALUES (9999,999,'foo') RETURNING tableoid::regclass;
 EXPLAIN (verbose, costs off)
-UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
+UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;             -- can be pushed down
 UPDATE ft2 SET c3 = 'bar' WHERE c1 = 9999 RETURNING tableoid::regclass;
 EXPLAIN (verbose, costs off)
-DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
+DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;                       -- can be pushed down
 DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
 
 -- Test that trigger on remote table works as expected
@@ -954,6 +958,90 @@ UPDATE rem1 SET f2 = 'testo';
 -- Test returning a system attribute
 INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid;
 
+-- cleanup
+DROP TRIGGER trig_row_before ON rem1;
+DROP TRIGGER trig_row_after ON rem1;
+DROP TRIGGER trig_local_before ON loc1;
+
+
+-- Test direct foreign table modification functionality
+
+-- Test with statement-level triggers
+CREATE TRIGGER trig_stmt_before
+	BEFORE DELETE OR INSERT OR UPDATE ON rem1
+	FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+DROP TRIGGER trig_stmt_before ON rem1;
+
+CREATE TRIGGER trig_stmt_after
+	AFTER DELETE OR INSERT OR UPDATE ON rem1
+	FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+DROP TRIGGER trig_stmt_after ON rem1;
+
+-- Test with row-level ON INSERT triggers
+CREATE TRIGGER trig_row_before_insert
+BEFORE INSERT ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+DROP TRIGGER trig_row_before_insert ON rem1;
+
+CREATE TRIGGER trig_row_after_insert
+AFTER INSERT ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+DROP TRIGGER trig_row_after_insert ON rem1;
+
+-- Test with row-level ON UPDATE triggers
+CREATE TRIGGER trig_row_before_update
+BEFORE UPDATE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can't be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+DROP TRIGGER trig_row_before_update ON rem1;
+
+CREATE TRIGGER trig_row_after_update
+AFTER UPDATE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can't be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+DROP TRIGGER trig_row_after_update ON rem1;
+
+-- Test with row-level ON DELETE triggers
+CREATE TRIGGER trig_row_before_delete
+BEFORE DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can't be pushed down
+DROP TRIGGER trig_row_before_delete ON rem1;
+
+CREATE TRIGGER trig_row_after_delete
+AFTER DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f2 = '';          -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can't be pushed down
+DROP TRIGGER trig_row_after_delete ON rem1;
+
 -- ===================================================================
 -- test inheritance features
 -- ===================================================================
@@ -1084,6 +1172,13 @@ declare c cursor for select * from bar where f1 = 7;
 fetch from c;
 update bar set f2 = null where current of c;
 rollback;
+
+explain (verbose, costs off)
+delete from foo where f1 < 5 returning *;
+delete from foo where f1 < 5 returning *;
+explain (verbose, costs off)
+update bar set f2 = f2 + 100 returning *;
+update bar set f2 = f2 + 100 returning *;
 
 drop table foo cascade;
 drop table bar cascade;
