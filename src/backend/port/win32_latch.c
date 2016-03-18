@@ -181,14 +181,11 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	do
 	{
 		/*
-		 * Reset the event, and check if the latch is set already. If someone
-		 * sets the latch between this and the WaitForMultipleObjects() call
-		 * below, the setter will set the event and WaitForMultipleObjects()
-		 * will return immediately.
+		 * The comment in unix_latch.c's equivalent to this applies here as
+		 * well. At least after mentally replacing self-pipe with windows
+		 * event. There's no danger of overflowing, as "Setting an event that
+		 * is already set has no effect.".
 		 */
-		if (!ResetEvent(latchevent))
-			elog(ERROR, "ResetEvent failed: error code %lu", GetLastError());
-
 		if ((wakeEvents & WL_LATCH_SET) && latch->is_set)
 		{
 			result |= WL_LATCH_SET;
@@ -217,9 +214,13 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		else if (rc == WAIT_OBJECT_0 + 1)
 		{
 			/*
-			 * Latch is set.  We'll handle that on next iteration of loop, but
-			 * let's not waste the cycles to update cur_timeout below.
+			 * Reset the event.  We'll re-check the, potentially, set latch on
+			 * next iteration of loop, but let's not waste the cycles to
+			 * update cur_timeout below.
 			 */
+			if (!ResetEvent(latchevent))
+				elog(ERROR, "ResetEvent failed: error code %lu", GetLastError());
+
 			continue;
 		}
 		else if ((wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE)) &&
