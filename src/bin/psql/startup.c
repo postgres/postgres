@@ -336,10 +336,10 @@ main(int argc, char *argv[])
 				if (pset.echo == PSQL_ECHO_ALL)
 					puts(cell->val);
 
-				scan_state = psql_scan_create();
+				scan_state = psql_scan_create(&psqlscan_callbacks);
 				psql_scan_setup(scan_state,
-								cell->val,
-								strlen(cell->val));
+								cell->val, strlen(cell->val),
+								pset.encoding, standard_strings());
 
 				successResult = HandleSlashCmds(scan_state, NULL) != PSQL_CMD_ERROR
 					? EXIT_SUCCESS : EXIT_FAILURE;

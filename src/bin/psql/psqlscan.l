@@ -2,7 +2,7 @@
 /*-------------------------------------------------------------------------
  *
  * psqlscan.l
- *	  lexical scanner for psql
+ *	  lexical scanner for psql (and other frontend programs)
  *
  * This code is mainly needed to determine where the end of a SQL statement
  * is: we are looking for semicolons that are not within quotes, comments,
@@ -41,11 +41,7 @@
 
 #include "psqlscan.h"
 
-#include <ctype.h>
-
-#include "common.h"
-#include "settings.h"
-#include "variables.h"
+#include "libpq-fe.h"
 
 
 /*
@@ -83,6 +79,7 @@ typedef struct PsqlScanStateData
 	/* safe_encoding, curline, refline are used by emit() to replace FFs */
 	int			encoding;		/* encoding being used now */
 	bool		safe_encoding;	/* is current encoding "safe"? */
+	bool		std_strings;	/* are string literals standard? */
 	const char *curline;		/* actual flex input string for cur buf */
 	const char *refline;		/* original data for cur buffer */
 
@@ -94,6 +91,11 @@ typedef struct PsqlScanStateData
 	int			paren_depth;	/* depth of nesting in parentheses */
 	int			xcdepth;		/* depth of nesting in slash-star comments */
 	char	   *dolqstart;		/* current $foo$ quote start string */
+
+	/*
+	 * Callback functions provided by the program making use of the lexer.
+	 */
+	const PsqlScanCallbacks *callbacks;
 } PsqlScanStateData;
 
 static PsqlScanState cur_state;	/* current state while active */
@@ -135,6 +137,7 @@ static void escape_variable(bool as_ident);
 %option nounput
 %option noyywrap
 %option warn
+%option prefix="psql_yy"
 
 /*
  * All of the following definitions and rules should exactly match
@@ -508,7 +511,7 @@ other			.
 				}
 
 {xqstart}		{
-					if (standard_strings())
+					if (cur_state->std_strings)
 						BEGIN(xq);
 					else
 						BEGIN(xe);
@@ -737,10 +740,15 @@ other			.
 :{variable_char}+	{
 					/* Possible psql variable substitution */
 					char   *varname;
-					const char *value;
+					char   *value;
 
 					varname = extract_substring(yytext + 1, yyleng - 1);
-					value = GetVariable(pset.vars, varname);
+					if (cur_state->callbacks->get_variable)
+						value = cur_state->callbacks->get_variable(varname,
+																   false,
+																   false);
+					else
+						value = NULL;
 
 					if (value)
 					{
@@ -748,8 +756,8 @@ other			.
 						if (var_is_current_source(cur_state, varname))
 						{
 							/* Recursive expansion --- don't go there */
-							psql_error("skipping recursive expansion of variable \"%s\"\n",
-									   varname);
+							cur_state->callbacks->write_error("skipping recursive expansion of variable \"%s\"\n",
+															  varname);
 							/* Instead copy the string as is */
 							ECHO;
 						}
@@ -759,6 +767,7 @@ other			.
 							push_new_buffer(value, varname);
 							/* yy_scan_string already made buffer active */
 						}
+						free(value);
 					}
 					else
 					{
@@ -1026,15 +1035,18 @@ other			.
 
 :{variable_char}+	{
 					/* Possible psql variable substitution */
-					if (option_type == OT_NO_EVAL)
+					if (option_type == OT_NO_EVAL ||
+						cur_state->callbacks->get_variable == NULL)
 						ECHO;
 					else
 					{
 						char   *varname;
-						const char *value;
+						char   *value;
 
 						varname = extract_substring(yytext + 1, yyleng - 1);
-						value = GetVariable(pset.vars, varname);
+						value = cur_state->callbacks->get_variable(varname,
+																   false,
+																   false);
 						free(varname);
 
 						/*
@@ -1045,7 +1057,10 @@ other			.
 						 * Note that we needn't guard against recursion here.
 						 */
 						if (value)
+						{
 							appendPQExpBufferStr(output_buf, value);
+							free(value);
+						}
 						else
 							ECHO;
 
@@ -1191,13 +1206,19 @@ other			.
 
 /*
  * Create a lexer working state struct.
+ *
+ * callbacks is a struct of function pointers that encapsulate some
+ * behavior we need from the surrounding program.  This struct must
+ * remain valid for the lifespan of the PsqlScanState.
  */
 PsqlScanState
-psql_scan_create(void)
+psql_scan_create(const PsqlScanCallbacks *callbacks)
 {
 	PsqlScanState state;
 
 	state = (PsqlScanStateData *) pg_malloc0(sizeof(PsqlScanStateData));
+
+	state->callbacks = callbacks;
 
 	psql_scan_reset(state);
 
@@ -1225,18 +1246,25 @@ psql_scan_destroy(PsqlScanState state)
  * be called when scanning is complete.  Note that the lexer retains
  * a pointer to the storage at *line --- this string must not be altered
  * or freed until after psql_scan_finish is called.
+ *
+ * encoding is the libpq identifier for the character encoding in use,
+ * and std_strings says whether standard_conforming_strings is on.
  */
 void
 psql_scan_setup(PsqlScanState state,
-				const char *line, int line_len)
+				const char *line, int line_len,
+				int encoding, bool std_strings)
 {
 	/* Mustn't be scanning already */
 	Assert(state->scanbufhandle == NULL);
 	Assert(state->buffer_stack == NULL);
 
 	/* Do we need to hack the character set encoding? */
-	state->encoding = pset.encoding;
-	state->safe_encoding = pg_valid_server_encoding_id(state->encoding);
+	state->encoding = encoding;
+	state->safe_encoding = pg_valid_server_encoding_id(encoding);
+
+	/* Save standard-strings flag as well */
+	state->std_strings = std_strings;
 
 	/* needed for prepare_buffer */
 	cur_state = state;
@@ -1615,7 +1643,7 @@ psql_scan_slash_option(PsqlScanState state,
 					{
 						if (!inquotes && type == OT_SQLID)
 							*cp = pg_tolower((unsigned char) *cp);
-						cp += PQmblen(cp, pset.encoding);
+						cp += PQmblen(cp, state->encoding);
 					}
 				}
 			}
@@ -1936,53 +1964,31 @@ extract_substring(const char *txt, int len)
  * If the variable name is found, escape its value using the appropriate
  * quoting method and emit the value to output_buf.  (Since the result is
  * surely quoted, there is never any reason to rescan it.)  If we don't
- * find the variable or the escaping function fails, emit the token as-is.
+ * find the variable or escaping fails, emit the token as-is.
  */
 static void
 escape_variable(bool as_ident)
 {
 	char	   *varname;
-	const char *value;
+	char	   *value;
 
 	/* Variable lookup. */
 	varname = extract_substring(yytext + 2, yyleng - 3);
-	value = GetVariable(pset.vars, varname);
+	if (cur_state->callbacks->get_variable)
+		value = cur_state->callbacks->get_variable(varname, true, as_ident);
+	else
+		value = NULL;
 	free(varname);
 
-	/* Escaping. */
 	if (value)
 	{
-		if (!pset.db)
-			psql_error("can't escape without active connection\n");
-		else
-		{
-			char   *escaped_value;
-
-			if (as_ident)
-				escaped_value =
-					PQescapeIdentifier(pset.db, value, strlen(value));
-			else
-				escaped_value =
-					PQescapeLiteral(pset.db, value, strlen(value));
-
-			if (escaped_value == NULL)
-			{
-				const char *error = PQerrorMessage(pset.db);
-
-				psql_error("%s", error);
-			}
-			else
-			{
-				appendPQExpBufferStr(output_buf, escaped_value);
-				PQfreemem(escaped_value);
-				return;
-			}
-		}
+		/* Emit the suitably-escaped value */
+		appendPQExpBufferStr(output_buf, value);
+		free(value);
 	}
-
-	/*
-	 * If we reach this point, some kind of error has occurred.  Emit the
-	 * original text into the output buffer.
-	 */
-	emit(yytext, yyleng);
+	else
+	{
+		/* Emit original token as-is */
+		emit(yytext, yyleng);
+	}
 }

@@ -36,12 +36,23 @@ enum slash_option_type
 	OT_NO_EVAL					/* no expansion of backticks or variables */
 };
 
+/* Callback functions to be used by the lexer */
+typedef struct PsqlScanCallbacks
+{
+	/* Fetch value of a variable, as a pfree'able string; NULL if unknown */
+	/* This pointer can be NULL if no variable substitution is wanted */
+	char	   *(*get_variable) (const char *varname, bool escape, bool as_ident);
+	/* Print an error message someplace appropriate */
+	void		(*write_error) (const char *fmt,...) pg_attribute_printf(1, 2);
+} PsqlScanCallbacks;
 
-extern PsqlScanState psql_scan_create(void);
+
+extern PsqlScanState psql_scan_create(const PsqlScanCallbacks *callbacks);
 extern void psql_scan_destroy(PsqlScanState state);
 
 extern void psql_scan_setup(PsqlScanState state,
-				const char *line, int line_len);
+				const char *line, int line_len,
+				int encoding, bool std_strings);
 extern void psql_scan_finish(PsqlScanState state);
 
 extern PsqlScanResult psql_scan(PsqlScanState state,

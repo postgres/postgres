@@ -108,6 +108,65 @@ setQFout(const char *fname)
 
 
 /*
+ * Variable-fetching callback for flex lexer
+ *
+ * If the specified variable exists, return its value as a string (malloc'd
+ * and expected to be freed by the caller); else return NULL.
+ *
+ * If "escape" is true, return the value suitably quoted and escaped,
+ * as an identifier or string literal depending on "as_ident".
+ * (Failure in escaping should lead to returning NULL.)
+ */
+char *
+psql_get_variable(const char *varname, bool escape, bool as_ident)
+{
+	char	   *result;
+	const char *value;
+
+	value = GetVariable(pset.vars, varname);
+	if (!value)
+		return NULL;
+
+	if (escape)
+	{
+		char	   *escaped_value;
+
+		if (!pset.db)
+		{
+			psql_error("can't escape without active connection\n");
+			return NULL;
+		}
+
+		if (as_ident)
+			escaped_value =
+				PQescapeIdentifier(pset.db, value, strlen(value));
+		else
+			escaped_value =
+				PQescapeLiteral(pset.db, value, strlen(value));
+
+		if (escaped_value == NULL)
+		{
+			const char *error = PQerrorMessage(pset.db);
+
+			psql_error("%s", error);
+			return NULL;
+		}
+
+		/*
+		 * Rather than complicate the lexer's API with a notion of which
+		 * free() routine to use, just pay the price of an extra strdup().
+		 */
+		result = pg_strdup(escaped_value);
+		PQfreemem(escaped_value);
+	}
+	else
+		result = pg_strdup(value);
+
+	return result;
+}
+
+
+/*
  * Error reporting for scripts. Errors should look like
  *	 psql:filename:lineno: message
  */

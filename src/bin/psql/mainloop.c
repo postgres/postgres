@@ -8,13 +8,19 @@
 #include "postgres_fe.h"
 #include "mainloop.h"
 
-
 #include "command.h"
 #include "common.h"
 #include "input.h"
 #include "settings.h"
 
 #include "mb/pg_wchar.h"
+
+
+/* callback functions for our flex lexer */
+const PsqlScanCallbacks psqlscan_callbacks = {
+	psql_get_variable,
+	psql_error
+};
 
 
 /*
@@ -61,7 +67,7 @@ MainLoop(FILE *source)
 	pset.stmt_lineno = 1;
 
 	/* Create working state */
-	scan_state = psql_scan_create();
+	scan_state = psql_scan_create(&psqlscan_callbacks);
 
 	query_buf = createPQExpBuffer();
 	previous_buf = createPQExpBuffer();
@@ -233,7 +239,8 @@ MainLoop(FILE *source)
 		/*
 		 * Parse line, looking for command separators.
 		 */
-		psql_scan_setup(scan_state, line, strlen(line));
+		psql_scan_setup(scan_state, line, strlen(line),
+						pset.encoding, standard_strings());
 		success = true;
 		line_saved_in_history = false;
 
@@ -373,7 +380,8 @@ MainLoop(FILE *source)
 					resetPQExpBuffer(query_buf);
 					/* reset parsing state since we are rescanning whole line */
 					psql_scan_reset(scan_state);
-					psql_scan_setup(scan_state, line, strlen(line));
+					psql_scan_setup(scan_state, line, strlen(line),
+									pset.encoding, standard_strings());
 					line_saved_in_history = false;
 					prompt_status = PROMPT_READY;
 				}
