@@ -116,8 +116,6 @@ extern int WaitLatchOrSocket(volatile Latch *latch, int wakeEvents,
 extern void SetLatch(volatile Latch *latch);
 extern void ResetLatch(volatile Latch *latch);
 
-/* beware of memory ordering issues if you use this macro! */
-#define TestLatch(latch) (((volatile Latch *) (latch))->is_set)
 
 /*
  * Unix implementation uses SIGUSR1 for inter-process signaling.
