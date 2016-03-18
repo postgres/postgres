@@ -59,7 +59,6 @@ print HFILE "/*
 #ifndef $define
 #define $define
 
-#include \"postgres_fe.h\"
 #include \"pqexpbuffer.h\"
 
 struct _helpStruct
@@ -84,6 +83,7 @@ print CFILE "/*
 
 #define N_(x) (x)				/* gettext noop */
 
+#include \"postgres_fe.h\"
 #include \"$hfile\"
 
 ";

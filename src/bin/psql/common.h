@@ -8,10 +8,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "postgres_fe.h"
 #include <setjmp.h>
-#include "libpq-fe.h"
 
+#include "libpq-fe.h"
 #include "print.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
