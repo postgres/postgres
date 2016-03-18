@@ -56,6 +56,22 @@
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 
+/*
+ * Select the fd readiness primitive to use. Normally the "most modern"
+ * primitive supported by the OS will be used, but for testing it can be
+ * useful to manually specify the used primitive.  If desired, just add a
+ * define somewhere before this block.
+ */
+#if defined(LATCH_USE_POLL) || defined(LATCH_USE_SELECT)
+/* don't overwrite manual choice */
+#elif defined(HAVE_POLL)
+#define LATCH_USE_POLL
+#elif HAVE_SYS_SELECT_H
+#define LATCH_USE_SELECT
+#else
+#error "no latch implementation available"
+#endif
+
 /* Are we currently in WaitLatch? The signal handler would like to know. */
 static volatile sig_atomic_t waiting = false;
 
@@ -215,10 +231,10 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				cur_time;
 	long		cur_timeout;
 
-#ifdef HAVE_POLL
+#if defined(LATCH_USE_POLL)
 	struct pollfd pfds[3];
 	int			nfds;
-#else
+#elif defined(LATCH_USE_SELECT)
 	struct timeval tv,
 			   *tvp;
 	fd_set		input_mask;
@@ -248,7 +264,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		Assert(timeout >= 0 && timeout <= INT_MAX);
 		cur_timeout = timeout;
 
-#ifndef HAVE_POLL
+#ifdef LATCH_USE_SELECT
 		tv.tv_sec = cur_timeout / 1000L;
 		tv.tv_usec = (cur_timeout % 1000L) * 1000L;
 		tvp = &tv;
@@ -258,7 +274,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	{
 		cur_timeout = -1;
 
-#ifndef HAVE_POLL
+#ifdef LATCH_USE_SELECT
 		tvp = NULL;
 #endif
 	}
@@ -292,16 +308,10 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		}
 
 		/*
-		 * Must wait ... we use poll(2) if available, otherwise select(2).
-		 *
-		 * On at least older linux kernels select(), in violation of POSIX,
-		 * doesn't reliably return a socket as writable if closed - but we
-		 * rely on that. So far all the known cases of this problem are on
-		 * platforms that also provide a poll() implementation without that
-		 * bug.  If we find one where that's not the case, we'll need to add a
-		 * workaround.
+		 * Must wait ... we use the polling interface determined at the top of
+		 * this file to do so.
 		 */
-#ifdef HAVE_POLL
+#if defined(LATCH_USE_POLL)
 		nfds = 0;
 		if (wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE))
 		{
@@ -397,8 +407,16 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 					result |= WL_POSTMASTER_DEATH;
 			}
 		}
-#else							/* !HAVE_POLL */
+#elif defined(LATCH_USE_SELECT)
 
+		/*
+		 * On at least older linux kernels select(), in violation of POSIX,
+		 * doesn't reliably return a socket as writable if closed - but we
+		 * rely on that. So far all the known cases of this problem are on
+		 * platforms that also provide a poll() implementation without that
+		 * bug.  If we find one where that's not the case, we'll need to add a
+		 * workaround.
+		 */
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
 
@@ -478,7 +496,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 					result |= WL_POSTMASTER_DEATH;
 			}
 		}
-#endif   /* HAVE_POLL */
+#endif   /* LATCH_USE_SELECT */
 
 		/* If we're not done, update cur_timeout for next iteration */
 		if (result == 0 && (wakeEvents & WL_TIMEOUT))
@@ -491,7 +509,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				/* Timeout has expired, no need to continue looping */
 				result |= WL_TIMEOUT;
 			}
-#ifndef HAVE_POLL
+#ifdef LATCH_USE_SELECT
 			else
 			{
 				tv.tv_sec = cur_timeout / 1000L;
