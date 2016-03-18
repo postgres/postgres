@@ -210,7 +210,7 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 			 * And again, c (ntrue) is a lower bound of len2, but c <= len1
 			 * just by definition and, consequently, upper bound of
 			 * similarity is just c / len1.
-			 * So, independly on DIVUNION the upper bound formula is the same.
+			 * So, independently on DIVUNION the upper bound formula is the same.
 			 */
 			res = (nkeys == 0) ? false :
 				(((((float4) ntrue) / ((float4) nkeys))) >= nlimit);
@@ -330,7 +330,7 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * As trigramsMatchGraph implements a montonic boolean function,
+				 * As trigramsMatchGraph implements a monotonic boolean function,
 				 * promoting all GIN_MAYBE keys to GIN_TRUE will give a
 				 * conservative result.
 				 */

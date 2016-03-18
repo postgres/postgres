@@ -1634,7 +1634,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"syslog_sequence_numbers", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Add sequence number to syslog messags to avoid duplicate suppression."),
+			gettext_noop("Add sequence number to syslog messages to avoid duplicate suppression."),
 			NULL
 		},
 		&syslog_sequence_numbers,
@@ -2681,7 +2681,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
-			gettext_noop("SSL regenotiation is no longer supported; this can only be 0."),
+			gettext_noop("SSL renegotiation is no longer supported; this can only be 0."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE,
 		},
@@ -4059,7 +4059,7 @@ get_guc_variables(void)
 
 /*
  * Build the sorted array.  This is split out so that it could be
- * re-executed after startup (eg, we could allow loadable modules to
+ * re-executed after startup (e.g., we could allow loadable modules to
  * add vars, and then we'd need to re-sort).
  */
 void
@@ -5904,7 +5904,7 @@ set_config_option(const char *name, const char *value,
 				 * don't re-read the config file during backend start.
 				 *
 				 * In EXEC_BACKEND builds, this works differently: we load all
-				 * nondefault settings from the CONFIG_EXEC_PARAMS file during
+				 * non-default settings from the CONFIG_EXEC_PARAMS file during
 				 * backend start.  In that case we must accept PGC_SIGHUP
 				 * settings, so as to have the same value as if we'd forked
 				 * from the postmaster.  This can also happen when using
@@ -6663,7 +6663,7 @@ GetConfigOptionResetString(const char *name)
  * We need to be told the name of the variable the args are for, because
  * the flattening rules vary (ugh).
  *
- * The result is NULL if args is NIL (ie, SET ... TO DEFAULT), otherwise
+ * The result is NULL if args is NIL (i.e., SET ... TO DEFAULT), otherwise
  * a palloc'd string.
  */
 static char *
@@ -7994,7 +7994,7 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	/* source */
 	values[8] = GucSource_Names[conf->source];
 
-	/* now get the type specifc attributes */
+	/* now get the type specific attributes */
 	switch (conf->vartype)
 	{
 		case PGC_BOOL:
@@ -9531,7 +9531,7 @@ validate_option_array_item(const char *name, const char *value,
 	 * There are three cases to consider:
 	 *
 	 * name is a known GUC variable.  Check the value normally, check
-	 * permissions normally (ie, allow if variable is USERSET, or if it's
+	 * permissions normally (i.e., allow if variable is USERSET, or if it's
 	 * SUSET and user is superuser).
 	 *
 	 * name is not known, but exists or can be created as a placeholder (i.e.,

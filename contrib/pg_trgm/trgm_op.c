@@ -628,7 +628,7 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 
 
 /*
- * Extract the next non-wildcard part of a search string, ie, a word bounded
+ * Extract the next non-wildcard part of a search string, i.e. a word bounded
  * by '_' or '%' meta-characters, non-word characters or string end.
  *
  * str: source string, of length lenstr bytes (need not be null-terminated)

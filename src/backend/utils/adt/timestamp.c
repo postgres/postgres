@@ -258,7 +258,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 				 errmsg("timestamp cannot be NaN")));
 #endif
 
-	/* rangecheck: see if timestamp_out would like it */
+	/* range check: see if timestamp_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0 ||
@@ -792,7 +792,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 	timestamp = (TimestampTz) pq_getmsgfloat8(buf);
 #endif
 
-	/* rangecheck: see if timestamptz_out would like it */
+	/* range check: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
 	else if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0 ||
@@ -1435,7 +1435,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else
 			elog(ERROR, "unrecognized interval typmod: %d", typmod);
 
-		/* Need to adjust subsecond precision? */
+		/* Need to adjust sub-second precision? */
 		if (precision != INTERVAL_FULL_PRECISION)
 		{
 			if (precision < 0 || precision > MAX_INTERVAL_PRECISION)
@@ -1635,7 +1635,7 @@ IntegerTimestampToTimestampTz(int64 timestamp)
  * Both inputs must be ordinary finite timestamps (in current usage,
  * they'll be results from GetCurrentTimestamp()).
  *
- * We expect start_time <= stop_time.  If not, we return zeroes; for current
+ * We expect start_time <= stop_time.  If not, we return zeros; for current
  * callers there is no need to be tense about which way division rounds on
  * negative inputs.
  */
@@ -2276,7 +2276,7 @@ timestamp_hash(PG_FUNCTION_ARGS)
 
 
 /*
- * Crosstype comparison functions for timestamp vs timestamptz
+ * Cross-type comparison functions for timestamp vs timestamptz
  */
 
 Datum
@@ -2678,7 +2678,7 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else null".
+		 * rather silly way of saying "true if both are non-null, else null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -2996,7 +2996,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
 
-			/* Add days by converting to and from julian */
+			/* Add days by converting to and from Julian */
 			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
@@ -3104,7 +3104,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
 
-			/* Add days by converting to and from julian */
+			/* Add days by converting to and from Julian */
 			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
@@ -3309,7 +3309,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	/*
 	 * The above correctly handles the whole-number part of the month and day
 	 * products, but we have to do something with any fractional part
-	 * resulting when the factor is nonintegral.  We cascade the fractions
+	 * resulting when the factor is non-integral.  We cascade the fractions
 	 * down to lower units using the conversion factors DAYS_PER_MONTH and
 	 * SECS_PER_DAY.  Note we do NOT cascade up, since we are not forced to do
 	 * so by the representation.  The user can choose to cascade up later,
@@ -3319,7 +3319,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	/*
 	 * Fractional months full days into days.
 	 *
-	 * Floating point calculation are inherently inprecise, so these
+	 * Floating point calculation are inherently imprecise, so these
 	 * calculations are crafted to produce the most reliable result possible.
 	 * TSROUND() is needed to more accurately produce whole numbers where
 	 * appropriate.

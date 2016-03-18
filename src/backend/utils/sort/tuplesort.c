@@ -2742,7 +2742,7 @@ batchmemtuples(Tuplesortstate *state)
 	/*
 	 * Refund STANDARDCHUNKHEADERSIZE per tuple.
 	 *
-	 * This sometimes fails to make memory use prefectly balanced, but it
+	 * This sometimes fails to make memory use perfectly balanced, but it
 	 * should never make the situation worse.  Note that Assert-enabled builds
 	 * get a larger refund, due to a varying STANDARDCHUNKHEADERSIZE.
 	 */
