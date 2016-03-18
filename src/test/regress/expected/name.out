@@ -124,3 +124,69 @@ SELECT '' AS two, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '.*asdf.*';
 (2 rows)
 
 DROP TABLE NAME_TBL;
+DO $$
+DECLARE r text[];
+BEGIN
+  r := parse_ident('Schemax.Tabley');
+  RAISE NOTICE '%', format('%I.%I', r[1], r[2]);
+  r := parse_ident('"SchemaX"."TableY"');
+  RAISE NOTICE '%', format('%I.%I', r[1], r[2]);
+END;
+$$;
+NOTICE:  schemax.tabley
+NOTICE:  "SchemaX"."TableY"
+SELECT parse_ident('foo.boo');
+ parse_ident 
+-------------
+ {foo,boo}
+(1 row)
+
+SELECT parse_ident('foo.boo[]'); -- should fail
+ERROR:  identifier contains disallowed characters: "foo.boo[]"
+SELECT parse_ident('foo.boo[]', strict => false); -- ok
+ parse_ident 
+-------------
+ {foo,boo}
+(1 row)
+
+-- should fail
+SELECT parse_ident(' ');
+ERROR:  missing valid identifier: " "
+SELECT parse_ident(' .aaa');
+ERROR:  missing valid identifier before "." symbol: " .aaa"
+SELECT parse_ident(' aaa . ');
+ERROR:  missing valid identifier after "." symbol: " aaa . "
+SELECT parse_ident('aaa.a%b');
+ERROR:  identifier contains disallowed characters: "aaa.a%b"
+SELECT parse_ident(E'X\rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+ERROR:  identifier contains disallowed characters: "X\rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+SELECT length(a[1]), length(a[2]) from parse_ident('"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy') as a ;
+ length | length 
+--------+--------
+    414 |    289
+(1 row)
+
+SELECT parse_ident(' first . "  second  " ."   third   ". "  ' || repeat('x',66) || '"');
+                                                parse_ident                                                
+-----------------------------------------------------------------------------------------------------------
+ {first,"  second  ","   third   ","  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+(1 row)
+
+SELECT parse_ident(' first . "  second  " ."   third   ". "  ' || repeat('x',66) || '"')::name[];
+                                             parse_ident                                              
+------------------------------------------------------------------------------------------------------
+ {first,"  second  ","   third   ","  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+(1 row)
+
+SELECT parse_ident(E'"c".X XXXX\002XXXXXX');
+ERROR:  identifier contains disallowed characters: ""c".X XXXX\u0002XXXXXX"
+SELECT parse_ident('1020');
+ERROR:  missing valid identifier: "1020"
+SELECT parse_ident('10.20');
+ERROR:  missing valid identifier: "10.20"
+SELECT parse_ident('.');
+ERROR:  missing valid identifier before "." symbol: "."
+SELECT parse_ident('.1020');
+ERROR:  missing valid identifier before "." symbol: ".1020"
+SELECT parse_ident('xxx.1020');
+ERROR:  missing valid identifier after "." symbol: "xxx.1020"

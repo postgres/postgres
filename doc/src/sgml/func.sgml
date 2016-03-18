@@ -1821,6 +1821,32 @@
       <row>
        <entry>
         <indexterm>
+         <primary>parse_ident</primary>
+        </indexterm>
+        <literal><function>parse_ident(<parameter>str</parameter> <type>text</type>,
+           [ <parameter>strictmode</parameter> <type>boolean</type> DEFAULT true ] )</function></literal>
+       </entry>
+       <entry><type>text[]</type></entry>
+       <entry>Split <parameter>qualified identifier</parameter> into array
+       <parameter>parts</parameter>. When <parameter>strictmode</parameter> is
+       false, extra characters after the identifier are ignored. This is useful
+       for parsing identifiers for objects like functions and arrays that may
+       have trailing characters. By default, extra characters after the last
+       identifier are considered an error, but if second parameter is false,
+       then chararacters after last identifier are ignored. Note that this
+       function does not truncate quoted identifiers. If you care about that
+       you should cast the result of this function to name[]. A non-printable
+       chararacters (like 0 to 31) are displayed as hexadecimal codes always,
+       what can be different from PostgreSQL internal SQL identifiers
+       processing, when the original escaped value is displayed.
+       </entry>
+       <entry><literal>parse_ident('"SomeSchema".someTable')</literal></entry>
+       <entry><literal>"SomeSchema,sometable"</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>pg_client_encoding</primary>
         </indexterm>
         <literal><function>pg_client_encoding()</function></literal>

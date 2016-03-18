@@ -3463,6 +3463,9 @@ DESCR("I/O");
 DATA(insert OID = 4086 (  to_regnamespace	PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 4089 "25" _null_ _null_ _null_ _null_ _null_ to_regnamespace _null_ _null_ _null_ ));
 DESCR("convert namespace name to regnamespace");
 
+DATA(insert OID = 1268 (  parse_ident		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1009 "25 16" _null_ _null_ "{str,strict}" _null_ _null_ parse_ident _null_ _null_ _null_ ));
+DESCR("parse qualified identifier to array of identifiers");
+
 DATA(insert OID = 2246 ( fmgr_internal_validator PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 2278 "26" _null_ _null_ _null_ _null_ _null_ fmgr_internal_validator _null_ _null_ _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 2247 ( fmgr_c_validator	PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 2278 "26" _null_ _null_ _null_ _null_ _null_ fmgr_c_validator _null_ _null_ _null_ ));

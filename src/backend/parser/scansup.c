@@ -130,6 +130,15 @@ scanstr(const char *s)
 char *
 downcase_truncate_identifier(const char *ident, int len, bool warn)
 {
+	return downcase_identifier(ident, len, warn, true);
+}
+
+/*
+ * a workhorse for downcase_truncate_identifier
+ */
+char *
+downcase_identifier(const char *ident, int len, bool warn, bool truncate)
+{
 	char	   *result;
 	int			i;
 	bool		enc_is_single_byte;
@@ -158,11 +167,12 @@ downcase_truncate_identifier(const char *ident, int len, bool warn)
 	}
 	result[i] = '\0';
 
-	if (i >= NAMEDATALEN)
+	if (i >= NAMEDATALEN && truncate)
 		truncate_identifier(result, i, warn);
 
 	return result;
 }
+
 
 /*
  * truncate_identifier() --- truncate an identifier to NAMEDATALEN-1 bytes.
