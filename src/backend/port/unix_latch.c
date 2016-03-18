@@ -226,11 +226,12 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	int			hifd;
 #endif
 
-	/* Ignore WL_SOCKET_* events if no valid socket is given */
-	if (sock == PGINVALID_SOCKET)
-		wakeEvents &= ~(WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE);
-
 	Assert(wakeEvents != 0);	/* must have at least one wake event */
+
+	/* waiting for socket readiness without a socket indicates a bug */
+	if (sock == PGINVALID_SOCKET &&
+		(wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE)) != 0)
+		elog(ERROR, "cannot wait on socket event without a socket");
 
 	if ((wakeEvents & WL_LATCH_SET) && latch->owner_pid != MyProcPid)
 		elog(ERROR, "cannot wait on a latch owned by another process");
