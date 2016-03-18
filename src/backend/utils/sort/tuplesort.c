@@ -2692,8 +2692,9 @@ beginmerge(Tuplesortstate *state, bool finalMergeBatch)
 							   state->mergetuples[srcTape] + 1023) / 1024;
 				usedSlots = slotsPerTape - state->mergeavailslots[srcTape];
 
-				elog(LOG, "tape %d initially used %ld KB of %ld KB batch "
-					 "(%2.3f) and %d out of %d slots (%2.3f)", srcTape,
+				elog(LOG, "tape %d initially used " INT64_FORMAT " KB of "
+					 INT64_FORMAT " KB batch (%2.3f) and %d out of %d slots "
+					 "(%2.3f)", srcTape,
 					 usedSpaceKB, perTapeKB,
 					 (double) usedSpaceKB / (double) perTapeKB,
 					 usedSlots, slotsPerTape,
