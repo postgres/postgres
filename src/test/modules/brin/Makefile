@@ -24,7 +24,7 @@ isolation-check: | submake-isolation
 	    --outputdir=./isolation_output \
 	    $(ISOLATIONCHECKS)
 
-PHONY: check isolation-check
+.PHONY: check isolation-check
 
 submake-isolation:
 	$(MAKE) -C $(top_builddir)/src/test/isolation all
