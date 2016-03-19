@@ -313,7 +313,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	{
 		print "Generating probes.h...\n";
 		system(
-'psed -f src/backend/utils/Gen_dummy_probes.sed src/backend/utils/probes.d > src/include/utils/probes.h'
+'perl src/backend/utils/Gen_dummy_probes.pl src/backend/utils/probes.d > src/include/utils/probes.h'
 		);
 	}
 
