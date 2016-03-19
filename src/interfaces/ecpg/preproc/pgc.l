@@ -26,7 +26,7 @@
 #include "preproc.h"
 
 /*
- * Change symbol names as expected by preproc.l.  It'd be better to do this
+ * Change symbol names as expected by preproc.y.  It'd be better to do this
  * with %option prefix="base_yy", but that affects some other names that
  * various files expect *not* to be prefixed with "base_".  Cleaning it up
  * is not worth the trouble right now.
