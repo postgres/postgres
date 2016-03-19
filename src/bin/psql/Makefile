@@ -48,7 +48,8 @@ psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
 
 psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
-psqlscanslash.c: FLEX_NO_BACKUP=yes
+# Ideally we'd check this, but parallel make causes problems:
+# psqlscanslash.c: FLEX_NO_BACKUP=yes
 
 # Latest flex causes warnings in these files.
 ifeq ($(GCC),yes)
