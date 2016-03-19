@@ -64,7 +64,7 @@ my $frontend_extraincludes = {
 	'initdb' => ['src/timezone'],
 	'psql'   => [ 'src/bin/pg_dump', 'src/backend' ] };
 my $frontend_extrasource = {
-	'psql' => ['src/bin/psql/psqlscan.l'],
+	'psql' => ['src/bin/psql/psqlscan.l', 'src/bin/psql/psqlscanslash.l'],
 	'pgbench' =>
 	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ], };
 my @frontend_excludes = (

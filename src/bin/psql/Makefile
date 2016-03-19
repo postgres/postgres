@@ -23,7 +23,7 @@ override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/p
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
 	tab-complete.o mbprint.o dumputils.o keywords.o kwlookup.o \
-	sql_help.o psqlscan.o \
+	sql_help.o psqlscan.o psqlscanslash.o \
 	$(WIN32RES)
 
 
@@ -47,12 +47,16 @@ sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
 
-# Latest flex causes warnings in this file.
+psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
+psqlscanslash.c: FLEX_NO_BACKUP=yes
+
+# Latest flex causes warnings in these files.
 ifeq ($(GCC),yes)
 psqlscan.o: CFLAGS += -Wno-error
+psqlscanslash.o: CFLAGS += -Wno-error
 endif
 
-distprep: sql_help.h psqlscan.c
+distprep: sql_help.h psqlscan.c psqlscanslash.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
@@ -64,9 +68,10 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/psql$(X)' '$(DESTDIR)$(datadir)/psqlrc.sample'
 
-# psqlscan.c is in the distribution tarball, so is not cleaned here
 clean distclean:
 	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c lex.backup
 
+# files removed here are supposed to be in the distribution tarball,
+# so do not clean them in the clean/distclean rules
 maintainer-clean: distclean
-	rm -f sql_help.h sql_help.c psqlscan.c
+	rm -f sql_help.h sql_help.c psqlscan.c psqlscanslash.c

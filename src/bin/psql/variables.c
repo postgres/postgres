@@ -16,7 +16,7 @@
  *
  * We allow any non-ASCII character, as well as ASCII letters, digits, and
  * underscore.  Keep this in sync with the definition of variable_char in
- * psqlscan.l.
+ * psqlscan.l and psqlscanslash.l.
  */
 static bool
 valid_variable_name(const char *name)
