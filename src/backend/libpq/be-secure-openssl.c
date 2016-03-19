@@ -206,8 +206,30 @@ be_tls_init(void)
 					 errmsg("could not access private key file \"%s\": %m",
 							ssl_key_file)));
 
+		if (!S_ISREG(buf.st_mode))
+			ereport(FATAL,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("private key file \"%s\" is not a regular file",
+							ssl_key_file)));
+
 		/*
-		 * Require no public access to key file.
+		 * Refuse to load files owned by users other than us or root.
+		 *
+		 * XXX surely we can check this on Windows somehow, too.
+		 */
+#if !defined(WIN32) && !defined(__CYGWIN__)
+		if (buf.st_uid != geteuid() && buf.st_uid != 0)
+			ereport(FATAL,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("private key file \"%s\" must be owned by the database user or root",
+							ssl_key_file)));
+#endif
+
+		/*
+		 * Require no public access to key file. If the file is owned by us,
+		 * require mode 0600 or less. If owned by root, require 0640 or less
+		 * to allow read access through our gid, or a supplementary gid that
+		 * allows to read system-wide certificates.
 		 *
 		 * XXX temporarily suppress check when on Windows, because there may
 		 * not be proper support for Unix-y file permissions.  Need to think
@@ -215,12 +237,13 @@ be_tls_init(void)
 		 * directory permission check in postmaster.c)
 		 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
-		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
+		if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
+			(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				  errmsg("private key file \"%s\" has group or world access",
-						 ssl_key_file),
-				   errdetail("Permissions should be u=rw (0600) or less.")));
+					 errmsg("private key file \"%s\" has group or world access",
+							ssl_key_file),
+					 errdetail("File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root.")));
 #endif
 
 		if (SSL_CTX_use_PrivateKey_file(SSL_context,

@@ -2147,9 +2147,20 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    the server's data directory, but other names and locations can be specified
    using the configuration parameters <xref linkend="guc-ssl-cert-file">
    and <xref linkend="guc-ssl-key-file">.
+  </para>
+
+  <para>
    On Unix systems, the permissions on <filename>server.key</filename> must
    disallow any access to world or group; achieve this by the command
-   <command>chmod 0600 server.key</command>.
+   <command>chmod 0600 server.key</command>.  Alternatively, the file can be
+   owned by root and have group read access (that is, <literal>0640</literal>
+   permissions).  That setup is intended for installations where certificate
+   and key files are managed by the operating system.  The user under which
+   the <productname>PostgreSQL</productname> server runs should then be made a
+   member of the group that has access to those certificate and key files.
+  </para>
+
+  <para>
    If the private key is protected with a passphrase, the
    server will prompt for the passphrase and will not start until it has
    been entered.
