@@ -1807,6 +1807,7 @@ _readForeignScan(void)
 
 	ReadCommonScan(&local_node->scan);
 
+	READ_ENUM_FIELD(operation, CmdType);
 	READ_OID_FIELD(fs_server);
 	READ_NODE_FIELD(fdw_exprs);
 	READ_NODE_FIELD(fdw_private);
