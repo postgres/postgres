@@ -12,7 +12,7 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
-OBJS= analyze.o gram.o keywords.o kwlookup.o parser.o \
+OBJS= analyze.o gram.o scan.o keywords.o kwlookup.o parser.o \
       parse_agg.o parse_clause.o parse_coerce.o parse_collate.o parse_cte.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_param.o \
       parse_relation.o parse_target.o parse_type.o parse_utilcmd.o scansup.o
@@ -20,12 +20,9 @@ OBJS= analyze.o gram.o keywords.o kwlookup.o parser.o \
 include $(top_srcdir)/src/backend/common.mk
 
 
-# scan is compiled as part of gram
-gram.o: scan.c
-
 # Latest flex causes warnings in this file.
 ifeq ($(GCC),yes)
-gram.o: CFLAGS += -Wno-error
+scan.o: CFLAGS += -Wno-error
 endif
 
 
@@ -47,7 +44,7 @@ scan.c: FLEX_NO_BACKUP=yes
 
 
 # Force these dependencies to be known even without dependency info built:
-gram.o keywords.o parser.o: gram.h
+gram.o scan.o keywords.o parser.o: gram.h
 
 
 # gram.c, gram.h, and scan.c are in the distribution tarball, so they

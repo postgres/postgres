@@ -1,4 +1,4 @@
-%{
+%top{
 /*-------------------------------------------------------------------------
  *
  * scan.l
@@ -6,7 +6,7 @@
  *
  * NOTE NOTE NOTE:
  *
- * The rules in this file must be kept in sync with psql's lexer!!!
+ * The rules in this file must be kept in sync with psql's psqlscan.l!
  *
  * The rules are designed so that the scanner never has to backtrack,
  * in the sense that there is always a rule that can match the input
@@ -34,12 +34,13 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "parser/gramparse.h"
 #include "parser/parser.h"				/* only needed for GUC variables */
-#include "parser/scanner.h"
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
+}
 
-
+%{
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
 #define fprintf(file, fmt, msg)  fprintf_to_ereport(fmt, msg)
