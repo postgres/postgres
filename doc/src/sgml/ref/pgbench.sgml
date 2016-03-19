@@ -262,11 +262,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
     <variablelist>
      <varlistentry>
-      <term><option>-b</> <replaceable>scriptname</></term>
-      <term><option>--builtin</> <replaceable>scriptname</></term>
+      <term><option>-b</> <replaceable>scriptname[@weight]</></term>
+      <term><option>--builtin</>=<replaceable>scriptname[@weight]</></term>
       <listitem>
        <para>
         Add the specified builtin script to the list of executed scripts.
+        An optional integer weight after <literal>@</> allows to adjust the
+        probability of drawing the script.  If not specified, it is set to 1.
         Available builtin scripts are: <literal>tpcb-like</>,
         <literal>simple-update</> and <literal>select-only</>.
         Unambiguous prefixes of builtin names are accepted.
@@ -322,12 +324,14 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-f</> <replaceable>filename</></term>
-      <term><option>--file=</><replaceable>filename</></term>
+      <term><option>-f</> <replaceable>filename[@weight]</></term>
+      <term><option>--file=</><replaceable>filename[@weight]</></term>
       <listitem>
        <para>
         Add a transaction script read from <replaceable>filename</> to
         the list of executed scripts.
+        An optional integer weight after <literal>@</> allows to adjust the
+        probability of drawing the test.
         See below for details.
        </para>
       </listitem>
@@ -687,9 +691,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <title>What is the <quote>Transaction</> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
-   Pgbench executes test scripts chosen randomly from a specified list.
+   <application>pgbench</> executes test scripts chosen randomly
+   from a specified list.
    They include built-in scripts with <option>-b</> and
    user-provided custom scripts with <option>-f</>.
+   Each script may be given a relative weight specified after a
+   <literal>@</> so as to change its drawing probability.
+   The default weight is <literal>1</>.
  </para>
 
   <para>
@@ -1194,12 +1202,11 @@ number of clients: 10
 number of threads: 1
 number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
+latency average = 15.844 ms
+latency stddev = 2.715 ms
 tps = 618.764555 (including connections establishing)
 tps = 622.977698 (excluding connections establishing)
-SQL script 1: &lt;builtin: TPC-B (sort of)&gt;
- - 10000 transactions (100.0% of total, tps = 618.764555)
- - latency average = 15.844 ms
- - latency stddev = 2.715 ms
+script statistics:
  - statement latencies in milliseconds:
         0.004386        \set nbranches 1 * :scale
         0.001343        \set ntellers 10 * :scale

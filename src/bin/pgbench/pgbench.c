@@ -38,6 +38,7 @@
 #include "portability/instr_time.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <math.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -180,6 +181,8 @@ char	   *login = NULL;
 char	   *dbName;
 const char *progname;
 
+#define WSEP '@'				/* weight separator */
+
 volatile bool timer_exceeded = false;	/* flag from signal handler */
 
 /* variable definitions */
@@ -298,26 +301,30 @@ typedef struct
 	SimpleStats stats;			/* time spent in this command */
 } Command;
 
-static struct
+typedef struct ParsedScript
 {
-	const char *name;
+	const char *desc;
+	int			weight;
 	Command   **commands;
-	StatsData stats;
-}	sql_script[MAX_SCRIPTS];	/* SQL script files */
+	StatsData	stats;
+} ParsedScript;
+
+static ParsedScript sql_script[MAX_SCRIPTS];	/* SQL script files */
 static int	num_scripts;		/* number of scripts in sql_script[] */
 static int	num_commands = 0;	/* total number of Command structs */
+static int64 total_weight = 0;
+
 static int	debug = 0;			/* debug flag */
 
-/* Define builtin test scripts */
-#define N_BUILTIN 3
-static struct
+/* Builtin test scripts */
+typedef struct BuiltinScript
 {
 	char	   *name;			/* very short name for -b ... */
 	char	   *desc;			/* short description */
-	char	   *commands;		/* actual pgbench script */
-}
+	char	   *script;			/* actual pgbench script */
+} BuiltinScript;
 
-			builtin_script[] =
+static BuiltinScript builtin_script[] =
 {
 	{
 		"tpcb-like",
@@ -393,9 +400,9 @@ usage(void)
 	 "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
 		   "  --unlogged-tables        create tables as unlogged tables\n"
 		   "\nOptions to select what to run:\n"
-		   "  -b, --builtin=NAME       add buitin script (use \"-b list\" to display\n"
-		   "                           available scripts)\n"
-		   "  -f, --file=FILENAME      add transaction script from FILENAME\n"
+		   "  -b, --builtin=NAME[@W]   add builtin script NAME weighted at W (default: 1)\n"
+	"                           (use \"-b list\" to list available scripts)\n"
+		   "  -f, --file=FILENAME[@W]  add script FILENAME weighted at W (default: 1)\n"
 		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
 		   "                           (same as \"-b simple-update\")\n"
 		   "  -S, --select-only        perform SELECT-only transactions\n"
@@ -1313,13 +1320,23 @@ clientDone(CState *st, bool ok)
 	return false;				/* always false */
 }
 
+/* return a script number with a weighted choice. */
 static int
 chooseScript(TState *thread)
 {
+	int			i = 0;
+	int64		w;
+
 	if (num_scripts == 1)
 		return 0;
 
-	return getrand(thread, 0, num_scripts - 1);
+	w = getrand(thread, 0, total_weight - 1);
+	do
+	{
+		w -= sql_script[i++].weight;
+	} while (w >= 0);
+
+	return i - 1;
 }
 
 /* return false iff client should be disconnected */
@@ -1493,7 +1510,7 @@ top:
 			commands = sql_script[st->use_file].commands;
 			if (debug)
 				fprintf(stderr, "client %d executing script \"%s\"\n", st->id,
-						sql_script[st->use_file].name);
+						sql_script[st->use_file].desc);
 			st->is_throttled = false;
 
 			/*
@@ -2632,23 +2649,19 @@ read_line_from_file(FILE *fd)
 }
 
 /*
- * Given a file name, read it and return the array of Commands contained
- * therein.  "-" means to read stdin.
+ * Given a file name, read it and return its ParsedScript representation.  "-"
+ * means to read stdin.
  */
-static Command **
+static ParsedScript
 process_file(char *filename)
 {
 #define COMMANDS_ALLOC_NUM 128
-
-	Command   **my_commands;
+	ParsedScript ps;
 	FILE	   *fd;
 	int			lineno,
 				index;
 	char	   *buf;
 	int			alloc_num;
-
-	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
 
 	if (strcmp(filename, "-") == 0)
 		fd = stdin;
@@ -2656,9 +2669,12 @@ process_file(char *filename)
 	{
 		fprintf(stderr, "could not open file \"%s\": %s\n",
 				filename, strerror(errno));
-		pg_free(my_commands);
-		return NULL;
+		exit(1);
 	}
+
+	alloc_num = COMMANDS_ALLOC_NUM;
+	ps.commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
+	ps.desc = filename;
 
 	lineno = 0;
 	index = 0;
@@ -2676,35 +2692,36 @@ process_file(char *filename)
 		if (command == NULL)
 			continue;
 
-		my_commands[index] = command;
+		ps.commands[index] = command;
 		index++;
 
 		if (index >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = pg_realloc(my_commands, sizeof(Command *) * alloc_num);
+			ps.commands = pg_realloc(ps.commands, sizeof(Command *) * alloc_num);
 		}
 	}
 	fclose(fd);
 
-	my_commands[index] = NULL;
+	ps.commands[index] = NULL;
 
-	return my_commands;
+	return ps;
 }
 
-static Command **
-process_builtin(const char *tb, const char *source)
+/* Parse the given builtin script and return the parsed representation */
+static ParsedScript
+process_builtin(BuiltinScript *bi)
 {
-#define COMMANDS_ALLOC_NUM 128
-
-	Command   **my_commands;
 	int			lineno,
 				index;
 	char		buf[BUFSIZ];
 	int			alloc_num;
+	char	   *tb = bi->script;
+	ParsedScript ps;
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
+	ps.desc = bi->desc;
+	ps.commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
 
 	lineno = 0;
 	index = 0;
@@ -2714,6 +2731,7 @@ process_builtin(const char *tb, const char *source)
 		char	   *p;
 		Command    *command;
 
+		/* buffer overflow check? */
 		p = buf;
 		while (*tb && *tb != '\n')
 			*p++ = *tb++;
@@ -2728,58 +2746,58 @@ process_builtin(const char *tb, const char *source)
 
 		lineno += 1;
 
-		command = process_commands(buf, source, lineno);
+		command = process_commands(buf, bi->desc, lineno);
 		if (command == NULL)
 			continue;
 
-		my_commands[index] = command;
+		ps.commands[index] = command;
 		index++;
 
 		if (index >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = pg_realloc(my_commands, sizeof(Command *) * alloc_num);
+			ps.commands = pg_realloc(ps.commands, sizeof(Command *) * alloc_num);
 		}
 	}
 
-	my_commands[index] = NULL;
+	ps.commands[index] = NULL;
 
-	return my_commands;
+	return ps;
 }
 
+/* show available builtin scripts */
 static void
 listAvailableScripts(void)
 {
 	int			i;
 
 	fprintf(stderr, "Available builtin scripts:\n");
-	for (i = 0; i < N_BUILTIN; i++)
+	for (i = 0; i < lengthof(builtin_script); i++)
 		fprintf(stderr, "\t%s\n", builtin_script[i].name);
 	fprintf(stderr, "\n");
 }
 
-/* return builtin script "name" if unambiguous */
-static char *
-findBuiltin(const char *name, char **desc)
+/* return builtin script "name" if unambiguous, of fails if not found */
+static BuiltinScript *
+findBuiltin(const char *name)
 {
 	int			i,
 				found = 0,
 				len = strlen(name);
-	char	   *commands = NULL;
+	BuiltinScript *result = NULL;
 
-	for (i = 0; i < N_BUILTIN; i++)
+	for (i = 0; i < lengthof(builtin_script); i++)
 	{
 		if (strncmp(builtin_script[i].name, name, len) == 0)
 		{
-			*desc = builtin_script[i].desc;
-			commands = builtin_script[i].commands;
+			result = &builtin_script[i];
 			found++;
 		}
 	}
 
 	/* ok, unambiguous result */
 	if (found == 1)
-		return commands;
+		return result;
 
 	/* error cases */
 	if (found == 0)
@@ -2792,13 +2810,61 @@ findBuiltin(const char *name, char **desc)
 	exit(1);
 }
 
-static void
-addScript(const char *name, Command **commands)
+/*
+ * Determine the weight specification from a script option (-b, -f), if any,
+ * and return it as an integer (1 is returned if there's no weight).  The
+ * script name is returned in *script as a malloc'd string.
+ */
+static int
+parseScriptWeight(const char *option, char **script)
 {
-	if (commands == NULL ||
-		commands[0] == NULL)
+	char	   *sep;
+	int			weight;
+
+	if ((sep = strrchr(option, WSEP)))
 	{
-		fprintf(stderr, "empty command list for script \"%s\"\n", name);
+		int			namelen = sep - option;
+		long		wtmp;
+		char	   *badp;
+
+		/* generate the script name */
+		*script = pg_malloc(namelen + 1);
+		strncpy(*script, option, namelen);
+		(*script)[namelen] = '\0';
+
+		/* process digits of the weight spec */
+		errno = 0;
+		wtmp = strtol(sep + 1, &badp, 10);
+		if (errno != 0 || badp == sep + 1 || *badp != '\0')
+		{
+			fprintf(stderr, "invalid weight specification: %s\n", sep);
+			exit(1);
+		}
+		if (wtmp > INT_MAX || wtmp <= 0)
+		{
+			fprintf(stderr,
+			"weight specification out of range (1 .. %u): " INT64_FORMAT "\n",
+					INT_MAX, (int64) wtmp);
+			exit(1);
+		}
+		weight = wtmp;
+	}
+	else
+	{
+		*script = pg_strdup(option);
+		weight = 1;
+	}
+
+	return weight;
+}
+
+/* append a script to the list of scripts to process */
+static void
+addScript(ParsedScript script, int weight)
+{
+	if (script.commands == NULL || script.commands[0] == NULL)
+	{
+		fprintf(stderr, "empty command list for script \"%s\"\n", script.desc);
 		exit(1);
 	}
 
@@ -2808,8 +2874,8 @@ addScript(const char *name, Command **commands)
 		exit(1);
 	}
 
-	sql_script[num_scripts].name = name;
-	sql_script[num_scripts].commands = commands;
+	sql_script[num_scripts] = script;
+	sql_script[num_scripts].weight = weight;
 	initStats(&sql_script[num_scripts].stats, 0.0);
 	num_scripts++;
 }
@@ -2840,7 +2906,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
 	printf("transaction type: %s\n",
-		   num_scripts == 1 ? sql_script[0].name : "multiple scripts");
+		   num_scripts == 1 ? sql_script[0].desc : "multiple scripts");
 	printf("scaling factor: %d\n", scale);
 	printf("query mode: %s\n", QUERYMODE[querymode]);
 	printf("number of clients: %d\n", nclients);
@@ -2894,19 +2960,24 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	printf("tps = %f (including connections establishing)\n", tps_include);
 	printf("tps = %f (excluding connections establishing)\n", tps_exclude);
 
-	/* Report per-command statistics */
-	if (per_script_stats)
+	/* Report per-script/command statistics */
+	if (per_script_stats || latency_limit || is_latencies)
 	{
 		int			i;
 
 		for (i = 0; i < num_scripts; i++)
 		{
-			printf("SQL script %d: %s\n"
-			" - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
-				   i + 1, sql_script[i].name,
-				   sql_script[i].stats.cnt,
-				   100.0 * sql_script[i].stats.cnt / total->cnt,
-				   sql_script[i].stats.cnt / time_include);
+			if (num_scripts > 1)
+				printf("SQL script %d: %s\n"
+					   " - weight = %d\n"
+					   " - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
+					   i + 1, sql_script[i].desc,
+					   sql_script[i].weight,
+					   sql_script[i].stats.cnt,
+					   100.0 * sql_script[i].stats.cnt / total->cnt,
+					   sql_script[i].stats.cnt / time_include);
+			else
+				printf("script statistics:\n");
 
 			if (latency_limit)
 				printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
@@ -2914,7 +2985,8 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 					   100.0 * sql_script[i].stats.skipped /
 					(sql_script[i].stats.skipped + sql_script[i].stats.cnt));
 
-			printSimpleStats(" - latency", &sql_script[i].stats.latency);
+			if (num_scripts > 1)
+				printSimpleStats(" - latency", &sql_script[i].stats.latency);
 
 			/* Report per-command latencies */
 			if (is_latencies)
@@ -2997,7 +3069,7 @@ main(int argc, char **argv)
 	instr_time	conn_total_time;
 	int64		latency_late = 0;
 	StatsData	stats;
-	char	   *desc;
+	int			weight;
 
 	int			i;
 	int			nclients_dealt;
@@ -3045,6 +3117,8 @@ main(int argc, char **argv)
 
 	while ((c = getopt_long(argc, argv, "ih:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
 	{
+		char	   *script;
+
 		switch (c)
 		{
 			case 'i':
@@ -3176,27 +3250,25 @@ main(int argc, char **argv)
 					exit(0);
 				}
 
-				addScript(desc,
-						  process_builtin(findBuiltin(optarg, &desc), desc));
+				weight = parseScriptWeight(optarg, &script);
+				addScript(process_builtin(findBuiltin(script)), weight);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
+
 			case 'S':
-				addScript(desc,
-						  process_builtin(findBuiltin("select-only", &desc),
-										  desc));
+				addScript(process_builtin(findBuiltin("select-only")), 1);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 			case 'N':
-				addScript(desc,
-						  process_builtin(findBuiltin("simple-update", &desc),
-										  desc));
+				addScript(process_builtin(findBuiltin("simple-update")), 1);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 			case 'f':
-				addScript(optarg, process_file(optarg));
+				weight = parseScriptWeight(optarg, &script);
+				addScript(process_file(script), weight);
 				benchmarking_option_set = true;
 				break;
 			case 'D':
@@ -3334,11 +3406,15 @@ main(int argc, char **argv)
 	/* set default script if none */
 	if (num_scripts == 0 && !is_init_mode)
 	{
-		addScript(desc,
-				  process_builtin(findBuiltin("tpcb-like", &desc), desc));
+		addScript(process_builtin(findBuiltin("tpcb-like")), 1);
 		benchmarking_option_set = true;
 		internal_script_used = true;
 	}
+
+	/* compute total_weight */
+	for (i = 0; i < num_scripts; i++)
+		/* cannot overflow: weight is 32b, total_weight 64b */
+		total_weight += sql_script[i].weight;
 
 	/* show per script stats if several scripts are used */
 	if (num_scripts > 1)
@@ -3745,7 +3821,7 @@ threadRun(void *arg)
 		commands = sql_script[st->use_file].commands;
 		if (debug)
 			fprintf(stderr, "client %d executing script \"%s\"\n", st->id,
-					sql_script[st->use_file].name);
+					sql_script[st->use_file].desc);
 		if (!doCustom(thread, st, &aggs))
 			remains--;			/* I've aborted */
 
