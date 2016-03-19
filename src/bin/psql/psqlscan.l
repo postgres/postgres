@@ -78,8 +78,8 @@ extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
  * src/backend/parser/scan.l so far as the flex patterns are concerned.
  * The rule bodies are just ECHO as opposed to what the backend does,
  * however.  (But be sure to duplicate code that affects the lexing process,
- * such as BEGIN().)  Also, psqlscan uses a single <<EOF>> rule whereas
- * scan.l has a separate one for each exclusive state.
+ * such as BEGIN() and yyless().)  Also, psqlscan uses a single <<EOF>> rule
+ * whereas scan.l has a separate one for each exclusive state.
  */
 
 /*
@@ -351,11 +351,10 @@ other			.
 
 		/*
 		 * Force flex into the state indicated by start_state.  This has a
-		 * couple of purposes: it lets some of the functions below set a
-		 * new starting state without ugly direct access to flex variables,
-		 * and it allows us to transition from one flex lexer to another
-		 * so that we can lex different parts of the source string using
-		 * separate lexers.
+		 * couple of purposes: it lets some of the functions below set a new
+		 * starting state without ugly direct access to flex variables, and it
+		 * allows us to transition from one flex lexer to another so that we
+		 * can lex different parts of the source string using separate lexers.
 		 */
 		BEGIN(cur_state->start_state);
 %}
@@ -390,9 +389,7 @@ other			.
 
 <xc>{xcstop}	{
 					if (cur_state->xcdepth <= 0)
-					{
 						BEGIN(INITIAL);
-					}
 					else
 						cur_state->xcdepth--;
 					ECHO;
@@ -447,7 +444,7 @@ other			.
 				}
 
 {xnstart}		{
-					yyless(1);				/* eat only 'n' this time */
+					yyless(1);	/* eat only 'n' this time */
 					ECHO;
 				}
 
@@ -474,6 +471,7 @@ other			.
 				}
 <xus>{quotestop} |
 <xus>{quotefail} {
+					/* throw back all but the quote */
 					yyless(1);
 					BEGIN(xusend);
 					ECHO;
@@ -547,7 +545,7 @@ other			.
 						 * the $... part to the output, but put back the final
 						 * $ for rescanning.  Consider $delim$...$junk$delim$
 						 */
-						yyless(yyleng-1);
+						yyless(yyleng - 1);
 					}
 					ECHO;
 				}
@@ -682,8 +680,8 @@ other			.
 
 :{variable_char}+	{
 					/* Possible psql variable substitution */
-					char   *varname;
-					char   *value;
+					char	   *varname;
+					char	   *value;
 
 					varname = psqlscan_extract_substring(cur_state,
 														 yytext + 1,
@@ -717,8 +715,8 @@ other			.
 					else
 					{
 						/*
-						 * if the variable doesn't exist we'll copy the
-						 * string as is
+						 * if the variable doesn't exist we'll copy the string
+						 * as is
 						 */
 						ECHO;
 					}
@@ -766,9 +764,9 @@ other			.
 					 * Note that slash-star or dash-dash at the first
 					 * character will match a prior rule, not this one.
 					 */
-					int		nchars = yyleng;
-					char   *slashstar = strstr(yytext, "/*");
-					char   *dashdash = strstr(yytext, "--");
+					int			nchars = yyleng;
+					char	   *slashstar = strstr(yytext, "/*");
+					char	   *dashdash = strstr(yytext, "--");
 
 					if (slashstar && dashdash)
 					{
@@ -790,12 +788,12 @@ other			.
 					 * sequences of SQL operators.
 					 */
 					while (nchars > 1 &&
-						   (yytext[nchars-1] == '+' ||
-							yytext[nchars-1] == '-'))
+						   (yytext[nchars - 1] == '+' ||
+							yytext[nchars - 1] == '-'))
 					{
-						int		ic;
+						int			ic;
 
-						for (ic = nchars-2; ic >= 0; ic--)
+						for (ic = nchars - 2; ic >= 0; ic--)
 						{
 							if (strchr("~!@#^&|`?%", yytext[ic]))
 								break;
@@ -825,7 +823,7 @@ other			.
 				}
 {decimalfail}	{
 					/* throw back the .., and treat as integer */
-					yyless(yyleng-2);
+					yyless(yyleng - 2);
 					ECHO;
 				}
 {real}			{
@@ -838,12 +836,12 @@ other			.
 					 * but since this case will almost certainly lead to a
 					 * syntax error anyway, we don't bother to distinguish.
 					 */
-					yyless(yyleng-1);
+					yyless(yyleng - 1);
 					ECHO;
 				}
 {realfail2}		{
 					/* throw back the [Ee][+-], and proceed as above */
-					yyless(yyleng-2);
+					yyless(yyleng - 2);
 					ECHO;
 				}
 
@@ -856,15 +854,11 @@ other			.
 					ECHO;
 				}
 
-	/*
-	 * psql uses a single <<EOF>> rule, unlike the backend.
-	 */
-
 <<EOF>>			{
 					if (cur_state->buffer_stack == NULL)
 					{
 						cur_state->start_state = YY_START;
-						return LEXRES_EOL; /* end of input reached */
+						return LEXRES_EOL;		/* end of input reached */
 					}
 
 					/*
@@ -1192,8 +1186,8 @@ psqlscan_push_new_buffer(PsqlScanState state, const char *newstr,
 	stackelem = (StackElem *) pg_malloc(sizeof(StackElem));
 
 	/*
-	 * In current usage, the passed varname points at the current flex
-	 * input buffer; we must copy it before calling psqlscan_prepare_buffer()
+	 * In current usage, the passed varname points at the current flex input
+	 * buffer; we must copy it before calling psqlscan_prepare_buffer()
 	 * because that will change the buffer state.
 	 */
 	stackelem->varname = varname ? pg_strdup(varname) : NULL;
@@ -1301,11 +1295,11 @@ psqlscan_prepare_buffer(PsqlScanState state, const char *txt, int len,
 	else
 	{
 		/* Gotta do it the hard way */
-		int		i = 0;
+		int			i = 0;
 
 		while (i < len)
 		{
-			int		thislen = PQmblen(txt + i, state->encoding);
+			int			thislen = PQmblen(txt + i, state->encoding);
 
 			/* first byte should always be okay... */
 			newtxt[i] = txt[i];
@@ -1337,13 +1331,13 @@ psqlscan_emit(PsqlScanState state, const char *txt, int len)
 	{
 		/* Gotta do it the hard way */
 		const char *reference = state->refline;
-		int		i;
+		int			i;
 
 		reference += (txt - state->curline);
 
 		for (i = 0; i < len; i++)
 		{
-			char	ch = txt[i];
+			char		ch = txt[i];
 
 			if (ch == (char) 0xFF)
 				ch = reference[i];
@@ -1369,13 +1363,13 @@ psqlscan_extract_substring(PsqlScanState state, const char *txt, int len)
 	{
 		/* Gotta do it the hard way */
 		const char *reference = state->refline;
-		int		i;
+		int			i;
 
 		reference += (txt - state->curline);
 
 		for (i = 0; i < len; i++)
 		{
-			char	ch = txt[i];
+			char		ch = txt[i];
 
 			if (ch == (char) 0xFF)
 				ch = reference[i];
@@ -1391,7 +1385,7 @@ psqlscan_extract_substring(PsqlScanState state, const char *txt, int len)
  *
  * If the variable name is found, escape its value using the appropriate
  * quoting method and emit the value to output_buf.  (Since the result is
- * surely quoted, there is never any reason to rescan it.)  If we don't
+ * surely quoted, there is never any reason to rescan it.)	If we don't
  * find the variable or escaping fails, emit the token as-is.
  */
 void

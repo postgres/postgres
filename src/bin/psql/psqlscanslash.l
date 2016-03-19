@@ -113,11 +113,10 @@ other			.
 
 		/*
 		 * Force flex into the state indicated by start_state.  This has a
-		 * couple of purposes: it lets some of the functions below set a
-		 * new starting state without ugly direct access to flex variables,
-		 * and it allows us to transition from one flex lexer to another
-		 * so that we can lex different parts of the source string using
-		 * separate lexers.
+		 * couple of purposes: it lets some of the functions below set a new
+		 * starting state without ugly direct access to flex variables, and it
+		 * allows us to transition from one flex lexer to another so that we
+		 * can lex different parts of the source string using separate lexers.
 		 */
 		BEGIN(cur_state->start_state);
 %}
@@ -228,8 +227,8 @@ other			.
 						ECHO;
 					else
 					{
-						char   *varname;
-						char   *value;
+						char	   *varname;
+						char	   *value;
 
 						varname = psqlscan_extract_substring(cur_state,
 															 yytext + 1,
@@ -396,15 +395,11 @@ other			.
 
 }
 
-	/*
-	 * psql uses a single <<EOF>> rule, unlike the backend.
-	 */
-
 <<EOF>>			{
 					if (cur_state->buffer_stack == NULL)
 					{
 						cur_state->start_state = YY_START;
-						return LEXRES_EOL; /* end of input reached */
+						return LEXRES_EOL;		/* end of input reached */
 					}
 
 					/*
