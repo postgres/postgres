@@ -893,7 +893,9 @@ psql_scan_create(const PsqlScanCallbacks *callbacks)
 
 	state->callbacks = callbacks;
 
-	yylex_init_extra(state, &state->scanner);
+	yylex_init(&state->scanner);
+
+	yyset_extra(state, state->scanner);
 
 	psql_scan_reset(state);
 
