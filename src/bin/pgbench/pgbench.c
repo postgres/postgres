@@ -2649,11 +2649,23 @@ read_line_from_file(FILE *fd)
 }
 
 /*
+ * Initialize a ParsedScript
+ */
+static void
+initParsedScript(ParsedScript *ps, const char *desc, int alloc_num, int weight)
+{
+	ps->commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
+	ps->desc = desc;
+	ps->weight = weight;
+	initStats(&ps->stats, 0.0);
+}
+
+/*
  * Given a file name, read it and return its ParsedScript representation.  "-"
  * means to read stdin.
  */
 static ParsedScript
-process_file(char *filename)
+process_file(char *filename, int weight)
 {
 #define COMMANDS_ALLOC_NUM 128
 	ParsedScript ps;
@@ -2673,8 +2685,7 @@ process_file(char *filename)
 	}
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	ps.commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
-	ps.desc = filename;
+	initParsedScript(&ps, filename, alloc_num, weight);
 
 	lineno = 0;
 	index = 0;
@@ -2710,7 +2721,7 @@ process_file(char *filename)
 
 /* Parse the given builtin script and return the parsed representation */
 static ParsedScript
-process_builtin(BuiltinScript *bi)
+process_builtin(BuiltinScript *bi, int weight)
 {
 	int			lineno,
 				index;
@@ -2720,8 +2731,7 @@ process_builtin(BuiltinScript *bi)
 	ParsedScript ps;
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	ps.desc = bi->desc;
-	ps.commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
+	initParsedScript(&ps, bi->desc, alloc_num, weight);
 
 	lineno = 0;
 	index = 0;
@@ -2860,7 +2870,7 @@ parseScriptWeight(const char *option, char **script)
 
 /* append a script to the list of scripts to process */
 static void
-addScript(ParsedScript script, int weight)
+addScript(ParsedScript script)
 {
 	if (script.commands == NULL || script.commands[0] == NULL)
 	{
@@ -2875,8 +2885,6 @@ addScript(ParsedScript script, int weight)
 	}
 
 	sql_script[num_scripts] = script;
-	sql_script[num_scripts].weight = weight;
-	initStats(&sql_script[num_scripts].stats, 0.0);
 	num_scripts++;
 }
 
@@ -3251,24 +3259,24 @@ main(int argc, char **argv)
 				}
 
 				weight = parseScriptWeight(optarg, &script);
-				addScript(process_builtin(findBuiltin(script)), weight);
+				addScript(process_builtin(findBuiltin(script), weight));
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 
 			case 'S':
-				addScript(process_builtin(findBuiltin("select-only")), 1);
+				addScript(process_builtin(findBuiltin("select-only"), 1));
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 			case 'N':
-				addScript(process_builtin(findBuiltin("simple-update")), 1);
+				addScript(process_builtin(findBuiltin("simple-update"), 1));
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 			case 'f':
 				weight = parseScriptWeight(optarg, &script);
-				addScript(process_file(script), weight);
+				addScript(process_file(script, weight));
 				benchmarking_option_set = true;
 				break;
 			case 'D':
@@ -3406,7 +3414,7 @@ main(int argc, char **argv)
 	/* set default script if none */
 	if (num_scripts == 0 && !is_init_mode)
 	{
-		addScript(process_builtin(findBuiltin("tpcb-like")), 1);
+		addScript(process_builtin(findBuiltin("tpcb-like"), 1));
 		benchmarking_option_set = true;
 		internal_script_used = true;
 	}
