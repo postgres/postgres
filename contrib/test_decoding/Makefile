@@ -69,6 +69,6 @@ isolationcheck-install-force: all | submake-isolation submake-test_decoding
 	    --extra-install=contrib/test_decoding \
 	    $(ISOLATIONCHECKS)
 
-PHONY: submake-test_decoding submake-regress check \
+.PHONY: submake-test_decoding submake-regress check \
 	regresscheck regresscheck-install-force \
 	isolationcheck isolationcheck-install-force
