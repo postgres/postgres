@@ -11,6 +11,15 @@
 #ifndef PGBENCH_H
 #define PGBENCH_H
 
+/*
+ * This file is included outside exprscan.l, in places where we can't see
+ * flex's definition of typedef yyscan_t.  Fortunately, it's documented as
+ * being "void *", so we can use a macro to keep the function declarations
+ * here looking like the definitions in exprscan.l.  exprparse.y also
+ * uses this to be able to declare things as "yyscan_t".
+ */
+#define yyscan_t  void *
+
 /* Types of expression nodes */
 typedef enum PgBenchExprType
 {
@@ -73,17 +82,18 @@ struct PgBenchExprList
 
 extern PgBenchExpr *expr_parse_result;
 
-extern int	expr_yyparse(void);
-extern int	expr_yylex(void);
-extern void expr_yyerror(const char *str);
-extern void expr_yyerror_more(const char *str, const char *more);
-extern void expr_scanner_init(const char *str, const char *source,
-				  const int lineno, const char *line,
-				  const char *cmd, const int ecol);
+extern int	expr_yyparse(yyscan_t yyscanner);
+extern int	expr_yylex(yyscan_t yyscanner);
+extern void expr_yyerror(yyscan_t yyscanner, const char *str);
+extern void expr_yyerror_more(yyscan_t yyscanner, const char *str,
+				  const char *more);
+extern yyscan_t expr_scanner_init(const char *str, const char *source,
+				  int lineno, const char *line,
+				  const char *cmd, int ecol);
 extern void syntax_error(const char *source, const int lineno, const char *line,
 			 const char *cmd, const char *msg, const char *more,
 			 const int col);
-extern void expr_scanner_finish(void);
+extern void expr_scanner_finish(yyscan_t yyscanner);
 
 extern int64 strtoint64(const char *str);
 

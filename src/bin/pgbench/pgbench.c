@@ -2495,17 +2495,22 @@ process_commands(char *buf, const char *source, const int lineno)
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "set") == 0)
 		{
+			yyscan_t	yyscanner;
+
 			if (my_commands->argc < 3)
 			{
 				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
 							 "missing argument", NULL, -1);
 			}
 
-			expr_scanner_init(my_commands->argv[2], source, lineno,
-							  my_commands->line, my_commands->argv[0],
-							  my_commands->cols[2] - 1);
+			yyscanner = expr_scanner_init(my_commands->argv[2],
+										  source,
+										  lineno,
+										  my_commands->line,
+										  my_commands->argv[0],
+										  my_commands->cols[2] - 1);
 
-			if (expr_yyparse() != 0)
+			if (expr_yyparse(yyscanner) != 0)
 			{
 				/* dead code: exit done from syntax_error called by yyerror */
 				exit(1);
@@ -2513,7 +2518,7 @@ process_commands(char *buf, const char *source, const int lineno)
 
 			my_commands->expr = expr_parse_result;
 
-			expr_scanner_finish();
+			expr_scanner_finish(yyscanner);
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "sleep") == 0)
 		{

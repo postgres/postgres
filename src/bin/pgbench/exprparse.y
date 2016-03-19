@@ -7,6 +7,8 @@
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * src/bin/pgbench/exprparse.y
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -19,15 +21,18 @@ PgBenchExpr *expr_parse_result;
 static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
 static PgBenchExpr *make_integer_constant(int64 ival);
 static PgBenchExpr *make_variable(char *varname);
-static PgBenchExpr *make_op(const char *operator, PgBenchExpr *lexpr,
-		PgBenchExpr *rexpr);
-static int find_func(const char *fname);
-static PgBenchExpr *make_func(const int fnumber, PgBenchExprList *args);
+static PgBenchExpr *make_op(yyscan_t yyscanner, const char *operator,
+							PgBenchExpr *lexpr, PgBenchExpr *rexpr);
+static int find_func(yyscan_t yyscanner, const char *fname);
+static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args);
 
 %}
 
 %expect 0
 %name-prefix="expr_yy"
+
+%parse-param {yyscan_t yyscanner}
+%lex-param   {yyscan_t yyscanner}
 
 %union
 {
@@ -43,7 +48,6 @@ static PgBenchExpr *make_func(const int fnumber, PgBenchExprList *args);
 %type <str> VARIABLE FUNCTION
 
 %token INTEGER VARIABLE FUNCTION
-%token CHAR_ERROR /* never used, will raise a syntax error */
 
 /* Precedence: lowest to highest */
 %left	'+' '-'
@@ -61,18 +65,19 @@ elist:                  	{ $$ = NULL; }
 
 expr: '(' expr ')'			{ $$ = $2; }
 	| '+' expr %prec UMINUS	{ $$ = $2; }
-	| '-' expr %prec UMINUS	{ $$ = make_op("-", make_integer_constant(0), $2); }
-	| expr '+' expr			{ $$ = make_op("+", $1, $3); }
-	| expr '-' expr			{ $$ = make_op("-", $1, $3); }
-	| expr '*' expr			{ $$ = make_op("*", $1, $3); }
-	| expr '/' expr			{ $$ = make_op("/", $1, $3); }
-	| expr '%' expr			{ $$ = make_op("%", $1, $3); }
+	| '-' expr %prec UMINUS	{ $$ = make_op(yyscanner, "-",
+										   make_integer_constant(0), $2); }
+	| expr '+' expr			{ $$ = make_op(yyscanner, "+", $1, $3); }
+	| expr '-' expr			{ $$ = make_op(yyscanner, "-", $1, $3); }
+	| expr '*' expr			{ $$ = make_op(yyscanner, "*", $1, $3); }
+	| expr '/' expr			{ $$ = make_op(yyscanner, "/", $1, $3); }
+	| expr '%' expr			{ $$ = make_op(yyscanner, "%", $1, $3); }
 	| INTEGER				{ $$ = make_integer_constant($1); }
 	| VARIABLE 				{ $$ = make_variable($1); }
-	| function '(' elist ')'{ $$ = make_func($1, $3); }
+	| function '(' elist ')' { $$ = make_func(yyscanner, $1, $3); }
 	;
 
-function: FUNCTION			{ $$ = find_func($1); pg_free($1); }
+function: FUNCTION			{ $$ = find_func(yyscanner, $1); pg_free($1); }
 	;
 
 %%
@@ -98,9 +103,10 @@ make_variable(char *varname)
 }
 
 static PgBenchExpr *
-make_op(const char *operator, PgBenchExpr *lexpr, PgBenchExpr *rexpr)
+make_op(yyscan_t yyscanner, const char *operator,
+		PgBenchExpr *lexpr, PgBenchExpr *rexpr)
 {
-	return make_func(find_func(operator),
+	return make_func(yyscanner, find_func(yyscanner, operator),
 					 make_elist(rexpr, make_elist(lexpr, NULL)));
 }
 
@@ -139,7 +145,7 @@ static struct
  * or fail if the function is unknown.
  */
 static int
-find_func(const char * fname)
+find_func(yyscan_t yyscanner, const char *fname)
 {
 	int i = 0;
 
@@ -150,7 +156,7 @@ find_func(const char * fname)
 		i++;
 	}
 
-	expr_yyerror_more("unexpected function name", fname);
+	expr_yyerror_more(yyscanner, "unexpected function name", fname);
 
 	/* not reached */
 	return -1;
@@ -198,7 +204,7 @@ elist_length(PgBenchExprList *list)
 
 /* Build function call expression */
 static PgBenchExpr *
-make_func(const int fnumber, PgBenchExprList *args)
+make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 {
 	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
 
@@ -206,13 +212,13 @@ make_func(const int fnumber, PgBenchExprList *args)
 
 	if (PGBENCH_FUNCTIONS[fnumber].nargs >= 0 &&
 		PGBENCH_FUNCTIONS[fnumber].nargs != elist_length(args))
-		expr_yyerror_more("unexpected number of arguments",
+		expr_yyerror_more(yyscanner, "unexpected number of arguments",
 						  PGBENCH_FUNCTIONS[fnumber].fname);
 
 	/* check at least one arg for min & max */
 	if (PGBENCH_FUNCTIONS[fnumber].nargs == -1 &&
 		elist_length(args) == 0)
-		expr_yyerror_more("at least one argument expected",
+		expr_yyerror_more(yyscanner, "at least one argument expected",
 						  PGBENCH_FUNCTIONS[fnumber].fname);
 
 	expr->etype = ENODE_FUNCTION;
@@ -225,5 +231,16 @@ make_func(const int fnumber, PgBenchExprList *args)
 
 	return expr;
 }
+
+/*
+ * exprscan.l is compiled as part of exprparse.y.  Currently, this is
+ * unavoidable because exprparse does not create a .h file to export
+ * its token symbols.  If these files ever grow large enough to be
+ * worth compiling separately, that could be fixed; but for now it
+ * seems like useless complication.
+ */
+
+/* First, get rid of "#define yyscan_t" from pgbench.h */
+#undef yyscan_t
 
 #include "exprscan.c"
