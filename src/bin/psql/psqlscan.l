@@ -1,4 +1,4 @@
-%{
+%top{
 /*-------------------------------------------------------------------------
  *
  * psqlscan.l
@@ -42,8 +42,9 @@
 #include "psqlscan.h"
 
 #include "libpq-fe.h"
+}
 
-
+%{
 /*
  * We use a stack of flex buffers to handle substitution of psql variables.
  * Each stacked buffer contains the as-yet-unread text from one psql variable.
@@ -67,6 +68,10 @@ typedef struct StackElem
  */
 typedef struct PsqlScanStateData
 {
+	yyscan_t	scanner;		/* Flex's state for this PsqlScanState */
+
+	PQExpBuffer output_buf;		/* current output buffer */
+
 	StackElem  *buffer_stack;	/* stack of variable expansion buffers */
 	/*
 	 * These variables always refer to the outer buffer, never to any
@@ -85,9 +90,10 @@ typedef struct PsqlScanStateData
 
 	/*
 	 * All this state lives across successive input lines, until explicitly
-	 * reset by psql_scan_reset.
+	 * reset by psql_scan_reset.  start_state is adopted by yylex() on
+	 * entry, and updated with its finishing state on exit.
 	 */
-	int			start_state;	/* saved YY_START */
+	int			start_state;	/* yylex's starting/finishing state */
 	int			paren_depth;	/* depth of nesting in parentheses */
 	int			xcdepth;		/* depth of nesting in slash-star comments */
 	char	   *dolqstart;		/* current $foo$ quote start string */
@@ -98,11 +104,16 @@ typedef struct PsqlScanStateData
 	const PsqlScanCallbacks *callbacks;
 } PsqlScanStateData;
 
-static PsqlScanState cur_state;	/* current state while active */
+/*
+ * Set the type of yyextra; we use it as a pointer back to the containing
+ * PsqlScanState.
+ */
+#define YY_EXTRA_TYPE PsqlScanState
 
-static PQExpBuffer output_buf;	/* current output buffer */
-
-/* these variables do not need to be saved across calls */
+/*
+ * These variables do not need to be saved across calls.  Yeah, it's a bit
+ * of a hack, but putting them into PsqlScanStateData would be klugy too.
+ */
 static enum slash_option_type option_type;
 static char *option_quote;
 static int	unquoted_option_chars;
@@ -116,20 +127,33 @@ static int	backtick_start_offset;
 #define LEXRES_OK			3	/* OK completion of backslash argument */
 
 
-static void evaluate_backtick(void);
-static void push_new_buffer(const char *newstr, const char *varname);
+static void evaluate_backtick(PsqlScanState state);
+static void push_new_buffer(PsqlScanState state,
+							const char *newstr, const char *varname);
 static void pop_buffer_stack(PsqlScanState state);
 static bool var_is_current_source(PsqlScanState state, const char *varname);
-static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
+static YY_BUFFER_STATE prepare_buffer(PsqlScanState state,
+									  const char *txt, int len,
 									  char **txtcopy);
-static void emit(const char *txt, int len);
-static char *extract_substring(const char *txt, int len);
-static void escape_variable(bool as_ident);
+static void emit(PsqlScanState state, const char *txt, int len);
+static char *extract_substring(PsqlScanState state, const char *txt, int len);
+static void escape_variable(PsqlScanState state, const char *txt, int len,
+							bool as_ident);
 
-#define ECHO emit(yytext, yyleng)
+#define ECHO emit(cur_state, yytext, yyleng)
+
+/*
+ * Work around a bug in flex 2.5.35: it emits a couple of functions that
+ * it forgets to emit declarations for.  Since we use -Wmissing-prototypes,
+ * this would cause warnings.  Providing our own declarations should be
+ * harmless even when the bug gets fixed.
+ */
+extern int	psql_yyget_column(yyscan_t yyscanner);
+extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
 
 %}
 
+%option reentrant
 %option 8bit
 %option never-interactive
 %option nodefault
@@ -418,6 +442,22 @@ other			.
  */
 
 %%
+
+%{
+		/* Declare some local variables inside yylex(), for convenience */
+		PsqlScanState cur_state = yyextra;
+		PQExpBuffer output_buf = cur_state->output_buf;
+
+		/*
+		 * Force flex into the state indicated by start_state.  This has a
+		 * couple of purposes: it lets some of the functions below set a
+		 * new starting state without ugly direct access to flex variables,
+		 * and it allows us to transition from one flex lexer to another
+		 * so that we can lex different parts of the source string using
+		 * separate lexers.
+		 */
+		BEGIN(cur_state->start_state);
+%}
 
 {whitespace}	{
 					/*
@@ -718,6 +758,7 @@ other			.
 					if (cur_state->paren_depth == 0)
 					{
 						/* Terminate lexing temporarily */
+						cur_state->start_state = YY_START;
 						return LEXRES_SEMI;
 					}
 				}
@@ -729,11 +770,12 @@ other			.
 
 "\\"[;:]		{
 					/* Force a semicolon or colon into the query buffer */
-					emit(yytext + 1, 1);
+					emit(cur_state, yytext + 1, 1);
 				}
 
 "\\"			{
 					/* Terminate lexing temporarily */
+					cur_state->start_state = YY_START;
 					return LEXRES_BACKSLASH;
 				}
 
@@ -742,7 +784,9 @@ other			.
 					char   *varname;
 					char   *value;
 
-					varname = extract_substring(yytext + 1, yyleng - 1);
+					varname = extract_substring(cur_state,
+												yytext + 1,
+												yyleng - 1);
 					if (cur_state->callbacks->get_variable)
 						value = cur_state->callbacks->get_variable(varname,
 																   false,
@@ -764,7 +808,7 @@ other			.
 						else
 						{
 							/* OK, perform substitution */
-							push_new_buffer(value, varname);
+							push_new_buffer(cur_state, value, varname);
 							/* yy_scan_string already made buffer active */
 						}
 						free(value);
@@ -782,11 +826,11 @@ other			.
 				}
 
 :'{variable_char}+'	{
-					escape_variable(false);
+					escape_variable(cur_state, yytext, yyleng, false);
 				}
 
 :\"{variable_char}+\"	{
-					escape_variable(true);
+					escape_variable(cur_state, yytext, yyleng, true);
 				}
 
 	/*
@@ -920,7 +964,10 @@ other			.
 					StackElem  *stackelem = cur_state->buffer_stack;
 
 					if (stackelem == NULL)
+					{
+						cur_state->start_state = YY_START;
 						return LEXRES_EOL; /* end of input reached */
+					}
 
 					/*
 					 * We were expanding a variable, so pop the inclusion
@@ -931,13 +978,13 @@ other			.
 					stackelem = cur_state->buffer_stack;
 					if (stackelem != NULL)
 					{
-						yy_switch_to_buffer(stackelem->buf);
+						yy_switch_to_buffer(stackelem->buf, cur_state->scanner);
 						cur_state->curline = stackelem->bufstring;
 						cur_state->refline = stackelem->origstring ? stackelem->origstring : stackelem->bufstring;
 					}
 					else
 					{
-						yy_switch_to_buffer(cur_state->scanbufhandle);
+						yy_switch_to_buffer(cur_state->scanbufhandle, cur_state->scanner);
 						cur_state->curline = cur_state->scanbuf;
 						cur_state->refline = cur_state->scanline;
 					}
@@ -952,6 +999,7 @@ other			.
 
 {space}|"\\"	{
 					yyless(0);
+					cur_state->start_state = YY_START;
 					return LEXRES_OK;
 				}
 
@@ -1010,6 +1058,7 @@ other			.
 					 * broken.
 					 */
 					yyless(0);
+					cur_state->start_state = YY_START;
 					return LEXRES_OK;
 				}
 
@@ -1043,7 +1092,9 @@ other			.
 						char   *varname;
 						char   *value;
 
-						varname = extract_substring(yytext + 1, yyleng - 1);
+						varname = extract_substring(cur_state,
+													yytext + 1,
+													yyleng - 1);
 						value = cur_state->callbacks->get_variable(varname,
 																   false,
 																   false);
@@ -1074,7 +1125,7 @@ other			.
 						ECHO;
 					else
 					{
-						escape_variable(false);
+						escape_variable(cur_state, yytext, yyleng, false);
 						*option_quote = ':';
 					}
 					unquoted_option_chars = 0;
@@ -1086,7 +1137,7 @@ other			.
 						ECHO;
 					else
 					{
-						escape_variable(true);
+						escape_variable(cur_state, yytext, yyleng, true);
 						*option_quote = ':';
 					}
 					unquoted_option_chars = 0;
@@ -1141,7 +1192,7 @@ other			.
 										  (char) strtol(yytext + 2, NULL, 16));
 				}
 
-"\\".			{ emit(yytext + 1, 1); }
+"\\".			{ emit(cur_state, yytext + 1, 1); }
 
 {other}|\n		{ ECHO; }
 
@@ -1157,7 +1208,7 @@ other			.
 "`"				{
 					/* In NO_EVAL mode, don't evaluate the command */
 					if (option_type != OT_NO_EVAL)
-						evaluate_backtick();
+						evaluate_backtick(cur_state);
 					BEGIN(xslasharg);
 				}
 
@@ -1193,10 +1244,14 @@ other			.
 <xslashend>{
 	/* at end of command, eat a double backslash, but not anything else */
 
-"\\\\"			{ return LEXRES_OK; }
+"\\\\"			{
+					cur_state->start_state = YY_START;
+					return LEXRES_OK;
+				}
 
 {other}|\n		{
 					yyless(0);
+					cur_state->start_state = YY_START;
 					return LEXRES_OK;
 				}
 
@@ -1220,6 +1275,8 @@ psql_scan_create(const PsqlScanCallbacks *callbacks)
 
 	state->callbacks = callbacks;
 
+	yylex_init_extra(state, &state->scanner);
+
 	psql_scan_reset(state);
 
 	return state;
@@ -1234,6 +1291,8 @@ psql_scan_destroy(PsqlScanState state)
 	psql_scan_finish(state);
 
 	psql_scan_reset(state);
+
+	yylex_destroy(state->scanner);
 
 	free(state);
 }
@@ -1266,11 +1325,8 @@ psql_scan_setup(PsqlScanState state,
 	/* Save standard-strings flag as well */
 	state->std_strings = std_strings;
 
-	/* needed for prepare_buffer */
-	cur_state = state;
-
 	/* Set up flex input buffer with appropriate translation and padding */
-	state->scanbufhandle = prepare_buffer(line, line_len,
+	state->scanbufhandle = prepare_buffer(state, line, line_len,
 										  &state->scanbuf);
 	state->scanline = line;
 
@@ -1322,22 +1378,17 @@ psql_scan(PsqlScanState state,
 	/* Must be scanning already */
 	Assert(state->scanbufhandle != NULL);
 
-	/* Set up static variables that will be used by yylex */
-	cur_state = state;
-	output_buf = query_buf;
+	/* Set current output target */
+	state->output_buf = query_buf;
 
+	/* Set input source */
 	if (state->buffer_stack != NULL)
-		yy_switch_to_buffer(state->buffer_stack->buf);
+		yy_switch_to_buffer(state->buffer_stack->buf, state->scanner);
 	else
-		yy_switch_to_buffer(state->scanbufhandle);
-
-	BEGIN(state->start_state);
+		yy_switch_to_buffer(state->scanbufhandle, state->scanner);
 
 	/* And lex. */
-	lexresult = yylex();
-
-	/* Update static vars back to the state struct */
-	state->start_state = YY_START;
+	lexresult = yylex(state->scanner);
 
 	/*
 	 * Check termination state and return appropriate result info.
@@ -1445,7 +1496,7 @@ psql_scan_finish(PsqlScanState state)
 
 	/* Done with the outer scan buffer, too */
 	if (state->scanbufhandle)
-		yy_delete_buffer(state->scanbufhandle);
+		yy_delete_buffer(state->scanbufhandle, state->scanner);
 	state->scanbufhandle = NULL;
 	if (state->scanbuf)
 		free(state->scanbuf);
@@ -1506,21 +1557,25 @@ psql_scan_slash_command(PsqlScanState state)
 	/* Build a local buffer that we'll return the data of */
 	initPQExpBuffer(&mybuf);
 
-	/* Set up static variables that will be used by yylex */
-	cur_state = state;
-	output_buf = &mybuf;
+	/* Set current output target */
+	state->output_buf = &mybuf;
 
+	/* Set input source */
 	if (state->buffer_stack != NULL)
-		yy_switch_to_buffer(state->buffer_stack->buf);
+		yy_switch_to_buffer(state->buffer_stack->buf, state->scanner);
 	else
-		yy_switch_to_buffer(state->scanbufhandle);
+		yy_switch_to_buffer(state->scanbufhandle, state->scanner);
 
-	BEGIN(xslashcmd);
+	/* Set lexer start state */
+	state->start_state = xslashcmd;
 
 	/* And lex. */
-	yylex();
+	yylex(state->scanner);
 
 	/* There are no possible errors in this lex state... */
+
+	/* Reset lexer state in case it's time to return to regular parsing */
+	state->start_state = INITIAL;
 
 	return mybuf.data;
 }
@@ -1552,6 +1607,7 @@ psql_scan_slash_option(PsqlScanState state,
 {
 	PQExpBufferData mybuf;
 	int			lexresult PG_USED_FOR_ASSERTS_ONLY;
+	int			final_state;
 	char		local_quote;
 
 	/* Must be scanning already */
@@ -1565,33 +1621,40 @@ psql_scan_slash_option(PsqlScanState state,
 	initPQExpBuffer(&mybuf);
 
 	/* Set up static variables that will be used by yylex */
-	cur_state = state;
-	output_buf = &mybuf;
 	option_type = type;
 	option_quote = quote;
 	unquoted_option_chars = 0;
 
-	if (state->buffer_stack != NULL)
-		yy_switch_to_buffer(state->buffer_stack->buf);
-	else
-		yy_switch_to_buffer(state->scanbufhandle);
+	/* Set current output target */
+	state->output_buf = &mybuf;
 
-	if (type == OT_WHOLE_LINE)
-		BEGIN(xslashwholeline);
+	/* Set input source */
+	if (state->buffer_stack != NULL)
+		yy_switch_to_buffer(state->buffer_stack->buf, state->scanner);
 	else
-		BEGIN(xslashargstart);
+		yy_switch_to_buffer(state->scanbufhandle, state->scanner);
+
+	/* Set lexer start state */
+	if (type == OT_WHOLE_LINE)
+		state->start_state = xslashwholeline;
+	else
+		state->start_state = xslashargstart;
 
 	/* And lex. */
-	lexresult = yylex();
+	lexresult = yylex(state->scanner);
+
+	/* Reset lexer state in case it's time to return to regular parsing */
+	final_state = state->start_state;
+	state->start_state = INITIAL;
 
 	/*
 	 * Check the lex result: we should have gotten back either LEXRES_OK
 	 * or LEXRES_EOL (the latter indicating end of string).  If we were inside
-	 * a quoted string, as indicated by YY_START, EOL is an error.
+	 * a quoted string, as indicated by final_state, EOL is an error.
 	 */
 	Assert(lexresult == LEXRES_EOL || lexresult == LEXRES_OK);
 
-	switch (YY_START)
+	switch (final_state)
 	{
 		case xslashargstart:
 			/* empty arg */
@@ -1652,7 +1715,7 @@ psql_scan_slash_option(PsqlScanState state,
 		case xslashbackquote:
 		case xslashdquote:
 			/* must have hit EOL inside quotes */
-			psql_error("unterminated quoted string\n");
+			state->callbacks->write_error("unterminated quoted string\n");
 			termPQExpBuffer(&mybuf);
 			return NULL;
 		case xslashwholeline:
@@ -1687,21 +1750,25 @@ psql_scan_slash_command_end(PsqlScanState state)
 	/* Must be scanning already */
 	Assert(state->scanbufhandle != NULL);
 
-	/* Set up static variables that will be used by yylex */
-	cur_state = state;
-	output_buf = NULL;
+	/* Set current output target */
+	state->output_buf = NULL;	/* we won't output anything */
 
+	/* Set input source */
 	if (state->buffer_stack != NULL)
-		yy_switch_to_buffer(state->buffer_stack->buf);
+		yy_switch_to_buffer(state->buffer_stack->buf, state->scanner);
 	else
-		yy_switch_to_buffer(state->scanbufhandle);
+		yy_switch_to_buffer(state->scanbufhandle, state->scanner);
 
-	BEGIN(xslashend);
+	/* Set lexer start state */
+	state->start_state = xslashend;
 
 	/* And lex. */
-	yylex();
+	yylex(state->scanner);
 
 	/* There are no possible errors in this lex state... */
+
+	/* Reset lexer state in case it's time to return to regular parsing */
+	state->start_state = INITIAL;
 }
 
 /*
@@ -1711,8 +1778,9 @@ psql_scan_slash_command_end(PsqlScanState state)
  * as a shell command and then replaced by the command's output.
  */
 static void
-evaluate_backtick(void)
+evaluate_backtick(PsqlScanState state)
 {
+	PQExpBuffer output_buf = state->output_buf;
 	char	   *cmd = output_buf->data + backtick_start_offset;
 	PQExpBufferData cmd_output;
 	FILE	   *fd;
@@ -1725,7 +1793,7 @@ evaluate_backtick(void)
 	fd = popen(cmd, PG_BINARY_R);
 	if (!fd)
 	{
-		psql_error("%s: %s\n", cmd, strerror(errno));
+		state->callbacks->write_error("%s: %s\n", cmd, strerror(errno));
 		error = true;
 	}
 
@@ -1736,7 +1804,7 @@ evaluate_backtick(void)
 			result = fread(buf, 1, sizeof(buf), fd);
 			if (ferror(fd))
 			{
-				psql_error("%s: %s\n", cmd, strerror(errno));
+				state->callbacks->write_error("%s: %s\n", cmd, strerror(errno));
 				error = true;
 				break;
 			}
@@ -1746,13 +1814,13 @@ evaluate_backtick(void)
 
 	if (fd && pclose(fd) == -1)
 	{
-		psql_error("%s: %s\n", cmd, strerror(errno));
+		state->callbacks->write_error("%s: %s\n", cmd, strerror(errno));
 		error = true;
 	}
 
 	if (PQExpBufferDataBroken(cmd_output))
 	{
-		psql_error("%s: out of memory\n", cmd);
+		state->callbacks->write_error("%s: out of memory\n", cmd);
 		error = true;
 	}
 
@@ -1776,12 +1844,10 @@ evaluate_backtick(void)
 /*
  * Push the given string onto the stack of stuff to scan.
  *
- * cur_state must point to the active PsqlScanState.
- *
  * NOTE SIDE EFFECT: the new buffer is made the active flex input buffer.
  */
 static void
-push_new_buffer(const char *newstr, const char *varname)
+push_new_buffer(PsqlScanState state, const char *newstr, const char *varname)
 {
 	StackElem  *stackelem;
 
@@ -1794,21 +1860,21 @@ push_new_buffer(const char *newstr, const char *varname)
 	 */
 	stackelem->varname = varname ? pg_strdup(varname) : NULL;
 
-	stackelem->buf = prepare_buffer(newstr, strlen(newstr),
+	stackelem->buf = prepare_buffer(state, newstr, strlen(newstr),
 									&stackelem->bufstring);
-	cur_state->curline = stackelem->bufstring;
-	if (cur_state->safe_encoding)
+	state->curline = stackelem->bufstring;
+	if (state->safe_encoding)
 	{
 		stackelem->origstring = NULL;
-		cur_state->refline = stackelem->bufstring;
+		state->refline = stackelem->bufstring;
 	}
 	else
 	{
 		stackelem->origstring = pg_strdup(newstr);
-		cur_state->refline = stackelem->origstring;
+		state->refline = stackelem->origstring;
 	}
-	stackelem->next = cur_state->buffer_stack;
-	cur_state->buffer_stack = stackelem;
+	stackelem->next = state->buffer_stack;
+	state->buffer_stack = stackelem;
 }
 
 /*
@@ -1823,7 +1889,7 @@ pop_buffer_stack(PsqlScanState state)
 	StackElem  *stackelem = state->buffer_stack;
 
 	state->buffer_stack = stackelem->next;
-	yy_delete_buffer(stackelem->buf);
+	yy_delete_buffer(stackelem->buf, state->scanner);
 	free(stackelem->bufstring);
 	if (stackelem->origstring)
 		free(stackelem->origstring);
@@ -1856,12 +1922,10 @@ var_is_current_source(PsqlScanState state, const char *varname)
  * copy of the data.  If working in an unsafe encoding, the copy has
  * multibyte sequences replaced by FFs to avoid fooling the lexer rules.
  *
- * cur_state must point to the active PsqlScanState.
- *
  * NOTE SIDE EFFECT: the new buffer is made the active flex input buffer.
  */
 static YY_BUFFER_STATE
-prepare_buffer(const char *txt, int len, char **txtcopy)
+prepare_buffer(PsqlScanState state, const char *txt, int len, char **txtcopy)
 {
 	char	   *newtxt;
 
@@ -1870,7 +1934,7 @@ prepare_buffer(const char *txt, int len, char **txtcopy)
 	*txtcopy = newtxt;
 	newtxt[len] = newtxt[len + 1] = YY_END_OF_BUFFER_CHAR;
 
-	if (cur_state->safe_encoding)
+	if (state->safe_encoding)
 		memcpy(newtxt, txt, len);
 	else
 	{
@@ -1879,7 +1943,7 @@ prepare_buffer(const char *txt, int len, char **txtcopy)
 
 		while (i < len)
 		{
-			int		thislen = PQmblen(txt + i, cur_state->encoding);
+			int		thislen = PQmblen(txt + i, state->encoding);
 
 			/* first byte should always be okay... */
 			newtxt[i] = txt[i];
@@ -1889,7 +1953,7 @@ prepare_buffer(const char *txt, int len, char **txtcopy)
 		}
 	}
 
-	return yy_scan_buffer(newtxt, len + 2);
+	return yy_scan_buffer(newtxt, len + 2, state->scanner);
 }
 
 /*
@@ -1901,17 +1965,19 @@ prepare_buffer(const char *txt, int len, char **txtcopy)
  * appended directly to output_buf.
  */
 static void
-emit(const char *txt, int len)
+emit(PsqlScanState state, const char *txt, int len)
 {
-	if (cur_state->safe_encoding)
+	PQExpBuffer output_buf = state->output_buf;
+
+	if (state->safe_encoding)
 		appendBinaryPQExpBuffer(output_buf, txt, len);
 	else
 	{
 		/* Gotta do it the hard way */
-		const char *reference = cur_state->refline;
+		const char *reference = state->refline;
 		int		i;
 
-		reference += (txt - cur_state->curline);
+		reference += (txt - state->curline);
 
 		for (i = 0; i < len; i++)
 		{
@@ -1931,19 +1997,19 @@ emit(const char *txt, int len)
  * rather than being pushed directly to output_buf.
  */
 static char *
-extract_substring(const char *txt, int len)
+extract_substring(PsqlScanState state, const char *txt, int len)
 {
 	char	   *result = (char *) pg_malloc(len + 1);
 
-	if (cur_state->safe_encoding)
+	if (state->safe_encoding)
 		memcpy(result, txt, len);
 	else
 	{
 		/* Gotta do it the hard way */
-		const char *reference = cur_state->refline;
+		const char *reference = state->refline;
 		int		i;
 
-		reference += (txt - cur_state->curline);
+		reference += (txt - state->curline);
 
 		for (i = 0; i < len; i++)
 		{
@@ -1967,15 +2033,15 @@ extract_substring(const char *txt, int len)
  * find the variable or escaping fails, emit the token as-is.
  */
 static void
-escape_variable(bool as_ident)
+escape_variable(PsqlScanState state, const char *txt, int len, bool as_ident)
 {
 	char	   *varname;
 	char	   *value;
 
 	/* Variable lookup. */
-	varname = extract_substring(yytext + 2, yyleng - 3);
-	if (cur_state->callbacks->get_variable)
-		value = cur_state->callbacks->get_variable(varname, true, as_ident);
+	varname = extract_substring(state, txt + 2, len - 3);
+	if (state->callbacks->get_variable)
+		value = state->callbacks->get_variable(varname, true, as_ident);
 	else
 		value = NULL;
 	free(varname);
@@ -1983,12 +2049,12 @@ escape_variable(bool as_ident)
 	if (value)
 	{
 		/* Emit the suitably-escaped value */
-		appendPQExpBufferStr(output_buf, value);
+		appendPQExpBufferStr(state->output_buf, value);
 		free(value);
 	}
 	else
 	{
 		/* Emit original token as-is */
-		emit(yytext, yyleng);
+		emit(state, txt, len);
 	}
 }
