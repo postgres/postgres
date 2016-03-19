@@ -389,7 +389,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				/* socket is writable */
 				result |= WL_SOCKET_WRITEABLE;
 			}
-			if ((wakeEvents & WL_SOCKET_WRITEABLE) &&
+			if ((wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE)) &&
 				(pfds[1].revents & (POLLHUP | POLLERR | POLLNVAL)))
 			{
 				/* EOF/error condition */
