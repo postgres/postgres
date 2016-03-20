@@ -62,11 +62,13 @@ my $frontend_extralibs = {
 	'psql'       => ['ws2_32.lib'] };
 my $frontend_extraincludes = {
 	'initdb' => ['src/timezone'],
-	'psql'   => [ 'src/bin/pg_dump', 'src/backend' ] };
+	'psql'   => [ 'src/bin/pg_dump', 'src/backend' ],
+	'pgbench' => [ 'src/bin/psql' ] };
 my $frontend_extrasource = {
 	'psql' => ['src/bin/psql/psqlscan.l', 'src/bin/psql/psqlscanslash.l'],
 	'pgbench' =>
-	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ], };
+	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y',
+	    'src/bin/psql/psqlscan.l' ] };
 my @frontend_excludes = (
 	'pgevent',     'pg_basebackup', 'pg_rewind', 'pg_dump',
 	'pg_xlogdump', 'scripts');
