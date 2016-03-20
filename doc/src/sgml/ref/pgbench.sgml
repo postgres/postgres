@@ -743,12 +743,24 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </para>
 
   <para>
-   The format of a script file is one SQL command per line; multiline
-   SQL commands are not supported.  Empty lines and lines beginning with
-   <literal>--</> are ignored.  Script file lines can also be
+   A script file contains one or more SQL commands terminated by
+   semicolons.  Empty lines and lines beginning with
+   <literal>--</> are ignored.  Script files can also contain
    <quote>meta commands</>, which are interpreted by <application>pgbench</>
    itself, as described below.
   </para>
+
+  <note>
+   <para>
+    Before <productname>PostgreSQL</> 9.6, SQL commands in script files
+    were terminated by newlines, and so they could not be continued across
+    lines.  Now a semicolon is <emphasis>required</> to separate consecutive
+    SQL commands (though a SQL command does not need one if it is followed
+    by a meta command).  If you need to create a script file that works with
+    both old and new versions of <application>pgbench</>, be sure to write
+    each SQL command on a single line ending with a semicolon.
+   </para>
+  </note>
 
   <para>
    There is a simple variable-substitution facility for script files.
@@ -789,7 +801,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    </table>
 
   <para>
-   Script file meta commands begin with a backslash (<literal>\</>).
+   Script file meta commands begin with a backslash (<literal>\</>) and
+   extend to the end of the line.
    Arguments to a meta command are separated by white space.
    These meta commands are supported:
   </para>
@@ -806,9 +819,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       from <replaceable>expression</>.
       The expression may contain integer constants such as <literal>5432</>,
       references to variables <literal>:</><replaceable>variablename</>,
-      and expressions composed of unary (<literal>-</>) or binary operators
+      unary operators (<literal>+</>, <literal>-</>) and binary operators
       (<literal>+</>, <literal>-</>, <literal>*</>, <literal>/</>,
-      <literal>%</>) with their usual associativity,
+      <literal>%</>) with their usual precedence and associativity,
       <link linkend="pgbench-builtin-functions">function calls</>, and
       parentheses.
      </para>
@@ -938,14 +951,15 @@ f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1.0 - exp(-parameter))
     <listitem>
      <para>
       Sets variable <replaceable>varname</> to the result of the shell command
-      <replaceable>command</>. The command must return an integer value
-      through its standard output.
+      <replaceable>command</> with the given <replaceable>argument</>(s).
+      The command must return an integer value through its standard output.
      </para>
 
-     <para><replaceable>argument</> can be either a text constant or a
-      <literal>:</><replaceable>variablename</> reference to a variable of
-      any types. If you want to use <replaceable>argument</> starting with
-      colons, you need to add an additional colon at the beginning of
+     <para>
+      <replaceable>command</> and each <replaceable>argument</> can be either
+      a text constant or a <literal>:</><replaceable>variablename</> reference
+      to a variable. If you want to use an <replaceable>argument</> starting
+      with a colon, write an additional colon at the beginning of
       <replaceable>argument</>.
      </para>
 
@@ -964,7 +978,8 @@ f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1.0 - exp(-parameter))
 
     <listitem>
      <para>
-      Same as <literal>\setshell</literal>, but the result is ignored.
+      Same as <literal>\setshell</literal>, but the result of the command
+      is discarded.
      </para>
 
      <para>
@@ -1010,7 +1025,7 @@ END;
 
    <para>
      The following functions are built into <application>pgbench</> and
-     may be used in conjunction with
+     may be used in expressions appearing in
      <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
    </para>
 

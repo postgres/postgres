@@ -291,22 +291,21 @@ static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
 
 typedef struct
 {
-	char	   *line;			/* full text of command line */
+	char	   *line;			/* text of command line */
 	int			command_num;	/* unique index of this Command struct */
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
 	int			argc;			/* number of command words */
 	char	   *argv[MAX_ARGS]; /* command word list */
-	int			cols[MAX_ARGS]; /* corresponding column starting from 1 */
-	PgBenchExpr *expr;			/* parsed expression */
+	PgBenchExpr *expr;			/* parsed expression, if needed */
 	SimpleStats stats;			/* time spent in this command */
 } Command;
 
 typedef struct ParsedScript
 {
-	const char *desc;
-	int			weight;
-	Command   **commands;
-	StatsData	stats;
+	const char *desc;			/* script descriptor (eg, file name) */
+	int			weight;			/* selection weight */
+	Command   **commands;		/* NULL-terminated array of Commands */
+	StatsData	stats;			/* total time spent in script */
 } ParsedScript;
 
 static ParsedScript sql_script[MAX_SCRIPTS];	/* SQL script files */
@@ -319,12 +318,12 @@ static int	debug = 0;			/* debug flag */
 /* Builtin test scripts */
 typedef struct BuiltinScript
 {
-	char	   *name;			/* very short name for -b ... */
-	char	   *desc;			/* short description */
-	char	   *script;			/* actual pgbench script */
+	const char *name;			/* very short name for -b ... */
+	const char *desc;			/* short description */
+	const char *script;			/* actual pgbench script */
 } BuiltinScript;
 
-static BuiltinScript builtin_script[] =
+static const BuiltinScript builtin_script[] =
 {
 	{
 		"tpcb-like",
@@ -371,16 +370,23 @@ static BuiltinScript builtin_script[] =
 
 
 /* Function prototypes */
-static void setalarm(int seconds);
-static void *threadRun(void *arg);
-
-static void processXactStats(TState *thread, CState *st, instr_time *now,
-				 bool skipped, StatsData *agg);
+static bool evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval);
 static void doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag);
+static void processXactStats(TState *thread, CState *st, instr_time *now,
+				 bool skipped, StatsData *agg);
+static void pgbench_error(const char *fmt,...) pg_attribute_printf(1, 2);
+static void addScript(ParsedScript script);
+static void *threadRun(void *arg);
+static void setalarm(int seconds);
 
 
-static bool evaluateExpr(CState *, PgBenchExpr *, int64 *);
+/* callback functions for our flex lexer */
+static const PsqlScanCallbacks pgbench_callbacks = {
+	NULL,						/* don't need get_variable functionality */
+	pgbench_error
+};
+
 
 static void
 usage(void)
@@ -2366,26 +2372,53 @@ parseQuery(Command *cmd, const char *raw_sql)
 	return true;
 }
 
+/*
+ * Simple error-printing function, might be needed by lexer
+ */
+static void
+pgbench_error(const char *fmt,...)
+{
+	va_list		ap;
+
+	fflush(stdout);
+	va_start(ap, fmt);
+	vfprintf(stderr, _(fmt), ap);
+	va_end(ap);
+}
+
+/*
+ * syntax error while parsing a script (in practice, while parsing a
+ * backslash command, because we don't detect syntax errors in SQL)
+ *
+ * source: source of script (filename or builtin-script ID)
+ * lineno: line number within script (count from 1)
+ * line: whole line of backslash command, if available
+ * command: backslash command name, if available
+ * msg: the actual error message
+ * more: optional extra message
+ * column: zero-based column number, or -1 if unknown
+ */
 void
-pg_attribute_noreturn()
-syntax_error(const char *source, const int lineno,
+syntax_error(const char *source, int lineno,
 			 const char *line, const char *command,
-			 const char *msg, const char *more, const int column)
+			 const char *msg, const char *more, int column)
 {
 	fprintf(stderr, "%s:%d: %s", source, lineno, msg);
 	if (more != NULL)
 		fprintf(stderr, " (%s)", more);
-	if (column != -1)
-		fprintf(stderr, " at column %d", column);
-	fprintf(stderr, " in command \"%s\"\n", command);
+	if (column >= 0 && line == NULL)
+		fprintf(stderr, " at column %d", column + 1);
+	if (command != NULL)
+		fprintf(stderr, " in command \"%s\"", command);
+	fprintf(stderr, "\n");
 	if (line != NULL)
 	{
 		fprintf(stderr, "%s\n", line);
-		if (column != -1)
+		if (column >= 0)
 		{
 			int			i;
 
-			for (i = 0; i < column - 1; i++)
+			for (i = 0; i < column; i++)
 				fprintf(stderr, " ");
 			fprintf(stderr, "^ error found here\n");
 		}
@@ -2393,293 +2426,425 @@ syntax_error(const char *source, const int lineno,
 	exit(1);
 }
 
-/* Parse a command; return a Command struct, or NULL if it's a comment */
+/*
+ * Parse a SQL command; return a Command struct, or NULL if it's a comment
+ *
+ * On entry, psqlscan.l has collected the command into "buf", so we don't
+ * really need to do much here except check for comment and set up a
+ * Command struct.
+ */
 static Command *
-process_commands(char *buf, const char *source, const int lineno)
+process_sql_command(PQExpBuffer buf, const char *source)
 {
-	const char	delim[] = " \f\n\r\t\v";
-	Command    *my_commands;
-	int			j;
-	char	   *p,
-			   *tok;
+	Command    *my_command;
+	char	   *p;
+	char	   *nlpos;
 
-	/* Make the string buf end at the next newline */
-	if ((p = strchr(buf, '\n')) != NULL)
-		*p = '\0';
+	/* Skip any leading whitespace, as well as "--" style comments */
+	p = buf->data;
+	for (;;)
+	{
+		if (isspace((unsigned char) *p))
+			p++;
+		else if (strncmp(p, "--", 2) == 0)
+		{
+			p = strchr(p, '\n');
+			if (p == NULL)
+				return NULL;
+			p++;
+		}
+		else
+			break;
+	}
 
-	/* Skip leading whitespace */
-	p = buf;
-	while (isspace((unsigned char) *p))
-		p++;
-
-	/* If the line is empty or actually a comment, we're done */
-	if (*p == '\0' || strncmp(p, "--", 2) == 0)
+	/* If there's nothing but whitespace and comments, we're done */
+	if (*p == '\0')
 		return NULL;
 
 	/* Allocate and initialize Command structure */
-	my_commands = (Command *) pg_malloc(sizeof(Command));
-	my_commands->line = pg_strdup(buf);
-	my_commands->command_num = num_commands++;
-	my_commands->type = 0;		/* until set */
-	my_commands->argc = 0;
-	initSimpleStats(&my_commands->stats);
+	my_command = (Command *) pg_malloc0(sizeof(Command));
+	my_command->command_num = num_commands++;
+	my_command->type = SQL_COMMAND;
+	my_command->argc = 0;
+	initSimpleStats(&my_command->stats);
 
-	if (*p == '\\')
+	/*
+	 * If SQL command is multi-line, we only want to save the first line as
+	 * the "line" label.
+	 */
+	nlpos = strchr(p, '\n');
+	if (nlpos)
 	{
-		int			max_args = -1;
-
-		my_commands->type = META_COMMAND;
-
-		j = 0;
-		tok = strtok(++p, delim);
-
-		if (tok != NULL && pg_strcasecmp(tok, "set") == 0)
-			max_args = 2;
-
-		while (tok != NULL)
-		{
-			my_commands->cols[j] = tok - buf + 1;
-			my_commands->argv[j++] = pg_strdup(tok);
-			my_commands->argc++;
-			if (max_args >= 0 && my_commands->argc >= max_args)
-				tok = strtok(NULL, "");
-			else
-				tok = strtok(NULL, delim);
-		}
-
-		if (pg_strcasecmp(my_commands->argv[0], "setrandom") == 0)
-		{
-			/*--------
-			 * parsing:
-			 *	 \setrandom variable min max [uniform]
-			 *	 \setrandom variable min max (gaussian|exponential) parameter
-			 */
-
-			if (my_commands->argc < 4)
-			{
-				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							 "missing arguments", NULL, -1);
-			}
-
-			/* argc >= 4 */
-
-			if (my_commands->argc == 4 ||		/* uniform without/with
-												 * "uniform" keyword */
-				(my_commands->argc == 5 &&
-				 pg_strcasecmp(my_commands->argv[4], "uniform") == 0))
-			{
-				/* nothing to do */
-			}
-			else if (			/* argc >= 5 */
-					 (pg_strcasecmp(my_commands->argv[4], "gaussian") == 0) ||
-				   (pg_strcasecmp(my_commands->argv[4], "exponential") == 0))
-			{
-				if (my_commands->argc < 6)
-				{
-					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							  "missing parameter", my_commands->argv[4], -1);
-				}
-				else if (my_commands->argc > 6)
-				{
-					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-								 "too many arguments", my_commands->argv[4],
-								 my_commands->cols[6]);
-				}
-			}
-			else	/* cannot parse, unexpected arguments */
-			{
-				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							 "unexpected argument", my_commands->argv[4],
-							 my_commands->cols[4]);
-			}
-		}
-		else if (pg_strcasecmp(my_commands->argv[0], "set") == 0)
-		{
-			yyscan_t	yyscanner;
-
-			if (my_commands->argc < 3)
-			{
-				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							 "missing argument", NULL, -1);
-			}
-
-			yyscanner = expr_scanner_init(my_commands->argv[2],
-										  source,
-										  lineno,
-										  my_commands->line,
-										  my_commands->argv[0],
-										  my_commands->cols[2] - 1);
-
-			if (expr_yyparse(yyscanner) != 0)
-			{
-				/* dead code: exit done from syntax_error called by yyerror */
-				exit(1);
-			}
-
-			my_commands->expr = expr_parse_result;
-
-			expr_scanner_finish(yyscanner);
-		}
-		else if (pg_strcasecmp(my_commands->argv[0], "sleep") == 0)
-		{
-			if (my_commands->argc < 2)
-			{
-				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							 "missing argument", NULL, -1);
-			}
-
-			/*
-			 * Split argument into number and unit to allow "sleep 1ms" etc.
-			 * We don't have to terminate the number argument with null
-			 * because it will be parsed with atoi, which ignores trailing
-			 * non-digit characters.
-			 */
-			if (my_commands->argv[1][0] != ':')
-			{
-				char	   *c = my_commands->argv[1];
-
-				while (isdigit((unsigned char) *c))
-					c++;
-				if (*c)
-				{
-					my_commands->argv[2] = c;
-					if (my_commands->argc < 3)
-						my_commands->argc = 3;
-				}
-			}
-
-			if (my_commands->argc >= 3)
-			{
-				if (pg_strcasecmp(my_commands->argv[2], "us") != 0 &&
-					pg_strcasecmp(my_commands->argv[2], "ms") != 0 &&
-					pg_strcasecmp(my_commands->argv[2], "s") != 0)
-				{
-					syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-								 "unknown time unit, must be us, ms or s",
-								 my_commands->argv[2], my_commands->cols[2]);
-				}
-			}
-
-			/* this should be an error?! */
-			for (j = 3; j < my_commands->argc; j++)
-				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
-						my_commands->argv[0], my_commands->argv[j]);
-		}
-		else if (pg_strcasecmp(my_commands->argv[0], "setshell") == 0)
-		{
-			if (my_commands->argc < 3)
-			{
-				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							 "missing argument", NULL, -1);
-			}
-		}
-		else if (pg_strcasecmp(my_commands->argv[0], "shell") == 0)
-		{
-			if (my_commands->argc < 1)
-			{
-				syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-							 "missing command", NULL, -1);
-			}
-		}
-		else
-		{
-			syntax_error(source, lineno, my_commands->line, my_commands->argv[0],
-						 "invalid command", NULL, -1);
-		}
+		my_command->line = pg_malloc(nlpos - p + 1);
+		memcpy(my_command->line, p, nlpos - p);
+		my_command->line[nlpos - p] = '\0';
 	}
 	else
-	{
-		my_commands->type = SQL_COMMAND;
+		my_command->line = pg_strdup(p);
 
-		switch (querymode)
-		{
-			case QUERY_SIMPLE:
-				my_commands->argv[0] = pg_strdup(p);
-				my_commands->argc++;
-				break;
-			case QUERY_EXTENDED:
-			case QUERY_PREPARED:
-				if (!parseQuery(my_commands, p))
-					exit(1);
-				break;
-			default:
+	switch (querymode)
+	{
+		case QUERY_SIMPLE:
+			my_command->argv[0] = pg_strdup(p);
+			my_command->argc++;
+			break;
+		case QUERY_EXTENDED:
+		case QUERY_PREPARED:
+			if (!parseQuery(my_command, p))
 				exit(1);
-		}
+			break;
+		default:
+			exit(1);
 	}
 
-	return my_commands;
+	return my_command;
 }
 
 /*
- * Read a line from fd, and return it in a malloc'd buffer.
- * Return NULL at EOF.
+ * Parse a backslash command; return a Command struct, or NULL if comment
+ *
+ * At call, we have scanned only the initial backslash.
+ */
+static Command *
+process_backslash_command(PsqlScanState sstate, const char *source)
+{
+	Command    *my_command;
+	PQExpBufferData word_buf;
+	int			word_offset;
+	int			offsets[MAX_ARGS];		/* offsets of argument words */
+	int			start_offset,
+				end_offset;
+	int			lineno;
+	int			j;
+
+	initPQExpBuffer(&word_buf);
+
+	/* Remember location of the backslash */
+	start_offset = expr_scanner_offset(sstate) - 1;
+	lineno = expr_scanner_get_lineno(sstate, start_offset);
+
+	/* Collect first word of command */
+	if (!expr_lex_one_word(sstate, &word_buf, &word_offset))
+	{
+		termPQExpBuffer(&word_buf);
+		return NULL;
+	}
+
+	/* Allocate and initialize Command structure */
+	my_command = (Command *) pg_malloc0(sizeof(Command));
+	my_command->command_num = num_commands++;
+	my_command->type = META_COMMAND;
+	my_command->argc = 0;
+	initSimpleStats(&my_command->stats);
+
+	/* Save first word (command name) */
+	j = 0;
+	offsets[j] = word_offset;
+	my_command->argv[j++] = pg_strdup(word_buf.data);
+	my_command->argc++;
+
+	if (pg_strcasecmp(my_command->argv[0], "set") == 0)
+	{
+		/* For \set, collect var name, then lex the expression. */
+		yyscan_t	yyscanner;
+
+		if (!expr_lex_one_word(sstate, &word_buf, &word_offset))
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "missing argument", NULL, -1);
+
+		offsets[j] = word_offset;
+		my_command->argv[j++] = pg_strdup(word_buf.data);
+		my_command->argc++;
+
+		yyscanner = expr_scanner_init(sstate, source, lineno, start_offset,
+									  my_command->argv[0]);
+
+		if (expr_yyparse(yyscanner) != 0)
+		{
+			/* dead code: exit done from syntax_error called by yyerror */
+			exit(1);
+		}
+
+		my_command->expr = expr_parse_result;
+
+		/* Get location of the ending newline */
+		end_offset = expr_scanner_offset(sstate) - 1;
+
+		/* Save line */
+		my_command->line = expr_scanner_get_substring(sstate,
+													  start_offset,
+													  end_offset);
+
+		expr_scanner_finish(yyscanner);
+
+		termPQExpBuffer(&word_buf);
+
+		return my_command;
+	}
+
+	/* For all other commands, collect remaining words. */
+	while (expr_lex_one_word(sstate, &word_buf, &word_offset))
+	{
+		if (j >= MAX_ARGS)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "too many arguments", NULL, -1);
+
+		offsets[j] = word_offset;
+		my_command->argv[j++] = pg_strdup(word_buf.data);
+		my_command->argc++;
+	}
+
+	/* Get location of the ending newline */
+	end_offset = expr_scanner_offset(sstate) - 1;
+
+	/* Save line */
+	my_command->line = expr_scanner_get_substring(sstate,
+												  start_offset,
+												  end_offset);
+
+	if (pg_strcasecmp(my_command->argv[0], "setrandom") == 0)
+	{
+		/*--------
+		 * parsing:
+		 *	 \setrandom variable min max [uniform]
+		 *	 \setrandom variable min max (gaussian|exponential) parameter
+		 */
+
+		if (my_command->argc < 4)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "missing arguments", NULL, -1);
+
+		if (my_command->argc == 4 ||	/* uniform without/with "uniform"
+										 * keyword */
+			(my_command->argc == 5 &&
+			 pg_strcasecmp(my_command->argv[4], "uniform") == 0))
+		{
+			/* nothing to do */
+		}
+		else if (				/* argc >= 5 */
+				 (pg_strcasecmp(my_command->argv[4], "gaussian") == 0) ||
+				 (pg_strcasecmp(my_command->argv[4], "exponential") == 0))
+		{
+			if (my_command->argc < 6)
+				syntax_error(source, lineno, my_command->line, my_command->argv[0],
+							 "missing parameter", NULL, -1);
+			else if (my_command->argc > 6)
+				syntax_error(source, lineno, my_command->line, my_command->argv[0],
+							 "too many arguments", NULL,
+							 offsets[6] - start_offset);
+		}
+		else	/* unrecognized distribution argument */
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "unexpected argument", my_command->argv[4],
+						 offsets[4] - start_offset);
+	}
+	else if (pg_strcasecmp(my_command->argv[0], "sleep") == 0)
+	{
+		if (my_command->argc < 2)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "missing argument", NULL, -1);
+
+		if (my_command->argc > 3)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "too many arguments", NULL,
+						 offsets[3] - start_offset);
+
+		/*
+		 * Split argument into number and unit to allow "sleep 1ms" etc. We
+		 * don't have to terminate the number argument with null because it
+		 * will be parsed with atoi, which ignores trailing non-digit
+		 * characters.
+		 */
+		if (my_command->argc == 2 && my_command->argv[1][0] != ':')
+		{
+			char	   *c = my_command->argv[1];
+
+			while (isdigit((unsigned char) *c))
+				c++;
+			if (*c)
+			{
+				my_command->argv[2] = c;
+				offsets[2] = offsets[1] + (c - my_command->argv[1]);
+				my_command->argc = 3;
+			}
+		}
+
+		if (my_command->argc == 3)
+		{
+			if (pg_strcasecmp(my_command->argv[2], "us") != 0 &&
+				pg_strcasecmp(my_command->argv[2], "ms") != 0 &&
+				pg_strcasecmp(my_command->argv[2], "s") != 0)
+				syntax_error(source, lineno, my_command->line, my_command->argv[0],
+							 "unrecognized time unit, must be us, ms or s",
+							 my_command->argv[2], offsets[2] - start_offset);
+		}
+	}
+	else if (pg_strcasecmp(my_command->argv[0], "setshell") == 0)
+	{
+		if (my_command->argc < 3)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "missing argument", NULL, -1);
+	}
+	else if (pg_strcasecmp(my_command->argv[0], "shell") == 0)
+	{
+		if (my_command->argc < 2)
+			syntax_error(source, lineno, my_command->line, my_command->argv[0],
+						 "missing command", NULL, -1);
+	}
+	else
+	{
+		syntax_error(source, lineno, my_command->line, my_command->argv[0],
+					 "invalid command", NULL, -1);
+	}
+
+	termPQExpBuffer(&word_buf);
+
+	return my_command;
+}
+
+/*
+ * Parse a script (either the contents of a file, or a built-in script)
+ * and add it to the list of scripts.
+ */
+static void
+ParseScript(const char *script, const char *desc, int weight)
+{
+	ParsedScript ps;
+	PsqlScanState sstate;
+	PQExpBufferData line_buf;
+	int			alloc_num;
+	int			index;
+
+#define COMMANDS_ALLOC_NUM 128
+	alloc_num = COMMANDS_ALLOC_NUM;
+
+	/* Initialize all fields of ps */
+	ps.desc = desc;
+	ps.weight = weight;
+	ps.commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
+	initStats(&ps.stats, 0.0);
+
+	/* Prepare to parse script */
+	sstate = psql_scan_create(&pgbench_callbacks);
+
+	/*
+	 * Ideally, we'd scan scripts using the encoding and stdstrings settings
+	 * we get from a DB connection.  However, without major rearrangement of
+	 * pgbench's argument parsing, we can't have a DB connection at the time
+	 * we parse scripts.  Using SQL_ASCII (encoding 0) should work well enough
+	 * with any backend-safe encoding, though conceivably we could be fooled
+	 * if a script file uses a client-only encoding.  We also assume that
+	 * stdstrings should be true, which is a bit riskier.
+	 */
+	psql_scan_setup(sstate, script, strlen(script), 0, true);
+
+	initPQExpBuffer(&line_buf);
+
+	index = 0;
+
+	for (;;)
+	{
+		PsqlScanResult sr;
+		promptStatus_t prompt;
+		Command    *command;
+
+		resetPQExpBuffer(&line_buf);
+
+		sr = psql_scan(sstate, &line_buf, &prompt);
+
+		/* If we collected a SQL command, process that */
+		command = process_sql_command(&line_buf, desc);
+		if (command)
+		{
+			ps.commands[index] = command;
+			index++;
+
+			if (index >= alloc_num)
+			{
+				alloc_num += COMMANDS_ALLOC_NUM;
+				ps.commands = (Command **)
+					pg_realloc(ps.commands, sizeof(Command *) * alloc_num);
+			}
+		}
+
+		/* If we reached a backslash, process that */
+		if (sr == PSCAN_BACKSLASH)
+		{
+			command = process_backslash_command(sstate, desc);
+			if (command)
+			{
+				ps.commands[index] = command;
+				index++;
+
+				if (index >= alloc_num)
+				{
+					alloc_num += COMMANDS_ALLOC_NUM;
+					ps.commands = (Command **)
+						pg_realloc(ps.commands, sizeof(Command *) * alloc_num);
+				}
+			}
+		}
+
+		/* Done if we reached EOF */
+		if (sr == PSCAN_INCOMPLETE || sr == PSCAN_EOL)
+			break;
+	}
+
+	ps.commands[index] = NULL;
+
+	addScript(ps);
+
+	termPQExpBuffer(&line_buf);
+	psql_scan_finish(sstate);
+	psql_scan_destroy(sstate);
+}
+
+/*
+ * Read the entire contents of file fd, and return it in a malloc'd buffer.
  *
  * The buffer will typically be larger than necessary, but we don't care
- * in this program, because we'll free it as soon as we've parsed the line.
+ * in this program, because we'll free it as soon as we've parsed the script.
  */
 static char *
-read_line_from_file(FILE *fd)
+read_file_contents(FILE *fd)
 {
-	char		tmpbuf[BUFSIZ];
 	char	   *buf;
 	size_t		buflen = BUFSIZ;
 	size_t		used = 0;
 
-	buf = (char *) palloc(buflen);
-	buf[0] = '\0';
+	buf = (char *) pg_malloc(buflen);
 
-	while (fgets(tmpbuf, BUFSIZ, fd) != NULL)
+	for (;;)
 	{
-		size_t		thislen = strlen(tmpbuf);
+		size_t		nread;
 
-		/* Append tmpbuf to whatever we had already */
-		memcpy(buf + used, tmpbuf, thislen + 1);
-		used += thislen;
-
-		/* Done if we collected a newline */
-		if (thislen > 0 && tmpbuf[thislen - 1] == '\n')
+		nread = fread(buf + used, 1, BUFSIZ, fd);
+		used += nread;
+		/* If fread() read less than requested, must be EOF or error */
+		if (nread < BUFSIZ)
 			break;
-
-		/* Else, enlarge buf to ensure we can append next bufferload */
+		/* Enlarge buf so we can read some more */
 		buflen += BUFSIZ;
 		buf = (char *) pg_realloc(buf, buflen);
 	}
+	/* There is surely room for a terminator */
+	buf[used] = '\0';
 
-	if (used > 0)
-		return buf;
-
-	/* Reached EOF */
-	free(buf);
-	return NULL;
+	return buf;
 }
 
 /*
- * Initialize a ParsedScript
+ * Given a file name, read it and add its script to the list.
+ * "-" means to read stdin.
+ * NB: filename must be storage that won't disappear.
  */
 static void
-initParsedScript(ParsedScript *ps, const char *desc, int alloc_num, int weight)
+process_file(const char *filename, int weight)
 {
-	ps->commands = (Command **) pg_malloc(sizeof(Command *) * alloc_num);
-	ps->desc = desc;
-	ps->weight = weight;
-	initStats(&ps->stats, 0.0);
-}
-
-/*
- * Given a file name, read it and return its ParsedScript representation.  "-"
- * means to read stdin.
- */
-static ParsedScript
-process_file(char *filename, int weight)
-{
-#define COMMANDS_ALLOC_NUM 128
-	ParsedScript ps;
 	FILE	   *fd;
-	int			lineno,
-				index;
 	char	   *buf;
-	int			alloc_num;
 
+	/* Slurp the file contents into "buf" */
 	if (strcmp(filename, "-") == 0)
 		fd = stdin;
 	else if ((fd = fopen(filename, "r")) == NULL)
@@ -2689,95 +2854,28 @@ process_file(char *filename, int weight)
 		exit(1);
 	}
 
-	alloc_num = COMMANDS_ALLOC_NUM;
-	initParsedScript(&ps, filename, alloc_num, weight);
+	buf = read_file_contents(fd);
 
-	lineno = 0;
-	index = 0;
-
-	while ((buf = read_line_from_file(fd)) != NULL)
+	if (ferror(fd))
 	{
-		Command    *command;
-
-		lineno += 1;
-
-		command = process_commands(buf, filename, lineno);
-
-		free(buf);
-
-		if (command == NULL)
-			continue;
-
-		ps.commands[index] = command;
-		index++;
-
-		if (index >= alloc_num)
-		{
-			alloc_num += COMMANDS_ALLOC_NUM;
-			ps.commands = pg_realloc(ps.commands, sizeof(Command *) * alloc_num);
-		}
+		fprintf(stderr, "could not read file \"%s\": %s\n",
+				filename, strerror(errno));
+		exit(1);
 	}
-	fclose(fd);
 
-	ps.commands[index] = NULL;
+	if (fd != stdin)
+		fclose(fd);
 
-	return ps;
+	ParseScript(buf, filename, weight);
+
+	free(buf);
 }
 
-/* Parse the given builtin script and return the parsed representation */
-static ParsedScript
-process_builtin(BuiltinScript *bi, int weight)
+/* Parse the given builtin script and add it to the list. */
+static void
+process_builtin(const BuiltinScript *bi, int weight)
 {
-	int			lineno,
-				index;
-	char		buf[BUFSIZ];
-	int			alloc_num;
-	char	   *tb = bi->script;
-	ParsedScript ps;
-
-	alloc_num = COMMANDS_ALLOC_NUM;
-	initParsedScript(&ps, bi->desc, alloc_num, weight);
-
-	lineno = 0;
-	index = 0;
-
-	for (;;)
-	{
-		char	   *p;
-		Command    *command;
-
-		/* buffer overflow check? */
-		p = buf;
-		while (*tb && *tb != '\n')
-			*p++ = *tb++;
-
-		if (*tb == '\0')
-			break;
-
-		if (*tb == '\n')
-			tb++;
-
-		*p = '\0';
-
-		lineno += 1;
-
-		command = process_commands(buf, bi->desc, lineno);
-		if (command == NULL)
-			continue;
-
-		ps.commands[index] = command;
-		index++;
-
-		if (index >= alloc_num)
-		{
-			alloc_num += COMMANDS_ALLOC_NUM;
-			ps.commands = pg_realloc(ps.commands, sizeof(Command *) * alloc_num);
-		}
-	}
-
-	ps.commands[index] = NULL;
-
-	return ps;
+	ParseScript(bi->script, bi->desc, weight);
 }
 
 /* show available builtin scripts */
@@ -2792,14 +2890,14 @@ listAvailableScripts(void)
 	fprintf(stderr, "\n");
 }
 
-/* return builtin script "name" if unambiguous, of fails if not found */
-static BuiltinScript *
+/* return builtin script "name" if unambiguous, fails if not found */
+static const BuiltinScript *
 findBuiltin(const char *name)
 {
 	int			i,
 				found = 0,
 				len = strlen(name);
-	BuiltinScript *result = NULL;
+	const BuiltinScript *result = NULL;
 
 	for (i = 0; i < lengthof(builtin_script); i++)
 	{
@@ -3264,24 +3362,24 @@ main(int argc, char **argv)
 				}
 
 				weight = parseScriptWeight(optarg, &script);
-				addScript(process_builtin(findBuiltin(script), weight));
+				process_builtin(findBuiltin(script), weight);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 
 			case 'S':
-				addScript(process_builtin(findBuiltin("select-only"), 1));
+				process_builtin(findBuiltin("select-only"), 1);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 			case 'N':
-				addScript(process_builtin(findBuiltin("simple-update"), 1));
+				process_builtin(findBuiltin("simple-update"), 1);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
 			case 'f':
 				weight = parseScriptWeight(optarg, &script);
-				addScript(process_file(script, weight));
+				process_file(script, weight);
 				benchmarking_option_set = true;
 				break;
 			case 'D':
@@ -3419,7 +3517,7 @@ main(int argc, char **argv)
 	/* set default script if none */
 	if (num_scripts == 0 && !is_init_mode)
 	{
-		addScript(process_builtin(findBuiltin("tpcb-like"), 1));
+		process_builtin(findBuiltin("tpcb-like"), 1);
 		benchmarking_option_set = true;
 		internal_script_used = true;
 	}

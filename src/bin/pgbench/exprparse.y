@@ -22,8 +22,8 @@ static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
 static PgBenchExpr *make_integer_constant(int64 ival);
 static PgBenchExpr *make_variable(char *varname);
 static PgBenchExpr *make_op(yyscan_t yyscanner, const char *operator,
-							PgBenchExpr *lexpr, PgBenchExpr *rexpr);
-static int find_func(yyscan_t yyscanner, const char *fname);
+		PgBenchExpr *lexpr, PgBenchExpr *rexpr);
+static int	find_func(yyscan_t yyscanner, const char *fname);
 static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args);
 
 %}
@@ -114,28 +114,49 @@ make_op(yyscan_t yyscanner, const char *operator,
  * List of available functions:
  * - fname: function name
  * - nargs: number of arguments
- *          -1 is a special value for min & max meaning #args >= 1
+ *			-1 is a special value for min & max meaning #args >= 1
  * - tag: function identifier from PgBenchFunction enum
  */
-static struct
+static const struct
 {
-	char * fname;
-	int nargs;
+	const char *fname;
+	int			nargs;
 	PgBenchFunction tag;
-} PGBENCH_FUNCTIONS[] = {
+}	PGBENCH_FUNCTIONS[] =
+{
 	/* parsed as operators, executed as functions */
-	{ "+", 2, PGBENCH_ADD },
-	{ "-", 2, PGBENCH_SUB },
-	{ "*", 2, PGBENCH_MUL },
-	{ "/", 2, PGBENCH_DIV },
-	{ "%", 2, PGBENCH_MOD },
+	{
+		"+", 2, PGBENCH_ADD
+	},
+	{
+		"-", 2, PGBENCH_SUB
+	},
+	{
+		"*", 2, PGBENCH_MUL
+	},
+	{
+		"/", 2, PGBENCH_DIV
+	},
+	{
+		"%", 2, PGBENCH_MOD
+	},
 	/* actual functions */
-	{ "abs", 1, PGBENCH_ABS },
-	{ "min", -1, PGBENCH_MIN },
-	{ "max", -1, PGBENCH_MAX },
-	{ "debug", 1, PGBENCH_DEBUG },
+	{
+		"abs", 1, PGBENCH_ABS
+	},
+	{
+		"min", -1, PGBENCH_MIN
+	},
+	{
+		"max", -1, PGBENCH_MAX
+	},
+	{
+		"debug", 1, PGBENCH_DEBUG
+	},
 	/* keep as last array element */
-	{ NULL, 0, 0 }
+	{
+		NULL, 0, 0
+	}
 };
 
 /*
@@ -147,7 +168,7 @@ static struct
 static int
 find_func(yyscan_t yyscanner, const char *fname)
 {
-	int i = 0;
+	int			i = 0;
 
 	while (PGBENCH_FUNCTIONS[i].fname)
 	{
@@ -166,7 +187,7 @@ find_func(yyscan_t yyscanner, const char *fname)
 static PgBenchExprList *
 make_elist(PgBenchExpr *expr, PgBenchExprList *list)
 {
-	PgBenchExprLink * cons;
+	PgBenchExprLink *cons;
 
 	if (list == NULL)
 	{
@@ -193,8 +214,8 @@ make_elist(PgBenchExpr *expr, PgBenchExprList *list)
 static int
 elist_length(PgBenchExprList *list)
 {
-	PgBenchExprLink *link = list != NULL? list->head: NULL;
-	int len = 0;
+	PgBenchExprLink *link = list != NULL ? list->head : NULL;
+	int			len = 0;
 
 	for (; link != NULL; link = link->next)
 		len++;
@@ -225,7 +246,7 @@ make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 	expr->u.function.function = PGBENCH_FUNCTIONS[fnumber].tag;
 
 	/* only the link is used, the head/tail is not useful anymore */
-	expr->u.function.args = args != NULL? args->head: NULL;
+	expr->u.function.args = args != NULL ? args->head : NULL;
 	if (args)
 		pg_free(args);
 
