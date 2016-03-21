@@ -4515,6 +4515,14 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				if (parent && IsA(parent, AggState))
 				{
 					AggState   *aggstate = (AggState *) parent;
+					Aggref	   *aggref = (Aggref *) node;
+
+					if (aggstate->finalizeAggs &&
+						aggref->aggoutputtype != aggref->aggtype)
+					{
+						/* planner messed up */
+						elog(ERROR, "Aggref aggoutputtype must match aggtype");
+					}
 
 					aggstate->aggs = lcons(astate, aggstate->aggs);
 					aggstate->numaggs++;

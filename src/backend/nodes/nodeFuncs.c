@@ -57,7 +57,7 @@ exprType(const Node *expr)
 			type = ((const Param *) expr)->paramtype;
 			break;
 		case T_Aggref:
-			type = ((const Aggref *) expr)->aggtype;
+			type = ((const Aggref *) expr)->aggoutputtype;
 			break;
 		case T_GroupingFunc:
 			type = INT4OID;

@@ -61,6 +61,7 @@ extern void add_column_to_pathtarget(PathTarget *target,
 extern void add_new_column_to_pathtarget(PathTarget *target, Expr *expr);
 extern void add_new_columns_to_pathtarget(PathTarget *target, List *exprs);
 extern void apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target);
+extern void apply_partialaggref_adjustment(PathTarget *target);
 
 /* Convenience macro to get a PathTarget with valid cost/width fields */
 #define create_pathtarget(root, tlist) \

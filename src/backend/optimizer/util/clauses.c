@@ -52,6 +52,10 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+typedef struct
+{
+	PartialAggType allowedtype;
+} partial_agg_context;
 
 typedef struct
 {
@@ -93,6 +97,8 @@ typedef struct
 	bool		allow_restricted;
 } has_parallel_hazard_arg;
 
+static bool aggregates_allow_partial_walker(Node *node,
+											partial_agg_context *context);
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool count_agg_clauses_walker(Node *node,
 						 count_agg_clauses_context *context);
@@ -398,6 +404,79 @@ make_ands_implicit(Expr *clause)
 /*****************************************************************************
  *		Aggregate-function clause manipulation
  *****************************************************************************/
+
+/*
+ * aggregates_allow_partial
+ *		Recursively search for Aggref clauses and determine the maximum
+ *		level of partial aggregation which can be supported.
+ */
+PartialAggType
+aggregates_allow_partial(Node *clause)
+{
+	partial_agg_context context;
+
+	/* initially any type is okay, until we find Aggrefs which say otherwise */
+	context.allowedtype = PAT_ANY;
+
+	if (!aggregates_allow_partial_walker(clause, &context))
+		return context.allowedtype;
+	return context.allowedtype;
+}
+
+static bool
+aggregates_allow_partial_walker(Node *node, partial_agg_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *aggref = (Aggref *) node;
+		HeapTuple	aggTuple;
+		Form_pg_aggregate aggform;
+
+		Assert(aggref->agglevelsup == 0);
+
+		/*
+		 * We can't perform partial aggregation with Aggrefs containing a
+		 * DISTINCT or ORDER BY clause.
+		 */
+		if (aggref->aggdistinct || aggref->aggorder)
+		{
+			context->allowedtype = PAT_DISABLED;
+			return true;	/* abort search */
+		}
+		aggTuple = SearchSysCache1(AGGFNOID,
+								   ObjectIdGetDatum(aggref->aggfnoid));
+		if (!HeapTupleIsValid(aggTuple))
+			elog(ERROR, "cache lookup failed for aggregate %u",
+				 aggref->aggfnoid);
+		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+
+		/*
+		 * If there is no combine function, then partial aggregation is not
+		 * possible.
+		 */
+		if (!OidIsValid(aggform->aggcombinefn))
+		{
+			ReleaseSysCache(aggTuple);
+			context->allowedtype = PAT_DISABLED;
+			return true;	/* abort search */
+		}
+
+		/*
+		 * If we find any aggs with an internal transtype then we must ensure
+		 * that pointers to aggregate states are not passed to other processes;
+		 * therefore, we set the maximum allowed type to PAT_INTERNAL_ONLY.
+		 */
+		if (aggform->aggtranstype == INTERNALOID)
+			context->allowedtype = PAT_INTERNAL_ONLY;
+
+		ReleaseSysCache(aggTuple);
+		return false; /* continue searching */
+	}
+	return expression_tree_walker(node, aggregates_allow_partial_walker,
+								  (void *) context);
+}
 
 /*
  * contain_agg_clause

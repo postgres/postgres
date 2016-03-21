@@ -255,12 +255,21 @@ typedef struct Param
  * DISTINCT is not supported in this case, so aggdistinct will be NIL.
  * The direct arguments appear in aggdirectargs (as a list of plain
  * expressions, not TargetEntry nodes).
+ *
+ * 'aggtype' and 'aggoutputtype' are the same except when we're performing
+ * partal aggregation; in that case, we output transition states.  Nothing
+ * interesting happens in the Aggref itself, but we must set the output data
+ * type to whatever type is used for transition values.
+ *
+ * Note: If you are adding fields here you may also need to add a comparison
+ * in search_indexed_tlist_for_partial_aggref()
  */
 typedef struct Aggref
 {
 	Expr		xpr;
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
-	Oid			aggtype;		/* type Oid of result of the aggregate */
+	Oid			aggtype;		/* type Oid of final result of the aggregate */
+	Oid			aggoutputtype;	/* type Oid of result of this aggregate */
 	Oid			aggcollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
 	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */

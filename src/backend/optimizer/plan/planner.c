@@ -106,6 +106,11 @@ static double get_number_of_groups(PlannerInfo *root,
 					 double path_rows,
 					 List *rollup_lists,
 					 List *rollup_groupclauses);
+static void set_grouped_rel_consider_parallel(PlannerInfo *root,
+					 RelOptInfo *grouped_rel,
+					 PathTarget *target);
+static Size estimate_hashagg_tablesize(Path *path, AggClauseCosts *agg_costs,
+					 double dNumGroups);
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
@@ -134,6 +139,8 @@ static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 double limit_tuples);
 static PathTarget *make_group_input_target(PlannerInfo *root,
 						PathTarget *final_target);
+static PathTarget *make_partialgroup_input_target(PlannerInfo *root,
+												  PathTarget *final_target);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
 static PathTarget *make_window_input_target(PlannerInfo *root,
@@ -1741,6 +1748,19 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 
 		/*
+		 * Likewise for any partial paths, although this case is simpler, since
+		 * we don't track the cheapest path.
+		 */
+		foreach(lc, current_rel->partial_pathlist)
+		{
+			Path	   *subpath = (Path *) lfirst(lc);
+
+			Assert(subpath->param_info == NULL);
+			lfirst(lc) = apply_projection_to_path(root, current_rel,
+											subpath, scanjoin_target);
+		}
+
+		/*
 		 * Save the various upper-rel PathTargets we just computed into
 		 * root->upper_targets[].  The core code doesn't use this, but it
 		 * provides a convenient place for extensions to get at the info.  For
@@ -3134,6 +3154,79 @@ get_number_of_groups(PlannerInfo *root,
 }
 
 /*
+ * set_grouped_rel_consider_parallel
+ *	  Determine if it's safe to generate partial paths for grouping.
+ */
+static void
+set_grouped_rel_consider_parallel(PlannerInfo *root, RelOptInfo *grouped_rel,
+								  PathTarget *target)
+{
+	Query	   *parse = root->parse;
+
+	Assert(grouped_rel->reloptkind == RELOPT_UPPER_REL);
+
+	/*
+	 * If there are no aggregates or GROUP BY clause, then no parallel
+	 * aggregation is possible.  At present, it doesn't matter whether
+	 * consider_parallel gets set in this case, because none of the upper rels
+	 * on top of this one try to set the flag or examine it, so we just bail
+	 * out as quickly as possible.  We might need to be more clever here in
+	 * the future.
+	 */
+	if (!parse->hasAggs && parse->groupClause == NIL)
+		return;
+
+	/*
+	 * Similarly, bail out quickly if GROUPING SETS are present; we can't
+	 * support those at present.
+	 */
+	if (parse->groupingSets)
+		return;
+
+	/*
+	 * If parallel-restricted functiosn are present in the target list or the
+	 * HAVING clause, we cannot safely go parallel.
+	 */
+	if (has_parallel_hazard((Node *) target->exprs, false) ||
+		has_parallel_hazard((Node *) parse->havingQual, false))
+		return;
+
+	/*
+	 * All that's left to check now is to make sure all aggregate functions
+	 * support partial mode. If there's no aggregates then we can skip checking
+	 * that.
+	 */
+	if (!parse->hasAggs)
+		grouped_rel->consider_parallel = true;
+	else if (aggregates_allow_partial((Node *) target->exprs) == PAT_ANY &&
+			 aggregates_allow_partial(root->parse->havingQual) == PAT_ANY)
+		grouped_rel->consider_parallel = true;
+}
+
+/*
+ * estimate_hashagg_tablesize
+ *	  estimate the number of bytes that a hash aggregate hashtable will
+ *	  require based on the agg_costs, path width and dNumGroups.
+ */
+static Size
+estimate_hashagg_tablesize(Path *path, AggClauseCosts *agg_costs,
+						   double dNumGroups)
+{
+	Size		hashentrysize;
+
+	/* Estimate per-hash-entry space at tuple width... */
+	hashentrysize = MAXALIGN(path->pathtarget->width) +
+		MAXALIGN(SizeofMinimalTupleHeader);
+
+	/* plus space for pass-by-ref transition values... */
+	hashentrysize += agg_costs->transitionSpace;
+	/* plus the per-hash-entry overhead */
+	hashentrysize += hash_agg_entry_size(agg_costs->numAggs);
+
+	return hashentrysize * dNumGroups;
+}
+
+/*
  * create_grouping_paths
  *
  * Build a new upperrel containing Paths for grouping and/or aggregation.
@@ -3149,9 +3242,8 @@ get_number_of_groups(PlannerInfo *root,
  *
  * We need to consider sorted and hashed aggregation in the same function,
  * because otherwise (1) it would be harder to throw an appropriate error
- * message if neither way works, and (2) we should not allow enable_hashagg or
- * hashtable size considerations to dissuade us from using hashing if sorting
- * is not possible.
+ * message if neither way works, and (2) we should not allow hashtable size
+ * considerations to dissuade us from using hashing if sorting is not possible.
  */
 static RelOptInfo *
 create_grouping_paths(PlannerInfo *root,
@@ -3163,9 +3255,14 @@ create_grouping_paths(PlannerInfo *root,
 	Query	   *parse = root->parse;
 	Path	   *cheapest_path = input_rel->cheapest_total_path;
 	RelOptInfo *grouped_rel;
+	PathTarget *partial_grouping_target = NULL;
 	AggClauseCosts agg_costs;
+	Size		hashaggtablesize;
 	double		dNumGroups;
-	bool		allow_hash;
+	double		dNumPartialGroups = 0;
+	bool		can_hash;
+	bool		can_sort;
+
 	ListCell   *lc;
 
 	/* For now, do all work in the (GROUP_AGG, NULL) upperrel */
@@ -3259,12 +3356,155 @@ create_grouping_paths(PlannerInfo *root,
 									  rollup_groupclauses);
 
 	/*
-	 * Consider sort-based implementations of grouping, if possible.  (Note
-	 * that if groupClause is empty, grouping_is_sortable() is trivially true,
-	 * and all the pathkeys_contained_in() tests will succeed too, so that
-	 * we'll consider every surviving input path.)
+	 * Partial paths in the input rel could allow us to perform aggregation in
+	 * parallel. set_grouped_rel_consider_parallel() will determine if it's
+	 * going to be safe to do so.
 	 */
-	if (grouping_is_sortable(parse->groupClause))
+	if (input_rel->partial_pathlist != NIL)
+		set_grouped_rel_consider_parallel(root, grouped_rel, target);
+
+	/*
+	 * Determine whether it's possible to perform sort-based implementations
+	 * of grouping.  (Note that if groupClause is empty, grouping_is_sortable()
+	 * is trivially true, and all the pathkeys_contained_in() tests will
+	 * succeed too, so that we'll consider every surviving input path.)
+	 */
+	can_sort = grouping_is_sortable(parse->groupClause);
+
+	/*
+	 * Determine whether we should consider hash-based implementations of
+	 * grouping.
+	 *
+	 * Hashed aggregation only applies if we're grouping.  We currently can't
+	 * hash if there are grouping sets, though.
+	 *
+	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
+	 * aggregates.  (Doing so would imply storing *all* the input values in
+	 * the hash table, and/or running many sorts in parallel, either of which
+	 * seems like a certain loser.)  We similarly don't support ordered-set
+	 * aggregates in hashed aggregation, but that case is also included in the
+	 * numOrderedAggs count.
+	 *
+	 * Note: grouping_is_hashable() is much more expensive to check than the
+	 * other gating conditions, so we want to do it last.
+	 */
+	can_hash = (parse->groupClause != NIL &&
+				parse->groupingSets == NIL &&
+				agg_costs.numOrderedAggs == 0 &&
+				grouping_is_hashable(parse->groupClause));
+
+	/*
+	 * Before generating paths for grouped_rel, we first generate any possible
+	 * partial paths; that way, later code can easily consider both parallel
+	 * and non-parallel approaches to grouping.  Note that the partial paths
+	 * we generate here are also partially aggregated, so simply pushing a
+	 * Gather node on top is insufficient to create a final path, as would be
+	 * the case for a scan/join rel.
+	 */
+	if (grouped_rel->consider_parallel)
+	{
+		Path   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
+
+		/*
+		 * Build target list for partial aggregate paths. We cannot reuse the
+		 * final target as Aggrefs must be set in partial mode, and we must
+		 * also include Aggrefs from the HAVING clause in the target as these
+		 * may not be present in the final target.
+		 */
+		partial_grouping_target = make_partialgroup_input_target(root, target);
+
+		/* Estimate number of partial groups. */
+		dNumPartialGroups = get_number_of_groups(root,
+								clamp_row_est(cheapest_partial_path->rows),
+												 NIL,
+												 NIL);
+
+		if (can_sort)
+		{
+			/* Checked in set_grouped_rel_consider_parallel() */
+			Assert(parse->hasAggs || parse->groupClause);
+
+			/*
+			 * Use any available suitably-sorted path as input, and also
+			 * consider sorting the cheapest partial path.
+			 */
+			foreach(lc, input_rel->partial_pathlist)
+			{
+				Path	   *path = (Path *) lfirst(lc);
+				bool		is_sorted;
+
+				is_sorted = pathkeys_contained_in(root->group_pathkeys,
+												  path->pathkeys);
+				if (path == cheapest_partial_path || is_sorted)
+				{
+					/* Sort the cheapest partial path, if it isn't already */
+					if (!is_sorted)
+						path = (Path *) create_sort_path(root,
+														 grouped_rel,
+														 path,
+														 root->group_pathkeys,
+														 -1.0);
+
+					if (parse->hasAggs)
+						add_partial_path(grouped_rel, (Path *)
+									create_agg_path(root,
+													grouped_rel,
+													path,
+													partial_grouping_target,
+								parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+													parse->groupClause,
+													NIL,
+													&agg_costs,
+													dNumPartialGroups,
+													false,
+													false));
+					else
+						add_partial_path(grouped_rel, (Path *)
+									create_group_path(root,
+													  grouped_rel,
+													  path,
+													  partial_grouping_target,
+													  parse->groupClause,
+													  NIL,
+													  dNumPartialGroups));
+				}
+			}
+		}
+
+		if (can_hash)
+		{
+			/* Checked above */
+			Assert(parse->hasAggs || parse->groupClause);
+
+			hashaggtablesize =
+				estimate_hashagg_tablesize(cheapest_partial_path,
+										   &agg_costs,
+										   dNumPartialGroups);
+
+			/*
+			 * Tentatively produce a partial HashAgg Path, depending on if it
+			 * looks as if the hash table will fit in work_mem.
+			 */
+			if (hashaggtablesize < work_mem * 1024L)
+			{
+				add_partial_path(grouped_rel, (Path *)
+							create_agg_path(root,
+											grouped_rel,
+											cheapest_partial_path,
+											partial_grouping_target,
+											AGG_HASHED,
+											parse->groupClause,
+											NIL,
+											&agg_costs,
+											dNumPartialGroups,
+											false,
+											false));
+			}
+		}
+	}
+
+	/* Build final grouping paths */
+	if (can_sort)
 	{
 		/*
 		 * Use any available suitably-sorted path as input, and also consider
@@ -3320,7 +3560,9 @@ create_grouping_paths(PlannerInfo *root,
 											 parse->groupClause,
 											 (List *) parse->havingQual,
 											 &agg_costs,
-											 dNumGroups));
+											 dNumGroups,
+											 false,
+											 true));
 				}
 				else if (parse->groupClause)
 				{
@@ -3344,69 +3586,131 @@ create_grouping_paths(PlannerInfo *root,
 				}
 			}
 		}
-	}
 
-	/*
-	 * Consider hash-based implementations of grouping, if possible.
-	 *
-	 * Hashed aggregation only applies if we're grouping.  We currently can't
-	 * hash if there are grouping sets, though.
-	 *
-	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
-	 * aggregates.  (Doing so would imply storing *all* the input values in
-	 * the hash table, and/or running many sorts in parallel, either of which
-	 * seems like a certain loser.)  We similarly don't support ordered-set
-	 * aggregates in hashed aggregation, but that case is also included in the
-	 * numOrderedAggs count.
-	 *
-	 * Note: grouping_is_hashable() is much more expensive to check than the
-	 * other gating conditions, so we want to do it last.
-	 */
-	allow_hash = (parse->groupClause != NIL &&
-				  parse->groupingSets == NIL &&
-				  agg_costs.numOrderedAggs == 0);
-
-	/* Consider reasons to disable hashing, but only if we can sort instead */
-	if (allow_hash && grouped_rel->pathlist != NIL)
-	{
-		if (!enable_hashagg)
-			allow_hash = false;
-		else
+		/*
+		 * Now generate a complete GroupAgg Path atop of the cheapest partial
+		 * path. We need only bother with the cheapest path here, as the output
+		 * of Gather is never sorted.
+		 */
+		if (grouped_rel->partial_pathlist)
 		{
+			Path   *path = (Path *) linitial(grouped_rel->partial_pathlist);
+			double total_groups = path->rows * path->parallel_degree;
+
+			path = (Path *) create_gather_path(root,
+											   grouped_rel,
+											   path,
+											   partial_grouping_target,
+											   NULL,
+											   &total_groups);
+
 			/*
-			 * Don't hash if it doesn't look like the hashtable will fit into
-			 * work_mem.
+			 * Gather is always unsorted, so we'll need to sort, unless there's
+			 * no GROUP BY clause, in which case there will only be a single
+			 * group.
 			 */
-			Size		hashentrysize;
+			if (parse->groupClause)
+				path = (Path *) create_sort_path(root,
+												 grouped_rel,
+												 path,
+												 root->group_pathkeys,
+												 -1.0);
 
-			/* Estimate per-hash-entry space at tuple width... */
-			hashentrysize = MAXALIGN(cheapest_path->pathtarget->width) +
-				MAXALIGN(SizeofMinimalTupleHeader);
-			/* plus space for pass-by-ref transition values... */
-			hashentrysize += agg_costs.transitionSpace;
-			/* plus the per-hash-entry overhead */
-			hashentrysize += hash_agg_entry_size(agg_costs.numAggs);
-
-			if (hashentrysize * dNumGroups > work_mem * 1024L)
-				allow_hash = false;
+			if (parse->hasAggs)
+				add_path(grouped_rel, (Path *)
+							create_agg_path(root,
+											grouped_rel,
+											path,
+											target,
+								parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+											parse->groupClause,
+											(List *) parse->havingQual,
+											&agg_costs,
+											dNumGroups,
+											true,
+											true));
+			else
+				add_path(grouped_rel, (Path *)
+							create_group_path(root,
+											  grouped_rel,
+											  path,
+											  target,
+											  parse->groupClause,
+											  (List *) parse->havingQual,
+											  dNumGroups));
 		}
 	}
 
-	if (allow_hash && grouping_is_hashable(parse->groupClause))
+	if (can_hash)
 	{
+		hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
+													  &agg_costs,
+													  dNumGroups);
+
 		/*
-		 * We just need an Agg over the cheapest-total input path, since input
-		 * order won't matter.
+		 * Provided that the estimated size of the hashtable does not exceed
+		 * work_mem, we'll generate a HashAgg Path, although if we were unable
+		 * to sort above, then we'd better generate a Path, so that we at least
+		 * have one.
 		 */
-		add_path(grouped_rel, (Path *)
-				 create_agg_path(root, grouped_rel,
-								 cheapest_path,
-								 target,
-								 AGG_HASHED,
-								 parse->groupClause,
-								 (List *) parse->havingQual,
-								 &agg_costs,
-								 dNumGroups));
+		if (hashaggtablesize < work_mem * 1024L ||
+			grouped_rel->pathlist == NIL)
+		{
+			/*
+			 * We just need an Agg over the cheapest-total input path, since input
+			 * order won't matter.
+			 */
+			add_path(grouped_rel, (Path *)
+					 create_agg_path(root, grouped_rel,
+									 cheapest_path,
+									 target,
+									 AGG_HASHED,
+									 parse->groupClause,
+									 (List *) parse->havingQual,
+									 &agg_costs,
+									 dNumGroups,
+									 false,
+									 true));
+		}
+
+		/*
+		 * Generate a HashAgg Path atop of the cheapest partial path. Once
+		 * again, we'll only do this if it looks as though the hash table won't
+		 * exceed work_mem.
+		 */
+		if (grouped_rel->partial_pathlist)
+		{
+			Path   *path = (Path *) linitial(grouped_rel->partial_pathlist);
+
+			hashaggtablesize = estimate_hashagg_tablesize(path,
+														  &agg_costs,
+														  dNumGroups);
+
+			if (hashaggtablesize < work_mem * 1024L)
+			{
+				double total_groups = path->rows * path->parallel_degree;
+
+				path = (Path *) create_gather_path(root,
+												   grouped_rel,
+												   path,
+												   partial_grouping_target,
+												   NULL,
+												   &total_groups);
+
+				add_path(grouped_rel, (Path *)
+							create_agg_path(root,
+											grouped_rel,
+											path,
+											target,
+											AGG_HASHED,
+											parse->groupClause,
+											(List *) parse->havingQual,
+											&agg_costs,
+											dNumGroups,
+											true,
+											true));
+			}
+		}
 	}
 
 	/* Give a helpful error if we failed to find any implementation */
@@ -3735,7 +4039,9 @@ create_distinct_paths(PlannerInfo *root,
 								 parse->distinctClause,
 								 NIL,
 								 NULL,
-								 numDistinctRows));
+								 numDistinctRows,
+								 false,
+								 true));
 	}
 
 	/* Give a helpful error if we failed to find any implementation */
@@ -3909,6 +4215,92 @@ make_group_input_target(PlannerInfo *root, PathTarget *final_target)
 	/* clean up cruft */
 	list_free(non_group_vars);
 	list_free(non_group_cols);
+
+	/* XXX this causes some redundant cost calculation ... */
+	return set_pathtarget_cost_width(root, input_target);
+}
+
+/*
+ * make_partialgroup_input_target
+ *	  Generate appropriate PathTarget for input for Partial Aggregate nodes.
+ *
+ * Similar to make_group_input_target(), only we don't recurse into Aggrefs, as
+ * we need these to remain intact so that they can be found later in Combine
+ * Aggregate nodes during set_combineagg_references(). Vars will be still
+ * pulled out of non-Aggref nodes as these will still be required by the
+ * combine aggregate phase.
+ *
+ * We also convert any Aggrefs which we do find and put them into partial mode,
+ * this adjusts the Aggref's return type so that the partially calculated
+ * aggregate value can make its way up the execution tree up to the Finalize
+ * Aggregate node.
+ */
+static PathTarget *
+make_partialgroup_input_target(PlannerInfo *root, PathTarget *final_target)
+{
+	Query	   *parse = root->parse;
+	PathTarget *input_target;
+	List	   *non_group_cols;
+	List	   *non_group_exprs;
+	int			i;
+	ListCell   *lc;
+
+	input_target = create_empty_pathtarget();
+	non_group_cols = NIL;
+
+	i = 0;
+	foreach(lc, final_target->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+		Index		sgref = final_target->sortgrouprefs[i];
+
+		if (sgref && parse->groupClause &&
+			get_sortgroupref_clause_noerr(sgref, parse->groupClause) != NULL)
+		{
+			/*
+			 * It's a grouping column, so add it to the input target as-is.
+			 */
+			add_column_to_pathtarget(input_target, expr, sgref);
+		}
+		else
+		{
+			/*
+			 * Non-grouping column, so just remember the expression for later
+			 * call to pull_var_clause.
+			 */
+			non_group_cols = lappend(non_group_cols, expr);
+		}
+
+		i++;
+	}
+
+	/*
+	 * If there's a HAVING clause, we'll need the Aggrefs it uses, too.
+	 */
+	if (parse->havingQual)
+		non_group_cols = lappend(non_group_cols, parse->havingQual);
+
+	/*
+	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
+	 * add them to the input target if not already present.  (A Var used
+	 * directly as a GROUP BY item will be present already.)  Note this
+	 * includes Vars used in resjunk items, so we are covering the needs of
+	 * ORDER BY and window specifications.  Vars used within Aggrefs will be
+	 * ignored and the Aggrefs themselves will be added to the PathTarget.
+	 */
+	non_group_exprs = pull_var_clause((Node *) non_group_cols,
+									  PVC_INCLUDE_AGGREGATES |
+									  PVC_RECURSE_WINDOWFUNCS |
+									  PVC_INCLUDE_PLACEHOLDERS);
+
+	add_new_columns_to_pathtarget(input_target, non_group_exprs);
+
+	/* clean up cruft */
+	list_free(non_group_exprs);
+	list_free(non_group_cols);
+
+	/* Adjust Aggrefs to put them in partial mode. */
+	apply_partialaggref_adjustment(input_target);
 
 	/* XXX this causes some redundant cost calculation ... */
 	return set_pathtarget_cost_width(root, input_target);
