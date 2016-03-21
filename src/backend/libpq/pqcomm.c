@@ -165,6 +165,7 @@ static PQcommMethods PqCommSocketMethods = {
 
 PQcommMethods *PqCommMethods = &PqCommSocketMethods;
 
+WaitEventSet *FeBeWaitSet;
 
 
 /* --------------------------------
