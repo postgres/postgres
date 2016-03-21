@@ -1356,6 +1356,10 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 		int			attnum = lfirst_int(lc);
 		TargetEntry *tle = get_tle_by_resno(targetlist, attnum);
 
+		if (!tle)
+			elog(ERROR, "attribute number %d not found in UPDATE targetlist",
+				 attnum);
+
 		if (!first)
 			appendStringInfoString(buf, ", ");
 		first = false;

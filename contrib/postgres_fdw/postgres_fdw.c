@@ -2042,7 +2042,7 @@ postgresRecheckForeignScan(ForeignScanState *node, TupleTableSlot *slot)
  * postgresPlanDirectModify
  *		Consider a direct foreign table modification
  *
- * Decide whether it is safe to modify a foreign table directly,  and if so,
+ * Decide whether it is safe to modify a foreign table directly, and if so,
  * rewrite subplan accordingly.
  */
 static bool
@@ -2118,6 +2118,10 @@ postgresPlanDirectModify(PlannerInfo *root,
 				elog(ERROR, "system-column update is not supported");
 
 			tle = get_tle_by_resno(subplan->targetlist, attno);
+
+			if (!tle)
+				elog(ERROR, "attribute number %d not found in subplan targetlist",
+					 attno);
 
 			if (!is_foreign_expr(root, baserel, (Expr *) tle->expr))
 				return false;
@@ -3305,7 +3309,8 @@ process_query_params(ExprContext *econtext,
 			param_values[i] = NULL;
 		else
 			param_values[i] = OutputFunctionCall(&param_flinfo[i], expr_value);
-			i++;
+
+		i++;
 	}
 
 	reset_transmission_modes(nestlevel);
