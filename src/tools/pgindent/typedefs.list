@@ -2113,6 +2113,8 @@ WalSnd
 WalSndCtlData
 WalSndSendDataCallback
 WalSndState
+WaitEvent
+WaitEventSet
 WholeRowVarExprState
 WindowAgg
 WindowAggState

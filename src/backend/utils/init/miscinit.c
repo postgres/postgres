@@ -33,6 +33,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
+#include "libpq/libpq.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
@@ -247,6 +248,9 @@ SwitchToSharedLatch(void)
 
 	MyLatch = &MyProc->procLatch;
 
+	if (FeBeWaitSet)
+		ModifyWaitEvent(FeBeWaitSet, 1, WL_LATCH_SET, MyLatch);
+
 	/*
 	 * Set the shared latch as the local one might have been set. This
 	 * shouldn't normally be necessary as code is supposed to check the
@@ -262,6 +266,10 @@ SwitchBackToLocalLatch(void)
 	Assert(MyProc != NULL && MyLatch == &MyProc->procLatch);
 
 	MyLatch = &LocalLatchData;
+
+	if (FeBeWaitSet)
+		ModifyWaitEvent(FeBeWaitSet, 1, WL_LATCH_SET, MyLatch);
+
 	SetLatch(MyLatch);
 }
 

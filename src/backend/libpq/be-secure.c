@@ -140,13 +140,13 @@ retry:
 	/* In blocking mode, wait until the socket is ready */
 	if (n < 0 && !port->noblock && (errno == EWOULDBLOCK || errno == EAGAIN))
 	{
-		int			w;
+		WaitEvent   event;
 
 		Assert(waitfor);
 
-		w = WaitLatchOrSocket(MyLatch,
-							  WL_LATCH_SET | WL_POSTMASTER_DEATH | waitfor,
-							  port->sock, 0);
+		ModifyWaitEvent(FeBeWaitSet, 0, waitfor, NULL);
+
+		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */, &event, 1);
 
 		/*
 		 * If the postmaster has died, it's not safe to continue running,
@@ -165,13 +165,13 @@ retry:
 		 * cycles checking for this very rare condition, and this should cause
 		 * us to exit quickly in most cases.)
 		 */
-		if (w & WL_POSTMASTER_DEATH)
+		if (event.events & WL_POSTMASTER_DEATH)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					errmsg("terminating connection due to unexpected postmaster exit")));
 
 		/* Handle interrupt. */
-		if (w & WL_LATCH_SET)
+		if (event.events & WL_LATCH_SET)
 		{
 			ResetLatch(MyLatch);
 			ProcessClientReadInterrupt(true);
@@ -241,22 +241,22 @@ retry:
 
 	if (n < 0 && !port->noblock && (errno == EWOULDBLOCK || errno == EAGAIN))
 	{
-		int			w;
+		WaitEvent   event;
 
 		Assert(waitfor);
 
-		w = WaitLatchOrSocket(MyLatch,
-							  WL_LATCH_SET | WL_POSTMASTER_DEATH | waitfor,
-							  port->sock, 0);
+		ModifyWaitEvent(FeBeWaitSet, 0, waitfor, NULL);
+
+		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */, &event, 1);
 
 		/* See comments in secure_read. */
-		if (w & WL_POSTMASTER_DEATH)
+		if (event.events & WL_POSTMASTER_DEATH)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					errmsg("terminating connection due to unexpected postmaster exit")));
 
 		/* Handle interrupt. */
-		if (w & WL_LATCH_SET)
+		if (event.events & WL_LATCH_SET)
 		{
 			ResetLatch(MyLatch);
 			ProcessClientWriteInterrupt(true);

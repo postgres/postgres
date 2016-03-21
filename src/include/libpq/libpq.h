@@ -19,6 +19,7 @@
 
 #include "lib/stringinfo.h"
 #include "libpq/libpq-be.h"
+#include "storage/latch.h"
 
 
 typedef struct
@@ -94,6 +95,8 @@ extern ssize_t secure_raw_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_write(Port *port, const void *ptr, size_t len);
 
 extern bool ssl_loaded_verify_locations;
+
+WaitEventSet *FeBeWaitSet;
 
 /* GUCs */
 extern char *SSLCipherSuites;
