@@ -66,7 +66,7 @@ static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		int lineno, bool *edited);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
-static bool do_watch(PQExpBuffer query_buf, long sleep);
+static bool do_watch(PQExpBuffer query_buf, double sleep);
 static bool lookup_object_oid(EditableObjectType obj_type, const char *desc,
 				  Oid *obj_oid);
 static bool get_create_object_cmd(EditableObjectType obj_type, Oid oid,
@@ -1577,12 +1577,12 @@ exec_command(const char *cmd,
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
 												 OT_NORMAL, NULL, true);
-		long		sleep = 2;
+		double		sleep = 2;
 
 		/* Convert optional sleep-length argument */
 		if (opt)
 		{
-			sleep = strtol(opt, NULL, 10);
+			sleep = strtod(opt, NULL);
 			if (sleep <= 0)
 				sleep = 1;
 			free(opt);
@@ -3017,8 +3017,9 @@ do_shell(const char *command)
  * onto a bunch of exec_command's variables to silence stupider compilers.
  */
 static bool
-do_watch(PQExpBuffer query_buf, long sleep)
+do_watch(PQExpBuffer query_buf, double sleep)
 {
+	long		sleep_ms = (long) (sleep * 1000);
 	printQueryOpt myopt = pset.popt;
 	const char *user_title;
 	char	   *title;
@@ -3064,10 +3065,10 @@ do_watch(PQExpBuffer query_buf, long sleep)
 			asctimebuf[i] = '\0';
 
 		if (user_title)
-			snprintf(title, title_len, _("%s\t%s (every %lds)\n"),
+			snprintf(title, title_len, _("%s\t%s (every %gs)\n"),
 					 user_title, asctimebuf, sleep);
 		else
-			snprintf(title, title_len, _("%s (every %lds)\n"),
+			snprintf(title, title_len, _("%s (every %gs)\n"),
 					 asctimebuf, sleep);
 		myopt.title = title;
 
@@ -3091,15 +3092,19 @@ do_watch(PQExpBuffer query_buf, long sleep)
 
 		/*
 		 * Enable 'watch' cancellations and wait a while before running the
-		 * query again.  Break the sleep into short intervals since pg_usleep
-		 * isn't interruptible on some platforms.
+		 * query again.  Break the sleep into short intervals (at most 1s)
+		 * since pg_usleep isn't interruptible on some platforms.
 		 */
 		sigint_interrupt_enabled = true;
-		for (i = 0; i < sleep; i++)
+		i = sleep_ms;
+		while (i > 0)
 		{
-			pg_usleep(1000000L);
+			long		s = Min(i, 1000L);
+
+			pg_usleep(s * 1000L);
 			if (cancel_pressed)
 				break;
+			i -= s;
 		}
 		sigint_interrupt_enabled = false;
 	}
