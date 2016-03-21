@@ -2637,7 +2637,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_parallel_degree", PGC_SUSET, RESOURCES_ASYNCHRONOUS,
+		{"max_parallel_degree", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Sets the maximum number of parallel processes per executor node."),
 			NULL
 		},
