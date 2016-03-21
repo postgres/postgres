@@ -3020,7 +3020,10 @@ static bool
 do_watch(PQExpBuffer query_buf, long sleep)
 {
 	printQueryOpt myopt = pset.popt;
-	char		title[50];
+	const char *user_title;
+	char	   *title;
+	int			title_len;
+	int			res = 0;
 
 	if (!query_buf || query_buf->len <= 0)
 	{
@@ -3034,19 +3037,38 @@ do_watch(PQExpBuffer query_buf, long sleep)
 	 */
 	myopt.topt.pager = 0;
 
+	/*
+	 * If there's a title in the user configuration, make sure we have room
+	 * for it in the title buffer.
+	 */
+	user_title = myopt.title;
+	title_len = (user_title ? strlen(user_title) : 0) + 100;
+	title = pg_malloc(title_len);
+
 	for (;;)
 	{
-		int			res;
 		time_t		timer;
+		char		asctimebuf[64];
 		long		i;
 
 		/*
-		 * Prepare title for output.  XXX would it be better to use the time
-		 * of completion of the command?
+		 * Prepare title for output.  Note that we intentionally include a
+		 * newline at the end of the title; this is somewhat historical but it
+		 * makes for reasonably nicely formatted output in simple cases.
 		 */
 		timer = time(NULL);
-		snprintf(title, sizeof(title), _("Watch every %lds\t%s"),
-				 sleep, asctime(localtime(&timer)));
+		strlcpy(asctimebuf, asctime(localtime(&timer)), sizeof(asctimebuf));
+		/* strip trailing newline from asctime's output */
+		i = strlen(asctimebuf);
+		while (i > 0 && asctimebuf[--i] == '\n')
+			asctimebuf[i] = '\0';
+
+		if (user_title)
+			snprintf(title, title_len, _("%s\t%s (every %lds)\n"),
+					 user_title, asctimebuf, sleep);
+		else
+			snprintf(title, title_len, _("%s (every %lds)\n"),
+					 asctimebuf, sleep);
 		myopt.title = title;
 
 		/* Run the query and print out the results */
@@ -3056,10 +3078,8 @@ do_watch(PQExpBuffer query_buf, long sleep)
 		 * PSQLexecWatch handles the case where we can no longer repeat the
 		 * query, and returns 0 or -1.
 		 */
-		if (res == 0)
+		if (res <= 0)
 			break;
-		if (res == -1)
-			return false;
 
 		/*
 		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
@@ -3084,7 +3104,8 @@ do_watch(PQExpBuffer query_buf, long sleep)
 		sigint_interrupt_enabled = false;
 	}
 
-	return true;
+	pg_free(title);
+	return (res >= 0);
 }
 
 /*
