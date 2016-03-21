@@ -27,6 +27,12 @@
 #include "psqlscan_int.h"
 
 /*
+ * We must have a typedef YYSTYPE for yylex's first argument, but this lexer
+ * doesn't presently make use of that argument, so just declare it as int.
+ */
+typedef int YYSTYPE;
+
+/*
  * Set the type of yyextra; we use it as a pointer back to the containing
  * PsqlScanState.
  */
@@ -62,7 +68,9 @@ extern void slash_yyset_column(int column_no, yyscan_t yyscanner);
 
 %}
 
+/* Except for the prefix, these options should match psqlscan.l */
 %option reentrant
+%option bison-bridge
 %option 8bit
 %option never-interactive
 %option nodefault
@@ -447,7 +455,7 @@ psql_scan_slash_command(PsqlScanState state)
 	state->start_state = xslashcmd;
 
 	/* And lex. */
-	yylex(state->scanner);
+	yylex(NULL, state->scanner);
 
 	/* There are no possible errors in this lex state... */
 
@@ -521,7 +529,7 @@ psql_scan_slash_option(PsqlScanState state,
 		state->start_state = xslashargstart;
 
 	/* And lex. */
-	lexresult = yylex(state->scanner);
+	lexresult = yylex(NULL, state->scanner);
 
 	/* Save final state for a moment... */
 	final_state = state->start_state;
@@ -648,7 +656,7 @@ psql_scan_slash_command_end(PsqlScanState state)
 	state->start_state = xslashend;
 
 	/* And lex. */
-	yylex(state->scanner);
+	yylex(NULL, state->scanner);
 
 	/* There are no possible errors in this lex state... */
 

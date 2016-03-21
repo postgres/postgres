@@ -17,10 +17,16 @@
  * This file is included outside exprscan.l, in places where we can't see
  * flex's definition of typedef yyscan_t.  Fortunately, it's documented as
  * being "void *", so we can use a macro to keep the function declarations
- * here looking like the definitions in exprscan.l.  exprparse.y also
- * uses this to be able to declare things as "yyscan_t".
+ * here looking like the definitions in exprscan.l.  exprparse.y and
+ * pgbench.c also use this to be able to declare things as "yyscan_t".
  */
 #define yyscan_t  void *
+
+/*
+ * Likewise, we can't see exprparse.y's definition of union YYSTYPE here,
+ * but for now there's no need to know what the union contents are.
+ */
+union YYSTYPE;
 
 /* Types of expression nodes */
 typedef enum PgBenchExprType
@@ -85,7 +91,7 @@ struct PgBenchExprList
 extern PgBenchExpr *expr_parse_result;
 
 extern int	expr_yyparse(yyscan_t yyscanner);
-extern int	expr_yylex(yyscan_t yyscanner);
+extern int	expr_yylex(union YYSTYPE *lvalp, yyscan_t yyscanner);
 extern void expr_yyerror(yyscan_t yyscanner, const char *str) pg_attribute_noreturn();
 extern void expr_yyerror_more(yyscan_t yyscanner, const char *str,
 				  const char *more) pg_attribute_noreturn();

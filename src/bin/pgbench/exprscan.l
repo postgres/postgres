@@ -47,6 +47,7 @@ extern void expr_yyset_column(int column_no, yyscan_t yyscanner);
 
 /* Except for the prefix, these options should match psqlscan.l */
 %option reentrant
+%option bison-bridge
 %option 8bit
 %option never-interactive
 %option nodefault
@@ -117,15 +118,15 @@ newline			[\n]
 ","				{ return ','; }
 
 :{alnum}+		{
-					yylval.str = pg_strdup(yytext + 1);
+					yylval->str = pg_strdup(yytext + 1);
 					return VARIABLE;
 				}
 {digit}+		{
-					yylval.ival = strtoint64(yytext);
+					yylval->ival = strtoint64(yytext);
 					return INTEGER;
 				}
 {alpha}{alnum}*	{
-					yylval.str = pg_strdup(yytext);
+					yylval->str = pg_strdup(yytext);
 					return FUNCTION;
 				}
 
@@ -169,6 +170,7 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 {
 	PsqlScanState state = yyget_extra(yyscanner);
 	int			error_detection_offset = expr_scanner_offset(state) - 1;
+	YYSTYPE		lval;
 	char	   *full_line;
 	size_t		l;
 
@@ -179,7 +181,7 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 	 */
 	if (!last_was_newline)
 	{
-		while (yylex(yyscanner))
+		while (yylex(&lval, yyscanner))
 			 /* skip */ ;
 	}
 
@@ -210,6 +212,7 @@ bool
 expr_lex_one_word(PsqlScanState state, PQExpBuffer word_buf, int *offset)
 {
 	int			lexresult;
+	YYSTYPE		lval;
 
 	/* Must be scanning already */
 	Assert(state->scanbufhandle != NULL);
@@ -228,7 +231,7 @@ expr_lex_one_word(PsqlScanState state, PQExpBuffer word_buf, int *offset)
 	state->start_state = INITIAL;
 
 	/* And lex. */
-	lexresult = yylex(state->scanner);
+	lexresult = yylex(&lval, state->scanner);
 
 	/*
 	 * Save start offset of word, if any.  We could do this more efficiently,

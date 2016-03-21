@@ -28,6 +28,7 @@ static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *
 
 %}
 
+%pure-parser
 %expect 0
 %name-prefix="expr_yy"
 
@@ -263,5 +264,7 @@ make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 
 /* First, get rid of "#define yyscan_t" from pgbench.h */
 #undef yyscan_t
+/* ... and the yylval macro, which flex will have its own definition for */
+#undef yylval
 
 #include "exprscan.c"
