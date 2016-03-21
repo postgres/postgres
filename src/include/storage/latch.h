@@ -36,7 +36,7 @@
  * WaitLatch includes a provision for timeouts (which should be avoided
  * when possible, as they incur extra overhead) and a provision for
  * postmaster child processes to wake up immediately on postmaster death.
- * See unix_latch.c for detailed specifications for the exported functions.
+ * See latch.c for detailed specifications for the exported functions.
  *
  * The correct pattern to wait for event(s) is:
  *

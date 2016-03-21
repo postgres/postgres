@@ -136,8 +136,6 @@ sub mkvcbuild
 		'src/backend/port/win32_sema.c');
 	$postgres->ReplaceFile('src/backend/port/pg_shmem.c',
 		'src/backend/port/win32_shmem.c');
-	$postgres->ReplaceFile('src/backend/port/pg_latch.c',
-		'src/backend/port/win32_latch.c');
 	$postgres->AddFiles('src/port',   @pgportfiles);
 	$postgres->AddFiles('src/common', @pgcommonbkndfiles);
 	$postgres->AddDir('src/timezone');

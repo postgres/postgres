@@ -306,8 +306,7 @@ ifeq ($(PORTNAME), win32)
 endif
 
 distclean: clean
-	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c \
-	      port/pg_latch.c
+	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c
 
 maintainer-clean: distclean
 	rm -f bootstrap/bootparse.c \
