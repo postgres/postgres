@@ -153,15 +153,22 @@
       </entry>
      </row>
      <row>
-       <entry><type>text</> <literal>%&gt;</literal> <type>text</></entry>
-       <entry><type>boolean</type></entry>
-       <entry>
-        Returns <literal>true</> if its first argument has the similar word in
-        the second argument and they have a similarity that is greater than the
-        current word similarity threshold set by
-        <varname>pg_trgm.word_similarity_threshold</> parameter.
-       </entry>
-      </row>
+      <entry><type>text</> <literal>&lt;%</literal> <type>text</></entry>
+      <entry><type>boolean</type></entry>
+      <entry>
+       Returns <literal>true</> if its first argument has the similar word in
+       the second argument and they have a similarity that is greater than the
+       current word similarity threshold set by
+       <varname>pg_trgm.word_similarity_threshold</> parameter.
+      </entry>
+     </row>
+     <row>
+      <entry><type>text</> <literal>%&gt;</literal> <type>text</></entry>
+      <entry><type>boolean</type></entry>
+      <entry>
+       Commutator of the <literal>&lt;%</> operator.
+      </entry>
+     </row>
      <row>
       <entry><type>text</> <literal>&lt;-&gt;</literal> <type>text</></entry>
       <entry><type>real</type></entry>
@@ -171,14 +178,23 @@
       </entry>
      </row>
      <row>
-       <entry>
-        <type>text</> <literal>&lt;-&gt;&gt;</literal> <type>text</>
-       </entry>
-       <entry><type>real</type></entry>
-       <entry>
-        Returns the <quote>distance</> between the arguments, that is
-        one minus the <function>word_similarity()</> value.
-       </entry>
+      <entry>
+       <type>text</> <literal>&lt;&lt;-&gt;</literal> <type>text</>
+      </entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Returns the <quote>distance</> between the arguments, that is
+       one minus the <function>word_similarity()</> value.
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <type>text</> <literal>&lt;-&gt;&gt;</literal> <type>text</>
+      </entry>
+      <entry><type>real</type></entry>
+      <entry>
+       Commutator of the <literal>&lt;&lt;-&gt;</> operator.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -215,8 +231,8 @@
      <listitem>
       <para>
        Sets the current word similarity threshold that is used by
-       the <literal>%&gt;</> operator.  The threshold must be between
-       0 and 1 (default is 0.6).
+       <literal>&lt;%</> and <literal>%&gt;</> operators.  The threshold
+       must be between 0 and 1 (default is 0.6).
       </para>
      </listitem>
     </varlistentry>
@@ -283,7 +299,7 @@ SELECT t, t &lt;-&gt; '<replaceable>word</>' AS dist
 <programlisting>
 SELECT t, word_similarity('<replaceable>word</>', t) AS sml
   FROM test_trgm
-  WHERE t %&gt; '<replaceable>word</>'
+  WHERE '<replaceable>word</>' &lt;% t
   ORDER BY sml DESC, t;
 </programlisting>
    This will return all values in the text column that have a word
@@ -295,7 +311,7 @@ SELECT t, word_similarity('<replaceable>word</>', t) AS sml
   <para>
    A variant of the above query is
 <programlisting>
-SELECT t, t &lt;-&gt;&gt; '<replaceable>word</>' AS dist
+SELECT t, '<replaceable>word</>' &lt;&lt;-&gt; t AS dist
   FROM test_trgm
   ORDER BY dist LIMIT 10;
 </programlisting>
