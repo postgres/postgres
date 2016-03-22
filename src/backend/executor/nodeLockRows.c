@@ -262,29 +262,15 @@ lnext:
 	 */
 	if (epq_needed)
 	{
-		int			i;
-
 		/* Initialize EPQ machinery */
 		EvalPlanQualBegin(&node->lr_epqstate, estate);
 
 		/*
-		 * Transfer already-fetched tuples into the EPQ state, and make sure
-		 * its test tuples for other tables are reset to NULL.
-		 */
-		for (i = 0; i < node->lr_ntables; i++)
-		{
-			EvalPlanQualSetTuple(&node->lr_epqstate,
-								 i + 1,
-								 node->lr_curtuples[i]);
-			/* freeing this tuple is now the responsibility of EPQ */
-			node->lr_curtuples[i] = NULL;
-		}
-
-		/*
-		 * Next, fetch a copy of any rows that were successfully locked
-		 * without any update having occurred.  (We do this in a separate pass
-		 * so as to avoid overhead in the common case where there are no
-		 * concurrent updates.)
+		 * Transfer any already-fetched tuples into the EPQ state, and fetch a
+		 * copy of any rows that were successfully locked without any update
+		 * having occurred.  (We do this in a separate pass so as to avoid
+		 * overhead in the common case where there are no concurrent updates.)
+		 * Make sure any inactive child rels have NULL test tuples in EPQ.
 		 */
 		foreach(lc, node->lr_arowMarks)
 		{
@@ -293,15 +279,25 @@ lnext:
 			HeapTupleData tuple;
 			Buffer		buffer;
 
-			/* ignore non-active child tables */
+			/* skip non-active child tables, but clear their test tuples */
 			if (!erm->ermActive)
 			{
 				Assert(erm->rti != erm->prti);	/* check it's child table */
+				EvalPlanQualSetTuple(&node->lr_epqstate, erm->rti, NULL);
 				continue;
 			}
 
-			if (EvalPlanQualGetTuple(&node->lr_epqstate, erm->rti) != NULL)
-				continue;		/* it was updated and fetched above */
+			/* was tuple updated and fetched above? */
+			if (node->lr_curtuples[erm->rti - 1] != NULL)
+			{
+				/* yes, so set it as the EPQ test tuple for this rel */
+				EvalPlanQualSetTuple(&node->lr_epqstate,
+									 erm->rti,
+									 node->lr_curtuples[erm->rti - 1]);
+				/* freeing this tuple is now the responsibility of EPQ */
+				node->lr_curtuples[erm->rti - 1] = NULL;
+				continue;
+			}
 
 			/* foreign tables should have been fetched above */
 			Assert(erm->relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE);

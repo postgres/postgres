@@ -144,3 +144,22 @@ accountid      balance
 
 checking       1050           
 savings        600            
+
+starting permutation: updateforss readforss c1 c2
+step updateforss: 
+	UPDATE table_a SET value = 'newTableAValue' WHERE id = 1;
+	UPDATE table_b SET value = 'newTableBValue' WHERE id = 1;
+
+step readforss: 
+	SELECT ta.id AS ta_id, ta.value AS ta_value,
+		(SELECT ROW(tb.id, tb.value)
+		 FROM table_b tb WHERE ta.id = tb.id) AS tb_row
+	FROM table_a ta
+	WHERE ta.id = 1 FOR UPDATE OF ta;
+ <waiting ...>
+step c1: COMMIT;
+step readforss: <... completed>
+ta_id          ta_value       tb_row         
+
+1              newTableAValue (1,tableBValue)
+step c2: COMMIT;
