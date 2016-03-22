@@ -2575,7 +2575,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        Number of heap blocks scanned.  Because the
        <link linkend="storage-vm">visibility map</> is used to optimize scans,
        some blocks will be skipped without inspection; skipped blocks are
-       included this total, so that this number will eventually become
+       included in this total, so that this number will eventually become
        equal to <structfield>heap_blks_total</> when the vacuum is complete.
        This counter only advances when the phase is <literal>scanning heap</>.
      </entry>
