@@ -987,6 +987,34 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.
  40 |   
 (10 rows)
 
+-- left outer join three tables
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft2 t1) LEFT JOIN (public.ft2 t2)) LEFT JOIN (public.ft4 t3)
+         Remote SQL: SELECT r1."C 1", r2.c2, r4.c3 FROM (("S 1"."T 1" r1 LEFT JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")))) LEFT JOIN "S 1"."T 3" r4 ON (((r2."C 1" = r4.c1))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 11 |  1 | 
+ 12 |  2 | AAA012
+ 13 |  3 | 
+ 14 |  4 | AAA014
+ 15 |  5 | 
+ 16 |  6 | AAA016
+ 17 |  7 | 
+ 18 |  8 | AAA018
+ 19 |  9 | 
+ 20 |  0 | AAA020
+(10 rows)
+
 -- left outer join + placement of clauses.
 -- clauses within the nullable side are not pulled up, but top level clause on
 -- non-nullable side is pushed into non-nullable side
@@ -1060,6 +1088,34 @@ SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2
     | 40
 (10 rows)
 
+-- right outer join three tables
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft4 t3) LEFT JOIN (public.ft2 t2)) LEFT JOIN (public.ft2 t1)
+         Remote SQL: SELECT r4.c3, r2.c2, r1."C 1" FROM (("S 1"."T 3" r4 LEFT JOIN "S 1"."T 1" r2 ON (((r2."C 1" = r4.c1)))) LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1"))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 22 |  2 | AAA022
+ 24 |  4 | AAA024
+ 26 |  6 | AAA026
+ 28 |  8 | AAA028
+ 30 |  0 | AAA030
+ 32 |  2 | AAA032
+ 34 |  4 | AAA034
+ 36 |  6 | AAA036
+ 38 |  8 | AAA038
+ 40 |  0 | AAA040
+(10 rows)
+
 -- full outer join
 EXPLAIN (COSTS false, VERBOSE)
 SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 45 LIMIT 10;
@@ -1086,6 +1142,202 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.
      | 15
      | 21
      | 27
+(10 rows)
+
+-- full outer join three tables
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft2 t1) FULL JOIN (public.ft2 t2)) FULL JOIN (public.ft4 t3)
+         Remote SQL: SELECT r1."C 1", r2.c2, r4.c3 FROM (("S 1"."T 1" r1 FULL JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")))) FULL JOIN "S 1"."T 3" r4 ON (((r2."C 1" = r4.c1))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 11 |  1 | 
+ 12 |  2 | AAA012
+ 13 |  3 | 
+ 14 |  4 | AAA014
+ 15 |  5 | 
+ 16 |  6 | AAA016
+ 17 |  7 | 
+ 18 |  8 | AAA018
+ 19 |  9 | 
+ 20 |  0 | AAA020
+(10 rows)
+
+-- full outer join + right outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft4 t3) LEFT JOIN (public.ft2 t2)) LEFT JOIN (public.ft2 t1)
+         Remote SQL: SELECT r4.c3, r2.c2, r1."C 1" FROM (("S 1"."T 3" r4 LEFT JOIN "S 1"."T 1" r2 ON (((r2."C 1" = r4.c1)))) LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1"))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 22 |  2 | AAA022
+ 24 |  4 | AAA024
+ 26 |  6 | AAA026
+ 28 |  8 | AAA028
+ 30 |  0 | AAA030
+ 32 |  2 | AAA032
+ 34 |  4 | AAA034
+ 36 |  6 | AAA036
+ 38 |  8 | AAA038
+ 40 |  0 | AAA040
+(10 rows)
+
+-- right outer join + full outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft2 t2) LEFT JOIN (public.ft2 t1)) FULL JOIN (public.ft4 t3)
+         Remote SQL: SELECT r2.c2, r1."C 1", r4.c3 FROM (("S 1"."T 1" r2 LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1")))) FULL JOIN "S 1"."T 3" r4 ON (((r2."C 1" = r4.c1))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 11 |  1 | 
+ 12 |  2 | AAA012
+ 13 |  3 | 
+ 14 |  4 | AAA014
+ 15 |  5 | 
+ 16 |  6 | AAA016
+ 17 |  7 | 
+ 18 |  8 | AAA018
+ 19 |  9 | 
+ 20 |  0 | AAA020
+(10 rows)
+
+-- full outer join + left outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft2 t1) FULL JOIN (public.ft2 t2)) LEFT JOIN (public.ft4 t3)
+         Remote SQL: SELECT r1."C 1", r2.c2, r4.c3 FROM (("S 1"."T 1" r1 FULL JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")))) LEFT JOIN "S 1"."T 3" r4 ON (((r2."C 1" = r4.c1))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 11 |  1 | 
+ 12 |  2 | AAA012
+ 13 |  3 | 
+ 14 |  4 | AAA014
+ 15 |  5 | 
+ 16 |  6 | AAA016
+ 17 |  7 | 
+ 18 |  8 | AAA018
+ 19 |  9 | 
+ 20 |  0 | AAA020
+(10 rows)
+
+-- left outer join + full outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft2 t1) LEFT JOIN (public.ft2 t2)) FULL JOIN (public.ft4 t3)
+         Remote SQL: SELECT r1."C 1", r2.c2, r4.c3 FROM (("S 1"."T 1" r1 LEFT JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1")))) FULL JOIN "S 1"."T 3" r4 ON (((r2."C 1" = r4.c1))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 11 |  1 | 
+ 12 |  2 | AAA012
+ 13 |  3 | 
+ 14 |  4 | AAA014
+ 15 |  5 | 
+ 16 |  6 | AAA016
+ 17 |  7 | 
+ 18 |  8 | AAA018
+ 19 |  9 | 
+ 20 |  0 | AAA020
+(10 rows)
+
+-- right outer join + left outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: ((public.ft2 t2) LEFT JOIN (public.ft2 t1)) LEFT JOIN (public.ft4 t3)
+         Remote SQL: SELECT r2.c2, r1."C 1", r4.c3 FROM (("S 1"."T 1" r2 LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1")))) LEFT JOIN "S 1"."T 3" r4 ON (((r2."C 1" = r4.c1))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 11 |  1 | 
+ 12 |  2 | AAA012
+ 13 |  3 | 
+ 14 |  4 | AAA014
+ 15 |  5 | 
+ 16 |  6 | AAA016
+ 17 |  7 | 
+ 18 |  8 | AAA018
+ 19 |  9 | 
+ 20 |  0 | AAA020
+(10 rows)
+
+-- left outer join + right outer join
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c2, t3.c3
+   ->  Foreign Scan
+         Output: t1.c1, t2.c2, t3.c3
+         Relations: (public.ft4 t3) LEFT JOIN ((public.ft2 t1) INNER JOIN (public.ft2 t2))
+         Remote SQL: SELECT r4.c3, r1."C 1", r2.c2 FROM ("S 1"."T 3" r4 LEFT JOIN ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (TRUE)) ON (((r2."C 1" = r4.c1)) AND ((r1."C 1" = r2."C 1"))))
+(6 rows)
+
+SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
+ c1 | c2 |   c3   
+----+----+--------
+ 22 |  2 | AAA022
+ 24 |  4 | AAA024
+ 26 |  6 | AAA026
+ 28 |  8 | AAA028
+ 30 |  0 | AAA030
+ 32 |  2 | AAA032
+ 34 |  4 | AAA034
+ 36 |  6 | AAA036
+ 38 |  8 | AAA038
+ 40 |  0 | AAA040
 (10 rows)
 
 -- full outer join + WHERE clause, only matched rows

@@ -727,12 +727,9 @@ get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		if (bms_is_subset(relids, restrictinfo->right_ec->ec_relids))
 			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
 													 restrictinfo->right_ec);
-		else
-		{
-			Assert(bms_is_subset(relids, restrictinfo->left_ec->ec_relids));
+		else if (bms_is_subset(relids, restrictinfo->left_ec->ec_relids))
 			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
 													  restrictinfo->left_ec);
-		}
 	}
 
 	return useful_eclass_list;
