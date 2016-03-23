@@ -1832,17 +1832,30 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 	}
 
 	/*
-	 * It's possible that there are platforms where the use of abbreviated
-	 * keys should be disabled at compile time.  Having only 4 byte datums
-	 * could make worst-case performance drastically more likely, for example.
-	 * Moreover, Darwin's strxfrm() implementations is known to not
-	 * effectively concentrate a significant amount of entropy from the
-	 * original string in earlier transformed blobs.  It's possible that other
-	 * supported platforms are similarly encumbered.  However, even in those
-	 * cases, the abbreviated keys optimization may win, and if it doesn't,
-	 * the "abort abbreviation" code may rescue us.  So, for now, we don't
-	 * disable this anywhere on the basis of performance.
+	 * Unfortunately, it seems that abbreviation for non-C collations is
+	 * broken on many common platforms; testing of multiple versions of glibc
+	 * reveals that, for many locales, strcoll() and strxfrm() do not return
+	 * consistent results, which is fatal to this optimization.  While no
+	 * other libc other than Cygwin has so far been shown to have a problem,
+	 * we take the conservative course of action for right now and disable
+	 * this categorically.  (Users who are certain this isn't a problem on
+	 * their system can define TRUST_STRXFRM.)
+	 *
+	 * Even apart from the risk of broken locales, it's possible that there
+	 * are platforms where the use of abbreviated keys should be disabled at
+	 * compile time.  Having only 4 byte datums could make worst-case
+	 * performance drastically more likely, for example.  Moreover, Darwin's
+	 * strxfrm() implementations is known to not effectively concentrate a
+	 * significant amount of entropy from the original string in earlier
+	 * transformed blobs.  It's possible that other supported platforms are
+	 * similarly encumbered.  So, if we ever get past disabling this
+	 * categorically, we may still want or need to disable it for particular
+	 * platforms.
 	 */
+#ifndef TRUST_STRXFRM
+	if (!collate_c)
+		abbreviate = false;
+#endif
 
 	/*
 	 * If we're using abbreviated keys, or if we're using a locale-aware
