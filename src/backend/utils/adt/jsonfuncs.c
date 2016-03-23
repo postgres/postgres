@@ -3722,12 +3722,15 @@ setPath(JsonbIterator **it, Datum *path_elems,
 {
 	JsonbValue	v;
 	JsonbIteratorToken r;
-	JsonbValue *res = NULL;
+	JsonbValue *res;
 
 	check_stack_depth();
 
 	if (path_nulls[level])
-		elog(ERROR, "path element at the position %d is NULL", level + 1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("path element at position %d is null",
+						level + 1)));
 
 	r = JsonbIteratorNext(it, &v, false);
 
@@ -3740,7 +3743,6 @@ setPath(JsonbIterator **it, Datum *path_elems,
 			r = JsonbIteratorNext(it, &v, false);
 			Assert(r == WJB_END_ARRAY);
 			res = pushJsonbValue(st, r, NULL);
-
 			break;
 		case WJB_BEGIN_OBJECT:
 			(void) pushJsonbValue(st, r, NULL);
@@ -3749,14 +3751,15 @@ setPath(JsonbIterator **it, Datum *path_elems,
 			r = JsonbIteratorNext(it, &v, true);
 			Assert(r == WJB_END_OBJECT);
 			res = pushJsonbValue(st, r, NULL);
-
 			break;
 		case WJB_ELEM:
 		case WJB_VALUE:
 			res = pushJsonbValue(st, r, &v);
 			break;
 		default:
-			elog(ERROR, "impossible state");
+			elog(ERROR, "unrecognized iterator result: %d", (int) r);
+			res = NULL;			/* keep compiler quiet */
+			break;
 	}
 
 	return res;
@@ -3867,7 +3870,6 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	JsonbValue	v;
 	int			idx,
 				i;
-	char	   *badp;
 	bool		done = false;
 
 	/* pick correct index */
@@ -3875,14 +3877,17 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 	{
 		char	   *c = TextDatumGetCString(path_elems[level]);
 		long		lindex;
+		char	   *badp;
 
 		errno = 0;
 		lindex = strtol(c, &badp, 10);
 		if (errno != 0 || badp == c || *badp != '\0' || lindex > INT_MAX ||
 			lindex < INT_MIN)
-			elog(ERROR, "path element at the position %d is not an integer", level + 1);
-		else
-			idx = lindex;
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			  errmsg("path element at position %d is not an integer: \"%s\"",
+					 level + 1, c)));
+		idx = lindex;
 	}
 	else
 		idx = nelems;
@@ -3957,7 +3962,6 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			{
 				addJsonbToParseState(st, newval);
 			}
-
 		}
 	}
 }

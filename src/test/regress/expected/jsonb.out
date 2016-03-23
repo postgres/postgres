@@ -3114,7 +3114,7 @@ select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::j
 (1 row)
 
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{d,NULL,0}', '[1,2,3]');
-ERROR:  path element at the position 2 is NULL
+ERROR:  path element at position 2 is null
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{n}', '{"1": 2}');
                                 jsonb_set                                
 -------------------------------------------------------------------------
@@ -3134,7 +3134,7 @@ select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::j
 (1 row)
 
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{d,NULL,0}', '{"1": 2}');
-ERROR:  path element at the position 2 is NULL
+ERROR:  path element at position 2 is null
 select jsonb_set('{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb, '{b,-1}', '"test"');
                                 jsonb_set                                 
 --------------------------------------------------------------------------
@@ -3178,7 +3178,7 @@ select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{
 (1 row)
 
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{b,-1e}'; -- invalid array subscript
-ERROR:  path element at the position 2 is not an integer
+ERROR:  path element at position 2 is not an integer: "-1e"
 select '{"n":null, "a":1, "b":[1,2], "c":{"1":2}, "d":{"1":[2,3]}}'::jsonb #- '{d,1,0}';
                              ?column?                             
 ------------------------------------------------------------------
@@ -3307,8 +3307,8 @@ select jsonb_set('[]','{-99}','{"foo":123}');
 (1 row)
 
 select jsonb_set('{"a": [1, 2, 3]}', '{a, non_integer}', '"new_value"');
-ERROR:  path element at the position 2 is not an integer
+ERROR:  path element at position 2 is not an integer: "non_integer"
 select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, non_integer}', '"new_value"');
-ERROR:  path element at the position 3 is not an integer
+ERROR:  path element at position 3 is not an integer: "non_integer"
 select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, NULL}', '"new_value"');
-ERROR:  path element at the position 3 is NULL
+ERROR:  path element at position 3 is null
