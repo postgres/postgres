@@ -10,8 +10,6 @@ to the optimizer and then executor.
 parser.c	things start here
 scan.l		break query into tokens
 scansup.c	handle escapes in input strings
-kwlookup.c	turn keywords into specific tokens
-keywords.c	table of standard keywords (passed to kwlookup.c)
 gram.y		parse the tokens and produce a "raw" parse tree
 analyze.c	top level of parse analysis for optimizable queries
 parse_agg.c	handle aggregates, like SUM(col1),  AVG(col2), ...
@@ -28,3 +26,7 @@ parse_relation.c support routines for tables and column handling
 parse_target.c	handle the result list of the query
 parse_type.c	support routines for data type handling
 parse_utilcmd.c	parse analysis for utility commands (done at execution time)
+
+See also src/common/keywords.c, which contains the table of standard
+keywords and the keyword lookup function.  We separated that out because
+various frontend code wants to use it too.

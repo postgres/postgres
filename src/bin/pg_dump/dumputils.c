@@ -18,12 +18,8 @@
 
 #include "dumputils.h"
 
-#include "parser/keywords.h"
+#include "common/keywords.h"
 
-
-/* Globals from keywords.c */
-extern const ScanKeyword FEScanKeywords[];
-extern const int NumFEScanKeywords;
 
 #define supports_grant_options(version) ((version) >= 70400)
 
@@ -116,8 +112,8 @@ fmtId(const char *rawid)
 		 * that's fine, since we already know we have all-lower-case.
 		 */
 		const ScanKeyword *keyword = ScanKeywordLookup(rawid,
-													   FEScanKeywords,
-													   NumFEScanKeywords);
+													   ScanKeywords,
+													   NumScanKeywords);
 
 		if (keyword != NULL && keyword->category != UNRESERVED_KEYWORD)
 			need_quotes = true;

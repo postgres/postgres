@@ -1,30 +1,55 @@
 /*-------------------------------------------------------------------------
  *
- * kwlookup.c
+ * keywords.c
  *	  lexical token lookup for key words in PostgreSQL
  *
- * NB - this file is also used by ECPG and several frontend programs in
- * src/bin/ including pg_dump and psql
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  src/backend/parser/kwlookup.c
+ *	  src/common/keywords.c
  *
  *-------------------------------------------------------------------------
  */
+#ifndef FRONTEND
+#include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
-/* use c.h so this can be built as either frontend or backend */
-#include "c.h"
+#ifndef FRONTEND
 
-#include <ctype.h>
+#include "parser/gramparse.h"
 
-#include "parser/keywords.h"
+#define PG_KEYWORD(a,b,c) {a,b,c},
+
+#else
+
+#include "common/keywords.h"
+
+/*
+ * We don't need the token number for frontend uses, so leave it out to avoid
+ * requiring backend headers that won't compile cleanly here.
+ */
+#define PG_KEYWORD(a,b,c) {a,0,c},
+
+#endif   /* FRONTEND */
+
+
+const ScanKeyword ScanKeywords[] = {
+#include "parser/kwlist.h"
+};
+
+const int	NumScanKeywords = lengthof(ScanKeywords);
+
 
 /*
  * ScanKeywordLookup - see if a given word is a keyword
+ *
+ * The table to be searched is passed explicitly, so that this can be used
+ * to search keyword lists other than the standard list appearing above.
  *
  * Returns a pointer to the ScanKeyword table entry, or NULL if no match.
  *

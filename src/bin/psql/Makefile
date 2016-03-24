@@ -22,7 +22,7 @@ override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/p
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
-	tab-complete.o mbprint.o dumputils.o keywords.o kwlookup.o \
+	tab-complete.o mbprint.o dumputils.o \
 	sql_help.o psqlscan.o psqlscanslash.o \
 	$(WIN32RES)
 
@@ -34,10 +34,7 @@ psql: $(OBJS) | submake-libpq submake-libpgport
 
 help.o: sql_help.h
 
-dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
-	rm -f $@ && $(LN_S) $< .
-
-kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
+dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
 
 sql_help.c: sql_help.h ;
@@ -70,7 +67,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/psql$(X)' '$(DESTDIR)$(datadir)/psqlrc.sample'
 
 clean distclean:
-	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c lex.backup
+	rm -f psql$(X) $(OBJS) dumputils.c lex.backup
 
 # files removed here are supposed to be in the distribution tarball,
 # so do not clean them in the clean/distclean rules

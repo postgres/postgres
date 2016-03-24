@@ -4,8 +4,8 @@
  *		Shared definitions for the "raw" parser (flex and bison phases only)
  *
  * NOTE: this file is only meant to be included in the core parsing files,
- * ie, parser.c, gram.y, scan.l, and keywords.c.  Definitions that are needed
- * outside the core parser should be in parser.h.
+ * ie, parser.c, gram.y, scan.l, and src/common/keywords.c.
+ * Definitions that are needed outside the core parser should be in parser.h.
  *
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group

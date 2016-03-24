@@ -4,7 +4,8 @@
 #define _ECPG_PREPROC_EXTERN_H
 
 #include "type.h"
-#include "parser/keywords.h"
+
+#include "common/keywords.h"
 
 #include <errno.h>
 #ifndef CHAR_BIT

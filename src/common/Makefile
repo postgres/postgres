@@ -36,8 +36,9 @@ override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
 override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
 
-OBJS_COMMON = config_info.o controldata_utils.o exec.o pg_lzcompress.o \
-	pgfnames.o psprintf.o relpath.o rmtree.o string.o username.o wait_error.o
+OBJS_COMMON = config_info.o controldata_utils.o exec.o keywords.o \
+	pg_lzcompress.o pgfnames.o psprintf.o relpath.o rmtree.o \
+	string.o username.o wait_error.o
 
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o restricted_token.o
 
@@ -82,6 +83,15 @@ $(OBJS_SRV): | submake-errcodes
 
 submake-errcodes:
 	$(MAKE) -C ../backend submake-errcodes
+
+# Dependencies of keywords.o need to be managed explicitly to make sure
+# that you don't get broken parsing code, even in a non-enable-depend build.
+# Note that gram.h isn't required for the frontend version of keywords.o.
+$(top_builddir)/src/include/parser/gram.h: $(top_srcdir)/src/backend/parser/gram.y
+	$(MAKE) -C $(top_builddir)/src/backend $(top_builddir)/src/include/parser/gram.h
+
+keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
+keywords_srv.o: $(top_builddir)/src/include/parser/gram.h $(top_srcdir)/src/include/parser/kwlist.h
 
 clean distclean maintainer-clean:
 	rm -f libpgcommon.a libpgcommon_srv.a $(OBJS_FRONTEND) $(OBJS_SRV)

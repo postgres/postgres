@@ -108,8 +108,9 @@ sub mkvcbuild
 	}
 
 	our @pgcommonallfiles = qw(
-	  config_info.c controldata_utils.c exec.c pg_lzcompress.c pgfnames.c
-	  psprintf.c relpath.c rmtree.c string.c username.c wait_error.c);
+	  config_info.c controldata_utils.c exec.c keywords.c
+	  pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
+	  string.c username.c wait_error.c);
 
 	our @pgcommonfrontendfiles = (
 		@pgcommonallfiles, qw(fe_memutils.c
@@ -343,8 +344,6 @@ sub mkvcbuild
 	$pgdump->AddFile('src/bin/pg_dump/pg_dump.c');
 	$pgdump->AddFile('src/bin/pg_dump/common.c');
 	$pgdump->AddFile('src/bin/pg_dump/pg_dump_sort.c');
-	$pgdump->AddFile('src/bin/pg_dump/keywords.c');
-	$pgdump->AddFile('src/backend/parser/kwlookup.c');
 	$pgdump->AddLibrary('ws2_32.lib');
 
 	my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
@@ -360,16 +359,12 @@ sub mkvcbuild
 	$pgdumpall->AddIncludeDir('src/backend');
 	$pgdumpall->AddFile('src/bin/pg_dump/pg_dumpall.c');
 	$pgdumpall->AddFile('src/bin/pg_dump/dumputils.c');
-	$pgdumpall->AddFile('src/bin/pg_dump/keywords.c');
-	$pgdumpall->AddFile('src/backend/parser/kwlookup.c');
 	$pgdumpall->AddLibrary('ws2_32.lib');
 
 	my $pgrestore = AddSimpleFrontend('pg_dump', 1);
 	$pgrestore->{name} = 'pg_restore';
 	$pgrestore->AddIncludeDir('src/backend');
 	$pgrestore->AddFile('src/bin/pg_dump/pg_restore.c');
-	$pgrestore->AddFile('src/bin/pg_dump/keywords.c');
-	$pgrestore->AddFile('src/backend/parser/kwlookup.c');
 	$pgrestore->AddLibrary('ws2_32.lib');
 
 	my $zic = $solution->AddProject('zic', 'exe', 'utils');
@@ -618,15 +613,7 @@ sub mkvcbuild
 		foreach my $f (@files)
 		{
 			$f =~ s/\.o$/\.c/;
-			if ($f eq 'keywords.c')
-			{
-				$proj->AddFile('src/bin/pg_dump/keywords.c');
-			}
-			elsif ($f eq 'kwlookup.c')
-			{
-				$proj->AddFile('src/backend/parser/kwlookup.c');
-			}
-			elsif ($f eq 'dumputils.c')
+			if ($f eq 'dumputils.c')
 			{
 				$proj->AddFile('src/bin/pg_dump/dumputils.c');
 			}

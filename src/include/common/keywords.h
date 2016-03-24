@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/parser/keywords.h
+ * src/include/common/keywords.h
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ typedef struct ScanKeyword
 
 extern PGDLLIMPORT const ScanKeyword ScanKeywords[];
 extern PGDLLIMPORT const int NumScanKeywords;
+
 
 extern const ScanKeyword *ScanKeywordLookup(const char *text,
 				  const ScanKeyword *keywords,

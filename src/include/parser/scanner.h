@@ -19,7 +19,7 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#include "parser/keywords.h"
+#include "common/keywords.h"
 
 /*
  * The scanner returns extra data about scanned tokens in this union type.
