@@ -1,0 +1,112 @@
+<!--
+doc/src/sgml/ref/drop_access_method.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-drop-access-method">
+ <indexterm zone="sql-drop-access-method">
+  <primary>DROP ACCESS METHOD</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP ACCESS METHOD</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP ACCESS METHOD</refname>
+  <refpurpose>remove an access method</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP ACCESS METHOD [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP ACCESS METHOD</command> removes an existing access method.
+   Only superusers can drop access methods.
+  </para>
+
+  <para>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the access method does not exist.
+      A notice is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing access method.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the access method
+      (such as operator classes, operator families, indexes).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the access method if any objects depend on it.
+      This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Drop the access method <literal>heptree</>:
+<programlisting>
+DROP ACCESS METHOD heptree;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>DROP ACCESS METHOD</command> is a
+   <productname>PostgreSQL</> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-create-access-method"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

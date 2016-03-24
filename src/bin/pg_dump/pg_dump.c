@@ -45,6 +45,7 @@
 #include "access/attnum.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
@@ -173,6 +174,7 @@ static void dumpFunc(Archive *fout, FuncInfo *finfo);
 static void dumpCast(Archive *fout, CastInfo *cast);
 static void dumpTransform(Archive *fout, TransformInfo *transform);
 static void dumpOpr(Archive *fout, OprInfo *oprinfo);
+static void dumpAccessMethod(Archive *fout, AccessMethodInfo *oprinfo);
 static void dumpOpclass(Archive *fout, OpclassInfo *opcinfo);
 static void dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo);
 static void dumpCollation(Archive *fout, CollInfo *convinfo);
@@ -1466,6 +1468,26 @@ selectDumpableProcLang(ProcLangInfo *plang, DumpOptions *dopt)
 		plang->dobj.dump = false;
 	else
 		plang->dobj.dump = dopt->include_everything;
+}
+
+/*
+ * selectDumpableAccessMethod: policy-setting subroutine
+ *		Mark an access method as to be dumped or not
+ *
+ * Access methods do not belong to any particular namespace.  To identify
+ * built-in access methods, we must resort to checking whether the
+ * method's OID is in the range reserved for initdb.
+ */
+static void
+selectDumpableAccessMethod(AccessMethodInfo *method, DumpOptions *dopt)
+{
+	if (checkExtensionMembership(&method->dobj, dopt))
+		return;					/* extension membership overrides all else */
+
+	if (method->dobj.catId.oid < (Oid) FirstNormalObjectId)
+		method->dobj.dump = false;
+	else
+		method->dobj.dump = dopt->include_everything;
 }
 
 /*
@@ -4099,6 +4121,84 @@ getConversions(Archive *fout, int *numConversions)
 
 	return convinfo;
 }
+
+/*
+ * getAccessMethods:
+ *	  read all user-defined access methods in the system catalogs and return
+ *	  them in the AccessMethodInfo* structure
+ *
+ *	numAccessMethods is set to the number of access methods read in
+ */
+AccessMethodInfo *
+getAccessMethods(Archive *fout, int *numAccessMethods)
+{
+	DumpOptions *dopt = fout->dopt;
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	PQExpBuffer query;
+	AccessMethodInfo *aminfo;
+	int			i_tableoid;
+	int			i_oid;
+	int			i_amname;
+	int			i_amhandler;
+	int			i_amtype;
+
+	/* Before 9.6, there are no user-defined access methods */
+	if (fout->remoteVersion < 90600)
+	{
+		*numAccessMethods = 0;
+		return NULL;
+	}
+
+	query = createPQExpBuffer();
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema(fout, "pg_catalog");
+
+	/*
+	 * Select only user-defined access methods assuming all built-in access
+	 * methods have oid < 10000.
+	 */
+	appendPQExpBuffer(query, "SELECT tableoid, oid, amname, amtype, "
+					  "amhandler::pg_catalog.regproc AS amhandler "
+					  "FROM pg_am");
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+	*numAccessMethods = ntups;
+
+	aminfo = (AccessMethodInfo *) pg_malloc(ntups * sizeof(AccessMethodInfo));
+
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_oid = PQfnumber(res, "oid");
+	i_amname = PQfnumber(res, "amname");
+	i_amhandler = PQfnumber(res, "amhandler");
+	i_amtype = PQfnumber(res, "amtype");
+
+	for (i = 0; i < ntups; i++)
+	{
+		aminfo[i].dobj.objType = DO_ACCESS_METHOD;
+		aminfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
+		aminfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
+		AssignDumpId(&aminfo[i].dobj);
+		aminfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_amname));
+		aminfo[i].dobj.namespace = NULL;
+		aminfo[i].amhandler = pg_strdup(PQgetvalue(res, i, i_amhandler));
+		aminfo[i].amtype = *(PQgetvalue(res, i, i_amtype));
+
+		/* Decide whether we want to dump it */
+		selectDumpableAccessMethod(&(aminfo[i]), dopt);
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+
+	return aminfo;
+}
+
 
 /*
  * getOpclasses:
@@ -8408,6 +8508,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 		case DO_OPERATOR:
 			dumpOpr(fout, (OprInfo *) dobj);
 			break;
+		case DO_ACCESS_METHOD:
+			dumpAccessMethod(fout, (AccessMethodInfo *) dobj);
+			break;
 		case DO_OPCLASS:
 			dumpOpclass(fout, (OpclassInfo *) dobj);
 			break;
@@ -11446,6 +11549,74 @@ convertTSFunction(Archive *fout, Oid funcOid)
 	return result;
 }
 
+/*
+ * dumpAccessMethod
+ *	  write out a single access method definition
+ */
+static void
+dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
+{
+	DumpOptions *dopt = fout->dopt;
+	PQExpBuffer q;
+	PQExpBuffer delq;
+	PQExpBuffer labelq;
+	char	   *qamname;
+
+	/* Skip if not to be dumped */
+	if (!aminfo->dobj.dump || dopt->dataOnly)
+		return;
+
+	q = createPQExpBuffer();
+	delq = createPQExpBuffer();
+	labelq = createPQExpBuffer();
+
+	qamname = pg_strdup(fmtId(aminfo->dobj.name));
+
+	appendPQExpBuffer(q, "CREATE ACCESS METHOD %s ", qamname);
+
+	switch (aminfo->amtype)
+	{
+		case AMTYPE_INDEX:
+			appendPQExpBuffer(q, "TYPE INDEX ");
+			break;
+		default:
+			write_msg(NULL, "WARNING: invalid type %c of access method %s\n",
+					  aminfo->amtype, qamname);
+			destroyPQExpBuffer(q);
+			destroyPQExpBuffer(delq);
+			destroyPQExpBuffer(labelq);
+			return;
+	}
+
+	appendPQExpBuffer(q, "HANDLER %s;\n", aminfo->amhandler);
+
+	appendPQExpBuffer(delq, "DROP ACCESS METHOD %s;\n",
+					  qamname);
+
+	appendPQExpBuffer(labelq, "ACCESS METHOD %s",
+					  qamname);
+
+	ArchiveEntry(fout, aminfo->dobj.catId, aminfo->dobj.dumpId,
+				 aminfo->dobj.name,
+				 NULL,
+				 NULL,
+				 "",
+				 false, "ACCESS METHOD", SECTION_PRE_DATA,
+				 q->data, delq->data, NULL,
+				 NULL, 0,
+				 NULL, NULL);
+
+	/* Dump Access Method Comments */
+	dumpComment(fout, labelq->data,
+				NULL, "",
+				aminfo->dobj.catId, 0, aminfo->dobj.dumpId);
+
+	free(qamname);
+
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(labelq);
+}
 
 /*
  * dumpOpclass
@@ -16227,6 +16398,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_FUNC:
 			case DO_AGG:
 			case DO_OPERATOR:
+			case DO_ACCESS_METHOD:
 			case DO_OPCLASS:
 			case DO_OPFAMILY:
 			case DO_COLLATION:

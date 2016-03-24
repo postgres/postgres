@@ -35,6 +35,7 @@ CATALOG(pg_am,2601)
 {
 	NameData	amname;			/* access method name */
 	regproc		amhandler;		/* handler function */
+	char		amtype;			/* see AMTYPE_xxx constants below */
 } FormData_pg_am;
 
 /* ----------------
@@ -48,31 +49,38 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am						2
+#define Natts_pg_am						3
 #define Anum_pg_am_amname				1
 #define Anum_pg_am_amhandler			2
+#define Anum_pg_am_amtype				3
+
+/* ----------------
+ *		compiler constant for amtype
+ * ----------------
+ */
+#define AMTYPE_INDEX					'i'		/* index access method */
 
 /* ----------------
  *		initial contents of pg_am
  * ----------------
  */
 
-DATA(insert OID = 403 (  btree		bthandler ));
+DATA(insert OID = 403 (  btree		bthandler	i ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash		hashhandler ));
+DATA(insert OID = 405 (  hash		hashhandler i ));
 DESCR("hash index access method");
 #define HASH_AM_OID 405
-DATA(insert OID = 783 (  gist		gisthandler ));
+DATA(insert OID = 783 (  gist		gisthandler i ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783
-DATA(insert OID = 2742 (  gin		ginhandler ));
+DATA(insert OID = 2742 (  gin		ginhandler	i ));
 DESCR("GIN index access method");
 #define GIN_AM_OID 2742
-DATA(insert OID = 4000 (  spgist	spghandler ));
+DATA(insert OID = 4000 (  spgist	spghandler	i ));
 DESCR("SP-GiST index access method");
 #define SPGIST_AM_OID 4000
-DATA(insert OID = 3580 (  brin		brinhandler ));
+DATA(insert OID = 3580 (  brin		brinhandler i ));
 DESCR("block range index (BRIN) access method");
 #define BRIN_AM_OID 3580
 

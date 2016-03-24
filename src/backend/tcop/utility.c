@@ -1520,6 +1520,10 @@ ProcessUtilitySlow(Node *parsetree,
 				address = ExecSecLabelStmt((SecLabelStmt *) parsetree);
 				break;
 
+			case T_CreateAmStmt:
+				address = CreateAccessMethod((CreateAmStmt *) parsetree);
+				break;
+
 			default:
 				elog(ERROR, "unrecognized node type: %d",
 					 (int) nodeTag(parsetree));
@@ -2160,6 +2164,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TRANSFORM:
 					tag = "DROP TRANSFORM";
 					break;
+				case OBJECT_ACCESS_METHOD:
+					tag = "DROP ACCESS METHOD";
+					break;
 				default:
 					tag = "???";
 			}
@@ -2255,6 +2262,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_COLLATION:
 					tag = "CREATE COLLATION";
+					break;
+				case OBJECT_ACCESS_METHOD:
+					tag = "CREATE ACCESS METHOD";
 					break;
 				default:
 					tag = "???";
@@ -2517,6 +2527,10 @@ CreateCommandTag(Node *parsetree)
 
 		case T_AlterPolicyStmt:
 			tag = "ALTER POLICY";
+			break;
+
+		case T_CreateAmStmt:
+			tag = "CREATE ACCESS METHOD";
 			break;
 
 		case T_PrepareStmt:
@@ -3073,6 +3087,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_AlterTSConfigurationStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateAmStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

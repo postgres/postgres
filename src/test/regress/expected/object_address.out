@@ -325,6 +325,10 @@ SELECT pg_get_object_address('event trigger', '{one}', '{}');
 ERROR:  event trigger "one" does not exist
 SELECT pg_get_object_address('event trigger', '{one,two}', '{}');
 ERROR:  event trigger name cannot be qualified
+SELECT pg_get_object_address('access method', '{one}', '{}');
+ERROR:  access method "one" does not exist
+SELECT pg_get_object_address('access method', '{one,two}', '{}');
+ERROR:  access method name cannot be qualified
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
 				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
@@ -373,7 +377,8 @@ WITH objects (type, name, args) AS (VALUES
 				-- extension
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}'),
-				('transform', '{int}', '{sql}')
+				('transform', '{int}', '{sql}'),
+				('access method', '{btree}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	-- test roundtrip through pg_identify_object_as_address
@@ -405,6 +410,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  server                    |            | addr_fserv        | addr_fserv                                                           | t
  user mapping              |            |                   | regtest_addr_user on server integer                                  | t
  foreign-data wrapper      |            | addr_fdw          | addr_fdw                                                             | t
+ access method             |            | btree             | btree                                                                | t
  operator of access method |            |                   | operator 1 (integer, integer) of pg_catalog.integer_ops USING btree  | t
  function of access method |            |                   | function 2 (integer, integer) of pg_catalog.integer_ops USING btree  | t
  default value             |            |                   | for addr_nsp.gentable.b                                              | t
@@ -426,7 +432,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(41 rows)
+(42 rows)
 
 ---
 --- Cleanup resources

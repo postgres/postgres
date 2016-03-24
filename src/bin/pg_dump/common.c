@@ -98,6 +98,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numProcLangs;
 	int			numCasts;
 	int			numTransforms;
+	int			numAccessMethods;
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
@@ -167,6 +168,10 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 		write_msg(NULL, "reading user-defined operators\n");
 	oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined access methods\n");
+	getAccessMethods(fout, &numAccessMethods);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator classes\n");

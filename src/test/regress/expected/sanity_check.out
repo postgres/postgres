@@ -44,7 +44,7 @@ e_star|f
 emp|f
 equipment_r|f
 f_star|f
-fast_emp4000|t
+fast_emp4000|f
 float4_tbl|f
 float8_tbl|f
 func_index_heap|t

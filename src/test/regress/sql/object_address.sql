@@ -117,6 +117,8 @@ SELECT pg_get_object_address('extension', '{one}', '{}');
 SELECT pg_get_object_address('extension', '{one,two}', '{}');
 SELECT pg_get_object_address('event trigger', '{one}', '{}');
 SELECT pg_get_object_address('event trigger', '{one,two}', '{}');
+SELECT pg_get_object_address('access method', '{one}', '{}');
+SELECT pg_get_object_address('access method', '{one,two}', '{}');
 
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
@@ -166,7 +168,8 @@ WITH objects (type, name, args) AS (VALUES
 				-- extension
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}'),
-				('transform', '{int}', '{sql}')
+				('transform', '{int}', '{sql}'),
+				('access method', '{btree}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 	-- test roundtrip through pg_identify_object_as_address

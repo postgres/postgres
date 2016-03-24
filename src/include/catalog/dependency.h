@@ -134,6 +134,7 @@ typedef enum ObjectClass
 	OCLASS_OPERATOR,			/* pg_operator */
 	OCLASS_OPCLASS,				/* pg_opclass */
 	OCLASS_OPFAMILY,			/* pg_opfamily */
+	OCLASS_AM,					/* pg_am */
 	OCLASS_AMOP,				/* pg_amop */
 	OCLASS_AMPROC,				/* pg_amproc */
 	OCLASS_REWRITE,				/* pg_rewrite */

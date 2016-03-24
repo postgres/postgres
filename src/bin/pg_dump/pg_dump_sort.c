@@ -28,8 +28,8 @@ static const char *modulename = gettext_noop("sorter");
  * by OID.  (This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)  Note: collations,
  * extensions, text search, foreign-data, materialized view, event trigger,
- * policies, transforms, and default ACL objects can't really happen here, so the rather
- * bogus priorities for them don't matter.
+ * policies, transforms, access methods and default ACL objects can't really
+ * happen here, so the rather bogus priorities for them don't matter.
  *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
@@ -45,6 +45,7 @@ static const int oldObjectTypePriority[] =
 	2,							/* DO_FUNC */
 	3,							/* DO_AGG */
 	3,							/* DO_OPERATOR */
+	3,							/* DO_ACCESS_METHOD */
 	4,							/* DO_OPCLASS */
 	4,							/* DO_OPFAMILY */
 	4,							/* DO_COLLATION */
@@ -95,6 +96,7 @@ static const int newObjectTypePriority[] =
 	6,							/* DO_FUNC */
 	7,							/* DO_AGG */
 	8,							/* DO_OPERATOR */
+	8,							/* DO_ACCESS_METHOD */
 	9,							/* DO_OPCLASS */
 	9,							/* DO_OPFAMILY */
 	3,							/* DO_COLLATION */
@@ -1327,6 +1329,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_OPERATOR:
 			snprintf(buf, bufsize,
 					 "OPERATOR %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_ACCESS_METHOD:
+			snprintf(buf, bufsize,
+					 "ACCESS METHOD %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_OPCLASS:

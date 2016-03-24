@@ -75,6 +75,7 @@ test: drop_if_exists
 test: updatable_views
 test: rolenames
 test: roleattributes
+test: create_am
 test: sanity_check
 test: errors
 test: select

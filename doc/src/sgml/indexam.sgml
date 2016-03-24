@@ -58,6 +58,12 @@
   </para>
 
   <para>
+   Index access access methods can be defined and dropped using
+   <xref linkend="sql-create-access-method"> and
+    <xref linkend="sql-drop-access-method"> SQL commands respectively.
+  </para>
+
+  <para>
    An index access method handler function must be declared to accept a
    single argument of type <type>internal</> and to return the
    pseudo-type <type>index_am_handler</>.  The argument is a dummy value that

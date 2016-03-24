@@ -1379,6 +1379,7 @@ typedef struct SetOperationStmt
 
 typedef enum ObjectType
 {
+	OBJECT_ACCESS_METHOD,
 	OBJECT_AGGREGATE,
 	OBJECT_AMOP,
 	OBJECT_AMPROC,
@@ -2069,6 +2070,18 @@ typedef struct AlterPolicyStmt
 	Node	   *qual;			/* the policy's condition */
 	Node	   *with_check;		/* the policy's WITH CHECK condition. */
 } AlterPolicyStmt;
+
+/*----------------------
+ *		Create ACCESS METHOD Statement
+ *----------------------
+ */
+typedef struct CreateAmStmt
+{
+	NodeTag		type;
+	char	   *amname;			/* access method name */
+	List	   *handler_name;	/* handler function name */
+	char		amtype;			/* type of access method */
+} CreateAmStmt;
 
 /* ----------------------
  *		Create TRIGGER Statement

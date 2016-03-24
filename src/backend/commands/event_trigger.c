@@ -86,6 +86,7 @@ typedef enum
 
 /* XXX merge this with ObjectTypeMap? */
 static event_trigger_support_data event_trigger_support[] = {
+	{"ACCESS METHOD", true},
 	{"AGGREGATE", true},
 	{"CAST", true},
 	{"CONSTRAINT", true},
@@ -1078,6 +1079,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_EVENT_TRIGGER:
 			/* no support for event triggers on event triggers */
 			return false;
+		case OBJECT_ACCESS_METHOD:
 		case OBJECT_AGGREGATE:
 		case OBJECT_AMOP:
 		case OBJECT_AMPROC:
@@ -1167,6 +1169,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_DEFACL:
 		case OCLASS_EXTENSION:
 		case OCLASS_POLICY:
+		case OCLASS_AM:
 			return true;
 	}
 

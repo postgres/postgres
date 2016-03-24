@@ -6013,21 +6013,7 @@ string_to_bytea_const(const char *str, size_t str_len)
  *-------------------------------------------------------------------------
  */
 
-/*
- * deconstruct_indexquals is a simple function to examine the indexquals
- * attached to a proposed IndexPath.  It returns a list of IndexQualInfo
- * structs, one per qual expression.
- */
-typedef struct
-{
-	RestrictInfo *rinfo;		/* the indexqual itself */
-	int			indexcol;		/* zero-based index column number */
-	bool		varonleft;		/* true if index column is on left of qual */
-	Oid			clause_op;		/* qual's operator OID, if relevant */
-	Node	   *other_operand;	/* non-index operand of qual's operator */
-} IndexQualInfo;
-
-static List *
+List *
 deconstruct_indexquals(IndexPath *path)
 {
 	List	   *result = NIL;
@@ -6177,35 +6163,7 @@ orderby_operands_eval_cost(PlannerInfo *root, IndexPath *path)
 	return qual_arg_cost;
 }
 
-/*
- * genericcostestimate is a general-purpose estimator that can be used for
- * most index types.  In some cases we use genericcostestimate as the base
- * code and then incorporate additional index-type-specific knowledge in
- * the type-specific calling function.  To avoid code duplication, we make
- * genericcostestimate return a number of intermediate values as well as
- * its preliminary estimates of the output cost values.  The GenericCosts
- * struct includes all these values.
- *
- * Callers should initialize all fields of GenericCosts to zero.  In addition,
- * they can set numIndexTuples to some positive value if they have a better
- * than default way of estimating the number of leaf index tuples visited.
- */
-typedef struct
-{
-	/* These are the values the cost estimator must return to the planner */
-	Cost		indexStartupCost;		/* index-related startup cost */
-	Cost		indexTotalCost; /* total index-related scan cost */
-	Selectivity indexSelectivity;		/* selectivity of index */
-	double		indexCorrelation;		/* order correlation of index */
-
-	/* Intermediate values we obtain along the way */
-	double		numIndexPages;	/* number of leaf pages visited */
-	double		numIndexTuples; /* number of leaf tuples visited */
-	double		spc_random_page_cost;	/* relevant random_page_cost value */
-	double		num_sa_scans;	/* # indexscans from ScalarArrayOps */
-} GenericCosts;
-
-static void
+void
 genericcostestimate(PlannerInfo *root,
 					IndexPath *path,
 					double loop_count,

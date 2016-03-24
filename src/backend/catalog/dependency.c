@@ -20,6 +20,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
@@ -141,6 +142,7 @@ static const Oid object_classes[] = {
 	OperatorRelationId,			/* OCLASS_OPERATOR */
 	OperatorClassRelationId,	/* OCLASS_OPCLASS */
 	OperatorFamilyRelationId,	/* OCLASS_OPFAMILY */
+	AccessMethodRelationId,		/* OCLASS_AM */
 	AccessMethodOperatorRelationId,		/* OCLASS_AMOP */
 	AccessMethodProcedureRelationId,	/* OCLASS_AMPROC */
 	RewriteRelationId,			/* OCLASS_REWRITE */
@@ -1197,6 +1199,10 @@ doDeletion(const ObjectAddress *object, int flags)
 
 		case OCLASS_OPFAMILY:
 			RemoveOpFamilyById(object->objectId);
+			break;
+
+		case OCLASS_AM:
+			RemoveAccessMethodById(object->objectId);
 			break;
 
 		case OCLASS_AMOP:
@@ -2355,6 +2361,9 @@ getObjectClass(const ObjectAddress *object)
 
 		case OperatorFamilyRelationId:
 			return OCLASS_OPFAMILY;
+
+		case AccessMethodRelationId:
+			return OCLASS_AM;
 
 		case AccessMethodOperatorRelationId:
 			return OCLASS_AMOP;

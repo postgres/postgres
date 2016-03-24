@@ -52,6 +52,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY commit             SYSTEM "commit.sgml">
 <!ENTITY commitPrepared     SYSTEM "commit_prepared.sgml">
 <!ENTITY copyTable          SYSTEM "copy.sgml">
+<!ENTITY createAccessMethod SYSTEM "create_access_method.sgml">
 <!ENTITY createAggregate    SYSTEM "create_aggregate.sgml">
 <!ENTITY createCast         SYSTEM "create_cast.sgml">
 <!ENTITY createCollation    SYSTEM "create_collation.sgml">
@@ -94,6 +95,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY delete             SYSTEM "delete.sgml">
 <!ENTITY discard            SYSTEM "discard.sgml">
 <!ENTITY do                 SYSTEM "do.sgml">
+<!ENTITY dropAccessMethod   SYSTEM "drop_access_method.sgml">
 <!ENTITY dropAggregate      SYSTEM "drop_aggregate.sgml">
 <!ENTITY dropCast           SYSTEM "drop_cast.sgml">
 <!ENTITY dropCollation      SYSTEM "drop_collation.sgml">
