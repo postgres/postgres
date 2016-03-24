@@ -28,8 +28,13 @@ typedef struct ScanKeyword
 	int16		category;		/* see codes above */
 } ScanKeyword;
 
+#ifndef FRONTEND
 extern PGDLLIMPORT const ScanKeyword ScanKeywords[];
 extern PGDLLIMPORT const int NumScanKeywords;
+#else
+extern const ScanKeyword ScanKeywords[];
+extern const int NumScanKeywords;
+#endif
 
 
 extern const ScanKeyword *ScanKeywordLookup(const char *text,
