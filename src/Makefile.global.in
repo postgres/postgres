@@ -501,7 +501,12 @@ submake-libpgport:
 	$(MAKE) -C $(top_builddir)/src/port all
 	$(MAKE) -C $(top_builddir)/src/common all
 
-.PHONY: submake-libpq submake-libpgport
+submake-libpgfeutils:
+	$(MAKE) -C $(top_builddir)/src/port all
+	$(MAKE) -C $(top_builddir)/src/common all
+	$(MAKE) -C $(top_builddir)/src/fe_utils all
+
+.PHONY: submake-libpq submake-libpgport submake-libpgfeutils
 
 
 ##########################################################################

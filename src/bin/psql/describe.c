@@ -15,10 +15,10 @@
 #include <ctype.h>
 
 #include "catalog/pg_default_acl.h"
+#include "fe_utils/string_utils.h"
 
 #include "common.h"
 #include "describe.h"
-#include "dumputils.h"
 #include "mbprint.h"
 #include "print.h"
 #include "settings.h"

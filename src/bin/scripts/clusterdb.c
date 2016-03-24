@@ -11,7 +11,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
-#include "dumputils.h"
+#include "fe_utils/simple_list.h"
 
 
 static void cluster_one_database(const char *dbname, bool verbose, const char *table,

@@ -18,24 +18,22 @@ include $(top_builddir)/src/Makefile.global
 
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
-override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/pg_dump $(CPPFLAGS)
+override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
-	tab-complete.o mbprint.o dumputils.o \
+	tab-complete.o mbprint.o \
 	sql_help.o psqlscan.o psqlscanslash.o \
 	$(WIN32RES)
 
 
 all: psql
 
-psql: $(OBJS) | submake-libpq submake-libpgport
+psql: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 help.o: sql_help.h
-
-dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
-	rm -f $@ && $(LN_S) $< .
 
 sql_help.c: sql_help.h ;
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
@@ -67,7 +65,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/psql$(X)' '$(DESTDIR)$(datadir)/psqlrc.sample'
 
 clean distclean:
-	rm -f psql$(X) $(OBJS) dumputils.c lex.backup
+	rm -f psql$(X) $(OBJS) lex.backup
 
 # files removed here are supposed to be in the distribution tarball,
 # so do not clean them in the clean/distclean rules

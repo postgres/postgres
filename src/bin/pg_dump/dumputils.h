@@ -1,8 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * Utility routines for SQL dumping
- *	Basically this is stuff that is useful in both pg_dump and pg_dumpall.
- *	Lately it's also being used by psql and bin/scripts/ ...
+ *
+ * Basically this is stuff that is useful in both pg_dump and pg_dumpall.
  *
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
@@ -17,39 +17,6 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
-
-/*
- * Data structures for simple lists of OIDs and strings.  The support for
- * these is very primitive compared to the backend's List facilities, but
- * it's all we need in pg_dump.
- */
-typedef struct SimpleOidListCell
-{
-	struct SimpleOidListCell *next;
-	Oid			val;
-} SimpleOidListCell;
-
-typedef struct SimpleOidList
-{
-	SimpleOidListCell *head;
-	SimpleOidListCell *tail;
-} SimpleOidList;
-
-typedef struct SimpleStringListCell
-{
-	struct SimpleStringListCell *next;
-	bool		touched;		/* true, when this string was searched and
-								 * touched */
-	char		val[FLEXIBLE_ARRAY_MEMBER];		/* null-terminated string here */
-} SimpleStringListCell;
-
-typedef struct SimpleStringList
-{
-	SimpleStringListCell *head;
-	SimpleStringListCell *tail;
-} SimpleStringList;
-
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /*
  * Preferred strftime(3) format specifier for printing timestamps in pg_dump
@@ -68,22 +35,7 @@ typedef struct SimpleStringList
 #define PGDUMP_STRFTIME_FMT  "%Y-%m-%d %H:%M:%S"
 #endif
 
-extern int	quote_all_identifiers;
-extern PQExpBuffer (*getLocalPQExpBuffer) (void);
 
-extern const char *fmtId(const char *identifier);
-extern const char *fmtQualifiedId(int remoteVersion,
-			   const char *schema, const char *id);
-extern void appendStringLiteral(PQExpBuffer buf, const char *str,
-					int encoding, bool std_strings);
-extern void appendStringLiteralConn(PQExpBuffer buf, const char *str,
-						PGconn *conn);
-extern void appendStringLiteralDQ(PQExpBuffer buf, const char *str,
-					  const char *dqprefix);
-extern void appendByteaLiteral(PQExpBuffer buf,
-				   const unsigned char *str, size_t length,
-				   bool std_strings);
-extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
 extern bool buildACLCommands(const char *name, const char *subname,
 				 const char *type, const char *acls, const char *owner,
 				 const char *prefix, int remoteVersion,
@@ -92,20 +44,9 @@ extern bool buildDefaultACLCommands(const char *type, const char *nspname,
 						const char *acls, const char *owner,
 						int remoteVersion,
 						PQExpBuffer sql);
-extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
-					  const char *pattern,
-					  bool have_where, bool force_escape,
-					  const char *schemavar, const char *namevar,
-					  const char *altnamevar, const char *visibilityrule);
 extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
 					 uint32 objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
 				PQExpBuffer buffer, const char *target, const char *objname);
-extern void set_dump_section(const char *arg, int *dumpSections);
-
-extern void simple_string_list_append(SimpleStringList *list, const char *val);
-extern bool simple_string_list_member(SimpleStringList *list, const char *val);
-extern const char *simple_string_list_not_touched(SimpleStringList *list);
-
 
 #endif   /* DUMPUTILS_H */

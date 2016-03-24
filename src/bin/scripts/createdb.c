@@ -12,7 +12,7 @@
 #include "postgres_fe.h"
 
 #include "common.h"
-#include "dumputils.h"
+#include "fe_utils/string_utils.h"
 
 
 static void help(const char *progname);

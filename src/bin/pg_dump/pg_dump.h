@@ -536,9 +536,6 @@ extern ExtensionInfo *findExtensionByOid(Oid oid);
 extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
 extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
 
-extern void simple_oid_list_append(SimpleOidList *list, Oid val);
-extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
-
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 
 extern void sortDumpableObjects(DumpableObject **objs, int numObjs,

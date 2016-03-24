@@ -26,6 +26,7 @@
 
 #include "dumputils.h"
 #include "pg_backup.h"
+#include "fe_utils/string_utils.h"
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"

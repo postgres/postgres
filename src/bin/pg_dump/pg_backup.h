@@ -23,7 +23,7 @@
 #ifndef PG_BACKUP_H
 #define PG_BACKUP_H
 
-#include "dumputils.h"
+#include "fe_utils/simple_list.h"
 #include "libpq-fe.h"
 
 

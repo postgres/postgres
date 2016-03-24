@@ -20,6 +20,7 @@
 
 #include "parallel.h"
 #include "pg_backup_utils.h"
+#include "fe_utils/string_utils.h"
 
 #ifndef WIN32
 #include <sys/types.h>

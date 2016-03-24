@@ -35,7 +35,7 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
-#include "dumputils.h"
+#include "fe_utils/string_utils.h"
 
 #include "common.h"
 #include "copy.h"

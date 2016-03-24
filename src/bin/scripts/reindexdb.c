@@ -11,7 +11,8 @@
 
 #include "postgres_fe.h"
 #include "common.h"
-#include "dumputils.h"
+#include "fe_utils/simple_list.h"
+#include "fe_utils/string_utils.h"
 
 
 static void reindex_one_database(const char *name, const char *dbname,

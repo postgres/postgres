@@ -18,26 +18,24 @@ include $(top_builddir)/src/Makefile.global
 
 PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb reindexdb pg_isready
 
-override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 all: $(PROGRAMS)
 
 %: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-createdb: createdb.o common.o dumputils.o | submake-libpq submake-libpgport
+createdb: createdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 createlang: createlang.o common.o print.o mbprint.o | submake-libpq submake-libpgport
-createuser: createuser.o common.o dumputils.o | submake-libpq submake-libpgport
-dropdb: dropdb.o common.o dumputils.o | submake-libpq submake-libpgport
+createuser: createuser.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
+dropdb: dropdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 droplang: droplang.o common.o print.o mbprint.o | submake-libpq submake-libpgport
-dropuser: dropuser.o common.o dumputils.o | submake-libpq submake-libpgport
-clusterdb: clusterdb.o common.o dumputils.o | submake-libpq submake-libpgport
-vacuumdb: vacuumdb.o common.o dumputils.o | submake-libpq submake-libpgport
-reindexdb: reindexdb.o common.o dumputils.o | submake-libpq submake-libpgport
+dropuser: dropuser.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
+clusterdb: clusterdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
+vacuumdb: vacuumdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
+reindexdb: reindexdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 pg_isready: pg_isready.o common.o | submake-libpq submake-libpgport
-
-dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
-	rm -f $@ && $(LN_S) $< .
 
 print.c mbprint.c : % : $(top_srcdir)/src/bin/psql/%
 	rm -f $@ && $(LN_S) $< .
@@ -62,8 +60,8 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
-	rm -f common.o dumputils.o print.o mbprint.o $(WIN32RES)
-	rm -f dumputils.c print.c mbprint.c
+	rm -f common.o print.o mbprint.o $(WIN32RES)
+	rm -f print.c mbprint.c
 	rm -rf tmp_check
 
 check:

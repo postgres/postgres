@@ -25,6 +25,7 @@
 
 #include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
+#include "fe_utils/string_utils.h"
 
 #include "libpq/libpq-fs.h"
 

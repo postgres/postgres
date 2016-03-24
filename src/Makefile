@@ -22,6 +22,7 @@ SUBDIRS = \
 	include \
 	interfaces \
 	backend/replication/libpqwalreceiver \
+	fe_utils \
 	bin \
 	pl \
 	makefiles \

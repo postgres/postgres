@@ -9,7 +9,6 @@
 /vacuumdb
 /pg_isready
 
-/dumputils.c
 /mbprint.c
 /print.c
 

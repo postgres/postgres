@@ -25,6 +25,8 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
+#include "dumputils.h"
+#include "fe_utils/string_utils.h"
 
 #include <ctype.h>
 #include <fcntl.h>

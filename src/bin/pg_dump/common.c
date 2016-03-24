@@ -22,6 +22,7 @@
 #include <ctype.h>
 
 #include "catalog/pg_class.h"
+#include "fe_utils/string_utils.h"
 
 
 /*
@@ -991,38 +992,4 @@ strInArray(const char *pattern, char **arr, int arr_size)
 			return i;
 	}
 	return -1;
-}
-
-
-/*
- * Support for simple list operations
- */
-
-void
-simple_oid_list_append(SimpleOidList *list, Oid val)
-{
-	SimpleOidListCell *cell;
-
-	cell = (SimpleOidListCell *) pg_malloc(sizeof(SimpleOidListCell));
-	cell->next = NULL;
-	cell->val = val;
-
-	if (list->tail)
-		list->tail->next = cell;
-	else
-		list->head = cell;
-	list->tail = cell;
-}
-
-bool
-simple_oid_list_member(SimpleOidList *list, Oid val)
-{
-	SimpleOidListCell *cell;
-
-	for (cell = list->head; cell; cell = cell->next)
-	{
-		if (cell->val == val)
-			return true;
-	}
-	return false;
 }
