@@ -132,6 +132,7 @@ sub mkvcbuild
 
 	$libpgfeutils = $solution->AddProject('libpgfeutils', 'lib', 'misc');
 	$libpgfeutils->AddDefine('FRONTEND');
+	$libpgfeutils->AddIncludeDir('src/interfaces/libpq');
 	$libpgfeutils->AddFiles('src/fe_utils', @pgfeutilsfiles);
 
 	$postgres = $solution->AddProject('postgres', 'exe', '', 'src/backend');
