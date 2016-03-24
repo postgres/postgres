@@ -30,7 +30,7 @@
 
 
 static Oid	lookup_index_am_handler_func(List *handler_name, char amtype);
-static char *get_am_type_string(char amtype);
+static const char *get_am_type_string(char amtype);
 
 
 /*
@@ -217,9 +217,9 @@ get_am_name(Oid amOid)
 }
 
 /*
- * Convert single charater access method type into string for error reporting.
+ * Convert single-character access method type into string for error reporting.
  */
-static char *
+static const char *
 get_am_type_string(char amtype)
 {
 	switch (amtype)
@@ -229,6 +229,7 @@ get_am_type_string(char amtype)
 		default:
 			/* shouldn't happen */
 			elog(ERROR, "invalid access method type '%c'", amtype);
+			return NULL;		/* keep compiler quiet */
 	}
 }
 
