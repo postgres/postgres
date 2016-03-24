@@ -108,15 +108,12 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    functions:
    a state transition function
    <replaceable class="PARAMETER">sfunc</replaceable>,
-   an optional final calculation function
-   <replaceable class="PARAMETER">ffunc</replaceable>,
-   and an optional combine function
-   <replaceable class="PARAMETER">combinefunc</replaceable>.
+   and an optional final calculation function
+   <replaceable class="PARAMETER">ffunc</replaceable>.
    These are used as follows:
 <programlisting>
 <replaceable class="PARAMETER">sfunc</replaceable>( internal-state, next-data-values ) ---> next-internal-state
 <replaceable class="PARAMETER">ffunc</replaceable>( internal-state ) ---> aggregate-value
-<replaceable class="PARAMETER">combinefunc</replaceable>( internal-state, internal-state ) ---> next-internal-state
 </programlisting>
   </para>
 
@@ -131,12 +128,6 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    the final function is invoked once to calculate the aggregate's return
    value.  If there is no final function then the ending state value
    is returned as-is.
-  </para>
-
-  <para>
-   An aggregate function may also supply a combining function, which allows
-   the aggregation process to be broken down into multiple steps.  This
-   facilitates query optimization techniques such as parallel query.
   </para>
 
   <para>
@@ -401,6 +392,46 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       (aggregated) arguments.  This is mainly useful to allow correct
       resolution of the aggregate result type when a polymorphic aggregate
       is being defined.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">combinefunc</replaceable></term>
+    <listitem>
+     <para>
+      The <replaceable class="PARAMETER">combinefunc</replaceable> may
+      optionally be specified in order to allow the aggregate function to
+      support partial aggregation. This is a prerequisite to allow the
+      aggregate to participate in certain optimizations such as parallel
+      aggregation.
+     </para>
+
+     <para>
+      This function can be thought of as an <replaceable class="PARAMETER">
+      sfunc</replaceable>, where instead of acting upon individual input rows
+      and adding these to the aggregate state, it adds other aggregate states
+      to the aggregate state.
+     </para>
+
+     <para>
+      The <replaceable class="PARAMETER">combinefunc</replaceable> must accept
+      two arguments of <replaceable class="PARAMETER">state_data_type
+      </replaceable> and return <replaceable class="PARAMETER">state_data_type
+      </replaceable>. Optionally this function may be <quote>strict</quote>. In
+      this case the function will not be called when either of the input states
+      are null.
+     </para>
+ 
+     <para>
+      For aggregate functions with an <literal>INTERNAL</literal>
+      <replaceable class="PARAMETER">state_data_type</replaceable> the
+      <replaceable class="PARAMETER">combinefunc</replaceable> must not be
+      <quote>strict</quote>. In this scenario the
+      <replaceable class="PARAMETER">combinefunc</replaceable> must take charge
+      and ensure that the null states are handled correctly and that the state
+      being returned is a pointer to memory which belongs in the aggregate
+      memory context.
      </para>
     </listitem>
    </varlistentry>

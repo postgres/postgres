@@ -407,6 +407,12 @@
       <entry>Final function (zero if none)</entry>
      </row>
      <row>
+      <entry><structfield>aggcombinefn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Combine function (zero if none)</entry>
+     </row>
+     <row>
       <entry><structfield>aggmtransfn</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
