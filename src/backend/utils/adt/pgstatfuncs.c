@@ -612,7 +612,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		{
 			values[2] = ObjectIdGetDatum(beentry->st_progress_command_target);
 			for(i = 0; i < PGSTAT_NUM_PROGRESS_PARAM; i++)
-				values[i+3] = UInt32GetDatum(beentry->st_progress_param[i]);
+				values[i+3] = Int64GetDatum(beentry->st_progress_param[i]);
 		}
 		else
 		{
