@@ -1,20 +1,21 @@
-/*
- * psql - the PostgreSQL interactive terminal
+/*-------------------------------------------------------------------------
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Multibyte character printing support for frontend code
  *
- * src/bin/psql/mbprint.c
  *
- * XXX this file does not really belong in psql/.  Perhaps move to libpq?
- * It also seems that the mbvalidate function is redundant with existing
- * functionality.
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/fe_utils/mbprint.c
+ *
+ *-------------------------------------------------------------------------
  */
-
 #include "postgres_fe.h"
-#include "mbprint.h"
-#ifndef PGSCRIPTS
-#include "settings.h"
-#endif
+
+#include "fe_utils/mbprint.h"
+
+#include "libpq-fe.h"
+
 
 /*
  * To avoid version-skew problems, this file must not use declarations
@@ -381,6 +382,12 @@ pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 	(lines + 1)->ptr = NULL;	/* terminate line array */
 }
 
+
+/*
+ * Encoding validation: delete any unvalidatable characters from the string
+ *
+ * This seems redundant with existing functionality elsewhere?
+ */
 unsigned char *
 mbvalidate(unsigned char *pwcs, int encoding)
 {

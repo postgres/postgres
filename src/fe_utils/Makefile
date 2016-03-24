@@ -17,7 +17,7 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
 
-OBJS = simple_list.o string_utils.o
+OBJS = mbprint.o print.o simple_list.o string_utils.o
 
 all: libpgfeutils.a
 

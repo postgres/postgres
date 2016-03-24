@@ -12,7 +12,7 @@
 #include "postgres_fe.h"
 
 #include "common.h"
-#include "print.h"
+#include "fe_utils/print.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 

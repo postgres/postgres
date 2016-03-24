@@ -1,13 +1,24 @@
-/*
- * psql - the PostgreSQL interactive terminal
+/*-------------------------------------------------------------------------
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Query-result printing support for frontend code
  *
- * src/bin/psql/print.c
+ * This file used to be part of psql, but now it's separated out to allow
+ * other frontend programs to use it.  Because the printing code needs
+ * access to the cancel_pressed flag as well as SIGPIPE trapping and
+ * pager open/close functions, all that stuff came with it.
+ *
+ *
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/fe_utils/print.c
+ *
+ *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
 
 #include <limits.h>
+#include <locale.h>
 #include <math.h>
 #include <signal.h>
 #include <unistd.h>
@@ -20,31 +31,22 @@
 #include <termios.h>
 #endif
 
-#include <locale.h>
+#include "fe_utils/print.h"
 
 #include "catalog/pg_type.h"
+#include "fe_utils/mbprint.h"
 
-#include "common.h"
-#include "mbprint.h"
-#include "print.h"
 
 /*
- * We define the cancel_pressed flag in this file, rather than common.c where
- * it naturally belongs, because this file is also used by non-psql programs
- * (see the bin/scripts/ directory).  In those programs cancel_pressed will
- * never become set and will have no effect.
+ * If the calling program doesn't have any mechanism for setting
+ * cancel_pressed, it will have no effect.
  *
  * Note: print.c's general strategy for when to check cancel_pressed is to do
  * so at completion of each row of output.
  */
 volatile bool cancel_pressed = false;
 
-/*
- * Likewise, the sigpipe_trap and pager open/close functions are here rather
- * than in common.c so that this file can be used by non-psql programs.
- */
 static bool always_ignore_sigpipe = false;
-
 
 /* info for locale-aware numeric formatting; set up by setDecimalLocale() */
 static char *decimal_point;
@@ -139,7 +141,7 @@ typedef struct unicodeStyleFormat
 	bool		wrap_right_border;
 } unicodeStyleFormat;
 
-const unicodeStyleFormat unicode_style = {
+static const unicodeStyleFormat unicode_style = {
 	{
 		{
 			/* ─ */

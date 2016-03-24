@@ -26,7 +26,7 @@
 #include "help.h"
 #include "input.h"
 #include "mainloop.h"
-#include "print.h"
+#include "fe_utils/print.h"
 #include "settings.h"
 
 

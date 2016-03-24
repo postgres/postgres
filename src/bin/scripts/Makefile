@@ -18,7 +18,7 @@ include $(top_builddir)/src/Makefile.global
 
 PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb reindexdb pg_isready
 
-override CPPFLAGS := -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 all: $(PROGRAMS)
@@ -27,18 +27,15 @@ all: $(PROGRAMS)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 createdb: createdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
-createlang: createlang.o common.o print.o mbprint.o | submake-libpq submake-libpgport
+createlang: createlang.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 createuser: createuser.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 dropdb: dropdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
-droplang: droplang.o common.o print.o mbprint.o | submake-libpq submake-libpgport
+droplang: droplang.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 dropuser: dropuser.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 clusterdb: clusterdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 vacuumdb: vacuumdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 reindexdb: reindexdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 pg_isready: pg_isready.o common.o | submake-libpq submake-libpgport
-
-print.c mbprint.c : % : $(top_srcdir)/src/bin/psql/%
-	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
 	$(INSTALL_PROGRAM) createdb$(X)   '$(DESTDIR)$(bindir)'/createdb$(X)
@@ -60,8 +57,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
-	rm -f common.o print.o mbprint.o $(WIN32RES)
-	rm -f print.c mbprint.c
+	rm -f common.o $(WIN32RES)
 	rm -rf tmp_check
 
 check:

@@ -22,8 +22,8 @@ override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
-	startup.o prompt.o variables.o large_obj.o print.o describe.o \
-	tab-complete.o mbprint.o \
+	startup.o prompt.o variables.o large_obj.o describe.o \
+	tab-complete.o \
 	sql_help.o psqlscan.o psqlscanslash.o \
 	$(WIN32RES)
 

@@ -23,7 +23,7 @@
 #include "settings.h"
 #include "command.h"
 #include "copy.h"
-#include "mbprint.h"
+#include "fe_utils/mbprint.h"
 
 
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);

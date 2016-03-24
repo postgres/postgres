@@ -19,8 +19,8 @@
 
 #include "common.h"
 #include "describe.h"
-#include "mbprint.h"
-#include "print.h"
+#include "fe_utils/mbprint.h"
+#include "fe_utils/print.h"
 #include "settings.h"
 #include "variables.h"
 

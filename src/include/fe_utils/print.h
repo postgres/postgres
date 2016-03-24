@@ -1,15 +1,27 @@
-/*
- * psql - the PostgreSQL interactive terminal
+/*-------------------------------------------------------------------------
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Query-result printing support for frontend code
  *
- * src/bin/psql/print.h
+ *
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/fe_utils/print.h
+ *
+ *-------------------------------------------------------------------------
  */
 #ifndef PRINT_H
 #define PRINT_H
 
 #include "libpq-fe.h"
 
+
+/* This is not a particularly great place for this ... */
+#ifndef __CYGWIN__
+#define DEFAULT_PAGER "more"
+#else
+#define DEFAULT_PAGER "less"
+#endif
 
 enum printFormat
 {
@@ -161,6 +173,8 @@ typedef struct printQueryOpt
 } printQueryOpt;
 
 
+extern volatile bool cancel_pressed;
+
 extern const printTextFormat pg_asciiformat;
 extern const printTextFormat pg_asciiformat_old;
 extern printTextFormat pg_utf8format;	/* ideally would be const, but... */
@@ -195,11 +209,5 @@ extern void printQuery(const PGresult *result, const printQueryOpt *opt,
 extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);
 extern void refresh_utf8format(const printTableOpt *opt);
-
-#ifndef __CYGWIN__
-#define DEFAULT_PAGER "more"
-#else
-#define DEFAULT_PAGER "less"
-#endif
 
 #endif   /* PRINT_H */

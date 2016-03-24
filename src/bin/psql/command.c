@@ -44,7 +44,7 @@
 #include "input.h"
 #include "large_obj.h"
 #include "mainloop.h"
-#include "print.h"
+#include "fe_utils/print.h"
 #include "psqlscanslash.h"
 #include "settings.h"
 #include "variables.h"

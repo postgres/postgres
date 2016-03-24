@@ -120,7 +120,7 @@ sub mkvcbuild
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
 	our @pgfeutilsfiles = qw(
-	  simple_list.c string_utils.c);
+	  mbprint.c print.c simple_list.c string_utils.c);
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');
@@ -622,17 +622,12 @@ sub mkvcbuild
 		foreach my $f (@files)
 		{
 			$f =~ s/\.o$/\.c/;
-			if ($f =~ /print\.c$/)
-			{    # Also catches mbprint.c
-				$proj->AddFile('src/bin/psql/' . $f);
-			}
-			elsif ($f =~ /\.c$/)
+			if ($f =~ /\.c$/)
 			{
 				$proj->AddFile('src/bin/scripts/' . $f);
 			}
 		}
 		$proj->AddIncludeDir('src/interfaces/libpq');
-		$proj->AddIncludeDir('src/bin/psql');
 		$proj->AddReference($libpq, $libpgfeutils, $libpgcommon,
 				    $libpgport);
 		$proj->AddDirResourceFile('src/bin/scripts');

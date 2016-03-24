@@ -9,7 +9,4 @@
 /vacuumdb
 /pg_isready
 
-/mbprint.c
-/print.c
-
 /tmp_check/

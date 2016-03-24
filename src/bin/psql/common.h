@@ -11,7 +11,7 @@
 #include <setjmp.h>
 
 #include "libpq-fe.h"
-#include "print.h"
+#include "fe_utils/print.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
@@ -27,10 +27,6 @@ extern void NoticeProcessor(void *arg, const char *message);
 extern volatile bool sigint_interrupt_enabled;
 
 extern sigjmp_buf sigint_interrupt_jmp;
-
-extern volatile bool cancel_pressed;
-
-/* Note: cancel_pressed is defined in print.c, see that file for reasons */
 
 extern void setup_cancel_handler(void);
 
