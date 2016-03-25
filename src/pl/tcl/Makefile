@@ -11,7 +11,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-override CPPFLAGS := $(TCL_INCLUDE_SPEC) $(CPPFLAGS)
+override CPPFLAGS := -I. -I$(srcdir) $(TCL_INCLUDE_SPEC) $(CPPFLAGS)
 
 # On Windows, we don't link directly with the Tcl library; see below
 ifneq ($(PORTNAME), win32)
