@@ -15,6 +15,9 @@
 #   src/pl/plpgsql/src/plerrcodes.h
 #      a list of PL/pgSQL condition names and their SQLSTATE codes
 #
+#   src/pl/tcl/pltclerrcodes.h
+#      the same, for PL/Tcl
+#
 #   doc/src/sgml/errcodes-list.sgml
 #      a SGML table of error codes for inclusion in the documentation
 #

@@ -13,7 +13,6 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := $(TCL_INCLUDE_SPEC) $(CPPFLAGS)
 
-
 # On Windows, we don't link directly with the Tcl library; see below
 ifneq ($(PORTNAME), win32)
 SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
@@ -56,6 +55,14 @@ include $(top_srcdir)/src/Makefile.shlib
 all: all-lib
 	$(MAKE) -C modules $@
 
+# Force this dependency to be known even without dependency info built:
+pltcl.o: pltclerrcodes.h
+
+# generate pltclerrcodes.h from src/backend/utils/errcodes.txt
+pltclerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-pltclerrcodes.pl
+	$(PERL) $(srcdir)/generate-pltclerrcodes.pl $< > $@
+
+distprep: pltclerrcodes.h
 
 install: all install-lib install-data
 	$(MAKE) -C modules $@
@@ -86,10 +93,14 @@ installcheck: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
-clean distclean maintainer-clean: clean-lib
+# pltclerrcodes.h is in the distribution tarball, so don't clean it here.
+clean distclean: clean-lib
 	rm -f $(OBJS)
 	rm -rf $(pg_regress_clean_files)
 ifeq ($(PORTNAME), win32)
 	rm -f $(tclwithver).def
 endif
 	$(MAKE) -C modules $@
+
+maintainer-clean: distclean
+	rm -f pltclerrcodes.h

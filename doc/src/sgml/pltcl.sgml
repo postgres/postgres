@@ -813,14 +813,16 @@ CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnit
      word is <literal>POSTGRES</literal>, the second word is the Postgres
      version number, and additional words are field name/value pairs
      providing detailed information about the error.
-     Fields <varname>message</> and <varname>SQLSTATE</> (the error code
-     shown in <xref linkend="errcodes-appendix">) are always supplied.
+     Fields <varname>SQLSTATE</>, <varname>condition</>,
+     and <varname>message</> are always supplied
+     (the first two represent the error code and condition name as shown
+     in <xref linkend="errcodes-appendix">).
      Fields that may be present include
      <varname>detail</>, <varname>hint</>, <varname>context</>,
      <varname>schema</>, <varname>table</>, <varname>column</>,
      <varname>datatype</>, <varname>constraint</>,
      <varname>statement</>, <varname>cursor_position</>,
-     <varname>filename</>, <varname>lineno</> and
+     <varname>filename</>, <varname>lineno</>, and
      <varname>funcname</>.
     </para>
 
@@ -832,7 +834,7 @@ CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnit
 if {[catch { spi_exec $sql_command }]} {
     if {[lindex $::errorCode 0] == "POSTGRES"} {
         array set errorArray $::errorCode
-        if {$errorArray(SQLSTATE) == "42P01"} {  # UNDEFINED_TABLE
+        if {$errorArray(condition) == "undefined_table"} {
             # deal with missing table
         } else {
             # deal with some other type of SQL error

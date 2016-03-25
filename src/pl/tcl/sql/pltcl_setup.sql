@@ -602,10 +602,10 @@ create function tcl_error_handling_test() returns text as $$
     global errorCode
     if {[catch { spi_exec "select no_such_column from foo;" }]} {
         array set errArray $errorCode
-        if {$errArray(SQLSTATE) == "42P01"} {
+        if {$errArray(condition) == "undefined_table"} {
             return "expected error: $errArray(message)"
         } else {
-            return "unexpected error: $errArray(SQLSTATE) $errArray(message)"
+            return "unexpected error: $errArray(condition) $errArray(message)"
         }
     } else {
         return "no error"

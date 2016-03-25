@@ -350,6 +350,17 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 		);
 	}
 
+	if ($self->{options}->{tcl}
+		&& IsNewer(
+			'src/pl/tcl/pltclerrcodes.h',
+			'src/backend/utils/errcodes.txt'))
+	{
+		print "Generating pltclerrcodes.h...\n";
+		system(
+'perl src/pl/tcl/generate-pltclerrcodes.pl src/backend/utils/errcodes.txt > src/pl/tcl/pltclerrcodes.h'
+		);
+	}
+
 	if (IsNewer(
 			'src/backend/utils/sort/qsort_tuple.c',
 			'src/backend/utils/sort/gen_qsort_tuple.pl'))

@@ -189,6 +189,20 @@ static FunctionCallInfo pltcl_current_fcinfo = NULL;
 static pltcl_proc_desc *pltcl_current_prodesc = NULL;
 
 /**********************************************************************
+ * Lookup table for SQLSTATE condition names
+ **********************************************************************/
+typedef struct
+{
+	const char *label;
+	int			sqlerrstate;
+} TclExceptionNameMap;
+
+static const TclExceptionNameMap exception_name_map[] = {
+#include "pltclerrcodes.h"		/* pgrminclude ignore */
+	{NULL, 0}
+};
+
+/**********************************************************************
  * Forward declarations
  **********************************************************************/
 void		_PG_init(void);
@@ -213,6 +227,7 @@ static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int objc, Tcl_Obj *const objv[]);
 static void pltcl_construct_errorCode(Tcl_Interp *interp, ErrorData *edata);
+static const char *pltcl_get_condition_name(int sqlstate);
 static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 			int objc, Tcl_Obj *const objv[]);
 static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
@@ -1682,6 +1697,10 @@ pltcl_construct_errorCode(Tcl_Interp *interp, ErrorData *edata)
 	Tcl_ListObjAppendElement(interp, obj,
 				  Tcl_NewStringObj(unpack_sql_state(edata->sqlerrcode), -1));
 	Tcl_ListObjAppendElement(interp, obj,
+							 Tcl_NewStringObj("condition", -1));
+	Tcl_ListObjAppendElement(interp, obj,
+		  Tcl_NewStringObj(pltcl_get_condition_name(edata->sqlerrcode), -1));
+	Tcl_ListObjAppendElement(interp, obj,
 							 Tcl_NewStringObj("message", -1));
 	UTF_BEGIN;
 	Tcl_ListObjAppendElement(interp, obj,
@@ -1803,6 +1822,23 @@ pltcl_construct_errorCode(Tcl_Interp *interp, ErrorData *edata)
 	}
 
 	Tcl_SetObjErrorCode(interp, obj);
+}
+
+
+/**********************************************************************
+ * pltcl_get_condition_name()	- find name for SQLSTATE
+ **********************************************************************/
+static const char *
+pltcl_get_condition_name(int sqlstate)
+{
+	int			i;
+
+	for (i = 0; exception_name_map[i].label != NULL; i++)
+	{
+		if (exception_name_map[i].sqlerrstate == sqlstate)
+			return exception_name_map[i].label;
+	}
+	return "unrecognized_sqlstate";
 }
 
 
