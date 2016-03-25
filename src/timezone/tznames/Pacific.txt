@@ -23,7 +23,7 @@ CHUT    36000    # Chuuk Time
                  #     (Pacific/Chuuk)
 CKT     Pacific/Rarotonga  # Cook Islands Time
                  #     (Pacific/Rarotonga)
-EASST   Pacific/Easter  # Easter Island Summer Time (obsolete)
+EASST   Pacific/Easter  # Easter Island Summer Time
                  #     (Pacific/Easter)
 # CONFLICT! EAST is not unique
 # Other timezones:

@@ -125,7 +125,7 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rainy_River)
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
-CLST   -10800 D  # Chile Summer Time (obsolete)
+CLST   -10800 D  # Chile Summer Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
 CLT    America/Santiago  # Chile Time
