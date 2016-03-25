@@ -10,7 +10,7 @@
 AWST    28800    # Australian Western Standard Time
                  #     (Antarctica/Casey)
                  #     (Australia/Perth)
-CLST   -10800 D  # Chile Summer Time (obsolete)
+CLST   -10800 D  # Chile Summer Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
 CLT    America/Santiago  # Chile Time
