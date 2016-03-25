@@ -95,7 +95,7 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rainy_River)
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
-CLST   -10800 D  # Chile Summer Time (obsolete)
+CLST   -10800 D  # Chile Summer Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
 CLT    America/Santiago  # Chile Time
@@ -263,7 +263,7 @@ AMT     Asia/Yerevan  # Armenia Time
 ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
 ANAT    Asia/Anadyr  # Anadyr Time
                  #     (Asia/Anadyr)
-AZST    Asia/Baku  # Azerbaijan Summer Time
+AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
                  #     (Asia/Baku)
 AZT     Asia/Baku  # Azerbaijan Time
                  #     (Asia/Baku)
@@ -685,7 +685,7 @@ CHUT    36000    # Chuuk Time
                  #     (Pacific/Chuuk)
 CKT     Pacific/Rarotonga  # Cook Islands Time
                  #     (Pacific/Rarotonga)
-EASST   Pacific/Easter  # Easter Island Summer Time (obsolete)
+EASST   Pacific/Easter  # Easter Island Summer Time
                  #     (Pacific/Easter)
 EAST    Pacific/Easter  # Easter Island Time (Chile)
                  #     (Pacific/Easter)
