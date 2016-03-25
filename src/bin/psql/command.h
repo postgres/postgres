@@ -9,7 +9,7 @@
 #define COMMAND_H
 
 #include "fe_utils/print.h"
-#include "psqlscan.h"
+#include "fe_utils/psqlscan.h"
 
 
 typedef enum _backslashResult

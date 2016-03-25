@@ -6,7 +6,7 @@
  *
  * XXX Avoid creating backtracking cases --- see the backend lexer for info.
  *
- * See psqlscan_int.h for additional commentary.
+ * See fe_utils/psqlscan_int.h for additional commentary.
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -24,7 +24,7 @@
 }
 
 %{
-#include "psqlscan_int.h"
+#include "fe_utils/psqlscan_int.h"
 
 /*
  * We must have a typedef YYSTYPE for yylex's first argument, but this lexer

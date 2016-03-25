@@ -8,7 +8,7 @@
 #ifndef MAINLOOP_H
 #define MAINLOOP_H
 
-#include "psqlscan.h"
+#include "fe_utils/psqlscan.h"
 
 extern const PsqlScanCallbacks psqlscan_callbacks;
 

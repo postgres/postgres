@@ -1,16 +1,26 @@
-/*
- * psql - the PostgreSQL interactive terminal
+/*-------------------------------------------------------------------------
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * psqlscan.h
+ *	  lexical scanner for SQL commands
  *
- * src/bin/psql/psqlscan.h
+ * This lexer used to be part of psql, and that heritage is reflected in
+ * the file name as well as function and typedef names, though it can now
+ * be used by other frontend programs as well.  It's also possible to extend
+ * this lexer with a compatible add-on lexer to handle program-specific
+ * backslash commands.
+ *
+ *
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/fe_utils/psqlscan.h
+ *
+ *-------------------------------------------------------------------------
  */
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H
 
 #include "pqexpbuffer.h"
-
-#include "prompt.h"
 
 
 /* Abstract type for lexer's internal state */
@@ -24,6 +34,19 @@ typedef enum
 	PSCAN_INCOMPLETE,			/* end of line, SQL statement incomplete */
 	PSCAN_EOL					/* end of line, SQL possibly complete */
 } PsqlScanResult;
+
+/* Prompt type returned by psql_scan() */
+typedef enum _promptStatus
+{
+	PROMPT_READY,
+	PROMPT_CONTINUE,
+	PROMPT_COMMENT,
+	PROMPT_SINGLEQUOTE,
+	PROMPT_DOUBLEQUOTE,
+	PROMPT_DOLLARQUOTE,
+	PROMPT_PAREN,
+	PROMPT_COPY
+} promptStatus_t;
 
 /* Callback functions to be used by the lexer */
 typedef struct PsqlScanCallbacks

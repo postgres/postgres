@@ -63,16 +63,14 @@ my $frontend_extralibs = {
 	'psql'       => ['ws2_32.lib'] };
 my $frontend_extraincludes = {
 	'initdb' => ['src/timezone'],
-	'psql'   => [ 'src/backend' ],
-	'pgbench' => [ 'src/bin/psql' ] };
+	'psql'   => [ 'src/backend' ] };
 my $frontend_extrasource = {
-	'psql' => ['src/bin/psql/psqlscan.l', 'src/bin/psql/psqlscanslash.l'],
+	'psql' => [ 'src/bin/psql/psqlscanslash.l' ],
 	'pgbench' =>
-	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y',
-	    'src/bin/psql/psqlscan.l' ] };
+	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ] };
 my @frontend_excludes = (
 	'pgevent',     'pg_basebackup', 'pg_rewind', 'pg_dump',
-	'pg_xlogdump', 'scripts',       'pgbench');
+	'pg_xlogdump', 'scripts');
 
 sub mkvcbuild
 {
@@ -120,7 +118,7 @@ sub mkvcbuild
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
 	our @pgfeutilsfiles = qw(
-	  mbprint.c print.c simple_list.c string_utils.c);
+	  mbprint.c print.c psqlscan.l psqlscan.c simple_list.c string_utils.c);
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');
@@ -658,11 +656,6 @@ sub mkvcbuild
 		$pg_xlogdump->AddFile($xf);
 	}
 	$pg_xlogdump->AddFile('src/backend/access/transam/xlogreader.c');
-
-	# fix up pgbench once it's been set up
-	# we're borrowing psqlscan.c from psql, so grab it from the correct place
-	my $pgbench = AddSimpleFrontend('pgbench');
-	$pgbench->ReplaceFile('src/bin/pgbench/psqlscan.c', 'src/bin/psql/psqlscan.c');
 
 	$solution->Save();
 	return $solution->{vcver};

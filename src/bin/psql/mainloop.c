@@ -11,6 +11,7 @@
 #include "command.h"
 #include "common.h"
 #include "input.h"
+#include "prompt.h"
 #include "settings.h"
 
 #include "mb/pg_wchar.h"

@@ -7,10 +7,10 @@ subdir = src/bin/pgbench
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = pgbench.o exprparse.o psqlscan.o $(WIN32RES)
+OBJS = pgbench.o exprparse.o $(WIN32RES)
 
-override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) \
-	-I$(top_srcdir)/src/bin/psql $(CPPFLAGS)
+override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
@@ -19,20 +19,11 @@ endif
 
 all: pgbench
 
-pgbench: $(OBJS) | submake-libpq submake-libpgport
+pgbench: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(PTHREAD_LIBS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 # exprscan is compiled as part of exprparse
 exprparse.o: exprscan.c
-
-# we import psqlscan.o as-is from psql
-submake-psqlscan:
-	$(MAKE) -C $(top_builddir)/src/bin/psql psqlscan.o
-
-psqlscan.o: | submake-psqlscan
-	rm -f $@ && $(LN_S) $(top_builddir)/src/bin/psql/psqlscan.o .
-
-.PHONY: submake-psqlscan
 
 distprep: exprparse.c exprscan.c
 

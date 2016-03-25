@@ -11,7 +11,7 @@
 #ifndef PGBENCH_H
 #define PGBENCH_H
 
-#include "psqlscan.h"
+#include "fe_utils/psqlscan.h"
 
 /*
  * This file is included outside exprscan.l, in places where we can't see

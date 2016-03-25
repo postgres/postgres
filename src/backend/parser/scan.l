@@ -6,7 +6,7 @@
  *
  * NOTE NOTE NOTE:
  *
- * The rules in this file must be kept in sync with psql's psqlscan.l!
+ * The rules in this file must be kept in sync with src/fe_utils/psqlscan.l!
  *
  * The rules are designed so that the scanner never has to backtrack,
  * in the sense that there is always a rule that can match the input

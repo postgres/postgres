@@ -23,7 +23,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "psqlscan_int.h"
+#include "fe_utils/psqlscan_int.h"
 
 /* context information for reporting errors in expressions */
 static const char *expr_source = NULL;

@@ -1,4 +1,5 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * psqlscan_int.h
  *	  lexical scanner internal declarations
  *
@@ -30,21 +31,33 @@
  * if we were using lexers with separate static state we would soon end up
  * with dangling buffer pointers in one or the other.  Also note that this
  * is unlikely to work very nicely if the lexers aren't all built with the
- * same flex version.
+ * same flex version, or if they don't use the same flex options.
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
- * src/bin/psql/psqlscan_int.h
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/fe_utils/psqlscan_int.h
+ *
+ *-------------------------------------------------------------------------
  */
 #ifndef PSQLSCAN_INT_H
 #define PSQLSCAN_INT_H
 
-#include "psqlscan.h"
+#include "fe_utils/psqlscan.h"
 
-/* This is just to allow this file to be compilable standalone */
+/*
+ * These are just to allow this file to be compilable standalone for header
+ * validity checking; in actual use, this file should always be included
+ * from the body of a flex file, where these symbols are already defined.
+ */
 #ifndef YY_TYPEDEF_YY_BUFFER_STATE
 #define YY_TYPEDEF_YY_BUFFER_STATE
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
+#endif
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void *yyscan_t;
 #endif
 
 /*
@@ -116,6 +129,8 @@ extern void psqlscan_push_new_buffer(PsqlScanState state,
 						 const char *newstr, const char *varname);
 extern void psqlscan_pop_buffer_stack(PsqlScanState state);
 extern void psqlscan_select_top_buffer(PsqlScanState state);
+extern bool psqlscan_var_is_current_source(PsqlScanState state,
+							   const char *varname);
 extern YY_BUFFER_STATE psqlscan_prepare_buffer(PsqlScanState state,
 						const char *txt, int len,
 						char **txtcopy);

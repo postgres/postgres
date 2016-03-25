@@ -2,14 +2,20 @@
 /*-------------------------------------------------------------------------
  *
  * psqlscan.l
- *	  lexical scanner for psql (and other frontend programs)
+ *	  lexical scanner for SQL commands
  *
- * This code is mainly needed to determine where the end of a SQL statement
- * is: we are looking for semicolons that are not within quotes, comments,
- * or parentheses.  The most reliable way to handle this is to borrow the
- * backend's flex lexer rules, lock, stock, and barrel.  The rules below
- * are (except for a few) the same as the backend's, but their actions are
- * just ECHO whereas the backend's actions generally do other things.
+ * This lexer used to be part of psql, and that heritage is reflected in
+ * the file name as well as function and typedef names, though it can now
+ * be used by other frontend programs as well.  It's also possible to extend
+ * this lexer with a compatible add-on lexer to handle program-specific
+ * backslash commands.
+ *
+ * This code is mainly concerned with determining where the end of a SQL
+ * statement is: we are looking for semicolons that are not within quotes,
+ * comments, or parentheses.  The most reliable way to handle this is to
+ * borrow the backend's flex lexer rules, lock, stock, and barrel.  The rules
+ * below are (except for a few) the same as the backend's, but their actions
+ * are just ECHO whereas the backend's actions generally do other things.
  *
  * XXX The rules in this file must be kept in sync with the backend lexer!!!
  *
@@ -21,19 +27,19 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/bin/psql/psqlscan.l
+ *	  src/fe_utils/psqlscan.l
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
 
-#include "psqlscan.h"
+#include "fe_utils/psqlscan.h"
 
 #include "libpq-fe.h"
 }
 
 %{
-#include "psqlscan_int.h"
+#include "fe_utils/psqlscan_int.h"
 
 /*
  * We must have a typedef YYSTYPE for yylex's first argument, but this lexer
@@ -53,8 +59,6 @@ typedef int YYSTYPE;
 #define LEXRES_SEMI			1	/* command-terminating semicolon found */
 #define LEXRES_BACKSLASH	2	/* backslash command start */
 
-
-static bool var_is_current_source(PsqlScanState state, const char *varname);
 
 #define ECHO psqlscan_emit(cur_state, yytext, yyleng)
 
@@ -703,7 +707,7 @@ other			.
 					if (value)
 					{
 						/* It is a variable, check for recursion */
-						if (var_is_current_source(cur_state, varname))
+						if (psqlscan_var_is_current_source(cur_state, varname))
 						{
 							/* Recursive expansion --- don't go there */
 							cur_state->callbacks->write_error("skipping recursive expansion of variable \"%s\"\n",
@@ -1264,8 +1268,8 @@ psqlscan_select_top_buffer(PsqlScanState state)
  * Check if specified variable name is the source for any string
  * currently being scanned
  */
-static bool
-var_is_current_source(PsqlScanState state, const char *varname)
+bool
+psqlscan_var_is_current_source(PsqlScanState state, const char *varname)
 {
 	StackElem  *stackelem;
 

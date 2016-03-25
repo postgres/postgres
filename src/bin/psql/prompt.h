@@ -8,17 +8,8 @@
 #ifndef PROMPT_H
 #define PROMPT_H
 
-typedef enum _promptStatus
-{
-	PROMPT_READY,
-	PROMPT_CONTINUE,
-	PROMPT_COMMENT,
-	PROMPT_SINGLEQUOTE,
-	PROMPT_DOUBLEQUOTE,
-	PROMPT_DOLLARQUOTE,
-	PROMPT_PAREN,
-	PROMPT_COPY
-} promptStatus_t;
+/* enum promptStatus_t is now defined by psqlscan.h */
+#include "fe_utils/psqlscan.h"
 
 char	   *get_prompt(promptStatus_t status);
 
