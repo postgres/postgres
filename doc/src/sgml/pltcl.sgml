@@ -507,8 +507,9 @@ SELECT 'doesn''t' AS ret
         written to the server log, or both is controlled by the
         <xref linkend="guc-log-min-messages"> and
         <xref linkend="guc-client-min-messages"> configuration
-        variables. See <xref linkend="runtime-config"> for more
-        information.
+        variables. See <xref linkend="runtime-config">
+        and <xref linkend="pltcl-error-handling">
+        for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -772,6 +773,75 @@ $$ LANGUAGE pltcl;
 
 CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnitch();
 </programlisting>
+    </para>
+   </sect1>
+
+   <sect1 id="pltcl-error-handling">
+    <title>Error Handling in PL/Tcl</title>
+
+    <indexterm>
+     <primary>exceptions</primary>
+     <secondary>in PL/Tcl</secondary>
+    </indexterm>
+
+    <para>
+     Tcl code within or called from a PL/Tcl function can raise an error,
+     either by executing some invalid operation or by generating an error
+     using the Tcl <function>error</function> command or
+     PL/Tcl's <function>elog</function> command.  Such errors can be caught
+     within Tcl using the Tcl <function>catch</function> command.  If they
+     are not caught but are allowed to propagate out to the top level of
+     execution of the PL/Tcl function, they turn into database errors.
+    </para>
+
+    <para>
+     Conversely, database errors that occur within PL/Tcl's
+     <function>spi_exec</function>, <function>spi_prepare</function>,
+     and <function>spi_execp</function> commands are reported as Tcl errors,
+     so they are catchable by Tcl's <function>catch</function> command.
+     Again, if they propagate out to the top level without being caught,
+     they turn back into database errors.
+    </para>
+
+    <para>
+     Tcl provides an <varname>errorCode</varname> variable that can represent
+     additional information about an error in a form that is easy for Tcl
+     programs to interpret.  The contents are in Tcl list format, and the
+     first word identifies the subsystem or library reporting the error;
+     beyond that the contents are left to the individual subsystem or
+     library.  For database errors reported by PL/Tcl commands, the first
+     word is <literal>POSTGRES</literal>, the second word is the Postgres
+     version number, and additional words are field name/value pairs
+     providing detailed information about the error.
+     Fields <varname>message</> and <varname>SQLSTATE</> (the error code
+     shown in <xref linkend="errcodes-appendix">) are always supplied.
+     Fields that may be present include
+     <varname>detail</>, <varname>hint</>, <varname>context</>,
+     <varname>schema</>, <varname>table</>, <varname>column</>,
+     <varname>datatype</>, <varname>constraint</>,
+     <varname>statement</>, <varname>cursor_position</>,
+     <varname>filename</>, <varname>lineno</> and
+     <varname>funcname</>.
+    </para>
+
+    <para>
+     A convenient way to work with PL/Tcl's <varname>errorCode</varname>
+     information is to load it into an array, so that the field names become
+     array subscripts.  Code for doing that might look like
+<programlisting>
+if {[catch { spi_exec $sql_command }]} {
+    if {[lindex $::errorCode 0] == "POSTGRES"} {
+        array set errorArray $::errorCode
+        if {$errorArray(SQLSTATE) == "42P01"} {  # UNDEFINED_TABLE
+            # deal with missing table
+        } else {
+            # deal with some other type of SQL error
+        }
+    }
+}
+</programlisting>
+     (The double colons explicitly specify that <varname>errorCode</varname>
+     is a global variable.)
     </para>
    </sect1>
 

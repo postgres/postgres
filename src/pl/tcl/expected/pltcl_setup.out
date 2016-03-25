@@ -555,3 +555,31 @@ NOTICE:  tclsnitch: ddl_command_start DROP TABLE
 NOTICE:  tclsnitch: ddl_command_end DROP TABLE
 drop event trigger tcl_a_snitch;
 drop event trigger tcl_b_snitch;
+-- test use of errorCode in error handling
+create function tcl_error_handling_test() returns text as $$
+    global errorCode
+    if {[catch { spi_exec "select no_such_column from foo;" }]} {
+        array set errArray $errorCode
+        if {$errArray(SQLSTATE) == "42P01"} {
+            return "expected error: $errArray(message)"
+        } else {
+            return "unexpected error: $errArray(SQLSTATE) $errArray(message)"
+        }
+    } else {
+        return "no error"
+    }
+$$ language pltcl;
+select tcl_error_handling_test();
+            tcl_error_handling_test            
+-----------------------------------------------
+ expected error: relation "foo" does not exist
+(1 row)
+
+create temp table foo(f1 int);
+select tcl_error_handling_test();
+                    tcl_error_handling_test                     
+----------------------------------------------------------------
+ unexpected error: 42703 column "no_such_column" does not exist
+(1 row)
+
+drop table foo;

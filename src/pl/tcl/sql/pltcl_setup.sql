@@ -595,3 +595,27 @@ drop table foo;
 
 drop event trigger tcl_a_snitch;
 drop event trigger tcl_b_snitch;
+
+-- test use of errorCode in error handling
+
+create function tcl_error_handling_test() returns text as $$
+    global errorCode
+    if {[catch { spi_exec "select no_such_column from foo;" }]} {
+        array set errArray $errorCode
+        if {$errArray(SQLSTATE) == "42P01"} {
+            return "expected error: $errArray(message)"
+        } else {
+            return "unexpected error: $errArray(SQLSTATE) $errArray(message)"
+        }
+    } else {
+        return "no error"
+    }
+$$ language pltcl;
+
+select tcl_error_handling_test();
+
+create temp table foo(f1 int);
+
+select tcl_error_handling_test();
+
+drop table foo;
