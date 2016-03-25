@@ -258,3 +258,41 @@ select unique1, unique2, generate_series(1,10)
        0 |    9998 |               7
 (7 rows)
 
+-- use of random() is to keep planner from folding the expressions together
+explain (verbose, costs off)
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Result
+   Output: generate_series(0, 2), generate_series(((random() * '0.1'::double precision))::integer, 2)
+(2 rows)
+
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
+ s1 | s2 
+----+----
+  0 |  0
+  1 |  1
+  2 |  2
+(3 rows)
+
+explain (verbose, costs off)
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2
+order by s2 desc;
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (generate_series(0, 2)), (generate_series(((random() * '0.1'::double precision))::integer, 2))
+   Sort Key: (generate_series(((random() * '0.1'::double precision))::integer, 2)) DESC
+   ->  Result
+         Output: generate_series(0, 2), generate_series(((random() * '0.1'::double precision))::integer, 2)
+(5 rows)
+
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2
+order by s2 desc;
+ s1 | s2 
+----+----
+  2 |  2
+  1 |  1
+  0 |  0
+(3 rows)
+

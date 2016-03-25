@@ -78,3 +78,16 @@ select unique1, unique2, generate_series(1,10)
 
 select unique1, unique2, generate_series(1,10)
   from tenk1 order by tenthous limit 7;
+
+-- use of random() is to keep planner from folding the expressions together
+explain (verbose, costs off)
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
+
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2;
+
+explain (verbose, costs off)
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2
+order by s2 desc;
+
+select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2
+order by s2 desc;

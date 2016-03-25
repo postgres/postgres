@@ -4615,11 +4615,16 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  *
  * Our current policy is to postpone volatile expressions till after the sort
  * unconditionally (assuming that that's possible, ie they are in plain tlist
- * columns and not ORDER BY/GROUP BY/DISTINCT columns).  We also postpone
- * set-returning expressions unconditionally (if possible), because running
- * them beforehand would bloat the sort dataset, and because it might cause
- * unexpected output order if the sort isn't stable.  Expensive expressions
- * are postponed if there is a LIMIT, or if root->tuple_fraction shows that
+ * columns and not ORDER BY/GROUP BY/DISTINCT columns).  We also prefer to
+ * postpone set-returning expressions, because running them beforehand would
+ * bloat the sort dataset, and because it might cause unexpected output order
+ * if the sort isn't stable.  However there's a constraint on that: all SRFs
+ * in the tlist should be evaluated at the same plan step, so that they can
+ * run in sync in ExecTargetList.  So if any SRFs are in sort columns, we
+ * mustn't postpone any SRFs.  (Note that in principle that policy should
+ * probably get applied to the group/window input targetlists too, but we
+ * have not done that historically.)  Lastly, expensive expressions are
+ * postponed if there is a LIMIT, or if root->tuple_fraction shows that
  * partial evaluation of the query is possible (if neither is true, we expect
  * to have to evaluate the expressions for every row anyway), or if there are
  * any volatile or set-returning expressions (since once we've put in a
@@ -4664,10 +4669,13 @@ make_sort_input_target(PlannerInfo *root,
 	Query	   *parse = root->parse;
 	PathTarget *input_target;
 	int			ncols;
+	bool	   *col_is_srf;
 	bool	   *postpone_col;
 	bool		have_srf;
 	bool		have_volatile;
 	bool		have_expensive;
+	bool		have_srf_sortcols;
+	bool		postpone_srfs;
 	List	   *postponable_cols;
 	List	   *postponable_vars;
 	int			i;
@@ -4680,8 +4688,9 @@ make_sort_input_target(PlannerInfo *root,
 
 	/* Inspect tlist and collect per-column information */
 	ncols = list_length(final_target->exprs);
+	col_is_srf = (bool *) palloc0(ncols * sizeof(bool));
 	postpone_col = (bool *) palloc0(ncols * sizeof(bool));
-	have_srf = have_volatile = have_expensive = false;
+	have_srf = have_volatile = have_expensive = have_srf_sortcols = false;
 
 	i = 0;
 	foreach(lc, final_target->exprs)
@@ -4699,17 +4708,18 @@ make_sort_input_target(PlannerInfo *root,
 		if (final_target->sortgrouprefs[i] == 0)
 		{
 			/*
-			 * If it returns a set or is volatile, that's an unconditional
-			 * reason to postpone.  Check the SRF case first because we must
-			 * know whether we have any postponed SRFs.
+			 * Check for SRF or volatile functions.  Check the SRF case first
+			 * because we must know whether we have any postponed SRFs.
 			 */
 			if (expression_returns_set((Node *) expr))
 			{
-				postpone_col[i] = true;
+				/* We'll decide below whether these are postponable */
+				col_is_srf[i] = true;
 				have_srf = true;
 			}
 			else if (contain_volatile_functions((Node *) expr))
 			{
+				/* Unconditionally postpone */
 				postpone_col[i] = true;
 				have_volatile = true;
 			}
@@ -4736,14 +4746,26 @@ make_sort_input_target(PlannerInfo *root,
 				}
 			}
 		}
+		else
+		{
+			/* For sortgroupref cols, just check if any contain SRFs */
+			if (!have_srf_sortcols &&
+				expression_returns_set((Node *) expr))
+				have_srf_sortcols = true;
+		}
 
 		i++;
 	}
 
 	/*
+	 * We can postpone SRFs if we have some but none are in sortgroupref cols.
+	 */
+	postpone_srfs = (have_srf && !have_srf_sortcols);
+
+	/*
 	 * If we don't need a post-sort projection, just return final_target.
 	 */
-	if (!(have_srf || have_volatile ||
+	if (!(postpone_srfs || have_volatile ||
 		  (have_expensive &&
 		   (parse->limitCount || root->tuple_fraction > 0))))
 		return final_target;
@@ -4754,7 +4776,7 @@ make_sort_input_target(PlannerInfo *root,
 	 * rely on the query's LIMIT (if any) to bound the number of rows it needs
 	 * to return.
 	 */
-	*have_postponed_srfs = have_srf;
+	*have_postponed_srfs = postpone_srfs;
 
 	/*
 	 * Construct the sort-input target, taking all non-postponable columns and
@@ -4769,7 +4791,7 @@ make_sort_input_target(PlannerInfo *root,
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
 
-		if (postpone_col[i])
+		if (postpone_col[i] || (postpone_srfs && col_is_srf[i]))
 			postponable_cols = lappend(postponable_cols, expr);
 		else
 			add_column_to_pathtarget(input_target, expr,
