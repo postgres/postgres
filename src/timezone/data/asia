@@ -129,13 +129,22 @@ Zone	Asia/Yerevan	2:58:00 -	LMT	1924 May  2
 			4:00	-	AMT
 
 # Azerbaijan
+
 # From Rustam Aliyev of the Azerbaijan Internet Forum (2005-10-23):
 # According to the resolution of Cabinet of Ministers, 1997
 # From Paul Eggert (2015-09-17): It was Resolution No. 21 (1997-03-17).
 # http://code.az/files/daylight_res.pdf
+
+# From Steffen Thorsen (2016-03-17):
+# ... the Azerbaijani Cabinet of Ministers has cancelled switching to
+# daylight saving time....
+# http://www.azernews.az/azerbaijan/94137.html
+# http://vestnikkavkaza.net/news/Azerbaijani-Cabinet-of-Ministers-cancels-daylight-saving-time.html
+# http://en.apa.az/xeber_azerbaijan_abolishes_daylight_savings_ti_240862.html
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Azer	1997	max	-	Mar	lastSun	 4:00	1:00	S
-Rule	Azer	1997	max	-	Oct	lastSun	 5:00	0	-
+Rule	Azer	1997	2015	-	Mar	lastSun	 4:00	1:00	S
+Rule	Azer	1997	2015	-	Oct	lastSun	 5:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Baku	3:19:24 -	LMT	1924 May  2
 			3:00	-	BAKT	1957 Mar    # Baku Time
@@ -1636,6 +1645,8 @@ Zone	Asia/Aqtau	3:21:04	-	LMT	1924 May  2
 			4:00 RussiaAsia	AQT%sT	2005 Mar 15
 			5:00	-	AQTT
 # West Kazakhstan
+# From Paul Eggert (2016-03-18):
+# The 1989 transition is from USSR act No. 227 (1989-03-14).
 Zone	Asia/Oral	3:25:24	-	LMT	1924 May  2 # or Ural'sk
 			4:00	-	URAT	1930 Jun 21 # Ural'sk time
 			5:00	-	URAT	1981 Apr  1
@@ -2396,6 +2407,16 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # http://www.timeanddate.com/time/change/gaza-strip/gaza
 # http://www.timeanddate.com/time/change/west-bank/hebron
 
+# From Hannah Kreitem (2016-03-09):
+# http://www.palestinecabinet.gov.ps/WebSite/ar/ViewDetails?ID=31728
+# [Google translation]: "The Council also decided to start daylight
+# saving in Palestine as of one o'clock on Saturday morning,
+# 2016-03-26, to provide the clock 60 minutes ahead."
+#
+# From Paul Eggert (2016-03-12):
+# Predict spring transitions on March's last Saturday at 01:00 from now on.
+# Leave fall predictions alone for now.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
 Rule EgyptAsia	1957	1958	-	Oct	 1	0:00	0	-
@@ -2424,7 +2445,8 @@ Rule Palestine	2012	2014	-	Mar	lastThu	24:00	1:00	S
 Rule Palestine	2012	only	-	Sep	21	1:00	0	-
 Rule Palestine	2013	only	-	Sep	Fri>=21	0:00	0	-
 Rule Palestine	2014	max	-	Oct	Fri>=21	0:00	0	-
-Rule Palestine	2015	max	-	Mar	lastFri	24:00	1:00	S
+Rule Palestine	2015	only	-	Mar	lastFri	24:00	1:00	S
+Rule Palestine	2016	max	-	Mar	lastSat	1:00	1:00	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct

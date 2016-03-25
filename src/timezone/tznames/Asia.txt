@@ -43,7 +43,7 @@ AST     10800    # Arabia Standard Time
                  #     (Asia/Kuwait)
                  #     (Asia/Qatar)
                  #     (Asia/Riyadh)
-AZST    Asia/Baku  # Azerbaijan Summer Time
+AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
                  #     (Asia/Baku)
 AZT     Asia/Baku  # Azerbaijan Time
                  #     (Asia/Baku)
