@@ -54,8 +54,6 @@ static Oid OperatorShellMake(const char *operatorName,
 				  Oid leftTypeId,
 				  Oid rightTypeId);
 
-static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
-
 static Oid get_other_operator(List *otherOp,
 				   Oid otherLeftTypeId, Oid otherRightTypeId,
 				   const char *operatorName, Oid operatorNamespace,
@@ -566,7 +564,7 @@ OperatorCreate(const char *operatorName,
 		commutatorId = operatorObjectId;
 
 	if (OidIsValid(commutatorId) || OidIsValid(negatorId))
-		OperatorUpd(operatorObjectId, commutatorId, negatorId);
+		OperatorUpd(operatorObjectId, commutatorId, negatorId, false);
 
 	return address;
 }
@@ -639,125 +637,125 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
  * OperatorUpd
  *
  *	For a given operator, look up its negator and commutator operators.
- *	If they are defined, but their negator and commutator fields
- *	(respectively) are empty, then use the new operator for neg or comm.
- *	This solves a problem for users who need to insert two new operators
- *	which are the negator or commutator of each other.
+ *	When isDelete is false, update their negator and commutator fields to
+ *	point back to the given operator; when isDelete is true, update those
+ *	fields to no longer point back to the given operator.
+ *
+ *	The !isDelete case solves a problem for users who need to insert two new
+ *	operators that are the negator or commutator of each other, while the
+ *	isDelete case is needed so as not to leave dangling OID links behind
+ *	after dropping an operator.
  */
-static void
-OperatorUpd(Oid baseId, Oid commId, Oid negId)
+void
+OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete)
 {
-	int			i;
 	Relation	pg_operator_desc;
 	HeapTuple	tup;
-	bool		nulls[Natts_pg_operator];
-	bool		replaces[Natts_pg_operator];
-	Datum		values[Natts_pg_operator];
-
-	for (i = 0; i < Natts_pg_operator; ++i)
-	{
-		values[i] = (Datum) 0;
-		replaces[i] = false;
-		nulls[i] = false;
-	}
 
 	/*
-	 * check and update the commutator & negator, if necessary
-	 *
-	 * We need a CommandCounterIncrement here in case of a self-commutator
-	 * operator: we'll need to update the tuple that we just inserted.
+	 * If we're making an operator into its own commutator, then we need a
+	 * command-counter increment here, since we've just inserted the tuple
+	 * we're about to update.  But when we're dropping an operator, we can
+	 * skip this because we're at the beginning of the command.
 	 */
-	CommandCounterIncrement();
+	if (!isDelete)
+		CommandCounterIncrement();
 
+	/* Open the relation. */
 	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(commId));
+	/* Get a writable copy of the commutator's tuple. */
+	if (OidIsValid(commId))
+		tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(commId));
+	else
+		tup = NULL;
 
-	/*
-	 * if the commutator and negator are the same operator, do one update. XXX
-	 * this is probably useless code --- I doubt it ever makes sense for
-	 * commutator and negator to be the same thing...
-	 */
-	if (commId == negId)
+	/* Update the commutator's tuple if need be. */
+	if (HeapTupleIsValid(tup))
 	{
-		if (HeapTupleIsValid(tup))
+		Form_pg_operator t = (Form_pg_operator) GETSTRUCT(tup);
+		bool		update_commutator = false;
+
+		/*
+		 * Out of due caution, we only change the commutator's oprcom field if
+		 * it has the exact value we expected: InvalidOid when creating an
+		 * operator, or baseId when dropping one.
+		 */
+		if (isDelete && t->oprcom == baseId)
 		{
-			Form_pg_operator t = (Form_pg_operator) GETSTRUCT(tup);
-
-			if (!OidIsValid(t->oprcom) || !OidIsValid(t->oprnegate))
-			{
-				if (!OidIsValid(t->oprnegate))
-				{
-					values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
-					replaces[Anum_pg_operator_oprnegate - 1] = true;
-				}
-
-				if (!OidIsValid(t->oprcom))
-				{
-					values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
-					replaces[Anum_pg_operator_oprcom - 1] = true;
-				}
-
-				tup = heap_modify_tuple(tup,
-										RelationGetDescr(pg_operator_desc),
-										values,
-										nulls,
-										replaces);
-
-				simple_heap_update(pg_operator_desc, &tup->t_self, tup);
-
-				CatalogUpdateIndexes(pg_operator_desc, tup);
-			}
+			t->oprcom = InvalidOid;
+			update_commutator = true;
+		}
+		else if (!isDelete && !OidIsValid(t->oprcom))
+		{
+			t->oprcom = baseId;
+			update_commutator = true;
 		}
 
-		heap_close(pg_operator_desc, RowExclusiveLock);
+		/* If any columns were found to need modification, update tuple. */
+		if (update_commutator)
+		{
+			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
+			CatalogUpdateIndexes(pg_operator_desc, tup);
 
-		return;
+			/*
+			 * Do CCI to make the updated tuple visible.  We must do this in
+			 * case the commutator is also the negator.  (Which would be a
+			 * logic error on the operator definer's part, but that's not a
+			 * good reason to fail here.)  We would need a CCI anyway in the
+			 * deletion case for a self-commutator with no negator.
+			 */
+			CommandCounterIncrement();
+		}
 	}
 
-	/* if commutator and negator are different, do two updates */
+	/*
+	 * Similarly find and update the negator, if any.
+	 */
+	if (OidIsValid(negId))
+		tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(negId));
+	else
+		tup = NULL;
 
-	if (HeapTupleIsValid(tup) &&
-		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprcom)))
+	if (HeapTupleIsValid(tup))
 	{
-		values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
-		replaces[Anum_pg_operator_oprcom - 1] = true;
+		Form_pg_operator t = (Form_pg_operator) GETSTRUCT(tup);
+		bool		update_negator = false;
 
-		tup = heap_modify_tuple(tup,
-								RelationGetDescr(pg_operator_desc),
-								values,
-								nulls,
-								replaces);
+		/*
+		 * Out of due caution, we only change the negator's oprnegate field if
+		 * it has the exact value we expected: InvalidOid when creating an
+		 * operator, or baseId when dropping one.
+		 */
+		if (isDelete && t->oprnegate == baseId)
+		{
+			t->oprnegate = InvalidOid;
+			update_negator = true;
+		}
+		else if (!isDelete && !OidIsValid(t->oprnegate))
+		{
+			t->oprnegate = baseId;
+			update_negator = true;
+		}
 
-		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
+		/* If any columns were found to need modification, update tuple. */
+		if (update_negator)
+		{
+			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
+			CatalogUpdateIndexes(pg_operator_desc, tup);
 
-		CatalogUpdateIndexes(pg_operator_desc, tup);
-
-		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
-		replaces[Anum_pg_operator_oprcom - 1] = false;
+			/*
+			 * In the deletion case, do CCI to make the updated tuple visible.
+			 * We must do this in case the operator is its own negator. (Which
+			 * would be a logic error on the operator definer's part, but
+			 * that's not a good reason to fail here.)
+			 */
+			if (isDelete)
+				CommandCounterIncrement();
+		}
 	}
 
-	/* check and update the negator, if necessary */
-
-	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(negId));
-
-	if (HeapTupleIsValid(tup) &&
-		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprnegate)))
-	{
-		values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
-		replaces[Anum_pg_operator_oprnegate - 1] = true;
-
-		tup = heap_modify_tuple(tup,
-								RelationGetDescr(pg_operator_desc),
-								values,
-								nulls,
-								replaces);
-
-		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
-
-		CatalogUpdateIndexes(pg_operator_desc, tup);
-	}
-
+	/* Close relation and release catalog lock. */
 	heap_close(pg_operator_desc, RowExclusiveLock);
 }
 

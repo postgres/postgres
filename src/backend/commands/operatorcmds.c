@@ -341,12 +341,32 @@ RemoveOperatorById(Oid operOid)
 {
 	Relation	relation;
 	HeapTuple	tup;
+	Form_pg_operator op;
 
 	relation = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for operator %u", operOid);
+	op = (Form_pg_operator) GETSTRUCT(tup);
+
+	/*
+	 * Reset links from commutator and negator, if any.  In case of a
+	 * self-commutator or self-negator, this means we have to re-fetch the
+	 * updated tuple.  (We could optimize away updates on the tuple we're
+	 * about to drop, but it doesn't seem worth convoluting the logic for.)
+	 */
+	if (OidIsValid(op->oprcom) || OidIsValid(op->oprnegate))
+	{
+		OperatorUpd(operOid, op->oprcom, op->oprnegate, true);
+		if (operOid == op->oprcom || operOid == op->oprnegate)
+		{
+			ReleaseSysCache(tup);
+			tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
+			if (!HeapTupleIsValid(tup)) /* should not happen */
+				elog(ERROR, "cache lookup failed for operator %u", operOid);
+		}
+	}
 
 	simple_heap_delete(relation, &tup->t_self);
 
