@@ -19,7 +19,7 @@ include $(top_builddir)/src/Makefile.global
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
-LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o describe.o \

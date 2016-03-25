@@ -10,7 +10,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = pgbench.o exprparse.o $(WIN32RES)
 
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
-LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
