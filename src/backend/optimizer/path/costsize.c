@@ -45,9 +45,10 @@
  *			(total_cost - startup_cost) * tuples_to_fetch / path->rows;
  * Note that a base relation's rows count (and, by extension, plan_rows for
  * plan nodes below the LIMIT node) are set without regard to any LIMIT, so
- * that this equation works properly.  (Also, these routines guarantee not to
- * set the rows count to zero, so there will be no zero divide.)  The LIMIT is
- * applied as a top-level plan node.
+ * that this equation works properly.  (Note: while path->rows is never zero
+ * for ordinary relations, it is zero for paths for provably-empty relations,
+ * so beware of division-by-zero.)  The LIMIT is applied as a top-level
+ * plan node.
  *
  * For largely historical reasons, most of the routines in this module use
  * the passed result Path only to store their results (rows, startup_cost and
@@ -1991,6 +1992,12 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	QualCost	restrict_qual_cost;
 	double		ntuples;
 
+	/* Protect some assumptions below that rowcounts aren't zero or NaN */
+	if (outer_path_rows <= 0 || isnan(outer_path_rows))
+		outer_path_rows = 1;
+	if (inner_path_rows <= 0 || isnan(inner_path_rows))
+		inner_path_rows = 1;
+
 	/* Mark the path with the correct row estimate */
 	if (path->path.param_info)
 		path->path.rows = path->path.param_info->ppi_rows;
@@ -3025,8 +3032,8 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
 
 		if (subplan->subLinkType == EXISTS_SUBLINK)
 		{
-			/* we only need to fetch 1 tuple */
-			sp_cost.per_tuple += plan_run_cost / plan->plan_rows;
+			/* we only need to fetch 1 tuple; clamp to avoid zero divide */
+			sp_cost.per_tuple += plan_run_cost / clamp_row_est(plan->plan_rows);
 		}
 		else if (subplan->subLinkType == ALL_SUBLINK ||
 				 subplan->subLinkType == ANY_SUBLINK)

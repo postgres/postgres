@@ -3346,12 +3346,10 @@ create_grouping_paths(PlannerInfo *root,
 	}
 
 	/*
-	 * Estimate number of groups.  Note: if cheapest_path is a dummy, it will
-	 * have zero rowcount estimate, which we don't want to use for fear of
-	 * divide-by-zero.  Hence clamp.
+	 * Estimate number of groups.
 	 */
 	dNumGroups = get_number_of_groups(root,
-									  clamp_row_est(cheapest_path->rows),
+									  cheapest_path->rows,
 									  rollup_lists,
 									  rollup_groupclauses);
 
@@ -3415,7 +3413,7 @@ create_grouping_paths(PlannerInfo *root,
 
 		/* Estimate number of partial groups. */
 		dNumPartialGroups = get_number_of_groups(root,
-								clamp_row_est(cheapest_partial_path->rows),
+												 cheapest_partial_path->rows,
 												 NIL,
 												 NIL);
 
@@ -4840,8 +4838,8 @@ get_cheapest_fractional_path(RelOptInfo *rel, double tuple_fraction)
 	if (tuple_fraction <= 0.0)
 		return best_path;
 
-	/* Convert absolute # of tuples to a fraction; no need to clamp */
-	if (tuple_fraction >= 1.0)
+	/* Convert absolute # of tuples to a fraction; no need to clamp to 0..1 */
+	if (tuple_fraction >= 1.0 && best_path->rows > 0)
 		tuple_fraction /= best_path->rows;
 
 	foreach(l, rel->pathlist)
