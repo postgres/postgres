@@ -79,7 +79,6 @@ close_target_file(void)
 				 dstpath, strerror(errno));
 
 	dstfd = -1;
-	/* fsync? */
 }
 
 void
