@@ -3540,7 +3540,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 	 * XXX Possibly better way, but much more expensive: multiply by
 	 * selectivity of rel's restriction clauses that mention the target Var.
 	 */
-	if (vardata.rel)
+	if (vardata.rel && vardata.rel->tuples > 0)
 	{
 		ndistinct *= vardata.rel->rows / vardata.rel->tuples;
 		ndistinct = clamp_row_est(ndistinct);
