@@ -209,11 +209,11 @@ PRINT_LWDEBUG(const char *where, LWLock *lock, LWLockMode mode)
 					 errmsg_internal("%d: %s(%s): excl %u shared %u haswaiters %u waiters %u rOK %d",
 							MyProcPid,
 							where, MainLWLockNames[id],
-							!!(state & LW_VAL_EXCLUSIVE),
+							(state & LW_VAL_EXCLUSIVE) != 0,
 							state & LW_SHARED_MASK,
-							!!(state & LW_FLAG_HAS_WAITERS),
+							(state & LW_FLAG_HAS_WAITERS) != 0,
 							pg_atomic_read_u32(&lock->nwaiters),
-							!!(state & LW_FLAG_RELEASE_OK))));
+							(state & LW_FLAG_RELEASE_OK) != 0)));
 		else
 			ereport(LOG,
 					(errhidestmt(true),
@@ -221,11 +221,11 @@ PRINT_LWDEBUG(const char *where, LWLock *lock, LWLockMode mode)
 					 errmsg_internal("%d: %s(%s %d): excl %u shared %u haswaiters %u waiters %u rOK %d",
 							MyProcPid,
 							where, T_NAME(lock), id,
-							!!(state & LW_VAL_EXCLUSIVE),
+							(state & LW_VAL_EXCLUSIVE) != 0,
 							state & LW_SHARED_MASK,
-							!!(state & LW_FLAG_HAS_WAITERS),
+							(state & LW_FLAG_HAS_WAITERS) != 0,
 							pg_atomic_read_u32(&lock->nwaiters),
-							!!(state & LW_FLAG_RELEASE_OK))));
+							(state & LW_FLAG_RELEASE_OK) != 0)));
 	}
 }
 

@@ -407,7 +407,7 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 		audit_name != SEPGSQL_AVC_NOAUDIT &&
 		sepgsql_get_mode() != SEPGSQL_MODE_INTERNAL)
 	{
-		sepgsql_audit_log(!!denied,
+		sepgsql_audit_log(denied != 0,
 						  cache->scontext,
 						  cache->tcontext_is_valid ?
 						  cache->tcontext : sepgsql_avc_unlabeled(),

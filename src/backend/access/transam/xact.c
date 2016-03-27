@@ -5335,7 +5335,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		LWLockRelease(XidGenLock);
 	}
 
-	Assert(!!(parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == (origin_id != InvalidRepOriginId));
+	Assert(((parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == 0) ==
+		   (origin_id == InvalidRepOriginId));
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
 		commit_time = parsed->origin_timestamp;

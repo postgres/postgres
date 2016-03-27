@@ -149,9 +149,9 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 
 /* Access macros for above flags */
 #define XactCompletionRelcacheInitFileInval(xinfo) \
-	(!!(xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE))
+	((xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE) != 0)
 #define XactCompletionForceSyncCommit(xinfo) \
-	(!!(xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT))
+	((xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT) != 0)
 
 typedef struct xl_xact_assignment
 {

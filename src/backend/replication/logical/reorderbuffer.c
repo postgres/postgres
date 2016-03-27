@@ -603,7 +603,7 @@ ReorderBufferTXNByXid(ReorderBuffer *rb, TransactionId xid, bool create,
 	if (is_new)
 		*is_new = !found;
 
-	Assert(!create || !!txn);
+	Assert(!create || txn != NULL);
 	return txn;
 }
 
