@@ -167,7 +167,7 @@ static void InitializeLWLocks(void);
 static void RegisterLWLockTranches(void);
 
 static inline void LWLockReportWaitStart(LWLock *lock);
-static inline void LWLockReportWaitEnd();
+static inline void LWLockReportWaitEnd(void);
 
 #ifdef LWLOCK_STATS
 typedef struct lwlock_stats_key
@@ -742,7 +742,7 @@ LWLockReportWaitStart(LWLock *lock)
  * Report end of wait event for light-weight locks.
  */
 static inline void
-LWLockReportWaitEnd()
+LWLockReportWaitEnd(void)
 {
 	pgstat_report_wait_end();
 }
