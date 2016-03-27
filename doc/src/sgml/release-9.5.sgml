@@ -61,7 +61,7 @@ Branch: REL9_5_STABLE [8aa6e9780] 2016-03-23 16:04:35 -0400
 
      <para>
       Unfortunately, this problem affects not only sorting but also entry
-      ordering in b-tree indexes, which means that b-tree indexes
+      ordering in B-tree indexes, which means that B-tree indexes
       on <type>text</>, <type>varchar</>, or <type>char</> columns may now
       be corrupt if they sort according to an affected locale and were
       built or modified under <productname>PostgreSQL</> 9.5.0 or 9.5.1.
@@ -278,8 +278,8 @@ Branch: REL9_1_STABLE [ca32f125b] 2016-02-19 08:35:02 +0000
 
     <listitem>
      <para>
-      Correctly handle wraparound cases in the <literal>pg_subtrans</>
-      startup logic for hot standby (Jeff Janes)
+      Correctly handle cases where <literal>pg_subtrans</> is close to XID
+      wraparound during server startup (Jeff Janes)
      </para>
     </listitem>
 
@@ -315,7 +315,7 @@ Branch: REL9_5_STABLE [f8a75881f] 2016-03-02 23:43:42 -0800
      <para>
       Trouble cases included tuples larger than one page when replica
       identity is <literal>FULL</>, <command>UPDATE</>s that change a
-      primary key in a transaction large enough to be spooled to disk,
+      primary key within a transaction large enough to be spooled to disk,
       incorrect reports of <quote>subxact logged without previous toplevel
       record</>, and incorrect reporting of a transaction's commit time.
      </para>
@@ -480,7 +480,7 @@ Branch: REL9_1_STABLE [2d61d88d8] 2016-03-14 11:31:49 -0400
 
     <listitem>
      <para>
-      Fix <application>psql</>'s tab completion after
+      Fix <application>psql</>'s tab completion for
       <literal>SECURITY LABEL</> (Tom Lane)
      </para>
 
