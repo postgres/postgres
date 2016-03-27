@@ -112,22 +112,22 @@ typedef struct GinMetaPageData
  */
 #define GinPageGetOpaque(page) ( (GinPageOpaque) PageGetSpecialPointer(page) )
 
-#define GinPageIsLeaf(page)    ( GinPageGetOpaque(page)->flags & GIN_LEAF )
+#define GinPageIsLeaf(page)    ( (GinPageGetOpaque(page)->flags & GIN_LEAF) != 0 )
 #define GinPageSetLeaf(page)   ( GinPageGetOpaque(page)->flags |= GIN_LEAF )
 #define GinPageSetNonLeaf(page)    ( GinPageGetOpaque(page)->flags &= ~GIN_LEAF )
-#define GinPageIsData(page)    ( GinPageGetOpaque(page)->flags & GIN_DATA )
+#define GinPageIsData(page)    ( (GinPageGetOpaque(page)->flags & GIN_DATA) != 0 )
 #define GinPageSetData(page)   ( GinPageGetOpaque(page)->flags |= GIN_DATA )
-#define GinPageIsList(page)    ( GinPageGetOpaque(page)->flags & GIN_LIST )
+#define GinPageIsList(page)    ( (GinPageGetOpaque(page)->flags & GIN_LIST) != 0 )
 #define GinPageSetList(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST )
-#define GinPageHasFullRow(page)    ( GinPageGetOpaque(page)->flags & GIN_LIST_FULLROW )
+#define GinPageHasFullRow(page)    ( (GinPageGetOpaque(page)->flags & GIN_LIST_FULLROW) != 0 )
 #define GinPageSetFullRow(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST_FULLROW )
-#define GinPageIsCompressed(page)	 ( GinPageGetOpaque(page)->flags & GIN_COMPRESSED )
+#define GinPageIsCompressed(page)	 ( (GinPageGetOpaque(page)->flags & GIN_COMPRESSED) != 0 )
 #define GinPageSetCompressed(page)	 ( GinPageGetOpaque(page)->flags |= GIN_COMPRESSED )
 
-#define GinPageIsDeleted(page) ( GinPageGetOpaque(page)->flags & GIN_DELETED)
+#define GinPageIsDeleted(page) ( (GinPageGetOpaque(page)->flags & GIN_DELETED) != 0 )
 #define GinPageSetDeleted(page)    ( GinPageGetOpaque(page)->flags |= GIN_DELETED)
 #define GinPageSetNonDeleted(page) ( GinPageGetOpaque(page)->flags &= ~GIN_DELETED)
-#define GinPageIsIncompleteSplit(page) ( GinPageGetOpaque(page)->flags & GIN_INCOMPLETE_SPLIT)
+#define GinPageIsIncompleteSplit(page) ( (GinPageGetOpaque(page)->flags & GIN_INCOMPLETE_SPLIT) != 0 )
 
 #define GinPageRightMost(page) ( GinPageGetOpaque(page)->rightlink == InvalidBlockNumber)
 
@@ -224,7 +224,7 @@ typedef signed char GinNullCategory;
 #define GinGetPostingOffset(itup)	(GinItemPointerGetBlockNumber(&(itup)->t_tid) & (~GIN_ITUP_COMPRESSED))
 #define GinSetPostingOffset(itup,n) ItemPointerSetBlockNumber(&(itup)->t_tid,(n)|GIN_ITUP_COMPRESSED)
 #define GinGetPosting(itup)			((Pointer) ((char*)(itup) + GinGetPostingOffset(itup)))
-#define GinItupIsCompressed(itup)	(GinItemPointerGetBlockNumber(&(itup)->t_tid) & GIN_ITUP_COMPRESSED)
+#define GinItupIsCompressed(itup)	((GinItemPointerGetBlockNumber(&(itup)->t_tid) & GIN_ITUP_COMPRESSED) != 0)
 
 /*
  * Maximum size of an item on entry tree page. Make sure that we fit at least
