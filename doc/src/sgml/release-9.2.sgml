@@ -1,6 +1,212 @@
 <!-- doc/src/sgml/release-9.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-2-16">
+  <title>Release 9.2.16</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-03-31</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.2.15.
+   For information about new features in the 9.2 major release, see
+   <xref linkend="release-9-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.2.16</title>
+
+   <para>
+    A dump/restore is not required for those running 9.2.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.2.11,
+    see <xref linkend="release-9-2-11">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix incorrect handling of NULL index entries in
+      indexed <literal>ROW()</> comparisons (Tom Lane)
+     </para>
+
+     <para>
+      An index search using a row comparison such as <literal>ROW(a, b) &gt;
+      ROW('x', 'y')</> would stop upon reaching a NULL entry in
+      the <structfield>b</> column, ignoring the fact that there might be
+      non-NULL <structfield>b</> values associated with later values
+      of <structfield>a</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unlikely data-loss scenarios due to renaming files without
+      adequate <function>fsync()</> calls before and after (Michael Paquier,
+      Tomas Vondra, Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Correctly handle cases where <literal>pg_subtrans</> is close to XID
+      wraparound during server startup (Jeff Janes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix corner-case crash due to trying to free <function>localeconv()</>
+      output strings more than once (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix parsing of affix files for <literal>ispell</> dictionaries
+      (Tom Lane)
+     </para>
+
+     <para>
+      The code could go wrong if the affix file contained any characters
+      whose byte length changes during case-folding, for
+      example <literal>I</> in Turkish UTF8 locales.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid use of <function>sscanf()</> to parse <literal>ispell</>
+      dictionary files (Artur Zakirov)
+     </para>
+
+     <para>
+      This dodges a portability problem on FreeBSD-derived platforms
+      (including OS X).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid a crash on old Windows versions (before 7SP1/2008R2SP1) with an
+      AVX2-capable CPU and a Postgres build done with Visual Studio 2013
+      (Christian Ullrich)
+     </para>
+
+     <para>
+      This is a workaround for a bug in Visual Studio 2013's runtime
+      library, which Microsoft have stated they will not fix in that
+      version.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s tab completion logic to handle multibyte
+      characters properly (Kyotaro Horiguchi, Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s tab completion for
+      <literal>SECURITY LABEL</> (Tom Lane)
+     </para>
+
+     <para>
+      Pressing TAB after <literal>SECURITY LABEL</> might cause a crash
+      or offering of inappropriate keywords.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_ctl</> accept a wait timeout from the
+      <envar>PGCTLTIMEOUT</> environment variable, if none is specified on
+      the command line (Noah Misch)
+     </para>
+
+     <para>
+      This eases testing of slower buildfarm members by allowing them
+      to globally specify a longer-than-normal timeout for postmaster
+      startup and shutdown.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect test for Windows service status
+      in <application>pg_ctl</> (Manuel Mathar)
+     </para>
+
+     <para>
+      The previous set of minor releases attempted to
+      fix <application>pg_ctl</> to properly determine whether to send log
+      messages to Window's Event Log, but got the test backwards.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pgbench</> to correctly handle the combination
+      of <literal>-C</> and <literal>-M prepared</> options (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In PL/Perl, properly translate empty Postgres arrays into empty Perl
+      arrays (Alex Hunsaker)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make PL/Python cope with function names that aren't valid Python
+      identifiers (Jim Nasby)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix multiple mistakes in the statistics returned
+      by <filename>contrib/pgstattuple</>'s <function>pgstatindex()</>
+      function (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove dependency on <literal>psed</> in MSVC builds, since it's no
+      longer provided by core Perl (Michael Paquier, Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016c
+      for DST law changes in Azerbaijan, Chile, Haiti, Palestine, and Russia
+      (Altai, Astrakhan, Kirov, Sakhalin, Ulyanovsk regions), plus
+      historical corrections for Lithuania, Moldova, and Russia
+      (Kaliningrad, Samara, Volgograd).
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-2-15">
   <title>Release 9.2.15</title>
 
