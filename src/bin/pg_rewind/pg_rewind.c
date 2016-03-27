@@ -36,6 +36,7 @@ static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
 static void digestControlFile(ControlFileData *ControlFile, char *source,
 				  size_t size);
 static void updateControlFile(ControlFileData *ControlFile);
+static void syncTargetDirectory(const char *argv0);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
 
@@ -349,6 +350,9 @@ main(int argc, char **argv)
 	ControlFile_new.state = DB_IN_ARCHIVE_RECOVERY;
 	updateControlFile(&ControlFile_new);
 
+	pg_log(PG_PROGRESS, "syncing target data directory\n");
+	syncTargetDirectory(argv[0]);
+
 	printf(_("Done!\n"));
 
 	return 0;
@@ -649,4 +653,57 @@ updateControlFile(ControlFileData *ControlFile)
 	write_target_range(buffer, 0, PG_CONTROL_SIZE);
 
 	close_target_file();
+}
+
+/*
+ * Sync target data directory to ensure that modifications are safely on disk.
+ *
+ * We do this once, for the whole data directory, for performance reasons.  At
+ * the end of pg_rewind's run, the kernel is likely to already have flushed
+ * most dirty buffers to disk. Additionally initdb -S uses a two-pass approach
+ * (only initiating writeback in the first pass), which often reduces the
+ * overall amount of IO noticeably.
+ */
+static void
+syncTargetDirectory(const char *argv0)
+{
+	int		ret;
+#define MAXCMDLEN (2 * MAXPGPATH)
+	char	exec_path[MAXPGPATH];
+	char	cmd[MAXCMDLEN];
+
+	/* locate initdb binary */
+	if ((ret = find_other_exec(argv0, "initdb",
+							   "initdb (PostgreSQL) " PG_VERSION "\n",
+							   exec_path)) < 0)
+	{
+		char        full_path[MAXPGPATH];
+
+		if (find_my_exec(argv0, full_path) < 0)
+			strlcpy(full_path, progname, sizeof(full_path));
+
+		if (ret == -1)
+			pg_fatal("The program \"initdb\" is needed by %s but was \n"
+					 "not found in the same directory as \"%s\".\n"
+					 "Check your installation.\n", progname, full_path);
+		else
+			pg_fatal("The program \"initdb\" was found by \"%s\"\n"
+					 "but was not the same version as %s.\n"
+					 "Check your installation.\n", full_path, progname);
+	}
+
+	/* only skip processing after ensuring presence of initdb */
+	if (dry_run)
+		return;
+
+	/* finally run initdb -S */
+	if (debug)
+		snprintf(cmd, MAXCMDLEN, "\"%s\" -D \"%s\" -S",
+				 exec_path, datadir_target);
+	else
+		snprintf(cmd, MAXCMDLEN, "\"%s\" -D \"%s\" -S > \"%s\"",
+				 exec_path, datadir_target, DEVNULL);
+
+	if (system(cmd) != 0)
+		pg_fatal("sync of target directory failed\n");
 }
