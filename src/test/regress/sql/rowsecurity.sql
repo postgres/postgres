@@ -852,11 +852,20 @@ CREATE POLICY p2 ON t1 TO rls_regress_user2 USING ((a % 4) = 0);
 
 ALTER TABLE t1 ENABLE ROW LEVEL SECURITY;
 
+-- Prepare as rls_regress_user1
 SET ROLE rls_regress_user1;
 PREPARE role_inval AS SELECT * FROM t1;
+-- Check plan
 EXPLAIN (COSTS OFF) EXECUTE role_inval;
 
+-- Change to rls_regress_user2
 SET ROLE rls_regress_user2;
+-- Check plan- should be different
+EXPLAIN (COSTS OFF) EXECUTE role_inval;
+
+-- Change back to rls_regress_user1
+SET ROLE rls_regress_user1;
+-- Check plan- should be back to original
 EXPLAIN (COSTS OFF) EXECUTE role_inval;
 
 --
