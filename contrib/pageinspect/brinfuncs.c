@@ -46,7 +46,22 @@ brin_page_type(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Page		page = VARDATA(raw_page);
+	int			raw_page_size;
 	char	   *type;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use raw page functions"))));
+
+	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+
+	if (raw_page_size != BLCKSZ)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page too small"),
+				 errdetail("Expected size %d, got %d",
+						   BLCKSZ, raw_page_size)));
 
 	switch (BrinPageType(page))
 	{
@@ -79,11 +94,12 @@ verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 
 	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
-	if (raw_page_size < SizeOfPageHeaderData)
+	if (raw_page_size != BLCKSZ)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("input page too small"),
-			  errdetail("Expected size %d, got %d", raw_page_size, BLCKSZ)));
+				 errdetail("Expected size %d, got %d",
+						   BLCKSZ, raw_page_size)));
 
 	page = VARDATA(raw_page);
 
@@ -315,6 +331,11 @@ brin_metapage_info(PG_FUNCTION_ARGS)
 	Datum		values[4];
 	bool		nulls[4];
 	HeapTuple	htup;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use raw page functions"))));
 
 	page = verify_brin_page(raw_page, BRIN_PAGETYPE_META, "metapage");
 
