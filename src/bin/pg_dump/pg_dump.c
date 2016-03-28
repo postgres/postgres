@@ -4157,10 +4157,7 @@ getAccessMethods(Archive *fout, int *numAccessMethods)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	/*
-	 * Select only user-defined access methods assuming all built-in access
-	 * methods have oid < 10000.
-	 */
+	/* Select all access methods from pg_am table */
 	appendPQExpBuffer(query, "SELECT tableoid, oid, amname, amtype, "
 					  "amhandler::pg_catalog.regproc AS amhandler "
 					  "FROM pg_am");
