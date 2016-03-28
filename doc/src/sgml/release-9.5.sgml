@@ -78,6 +78,49 @@ Branch: REL9_5_STABLE [8aa6e9780] 2016-03-23 16:04:35 -0400
     </listitem>
 
 <!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [86ebf30fd] 2016-03-28 09:03:20 -0400
+Branch: REL9_5_STABLE [db69e58a0] 2016-03-28 09:03:41 -0400
+-->
+
+    <listitem>
+     <para>
+      Maintain row-security status properly in cached plans (Stephen Frost)
+     </para>
+
+     <para>
+      In a session that performs queries as more than one role, the plan
+      cache might incorrectly re-use a plan that was generated for another
+      role ID, thus possibly applying the wrong set of policies when
+      row-level security (RLS) is in use.
+      (CVE-2016-2193)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [3e1338475] 2016-03-28 10:57:42 -0300
+Branch: REL9_5_STABLE [bf78a6f10] 2016-03-28 10:57:46 -0300
+-->
+
+    <listitem>
+     <para>
+      Add must-be-superuser checks to some
+      new <filename>contrib/pageinspect</> functions (Andreas Seltenreich)
+     </para>
+
+     <para>
+      Most functions in the <filename>pageinspect</> extension that
+      inspect <type>bytea</> values disallow calls by non-superusers,
+      but <function>brin_page_type()</> and <function>brin_metapage_info()</>
+      failed to do so.  Passing contrived <type>bytea</> values to them might
+      crash the server or disclose a few bytes of server memory.  Add the
+      missing permissions checks to prevent misuse.
+      (CVE-2016-3065)
+     </para>
+    </listitem>
+
+<!--
 Author: Simon Riggs <simon@2ndQuadrant.com>
 Branch: master [c7111d11b] 2016-03-03 09:53:43 +0000
 Branch: REL9_5_STABLE [bf7ced5e2] 2016-03-03 09:50:38 +0000
