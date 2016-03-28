@@ -470,9 +470,9 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 		int		i;
 
 		if (controlFile == &ControlFile_source)
-			printf("Source timeline history:\n");
+			pg_log(PG_DEBUG, "Source timeline history:\n");
 		else if (controlFile == &ControlFile_target)
-			printf("Target timeline history:\n");
+			pg_log(PG_DEBUG, "Target timeline history:\n");
 		else
 			Assert(false);
 
@@ -484,9 +484,11 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 			TimeLineHistoryEntry *entry;
 
 			entry = &history[i];
-			printf("%d: %X/%X - %X/%X\n", entry->tli,
-				(uint32) (entry->begin >> 32), (uint32) (entry->begin),
-				(uint32) (entry->end >> 32), (uint32) (entry->end));
+			pg_log(PG_DEBUG,
+			/* translator: %d is a timeline number, others are LSN positions */
+				   "%d: %X/%X - %X/%X\n", entry->tli,
+				   (uint32) (entry->begin >> 32), (uint32) (entry->begin),
+				   (uint32) (entry->end >> 32), (uint32) (entry->end));
 		}
 	}
 
