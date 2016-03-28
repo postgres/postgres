@@ -11580,6 +11580,7 @@ dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
 		default:
 			write_msg(NULL, "WARNING: invalid type %c of access method %s\n",
 					  aminfo->amtype, qamname);
+			pg_free(qamname);
 			destroyPQExpBuffer(q);
 			destroyPQExpBuffer(delq);
 			destroyPQExpBuffer(labelq);
@@ -11609,7 +11610,7 @@ dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
 				NULL, "",
 				aminfo->dobj.catId, 0, aminfo->dobj.dumpId);
 
-	free(qamname);
+	pg_free(qamname);
 
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
