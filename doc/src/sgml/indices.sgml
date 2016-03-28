@@ -395,7 +395,8 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   Currently, only the B-tree, GiST and GIN index types support multicolumn
+   Currently, only the B-tree, GiST, GIN, and BRIN
+   index types support multicolumn
    indexes.  Up to 32 columns can be specified.  (This limit can be
    altered when building <productname>PostgreSQL</productname>; see the
    file <filename>pg_config_manual.h</filename>.)
@@ -438,6 +439,15 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    involve any subset of the index's columns. Unlike B-tree or GiST,
    index search effectiveness is the same regardless of which index column(s)
    the query conditions use.
+  </para>
+
+  <para>
+   A multicolumn BRIN index can be used with query conditions that
+   involve any subset of the index's columns. Like GIN and unlike B-tree or
+   GiST, index search effectiveness is the same regardless of which index
+   column(s) the query conditions use. The only reason to have multiple BRIN
+   indexes instead of one multicolumn BRIN index on a single table is to have
+   a different <literal>pages_per_range</literal> storage parameter.
   </para>
 
   <para>
