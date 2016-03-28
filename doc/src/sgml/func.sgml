@@ -1823,25 +1823,22 @@
         <indexterm>
          <primary>parse_ident</primary>
         </indexterm>
-        <literal><function>parse_ident(<parameter>str</parameter> <type>text</type>,
-           [ <parameter>strictmode</parameter> <type>boolean</type> DEFAULT true ] )</function></literal>
+        <literal><function>parse_ident(<parameter>qualified_identifier</parameter> <type>text</type>
+           [, <parameter>strictmode</parameter> <type>boolean</type> DEFAULT true ] )</function></literal>
        </entry>
        <entry><type>text[]</type></entry>
-       <entry>Split <parameter>qualified identifier</parameter> into array
-       <parameter>parts</parameter>. When <parameter>strictmode</parameter> is
-       false, extra characters after the identifier are ignored. This is useful
-       for parsing identifiers for objects like functions and arrays that may
-       have trailing characters. By default, extra characters after the last
-       identifier are considered an error, but if the second parameter is false,
-       then the characters after the last identifier are ignored. Note that this
-       function does not truncate quoted identifiers. If you care about that
-       you should cast the result of this function to name[]. Non-printable
-       characters (like 0 to 31) are always displayed as hexadecimal codes,
-       which can be different from PostgreSQL internal SQL identifiers
-       processing, when the original escaped value is displayed.
+       <entry>
+        Split <parameter>qualified_identifier</parameter> into an array of
+        identifiers, removing any quoting of individual identifiers.  By
+        default, extra characters after the last identifier are considered an
+        error; but if the second parameter is <literal>false</>, then such
+        extra characters are ignored. (This behavior is useful for parsing
+        names for objects like functions.) Note that this function does not
+        truncate over-length identifiers. If you want truncation you can cast
+        the result to <type>name[]</>.
        </entry>
        <entry><literal>parse_ident('"SomeSchema".someTable')</literal></entry>
-       <entry><literal>"SomeSchema,sometable"</literal></entry>
+       <entry><literal>{SomeSchema,sometable}</literal></entry>
       </row>
 
       <row>

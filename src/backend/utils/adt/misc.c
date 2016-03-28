@@ -723,105 +723,57 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 
 
 /*
- * This simple parser utility are compatible with lexer implementation,
- * used only in parse_ident function
+ * Is character a valid identifier start?
+ * Must match scan.l's {ident_start} character class.
  */
 static bool
 is_ident_start(unsigned char c)
 {
+	/* Underscores and ASCII letters are OK */
 	if (c == '_')
 		return true;
 	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
 		return true;
-
-	if (c >= 0200 && c <= 0377)
+	/* Any high-bit-set character is OK (might be part of a multibyte char) */
+	if (IS_HIGHBIT_SET(c))
 		return true;
-
 	return false;
 }
 
+/*
+ * Is character a valid identifier continuation?
+ * Must match scan.l's {ident_cont} character class.
+ */
 static bool
 is_ident_cont(unsigned char c)
 {
-	if (c >= '0' && c <= '9')
+	/* Can be digit or dollar sign ... */
+	if ((c >= '0' && c <= '9') || c == '$')
 		return true;
-
+	/* ... or an identifier start character */
 	return is_ident_start(c);
 }
 
 /*
- * Sanitize SQL string for using in error message.
- */
-static char *
-sanitize_text(text *t)
-{
-	int			len = VARSIZE_ANY_EXHDR(t);
-	const char *p = VARDATA_ANY(t);
-	StringInfo	dstr;
-
-	dstr = makeStringInfo();
-
-	appendStringInfoChar(dstr, '"');
-
-	while (len--)
-	{
-		switch (*p)
-		{
-			case '\b':
-				appendStringInfoString(dstr, "\\b");
-				break;
-			case '\f':
-				appendStringInfoString(dstr, "\\f");
-				break;
-			case '\n':
-				appendStringInfoString(dstr, "\\n");
-				break;
-			case '\r':
-				appendStringInfoString(dstr, "\\r");
-				break;
-			case '\t':
-				appendStringInfoString(dstr, "\\t");
-				break;
-			case '\'':
-				appendStringInfoString(dstr, "''");
-				break;
-			case '\\':
-				appendStringInfoString(dstr, "\\\\");
-				break;
-			default:
-				if ((unsigned char) *p < ' ')
-					appendStringInfo(dstr, "\\u%04x", (int) *p);
-				else
-					appendStringInfoCharMacro(dstr, *p);
-				break;
-		}
-		p++;
-	}
-
-	appendStringInfoChar(dstr, '"');
-
-	return dstr->data;
-}
-
-/*
- * parse_ident - parse SQL composed identifier to separate identifiers.
+ * parse_ident - parse a SQL qualified identifier into separate identifiers.
  * When strict mode is active (second parameter), then any chars after
- * last identifiers are disallowed.
+ * the last identifier are disallowed.
  */
 Datum
 parse_ident(PG_FUNCTION_ARGS)
 {
-	text	   *qualname;
-	char	   *qualname_str;
-	bool		strict;
+	text	   *qualname = PG_GETARG_TEXT_PP(0);
+	bool		strict = PG_GETARG_BOOL(1);
+	char	   *qualname_str = text_to_cstring(qualname);
+	ArrayBuildState *astate = NULL;
 	char	   *nextp;
 	bool		after_dot = false;
-	ArrayBuildState *astate = NULL;
 
-	qualname = PG_GETARG_TEXT_PP(0);
-	qualname_str = text_to_cstring(qualname);
-	strict = PG_GETARG_BOOL(1);
-
+	/*
+	 * The code below scribbles on qualname_str in some cases, so we should
+	 * reconvert qualname if we need to show the original string in error
+	 * messages.
+	 */
 	nextp = qualname_str;
 
 	/* skip leading whitespace */
@@ -830,25 +782,24 @@ parse_ident(PG_FUNCTION_ARGS)
 
 	for (;;)
 	{
-		char		*curname;
-		char		*endp;
-		bool		missing_ident;
+		char	   *curname;
+		bool		missing_ident = true;
 
-		missing_ident = true;
-
-		if (*nextp == '\"')
+		if (*nextp == '"')
 		{
+			char	   *endp;
+
 			curname = nextp + 1;
 			for (;;)
 			{
-				endp = strchr(nextp + 1, '\"');
+				endp = strchr(nextp + 1, '"');
 				if (endp == NULL)
 					ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unclosed double quotes"),
-						 errdetail("string %s is not valid identifier",
-									sanitize_text(qualname))));
-				if (endp[1] != '\"')
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						   errmsg("string is not a valid identifier: \"%s\"",
+								  text_to_cstring(qualname)),
+						   errdetail("String has unclosed double quotes.")));
+				if (endp[1] != '"')
 					break;
 				memmove(endp, endp + 1, strlen(endp));
 				nextp = endp;
@@ -856,44 +807,40 @@ parse_ident(PG_FUNCTION_ARGS)
 			nextp = endp + 1;
 			*endp = '\0';
 
-			/* Show complete input string in this case. */
 			if (endp - curname == 0)
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("identifier should not be empty: %s",
-							sanitize_text(qualname))));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("string is not a valid identifier: \"%s\"",
+								text_to_cstring(qualname)),
+						 errdetail("Quoted identifier must not be empty.")));
 
 			astate = accumArrayResult(astate, CStringGetTextDatum(curname),
 									  false, TEXTOID, CurrentMemoryContext);
 			missing_ident = false;
 		}
-		else
+		else if (is_ident_start((unsigned char) *nextp))
 		{
-			if (is_ident_start((unsigned char) *nextp))
-			{
-				char *downname;
-				int	len;
-				text	*part;
+			char	   *downname;
+			int			len;
+			text	   *part;
 
-				curname = nextp++;
-				while (is_ident_cont((unsigned char) *nextp))
-					nextp++;
+			curname = nextp++;
+			while (is_ident_cont((unsigned char) *nextp))
+				nextp++;
 
-				len = nextp - curname;
+			len = nextp - curname;
 
-				/*
-				 * Unlike name, we don't implicitly truncate identifiers. This
-				 * is useful for allowing the user to check for specific parts
-				 * of the identifier being too long. It's easy enough for the
-				 * user to get the truncated names by casting our output to
-				 * name[].
-				 */
-				downname = downcase_identifier(curname, len, false, false);
-				part = cstring_to_text_with_len(downname, len);
-				astate = accumArrayResult(astate, PointerGetDatum(part), false,
-										  TEXTOID, CurrentMemoryContext);
-				missing_ident = false;
-			}
+			/*
+			 * We don't implicitly truncate identifiers. This is useful for
+			 * allowing the user to check for specific parts of the identifier
+			 * being too long. It's easy enough for the user to get the
+			 * truncated names by casting our output to name[].
+			 */
+			downname = downcase_identifier(curname, len, false, false);
+			part = cstring_to_text_with_len(downname, len);
+			astate = accumArrayResult(astate, PointerGetDatum(part), false,
+									  TEXTOID, CurrentMemoryContext);
+			missing_ident = false;
 		}
 
 		if (missing_ident)
@@ -901,19 +848,21 @@ parse_ident(PG_FUNCTION_ARGS)
 			/* Different error messages based on where we failed. */
 			if (*nextp == '.')
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("missing valid identifier before \".\" symbol: %s",
-							sanitize_text(qualname))));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("string is not a valid identifier: \"%s\"",
+								text_to_cstring(qualname)),
+					 errdetail("No valid identifier before \".\" symbol.")));
 			else if (after_dot)
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("missing valid identifier after \".\" symbol: %s",
-							sanitize_text(qualname))));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("string is not a valid identifier: \"%s\"",
+								text_to_cstring(qualname)),
+					  errdetail("No valid identifier after \".\" symbol.")));
 			else
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("missing valid identifier: %s",
-							sanitize_text(qualname))));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("string is not a valid identifier: \"%s\"",
+								text_to_cstring(qualname))));
 		}
 
 		while (isspace((unsigned char) *nextp))
@@ -934,9 +883,9 @@ parse_ident(PG_FUNCTION_ARGS)
 		{
 			if (strict)
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("identifier contains disallowed characters: %s",
-							sanitize_text(qualname))));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("string is not a valid identifier: \"%s\"",
+								text_to_cstring(qualname))));
 			break;
 		}
 	}
