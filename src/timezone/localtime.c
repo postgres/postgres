@@ -409,7 +409,7 @@ tzloadbody(char const * name, char *canonname, struct state * sp, bool doextend,
 		struct state *ts = &lsp->u.st;
 
 		up->buf[nread - 1] = '\0';
-		if (tzparse(&up->buf[1], ts, false) == 0
+		if (tzparse(&up->buf[1], ts, false)
 			&& ts->typecnt == 2)
 		{
 			/*
@@ -534,7 +534,7 @@ tzloadbody(char const * name, char *canonname, struct state * sp, bool doextend,
  * given name is stored there (the buffer must be > TZ_STRLEN_MAX bytes!).
  */
 int
-tzload(const char *name, char *canonname, struct state * sp, int doextend)
+tzload(const char *name, char *canonname, struct state * sp, bool doextend)
 {
 	union local_storage ls;
 
@@ -864,13 +864,10 @@ transtime(int year, const struct rule * rulep,
 /*
  * Given a POSIX section 8-style TZ string, fill in the rule tables as
  * appropriate.
- *
- * Returns 0 on success, -1 on failure.  (Note: tzcode has converted this
- * to a bool true-on-success convention, but we're holding the line in PG
- * for the moment, to avoid external API changes.)
+ * Returns true on success, false on failure.
  */
-int
-tzparse(const char *name, struct state * sp, int lastditch)
+bool
+tzparse(const char *name, struct state * sp, bool lastditch)
 {
 	const char *stdname;
 	const char *dstname = NULL;
@@ -908,7 +905,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 			stdname = name;
 			name = getqzname(name, '>');
 			if (*name != '>')
-				return -1;
+				return false;
 			stdlen = name - stdname;
 			name++;
 		}
@@ -918,13 +915,13 @@ tzparse(const char *name, struct state * sp, int lastditch)
 			stdlen = name - stdname;
 		}
 		if (*name == '\0')		/* we allow empty STD abbrev, unlike IANA */
-			return -1;
+			return false;
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
-			return -1;
+			return false;
 		charcnt = stdlen + 1;
 		if (sizeof sp->chars < charcnt)
-			return -1;
+			return false;
 		load_ok = tzload(TZDEFRULES, NULL, sp, false) == 0;
 	}
 	if (!load_ok)
@@ -936,7 +933,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 			dstname = ++name;
 			name = getqzname(name, '>');
 			if (*name != '>')
-				return -1;
+				return false;
 			dstlen = name - dstname;
 			name++;
 		}
@@ -947,15 +944,15 @@ tzparse(const char *name, struct state * sp, int lastditch)
 			dstlen = name - dstname;	/* length of DST zone name */
 		}
 		if (!dstlen)
-			return -1;
+			return false;
 		charcnt += dstlen + 1;
 		if (sizeof sp->chars < charcnt)
-			return -1;
+			return false;
 		if (*name != '\0' && *name != ',' && *name != ';')
 		{
 			name = getoffset(name, &dstoffset);
 			if (name == NULL)
-				return -1;
+				return false;
 		}
 		else
 			dstoffset = stdoffset - SECSPERHOUR;
@@ -972,13 +969,13 @@ tzparse(const char *name, struct state * sp, int lastditch)
 
 			++name;
 			if ((name = getrule(name, &start)) == NULL)
-				return -1;
+				return false;
 			if (*name++ != ',')
-				return -1;
+				return false;
 			if ((name = getrule(name, &end)) == NULL)
-				return -1;
+				return false;
 			if (*name != '\0')
-				return -1;
+				return false;
 			sp->typecnt = 2;	/* standard time and DST */
 
 			/*
@@ -1044,7 +1041,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 			int			j;
 
 			if (*name != '\0')
-				return -1;
+				return false;
 
 			/*
 			 * Initial values of theirstdoffset and theirdstoffset.
@@ -1148,7 +1145,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 		memcpy(cp, dstname, dstlen);
 		*(cp + dstlen) = '\0';
 	}
-	return 0;
+	return true;
 }
 
 static void
