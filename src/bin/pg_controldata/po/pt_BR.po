@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2015.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-04 15:50-0300\n"
+"POT-Creation-Date: 2016-02-13 17:22-0300\n"
 "PO-Revision-Date: 2005-10-04 23:00-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -281,13 +281,13 @@ msgstr "BD do oldestMulti do último ponto de controle:       %u\n"
 
 #: pg_controldata.c:274
 #, c-format
-msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "oldestCommitTs do último ponto de controle:          %u\n"
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "oldestCommitTsXid do último ponto de controle:       %u\n"
 
 #: pg_controldata.c:276
 #, c-format
-msgid "Latest checkpoint's newestCommitTs:   %u\n"
-msgstr "newestCommitTs do último ponto de controle:          %u\n"
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "newestCommitTsXid do último ponto de controle:       %u\n"
 
 #: pg_controldata.c:278
 #, c-format

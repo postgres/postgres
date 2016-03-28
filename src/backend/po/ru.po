@@ -27,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-01-15 04:38+0000\n"
-"PO-Revision-Date: 2016-01-17 08:06+0300\n"
+"POT-Creation-Date: 2016-02-08 21:38+0000\n"
+"PO-Revision-Date: 2016-02-10 14:52+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-translators@postgresql.org>\n"
 "Language: ru\n"
@@ -108,16 +108,16 @@ msgstr "не удалось закрыть каталог \"%s\": %s\n"
 #: libpq/auth.c:820 libpq/auth.c:1181 libpq/auth.c:1249 libpq/auth.c:1660
 #: postmaster/bgworker.c:289 postmaster/bgworker.c:797
 #: postmaster/postmaster.c:2317 postmaster/postmaster.c:2348
-#: postmaster/postmaster.c:3867 postmaster/postmaster.c:4555
-#: postmaster/postmaster.c:4623 postmaster/postmaster.c:5313
-#: postmaster/postmaster.c:5566 replication/logical/logical.c:167
+#: postmaster/postmaster.c:3867 postmaster/postmaster.c:4557
+#: postmaster/postmaster.c:4625 postmaster/postmaster.c:5315
+#: postmaster/postmaster.c:5568 replication/logical/logical.c:167
 #: storage/buffer/localbuf.c:396 storage/file/fd.c:481 storage/file/fd.c:878
 #: storage/file/fd.c:996 storage/file/fd.c:1609 storage/ipc/procarray.c:907
 #: storage/ipc/procarray.c:1393 storage/ipc/procarray.c:1400
 #: storage/ipc/procarray.c:1793 storage/ipc/procarray.c:2377
 #: utils/adt/formatting.c:1523 utils/adt/formatting.c:1643
 #: utils/adt/formatting.c:1764 utils/adt/regexp.c:219 utils/adt/varlena.c:4199
-#: utils/adt/varlena.c:4220 utils/fmgr/dfmgr.c:220 utils/hash/dynahash.c:411
+#: utils/adt/varlena.c:4220 utils/fmgr/dfmgr.c:216 utils/hash/dynahash.c:411
 #: utils/hash/dynahash.c:488 utils/hash/dynahash.c:1002 utils/mb/mbutils.c:376
 #: utils/mb/mbutils.c:709 utils/misc/guc.c:3723 utils/misc/guc.c:3739
 #: utils/misc/guc.c:3752 utils/misc/guc.c:6686 utils/misc/tzparser.c:470
@@ -241,7 +241,7 @@ msgid "could not determine encoding for codeset \"%s\""
 msgstr "не удалось определить кодировку для набора символов \"%s\""
 
 #: ../port/chklocale.c:260 ../port/chklocale.c:389
-#: postmaster/postmaster.c:4855
+#: postmaster/postmaster.c:4857
 #, c-format
 msgid "Please report this to <pgsql-bugs@postgresql.org>."
 msgstr ""
@@ -433,7 +433,7 @@ msgstr ""
 msgid "Attribute \"%s\" of type %s does not exist in type %s."
 msgstr "Атрибут \"%s\" типа %s не существует в типе %s."
 
-#: access/common/tupdesc.c:635 parser/parse_relation.c:1514
+#: access/common/tupdesc.c:635 parser/parse_relation.c:1517
 #, c-format
 msgid "column \"%s\" cannot be declared SETOF"
 msgstr "столбец \"%s\" не может быть объявлен как SETOF"
@@ -628,7 +628,7 @@ msgstr "не удалось синхронизировать с ФС файл \"
 #: access/transam/timeline.c:315 access/transam/timeline.c:475
 #: access/transam/xlog.c:2967 access/transam/xlog.c:3116
 #: access/transam/xlog.c:10105 access/transam/xlog.c:10141
-#: access/transam/xlog.c:10463 postmaster/postmaster.c:4330
+#: access/transam/xlog.c:10463 postmaster/postmaster.c:4332
 #: replication/logical/origin.c:542 replication/slot.c:983
 #: storage/file/copydir.c:162 storage/smgr/md.c:320 utils/time/snapmgr.c:1071
 #, c-format
@@ -649,13 +649,13 @@ msgstr "не удалось перейти к концу файла \"%s\": %m"
 #: access/heap/rewriteheap.c:1167 access/transam/timeline.c:367
 #: access/transam/timeline.c:401 access/transam/timeline.c:491
 #: access/transam/xlog.c:3002 access/transam/xlog.c:3166
-#: postmaster/postmaster.c:4340 postmaster/postmaster.c:4350
+#: postmaster/postmaster.c:4342 postmaster/postmaster.c:4352
 #: replication/logical/origin.c:551 replication/logical/origin.c:587
 #: replication/logical/origin.c:603 replication/logical/snapbuild.c:1576
 #: replication/slot.c:1012 storage/file/copydir.c:187
 #: utils/init/miscinit.c:1199 utils/init/miscinit.c:1208
 #: utils/init/miscinit.c:1215 utils/misc/guc.c:6669 utils/misc/guc.c:6700
-#: utils/misc/guc.c:8487 utils/misc/guc.c:8501 utils/time/snapmgr.c:1076
+#: utils/misc/guc.c:8498 utils/misc/guc.c:8512 utils/time/snapmgr.c:1076
 #: utils/time/snapmgr.c:1083
 #, c-format
 msgid "could not write to file \"%s\": %m"
@@ -1891,8 +1891,8 @@ msgstr "параметр \"%s\" требует временное значени
 #: commands/tablecmds.c:9415 commands/user.c:1027 commands/view.c:482
 #: libpq/auth.c:285 port/win32/security.c:51 storage/lmgr/deadlock.c:955
 #: storage/lmgr/proc.c:1177 utils/misc/guc.c:5486 utils/misc/guc.c:5579
-#: utils/misc/guc.c:9458 utils/misc/guc.c:9492 utils/misc/guc.c:9526
-#: utils/misc/guc.c:9560 utils/misc/guc.c:9595
+#: utils/misc/guc.c:9469 utils/misc/guc.c:9503 utils/misc/guc.c:9537
+#: utils/misc/guc.c:9571 utils/misc/guc.c:9606
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -3196,8 +3196,8 @@ msgstr "права по умолчанию нельзя определить д�
 #: commands/tablecmds.c:5597 commands/tablecmds.c:5693
 #: commands/tablecmds.c:7845 commands/tablecmds.c:8050
 #: commands/tablecmds.c:8470 commands/trigger.c:643 parser/analyze.c:2160
-#: parser/parse_relation.c:2539 parser/parse_relation.c:2601
-#: parser/parse_target.c:940 parser/parse_type.c:128 utils/adt/acl.c:2839
+#: parser/parse_relation.c:2542 parser/parse_relation.c:2604
+#: parser/parse_target.c:940 parser/parse_type.c:127 utils/adt/acl.c:2839
 #: utils/adt/ruleutils.c:1856
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
@@ -3901,13 +3901,13 @@ msgstr "не удалось получить блокировку таблицы
 msgid "could not obtain lock on relation \"%s\""
 msgstr "не удалось получить блокировку таблицы \"%s\""
 
-#: catalog/namespace.c:414 parser/parse_relation.c:1134
+#: catalog/namespace.c:414 parser/parse_relation.c:1137
 #, c-format
 msgid "relation \"%s.%s\" does not exist"
 msgstr "отношение \"%s.%s\" не существует"
 
-#: catalog/namespace.c:419 parser/parse_relation.c:1147
-#: parser/parse_relation.c:1155 utils/adt/regproc.c:1034
+#: catalog/namespace.c:419 parser/parse_relation.c:1150
+#: parser/parse_relation.c:1158 utils/adt/regproc.c:1034
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "отношение \"%s\" не существует"
@@ -4017,7 +4017,7 @@ msgid "cannot create temporary tables in parallel mode"
 msgstr "создавать временные таблицы в параллельном режиме нельзя"
 
 #: catalog/namespace.c:3898 commands/tablespace.c:1159 commands/variable.c:63
-#: replication/syncrep.c:700 utils/misc/guc.c:9625
+#: replication/syncrep.c:700 utils/misc/guc.c:9636
 #, c-format
 msgid "List syntax is invalid."
 msgstr "Ошибка синтаксиса в списке."
@@ -4097,8 +4097,8 @@ msgstr ""
 "значение по умолчанию для столбца \"%s\" отношения \"%s\" не существует"
 
 #: catalog/objectaddress.c:1460 commands/functioncmds.c:128
-#: commands/tablecmds.c:243 commands/typecmds.c:3210 parser/parse_type.c:227
-#: parser/parse_type.c:256 parser/parse_type.c:824 utils/adt/acl.c:4373
+#: commands/tablecmds.c:243 commands/typecmds.c:3210 parser/parse_type.c:226
+#: parser/parse_type.c:255 parser/parse_type.c:795 utils/adt/acl.c:4373
 #: utils/adt/regproc.c:1225
 #, c-format
 msgid "type \"%s\" does not exist"
@@ -5905,8 +5905,8 @@ msgid "incorrect binary data format"
 msgstr "неверный двоичный формат данных"
 
 #: commands/copy.c:4388 commands/indexcmds.c:1008 commands/tablecmds.c:1459
-#: commands/tablecmds.c:2282 parser/parse_relation.c:3081
-#: parser/parse_relation.c:3101 utils/adt/tsvector_op.c:1417
+#: commands/tablecmds.c:2282 parser/parse_relation.c:3084
+#: parser/parse_relation.c:3104 utils/adt/tsvector_op.c:1417
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "столбец \"%s\" не существует"
@@ -6433,7 +6433,7 @@ msgstr "%s можно вызывать только в событийной тр
 #: utils/adt/jsonfuncs.c:1474 utils/adt/jsonfuncs.c:1606
 #: utils/adt/jsonfuncs.c:1796 utils/adt/jsonfuncs.c:1925
 #: utils/adt/jsonfuncs.c:2693 utils/adt/pgstatfuncs.c:547
-#: utils/fmgr/funcapi.c:61 utils/misc/guc.c:8196 utils/mmgr/portalmem.c:1052
+#: utils/fmgr/funcapi.c:61 utils/misc/guc.c:8207 utils/mmgr/portalmem.c:1052
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
@@ -6444,7 +6444,7 @@ msgstr ""
 #: commands/extension.c:1951 commands/prepare.c:705 foreign/foreign.c:496
 #: replication/logical/logicalfuncs.c:328 replication/logical/origin.c:1414
 #: replication/slotfuncs.c:177 replication/walsender.c:2766
-#: utils/adt/pgstatfuncs.c:551 utils/misc/guc.c:8200
+#: utils/adt/pgstatfuncs.c:551 utils/misc/guc.c:8211
 #: utils/mmgr/portalmem.c:1056
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
@@ -6831,7 +6831,7 @@ msgstr "SQL-функция не может возвращать тип-пуст�
 msgid "return type %s is only a shell"
 msgstr "возвращаемый тип %s - лишь пустышка"
 
-#: commands/functioncmds.c:134 parser/parse_type.c:338
+#: commands/functioncmds.c:134 parser/parse_type.c:337
 #, c-format
 msgid "type modifier cannot be specified for shell type \"%s\""
 msgstr "для типа-пустышки \"%s\" нельзя указать модификатор типа"
@@ -7250,7 +7250,7 @@ msgid "could not determine which collation to use for index expression"
 msgstr "не удалось определить правило сравнения для индексного выражения"
 
 #: commands/indexcmds.c:1094 commands/typecmds.c:825 parser/parse_expr.c:2559
-#: parser/parse_type.c:551 parser/parse_utilcmd.c:2736 utils/adt/misc.c:546
+#: parser/parse_type.c:550 parser/parse_utilcmd.c:2736 utils/adt/misc.c:546
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "тип %s не поддерживает сортировку (COLLATION)"
@@ -8034,9 +8034,9 @@ msgstr "конфликт типов в наследованном столбце
 
 #: commands/tablecmds.c:1613 commands/tablecmds.c:1634
 #: commands/tablecmds.c:1832 commands/tablecmds.c:1854
-#: parser/parse_coerce.c:1592 parser/parse_coerce.c:1612
-#: parser/parse_coerce.c:1632 parser/parse_coerce.c:1677
-#: parser/parse_coerce.c:1714 parser/parse_param.c:218
+#: parser/parse_coerce.c:1630 parser/parse_coerce.c:1650
+#: parser/parse_coerce.c:1670 parser/parse_coerce.c:1715
+#: parser/parse_coerce.c:1752 parser/parse_param.c:218
 #, c-format
 msgid "%s versus %s"
 msgstr "%s и %s"
@@ -9149,8 +9149,8 @@ msgstr "триггерная функция %u вернула значение N
 msgid "BEFORE STATEMENT trigger cannot return a value"
 msgstr "триггер BEFORE STATEMENT не может возвращать значение"
 
-#: commands/trigger.c:2727 executor/nodeModifyTable.c:631
-#: executor/nodeModifyTable.c:919
+#: commands/trigger.c:2727 executor/nodeModifyTable.c:648
+#: executor/nodeModifyTable.c:942
 #, c-format
 msgid ""
 "tuple to be updated was already modified by an operation triggered by the "
@@ -9159,8 +9159,8 @@ msgstr ""
 "кортеж, который должен быть изменён, уже модифицирован в операции, вызванной "
 "текущей командой"
 
-#: commands/trigger.c:2728 executor/nodeModifyTable.c:632
-#: executor/nodeModifyTable.c:920
+#: commands/trigger.c:2728 executor/nodeModifyTable.c:649
+#: executor/nodeModifyTable.c:943
 #, c-format
 msgid ""
 "Consider using an AFTER trigger instead of a BEFORE trigger to propagate "
@@ -9171,8 +9171,8 @@ msgstr ""
 
 #: commands/trigger.c:2742 executor/execMain.c:2344
 #: executor/nodeLockRows.c:216 executor/nodeModifyTable.c:183
-#: executor/nodeModifyTable.c:644 executor/nodeModifyTable.c:932
-#: executor/nodeModifyTable.c:1099
+#: executor/nodeModifyTable.c:661 executor/nodeModifyTable.c:955
+#: executor/nodeModifyTable.c:1122
 #, c-format
 msgid "could not serialize access due to concurrent update"
 msgstr "не удалось сериализовать доступ из-за параллельного изменения"
@@ -9955,7 +9955,7 @@ msgstr "\"%s\": усечение (было страниц: %u, стало: %u)"
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": приостановка усечения из-за конфликтующего запроса блокировки"
 
-#: commands/variable.c:164 utils/misc/guc.c:9649
+#: commands/variable.c:164 utils/misc/guc.c:9660
 #, c-format
 msgid "Unrecognized key word: \"%s\"."
 msgstr "нераспознанное ключевое слово: \"%s\"."
@@ -10736,12 +10736,12 @@ msgstr ""
 msgid "Query has too few columns."
 msgstr "Запрос возвращает меньше столбцов."
 
-#: executor/nodeModifyTable.c:1080
+#: executor/nodeModifyTable.c:1103
 #, c-format
 msgid "ON CONFLICT DO UPDATE command cannot affect row a second time"
 msgstr "команда ON CONFLICT DO UPDATE не может менять строку повторно"
 
-#: executor/nodeModifyTable.c:1081
+#: executor/nodeModifyTable.c:1104
 #, c-format
 msgid ""
 "Ensure that no rows proposed for insertion within the same command have "
@@ -12408,8 +12408,8 @@ msgstr ""
 "должен запускать обычный пользователь. Подробнее о том, как\n"
 "правильно запускать сервер, вы можете узнать в документации.\n"
 
-#: nodes/nodeFuncs.c:118 nodes/nodeFuncs.c:149 parser/parse_coerce.c:1782
-#: parser/parse_coerce.c:1810 parser/parse_coerce.c:1886
+#: nodes/nodeFuncs.c:118 nodes/nodeFuncs.c:149 parser/parse_coerce.c:1820
+#: parser/parse_coerce.c:1848 parser/parse_coerce.c:1924
 #: parser/parse_expr.c:1981 parser/parse_func.c:597 parser/parse_oper.c:952
 #, c-format
 msgid "could not find array type for data type %s"
@@ -12455,18 +12455,18 @@ msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "%s не может применяться к NULL-содержащей стороне внешнего соединения"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/planner.c:1323 parser/analyze.c:1481 parser/analyze.c:1679
+#: optimizer/plan/planner.c:1330 parser/analyze.c:1481 parser/analyze.c:1679
 #: parser/analyze.c:2460
 #, c-format
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "%s несовместимо с UNION/INTERSECT/EXCEPT"
 
-#: optimizer/plan/planner.c:3580
+#: optimizer/plan/planner.c:3587
 #, c-format
 msgid "could not implement GROUP BY"
 msgstr "не удалось реализовать GROUP BY"
 
-#: optimizer/plan/planner.c:3581 optimizer/plan/planner.c:3749
+#: optimizer/plan/planner.c:3588 optimizer/plan/planner.c:3756
 #: optimizer/prep/prepunion.c:828
 #, c-format
 msgid ""
@@ -12476,27 +12476,27 @@ msgstr ""
 "Одни типы данных поддерживают только хеширование, а другие - только "
 "сортировку."
 
-#: optimizer/plan/planner.c:3748
+#: optimizer/plan/planner.c:3755
 #, c-format
 msgid "could not implement DISTINCT"
 msgstr "не удалось реализовать DISTINCT"
 
-#: optimizer/plan/planner.c:4354
+#: optimizer/plan/planner.c:4361
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "не удалось реализовать PARTITION BY для окна"
 
-#: optimizer/plan/planner.c:4355
+#: optimizer/plan/planner.c:4362
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "Столбцы, разбивающие окна, должны иметь сортируемые типы данных."
 
-#: optimizer/plan/planner.c:4359
+#: optimizer/plan/planner.c:4366
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "не удалось реализовать ORDER BY для окна"
 
-#: optimizer/plan/planner.c:4360
+#: optimizer/plan/planner.c:4367
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "Столбцы, сортирующие окна, должны иметь сортируемые типы данных."
@@ -13263,82 +13263,82 @@ msgstr ""
 "Операторы сортировки должны быть членами \"<\" или \">\" семейств операторов "
 "btree."
 
-#: parser/parse_coerce.c:933 parser/parse_coerce.c:963
-#: parser/parse_coerce.c:981 parser/parse_coerce.c:996
+#: parser/parse_coerce.c:971 parser/parse_coerce.c:1001
+#: parser/parse_coerce.c:1019 parser/parse_coerce.c:1034
 #: parser/parse_expr.c:2015 parser/parse_expr.c:2528 parser/parse_target.c:874
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "привести тип %s к %s нельзя"
 
-#: parser/parse_coerce.c:966
+#: parser/parse_coerce.c:1004
 #, c-format
 msgid "Input has too few columns."
 msgstr "Во входных данных недостаточно столбцов."
 
-#: parser/parse_coerce.c:984
+#: parser/parse_coerce.c:1022
 #, c-format
 msgid "Cannot cast type %s to %s in column %d."
 msgstr "Не удалось привести тип %s к %s в столбце %d."
 
-#: parser/parse_coerce.c:999
+#: parser/parse_coerce.c:1037
 #, c-format
 msgid "Input has too many columns."
 msgstr "Во входных данных больше столбцов."
 
 #. translator: first %s is name of a SQL construct, eg WHERE
-#: parser/parse_coerce.c:1042
+#: parser/parse_coerce.c:1080
 #, c-format
 msgid "argument of %s must be type boolean, not type %s"
 msgstr "аргумент конструкции %s должен иметь логический тип, а не %s"
 
 #. translator: %s is name of a SQL construct, eg WHERE
 #. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:1052 parser/parse_coerce.c:1101
+#: parser/parse_coerce.c:1090 parser/parse_coerce.c:1139
 #, c-format
 msgid "argument of %s must not return a set"
 msgstr "аргумент конструкции %s не должен возвращать множество"
 
 #. translator: first %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:1089
+#: parser/parse_coerce.c:1127
 #, c-format
 msgid "argument of %s must be type %s, not type %s"
 msgstr "аргумент конструкции %s должен иметь тип %s, а не %s"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1222
+#: parser/parse_coerce.c:1260
 #, c-format
 msgid "%s types %s and %s cannot be matched"
 msgstr "в конструкции %s нельзя обобщить типы %s и %s"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1289
+#: parser/parse_coerce.c:1327
 #, c-format
 msgid "%s could not convert type %s to %s"
 msgstr "в конструкции %s нельзя преобразовать тип %s в %s"
 
-#: parser/parse_coerce.c:1591
+#: parser/parse_coerce.c:1629
 #, c-format
 msgid "arguments declared \"anyelement\" are not all alike"
 msgstr "аргументы, объявленные как \"anyelement\", должны быть однотипными"
 
-#: parser/parse_coerce.c:1611
+#: parser/parse_coerce.c:1649
 #, c-format
 msgid "arguments declared \"anyarray\" are not all alike"
 msgstr "аргументы, объявленные как \"anyarray\", должны быть однотипными"
 
-#: parser/parse_coerce.c:1631
+#: parser/parse_coerce.c:1669
 #, c-format
 msgid "arguments declared \"anyrange\" are not all alike"
 msgstr "аргументы, объявленные как \"anyrange\", должны быть однотипными"
 
-#: parser/parse_coerce.c:1660 parser/parse_coerce.c:1871
-#: parser/parse_coerce.c:1905
+#: parser/parse_coerce.c:1698 parser/parse_coerce.c:1909
+#: parser/parse_coerce.c:1943
 #, c-format
 msgid "argument declared \"anyarray\" is not an array but type %s"
 msgstr ""
 "аргумент, объявленный как \"anyarray\", оказался не массивом, а типом %s"
 
-#: parser/parse_coerce.c:1676
+#: parser/parse_coerce.c:1714
 #, c-format
 msgid ""
 "argument declared \"anyarray\" is not consistent with argument declared "
@@ -13347,13 +13347,13 @@ msgstr ""
 "аргумент, объявленный как \"anyarray\", не согласуется с аргументом "
 "\"anyelement\""
 
-#: parser/parse_coerce.c:1697 parser/parse_coerce.c:1918
+#: parser/parse_coerce.c:1735 parser/parse_coerce.c:1956
 #, c-format
 msgid "argument declared \"anyrange\" is not a range type but type %s"
 msgstr ""
 "аргумент, объявленный как \"anyrange\", оказался не диапазоном, а типом %s"
 
-#: parser/parse_coerce.c:1713
+#: parser/parse_coerce.c:1751
 #, c-format
 msgid ""
 "argument declared \"anyrange\" is not consistent with argument declared "
@@ -13362,28 +13362,28 @@ msgstr ""
 "аргумент, объявленный как \"anyrange\", не согласуется с аргументом "
 "\"anyelement\""
 
-#: parser/parse_coerce.c:1733
+#: parser/parse_coerce.c:1771
 #, c-format
 msgid "could not determine polymorphic type because input has type \"unknown\""
 msgstr ""
 "не удалось определить полиморфный тип, так как входные аргументы имеют тип "
 "\"unknown\""
 
-#: parser/parse_coerce.c:1743
+#: parser/parse_coerce.c:1781
 #, c-format
 msgid "type matched to anynonarray is an array type: %s"
 msgstr ""
 "в нарушение объявления \"anynonarray\" соответствующий аргумент оказался "
 "массивом: %s"
 
-#: parser/parse_coerce.c:1753
+#: parser/parse_coerce.c:1791
 #, c-format
 msgid "type matched to anyenum is not an enum type: %s"
 msgstr ""
 "в нарушение объявления \"anyenum\" соответствующий аргумент оказался не "
 "перечислением: %s"
 
-#: parser/parse_coerce.c:1793 parser/parse_coerce.c:1823
+#: parser/parse_coerce.c:1831 parser/parse_coerce.c:1861
 #, c-format
 msgid "could not find range type for data type %s"
 msgstr "тип диапазона для типа данных %s не найден"
@@ -13535,8 +13535,8 @@ msgstr "FOR UPDATE/SHARE в рекурсивном запросе не подд�
 msgid "recursive reference to query \"%s\" must not appear more than once"
 msgstr "рекурсивная ссылка на запрос \"%s\" указана неоднократно"
 
-#: parser/parse_expr.c:387 parser/parse_relation.c:3080
-#: parser/parse_relation.c:3100
+#: parser/parse_expr.c:387 parser/parse_relation.c:3083
+#: parser/parse_relation.c:3103
 #, c-format
 msgid "column %s.%s does not exist"
 msgstr "столбец %s.%s не существует"
@@ -13562,8 +13562,8 @@ msgstr ""
 msgid "row expansion via \"*\" is not supported here"
 msgstr "расширение строки через \"*\" здесь не поддерживается"
 
-#: parser/parse_expr.c:767 parser/parse_relation.c:666
-#: parser/parse_relation.c:766 parser/parse_target.c:1109
+#: parser/parse_expr.c:767 parser/parse_relation.c:667
+#: parser/parse_relation.c:767 parser/parse_target.c:1109
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "неоднозначная ссылка на столбец \"%s\""
@@ -14010,12 +14010,12 @@ msgstr "ссылка на таблицу %u неоднозначна"
 msgid "table name \"%s\" specified more than once"
 msgstr "имя таблицы \"%s\" указано больше одного раза"
 
-#: parser/parse_relation.c:424 parser/parse_relation.c:3020
+#: parser/parse_relation.c:424 parser/parse_relation.c:3023
 #, c-format
 msgid "invalid reference to FROM-clause entry for table \"%s\""
 msgstr "в элементе предложения FROM неверная ссылка на таблицу \"%s\""
 
-#: parser/parse_relation.c:427 parser/parse_relation.c:3025
+#: parser/parse_relation.c:427 parser/parse_relation.c:3028
 #, c-format
 msgid ""
 "There is an entry for table \"%s\", but it cannot be referenced from this "
@@ -14029,18 +14029,18 @@ msgstr ""
 msgid "The combining JOIN type must be INNER or LEFT for a LATERAL reference."
 msgstr "Для ссылки LATERAL тип JOIN должен быть INNER или LEFT."
 
-#: parser/parse_relation.c:704
+#: parser/parse_relation.c:705
 #, c-format
 msgid "system column \"%s\" reference in check constraint is invalid"
 msgstr "в ограничении-проверке указан недопустимый системный столбец \"%s\""
 
-#: parser/parse_relation.c:1062 parser/parse_relation.c:1342
-#: parser/parse_relation.c:1844
+#: parser/parse_relation.c:1065 parser/parse_relation.c:1345
+#: parser/parse_relation.c:1847
 #, c-format
 msgid "table \"%s\" has %d columns available but %d columns specified"
 msgstr "в таблице \"%s\" содержится столбцов: %d, но указано: %d"
 
-#: parser/parse_relation.c:1149
+#: parser/parse_relation.c:1152
 #, c-format
 msgid ""
 "There is a WITH item named \"%s\", but it cannot be referenced from this "
@@ -14049,7 +14049,7 @@ msgstr ""
 "В WITH есть элемент \"%s\", но на него нельзя ссылаться из этой части "
 "запроса."
 
-#: parser/parse_relation.c:1151
+#: parser/parse_relation.c:1154
 #, c-format
 msgid ""
 "Use WITH RECURSIVE, or re-order the WITH items to remove forward references."
@@ -14057,7 +14057,7 @@ msgstr ""
 "Используйте WITH RECURSIVE или исключите ссылки вперёд, переупорядочив "
 "элементы WITH."
 
-#: parser/parse_relation.c:1462
+#: parser/parse_relation.c:1465
 #, c-format
 msgid ""
 "a column definition list is only allowed for functions returning \"record\""
@@ -14065,54 +14065,54 @@ msgstr ""
 "список с определением столбцов может быть только у функций, возвращающих "
 "запись"
 
-#: parser/parse_relation.c:1471
+#: parser/parse_relation.c:1474
 #, c-format
 msgid "a column definition list is required for functions returning \"record\""
 msgstr ""
 "у функций, возвращающих запись, должен быть список с определением столбцов"
 
-#: parser/parse_relation.c:1550
+#: parser/parse_relation.c:1553
 #, c-format
 msgid "function \"%s\" in FROM has unsupported return type %s"
 msgstr ""
 "функция \"%s\", используемая во FROM, возвращает неподдерживаемый тип %s"
 
-#: parser/parse_relation.c:1672
+#: parser/parse_relation.c:1675
 #, c-format
 msgid "VALUES lists \"%s\" have %d columns available but %d columns specified"
 msgstr "в списках VALUES \"%s\" содержится столбцов: %d, но указано: %d"
 
-#: parser/parse_relation.c:1727
+#: parser/parse_relation.c:1730
 #, c-format
 msgid "joins can have at most %d columns"
 msgstr "число столбцов в соединениях ограничено %d"
 
-#: parser/parse_relation.c:1817
+#: parser/parse_relation.c:1820
 #, c-format
 msgid "WITH query \"%s\" does not have a RETURNING clause"
 msgstr "в запросе \"%s\" в WITH нет предложения RETURNING"
 
-#: parser/parse_relation.c:2649 parser/parse_relation.c:2804
+#: parser/parse_relation.c:2652 parser/parse_relation.c:2807
 #, c-format
 msgid "column %d of relation \"%s\" does not exist"
 msgstr "столбец %d отношения \"%s\" не существует"
 
-#: parser/parse_relation.c:3023
+#: parser/parse_relation.c:3026
 #, c-format
 msgid "Perhaps you meant to reference the table alias \"%s\"."
 msgstr "Возможно, предполагалась ссылка на псевдоним таблицы \"%s\"."
 
-#: parser/parse_relation.c:3031
+#: parser/parse_relation.c:3034
 #, c-format
 msgid "missing FROM-clause entry for table \"%s\""
 msgstr "таблица \"%s\" отсутствует в предложении FROM"
 
-#: parser/parse_relation.c:3083
+#: parser/parse_relation.c:3086
 #, c-format
 msgid "Perhaps you meant to reference the column \"%s.%s\"."
 msgstr "Возможно, предполагалась ссылка на столбец \"%s.%s\"."
 
-#: parser/parse_relation.c:3085
+#: parser/parse_relation.c:3088
 #, c-format
 msgid ""
 "There is a column named \"%s\" in table \"%s\", but it cannot be referenced "
@@ -14121,7 +14121,7 @@ msgstr ""
 "Столбец \"%s\" есть в таблице \"%s\", но на него нельзя ссылаться из этой "
 "части запроса."
 
-#: parser/parse_relation.c:3102
+#: parser/parse_relation.c:3105
 #, c-format
 msgid ""
 "Perhaps you meant to reference the column \"%s.%s\" or the column \"%s.%s\"."
@@ -14184,37 +14184,37 @@ msgstr "вложенное поле \"%s\" имеет тип %s, а выраже
 msgid "SELECT * with no tables specified is not valid"
 msgstr "SELECT * должен ссылаться на таблицы"
 
-#: parser/parse_type.c:84
+#: parser/parse_type.c:83
 #, c-format
 msgid "improper %%TYPE reference (too few dotted names): %s"
 msgstr "неправильное указание %%TYPE (слишком мало компонентов): %s"
 
-#: parser/parse_type.c:106
+#: parser/parse_type.c:105
 #, c-format
 msgid "improper %%TYPE reference (too many dotted names): %s"
 msgstr "неправильное указание %%TYPE (слишком много компонентов): %s"
 
-#: parser/parse_type.c:141
+#: parser/parse_type.c:140
 #, c-format
 msgid "type reference %s converted to %s"
 msgstr "ссылка на тип %s преобразована в тип %s"
 
-#: parser/parse_type.c:262 parser/parse_type.c:834 utils/cache/typcache.c:238
+#: parser/parse_type.c:261 parser/parse_type.c:805 utils/cache/typcache.c:238
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "тип \"%s\" - лишь пустышка"
 
-#: parser/parse_type.c:347
+#: parser/parse_type.c:346
 #, c-format
 msgid "type modifier is not allowed for type \"%s\""
 msgstr "у типа \"%s\" не может быть модификаторов"
 
-#: parser/parse_type.c:389
+#: parser/parse_type.c:388
 #, c-format
 msgid "type modifiers must be simple constants or identifiers"
 msgstr "модификатором типа должна быть простая константа или идентификатор"
 
-#: parser/parse_type.c:700 parser/parse_type.c:799
+#: parser/parse_type.c:671 parser/parse_type.c:770
 #, c-format
 msgid "invalid type name \"%s\""
 msgstr "неверное имя типа \"%s\""
@@ -15308,7 +15308,7 @@ msgstr ""
 "%u.0 - %u.%u "
 
 #: postmaster/postmaster.c:2050 utils/misc/guc.c:5484 utils/misc/guc.c:5577
-#: utils/misc/guc.c:6869 utils/misc/guc.c:9555 utils/misc/guc.c:9589
+#: utils/misc/guc.c:6869 utils/misc/guc.c:9566 utils/misc/guc.c:9600
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "неверное значение для параметра \"%s\": \"%s\""
@@ -15521,128 +15521,128 @@ msgstr "породить новый процесс для соединения �
 msgid "could not fork new process for connection: "
 msgstr "породить новый процесс для соединения не удалось: "
 
-#: postmaster/postmaster.c:4075
+#: postmaster/postmaster.c:4083
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "принято подключение: узел=%s порт=%s"
 
-#: postmaster/postmaster.c:4080
+#: postmaster/postmaster.c:4088
 #, c-format
 msgid "connection received: host=%s"
 msgstr "принято подключение: узел=%s"
 
-#: postmaster/postmaster.c:4369
+#: postmaster/postmaster.c:4371
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "запустить серверный процесс \"%s\" не удалось: %m"
 
-#: postmaster/postmaster.c:4929
+#: postmaster/postmaster.c:4931
 #, c-format
 msgid "database system is ready to accept read only connections"
 msgstr "система БД готова к подключениям в режиме \"только чтение\""
 
-#: postmaster/postmaster.c:5212
+#: postmaster/postmaster.c:5214
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "породить стартовый процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5216
+#: postmaster/postmaster.c:5218
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "породить процесс фоновой записи не удалось: %m"
 
-#: postmaster/postmaster.c:5220
+#: postmaster/postmaster.c:5222
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "породить процесс контрольных точек не удалось: %m"
 
-#: postmaster/postmaster.c:5224
+#: postmaster/postmaster.c:5226
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "породить процесс записи WAL не удалось: %m"
 
-#: postmaster/postmaster.c:5228
+#: postmaster/postmaster.c:5230
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "породить процесс считывания WAL не удалось: %m"
 
-#: postmaster/postmaster.c:5232
+#: postmaster/postmaster.c:5234
 #, c-format
 msgid "could not fork process: %m"
 msgstr "породить процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5394 postmaster/postmaster.c:5417
+#: postmaster/postmaster.c:5396 postmaster/postmaster.c:5419
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr ""
 "при регистрации фонового процесса не указывалось, что ему требуется "
 "подключение к БД"
 
-#: postmaster/postmaster.c:5401 postmaster/postmaster.c:5424
+#: postmaster/postmaster.c:5403 postmaster/postmaster.c:5426
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "неправильный режим обработки в фоновом процессе"
 
-#: postmaster/postmaster.c:5476
+#: postmaster/postmaster.c:5478
 #, c-format
 msgid "starting background worker process \"%s\""
 msgstr "запуск фонового рабочего процесса \"%s\""
 
-#: postmaster/postmaster.c:5487
+#: postmaster/postmaster.c:5489
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "породить рабочий процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5863
+#: postmaster/postmaster.c:5865
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr ""
 "продублировать сокет %d для серверного процесса не удалось (код ошибки: %d)"
 
-#: postmaster/postmaster.c:5895
+#: postmaster/postmaster.c:5897
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "создать наследуемый сокет не удалось (код ошибки: %d)\n"
 
-#: postmaster/postmaster.c:5924
+#: postmaster/postmaster.c:5926
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "открыть файл серверных переменных \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:5931
+#: postmaster/postmaster.c:5933
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "прочитать файл серверных переменных \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:5940
+#: postmaster/postmaster.c:5942
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "не удалось стереть файл \"%s\": %s\n"
 
-#: postmaster/postmaster.c:5957
+#: postmaster/postmaster.c:5959
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "отобразить файл серверных переменных не удалось (код ошибки: %lu)\n"
 
-#: postmaster/postmaster.c:5966
+#: postmaster/postmaster.c:5968
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr ""
 "отключить отображение файла серверных переменных не удалось (код ошибки: "
 "%lu)\n"
 
-#: postmaster/postmaster.c:5973
+#: postmaster/postmaster.c:5975
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr ""
 "закрыть указатель файла серверных переменных не удалось (код ошибки: %lu)\n"
 
-#: postmaster/postmaster.c:6132
+#: postmaster/postmaster.c:6134
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "прочитать код завершения процесса не удалось\n"
 
-#: postmaster/postmaster.c:6137
+#: postmaster/postmaster.c:6139
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "отправить состояние завершения потомка не удалось\n"
@@ -15952,7 +15952,7 @@ msgstr "массив должен быть одномерным"
 msgid "array must not contain nulls"
 msgstr "массив не должен содержать элементы null"
 
-#: replication/logical/logicalfuncs.c:370 utils/adt/json.c:2263
+#: replication/logical/logicalfuncs.c:370 utils/adt/json.c:2277
 #: utils/adt/jsonb.c:1356
 #, c-format
 msgid "array must have even number of elements"
@@ -18341,8 +18341,8 @@ msgid "array size exceeds the maximum allowed (%d)"
 msgstr "размер массива превышает предел (%d)"
 
 #: utils/adt/array_userfuncs.c:67 utils/adt/array_userfuncs.c:529
-#: utils/adt/array_userfuncs.c:609 utils/adt/json.c:1745 utils/adt/json.c:1840
-#: utils/adt/json.c:1878 utils/adt/jsonb.c:1126 utils/adt/jsonb.c:1155
+#: utils/adt/array_userfuncs.c:609 utils/adt/json.c:1759 utils/adt/json.c:1854
+#: utils/adt/json.c:1892 utils/adt/jsonb.c:1126 utils/adt/jsonb.c:1155
 #: utils/adt/jsonb.c:1590 utils/adt/jsonb.c:1754 utils/adt/jsonb.c:1764
 #, c-format
 msgid "could not determine input data type"
@@ -18541,7 +18541,7 @@ msgstr "разрезание массивов постоянной длины н
 #: utils/adt/arrayfuncs.c:2297 utils/adt/arrayfuncs.c:2533
 #: utils/adt/arrayfuncs.c:2830 utils/adt/arrayfuncs.c:5718
 #: utils/adt/arrayfuncs.c:5750 utils/adt/arrayfuncs.c:5767
-#: utils/adt/json.c:2276 utils/adt/json.c:2351 utils/adt/jsonb.c:1369
+#: utils/adt/json.c:2290 utils/adt/json.c:2365 utils/adt/jsonb.c:1369
 #: utils/adt/jsonb.c:1455 utils/adt/jsonfuncs.c:3528
 #: utils/adt/jsonfuncs.c:3573
 #, c-format
@@ -18752,7 +18752,7 @@ msgstr "дата вне диапазона для типа timestamp"
 #: utils/adt/date.c:970 utils/adt/date.c:1016 utils/adt/date.c:1616
 #: utils/adt/date.c:1652 utils/adt/date.c:2524 utils/adt/formatting.c:3399
 #: utils/adt/formatting.c:3431 utils/adt/formatting.c:3499
-#: utils/adt/json.c:1520 utils/adt/json.c:1542 utils/adt/jsonb.c:823
+#: utils/adt/json.c:1534 utils/adt/json.c:1556 utils/adt/jsonb.c:823
 #: utils/adt/jsonb.c:847 utils/adt/nabstime.c:455 utils/adt/nabstime.c:498
 #: utils/adt/nabstime.c:528 utils/adt/nabstime.c:571 utils/adt/timestamp.c:224
 #: utils/adt/timestamp.c:267 utils/adt/timestamp.c:716
@@ -19480,50 +19480,50 @@ msgstr "bigint вне диапазона"
 msgid "OID out of range"
 msgstr "OID вне диапазона"
 
-#: utils/adt/json.c:777 utils/adt/json.c:817 utils/adt/json.c:832
-#: utils/adt/json.c:843 utils/adt/json.c:853 utils/adt/json.c:904
-#: utils/adt/json.c:935 utils/adt/json.c:953 utils/adt/json.c:965
-#: utils/adt/json.c:977 utils/adt/json.c:1116 utils/adt/json.c:1130
-#: utils/adt/json.c:1141 utils/adt/json.c:1149 utils/adt/json.c:1157
-#: utils/adt/json.c:1165 utils/adt/json.c:1173 utils/adt/json.c:1181
-#: utils/adt/json.c:1189 utils/adt/json.c:1197 utils/adt/json.c:1227
+#: utils/adt/json.c:785 utils/adt/json.c:825 utils/adt/json.c:840
+#: utils/adt/json.c:851 utils/adt/json.c:861 utils/adt/json.c:912
+#: utils/adt/json.c:943 utils/adt/json.c:961 utils/adt/json.c:973
+#: utils/adt/json.c:985 utils/adt/json.c:1130 utils/adt/json.c:1144
+#: utils/adt/json.c:1155 utils/adt/json.c:1163 utils/adt/json.c:1171
+#: utils/adt/json.c:1179 utils/adt/json.c:1187 utils/adt/json.c:1195
+#: utils/adt/json.c:1203 utils/adt/json.c:1211 utils/adt/json.c:1241
 #, c-format
 msgid "invalid input syntax for type json"
 msgstr "неверный синтаксис для типа json"
 
-#: utils/adt/json.c:778
+#: utils/adt/json.c:786
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Символ с кодом 0x%02x необходимо экранировать."
 
-#: utils/adt/json.c:818
+#: utils/adt/json.c:826
 #, c-format
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "За \"\\u\" должны следовать четыре шестнадцатеричные цифры."
 
-#: utils/adt/json.c:833
+#: utils/adt/json.c:841
 #, c-format
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr ""
 "Старшее слово суррогата Unicode не может следовать за другим старшим словом."
 
-#: utils/adt/json.c:844 utils/adt/json.c:854 utils/adt/json.c:905
-#: utils/adt/json.c:966 utils/adt/json.c:978
+#: utils/adt/json.c:852 utils/adt/json.c:862 utils/adt/json.c:913
+#: utils/adt/json.c:974 utils/adt/json.c:986
 #, c-format
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Младшее слово суррогата Unicode должно следовать за старшим словом."
 
-#: utils/adt/json.c:869 utils/adt/json.c:892
+#: utils/adt/json.c:877 utils/adt/json.c:900
 #, c-format
 msgid "unsupported Unicode escape sequence"
 msgstr "неподдерживаемая спецпоследовательность Unicode"
 
-#: utils/adt/json.c:870
+#: utils/adt/json.c:878
 #, c-format
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 нельзя преобразовать в текст."
 
-#: utils/adt/json.c:893
+#: utils/adt/json.c:901
 #, c-format
 msgid ""
 "Unicode escape values cannot be used for code point values above 007F when "
@@ -19532,93 +19532,93 @@ msgstr ""
 "Спецкоды Unicode для значений выше 007F можно использовать только с "
 "серверной кодировкой UTF8."
 
-#: utils/adt/json.c:936 utils/adt/json.c:954
+#: utils/adt/json.c:944 utils/adt/json.c:962
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Неверная спецпоследовательность: \"\\%s\"."
 
-#: utils/adt/json.c:1117
+#: utils/adt/json.c:1131
 #, c-format
 msgid "The input string ended unexpectedly."
 msgstr "Неожиданный конец входной строки."
 
-#: utils/adt/json.c:1131
+#: utils/adt/json.c:1145
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Ожидался конец текста, но обнаружено продолжение \"%s\"."
 
-#: utils/adt/json.c:1142
+#: utils/adt/json.c:1156
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Ожидалось значение JSON, но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1150 utils/adt/json.c:1198
+#: utils/adt/json.c:1164 utils/adt/json.c:1212
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Ожидалась строка, но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1158
+#: utils/adt/json.c:1172
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Ожидался элемент массива или \"]\", но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1166
+#: utils/adt/json.c:1180
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Ожидалась \",\" или \"]\", но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1174
+#: utils/adt/json.c:1188
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Ожидалась строка или \"}\", но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1182
+#: utils/adt/json.c:1196
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Ожидалось \":\", но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1190
+#: utils/adt/json.c:1204
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Ожидалась \",\" или \"}\", но обнаружено \"%s\"."
 
-#: utils/adt/json.c:1228
+#: utils/adt/json.c:1242
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Ошибочный элемент текста \"%s\"."
 
-#: utils/adt/json.c:1300
+#: utils/adt/json.c:1314
 #, c-format
 msgid "JSON data, line %d: %s%s%s"
 msgstr "данные JSON, строка %d: %s%s%s"
 
-#: utils/adt/json.c:1455 utils/adt/jsonb.c:724
+#: utils/adt/json.c:1469 utils/adt/jsonb.c:724
 #, c-format
 msgid "key value must be scalar, not array, composite, or json"
 msgstr ""
 "значением ключа должен быть скаляр (не массив, композитный тип или json)"
 
-#: utils/adt/json.c:1992
+#: utils/adt/json.c:2006
 #, c-format
 msgid "could not determine data type for argument 1"
 msgstr "не удалось определить тип данных аргумента 1"
 
-#: utils/adt/json.c:2002
+#: utils/adt/json.c:2016
 #, c-format
 msgid "could not determine data type for argument 2"
 msgstr "не удалось определить тип данных аргумента 2"
 
-#: utils/adt/json.c:2026 utils/adt/jsonb.c:1780
+#: utils/adt/json.c:2040 utils/adt/jsonb.c:1780
 #, c-format
 msgid "field name must not be null"
 msgstr "имя поля не может быть NULL"
 
-#: utils/adt/json.c:2103
+#: utils/adt/json.c:2117
 #, c-format
 msgid "argument list must have even number of elements"
 msgstr "в списке аргументов должно быть чётное число элементов"
 
-#: utils/adt/json.c:2104
+#: utils/adt/json.c:2118
 #, c-format
 msgid ""
 "The arguments of json_build_object() must consist of alternating keys and "
@@ -19626,33 +19626,33 @@ msgid ""
 msgstr ""
 "Аргументы json_build_object() должны состоять из пар ключей и значений."
 
-#: utils/adt/json.c:2128 utils/adt/json.c:2149 utils/adt/json.c:2208
+#: utils/adt/json.c:2142 utils/adt/json.c:2163 utils/adt/json.c:2222
 #, c-format
 msgid "could not determine data type for argument %d"
 msgstr "не удалось определить тип данных аргумента %d"
 
-#: utils/adt/json.c:2134
+#: utils/adt/json.c:2148
 #, c-format
 msgid "argument %d cannot be null"
 msgstr "аргумент %d не может быть NULL"
 
-#: utils/adt/json.c:2135
+#: utils/adt/json.c:2149
 #, c-format
 msgid "Object keys should be text."
 msgstr "Ключи объектов должны быть текстовыми."
 
-#: utils/adt/json.c:2270 utils/adt/jsonb.c:1363
+#: utils/adt/json.c:2284 utils/adt/jsonb.c:1363
 #, c-format
 msgid "array must have two columns"
 msgstr "массив должен иметь два столбца"
 
-#: utils/adt/json.c:2294 utils/adt/json.c:2378 utils/adt/jsonb.c:1387
+#: utils/adt/json.c:2308 utils/adt/json.c:2392 utils/adt/jsonb.c:1387
 #: utils/adt/jsonb.c:1482
 #, c-format
 msgid "null value not allowed for object key"
 msgstr "значение null не может быть ключом объекта"
 
-#: utils/adt/json.c:2367 utils/adt/jsonb.c:1471
+#: utils/adt/json.c:2381 utils/adt/jsonb.c:1471
 #, c-format
 msgid "mismatched array dimensions"
 msgstr "неподходящие размерности массива"
@@ -19820,10 +19820,10 @@ msgstr "удалить путь в скаляре нельзя"
 msgid "invalid concatenation of jsonb objects"
 msgstr "неверная конкатенация объектов jsonb"
 
-#: utils/adt/levenshtein.c:127
+#: utils/adt/levenshtein.c:133
 #, c-format
-msgid "argument exceeds the maximum length of %d bytes"
-msgstr "длина аргумента превышает максимум (%d Б)"
+msgid "levenshtein argument exceeds maximum length of %d characters"
+msgstr "длина аргумента levenshtein() превышает максимум (%d симв.)"
 
 #: utils/adt/like.c:212 utils/adt/selfuncs.c:5275
 #, c-format
@@ -20476,7 +20476,7 @@ msgstr ""
 "Чтобы обозначить отсутствующий аргумент унарного оператора, укажите NONE."
 
 #: utils/adt/regproc.c:779 utils/adt/regproc.c:820 utils/adt/regproc.c:2006
-#: utils/adt/ruleutils.c:8154 utils/adt/ruleutils.c:8279
+#: utils/adt/ruleutils.c:8167 utils/adt/ruleutils.c:8292
 #, c-format
 msgid "too many arguments"
 msgstr "слишком много аргументов"
@@ -21504,91 +21504,91 @@ msgstr "ВАЖНО"
 msgid "PANIC"
 msgstr "ПАНИКА"
 
-#: utils/fmgr/dfmgr.c:121
+#: utils/fmgr/dfmgr.c:117
 #, c-format
 msgid "could not find function \"%s\" in file \"%s\""
 msgstr "не удалось найти функцию \"%s\" в файле \"%s\""
 
-#: utils/fmgr/dfmgr.c:200 utils/fmgr/dfmgr.c:409 utils/fmgr/dfmgr.c:457
+#: utils/fmgr/dfmgr.c:196 utils/fmgr/dfmgr.c:405 utils/fmgr/dfmgr.c:453
 #, c-format
 msgid "could not access file \"%s\": %m"
 msgstr "нет доступа к файлу \"%s\": %m"
 
-#: utils/fmgr/dfmgr.c:238
+#: utils/fmgr/dfmgr.c:234
 #, c-format
 msgid "could not load library \"%s\": %s"
 msgstr "загрузить библиотеку \"%s\" не удалось: %s"
 
-#: utils/fmgr/dfmgr.c:270
+#: utils/fmgr/dfmgr.c:266
 #, c-format
 msgid "incompatible library \"%s\": missing magic block"
 msgstr "несовместимая библиотека \"%s\": нет отличительного блока"
 
-#: utils/fmgr/dfmgr.c:272
+#: utils/fmgr/dfmgr.c:268
 #, c-format
 msgid "Extension libraries are required to use the PG_MODULE_MAGIC macro."
 msgstr "Внешние библиотеки должны использовать макрос PG_MODULE_MAGIC."
 
-#: utils/fmgr/dfmgr.c:308
+#: utils/fmgr/dfmgr.c:304
 #, c-format
 msgid "incompatible library \"%s\": version mismatch"
 msgstr "несовместимая библиотека \"%s\": несовпадение версий"
 
-#: utils/fmgr/dfmgr.c:310
+#: utils/fmgr/dfmgr.c:306
 #, c-format
 msgid "Server is version %d.%d, library is version %d.%d."
 msgstr "Версия сервера: %d.%d, версия библиотеки: %d.%d."
 
-#: utils/fmgr/dfmgr.c:329
+#: utils/fmgr/dfmgr.c:325
 #, c-format
 msgid "Server has FUNC_MAX_ARGS = %d, library has %d."
 msgstr "В сервере FUNC_MAX_ARGS = %d, в библиотеке: %d."
 
-#: utils/fmgr/dfmgr.c:338
+#: utils/fmgr/dfmgr.c:334
 #, c-format
 msgid "Server has INDEX_MAX_KEYS = %d, library has %d."
 msgstr "В сервере INDEX_MAX_KEYS = %d, в библиотеке: %d."
 
-#: utils/fmgr/dfmgr.c:347
+#: utils/fmgr/dfmgr.c:343
 #, c-format
 msgid "Server has NAMEDATALEN = %d, library has %d."
 msgstr "В сервере NAMEDATALEN = %d, в библиотеке: %d."
 
-#: utils/fmgr/dfmgr.c:356
+#: utils/fmgr/dfmgr.c:352
 #, c-format
 msgid "Server has FLOAT4PASSBYVAL = %s, library has %s."
 msgstr "В сервере FLOAT4PASSBYVAL = %s, в библиотеке: %s."
 
-#: utils/fmgr/dfmgr.c:365
+#: utils/fmgr/dfmgr.c:361
 #, c-format
 msgid "Server has FLOAT8PASSBYVAL = %s, library has %s."
 msgstr "В сервере FLOAT8PASSBYVAL = %s, в библиотеке: %s."
 
-#: utils/fmgr/dfmgr.c:372
+#: utils/fmgr/dfmgr.c:368
 msgid "Magic block has unexpected length or padding difference."
 msgstr "Отличительный блок имеет неверную длину или дополнен по-другому."
 
-#: utils/fmgr/dfmgr.c:375
+#: utils/fmgr/dfmgr.c:371
 #, c-format
 msgid "incompatible library \"%s\": magic block mismatch"
 msgstr "несовместимая библиотека \"%s\": несоответствие отличительного блока"
 
-#: utils/fmgr/dfmgr.c:539
+#: utils/fmgr/dfmgr.c:535
 #, c-format
 msgid "access to library \"%s\" is not allowed"
 msgstr "доступ к библиотеке \"%s\" не разрешён"
 
-#: utils/fmgr/dfmgr.c:565
+#: utils/fmgr/dfmgr.c:561
 #, c-format
 msgid "invalid macro name in dynamic library path: %s"
 msgstr "неправильный макрос в пути динамической библиотеки: %s"
 
-#: utils/fmgr/dfmgr.c:605
+#: utils/fmgr/dfmgr.c:601
 #, c-format
 msgid "zero-length component in parameter \"dynamic_library_path\""
 msgstr "параметр dynamic_library_path содержит компонент нулевой длины"
 
-#: utils/fmgr/dfmgr.c:624
+#: utils/fmgr/dfmgr.c:620
 #, c-format
 msgid "component in parameter \"dynamic_library_path\" is not an absolute path"
 msgstr ""
@@ -21763,7 +21763,7 @@ msgstr ""
 msgid "could not write lock file \"%s\": %m"
 msgstr "не удалось записать файл блокировки \"%s\": %m"
 
-#: utils/init/miscinit.c:1143 utils/init/miscinit.c:1272 utils/misc/guc.c:8578
+#: utils/init/miscinit.c:1143 utils/init/miscinit.c:1272 utils/misc/guc.c:8589
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -23898,8 +23898,8 @@ msgid "cannot set parameters during a parallel operation"
 msgstr "устанавливать параметры во время параллельных операций нельзя"
 
 #: utils/misc/guc.c:5682 utils/misc/guc.c:6432 utils/misc/guc.c:6484
-#: utils/misc/guc.c:6845 utils/misc/guc.c:7581 utils/misc/guc.c:7740
-#: utils/misc/guc.c:9375
+#: utils/misc/guc.c:6845 utils/misc/guc.c:7592 utils/misc/guc.c:7751
+#: utils/misc/guc.c:9386
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "нераспознанный параметр конфигурации: \"%s\""
@@ -23921,7 +23921,7 @@ msgstr "параметр \"%s\" изменяется только при пер�
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "параметр \"%s\" нельзя изменить сейчас"
 
-#: utils/misc/guc.c:5748 utils/misc/guc.c:5793 utils/misc/guc.c:9391
+#: utils/misc/guc.c:5748 utils/misc/guc.c:5793 utils/misc/guc.c:9402
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "нет прав для изменения параметра \"%s\""
@@ -23938,7 +23938,7 @@ msgstr ""
 "параметр \"%s\" нельзя задать в функции с контекстом безопасности "
 "определившего"
 
-#: utils/misc/guc.c:6440 utils/misc/guc.c:6488 utils/misc/guc.c:7744
+#: utils/misc/guc.c:6440 utils/misc/guc.c:6488 utils/misc/guc.c:7755
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "прочитать \"%s\" может только суперпользователь"
@@ -23968,32 +23968,32 @@ msgstr "SET LOCAL TRANSACTION SNAPSHOT не реализовано"
 msgid "SET requires parameter name"
 msgstr "SET требует имя параметра"
 
-#: utils/misc/guc.c:7278
+#: utils/misc/guc.c:7289
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "попытка переопределить параметр \"%s\""
 
-#: utils/misc/guc.c:9008
+#: utils/misc/guc.c:9019
 #, c-format
 msgid "parameter \"%s\" could not be set"
 msgstr "параметр \"%s\" нельзя установить"
 
-#: utils/misc/guc.c:9095
+#: utils/misc/guc.c:9106
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "не удалось разобрать значение параметра \"%s\""
 
-#: utils/misc/guc.c:9453 utils/misc/guc.c:9487
+#: utils/misc/guc.c:9464 utils/misc/guc.c:9498
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "неверное значение параметра \"%s\": %d"
 
-#: utils/misc/guc.c:9521
+#: utils/misc/guc.c:9532
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "неверное значение параметра \"%s\": %g"
 
-#: utils/misc/guc.c:9711
+#: utils/misc/guc.c:9722
 #, c-format
 msgid ""
 "\"temp_buffers\" cannot be changed after any temporary tables have been "
@@ -24002,23 +24002,23 @@ msgstr ""
 "параметр \"temp_buffers\" нельзя изменить после обращения к временным "
 "таблицам в текущем сеансе."
 
-#: utils/misc/guc.c:9723
+#: utils/misc/guc.c:9734
 #, c-format
 msgid "Bonjour is not supported by this build"
 msgstr "Bonjour не поддерживается в данной сборке"
 
-#: utils/misc/guc.c:9736
+#: utils/misc/guc.c:9747
 #, c-format
 msgid "SSL is not supported by this build"
 msgstr "SSL не поддерживается в данной сборке"
 
-#: utils/misc/guc.c:9748
+#: utils/misc/guc.c:9759
 #, c-format
 msgid "Cannot enable parameter when \"log_statement_stats\" is true."
 msgstr ""
 "Этот параметр нельзя включить, когда \"log_statement_stats\" равен true."
 
-#: utils/misc/guc.c:9760
+#: utils/misc/guc.c:9771
 #, c-format
 msgid ""
 "Cannot enable \"log_statement_stats\" when \"log_parser_stats\", "

@@ -2,13 +2,13 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011, 2012.
-# grzegorz <begina.felicysym@wp.eu>, 2014, 2015.
+# grzegorz <begina.felicysym@wp.eu>, 2014, 2015, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-08-15 18:37+0000\n"
-"PO-Revision-Date: 2015-08-16 16:59+0200\n"
+"POT-Creation-Date: 2016-02-13 23:07+0000\n"
+"PO-Revision-Date: 2016-02-14 01:09+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -74,11 +74,8 @@ msgstr "nieobsługiwany tryb zwracania przez funkcję grupy"
 
 #: plpy_exec.c:92
 #, c-format
-#| msgid "PL/Python set-returning functions only support returning only value per call."
 msgid "PL/Python set-returning functions only support returning one value per call."
-msgstr ""
-"funkcje zwracające grupę PL/Python obsługuje tylko zwracanie jednej wartości "
-"w wywołaniu."
+msgstr "funkcje zwracające grupę PL/Python obsługuje tylko zwracanie jednej wartości w wywołaniu."
 
 #: plpy_exec.c:104
 #, c-format
@@ -175,47 +172,58 @@ msgstr "podczas modyfikowania wiersza wyzwalacza"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "wymuszone przerywanie podtransakcji, która nie została zakończona"
 
-#: plpy_main.c:93
+#: plpy_main.c:124
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "niezgodna wersja główna Python w sesji"
 
-#: plpy_main.c:94
+#: plpy_main.c:125
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Ta sesja używała poprzednio Python w głównej wersji %d, teraz próbuje użyć Python w głównej wersji %d."
 
-#: plpy_main.c:96
+#: plpy_main.c:127
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Uruchom nową sesję aby użyć innej głównej wersji Python."
 
-#: plpy_main.c:111
+#: plpy_main.c:150
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "kilka bibliotek Python jest dostępne w sesji"
+
+#: plpy_main.c:151
+#, c-format
+#| msgid "Python major version mismatch in session"
+msgid "Only one Python major version can be used in one session."
+msgstr "Tylko jedna podstawowa wersja Python może być używana w sesji."
+
+#: plpy_main.c:167
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "niewyłapany błąd w inicjacji"
 
-#: plpy_main.c:134
+#: plpy_main.c:190
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "nie można zaimportować modułu \"__main__\""
 
-#: plpy_main.c:139
+#: plpy_main.c:195
 #, c-format
 msgid "could not create globals"
 msgstr "nie można utworzyć zmiennych globalnych"
 
-#: plpy_main.c:143
+#: plpy_main.c:199
 #, c-format
 msgid "could not initialize globals"
 msgstr "nie można zainicjować zmiennych globalnych"
 
-#: plpy_main.c:348
+#: plpy_main.c:409
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "funkcja PL/Python \"%s\""
 
-#: plpy_main.c:355
+#: plpy_main.c:416
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "anonimowy blok kodu PL/Python"
@@ -389,27 +397,27 @@ msgstr "nie można zmienić obiektu Python na cstring: reprezentacja ciągu znak
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "wartość zwrócona przez funkcję zwracającą tablicę nie jest sekwencją Python"
 
-#: plpy_typeio.c:982
+#: plpy_typeio.c:992
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "nie odnaleziono klucza \"%s\" w mapowaniu"
 
-#: plpy_typeio.c:983
+#: plpy_typeio.c:993
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Aby zwrócić null w kolumnie, dodaj wartość None do mapowania z kluczem nazwanym wedle kolumny."
 
-#: plpy_typeio.c:1034
+#: plpy_typeio.c:1044
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "długość zwróconej sekwencji nie jest równa liczbie kolumn w wierszu"
 
-#: plpy_typeio.c:1145
+#: plpy_typeio.c:1155
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atrybut \"%s\" nie istnieje w obiekcie Python"
 
-#: plpy_typeio.c:1146
+#: plpy_typeio.c:1156
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Aby zwrócić null w kolumnie, niech zwrócony obiekt posiada atrybut nazwany wedle kolumny z wartością None."
@@ -424,11 +432,11 @@ msgstr "nie można zmienić obiektu unikodowego Python na bajty"
 msgid "could not extract bytes from encoded string"
 msgstr "nie można wyciągnąć bajtów z kodowanego ciągu znaków"
 
-#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
-#~ msgstr "nierozpoznany błąd w PLy_spi_execute_fetch_result"
+#~ msgid "plpy.prepare does not support composite types"
+#~ msgstr "plpy.prepare nie obsługuje typów złożonych"
 
 #~ msgid "PL/Python does not support conversion to arrays of row types."
 #~ msgstr "PL/Python nie obsługuje konwersji typów wierszowych na tablice."
 
-#~ msgid "plpy.prepare does not support composite types"
-#~ msgstr "plpy.prepare nie obsługuje typów złożonych"
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "nierozpoznany błąd w PLy_spi_execute_fetch_result"

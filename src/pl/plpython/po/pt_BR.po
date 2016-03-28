@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2015.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-17 22:32-0300\n"
+"POT-Creation-Date: 2016-02-13 17:22-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -169,47 +169,57 @@ msgstr "ao modificar registro de gatilho"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "forçado a abortar subtransação que não foi concluída"
 
-#: plpy_main.c:93
+#: plpy_main.c:124
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "versão do Python não corresponde na sessão"
 
-#: plpy_main.c:94
+#: plpy_main.c:125
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Esta sessão utilizou Python versão %d, e agora está tentando utilizar Python versão %d."
 
-#: plpy_main.c:96
+#: plpy_main.c:127
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Inicie uma nova sessão para utilizar uma versão diferente do Python."
 
-#: plpy_main.c:111
+#: plpy_main.c:150
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "múltiplas bibliotecas do Python estão presentes na sessão"
+
+#: plpy_main.c:151
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr "Apenas uma versão do Python pode ser utilizada na sessão."
+
+#: plpy_main.c:167
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "erro não interceptado na inicialização"
 
-#: plpy_main.c:134
+#: plpy_main.c:190
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "não pôde importar módulo \"__main__\""
 
-#: plpy_main.c:139
+#: plpy_main.c:195
 #, c-format
 msgid "could not create globals"
 msgstr "não pôde criar globais"
 
-#: plpy_main.c:143
+#: plpy_main.c:199
 #, c-format
 msgid "could not initialize globals"
 msgstr "não pôde inicializar globais"
 
-#: plpy_main.c:348
+#: plpy_main.c:409
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "função PL/Python \"%s\""
 
-#: plpy_main.c:355
+#: plpy_main.c:416
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloco de código PL/Python anônimo"

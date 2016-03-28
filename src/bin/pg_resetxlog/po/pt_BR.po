@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2015.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-04 16:26-0300\n"
+"POT-Creation-Date: 2016-02-13 17:22-0300\n"
 "PO-Revision-Date: 2005-10-04 22:55-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -291,13 +291,13 @@ msgstr "BD do oldestMulti do último ponto de controle:     %u\n"
 
 #: pg_resetxlog.c:668
 #, c-format
-msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "oldestCommitTs do último ponto de controle:          %u\n"
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "oldestCommitTsXid do último ponto de controle:     %u\n"
 
 #: pg_resetxlog.c:670
 #, c-format
-msgid "Latest checkpoint's newestCommitTs:   %u\n"
-msgstr "newestCommitTs do último ponto de controle:          %u\n"
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "newestCommitTsXid do último ponto de controle:     %u\n"
 
 #: pg_resetxlog.c:672
 #, c-format
@@ -445,13 +445,13 @@ msgstr "época do NextXID:                                  %u\n"
 
 #: pg_resetxlog.c:756
 #, c-format
-msgid "oldestCommitTs:                       %u\n"
-msgstr "oldestCommitTs:                                    %u\n"
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "oldestCommitTsXid:                                 %u\n"
 
 #: pg_resetxlog.c:761
 #, c-format
-msgid "newestCommitTs:                       %u\n"
-msgstr "newestCommitTs:                                    %u\n"
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "newestCommitTsXid:                                 %u\n"
 
 #: pg_resetxlog.c:827
 #, c-format
@@ -541,7 +541,7 @@ msgstr "                   (zero em qualquer valor significa nenhuma mudança)\n
 #: pg_resetxlog.c:1172
 #, c-format
 msgid " [-D] DATADIR      data directory\n"
-msgstr " [-D] DIRDADOS   diretório de dados\n"
+msgstr " [-D] DIRDADOS     diretório de dados\n"
 
 #: pg_resetxlog.c:1173
 #, c-format

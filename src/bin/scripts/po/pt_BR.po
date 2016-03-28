@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for pgscripts
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2015.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-04 16:29-0300\n"
+"POT-Creation-Date: 2016-02-13 17:22-0300\n"
 "PO-Revision-Date: 2005-10-06 00:21-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -224,58 +224,58 @@ msgstr ""
 "\n"
 "Relate erros a <pgsql-bugs@postgresql.org>.\n"
 
-#: common.c:68 common.c:114
+#: common.c:82 common.c:128
 msgid "Password: "
 msgstr "Senha: "
 
-#: common.c:103
+#: common.c:113
 #, c-format
-msgid "%s: could not connect to database %s\n"
-msgstr "%s: não pôde conectar ao banco de dados %s\n"
+msgid "%s: could not connect to database %s: out of memory\n"
+msgstr "%s: não pôde conectar ao banco de dados %s: sem memória\n"
 
-#: common.c:130
+#: common.c:141
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: não pôde conectar ao banco de dados %s: %s"
 
-#: common.c:179 common.c:207
+#: common.c:190 common.c:218
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: consulta falhou: %s"
 
-#: common.c:181 common.c:209
+#: common.c:192 common.c:220
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: consulta foi: %s\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:250
+#: common.c:261
 msgid "y"
 msgstr "s"
 
 #. translator: abbreviation for "no"
-#: common.c:252
+#: common.c:263
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:262
+#: common.c:273
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:283
+#: common.c:294
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Por favor responda \"%s\" ou \"%s\".\n"
 
-#: common.c:362 common.c:399
+#: common.c:373 common.c:410
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "Requisição de cancelamento enviada\n"
 
-#: common.c:365 common.c:403
+#: common.c:376 common.c:414
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Não pôde enviar requisição de cancelamento: %s"
@@ -946,7 +946,7 @@ msgstr ""
 
 #: vacuumdb.c:190
 #, c-format
-msgid "%s: number of parallel \"jobs\" must be at least 1\n"
+msgid "%s: number of parallel jobs must be at least 1\n"
 msgstr "%s: número de tarefas paralelas deve ser pelo menos 1\n"
 
 #: vacuumdb.c:196
