@@ -2,13 +2,13 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011, 2012.
-# grzegorz <begina.felicysym@wp.eu>, 2014.
+# grzegorz <begina.felicysym@wp.eu>, 2014, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-11-10 20:37+0000\n"
-"PO-Revision-Date: 2014-11-10 22:58+0200\n"
+"POT-Creation-Date: 2016-02-21 00:44+0000\n"
+"PO-Revision-Date: 2016-02-22 21:39+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -74,8 +74,11 @@ msgstr "nieobsługiwany tryb zwracania przez funkcję grupy"
 
 #: plpy_exec.c:92
 #, c-format
-msgid "PL/Python set-returning functions only support returning only value per call."
-msgstr "funkcja zwracająca grupę PL/obsługuje tylko zwracanie jednej wartości w wywołaniu."
+#| msgid "PL/Python set-returning functions only support returning only value per call."
+msgid "PL/Python set-returning functions only support returning one value per call."
+msgstr ""
+"Funkcje zwracające grupę PL/Python obsługuje tylko zwracanie jednej wartości "
+"w wywołaniu."
 
 #: plpy_exec.c:104
 #, c-format
@@ -172,47 +175,58 @@ msgstr "podczas modyfikowania wiersza wyzwalacza"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "wymuszone przerywanie podtransakcji, która nie została zakończona"
 
-#: plpy_main.c:93
+#: plpy_main.c:124
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "niezgodna wersja główna Python w sesji"
 
-#: plpy_main.c:94
+#: plpy_main.c:125
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Ta sesja używała poprzednio Python w głównej wersji %d, teraz próbuje użyć Python w głównej wersji %d."
 
-#: plpy_main.c:96
+#: plpy_main.c:127
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Uruchom nową sesję aby użyć innej głównej wersji Python."
 
-#: plpy_main.c:111
+#: plpy_main.c:150
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "kilka bibliotek Python jest dostępne w sesji"
+
+#: plpy_main.c:151
+#, c-format
+#| msgid "Python major version mismatch in session"
+msgid "Only one Python major version can be used in one session."
+msgstr "Tylko jedna podstawowa wersja Python może być używana w sesji."
+
+#: plpy_main.c:167
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "niewyłapany błąd w inicjacji"
 
-#: plpy_main.c:134
+#: plpy_main.c:190
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "nie można zaimportować modułu \"__main__\""
 
-#: plpy_main.c:139
+#: plpy_main.c:195
 #, c-format
 msgid "could not create globals"
 msgstr "nie można utworzyć zmiennych globalnych"
 
-#: plpy_main.c:143
+#: plpy_main.c:199
 #, c-format
 msgid "could not initialize globals"
 msgstr "nie można zainicjować zmiennych globalnych"
 
-#: plpy_main.c:347
+#: plpy_main.c:408
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "funkcja PL/Python \"%s\""
 
-#: plpy_main.c:354
+#: plpy_main.c:415
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "anonimowy blok kodu PL/Python"
@@ -251,27 +265,27 @@ msgstr "nie można rozpakować argumentów w plpy.elog"
 msgid "could not parse error message in plpy.elog"
 msgstr "nie można przetworzyć komunikatu błędu w plpy.elog"
 
-#: plpy_procedure.c:200
+#: plpy_procedure.c:210
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "procedury wyzwalaczy mogą być wywoływane jedynie przez wyzwalacze"
 
-#: plpy_procedure.c:205 plpy_typeio.c:409
+#: plpy_procedure.c:215 plpy_typeio.c:409
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funkcje PL/Python nie mogą zwracać wartości typu %s"
 
-#: plpy_procedure.c:287
+#: plpy_procedure.c:297
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "funkcje PL/Python nie obsługują typu %s"
 
-#: plpy_procedure.c:383
+#: plpy_procedure.c:393
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "nie powiodła się kompilacja funkcji PL/Python \"%s\""
 
-#: plpy_procedure.c:386
+#: plpy_procedure.c:396
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "nie udało się skompilować anonimowego bloku kodu PL/Python"
@@ -348,7 +362,6 @@ msgstr "PL/Python nie obsługuje konwersji typów wierszowych na tablice."
 
 #: plpy_typeio.c:540
 #, c-format
-#| msgid "could not import \"plpy\" module"
 msgid "could not import a module for Decimal constructor"
 msgstr "nie można zaimportować modułu dla konstruktora Decimal"
 
@@ -359,7 +372,6 @@ msgstr "brak atrybutu Decimal w module"
 
 #: plpy_typeio.c:550
 #, c-format
-#| msgid "conversion from wchar_t to server encoding failed: %m"
 msgid "conversion from numeric to Decimal failed"
 msgstr "konwersja z numeric na Decimal nie powiodła się"
 
@@ -398,27 +410,27 @@ msgstr "nie można zmienić obiektu Python na cstring: reprezentacja ciągu znak
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "wartość zwrócona przez funkcję zwracającą tablicę nie jest sekwencją Python"
 
-#: plpy_typeio.c:930
+#: plpy_typeio.c:940
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "nie odnaleziono klucza \"%s\" w mapowaniu"
 
-#: plpy_typeio.c:931
+#: plpy_typeio.c:941
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Aby zwrócić null w kolumnie, dodaj wartość None do mapowania z kluczem nazwanym wedle kolumny."
 
-#: plpy_typeio.c:979
+#: plpy_typeio.c:989
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "długość zwróconej sekwencji nie jest równa liczbie kolumn w wierszu"
 
-#: plpy_typeio.c:1087
+#: plpy_typeio.c:1097
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atrybut \"%s\" nie istnieje w obiekcie Python"
 
-#: plpy_typeio.c:1088
+#: plpy_typeio.c:1098
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Aby zwrócić null w kolumnie, niech zwrócony obiekt posiada atrybut nazwany wedle kolumny z wartością None."

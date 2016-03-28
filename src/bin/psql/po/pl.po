@@ -2,13 +2,13 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011, 2012, 2013.
-# grzegorz <begina.felicysym@wp.eu>, 2014.
+# grzegorz <begina.felicysym@wp.eu>, 2014, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-11-08 02:11+0000\n"
-"PO-Revision-Date: 2014-11-10 17:30+0200\n"
+"POT-Creation-Date: 2016-02-21 00:49+0000\n"
+"PO-Revision-Date: 2016-02-22 22:07+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -55,8 +55,8 @@ msgid "pclose failed: %s"
 msgstr "pclose nie powiodło się: %s"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83 command.c:1136 input.c:205 mainloop.c:72
-#: mainloop.c:234 tab-complete.c:3982
+#: ../../common/fe_memutils.c:83 command.c:321 input.c:216 mainloop.c:72
+#: mainloop.c:234
 #, c-format
 msgid "out of memory\n"
 msgstr "brak pamięci\n"
@@ -68,19 +68,18 @@ msgstr "nie można powielić pustego wskazania (błąd wewnętrzny)\n"
 
 #: ../../common/username.c:45
 #, c-format
-#| msgid "could not load private key file \"%s\": %s"
 msgid "could not look up effective user ID %ld: %s"
 msgstr "nie udało się odnaleźć efektywnego ID użytkownika %ld: %s"
 
 #: ../../common/username.c:47 command.c:276
-#| msgid "server \"%s\" does not exist"
 msgid "user does not exist"
 msgstr "użytkownik nie istnieje"
 
-#: ../../common/username.c:61
+#: ../../common/username.c:62
 #, c-format
-msgid "user name lookup failure: %s"
-msgstr "niepowodzenie wyszukiwania nazwy użytkownika: %s"
+#| msgid "user name lookup failure: %s"
+msgid "user name lookup failure: error code %lu"
+msgstr "niepowodzenie wyszukiwania nazwy użytkownika: kod błędu %lu"
 
 #: ../../common/wait_error.c:47
 #, c-format
@@ -134,7 +133,6 @@ msgstr "\\%s: nadmiarowy argument \"%s\" zignorowany\n"
 
 #: command.c:274
 #, c-format
-#| msgid "could not get home directory: %s\n"
 msgid "could not get home directory for user ID %ld: %s\n"
 msgstr "nie można pobrać folderu domowego dla ID użytkownika %ld: %s\n"
 
@@ -143,176 +141,175 @@ msgstr "nie można pobrać folderu domowego dla ID użytkownika %ld: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: nie można zmienić katalogu na \"%s\": %s\n"
 
-#: command.c:308 common.c:446 common.c:886
+#: command.c:307 common.c:446 common.c:886
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "Nie jesteś obecnie połączony do bazy danych.\n"
 
-#: command.c:315
+#: command.c:334
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Jesteś obecnie połączony do bazy danych \"%s\" jako użytkownik \"%s\" przez gniazdo w \"%s\" port \"%s\".\n"
 
-#: command.c:318
+#: command.c:337
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Jesteś obecnie połączony do bazy danych \"%s\" jako użytkownik \"%s\" na serwerze \"%s\" port \"%s\".\n"
 
-#: command.c:517 command.c:587 command.c:1387
+#: command.c:538 command.c:608 command.c:1403
 #, c-format
 msgid "no query buffer\n"
 msgstr "brak bufora zapytania\n"
 
-#: command.c:550 command.c:2983
+#: command.c:571 command.c:3040
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "nieprawidłowy numer linii: %s\n"
 
-#: command.c:581
+#: command.c:602
 #, c-format
 msgid "The server (version %d.%d) does not support editing function source.\n"
 msgstr "Serwer (wersja %d.%d) nie obsługuje edycji źródła funkcji.\n"
 
-#: command.c:661
+#: command.c:682
 msgid "No changes"
 msgstr "Bez zmian"
 
-#: command.c:715
+#: command.c:736
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: nieprawidłowa nazwa kodowania lub nie znaleziono procedury konwersji\n"
 
-#: command.c:812 command.c:862 command.c:876 command.c:893 command.c:1000
-#: command.c:1164 command.c:1367 command.c:1398
+#: command.c:833 command.c:883 command.c:897 command.c:914 command.c:1021
+#: command.c:1180 command.c:1383 command.c:1414
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: brakujący wymagany argument\n"
 
-#: command.c:925
+#: command.c:946
 msgid "Query buffer is empty."
 msgstr "Bufor zapytania jest pusty."
 
-#: command.c:935
+#: command.c:956
 msgid "Enter new password: "
 msgstr "Wprowadź nowe hasło: "
 
-#: command.c:936
+#: command.c:957
 msgid "Enter it again: "
 msgstr "Powtórz podane hasło: "
 
-#: command.c:940
+#: command.c:961
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Podane hasła różnią się.\n"
 
-#: command.c:958
+#: command.c:979
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "Nie udało się zaszyfrować hasła.\n"
 
-#: command.c:1029 command.c:1145 command.c:1372
+#: command.c:1050 command.c:1161 command.c:1388
 #, c-format
 msgid "\\%s: error while setting variable\n"
 msgstr "\\%s: błąd podczas ustawiania zmiennej\n"
 
-#: command.c:1087
+#: command.c:1108
 msgid "Query buffer reset (cleared)."
 msgstr "Reset bufora zapytania (wyczyszczony)."
 
-#: command.c:1099
+#: command.c:1120
 #, c-format
-#| msgid "Wrote history to file \"%s/%s\".\n"
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Zapisano historię do pliku \"%s\".\n"
 
-#: command.c:1169
+#: command.c:1185
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\"\n"
 msgstr "\\%s: zmienna środowiska nie może zawierać \"=\"\n"
 
-#: command.c:1211
+#: command.c:1227
 #, c-format
 msgid "The server (version %d.%d) does not support showing function source.\n"
 msgstr "Serwer (wersja %d.%d) nie obsługuje wyświetlania źródła funkcji.\n"
 
-#: command.c:1217
+#: command.c:1233
 #, c-format
 msgid "function name is required\n"
 msgstr "wymagana jest nazwa funkcji\n"
 
-#: command.c:1352
+#: command.c:1368
 msgid "Timing is on."
 msgstr "Pomiar czasu włączony."
 
-#: command.c:1354
+#: command.c:1370
 msgid "Timing is off."
 msgstr "Pomiar czasu wyłączony."
 
-#: command.c:1415 command.c:1435 command.c:2023 command.c:2026 command.c:2029
-#: command.c:2035 command.c:2037 command.c:2045 command.c:2055 command.c:2064
-#: command.c:2078 command.c:2095 command.c:2154 common.c:74 copy.c:333
-#: copy.c:393 copy.c:408 psqlscan.l:1677 psqlscan.l:1688 psqlscan.l:1698
+#: command.c:1431 command.c:1451 command.c:2077 command.c:2080 command.c:2083
+#: command.c:2089 command.c:2091 command.c:2099 command.c:2109 command.c:2118
+#: command.c:2132 command.c:2149 command.c:2208 common.c:74 copy.c:333
+#: copy.c:393 copy.c:408 psqlscan.l:1676 psqlscan.l:1687 psqlscan.l:1697
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1514
+#: command.c:1530
 #, c-format
 msgid "+ opt(%d) = |%s|\n"
 msgstr "+ opt(%d) = |%s|\n"
 
-#: command.c:1540 startup.c:184
+#: command.c:1556 startup.c:184
 msgid "Password: "
 msgstr "Hasło: "
 
-#: command.c:1545 startup.c:186
+#: command.c:1561 startup.c:186
 #, c-format
 msgid "Password for user %s: "
 msgstr "Hasło użytkownika %s: "
 
-#: command.c:1590
+#: command.c:1608
 #, c-format
 msgid "All connection parameters must be supplied because no database connection exists\n"
 msgstr "Wszystkie parametry połączenia muszą być wskazane ponieważ nie istnieje żadne połączenie do bazy danych\n"
 
-#: command.c:1676 command.c:3017 common.c:120 common.c:413 common.c:478
+#: command.c:1729 command.c:3074 common.c:120 common.c:413 common.c:478
 #: common.c:929 common.c:954 common.c:1051 copy.c:492 copy.c:695
-#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
+#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1948
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1680
+#: command.c:1733
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "Poprzednie połączenie zachowane\n"
 
-#: command.c:1684
+#: command.c:1737
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1717
+#: command.c:1771
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Jesteś obecnie połączony do bazy danych \"%s\" jako użytkownik \"%s\" przez gniazdo na \"%s\" port \"%s\".\n"
 
-#: command.c:1720
+#: command.c:1774
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Jesteś obecnie połączony do bazy danych \"%s\" jako użytkownik \"%s\" na serwerze \"%s\" port \"%s\".\n"
 
-#: command.c:1724
+#: command.c:1778
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Jesteś obecnie połączony do bazy danych \"%s\" jako użytkownik \"%s\".\n"
 
-#: command.c:1758
+#: command.c:1812
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, serwer %s)\n"
 
-#: command.c:1766
+#: command.c:1820
 #, c-format
 msgid ""
 "WARNING: %s major version %d.%d, server major version %d.%d.\n"
@@ -321,26 +318,25 @@ msgstr ""
 "OSTRZEŻENIE: %s wersja główna %d.%d, wersja główna serwera %d.%d.\n"
 "             Niektóre cechy psql mogą nie działać.\n"
 
-#: command.c:1796
+#: command.c:1850
 #, c-format
-#| msgid "SSL connection (cipher: %s, bits: %d)\n"
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %d, compression: %s)\n"
 msgstr "Połączenie SSL (protokół: %s, szyfrowanie: %s, bity: %d, kompresja %s)\n"
 
-#: command.c:1798 help.c:46
+#: command.c:1852 help.c:46
 msgid "off"
 msgstr "wyłączone"
 
-#: command.c:1798 help.c:46
+#: command.c:1852 help.c:46
 msgid "on"
 msgstr "włączone"
 
-#: command.c:1807
+#: command.c:1861
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "Połączenie SSL (nieznany szyfr)\n"
 
-#: command.c:1828
+#: command.c:1882
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -351,214 +347,204 @@ msgstr ""
 "             8-bitowe znaki mogą nie wyglądać poprawnie. Przejrzyj odnośną\n"
 "             stronę \"Notes for Windows users\" by poznać szczegóły.\n"
 
-#: command.c:1912
+#: command.c:1966
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
 msgstr "musi być ustawiona zmienna środowiskowa PSQL_EDITOR_LINENUMBER_ARG by wskazać numer linii\n"
 
-#: command.c:1941
+#: command.c:1995
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "nie można uruchomić edytora \"%s\"\n"
 
-#: command.c:1943
+#: command.c:1997
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "nie można uruchomić /bin/sh\n"
 
-#: command.c:1981
+#: command.c:2035
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "nie można utworzyć katalogu tymczasowego: %s\n"
 
-#: command.c:2008
+#: command.c:2062
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "nie można otworzyć pliku tymczasowego \"%s\": %s\n"
 
-#: command.c:2276
+#: command.c:2330
 #, c-format
-msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
-msgstr "\\pset: dostępnymi formatami są unaligned, aligned, wrapped, html, latex, troff-ms\n"
+#| msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
+msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, latex-longtable, troff-ms\n"
+msgstr "\\pset: dostępnymi formatami są unaligned, aligned, wrapped, html, latex, "
+"latex-longtable, troff-ms\n"
 
-#: command.c:2295
+#: command.c:2349
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: dostępne style linii to ascii, old-ascii, unicode\n"
 
-#: command.c:2437 command.c:2588
+#: command.c:2495 command.c:2646
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: nieznana opcja: %s\n"
 
-#: command.c:2455
+#: command.c:2513
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Styl obramowania to %d.\n"
 
-#: command.c:2461
+#: command.c:2519
 #, c-format
-#| msgid "Target width is %d.\n"
 msgid "Target width is unset.\n"
 msgstr "Szerokość celu nieustawiona.\n"
 
-#: command.c:2463
+#: command.c:2521
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "Szerokość celu to %d.\n"
 
-#: command.c:2470
+#: command.c:2528
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Rozszerzone wyświetlanie jest włączone.\n"
 
-#: command.c:2472
+#: command.c:2530
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "Rozszerzone wyświetlanie jest stosowane automatycznie.\n"
 
-#: command.c:2474
+#: command.c:2532
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Rozszerzone wyświetlanie jest wyłączone.\n"
 
-#: command.c:2481 command.c:2489
+#: command.c:2539 command.c:2547
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Separatorem pól jest bajt zero.\n"
 
-#: command.c:2483
+#: command.c:2541
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Separatorem pól jest \"%s\".\n"
 
-#: command.c:2496
+#: command.c:2554
 #, c-format
-#| msgid "Default footer is on."
 msgid "Default footer is on.\n"
 msgstr "Domyślna stopka jest włączona.\n"
 
-#: command.c:2498
+#: command.c:2556
 #, c-format
-#| msgid "Default footer is off."
 msgid "Default footer is off.\n"
 msgstr "Domyślna stopka jest wyłączona.\n"
 
-#: command.c:2504
+#: command.c:2562
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Format wyjścia to %s.\n"
 
-#: command.c:2510
+#: command.c:2568
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Styl linii to %s.\n"
 
-#: command.c:2517
+#: command.c:2575
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Wyświetlanie Null jako \"%s\".\n"
 
-#: command.c:2525
+#: command.c:2583
 #, c-format
-#| msgid "Locale-adjusted numeric output is off."
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "Dostosowane do lokalizacji wyświetlanie liczb jest włączone.\n"
 
-#: command.c:2527
+#: command.c:2585
 #, c-format
-#| msgid "Locale-adjusted numeric output is off."
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "Dostosowane do lokalizacji wyświetlanie liczb jest wyłączone.\n"
 
-#: command.c:2534
+#: command.c:2592
 #, c-format
-#| msgid "Pager is used for long output."
 msgid "Pager is used for long output.\n"
 msgstr "Stronicowanie jest używane dla długiego wyjścia.\n"
 
-#: command.c:2536
+#: command.c:2594
 #, c-format
-#| msgid "Pager is always used."
 msgid "Pager is always used.\n"
 msgstr "Stronicowanie zawsze używane.\n"
 
-#: command.c:2538
+#: command.c:2596
 #, c-format
-#| msgid "Pager usage is off."
 msgid "Pager usage is off.\n"
 msgstr "Stronicowanie nigdy nie używane.\n"
 
-#: command.c:2545 command.c:2555
+#: command.c:2603 command.c:2613
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Separatorem rekordów jest bajt zero.\n"
 
-#: command.c:2547
+#: command.c:2605
 #, c-format
-#| msgid "Record separator is <newline>."
 msgid "Record separator is <newline>.\n"
 msgstr "Separatorem rekordów jest <newline>.\n"
 
-#: command.c:2549
+#: command.c:2607
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Separatorem rekordów jest \"%s\".\n"
 
-#: command.c:2562
+#: command.c:2620
 #, c-format
-#| msgid "Table attribute is \"%s\".\n"
 msgid "Table attributes are \"%s\".\n"
 msgstr "Atrybuty tabeli to \"%s\".\n"
 
-#: command.c:2565
+#: command.c:2623
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atrybuty tabeli nie są ustawione.\n"
 
-#: command.c:2572
+#: command.c:2630
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Tytuł to \"%s\".\n"
 
-#: command.c:2574
+#: command.c:2632
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Tytuł nie jest ustawiony.\n"
 
-#: command.c:2581
+#: command.c:2639
 #, c-format
-#| msgid "Tuples only is off."
 msgid "Tuples only is on.\n"
 msgstr "Tylko krotki włączone.\n"
 
-#: command.c:2583
+#: command.c:2641
 #, c-format
-#| msgid "Tuples only is off."
 msgid "Tuples only is off.\n"
 msgstr "Tylko krotki wyłączone.\n"
 
-#: command.c:2734
+#: command.c:2792
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: niepowodzenie\n"
 
-#: command.c:2754 command.c:2813
+#: command.c:2812 command.c:2870
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch nie może być użyte z pustym zapytaniem\n"
 
-#: command.c:2776
+#: command.c:2833
 #, c-format
 msgid "Watch every %lds\t%s"
 msgstr "Oglądaj co %lds\t%s"
 
-#: command.c:2820
+#: command.c:2877
 #, c-format
 msgid "\\watch cannot be used with COPY\n"
 msgstr "\\watch nie może być użyte z COPY\n"
 
-#: command.c:2826
+#: command.c:2883
 #, c-format
 msgid "unexpected result status for \\watch\n"
 msgstr "nieoczekiwany stan wyniku dla \\watch\n"
@@ -674,7 +660,6 @@ msgstr "nie można wykonać polecenia \"%s\": %s\n"
 
 #: copy.c:346
 #, c-format
-#| msgid "could not stat file \"%s\": %m"
 msgid "could not stat file \"%s\": %s\n"
 msgstr "nie można wykonać stat na pliku \"%s\": %s\n"
 
@@ -722,7 +707,7 @@ msgstr "próba wyjścia z trybu kopiowanie"
 #: describe.c:844 describe.c:914 describe.c:2759 describe.c:2964
 #: describe.c:3054 describe.c:3299 describe.c:3436 describe.c:3665
 #: describe.c:3737 describe.c:3748 describe.c:3807 describe.c:4215
-#: describe.c:4294
+#: describe.c:4295
 msgid "Schema"
 msgstr "Schemat"
 
@@ -731,7 +716,7 @@ msgstr "Schemat"
 #: describe.c:2886 describe.c:2965 describe.c:3055 describe.c:3134
 #: describe.c:3300 describe.c:3364 describe.c:3437 describe.c:3666
 #: describe.c:3738 describe.c:3749 describe.c:3808 describe.c:3997
-#: describe.c:4078 describe.c:4292
+#: describe.c:4078 describe.c:4293
 msgid "Name"
 msgstr "Nazwa"
 
@@ -750,7 +735,7 @@ msgstr "Typy danych argumentów"
 #: describe.c:3147 describe.c:3215 describe.c:3307 describe.c:3373
 #: describe.c:3438 describe.c:3574 describe.c:3614 describe.c:3682
 #: describe.c:3741 describe.c:3750 describe.c:3809 describe.c:4023
-#: describe.c:4100 describe.c:4229 describe.c:4295 large_obj.c:291
+#: describe.c:4100 describe.c:4229 describe.c:4296 large_obj.c:291
 #: large_obj.c:301
 msgid "Description"
 msgstr "Opis"
@@ -934,7 +919,7 @@ msgstr "tabela obca"
 msgid "Column access privileges"
 msgstr "Uprawnienia dostępu do kolumn"
 
-#: describe.c:802 describe.c:4439 describe.c:4443
+#: describe.c:802 describe.c:4440 describe.c:4444
 msgid "Access privileges"
 msgstr "Uprawnienia dostępu"
 
@@ -1177,7 +1162,6 @@ msgid "Triggers:"
 msgstr "Wyzwalacze:"
 
 #: describe.c:2186
-#| msgid "Disabled triggers:"
 msgid "Disabled user triggers:"
 msgstr "Wyłączone wyzwalacze użytkownika:"
 
@@ -1186,7 +1170,6 @@ msgid "Disabled triggers:"
 msgstr "Wyłączone wyzwalacze:"
 
 #: describe.c:2191
-#| msgid "Disabled triggers:"
 msgid "Disabled internal triggers:"
 msgstr "Wyłączone wyzwalacze wewnętrzne:"
 
@@ -1217,12 +1200,10 @@ msgid "Typed table of type: %s"
 msgstr "Tabela typizowana typu: %s"
 
 #: describe.c:2358
-#| msgid "Replication"
 msgid "Replica Identity"
 msgstr "Identyczność Repliki"
 
 #: describe.c:2371
-#| msgid "Has OIDs"
 msgid "Has OIDs: yes"
 msgstr "Zawiera OIDy: tak"
 
@@ -1633,7 +1614,7 @@ msgstr "Serwer (wersja %d.%d) nie obsługuje serwerów obcych.\n"
 msgid "Foreign-data wrapper"
 msgstr "Opakowanie obcych danych"
 
-#: describe.c:4098 describe.c:4293
+#: describe.c:4098 describe.c:4294
 msgid "Version"
 msgstr "Wersja"
 
@@ -1663,41 +1644,40 @@ msgstr "Lista mapowań użytkownika"
 msgid "The server (version %d.%d) does not support foreign tables.\n"
 msgstr "Serwer (wersja %d.%d) nie obsługuje tabel obcych.\n"
 
-#: describe.c:4256
+#: describe.c:4257
 msgid "List of foreign tables"
 msgstr "Lista tabel obcych"
 
-#: describe.c:4279 describe.c:4333
+#: describe.c:4280 describe.c:4334
 #, c-format
 msgid "The server (version %d.%d) does not support extensions.\n"
 msgstr "Serwer (wersja %d.%d) nie obsługuje rozszerzeń.\n"
 
-#: describe.c:4310
+#: describe.c:4311
 msgid "List of installed extensions"
 msgstr "Lista zainstalowanych rozszerzeń"
 
-#: describe.c:4360
+#: describe.c:4361
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
 msgstr "Nie znaleziono żadnego rozszerzenia o nazwie \"%s\".\n"
 
-#: describe.c:4363
+#: describe.c:4364
 #, c-format
 msgid "Did not find any extensions.\n"
 msgstr "Nie znaleziono żadnego rozszerzenia.\n"
 
-#: describe.c:4407
+#: describe.c:4408
 msgid "Object Description"
 msgstr "Opis Obiektu"
 
-#: describe.c:4416
+#: describe.c:4417
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "Obiekty w rozszerzeniu \"%s\""
 
 #: help.c:62
 #, c-format
-#| msgid "%s"
 msgid "%s\n"
 msgstr "%s\n"
 
@@ -1854,16 +1834,12 @@ msgstr "  -A, --no-align           tryb braku wyrównania tabeli na wyjściu\n"
 
 #: help.c:101
 #, c-format
-#| msgid ""
-#| "  -F, --field-separator=STRING\n"
-#| "                           set field separator (default: \"%s\")\n"
 msgid ""
 "  -F, --field-separator=STRING\n"
 "                           field separator for unaligned output (default: \"%s\")\n"
 msgstr ""
 "  -F, --field-separator=CIĄGZNAKÓW\n"
-"                           separator pól dla niewyrównanego wyjścia "
-"(domyślnie: \"%s\")\n"
+"                           separator pól dla niewyrównanego wyjścia (domyślnie: \"%s\")\n"
 
 #: help.c:104
 #, c-format
@@ -1877,16 +1853,12 @@ msgstr "  -P, --pset=ZMI[=ARG]     ustawia opcję drukowania ZMI na ARG (patrz p
 
 #: help.c:106
 #, c-format
-#| msgid ""
-#| "  -R, --record-separator=STRING\n"
-#| "                           set record separator (default: newline)\n"
 msgid ""
 "  -R, --record-separator=STRING\n"
 "                           record separator for unaligned output (default: newline)\n"
 msgstr ""
 "  -R, --record-separator=CIĄGZNAKÓW\n"
-"                           separator rekordów dla niewyrównanego "
-"wyjścia(domyślnie: nowa linia)\n"
+"                           separator rekordów dla niewyrównanego wyjścia(domyślnie: nowa linia)\n"
 
 #: help.c:108
 #, c-format
@@ -1905,29 +1877,21 @@ msgstr "  -x, --expanded           włącza wyjście rozciągniętej tabeli\n"
 
 #: help.c:111
 #, c-format
-#| msgid ""
-#| "  -z, --field-separator-zero\n"
-#| "                           set field separator to zero byte\n"
 msgid ""
 "  -z, --field-separator-zero\n"
 "                           set field separator for unaligned output to zero byte\n"
 msgstr ""
 "  -z, --field-separator-zero\n"
-"                           ustala separator pól dla niewyrównanego wyjścia "
-"na bajt zero\n"
+"                           ustala separator pól dla niewyrównanego wyjścia na bajt zero\n"
 
 #: help.c:113
 #, c-format
-#| msgid ""
-#| "  -0, --record-separator-zero\n"
-#| "                           set record separator to zero byte\n"
 msgid ""
 "  -0, --record-separator-zero\n"
 "                           set record separator for unaligned output to zero byte\n"
 msgstr ""
 "  -0, --record-separator-zero\n"
-"                           ustala separator rekordów dla niewyrównanego "
-"wyjścia na bajt zero\n"
+"                           ustala separator rekordów dla niewyrównanego wyjścia na bajt zero\n"
 
 #: help.c:116
 #, c-format
@@ -2334,20 +2298,14 @@ msgstr "  \\H                     przełącza tryb wyjścia HTML (obecnie %s)\n"
 
 #: help.c:235
 #, c-format
-#| msgid ""
-#| "  \\pset NAME [VALUE]     set table output option\n"
-#| "                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-#| "                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
 msgid ""
 "  \\pset [NAME [VALUE]]   set table output option\n"
 "                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
 "                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
 msgstr ""
 "  \\pset [NAZWA [WARTOSC]]  ustawia opcje wyjścia tabeli\n"
-"                         (NAZWA := "
-"{format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-"                         "
-"numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
+"                         (NAZWA := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
+"                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:238
 #, c-format
@@ -2371,20 +2329,26 @@ msgstr "Połączenie\n"
 
 #: help.c:247
 #, c-format
+#| msgid ""
+#| "  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+#| "                         connect to new database (currently \"%s\")\n"
 msgid ""
-"  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 "                         connect to new database (currently \"%s\")\n"
 msgstr ""
-"  \\c[onnect] [NAZWADB|- UŻYTK|- HOST|- PORT|-]\n"
+"  \\c[onnect] {[NAZWADB|- UŻYTK|- HOST|- PORT|-] | conninfo}\n"
 "                         łączy do nowej bazy danych (obecnie \"%s\")\n"
 
 #: help.c:251
 #, c-format
+#| msgid ""
+#| "  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+#| "                         connect to new database (currently no connection)\n"
 msgid ""
-"  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+"  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
 "                         connect to new database (currently no connection)\n"
 msgstr ""
-"  \\c[onnect] [NAZWADB|- UŻYTK|- HOST|- PORT|-]\n"
+"  \\c[onnect] {[NAZWADB|- UŻYTK|- HOST|- PORT|-] | conninfo}\n"
 "                         łączy do nowej bazy danych (obecnie bez połączenia)\n"
 
 #: help.c:253
@@ -2497,17 +2461,17 @@ msgstr ""
 "Brak dostępnej pomocy dla \"%s\".\n"
 "Spróbuj \\h bez argumentów by zobaczyć dostępną pomoc.\n"
 
-#: input.c:194
+#: input.c:205
 #, c-format
 msgid "could not read from input file: %s\n"
 msgstr "nie można czytać z pliku wejścia: %s\n"
 
-#: input.c:451 input.c:490
+#: input.c:460 input.c:499
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "nie można zapisać historii do pliku \"%s\": %s\n"
 
-#: input.c:510
+#: input.c:519
 #, c-format
 msgid "history is not supported by this installation\n"
 msgstr "historia nie jest obsługiwana przez tą instalację\n"
@@ -2559,7 +2523,7 @@ msgstr ""
 "        \\g lub zakończ średnikiem by wykonać zapytanie\n"
 "        \\q by wyjść\n"
 
-#: print.c:272
+#: print.c:278
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
@@ -2567,27 +2531,27 @@ msgstr[0] "(%lu wiersz)"
 msgstr[1] "(%lu wiersze)"
 msgstr[2] "(%lu wierszy)"
 
-#: print.c:1174
+#: print.c:1180
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Brak wierszy)\n"
 
-#: print.c:2238
+#: print.c:2244
 #, c-format
 msgid "Interrupted\n"
 msgstr "Przerwane\n"
 
-#: print.c:2304
+#: print.c:2310
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "Nie można dodać nagłówka do zawartości tabeli: przekroczona liczba kolumn %d.\n"
 
-#: print.c:2344
+#: print.c:2350
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "Nie można dodać komórki do zawartości tabeli: przekroczona liczba komórek %d.\n"
 
-#: print.c:2570
+#: print.c:2576
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "niepoprawny format wyjścia (błąd wewnętrzny): %d"
@@ -2597,17 +2561,17 @@ msgstr "niepoprawny format wyjścia (błąd wewnętrzny): %d"
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "pomijanie rekurencyjnego rozszerzania zmiennej \"%s\"\n"
 
-#: psqlscan.l:1604
+#: psqlscan.l:1603
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "niezakończona stała łańcuchowa\n"
 
-#: psqlscan.l:1704
+#: psqlscan.l:1703
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: brak pamięci\n"
 
-#: psqlscan.l:1933
+#: psqlscan.l:1932
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "nie może uciec bez aktywnego połączenia\n"
@@ -2664,7 +2628,6 @@ msgstr "nazwa"
 
 #: sql_help.c:33 sql_help.c:36 sql_help.c:39 sql_help.c:300 sql_help.c:1279
 #: sql_help.c:2417 sql_help.c:3234
-#| msgid "aggregates cannot return sets"
 msgid "aggregate_signature"
 msgstr "podpis_agregatu"
 
@@ -2694,7 +2657,6 @@ msgid "new_schema"
 msgstr "nowy_schemat"
 
 #: sql_help.c:41 sql_help.c:1326 sql_help.c:2418 sql_help.c:3253
-#| msgid "where constraint is:"
 msgid "where aggregate_signature is:"
 msgstr "gdzie podpis_agregatu to:"
 
@@ -2842,7 +2804,6 @@ msgid "where member_object is:"
 msgstr "gdzie obiekt_składowy to:"
 
 #: sql_help.c:299 sql_help.c:1278 sql_help.c:3233
-#| msgid "agg_name"
 msgid "aggregate_name"
 msgstr "nazwa_agregatu"
 
@@ -3237,7 +3198,6 @@ msgid "encoding_name"
 msgstr "nazwa_kodowania"
 
 #: sql_help.c:1459 sql_help.c:1475 sql_help.c:1478
-#| msgid "data_type"
 msgid "arg_data_type"
 msgstr "typ_arg_danych"
 
@@ -3250,7 +3210,6 @@ msgid "state_data_type"
 msgstr "typ_danych_stanu"
 
 #: sql_help.c:1462 sql_help.c:1481 sql_help.c:1489
-#| msgid "state_data_type"
 msgid "state_data_size"
 msgstr "rozm_danych_stanu"
 
@@ -3263,32 +3222,26 @@ msgid "initial_condition"
 msgstr "warunek_początkowy"
 
 #: sql_help.c:1465 sql_help.c:1492
-#| msgid "sfunc"
 msgid "msfunc"
 msgstr "msfunk"
 
 #: sql_help.c:1466 sql_help.c:1493
-#| msgid "minvalue"
 msgid "minvfunc"
 msgstr "fnwmin"
 
 #: sql_help.c:1467 sql_help.c:1494
-#| msgid "state_data_type"
 msgid "mstate_data_type"
 msgstr "typ_danych_mstanu"
 
 #: sql_help.c:1468 sql_help.c:1495
-#| msgid "state_data_type"
 msgid "mstate_data_size"
 msgstr "rozm_danych_mstanu"
 
 #: sql_help.c:1469 sql_help.c:1496
-#| msgid "ffunc"
 msgid "mffunc"
 msgstr "mffunk"
 
 #: sql_help.c:1470 sql_help.c:1497
-#| msgid "initial_condition"
 msgid "minitial_condition"
 msgstr "warunek_mpoczątkowy"
 
@@ -3967,7 +3920,6 @@ msgid "change the definition of a foreign server"
 msgstr "zmienia definicję serwera obcego"
 
 #: sql_help.h:316
-#| msgid "configuration_parameter"
 msgid "change a server configuration parameter"
 msgstr "zmienia parametr konfiguracji serwera"
 
@@ -4516,7 +4468,13 @@ msgstr "%s: ostrzeżenie: nadmiarowy argument wiersza poleceń \"%s\" zignorowan
 msgid "%s: could not find own program executable\n"
 msgstr "%s: nie można znaleźć programu wykonywalnego\n"
 
-#: tab-complete.c:4115
+#: startup.c:729 startup.c:776 startup.c:797 startup.c:834 variables.c:121
+#, c-format
+#| msgid "unrecognized Boolean value; assuming \"on\"\n"
+msgid "unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n"
+msgstr "nierozpoznana wartość \"%s\" dla \"%s\"; przyjęto \"%s\"\n"
+
+#: tab-complete.c:4106
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -4527,31 +4485,26 @@ msgstr ""
 "Zapytanie to:\n"
 "%s\n"
 
-#: variables.c:115
-#, c-format
-msgid "unrecognized Boolean value; assuming \"on\"\n"
-msgstr "nierozpoznana wartość logiczna; przyjęto \"on\"\n"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "nie można zmienić katalogu na \"%s\""
-
-#~ msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
-#~ msgstr "%s: pg_strdup: nie można powielić pustego wskazania (błąd wewnętrzny)\n"
-
-#~ msgid "  \\l[+]                  list all databases\n"
-#~ msgstr "  \\l[+]                  listuje wszystkie bazy danych\n"
-
-#~ msgid "input_data_type"
-#~ msgstr "typ_danych_wejściowych"
-
-#~ msgid "agg_type"
-#~ msgstr "typ_agreg"
-
-#~ msgid "could not get current user name: %s\n"
-#~ msgstr "nie udało się uzyskać nazwy bieżącego użytkownika: %s\n"
+#~ msgid "Showing locale-adjusted numeric output."
+#~ msgstr "Wyświetlanie dostosowanego do lokalizacji wyjścia numerycznego."
 
 #~ msgid "Showing only tuples."
 #~ msgstr "Pokazywanie tylko krotek."
 
-#~ msgid "Showing locale-adjusted numeric output."
-#~ msgstr "Wyświetlanie dostosowanego do lokalizacji wyjścia numerycznego."
+#~ msgid "could not get current user name: %s\n"
+#~ msgstr "nie udało się uzyskać nazwy bieżącego użytkownika: %s\n"
+
+#~ msgid "agg_type"
+#~ msgstr "typ_agreg"
+
+#~ msgid "input_data_type"
+#~ msgstr "typ_danych_wejściowych"
+
+#~ msgid "  \\l[+]                  list all databases\n"
+#~ msgstr "  \\l[+]                  listuje wszystkie bazy danych\n"
+
+#~ msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
+#~ msgstr "%s: pg_strdup: nie można powielić pustego wskazania (błąd wewnętrzny)\n"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "nie można zmienić katalogu na \"%s\""

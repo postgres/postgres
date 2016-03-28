@@ -2,13 +2,13 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011, 2012, 2013.
-# grzegorz <begina.felicysym@wp.eu>, 2014.
+# grzegorz <begina.felicysym@wp.eu>, 2014, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-11-10 20:42+0000\n"
-"PO-Revision-Date: 2014-11-10 23:03+0200\n"
+"POT-Creation-Date: 2016-02-21 00:49+0000\n"
+"PO-Revision-Date: 2016-02-22 21:38+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -32,19 +32,18 @@ msgstr "nie można powielić pustego wskazania (błąd wewnętrzny)\n"
 
 #: ../../common/username.c:45
 #, c-format
-#| msgid "could not load private key file \"%s\": %s"
 msgid "could not look up effective user ID %ld: %s"
 msgstr "nie udało się odnaleźć efektywnego ID użytkownika %ld: %s"
 
 #: ../../common/username.c:47
-#| msgid "server \"%s\" does not exist"
 msgid "user does not exist"
 msgstr "użytkownik nie istnieje"
 
-#: ../../common/username.c:61
+#: ../../common/username.c:62
 #, c-format
-msgid "user name lookup failure: %s"
-msgstr "niepowodzenie wyszukiwania nazwy użytkownika: %s"
+#| msgid "user name lookup failure: %s"
+msgid "user name lookup failure: error code %lu"
+msgstr "niepowodzenie wyszukiwania nazwy użytkownika: kod błędu %lu"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:168
@@ -547,7 +546,6 @@ msgstr "  -E, --encrypted           szyfruje zapisane hasło\n"
 
 #: createuser.c:356
 #, c-format
-#| msgid "  -s, --superuser           role will be superuser\n"
 msgid "  -g, --role=ROLE           new role will be a member of this role\n"
 msgstr "  -g, --role=ROLA           nowa rola będzie członkiem tej roli\n"
 
@@ -752,6 +750,34 @@ msgstr "%s: %s"
 #, c-format
 msgid "%s: could not fetch default options\n"
 msgstr "%s: nie można pobrać opcji domyślnych\n"
+
+#: pg_isready.c:199
+#, c-format
+#| msgid "Server started and accepting connections\n"
+msgid "accepting connections\n"
+msgstr "akceptowanie połączeń\n"
+
+#: pg_isready.c:202
+#, c-format
+#| msgid "Server started and accepting connections\n"
+msgid "rejecting connections\n"
+msgstr "odrzucanie połaczeń\n"
+
+#: pg_isready.c:205
+#, c-format
+msgid "no response\n"
+msgstr "brak odpowiedzi\n"
+
+#: pg_isready.c:208
+#, c-format
+msgid "no attempt\n"
+msgstr "nie próbowano\n"
+
+#: pg_isready.c:211
+#, c-format
+#| msgid "[unknown]"
+msgid "unknown\n"
+msgstr "nieznany\n"
 
 #: pg_isready.c:221
 #, c-format
@@ -1022,8 +1048,7 @@ msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
 "                                  stages for faster results\n"
 msgstr ""
-"      --analyze-in-stages         tylko aktualizuj statystyki "
-"optymalizatora, przy\n"
+"      --analyze-in-stages         tylko aktualizuj statystyki optymalizatora, przy\n"
 "                                  wielostopniowych dla szybszych wyników\n"
 
 #: vacuumdb.c:441
@@ -1040,11 +1065,11 @@ msgstr ""
 "\n"
 "Przeczytaj opis polecenia SQL VACUUM by uzyskać informacje szczegółowe.\n"
 
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s: brak pamięci\n"
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: nie można uzyskać informacji o bieżącym użytkowniku: %s\n"
 
 #~ msgid "%s: could not get current user name: %s\n"
 #~ msgstr "%s: nie można pobrać nazwy bieżącego użytkownika: %s\n"
 
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: nie można uzyskać informacji o bieżącym użytkowniku: %s\n"
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s: brak pamięci\n"
