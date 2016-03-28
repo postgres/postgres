@@ -1032,6 +1032,8 @@ sub psql
 	  IPC::Run::timeout($params{timeout}, exception => $timeout_exception)
 	  if (defined($params{timeout}));
 
+	${$params{timed_out}} = 0 if defined $params{timed_out};
+
 	# IPC::Run would otherwise append to existing contents:
 	$$stdout = "" if ref($stdout);
 	$$stderr = "" if ref($stderr);
