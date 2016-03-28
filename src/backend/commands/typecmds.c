@@ -450,14 +450,14 @@ DefineType(List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(WARNING,
-					(errmsg("changing return type of function %s from \"opaque\" to %s",
-							NameListToString(inputName), typeName)));
+					(errmsg("changing return type of function %s from \"%s\" to \"%s\"",
+							NameListToString(inputName), "opaque", typeName)));
 			SetFunctionReturnType(inputOid, typoid);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type input function %s must return type %s",
+					 errmsg("type input function %s must return type \"%s\"",
 							NameListToString(inputName), typeName)));
 	}
 	resulttype = get_func_rettype(outputOid);
@@ -467,15 +467,15 @@ DefineType(List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(WARNING,
-					(errmsg("changing return type of function %s from \"opaque\" to \"cstring\"",
-							NameListToString(outputName))));
+					(errmsg("changing return type of function %s from \"%s\" to \"%s\"",
+							NameListToString(outputName), "opaque", "cstring")));
 			SetFunctionReturnType(outputOid, CSTRINGOID);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("type output function %s must return type \"cstring\"",
-					  NameListToString(outputName))));
+			   errmsg("type output function %s must return type \"%s\"",
+					  NameListToString(outputName), "cstring")));
 	}
 	if (receiveOid)
 	{
@@ -483,7 +483,7 @@ DefineType(List *names, List *parameters)
 		if (resulttype != typoid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type receive function %s must return type %s",
+					 errmsg("type receive function %s must return type \"%s\"",
 							NameListToString(receiveName), typeName)));
 	}
 	if (sendOid)
@@ -492,8 +492,8 @@ DefineType(List *names, List *parameters)
 		if (resulttype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				   errmsg("type send function %s must return type \"bytea\"",
-						  NameListToString(sendName))));
+				   errmsg("type send function %s must return type \"%s\"",
+						  NameListToString(sendName), "bytea")));
 	}
 
 	/*
@@ -1834,8 +1834,8 @@ findTypeTypmodinFunction(List *procname)
 	if (get_func_rettype(procOid) != INT4OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("typmod_in function %s must return type \"integer\"",
-						NameListToString(procname))));
+				 errmsg("typmod_in function %s must return type \"%s\"",
+						NameListToString(procname), "integer")));
 
 	return procOid;
 }
@@ -1861,8 +1861,8 @@ findTypeTypmodoutFunction(List *procname)
 	if (get_func_rettype(procOid) != CSTRINGOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("typmod_out function %s must return type \"cstring\"",
-						NameListToString(procname))));
+				 errmsg("typmod_out function %s must return type \"%s\"",
+						NameListToString(procname), "cstring")));
 
 	return procOid;
 }
@@ -1888,8 +1888,8 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 	if (get_func_rettype(procOid) != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			  errmsg("type analyze function %s must return type \"boolean\"",
-					 NameListToString(procname))));
+			  errmsg("type analyze function %s must return type \"%s\"",
+					 NameListToString(procname), "boolean")));
 
 	return procOid;
 }
@@ -2007,8 +2007,9 @@ findRangeSubtypeDiffFunction(List *procname, Oid subtype)
 	if (get_func_rettype(procOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("range subtype diff function %s must return type double precision",
-						func_signature_string(procname, 2, NIL, argList))));
+				 errmsg("range subtype diff function %s must return type \"%s\"",
+						func_signature_string(procname, 2, NIL, argList),
+						"double precision")));
 
 	if (func_volatile(procOid) != PROVOLATILE_IMMUTABLE)
 		ereport(ERROR,

@@ -758,8 +758,8 @@ transformRangeTableSample(ParseState *pstate, RangeTableSample *rts)
 	if (get_func_rettype(handlerOid) != TSM_HANDLEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("function %s must return type \"tsm_handler\"",
-						NameListToString(rts->method)),
+				 errmsg("function %s must return type \"%s\"",
+						NameListToString(rts->method), "tsm_handler"),
 				 parser_errposition(pstate, rts->location)));
 
 	/* OK, run the handler to get TsmRoutine, for argument type info */

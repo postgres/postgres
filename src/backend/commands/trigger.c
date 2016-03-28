@@ -438,8 +438,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("function %s must return type \"trigger\"",
-							NameListToString(stmt->funcname))));
+					 errmsg("function %s must return type \"%s\"",
+							NameListToString(stmt->funcname), "trigger")));
 	}
 
 	/*
