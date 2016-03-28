@@ -353,6 +353,15 @@ ereport(ERROR,
      includes the current statement already.
     </para>
    </listitem>
+   <listitem>
+    <para>
+     <function>errhidecontext(bool hide_ctx)</function> can be called to
+     specify suppression of the <literal>CONTEXT:</> portion of a message in
+     the postmaster log.  This should only be used for verbose debugging
+     messages where the repeated inclusion of context would bloat the log
+     volume too much.
+    </para>
+   </listitem>
   </itemizedlist>
    </para>
 

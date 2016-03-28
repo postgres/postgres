@@ -1081,7 +1081,7 @@ errhidestmt(bool hide_stmt)
  * errhidecontext --- optionally suppress CONTEXT: field of log entry
  *
  * This should only be used for verbose debugging messages where the repeated
- * inclusion of CONTEXT: bloats the log volume too much.
+ * inclusion of context would bloat the log volume too much.
  */
 int
 errhidecontext(bool hide_ctx)
