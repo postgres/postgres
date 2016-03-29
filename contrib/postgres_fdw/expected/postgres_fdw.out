@@ -1958,13 +1958,30 @@ EXECUTE join_stmt;
 
 -- change the session user to view_owner and execute the statement. Because of
 -- change in session user, the plan should get invalidated and created again.
--- While creating the plan, it should throw error since there is no user mapping
--- available for view_owner.
+-- The join will not be pushed down since the joining relations do not have a
+-- valid user mapping.
 SET SESSION ROLE view_owner;
 EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
-ERROR:  user mapping not found for "view_owner"
-EXECUTE join_stmt;
-ERROR:  user mapping not found for "view_owner"
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Limit
+   Output: t1.c1, t2.c1
+   ->  Sort
+         Output: t1.c1, t2.c1
+         Sort Key: t1.c1, t2.c1
+         ->  Hash Left Join
+               Output: t1.c1, t2.c1
+               Hash Cond: (t1.c1 = t2.c1)
+               ->  Foreign Scan on public.ft4 t1
+                     Output: t1.c1, t1.c2, t1.c3
+                     Remote SQL: SELECT c1 FROM "S 1"."T 3"
+               ->  Hash
+                     Output: t2.c1
+                     ->  Foreign Scan on public.ft5 t2
+                           Output: t2.c1
+                           Remote SQL: SELECT c1 FROM "S 1"."T 4"
+(16 rows)
+
 RESET ROLE;
 DEALLOCATE join_stmt;
 CREATE VIEW v_ft5 AS SELECT * FROM ft5;
@@ -2020,6 +2037,40 @@ EXECUTE join_stmt;
  c1 | c1 
 ----+----
 (0 rows)
+
+-- If a sub-join can't be pushed down, upper level join shouldn't be either.
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM (ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1)) left join (ft5 t3 JOIN v_ft5 t4 ON (t3.c1 = t4.c1)) ON (t1.c1 = t3.c1);
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Hash Join
+   Output: t1.c1, ft5.c1
+   Hash Cond: (t1.c1 = ft5.c1)
+   ->  Hash Right Join
+         Output: t1.c1
+         Hash Cond: (t3.c1 = t1.c1)
+         ->  Hash Join
+               Output: t3.c1
+               Hash Cond: (t3.c1 = ft5_1.c1)
+               ->  Foreign Scan on public.ft5 t3
+                     Output: t3.c1, t3.c2, t3.c3
+                     Remote SQL: SELECT c1 FROM "S 1"."T 4"
+               ->  Hash
+                     Output: ft5_1.c1
+                     ->  Foreign Scan on public.ft5 ft5_1
+                           Output: ft5_1.c1
+                           Remote SQL: SELECT c1 FROM "S 1"."T 4"
+         ->  Hash
+               Output: t1.c1
+               ->  Foreign Scan on public.ft5 t1
+                     Output: t1.c1
+                     Remote SQL: SELECT c1 FROM "S 1"."T 4"
+   ->  Hash
+         Output: ft5.c1
+         ->  Foreign Scan on public.ft5
+               Output: ft5.c1
+               Remote SQL: SELECT c1 FROM "S 1"."T 4"
+(27 rows)
 
 -- recreate the dropped user mapping for further tests
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;

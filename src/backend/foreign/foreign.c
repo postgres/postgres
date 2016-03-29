@@ -31,7 +31,7 @@
 extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
 extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
-static HeapTuple find_user_mapping(Oid userid, Oid serverid);
+static HeapTuple find_user_mapping(Oid userid, Oid serverid, bool missing_ok);
 
 /*
  * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
@@ -223,7 +223,7 @@ GetUserMapping(Oid userid, Oid serverid)
 	bool		isnull;
 	UserMapping *um;
 
-	tp = find_user_mapping(userid, serverid);
+	tp = find_user_mapping(userid, serverid, false);
 
 	um = (UserMapping *) palloc(sizeof(UserMapping));
 	um->umid = HeapTupleGetOid(tp);
@@ -250,14 +250,23 @@ GetUserMapping(Oid userid, Oid serverid)
  *
  * If no mapping is found for the supplied user, we also look for
  * PUBLIC mappings (userid == InvalidOid).
+ *
+ * If missing_ok is true, the function returns InvalidOid when it does not find
+ * required user mapping. Otherwise, find_user_mapping() throws error if it
+ * does not find required user mapping. 
  */
 Oid
-GetUserMappingId(Oid userid, Oid serverid)
+GetUserMappingId(Oid userid, Oid serverid, bool missing_ok)
 {
 	HeapTuple	tp;
 	Oid			umid;
 
-	tp = find_user_mapping(userid, serverid);
+	tp = find_user_mapping(userid, serverid, missing_ok);
+
+	Assert(missing_ok || tp);
+
+	if (!tp && missing_ok)
+		return InvalidOid;
 
 	/* Extract the Oid */
 	umid = HeapTupleGetOid(tp);
@@ -273,9 +282,13 @@ GetUserMappingId(Oid userid, Oid serverid)
  *
  * If no mapping is found for the supplied user, we also look for
  * PUBLIC mappings (userid == InvalidOid).
+ *
+ * If missing_ok is true, the function returns NULL, if it does not find
+ * the required user mapping. Otherwise, it throws error if it does not
+ * find the required user mapping.
  */
 static HeapTuple
-find_user_mapping(Oid userid, Oid serverid)
+find_user_mapping(Oid userid, Oid serverid, bool missing_ok)
 {
 	HeapTuple	tp;
 
@@ -292,10 +305,15 @@ find_user_mapping(Oid userid, Oid serverid)
 						 ObjectIdGetDatum(serverid));
 
 	if (!HeapTupleIsValid(tp))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user mapping not found for \"%s\"",
-						MappingUserName(userid))));
+	{
+		if (missing_ok)
+			return NULL;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("user mapping not found for \"%s\"",
+							MappingUserName(userid))));
+	}
 
 	return tp;
 }

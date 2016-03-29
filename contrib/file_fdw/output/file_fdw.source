@@ -322,6 +322,17 @@ EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
    Foreign File: @abs_srcdir@/data/agg.data
 
 \t off
+-- file FDW allows foreign tables to be accessed without user mapping
+DROP USER MAPPING FOR file_fdw_user SERVER file_server;
+SELECT * FROM agg_text ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+  56 |     7.8
+ 100 |  99.097
+(4 rows)
+
 -- privilege tests for object
 SET ROLE file_fdw_superuser;
 ALTER FOREIGN TABLE agg_text OWNER TO file_fdw_user;
@@ -333,9 +344,8 @@ SET ROLE file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
-NOTICE:  drop cascades to 8 other objects
+NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to server file_server
-drop cascades to user mapping for file_fdw_user on server file_server
 drop cascades to user mapping for file_fdw_superuser on server file_server
 drop cascades to user mapping for no_priv_user on server file_server
 drop cascades to foreign table agg_text

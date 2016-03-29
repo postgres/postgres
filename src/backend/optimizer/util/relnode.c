@@ -180,11 +180,15 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 		 * ensure that it gets invalidated in the case of a user OID change.
 		 * See RevalidateCachedQuery and more generally the hasForeignJoin
 		 * flags in PlannerGlobal and PlannedStmt.
+		 *
+		 * It's possible, and not necessarily an error, for rel->umid to be
+		 * InvalidOid even though rel->serverid is set.  That just means there
+		 * is a server with no user mapping.
 		 */
 		Oid		userid;
 
 		userid = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
-		rel->umid = GetUserMappingId(userid, rel->serverid);
+		rel->umid = GetUserMappingId(userid, rel->serverid, true);
 	}
 	else
 		rel->umid = InvalidOid;
@@ -435,12 +439,16 @@ build_join_rel(PlannerInfo *root,
 	 *
 	 * Otherwise those fields are left invalid, so FDW API will not be called
 	 * for the join relation.
+	 *
+	 * For FDWs like file_fdw, which ignore user mapping, the user mapping id
+	 * associated with the joining relation may be invalid. A valid serverid
+	 * distinguishes between a pushed down join with no user mapping and
+	 * a join which can not be pushed down because of user mapping mismatch.
 	 */
 	if (OidIsValid(outer_rel->serverid) &&
 		inner_rel->serverid == outer_rel->serverid &&
 		inner_rel->umid == outer_rel->umid)
 	{
-		Assert(OidIsValid(outer_rel->umid));
 		joinrel->serverid = outer_rel->serverid;
 		joinrel->umid = outer_rel->umid;
 		joinrel->fdwroutine = outer_rel->fdwroutine;

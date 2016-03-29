@@ -3911,6 +3911,16 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	List	   *otherclauses;
 
 	/*
+	 * Core code may call GetForeignJoinPaths hook even when the join
+	 * relation doesn't have a valid user mapping associated with it. See
+	 * build_join_rel() for details. We can't push down such join, since
+	 * there doesn't exist a user mapping which can be used to connect to the
+	 * foreign server.
+	 */
+	if (!OidIsValid(joinrel->umid))
+		return false;
+
+	/*
 	 * We support pushing down INNER, LEFT, RIGHT and FULL OUTER joins.
 	 * Constructing queries representing SEMI and ANTI joins is hard, hence
 	 * not considered right now.

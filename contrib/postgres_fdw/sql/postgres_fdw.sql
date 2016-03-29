@@ -478,11 +478,10 @@ EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
 EXECUTE join_stmt;
 -- change the session user to view_owner and execute the statement. Because of
 -- change in session user, the plan should get invalidated and created again.
--- While creating the plan, it should throw error since there is no user mapping
--- available for view_owner.
+-- The join will not be pushed down since the joining relations do not have a
+-- valid user mapping.
 SET SESSION ROLE view_owner;
 EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
-EXECUTE join_stmt;
 RESET ROLE;
 DEALLOCATE join_stmt;
 
@@ -505,6 +504,10 @@ EXECUTE join_stmt;
 CREATE USER MAPPING FOR view_owner SERVER loopback;
 EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
 EXECUTE join_stmt;
+
+-- If a sub-join can't be pushed down, upper level join shouldn't be either.
+EXPLAIN (COSTS false, VERBOSE)
+SELECT t1.c1, t2.c1 FROM (ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1)) left join (ft5 t3 JOIN v_ft5 t4 ON (t3.c1 = t4.c1)) ON (t1.c1 = t3.c1);
 
 -- recreate the dropped user mapping for further tests
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;

@@ -173,6 +173,9 @@ SET ROLE file_fdw_user;
 \t on
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
 \t off
+-- file FDW allows foreign tables to be accessed without user mapping
+DROP USER MAPPING FOR file_fdw_user SERVER file_server;
+SELECT * FROM agg_text ORDER BY a;
 
 -- privilege tests for object
 SET ROLE file_fdw_superuser;
