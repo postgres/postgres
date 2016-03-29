@@ -383,7 +383,7 @@ SetLatch(volatile Latch *latch)
 #endif
 
 	/*
-	 * The memory barrier has be to be placed here to ensure that any flag
+	 * The memory barrier has to be placed here to ensure that any flag
 	 * variables possibly changed by this process have been flushed to main
 	 * memory, before we check/set is_set.
 	 */
