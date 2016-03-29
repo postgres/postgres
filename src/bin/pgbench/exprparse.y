@@ -20,6 +20,7 @@ PgBenchExpr *expr_parse_result;
 
 static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
 static PgBenchExpr *make_integer_constant(int64 ival);
+static PgBenchExpr *make_double_constant(double dval);
 static PgBenchExpr *make_variable(char *varname);
 static PgBenchExpr *make_op(yyscan_t yyscanner, const char *operator,
 		PgBenchExpr *lexpr, PgBenchExpr *rexpr);
@@ -38,6 +39,7 @@ static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *
 %union
 {
 	int64		ival;
+	double		dval;
 	char	   *str;
 	PgBenchExpr *expr;
 	PgBenchExprList *elist;
@@ -46,9 +48,10 @@ static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *
 %type <elist> elist
 %type <expr> expr
 %type <ival> INTEGER function
+%type <dval> DOUBLE
 %type <str> VARIABLE FUNCTION
 
-%token INTEGER VARIABLE FUNCTION
+%token INTEGER DOUBLE VARIABLE FUNCTION
 
 /* Precedence: lowest to highest */
 %left	'+' '-'
@@ -74,6 +77,7 @@ expr: '(' expr ')'			{ $$ = $2; }
 	| expr '/' expr			{ $$ = make_op(yyscanner, "/", $1, $3); }
 	| expr '%' expr			{ $$ = make_op(yyscanner, "%", $1, $3); }
 	| INTEGER				{ $$ = make_integer_constant($1); }
+	| DOUBLE				{ $$ = make_double_constant($1); }
 	| VARIABLE 				{ $$ = make_variable($1); }
 	| function '(' elist ')' { $$ = make_func(yyscanner, $1, $3); }
 	;
@@ -88,8 +92,20 @@ make_integer_constant(int64 ival)
 {
 	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
 
-	expr->etype = ENODE_INTEGER_CONSTANT;
-	expr->u.integer_constant.ival = ival;
+	expr->etype = ENODE_CONSTANT;
+	expr->u.constant.type = PGBT_INT;
+	expr->u.constant.u.ival = ival;
+	return expr;
+}
+
+static PgBenchExpr *
+make_double_constant(double dval)
+{
+	PgBenchExpr *expr = pg_malloc(sizeof(PgBenchExpr));
+
+	expr->etype = ENODE_CONSTANT;
+	expr->u.constant.type = PGBT_DOUBLE;
+	expr->u.constant.u.dval = dval;
 	return expr;
 }
 
@@ -153,6 +169,27 @@ static const struct
 	},
 	{
 		"debug", 1, PGBENCH_DEBUG
+	},
+	{
+		"pi", 0, PGBENCH_PI
+	},
+	{
+		"sqrt", 1, PGBENCH_SQRT
+	},
+	{
+		"int", 1, PGBENCH_INT
+	},
+	{
+		"double", 1, PGBENCH_DOUBLE
+	},
+	{
+		"random", 2, PGBENCH_RANDOM
+	},
+	{
+		"random_gaussian", 3, PGBENCH_RANDOM_GAUSSIAN
+	},
+	{
+		"random_exponential", 3, PGBENCH_RANDOM_EXPONENTIAL
 	},
 	/* keep as last array element */
 	{

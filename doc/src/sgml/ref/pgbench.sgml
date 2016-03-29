@@ -815,9 +815,10 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
     <listitem>
      <para>
-      Sets variable <replaceable>varname</> to an integer value calculated
+      Sets variable <replaceable>varname</> to a value calculated
       from <replaceable>expression</>.
       The expression may contain integer constants such as <literal>5432</>,
+      double constants such as <literal>3.14159</>,
       references to variables <literal>:</><replaceable>variablename</>,
       unary operators (<literal>+</>, <literal>-</>) and binary operators
       (<literal>+</>, <literal>-</>, <literal>*</>, <literal>/</>,
@@ -830,7 +831,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Examples:
 <programlisting>
 \set ntellers 10 * :scale
-\set aid (1021 * :aid) % (100000 * :scale) + 1
+\set aid (1021 * random(1, 100000 * :scale)) % (100000 * :scale) + 1
 </programlisting></para>
     </listitem>
    </varlistentry>
@@ -850,66 +851,35 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </para>
 
      <para>
-      By default, or when <literal>uniform</> is specified, all values in the
-      range are drawn with equal probability.  Specifying <literal>gaussian</>
-      or  <literal>exponential</> options modifies this behavior; each
-      requires a mandatory parameter which determines the precise shape of the
-      distribution.
-     </para>
+      <itemizedlist>
+       <listitem>
+        <para>
+         <literal>\setrandom n 1 10</> or <literal>\setrandom n 1 10 uniform</>
+         is equivalent to <literal>\set n random(1, 10)</> and uses a uniform
+         distribution.
+        </para>
+       </listitem>
 
-     <para>
-      For a Gaussian distribution, the interval is mapped onto a standard
-      normal distribution (the classical bell-shaped Gaussian curve) truncated
-      at <literal>-parameter</> on the left and <literal>+parameter</>
-      on the right.
-      Values in the middle of the interval are more likely to be drawn.
-      To be precise, if <literal>PHI(x)</> is the cumulative distribution
-      function of the standard normal distribution, with mean <literal>mu</>
-      defined as <literal>(max + min) / 2.0</>, with
-<literallayout>
- f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
-        (2.0 * PHI(parameter) - 1.0)
-</literallayout>
-      then value <replaceable>i</> between <replaceable>min</> and
-      <replaceable>max</> inclusive is drawn with probability:
-      <literal>f(i + 0.5) - f(i - 0.5)</>.
-      Intuitively, the larger <replaceable>parameter</>, the more
-      frequently values close to the middle of the interval are drawn, and the
-      less frequently values close to the <replaceable>min</> and
-      <replaceable>max</> bounds. About 67% of values are drawn from the
-      middle <literal>1.0 / parameter</>, that is a relative
-      <literal>0.5 / parameter</> around the mean, and 95% in the middle
-      <literal>2.0 / parameter</>, that is a relative
-      <literal>1.0 / parameter</> around the mean; for instance, if
-      <replaceable>parameter</> is 4.0, 67% of values are drawn from the
-      middle quarter (1.0 / 4.0) of the interval (i.e. from
-      <literal>3.0 / 8.0</> to <literal>5.0 / 8.0</>) and 95% from
-      the middle half (<literal>2.0 / 4.0</>) of the interval (second and
-      third quartiles). The minimum <replaceable>parameter</> is 2.0 for
-      performance of the Box-Muller transform.
-     </para>
+      <listitem>
+       <para>
+        <literal>\setrandom n 1 10 exponential 3.0</> is equivalent to
+        <literal>\set n random_exponential(1, 10, 3.0)</> and uses an
+        exponential distribution.
+       </para>
+      </listitem>
 
-     <para>
-      For an exponential distribution, <replaceable>parameter</>
-      controls the distribution by truncating a quickly-decreasing
-      exponential distribution at <replaceable>parameter</>, and then
-      projecting onto integers between the bounds.
-      To be precise, with
-<literallayout>
-f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1.0 - exp(-parameter))
-</literallayout>
-      Then value <replaceable>i</> between <replaceable>min</> and
-      <replaceable>max</> inclusive is drawn with probability:
-      <literal>f(x) - f(x + 1)</>.
-      Intuitively, the larger <replaceable>parameter</>, the more
-      frequently values close to <replaceable>min</> are accessed, and the
-      less frequently values close to <replaceable>max</> are accessed.
-      The closer to 0 <replaceable>parameter</>, the flatter (more uniform)
-      the access distribution.
-      A crude approximation of the distribution is that the most frequent 1%
-      values in the range, close to <replaceable>min</>, are drawn
-      <replaceable>parameter</>% of the time.
-      <replaceable>parameter</> value must be strictly positive.
+      <listitem>
+       <para>
+        <literal>\setrandom n 1 10 gaussian 2.0</> is equivalent to
+        <literal>\set n random_gaussian(1, 10, 2.0)</>, and uses a gaussian
+        distribution.
+       </para>
+      </listitem>
+     </itemizedlist>
+
+       See the documentation of these functions below for further information
+       about the precise shape of these distributions, depending on the value
+       of the parameter.
      </para>
 
      <para>
@@ -990,34 +960,6 @@ f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1.0 - exp(-parameter))
     </listitem>
    </varlistentry>
   </variablelist>
-
-  <para>
-   As an example, the full definition of the built-in TPC-B-like
-   transaction is:
-
-<programlisting>
-\set nbranches :scale
-\set ntellers 10 * :scale
-\set naccounts 100000 * :scale
-\setrandom aid 1 :naccounts
-\setrandom bid 1 :nbranches
-\setrandom tid 1 :ntellers
-\setrandom delta -5000 5000
-BEGIN;
-UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
-SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
-UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
-UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
-INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
-END;
-</programlisting>
-
-   This script allows each iteration of the transaction to reference
-   different, randomly-chosen rows.  (This example also shows why it's
-   important for each client session to have its own variables &mdash;
-   otherwise they'd not be independently touching different rows.)
-  </para>
-
  </refsect2>
 
  <refsect2 id="pgbench-builtin-functions">
@@ -1046,7 +988,7 @@ END;
       <row>
        <entry><literal><function>abs(<replaceable>a</>)</></></>
        <entry>same as <replaceable>a</></>
-       <entry>integer value</>
+       <entry>integer or double absolute value</>
        <entry><literal>abs(-17)</></>
        <entry><literal>17</></>
       </row>
@@ -1054,8 +996,22 @@ END;
        <entry><literal><function>debug(<replaceable>a</>)</></></>
        <entry>same as <replaceable>a</> </>
        <entry>print to <systemitem>stderr</systemitem> the given argument</>
-       <entry><literal>debug(5432)</></>
-       <entry><literal>5432</></>
+       <entry><literal>debug(5432.1)</></>
+       <entry><literal>5432.1</></>
+      </row>
+      <row>
+       <entry><literal><function>double(<replaceable>i</>)</></></>
+       <entry>double</>
+       <entry>cast to double</>
+       <entry><literal>double(5432)</></>
+       <entry><literal>5432.0</></>
+      </row>
+      <row>
+       <entry><literal><function>int(<replaceable>x</>)</></></>
+       <entry>integer</>
+       <entry>cast to int</>
+       <entry><literal>int(5.4 + 3.8)</></>
+       <entry><literal>9</></>
       </row>
       <row>
        <entry><literal><function>max(<replaceable>i</> [, <replaceable>...</> ] )</></></>
@@ -1071,9 +1027,143 @@ END;
        <entry><literal>min(5, 4, 3, 2)</></>
        <entry><literal>2</></>
       </row>
+      <row>
+       <entry><literal><function>pi()</></></>
+       <entry>double</>
+       <entry>value of the PI constant</>
+       <entry><literal>pi()</></>
+       <entry><literal>3.14159265358979323846</></>
+      </row>
+      <row>
+       <entry><literal><function>random(<replaceable>lb</>, <replaceable>ub</>)</></></>
+       <entry>integer</>
+       <entry>uniformly-distributed random integer in <literal>[lb, ub]</></>
+       <entry><literal>random(1, 10)</></>
+       <entry>an integer between <literal>1</> and <literal>10</></>
+      </row>
+      <row>
+       <entry><literal><function>random_exponential(<replaceable>lb</>, <replaceable>ub</>, <replaceable>parameter</>)</></></>
+       <entry>integer</>
+       <entry>exponentially-distributed random integer in <literal>[lb, ub]</>,
+              see below</>
+       <entry><literal>random_exponential(1, 10, 3.0)</></>
+       <entry>an integer between <literal>1</> and <literal>10</></>
+      </row>
+      <row>
+       <entry><literal><function>random_gaussian(<replaceable>lb</>, <replaceable>ub</>, <replaceable>parameter</>)</></></>
+       <entry>integer</>
+       <entry>gaussian-distributed random integer in <literal>[lb, ub]</>,
+              see below</>
+       <entry><literal>random_gaussian(1, 10, 2.5)</></>
+       <entry>an integer between <literal>1</> and <literal>10</></>
+      </row>
+      <row>
+       <entry><literal><function>sqrt(<replaceable>x</>)</></></>
+       <entry>double</>
+       <entry>square root</>
+       <entry><literal>sqrt(2.0)</></>
+       <entry><literal>1.414213562</></>
+      </row>
      </tbody>
      </tgroup>
    </table>
+
+   <para>
+    The <literal>random</> function generates values using a uniform
+    distribution, that is all the values are drawn within the specified
+    range with equal probability. The <literal>random_exponential</> and
+    <literal>random_gaussian</> functions require an additional double
+    parameter which determines the precise shape of the distribution.
+   </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      For an exponential distribution, <replaceable>parameter</>
+      controls the distribution by truncating a quickly-decreasing
+      exponential distribution at <replaceable>parameter</>, and then
+      projecting onto integers between the bounds.
+      To be precise, with
+<literallayout>
+f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1 - exp(-parameter))
+</literallayout>
+      Then value <replaceable>i</> between <replaceable>min</> and
+      <replaceable>max</> inclusive is drawn with probability:
+      <literal>f(x) - f(x + 1)</>.
+     </para>
+
+     <para>
+      Intuitively, the larger the <replaceable>parameter</>, the more
+      frequently values close to <replaceable>min</> are accessed, and the
+      less frequently values close to <replaceable>max</> are accessed.
+      The closer to 0 <replaceable>parameter</> is, the flatter (more
+      uniform) the access distribution.
+      A crude approximation of the distribution is that the most frequent 1%
+      values in the range, close to <replaceable>min</>, are drawn
+      <replaceable>parameter</>% of the time.
+      The <replaceable>parameter</> value must be strictly positive.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For a Gaussian distribution, the interval is mapped onto a standard
+      normal distribution (the classical bell-shaped Gaussian curve) truncated
+      at <literal>-parameter</> on the left and <literal>+parameter</>
+      on the right.
+      Values in the middle of the interval are more likely to be drawn.
+      To be precise, if <literal>PHI(x)</> is the cumulative distribution
+      function of the standard normal distribution, with mean <literal>mu</>
+      defined as <literal>(max + min) / 2.0</>, with
+<literallayout>
+ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
+        (2.0 * PHI(parameter) - 1)
+</literallayout>
+      then value <replaceable>i</> between <replaceable>min</> and
+      <replaceable>max</> inclusive is drawn with probability:
+      <literal>f(i + 0.5) - f(i - 0.5)</>.
+      Intuitively, the larger the <replaceable>parameter</>, the more
+      frequently values close to the middle of the interval are drawn, and the
+      less frequently values close to the <replaceable>min</> and
+      <replaceable>max</> bounds. About 67% of values are drawn from the
+      middle <literal>1.0 / parameter</>, that is a relative
+      <literal>0.5 / parameter</> around the mean, and 95% in the middle
+      <literal>2.0 / parameter</>, that is a relative
+      <literal>1.0 / parameter</> around the mean; for instance, if
+      <replaceable>parameter</> is 4.0, 67% of values are drawn from the
+      middle quarter (1.0 / 4.0) of the interval (i.e. from
+      <literal>3.0 / 8.0</> to <literal>5.0 / 8.0</>) and 95% from
+      the middle half (<literal>2.0 / 4.0</>) of the interval (second and third
+      quartiles). The minimum <replaceable>parameter</> is 2.0 for performance
+      of the Box-Muller transform.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+  <para>
+   As an example, the full definition of the built-in TPC-B-like
+   transaction is:
+
+<programlisting>
+\set aid random(1, 100000 * :scale)
+\set bid random(1, 1 * :scale)
+\set tid random(1, 10 * :scale)
+\set delta random(-5000, 5000)
+BEGIN;
+UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
+SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
+UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
+UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
+INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+END;
+</programlisting>
+
+   This script allows each iteration of the transaction to reference
+   different, randomly-chosen rows.  (This example also shows why it's
+   important for each client session to have its own variables &mdash;
+   otherwise they'd not be independently touching different rows.)
+  </para>
+
  </refsect2>
 
  <refsect2>
@@ -1223,13 +1313,10 @@ tps = 618.764555 (including connections establishing)
 tps = 622.977698 (excluding connections establishing)
 script statistics:
  - statement latencies in milliseconds:
-        0.004386        \set nbranches 1 * :scale
-        0.001343        \set ntellers 10 * :scale
-        0.001212        \set naccounts 100000 * :scale
-        0.001310        \setrandom aid 1 :naccounts
-        0.001073        \setrandom bid 1 :nbranches
-        0.001005        \setrandom tid 1 :ntellers
-        0.001078        \setrandom delta -5000 5000
+        0.002522        \set aid random(1, 100000 * :scale)
+        0.005459        \set bid random(1, 1 * :scale)
+        0.002348        \set tid random(1, 10 * :scale)
+        0.001078        \set delta random(-5000, 5000)
         0.326152        BEGIN;
         0.603376        UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
         0.454643        SELECT abalance FROM pgbench_accounts WHERE aid = :aid;

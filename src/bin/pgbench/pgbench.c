@@ -328,13 +328,10 @@ static const BuiltinScript builtin_script[] =
 	{
 		"tpcb-like",
 		"<builtin: TPC-B (sort of)>",
-		"\\set nbranches " CppAsString2(nbranches) " * :scale\n"
-		"\\set ntellers " CppAsString2(ntellers) " * :scale\n"
-		"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
-		"\\setrandom aid 1 :naccounts\n"
-		"\\setrandom bid 1 :nbranches\n"
-		"\\setrandom tid 1 :ntellers\n"
-		"\\setrandom delta -5000 5000\n"
+		"\\set aid random(1, " CppAsString2(naccounts) " * :scale)\n"
+		"\\set bid random(1, " CppAsString2(nbranches) " * :scale)\n"
+		"\\set tid random(1, " CppAsString2(ntellers) " * :scale)\n"
+		"\\set delta random(-5000, 5000)\n"
 		"BEGIN;\n"
 		"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
 		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
@@ -346,13 +343,10 @@ static const BuiltinScript builtin_script[] =
 	{
 		"simple-update",
 		"<builtin: simple update>",
-		"\\set nbranches " CppAsString2(nbranches) " * :scale\n"
-		"\\set ntellers " CppAsString2(ntellers) " * :scale\n"
-		"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
-		"\\setrandom aid 1 :naccounts\n"
-		"\\setrandom bid 1 :nbranches\n"
-		"\\setrandom tid 1 :ntellers\n"
-		"\\setrandom delta -5000 5000\n"
+		"\\set aid random(1, " CppAsString2(naccounts) " * :scale)\n"
+		"\\set bid random(1, " CppAsString2(nbranches) " * :scale)\n"
+		"\\set tid random(1, " CppAsString2(ntellers) " * :scale)\n"
+		"\\set delta random(-5000, 5000)\n"
 		"BEGIN;\n"
 		"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
 		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
@@ -362,15 +356,14 @@ static const BuiltinScript builtin_script[] =
 	{
 		"select-only",
 		"<builtin: select only>",
-		"\\set naccounts " CppAsString2(naccounts) " * :scale\n"
-		"\\setrandom aid 1 :naccounts\n"
+		"\\set aid random(1, " CppAsString2(naccounts) " * :scale)\n"
 		"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
 	}
 };
 
 
 /* Function prototypes */
-static bool evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval);
+static bool evaluateExpr(TState *, CState *, PgBenchExpr *, PgBenchValue *);
 static void doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, instr_time *now,
@@ -445,6 +438,33 @@ usage(void)
 		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
 		   progname, progname);
 }
+
+/* return whether str matches "^\s*[-+]?[0-9]+$" */
+static bool
+is_an_int(const char *str)
+{
+	const char *ptr = str;
+
+	/* skip leading spaces; cast is consistent with strtoint64 */
+	while (*ptr && isspace((unsigned char) *ptr))
+		ptr++;
+
+	/* skip sign */
+	if (*ptr == '+' || *ptr == '-')
+		ptr++;
+
+	/* at least one digit */
+	if (*ptr && !isdigit((unsigned char) *ptr))
+		return false;
+
+	/* eat all digits */
+	while (*ptr && isdigit((unsigned char) *ptr))
+		ptr++;
+
+	/* must have reached end of string */
+	return *ptr == '\0';
+}
+
 
 /*
  * strtoint64 -- convert a string to 64-bit integer
@@ -542,6 +562,7 @@ getExponentialRand(TState *thread, int64 min, int64 max, double parameter)
 				uniform,
 				rand;
 
+	/* abort if wrong parameter, but must really be checked beforehand */
 	Assert(parameter > 0.0);
 	cut = exp(-parameter);
 	/* erand in [0, 1), uniform in (0, 1] */
@@ -562,6 +583,9 @@ getGaussianRand(TState *thread, int64 min, int64 max, double parameter)
 {
 	double		stdev;
 	double		rand;
+
+	/* abort if parameter is too low, but must really be checked beforehand */
+	Assert(parameter >= MIN_GAUSSIAN_PARAM);
 
 	/*
 	 * Get user specified random number from this loop, with -parameter <
@@ -1006,6 +1030,62 @@ getQueryParams(CState *st, const Command *command, const char **params)
 		params[i] = getVariable(st, command->argv[i + 1]);
 }
 
+/* get a value as an int, tell if there is a problem */
+static bool
+coerceToInt(PgBenchValue *pval, int64 *ival)
+{
+	if (pval->type == PGBT_INT)
+	{
+		*ival = pval->u.ival;
+		return true;
+	}
+	else
+	{
+		double dval = pval->u.dval;
+		Assert(pval->type == PGBT_DOUBLE);
+		if (dval < INT64_MIN || INT64_MAX < dval)
+		{
+			fprintf(stderr, "double to int overflow for %f\n", dval);
+			return false;
+		}
+		*ival = (int64) dval;
+		return true;
+	}
+}
+
+/* get a value as a double, or tell if there is a problem */
+static bool
+coerceToDouble(PgBenchValue *pval, double *dval)
+{
+	if (pval->type == PGBT_DOUBLE)
+	{
+		*dval = pval->u.dval;
+		return true;
+	}
+	else
+	{
+		Assert(pval->type == PGBT_INT);
+		*dval = (double) pval->u.ival;
+		return true;
+	}
+}
+
+/* assign an integer value */
+static void
+setIntValue(PgBenchValue *pv, int64 ival)
+{
+	pv->type = PGBT_INT;
+	pv->u.ival = ival;
+}
+
+/* assign a double value */
+static void
+setDoubleValue(PgBenchValue *pv, double dval)
+{
+	pv->type = PGBT_DOUBLE;
+	pv->u.dval = dval;
+}
+
 /* maximum number of function arguments */
 #define MAX_FARGS 16
 
@@ -1013,16 +1093,16 @@ getQueryParams(CState *st, const Command *command, const char **params)
  * Recursive evaluation of functions
  */
 static bool
-evalFunc(CState *st,
-		 PgBenchFunction func, PgBenchExprLink *args, int64 *retval)
+evalFunc(TState *thread, CState *st,
+		 PgBenchFunction func, PgBenchExprLink *args, PgBenchValue *retval)
 {
 	/* evaluate all function arguments */
-	int			nargs = 0;
-	int64		iargs[MAX_FARGS];
+	int	 			nargs = 0;
+	PgBenchValue 	vargs[MAX_FARGS];
 	PgBenchExprLink *l = args;
 
 	for (nargs = 0; nargs < MAX_FARGS && l != NULL; nargs++, l = l->next)
-		if (!evaluateExpr(st, l->expr, &iargs[nargs]))
+		if (!evaluateExpr(thread, st, l->expr, &vargs[nargs]))
 			return false;
 
 	if (l != NULL)
@@ -1035,104 +1115,206 @@ evalFunc(CState *st,
 	/* then evaluate function */
 	switch (func)
 	{
+		/* overloaded operators */
 		case PGBENCH_ADD:
 		case PGBENCH_SUB:
 		case PGBENCH_MUL:
 		case PGBENCH_DIV:
 		case PGBENCH_MOD:
 			{
-				int64		lval = iargs[0],
-							rval = iargs[1];
-
+				PgBenchValue	*lval = &vargs[0],
+								*rval = &vargs[1];
 				Assert(nargs == 2);
 
-				switch (func)
+				/* overloaded type management, double if some double */
+				if ((lval->type == PGBT_DOUBLE ||
+					 rval->type == PGBT_DOUBLE) && func != PGBENCH_MOD)
 				{
-					case PGBENCH_ADD:
-						*retval = lval + rval;
-						return true;
+					double ld, rd;
 
-					case PGBENCH_SUB:
-						*retval = lval - rval;
-						return true;
+					if (!coerceToDouble(lval, &ld) ||
+						!coerceToDouble(rval, &rd))
+						return false;
 
-					case PGBENCH_MUL:
-						*retval = lval * rval;
-						return true;
+					switch (func)
+					{
+						case PGBENCH_ADD:
+							setDoubleValue(retval, ld + rd);
+							return true;
 
-					case PGBENCH_DIV:
-					case PGBENCH_MOD:
-						if (rval == 0)
-						{
-							fprintf(stderr, "division by zero\n");
-							return false;
-						}
-						/* special handling of -1 divisor */
-						if (rval == -1)
-						{
-							if (func == PGBENCH_DIV)
+						case PGBENCH_SUB:
+							setDoubleValue(retval, ld - rd);
+							return true;
+
+						case PGBENCH_MUL:
+							setDoubleValue(retval, ld * rd);
+							return true;
+
+						case PGBENCH_DIV:
+							setDoubleValue(retval, ld / rd);
+							return true;
+
+						default:
+							/* cannot get here */
+							Assert(0);
+					}
+				}
+				else  /* we have integer operands, or % */
+				{
+					int64 li, ri;
+
+					if (!coerceToInt(lval, &li) ||
+						!coerceToInt(rval, &ri))
+						return false;
+
+					switch (func)
+					{
+						case PGBENCH_ADD:
+							setIntValue(retval, li + ri);
+							return true;
+
+						case PGBENCH_SUB:
+							setIntValue(retval, li - ri);
+							return true;
+
+						case PGBENCH_MUL:
+							setIntValue(retval, li * ri);
+							return true;
+
+						case PGBENCH_DIV:
+						case PGBENCH_MOD:
+							if (ri == 0)
 							{
-								/* overflow check (needed for INT64_MIN) */
-								if (lval == PG_INT64_MIN)
+								fprintf(stderr, "division by zero\n");
+								return false;
+							}
+							/* special handling of -1 divisor */
+							if (ri == -1)
+							{
+								if (func == PGBENCH_DIV)
 								{
-									fprintf(stderr, "bigint out of range\n");
-									return false;
+									/* overflow check (needed for INT64_MIN) */
+									if (li == PG_INT64_MIN)
+									{
+										fprintf(stderr, "bigint out of range\n");
+										return false;
+									}
+									else
+										setIntValue(retval, - li);
 								}
 								else
-									*retval = -lval;
+									setIntValue(retval, 0);
+								return true;
 							}
-							else
-								*retval = 0;
-							return true;
-						}
-						/* divisor is not -1 */
-						if (func == PGBENCH_DIV)
-							*retval = lval / rval;
-						else	/* func == PGBENCH_MOD */
-							*retval = lval % rval;
-						return true;
+							/* else divisor is not -1 */
+							if (func == PGBENCH_DIV)
+								setIntValue(retval, li / ri);
+							else /* func == PGBENCH_MOD */
+								setIntValue(retval, li % ri);
 
-					default:
-						/* cannot get here */
-						Assert(0);
+							return true;
+
+						default:
+							/* cannot get here */
+							Assert(0);
+					}
 				}
 			}
 
+		/* no arguments */
+		case PGBENCH_PI:
+			setDoubleValue(retval, M_PI);
+			return true;
+
+		/* 1 overloaded argument */
 		case PGBENCH_ABS:
 			{
+				PgBenchValue *varg = &vargs[0];
 				Assert(nargs == 1);
 
-				if (iargs[0] < 0)
-					*retval = -iargs[0];
+				if (varg->type == PGBT_INT)
+				{
+					int64 i = varg->u.ival;
+					setIntValue(retval, i < 0 ? -i : i);
+				}
 				else
-					*retval = iargs[0];
+				{
+					double d = varg->u.dval;
+					Assert(varg->type == PGBT_DOUBLE);
+					setDoubleValue(retval, d < 0.0 ? -d: d);
+				}
 
 				return true;
 			}
 
 		case PGBENCH_DEBUG:
 			{
+				PgBenchValue *varg = &vargs[0];
 				Assert(nargs == 1);
 
-				fprintf(stderr, "debug(script=%d,command=%d): " INT64_FORMAT "\n",
-						st->use_file, st->state + 1, iargs[0]);
+				fprintf(stderr,	"debug(script=%d,command=%d): ",
+						st->use_file, st->state+1);
 
-				*retval = iargs[0];
+				if (varg->type == PGBT_INT)
+					fprintf(stderr,	"int "INT64_FORMAT"\n", varg->u.ival);
+				else
+				{
+					Assert(varg->type == PGBT_DOUBLE);
+					fprintf(stderr, "double %f\n", varg->u.dval);
+				}
+
+				*retval = *varg;
 
 				return true;
 			}
 
+		/* 1 double argument */
+		case PGBENCH_DOUBLE:
+		case PGBENCH_SQRT:
+			{
+				double dval;
+				Assert(nargs == 1);
+
+				if (!coerceToDouble(&vargs[0], &dval))
+					return false;
+
+				if (func == PGBENCH_SQRT)
+					dval = sqrt(dval);
+
+				setDoubleValue(retval, dval);
+				return true;
+			}
+
+		/* 1 int argument */
+		case PGBENCH_INT:
+			{
+				int64 ival;
+				Assert(nargs == 1);
+
+				if (!coerceToInt(&vargs[0], &ival))
+					return false;
+
+				setIntValue(retval, ival);
+				return true;
+			}
+
+		/* variable number of int arguments */
 		case PGBENCH_MIN:
 		case PGBENCH_MAX:
 			{
-				int64		extremum = iargs[0];
+				int64		extremum;
 				int			i;
-
 				Assert(nargs >= 1);
+
+				if (!coerceToInt(&vargs[0], &extremum))
+					return false;
 
 				for (i = 1; i < nargs; i++)
 				{
-					int64		ival = iargs[i];
+					int64		ival;
+
+					if (!coerceToInt(&vargs[i], &ival))
+						return false;
 
 					if (func == PGBENCH_MIN)
 						extremum = extremum < ival ? extremum : ival;
@@ -1140,13 +1322,84 @@ evalFunc(CState *st,
 						extremum = extremum > ival ? extremum : ival;
 				}
 
-				*retval = extremum;
+				setIntValue(retval, extremum);
 				return true;
 			}
 
+		/* random functions */
+		case PGBENCH_RANDOM:
+		case PGBENCH_RANDOM_EXPONENTIAL:
+		case PGBENCH_RANDOM_GAUSSIAN:
+		{
+			int64       imin, imax;
+			Assert(nargs >= 2);
+
+			if (!coerceToInt(&vargs[0], &imin) ||
+				!coerceToInt(&vargs[1], &imax))
+				return false;
+
+			/* check random range */
+			if (imin > imax)
+			{
+				fprintf(stderr, "empty range given to random\n");
+				return false;
+			}
+			else if (imax - imin < 0 || (imax - imin) + 1 < 0)
+			{
+				/* prevent int overflows in random functions */
+				fprintf(stderr, "random range is too large\n");
+				return false;
+			}
+
+			if (func == PGBENCH_RANDOM)
+			{
+				Assert(nargs == 2);
+				setIntValue(retval, getrand(thread, imin, imax));
+			}
+			else /* gaussian & exponential */
+			{
+				double param;
+				Assert(nargs == 3);
+
+				if (!coerceToDouble(&vargs[2], &param))
+					return false;
+
+				if (func == PGBENCH_RANDOM_GAUSSIAN)
+				{
+					if (param < MIN_GAUSSIAN_PARAM)
+					{
+						fprintf(stderr,
+								"gaussian parameter must be at least %f "
+								"(not %f)\n", MIN_GAUSSIAN_PARAM, param);
+						return false;
+					}
+
+					setIntValue(retval,
+								getGaussianRand(thread, imin, imax,	param));
+				}
+				else /* exponential */
+				{
+					if (param <= 0.0)
+					{
+						fprintf(stderr,
+								"exponential parameter must be greater than zero"
+								" (got %f)\n", param);
+						return false;
+					}
+
+					setIntValue(retval,
+								getExponentialRand(thread, imin, imax, param));
+				}
+			}
+
+			return true;
+		}
+
 		default:
-			fprintf(stderr, "unexpected function tag: %d\n", func);
-			exit(1);
+			/* cannot get here */
+			Assert(0);
+			/* dead code to avoid a compiler warning */
+			return false;
 	}
 }
 
@@ -1157,13 +1410,13 @@ evalFunc(CState *st,
  * the value itself is returned through the retval pointer.
  */
 static bool
-evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
+evaluateExpr(TState *thread, CState *st, PgBenchExpr *expr, PgBenchValue *retval)
 {
 	switch (expr->etype)
 	{
-		case ENODE_INTEGER_CONSTANT:
+		case ENODE_CONSTANT:
 			{
-				*retval = expr->u.integer_constant.ival;
+				*retval = expr->u.constant;
 				return true;
 			}
 
@@ -1177,24 +1430,39 @@ evaluateExpr(CState *st, PgBenchExpr *expr, int64 *retval)
 							expr->u.variable.varname);
 					return false;
 				}
-				*retval = strtoint64(var);
+
+				if (is_an_int(var))
+				{
+					setIntValue(retval, strtoint64(var));
+				}
+				else /* type should be double */
+				{
+					double dv;
+					if (sscanf(var, "%lf", &dv) != 1)
+					{
+						fprintf(stderr,
+								"malformed variable \"%s\" value: \"%s\"\n",
+								expr->u.variable.varname, var);
+						return false;
+					}
+					setDoubleValue(retval, dv);
+				}
+
 				return true;
 			}
 
 		case ENODE_FUNCTION:
-			return evalFunc(st,
+			return evalFunc(thread, st,
 							expr->u.function.function,
 							expr->u.function.args,
 							retval);
 
 		default:
+			/* internal error which should never occur */
 			fprintf(stderr, "unexpected enode type in evaluation: %d\n",
 					expr->etype);
 			exit(1);
 	}
-
-	fprintf(stderr, "bad expression\n");
-	return false;
 }
 
 /*
@@ -1673,6 +1941,10 @@ top:
 			fprintf(stderr, "\n");
 		}
 
+		/*
+		 * Note: this section could be removed, as the same functionnality
+		 * is available through \set xxx random_gaussian(...)
+		 */
 		if (pg_strcasecmp(argv[0], "setrandom") == 0)
 		{
 			char	   *var;
@@ -1814,15 +2086,21 @@ top:
 		{
 			char		res[64];
 			PgBenchExpr *expr = commands[st->state]->expr;
-			int64		result;
+			PgBenchValue	result;
 
-			if (!evaluateExpr(st, expr, &result))
+			if (!evaluateExpr(thread, st, expr, &result))
 			{
 				st->ecnt++;
 				return true;
 			}
 
-			sprintf(res, INT64_FORMAT, result);
+			if (result.type == PGBT_INT)
+				sprintf(res, INT64_FORMAT, result.u.ival);
+			else
+			{
+				Assert(result.type == PGBT_DOUBLE);
+				sprintf(res, "%.18e", result.u.dval);
+			}
 
 			if (!putVariable(st, argv[0], argv[1], res))
 			{

@@ -28,10 +28,31 @@
  */
 union YYSTYPE;
 
+/*
+ * Variable types used in parser.
+ */
+typedef enum
+{
+	PGBT_INT,
+	PGBT_DOUBLE
+	/* add other types here */
+} PgBenchValueType;
+
+typedef struct
+{
+	PgBenchValueType type;
+	union
+	{
+		int64 ival;
+		double dval;
+		/* add other types here */
+	} u;
+} PgBenchValue;
+
 /* Types of expression nodes */
 typedef enum PgBenchExprType
 {
-	ENODE_INTEGER_CONSTANT,
+	ENODE_CONSTANT,
 	ENODE_VARIABLE,
 	ENODE_FUNCTION
 } PgBenchExprType;
@@ -48,6 +69,13 @@ typedef enum PgBenchFunction
 	PGBENCH_ABS,
 	PGBENCH_MIN,
 	PGBENCH_MAX,
+	PGBENCH_INT,
+	PGBENCH_DOUBLE,
+	PGBENCH_PI,
+	PGBENCH_SQRT,
+	PGBENCH_RANDOM,
+	PGBENCH_RANDOM_GAUSSIAN,
+	PGBENCH_RANDOM_EXPONENTIAL
 } PgBenchFunction;
 
 typedef struct PgBenchExpr PgBenchExpr;
@@ -59,10 +87,7 @@ struct PgBenchExpr
 	PgBenchExprType etype;
 	union
 	{
-		struct
-		{
-			int64		ival;
-		}			integer_constant;
+		PgBenchValue	constant;
 		struct
 		{
 			char	   *varname;

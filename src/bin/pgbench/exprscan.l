@@ -125,6 +125,11 @@ newline			[\n]
 					yylval->ival = strtoint64(yytext);
 					return INTEGER;
 				}
+{digit}+(\.{digit}*)?([eE][-+]?{digit}+)?	{
+					yycolumn += yyleng;
+					yylval->dval = atof(yytext);
+					return DOUBLE;
+				}
 {alpha}{alnum}*	{
 					yylval->str = pg_strdup(yytext);
 					return FUNCTION;
