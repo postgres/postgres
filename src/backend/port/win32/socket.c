@@ -658,7 +658,9 @@ pgwin32_socket_strerror(int err)
 	}
 
 	ZeroMemory(&wserrbuf, sizeof(wserrbuf));
-	if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
+	if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
+					  FORMAT_MESSAGE_FROM_SYSTEM |
+					  FORMAT_MESSAGE_FROM_HMODULE,
 					  handleDLL,
 					  err,
 					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
