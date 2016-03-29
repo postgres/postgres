@@ -1149,10 +1149,9 @@ END;
    Field <replaceable>schedule_lag</> is the difference between the
    transaction's scheduled start time, and the time it actually started, in
    microseconds. It is only present when the <option>--rate</> option is used.
-   The last field <replaceable>skipped_transactions</> reports the number of
-   transactions skipped because they were too far behind schedule. It is only
-   present when both options <option>--rate</> and <option>--latency-limit</>
-   are used.
+   When both <option>--rate</> and <option>--latency-limit</> are used,
+   the <replaceable>time</> for a skipped transaction will be reported as
+   <literal>skipped</>.
   </para>
 
   <para>
