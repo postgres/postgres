@@ -5579,15 +5579,6 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     argument is the value to be formatted and the second argument is a
     template that defines the output or input format.
    </para>
-   <para>
-    A single-argument <function>to_timestamp</function> function is also
-    available;  it accepts a
-    <type>double precision</type> argument and converts from Unix epoch
-    (seconds since 1970-01-01 00:00:00+00) to
-    <type>timestamp with time zone</type>.
-    (<type>Integer</type> Unix epochs are implicitly cast to
-    <type>double precision</type>.)
-   </para>
 
     <table id="functions-formatting-table">
      <title>Formatting Functions</title>
@@ -5670,15 +5661,16 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry>convert string to time stamp</entry>
         <entry><literal>to_timestamp('05&nbsp;Dec&nbsp;2000', 'DD&nbsp;Mon&nbsp;YYYY')</literal></entry>
        </row>
-       <row>
-        <entry><literal><function>to_timestamp(<type>double precision</type>)</function></literal></entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>convert Unix epoch to time stamp</entry>
-        <entry><literal>to_timestamp(1284352323)</literal></entry>
-       </row>
       </tbody>
      </tgroup>
     </table>
+
+   <note>
+    <para>
+     There is also a single-argument <function>to_timestamp</function>
+     function; see <xref linkend="functions-datetime-table">.
+    </para>
+   </note>
 
    <para>
     In a <function>to_char</> output template string, there are certain
@@ -7060,8 +7052,8 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry><type>timestamp with time zone</type></entry>
         <entry>
          Create timestamp with time zone from year, month, day, hour, minute
-         and seconds fields. When <parameter>timezone</parameter> is not specified,
-         then current time zone is used.
+         and seconds fields; if <parameter>timezone</parameter> is not
+         specified, the current time zone is used
         </entry>
         <entry><literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5)</literal></entry>
         <entry><literal>2013-07-15 08:15:23.5+01</literal></entry>
@@ -7126,6 +7118,19 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         </entry>
         <entry></entry>
         <entry></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>to_timestamp</primary>
+         </indexterm>
+         <literal><function>to_timestamp(<type>double precision</type>)</function></literal>
+        </entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Convert Unix epoch (seconds since 1970-01-01 00:00:00+00) to
+         timestamp</entry>
+        <entry><literal>to_timestamp(1284352323)</literal></entry>
+        <entry><literal>2010-09-13 04:32:03+00</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -7377,16 +7382,13 @@ SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
 </screen>
 
        <para>
-        Here is how you can convert an epoch value back to a time
-        stamp:
+        You can convert an epoch value back to a time stamp
+        with <function>to_timestamp</>:
        </para>
 <screen>
-SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720.12 * INTERVAL '1 second';
+SELECT to_timestamp(982384720.12);
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-17 04:38:40.12+00</computeroutput>
 </screen>
-       <para>
-        (The <function>to_timestamp</> function encapsulates the above
-        conversion.)
-       </para>
       </listitem>
      </varlistentry>
 

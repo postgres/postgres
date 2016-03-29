@@ -124,6 +124,7 @@ extern Datum timestamp_cmp_timestamptz(PG_FUNCTION_ARGS);
 extern Datum make_timestamp(PG_FUNCTION_ARGS);
 extern Datum make_timestamptz(PG_FUNCTION_ARGS);
 extern Datum make_timestamptz_at_timezone(PG_FUNCTION_ARGS);
+extern Datum float8_timestamptz(PG_FUNCTION_ARGS);
 
 extern Datum timestamptz_eq_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamptz_ne_timestamp(PG_FUNCTION_ARGS);

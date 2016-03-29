@@ -1202,7 +1202,7 @@ DATA(insert OID = 1154 (  timestamptz_lt   PGNSP PGUID 12 1 0 0 0 f f f t t f i 
 DATA(insert OID = 1155 (  timestamptz_le   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ _null_ timestamp_le _null_ _null_ _null_ ));
 DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ _null_ timestamp_ge _null_ _null_ _null_ ));
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "1184 1184" _null_ _null_ _null_ _null_ _null_ timestamp_gt _null_ _null_ _null_ ));
-DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 0 0 f f f f t f i s 1 0 1184 "701" _null_ _null_ _null_ _null_ _null_ "select (''epoch''::pg_catalog.timestamptz + $1 * ''1 second''::pg_catalog.interval)" _null_ _null_ _null_ ));
+DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 1184 "701" _null_ _null_ _null_ _null_ _null_ float8_timestamptz _null_ _null_ _null_ ));
 DESCR("convert UNIX epoch to timestamptz");
 DATA(insert OID = 3995 (  timestamp_zone_transform PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2281 "2281" _null_ _null_ _null_ _null_ _null_ timestamp_zone_transform _null_ _null_ _null_ ));
 DESCR("transform a time zone adjustment");
