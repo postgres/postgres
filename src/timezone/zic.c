@@ -3485,7 +3485,10 @@ int
 link(const char *oldpath, const char *newpath)
 {
 	if (!CopyFile(oldpath, newpath, false))
+	{
+		_dosmaperr(GetLastError());
 		return -1;
+	}
 	return 0;
 }
 #endif
