@@ -838,60 +838,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\setrandom <replaceable>varname</> <replaceable>min</> <replaceable>max</> [ uniform | { gaussian | exponential } <replaceable>parameter</> ]</literal>
-     </term>
-
-    <listitem>
-     <para>
-      Sets variable <replaceable>varname</> to a random integer value
-      between the limits <replaceable>min</> and <replaceable>max</> inclusive.
-      Each limit can be either an integer constant or a
-      <literal>:</><replaceable>variablename</> reference to a variable
-      having an integer value.
-     </para>
-
-     <para>
-      <itemizedlist>
-       <listitem>
-        <para>
-         <literal>\setrandom n 1 10</> or <literal>\setrandom n 1 10 uniform</>
-         is equivalent to <literal>\set n random(1, 10)</> and uses a uniform
-         distribution.
-        </para>
-       </listitem>
-
-      <listitem>
-       <para>
-        <literal>\setrandom n 1 10 exponential 3.0</> is equivalent to
-        <literal>\set n random_exponential(1, 10, 3.0)</> and uses an
-        exponential distribution.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        <literal>\setrandom n 1 10 gaussian 2.0</> is equivalent to
-        <literal>\set n random_gaussian(1, 10, 2.0)</>, and uses a gaussian
-        distribution.
-       </para>
-      </listitem>
-     </itemizedlist>
-
-       See the documentation of these functions below for further information
-       about the precise shape of these distributions, depending on the value
-       of the parameter.
-     </para>
-
-     <para>
-      Example:
-<programlisting>
-\setrandom aid 1 :naccounts gaussian 5.0
-</programlisting></para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
      <literal>\sleep <replaceable>number</> [ us | ms | s ]</literal>
     </term>
 
