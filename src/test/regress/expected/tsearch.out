@@ -264,7 +264,7 @@ SELECT * FROM ts_token_type('default');
     23 | entity          | XML entity
 (23 rows)
 
-SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net teodor@123-stack.net 123_teodor@stack.net 123-teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
 <i <b> wow  < jqw <> qwerty');
  tokid |                token                 
@@ -331,6 +331,12 @@ SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.w
     20 | 5.005
     12 |  
      4 | teodor@stack.net
+    12 |  
+     4 | teodor@123-stack.net
+    12 |  
+     4 | 123_teodor@stack.net
+    12 |  
+     4 | 123-teodor@stack.net
     12 |  
     16 | qwe-wer
     11 | qwe
@@ -404,22 +410,22 @@ SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.w
     12 |  
     12 | <> 
      1 | qwerty
-(133 rows)
+(139 rows)
 
-SELECT to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net teodor@123-stack.net 123_teodor@stack.net 123-teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
 <i <b> wow  < jqw <> qwerty');
-                                                                                                                                                                                                                                                                                                                                                                                                                                       to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                                        
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- '+4.0e-10':28 '-4.2':60,62 '/?':18 '/?ad=qwe&dw':7,10,14,24 '/?ad=qwe&dw=%20%32':27 '/awdf/dwqe/4325':48 '/usr/local/fff':47 '/wqe-324/ewr':51 '1aew.werc.ewr':9 '1aew.werc.ewr/?ad=qwe&dw':8 '234':63 '234.435':32 '2aew.werc.ewr':11 '345':1 '3aew.werc.ewr':13 '3aew.werc.ewr/?ad=qwe&dw':12 '4.2':56,57,58 '455':33 '4aew.werc.ewr':15 '5.005':34 '5aew.werc.ewr:8100':17 '5aew.werc.ewr:8100/?':16 '6aew.werc.ewr:8100':23 '6aew.werc.ewr:8100/?ad=qwe&dw':22 '7aew.werc.ewr:8100':26 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':25 'ad':19 'aew.werc.ewr':6 'aew.werc.ewr/?ad=qwe&dw':5 'asdf':39 'dw':21 'efd.r':3 'ewr1':45 'ewri2':46 'gist.c':54 'gist.h':52 'gist.h.c':53 'hjwer':44 'jf':41 'jqw':66 'qwe':2,20,29,30,37 'qwe-wer':36 'qwer':40 'qwerti':67 'qwqwe':31 'readlin':55,59,61 'rewt/ewr':49 'sdjk':42 'teodor@stack.net':35 'wefjn':50 'wer':38 'wow':65 'www.com':4
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                              to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ '+4.0e-10':28 '-4.2':63,65 '/?':18 '/?ad=qwe&dw':7,10,14,24 '/?ad=qwe&dw=%20%32':27 '/awdf/dwqe/4325':51 '/usr/local/fff':50 '/wqe-324/ewr':54 '123-teodor@stack.net':38 '123_teodor@stack.net':37 '1aew.werc.ewr':9 '1aew.werc.ewr/?ad=qwe&dw':8 '234':66 '234.435':32 '2aew.werc.ewr':11 '345':1 '3aew.werc.ewr':13 '3aew.werc.ewr/?ad=qwe&dw':12 '4.2':59,60,61 '455':33 '4aew.werc.ewr':15 '5.005':34 '5aew.werc.ewr:8100':17 '5aew.werc.ewr:8100/?':16 '6aew.werc.ewr:8100':23 '6aew.werc.ewr:8100/?ad=qwe&dw':22 '7aew.werc.ewr:8100':26 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':25 'ad':19 'aew.werc.ewr':6 'aew.werc.ewr/?ad=qwe&dw':5 'asdf':42 'dw':21 'efd.r':3 'ewr1':48 'ewri2':49 'gist.c':57 'gist.h':55 'gist.h.c':56 'hjwer':47 'jf':44 'jqw':69 'qwe':2,20,29,30,40 'qwe-wer':39 'qwer':43 'qwerti':70 'qwqwe':31 'readlin':58,62,64 'rewt/ewr':52 'sdjk':45 'teodor@123-stack.net':36 'teodor@stack.net':35 'wefjn':53 'wer':41 'wow':68 'www.com':4
 (1 row)
 
-SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net teodor@123-stack.net 123_teodor@stack.net 123-teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
 <i <b> wow  < jqw <> qwerty'));
  length 
 --------
-     53
+     56
 (1 row)
 
 -- ts_debug
