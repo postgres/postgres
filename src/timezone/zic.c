@@ -811,6 +811,7 @@ dolink(char const * fromfield, char const * tofield)
 			link_errno = link(fromname, toname) == 0 ? 0 : errno;
 		if (link_errno != 0)
 		{
+#ifdef HAVE_SYMLINK
 			const char *s = fromfield;
 			const char *t;
 			char	   *p;
@@ -838,6 +839,7 @@ dolink(char const * fromfield, char const * tofield)
 							strerror(link_errno));
 			}
 			else
+#endif   /* HAVE_SYMLINK */
 			{
 				FILE	   *fp,
 						   *tp;
