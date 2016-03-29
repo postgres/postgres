@@ -14,6 +14,7 @@
 
 #include "access/parallel.h"
 #include "nodes/execnodes.h"
+#include "nodes/extensible.h"
 
 /*
  * General executor code

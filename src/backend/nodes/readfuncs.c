@@ -1827,8 +1827,7 @@ static CustomScan *
 _readCustomScan(void)
 {
 	READ_LOCALS(CustomScan);
-	char	   *library_name;
-	char	   *symbol_name;
+	char	   *custom_name;
 	const CustomScanMethods *methods;
 
 	ReadCommonScan(&local_node->scan);
@@ -1840,19 +1839,11 @@ _readCustomScan(void)
 	READ_NODE_FIELD(custom_scan_tlist);
 	READ_BITMAPSET_FIELD(custom_relids);
 
-	/*
-	 * Reconstruction of methods using library and symbol name
-	 */
+	/* Lookup CustomScanMethods by CustomName */
 	token = pg_strtok(&length);		/* skip methods: */
-	token = pg_strtok(&length);		/* LibraryName */
-	library_name = nullable_string(token, length);
-	token = pg_strtok(&length);		/* SymbolName */
-	symbol_name = nullable_string(token, length);
-
-	methods = (const CustomScanMethods *)
-		load_external_function(library_name, symbol_name, true, NULL);
-	Assert(strcmp(methods->LibraryName, library_name) == 0 &&
-		   strcmp(methods->SymbolName, symbol_name) == 0);
+	token = pg_strtok(&length);		/* CustomName */
+	custom_name = nullable_string(token, length);
+	methods = GetCustomScanMethods(custom_name, false);
 	local_node->methods = methods;
 
 	READ_DONE();

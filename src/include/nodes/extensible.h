@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * extensible.h
- *    Definitions for extensible node type
+ *    Definitions for extensible nodes and custom scans
  *
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
@@ -14,8 +14,13 @@
 #ifndef EXTENSIBLE_H
 #define EXTENSIBLE_H
 
-#include "nodes/nodes.h"
+#include "access/parallel.h"
+#include "commands/explain.h"
+#include "nodes/execnodes.h"
+#include "nodes/plannodes.h"
+#include "nodes/relation.h"
 
+/* maximum length of an extensible node identifier */
 #define EXTNODENAME_MAX_LEN					64
 
 /*
@@ -68,5 +73,81 @@ typedef struct ExtensibleNodeMethods
 extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *method);
 extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
 						 bool missing_ok);
+
+/*
+ * Flags for custom paths, indicating what capabilities the resulting scan
+ * will have.
+ */
+#define CUSTOMPATH_SUPPORT_BACKWARD_SCAN	0x0001
+#define CUSTOMPATH_SUPPORT_MARK_RESTORE		0x0002
+
+/*
+ * Custom path methods.  Mostly, we just need to know how to convert a
+ * CustomPath to a plan.
+ */
+typedef struct CustomPathMethods
+{
+	const char *CustomName;
+
+	/* Convert Path to a Plan */
+	struct Plan *(*PlanCustomPath) (PlannerInfo *root,
+									RelOptInfo *rel,
+									struct CustomPath *best_path,
+									List *tlist,
+									List *clauses,
+									List *custom_plans);
+} CustomPathMethods;
+
+/*
+ * Custom scan.  Here again, there's not much to do: we need to be able to
+ * generate a ScanState corresponding to the scan.
+ */
+typedef struct CustomScanMethods
+{
+	const char *CustomName;
+
+	/* Create execution state (CustomScanState) from a CustomScan plan node */
+	Node	   *(*CreateCustomScanState) (CustomScan *cscan);
+} CustomScanMethods;
+
+/*
+ * Execution-time methods for a CustomScanState.  This is more complex than
+ * what we need for a custom path or scan.
+ */
+typedef struct CustomExecMethods
+{
+	const char *CustomName;
+
+	/* Required executor methods */
+	void		(*BeginCustomScan) (CustomScanState *node,
+									EState *estate,
+									int eflags);
+	TupleTableSlot *(*ExecCustomScan) (CustomScanState *node);
+	void		(*EndCustomScan) (CustomScanState *node);
+	void		(*ReScanCustomScan) (CustomScanState *node);
+
+	/* Optional methods: needed if mark/restore is supported */
+	void		(*MarkPosCustomScan) (CustomScanState *node);
+	void		(*RestrPosCustomScan) (CustomScanState *node);
+
+	/* Optional methods: needed if parallel execution is supported */
+	Size		(*EstimateDSMCustomScan) (CustomScanState *node,
+										  ParallelContext *pcxt);
+	void		(*InitializeDSMCustomScan) (CustomScanState *node,
+											ParallelContext *pcxt,
+											void *coordinate);
+	void		(*InitializeWorkerCustomScan) (CustomScanState *node,
+											   shm_toc *toc,
+											   void *coordinate);
+
+	/* Optional: print additional information in EXPLAIN */
+	void		(*ExplainCustomScan) (CustomScanState *node,
+									  List *ancestors,
+									  ExplainState *es);
+} CustomExecMethods;
+
+extern void RegisterCustomScanMethods(const CustomScanMethods *methods);
+extern const CustomScanMethods *GetCustomScanMethods(const char *CustomName,
+													 bool missing_ok);
 
 #endif	/* EXTENSIBLE_H */
