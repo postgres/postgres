@@ -756,8 +756,8 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
  * apply_partialaggref_adjustment
  *	  Convert PathTarget to be suitable for a partial aggregate node. We simply
  *	  adjust any Aggref nodes found in the target and set the aggoutputtype to
- *	  the aggtranstype. This allows exprType() to return the actual type that
- *	  will be produced.
+ *	  the aggtranstype or aggserialtype. This allows exprType() to return the
+ *	  actual type that will be produced.
  *
  * Note: We expect 'target' to be a flat target list and not have Aggrefs burried
  * within other expressions.
@@ -785,7 +785,12 @@ apply_partialaggref_adjustment(PathTarget *target)
 			aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
 			newaggref = (Aggref *) copyObject(aggref);
-			newaggref->aggoutputtype = aggform->aggtranstype;
+
+			/* use the serialization type, if one exists */
+			if (OidIsValid(aggform->aggserialtype))
+				newaggref->aggoutputtype = aggform->aggserialtype;
+			else
+				newaggref->aggoutputtype = aggform->aggtranstype;
 
 			lfirst(lc) = newaggref;
 

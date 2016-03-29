@@ -413,6 +413,18 @@
       <entry>Combine function (zero if none)</entry>
      </row>
      <row>
+      <entry><structfield>aggserialfn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Serialization function (zero if none)</entry>
+     </row>
+     <row>
+      <entry><structfield>aggdeserialfn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Deserialization function (zero if none)</entry>
+     </row>
+     <row>
       <entry><structfield>aggmtransfn</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
@@ -453,6 +465,12 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Data type of the aggregate function's internal transition (state) data</entry>
+     </row>
+     <row>
+      <entry><structfield>aggserialtype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Return data type of the aggregate function's serialization function (zero if none)</entry>
      </row>
      <row>
       <entry><structfield>aggtransspace</structfield></entry>

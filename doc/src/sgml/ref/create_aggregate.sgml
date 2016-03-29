@@ -28,6 +28,9 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
     [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
+    [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
+    [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
+    [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
@@ -47,6 +50,9 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
     [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
+    [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
+    [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
+    [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , HYPOTHETICAL ]
 )
@@ -61,6 +67,9 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
     [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
+    [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
+    [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
+    [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
@@ -432,6 +441,47 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       and ensure that the null states are handled correctly and that the state
       being returned is a pointer to memory which belongs in the aggregate
       memory context.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">serialfunc</replaceable></term>
+    <listitem>
+     <para>
+      In order to allow aggregate functions with an <literal>INTERNAL</>
+      <replaceable class="PARAMETER">state_data_type</replaceable> to
+      participate in parallel aggregation, the aggregate must have a valid
+      <replaceable class="PARAMETER">serialfunc</replaceable>, which must
+      serialize the aggregate state into <replaceable class="PARAMETER">
+      serialtype</replaceable>. This function must take a single argument of
+      <replaceable class="PARAMETER">state_data_type</replaceable> and return
+      <replaceable class="PARAMETER">serialtype</replaceable>. A
+      corresponding <replaceable class="PARAMETER">deserialfunc</replaceable>
+      is also required.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">deserialfunc</replaceable></term>
+    <listitem>
+     <para>
+      Deserializes a previously serialized aggregate state back into
+      <replaceable class="PARAMETER">state_data_type</replaceable>. This
+      function must take a single argument of <replaceable class="PARAMETER">
+      serialtype</replaceable> and return <replaceable class="PARAMETER">
+      state_data_type</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">serialtype</replaceable></term>
+    <listitem>
+     <para>
+      The data type to into which an <literal>INTERNAL</literal> aggregate
+      state should be serialized.
      </para>
     </listitem>
    </varlistentry>

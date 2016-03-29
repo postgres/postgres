@@ -708,6 +708,7 @@ _outAgg(StringInfo str, const Agg *node)
 	WRITE_ENUM_FIELD(aggstrategy, AggStrategy);
 	WRITE_BOOL_FIELD(combineStates);
 	WRITE_BOOL_FIELD(finalizeAggs);
+	WRITE_BOOL_FIELD(serialStates);
 	WRITE_INT_FIELD(numCols);
 
 	appendStringInfoString(str, " :grpColIdx");

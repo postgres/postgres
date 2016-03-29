@@ -2433,7 +2433,8 @@ create_agg_path(PlannerInfo *root,
 				const AggClauseCosts *aggcosts,
 				double numGroups,
 				bool combineStates,
-				bool finalizeAggs)
+				bool finalizeAggs,
+				bool serialStates)
 {
 	AggPath    *pathnode = makeNode(AggPath);
 
@@ -2458,6 +2459,7 @@ create_agg_path(PlannerInfo *root,
 	pathnode->qual = qual;
 	pathnode->finalizeAggs = finalizeAggs;
 	pathnode->combineStates = combineStates;
+	pathnode->serialStates = serialStates;
 
 	cost_agg(&pathnode->path, root,
 			 aggstrategy, aggcosts,

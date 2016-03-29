@@ -1966,6 +1966,45 @@ build_aggregate_combinefn_expr(Oid agg_state_type,
 
 /*
  * Like build_aggregate_transfn_expr, but creates an expression tree for the
+ * serialization or deserialization function of an aggregate, rather than the
+ * transition function. This may be used for either the serialization or
+ * deserialization function by swapping the first two parameters over.
+ */
+void
+build_aggregate_serialfn_expr(Oid agg_input_type,
+							  Oid agg_output_type,
+							  Oid agg_input_collation,
+							  Oid serialfn_oid,
+							  Expr **serialfnexpr)
+{
+	Param	   *argp;
+	List	   *args;
+	FuncExpr   *fexpr;
+
+	/* Build arg list to use in the FuncExpr node. */
+	argp = makeNode(Param);
+	argp->paramkind = PARAM_EXEC;
+	argp->paramid = -1;
+	argp->paramtype = agg_input_type;
+	argp->paramtypmod = -1;
+	argp->paramcollid = agg_input_collation;
+	argp->location = -1;
+
+	/* takes a single arg of the agg_input_type */
+	args = list_make1(argp);
+
+	fexpr = makeFuncExpr(serialfn_oid,
+						 agg_output_type,
+						 args,
+						 InvalidOid,
+						 agg_input_collation,
+						 COERCE_EXPLICIT_CALL);
+	fexpr->funcvariadic = false;
+	*serialfnexpr = (Expr *) fexpr;
+}
+
+/*
+ * Like build_aggregate_transfn_expr, but creates an expression tree for the
  * final function of an aggregate, rather than the transition function.
  */
 void

@@ -861,7 +861,8 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 										NULL,
 										dNumGroups,
 										false,
-										true);
+										true,
+										false);
 	}
 	else
 	{

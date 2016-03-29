@@ -1296,6 +1296,7 @@ typedef struct AggPath
 	List	   *qual;			/* quals (HAVING quals), if any */
 	bool		combineStates;	/* input is partially aggregated agg states */
 	bool		finalizeAggs;	/* should the executor call the finalfn? */
+	bool		serialStates;	/* should agg states be (de)serialized? */
 } AggPath;
 
 /*

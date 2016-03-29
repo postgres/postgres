@@ -2057,10 +2057,10 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  * search_indexed_tlist_for_partial_aggref - find an Aggref in an indexed tlist
  *
  * Aggrefs for partial aggregates have their aggoutputtype adjusted to set it
- * to the aggregate state's type. This means that a standard equal() comparison
- * won't match when comparing an Aggref which is in partial mode with an Aggref
- * which is not. Here we manually compare all of the fields apart from
- * aggoutputtype.
+ * to the aggregate state's type, or serialization type. This means that a
+ * standard equal() comparison won't match when comparing an Aggref which is
+ * in partial mode with an Aggref which is not. Here we manually compare all of
+ * the fields apart from aggoutputtype.
  */
 static Var *
 search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,

@@ -1836,6 +1836,7 @@ typedef struct AggState
 	bool		agg_done;		/* indicates completion of Agg scan */
 	bool		combineStates;	/* input tuples contain transition states */
 	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
+	bool		serialStates;	/* should agg states be (de)serialized? */
 	int			projected_set;	/* The last projected grouping set */
 	int			current_set;	/* The current grouping set being evaluated */
 	Bitmapset  *grouped_cols;	/* grouped cols in current projection */

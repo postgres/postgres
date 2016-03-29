@@ -1993,6 +1993,7 @@ _readAgg(void)
 	READ_ENUM_FIELD(aggstrategy, AggStrategy);
 	READ_BOOL_FIELD(combineStates);
 	READ_BOOL_FIELD(finalizeAggs);
+	READ_BOOL_FIELD(serialStates);
 	READ_INT_FIELD(numCols);
 	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
 	READ_OID_ARRAY(grpOperators, local_node->numCols);

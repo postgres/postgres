@@ -51,6 +51,12 @@ extern void build_aggregate_combinefn_expr(Oid agg_state_type,
 										   Oid combinefn_oid,
 										   Expr **combinefnexpr);
 
+extern void build_aggregate_serialfn_expr(Oid agg_state_type,
+										  Oid agg_serial_type,
+										  Oid agg_input_collation,
+										  Oid serialfn_oid,
+										  Expr **serialfnexpr);
+
 extern void build_aggregate_finalfn_expr(Oid *agg_input_types,
 						int num_finalfn_inputs,
 						Oid agg_state_type,

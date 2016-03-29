@@ -58,7 +58,7 @@ extern bool is_projection_capable_plan(Plan *plan);
 /* External use of these functions is deprecated: */
 extern Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
 extern Agg *make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
-		 bool combineStates, bool finalizeAggs,
+		 bool combineStates, bool finalizeAggs, bool serialStates,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 		 List *groupingSets, List *chain,
 		 double dNumGroups, Plan *lefttree);

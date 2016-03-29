@@ -871,6 +871,7 @@ _copyAgg(const Agg *from)
 	COPY_SCALAR_FIELD(aggstrategy);
 	COPY_SCALAR_FIELD(combineStates);
 	COPY_SCALAR_FIELD(finalizeAggs);
+	COPY_SCALAR_FIELD(serialStates);
 	COPY_SCALAR_FIELD(numCols);
 	if (from->numCols > 0)
 	{

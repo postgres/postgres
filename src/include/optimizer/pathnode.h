@@ -171,7 +171,8 @@ extern AggPath *create_agg_path(PlannerInfo *root,
 				const AggClauseCosts *aggcosts,
 				double numGroups,
 				bool combineStates,
-				bool finalizeAggs);
+				bool finalizeAggs,
+				bool serialStates);
 extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *subpath,
