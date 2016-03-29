@@ -3054,10 +3054,10 @@ parseScriptWeight(const char *option, char **script)
 			fprintf(stderr, "invalid weight specification: %s\n", sep);
 			exit(1);
 		}
-		if (wtmp > INT_MAX || wtmp <= 0)
+		if (wtmp > INT_MAX || wtmp < 0)
 		{
 			fprintf(stderr,
-			"weight specification out of range (1 .. %u): " INT64_FORMAT "\n",
+			"weight specification out of range (0 .. %u): " INT64_FORMAT "\n",
 					INT_MAX, (int64) wtmp);
 			exit(1);
 		}
@@ -3181,10 +3181,11 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 		{
 			if (num_scripts > 1)
 				printf("SQL script %d: %s\n"
-					   " - weight = %d\n"
+					   " - weight = %d (targets %.1f%% of total)\n"
 					   " - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
 					   i + 1, sql_script[i].desc,
 					   sql_script[i].weight,
+					   100.0 * sql_script[i].weight / total_weight,
 					   sql_script[i].stats.cnt,
 					   100.0 * sql_script[i].stats.cnt / total->cnt,
 					   sql_script[i].stats.cnt / time_include);
@@ -3627,6 +3628,12 @@ main(int argc, char **argv)
 	for (i = 0; i < num_scripts; i++)
 		/* cannot overflow: weight is 32b, total_weight 64b */
 		total_weight += sql_script[i].weight;
+
+	if (total_weight == 0 && !is_init_mode)
+	{
+		fprintf(stderr, "total script weight must not be zero\n");
+		exit(1);
+	}
 
 	/* show per script stats if several scripts are used */
 	if (num_scripts > 1)

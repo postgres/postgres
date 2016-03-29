@@ -698,6 +698,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    Each script may be given a relative weight specified after a
    <literal>@</> so as to change its drawing probability.
    The default weight is <literal>1</>.
+   Scripts with a weight of <literal>0</> are ignored.
  </para>
 
   <para>
@@ -1259,17 +1260,17 @@ tps = 618.764555 (including connections establishing)
 tps = 622.977698 (excluding connections establishing)
 script statistics:
  - statement latencies in milliseconds:
-        0.002522        \set aid random(1, 100000 * :scale)
-        0.005459        \set bid random(1, 1 * :scale)
-        0.002348        \set tid random(1, 10 * :scale)
-        0.001078        \set delta random(-5000, 5000)
-        0.326152        BEGIN;
-        0.603376        UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
-        0.454643        SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
-        5.528491        UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
-        7.335435        UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
-        0.371851        INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
-        1.212976        END;
+        0.002  \set aid random(1, 100000 * :scale)
+        0.005  \set bid random(1, 1 * :scale)
+        0.002  \set tid random(1, 10 * :scale)
+        0.001  \set delta random(-5000, 5000)
+        0.326  BEGIN;
+        0.603  UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
+        0.454  SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
+        5.528  UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
+        7.335  UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
+        0.371  INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+        1.212  END;
 </screen>
   </para>
 
