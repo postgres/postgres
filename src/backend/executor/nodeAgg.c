@@ -2862,11 +2862,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			fmgr_info_set_expr((Node *) finalfnexpr, &peragg->finalfn);
 		}
 
-		/* when finalizing we get info about the final result's datatype */
-		if (aggstate->finalizeAggs)
-			get_typlenbyval(aggref->aggtype,
-							&peragg->resulttypeLen,
-							&peragg->resulttypeByVal);
+		/* get info about the output value's datatype */
+		get_typlenbyval(aggref->aggoutputtype,
+						&peragg->resulttypeLen,
+						&peragg->resulttypeByVal);
 
 		/*
 		 * initval is potentially null, so don't try to access it as a struct
