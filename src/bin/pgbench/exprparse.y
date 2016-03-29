@@ -47,11 +47,11 @@ static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *
 
 %type <elist> elist
 %type <expr> expr
-%type <ival> INTEGER function
-%type <dval> DOUBLE
+%type <ival> INTEGER_CONST function
+%type <dval> DOUBLE_CONST
 %type <str> VARIABLE FUNCTION
 
-%token INTEGER DOUBLE VARIABLE FUNCTION
+%token INTEGER_CONST DOUBLE_CONST VARIABLE FUNCTION
 
 /* Precedence: lowest to highest */
 %left	'+' '-'
@@ -76,8 +76,8 @@ expr: '(' expr ')'			{ $$ = $2; }
 	| expr '*' expr			{ $$ = make_op(yyscanner, "*", $1, $3); }
 	| expr '/' expr			{ $$ = make_op(yyscanner, "/", $1, $3); }
 	| expr '%' expr			{ $$ = make_op(yyscanner, "%", $1, $3); }
-	| INTEGER				{ $$ = make_integer_constant($1); }
-	| DOUBLE				{ $$ = make_double_constant($1); }
+	| INTEGER_CONST			{ $$ = make_integer_constant($1); }
+	| DOUBLE_CONST			{ $$ = make_double_constant($1); }
 	| VARIABLE 				{ $$ = make_variable($1); }
 	| function '(' elist ')' { $$ = make_func(yyscanner, $1, $3); }
 	;

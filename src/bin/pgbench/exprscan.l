@@ -123,12 +123,15 @@ newline			[\n]
 				}
 {digit}+		{
 					yylval->ival = strtoint64(yytext);
-					return INTEGER;
+					return INTEGER_CONST;
 				}
 {digit}+(\.{digit}*)?([eE][-+]?{digit}+)?	{
-					yycolumn += yyleng;
 					yylval->dval = atof(yytext);
-					return DOUBLE;
+					return DOUBLE_CONST;
+				}
+\.{digit}+([eE][-+]?{digit}+)?	{
+					yylval->dval = atof(yytext);
+					return DOUBLE_CONST;
 				}
 {alpha}{alnum}*	{
 					yylval->str = pg_strdup(yytext);

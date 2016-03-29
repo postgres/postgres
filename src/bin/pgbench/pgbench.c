@@ -1043,7 +1043,7 @@ coerceToInt(PgBenchValue *pval, int64 *ival)
 	{
 		double dval = pval->u.dval;
 		Assert(pval->type == PGBT_DOUBLE);
-		if (dval < INT64_MIN || INT64_MAX < dval)
+		if (dval < PG_INT64_MIN || PG_INT64_MAX < dval)
 		{
 			fprintf(stderr, "double to int overflow for %f\n", dval);
 			return false;
