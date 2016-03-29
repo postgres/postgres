@@ -1135,12 +1135,12 @@ END;
    The format of the log is:
 
 <synopsis>
-<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional><replaceable>schedule_lag</replaceable></optional>
+<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>script_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional><replaceable>schedule_lag</replaceable></optional>
 </synopsis>
 
    where <replaceable>time</> is the total elapsed transaction time in microseconds,
-   <replaceable>file_no</> identifies which script file was used
-   (useful when multiple scripts were specified with <option>-f</>),
+   <replaceable>script_no</> identifies which script file was used (useful when
+   multiple scripts were specified with <option>-f</> or <option>-b</>),
    and <replaceable>time_epoch</>/<replaceable>time_us</> are a
    Unix epoch format time stamp and an offset
    in microseconds (suitable for creating an ISO 8601
