@@ -343,6 +343,9 @@ extern float get_float4_infinity(void);
 extern double get_float8_nan(void);
 extern float get_float4_nan(void);
 extern int	is_infinite(double val);
+extern double float8in_internal(char *num, char **endptr_p,
+				  const char *type_name, const char *orig_string);
+extern char *float8out_internal(double num);
 
 extern Datum float4in(PG_FUNCTION_ARGS);
 extern Datum float4out(PG_FUNCTION_ARGS);

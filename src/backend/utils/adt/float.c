@@ -411,16 +411,34 @@ Datum
 float8in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
-	char	   *orig_num;
+
+	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
+}
+
+/*
+ * float8in_internal - guts of float8in()
+ *
+ * This is exposed for use by functions that want a reasonably
+ * platform-independent way of inputting doubles.  The behavior is
+ * essentially like strtod + ereport on error, but note the following
+ * differences:
+ * 1. Both leading and trailing whitespace are skipped.
+ * 2. If endptr_p is NULL, we throw error if there's trailing junk.
+ * Otherwise, it's up to the caller to complain about trailing junk.
+ * 3. In event of a syntax error, the report mentions the given type_name
+ * and prints orig_string as the input; this is meant to support use of
+ * this function with types such as "box" and "point", where what we are
+ * parsing here is just a substring of orig_string.
+ *
+ * "num" could validly be declared "const char *", but that results in an
+ * unreasonable amount of extra casting both here and in callers, so we don't.
+ */
+double
+float8in_internal(char *num, char **endptr_p,
+				  const char *type_name, const char *orig_string)
+{
 	double		val;
 	char	   *endptr;
-
-	/*
-	 * endptr points to the first character _after_ the sequence we recognized
-	 * as a valid floating point number. orig_num points to the original input
-	 * string.
-	 */
-	orig_num = num;
 
 	/* skip leading whitespace */
 	while (*num != '\0' && isspace((unsigned char) *num))
@@ -433,8 +451,8 @@ float8in(PG_FUNCTION_ARGS)
 	if (*num == '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type double precision: \"%s\"",
-					orig_num)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						type_name, orig_string)));
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -497,18 +515,27 @@ float8in(PG_FUNCTION_ARGS)
 			 * precision).  We'd prefer not to throw error for that, so try to
 			 * detect whether it's a "real" out-of-range condition by checking
 			 * to see if the result is zero or huge.
+			 *
+			 * On error, we intentionally complain about double precision not
+			 * the given type name, and we print only the part of the string
+			 * that is the current number.
 			 */
 			if (val == 0.0 || val >= HUGE_VAL || val <= -HUGE_VAL)
+			{
+				char	   *errnumber = pstrdup(num);
+
+				errnumber[endptr - num] = '\0';
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				   errmsg("\"%s\" is out of range for type double precision",
-						  orig_num)));
+						  errnumber)));
+			}
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type double precision: \"%s\"",
-					orig_num)));
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							type_name, orig_string)));
 	}
 #ifdef HAVE_BUGGY_SOLARIS_STRTOD
 	else
@@ -527,16 +554,16 @@ float8in(PG_FUNCTION_ARGS)
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
 		endptr++;
 
-	/* if there is any junk left at the end of the string, bail out */
-	if (*endptr != '\0')
+	/* report stopping point if wanted, else complain if not end of string */
+	if (endptr_p)
+		*endptr_p = endptr;
+	else if (*endptr != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type double precision: \"%s\"",
-					orig_num)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						type_name, orig_string)));
 
-	CHECKFLOATVAL(val, true, true);
-
-	PG_RETURN_FLOAT8(val);
+	return val;
 }
 
 /*
@@ -547,10 +574,24 @@ Datum
 float8out(PG_FUNCTION_ARGS)
 {
 	float8		num = PG_GETARG_FLOAT8(0);
+
+	PG_RETURN_CSTRING(float8out_internal(num));
+}
+
+/*
+ * float8out_internal - guts of float8out()
+ *
+ * This is exposed for use by functions that want a reasonably
+ * platform-independent way of outputting doubles.
+ * The result is always palloc'd.
+ */
+char *
+float8out_internal(double num)
+{
 	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
 
 	if (isnan(num))
-		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
+		return strcpy(ascii, "NaN");
 
 	switch (is_infinite(num))
 	{
@@ -571,7 +612,7 @@ float8out(PG_FUNCTION_ARGS)
 			}
 	}
 
-	PG_RETURN_CSTRING(ascii);
+	return ascii;
 }
 
 /*

@@ -232,15 +232,15 @@ INSERT INTO box_temp
 		   ('(-infinity,-infinity)(infinity,infinity)');
 SET enable_seqscan = false;
 SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
-        f1        
-------------------
+             f1             
+----------------------------
  (2,2),(1,1)
  (4,4),(2,2)
  (6,6),(3,3)
  (8,8),(4,4)
  (-0,100),(0,0)
- (0,inf),(0,100)
- (0,inf),(-inf,0)
+ (0,Infinity),(0,100)
+ (0,Infinity),(-Infinity,0)
 (7 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
@@ -251,16 +251,16 @@ EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
 (2 rows)
 
 SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
-        f1        
-------------------
+             f1             
+----------------------------
  (2,2),(1,1)
  (4,4),(2,2)
  (6,6),(3,3)
  (8,8),(4,4)
  (10,10),(5,5)
  (-0,100),(0,0)
- (0,inf),(0,100)
- (0,inf),(-inf,0)
+ (0,Infinity),(0,100)
+ (0,Infinity),(-Infinity,0)
 (8 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
@@ -271,8 +271,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
 (2 rows)
 
 SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
-          f1           
------------------------
+                    f1                     
+-------------------------------------------
  (20,20),(10,10)
  (22,22),(11,11)
  (24,24),(12,12)
@@ -289,7 +289,7 @@ SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
  (46,46),(23,23)
  (48,48),(24,24)
  (50,50),(25,25)
- (inf,inf),(-inf,-inf)
+ (Infinity,Infinity),(-Infinity,-Infinity)
 (17 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
@@ -375,10 +375,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &<| '(10,4.3333334),(5,1)';
 (2 rows)
 
 SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
-        f1         
--------------------
+          f1          
+----------------------
  (100,100),(50,50)
- (0,inf),(0,100)
+ (0,Infinity),(0,100)
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
@@ -389,8 +389,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49
 (2 rows)
 
 SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
-        f1         
--------------------
+          f1          
+----------------------
  (82,82),(41,41)
  (84,84),(42,42)
  (86,86),(43,43)
@@ -401,7 +401,7 @@ SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
  (96,96),(48,48)
  (98,98),(49,49)
  (100,100),(50,50)
- (0,inf),(0,100)
+ (0,Infinity),(0,100)
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
@@ -412,12 +412,12 @@ EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
 (2 rows)
 
 SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,16)';
-          f1           
------------------------
+                    f1                     
+-------------------------------------------
  (16,16),(8,8)
  (18,18),(9,9)
  (20,20),(10,10)
- (inf,inf),(-inf,-inf)
+ (Infinity,Infinity),(-Infinity,-Infinity)
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,15)';
