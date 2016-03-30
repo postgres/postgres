@@ -515,8 +515,8 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 	for (quadrant = 0; quadrant < in->nNodes; quadrant++)
 	{
-		bool		flag;
 		RectBox	   *next_rect_box = nextRectBox(rect_box, centroid, quadrant);
+		bool		flag = true;
 
 		for (i = 0; i < in->nkeys; i++)
 		{
@@ -609,7 +609,7 @@ spg_box_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
 	spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
 	Datum		leaf = in->leafDatum;
-	bool		flag;
+	bool		flag = true;
 	int			i;
 
 	/* All tests are exact. */
