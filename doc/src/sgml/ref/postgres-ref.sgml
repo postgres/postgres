@@ -635,16 +635,6 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><envar>TZ</envar></term>
-
-    <listitem>
-     <para>
-      Server time zone
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
  </refsect1>
 
