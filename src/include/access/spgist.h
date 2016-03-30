@@ -133,6 +133,8 @@ typedef struct spgInnerConsistentIn
 	int			nkeys;			/* length of array */
 
 	Datum		reconstructedValue;		/* value reconstructed at parent */
+	void	   *traversalValue; /* opclass-specific traverse value */
+	MemoryContext traversalMemoryContext;
 	int			level;			/* current level (counting from zero) */
 	bool		returnData;		/* original data must be returned? */
 
@@ -150,6 +152,7 @@ typedef struct spgInnerConsistentOut
 	int		   *nodeNumbers;	/* their indexes in the node array */
 	int		   *levelAdds;		/* increment level by this much for each */
 	Datum	   *reconstructedValues;	/* associated reconstructed values */
+	void	  **traversalValues;	/* opclass-specific traverse values */
 } spgInnerConsistentOut;
 
 /*
@@ -160,6 +163,7 @@ typedef struct spgLeafConsistentIn
 	ScanKey		scankeys;		/* array of operators and comparison values */
 	int			nkeys;			/* length of array */
 
+	void	   *traversalValue; /* opclass-specific traverse value */
 	Datum		reconstructedValue;		/* value reconstructed at parent */
 	int			level;			/* current level (counting from zero) */
 	bool		returnData;		/* original data must be returned? */
