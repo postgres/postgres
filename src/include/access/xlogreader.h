@@ -139,16 +139,22 @@ struct XLogReaderState
 	 * ----------------------------------------
 	 */
 
-	/* Buffer for currently read page (XLOG_BLCKSZ bytes) */
+	/*
+	 * Buffer for currently read page (XLOG_BLCKSZ bytes, valid up to at least
+	 * readLen bytes)
+	 */
 	char	   *readBuf;
+	uint32		readLen;
 
-	/* last read segment, segment offset, read length, TLI */
+	/* last read segment, segment offset, TLI for data currently in readBuf */
 	XLogSegNo	readSegNo;
 	uint32		readOff;
-	uint32		readLen;
 	TimeLineID	readPageTLI;
 
-	/* beginning of last page read, and its TLI  */
+	/*
+	 * beginning of prior page read, and its TLI.  Doesn't necessarily
+	 * correspond to what's in readBuf; used for timeline sanity checks.
+	 */
 	XLogRecPtr	latestPagePtr;
 	TimeLineID	latestPageTLI;
 
@@ -173,6 +179,9 @@ extern void XLogReaderFree(XLogReaderState *state);
 /* Read the next XLog record. Returns NULL on end-of-WAL or failure */
 extern struct XLogRecord *XLogReadRecord(XLogReaderState *state,
 			   XLogRecPtr recptr, char **errormsg);
+
+/* Invalidate read state */
+extern void XLogReaderInvalReadState(XLogReaderState *state);
 
 #ifdef FRONTEND
 extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
