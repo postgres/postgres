@@ -117,3 +117,65 @@ SELECT '' AS one, b1.*, b2.*
    WHERE b1.f1 @> b2.f1 and not b1.f1 ~= b2.f1;
 
 SELECT '' AS four, height(f1), width(f1) FROM BOX_TBL;
+
+--
+-- Test the SP-GiST index
+--
+
+CREATE TEMPORARY TABLE box_temp (f1 box);
+
+INSERT INTO box_temp
+	SELECT box(point(i, i), point(i * 2, i * 2))
+	FROM generate_series(1, 50) AS i;
+
+CREATE INDEX box_spgist ON box_temp USING spgist (f1);
+
+INSERT INTO box_temp
+	VALUES (NULL),
+		   ('(-0,0)(0,100)'),
+		   ('(-3,4.3333333333)(40,1)'),
+		   ('(0,100)(0,infinity)'),
+		   ('(-infinity,0)(0,infinity)'),
+		   ('(-infinity,-infinity)(infinity,infinity)');
+
+SET enable_seqscan = false;
+
+SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
+
+SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
+
+SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
+
+SELECT * FROM box_temp WHERE f1 &> '(40,30),(45,50)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &> '(40,30),(45,50)';
+
+SELECT * FROM box_temp WHERE f1 >> '(30,40),(40,30)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 >> '(30,40),(40,30)';
+
+SELECT * FROM box_temp WHERE f1 <<| '(10,4.33334),(5,100)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 <<| '(10,4.33334),(5,100)';
+
+SELECT * FROM box_temp WHERE f1 &<| '(10,4.3333334),(5,1)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &<| '(10,4.3333334),(5,1)';
+
+SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
+
+SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
+
+SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,16)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,15)';
+
+SELECT * FROM box_temp WHERE f1 <@ '(10,15),(30,35)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 <@ '(10,15),(30,35)';
+
+SELECT * FROM box_temp WHERE f1 ~= '(20,20),(40,40)';
+EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 ~= '(20,20),(40,40)';
+
+RESET enable_seqscan;
+
+DROP INDEX box_spgist;

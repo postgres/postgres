@@ -14,8 +14,8 @@ OBJS = acl.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	bool.o cash.o char.o date.o datetime.o datum.o dbsize.o domains.o \
 	encode.o enum.o expandeddatum.o \
 	float.o format_type.o formatting.o genfile.o \
-	geo_ops.o geo_selfuncs.o inet_cidr_ntop.o inet_net_pton.o int.o \
-	int8.o json.o jsonb.o jsonb_gin.o jsonb_op.o jsonb_util.o \
+	geo_ops.o geo_selfuncs.o geo_spgist.o inet_cidr_ntop.o inet_net_pton.o \
+	int.o int8.o json.o jsonb.o jsonb_gin.o jsonb_op.o jsonb_util.o \
 	jsonfuncs.o like.o lockfuncs.o mac.o misc.o nabstime.o name.o \
 	network.o network_gist.o network_selfuncs.o \
 	numeric.o numutils.o oid.o oracle_compat.o \

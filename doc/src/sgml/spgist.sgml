@@ -113,6 +113,24 @@
       </entry>
      </row>
      <row>
+      <entry><literal>box_ops</></entry>
+      <entry>box</entry>
+      <entry>
+       <literal>&lt;&lt;</>
+       <literal>&amp;&lt;</>
+       <literal>&amp;&amp;</>
+       <literal>&amp;&gt;</>
+       <literal>&gt;&gt;</>
+       <literal>~=</>
+       <literal>@&gt;</>
+       <literal>&lt;@</>
+       <literal>&amp;&lt;|</>
+       <literal>&lt;&lt;|</>
+       <literal>|&gt;&gt;</literal>
+       <literal>|&amp;&gt;</>
+      </entry>
+     </row>
+     <row>
       <entry><literal>text_ops</></entry>
       <entry><type>text</></entry>
       <entry>

@@ -426,6 +426,12 @@ extern Datum gist_point_consistent(PG_FUNCTION_ARGS);
 extern Datum gist_point_distance(PG_FUNCTION_ARGS);
 extern Datum gist_point_fetch(PG_FUNCTION_ARGS);
 
+/* utils/adt/geo_spgist.c */
+Datum spg_box_quad_config(PG_FUNCTION_ARGS);
+Datum spg_box_quad_choose(PG_FUNCTION_ARGS);
+Datum spg_box_quad_picksplit(PG_FUNCTION_ARGS);
+Datum spg_box_quad_inner_consistent(PG_FUNCTION_ARGS);
+Datum spg_box_quad_leaf_consistent(PG_FUNCTION_ARGS);
 
 /* geo_selfuncs.c */
 extern Datum areasel(PG_FUNCTION_ARGS);

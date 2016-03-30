@@ -833,6 +833,22 @@ DATA(insert (	3474   3831 2283 16 s	3889 4000 0 ));
 DATA(insert (	3474   3831 3831 18 s	3882 4000 0 ));
 
 /*
+ * SP-GiST box_ops
+ */
+DATA(insert (	5000	603  603  1 s	 493	4000 0 ));
+DATA(insert (	5000	603  603  2 s	 494	4000 0 ));
+DATA(insert (	5000	603  603  3 s	 500	4000 0 ));
+DATA(insert (	5000	603  603  4 s	 495	4000 0 ));
+DATA(insert (	5000	603  603  5 s	 496	4000 0 ));
+DATA(insert (	5000	603  603  6 s	 499	4000 0 ));
+DATA(insert (	5000	603  603  7 s	 498	4000 0 ));
+DATA(insert (	5000	603  603  8 s	 497	4000 0 ));
+DATA(insert (	5000	603  603  9 s	2571	4000 0 ));
+DATA(insert (	5000	603  603 10 s	2570	4000 0 ));
+DATA(insert (	5000	603  603 11 s	2573	4000 0 ));
+DATA(insert (	5000	603  603 12 s	2572	4000 0 ));
+
+/*
  * GiST inet_ops
  */
 DATA(insert (	3550	869 869 3 s		3552 783 0 ));
