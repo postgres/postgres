@@ -16,14 +16,16 @@ bool walrcv_connect(char *conninfo, XLogRecPtr startpoint)
 Establish connection to the primary, and starts streaming from 'startpoint'.
 Returns true on success.
 
-bool walrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
+int walrcv_receive(char **buffer, int *wait_fd)
 
-Retrieve any message available through the connection, blocking for
-maximum of 'timeout' ms. If a message was successfully read, returns true,
-otherwise false. On success, a pointer to the message payload is stored in
-*buffer, length in *len, and the type of message received in *type. The
-returned buffer is valid until the next call to walrcv_* functions, the
-caller should not attempt freeing it.
+Retrieve any message available without blocking through the
+connection.  If a message was successfully read, returns its
+length. If the connection is closed, returns -1.  Otherwise returns 0
+to indicate that no data is available, and sets *wait_fd to a file
+descriptor which can be waited on before trying again.  On success, a
+pointer to the message payload is stored in *buffer. The returned
+buffer is valid until the next call to walrcv_* functions, and the
+caller should not attempt to free it.
 
 void walrcv_send(const char *buffer, int nbytes)
 

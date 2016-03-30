@@ -60,7 +60,9 @@ typedef enum
 	SYNCHRONOUS_COMMIT_LOCAL_FLUSH,		/* wait for local flush only */
 	SYNCHRONOUS_COMMIT_REMOTE_WRITE,	/* wait for local flush and remote
 										 * write */
-	SYNCHRONOUS_COMMIT_REMOTE_FLUSH		/* wait for local and remote flush */
+	SYNCHRONOUS_COMMIT_REMOTE_FLUSH,	/* wait for local and remote flush */
+	SYNCHRONOUS_COMMIT_REMOTE_APPLY		/* wait for local flush and remote
+										 * apply */
 }	SyncCommitLevel;
 
 /* Define the default setting for synchonous_commit */
@@ -144,10 +146,13 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
  * EOXact... routines which run at the end of the original transaction
  * completion.
  */
+#define XACT_COMPLETION_APPLY_FEEDBACK			(1U << 29)
 #define XACT_COMPLETION_UPDATE_RELCACHE_FILE	(1U << 30)
 #define XACT_COMPLETION_FORCE_SYNC_COMMIT		(1U << 31)
 
 /* Access macros for above flags */
+#define XactCompletionApplyFeedback(xinfo) \
+	((xinfo & XACT_COMPLETION_APPLY_FEEDBACK) != 0)
 #define XactCompletionRelcacheInitFileInval(xinfo) \
 	((xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE) != 0)
 #define XactCompletionForceSyncCommit(xinfo) \

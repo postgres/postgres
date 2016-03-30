@@ -113,9 +113,16 @@ typedef struct
 	slock_t		mutex;			/* locks shared variables shown above */
 
 	/*
+	 * force walreceiver reply?  This doesn't need to be locked; memory
+	 * barriers for ordering are sufficient.
+	 */
+	bool		force_reply;
+
+	/*
 	 * Latch used by startup process to wake up walreceiver after telling it
 	 * where to start streaming (after setting receiveStart and
-	 * receiveStartTLI).
+	 * receiveStartTLI), and also to tell it to send apply feedback to the
+	 * primary whenever specially marked commit records are applied.
 	 */
 	Latch		latch;
 } WalRcvData;
@@ -138,7 +145,7 @@ extern PGDLLIMPORT walrcv_startstreaming_type walrcv_startstreaming;
 typedef void (*walrcv_endstreaming_type) (TimeLineID *next_tli);
 extern PGDLLIMPORT walrcv_endstreaming_type walrcv_endstreaming;
 
-typedef int (*walrcv_receive_type) (int timeout, char **buffer);
+typedef int (*walrcv_receive_type) (char **buffer, int *wait_fd);
 extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
 
 typedef void (*walrcv_send_type) (const char *buffer, int nbytes);
@@ -162,5 +169,6 @@ extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr,
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
+extern void WalRcvForceReply(void);
 
 #endif   /* _WALRECEIVER_H */

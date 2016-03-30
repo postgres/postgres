@@ -1081,6 +1081,9 @@ primary_slot_name = 'node_a_slot'
     WAL record is then sent to the standby. The standby sends reply
     messages each time a new batch of WAL data is written to disk, unless
     <varname>wal_receiver_status_interval</> is set to zero on the standby.
+    In the case that <varname>synchronous_commit</> is set to
+    <literal>remote_apply</>, the standby sends reply messages when the commit
+    record is replayed, making the transaction visible.
     If the standby is the first matching standby, as specified in
     <varname>synchronous_standby_names</> on the primary, the reply
     messages from that standby will be used to wake users waiting for
@@ -1104,6 +1107,14 @@ primary_slot_name = 'node_a_slot'
     because it can decrease the response time for the transaction.
     Data loss could only occur if both the primary and the standby crash and
     the database of the primary gets corrupted at the same time.
+   </para>
+
+   <para>
+    Setting <varname>synchronous_commit</> to <literal>remote_apply</> will
+    cause each commit to wait until the current synchronous standby reports
+    that it has replayed the transaction, making it visible to user queries.
+    In simple cases, this allows for load balancing with causal consistency
+    on a single hot standby.
    </para>
 
    <para>
@@ -1160,9 +1171,10 @@ primary_slot_name = 'node_a_slot'
     <title>Planning for High Availability</title>
 
    <para>
-    Commits made when <varname>synchronous_commit</> is set to <literal>on</>
-    or <literal>remote_write</> will wait until the synchronous standby responds. The response
-    may never occur if the last, or only, standby should crash.
+    Commits made when <varname>synchronous_commit</> is set to <literal>on</>,
+    <literal>remote_apply</> or <literal>remote_write</> will wait until the
+    synchronous standby responds. The response may never occur if the last, or
+    only, standby should crash.
    </para>
 
    <para>

@@ -2143,8 +2143,8 @@ include_dir 'conf.d'
         Specifies whether transaction commit will wait for WAL records
         to be written to disk before the command returns a <quote>success</>
         indication to the client.  Valid values are <literal>on</>,
-        <literal>remote_write</>, <literal>local</>, and <literal>off</>.
-        The default, and safe, setting
+        <literal>remote_write</>, <literal>remote_apply</>, <literal>local</>,
+        and <literal>off</>.  The default, and safe, setting
         is <literal>on</>.  When <literal>off</>, there can be a delay between
         when success is reported to the client and when the transaction is
         really guaranteed to be safe against a server crash.  (The maximum
@@ -2169,6 +2169,10 @@ include_dir 'conf.d'
         the commit record of the transaction and flushed it to disk.  This
         ensures the transaction will not be lost unless both primary and
         standby suffer corruption of their database storage.
+        When set to <literal>remote_apply</>, commits will wait until a reply
+        from the current synchronous standby indicates it has received the
+        commit record of the transaction and applied it, so that it has become
+        visible to queries.
         When set to <literal>remote_write</>, commits will wait
         until a reply from the current synchronous standby indicates it has
         received the commit record of the transaction and written it out to
@@ -2186,9 +2190,9 @@ include_dir 'conf.d'
         setting <literal>local</> is available for transactions that
         wish to wait for local flush to disk, but not synchronous replication.
         If <varname>synchronous_standby_names</> is not set, the settings
-        <literal>on</>, <literal>remote_write</> and <literal>local</> all
-        provide the same synchronization level: transaction commits only wait
-        for local flush to disk.
+        <literal>on</>, <literal>remote_apply</>, <literal>remote_write</>
+        and <literal>local</> all provide the same synchronization level:
+        transaction commits only wait for local flush to disk.
        </para>
        <para>
         This parameter can be changed at any time; the behavior for any
