@@ -310,14 +310,12 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
 	int			which;
 	int			i;
+	MemoryContext oldCtx;
 
 	/*
 	 * For adjacent search we need also previous centroid (if any) to improve
 	 * the precision of the consistent check. In this case needPrevious flag
-	 * is set and centroid is passed into reconstructedValues. This is not the
-	 * intended purpose of reconstructedValues (because we already have the
-	 * full value available at the leaf), but it's a convenient place to store
-	 * state while traversing the tree.
+	 * is set and centroid is passed into traversalValue.
 	 */
 	bool		needPrevious = false;
 
@@ -565,9 +563,9 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 * for lower or upper bounds to be adjacent. Deserialize
 					 * previous centroid range if present for checking this.
 					 */
-					if (in->reconstructedValue != (Datum) 0)
+					if (in->traversalValue != (Datum) 0)
 					{
-						prevCentroid = DatumGetRangeType(in->reconstructedValue);
+						prevCentroid = DatumGetRangeType(in->traversalValue);
 						range_deserialize(typcache, prevCentroid,
 										  &prevLower, &prevUpper, &prevEmpty);
 					}
@@ -746,18 +744,36 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 	/* We must descend into the quadrant(s) identified by 'which' */
 	out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
 	if (needPrevious)
-		out->reconstructedValues = (Datum *) palloc(sizeof(Datum) * in->nNodes);
+		out->traversalValues = (void **) palloc(sizeof(void *) * in->nNodes);
 	out->nNodes = 0;
+
+	/*
+	 * Elements of traversalValues should be allocated in
+	 * traversalMemoryContext
+	 */
+	oldCtx = MemoryContextSwitchTo(in->traversalMemoryContext);
+
 	for (i = 1; i <= in->nNodes; i++)
 	{
 		if (which & (1 << i))
 		{
 			/* Save previous prefix if needed */
 			if (needPrevious)
-				out->reconstructedValues[out->nNodes] = in->prefixDatum;
-			out->nodeNumbers[out->nNodes++] = i - 1;
+			{
+				Datum previousCentroid;
+
+				/* We know, that in->prefixDatum in this place is varlena,
+				 * because it's range
+				 */
+				previousCentroid = datumCopy(in->prefixDatum, false, -1);
+				out->traversalValues[out->nNodes] = (void *)previousCentroid;
+			}
+			out->nodeNumbers[out->nNodes] = i - 1;
+			out->nNodes++;
 		}
 	}
+
+	MemoryContextSwitchTo(oldCtx);
 
 	PG_RETURN_VOID();
 }
