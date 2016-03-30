@@ -118,6 +118,11 @@ XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
 		return NULL;
 	}
 
+#ifndef FRONTEND
+	/* Will be loaded on first read */
+	state->timelineHistory = NIL;
+#endif
+
 	return state;
 }
 
@@ -137,6 +142,10 @@ XLogReaderFree(XLogReaderState *state)
 	pfree(state->errormsg_buf);
 	if (state->readRecordBuf)
 		pfree(state->readRecordBuf);
+#ifndef FRONTEND
+	if (state->timelineHistory)
+		list_free_deep(state->timelineHistory);
+#endif
 	pfree(state->readBuf);
 	pfree(state);
 }
