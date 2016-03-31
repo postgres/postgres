@@ -23,7 +23,6 @@
 typedef int64 zic_t;
 #define ZIC_MIN PG_INT64_MIN
 #define ZIC_MAX PG_INT64_MAX
-#define SCNdZIC INT64_MODIFIER "d"
 
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
 #define ZIC_MAX_ABBR_LEN_WO_WARN	  6
@@ -1145,7 +1144,8 @@ infile(const char *name)
 static zic_t
 gethms(char const * string, char const * errstring, bool signable)
 {
-	zic_t		hh;
+	/* PG: make hh be int not zic_t to avoid sscanf portability issues */
+	int			hh;
 	int			mm,
 				ss,
 				sign;
@@ -1162,11 +1162,11 @@ gethms(char const * string, char const * errstring, bool signable)
 	}
 	else
 		sign = 1;
-	if (sscanf(string, "%" SCNdZIC "%c", &hh, &xs) == 1)
+	if (sscanf(string, "%d%c", &hh, &xs) == 1)
 		mm = ss = 0;
-	else if (sscanf(string, "%" SCNdZIC ":%d%c", &hh, &mm, &xs) == 2)
+	else if (sscanf(string, "%d:%d%c", &hh, &mm, &xs) == 2)
 		ss = 0;
-	else if (sscanf(string, "%" SCNdZIC ":%d:%d%c", &hh, &mm, &ss, &xs)
+	else if (sscanf(string, "%d:%d:%d%c", &hh, &mm, &ss, &xs)
 			 != 3)
 	{
 		error("%s", errstring);
@@ -1179,7 +1179,7 @@ gethms(char const * string, char const * errstring, bool signable)
 		error("%s", errstring);
 		return 0;
 	}
-	if (ZIC_MAX / SECSPERHOUR < hh)
+	if (ZIC_MAX / SECSPERHOUR < (zic_t) hh)
 	{
 		error(_("time overflow"));
 		return 0;
@@ -1187,7 +1187,7 @@ gethms(char const * string, char const * errstring, bool signable)
 	if (noise && (hh > HOURSPERDAY ||
 				  (hh == HOURSPERDAY && (mm != 0 || ss != 0))))
 		warning(_("values over 24 hours not handled by pre-2007 versions of zic"));
-	return oadd(sign * hh * SECSPERHOUR,
+	return oadd(sign * (zic_t) hh * SECSPERHOUR,
 				sign * (mm * SECSPERMIN + ss));
 }
 
@@ -1374,7 +1374,9 @@ inleap(char **fields, int nfields)
 	const struct lookup *lp;
 	int			i,
 				j;
-	zic_t		year;
+
+	/* PG: make year be int not zic_t to avoid sscanf portability issues */
+	int			year;
 	int			month,
 				day;
 	zic_t		dayoff,
@@ -1389,7 +1391,7 @@ inleap(char **fields, int nfields)
 	}
 	dayoff = 0;
 	cp = fields[LP_YEAR];
-	if (sscanf(cp, "%" SCNdZIC "%c", &year, &xs) != 1)
+	if (sscanf(cp, "%d%c", &year, &xs) != 1)
 	{
 		/*
 		 * Leapin' Lizards!
@@ -1531,6 +1533,9 @@ rulesub(struct rule * rp, const char *loyearp, const char *hiyearp,
 	char	   *ep;
 	char		xs;
 
+	/* PG: year_tmp is to avoid sscanf portability issues */
+	int			year_tmp;
+
 	if ((lp = byword(monthp, mon_names)) == NULL)
 	{
 		error(_("invalid month name"));
@@ -1588,7 +1593,9 @@ rulesub(struct rule * rp, const char *loyearp, const char *hiyearp,
 						progname, lp->l_value);
 				exit(EXIT_FAILURE);
 		}
-	else if (sscanf(cp, "%" SCNdZIC "%c", &rp->r_loyear, &xs) != 1)
+	else if (sscanf(cp, "%d%c", &year_tmp, &xs) == 1)
+		rp->r_loyear = year_tmp;
+	else
 	{
 		error(_("invalid starting year"));
 		return;
@@ -1614,7 +1621,9 @@ rulesub(struct rule * rp, const char *loyearp, const char *hiyearp,
 						progname, lp->l_value);
 				exit(EXIT_FAILURE);
 		}
-	else if (sscanf(cp, "%" SCNdZIC "%c", &rp->r_hiyear, &xs) != 1)
+	else if (sscanf(cp, "%d%c", &year_tmp, &xs) == 1)
+		rp->r_hiyear = year_tmp;
+	else
 	{
 		error(_("invalid ending year"));
 		return;
