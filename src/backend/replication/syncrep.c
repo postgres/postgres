@@ -482,7 +482,7 @@ SyncRepReleaseWaiters(void)
 
 	LWLockRelease(SyncRepLock);
 
-	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X, %d procs up to apply %X/%x",
+	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X, %d procs up to apply %X/%X",
 		 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
 		 numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush,
 		 numapply, (uint32) (MyWalSnd->apply >> 32), (uint32) MyWalSnd->apply);
