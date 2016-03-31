@@ -476,7 +476,7 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 {
 	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
 	TimestampTz	commit_time = parsed->xact_time;
-	XLogRecPtr	origin_id = XLogRecGetOrigin(buf->record);
+	RepOriginId	origin_id = XLogRecGetOrigin(buf->record);
 	int			i;
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
