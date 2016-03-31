@@ -474,7 +474,7 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * Test any partial indexes of rel for applicability.  We must do this
 	 * first since partial unique indexes can affect size estimates.
 	 */
-	check_partial_indexes(root, rel);
+	check_index_predicates(root, rel);
 
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
@@ -716,7 +716,7 @@ set_tablesample_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * Test any partial indexes of rel for applicability.  We must do this
 	 * first since partial unique indexes can affect size estimates.
 	 */
-	check_partial_indexes(root, rel);
+	check_index_predicates(root, rel);
 
 	/*
 	 * Call the sampling method's estimation function to estimate the number

@@ -188,6 +188,50 @@ SELECT * FROM foo ORDER BY f1 DESC;
 SELECT * FROM foo ORDER BY f1 DESC NULLS LAST;
 
 --
+-- Test planning of some cases with partial indexes
+--
+
+-- partial index is usable
+explain (costs off)
+select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
+select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
+explain (costs off)
+select unique2 from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
+select unique2 from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
+-- partial index predicate implies clause, so no need for retest
+explain (costs off)
+select * from onek2 where unique2 = 11 and stringu1 < 'B';
+select * from onek2 where unique2 = 11 and stringu1 < 'B';
+explain (costs off)
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'B';
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'B';
+-- but if it's an update target, must retest anyway
+explain (costs off)
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'B' for update;
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'B' for update;
+-- partial index is not applicable
+explain (costs off)
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'C';
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'C';
+-- partial index implies clause, but bitmap scan must recheck predicate anyway
+SET enable_indexscan TO off;
+explain (costs off)
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'B';
+select unique2 from onek2 where unique2 = 11 and stringu1 < 'B';
+RESET enable_indexscan;
+-- check multi-index cases too
+explain (costs off)
+select unique1, unique2 from onek2
+  where (unique2 = 11 or unique1 = 0) and stringu1 < 'B';
+select unique1, unique2 from onek2
+  where (unique2 = 11 or unique1 = 0) and stringu1 < 'B';
+explain (costs off)
+select unique1, unique2 from onek2
+  where (unique2 = 11 and stringu1 < 'B') or unique1 = 0;
+select unique1, unique2 from onek2
+  where (unique2 = 11 and stringu1 < 'B') or unique1 = 0;
+
+--
 -- Test some corner cases that have been known to confuse the planner
 --
 

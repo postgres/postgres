@@ -2129,6 +2129,7 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	/* indexprs is redundant since we print indextlist */
 	WRITE_NODE_FIELD(indpred);
 	WRITE_NODE_FIELD(indextlist);
+	WRITE_NODE_FIELD(indrestrictinfo);
 	WRITE_BOOL_FIELD(predOK);
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(immediate);

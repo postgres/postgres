@@ -433,15 +433,18 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 
 	/*
 	 * Mark the path with the correct row estimate, and identify which quals
-	 * will need to be enforced as qpquals.
+	 * will need to be enforced as qpquals.  We need not check any quals that
+	 * are implied by the index's predicate, so we can use indrestrictinfo not
+	 * baserestrictinfo as the list of relevant restriction clauses for the
+	 * rel.
 	 */
 	if (path->path.param_info)
 	{
 		path->path.rows = path->path.param_info->ppi_rows;
 		/* qpquals come from the rel's restriction clauses and ppi_clauses */
 		qpquals = list_concat(
-					   extract_nonindex_conditions(baserel->baserestrictinfo,
-												   path->indexquals),
+				extract_nonindex_conditions(path->indexinfo->indrestrictinfo,
+											path->indexquals),
 			  extract_nonindex_conditions(path->path.param_info->ppi_clauses,
 										  path->indexquals));
 	}
@@ -449,7 +452,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	{
 		path->path.rows = baserel->rows;
 		/* qpquals come from just the rel's restriction clauses */
-		qpquals = extract_nonindex_conditions(baserel->baserestrictinfo,
+		qpquals = extract_nonindex_conditions(path->indexinfo->indrestrictinfo,
 											  path->indexquals);
 	}
 
@@ -631,11 +634,11 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
  * final plan.  So we approximate it as quals that don't appear directly in
  * indexquals and also are not redundant children of the same EquivalenceClass
  * as some indexqual.  This method neglects some infrequently-relevant
- * considerations such as clauses that needn't be checked because they are
- * implied by a partial index's predicate.  It does not seem worth the cycles
- * to try to factor those things in at this stage, even though createplan.c
- * will take pains to remove such unnecessary clauses from the qpquals list if
- * this path is selected for use.
+ * considerations, specifically clauses that needn't be checked because they
+ * are implied by an indexqual.  It does not seem worth the cycles to try to
+ * factor that in at this stage, even though createplan.c will take pains to
+ * remove such unnecessary clauses from the qpquals list if this path is
+ * selected for use.
  */
 static List *
 extract_nonindex_conditions(List *qual_clauses, List *indexquals)
@@ -654,7 +657,7 @@ extract_nonindex_conditions(List *qual_clauses, List *indexquals)
 			continue;			/* simple duplicate */
 		if (is_redundant_derived_clause(rinfo, indexquals))
 			continue;			/* derived from same EquivalenceClass */
-		/* ... skip the predicate proof attempts createplan.c will try ... */
+		/* ... skip the predicate proof attempt createplan.c will try ... */
 		result = lappend(result, rinfo);
 	}
 	return result;

@@ -30,6 +30,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/predtest.h"
+#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
 #include "utils/builtins.h"
@@ -216,7 +217,7 @@ static Const *string_to_const(const char *str, Oid datatype);
  *
  * 'rel' is the relation for which we want to generate index paths
  *
- * Note: check_partial_indexes() must have been run previously for this rel.
+ * Note: check_index_predicates() must have been run previously for this rel.
  *
  * Note: in cases involving LATERAL references in the relation's tlist, it's
  * possible that rel->lateral_relids is nonempty.  Currently, we include
@@ -1800,25 +1801,27 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 	/*
 	 * Check that all needed attributes of the relation are available from the
 	 * index.
-	 *
-	 * XXX this is overly conservative for partial indexes, since we will
-	 * consider attributes involved in the index predicate as required even
-	 * though the predicate won't need to be checked at runtime.  (The same is
-	 * true for attributes used only in index quals, if we are certain that
-	 * the index is not lossy.)  However, it would be quite expensive to
-	 * determine that accurately at this point, so for now we take the easy
-	 * way out.
 	 */
 
 	/*
-	 * Add all the attributes needed for joins or final output.  Note: we must
-	 * look at rel's targetlist, not the attr_needed data, because attr_needed
-	 * isn't computed for inheritance child rels.
+	 * First, identify all the attributes needed for joins or final output.
+	 * Note: we must look at rel's targetlist, not the attr_needed data,
+	 * because attr_needed isn't computed for inheritance child rels.
 	 */
 	pull_varattnos((Node *) rel->reltarget->exprs, rel->relid, &attrs_used);
 
-	/* Add all the attributes used by restriction clauses. */
-	foreach(lc, rel->baserestrictinfo)
+	/*
+	 * Add all the attributes used by restriction clauses; but consider only
+	 * those clauses not implied by the index predicate, since ones that are
+	 * so implied don't need to be checked explicitly in the plan.
+	 *
+	 * Note: attributes used only in index quals would not be needed at
+	 * runtime either, if we are certain that the index is not lossy.  However
+	 * it'd be complicated to account for that accurately, and it doesn't
+	 * matter in most cases, since we'd conclude that such attributes are
+	 * available from the index anyway.
+	 */
+	foreach(lc, index->indrestrictinfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
@@ -2023,7 +2026,8 @@ static void
 match_restriction_clauses_to_index(RelOptInfo *rel, IndexOptInfo *index,
 								   IndexClauseSet *clauseset)
 {
-	match_clauses_to_index(index, rel->baserestrictinfo, clauseset);
+	/* We can ignore clauses that are implied by the index predicate */
+	match_clauses_to_index(index, index->indrestrictinfo, clauseset);
 }
 
 /*
@@ -2664,39 +2668,48 @@ match_clause_to_ordering_op(IndexOptInfo *index,
  ****************************************************************************/
 
 /*
- * check_partial_indexes
- *		Check each partial index of the relation, and mark it predOK if
- *		the index's predicate is satisfied for this query.
+ * check_index_predicates
+ *		Set the predicate-derived IndexOptInfo fields for each index
+ *		of the specified relation.
  *
- * Note: it is possible for this to get re-run after adding more restrictions
- * to the rel; so we might be able to prove more indexes OK.  We assume that
- * adding more restrictions can't make an index not OK.
+ * predOK is set true if the index is partial and its predicate is satisfied
+ * for this query, ie the query's WHERE clauses imply the predicate.
+ *
+ * indrestrictinfo is set to the relation's baserestrictinfo list less any
+ * conditions that are implied by the index's predicate.  (Obviously, for a
+ * non-partial index, this is the same as baserestrictinfo.)  Such conditions
+ * can be dropped from the plan when using the index, in certain cases.
+ *
+ * At one time it was possible for this to get re-run after adding more
+ * restrictions to the rel, thus possibly letting us prove more indexes OK.
+ * That doesn't happen any more (at least not in the core code's usage),
+ * but this code still supports it in case extensions want to mess with the
+ * baserestrictinfo list.  We assume that adding more restrictions can't make
+ * an index not predOK.  We must recompute indrestrictinfo each time, though,
+ * to make sure any newly-added restrictions get into it if needed.
  */
 void
-check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
+check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *clauselist;
 	bool		have_partial;
+	bool		is_target_rel;
 	Relids		otherrels;
 	ListCell   *lc;
 
 	/*
-	 * Frequently, there will be no partial indexes, so first check to make
-	 * sure there's something useful to do here.
+	 * Initialize the indrestrictinfo lists to be identical to
+	 * baserestrictinfo, and check whether there are any partial indexes.  If
+	 * not, this is all we need to do.
 	 */
 	have_partial = false;
 	foreach(lc, rel->indexlist)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
 
-		if (index->indpred == NIL)
-			continue;			/* ignore non-partial indexes */
-
-		if (index->predOK)
-			continue;			/* don't repeat work if already proven OK */
-
-		have_partial = true;
-		break;
+		index->indrestrictinfo = rel->baserestrictinfo;
+		if (index->indpred)
+			have_partial = true;
 	}
 	if (!have_partial)
 		return;
@@ -2743,18 +2756,54 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 														 otherrels,
 														 rel));
 
-	/* Now try to prove each index predicate true */
+	/*
+	 * Normally we remove quals that are implied by a partial index's
+	 * predicate from indrestrictinfo, indicating that they need not be
+	 * checked explicitly by an indexscan plan using this index.  However, if
+	 * the rel is a target relation of UPDATE/DELETE/SELECT FOR UPDATE, we
+	 * cannot remove such quals from the plan, because they need to be in the
+	 * plan so that they will be properly rechecked by EvalPlanQual testing.
+	 * Some day we might want to remove such quals from the main plan anyway
+	 * and pass them through to EvalPlanQual via a side channel; but for now,
+	 * we just don't remove implied quals at all for target relations.
+	 */
+	is_target_rel = (rel->relid == root->parse->resultRelation ||
+					 get_plan_rowmark(root->rowMarks, rel->relid) != NULL);
+
+	/*
+	 * Now try to prove each index predicate true, and compute the
+	 * indrestrictinfo lists for partial indexes.  Note that we compute the
+	 * indrestrictinfo list even for non-predOK indexes; this might seem
+	 * wasteful, but we may be able to use such indexes in OR clauses, cf
+	 * generate_bitmap_or_paths().
+	 */
 	foreach(lc, rel->indexlist)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
+		ListCell   *lcr;
 
 		if (index->indpred == NIL)
-			continue;			/* ignore non-partial indexes */
+			continue;			/* ignore non-partial indexes here */
 
-		if (index->predOK)
-			continue;			/* don't repeat work if already proven OK */
+		if (!index->predOK)		/* don't repeat work if already proven OK */
+			index->predOK = predicate_implied_by(index->indpred, clauselist);
 
-		index->predOK = predicate_implied_by(index->indpred, clauselist);
+		/* If rel is an update target, leave indrestrictinfo as set above */
+		if (is_target_rel)
+			continue;
+
+		/* Else compute indrestrictinfo as the non-implied quals */
+		index->indrestrictinfo = NIL;
+		foreach(lcr, rel->baserestrictinfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lcr);
+
+			/* predicate_implied_by() assumes first arg is immutable */
+			if (contain_mutable_functions((Node *) rinfo->clause) ||
+				!predicate_implied_by(list_make1(rinfo->clause),
+									  index->indpred))
+				index->indrestrictinfo = lappend(index->indrestrictinfo, rinfo);
+		}
 	}
 }
 
