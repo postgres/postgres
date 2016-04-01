@@ -467,7 +467,7 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
  * command for a prepared statement) containing the attribute data.
  * Returns: 0 if processed message successfully, EOF to suspend parsing
  * (the latter case is not actually used currently).
- * In either case, conn->inStart has been advanced past the message.
+ * In the former case, conn->inStart has been advanced past the message.
  */
 static int
 getRowDescriptions(PGconn *conn, int msgLength)
@@ -641,6 +641,7 @@ advance_and_error:
  * parseInput subroutine to read a 't' (ParameterDescription) message.
  * We'll build a new PGresult structure containing the parameter data.
  * Returns: 0 if completed message, EOF if not enough data yet.
+ * In the former case, conn->inStart has been advanced past the message.
  *
  * Note that if we run out of data, we have to release the partially
  * constructed PGresult, and rebuild it again next time.  Fortunately,
@@ -650,9 +651,9 @@ static int
 getParamDescriptions(PGconn *conn, int msgLength)
 {
 	PGresult   *result;
+	const char *errmsg = NULL;	/* means "out of memory", see below */
 	int			nparams;
 	int			i;
-	const char *errmsg = NULL;
 
 	result = PQmakeEmptyPGresult(conn, PGRES_COMMAND_OK);
 	if (!result)
@@ -682,6 +683,13 @@ getParamDescriptions(PGconn *conn, int msgLength)
 		if (pqGetInt(&typid, 4, conn))
 			goto not_enough_data;
 		result->paramDescs[i].typid = typid;
+	}
+
+	/* Sanity check that we absorbed all the data */
+	if (conn->inCursor != conn->inStart + 5 + msgLength)
+	{
+		errmsg = libpq_gettext("extraneous data in \"t\" message");
+		goto advance_and_error;
 	}
 
 	/* Success! */
@@ -721,6 +729,11 @@ advance_and_error:
 	printfPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
 	pqSaveErrorResult(conn);
 
+	/*
+	 * Return zero to allow input parsing to continue.  Essentially, we've
+	 * replaced the COMMAND_OK result with an error result, but since this
+	 * doesn't affect the protocol state, it's fine.
+	 */
 	return 0;
 }
 
@@ -729,7 +742,7 @@ advance_and_error:
  * We fill rowbuf with column pointers and then call the row processor.
  * Returns: 0 if processed message successfully, EOF to suspend parsing
  * (the latter case is not actually used currently).
- * In either case, conn->inStart has been advanced past the message.
+ * In the former case, conn->inStart has been advanced past the message.
  */
 static int
 getAnotherTuple(PGconn *conn, int msgLength)
