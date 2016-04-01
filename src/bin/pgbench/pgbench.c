@@ -1582,10 +1582,8 @@ preparedStatementName(char *buffer, int file, int state)
 }
 
 static bool
-clientDone(CState *st, bool ok)
+clientDone(CState *st)
 {
-	(void) ok;					/* unused */
-
 	if (st->con != NULL)
 	{
 		PQfinish(st->con);
@@ -1656,7 +1654,7 @@ top:
 
 		/* stop client if next transaction is beyond pgbench end of execution */
 		if (duration > 0 && st->txn_scheduled > end_time)
-			return clientDone(st, true);
+			return clientDone(st);
 
 		/*
 		 * If this --latency-limit is used, and this slot is already late so
@@ -1709,7 +1707,7 @@ top:
 			if (!PQconsumeInput(st->con))
 			{					/* there's something wrong */
 				fprintf(stderr, "client %d aborted in state %d; perhaps the backend died while processing\n", st->id, st->state);
-				return clientDone(st, false);
+				return clientDone(st);
 			}
 			if (PQisBusy(st->con))
 				return true;	/* don't have the whole result yet */
@@ -1756,7 +1754,7 @@ top:
 					fprintf(stderr, "client %d aborted in state %d: %s",
 							st->id, st->state, PQerrorMessage(st->con));
 					PQclear(res);
-					return clientDone(st, false);
+					return clientDone(st);
 			}
 			PQclear(res);
 			discard_response(st);
@@ -1772,7 +1770,7 @@ top:
 
 			++st->cnt;
 			if ((st->cnt >= nxacts && duration <= 0) || timer_exceeded)
-				return clientDone(st, true);	/* exit success */
+				return clientDone(st);	/* exit success */
 		}
 
 		/* increment state counter */
@@ -1809,7 +1807,7 @@ top:
 		{
 			fprintf(stderr, "client %d aborted while establishing connection\n",
 					st->id);
-			return clientDone(st, false);
+			return clientDone(st);
 		}
 		INSTR_TIME_SET_CURRENT(end);
 		INSTR_TIME_ACCUM_DIFF(thread->conn_time, end, start);
@@ -2010,7 +2008,7 @@ top:
 			bool		ret = runShellCommand(st, argv[1], argv + 2, argc - 2);
 
 			if (timer_exceeded) /* timeout */
-				return clientDone(st, true);
+				return clientDone(st);
 			else if (!ret)		/* on error */
 			{
 				st->ecnt++;
@@ -2024,7 +2022,7 @@ top:
 			bool		ret = runShellCommand(st, NULL, argv + 1, argc - 1);
 
 			if (timer_exceeded) /* timeout */
-				return clientDone(st, true);
+				return clientDone(st);
 			else if (!ret)		/* on error */
 			{
 				st->ecnt++;
