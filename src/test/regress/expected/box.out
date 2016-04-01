@@ -225,7 +225,7 @@ INSERT INTO box_temp
 CREATE INDEX box_spgist ON box_temp USING spgist (f1);
 INSERT INTO box_temp
 	VALUES (NULL),
-		   ('(-0,0)(0,100)'),
+		   ('(0,0)(0,100)'),
 		   ('(-3,4.3333333333)(40,1)'),
 		   ('(0,100)(0,infinity)'),
 		   ('(-infinity,0)(0,infinity)'),
@@ -238,7 +238,7 @@ SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
  (4,4),(2,2)
  (6,6),(3,3)
  (8,8),(4,4)
- (-0,100),(0,0)
+ (0,100),(0,0)
  (0,Infinity),(0,100)
  (0,Infinity),(-Infinity,0)
 (7 rows)
@@ -258,7 +258,7 @@ SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
  (6,6),(3,3)
  (8,8),(4,4)
  (10,10),(5,5)
- (-0,100),(0,0)
+ (0,100),(0,0)
  (0,Infinity),(0,100)
  (0,Infinity),(-Infinity,0)
 (8 rows)
