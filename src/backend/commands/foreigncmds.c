@@ -486,7 +486,7 @@ lookup_fdw_handler_func(DefElem *handler)
 	if (get_func_rettype(handlerOid) != FDW_HANDLEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("function %s must return type \"%s\"",
+				 errmsg("function %s must return type %s",
 						NameListToString((List *) handler->arg), "fdw_handler")));
 
 	return handlerOid;

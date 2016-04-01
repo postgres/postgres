@@ -237,7 +237,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	if (funcrettype != EVTTRIGGEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("function %s must return type \"%s\"",
+				 errmsg("function %s must return type %s",
 						NameListToString(stmt->funcname), "event_trigger")));
 
 	/* Insert catalog entries. */

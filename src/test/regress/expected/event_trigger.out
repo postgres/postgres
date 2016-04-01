@@ -2,7 +2,7 @@
 create event trigger regress_event_trigger
    on ddl_command_start
    execute procedure pg_backend_pid();
-ERROR:  function pg_backend_pid must return type "event_trigger"
+ERROR:  function pg_backend_pid must return type event_trigger
 -- OK
 create function test_event_trigger() returns event_trigger as $$
 BEGIN

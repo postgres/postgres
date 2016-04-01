@@ -114,7 +114,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			if (funcrettype != LANGUAGE_HANDLEROID)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				  errmsg("function %s must return type \"%s\"",
+				  errmsg("function %s must return type %s",
 						 NameListToString(funcname), "language_handler")));
 		}
 		else
@@ -285,7 +285,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				  errmsg("function %s must return type \"%s\"",
+				  errmsg("function %s must return type %s",
 						 NameListToString(stmt->plhandler), "language_handler")));
 		}
 

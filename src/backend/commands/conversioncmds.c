@@ -85,7 +85,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	if (get_func_rettype(funcoid) != VOIDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		  errmsg("encoding conversion function %s must return type \"%s\"",
+		  errmsg("encoding conversion function %s must return type %s",
 				 NameListToString(func_name), "void")));
 
 	/* Check we have EXECUTE rights for the function */

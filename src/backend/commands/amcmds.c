@@ -260,7 +260,7 @@ lookup_index_am_handler_func(List *handler_name, char amtype)
 			if (get_func_rettype(handlerOid) != INDEX_AM_HANDLEROID)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function %s must return type \"%s\"",
+						 errmsg("function %s must return type %s",
 								NameListToString(handler_name),
 								"index_am_handler")));
 			break;

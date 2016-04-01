@@ -275,7 +275,7 @@ ValidateRestrictionEstimator(List *restrictionName)
 	if (get_func_rettype(restrictionOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("restriction estimator function %s must return type \"%s\"",
+				 errmsg("restriction estimator function %s must return type %s",
 						NameListToString(restrictionName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */
@@ -321,7 +321,7 @@ ValidateJoinEstimator(List *joinName)
 	if (get_func_rettype(joinOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("join estimator function %s must return type \"%s\"",
+			 errmsg("join estimator function %s must return type %s",
 					NameListToString(joinName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */

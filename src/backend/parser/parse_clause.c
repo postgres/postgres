@@ -758,7 +758,7 @@ transformRangeTableSample(ParseState *pstate, RangeTableSample *rts)
 	if (get_func_rettype(handlerOid) != TSM_HANDLEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("function %s must return type \"%s\"",
+				 errmsg("function %s must return type %s",
 						NameListToString(rts->method), "tsm_handler"),
 				 parser_errposition(pstate, rts->location)));
 
