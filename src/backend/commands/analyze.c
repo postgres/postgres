@@ -2133,14 +2133,13 @@ compute_distinct_stats(VacAttrStatsP stats,
 		}
 		else
 		{
-			double		ndistinct = stats->stadistinct;
+			/* d here is the same as d in the Haas-Stokes formula */
+			int			d = nonnull_cnt - summultiple + nmultiple;
 			double		avgcount,
 						mincount;
 
-			if (ndistinct < 0)
-				ndistinct = -ndistinct * totalrows;
-			/* estimate # of occurrences in sample of a typical value */
-			avgcount = (double) samplerows / ndistinct;
+			/* estimate # occurrences in sample of a typical nonnull value */
+			avgcount = (double) nonnull_cnt / (double) d;
 			/* set minimum threshold count to store a value */
 			mincount = avgcount * 1.25;
 			if (mincount < 2)
@@ -2494,21 +2493,20 @@ compute_scalar_stats(VacAttrStatsP stats,
 		}
 		else
 		{
-			double		ndistinct = stats->stadistinct;
+			/* d here is the same as d in the Haas-Stokes formula */
+			int			d = ndistinct + toowide_cnt;
 			double		avgcount,
 						mincount,
 						maxmincount;
 
-			if (ndistinct < 0)
-				ndistinct = -ndistinct * totalrows;
-			/* estimate # of occurrences in sample of a typical value */
-			avgcount = (double) samplerows / ndistinct;
+			/* estimate # occurrences in sample of a typical nonnull value */
+			avgcount = (double) values_cnt / (double) d;
 			/* set minimum threshold count to store a value */
 			mincount = avgcount * 1.25;
 			if (mincount < 2)
 				mincount = 2;
 			/* don't let threshold exceed 1/K, however */
-			maxmincount = (double) samplerows / (double) num_bins;
+			maxmincount = (double) values_cnt / (double) num_bins;
 			if (mincount > maxmincount)
 				mincount = maxmincount;
 			if (num_mcv > track_cnt)
