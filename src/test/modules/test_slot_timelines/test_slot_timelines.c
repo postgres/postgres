@@ -85,8 +85,8 @@ Datum
 test_slot_timelines_advance_logical_slot(PG_FUNCTION_ARGS)
 {
 	char	   *slotname = text_to_cstring(PG_GETARG_TEXT_P(0));
-	TransactionId new_xmin = (TransactionId) PG_GETARG_INT64(1);
-	TransactionId new_catalog_xmin = (TransactionId) PG_GETARG_INT64(2);
+	TransactionId new_xmin = DatumGetTransactionId(PG_GETARG_DATUM(1));
+	TransactionId new_catalog_xmin = DatumGetTransactionId(PG_GETARG_DATUM(2));
 	XLogRecPtr	restart_lsn = PG_GETARG_LSN(3);
 	XLogRecPtr	confirmed_lsn = PG_GETARG_LSN(4);
 
@@ -95,7 +95,7 @@ test_slot_timelines_advance_logical_slot(PG_FUNCTION_ARGS)
 	ReplicationSlotAcquire(slotname);
 
 	if (MyReplicationSlot->data.database != MyDatabaseId)
-		elog(ERROR, "Trying to update a slot on a different database");
+		elog(ERROR, "trying to update a slot on a different database");
 
 	MyReplicationSlot->data.xmin = new_xmin;
 	MyReplicationSlot->data.catalog_xmin = new_catalog_xmin;

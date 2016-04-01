@@ -172,8 +172,13 @@ is($stdout, '', 'No slots exist on the replica');
 # we're just doing it by hand for this test. This is exposing
 # postgres innards to SQL so it's unsafe except for testing.
 $node_master->safe_psql('postgres', 'CREATE EXTENSION test_slot_timelines;');
-my $slotinfo = $node_master->safe_psql('postgres',
-'SELECT slot_name, plugin, xmin, catalog_xmin, restart_lsn, confirmed_flush_lsn FROM pg_replication_slots ORDER BY slot_name'
+
+my $slotinfo = $node_master->safe_psql(
+	'postgres',
+	qq{SELECT slot_name, plugin,
+	COALESCE(xmin, '0'), catalog_xmin,
+	restart_lsn, confirmed_flush_lsn
+	FROM pg_replication_slots ORDER BY slot_name}
 );
 diag "Copying slots to replica";
 open my $fh, '<', \$slotinfo or die $!;
@@ -183,10 +188,7 @@ while (<$fh>)
 	chomp $_;
 	my ($slot_name, $plugin, $xmin, $catalog_xmin, $restart_lsn,
 		$confirmed_flush_lsn)
-	  = map {
-		if   ($_ ne '') { "'$_'" }
-		else            { 'NULL' }
-	  } split qr/\|/, $_;
+	  = map { "'$_'" } split qr/\|/, $_;
 
 	print
 "# Copying slot $slot_name,$plugin,$xmin,$catalog_xmin,$restart_lsn,$confirmed_flush_lsn\n";
@@ -208,7 +210,7 @@ is( $stdout,
 
 $stdout = $node_replica->safe_psql(
 	'postgres',
-	qq{SELECT slot_name, plugin, xmin, catalog_xmin,
+	qq{SELECT slot_name, plugin, COALESCE(xmin, '0'), catalog_xmin,
 			  restart_lsn, confirmed_flush_lsn
 		 FROM pg_replication_slots
 	 ORDER BY slot_name});
@@ -243,6 +245,7 @@ diag "oldest needed xlog seg is $oldest_needed_segment ";
 opendir(my $pg_xlog, $node_master->data_dir . "/pg_xlog") or die $!;
 while (my $seg = readdir $pg_xlog)
 {
+	next if $seg eq '.' or $seg eq '..';
 	next unless $seg >= $oldest_needed_segment && $seg =~ /^[0-9]{24}/;
 	diag "copying xlog seg $seg";
 	copy(

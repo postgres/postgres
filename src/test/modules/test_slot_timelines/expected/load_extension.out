@@ -5,7 +5,7 @@ SELECT test_slot_timelines_create_logical_slot('test_slot', 'test_decoding');
  
 (1 row)
 
-SELECT test_slot_timelines_advance_logical_slot('test_slot', txid_current(), txid_current(), pg_current_xlog_location(), pg_current_xlog_location());
+SELECT test_slot_timelines_advance_logical_slot('test_slot', txid_current()::text::xid, txid_current()::text::xid, pg_current_xlog_location(), pg_current_xlog_location());
  test_slot_timelines_advance_logical_slot 
 ------------------------------------------
  
