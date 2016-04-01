@@ -1,0 +1,5 @@
+# bloom extension
+comment = 'bloom access method - signature file based index'
+default_version = '1.0'
+module_pathname = '$libdir/bloom'
+relocatable = true

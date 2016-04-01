@@ -1,0 +1,218 @@
+<!-- doc/src/sgml/bloom.sgml -->
+
+<sect1 id="bloom" xreflabel="bloom">
+ <title>bloom</title>
+
+ <indexterm zone="bloom">
+  <primary>bloom</primary>
+ </indexterm>
+
+ <para>
+  <literal>bloom</> is a contrib which implements index access method.  It comes
+  as example of custom access methods and generic WAL records usage.  But it
+  is also useful itself.
+ </para>
+
+ <sect2>
+  <title>Introduction</title>
+
+  <para>
+   Implementation of
+   <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</ulink>
+   allows fast exclusion of non-candidate tuples.
+   Since signature is a lossy representation of all indexed attributes, 
+   search results should be rechecked using heap information. 
+   User can specify signature length (in uint16, default is 5) and the number of 
+   bits, which can be setted, per attribute (1 < colN < 2048).
+  </para>
+
+  <para>
+   This index is useful if table has many attributes and queries can include
+   their arbitary combinations.  Traditional <literal>btree</> index is faster
+   than bloom index, but it'd require too many indexes to support all possible 
+   queries, while one need only one bloom index.  Bloom index supports only 
+   equality comparison.  Since it's a signature file, not a tree, it always
+   should be readed fully, but sequentially, so index search performance is 
+   constant and doesn't depend on a query. 
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Parameters</title>
+
+  <para>
+   <literal>bloom</> indexes accept following parameters in <literal>WITH</>
+   clause.
+  </para>
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>length</></term>
+    <listitem>
+     <para>
+      Length of signature in uint16 type values
+     </para>
+    </listitem>
+   </varlistentry>
+   </variablelist>
+   <variablelist>
+   <varlistentry>
+    <term><literal>col1 &mdash; col16</></term>
+    <listitem>
+     <para>
+      Number of bits for corresponding column
+     </para>
+    </listitem>
+   </varlistentry>
+   </variablelist>
+ </sect2>
+
+ <sect2>
+  <title>Examples</title>
+
+  <para>
+   Example of index definition is given below.
+  </para>
+
+<programlisting>
+CREATE INDEX bloomidx ON tbloom(i1,i2,i3) 
+       WITH (length=5, col1=2, col2=2, col3=4);
+</programlisting>
+
+  <para>
+   Here, we create bloom index with signature length 80 bits and attributes
+   i1, i2  mapped to 2 bits, attribute i3 - to 4 bits.
+  </para>
+
+  <para>
+   Example of index definition and usage is given below.
+  </para>
+
+<programlisting>
+CREATE TABLE tbloom AS
+SELECT
+    random()::int as i1,
+    random()::int as i2,
+    random()::int as i3,
+    random()::int as i4,
+    random()::int as i5,
+    random()::int as i6,
+    random()::int as i7,
+    random()::int as i8,
+    random()::int as i9,
+    random()::int as i10,
+    random()::int as i11,
+    random()::int as i12,
+    random()::int as i13
+FROM
+    generate_series(1,1000);
+CREATE INDEX bloomidx ON tbloom USING
+             bloom (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12);
+SELECT pg_relation_size('bloomidx');
+CREATE index btree_idx ON tbloom(i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12);
+SELECT pg_relation_size('btree_idx');
+</programlisting>
+
+<programlisting>
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 20 AND i10 = 15;
+                                                   QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=1.50..5.52 rows=1 width=52) (actual time=0.057..0.057 rows=0 loops=1)
+   Recheck Cond: ((i2 = 20) AND (i10 = 15))
+   ->  Bitmap Index Scan on bloomidx  (cost=0.00..1.50 rows=1 width=0) (actual time=0.041..0.041 rows=9 loops=1)
+         Index Cond: ((i2 = 20) AND (i10 = 15))
+ Total runtime: 0.081 ms
+(5 rows)
+</programlisting>
+
+  <para>
+   Seqscan is slow.
+  </para>
+
+<programlisting>
+=# SET enable_bitmapscan = off;
+=# SET enable_indexscan = off;
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 20 AND i10 = 15;
+                                            QUERY PLAN
+--------------------------------------------------------------------------------------------------
+ Seq Scan on tbloom  (cost=0.00..25.00 rows=1 width=52) (actual time=0.162..0.162 rows=0 loops=1)
+   Filter: ((i2 = 20) AND (i10 = 15))
+ Total runtime: 0.181 ms
+(3 rows)
+</programlisting>
+
+ <para>
+  Btree index will be not used for this query.
+ </para>
+
+<programlisting>
+=# DROP INDEX bloomidx;
+=# CREATE INDEX btree_idx ON tbloom(i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12);
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 20 AND i10 = 15;
+                                            QUERY PLAN
+--------------------------------------------------------------------------------------------------
+ Seq Scan on tbloom (cost=0.00..25.00 rows=1 width=52) (actual time=0.210..0.210 rows=0 loops=1)
+   Filter: ((i2 = 20) AND (i10 = 15))
+ Total runtime: 0.250 ms
+(3 rows)
+</programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Opclass interface</title>
+
+  <para>
+   Bloom opclass interface is simple.  It requires 1 supporting function:
+   hash function for indexing datatype.  And it provides 1 search operator:
+   equality operator.  The example below shows <literal>opclass</> definition
+   for <literal>text</> datatype.
+  </para>
+
+<programlisting>
+CREATE OPERATOR CLASS text_ops
+DEFAULT FOR TYPE text USING bloom AS
+    OPERATOR    1   =(text, text),
+    FUNCTION    1   hashtext(text);
+</programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Limitation</title>
+  <para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      For now, only opclasses for <literal>int4</>, <literal>text</> comes
+      with contrib.  However, users may define more of them.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Only <literal>=</literal> operator is supported for search now.  But it's
+      possible to add support of arrays with contains and intersection
+      operations in future.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Authors</title>
+
+  <para>
+   Teodor Sigaev <email>teodor@postgrespro.ru</email>, Postgres Professional, Moscow, Russia
+  </para>
+
+  <para>
+   Alexander Korotkov <email>a.korotkov@postgrespro.ru</email>, Postgres Professional, Moscow, Russia
+  </para>
+
+  <para>
+   Oleg Bartunov <email>obartunov@postgrespro.ru</email>, Postgres Professional, Moscow, Russia
+  </para>
+ </sect2>
+
+</sect1>

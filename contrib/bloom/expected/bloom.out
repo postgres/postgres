@@ -1,0 +1,122 @@
+CREATE EXTENSION bloom;
+CREATE TABLE tst (
+	i	int4,
+	t	text
+);
+INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,100000) i;
+CREATE INDEX bloomidx ON tst USING bloom (i, t) WITH (col1 = 3);
+SET enable_seqscan=on;
+SET enable_bitmapscan=off;
+SET enable_indexscan=off;
+SELECT count(*) FROM tst WHERE i = 7;
+ count 
+-------
+ 10000
+(1 row)
+
+SELECT count(*) FROM tst WHERE t = '5';
+ count 
+-------
+  6264
+(1 row)
+
+SELECT count(*) FROM tst WHERE i = 7 AND t = '5';
+ count 
+-------
+   588
+(1 row)
+
+SET enable_seqscan=off;
+SET enable_bitmapscan=on;
+SET enable_indexscan=on;
+EXPLAIN (COSTS OFF) SELECT count(*) FROM tst WHERE i = 7;
+                QUERY PLAN                 
+-------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tst
+         Recheck Cond: (i = 7)
+         ->  Bitmap Index Scan on bloomidx
+               Index Cond: (i = 7)
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT count(*) FROM tst WHERE t = '5';
+                QUERY PLAN                 
+-------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tst
+         Recheck Cond: (t = '5'::text)
+         ->  Bitmap Index Scan on bloomidx
+               Index Cond: (t = '5'::text)
+(5 rows)
+
+EXPLAIN (COSTS OFF) SELECT count(*) FROM tst WHERE i = 7 AND t = '5';
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tst
+         Recheck Cond: ((i = 7) AND (t = '5'::text))
+         ->  Bitmap Index Scan on bloomidx
+               Index Cond: ((i = 7) AND (t = '5'::text))
+(5 rows)
+
+SELECT count(*) FROM tst WHERE i = 7;
+ count 
+-------
+ 10000
+(1 row)
+
+SELECT count(*) FROM tst WHERE t = '5';
+ count 
+-------
+  6264
+(1 row)
+
+SELECT count(*) FROM tst WHERE i = 7 AND t = '5';
+ count 
+-------
+   588
+(1 row)
+
+DELETE FROM tst;
+INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,100000) i;
+VACUUM ANALYZE tst;
+SELECT count(*) FROM tst WHERE i = 7;
+ count 
+-------
+ 10000
+(1 row)
+
+SELECT count(*) FROM tst WHERE t = '5';
+ count 
+-------
+  6264
+(1 row)
+
+SELECT count(*) FROM tst WHERE i = 7 AND t = '5';
+ count 
+-------
+   588
+(1 row)
+
+VACUUM FULL tst;
+SELECT count(*) FROM tst WHERE i = 7;
+ count 
+-------
+ 10000
+(1 row)
+
+SELECT count(*) FROM tst WHERE t = '5';
+ count 
+-------
+  6264
+(1 row)
+
+SELECT count(*) FROM tst WHERE i = 7 AND t = '5';
+ count 
+-------
+   588
+(1 row)
+
+RESET enable_seqscan;
+RESET enable_bitmapscan;
+RESET enable_indexscan;
