@@ -4,6 +4,7 @@
 /clogdesc.c
 /committsdesc.c
 /dbasedesc.c
+/genericdesc.c
 /gindesc.c
 /gistdesc.c
 /hashdesc.c

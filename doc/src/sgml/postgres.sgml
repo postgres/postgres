@@ -247,6 +247,7 @@
   &custom-scan;
   &geqo;
   &indexam;
+  &generic-wal;
   &gist;
   &spgist;
   &gin;
