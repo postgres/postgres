@@ -8,32 +8,32 @@
  </indexterm>
 
  <para>
-  <literal>bloom</> is a contrib which implements index access method.  It comes
-  as example of custom access methods and generic WAL records usage.  But it
-  is also useful itself.
+  <literal>bloom</> is a module which implements an index access method.  It comes
+  as an example of custom access methods and generic WAL records usage.  But it
+  is also useful in itself.
  </para>
 
  <sect2>
   <title>Introduction</title>
 
   <para>
-   Implementation of
+   The implementation of a
    <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</ulink>
-   allows fast exclusion of non-candidate tuples.
-   Since signature is a lossy representation of all indexed attributes, 
-   search results should be rechecked using heap information. 
-   User can specify signature length (in uint16, default is 5) and the number of 
-   bits, which can be setted, per attribute (1 < colN < 2048).
+   allows fast exclusion of non-candidate tuples via signatures.
+   Since a signature is a lossy representation of all indexed attributes, 
+   search results must be rechecked using heap information. 
+   The user can specify signature length (in uint16, default is 5) and the
+   number of bits, which can be set per attribute (1 < colN < 2048).
   </para>
 
   <para>
-   This index is useful if table has many attributes and queries can include
-   their arbitary combinations.  Traditional <literal>btree</> index is faster
-   than bloom index, but it'd require too many indexes to support all possible 
-   queries, while one need only one bloom index.  Bloom index supports only 
-   equality comparison.  Since it's a signature file, not a tree, it always
-   should be readed fully, but sequentially, so index search performance is 
-   constant and doesn't depend on a query. 
+   This index is useful if a table has many attributes and queries include
+   arbitrary combinations of them.  A traditional <literal>btree</> index is
+   faster than a bloom index, but it can require many indexes to support all
+   possible queries where one needs only a single bloom index.  A Bloom index
+   supports only equality comparison.  Since it's a signature file, and not a
+   tree, it always must be read fully, but sequentially, so that index search
+   performance is constant and doesn't depend on a query. 
   </para>
  </sect2>
 
@@ -41,7 +41,8 @@
   <title>Parameters</title>
 
   <para>
-   <literal>bloom</> indexes accept following parameters in <literal>WITH</>
+   <literal>bloom</> indexes accept the following parameters in the
+   <literal>WITH</>
    clause.
   </para>
 
@@ -71,7 +72,7 @@
   <title>Examples</title>
 
   <para>
-   Example of index definition is given below.
+   An example of an index definition is given below.
   </para>
 
 <programlisting>
@@ -80,12 +81,12 @@ CREATE INDEX bloomidx ON tbloom(i1,i2,i3)
 </programlisting>
 
   <para>
-   Here, we create bloom index with signature length 80 bits and attributes
-   i1, i2  mapped to 2 bits, attribute i3 - to 4 bits.
+   Here, we created a bloom index with a signature length of 80 bits,
+   and attributes i1 and i2 mapped to 2 bits, and attribute i3 to 4 bits.
   </para>
 
   <para>
-   Example of index definition and usage is given below.
+   Here is a fuller example of index definition and usage:
   </para>
 
 <programlisting>
@@ -142,7 +143,7 @@ SELECT pg_relation_size('btree_idx');
 </programlisting>
 
  <para>
-  Btree index will be not used for this query.
+  A btree index will be not used for this query.
  </para>
 
 <programlisting>
@@ -162,10 +163,10 @@ SELECT pg_relation_size('btree_idx');
   <title>Opclass interface</title>
 
   <para>
-   Bloom opclass interface is simple.  It requires 1 supporting function:
-   hash function for indexing datatype.  And it provides 1 search operator:
-   equality operator.  The example below shows <literal>opclass</> definition
-   for <literal>text</> datatype.
+   The Bloom opclass interface is simple.  It requires 1 supporting function:
+   a hash function for the indexing datatype.  It provides 1 search operator:
+   the equality operator.  The example below shows <literal>opclass</>
+   definition for <literal>text</> datatype.
   </para>
 
 <programlisting>
@@ -183,16 +184,16 @@ DEFAULT FOR TYPE text USING bloom AS
    <itemizedlist>
     <listitem>
      <para>
-      For now, only opclasses for <literal>int4</>, <literal>text</> comes
-      with contrib.  However, users may define more of them.
+      For now, only opclasses for <literal>int4</>, <literal>text</> come
+      with the module.  However, users may define more of them.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Only <literal>=</literal> operator is supported for search now.  But it's
-      possible to add support of arrays with contains and intersection
-      operations in future.
+      Only the <literal>=</literal> operator is supported for search at the
+      moment.  But it's possible to add support for arrays with contains and
+      intersection operations in the future.
      </para>
     </listitem>
    </itemizedlist>
@@ -203,15 +204,18 @@ DEFAULT FOR TYPE text USING bloom AS
   <title>Authors</title>
 
   <para>
-   Teodor Sigaev <email>teodor@postgrespro.ru</email>, Postgres Professional, Moscow, Russia
+   Teodor Sigaev <email>teodor@postgrespro.ru</email>,
+   Postgres Professional, Moscow, Russia
   </para>
 
   <para>
-   Alexander Korotkov <email>a.korotkov@postgrespro.ru</email>, Postgres Professional, Moscow, Russia
+   Alexander Korotkov <email>a.korotkov@postgrespro.ru</email>,
+   Postgres Professional, Moscow, Russia
   </para>
 
   <para>
-   Oleg Bartunov <email>obartunov@postgrespro.ru</email>, Postgres Professional, Moscow, Russia
+   Oleg Bartunov <email>obartunov@postgrespro.ru</email>,
+   Postgres Professional, Moscow, Russia
   </para>
  </sect2>
 
