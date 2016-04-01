@@ -44,10 +44,14 @@ typedef BloomPageOpaqueData *BloomPageOpaque;
 /* Macros for accessing bloom page structures */
 #define BloomPageGetOpaque(page) ((BloomPageOpaque) PageGetSpecialPointer(page))
 #define BloomPageGetMaxOffset(page) (BloomPageGetOpaque(page)->maxoff)
-#define BloomPageIsMeta(page) (BloomPageGetOpaque(page)->flags & BLOOM_META)
-#define BloomPageIsDeleted(page) (BloomPageGetOpaque(page)->flags & BLOOM_DELETED)
-#define BloomPageSetDeleted(page) (BloomPageGetOpaque(page)->flags |= BLOOM_DELETED)
-#define BloomPageSetNonDeleted(page) (BloomPageGetOpaque(page)->flags &= ~BLOOM_DELETED)
+#define BloomPageIsMeta(page) \
+	((BloomPageGetOpaque(page)->flags & BLOOM_META) != 0)
+#define BloomPageIsDeleted(page) \
+	((BloomPageGetOpaque(page)->flags & BLOOM_DELETED) != 0)
+#define BloomPageSetDeleted(page) \
+	(BloomPageGetOpaque(page)->flags |= BLOOM_DELETED)
+#define BloomPageSetNonDeleted(page) \
+	(BloomPageGetOpaque(page)->flags &= ~BLOOM_DELETED)
 #define BloomPageGetData(page)		((BloomTuple *)PageGetContents(page))
 #define BloomPageGetTuple(state, page, offset) \
 	((BloomTuple *)(PageGetContents(page) \
