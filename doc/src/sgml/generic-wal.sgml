@@ -43,7 +43,7 @@
 
     <listitem>
      <para>
-      <function>GenericXLogAbort(state)</> &mdash; finish construction of
+      <function>GenericXLogFinish(state)</> &mdash; finish construction of
       a generic xlog record.
      </para>
     </listitem>
@@ -52,7 +52,7 @@
 
   <para>
    The xlog record construction can be canceled between any of the above
-   steps by calling <function>GenericXLogAbort()</>.  This will discard all
+   steps by calling <function>GenericXLogAbort(state)</>.  This will discard all
    changes to the page image copies.
   </para>
 
