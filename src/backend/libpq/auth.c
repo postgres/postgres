@@ -1252,7 +1252,7 @@ pg_SSPI_recvauth(Port *port)
 
 	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
 		ereport(ERROR,
-				(errmsg_internal("could not get user token: error code %lu",
+				(errmsg_internal("could not get token user: error code %lu",
 								 GetLastError())));
 
 	CloseHandle(token);
