@@ -9689,7 +9689,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Remove <filename>src/tool/backend</>, now that the content is on
+        Remove <filename>src/tools/backend</>, now that the content is on
         the <productname>PostgreSQL</> wiki (Bruce Momjian)
        </para>
       </listitem>

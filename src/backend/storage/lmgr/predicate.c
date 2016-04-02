@@ -496,8 +496,8 @@ SerializationNeededForRead(Relation relation, Snapshot snapshot)
 	 * Don't acquire locks or conflict when scanning with a special snapshot.
 	 * This excludes things like CLUSTER and REINDEX. They use the wholesale
 	 * functions TransferPredicateLocksToHeapRelation() and
-	 * CheckTableForSerializableConflictIn() to participate serialization, but
-	 * the scans involved don't need serialization.
+	 * CheckTableForSerializableConflictIn() to participate in serialization,
+	 * but the scans involved don't need serialization.
 	 */
 	if (!IsMVCCSnapshot(snapshot))
 		return false;

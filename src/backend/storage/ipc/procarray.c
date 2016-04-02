@@ -2673,7 +2673,7 @@ MinimumActiveBackends(int min)
 
 		/*
 		 * Since we're not holding a lock, need to be prepared to deal with
-		 * garbage, as someone could have incremented numPucs but not yet
+		 * garbage, as someone could have incremented numProcs but not yet
 		 * filled the structure.
 		 *
 		 * If someone just decremented numProcs, 'proc' could also point to a

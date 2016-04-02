@@ -393,7 +393,7 @@ fsm_space_needed_to_cat(Size needed)
 }
 
 /*
- * Returns the physical block number an FSM page
+ * Returns the physical block number of a FSM page
  */
 static BlockNumber
 fsm_logical_to_physical(FSMAddress addr)
@@ -472,7 +472,7 @@ fsm_get_parent(FSMAddress child, uint16 *slot)
 }
 
 /*
- * Given a logical address of a parent page, and a slot number get the
+ * Given a logical address of a parent page and a slot number, get the
  * logical address of the corresponding child page.
  */
 static FSMAddress

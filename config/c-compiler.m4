@@ -335,7 +335,7 @@ if test x"$Ac_cachevar" = x"yes"; then
   $1="${$1} $2"
 fi
 undefine([Ac_cachevar])dnl
-])# PGAC_PROG_CC_CFLAGS_OPT
+])# PGAC_PROG_CC_VAR_OPT
 
 
 

@@ -71,7 +71,7 @@ typedef struct ExecParallelEstimateContext
 	int nnodes;
 } ExecParallelEstimateContext;
 
-/* Context object for ExecParallelEstimate. */
+/* Context object for ExecParallelInitializeDSM. */
 typedef struct ExecParallelInitializeDSMContext
 {
 	ParallelContext *pcxt;

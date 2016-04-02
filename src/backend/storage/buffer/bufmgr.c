@@ -921,7 +921,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 *
 	 * Since no-one else can be looking at the page contents yet, there is no
 	 * difference between an exclusive lock and a cleanup-strength lock. (Note
-	 * that we cannot use LockBuffer() of LockBufferForCleanup() here, because
+	 * that we cannot use LockBuffer() or LockBufferForCleanup() here, because
 	 * they assert that the buffer is already valid.)
 	 */
 	if ((mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK) &&
@@ -1882,7 +1882,7 @@ BufferSync(int flags)
 		 * and clears the flag right after we check, but that doesn't matter
 		 * since SyncOneBuffer will then do nothing.  However, there is a
 		 * further race condition: it's conceivable that between the time we
-		 * examine the bit here and the time SyncOneBuffer acquires lock,
+		 * examine the bit here and the time SyncOneBuffer acquires the lock,
 		 * someone else not only wrote the buffer but replaced it with another
 		 * page and dirtied it.  In that improbable case, SyncOneBuffer will
 		 * write the buffer though we didn't need to.  It doesn't seem worth

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pgstatapproc.c
+ * pgstatapprox.c
  *		  Bloat estimation functions
  *
  * Copyright (c) 2014-2016, PostgreSQL Global Development Group

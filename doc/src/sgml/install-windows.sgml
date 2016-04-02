@@ -457,7 +457,7 @@ $ENV{CONFIG}="Debug";
   <para>
    Running the regression tests on client programs, with
    <command>vcregress bincheck</>, or on recovery tests, with
-   <command>vcregress recoverycheck</> requires an additional Perl module
+   <command>vcregress recoverycheck</>, requires an additional Perl module
    to be installed:
    <variablelist>
     <varlistentry>

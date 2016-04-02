@@ -5148,7 +5148,7 @@ timestamp_zone_transform(PG_FUNCTION_ARGS)
  *	This function is just timestamp2timestamptz() except instead of
  *	shifting to the global timezone, we shift to the specified timezone.
  *	This is different from the other AT TIME ZONE cases because instead
- *	of shifting to a _to_ a new time zone, it sets the time to _be_ the
+ *	of shifting _to_ a new time zone, it sets the time to _be_ the
  *	specified timezone.
  */
 Datum

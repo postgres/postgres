@@ -136,7 +136,7 @@
 
 # Atomic writes to 64bit atomic vars uses compare/exchange to
 # guarantee atomic writes of 64bit variables. pg_atomic_write is used
-# during initialization of the atomic variable, hat leads to an
+# during initialization of the atomic variable; that leads to an
 # initial read of the old, undefined, memory value. But that's just to
 # make sure the swap works correctly.
 {

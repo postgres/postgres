@@ -901,7 +901,7 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 			 * We used to pass O_CREAT here, but that's has the disadvantage
 			 * that it might create a segment which has vanished through some
 			 * operating system misadventure.  In such a case, creating the
-			 * segment here undermine _mdfd_getseg's attempts to notice and
+			 * segment here undermines _mdfd_getseg's attempts to notice and
 			 * report an error upon access to a missing segment.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, forknum, segno, 0);

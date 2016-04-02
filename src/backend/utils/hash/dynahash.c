@@ -67,7 +67,7 @@
  * are not implemented; otherwise functionality is identical.
  *
  * Compilation controls:
- * DEBUG controls some informative traces, mainly for debugging.
+ * HASH_DEBUG controls some informative traces, mainly for debugging.
  * HASH_STATISTICS causes HashAccesses and HashCollisions to be maintained;
  * when combined with HASH_DEBUG, these are displayed by hdestroy().
  *

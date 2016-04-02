@@ -3977,7 +3977,7 @@ plperl_inline_callback(void *arg)
 
 
 /*
- * Perl's own setlocal() copied from POSIX.xs
+ * Perl's own setlocale(), copied from POSIX.xs
  * (needed because of the calls to new_*())
  */
 #ifdef WIN32
