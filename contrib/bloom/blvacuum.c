@@ -112,7 +112,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		 * Add page to notFullPage list if we will not mark page as deleted and
 		 * there is a free space on it
 		 */
-		if (BloomPageGetMaxOffset(page) == 0 &&
+		if (BloomPageGetMaxOffset(page) != 0 &&
 			BloomPageGetFreeSpace(&state, page) > state.sizeOfBloomTuple &&
 			countPage < BloomMetaBlockN)
 			notFullPage[countPage++] = blkno;
