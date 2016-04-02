@@ -63,6 +63,12 @@ typedef BloomPageOpaqueData *BloomPageOpaque;
 #define BLOOM_METAPAGE_BLKNO	(0)
 #define BLOOM_HEAD_BLKNO		(1)		/* first data page */
 
+/*
+ * Maximum of bloom signature length in uint16. Actual value
+ * is 512 bytes
+ */
+#define MAX_BLOOM_LENGTH		(256)
+
 /* Bloom index options */
 typedef struct BloomOptions
 {

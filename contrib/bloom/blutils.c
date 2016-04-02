@@ -177,7 +177,7 @@ myRand()
 	/*
 	 * Compute x = (7^5 * x) mod (2^31 - 1)
 	 * without overflowing 31 bits:
-	 *      (2^31 - 1) = 127773 * (7^5) + 2836
+	 *		(2^31 - 1) = 127773 * (7^5) + 2836
 	 * From "Random number generators: good ones are hard to find",
 	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
 	 * October 1988, p. 1195.
@@ -370,8 +370,11 @@ adjustBloomOptions(BloomOptions *opts)
 	/* Default length of bloom filter is 5 of 16-bit integers */
 	if (opts->bloomLength <= 0)
 		opts->bloomLength = 5;
-	else
-		opts->bloomLength = opts->bloomLength;
+	else if (opts->bloomLength > MAX_BLOOM_LENGTH)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("length of bloom signature (%d) is greater than maximum %d",
+						opts->bloomLength, MAX_BLOOM_LENGTH)));
 
 	/* Check singnature length */
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -382,7 +385,7 @@ adjustBloomOptions(BloomOptions *opts)
 		 * with 2 bits default.
 		 */
 		if (opts->bitSize[i] <= 0
-			|| opts->bitSize[i] >= opts->bloomLength * sizeof(SignType))
+			|| opts->bitSize[i] >= opts->bloomLength * sizeof(SignType) * BITS_PER_BYTE)
 			opts->bitSize[i] = 2;
 	}
 }
