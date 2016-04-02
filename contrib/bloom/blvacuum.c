@@ -108,7 +108,12 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		Assert(itupPtr == BloomPageGetTuple(&state, page,
 								OffsetNumberNext(BloomPageGetMaxOffset(page))));
 
-		if (BloomPageGetFreeSpace(&state, page) > state.sizeOfBloomTuple &&
+		/*
+		 * Add page to notFullPage list if we will not mark page as deleted and
+		 * there is a free space on it
+		 */
+		if (BloomPageGetMaxOffset(page) == 0 &&
+			BloomPageGetFreeSpace(&state, page) > state.sizeOfBloomTuple &&
 			countPage < BloomMetaBlockN)
 			notFullPage[countPage++] = blkno;
 
@@ -116,7 +121,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		if (itupPtr != itup)
 		{
 			/* Is it empty page now? */
-			if (itupPtr == BloomPageGetData(page))
+			if (BloomPageGetMaxOffset(page) == 0)
 				BloomPageSetDeleted(page);
 			/* Adjust pg_lower */
 			((PageHeader) page)->pd_lower = (Pointer) itupPtr - page;
