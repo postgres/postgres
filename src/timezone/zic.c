@@ -1179,11 +1179,14 @@ gethms(char const * string, char const * errstring, bool signable)
 		error("%s", errstring);
 		return 0;
 	}
-	if (ZIC_MAX / SECSPERHOUR < (zic_t) hh)
+	/* Some compilers warn that this test is unsatisfiable for 32-bit ints */
+#if INT_MAX > PG_INT32_MAX
+	if (ZIC_MAX / SECSPERHOUR < hh)
 	{
 		error(_("time overflow"));
 		return 0;
 	}
+#endif
 	if (noise && (hh > HOURSPERDAY ||
 				  (hh == HOURSPERDAY && (mm != 0 || ss != 0))))
 		warning(_("values over 24 hours not handled by pre-2007 versions of zic"));
