@@ -195,7 +195,7 @@ myRand()
 	return (x - 1);
 }
 
-void
+static void
 mySrand(uint32 seed)
 {
 	next = seed;
