@@ -143,7 +143,7 @@ static void WaitEventAdjustPoll(WaitEventSet *set, WaitEvent *event);
 static void WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event);
 #endif
 
-static int WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
+static inline int WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 					  WaitEvent *occurred_events, int nevents);
 
 /*
@@ -968,7 +968,7 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
  * epoll_event struct contain a pointer to our events, making association
  * easy.
  */
-static int
+static inline int
 WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 					  WaitEvent *occurred_events, int nevents)
 {
