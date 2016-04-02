@@ -1329,7 +1329,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	if (platform_expectfile)
 	{
 		/*
-		 * Replace everything afer the last slash in expectfile with what the
+		 * Replace everything after the last slash in expectfile with what the
 		 * platform_expectfile contains.
 		 */
 		char	   *p = strrchr(expectfile, '/');
