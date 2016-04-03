@@ -833,15 +833,18 @@ seg_different(SEG *a, SEG *b)
  *				   Auxiliary functions
  *****************************************************************************/
 
-/* The purpose of this routine is to print the floating point
- * value with exact number of significant digits. Its behaviour
+/*
+ * The purpose of this routine is to print the given floating point
+ * value with exactly n significant digits.  Its behaviour
  * is similar to %.ng except it prints 8.00 where %.ng would
- * print 8
+ * print 8.  Returns the length of the string written at "result".
+ *
+ * Caller must provide a sufficiently large result buffer; 16 bytes
+ * should be enough for all known float implementations.
  */
 static int
 restore(char *result, float val, int n)
 {
-	static char efmt[8] = {'%', '-', '1', '5', '.', '#', 'e', 0};
 	char		buf[25] = {
 		'0', '0', '0', '0', '0',
 		'0', '0', '0', '0', '0',
@@ -856,32 +859,29 @@ restore(char *result, float val, int n)
 				sign;
 
 	/*
-	 * put a cap on the number of siugnificant digits to avoid nonsense in the
-	 * output
+	 * Put a cap on the number of significant digits to avoid garbage in the
+	 * output and ensure we don't overrun the result buffer.
 	 */
 	n = Min(n, FLT_DIG);
 
 	/* remember the sign */
 	sign = (val < 0 ? 1 : 0);
 
-	efmt[5] = '0' + (n - 1) % 10;		/* makes %-15.(n-1)e -- this format
-										 * guarantees that the exponent is
-										 * always present */
+	/* print, in %e style to start with */
+	sprintf(result, "%.*e", n - 1, val);
 
-	sprintf(result, efmt, val);
+	/* find the exponent */
+	p = strchr(result, 'e');
 
-	/* trim the spaces left by the %e */
-	for (p = result; *p != ' '; p++);
-	*p = '\0';
+	/* punt if we have 'inf' or similar */
+	if (p == NULL)
+		return strlen(result);
 
-	/* get the exponent */
-	strtok(pstrdup(result), "e");
-	exp = atoi(strtok(NULL, "e"));
-
+	exp = atoi(p + 1);
 	if (exp == 0)
 	{
-		/* use the supplied mantyssa with sign */
-		strcpy((char *) strchr(result, 'e'), "");
+		/* just truncate off the 'e+00' */
+		*p = '\0';
 	}
 	else
 	{
