@@ -96,10 +96,10 @@ bloomBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 		initCachedPage(buildstate);
 
-		if (BloomPageAddItem(&buildstate->blstate, buildstate->data, itup) == false)
+		if (!BloomPageAddItem(&buildstate->blstate, buildstate->data, itup))
 		{
 			/* We shouldn't be here since we're inserting to the empty page */
-			elog(ERROR, "can not add new tuple");
+			elog(ERROR, "could not add new bloom tuple to empty page");
 		}
 	}
 
@@ -298,7 +298,12 @@ blinsert(Relation index, Datum *values, bool *isnull,
 	metaData = BloomPageGetMeta(metaPage);
 	page = GenericXLogRegister(state, buffer, true);
 	BloomInitPage(page, 0);
-	BloomPageAddItem(&blstate, page, itup);
+
+	if (!BloomPageAddItem(&blstate, page, itup))
+	{
+		/* We shouldn't be here since we're inserting to the empty page */
+		elog(ERROR, "could not add new bloom tuple to empty page");
+	}
 
 	metaData->nStart = 0;
 	metaData->nEnd = 1;
