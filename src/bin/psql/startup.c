@@ -135,6 +135,7 @@ main(int argc, char *argv[])
 	pset.queryFout = stdout;
 	pset.queryFoutPipe = false;
 	pset.copyStream = NULL;
+	pset.last_error_result = NULL;
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
 

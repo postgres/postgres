@@ -497,6 +497,33 @@ AcceptResult(const PGresult *result)
 }
 
 
+/*
+ * ClearOrSaveResult
+ *
+ * If the result represents an error, remember it for possible display by
+ * \errverbose.  Otherwise, just PQclear() it.
+ */
+static void
+ClearOrSaveResult(PGresult *result)
+{
+	if (result)
+	{
+		switch (PQresultStatus(result))
+		{
+			case PGRES_NONFATAL_ERROR:
+			case PGRES_FATAL_ERROR:
+				if (pset.last_error_result)
+					PQclear(pset.last_error_result);
+				pset.last_error_result = result;
+				break;
+
+			default:
+				PQclear(result);
+				break;
+		}
+	}
+}
+
 
 /*
  * PSQLexec
@@ -548,7 +575,7 @@ PSQLexec(const char *query)
 
 	if (!AcceptResult(res))
 	{
-		PQclear(res);
+		ClearOrSaveResult(res);
 		res = NULL;
 	}
 
@@ -590,7 +617,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt)
 
 	if (!AcceptResult(res))
 	{
-		PQclear(res);
+		ClearOrSaveResult(res);
 		return 0;
 	}
 
@@ -1077,11 +1104,11 @@ SendQuery(const char *query)
 		if (PQresultStatus(results) != PGRES_COMMAND_OK)
 		{
 			psql_error("%s", PQerrorMessage(pset.db));
-			PQclear(results);
+			ClearOrSaveResult(results);
 			ResetCancelConn();
 			goto sendquery_cleanup;
 		}
-		PQclear(results);
+		ClearOrSaveResult(results);
 		transaction_status = PQtransactionStatus(pset.db);
 	}
 
@@ -1102,11 +1129,11 @@ SendQuery(const char *query)
 			if (PQresultStatus(results) != PGRES_COMMAND_OK)
 			{
 				psql_error("%s", PQerrorMessage(pset.db));
-				PQclear(results);
+				ClearOrSaveResult(results);
 				ResetCancelConn();
 				goto sendquery_cleanup;
 			}
-			PQclear(results);
+			ClearOrSaveResult(results);
 			on_error_rollback_savepoint = true;
 		}
 	}
@@ -1202,7 +1229,7 @@ SendQuery(const char *query)
 			if (PQresultStatus(svptres) != PGRES_COMMAND_OK)
 			{
 				psql_error("%s", PQerrorMessage(pset.db));
-				PQclear(svptres);
+				ClearOrSaveResult(svptres);
 				OK = false;
 
 				PQclear(results);
@@ -1213,7 +1240,7 @@ SendQuery(const char *query)
 		}
 	}
 
-	PQclear(results);
+	ClearOrSaveResult(results);
 
 	/* Possible microtiming output */
 	if (pset.timing)
@@ -1299,7 +1326,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		results = PQexec(pset.db, "BEGIN");
 		OK = AcceptResult(results) &&
 			(PQresultStatus(results) == PGRES_COMMAND_OK);
-		PQclear(results);
+		ClearOrSaveResult(results);
 		if (!OK)
 			return false;
 		started_txn = true;
@@ -1313,7 +1340,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	results = PQexec(pset.db, buf.data);
 	OK = AcceptResult(results) &&
 		(PQresultStatus(results) == PGRES_COMMAND_OK);
-	PQclear(results);
+	ClearOrSaveResult(results);
 	termPQExpBuffer(&buf);
 	if (!OK)
 		goto cleanup;
@@ -1384,7 +1411,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 			OK = AcceptResult(results);
 			Assert(!OK);
-			PQclear(results);
+			ClearOrSaveResult(results);
 			break;
 		}
 
@@ -1392,7 +1419,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		{
 			/* StoreQueryTuple will complain if not exactly one row */
 			OK = StoreQueryTuple(results);
-			PQclear(results);
+			ClearOrSaveResult(results);
 			break;
 		}
 
@@ -1415,7 +1442,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 		printQuery(results, &my_popt, fout, is_pager, pset.logfile);
 
-		PQclear(results);
+		ClearOrSaveResult(results);
 
 		/* after the first result set, disallow header decoration */
 		my_popt.topt.start_table = false;
@@ -1473,14 +1500,14 @@ cleanup:
 		OK = AcceptResult(results) &&
 			(PQresultStatus(results) == PGRES_COMMAND_OK);
 	}
-	PQclear(results);
+	ClearOrSaveResult(results);
 
 	if (started_txn)
 	{
 		results = PQexec(pset.db, OK ? "COMMIT" : "ROLLBACK");
 		OK &= AcceptResult(results) &&
 			(PQresultStatus(results) == PGRES_COMMAND_OK);
-		PQclear(results);
+		ClearOrSaveResult(results);
 	}
 
 	if (pset.timing)

@@ -1280,7 +1280,7 @@ psql_completion(const char *text, int start, int end)
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", "\\dL",
 		"\\dm", "\\dn", "\\do", "\\dO", "\\dp", "\\drds", "\\ds", "\\dS",
 		"\\dt", "\\dT", "\\dv", "\\du", "\\dx", "\\dy",
-		"\\e", "\\echo", "\\ef", "\\encoding", "\\ev",
+		"\\e", "\\echo", "\\ef", "\\encoding", "\\errverbose", "\\ev",
 		"\\f", "\\g", "\\gset", "\\h", "\\help", "\\H", "\\i", "\\ir", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
 		"\\o", "\\p", "\\password", "\\prompt", "\\pset", "\\q", "\\qecho", "\\r",

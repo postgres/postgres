@@ -1718,6 +1718,20 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\errverbose</literal></term>
+
+        <listitem>
+        <para>
+        Repeats the most recent server error message at maximum
+        verbosity, as though <varname>VERBOSITY</varname> were set
+        to <literal>verbose</> and <varname>SHOW_CONTEXT</varname> were
+        set to <literal>always</>.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\f [ <replaceable class="parameter">string</replaceable> ]</literal></term>
 
         <listitem>
@@ -3244,6 +3258,8 @@ bar
         that context will be shown in error messages, but not in notice or
         warning messages).  This setting has no effect
         when <varname>VERBOSITY</> is set to <literal>terse</>.
+        (See also <command>\errverbose</>, for use when you want a verbose
+        version of the error you just got.)
         </para>
         </listitem>
       </varlistentry>
@@ -3286,6 +3302,8 @@ bar
         This variable can be set to the values <literal>default</>,
         <literal>verbose</>, or <literal>terse</> to control the verbosity
         of error reports.
+        (See also <command>\errverbose</>, for use when you want a verbose
+        version of the error you just got.)
         </para>
         </listitem>
       </varlistentry>

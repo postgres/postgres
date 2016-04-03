@@ -86,6 +86,8 @@ typedef struct _psqlSettings
 
 	FILE	   *copyStream;		/* Stream to read/write for \copy command */
 
+	PGresult   *last_error_result;		/* most recent error result, if any */
+
 	printQueryOpt popt;
 
 	char	   *gfname;			/* one-shot file output argument for \g */
