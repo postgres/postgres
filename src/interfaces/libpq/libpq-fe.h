@@ -463,6 +463,9 @@ extern PGresult *PQfn(PGconn *conn,
 extern ExecStatusType PQresultStatus(const PGresult *res);
 extern char *PQresStatus(ExecStatusType status);
 extern char *PQresultErrorMessage(const PGresult *res);
+extern char *PQresultVerboseErrorMessage(const PGresult *res,
+							PGVerbosity verbosity,
+							PGContextVisibility show_context);
 extern char *PQresultErrorField(const PGresult *res, int fieldcode);
 extern int	PQntuples(const PGresult *res);
 extern int	PQnfields(const PGresult *res);

@@ -170,3 +170,4 @@ PQsslStruct               167
 PQsslAttributeNames       168
 PQsslAttribute            169
 PQsetErrorContextVisibility 170
+PQresultVerboseErrorMessage 171

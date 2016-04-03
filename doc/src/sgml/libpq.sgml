@@ -2691,6 +2691,48 @@ char *PQresultErrorMessage(const PGresult *res);
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-pqresultverboseerrormessage">
+      <term>
+       <function>PQresultVerboseErrorMessage</function>
+       <indexterm>
+        <primary>PQresultVerboseErrorMessage</primary>
+       </indexterm>
+      </term>
+
+      <listitem>
+       <para>
+        Returns a reformatted version of the error message associated with
+        a <structname>PGresult</> object.
+<synopsis>
+char *PQresultVerboseErrorMessage(const PGresult *res,
+                                  PGVerbosity verbosity,
+                                  PGContextVisibility show_context);
+</synopsis>
+        In some situations a client might wish to obtain a more detailed
+        version of a previously-reported error.
+        <function>PQresultVerboseErrorMessage</function> addresses this need
+        by computing the message that would have been produced
+        by <function>PQresultErrorMessage</function> if the specified
+        verbosity settings had been in effect for the connection when the
+        given <structname>PGresult</> was generated.  If
+        the <structname>PGresult</> is not an error result,
+        <quote>PGresult is not an error result</> is reported instead.
+        The returned string includes a trailing newline.
+       </para>
+
+       <para>
+        Unlike most other functions for extracting data from
+        a <structname>PGresult</>, the result of this function is a freshly
+        allocated string.  The caller must free it
+        using <function>PQfreemem()</> when the string is no longer needed.
+       </para>
+
+       <para>
+        A NULL return is possible if there is insufficient memory.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-pqresulterrorfield">
       <term><function>PQresultErrorField</function><indexterm><primary>PQresultErrorField</></></term>
       <listitem>
@@ -5582,6 +5624,8 @@ PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
       mode includes all available fields.  Changing the verbosity does not
       affect the messages available from already-existing
       <structname>PGresult</> objects, only subsequently-created ones.
+      (But see <function>PQresultVerboseErrorMessage</function> if you
+      want to print a previous error with a different verbosity.)
      </para>
     </listitem>
    </varlistentry>
@@ -5622,6 +5666,8 @@ PGContextVisibility PQsetErrorContextVisibility(PGconn *conn, PGContextVisibilit
       affect the messages available from
       already-existing <structname>PGresult</> objects, only
       subsequently-created ones.
+      (But see <function>PQresultVerboseErrorMessage</function> if you
+      want to print a previous error with a different display mode.)
      </para>
     </listitem>
    </varlistentry>
@@ -6089,8 +6135,9 @@ PQsetNoticeProcessor(PGconn *conn,
    receiver function is called.  It is passed the message in the form of
    a <symbol>PGRES_NONFATAL_ERROR</symbol>
    <structname>PGresult</structname>.  (This allows the receiver to extract
-   individual fields using <function>PQresultErrorField</>, or the complete
-   preformatted message using <function>PQresultErrorMessage</>.) The same
+   individual fields using <function>PQresultErrorField</>, or obtain a
+   complete preformatted message using <function>PQresultErrorMessage</>
+   or <function>PQresultVerboseErrorMessage</>.)  The same
    void pointer passed to <function>PQsetNoticeReceiver</function> is also
    passed.  (This pointer can be used to access application-specific state
    if needed.)

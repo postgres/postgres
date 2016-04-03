@@ -159,6 +159,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->nEvents = 0;
 	result->errMsg = NULL;
 	result->errFields = NULL;
+	result->errQuery = NULL;
 	result->null_field[0] = '\0';
 	result->curBlock = NULL;
 	result->curOffset = 0;
@@ -2596,6 +2597,44 @@ PQresultErrorMessage(const PGresult *res)
 	if (!res || !res->errMsg)
 		return "";
 	return res->errMsg;
+}
+
+char *
+PQresultVerboseErrorMessage(const PGresult *res,
+							PGVerbosity verbosity,
+							PGContextVisibility show_context)
+{
+	PQExpBufferData workBuf;
+
+	/*
+	 * Because the caller is expected to free the result string, we must
+	 * strdup any constant result.  We use plain strdup and document that
+	 * callers should expect NULL if out-of-memory.
+	 */
+	if (!res ||
+		(res->resultStatus != PGRES_FATAL_ERROR &&
+		 res->resultStatus != PGRES_NONFATAL_ERROR))
+		return strdup(libpq_gettext("PGresult is not an error result\n"));
+
+	initPQExpBuffer(&workBuf);
+
+	/*
+	 * Currently, we pass this off to fe-protocol3.c in all cases; it will
+	 * behave reasonably sanely with an error reported by fe-protocol2.c as
+	 * well.  If necessary, we could record the protocol version in PGresults
+	 * so as to be able to invoke a version-specific message formatter, but
+	 * for now there's no need.
+	 */
+	pqBuildErrorMessage3(&workBuf, res, verbosity, show_context);
+
+	/* If insufficient memory to format the message, fail cleanly */
+	if (PQExpBufferDataBroken(workBuf))
+	{
+		termPQExpBuffer(&workBuf);
+		return strdup(libpq_gettext("out of memory\n"));
+	}
+
+	return workBuf.data;
 }
 
 char *
