@@ -385,17 +385,21 @@ static void
 btree_xlog_vacuum(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
-	xl_btree_vacuum *xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque opaque;
+#ifdef UNUSED
+	xl_btree_vacuum *xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
 
 	/*
+	 * This section of code is thought to be no longer needed, after
+	 * analysis of the calling paths. It is retained to allow the code
+	 * to be reinstated if a flaw is revealed in that thinking.
+	 *
 	 * If we are running non-MVCC scans using this index we need to do some
 	 * additional work to ensure correctness, which is known as a "pin scan"
 	 * described in more detail in next paragraphs. We used to do the extra
-	 * work in all cases, whereas we now avoid that work except when the index
-	 * is a toast index, since toast scans aren't fully MVCC compliant.
+	 * work in all cases, whereas we now avoid that work in most cases.
 	 * If lastBlockVacuumed is set to InvalidBlockNumber then we skip the
 	 * additional work required for the pin scan.
 	 *
@@ -458,6 +462,7 @@ btree_xlog_vacuum(XLogReaderState *record)
 			}
 		}
 	}
+#endif
 
 	/*
 	 * Like in btvacuumpage(), we need to take a cleanup lock on every leaf

@@ -525,8 +525,12 @@ MVCC scans is not required on standby nodes. That is because
 HeapTupleSatisfiesUpdate(), HeapTupleSatisfiesSelf(),
 HeapTupleSatisfiesDirty() and HeapTupleSatisfiesVacuum() are only
 ever used during write transactions, which cannot exist on the standby.
-This leaves HeapTupleSatisfiesMVCC() and HeapTupleSatisfiesToast(), so
-HeapTupleSatisfiesToast() is the only non-MVCC scan type used on standbys.
+This leaves HeapTupleSatisfiesMVCC() and HeapTupleSatisfiesToast().
+HeapTupleSatisfiesToast() doesn't use MVCC semantics, though that's
+because it doesn't need to - if the main heap row is visible then the
+toast rows will also be visible. So as long as we follow a toast
+pointer from a visible (live) tuple the corresponding toast rows
+will also be visible, so we do not need to recheck MVCC on them.
 There is one minor exception, which is that the optimizer sometimes
 looks at the boundaries of value ranges using SnapshotDirty, which
 could result in returning a newer value for query statistics; this
@@ -536,13 +540,6 @@ in the index, so the scan retrieves a tid then immediately uses it
 to look in the heap. It is unlikely that the tid could have been
 deleted, vacuumed and re-inserted in the time taken to look in the heap
 via direct tid access. So we ignore that scan type as a problem.
-This means if we re-check the results of any scan of a toast index we
-will be able to completely avoid performing the "pin scan" operation
-during replay of VACUUM WAL records.
-
-XXX FIXME: Toast re-checks are not yet added, so we still perform the
-pin scan when replaying vacuum records of toast indexes.
-
 
 Other Things That Are Handy to Know
 -----------------------------------

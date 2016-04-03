@@ -22,7 +22,6 @@
 #include "access/relscan.h"
 #include "access/xlog.h"
 #include "catalog/index.h"
-#include "catalog/pg_namespace.h"
 #include "commands/vacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
@@ -833,8 +832,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	/*
 	 * Check to see if we need to issue one final WAL record for this index,
 	 * which may be needed for correctness on a hot standby node when
-	 * non-MVCC index scans could take place. This now only occurs when we
-	 * perform a TOAST scan, so only occurs for TOAST indexes.
+	 * non-MVCC index scans could take place.
 	 *
 	 * If the WAL is replayed in hot standby, the replay process needs to get
 	 * cleanup locks on all index leaf pages, just as we've been doing here.
@@ -846,7 +844,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * against the last leaf page in the index, if that one wasn't vacuumed.
 	 */
 	if (XLogStandbyInfoActive() &&
-		rel->rd_rel->relnamespace == PG_TOAST_NAMESPACE &&
 		vstate.lastBlockVacuumed < vstate.lastBlockLocked)
 	{
 		Buffer		buf;
@@ -1045,25 +1042,14 @@ restart:
 		 */
 		if (ndeletable > 0)
 		{
-			BlockNumber	lastBlockVacuumed = InvalidBlockNumber;
-
 			/*
-			 * We may need to record the lastBlockVacuumed for use when
-			 * non-MVCC scans might be performed on the index on a
-			 * hot standby. See explanation in btree_xlog_vacuum().
-			 *
-			 * On a hot standby, a non-MVCC scan can only take place
-			 * when we access a Toast Index, so we need only record
-			 * the lastBlockVacuumed if we are vacuuming a Toast Index.
-			 */
-			if (rel->rd_rel->relnamespace == PG_TOAST_NAMESPACE)
-				lastBlockVacuumed = vstate->lastBlockVacuumed;
-
-			/*
-			 * Notice that the issued XLOG_BTREE_VACUUM WAL record includes an
-			 * instruction to the replay code to get cleanup lock on all pages
-			 * between the previous lastBlockVacuumed and this page.  This
-			 * ensures that WAL replay locks all leaf pages at some point.
+			 * Notice that the issued XLOG_BTREE_VACUUM WAL record includes all
+			 * information to the replay code to allow it to get a cleanup lock
+			 * on all pages between the previous lastBlockVacuumed and this page.
+			 * This ensures that WAL replay locks all leaf pages at some point,
+			 * which is important should non-MVCC scans be requested.
+			 * This is currently unused on standby, but we record it anyway, so
+			 * that the WAL contains the required information.
 			 *
 			 * Since we can visit leaf pages out-of-order when recursing,
 			 * replay might end up locking such pages an extra time, but it
@@ -1071,7 +1057,7 @@ restart:
 			 * that.
 			 */
 			_bt_delitems_vacuum(rel, buf, deletable, ndeletable,
-								lastBlockVacuumed);
+								vstate->lastBlockVacuumed);
 
 			/*
 			 * Remember highest leaf page number we've issued a
