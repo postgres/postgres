@@ -110,12 +110,11 @@ typedef struct BloomMetaPageData
 typedef struct BloomState
 {
 	FmgrInfo	hashFn[INDEX_MAX_KEYS];
-	BloomOptions *opts;			/* stored in rd_amcache and defined at
-								 * creation time */
+	BloomOptions opts;			/* copy of options on index's metapage */
 	int32		nColumns;
 
 	/*
-	 * sizeOfBloomTuple is index's specific, and it depends on reloptions, so
+	 * sizeOfBloomTuple is index-specific, and it depends on reloptions, so
 	 * precompute it
 	 */
 	Size		sizeOfBloomTuple;

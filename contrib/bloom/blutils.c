@@ -155,9 +155,9 @@ initBloomState(BloomState *state, Relation index)
 		index->rd_amcache = (void *) opts;
 	}
 
-	state->opts = (BloomOptions *) index->rd_amcache;
+	memcpy(&state->opts, index->rd_amcache, sizeof(state->opts));
 	state->sizeOfBloomTuple = BLOOMTUPLEHDRSZ +
-		sizeof(SignType) * state->opts->bloomLength;
+		sizeof(SignType) * state->opts.bloomLength;
 }
 
 /*
@@ -228,10 +228,10 @@ signValue(BloomState *state, SignType *sign, Datum value, int attno)
 	hashVal = DatumGetInt32(FunctionCall1(&state->hashFn[attno], value));
 	mySrand(hashVal ^ myRand());
 
-	for (j = 0; j < state->opts->bitSize[attno]; j++)
+	for (j = 0; j < state->opts.bitSize[attno]; j++)
 	{
 		/* prevent mutiple evaluation */
-		nBit = myRand() % (state->opts->bloomLength * BITSIGNTYPE);
+		nBit = myRand() % (state->opts.bloomLength * BITSIGNTYPE);
 		SETBIT(sign, nBit);
 	}
 }

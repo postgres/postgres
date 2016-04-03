@@ -99,7 +99,7 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		/* New search: have to calculate search signature */
 		ScanKey		skey = scan->keyData;
 
-		so->sign = palloc0(sizeof(SignType) * so->state.opts->bloomLength);
+		so->sign = palloc0(sizeof(SignType) * so->state.opts.bloomLength);
 
 		for (i = 0; i < scan->numberOfKeys; i++)
 		{
@@ -151,7 +151,7 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 				bool		res = true;
 
 				/* Check index signature with scan signature */
-				for (i = 0; i < so->state.opts->bloomLength; i++)
+				for (i = 0; i < so->state.opts.bloomLength; i++)
 				{
 					if ((itup->sign[i] & so->sign[i]) != so->sign[i])
 					{
