@@ -262,7 +262,7 @@ BloomFormTuple(BloomState *state, ItemPointer iptr, Datum *values, bool *isnull)
 
 /*
  * Add new bloom tuple to the page.  Returns true if new tuple was successfully
- * added to the page.  Returns false if it doesn't git the page.
+ * added to the page.  Returns false if it doesn't fit the page.
  */
 bool
 BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
