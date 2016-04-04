@@ -12,7 +12,7 @@
   </para>
 
   <para>
-   The API for contructing generic WAL records is defined in
+   The API for constructing generic WAL records is defined in
    <filename>generic_xlog.h</> and implemented in <filename>generic_xlog.c</>.
    Each generic WAL record must be constructed by following these steps:
 
