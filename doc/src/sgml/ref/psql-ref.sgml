@@ -1766,6 +1766,49 @@ Tue Oct 26 21:40:57 CEST 1999
         </listitem>
       </varlistentry>
 
+
+      <varlistentry>
+        <term><literal>\gexec</literal></term>
+
+        <listitem>
+        <para>
+         Sends the current query input buffer to the server, then treats
+         each column of each row of the query's output (if any) as a SQL
+         statement to be executed.  For example, to create an index on each
+         column of <structname>my_table</>:
+<programlisting>
+=&gt; <userinput>SELECT format('create index on my_table(%I)', attname)</>
+-&gt; <userinput>FROM pg_attribute</>
+-&gt; <userinput>WHERE attrelid = 'my_table'::regclass AND attnum &gt; 0</>
+-&gt; <userinput>ORDER BY attnum</>
+-&gt; <userinput>\gexec</>
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+</programlisting>
+        </para>
+
+        <para>
+         The generated queries are executed in the order in which the rows
+         are returned, and left-to-right within each row if there is more
+         than one column.  NULL fields are ignored.  The generated queries
+         are sent literally to the server for processing, so they cannot be
+         <application>psql</> meta-commands nor contain <application>psql</>
+         variable references.  If any individual query fails, execution of
+         the remaining queries continues
+         unless <varname>ON_ERROR_STOP</varname> is set.  Execution of each
+         query is subject to <varname>ECHO</varname> processing.
+         (Setting <varname>ECHO</varname> to <literal>all</literal>
+         or <literal>queries</literal> is often advisable when
+         using <command>\gexec</>.)  Query logging, single-step mode,
+         timing, and other query execution features apply to each generated
+         query as well.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
       <varlistentry>
         <term><literal>\gset [ <replaceable class="parameter">prefix</replaceable> ]</literal></term>
 

@@ -798,6 +798,76 @@ StoreQueryTuple(const PGresult *result)
 
 
 /*
+ * ExecQueryTuples: assuming query result is OK, execute each query
+ * result field as a SQL statement
+ *
+ * Returns true if successful, false otherwise.
+ */
+static bool
+ExecQueryTuples(const PGresult *result)
+{
+	bool		success = true;
+	int			nrows = PQntuples(result);
+	int			ncolumns = PQnfields(result);
+	int			r,
+				c;
+
+	/*
+	 * We must turn off gexec_flag to avoid infinite recursion.  Note that
+	 * this allows ExecQueryUsingCursor to be applied to the individual query
+	 * results.  SendQuery prevents it from being applied when fetching the
+	 * queries-to-execute, because it can't handle recursion either.
+	 */
+	pset.gexec_flag = false;
+
+	for (r = 0; r < nrows; r++)
+	{
+		for (c = 0; c < ncolumns; c++)
+		{
+			if (!PQgetisnull(result, r, c))
+			{
+				const char *query = PQgetvalue(result, r, c);
+
+				/* Abandon execution if cancel_pressed */
+				if (cancel_pressed)
+					goto loop_exit;
+
+				/*
+				 * ECHO_ALL mode should echo these queries, but SendQuery
+				 * assumes that MainLoop did that, so we have to do it here.
+				 */
+				if (pset.echo == PSQL_ECHO_ALL && !pset.singlestep)
+				{
+					puts(query);
+					fflush(stdout);
+				}
+
+				if (!SendQuery(query))
+				{
+					/* Error - abandon execution if ON_ERROR_STOP */
+					success = false;
+					if (pset.on_error_stop)
+						goto loop_exit;
+				}
+			}
+		}
+	}
+
+loop_exit:
+
+	/*
+	 * Restore state.  We know gexec_flag was on, else we'd not be here. (We
+	 * also know it'll get turned off at end of command, but that's not ours
+	 * to do here.)
+	 */
+	pset.gexec_flag = true;
+
+	/* Return true if all queries were successful */
+	return success;
+}
+
+
+/*
  * ProcessResult: utility function for use by SendQuery() only
  *
  * When our command string contained a COPY FROM STDIN or COPY TO STDOUT,
@@ -971,7 +1041,7 @@ PrintQueryStatus(PGresult *results)
 
 
 /*
- * PrintQueryResults: print out (or store) query results as required
+ * PrintQueryResults: print out (or store or execute) query results as required
  *
  * Note: Utility function for use by SendQuery() only.
  *
@@ -989,9 +1059,11 @@ PrintQueryResults(PGresult *results)
 	switch (PQresultStatus(results))
 	{
 		case PGRES_TUPLES_OK:
-			/* store or print the data ... */
+			/* store or execute or print the data ... */
 			if (pset.gset_prefix)
 				success = StoreQueryTuple(results);
+			else if (pset.gexec_flag)
+				success = ExecQueryTuples(results);
 			else
 				success = PrintQueryTuples(results);
 			/* if it's INSERT/UPDATE/DELETE RETURNING, also print status */
@@ -1068,6 +1140,7 @@ SendQuery(const char *query)
 	{
 		char		buf[3];
 
+		fflush(stderr);
 		printf(_("***(Single step mode: verify command)*******************************************\n"
 				 "%s\n"
 				 "***(press return to proceed or enter x and return to cancel)********************\n"),
@@ -1076,6 +1149,8 @@ SendQuery(const char *query)
 		if (fgets(buf, sizeof(buf), stdin) != NULL)
 			if (buf[0] == 'x')
 				goto sendquery_cleanup;
+		if (cancel_pressed)
+			goto sendquery_cleanup;
 	}
 	else if (pset.echo == PSQL_ECHO_QUERIES)
 	{
@@ -1138,7 +1213,7 @@ SendQuery(const char *query)
 		}
 	}
 
-	if (pset.fetch_count <= 0 || !is_select_command(query))
+	if (pset.fetch_count <= 0 || pset.gexec_flag || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
 		instr_time	before,
@@ -1277,6 +1352,9 @@ sendquery_cleanup:
 		free(pset.gset_prefix);
 		pset.gset_prefix = NULL;
 	}
+
+	/* reset \gexec trigger */
+	pset.gexec_flag = false;
 
 	return OK;
 }
@@ -1423,6 +1501,8 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			break;
 		}
 
+		/* Note we do not deal with \gexec mode here */
+
 		ntuples = PQntuples(results);
 
 		if (ntuples < fetch_count)
@@ -1499,8 +1579,10 @@ cleanup:
 	{
 		OK = AcceptResult(results) &&
 			(PQresultStatus(results) == PGRES_COMMAND_OK);
+		ClearOrSaveResult(results);
 	}
-	ClearOrSaveResult(results);
+	else
+		PQclear(results);
 
 	if (started_txn)
 	{

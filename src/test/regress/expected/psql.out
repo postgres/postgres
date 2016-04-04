@@ -52,6 +52,51 @@ more than one row returned for \gset
 select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 no rows returned for \gset
 \unset FETCH_COUNT
+-- \gexec
+create temporary table gexec_test(a int, b text, c date, d float);
+select format('create index on gexec_test(%I)', attname)
+from pg_attribute
+where attrelid = 'gexec_test'::regclass and attnum > 0
+order by attnum
+\gexec
+create index on gexec_test(a)
+create index on gexec_test(b)
+create index on gexec_test(c)
+create index on gexec_test(d)
+-- \gexec should work in FETCH_COUNT mode too
+-- (though the fetch limit applies to the executed queries not the meta query)
+\set FETCH_COUNT 1
+select 'select 1 as ones', 'select x.y, x.y*2 as double from generate_series(1,4) as x(y)'
+union all
+select 'drop table gexec_test', NULL
+union all
+select 'drop table gexec_test', 'select ''2000-01-01''::date as party_over'
+\gexec
+select 1 as ones
+ ones 
+------
+    1
+(1 row)
+
+select x.y, x.y*2 as double from generate_series(1,4) as x(y)
+ y | double 
+---+--------
+ 1 |      2
+ 2 |      4
+ 3 |      6
+ 4 |      8
+(4 rows)
+
+drop table gexec_test
+drop table gexec_test
+ERROR:  table "gexec_test" does not exist
+select '2000-01-01'::date as party_over
+ party_over 
+------------
+ 01-01-2000
+(1 row)
+
+\unset FETCH_COUNT
 -- show all pset options
 \pset
 border                   1

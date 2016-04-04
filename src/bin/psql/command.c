@@ -871,6 +871,13 @@ exec_command(const char *cmd,
 		status = PSQL_CMD_SEND;
 	}
 
+	/* \gexec -- send query and execute each field of result */
+	else if (strcmp(cmd, "gexec") == 0)
+	{
+		pset.gexec_flag = true;
+		status = PSQL_CMD_SEND;
+	}
+
 	/* \gset [prefix] -- send query and store result into variables */
 	else if (strcmp(cmd, "gset") == 0)
 	{

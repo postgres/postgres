@@ -38,6 +38,28 @@ select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 
 \unset FETCH_COUNT
 
+-- \gexec
+
+create temporary table gexec_test(a int, b text, c date, d float);
+select format('create index on gexec_test(%I)', attname)
+from pg_attribute
+where attrelid = 'gexec_test'::regclass and attnum > 0
+order by attnum
+\gexec
+
+-- \gexec should work in FETCH_COUNT mode too
+-- (though the fetch limit applies to the executed queries not the meta query)
+\set FETCH_COUNT 1
+
+select 'select 1 as ones', 'select x.y, x.y*2 as double from generate_series(1,4) as x(y)'
+union all
+select 'drop table gexec_test', NULL
+union all
+select 'drop table gexec_test', 'select ''2000-01-01''::date as party_over'
+\gexec
+
+\unset FETCH_COUNT
+
 -- show all pset options
 \pset
 
