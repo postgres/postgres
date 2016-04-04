@@ -10847,7 +10847,11 @@ rm_redo_error_callback(void *arg)
 	initStringInfo(&buf);
 	xlog_outdesc(&buf, record);
 
-	errcontext("xlog redo %s", buf.data);
+	/* translator: %s is an XLog record description */
+	errcontext("xlog redo at %X/%X for %s",
+			   (uint32) (record->ReadRecPtr >> 32),
+			   (uint32) record->ReadRecPtr,
+			   buf.data);
 
 	pfree(buf.data);
 }
