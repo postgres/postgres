@@ -2133,13 +2133,15 @@ compute_distinct_stats(VacAttrStatsP stats,
 		}
 		else
 		{
-			/* d here is the same as d in the Haas-Stokes formula */
-			int			d = nonnull_cnt - summultiple + nmultiple;
+			double		ndistinct_table = stats->stadistinct;
 			double		avgcount,
 						mincount;
 
+			/* Re-extract estimate of # distinct nonnull values in table */
+			if (ndistinct_table < 0)
+				ndistinct_table = -ndistinct_table * totalrows;
 			/* estimate # occurrences in sample of a typical nonnull value */
-			avgcount = (double) nonnull_cnt / (double) d;
+			avgcount = (double) nonnull_cnt / ndistinct_table;
 			/* set minimum threshold count to store a value */
 			mincount = avgcount * 1.25;
 			if (mincount < 2)
@@ -2493,14 +2495,16 @@ compute_scalar_stats(VacAttrStatsP stats,
 		}
 		else
 		{
-			/* d here is the same as d in the Haas-Stokes formula */
-			int			d = ndistinct + toowide_cnt;
+			double		ndistinct_table = stats->stadistinct;
 			double		avgcount,
 						mincount,
 						maxmincount;
 
+			/* Re-extract estimate of # distinct nonnull values in table */
+			if (ndistinct_table < 0)
+				ndistinct_table = -ndistinct_table * totalrows;
 			/* estimate # occurrences in sample of a typical nonnull value */
-			avgcount = (double) values_cnt / (double) d;
+			avgcount = (double) nonnull_cnt / ndistinct_table;
 			/* set minimum threshold count to store a value */
 			mincount = avgcount * 1.25;
 			if (mincount < 2)
