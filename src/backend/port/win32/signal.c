@@ -33,6 +33,7 @@ HANDLE		pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
  */
 static CRITICAL_SECTION pg_signal_crit_sec;
 
+/* Note that array elements 0 are unused since they correspond to signal 0 */
 static pqsigfunc pg_signal_array[PG_SIGNAL_COUNT];
 static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 
@@ -105,15 +106,15 @@ pgwin32_signal_initialize(void)
 void
 pgwin32_dispatch_queued_signals(void)
 {
-	int			i;
+	int			exec_mask;
 
 	EnterCriticalSection(&pg_signal_crit_sec);
-	while (UNBLOCKED_SIGNAL_QUEUE())
+	while ((exec_mask = UNBLOCKED_SIGNAL_QUEUE()) != 0)
 	{
 		/* One or more unblocked signals queued for execution */
-		int			exec_mask = UNBLOCKED_SIGNAL_QUEUE();
+		int			i;
 
-		for (i = 0; i < PG_SIGNAL_COUNT; i++)
+		for (i = 1; i < PG_SIGNAL_COUNT; i++)
 		{
 			if (exec_mask & sigmask(i))
 			{
