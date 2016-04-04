@@ -25,9 +25,11 @@
 #define DEBUG1		14			/* used by GUC debug_* variables */
 #define LOG			15			/* Server operational messages; sent only to
 								 * server log by default. */
-#define COMMERROR	16			/* Client communication problems; same as LOG
-								 * for server reporting, but never sent to
-								 * client. */
+#define LOG_SERVER_ONLY 16		/* Same as LOG for server reporting, but never
+								 * sent to client. */
+#define COMMERROR	LOG_SERVER_ONLY		/* Client communication problems; same
+										 * as LOG for server reporting, but
+										 * never sent to client. */
 #define INFO		17			/* Messages specifically requested by user (eg
 								 * VACUUM VERBOSE output); always sent to
 								 * client regardless of client_min_messages,
@@ -354,7 +356,7 @@ typedef struct ErrorData
 	char	   *detail_log;		/* detail error message for server log only */
 	char	   *hint;			/* hint message */
 	char	   *context;		/* context message */
-	const char *message_id;		/* message id of .message (original English text) */
+	const char *message_id;		/* primary message's id (original string) */
 	char	   *schema_name;	/* name of schema */
 	char	   *table_name;		/* name of table */
 	char	   *column_name;	/* name of column */
