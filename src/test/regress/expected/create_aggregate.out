@@ -20,9 +20,9 @@ CREATE AGGREGATE newsum (
 -- zero-argument aggregate
 CREATE AGGREGATE newcnt (*) (
    sfunc = int8inc, stype = int8,
-   initcond = '0'
+   initcond = '0', parallel = safe
 );
--- old-style spelling of same
+-- old-style spelling of same (except without parallel-safe; that's too new)
 CREATE AGGREGATE oldcnt (
    sfunc = int8inc, basetype = 'ANY', stype = int8,
    initcond = '0'
@@ -188,6 +188,14 @@ WHERE aggfnoid = 'myavg'::REGPROC;
 (1 row)
 
 DROP AGGREGATE myavg (numeric);
+-- invalid: bad parallel-safety marking
+CREATE AGGREGATE mysum (int)
+(
+	stype = int,
+	sfunc = int4pl,
+	parallel = pear
+);
+ERROR:  parameter "parallel" must be SAFE, RESTRICTED, or UNSAFE
 -- invalid: nonstrict inverse with strict forward function
 CREATE FUNCTION float8mi_n(float8, float8) RETURNS float8 AS
 $$ SELECT $1 - $2; $$

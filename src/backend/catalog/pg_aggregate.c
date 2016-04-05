@@ -72,7 +72,8 @@ AggregateCreate(const char *aggName,
 				Oid aggmTransType,
 				int32 aggmTransSpace,
 				const char *agginitval,
-				const char *aggminitval)
+				const char *aggminitval,
+				char proparallel)
 {
 	Relation	aggdesc;
 	HeapTuple	tup;
@@ -622,7 +623,7 @@ AggregateCreate(const char *aggName,
 							 false,		/* isStrict (not needed for agg) */
 							 PROVOLATILE_IMMUTABLE,		/* volatility (not
 														 * needed for agg) */
-							 PROPARALLEL_UNSAFE,
+							 proparallel,
 							 parameterTypes,	/* paramTypes */
 							 allParameterTypes, /* allParamTypes */
 							 parameterModes,	/* parameterModes */

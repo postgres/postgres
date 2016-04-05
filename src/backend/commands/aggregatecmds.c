@@ -78,6 +78,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	int32		mtransSpace = 0;
 	char	   *initval = NULL;
 	char	   *minitval = NULL;
+	char	   *parallel = NULL;
 	int			numArgs;
 	int			numDirectArgs = 0;
 	oidvector  *parameterTypes;
@@ -91,6 +92,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	Oid			mtransTypeId = InvalidOid;
 	char		transTypeType;
 	char		mtransTypeType = 0;
+	char		proparallel = PROPARALLEL_UNSAFE;
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
@@ -178,6 +180,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			initval = defGetString(defel);
 		else if (pg_strcasecmp(defel->defname, "minitcond") == 0)
 			minitval = defGetString(defel);
+		else if (pg_strcasecmp(defel->defname, "parallel") == 0)
+			parallel = defGetString(defel);
 		else
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -449,6 +453,20 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		(void) OidInputFunctionCall(typinput, minitval, typioparam, -1);
 	}
 
+	if (parallel)
+	{
+		if (pg_strcasecmp(parallel, "safe") == 0)
+			proparallel = PROPARALLEL_SAFE;
+		else if (pg_strcasecmp(parallel, "restricted") == 0)
+			proparallel = PROPARALLEL_RESTRICTED;
+		else if (pg_strcasecmp(parallel, "unsafe") == 0)
+			proparallel = PROPARALLEL_UNSAFE;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("parameter \"parallel\" must be SAFE, RESTRICTED, or UNSAFE")));
+	}
+
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
@@ -480,5 +498,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   mtransTypeId,		/* transition data type */
 						   mtransSpace, /* transition space */
 						   initval,		/* initial condition */
-						   minitval);	/* initial condition */
+						   minitval,	/* initial condition */
+						   proparallel);		/* parallel safe? */
 }

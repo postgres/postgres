@@ -40,6 +40,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , MFINALFUNC_EXTRA ]
     [ , MINITCOND = <replaceable class="PARAMETER">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
+    [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
 )
 
 CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ]
@@ -55,6 +56,8 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , HYPOTHETICAL ]
+    [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
+
 )
 
 <phrase>or the old syntax</phrase>
@@ -683,6 +686,12 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    <para>
     Currently, ordered-set aggregates do not need to support
     moving-aggregate mode, since they cannot be used as window functions.
+   </para>
+
+   <para>
+    The meaning of <literal>PARALLEL SAFE</>, <literal>PARALLEL RESTRICTED</>,
+    and <literal>PARALLEL UNSAFE</> is the same as for
+    <xref linkend="sql-createfunction">.
    </para>
  </refsect1>
 

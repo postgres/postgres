@@ -1419,6 +1419,13 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 		if (parallel_too_dangerous(func_parallel(expr->funcid), context))
 			return true;
 	}
+	else if (IsA(node, Aggref))
+	{
+		Aggref	   *aggref = (Aggref *) node;
+
+		if (parallel_too_dangerous(func_parallel(aggref->aggfnoid), context))
+			return true;
+	}
 	else if (IsA(node, OpExpr))
 	{
 		OpExpr	   *expr = (OpExpr *) node;

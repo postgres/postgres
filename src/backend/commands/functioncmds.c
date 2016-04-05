@@ -566,9 +566,8 @@ interpret_func_parallel(DefElem *defel)
 	else
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("parallel option \"%s\" not recognized",
-						str)));
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("parameter \"parallel\" must be SAFE, RESTRICTED, or UNSAFE")));
 		return PROPARALLEL_UNSAFE;		/* keep compiler quiet */
 	}
 }

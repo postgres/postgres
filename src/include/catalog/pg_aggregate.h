@@ -349,6 +349,7 @@ extern ObjectAddress AggregateCreate(const char *aggName,
 				Oid aggmTransType,
 				int32 aggmTransSpace,
 				const char *agginitval,
-				const char *aggminitval);
+				const char *aggminitval,
+				char proparallel);
 
 #endif   /* PG_AGGREGATE_H */

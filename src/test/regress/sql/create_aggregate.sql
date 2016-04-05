@@ -23,10 +23,10 @@ CREATE AGGREGATE newsum (
 -- zero-argument aggregate
 CREATE AGGREGATE newcnt (*) (
    sfunc = int8inc, stype = int8,
-   initcond = '0'
+   initcond = '0', parallel = safe
 );
 
--- old-style spelling of same
+-- old-style spelling of same (except without parallel-safe; that's too new)
 CREATE AGGREGATE oldcnt (
    sfunc = int8inc, basetype = 'ANY', stype = int8,
    initcond = '0'
@@ -200,6 +200,14 @@ FROM pg_aggregate
 WHERE aggfnoid = 'myavg'::REGPROC;
 
 DROP AGGREGATE myavg (numeric);
+
+-- invalid: bad parallel-safety marking
+CREATE AGGREGATE mysum (int)
+(
+	stype = int,
+	sfunc = int4pl,
+	parallel = pear
+);
 
 -- invalid: nonstrict inverse with strict forward function
 
