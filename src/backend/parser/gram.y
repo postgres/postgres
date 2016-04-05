@@ -233,7 +233,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		AlterEventTrigStmt
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
-		AlterObjectSchemaStmt AlterOwnerStmt AlterOperatorStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
+		AlterObjectDependsStmt AlterObjectSchemaStmt AlterOwnerStmt
+		AlterOperatorStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
 		AlterTblSpcStmt AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
 		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt AlterPolicyStmt
@@ -578,7 +579,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATA_P DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
-	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DESC
+	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DEPENDS DESC
 	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EVENT EXCEPT
@@ -767,6 +768,7 @@ stmt :
 			| AlterForeignTableStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
+			| AlterObjectDependsStmt
 			| AlterObjectSchemaStmt
 			| AlterOwnerStmt
 			| AlterOperatorStmt
@@ -8027,6 +8029,55 @@ opt_set_data: SET DATA_P							{ $$ = 1; }
 
 /*****************************************************************************
  *
+ * ALTER THING name DEPENDS ON EXTENSION name
+ *
+ *****************************************************************************/
+
+AlterObjectDependsStmt:
+			ALTER FUNCTION function_with_argtypes DEPENDS ON EXTENSION name
+				{
+					AlterObjectDependsStmt *n = makeNode(AlterObjectDependsStmt);
+					n->objectType = OBJECT_FUNCTION;
+					n->relation = NULL;
+					n->objname = $3->funcname;
+					n->objargs = $3->funcargs;
+					n->extname = makeString($7);
+					$$ = (Node *)n;
+				}
+			| ALTER TRIGGER name ON qualified_name DEPENDS ON EXTENSION name
+				{
+					AlterObjectDependsStmt *n = makeNode(AlterObjectDependsStmt);
+					n->objectType = OBJECT_TRIGGER;
+					n->relation = $5;
+					n->objname = list_make1(makeString($3));
+					n->objargs = NIL;
+					n->extname = makeString($9);
+					$$ = (Node *)n;
+				}
+			| ALTER MATERIALIZED VIEW qualified_name DEPENDS ON EXTENSION name
+				{
+					AlterObjectDependsStmt *n = makeNode(AlterObjectDependsStmt);
+					n->objectType = OBJECT_MATVIEW;
+					n->relation = $4;
+					n->objname = NIL;
+					n->objargs = NIL;
+					n->extname = makeString($8);
+					$$ = (Node *)n;
+				}
+			| ALTER INDEX qualified_name DEPENDS ON EXTENSION name
+				{
+					AlterObjectDependsStmt *n = makeNode(AlterObjectDependsStmt);
+					n->objectType = OBJECT_INDEX;
+					n->relation = $3;
+					n->objname = NIL;
+					n->objargs = NIL;
+					n->extname = makeString($7);
+					$$ = (Node *)n;
+				}
+		;
+
+/*****************************************************************************
+ *
  * ALTER THING name SET SCHEMA name
  *
  *****************************************************************************/
@@ -13726,6 +13777,7 @@ unreserved_keyword:
 			| DELETE_P
 			| DELIMITER
 			| DELIMITERS
+			| DEPENDS
 			| DICTIONARY
 			| DISABLE_P
 			| DISCARD

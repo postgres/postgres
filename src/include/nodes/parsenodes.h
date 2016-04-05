@@ -2536,6 +2536,20 @@ typedef struct RenameStmt
 } RenameStmt;
 
 /* ----------------------
+ * ALTER object DEPENDS ON EXTENSION extname
+ * ----------------------
+ */
+typedef struct AlterObjectDependsStmt
+{
+	NodeTag		type;
+	ObjectType	objectType;		/* OBJECT_FUNCTION, OBJECT_TRIGGER, etc */
+	RangeVar   *relation;		/* in case a table is involved */
+	List	   *objname;		/* name of the object */
+	List	   *objargs;		/* argument types, if applicable */
+	Value	   *extname;		/* extension name */
+} AlterObjectDependsStmt;
+
+/* ----------------------
  *		ALTER object SET SCHEMA Statement
  * ----------------------
  */

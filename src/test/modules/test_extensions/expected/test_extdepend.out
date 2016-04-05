@@ -1,0 +1,152 @@
+--
+-- test ALTER THING name DEPENDS ON EXTENSION
+--
+-- Common setup for all tests
+CREATE TABLE test_extdep_commands (command text);
+COPY test_extdep_commands FROM stdin;
+SELECT * FROM test_extdep_commands;
+                                 command                                 
+-------------------------------------------------------------------------
+  CREATE SCHEMA test_ext
+  CREATE EXTENSION test_ext5 SCHEMA test_ext
+  SET search_path TO test_ext
+  CREATE TABLE a (a1 int)
+ 
+  CREATE FUNCTION b() RETURNS TRIGGER LANGUAGE plpgsql AS               +
+    $$ BEGIN NEW.a1 := NEW.a1 + 42; RETURN NEW; END; $$
+  ALTER FUNCTION b() DEPENDS ON EXTENSION test_ext5
+ 
+  CREATE TRIGGER c BEFORE INSERT ON a FOR EACH ROW EXECUTE PROCEDURE b()
+  ALTER TRIGGER c ON a DEPENDS ON EXTENSION test_ext5
+ 
+  CREATE MATERIALIZED VIEW d AS SELECT * FROM a
+  ALTER MATERIALIZED VIEW d DEPENDS ON EXTENSION test_ext5
+ 
+  CREATE INDEX e ON a (a1)
+  ALTER INDEX e DEPENDS ON EXTENSION test_ext5
+  RESET search_path
+(17 rows)
+
+-- First, test that dependent objects go away when the extension is dropped.
+SELECT * FROM test_extdep_commands \gexec
+ CREATE SCHEMA test_ext
+ CREATE EXTENSION test_ext5 SCHEMA test_ext
+ SET search_path TO test_ext
+ CREATE TABLE a (a1 int)
+
+ CREATE FUNCTION b() RETURNS TRIGGER LANGUAGE plpgsql AS
+   $$ BEGIN NEW.a1 := NEW.a1 + 42; RETURN NEW; END; $$
+ ALTER FUNCTION b() DEPENDS ON EXTENSION test_ext5
+
+ CREATE TRIGGER c BEFORE INSERT ON a FOR EACH ROW EXECUTE PROCEDURE b()
+ ALTER TRIGGER c ON a DEPENDS ON EXTENSION test_ext5
+
+ CREATE MATERIALIZED VIEW d AS SELECT * FROM a
+ ALTER MATERIALIZED VIEW d DEPENDS ON EXTENSION test_ext5
+
+ CREATE INDEX e ON a (a1)
+ ALTER INDEX e DEPENDS ON EXTENSION test_ext5
+ RESET search_path
+-- make sure we have the right dependencies on the extension
+SELECT deptype, p.*
+  FROM pg_depend, pg_identify_object(classid, objid, objsubid) AS p
+ WHERE refclassid = 'pg_extension'::regclass AND
+       refobjid = (SELECT oid FROM pg_extension WHERE extname = 'test_ext5')
+ORDER BY type;
+ deptype |       type        |  schema  | name |    identity     
+---------+-------------------+----------+------+-----------------
+ x       | function          | test_ext |      | test_ext.b()
+ x       | index             | test_ext | e    | test_ext.e
+ x       | materialized view | test_ext | d    | test_ext.d
+ x       | trigger           |          |      | c on test_ext.a
+(4 rows)
+
+DROP EXTENSION test_ext5;
+-- anything still depending on the table?
+SELECT deptype, i.*
+  FROM pg_catalog.pg_depend, pg_identify_object(classid, objid, objsubid) i
+WHERE refclassid='pg_class'::regclass AND
+ refobjid='test_ext.a'::regclass AND NOT deptype IN ('i', 'a');
+ deptype | type | schema | name | identity 
+---------+------+--------+------+----------
+(0 rows)
+
+DROP SCHEMA test_ext CASCADE;
+NOTICE:  drop cascades to table test_ext.a
+-- Second test: If we drop the table, the objects are dropped too and no
+-- vestige remains in pg_depend.
+SELECT * FROM test_extdep_commands \gexec
+ CREATE SCHEMA test_ext
+ CREATE EXTENSION test_ext5 SCHEMA test_ext
+ SET search_path TO test_ext
+ CREATE TABLE a (a1 int)
+
+ CREATE FUNCTION b() RETURNS TRIGGER LANGUAGE plpgsql AS
+   $$ BEGIN NEW.a1 := NEW.a1 + 42; RETURN NEW; END; $$
+ ALTER FUNCTION b() DEPENDS ON EXTENSION test_ext5
+
+ CREATE TRIGGER c BEFORE INSERT ON a FOR EACH ROW EXECUTE PROCEDURE b()
+ ALTER TRIGGER c ON a DEPENDS ON EXTENSION test_ext5
+
+ CREATE MATERIALIZED VIEW d AS SELECT * FROM a
+ ALTER MATERIALIZED VIEW d DEPENDS ON EXTENSION test_ext5
+
+ CREATE INDEX e ON a (a1)
+ ALTER INDEX e DEPENDS ON EXTENSION test_ext5
+ RESET search_path
+DROP TABLE test_ext.a;		-- should fail, require cascade
+ERROR:  cannot drop table test_ext.a because other objects depend on it
+DETAIL:  materialized view test_ext.d depends on table test_ext.a
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP TABLE test_ext.a CASCADE;
+NOTICE:  drop cascades to materialized view test_ext.d
+-- anything still depending on the extension?  Should be only function b()
+SELECT deptype, i.*
+  FROM pg_catalog.pg_depend, pg_identify_object(classid, objid, objsubid) i
+ WHERE refclassid='pg_extension'::regclass AND
+ refobjid=(SELECT oid FROM pg_extension WHERE extname='test_ext5');
+ deptype |   type   |  schema  | name |   identity   
+---------+----------+----------+------+--------------
+ x       | function | test_ext |      | test_ext.b()
+(1 row)
+
+DROP EXTENSION test_ext5;
+DROP SCHEMA test_ext CASCADE;
+-- Third test: we can drop the objects individually
+SELECT * FROM test_extdep_commands \gexec
+ CREATE SCHEMA test_ext
+ CREATE EXTENSION test_ext5 SCHEMA test_ext
+ SET search_path TO test_ext
+ CREATE TABLE a (a1 int)
+
+ CREATE FUNCTION b() RETURNS TRIGGER LANGUAGE plpgsql AS
+   $$ BEGIN NEW.a1 := NEW.a1 + 42; RETURN NEW; END; $$
+ ALTER FUNCTION b() DEPENDS ON EXTENSION test_ext5
+
+ CREATE TRIGGER c BEFORE INSERT ON a FOR EACH ROW EXECUTE PROCEDURE b()
+ ALTER TRIGGER c ON a DEPENDS ON EXTENSION test_ext5
+
+ CREATE MATERIALIZED VIEW d AS SELECT * FROM a
+ ALTER MATERIALIZED VIEW d DEPENDS ON EXTENSION test_ext5
+
+ CREATE INDEX e ON a (a1)
+ ALTER INDEX e DEPENDS ON EXTENSION test_ext5
+ RESET search_path
+SET search_path TO test_ext;
+DROP TRIGGER c ON a;
+DROP FUNCTION b();
+DROP MATERIALIZED VIEW d;
+DROP INDEX e;
+SELECT deptype, i.*
+  FROM pg_catalog.pg_depend, pg_identify_object(classid, objid, objsubid) i
+ WHERE (refclassid='pg_extension'::regclass AND
+        refobjid=(SELECT oid FROM pg_extension WHERE extname='test_ext5'))
+	OR (refclassid='pg_class'::regclass AND refobjid='test_ext.a'::regclass)
+   AND NOT deptype IN ('i', 'a');
+ deptype | type | schema | name | identity 
+---------+------+--------+------+----------
+(0 rows)
+
+DROP TABLE a;
+DROP SCHEMA test_ext CASCADE;
+NOTICE:  drop cascades to extension test_ext5

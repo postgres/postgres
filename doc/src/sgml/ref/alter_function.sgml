@@ -29,6 +29,8 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
     OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     SET SCHEMA <replaceable>new_schema</replaceable>
+ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -144,6 +146,15 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
     <listitem>
      <para>
       The new schema for the function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">extension_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the extension that the function is to depend on.
      </para>
     </listitem>
    </varlistentry>
@@ -296,6 +307,15 @@ ALTER FUNCTION sqrt(integer) OWNER TO joe;
    <type>integer</type> to <literal>maths</literal>:
 <programlisting>
 ALTER FUNCTION sqrt(integer) SET SCHEMA maths;
+</programlisting>
+  </para>
+
+  <para>
+   To mark the function <literal>sqrt</literal> for type
+   <type>integer</type> as being dependent on the extension
+   <literal>mathlib</literal>:
+<programlisting>
+ALTER FUNCTION sqrt(integer) DEPENDS ON EXTENSION mathlib;
 </programlisting>
   </para>
 

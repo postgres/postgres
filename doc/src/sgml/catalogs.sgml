@@ -2877,6 +2877,19 @@
     </varlistentry>
 
     <varlistentry>
+     <term><symbol>DEPENDENCY_AUTO_EXTENSION</> (<literal>x</>)</term>
+     <listitem>
+      <para>
+       The dependent object is not a member of the extension that is the
+       referenced object (and so should not be ignored by pg_dump), but
+       cannot function without it and should be dropped when the
+       extension itself is. The dependent object may be dropped on its
+       own as well.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><symbol>DEPENDENCY_PIN</> (<literal>p</>)</term>
      <listitem>
       <para>

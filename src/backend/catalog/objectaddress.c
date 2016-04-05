@@ -1016,6 +1016,31 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 }
 
 /*
+ * Return an ObjectAddress based on a RangeVar and an object name. The
+ * name of the relation identified by the RangeVar is prepended to the
+ * (possibly empty) list passed in as objname. This is useful to find
+ * the ObjectAddress of objects that depend on a relation. All other
+ * considerations are exactly as for get_object_address above.
+ */
+ObjectAddress
+get_object_address_rv(ObjectType objtype, RangeVar *rel, List *objname,
+					  List *objargs, Relation *relp, LOCKMODE lockmode,
+					  bool missing_ok)
+{
+	if (rel)
+	{
+		objname = lcons(makeString(rel->relname), objname);
+		if (rel->schemaname)
+			objname = lcons(makeString(rel->schemaname), objname);
+		if (rel->catalogname)
+			objname = lcons(makeString(rel->catalogname), objname);
+	}
+
+	return get_object_address(objtype, objname, objargs,
+							  relp, lockmode, missing_ok);
+}
+
+/*
  * Find an ObjectAddress for a type of object that is identified by an
  * unqualified name.
  */

@@ -147,6 +147,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterFunctionStmt:
 		case T_AlterRoleStmt:
 		case T_AlterRoleSetStmt:
+		case T_AlterObjectDependsStmt:
 		case T_AlterObjectSchemaStmt:
 		case T_AlterOwnerStmt:
 		case T_AlterOperatorStmt:
@@ -836,6 +837,19 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 
+		case T_AlterObjectDependsStmt:
+			{
+				AlterObjectDependsStmt *stmt = (AlterObjectDependsStmt *) parsetree;
+
+				if (EventTriggerSupportsObjectType(stmt->objectType))
+					ProcessUtilitySlow(parsetree, queryString,
+									   context, params,
+									   dest, completionTag);
+				else
+					ExecAlterObjectDependsStmt(stmt, NULL);
+			}
+			break;
+
 		case T_AlterObjectSchemaStmt:
 			{
 				AlterObjectSchemaStmt *stmt = (AlterObjectSchemaStmt *) parsetree;
@@ -1470,6 +1484,12 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_RenameStmt:
 				address = ExecRenameStmt((RenameStmt *) parsetree);
+				break;
+
+			case T_AlterObjectDependsStmt:
+				address =
+					ExecAlterObjectDependsStmt((AlterObjectDependsStmt *) parsetree,
+											   &secondaryObject);
 				break;
 
 			case T_AlterObjectSchemaStmt:
@@ -2192,6 +2212,10 @@ CreateCommandTag(Node *parsetree)
 			tag = AlterObjectTypeCommandTag(((RenameStmt *) parsetree)->renameType);
 			break;
 
+		case T_AlterObjectDependsStmt:
+			tag = AlterObjectTypeCommandTag(((AlterObjectDependsStmt *) parsetree)->objectType);
+			break;
+
 		case T_AlterObjectSchemaStmt:
 			tag = AlterObjectTypeCommandTag(((AlterObjectSchemaStmt *) parsetree)->objectType);
 			break;
@@ -2819,6 +2843,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_RenameStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterObjectDependsStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

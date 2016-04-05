@@ -589,6 +589,7 @@ findDependentObjects(const ObjectAddress *object,
 		{
 			case DEPENDENCY_NORMAL:
 			case DEPENDENCY_AUTO:
+			case DEPENDENCY_AUTO_EXTENSION:
 				/* no problem */
 				break;
 			case DEPENDENCY_INTERNAL:
@@ -788,6 +789,7 @@ findDependentObjects(const ObjectAddress *object,
 				subflags = DEPFLAG_NORMAL;
 				break;
 			case DEPENDENCY_AUTO:
+			case DEPENDENCY_AUTO_EXTENSION:
 				subflags = DEPFLAG_AUTO;
 				break;
 			case DEPENDENCY_INTERNAL:

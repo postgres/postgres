@@ -23,6 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> DEPENDS ON EXTENSION <replaceable class="PARAMETER">extension_name</replaceable>
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
 ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
@@ -78,6 +79,16 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       <command>ALTER INDEX</command> invocations instead if desired.
       See also
       <xref linkend="SQL-CREATETABLESPACE">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEPENDS ON EXTENSION</literal></term>
+    <listitem>
+     <para>
+      This form marks the index as dependent on the extension, such that if the
+      extension is dropped, the index will automatically be dropped as well.
      </para>
     </listitem>
    </varlistentry>
@@ -143,6 +154,15 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       <listitem>
        <para>
         The tablespace to which the index will be moved.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">extension_name</replaceable></term>
+      <listitem>
+       <para>
+        The name of the extension that the index is to depend on.
        </para>
       </listitem>
      </varlistentry>

@@ -9,7 +9,7 @@ DATA = test_ext1--1.0.sql test_ext2--1.0.sql test_ext3--1.0.sql \
 	   test_ext4--1.0.sql test_ext5--1.0.sql test_ext_cyclic1--1.0.sql \
 	   test_ext_cyclic2--1.0.sql
 
-REGRESS = test_extensions
+REGRESS = test_extensions test_extdepend
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

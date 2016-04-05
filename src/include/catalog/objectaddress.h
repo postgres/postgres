@@ -44,6 +44,10 @@ extern ObjectAddress get_object_address(ObjectType objtype, List *objname,
 				   List *objargs, Relation *relp,
 				   LOCKMODE lockmode, bool missing_ok);
 
+extern ObjectAddress get_object_address_rv(ObjectType objtype, RangeVar *rel,
+				   List *objname, List *objargs, Relation *relp,
+				   LOCKMODE lockmode, bool missing_ok);
+
 extern void check_object_ownership(Oid roleid,
 					   ObjectType objtype, ObjectAddress address,
 					   List *objname, List *objargs, Relation relation);

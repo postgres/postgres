@@ -55,6 +55,12 @@
  * this dependency type acts the same as an internal dependency, but it's
  * kept separate for clarity and to simplify pg_dump.
  *
+ * DEPENDENCY_AUTO_EXTENSION ('x'): the dependent object is not a member
+ * of the extension that is the referenced object (and so should not be
+ * ignored by pg_dump), but cannot function without the extension and
+ * should be dropped when the extension itself is.  The dependent object
+ * may be dropped on its own as well.
+ *
  * DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
  * is a signal that the system itself depends on the referenced object,
  * and so that object must never be deleted.  Entries of this type are
@@ -70,6 +76,7 @@ typedef enum DependencyType
 	DEPENDENCY_AUTO = 'a',
 	DEPENDENCY_INTERNAL = 'i',
 	DEPENDENCY_EXTENSION = 'e',
+	DEPENDENCY_AUTO_EXTENSION = 'x',
 	DEPENDENCY_PIN = 'p'
 } DependencyType;
 

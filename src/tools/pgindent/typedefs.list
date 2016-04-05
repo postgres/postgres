@@ -67,6 +67,7 @@ AlterExtensionStmt
 AlterFdwStmt
 AlterForeignServerStmt
 AlterFunctionStmt
+AlterObjectDependsStmt
 AlterObjectSchemaStmt
 AlterOpFamilyStmt
 AlterOwnerStmt
