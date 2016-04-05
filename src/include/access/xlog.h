@@ -276,8 +276,8 @@ extern void assign_checkpoint_completion_target(double newval, void *extra);
  * Starting/stopping a base backup
  */
 extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast,
-				   TimeLineID *starttli_p, char **labelfile, DIR *tblspcdir,
-				   List **tablespaces, char **tblspcmapfile, bool infotbssize,
+				   TimeLineID *starttli_p, StringInfo labelfile, DIR *tblspcdir,
+				   List **tablespaces, StringInfo tblspcmapfile, bool infotbssize,
 				   bool needtblspcmapfile);
 extern XLogRecPtr do_pg_stop_backup(char *labelfile, bool waitforarchive,
 				  TimeLineID *stoptli_p);

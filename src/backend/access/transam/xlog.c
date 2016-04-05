@@ -9768,8 +9768,8 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  */
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
-				   char **labelfile, DIR *tblspcdir, List **tablespaces,
-				   char **tblspcmapfile, bool infotbssize,
+				   StringInfo labelfile, DIR *tblspcdir, List **tablespaces,
+				   StringInfo tblspcmapfile, bool infotbssize,
 				   bool needtblspcmapfile)
 {
 	bool		exclusive = (labelfile == NULL);
@@ -9783,8 +9783,6 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	XLogSegNo	_logSegNo;
 	struct stat stat_buf;
 	FILE	   *fp;
-	StringInfoData labelfbuf;
-	StringInfoData tblspc_mapfbuf;
 
 	backup_started_in_recovery = RecoveryInProgress();
 
@@ -9981,7 +9979,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		/*
 		 * Construct tablespace_map file
 		 */
-		initStringInfo(&tblspc_mapfbuf);
+		if (exclusive)
+			tblspcmapfile = makeStringInfo();
 
 		datadirpathlen = strlen(DataDir);
 
@@ -10054,7 +10053,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			if (tablespaces)
 				*tablespaces = lappend(*tablespaces, ti);
 
-			appendStringInfo(&tblspc_mapfbuf, "%s %s\n", ti->oid, ti->path);
+			appendStringInfo(tblspcmapfile, "%s %s\n", ti->oid, ti->path);
 
 			pfree(buflinkpath.data);
 #else
@@ -10073,23 +10072,24 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		/*
 		 * Construct backup label file
 		 */
-		initStringInfo(&labelfbuf);
+		if (exclusive)
+			labelfile = makeStringInfo();
 
 		/* Use the log timezone here, not the session timezone */
 		stamp_time = (pg_time_t) time(NULL);
 		pg_strftime(strfbuf, sizeof(strfbuf),
 					"%Y-%m-%d %H:%M:%S %Z",
 					pg_localtime(&stamp_time, log_timezone));
-		appendStringInfo(&labelfbuf, "START WAL LOCATION: %X/%X (file %s)\n",
+		appendStringInfo(labelfile, "START WAL LOCATION: %X/%X (file %s)\n",
 			 (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename);
-		appendStringInfo(&labelfbuf, "CHECKPOINT LOCATION: %X/%X\n",
+		appendStringInfo(labelfile, "CHECKPOINT LOCATION: %X/%X\n",
 					 (uint32) (checkpointloc >> 32), (uint32) checkpointloc);
-		appendStringInfo(&labelfbuf, "BACKUP METHOD: %s\n",
+		appendStringInfo(labelfile, "BACKUP METHOD: %s\n",
 						 exclusive ? "pg_start_backup" : "streamed");
-		appendStringInfo(&labelfbuf, "BACKUP FROM: %s\n",
+		appendStringInfo(labelfile, "BACKUP FROM: %s\n",
 						 backup_started_in_recovery ? "standby" : "master");
-		appendStringInfo(&labelfbuf, "START TIME: %s\n", strfbuf);
-		appendStringInfo(&labelfbuf, "LABEL: %s\n", backupidstr);
+		appendStringInfo(labelfile, "START TIME: %s\n", strfbuf);
+		appendStringInfo(labelfile, "LABEL: %s\n", backupidstr);
 
 		/*
 		 * Okay, write the file, or return its contents to caller.
@@ -10123,7 +10123,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 						(errcode_for_file_access(),
 						 errmsg("could not create file \"%s\": %m",
 								BACKUP_LABEL_FILE)));
-			if (fwrite(labelfbuf.data, labelfbuf.len, 1, fp) != 1 ||
+			if (fwrite(labelfile->data, labelfile->len, 1, fp) != 1 ||
 				fflush(fp) != 0 ||
 				pg_fsync(fileno(fp)) != 0 ||
 				ferror(fp) ||
@@ -10132,10 +10132,12 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 						(errcode_for_file_access(),
 						 errmsg("could not write file \"%s\": %m",
 								BACKUP_LABEL_FILE)));
-			pfree(labelfbuf.data);
+			/* Allocated locally for exclusive backups, so free separately */
+			pfree(labelfile->data);
+			pfree(labelfile);
 
 			/* Write backup tablespace_map file. */
-			if (tblspc_mapfbuf.len > 0)
+			if (tblspcmapfile->len > 0)
 			{
 				if (stat(TABLESPACE_MAP, &stat_buf) != 0)
 				{
@@ -10159,7 +10161,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 							(errcode_for_file_access(),
 							 errmsg("could not create file \"%s\": %m",
 									TABLESPACE_MAP)));
-				if (fwrite(tblspc_mapfbuf.data, tblspc_mapfbuf.len, 1, fp) != 1 ||
+				if (fwrite(tblspcmapfile->data, tblspcmapfile->len, 1, fp) != 1 ||
 					fflush(fp) != 0 ||
 					pg_fsync(fileno(fp)) != 0 ||
 					ferror(fp) ||
@@ -10170,13 +10172,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 									TABLESPACE_MAP)));
 			}
 
-			pfree(tblspc_mapfbuf.data);
-		}
-		else
-		{
-			*labelfile = labelfbuf.data;
-			if (tblspc_mapfbuf.len > 0)
-				*tblspcmapfile = tblspc_mapfbuf.data;
+			/* Allocated locally for exclusive backups, so free separately */
+			pfree(tblspcmapfile->data);
+			pfree(tblspcmapfile);
 		}
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) BoolGetDatum(exclusive));
@@ -10283,7 +10281,16 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 */
 	WALInsertLockAcquireExclusive();
 	if (exclusive)
+	{
+		if (!XLogCtl->Insert.exclusiveBackup)
+		{
+			WALInsertLockRelease();
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("exclusive backup not in progress")));
+		}
 		XLogCtl->Insert.exclusiveBackup = false;
+	}
 	else
 	{
 		/*

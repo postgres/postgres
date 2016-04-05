@@ -117,8 +117,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	TimeLineID	starttli;
 	XLogRecPtr	endptr;
 	TimeLineID	endtli;
-	char	   *labelfile;
-	char	   *tblspc_map_file = NULL;
+	StringInfo  labelfile;
+	StringInfo  tblspc_map_file = NULL;
 	int			datadirpathlen;
 	List	   *tablespaces = NIL;
 
@@ -126,9 +126,12 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 	backup_started_in_recovery = RecoveryInProgress();
 
+	labelfile = makeStringInfo();
+	tblspc_map_file = makeStringInfo();
+
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
-								  &labelfile, tblspcdir, &tablespaces,
-								  &tblspc_map_file,
+								  labelfile, tblspcdir, &tablespaces,
+								  tblspc_map_file,
 								  opt->progress, opt->sendtblspcmapfile);
 
 	/*
@@ -206,7 +209,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				struct stat statbuf;
 
 				/* In the main tar, include the backup_label first... */
-				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
+				sendFileWithContent(BACKUP_LABEL_FILE, labelfile->data);
 
 				/*
 				 * Send tablespace_map file if required and then the bulk of
@@ -214,7 +217,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				 */
 				if (tblspc_map_file && opt->sendtblspcmapfile)
 				{
-					sendFileWithContent(TABLESPACE_MAP, tblspc_map_file);
+					sendFileWithContent(TABLESPACE_MAP, tblspc_map_file->data);
 					sendDir(".", 1, false, tablespaces, false);
 				}
 				else
@@ -247,7 +250,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 
-	endptr = do_pg_stop_backup(labelfile, !opt->nowait, &endtli);
+	endptr = do_pg_stop_backup(labelfile->data, !opt->nowait, &endtli);
 
 	if (opt->includewal)
 	{
