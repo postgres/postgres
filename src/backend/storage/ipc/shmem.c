@@ -171,9 +171,17 @@ ShmemAlloc(Size size)
 	void	   *newSpace;
 
 	/*
-	 * ensure all space is adequately aligned.
+	 * Ensure all space is adequately aligned.  We used to only MAXALIGN this
+	 * space but experience has proved that on modern systems that is not good
+	 * enough.  Many parts of the system are very sensitive to critical data
+	 * structures getting split across cache line boundaries.  To avoid that,
+	 * attempt to align the beginning of the allocation to a cache line
+	 * boundary.  The calling code will still need to be careful about how it
+	 * uses the allocated space - e.g. by padding each element in an array of
+	 * structures out to a power-of-two size - but without this, even that
+	 * won't be sufficient.
 	 */
-	size = MAXALIGN(size);
+	size = CACHELINEALIGN(size);
 
 	Assert(ShmemSegHdr != NULL);
 
