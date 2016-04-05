@@ -763,7 +763,7 @@ CheckSlotRequirements(void)
 	if (wal_level < WAL_LEVEL_REPLICA)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("replication slots can only be used if wal_level >= archive")));
+				 errmsg("replication slots can only be used if wal_level >= replica")));
 }
 
 /*
