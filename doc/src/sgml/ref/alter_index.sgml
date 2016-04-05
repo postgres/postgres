@@ -41,16 +41,6 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
   <variablelist>
 
    <varlistentry>
-    <term><literal>IF EXISTS</literal></term>
-    <listitem>
-     <para>
-      Do not throw an error if the index does not exist. A notice is issued
-      in this case.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><literal>RENAME</literal></term>
     <listitem>
      <para>
@@ -129,6 +119,16 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
   <title>Parameters</title>
 
     <variablelist>
+
+     <varlistentry>
+      <term><literal>IF EXISTS</literal></term>
+      <listitem>
+       <para>
+        Do not throw an error if the index does not exist. A notice is issued
+        in this case.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <term><replaceable class="PARAMETER">name</replaceable></term>
