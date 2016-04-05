@@ -52,9 +52,6 @@ return None
 '
 	LANGUAGE plpythonu;
 
-
-
-
 CREATE FUNCTION join_sequences(s sequences) RETURNS text
 	AS
 'if not s["multipart"]:
@@ -68,10 +65,16 @@ return seq
 '
 	LANGUAGE plpythonu;
 
+CREATE FUNCTION spi_recursive_sum(a int) RETURNS int
+	AS
+'r = 0
+if a > 1:
+    r = plpy.execute("SELECT spi_recursive_sum(%d) as a" % (a-1))[0]["a"]
+return a + r
+'
+	LANGUAGE plpythonu;
 
-
-
-
+--
 -- spi and nested calls
 --
 select nested_call_one('pass this along');
@@ -79,15 +82,13 @@ select spi_prepared_plan_test_one('doe');
 select spi_prepared_plan_test_one('smith');
 select spi_prepared_plan_test_nested('smith');
 
-
-
-
 SELECT join_sequences(sequences) FROM sequences;
 SELECT join_sequences(sequences) FROM sequences
 	WHERE join_sequences(sequences) ~* '^A';
 SELECT join_sequences(sequences) FROM sequences
 	WHERE join_sequences(sequences) ~* '^B';
 
+SELECT spi_recursive_sum(10);
 
 --
 -- plan and result objects

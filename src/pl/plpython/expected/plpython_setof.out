@@ -124,6 +124,35 @@ SELECT test_setof_spi_in_iterator();
  World
 (4 rows)
 
+-- set-returning function that modifies its parameters
+CREATE OR REPLACE FUNCTION ugly(x int, lim int) RETURNS SETOF int AS $$
+global x
+while x <= lim:
+    yield x
+    x = x + 1
+$$ LANGUAGE plpythonu;
+SELECT ugly(1, 5);
+ ugly 
+------
+    1
+    2
+    3
+    4
+    5
+(5 rows)
+
+-- interleaved execution of such a function
+SELECT ugly(1,3), ugly(7,8);
+ ugly | ugly 
+------+------
+    1 |    7
+    2 |    8
+    3 |    7
+    1 |    8
+    2 |    7
+    3 |    8
+(6 rows)
+
 -- returns set of named-composite-type tuples
 CREATE OR REPLACE FUNCTION get_user_records()
 RETURNS SETOF users

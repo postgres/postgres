@@ -11,6 +11,15 @@
 extern void init_procedure_caches(void);
 
 
+/* saved arguments for outer recursion level or set-returning function */
+typedef struct PLySavedArgs
+{
+	struct PLySavedArgs *next;	/* linked-list pointer */
+	PyObject   *args;			/* "args" element of globals dict */
+	int			nargs;			/* length of namedargs array */
+	PyObject   *namedargs[FLEXIBLE_ARRAY_MEMBER];		/* named args */
+} PLySavedArgs;
+
 /* cached procedure data */
 typedef struct PLyProcedure
 {
@@ -21,10 +30,9 @@ typedef struct PLyProcedure
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
 	bool		fn_readonly;
+	bool		is_setof;		/* true, if procedure returns result set */
 	PLyTypeInfo result;			/* also used to store info for trigger tuple
 								 * type */
-	bool		is_setof;		/* true, if procedure returns result set */
-	PyObject   *setof;			/* contents of result set. */
 	char	   *src;			/* textual procedure code, after mangling */
 	char	  **argnames;		/* Argument names */
 	PLyTypeInfo args[FUNC_MAX_ARGS];
@@ -34,6 +42,8 @@ typedef struct PLyProcedure
 	PyObject   *code;			/* compiled procedure code */
 	PyObject   *statics;		/* data saved across calls, local scope */
 	PyObject   *globals;		/* data saved across calls, global scope */
+	long		calldepth;		/* depth of recursive calls of function */
+	PLySavedArgs *argstack;		/* stack of outer-level call arguments */
 } PLyProcedure;
 
 /* the procedure cache key */

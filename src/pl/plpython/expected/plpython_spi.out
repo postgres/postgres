@@ -57,6 +57,15 @@ for r in rv:
 return seq
 '
 	LANGUAGE plpythonu;
+CREATE FUNCTION spi_recursive_sum(a int) RETURNS int
+	AS
+'r = 0
+if a > 1:
+    r = plpy.execute("SELECT spi_recursive_sum(%d) as a" % (a-1))[0]["a"]
+return a + r
+'
+	LANGUAGE plpythonu;
+--
 -- spi and nested calls
 --
 select nested_call_one('pass this along');
@@ -111,6 +120,12 @@ SELECT join_sequences(sequences) FROM sequences
  join_sequences 
 ----------------
 (0 rows)
+
+SELECT spi_recursive_sum(10);
+ spi_recursive_sum 
+-------------------
+                55
+(1 row)
 
 --
 -- plan and result objects

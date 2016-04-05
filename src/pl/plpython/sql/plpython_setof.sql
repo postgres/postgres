@@ -63,6 +63,18 @@ SELECT test_setof_as_iterator(2, null);
 
 SELECT test_setof_spi_in_iterator();
 
+-- set-returning function that modifies its parameters
+CREATE OR REPLACE FUNCTION ugly(x int, lim int) RETURNS SETOF int AS $$
+global x
+while x <= lim:
+    yield x
+    x = x + 1
+$$ LANGUAGE plpythonu;
+
+SELECT ugly(1, 5);
+
+-- interleaved execution of such a function
+SELECT ugly(1,3), ugly(7,8);
 
 -- returns set of named-composite-type tuples
 CREATE OR REPLACE FUNCTION get_user_records()

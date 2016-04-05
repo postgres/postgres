@@ -188,10 +188,11 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		proc->pyname = pstrdup(procName);
 		proc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 		proc->fn_tid = procTup->t_self;
-		/* Remember if function is STABLE/IMMUTABLE */
-		proc->fn_readonly =
-			(procStruct->provolatile != PROVOLATILE_VOLATILE);
+		proc->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
+		proc->is_setof = procStruct->proretset;
 		PLy_typeinfo_init(&proc->result, proc->mcxt);
+		proc->src = NULL;
+		proc->argnames = NULL;
 		for (i = 0; i < FUNC_MAX_ARGS; i++)
 			PLy_typeinfo_init(&proc->args[i], proc->mcxt);
 		proc->nargs = 0;
@@ -200,12 +201,11 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 											Anum_pg_proc_protrftypes,
 											&isnull);
 		proc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
-		proc->code = proc->statics = NULL;
+		proc->code = NULL;
+		proc->statics = NULL;
 		proc->globals = NULL;
-		proc->is_setof = procStruct->proretset;
-		proc->setof = NULL;
-		proc->src = NULL;
-		proc->argnames = NULL;
+		proc->calldepth = 0;
+		proc->argstack = NULL;
 
 		/*
 		 * get information required for output conversion of the return value,
