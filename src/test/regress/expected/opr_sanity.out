@@ -279,15 +279,21 @@ ORDER BY 1, 2;
 -- Look for functions that return type "internal" and do not have any
 -- "internal" argument.  Such a function would be a security hole since
 -- it might be used to call an internal function from an SQL command.
--- As of 7.3 this query should find only internal_in.
+-- As of 7.3 this query should find internal_in, and as of 9.6 aggregate
+-- deserialization will be found too. These should contain a runtime check to
+-- ensure they can only be called in an aggregate context.
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prorettype = 'internal'::regtype AND NOT
     'internal'::regtype = ANY (p1.proargtypes);
- oid  |   proname   
-------+-------------
+ oid  |         proname          
+------+--------------------------
+ 2741 | numeric_avg_deserialize
+ 3336 | numeric_deserialize
+ 3340 | numeric_poly_deserialize
+ 2787 | int8_avg_deserialize
  2304 | internal_in
-(1 row)
+(5 rows)
 
 -- Look for functions that return a polymorphic type and do not have any
 -- polymorphic argument.  Calls of such functions would be unresolvable
@@ -1526,6 +1532,89 @@ FROM pg_proc AS p JOIN pg_aggregate AS a ON a.aggfnoid = p.oid
 WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
  oid | proname 
 -----+---------
+(0 rows)
+
+-- Check that all serial functions have a return type the same as the serial
+-- type.
+SELECT a.aggserialfn,a.aggserialtype,p.prorettype
+FROM pg_aggregate a
+INNER JOIN pg_proc p ON a.aggserialfn = p.oid
+WHERE a.aggserialtype <> p.prorettype;
+ aggserialfn | aggserialtype | prorettype 
+-------------+---------------+------------
+(0 rows)
+
+-- Check that all the deserial functions have the same input type as the
+-- serialtype
+SELECT a.aggserialfn,a.aggserialtype,p.proargtypes[0]
+FROM pg_aggregate a
+INNER JOIN pg_proc p ON a.aggdeserialfn = p.oid
+WHERE p.proargtypes[0] <> a.aggserialtype;
+ aggserialfn | aggserialtype | proargtypes 
+-------------+---------------+-------------
+(0 rows)
+
+-- An aggregate should either have a complete set of serialtype, serial func
+-- and deserial func, or none of them.
+SELECT aggserialtype,aggserialfn,aggdeserialfn
+FROM pg_aggregate
+WHERE (aggserialtype <> 0 OR aggserialfn <> 0 OR aggdeserialfn <> 0)
+  AND (aggserialtype = 0 OR aggserialfn = 0 OR aggdeserialfn = 0);
+ aggserialtype | aggserialfn | aggdeserialfn 
+---------------+-------------+---------------
+(0 rows)
+
+-- Check that all aggregates with serialtypes have internal states.
+-- (There's no point in serializing anything apart from internal)
+SELECT aggfnoid,aggserialtype,aggtranstype
+FROM pg_aggregate
+WHERE aggserialtype <> 0 AND aggtranstype <> 'internal'::regtype;
+ aggfnoid | aggserialtype | aggtranstype 
+----------+---------------+--------------
+(0 rows)
+
+-- Check that all serial functions are strict. It's wasteful for these to be
+-- called with NULL values.
+SELECT aggfnoid,aggserialfn
+FROM pg_aggregate a
+INNER JOIN pg_proc p ON a.aggserialfn = p.oid
+WHERE p.proisstrict = false;
+ aggfnoid | aggserialfn 
+----------+-------------
+(0 rows)
+
+-- Check that all deserial functions are strict. It's wasteful for these to be
+-- called with NULL values.
+SELECT aggfnoid,aggdeserialfn
+FROM pg_aggregate a
+INNER JOIN pg_proc p ON a.aggdeserialfn = p.oid
+WHERE p.proisstrict = false;
+ aggfnoid | aggdeserialfn 
+----------+---------------
+(0 rows)
+
+-- Check that no combine functions with an INTERNAL return type are strict.
+SELECT aggfnoid,aggcombinefn
+FROM pg_aggregate a
+INNER JOIN pg_proc p ON a.aggcombinefn = p.oid
+INNER JOIN pg_type t ON a.aggtranstype = t.oid
+WHERE t.typname = 'internal' AND p.proisstrict = true;
+ aggfnoid | aggcombinefn 
+----------+--------------
+(0 rows)
+
+-- Check that aggregates which have the same transition function also have
+-- the same combine, serialization, and deserialization functions.
+SELECT a.aggfnoid, a.aggcombinefn, a.aggserialfn, a.aggdeserialfn,
+       b.aggfnoid, b.aggcombinefn, b.aggserialfn, b.aggdeserialfn
+FROM
+    pg_aggregate a, pg_aggregate b
+WHERE
+    a.aggfnoid < b.aggfnoid AND a.aggtransfn = b.aggtransfn AND
+    (a.aggcombinefn != b.aggcombinefn OR a.aggserialfn != b.aggserialfn
+     OR a.aggdeserialfn != b.aggdeserialfn);
+ aggfnoid | aggcombinefn | aggserialfn | aggdeserialfn | aggfnoid | aggcombinefn | aggserialfn | aggdeserialfn 
+----------+--------------+-------------+---------------+----------+--------------+-------------+---------------
 (0 rows)
 
 -- **************** pg_opfamily ****************

@@ -101,24 +101,93 @@ CREATE AGGREGATE sumdouble (float8)
     msfunc = float8pl,
     minvfunc = float8mi
 );
--- Test aggregate combine function
--- ensure create aggregate works.
-CREATE AGGREGATE mysum (int)
+-- aggregate combine and serialization functions
+-- Ensure stype and serialtype can't be the same
+CREATE AGGREGATE myavg (numeric)
 (
-	stype = int,
-	sfunc = int4pl,
-	combinefunc = int4pl
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = internal
+);
+ERROR:  aggregate serialization type cannot be "internal"
+-- if serialtype is specified we need a serialfunc and deserialfunc
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea
+);
+ERROR:  aggregate serialization function must be specified when serialization type is specified
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize
+);
+ERROR:  aggregate deserialization function must be specified when serialization type is specified
+-- serialfunc must have correct parameters
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_deserialize,
+	deserialfunc = numeric_avg_deserialize
+);
+ERROR:  function numeric_avg_deserialize(internal) does not exist
+-- deserialfunc must have correct parameters
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_serialize
+);
+ERROR:  function numeric_avg_serialize(bytea) does not exist
+-- ensure return type of serialfunc is checked
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = text,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_deserialize
+);
+ERROR:  return type of serialization function numeric_avg_serialize is not text
+-- ensure combine function parameters are checked
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_deserialize,
+	combinefunc = int4larger
+);
+ERROR:  function int4larger(internal, internal) does not exist
+-- ensure create aggregate works.
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	finalfunc = numeric_avg,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_deserialize,
+	combinefunc = numeric_avg_combine
 );
 -- Ensure all these functions made it into the catalog
-SELECT aggfnoid,aggtransfn,aggcombinefn,aggtranstype
+SELECT aggfnoid,aggtransfn,aggcombinefn,aggtranstype,aggserialfn,aggdeserialfn,aggserialtype
 FROM pg_aggregate
-WHERE aggfnoid = 'mysum'::REGPROC;
- aggfnoid | aggtransfn | aggcombinefn | aggtranstype 
-----------+------------+--------------+--------------
- mysum    | int4pl     | int4pl       |           23
+WHERE aggfnoid = 'myavg'::REGPROC;
+ aggfnoid |    aggtransfn     |    aggcombinefn     | aggtranstype |      aggserialfn      |      aggdeserialfn      | aggserialtype 
+----------+-------------------+---------------------+--------------+-----------------------+-------------------------+---------------
+ myavg    | numeric_avg_accum | numeric_avg_combine |         2281 | numeric_avg_serialize | numeric_avg_deserialize |            17
 (1 row)
 
-DROP AGGREGATE mysum (int);
+DROP AGGREGATE myavg (numeric);
 -- invalid: nonstrict inverse with strict forward function
 CREATE FUNCTION float8mi_n(float8, float8) RETURNS float8 AS
 $$ SELECT $1 - $2; $$

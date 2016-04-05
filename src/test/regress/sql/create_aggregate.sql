@@ -115,22 +115,91 @@ CREATE AGGREGATE sumdouble (float8)
     minvfunc = float8mi
 );
 
--- Test aggregate combine function
+-- aggregate combine and serialization functions
+
+-- Ensure stype and serialtype can't be the same
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = internal
+);
+
+-- if serialtype is specified we need a serialfunc and deserialfunc
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea
+);
+
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize
+);
+
+-- serialfunc must have correct parameters
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_deserialize,
+	deserialfunc = numeric_avg_deserialize
+);
+
+-- deserialfunc must have correct parameters
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_serialize
+);
+
+-- ensure return type of serialfunc is checked
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = text,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_deserialize
+);
+
+-- ensure combine function parameters are checked
+CREATE AGGREGATE myavg (numeric)
+(
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_deserialize,
+	combinefunc = int4larger
+);
 
 -- ensure create aggregate works.
-CREATE AGGREGATE mysum (int)
+CREATE AGGREGATE myavg (numeric)
 (
-	stype = int,
-	sfunc = int4pl,
-	combinefunc = int4pl
+	stype = internal,
+	sfunc = numeric_avg_accum,
+	finalfunc = numeric_avg,
+	serialtype = bytea,
+	serialfunc = numeric_avg_serialize,
+	deserialfunc = numeric_avg_deserialize,
+	combinefunc = numeric_avg_combine
 );
 
 -- Ensure all these functions made it into the catalog
-SELECT aggfnoid,aggtransfn,aggcombinefn,aggtranstype
+SELECT aggfnoid,aggtransfn,aggcombinefn,aggtranstype,aggserialfn,aggdeserialfn,aggserialtype
 FROM pg_aggregate
-WHERE aggfnoid = 'mysum'::REGPROC;
+WHERE aggfnoid = 'myavg'::REGPROC;
 
-DROP AGGREGATE mysum (int);
+DROP AGGREGATE myavg (numeric);
 
 -- invalid: nonstrict inverse with strict forward function
 

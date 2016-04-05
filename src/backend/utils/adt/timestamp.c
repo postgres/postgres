@@ -3525,6 +3525,55 @@ interval_accum(PG_FUNCTION_ARGS)
 }
 
 Datum
+interval_combine(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *transarray2 = PG_GETARG_ARRAYTYPE_P(1);
+	Datum	   *transdatums1;
+	Datum	   *transdatums2;
+	int			ndatums1;
+	int			ndatums2;
+	Interval	sum1,
+				N1;
+	Interval	sum2,
+				N2;
+
+	Interval   *newsum;
+	ArrayType  *result;
+
+	deconstruct_array(transarray1,
+					  INTERVALOID, sizeof(Interval), false, 'd',
+					  &transdatums1, NULL, &ndatums1);
+	if (ndatums1 != 2)
+		elog(ERROR, "expected 2-element interval array");
+
+	sum1 = *(DatumGetIntervalP(transdatums1[0]));
+	N1 = *(DatumGetIntervalP(transdatums1[1]));
+
+	deconstruct_array(transarray2,
+					  INTERVALOID, sizeof(Interval), false, 'd',
+					  &transdatums2, NULL, &ndatums2);
+	if (ndatums2 != 2)
+		elog(ERROR, "expected 2-element interval array");
+
+	sum2 = *(DatumGetIntervalP(transdatums2[0]));
+	N2 = *(DatumGetIntervalP(transdatums2[1]));
+
+	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
+												   IntervalPGetDatum(&sum1),
+												   IntervalPGetDatum(&sum2)));
+	N1.time += N2.time;
+
+	transdatums1[0] = IntervalPGetDatum(newsum);
+	transdatums1[1] = IntervalPGetDatum(&N1);
+
+	result = construct_array(transdatums1, 2,
+							 INTERVALOID, sizeof(Interval), false, 'd');
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+Datum
 interval_accum_inv(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
