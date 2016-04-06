@@ -1027,10 +1027,12 @@ primary_slot_name = 'node_a_slot'
 
    <para>
     Synchronous replication offers the ability to confirm that all changes
-    made by a transaction have been transferred to one synchronous standby
-    server. This extends the standard level of durability
+    made by a transaction have been transferred to one or more synchronous
+    standby servers. This extends that standard level of durability
     offered by a transaction commit. This level of protection is referred
-    to as 2-safe replication in computer science theory.
+    to as 2-safe replication in computer science theory, and group-1-safe
+    (group-safe and 1-safe) when <varname>synchronous_commit</> is set to
+    <literal>remote_write</>.
    </para>
 
    <para>
@@ -1084,8 +1086,8 @@ primary_slot_name = 'node_a_slot'
     In the case that <varname>synchronous_commit</> is set to
     <literal>remote_apply</>, the standby sends reply messages when the commit
     record is replayed, making the transaction visible.
-    If the standby is the first matching standby, as specified in
-    <varname>synchronous_standby_names</> on the primary, the reply
+    If the standby is chosen as the synchronous standby, from a priority
+    list of <varname>synchronous_standby_names</> on the primary, the reply
     messages from that standby will be used to wake users waiting for
     confirmation that the commit record has been received. These parameters
     allow the administrator to specify which standby servers should be
@@ -1124,6 +1126,40 @@ primary_slot_name = 'node_a_slot'
     connected standby servers.
    </para>
 
+   </sect3>
+
+   <sect3 id="synchronous-replication-multiple-standbys">
+    <title>Multiple Synchronous Standbys</title>
+
+   <para>
+    Synchronous replication supports one or more synchronous standby servers;
+    transactions will wait until all the standby servers which are considered
+    as synchronous confirm receipt of their data. The number of synchronous
+    standbys that transactions must wait for replies from is specified in
+    <varname>synchronous_standby_names</>. This parameter also specifies
+    a list of standby names, which determines the priority of each standby
+    for being chosen as a synchronous standby. The standbys whose names
+    appear earlier in the list are given higher priority and will be considered
+    as synchronous. Other standby servers appearing later in this list
+    represent potential synchronous standbys. If any of the current
+    synchronous standbys disconnects for whatever reason, it will be replaced
+    immediately with the next-highest-priority standby.
+   </para>
+   <para>
+    An example of <varname>synchronous_standby_names</> for multiple
+    synchronous standbys is:
+<programlisting>
+synchronous_standby_names = '2 (s1, s2, s3)'
+</programlisting>
+    In this example, if four standby servers <literal>s1</>, <literal>s2</>,
+    <literal>s3</> and <literal>s4</> are running, the two standbys
+    <literal>s1</> and <literal>s2</> will be chosen as synchronous standbys
+    because their names appear early in the list of standby names.
+    <literal>s3</> is a potential synchronous standby and will take over
+    the role of synchronous standby when either of <literal>s1</> or
+    <literal>s2</> fails. <literal>s4</> is an asynchronous standby since
+    its name is not in the list.
+   </para>
    </sect3>
 
    <sect3 id="synchronous-replication-performance">
@@ -1171,19 +1207,21 @@ primary_slot_name = 'node_a_slot'
     <title>Planning for High Availability</title>
 
    <para>
-    Commits made when <varname>synchronous_commit</> is set to <literal>on</>,
-    <literal>remote_apply</> or <literal>remote_write</> will wait until the
-    synchronous standby responds. The response may never occur if the last, or
-    only, standby should crash.
+    <varname>synchronous_standby_names</> specifies the number and
+    names of synchronous standbys that transaction commits made when
+    <varname>synchronous_commit</> is set to <literal>on</>,
+    <literal>remote_apply</> or <literal>remote_write</> will wait for
+    responses from. Such transaction commits may never be completed
+    if any one of synchronous standbys should crash.
    </para>
 
    <para>
-    The best solution for avoiding data loss is to ensure you don't lose
-    your last remaining synchronous standby. This can be achieved by naming multiple
+    The best solution for high availability is to ensure you keep as many
+    synchronous standbys as requested. This can be achieved by naming multiple
     potential synchronous standbys using <varname>synchronous_standby_names</>.
-    The first named standby will be used as the synchronous standby. Standbys
-    listed after this will take over the role of synchronous standby if the
-    first one should fail.
+    The standbys whose names appear earlier in the list will be used as
+    synchronous standbys. Standbys listed after these will take over
+    the role of synchronous standby if one of current ones should fail.
    </para>
 
    <para>
@@ -1208,13 +1246,15 @@ primary_slot_name = 'node_a_slot'
     they show as committed on the primary. The guarantee we offer is that
     the application will not receive explicit acknowledgement of the
     successful commit of a transaction until the WAL data is known to be
-    safely received by the standby.
+    safely received by all the synchronous standbys.
    </para>
 
    <para>
-    If you really do lose your last standby server then you should disable
-    <varname>synchronous_standby_names</> and reload the configuration file
-    on the primary server.
+    If you really cannot keep as many synchronous standbys as requested
+    then you should decrease the number of synchronous standbys that
+    transaction commits must wait for responses from
+    in <varname>synchronous_standby_names</> (or disable it) and
+    reload the configuration file on the primary server.
    </para>
 
    <para>

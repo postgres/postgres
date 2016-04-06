@@ -32,6 +32,18 @@
 #define SYNC_REP_WAITING			1
 #define SYNC_REP_WAIT_COMPLETE		2
 
+/*
+ * Struct for the configuration of synchronous replication.
+ */
+typedef struct SyncRepConfigData
+{
+	int	num_sync;	/* number of sync standbys that we need to wait for */
+	List	*members;	/* list of names of potential sync standbys */
+} SyncRepConfigData;
+
+extern SyncRepConfigData *syncrep_parse_result;
+extern SyncRepConfigData *SyncRepConfig;
+
 /* user-settable parameters for synchronous replication */
 extern char *SyncRepStandbyNames;
 
@@ -45,14 +57,25 @@ extern void SyncRepCleanupAtProcExit(void);
 extern void SyncRepInitConfig(void);
 extern void SyncRepReleaseWaiters(void);
 
+/* called by wal sender and user backend */
+extern List *SyncRepGetSyncStandbys(bool *am_sync);
+extern void SyncRepUpdateConfig(void);
+extern void SyncRepFreeConfig(SyncRepConfigData *config);
+
 /* called by checkpointer */
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
-/* forward declaration to avoid pulling in walsender_private.h */
-struct WalSnd;
-extern struct WalSnd *SyncRepGetSynchronousStandby(void);
-
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 extern void assign_synchronous_commit(int newval, void *extra);
+
+/*
+ * Internal functions for parsing synchronous_standby_names grammar,
+ * in syncrep_gram.y and syncrep_scanner.l
+ */
+extern int  syncrep_yyparse(void);
+extern int  syncrep_yylex(void);
+extern void syncrep_yyerror(const char *str);
+extern void syncrep_scanner_init(const char *query_string);
+extern void syncrep_scanner_finish(void);
 
 #endif   /* _SYNCREP_H */

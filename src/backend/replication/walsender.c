@@ -2751,7 +2751,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	Tuplestorestate *tupstore;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
-	WalSnd	   *sync_standby;
+	List	   *sync_standbys;
 	int			i;
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -2780,11 +2780,22 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Get the currently active synchronous standby.
+	 * Allocate and update the config data of synchronous replication,
+	 * and then get the currently active synchronous standbys.
 	 */
+	SyncRepUpdateConfig();
 	LWLockAcquire(SyncRepLock, LW_SHARED);
-	sync_standby = SyncRepGetSynchronousStandby();
+	sync_standbys = SyncRepGetSyncStandbys(NULL);
 	LWLockRelease(SyncRepLock);
+
+	/*
+	 * Free the previously-allocated config data because a backend
+	 * no longer needs it. The next call of this function needs to
+	 * allocate and update the config data newly because the setting
+	 * of sync replication might be changed between the calls.
+	 */
+	SyncRepFreeConfig(SyncRepConfig);
+	SyncRepConfig = NULL;
 
 	for (i = 0; i < max_wal_senders; i++)
 	{
@@ -2856,7 +2867,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 */
 			if (priority == 0)
 				values[7] = CStringGetTextDatum("async");
-			else if (walsnd == sync_standby)
+			else if (list_member_int(sync_standbys, i))
 				values[7] = CStringGetTextDatum("sync");
 			else
 				values[7] = CStringGetTextDatum("potential");

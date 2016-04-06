@@ -2906,34 +2906,69 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies a comma-separated list of standby names that can support
+        Specifies a list of standby names that can support
         <firstterm>synchronous replication</>, as described in
         <xref linkend="synchronous-replication">.
-        At any one time there will be at most one active synchronous standby;
+        There will be one or more active synchronous standbys;
         transactions waiting for commit will be allowed to proceed after
-        this standby server confirms receipt of their data.
-        The synchronous standby will be the first standby named in this list
+        these standby servers confirm receipt of their data.
+        The synchronous standbys will be those whose names appear
+        earlier in this list, and
         that is both currently connected and streaming data in real-time
         (as shown by a state of <literal>streaming</literal> in the
         <link linkend="monitoring-stats-views-table">
         <literal>pg_stat_replication</></link> view).
         Other standby servers appearing later in this list represent potential
-        synchronous standbys.
-        If the current synchronous standby disconnects for whatever reason,
+        synchronous standbys. If any of the current synchronous
+        standbys disconnects for whatever reason,
         it will be replaced immediately with the next-highest-priority standby.
         Specifying more than one standby name can allow very high availability.
+       </para>
+       <para>
+        This parameter specifies a list of standby servers by using
+        either of the following syntaxes:
+<synopsis>
+<replaceable class="parameter">num_sync</replaceable> ( <replaceable class="parameter">standby_name</replaceable> [, ...] )
+<replaceable class="parameter">standby_name</replaceable> [, ...]
+</synopsis>
+        where <replaceable class="parameter">num_sync</replaceable> is
+        the number of synchronous standbys that transactions need to
+        wait for replies from,
+        and <replaceable class="parameter">standby_name</replaceable>
+        is the name of a standby server. For example, a setting of
+        <literal>'3 (s1, s2, s3, s4)'</> makes transaction commits wait
+        until their WAL records are received by three higher priority standbys
+        chosen from standby servers <literal>s1</>, <literal>s2</>,
+        <literal>s3</> and <literal>s4</>.
+        </para>
+        <para>
+        The second syntax was used before <productname>PostgreSQL</>
+        version 9.6 and is still supported. It's the same as the first syntax
+        with <replaceable class="parameter">num_sync</replaceable>=1.
+        For example, both settings of <literal>'1 (s1, s2)'</> and
+        <literal>'s1, s2'</> have the same meaning; either <literal>s1</>
+        or <literal>s2</> is chosen as a synchronous standby.
        </para>
        <para>
         The name of a standby server for this purpose is the
         <varname>application_name</> setting of the standby, as set in the
         <varname>primary_conninfo</> of the standby's WAL receiver.  There is
         no mechanism to enforce uniqueness. In case of duplicates one of the
-        matching standbys will be chosen to be the synchronous standby, though
+        matching standbys will be considered as higher priority, though
         exactly which one is indeterminate.
         The special entry <literal>*</> matches any
         <varname>application_name</>, including the default application name
         of <literal>walreceiver</>.
        </para>
+       <note>
+        <para>
+         The <replaceable class="parameter">standby_name</replaceable>
+         must be enclosed in double quotes if a comma (<literal>,</>),
+         a double quote (<literal>"</>), <!-- " font-lock sanity -->
+         a left parentheses (<literal>(</>), a right parentheses (<literal>)</>)
+         or a space is used in the name of a standby server.
+        </para>
+       </note>
        <para>
         If no synchronous standby names are specified here, then synchronous
         replication is not enabled and transaction commits will not wait for

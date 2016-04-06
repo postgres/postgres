@@ -156,7 +156,7 @@ sub mkvcbuild
 		'bootparse.y');
 	$postgres->AddFiles('src/backend/utils/misc', 'guc-file.l');
 	$postgres->AddFiles('src/backend/replication', 'repl_scanner.l',
-		'repl_gram.y');
+		'repl_gram.y', 'syncrep_scanner.l', 'syncrep_gram.y');
 	$postgres->AddDefine('BUILDING_DLL');
 	$postgres->AddLibrary('secur32.lib');
 	$postgres->AddLibrary('ws2_32.lib');
