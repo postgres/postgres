@@ -36,7 +36,7 @@ make
 su
 make install
 adduser postgres
-mkdir /usr/local/pgsql/data
+mkdir -p /usr/local/pgsql/data
 chown postgres /usr/local/pgsql/data
 su - postgres
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
@@ -1834,7 +1834,7 @@ export MANPATH
      <productname>PostgreSQL</> server account. It will not work as
      root.
 <screen>
-root# <userinput>mkdir /usr/local/pgsql/data</>
+root# <userinput>mkdir -p /usr/local/pgsql/data</>
 root# <userinput>chown postgres /usr/local/pgsql/data</>
 root# <userinput>su - postgres</>
 postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
