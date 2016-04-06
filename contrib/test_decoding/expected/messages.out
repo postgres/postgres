@@ -53,22 +53,22 @@ SELECT 'msg7' FROM pg_logical_emit_message(true, 'test', 'msg7');
 (1 row)
 
 COMMIT;
-SELECT 'žluťoučký kůň' FROM pg_logical_emit_message(true, 'test', 'žluťoučký kůň');
-   ?column?    
----------------
- žluťoučký kůň
+SELECT 'ignorethis' FROM pg_logical_emit_message(true, 'test', 'czechtastic');
+  ?column?  
+------------
+ ignorethis
 (1 row)
 
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1');
-                                 data                                 
-----------------------------------------------------------------------
+                                data                                
+--------------------------------------------------------------------
  message: transactional: 1 prefix: test, sz: 4 content:msg1
  message: transactional: 0 prefix: test, sz: 4 content:msg2
  message: transactional: 0 prefix: test, sz: 4 content:msg4
  message: transactional: 0 prefix: test, sz: 4 content:msg6
  message: transactional: 1 prefix: test, sz: 4 content:msg5
  message: transactional: 1 prefix: test, sz: 4 content:msg7
- message: transactional: 1 prefix: test, sz: 19 content:žluťoučký kůň
+ message: transactional: 1 prefix: test, sz: 11 content:czechtastic
 (7 rows)
 
 SELECT 'init' FROM pg_drop_replication_slot('regression_slot');

@@ -18,7 +18,7 @@ SELECT 'msg6' FROM pg_logical_emit_message(false, 'test', 'msg6');
 SELECT 'msg7' FROM pg_logical_emit_message(true, 'test', 'msg7');
 COMMIT;
 
-SELECT 'žluťoučký kůň' FROM pg_logical_emit_message(true, 'test', 'žluťoučký kůň');
+SELECT 'ignorethis' FROM pg_logical_emit_message(true, 'test', 'czechtastic');
 
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1');
 
