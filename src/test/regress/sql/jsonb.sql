@@ -837,3 +837,33 @@ select jsonb_set('[]','{-99}','{"foo":123}');
 select jsonb_set('{"a": [1, 2, 3]}', '{a, non_integer}', '"new_value"');
 select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, non_integer}', '"new_value"');
 select jsonb_set('{"a": {"b": [1, 2, 3]}}', '{a, b, NULL}', '"new_value"');
+
+
+-- jsonb_insert
+select jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"');
+select jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"', true);
+select jsonb_insert('{"a": {"b": {"c": [0, 1, "test1", "test2"]}}}', '{a, b, c, 2}', '"new_value"');
+select jsonb_insert('{"a": {"b": {"c": [0, 1, "test1", "test2"]}}}', '{a, b, c, 2}', '"new_value"', true);
+select jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '{"b": "value"}');
+select jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '["value1", "value2"]');
+
+-- edge cases
+select jsonb_insert('{"a": [0,1,2]}', '{a, 0}', '"new_value"');
+select jsonb_insert('{"a": [0,1,2]}', '{a, 0}', '"new_value"', true);
+select jsonb_insert('{"a": [0,1,2]}', '{a, 2}', '"new_value"');
+select jsonb_insert('{"a": [0,1,2]}', '{a, 2}', '"new_value"', true);
+select jsonb_insert('{"a": [0,1,2]}', '{a, -1}', '"new_value"');
+select jsonb_insert('{"a": [0,1,2]}', '{a, -1}', '"new_value"', true);
+select jsonb_insert('[]', '{1}', '"new_value"');
+select jsonb_insert('[]', '{1}', '"new_value"', true);
+select jsonb_insert('{"a": []}', '{a, 1}', '"new_value"');
+select jsonb_insert('{"a": []}', '{a, 1}', '"new_value"', true);
+select jsonb_insert('{"a": [0,1,2]}', '{a, 10}', '"new_value"');
+select jsonb_insert('{"a": [0,1,2]}', '{a, -10}', '"new_value"');
+
+-- jsonb_insert should be able to insert new value for objects, but not to replace
+select jsonb_insert('{"a": {"b": "value"}}', '{a, c}', '"new_value"');
+select jsonb_insert('{"a": {"b": "value"}}', '{a, c}', '"new_value"', true);
+
+select jsonb_insert('{"a": {"b": "value"}}', '{a, b}', '"new_value"');
+select jsonb_insert('{"a": {"b": "value"}}', '{a, b}', '"new_value"', true);

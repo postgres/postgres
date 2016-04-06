@@ -10903,6 +10903,9 @@ table2-mapping
    <primary>jsonb_set</primary>
   </indexterm>
   <indexterm>
+   <primary>jsonb_insert</primary>
+  </indexterm>
+  <indexterm>
    <primary>jsonb_pretty</primary>
   </indexterm>
 
@@ -11184,6 +11187,39 @@ table2-mapping
         </para></entry>
        </row>
       <row>
+       <entry>
+           <para><literal>
+           jsonb_insert(target jsonb, path text[], new_value jsonb, <optional><parameter>insert_after</parameter> <type>boolean</type></optional>)
+           </literal></para>
+       </entry>
+       <entry><para><type>jsonb</type></para></entry>
+       <entry>
+         Returns <replaceable>target</replaceable> with
+         <replaceable>new_value</replaceable> inserted. If
+         <replaceable>target</replaceable> section designated by
+         <replaceable>path</replaceable> is in a JSONB array,
+         <replaceable>new_value</replaceable> will be inserted before target or
+         after if <replaceable>insert_after</replaceable> is true (default is
+         <literal>false</>). If <replaceable>target</replaceable> section
+         designated by <replaceable>path</replaceable> is in JSONB object,
+         <replaceable>new_value</replaceable> will be inserted only if
+         <replaceable>target</replaceable> does not exist. As with the path
+         orientated operators, negative integers that appear in
+         <replaceable>path</replaceable> count from the end of JSON arrays.
+       </entry>
+       <entry>
+           <para><literal>
+               jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"')
+           </literal></para>
+           <para><literal>
+               jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"', true)
+           </literal></para>
+       </entry>
+       <entry><para><literal>{"a": [0, "new_value", 1, 2]}</literal>
+         </para><para><literal>{"a": [0, 1, "new_value", 2]}</literal>
+        </para></entry>
+       </row>
+      <row>
        <entry><para><literal>jsonb_pretty(from_json jsonb)</literal>
          </para></entry>
        <entry><para><type>text</type></para></entry>
@@ -11235,10 +11271,11 @@ table2-mapping
   <note>
     <para>
       All the items of the <literal>path</> parameter of <literal>jsonb_set</>
-      must be present in the <literal>target</>, unless
-      <literal>create_missing</> is true, in which case all but the last item
-      must be present. If these conditions are not met the <literal>target</>
-      is returned unchanged.
+      as well as <literal>jsonb_insert</> except the last item must be present
+      in the <literal>target</>. If <literal>create_missing</> is false, all
+      items of the <literal>path</> parameter of <literal>jsonb_set</> must be
+      present. If these conditions are not met the <literal>target</> is
+      returned unchanged.
     </para>
     <para>
       If the last path item is an object key, it will be created if it

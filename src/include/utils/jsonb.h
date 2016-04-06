@@ -408,6 +408,9 @@ extern Datum jsonb_delete_path(PG_FUNCTION_ARGS);
 /* replacement */
 extern Datum jsonb_set(PG_FUNCTION_ARGS);
 
+/* insert after or before (for arrays) */
+extern Datum jsonb_insert(PG_FUNCTION_ARGS);
+
 /* Support functions */
 extern uint32 getJsonbOffset(const JsonbContainer *jc, int index);
 extern uint32 getJsonbLength(const JsonbContainer *jc, int index);

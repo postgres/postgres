@@ -997,3 +997,11 @@ RETURNS text[]
 LANGUAGE INTERNAL
 STRICT IMMUTABLE
 AS 'parse_ident';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_insert(jsonb_in jsonb, path text[] , replacement jsonb,
+            insert_after boolean DEFAULT false)
+RETURNS jsonb
+LANGUAGE INTERNAL
+STRICT IMMUTABLE
+AS 'jsonb_insert';
