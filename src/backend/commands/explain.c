@@ -574,7 +574,7 @@ void
 ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
 	Bitmapset  *rels_used = NULL;
-	PlanState *ps;
+	PlanState  *ps;
 
 	Assert(queryDesc->plannedstmt != NULL);
 	es->pstmt = queryDesc->plannedstmt;
@@ -1333,7 +1333,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_Gather:
 			{
-				Gather *gather = (Gather *) plan;
+				Gather	   *gather = (Gather *) plan;
 
 				show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 				if (plan->qual)
@@ -1343,7 +1343,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 									   gather->num_workers, es);
 				if (gather->single_copy)
 					ExplainPropertyText("Single Copy",
-										gather->single_copy ? "true" : "false",
+									  gather->single_copy ? "true" : "false",
 										es);
 			}
 			break;
@@ -1514,8 +1514,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				appendStringInfo(es->str, "Worker %d: ", n);
 				if (es->timing)
 					appendStringInfo(es->str,
-							"actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
-								 startup_sec, total_sec, rows, nloops);
+							 "actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
+									 startup_sec, total_sec, rows, nloops);
 				else
 					appendStringInfo(es->str,
 									 "actual rows=%.0f loops=%.0f\n",
@@ -1671,6 +1671,7 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 		return;
 	if (IsA(plan, RecursiveUnion))
 		return;
+
 	/*
 	 * Likewise for ForeignScan that executes a direct INSERT/UPDATE/DELETE
 	 *
@@ -2329,7 +2330,7 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 		bool		has_temp = (usage->temp_blks_read > 0 ||
 								usage->temp_blks_written > 0);
 		bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->blk_read_time) ||
-								 !INSTR_TIME_IS_ZERO(usage->blk_write_time));
+								  !INSTR_TIME_IS_ZERO(usage->blk_write_time));
 
 		/* Show only positive counter values. */
 		if (has_shared || has_local || has_temp)
@@ -2393,10 +2394,10 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 			appendStringInfoString(es->str, "I/O Timings:");
 			if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
 				appendStringInfo(es->str, " read=%0.3f",
-						  INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
+							  INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
 			if (!INSTR_TIME_IS_ZERO(usage->blk_write_time))
 				appendStringInfo(es->str, " write=%0.3f",
-						 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
+							 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
 			appendStringInfoChar(es->str, '\n');
 		}
 	}

@@ -4203,7 +4203,7 @@ _copyList(const List *from)
 static ExtensibleNode *
 _copyExtensibleNode(const ExtensibleNode *from)
 {
-	ExtensibleNode	   *newnode;
+	ExtensibleNode *newnode;
 	const ExtensibleNodeMethods *methods;
 
 	methods = GetExtensibleNodeMethods(from->extnodename, false);

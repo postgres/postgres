@@ -550,11 +550,11 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
  */
 extern char *nodeToString(const void *obj);
 
-struct Bitmapset;		/* not to include bitmapset.h here */
-struct StringInfoData;	/* not to include stringinfo.h here */
+struct Bitmapset;				/* not to include bitmapset.h here */
+struct StringInfoData;			/* not to include stringinfo.h here */
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
-						 const struct Bitmapset *bms);
+			 const struct Bitmapset *bms);
 
 /*
  * nodes/{readfuncs.c,read.c}

@@ -317,9 +317,9 @@ static void postgresEndForeignModify(EState *estate,
 						 ResultRelInfo *resultRelInfo);
 static int	postgresIsForeignRelUpdatable(Relation rel);
 static bool postgresPlanDirectModify(PlannerInfo *root,
-									 ModifyTable *plan,
-									 Index resultRelation,
-									 int subplan_index);
+						 ModifyTable *plan,
+						 Index resultRelation,
+						 int subplan_index);
 static void postgresBeginDirectModify(ForeignScanState *node, int eflags);
 static TupleTableSlot *postgresIterateDirectModify(ForeignScanState *node);
 static void postgresEndDirectModify(ForeignScanState *node);
@@ -331,7 +331,7 @@ static void postgresExplainForeignModify(ModifyTableState *mtstate,
 							 int subplan_index,
 							 ExplainState *es);
 static void postgresExplainDirectModify(ForeignScanState *node,
-										ExplainState *es);
+							ExplainState *es);
 static bool postgresAnalyzeForeignTable(Relation relation,
 							AcquireSampleRowsFunc *func,
 							BlockNumber *totalpages);
@@ -2101,8 +2101,8 @@ postgresPlanDirectModify(PlannerInfo *root,
 		int			col;
 
 		/*
-		 * We transmit only columns that were explicitly targets of the UPDATE,
-		 * so as to avoid unnecessary data transmission.
+		 * We transmit only columns that were explicitly targets of the
+		 * UPDATE, so as to avoid unnecessary data transmission.
 		 */
 		col = -1;
 		while ((col = bms_next_member(rte->updatedCols, col)) >= 0)
@@ -2242,17 +2242,17 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->conn = GetConnection(user, false);
 
 	/* Initialize state variable */
-	dmstate->num_tuples = -1;		/* -1 means not set yet */
+	dmstate->num_tuples = -1;	/* -1 means not set yet */
 
 	/* Get private info created by planner functions. */
 	dmstate->query = strVal(list_nth(fsplan->fdw_private,
 									 FdwDirectModifyPrivateUpdateSql));
 	dmstate->has_returning = intVal(list_nth(fsplan->fdw_private,
-										 FdwDirectModifyPrivateHasReturning));
+										FdwDirectModifyPrivateHasReturning));
 	dmstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
-										FdwDirectModifyPrivateRetrievedAttrs);
+									   FdwDirectModifyPrivateRetrievedAttrs);
 	dmstate->set_processed = intVal(list_nth(fsplan->fdw_private,
-										 FdwDirectModifyPrivateSetProcessed));
+										FdwDirectModifyPrivateSetProcessed));
 
 	/* Create context for per-tuple temp workspace. */
 	dmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,
@@ -3911,10 +3911,10 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	List	   *otherclauses;
 
 	/*
-	 * Core code may call GetForeignJoinPaths hook even when the join
-	 * relation doesn't have a valid user mapping associated with it. See
-	 * build_join_rel() for details. We can't push down such join, since
-	 * there doesn't exist a user mapping which can be used to connect to the
+	 * Core code may call GetForeignJoinPaths hook even when the join relation
+	 * doesn't have a valid user mapping associated with it. See
+	 * build_join_rel() for details. We can't push down such join, since there
+	 * doesn't exist a user mapping which can be used to connect to the
 	 * foreign server.
 	 */
 	if (!OidIsValid(joinrel->umid))

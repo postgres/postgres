@@ -70,10 +70,10 @@ query_planner(PlannerInfo *root, List *tlist,
 		final_rel = build_empty_join_rel(root);
 
 		/*
-		 * If query allows parallelism in general, check whether the quals
-		 * are parallel-restricted.  There's currently no real benefit to
-		 * setting this flag correctly because we can't yet reference subplans
-		 * from parallel workers.  But that might change someday, so set this
+		 * If query allows parallelism in general, check whether the quals are
+		 * parallel-restricted.  There's currently no real benefit to setting
+		 * this flag correctly because we can't yet reference subplans from
+		 * parallel workers.  But that might change someday, so set this
 		 * correctly anyway.
 		 */
 		if (root->glob->parallelModeOK)

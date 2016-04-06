@@ -879,7 +879,7 @@ _equalPlaceHolderInfo(const PlaceHolderInfo *a, const PlaceHolderInfo *b)
 static bool
 _equalExtensibleNode(const ExtensibleNode *a, const ExtensibleNode *b)
 {
-	const ExtensibleNodeMethods  *methods;
+	const ExtensibleNodeMethods *methods;
 
 	COMPARE_STRING_FIELD(extnodename);
 

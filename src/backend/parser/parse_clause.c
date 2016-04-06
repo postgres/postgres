@@ -1887,7 +1887,7 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 					Node	   *n2 = flatten_grouping_sets(n1, false, NULL);
 
 					if (IsA(n1, GroupingSet) &&
-						((GroupingSet *)n1)->kind == GROUPING_SET_SETS)
+						((GroupingSet *) n1)->kind == GROUPING_SET_SETS)
 					{
 						result_set = list_concat(result_set, (List *) n2);
 					}
@@ -2869,7 +2869,7 @@ transformOnConflictArbiter(ParseState *pstate,
 	if (IsCatalogRelation(pstate->p_target_relation))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("ON CONFLICT is not supported with system catalog tables"),
+		   errmsg("ON CONFLICT is not supported with system catalog tables"),
 				 parser_errposition(pstate,
 								  exprLocation((Node *) onConflictClause))));
 

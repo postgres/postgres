@@ -175,8 +175,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 		/*
 		 * This should match what ExecCheckRTEPerms() does.
 		 *
-		 * Note that if the plan ends up depending on the user OID in any
-		 * way - e.g. if it depends on the computed user mapping OID - we must
+		 * Note that if the plan ends up depending on the user OID in any way
+		 * - e.g. if it depends on the computed user mapping OID - we must
 		 * ensure that it gets invalidated in the case of a user OID change.
 		 * See RevalidateCachedQuery and more generally the hasForeignJoin
 		 * flags in PlannerGlobal and PlannedStmt.
@@ -185,7 +185,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 		 * InvalidOid even though rel->serverid is set.  That just means there
 		 * is a server with no user mapping.
 		 */
-		Oid		userid;
+		Oid			userid;
 
 		userid = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
 		rel->umid = GetUserMappingId(userid, rel->serverid, true);
@@ -434,16 +434,16 @@ build_join_rel(PlannerInfo *root,
 
 	/*
 	 * Set up foreign-join fields if outer and inner relation are foreign
-	 * tables (or joins) belonging to the same server and using the same
-	 * user mapping.
+	 * tables (or joins) belonging to the same server and using the same user
+	 * mapping.
 	 *
 	 * Otherwise those fields are left invalid, so FDW API will not be called
 	 * for the join relation.
 	 *
 	 * For FDWs like file_fdw, which ignore user mapping, the user mapping id
 	 * associated with the joining relation may be invalid. A valid serverid
-	 * distinguishes between a pushed down join with no user mapping and
-	 * a join which can not be pushed down because of user mapping mismatch.
+	 * distinguishes between a pushed down join with no user mapping and a
+	 * join which can not be pushed down because of user mapping mismatch.
 	 */
 	if (OidIsValid(outer_rel->serverid) &&
 		inner_rel->serverid == outer_rel->serverid &&

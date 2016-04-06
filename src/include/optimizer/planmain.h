@@ -23,12 +23,12 @@ typedef enum
 	FORCE_PARALLEL_OFF,
 	FORCE_PARALLEL_ON,
 	FORCE_PARALLEL_REGRESS
-} ForceParallelMode;
+}	ForceParallelMode;
 
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
 extern double cursor_tuple_fraction;
-extern int force_parallel_mode;
+extern int	force_parallel_mode;
 
 /* query_planner callback to compute query_pathkeys */
 typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
@@ -55,6 +55,7 @@ extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 extern Plan *materialize_finished_plan(Plan *subplan);
 extern bool is_projection_capable_path(Path *path);
 extern bool is_projection_capable_plan(Plan *plan);
+
 /* External use of these functions is deprecated: */
 extern Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
 extern Agg *make_agg(List *tlist, List *qual, AggStrategy aggstrategy,

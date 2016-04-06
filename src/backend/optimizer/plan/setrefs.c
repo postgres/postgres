@@ -105,7 +105,7 @@ static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
 static void set_join_references(PlannerInfo *root, Join *join, int rtoffset);
 static void set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset);
 static void set_combineagg_references(PlannerInfo *root, Plan *plan,
-									  int rtoffset);
+						  int rtoffset);
 static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
@@ -120,7 +120,7 @@ static Var *search_indexed_tlist_for_sortgroupref(Node *node,
 									  indexed_tlist *itlist,
 									  Index newvarno);
 static Var *search_indexed_tlist_for_partial_aggref(Aggref *aggref,
-					   indexed_tlist *itlist, Index newvarno);
+									  indexed_tlist *itlist, Index newvarno);
 static List *fix_join_expr(PlannerInfo *root,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
@@ -136,12 +136,12 @@ static Node *fix_upper_expr(PlannerInfo *root,
 static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
 static Node *fix_combine_agg_expr(PlannerInfo *root,
-								  Node *node,
-								  indexed_tlist *subplan_itlist,
-								  Index newvarno,
-								  int rtoffset);
+					 Node *node,
+					 indexed_tlist *subplan_itlist,
+					 Index newvarno,
+					 int rtoffset);
 static Node *fix_combine_agg_expr_mutator(Node *node,
-										  fix_upper_expr_context *context);
+							 fix_upper_expr_context *context);
 static List *set_returning_clause_references(PlannerInfo *root,
 								List *rlist,
 								Plan *topplan,
@@ -679,7 +679,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			break;
 		case T_Agg:
 			{
-				Agg *aggplan = (Agg *) plan;
+				Agg		   *aggplan = (Agg *) plan;
 
 				if (aggplan->combineStates)
 					set_combineagg_references(root, plan, rtoffset);
@@ -2066,7 +2066,7 @@ static Var *
 search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,
 										Index newvarno)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	foreach(lc, itlist->tlist)
 	{
@@ -2106,7 +2106,7 @@ search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,
 				continue;
 
 			newvar = makeVarFromTargetEntry(newvarno, tle);
-			newvar->varnoold = 0;	/* wasn't ever a plain Var */
+			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;
 
 			return newvar;
@@ -2392,10 +2392,10 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  */
 static Node *
 fix_combine_agg_expr(PlannerInfo *root,
-			   Node *node,
-			   indexed_tlist *subplan_itlist,
-			   Index newvarno,
-			   int rtoffset)
+					 Node *node,
+					 indexed_tlist *subplan_itlist,
+					 Index newvarno,
+					 int rtoffset)
 {
 	fix_upper_expr_context context;
 
@@ -2445,15 +2445,15 @@ fix_combine_agg_expr_mutator(Node *node, fix_upper_expr_context *context)
 		return fix_param_node(context->root, (Param *) node);
 	if (IsA(node, Aggref))
 	{
-		Aggref		   *aggref = (Aggref *) node;
+		Aggref	   *aggref = (Aggref *) node;
 
 		newvar = search_indexed_tlist_for_partial_aggref(aggref,
 													 context->subplan_itlist,
 														 context->newvarno);
 		if (newvar)
 		{
-			Aggref		   *newaggref;
-			TargetEntry	   *newtle;
+			Aggref	   *newaggref;
+			TargetEntry *newtle;
 
 			/*
 			 * Now build a new TargetEntry for the Aggref's arguments which is

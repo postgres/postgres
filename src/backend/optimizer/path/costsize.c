@@ -47,7 +47,7 @@
  * plan nodes below the LIMIT node) are set without regard to any LIMIT, so
  * that this equation works properly.  (Note: while path->rows is never zero
  * for ordinary relations, it is zero for paths for provably-empty relations,
- * so beware of division-by-zero.)  The LIMIT is applied as a top-level
+ * so beware of division-by-zero.)	The LIMIT is applied as a top-level
  * plan node.
  *
  * For largely historical reasons, most of the routines in this module use
@@ -231,8 +231,8 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	/* Adjust costing for parallelism, if used. */
 	if (path->parallel_degree > 0)
 	{
-		double	parallel_divisor = path->parallel_degree;
-		double	leader_contribution;
+		double		parallel_divisor = path->parallel_degree;
+		double		leader_contribution;
 
 		/*
 		 * Early experience with parallel query suggests that when there is
