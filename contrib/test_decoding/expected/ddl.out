@@ -220,11 +220,17 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
 (7 rows)
 
 /*
- * check that disk spooling works
+ * check that disk spooling works (also for logical messages)
  */
 BEGIN;
 CREATE TABLE tr_etoomuch (id serial primary key, data int);
 INSERT INTO tr_etoomuch(data) SELECT g.i FROM generate_series(1, 10234) g(i);
+SELECT 'tx logical msg' FROM pg_logical_emit_message(true, 'test', 'tx logical msg');
+    ?column?    
+----------------
+ tx logical msg
+(1 row)
+
 DELETE FROM tr_etoomuch WHERE id < 5000;
 UPDATE tr_etoomuch SET data = - data WHERE id > 5000;
 COMMIT;
@@ -233,12 +239,13 @@ SELECT count(*), min(data), max(data)
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
 GROUP BY substring(data, 1, 24)
 ORDER BY 1,2;
- count |                       min                       |                                  max                                   
--------+-------------------------------------------------+------------------------------------------------------------------------
-     1 | BEGIN                                           | BEGIN
-     1 | COMMIT                                          | COMMIT
- 20467 | table public.tr_etoomuch: DELETE: id[integer]:1 | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
-(3 rows)
+ count |                                  min                                  |                                  max                                   
+-------+-----------------------------------------------------------------------+------------------------------------------------------------------------
+     1 | BEGIN                                                                 | BEGIN
+     1 | COMMIT                                                                | COMMIT
+     1 | message: transactional: 1 prefix: test, sz: 14 content:tx logical msg | message: transactional: 1 prefix: test, sz: 14 content:tx logical msg
+ 20467 | table public.tr_etoomuch: DELETE: id[integer]:1                       | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
+(4 rows)
 
 -- check updates of primary keys work correctly
 BEGIN;
