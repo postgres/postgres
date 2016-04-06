@@ -330,11 +330,8 @@ BackgroundWriterMain(void)
 			if (now >= timeout &&
 				last_snapshot_lsn != GetXLogInsertRecPtr())
 			{
-				XLogRecPtr log_standby_lsn = LogStandbySnapshot();
-
+				last_snapshot_lsn = LogStandbySnapshot();
 				last_snapshot_ts = now;
-				if (!XLogRecPtrIsInvalid(log_standby_lsn))
-					last_snapshot_lsn = log_standby_lsn;
 			}
 		}
 

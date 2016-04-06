@@ -902,7 +902,6 @@ LogStandbySnapshot(void)
 	RunningTransactions running;
 	xl_standby_lock *locks;
 	int			nlocks;
-	static bool last_snapshot_overflowed = false;
 
 	Assert(XLogStandbyInfoActive());
 
@@ -933,27 +932,7 @@ LogStandbySnapshot(void)
 	 * only a shared lock.
 	 */
 	if (wal_level < WAL_LEVEL_LOGICAL)
-	{
 		LWLockRelease(ProcArrayLock);
-
-		/*
-		 * Don't bother to log anything if nothing is happening, if we are
-		 * using archive_timeout > 0 and we didn't overflow snapshot last time.
-		 *
-		 * This ensures that we don't issue an empty WAL record, which can
-		 * be annoying when used in conjunction with archive timeout.
-		 */
-		if (running->xcnt == 0 &&
-			nlocks == 0 &&
-			XLogArchiveTimeout > 0 &&
-			!last_snapshot_overflowed)
-		{
-			LWLockRelease(XidGenLock);
-			return InvalidXLogRecPtr;
-		}
-
-		last_snapshot_overflowed = running->subxid_overflow;
-	}
 
 	recptr = LogCurrentRunningXacts(running);
 
