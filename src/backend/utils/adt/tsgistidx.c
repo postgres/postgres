@@ -298,7 +298,7 @@ typedef struct
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_arr(void *checkval, QueryOperand *val)
+checkcondition_arr(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
 	int32	   *StopLow = ((CHKVAL *) checkval)->arrb;
 	int32	   *StopHigh = ((CHKVAL *) checkval)->arre;
@@ -327,7 +327,7 @@ checkcondition_arr(void *checkval, QueryOperand *val)
 }
 
 static bool
-checkcondition_bit(void *checkval, QueryOperand *val)
+checkcondition_bit(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
 	/*
 	 * we are not able to find a prefix in signature tree

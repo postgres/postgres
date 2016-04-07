@@ -277,15 +277,15 @@ SELECT '(!1|2)&3'::tsquery;
 (1 row)
 
 SELECT '1|(2|(4|(5|6)))'::tsquery;
-                 tsquery                 
------------------------------------------
- '1' | ( '2' | ( '4' | ( '5' | '6' ) ) )
+           tsquery           
+-----------------------------
+ '1' | '2' | '4' | '5' | '6'
 (1 row)
 
 SELECT '1|2|4|5|6'::tsquery;
-                 tsquery                 
------------------------------------------
- ( ( ( '1' | '2' ) | '4' ) | '5' ) | '6'
+           tsquery           
+-----------------------------
+ '1' | '2' | '4' | '5' | '6'
 (1 row)
 
 SELECT '1&(2&(4&(5&6)))'::tsquery;
@@ -325,11 +325,139 @@ SELECT $$'\\as'$$::tsquery;
 (1 row)
 
 SELECT 'a:* & nbb:*ac | doo:a* | goo'::tsquery;
-                 tsquery                  
-------------------------------------------
- ( 'a':* & 'nbb':*AC | 'doo':*A ) | 'goo'
+               tsquery                
+--------------------------------------
+ 'a':* & 'nbb':*AC | 'doo':*A | 'goo'
 (1 row)
 
+-- phrase transformation
+SELECT 'a <-> (b|c)'::tsquery;
+          tsquery          
+---------------------------
+ 'a' <-> 'b' | 'a' <-> 'c'
+(1 row)
+
+SELECT '(a|b) <-> c'::tsquery;
+          tsquery          
+---------------------------
+ 'a' <-> 'c' | 'b' <-> 'c'
+(1 row)
+
+SELECT '(a|b) <-> (d|c)'::tsquery;
+                        tsquery                        
+-------------------------------------------------------
+ 'a' <-> 'd' | 'b' <-> 'd' | 'a' <-> 'c' | 'b' <-> 'c'
+(1 row)
+
+SELECT 'a <-> (b&c)'::tsquery;
+              tsquery              
+-----------------------------------
+ ( 'a' <-> 'b' ) & ( 'a' <-> 'c' )
+(1 row)
+
+SELECT '(a&b) <-> c'::tsquery;
+              tsquery              
+-----------------------------------
+ ( 'a' <-> 'c' ) & ( 'b' <-> 'c' )
+(1 row)
+
+SELECT '(a&b) <-> (d&c)'::tsquery;
+                                tsquery                                
+-----------------------------------------------------------------------
+ ( 'a' <-> 'd' ) & ( 'b' <-> 'd' ) & ( 'a' <-> 'c' ) & ( 'b' <-> 'c' )
+(1 row)
+
+SELECT 'a <-> !b'::tsquery;
+        tsquery         
+------------------------
+ 'a' & !( 'a' <-> 'b' )
+(1 row)
+
+SELECT '!a <-> b'::tsquery;
+        tsquery         
+------------------------
+ !( 'a' <-> 'b' ) & 'b'
+(1 row)
+
+SELECT '!a <-> !b'::tsquery;
+              tsquery               
+------------------------------------
+ !'a' & !( !( 'a' <-> 'b' ) & 'b' )
+(1 row)
+
+SELECT 'a <-> !(b&c)'::tsquery;
+                   tsquery                    
+----------------------------------------------
+ 'a' & !( ( 'a' <-> 'b' ) & ( 'a' <-> 'c' ) )
+(1 row)
+
+SELECT 'a <-> !(b|c)'::tsquery;
+               tsquery                
+--------------------------------------
+ 'a' & !( 'a' <-> 'b' | 'a' <-> 'c' )
+(1 row)
+
+SELECT  '!(a&b) <-> c'::tsquery;
+                   tsquery                    
+----------------------------------------------
+ !( ( 'a' <-> 'c' ) & ( 'b' <-> 'c' ) ) & 'c'
+(1 row)
+
+SELECT  '!(a|b) <-> c'::tsquery;
+               tsquery                
+--------------------------------------
+ !( 'a' <-> 'c' | 'b' <-> 'c' ) & 'c'
+(1 row)
+
+SELECT  '(!a|b) <-> c'::tsquery;
+               tsquery                
+--------------------------------------
+ !( 'a' <-> 'c' ) & 'c' | 'b' <-> 'c'
+(1 row)
+
+SELECT  '(!a&b) <-> c'::tsquery;
+                 tsquery                  
+------------------------------------------
+ !( 'a' <-> 'c' ) & 'c' & ( 'b' <-> 'c' )
+(1 row)
+
+SELECT  'c <-> (!a|b)'::tsquery;
+               tsquery                
+--------------------------------------
+ 'c' & !( 'c' <-> 'a' ) | 'c' <-> 'b'
+(1 row)
+
+SELECT  'c <-> (!a&b)'::tsquery;
+                 tsquery                  
+------------------------------------------
+ 'c' & !( 'c' <-> 'a' ) & ( 'c' <-> 'b' )
+(1 row)
+
+SELECT  '(a|b) <-> !c'::tsquery;
+                    tsquery                     
+------------------------------------------------
+ ( 'a' | 'b' ) & !( 'a' <-> 'c' | 'b' <-> 'c' )
+(1 row)
+
+SELECT  '(a&b) <-> !c'::tsquery;
+                      tsquery                       
+----------------------------------------------------
+ 'a' & 'b' & !( ( 'a' <-> 'c' ) & ( 'b' <-> 'c' ) )
+(1 row)
+
+SELECT  '!c <-> (a|b)'::tsquery;
+                     tsquery                     
+-------------------------------------------------
+ !( 'c' <-> 'a' ) & 'a' | !( 'c' <-> 'b' ) & 'b'
+(1 row)
+
+SELECT  '!c <-> (a&b)'::tsquery;
+                     tsquery                     
+-------------------------------------------------
+ !( 'c' <-> 'a' ) & 'a' & !( 'c' <-> 'b' ) & 'b'
+(1 row)
+
+--comparisons
 SELECT 'a' < 'b & c'::tsquery as "true";
  true 
 ------
@@ -342,10 +470,10 @@ SELECT 'a' > 'b & c'::tsquery as "false";
  f
 (1 row)
 
-SELECT 'a | f' < 'b & c'::tsquery as "true";
- true 
-------
- t
+SELECT 'a | f' < 'b & c'::tsquery as "false";
+ false 
+-------
+ f
 (1 row)
 
 SELECT 'a | ff' < 'b & c'::tsquery as "false";
@@ -360,6 +488,7 @@ SELECT 'a | f | g' < 'b & c'::tsquery as "false";
  f
 (1 row)
 
+--concatenation
 SELECT numnode( 'new'::tsquery );
  numnode 
 ---------
@@ -400,6 +529,36 @@ SELECT 'foo & bar'::tsquery && 'asd | fg';
              ?column?             
 ----------------------------------
  'foo' & 'bar' & ( 'asd' | 'fg' )
+(1 row)
+
+SELECT 'a' <-> 'b & d'::tsquery;
+             ?column?              
+-----------------------------------
+ ( 'a' <-> 'b' ) & ( 'a' <-> 'd' )
+(1 row)
+
+SELECT 'a & g' <-> 'b & d'::tsquery;
+                               ?column?                                
+-----------------------------------------------------------------------
+ ( 'a' <-> 'b' ) & ( 'g' <-> 'b' ) & ( 'a' <-> 'd' ) & ( 'g' <-> 'd' )
+(1 row)
+
+SELECT 'a & g' <-> 'b | d'::tsquery;
+                               ?column?                                
+-----------------------------------------------------------------------
+ ( 'a' <-> 'b' ) & ( 'g' <-> 'b' ) | ( 'a' <-> 'd' ) & ( 'g' <-> 'd' )
+(1 row)
+
+SELECT 'a & g' <-> 'b <-> d'::tsquery;
+                         ?column?                          
+-----------------------------------------------------------
+ ( 'a' <-> ( 'b' <-> 'd' ) ) & ( 'g' <-> ( 'b' <-> 'd' ) )
+(1 row)
+
+SELECT tsquery_phrase('a <3> g', 'b & d', 10);
+                       tsquery_phrase                        
+-------------------------------------------------------------
+ ( ( 'a' <3> 'g' ) <10> 'b' ) & ( ( 'a' <3> 'g' ) <10> 'd' )
 (1 row)
 
 -- tsvector-tsquery operations
@@ -499,6 +658,80 @@ SELECT 'supeznova supernova'::tsvector @@ 'super:*'::tsquery AS "true";
  t
 (1 row)
 
+--phrase search
+SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <-> 2' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <2> 2' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <-> 3' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <2> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 11 3') @@ '1 <-> 3' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 11 3') @@ '1:* <-> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> 2 <-> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <-> (2 <-> 3)' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 3 4') @@ '1 <2> (2 <-> 3)' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '(1 <-> 2) <-> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT to_tsvector('simple', '1 2 1 2 3 4') @@ '1 <-> 2 <-> 3' AS "true";
+ true 
+------
+ t
+(1 row)
+
+--ranking
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
   ts_rank  
 -----------
@@ -611,6 +844,120 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
  ts_rank_cd 
 ------------
         0.1
+(1 row)
+
+SELECT ts_rank_cd(' a:1 s:2A d g'::tsvector, 'a <-> s');
+ ts_rank_cd 
+------------
+   0.181818
+(1 row)
+
+SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a <-> s');
+ ts_rank_cd 
+------------
+   0.133333
+(1 row)
+
+SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a <-> s');
+ ts_rank_cd 
+------------
+        0.1
+(1 row)
+
+SELECT ts_rank_cd(' a:1 s:2 d:2A g'::tsvector, 'a <-> s');
+ ts_rank_cd 
+------------
+        0.1
+(1 row)
+
+SELECT ts_rank_cd(' a:1 s:2,3A d:2A g'::tsvector, 'a <2> s:A');
+ ts_rank_cd 
+------------
+  0.0909091
+(1 row)
+
+SELECT ts_rank_cd(' a:1 b:2 s:3A d:2A g'::tsvector, 'a <2> s:A');
+ ts_rank_cd 
+------------
+  0.0909091
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2D sb:2A g'::tsvector, 'a <-> s:*');
+ ts_rank_cd 
+------------
+        0.1
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2A sb:2D g'::tsvector, 'a <-> s:*');
+ ts_rank_cd 
+------------
+        0.1
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2A sb:2D g'::tsvector, 'a <-> s:* <-> sa:A');
+ ts_rank_cd 
+------------
+  0.0714286
+(1 row)
+
+SELECT ts_rank_cd(' a:1 sa:2A sb:2D g'::tsvector, 'a <-> s:* <-> sa:B');
+ ts_rank_cd 
+------------
+          0
+(1 row)
+
+SELECT 'a:1 b:2'::tsvector @@ 'a <-> b'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a:1 b:2'::tsvector @@ 'a <0> b'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'a:1 b:2'::tsvector @@ 'a <1> b'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a:1 b:2'::tsvector @@ 'a <2> b'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a:1 b:3'::tsvector @@ 'a <-> b'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'a:1 b:3'::tsvector @@ 'a <0> b'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'a:1 b:3'::tsvector @@ 'a <1> b'::tsquery AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'a:1 b:3'::tsvector @@ 'a <2> b'::tsquery AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'a:1 b:3'::tsvector @@ 'a <3> b'::tsquery AS "true";
+ true 
+------
+ t
 (1 row)
 
 -- tsvector editing operations

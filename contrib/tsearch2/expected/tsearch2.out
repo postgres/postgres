@@ -278,15 +278,15 @@ SELECT '(!1|2)&3'::tsquery;
 (1 row)
 
 SELECT '1|(2|(4|(5|6)))'::tsquery;
-                 tsquery                 
------------------------------------------
- '1' | ( '2' | ( '4' | ( '5' | '6' ) ) )
+           tsquery           
+-----------------------------
+ '1' | '2' | '4' | '5' | '6'
 (1 row)
 
 SELECT '1|2|4|5|6'::tsquery;
-                 tsquery                 
------------------------------------------
- ( ( ( '1' | '2' ) | '4' ) | '5' ) | '6'
+           tsquery           
+-----------------------------
+ '1' | '2' | '4' | '5' | '6'
 (1 row)
 
 SELECT '1&(2&(4&(5&6)))'::tsquery;
@@ -340,7 +340,7 @@ select 'a' > 'b & c'::tsquery;
 select 'a | f' < 'b & c'::tsquery;
  ?column? 
 ----------
- t
+ f
 (1 row)
 
 select 'a | ff' < 'b & c'::tsquery;
@@ -443,9 +443,9 @@ select count(*) from test_tsquery where keyword >  'new & york';
 
 set enable_seqscan=on;
 select rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & apple | nyc | new & york & city');
-                                     rewrite                                      
-----------------------------------------------------------------------------------
- 'foo' & 'bar' & 'qq' & ( 'city' & 'new' & 'york' | ( 'nyc' | 'big' & 'apple' ) )
+                                   rewrite                                    
+------------------------------------------------------------------------------
+ 'foo' & 'bar' & 'qq' & ( 'nyc' | 'big' & 'apple' | 'city' & 'new' & 'york' )
 (1 row)
 
 select rewrite('moscow', 'select keyword, sample from test_tsquery'::text );
@@ -461,9 +461,9 @@ select rewrite('moscow & hotel', 'select keyword, sample from test_tsquery'::tex
 (1 row)
 
 select rewrite('bar &  new & qq & foo & york', 'select keyword, sample from test_tsquery'::text );
-                                       rewrite                                       
--------------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+                                     rewrite                                     
+---------------------------------------------------------------------------------
+ ( 'nyc' | 'big' & 'appl' | 'new' & 'york' ) & 'citi' & 'foo' & ( 'bar' | 'qq' )
 (1 row)
 
 select rewrite( ARRAY['moscow', keyword, sample] ) from test_tsquery;
@@ -479,9 +479,9 @@ select rewrite( ARRAY['moscow & hotel', keyword, sample] ) from test_tsquery;
 (1 row)
 
 select rewrite( ARRAY['bar &  new & qq & foo & york', keyword, sample] ) from test_tsquery;
-                                       rewrite                                       
--------------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+                                     rewrite                                     
+---------------------------------------------------------------------------------
+ ( 'nyc' | 'big' & 'appl' | 'new' & 'york' ) & 'citi' & 'foo' & ( 'bar' | 'qq' )
 (1 row)
 
 select keyword from test_tsquery where keyword @> 'new';
@@ -520,9 +520,9 @@ select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('e
 (1 row)
 
 select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where keyword <@ query;
-                                       rewrite                                       
--------------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+                                     rewrite                                     
+---------------------------------------------------------------------------------
+ ( 'nyc' | 'big' & 'appl' | 'new' & 'york' ) & 'citi' & 'foo' & ( 'bar' | 'qq' )
 (1 row)
 
 select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where query @> keyword;
@@ -538,9 +538,9 @@ select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('e
 (1 row)
 
 select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where query @> keyword;
-                                       rewrite                                       
--------------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+                                     rewrite                                     
+---------------------------------------------------------------------------------
+ ( 'nyc' | 'big' & 'appl' | 'new' & 'york' ) & 'citi' & 'foo' & ( 'bar' | 'qq' )
 (1 row)
 
 create index qq on test_tsquery using gist (keyword gist_tp_tsquery_ops);
@@ -581,9 +581,9 @@ select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('e
 (1 row)
 
 select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where keyword <@ query;
-                                       rewrite                                       
--------------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+                                     rewrite                                     
+---------------------------------------------------------------------------------
+ ( 'nyc' | 'big' & 'appl' | 'new' & 'york' ) & 'citi' & 'foo' & ( 'bar' | 'qq' )
 (1 row)
 
 select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where query @> keyword;
@@ -599,9 +599,9 @@ select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('e
 (1 row)
 
 select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where query @> keyword;
-                                       rewrite                                       
--------------------------------------------------------------------------------------
- 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+                                     rewrite                                     
+---------------------------------------------------------------------------------
+ ( 'nyc' | 'big' & 'appl' | 'new' & 'york' ) & 'citi' & 'foo' & ( 'bar' | 'qq' )
 (1 row)
 
 set enable_seqscan='on';

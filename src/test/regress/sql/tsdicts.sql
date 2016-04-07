@@ -142,6 +142,9 @@ SELECT to_tsvector('hunspell_tst', 'Booking the skies after rebookings for footb
 SELECT to_tsquery('hunspell_tst', 'footballklubber');
 SELECT to_tsquery('hunspell_tst', 'footballyklubber:b & rebookings:A & sky');
 
+SELECT to_tsquery('hunspell_tst', 'footballyklubber:b <-> sky');
+SELECT phraseto_tsquery('hunspell_tst', 'footballyklubber sky');
+
 -- Test ispell dictionary with hunspell affix with FLAG long in configuration
 ALTER TEXT SEARCH CONFIGURATION hunspell_tst ALTER MAPPING
 	REPLACE hunspell WITH hunspell_long;

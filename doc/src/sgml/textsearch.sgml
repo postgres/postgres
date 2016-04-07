@@ -263,9 +263,10 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     As the above example suggests, a <type>tsquery</type> is not just raw
     text, any more than a <type>tsvector</type> is.  A <type>tsquery</type>
     contains search terms, which must be already-normalized lexemes, and
-    may combine multiple terms using AND, OR, and NOT operators.
+    may combine multiple terms using AND, OR, NOT and FOLLOWED BY operators.
     (For details see <xref linkend="datatype-textsearch">.)  There are
-    functions <function>to_tsquery</> and <function>plainto_tsquery</>
+    functions <function>to_tsquery</>, <function>plainto_tsquery</>
+    and <function>phraseto_tsquery</>
     that are helpful in converting user-written text into a proper
     <type>tsquery</type>, for example by normalizing words appearing in
     the text.  Similarly, <function>to_tsvector</> is used to parse and
@@ -291,6 +292,35 @@ SELECT 'fat cats ate fat rats'::tsvector @@ to_tsquery('fat &amp; rat');
     since here no normalization of the word <literal>rats</> will occur.
     The elements of a <type>tsvector</> are lexemes, which are assumed
     already normalized, so <literal>rats</> does not match <literal>rat</>.
+   </para>
+
+   <para>
+    Phrase search is made possible with the help of the <literal>&lt;-&gt;</>
+    (FOLLOWED BY) operator, which enforces lexeme order. This allows you
+    to discard strings not containing the desired phrase, for example:
+
+<programlisting>
+SELECT q @@ to_tsquery('fatal &lt;-&gt; error')
+FROM unnest(array[to_tsvector('fatal error'),
+                  to_tsvector('error is not fatal')]) AS q;
+ ?column?
+----------
+ t
+ f
+</programlisting>
+
+    A more generic version of the FOLLOWED BY operator takes form of
+    <literal>&lt;N&gt;</>, where N stands for the greatest allowed distance
+    between the specified lexemes. The <literal>phraseto_tsquery</>
+    function makes use of this behavior in order to construct a
+    <literal>tsquery</> capable of matching the provided phrase:
+
+<programlisting>
+SELECT phraseto_tsquery('cat ate some rats');
+       phraseto_tsquery
+-------------------------------
+ ( 'cat' &lt;-&gt; 'ate' ) &lt;2&gt; 'rat'
+</programlisting>
    </para>
 
    <para>
@@ -709,11 +739,14 @@ UPDATE tt SET ti =
 
    <para>
     <productname>PostgreSQL</productname> provides the
-    functions <function>to_tsquery</function> and
-    <function>plainto_tsquery</function> for converting a query to
-    the <type>tsquery</type> data type.  <function>to_tsquery</function>
-    offers access to more features than <function>plainto_tsquery</function>,
-    but is less forgiving about its input.
+    functions <function>to_tsquery</function>,
+    <function>plainto_tsquery</function> and
+    <function>phraseto_tsquery</function>
+    for converting a query to the <type>tsquery</type> data type.
+    <function>to_tsquery</function> offers access to more features
+    than both <function>plainto_tsquery</function> and
+    <function>phraseto_tsquery</function>, but is less forgiving
+    about its input.
    </para>
 
    <indexterm>
@@ -728,7 +761,8 @@ to_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>
     <function>to_tsquery</function> creates a <type>tsquery</> value from
     <replaceable>querytext</replaceable>, which must consist of single tokens
     separated by the Boolean operators <literal>&amp;</literal> (AND),
-    <literal>|</literal> (OR) and <literal>!</literal> (NOT).  These operators
+    <literal>|</literal> (OR), <literal>!</literal> (NOT), and also the
+    <literal>&lt;-&gt;</literal> (FOLLOWED BY) phrase search operator. These operators
     can be grouped using parentheses.  In other words, the input to
     <function>to_tsquery</function> must already follow the general rules for
     <type>tsquery</> input, as described in <xref
@@ -814,8 +848,8 @@ SELECT plainto_tsquery('english', 'The Fat Rats');
 </screen>
 
     Note that <function>plainto_tsquery</> cannot
-    recognize Boolean operators, weight labels, or prefix-match labels
-    in its input:
+    recognize Boolean and phrase search operators, weight labels,
+    or prefix-match labels in its input:
 
 <screen>
 SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
@@ -825,6 +859,57 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
 </screen>
 
     Here, all the input punctuation was discarded as being space symbols.
+   </para>
+
+   <indexterm>
+    <primary>phraseto_tsquery</primary>
+   </indexterm>
+
+<synopsis>
+phraseto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
+</synopsis>
+
+   <para>
+    <function>phraseto_tsquery</> behaves much like
+    <function>plainto_tsquery</>, with the exception
+    that it utilizes the <literal>&lt;-&gt;</literal> (FOLLOWED BY) phrase search
+    operator instead of the <literal>&amp;</literal> (AND) Boolean operator.
+    This is particularly useful when searching for exact lexeme sequences,
+    since the phrase search operator helps to maintain lexeme order.
+   </para>
+
+   <para>
+    Example:
+
+<screen>
+SELECT phraseto_tsquery('english', 'The Fat Rats');
+ phraseto_tsquery
+------------------
+ 'fat' &lt;-&gt; 'rat'
+</screen>
+
+    Just like the <function>plainto_tsquery</>, the
+    <function>phraseto_tsquery</> function cannot
+    recognize Boolean and phrase search operators, weight labels,
+    or prefix-match labels in its input:
+
+<screen>
+SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
+      phraseto_tsquery
+-----------------------------
+ ( 'fat' &lt;-&gt; 'rat' ) &lt;-&gt; 'c'
+</screen>
+
+    It is possible to specify the configuration to be used to parse the document,
+    for example, we could create a new one using the hunspell dictionary
+    (namely 'eng_hunspell') in order to match phrases with different word forms:
+
+<screen>
+SELECT phraseto_tsquery('eng_hunspell', 'developer of the building which collapsed');
+                                      phraseto_tsquery
+--------------------------------------------------------------------------------------------
+ ( 'developer' &lt;3&gt; 'building' ) &lt;2&gt; 'collapse' | ( 'developer' &lt;3&gt; 'build' ) &lt;2&gt; 'collapse'
+</screen>
    </para>
 
   </sect2>
@@ -1385,6 +1470,81 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
       </para>
      </listitem>
 
+    </varlistentry>
+
+    <varlistentry>
+
+     <term>
+      <literal><type>tsquery</> &lt;-&gt; <type>tsquery</></literal>
+     </term>
+
+     <listitem>
+      <para>
+       Returns the phrase-concatenation of the two given queries.
+
+<screen>
+SELECT to_tsquery('fat') &lt;-&gt; to_tsquery('cat | rat');
+             ?column?
+-----------------------------------
+ 'fat' &lt;-&gt; 'cat' | 'fat' &lt;-&gt; 'rat'
+</screen>
+      </para>
+     </listitem>
+
+    </varlistentry>
+
+    <varlistentry>
+
+     <term>
+     <indexterm>
+      <primary>tsquery_phrase</primary>
+     </indexterm>
+
+      <literal>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</> [, <replaceable class="PARAMETER">distance</replaceable> <type>integer</> ]) returns <type>tsquery</></literal>
+     </term>
+
+     <listitem>
+      <para>
+       Returns the distanced phrase-concatenation of the two given queries.
+       This function lies in the implementation of the <literal>&lt;-&gt;</> operator.
+
+<screen>
+SELECT tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10);
+  tsquery_phrase
+------------------
+ 'fat' &lt;10&gt; 'cat'
+</screen>
+      </para>
+     </listitem>
+
+    </varlistentry>
+
+    <varlistentry>
+
+     <term>
+     <indexterm>
+      <primary>setweight</primary>
+     </indexterm>
+
+      <literal>setweight(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsquery</></literal>
+     </term>
+
+     <listitem>
+      <para>
+       <function>setweight</> returns a copy of the input query in which every
+       position has been labeled with the given <replaceable>weight</>(s), either
+       <literal>A</literal>, <literal>B</literal>, <literal>C</literal>,
+       <literal>D</literal> or their combination. These labels are retained when
+       queries are concatenated, allowing words from different parts of a document
+       to be weighted differently by ranking functions.
+      </para>
+
+      <para>
+       Note that weight labels apply to <emphasis>positions</>, not
+       <emphasis>lexemes</>.  If the input query has been stripped of
+       positions then <function>setweight</> does nothing.
+      </para>
+     </listitem>
     </varlistentry>
 
     <varlistentry>
@@ -2428,7 +2588,7 @@ more sample word(s) : more indexed word(s)
 
    <para>
     Specific stop words recognized by the subdictionary cannot be
-    specified;  instead use <literal>?</> to mark the location where any
+    specified;  instead use <literal>&lt;-&gt;</> to mark the location where any
     stop word can appear.  For example, assuming that <literal>a</> and
     <literal>the</> are stop words according to the subdictionary:
 

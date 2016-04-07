@@ -1121,35 +1121,124 @@ tsCompareString(char *a, int lena, char *b, int lenb, bool prefix)
 }
 
 /*
- * check weight info
+ * Check weight info or/and fill 'data' with the required positions
  */
 static bool
-checkclass_str(CHKVAL *chkval, WordEntry *val, QueryOperand *item)
+checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
+			   ExecPhraseData *data)
 {
-	WordEntryPosVector *posvec;
-	WordEntryPos *ptr;
-	uint16		len;
+	bool result = false;
 
-	posvec = (WordEntryPosVector *)
-		(chkval->values + SHORTALIGN(val->pos + val->len));
-
-	len = posvec->npos;
-	ptr = posvec->pos;
-
-	while (len--)
+	if (entry->haspos && (val->weight || data))
 	{
-		if (item->weight & (1 << WEP_GETWEIGHT(*ptr)))
-			return true;
-		ptr++;
+		WordEntryPosVector	*posvec;
+
+		/*
+		 * We can't use the _POSVECPTR macro here because the pointer to the
+		 * tsvector's lexeme storage is already contained in chkval->values.
+		 */
+		posvec = (WordEntryPosVector *)
+			(chkval->values + SHORTALIGN(entry->pos + entry->len));
+
+		if (val->weight && data)
+		{
+			WordEntryPos	*posvec_iter = posvec->pos;
+			WordEntryPos	*dptr;
+
+			/*
+			 * Filter position information by weights
+			 */
+			dptr = data->pos = palloc(sizeof(WordEntryPos) * posvec->npos);
+			data->allocated = true;
+
+			/* Is there a position with a matching weight? */
+			while (posvec_iter < posvec->pos + posvec->npos)
+			{
+				/* If true, append this position to the data->pos */
+				if (val->weight & (1 << WEP_GETWEIGHT(*posvec_iter)))
+				{
+					*dptr = WEP_GETPOS(*posvec_iter);
+					dptr++;
+				}
+
+				posvec_iter++;
+			}
+
+			data->npos = dptr - data->pos;
+
+			if (data->npos > 0)
+				result = true;
+		}
+		else if (val->weight)
+		{
+			WordEntryPos	*posvec_iter = posvec->pos;
+
+			/* Is there a position with a matching weight? */
+			while (posvec_iter < posvec->pos + posvec->npos)
+			{
+				if (val->weight & (1 << WEP_GETWEIGHT(*posvec_iter)))
+				{
+					result = true;
+					break; /* no need to go further */
+				}
+
+				posvec_iter++;
+			}
+		}
+		else /* data != NULL */
+		{
+			data->npos = posvec->npos;
+			data->pos  = posvec->pos;
+			data->allocated = false;
+			result = true;
+		}
 	}
-	return false;
+	else
+	{
+		result = true;
+	}
+
+	return result;
+}
+
+/*
+ * Removes duplicate pos entries. We can't use uniquePos() from
+ * tsvector.c because array might be longer than MAXENTRYPOS
+ *
+ * Returns new length.
+ */
+static int
+uniqueLongPos(WordEntryPos *pos, int npos)
+{
+	WordEntryPos *pos_iter,
+				 *result;
+
+	if (npos <= 1)
+		return npos;
+
+	qsort((void *) pos, npos, sizeof(WordEntryPos), comparePos);
+
+	result = pos;
+	pos_iter = pos + 1;
+	while (pos_iter < pos + npos)
+	{
+		if (WEP_GETPOS(*pos_iter) != WEP_GETPOS(*result))
+		{
+			result++;
+			*result = WEP_GETPOS(*pos_iter);
+		}
+
+		pos_iter++;
+	}
+
+	return result + 1 - pos;
 }
 
 /*
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_str(void *checkval, QueryOperand *val)
+checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
 	CHKVAL	   *chkval = (CHKVAL *) checkval;
 	WordEntry  *StopLow = chkval->arrb;
@@ -1162,14 +1251,16 @@ checkcondition_str(void *checkval, QueryOperand *val)
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		difference = tsCompareString(chkval->operand + val->distance, val->length,
-						   chkval->values + StopMiddle->pos, StopMiddle->len,
+		difference = tsCompareString(chkval->operand + val->distance,
+									 val->length,
+									 chkval->values + StopMiddle->pos,
+									 StopMiddle->len,
 									 false);
 
 		if (difference == 0)
 		{
-			res = (val->weight && StopMiddle->haspos) ?
-				checkclass_str(chkval, StopMiddle, val) : true;
+			/* Check weight info & fill 'data' with positions */
+			res = checkclass_str(chkval, StopMiddle, val, data);
 			break;
 		}
 		else if (difference > 0)
@@ -1178,29 +1269,198 @@ checkcondition_str(void *checkval, QueryOperand *val)
 			StopHigh = StopMiddle;
 	}
 
-	if (!res && val->prefix)
+	if ((!res || data) && val->prefix)
 	{
+		WordEntryPos	   *allpos = NULL;
+		int					npos = 0,
+							totalpos = 0;
 		/*
 		 * there was a failed exact search, so we should scan further to find
-		 * a prefix match.
+		 * a prefix match. We also need to do so if caller needs position info
 		 */
 		if (StopLow >= StopHigh)
 			StopMiddle = StopHigh;
 
-		while (res == false && StopMiddle < chkval->arre &&
-			   tsCompareString(chkval->operand + val->distance, val->length,
-						   chkval->values + StopMiddle->pos, StopMiddle->len,
+		while ((!res || data) && StopMiddle < chkval->arre &&
+			   tsCompareString(chkval->operand + val->distance,
+							   val->length,
+							   chkval->values + StopMiddle->pos,
+							   StopMiddle->len,
 							   true) == 0)
 		{
-			res = (val->weight && StopMiddle->haspos) ?
-				checkclass_str(chkval, StopMiddle, val) : true;
+			if (data)
+			{
+				/*
+				 * We need to join position information
+				 */
+				res = checkclass_str(chkval, StopMiddle, val, data);
+
+				if (res)
+				{
+					while (npos + data->npos >= totalpos)
+					{
+						if (totalpos == 0)
+						{
+							totalpos = 256;
+							allpos = palloc(sizeof(WordEntryPos) * totalpos);
+						}
+						else
+						{
+							totalpos *= 2;
+							allpos = repalloc(allpos, sizeof(WordEntryPos) * totalpos);
+						}
+					}
+
+					memcpy(allpos + npos, data->pos, sizeof(WordEntryPos) * data->npos);
+					npos += data->npos;
+				}
+			}
+			else
+			{
+				res = checkclass_str(chkval, StopMiddle, val, NULL);
+			}
 
 			StopMiddle++;
+		}
+
+		if (res && data)
+		{
+			/* Sort and make unique array of found positions */
+			data->pos = allpos;
+			data->npos = uniqueLongPos(allpos, npos);
+			data->allocated = true;
 		}
 	}
 
 	return res;
 }
+
+/*
+ * Check for phrase condition. Fallback to the AND operation
+ * if there is no positional information.
+ */
+static bool
+TS_phrase_execute(QueryItem *curitem,
+				  void *checkval, bool calcnot, ExecPhraseData *data,
+				  bool (*chkcond) (void *, QueryOperand *, ExecPhraseData *))
+{
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
+	if (curitem->type == QI_VAL)
+	{
+		return chkcond(checkval, (QueryOperand *) curitem, data);
+	}
+	else
+	{
+		ExecPhraseData  Ldata = {0, false, NULL},
+						Rdata = {0, false, NULL};
+		WordEntryPos   *Lpos,
+					   *Rpos,
+					   *pos_iter = NULL;
+
+		Assert(curitem->qoperator.oper == OP_PHRASE);
+
+		if (!TS_phrase_execute(curitem + curitem->qoperator.left,
+							   checkval, calcnot, &Ldata, chkcond))
+			return false;
+
+		if (!TS_phrase_execute(curitem + 1, checkval, calcnot, &Rdata, chkcond))
+			return false;
+
+		/*
+		 * if at least one of the operands has no position
+		 * information, fallback to AND operation.
+		 */
+		if (Ldata.npos == 0 || Rdata.npos == 0)
+			return true;
+
+		/*
+		 * Result of the operation is a list of the
+		 * corresponding positions of RIGHT operand.
+		 */
+		if (data)
+		{
+			if (!Rdata.allocated)
+				/*
+				 * OP_PHRASE is based on the OP_AND, so the number of resulting
+				 * positions could not be greater than the total amount of operands.
+				 */
+				data->pos = palloc(sizeof(WordEntryPos) * Min(Ldata.npos, Rdata.npos));
+			else
+				data->pos = Rdata.pos;
+
+			data->allocated = true;
+			data->npos = 0;
+			pos_iter = data->pos;
+		}
+
+		Lpos = Ldata.pos;
+		Rpos = Rdata.pos;
+
+		/*
+		 * Find matches by distance, WEP_GETPOS() is needed because
+		 * ExecPhraseData->data can point to the tsvector's WordEntryPosVector
+		 */
+
+		while (Rpos < Rdata.pos + Rdata.npos)
+		{
+			while (Lpos < Ldata.pos + Ldata.npos)
+			{
+				if (WEP_GETPOS(*Lpos) <= WEP_GETPOS(*Rpos))
+				{
+					/*
+					 * Lpos is behind the Rpos, so we have to check the
+					 * distance condition
+					 */
+					if (WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) <= curitem->qoperator.distance)
+					{
+						/* MATCH! */
+						if (data)
+						{
+							*pos_iter = WEP_GETPOS(*Rpos);
+							pos_iter++;
+
+							break; /* We need to build a unique result
+									* array, so go to the next Rpos */
+						}
+						else
+						{
+							/*
+							 * We are in the root of the phrase tree and hence
+							 * we don't have to store the resulting positions
+							 */
+							return true;
+						}
+					}
+				}
+				else
+				{
+					/*
+					 * Go to the next Rpos, because Lpos
+					 * is ahead of the current Rpos
+					 */
+					break;
+				}
+
+				Lpos++;
+			}
+
+			Rpos++;
+		}
+
+		if (data)
+		{
+			data->npos = pos_iter - data->pos;
+
+			if (data->npos > 0)
+				return true;
+		}
+	}
+
+	return false;
+}
+
 
 /*
  * Evaluate tsquery boolean expression.
@@ -1210,16 +1470,19 @@ checkcondition_str(void *checkval, QueryOperand *val)
  * do anything with it.
  * if calcnot is false, NOT expressions are always evaluated to be true. This
  * is used in ranking.
+ * It believes that ordinary operators are always closier to root than phrase
+ * operator, so, TS_execute() may not take care of lexeme's position at all.
  */
 bool
 TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
-		   bool (*chkcond) (void *checkval, QueryOperand *val))
+		   bool (*chkcond) (void *checkval, QueryOperand *val, ExecPhraseData *data))
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
-		return chkcond(checkval, (QueryOperand *) curitem);
+		return chkcond(checkval, (QueryOperand *) curitem,
+					   NULL /* we don't need position info */);
 
 	switch (curitem->qoperator.oper)
 	{
@@ -1240,6 +1503,9 @@ TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
 				return true;
 			else
 				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
+
+		case OP_PHRASE:
+			return TS_phrase_execute(curitem, checkval, calcnot, NULL, chkcond);
 
 		default:
 			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
@@ -1277,6 +1543,10 @@ tsquery_requires_match(QueryItem *curitem)
 			 */
 			return false;
 
+		case OP_PHRASE:
+			/*
+			 * Treat OP_PHRASE as OP_AND here
+			 */
 		case OP_AND:
 			/* If either side requires a match, we're good */
 			if (tsquery_requires_match(curitem + curitem->qoperator.left))

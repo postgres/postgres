@@ -25,6 +25,12 @@ typedef struct NODE
 	QueryItem  *valnode;
 } NODE;
 
+/* Non-operator nodes have fake (but highest) priority */
+#define NODE_PRIORITY(x) \
+	( ((x)->valnode->qoperator.type == QI_OPR) ? \
+			QO_PRIORITY((x)->valnode) : \
+			TOP_PRIORITY )
+
 /*
  * make query tree from plain view of query
  */
@@ -160,7 +166,8 @@ clean_NOT_intree(NODE *node)
 	{
 		NODE	   *res = node;
 
-		Assert(node->valnode->qoperator.oper == OP_AND);
+		Assert(node->valnode->qoperator.oper == OP_AND ||
+			   node->valnode->qoperator.oper == OP_PHRASE);
 
 		node->left = clean_NOT_intree(node->left);
 		node->right = clean_NOT_intree(node->right);
@@ -212,17 +219,19 @@ clean_NOT(QueryItem *ptr, int *len)
 #define V_STOP		3			/* the expression is a stop word */
 
 /*
- * Clean query tree from values which is always in
- * text (stopword)
+ * Remove QI_VALSTOP (stopword nodes) from query tree.
  */
 static NODE *
-clean_fakeval_intree(NODE *node, char *result)
+clean_fakeval_intree(NODE *node, char *result, int *adddistance)
 {
-	char		lresult = V_UNKNOWN,
-				rresult = V_UNKNOWN;
+	char	lresult = V_UNKNOWN,
+			rresult = V_UNKNOWN;
 
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
+
+	if (adddistance)
+		*adddistance = 0;
 
 	if (node->valnode->type == QI_VAL)
 		return node;
@@ -237,7 +246,7 @@ clean_fakeval_intree(NODE *node, char *result)
 
 	if (node->valnode->qoperator.oper == OP_NOT)
 	{
-		node->right = clean_fakeval_intree(node->right, &rresult);
+		node->right = clean_fakeval_intree(node->right, &rresult, NULL);
 		if (!node->right)
 		{
 			*result = V_STOP;
@@ -247,13 +256,30 @@ clean_fakeval_intree(NODE *node, char *result)
 	}
 	else
 	{
-		NODE	   *res = node;
+		NODE   *res = node;
+		int		ndistance, ldistance = 0, rdistance = 0;
 
-		node->left = clean_fakeval_intree(node->left, &lresult);
-		node->right = clean_fakeval_intree(node->right, &rresult);
+		ndistance = (node->valnode->qoperator.oper == OP_PHRASE) ?
+						node->valnode->qoperator.distance :
+						0;
+
+		node->left  = clean_fakeval_intree(node->left,
+										   &lresult,
+										   ndistance ? &ldistance : NULL);
+
+		node->right = clean_fakeval_intree(node->right,
+										   &rresult,
+										   ndistance ? &rdistance : NULL);
+
+		/*
+		 * ndistance, ldistance and rdistance are greater than zero
+		 * if their corresponding nodes are OP_PHRASE
+		 */
 
 		if (lresult == V_STOP && rresult == V_STOP)
 		{
+			if (adddistance && ndistance)
+				*adddistance = ldistance + ndistance + rdistance;
 			freetree(node);
 			*result = V_STOP;
 			return NULL;
@@ -261,33 +287,333 @@ clean_fakeval_intree(NODE *node, char *result)
 		else if (lresult == V_STOP)
 		{
 			res = node->right;
+			/*
+			 * propagate distance from current node to the
+			 * right upper subtree.
+			 */
+			if (adddistance && ndistance)
+				*adddistance = rdistance;
 			pfree(node);
 		}
 		else if (rresult == V_STOP)
 		{
 			res = node->left;
+			/*
+			 * propagate distance from current node to the upper tree.
+			 */
+			if (adddistance && ndistance)
+				*adddistance = ndistance + ldistance;
 			pfree(node);
 		}
+		else if (ndistance)
+		{
+			node->valnode->qoperator.distance += ldistance;
+			if (adddistance)
+				*adddistance = 0;
+		}
+		else if (adddistance)
+		{
+			*adddistance = 0;
+		}
+
 		return res;
 	}
 	return node;
 }
 
-QueryItem *
-clean_fakeval(QueryItem *ptr, int *len)
+static NODE *
+copyNODE(NODE *node)
 {
-	NODE	   *root = maketree(ptr);
-	char		result = V_UNKNOWN;
-	NODE	   *resroot;
+	NODE *cnode = palloc(sizeof(NODE));
 
-	resroot = clean_fakeval_intree(root, &result);
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
+	cnode->valnode = palloc(sizeof(QueryItem));
+	*(cnode->valnode) = *(node->valnode);
+
+	if (node->valnode->type == QI_OPR)
+	{
+		cnode->right = copyNODE(node->right);
+		if (node->valnode->qoperator.oper != OP_NOT)
+			cnode->left = copyNODE(node->left);
+	}
+
+	return cnode;
+}
+
+static NODE *
+makeNODE(int8 op, NODE *left, NODE *right)
+{
+	NODE *node = palloc(sizeof(NODE));
+
+	node->valnode = palloc(sizeof(QueryItem));
+
+	node->valnode->qoperator.type = QI_OPR;
+	node->valnode->qoperator.oper = op;
+
+	node->left = left;
+	node->right = right;
+
+	return node;
+}
+
+/*
+ * Move operation with high priority to the leaves. This guarantees
+ * that the phrase operator will be near the bottom of the tree.
+ * An idea behind is do not store position of lexemes during execution
+ * of ordinary operations (AND, OR, NOT) because it could be expensive.
+ * Actual transformation will be performed only on subtrees under the
+ * <-> (<n>) operation since it's needed solely for the phrase operator.
+ *
+ * Rules:
+ *	  a	 <->  (b | c)	=>	(a <-> b)  |   (a <-> c)
+ *   (a | b)  <->	 c	   =>	(a <-> c)  |   (b <-> c)
+ *	  a	 <->	!b	   =>		a	  &  !(a <-> b)
+ *	 !a	 <->	 b	   =>		b	  &  !(a <-> b)
+ *
+ * Warnings for readers:
+ *		  a <-> b	   !=	   b <-> a
+ *
+ *	  a <n> (b <n> c)   !=   (a <n> b) <n> c since the phrase lengths are:
+ *			 n					2n-1
+ */
+static NODE *
+normalize_phrase_tree(NODE *node)
+{
+	/* there should be no stop words at this point */
+	Assert(node->valnode->type != QI_VALSTOP);
+
+	if (node->valnode->type == QI_VAL)
+		return node;
+
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
+	Assert(node->valnode->type == QI_OPR);
+
+	if (node->valnode->qoperator.oper == OP_NOT)
+	{
+		/* eliminate NOT sequence */
+		while (node->valnode->type == QI_OPR &&
+			   node->valnode->qoperator.oper == node->right->valnode->qoperator.oper)
+		{
+			node = node->right->right;
+		}
+
+		node->right = normalize_phrase_tree(node->right);
+	}
+	else if (node->valnode->qoperator.oper == OP_PHRASE)
+	{
+		int16	 distance;
+		NODE	*X;
+
+		node->left = normalize_phrase_tree(node->left);
+		node->right = normalize_phrase_tree(node->right);
+
+		if (NODE_PRIORITY(node) <= NODE_PRIORITY(node->right) &&
+			NODE_PRIORITY(node) <= NODE_PRIORITY(node->left))
+				return node;
+
+		/*
+		 * We can't swap left-right and works only with left child
+		 * because of a <-> b  !=  b <-> a
+		 */
+
+		distance = node->valnode->qoperator.distance;
+
+		if (node->right->valnode->type == QI_OPR)
+		{
+			switch (node->right->valnode->qoperator.oper)
+			{
+				case OP_AND:
+					/* a <-> (b & c)  =>  (a <-> b) & (a <-> c) */
+					node = makeNODE(OP_AND,
+									makeNODE(OP_PHRASE,
+											 node->left,
+											 node->right->left),
+									makeNODE(OP_PHRASE,
+											 copyNODE(node->left),
+											 node->right->right));
+					node->left->valnode->qoperator.distance =
+						node->right->valnode->qoperator.distance = distance;
+					break;
+				case OP_OR:
+					/* a <-> (b | c)  =>  (a <-> b) | (a <-> c) */
+					node = makeNODE(OP_OR,
+									makeNODE(OP_PHRASE,
+											 node->left,
+											 node->right->left),
+									makeNODE(OP_PHRASE,
+											 copyNODE(node->left),
+											 node->right->right));
+					node->left->valnode->qoperator.distance =
+						node->right->valnode->qoperator.distance = distance;
+					break;
+				case OP_NOT:
+					/* a <-> !b  =>  a & !(a <-> b) */
+					X = node->right;
+					node->right = node->right->right;
+					X->right = node;
+					node = makeNODE(OP_AND,
+									copyNODE(node->left),
+									X);
+					break;
+				case OP_PHRASE:
+					/* no-op */
+					break;
+				default:
+					elog(ERROR,"Wrong type of tsquery node: %d",
+								node->right->valnode->qoperator.oper);
+			}
+		}
+
+		if (node->left->valnode->type == QI_OPR &&
+			node->valnode->qoperator.oper == OP_PHRASE)
+		{
+			/*
+			 * if the node is still OP_PHRASE, check the left subtree,
+			 * otherwise the whole node will be transformed later.
+			 */
+			switch(node->left->valnode->qoperator.oper)
+			{
+				case OP_AND:
+					/*  (a & b) <-> c  =>  (a <-> c) & (b <-> c) */
+					node = makeNODE(OP_AND,
+									makeNODE(OP_PHRASE,
+											 node->left->left,
+											 node->right),
+									makeNODE(OP_PHRASE,
+											 node->left->right,
+											 copyNODE(node->right)));
+					node->left->valnode->qoperator.distance =
+						node->right->valnode->qoperator.distance = distance;
+					break;
+				case OP_OR:
+					/* (a | b) <-> c  =>  (a <-> c) | (b <-> c) */
+					node = makeNODE(OP_OR,
+									makeNODE(OP_PHRASE,
+											 node->left->left,
+											 node->right),
+									makeNODE(OP_PHRASE,
+											 node->left->right,
+											 copyNODE(node->right)));
+					node->left->valnode->qoperator.distance =
+						node->right->valnode->qoperator.distance = distance;
+					break;
+				case OP_NOT:
+					/* !a <-> b  =>  b & !(a <-> b) */
+					X = node->left;
+					node->left = node->left->right;
+					X->right = node;
+					node = makeNODE(OP_AND,
+									X,
+									copyNODE(node->right));
+					break;
+				case OP_PHRASE:
+					/* no-op */
+					break;
+				default:
+					elog(ERROR,"Wrong type of tsquery node: %d",
+								node->left->valnode->qoperator.oper);
+			}
+		}
+
+		/* continue transformation */
+		node = normalize_phrase_tree(node);
+	}
+	else /* AND or OR */
+	{
+		node->left = normalize_phrase_tree(node->left);
+		node->right = normalize_phrase_tree(node->right);
+	}
+
+	return node;
+}
+
+/*
+ * Number of elements in query tree
+ */
+static int32
+calcstrlen(NODE *node)
+{
+	int32	size = 0;
+
+	if (node->valnode->type == QI_VAL)
+	{
+		size = node->valnode->qoperand.length + 1;
+	}
+	else
+	{
+		Assert(node->valnode->type == QI_OPR);
+
+		size = calcstrlen(node->right);
+		if (node->valnode->qoperator.oper != OP_NOT)
+			size += calcstrlen(node->left);
+	}
+
+	return size;
+}
+
+TSQuery
+cleanup_fakeval_and_phrase(TSQuery in)
+{
+	int32		len,
+				lenstr,
+				commonlen,
+				i;
+	NODE	   *root;
+	char		result = V_UNKNOWN;
+	TSQuery		out;
+	QueryItem  *items;
+	char	   *operands;
+
+	if (in->size == 0)
+		return in;
+
+	/* eliminate stop words */
+	root = clean_fakeval_intree(maketree(GETQUERY(in)), &result, NULL);
 	if (result != V_UNKNOWN)
 	{
 		ereport(NOTICE,
 				(errmsg("text-search query contains only stop words or doesn't contain lexemes, ignored")));
-		*len = 0;
-		return NULL;
+		out = palloc(HDRSIZETQ);
+		out->size = 0;
+		SET_VARSIZE(out, HDRSIZETQ);
+		return out;
 	}
 
-	return plaintree(resroot, len);
+	/* push OP_PHRASE nodes down */
+	root = normalize_phrase_tree(root);
+
+	/*
+	 * Build TSQuery from plain view
+	 */
+
+	lenstr = calcstrlen(root);
+	items = plaintree(root, &len);
+	commonlen = COMPUTESIZE(len, lenstr);
+
+	out = palloc(commonlen);
+	SET_VARSIZE(out, commonlen);
+	out->size = len;
+
+	memcpy(GETQUERY(out), items, len * sizeof(QueryItem));
+
+	items = GETQUERY(out);
+	operands = GETOPERAND(out);
+	for (i = 0; i < out->size; i++)
+	{
+		QueryOperand *op = (QueryOperand *) &items[i];
+
+		if (op->type != QI_VAL)
+			continue;
+
+		memcpy(operands, GETOPERAND(in) + op->distance, op->length);
+		operands[op->length] = '\0';
+		op->distance = operands - GETOPERAND(out);
+		operands += op->length + 1;
+	}
+
+	return out;
 }

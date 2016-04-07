@@ -27,7 +27,7 @@ tsquery_numnode(PG_FUNCTION_ARGS)
 }
 
 static QTNode *
-join_tsqueries(TSQuery a, TSQuery b, int8 operator)
+join_tsqueries(TSQuery a, TSQuery b, int8 operator, uint16 distance)
 {
 	QTNode	   *res = (QTNode *) palloc0(sizeof(QTNode));
 
@@ -36,6 +36,8 @@ join_tsqueries(TSQuery a, TSQuery b, int8 operator)
 	res->valnode = (QueryItem *) palloc0(sizeof(QueryItem));
 	res->valnode->type = QI_OPR;
 	res->valnode->qoperator.oper = operator;
+	if (operator == OP_PHRASE)
+		res->valnode->qoperator.distance = distance;
 
 	res->child = (QTNode **) palloc0(sizeof(QTNode *) * 2);
 	res->child[0] = QT2QTN(GETQUERY(b), GETOPERAND(b));
@@ -64,7 +66,7 @@ tsquery_and(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b, OP_AND);
+	res = join_tsqueries(a, b, OP_AND, 0);
 
 	query = QTN2QT(res);
 
@@ -94,7 +96,7 @@ tsquery_or(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b, OP_OR);
+	res = join_tsqueries(a, b, OP_OR, 0);
 
 	query = QTN2QT(res);
 
@@ -103,6 +105,52 @@ tsquery_or(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(b, 1);
 
 	PG_RETURN_POINTER(query);
+}
+
+Datum
+tsquery_phrase_distance(PG_FUNCTION_ARGS)
+{
+	TSQuery		a = PG_GETARG_TSQUERY_COPY(0);
+	TSQuery		b = PG_GETARG_TSQUERY_COPY(1);
+	QTNode	   *res;
+	TSQuery		query;
+	int32 		distance = PG_GETARG_INT32(2);
+
+	if (distance < 0 || distance > MAXENTRYPOS)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("distance in phrase operator should be non-negative and less than %d",
+					    MAXENTRYPOS)));
+	if (a->size == 0)
+	{
+		PG_FREE_IF_COPY(a, 1);
+		PG_RETURN_POINTER(b);
+	}
+	else if (b->size == 0)
+	{
+		PG_FREE_IF_COPY(b, 1);
+		PG_RETURN_POINTER(a);
+	}
+
+	res = join_tsqueries(a, b, OP_PHRASE, (uint16) distance);
+
+	query = QTN2QT(res);
+
+	QTNFree(res);
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+
+	PG_RETURN_POINTER(cleanup_fakeval_and_phrase(query));
+}
+
+Datum
+tsquery_phrase(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_POINTER(DirectFunctionCall3(
+							tsquery_phrase_distance,
+							PG_GETARG_DATUM(0),
+							PG_GETARG_DATUM(1),
+							Int32GetDatum(1)));
 }
 
 Datum

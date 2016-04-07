@@ -28,7 +28,7 @@ typedef struct
 
 
 /* Compare two WordEntryPos values for qsort */
-static int
+int
 comparePos(const void *a, const void *b)
 {
 	int			apos = WEP_GETPOS(*(const WordEntryPos *) a);

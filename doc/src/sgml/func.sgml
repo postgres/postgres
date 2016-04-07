@@ -9128,6 +9128,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal>!'cat'</literal></entry>
        </row>
        <row>
+        <entry> <literal>&lt;-&gt;</literal> </entry>
+        <entry><type>tsquery</> followed by <type>tsquery</></entry>
+        <entry><literal>to_tsquery('fat') &lt;-&gt; to_tsquery('rat')</literal></entry>
+        <entry><literal>'fat' &lt;-&gt; 'rat'</literal></entry>
+       </row>
+       <row>
         <entry> <literal>@&gt;</literal> </entry>
         <entry><type>tsquery</> contains another ?</entry>
         <entry><literal>'cat'::tsquery @&gt; 'cat &amp; rat'::tsquery</literal></entry>
@@ -9218,6 +9224,18 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>produce <type>tsquery</> ignoring punctuation</entry>
         <entry><literal>plainto_tsquery('english', 'The Fat Rats')</literal></entry>
         <entry><literal>'fat' &amp; 'rat'</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>phraseto_tsquery</primary>
+         </indexterm>
+         <literal><function>phraseto_tsquery(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</function></literal>
+        </entry>
+        <entry><type>tsquery</type></entry>
+        <entry>produce <type>tsquery</> ignoring punctuation</entry>
+        <entry><literal>phraseto_tsquery('english', 'The Fat Rats')</literal></entry>
+        <entry><literal>'fat' &lt;-&gt; 'rat'</literal></entry>
        </row>
        <row>
         <entry>
@@ -9420,6 +9438,27 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>replace using targets and substitutes from a <command>SELECT</> command</entry>
         <entry><literal>SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases')</literal></entry>
         <entry><literal>'b' &amp; ( 'foo' | 'bar' )</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>tsquery_phrase</primary>
+         </indexterm>
+         <literal><function>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</>)</function></literal>
+        </entry>
+        <entry><type>tsquery</type></entry>
+        <entry>implementation of <literal>&lt;-&gt;</> (FOLLOWED BY) operator</entry>
+        <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'))</literal></entry>
+        <entry><literal>'fat' &lt;-&gt; 'cat'</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal><function>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">distance</replaceable> <type>integer</>)</function></literal>
+        </entry>
+        <entry><type>tsquery</type></entry>
+        <entry>phrase-concatenate with distance</entry>
+        <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10)</literal></entry>
+        <entry><literal>'fat' &lt;10&gt; 'cat'</literal></entry>
        </row>
        <row>
         <entry>

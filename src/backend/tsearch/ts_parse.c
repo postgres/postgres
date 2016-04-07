@@ -454,7 +454,7 @@ hladdword(HeadlineParsedText *prs, char *buf, int buflen, int type)
 }
 
 static void
-hlfinditem(HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
+hlfinditem(HeadlineParsedText *prs, TSQuery query, int32 pos, char *buf, int buflen)
 {
 	int			i;
 	QueryItem  *item = GETQUERY(query);
@@ -467,6 +467,7 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
 	}
 
 	word = &(prs->words[prs->curwords - 1]);
+	word->pos = LIMITPOS(pos);
 	for (i = 0; i < query->size; i++)
 	{
 		if (item->type == QI_VAL &&
@@ -492,17 +493,20 @@ addHLParsedLex(HeadlineParsedText *prs, TSQuery query, ParsedLex *lexs, TSLexeme
 {
 	ParsedLex  *tmplexs;
 	TSLexeme   *ptr;
+	int32		savedpos;
 
 	while (lexs)
 	{
-
 		if (lexs->type > 0)
 			hladdword(prs, lexs->lemm, lexs->lenlemm, lexs->type);
 
 		ptr = norms;
+		savedpos = prs->vectorpos;
 		while (ptr && ptr->lexeme)
 		{
-			hlfinditem(prs, query, ptr->lexeme, strlen(ptr->lexeme));
+			if (ptr->flags & TSL_ADDPOS)
+				savedpos++;
+			hlfinditem(prs, query, savedpos, ptr->lexeme, strlen(ptr->lexeme));
 			ptr++;
 		}
 
@@ -516,6 +520,8 @@ addHLParsedLex(HeadlineParsedText *prs, TSQuery query, ParsedLex *lexs, TSLexeme
 		ptr = norms;
 		while (ptr->lexeme)
 		{
+			if (ptr->flags & TSL_ADDPOS)
+				prs->vectorpos++;
 			pfree(ptr->lexeme);
 			ptr++;
 		}
@@ -575,7 +581,10 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 		do
 		{
 			if ((norms = LexizeExec(&ldata, &lexs)) != NULL)
+			{
+				prs->vectorpos++;
 				addHLParsedLex(prs, query, lexs, norms);
+			}
 			else
 				addHLParsedLex(prs, query, lexs, NULL);
 		} while (norms);
