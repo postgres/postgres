@@ -169,10 +169,10 @@ SELECT to_tsquery('english', '2 <-> (s <-> (a <-> 1))');
 SELECT to_tsquery('english', '2 <-> ((1 <-> a) <-> s)');
 SELECT to_tsquery('english', '2 <-> (s <-> (1 <-> a))');
 
-SELECT to_tsquery('foo <-> (a <-> (the <-> bar))');
-SELECT to_tsquery('((foo <-> a) <-> the) <-> bar');
-SELECT to_tsquery('foo <-> a <-> the <-> bar');
-SELECT phraseto_tsquery('PostgreSQL can be extended by the user in many ways');
+SELECT to_tsquery('english', 'foo <-> (a <-> (the <-> bar))');
+SELECT to_tsquery('english', '((foo <-> a) <-> the) <-> bar');
+SELECT to_tsquery('english', 'foo <-> a <-> the <-> bar');
+SELECT phraseto_tsquery('english', 'PostgreSQL can be extended by the user in many ways');
 
 
 SELECT ts_rank_cd(to_tsvector('english', '
@@ -485,5 +485,5 @@ create temp table phrase_index_test(fts tsvector);
 insert into phrase_index_test values('A fat cat has just eaten a rat.');
 create index phrase_index_test_idx on phrase_index_test using gin(fts);
 set enable_seqscan = off;
-select * from phrase_index_test where fts @@ phraseto_tsquery('fat cat');
+select * from phrase_index_test where fts @@ phraseto_tsquery('english', 'fat cat');
 set enable_seqscan = on;
