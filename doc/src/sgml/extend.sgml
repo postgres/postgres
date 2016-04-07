@@ -339,6 +339,27 @@
    </para>
 
    <para>
+    The extension script may set privileges on objects which are part of the
+    extension via <command>GRANT</command> and <command>REVOKE</command>
+    statements.  The final set of privileges for each object (if any are set)
+    will be stored in the
+    <link linkend="catalog-pg-init-privs"><structname>pg_init_privs</structname></link>
+    system catalog.  When <application>pg_dump</> is used, the
+    <command>CREATE EXTENSION</> command will be included in the dump, followed
+    by the set of <command>GRANT</command> and <command>REVOKE</command>
+    statements necessary to set the privileges on the objects to what they were
+    at the time the dump was taken.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> does not currently support extension scripts
+    issuing <command>CREATE POLICY</command> or <command>SECURITY LABEL</command>
+    statements.  These are expected to be set after the extension has been
+    created.  All RLS policies and security labels on extension objects will be
+    included in dumps created by <application>pg_dump</>.
+   </para>
+
+   <para>
     The extension mechanism also has provisions for packaging modification
     scripts that adjust the definitions of the SQL objects contained in an
     extension.  For example, if version 1.1 of an extension adds one function

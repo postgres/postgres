@@ -113,6 +113,9 @@ typedef struct _namespaceInfo
 	DumpableObject dobj;
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *nspacl;
+	char	   *rnspacl;
+	char	   *initnspacl;
+	char	   *initrnspacl;
 } NamespaceInfo;
 
 typedef struct _extensionInfo
@@ -135,6 +138,9 @@ typedef struct _typeInfo
 	 */
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *typacl;
+	char	   *rtypacl;
+	char	   *inittypacl;
+	char	   *initrtypacl;
 	Oid			typelem;
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
@@ -164,6 +170,9 @@ typedef struct _funcInfo
 	Oid		   *argtypes;
 	Oid			prorettype;
 	char	   *proacl;
+	char	   *rproacl;
+	char	   *initproacl;
+	char	   *initrproacl;
 } FuncInfo;
 
 /* AggInfo is a superset of FuncInfo */
@@ -220,6 +229,9 @@ typedef struct _tableInfo
 	DumpableObject dobj;
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *relacl;
+	char	   *rrelacl;
+	char	   *initrelacl;
+	char	   *initrrelacl;
 	char		relkind;
 	char		relpersistence; /* relation persistence */
 	bool		relispopulated; /* relation is populated */
@@ -388,6 +400,9 @@ typedef struct _procLangInfo
 	Oid			laninline;
 	Oid			lanvalidator;
 	char	   *lanacl;
+	char	   *rlanacl;
+	char	   *initlanacl;
+	char	   *initrlanacl;
 	char	   *lanowner;		/* name of owner, or empty string */
 } ProcLangInfo;
 
@@ -457,6 +472,9 @@ typedef struct _fdwInfo
 	char	   *fdwvalidator;
 	char	   *fdwoptions;
 	char	   *fdwacl;
+	char	   *rfdwacl;
+	char	   *initfdwacl;
+	char	   *initrfdwacl;
 } FdwInfo;
 
 typedef struct _foreignServerInfo
@@ -467,6 +485,9 @@ typedef struct _foreignServerInfo
 	char	   *srvtype;
 	char	   *srvversion;
 	char	   *srvacl;
+	char	   *rsrvacl;
+	char	   *initsrvacl;
+	char	   *initrsrvacl;
 	char	   *srvoptions;
 } ForeignServerInfo;
 
@@ -483,6 +504,9 @@ typedef struct _blobInfo
 	DumpableObject dobj;
 	char	   *rolname;
 	char	   *blobacl;
+	char	   *rblobacl;
+	char	   *initblobacl;
+	char	   *initrblobacl;
 } BlobInfo;
 
 /*

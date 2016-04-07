@@ -22,6 +22,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/xact.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -85,6 +86,12 @@ typedef struct
 	DropBehavior behavior;
 } InternalDefaultACL;
 
+/*
+ * When performing a binary-upgrade, pg_dump will call a function to set
+ * this variable to let us know that we need to populate the pg_init_privs
+ * table for the GRANT/REVOKE commands while this variable is set to true.
+ */
+bool		binary_upgrade_record_init_privs = false;
 
 static void ExecGrantStmt_oids(InternalGrant *istmt);
 static void ExecGrant_Relation(InternalGrant *grantStmt);
@@ -5237,7 +5244,15 @@ recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid, Acl *new_acl)
 	HeapTuple	tuple;
 	HeapTuple	oldtuple;
 
-	if (!creating_extension)
+	/*
+	 * Generally, we only record the initial privileges when an extension is
+	 * being created, but because we don't actually use CREATE EXTENSION
+	 * during binary upgrades with pg_upgrade, there is a variable to let us
+	 * know that the GRANT and REVOKE statements being issued, while this
+	 * variable is true, are for the initial privileges of the extension
+	 * object and therefore we need to record them.
+	 */
+	if (!creating_extension && !binary_upgrade_record_init_privs)
 		return;
 
 	relation = heap_open(InitPrivsRelationId, RowExclusiveLock);

@@ -5245,6 +5245,8 @@ DATA(insert OID = 3590 ( binary_upgrade_set_next_pg_authid_oid PGNSP PGUID	12 1 
 DESCR("for use by pg_upgrade");
 DATA(insert OID = 3591 ( binary_upgrade_create_empty_extension PGNSP PGUID	12 1 0 0 0 f f f f f f v r 7 0 2278 "25 25 16 25 1028 1009 1009" _null_ _null_ _null_ _null_ _null_ binary_upgrade_create_empty_extension _null_ _null_ _null_ ));
 DESCR("for use by pg_upgrade");
+DATA(insert OID = 4083 ( binary_upgrade_set_record_init_privs PGNSP PGUID	12 1 0 0 0 f f f f t f v r 1 0 2278 "16" _null_ _null_ _null_ _null_ _null_ binary_upgrade_set_record_init_privs _null_ _null_ _null_ ));
+DESCR("for use by pg_upgrade");
 
 /* replication/origin.h */
 DATA(insert OID = 6003 ( pg_replication_origin_create PGNSP PGUID 12 1 0 0 0 f f f f t f v u 1 0 26 "25" _null_ _null_ _null_ _null_ _null_ pg_replication_origin_create _null_ _null_ _null_ ));

@@ -105,6 +105,7 @@ test: gin
 test: gist
 test: spgist
 test: privileges
+test: init_privs
 test: security_label
 test: collate
 test: matview

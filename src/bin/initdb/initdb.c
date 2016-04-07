@@ -2002,7 +2002,11 @@ setup_privileges(FILE *cmdfd)
 	char	  **priv_lines;
 	static char *privileges_setup[] = {
 		"UPDATE pg_class "
-		"  SET relacl = E'{\"=r/\\\\\"$POSTGRES_SUPERUSERNAME\\\\\"\"}' "
+		"  SET relacl = (SELECT array_agg(a.acl) FROM "
+		" (SELECT E'=r/\"$POSTGRES_SUPERUSERNAME\"' as acl "
+		"  UNION SELECT unnest(pg_catalog.acldefault("
+		"    CASE WHEN relkind = 'S' THEN 's' ELSE 'r' END::\"char\",10::oid))"
+		" ) as a) "
 		"  WHERE relkind IN ('r', 'v', 'm', 'S') AND relacl IS NULL;\n\n",
 		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n\n",
 		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n\n",
