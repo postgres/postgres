@@ -179,6 +179,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-init-privs"><structname>pg_init_privs</structname></link></entry>
+      <entry>object initial privileges</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-language"><structname>pg_language</structname></link></entry>
       <entry>languages for writing functions</entry>
      </row>
@@ -3779,6 +3784,109 @@
        inherited columns are to be arranged.  The count starts at 1.
       </entry>
      </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="catalog-pg-init-privs">
+  <title><structname>pg_init_privs</structname></title>
+
+  <indexterm zone="catalog-pg-init-privs">
+   <primary>pg_init_privs</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_init_privs</> records information about
+   the initial privileges of objects in the system.  There is one entry
+   for each object in the database which has a non-default (non-NULL)
+   initial set of privileges.
+  </para>
+
+  <para>
+   Objects can have initial privileges either by having those privileges set
+   when the system is initialized (by <application>initdb</>) or when the
+   object is created during a <command>CREATE EXTENSION</command> and the
+   extension script sets initial privileges using the <command>GRANT</command>
+   system.  Note that the system will automatically handle recording of the
+   privileges during the extension script and that extension authors need
+   only use the <command>GRANT</command> and <command>REVOKE</command>
+   statements in their script to have the privileges recorded.  The
+   <literal>privtype</literal> column indicates if the initial privilege was
+   set by <application>initdb</> or during a
+   <command>CREATE EXTENSION</command> command.
+  </para>
+
+  <para>
+   Objects which have initial privileges set by <application>initdb</> will
+   have entries where <literal>privtype</literal> is
+   <literal>'i'</literal>, while objects which have initial privileges set
+   by <command>CREATE EXTENSION</command> will have entries where
+   <literal>privtype</literal> is <literal>'e'</literal>.
+  </para>
+
+  <table>
+   <title><structname>pg_inherits</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>objoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>any OID column</entry>
+      <entry>The OID of the specific object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>classoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the system catalog the object is in</entry>
+     </row>
+
+     <row>
+      <entry><structfield>objsubid</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       For a table column, this is the column number (the
+       <structfield>objoid</> and <structfield>classoid</> refer to the
+       table itself).  For all other object types, this column is
+       zero.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>privtype</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       A code defining the type of initial privilege of this object; see text
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>initprivs</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       The initial access privileges; see
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
+       for details
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

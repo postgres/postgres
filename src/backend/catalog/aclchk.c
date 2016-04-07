@@ -35,6 +35,7 @@
 #include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_init_privs.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
@@ -49,6 +50,7 @@
 #include "catalog/pg_ts_dict.h"
 #include "commands/dbcommands.h"
 #include "commands/event_trigger.h"
+#include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "foreign/foreign.h"
@@ -119,6 +121,8 @@ static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
 						 AttrNumber att_number, const char *colname);
 static AclMode pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum,
 		   Oid roleid, AclMode mask, AclMaskHow how);
+static void recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
+						Acl *new_acl);
 
 
 #ifdef ACLDEBUG
@@ -1678,6 +1682,10 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(attRelation, newtuple);
 
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(relOid, RelationRelationId, attnum,
+								ACL_NUM(new_acl) > 0 ? new_acl : NULL);
+
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(RelationRelationId, relOid, attnum,
 							  ownerId,
@@ -1938,6 +1946,9 @@ ExecGrant_Relation(InternalGrant *istmt)
 
 			/* keep the catalog indexes up to date */
 			CatalogUpdateIndexes(relation, newtuple);
+
+			/* Update initial privileges for extensions */
+			recordExtensionInitPriv(relOid, RelationRelationId, 0, new_acl);
 
 			/* Update the shared dependency ACL info */
 			updateAclDependencies(RelationRelationId, relOid, 0,
@@ -2254,6 +2265,10 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(fdwid, ForeignDataWrapperRelationId, 0,
+								new_acl);
+
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ForeignDataWrapperRelationId,
 							  HeapTupleGetOid(tuple), 0,
@@ -2379,6 +2394,9 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(srvid, ForeignServerRelationId, 0, new_acl);
+
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ForeignServerRelationId,
 							  HeapTupleGetOid(tuple), 0,
@@ -2502,6 +2520,9 @@ ExecGrant_Function(InternalGrant *istmt)
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(funcId, ProcedureRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ProcedureRelationId, funcId, 0,
@@ -2632,6 +2653,9 @@ ExecGrant_Language(InternalGrant *istmt)
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(langId, LanguageRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LanguageRelationId, HeapTupleGetOid(tuple), 0,
@@ -2772,6 +2796,9 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(loid, LargeObjectRelationId, 0, new_acl);
+
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LargeObjectRelationId,
 							  HeapTupleGetOid(tuple), 0,
@@ -2896,6 +2923,9 @@ ExecGrant_Namespace(InternalGrant *istmt)
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(nspid, NamespaceRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(NamespaceRelationId, HeapTupleGetOid(tuple), 0,
@@ -3157,6 +3187,9 @@ ExecGrant_Type(InternalGrant *istmt)
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update initial privileges for extensions */
+		recordExtensionInitPriv(typId, TypeRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(TypeRelationId, typId, 0,
@@ -5173,4 +5206,120 @@ get_user_default_acl(GrantObjectType objtype, Oid ownerId, Oid nsp_oid)
 		result = NULL;
 
 	return result;
+}
+
+/*
+ * Record initial ACL for an extension object
+ *
+ * This will perform a wholesale replacement of the entire ACL for the object
+ * passed in, therefore be sure to pass in the complete new ACL to use.
+ *
+ * Can be called at any time, we check if 'creating_extension' is set and, if
+ * not, exit immediately.
+ *
+ * Pass in the object OID, the OID of the class (the OID of the table which
+ * the object is defined in) and the 'sub' id of the object (objsubid), if
+ * any.  If there is no 'sub' id (they are currently only used for columns of
+ * tables) then pass in '0'.  Finally, pass in the complete ACL to store.
+ *
+ * If an ACL already exists for this object/sub-object then we will replace
+ * it with what is passed in.
+ *
+ * Passing in NULL for 'new_acl' will result in the entry for the object being
+ * removed, if one is found.
+ */
+static void
+recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid, Acl *new_acl)
+{
+	Relation	relation;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	HeapTuple	oldtuple;
+
+	if (!creating_extension)
+		return;
+
+	relation = heap_open(InitPrivsRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_init_privs_objoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objoid));
+	ScanKeyInit(&key[1],
+				Anum_pg_init_privs_classoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classoid));
+	ScanKeyInit(&key[2],
+				Anum_pg_init_privs_objsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(objsubid));
+
+	scan = systable_beginscan(relation, InitPrivsObjIndexId, true,
+							  NULL, 3, key);
+
+	/* There should exist only one entry or none. */
+	oldtuple = systable_getnext(scan);
+
+	systable_endscan(scan);
+
+	/* If we find an entry, update it with the latest ACL. */
+	if (HeapTupleIsValid(oldtuple))
+	{
+		Datum		values[Natts_pg_init_privs];
+		bool		nulls[Natts_pg_init_privs];
+		bool		replace[Natts_pg_init_privs];
+
+		/* If we have a new ACL to set, then update the row with it. */
+		if (new_acl)
+		{
+			MemSet(values, 0, sizeof(values));
+			MemSet(nulls, false, sizeof(nulls));
+			MemSet(replace, false, sizeof(replace));
+
+			values[Anum_pg_init_privs_privs - 1] = PointerGetDatum(new_acl);
+			replace[Anum_pg_init_privs_privs - 1] = true;
+
+			oldtuple = heap_modify_tuple(oldtuple, RelationGetDescr(relation),
+										 values, nulls, replace);
+
+			simple_heap_update(relation, &oldtuple->t_self, oldtuple);
+
+			/* keep the catalog indexes up to date */
+			CatalogUpdateIndexes(relation, oldtuple);
+		}
+		else
+			/* new_acl is NULL, so delete the entry we found. */
+			simple_heap_delete(relation, &oldtuple->t_self);
+	}
+	else
+	{
+		/* No entry found, so add it. */
+		Datum		values[Natts_pg_init_privs];
+		bool		nulls[Natts_pg_init_privs];
+
+		MemSet(nulls, false, sizeof(nulls));
+
+		values[Anum_pg_init_privs_objoid - 1] = ObjectIdGetDatum(objoid);
+		values[Anum_pg_init_privs_classoid - 1] = ObjectIdGetDatum(classoid);
+		values[Anum_pg_init_privs_objsubid - 1] = Int32GetDatum(objsubid);
+
+		/* This function only handles initial privileges of extensions */
+		values[Anum_pg_init_privs_privtype - 1] =
+			CharGetDatum(INITPRIVS_EXTENSION);
+
+		values[Anum_pg_init_privs_privs - 1] = PointerGetDatum(new_acl);
+
+		tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
+
+		simple_heap_insert(relation, tuple);
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, tuple);
+	}
+
+	/* prevent error when processing objects multiple times */
+	CommandCounterIncrement();
+
+	heap_close(relation, RowExclusiveLock);
 }
