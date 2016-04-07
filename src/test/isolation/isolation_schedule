@@ -1,3 +1,7 @@
+test: read-write-unique
+test: read-write-unique-2
+test: read-write-unique-3
+test: read-write-unique-4
 test: simple-write-skew
 test: receipt-report
 test: temporal-range-integrity

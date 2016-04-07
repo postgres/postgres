@@ -644,7 +644,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     first.  In <productname>PostgreSQL</productname> these locks do not
     cause any blocking and therefore can <emphasis>not</> play any part in
     causing a deadlock.  They are used to identify and flag dependencies
-    among concurrent serializable transactions which in certain combinations
+    among concurrent Serializable transactions which in certain combinations
     can lead to serialization anomalies.  In contrast, a Read Committed or
     Repeatable Read transaction which wants to ensure data consistency may
     need to take out a lock on an entire table, which could block other
@@ -679,12 +679,13 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
    <para>
     Consistent use of Serializable transactions can simplify development.
-    The guarantee that any set of concurrent serializable transactions will
-    have the same effect as if they were run one at a time means that if
-    you can demonstrate that a single transaction, as written, will do the
-    right thing when run by itself, you can have confidence that it will
-    do the right thing in any mix of serializable transactions, even without
-    any information about what those other transactions might do.  It is
+    The guarantee that any set of successfully committed concurrent
+    Serializable transactions will have the same effect as if they were run
+    one at a time means that if you can demonstrate that a single transaction,
+    as written, will do the right thing when run by itself, you can have
+    confidence that it will do the right thing in any mix of Serializable
+    transactions, even without any information about what those other
+    transactions might do, or it will not successfully commit.  It is
     important that an environment which uses this technique have a
     generalized way of handling serialization failures (which always return
     with a SQLSTATE value of '40001'), because it will be very hard to
@@ -696,6 +697,26 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     explicit locks and <literal>SELECT FOR UPDATE</> or <literal>SELECT FOR
     SHARE</>, Serializable transactions are the best performance choice
     for some environments.
+   </para>
+
+   <para>
+    While <productname>PostgreSQL</>'s Serializable transaction isolation
+    level only allows concurrent transactions to commit if it can prove there
+    is a serial order of execution that would produce the same effect, it
+    doesn't always prevent errors from being raised that would not occur in
+    true serial execution.  In particular, it is possible to see unique
+    constraint violations caused by conflicts with overlapping Serializable
+    transactions even after explicitly checking that the key isn't present
+    before attempting to insert it.  This can be avoided by making sure
+    that <emphasis>all</> Serializable transactions that insert potentially
+    conflicting keys explicitly check if they can do so first.  For example,
+    imagine an application that asks the user for a new key and then checks
+    that it doesn't exist already by trying to select it first, or generates
+    a new key by selecting the maximum existing key and adding one.  If some
+    Serializable transactions insert new keys directly without following this
+    protocol, unique constraints violations might be reported even in cases
+    where they could not occur in a serial execution of the concurrent
+    transactions.
    </para>
 
    <para>

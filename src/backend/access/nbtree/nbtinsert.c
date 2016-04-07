@@ -392,6 +392,14 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					}
 
 					/*
+					 * Check for a conflict-in as we would if we were going to
+					 * write to this page.  We aren't actually going to write,
+					 * but we want a chance to report SSI conflicts that would
+					 * otherwise be masked by this unique constraint violation.
+					 */
+					CheckForSerializableConflictIn(rel, NULL, buf);
+
+					/*
 					 * This is a definite conflict.  Break the tuple down into
 					 * datums and report the error.  But first, make sure we
 					 * release the buffer locks we're holding ---
