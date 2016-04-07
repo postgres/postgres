@@ -347,7 +347,8 @@ makeNODE(int8 op, NODE *left, NODE *right)
 {
 	NODE *node = palloc(sizeof(NODE));
 
-	node->valnode = palloc(sizeof(QueryItem));
+	/* zeroing allocation to prevent difference in unused bytes */
+	node->valnode = palloc0(sizeof(QueryItem));
 
 	node->valnode->qoperator.type = QI_OPR;
 	node->valnode->qoperator.oper = op;
