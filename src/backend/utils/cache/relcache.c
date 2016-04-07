@@ -2031,6 +2031,7 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 			FreeTupleDesc(relation->rd_att);
 	}
 	list_free(relation->rd_indexlist);
+	list_free(relation->rd_fkeylist);
 	bms_free(relation->rd_indexattr);
 	bms_free(relation->rd_keyattr);
 	bms_free(relation->rd_idattr);
@@ -3957,6 +3958,79 @@ RelationGetIndexList(Relation relation)
 }
 
 /*
+ * RelationGetFKeyList -- get a list of foreign key oids
+ *
+ * Use an index scan on pg_constraint to load in FK definitions,
+ * intended for use within the planner, not for enforcing FKs.
+ *
+ * Data is ordered by Oid, though this is not critical at this point
+ * since we do not lock the referenced relations.
+ */
+List *
+RelationGetFKeyList(Relation relation)
+{
+	Relation	conrel;
+	SysScanDesc conscan;
+	ScanKeyData skey;
+	HeapTuple	htup;
+	List	   *result;
+	List	   *oldlist;
+	MemoryContext oldcxt;
+
+	/* Quick exit if we already computed the list. */
+	if (relation->rd_fkeylist)
+		return list_copy(relation->rd_fkeylist);
+
+	/* Fast path if no FKs... if it doesn't have a trigger, it can't have a FK */
+	if (!relation->rd_rel->relhastriggers)
+		return NIL;
+	/*
+	 * We build the list we intend to return (in the caller's context) while
+	 * doing the scan.  After successfully completing the scan, we copy that
+	 * list into the relcache entry.  This avoids cache-context memory leakage
+	 * if we get some sort of error partway through.
+	 */
+	result = NIL;
+
+	/* Prepare to scan pg_constraint for entries having conrelid = this rel. */
+	ScanKeyInit(&skey,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
+
+	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
+								 NULL, 1, &skey);
+
+	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
+	{
+		Form_pg_constraint constraint = (Form_pg_constraint) GETSTRUCT(htup);
+
+		/* return only foreign keys */
+		if (constraint->contype != CONSTRAINT_FOREIGN)
+			continue;
+
+		/* Add FK's OID to result list in the proper order */
+		result = insert_ordered_oid(result, HeapTupleGetOid(htup));
+	}
+
+	systable_endscan(conscan);
+
+	heap_close(conrel, AccessShareLock);
+
+	/* Now save a copy of the completed list in the relcache entry. */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	oldlist = relation->rd_fkeylist;
+	relation->rd_fkeylist = list_copy(result);
+	MemoryContextSwitchTo(oldcxt);
+
+	/* Don't leak the old list, if there is one */
+	list_free(oldlist);
+
+	return result;
+}
+
+/*
  * insert_ordered_oid
  *		Insert a new Oid into a sorted list of Oids, preserving ordering
  *
@@ -4920,6 +4994,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_indexattr = NULL;
 		rel->rd_keyattr = NULL;
 		rel->rd_idattr = NULL;
+		rel->rd_fkeylist = NIL;
 		rel->rd_createSubid = InvalidSubTransactionId;
 		rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 		rel->rd_amcache = NULL;
