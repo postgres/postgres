@@ -248,14 +248,14 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 	if (GetTokenInformation(token, class, NULL, 0, &InfoBufferSize))
 	{
 		snprintf(errbuf, errsize,
-				 "could not get token information: got zero size\n");
+			 "could not get token information buffer size: got zero size\n");
 		return FALSE;
 	}
 
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		snprintf(errbuf, errsize,
-				 "could not get token information: error code %lu\n",
+			 "could not get token information buffer size: error code %lu\n",
 				 GetLastError());
 		return FALSE;
 	}

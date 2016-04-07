@@ -1242,8 +1242,8 @@ pg_SSPI_recvauth(Port *port)
 
 	if (!GetTokenInformation(token, TokenUser, NULL, 0, &retlen) && GetLastError() != 122)
 		ereport(ERROR,
-			(errmsg_internal("could not get token user size: error code %lu",
-							 GetLastError())));
+				(errmsg_internal("could not get token information buffer size: error code %lu",
+								 GetLastError())));
 
 	tokenuser = malloc(retlen);
 	if (tokenuser == NULL)
@@ -1252,8 +1252,8 @@ pg_SSPI_recvauth(Port *port)
 
 	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
 		ereport(ERROR,
-				(errmsg_internal("could not get token user: error code %lu",
-								 GetLastError())));
+		  (errmsg_internal("could not get token information: error code %lu",
+						   GetLastError())));
 
 	CloseHandle(token);
 
