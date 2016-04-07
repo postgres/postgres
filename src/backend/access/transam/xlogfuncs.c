@@ -66,6 +66,9 @@ nonexclusive_base_backup_cleanup(int code, Datum arg)
  * contains the user-supplied label string (typically this would be used
  * to tell where the backup dump will be stored) and the starting time and
  * starting WAL location for the dump.
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_start_backup(PG_FUNCTION_ARGS)
@@ -78,11 +81,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	DIR		   *dir;
 
 	backupidstr = text_to_cstring(backupid);
-
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		   errmsg("must be superuser or replication role to run a backup")));
 
 	if (exclusive_backup_running || nonexclusive_backup_running)
 		ereport(ERROR,
@@ -142,16 +140,14 @@ pg_start_backup(PG_FUNCTION_ARGS)
  * Note: this version is only called to stop an exclusive backup. The function
  *       pg_stop_backup_v2 (overloaded as pg_stop_backup in SQL) is called to
  *       stop non-exclusive backups.
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	stoppoint;
-
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		 (errmsg("must be superuser or replication role to run a backup"))));
 
 	if (nonexclusive_backup_running)
 		ereport(ERROR,
@@ -179,6 +175,9 @@ pg_stop_backup(PG_FUNCTION_ARGS)
  * Works the same as pg_stop_backup, except for non-exclusive backups it returns
  * the backup label and tablespace map files as text fields in as part of the
  * resultset.
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_stop_backup_v2(PG_FUNCTION_ARGS)
@@ -204,11 +203,6 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not " \
 						"allowed in this context")));
-
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser or replication role to run a backup"))));
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -285,16 +279,14 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 
 /*
  * pg_switch_xlog: switch to next xlog file
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_switch_xlog(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	switchpoint;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 (errmsg("must be superuser to switch transaction log files"))));
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -312,6 +304,9 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 
 /*
  * pg_create_restore_point: a named point for restore
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_create_restore_point(PG_FUNCTION_ARGS)
@@ -319,11 +314,6 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 	text	   *restore_name = PG_GETARG_TEXT_P(0);
 	char	   *restore_name_str;
 	XLogRecPtr	restorepoint;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to create a restore point"))));
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -546,15 +536,13 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 
 /*
  * pg_xlog_replay_pause - pause recovery now
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_xlog_replay_pause(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to control recovery"))));
-
 	if (!RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -568,15 +556,13 @@ pg_xlog_replay_pause(PG_FUNCTION_ARGS)
 
 /*
  * pg_xlog_replay_resume - resume recovery now
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_xlog_replay_resume(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to control recovery"))));
-
 	if (!RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

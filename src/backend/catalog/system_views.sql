@@ -1005,3 +1005,24 @@ RETURNS jsonb
 LANGUAGE INTERNAL
 STRICT IMMUTABLE
 AS 'jsonb_insert';
+
+-- The default permissions for functions mean that anyone can execute them.
+-- A number of functions shouldn't be executable by just anyone, but rather
+-- than use explicit 'superuser()' checks in those functions, we use the GRANT
+-- system to REVOKE access to those functions at initdb time.  Administrators
+-- can later change who can access these functions, or leave them as only
+-- available to superuser / cluster owner, if they choose.
+REVOKE EXECUTE ON FUNCTION pg_start_backup(text, boolean, boolean) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_stop_backup() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_stop_backup(boolean) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_create_restore_point(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_switch_xlog() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_xlog_replay_pause() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_xlog_replay_resume() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_rotate_logfile() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_reload_conf() FROM public;
+
+REVOKE EXECUTE ON FUNCTION pg_stat_reset() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_stat_reset_shared(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_table_counters(oid) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM public;

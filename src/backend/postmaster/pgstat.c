@@ -1217,6 +1217,9 @@ pgstat_drop_relation(Oid relid)
  * pgstat_reset_counters() -
  *
  *	Tell the statistics collector to reset counters for our database.
+ *
+ *	Permission checking for this function is managed through the normal
+ *	GRANT system.
  * ----------
  */
 void
@@ -1227,11 +1230,6 @@ pgstat_reset_counters(void)
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to reset statistics counters")));
-
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETCOUNTER);
 	msg.m_databaseid = MyDatabaseId;
 	pgstat_send(&msg, sizeof(msg));
@@ -1241,6 +1239,9 @@ pgstat_reset_counters(void)
  * pgstat_reset_shared_counters() -
  *
  *	Tell the statistics collector to reset cluster-wide shared counters.
+ *
+ *	Permission checking for this function is managed through the normal
+ *	GRANT system.
  * ----------
  */
 void
@@ -1250,11 +1251,6 @@ pgstat_reset_shared_counters(const char *target)
 
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to reset statistics counters")));
 
 	if (strcmp(target, "archiver") == 0)
 		msg.m_resettarget = RESET_ARCHIVER;
@@ -1274,6 +1270,9 @@ pgstat_reset_shared_counters(const char *target)
  * pgstat_reset_single_counter() -
  *
  *	Tell the statistics collector to reset a single counter.
+ *
+ *	Permission checking for this function is managed through the normal
+ *	GRANT system.
  * ----------
  */
 void
@@ -1283,11 +1282,6 @@ pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
 
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to reset statistics counters")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSINGLECOUNTER);
 	msg.m_databaseid = MyDatabaseId;

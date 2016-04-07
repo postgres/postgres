@@ -826,7 +826,9 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
    </listitem>
    <listitem>
     <para>
-     Connect to the database as a superuser and issue the command:
+     Connect to the database as a user with rights to run pg_start_backup
+     (superuser, or a user who has been granted EXECUTE on the function)
+     and issue the command:
 <programlisting>
 SELECT pg_start_backup('label');
 </programlisting>
@@ -877,7 +879,9 @@ SELECT pg_start_backup('label', true);
    </listitem>
    <listitem>
     <para>
-     Again connect to the database as a superuser, and issue the command:
+     Again connect to the database as a user with rights to run
+     pg_stop_backup (superuser, or a user who has been granted EXECUTE on
+     the function), and issue the command:
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>

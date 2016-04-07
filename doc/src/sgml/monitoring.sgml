@@ -2289,7 +2289,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry><type>void</type></entry>
       <entry>
        Reset all statistics counters for the current database to zero
-       (requires superuser privileges)
+       (requires superuser privileges by default, but EXECUTE for this
+       function can be granted to others.)
       </entry>
      </row>
 
@@ -2298,7 +2299,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry><type>void</type></entry>
       <entry>
        Reset some cluster-wide statistics counters to zero, depending on the
-       argument (requires superuser privileges).
+       argument (requires superuser privileges by default, but EXECUTE for
+       this functiion can be granted to others).
        Calling <literal>pg_stat_reset_shared('bgwriter')</> will zero all the
        counters shown in the <structname>pg_stat_bgwriter</> view.
        Calling <literal>pg_stat_reset_shared('archiver')</> will zero all the
@@ -2311,7 +2313,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry><type>void</type></entry>
       <entry>
        Reset statistics for a single table or index in the current database to
-       zero (requires superuser privileges)
+       zero (requires superuser privileges by default, but EXECUTE for this
+       function can be granted to others)
       </entry>
      </row>
 
@@ -2320,7 +2323,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry><type>void</type></entry>
       <entry>
        Reset statistics for a single function in the current database to
-       zero (requires superuser privileges)
+       zero (requires superuser privileges by default, but EXECUTE for this
+       function can be granted to others)
       </entry>
      </row>
     </tbody>

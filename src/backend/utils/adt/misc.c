@@ -321,15 +321,13 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 
 /*
  * Signal to reload the database configuration
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to signal the postmaster"))));
-
 	if (kill(PostmasterPid, SIGHUP))
 	{
 		ereport(WARNING,
@@ -343,15 +341,13 @@ pg_reload_conf(PG_FUNCTION_ARGS)
 
 /*
  * Rotate log file
+ *
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 Datum
 pg_rotate_logfile(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to rotate log files"))));
-
 	if (!Logging_collector)
 	{
 		ereport(WARNING,

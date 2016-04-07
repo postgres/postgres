@@ -17339,8 +17339,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     The functions shown in <xref
     linkend="functions-admin-signal-table"> send control signals to
-    other server processes.  Use of these functions is usually restricted
-    to superusers, with noted exceptions.
+    other server processes.  Use of these functions is restricted to
+    superusers by default but access may be granted to others with the
+    <command>GRANT</command>, with noted exceptions.
    </para>
 
    <table id="functions-admin-signal-table">
@@ -17490,7 +17491,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_create_restore_point(<parameter>name</> <type>text</>)</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Create a named point for performing restore (restricted to superusers)</entry>
+       <entry>Create a named point for performing restore (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
       </row>
       <row>
        <entry>
@@ -17518,21 +17519,21 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_start_backup(<parameter>label</> <type>text</> <optional>, <parameter>fast</> <type>boolean</> <optional>, <parameter>exclusive</> <type>boolean</> </optional></optional>)</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Prepare for performing on-line backup (restricted to superusers or replication roles)</entry>
+       <entry>Prepare for performing on-line backup (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_stop_backup()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Finish performing exclusive on-line backup (restricted to superusers or replication roles)</entry>
+       <entry>Finish performing exclusive on-line backup (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_stop_backup(<parameter>exclusive</> <type>boolean</>)</function></literal>
         </entry>
        <entry><type>setof record</type></entry>
-       <entry>Finish performing exclusive or non-exclusive on-line backup (restricted to superusers or replication roles)</entry>
+       <entry>Finish performing exclusive or non-exclusive on-line backup (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
       </row>
       <row>
        <entry>
@@ -17553,7 +17554,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_switch_xlog()</function></literal>
         </entry>
        <entry><type>pg_lsn</type></entry>
-       <entry>Force switch to a new transaction log file (restricted to superusers)</entry>
+       <entry>Force switch to a new transaction log file (restricted to superusers by default, but other users can be granted EXECUTE to run the function)</entry>
       </row>
       <row>
        <entry>
@@ -17821,7 +17822,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_xlog_replay_pause()</function></literal>
         </entry>
        <entry><type>void</type></entry>
-       <entry>Pauses recovery immediately (restricted to superusers).
+       <entry>Pauses recovery immediately (restricted to superusers by default, but other users can be granted EXECUTE to run the function).
        </entry>
       </row>
       <row>
@@ -17829,7 +17830,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_xlog_replay_resume()</function></literal>
         </entry>
        <entry><type>void</type></entry>
-       <entry>Restarts recovery if it was paused (restricted to superusers).
+       <entry>Restarts recovery if it was paused (restricted to superusers by default, but other users can be granted EXECUTE to run the function).
        </entry>
       </row>
      </tbody>
