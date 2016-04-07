@@ -1311,24 +1311,25 @@ selectDumpableNamespace(NamespaceInfo *nsinfo, DumpOptions *dopt)
 	 */
 
 	if (table_include_oids.head != NULL)
-		nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
+		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
 	else if (schema_include_oids.head != NULL)
-		nsinfo->dobj.dump = simple_oid_list_member(&schema_include_oids,
-												   nsinfo->dobj.catId.oid) ?
+		nsinfo->dobj.dump_contains = nsinfo->dobj.dump =
+			simple_oid_list_member(&schema_include_oids,
+								   nsinfo->dobj.catId.oid) ?
 			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
 	else if (strncmp(nsinfo->dobj.name, "pg_", 3) == 0 ||
 			 strcmp(nsinfo->dobj.name, "information_schema") == 0)
-		nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
+		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
 	else
-		nsinfo->dobj.dump = DUMP_COMPONENT_ALL;
+		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_ALL;
 
 	/*
 	 * In any case, a namespace can be excluded by an exclusion switch
 	 */
-	if (nsinfo->dobj.dump &&
+	if (nsinfo->dobj.dump_contains &&
 		simple_oid_list_member(&schema_exclude_oids,
 							   nsinfo->dobj.catId.oid))
-		nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
+		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
 }
 
 /*
@@ -1350,7 +1351,7 @@ selectDumpableTable(TableInfo *tbinfo, DumpOptions *dopt)
 												   tbinfo->dobj.catId.oid) ?
 			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
 	else
-		tbinfo->dobj.dump = tbinfo->dobj.namespace->dobj.dump;
+		tbinfo->dobj.dump = tbinfo->dobj.namespace->dobj.dump_contains;
 
 	/*
 	 * In any case, a table can be excluded by an exclusion switch
@@ -1407,7 +1408,8 @@ selectDumpableType(TypeInfo *tyinfo, DumpOptions *dopt)
 	if (checkExtensionMembership(&tyinfo->dobj, dopt))
 		return;					/* extension membership overrides all else */
 
-	tyinfo->dobj.dump = tyinfo->dobj.namespace->dobj.dump;
+	/* Dump based on if the contents of the namespace are being dumped */
+	tyinfo->dobj.dump = tyinfo->dobj.namespace->dobj.dump_contains;
 }
 
 /*
@@ -1424,6 +1426,7 @@ selectDumpableDefaultACL(DefaultACLInfo *dinfo, DumpOptions *dopt)
 	/* Default ACLs can't be extension members */
 
 	if (dinfo->dobj.namespace)
+		/* default ACLs are considered part of the namespace */
 		dinfo->dobj.dump = dinfo->dobj.namespace->dobj.dump;
 	else
 		dinfo->dobj.dump = dopt->include_everything ?
@@ -1530,7 +1533,7 @@ selectDumpableObject(DumpableObject *dobj, DumpOptions *dopt)
 	 * non-namespace-associated items, dump if we're dumping "everything".
 	 */
 	if (dobj->namespace)
-		dobj->dump = dobj->namespace->dobj.dump;
+		dobj->dump = dobj->namespace->dobj.dump_contains;
 	else
 		dobj->dump = dopt->include_everything ?
 			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
