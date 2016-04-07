@@ -674,10 +674,7 @@ AddUserToTokenDacl(HANDLE hToken)
 
 	/* Get the current user SID */
 	if (!GetTokenUser(hToken, &pTokenUser))
-	{
-		log_error("could not get token user: error code %lu", GetLastError());
-		goto cleanup;
-	}
+		goto cleanup;			/* callee printed a message */
 
 	/* Figure out the size of the new ACL */
 	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) +
