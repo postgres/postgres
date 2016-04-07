@@ -81,6 +81,18 @@ typedef enum
 	DO_POLICY
 } DumpableObjectType;
 
+/* component types of an object which can be selected for dumping */
+typedef uint32 DumpComponents;	/* a bitmask of dump object components */
+#define DUMP_COMPONENT_NONE			(0)
+#define DUMP_COMPONENT_DEFINITION	(1 << 0)
+#define DUMP_COMPONENT_DATA			(1 << 1)
+#define DUMP_COMPONENT_COMMENT		(1 << 2)
+#define DUMP_COMPONENT_SECLABEL		(1 << 3)
+#define DUMP_COMPONENT_ACL			(1 << 4)
+#define DUMP_COMPONENT_POLICY		(1 << 5)
+#define DUMP_COMPONENT_USERMAP		(1 << 6)
+#define DUMP_COMPONENT_ALL			(0xFFFF)
+
 typedef struct _dumpableObject
 {
 	DumpableObjectType objType;
@@ -88,7 +100,7 @@ typedef struct _dumpableObject
 	DumpId		dumpId;			/* assigned by AssignDumpId() */
 	char	   *name;			/* object name (should never be NULL) */
 	struct _namespaceInfo *namespace;	/* containing namespace, or NULL */
-	bool		dump;			/* true if we want to dump this object */
+	DumpComponents dump;	/* bitmask of components to dump */
 	bool		ext_member;		/* true if object is member of extension */
 	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
 	int			nDeps;			/* number of valid dependencies */
