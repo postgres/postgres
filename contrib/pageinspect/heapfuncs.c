@@ -459,7 +459,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		if (t_bits_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("t_bits string is expected to be NULL, but instead it is %lu bytes length",
+					 errmsg("t_bits string is expected to be NULL, but instead it is %zu bytes length",
 							strlen(t_bits_str))));
 	}
 
