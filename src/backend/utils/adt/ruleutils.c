@@ -1140,6 +1140,21 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		Oid			keycoltype;
 		Oid			keycolcollation;
 
+		/*
+		 * attrsOnly flag is used for building unique-constraint and
+		 * exclusion-constraint error messages. Included attrs are
+		 * meaningless there, so do not include them into the message.
+		 */
+		if (attrsOnly && keyno >= idxrec->indnkeyatts)
+			break;
+
+		/* Report the INCLUDED attributes, if any. */
+		if ((!attrsOnly) && keyno == idxrec->indnkeyatts)
+		{
+				appendStringInfoString(&buf, ") INCLUDING (");
+				sep = "";
+		}
+
 		if (!colno)
 			appendStringInfoString(&buf, sep);
 		sep = ", ";
@@ -1153,6 +1168,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			attname = get_relid_attribute_name(indrelid, attnum);
 			if (!colno || colno == keyno + 1)
 				appendStringInfoString(&buf, quote_identifier(attname));
+
 			get_atttypetypmodcoll(indrelid, attnum,
 								  &keycoltype, &keycoltypmod,
 								  &keycolcollation);
@@ -1191,6 +1207,9 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			if (OidIsValid(indcoll) && indcoll != keycolcollation)
 				appendStringInfo(&buf, " COLLATE %s",
 								 generate_collation_name((indcoll)));
+
+			if(keyno >= idxrec->indnkeyatts)
+				continue;
 
 			/* Add the operator class name, if not default */
 			get_opclass_name(indclass->values[keyno], keycoltype, &buf);
@@ -1519,6 +1538,19 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				decompile_column_index_array(val, conForm->conrelid, &buf);
 
 				appendStringInfoChar(&buf, ')');
+
+				/* Fetch and build including column list */
+				isnull = true;
+				val = SysCacheGetAttr(CONSTROID, tup,
+									  Anum_pg_constraint_conincluding, &isnull);
+				if (!isnull)
+				{
+					appendStringInfoString(&buf, " INCLUDING (");
+
+					decompile_column_index_array(val, conForm->conrelid, &buf);
+
+					appendStringInfoChar(&buf, ')');
+				}
 
 				indexId = get_constraint_index(constraintId);
 

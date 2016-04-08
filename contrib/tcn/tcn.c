@@ -138,9 +138,9 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		/* we're only interested if it is the primary key and valid */
 		if (index->indisprimary && IndexIsValid(index))
 		{
-			int			numatts = index->indnatts;
+			int			indnkeyatts = index->indnkeyatts;
 
-			if (numatts > 0)
+			if (indnkeyatts > 0)
 			{
 				int			i;
 
@@ -150,7 +150,7 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 				appendStringInfoCharMacro(payload, ',');
 				appendStringInfoCharMacro(payload, operation);
 
-				for (i = 0; i < numatts; i++)
+				for (i = 0; i < indnkeyatts; i++)
 				{
 					int			colno = index->indkey.values[i];
 

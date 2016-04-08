@@ -2043,7 +2043,8 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 							  is_validated,
 							  RelationGetRelid(rel),	/* relation */
 							  attNos,	/* attrs in the constraint */
-							  keycount, /* # attrs in the constraint */
+							  keycount, /* # key attrs in the constraint */
+							  keycount, /* # total attrs in the constraint */
 							  InvalidOid,		/* not a domain constraint */
 							  InvalidOid,		/* no associated index */
 							  InvalidOid,		/* Foreign key fields */

@@ -59,8 +59,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
-  UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
-  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+  UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> <optional>INCLUDING (<replaceable class="PARAMETER">column_name</replaceable> [, ...])</optional> |
+  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> <optional>INCLUDING (<replaceable class="PARAMETER">column_name</replaceable> [, ...])</optional> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
   FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
@@ -476,8 +476,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
    <varlistentry>
     <term><literal>UNIQUE</> (column constraint)</term>
-    <term><literal>UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )</> (table constraint)</term>
-
+    <term><literal>UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )
+    <optional>INCLUDING ( <replaceable class="PARAMETER">column_name</replaceable> [, ...])</optional></> (table constraint)</term>
     <listitem>
      <para>
       The <literal>UNIQUE</literal> constraint specifies that a
@@ -498,12 +498,26 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       primary key constraint defined for the table.  (Otherwise it
       would just be the same constraint listed twice.)
      </para>
+
+     <para>
+      Adding a unique constraint will automatically create a unique btree
+      index on the column or group of columns used in the constraint.
+      Optional clause <literal>INCLUDING</literal> allows to add into the index
+      a portion of columns on which the uniqueness is not enforced upon.
+      Note, that althogh constraint is not enforced upon included columns, it still
+      depends on them. Consequently, some operations on these columns (e.g. <literal>DROP COLUMN</literal>)
+      can cause cascade constraint and index deletion.
+      See paragraph about <literal>INCLUDING</literal> in
+      <xref linkend="SQL-CREATEINDEX"> for more information.
+     </para>
+
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><literal>PRIMARY KEY</> (column constraint)</term>
-    <term><literal>PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )</> (table constraint)</term>
+    <term><literal>PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )
+    <optional>INCLUDING ( <replaceable class="PARAMETER">column_name</replaceable> [, ...])</optional></> (table constraint)</term>
     <listitem>
      <para>
       The <literal>PRIMARY KEY</> constraint specifies that a column or
@@ -525,6 +539,18 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       identifying a set of columns as the primary key also provides metadata
       about the design of the schema, since a primary key implies that other
       tables can rely on this set of columns as a unique identifier for rows.
+     </para>
+
+     <para>
+      Adding a <literal>PRIMARY KEY</literal> constraint will automatically create a unique btree
+      index on the column or group of columns used in the constraint.
+      Optional clause <literal>INCLUDING</literal> allows to add into the index
+      a portion of columns on which the constraint is not enforced upon.
+      Note, that althogh constraint is not enforced upon included columns, it still
+      depends on them. Consequently, some operations on these columns (e.g. <literal>DROP COLUMN</literal>)
+      can cause cascade constraint and index deletion.
+      See paragraph about <literal>INCLUDING</literal> in
+      <xref linkend="SQL-CREATEINDEX"> for more information.
      </para>
     </listitem>
    </varlistentry>

@@ -920,7 +920,7 @@ transformOnConflictClause(ParseState *pstate,
 		 * relation.
 		 */
 		Assert(pstate->p_next_resno == 1);
-		for (attno = 0; attno < targetrel->rd_rel->relnatts; attno++)
+		for (attno = 0; attno < RelationGetNumberOfAttributes(targetrel); attno++)
 		{
 			Form_pg_attribute attr = targetrel->rd_att->attrs[attno];
 			char	   *name;
@@ -2122,8 +2122,8 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 								EXPR_KIND_UPDATE_SOURCE);
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
-	if (pstate->p_next_resno <= pstate->p_target_relation->rd_rel->relnatts)
-		pstate->p_next_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
+	if (pstate->p_next_resno <= RelationGetNumberOfAttributes(pstate->p_target_relation))
+		pstate->p_next_resno = RelationGetNumberOfAttributes(pstate->p_target_relation) + 1;
 
 	/* Prepare non-junk columns for assignment to target table */
 	target_rte = pstate->p_target_rangetblentry;

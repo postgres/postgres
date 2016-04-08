@@ -2143,7 +2143,7 @@ match_clause_to_index(IndexOptInfo *index,
 {
 	int			indexcol;
 
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 	{
 		if (match_clause_to_indexcol(index,
 									 indexcol,

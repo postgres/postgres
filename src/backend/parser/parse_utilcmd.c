@@ -1242,14 +1242,14 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 
 	/* Build the list of IndexElem */
 	index->indexParams = NIL;
+	index->indexIncludingParams = NIL;
 
 	indexpr_item = list_head(indexprs);
-	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
+	for (keyno = 0; keyno < idxrec->indnkeyatts; keyno++)
 	{
 		IndexElem  *iparam;
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 		int16		opt = source_idx->rd_indoption[keyno];
-
 		iparam = makeNode(IndexElem);
 
 		if (AttributeNumberIsValid(attnum))
@@ -1331,6 +1331,38 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		index->indexParams = lappend(index->indexParams, iparam);
 	}
 
+	/* Handle included columns separately */
+	for (keyno = idxrec->indnkeyatts; keyno < idxrec->indnatts; keyno++)
+	{
+		IndexElem  *iparam;
+		AttrNumber	attnum = idxrec->indkey.values[keyno];
+
+		iparam = makeNode(IndexElem);
+
+		if (AttributeNumberIsValid(attnum))
+		{
+			/* Simple index column */
+			char	   *attname;
+
+			attname = get_relid_attribute_name(indrelid, attnum);
+			keycoltype = get_atttype(indrelid, attnum);
+
+			iparam->name = attname;
+			iparam->expr = NULL;
+		}
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("expressions are not supported in included columns")));
+
+		/* Copy the original index column name */
+		iparam->indexcolname = pstrdup(NameStr(attrs[keyno]->attname));
+
+		/* Add the collation name, if non-default */
+		iparam->collation = get_collation(indcollation->values[keyno], keycoltype);
+
+		index->indexIncludingParams = lappend(index->indexIncludingParams, iparam);
+	}
 	/* Copy reloptions if any */
 	datum = SysCacheGetAttr(RELOID, ht_idxrel,
 							Anum_pg_class_reloptions, &isnull);
@@ -1523,6 +1555,7 @@ transformIndexConstraints(CreateStmtContext *cxt)
 			IndexStmt  *priorindex = lfirst(k);
 
 			if (equal(index->indexParams, priorindex->indexParams) &&
+				equal(index->indexIncludingParams, priorindex->indexIncludingParams) &&
 				equal(index->whereClause, priorindex->whereClause) &&
 				equal(index->excludeOpNames, priorindex->excludeOpNames) &&
 				strcmp(index->accessMethod, priorindex->accessMethod) == 0 &&
@@ -1594,6 +1627,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->tableSpace = constraint->indexspace;
 	index->whereClause = constraint->where_clause;
 	index->indexParams = NIL;
+	index->indexIncludingParams = NIL;
 	index->excludeOpNames = NIL;
 	index->idxcomment = NULL;
 	index->indexOid = InvalidOid;
@@ -1743,24 +1777,30 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 											   heap_rel->rd_rel->relhasoids);
 			attname = pstrdup(NameStr(attform->attname));
 
-			/*
-			 * Insist on default opclass and sort options.  While the index
-			 * would still work as a constraint with non-default settings, it
-			 * might not provide exactly the same uniqueness semantics as
-			 * you'd get from a normally-created constraint; and there's also
-			 * the dump/reload problem mentioned above.
-			 */
-			defopclass = GetDefaultOpClass(attform->atttypid,
-										   index_rel->rd_rel->relam);
-			if (indclass->values[i] != defopclass ||
-				index_rel->rd_indoption[i] != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("index \"%s\" does not have default sorting behavior", index_name),
-						 errdetail("Cannot create a primary key or unique constraint using such an index."),
-					 parser_errposition(cxt->pstate, constraint->location)));
+			if (i < index_form->indnkeyatts)
+			{
+				/*
+				* Insist on default opclass and sort options.  While the index
+				* would still work as a constraint with non-default settings, it
+				* might not provide exactly the same uniqueness semantics as
+				* you'd get from a normally-created constraint; and there's also
+				* the dump/reload problem mentioned above.
+				*/
+				defopclass = GetDefaultOpClass(attform->atttypid,
+											index_rel->rd_rel->relam);
+				if (indclass->values[i] != defopclass ||
+					index_rel->rd_indoption[i] != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							errmsg("index \"%s\" does not have default sorting behavior", index_name),
+							errdetail("Cannot create a primary key or unique constraint using such an index."),
+						parser_errposition(cxt->pstate, constraint->location)));
 
-			constraint->keys = lappend(constraint->keys, makeString(attname));
+				constraint->keys = lappend(constraint->keys, makeString(attname));
+			}
+			else
+				constraint->including = lappend(constraint->including, makeString(attname));
+
 		}
 
 		/* Close the index relation but keep the lock */
@@ -1773,6 +1813,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	 * If it's an EXCLUDE constraint, the grammar returns a list of pairs of
 	 * IndexElems and operator names.  We have to break that apart into
 	 * separate lists.
+	 * NOTE that exclusion constraints don't support included nonkey attributes
 	 */
 	if (constraint->contype == CONSTR_EXCLUSION)
 	{
@@ -1925,6 +1966,48 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		iparam->ordering = SORTBY_DEFAULT;
 		iparam->nulls_ordering = SORTBY_NULLS_DEFAULT;
 		index->indexParams = lappend(index->indexParams, iparam);
+	}
+
+	/* Here is some ugly code duplication. But we do need it. */
+	foreach(lc, constraint->including)
+	{
+		char	   *key = strVal(lfirst(lc));
+		bool		found = false;
+		ColumnDef  *column = NULL;
+		ListCell   *columns;
+		IndexElem  *iparam;
+
+		foreach(columns, cxt->columns)
+		{
+			column = (ColumnDef *) lfirst(columns);
+			Assert(IsA(column, ColumnDef));
+			if (strcmp(column->colname, key) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		/*
+		 * In the ALTER TABLE case, don't complain about index keys not
+		 * created in the command; they may well exist already. DefineIndex
+		 * will complain about them if not, and will also take care of marking
+		 * them NOT NULL.
+		 */
+		if (!found && !cxt->isalter)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" named in key does not exist", key),
+					 parser_errposition(cxt->pstate, constraint->location)));
+
+		/* OK, add it to the index definition */
+		iparam = makeNode(IndexElem);
+		iparam->name = pstrdup(key);
+		iparam->expr = NULL;
+		iparam->indexcolname = NULL;
+		iparam->collation = NIL;
+		iparam->opclass = NIL;
+		index->indexIncludingParams = lappend(index->indexIncludingParams, iparam);
 	}
 
 	return index;

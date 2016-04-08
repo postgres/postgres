@@ -898,7 +898,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		 * Generate default column list for INSERT.
 		 */
 		Form_pg_attribute *attr = pstate->p_target_relation->rd_att->attrs;
-		int			numcol = pstate->p_target_relation->rd_rel->relnatts;
+		int			numcol = RelationGetNumberOfAttributes(pstate->p_target_relation);
 		int			i;
 
 		for (i = 0; i < numcol; i++)

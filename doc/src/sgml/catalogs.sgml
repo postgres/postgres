@@ -3557,6 +3557,14 @@
       <literal>pg_class.relnatts</literal>)</entry>
      </row>
 
+      <row>
+      <entry><structfield>indnkeyatts</structfield></entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>The number of key columns in the index. "Key columns" are ordinary
+      index columns in contrast with "included" columns.</entry>
+     </row>
+
      <row>
       <entry><structfield>indisunique</structfield></entry>
       <entry><type>bool</type></entry>

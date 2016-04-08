@@ -456,6 +456,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	OffsetNumber last_off;
 	Size		pgspc;
 	Size		itupsz;
+	BTPageOpaque pageop;
+	int indnatts = IndexRelationGetNumberOfAttributes(wstate->index);
+	int indnkeyatts = IndexRelationGetNumberOfKeyAttributes(wstate->index);
 
 	/*
 	 * This is a handy place to check for cancel interrupts during the btree
@@ -510,6 +513,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		ItemId		ii;
 		ItemId		hii;
 		IndexTuple	oitup;
+		IndexTuple	keytup;
+		BTPageOpaque opageop = (BTPageOpaque) PageGetSpecialPointer(opage);
 
 		/* Create new page of same level */
 		npage = _bt_blnewpage(state->btps_level);
@@ -537,6 +542,28 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		ItemIdSetUnused(ii);	/* redundant */
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
 
+		if (indnkeyatts != indnatts && P_ISLEAF(opageop))
+		{
+			/*
+			 * It's essential to truncate High key here.
+			 * The purpose is not just to save more space on this particular page,
+			 * but to keep whole b-tree structure consistent. Subsequent insertions
+			 * assume that hikey is already truncated, and so they should not
+			 * worry about it, when copying the high key into the parent page
+			 * as a downlink.
+			 * NOTE It is not crutial for reliability in present,
+			 * but maybe it will be that in the future.
+			 */
+			keytup = index_truncate_tuple(wstate->index, oitup);
+
+			/*  delete "wrong" high key, insert keytup as P_HIKEY. */
+			PageIndexTupleDelete(opage, P_HIKEY);
+
+			if (!_bt_pgaddtup(opage, IndexTupleSize(keytup), keytup, P_HIKEY))
+				elog(ERROR, "failed to rewrite compressed item in index \"%s\"",
+					RelationGetRelationName(wstate->index));
+		}
+
 		/*
 		 * Link the old page into its parent, using its minimum key. If we
 		 * don't have a parent, we have to create one; this adds a new btree
@@ -554,8 +581,15 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		 * Save a copy of the minimum key for the new page.  We have to copy
 		 * it off the old page, not the new one, in case we are not at leaf
 		 * level.
+		 * If tuple contains non-key attributes, truncate them.
+		 * We perform truncation only for leaf pages,
+		 * beacuse all tuples at inner pages will be already
+		 * truncated by the time we handle them.
 		 */
-		state->btps_minkey = CopyIndexTuple(oitup);
+		if (indnkeyatts != indnatts && P_ISLEAF(opageop))
+			state->btps_minkey = index_truncate_tuple(wstate->index, oitup);
+		else
+			state->btps_minkey = CopyIndexTuple(oitup);
 
 		/*
 		 * Set the sibling links for both pages.
@@ -581,6 +615,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		last_off = P_FIRSTKEY;
 	}
 
+	pageop = (BTPageOpaque) PageGetSpecialPointer(npage);
 	/*
 	 * If the new item is the first for its page, stash a copy for later. Note
 	 * this will only happen for the first item on a level; on later pages,
@@ -590,7 +625,14 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	if (last_off == P_HIKEY)
 	{
 		Assert(state->btps_minkey == NULL);
-		state->btps_minkey = CopyIndexTuple(itup);
+		/*
+		 * Truncate the tuple that we're going to insert
+		 * into the parent page as a downlink
+		 */
+		if (indnkeyatts != indnatts && P_ISLEAF(pageop))
+			state->btps_minkey = index_truncate_tuple(wstate->index, itup);
+		else
+			state->btps_minkey = CopyIndexTuple(itup);
 	}
 
 	/*
@@ -685,7 +727,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				load1;
 	TupleDesc	tupdes = RelationGetDescr(wstate->index);
 	int			i,
-				keysz = RelationGetNumberOfAttributes(wstate->index);
+				keysz = IndexRelationGetNumberOfKeyAttributes(wstate->index);
 	ScanKey		indexScanKey = NULL;
 	SortSupport sortKeys;
 

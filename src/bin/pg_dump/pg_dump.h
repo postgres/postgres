@@ -318,8 +318,10 @@ typedef struct _indxInfo
 	char	   *indexdef;
 	char	   *tablespace;		/* tablespace in which index is stored */
 	char	   *indreloptions;	/* options specified by WITH (...) */
-	int			indnkeys;
-	Oid		   *indkeys;
+	int			indnkeyattrs;	/* number of index key attributes*/
+	int			indnattrs;		/* total number of index attributes*/
+	Oid		   *indkeys;		/* In spite of the name 'indkeys' this field
+								 * contains both key and nonkey attributes*/
 	bool		indisclustered;
 	bool		indisreplident;
 	/* if there is an associated constraint object, its dumpId: */

@@ -431,6 +431,8 @@ _bt_compare(Relation rel,
 
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 
+	Assert (keysz <= rel->rd_index->indnkeyatts);
+
 	/*
 	 * The scan key is set up with the attribute number associated with each
 	 * term in the key.  It is important that, if the index is multi-key, the

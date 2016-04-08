@@ -55,6 +55,7 @@ CreateConstraintEntry(const char *constraintName,
 					  Oid relId,
 					  const int16 *constraintKey,
 					  int constraintNKeys,
+					  int constraintNTotalKeys,
 					  Oid domainId,
 					  Oid indexRelId,
 					  Oid foreignRelId,
@@ -81,6 +82,7 @@ CreateConstraintEntry(const char *constraintName,
 	bool		nulls[Natts_pg_constraint];
 	Datum		values[Natts_pg_constraint];
 	ArrayType  *conkeyArray;
+	ArrayType  *conincludingArray;
 	ArrayType  *confkeyArray;
 	ArrayType  *conpfeqopArray;
 	ArrayType  *conppeqopArray;
@@ -110,6 +112,21 @@ CreateConstraintEntry(const char *constraintName,
 	}
 	else
 		conkeyArray = NULL;
+
+	if (constraintNTotalKeys > constraintNKeys)
+	{
+		Datum	   *conincluding;
+		int j = 0;
+		int constraintNIncludedKeys = constraintNTotalKeys - constraintNKeys;
+
+		conincluding = (Datum *) palloc(constraintNIncludedKeys* sizeof(Datum));
+		for (i = constraintNKeys; i < constraintNTotalKeys; i++)
+			conincluding[j++] = Int16GetDatum(constraintKey[i]);
+		conincludingArray = construct_array(conincluding, constraintNIncludedKeys,
+									  INT2OID, 2, true, 's');
+	}
+	else
+		conincludingArray = NULL;
 
 	if (foreignNKeys > 0)
 	{
@@ -183,6 +200,11 @@ CreateConstraintEntry(const char *constraintName,
 	else
 		nulls[Anum_pg_constraint_conkey - 1] = true;
 
+	if (conincludingArray)
+		values[Anum_pg_constraint_conincluding - 1] = PointerGetDatum(conincludingArray);
+	else
+		nulls[Anum_pg_constraint_conincluding - 1] = true;
+
 	if (confkeyArray)
 		values[Anum_pg_constraint_confkey - 1] = PointerGetDatum(confkeyArray);
 	else
@@ -247,9 +269,9 @@ CreateConstraintEntry(const char *constraintName,
 
 		relobject.classId = RelationRelationId;
 		relobject.objectId = relId;
-		if (constraintNKeys > 0)
+		if (constraintNTotalKeys > 0)
 		{
-			for (i = 0; i < constraintNKeys; i++)
+			for (i = 0; i < constraintNTotalKeys; i++)
 			{
 				relobject.objectSubId = constraintKey[i];
 
