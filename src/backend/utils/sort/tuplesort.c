@@ -2357,11 +2357,6 @@ inittapes(Tuplesortstate *state)
 
 	if (state->replaceActive)
 	{
-#ifdef TRACE_SORT
-		if (trace_sort)
-			elog(LOG, "replacement selection will sort %d first run tuples",
-				 state->memtupcount);
-#endif
 		/*
 		 * Convert the unsorted contents of memtuples[] into a heap. Each
 		 * tuple is marked as belonging to run number zero.
@@ -2372,6 +2367,11 @@ inittapes(Tuplesortstate *state)
 		 */
 		int			ntuples = state->memtupcount;
 
+#ifdef TRACE_SORT
+		if (trace_sort)
+			elog(LOG, "replacement selection will sort %d first run tuples",
+				 state->memtupcount);
+#endif
 		state->memtupcount = 0;		/* make the heap empty */
 
 		for (j = 0; j < ntuples; j++)
