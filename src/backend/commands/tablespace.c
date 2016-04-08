@@ -773,13 +773,26 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 remove_symlink:
 	linkloc = pstrdup(linkloc_with_version_dir);
 	get_parent_directory(linkloc);
-	if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
+	if (lstat(linkloc, &st) < 0)
+	{
+		int			saved_errno = errno;
+
+		ereport(redo ? LOG : (saved_errno == ENOENT ? WARNING : ERROR),
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m",
+						linkloc)));
+	}
+	else if (S_ISDIR(st.st_mode))
 	{
 		if (rmdir(linkloc) < 0)
-			ereport(redo ? LOG : ERROR,
+		{
+			int			saved_errno = errno;
+
+			ereport(redo ? LOG : (saved_errno == ENOENT ? WARNING : ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\": %m",
 							linkloc)));
+		}
 	}
 #ifdef S_ISLNK
 	else if (S_ISLNK(st.st_mode))
@@ -799,7 +812,7 @@ remove_symlink:
 	{
 		/* Refuse to remove anything that's not a directory or symlink */
 		ereport(redo ? LOG : ERROR,
-				(ERRCODE_SYSTEM_ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("\"%s\" is not a directory or symbolic link",
 						linkloc)));
 	}
@@ -851,7 +864,7 @@ remove_tablespace_symlink(const char *linkloc)
 {
 	struct stat st;
 
-	if (lstat(linkloc, &st) != 0)
+	if (lstat(linkloc, &st) < 0)
 	{
 		if (errno == ENOENT)
 			return;
@@ -863,10 +876,10 @@ remove_tablespace_symlink(const char *linkloc)
 	if (S_ISDIR(st.st_mode))
 	{
 		/*
-		 * This will fail if the directory isn't empty, but not
-		 * if it's a junction point.
+		 * This will fail if the directory isn't empty, but not if it's a
+		 * junction point.
 		 */
-		if (rmdir(linkloc) < 0)
+		if (rmdir(linkloc) < 0 && errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\": %m",
@@ -878,7 +891,7 @@ remove_tablespace_symlink(const char *linkloc)
 		if (unlink(linkloc) < 0 && errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-						errmsg("could not remove symbolic link \"%s\": %m",
+					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
 	}
 #endif
@@ -886,7 +899,8 @@ remove_tablespace_symlink(const char *linkloc)
 	{
 		/* Refuse to remove anything that's not a directory or symlink */
 		ereport(ERROR,
-				(errmsg("\"%s\" is not a directory or symbolic link",
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("\"%s\" is not a directory or symbolic link",
 						linkloc)));
 	}
 }
