@@ -87,7 +87,7 @@ static int	initialize_SSL(PGconn *conn);
 static void destroySSL(void);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
 static void close_SSL(PGconn *);
-static char *SSLerrmessage(void);
+static char *SSLerrmessage(unsigned long ecode);
 static void SSLerrfree(char *buf);
 
 static bool pq_init_ssl_lib = true;
@@ -276,7 +276,7 @@ pqsecure_open_client(PGconn *conn)
 			!SSL_set_app_data(conn->ssl, conn) ||
 			!SSL_set_fd(conn->ssl, conn->sock))
 		{
-			char	   *err = SSLerrmessage();
+			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
 				   libpq_gettext("could not establish SSL connection: %s\n"),
@@ -342,6 +342,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 	if (conn->ssl)
 	{
 		int			err;
+		unsigned long ecode;
 
 		DECLARE_SIGPIPE_INFO(spinfo);
 
@@ -349,9 +350,30 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
 rloop:
+		/*
+		 * Prepare to call SSL_get_error() by clearing thread's OpenSSL
+		 * error queue.  In general, the current thread's error queue must
+		 * be empty before the TLS/SSL I/O operation is attempted, or
+		 * SSL_get_error() will not work reliably.  Since the possibility
+		 * exists that other OpenSSL clients running in the same thread but
+		 * not under our control will fail to call ERR_get_error()
+		 * themselves (after their own I/O operations), pro-actively clear
+		 * the per-thread error queue now.
+		 */
 		SOCK_ERRNO_SET(0);
+		ERR_clear_error();
 		n = SSL_read(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
+
+		/*
+		 * Other clients of OpenSSL may fail to call ERR_get_error(), but
+		 * we always do, so as to not cause problems for OpenSSL clients
+		 * that don't call ERR_clear_error() defensively.  Be sure that
+		 * this happens by calling now.  SSL_get_error() relies on the
+		 * OpenSSL per-thread error queue being intact, so this is the
+		 * earliest possible point ERR_get_error() may be called.
+		 */
+		ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
 		switch (err)
 		{
 			case SSL_ERROR_NONE:
@@ -405,7 +427,7 @@ rloop:
 				break;
 			case SSL_ERROR_SSL:
 				{
-					char	   *errm = SSLerrmessage();
+					char	   *errm = SSLerrmessage(ecode);
 
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("SSL error: %s\n"), errm);
@@ -507,12 +529,15 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	if (conn->ssl)
 	{
 		int			err;
+		unsigned long ecode;
 
 		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
 		SOCK_ERRNO_SET(0);
+		ERR_clear_error();
 		n = SSL_write(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
+		ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
 		switch (err)
 		{
 			case SSL_ERROR_NONE:
@@ -566,7 +591,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				break;
 			case SSL_ERROR_SSL:
 				{
-					char	   *errm = SSLerrmessage();
+					char	   *errm = SSLerrmessage(ecode);
 
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("SSL error: %s\n"), errm);
@@ -976,7 +1001,7 @@ init_ssl_system(PGconn *conn)
 		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)
 		{
-			char	   *err = SSLerrmessage();
+			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
 						 libpq_gettext("could not create SSL context: %s\n"),
@@ -1141,7 +1166,7 @@ initialize_SSL(PGconn *conn)
 #endif
 		if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
 		{
-			char	   *err = SSLerrmessage();
+			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not read certificate file \"%s\": %s\n"),
@@ -1156,7 +1181,7 @@ initialize_SSL(PGconn *conn)
 
 		if (SSL_use_certificate_file(conn->ssl, fnbuf, SSL_FILETYPE_PEM) != 1)
 		{
-			char	   *err = SSLerrmessage();
+			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not read certificate file \"%s\": %s\n"),
@@ -1211,7 +1236,7 @@ initialize_SSL(PGconn *conn)
 			conn->engine = ENGINE_by_id(engine_str);
 			if (conn->engine == NULL)
 			{
-				char	   *err = SSLerrmessage();
+				char	   *err = SSLerrmessage(ERR_get_error());
 
 				printfPQExpBuffer(&conn->errorMessage,
 					 libpq_gettext("could not load SSL engine \"%s\": %s\n"),
@@ -1223,7 +1248,7 @@ initialize_SSL(PGconn *conn)
 
 			if (ENGINE_init(conn->engine) == 0)
 			{
-				char	   *err = SSLerrmessage();
+				char	   *err = SSLerrmessage(ERR_get_error());
 
 				printfPQExpBuffer(&conn->errorMessage,
 				libpq_gettext("could not initialize SSL engine \"%s\": %s\n"),
@@ -1239,7 +1264,7 @@ initialize_SSL(PGconn *conn)
 										   NULL, NULL);
 			if (pkey == NULL)
 			{
-				char	   *err = SSLerrmessage();
+				char	   *err = SSLerrmessage(ERR_get_error());
 
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
@@ -1253,7 +1278,7 @@ initialize_SSL(PGconn *conn)
 			}
 			if (SSL_use_PrivateKey(conn->ssl, pkey) != 1)
 			{
-				char	   *err = SSLerrmessage();
+				char	   *err = SSLerrmessage(ERR_get_error());
 
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("could not load private SSL key \"%s\" from engine \"%s\": %s\n"),
@@ -1309,7 +1334,7 @@ initialize_SSL(PGconn *conn)
 
 		if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_PEM) != 1)
 		{
-			char	   *err = SSLerrmessage();
+			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not load private key file \"%s\": %s\n"),
@@ -1323,7 +1348,7 @@ initialize_SSL(PGconn *conn)
 	if (have_cert &&
 		SSL_check_private_key(conn->ssl) != 1)
 	{
-		char	   *err = SSLerrmessage();
+		char	   *err = SSLerrmessage(ERR_get_error());
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("certificate does not match private key file \"%s\": %s\n"),
@@ -1361,7 +1386,7 @@ initialize_SSL(PGconn *conn)
 #endif
 		if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
 		{
-			char	   *err = SSLerrmessage();
+			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
@@ -1391,7 +1416,7 @@ initialize_SSL(PGconn *conn)
 				X509_STORE_set_flags(cvstore,
 						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 #else
-				char	   *err = SSLerrmessage();
+				char	   *err = SSLerrmessage(ERR_get_error());
 
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("SSL library does not support CRL certificates (file \"%s\")\n"),
@@ -1465,11 +1490,14 @@ open_client_SSL(PGconn *conn)
 {
 	int			r;
 
+	ERR_clear_error();
 	r = SSL_connect(conn->ssl);
 	if (r <= 0)
 	{
 		int			err = SSL_get_error(conn->ssl, r);
+		unsigned long ecode;
 
+		ecode = ERR_get_error();
 		switch (err)
 		{
 			case SSL_ERROR_WANT_READ:
@@ -1494,7 +1522,7 @@ open_client_SSL(PGconn *conn)
 				}
 			case SSL_ERROR_SSL:
 				{
-					char	   *err = SSLerrmessage();
+					char	   *err = SSLerrmessage(ecode);
 
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("SSL error: %s\n"),
@@ -1522,7 +1550,9 @@ open_client_SSL(PGconn *conn)
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
 	if (conn->peer == NULL)
 	{
-		char	   *err = SSLerrmessage();
+		char	   *err;
+
+		err = SSLerrmessage(ERR_get_error());
 
 		printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("certificate could not be obtained: %s\n"),
@@ -1598,7 +1628,9 @@ close_SSL(PGconn *conn)
 }
 
 /*
- * Obtain reason string for last SSL error
+ * Obtain reason string for passed SSL errcode
+ *
+ * ERR_get_error() is used by caller to get errcode to pass here.
  *
  * Some caution is needed here since ERR_reason_error_string will
  * return NULL if it doesn't recognize the error code.  We don't
@@ -1609,28 +1641,26 @@ static char ssl_nomem[] = "out of memory allocating error description";
 #define SSL_ERR_LEN 128
 
 static char *
-SSLerrmessage(void)
+SSLerrmessage(unsigned long ecode)
 {
-	unsigned long errcode;
 	const char *errreason;
 	char	   *errbuf;
 
 	errbuf = malloc(SSL_ERR_LEN);
 	if (!errbuf)
 		return ssl_nomem;
-	errcode = ERR_get_error();
-	if (errcode == 0)
+	if (ecode == 0)
 	{
 		snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("no SSL error reported"));
 		return errbuf;
 	}
-	errreason = ERR_reason_error_string(errcode);
+	errreason = ERR_reason_error_string(ecode);
 	if (errreason != NULL)
 	{
 		strlcpy(errbuf, errreason, SSL_ERR_LEN);
 		return errbuf;
 	}
-	snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("SSL error code %lu"), errcode);
+	snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("SSL error code %lu"), ecode);
 	return errbuf;
 }
 
