@@ -4380,3 +4380,40 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 	LockRelease(&tag, ShareLock, false);
 	return true;
 }
+
+/*
+ * LockWaiterCount
+ *
+ * Find the number of lock requester on this locktag
+ */
+int
+LockWaiterCount(const LOCKTAG *locktag)
+{
+	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
+	LOCK	   *lock;
+	bool		found;
+	uint32		hashcode;
+	LWLock	   *partitionLock;
+	int			waiters = 0;
+
+	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
+		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
+
+	hashcode = LockTagHashCode(locktag);
+	partitionLock = LockHashPartitionLock(hashcode);
+	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
+
+	lock = (LOCK *) hash_search_with_hash_value(LockMethodLockHash,
+												(const void *) locktag,
+												hashcode,
+												HASH_FIND,
+												&found);
+	if (found)
+	{
+		Assert(lock != NULL);
+		waiters = lock->nRequested;
+	}
+	LWLockRelease(partitionLock);
+
+	return waiters;
+}

@@ -341,6 +341,41 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
 }
 
 /*
+ *		ConditionalLockRelationForExtension
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE iff the lock was acquired.
+ */
+bool
+ConditionalLockRelationForExtension(Relation relation, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION_EXTEND(tag,
+								relation->rd_lockInfo.lockRelId.dbId,
+								relation->rd_lockInfo.lockRelId.relId);
+
+	return (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
+ *		RelationExtensionLockWaiterCount
+ *
+ * Count the number of processes waiting for the given relation extension lock.
+ */
+int
+RelationExtensionLockWaiterCount(Relation relation)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION_EXTEND(tag,
+								relation->rd_lockInfo.lockRelId.dbId,
+								relation->rd_lockInfo.lockRelId.relId);
+
+	return LockWaiterCount(&tag);
+}
+
+/*
  *		UnlockRelationForExtension
  */
 void

@@ -574,6 +574,8 @@ extern void RememberSimpleDeadLock(PGPROC *proc1,
 					   PGPROC *proc2);
 extern void InitDeadLockChecking(void);
 
+extern int	LockWaiterCount(const LOCKTAG *locktag);
+
 #ifdef LOCK_DEBUG
 extern void DumpLocks(PGPROC *proc);
 extern void DumpAllLocks(void);

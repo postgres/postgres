@@ -109,6 +109,8 @@ static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 				   uint8 newValue, uint8 minValue);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
+static BlockNumber fsm_get_lastblckno(Relation rel, FSMAddress addr);
+static void fsm_update_recursive(Relation rel, FSMAddress addr, uint8 new_cat);
 
 
 /******** Public API ********/
@@ -186,6 +188,46 @@ RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk, Size spaceAvail)
 	addr = fsm_get_location(heapBlk, &slot);
 
 	fsm_set_and_search(rel, addr, slot, new_cat, 0);
+}
+
+/*
+ * Update the upper levels of the free space map all the way up to the root
+ * to make sure we don't lose track of new blocks we just inserted.  This is
+ * intended to be used after adding many new blocks to the relation; we judge
+ * it not worth updating the upper levels of the tree every time data for
+ * a single page changes, but for a bulk-extend it's worth it.
+ */
+void
+UpdateFreeSpaceMap(Relation rel, BlockNumber startBlkNum,
+					BlockNumber endBlkNum, Size freespace)
+{
+	int			new_cat = fsm_space_avail_to_cat(freespace);
+	FSMAddress	addr;
+	uint16		slot;
+	BlockNumber	blockNum;
+	BlockNumber	lastBlkOnPage;
+
+	blockNum = startBlkNum;
+
+	while (blockNum <= endBlkNum)
+	{
+		/*
+		 * Find FSM address for this block; update tree all the way to the
+		 * root.
+		 */
+		addr = fsm_get_location(blockNum, &slot);
+		fsm_update_recursive(rel, addr, new_cat);
+
+		/*
+		 * Get the last block number on this FSM page.  If that's greater
+		 * than or equal to our endBlkNum, we're done.  Otherwise, advance
+		 * to the first block on the next page.
+		 */
+		lastBlkOnPage = fsm_get_lastblckno(rel, addr);
+		if (lastBlkOnPage >= endBlkNum)
+			break;
+		blockNum = lastBlkOnPage + 1;
+	}
 }
 
 /*
@@ -787,4 +829,43 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 	ReleaseBuffer(buf);
 
 	return max_avail;
+}
+
+/*
+ * This function will return the last block number stored on given
+ * FSM page address.
+ */
+static BlockNumber
+fsm_get_lastblckno(Relation rel, FSMAddress addr)
+{
+	int			slot;
+
+	/*
+	 * Get the last slot number on the given address and convert that to
+	 * block number
+	 */
+	slot = SlotsPerFSMPage - 1;
+	return fsm_get_heap_blk(addr, slot);
+}
+
+/*
+ * Recursively update the FSM tree from given address to
+ * all the way up to root.
+ */
+static void
+fsm_update_recursive(Relation rel, FSMAddress addr, uint8 new_cat)
+{
+	uint16		parentslot;
+	FSMAddress	parent;
+
+	if (addr.level == FSM_ROOT_LEVEL)
+		return;
+
+	/*
+	 * Get the parent page and our slot in the parent page, and
+	 * update the information in that.
+	 */
+	parent = fsm_get_parent(addr, &parentslot);
+	fsm_set_and_search(rel, parent, parentslot, new_cat, 0);
+	fsm_update_recursive(rel, parent, new_cat);
 }
