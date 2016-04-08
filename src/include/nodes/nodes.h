@@ -553,15 +553,23 @@ extern char *nodeToString(const void *obj);
 
 struct Bitmapset;				/* not to include bitmapset.h here */
 struct StringInfoData;			/* not to include stringinfo.h here */
+extern void outNode(struct StringInfoData *str, const void *obj);
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
 			 const struct Bitmapset *bms);
+extern void outDatum(struct StringInfoData *str, uintptr_t value,
+					 int typlen, bool typbyval);
 
 /*
  * nodes/{readfuncs.c,read.c}
  */
 extern void *stringToNode(char *str);
 extern struct Bitmapset *readBitmapset(void);
+extern uintptr_t readDatum(bool typbyval);
+extern bool *readBoolCols(int numCols);
+extern int *readIntCols(int numCols);
+extern Oid *readOidCols(int numCols);
+extern int16 *readAttrNumberCols(int numCols);
 
 /*
  * nodes/copyfuncs.c

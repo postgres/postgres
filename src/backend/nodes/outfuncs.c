@@ -89,7 +89,7 @@
 /* Write a Node field */
 #define WRITE_NODE_FIELD(fldname) \
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
-	 _outNode(str, node->fldname))
+	 outNode(str, node->fldname))
 
 /* Write a bitmapset field */
 #define WRITE_BITMAPSET_FIELD(fldname) \
@@ -98,8 +98,6 @@
 
 
 #define booltostr(x)  ((x) ? "true" : "false")
-
-static void _outNode(StringInfo str, const void *obj);
 
 
 /*
@@ -169,7 +167,7 @@ _outList(StringInfo str, const List *node)
 		 */
 		if (IsA(node, List))
 		{
-			_outNode(str, lfirst(lc));
+			outNode(str, lfirst(lc));
 			if (lnext(lc))
 				appendStringInfoChar(str, ' ');
 		}
@@ -214,8 +212,8 @@ outBitmapset(StringInfo str, const Bitmapset *bms)
 /*
  * Print the value of a Datum given its type.
  */
-static void
-_outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
+void
+outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 {
 	Size		length,
 				i;
@@ -1009,7 +1007,7 @@ _outConst(StringInfo str, const Const *node)
 	if (node->constisnull)
 		appendStringInfoString(str, "<>");
 	else
-		_outDatum(str, node->constvalue, node->constlen, node->constbyval);
+		outDatum(str, node->constvalue, node->constlen, node->constbyval);
 }
 
 static void
@@ -3219,11 +3217,11 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 
 /*
- * _outNode -
+ * outNode -
  *	  converts a Node into ascii string and append it to 'str'
  */
-static void
-_outNode(StringInfo str, const void *obj)
+void
+outNode(StringInfo str, const void *obj)
 {
 	if (obj == NULL)
 		appendStringInfoString(str, "<>");
@@ -3801,7 +3799,7 @@ _outNode(StringInfo str, const void *obj)
 
 				/*
 				 * This should be an ERROR, but it's too useful to be able to
-				 * dump structures that _outNode only understands part of.
+				 * dump structures that outNode only understands part of.
 				 */
 				elog(WARNING, "could not dump unrecognized node type: %d",
 					 (int) nodeTag(obj));
@@ -3822,6 +3820,6 @@ nodeToString(const void *obj)
 
 	/* see stringinfo.h for an explanation of this maneuver */
 	initStringInfo(&str);
-	_outNode(&str, obj);
+	outNode(&str, obj);
 	return str.data;
 }

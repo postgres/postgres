@@ -172,12 +172,6 @@
 	((length) == 0 ? NULL : debackslash(token, length))
 
 
-static Datum readDatum(bool typbyval);
-static bool *readBoolCols(int numCols);
-static int *readIntCols(int numCols);
-static Oid *readOidCols(int numCols);
-static AttrNumber *readAttrNumberCols(int numCols);
-
 /*
  * _readBitmapset
  */
@@ -2499,7 +2493,7 @@ parseNodeString(void)
  * Datum.  The string representation embeds length info, but not byValue,
  * so we must be told that.
  */
-static Datum
+Datum
 readDatum(bool typbyval)
 {
 	Size		length,
@@ -2556,7 +2550,7 @@ readDatum(bool typbyval)
 /*
  * readAttrNumberCols
  */
-static AttrNumber *
+AttrNumber *
 readAttrNumberCols(int numCols)
 {
 	int			tokenLength,
@@ -2580,7 +2574,7 @@ readAttrNumberCols(int numCols)
 /*
  * readOidCols
  */
-static Oid *
+Oid *
 readOidCols(int numCols)
 {
 	int			tokenLength,
@@ -2604,7 +2598,7 @@ readOidCols(int numCols)
 /*
  * readIntCols
  */
-static int *
+int *
 readIntCols(int numCols)
 {
 	int			tokenLength,
@@ -2628,7 +2622,7 @@ readIntCols(int numCols)
 /*
  * readBoolCols
  */
-static bool *
+bool *
 readBoolCols(int numCols)
 {
 	int			tokenLength,
