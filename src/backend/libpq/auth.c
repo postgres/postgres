@@ -166,6 +166,11 @@ typedef SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
 static int	pg_SSPI_recvauth(Port *port);
+static int pg_SSPI_make_upn(char *accountname,
+				 size_t accountnamesize,
+				 char *domainname,
+				 size_t domainnamesize,
+				 bool update_accountname);
 #endif
 
 /*----------------------------------------------------------------
@@ -1287,6 +1292,17 @@ pg_SSPI_recvauth(Port *port)
 
 	free(tokenuser);
 
+	if (!port->hba->compat_realm)
+	{
+		int			status = pg_SSPI_make_upn(accountname, sizeof(accountname),
+											  domainname, sizeof(domainname),
+											  port->hba->upn_username);
+
+		if (status != STATUS_OK)
+			/* Error already reported from pg_SSPI_make_upn */
+			return status;
+	}
+
 	/*
 	 * Compare realm/domain if requested. In SSPI, always compare case
 	 * insensitive.
@@ -1321,6 +1337,100 @@ pg_SSPI_recvauth(Port *port)
 	}
 	else
 		return check_usermap(port->hba->usermap, port->user_name, accountname, true);
+}
+
+/*
+ * Replaces the domainname with the Kerberos realm name,
+ * and optionally the accountname with the Kerberos user name.
+ */
+static int
+pg_SSPI_make_upn(char *accountname,
+				 size_t accountnamesize,
+				 char *domainname,
+				 size_t domainnamesize,
+				 bool update_accountname)
+{
+	char	   *samname;
+	char	   *upname = NULL;
+	char	   *p = NULL;
+	ULONG		upnamesize = 0;
+	size_t		upnamerealmsize;
+	BOOLEAN		res;
+
+	/*
+	 * Build SAM name (DOMAIN\user), then translate to UPN
+	 * (user@kerberos.realm). The realm name is returned in lower case, but
+	 * that is fine because in SSPI auth, string comparisons are always
+	 * case-insensitive.
+	 */
+
+	samname = psprintf("%s\\%s", domainname, accountname);
+	res = TranslateName(samname, NameSamCompatible, NameUserPrincipal,
+						NULL, &upnamesize);
+
+	if ((!res && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+		|| upnamesize == 0)
+	{
+		pfree(samname);
+		ereport(LOG,
+				(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+				 errmsg("could not translate name")));
+		return STATUS_ERROR;
+	}
+
+	/* upnamesize includes the terminating NUL. */
+	upname = palloc(upnamesize);
+
+	res = TranslateName(samname, NameSamCompatible, NameUserPrincipal,
+						upname, &upnamesize);
+
+	pfree(samname);
+	if (res)
+		p = strchr(upname, '@');
+
+	if (!res || p == NULL)
+	{
+		pfree(upname);
+		ereport(LOG,
+				(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+				 errmsg("could not translate name")));
+		return STATUS_ERROR;
+	}
+
+	/* Length of realm name after the '@', including the NUL. */
+	upnamerealmsize = upnamesize - (p - upname + 1);
+
+	/* Replace domainname with realm name. */
+	if (upnamerealmsize > domainnamesize)
+	{
+		pfree(upname);
+		ereport(LOG,
+				(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+				 errmsg("realm name too long")));
+		return STATUS_ERROR;
+	}
+
+	/* Length is now safe. */
+	strcpy(domainname, p + 1);
+
+	/* Replace account name as well (in case UPN != SAM)? */
+	if (update_accountname)
+	{
+		if ((p - upname + 1) > accountnamesize)
+		{
+			pfree(upname);
+			ereport(LOG,
+					(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+					 errmsg("translated account name too long")));
+			return STATUS_ERROR;
+		}
+
+		*p = 0;
+		strcpy(accountname, upname);
+	}
+
+	pfree(upname);
+	return STATUS_OK;
 }
 #endif   /* ENABLE_SSPI */
 

@@ -1107,6 +1107,43 @@ omicron         bryanh                  guest1
      </varlistentry>
 
      <varlistentry>
+      <term><literal>compat_realm</literal></term>
+      <listitem>
+       <para>
+        If set to 1, the domain's SAM-compatible name (also known as the
+        NetBIOS name) is used for the <literal>include_realm</literal>
+        option. This is the default. If set to 0, the true realm name from
+        the Kerberos user principal name is used.
+       </para>
+       <para>
+        Do not enable this option unless your server runs under a domain
+        account (this includes virtual service accounts on a domain member
+        system) and all clients authenticating through SSPI are also using
+        domain accounts, or authentication will fail.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>upn_username</literal></term>
+      <listitem>
+       <para>
+        If this option is enabled along with <literal>compat_realm</literal>,
+        the user name from the Kerberos UPN is used for authentication. If
+        it is disabled (the default), the SAM-compatible user name is used.
+        By default, these two names are identical for new user accounts.
+       </para>
+       <para>
+        Note that <application>libpq</> uses the SAM-compatible name if no
+        explicit user name is specified. If you use
+        <application>libpq</> or a driver based on it, you should
+        leave this option disabled or explicitly specify user name in the
+        connection string.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><literal>map</literal></term>
       <listitem>
        <para>
