@@ -228,7 +228,7 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
 	regbuf = &registered_buffers[block_id];
 
 	BufferGetTag(buffer, &regbuf->rnode, &regbuf->forkno, &regbuf->block);
-	regbuf->page = BufferGetPage(buffer);
+	regbuf->page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	regbuf->flags = flags;
 	regbuf->rdata_tail = (XLogRecData *) &regbuf->rdata_head;
 	regbuf->rdata_len = 0;
@@ -825,7 +825,7 @@ XLogCheckBufferNeedsBackup(Buffer buffer)
 
 	GetFullPageWriteInfo(&RedoRecPtr, &doPageWrites);
 
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (doPageWrites && PageGetLSN(page) <= RedoRecPtr)
 		return true;			/* buffer requires backup */
@@ -896,7 +896,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 		if (buffer_std)
 		{
 			/* Assume we can omit data between pd_lower and pd_upper */
-			Page		page = BufferGetPage(buffer);
+			Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 			uint16		lower = ((PageHeader) page)->pd_lower;
 			uint16		upper = ((PageHeader) page)->pd_upper;
 
@@ -973,7 +973,7 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 XLogRecPtr
 log_newpage_buffer(Buffer buffer, bool page_std)
 {
-	Page		page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	RelFileNode rnode;
 	ForkNumber	forkNum;
 	BlockNumber blkno;

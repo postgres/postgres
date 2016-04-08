@@ -95,7 +95,8 @@ writeFragment(PageData *pageData, OffsetNumber offset, OffsetNumber length,
 static void
 writeDelta(PageData *pageData)
 {
-	Page			page = BufferGetPage(pageData->buffer),
+	Page			page = BufferGetPage(pageData->buffer, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST),
 					image = (Page) pageData->image;
 	int				i,
 					fragmentBegin = -1,
@@ -220,7 +221,8 @@ GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 		if (BufferIsInvalid(page->buffer))
 		{
 			page->buffer = buffer;
-			memcpy(page->image, BufferGetPage(buffer), BLCKSZ);
+			memcpy(page->image, BufferGetPage(buffer, NULL, NULL,
+											  BGP_NO_SNAPSHOT_TEST), BLCKSZ);
 			page->dataLen = 0;
 			page->fullImage = isNew;
 			return (Page)page->image;
@@ -295,8 +297,10 @@ GenericXLogFinish(GenericXLogState *state)
 
 			/* Swap current and saved page image. */
 			memcpy(tmp, page->image, BLCKSZ);
-			memcpy(page->image, BufferGetPage(page->buffer), BLCKSZ);
-			memcpy(BufferGetPage(page->buffer), tmp, BLCKSZ);
+			memcpy(page->image, BufferGetPage(page->buffer, NULL, NULL,
+											  BGP_NO_SNAPSHOT_TEST), BLCKSZ);
+			memcpy(BufferGetPage(page->buffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST), tmp, BLCKSZ);
 
 			if (page->fullImage)
 			{
@@ -325,7 +329,8 @@ GenericXLogFinish(GenericXLogState *state)
 
 			if (BufferIsInvalid(page->buffer))
 				continue;
-			PageSetLSN(BufferGetPage(page->buffer), lsn);
+			PageSetLSN(BufferGetPage(page->buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST), lsn);
 			MarkBufferDirty(page->buffer);
 		}
 		END_CRIT_SECTION();
@@ -340,7 +345,8 @@ GenericXLogFinish(GenericXLogState *state)
 
 			if (BufferIsInvalid(page->buffer))
 				continue;
-			memcpy(BufferGetPage(page->buffer), page->image, BLCKSZ);
+			memcpy(BufferGetPage(page->buffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST), page->image, BLCKSZ);
 			MarkBufferDirty(page->buffer);
 		}
 		END_CRIT_SECTION();
@@ -413,7 +419,7 @@ generic_redo(XLogReaderState *record)
 			Size	blockDataSize;
 			Page	page;
 
-			page = BufferGetPage(buffers[block_id]);
+			page = BufferGetPage(buffers[block_id], NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 			blockData = XLogRecGetBlockData(record, block_id, &blockDataSize);
 			applyPageRedo(page, blockData, blockDataSize);
 

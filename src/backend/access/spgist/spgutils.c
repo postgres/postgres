@@ -126,7 +126,8 @@ spgGetCache(Relation index)
 		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
 		LockBuffer(metabuffer, BUFFER_LOCK_SHARE);
 
-		metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
+		metadata = SpGistPageGetMeta
+			(BufferGetPage(metabuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST));
 
 		if (metadata->magicNumber != SPGIST_MAGIC_NUMBER)
 			elog(ERROR, "index \"%s\" is not an SP-GiST index",
@@ -206,7 +207,8 @@ SpGistNewBuffer(Relation index)
 		 */
 		if (ConditionalLockBuffer(buffer))
 		{
-			Page		page = BufferGetPage(buffer);
+			Page		page = BufferGetPage(buffer, NULL, NULL,
+											 BGP_NO_SNAPSHOT_TEST);
 
 			if (PageIsNew(page))
 				return buffer;	/* OK to use, if never initialized */
@@ -256,7 +258,8 @@ SpGistUpdateMetaPage(Relation index)
 
 		if (ConditionalLockBuffer(metabuffer))
 		{
-			metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
+			metadata = SpGistPageGetMeta
+				(BufferGetPage(metabuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST));
 			metadata->lastUsedPages = cache->lastUsedPages;
 
 			MarkBufferDirty(metabuffer);
@@ -333,7 +336,9 @@ allocNewBuffer(Relation index, int flags)
 					blkFlags |= GBUF_NULLS;
 				cache->lastUsedPages.cachedPage[blkFlags].blkno = blkno;
 				cache->lastUsedPages.cachedPage[blkFlags].freeSpace =
-					PageGetExactFreeSpace(BufferGetPage(buffer));
+					PageGetExactFreeSpace
+						(BufferGetPage(buffer, NULL, NULL,
+									   BGP_NO_SNAPSHOT_TEST));
 				UnlockReleaseBuffer(buffer);
 			}
 		}
@@ -401,7 +406,7 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 			return allocNewBuffer(index, flags);
 		}
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (PageIsNew(page) || SpGistPageIsDeleted(page) || PageIsEmpty(page))
 		{
@@ -460,7 +465,7 @@ SpGistSetLastUsedPage(Relation index, Buffer buffer)
 	SpGistCache *cache = spgGetCache(index);
 	SpGistLastUsedPage *lup;
 	int			freeSpace;
-	Page		page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	int			flags;
 
@@ -508,7 +513,7 @@ void
 SpGistInitBuffer(Buffer b, uint16 f)
 {
 	Assert(BufferGetPageSize(b) == BLCKSZ);
-	SpGistInitPage(BufferGetPage(b), f);
+	SpGistInitPage(BufferGetPage(b, NULL, NULL, BGP_NO_SNAPSHOT_TEST), f);
 }
 
 /*

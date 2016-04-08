@@ -193,7 +193,7 @@ ginEntryInsert(GinState *ginstate,
 	ginPrepareEntryScan(&btree, attnum, key, category, ginstate);
 
 	stack = ginFindLeafPage(&btree, false);
-	page = BufferGetPage(stack->buffer);
+	page = BufferGetPage(stack->buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (btree.findItem(&btree, stack))
 	{
@@ -352,10 +352,10 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_INDEX);
 
-		page = BufferGetPage(RootBuffer);
+		page = BufferGetPage(RootBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		PageSetLSN(page, recptr);
 
-		page = BufferGetPage(MetaBuffer);
+		page = BufferGetPage(MetaBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		PageSetLSN(page, recptr);
 	}
 

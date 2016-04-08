@@ -169,7 +169,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/* initialize the root page */
 	buffer = gistNewBuffer(index);
 	Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	START_CRIT_SECTION();
 
@@ -589,7 +589,7 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		buffer = ReadBuffer(indexrel, blkno);
 		LockBuffer(buffer, GIST_EXCLUSIVE);
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		childoffnum = gistchoose(indexrel, page, itup, giststate);
 		iid = PageGetItemId(page, childoffnum);
 		idxtuple = (IndexTuple) PageGetItem(page, iid);
@@ -699,7 +699,8 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 	 */
 	if (is_split && BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO)
 	{
-		Page		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST);
 		OffsetNumber off;
 		OffsetNumber maxoff;
 
@@ -866,7 +867,7 @@ gistBufferingFindCorrectParent(GISTBuildState *buildstate,
 	}
 
 	buffer = ReadBuffer(buildstate->indexrel, parent);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(buildstate->indexrel, buffer);
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -1067,7 +1068,7 @@ gistGetMaxLevel(Relation index)
 		 * pro forma.
 		 */
 		LockBuffer(buffer, GIST_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (GistPageIsLeaf(page))
 		{
@@ -1167,7 +1168,8 @@ gistMemorizeAllDownlinks(GISTBuildState *buildstate, Buffer parentbuf)
 	OffsetNumber maxoff;
 	OffsetNumber off;
 	BlockNumber parentblkno = BufferGetBlockNumber(parentbuf);
-	Page		page = BufferGetPage(parentbuf);
+	Page		page = BufferGetPage(parentbuf, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 
 	Assert(!GistPageIsLeaf(page));
 

@@ -79,7 +79,7 @@ spgRedoCreateIndex(XLogReaderState *record)
 
 	buffer = XLogInitBufferForRedo(record, 0);
 	Assert(BufferGetBlockNumber(buffer) == SPGIST_METAPAGE_BLKNO);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	SpGistInitMetapage(page);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buffer);
@@ -88,7 +88,7 @@ spgRedoCreateIndex(XLogReaderState *record)
 	buffer = XLogInitBufferForRedo(record, 1);
 	Assert(BufferGetBlockNumber(buffer) == SPGIST_ROOT_BLKNO);
 	SpGistInitBuffer(buffer, SPGIST_LEAF);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
@@ -96,7 +96,7 @@ spgRedoCreateIndex(XLogReaderState *record)
 	buffer = XLogInitBufferForRedo(record, 2);
 	Assert(BufferGetBlockNumber(buffer) == SPGIST_NULL_BLKNO);
 	SpGistInitBuffer(buffer, SPGIST_LEAF | SPGIST_NULLS);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
@@ -136,7 +136,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 
 	if (action == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		/* insert new tuple */
 		if (xldata->offnumLeaf != xldata->offnumHeadLeaf)
@@ -183,7 +183,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 
 			XLogRecGetBlockTag(record, 0, NULL, NULL, &blknoLeaf);
 
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			tuple = (SpGistInnerTuple) PageGetItem(page,
 								  PageGetItemId(page, xldata->offnumParent));
@@ -249,7 +249,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 	{
 		int			i;
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		for (i = 0; i < nInsert; i++)
 		{
@@ -278,7 +278,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 	/* Delete tuples from the source page, inserting a redirection pointer */
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		spgPageIndexMultiDelete(&state, page, toDelete, xldata->nMoves,
 						state.isBuild ? SPGIST_PLACEHOLDER : SPGIST_REDIRECT,
@@ -297,7 +297,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 	{
 		SpGistInnerTuple tuple;
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		tuple = (SpGistInnerTuple) PageGetItem(page,
 								  PageGetItemId(page, xldata->offnumParent));
@@ -338,7 +338,7 @@ spgRedoAddNode(XLogReaderState *record)
 		Assert(xldata->parentBlk == -1);
 		if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 		{
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			PageIndexTupleDelete(page, xldata->offnum);
 			if (PageAddItem(page, (Item) innerTuple, innerTupleHdr.size,
@@ -381,7 +381,7 @@ spgRedoAddNode(XLogReaderState *record)
 			action = XLogReadBufferForRedo(record, 1, &buffer);
 		if (action == BLK_NEEDS_REDO)
 		{
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			addOrReplaceTuple(page, (Item) innerTuple,
 							  innerTupleHdr.size, xldata->offnumNew);
@@ -410,7 +410,7 @@ spgRedoAddNode(XLogReaderState *record)
 		{
 			SpGistDeadTuple dt;
 
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			if (state.isBuild)
 				dt = spgFormDeadTuple(&state, SPGIST_PLACEHOLDER,
@@ -462,7 +462,7 @@ spgRedoAddNode(XLogReaderState *record)
 			{
 				SpGistInnerTuple parentTuple;
 
-				page = BufferGetPage(buffer);
+				page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 				parentTuple = (SpGistInnerTuple) PageGetItem(page,
 								  PageGetItemId(page, xldata->offnumParent));
@@ -522,7 +522,7 @@ spgRedoSplitTuple(XLogReaderState *record)
 			action = XLogReadBufferForRedo(record, 1, &buffer);
 		if (action == BLK_NEEDS_REDO)
 		{
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			addOrReplaceTuple(page, (Item) postfixTuple,
 							  postfixTupleHdr.size, xldata->offnumPostfix);
@@ -537,7 +537,7 @@ spgRedoSplitTuple(XLogReaderState *record)
 	/* now handle the original page */
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		PageIndexTupleDelete(page, xldata->offnumPrefix);
 		if (PageAddItem(page, (Item) prefixTuple, prefixTupleHdr.size,
@@ -608,7 +608,7 @@ spgRedoPickSplit(XLogReaderState *record)
 	{
 		/* just re-init the source page */
 		srcBuffer = XLogInitBufferForRedo(record, 0);
-		srcPage = (Page) BufferGetPage(srcBuffer);
+		srcPage = BufferGetPage(srcBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		SpGistInitBuffer(srcBuffer,
 					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
@@ -625,7 +625,7 @@ spgRedoPickSplit(XLogReaderState *record)
 		srcPage = NULL;
 		if (XLogReadBufferForRedo(record, 0, &srcBuffer) == BLK_NEEDS_REDO)
 		{
-			srcPage = BufferGetPage(srcBuffer);
+			srcPage = BufferGetPage(srcBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			/*
 			 * We have it a bit easier here than in doPickSplit(), because we
@@ -661,7 +661,8 @@ spgRedoPickSplit(XLogReaderState *record)
 	{
 		/* just re-init the dest page */
 		destBuffer = XLogInitBufferForRedo(record, 1);
-		destPage = (Page) BufferGetPage(destBuffer);
+		destPage = BufferGetPage(destBuffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST);
 
 		SpGistInitBuffer(destBuffer,
 					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
@@ -674,7 +675,8 @@ spgRedoPickSplit(XLogReaderState *record)
 		 * full-page-image case, but for safety let's hold it till later.
 		 */
 		if (XLogReadBufferForRedo(record, 1, &destBuffer) == BLK_NEEDS_REDO)
-			destPage = (Page) BufferGetPage(destBuffer);
+			destPage = BufferGetPage(destBuffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 		else
 			destPage = NULL;	/* don't do any page updates */
 	}
@@ -722,7 +724,7 @@ spgRedoPickSplit(XLogReaderState *record)
 
 	if (action == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(innerBuffer);
+		page = BufferGetPage(innerBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		addOrReplaceTuple(page, (Item) innerTuple, innerTupleHdr.size,
 						  xldata->offnumInner);
@@ -762,7 +764,8 @@ spgRedoPickSplit(XLogReaderState *record)
 		{
 			SpGistInnerTuple parent;
 
-			page = BufferGetPage(parentBuffer);
+			page = BufferGetPage(parentBuffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST);
 
 			parent = (SpGistInnerTuple) PageGetItem(page,
 								  PageGetItemId(page, xldata->offnumParent));
@@ -813,7 +816,7 @@ spgRedoVacuumLeaf(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		spgPageIndexMultiDelete(&state, page,
 								toDead, xldata->nDead,
@@ -876,7 +879,7 @@ spgRedoVacuumRoot(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		/* The tuple numbers are in order */
 		PageIndexMultiDelete(page, toDelete, xldata->nDelete);
@@ -917,7 +920,8 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		Page		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST);
 		SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
 		int			i;
 

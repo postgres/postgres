@@ -55,7 +55,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	current = &(so->hashso_curpos);
 	offnum = ItemPointerGetOffsetNumber(current);
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	so->hashso_heappos = itup->t_tid;
 
@@ -79,7 +79,7 @@ _hash_readnext(Relation rel,
 	if (BlockNumberIsValid(blkno))
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
-		*pagep = BufferGetPage(*bufp);
+		*pagep = BufferGetPage(*bufp, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
 	}
 }
@@ -102,7 +102,7 @@ _hash_readprev(Relation rel,
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ,
 							 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-		*pagep = BufferGetPage(*bufp);
+		*pagep = BufferGetPage(*bufp, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
 	}
 }
@@ -188,7 +188,9 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	page = BufferGetPage(metabuf, NULL, NULL,
+						 BGP_NO_SNAPSHOT_TEST);
+	metap = HashPageGetMeta(page);
 
 	/*
 	 * Loop until we get a lock on the correct target bucket.
@@ -240,7 +242,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* Fetch the primary bucket page for the bucket */
 	buf = _hash_getbuf(rel, blkno, HASH_READ, LH_BUCKET_PAGE);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL,
+						 BGP_NO_SNAPSHOT_TEST);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	Assert(opaque->hasho_bucket == bucket);
 
@@ -258,7 +261,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	/* if we're here, _hash_step found a valid tuple */
 	offnum = ItemPointerGetOffsetNumber(current);
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	so->hashso_heappos = itup->t_tid;
 
@@ -294,7 +297,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 
 	buf = *bufP;
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	/*

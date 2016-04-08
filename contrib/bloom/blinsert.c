@@ -204,7 +204,8 @@ blinsert(Relation index, Datum *values, bool *isnull,
 	 */
 	metaBuffer = ReadBuffer(index, BLOOM_METAPAGE_BLKNO);
 	LockBuffer(metaBuffer, BUFFER_LOCK_SHARE);
-	metaData = BloomPageGetMeta(BufferGetPage(metaBuffer));
+	metaData = BloomPageGetMeta(BufferGetPage(metaBuffer, NULL, NULL,
+											  BGP_NO_SNAPSHOT_TEST));
 
 	if (metaData->nEnd > metaData->nStart)
 	{

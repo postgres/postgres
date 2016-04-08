@@ -155,7 +155,7 @@ _hash_log2(uint32 num)
 void
 _hash_checkpage(Relation rel, Buffer buf, int flags)
 {
-	Page		page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/*
 	 * ReadBuffer verifies that every newly-read page passes

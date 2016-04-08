@@ -253,7 +253,7 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 	buf = XLogReadBufferExtended(rnode, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR);
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	if (PageIsNew(page))
 		PageInit(page, BLCKSZ, 0);
 
@@ -280,7 +280,8 @@ GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk)
 	buf = fsm_readbuf(rel, addr, false);
 	if (!BufferIsValid(buf))
 		return 0;
-	cat = fsm_get_avail(BufferGetPage(buf), slot);
+	cat = fsm_get_avail(BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
+						slot);
 	ReleaseBuffer(buf);
 
 	return fsm_space_cat_to_avail(cat);
@@ -327,7 +328,9 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 		if (!BufferIsValid(buf))
 			return;				/* nothing to do; the FSM was already smaller */
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-		fsm_truncate_avail(BufferGetPage(buf), first_removed_slot);
+		fsm_truncate_avail(BufferGetPage(buf, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST),
+						   first_removed_slot);
 		MarkBufferDirtyHint(buf, false);
 		UnlockReleaseBuffer(buf);
 
@@ -577,8 +580,9 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 	 * headers, for example.
 	 */
 	buf = ReadBufferExtended(rel, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR, NULL);
-	if (PageIsNew(BufferGetPage(buf)))
-		PageInit(BufferGetPage(buf), BLCKSZ, 0);
+	if (PageIsNew(BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST)))
+		PageInit(BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
+				 BLCKSZ, 0);
 	return buf;
 }
 
@@ -657,7 +661,7 @@ fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 	buf = fsm_readbuf(rel, addr, true);
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (fsm_set_avail(page, slot, newValue))
 		MarkBufferDirtyHint(buf, false);
@@ -701,7 +705,9 @@ fsm_search(Relation rel, uint8 min_cat)
 									(addr.level == FSM_BOTTOM_LEVEL),
 									false);
 			if (slot == -1)
-				max_avail = fsm_get_max_avail(BufferGetPage(buf));
+				max_avail =
+					fsm_get_max_avail(BufferGetPage(buf, NULL, NULL,
+													BGP_NO_SNAPSHOT_TEST));
 			UnlockReleaseBuffer(buf);
 		}
 		else
@@ -783,7 +789,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 	else
 		*eof_p = false;
 
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/*
 	 * Recurse into children, and fix the information stored about them at
@@ -810,14 +816,17 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 			if (fsm_get_avail(page, slot) != child_avail)
 			{
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-				fsm_set_avail(BufferGetPage(buf), slot, child_avail);
+				fsm_set_avail(BufferGetPage(buf, NULL, NULL,
+											BGP_NO_SNAPSHOT_TEST),
+							  slot, child_avail);
 				MarkBufferDirtyHint(buf, false);
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
 		}
 	}
 
-	max_avail = fsm_get_max_avail(BufferGetPage(buf));
+	max_avail = fsm_get_max_avail(BufferGetPage(buf, NULL, NULL,
+												BGP_NO_SNAPSHOT_TEST));
 
 	/*
 	 * Reset the next slot pointer. This encourages the use of low-numbered

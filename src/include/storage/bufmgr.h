@@ -14,11 +14,14 @@
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
+#include "catalog/catalog.h"
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
+#include "utils/snapmgr.h"
+#include "utils/tqual.h"
 
 typedef void *Block;
 
@@ -44,6 +47,19 @@ typedef enum
 	RBM_NORMAL_NO_LOG			/* Don't log page as invalid during WAL
 								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
+
+/*
+ * Forced choice for whether BufferGetPage() must check snapshot age
+ *
+ * A scan must test for old snapshot, unless the test would be redundant (for
+ * example, to tests already made at a lower level on all code paths).
+ * Positioning for DML or vacuuming does not need this sort of test.
+ */
+typedef enum
+{
+	BGP_NO_SNAPSHOT_TEST,		/* Not used for scan, or is redundant */
+	BGP_TEST_FOR_OLD_SNAPSHOT	/* Test for old snapshot is needed */
+} BufferGetPageAgeTest;
 
 /* forward declared, to avoid having to expose buf_internals.h here */
 struct WritebackContext;
@@ -165,7 +181,11 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * BufferGetPage
  *		Returns the page associated with a buffer.
  */
-#define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
+#define BufferGetPage(buffer, snapshot, relation, agetest) \
+( \
+	AssertMacro((agetest) == BGP_NO_SNAPSHOT_TEST), \
+	((Page)BufferGetBlock(buffer)) \
+)
 
 /*
  * prototypes for functions in bufmgr.c
@@ -232,6 +252,8 @@ extern void BufmgrCommit(void);
 extern bool BgBufferSync(struct WritebackContext *wb_context);
 
 extern void AtProcExit_LocalBuffers(void);
+
+extern Page TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page);
 
 /* in freelist.c */
 extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);

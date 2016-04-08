@@ -257,7 +257,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 * Okay to fetch the tuple
 		 */
 		targoffset = scan->rs_vistuples[scan->rs_cindex];
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lp = PageGetItemId(dp, targoffset);
 		Assert(ItemIdIsNormal(lp));
 
@@ -375,7 +375,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		 * Bitmap is lossy, so we must examine each item pointer on the page.
 		 * But we can ignore HOT chains, since we'll check each tuple anyway.
 		 */
-		Page		dp = (Page) BufferGetPage(buffer);
+		Page		dp = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		OffsetNumber maxoff = PageGetMaxOffsetNumber(dp);
 		OffsetNumber offnum;
 

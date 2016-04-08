@@ -173,7 +173,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 	 */
 	{
 		Buffer		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, 0, RBM_NORMAL, bstrategy);
-		Page		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		BTMetaPageData *metad = BTPageGetMeta(page);
 
 		indexStat.version = metad->btm_version;
@@ -211,7 +211,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		/* Determine page type, and update totals */
@@ -399,7 +399,7 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	 */
 	buffer = ReadBuffer(rel, GIN_METAPAGE_BLKNO);
 	LockBuffer(buffer, GIN_SHARE);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	metadata = GinPageGetMeta(page);
 
 	stats.version = metadata->ginVersion;

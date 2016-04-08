@@ -139,11 +139,12 @@ initBloomState(BloomState *state, Relation index)
 		buffer = ReadBuffer(index, BLOOM_METAPAGE_BLKNO);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (!BloomPageIsMeta(page))
 			elog(ERROR, "Relation is not a bloom index");
-		meta = BloomPageGetMeta(BufferGetPage(buffer));
+		meta = BloomPageGetMeta(BufferGetPage(buffer, NULL, NULL,
+											  BGP_NO_SNAPSHOT_TEST));
 
 		if (meta->magickNumber != BLOOM_MAGICK_NUMBER)
 			elog(ERROR, "Relation is not a bloom index");
@@ -315,7 +316,8 @@ BloomNewBuffer(Relation index)
 		 */
 		if (ConditionalLockBuffer(buffer))
 		{
-			Page		page = BufferGetPage(buffer);
+			Page		page = BufferGetPage(buffer, NULL, NULL,
+											 BGP_NO_SNAPSHOT_TEST);
 
 			if (PageIsNew(page))
 				return buffer;	/* OK to use, if never initialized */

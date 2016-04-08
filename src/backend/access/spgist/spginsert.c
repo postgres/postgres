@@ -92,7 +92,8 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	START_CRIT_SECTION();
 
-	SpGistInitMetapage(BufferGetPage(metabuffer));
+	SpGistInitMetapage(BufferGetPage(metabuffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST));
 	MarkBufferDirty(metabuffer);
 	SpGistInitBuffer(rootbuffer, SPGIST_LEAF);
 	MarkBufferDirty(rootbuffer);
@@ -115,9 +116,12 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 		recptr = XLogInsert(RM_SPGIST_ID, XLOG_SPGIST_CREATE_INDEX);
 
-		PageSetLSN(BufferGetPage(metabuffer), recptr);
-		PageSetLSN(BufferGetPage(rootbuffer), recptr);
-		PageSetLSN(BufferGetPage(nullbuffer), recptr);
+		PageSetLSN(BufferGetPage(metabuffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST), recptr);
+		PageSetLSN(BufferGetPage(rootbuffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST), recptr);
+		PageSetLSN(BufferGetPage(nullbuffer, NULL, NULL,
+								 BGP_NO_SNAPSHOT_TEST), recptr);
 	}
 
 	END_CRIT_SECTION();

@@ -161,7 +161,8 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 	/* ref count and lock type are correct */
 
 	/* initialize the page */
-	_hash_pageinit(BufferGetPage(buf), BufferGetPageSize(buf));
+	_hash_pageinit(BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
+				   BufferGetPageSize(buf));
 
 	return buf;
 }
@@ -210,7 +211,8 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno, ForkNumber forkNum)
 	/* ref count and lock type are correct */
 
 	/* initialize the page */
-	_hash_pageinit(BufferGetPage(buf), BufferGetPageSize(buf));
+	_hash_pageinit(BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
+				   BufferGetPageSize(buf));
 
 	return buf;
 }
@@ -384,7 +386,7 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 	 * the physical index length.
 	 */
 	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, forkNum);
-	pg = BufferGetPage(metabuf);
+	pg = BufferGetPage(metabuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
@@ -452,7 +454,7 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 		CHECK_FOR_INTERRUPTS();
 
 		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i), forkNum);
-		pg = BufferGetPage(buf);
+		pg = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
 		pageopaque->hasho_prevblkno = InvalidBlockNumber;
 		pageopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -517,7 +519,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	metap = HashPageGetMeta(BufferGetPage(metabuf, NULL, NULL,
+										  BGP_NO_SNAPSHOT_TEST));
 
 	/*
 	 * Check to see if split is still needed; someone else might have already
@@ -774,10 +777,10 @@ _hash_splitbucket(Relation rel,
 	 * either bucket.
 	 */
 	obuf = _hash_getbuf(rel, start_oblkno, HASH_WRITE, LH_BUCKET_PAGE);
-	opage = BufferGetPage(obuf);
+	opage = BufferGetPage(obuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 
-	npage = BufferGetPage(nbuf);
+	npage = BufferGetPage(nbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/* initialize the new bucket's primary page */
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
@@ -841,7 +844,7 @@ _hash_splitbucket(Relation rel,
 					_hash_chgbufaccess(rel, nbuf, HASH_WRITE, HASH_NOLOCK);
 					/* chain to a new overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf);
-					npage = BufferGetPage(nbuf);
+					npage = BufferGetPage(nbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 					/* we don't need nopaque within the loop */
 				}
 
@@ -888,7 +891,7 @@ _hash_splitbucket(Relation rel,
 
 		/* Else, advance to next old page */
 		obuf = _hash_getbuf(rel, oblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
-		opage = BufferGetPage(obuf);
+		opage = BufferGetPage(obuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 	}
 

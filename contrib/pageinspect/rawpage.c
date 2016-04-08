@@ -147,7 +147,9 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 	buf = ReadBufferExtended(rel, forknum, blkno, RBM_NORMAL, NULL);
 	LockBuffer(buf, BUFFER_LOCK_SHARE);
 
-	memcpy(raw_page_data, BufferGetPage(buf), BLCKSZ);
+	memcpy(raw_page_data,
+		   BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
+		   BLCKSZ);
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buf);

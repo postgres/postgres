@@ -1025,7 +1025,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 		targbuffer = ReadBufferExtended(onerel, MAIN_FORKNUM, targblock,
 										RBM_NORMAL, vac_strategy);
 		LockBuffer(targbuffer, BUFFER_LOCK_SHARE);
-		targpage = BufferGetPage(targbuffer);
+		targpage = BufferGetPage(targbuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		maxoffset = PageGetMaxOffsetNumber(targpage);
 
 		/* Inner loop over all tuples on the selected page */

@@ -125,7 +125,8 @@ static void
 vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 			   bool forPending)
 {
-	Page		page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 	spgxlogVacuumLeaf xlrec;
 	OffsetNumber toDead[MaxIndexTuplesPerPage];
 	OffsetNumber toPlaceholder[MaxIndexTuplesPerPage];
@@ -405,7 +406,8 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 static void
 vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 {
-	Page		page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 	spgxlogVacuumRoot xlrec;
 	OffsetNumber toDelete[MaxIndexTuplesPerPage];
 	OffsetNumber i,
@@ -490,7 +492,8 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 static void
 vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 {
-	Page		page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 	SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
 	OffsetNumber i,
 				max = PageGetMaxOffsetNumber(page),
@@ -615,7 +618,7 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, bds->info->strategy);
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (PageIsNew(page))
 	{
@@ -696,7 +699,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, bds->info->strategy);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (PageIsNew(page) || SpGistPageIsDeleted(page))
 		{

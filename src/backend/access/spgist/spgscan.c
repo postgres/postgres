@@ -301,7 +301,7 @@ spgLeafTest(Relation index, SpGistScanOpaque so,
  */
 static void
 spgWalk(Relation index, SpGistScanOpaque so, bool scanWholeIndex,
-		storeRes_func storeRes)
+		storeRes_func storeRes, Snapshot snapshot)
 {
 	Buffer		buffer = InvalidBuffer;
 	bool		reportedSome = false;
@@ -341,7 +341,7 @@ redirect:
 		}
 		/* else new pointer points to the same page, no work needed */
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		isnull = SpGistPageStoresNulls(page) ? true : false;
 
@@ -576,7 +576,7 @@ spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	so->tbm = tbm;
 	so->ntids = 0;
 
-	spgWalk(scan->indexRelation, so, true, storeBitmap);
+	spgWalk(scan->indexRelation, so, true, storeBitmap, scan->xs_snapshot);
 
 	return so->ntids;
 }
@@ -635,7 +635,8 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 		}
 		so->iPtr = so->nPtrs = 0;
 
-		spgWalk(scan->indexRelation, so, false, storeGettuple);
+		spgWalk(scan->indexRelation, so, false, storeGettuple,
+				scan->xs_snapshot);
 
 		if (so->nPtrs == 0)
 			break;				/* must have completed scan */

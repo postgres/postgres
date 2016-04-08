@@ -53,7 +53,8 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	metap = HashPageGetMeta(BufferGetPage(metabuf, NULL, NULL,
+										  BGP_NO_SNAPSHOT_TEST));
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually, we
@@ -111,7 +112,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 
 	/* Fetch the primary bucket page for the bucket */
 	buf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BUCKET_PAGE);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	Assert(pageopaque->hasho_bucket == bucket);
 
@@ -131,7 +132,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 			 */
 			_hash_relbuf(rel, buf);
 			buf = _hash_getbuf(rel, nextblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
-			page = BufferGetPage(buf);
+			page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		}
 		else
 		{
@@ -145,7 +146,7 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 
 			/* chain to a new overflow page */
 			buf = _hash_addovflpage(rel, metabuf, buf);
-			page = BufferGetPage(buf);
+			page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			/* should fit now, given test above */
 			Assert(PageGetFreeSpace(page) >= itemsz);
@@ -206,7 +207,7 @@ _hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup)
 	uint32		hashkey;
 
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/* Find where to insert the tuple (preserving page's hashkey ordering) */
 	hashkey = _hash_get_indextuple_hashkey(itup);

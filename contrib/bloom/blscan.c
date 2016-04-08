@@ -138,7 +138,7 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 									blkno, RBM_NORMAL, bas);
 
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (!BloomPageIsDeleted(page))
 		{

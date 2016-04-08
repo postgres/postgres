@@ -320,7 +320,8 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 			buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
 										RBM_NORMAL, scan->rs_strategy);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
-			stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
+			stat.free_space += PageGetHeapFreeSpace
+				(BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST));
 			UnlockReleaseBuffer(buffer);
 			block++;
 		}
@@ -333,7 +334,8 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
 									RBM_NORMAL, scan->rs_strategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
+		stat.free_space += PageGetHeapFreeSpace
+			(BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST));
 		UnlockReleaseBuffer(buffer);
 		block++;
 	}
@@ -358,7 +360,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 	LockBuffer(buf, BT_READ);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/* Page is valid, see what to do with it */
 	if (PageIsNew(page))
@@ -402,7 +404,7 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 
 	_hash_getlock(rel, blkno, HASH_SHARE);
 	buf = _hash_getbuf_with_strategy(rel, blkno, HASH_READ, 0, bstrategy);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (PageGetSpecialSize(page) == MAXALIGN(sizeof(HashPageOpaqueData)))
 	{
@@ -447,7 +449,7 @@ pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 	LockBuffer(buf, GIST_SHARE);
 	gistcheckpage(rel, buf);
-	page = BufferGetPage(buf);
+	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (GistPageIsLeaf(page))
 	{

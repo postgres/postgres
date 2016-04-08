@@ -158,7 +158,7 @@ int
 fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 				 bool exclusive_lock_held)
 {
-	Page		page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
 	int			nodeno;
 	int			target;

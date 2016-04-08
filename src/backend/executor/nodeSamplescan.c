@@ -435,7 +435,7 @@ tablesample_getnext(SampleScanState *scanstate)
 	if (!pagemode)
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-	page = (Page) BufferGetPage(scan->rs_cbuf);
+	page = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	all_visible = PageIsAllVisible(page) && !snapshot->takenDuringRecovery;
 	maxoffset = PageGetMaxOffsetNumber(page);
 
@@ -546,7 +546,7 @@ tablesample_getnext(SampleScanState *scanstate)
 		if (!pagemode)
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		page = (Page) BufferGetPage(scan->rs_cbuf);
+		page = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		all_visible = PageIsAllVisible(page) && !snapshot->takenDuringRecovery;
 		maxoffset = PageGetMaxOffsetNumber(page);
 	}

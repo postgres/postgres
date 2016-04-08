@@ -75,7 +75,7 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 									info->strategy);
 		LockBuffer(buffer, GIST_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (PageIsNew(page) || GistPageIsDeleted(page))
 		{
@@ -166,7 +166,7 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(rel, buffer);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (GistPageIsLeaf(page))
 		{
@@ -176,7 +176,7 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			LockBuffer(buffer, GIST_UNLOCK);
 			LockBuffer(buffer, GIST_EXCLUSIVE);
 
-			page = (Page) BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 			if (stack->blkno == GIST_ROOT_BLKNO && !GistPageIsLeaf(page))
 			{
 				/* only the root can become non-leaf during relock */

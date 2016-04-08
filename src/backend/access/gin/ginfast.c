@@ -53,7 +53,7 @@ static int32
 writeListPage(Relation index, Buffer buffer,
 			  IndexTuple *tuples, int32 ntuples, BlockNumber rightlink)
 {
-	Page		page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	int32		i,
 				freesize,
 				size = 0;
@@ -239,7 +239,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	data.newRightlink = data.prevTail = InvalidBlockNumber;
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
-	metapage = BufferGetPage(metabuffer);
+	metapage = BufferGetPage(metabuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	if (collector->sumsize + collector->ntuples * sizeof(ItemIdData) > GinListPageSize)
 	{
@@ -310,7 +310,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 
 			buffer = ReadBuffer(index, metadata->tail);
 			LockBuffer(buffer, GIN_EXCLUSIVE);
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			Assert(GinPageGetOpaque(page)->rightlink == InvalidBlockNumber);
 
@@ -344,7 +344,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 
 		buffer = ReadBuffer(index, metadata->tail);
 		LockBuffer(buffer, GIN_EXCLUSIVE);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		off = (PageIsEmpty(page)) ? FirstOffsetNumber :
 			OffsetNumberNext(PageGetMaxOffsetNumber(page));
@@ -514,7 +514,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 	GinMetaPageData *metadata;
 	BlockNumber blknoToDelete;
 
-	metapage = BufferGetPage(metabuffer);
+	metapage = BufferGetPage(metabuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	metadata = GinPageGetMeta(metapage);
 	blknoToDelete = metadata->head;
 
@@ -533,7 +533,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 			freespace[data.ndeleted] = blknoToDelete;
 			buffers[data.ndeleted] = ReadBuffer(index, blknoToDelete);
 			LockBuffer(buffers[data.ndeleted], GIN_EXCLUSIVE);
-			page = BufferGetPage(buffers[data.ndeleted]);
+			page = BufferGetPage(buffers[data.ndeleted], NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			data.ndeleted++;
 
@@ -582,7 +582,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 
 		for (i = 0; i < data.ndeleted; i++)
 		{
-			page = BufferGetPage(buffers[i]);
+			page = BufferGetPage(buffers[i], NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 			GinPageGetOpaque(page)->flags = GIN_DELETED;
 			MarkBufferDirty(buffers[i]);
 		}
@@ -606,7 +606,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 
 			for (i = 0; i < data.ndeleted; i++)
 			{
-				page = BufferGetPage(buffers[i]);
+				page = BufferGetPage(buffers[i], NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 				PageSetLSN(page, recptr);
 			}
 		}
@@ -760,7 +760,7 @@ ginInsertCleanup(GinState *ginstate,
 
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	LockBuffer(metabuffer, GIN_SHARE);
-	metapage = BufferGetPage(metabuffer);
+	metapage = BufferGetPage(metabuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	metadata = GinPageGetMeta(metapage);
 
 	if (metadata->head == InvalidBlockNumber)
@@ -776,7 +776,7 @@ ginInsertCleanup(GinState *ginstate,
 	blkno = metadata->head;
 	buffer = ReadBuffer(index, blkno);
 	LockBuffer(buffer, GIN_SHARE);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	LockBuffer(metabuffer, GIN_UNLOCK);
 
@@ -943,7 +943,7 @@ ginInsertCleanup(GinState *ginstate,
 		vacuum_delay_point();
 		buffer = ReadBuffer(index, blkno);
 		LockBuffer(buffer, GIN_SHARE);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	}
 
 	ReleaseBuffer(metabuffer);

@@ -701,7 +701,7 @@ GISTInitBuffer(Buffer b, uint32 f)
 	Size		pageSize;
 
 	pageSize = BufferGetPageSize(b);
-	page = BufferGetPage(b);
+	page = BufferGetPage(b, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
 
 	opaque = GistPageGetOpaque(page);
@@ -718,7 +718,7 @@ GISTInitBuffer(Buffer b, uint32 f)
 void
 gistcheckpage(Relation rel, Buffer buf)
 {
-	Page		page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/*
 	 * ReadBuffer verifies that every newly-read page passes
@@ -776,7 +776,7 @@ gistNewBuffer(Relation r)
 		 */
 		if (ConditionalLockBuffer(buffer))
 		{
-			Page		page = BufferGetPage(buffer);
+			Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 			if (PageIsNew(page))
 				return buffer;	/* OK to use, if never initialized */

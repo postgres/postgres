@@ -394,7 +394,7 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	dp = (Page) BufferGetPage(buffer);
+	dp = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	lines = PageGetMaxOffsetNumber(dp);
 	ntup = 0;
 
@@ -537,7 +537,7 @@ heapgettup(HeapScanDesc scan,
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lines = PageGetMaxOffsetNumber(dp);
 		/* page and lineoff now reference the physically next tid */
 
@@ -582,7 +582,7 @@ heapgettup(HeapScanDesc scan,
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lines = PageGetMaxOffsetNumber(dp);
 
 		if (!scan->rs_inited)
@@ -616,7 +616,7 @@ heapgettup(HeapScanDesc scan,
 			heapgetpage(scan, page);
 
 		/* Since the tuple was previously fetched, needn't lock page here */
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
 		lpp = PageGetItemId(dp, lineoff);
 		Assert(ItemIdIsNormal(lpp));
@@ -745,7 +745,7 @@ heapgettup(HeapScanDesc scan,
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lines = PageGetMaxOffsetNumber((Page) dp);
 		linesleft = lines;
 		if (backward)
@@ -832,7 +832,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			lineindex = scan->rs_cindex + 1;
 		}
 
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lines = scan->rs_ntuples;
 		/* page and lineindex now reference the next visible tid */
 
@@ -875,7 +875,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			page = scan->rs_cblock;		/* current page */
 		}
 
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lines = scan->rs_ntuples;
 
 		if (!scan->rs_inited)
@@ -908,7 +908,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			heapgetpage(scan, page);
 
 		/* Since the tuple was previously fetched, needn't lock page here */
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
 		lpp = PageGetItemId(dp, lineoff);
 		Assert(ItemIdIsNormal(lpp));
@@ -1027,7 +1027,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 
 		heapgetpage(scan, page);
 
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		lines = scan->rs_ntuples;
 		linesleft = lines;
 		if (backward)
@@ -1871,7 +1871,7 @@ heap_fetch(Relation relation,
 	 * Need share lock on buffer to examine tuple commit status.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/*
 	 * We'd better check for out-of-range offnum in case of VACUUM since the
@@ -1986,7 +1986,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 					   Snapshot snapshot, HeapTuple heapTuple,
 					   bool *all_dead, bool first_call)
 {
-	Page		dp = (Page) BufferGetPage(buffer);
+	Page		dp = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	TransactionId prev_xmax = InvalidTransactionId;
 	OffsetNumber offnum;
 	bool		at_chain_start;
@@ -2200,7 +2200,7 @@ heap_get_latest_tid(Relation relation,
 		 */
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&ctid));
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		/*
 		 * Check for bogus item number.  This is not treated as an error
@@ -2418,10 +2418,12 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	RelationPutHeapTuple(relation, buffer, heaptup,
 						 (options & HEAP_INSERT_SPECULATIVE) != 0);
 
-	if (PageIsAllVisible(BufferGetPage(buffer)))
+	if (PageIsAllVisible(BufferGetPage(buffer, NULL, NULL,
+									   BGP_NO_SNAPSHOT_TEST)))
 	{
 		all_visible_cleared = true;
-		PageClearAllVisible(BufferGetPage(buffer));
+		PageClearAllVisible(BufferGetPage(buffer, NULL, NULL,
+										  BGP_NO_SNAPSHOT_TEST));
 		visibilitymap_clear(relation,
 							ItemPointerGetBlockNumber(&(heaptup->t_self)),
 							vmbuffer);
@@ -2446,7 +2448,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
 		XLogRecPtr	recptr;
-		Page		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST);
 		uint8		info = XLOG_HEAP_INSERT;
 		int			bufflags = 0;
 
@@ -2705,7 +2708,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 		buffer = RelationGetBufferForTuple(relation, heaptuples[ndone]->t_len,
 										   InvalidBuffer, options, bistate,
 										   &vmbuffer, NULL);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		/* NO EREPORT(ERROR) from here till changes are logged */
 		START_CRIT_SECTION();
@@ -3019,7 +3022,7 @@ heap_delete(Relation relation, ItemPointer tid,
 
 	block = ItemPointerGetBlockNumber(tid);
 	buffer = ReadBuffer(relation, block);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/*
 	 * Before locking the buffer, pin the visibility map page if it appears to
@@ -3509,7 +3512,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	block = ItemPointerGetBlockNumber(otid);
 	buffer = ReadBuffer(relation, block);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	/*
 	 * Before locking the buffer, pin the visibility map page if it appears to
@@ -4110,17 +4113,22 @@ l2:
 	oldtup.t_data->t_ctid = heaptup->t_self;
 
 	/* clear PD_ALL_VISIBLE flags */
-	if (PageIsAllVisible(BufferGetPage(buffer)))
+	if (PageIsAllVisible(BufferGetPage(buffer, NULL, NULL,
+									   BGP_NO_SNAPSHOT_TEST)))
 	{
 		all_visible_cleared = true;
-		PageClearAllVisible(BufferGetPage(buffer));
+		PageClearAllVisible(BufferGetPage(buffer, NULL, NULL,
+										  BGP_NO_SNAPSHOT_TEST));
 		visibilitymap_clear(relation, BufferGetBlockNumber(buffer),
 							vmbuffer);
 	}
-	if (newbuf != buffer && PageIsAllVisible(BufferGetPage(newbuf)))
+	if (newbuf != buffer &&
+		PageIsAllVisible(BufferGetPage(newbuf, NULL, NULL,
+									   BGP_NO_SNAPSHOT_TEST)))
 	{
 		all_visible_cleared_new = true;
-		PageClearAllVisible(BufferGetPage(newbuf));
+		PageClearAllVisible(BufferGetPage(newbuf, NULL, NULL,
+										  BGP_NO_SNAPSHOT_TEST));
 		visibilitymap_clear(relation, BufferGetBlockNumber(newbuf),
 							vmbuffer_new);
 	}
@@ -4151,9 +4159,12 @@ l2:
 								 all_visible_cleared_new);
 		if (newbuf != buffer)
 		{
-			PageSetLSN(BufferGetPage(newbuf), recptr);
+			PageSetLSN(BufferGetPage(newbuf, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST),
+					   recptr);
 		}
-		PageSetLSN(BufferGetPage(buffer), recptr);
+		PageSetLSN(BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
+				   recptr);
 	}
 
 	END_CRIT_SECTION();
@@ -4517,7 +4528,7 @@ heap_lock_tuple(Relation relation, HeapTuple tuple,
 	*buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 
-	page = BufferGetPage(*buffer);
+	page = BufferGetPage(*buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
 	Assert(ItemIdIsNormal(lp));
 
@@ -5695,7 +5706,8 @@ l4:
 		{
 			xl_heap_lock_updated xlrec;
 			XLogRecPtr	recptr;
-			Page		page = BufferGetPage(buf);
+			Page		page = BufferGetPage(buf, NULL, NULL,
+											 BGP_NO_SNAPSHOT_TEST);
 
 			XLogBeginInsert();
 			XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
@@ -5802,7 +5814,7 @@ heap_finish_speculative(Relation relation, HeapTuple tuple)
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&(tuple->t_self)));
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	offnum = ItemPointerGetOffsetNumber(&(tuple->t_self));
 	if (PageGetMaxOffsetNumber(page) >= offnum)
@@ -5896,7 +5908,7 @@ heap_abort_speculative(Relation relation, HeapTuple tuple)
 
 	block = ItemPointerGetBlockNumber(tid);
 	buffer = ReadBuffer(relation, block);
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
@@ -6043,7 +6055,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&(tuple->t_self)));
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	offnum = ItemPointerGetOffsetNumber(&(tuple->t_self));
 	if (PageGetMaxOffsetNumber(page) >= offnum)
@@ -7298,7 +7310,8 @@ log_heap_update(Relation reln, Buffer oldbuf,
 	uint16		prefixlen = 0,
 				suffixlen = 0;
 	XLogRecPtr	recptr;
-	Page		page = BufferGetPage(newbuf);
+	Page		page = BufferGetPage(newbuf, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 	bool		need_tuple_data = RelationIsLogicallyLogged(reln);
 	bool		init;
 	int			bufflags;
@@ -7747,7 +7760,8 @@ heap_xlog_clean(XLogReaderState *record)
 										   &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
-		Page		page = (Page) BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST);
 		OffsetNumber *end;
 		OffsetNumber *redirected;
 		OffsetNumber *nowdead;
@@ -7853,7 +7867,7 @@ heap_xlog_visible(XLogReaderState *record)
 		 * XLOG record's LSN, we mustn't mark the page all-visible, because
 		 * the subsequent update won't be replayed to clear the flag.
 		 */
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		PageSetAllVisible(page);
 
@@ -7879,7 +7893,8 @@ heap_xlog_visible(XLogReaderState *record)
 	if (XLogReadBufferForRedoExtended(record, 0, RBM_ZERO_ON_ERROR, false,
 									  &vmbuffer) == BLK_NEEDS_REDO)
 	{
-		Page		vmpage = BufferGetPage(vmbuffer);
+		Page		vmpage = BufferGetPage(vmbuffer, NULL, NULL,
+										   BGP_NO_SNAPSHOT_TEST);
 		Relation	reln;
 
 		/* initialize the page if it was read as zeros */
@@ -7946,7 +7961,8 @@ heap_xlog_freeze_page(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		Page		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer, NULL, NULL,
+										 BGP_NO_SNAPSHOT_TEST);
 		xl_heap_freeze_tuple *tuples;
 
 		tuples = (xl_heap_freeze_tuple *) XLogRecGetBlockData(record, 0, NULL);
@@ -8033,7 +8049,7 @@ heap_xlog_delete(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (PageGetMaxOffsetNumber(page) >= xlrec->offnum)
 			lp = PageGetItemId(page, xlrec->offnum);
@@ -8116,7 +8132,7 @@ heap_xlog_insert(XLogReaderState *record)
 	if (XLogRecGetInfo(record) & XLOG_HEAP_INIT_PAGE)
 	{
 		buffer = XLogInitBufferForRedo(record, 0);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		PageInit(page, BufferGetPageSize(buffer), 0);
 		action = BLK_NEEDS_REDO;
 	}
@@ -8127,7 +8143,7 @@ heap_xlog_insert(XLogReaderState *record)
 		Size		datalen;
 		char	   *data;
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		if (PageGetMaxOffsetNumber(page) + 1 < xlrec->offnum)
 			elog(PANIC, "invalid max offset number");
@@ -8232,7 +8248,7 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	if (isinit)
 	{
 		buffer = XLogInitBufferForRedo(record, 0);
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		PageInit(page, BufferGetPageSize(buffer), 0);
 		action = BLK_NEEDS_REDO;
 	}
@@ -8248,7 +8264,7 @@ heap_xlog_multi_insert(XLogReaderState *record)
 		tupdata = XLogRecGetBlockData(record, 0, &len);
 		endptr = tupdata + len;
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		for (i = 0; i < xlrec->ntuples; i++)
 		{
@@ -8399,7 +8415,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 									  &obuffer);
 	if (oldaction == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(obuffer);
+		page = BufferGetPage(obuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		offnum = xlrec->old_offnum;
 		if (PageGetMaxOffsetNumber(page) >= offnum)
 			lp = PageGetItemId(page, offnum);
@@ -8446,7 +8462,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 	else if (XLogRecGetInfo(record) & XLOG_HEAP_INIT_PAGE)
 	{
 		nbuffer = XLogInitBufferForRedo(record, 0);
-		page = (Page) BufferGetPage(nbuffer);
+		page = BufferGetPage(nbuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 		PageInit(page, BufferGetPageSize(nbuffer), 0);
 		newaction = BLK_NEEDS_REDO;
 	}
@@ -8479,7 +8495,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 		recdata = XLogRecGetBlockData(record, 0, &datalen);
 		recdata_end = recdata + datalen;
 
-		page = BufferGetPage(nbuffer);
+		page = BufferGetPage(nbuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		offnum = xlrec->new_offnum;
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
@@ -8609,7 +8625,7 @@ heap_xlog_confirm(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) >= offnum)
@@ -8645,7 +8661,7 @@ heap_xlog_lock(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) >= offnum)
@@ -8695,7 +8711,7 @@ heap_xlog_lock_updated(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) >= offnum)
@@ -8734,7 +8750,7 @@ heap_xlog_inplace(XLogReaderState *record)
 	{
 		char	   *newtup = XLogRecGetBlockData(record, 0, &newlen);
 
-		page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) >= offnum)

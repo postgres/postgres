@@ -107,7 +107,7 @@ pg_visibility(PG_FUNCTION_ARGS)
 	buffer = ReadBuffer(rel, blkno);
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	page = BufferGetPage(buffer);
+	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	values[2] = BoolGetDatum(PageIsAllVisible(page));
 
 	UnlockReleaseBuffer(buffer);
@@ -333,7 +333,7 @@ collect_visibility_data(Oid relid, bool include_pd)
 										bstrategy);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-			page = BufferGetPage(buffer);
+			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 			if (PageIsAllVisible(page))
 				info->bits[blkno] |= (1 << 2);
 

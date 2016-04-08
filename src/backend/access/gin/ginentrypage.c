@@ -274,7 +274,8 @@ entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
 				maxoff;
 	IndexTuple	itup = NULL;
 	int			result;
-	Page		page = BufferGetPage(stack->buffer);
+	Page		page = BufferGetPage(stack->buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 
 	Assert(!GinPageIsLeaf(page));
 	Assert(!GinPageIsData(page));
@@ -345,7 +346,8 @@ entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
 static bool
 entryLocateLeafEntry(GinBtree btree, GinBtreeStack *stack)
 {
-	Page		page = BufferGetPage(stack->buffer);
+	Page		page = BufferGetPage(stack->buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST);
 	OffsetNumber low,
 				high;
 
@@ -461,7 +463,7 @@ entryIsEnoughSpace(GinBtree btree, Buffer buf, OffsetNumber off,
 {
 	Size		releasedsz = 0;
 	Size		addedsz;
-	Page		page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 
 	Assert(insertData->entry);
 	Assert(!GinPageIsData(page));
@@ -525,7 +527,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 				 Page *newlpage, Page *newrpage)
 {
 	GinBtreeEntryInsertData *insertData = insertPayload;
-	Page		page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	OffsetNumber off = stack->off;
 	OffsetNumber placed;
 
@@ -592,8 +594,10 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	char	   *ptr;
 	IndexTuple	itup;
 	Page		page;
-	Page		lpage = PageGetTempPageCopy(BufferGetPage(origbuf));
-	Page		rpage = PageGetTempPageCopy(BufferGetPage(origbuf));
+	Page		lpage = PageGetTempPageCopy(BufferGetPage(origbuf, NULL, NULL,
+														  BGP_NO_SNAPSHOT_TEST));
+	Page		rpage = PageGetTempPageCopy(BufferGetPage(origbuf, NULL, NULL,
+														  BGP_NO_SNAPSHOT_TEST));
 	Size		pageSize = PageGetPageSize(lpage);
 	char		tupstore[2 * BLCKSZ];
 
@@ -674,7 +678,7 @@ static void *
 entryPrepareDownlink(GinBtree btree, Buffer lbuf)
 {
 	GinBtreeEntryInsertData *insertData;
-	Page		lpage = BufferGetPage(lbuf);
+	Page		lpage = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	BlockNumber lblkno = BufferGetBlockNumber(lbuf);
 	IndexTuple	itup;
 
