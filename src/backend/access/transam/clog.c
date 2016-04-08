@@ -417,30 +417,23 @@ TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn)
 /*
  * Number of shared CLOG buffers.
  *
- * Testing during the PostgreSQL 9.2 development cycle revealed that on a
- * large multi-processor system, it was possible to have more CLOG page
- * requests in flight at one time than the number of CLOG buffers which existed
- * at that time, which was hardcoded to 8.  Further testing revealed that
- * performance dropped off with more than 32 CLOG buffers, possibly because
- * the linear buffer search algorithm doesn't scale well.
+ * On larger multi-processor systems, it is possible to have many CLOG page
+ * requests in flight at one time which could lead to disk access for CLOG
+ * page if the required page is not found in memory.  Testing revealed that we
+ * can get the best performance by having 128 CLOG buffers, more than that it
+ * doesn't improve performance.
  *
- * Unconditionally increasing the number of CLOG buffers to 32 did not seem
- * like a good idea, because it would increase the minimum amount of shared
- * memory required to start, which could be a problem for people running very
- * small configurations.  The following formula seems to represent a reasonable
+ * Unconditionally keeping the number of CLOG buffers to 128 did not seem like
+ * a good idea, because it would increase the minimum amount of shared memory
+ * required to start, which could be a problem for people running very small
+ * configurations.  The following formula seems to represent a reasonable
  * compromise: people with very low values for shared_buffers will get fewer
- * CLOG buffers as well, and everyone else will get 32.
- *
- * It is likely that some further work will be needed here in future releases;
- * for example, on a 64-core server, the maximum number of CLOG requests that
- * can be simultaneously in flight will be even larger.  But that will
- * apparently require more than just changing the formula, so for now we take
- * the easy way out.
+ * CLOG buffers as well, and everyone else will get 128.
  */
 Size
 CLOGShmemBuffers(void)
 {
-	return Min(32, Max(4, NBuffers / 512));
+	return Min(128, Max(4, NBuffers / 512));
 }
 
 /*
