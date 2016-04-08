@@ -100,7 +100,7 @@ static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
 static void createNewConnection(const char *name, remoteConn *rconn);
 static void deleteConnection(const char *name);
-static char **get_pkey_attnames(Relation rel, int16 *indnkeyatts);
+static char **get_pkey_attnames(Relation rel, int16 *numatts);
 static char **get_text_array_contents(ArrayType *array, int *numitems);
 static char *get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals);
 static char *get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals);
@@ -1485,7 +1485,7 @@ PG_FUNCTION_INFO_V1(dblink_get_pkey);
 Datum
 dblink_get_pkey(PG_FUNCTION_ARGS)
 {
-	int16		indnkeyatts;
+	int16		numatts;
 	char	  **results;
 	FuncCallContext *funcctx;
 	int32		call_cntr;
@@ -1511,7 +1511,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		rel = get_rel_from_relname(PG_GETARG_TEXT_P(0), AccessShareLock, ACL_SELECT);
 
 		/* get the array of attnums */
-		results = get_pkey_attnames(rel, &indnkeyatts);
+		results = get_pkey_attnames(rel, &numatts);
 
 		relation_close(rel, AccessShareLock);
 
@@ -1531,9 +1531,9 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		if ((results != NULL) && (indnkeyatts > 0))
+		if ((results != NULL) && (numatts > 0))
 		{
-			funcctx->max_calls = indnkeyatts;
+			funcctx->max_calls = numatts;
 
 			/* got results, keep track of them */
 			funcctx->user_fctx = results;
@@ -2023,10 +2023,10 @@ dblink_fdw_validator(PG_FUNCTION_ARGS)
  * get_pkey_attnames
  *
  * Get the primary key attnames for the given relation.
- * Return NULL, and set indnkeyatts = 0, if no primary key exists.
+ * Return NULL, and set numatts = 0, if no primary key exists.
  */
 static char **
-get_pkey_attnames(Relation rel, int16 *indnkeyatts)
+get_pkey_attnames(Relation rel, int16 *numatts)
 {
 	Relation	indexRelation;
 	ScanKeyData skey;
@@ -2036,8 +2036,8 @@ get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 	char	  **result = NULL;
 	TupleDesc	tupdesc;
 
-	/* initialize indnkeyatts to 0 in case no primary key exists */
-	*indnkeyatts = 0;
+	/* initialize numatts to 0 in case no primary key exists */
+	*numatts = 0;
 
 	tupdesc = rel->rd_att;
 
@@ -2058,12 +2058,12 @@ get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 		/* we're only interested if it is the primary key */
 		if (index->indisprimary)
 		{
-			*indnkeyatts = index->indnkeyatts;
-			if (*indnkeyatts > 0)
+			*numatts = index->indnatts;
+			if (*numatts > 0)
 			{
-				result = (char **) palloc(*indnkeyatts * sizeof(char *));
+				result = (char **) palloc(*numatts * sizeof(char *));
 
-				for (i = 0; i < *indnkeyatts; i++)
+				for (i = 0; i < *numatts; i++)
 					result[i] = SPI_fname(tupdesc, index->indkey.values[i]);
 			}
 			break;

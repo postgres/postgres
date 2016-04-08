@@ -521,7 +521,7 @@ RelationBuildTupleDesc(Relation relation)
 	/*
 	 * add attribute data to relation->rd_att
 	 */
-	need = RelationGetNumberOfAttributes(relation);
+	need = relation->rd_rel->relnatts;
 
 	while (HeapTupleIsValid(pg_attribute_tuple = systable_getnext(pg_attribute_scan)))
 	{
@@ -530,7 +530,7 @@ RelationBuildTupleDesc(Relation relation)
 		attp = (Form_pg_attribute) GETSTRUCT(pg_attribute_tuple);
 
 		if (attp->attnum <= 0 ||
-			attp->attnum > RelationGetNumberOfAttributes(relation))
+			attp->attnum > relation->rd_rel->relnatts)
 			elog(ERROR, "invalid attribute number %d for %s",
 				 attp->attnum, RelationGetRelationName(relation));
 
@@ -547,7 +547,7 @@ RelationBuildTupleDesc(Relation relation)
 			if (attrdef == NULL)
 				attrdef = (AttrDefault *)
 					MemoryContextAllocZero(CacheMemoryContext,
-										   RelationGetNumberOfAttributes(relation) *
+										   relation->rd_rel->relnatts *
 										   sizeof(AttrDefault));
 			attrdef[ndef].adnum = attp->attnum;
 			attrdef[ndef].adbin = NULL;
@@ -577,7 +577,7 @@ RelationBuildTupleDesc(Relation relation)
 	{
 		int			i;
 
-		for (i = 0; i < RelationGetNumberOfAttributes(relation); i++)
+		for (i = 0; i < relation->rd_rel->relnatts; i++)
 			Assert(relation->rd_att->attrs[i]->attcacheoff == -1);
 	}
 #endif
@@ -587,7 +587,7 @@ RelationBuildTupleDesc(Relation relation)
 	 * attribute: it must be zero.  This eliminates the need for special cases
 	 * for attnum=1 that used to exist in fastgetattr() and index_getattr().
 	 */
-	if (RelationGetNumberOfAttributes(relation) > 0)
+	if (relation->rd_rel->relnatts > 0)
 		relation->rd_att->attrs[0]->attcacheoff = 0;
 
 	/*
@@ -599,7 +599,7 @@ RelationBuildTupleDesc(Relation relation)
 
 		if (ndef > 0)			/* DEFAULTs */
 		{
-			if (ndef < RelationGetNumberOfAttributes(relation))
+			if (ndef < relation->rd_rel->relnatts)
 				constr->defval = (AttrDefault *)
 					repalloc(attrdef, ndef * sizeof(AttrDefault));
 			else
@@ -1205,8 +1205,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	int2vector *indoption;
 	MemoryContext indexcxt;
 	MemoryContext oldcontext;
-	int			indnatts;
-	int			indnkeyatts;
+	int			natts;
 	uint16		amsupport;
 
 	/*
@@ -1236,11 +1235,10 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_amhandler = aform->amhandler;
 	ReleaseSysCache(tuple);
 
-	indnatts = RelationGetNumberOfAttributes(relation);
-	if (indnatts != IndexRelationGetNumberOfAttributes(relation))
+	natts = relation->rd_rel->relnatts;
+	if (natts != relation->rd_index->indnatts)
 		elog(ERROR, "relnatts disagrees with indnatts for index %u",
 			 RelationGetRelid(relation));
-	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(relation);
 
 	/*
 	 * Make the private context to hold index access info.  The reason we need
@@ -1266,14 +1264,14 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * Allocate arrays to hold data
 	 */
 	relation->rd_opfamily = (Oid *)
-		MemoryContextAllocZero(indexcxt, indnkeyatts * sizeof(Oid));
+		MemoryContextAllocZero(indexcxt, natts * sizeof(Oid));
 	relation->rd_opcintype = (Oid *)
-		MemoryContextAllocZero(indexcxt, indnkeyatts * sizeof(Oid));
+		MemoryContextAllocZero(indexcxt, natts * sizeof(Oid));
 
 	amsupport = relation->rd_amroutine->amsupport;
 	if (amsupport > 0)
 	{
-		int			nsupport = indnatts * amsupport;
+		int			nsupport = natts * amsupport;
 
 		relation->rd_support = (RegProcedure *)
 			MemoryContextAllocZero(indexcxt, nsupport * sizeof(RegProcedure));
@@ -1287,10 +1285,10 @@ RelationInitIndexAccessInfo(Relation relation)
 	}
 
 	relation->rd_indcollation = (Oid *)
-		MemoryContextAllocZero(indexcxt, indnatts * sizeof(Oid));
+		MemoryContextAllocZero(indexcxt, natts * sizeof(Oid));
 
 	relation->rd_indoption = (int16 *)
-		MemoryContextAllocZero(indexcxt, indnatts * sizeof(int16));
+		MemoryContextAllocZero(indexcxt, natts * sizeof(int16));
 
 	/*
 	 * indcollation cannot be referenced directly through the C struct,
@@ -1303,7 +1301,7 @@ RelationInitIndexAccessInfo(Relation relation)
 							   &isnull);
 	Assert(!isnull);
 	indcoll = (oidvector *) DatumGetPointer(indcollDatum);
-	memcpy(relation->rd_indcollation, indcoll->values, indnatts * sizeof(Oid));
+	memcpy(relation->rd_indcollation, indcoll->values, natts * sizeof(Oid));
 
 	/*
 	 * indclass cannot be referenced directly through the C struct, because it
@@ -1324,7 +1322,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	 */
 	IndexSupportInitialize(indclass, relation->rd_support,
 						   relation->rd_opfamily, relation->rd_opcintype,
-						   amsupport, indnkeyatts);
+						   amsupport, natts);
 
 	/*
 	 * Similarly extract indoption and copy it to the cache entry
@@ -1335,7 +1333,7 @@ RelationInitIndexAccessInfo(Relation relation)
 								 &isnull);
 	Assert(!isnull);
 	indoption = (int2vector *) DatumGetPointer(indoptionDatum);
-	memcpy(relation->rd_indoption, indoption->values, indnatts * sizeof(int16));
+	memcpy(relation->rd_indoption, indoption->values, natts * sizeof(int16));
 
 	/*
 	 * expressions, predicate, exclusion caches will be filled later
@@ -4396,25 +4394,16 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 		{
 			int			attrnum = indexInfo->ii_KeyAttrNumbers[i];
 
-			/*
-			 * Since we have covering indexes with non-key columns,
-			 * we must handle them accurately here. non-key columns
-			 * must be added into indexattrs, since they are in index,
-			 * and HOT-update shouldn't miss them.
-			 * Obviously, non-key columns couldn't be referenced by
-			 * foreign key or identity key. Hence we do not include
-			 * them into uindexattrs and idindexattrs bitmaps.
-			 */
 			if (attrnum != 0)
 			{
 				indexattrs = bms_add_member(indexattrs,
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
 
-				if (isKey && i < indexInfo->ii_NumIndexKeyAttrs)
+				if (isKey)
 					uindexattrs = bms_add_member(uindexattrs,
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
 
-				if (isIDKey && i < indexInfo->ii_NumIndexKeyAttrs)
+				if (isIDKey)
 					idindexattrs = bms_add_member(idindexattrs,
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
 			}
@@ -4482,7 +4471,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 						 Oid **procs,
 						 uint16 **strategies)
 {
-	int			indnkeyatts;
+	int			ncols = indexRelation->rd_rel->relnatts;
 	Oid		   *ops;
 	Oid		   *funcs;
 	uint16	   *strats;
@@ -4494,19 +4483,17 @@ RelationGetExclusionInfo(Relation indexRelation,
 	MemoryContext oldcxt;
 	int			i;
 
-	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(indexRelation);
-
 	/* Allocate result space in caller context */
-	*operators = ops = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	*procs = funcs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	*strategies = strats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
+	*operators = ops = (Oid *) palloc(sizeof(Oid) * ncols);
+	*procs = funcs = (Oid *) palloc(sizeof(Oid) * ncols);
+	*strategies = strats = (uint16 *) palloc(sizeof(uint16) * ncols);
 
 	/* Quick exit if we have the data cached already */
 	if (indexRelation->rd_exclstrats != NULL)
 	{
-		memcpy(ops, indexRelation->rd_exclops, sizeof(Oid) * indnkeyatts);
-		memcpy(funcs, indexRelation->rd_exclprocs, sizeof(Oid) * indnkeyatts);
-		memcpy(strats, indexRelation->rd_exclstrats, sizeof(uint16) * indnkeyatts);
+		memcpy(ops, indexRelation->rd_exclops, sizeof(Oid) * ncols);
+		memcpy(funcs, indexRelation->rd_exclprocs, sizeof(Oid) * ncols);
+		memcpy(strats, indexRelation->rd_exclstrats, sizeof(uint16) * ncols);
 		return;
 	}
 
@@ -4555,12 +4542,12 @@ RelationGetExclusionInfo(Relation indexRelation,
 		arr = DatumGetArrayTypeP(val);	/* ensure not toasted */
 		nelem = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
-			nelem != indnkeyatts ||
+			nelem != ncols ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != OIDOID)
 			elog(ERROR, "conexclop is not a 1-D Oid array");
 
-		memcpy(ops, ARR_DATA_PTR(arr), sizeof(Oid) * indnkeyatts);
+		memcpy(ops, ARR_DATA_PTR(arr), sizeof(Oid) * ncols);
 	}
 
 	systable_endscan(conscan);
@@ -4571,7 +4558,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 			 RelationGetRelationName(indexRelation));
 
 	/* We need the func OIDs and strategy numbers too */
-	for (i = 0; i < indnkeyatts; i++)
+	for (i = 0; i < ncols; i++)
 	{
 		funcs[i] = get_opcode(ops[i]);
 		strats[i] = get_op_opfamily_strategy(ops[i],
@@ -4584,12 +4571,12 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 	/* Save a copy of the results in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(indexRelation->rd_indexcxt);
-	indexRelation->rd_exclops = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	indexRelation->rd_exclprocs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	indexRelation->rd_exclstrats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
-	memcpy(indexRelation->rd_exclops, ops, sizeof(Oid) * indnkeyatts);
-	memcpy(indexRelation->rd_exclprocs, funcs, sizeof(Oid) * indnkeyatts);
-	memcpy(indexRelation->rd_exclstrats, strats, sizeof(uint16) * indnkeyatts);
+	indexRelation->rd_exclops = (Oid *) palloc(sizeof(Oid) * ncols);
+	indexRelation->rd_exclprocs = (Oid *) palloc(sizeof(Oid) * ncols);
+	indexRelation->rd_exclstrats = (uint16 *) palloc(sizeof(uint16) * ncols);
+	memcpy(indexRelation->rd_exclops, ops, sizeof(Oid) * ncols);
+	memcpy(indexRelation->rd_exclprocs, funcs, sizeof(Oid) * ncols);
+	memcpy(indexRelation->rd_exclstrats, strats, sizeof(uint16) * ncols);
 	MemoryContextSwitchTo(oldcxt);
 }
 

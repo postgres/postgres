@@ -593,7 +593,7 @@ boot_openrel(char *relname)
 		 relname, (int) ATTRIBUTE_FIXED_PART_SIZE);
 
 	boot_reldesc = heap_openrv(makeRangeVar(NULL, relname, -1), NoLock);
-	numattr = RelationGetNumberOfAttributes(boot_reldesc);
+	numattr = boot_reldesc->rd_rel->relnatts;
 	for (i = 0; i < numattr; i++)
 	{
 		if (attrtypes[i] == NULL)

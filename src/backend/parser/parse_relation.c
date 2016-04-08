@@ -2875,7 +2875,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 {
 	int			i;
 
-	for (i = 0; i < RelationGetNumberOfAttributes(rd); i++)
+	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
 		Form_pg_attribute att = rd->rd_att->attrs[i];
 

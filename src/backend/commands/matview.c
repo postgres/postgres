@@ -612,7 +612,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 										  RelationGetRelationName(tempRel));
 	diffname = make_temptable_name_n(tempname, 2);
 
-	relnatts = RelationGetNumberOfAttributes(matviewRel);
+	relnatts = matviewRel->rd_rel->relnatts;
 	usedForQual = (bool *) palloc0(sizeof(bool) * relnatts);
 
 	/* Open SPI context. */
@@ -698,11 +698,11 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 			RelationGetIndexExpressions(indexRel) == NIL &&
 			RelationGetIndexPredicate(indexRel) == NIL)
 		{
-			int			indnkeyatts = indexStruct->indnkeyatts;
+			int			numatts = indexStruct->indnatts;
 			int			i;
 
 			/* Add quals for all columns from this index. */
-			for (i = 0; i < indnkeyatts; i++)
+			for (i = 0; i < numatts; i++)
 			{
 				int			attnum = indexStruct->indkey.values[i];
 				Oid			type;

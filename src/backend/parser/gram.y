@@ -356,7 +356,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				oper_argtypes RuleActionList RuleActionMulti
 				opt_column_list columnList opt_name_list
 				sort_clause opt_sort_clause sortby_list index_params
-				optincluding opt_including index_including_params
 				name_list role_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list type_name_list
 				any_operator expr_list attrs
@@ -373,7 +372,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				create_generic_options alter_generic_options
 				relation_expr_list dostmt_opt_list
 				transform_element_list transform_type_list
-				optcincluding opt_c_including
 
 %type <list>	group_by_list
 %type <node>	group_by_item empty_grouping_set rollup_clause cube_clause
@@ -3219,18 +3217,17 @@ ConstraintElem:
 					n->initially_valid = !n->skip_validation;
 					$$ = (Node *)n;
 				}
-			| UNIQUE '(' columnList ')' opt_c_including opt_definition OptConsTableSpace
+			| UNIQUE '(' columnList ')' opt_definition OptConsTableSpace
 				ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
 					n->keys = $3;
-					n->including = $5;
-					n->options = $6;
+					n->options = $5;
 					n->indexname = NULL;
-					n->indexspace = $7;
-					processCASbits($8, @8, "UNIQUE",
+					n->indexspace = $6;
+					processCASbits($7, @7, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -3241,7 +3238,6 @@ ConstraintElem:
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
 					n->keys = NIL;
-					n->including = NIL;
 					n->options = NIL;
 					n->indexname = $2;
 					n->indexspace = NULL;
@@ -3250,18 +3246,17 @@ ConstraintElem:
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY '(' columnList ')' opt_c_including opt_definition OptConsTableSpace
+			| PRIMARY KEY '(' columnList ')' opt_definition OptConsTableSpace
 				ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->location = @1;
 					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->options = $6;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "PRIMARY KEY",
+					n->indexspace = $7;
+					processCASbits($8, @8, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -3272,7 +3267,6 @@ ConstraintElem:
 					n->contype = CONSTR_PRIMARY;
 					n->location = @1;
 					n->keys = NIL;
-					n->including = NIL;
 					n->options = NIL;
 					n->indexname = $3;
 					n->indexspace = NULL;
@@ -3338,13 +3332,6 @@ columnElem: ColId
 				{
 					$$ = (Node *) makeString($1);
 				}
-		;
-
-opt_c_including:	INCLUDING optcincluding			{ $$ = $2; }
-			 |		/* EMPTY */						{ $$ = NIL; }
-		;
-
-optcincluding : '(' columnList ')'		{ $$ = $2; }
 		;
 
 key_match:  MATCH FULL
@@ -6639,7 +6626,7 @@ defacl_privilege_target:
 
 IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 			ON qualified_name access_method_clause '(' index_params ')'
-			opt_including opt_reloptions OptTableSpace where_clause
+			opt_reloptions OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -6648,10 +6635,9 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->relation = $7;
 					n->accessMethod = $8;
 					n->indexParams = $10;
-					n->indexIncludingParams = $12;
-					n->options = $13;
-					n->tableSpace = $14;
-					n->whereClause = $15;
+					n->options = $12;
+					n->tableSpace = $13;
+					n->whereClause = $14;
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
@@ -6666,7 +6652,7 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 				}
 			| CREATE opt_unique INDEX opt_concurrently IF_P NOT EXISTS index_name
 			ON qualified_name access_method_clause '(' index_params ')'
-			opt_including opt_reloptions OptTableSpace where_clause
+			opt_reloptions OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -6675,10 +6661,9 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->relation = $10;
 					n->accessMethod = $11;
 					n->indexParams = $13;
-					n->indexIncludingParams = $15;
-					n->options = $16;
-					n->tableSpace = $17;
-					n->whereClause = $18;
+					n->options = $15;
+					n->tableSpace = $16;
+					n->whereClause = $17;
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
@@ -6755,16 +6740,6 @@ index_elem:	ColId opt_collate opt_class opt_asc_desc opt_nulls_order
 					$$->ordering = $6;
 					$$->nulls_ordering = $7;
 				}
-		;
-
-optincluding : '(' index_including_params ')'		{ $$ = $2; }
-		;
-opt_including:		INCLUDING optincluding			{ $$ = $2; }
-			 |		/* EMPTY */						{ $$ = NIL; }
-		;
-
-index_including_params:	index_elem						{ $$ = list_make1($1); }
-			| index_including_params ',' index_elem		{ $$ = lappend($1, $3); }
 		;
 
 opt_collate: COLLATE any_name						{ $$ = $2; }

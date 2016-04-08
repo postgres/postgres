@@ -1144,9 +1144,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 		Expr	   *leftop;		/* expr on lhs of operator */
 		Expr	   *rightop;	/* expr on rhs ... */
 		AttrNumber	varattno;	/* att number used in scan */
-		int			indnkeyatts;
 
-		indnkeyatts = IndexRelationGetNumberOfKeyAttributes(index);
 		if (IsA(clause, OpExpr))
 		{
 			/* indexkey op const or indexkey op expression */
@@ -1171,7 +1169,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				elog(ERROR, "indexqual doesn't have key on left side");
 
 			varattno = ((Var *) leftop)->varattno;
-			if (varattno < 1 || varattno > indnkeyatts)
+			if (varattno < 1 || varattno > index->rd_index->indnatts)
 				elog(ERROR, "bogus index qualification");
 
 			/*
@@ -1294,7 +1292,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				opnos_cell = lnext(opnos_cell);
 
 				if (index->rd_rel->relam != BTREE_AM_OID ||
-					varattno < 1 || varattno > indnkeyatts)
+					varattno < 1 || varattno > index->rd_index->indnatts)
 					elog(ERROR, "bogus RowCompare index qualification");
 				opfamily = index->rd_opfamily[varattno - 1];
 
@@ -1415,7 +1413,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				elog(ERROR, "indexqual doesn't have key on left side");
 
 			varattno = ((Var *) leftop)->varattno;
-			if (varattno < 1 || varattno > indnkeyatts)
+			if (varattno < 1 || varattno > index->rd_index->indnatts)
 				elog(ERROR, "bogus index qualification");
 
 			/*

@@ -23,7 +23,6 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class="parameter">name</replaceable> ] ON <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
     ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
-    [ INCLUDING ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
     [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
@@ -135,35 +134,6 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         A notice is issued in this case. Note that there is no guarantee that
         the existing index is anything like the one that would have been created.
         Index name is required when <literal>IF NOT EXISTS</literal> is specified.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>INCLUDING</literal></term>
-      <listitem>
-       <para>
-        An optional <literal>INCLUDING</> clause allows a list of columns to be
-        specified which will be included in the index, in the non-key portion of
-        the index. Columns which are part of this clause cannot also exist in
-        the key columns portion of the index, and vice versa. The
-        <literal>INCLUDING</> columns exist solely to allow more queries to
-        benefit from <firstterm>index-only scans</> by including certain
-        columns in the index, the value of which would otherwise have to be
-        obtained by reading
-        the table's heap. Having these columns in the <literal>INCLUDING</>
-        clause in some cases allows <productname>PostgreSQL</> to skip the heap
-        read completely. This also allows <literal>UNIQUE</> indexes to be
-        defined on one set of columns, which can include another set of column
-        in the <literal>INCLUDING</> clause, on which the uniqueness is not
-        enforced upon.  It's the same with other constraints (PRIMARY KEY and
-        EXCLUDE). This can also can be used for non-unique indexes as any
-        columns which are not required for the searching or ordering of records
-        can be included in the <literal>INCLUDING</> clause, which can slightly
-        reduce the size of the index, due to storing included attributes only
-        in leaf index pages. Currently, only the B-tree access method supports
-        this feature.  Expressions as included columns are not supported since
-        they cannot be used in index-only scan.
        </para>
       </listitem>
      </varlistentry>
@@ -629,19 +599,10 @@ Indexes:
   <title>Examples</title>
 
   <para>
-   To create a unique B-tree index on the column <literal>title</literal> in
+   To create a B-tree index on the column <literal>title</literal> in
    the table <literal>films</literal>:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title);
-</programlisting>
-  </para>
-
-  <para>
-   To create a unique B-tree index on the column <literal>title</literal>
-   and included columns <literal>director</literal> and <literal>rating</literal>
-   in the table <literal>films</literal>:
-<programlisting>
-CREATE UNIQUE INDEX title_idx ON films (title) INCLUDING (director, rating);
 </programlisting>
   </para>
 
