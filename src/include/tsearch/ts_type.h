@@ -49,7 +49,7 @@ typedef struct
 #define MAXSTRLEN ( (1<<11) - 1)
 #define MAXSTRPOS ( (1<<20) - 1)
 
-extern int comparePos(const void *a, const void *b);
+extern int compareWordEntryPos(const void *a, const void *b);
 
 /*
  * Equivalent to

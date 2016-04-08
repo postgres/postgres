@@ -1216,7 +1216,7 @@ uniqueLongPos(WordEntryPos *pos, int npos)
 	if (npos <= 1)
 		return npos;
 
-	qsort((void *) pos, npos, sizeof(WordEntryPos), comparePos);
+	qsort((void *) pos, npos, sizeof(WordEntryPos), compareWordEntryPos);
 
 	result = pos;
 	pos_iter = pos + 1;
