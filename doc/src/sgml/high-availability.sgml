@@ -1086,9 +1086,10 @@ primary_slot_name = 'node_a_slot'
     In the case that <varname>synchronous_commit</> is set to
     <literal>remote_apply</>, the standby sends reply messages when the commit
     record is replayed, making the transaction visible.
-    If the standby is chosen as the synchronous standby, from a priority
+    If the standby is chosen as a synchronous standby, from a priority
     list of <varname>synchronous_standby_names</> on the primary, the reply
-    messages from that standby will be used to wake users waiting for
+    messages from that standby will be considered along with those from other
+    synchronous standbys to decide when to release transactions waiting for
     confirmation that the commit record has been received. These parameters
     allow the administrator to specify which standby servers should be
     synchronous standbys. Note that the configuration of synchronous
@@ -1113,10 +1114,10 @@ primary_slot_name = 'node_a_slot'
 
    <para>
     Setting <varname>synchronous_commit</> to <literal>remote_apply</> will
-    cause each commit to wait until the current synchronous standby reports
-    that it has replayed the transaction, making it visible to user queries.
-    In simple cases, this allows for load balancing with causal consistency
-    on a single hot standby.
+    cause each commit to wait until the current synchronous standbys report
+    that they have replayed the transaction, making it visible to user
+    queries.  In simple cases, this allows for load balancing with causal
+    consistency.
    </para>
 
    <para>
