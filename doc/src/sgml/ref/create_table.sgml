@@ -909,6 +909,19 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
+    <term><literal>parallel_degree</> (<type>integer</>)</term>
+    <listitem>
+     <para>
+      The parallel degree for a table is the number of workers that should
+      be used to assist a parallel scan of that table.  If not set, the
+      system will determine a value based on the relation size.  The actual
+      number of workers chosen by the planner may be less, for example due to
+      the setting of <xref linkend="guc-max-parallel-degree">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>autovacuum_enabled</>, <literal>toast.autovacuum_enabled</literal> (<type>boolean</>)</term>
     <listitem>
      <para>

@@ -659,31 +659,55 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 create_parallel_paths(PlannerInfo *root, RelOptInfo *rel)
 {
-	int		parallel_threshold = 1000;
-	int		parallel_degree = 1;
+	int			parallel_degree = 1;
 
 	/*
-	 * If this relation is too small to be worth a parallel scan, just return
-	 * without doing anything ... unless it's an inheritance child.  In that case,
-	 * we want to generate a parallel path here anyway.  It might not be worthwhile
-	 * just for this relation, but when combined with all of its inheritance siblings
-	 * it may well pay off.
+	 * If the user has set the parallel_degree reloption, we decide what to do
+	 * based on the value of that option.  Otherwise, we estimate a value.
 	 */
-	if (rel->pages < parallel_threshold && rel->reloptkind == RELOPT_BASEREL)
-		return;
-
-	/*
-	 * Limit the degree of parallelism logarithmically based on the size of the
-	 * relation.  This probably needs to be a good deal more sophisticated, but we
-	 * need something here for now.
-	 */
-	while (rel->pages > parallel_threshold * 3 &&
-		   parallel_degree < max_parallel_degree)
+	if (rel->rel_parallel_degree != -1)
 	{
-		parallel_degree++;
-		parallel_threshold *= 3;
-		if (parallel_threshold >= PG_INT32_MAX / 3)
-			break;
+		/*
+		 * If parallel_degree = 0 is set for this relation, bail out.  The
+		 * user does not want a parallel path for this relation.
+		 */
+		if (rel->rel_parallel_degree == 0)
+			return;
+
+		/*
+		 * Use the table parallel_degree, but don't go further than
+		 * max_parallel_degree.
+		 */
+		parallel_degree = Min(rel->rel_parallel_degree, max_parallel_degree);
+	}
+	else
+	{
+		int			parallel_threshold = 1000;
+
+		/*
+		 * If this relation is too small to be worth a parallel scan, just
+		 * return without doing anything ... unless it's an inheritance child.
+		 * In that case, we want to generate a parallel path here anyway.  It
+		 * might not be worthwhile just for this relation, but when combined
+		 * with all of its inheritance siblings it may well pay off.
+		 */
+		if (rel->pages < parallel_threshold &&
+			rel->reloptkind == RELOPT_BASEREL)
+			return;
+
+		/*
+		 * Limit the degree of parallelism logarithmically based on the size
+		 * of the relation.  This probably needs to be a good deal more
+		 * sophisticated, but we need something here for now.
+		 */
+		while (rel->pages > parallel_threshold * 3 &&
+			   parallel_degree < max_parallel_degree)
+		{
+			parallel_degree++;
+			parallel_threshold *= 3;
+			if (parallel_threshold >= PG_INT32_MAX / 3)
+				break;
+		}
 	}
 
 	/* Add an unordered partial path based on a parallel sequential scan. */

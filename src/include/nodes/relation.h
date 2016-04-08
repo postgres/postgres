@@ -522,6 +522,7 @@ typedef struct RelOptInfo
 	double		allvisfrac;
 	PlannerInfo *subroot;		/* if subquery */
 	List	   *subplan_params; /* if subquery */
+	int			rel_parallel_degree;	/* wanted number of parallel workers */
 
 	/* Information about foreign tables and foreign joins */
 	Oid			serverid;		/* identifies server for the table or join */

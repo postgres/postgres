@@ -133,6 +133,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 		estimate_rel_size(relation, rel->attr_widths - rel->min_attr,
 						  &rel->pages, &rel->tuples, &rel->allvisfrac);
 
+	/* Retrive the parallel_degree reloption, if set. */
+	rel->rel_parallel_degree = RelationGetParallelDegree(relation, -1);
+
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
 	 * Don't bother with indexes for an inheritance parent, either.

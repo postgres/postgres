@@ -206,6 +206,7 @@ typedef struct StdRdOptions
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
 	bool		user_catalog_table;		/* use as an additional catalog
 										 * relation */
+	int			parallel_degree;	/* max number of parallel workers */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10
@@ -241,6 +242,14 @@ typedef struct StdRdOptions
 #define RelationIsUsedAsCatalogTable(relation)	\
 	((relation)->rd_options ?				\
 	 ((StdRdOptions *) (relation)->rd_options)->user_catalog_table : false)
+
+/*
+ * RelationGetParallelDegree
+ *		Returns the relation's parallel_degree.  Note multiple eval of argument!
+ */
+#define RelationGetParallelDegree(relation, defaultpd) \
+	((relation)->rd_options ? \
+	 ((StdRdOptions *) (relation)->rd_options)->parallel_degree : (defaultpd))
 
 
 /*

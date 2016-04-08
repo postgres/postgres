@@ -26,6 +26,7 @@
 #include "commands/tablespace.h"
 #include "commands/view.h"
 #include "nodes/makefuncs.h"
+#include "postmaster/postmaster.h"
 #include "utils/array.h"
 #include "utils/attoptcache.h"
 #include "utils/builtins.h"
@@ -266,6 +267,15 @@ static relopt_int intRelOpts[] =
 #else
 		0, 0, 0
 #endif
+	},
+	{
+		{
+			"parallel_degree",
+			"Number of parallel processes that can be used per executor node for this relation.",
+			RELOPT_KIND_HEAP,
+			AccessExclusiveLock
+		},
+		-1, 0, MAX_BACKENDS
 	},
 
 	/* list terminator */
@@ -1251,8 +1261,7 @@ fillRelOptions(void *rdopts, Size basesize,
 
 
 /*
- * Option parser for anything that uses StdRdOptions (i.e. fillfactor and
- * autovacuum)
+ * Option parser for anything that uses StdRdOptions.
  */
 bytea *
 default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
@@ -1291,7 +1300,9 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)},
 		{"user_catalog_table", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, user_catalog_table)}
+		offsetof(StdRdOptions, user_catalog_table)},
+		{"parallel_degree", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, parallel_degree)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
