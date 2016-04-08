@@ -436,7 +436,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		if (!t_bits_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("argument of t_bits is null, but it is expected to be null and %i character long",
+					 errmsg("argument of t_bits is null, but it is expected to be null and %d character long",
 							bits_len * 8)));
 
 		bits_str_len = strlen(t_bits_str);
@@ -448,7 +448,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		if (bits_len * 8 != bits_str_len)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("unexpected length of t_bits %u, expected %i",
+					 errmsg("unexpected length of t_bits %u, expected %d",
 							bits_str_len, bits_len * 8)));
 
 		/* do the conversion */

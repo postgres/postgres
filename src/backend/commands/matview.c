@@ -531,7 +531,7 @@ make_temptable_name_n(char *tempname, int n)
 
 	initStringInfo(&namebuf);
 	appendStringInfoString(&namebuf, tempname);
-	appendStringInfo(&namebuf, "_%i", n);
+	appendStringInfo(&namebuf, "_%d", n);
 	return namebuf.data;
 }
 

@@ -112,7 +112,7 @@ isolation_init(int argc, char **argv)
 	argv0_len = strlcpy(saved_argv0, argv[0], MAXPGPATH);
 	if (argv0_len >= MAXPGPATH)
 	{
-		fprintf(stderr, _("path for isolationtester executable is longer than %i bytes\n"),
+		fprintf(stderr, _("path for isolationtester executable is longer than %d bytes\n"),
 				(int) (MAXPGPATH - 1));
 		exit(2);
 	}
