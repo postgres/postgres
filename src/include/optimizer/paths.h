@@ -76,6 +76,8 @@ extern Expr *adjust_rowcompare_for_index(RowCompareExpr *clause,
 							int indexcol,
 							List **indexcolnos,
 							bool *var_on_left_p);
+extern bool has_matching_fkey(RelOptInfo *rel, RelOptInfo *frel, List *clauses,
+							  bool reverse);
 
 /*
  * tidpath.h
