@@ -674,6 +674,16 @@ AC_MSG_RESULT([$with_pam])
 
 
 #
+# BSD AUTH
+#
+AC_MSG_CHECKING([whether to build with BSD Authentication support])
+PGAC_ARG_BOOL(with, bsd-auth, no,
+              [build with BSD Authentication support],
+              [AC_DEFINE([USE_BSD_AUTH], 1, [Define to 1 to build with BSD Authentication support. (--with-bsd-auth)])])
+AC_MSG_RESULT([$with_bsd_auth])
+
+
+#
 # LDAP
 #
 AC_MSG_CHECKING([whether to build with LDAP support])
@@ -1267,6 +1277,10 @@ if test "$with_pam" = yes ; then
   AC_CHECK_HEADERS(security/pam_appl.h, [],
                    [AC_CHECK_HEADERS(pam/pam_appl.h, [],
                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
+fi
+
+if test "$with_bsd_auth" = yes ; then
+  AC_CHECK_HEADER(bsd_auth.h, [], [AC_MSG_ERROR([header file <bsd_auth.h> is required for BSD Authentication support])])
 fi
 
 if test "$with_systemd" = yes ; then

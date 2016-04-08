@@ -90,6 +90,9 @@ static const char *const auth_methods_host[] = {
 #ifdef USE_PAM
 	"pam", "pam ",
 #endif
+#ifdef USE_BSD_AUTH
+	"bsd",
+#endif
 #ifdef USE_LDAP
 	"ldap",
 #endif
@@ -102,6 +105,9 @@ static const char *const auth_methods_local[] = {
 	"trust", "reject", "md5", "password", "peer", "radius",
 #ifdef USE_PAM
 	"pam", "pam ",
+#endif
+#ifdef USE_BSD_AUTH
+	"bsd",
 #endif
 #ifdef USE_LDAP
 	"ldap",

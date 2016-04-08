@@ -27,6 +27,7 @@ typedef enum UserAuth
 	uaGSS,
 	uaSSPI,
 	uaPAM,
+	uaBSD,
 	uaLDAP,
 	uaCert,
 	uaRADIUS,

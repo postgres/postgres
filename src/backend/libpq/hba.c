@@ -1190,6 +1190,12 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 #else
 		unsupauth = "pam";
 #endif
+	else if (strcmp(token->string, "bsd") == 0)
+#ifdef USE_BSD_AUTH
+		parsedline->auth_method = uaBSD;
+#else
+		unsupauth = "bsd";
+#endif
 	else if (strcmp(token->string, "ldap") == 0)
 #ifdef USE_LDAP
 		parsedline->auth_method = uaLDAP;

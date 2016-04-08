@@ -793,6 +793,9 @@
 /* Define to 1 to build with Bonjour support. (--with-bonjour) */
 #undef USE_BONJOUR
 
+/* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
+#undef USE_BSD_AUTH
+
 /* Define to 1 if you want float4 values to be passed by value.
    (--enable-float4-byval) */
 #undef USE_FLOAT4_BYVAL

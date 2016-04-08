@@ -827,6 +827,7 @@ with_python
 with_gssapi
 with_krb_srvnam
 with_pam
+with_bsd_auth
 with_ldap
 with_bonjour
 with_openssl
@@ -1516,6 +1517,7 @@ Optional Packages:
   --with-krb-srvnam=NAME  default service principal name in Kerberos (GSSAPI)
                           [postgres]
   --with-pam              build with PAM support
+  --with-bsd-auth         build with BSD Authentication support
   --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
@@ -5568,6 +5570,41 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_pam" >&5
 $as_echo "$with_pam" >&6; }
+
+
+#
+# BSD AUTH
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with BSD Authentication support" >&5
+$as_echo_n "checking whether to build with BSD Authentication support... " >&6; }
+
+
+
+# Check whether --with-bsd-auth was given.
+if test "${with_bsd_auth+set}" = set; then :
+  withval=$with_bsd_auth;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_BSD_AUTH 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-bsd-auth option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_bsd_auth=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_bsd_auth" >&5
+$as_echo "$with_bsd_auth" >&6; }
 
 
 #
@@ -10521,6 +10558,17 @@ done
 fi
 
 done
+
+fi
+
+if test "$with_bsd_auth" = yes ; then
+  ac_fn_c_check_header_mongrel "$LINENO" "bsd_auth.h" "ac_cv_header_bsd_auth_h" "$ac_includes_default"
+if test "x$ac_cv_header_bsd_auth_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <bsd_auth.h> is required for BSD Authentication support" "$LINENO" 5
+fi
+
 
 fi
 

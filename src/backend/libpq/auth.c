@@ -89,6 +89,17 @@ static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 
 
 /*----------------------------------------------------------------
+ * BSD authentication
+ *----------------------------------------------------------------
+ */
+#ifdef USE_BSD_AUTH
+#include <bsd_auth.h>
+
+static int	CheckBSDAuth(Port *port, char *user);
+#endif   /* USE_BSD_AUTH */
+
+
+/*----------------------------------------------------------------
  * LDAP authentication
  *----------------------------------------------------------------
  */
@@ -257,6 +268,9 @@ auth_failed(Port *port, int status, char *logdetail)
 			break;
 		case uaPAM:
 			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
+			break;
+		case uaBSD:
+			errstr = gettext_noop("BSD authentication failed for user \"%s\"");
 			break;
 		case uaLDAP:
 			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
@@ -527,6 +541,14 @@ ClientAuthentication(Port *port)
 #else
 			Assert(false);
 #endif   /* USE_PAM */
+			break;
+
+		case uaBSD:
+#ifdef USE_BSD_AUTH
+			status = CheckBSDAuth(port, port->user_name);
+#else
+			Assert(false);
+#endif   /* USE_BSD_AUTH */
 			break;
 
 		case uaLDAP:
@@ -1855,6 +1877,38 @@ CheckPAMAuth(Port *port, char *user, char *password)
 }
 #endif   /* USE_PAM */
 
+
+/*----------------------------------------------------------------
+ * BSD authentication system
+ *----------------------------------------------------------------
+ */
+#ifdef USE_BSD_AUTH
+static int
+CheckBSDAuth(Port *port, char *user)
+{
+	char *passwd;
+	int retval;
+
+	/* Send regular password request to client, and get the response */
+	sendAuthRequest(port, AUTH_REQ_PASSWORD);
+
+	passwd = recv_password_packet(port);
+	if (passwd == NULL)
+		return STATUS_EOF;
+
+	/*
+	 * Ask the BSD auth system to verify password.  Note that auth_userokay
+	 * will overwrite the password string with zeroes, but it's just a
+	 * temporary string so we don't care.
+	 */
+	retval = auth_userokay(user, NULL, "auth-postgresql", passwd);
+
+	if (!retval)
+		return STATUS_ERROR;
+
+	return STATUS_OK;
+}
+#endif   /* USE_BSD_AUTH */
 
 
 /*----------------------------------------------------------------

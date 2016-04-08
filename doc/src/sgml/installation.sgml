@@ -793,6 +793,17 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-bsd-auth</option></term>
+       <listitem>
+        <para>
+         Build with BSD Authentication support.
+         (The BSD Authentication framework is
+         currently only available on OpenBSD.)
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-ldap</option></term>
        <listitem>
         <para>

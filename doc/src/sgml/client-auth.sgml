@@ -522,6 +522,16 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term><literal>bsd</></term>
+        <listitem>
+         <para>
+          Authenticate using the BSD Authentication service provided by the
+          operating system. See <xref linkend="auth-bsd"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
       </variablelist>
 
       </para>
@@ -1659,6 +1669,41 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
      will fail because the PostgreSQL server is started by a non-root
      user.  However, this is not an issue when PAM is configured to use
      LDAP or other authentication methods.
+    </para>
+   </note>
+  </sect2>
+
+  <sect2 id="auth-bsd">
+   <title>BSD Authentication</title>
+
+   <indexterm zone="auth-bsd">
+    <primary>BSD Authentication</primary>
+   </indexterm>
+
+   <para>
+    This authentication method operates similarly to
+    <literal>password</literal> except that it uses BSD Authentication
+    to verify the password. BSD Authentication is used only
+    to validate user name/password pairs. Therefore the user's role must
+    already exist in the database before BSD Authentication can be used
+    for authentication. The BSD Authentication framework is currently
+    only available on OpenBSD.
+   </para>
+
+   <para>
+    BSD Authentication in <productname>PostgreSQL</> uses
+    the <literal>auth-postgresql</literal> login type and authenticates with
+    the <literal>postgresql</literal> login class if that's defined
+    in <filename>login.conf</filename>. By default that login class does not
+    exist, and <productname>PostgreSQL</> will use the default login class.
+   </para>
+
+   <note>
+    <para>
+     To use BSD Authentication, the PostgreSQL user account (that is, the
+     operating system user running the server) must first be added to
+     the <literal>auth</literal> group.  The <literal>auth</literal> group
+     exists by default on OpenBSD systems.
     </para>
    </note>
   </sect2>
