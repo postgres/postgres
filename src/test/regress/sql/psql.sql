@@ -326,6 +326,8 @@ execute q;
 
 deallocate q;
 
+\pset linestyle ascii
+
 prepare q as select ' | = | lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&' as " | -- | 012345678 9abc def!*@#&!@(*&*~~_+-=\ \", '11' as "0123456789", 11 as int from generate_series(1,10) as n;
 
 \pset format asciidoc
@@ -351,6 +353,10 @@ execute q;
 
 deallocate q;
 
+\pset format aligned
+\pset expanded off
+\pset border 1
+
 -- SHOW_CONTEXT
 
 \set SHOW_CONTEXT never
@@ -373,3 +379,102 @@ begin
   raise notice 'foo';
   raise exception 'bar';
 end $$;
+
+--
+-- \crosstabview
+--
+
+CREATE TABLE ctv_data (v, h, c, i, d) AS
+VALUES
+   ('v1','h2','foo', 3, '2015-04-01'::date),
+   ('v2','h1','bar', 3, '2015-01-02'),
+   ('v1','h0','baz', NULL, '2015-07-12'),
+   ('v0','h4','qux', 4, '2015-07-15'),
+   ('v0','h4','dbl', -3, '2014-12-15'),
+   ('v0',NULL,'qux', 5, '2014-07-15'),
+   ('v1','h2','quux',7, '2015-04-04');
+
+-- running \crosstabview after query uses query in buffer
+SELECT v, EXTRACT(year FROM d), count(*)
+ FROM ctv_data
+ GROUP BY 1, 2
+ ORDER BY 1, 2;
+-- basic usage with 3 columns
+ \crosstabview
+
+-- ordered months in horizontal header, quoted column name
+SELECT v, to_char(d, 'Mon') AS "month name", EXTRACT(month FROM d) AS num,
+ count(*) FROM ctv_data  GROUP BY 1,2,3 ORDER BY 1
+ \crosstabview v "month name":num 4
+
+-- ordered months in vertical header, ordered years in horizontal header
+SELECT EXTRACT(year FROM d) AS year, to_char(d,'Mon') AS "month name",
+  EXTRACT(month FROM d) AS month,
+  format('sum=%s avg=%s', sum(i), avg(i)::numeric(2,1))
+  FROM ctv_data
+  GROUP BY EXTRACT(year FROM d), to_char(d,'Mon'), EXTRACT(month FROM d)
+ORDER BY month
+\crosstabview "month name" year:year format
+
+-- combine contents vertically into the same cell (V/H duplicates)
+SELECT v, h, string_agg(c, E'\n') FROM ctv_data GROUP BY v, h ORDER BY 1,2,3
+ \crosstabview 1 2 3
+
+-- horizontal ASC order from window function
+SELECT v,h, string_agg(c, E'\n') AS c, row_number() OVER(ORDER BY h) AS r
+FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
+ \crosstabview v h:r c
+
+-- horizontal DESC order from window function
+SELECT v, h, string_agg(c, E'\n') AS c, row_number() OVER(ORDER BY h DESC) AS r
+FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
+ \crosstabview v h:r c
+
+-- horizontal ASC order from window function, NULLs pushed rightmost
+SELECT v,h, string_agg(c, E'\n') AS c, row_number() OVER(ORDER BY h NULLS LAST) AS r
+FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
+ \crosstabview v h:r c
+
+-- only null, no column name, 2 columns: error
+SELECT null,null \crosstabview
+
+-- only null, no column name, 3 columns: works
+SELECT null,null,null \crosstabview
+
+-- null display
+\pset null '#null#'
+SELECT v,h, string_agg(i::text, E'\n') AS i FROM ctv_data
+GROUP BY v, h ORDER BY h,v
+ \crosstabview v h i
+\pset null ''
+
+-- refer to columns by position
+SELECT v,h,string_agg(i::text, E'\n'), string_agg(c, E'\n')
+FROM ctv_data GROUP BY v, h ORDER BY h,v
+ \crosstabview 2 1 4
+
+-- refer to columns by positions and names mixed
+SELECT v,h, string_agg(i::text, E'\n') AS i, string_agg(c, E'\n') AS c
+FROM ctv_data GROUP BY v, h ORDER BY h,v
+ \crosstabview 1 "h" 4
+
+-- error: bad column name
+SELECT v,h,c,i FROM ctv_data
+ \crosstabview v h j
+
+-- error: bad column number
+SELECT v,h,i,c FROM ctv_data
+ \crosstabview 2 1 5
+
+-- error: same H and V columns
+SELECT v,h,i,c FROM ctv_data
+ \crosstabview 2 h 4
+
+-- error: too many columns
+SELECT a,a,1 FROM generate_series(1,3000) AS a
+ \crosstabview
+
+-- error: only one column
+SELECT 1 \crosstabview
+
+DROP TABLE ctv_data;

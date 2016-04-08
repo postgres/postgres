@@ -93,6 +93,10 @@ typedef struct _psqlSettings
 	char	   *gfname;			/* one-shot file output argument for \g */
 	char	   *gset_prefix;	/* one-shot prefix argument for \gset */
 	bool		gexec_flag;		/* one-shot flag to execute query's results */
+	bool		crosstab_flag;	/* one-shot request to crosstab results */
+	char	   *ctv_col_V;		/* \crosstabview 1st argument */
+	char	   *ctv_col_H;		/* \crosstabview 2nd argument */
+	char	   *ctv_col_D;		/* \crosstabview 3nd argument */
 
 	bool		notty;			/* stdin or stdout is not a tty (as determined
 								 * on startup) */

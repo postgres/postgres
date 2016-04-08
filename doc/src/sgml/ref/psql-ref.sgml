@@ -990,6 +990,106 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
+        <term><literal>\crosstabview [
+            <replaceable class="parameter">colV</replaceable>
+            <replaceable class="parameter">colH</replaceable>
+            [:<replaceable class="parameter">scolH</replaceable>]
+            [<replaceable class="parameter">colD</replaceable>]
+            ] </literal></term>
+        <listitem>
+        <para>
+        Execute the current query buffer (like <literal>\g</literal>) and shows
+        the results inside a crosstab grid.
+        The query must return at least three columns.
+        The output column <replaceable class="parameter">colV</replaceable>
+        becomes a vertical header
+        and the output column <replaceable class="parameter">colH</replaceable>
+        becomes a horizontal header, optionally sorted by ranking data obtained
+        from <replaceable class="parameter">scolH</replaceable>.
+        <replaceable class="parameter">colD</replaceable>
+        is the output column to project into the grid.  If this is not
+        specified and there are exactly three columns in the result set,
+        the column that isn't 
+        <replaceable class="parameter">colV</replaceable> nor
+        <replaceable class="parameter">colH</replaceable>
+        is displayed; if there are more columns, an error is thrown.
+        </para>
+
+        <para>
+        All columns can be refered to by their position (starting at 1), or by
+        their name. Normal case folding and quoting rules apply on column
+        names. By default,
+        <replaceable class="parameter">colV</replaceable> corresponds to column 1
+        and <replaceable class="parameter">colH</replaceable> to column 2.
+        A query having only one output column cannot be viewed in crosstab, and
+        <replaceable class="parameter">colH</replaceable> must differ from
+        <replaceable class="parameter">colV</replaceable>.
+        </para>
+
+        <para>
+        The vertical header, displayed as the leftmost column,
+        contains the deduplicated values found in
+        column <replaceable class="parameter">colV</replaceable>, in the same
+        order as in the query results.
+        </para>
+
+        <para>
+        The horizontal header, displayed as the first row,
+        contains the deduplicated values found in
+        column <replaceable class="parameter">colH</replaceable>, in
+        the order of appearance in the query results.
+        If specified, the optional <replaceable class="parameter">scolH</replaceable>
+        argument refers to a column whose values should be integer numbers
+        by which <replaceable class="parameter">colH</replaceable> will be sorted
+        to be positioned in the horizontal header.
+        </para>
+
+        <para>
+        Inside the crosstab grid,
+        given a query output with <literal>N</literal> columns
+        (including <replaceable class="parameter">colV</replaceable> and
+        <replaceable class="parameter">colH</replaceable>),
+        for each distinct value <literal>x</literal> of
+        <replaceable class="parameter">colH</replaceable>
+        and each distinct value <literal>y</literal> of
+        <replaceable class="parameter">colV</replaceable>,
+        the contents of a cell located at the intersection
+        <literal>(x,y)</literal> is determined by these rules:
+        <itemizedlist>
+        <listitem>
+        <para>
+         if there is no corresponding row in the query results such that the
+         value for <replaceable class="parameter">colH</replaceable>
+         is <literal>x</literal> and the value
+         for <replaceable class="parameter">colV</replaceable>
+         is <literal>y</literal>, the cell is empty.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
+         if there is exactly one row such that the value
+         for <replaceable class="parameter">colH</replaceable>
+         is <literal>x</literal> and the value
+         for <replaceable class="parameter">colV</replaceable>
+         is <literal>y</literal>, then the <literal>colD</literal> column
+         is displayed.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
+         if there are several such rows, an error is thrown.
+        </para>
+        </listitem>
+
+        </itemizedlist>
+        </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\d[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
@@ -4069,6 +4169,47 @@ second | three
 first  | 4
 second | four
 </programlisting></para>
+
+<para>
+  When suitable, query results can be shown in a crosstab representation
+  with the \crosstabview command:
+<programlisting>
+testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;</userinput>
+ first | second | ge2 
+-------+--------+-----
+     1 | one    | f
+     2 | two    | f
+     3 | three  | t
+     4 | four   | t
+(4 rows)
+
+testdb=&gt; <userinput>\crosstabview first second</userinput>
+ first | one | two | three | four 
+-------+-----+-----+-------+------
+     1 | f   |     |       | 
+     2 |     | f   |       | 
+     3 |     |     | t     | 
+     4 |     |     |       | t
+(4 rows)
+</programlisting>
+
+This second example shows a multiplication table with rows sorted in reverse
+numerical order and columns with an independant, ascending numerical order.
+<programlisting>
+testdb=&gt; <userinput>SELECT t1.first as "A", t2.first+100 AS "B", t1.first*(t2.first+100) as "AxB",</userinput>
+testdb(&gt; <userinput>row_number() over(order by t2.first) AS ord</userinput>
+testdb(&gt; <userinput>FROM my_table t1 CROSS JOIN my_table t2 ORDER BY 1 DESC</userinput>
+testdb(&gt; <userinput>\crosstabview A B:ord AxB</userinput>
+ A | 101 | 102 | 103 | 104 
+---+-----+-----+-----+-----
+ 4 | 404 | 408 | 412 | 416
+ 3 | 303 | 306 | 309 | 312
+ 2 | 202 | 204 | 206 | 208
+ 1 | 101 | 102 | 103 | 104
+(4 rows)
+</programlisting>
+
+</para>
 
  </refsect1>
 

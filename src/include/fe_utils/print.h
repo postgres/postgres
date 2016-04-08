@@ -206,6 +206,8 @@ extern void printTable(const printTableContent *cont,
 extern void printQuery(const PGresult *result, const printQueryOpt *opt,
 		   FILE *fout, bool is_pager, FILE *flog);
 
+extern char column_type_alignment(Oid);
+
 extern void setDecimalLocale(void);
 extern const printTextFormat *get_line_style(const printTableOpt *opt);
 extern void refresh_utf8format(const printTableOpt *opt);

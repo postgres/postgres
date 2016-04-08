@@ -23,6 +23,7 @@
 #include "settings.h"
 #include "command.h"
 #include "copy.h"
+#include "crosstabview.h"
 #include "fe_utils/mbprint.h"
 
 
@@ -1064,6 +1065,8 @@ PrintQueryResults(PGresult *results)
 				success = StoreQueryTuple(results);
 			else if (pset.gexec_flag)
 				success = ExecQueryTuples(results);
+			else if (pset.crosstab_flag)
+				success = PrintResultsInCrosstab(results);
 			else
 				success = PrintQueryTuples(results);
 			/* if it's INSERT/UPDATE/DELETE RETURNING, also print status */
@@ -1213,7 +1216,8 @@ SendQuery(const char *query)
 		}
 	}
 
-	if (pset.fetch_count <= 0 || pset.gexec_flag || !is_select_command(query))
+	if (pset.fetch_count <= 0 || pset.gexec_flag ||
+		pset.crosstab_flag || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
 		instr_time	before,
@@ -1355,6 +1359,24 @@ sendquery_cleanup:
 
 	/* reset \gexec trigger */
 	pset.gexec_flag = false;
+
+	/* reset \crosstabview trigger */
+	pset.crosstab_flag = false;
+	if (pset.ctv_col_V)
+	{
+		free(pset.ctv_col_V);
+		pset.ctv_col_V = NULL;
+	}
+	if (pset.ctv_col_H)
+	{
+		free(pset.ctv_col_H);
+		pset.ctv_col_H = NULL;
+	}
+	if (pset.ctv_col_D)
+	{
+		free(pset.ctv_col_D);
+		pset.ctv_col_D = NULL;
+	}
 
 	return OK;
 }
@@ -1501,7 +1523,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			break;
 		}
 
-		/* Note we do not deal with \gexec mode here */
+		/* Note we do not deal with \gexec or \crosstabview modes here */
 
 		ntuples = PQntuples(results);
 

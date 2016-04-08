@@ -23,7 +23,7 @@ LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o describe.o \
-	tab-complete.o \
+	crosstabview.o tab-complete.o \
 	sql_help.o psqlscanslash.o \
 	$(WIN32RES)
 

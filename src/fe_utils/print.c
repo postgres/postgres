@@ -3295,30 +3295,9 @@ printQuery(const PGresult *result, const printQueryOpt *opt,
 
 	for (i = 0; i < cont.ncolumns; i++)
 	{
-		char		align;
-		Oid			ftype = PQftype(result, i);
-
-		switch (ftype)
-		{
-			case INT2OID:
-			case INT4OID:
-			case INT8OID:
-			case FLOAT4OID:
-			case FLOAT8OID:
-			case NUMERICOID:
-			case OIDOID:
-			case XIDOID:
-			case CIDOID:
-			case CASHOID:
-				align = 'r';
-				break;
-			default:
-				align = 'l';
-				break;
-		}
-
 		printTableAddHeader(&cont, PQfname(result, i),
-							opt->translate_header, align);
+							opt->translate_header,
+							column_type_alignment(PQftype(result, i)));
 	}
 
 	/* set cells */
@@ -3360,6 +3339,31 @@ printQuery(const PGresult *result, const printQueryOpt *opt,
 	printTableCleanup(&cont);
 }
 
+char
+column_type_alignment(Oid ftype)
+{
+	char		align;
+
+	switch (ftype)
+	{
+		case INT2OID:
+		case INT4OID:
+		case INT8OID:
+		case FLOAT4OID:
+		case FLOAT8OID:
+		case NUMERICOID:
+		case OIDOID:
+		case XIDOID:
+		case CIDOID:
+		case CASHOID:
+			align = 'r';
+			break;
+		default:
+			align = 'l';
+			break;
+	}
+	return align;
+}
 
 void
 setDecimalLocale(void)
