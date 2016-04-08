@@ -14846,6 +14846,13 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 	DumpOptions *dopt = fout->dopt;
 	char	   *namecopy;
 
+	/*
+	 * noop if we are not dumping anything about this table, or if we are
+	 * doing a data-only dump
+	 */
+	if (!tbinfo->dobj.dump || dopt->dataOnly)
+		return;
+
 	if (tbinfo->relkind == RELKIND_SEQUENCE)
 		dumpSequence(fout, tbinfo);
 	else
