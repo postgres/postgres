@@ -109,6 +109,7 @@ bool		enableFsync = true;
 bool		allowSystemTableMods = false;
 int			work_mem = 1024;
 int			maintenance_work_mem = 16384;
+int			replacement_sort_tuples = 150000;
 
 /*
  * Primary determinants of sizes of shared-memory structures.

@@ -239,6 +239,7 @@ extern bool enableFsync;
 extern bool allowSystemTableMods;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
+extern PGDLLIMPORT int replacement_sort_tuples;
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
