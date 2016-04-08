@@ -16,12 +16,21 @@
 
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "tsearch/ts_type.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
 
+/* FTS operator priorities, see ts_type.h */
+const int tsearch_op_priority[OP_COUNT] =
+{
+	3,	/* OP_NOT */
+	2,	/* OP_AND */
+	1,	/* OP_OR */
+	4	/* OP_PHRASE */
+};
 
 struct TSQueryParserStateData
 {
@@ -735,9 +744,6 @@ while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) \
 	(inf)->buf = (char*) repalloc( (void*)(inf)->buf, (inf)->buflen ); \
 	(inf)->cur = (inf)->buf + len; \
 }
-
-#define PRINT_PRIORITY(x) \
-	( (QO_PRIORITY(x) == OP_NOT) ? OP_NOT_PHRASE : QO_PRIORITY(x) )
 
 /*
  * recursively traverse the tree and

@@ -473,7 +473,7 @@ SELECT 'a' > 'b & c'::tsquery as "false";
 SELECT 'a | f' < 'b & c'::tsquery as "false";
  false 
 -------
- f
+ t
 (1 row)
 
 SELECT 'a | ff' < 'b & c'::tsquery as "false";

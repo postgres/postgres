@@ -222,11 +222,15 @@ typedef struct
  * for query transformation! That's need to simplify
  * algorithm of query transformation.
  */
-#define OP_OR			1
+#define OP_NOT			1
 #define OP_AND			2
-#define OP_NOT			3
+#define OP_OR			3
 #define OP_PHRASE		4
-#define OP_NOT_PHRASE	5	/*
+#define OP_COUNT		4
+
+extern const int tsearch_op_priority[OP_COUNT];
+
+#define NOT_PHRASE_P	5	/*
 							 * OP_PHRASE negation operations must have greater
 							 * priority in order to force infix() to surround
 							 * the whole OP_PHRASE expression with parentheses.
@@ -234,8 +238,13 @@ typedef struct
 
 #define TOP_PRIORITY	6	/* highest priority for val nodes */
 
-#define	OP_PRIORITY(x)	(x)
+/* get operation priority  by its code*/
+#define	OP_PRIORITY(x)	( tsearch_op_priority[(x) - 1] )
+/* get QueryOperator priority */
 #define QO_PRIORITY(x)	OP_PRIORITY(((QueryOperator *) (x))->oper)
+/* special case: get QueryOperator priority for correct printing !(a <-> b>) */
+#define PRINT_PRIORITY(x) \
+	( (((QueryOperator *) (x))->oper == OP_NOT) ? NOT_PHRASE_P : QO_PRIORITY(x) )
 
 typedef struct
 {
