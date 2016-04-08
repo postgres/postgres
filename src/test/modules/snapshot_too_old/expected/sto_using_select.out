@@ -1,0 +1,55 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1f1 s1sleep s1f2 s2u
+step s1f1: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+c              
+
+1              
+step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
+setting        pg_sleep       
+
+0                             
+step s1f2: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+c              
+
+1              
+step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
+
+starting permutation: s1f1 s1sleep s2u s1f2
+step s1f1: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+c              
+
+1              
+step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
+setting        pg_sleep       
+
+0                             
+step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
+step s1f2: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+ERROR:  snapshot too old
+
+starting permutation: s1f1 s2u s1sleep s1f2
+step s1f1: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+c              
+
+1              
+step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
+step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
+setting        pg_sleep       
+
+0                             
+step s1f2: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+ERROR:  snapshot too old
+
+starting permutation: s2u s1f1 s1sleep s1f2
+step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
+step s1f1: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+c              
+
+2              
+step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
+setting        pg_sleep       
+
+0                             
+step s1f2: SELECT c FROM sto1 ORDER BY c LIMIT 1;
+ERROR:  snapshot too old

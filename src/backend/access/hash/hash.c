@@ -278,7 +278,8 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 
 		buf = so->hashso_curbuf;
 		Assert(BufferIsValid(buf));
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf, scan->xs_snapshot, rel,
+							 BGP_TEST_FOR_OLD_SNAPSHOT);
 		maxoffnum = PageGetMaxOffsetNumber(page);
 		for (offnum = ItemPointerGetOffsetNumber(current);
 			 offnum <= maxoffnum;

@@ -18,12 +18,13 @@
 #include "storage/itemptr.h"
 #include "storage/off.h"
 #include "utils/relcache.h"
+#include "utils/snapshot.h"
 
 /* struct definition lives in brin_revmap.c */
 typedef struct BrinRevmap BrinRevmap;
 
 extern BrinRevmap *brinRevmapInitialize(Relation idxrel,
-					 BlockNumber *pagesPerRange);
+					 BlockNumber *pagesPerRange, Snapshot snapshot);
 extern void brinRevmapTerminate(BrinRevmap *revmap);
 
 extern void brinRevmapExtend(BrinRevmap *revmap,
@@ -34,6 +35,6 @@ extern void brinSetHeapBlockItemptr(Buffer rmbuf, BlockNumber pagesPerRange,
 						BlockNumber heapBlk, ItemPointerData tid);
 extern BrinTuple *brinGetTupleForHeapBlock(BrinRevmap *revmap,
 						 BlockNumber heapBlk, Buffer *buf, OffsetNumber *off,
-						 Size *size, int mode);
+						 Size *size, int mode, Snapshot snapshot);
 
 #endif   /* BRIN_REVMAP_H */

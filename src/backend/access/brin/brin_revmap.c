@@ -68,7 +68,8 @@ static void revmap_physical_extend(BrinRevmap *revmap);
  * brinRevmapTerminate when caller is done with it.
  */
 BrinRevmap *
-brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange)
+brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange,
+					 Snapshot snapshot)
 {
 	BrinRevmap *revmap;
 	Buffer		meta;
@@ -77,7 +78,7 @@ brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange)
 
 	meta = ReadBuffer(idxrel, BRIN_METAPAGE_BLKNO);
 	LockBuffer(meta, BUFFER_LOCK_SHARE);
-	page = BufferGetPage(meta, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(meta, snapshot, idxrel, BGP_TEST_FOR_OLD_SNAPSHOT);
 	metadata = (BrinMetaPageData *) PageGetContents(page);
 
 	revmap = palloc(sizeof(BrinRevmap));
@@ -187,7 +188,8 @@ brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
  */
 BrinTuple *
 brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
-						 Buffer *buf, OffsetNumber *off, Size *size, int mode)
+						 Buffer *buf, OffsetNumber *off, Size *size, int mode,
+						 Snapshot snapshot)
 {
 	Relation	idxRel = revmap->rm_irel;
 	BlockNumber mapBlk;
@@ -264,7 +266,8 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 			*buf = ReadBuffer(idxRel, blk);
 		}
 		LockBuffer(*buf, mode);
-		page = BufferGetPage(*buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(*buf, snapshot, idxRel,
+							 BGP_TEST_FOR_OLD_SNAPSHOT);
 
 		/* If we land on a revmap page, start over */
 		if (BRIN_IS_REGULAR_PAGE(page))

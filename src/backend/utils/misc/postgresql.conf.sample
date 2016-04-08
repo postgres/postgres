@@ -166,6 +166,8 @@
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #max_worker_processes = 8
 #max_parallel_degree = 0		# max number of worker processes per node
+#old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
+									# (change requires restart)
 
 
 #------------------------------------------------------------------------------

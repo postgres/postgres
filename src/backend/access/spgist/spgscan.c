@@ -341,7 +341,7 @@ redirect:
 		}
 		/* else new pointer points to the same page, no work needed */
 
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buffer, snapshot, index, BGP_TEST_FOR_OLD_SNAPSHOT);
 
 		isnull = SpGistPageStoresNulls(page) ? true : false;
 

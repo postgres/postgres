@@ -14,9 +14,19 @@
 #define SNAPMGR_H
 
 #include "fmgr.h"
+#include "utils/relcache.h"
 #include "utils/resowner.h"
 #include "utils/snapshot.h"
 
+
+/* GUC variables */
+extern int	old_snapshot_threshold;
+
+
+extern Size SnapMgrShmemSize(void);
+extern void SnapMgrInit(void);
+extern int64 GetSnapshotCurrentTimestamp(void);
+extern int64 GetOldSnapshotThresholdTimestamp(void);
 
 extern bool FirstSnapshotSet;
 
@@ -54,6 +64,9 @@ extern void ImportSnapshot(const char *idstr);
 extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);
 extern bool ThereAreNoPriorRegisteredSnapshots(void);
+extern TransactionId TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
+														 Relation relation);
+extern void MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin);
 
 extern char *ExportSnapshot(Snapshot snapshot);
 

@@ -73,7 +73,7 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 	Page		page;
 
 	/* Descend to the leftmost leaf page */
-	stack = ginScanBeginPostingTree(&btree, index, rootPostingTree);
+	stack = ginScanBeginPostingTree(&btree, index, rootPostingTree, snapshot);
 	buffer = stack->buffer;
 	IncrBufferRefCount(buffer); /* prevent unpin in freeGinBtreeStack */
 
@@ -146,7 +146,8 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 		if (moveRightIfItNeeded(btree, stack) == false)
 			return true;
 
-		page = BufferGetPage(stack->buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(stack->buffer, snapshot, btree->index,
+							 BGP_TEST_FOR_OLD_SNAPSHOT);
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, stack->off));
 
 		/*
@@ -320,7 +321,7 @@ restartScanEntry:
 	ginPrepareEntryScan(&btreeEntry, entry->attnum,
 						entry->queryKey, entry->queryCategory,
 						ginstate);
-	stackEntry = ginFindLeafPage(&btreeEntry, true);
+	stackEntry = ginFindLeafPage(&btreeEntry, true, snapshot);
 	page = BufferGetPage(stackEntry->buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 	needUnlock = TRUE;
 
@@ -385,7 +386,7 @@ restartScanEntry:
 			needUnlock = FALSE;
 
 			stack = ginScanBeginPostingTree(&entry->btree, ginstate->index,
-											rootPostingTree);
+											rootPostingTree, snapshot);
 			entry->buffer = stack->buffer;
 
 			/*
@@ -627,7 +628,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
 			entry->btree.itemptr.ip_posid++;
 		}
 		entry->btree.fullScan = false;
-		stack = ginFindLeafPage(&entry->btree, true);
+		stack = ginFindLeafPage(&entry->btree, true, snapshot);
 
 		/* we don't need the stack, just the buffer. */
 		entry->buffer = stack->buffer;
@@ -1335,8 +1336,8 @@ scanGetCandidate(IndexScanDesc scan, pendingPosition *pos)
 	ItemPointerSetInvalid(&pos->item);
 	for (;;)
 	{
-		page = BufferGetPage(pos->pendingBuffer, NULL,
-							 NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(pos->pendingBuffer, scan->xs_snapshot,
+							 scan->indexRelation, BGP_TEST_FOR_OLD_SNAPSHOT);
 
 		maxoff = PageGetMaxOffsetNumber(page);
 		if (pos->firstOffset > maxoff)
@@ -1516,8 +1517,8 @@ collectMatchesForHeapRow(IndexScanDesc scan, pendingPosition *pos)
 		memset(datumExtracted + pos->firstOffset - 1, 0,
 			   sizeof(bool) * (pos->lastOffset - pos->firstOffset));
 
-		page = BufferGetPage(pos->pendingBuffer, NULL,
-							 NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(pos->pendingBuffer, scan->xs_snapshot,
+							 scan->indexRelation, BGP_TEST_FOR_OLD_SNAPSHOT);
 
 		for (i = 0; i < so->nkeys; i++)
 		{
@@ -1710,7 +1711,8 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 	*ntids = 0;
 
 	LockBuffer(metabuffer, GIN_SHARE);
-	page = BufferGetPage(metabuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(metabuffer, scan->xs_snapshot, scan->indexRelation,
+						 BGP_TEST_FOR_OLD_SNAPSHOT);
 	blkno = GinPageGetMeta(page)->head;
 
 	/*

@@ -180,11 +180,26 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 /*
  * BufferGetPage
  *		Returns the page associated with a buffer.
+ *
+ * agetest will normally be a literal, so use a macro at the outer level to
+ * give the compiler a chance to optimize away the runtime code to check it.
+ *
+ * TestForOldSnapshot(), if it doesn't throw an error, will return the page
+ * argument it is passed, so the same result will go back to this macro's
+ * caller for either agetest value; it is a matter of whether to call the
+ * function to perform the test.  For call sites where the check is not needed
+ * (which is the vast majority of them), the snapshot and relation parameters
+ * can, and generally should, be NULL.
  */
 #define BufferGetPage(buffer, snapshot, relation, agetest) \
 ( \
-	AssertMacro((agetest) == BGP_NO_SNAPSHOT_TEST), \
-	((Page)BufferGetBlock(buffer)) \
+	( \
+		AssertMacro((agetest) == BGP_NO_SNAPSHOT_TEST || (agetest) == BGP_TEST_FOR_OLD_SNAPSHOT), \
+		((agetest) == BGP_NO_SNAPSHOT_TEST) \
+	) ? \
+		((Page)BufferGetBlock(buffer)) \
+	: \
+		(TestForOldSnapshot(snapshot, relation, (Page)BufferGetBlock(buffer))) \
 )
 
 /*

@@ -394,7 +394,8 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	dp = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	dp = BufferGetPage(buffer, snapshot, scan->rs_rd,
+					   BGP_TEST_FOR_OLD_SNAPSHOT);
 	lines = PageGetMaxOffsetNumber(dp);
 	ntup = 0;
 
@@ -537,7 +538,7 @@ heapgettup(HeapScanDesc scan,
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, snapshot, scan->rs_rd, BGP_TEST_FOR_OLD_SNAPSHOT);
 		lines = PageGetMaxOffsetNumber(dp);
 		/* page and lineoff now reference the physically next tid */
 
@@ -582,7 +583,8 @@ heapgettup(HeapScanDesc scan,
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lines = PageGetMaxOffsetNumber(dp);
 
 		if (!scan->rs_inited)
@@ -616,7 +618,8 @@ heapgettup(HeapScanDesc scan,
 			heapgetpage(scan, page);
 
 		/* Since the tuple was previously fetched, needn't lock page here */
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
 		lpp = PageGetItemId(dp, lineoff);
 		Assert(ItemIdIsNormal(lpp));
@@ -745,7 +748,8 @@ heapgettup(HeapScanDesc scan,
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lines = PageGetMaxOffsetNumber((Page) dp);
 		linesleft = lines;
 		if (backward)
@@ -832,7 +836,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 			lineindex = scan->rs_cindex + 1;
 		}
 
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, scan->rs_snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lines = scan->rs_ntuples;
 		/* page and lineindex now reference the next visible tid */
 
@@ -875,7 +880,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 			page = scan->rs_cblock;		/* current page */
 		}
 
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, scan->rs_snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lines = scan->rs_ntuples;
 
 		if (!scan->rs_inited)
@@ -908,7 +914,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 			heapgetpage(scan, page);
 
 		/* Since the tuple was previously fetched, needn't lock page here */
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, scan->rs_snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
 		lpp = PageGetItemId(dp, lineoff);
 		Assert(ItemIdIsNormal(lpp));
@@ -1027,7 +1034,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 
 		heapgetpage(scan, page);
 
-		dp = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		dp = BufferGetPage(scan->rs_cbuf, scan->rs_snapshot, scan->rs_rd,
+						   BGP_TEST_FOR_OLD_SNAPSHOT);
 		lines = scan->rs_ntuples;
 		linesleft = lines;
 		if (backward)
@@ -1871,7 +1879,7 @@ heap_fetch(Relation relation,
 	 * Need share lock on buffer to examine tuple commit status.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buffer, snapshot, relation, BGP_TEST_FOR_OLD_SNAPSHOT);
 
 	/*
 	 * We'd better check for out-of-range offnum in case of VACUUM since the
@@ -2200,7 +2208,8 @@ heap_get_latest_tid(Relation relation,
 		 */
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&ctid));
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buffer, snapshot, relation,
+							 BGP_TEST_FOR_OLD_SNAPSHOT);
 
 		/*
 		 * Check for bogus item number.  This is not treated as an error

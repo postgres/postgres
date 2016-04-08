@@ -71,7 +71,7 @@ ginTraverseLock(Buffer buffer, bool searchMode)
  * is share-locked, and stack->parent is NULL.
  */
 GinBtreeStack *
-ginFindLeafPage(GinBtree btree, bool searchMode)
+ginFindLeafPage(GinBtree btree, bool searchMode, Snapshot snapshot)
 {
 	GinBtreeStack *stack;
 
@@ -89,7 +89,8 @@ ginFindLeafPage(GinBtree btree, bool searchMode)
 
 		stack->off = InvalidOffsetNumber;
 
-		page = BufferGetPage(stack->buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(stack->buffer, snapshot, btree->index,
+							 BGP_TEST_FOR_OLD_SNAPSHOT);
 
 		access = ginTraverseLock(stack->buffer, searchMode);
 
@@ -115,8 +116,8 @@ ginFindLeafPage(GinBtree btree, bool searchMode)
 
 			stack->buffer = ginStepRight(stack->buffer, btree->index, access);
 			stack->blkno = rightlink;
-			page = BufferGetPage(stack->buffer, NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST);
+			page = BufferGetPage(stack->buffer, snapshot, btree->index,
+								 BGP_TEST_FOR_OLD_SNAPSHOT);
 
 			if (!searchMode && GinPageIsIncompleteSplit(page))
 				ginFinishSplit(btree, stack, false, NULL);
