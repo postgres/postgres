@@ -88,9 +88,9 @@ DROP TABLE tbl;
  */
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 int);
 CREATE UNIQUE INDEX tbl_idx ON tbl using btree(c1, c2, c3, c4);
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 ALTER TABLE tbl DROP COLUMN c3;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 DROP TABLE tbl;
 
 /*
@@ -100,9 +100,9 @@ DROP TABLE tbl;
  */
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box);
 CREATE UNIQUE INDEX tbl_idx ON tbl using btree(c1, c2) INCLUDING(c3,c4);
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 ALTER TABLE tbl DROP COLUMN c3;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 DROP TABLE tbl;
 
 /*
@@ -111,11 +111,11 @@ DROP TABLE tbl;
  * as well as key columns deletion. It's explained in documentation.
  */
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box, UNIQUE(c1, c2) INCLUDING(c3,c4));
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 ALTER TABLE tbl DROP COLUMN c3;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 ALTER TABLE tbl DROP COLUMN c1;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 DROP TABLE tbl;
 
 
@@ -125,7 +125,7 @@ DROP TABLE tbl;
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box, UNIQUE(c1, c2) INCLUDING(c3,c4));
 INSERT INTO tbl select x, 2*x, 3*x, box('4,4,4,4') from generate_series(1,1000) as x;
 CREATE UNIQUE INDEX CONCURRENTLY on tbl (c1, c2) INCLUDING (c3, c4);
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 DROP TABLE tbl;
 
 
@@ -133,13 +133,13 @@ DROP TABLE tbl;
  * 5. REINDEX
  */
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box, UNIQUE(c1, c2) INCLUDING(c3,c4));
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 ALTER TABLE tbl DROP COLUMN c3;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 REINDEX INDEX tbl_c1_c2_c3_c4_key;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 ALTER TABLE tbl DROP COLUMN c1;
-select indexdef from pg_indexes where tablename='tbl';
+select indexdef from pg_indexes where tablename = 'tbl' order by indexname;
 DROP TABLE tbl;
 
 /*
