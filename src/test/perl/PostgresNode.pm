@@ -668,6 +668,24 @@ sub stop
 
 =pod
 
+=item $node->reload()
+
+Reload configuration parameters on the node.
+
+=cut
+
+sub reload
+{
+	my ($self) = @_;
+	my $port   = $self->port;
+	my $pgdata = $self->data_dir;
+	my $name   = $self->name;
+	print "### Reloading node \"$name\"\n";
+	TestLib::system_log('pg_ctl', '-D', $pgdata, 'reload');
+}
+
+=pod
+
 =item $node->restart()
 
 Wrapper for pg_ctl -w restart
