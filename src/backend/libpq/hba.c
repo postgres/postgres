@@ -1447,6 +1447,15 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 		REQUIRE_AUTH_OPTION(uaPAM, "pamservice", "pam");
 		hbaline->pamservice = pstrdup(val);
 	}
+	else if (strcmp(name, "pam_use_hostname") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaPAM, "pam_use_hostname", "pam");
+		if (strcmp(val, "1") == 0)
+			hbaline->pam_use_hostname = true;
+		else
+			hbaline->pam_use_hostname = false;
+
+	}
 	else if (strcmp(name, "ldapurl") == 0)
 	{
 #ifdef LDAP_API_FEATURE_X_OPENLDAP

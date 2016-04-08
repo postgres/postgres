@@ -64,6 +64,7 @@ typedef struct HbaLine
 
 	char	   *usermap;
 	char	   *pamservice;
+	bool		pam_use_hostname;
 	bool		ldaptls;
 	char	   *ldapserver;
 	int			ldapport;
