@@ -41,9 +41,9 @@ my $contrib_extrasource = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ], };
 my @contrib_excludes = (
-	'commit_ts',      'hstore_plperl', 'hstore_plpython', 'intagg',
-	'ltree_plpython', 'pgcrypto',      'sepgsql',         'brin',
-	'test_extensions');
+	'commit_ts',       'hstore_plperl',    'hstore_plpython', 'intagg',
+	'ltree_plpython',  'pgcrypto',         'sepgsql',         'brin',
+	'test_extensions', 'snapshot_too_old');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
