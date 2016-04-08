@@ -17,4 +17,6 @@ extern void PLy_exception_set(PyObject *exc, const char *fmt,...) pg_attribute_p
 extern void PLy_exception_set_plural(PyObject *exc, const char *fmt_singular, const char *fmt_plural,
 	unsigned long n,...) pg_attribute_printf(2, 5) pg_attribute_printf(3, 5);
 
+extern void PLy_exception_set_with_details(PyObject *excclass, ErrorData *edata);
+
 #endif   /* PLPY_ELOG_H */

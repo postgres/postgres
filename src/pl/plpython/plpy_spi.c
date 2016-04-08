@@ -554,8 +554,9 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 	/* Look up the correct exception */
 	entry = hash_search(PLy_spi_exceptions, &(edata->sqlerrcode),
 						HASH_FIND, NULL);
-	/* We really should find it, but just in case have a fallback */
-	Assert(entry != NULL);
+	/* This could be a custom error code, if that's the case fallback to
+	 * SPIError
+	 */
 	exc = entry ? entry->exc : PLy_exc_spi_error;
 	/* Make Python raise the exception */
 	PLy_spi_exception_set(exc, edata);
@@ -582,8 +583,10 @@ PLy_spi_exception_set(PyObject *excclass, ErrorData *edata)
 	if (!spierror)
 		goto failure;
 
-	spidata = Py_BuildValue("(izzzi)", edata->sqlerrcode, edata->detail, edata->hint,
-							edata->internalquery, edata->internalpos);
+	spidata= Py_BuildValue("(izzzizzzzz)", edata->sqlerrcode, edata->detail, edata->hint,
+							edata->internalquery, edata->internalpos,
+							edata->schema_name, edata->table_name, edata->column_name,
+							edata->datatype_name, edata->constraint_name);
 	if (!spidata)
 		goto failure;
 

@@ -1341,29 +1341,61 @@ $$ LANGUAGE plpythonu;
   <title>Utility Functions</title>
   <para>
    The <literal>plpy</literal> module also provides the functions
-   <literal>plpy.debug(<replaceable>msg</>)</literal>,
-   <literal>plpy.log(<replaceable>msg</>)</literal>,
-   <literal>plpy.info(<replaceable>msg</>)</literal>,
-   <literal>plpy.notice(<replaceable>msg</>)</literal>,
-   <literal>plpy.warning(<replaceable>msg</>)</literal>,
-   <literal>plpy.error(<replaceable>msg</>)</literal>, and
-   <literal>plpy.fatal(<replaceable>msg</>)</literal>.<indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
-   <function>plpy.error</function> and
-   <function>plpy.fatal</function> actually raise a Python exception
-   which, if uncaught, propagates out to the calling query, causing
-   the current transaction or subtransaction to be aborted.
-   <literal>raise plpy.Error(<replaceable>msg</>)</literal> and
+   <literal>plpy.debug(<replaceable>msg, **kwargs</>)</literal>,
+   <literal>plpy.log(<replaceable>msg, **kwargs</>)</literal>,
+   <literal>plpy.info(<replaceable>msg, **kwargs</>)</literal>,
+   <literal>plpy.notice(<replaceable>msg, **kwargs</>)</literal>,
+   <literal>plpy.warning(<replaceable>msg, **kwargs</>)</literal>,
+   <literal>plpy.error(<replaceable>msg, **kwargs</>)</literal>, and
+   <literal>plpy.fatal(<replaceable>msg, **kwargs</>)</literal>.
+   <indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
+   <function>plpy.error</function> and <function>plpy.fatal</function>
+   actually raise a Python exception which, if uncaught, propagates out to
+   the calling query, causing the current transaction or subtransaction to
+   be aborted.  <literal>raise plpy.Error(<replaceable>msg</>)</literal> and
    <literal>raise plpy.Fatal(<replaceable>msg</>)</literal> are
-   equivalent to calling
-   <function>plpy.error</function> and
-   <function>plpy.fatal</function>, respectively.
-   The other functions only generate messages of different
-   priority levels.
+   equivalent to calling <literal>plpy.error(<replaceable>msg</>)</literal> and
+   <literal>plpy.fatal(<replaceable>msg</>)</literal>, respectively but
+   the <literal>raise</literal> form does not allow passing keyword arguments.
+   The other functions only generate messages of different priority levels.
    Whether messages of a particular priority are reported to the client,
    written to the server log, or both is controlled by the
    <xref linkend="guc-log-min-messages"> and
    <xref linkend="guc-client-min-messages"> configuration
    variables. See <xref linkend="runtime-config"> for more information.
+  </para>
+
+  <para>
+
+   The <replaceable>msg</> argument is given as a positional argument.  For
+   backward compatibility, more than one positional argument can be given. In
+   that case, the string representation of the tuple of positional arguments
+   becomes the message reported to the client.
+   The following keyword-only arguments are accepted:
+   <literal>
+   <replaceable>detail</replaceable>, <replaceable>hint</replaceable>,
+   <replaceable>sqlstate</replaceable>, <replaceable>schema</replaceable>,
+   <replaceable>table</replaceable>, <replaceable>column</replaceable>,
+   <replaceable>datatype</replaceable> , <replaceable>constraint</replaceable>
+   </literal>.
+   The string representation of the objects passed as keyword-only arguments
+   is used to enrich the messages reported to the client. For example:
+
+<programlisting>
+CREATE FUNCTION raise_custom_exception() RETURNS void AS $$
+plpy.error("custom exception message", detail = "some info about exception", hint = "hint for users")
+$$ LANGUAGE plpythonu;
+
+postgres=# select raise_custom_exception();
+ERROR:  XX000: plpy.Error: custom exception message
+DETAIL:  some info about exception
+HINT:  hint for users
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "raise_custom_exception", line 2, in &lt;module&gt;
+    plpy.error("custom exception message", detail = "some info about exception", hint = "hint for users")
+PL/Python function "raise_custom_exception"
+LOCATION:  PLy_elog, plpy_elog.c:132
+</programlisting>
   </para>
 
   <para>
