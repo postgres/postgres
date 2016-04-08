@@ -483,6 +483,57 @@ DROP ROLE doomed_role;
   </para>
  </sect1>
 
+ <sect1 id="default-roles">
+  <title>Default Roles</title>
+
+  <indexterm zone="default-roles">
+   <primary>role</>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> provides a set of default roles
+   which provide access to certain, commonly needed, privileged capabilities
+   and information.  Administrators can GRANT these roles to users and/or
+   other roles in their environment, providing those users with access to
+   the specified capabilities and information.
+  </para>
+
+  <para>
+   The default roles are described in <xref linkend="default-roles-table">.
+   Note that the specific permissions for each of the default roles may
+   change in the future as additional capabilities are added.  Administrators
+   should monitor the release notes for changes.
+  </para>
+
+   <table tocentry="1" id="default-roles-table">
+    <title>Default Roles</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Role</entry>
+       <entry>Allowed Access</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>pg_signal_backend</entry>
+       <entry>Send signals to other backends (eg: cancel query, terminate).</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   Administrators can grant access to these roles to users using the GRANT
+   command:
+
+<programlisting>
+GRANT pg_signal_backend TO admin_user;
+</programlisting>
+  </para>
+
+ </sect1>
+
  <sect1 id="perm-functions">
   <title>Function and Trigger Security</title>
 

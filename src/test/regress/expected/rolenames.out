@@ -824,6 +824,11 @@ ERROR:  role "pg_abcdef" is reserved
 DETAIL:  Cannot GRANT roles to a reserved role.
 SET ROLE pg_testrole; -- error
 ERROR:  invalid value for parameter "role": "pg_testrole"
+SET ROLE pg_signal_backend; --error
+ERROR:  invalid value for parameter "role": "pg_signal_backend"
+CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --error
+ERROR:  role "pg_signal_backend" is reserved
+DETAIL:  Cannot specify reserved role as owner.
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
  proname  | proacl 

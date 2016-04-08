@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "access/sysattr.h"
+#include "catalog/pg_authid.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
@@ -244,7 +245,8 @@ pg_signal_backend(int pid, int sig)
 		return SIGNAL_BACKEND_NOSUPERUSER;
 
 	/* Users can signal backends they have role membership in. */
-	if (!has_privs_of_role(GetUserId(), proc->roleId))
+	if (!has_privs_of_role(GetUserId(), proc->roleId) &&
+		!has_privs_of_role(GetUserId(), DEFAULT_ROLE_SIGNAL_BACKENDID))
 		return SIGNAL_BACKEND_NOPERMISSION;
 
 	/*
@@ -290,7 +292,7 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a member of the role whose query is being canceled"))));
+				 (errmsg("must be a member of the role whose query is being canceled or member of pg_signal_backend"))));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
@@ -314,7 +316,7 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a member of the role whose process is being terminated"))));
+				 (errmsg("must be a member of the role whose process is being terminated or member of pg_signal_backend"))));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }

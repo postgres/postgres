@@ -385,6 +385,8 @@ GRANT testrol0 TO pg_abc; -- error
 GRANT pg_abc TO pg_abcdef; -- error
 
 SET ROLE pg_testrole; -- error
+SET ROLE pg_signal_backend; --error
+CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --error
 
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';

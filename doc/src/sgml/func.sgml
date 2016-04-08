@@ -17454,7 +17454,8 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>boolean</type></entry>
        <entry>Cancel a backend's current query.  This is also allowed if the
-        calling role is a member of the role whose backend is being canceled,
+        calling role is a member of the role whose backend is being canceled or
+        the calling role has been granted <literal>pg_signal_backend</literal>,
         however only superusers can cancel superuser backends.
         </entry>
       </row>
@@ -17478,8 +17479,9 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>boolean</type></entry>
        <entry>Terminate a backend.  This is also allowed if the calling role
-        is a member of the role whose backend is being terminated, however only
-        superusers can terminate superuser backends.
+        is a member of the role whose backend is being terminated or the
+        calling role has been granted <literal>pg_signal_backend</literal>,
+        however only superusers can terminate superuser backends.
        </entry>
       </row>
      </tbody>

@@ -93,10 +93,16 @@ typedef FormData_pg_authid *Form_pg_authid;
  *
  * The uppercase quantities will be replaced at initdb time with
  * user choices.
+ *
+ * If adding new default roles or changing the OIDs below, be sure to add or
+ * update the #defines which follow as appropriate.
  * ----------------
  */
 DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_));
+DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_));
 
-#define BOOTSTRAP_SUPERUSERID 10
+#define BOOTSTRAP_SUPERUSERID			10
+
+#define DEFAULT_ROLE_SIGNAL_BACKENDID	4200
 
 #endif   /* PG_AUTHID_H */
