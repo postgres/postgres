@@ -2435,6 +2435,50 @@ check_float8_array(ArrayType *transarray, const char *caller, int n)
 	return (float8 *) ARR_DATA_PTR(transarray);
 }
 
+/*
+ * float8_combine
+ *
+ * An aggregate combine function used to combine two 3 fields
+ * aggregate transition data into a single transition data.
+ * This function is used only in two stage aggregation and
+ * shouldn't be called outside aggregate context.
+ */
+Datum
+float8_combine(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *transarray2 = PG_GETARG_ARRAYTYPE_P(1);
+	float8	   *transvalues1;
+	float8	   *transvalues2;
+	float8		N,
+				sumX,
+				sumX2;
+
+	if (!AggCheckCallContext(fcinfo, NULL))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	transvalues1 = check_float8_array(transarray1, "float8_combine", 3);
+	N = transvalues1[0];
+	sumX = transvalues1[1];
+	sumX2 = transvalues1[2];
+
+	transvalues2 = check_float8_array(transarray2, "float8_combine", 3);
+
+	N += transvalues2[0];
+	sumX += transvalues2[1];
+	CHECKFLOATVAL(sumX, isinf(transvalues1[1]) || isinf(transvalues2[1]),
+				  true);
+	sumX2 += transvalues2[2];
+	CHECKFLOATVAL(sumX2, isinf(transvalues1[2]) || isinf(transvalues2[2]),
+				  true);
+
+	transvalues1[0] = N;
+	transvalues1[1] = sumX;
+	transvalues1[2] = sumX2;
+
+	PG_RETURN_ARRAYTYPE_P(transarray1);
+}
+
 Datum
 float8_accum(PG_FUNCTION_ARGS)
 {
@@ -2761,6 +2805,69 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
 }
+
+/*
+ * float8_regr_combine
+ *
+ * An aggregate combine function used to combine two 6 fields
+ * aggregate transition data into a single transition data.
+ * This function is used only in two stage aggregation and
+ * shouldn't be called outside aggregate context.
+ */
+Datum
+float8_regr_combine(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *transarray2 = PG_GETARG_ARRAYTYPE_P(1);
+	float8	   *transvalues1;
+	float8	   *transvalues2;
+	float8		N,
+				sumX,
+				sumX2,
+				sumY,
+				sumY2,
+				sumXY;
+
+	if (!AggCheckCallContext(fcinfo, NULL))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	transvalues1 = check_float8_array(transarray1, "float8_regr_combine", 6);
+	N = transvalues1[0];
+	sumX = transvalues1[1];
+	sumX2 = transvalues1[2];
+	sumY = transvalues1[3];
+	sumY2 = transvalues1[4];
+	sumXY = transvalues1[5];
+
+	transvalues2 = check_float8_array(transarray2, "float8_regr_combine", 6);
+
+	N += transvalues2[0];
+	sumX += transvalues2[1];
+	CHECKFLOATVAL(sumX, isinf(transvalues1[1]) || isinf(transvalues2[1]),
+				  true);
+	sumX2 += transvalues2[2];
+	CHECKFLOATVAL(sumX2, isinf(transvalues1[2]) || isinf(transvalues2[2]),
+				  true);
+	sumY += transvalues2[3];
+	CHECKFLOATVAL(sumY, isinf(transvalues1[3]) || isinf(transvalues2[3]),
+				  true);
+	sumY2 += transvalues2[4];
+	CHECKFLOATVAL(sumY2, isinf(transvalues1[4]) || isinf(transvalues2[4]),
+				  true);
+	sumXY += transvalues2[5];
+	CHECKFLOATVAL(sumXY, isinf(transvalues1[5]) || isinf(transvalues2[5]),
+				  true);
+
+	transvalues1[0] = N;
+	transvalues1[1] = sumX;
+	transvalues1[2] = sumX2;
+	transvalues1[3] = sumY;
+	transvalues1[4] = sumY2;
+	transvalues1[5] = sumXY;
+
+	PG_RETURN_ARRAYTYPE_P(transarray1);
+}
+
 
 Datum
 float8_regr_sxx(PG_FUNCTION_ARGS)
