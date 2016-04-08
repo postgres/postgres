@@ -2465,6 +2465,8 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight,
 			}
 			else
 			{					/* shorter cover :((( */
+				if (i > q)
+					i = q;
 				for (; curlen > min_words; i--)
 				{
 					if (!NONWORDTOKEN(prs->words[i].type))
