@@ -24,6 +24,7 @@ static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_jsonb_9_4_usage(ClusterInfo *cluster);
+static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void get_bin_version(ClusterInfo *cluster);
 static char *get_canonical_locale_name(int category, const char *locale);
 
@@ -96,6 +97,11 @@ check_and_dump_old_cluster(bool live_check)
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
+
+	/* 9.5 and below should not have roles starting with pg_ */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 905)
+		check_for_pg_role_prefix(&old_cluster);
+
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904 &&
 		old_cluster.controldata.cat_ver < JSONB_FORMAT_CHANGE_CAT_VER)
 		check_for_jsonb_9_4_usage(&old_cluster);
@@ -629,7 +635,8 @@ check_is_install_user(ClusterInfo *cluster)
 	res = executeQueryOrDie(conn,
 							"SELECT rolsuper, oid "
 							"FROM pg_catalog.pg_roles "
-							"WHERE rolname = current_user");
+							"WHERE rolname = current_user "
+							"AND rolname !~ '^pg_'");
 
 	/*
 	 * We only allow the install user in the new cluster (see comment below)
@@ -645,7 +652,8 @@ check_is_install_user(ClusterInfo *cluster)
 
 	res = executeQueryOrDie(conn,
 							"SELECT COUNT(*) "
-							"FROM pg_catalog.pg_roles ");
+							"FROM pg_catalog.pg_roles "
+							"WHERE rolname !~ '^pg_'");
 
 	if (PQntuples(res) != 1)
 		pg_fatal("could not determine the number of users\n");
@@ -1033,6 +1041,34 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 		check_ok();
 }
 
+/*
+ * check_for_pg_role_prefix()
+ *
+ *	Versions older than 9.6 should not have any pg_* roles
+ */
+static void
+check_for_pg_role_prefix(ClusterInfo *cluster)
+{
+	PGresult   *res;
+	PGconn	   *conn = connectToServer(cluster, "template1");
+
+	prep_status("Checking for roles starting with 'pg_'");
+
+	res = executeQueryOrDie(conn,
+							"SELECT * "
+							"FROM pg_catalog.pg_roles "
+							"WHERE rolname ~ '^pg_'");
+
+	if (PQntuples(res) != 0)
+		pg_fatal("The %s cluster contains roles starting with 'pg_'\n",
+				 CLUSTER_NAME(cluster));
+
+	PQclear(res);
+
+	PQfinish(conn);
+
+	check_ok();
+}
 
 static void
 get_bin_version(ClusterInfo *cluster)

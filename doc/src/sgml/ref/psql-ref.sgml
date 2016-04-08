@@ -1365,13 +1365,15 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dg[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dg[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists database roles.
         (Since the concepts of <quote>users</> and <quote>groups</> have been
         unified into <quote>roles</>, this command is now equivalent to
         <literal>\du</literal>.)
+        By default, only user-created roles are shown; supply the
+        <literal>S</literal> modifier to include system roles.
         If <replaceable class="parameter">pattern</replaceable> is specified,
         only those roles whose names match the pattern are listed.
         If the form <literal>\dg+</literal> is used, additional information
@@ -1525,13 +1527,15 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\du[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\du[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists database roles.
         (Since the concepts of <quote>users</> and <quote>groups</> have been
         unified into <quote>roles</>, this command is now equivalent to
         <literal>\dg</literal>.)
+        By default, only user-created roles are shown; supply the
+        <literal>S</literal> modifier to include system roles.
         If <replaceable class="parameter">pattern</replaceable> is specified,
         only those roles whose names match the pattern are listed.
         If the form <literal>\du+</literal> is used, additional information

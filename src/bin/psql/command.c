@@ -429,7 +429,7 @@ exec_command(const char *cmd,
 				break;
 			case 'g':
 				/* no longer distinct from \du */
-				success = describeRoles(pattern, show_verbose);
+				success = describeRoles(pattern, show_verbose, show_system);
 				break;
 			case 'l':
 				success = do_lo_list();
@@ -474,7 +474,7 @@ exec_command(const char *cmd,
 					success = PSQL_CMD_UNKNOWN;
 				break;
 			case 'u':
-				success = describeRoles(pattern, show_verbose);
+				success = describeRoles(pattern, show_verbose, show_system);
 				break;
 			case 'F':			/* text search subsystem */
 				switch (cmd[2])

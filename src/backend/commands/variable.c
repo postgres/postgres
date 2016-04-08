@@ -854,6 +854,9 @@ check_role(char **newval, void **extra, GucSource source)
 		roleid = InvalidOid;
 		is_superuser = false;
 	}
+	/* Do not allow setting role to a reserved role. */
+	else if (strncmp(*newval, "pg_", 3) == 0)
+		return false;
 	else
 	{
 		if (!IsTransactionState())

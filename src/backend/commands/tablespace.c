@@ -256,6 +256,10 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	else
 		ownerId = GetUserId();
 
+	/* Additional check to protect reserved role names */
+	check_rolespec_name(stmt->owner,
+						"Cannot specify reserved role as owner.");
+
 	/* Unix-ify the offered path, and strip any trailing slashes */
 	location = pstrdup(stmt->location);
 	canonicalize_path(location);

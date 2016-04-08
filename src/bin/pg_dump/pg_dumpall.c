@@ -665,7 +665,7 @@ dumpRoles(PGconn *conn)
 	int			i;
 
 	/* note: rolconfig is dumped later */
-	if (server_version >= 90500)
+	if (server_version >= 90600)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, "
@@ -674,6 +674,7 @@ dumpRoles(PGconn *conn)
 			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
 						  "FROM pg_authid "
+						  "WHERE rolname !~ '^pg_' "
 						  "ORDER BY 2");
 	else if (server_version >= 90100)
 		printfPQExpBuffer(buf,
@@ -770,6 +771,13 @@ dumpRoles(PGconn *conn)
 
 		auth_oid = atooid(PQgetvalue(res, i, i_oid));
 		rolename = PQgetvalue(res, i, i_rolname);
+
+		if (strncmp(rolename,"pg_",3) == 0)
+		{
+			fprintf(stderr, _("%s: role name starting with 'pg_' skipped (%s)\n"),
+					progname, rolename);
+			continue;
+		}
 
 		resetPQExpBuffer(buf);
 
@@ -896,6 +904,7 @@ dumpRoleMembership(PGconn *conn)
 					   "LEFT JOIN pg_authid ur on ur.oid = a.roleid "
 					   "LEFT JOIN pg_authid um on um.oid = a.member "
 					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor "
+					   "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
 					   "ORDER BY 1,2,3");
 
 	if (PQntuples(res) > 0)

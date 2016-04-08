@@ -423,6 +423,9 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				grantee_uid = ACL_ID_PUBLIC;
 				break;
 			default:
+				if (!IsBootstrapProcessingMode())
+					check_rolespec_name((Node *) grantee,
+			"Cannot GRANT or REVOKE privileges to or from a reserved role.");
 				grantee_uid = get_rolespec_oid((Node *) grantee, false);
 				break;
 		}
@@ -918,6 +921,8 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 				grantee_uid = ACL_ID_PUBLIC;
 				break;
 			default:
+				check_rolespec_name((Node *) grantee,
+	"Cannot GRANT or REVOKE default privileges to or from a reserved role.");
 				grantee_uid = get_rolespec_oid((Node *) grantee, false);
 				break;
 		}
@@ -1008,6 +1013,8 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 		{
 			RoleSpec   *rolespec = lfirst(rolecell);
 
+			check_rolespec_name((Node *) rolespec,
+						"Cannot alter default privileges for reserved role.");
 			iacls.roleid = get_rolespec_oid((Node *) rolespec, false);
 
 			/*

@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "access/htup_details.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_auth_members.h"
@@ -5246,4 +5247,42 @@ get_rolespec_name(const Node *node)
 	ReleaseSysCache(tp);
 
 	return rolename;
+}
+
+/*
+ * Given a RoleSpec, throw an error if the name is reserved, using detail_msg,
+ * if provided.
+ *
+ * If node is NULL, no error is thrown.  If detail_msg is NULL then no detail
+ * message is provided.
+ */
+void
+check_rolespec_name(const Node *node, const char *detail_msg)
+{
+	RoleSpec   *role;
+
+	if (!node)
+		return;
+
+	role = (RoleSpec *) node;
+
+	Assert(IsA(node, RoleSpec));
+
+	if (role->roletype != ROLESPEC_CSTRING)
+		return;
+
+	if (IsReservedName(role->rolename))
+	{
+		if (detail_msg)
+			ereport(ERROR,
+					(errcode(ERRCODE_RESERVED_NAME),
+					 errmsg("role \"%s\" is reserved",
+						 role->rolename),
+					 errdetail("%s", detail_msg)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_RESERVED_NAME),
+					 errmsg("role \"%s\" is reserved",
+						 role->rolename)));
+	}
 }

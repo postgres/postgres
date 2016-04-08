@@ -184,8 +184,9 @@ IsToastNamespace(Oid namespaceId)
  *		True iff name starts with the pg_ prefix.
  *
  *		For some classes of objects, the prefix pg_ is reserved for
- *		system objects only.  As of 8.0, this is only true for
- *		schema and tablespace names.
+ *		system objects only.  As of 8.0, this was only true for
+ *		schema and tablespace names.  With 9.6, this is also true
+ *		for roles.
  */
 bool
 IsReservedName(const char *name)

@@ -57,6 +57,11 @@ CREATE ROLE "public"; -- error
 CREATE ROLE none; -- error
 CREATE ROLE "none"; -- error
 
+CREATE ROLE pg_abc; -- error
+CREATE ROLE "pg_abc"; -- error
+CREATE ROLE pg_abcdef; -- error
+CREATE ROLE "pg_abcdef"; -- error
+
 CREATE ROLE testrol0 SUPERUSER LOGIN;
 CREATE ROLE testrolx SUPERUSER LOGIN;
 CREATE ROLE testrol2 SUPERUSER;
@@ -376,6 +381,11 @@ DROP USER MAPPING IF EXISTS FOR CURRENT_ROLE SERVER sv9; --error
 DROP USER MAPPING IF EXISTS FOR nonexistent SERVER sv9;  -- error
 
 -- GRANT/REVOKE
+GRANT testrol0 TO pg_abc; -- error
+GRANT pg_abc TO pg_abcdef; -- error
+
+SET ROLE pg_testrole; -- error
+
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
 

@@ -3566,6 +3566,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 												(List *) cmd->def, lockmode);
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
+			check_rolespec_name(cmd->newowner,
+								"Cannot specify reserved role as owner.");
 			ATExecChangeOwner(RelationGetRelid(rel),
 							  get_rolespec_oid(cmd->newowner, false),
 							  false, lockmode);
