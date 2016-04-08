@@ -56,7 +56,7 @@ if ($buildwhat)
 }
 else
 {
-    system("msbuild pgsql.sln /verbosity:detailed /p:Configuration=$bconf");
+    system("msbuild pgsql.sln /verbosity:normal /p:Configuration=$bconf");
 }
 
 # report status
