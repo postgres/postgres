@@ -124,6 +124,7 @@ test: async
 test: dbsize
 test: misc_functions
 test: rules
+test: psql_crosstab
 test: select_views
 test: portals_p2
 test: foreign_key

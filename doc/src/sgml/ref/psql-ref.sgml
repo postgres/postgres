@@ -1009,7 +1009,7 @@ testdb=&gt;
         <replaceable class="parameter">colD</replaceable>
         is the output column to project into the grid.  If this is not
         specified and there are exactly three columns in the result set,
-        the column that isn't 
+        the column that isn't
         <replaceable class="parameter">colV</replaceable> nor
         <replaceable class="parameter">colH</replaceable>
         is displayed; if there are more columns, an error is thrown.
