@@ -46,11 +46,11 @@
 /* Struct of generic xlog data for single page */
 typedef struct
 {
-	Buffer	buffer;			/* registered buffer */
-	char	image[BLCKSZ];	/* copy of page image for modification */
-	char	data[MAX_DELTA_SIZE]; /* delta between page images */
-	int		dataLen;		/* space consumed in data field */
-	bool	fullImage;		/* are we taking a full image of this page? */
+	Buffer		buffer;			/* registered buffer */
+	char		image[BLCKSZ];	/* copy of page image for modification */
+	char		data[MAX_DELTA_SIZE];	/* delta between page images */
+	int			dataLen;		/* space consumed in data field */
+	bool		fullImage;		/* are we taking a full image of this page? */
 } PageData;
 
 /* State of generic xlog record construction */
@@ -61,7 +61,7 @@ struct GenericXLogState
 };
 
 static void writeFragment(PageData *pageData, OffsetNumber offset,
-						  OffsetNumber len, Pointer data);
+			  OffsetNumber len, Pointer data);
 static void writeDelta(PageData *pageData);
 static void applyPageRedo(Page page, Pointer data, Size dataSize);
 
@@ -72,7 +72,7 @@ static void
 writeFragment(PageData *pageData, OffsetNumber offset, OffsetNumber length,
 			  Pointer data)
 {
-	Pointer			ptr = pageData->data + pageData->dataLen;
+	Pointer		ptr = pageData->data + pageData->dataLen;
 
 	/* Check if we have enough space */
 	Assert(pageData->dataLen + sizeof(offset) +
@@ -95,20 +95,20 @@ writeFragment(PageData *pageData, OffsetNumber offset, OffsetNumber length,
 static void
 writeDelta(PageData *pageData)
 {
-	Page			page = BufferGetPage(pageData->buffer, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST),
-					image = (Page) pageData->image;
-	int				i,
-					fragmentBegin = -1,
-					fragmentEnd = -1;
-	uint16			pageLower = ((PageHeader) page)->pd_lower,
-					pageUpper = ((PageHeader) page)->pd_upper,
-					imageLower = ((PageHeader) image)->pd_lower,
-					imageUpper = ((PageHeader) image)->pd_upper;
+	Page		page = BufferGetPage(pageData->buffer, NULL, NULL,
+									 BGP_NO_SNAPSHOT_TEST),
+				image = (Page) pageData->image;
+	int			i,
+				fragmentBegin = -1,
+				fragmentEnd = -1;
+	uint16		pageLower = ((PageHeader) page)->pd_lower,
+				pageUpper = ((PageHeader) page)->pd_upper,
+				imageLower = ((PageHeader) image)->pd_lower,
+				imageUpper = ((PageHeader) image)->pd_upper;
 
 	for (i = 0; i < BLCKSZ; i++)
 	{
-		bool	match;
+		bool		match;
 
 		/*
 		 * Check if bytes in old and new page images match.  We do not care
@@ -171,14 +171,15 @@ writeDelta(PageData *pageData)
 					  BLCKSZ - fragmentBegin,
 					  page + fragmentBegin);
 
-#ifdef WAL_DEBUG
 	/*
 	 * If xlog debug is enabled, then check produced delta.  Result of delta
 	 * application to saved image should be the same as current page state.
 	 */
+#ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 	{
-		char	tmp[BLCKSZ];
+		char		tmp[BLCKSZ];
+
 		memcpy(tmp, image, BLCKSZ);
 		applyPageRedo(tmp, pageData->data, pageData->dataLen);
 		if (memcmp(tmp, page, pageLower)
@@ -194,8 +195,8 @@ writeDelta(PageData *pageData)
 GenericXLogState *
 GenericXLogStart(Relation relation)
 {
-	int					i;
-	GenericXLogState   *state;
+	int			i;
+	GenericXLogState *state;
 
 	state = (GenericXLogState *) palloc(sizeof(GenericXLogState));
 
@@ -212,12 +213,13 @@ GenericXLogStart(Relation relation)
 Page
 GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 {
-	int block_id;
+	int			block_id;
 
 	/* Place new buffer to unused slot in array */
 	for (block_id = 0; block_id < MAX_GENERIC_XLOG_PAGES; block_id++)
 	{
-		PageData *page = &state->pages[block_id];
+		PageData   *page = &state->pages[block_id];
+
 		if (BufferIsInvalid(page->buffer))
 		{
 			page->buffer = buffer;
@@ -225,7 +227,7 @@ GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 											  BGP_NO_SNAPSHOT_TEST), BLCKSZ);
 			page->dataLen = 0;
 			page->fullImage = isNew;
-			return (Page)page->image;
+			return (Page) page->image;
 		}
 		else if (page->buffer == buffer)
 		{
@@ -233,7 +235,7 @@ GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 			 * Buffer is already registered.  Just return the image, which is
 			 * already prepared.
 			 */
-			return (Page)page->image;
+			return (Page) page->image;
 		}
 	}
 
@@ -250,7 +252,7 @@ GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 void
 GenericXLogUnregister(GenericXLogState *state, Buffer buffer)
 {
-	int block_id;
+	int			block_id;
 
 	/* Find block in array to unregister */
 	for (block_id = 0; block_id < MAX_GENERIC_XLOG_PAGES; block_id++)
@@ -262,7 +264,7 @@ GenericXLogUnregister(GenericXLogState *state, Buffer buffer)
 			 * concurrency.
 			 */
 			memmove(&state->pages[block_id], &state->pages[block_id + 1],
-					(MAX_GENERIC_XLOG_PAGES - block_id - 1) * sizeof(PageData));
+				 (MAX_GENERIC_XLOG_PAGES - block_id - 1) * sizeof(PageData));
 			state->pages[MAX_GENERIC_XLOG_PAGES - 1].buffer = InvalidBuffer;
 			return;
 		}
@@ -277,8 +279,8 @@ GenericXLogUnregister(GenericXLogState *state, Buffer buffer)
 XLogRecPtr
 GenericXLogFinish(GenericXLogState *state)
 {
-	XLogRecPtr lsn = InvalidXLogRecPtr;
-	int i;
+	XLogRecPtr	lsn = InvalidXLogRecPtr;
+	int			i;
 
 	if (state->isLogged)
 	{
@@ -372,12 +374,13 @@ GenericXLogAbort(GenericXLogState *state)
 static void
 applyPageRedo(Page page, Pointer data, Size dataSize)
 {
-	Pointer ptr = data, end = data + dataSize;
+	Pointer		ptr = data,
+				end = data + dataSize;
 
 	while (ptr < end)
 	{
-		OffsetNumber	offset,
-						length;
+		OffsetNumber offset,
+					length;
 
 		memcpy(&offset, ptr, sizeof(offset));
 		ptr += sizeof(offset);
@@ -415,9 +418,9 @@ generic_redo(XLogReaderState *record)
 		/* Apply redo to given block if needed */
 		if (action == BLK_NEEDS_REDO)
 		{
-			Pointer	blockData;
-			Size	blockDataSize;
-			Page	page;
+			Pointer		blockData;
+			Size		blockDataSize;
+			Page		page;
 
 			page = BufferGetPage(buffers[block_id], NULL, NULL, BGP_NO_SNAPSHOT_TEST);
 			blockData = XLogRecGetBlockData(record, block_id, &blockDataSize);
