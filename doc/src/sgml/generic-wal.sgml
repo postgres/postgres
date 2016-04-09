@@ -1,70 +1,84 @@
 <!-- doc/src/sgml/generic-wal.sgml -->
 
 <chapter id="generic-wal">
- <title>Generic WAL records</title>
+ <title>Generic WAL Records</title>
 
   <para>
-   Despite all built-in access methods and WAL-logged modules having their own
-   types of WAL records, there is also a generic WAL record type, which describes
-   changes to pages in a generic way.  This is useful for extensions that
-   provide custom access methods, because they cannot register their own
-   WAL redo routines.
+   Although all built-in WAL-logged modules have their own types of WAL
+   records, there is also a generic WAL record type, which describes changes
+   to pages in a generic way.  This is useful for extensions that provide
+   custom access methods, because they cannot register their own WAL redo
+   routines.
   </para>
 
   <para>
    The API for constructing generic WAL records is defined in
-   <filename>generic_xlog.h</> and implemented in <filename>generic_xlog.c</>.
-   Each generic WAL record must be constructed by following these steps:
+   <filename>access/generic_xlog.h</> and implemented
+   in <filename>access/transam/generic_xlog.c</>.
+  </para>
+
+  <para>
+   To perform a WAL-logged data update using the generic WAL record
+   facility, follow these steps:
 
    <orderedlist>
     <listitem>
      <para>
       <function>state = GenericXLogStart(relation)</> &mdash; start
-      construction of a generic xlog record for the given relation.
+      construction of a generic WAL record for the given relation.
      </para>
     </listitem>
 
     <listitem>
      <para>
       <function>page = GenericXLogRegister(state, buffer, isNew)</> &mdash;
-      register one or more buffers (one at a time) for the current generic
-      xlog record.  This function returns a copy of the page image, where
-      modifications can be made.  The second argument indicates if the page
-      is new (eventually, this will result in a full page image being put into
-      the xlog record).
+      register a buffer to be modified within the current generic WAL
+      record.  This function returns a pointer to a temporary copy of the
+      buffer's page, where modifications should be made.  (Do not modify the
+      buffer's contents directly.)  The third argument indicates if the page
+      is new; if true, this will result in a full-page image rather than a
+      delta update being included in the WAL record.
+      <function>GenericXLogRegister</> can be repeated if the WAL-logged
+      action needs to modify multiple pages.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Apply modifications to page images obtained in the previous step.
+      Apply modifications to the page images obtained in the previous step.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <function>GenericXLogFinish(state)</> &mdash; finish construction of
-      a generic xlog record.
+      <function>GenericXLogFinish(state)</> &mdash; apply the changes to
+      the buffers and emit the generic WAL record.
      </para>
     </listitem>
    </orderedlist>
   </para>
 
   <para>
-   The xlog record construction can be canceled between any of the above
-   steps by calling <function>GenericXLogAbort(state)</>.  This will discard all
+   WAL record construction can be canceled between any of the above steps by
+   calling <function>GenericXLogAbort(state)</>.  This will discard all
    changes to the page image copies.
   </para>
 
   <para>
-   Please note the following points when constructing generic xlog records:
+   Please note the following points when using the generic WAL record
+   facility:
+
    <itemizedlist>
     <listitem>
      <para>
-      No direct modifications of page images are allowed!  All modifications
+      No direct modifications of buffers are allowed!  All modifications
       must be done in copies acquired from <function>GenericXLogRegister()</>.
-      In other words, code which makes generic xlog records must never call
-      <function>BufferGetPage()</>.
+      In other words, code that makes generic WAL records should never call
+      <function>BufferGetPage()</> for itself.  However, it remains the
+      caller's responsibility to pin/unpin and lock/unlock the buffers at
+      appropriate times.  Exclusive lock must be held on each target buffer
+      from before <function>GenericXLogRegister()</> until after
+      <function>GenericXLogFinish()</>.
      </para>
     </listitem>
 
@@ -72,68 +86,69 @@
      <para>
       Registrations of buffers (step 2) and modifications of page images
       (step 3) can be mixed freely, i.e., both steps may be repeated in any
-      sequence.  The only restriction is that you can modify a page image
-      only after the registration of the corresponding buffer.
+      sequence.  Keep in mind that buffers should be registered in the same
+      order in which locks are to be obtained on them during replay.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      After registration, the buffer can also be unregistered by calling
-      <function>GenericXLogUnregister(buffer)</>.  In this case, the changes
-      made to that particular page image copy will be discarded.
+      The maximum number of buffers that can be registered for a generic WAL
+      record is <literal>MAX_GENERIC_XLOG_PAGES</>.  An error will be thrown
+      if this limit is exceeded.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Generic xlog assumes that pages are using standard layout.  I.e., all
-      information between pd_lower and pd_upper will be discarded.
+      Generic WAL assumes that the pages to be modified have standard
+      layout, and in particular that there is no useful data between
+      <structfield>pd_lower</> and <structfield>pd_upper</>.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The maximum number of buffers that can be simultaneously registered
-      for a generic xlog is <literal>MAX_GENERIC_XLOG_PAGES</>.  An error will
-      be thrown if this limit is exceeded.
+      Since you are modifying copies of buffer
+      pages, <function>GenericXLogStart()</> does not start a critical
+      section.  Thus, you can safely do memory allocation, error throwing,
+      etc. between <function>GenericXLogStart()</> and
+      <function>GenericXLogFinish()</>.  The only actual critical section is
+      present inside <function>GenericXLogFinish()</>.  There is no need to
+      worry about calling  <function>GenericXLogAbort()</> during an error
+      exit, either.
      </para>
     </listitem>
+
     <listitem>
      <para>
-      Since you modify copies of page images, <function>GenericXLogStart()</>
-      does not start a critical section.  Thus, you can do memory allocation,
-      error throwing, etc. between <function>GenericXLogStart()</> and
-      <function>GenericXLogFinish()</>.  The actual critical section is present
-      inside <function>GenericXLogFinish()</>.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      <function>GenericXLogFinish()</> takes care of marking buffers as dirty
+      <function>GenericXLogFinish()</> takes care of marking buffers dirty
       and setting their LSNs.  You do not need to do this explicitly.
      </para>
     </listitem>
+
     <listitem>
      <para>
-      For unlogged relations, everything works the same except there is no
-      WAL record produced.  Thus, you typically do not need to do any explicit
-      checks for unlogged relations.
+      For unlogged relations, everything works the same except that no
+      actual WAL record is emitted.  Thus, you typically do not need to do
+      any explicit checks for unlogged relations.
      </para>
     </listitem>
+
     <listitem>
      <para>
-      If a registered buffer is not new, the generic xlog record contains
-      a delta between the old and the new page images.  This delta is produced
-      using per byte comparison.  The current delta mechanism is not effective
-      for moving data within a page and may be improved in the future.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      The generic xlog redo function will acquire exclusive locks to buffers
+      The generic WAL redo function will acquire exclusive locks to buffers
       in the same order as they were registered.  After redoing all changes,
       the locks will be released in the same order.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If a registered buffer is not new, the generic WAL record contains
+      a delta between the old and the new page images.  This delta is based
+      on byte-by-byte comparison.  This is not very compact for the case of
+      moving data within a page, and might be improved in the future.
      </para>
     </listitem>
    </itemizedlist>

@@ -258,35 +258,6 @@ GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 }
 
 /*
- * Unregister particular buffer for generic xlog record.
- *
- * XXX this is dangerous and should go away.
- */
-void
-GenericXLogUnregister(GenericXLogState *state, Buffer buffer)
-{
-	int			block_id;
-
-	/* Find block in array to unregister */
-	for (block_id = 0; block_id < MAX_GENERIC_XLOG_PAGES; block_id++)
-	{
-		if (state->pages[block_id].buffer == buffer)
-		{
-			/*
-			 * Preserve order of pages in array because it could matter for
-			 * concurrency.
-			 */
-			memmove(&state->pages[block_id], &state->pages[block_id + 1],
-				 (MAX_GENERIC_XLOG_PAGES - block_id - 1) * sizeof(PageData));
-			state->pages[MAX_GENERIC_XLOG_PAGES - 1].buffer = InvalidBuffer;
-			return;
-		}
-	}
-
-	elog(ERROR, "registered generic xlog buffer not found");
-}
-
-/*
  * Apply changes represented by GenericXLogState to the actual buffers,
  * and emit a generic xlog record.
  */
