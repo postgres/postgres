@@ -102,8 +102,12 @@ RETURNS void AS $$
 kwargs = { "message":_message, "detail":_detail, "hint":_hint,
 			"sqlstate":_sqlstate, "schema":_schema, "table":_table,
 			"column":_column, "datatype":_datatype, "constraint":_constraint }
-# ignore None values
-plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
+# ignore None values - should work on Python2.3
+dict = {}
+for k in kwargs:
+	if kwargs[k] is not None:
+		dict[k] = kwargs[k]
+plpy.error(**dict)
 $$ LANGUAGE plpythonu;
 
 SELECT raise_exception('hello', 'world');

@@ -150,22 +150,26 @@ RETURNS void AS $$
 kwargs = { "message":_message, "detail":_detail, "hint":_hint,
 			"sqlstate":_sqlstate, "schema":_schema, "table":_table,
 			"column":_column, "datatype":_datatype, "constraint":_constraint }
-# ignore None values
-plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
+# ignore None values - should work on Python2.3
+dict = {}
+for k in kwargs:
+	if kwargs[k] is not None:
+		dict[k] = kwargs[k]
+plpy.error(**dict)
 $$ LANGUAGE plpythonu;
 SELECT raise_exception('hello', 'world');
 ERROR:  plpy.Error: hello
 DETAIL:  world
 CONTEXT:  Traceback (most recent call last):
-  PL/Python function "raise_exception", line 6, in <module>
-    plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
+  PL/Python function "raise_exception", line 10, in <module>
+    plpy.error(**dict)
 PL/Python function "raise_exception"
 SELECT raise_exception('message text', 'detail text', _sqlstate => 'YY333');
 ERROR:  plpy.Error: message text
 DETAIL:  detail text
 CONTEXT:  Traceback (most recent call last):
-  PL/Python function "raise_exception", line 6, in <module>
-    plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
+  PL/Python function "raise_exception", line 10, in <module>
+    plpy.error(**dict)
 PL/Python function "raise_exception"
 SELECT raise_exception(_message => 'message text',
 						_detail => 'detail text',
@@ -180,8 +184,8 @@ ERROR:  plpy.Error: message text
 DETAIL:  detail text
 HINT:  hint text
 CONTEXT:  Traceback (most recent call last):
-  PL/Python function "raise_exception", line 6, in <module>
-    plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
+  PL/Python function "raise_exception", line 10, in <module>
+    plpy.error(**dict)
 PL/Python function "raise_exception"
 SELECT raise_exception(_message => 'message text',
 						_hint => 'hint text',
@@ -191,8 +195,8 @@ SELECT raise_exception(_message => 'message text',
 ERROR:  plpy.Error: message text
 HINT:  hint text
 CONTEXT:  Traceback (most recent call last):
-  PL/Python function "raise_exception", line 6, in <module>
-    plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
+  PL/Python function "raise_exception", line 10, in <module>
+    plpy.error(**dict)
 PL/Python function "raise_exception"
 DO $$
 DECLARE
