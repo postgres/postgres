@@ -301,10 +301,10 @@ typedef PageHeaderData *PageHeader;
  * Using assertions, validate that the page special pointer is OK.
  *
  * This is intended to catch use of the pointer before page initialization.
- * It is implemented as a function do to the limitations of the MSVC compiler,
- * which choked on doing all these tests within another macro.  We return true
- * so that MacroAssert() can be used while still getting the specifics from
- * the macro failure within this function.
+ * It is implemented as a function due to the limitations of the MSVC
+ * compiler, which choked on doing all these tests within another macro.  We
+ * return true so that MacroAssert() can be used while still getting the
+ * specifics from the macro failure within this function.
  */
 static inline bool
 PageValidateSpecialPointer(Page page)
