@@ -349,7 +349,8 @@ GenericXLogFinish(GenericXLogState *state)
 			{
 				/* A full page image does not require anything special */
 				memcpy(page, pageData->image, BLCKSZ);
-				XLogRegisterBuffer(i, pageData->buffer, REGBUF_FORCE_IMAGE);
+				XLogRegisterBuffer(i, pageData->buffer,
+								   REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
 			}
 			else
 			{
