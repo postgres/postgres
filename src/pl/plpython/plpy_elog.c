@@ -21,7 +21,8 @@ PyObject   *PLy_exc_fatal = NULL;
 PyObject   *PLy_exc_spi_error = NULL;
 
 
-static void PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth);
+static void PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
+			  char **xmsg, char **tbmsg, int *tb_depth);
 static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
 			char **hint, char **query, int *position,
 			char **schema_name, char **table_name, char **column_name,
@@ -65,22 +66,27 @@ PLy_elog(int elevel, const char *fmt,...)
 	char	   *constraint_name = NULL;
 
 	PyErr_Fetch(&exc, &val, &tb);
+
 	if (exc != NULL)
 	{
+		PyErr_NormalizeException(&exc, &val, &tb);
+
 		if (PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
-			PLy_get_spi_error_data(val, &sqlerrcode, &detail, &hint, &query, &position,
-						&schema_name, &table_name, &column_name,
-						&datatype_name, &constraint_name);
+			PLy_get_spi_error_data(val, &sqlerrcode,
+								   &detail, &hint, &query, &position,
+								   &schema_name, &table_name, &column_name,
+								   &datatype_name, &constraint_name);
 		else if (PyErr_GivenExceptionMatches(val, PLy_exc_error))
 			PLy_get_error_data(val, &sqlerrcode, &detail, &hint,
-						&schema_name, &table_name, &column_name,
-						&datatype_name, &constraint_name);
+							   &schema_name, &table_name, &column_name,
+							   &datatype_name, &constraint_name);
 		else if (PyErr_GivenExceptionMatches(val, PLy_exc_fatal))
 			elevel = FATAL;
 	}
-	PyErr_Restore(exc, val, tb);
 
-	PLy_traceback(&xmsg, &tbmsg, &tb_depth);
+	/* this releases our refcount on tb! */
+	PLy_traceback(exc, val, tb,
+				  &xmsg, &tbmsg, &tb_depth);
 
 	if (fmt)
 	{
@@ -122,11 +128,16 @@ PLy_elog(int elevel, const char *fmt,...)
 				 (hint) ? errhint("%s", hint) : 0,
 				 (query) ? internalerrquery(query) : 0,
 				 (position) ? internalerrposition(position) : 0,
-				 (schema_name) ? err_generic_string(PG_DIAG_SCHEMA_NAME, schema_name) : 0,
-				 (table_name) ? err_generic_string(PG_DIAG_TABLE_NAME, table_name) : 0,
-				 (column_name) ? err_generic_string(PG_DIAG_COLUMN_NAME, column_name) : 0,
-				 (datatype_name) ? err_generic_string(PG_DIAG_DATATYPE_NAME, datatype_name) : 0,
-				 (constraint_name) ? err_generic_string(PG_DIAG_CONSTRAINT_NAME, constraint_name) : 0));
+				 (schema_name) ? err_generic_string(PG_DIAG_SCHEMA_NAME,
+													schema_name) : 0,
+				 (table_name) ? err_generic_string(PG_DIAG_TABLE_NAME,
+												   table_name) : 0,
+				 (column_name) ? err_generic_string(PG_DIAG_COLUMN_NAME,
+													column_name) : 0,
+				 (datatype_name) ? err_generic_string(PG_DIAG_DATATYPE_NAME,
+													  datatype_name) : 0,
+				 (constraint_name) ? err_generic_string(PG_DIAG_CONSTRAINT_NAME,
+														constraint_name) : 0));
 	}
 	PG_CATCH();
 	{
@@ -136,6 +147,9 @@ PLy_elog(int elevel, const char *fmt,...)
 			pfree(xmsg);
 		if (tbmsg)
 			pfree(tbmsg);
+		Py_XDECREF(exc);
+		Py_XDECREF(val);
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -146,21 +160,24 @@ PLy_elog(int elevel, const char *fmt,...)
 		pfree(xmsg);
 	if (tbmsg)
 		pfree(tbmsg);
+	Py_XDECREF(exc);
+	Py_XDECREF(val);
 }
 
 /*
- * Extract a Python traceback from the current exception.
+ * Extract a Python traceback from the given exception data.
  *
  * The exception error message is returned in xmsg, the traceback in
  * tbmsg (both as palloc'd strings) and the traceback depth in
  * tb_depth.
+ *
+ * We release refcounts on all the Python objects in the traceback stack,
+ * but not on e or v.
  */
 static void
-PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
+PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
+			  char **xmsg, char **tbmsg, int *tb_depth)
 {
-	PyObject   *e,
-			   *v,
-			   *tb;
 	PyObject   *e_type_o;
 	PyObject   *e_module_o;
 	char	   *e_type_s = NULL;
@@ -171,12 +188,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 	StringInfoData tbstr;
 
 	/*
-	 * get the current exception
-	 */
-	PyErr_Fetch(&e, &v, &tb);
-
-	/*
-	 * oops, no exception, return
+	 * if no exception, return nulls
 	 */
 	if (e == NULL)
 	{
@@ -186,8 +198,6 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 
 		return;
 	}
-
-	PyErr_NormalizeException(&e, &v, &tb);
 
 	/*
 	 * Format the exception and its value and put it in xmsg.
@@ -355,8 +365,6 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 	Py_XDECREF(e_type_o);
 	Py_XDECREF(e_module_o);
 	Py_XDECREF(vob);
-	Py_XDECREF(v);
-	Py_DECREF(e);
 }
 
 /*
@@ -388,19 +396,21 @@ PLy_get_sqlerrcode(PyObject *exc, int *sqlerrcode)
  */
 static void
 PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
-			char **hint, char **query, int *position,
-			char **schema_name, char **table_name, char **column_name,
-			char **datatype_name, char **constraint_name)
+					   char **hint, char **query, int *position,
+					   char **schema_name, char **table_name,
+					   char **column_name,
+					   char **datatype_name, char **constraint_name)
 {
-	PyObject   *spidata = NULL;
+	PyObject   *spidata;
 
 	spidata = PyObject_GetAttrString(exc, "spidata");
 
 	if (spidata != NULL)
 	{
-		PyArg_ParseTuple(spidata, "izzzizzzzz", sqlerrcode, detail, hint, query, position,
-												schema_name, table_name, column_name,
-												datatype_name, constraint_name);
+		PyArg_ParseTuple(spidata, "izzzizzzzz",
+						 sqlerrcode, detail, hint, query, position,
+						 schema_name, table_name, column_name,
+						 datatype_name, constraint_name);
 	}
 	else
 	{
@@ -411,23 +421,21 @@ PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
 		PLy_get_sqlerrcode(exc, sqlerrcode);
 	}
 
-	PyErr_Clear();
-	/* no elog here, we simply won't report the errhint, errposition etc */
 	Py_XDECREF(spidata);
 }
 
 /*
  * Extract the error data from an Error.
+ *
  * Note: position and query attributes are never set for Error so, unlike
  * PLy_get_spi_error_data, this function doesn't return them.
  */
 static void
 PLy_get_error_data(PyObject *exc, int *sqlerrcode, char **detail, char **hint,
-			char **schema_name, char **table_name, char **column_name,
-			char **datatype_name, char **constraint_name)
+				   char **schema_name, char **table_name, char **column_name,
+				   char **datatype_name, char **constraint_name)
 {
 	PLy_get_sqlerrcode(exc, sqlerrcode);
-
 	get_string_attr(exc, "detail", detail);
 	get_string_attr(exc, "hint", hint);
 	get_string_attr(exc, "schema_name", schema_name);
@@ -435,9 +443,6 @@ PLy_get_error_data(PyObject *exc, int *sqlerrcode, char **detail, char **hint,
 	get_string_attr(exc, "column_name", column_name);
 	get_string_attr(exc, "datatype_name", datatype_name);
 	get_string_attr(exc, "constraint_name", constraint_name);
-
-	PyErr_Clear();
-	/* no elog here, we simply won't report the errhint, errposition etc */
 }
 
 /*
