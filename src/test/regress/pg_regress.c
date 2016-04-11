@@ -2386,7 +2386,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 		postmaster_running = true;
 
-#ifdef WIN64
+#ifdef _WIN64
 /* need a series of two casts to convert HANDLE without compiler warning */
 #define ULONGPID(x) (unsigned long) (unsigned long long) (x)
 #else

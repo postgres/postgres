@@ -16,7 +16,7 @@ CPU=i386
 !MESSAGE Building the Win32 static library...
 !MESSAGE
 !ELSEIF ("$(CPU)" == "IA64")||("$(CPU)" == "AMD64")
-ADD_DEFINES=/D "WIN64" /Wp64 /GS
+ADD_DEFINES=/D "_WIN64" /Wp64 /GS
 ADD_SECLIB=bufferoverflowU.lib
 !MESSAGE Building the Win64 static library...
 !MESSAGE
