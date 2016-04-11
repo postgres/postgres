@@ -178,31 +178,6 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 )
 
 /*
- * BufferGetPage
- *		Returns the page associated with a buffer.
- *
- * agetest will normally be a literal, so use a macro at the outer level to
- * give the compiler a chance to optimize away the runtime code to check it.
- *
- * TestForOldSnapshot(), if it doesn't throw an error, will return the page
- * argument it is passed, so the same result will go back to this macro's
- * caller for either agetest value; it is a matter of whether to call the
- * function to perform the test.  For call sites where the check is not needed
- * (which is the vast majority of them), the snapshot and relation parameters
- * can, and generally should, be NULL.
- */
-#define BufferGetPage(buffer, snapshot, relation, agetest) \
-( \
-	( \
-		AssertMacro((agetest) == BGP_NO_SNAPSHOT_TEST || (agetest) == BGP_TEST_FOR_OLD_SNAPSHOT), \
-		((agetest) == BGP_NO_SNAPSHOT_TEST) \
-	) ? \
-		((Page)BufferGetBlock(buffer)) \
-	: \
-		(TestForOldSnapshot(snapshot, relation, (Page)BufferGetBlock(buffer))) \
-)
-
-/*
  * prototypes for functions in bufmgr.c
  */
 extern bool ComputeIoConcurrency(int io_concurrency, double *target);
@@ -268,10 +243,33 @@ extern bool BgBufferSync(struct WritebackContext *wb_context);
 
 extern void AtProcExit_LocalBuffers(void);
 
-extern Page TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page);
+extern void TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page);
 
 /* in freelist.c */
 extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);
 extern void FreeAccessStrategy(BufferAccessStrategy strategy);
+
+
+/* inline functions */
+
+/*
+ * BufferGetPage
+ *		Returns the page associated with a buffer.
+ *
+ * For call sites where the check is not needed (which is the vast majority of
+ * them), the snapshot and relation parameters can, and generally should, be
+ * NULL.
+ */
+static inline Page
+BufferGetPage(Buffer buffer, Snapshot snapshot, Relation relation,
+			  BufferGetPageAgeTest agetest)
+{
+	Page		page = (Page) BufferGetBlock(buffer);
+
+	if (agetest == BGP_TEST_FOR_OLD_SNAPSHOT)
+		TestForOldSnapshot(snapshot, relation, page);
+
+	return page;
+}
 
 #endif

@@ -4295,7 +4295,7 @@ IssuePendingWritebacks(WritebackContext *context)
  * For best performance, keep the tests that are fastest and/or most likely to
  * exclude a page from old snapshot testing near the front.
  */
-extern Page
+extern void
 TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 {
 	Assert(relation != NULL);
@@ -4311,6 +4311,4 @@ TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 		ereport(ERROR,
 				(errcode(ERRCODE_SNAPSHOT_TOO_OLD),
 				 errmsg("snapshot too old")));
-
-	return page;
 }
