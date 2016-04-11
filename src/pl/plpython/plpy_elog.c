@@ -21,7 +21,8 @@ PyObject   *PLy_exc_fatal = NULL;
 PyObject   *PLy_exc_spi_error = NULL;
 
 
-static void PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth);
+static void PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
+			  char **xmsg, char **tbmsg, int *tb_depth);
 static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
 					   char **hint, char **query, int *position);
 static char *get_source_line(const char *src, int lineno);
@@ -53,16 +54,20 @@ PLy_elog(int elevel, const char *fmt,...)
 	int			position = 0;
 
 	PyErr_Fetch(&exc, &val, &tb);
+
 	if (exc != NULL)
 	{
+		PyErr_NormalizeException(&exc, &val, &tb);
+
 		if (PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
 			PLy_get_spi_error_data(val, &sqlerrcode, &detail, &hint, &query, &position);
 		else if (PyErr_GivenExceptionMatches(val, PLy_exc_fatal))
 			elevel = FATAL;
 	}
-	PyErr_Restore(exc, val, tb);
 
-	PLy_traceback(&xmsg, &tbmsg, &tb_depth);
+	/* this releases our refcount on tb! */
+	PLy_traceback(exc, val, tb,
+				  &xmsg, &tbmsg, &tb_depth);
 
 	if (fmt)
 	{
@@ -113,6 +118,9 @@ PLy_elog(int elevel, const char *fmt,...)
 			pfree(xmsg);
 		if (tbmsg)
 			pfree(tbmsg);
+		Py_XDECREF(exc);
+		Py_XDECREF(val);
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -123,21 +131,24 @@ PLy_elog(int elevel, const char *fmt,...)
 		pfree(xmsg);
 	if (tbmsg)
 		pfree(tbmsg);
+	Py_XDECREF(exc);
+	Py_XDECREF(val);
 }
 
 /*
- * Extract a Python traceback from the current exception.
+ * Extract a Python traceback from the given exception data.
  *
  * The exception error message is returned in xmsg, the traceback in
  * tbmsg (both as palloc'd strings) and the traceback depth in
  * tb_depth.
+ *
+ * We release refcounts on all the Python objects in the traceback stack,
+ * but not on e or v.
  */
 static void
-PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
+PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
+			  char **xmsg, char **tbmsg, int *tb_depth)
 {
-	PyObject   *e,
-			   *v,
-			   *tb;
 	PyObject   *e_type_o;
 	PyObject   *e_module_o;
 	char	   *e_type_s = NULL;
@@ -148,12 +159,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 	StringInfoData tbstr;
 
 	/*
-	 * get the current exception
-	 */
-	PyErr_Fetch(&e, &v, &tb);
-
-	/*
-	 * oops, no exception, return
+	 * if no exception, return nulls
 	 */
 	if (e == NULL)
 	{
@@ -163,8 +169,6 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 
 		return;
 	}
-
-	PyErr_NormalizeException(&e, &v, &tb);
 
 	/*
 	 * Format the exception and its value and put it in xmsg.
@@ -332,8 +336,6 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 	Py_XDECREF(e_type_o);
 	Py_XDECREF(e_module_o);
 	Py_XDECREF(vob);
-	Py_XDECREF(v);
-	Py_DECREF(e);
 }
 
 /*
@@ -367,7 +369,7 @@ PLy_get_spi_sqlerrcode(PyObject *exc, int *sqlerrcode)
 static void
 PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail, char **hint, char **query, int *position)
 {
-	PyObject   *spidata = NULL;
+	PyObject   *spidata;
 
 	spidata = PyObject_GetAttrString(exc, "spidata");
 
@@ -384,8 +386,6 @@ PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail, char **hin
 		PLy_get_spi_sqlerrcode(exc, sqlerrcode);
 	}
 
-	PyErr_Clear();
-	/* no elog here, we simply won't report the errhint, errposition etc */
 	Py_XDECREF(spidata);
 }
 
