@@ -117,9 +117,7 @@ typedef struct OldSnapshotControlData
 	TransactionId xid_by_minute[FLEXIBLE_ARRAY_MEMBER];
 }	OldSnapshotControlData;
 
-typedef struct OldSnapshotControlData *OldSnapshotControl;
-
-static volatile OldSnapshotControl oldSnapshotControl;
+static volatile OldSnapshotControlData *oldSnapshotControl; 
 
 
 /*
@@ -259,9 +257,9 @@ SnapMgrInit(void)
 	bool		found;
 
 	/*
-	 * Create or attach to the OldSnapshotControl structure.
+	 * Create or attach to the OldSnapshotControlData structure.
 	 */
-	oldSnapshotControl = (OldSnapshotControl)
+	oldSnapshotControl = (volatile OldSnapshotControlData *)
 		ShmemInitStruct("OldSnapshotControlData",
 						SnapMgrShmemSize(), &found);
 

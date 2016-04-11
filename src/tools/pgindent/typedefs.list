@@ -1175,6 +1175,7 @@ Oid
 OidOptions
 OkeysState
 OldSerXidControl
+OldSnapshotControlData
 OldToNewMapping
 OldToNewMappingData
 OldTriggerInfo
