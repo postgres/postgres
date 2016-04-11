@@ -255,6 +255,12 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 
 		PG_TRY();
 		{
+			/*
+			 * Ancient versions of Python (circa 2.3) contain a bug whereby
+			 * the fetches below can fail if the error indicator is set.
+			 */
+			PyErr_Clear();
+
 			lineno = PyObject_GetAttrString(tb, "tb_lineno");
 			if (lineno == NULL)
 				elog(ERROR, "could not get line number from Python traceback");
