@@ -36,5 +36,5 @@ do
 	    echo '};'
 	} >$tmp/test.cpp
 
-	${CXX:-g++} -I . -I src/include -fsyntax-only -Wall -c $tmp/test.cpp
+	${CXX:-g++} -I . -I src/interfaces/libpq -I src/include -fsyntax-only -Wall -c $tmp/test.cpp
 done
