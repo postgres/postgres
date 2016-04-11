@@ -886,8 +886,13 @@ SyncRepUpdateConfig(void)
 	 */
 	syncrep_scanner_init(SyncRepStandbyNames);
 	parse_rc = syncrep_yyparse();
-	Assert(parse_rc == 0);
 	syncrep_scanner_finish();
+
+	if (parse_rc != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg_internal("synchronous_standby_names parser returned %d",
+								 parse_rc)));
 
 	SyncRepConfig = syncrep_parse_result;
 	syncrep_parse_result = NULL;
