@@ -424,11 +424,12 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	else
 		so = PyObject_Str(args);
 
-	if (so == NULL || ((message = pstrdup(PyString_AsString(so))) == NULL))
+	if (so == NULL || ((message = PyString_AsString(so)) == NULL))
 	{
 		level = ERROR;
 		message = dgettext(TEXTDOMAIN, "could not parse error message in plpy.elog");
 	}
+	message = pstrdup(message);
 
 	Py_XDECREF(so);
 
@@ -444,7 +445,8 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 				if (PyTuple_Size(args) != 0)
 					PLy_elog(ERROR, "the message is already specified");
 
-				pfree(message);
+				if (message)
+					pfree(message);
 				message = object_to_string(value);
 			}
 			else if (strcmp(keyword, "detail") == 0)
