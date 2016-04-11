@@ -148,11 +148,12 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		 */
 		for (i = 0; i < NBuffers; i++)
 		{
-			volatile BufferDesc *bufHdr;
+			BufferDesc *bufHdr;
+			uint32		buf_state;
 
 			bufHdr = GetBufferDescriptor(i);
 			/* Lock each buffer header before inspecting. */
-			LockBufHdr(bufHdr);
+			buf_state = LockBufHdr(bufHdr);
 
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
 			fctx->record[i].relfilenode = bufHdr->tag.rnode.relNode;
@@ -160,21 +161,21 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			fctx->record[i].reldatabase = bufHdr->tag.rnode.dbNode;
 			fctx->record[i].forknum = bufHdr->tag.forkNum;
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
-			fctx->record[i].usagecount = bufHdr->usage_count;
-			fctx->record[i].pinning_backends = bufHdr->refcount;
+			fctx->record[i].usagecount = BUF_STATE_GET_USAGECOUNT(buf_state);
+			fctx->record[i].pinning_backends = BUF_STATE_GET_REFCOUNT(buf_state);
 
-			if (bufHdr->flags & BM_DIRTY)
+			if (buf_state & BM_DIRTY)
 				fctx->record[i].isdirty = true;
 			else
 				fctx->record[i].isdirty = false;
 
 			/* Note if the buffer is valid, and has storage created */
-			if ((bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_TAG_VALID))
+			if ((buf_state & BM_VALID) && (buf_state & BM_TAG_VALID))
 				fctx->record[i].isvalid = true;
 			else
 				fctx->record[i].isvalid = false;
 
-			UnlockBufHdr(bufHdr);
+			UnlockBufHdr(bufHdr, buf_state);
 		}
 
 		/*

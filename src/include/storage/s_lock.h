@@ -991,4 +991,22 @@ extern int s_lock(volatile slock_t *lock, const char *file, int line);
 extern void set_spins_per_delay(int shared_spins_per_delay);
 extern int	update_spins_per_delay(int shared_spins_per_delay);
 
+/*
+ * Support for spin delay which is useful in various places where
+ * spinlock-like procedures take place.
+ */
+typedef struct
+{
+	int			spins;
+	int			delays;
+	int			cur_delay;
+	void	   *ptr;
+	const char *file;
+	int			line;
+} SpinDelayStatus;
+
+#define init_spin_delay(ptr) {0, 0, 0, (ptr), __FILE__, __LINE__}
+void perform_spin_delay(SpinDelayStatus *status);
+void finish_spin_delay(SpinDelayStatus *status);
+
 #endif	 /* S_LOCK_H */

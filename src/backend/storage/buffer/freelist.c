@@ -98,7 +98,8 @@ typedef struct BufferAccessStrategyData
 
 
 /* Prototypes for internal functions */
-static BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy);
+static BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy,
+				  uint32 *buf_state);
 static void AddBufferToRing(BufferAccessStrategy strategy,
 				BufferDesc *buf);
 
@@ -180,11 +181,12 @@ ClockSweepTick(void)
  *	return the buffer with the buffer header spinlock still held.
  */
 BufferDesc *
-StrategyGetBuffer(BufferAccessStrategy strategy)
+StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 {
 	BufferDesc *buf;
 	int			bgwprocno;
 	int			trycounter;
+	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
 
 	/*
 	 * If given a strategy object, see whether it can select a buffer. We
@@ -192,7 +194,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 	 */
 	if (strategy != NULL)
 	{
-		buf = GetBufferFromRing(strategy);
+		buf = GetBufferFromRing(strategy, buf_state);
 		if (buf != NULL)
 			return buf;
 	}
@@ -279,14 +281,16 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 			 * it before we got to it.  It's probably impossible altogether as
 			 * of 8.3, but we'd better check anyway.)
 			 */
-			LockBufHdr(buf);
-			if (buf->refcount == 0 && buf->usage_count == 0)
+			local_buf_state = LockBufHdr(buf);
+			if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
+				&& BUF_STATE_GET_USAGECOUNT(local_buf_state) == 0)
 			{
 				if (strategy != NULL)
 					AddBufferToRing(strategy, buf);
+				*buf_state = local_buf_state;
 				return buf;
 			}
-			UnlockBufHdr(buf);
+			UnlockBufHdr(buf, local_buf_state);
 
 		}
 	}
@@ -295,19 +299,20 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 	trycounter = NBuffers;
 	for (;;)
 	{
-
 		buf = GetBufferDescriptor(ClockSweepTick());
 
 		/*
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
 		 * it; decrement the usage_count (unless pinned) and keep scanning.
 		 */
-		LockBufHdr(buf);
-		if (buf->refcount == 0)
+		local_buf_state = LockBufHdr(buf);
+
+		if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0)
 		{
-			if (buf->usage_count > 0)
+			if (BUF_STATE_GET_USAGECOUNT(local_buf_state) != 0)
 			{
-				buf->usage_count--;
+				local_buf_state -= BUF_USAGECOUNT_ONE;
+
 				trycounter = NBuffers;
 			}
 			else
@@ -315,6 +320,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 				/* Found a usable buffer */
 				if (strategy != NULL)
 					AddBufferToRing(strategy, buf);
+				*buf_state = local_buf_state;
 				return buf;
 			}
 		}
@@ -327,10 +333,10 @@ StrategyGetBuffer(BufferAccessStrategy strategy)
 			 * probably better to fail than to risk getting stuck in an
 			 * infinite loop.
 			 */
-			UnlockBufHdr(buf);
+			UnlockBufHdr(buf, local_buf_state);
 			elog(ERROR, "no unpinned buffers available");
 		}
-		UnlockBufHdr(buf);
+		UnlockBufHdr(buf, local_buf_state);
 	}
 }
 
@@ -585,10 +591,12 @@ FreeAccessStrategy(BufferAccessStrategy strategy)
  * The bufhdr spin lock is held on the returned buffer.
  */
 static BufferDesc *
-GetBufferFromRing(BufferAccessStrategy strategy)
+GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 {
 	BufferDesc *buf;
 	Buffer		bufnum;
+	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
+
 
 	/* Advance to next ring slot */
 	if (++strategy->current >= strategy->ring_size)
@@ -616,13 +624,15 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 	 * shouldn't re-use it.
 	 */
 	buf = GetBufferDescriptor(bufnum - 1);
-	LockBufHdr(buf);
-	if (buf->refcount == 0 && buf->usage_count <= 1)
+	local_buf_state = LockBufHdr(buf);
+	if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
+		&& BUF_STATE_GET_USAGECOUNT(local_buf_state) <= 1)
 	{
 		strategy->current_was_in_ring = true;
+		*buf_state = local_buf_state;
 		return buf;
 	}
-	UnlockBufHdr(buf);
+	UnlockBufHdr(buf, local_buf_state);
 
 	/*
 	 * Tell caller to allocate a new buffer with the normal allocation

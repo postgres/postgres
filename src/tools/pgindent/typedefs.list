@@ -1859,6 +1859,7 @@ SpGistScanOpaqueData
 SpGistState
 SpGistTypeDesc
 SpecialJoinInfo
+SpinDelayStatus
 SplitInterval
 SplitLR
 SplitVar

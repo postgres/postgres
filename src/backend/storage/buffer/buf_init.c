@@ -135,12 +135,9 @@ InitBufferPool(void)
 			BufferDesc *buf = GetBufferDescriptor(i);
 
 			CLEAR_BUFFERTAG(buf->tag);
-			buf->flags = 0;
-			buf->usage_count = 0;
-			buf->refcount = 0;
-			buf->wait_backend_pid = 0;
 
-			SpinLockInit(&buf->buf_hdr_lock);
+			pg_atomic_init_u32(&buf->state, 0);
+			buf->wait_backend_pid = 0;
 
 			buf->buf_id = i;
 
