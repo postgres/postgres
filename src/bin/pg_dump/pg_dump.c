@@ -14287,6 +14287,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(labelq);
+	destroyPQExpBuffer(query);
 }
 
 /*
