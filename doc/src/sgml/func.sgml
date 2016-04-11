@@ -18398,7 +18398,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_logical_emit_message(<parameter>transactional</parameter> <type>bool</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
-        void
+        <type>pg_lsn</type>
        </entry>
        <entry>
         Emit text logical decoding message. This can be used to pass generic
@@ -18415,12 +18415,12 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
       <row>
        <entry id="pg-logical-emit-message-bytea">
         <indexterm>
-         <primary>>pg_logical_emit_message</primary>
+         <primary>pg_logical_emit_message</primary>
         </indexterm>
-        <literal><function>>pg_logical_emit_message(<parameter>transactional</parameter> <type>bool</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type>)</function></literal>
+        <literal><function>pg_logical_emit_message(<parameter>transactional</parameter> <type>bool</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type>)</function></literal>
        </entry>
        <entry>
-        void
+        <type>pg_lsn</type>
        </entry>
        <entry>
         Emit binary logical decoding message. This can be used to pass generic
