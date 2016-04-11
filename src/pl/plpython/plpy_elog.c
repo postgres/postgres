@@ -619,4 +619,3 @@ set_string_attr(PyObject *obj, char *attrname, char *str)
 
 	return result != -1;
 }
-

@@ -114,13 +114,13 @@ tsquery_phrase_distance(PG_FUNCTION_ARGS)
 	TSQuery		b = PG_GETARG_TSQUERY_COPY(1);
 	QTNode	   *res;
 	TSQuery		query;
-	int32 		distance = PG_GETARG_INT32(2);
+	int32		distance = PG_GETARG_INT32(2);
 
 	if (distance < 0 || distance > MAXENTRYPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("distance in phrase operator should be non-negative and less than %d",
-					    MAXENTRYPOS)));
+						MAXENTRYPOS)));
 	if (a->size == 0)
 	{
 		PG_FREE_IF_COPY(a, 1);

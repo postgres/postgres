@@ -33,7 +33,7 @@ typedef struct
 } ExtensibleNodeEntry;
 
 /*
- * An internal function to register a new callback structure 
+ * An internal function to register a new callback structure
  */
 static void
 RegisterExtensibleNodeEntry(HTAB **p_htable, const char *htable_label,

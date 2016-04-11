@@ -253,7 +253,7 @@ GetUserMapping(Oid userid, Oid serverid)
  *
  * If missing_ok is true, the function returns InvalidOid when it does not find
  * required user mapping. Otherwise, find_user_mapping() throws error if it
- * does not find required user mapping. 
+ * does not find required user mapping.
  */
 Oid
 GetUserMappingId(Oid userid, Oid serverid, bool missing_ok)
