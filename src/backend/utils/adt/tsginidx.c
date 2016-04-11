@@ -240,6 +240,7 @@ TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem)
 			 * treat OP_PHRASE as OP_AND with recheck requirement
 			 */
 			*gcv->need_recheck = true;
+			/* FALL THRU */
 
 		case OP_AND:
 			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left);
