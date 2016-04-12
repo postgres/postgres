@@ -364,6 +364,8 @@ void		pg_queue_signal(int signum);
 /* In backend/port/win32/socket.c */
 #ifndef FRONTEND
 #define socket(af, type, protocol) pgwin32_socket(af, type, protocol)
+#define bind(s, addr, addrlen) pgwin32_bind(s, addr, addrlen)
+#define listen(s, backlog) pgwin32_listen(s, backlog)
 #define accept(s, addr, addrlen) pgwin32_accept(s, addr, addrlen)
 #define connect(s, name, namelen) pgwin32_connect(s, name, namelen)
 #define select(n, r, w, e, timeout) pgwin32_select(n, r, w, e, timeout)
@@ -371,6 +373,8 @@ void		pg_queue_signal(int signum);
 #define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
 
 SOCKET		pgwin32_socket(int af, int type, int protocol);
+int			pgwin32_bind(SOCKET s, struct sockaddr * addr, int *addrlen);
+int			pgwin32_listen(SOCKET s, int backlog);
 SOCKET		pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen);
 int			pgwin32_connect(SOCKET s, const struct sockaddr * name, int namelen);
 int			pgwin32_select(int nfds, fd_set *readfs, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout);

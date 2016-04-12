@@ -27,7 +27,10 @@
  */
 int			pgwin32_noblock = 0;
 
+/* Undef the macros defined in win32.h, so we can access system functions */
 #undef socket
+#undef bind
+#undef listen
 #undef accept
 #undef connect
 #undef select
@@ -261,6 +264,27 @@ pgwin32_socket(int af, int type, int protocol)
 	return s;
 }
 
+int
+pgwin32_bind(SOCKET s, struct sockaddr * addr, int *addrlen)
+{
+	int			res;
+
+	res = bind(s, addr, addrlen);
+	if (res < 0)
+		TranslateSocketError();
+	return res;
+}
+
+int
+pgwin32_listen(SOCKET s, int backlog)
+{
+	int			res;
+
+	res = listen(s, backlog);
+	if (res < 0)
+		TranslateSocketError();
+	return res;
+}
 
 SOCKET
 pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen)
