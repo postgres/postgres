@@ -2217,15 +2217,23 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				 */
 				if (IsA(stmt, CreateTableAsStmt))
 				{
-					Assert(strncmp(completionTag, "SELECT ", 7) == 0);
-					_SPI_current->processed = pg_strtouint64(completionTag + 7,
-															 NULL, 10);
+					CreateTableAsStmt *ctastmt = (CreateTableAsStmt *) stmt;
+
+					if (strncmp(completionTag, "SELECT ", 7) == 0)
+						_SPI_current->processed =
+							pg_strtouint64(completionTag + 7, NULL, 10);
+					else
+					{
+						/* Must be an IF NOT EXISTS that did nothing */
+						Assert(ctastmt->if_not_exists);
+						_SPI_current->processed = 0;
+					}
 
 					/*
 					 * For historical reasons, if CREATE TABLE AS was spelled
 					 * as SELECT INTO, return a special return code.
 					 */
-					if (((CreateTableAsStmt *) stmt)->is_select_into)
+					if (ctastmt->is_select_into)
 						res = SPI_OK_SELINTO;
 				}
 				else if (IsA(stmt, CopyStmt))
