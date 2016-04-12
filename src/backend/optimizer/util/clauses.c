@@ -61,6 +61,9 @@ typedef struct
 {
 	PlannerInfo *root;
 	AggClauseCosts *costs;
+	bool		finalizeAggs;
+	bool		combineStates;
+	bool		serialStates;
 } count_agg_clauses_context;
 
 typedef struct
@@ -540,12 +543,16 @@ contain_agg_clause_walker(Node *node, void *context)
  * are no subqueries.  There mustn't be outer-aggregate references either.
  */
 void
-count_agg_clauses(PlannerInfo *root, Node *clause, AggClauseCosts *costs)
+count_agg_clauses(PlannerInfo *root, Node *clause, AggClauseCosts *costs,
+				  bool finalizeAggs, bool combineStates, bool serialStates)
 {
 	count_agg_clauses_context context;
 
 	context.root = root;
 	context.costs = costs;
+	context.finalizeAggs = finalizeAggs;
+	context.combineStates = combineStates;
+	context.serialStates = serialStates;
 	(void) count_agg_clauses_walker(clause, &context);
 }
 
@@ -562,6 +569,9 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		Form_pg_aggregate aggform;
 		Oid			aggtransfn;
 		Oid			aggfinalfn;
+		Oid			aggcombinefn;
+		Oid			aggserialfn;
+		Oid			aggdeserialfn;
 		Oid			aggtranstype;
 		int32		aggtransspace;
 		QualCost	argcosts;
@@ -583,6 +593,9 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 		aggtransfn = aggform->aggtransfn;
 		aggfinalfn = aggform->aggfinalfn;
+		aggcombinefn = aggform->aggcombinefn;
+		aggserialfn = aggform->aggserialfn;
+		aggdeserialfn = aggform->aggdeserialfn;
 		aggtranstype = aggform->aggtranstype;
 		aggtransspace = aggform->aggtransspace;
 		ReleaseSysCache(aggTuple);
@@ -592,28 +605,58 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		if (aggref->aggorder != NIL || aggref->aggdistinct != NIL)
 			costs->numOrderedAggs++;
 
-		/* add component function execution costs to appropriate totals */
-		costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
-		if (OidIsValid(aggfinalfn))
-			costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
+		/*
+		 * Add the appropriate component function execution costs to
+		 * appropriate totals.
+		 */
+		if (context->combineStates)
+		{
+			/* charge for combining previously aggregated states */
+			costs->transCost.per_tuple += get_func_cost(aggcombinefn) * cpu_operator_cost;
 
-		/* also add the input expressions' cost to per-input-row costs */
-		cost_qual_eval_node(&argcosts, (Node *) aggref->args, context->root);
-		costs->transCost.startup += argcosts.startup;
-		costs->transCost.per_tuple += argcosts.per_tuple;
+			/* charge for deserialization, when appropriate */
+			if (context->serialStates && OidIsValid(aggdeserialfn))
+				costs->transCost.per_tuple += get_func_cost(aggdeserialfn) * cpu_operator_cost;
+		}
+		else
+			costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
+
+		if (context->finalizeAggs)
+		{
+			if (OidIsValid(aggfinalfn))
+				costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
+		}
+		else if (context->serialStates)
+		{
+			if (OidIsValid(aggserialfn))
+				costs->finalCost += get_func_cost(aggserialfn) * cpu_operator_cost;
+		}
 
 		/*
-		 * Add any filter's cost to per-input-row costs.
-		 *
-		 * XXX Ideally we should reduce input expression costs according to
-		 * filter selectivity, but it's not clear it's worth the trouble.
+		 * Some costs will already have been incurred by the initial aggregate
+		 * node, so we mustn't include these again.
 		 */
-		if (aggref->aggfilter)
+		if (!context->combineStates)
 		{
-			cost_qual_eval_node(&argcosts, (Node *) aggref->aggfilter,
-								context->root);
+			/* add the input expressions' cost to per-input-row costs */
+			cost_qual_eval_node(&argcosts, (Node *) aggref->args, context->root);
 			costs->transCost.startup += argcosts.startup;
 			costs->transCost.per_tuple += argcosts.per_tuple;
+
+			/*
+			 * Add any filter's cost to per-input-row costs.
+			 *
+			 * XXX Ideally we should reduce input expression costs according
+			 * to filter selectivity, but it's not clear it's worth the
+			 * trouble.
+			 */
+			if (aggref->aggfilter)
+			{
+				cost_qual_eval_node(&argcosts, (Node *) aggref->aggfilter,
+									context->root);
+				costs->transCost.startup += argcosts.startup;
+				costs->transCost.per_tuple += argcosts.per_tuple;
+			}
 		}
 
 		/*
