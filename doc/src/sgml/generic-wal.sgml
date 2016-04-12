@@ -31,15 +31,18 @@
 
     <listitem>
      <para>
-      <function>page = GenericXLogRegister(state, buffer, isNew)</> &mdash;
-      register a buffer to be modified within the current generic WAL
+      <function>page = GenericXLogRegisterBuffer(state, buffer, flags)</>
+      &mdash; register a buffer to be modified within the current generic WAL
       record.  This function returns a pointer to a temporary copy of the
       buffer's page, where modifications should be made.  (Do not modify the
-      buffer's contents directly.)  The third argument indicates if the page
-      is new; if true, this will result in a full-page image rather than a
-      delta update being included in the WAL record.
-      <function>GenericXLogRegister</> can be repeated if the WAL-logged
-      action needs to modify multiple pages.
+      buffer's contents directly.)  The third argument is a bitmask of flags
+      applicable to the operation.  Currently the only such flag is
+      <literal>GENERIC_XLOG_FULL_IMAGE</>, which indicates that a full-page
+      image rather than a delta update should be included in the WAL record.
+      Typically this flag would be set if the page is new or has been
+      rewritten completely.
+      <function>GenericXLogRegisterBuffer</> can be repeated if the
+      WAL-logged action needs to modify multiple pages.
      </para>
     </listitem>
 
@@ -71,13 +74,13 @@
    <itemizedlist>
     <listitem>
      <para>
-      No direct modifications of buffers are allowed!  All modifications
-      must be done in copies acquired from <function>GenericXLogRegister()</>.
+      No direct modifications of buffers are allowed!  All modifications must
+      be done in copies acquired from <function>GenericXLogRegisterBuffer()</>.
       In other words, code that makes generic WAL records should never call
       <function>BufferGetPage()</> for itself.  However, it remains the
       caller's responsibility to pin/unpin and lock/unlock the buffers at
       appropriate times.  Exclusive lock must be held on each target buffer
-      from before <function>GenericXLogRegister()</> until after
+      from before <function>GenericXLogRegisterBuffer()</> until after
       <function>GenericXLogFinish()</>.
      </para>
     </listitem>
@@ -145,10 +148,11 @@
 
     <listitem>
      <para>
-      If a registered buffer is not new, the generic WAL record contains
-      a delta between the old and the new page images.  This delta is based
-      on byte-by-byte comparison.  This is not very compact for the case of
-      moving data within a page, and might be improved in the future.
+      If <literal>GENERIC_XLOG_FULL_IMAGE</> is not specified for a
+      registered buffer, the generic WAL record contains a delta between
+      the old and the new page images.  This delta is based on byte-by-byte
+      comparison.  This is not very compact for the case of moving data
+      within a page, and might be improved in the future.
      </para>
     </listitem>
    </itemizedlist>

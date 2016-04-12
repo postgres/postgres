@@ -22,14 +22,17 @@
 
 #define MAX_GENERIC_XLOG_PAGES	XLR_NORMAL_MAX_BLOCK_ID
 
+/* Flag bits for GenericXLogRegisterBuffer */
+#define GENERIC_XLOG_FULL_IMAGE 0x0001	/* write full-page image */
+
 /* state of generic xlog record construction */
 struct GenericXLogState;
 typedef struct GenericXLogState GenericXLogState;
 
 /* API for construction of generic xlog records */
 extern GenericXLogState *GenericXLogStart(Relation relation);
-extern Page GenericXLogRegister(GenericXLogState *state, Buffer buffer,
-					bool isNew);
+extern Page GenericXLogRegisterBuffer(GenericXLogState *state, Buffer buffer,
+						  int flags);
 extern XLogRecPtr GenericXLogFinish(GenericXLogState *state);
 extern void GenericXLogAbort(GenericXLogState *state);
 

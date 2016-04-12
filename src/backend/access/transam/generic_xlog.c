@@ -50,7 +50,7 @@
 typedef struct
 {
 	Buffer		buffer;			/* registered buffer */
-	bool		fullImage;		/* are we taking a full image of this page? */
+	int			flags;			/* flags for this buffer */
 	int			deltaLen;		/* space consumed in delta field */
 	char		image[BLCKSZ];	/* copy of page image for modification */
 	char		delta[MAX_DELTA_SIZE];	/* delta between page images */
@@ -280,9 +280,11 @@ GenericXLogStart(Relation relation)
  * is what the caller should modify.
  *
  * If the buffer is already registered, just return its existing entry.
+ * (It's not very clear what to do with the flags in such a case, but
+ * for now we stay with the original flags.)
  */
 Page
-GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
+GenericXLogRegisterBuffer(GenericXLogState *state, Buffer buffer, int flags)
 {
 	int			block_id;
 
@@ -295,7 +297,7 @@ GenericXLogRegister(GenericXLogState *state, Buffer buffer, bool isNew)
 		{
 			/* Empty slot, so use it (there cannot be a match later) */
 			page->buffer = buffer;
-			page->fullImage = isNew;
+			page->flags = flags;
 			memcpy(page->image,
 				   BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
 				   BLCKSZ);
@@ -347,7 +349,7 @@ GenericXLogFinish(GenericXLogState *state)
 								 BGP_NO_SNAPSHOT_TEST);
 			pageHeader = (PageHeader) pageData->image;
 
-			if (pageData->fullImage)
+			if (pageData->flags & GENERIC_XLOG_FULL_IMAGE)
 			{
 				/*
 				 * A full-page image does not require us to supply any xlog

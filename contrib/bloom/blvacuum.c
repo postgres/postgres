@@ -65,7 +65,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		gxlogState = GenericXLogStart(index);
-		page = GenericXLogRegister(gxlogState, buffer, false);
+		page = GenericXLogRegisterBuffer(gxlogState, buffer, 0);
 
 		if (BloomPageIsDeleted(page))
 		{
@@ -145,7 +145,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 		gxlogState = GenericXLogStart(index);
-		page = GenericXLogRegister(gxlogState, buffer, false);
+		page = GenericXLogRegisterBuffer(gxlogState, buffer, 0);
 
 		metaData = BloomPageGetMeta(page);
 		memcpy(metaData->notFullPage, notFullPage, sizeof(BlockNumber) * countPage);

@@ -39,7 +39,7 @@ PG_FUNCTION_INFO_V1(blhandler);
 /* Kind of relation optioms for bloom index */
 static relopt_kind bl_relopt_kind;
 
-static int32 myRand();
+static int32 myRand(void);
 static void mySrand(uint32 seed);
 
 /*
@@ -173,15 +173,16 @@ initBloomState(BloomState *state, Relation index)
 static int32 next;
 
 static int32
-myRand()
+myRand(void)
 {
-	/*
+	/*----------
 	 * Compute x = (7^5 * x) mod (2^31 - 1)
 	 * without overflowing 31 bits:
 	 *		(2^31 - 1) = 127773 * (7^5) + 2836
 	 * From "Random number generators: good ones are hard to find",
 	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
 	 * October 1988, p. 1195.
+	 *----------
 	 */
 	int32 hi, lo, x;
 
@@ -418,7 +419,7 @@ BloomInitMetapage(Relation index)
 
 	/* Initialize contents of meta page */
 	state = GenericXLogStart(index);
-	metaPage = GenericXLogRegister(state, metaBuffer, true);
+	metaPage = GenericXLogRegisterBuffer(state, metaBuffer, GENERIC_XLOG_FULL_IMAGE);
 
 	BloomInitPage(metaPage, BLOOM_META);
 	metadata = BloomPageGetMeta(metaPage);

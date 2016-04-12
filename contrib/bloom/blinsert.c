@@ -49,7 +49,7 @@ flushCachedPage(Relation index, BloomBuildState *buildstate)
 	GenericXLogState *state;
 
 	state = GenericXLogStart(index);
-	page = GenericXLogRegister(state, buffer, true);
+	page = GenericXLogRegisterBuffer(state, buffer, GENERIC_XLOG_FULL_IMAGE);
 	memcpy(page, buildstate->data, BLCKSZ);
 	GenericXLogFinish(state);
 	UnlockReleaseBuffer(buffer);
@@ -221,7 +221,7 @@ blinsert(Relation index, Datum *values, bool *isnull,
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 		state = GenericXLogStart(index);
-		page = GenericXLogRegister(state, buffer, false);
+		page = GenericXLogRegisterBuffer(state, buffer, 0);
 
 		if (BloomPageAddItem(&blstate, page, itup))
 		{
@@ -268,7 +268,7 @@ blinsert(Relation index, Datum *values, bool *isnull,
 		state = GenericXLogStart(index);
 
 		/* get modifiable copy of metapage */
-		metaPage = GenericXLogRegister(state, metaBuffer, false);
+		metaPage = GenericXLogRegisterBuffer(state, metaBuffer, 0);
 		metaData = BloomPageGetMeta(metaPage);
 
 		if (nStart >= metaData->nEnd)
@@ -279,7 +279,7 @@ blinsert(Relation index, Datum *values, bool *isnull,
 
 		buffer = ReadBuffer(index, blkno);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		page = GenericXLogRegister(state, buffer, false);
+		page = GenericXLogRegisterBuffer(state, buffer, 0);
 
 		if (BloomPageAddItem(&blstate, page, itup))
 		{
@@ -305,7 +305,7 @@ blinsert(Relation index, Datum *values, bool *isnull,
 	 */
 	buffer = BloomNewBuffer(index);
 
-	page = GenericXLogRegister(state, buffer, true);
+	page = GenericXLogRegisterBuffer(state, buffer, GENERIC_XLOG_FULL_IMAGE);
 	BloomInitPage(page, 0);
 
 	if (!BloomPageAddItem(&blstate, page, itup))
