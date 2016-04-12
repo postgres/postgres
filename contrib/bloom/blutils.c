@@ -359,6 +359,7 @@ BloomInitPage(Page page, uint16 flags)
 	opaque = BloomPageGetOpaque(page);
 	memset(opaque, 0, sizeof(BloomPageOpaqueData));
 	opaque->flags = flags;
+	opaque->bloom_page_id = BLOOM_PAGE_ID;
 }
 
 /*

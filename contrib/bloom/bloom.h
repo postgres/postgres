@@ -31,8 +31,13 @@
 /* Opaque for bloom pages */
 typedef struct BloomPageOpaqueData
 {
-	OffsetNumber maxoff;
-	uint16		flags;
+	OffsetNumber	maxoff;			/* number of index tuples on page */
+	uint16			flags;			/* see bit definitions below */
+	uint16			unused;			/* placeholder to force maxaligning of size
+									 * of BloomPageOpaqueData and to place
+									 * bloom_page_id exactly at the end of page
+									 */
+	uint16			bloom_page_id;	/* for identification of BLOOM indexes */
 }	BloomPageOpaqueData;
 
 typedef BloomPageOpaqueData *BloomPageOpaque;
@@ -40,6 +45,16 @@ typedef BloomPageOpaqueData *BloomPageOpaque;
 /* Bloom page flags */
 #define BLOOM_META		(1<<0)
 #define BLOOM_DELETED	(2<<0)
+
+/*
+ * The page ID is for the convenience of pg_filedump and similar utilities,
+ * which otherwise would have a hard time telling pages of different index
+ * types apart.  It should be the last 2 bytes on the page.  This is more or
+ * less "free" due to alignment considerations.
+ *
+ * See comments above GinPageOpaqueData.
+ */
+#define BLOOM_PAGE_ID		0xFF83
 
 /* Macros for accessing bloom page structures */
 #define BloomPageGetOpaque(page) ((BloomPageOpaque) PageGetSpecialPointer(page))
