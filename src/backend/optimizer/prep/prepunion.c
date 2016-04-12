@@ -206,7 +206,12 @@ plan_set_operations(PlannerInfo *root)
 	/* Add only the final path to the SETOP upperrel. */
 	add_path(setop_rel, path);
 
-	/* Select cheapest path (pretty easy at the moment) */
+	/* Let extensions possibly add some more paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_SETOP,
+									NULL, setop_rel);
+
+	/* Select cheapest path */
 	set_cheapest(setop_rel);
 
 	return setop_rel;

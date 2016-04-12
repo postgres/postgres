@@ -62,7 +62,7 @@ int			force_parallel_mode = FORCE_PARALLEL_OFF;
 /* Hook for plugins to get control in planner() */
 planner_hook_type planner_hook = NULL;
 
-/* Hook for plugins to get control before grouping_planner plans upper rels */
+/* Hook for plugins to get control when grouping_planner() plans upper rels */
 create_upper_paths_hook_type create_upper_paths_hook = NULL;
 
 
@@ -1772,19 +1772,19 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		root->upper_targets[UPPERREL_GROUP_AGG] = grouping_target;
 
 		/*
-		 * Let extensions, particularly FDWs and CustomScan providers,
-		 * consider injecting extension Paths into the query's upperrels,
-		 * where they will compete with the Paths we create below.  We pass
-		 * the final scan/join rel because that's not so easily findable from
-		 * the PlannerInfo struct; anything else the hooks want to know should
-		 * be obtainable via "root".
+		 * If there is an FDW that's responsible for the final scan/join rel,
+		 * let it consider injecting extension Paths into the query's
+		 * upperrels, where they will compete with the Paths we create below.
+		 * We pass the final scan/join rel because that's not so easily
+		 * findable from the PlannerInfo struct; anything else the FDW wants
+		 * to know should be obtainable via "root".
+		 *
+		 * Note: CustomScan providers, as well as FDWs that don't want to
+		 * use this hook, can use the create_upper_paths_hook; see below.
 		 */
 		if (current_rel->fdwroutine &&
 			current_rel->fdwroutine->GetForeignUpperPaths)
 			current_rel->fdwroutine->GetForeignUpperPaths(root, current_rel);
-
-		if (create_upper_paths_hook)
-			(*create_upper_paths_hook) (root, current_rel);
 
 		/*
 		 * If we have grouping and/or aggregation, consider ways to implement
@@ -1961,6 +1961,11 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		/* And shove it into final_rel */
 		add_path(final_rel, path);
 	}
+
+	/* Let extensions possibly add some more paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_FINAL,
+									current_rel, final_rel);
 
 	/* Note: currently, we leave it to callers to do set_cheapest() */
 }
@@ -3724,6 +3729,11 @@ create_grouping_paths(PlannerInfo *root,
 				 errmsg("could not implement GROUP BY"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 
+	/* Let extensions possibly add some more paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_GROUP_AGG,
+									input_rel, grouped_rel);
+
 	/* Now choose the best path(s) */
 	set_cheapest(grouped_rel);
 
@@ -3779,6 +3789,11 @@ create_window_paths(PlannerInfo *root,
 								   wflists,
 								   activeWindows);
 	}
+
+	/* Let extensions possibly add some more paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_WINDOW,
+									input_rel, window_rel);
 
 	/* Now choose the best path(s) */
 	set_cheapest(window_rel);
@@ -4056,6 +4071,11 @@ create_distinct_paths(PlannerInfo *root,
 				 errmsg("could not implement DISTINCT"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 
+	/* Let extensions possibly add some more paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_DISTINCT,
+									input_rel, distinct_rel);
+
 	/* Now choose the best path(s) */
 	set_cheapest(distinct_rel);
 
@@ -4116,6 +4136,11 @@ create_ordered_paths(PlannerInfo *root,
 			add_path(ordered_rel, path);
 		}
 	}
+
+	/* Let extensions possibly add some more paths */
+	if (create_upper_paths_hook)
+		(*create_upper_paths_hook) (root, UPPERREL_ORDERED,
+									input_rel, ordered_rel);
 
 	/*
 	 * No need to bother with set_cheapest here; grouping_planner does not
