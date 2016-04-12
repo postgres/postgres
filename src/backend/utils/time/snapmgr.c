@@ -117,7 +117,7 @@ typedef struct OldSnapshotControlData
 	TransactionId xid_by_minute[FLEXIBLE_ARRAY_MEMBER];
 }	OldSnapshotControlData;
 
-static volatile OldSnapshotControlData *oldSnapshotControl; 
+static volatile OldSnapshotControlData *oldSnapshotControl;
 
 
 /*
