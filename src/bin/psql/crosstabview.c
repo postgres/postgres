@@ -82,7 +82,8 @@ static bool printCrosstab(const PGresult *results,
 			  int num_columns, pivot_field *piv_columns, int field_for_columns,
 			  int num_rows, pivot_field *piv_rows, int field_for_rows,
 			  int field_for_data);
-static int parseColumnRefs(char *arg, PGresult *res, int **col_numbers,
+static int parseColumnRefs(const char *arg, const PGresult *res,
+				int **col_numbers,
 				int max_columns, char separator);
 static void avlInit(avl_tree *tree);
 static void avlMergeValue(avl_tree *tree, char *name, char *sort_value);
@@ -90,7 +91,7 @@ static int avlCollectFields(avl_tree *tree, avl_node *node,
 				 pivot_field *fields, int idx);
 static void avlFree(avl_tree *tree, avl_node *node);
 static void rankSort(int num_columns, pivot_field *piv_columns);
-static int	indexOfColumn(const char *arg, PGresult *res);
+static int	indexOfColumn(const char *arg, const PGresult *res);
 static int	pivotFieldCompare(const void *a, const void *b);
 static int	rankCompare(const void *a, const void *b);
 
@@ -103,7 +104,7 @@ static int	rankCompare(const void *a, const void *b);
  * then call printCrosstab() for the actual output.
  */
 bool
-PrintResultsInCrosstab(PGresult *res)
+PrintResultsInCrosstab(const PGresult *res)
 {
 	char	   *opt_field_for_rows = pset.ctv_col_V;
 	char	   *opt_field_for_columns = pset.ctv_col_H;
@@ -475,32 +476,36 @@ error:
 }
 
 /*
- * Parse col1[<sep>col2][<sep>col3]...
- * where colN can be:
+ * Parse "arg", which is a string of column IDs separated by "separator".
+ *
+ * Each column ID can be:
  * - a number from 1 to PQnfields(res)
  * - an unquoted column name matching (case insensitively) one of PQfname(res,...)
  * - a quoted column name matching (case sensitively) one of PQfname(res,...)
- * max_columns: 0 if no maximum
+ *
+ * If max_columns > 0, it is the max number of column IDs allowed.
+ *
+ * On success, return number of column IDs found (possibly 0), and return a
+ * malloc'd array of the matching column numbers of "res" into *col_numbers.
+ *
+ * On failure, return -1 and set *col_numbers to NULL.
  */
 static int
-parseColumnRefs(char *arg,
-				PGresult *res,
+parseColumnRefs(const char *arg,
+				const PGresult *res,
 				int **col_numbers,
 				int max_columns,
 				char separator)
 {
-	char	   *p = arg;
+	const char *p = arg;
 	char		c;
-	int			col_num = -1;
-	int			nb_cols = 0;
-	char	   *field_start = NULL;
+	int			num_cols = 0;
 
 	*col_numbers = NULL;
 	while ((c = *p) != '\0')
 	{
+		const char *field_start = p;
 		bool		quoted_field = false;
-
-		field_start = p;
 
 		/* first char */
 		if (c == '"')
@@ -533,20 +538,27 @@ parseColumnRefs(char *arg,
 
 		if (p != field_start)
 		{
-			/* look up the column and add its index into *col_numbers */
-			if (max_columns != 0 && nb_cols == max_columns)
+			char   *col_name;
+			int		col_num;
+
+			/* enforce max_columns limit */
+			if (max_columns > 0 && num_cols == max_columns)
 			{
-				psql_error(_("No more than %d column references expected\n"), max_columns);
+				psql_error(_("No more than %d column references expected\n"),
+						   max_columns);
 				goto errfail;
 			}
-			c = *p;
-			*p = '\0';
-			col_num = indexOfColumn(field_start, res);
+			/* look up the column and add its index into *col_numbers */
+			col_name = pg_malloc(p - field_start + 1);
+			memcpy(col_name, field_start, p - field_start);
+			col_name[p - field_start] = '\0';
+			col_num = indexOfColumn(col_name, res);
+			pg_free(col_name);
 			if (col_num < 0)
 				goto errfail;
-			*p = c;
-			*col_numbers = (int *) pg_realloc(*col_numbers, (1 + nb_cols) * sizeof(int));
-			(*col_numbers)[nb_cols++] = col_num;
+			*col_numbers = (int *) pg_realloc(*col_numbers,
+											  (num_cols + 1) * sizeof(int));
+			(*col_numbers)[num_cols++] = col_num;
 		}
 		else
 		{
@@ -557,7 +569,7 @@ parseColumnRefs(char *arg,
 		if (*p)
 			p += PQmblen(p, pset.encoding);
 	}
-	return nb_cols;
+	return num_cols;
 
 errfail:
 	pg_free(*col_numbers);
@@ -776,7 +788,7 @@ fieldNameEquals(const char *arg, const char *fieldname)
 	char		c;
 
 	if (*p++ != '"')
-		return !pg_strcasecmp(arg, fieldname);
+		return (pg_strcasecmp(arg, fieldname) == 0);
 
 	while ((c = *p++))
 	{
@@ -805,7 +817,7 @@ fieldNameEquals(const char *arg, const char *fieldname)
  *		  or if it's ambiguous (arg corresponding to several columns)
  */
 static int
-indexOfColumn(const char *arg, PGresult *res)
+indexOfColumn(const char *arg, const PGresult *res)
 {
 	int			idx;
 
