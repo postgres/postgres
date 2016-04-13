@@ -71,18 +71,6 @@
 #include "utils/errcodes.h"
 
 
-/* Which __func__ symbol do we have, if any? */
-#ifdef HAVE_FUNCNAME__FUNC
-#define PG_FUNCNAME_MACRO	__func__
-#else
-#ifdef HAVE_FUNCNAME__FUNCTION
-#define PG_FUNCNAME_MACRO	__FUNCTION__
-#else
-#define PG_FUNCNAME_MACRO	NULL
-#endif
-#endif
-
-
 /*----------
  * New-style error reporting API: to be used in this way:
  *		ereport(ERROR,

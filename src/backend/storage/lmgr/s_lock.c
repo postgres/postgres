@@ -70,16 +70,18 @@ static int	spins_per_delay = DEFAULT_SPINS_PER_DELAY;
  * s_lock_stuck() - complain about a stuck spinlock
  */
 static void
-s_lock_stuck(void *p, const char *file, int line)
+s_lock_stuck(const char *file, int line, const char *func)
 {
+	if (!func)
+		func = "(unknown)";
 #if defined(S_LOCK_TEST)
 	fprintf(stderr,
-			"\nStuck spinlock (%p) detected at %s:%d.\n",
-			p, file, line);
+			"\nStuck spinlock detected at %s, %s:%d.\n",
+			func, file, line);
 	exit(1);
 #else
-	elog(PANIC, "stuck spinlock (%p) detected at %s:%d",
-		 p, file, line);
+	elog(PANIC, "stuck spinlock detected at %s, %s:%d",
+		 func, file, line);
 #endif
 }
 
@@ -87,9 +89,9 @@ s_lock_stuck(void *p, const char *file, int line)
  * s_lock(lock) - platform-independent portion of waiting for a spinlock.
  */
 int
-s_lock(volatile slock_t *lock, const char *file, int line)
+s_lock(volatile slock_t *lock, const char *file, int line, const char *func)
 {
-	SpinDelayStatus delayStatus = init_spin_delay((void *) lock);
+	SpinDelayStatus delayStatus = init_spin_delay(file, line, func);
 
 	while (TAS_SPIN(lock))
 	{
@@ -127,7 +129,7 @@ perform_spin_delay(SpinDelayStatus *status)
 	if (++(status->spins) >= spins_per_delay)
 	{
 		if (++(status->delays) > NUM_DELAYS)
-			s_lock_stuck(status->ptr, status->file, status->line);
+			s_lock_stuck(status->file, status->line, status->func);
 
 		if (status->cur_delay == 0)		/* first time to delay? */
 			status->cur_delay = MIN_DELAY_USEC;

@@ -4029,7 +4029,7 @@ rnode_comparator(const void *p1, const void *p2)
 uint32
 LockBufHdr(BufferDesc *desc)
 {
-	SpinDelayStatus delayStatus = init_spin_delay(desc);
+	SpinDelayStatus delayStatus = init_local_spin_delay();
 	uint32		old_buf_state;
 
 	while (true)
@@ -4055,7 +4055,7 @@ LockBufHdr(BufferDesc *desc)
 static uint32
 WaitBufHdrUnlocked(BufferDesc *buf)
 {
-	SpinDelayStatus delayStatus = init_spin_delay(buf);
+	SpinDelayStatus delayStatus = init_local_spin_delay();
 	uint32		buf_state;
 
 	buf_state = pg_atomic_read_u32(&buf->state);

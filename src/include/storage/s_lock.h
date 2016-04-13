@@ -930,7 +930,7 @@ extern int	tas_sema(volatile slock_t *lock);
 
 #if !defined(S_LOCK)
 #define S_LOCK(lock) \
-	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__) : 0)
+	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__, PG_FUNCNAME_MACRO) : 0)
 #endif	 /* S_LOCK */
 
 #if !defined(S_LOCK_FREE)
@@ -983,7 +983,7 @@ extern slock_t dummy_spinlock;
 /*
  * Platform-independent out-of-line support routines
  */
-extern int s_lock(volatile slock_t *lock, const char *file, int line);
+extern int s_lock(volatile slock_t *lock, const char *file, int line, const char *func);
 
 /* Support for dynamic adjustment of spins_per_delay */
 #define DEFAULT_SPINS_PER_DELAY  100
@@ -1000,12 +1000,13 @@ typedef struct
 	int			spins;
 	int			delays;
 	int			cur_delay;
-	void	   *ptr;
 	const char *file;
 	int			line;
+	const char *func;
 } SpinDelayStatus;
 
-#define init_spin_delay(ptr) {0, 0, 0, (ptr), __FILE__, __LINE__}
+#define init_spin_delay(file, line, func) {0, 0, 0, file, line, func}
+#define init_local_spin_delay() init_spin_delay(__FILE__, __LINE__, PG_FUNCNAME_MACRO)
 void perform_spin_delay(SpinDelayStatus *status);
 void finish_spin_delay(SpinDelayStatus *status);
 
