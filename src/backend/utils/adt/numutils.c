@@ -136,7 +136,7 @@ pg_ltoa(int32 value, char *a)
 	 * Avoid problems with the most negative integer not being representable
 	 * as a positive integer.
 	 */
-	if (value == (-2147483647 - 1))
+	if (value == PG_INT32_MIN)
 	{
 		memcpy(a, "-2147483648", 12);
 		return;
