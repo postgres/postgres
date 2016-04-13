@@ -293,6 +293,14 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
     required <literal>FROM</> clause in a view definition.
    </para>
 
+   <note>
+    <para>
+     See also the <command><link linkend="APP-PSQL-meta-commands-crosstabview">\crosstabview</link></command>
+     command in <application>psql</>, which provides functionality similar
+     to <function>crosstab()</>.
+    </para>
+   </note>
+
   </sect3>
 
   <sect3>

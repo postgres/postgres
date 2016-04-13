@@ -989,105 +989,77 @@ testdb=&gt;
         </listitem>
       </varlistentry>
 
-      <varlistentry>
+
+      <varlistentry id="APP-PSQL-meta-commands-crosstabview">
         <term><literal>\crosstabview [
             <replaceable class="parameter">colV</replaceable>
-            <replaceable class="parameter">colH</replaceable>
-            [:<replaceable class="parameter">scolH</replaceable>]
+            <replaceable class="parameter">colH</replaceable>[:<replaceable class="parameter">scolH</replaceable>]
             [<replaceable class="parameter">colD</replaceable>]
             ] </literal></term>
         <listitem>
         <para>
-        Execute the current query buffer (like <literal>\g</literal>) and shows
-        the results inside a crosstab grid.
+        Executes the current query buffer (like <literal>\g</literal>) and
+        shows the results in a crosstab grid.
         The query must return at least three columns.
-        The output column <replaceable class="parameter">colV</replaceable>
-        becomes a vertical header
-        and the output column <replaceable class="parameter">colH</replaceable>
+        The output column identified by <replaceable class="parameter">colV</>
+        becomes a vertical header and the output column identified by
+        <replaceable class="parameter">colH</replaceable>
         becomes a horizontal header, optionally sorted by ranking data obtained
-        from <replaceable class="parameter">scolH</replaceable>.
-        <replaceable class="parameter">colD</replaceable>
-        is the output column to project into the grid.  If this is not
+        from column <replaceable class="parameter">scolH</replaceable>.
+        <replaceable class="parameter">colD</replaceable> identifies
+        the output column to display within the grid.
+        If <replaceable class="parameter">colD</replaceable> is not
         specified and there are exactly three columns in the result set,
-        the column that isn't
+        the column that is neither
         <replaceable class="parameter">colV</replaceable> nor
         <replaceable class="parameter">colH</replaceable>
-        is displayed; if there are more columns, an error is thrown.
+        is displayed; if there are more columns, an error is reported.
         </para>
 
         <para>
-        All columns can be refered to by their position (starting at 1), or by
-        their name. Normal case folding and quoting rules apply on column
-        names. By default,
-        <replaceable class="parameter">colV</replaceable> corresponds to column 1
-        and <replaceable class="parameter">colH</replaceable> to column 2.
-        A query having only one output column cannot be viewed in crosstab, and
+        Each column specification can be a column number (starting at 1) or
+        a column name.  The usual SQL case folding and quoting rules apply to
+        column names.  If omitted,
+        <replaceable class="parameter">colV</replaceable> is taken as column 1
+        and <replaceable class="parameter">colH</replaceable> as column 2.
         <replaceable class="parameter">colH</replaceable> must differ from
         <replaceable class="parameter">colV</replaceable>.
         </para>
 
         <para>
-        The vertical header, displayed as the leftmost column,
-        contains the deduplicated values found in
-        column <replaceable class="parameter">colV</replaceable>, in the same
-        order as in the query results.
+        The vertical header, displayed as the leftmost column, contains the
+        values found in column <replaceable class="parameter">colV</>, in the
+        same order as in the query results, but with duplicates removed.
         </para>
 
         <para>
-        The horizontal header, displayed as the first row,
-        contains the deduplicated values found in
-        column <replaceable class="parameter">colH</replaceable>, in
-        the order of appearance in the query results.
-        If specified, the optional <replaceable class="parameter">scolH</replaceable>
-        argument refers to a column whose values should be integer numbers
-        by which <replaceable class="parameter">colH</replaceable> will be sorted
-        to be positioned in the horizontal header.
+        The horizontal header, displayed as the first row, contains the values
+        found in column <replaceable class="parameter">colH</replaceable>,
+        with duplicates removed.  By default, these appear in the same order
+        as in the query results.  But if the
+        optional <replaceable class="parameter">scolH</> argument is given, it
+        identifies a column whose values must be integer numbers, and the
+        values from <replaceable class="parameter">colH</replaceable> will
+        appear in the horizontal header sorted according to the
+        corresponding <replaceable class="parameter">scolH</> values.
         </para>
 
         <para>
-        Inside the crosstab grid,
-        given a query output with <literal>N</literal> columns
-        (including <replaceable class="parameter">colV</replaceable> and
-        <replaceable class="parameter">colH</replaceable>),
-        for each distinct value <literal>x</literal> of
-        <replaceable class="parameter">colH</replaceable>
-        and each distinct value <literal>y</literal> of
-        <replaceable class="parameter">colV</replaceable>,
-        the contents of a cell located at the intersection
-        <literal>(x,y)</literal> is determined by these rules:
-        <itemizedlist>
-        <listitem>
-        <para>
-         if there is no corresponding row in the query results such that the
-         value for <replaceable class="parameter">colH</replaceable>
-         is <literal>x</literal> and the value
-         for <replaceable class="parameter">colV</replaceable>
-         is <literal>y</literal>, the cell is empty.
+        Inside the crosstab grid, for each distinct value <literal>x</literal>
+        of <replaceable class="parameter">colH</replaceable> and each distinct
+        value <literal>y</literal>
+        of <replaceable class="parameter">colV</replaceable>, the cell located
+        at the intersection <literal>(x,y)</literal> contains the value of
+        the <literal>colD</literal> column in the query result row for which
+        the value of <replaceable class="parameter">colH</replaceable>
+        is <literal>x</literal> and the value
+        of <replaceable class="parameter">colV</replaceable>
+        is <literal>y</>.  If there is no such row, the cell is empty.  If
+        there are multiple such rows, an error is reported.
         </para>
-        </listitem>
-
-        <listitem>
-        <para>
-         if there is exactly one row such that the value
-         for <replaceable class="parameter">colH</replaceable>
-         is <literal>x</literal> and the value
-         for <replaceable class="parameter">colV</replaceable>
-         is <literal>y</literal>, then the <literal>colD</literal> column
-         is displayed.
-        </para>
-        </listitem>
-
-        <listitem>
-        <para>
-         if there are several such rows, an error is thrown.
-        </para>
-        </listitem>
-
-        </itemizedlist>
-        </para>
-
         </listitem>
       </varlistentry>
+
 
       <varlistentry>
         <term><literal>\d[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
