@@ -294,10 +294,14 @@ MarkLocalBufferDirty(Buffer buffer)
 
 	bufHdr = GetLocalBufferDescriptor(bufid);
 
-	buf_state = pg_atomic_fetch_or_u32(&bufHdr->state, BM_DIRTY);
+	buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 	if (!(buf_state & BM_DIRTY))
 		pgBufferUsage.local_blks_dirtied++;
+
+	buf_state |= BM_DIRTY;
+
+	pg_atomic_write_u32(&bufHdr->state, buf_state);
 }
 
 /*
@@ -431,6 +435,13 @@ InitLocalBuffers(void)
 		 * is -1.)
 		 */
 		buf->buf_id = -i - 2;
+
+		/*
+		 * Intentionally do not initialize the buffer's atomic variable
+		 * (besides zeroing the underlying memory above). That way we get
+		 * errors on platforms without atomics, if somebody (re-)introduces
+		 * atomic operations for local buffers.
+		 */
 	}
 
 	/* Create the lookup hash table */
