@@ -9976,9 +9976,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	appendPQExpBuffer(q, "FOR TYPE %s USING %s",
 					  opcintype,
 					  fmtId(amname));
-	if (strlen(opcfamilyname) > 0 &&
-		(strcmp(opcfamilyname, opcinfo->dobj.name) != 0 ||
-		 strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0))
+	if (strlen(opcfamilyname) > 0)
 	{
 		appendPQExpBuffer(q, " FAMILY ");
 		if (strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0)
@@ -10245,15 +10243,6 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	if (!opfinfo->dobj.dump || dataOnly)
 		return;
 
-	/*
-	 * We want to dump the opfamily only if (1) it contains "loose" operators
-	 * or functions, or (2) it contains an opclass with a different name or
-	 * owner.  Otherwise it's sufficient to let it be created during creation
-	 * of the contained opclass, and not dumping it improves portability of
-	 * the dump.  Since we have to fetch the loose operators/funcs anyway, do
-	 * that first.
-	 */
-
 	query = createPQExpBuffer();
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
@@ -10337,41 +10326,6 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 
 	res_procs = PQexec(g_conn, query->data);
 	check_sql_result(res_procs, g_conn, query->data, PGRES_TUPLES_OK);
-
-	if (PQntuples(res_ops) == 0 && PQntuples(res_procs) == 0)
-	{
-		/* No loose members, so check contained opclasses */
-		resetPQExpBuffer(query);
-
-		appendPQExpBuffer(query, "SELECT 1 "
-						  "FROM pg_catalog.pg_opclass c, pg_catalog.pg_opfamily f, pg_catalog.pg_depend "
-						  "WHERE f.oid = '%u'::pg_catalog.oid "
-			"AND refclassid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass "
-						  "AND refobjid = f.oid "
-				"AND classid = 'pg_catalog.pg_opclass'::pg_catalog.regclass "
-						  "AND objid = c.oid "
-						  "AND (opcname != opfname OR opcnamespace != opfnamespace OR opcowner != opfowner) "
-						  "LIMIT 1",
-						  opfinfo->dobj.catId.oid);
-
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
-
-		if (PQntuples(res) == 0)
-		{
-			/* no need to dump it, so bail out */
-			PQclear(res);
-			PQclear(res_ops);
-			PQclear(res_procs);
-			destroyPQExpBuffer(query);
-			destroyPQExpBuffer(q);
-			destroyPQExpBuffer(delq);
-			destroyPQExpBuffer(labelq);
-			return;
-		}
-
-		PQclear(res);
-	}
 
 	/* Get additional fields from the pg_opfamily row */
 	resetPQExpBuffer(query);
