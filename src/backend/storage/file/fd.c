@@ -1538,28 +1538,28 @@ FilePrefetch(File file, off_t offset, int amount)
 }
 
 void
-FileWriteback(File file, off_t offset, int amount)
+FileWriteback(File file, off_t offset, off_t nbytes)
 {
 	int			returnCode;
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileWriteback: %d (%s) " INT64_FORMAT " %d",
+	DO_DB(elog(LOG, "FileWriteback: %d (%s) " INT64_FORMAT " " INT64_FORMAT,
 			   file, VfdCache[file].fileName,
-			   (int64) offset, amount));
+			   (int64) offset, (int64) nbytes));
 
 	/*
-	 * Caution: do not call pg_flush_data with amount = 0, it could trash the
-	 * file's seek position.
+	 * Caution: do not call pg_flush_data with nbytes = 0, it could trash the
+	 * file's seek position.  We prefer to define that as a no-op here.
 	 */
-	if (amount <= 0)
+	if (nbytes <= 0)
 		return;
 
 	returnCode = FileAccess(file);
 	if (returnCode < 0)
 		return;
 
-	pg_flush_data(VfdCache[file].fd, offset, amount);
+	pg_flush_data(VfdCache[file].fd, offset, nbytes);
 }
 
 int

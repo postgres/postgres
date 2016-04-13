@@ -54,7 +54,7 @@ typedef struct f_smgr
 	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
 						 BlockNumber blocknum, char *buffer, bool skipFsync);
 	void		(*smgr_writeback) (SMgrRelation reln, ForkNumber forknum,
-										  BlockNumber blocknum, int nblocks);
+								  BlockNumber blocknum, BlockNumber nblocks);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
 											  BlockNumber nblocks);
@@ -658,7 +658,7 @@ smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  */
 void
 smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
-			  int nblocks)
+			  BlockNumber nblocks)
 {
 	(*(smgrsw[reln->smgr_which].smgr_writeback)) (reln, forknum, blocknum,
 												  nblocks);

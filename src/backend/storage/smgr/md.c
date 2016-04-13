@@ -669,15 +669,16 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
  * considerably more efficient than doing so individually.
  */
 void
-mdwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, int nblocks)
+mdwriteback(SMgrRelation reln, ForkNumber forknum,
+			BlockNumber blocknum, BlockNumber nblocks)
 {
 	/*
 	 * Issue flush requests in as few requests as possible; have to split at
 	 * segment boundaries though, since those are actually separate files.
 	 */
-	while (nblocks != 0)
+	while (nblocks > 0)
 	{
-		int			nflush = nblocks;
+		BlockNumber nflush = nblocks;
 		off_t		seekpos;
 		MdfdVec    *v;
 		int			segnum_start,
@@ -706,7 +707,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, int nbl
 
 		seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
 
-		FileWriteback(v->mdfd_vfd, seekpos, BLCKSZ * nflush);
+		FileWriteback(v->mdfd_vfd, seekpos, (off_t) BLCKSZ * nflush);
 
 		nblocks -= nflush;
 		blocknum += nflush;
