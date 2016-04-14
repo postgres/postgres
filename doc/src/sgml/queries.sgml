@@ -1794,16 +1794,19 @@ SELECT <replaceable>select_list</replaceable>
 
   <para>
    If a limit count is given, no more than that many rows will be
-   returned (but possibly less, if the query itself yields less rows).
+   returned (but possibly fewer, if the query itself yields fewer rows).
    <literal>LIMIT ALL</> is the same as omitting the <literal>LIMIT</>
-   clause.
+   clause, as is <literal>LIMIT</> with a NULL argument.
   </para>
 
   <para>
    <literal>OFFSET</> says to skip that many rows before beginning to
    return rows.  <literal>OFFSET 0</> is the same as omitting the
-   <literal>OFFSET</> clause, and <literal>LIMIT NULL</> is the same
-   as omitting the <literal>LIMIT</> clause.  If both <literal>OFFSET</>
+   <literal>OFFSET</> clause, as is <literal>OFFSET</> with a NULL argument.
+  </para>
+
+  <para>
+   If both <literal>OFFSET</>
    and <literal>LIMIT</> appear, then <literal>OFFSET</> rows are
    skipped before starting to count the <literal>LIMIT</> rows that
    are returned.
