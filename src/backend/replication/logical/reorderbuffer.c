@@ -2347,6 +2347,10 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 /*
  * Convert change from its on-disk format to in-memory format and queue it onto
  * the TXN's ->changes list.
+ *
+ * Note: although "data" is declared char*, at entry it points to a
+ * maxalign'd buffer, making it safe in most of this function to assume
+ * that the pointed-to data is suitably aligned for direct access.
  */
 static void
 ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
@@ -2374,7 +2378,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
 			if (change->data.tp.oldtuple)
 			{
-				Size		tuplelen = ((HeapTuple) data)->t_len;
+				uint32		tuplelen = ((HeapTuple) data)->t_len;
 
 				change->data.tp.oldtuple =
 					ReorderBufferGetTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
@@ -2395,7 +2399,11 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 			if (change->data.tp.newtuple)
 			{
-				Size		tuplelen = ((HeapTuple) data)->t_len;
+				/* here, data might not be suitably aligned! */
+				uint32		tuplelen;
+
+				memcpy(&tuplelen, data + offsetof(HeapTupleData, t_len),
+					   sizeof(uint32));
 
 				change->data.tp.newtuple =
 					ReorderBufferGetTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
