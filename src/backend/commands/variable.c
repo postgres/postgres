@@ -794,6 +794,10 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
+	/* Do not allow setting role to a reserved role. */
+	if (strncmp(*newval, "pg_", 3) == 0)
+		return false;
+
 	/* Look up the username */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
 	if (!HeapTupleIsValid(roleTup))
