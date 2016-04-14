@@ -31,6 +31,8 @@ SELECT pg_replication_origin_session_setup('test_decoding: regression_slot');
 -- ensure we prevent duplicate setup
 SELECT pg_replication_origin_session_setup('test_decoding: regression_slot');
 
+SELECT '' FROM pg_logical_emit_message(false, 'test', 'this message will not be decoded');
+
 BEGIN;
 -- setup transaction origin
 SELECT pg_replication_origin_xact_setup('0/aabbccdd', '2013-01-01 00:00');

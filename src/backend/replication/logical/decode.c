@@ -464,6 +464,15 @@ DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	}
 }
 
+static inline bool
+FilterByOrigin(LogicalDecodingContext *ctx, RepOriginId origin_id)
+{
+	if (ctx->callbacks.filter_by_origin_cb == NULL)
+		return false;
+
+	return filter_by_origin_cb_wrapper(ctx, origin_id);
+}
+
 /*
  * Handle rmgr LOGICALMSG_ID records for DecodeRecordIntoReorderBuffer().
  */
@@ -474,6 +483,7 @@ DecodeLogicalMsgOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	XLogReaderState *r = buf->record;
 	TransactionId	xid = XLogRecGetXid(r);
 	uint8			info = XLogRecGetInfo(r) & ~XLR_INFO_MASK;
+	RepOriginId		origin_id = XLogRecGetOrigin(r);
 	Snapshot		snapshot;
 	xl_logical_message *message;
 
@@ -487,6 +497,10 @@ DecodeLogicalMsgOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	message = (xl_logical_message *) XLogRecGetData(r);
+
+	if (message->dbId != ctx->slot->data.database ||
+		FilterByOrigin(ctx, origin_id))
+		return;
 
 	if (message->transactional &&
 		!SnapBuildProcessChange(builder, xid, buf->origptr))
@@ -502,15 +516,6 @@ DecodeLogicalMsgOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 							  message->message, /* first part of message is prefix */
 							  message->message_size,
 							  message->message + message->prefix_size);
-}
-
-static inline bool
-FilterByOrigin(LogicalDecodingContext *ctx, RepOriginId origin_id)
-{
-	if (ctx->callbacks.filter_by_origin_cb == NULL)
-		return false;
-
-	return filter_by_origin_cb_wrapper(ctx, origin_id);
 }
 
 /*

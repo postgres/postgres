@@ -31,6 +31,8 @@
 
 #include "postgres.h"
 
+#include "miscadmin.h"
+
 #include "access/xact.h"
 
 #include "catalog/indexing.h"
@@ -60,6 +62,7 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 		GetCurrentTransactionId();
 	}
 
+	xlrec.dbId = MyDatabaseId;
 	xlrec.transactional = transactional;
 	xlrec.prefix_size = strlen(prefix) + 1;
 	xlrec.message_size = size;
@@ -68,6 +71,9 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 	XLogRegisterData((char *) &xlrec, SizeOfLogicalMessage);
 	XLogRegisterData((char *) prefix, xlrec.prefix_size);
 	XLogRegisterData((char *) message, size);
+
+	/* allow origin filtering */
+	XLogIncludeOrigin();
 
 	return XLogInsert(RM_LOGICALMSG_ID, XLOG_LOGICAL_MESSAGE);
 }

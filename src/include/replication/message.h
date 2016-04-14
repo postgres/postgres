@@ -19,6 +19,7 @@
  */
 typedef struct xl_logical_message
 {
+	Oid         dbId;							/* database Oid emitted from */
 	bool		transactional;					/* is message transactional? */
 	Size		prefix_size;					/* length of prefix */
 	Size		message_size;					/* size of the message */
