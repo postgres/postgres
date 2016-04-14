@@ -285,13 +285,17 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	heap_freetuple(tup);
 
 	/*
-	 * Create dependencies for the opfamily proper.  Note: we do not create a
-	 * dependency link to the AM, because we don't currently support DROP
-	 * ACCESS METHOD.
+	 * Create dependencies for the opfamily proper.
 	 */
 	myself.classId = OperatorFamilyRelationId;
 	myself.objectId = opfamilyoid;
 	myself.objectSubId = 0;
+
+	/* dependency on access method */
+	referenced.classId = AccessMethodRelationId;
+	referenced.objectId = amoid;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
 	/* dependency on namespace */
 	referenced.classId = NamespaceRelationId;
@@ -670,19 +674,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	EventTriggerCollectCreateOpClass(stmt, opclassoid, operators, procedures);
 
 	/*
-	 * Create dependencies for the opclass proper.  Note: we do not create a
-	 * dependency link to the AM, because we don't currently support DROP
-	 * ACCESS METHOD.
+	 * Create dependencies for the opclass proper.  Note: we do not need a
+	 * dependency link to the AM, because that exists through the opfamily.
 	 */
 	myself.classId = OperatorClassRelationId;
 	myself.objectId = opclassoid;
 	myself.objectSubId = 0;
-
-	/* dependency on access method */
-	referenced.classId = AccessMethodRelationId;
-	referenced.objectId = amoid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on namespace */
 	referenced.classId = NamespaceRelationId;

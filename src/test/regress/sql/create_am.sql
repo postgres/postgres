@@ -5,11 +5,8 @@
 -- Make gist2 over gisthandler. In fact, it would be a synonym to gist.
 CREATE ACCESS METHOD gist2 TYPE INDEX HANDLER gisthandler;
 
--- Drop old index on fast_emp4000
-DROP INDEX grect2ind;
-
 -- Try to create gist2 index on fast_emp4000: fail because opclass doesn't exist
-CREATE INDEX grect2ind ON fast_emp4000 USING gist2 (home_base);
+CREATE INDEX grect2ind2 ON fast_emp4000 USING gist2 (home_base);
 
 -- Make operator class for boxes using gist2
 CREATE OPERATOR CLASS box_ops DEFAULT
@@ -38,9 +35,12 @@ CREATE OPERATOR CLASS box_ops DEFAULT
 	FUNCTION 9	gist_box_fetch(internal);
 
 -- Create gist2 index on fast_emp4000
-CREATE INDEX grect2ind ON fast_emp4000 USING gist2 (home_base);
+CREATE INDEX grect2ind2 ON fast_emp4000 USING gist2 (home_base);
 
--- Now check the results from plain indexscan
+-- Now check the results from plain indexscan; temporarily drop existing
+-- index grect2ind to ensure it doesn't capture the plan
+BEGIN;
+DROP INDEX grect2ind;
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
@@ -61,13 +61,10 @@ EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 
--- Try to drop access method: fail because of depending objects
+ROLLBACK;
+
+-- Try to drop access method: fail because of dependent objects
 DROP ACCESS METHOD gist2;
 
 -- Drop access method cascade
 DROP ACCESS METHOD gist2 CASCADE;
-
--- Reset optimizer options
-RESET enable_seqscan;
-RESET enable_indexscan;
-RESET enable_bitmapscan;
