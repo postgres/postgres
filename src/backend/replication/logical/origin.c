@@ -120,9 +120,9 @@ typedef struct ReplicationState
 	XLogRecPtr	local_lsn;
 
 	/*
-	 * Slot is setup in backend?
+	 * PID of backend that's acquired slot, or 0 if none.
 	 */
-	pid_t		acquired_by;
+	int			acquired_by;
 
 	/*
 	 * Lock protecting remote_lsn and local_lsn.
