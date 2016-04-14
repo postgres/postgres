@@ -233,6 +233,8 @@ SELECT 'tx logical msg' FROM pg_logical_emit_message(true, 'test', 'tx logical m
 
 DELETE FROM tr_etoomuch WHERE id < 5000;
 UPDATE tr_etoomuch SET data = - data WHERE id > 5000;
+CREATE TABLE tr_oddlength (id text primary key, data text);
+INSERT INTO tr_oddlength VALUES('ab', 'foo');
 COMMIT;
 /* display results, but hide most of the output */
 SELECT count(*), min(data), max(data)
@@ -244,13 +246,16 @@ ORDER BY 1,2;
      1 | BEGIN                                                                 | BEGIN
      1 | COMMIT                                                                | COMMIT
      1 | message: transactional: 1 prefix: test, sz: 14 content:tx logical msg | message: transactional: 1 prefix: test, sz: 14 content:tx logical msg
+     1 | table public.tr_oddlength: INSERT: id[text]:'ab' data[text]:'foo'     | table public.tr_oddlength: INSERT: id[text]:'ab' data[text]:'foo'
  20467 | table public.tr_etoomuch: DELETE: id[integer]:1                       | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
-(4 rows)
+(5 rows)
 
 -- check updates of primary keys work correctly
 BEGIN;
 CREATE TABLE spoolme AS SELECT g.i FROM generate_series(1, 5000) g(i);
 UPDATE tr_etoomuch SET id = -id WHERE id = 5000;
+UPDATE tr_oddlength SET id = 'x', data = 'quux';
+UPDATE tr_oddlength SET id = 'yy', data = 'a';
 DELETE FROM spoolme;
 DROP TABLE spoolme;
 COMMIT;
@@ -260,7 +265,9 @@ WHERE data ~ 'UPDATE';
                                                     data                                                     
 -------------------------------------------------------------------------------------------------------------
  table public.tr_etoomuch: UPDATE: old-key: id[integer]:5000 new-tuple: id[integer]:-5000 data[integer]:5000
-(1 row)
+ table public.tr_oddlength: UPDATE: old-key: id[text]:'ab' new-tuple: id[text]:'x' data[text]:'quux'
+ table public.tr_oddlength: UPDATE: old-key: id[text]:'x' new-tuple: id[text]:'yy' data[text]:'a'
+(3 rows)
 
 -- check that a large, spooled, upsert works
 INSERT INTO tr_etoomuch (id, data)
