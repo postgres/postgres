@@ -379,7 +379,7 @@ WalReceiverMain(void)
 				char	   *buf;
 				int			len;
 				bool		endofwal = false;
-				int			wait_fd = PGINVALID_SOCKET;
+				pgsocket	wait_fd = PGINVALID_SOCKET;
 				int			rc;
 
 				/*

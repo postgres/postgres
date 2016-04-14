@@ -52,7 +52,7 @@ static void libpqrcv_readtimelinehistoryfile(TimeLineID tli, char **filename, ch
 static bool libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint,
 						char *slotname);
 static void libpqrcv_endstreaming(TimeLineID *next_tli);
-static int	libpqrcv_receive(char **buffer, int *wait_fd);
+static int	libpqrcv_receive(char **buffer, pgsocket *wait_fd);
 static void libpqrcv_send(const char *buffer, int nbytes);
 static void libpqrcv_disconnect(void);
 
@@ -472,14 +472,14 @@ libpqrcv_disconnect(void)
  *	 until the next libpqrcv_* call.
  *
  *	 If no data was available immediately, returns 0, and *wait_fd is set to a
- *	 file descriptor which can be waited on before trying again.
+ *	 socket descriptor which can be waited on before trying again.
  *
  *	 -1 if the server ended the COPY.
  *
  * ereports on error.
  */
 static int
-libpqrcv_receive(char **buffer, int *wait_fd)
+libpqrcv_receive(char **buffer, pgsocket *wait_fd)
 {
 	int			rawlen;
 
