@@ -386,7 +386,7 @@ pg_logical_slot_peek_binary_changes(PG_FUNCTION_ARGS)
 
 
 /*
- * SQL function for writing logical decding message into WAL.
+ * SQL function for writing logical decoding message into WAL.
  */
 Datum
 pg_logical_emit_message_bytea(PG_FUNCTION_ARGS)
