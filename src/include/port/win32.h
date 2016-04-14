@@ -373,7 +373,7 @@ void		pg_queue_signal(int signum);
 #define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
 
 SOCKET		pgwin32_socket(int af, int type, int protocol);
-int			pgwin32_bind(SOCKET s, struct sockaddr * addr, int *addrlen);
+int			pgwin32_bind(SOCKET s, struct sockaddr * addr, int addrlen);
 int			pgwin32_listen(SOCKET s, int backlog);
 SOCKET		pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen);
 int			pgwin32_connect(SOCKET s, const struct sockaddr * name, int namelen);

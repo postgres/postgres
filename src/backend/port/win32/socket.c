@@ -265,7 +265,7 @@ pgwin32_socket(int af, int type, int protocol)
 }
 
 int
-pgwin32_bind(SOCKET s, struct sockaddr * addr, int *addrlen)
+pgwin32_bind(SOCKET s, struct sockaddr * addr, int addrlen)
 {
 	int			res;
 
