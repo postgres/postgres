@@ -91,7 +91,9 @@ s_lock_stuck(const char *file, int line, const char *func)
 int
 s_lock(volatile slock_t *lock, const char *file, int line, const char *func)
 {
-	SpinDelayStatus delayStatus = init_spin_delay(file, line, func);
+	SpinDelayStatus delayStatus;
+
+	init_spin_delay(&delayStatus, file, line, func);
 
 	while (TAS_SPIN(lock))
 	{

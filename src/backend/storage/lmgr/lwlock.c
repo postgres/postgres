@@ -870,7 +870,9 @@ LWLockWaitListLock(LWLock *lock)
 
 		/* and then spin without atomic operations until lock is released */
 		{
-			SpinDelayStatus delayStatus = init_local_spin_delay();
+			SpinDelayStatus delayStatus;
+
+			init_local_spin_delay(&delayStatus);
 
 			while (old_state & LW_FLAG_LOCKED)
 			{
