@@ -1339,8 +1339,16 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				if (plan->qual)
 					show_instrumentation_count("Rows Removed by Filter", 1,
 											   planstate, es);
-				ExplainPropertyInteger("Number of Workers",
+				ExplainPropertyInteger("Workers Planned",
 									   gather->num_workers, es);
+				if (es->analyze)
+				{
+					int			nworkers;
+
+					nworkers = ((GatherState *) planstate)->nworkers_launched;
+					ExplainPropertyInteger("Workers Launched",
+										   nworkers, es);
+				}
 				if (gather->single_copy)
 					ExplainPropertyText("Single Copy",
 									  gather->single_copy ? "true" : "false",

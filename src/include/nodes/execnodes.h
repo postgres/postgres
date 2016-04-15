@@ -1956,6 +1956,7 @@ typedef struct GatherState
 	struct ParallelExecutorInfo *pei;
 	int			nreaders;
 	int			nextreader;
+	int			nworkers_launched;
 	struct TupleQueueReader **reader;
 	TupleTableSlot *funnel_slot;
 	bool		need_to_scan_locally;
