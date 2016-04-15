@@ -5,10 +5,11 @@ CREATE TABLE test_replica_identity (
        nonkey text,
        CONSTRAINT test_replica_identity_unique_defer UNIQUE (keya, keyb) DEFERRABLE,
        CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
-);
+) WITH OIDS;
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
 CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
+CREATE UNIQUE INDEX test_replica_identity_oid_idx ON test_replica_identity (oid);
 CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
 CREATE INDEX test_replica_identity_hash ON test_replica_identity USING hash (nonkey);
 WARNING:  hash indexes are not WAL-logged and their use is discouraged
@@ -88,12 +89,15 @@ Indexes:
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
     "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
     "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_oid_idx" UNIQUE, btree (oid)
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
     "test_replica_identity_hash" hash (nonkey)
     "test_replica_identity_keyab" btree (keya, keyb)
 
+-- succeed, oid unique index
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_oid_idx;
 -- succeed, nondeferrable unique constraint over nonullable cols
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_nondefer;
 -- succeed unique index over nonnullable cols
@@ -118,6 +122,7 @@ Indexes:
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
     "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb) REPLICA IDENTITY
     "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_oid_idx" UNIQUE, btree (oid)
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
@@ -166,12 +171,14 @@ Indexes:
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
     "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
     "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_oid_idx" UNIQUE, btree (oid)
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
     "test_replica_identity_hash" hash (nonkey)
     "test_replica_identity_keyab" btree (keya, keyb)
 Replica Identity: FULL
+Has OIDs: yes
 
 ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
