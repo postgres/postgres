@@ -1289,6 +1289,14 @@ iexit| SELECT ih.name,
    FROM ihighway ih,
     ramp r
   WHERE (ih.thepath ## r.thepath);
+mvtest_tv| SELECT mvtest_t.type,
+    sum(mvtest_t.amt) AS totamt
+   FROM mvtest_t
+  GROUP BY mvtest_t.type;
+mvtest_tvv| SELECT sum(mvtest_tv.totamt) AS grandtot
+   FROM mvtest_tv;
+mvtest_tvvmv| SELECT mvtest_tvvm.grandtot
+   FROM mvtest_tvvm;
 pg_available_extension_versions| SELECT e.name,
     e.version,
     (x.extname IS NOT NULL) AS installed,
@@ -2251,14 +2259,6 @@ toyemp| SELECT emp.name,
     emp.location,
     (12 * emp.salary) AS annualsal
    FROM emp;
-tv| SELECT t.type,
-    sum(t.amt) AS totamt
-   FROM t
-  GROUP BY t.type;
-tvv| SELECT sum(tv.totamt) AS grandtot
-   FROM tv;
-tvvmv| SELECT tvvm.grandtot
-   FROM tvvm;
 SELECT tablename, rulename, definition FROM pg_rules
 	ORDER BY tablename, rulename;
 pg_settings|pg_settings_n|CREATE RULE pg_settings_n AS

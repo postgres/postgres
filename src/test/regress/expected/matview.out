@@ -1,14 +1,14 @@
 -- create a table to use as a basis for views and materialized views in various combinations
-CREATE TABLE t (id int NOT NULL PRIMARY KEY, type text NOT NULL, amt numeric NOT NULL);
-INSERT INTO t VALUES
+CREATE TABLE mvtest_t (id int NOT NULL PRIMARY KEY, type text NOT NULL, amt numeric NOT NULL);
+INSERT INTO mvtest_t VALUES
   (1, 'x', 2),
   (2, 'x', 3),
   (3, 'y', 5),
   (4, 'y', 7),
   (5, 'z', 11);
 -- we want a view based on the table, too, since views present additional challenges
-CREATE VIEW tv AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type;
-SELECT * FROM tv ORDER BY type;
+CREATE VIEW mvtest_tv AS SELECT type, sum(amt) AS totamt FROM mvtest_t GROUP BY type;
+SELECT * FROM mvtest_tv ORDER BY type;
  type | totamt 
 ------+--------
  x    |      5
@@ -18,33 +18,33 @@ SELECT * FROM tv ORDER BY type;
 
 -- create a materialized view with no data, and confirm correct behavior
 EXPLAIN (costs off)
-  CREATE MATERIALIZED VIEW tm AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
-     QUERY PLAN      
----------------------
+  CREATE MATERIALIZED VIEW mvtest_tm AS SELECT type, sum(amt) AS totamt FROM mvtest_t GROUP BY type WITH NO DATA;
+         QUERY PLAN         
+----------------------------
  HashAggregate
    Group Key: type
-   ->  Seq Scan on t
+   ->  Seq Scan on mvtest_t
 (3 rows)
 
-CREATE MATERIALIZED VIEW tm AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
-SELECT relispopulated FROM pg_class WHERE oid = 'tm'::regclass;
+CREATE MATERIALIZED VIEW mvtest_tm AS SELECT type, sum(amt) AS totamt FROM mvtest_t GROUP BY type WITH NO DATA;
+SELECT relispopulated FROM pg_class WHERE oid = 'mvtest_tm'::regclass;
  relispopulated 
 ----------------
  f
 (1 row)
 
-SELECT * FROM tm;
-ERROR:  materialized view "tm" has not been populated
+SELECT * FROM mvtest_tm;
+ERROR:  materialized view "mvtest_tm" has not been populated
 HINT:  Use the REFRESH MATERIALIZED VIEW command.
-REFRESH MATERIALIZED VIEW tm;
-SELECT relispopulated FROM pg_class WHERE oid = 'tm'::regclass;
+REFRESH MATERIALIZED VIEW mvtest_tm;
+SELECT relispopulated FROM pg_class WHERE oid = 'mvtest_tm'::regclass;
  relispopulated 
 ----------------
  t
 (1 row)
 
-CREATE UNIQUE INDEX tm_type ON tm (type);
-SELECT * FROM tm;
+CREATE UNIQUE INDEX mvtest_tm_type ON mvtest_tm (type);
+SELECT * FROM mvtest_tm;
  type | totamt 
 ------+--------
  y    |     12
@@ -54,18 +54,18 @@ SELECT * FROM tm;
 
 -- create various views
 EXPLAIN (costs off)
-  CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv ORDER BY type;
-        QUERY PLAN         
----------------------------
+  CREATE MATERIALIZED VIEW mvtest_tvm AS SELECT * FROM mvtest_tv ORDER BY type;
+            QUERY PLAN            
+----------------------------------
  Sort
-   Sort Key: t.type
+   Sort Key: mvtest_t.type
    ->  HashAggregate
-         Group Key: t.type
-         ->  Seq Scan on t
+         Group Key: mvtest_t.type
+         ->  Seq Scan on mvtest_t
 (5 rows)
 
-CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv ORDER BY type;
-SELECT * FROM tvm;
+CREATE MATERIALIZED VIEW mvtest_tvm AS SELECT * FROM mvtest_tv ORDER BY type;
+SELECT * FROM mvtest_tvm;
  type | totamt 
 ------+--------
  x    |      5
@@ -73,103 +73,103 @@ SELECT * FROM tvm;
  z    |     11
 (3 rows)
 
-CREATE MATERIALIZED VIEW tmm AS SELECT sum(totamt) AS grandtot FROM tm;
-CREATE MATERIALIZED VIEW tvmm AS SELECT sum(totamt) AS grandtot FROM tvm;
-CREATE UNIQUE INDEX tvmm_expr ON tvmm ((grandtot > 0));
-CREATE UNIQUE INDEX tvmm_pred ON tvmm (grandtot) WHERE grandtot < 0;
-CREATE VIEW tvv AS SELECT sum(totamt) AS grandtot FROM tv;
+CREATE MATERIALIZED VIEW mvtest_tmm AS SELECT sum(totamt) AS grandtot FROM mvtest_tm;
+CREATE MATERIALIZED VIEW mvtest_tvmm AS SELECT sum(totamt) AS grandtot FROM mvtest_tvm;
+CREATE UNIQUE INDEX mvtest_tvmm_expr ON mvtest_tvmm ((grandtot > 0));
+CREATE UNIQUE INDEX mvtest_tvmm_pred ON mvtest_tvmm (grandtot) WHERE grandtot < 0;
+CREATE VIEW mvtest_tvv AS SELECT sum(totamt) AS grandtot FROM mvtest_tv;
 EXPLAIN (costs off)
-  CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
-        QUERY PLAN         
----------------------------
+  CREATE MATERIALIZED VIEW mvtest_tvvm AS SELECT * FROM mvtest_tvv;
+            QUERY PLAN            
+----------------------------------
  Aggregate
    ->  HashAggregate
-         Group Key: t.type
-         ->  Seq Scan on t
+         Group Key: mvtest_t.type
+         ->  Seq Scan on mvtest_t
 (4 rows)
 
-CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
-CREATE VIEW tvvmv AS SELECT * FROM tvvm;
-CREATE MATERIALIZED VIEW bb AS SELECT * FROM tvvmv;
-CREATE INDEX aa ON bb (grandtot);
+CREATE MATERIALIZED VIEW mvtest_tvvm AS SELECT * FROM mvtest_tvv;
+CREATE VIEW mvtest_tvvmv AS SELECT * FROM mvtest_tvvm;
+CREATE MATERIALIZED VIEW mvtest_bb AS SELECT * FROM mvtest_tvvmv;
+CREATE INDEX mvtest_aa ON mvtest_bb (grandtot);
 -- check that plans seem reasonable
-\d+ tvm
-                    Materialized view "public.tvm"
+\d+ mvtest_tvm
+                Materialized view "public.mvtest_tvm"
  Column |  Type   | Modifiers | Storage  | Stats target | Description 
 --------+---------+-----------+----------+--------------+-------------
  type   | text    |           | extended |              | 
  totamt | numeric |           | main     |              | 
 View definition:
- SELECT tv.type,
-    tv.totamt
-   FROM tv
-  ORDER BY tv.type;
+ SELECT mvtest_tv.type,
+    mvtest_tv.totamt
+   FROM mvtest_tv
+  ORDER BY mvtest_tv.type;
 
-\d+ tvm
-                    Materialized view "public.tvm"
+\d+ mvtest_tvm
+                Materialized view "public.mvtest_tvm"
  Column |  Type   | Modifiers | Storage  | Stats target | Description 
 --------+---------+-----------+----------+--------------+-------------
  type   | text    |           | extended |              | 
  totamt | numeric |           | main     |              | 
 View definition:
- SELECT tv.type,
-    tv.totamt
-   FROM tv
-  ORDER BY tv.type;
+ SELECT mvtest_tv.type,
+    mvtest_tv.totamt
+   FROM mvtest_tv
+  ORDER BY mvtest_tv.type;
 
-\d+ tvvm
-                    Materialized view "public.tvvm"
+\d+ mvtest_tvvm
+                Materialized view "public.mvtest_tvvm"
   Column  |  Type   | Modifiers | Storage | Stats target | Description 
 ----------+---------+-----------+---------+--------------+-------------
  grandtot | numeric |           | main    |              | 
 View definition:
- SELECT tvv.grandtot
-   FROM tvv;
+ SELECT mvtest_tvv.grandtot
+   FROM mvtest_tvv;
 
-\d+ bb
-                     Materialized view "public.bb"
+\d+ mvtest_bb
+                 Materialized view "public.mvtest_bb"
   Column  |  Type   | Modifiers | Storage | Stats target | Description 
 ----------+---------+-----------+---------+--------------+-------------
  grandtot | numeric |           | main    |              | 
 Indexes:
-    "aa" btree (grandtot)
+    "mvtest_aa" btree (grandtot)
 View definition:
- SELECT tvvmv.grandtot
-   FROM tvvmv;
+ SELECT mvtest_tvvmv.grandtot
+   FROM mvtest_tvvmv;
 
 -- test schema behavior
-CREATE SCHEMA mvschema;
-ALTER MATERIALIZED VIEW tvm SET SCHEMA mvschema;
-\d+ tvm
-\d+ tvmm
-                    Materialized view "public.tvmm"
+CREATE SCHEMA mvtest_mvschema;
+ALTER MATERIALIZED VIEW mvtest_tvm SET SCHEMA mvtest_mvschema;
+\d+ mvtest_tvm
+\d+ mvtest_tvmm
+                Materialized view "public.mvtest_tvmm"
   Column  |  Type   | Modifiers | Storage | Stats target | Description 
 ----------+---------+-----------+---------+--------------+-------------
  grandtot | numeric |           | main    |              | 
 Indexes:
-    "tvmm_expr" UNIQUE, btree ((grandtot > 0::numeric))
-    "tvmm_pred" UNIQUE, btree (grandtot) WHERE grandtot < 0::numeric
+    "mvtest_tvmm_expr" UNIQUE, btree ((grandtot > 0::numeric))
+    "mvtest_tvmm_pred" UNIQUE, btree (grandtot) WHERE grandtot < 0::numeric
 View definition:
- SELECT sum(tvm.totamt) AS grandtot
-   FROM mvschema.tvm;
+ SELECT sum(mvtest_tvm.totamt) AS grandtot
+   FROM mvtest_mvschema.mvtest_tvm;
 
-SET search_path = mvschema, public;
-\d+ tvm
-                   Materialized view "mvschema.tvm"
+SET search_path = mvtest_mvschema, public;
+\d+ mvtest_tvm
+            Materialized view "mvtest_mvschema.mvtest_tvm"
  Column |  Type   | Modifiers | Storage  | Stats target | Description 
 --------+---------+-----------+----------+--------------+-------------
  type   | text    |           | extended |              | 
  totamt | numeric |           | main     |              | 
 View definition:
- SELECT tv.type,
-    tv.totamt
-   FROM tv
-  ORDER BY tv.type;
+ SELECT mvtest_tv.type,
+    mvtest_tv.totamt
+   FROM mvtest_tv
+  ORDER BY mvtest_tv.type;
 
 -- modify the underlying table data
-INSERT INTO t VALUES (6, 'z', 13);
+INSERT INTO mvtest_t VALUES (6, 'z', 13);
 -- confirm pre- and post-refresh contents of fairly simple materialized views
-SELECT * FROM tm ORDER BY type;
+SELECT * FROM mvtest_tm ORDER BY type;
  type | totamt 
 ------+--------
  x    |      5
@@ -177,7 +177,7 @@ SELECT * FROM tm ORDER BY type;
  z    |     11
 (3 rows)
 
-SELECT * FROM tvm ORDER BY type;
+SELECT * FROM mvtest_tvm ORDER BY type;
  type | totamt 
 ------+--------
  x    |      5
@@ -185,9 +185,9 @@ SELECT * FROM tvm ORDER BY type;
  z    |     11
 (3 rows)
 
-REFRESH MATERIALIZED VIEW CONCURRENTLY tm;
-REFRESH MATERIALIZED VIEW tvm;
-SELECT * FROM tm ORDER BY type;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_tm;
+REFRESH MATERIALIZED VIEW mvtest_tvm;
+SELECT * FROM mvtest_tm ORDER BY type;
  type | totamt 
 ------+--------
  x    |      5
@@ -195,7 +195,7 @@ SELECT * FROM tm ORDER BY type;
  z    |     24
 (3 rows)
 
-SELECT * FROM tvm ORDER BY type;
+SELECT * FROM mvtest_tvm ORDER BY type;
  type | totamt 
 ------+--------
  x    |      5
@@ -206,84 +206,84 @@ SELECT * FROM tvm ORDER BY type;
 RESET search_path;
 -- confirm pre- and post-refresh contents of nested materialized views
 EXPLAIN (costs off)
-  SELECT * FROM tmm;
-   QUERY PLAN    
------------------
- Seq Scan on tmm
+  SELECT * FROM mvtest_tmm;
+       QUERY PLAN       
+------------------------
+ Seq Scan on mvtest_tmm
 (1 row)
 
 EXPLAIN (costs off)
-  SELECT * FROM tvmm;
-    QUERY PLAN    
-------------------
- Seq Scan on tvmm
+  SELECT * FROM mvtest_tvmm;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on mvtest_tvmm
 (1 row)
 
 EXPLAIN (costs off)
-  SELECT * FROM tvvm;
-    QUERY PLAN    
-------------------
- Seq Scan on tvvm
+  SELECT * FROM mvtest_tvvm;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on mvtest_tvvm
 (1 row)
 
-SELECT * FROM tmm;
+SELECT * FROM mvtest_tmm;
  grandtot 
 ----------
        28
 (1 row)
 
-SELECT * FROM tvmm;
+SELECT * FROM mvtest_tvmm;
  grandtot 
 ----------
        28
 (1 row)
 
-SELECT * FROM tvvm;
+SELECT * FROM mvtest_tvvm;
  grandtot 
 ----------
        28
 (1 row)
 
-REFRESH MATERIALIZED VIEW tmm;
-REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm;
-ERROR:  cannot refresh materialized view "public.tvmm" concurrently
+REFRESH MATERIALIZED VIEW mvtest_tmm;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_tvmm;
+ERROR:  cannot refresh materialized view "public.mvtest_tvmm" concurrently
 HINT:  Create a unique index with no WHERE clause on one or more columns of the materialized view.
-REFRESH MATERIALIZED VIEW tvmm;
-REFRESH MATERIALIZED VIEW tvvm;
+REFRESH MATERIALIZED VIEW mvtest_tvmm;
+REFRESH MATERIALIZED VIEW mvtest_tvvm;
 EXPLAIN (costs off)
-  SELECT * FROM tmm;
-   QUERY PLAN    
------------------
- Seq Scan on tmm
+  SELECT * FROM mvtest_tmm;
+       QUERY PLAN       
+------------------------
+ Seq Scan on mvtest_tmm
 (1 row)
 
 EXPLAIN (costs off)
-  SELECT * FROM tvmm;
-    QUERY PLAN    
-------------------
- Seq Scan on tvmm
+  SELECT * FROM mvtest_tvmm;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on mvtest_tvmm
 (1 row)
 
 EXPLAIN (costs off)
-  SELECT * FROM tvvm;
-    QUERY PLAN    
-------------------
- Seq Scan on tvvm
+  SELECT * FROM mvtest_tvvm;
+       QUERY PLAN        
+-------------------------
+ Seq Scan on mvtest_tvvm
 (1 row)
 
-SELECT * FROM tmm;
+SELECT * FROM mvtest_tmm;
  grandtot 
 ----------
        41
 (1 row)
 
-SELECT * FROM tvmm;
+SELECT * FROM mvtest_tvmm;
  grandtot 
 ----------
        41
 (1 row)
 
-SELECT * FROM tvvm;
+SELECT * FROM mvtest_tvvm;
  grandtot 
 ----------
        41
@@ -293,13 +293,13 @@ SELECT * FROM tvvm;
 DROP MATERIALIZED VIEW IF EXISTS no_such_mv;
 NOTICE:  materialized view "no_such_mv" does not exist, skipping
 -- make sure invalid comination of options is prohibited
-REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm WITH NO DATA;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_tvmm WITH NO DATA;
 ERROR:  CONCURRENTLY and WITH NO DATA options cannot be used together
 -- no tuple locks on materialized views
-SELECT * FROM tvvm FOR SHARE;
-ERROR:  cannot lock rows in materialized view "tvvm"
+SELECT * FROM mvtest_tvvm FOR SHARE;
+ERROR:  cannot lock rows in materialized view "mvtest_tvvm"
 -- test join of mv and view
-SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
+SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM mvtest_tm m LEFT JOIN mvtest_tv v USING (type) ORDER BY type;
  type | mtot | vtot 
 ------+------+------
  x    |    5 |    5
@@ -308,53 +308,53 @@ SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (
 (3 rows)
 
 -- make sure that dependencies are reported properly when they block the drop
-DROP TABLE t;
-ERROR:  cannot drop table t because other objects depend on it
-DETAIL:  view tv depends on table t
-view tvv depends on view tv
-materialized view tvvm depends on view tvv
-view tvvmv depends on materialized view tvvm
-materialized view bb depends on view tvvmv
-materialized view mvschema.tvm depends on view tv
-materialized view tvmm depends on materialized view mvschema.tvm
-materialized view tm depends on table t
-materialized view tmm depends on materialized view tm
+DROP TABLE mvtest_t;
+ERROR:  cannot drop table mvtest_t because other objects depend on it
+DETAIL:  view mvtest_tv depends on table mvtest_t
+view mvtest_tvv depends on view mvtest_tv
+materialized view mvtest_tvvm depends on view mvtest_tvv
+view mvtest_tvvmv depends on materialized view mvtest_tvvm
+materialized view mvtest_bb depends on view mvtest_tvvmv
+materialized view mvtest_mvschema.mvtest_tvm depends on view mvtest_tv
+materialized view mvtest_tvmm depends on materialized view mvtest_mvschema.mvtest_tvm
+materialized view mvtest_tm depends on table mvtest_t
+materialized view mvtest_tmm depends on materialized view mvtest_tm
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- make sure dependencies are dropped and reported
 -- and make sure that transactional behavior is correct on rollback
 -- incidentally leaving some interesting materialized views for pg_dump testing
 BEGIN;
-DROP TABLE t CASCADE;
+DROP TABLE mvtest_t CASCADE;
 NOTICE:  drop cascades to 9 other objects
-DETAIL:  drop cascades to view tv
-drop cascades to view tvv
-drop cascades to materialized view tvvm
-drop cascades to view tvvmv
-drop cascades to materialized view bb
-drop cascades to materialized view mvschema.tvm
-drop cascades to materialized view tvmm
-drop cascades to materialized view tm
-drop cascades to materialized view tmm
+DETAIL:  drop cascades to view mvtest_tv
+drop cascades to view mvtest_tvv
+drop cascades to materialized view mvtest_tvvm
+drop cascades to view mvtest_tvvmv
+drop cascades to materialized view mvtest_bb
+drop cascades to materialized view mvtest_mvschema.mvtest_tvm
+drop cascades to materialized view mvtest_tvmm
+drop cascades to materialized view mvtest_tm
+drop cascades to materialized view mvtest_tmm
 ROLLBACK;
 -- some additional tests not using base tables
-CREATE VIEW v_test1 AS SELECT 1 moo;
-CREATE VIEW v_test2 AS SELECT moo, 2*moo FROM v_test1 UNION ALL SELECT moo, 3*moo FROM v_test1;
-\d+ v_test2
-                 View "public.v_test2"
+CREATE VIEW mvtest_vt1 AS SELECT 1 moo;
+CREATE VIEW mvtest_vt2 AS SELECT moo, 2*moo FROM mvtest_vt1 UNION ALL SELECT moo, 3*moo FROM mvtest_vt1;
+\d+ mvtest_vt2
+                View "public.mvtest_vt2"
   Column  |  Type   | Modifiers | Storage | Description 
 ----------+---------+-----------+---------+-------------
  moo      | integer |           | plain   | 
  ?column? | integer |           | plain   | 
 View definition:
- SELECT v_test1.moo,
-    2 * v_test1.moo
-   FROM v_test1
+ SELECT mvtest_vt1.moo,
+    2 * mvtest_vt1.moo
+   FROM mvtest_vt1
 UNION ALL
- SELECT v_test1.moo,
-    3 * v_test1.moo
-   FROM v_test1;
+ SELECT mvtest_vt1.moo,
+    3 * mvtest_vt1.moo
+   FROM mvtest_vt1;
 
-CREATE MATERIALIZED VIEW mv_test2 AS SELECT moo, 2*moo FROM v_test2 UNION ALL SELECT moo, 3*moo FROM v_test2;
+CREATE MATERIALIZED VIEW mv_test2 AS SELECT moo, 2*moo FROM mvtest_vt2 UNION ALL SELECT moo, 3*moo FROM mvtest_vt2;
 \d+ mv_test2
                   Materialized view "public.mv_test2"
   Column  |  Type   | Modifiers | Storage | Stats target | Description 
@@ -362,13 +362,13 @@ CREATE MATERIALIZED VIEW mv_test2 AS SELECT moo, 2*moo FROM v_test2 UNION ALL SE
  moo      | integer |           | plain   |              | 
  ?column? | integer |           | plain   |              | 
 View definition:
- SELECT v_test2.moo,
-    2 * v_test2.moo
-   FROM v_test2
+ SELECT mvtest_vt2.moo,
+    2 * mvtest_vt2.moo
+   FROM mvtest_vt2
 UNION ALL
- SELECT v_test2.moo,
-    3 * v_test2.moo
-   FROM v_test2;
+ SELECT mvtest_vt2.moo,
+    3 * mvtest_vt2.moo
+   FROM mvtest_vt2;
 
 CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
 SELECT relispopulated FROM pg_class WHERE oid = 'mv_test3'::regclass;
@@ -377,73 +377,73 @@ SELECT relispopulated FROM pg_class WHERE oid = 'mv_test3'::regclass;
  t
 (1 row)
 
-DROP VIEW v_test1 CASCADE;
+DROP VIEW mvtest_vt1 CASCADE;
 NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to view v_test2
+DETAIL:  drop cascades to view mvtest_vt2
 drop cascades to materialized view mv_test2
 drop cascades to materialized view mv_test3
 -- test that vacuum does not make empty matview look unpopulated
-CREATE TABLE hoge (i int);
-INSERT INTO hoge VALUES (generate_series(1,100000));
-CREATE MATERIALIZED VIEW hogeview AS SELECT * FROM hoge WHERE i % 2 = 0;
-CREATE INDEX hogeviewidx ON hogeview (i);
-DELETE FROM hoge;
-REFRESH MATERIALIZED VIEW hogeview;
-SELECT * FROM hogeview WHERE i < 10;
+CREATE TABLE mvtest_huge (i int);
+INSERT INTO mvtest_huge VALUES (generate_series(1,100000));
+CREATE MATERIALIZED VIEW mvtest_hugeview AS SELECT * FROM mvtest_huge WHERE i % 2 = 0;
+CREATE INDEX mvtest_hugeviewidx ON mvtest_hugeview (i);
+DELETE FROM mvtest_huge;
+REFRESH MATERIALIZED VIEW mvtest_hugeview;
+SELECT * FROM mvtest_hugeview WHERE i < 10;
  i 
 ---
 (0 rows)
 
-VACUUM ANALYZE hogeview;
-SELECT * FROM hogeview WHERE i < 10;
+VACUUM ANALYZE mvtest_hugeview;
+SELECT * FROM mvtest_hugeview WHERE i < 10;
  i 
 ---
 (0 rows)
 
-DROP TABLE hoge CASCADE;
-NOTICE:  drop cascades to materialized view hogeview
+DROP TABLE mvtest_huge CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_hugeview
 -- test that duplicate values on unique index prevent refresh
-CREATE TABLE foo(a, b) AS VALUES(1, 10);
-CREATE MATERIALIZED VIEW mv AS SELECT * FROM foo;
-CREATE UNIQUE INDEX ON mv(a);
-INSERT INTO foo SELECT * FROM foo;
-REFRESH MATERIALIZED VIEW mv;
-ERROR:  could not create unique index "mv_a_idx"
+CREATE TABLE mvtest_foo(a, b) AS VALUES(1, 10);
+CREATE MATERIALIZED VIEW mvtest_mv AS SELECT * FROM mvtest_foo;
+CREATE UNIQUE INDEX ON mvtest_mv(a);
+INSERT INTO mvtest_foo SELECT * FROM mvtest_foo;
+REFRESH MATERIALIZED VIEW mvtest_mv;
+ERROR:  could not create unique index "mvtest_mv_a_idx"
 DETAIL:  Key (a)=(1) is duplicated.
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
-ERROR:  new data for materialized view "mv" contains duplicate rows without any null columns
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv;
+ERROR:  new data for materialized view "mvtest_mv" contains duplicate rows without any null columns
 DETAIL:  Row: (1,10)
-DROP TABLE foo CASCADE;
-NOTICE:  drop cascades to materialized view mv
+DROP TABLE mvtest_foo CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_mv
 -- make sure that all columns covered by unique indexes works
-CREATE TABLE foo(a, b, c) AS VALUES(1, 2, 3);
-CREATE MATERIALIZED VIEW mv AS SELECT * FROM foo;
-CREATE UNIQUE INDEX ON mv (a);
-CREATE UNIQUE INDEX ON mv (b);
-CREATE UNIQUE INDEX on mv (c);
-INSERT INTO foo VALUES(2, 3, 4);
-INSERT INTO foo VALUES(3, 4, 5);
-REFRESH MATERIALIZED VIEW mv;
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
-DROP TABLE foo CASCADE;
-NOTICE:  drop cascades to materialized view mv
+CREATE TABLE mvtest_foo(a, b, c) AS VALUES(1, 2, 3);
+CREATE MATERIALIZED VIEW mvtest_mv AS SELECT * FROM mvtest_foo;
+CREATE UNIQUE INDEX ON mvtest_mv (a);
+CREATE UNIQUE INDEX ON mvtest_mv (b);
+CREATE UNIQUE INDEX on mvtest_mv (c);
+INSERT INTO mvtest_foo VALUES(2, 3, 4);
+INSERT INTO mvtest_foo VALUES(3, 4, 5);
+REFRESH MATERIALIZED VIEW mvtest_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv;
+DROP TABLE mvtest_foo CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_mv
 -- allow subquery to reference unpopulated matview if WITH NO DATA is specified
-CREATE MATERIALIZED VIEW mv1 AS SELECT 1 AS col1 WITH NO DATA;
-CREATE MATERIALIZED VIEW mv2 AS SELECT * FROM mv1
-  WHERE col1 = (SELECT LEAST(col1) FROM mv1) WITH NO DATA;
-DROP MATERIALIZED VIEW mv1 CASCADE;
-NOTICE:  drop cascades to materialized view mv2
+CREATE MATERIALIZED VIEW mvtest_mv1 AS SELECT 1 AS col1 WITH NO DATA;
+CREATE MATERIALIZED VIEW mvtest_mv2 AS SELECT * FROM mvtest_mv1
+  WHERE col1 = (SELECT LEAST(col1) FROM mvtest_mv1) WITH NO DATA;
+DROP MATERIALIZED VIEW mvtest_mv1 CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_mv2
 -- make sure that types with unusual equality tests work
-CREATE TABLE boxes (id serial primary key, b box);
-INSERT INTO boxes (b) VALUES
+CREATE TABLE mvtest_boxes (id serial primary key, b box);
+INSERT INTO mvtest_boxes (b) VALUES
   ('(32,32),(31,31)'),
   ('(2.0000004,2.0000004),(1,1)'),
   ('(1.9999996,1.9999996),(1,1)');
-CREATE MATERIALIZED VIEW boxmv AS SELECT * FROM boxes;
-CREATE UNIQUE INDEX boxmv_id ON boxmv (id);
-UPDATE boxes SET b = '(2,2),(1,1)' WHERE id = 2;
-REFRESH MATERIALIZED VIEW CONCURRENTLY boxmv;
-SELECT * FROM boxmv ORDER BY id;
+CREATE MATERIALIZED VIEW mvtest_boxmv AS SELECT * FROM mvtest_boxes;
+CREATE UNIQUE INDEX mvtest_boxmv_id ON mvtest_boxmv (id);
+UPDATE mvtest_boxes SET b = '(2,2),(1,1)' WHERE id = 2;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_boxmv;
+SELECT * FROM mvtest_boxmv ORDER BY id;
  id |              b              
 ----+-----------------------------
   1 | (32,32),(31,31)
@@ -451,36 +451,36 @@ SELECT * FROM boxmv ORDER BY id;
   3 | (1.9999996,1.9999996),(1,1)
 (3 rows)
 
-DROP TABLE boxes CASCADE;
-NOTICE:  drop cascades to materialized view boxmv
+DROP TABLE mvtest_boxes CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_boxmv
 -- make sure that column names are handled correctly
-CREATE TABLE v (i int, j int);
-CREATE MATERIALIZED VIEW mv_v (ii) AS SELECT i, j AS jj FROM v;
-ALTER TABLE v RENAME COLUMN i TO x;
-INSERT INTO v values (1, 2);
-CREATE UNIQUE INDEX mv_v_ii ON mv_v (ii);
-REFRESH MATERIALIZED VIEW mv_v;
-UPDATE v SET j = 3 WHERE x = 1;
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv_v;
-SELECT * FROM v;
+CREATE TABLE mvtest_v (i int, j int);
+CREATE MATERIALIZED VIEW mvtest_mv_v (ii) AS SELECT i, j AS jj FROM mvtest_v;
+ALTER TABLE mvtest_v RENAME COLUMN i TO x;
+INSERT INTO mvtest_v values (1, 2);
+CREATE UNIQUE INDEX mvtest_mv_v_ii ON mvtest_mv_v (ii);
+REFRESH MATERIALIZED VIEW mvtest_mv_v;
+UPDATE mvtest_v SET j = 3 WHERE x = 1;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv_v;
+SELECT * FROM mvtest_v;
  x | j 
 ---+---
  1 | 3
 (1 row)
 
-SELECT * FROM mv_v;
+SELECT * FROM mvtest_mv_v;
  ii | jj 
 ----+----
   1 |  3
 (1 row)
 
-DROP TABLE v CASCADE;
-NOTICE:  drop cascades to materialized view mv_v
+DROP TABLE mvtest_v CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_mv_v
 -- make sure that matview rows can be referenced as source rows (bug #9398)
-CREATE TABLE v AS SELECT generate_series(1,10) AS a;
-CREATE MATERIALIZED VIEW mv_v AS SELECT a FROM v WHERE a <= 5;
-DELETE FROM v WHERE EXISTS ( SELECT * FROM mv_v WHERE mv_v.a = v.a );
-SELECT * FROM v;
+CREATE TABLE mvtest_v AS SELECT generate_series(1,10) AS a;
+CREATE MATERIALIZED VIEW mvtest_mv_v AS SELECT a FROM mvtest_v WHERE a <= 5;
+DELETE FROM mvtest_v WHERE EXISTS ( SELECT * FROM mvtest_mv_v WHERE mvtest_mv_v.a = mvtest_v.a );
+SELECT * FROM mvtest_v;
  a  
 ----
   6
@@ -490,7 +490,7 @@ SELECT * FROM v;
  10
 (5 rows)
 
-SELECT * FROM mv_v;
+SELECT * FROM mvtest_mv_v;
  a 
 ---
  1
@@ -500,21 +500,21 @@ SELECT * FROM mv_v;
  5
 (5 rows)
 
-DROP TABLE v CASCADE;
-NOTICE:  drop cascades to materialized view mv_v
+DROP TABLE mvtest_v CASCADE;
+NOTICE:  drop cascades to materialized view mvtest_mv_v
 -- make sure running as superuser works when MV owned by another role (bug #11208)
-CREATE ROLE user_dw;
-SET ROLE user_dw;
-CREATE TABLE foo_data AS SELECT i, md5(random()::text)
+CREATE ROLE regress_user_mvtest;
+SET ROLE regress_user_mvtest;
+CREATE TABLE mvtest_foo_data AS SELECT i, md5(random()::text)
   FROM generate_series(1, 10) i;
-CREATE MATERIALIZED VIEW mv_foo AS SELECT * FROM foo_data;
-CREATE MATERIALIZED VIEW mv_foo AS SELECT * FROM foo_data;
-ERROR:  relation "mv_foo" already exists
-CREATE MATERIALIZED VIEW IF NOT EXISTS mv_foo AS SELECT * FROM foo_data;
-NOTICE:  relation "mv_foo" already exists, skipping
-CREATE UNIQUE INDEX ON mv_foo (i);
+CREATE MATERIALIZED VIEW mvtest_mv_foo AS SELECT * FROM mvtest_foo_data;
+CREATE MATERIALIZED VIEW mvtest_mv_foo AS SELECT * FROM mvtest_foo_data;
+ERROR:  relation "mvtest_mv_foo" already exists
+CREATE MATERIALIZED VIEW IF NOT EXISTS mvtest_mv_foo AS SELECT * FROM mvtest_foo_data;
+NOTICE:  relation "mvtest_mv_foo" already exists, skipping
+CREATE UNIQUE INDEX ON mvtest_mv_foo (i);
 RESET ROLE;
-REFRESH MATERIALIZED VIEW mv_foo;
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv_foo;
-DROP OWNED BY user_dw CASCADE;
-DROP ROLE user_dw;
+REFRESH MATERIALIZED VIEW mvtest_mv_foo;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv_foo;
+DROP OWNED BY regress_user_mvtest CASCADE;
+DROP ROLE regress_user_mvtest;
