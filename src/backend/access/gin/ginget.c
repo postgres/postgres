@@ -281,6 +281,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			ipd = ginReadTuple(btree->ginstate, scanEntry->attnum, itup, &nipd);
 			tbm_add_tuples(scanEntry->matchBitmap, ipd, nipd, false);
 			scanEntry->predictNumberResult += GinGetNPosting(itup);
+			pfree(ipd);
 		}
 
 		/*
