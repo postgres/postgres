@@ -4410,6 +4410,18 @@ make_tuple_from_result_row(PGresult *res,
 	if (ctid)
 		tuple->t_self = tuple->t_data->t_ctid = *ctid;
 
+	/*
+	 * Stomp on the xmin, xmax, and cmin fields from the tuple created by
+	 * heap_form_tuple.  heap_form_tuple actually creates the tuple with
+	 * DatumTupleFields, not HeapTupleFields, but the executor expects
+	 * HeapTupleFields and will happily extract system columns on that
+	 * assumption.  If we don't do this then, for example, the tuple length
+	 * ends up in the xmin field, which isn't what we want.
+	 */
+	HeapTupleHeaderSetXmax(tuple->t_data, InvalidTransactionId);
+	HeapTupleHeaderSetXmin(tuple->t_data, InvalidTransactionId);
+	HeapTupleHeaderSetCmin(tuple->t_data, InvalidTransactionId);
+
 	/* Clean up */
 	MemoryContextReset(temp_context);
 
