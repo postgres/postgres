@@ -30,7 +30,7 @@ typedef enum
 	JSON_TOKEN_TRUE,
 	JSON_TOKEN_FALSE,
 	JSON_TOKEN_NULL,
-	JSON_TOKEN_END,
+	JSON_TOKEN_END
 } JsonTokenType;
 
 
