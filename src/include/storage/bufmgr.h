@@ -253,6 +253,15 @@ extern void FreeAccessStrategy(BufferAccessStrategy strategy);
 /* inline functions */
 
 /*
+ * Although this header file is nominally backend-only, certain frontend
+ * programs like pg_xlogdump include it.  For compilers that emit static
+ * inline functions even when they're unused, that leads to unsatisfied
+ * external references; hence hide these with #ifndef FRONTEND.
+ */
+
+#ifndef FRONTEND
+
+/*
  * BufferGetPage
  *		Returns the page associated with a buffer.
  *
@@ -272,4 +281,6 @@ BufferGetPage(Buffer buffer, Snapshot snapshot, Relation relation,
 	return page;
 }
 
-#endif
+#endif   /* FRONTEND */
+
+#endif   /* BUFMGR_H */

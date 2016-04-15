@@ -4299,7 +4299,7 @@ IssuePendingWritebacks(WritebackContext *context)
  * For best performance, keep the tests that are fastest and/or most likely to
  * exclude a page from old snapshot testing near the front.
  */
-extern void
+void
 TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 {
 	Assert(relation != NULL);
