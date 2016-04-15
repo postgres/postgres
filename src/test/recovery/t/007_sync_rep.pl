@@ -22,7 +22,23 @@ sub test_sync_state
 		$self->reload;
 	}
 
-	my $result = $self->safe_psql('postgres', $check_sql);
+	my $timeout_max = 30;
+	my $timeout = 0;
+	my $result;
+
+	# A reload may take some time to take effect on busy machines,
+	# hence use a loop with a timeout to give some room for the test
+	# to pass.
+	while ($timeout < $timeout_max)
+	{
+		$result = $self->safe_psql('postgres', $check_sql);
+
+		last if ($result eq $expected);
+
+		$timeout++;
+		sleep 1;
+	}
+
 	is($result, $expected, $msg);
 }
 
