@@ -23,7 +23,7 @@
  */
 typedef enum ObjectAccessType
 {
-	OAT_POST_CREATE,
+	OAT_POST_CREATE
 } ObjectAccessType;
 
 /*
