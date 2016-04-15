@@ -3189,7 +3189,7 @@ set_grouped_rel_consider_parallel(PlannerInfo *root, RelOptInfo *grouped_rel,
 		return;
 
 	/*
-	 * If parallel-restricted functiosn are present in the target list or the
+	 * If parallel-restricted functions are present in the target list or the
 	 * HAVING clause, we cannot safely go parallel.
 	 */
 	if (has_parallel_hazard((Node *) target->exprs, false) ||
