@@ -1130,6 +1130,7 @@ SendQuery(const char *query)
 	PGTransactionStatusType transaction_status;
 	double		elapsed_msec = 0;
 	bool		OK = false;
+	int			i;
 	bool		on_error_rollback_savepoint = false;
 	static bool on_error_rollback_warning = false;
 
@@ -1362,20 +1363,10 @@ sendquery_cleanup:
 
 	/* reset \crosstabview trigger */
 	pset.crosstab_flag = false;
-	if (pset.ctv_col_V)
+	for (i = 0; i < lengthof(pset.ctv_args); i++)
 	{
-		free(pset.ctv_col_V);
-		pset.ctv_col_V = NULL;
-	}
-	if (pset.ctv_col_H)
-	{
-		free(pset.ctv_col_H);
-		pset.ctv_col_H = NULL;
-	}
-	if (pset.ctv_col_D)
-	{
-		free(pset.ctv_col_D);
-		pset.ctv_col_D = NULL;
+		pg_free(pset.ctv_args[i]);
+		pset.ctv_args[i] = NULL;
 	}
 
 	return OK;

@@ -35,7 +35,7 @@ SELECT v, EXTRACT(year FROM d), count(*)
 -- ordered months in horizontal header, quoted column name
 SELECT v, to_char(d, 'Mon') AS "month name", EXTRACT(month FROM d) AS num,
  count(*) FROM ctv_data  GROUP BY 1,2,3 ORDER BY 1
- \crosstabview v "month name":num 4
+ \crosstabview v "month name" 4 num
  v  | Jan | Apr | Jul | Dec 
 ----+-----+-----+-----+-----
  v0 |     |     |   2 |   1
@@ -50,7 +50,7 @@ SELECT EXTRACT(year FROM d) AS year, to_char(d,'Mon') AS "month name",
   FROM ctv_data
   GROUP BY EXTRACT(year FROM d), to_char(d,'Mon'), EXTRACT(month FROM d)
 ORDER BY month
-\crosstabview "month name" year:year format
+\crosstabview "month name" year format year
  month name |      2014       |      2015      
 ------------+-----------------+----------------
  Jan        |                 | sum=3 avg=3.0
@@ -74,7 +74,7 @@ SELECT v, h, string_agg(c, E'\n') FROM ctv_data GROUP BY v, h ORDER BY 1,2,3
 -- horizontal ASC order from window function
 SELECT v,h, string_agg(c, E'\n') AS c, row_number() OVER(ORDER BY h) AS r
 FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
- \crosstabview v h:r c
+ \crosstabview v h c r
  v  | h0  | h1  |  h2  | h4  |     
 ----+-----+-----+------+-----+-----
  v0 |     |     |      | qux+| qux
@@ -87,7 +87,7 @@ FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
 -- horizontal DESC order from window function
 SELECT v, h, string_agg(c, E'\n') AS c, row_number() OVER(ORDER BY h DESC) AS r
 FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
- \crosstabview v h:r c
+ \crosstabview v h c r
  v  |     | h4  |  h2  | h1  | h0  
 ----+-----+-----+------+-----+-----
  v0 | qux | qux+|      |     | 
@@ -100,7 +100,7 @@ FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
 -- horizontal ASC order from window function, NULLs pushed rightmost
 SELECT v,h, string_agg(c, E'\n') AS c, row_number() OVER(ORDER BY h NULLS LAST) AS r
 FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
- \crosstabview v h:r c
+ \crosstabview v h c r
  v  | h0  | h1  |  h2  | h4  |     
 ----+-----+-----+------+-----+-----
  v0 |     |     |      | qux+| qux
@@ -112,7 +112,7 @@ FROM ctv_data GROUP BY v, h ORDER BY 1,3,2
 
 -- only null, no column name, 2 columns: error
 SELECT null,null \crosstabview
-The query must return at least two columns to be shown in crosstab
+\crosstabview: query must return at least three columns
 -- only null, no column name, 3 columns: works
 SELECT null,null,null \crosstabview
  ?column? |  
@@ -163,23 +163,39 @@ FROM ctv_data GROUP BY v, h ORDER BY h,v
     |     |     |      | dbl | 
 (3 rows)
 
+-- refer to columns by quoted names, check downcasing of unquoted name
+SELECT 1 as "22", 2 as b, 3 as "Foo"
+ \crosstabview "22" B "Foo"
+ 22 | 2 
+----+---
+  1 | 3
+(1 row)
+
 -- error: bad column name
 SELECT v,h,c,i FROM ctv_data
  \crosstabview v h j
-Invalid column name: j
+\crosstabview: column name not found: "j"
+-- error: need to quote name
+SELECT 1 as "22", 2 as b, 3 as "Foo"
+ \crosstabview 1 2 Foo
+\crosstabview: column name not found: "foo"
+-- error: need to not quote name
+SELECT 1 as "22", 2 as b, 3 as "Foo"
+ \crosstabview 1 "B" "Foo"
+\crosstabview: column name not found: "B"
 -- error: bad column number
 SELECT v,h,i,c FROM ctv_data
  \crosstabview 2 1 5
-Invalid column number: 5
+\crosstabview: invalid column number: "5"
 -- error: same H and V columns
 SELECT v,h,i,c FROM ctv_data
  \crosstabview 2 h 4
-The same column cannot be used for both vertical and horizontal headers
+\crosstabview: vertical and horizontal headers must be different columns
 -- error: too many columns
 SELECT a,a,1 FROM generate_series(1,3000) AS a
  \crosstabview
-Maximum number of columns (1600) exceeded
+\crosstabview: maximum number of columns (1600) exceeded
 -- error: only one column
 SELECT 1 \crosstabview
-The query must return at least two columns to be shown in crosstab
+\crosstabview: query must return at least three columns
 DROP TABLE ctv_data;

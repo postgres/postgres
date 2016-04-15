@@ -368,13 +368,11 @@ exec_command(const char *cmd,
 	/* \crosstabview -- execute a query and display results in crosstab */
 	else if (strcmp(cmd, "crosstabview") == 0)
 	{
-		pset.ctv_col_V = psql_scan_slash_option(scan_state,
-												OT_NORMAL, NULL, false);
-		pset.ctv_col_H = psql_scan_slash_option(scan_state,
-												OT_NORMAL, NULL, false);
-		pset.ctv_col_D = psql_scan_slash_option(scan_state,
-												OT_NORMAL, NULL, false);
+		int			i;
 
+		for (i = 0; i < lengthof(pset.ctv_args); i++)
+			pset.ctv_args[i] = psql_scan_slash_option(scan_state,
+													  OT_NORMAL, NULL, true);
 		pset.crosstab_flag = true;
 		status = PSQL_CMD_SEND;
 	}

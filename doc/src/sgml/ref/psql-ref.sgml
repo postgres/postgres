@@ -993,9 +993,10 @@ testdb=&gt;
       <varlistentry id="APP-PSQL-meta-commands-crosstabview">
         <term><literal>\crosstabview [
             <replaceable class="parameter">colV</replaceable>
-            <replaceable class="parameter">colH</replaceable>[:<replaceable class="parameter">scolH</replaceable>]
-            [<replaceable class="parameter">colD</replaceable>]
-            ] </literal></term>
+            [ <replaceable class="parameter">colH</replaceable>
+            [ <replaceable class="parameter">colD</replaceable>
+            [ <replaceable class="parameter">sortcolH</replaceable>
+            ] ] ] ] </literal></term>
         <listitem>
         <para>
         Executes the current query buffer (like <literal>\g</literal>) and
@@ -1004,16 +1005,11 @@ testdb=&gt;
         The output column identified by <replaceable class="parameter">colV</>
         becomes a vertical header and the output column identified by
         <replaceable class="parameter">colH</replaceable>
-        becomes a horizontal header, optionally sorted by ranking data obtained
-        from column <replaceable class="parameter">scolH</replaceable>.
+        becomes a horizontal header.
         <replaceable class="parameter">colD</replaceable> identifies
         the output column to display within the grid.
-        If <replaceable class="parameter">colD</replaceable> is not
-        specified and there are exactly three columns in the result set,
-        the column that is neither
-        <replaceable class="parameter">colV</replaceable> nor
-        <replaceable class="parameter">colH</replaceable>
-        is displayed; if there are more columns, an error is reported.
+        <replaceable class="parameter">sortcolH</replaceable> identifies
+        an optional sort column for the horizontal header.
         </para>
 
         <para>
@@ -1024,6 +1020,12 @@ testdb=&gt;
         and <replaceable class="parameter">colH</replaceable> as column 2.
         <replaceable class="parameter">colH</replaceable> must differ from
         <replaceable class="parameter">colV</replaceable>.
+        If <replaceable class="parameter">colD</replaceable> is not
+        specified, then there must be exactly three columns in the query
+        result, and the column that is neither
+        <replaceable class="parameter">colV</replaceable> nor
+        <replaceable class="parameter">colH</replaceable>
+        is taken to be <replaceable class="parameter">colD</replaceable>.
         </para>
 
         <para>
@@ -1037,11 +1039,11 @@ testdb=&gt;
         found in column <replaceable class="parameter">colH</replaceable>,
         with duplicates removed.  By default, these appear in the same order
         as in the query results.  But if the
-        optional <replaceable class="parameter">scolH</> argument is given, it
-        identifies a column whose values must be integer numbers, and the
+        optional <replaceable class="parameter">sortcolH</> argument is given,
+        it identifies a column whose values must be integer numbers, and the
         values from <replaceable class="parameter">colH</replaceable> will
         appear in the horizontal header sorted according to the
-        corresponding <replaceable class="parameter">scolH</> values.
+        corresponding <replaceable class="parameter">sortcolH</> values.
         </para>
 
         <para>

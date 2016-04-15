@@ -82,16 +82,13 @@ static bool printCrosstab(const PGresult *results,
 			  int num_columns, pivot_field *piv_columns, int field_for_columns,
 			  int num_rows, pivot_field *piv_rows, int field_for_rows,
 			  int field_for_data);
-static int parseColumnRefs(const char *arg, const PGresult *res,
-				int **col_numbers,
-				int max_columns, char separator);
 static void avlInit(avl_tree *tree);
 static void avlMergeValue(avl_tree *tree, char *name, char *sort_value);
 static int avlCollectFields(avl_tree *tree, avl_node *node,
 				 pivot_field *fields, int idx);
 static void avlFree(avl_tree *tree, avl_node *node);
 static void rankSort(int num_columns, pivot_field *piv_columns);
-static int	indexOfColumn(const char *arg, const PGresult *res);
+static int	indexOfColumn(char *arg, const PGresult *res);
 static int	pivotFieldCompare(const void *a, const void *b);
 static int	rankCompare(const void *a, const void *b);
 
@@ -99,133 +96,85 @@ static int	rankCompare(const void *a, const void *b);
 /*
  * Main entry point to this module.
  *
- * Process the data from *res according the display options in pset (global),
+ * Process the data from *res according to the options in pset (global),
  * to generate the horizontal and vertical headers contents,
  * then call printCrosstab() for the actual output.
  */
 bool
 PrintResultsInCrosstab(const PGresult *res)
 {
-	char	   *opt_field_for_rows = pset.ctv_col_V;
-	char	   *opt_field_for_columns = pset.ctv_col_H;
-	char	   *opt_field_for_data = pset.ctv_col_D;
-	int			rn;
+	bool		retval = false;
 	avl_tree	piv_columns;
 	avl_tree	piv_rows;
 	pivot_field *array_columns = NULL;
 	pivot_field *array_rows = NULL;
 	int			num_columns = 0;
 	int			num_rows = 0;
-	int		   *colsV = NULL,
-			   *colsH = NULL,
-			   *colsD = NULL;
-	int			n;
-	int			field_for_columns;
-	int			sort_field_for_columns = -1;
 	int			field_for_rows;
-	int			field_for_data = -1;
-	bool		retval = false;
+	int			field_for_columns;
+	int			field_for_data;
+	int			sort_field_for_columns;
+	int			rn;
 
 	avlInit(&piv_rows);
 	avlInit(&piv_columns);
 
-	if (res == NULL)
-	{
-		psql_error(_("No result\n"));
-		goto error_return;
-	}
-
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		psql_error(_("The query must return results to be shown in crosstab\n"));
+		psql_error(_("\\crosstabview: query must return results to be shown in crosstab\n"));
 		goto error_return;
 	}
 
-	if (opt_field_for_rows && !opt_field_for_columns)
+	if (PQnfields(res) < 3)
 	{
-		psql_error(_("A second column must be specified for the horizontal header\n"));
+		psql_error(_("\\crosstabview: query must return at least three columns\n"));
 		goto error_return;
 	}
 
-	if (PQnfields(res) <= 2)
-	{
-		psql_error(_("The query must return at least two columns to be shown in crosstab\n"));
-		goto error_return;
-	}
-
-	/*
-	 * Arguments processing for the vertical header (1st arg) displayed in the
-	 * left-most column. Only a reference to a field is accepted (no sort
-	 * column).
-	 */
-
-	if (opt_field_for_rows == NULL)
-	{
+	/* Process first optional arg (vertical header column) */
+	if (pset.ctv_args[0] == NULL)
 		field_for_rows = 0;
-	}
 	else
 	{
-		n = parseColumnRefs(opt_field_for_rows, res, &colsV, 1, ':');
-		if (n != 1)
+		field_for_rows = indexOfColumn(pset.ctv_args[0], res);
+		if (field_for_rows < 0)
 			goto error_return;
-		field_for_rows = colsV[0];
 	}
 
-	if (field_for_rows < 0)
-		goto error_return;
-
-	/*----------
-	 * Arguments processing for the horizontal header (2nd arg)
-	 * (pivoted column that gets displayed as the first row).
-	 * Determine:
-	 * - the field number for the horizontal header column
-	 * - the field number of the associated sort column, if any
-	 */
-
-	if (opt_field_for_columns == NULL)
+	/* Process second optional arg (horizontal header column) */
+	if (pset.ctv_args[1] == NULL)
 		field_for_columns = 1;
 	else
 	{
-		n = parseColumnRefs(opt_field_for_columns, res, &colsH, 2, ':');
-		if (n <= 0)
-			goto error_return;
-		if (n == 1)
-			field_for_columns = colsH[0];
-		else
-		{
-			field_for_columns = colsH[0];
-			sort_field_for_columns = colsH[1];
-		}
-
+		field_for_columns = indexOfColumn(pset.ctv_args[1], res);
 		if (field_for_columns < 0)
 			goto error_return;
 	}
 
+	/* Insist that header columns be distinct */
 	if (field_for_columns == field_for_rows)
 	{
-		psql_error(_("The same column cannot be used for both vertical and horizontal headers\n"));
+		psql_error(_("\\crosstabview: vertical and horizontal headers must be different columns\n"));
 		goto error_return;
 	}
 
-	/*
-	 * Arguments processing for the data columns (3rd arg).  Determine the
-	 * column to display in the grid.
-	 */
-	if (opt_field_for_data == NULL)
+	/* Process third optional arg (data column) */
+	if (pset.ctv_args[2] == NULL)
 	{
-		int		i;
+		int			i;
 
 		/*
 		 * If the data column was not specified, we search for the one not
-		 * used as either vertical or horizontal headers.  If the result has
-		 * more than three columns, raise an error.
+		 * used as either vertical or horizontal headers.  Must be exactly
+		 * three columns, or this won't be unique.
 		 */
-		if (PQnfields(res) > 3)
+		if (PQnfields(res) != 3)
 		{
-			psql_error(_("Data column must be specified when the result set has more than three columns\n"));
+			psql_error(_("\\crosstabview: data column must be specified when query returns more than three columns\n"));
 			goto error_return;
 		}
 
+		field_for_data = -1;
 		for (i = 0; i < PQnfields(res); i++)
 		{
 			if (i != field_for_rows && i != field_for_columns)
@@ -238,13 +187,19 @@ PrintResultsInCrosstab(const PGresult *res)
 	}
 	else
 	{
-		int		num_fields;
-
-		/* If a field was given, find out what it is.  Only one is allowed. */
-		num_fields = parseColumnRefs(opt_field_for_data, res, &colsD, 1, ',');
-		if (num_fields < 1)
+		field_for_data = indexOfColumn(pset.ctv_args[2], res);
+		if (field_for_data < 0)
 			goto error_return;
-		field_for_data = colsD[0];
+	}
+
+	/* Process fourth optional arg (horizontal header sort column) */
+	if (pset.ctv_args[3] == NULL)
+		sort_field_for_columns = -1;	/* no sort column */
+	else
+	{
+		sort_field_for_columns = indexOfColumn(pset.ctv_args[3], res);
+		if (sort_field_for_columns < 0)
+			goto error_return;
 	}
 
 	/*
@@ -271,7 +226,7 @@ PrintResultsInCrosstab(const PGresult *res)
 
 		if (piv_columns.count > CROSSTABVIEW_MAX_COLUMNS)
 		{
-			psql_error(_("Maximum number of columns (%d) exceeded\n"),
+			psql_error(_("\\crosstabview: maximum number of columns (%d) exceeded\n"),
 					   CROSSTABVIEW_MAX_COLUMNS);
 			goto error_return;
 		}
@@ -319,9 +274,6 @@ error_return:
 	avlFree(&piv_rows, piv_rows.root);
 	pg_free(array_columns);
 	pg_free(array_rows);
-	pg_free(colsV);
-	pg_free(colsH);
-	pg_free(colsD);
 
 	return retval;
 }
@@ -442,7 +394,7 @@ printCrosstab(const PGresult *results,
 			 */
 			if (cont.cells[idx] != NULL)
 			{
-				psql_error(_("data cell already contains a value: (row: \"%s\", column: \"%s\")\n"),
+				psql_error(_("\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"\n"),
 							 piv_rows[row_number].name ? piv_rows[row_number].name :
 							 popt.nullPrint ? popt.nullPrint : "(null)",
 							 piv_columns[col_number].name ? piv_columns[col_number].name :
@@ -473,108 +425,6 @@ error:
 	printTableCleanup(&cont);
 
 	return retval;
-}
-
-/*
- * Parse "arg", which is a string of column IDs separated by "separator".
- *
- * Each column ID can be:
- * - a number from 1 to PQnfields(res)
- * - an unquoted column name matching (case insensitively) one of PQfname(res,...)
- * - a quoted column name matching (case sensitively) one of PQfname(res,...)
- *
- * If max_columns > 0, it is the max number of column IDs allowed.
- *
- * On success, return number of column IDs found (possibly 0), and return a
- * malloc'd array of the matching column numbers of "res" into *col_numbers.
- *
- * On failure, return -1 and set *col_numbers to NULL.
- */
-static int
-parseColumnRefs(const char *arg,
-				const PGresult *res,
-				int **col_numbers,
-				int max_columns,
-				char separator)
-{
-	const char *p = arg;
-	char		c;
-	int			num_cols = 0;
-
-	*col_numbers = NULL;
-	while ((c = *p) != '\0')
-	{
-		const char *field_start = p;
-		bool		quoted_field = false;
-
-		/* first char */
-		if (c == '"')
-		{
-			quoted_field = true;
-			p++;
-		}
-
-		while ((c = *p) != '\0')
-		{
-			if (c == separator && !quoted_field)
-				break;
-			if (c == '"')		/* end of field or embedded double quote */
-			{
-				p++;
-				if (*p == '"')
-				{
-					if (quoted_field)
-					{
-						p++;
-						continue;
-					}
-				}
-				else if (quoted_field && *p == separator)
-					break;
-			}
-			if (*p)
-				p += PQmblen(p, pset.encoding);
-		}
-
-		if (p != field_start)
-		{
-			char   *col_name;
-			int		col_num;
-
-			/* enforce max_columns limit */
-			if (max_columns > 0 && num_cols == max_columns)
-			{
-				psql_error(_("No more than %d column references expected\n"),
-						   max_columns);
-				goto errfail;
-			}
-			/* look up the column and add its index into *col_numbers */
-			col_name = pg_malloc(p - field_start + 1);
-			memcpy(col_name, field_start, p - field_start);
-			col_name[p - field_start] = '\0';
-			col_num = indexOfColumn(col_name, res);
-			pg_free(col_name);
-			if (col_num < 0)
-				goto errfail;
-			*col_numbers = (int *) pg_realloc(*col_numbers,
-											  (num_cols + 1) * sizeof(int));
-			(*col_numbers)[num_cols++] = col_num;
-		}
-		else
-		{
-			psql_error(_("Empty column reference\n"));
-			goto errfail;
-		}
-
-		if (*p)
-			p += PQmblen(p, pset.encoding);
-	}
-	return num_cols;
-
-errfail:
-	pg_free(*col_numbers);
-	*col_numbers = NULL;
-	return -1;
 }
 
 /*
@@ -773,77 +623,75 @@ rankSort(int num_columns, pivot_field *piv_columns)
 }
 
 /*
- * Compare a user-supplied argument against a field name obtained by PQfname(),
- * which is already case-folded.
- * If arg is not enclosed in double quotes, pg_strcasecmp applies, otherwise
- * do a case-sensitive comparison with these rules:
- * - double quotes enclosing 'arg' are filtered out
- * - double quotes inside 'arg' are expected to be doubled
- */
-static bool
-fieldNameEquals(const char *arg, const char *fieldname)
-{
-	const char *p = arg;
-	const char *f = fieldname;
-	char		c;
-
-	if (*p++ != '"')
-		return (pg_strcasecmp(arg, fieldname) == 0);
-
-	while ((c = *p++))
-	{
-		if (c == '"')
-		{
-			if (*p == '"')
-				p++;			/* skip second quote and continue */
-			else if (*p == '\0')
-				return (*f == '\0');	/* p is shorter than f, or is
-										 * identical */
-		}
-		if (*f == '\0')
-			return false;		/* f is shorter than p */
-		if (c != *f)			/* found one byte that differs */
-			return false;
-		f++;
-	}
-	return (*f == '\0');
-}
-
-/*
- * arg can be a number or a column name, possibly quoted (like in an ORDER BY clause)
- * Returns:
- *	on success, the 0-based index of the column
- *	or -1 if the column number or name is not found in the result's structure,
- *		  or if it's ambiguous (arg corresponding to several columns)
+ * Look up a column reference, which can be either:
+ * - a number from 1 to PQnfields(res)
+ * - a column name matching one of PQfname(res,...)
+ *
+ * Returns zero-based column number, or -1 if not found or ambiguous.
+ *
+ * Note: may modify contents of "arg" string.
  */
 static int
-indexOfColumn(const char *arg, const PGresult *res)
+indexOfColumn(char *arg, const PGresult *res)
 {
 	int			idx;
 
-	if (strspn(arg, "0123456789") == strlen(arg))
+	if (arg[0] && strspn(arg, "0123456789") == strlen(arg))
 	{
 		/* if arg contains only digits, it's a column number */
 		idx = atoi(arg) - 1;
 		if (idx < 0 || idx >= PQnfields(res))
 		{
-			psql_error(_("Invalid column number: %s\n"), arg);
+			psql_error(_("\\crosstabview: invalid column number: \"%s\"\n"), arg);
 			return -1;
 		}
 	}
 	else
 	{
+		bool		inquotes = false;
+		char	   *cp = arg;
 		int			i;
 
+		/*
+		 * Dequote and downcase the column name.  By checking for all-digits
+		 * before doing this, we can ensure that a quoted name is treated as a
+		 * name even if it's all digits.  This transformation should match
+		 * what psqlscanslash.l does in OT_SQLID mode.  (XXX ideally we would
+		 * let the lexer do this, but then we couldn't tell if the name was
+		 * quoted.)
+		 */
+		while (*cp)
+		{
+			if (*cp == '"')
+			{
+				if (inquotes && cp[1] == '"')
+				{
+					/* Keep the first quote, remove the second */
+					cp++;
+				}
+				inquotes = !inquotes;
+				/* Collapse out quote at *cp */
+				memmove(cp, cp + 1, strlen(cp));
+				/* do not advance cp */
+			}
+			else
+			{
+				if (!inquotes)
+					*cp = pg_tolower((unsigned char) *cp);
+				cp += PQmblen(cp, pset.encoding);
+			}
+		}
+
+		/* Now look for match(es) among res' column names */
 		idx = -1;
 		for (i = 0; i < PQnfields(res); i++)
 		{
-			if (fieldNameEquals(arg, PQfname(res, i)))
+			if (strcmp(arg, PQfname(res, i)) == 0)
 			{
 				if (idx >= 0)
 				{
-					/* if another idx was already found for the same name */
-					psql_error(_("Ambiguous column name: %s\n"), arg);
+					/* another idx was already found for the same name */
+					psql_error(_("\\crosstabview: ambiguous column name: \"%s\"\n"), arg);
 					return -1;
 				}
 				idx = i;
@@ -851,7 +699,7 @@ indexOfColumn(const char *arg, const PGresult *res)
 		}
 		if (idx == -1)
 		{
-			psql_error(_("Invalid column name: %s\n"), arg);
+			psql_error(_("\\crosstabview: column name not found: \"%s\"\n"), arg);
 			return -1;
 		}
 	}
