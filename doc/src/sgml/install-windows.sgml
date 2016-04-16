@@ -240,10 +240,10 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
 
      <note>
        <para>
-       The obsolete "winflex" binaries distributed on the PostgreSQL FTP site
-       and referenced in older documentation will fail with "flex: fatal
-       internal error, exec failed" on 64-bit Windows hosts. Use flex from
-       msys instead.
+       The obsolete <literal>winflex</literal> binaries distributed on the PostgreSQL FTP site
+       and referenced in older documentation will fail with <quote>flex: fatal
+       internal error, exec failed</quote> on 64-bit Windows hosts. Use Flex from
+       MSYS instead.
        </para>
      </note>
      </listitem>
