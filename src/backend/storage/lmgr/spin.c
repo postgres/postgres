@@ -22,10 +22,6 @@
  */
 #include "postgres.h"
 
-#include "access/xlog.h"
-#include "miscadmin.h"
-#include "replication/walsender.h"
-#include "storage/lwlock.h"
 #include "storage/pg_sema.h"
 #include "storage/spin.h"
 
@@ -85,7 +81,17 @@ SpinlockSemaInit(PGSemaphore spinsemas)
 }
 
 /*
- * s_lock.h hardware-spinlock emulation
+ * s_lock.h hardware-spinlock emulation using semaphores
+ *
+ * We map all spinlocks onto a set of NUM_SPINLOCK_SEMAPHORES semaphores.
+ * It's okay to map multiple spinlocks onto one semaphore because no process
+ * should ever hold more than one at a time.  We just need enough semaphores
+ * so that we aren't adding too much extra contention from that.
+ *
+ * slock_t is just an int for this implementation; it holds the spinlock
+ * number from 1..NUM_SPINLOCK_SEMAPHORES.  We intentionally ensure that 0
+ * is not a valid value, so that testing with this code can help find
+ * failures to initialize spinlocks.
  */
 
 void
@@ -93,13 +99,17 @@ s_init_lock_sema(volatile slock_t *lock, bool nested)
 {
 	static int	counter = 0;
 
-	*lock = (++counter) % NUM_SPINLOCK_SEMAPHORES;
+	*lock = ((++counter) % NUM_SPINLOCK_SEMAPHORES) + 1;
 }
 
 void
 s_unlock_sema(volatile slock_t *lock)
 {
-	PGSemaphoreUnlock(&SpinlockSemaArray[*lock]);
+	int			lockndx = *lock;
+
+	if (lockndx <= 0 || lockndx > NUM_SPINLOCK_SEMAPHORES)
+		elog(ERROR, "invalid spinlock number: %d", lockndx);
+	PGSemaphoreUnlock(&SpinlockSemaArray[lockndx - 1]);
 }
 
 bool
@@ -113,8 +123,12 @@ s_lock_free_sema(volatile slock_t *lock)
 int
 tas_sema(volatile slock_t *lock)
 {
+	int			lockndx = *lock;
+
+	if (lockndx <= 0 || lockndx > NUM_SPINLOCK_SEMAPHORES)
+		elog(ERROR, "invalid spinlock number: %d", lockndx);
 	/* Note that TAS macros return 0 if *success* */
-	return !PGSemaphoreTryLock(&SpinlockSemaArray[*lock]);
+	return !PGSemaphoreTryLock(&SpinlockSemaArray[lockndx - 1]);
 }
 
 #endif   /* !HAVE_SPINLOCKS */
