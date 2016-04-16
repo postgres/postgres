@@ -18,6 +18,7 @@
 #include "access/amapi.h"
 #include "access/htup_details.h"
 #include "access/reloptions.h"
+#include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
@@ -37,6 +38,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
+#include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -573,6 +575,41 @@ DefineIndex(Oid relationId,
 	 */
 	if (stmt->primary)
 		index_check_primary_key(rel, indexInfo, is_alter_table);
+
+	/*
+	 * We disallow indexes on system columns other than OID.  They would not
+	 * necessarily get updated correctly, and they don't seem useful anyway.
+	 */
+	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+	{
+		AttrNumber	attno = indexInfo->ii_KeyAttrNumbers[i];
+
+		if (attno < 0 && attno != ObjectIdAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("index creation on system columns is not supported")));
+	}
+
+	/*
+	 * Also check for system columns used in expressions or predicates.
+	 */
+	if (indexInfo->ii_Expressions || indexInfo->ii_Predicate)
+	{
+		Bitmapset  *indexattrs = NULL;
+
+		pull_varattnos((Node *) indexInfo->ii_Expressions, 1, &indexattrs);
+		pull_varattnos((Node *) indexInfo->ii_Predicate, 1, &indexattrs);
+
+		for (i = FirstLowInvalidHeapAttributeNumber + 1; i < 0; i++)
+		{
+			if (i != ObjectIdAttributeNumber &&
+				bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
+							  indexattrs))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("index creation on system columns is not supported")));
+		}
+	}
 
 	/*
 	 * Report index creation if appropriate (delay this till after most of the
