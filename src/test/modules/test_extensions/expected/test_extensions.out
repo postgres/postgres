@@ -35,3 +35,6 @@ drop cascades to extension test_ext5
 drop cascades to extension test_ext2
 drop cascades to extension test_ext4
 drop cascades to extension test_ext1
+CREATE EXTENSION test_ext6;
+DROP EXTENSION test_ext6;
+CREATE EXTENSION test_ext6;

@@ -1,0 +1,5 @@
+comment = 'test_ext6'
+default_version = '1.0'
+relocatable = false
+superuser = true
+schema = 'test_ext6'

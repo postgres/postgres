@@ -13,3 +13,7 @@ SELECT extname, nspname, extversion, extrelocatable FROM pg_extension e, pg_name
 CREATE EXTENSION test_ext_cyclic1 CASCADE;
 
 DROP SCHEMA test_ext CASCADE;
+
+CREATE EXTENSION test_ext6;
+DROP EXTENSION test_ext6;
+CREATE EXTENSION test_ext6;

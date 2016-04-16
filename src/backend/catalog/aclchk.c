@@ -5283,8 +5283,6 @@ recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid, Acl *new_acl)
 	/* There should exist only one entry or none. */
 	oldtuple = systable_getnext(scan);
 
-	systable_endscan(scan);
-
 	/* If we find an entry, update it with the latest ACL. */
 	if (HeapTupleIsValid(oldtuple))
 	{
@@ -5339,6 +5337,8 @@ recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid, Acl *new_acl)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, tuple);
 	}
+
+	systable_endscan(scan);
 
 	/* prevent error when processing objects multiple times */
 	CommandCounterIncrement();
