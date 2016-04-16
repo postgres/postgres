@@ -8559,7 +8559,7 @@ int dectolong(decimal *np, long *lngp);
 int rdatestr(date d, char *str);
 </synopsis>
         The function receives two arguments, the first one is the date to
-        convert (<literal>d</> and the second one is a pointer to the target
+        convert (<literal>d</>) and the second one is a pointer to the target
         string. The output format is always <literal>yyyy-mm-dd</>, so you need
         to allocate at least 11 bytes (including the zero-byte terminator) for the
         string.
@@ -8912,7 +8912,7 @@ int dttoasc(timestamp *ts, char *output);
 </synopsis>
         The function receives a pointer to the timestamp variable to convert
         (<literal>ts</>) and the string that should hold the result of the
-        operation <literal>output</>). It converts <literal>ts</> to its
+        operation (<literal>output</>). It converts <literal>ts</> to its
         textual representation according to the SQL standard, which is
         be <literal>YYYY-MM-DD HH:MM:SS</literal>.
        </para>
@@ -8959,7 +8959,7 @@ int intoasc(interval *i, char *str);
 </synopsis>
         The function receives a pointer to the interval variable to convert
         (<literal>i</>) and the string that should hold the result of the
-        operation <literal>str</>). It converts <literal>i</> to its
+        operation (<literal>str</>). It converts <literal>i</> to its
         textual representation according to the SQL standard, which is
         be <literal>YYYY-MM-DD HH:MM:SS</literal>.
        </para>
