@@ -1466,7 +1466,7 @@ ALTER TABLE products RENAME TO items;
 
   <para>
    To assign privileges, the <command>GRANT</command> command is
-   used. For example, if <literal>joe</literal> is an existing user, and
+   used. For example, if <literal>joe</literal> is an existing role, and
    <literal>accounts</literal> is an existing table, the privilege to
    update the table can be granted with:
 <programlisting>
@@ -1477,8 +1477,8 @@ GRANT UPDATE ON accounts TO joe;
   </para>
 
   <para>
-   The special <quote>user</quote> name <literal>PUBLIC</literal> can
-   be used to grant a privilege to every user on the system.  Also,
+   The special <quote>role</quote> name <literal>PUBLIC</literal> can
+   be used to grant a privilege to every role on the system.  Also,
    <quote>group</> roles can be set up to help manage privileges when
    there are many users of a database &mdash; for details see
    <xref linkend="user-manag">.
