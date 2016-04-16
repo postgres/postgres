@@ -42,6 +42,8 @@
 
 #include "bootstrap/bootstrap.h"
 #include "postmaster/postmaster.h"
+#include "storage/barrier.h"
+#include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
 #include "utils/memutils.h"
@@ -313,6 +315,12 @@ startup_hacks(const char *progname)
 
 	}
 #endif   /* WIN32 */
+
+	/*
+	 * Initialize dummy_spinlock, in case we are on a platform where we have
+	 * to use the fallback implementation of pg_memory_barrier().
+	 */
+	SpinLockInit(&dummy_spinlock);
 }
 
 
