@@ -12,6 +12,7 @@
 #include "common.h"
 #include "crosstabview.h"
 #include "pqexpbuffer.h"
+#include "psqlscanslash.h"
 #include "settings.h"
 
 
@@ -648,39 +649,14 @@ indexOfColumn(char *arg, const PGresult *res)
 	}
 	else
 	{
-		bool		inquotes = false;
-		char	   *cp = arg;
 		int			i;
 
 		/*
 		 * Dequote and downcase the column name.  By checking for all-digits
 		 * before doing this, we can ensure that a quoted name is treated as a
-		 * name even if it's all digits.  This transformation should match
-		 * what psqlscanslash.l does in OT_SQLID mode.  (XXX ideally we would
-		 * let the lexer do this, but then we couldn't tell if the name was
-		 * quoted.)
+		 * name even if it's all digits.
 		 */
-		while (*cp)
-		{
-			if (*cp == '"')
-			{
-				if (inquotes && cp[1] == '"')
-				{
-					/* Keep the first quote, remove the second */
-					cp++;
-				}
-				inquotes = !inquotes;
-				/* Collapse out quote at *cp */
-				memmove(cp, cp + 1, strlen(cp));
-				/* do not advance cp */
-			}
-			else
-			{
-				if (!inquotes)
-					*cp = pg_tolower((unsigned char) *cp);
-				cp += PQmblen(cp, pset.encoding);
-			}
-		}
+		dequote_downcase_identifier(arg, true, pset.encoding);
 
 		/* Now look for match(es) among res' column names */
 		idx = -1;

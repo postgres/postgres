@@ -32,4 +32,6 @@ extern char *psql_scan_slash_option(PsqlScanState state,
 
 extern void psql_scan_slash_command_end(PsqlScanState state);
 
+extern void dequote_downcase_identifier(char *str, bool downcase, int encoding);
+
 #endif   /* PSQLSCANSLASH_H */

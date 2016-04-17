@@ -566,42 +566,15 @@ psql_scan_slash_option(PsqlScanState state,
 
 			/*
 			 * If SQL identifier processing was requested, then we strip out
-			 * excess double quotes and downcase unquoted letters.
-			 * Doubled double-quotes become output double-quotes, per spec.
-			 *
-			 * Note that a string like FOO"BAR"BAZ will be converted to
-			 * fooBARbaz; this is somewhat inconsistent with the SQL spec,
-			 * which would have us parse it as several identifiers.  But
-			 * for psql's purposes, we want a string like "foo"."bar" to
-			 * be treated as one option, so there's little choice.
+			 * excess double quotes and optionally downcase unquoted letters.
 			 */
 			if (type == OT_SQLID || type == OT_SQLIDHACK)
 			{
-				bool		inquotes = false;
-				char	   *cp = mybuf.data;
-
-				while (*cp)
-				{
-					if (*cp == '"')
-					{
-						if (inquotes && cp[1] == '"')
-						{
-							/* Keep the first quote, remove the second */
-							cp++;
-						}
-						inquotes = !inquotes;
-						/* Collapse out quote at *cp */
-						memmove(cp, cp + 1, strlen(cp));
-						mybuf.len--;
-						/* do not advance cp */
-					}
-					else
-					{
-						if (!inquotes && type == OT_SQLID)
-							*cp = pg_tolower((unsigned char) *cp);
-						cp += PQmblen(cp, state->encoding);
-					}
-				}
+				dequote_downcase_identifier(mybuf.data,
+											(type != OT_SQLIDHACK),
+											state->encoding);
+				/* update mybuf.len for possible shortening */
+				mybuf.len = strlen(mybuf.data);
 			}
 			break;
 		case xslashquote:
@@ -665,6 +638,51 @@ psql_scan_slash_command_end(PsqlScanState state)
 	 * reselect the appropriate initial state.
 	 */
 	psql_scan_reselect_sql_lexer(state);
+}
+
+/*
+ * De-quote and optionally downcase a SQL identifier.
+ *
+ * The string at *str is modified in-place; it can become shorter,
+ * but not longer.
+ *
+ * If downcase is true then non-quoted letters are folded to lower case.
+ * Ideally this behavior will match the backend's downcase_identifier();
+ * but note that it could differ if LC_CTYPE is different in the frontend.
+ *
+ * Note that a string like FOO"BAR"BAZ will be converted to fooBARbaz;
+ * this is somewhat inconsistent with the SQL spec, which would have us
+ * parse it as several identifiers.  But for psql's purposes, we want a
+ * string like "foo"."bar" to be treated as one option, so there's little
+ * choice; this routine doesn't get to change the token boundaries.
+ */
+void
+dequote_downcase_identifier(char *str, bool downcase, int encoding)
+{
+	bool		inquotes = false;
+	char	   *cp = str;
+
+	while (*cp)
+	{
+		if (*cp == '"')
+		{
+			if (inquotes && cp[1] == '"')
+			{
+				/* Keep the first quote, remove the second */
+				cp++;
+			}
+			inquotes = !inquotes;
+			/* Collapse out quote at *cp */
+			memmove(cp, cp + 1, strlen(cp));
+			/* do not advance cp */
+		}
+		else
+		{
+			if (downcase && !inquotes)
+				*cp = pg_tolower((unsigned char) *cp);
+			cp += PQmblen(cp, encoding);
+		}
+	}
 }
 
 /*
