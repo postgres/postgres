@@ -62,7 +62,7 @@
  * may improve performance, but supplying a real spinlock implementation is
  * probably far better.
  */
-#define	NUM_SPINLOCK_SEMAPHORES		1024
+#define	NUM_SPINLOCK_SEMAPHORES		128
 
 /*
  * Define this if you want to allow the lo_import and lo_export SQL
