@@ -25,8 +25,23 @@
 #include "miscadmin.h"
 #include "replication/walsender.h"
 #include "storage/lwlock.h"
+#include "storage/pg_sema.h"
 #include "storage/spin.h"
 
+
+#ifndef HAVE_SPINLOCKS
+PGSemaphore SpinlockSemaArray;
+#endif
+
+/*
+ * Report the amount of shared memory needed to store semaphores for spinlock
+ * support.
+ */
+Size
+SpinlockSemaSize(void)
+{
+	return SpinlockSemas() * sizeof(PGSemaphoreData);
+}
 
 #ifdef HAVE_SPINLOCKS
 
@@ -51,21 +66,20 @@ SpinlockSemas(void)
 int
 SpinlockSemas(void)
 {
-	int			nsemas;
+	return NUM_SPINLOCK_SEMAPHORES;
+}
 
-	/*
-	 * It would be cleaner to distribute this logic into the affected modules,
-	 * similar to the way shmem space estimation is handled.
-	 *
-	 * For now, though, there are few enough users of spinlocks that we just
-	 * keep the knowledge here.
-	 */
-	nsemas = NumLWLocks();		/* one for each lwlock */
-	nsemas += NBuffers;			/* one for each buffer header */
-	nsemas += max_wal_senders;	/* one for each wal sender process */
-	nsemas += 30;				/* plus a bunch for other small-scale use */
+/*
+ * Initialize semaphores.
+ */
+extern void
+SpinlockSemaInit(PGSemaphore spinsemas)
+{
+	int			i;
 
-	return nsemas;
+	for (i = 0; i < NUM_SPINLOCK_SEMAPHORES; ++i)
+		PGSemaphoreCreate(&spinsemas[i]);
+	SpinlockSemaArray = spinsemas;
 }
 
 /*
@@ -75,13 +89,15 @@ SpinlockSemas(void)
 void
 s_init_lock_sema(volatile slock_t *lock)
 {
-	PGSemaphoreCreate((PGSemaphore) lock);
+	static int	counter = 0;
+
+	*lock = (++counter) % NUM_SPINLOCK_SEMAPHORES;
 }
 
 void
 s_unlock_sema(volatile slock_t *lock)
 {
-	PGSemaphoreUnlock((PGSemaphore) lock);
+	PGSemaphoreUnlock(&SpinlockSemaArray[*lock]);
 }
 
 bool
@@ -96,7 +112,7 @@ int
 tas_sema(volatile slock_t *lock)
 {
 	/* Note that TAS macros return 0 if *success* */
-	return !PGSemaphoreTryLock((PGSemaphore) lock);
+	return !PGSemaphoreTryLock(&SpinlockSemaArray[*lock]);
 }
 
 #endif   /* !HAVE_SPINLOCKS */
