@@ -440,6 +440,9 @@ typedef struct
 	slock_t    *ShmemLock;
 	VariableCache ShmemVariableCache;
 	Backend    *ShmemBackendArray;
+#ifndef HAVE_SPINLOCKS
+	PGSemaphore	SpinlockSemaArray;
+#endif
 	LWLock	   *LWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
@@ -4927,6 +4930,9 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->ShmemVariableCache = ShmemVariableCache;
 	param->ShmemBackendArray = ShmemBackendArray;
 
+#ifndef HAVE_SPINLOCKS
+	param->SpinlockSemaArray = SpinlockSemaArray;
+#endif
 	param->LWLockArray = LWLockArray;
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
@@ -5153,6 +5159,9 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	ShmemVariableCache = param->ShmemVariableCache;
 	ShmemBackendArray = param->ShmemBackendArray;
 
+#ifndef HAVE_SPINLOCKS
+	SpinlockSemaArray = param->SpinlockSemaArray;
+#endif
 	LWLockArray = param->LWLockArray;
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;
