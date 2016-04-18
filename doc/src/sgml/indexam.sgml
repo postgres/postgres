@@ -58,7 +58,7 @@
   </para>
 
   <para>
-   Index access access methods can be defined and dropped using
+   Index access methods can be defined and dropped using
    <xref linkend="sql-create-access-method"> and
     <xref linkend="sql-drop-access-method"> SQL commands respectively.
   </para>
