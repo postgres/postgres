@@ -1198,9 +1198,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		{
 			/* if it wasn't valid, we need only the new partition */
 			LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
-			/* these just keep the compiler quiet about uninit variables */
+			/* remember we have no old-partition lock or tag */
+			oldPartitionLock = NULL;
+			/* this just keeps the compiler quiet about uninit variables */
 			oldHash = 0;
-			oldPartitionLock = 0;
 		}
 
 		/*
@@ -1223,7 +1224,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			UnpinBuffer(buf, true);
 
 			/* Can give up that buffer's mapping partition lock now */
-			if ((oldFlags & BM_TAG_VALID) &&
+			if (oldPartitionLock != NULL &&
 				oldPartitionLock != newPartitionLock)
 				LWLockRelease(oldPartitionLock);
 
@@ -1277,7 +1278,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 		UnlockBufHdr(buf, buf_state);
 		BufTableDelete(&newTag, newHash);
-		if ((oldFlags & BM_TAG_VALID) &&
+		if (oldPartitionLock != NULL &&
 			oldPartitionLock != newPartitionLock)
 			LWLockRelease(oldPartitionLock);
 		LWLockRelease(newPartitionLock);
@@ -1303,7 +1304,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 	UnlockBufHdr(buf, buf_state);
 
-	if (oldFlags & BM_TAG_VALID)
+	if (oldPartitionLock != NULL)
 	{
 		BufTableDelete(&oldTag, oldHash);
 		if (oldPartitionLock != newPartitionLock)
