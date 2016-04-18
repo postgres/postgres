@@ -57,7 +57,7 @@
  * may improve performance, but supplying a real spinlock implementation is
  * probably far better.
  */
-#define NUM_SPINLOCK_SEMAPHORES		1024
+#define NUM_SPINLOCK_SEMAPHORES		128
 
 /*
  * When we have neither spinlocks nor atomic operations support we're
