@@ -698,17 +698,21 @@ SET LOCAL search_path TO @extschema@;
 
     <para>
      To solve this problem, an extension's script file can mark a table
-     it has created as a configuration table, which will cause
-     <application>pg_dump</> to include the table's contents (not its
-     definition) in dumps.  To do that, call the function
+     or a sequence it has created as a configuration relation, which will
+     cause <application>pg_dump</> to include the table's or the sequence's
+     contents (not its definition) in dumps.  To do that, call the function
      <function>pg_extension_config_dump(regclass, text)</> after creating the
-     table, for example
+     table or the sequence, for example
 <programlisting>
 CREATE TABLE my_config (key text, value text);
+CREATE SEQUENCE my_config_seq;
 
 SELECT pg_catalog.pg_extension_config_dump('my_config', '');
+SELECT pg_catalog.pg_extension_config_dump('my_config_seq', '');
 </programlisting>
-     Any number of tables can be marked this way.
+     Any number of tables or sequences can be marked this way. Sequences
+     associated with <type>serial</> or <type>bigserial</> columns can
+     be marked as well.
     </para>
 
     <para>
@@ -727,6 +731,11 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
 </programlisting>
      and then make sure that <structfield>standard_entry</> is true only
      in the rows created by the extension's script.
+    </para>
+
+    <para>
+     For sequences, the second argument of <function>pg_extension_config_dump</>
+     has no effect.
     </para>
 
     <para>
@@ -752,6 +761,12 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      supported.  When circular dependencies exist, the data will still be dumped
      out but the dump will not be able to be restored directly and user
      intervention will be required.
+    </para>
+    
+    <para>
+     Sequences associated with <type>serial</> or <type>bigserial</> columns
+     need to be directly marked to dump their state. Marking their parent
+     relation is not enough for this purpose.
     </para>
    </sect2>
 
