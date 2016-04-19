@@ -443,79 +443,106 @@ SELECT '' AS five, * FROM FLOAT8_TBL;
 (5 rows)
 
 -- test exact cases for trigonometric functions in degrees
+SET extra_float_digits = 3;
 SELECT x,
-       CASE WHEN sind(x) IN (-1,-0.5,0,0.5,1) THEN sind(x) END AS sind,
-       CASE WHEN cosd(x) IN (-1,-0.5,0,0.5,1) THEN cosd(x) END AS cosd,
-       CASE WHEN tand(x) IN ('-Infinity'::float8,-1,0,
-                             1,'Infinity'::float8) THEN tand(x) END AS tand,
-       CASE WHEN cotd(x) IN ('-Infinity'::float8,-1,0,
-                             1,'Infinity'::float8) THEN cotd(x) END AS cotd
-FROM generate_series(0, 360, 15) AS t(x);
-  x  | sind | cosd |   tand    |   cotd    
------+------+------+-----------+-----------
-   0 |    0 |    1 |         0 |  Infinity
-  15 |      |      |           |          
-  30 |  0.5 |      |           |          
-  45 |      |      |         1 |         1
-  60 |      |  0.5 |           |          
-  75 |      |      |           |          
-  90 |    1 |    0 |  Infinity |         0
- 105 |      |      |           |          
- 120 |      | -0.5 |           |          
- 135 |      |      |        -1 |        -1
- 150 |  0.5 |      |           |          
- 165 |      |      |           |          
- 180 |    0 |   -1 |         0 | -Infinity
- 195 |      |      |           |          
- 210 | -0.5 |      |           |          
- 225 |      |      |         1 |         1
- 240 |      | -0.5 |           |          
- 255 |      |      |           |          
- 270 |   -1 |    0 | -Infinity |         0
- 285 |      |      |           |          
- 300 |      |  0.5 |           |          
- 315 |      |      |        -1 |        -1
- 330 | -0.5 |      |           |          
- 345 |      |      |           |          
- 360 |    0 |    1 |         0 |  Infinity
-(25 rows)
+       sind(x),
+       sind(x) IN (-1,-0.5,0,0.5,1) AS sind_exact
+FROM (VALUES (0), (30), (90), (150), (180),
+      (210), (270), (330), (360)) AS t(x);
+  x  | sind | sind_exact 
+-----+------+------------
+   0 |    0 | t
+  30 |  0.5 | t
+  90 |    1 | t
+ 150 |  0.5 | t
+ 180 |    0 | t
+ 210 | -0.5 | t
+ 270 |   -1 | t
+ 330 | -0.5 | t
+ 360 |    0 | t
+(9 rows)
 
 SELECT x,
-       CASE WHEN asind(x) IN (-90,-30,0,30,90) THEN asind(x) END AS asind,
-       CASE WHEN acosd(x) IN (0,60,90,120,180) THEN acosd(x) END AS acosd,
-       CASE WHEN atand(x) IN (-45,0,45) THEN atand(x) END AS atand
+       cosd(x),
+       cosd(x) IN (-1,-0.5,0,0.5,1) AS cosd_exact
+FROM (VALUES (0), (60), (90), (120), (180),
+      (240), (270), (300), (360)) AS t(x);
+  x  | cosd | cosd_exact 
+-----+------+------------
+   0 |    1 | t
+  60 |  0.5 | t
+  90 |    0 | t
+ 120 | -0.5 | t
+ 180 |   -1 | t
+ 240 | -0.5 | t
+ 270 |    0 | t
+ 300 |  0.5 | t
+ 360 |    1 | t
+(9 rows)
+
+SELECT x,
+       tand(x),
+       tand(x) IN ('-Infinity'::float8,-1,0,
+                   1,'Infinity'::float8) AS tand_exact,
+       cotd(x),
+       cotd(x) IN ('-Infinity'::float8,-1,0,
+                   1,'Infinity'::float8) AS cotd_exact
+FROM (VALUES (0), (45), (90), (135), (180),
+      (225), (270), (315), (360)) AS t(x);
+  x  |   tand    | tand_exact |   cotd    | cotd_exact 
+-----+-----------+------------+-----------+------------
+   0 |         0 | t          |  Infinity | t
+  45 |         1 | t          |         1 | t
+  90 |  Infinity | t          |         0 | t
+ 135 |        -1 | t          |        -1 | t
+ 180 |         0 | t          | -Infinity | t
+ 225 |         1 | t          |         1 | t
+ 270 | -Infinity | t          |         0 | t
+ 315 |        -1 | t          |        -1 | t
+ 360 |         0 | t          |  Infinity | t
+(9 rows)
+
+SELECT x,
+       asind(x),
+       asind(x) IN (-90,-30,0,30,90) AS asind_exact,
+       acosd(x),
+       acosd(x) IN (0,60,90,120,180) AS acosd_exact
 FROM (VALUES (-1), (-0.5), (0), (0.5), (1)) AS t(x);
-  x   | asind | acosd | atand 
-------+-------+-------+-------
-   -1 |   -90 |   180 |   -45
- -0.5 |   -30 |   120 |      
-    0 |     0 |    90 |     0
-  0.5 |    30 |    60 |      
-    1 |    90 |     0 |    45
+  x   | asind | asind_exact | acosd | acosd_exact 
+------+-------+-------------+-------+-------------
+   -1 |   -90 | t           |   180 | t
+ -0.5 |   -30 | t           |   120 | t
+    0 |     0 | t           |    90 | t
+  0.5 |    30 | t           |    60 | t
+    1 |    90 | t           |     0 | t
 (5 rows)
 
-SELECT atand('-Infinity'::float8) = -90;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT atand('Infinity'::float8) = 90;
- ?column? 
-----------
- t
-(1 row)
+SELECT x,
+       atand(x),
+       atand(x) IN (-90,-45,0,45,90) AS atand_exact
+FROM (VALUES ('-Infinity'::float8), (-1), (0), (1),
+      ('Infinity'::float8)) AS t(x);
+     x     | atand | atand_exact 
+-----------+-------+-------------
+ -Infinity |   -90 | t
+        -1 |   -45 | t
+         0 |     0 | t
+         1 |    45 | t
+  Infinity |    90 | t
+(5 rows)
 
 SELECT x, y,
-       CASE WHEN atan2d(y, x) IN (-90,0,90,180) THEN atan2d(y, x) END AS atan2d
+       atan2d(y, x),
+       atan2d(y, x) IN (-90,0,90,180) AS atan2d_exact
 FROM (SELECT 10*cosd(a), 10*sind(a)
       FROM generate_series(0, 360, 90) AS t(a)) AS t(x,y);
-  x  |  y  | atan2d 
------+-----+--------
-  10 |   0 |      0
-   0 |  10 |     90
- -10 |   0 |    180
-   0 | -10 |    -90
-  10 |   0 |      0
+  x  |  y  | atan2d | atan2d_exact 
+-----+-----+--------+--------------
+  10 |   0 |      0 | t
+   0 |  10 |     90 | t
+ -10 |   0 |    180 | t
+   0 | -10 |    -90 | t
+  10 |   0 |      0 | t
 (5 rows)
 
+RESET extra_float_digits;

@@ -169,25 +169,47 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 SELECT '' AS five, * FROM FLOAT8_TBL;
 
 -- test exact cases for trigonometric functions in degrees
-SELECT x,
-       CASE WHEN sind(x) IN (-1,-0.5,0,0.5,1) THEN sind(x) END AS sind,
-       CASE WHEN cosd(x) IN (-1,-0.5,0,0.5,1) THEN cosd(x) END AS cosd,
-       CASE WHEN tand(x) IN ('-Infinity'::float8,-1,0,
-                             1,'Infinity'::float8) THEN tand(x) END AS tand,
-       CASE WHEN cotd(x) IN ('-Infinity'::float8,-1,0,
-                             1,'Infinity'::float8) THEN cotd(x) END AS cotd
-FROM generate_series(0, 360, 15) AS t(x);
+SET extra_float_digits = 3;
 
 SELECT x,
-       CASE WHEN asind(x) IN (-90,-30,0,30,90) THEN asind(x) END AS asind,
-       CASE WHEN acosd(x) IN (0,60,90,120,180) THEN acosd(x) END AS acosd,
-       CASE WHEN atand(x) IN (-45,0,45) THEN atand(x) END AS atand
+       sind(x),
+       sind(x) IN (-1,-0.5,0,0.5,1) AS sind_exact
+FROM (VALUES (0), (30), (90), (150), (180),
+      (210), (270), (330), (360)) AS t(x);
+
+SELECT x,
+       cosd(x),
+       cosd(x) IN (-1,-0.5,0,0.5,1) AS cosd_exact
+FROM (VALUES (0), (60), (90), (120), (180),
+      (240), (270), (300), (360)) AS t(x);
+
+SELECT x,
+       tand(x),
+       tand(x) IN ('-Infinity'::float8,-1,0,
+                   1,'Infinity'::float8) AS tand_exact,
+       cotd(x),
+       cotd(x) IN ('-Infinity'::float8,-1,0,
+                   1,'Infinity'::float8) AS cotd_exact
+FROM (VALUES (0), (45), (90), (135), (180),
+      (225), (270), (315), (360)) AS t(x);
+
+SELECT x,
+       asind(x),
+       asind(x) IN (-90,-30,0,30,90) AS asind_exact,
+       acosd(x),
+       acosd(x) IN (0,60,90,120,180) AS acosd_exact
 FROM (VALUES (-1), (-0.5), (0), (0.5), (1)) AS t(x);
 
-SELECT atand('-Infinity'::float8) = -90;
-SELECT atand('Infinity'::float8) = 90;
+SELECT x,
+       atand(x),
+       atand(x) IN (-90,-45,0,45,90) AS atand_exact
+FROM (VALUES ('-Infinity'::float8), (-1), (0), (1),
+      ('Infinity'::float8)) AS t(x);
 
 SELECT x, y,
-       CASE WHEN atan2d(y, x) IN (-90,0,90,180) THEN atan2d(y, x) END AS atan2d
+       atan2d(y, x),
+       atan2d(y, x) IN (-90,0,90,180) AS atan2d_exact
 FROM (SELECT 10*cosd(a), 10*sind(a)
       FROM generate_series(0, 360, 90) AS t(a)) AS t(x,y);
+
+RESET extra_float_digits;
