@@ -2798,7 +2798,7 @@ ltrmark:;
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buffer);
 		lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
 
 		Assert(ItemIdIsNormal(lp));

@@ -298,9 +298,7 @@ GenericXLogRegisterBuffer(GenericXLogState *state, Buffer buffer, int flags)
 			/* Empty slot, so use it (there cannot be a match later) */
 			page->buffer = buffer;
 			page->flags = flags;
-			memcpy(page->image,
-				   BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
-				   BLCKSZ);
+			memcpy(page->image, BufferGetPage(buffer), BLCKSZ);
 			return (Page) page->image;
 		}
 		else if (page->buffer == buffer)
@@ -345,8 +343,7 @@ GenericXLogFinish(GenericXLogState *state)
 			if (BufferIsInvalid(pageData->buffer))
 				continue;
 
-			page = BufferGetPage(pageData->buffer, NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST);
+			page = BufferGetPage(pageData->buffer);
 			pageHeader = (PageHeader) pageData->image;
 
 			if (pageData->flags & GENERIC_XLOG_FULL_IMAGE)
@@ -399,8 +396,7 @@ GenericXLogFinish(GenericXLogState *state)
 
 			if (BufferIsInvalid(pageData->buffer))
 				continue;
-			PageSetLSN(BufferGetPage(pageData->buffer, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST), lsn);
+			PageSetLSN(BufferGetPage(pageData->buffer), lsn);
 			MarkBufferDirty(pageData->buffer);
 		}
 		END_CRIT_SECTION();
@@ -415,8 +411,7 @@ GenericXLogFinish(GenericXLogState *state)
 
 			if (BufferIsInvalid(pageData->buffer))
 				continue;
-			memcpy(BufferGetPage(pageData->buffer, NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST),
+			memcpy(BufferGetPage(pageData->buffer),
 				   pageData->image,
 				   BLCKSZ);
 			/* We don't worry about zeroing the "hole" in this case */
@@ -502,8 +497,7 @@ generic_redo(XLogReaderState *record)
 			char	   *blockDelta;
 			Size		blockDeltaSize;
 
-			page = BufferGetPage(buffers[block_id], NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST);
+			page = BufferGetPage(buffers[block_id]);
 			blockDelta = XLogRecGetBlockData(record, block_id, &blockDeltaSize);
 			applyPageRedo(page, blockDelta, blockDeltaSize);
 

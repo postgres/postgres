@@ -110,7 +110,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		newbuf = InvalidBuffer;
 		extended = false;
 	}
-	oldpage = BufferGetPage(oldbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	oldpage = BufferGetPage(oldbuf);
 	oldlp = PageGetItemId(oldpage, oldoff);
 
 	/*
@@ -228,8 +228,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		 * Not enough free space on the oldpage. Put the new tuple on the new
 		 * page, and update the revmap.
 		 */
-		Page		newpage = BufferGetPage(newbuf, NULL, NULL,
-											BGP_NO_SNAPSHOT_TEST);
+		Page		newpage = BufferGetPage(newbuf);
 		Buffer		revmapbuf;
 		ItemPointerData newtid;
 		OffsetNumber newoff;
@@ -246,9 +245,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		 * need to do that here.
 		 */
 		if (extended)
-			brin_page_init(BufferGetPage(newbuf, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST),
-						   BRIN_PAGETYPE_REGULAR);
+			brin_page_init(BufferGetPage(newbuf), BRIN_PAGETYPE_REGULAR);
 
 		PageIndexDeleteNoCompact(oldpage, &oldoff, 1);
 		newoff = PageAddItem(newpage, (Item) newtup, newsz,
@@ -301,9 +298,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 
 			PageSetLSN(oldpage, recptr);
 			PageSetLSN(newpage, recptr);
-			PageSetLSN(BufferGetPage(revmapbuf, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST),
-					   recptr);
+			PageSetLSN(BufferGetPage(revmapbuf), recptr);
 		}
 
 		END_CRIT_SECTION();
@@ -331,9 +326,7 @@ brin_can_do_samepage_update(Buffer buffer, Size origsz, Size newsz)
 {
 	return
 		((newsz <= origsz) ||
-		 PageGetExactFreeSpace(BufferGetPage(buffer, NULL, NULL,
-											 BGP_NO_SNAPSHOT_TEST))
-			>= (newsz - origsz));
+		 PageGetExactFreeSpace(BufferGetPage(buffer)) >= (newsz - origsz));
 }
 
 /*
@@ -388,9 +381,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		 * it's still a regular page.
 		 */
 		LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (br_page_get_freespace(BufferGetPage(*buffer, NULL, NULL,
-												BGP_NO_SNAPSHOT_TEST))
-			< itemsz)
+		if (br_page_get_freespace(BufferGetPage(*buffer)) < itemsz)
 		{
 			UnlockReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
@@ -413,15 +404,13 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	/* Now obtain lock on revmap buffer */
 	revmapbuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
 
-	page = BufferGetPage(*buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(*buffer);
 	blk = BufferGetBlockNumber(*buffer);
 
 	/* Execute the actual insertion */
 	START_CRIT_SECTION();
 	if (extended)
-		brin_page_init(BufferGetPage(*buffer, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST),
-					   BRIN_PAGETYPE_REGULAR);
+		brin_page_init(BufferGetPage(*buffer), BRIN_PAGETYPE_REGULAR);
 	off = PageAddItem(page, (Item) tup, itemsz, InvalidOffsetNumber,
 					  false, false);
 	if (off == InvalidOffsetNumber)
@@ -458,8 +447,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		recptr = XLogInsert(RM_BRIN_ID, info);
 
 		PageSetLSN(page, recptr);
-		PageSetLSN(BufferGetPage(revmapbuf, NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST), recptr);
+		PageSetLSN(BufferGetPage(revmapbuf), recptr);
 	}
 
 	END_CRIT_SECTION();
@@ -527,7 +515,7 @@ brin_start_evacuating_page(Relation idxRel, Buffer buf)
 	OffsetNumber maxoff;
 	Page		page;
 
-	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buf);
 
 	if (PageIsNew(page))
 		return false;
@@ -563,7 +551,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 	OffsetNumber maxoff;
 	Page		page;
 
-	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buf);
 
 	Assert(BrinPageFlags(page) & BRIN_EVACUATE_PAGE);
 
@@ -610,7 +598,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 bool
 brin_page_cleanup(Relation idxrel, Buffer buf)
 {
-	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buf);
 	Size		freespace;
 
 	/*
@@ -639,10 +627,8 @@ brin_page_cleanup(Relation idxrel, Buffer buf)
 	}
 
 	/* Nothing to be done for non-regular index pages */
-	if (BRIN_IS_META_PAGE(BufferGetPage(buf, NULL, NULL,
-										BGP_NO_SNAPSHOT_TEST)) ||
-		BRIN_IS_REVMAP_PAGE(BufferGetPage(buf, NULL, NULL,
-										  BGP_NO_SNAPSHOT_TEST)))
+	if (BRIN_IS_META_PAGE(BufferGetPage(buf)) ||
+		BRIN_IS_REVMAP_PAGE(BufferGetPage(buf)))
 		return false;
 
 	/* Measure free space and record it */
@@ -752,8 +738,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		if (BufferIsValid(oldbuf) && oldblk < newblk)
 		{
 			LockBuffer(oldbuf, BUFFER_LOCK_EXCLUSIVE);
-			if (!BRIN_IS_REGULAR_PAGE(BufferGetPage(oldbuf, NULL, NULL,
-													BGP_NO_SNAPSHOT_TEST)))
+			if (!BRIN_IS_REGULAR_PAGE(BufferGetPage(oldbuf)))
 			{
 				LockBuffer(oldbuf, BUFFER_LOCK_UNLOCK);
 
@@ -785,7 +770,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		if (extensionLockHeld)
 			UnlockRelationForExtension(irel, ExclusiveLock);
 
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 
 		/*
 		 * We have a new buffer to insert into.  Check that the new page has
@@ -820,8 +805,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 			if (BufferIsValid(oldbuf) && oldblk > newblk)
 			{
 				LockBuffer(oldbuf, BUFFER_LOCK_EXCLUSIVE);
-				Assert(BRIN_IS_REGULAR_PAGE(BufferGetPage(oldbuf, NULL, NULL,
-														  BGP_NO_SNAPSHOT_TEST)));
+				Assert(BRIN_IS_REGULAR_PAGE(BufferGetPage(oldbuf)));
 			}
 
 			return buf;
@@ -878,7 +862,7 @@ brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer)
 			   BufferGetBlockNumber(buffer)));
 
 	START_CRIT_SECTION();
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buffer);
 	brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 	MarkBufferDirty(buffer);
 	log_newpage_buffer(buffer, true);

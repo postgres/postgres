@@ -100,7 +100,7 @@ statapprox_heap(Relation rel, output_type *stat)
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 
 		/*
 		 * It's not safe to call PageGetHeapFreeSpace() on new pages, so we

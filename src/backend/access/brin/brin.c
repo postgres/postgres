@@ -208,8 +208,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 		}
 		else
 		{
-			Page		page = BufferGetPage(buf, NULL, NULL,
-											 BGP_NO_SNAPSHOT_TEST);
+			Page		page = BufferGetPage(buf);
 			ItemId		lp = PageGetItemId(page, off);
 			Size		origsz;
 			BrinTuple  *origtup;
@@ -620,8 +619,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	Assert(BufferGetBlockNumber(meta) == BRIN_METAPAGE_BLKNO);
 	LockBuffer(meta, BUFFER_LOCK_EXCLUSIVE);
 
-	brin_metapage_init(BufferGetPage(meta, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
-					   BrinGetPagesPerRange(index),
+	brin_metapage_init(BufferGetPage(meta), BrinGetPagesPerRange(index),
 					   BRIN_CURRENT_VERSION);
 	MarkBufferDirty(meta);
 
@@ -640,7 +638,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_CREATE_INDEX);
 
-		page = BufferGetPage(meta, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(meta);
 		PageSetLSN(page, recptr);
 	}
 
@@ -690,9 +688,7 @@ brinbuildempty(Relation index)
 
 	/* Initialize and xlog metabuffer. */
 	START_CRIT_SECTION();
-	brin_metapage_init(BufferGetPage(metabuf, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST),
-					   BrinGetPagesPerRange(index),
+	brin_metapage_init(BufferGetPage(metabuf), BrinGetPagesPerRange(index),
 					   BRIN_CURRENT_VERSION);
 	MarkBufferDirty(metabuf);
 	log_newpage_buffer(metabuf, false);
@@ -947,8 +943,7 @@ terminate_brin_buildstate(BrinBuildState *state)
 	{
 		Page		page;
 
-		page = BufferGetPage(state->bs_currentInsertBuf, NULL, NULL,
-							 BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(state->bs_currentInsertBuf);
 		RecordPageWithFreeSpace(state->bs_irel,
 							BufferGetBlockNumber(state->bs_currentInsertBuf),
 								PageGetFreeSpace(page));

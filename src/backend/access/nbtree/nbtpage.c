@@ -130,7 +130,7 @@ _bt_getroot(Relation rel, int access)
 		rootlevel = metad->btm_fastlevel;
 
 		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
-		rootpage = BufferGetPage(rootbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		rootpage = BufferGetPage(rootbuf);
 		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
 		/*
@@ -156,7 +156,7 @@ _bt_getroot(Relation rel, int access)
 	}
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
-	metapg = BufferGetPage(metabuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	metapg = BufferGetPage(metabuf);
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
@@ -213,7 +213,7 @@ _bt_getroot(Relation rel, int access)
 		 */
 		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 		rootblkno = BufferGetBlockNumber(rootbuf);
-		rootpage = BufferGetPage(rootbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		rootpage = BufferGetPage(rootbuf);
 		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 		rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
 		rootopaque->btpo_flags = (BTP_LEAF | BTP_ROOT);
@@ -295,7 +295,7 @@ _bt_getroot(Relation rel, int access)
 		for (;;)
 		{
 			rootbuf = _bt_relandgetbuf(rel, rootbuf, rootblkno, BT_READ);
-			rootpage = BufferGetPage(rootbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			rootpage = BufferGetPage(rootbuf);
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
 			if (!P_IGNORE(rootopaque))
@@ -360,7 +360,7 @@ _bt_gettrueroot(Relation rel)
 	rel->rd_amcache = NULL;
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
-	metapg = BufferGetPage(metabuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	metapg = BufferGetPage(metabuf);
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
@@ -397,7 +397,7 @@ _bt_gettrueroot(Relation rel)
 	for (;;)
 	{
 		rootbuf = _bt_relandgetbuf(rel, rootbuf, rootblkno, BT_READ);
-		rootpage = BufferGetPage(rootbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		rootpage = BufferGetPage(rootbuf);
 		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
 		if (!P_IGNORE(rootopaque))
@@ -446,7 +446,7 @@ _bt_getrootheight(Relation rel)
 		BTPageOpaque metaopaque;
 
 		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
-		metapg = BufferGetPage(metabuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		metapg = BufferGetPage(metabuf);
 		metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 		metad = BTPageGetMeta(metapg);
 
@@ -501,7 +501,7 @@ _bt_getrootheight(Relation rel)
 void
 _bt_checkpage(Relation rel, Buffer buf)
 {
-	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buf);
 
 	/*
 	 * ReadBuffer verifies that every newly-read page passes
@@ -616,7 +616,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 			buf = ReadBuffer(rel, blkno);
 			if (ConditionalLockBuffer(buf))
 			{
-				page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+				page = BufferGetPage(buf);
 				if (_bt_page_recyclable(page))
 				{
 					/*
@@ -674,7 +674,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 			UnlockRelationForExtension(rel, ExclusiveLock);
 
 		/* Initialize the new page before returning it */
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 		Assert(PageIsNew(page));
 		_bt_pageinit(page, BufferGetPageSize(buf));
 	}
@@ -789,7 +789,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 					OffsetNumber *itemnos, int nitems,
 					BlockNumber lastBlockVacuumed)
 {
-	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
 
 	/* No ereport(ERROR) until changes are logged */
@@ -862,7 +862,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 					OffsetNumber *itemnos, int nitems,
 					Relation heapRel)
 {
-	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
 
 	/* Shouldn't be called unless there's something to do */
@@ -931,7 +931,7 @@ _bt_is_page_halfdead(Relation rel, BlockNumber blk)
 	bool		result;
 
 	buf = _bt_getbuf(rel, blk, BT_READ);
-	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	result = P_ISHALFDEAD(opaque);
@@ -991,7 +991,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
 
-	page = BufferGetPage(pbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(pbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
@@ -1035,7 +1035,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 				BTPageOpaque lopaque;
 
 				lbuf = _bt_getbuf(rel, leftsib, BT_READ);
-				lpage = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+				lpage = BufferGetPage(lbuf);
 				lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
 				/*
@@ -1126,7 +1126,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 
 	for (;;)
 	{
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		/*
@@ -1231,7 +1231,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 					Page		lpage;
 
 					lbuf = _bt_getbuf(rel, leftsib, BT_READ);
-					lpage = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+					lpage = BufferGetPage(lbuf);
 					lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
 					/*
@@ -1332,7 +1332,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	IndexTuple	itup;
 	IndexTupleData trunctuple;
 
-	page = BufferGetPage(leafbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(leafbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	Assert(!P_RIGHTMOST(opaque) && !P_ISROOT(opaque) && !P_ISDELETED(opaque) &&
@@ -1385,7 +1385,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * contents.  The test on the next-child downlink is known to sometimes
 	 * fail in the field, though.
 	 */
-	page = BufferGetPage(topparent, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(topparent);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 #ifdef USE_ASSERT_CHECKING
@@ -1417,7 +1417,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * to copy the right sibling's downlink over the target downlink, and then
 	 * delete the following item.
 	 */
-	page = BufferGetPage(topparent, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(topparent);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	itemid = PageGetItemId(page, topoff);
@@ -1432,7 +1432,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * highest internal page in the branch we're deleting.  We use the tid of
 	 * the high key to store it.
 	 */
-	page = BufferGetPage(leafbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(leafbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags |= BTP_HALF_DEAD;
 
@@ -1469,7 +1469,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 		XLogRegisterBuffer(0, leafbuf, REGBUF_WILL_INIT);
 		XLogRegisterBuffer(1, topparent, REGBUF_STANDARD);
 
-		page = BufferGetPage(leafbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(leafbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		xlrec.leftblk = opaque->btpo_prev;
 		xlrec.rightblk = opaque->btpo_next;
@@ -1478,9 +1478,9 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_MARK_PAGE_HALFDEAD);
 
-		page = BufferGetPage(topparent, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(topparent);
 		PageSetLSN(page, recptr);
-		page = BufferGetPage(leafbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(leafbuf);
 		PageSetLSN(page, recptr);
 	}
 
@@ -1525,7 +1525,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	ItemPointer leafhikey;
 	BlockNumber nextchild;
 
-	page = BufferGetPage(leafbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(leafbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	Assert(P_ISLEAF(opaque) && P_ISHALFDEAD(opaque));
@@ -1551,7 +1551,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 
 		/* fetch the block number of the topmost parent's left sibling */
 		buf = _bt_getbuf(rel, target, BT_READ);
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		leftsib = opaque->btpo_prev;
 		targetlevel = opaque->btpo.level;
@@ -1589,7 +1589,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	if (leftsib != P_NONE)
 	{
 		lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
-		page = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(lbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		while (P_ISDELETED(opaque) || opaque->btpo_next != target)
 		{
@@ -1603,7 +1603,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 				return false;
 			}
 			lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
-			page = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			page = BufferGetPage(lbuf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		}
 	}
@@ -1616,7 +1616,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 * empty page.
 	 */
 	LockBuffer(buf, BT_WRITE);
-	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
@@ -1660,7 +1660,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	rightsib = opaque->btpo_next;
 	rbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
-	page = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(rbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (opaque->btpo_prev != target)
 		elog(ERROR, "right sibling's left-link doesn't match: "
@@ -1684,13 +1684,13 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	if (leftsib == P_NONE && rightsib_is_rightmost)
 	{
-		page = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(rbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (P_RIGHTMOST(opaque))
 		{
 			/* rightsib will be the only one left on the level */
 			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
-			metapg = BufferGetPage(metabuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
 
 			/*
@@ -1721,12 +1721,12 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	if (BufferIsValid(lbuf))
 	{
-		page = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(lbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		Assert(opaque->btpo_next == target);
 		opaque->btpo_next = rightsib;
 	}
-	page = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(rbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	Assert(opaque->btpo_prev == target);
 	opaque->btpo_prev = leftsib;
@@ -1754,7 +1754,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 * will continue to do so, holding back RecentGlobalXmin, for the duration
 	 * of that scan.
 	 */
-	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HALF_DEAD;
 	opaque->btpo_flags |= BTP_DELETED;
@@ -1826,18 +1826,18 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 		{
 			PageSetLSN(metapg, recptr);
 		}
-		page = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(rbuf);
 		PageSetLSN(page, recptr);
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 		PageSetLSN(page, recptr);
 		if (BufferIsValid(lbuf))
 		{
-			page = BufferGetPage(lbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			page = BufferGetPage(lbuf);
 			PageSetLSN(page, recptr);
 		}
 		if (target != leafblkno)
 		{
-			page = BufferGetPage(leafbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			page = BufferGetPage(leafbuf);
 			PageSetLSN(page, recptr);
 		}
 	}

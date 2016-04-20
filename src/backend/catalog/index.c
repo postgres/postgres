@@ -2306,7 +2306,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		 */
 		if (scan->rs_cblock != root_blkno)
 		{
-			Page		page = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			Page		page = BufferGetPage(scan->rs_cbuf);
 
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 			heap_get_root_tuples(page, root_offsets);
@@ -3016,7 +3016,7 @@ validate_index_heapscan(Relation heapRelation,
 		 */
 		if (scan->rs_cblock != root_blkno)
 		{
-			Page		page = BufferGetPage(scan->rs_cbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			Page		page = BufferGetPage(scan->rs_cbuf);
 
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 			heap_get_root_tuples(page, root_offsets);

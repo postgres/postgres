@@ -451,7 +451,7 @@ moveLeafs(Relation index, SpGistState *state,
 	/* Find a leaf page that will hold them */
 	nbuf = SpGistGetBuffer(index, GBUF_LEAF | (isNulls ? GBUF_NULLS : 0),
 						   size, &xlrec.newPage);
-	npage = BufferGetPage(nbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	npage = BufferGetPage(nbuf);
 	nblkno = BufferGetBlockNumber(nbuf);
 	Assert(nblkno != current->blkno);
 
@@ -1037,8 +1037,7 @@ doPickSplit(Relation index, SpGistState *state,
 		nodePageSelect = (uint8 *) palloc(sizeof(uint8) * out.nNodes);
 
 		curspace = currentFreeSpace;
-		newspace = PageGetExactFreeSpace
-			(BufferGetPage(newLeafBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST));
+		newspace = PageGetExactFreeSpace(BufferGetPage(newLeafBuffer));
 		for (i = 0; i < out.nNodes; i++)
 		{
 			if (leafSizes[i] <= curspace)
@@ -1071,9 +1070,7 @@ doPickSplit(Relation index, SpGistState *state,
 
 			/* Repeat the node assignment process --- should succeed now */
 			curspace = currentFreeSpace;
-			newspace = PageGetExactFreeSpace
-				(BufferGetPage(newLeafBuffer, NULL, NULL,
-							   BGP_NO_SNAPSHOT_TEST));
+			newspace = PageGetExactFreeSpace(BufferGetPage(newLeafBuffer));
 			for (i = 0; i < out.nNodes; i++)
 			{
 				if (leafSizes[i] <= curspace)
@@ -1204,9 +1201,7 @@ doPickSplit(Relation index, SpGistState *state,
 			it->nextOffset = InvalidOffsetNumber;
 
 		/* Insert it on page */
-		newoffset = SpGistPageAddNewItem(state,
-										 BufferGetPage(leafBuffer, NULL, NULL,
-													   BGP_NO_SNAPSHOT_TEST),
+		newoffset = SpGistPageAddNewItem(state, BufferGetPage(leafBuffer),
 										 (Item) it, it->size,
 										 &startOffsets[leafPageSelect[i]],
 										 false);
@@ -1280,8 +1275,7 @@ doPickSplit(Relation index, SpGistState *state,
 		/* Repoint "current" at the new inner tuple */
 		current->buffer = newInnerBuffer;
 		current->blkno = BufferGetBlockNumber(current->buffer);
-		current->page = BufferGetPage(current->buffer, NULL, NULL,
-									  BGP_NO_SNAPSHOT_TEST);
+		current->page = BufferGetPage(current->buffer);
 		xlrec.offnumInner = current->offnum =
 			SpGistPageAddNewItem(state, current->page,
 								 (Item) innerTuple, innerTuple->size,
@@ -1397,22 +1391,24 @@ doPickSplit(Relation index, SpGistState *state,
 		/* Update page LSNs on all affected pages */
 		if (newLeafBuffer != InvalidBuffer)
 		{
-			Page		page = BufferGetPage(newLeafBuffer, NULL, NULL,
-											 BGP_NO_SNAPSHOT_TEST);
+			Page		page = BufferGetPage(newLeafBuffer);
+
 			PageSetLSN(page, recptr);
 		}
 
 		if (saveCurrent.buffer != InvalidBuffer)
 		{
-			Page		page = BufferGetPage(saveCurrent.buffer, NULL, NULL,
-											 BGP_NO_SNAPSHOT_TEST);
+			Page		page = BufferGetPage(saveCurrent.buffer);
+
 			PageSetLSN(page, recptr);
 		}
 
 		PageSetLSN(current->page, recptr);
 
 		if (parent->buffer != InvalidBuffer)
+		{
 			PageSetLSN(parent->page, recptr);
+		}
 	}
 
 	END_CRIT_SECTION();
@@ -1582,8 +1578,7 @@ spgAddNodeAction(Relation index, SpGistState *state,
 									newInnerTuple->size + sizeof(ItemIdData),
 										  &xlrec.newPage);
 		current->blkno = BufferGetBlockNumber(current->buffer);
-		current->page = BufferGetPage(current->buffer, NULL, NULL,
-									  BGP_NO_SNAPSHOT_TEST);
+		current->page = BufferGetPage(current->buffer);
 
 		/*
 		 * Let's just make real sure new current isn't same as old.  Right now
@@ -1798,9 +1793,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	{
 		postfixBlkno = BufferGetBlockNumber(newBuffer);
 		xlrec.offnumPostfix = postfixOffset =
-			SpGistPageAddNewItem(state,
-								 BufferGetPage(newBuffer, NULL, NULL,
-											   BGP_NO_SNAPSHOT_TEST),
+			SpGistPageAddNewItem(state, BufferGetPage(newBuffer),
 								 (Item) postfixTuple, postfixTuple->size,
 								 NULL, false);
 		MarkBufferDirty(newBuffer);
@@ -1847,8 +1840,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 
 		if (newBuffer != InvalidBuffer)
 		{
-			PageSetLSN(BufferGetPage(newBuffer, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST), recptr);
+			PageSetLSN(BufferGetPage(newBuffer), recptr);
 		}
 	}
 
@@ -1992,8 +1984,7 @@ spgdoinsert(Relation index, SpGistState *state,
 			/* inner tuple can be stored on the same page as parent one */
 			current.buffer = parent.buffer;
 		}
-		current.page = BufferGetPage(current.buffer, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST);
+		current.page = BufferGetPage(current.buffer);
 
 		/* should not arrive at a page of the wrong type */
 		if (isnull ? !SpGistPageStoresNulls(current.page) :
