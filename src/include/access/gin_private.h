@@ -656,12 +656,12 @@ typedef struct GinBtreeStack
 
 typedef struct GinBtreeData *GinBtree;
 
-/* Return codes for GinBtreeData.placeToPage method */
+/* Return codes for GinBtreeData.beginPlaceToPage method */
 typedef enum
 {
-	UNMODIFIED,
-	INSERTED,
-	SPLIT
+	GPTP_NO_WORK,
+	GPTP_INSERT,
+	GPTP_SPLIT
 } GinPlaceToPageRC;
 
 typedef struct GinBtreeData
@@ -674,7 +674,8 @@ typedef struct GinBtreeData
 
 	/* insert methods */
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
-	GinPlaceToPageRC (*placeToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, XLogRecData **, Page *, Page *);
+	GinPlaceToPageRC (*beginPlaceToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, void **, Page *, Page *, XLogRecData *);
+	void		(*execPlaceToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, void *, XLogRecData *);
 	void	   *(*prepareDownlink) (GinBtree, Buffer);
 	void		(*fillRoot) (GinBtree, Page, BlockNumber, Page, BlockNumber, Page);
 
