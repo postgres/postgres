@@ -18,7 +18,6 @@
 #include "access/xloginsert.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 
 /*
@@ -57,6 +56,13 @@ typedef struct
 	int			rsize;			/* total size on right page */
 
 	bool		oldformat;		/* page is in pre-9.4 format on disk */
+
+	/*
+	 * If we need WAL data representing the reconstructed leaf page, it's
+	 * stored here by computeLeafRecompressWALData.
+	 */
+	char	   *walinfo;		/* buffer start */
+	int			walinfolen;		/* and length */
 } disassembledLeaf;
 
 typedef struct
@@ -105,10 +111,9 @@ static bool leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining);
 static bool addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems,
 			   int nNewItems);
 
-static void registerLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf);
+static void computeLeafRecompressWALData(disassembledLeaf *leaf);
 static void dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf);
-static void dataPlaceToPageLeafSplit(Buffer buf,
-						 disassembledLeaf *leaf,
+static void dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 						 ItemPointerData lbound, ItemPointerData rbound,
 						 Page lpage, Page rpage);
 
@@ -423,11 +428,22 @@ GinPageDeletePostingItem(Page page, OffsetNumber offset)
 }
 
 /*
- * Places keys to leaf data page and fills WAL record.
+ * Prepare to insert data on a leaf data page.
+ *
+ * If it will fit, return GPTP_INSERT after doing whatever setup is needed
+ * before we enter the insertion critical section.  *ptp_workspace can be
+ * set to pass information along to the execPlaceToPage function.
+ *
+ * If it won't fit, perform a page split and return two temporary page
+ * images into *newlpage and *newrpage, with result GPTP_SPLIT.
+ *
+ * In neither case should the given page buffer be modified here.
  */
 static GinPlaceToPageRC
-dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
-					void *insertdata, Page *newlpage, Page *newrpage)
+dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+						 void *insertdata,
+						 void **ptp_workspace,
+						 Page *newlpage, Page *newrpage)
 {
 	GinBtreeDataLeafInsertData *items = insertdata;
 	ItemPointer newItems = &items->items[items->curitem];
@@ -440,14 +456,10 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	bool		append;
 	int			segsize;
 	Size		freespace;
-	MemoryContext tmpCxt;
-	MemoryContext oldCxt;
 	disassembledLeaf *leaf;
 	leafSegmentInfo *lastleftinfo;
 	ItemPointerData maxOldItem;
 	ItemPointerData remaining;
-
-	Assert(GinPageIsData(page));
 
 	rbound = *GinDataPageGetRightBound(page);
 
@@ -472,18 +484,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		maxitems = i;
 	}
 
-	/*
-	 * The following operations do quite a lot of small memory allocations,
-	 * create a temporary memory context so that we don't need to keep track
-	 * of them individually.
-	 */
-	tmpCxt = AllocSetContextCreate(CurrentMemoryContext,
-								   "Gin split temporary context",
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_INITSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
-	oldCxt = MemoryContextSwitchTo(tmpCxt);
-
+	/* Disassemble the data on the page */
 	leaf = disassembleLeaf(page);
 
 	/*
@@ -548,16 +549,13 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		maxitems = Min(maxitems, nnewsegments * MinTuplesPerSegment);
 	}
 
-	/* Add the new items to the segments */
+	/* Add the new items to the segment list */
 	if (!addItemsToLeaf(leaf, newItems, maxitems))
 	{
 		/* all items were duplicates, we have nothing to do */
 		items->curitem += maxitems;
 
-		MemoryContextSwitchTo(oldCxt);
-		MemoryContextDelete(tmpCxt);
-
-		return UNMODIFIED;
+		return GPTP_NO_WORK;
 	}
 
 	/*
@@ -590,22 +588,17 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	if (!needsplit)
 	{
 		/*
-		 * Great, all the items fit on a single page. Construct a WAL record
-		 * describing the changes we made, and write the segments back to the
-		 * page.
-		 *
-		 * Once we start modifying the page, there's no turning back. The
-		 * caller is responsible for calling END_CRIT_SECTION() after writing
-		 * the WAL record.
+		 * Great, all the items fit on a single page.  If needed, prepare data
+		 * for a WAL record describing the changes we'll make.
 		 */
-		MemoryContextSwitchTo(oldCxt);
 		if (RelationNeedsWAL(btree->index))
-		{
-			XLogBeginInsert();
-			registerLeafRecompressWALData(buf, leaf);
-		}
-		START_CRIT_SECTION();
-		dataPlaceToPageLeafRecompress(buf, leaf);
+			computeLeafRecompressWALData(leaf);
+
+		/*
+		 * We're ready to enter the critical section, but
+		 * dataExecPlaceToPageLeaf will need access to the "leaf" data.
+		 */
+		*ptp_workspace = leaf;
 
 		if (append)
 			elog(DEBUG2, "appended %d new items to block %u; %d bytes (%d to go)",
@@ -619,7 +612,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	else
 	{
 		/*
-		 * Had to split.
+		 * Have to split.
 		 *
 		 * leafRepackItems already divided the segments between the left and
 		 * the right page. It filled the left page as full as possible, and
@@ -631,7 +624,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		 * until they're balanced.
 		 *
 		 * As a further heuristic, when appending items to the end of the
-		 * page, try make the left page 75% full, one the assumption that
+		 * page, try to make the left page 75% full, on the assumption that
 		 * subsequent insertions will probably also go to the end. This packs
 		 * the index somewhat tighter when appending to a table, which is very
 		 * common.
@@ -680,10 +673,13 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 													   &lastleftinfo->nitems);
 		lbound = lastleftinfo->items[lastleftinfo->nitems - 1];
 
-		*newlpage = MemoryContextAlloc(oldCxt, BLCKSZ);
-		*newrpage = MemoryContextAlloc(oldCxt, BLCKSZ);
+		/*
+		 * Now allocate a couple of temporary page images, and fill them.
+		 */
+		*newlpage = palloc(BLCKSZ);
+		*newrpage = palloc(BLCKSZ);
 
-		dataPlaceToPageLeafSplit(buf, leaf, lbound, rbound,
+		dataPlaceToPageLeafSplit(leaf, lbound, rbound,
 								 *newlpage, *newrpage);
 
 		Assert(GinPageRightMost(page) ||
@@ -700,12 +696,31 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 				 items->nitem - items->curitem - maxitems);
 	}
 
-	MemoryContextSwitchTo(oldCxt);
-	MemoryContextDelete(tmpCxt);
-
 	items->curitem += maxitems;
 
-	return needsplit ? SPLIT : INSERTED;
+	return needsplit ? GPTP_SPLIT : GPTP_INSERT;
+}
+
+/*
+ * Perform data insertion after beginPlaceToPage has decided it will fit.
+ *
+ * This is invoked within a critical section, and XLOG record creation (if
+ * needed) is already started.  The target buffer is registered in slot 0.
+ */
+static void
+dataExecPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+						void *insertdata, void *ptp_workspace)
+{
+	disassembledLeaf *leaf = (disassembledLeaf *) ptp_workspace;
+
+	/* Apply changes to page */
+	dataPlaceToPageLeafRecompress(buf, leaf);
+
+	/* If needed, register WAL data built by computeLeafRecompressWALData */
+	if (RelationNeedsWAL(btree->index))
+	{
+		XLogRegisterBufData(0, leaf->walinfo, leaf->walinfolen);
+	}
 }
 
 /*
@@ -816,11 +831,11 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 		}
 
 		if (RelationNeedsWAL(indexrel))
-		{
-			XLogBeginInsert();
-			registerLeafRecompressWALData(buffer, leaf);
-		}
+			computeLeafRecompressWALData(leaf);
+
+		/* Apply changes to page */
 		START_CRIT_SECTION();
+
 		dataPlaceToPageLeafRecompress(buffer, leaf);
 
 		MarkBufferDirty(buffer);
@@ -829,6 +844,9 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 		{
 			XLogRecPtr	recptr;
 
+			XLogBeginInsert();
+			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+			XLogRegisterBufData(0, leaf->walinfo, leaf->walinfolen);
 			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_VACUUM_DATA_LEAF_PAGE);
 			PageSetLSN(page, recptr);
 		}
@@ -839,10 +857,11 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 
 /*
  * Construct a ginxlogRecompressDataLeaf record representing the changes
- * in *leaf.
+ * in *leaf.  (Because this requires a palloc, we have to do it before
+ * we enter the critical section that actually updates the page.)
  */
 static void
-registerLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf)
+computeLeafRecompressWALData(disassembledLeaf *leaf)
 {
 	int			nmodified = 0;
 	char	   *walbufbegin;
@@ -933,18 +952,15 @@ registerLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf)
 			segno++;
 	}
 
-
-	XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-	XLogRegisterBufData(0, walbufbegin, walbufend - walbufbegin);
-
+	/* Pass back the constructed info via *leaf */
+	leaf->walinfo = walbufbegin;
+	leaf->walinfolen = walbufend - walbufbegin;
 }
 
 /*
  * Assemble a disassembled posting tree leaf page back to a buffer.
  *
- * *prdata is filled with WAL information about this operation. The caller
- * is responsible for inserting to the WAL, along with any other information
- * about the operation that triggered this recompression.
+ * This just updates the target buffer; WAL stuff is caller's responsibility.
  *
  * NOTE: The segment pointers must not point directly to the same buffer,
  * except for segments that have not been modified and whose preceding
@@ -1003,11 +1019,11 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf)
  * segments to two pages instead of one.
  *
  * This is different from the non-split cases in that this does not modify
- * the original page directly, but to temporary in-memory copies of the new
- * left and right pages.
+ * the original page directly, but writes to temporary in-memory copies of
+ * the new left and right pages.
  */
 static void
-dataPlaceToPageLeafSplit(Buffer buf, disassembledLeaf *leaf,
+dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 						 ItemPointerData lbound, ItemPointerData rbound,
 						 Page lpage, Page rpage)
 {
@@ -1076,39 +1092,55 @@ dataPlaceToPageLeafSplit(Buffer buf, disassembledLeaf *leaf,
 }
 
 /*
- * Place a PostingItem to page, and fill a WAL record.
+ * Prepare to insert data on an internal data page.
  *
- * If the item doesn't fit, returns false without modifying the page.
+ * If it will fit, return GPTP_INSERT after doing whatever setup is needed
+ * before we enter the insertion critical section.  *ptp_workspace can be
+ * set to pass information along to the execPlaceToPage function.
  *
- * In addition to inserting the given item, the downlink of the existing item
- * at 'off' is updated to point to 'updateblkno'.
+ * If it won't fit, perform a page split and return two temporary page
+ * images into *newlpage and *newrpage, with result GPTP_SPLIT.
  *
- * On INSERTED, registers the buffer as buffer ID 0, with data.
- * On SPLIT, returns rdata that represents the split pages in *prdata.
+ * In neither case should the given page buffer be modified here.
+ *
+ * Note: on insertion to an internal node, in addition to inserting the given
+ * item, the downlink of the existing item at stack->off will be updated to
+ * point to updateblkno.
  */
 static GinPlaceToPageRC
-dataPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
-						void *insertdata, BlockNumber updateblkno,
-						Page *newlpage, Page *newrpage)
+dataBeginPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+							 void *insertdata, BlockNumber updateblkno,
+							 void **ptp_workspace,
+							 Page *newlpage, Page *newrpage)
 {
 	Page		page = BufferGetPage(buf);
-	OffsetNumber off = stack->off;
-	PostingItem *pitem;
 
-	/* this must be static so it can be returned to caller */
-	static ginxlogInsertDataInternal data;
-
-	/* split if we have to */
+	/* If it doesn't fit, deal with split case */
 	if (GinNonLeafDataPageGetFreeSpace(page) < sizeof(PostingItem))
 	{
 		dataSplitPageInternal(btree, buf, stack, insertdata, updateblkno,
 							  newlpage, newrpage);
-		return SPLIT;
+		return GPTP_SPLIT;
 	}
 
-	Assert(GinPageIsData(page));
+	/* Else, we're ready to proceed with insertion */
+	return GPTP_INSERT;
+}
 
-	START_CRIT_SECTION();
+/*
+ * Perform data insertion after beginPlaceToPage has decided it will fit.
+ *
+ * This is invoked within a critical section, and XLOG record creation (if
+ * needed) is already started.  The target buffer is registered in slot 0.
+ */
+static void
+dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+							void *insertdata, BlockNumber updateblkno,
+							void *ptp_workspace)
+{
+	Page		page = BufferGetPage(buf);
+	OffsetNumber off = stack->off;
+	PostingItem *pitem;
 
 	/* Update existing downlink to point to next page (on internal page) */
 	pitem = GinDataPageGetPostingItem(page, off);
@@ -1120,43 +1152,90 @@ dataPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 	if (RelationNeedsWAL(btree->index))
 	{
+		/*
+		 * This must be static, because it has to survive until XLogInsert,
+		 * and we can't palloc here.  Ugly, but the XLogInsert infrastructure
+		 * isn't reentrant anyway.
+		 */
+		static ginxlogInsertDataInternal data;
+
 		data.offset = off;
 		data.newitem = *pitem;
 
-		XLogBeginInsert();
-		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterBufData(0, (char *) &data,
 							sizeof(ginxlogInsertDataInternal));
 	}
-
-	return INSERTED;
 }
 
 /*
- * Places an item (or items) to a posting tree. Calls relevant function of
- * internal of leaf page because they are handled very differently.
+ * Prepare to insert data on a posting-tree data page.
+ *
+ * If it will fit, return GPTP_INSERT after doing whatever setup is needed
+ * before we enter the insertion critical section.  *ptp_workspace can be
+ * set to pass information along to the execPlaceToPage function.
+ *
+ * If it won't fit, perform a page split and return two temporary page
+ * images into *newlpage and *newrpage, with result GPTP_SPLIT.
+ *
+ * In neither case should the given page buffer be modified here.
+ *
+ * Note: on insertion to an internal node, in addition to inserting the given
+ * item, the downlink of the existing item at stack->off will be updated to
+ * point to updateblkno.
+ *
+ * Calls relevant function for internal or leaf page because they are handled
+ * very differently.
  */
 static GinPlaceToPageRC
-dataPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
-				void *insertdata, BlockNumber updateblkno,
-				Page *newlpage, Page *newrpage)
+dataBeginPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+					 void *insertdata, BlockNumber updateblkno,
+					 void **ptp_workspace,
+					 Page *newlpage, Page *newrpage)
 {
 	Page		page = BufferGetPage(buf);
 
 	Assert(GinPageIsData(page));
 
 	if (GinPageIsLeaf(page))
-		return dataPlaceToPageLeaf(btree, buf, stack, insertdata,
-								   newlpage, newrpage);
+		return dataBeginPlaceToPageLeaf(btree, buf, stack, insertdata,
+										ptp_workspace,
+										newlpage, newrpage);
 	else
-		return dataPlaceToPageInternal(btree, buf, stack,
-									   insertdata, updateblkno,
-									   newlpage, newrpage);
+		return dataBeginPlaceToPageInternal(btree, buf, stack,
+											insertdata, updateblkno,
+											ptp_workspace,
+											newlpage, newrpage);
 }
 
 /*
- * Split page and fill WAL record. Returns a new temp buffer filled with data
- * that should go to the left page. The original buffer is left untouched.
+ * Perform data insertion after beginPlaceToPage has decided it will fit.
+ *
+ * This is invoked within a critical section, and XLOG record creation (if
+ * needed) is already started.  The target buffer is registered in slot 0.
+ *
+ * Calls relevant function for internal or leaf page because they are handled
+ * very differently.
+ */
+static void
+dataExecPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+					void *insertdata, BlockNumber updateblkno,
+					void *ptp_workspace)
+{
+	Page		page = BufferGetPage(buf);
+
+	if (GinPageIsLeaf(page))
+		dataExecPlaceToPageLeaf(btree, buf, stack, insertdata,
+								ptp_workspace);
+	else
+		dataExecPlaceToPageInternal(btree, buf, stack, insertdata,
+									updateblkno, ptp_workspace);
+}
+
+/*
+ * Split internal page and insert new data.
+ *
+ * Returns new temp pages to *newlpage and *newrpage.
+ * The original buffer is left untouched.
  */
 static void
 dataSplitPageInternal(GinBtree btree, Buffer origbuf,
@@ -1231,6 +1310,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 	/* set up right bound for right page */
 	*GinDataPageGetRightBound(rpage) = oldbound;
 
+	/* return temp pages to caller */
 	*newlpage = lpage;
 	*newrpage = rpage;
 }
@@ -1789,7 +1869,8 @@ ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno)
 	btree->isMoveRight = dataIsMoveRight;
 	btree->findItem = NULL;
 	btree->findChildPtr = dataFindChildPtr;
-	btree->placeToPage = dataPlaceToPage;
+	btree->beginPlaceToPage = dataBeginPlaceToPage;
+	btree->execPlaceToPage = dataExecPlaceToPage;
 	btree->fillRoot = ginDataFillRoot;
 	btree->prepareDownlink = dataPrepareDownlink;
 
