@@ -112,6 +112,7 @@ void
 InitShmemAllocation(void)
 {
 	PGShmemHeader *shmhdr = ShmemSegHdr;
+	char	   *aligned;
 
 	Assert(shmhdr != NULL);
 
@@ -138,6 +139,11 @@ InitShmemAllocation(void)
 	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
 	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
 	Assert(shmhdr->freeoffset <= shmhdr->totalsize);
+
+	/* Make sure the first allocation begins on a cache line boundary. */
+	aligned = (char *)
+		(CACHELINEALIGN((((char *) shmhdr) + shmhdr->freeoffset)));
+	shmhdr->freeoffset = aligned - (char *) shmhdr;
 
 	SpinLockInit(ShmemLock);
 
@@ -189,10 +195,6 @@ ShmemAlloc(Size size)
 
 	newStart = ShmemSegHdr->freeoffset;
 
-	/* extra alignment for large requests, since they are probably buffers */
-	if (size >= BLCKSZ)
-		newStart = BUFFERALIGN(newStart);
-
 	newFree = newStart + size;
 	if (newFree <= ShmemSegHdr->totalsize)
 	{
@@ -208,6 +210,8 @@ ShmemAlloc(Size size)
 		ereport(WARNING,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
+
+	Assert(newSpace == (void *) CACHELINEALIGN(newSpace));
 
 	return newSpace;
 }
@@ -425,6 +429,9 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	LWLockRelease(ShmemIndexLock);
 
 	Assert(ShmemAddrIsValid(structPtr));
+
+	Assert(structPtr == (void *) CACHELINEALIGN(structPtr));
+
 	return structPtr;
 }
 
