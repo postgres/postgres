@@ -17,6 +17,7 @@
 #include "access/xact.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "storage/latch.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
@@ -448,6 +449,78 @@ GetPrepStmtNumber(PGconn *conn)
 }
 
 /*
+ * Submit a query and wait for the result.
+ *
+ * This function is interruptible by signals.
+ *
+ * Caller is responsible for the error handling on the result.
+ */
+PGresult *
+pgfdw_exec_query(PGconn *conn, const char *query)
+{
+	/*
+	 * Submit a query.  Since we don't use non-blocking mode, this also can
+	 * block.  But its risk is relatively small, so we ignore that for now.
+	 */
+	if (!PQsendQuery(conn, query))
+		pgfdw_report_error(ERROR, NULL, conn, false, query);
+
+	/* Wait for the result. */
+	return pgfdw_get_result(conn, query);
+}
+
+/*
+ * Wait for the result from a prior asynchronous execution function call.
+ *
+ * This function offers quick responsiveness by checking for any interruptions.
+ *
+ * This function emulates the PQexec()'s behavior of returning the last result
+ * when there are many.
+ *
+ * Caller is responsible for the error handling on the result.
+ */
+PGresult *
+pgfdw_get_result(PGconn *conn, const char *query)
+{
+	PGresult   *last_res = NULL;
+
+	for (;;)
+	{
+		PGresult *res;
+
+		while (PQisBusy(conn))
+		{
+			int		wc;
+
+			/* Sleep until there's something to do */
+			wc = WaitLatchOrSocket(MyLatch,
+								   WL_LATCH_SET | WL_SOCKET_READABLE,
+								   PQsocket(conn),
+								   -1L);
+			ResetLatch(MyLatch);
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* Data available in socket */
+			if (wc & WL_SOCKET_READABLE)
+			{
+				if (!PQconsumeInput(conn))
+					pgfdw_report_error(ERROR, NULL, conn, false, query);
+			}
+		}
+
+		res = PQgetResult(conn);
+		if (res == NULL)
+			break;				/* query is complete */
+
+		PQclear(last_res);
+		last_res = res;
+	}
+
+	return last_res;
+}
+
+/*
  * Report an error we got from the remote server.
  *
  * elevel: error level to use (typically ERROR, but might be less)
@@ -598,6 +671,32 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 				case XACT_EVENT_ABORT:
 					/* Assume we might have lost track of prepared statements */
 					entry->have_error = true;
+
+					/*
+					 * If a command has been submitted to the remote server by
+					 * using an asynchronous execution function, the command
+					 * might not have yet completed.  Check to see if a command
+					 * is still being processed by the remote server, and if so,
+					 * request cancellation of the command; if not, abort
+					 * gracefully.
+					 */
+					if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
+					{
+						PGcancel   *cancel;
+						char		errbuf[256];
+
+						if ((cancel = PQgetCancel(entry->conn)))
+						{
+							if (!PQcancel(cancel, errbuf, sizeof(errbuf)))
+								ereport(WARNING,
+										(errcode(ERRCODE_CONNECTION_FAILURE),
+										 errmsg("could not send cancel request: %s",
+												errbuf)));
+							PQfreeCancel(cancel);
+						}
+						break;
+					}
+
 					/* If we're aborting, abort all remote transactions too */
 					res = PQexec(entry->conn, "ABORT TRANSACTION");
 					/* Note: can't throw ERROR, it would be infinite loop */
