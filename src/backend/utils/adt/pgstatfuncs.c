@@ -27,6 +27,8 @@
 #include "utils/inet.h"
 #include "utils/timestamp.h"
 
+#define UINT32_ACCESS_ONCE(var)      ((uint32)(*((volatile uint32 *)&(var))))
+
 /* bogus ... these externs should be in a header file */
 extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_returned(PG_FUNCTION_ARGS);
@@ -783,13 +785,26 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			values[5] = CStringGetTextDatum(beentry->st_activity);
 
 			proc = BackendPidGetProc(beentry->st_procpid);
-			wait_event_type = pgstat_get_wait_event_type(proc->wait_event_info);
+			if (proc != NULL)
+			{
+				uint32	raw_wait_event;
+
+				raw_wait_event = UINT32_ACCESS_ONCE(proc->wait_event_info);
+				wait_event_type = pgstat_get_wait_event_type(raw_wait_event);
+				wait_event = pgstat_get_wait_event(raw_wait_event);
+
+			}
+			else
+			{
+				wait_event_type = NULL;
+				wait_event = NULL;
+			}
+
 			if (wait_event_type)
 				values[6] = CStringGetTextDatum(wait_event_type);
 			else
 				nulls[6] = true;
 
-			wait_event = pgstat_get_wait_event(proc->wait_event_info);
 			if (wait_event)
 				values[7] = CStringGetTextDatum(wait_event);
 			else
@@ -984,17 +999,14 @@ pg_stat_get_backend_wait_event_type(PG_FUNCTION_ARGS)
 	int32		beid = PG_GETARG_INT32(0);
 	PgBackendStatus *beentry;
 	PGPROC	   *proc;
-	const char *wait_event_type;
+	const char *wait_event_type = NULL;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		wait_event_type = "<backend information not available>";
 	else if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		wait_event_type = "<insufficient privilege>";
-	else
-	{
-		proc = BackendPidGetProc(beentry->st_procpid);
+	else if ((proc = BackendPidGetProc(beentry->st_procpid)) != NULL)
 		wait_event_type = pgstat_get_wait_event_type(proc->wait_event_info);
-	}
 
 	if (!wait_event_type)
 		PG_RETURN_NULL();
@@ -1008,17 +1020,14 @@ pg_stat_get_backend_wait_event(PG_FUNCTION_ARGS)
 	int32		beid = PG_GETARG_INT32(0);
 	PgBackendStatus *beentry;
 	PGPROC	   *proc;
-	const char *wait_event;
+	const char *wait_event = NULL;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		wait_event = "<backend information not available>";
 	else if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		wait_event = "<insufficient privilege>";
-	else
-	{
-		proc = BackendPidGetProc(beentry->st_procpid);
+	else if ((proc = BackendPidGetProc(beentry->st_procpid)) != NULL)
 		wait_event = pgstat_get_wait_event(proc->wait_event_info);
-	}
 
 	if (!wait_event)
 		PG_RETURN_NULL();
