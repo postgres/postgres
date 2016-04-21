@@ -13274,6 +13274,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_agginitval;
 	int			i_aggminitval;
 	int			i_convertok;
+	int			i_proparallel;
 	const char *aggtransfn;
 	const char *aggfinalfn;
 	const char *aggcombinefn;
@@ -13295,6 +13296,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	const char *agginitval;
 	const char *aggminitval;
 	bool		convertok;
+	const char *proparallel;
 
 	/* Skip if not to be dumped */
 	if (!agginfo->aggfn.dobj.dump || dopt->dataOnly)
@@ -13324,7 +13326,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 			"aggmtransspace, aggminitval, "
 			"true AS convertok, "
 			"pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
-			"pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
+			"pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs, "
+			"p.proparallel "
 			"FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 			"WHERE a.aggfnoid = p.oid "
 			"AND p.oid = '%u'::pg_catalog.oid",
@@ -13472,6 +13475,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	i_agginitval = PQfnumber(res, "agginitval");
 	i_aggminitval = PQfnumber(res, "aggminitval");
 	i_convertok = PQfnumber(res, "convertok");
+	i_proparallel = PQfnumber(res, "proparallel");
 
 	aggtransfn = PQgetvalue(res, 0, i_aggtransfn);
 	aggfinalfn = PQgetvalue(res, 0, i_aggfinalfn);
@@ -13510,6 +13514,11 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		aggsig = format_aggregate_signature(agginfo, fout, true);
 
 	aggsig_tag = format_aggregate_signature(agginfo, fout, false);
+
+	if (i_proparallel != -1)
+		proparallel = PQgetvalue(res, 0, PQfnumber(res, "proparallel"));
+	else
+		proparallel = NULL;
 
 	if (!convertok)
 	{
@@ -13621,6 +13630,17 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	if (hypothetical)
 		appendPQExpBufferStr(details, ",\n    HYPOTHETICAL");
+
+	if (proparallel != NULL && proparallel[0] != PROPARALLEL_UNSAFE)
+	{
+		if (proparallel[0] == PROPARALLEL_SAFE)
+			appendPQExpBufferStr(details, ",\n    PARALLEL = safe");
+		else if (proparallel[0] == PROPARALLEL_RESTRICTED)
+			appendPQExpBufferStr(details, ",\n    PARALLEL = restricted");
+		else if (proparallel[0] != PROPARALLEL_UNSAFE)
+			exit_horribly(NULL, "unrecognized proparallel value for function \"%s\"\n",
+						  agginfo->aggfn.dobj.name);
+	}
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
