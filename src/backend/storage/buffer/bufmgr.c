@@ -4282,33 +4282,15 @@ IssuePendingWritebacks(WritebackContext *context)
 
 
 /*
- * Check whether the given snapshot is too old to have safely read the given
- * page from the given table.  If so, throw a "snapshot too old" error.
+ * Implement slower/larger portions of TestForOldSnapshot
  *
- * This test generally needs to be performed after every BufferGetPage() call
- * that is executed as part of a scan.  It is not needed for calls made for
- * modifying the page (for example, to position to the right place to insert a
- * new index tuple or for vacuuming).  It may also be omitted where calls to
- * lower-level functions will have already performed the test.
- *
- * Note that a NULL snapshot argument is allowed and causes a fast return
- * without error; this is to support call sites which can be called from
- * either scans or index modification areas.
- *
- * For best performance, keep the tests that are fastest and/or most likely to
- * exclude a page from old snapshot testing near the front.
+ * Smaller/faster portions are put inline, but the entire set of logic is too
+ * big for that.
  */
 void
-TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
+TestForOldSnapshot_impl(Snapshot snapshot, Relation relation)
 {
-	Assert(relation != NULL);
-
-	if (old_snapshot_threshold >= 0
-	 && (snapshot) != NULL
-	 && (snapshot)->satisfies == HeapTupleSatisfiesMVCC
-	 && !XLogRecPtrIsInvalid((snapshot)->lsn)
-	 && PageGetLSN(page) > (snapshot)->lsn
-	 && !IsCatalogRelation(relation)
+	if (!IsCatalogRelation(relation)
 	 && !RelationIsAccessibleInLogicalDecoding(relation)
 	 && (snapshot)->whenTaken < GetOldSnapshotThresholdTimestamp())
 		ereport(ERROR,
