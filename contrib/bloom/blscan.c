@@ -19,7 +19,6 @@
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/snapmgr.h"
 
 #include "bloom.h"
 
