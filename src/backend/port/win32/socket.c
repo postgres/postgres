@@ -44,22 +44,37 @@ int			pgwin32_noblock = 0;
 
 /*
  * Convert the last socket error code into errno
+ *
+ * Note: where there is a direct correspondence between a WSAxxx error code
+ * and a Berkeley error symbol, this mapping is actually a no-op, because
+ * in win32.h we redefine the network-related Berkeley error symbols to have
+ * the values of their WSAxxx counterparts.  The point of the switch is
+ * mostly to translate near-miss error codes into something that's sensible
+ * in the Berkeley universe.
  */
 static void
 TranslateSocketError(void)
 {
 	switch (WSAGetLastError())
 	{
-		case WSANOTINITIALISED:
-		case WSAENETDOWN:
-		case WSAEINPROGRESS:
 		case WSAEINVAL:
-		case WSAESOCKTNOSUPPORT:
-		case WSAEFAULT:
+		case WSANOTINITIALISED:
 		case WSAEINVALIDPROVIDER:
 		case WSAEINVALIDPROCTABLE:
-		case WSAEMSGSIZE:
+		case WSAEDESTADDRREQ:
 			errno = EINVAL;
+			break;
+		case WSAEINPROGRESS:
+			errno = EINPROGRESS;
+			break;
+		case WSAEFAULT:
+			errno = EFAULT;
+			break;
+		case WSAEISCONN:
+			errno = EISCONN;
+			break;
+		case WSAEMSGSIZE:
+			errno = EMSGSIZE;
 			break;
 		case WSAEAFNOSUPPORT:
 			errno = EAFNOSUPPORT;
@@ -72,16 +87,23 @@ TranslateSocketError(void)
 			break;
 		case WSAEPROTONOSUPPORT:
 		case WSAEPROTOTYPE:
+		case WSAESOCKTNOSUPPORT:
 			errno = EPROTONOSUPPORT;
+			break;
+		case WSAECONNABORTED:
+			errno = ECONNABORTED;
 			break;
 		case WSAECONNREFUSED:
 			errno = ECONNREFUSED;
+			break;
+		case WSAECONNRESET:
+			errno = ECONNRESET;
 			break;
 		case WSAEINTR:
 			errno = EINTR;
 			break;
 		case WSAENOTSOCK:
-			errno = EBADFD;
+			errno = ENOTSOCK;
 			break;
 		case WSAEOPNOTSUPP:
 			errno = EOPNOTSUPP;
@@ -92,13 +114,24 @@ TranslateSocketError(void)
 		case WSAEACCES:
 			errno = EACCES;
 			break;
-		case WSAENOTCONN:
+		case WSAEADDRINUSE:
+			errno = EADDRINUSE;
+			break;
+		case WSAEADDRNOTAVAIL:
+			errno = EADDRNOTAVAIL;
+			break;
+		case WSAEHOSTUNREACH:
+		case WSAEHOSTDOWN:
+		case WSAHOST_NOT_FOUND:
+		case WSAENETDOWN:
+		case WSAENETUNREACH:
 		case WSAENETRESET:
-		case WSAECONNRESET:
+			errno = EHOSTUNREACH;
+			break;
+		case WSAENOTCONN:
 		case WSAESHUTDOWN:
-		case WSAECONNABORTED:
 		case WSAEDISCON:
-			errno = ECONNREFUSED;		/* ENOTCONN? */
+			errno = ENOTCONN;
 			break;
 		default:
 			ereport(NOTICE,
