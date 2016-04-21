@@ -259,11 +259,18 @@ typedef int pid_t;
 
 /*
  * Supplement to <errno.h>.
+ *
+ * We redefine network-related Berkeley error symbols as the corresponding WSA
+ * constants.  This allows elog.c to recognize them as being in the Winsock
+ * error code range and pass them off to pgwin32_socket_strerror(), since
+ * Windows' version of plain strerror() won't cope.  Note that this will break
+ * if these names are used for anything else besides Windows Sockets errors.
+ * See TranslateSocketError() when changing this list.
  */
 #undef EAGAIN
+#define EAGAIN WSAEWOULDBLOCK
 #undef EINTR
 #define EINTR WSAEINTR
-#define EAGAIN WSAEWOULDBLOCK
 #undef EMSGSIZE
 #define EMSGSIZE WSAEMSGSIZE
 #undef EAFNOSUPPORT
