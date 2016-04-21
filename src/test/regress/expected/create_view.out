@@ -1502,6 +1502,34 @@ explain (costs off) select * from tt18v;
    ->  Seq Scan on int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_1
 (3 rows)
 
+-- check display of ScalarArrayOp with a sub-select
+select 'foo'::text = any(array['abc','def','foo']::text[]);
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'foo'::text = any((select array['abc','def','foo']::text[]));  -- fail
+ERROR:  operator does not exist: text = text[]
+LINE 1: select 'foo'::text = any((select array['abc','def','foo']::t...
+                           ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+select 'foo'::text = any((select array['abc','def','foo']::text[])::text[]);
+ ?column? 
+----------
+ t
+(1 row)
+
+create view tt19v as
+select 'foo'::text = any(array['abc','def','foo']::text[]) c1,
+       'foo'::text = any((select array['abc','def','foo']::text[])::text[]) c2;
+select pg_get_viewdef('tt19v', true);
+                                               pg_get_viewdef                                               
+------------------------------------------------------------------------------------------------------------
+  SELECT 'foo'::text = ANY (ARRAY['abc'::text, 'def'::text, 'foo'::text]) AS c1,                           +
+     'foo'::text = ANY ((( SELECT ARRAY['abc'::text, 'def'::text, 'foo'::text] AS "array"))::text[]) AS c2;
+(1 row)
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

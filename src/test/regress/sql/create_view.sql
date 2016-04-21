@@ -496,6 +496,17 @@ create view tt18v as
 select pg_get_viewdef('tt18v', true);
 explain (costs off) select * from tt18v;
 
+-- check display of ScalarArrayOp with a sub-select
+
+select 'foo'::text = any(array['abc','def','foo']::text[]);
+select 'foo'::text = any((select array['abc','def','foo']::text[]));  -- fail
+select 'foo'::text = any((select array['abc','def','foo']::text[])::text[]);
+
+create view tt19v as
+select 'foo'::text = any(array['abc','def','foo']::text[]) c1,
+       'foo'::text = any((select array['abc','def','foo']::text[])::text[]) c2;
+select pg_get_viewdef('tt19v', true);
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
