@@ -852,6 +852,23 @@ select * from
   on i8.q1 = i4.f1;
 
 --
+-- test successful handling of full join underneath left join (bug #14105)
+--
+
+explain (costs off)
+select * from
+  (select 1 as id) as xx
+  left join
+    (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
+  on (xx.id = coalesce(yy.id));
+
+select * from
+  (select 1 as id) as xx
+  left join
+    (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
+  on (xx.id = coalesce(yy.id));
+
+--
 -- test ability to push constants through outer join clauses
 --
 
