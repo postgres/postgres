@@ -67,6 +67,9 @@ pgwin32_putenv(const char *envval)
 			"msvcr110", 0, NULL
 		},						/* Visual Studio 2012 */
 		{
+			"msvcr120", 0, NULL
+		},						/* Visual Studio 2013 */
+		{
 			NULL, 0, NULL
 		}
 	};
