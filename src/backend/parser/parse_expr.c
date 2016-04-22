@@ -857,6 +857,14 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 			emit_precedence_warnings(pstate, opgroup, opname,
 									 lexpr, rexpr,
 									 a->location);
+
+		/* Look through AEXPR_PAREN nodes so they don't affect tests below */
+		while (lexpr && IsA(lexpr, A_Expr) &&
+			   ((A_Expr *) lexpr)->kind == AEXPR_PAREN)
+			lexpr = ((A_Expr *) lexpr)->lexpr;
+		while (rexpr && IsA(rexpr, A_Expr) &&
+			   ((A_Expr *) rexpr)->kind == AEXPR_PAREN)
+			rexpr = ((A_Expr *) rexpr)->lexpr;
 	}
 
 	/*
@@ -1903,6 +1911,11 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		Node	   *e = (Node *) lfirst(element);
 		Node	   *newe;
 
+		/* Look through AEXPR_PAREN nodes so they don't affect test below */
+		while (e && IsA(e, A_Expr) &&
+			   ((A_Expr *) e)->kind == AEXPR_PAREN)
+			e = ((A_Expr *) e)->lexpr;
+
 		/*
 		 * If an element is itself an A_ArrayExpr, recurse directly so that we
 		 * can pass down any target type we were given.
@@ -2453,20 +2466,31 @@ transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte, int location)
 /*
  * Handle an explicit CAST construct.
  *
- * Transform the argument, then look up the type name and apply any necessary
+ * Transform the argument, look up the type name, and apply any necessary
  * coercion function(s).
  */
 static Node *
 transformTypeCast(ParseState *pstate, TypeCast *tc)
 {
 	Node	   *result;
+	Node	   *arg = tc->arg;
 	Node	   *expr;
 	Oid			inputType;
 	Oid			targetType;
 	int32		targetTypmod;
 	int			location;
 
+	/* Look up the type name first */
 	typenameTypeIdAndMod(pstate, tc->typeName, &targetType, &targetTypmod);
+
+	/*
+	 * Look through any AEXPR_PAREN nodes that may have been inserted thanks
+	 * to operator_precedence_warning.  Otherwise, ARRAY[]::foo[] behaves
+	 * differently from (ARRAY[])::foo[].
+	 */
+	while (arg && IsA(arg, A_Expr) &&
+		   ((A_Expr *) arg)->kind == AEXPR_PAREN)
+		arg = ((A_Expr *) arg)->lexpr;
 
 	/*
 	 * If the subject of the typecast is an ARRAY[] construct and the target
@@ -2475,7 +2499,7 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 	 * transformArrayExpr() might not infer the correct type.  Otherwise, just
 	 * transform the argument normally.
 	 */
-	if (IsA(tc->arg, A_ArrayExpr))
+	if (IsA(arg, A_ArrayExpr))
 	{
 		Oid			targetBaseType;
 		int32		targetBaseTypmod;
@@ -2493,16 +2517,16 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 		if (OidIsValid(elementType))
 		{
 			expr = transformArrayExpr(pstate,
-									  (A_ArrayExpr *) tc->arg,
+									  (A_ArrayExpr *) arg,
 									  targetBaseType,
 									  elementType,
 									  targetBaseTypmod);
 		}
 		else
-			expr = transformExprRecurse(pstate, tc->arg);
+			expr = transformExprRecurse(pstate, arg);
 	}
 	else
-		expr = transformExprRecurse(pstate, tc->arg);
+		expr = transformExprRecurse(pstate, arg);
 
 	inputType = exprType(expr);
 	if (inputType == InvalidOid)
