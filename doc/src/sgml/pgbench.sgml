@@ -944,7 +944,7 @@ END;
   </para>
 
   <para>
-   Here is example outputs:
+   Here is example output:
 <screen>
 1345828501 5601 1542744 483552416 61 2573
 1345828503 7884 1979812 565806736 60 1479
@@ -954,8 +954,8 @@ END;
 </screen></para>
 
   <para>
-   Notice that while the plain (unaggregated) log file contains index
-   of the custom script files, the aggregated log does not. Therefore if
+   Notice that while the plain (unaggregated) log file contains a reference
+   to the custom script files, the aggregated log does not. Therefore if
    you need per script data, you need to aggregate the data on your own.
   </para>
 
