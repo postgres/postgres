@@ -2274,6 +2274,18 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"checkpoint_flush_after", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&checkpoint_flush_after,
+		/* see bufmgr.h: OS dependent default */
+		DEFAULT_CHECKPOINT_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"wal_buffers", PGC_POSTMASTER, WAL_SETTINGS,
 			gettext_noop("Sets the number of disk-page buffers in shared memory for WAL."),
 			NULL,
@@ -2420,6 +2432,18 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"bgwriter_flush_after", PGC_SIGHUP, RESOURCES_BGWRITER,
+			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
+			NULL,
+			GUC_UNIT_BLOCKS
+		},
+		&bgwriter_flush_after,
+		/* see bufmgr.h: OS dependent default */
+		DEFAULT_BGWRITER_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"effective_io_concurrency",
 			PGC_USERSET,
 			RESOURCES_ASYNCHRONOUS,
@@ -2436,19 +2460,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"checkpoint_flush_after", PGC_SIGHUP, RESOURCES_ASYNCHRONOUS,
-			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
-			NULL,
-			GUC_UNIT_BLOCKS
-		},
-		&checkpoint_flush_after,
-		/* see bufmgr.h: OS dependent default */
-		DEFAULT_CHECKPOINT_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"backend_flush_after", PGC_USERSET, WAL_CHECKPOINTS,
+		{"backend_flush_after", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
 			NULL,
 			GUC_UNIT_BLOCKS
@@ -2456,18 +2468,6 @@ static struct config_int ConfigureNamesInt[] =
 		&backend_flush_after,
 		/* see bufmgr.h: OS dependent default */
 		DEFAULT_BACKEND_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"bgwriter_flush_after", PGC_SIGHUP, WAL_CHECKPOINTS,
-			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
-			NULL,
-			GUC_UNIT_BLOCKS
-		},
-		&bgwriter_flush_after,
-		/* see bufmgr.h: 16 on Linux, 0 otherwise */
-		DEFAULT_BGWRITER_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
 		NULL, NULL, NULL
 	},
 

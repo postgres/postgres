@@ -1884,7 +1884,7 @@ include_dir 'conf.d'
       </varlistentry>
 
       <varlistentry id="guc-bgwriter-flush-after" xreflabel="bgwriter_flush_after">
-       <term><varname>bgwriter_flush_after</varname> (<type>int</type>)
+       <term><varname>bgwriter_flush_after</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>bgwriter_flush_after</> configuration parameter</primary>
        </indexterm>
@@ -2014,7 +2014,7 @@ include_dir 'conf.d'
       </varlistentry>
 
       <varlistentry id="guc-backend-flush-after" xreflabel="backend_flush_after">
-       <term><varname>backend_flush_after</varname> (<type>int</type>)
+       <term><varname>backend_flush_after</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>backend_flush_after</> configuration parameter</primary>
        </indexterm>
@@ -2036,8 +2036,6 @@ include_dir 'conf.d'
          and <literal>2MB</literal>.  The default is <literal>128Kb</> on
          Linux, <literal>0</> elsewhere.  (Non-default values of
          <symbol>BLCKSZ</symbol> change the default and maximum.)
-         This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -2607,7 +2605,7 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-checkpoint-flush-after" xreflabel="checkpoint_flush_after">
-      <term><varname>checkpoint_flush_after</varname> (<type>int</type>)
+      <term><varname>checkpoint_flush_after</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>checkpoint_flush_after</> configuration parameter</primary>
       </indexterm>
@@ -2626,7 +2624,7 @@ include_dir 'conf.d'
         than the OS's page cache, where performance might degrade.  This
         setting may have no effect on some platforms.  The valid range is
         between <literal>0</literal>, which disables controlled writeback,
-        and <literal>2MB</literal>.  The default is <literal>128Kb</> on
+        and <literal>2MB</literal>.  The default is <literal>256Kb</> on
         Linux, <literal>0</> elsewhere.  (Non-default values of
         <symbol>BLCKSZ</symbol> change the default and maximum.)
         This parameter can only be set in the <filename>postgresql.conf</>
