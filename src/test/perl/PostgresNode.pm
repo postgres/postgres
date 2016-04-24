@@ -90,6 +90,7 @@ use File::Spec;
 use File::Temp ();
 use IPC::Run;
 use RecursiveCopy;
+use Socket;
 use Test::More;
 use TestLib ();
 use Scalar::Util qw(blessed);
@@ -98,14 +99,15 @@ our @EXPORT = qw(
   get_new_node
 );
 
-our ($test_pghost, $last_port_assigned, @all_nodes);
+our ($test_localhost, $test_pghost, $last_port_assigned, @all_nodes);
 
 INIT
 {
 	# PGHOST is set once and for all through a single series of tests when
 	# this module is loaded.
+	$test_localhost = "127.0.0.1";
 	$test_pghost =
-	  $TestLib::windows_os ? "127.0.0.1" : TestLib::tempdir_short;
+	  $TestLib::windows_os ? $test_localhost : TestLib::tempdir_short;
 	$ENV{PGHOST}     = $test_pghost;
 	$ENV{PGDATABASE} = 'postgres';
 
@@ -347,7 +349,7 @@ sub set_replication_conf
 	else
 	{
 		print $hba
-"host replication all 127.0.0.1/32 sspi include_realm=1 map=regress\n";
+"host replication all $test_localhost/32 sspi include_realm=1 map=regress\n";
 	}
 	close $hba;
 }
@@ -839,19 +841,31 @@ sub get_new_node
 
 	while ($found == 0)
 	{
-		# wrap correctly around range end
+		# advance $port, wrapping correctly around range end
 		$port = 49152 if ++$port >= 65536;
-		print "# Checking for port $port\n";
-		if (!TestLib::run_log([ 'pg_isready', '-p', $port ]))
-		{
-			$found = 1;
+		print "# Checking port $port\n";
 
-			# Found a potential candidate port number.  Check first that it is
-			# not included in the list of registered nodes.
-			foreach my $node (@all_nodes)
-			{
-				$found = 0 if ($node->port == $port);
-			}
+		# Check first that candidate port number is not included in
+		# the list of already-registered nodes.
+		$found = 1;
+		foreach my $node (@all_nodes)
+		{
+			$found = 0 if ($node->port == $port);
+		}
+
+		# Check to see if anything else is listening on this TCP port.
+		# This is *necessary* on Windows, and seems like a good idea
+		# on Unixen as well, even though we don't ask the postmaster
+		# to open a TCP port on Unix.
+		if ($found == 1)
+		{
+			my $iaddr   = inet_aton($test_localhost);
+			my $paddr   = sockaddr_in($port, $iaddr);
+			my $proto   = getprotobyname("tcp");
+
+			socket(SOCK, PF_INET, SOCK_STREAM, $proto) or die;
+			$found = 0 if connect(SOCK, $paddr);
+			close(SOCK);
 		}
 	}
 
