@@ -3802,6 +3802,37 @@ where ss1.c2 = 0;
 (0 rows)
 
 --
+-- test successful handling of full join underneath left join (bug #14105)
+--
+explain (costs off)
+select * from
+  (select 1 as id) as xx
+  left join
+    (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
+  on (xx.id = coalesce(yy.id));
+              QUERY PLAN               
+---------------------------------------
+ Nested Loop Left Join
+   Join Filter: ((1) = COALESCE((1)))
+   ->  Result
+   ->  Hash Full Join
+         Hash Cond: (a1.unique1 = (1))
+         ->  Seq Scan on tenk1 a1
+         ->  Hash
+               ->  Result
+(8 rows)
+
+select * from
+  (select 1 as id) as xx
+  left join
+    (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
+  on (xx.id = coalesce(yy.id));
+ id | unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 | id 
+----+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------+----
+  1 |       1 |    2838 |   1 |    1 |   1 |      1 |       1 |        1 |           1 |         1 |        1 |   2 |    3 | BAAAAA   | EFEAAA   | OOOOxx  |  1
+(1 row)
+
+--
 -- test ability to push constants through outer join clauses
 --
 explain (costs off)

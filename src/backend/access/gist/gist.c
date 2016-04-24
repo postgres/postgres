@@ -211,8 +211,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				bool markfollowright)
 {
 	BlockNumber blkno = BufferGetBlockNumber(buffer);
-	Page		page = BufferGetPage(buffer, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buffer);
 	bool		is_leaf = (GistPageIsLeaf(page)) ? true : false;
 	XLogRecPtr	recptr;
 	int			i;
@@ -317,9 +316,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 
 			dist->buffer = buffer;
 			dist->block.blkno = BufferGetBlockNumber(buffer);
-			dist->page =
-				PageGetTempPageCopySpecial(BufferGetPage(buffer, NULL, NULL,
-														 BGP_NO_SNAPSHOT_TEST));
+			dist->page = PageGetTempPageCopySpecial(BufferGetPage(buffer));
 
 			/* clean all flags except F_LEAF */
 			GistPageGetOpaque(dist->page)->flags = (is_leaf) ? F_LEAF : 0;
@@ -331,7 +328,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			/* Allocate new page */
 			ptr->buffer = gistNewBuffer(rel);
 			GISTInitBuffer(ptr->buffer, (is_leaf) ? F_LEAF : 0);
-			ptr->page = BufferGetPage(ptr->buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			ptr->page = BufferGetPage(ptr->buffer);
 			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
 		}
 
@@ -357,10 +354,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			int			i;
 
 			rootpg.buffer = buffer;
-			rootpg.page =
-				PageGetTempPageCopySpecial(BufferGetPage(rootpg.buffer,
-														 NULL, NULL,
-														 BGP_NO_SNAPSHOT_TEST));
+			rootpg.page = PageGetTempPageCopySpecial(BufferGetPage(rootpg.buffer));
 			GistPageGetOpaque(rootpg.page)->flags = 0;
 
 			/* Prepare a vector of all the downlinks */
@@ -468,11 +462,8 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		 * The first page in the chain was a temporary working copy meant to
 		 * replace the old page. Copy it over the old page.
 		 */
-		PageRestoreTempPage(dist->page, BufferGetPage(dist->buffer,
-													  NULL, NULL,
-													  BGP_NO_SNAPSHOT_TEST));
-		dist->page = BufferGetPage(dist->buffer, NULL, NULL,
-								   BGP_NO_SNAPSHOT_TEST);
+		PageRestoreTempPage(dist->page, BufferGetPage(dist->buffer));
+		dist->page = BufferGetPage(dist->buffer);
 
 		/* Write the WAL record */
 		if (RelationNeedsWAL(rel))
@@ -563,8 +554,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	 */
 	if (BufferIsValid(leftchildbuf))
 	{
-		Page		leftpg = BufferGetPage(leftchildbuf, NULL, NULL,
-										   BGP_NO_SNAPSHOT_TEST);
+		Page		leftpg = BufferGetPage(leftchildbuf);
 
 		GistPageSetNSN(leftpg, recptr);
 		GistClearFollowRight(leftpg);
@@ -624,8 +614,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 			gistcheckpage(state.r, stack->buffer);
 		}
 
-		stack->page = BufferGetPage(stack->buffer, NULL, NULL,
-									BGP_NO_SNAPSHOT_TEST);
+		stack->page = (Page) BufferGetPage(stack->buffer);
 		stack->lsn = PageGetLSN(stack->page);
 		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
 
@@ -710,8 +699,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 					LockBuffer(stack->buffer, GIST_UNLOCK);
 					LockBuffer(stack->buffer, GIST_EXCLUSIVE);
 					xlocked = true;
-					stack->page = BufferGetPage(stack->buffer, NULL, NULL,
-												BGP_NO_SNAPSHOT_TEST);
+					stack->page = (Page) BufferGetPage(stack->buffer);
 
 					if (PageGetLSN(stack->page) != stack->lsn)
 					{
@@ -775,8 +763,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 				LockBuffer(stack->buffer, GIST_UNLOCK);
 				LockBuffer(stack->buffer, GIST_EXCLUSIVE);
 				xlocked = true;
-				stack->page = BufferGetPage(stack->buffer, NULL, NULL,
-											BGP_NO_SNAPSHOT_TEST);
+				stack->page = (Page) BufferGetPage(stack->buffer);
 				stack->lsn = PageGetLSN(stack->page);
 
 				if (stack->blkno == GIST_ROOT_BLKNO)
@@ -866,7 +853,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		buffer = ReadBuffer(r, top->blkno);
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(r, buffer);
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 
 		if (GistPageIsLeaf(page))
 		{
@@ -954,8 +941,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 	GISTInsertStack *parent = child->parent;
 
 	gistcheckpage(r, parent->buffer);
-	parent->page = BufferGetPage(parent->buffer, NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST);
+	parent->page = (Page) BufferGetPage(parent->buffer);
 
 	/* here we don't need to distinguish between split and page update */
 	if (child->downlinkoffnum == InvalidOffsetNumber ||
@@ -996,8 +982,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 			parent->buffer = ReadBuffer(r, parent->blkno);
 			LockBuffer(parent->buffer, GIST_EXCLUSIVE);
 			gistcheckpage(r, parent->buffer);
-			parent->page = BufferGetPage(parent->buffer, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST);
+			parent->page = (Page) BufferGetPage(parent->buffer);
 		}
 
 		/*
@@ -1021,8 +1006,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 		while (ptr)
 		{
 			ptr->buffer = ReadBuffer(r, ptr->blkno);
-			ptr->page = BufferGetPage(ptr->buffer, NULL, NULL,
-									  BGP_NO_SNAPSHOT_TEST);
+			ptr->page = (Page) BufferGetPage(ptr->buffer);
 			ptr = ptr->parent;
 		}
 
@@ -1044,7 +1028,7 @@ static IndexTuple
 gistformdownlink(Relation rel, Buffer buf, GISTSTATE *giststate,
 				 GISTInsertStack *stack)
 {
-	Page		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buf);
 	OffsetNumber maxoff;
 	OffsetNumber offset;
 	IndexTuple	downlink = NULL;
@@ -1125,7 +1109,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
 		GISTPageSplitInfo *si = palloc(sizeof(GISTPageSplitInfo));
 		IndexTuple	downlink;
 
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 
 		/* Form the new downlink tuples to insert to parent */
 		downlink = gistformdownlink(state->r, buf, giststate, stack);

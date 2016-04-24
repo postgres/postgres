@@ -20,7 +20,7 @@
 
 
 /* GUC variables */
-extern int	old_snapshot_threshold;
+extern PGDLLIMPORT int old_snapshot_threshold;
 
 
 extern Size SnapMgrShmemSize(void);

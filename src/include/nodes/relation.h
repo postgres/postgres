@@ -1030,7 +1030,8 @@ typedef struct SubqueryScanPath
 } SubqueryScanPath;
 
 /*
- * ForeignPath represents a potential scan of a foreign table
+ * ForeignPath represents a potential scan of a foreign table, foreign join
+ * or foreign upper-relation.
  *
  * fdw_private stores FDW private data about the scan.  While fdw_private is
  * not actually touched by the core code during normal operations, it's

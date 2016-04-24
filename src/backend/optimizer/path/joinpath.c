@@ -1450,10 +1450,14 @@ hash_inner_and_outer(PlannerInfo *root,
 		 * If the joinrel is parallel-safe, we may be able to consider a
 		 * partial hash join.  However, we can't handle JOIN_UNIQUE_OUTER,
 		 * because the outer path will be partial, and therefore we won't be
-		 * able to properly guarantee uniqueness.  Also, the resulting path
-		 * must not be parameterized.
+		 * able to properly guarantee uniqueness.  Similarly, we can't handle
+		 * JOIN_FULL and JOIN_RIGHT, because they can produce false null
+		 * extended rows.  Also, the resulting path must not be parameterized.
 		 */
-		if (joinrel->consider_parallel && jointype != JOIN_UNIQUE_OUTER &&
+		if (joinrel->consider_parallel &&
+			jointype != JOIN_UNIQUE_OUTER &&
+			jointype != JOIN_FULL &&
+			jointype != JOIN_RIGHT &&
 			outerrel->partial_pathlist != NIL &&
 			bms_is_empty(joinrel->lateral_relids))
 		{

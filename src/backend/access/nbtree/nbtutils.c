@@ -1756,7 +1756,7 @@ _bt_killitems(IndexScanDesc scan)
 		 */
 		LockBuffer(so->currPos.buf, BT_READ);
 
-		page = BufferGetPage(so->currPos.buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(so->currPos.buf);
 	}
 	else
 	{
@@ -1769,7 +1769,7 @@ _bt_killitems(IndexScanDesc scan)
 		if (!BufferIsValid(buf))
 			return;
 
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 		if (PageGetLSN(page) == so->currPos.lsn)
 			so->currPos.buf = buf;
 		else

@@ -16,7 +16,7 @@
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c */
 static int
-strtoi(const char *nptr, char **endptr, int base)
+strtoint(const char *nptr, char **endptr, int base)
 {
 	long		val;
 
@@ -448,7 +448,7 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 				}
 
 				errno = 0;
-				val = strtoi(field[i], &cp, 10);
+				val = strtoint(field[i], &cp, 10);
 				if (errno == ERANGE)
 					return DTERR_FIELD_OVERFLOW;
 
@@ -457,7 +457,7 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 					/* SQL "years-months" syntax */
 					int			val2;
 
-					val2 = strtoi(cp + 1, &cp, 10);
+					val2 = strtoint(cp + 1, &cp, 10);
 					if (errno == ERANGE || val2 < 0 || val2 >= MONTHS_PER_YEAR)
 						return DTERR_FIELD_OVERFLOW;
 					if (*cp != '\0')

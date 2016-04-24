@@ -90,7 +90,7 @@ typedef struct BTPageStat
 static void
 GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat *stat)
 {
-	Page		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buffer);
 	PageHeader	phdr = (PageHeader) page;
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -317,9 +317,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 		uargs = palloc(sizeof(struct user_args));
 
 		uargs->page = palloc(BLCKSZ);
-		memcpy(uargs->page,
-			   BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST),
-			   BLCKSZ);
+		memcpy(uargs->page, BufferGetPage(buffer), BLCKSZ);
 
 		UnlockReleaseBuffer(buffer);
 		relation_close(rel, AccessShareLock);
@@ -449,7 +447,7 @@ bt_metap(PG_FUNCTION_ARGS)
 	buffer = ReadBuffer(rel, 0);
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buffer);
 	metad = BTPageGetMeta(page);
 
 	/* Build a tuple descriptor for our result type */

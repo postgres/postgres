@@ -123,7 +123,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 	{
 		BlockNumber nextblkno;
 
-		page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buf);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		nextblkno = pageopaque->hasho_nextblkno;
 
@@ -137,7 +137,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 	}
 
 	/* now that we have correct backlink, initialize new overflow page */
-	ovflpage = BufferGetPage(ovflbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	ovflpage = BufferGetPage(ovflbuf);
 	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
 	ovflopaque->hasho_prevblkno = BufferGetBlockNumber(buf);
 	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -186,8 +186,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf, NULL, NULL,
-										  BGP_NO_SNAPSHOT_TEST));
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/* start search at hashm_firstfree */
 	orig_firstfree = metap->hashm_firstfree;
@@ -225,7 +224,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 
 		mapbuf = _hash_getbuf(rel, mapblkno, HASH_WRITE, LH_BITMAP_PAGE);
-		mappage = BufferGetPage(mapbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		mappage = BufferGetPage(mapbuf);
 		freep = HashPageGetBitmap(mappage);
 
 		for (; bit <= last_inpage; j++, bit += BITS_PER_MAP)
@@ -397,7 +396,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 	/* Get information from the doomed page */
 	_hash_checkpage(rel, ovflbuf, LH_OVERFLOW_PAGE);
 	ovflblkno = BufferGetBlockNumber(ovflbuf);
-	ovflpage = BufferGetPage(ovflbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	ovflpage = BufferGetPage(ovflbuf);
 	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
 	nextblkno = ovflopaque->hasho_nextblkno;
 	prevblkno = ovflopaque->hasho_prevblkno;
@@ -424,7 +423,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 														 HASH_WRITE,
 										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
 														 bstrategy);
-		Page		prevpage = BufferGetPage(prevbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		Page		prevpage = BufferGetPage(prevbuf);
 		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
 
 		Assert(prevopaque->hasho_bucket == bucket);
@@ -438,7 +437,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 														 HASH_WRITE,
 														 LH_OVERFLOW_PAGE,
 														 bstrategy);
-		Page		nextpage = BufferGetPage(nextbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		Page		nextpage = BufferGetPage(nextbuf);
 		HashPageOpaque nextopaque = (HashPageOpaque) PageGetSpecialPointer(nextpage);
 
 		Assert(nextopaque->hasho_bucket == bucket);
@@ -450,8 +449,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 
 	/* Read the metapage so we can determine which bitmap page to use */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf, NULL, NULL,
-										  BGP_NO_SNAPSHOT_TEST));
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/* Identify which bit to set */
 	ovflbitno = blkno_to_bitno(metap, ovflblkno);
@@ -468,7 +466,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 
 	/* Clear the bitmap bit to indicate that this overflow page is free */
 	mapbuf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BITMAP_PAGE);
-	mappage = BufferGetPage(mapbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	mappage = BufferGetPage(mapbuf);
 	freep = HashPageGetBitmap(mappage);
 	Assert(ISSET(freep, bitmapbit));
 	CLRBIT(freep, bitmapbit);
@@ -523,7 +521,7 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
 	 * that it's not worth worrying about.
 	 */
 	buf = _hash_getnewbuf(rel, blkno, forkNum);
-	pg = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	pg = BufferGetPage(buf);
 
 	/* initialize the page's special space */
 	op = (HashPageOpaque) PageGetSpecialPointer(pg);
@@ -603,7 +601,7 @@ _hash_squeezebucket(Relation rel,
 									  HASH_WRITE,
 									  LH_BUCKET_PAGE,
 									  bstrategy);
-	wpage = BufferGetPage(wbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	wpage = BufferGetPage(wbuf);
 	wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 
 	/*
@@ -633,7 +631,7 @@ _hash_squeezebucket(Relation rel,
 										  HASH_WRITE,
 										  LH_OVERFLOW_PAGE,
 										  bstrategy);
-		rpage = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		rpage = BufferGetPage(rbuf);
 		ropaque = (HashPageOpaque) PageGetSpecialPointer(rpage);
 		Assert(ropaque->hasho_bucket == bucket);
 	} while (BlockNumberIsValid(ropaque->hasho_nextblkno));
@@ -698,7 +696,7 @@ _hash_squeezebucket(Relation rel,
 												  HASH_WRITE,
 												  LH_OVERFLOW_PAGE,
 												  bstrategy);
-				wpage = BufferGetPage(wbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+				wpage = BufferGetPage(wbuf);
 				wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 				Assert(wopaque->hasho_bucket == bucket);
 				wbuf_dirty = false;
@@ -754,7 +752,7 @@ _hash_squeezebucket(Relation rel,
 										  HASH_WRITE,
 										  LH_OVERFLOW_PAGE,
 										  bstrategy);
-		rpage = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		rpage = BufferGetPage(rbuf);
 		ropaque = (HashPageOpaque) PageGetSpecialPointer(rpage);
 		Assert(ropaque->hasho_bucket == bucket);
 	}

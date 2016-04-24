@@ -76,11 +76,9 @@ InitBufferPool(void)
 
 	/* Align descriptors to a cacheline boundary. */
 	BufferDescriptors = (BufferDescPadded *)
-		CACHELINEALIGN(
-					   ShmemInitStruct("Buffer Descriptors",
-									   NBuffers * sizeof(BufferDescPadded)
-									   + PG_CACHE_LINE_SIZE,
-									   &foundDescs));
+		ShmemInitStruct("Buffer Descriptors",
+						NBuffers * sizeof(BufferDescPadded),
+						&foundDescs);
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
@@ -88,10 +86,9 @@ InitBufferPool(void)
 
 	/* Align lwlocks to cacheline boundary */
 	BufferIOLWLockArray = (LWLockMinimallyPadded *)
-		CACHELINEALIGN(ShmemInitStruct("Buffer IO Locks",
-							  NBuffers * (Size) sizeof(LWLockMinimallyPadded)
-									   + PG_CACHE_LINE_SIZE,
-									   &foundIOLocks));
+		ShmemInitStruct("Buffer IO Locks",
+						NBuffers * (Size) sizeof(LWLockMinimallyPadded),
+						&foundIOLocks);
 
 	BufferIOLWLockTranche.name = "buffer_io";
 	BufferIOLWLockTranche.array_base = BufferIOLWLockArray;

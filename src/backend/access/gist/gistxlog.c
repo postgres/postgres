@@ -46,7 +46,7 @@ gistRedoClearFollowRight(XLogReaderState *record, uint8 block_id)
 	action = XLogReadBufferForRedo(record, block_id, &buffer);
 	if (action == BLK_NEEDS_REDO || action == BLK_RESTORED)
 	{
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buffer);
 
 		GistPageSetNSN(page, lsn);
 		GistClearFollowRight(page);
@@ -78,7 +78,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 
 		data = begin = XLogRecGetBlockData(record, 0, &datalen);
 
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 
 		/* Delete old tuples */
 		if (xldata->ntodelete > 0)
@@ -199,7 +199,7 @@ gistRedoPageSplitRecord(XLogReaderState *record)
 		}
 
 		buffer = XLogInitBufferForRedo(record, i + 1);
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 		data = XLogRecGetBlockData(record, i + 1, &datalen);
 
 		tuples = decodePageSplitRecord(data, datalen, &num);
@@ -265,7 +265,7 @@ gistRedoCreateIndex(XLogReaderState *record)
 
 	buffer = XLogInitBufferForRedo(record, 0);
 	Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = (Page) BufferGetPage(buffer);
 
 	GISTInitBuffer(buffer, F_LEAF);
 

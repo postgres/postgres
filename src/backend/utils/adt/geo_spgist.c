@@ -171,7 +171,7 @@ getRangeBox(BOX *box)
  * initialize the struct to cover the whole 4D space.
  */
 static RectBox *
-initRectBox()
+initRectBox(void)
 {
 	RectBox	   *rect_box = (RectBox *) palloc(sizeof(RectBox));
 	double		infinity = get_float8_infinity();

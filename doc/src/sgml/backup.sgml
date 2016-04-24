@@ -818,6 +818,21 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
     simple. It is very important that these steps are executed in
     sequence, and that the success of a step is verified before
     proceeding to the next step.
+   </para>
+   <para>
+    Low level base backups can be made in a non-exclusive or an exclusive
+    way. The non-exclusive method is recommended and the exclusive one is
+    deprecated and will eventually be removed.
+   </para>
+   <sect3 id="backup-lowlevel-base-backup-nonexclusive">
+    <title>Making a non-exclusive low level backup</title>
+    <para>
+     A non-exclusive low level backup is one that allows other
+     concurrent backups to be running (both those started using
+     the same backup API and those started using
+     <xref linkend="app-pgbasebackup">.
+    </para>
+    <para>
   <orderedlist>
    <listitem>
     <para>
@@ -826,29 +841,127 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
    </listitem>
    <listitem>
     <para>
-     Connect to the database as a user with rights to run pg_start_backup
-     (superuser, or a user who has been granted EXECUTE on the function)
-     and issue the command:
+     Connect to the server (it does not matter which database) as a user with
+     rights to run pg_start_backup (superuser, or a user who has been granted
+     EXECUTE on the function) and issue the command:
+<programlisting>
+SELECT pg_start_backup('label', false, false);
+</programlisting>
+     where <literal>label</> is any string you want to use to uniquely
+     identify this backup operation. The connection
+     calling <function>pg_start_backup</> must be maintained until the end of
+     the backup, or the backup will be automatically aborted.
+    </para>
+
+    <para>
+     By default, <function>pg_start_backup</> can take a long time to finish.
+     This is because it performs a checkpoint, and the I/O
+     required for the checkpoint will be spread out over a significant
+     period of time, by default half your inter-checkpoint interval
+     (see the configuration parameter
+     <xref linkend="guc-checkpoint-completion-target">).  This is
+     usually what you want, because it minimizes the impact on query
+     processing.  If you want to start the backup as soon as
+     possible, change the second parameter to <literal>true</>.
+    </para>
+
+    <para>
+     The third parameter being <literal>false</> tells
+     <function>pg_start_backup</> to initiate a non-exclusive base backup.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Perform the backup, using any convenient file-system-backup tool
+     such as <application>tar</> or <application>cpio</> (not
+     <application>pg_dump</application> or
+     <application>pg_dumpall</application>).  It is neither
+     necessary nor desirable to stop normal operation of the database
+     while you do this. See section
+     <xref linkend="backup-lowlevel-base-backup-data"> for things to
+     consider during this backup.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     In the same connection as before, issue the command:
+<programlisting>
+SELECT * FROM pg_stop_backup(false);
+</programlisting>
+     This terminates the backup mode and performs an automatic switch to
+     the next WAL segment.  The reason for the switch is to arrange for
+     the last WAL segment file written during the backup interval to be
+     ready to archive.
+    </para>
+    <para>
+     The <function>pg_stop_backup</> will return one row with three
+     values. The second of these fields should be written to a file named
+     <filename>backup_label</> in the root directory of the backup. The
+     third field should be written to a file named
+     <filename>tablespace_map</> unless the field is empty. These files are
+     vital to the backup working, and must be written without modification.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Once the WAL segment files active during the backup are archived, you are
+     done.  The file identified by <function>pg_stop_backup</>'s first return
+     value the last segment that is required to form a complete set of backup
+     files.  If <varname>archive_mode</> is enabled,
+     <function>pg_stop_backup</> does not return until the last segment has
+     been archived.
+     Archiving of these files happens automatically since you have
+     already configured <varname>archive_command</>. In most cases this
+     happens quickly, but you are advised to monitor your archive
+     system to ensure there are no delays.
+     If the archive process has fallen behind
+     because of failures of the archive command, it will keep retrying
+     until the archive succeeds and the backup is complete.
+     If you wish to place a time limit on the execution of
+     <function>pg_stop_backup</>, set an appropriate
+     <varname>statement_timeout</varname> value, but make note that if
+     <function>pg_stop_backup</> terminates because of this your backup
+     may not be valid.
+    </para>
+   </listitem>
+  </orderedlist>
+    </para>
+   </sect3>
+   <sect3 id="backup-lowlevel-base-backup-exclusive">
+    <title>Making an exclusive low level backup</title>
+    <para>
+     The process for an exclusive backup is mostly the same as for a
+     non-exclusive one, but it differs in a few key steps. It does not allow
+     more than one concurrent backup to run, and there can be some issues on
+     the server if it crashes during the backup. Prior to PostgreSQL 9.6, this
+     was the only low-level method available, but it is now recommended that
+     all users upgrade their scripts to use non-exclusive backups if possible.
+    </para>
+    <para>
+  <orderedlist>
+   <listitem>
+    <para>
+     Ensure that WAL archiving is enabled and working.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Connect to the server (it does not matter which database) as a user with
+     rights to run pg_start_backup (superuser, or a user who has been granted
+     EXECUTE on the function) and issue the command:
 <programlisting>
 SELECT pg_start_backup('label');
 </programlisting>
      where <literal>label</> is any string you want to use to uniquely
-     identify this backup operation.  (One good practice is to use the
-     full path where you intend to put the backup dump file.)
+     identify this backup operation.
      <function>pg_start_backup</> creates a <firstterm>backup label</> file,
      called <filename>backup_label</>, in the cluster directory with
-     information about your backup, including the start time and label
-     string.  The function also creates a <firstterm>tablespace map</> file,
+     information about your backup, including the start time and label string.
+     The function also creates a <firstterm>tablespace map</> file,
      called <filename>tablespace_map</>, in the cluster directory with
-     information about tablespace symbolic links in <filename>pg_tblspc/</>
-     if one or more such link is present.  Both files are critical to the
+     information about tablespace symbolic links in <filename>pg_tblspc/</> if
+     one or more such link is present.  Both files are critical to the
      integrity of the backup, should you need to restore from it.
-    </para>
-
-    <para>
-     It does not matter which database within the cluster you connect to to
-     issue this command.  You can ignore the result returned by the function;
-     but if it reports an error, deal with that before proceeding.
     </para>
 
     <para>
@@ -874,7 +987,9 @@ SELECT pg_start_backup('label', true);
      <application>pg_dump</application> or
      <application>pg_dumpall</application>).  It is neither
      necessary nor desirable to stop normal operation of the database
-     while you do this.
+     while you do this. See section
+     <xref linkend="backup-lowlevel-base-backup-data"> for things to
+     consider during this backup.
     </para>
    </listitem>
    <listitem>
@@ -908,12 +1023,16 @@ SELECT pg_stop_backup();
      until the archive succeeds and the backup is complete.
      If you wish to place a time limit on the execution of
      <function>pg_stop_backup</>, set an appropriate
-     <varname>statement_timeout</varname> value.
+     <varname>statement_timeout</varname> value, but make note that if
+     <function>pg_stop_backup</> terminates because of this your backup
+     may not be valid.
     </para>
    </listitem>
   </orderedlist>
-   </para>
-
+    </para>
+   </sect3>
+   <sect3 id="backup-lowlevel-base-backup-data">
+   <title>Backing up the data directory</title>
    <para>
     Some file system backup tools emit warnings or errors
     if the files they are trying to copy change while the copy proceeds.
@@ -933,16 +1052,16 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    Be certain that your backup dump includes all of the files under
+    Be certain that your backup includes all of the files under
     the database cluster directory (e.g., <filename>/usr/local/pgsql/data</>).
     If you are using tablespaces that do not reside underneath this directory,
-    be careful to include them as well (and be sure that your backup dump
+    be careful to include them as well (and be sure that your backup
     archives symbolic links as links, otherwise the restore will corrupt
     your tablespaces).
    </para>
 
    <para>
-    You can, however, omit from the backup dump the files within the
+    You should, however, omit from the backup the files within the
     cluster's <filename>pg_xlog/</> subdirectory.  This
     slight adjustment is worthwhile because it reduces the risk
     of mistakes when restoring.  This is easy to arrange if
@@ -956,7 +1075,7 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    It is often a good idea to also omit from the backup dump the files
+    It is often a good idea to also omit from the backup the files
     within the cluster's <filename>pg_replslot/</> directory, so that
     replication slots that exist on the master do not become part of the
     backup.  Otherwise, the subsequent use of the backup to create a standby
@@ -971,15 +1090,11 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    It's also worth noting that the <function>pg_start_backup</> function
-    makes files named <filename>backup_label</> and
-    <filename>tablespace_map</> in the database cluster directory,
-    which are removed by <function>pg_stop_backup</>.  These files will of
-    course be archived as a part of your backup dump file.  The backup label
+    The backup label
     file includes the label string you gave to <function>pg_start_backup</>,
     as well as the time at which <function>pg_start_backup</> was run, and
     the name of the starting WAL file.  In case of confusion it is therefore
-    possible to look inside a backup dump file and determine exactly which
+    possible to look inside a backup file and determine exactly which
     backup session the dump file came from.  The tablespace map file includes
     the symbolic link names as they exist in the directory
     <filename>pg_tblspc/</> and the full path of each symbolic link.
@@ -989,13 +1104,14 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    It is also possible to make a backup dump while the server is
+    It is also possible to make a backup while the server is
     stopped.  In this case, you obviously cannot use
     <function>pg_start_backup</> or <function>pg_stop_backup</>, and
     you will therefore be left to your own devices to keep track of which
-    backup dump is which and how far back the associated WAL files go.
+    backup is which and how far back the associated WAL files go.
     It is generally better to follow the continuous archiving procedure above.
    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="backup-pitr-recovery">

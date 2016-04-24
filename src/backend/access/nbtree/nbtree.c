@@ -910,7 +910,7 @@ restart:
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 							 info->strategy);
 	LockBuffer(buf, BT_READ);
-	page = BufferGetPage(buf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buf);
 	if (!PageIsNew(page))
 	{
 		_bt_checkpage(rel, buf);

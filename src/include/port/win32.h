@@ -267,51 +267,50 @@ typedef int pid_t;
 
 /*
  * Supplement to <errno.h>.
+ *
+ * We redefine network-related Berkeley error symbols as the corresponding WSA
+ * constants.  This allows elog.c to recognize them as being in the Winsock
+ * error code range and pass them off to pgwin32_socket_strerror(), since
+ * Windows' version of plain strerror() won't cope.  Note that this will break
+ * if these names are used for anything else besides Windows Sockets errors.
+ * See TranslateSocketError() when changing this list.
  */
 #undef EAGAIN
+#define EAGAIN WSAEWOULDBLOCK
 #undef EINTR
 #define EINTR WSAEINTR
-#define EAGAIN WSAEWOULDBLOCK
 #undef EMSGSIZE
 #define EMSGSIZE WSAEMSGSIZE
 #undef EAFNOSUPPORT
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
 #undef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
+#undef ECONNABORTED
+#define ECONNABORTED WSAECONNABORTED
 #undef ECONNRESET
 #define ECONNRESET WSAECONNRESET
 #undef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
+#undef EISCONN
+#define EISCONN WSAEISCONN
 #undef ENOBUFS
 #define ENOBUFS WSAENOBUFS
 #undef EPROTONOSUPPORT
 #define EPROTONOSUPPORT WSAEPROTONOSUPPORT
 #undef ECONNREFUSED
 #define ECONNREFUSED WSAECONNREFUSED
-#undef EBADFD
-#define EBADFD WSAENOTSOCK
+#undef ENOTSOCK
+#define ENOTSOCK WSAENOTSOCK
 #undef EOPNOTSUPP
 #define EOPNOTSUPP WSAEOPNOTSUPP
-
-/*
- * For Microsoft Visual Studio 2010 and above we intentionally redefine
- * the regular Berkeley error constants and set them to the WSA constants.
- * Note that this will break if those constants are used for anything else
- * than Windows Sockets errors.
- */
-#if _MSC_VER >= 1600
-#pragma warning(disable:4005)
-#define EMSGSIZE WSAEMSGSIZE
-#define EAFNOSUPPORT WSAEAFNOSUPPORT
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#define EPROTONOSUPPORT WSAEPROTONOSUPPORT
-#define ECONNRESET WSAECONNRESET
-#define EINPROGRESS WSAEINPROGRESS
-#define ENOBUFS WSAENOBUFS
-#define ECONNREFUSED WSAECONNREFUSED
-#define EOPNOTSUPP WSAEOPNOTSUPP
-#pragma warning(default:4005)
-#endif
+#undef EADDRINUSE
+#define EADDRINUSE WSAEADDRINUSE
+#undef EADDRNOTAVAIL
+#define EADDRNOTAVAIL WSAEADDRNOTAVAIL
+#undef EHOSTUNREACH
+#define EHOSTUNREACH WSAEHOSTUNREACH
+#undef ENOTCONN
+#define ENOTCONN WSAENOTCONN
 
 /*
  * Extended locale functions with gratuitous underscore prefixes.

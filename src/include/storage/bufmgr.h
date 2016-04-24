@@ -48,19 +48,6 @@ typedef enum
 								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 
-/*
- * Forced choice for whether BufferGetPage() must check snapshot age
- *
- * A scan must test for old snapshot, unless the test would be redundant (for
- * example, to tests already made at a lower level on all code paths).
- * Positioning for DML or vacuuming does not need this sort of test.
- */
-typedef enum
-{
-	BGP_NO_SNAPSHOT_TEST,		/* Not used for scan, or is redundant */
-	BGP_TEST_FOR_OLD_SNAPSHOT	/* Test for old snapshot is needed */
-} BufferGetPageAgeTest;
-
 /* forward declared, to avoid having to expose buf_internals.h here */
 struct WritebackContext;
 
@@ -178,6 +165,15 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 )
 
 /*
+ * BufferGetPage
+ *		Returns the page associated with a buffer.
+ *
+ * When this is called as part of a scan, there may be a need for a nearby
+ * call to TestForOldSnapshot().  See the definition of that for details.
+ */
+#define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
+
+/*
  * prototypes for functions in bufmgr.c
  */
 extern bool ComputeIoConcurrency(int io_concurrency, double *target);
@@ -243,7 +239,7 @@ extern bool BgBufferSync(struct WritebackContext *wb_context);
 
 extern void AtProcExit_LocalBuffers(void);
 
-extern void TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page);
+extern void TestForOldSnapshot_impl(Snapshot snapshot, Relation relation);
 
 /* in freelist.c */
 extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);
@@ -262,23 +258,33 @@ extern void FreeAccessStrategy(BufferAccessStrategy strategy);
 #ifndef FRONTEND
 
 /*
- * BufferGetPage
- *		Returns the page associated with a buffer.
+ * Check whether the given snapshot is too old to have safely read the given
+ * page from the given table.  If so, throw a "snapshot too old" error.
  *
- * For call sites where the check is not needed (which is the vast majority of
- * them), the snapshot and relation parameters can, and generally should, be
- * NULL.
+ * This test generally needs to be performed after every BufferGetPage() call
+ * that is executed as part of a scan.  It is not needed for calls made for
+ * modifying the page (for example, to position to the right place to insert a
+ * new index tuple or for vacuuming).  It may also be omitted where calls to
+ * lower-level functions will have already performed the test.
+ *
+ * Note that a NULL snapshot argument is allowed and causes a fast return
+ * without error; this is to support call sites which can be called from
+ * either scans or index modification areas.
+ *
+ * For best performance, keep the tests that are fastest and/or most likely to
+ * exclude a page from old snapshot testing near the front.
  */
-static inline Page
-BufferGetPage(Buffer buffer, Snapshot snapshot, Relation relation,
-			  BufferGetPageAgeTest agetest)
+static inline void
+TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 {
-	Page		page = (Page) BufferGetBlock(buffer);
+	Assert(relation != NULL);
 
-	if (agetest == BGP_TEST_FOR_OLD_SNAPSHOT)
-		TestForOldSnapshot(snapshot, relation, page);
-
-	return page;
+	if (old_snapshot_threshold >= 0
+		&& (snapshot) != NULL
+		&& (snapshot)->satisfies == HeapTupleSatisfiesMVCC
+		&& !XLogRecPtrIsInvalid((snapshot)->lsn)
+		&& PageGetLSN(page) > (snapshot)->lsn)
+		TestForOldSnapshot_impl(snapshot, relation);
 }
 
 #endif   /* FRONTEND */

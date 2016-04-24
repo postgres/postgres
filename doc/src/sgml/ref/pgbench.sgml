@@ -1174,7 +1174,7 @@ END;
  0 84 4142 0 1412881037 918023 2333
  0 85 2465 0 1412881037 919759 740
 </screen>
-   In this example, transaction 82 was late, because it's latency (6.173 ms) was
+   In this example, transaction 82 was late, because its latency (6.173 ms) was
    over the 5 ms limit. The next two transactions were skipped, because they
    were already late before they were even started.
   </para>
@@ -1215,7 +1215,7 @@ END;
   </para>
 
   <para>
-   Here is example outputs:
+   Here is example output:
 <screen>
 1345828501 5601 1542744 483552416 61 2573
 1345828503 7884 1979812 565806736 60 1479
@@ -1225,8 +1225,8 @@ END;
 </screen></para>
 
   <para>
-   Notice that while the plain (unaggregated) log file contains index
-   of the custom script files, the aggregated log does not. Therefore if
+   Notice that while the plain (unaggregated) log file contains a reference
+   to the custom script files, the aggregated log does not. Therefore if
    you need per script data, you need to aggregate the data on your own.
   </para>
 

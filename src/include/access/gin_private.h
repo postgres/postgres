@@ -420,14 +420,14 @@ typedef struct ginxlogCreatePostingTree
 
 typedef struct
 {
-	uint16		flags;			/* GIN_SPLIT_ISLEAF and/or GIN_SPLIT_ISDATA */
+	uint16		flags;			/* GIN_INSERT_ISLEAF and/or GIN_INSERT_ISDATA */
 
 	/*
 	 * FOLLOWS:
 	 *
 	 * 1. if not leaf page, block numbers of the left and right child pages
-	 * whose split this insertion finishes. As BlockIdData[2] (beware of
-	 * adding fields before this that would make them not 16-bit aligned)
+	 * whose split this insertion finishes, as BlockIdData[2] (beware of
+	 * adding fields in this struct that would make them not 16-bit aligned)
 	 *
 	 * 2. a ginxlogInsertEntry or ginxlogRecompressDataLeaf struct, depending
 	 * on tree type.
@@ -499,21 +499,19 @@ typedef struct ginxlogSplit
 								 * split */
 	BlockNumber leftChildBlkno; /* valid on a non-leaf split */
 	BlockNumber rightChildBlkno;
-	uint16		flags;
-
-	/* follows: one of the following structs */
+	uint16		flags;			/* see below */
 } ginxlogSplit;
 
 /*
  * Flags used in ginxlogInsert and ginxlogSplit records
  */
 #define GIN_INSERT_ISDATA	0x01	/* for both insert and split records */
-#define GIN_INSERT_ISLEAF	0x02	/* .. */
+#define GIN_INSERT_ISLEAF	0x02	/* ditto */
 #define GIN_SPLIT_ROOT		0x04	/* only for split records */
 
 /*
  * Vacuum simply WAL-logs the whole page, when anything is modified. This
- * functionally identical heap_newpage records, but is kept separate for
+ * is functionally identical to heap_newpage records, but is kept separate for
  * debugging purposes. (When inspecting the WAL stream, it's easier to see
  * what's going on when GIN vacuum records are marked as such, not as heap
  * records.) This is currently only used for entry tree leaf pages.
@@ -641,12 +639,12 @@ typedef struct GinBtreeStack
 
 typedef struct GinBtreeData *GinBtree;
 
-/* Return codes for GinBtreeData.placeToPage method */
+/* Return codes for GinBtreeData.beginPlaceToPage method */
 typedef enum
 {
-	UNMODIFIED,
-	INSERTED,
-	SPLIT
+	GPTP_NO_WORK,
+	GPTP_INSERT,
+	GPTP_SPLIT
 } GinPlaceToPageRC;
 
 typedef struct GinBtreeData
@@ -659,7 +657,8 @@ typedef struct GinBtreeData
 
 	/* insert methods */
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
-	GinPlaceToPageRC (*placeToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, Page *, Page *);
+	GinPlaceToPageRC (*beginPlaceToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, void **, Page *, Page *);
+	void		(*execPlaceToPage) (GinBtree, Buffer, GinBtreeStack *, void *, BlockNumber, void *);
 	void	   *(*prepareDownlink) (GinBtree, Buffer);
 	void		(*fillRoot) (GinBtree, Page, BlockNumber, Page, BlockNumber, Page);
 

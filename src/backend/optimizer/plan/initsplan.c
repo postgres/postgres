@@ -1176,9 +1176,32 @@ make_outerjoininfo(PlannerInfo *root,
 	{
 		SpecialJoinInfo *otherinfo = (SpecialJoinInfo *) lfirst(l);
 
-		/* ignore full joins --- other mechanisms preserve their ordering */
+		/*
+		 * A full join is an optimization barrier: we can't associate into or
+		 * out of it.  Hence, if it overlaps either LHS or RHS of the current
+		 * rel, expand that side's min relset to cover the whole full join.
+		 */
 		if (otherinfo->jointype == JOIN_FULL)
+		{
+			if (bms_overlap(left_rels, otherinfo->syn_lefthand) ||
+				bms_overlap(left_rels, otherinfo->syn_righthand))
+			{
+				min_lefthand = bms_add_members(min_lefthand,
+											   otherinfo->syn_lefthand);
+				min_lefthand = bms_add_members(min_lefthand,
+											   otherinfo->syn_righthand);
+			}
+			if (bms_overlap(right_rels, otherinfo->syn_lefthand) ||
+				bms_overlap(right_rels, otherinfo->syn_righthand))
+			{
+				min_righthand = bms_add_members(min_righthand,
+												otherinfo->syn_lefthand);
+				min_righthand = bms_add_members(min_righthand,
+												otherinfo->syn_righthand);
+			}
+			/* Needn't do anything else with the full join */
 			continue;
+		}
 
 		/*
 		 * For a lower OJ in our LHS, if our join condition uses the lower

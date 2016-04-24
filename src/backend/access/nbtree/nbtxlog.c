@@ -89,7 +89,7 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	Assert(len == sizeof(xl_btree_metadata));
 	Assert(BufferGetBlockNumber(metabuf) == BTREE_METAPAGE);
 	xlrec = (xl_btree_metadata *) ptr;
-	metapg = BufferGetPage(metabuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	metapg = BufferGetPage(metabuf);
 
 	_bt_pageinit(metapg, BufferGetPageSize(metabuf));
 
@@ -130,8 +130,7 @@ _bt_clear_incomplete_split(XLogReaderState *record, uint8 block_id)
 
 	if (XLogReadBufferForRedo(record, block_id, &buf) == BLK_NEEDS_REDO)
 	{
-		Page		page = BufferGetPage(buf, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST);
+		Page		page = (Page) BufferGetPage(buf);
 		BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		Assert((pageop->btpo_flags & BTP_INCOMPLETE_SPLIT) != 0);
@@ -168,7 +167,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, XLogReaderState *record)
 		Size		datalen;
 		char	   *datapos = XLogRecGetBlockData(record, 0, &datalen);
 
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = BufferGetPage(buffer);
 
 		if (PageAddItem(page, (Item) datapos, datalen, xlrec->offnum,
 						false, false) == InvalidOffsetNumber)
@@ -225,7 +224,7 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 	/* Reconstruct right (new) sibling page from scratch */
 	rbuf = XLogInitBufferForRedo(record, 1);
 	datapos = XLogRecGetBlockData(record, 1, &datalen);
-	rpage = BufferGetPage(rbuf, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	rpage = (Page) BufferGetPage(rbuf);
 
 	_bt_pageinit(rpage, BufferGetPageSize(rbuf));
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
@@ -267,8 +266,7 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 		 * but it helps debugging.  See also _bt_restore_page(), which does
 		 * the same for the right page.
 		 */
-		Page		lpage = BufferGetPage(lbuf, NULL, NULL,
-										  BGP_NO_SNAPSHOT_TEST);
+		Page		lpage = (Page) BufferGetPage(lbuf);
 		BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 		OffsetNumber off;
 		Item		newitem = NULL;
@@ -370,8 +368,7 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 
 		if (XLogReadBufferForRedo(record, 2, &buffer) == BLK_NEEDS_REDO)
 		{
-			Page		page = BufferGetPage(buffer, NULL, NULL,
-											 BGP_NO_SNAPSHOT_TEST);
+			Page		page = (Page) BufferGetPage(buffer);
 			BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 			pageop->btpo_prev = rightsib;
@@ -479,7 +476,7 @@ btree_xlog_vacuum(XLogReaderState *record)
 
 		ptr = XLogRecGetBlockData(record, 0, &len);
 
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 
 		if (len > 0)
 		{
@@ -573,7 +570,7 @@ btree_xlog_delete_get_latestRemovedXid(XLogReaderState *record)
 	if (!BufferIsValid(ibuffer))
 		return InvalidTransactionId;
 	LockBuffer(ibuffer, BT_READ);
-	ipage = BufferGetPage(ibuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	ipage = (Page) BufferGetPage(ibuffer);
 
 	/*
 	 * Loop through the deleted index items to obtain the TransactionId from
@@ -600,7 +597,7 @@ btree_xlog_delete_get_latestRemovedXid(XLogReaderState *record)
 			return InvalidTransactionId;
 		}
 		LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
-		hpage = BufferGetPage(hbuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		hpage = (Page) BufferGetPage(hbuffer);
 
 		/*
 		 * Look up the heap tuple header that the index tuple points at by
@@ -696,7 +693,7 @@ btree_xlog_delete(XLogReaderState *record)
 	 */
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 
 		if (XLogRecGetDataLen(record) > SizeOfBtreeDelete)
 		{
@@ -748,7 +745,7 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 		OffsetNumber nextoffset;
 		BlockNumber rightsib;
 
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		poffset = xlrec->poffset;
@@ -772,7 +769,7 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 
 	/* Rewrite the leaf page as a halfdead page */
 	buffer = XLogInitBufferForRedo(record, 0);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = (Page) BufferGetPage(buffer);
 
 	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -828,7 +825,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 	/* Fix left-link of right sibling */
 	if (XLogReadBufferForRedo(record, 2, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 		pageop->btpo_prev = leftsib;
 
@@ -843,7 +840,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 	{
 		if (XLogReadBufferForRedo(record, 1, &buffer) == BLK_NEEDS_REDO)
 		{
-			page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+			page = (Page) BufferGetPage(buffer);
 			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			pageop->btpo_next = rightsib;
 
@@ -856,7 +853,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 
 	/* Rewrite target page as empty deleted page */
 	buffer = XLogInitBufferForRedo(record, 0);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = (Page) BufferGetPage(buffer);
 
 	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -885,7 +882,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		IndexTupleData trunctuple;
 
 		buffer = XLogInitBufferForRedo(record, 3);
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 
 		_bt_pageinit(page, BufferGetPageSize(buffer));
 		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -929,7 +926,7 @@ btree_xlog_newroot(XLogReaderState *record)
 	Size		len;
 
 	buffer = XLogInitBufferForRedo(record, 0);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = (Page) BufferGetPage(buffer);
 
 	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);

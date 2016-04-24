@@ -87,8 +87,7 @@ ginVacuumItemPointers(GinVacuumState *gvs, ItemPointerData *items,
 static void
 xlogVacuumPage(Relation index, Buffer buffer)
 {
-	Page		page = BufferGetPage(buffer, NULL, NULL,
-									 BGP_NO_SNAPSHOT_TEST);
+	Page		page = BufferGetPage(buffer);
 	XLogRecPtr	recptr;
 
 	/* This is only used for entry tree leaf pages. */
@@ -119,7 +118,7 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 
 	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, gvs->strategy);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buffer);
 
 	/*
 	 * We should be sure that we don't concurrent with inserts, insert process
@@ -213,14 +212,14 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	START_CRIT_SECTION();
 
 	/* Unlink the page by changing left sibling's rightlink */
-	page = BufferGetPage(dBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(dBuffer);
 	rightlink = GinPageGetOpaque(page)->rightlink;
 
-	page = BufferGetPage(lBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(lBuffer);
 	GinPageGetOpaque(page)->rightlink = rightlink;
 
 	/* Delete downlink from parent */
-	parentPage = BufferGetPage(pBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	parentPage = BufferGetPage(pBuffer);
 #ifdef USE_ASSERT_CHECKING
 	do
 	{
@@ -231,7 +230,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 #endif
 	GinPageDeletePostingItem(parentPage, myoff);
 
-	page = BufferGetPage(dBuffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(dBuffer);
 
 	/*
 	 * we shouldn't change rightlink field to save workability of running
@@ -269,8 +268,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_PAGE);
 		PageSetLSN(page, recptr);
 		PageSetLSN(parentPage, recptr);
-		PageSetLSN(BufferGetPage(lBuffer, NULL, NULL,
-								 BGP_NO_SNAPSHOT_TEST), recptr);
+		PageSetLSN(BufferGetPage(lBuffer), recptr);
 	}
 
 	if (!isParentRoot)
@@ -326,7 +324,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot,
 
 	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, gvs->strategy);
-	page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+	page = BufferGetPage(buffer);
 
 	Assert(GinPageIsData(page));
 
@@ -409,8 +407,7 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 static Page
 ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint32 *nroot)
 {
-	Page		origpage = BufferGetPage(buffer, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST),
+	Page		origpage = BufferGetPage(buffer),
 				tmppage;
 	OffsetNumber i,
 				maxoff = PageGetMaxOffsetNumber(origpage);
@@ -557,8 +554,7 @@ ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	/* find leaf page */
 	for (;;)
 	{
-		Page		page = BufferGetPage(buffer, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST);
+		Page		page = BufferGetPage(buffer);
 		IndexTuple	itup;
 
 		LockBuffer(buffer, GIN_SHARE);
@@ -593,8 +589,7 @@ ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 	for (;;)
 	{
-		Page		page = BufferGetPage(buffer, NULL, NULL,
-										 BGP_NO_SNAPSHOT_TEST);
+		Page		page = BufferGetPage(buffer);
 		Page		resPage;
 		uint32		i;
 
@@ -708,7 +703,7 @@ ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, GIN_SHARE);
-		page = BufferGetPage(buffer, NULL, NULL, BGP_NO_SNAPSHOT_TEST);
+		page = (Page) BufferGetPage(buffer);
 
 		if (PageIsNew(page) || GinPageIsDeleted(page))
 		{
