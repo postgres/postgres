@@ -77,15 +77,24 @@ static float8 atan_1_0 = 0;
 static float8 tan_45 = 0;
 static float8 cot_45 = 0;
 
+/*
+ * These are intentionally not static; don't "fix" them.  They will never
+ * be referenced by other files, much less changed; but we don't want the
+ * compiler to know that, else it might try to precompute expressions
+ * involving them.  See comments for init_degree_constants().
+ */
+float8		degree_c_thirty = 30.0;
+float8		degree_c_forty_five = 45.0;
+float8		degree_c_sixty = 60.0;
+float8		degree_c_one_half = 0.5;
+float8		degree_c_one = 1.0;
+
 /* Local function prototypes */
 static int	float4_cmp_internal(float4 a, float4 b);
 static int	float8_cmp_internal(float8 a, float8 b);
 static double sind_q1(double x);
 static double cosd_q1(double x);
-
-/* This is INTENTIONALLY NOT STATIC.  Don't "fix" it. */
-void init_degree_constants(float8 thirty, float8 forty_five, float8 sixty,
-					  float8 one_half, float8 one);
+static void init_degree_constants(void);
 
 #ifndef HAVE_CBRT
 /*
@@ -1814,35 +1823,31 @@ dtan(PG_FUNCTION_ARGS)
  * compilers out there that will precompute expressions such as sin(constant)
  * using a sin() function different from what will be used at runtime.  If we
  * want exact results, we must ensure that none of the scaling constants used
- * in the degree-based trig functions are computed that way.
- *
- * The whole approach fails if init_degree_constants() gets inlined into the
- * call sites, since then constant-folding can happen anyway.  Currently it
- * seems sufficient to declare it non-static to prevent that.  We have no
- * expectation that other files will call this, but don't tell gcc that.
+ * in the degree-based trig functions are computed that way.  To do so, we
+ * compute them from the variables degree_c_thirty etc, which are also really
+ * constants, but the compiler cannot assume that.
  *
  * Other hazards we are trying to forestall with this kluge include the
  * possibility that compilers will rearrange the expressions, or compute
  * some intermediate results in registers wider than a standard double.
  */
-void
-init_degree_constants(float8 thirty, float8 forty_five, float8 sixty,
-					  float8 one_half, float8 one)
+static void
+init_degree_constants(void)
 {
-	sin_30 = sin(thirty * RADIANS_PER_DEGREE);
-	one_minus_cos_60 = 1.0 - cos(sixty * RADIANS_PER_DEGREE);
-	asin_0_5 = asin(one_half);
-	acos_0_5 = acos(one_half);
-	atan_1_0 = atan(one);
-	tan_45 = sind_q1(forty_five) / cosd_q1(forty_five);
-	cot_45 = cosd_q1(forty_five) / sind_q1(forty_five);
+	sin_30 = sin(degree_c_thirty * RADIANS_PER_DEGREE);
+	one_minus_cos_60 = 1.0 - cos(degree_c_sixty * RADIANS_PER_DEGREE);
+	asin_0_5 = asin(degree_c_one_half);
+	acos_0_5 = acos(degree_c_one_half);
+	atan_1_0 = atan(degree_c_one);
+	tan_45 = sind_q1(degree_c_forty_five) / cosd_q1(degree_c_forty_five);
+	cot_45 = cosd_q1(degree_c_forty_five) / sind_q1(degree_c_forty_five);
 	degree_consts_set = true;
 }
 
 #define INIT_DEGREE_CONSTANTS() \
 do { \
 	if (!degree_consts_set) \
-		init_degree_constants(30.0, 45.0, 60.0, 0.5, 1.0); \
+		init_degree_constants(); \
 } while(0)
 
 
