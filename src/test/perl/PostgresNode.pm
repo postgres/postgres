@@ -859,12 +859,18 @@ sub get_new_node
 		# to open a TCP port on Unix.
 		if ($found == 1)
 		{
-			my $iaddr   = inet_aton($test_localhost);
-			my $paddr   = sockaddr_in($port, $iaddr);
-			my $proto   = getprotobyname("tcp");
+			my $iaddr = inet_aton($test_localhost);
+			my $paddr = sockaddr_in($port, $iaddr);
+			my $proto = getprotobyname("tcp");
 
-			socket(SOCK, PF_INET, SOCK_STREAM, $proto) or die;
-			$found = 0 if connect(SOCK, $paddr);
+			socket(SOCK, PF_INET, SOCK_STREAM, $proto)
+			  or die "socket failed: $!";
+
+			# As in postmaster, don't use SO_REUSEADDR on Windows
+			setsockopt(SOCK, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
+			  unless $TestLib::windows_os;
+			(bind(SOCK, $paddr) && listen(SOCK, SOMAXCONN))
+			  or $found = 0;
 			close(SOCK);
 		}
 	}
