@@ -6,7 +6,7 @@
   </indexterm>
   <para>
    PostgreSQL provides infrastructure to stream the modifications performed
-   via SQL to external consumers.  This functionality can be used to for a
+   via SQL to external consumers.  This functionality can be used for a
    variety of purposes, including replication solutions and auditing.
   </para>
 
