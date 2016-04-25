@@ -774,7 +774,7 @@ dumpRoles(PGconn *conn)
 
 		if (strncmp(rolename,"pg_",3) == 0)
 		{
-			fprintf(stderr, _("%s: role name starting with 'pg_' skipped (%s)\n"),
+			fprintf(stderr, _("%s: role name starting with \"pg_\" skipped (%s)\n"),
 					progname, rolename);
 			continue;
 		}

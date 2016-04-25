@@ -460,7 +460,7 @@ usage(const char *progname)
 	printf(_("  -P, --function=NAME(args)    restore named function\n"));
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"));
-	printf(_("  -t, --table=NAME             restore named relation (table, view, etc)\n"));
+	printf(_("  -t, --table=NAME             restore named relation (table, view, etc.)\n"));
 	printf(_("  -T, --trigger=NAME           restore named trigger\n"));
 	printf(_("  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"));
 	printf(_("  -1, --single-transaction     restore as a single transaction\n"));
