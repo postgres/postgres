@@ -1659,7 +1659,7 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 		 * This is not an assertion because we avoid the spinlock for
 		 * performance, leaving open the possibility that xlimit could advance
 		 * and be more current; but it seems prudent to apply this limit.  It
-		 * might make pruning a tiny bit less agressive than it could be, but
+		 * might make pruning a tiny bit less aggressive than it could be, but
 		 * protects against data loss bugs.
 		 */
 		if (TransactionIdIsNormal(latest_xmin)
@@ -1681,9 +1681,8 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 {
 	int64		ts;
 
-	/* Fast exit when old_snapshot_threshold is not used. */
-	if (old_snapshot_threshold < 0)
-		return;
+	/* Never call this function when old snapshot checking is disabled. */
+	Assert(old_snapshot_threshold >= 0);
 
 	/* Keep track of the latest xmin seen by any process. */
 	SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
