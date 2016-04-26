@@ -662,6 +662,7 @@ sub stop
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
 	$mode = 'fast' unless defined $mode;
+	return unless defined $self->{_pid};
 	print "### Stopping node \"$name\" using mode $mode\n";
 	TestLib::system_log('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->{_pid} = undef;
@@ -826,8 +827,8 @@ sub _update_pid
 Build a new PostgresNode object, assigning a free port number. Standalone
 function that's automatically imported.
 
-We also register the node, to avoid the port number from being reused
-for another node even when this one is not active.
+Remembers the node, to prevent its port number from being reused for another
+node, and to ensure that it gets shut down when the test script exits.
 
 You should generally use this instead of PostgresNode::new(...).
 
@@ -889,14 +890,21 @@ sub get_new_node
 	return $node;
 }
 
-# Attempt automatic cleanup
-sub DESTROY
+# Automatically shut down any still-running nodes when the test script exits.
+# Note that this just stops the postmasters (in the same order the nodes were
+# created in).  Temporary PGDATA directories are deleted, in an unspecified
+# order, later when the File::Temp objects are destroyed.
+END
 {
-	my $self = shift;
-	my $name = $self->name;
-	return unless defined $self->{_pid};
-	print "### Signalling QUIT to $self->{_pid} for node \"$name\"\n";
-	TestLib::system_log('pg_ctl', 'kill', 'QUIT', $self->{_pid});
+	# take care not to change the script's exit value
+	my $exit_code = $?;
+
+	foreach my $node (@all_nodes)
+	{
+		$node->teardown_node;
+	}
+
+	$? = $exit_code;
 }
 
 =pod
