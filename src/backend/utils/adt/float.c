@@ -1830,6 +1830,19 @@ dtan(PG_FUNCTION_ARGS)
  * Other hazards we are trying to forestall with this kluge include the
  * possibility that compilers will rearrange the expressions, or compute
  * some intermediate results in registers wider than a standard double.
+ *
+ * In the places where we use these constants, the typical pattern is like
+ *		volatile float8 sin_x = sin(x * RADIANS_PER_DEGREE);
+ *		return (sin_x / sin_30);
+ * where we hope to get a value of exactly 1.0 from the division when x = 30.
+ * The volatile temporary variable is needed on machines with wide float
+ * registers, to ensure that the result of sin(x) is rounded to double width
+ * the same as the value of sin_30 has been.  Experimentation with gcc shows
+ * that marking the temp variable volatile is necessary to make the store and
+ * reload actually happen; hopefully the same trick works for other compilers.
+ * (gcc's documentation suggests using the -ffloat-store compiler switch to
+ * ensure this, but that is compiler-specific and it also pessimizes code in
+ * many places where we don't care about this.)
  */
 static void
 init_degree_constants(void)
@@ -1870,9 +1883,17 @@ asind_q1(double x)
 	 * over the full range.
 	 */
 	if (x <= 0.5)
-		return (asin(x) / asin_0_5) * 30.0;
+	{
+		volatile float8 asin_x = asin(x);
+
+		return (asin_x / asin_0_5) * 30.0;
+	}
 	else
-		return 90.0 - (acos(x) / acos_0_5) * 60.0;
+	{
+		volatile float8 acos_x = acos(x);
+
+		return 90.0 - (acos_x / acos_0_5) * 60.0;
+	}
 }
 
 
@@ -1895,9 +1916,17 @@ acosd_q1(double x)
 	 * over the full range.
 	 */
 	if (x <= 0.5)
-		return 90.0 - (asin(x) / asin_0_5) * 30.0;
+	{
+		volatile float8 asin_x = asin(x);
+
+		return 90.0 - (asin_x / asin_0_5) * 30.0;
+	}
 	else
-		return (acos(x) / acos_0_5) * 60.0;
+	{
+		volatile float8 acos_x = acos(x);
+
+		return (acos_x / acos_0_5) * 60.0;
+	}
 }
 
 
@@ -1979,6 +2008,7 @@ datand(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
+	volatile float8 atan_arg1;
 
 	/* Per the POSIX spec, return NaN if the input is NaN */
 	if (isnan(arg1))
@@ -1992,7 +2022,8 @@ datand(PG_FUNCTION_ARGS)
 	 * even if the input is infinite.  Additionally, we take care to ensure
 	 * than when arg1 is 1, the result is exactly 45.
 	 */
-	result = (atan(arg1) / atan_1_0) * 45.0;
+	atan_arg1 = atan(arg1);
+	result = (atan_arg1 / atan_1_0) * 45.0;
 
 	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
@@ -2008,6 +2039,7 @@ datan2d(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 	float8		result;
+	volatile float8 atan2_arg1_arg2;
 
 	/* Per the POSIX spec, return NaN if either input is NaN */
 	if (isnan(arg1) || isnan(arg2))
@@ -2018,8 +2050,14 @@ datan2d(PG_FUNCTION_ARGS)
 	/*
 	 * atan2d maps all inputs to values in the range [-180, 180], so the
 	 * result should always be finite, even if the inputs are infinite.
+	 *
+	 * Note: this coding assumes that atan(1.0) is a suitable scaling constant
+	 * to get an exact result from atan2().  This might well fail on us at
+	 * some point, requiring us to decide exactly what inputs we think we're
+	 * going to guarantee an exact result for.
 	 */
-	result = (atan2(arg1, arg2) / atan_1_0) * 45.0;
+	atan2_arg1_arg2 = atan2(arg1, arg2);
+	result = (atan2_arg1_arg2 / atan_1_0) * 45.0;
 
 	CHECKFLOATVAL(result, false, true);
 	PG_RETURN_FLOAT8(result);
@@ -2034,7 +2072,9 @@ datan2d(PG_FUNCTION_ARGS)
 static double
 sind_0_to_30(double x)
 {
-	return (sin(x * RADIANS_PER_DEGREE) / sin_30) / 2.0;
+	volatile float8 sin_x = sin(x * RADIANS_PER_DEGREE);
+
+	return (sin_x / sin_30) / 2.0;
 }
 
 
@@ -2046,7 +2086,7 @@ sind_0_to_30(double x)
 static double
 cosd_0_to_60(double x)
 {
-	float8		one_minus_cos_x = 1.0 - cos(x * RADIANS_PER_DEGREE);
+	volatile float8 one_minus_cos_x = 1.0 - cos(x * RADIANS_PER_DEGREE);
 
 	return 1.0 - (one_minus_cos_x / one_minus_cos_60) / 2.0;
 }
@@ -2153,6 +2193,7 @@ dcotd(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
+	volatile float8 cot_arg1;
 	int			sign = 1;
 
 	/*
@@ -2193,7 +2234,8 @@ dcotd(PG_FUNCTION_ARGS)
 		sign = -sign;
 	}
 
-	result = sign * ((cosd_q1(arg1) / sind_q1(arg1)) / cot_45);
+	cot_arg1 = cosd_q1(arg1) / sind_q1(arg1);
+	result = sign * (cot_arg1 / cot_45);
 
 	/*
 	 * On some machines we get cotd(270) = minus zero, but this isn't always
@@ -2270,6 +2312,7 @@ dtand(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
+	volatile float8 tan_arg1;
 	int			sign = 1;
 
 	/*
@@ -2310,7 +2353,8 @@ dtand(PG_FUNCTION_ARGS)
 		sign = -sign;
 	}
 
-	result = sign * ((sind_q1(arg1) / cosd_q1(arg1)) / tan_45);
+	tan_arg1 = sind_q1(arg1) / cosd_q1(arg1);
+	result = sign * (tan_arg1 / tan_45);
 
 	/*
 	 * On some machines we get tand(180) = minus zero, but this isn't always
