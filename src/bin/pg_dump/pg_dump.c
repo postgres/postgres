@@ -1243,7 +1243,7 @@ expand_table_name_patterns(Archive *fout,
 
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 		if (strict_names && PQntuples(res) == 0)
-			exit_horribly(NULL, "No matching table(s) were found for pattern \"%s\"\n", cell->val);
+			exit_horribly(NULL, "no matching tables were found for pattern \"%s\"\n", cell->val);
 
 		for (i = 0; i < PQntuples(res); i++)
 		{
