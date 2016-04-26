@@ -2005,10 +2005,14 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         Sets the maximum degree of parallelism for an individual parallel
-         operation.  Note that the requested number of workers may not actually
-         be available at runtime.  Parallel workers are taken from the pool
-         of processes established by <xref linkend="guc-max-worker-processes">.
+         Sets the maximum number of workers that can be started for an
+         individual parallel operation.  Parallel workers are taken from the
+         pool of processes established by
+         <xref linkend="guc-max-worker-processes">.  Note that the requested
+         number of workers may not actually be available at runtime.  If this
+         occurs, the plan will run with fewer workers than expected, which may
+         be inefficient.  The default value is 2.  Setting this value to 0
+         disables parallel query.
         </para>
        </listitem>
       </varlistentry>

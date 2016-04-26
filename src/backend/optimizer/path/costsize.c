@@ -113,7 +113,7 @@ int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 1.0e10;
 
-int			max_parallel_degree = 0;
+int			max_parallel_degree = 2;
 
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
