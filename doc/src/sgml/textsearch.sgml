@@ -1523,34 +1523,6 @@ SELECT tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10);
 
      <term>
      <indexterm>
-      <primary>setweight</primary>
-     </indexterm>
-
-      <literal>setweight(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsquery</></literal>
-     </term>
-
-     <listitem>
-      <para>
-       <function>setweight</> returns a copy of the input query in which every
-       position has been labeled with the given <replaceable>weight</>(s), either
-       <literal>A</literal>, <literal>B</literal>, <literal>C</literal>,
-       <literal>D</literal> or their combination. These labels are retained when
-       queries are concatenated, allowing words from different parts of a document
-       to be weighted differently by ranking functions.
-      </para>
-
-      <para>
-       Note that weight labels apply to <emphasis>positions</>, not
-       <emphasis>lexemes</>.  If the input query has been stripped of
-       positions then <function>setweight</> does nothing.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <term>
-     <indexterm>
       <primary>numnode</primary>
      </indexterm>
 
@@ -2588,7 +2560,7 @@ more sample word(s) : more indexed word(s)
 
    <para>
     Specific stop words recognized by the subdictionary cannot be
-    specified;  instead use <literal>&lt;-&gt;</> to mark the location where any
+    specified;  instead use <literal>?</> to mark the location where any
     stop word can appear.  For example, assuming that <literal>a</> and
     <literal>the</> are stop words according to the subdictionary:
 
