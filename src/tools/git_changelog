@@ -5,7 +5,9 @@
 #
 # Display all commits on active branches, merging together commits from
 # different branches that occur close together in time and with identical
-# log messages.  Commits are annotated with branch and release info thus:
+# log messages.
+#
+# By default, commits are annotated with branch and release info thus:
 # Branch: REL8_3_STABLE Release: REL8_3_2 [92c3a8004] 2008-03-29 00:15:37 +0000
 # This shows that the commit on REL8_3_STABLE was released in 8.3.2.
 # Commits on master will usually instead have notes like
@@ -14,6 +16,11 @@
 # If no Release: marker appears, the commit hasn't yet made it into any
 # release.
 #
+# The --brief option shortens that to a format like:
+# YYYY-MM-DD [hash] abbreviated commit subject line
+# Since the branch isn't shown, this is mainly useful in conjunction
+# with --master-only.
+#
 # Most of the time, matchable commits occur in the same order on all branches,
 # and we print them out in that order.  However, if commit A occurs before
 # commit B on branch X and commit B occurs before commit A on branch Y, then
@@ -21,11 +28,15 @@
 # we sort a merged commit according to its timestamp on the newest branch
 # it appears in.
 #
-# Typical usage to generate major release notes:
-#   git_changelog --since '2010-07-09 00:00:00' --master-only --oldest-first --details-after
+# The default output of this script is meant for generating minor release
+# notes, where we need to know which branches a merged commit affects.
 #
-# To find the branch start date, use:
-#   git show $(git merge-base REL9_0_STABLE master)
+# To generate major release notes, intended usage is
+#   git_changelog --master-only --brief --oldest-first --since='start-date'
+# To find the appropriate start date, use:
+#   git show $(git merge-base REL9_5_STABLE master)
+# where the branch to mention is the previously forked-off branch.  This
+# shows the last commit before that branch was made.
 
 
 use strict;
@@ -47,6 +58,7 @@ my @BRANCHES = qw(master
 # Might want to make this parameter user-settable.
 my $timestamp_slop = 24 * 60 * 60;
 
+my $brief         = 0;
 my $details_after = 0;
 my $post_date     = 0;
 my $master_only   = 0;
@@ -56,6 +68,7 @@ my @output_buffer;
 my $output_line = '';
 
 Getopt::Long::GetOptions(
+	'brief'         => \$brief,
 	'details-after' => \$details_after,
 	'master-only'   => \$master_only,
 	'post-date'     => \$post_date,
@@ -336,12 +349,25 @@ sub output_details
 	}
 	foreach my $c (@{ $item->{'commits'} })
 	{
-		output_str("Branch: %s ", $c->{'branch'}) if (!$master_only);
-		if (defined $c->{'last_tag'})
+		if ($brief)
 		{
-			output_str("Release: %s ", $c->{'last_tag'});
+			$item->{'message'} =~ m/^\s*(.*)/;
+
+			output_str("%s [%s] %s\n",
+				   substr($c->{'date'}, 0, 10),
+				   substr($c->{'commit'}, 0, 9),
+				   substr($1, 0, 56));
 		}
-		output_str("[%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'});
+		else
+		{
+			output_str("Branch: %s ", $c->{'branch'})
+			    if (!$master_only);
+			output_str("Release: %s ", $c->{'last_tag'})
+			    if (defined $c->{'last_tag'});
+			output_str("[%s] %s\n",
+				   substr($c->{'commit'}, 0, 9),
+				   $c->{'date'});
+		}
 	}
 	output_str("\n");
 }
@@ -349,7 +375,8 @@ sub output_details
 sub usage
 {
 	print STDERR <<EOM;
-Usage: git_changelog [--details-after/-d] [--master-only/-m] [--oldest-first/-o] [--post-date/-p] [--since=SINCE]
+Usage: git_changelog [--brief/-b] [--details-after/-d] [--master-only/-m] [--oldest-first/-o] [--post-date/-p] [--since=SINCE]
+    --brief         Shorten commit descriptions, omitting branch identification
     --details-after Show branch and author info after the commit description
     --master-only   Show commits made exclusively to the master branch
     --oldest-first  Show oldest commits first
