@@ -182,7 +182,9 @@
 
 #wal_level = minimal			# minimal, replica, or logical
 					# (change requires restart)
-#fsync = on				# turns forced synchronization on or off
+#fsync = on				# flush data to disk for crash safety
+						# (turning this off can cause
+						# unrecoverable disk corruption)
 #synchronous_commit = on		# synchronization level;
 					# off, local, remote_write, remote_apply, or on
 #wal_sync_method = fsync		# the default is the first option
