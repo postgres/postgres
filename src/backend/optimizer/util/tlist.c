@@ -792,6 +792,9 @@ apply_partialaggref_adjustment(PathTarget *target)
 			else
 				newaggref->aggoutputtype = aggform->aggtranstype;
 
+			/* flag it as partial */
+			newaggref->aggpartial = true;
+
 			lfirst(lc) = newaggref;
 
 			ReleaseSysCache(aggTuple);
