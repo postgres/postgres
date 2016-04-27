@@ -184,7 +184,7 @@
 					# (change requires restart)
 #fsync = on				# flush data to disk for crash safety
 						# (turning this off can cause
-						# unrecoverable disk corruption)
+						# unrecoverable data corruption)
 #synchronous_commit = on		# synchronization level;
 					# off, local, remote_write, remote_apply, or on
 #wal_sync_method = fsync		# the default is the first option
