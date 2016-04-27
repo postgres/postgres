@@ -554,8 +554,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 
 				/* Remove that step from the waiting[] array. */
 				if (w + 1 < nwaiting)
-					memcpy(&waiting[w], &waiting[w + 1],
-						   (nwaiting - (w + 1)) * sizeof(Step *));
+					memmove(&waiting[w], &waiting[w + 1],
+							(nwaiting - (w + 1)) * sizeof(Step *));
 				nwaiting--;
 
 				break;
@@ -582,8 +582,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 					/* This one finished, too! */
 					errorstep[nerrorstep++] = waiting[w];
 					if (w + 1 < nwaiting)
-						memcpy(&waiting[w], &waiting[w + 1],
-							   (nwaiting - (w + 1)) * sizeof(Step *));
+						memmove(&waiting[w], &waiting[w + 1],
+								(nwaiting - (w + 1)) * sizeof(Step *));
 					nwaiting--;
 				}
 			}
@@ -614,8 +614,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 			{
 				errorstep[nerrorstep++] = waiting[w];
 				if (w + 1 < nwaiting)
-					memcpy(&waiting[w], &waiting[w + 1],
-						   (nwaiting - (w + 1)) * sizeof(Step *));
+					memmove(&waiting[w], &waiting[w + 1],
+							(nwaiting - (w + 1)) * sizeof(Step *));
 				nwaiting--;
 			}
 		}
