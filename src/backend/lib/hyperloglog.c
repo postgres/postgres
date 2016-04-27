@@ -221,28 +221,6 @@ estimateHyperLogLog(hyperLogLogState *cState)
 }
 
 /*
- * Merges the estimate from one HyperLogLog state to another, returning the
- * estimate of their union.
- *
- * The number of registers in each must match.
- */
-void
-mergeHyperLogLog(hyperLogLogState *cState, const hyperLogLogState *oState)
-{
-	int			r;
-
-	if (cState->nRegisters != oState->nRegisters)
-		elog(ERROR, "number of registers mismatch: %zu != %zu",
-			 cState->nRegisters, oState->nRegisters);
-
-	for (r = 0; r < cState->nRegisters; ++r)
-	{
-		cState->hashesArr[r] = Max(cState->hashesArr[r], oState->hashesArr[r]);
-	}
-}
-
-
-/*
  * Worker for addHyperLogLog().
  *
  * Calculates the position of the first set bit in first b bits of x argument
