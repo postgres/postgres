@@ -12,16 +12,16 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "replication/syncrep.h"
-#include "utils/formatting.h"
 
-/* Result of the parsing is returned here */
-SyncRepConfigData	*syncrep_parse_result;
+/* Result of parsing is returned in one of these two variables */
+SyncRepConfigData *syncrep_parse_result;
+char	   *syncrep_parse_error_msg;
 
-static SyncRepConfigData *create_syncrep_config(char *num_sync, List *members);
+static SyncRepConfigData *create_syncrep_config(const char *num_sync,
+					  List *members);
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -43,10 +43,10 @@ static SyncRepConfigData *create_syncrep_config(char *num_sync, List *members);
 {
 	char	   *str;
 	List	   *list;
-	SyncRepConfigData  *config;
+	SyncRepConfigData *config;
 }
 
-%token <str> NAME NUM
+%token <str> NAME NUM JUNK
 
 %type <config> result standby_config
 %type <list> standby_list
@@ -57,29 +57,57 @@ static SyncRepConfigData *create_syncrep_config(char *num_sync, List *members);
 %%
 result:
 		standby_config				{ syncrep_parse_result = $1; }
-;
+	;
+
 standby_config:
 		standby_list				{ $$ = create_syncrep_config("1", $1); }
-		| NUM '(' standby_list ')'		{ $$ = create_syncrep_config($1, $3); }
-;
+		| NUM '(' standby_list ')'	{ $$ = create_syncrep_config($1, $3); }
+	;
+
 standby_list:
-		standby_name				{ $$ = list_make1($1);}
-		| standby_list ',' standby_name		{ $$ = lappend($1, $3);}
-;
+		standby_name						{ $$ = list_make1($1); }
+		| standby_list ',' standby_name		{ $$ = lappend($1, $3); }
+	;
+
 standby_name:
-		NAME					{ $$ = $1; }
-		| NUM					{ $$ = $1; }
-;
+		NAME						{ $$ = $1; }
+		| NUM						{ $$ = $1; }
+	;
 %%
 
-static SyncRepConfigData *
-create_syncrep_config(char *num_sync, List *members)
-{
-	SyncRepConfigData *config =
-		(SyncRepConfigData *) palloc(sizeof(SyncRepConfigData));
 
+static SyncRepConfigData *
+create_syncrep_config(const char *num_sync, List *members)
+{
+	SyncRepConfigData *config;
+	int			size;
+	ListCell   *lc;
+	char	   *ptr;
+
+	/* Compute space needed for flat representation */
+	size = offsetof(SyncRepConfigData, member_names);
+	foreach(lc, members)
+	{
+		char	   *standby_name = (char *) lfirst(lc);
+
+		size += strlen(standby_name) + 1;
+	}
+
+	/* And transform the data into flat representation */
+	config = (SyncRepConfigData *) palloc(size);
+
+	config->config_size = size;
 	config->num_sync = atoi(num_sync);
-	config->members = members;
+	config->nmembers = list_length(members);
+	ptr = config->member_names;
+	foreach(lc, members)
+	{
+		char	   *standby_name = (char *) lfirst(lc);
+
+		strcpy(ptr, standby_name);
+		ptr += strlen(standby_name) + 1;
+	}
+
 	return config;
 }
 

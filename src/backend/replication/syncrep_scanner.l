@@ -15,31 +15,16 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "lib/stringinfo.h"
 
-/*
-  * flex emits a yy_fatal_error() function that it calls in response to
-  * critical errors like malloc failure, file I/O errors, and detection of
-  * internal inconsistency.  That function prints a message and calls exit().
-  * Mutate it to instead call ereport(FATAL), which terminates this process.
-  *
-  * The process that causes this fatal error should be terminated.
-  * Otherwise it has to abandon the new setting value of
-  * synchronous_standby_names and keep running with the previous one
-  * while the other processes switch to the new one.
-  * This inconsistency of the setting that each process is based on
-  * can cause a serious problem. Though it's basically not good idea to
-  * use FATAL here because it can take down the postmaster,
-  * we should do that in order to avoid such an inconsistency.
-  */
+/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
-#define fprintf(file, fmt, msg) syncrep_flex_fatal(fmt, msg)
+#define fprintf(file, fmt, msg)  fprintf_to_ereport(fmt, msg)
 
 static void
-syncrep_flex_fatal(const char *fmt, const char *msg)
+fprintf_to_ereport(const char *fmt, const char *msg)
 {
-	ereport(FATAL, (errmsg_internal("%s", msg)));
+	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
 /* Handles to the buffer that the lexer uses internally */
@@ -51,8 +36,9 @@ static StringInfoData xdbuf;
 
 %option 8bit
 %option never-interactive
-%option nounput
+%option nodefault
 %option noinput
+%option nounput
 %option noyywrap
 %option warn
 %option prefix="syncrep_yy"
@@ -62,57 +48,79 @@ static StringInfoData xdbuf;
  */
 %x xd
 
-space		[ \t\n\r\f\v]
+space			[ \t\n\r\f\v]
 
-undquoted_start	[^ ,\(\)\"]
-undquoted_cont		[^ ,\(\)]
-undquoted_name    {undquoted_start}{undquoted_cont}*
-dquoted_name		[^\"]+
+digit			[0-9]
+ident_start		[A-Za-z\200-\377_]
+ident_cont		[A-Za-z\200-\377_0-9\$]
+identifier		{ident_start}{ident_cont}*
 
-/* Double-quoted string */
-dquote		\"
-xdstart		{dquote}
+dquote			\"
+xdstart			{dquote}
+xdstop			{dquote}
 xddouble		{dquote}{dquote}
-xdstop		{dquote}
-xdinside		{dquoted_name}
+xdinside		[^"]+
 
 %%
-{space}+		{ /* ignore */ }
+{space}+	{ /* ignore */ }
+
 {xdstart}	{
 				initStringInfo(&xdbuf);
 				BEGIN(xd);
 		}
 <xd>{xddouble} {
-				appendStringInfoChar(&xdbuf, '\"');
+				appendStringInfoChar(&xdbuf, '"');
 		}
 <xd>{xdinside} {
 				appendStringInfoString(&xdbuf, yytext);
 		}
 <xd>{xdstop} {
-				yylval.str = pstrdup(xdbuf.data);
-				pfree(xdbuf.data);
+				yylval.str = xdbuf.data;
+				xdbuf.data = NULL;
 				BEGIN(INITIAL);
 				return NAME;
 		}
-","			{ return ','; }
-"("			{ return '('; }
-")"			{ return ')'; }
-[1-9][0-9]*	{
-				yylval.str = pstrdup(yytext);
-				return NUM;
+<xd><<EOF>> {
+				yyerror("unterminated quoted identifier");
+				return JUNK;
 		}
-{undquoted_name} {
+
+{identifier} {
 				yylval.str = pstrdup(yytext);
 				return NAME;
 		}
+
+{digit}+	{
+				yylval.str = pstrdup(yytext);
+				return NUM;
+		}
+
+"*"		{
+				yylval.str = "*";
+				return NAME;
+		}
+
+","			{ return ','; }
+"("			{ return '('; }
+")"			{ return ')'; }
+
+.			{ return JUNK; }
 %%
 
+
+/* Needs to be here for access to yytext */
 void
-yyerror(const char *message)
+syncrep_yyerror(const char *message)
 {
-	ereport(IsUnderPostmaster ? DEBUG2 : LOG,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s at or near \"%s\"", message, yytext)));
+	/* report only the first error in a parse operation */
+	if (syncrep_parse_error_msg)
+		return;
+	if (yytext[0])
+		syncrep_parse_error_msg = psprintf("%s at or near \"%s\"",
+										   message, yytext);
+	else
+		syncrep_parse_error_msg = psprintf("%s at end of input",
+										   message);
 }
 
 void
@@ -134,6 +142,9 @@ syncrep_scanner_init(const char *str)
 	memcpy(scanbuf, str, slen);
 	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
 	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
+
+	/* Make sure we start in proper state */
+	BEGIN(INITIAL);
 }
 
 void

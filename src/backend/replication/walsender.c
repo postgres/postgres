@@ -2780,22 +2780,11 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Allocate and update the config data of synchronous replication,
-	 * and then get the currently active synchronous standbys.
+	 * Get the currently active synchronous standbys.
 	 */
-	SyncRepUpdateConfig();
 	LWLockAcquire(SyncRepLock, LW_SHARED);
 	sync_standbys = SyncRepGetSyncStandbys(NULL);
 	LWLockRelease(SyncRepLock);
-
-	/*
-	 * Free the previously-allocated config data because a backend
-	 * no longer needs it. The next call of this function needs to
-	 * allocate and update the config data newly because the setting
-	 * of sync replication might be changed between the calls.
-	 */
-	SyncRepFreeConfig(SyncRepConfig);
-	SyncRepConfig = NULL;
 
 	for (i = 0; i < max_wal_senders; i++)
 	{
