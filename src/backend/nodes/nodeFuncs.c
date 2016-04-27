@@ -3425,7 +3425,9 @@ raw_expression_tree_walker(Node *node,
  * recurse into any sub-nodes it has.
  */
 bool
-planstate_tree_walker(PlanState *planstate, bool (*walker) (), void *context)
+planstate_tree_walker(PlanState *planstate,
+					  bool (*walker) (),
+					  void *context)
 {
 	Plan	   *plan = planstate->plan;
 	ListCell   *lc;
@@ -3507,7 +3509,9 @@ planstate_tree_walker(PlanState *planstate, bool (*walker) (), void *context)
  * Walk a list of SubPlans (or initPlans, which also use SubPlan nodes).
  */
 static bool
-planstate_walk_subplans(List *plans, bool (*walker) (), void *context)
+planstate_walk_subplans(List *plans,
+						bool (*walker) (),
+						void *context)
 {
 	ListCell   *lc;
 

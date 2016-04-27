@@ -50,14 +50,29 @@
 
 #define PARALLEL_TUPLE_QUEUE_SIZE		65536
 
-/* DSM structure for accumulating per-PlanState instrumentation. */
+/*
+ * DSM structure for accumulating per-PlanState instrumentation.
+ *
+ * instrument_options: Same meaning here as in instrument.c.
+ *
+ * instrument_offset: Offset, relative to the start of this structure,
+ * of the first Instrumentation object.  This will depend on the length of
+ * the plan_node_id array.
+ *
+ * num_workers: Number of workers.
+ *
+ * num_plan_nodes: Number of plan nodes.
+ *
+ * plan_node_id: Array of plan nodes for which we are gathering instrumentation
+ * from parallel workers.  The length of this array is given by num_plan_nodes.
+ */
 struct SharedExecutorInstrumentation
 {
-	int instrument_options;
-	int instrument_offset;		/* offset of first Instrumentation struct */
-	int num_workers;							/* # of workers */
-	int num_plan_nodes;							/* # of plan nodes */
-	int plan_node_id[FLEXIBLE_ARRAY_MEMBER];	/* array of plan node IDs */
+	int			instrument_options;
+	int			instrument_offset;
+	int			num_workers;
+	int			num_plan_nodes;
+	int			plan_node_id[FLEXIBLE_ARRAY_MEMBER];
 	/* array of num_plan_nodes * num_workers Instrumentation objects follows */
 };
 #define GetInstrumentationArray(sei) \
