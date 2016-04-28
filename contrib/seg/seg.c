@@ -35,18 +35,6 @@ typedef struct
 } gseg_picksplit_item;
 
 /*
- * Declarations for SQL-visible functions.
- *
- * Note: many of these functions have intentionally been left using V0 call
- * convention, as a means of testing that that still works.  However, we had
- * to convert functions taking or returning float4 to V1 convention, as it was
- * otherwise too painful to deal with both pass-by-val and pass-by-ref cases.
- * Also, on some modern platforms V0 functions returning bool do not work
- * (because the compiler doesn't ensure that high-order bits of the
- * pointer-sized result are zeroed), so those have been converted to V1 also.
- */
-
-/*
 ** Input/Output routines
 */
 PG_FUNCTION_INFO_V1(seg_in);
@@ -59,54 +47,52 @@ PG_FUNCTION_INFO_V1(seg_center);
 /*
 ** GiST support methods
 */
-PG_FUNCTION_INFO_V1(gseg_consistent);
+bool gseg_consistent(GISTENTRY *entry,
+				SEG *query,
+				StrategyNumber strategy,
+				Oid subtype,
+				bool *recheck);
 GISTENTRY  *gseg_compress(GISTENTRY *entry);
 GISTENTRY  *gseg_decompress(GISTENTRY *entry);
 float	   *gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
 GIST_SPLITVEC *gseg_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v);
-static bool gseg_leaf_consistent(SEG *key, SEG *query, StrategyNumber strategy);
-static bool gseg_internal_consistent(SEG *key, SEG *query, StrategyNumber strategy);
+bool		gseg_leaf_consistent(SEG *key, SEG *query, StrategyNumber strategy);
+bool		gseg_internal_consistent(SEG *key, SEG *query, StrategyNumber strategy);
 SEG		   *gseg_union(GistEntryVector *entryvec, int *sizep);
-static SEG *gseg_binary_union(SEG *r1, SEG *r2, int *sizep);
+SEG		   *gseg_binary_union(SEG *r1, SEG *r2, int *sizep);
 bool	   *gseg_same(SEG *b1, SEG *b2, bool *result);
 
 
 /*
 ** R-tree support functions
 */
-PG_FUNCTION_INFO_V1(seg_same);
-PG_FUNCTION_INFO_V1(seg_contains);
-PG_FUNCTION_INFO_V1(seg_contained);
-PG_FUNCTION_INFO_V1(seg_overlap);
-PG_FUNCTION_INFO_V1(seg_left);
-PG_FUNCTION_INFO_V1(seg_over_left);
-PG_FUNCTION_INFO_V1(seg_right);
-PG_FUNCTION_INFO_V1(seg_over_right);
-static bool seg_same_internal(SEG *a, SEG *b);
-static bool seg_contains_internal(SEG *a, SEG *b);
-static bool seg_contained_internal(SEG *a, SEG *b);
-static bool seg_overlap_internal(SEG *a, SEG *b);
-static bool seg_left_internal(SEG *a, SEG *b);
-static bool seg_over_left_internal(SEG *a, SEG *b);
-static bool seg_right_internal(SEG *a, SEG *b);
-static bool seg_over_right_internal(SEG *a, SEG *b);
+bool		seg_same(SEG *a, SEG *b);
+bool		seg_contains_int(SEG *a, int *b);
+bool		seg_contains_float4(SEG *a, float4 *b);
+bool		seg_contains_float8(SEG *a, float8 *b);
+bool		seg_contains(SEG *a, SEG *b);
+bool		seg_contained(SEG *a, SEG *b);
+bool		seg_overlap(SEG *a, SEG *b);
+bool		seg_left(SEG *a, SEG *b);
+bool		seg_over_left(SEG *a, SEG *b);
+bool		seg_right(SEG *a, SEG *b);
+bool		seg_over_right(SEG *a, SEG *b);
 SEG		   *seg_union(SEG *a, SEG *b);
 SEG		   *seg_inter(SEG *a, SEG *b);
-static void rt_seg_size(SEG *a, float *sz);
+void		rt_seg_size(SEG *a, float *sz);
 
 /*
 ** Various operators
 */
 int32		seg_cmp(SEG *a, SEG *b);
-
-PG_FUNCTION_INFO_V1(seg_lt);
-PG_FUNCTION_INFO_V1(seg_le);
-PG_FUNCTION_INFO_V1(seg_gt);
-PG_FUNCTION_INFO_V1(seg_ge);
-PG_FUNCTION_INFO_V1(seg_different);
+bool		seg_lt(SEG *a, SEG *b);
+bool		seg_le(SEG *a, SEG *b);
+bool		seg_gt(SEG *a, SEG *b);
+bool		seg_ge(SEG *a, SEG *b);
+bool		seg_different(SEG *a, SEG *b);
 
 /*
-** Auxiliary functions
+** Auxiliary funxtions
 */
 static int	restore(char *s, float val, int n);
 
@@ -207,17 +193,13 @@ seg_upper(PG_FUNCTION_ARGS)
 ** the predicate x op query == FALSE, where op is the oper
 ** corresponding to strategy in the pg_amop table.
 */
-Datum
-gseg_consistent(PG_FUNCTION_ARGS)
+bool
+gseg_consistent(GISTENTRY *entry,
+				SEG *query,
+				StrategyNumber strategy,
+				Oid subtype,
+				bool *recheck)
 {
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	SEG		   *query = (SEG *) PG_GETARG_POINTER(1);
-	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
-	/* Oid		subtype = PG_GETARG_OID(3); */
-	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		result;
-
 	/* All cases served by this function are exact */
 	*recheck = false;
 
@@ -226,13 +208,9 @@ gseg_consistent(PG_FUNCTION_ARGS)
 	 * gseg_leaf_consistent
 	 */
 	if (GIST_LEAF(entry))
-		result = gseg_leaf_consistent((SEG *) DatumGetPointer(entry->key),
-									  query, strategy);
+		return (gseg_leaf_consistent((SEG *) DatumGetPointer(entry->key), query, strategy));
 	else
-		result = gseg_internal_consistent((SEG *) DatumGetPointer(entry->key),
-										  query, strategy);
-
-	PG_RETURN_BOOL(result);
+		return (gseg_internal_consistent((SEG *) DatumGetPointer(entry->key), query, strategy));
 }
 
 /*
@@ -418,7 +396,7 @@ gseg_picksplit(GistEntryVector *entryvec,
 bool *
 gseg_same(SEG *b1, SEG *b2, bool *result)
 {
-	if (seg_same_internal(b1, b2))
+	if (seg_same(b1, b2))
 		*result = TRUE;
 	else
 		*result = FALSE;
@@ -433,7 +411,7 @@ gseg_same(SEG *b1, SEG *b2, bool *result)
 /*
 ** SUPPORT ROUTINES
 */
-static bool
+bool
 gseg_leaf_consistent(SEG *key,
 					 SEG *query,
 					 StrategyNumber strategy)
@@ -447,30 +425,30 @@ gseg_leaf_consistent(SEG *key,
 	switch (strategy)
 	{
 		case RTLeftStrategyNumber:
-			retval = seg_left_internal(key, query);
+			retval = (bool) seg_left(key, query);
 			break;
 		case RTOverLeftStrategyNumber:
-			retval = seg_over_left_internal(key, query);
+			retval = (bool) seg_over_left(key, query);
 			break;
 		case RTOverlapStrategyNumber:
-			retval = seg_overlap_internal(key, query);
+			retval = (bool) seg_overlap(key, query);
 			break;
 		case RTOverRightStrategyNumber:
-			retval = seg_over_right_internal(key, query);
+			retval = (bool) seg_over_right(key, query);
 			break;
 		case RTRightStrategyNumber:
-			retval = seg_right_internal(key, query);
+			retval = (bool) seg_right(key, query);
 			break;
 		case RTSameStrategyNumber:
-			retval = seg_same_internal(key, query);
+			retval = (bool) seg_same(key, query);
 			break;
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
-			retval = seg_contains_internal(key, query);
+			retval = (bool) seg_contains(key, query);
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
-			retval = seg_contained_internal(key, query);
+			retval = (bool) seg_contained(key, query);
 			break;
 		default:
 			retval = FALSE;
@@ -478,7 +456,7 @@ gseg_leaf_consistent(SEG *key,
 	return (retval);
 }
 
-static bool
+bool
 gseg_internal_consistent(SEG *key,
 						 SEG *query,
 						 StrategyNumber strategy)
@@ -492,28 +470,28 @@ gseg_internal_consistent(SEG *key,
 	switch (strategy)
 	{
 		case RTLeftStrategyNumber:
-			retval = !seg_over_right_internal(key, query);
+			retval = (bool) !seg_over_right(key, query);
 			break;
 		case RTOverLeftStrategyNumber:
-			retval = !seg_right_internal(key, query);
+			retval = (bool) !seg_right(key, query);
 			break;
 		case RTOverlapStrategyNumber:
-			retval = seg_overlap_internal(key, query);
+			retval = (bool) seg_overlap(key, query);
 			break;
 		case RTOverRightStrategyNumber:
-			retval = !seg_left_internal(key, query);
+			retval = (bool) !seg_left(key, query);
 			break;
 		case RTRightStrategyNumber:
-			retval = !seg_over_left_internal(key, query);
+			retval = (bool) !seg_over_left(key, query);
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
-			retval = seg_contains_internal(key, query);
+			retval = (bool) seg_contains(key, query);
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
-			retval = seg_overlap_internal(key, query);
+			retval = (bool) seg_overlap(key, query);
 			break;
 		default:
 			retval = FALSE;
@@ -521,7 +499,7 @@ gseg_internal_consistent(SEG *key,
 	return (retval);
 }
 
-static SEG *
+SEG *
 gseg_binary_union(SEG *r1, SEG *r2, int *sizep)
 {
 	SEG		   *retval;
@@ -533,68 +511,32 @@ gseg_binary_union(SEG *r1, SEG *r2, int *sizep)
 }
 
 
-Datum
-seg_contains(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_contains_internal(a, b));
-}
-
-static bool
-seg_contains_internal(SEG *a, SEG *b)
+bool
+seg_contains(SEG *a, SEG *b)
 {
 	return ((a->lower <= b->lower) && (a->upper >= b->upper));
 }
 
-Datum
-seg_contained(PG_FUNCTION_ARGS)
+bool
+seg_contained(SEG *a, SEG *b)
 {
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_contained_internal(a, b));
-}
-
-static bool
-seg_contained_internal(SEG *a, SEG *b)
-{
-	return (seg_contains_internal(b, a));
+	return (seg_contains(b, a));
 }
 
 /*****************************************************************************
  * Operator class for R-tree indexing
  *****************************************************************************/
 
-Datum
-seg_same(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_same_internal(a, b));
-}
-
-static bool
-seg_same_internal(SEG *a, SEG *b)
+bool
+seg_same(SEG *a, SEG *b)
 {
 	return seg_cmp(a, b) == 0;
 }
 
 /*	seg_overlap -- does a overlap b?
  */
-Datum
-seg_overlap(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_overlap_internal(a, b));
-}
-
-static bool
-seg_overlap_internal(SEG *a, SEG *b)
+bool
+seg_overlap(SEG *a, SEG *b)
 {
 	return (
 			((a->upper >= b->upper) && (a->lower <= b->upper))
@@ -605,68 +547,32 @@ seg_overlap_internal(SEG *a, SEG *b)
 
 /*	seg_overleft -- is the right edge of (a) located at or left of the right edge of (b)?
  */
-Datum
-seg_over_left(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_over_left_internal(a, b));
-}
-
-static bool
-seg_over_left_internal(SEG *a, SEG *b)
+bool
+seg_over_left(SEG *a, SEG *b)
 {
 	return (a->upper <= b->upper);
 }
 
 /*	seg_left -- is (a) entirely on the left of (b)?
  */
-Datum
-seg_left(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_left_internal(a, b));
-}
-
-static bool
-seg_left_internal(SEG *a, SEG *b)
+bool
+seg_left(SEG *a, SEG *b)
 {
 	return (a->upper < b->lower);
 }
 
 /*	seg_right -- is (a) entirely on the right of (b)?
  */
-Datum
-seg_right(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_right_internal(a, b));
-}
-
-static bool
-seg_right_internal(SEG *a, SEG *b)
+bool
+seg_right(SEG *a, SEG *b)
 {
 	return (a->lower > b->upper);
 }
 
 /*	seg_overright -- is the left edge of (a) located at or right of the left edge of (b)?
  */
-Datum
-seg_over_right(PG_FUNCTION_ARGS)
-{
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_over_right_internal(a, b));
-}
-
-static bool
-seg_over_right_internal(SEG *a, SEG *b)
+bool
+seg_over_right(SEG *a, SEG *b)
 {
 	return (a->lower >= b->lower);
 }
@@ -749,7 +655,7 @@ seg_inter(SEG *a, SEG *b)
 	return (n);
 }
 
-static void
+void
 rt_seg_size(SEG *a, float *size)
 {
 	if (a == (SEG *) NULL || a->upper <= a->lower)
@@ -891,50 +797,36 @@ seg_cmp(SEG *a, SEG *b)
 	return 0;
 }
 
-Datum
-seg_lt(PG_FUNCTION_ARGS)
+bool
+seg_lt(SEG *a, SEG *b)
 {
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_cmp(a, b) < 0);
+	return seg_cmp(a, b) < 0;
 }
 
-Datum
-seg_le(PG_FUNCTION_ARGS)
+bool
+seg_le(SEG *a, SEG *b)
 {
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_cmp(a, b) <= 0);
+	return seg_cmp(a, b) <= 0;
 }
 
-Datum
-seg_gt(PG_FUNCTION_ARGS)
+bool
+seg_gt(SEG *a, SEG *b)
 {
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_cmp(a, b) > 0);
+	return seg_cmp(a, b) > 0;
 }
 
-Datum
-seg_ge(PG_FUNCTION_ARGS)
+bool
+seg_ge(SEG *a, SEG *b)
 {
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_cmp(a, b) >= 0);
+	return seg_cmp(a, b) >= 0;
 }
 
-Datum
-seg_different(PG_FUNCTION_ARGS)
+bool
+seg_different(SEG *a, SEG *b)
 {
-	SEG		   *a = (SEG *) PG_GETARG_POINTER(0);
-	SEG		   *b = (SEG *) PG_GETARG_POINTER(1);
-
-	PG_RETURN_BOOL(seg_cmp(a, b) != 0);
+	return seg_cmp(a, b) != 0;
 }
+
 
 
 /*****************************************************************************
@@ -1092,6 +984,24 @@ restore(char *result, float val, int n)
 /*
 ** Miscellany
 */
+
+bool
+seg_contains_int(SEG *a, int *b)
+{
+	return ((a->lower <= *b) && (a->upper >= *b));
+}
+
+bool
+seg_contains_float4(SEG *a, float4 *b)
+{
+	return ((a->lower <= *b) && (a->upper >= *b));
+}
+
+bool
+seg_contains_float8(SEG *a, float8 *b)
+{
+	return ((a->lower <= *b) && (a->upper >= *b));
+}
 
 /* find out the number of significant digits in a string representing
  * a floating point number
