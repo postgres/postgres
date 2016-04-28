@@ -2461,16 +2461,16 @@ dumpDatabase(Archive *fout)
 			resetPQExpBuffer(loFrozenQry);
 			resetPQExpBuffer(loOutQry);
 
-		if (fout->remoteVersion >= 90300)
-			appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, relminmxid\n"
-							  "FROM pg_catalog.pg_class\n"
-							  "WHERE oid = %u;\n",
-							  LargeObjectMetadataRelationId);
-		else
-			appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, 0 AS relminmxid\n"
-							  "FROM pg_catalog.pg_class\n"
-							  "WHERE oid = %u;\n",
-							  LargeObjectMetadataRelationId);
+			if (fout->remoteVersion >= 90300)
+				appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, relminmxid\n"
+								  "FROM pg_catalog.pg_class\n"
+								  "WHERE oid = %u;\n",
+								  LargeObjectMetadataRelationId);
+			else
+				appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, 0 AS relminmxid\n"
+								  "FROM pg_catalog.pg_class\n"
+								  "WHERE oid = %u;\n",
+								  LargeObjectMetadataRelationId);
 
 			lo_res = ExecuteSqlQueryForSingleRow(fout, loFrozenQry->data);
 
