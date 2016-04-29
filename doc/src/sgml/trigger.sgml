@@ -125,11 +125,11 @@
     If an <command>INSERT</command> contains an <literal>ON CONFLICT
     DO UPDATE</> clause, it is possible that the effects of all
     row-level <literal>BEFORE</> <command>INSERT</command> triggers
-    and all row-level BEFORE <command>UPDATE</command> triggers can
+    and all row-level <literal>BEFORE</literal> <command>UPDATE</command> triggers can
     both be applied in a way that is apparent from the final state of
     the updated row, if an <varname>EXCLUDED</> column is referenced.
     There need not be an <varname>EXCLUDED</> column reference for
-    both sets of BEFORE row-level triggers to execute, though.  The
+    both sets of row-level <literal>BEFORE</literal> triggers to execute, though.  The
     possibility of surprising outcomes should be considered when there
     are both <literal>BEFORE</> <command>INSERT</command> and
     <literal>BEFORE</> <command>UPDATE</command> row-level triggers
@@ -327,7 +327,7 @@
       <para>
        Statement-level triggers follow simple visibility rules: none of
        the changes made by a statement are visible to statement-level
-       triggers that are invoked before the statement, whereas all
+       <literal>BEFORE</literal> triggers, whereas all
        modifications are visible to statement-level <literal>AFTER</>
        triggers.
       </para>
