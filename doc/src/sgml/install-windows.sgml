@@ -19,10 +19,10 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install <productname>Visual Studio Express 2013
+  Microsoft tools is to install <productname>Visual Studio Express 2015
   for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2005 to 2013</productname>.
+  <productname>Microsoft Visual C++ 2005 to 2015</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -77,19 +77,26 @@
   <productname>Visual Studio Express</productname> or some versions of the
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
-  ways are to use the compilers from <productname>Visual Studio Express 2013
+  ways are to use the compilers from <productname>Visual Studio Express 2015
   for Windows Desktop</productname> or those in the <productname>Windows SDK
   7.1</productname>, which are both free downloads from Microsoft.
  </para>
 
  <para>
-  PostgreSQL is known to support compilation using the compilers shipped with
+  Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
+  32-bit PostgreSQL buils are possible with
   <productname>Visual Studio 2005</productname> to
-  <productname>Visual Studio 2013</productname> (including Express editions),
+  <productname>Visual Studio 2015</productname> (including Express editions),
   as well as standalone Windows SDK releases 6.0 to 7.1.
-  64-bit PostgreSQL builds are only supported with
+  64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 6.0a to 7.1 or
-  <productname>Visual Studio 2008</productname> and above.
+  <productname>Visual Studio 2008</productname> and above. Compilation
+  is supported down to <productname>Windows XP</productname> and
+  <productname>Windows Server 2003</> when building with
+  <productname>Visual Studio 2005</> to
+  <productname>Visual Studio 2013</productname>. Building with
+  <productname>Visual Studio 2015</productname> is supported down to
+  <productname>Windows Vista</> and <productname>Windows Server 2008</>.
  </para>
 
  <para>
@@ -210,9 +217,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
       Both <productname>Bison</productname> and <productname>Flex</productname>
       are included in the <productname>msys</productname> tool suite, available
       from <ulink url="http://www.mingw.org/wiki/MSYS"></> as part of the
-      <productname>MinGW</productname> compiler suite. You can also get
-      <productname>msys</productname> as part of
-      <productname>msysGit</productname> from <ulink url="http://git-scm.com/"></>.
+      <productname>MinGW</productname> compiler suite.
      </para>
 
      <para>
@@ -221,9 +226,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
       PATH environment variable in <filename>buildenv.pl</filename> unless
       they are already in PATH. In the case of MinGW, the directory is the
       <filename>\msys\1.0\bin</filename> subdirectory of your MinGW
-      installation directory. For msysGit, it's the <filename>bin</filename>
-      directory in your Git install directory. Do not add the MinGW compiler
-      tools themselves to PATH.
+      installation directory.
      </para>
 
      <note>

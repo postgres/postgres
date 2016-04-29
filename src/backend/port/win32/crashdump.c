@@ -41,7 +41,21 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <string.h>
+/*
+ * Some versions of the MS SDK contain "typedef enum { ... } ;" which the MS
+ * compiler quite sanely complains about. Well done, Microsoft.
+ * This pragma disables the warning just while we include the header.
+ * The pragma is known to work with all (as at the time of writing) supported
+ * versions of MSVC.
+ */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4091)
+#endif
 #include <dbghelp.h>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 /*
  * Much of the following code is based on CodeProject and MSDN examples,
