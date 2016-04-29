@@ -70,7 +70,7 @@ pgwin32_putenv(const char *envval)
 			"msvcr120", 0, NULL
 		},						/* Visual Studio 2013 */
 		{
-			"urctbase", 0, NULL
+			"ucrtbase", 0, NULL
 		},						/* Visual Studio 2015 and later */
 		{
 			NULL, 0, NULL
