@@ -92,10 +92,10 @@ typedef struct OldSnapshotControlData
 	 * Use a circular buffer with a head offset, a count of entries currently
 	 * used, and a timestamp corresponding to the xid at the head offset.  A
 	 * count_used value of zero means that there are no times stored; a
-	 * count_used value of old_snapshot_threshold means that the buffer is
-	 * full and the head must be advanced to add new entries.  Use timestamps
-	 * aligned to minute boundaries, since that seems less surprising than
-	 * aligning based on the first usage timestamp.
+	 * count_used value of OLD_SNAPSHOT_TIME_MAP_ENTRIES means that the buffer
+	 * is full and the head must be advanced to add new entries.  Use
+	 * timestamps aligned to minute boundaries, since that seems less
+	 * surprising than aligning based on the first usage timestamp.
 	 *
 	 * It is OK if the xid for a given time slot is from earlier than
 	 * calculated by adding the number of minutes corresponding to the
@@ -243,7 +243,7 @@ SnapMgrShmemSize(void)
 	size = offsetof(OldSnapshotControlData, xid_by_minute);
 	if (old_snapshot_threshold > 0)
 		size = add_size(size, mul_size(sizeof(TransactionId),
-									   old_snapshot_threshold));
+									   OLD_SNAPSHOT_TIME_MAP_ENTRIES));
 
 	return size;
 }
@@ -1643,7 +1643,7 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 				if (offset > oldSnapshotControl->count_used - 1)
 					offset = oldSnapshotControl->count_used - 1;
 				offset = (oldSnapshotControl->head_offset + offset)
-						% old_snapshot_threshold;
+						% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 				xlimit = oldSnapshotControl->xid_by_minute[offset];
 
 				if (NormalTransactionIdFollows(xlimit, recentXmin))
@@ -1720,10 +1720,10 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 	LWLockAcquire(OldSnapshotTimeMapLock, LW_EXCLUSIVE);
 
 	Assert(oldSnapshotControl->head_offset >= 0);
-	Assert(oldSnapshotControl->head_offset < old_snapshot_threshold);
+	Assert(oldSnapshotControl->head_offset < OLD_SNAPSHOT_TIME_MAP_ENTRIES);
 	Assert((oldSnapshotControl->head_timestamp % USECS_PER_MINUTE) == 0);
 	Assert(oldSnapshotControl->count_used >= 0);
-	Assert(oldSnapshotControl->count_used <= old_snapshot_threshold);
+	Assert(oldSnapshotControl->count_used <= OLD_SNAPSHOT_TIME_MAP_ENTRIES);
 
 	if (oldSnapshotControl->count_used == 0)
 	{
@@ -1750,7 +1750,7 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 		int		bucket = (oldSnapshotControl->head_offset
 						  + ((ts - oldSnapshotControl->head_timestamp)
 							 / USECS_PER_MINUTE))
-						 % old_snapshot_threshold;
+						 % OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 		if (TransactionIdPrecedes(oldSnapshotControl->xid_by_minute[bucket], xmin))
 			oldSnapshotControl->xid_by_minute[bucket] = xmin;
@@ -1763,7 +1763,7 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 
 		oldSnapshotControl->head_timestamp = ts;
 
-		if (advance >= old_snapshot_threshold)
+		if (advance >= OLD_SNAPSHOT_TIME_MAP_ENTRIES)
 		{
 			/* Advance is so far that all old data is junk; start over. */
 			oldSnapshotControl->head_offset = 0;
@@ -1777,12 +1777,12 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 
 			for (i = 0; i < advance; i++)
 			{
-				if (oldSnapshotControl->count_used == old_snapshot_threshold)
+				if (oldSnapshotControl->count_used == OLD_SNAPSHOT_TIME_MAP_ENTRIES)
 				{
 					/* Map full and new value replaces old head. */
 					int		old_head = oldSnapshotControl->head_offset;
 
-					if (old_head == (old_snapshot_threshold - 1))
+					if (old_head == (OLD_SNAPSHOT_TIME_MAP_ENTRIES - 1))
 						oldSnapshotControl->head_offset = 0;
 					else
 						oldSnapshotControl->head_offset = old_head + 1;
@@ -1793,7 +1793,7 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 					/* Extend map to unused entry. */
 					int		new_tail = (oldSnapshotControl->head_offset
 										+ oldSnapshotControl->count_used)
-									   % old_snapshot_threshold;
+									   % OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 					oldSnapshotControl->count_used++;
 					oldSnapshotControl->xid_by_minute[new_tail] = xmin;

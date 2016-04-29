@@ -19,6 +19,19 @@
 #include "utils/snapshot.h"
 
 
+/*
+ * The structure used to map times to TransactionId values for the "snapshot
+ * too old" feature must have a few entries at the tail to hold old values;
+ * otherwise the lookup will often fail and the expected early pruning or
+ * vacuum will not usually occur.  It is best if this padding is for a number
+ * of minutes greater than a thread would normally be stalled, but it's OK if
+ * early vacuum opportunities are occasionally missed, so there's no need to
+ * use an extreme value or get too fancy.  10 minutes seems plenty.
+ */
+#define OLD_SNAPSHOT_PADDING_ENTRIES 10
+#define OLD_SNAPSHOT_TIME_MAP_ENTRIES (old_snapshot_threshold + OLD_SNAPSHOT_PADDING_ENTRIES)
+
+
 /* GUC variables */
 extern PGDLLIMPORT int old_snapshot_threshold;
 
