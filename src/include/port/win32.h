@@ -6,14 +6,28 @@
 
 /*
  * Make sure _WIN32_WINNT has the minimum required value.
- * Leave a higher value in place.
-*/
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0501
+ * Leave a higher value in place. When building with at least Visual
+ * Studio 2015 the minimum requirement is Windows Vista (0x0600) to
+ * get support for GetLocaleInfoEx() with locales. For everything else
+ * the minumum version is Windows XP (0x0501).
+ * Also  for VS2015, add a define that stops compiler complaints about
+ * using the old Winsock API.
+ */
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#define  _WINSOCK_DEPRECATED_NO_WARNINGS
+#define MIN_WINNT 0x0600
+#else
+#define MIN_WINNT 0x0501
+#endif
+
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < MIN_WINNT
 #undef _WIN32_WINNT
 #endif
+
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT MIN_WINNT
 #endif
+
 /*
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
