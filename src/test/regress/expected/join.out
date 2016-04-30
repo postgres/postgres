@@ -2237,6 +2237,38 @@ where t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
 (1 row)
 
 --
+-- regression test: check a case where we formerly missed including an EC
+-- enforcement clause because it was expected to be handled at scan level
+--
+explain (costs off)
+select a.f1, b.f1, t.thousand, t.tenthous from
+  tenk1 t,
+  (select sum(f1)+1 as f1 from int4_tbl i4a) a,
+  (select sum(f1) as f1 from int4_tbl i4b) b
+where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   ->  Aggregate
+         ->  Seq Scan on int4_tbl i4b
+   ->  Nested Loop
+         Join Filter: ((sum(i4b.f1)) = ((sum(i4a.f1) + 1)))
+         ->  Aggregate
+               ->  Seq Scan on int4_tbl i4a
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t
+               Index Cond: ((thousand = (sum(i4b.f1))) AND (tenthous = ((((sum(i4a.f1) + 1)) + (sum(i4b.f1))) + 999)))
+(9 rows)
+
+select a.f1, b.f1, t.thousand, t.tenthous from
+  tenk1 t,
+  (select sum(f1)+1 as f1 from int4_tbl i4a) a,
+  (select sum(f1) as f1 from int4_tbl i4b) b
+where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
+ f1 | f1 | thousand | tenthous 
+----+----+----------+----------
+(0 rows)
+
+--
 -- Clean up
 --
 DROP TABLE t1;
