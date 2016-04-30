@@ -167,6 +167,16 @@ all the ways to produce the same set of joined base rels will share the
 same RelOptInfo, so the paths produced from different join combinations
 that produce equivalent joinrels will compete in add_path().
 
+The dynamic-programming approach has an important property that's not
+immediately obvious: we will finish constructing all paths for a given
+relation before we construct any paths for relations containing that rel.
+This means that we can reliably identify the "cheapest path" for each rel
+before higher-level relations need to know that.  Also, we can safely
+discard a path when we find that another path for the same rel is better,
+without worrying that maybe there is already a reference to that path in
+some higher-level join path.  Without this, memory management for paths
+would be much more complicated.
+
 Once we have built the final join rel, we use either the cheapest path
 for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
@@ -321,8 +331,9 @@ set up for recursive handling of subqueries
         For each joinrel of the prior level, do make_rels_by_clause_joins()
         if it has join clauses, or make_rels_by_clauseless_joins() if not.
         Also generate "bushy plan" joins between joinrels of lower levels.
-      Back at standard_join_search(), apply set_cheapest() to extract the
-      cheapest path for each newly constructed joinrel.
+      Back at standard_join_search(), generate gather paths if needed for
+      each newly constructed joinrel, then apply set_cheapest() to extract
+      the cheapest path for it.
       Loop back if this wasn't the top join level.
   Back at grouping_planner:
   do grouping (GROUP BY) and aggregation

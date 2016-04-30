@@ -266,6 +266,9 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 			/* Keep searching if join order is not valid */
 			if (joinrel)
 			{
+				/* Create GatherPaths for any useful partial paths for rel */
+				generate_gather_paths(root, joinrel);
+
 				/* Find and save the cheapest paths for this joinrel */
 				set_cheapest(joinrel);
 
