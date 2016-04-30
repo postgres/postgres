@@ -2220,7 +2220,7 @@ include_dir 'conf.d'
         Specifies whether transaction commit will wait for WAL records
         to be written to disk before the command returns a <quote>success</>
         indication to the client.  Valid values are <literal>on</>,
-        <literal>remote_write</>, <literal>remote_apply</>, <literal>local</>,
+        <literal>remote_apply</>, <literal>remote_write</>, <literal>local</>,
         and <literal>off</>.  The default, and safe, setting
         is <literal>on</>.  When <literal>off</>, there can be a delay between
         when success is reported to the client and when the transaction is
@@ -2237,36 +2237,33 @@ include_dir 'conf.d'
         discussion see <xref linkend="wal-async-commit">.
        </para>
        <para>
-        If <xref linkend="guc-synchronous-standby-names"> is set, this
+        If <xref linkend="guc-synchronous-standby-names"> is non-empty, this
         parameter also controls whether or not transaction commits will wait
-        for the transaction's WAL records to be replicated to the standby
-        server.
-        When set to <literal>on</>, commits will wait until a reply
-        from the current synchronous standby indicates it has received
+        for their WAL records to be replicated to the standby server(s).
+        When set to <literal>on</>, commits will wait until replies
+        from the current synchronous standby(s) indicate they have received
         the commit record of the transaction and flushed it to disk.  This
-        ensures the transaction will not be lost unless both primary and
-        standby suffer corruption of their database storage.
-        When set to <literal>remote_apply</>, commits will wait until a reply
-        from the current synchronous standby indicates it has received the
+        ensures the transaction will not be lost unless both the primary and
+        all synchronous standbys suffer corruption of their database storage.
+        When set to <literal>remote_apply</>, commits will wait until replies
+        from the current synchronous standby(s) indicate they have received the
         commit record of the transaction and applied it, so that it has become
-        visible to queries.
-        When set to <literal>remote_write</>, commits will wait
-        until a reply from the current synchronous standby indicates it has
+        visible to queries on the standby(s).
+        When set to <literal>remote_write</>, commits will wait until replies
+        from the current synchronous standby(s) indicate they have
         received the commit record of the transaction and written it out to
-        the standby's operating system, but the data has not necessarily
-        reached stable storage on the standby. This setting is sufficient to
-        ensure data preservation even if the standby instance of
+        their operating system. This setting is sufficient to
+        ensure data preservation even if a standby instance of
         <productname>PostgreSQL</> were to crash, but not if the standby
-        suffers an operating-system-level crash.
+        suffers an operating-system-level crash, since the data has not
+        necessarily reached stable storage on the standby.
+        Finally, the setting <literal>local</> causes commits to wait for
+        local flush to disk, but not for replication.  This is not usually
+        desirable when synchronous replication is in use, but is provided for
+        completeness.
        </para>
        <para>
-        When synchronous
-        replication is in use, it will normally be sensible either to wait
-        for both local flush to disk and replication of WAL records, or
-        to allow the transaction to commit asynchronously.  However, the
-        setting <literal>local</> is available for transactions that
-        wish to wait for local flush to disk, but not synchronous replication.
-        If <varname>synchronous_standby_names</> is not set, the settings
+        If <varname>synchronous_standby_names</> is empty, the settings
         <literal>on</>, <literal>remote_apply</>, <literal>remote_write</>
         and <literal>local</> all provide the same synchronization level:
         transaction commits only wait for local flush to disk.

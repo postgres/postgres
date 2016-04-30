@@ -929,51 +929,6 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 			return false;
 		}
 
-		/*
-		 * Warn if num_sync exceeds the number of names of potential sync
-		 * standbys. This setting doesn't make sense in most cases because it
-		 * implies that enough number of sync standbys will not appear, which
-		 * makes transaction commits wait for sync replication infinitely.
-		 *
-		 * If there are more than one standbys having the same name and
-		 * priority, we can see enough sync standbys to complete transaction
-		 * commits. However it's not recommended to run multiple standbys with
-		 * the same priority because we cannot gain full control of the
-		 * selection of sync standbys from them.
-		 *
-		 * OTOH, that setting is OK if we understand the above problem
-		 * regarding the selection of sync standbys and intentionally specify *
-		 * to match all the standbys.
-		 */
-		if (syncrep_parse_result->num_sync > syncrep_parse_result->nmembers)
-		{
-			const char *standby_name;
-			int			i;
-			bool		has_asterisk = false;
-
-			standby_name = syncrep_parse_result->member_names;
-			for (i = 1; i <= syncrep_parse_result->nmembers; i++)
-			{
-				if (strcmp(standby_name, "*") == 0)
-				{
-					has_asterisk = true;
-					break;
-				}
-				standby_name += strlen(standby_name) + 1;
-			}
-
-			/*
-			 * Only the postmaster warns about this inappropriate setting to
-			 * avoid cluttering the log.
-			 */
-			if (!has_asterisk && !IsUnderPostmaster)
-				ereport(WARNING,
-						(errmsg("configured number of synchronous standbys (%d) exceeds the number of names of potential synchronous ones (%d)",
-								syncrep_parse_result->num_sync,
-								syncrep_parse_result->nmembers),
-						 errhint("Specify more names of potential synchronous standbys in synchronous_standby_names.")));
-		}
-
 		/* GUC extra value must be malloc'd, not palloc'd */
 		pconf = (SyncRepConfigData *)
 			malloc(syncrep_parse_result->config_size);
