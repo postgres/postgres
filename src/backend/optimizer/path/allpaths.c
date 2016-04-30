@@ -2829,7 +2829,7 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 #ifdef OPTIMIZER_DEBUG
 
 static void
-print_relids(Relids relids)
+print_relids(PlannerInfo *root, Relids relids)
 {
 	int			x;
 	bool		first = true;
@@ -2839,7 +2839,11 @@ print_relids(Relids relids)
 	{
 		if (!first)
 			printf(" ");
-		printf("%d", x);
+		if (x < root->simple_rel_array_size &&
+			root->simple_rte_array[x])
+			printf("%s", root->simple_rte_array[x]->eref->aliasname);
+		else
+			printf("%d", x);
 		first = false;
 	}
 }
@@ -3013,10 +3017,17 @@ print_path(PlannerInfo *root, Path *path, int indent)
 	if (path->parent)
 	{
 		printf("(");
-		print_relids(path->parent->relids);
-		printf(") rows=%.0f", path->parent->rows);
+		print_relids(root, path->parent->relids);
+		printf(")");
 	}
-	printf(" cost=%.2f..%.2f\n", path->startup_cost, path->total_cost);
+	if (path->param_info)
+	{
+		printf(" required_outer (");
+		print_relids(root, path->param_info->ppi_req_outer);
+		printf(")");
+	}
+	printf(" rows=%.0f cost=%.2f..%.2f\n",
+		   path->rows, path->startup_cost, path->total_cost);
 
 	if (path->pathkeys)
 	{
@@ -3062,7 +3073,7 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *l;
 
 	printf("RELOPTINFO (");
-	print_relids(rel->relids);
+	print_relids(root, rel->relids);
 	printf("): rows=%.0f width=%d\n", rel->rows, rel->reltarget->width);
 
 	if (rel->baserestrictinfo)
@@ -3082,6 +3093,12 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
 		print_path(root, lfirst(l), 1);
+	if (rel->cheapest_parameterized_paths)
+	{
+		printf("\n\tcheapest parameterized paths:\n");
+		foreach(l, rel->cheapest_parameterized_paths)
+			print_path(root, lfirst(l), 1);
+	}
 	if (rel->cheapest_startup_path)
 	{
 		printf("\n\tcheapest startup path:\n");
