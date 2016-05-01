@@ -37,6 +37,14 @@
 #   git show $(git merge-base REL9_5_STABLE master)
 # where the branch to mention is the previously forked-off branch.  This
 # shows the last commit before that branch was made.
+#
+# Note that --master-only is an imperfect filter, since it will not detect
+# cases where a HEAD patch was back-patched awhile later or with a slightly
+# different commit message.  To find such cases, it's a good idea to look
+# through the output of
+#   git_changelog --non-master-only --oldest-first --since='start-date'
+# and then remove anything from the --master-only output that would be
+# duplicative.
 
 
 use strict;
@@ -62,6 +70,7 @@ my $brief         = 0;
 my $details_after = 0;
 my $post_date     = 0;
 my $master_only   = 0;
+my $non_master_only = 0;
 my $oldest_first  = 0;
 my $since;
 my @output_buffer;
@@ -71,6 +80,7 @@ Getopt::Long::GetOptions(
 	'brief'         => \$brief,
 	'details-after' => \$details_after,
 	'master-only'   => \$master_only,
+	'non-master-only' => \$non_master_only,
 	'post-date'     => \$post_date,
 	'oldest-first'  => \$oldest_first,
 	'since=s'       => \$since) || usage();
@@ -236,10 +246,21 @@ while (1)
 	my $winner =
 	  $all_commits_by_branch{$best_branch}->[ $position{$best_branch} ];
 
-	# check for master-only
-	if (!$master_only
-		|| ($winner->{'commits'}[0]->{'branch'} eq 'master'
-			&& @{ $winner->{'commits'} } == 1))
+	my $print_it = 1;
+	if ($master_only)
+	{
+		$print_it = (@{ $winner->{'commits'} } == 1)
+			&& ($winner->{'commits'}[0]->{'branch'} eq 'master');
+	}
+	elsif ($non_master_only)
+	{
+		foreach my $c (@{ $winner->{'commits'} })
+		{
+			$print_it = 0 if ($c->{'branch'} eq 'master');
+		}
+	}
+
+	if ($print_it)
 	{
 		output_details($winner) if (!$details_after);
 		output_str("%s", $winner->{'message'} . "\n");
@@ -375,13 +396,14 @@ sub output_details
 sub usage
 {
 	print STDERR <<EOM;
-Usage: git_changelog [--brief/-b] [--details-after/-d] [--master-only/-m] [--oldest-first/-o] [--post-date/-p] [--since=SINCE]
+Usage: git_changelog [--brief/-b] [--details-after/-d] [--master-only/-m] [--non-master-only/-n] [--oldest-first/-o] [--post-date/-p] [--since=SINCE]
     --brief         Shorten commit descriptions, omitting branch identification
     --details-after Show branch and author info after the commit description
-    --master-only   Show commits made exclusively to the master branch
+    --master-only   Show only commits made just in the master branch
+    --non-master-only Show only commits made just in back branches
     --oldest-first  Show oldest commits first
     --post-date     Show branches made after a commit occurred
-    --since         Print only commits dated since SINCE
+    --since         Show only commits dated since SINCE
 EOM
 	exit 1;
 }
