@@ -58,16 +58,6 @@ PG_FUNCTION_INFO_V1(pgstatginindex);
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 #define IS_GIN(r) ((r)->rd_rel->relam == GIN_AM_OID)
 
-#define CHECK_PAGE_OFFSET_RANGE(pg, offnum) { \
-		if ( !(FirstOffsetNumber <= (offnum) && \
-						(offnum) <= PageGetMaxOffsetNumber(pg)) ) \
-			 elog(ERROR, "page offset number out of range"); }
-
-/* note: BlockNumber is unsigned, hence can't be negative */
-#define CHECK_RELATION_BLOCK_RANGE(rel, blkno) { \
-		if ( RelationGetNumberOfBlocks(rel) <= (BlockNumber) (blkno) ) \
-			 elog(ERROR, "block number out of range"); }
-
 /* ------------------------------------------------
  * A structure for a whole btree index statistics
  * used by pgstatindex().
