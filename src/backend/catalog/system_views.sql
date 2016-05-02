@@ -922,7 +922,8 @@ COMMENT ON FUNCTION ts_debug(text) IS
 
 CREATE OR REPLACE FUNCTION
   pg_start_backup(label text, fast boolean DEFAULT false, exclusive boolean DEFAULT true)
-  RETURNS pg_lsn STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
+  RETURNS pg_lsn STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup'
+  PARALLEL RESTRICTED;
 
 -- legacy definition for compatibility with 9.3
 CREATE OR REPLACE FUNCTION
