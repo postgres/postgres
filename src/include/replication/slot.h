@@ -69,8 +69,8 @@ typedef struct ReplicationSlotPersistentData
 	/*
 	 * Oldest LSN that the client has acked receipt for.  This is used as the
 	 * start_lsn point in case the client doesn't specify one, and also as a
-	 * safety measure to back off in case the client specifies a start_lsn
-	 * that's further in the future than this value.
+	 * safety measure to jump forwards in case the client specifies a
+	 * start_lsn that's further in the past than this value.
 	 */
 	XLogRecPtr	confirmed_flush;
 
