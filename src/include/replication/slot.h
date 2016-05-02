@@ -66,7 +66,12 @@ typedef struct ReplicationSlotPersistentData
 	/* oldest LSN that might be required by this replication slot */
 	XLogRecPtr	restart_lsn;
 
-	/* oldest LSN that the client has acked receipt for */
+	/*
+	 * Oldest LSN that the client has acked receipt for.  This is used as the
+	 * start_lsn point in case the client doesn't specify one, and also as a
+	 * safety measure to back off in case the client specifies a start_lsn
+	 * that's further in the future than this value.
+	 */
 	XLogRecPtr	confirmed_flush;
 
 	/* plugin name */
@@ -113,11 +118,10 @@ typedef struct ReplicationSlot
 
 	/* all the remaining data is only used for logical slots */
 
-	/* ----
+	/*
 	 * When the client has confirmed flushes >= candidate_xmin_lsn we can
-	 * advance the catalog xmin, when restart_valid has been passed,
+	 * advance the catalog xmin.  When restart_valid has been passed,
 	 * restart_lsn can be increased.
-	 * ----
 	 */
 	TransactionId candidate_catalog_xmin;
 	XLogRecPtr	candidate_xmin_lsn;
