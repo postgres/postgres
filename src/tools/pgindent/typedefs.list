@@ -1,10 +1,10 @@
 ABITVEC
 ACCESS_ALLOWED_ACE
-ACL
 ACL_SIZE_INFORMATION
 AES_KEY
 AFFIX
 ASN1_INTEGER
+ASN1_OBJECT
 ASN1_STRING
 AV
 A_ArrayExpr
@@ -45,8 +45,8 @@ AggStatePerAgg
 AggStatePerGroup
 AggStatePerGroupData
 AggStatePerPhase
+AggStatePerTrans
 AggStrategy
-AggVals
 Aggref
 AggrefExprState
 AlenState
@@ -133,8 +133,6 @@ AttrDefInfo
 AttrDefault
 AttrNumber
 AttributeOpts
-AuditEvent
-AuditEventStackItem
 AuthRequest
 AutoVacOpts
 AutoVacuumShmemStruct
@@ -187,8 +185,10 @@ BackgroundWorkerArray
 BackgroundWorkerHandle
 BackgroundWorkerSlot
 BaseBackupCmd
+BeginDirectModify_function
 BeginForeignModify_function
 BeginForeignScan_function
+BeginSampleScan_function
 BernoulliSamplerData
 BgWorkerStartTime
 BgwHandleStatus
@@ -215,7 +215,12 @@ BlockSamplerData
 BlockedProcData
 BlockedProcsData
 BloomBuildState
+BloomMetaPageData
 BloomOptions
+BloomPageOpaque
+BloomPageOpaqueData
+BloomScanOpaque
+BloomScanOpaqueData
 BloomState
 BloomTuple
 BlowfishContext
@@ -239,7 +244,6 @@ BrinTuple
 BrinValues
 Bucket
 BufFile
-BufFlags
 Buffer
 BufferAccessStrategy
 BufferAccessStrategyType
@@ -348,7 +352,6 @@ CompoundAffixFlag
 CompressionAlgorithm
 CompressorState
 ConfigData
-ConfigFileVariable
 ConfigVariable
 ConnCacheEntry
 ConnCacheKey
@@ -420,7 +423,6 @@ CurrentOfExpr
 CustomExecMethods
 CustomOutPtr
 CustomPath
-CustomPathMethods
 CustomScan
 CustomScanMethods
 CustomScanState
@@ -488,6 +490,7 @@ DropStmt
 DropTableSpaceStmt
 DropUserMappingStmt
 DropdbStmt
+DumpComponents
 DumpId
 DumpOptions
 DumpableObject
@@ -513,14 +516,17 @@ EnableTimeoutParams
 EndBlobPtr
 EndBlobsPtr
 EndDataPtr
+EndDirectModify_function
 EndForeignModify_function
 EndForeignScan_function
+EndSampleScan_function
 EnumItem
 EolType
 EquivalenceClass
 EquivalenceMember
 ErrorContextCallback
 ErrorData
+EstimateDSMForeignScan_function
 EventTriggerCacheEntry
 EventTriggerCacheItem
 EventTriggerCacheStateType
@@ -551,6 +557,7 @@ ExecutorStart_hook_type
 ExpandedArrayHeader
 ExpandedObjectHeader
 ExpandedObjectMethods
+ExplainDirectModify_function
 ExplainForeignModify_function
 ExplainForeignScan_function
 ExplainFormat
@@ -653,7 +660,6 @@ FormData_pg_rewrite
 FormData_pg_sequence
 FormData_pg_shdepend
 FormData_pg_statistic
-FormData_pg_tablesample_method
 FormData_pg_tablespace
 FormData_pg_transform
 FormData_pg_trigger
@@ -704,7 +710,6 @@ Form_pg_rewrite
 Form_pg_sequence
 Form_pg_shdepend
 Form_pg_statistic
-Form_pg_tablesample_method
 Form_pg_tablespace
 Form_pg_transform
 Form_pg_trigger
@@ -716,6 +721,8 @@ Form_pg_ts_template
 Form_pg_type
 Form_pg_user_mapping
 FormatNode
+FreeBlockNumberArray
+FreeListData
 FromCharDateMode
 FromExpr
 FuncCall
@@ -770,6 +777,7 @@ GetForeignPaths_function
 GetForeignPlan_function
 GetForeignRelSize_function
 GetForeignRowMarkType_function
+GetForeignUpperPaths_function
 GetState
 GiSTOptions
 GinBtree
@@ -843,7 +851,6 @@ HASHELEMENT
 HASHHDR
 HASHSEGMENT
 HASH_SEQ_STATUS
-HCRYPTPROV
 HE
 HEntry
 HIST_ENTRY
@@ -945,6 +952,9 @@ InfoItem
 InhInfo
 InhOption
 InheritableSocket
+InitSampleScan_function
+InitializeDSMForeignScan_function
+InitializeWorkerForeignScan_function
 InlineCodeBlock
 InsertStmt
 Instrumentation
@@ -962,6 +972,7 @@ IpcMemoryKey
 IpcSemaphoreId
 IpcSemaphoreKey
 IsForeignRelUpdatable_function
+IsForeignScanParallelSafe_function
 IspellDict
 Item
 ItemId
@@ -970,6 +981,7 @@ ItemLength
 ItemOffset
 ItemPointer
 ItemPointerData
+IterateDirectModify_function
 IterateForeignScan_function
 JEntry
 JHashState
@@ -1023,7 +1035,6 @@ LOCKMETHODID
 LOCKMODE
 LOCKTAG
 LONG
-LONG_PTR
 LOOP
 LPBYTE
 LPCTSTR
@@ -1047,7 +1058,6 @@ LWLockTranche
 LabelProvider
 LargeObjectDesc
 Latch
-LateralJoinInfo
 LerpFunc
 LexDescr
 LexemeEntry
@@ -1093,6 +1103,7 @@ LogicalDecodeBeginCB
 LogicalDecodeChangeCB
 LogicalDecodeCommitCB
 LogicalDecodeFilterByOriginCB
+LogicalDecodeMessageCB
 LogicalDecodeShutdownCB
 LogicalDecodeStartupCB
 LogicalDecodingContext
@@ -1115,7 +1126,6 @@ Material
 MaterialPath
 MaterialState
 MdfdVec
-MembersLiveRange
 MemoryContext
 MemoryContextCallback
 MemoryContextCallbackFunction
@@ -1169,6 +1179,8 @@ NestLoopState
 NestPath
 NewColumnValue
 NewConstraint
+NextSampleBlock_function
+NextSampleTuple_function
 Node
 NodeTag
 NonEmptyRange
@@ -1404,8 +1416,6 @@ PSQL_ECHO_HIDDEN
 PSQL_ERROR_ROLLBACK
 PTOKEN_GROUPS
 PTOKEN_USER
-PVCAggregateBehavior
-PVCPlaceHolderBehavior
 PVOID
 PX_Alias
 PX_Cipher
@@ -1423,6 +1433,7 @@ Pairs
 ParallelArgs
 ParallelContext
 ParallelExecutorInfo
+ParallelHeapScanDesc
 ParallelSlot
 ParallelState
 ParallelWorkerInfo
@@ -1466,6 +1477,8 @@ Permutation
 PgBackendSSLStatus
 PgBackendStatus
 PgBenchExpr
+PgBenchExprLink
+PgBenchExprList
 PgBenchExprType
 PgBenchFunction
 PgBenchValue
@@ -1523,6 +1536,7 @@ PipeProtoHeader
 PlaceHolderInfo
 PlaceHolderVar
 Plan
+PlanDirectModify_function
 PlanForeignModify_function
 PlanInvalItem
 PlanRowMark
@@ -1574,6 +1588,7 @@ ProcState
 ProcessUtilityContext
 ProcessUtility_hook_type
 ProcessingMode
+ProgressCommandType
 ProjectionInfo
 ProjectionPath
 ProtocolVersion
@@ -1589,9 +1604,11 @@ PullFilterOps
 PushFilter
 PushFilterOps
 PushFunction
+PyCFunction
 PyCodeObject
 PyMappingMethods
 PyMethodDef
+PyModuleDef
 PyObject
 PySequenceMethods
 PyTypeObject
@@ -1651,9 +1668,11 @@ ReadBytePtr
 ReadExtraTocPtr
 ReadFunc
 ReassignOwnedStmt
+RecheckForeignScan_function
 RecordCacheEntry
 RecordCompareData
 RecordIOData
+RecordTypemodMap
 RecoveryTargetAction
 RecoveryTargetType
 RectBox
@@ -1682,7 +1701,6 @@ RelToCheck
 RelToCluster
 RelabelType
 Relation
-RelationAmInfo
 RelationData
 RelationPtr
 RelativeTime
@@ -1691,6 +1709,8 @@ RelfilenodeMapEntry
 RelfilenodeMapKey
 Relids
 RelocationBufferInfo
+RemapClass
+RemapInfo
 RenameStmt
 ReopenPtr
 ReorderBuffer
@@ -1701,6 +1721,7 @@ ReorderBufferCommitCB
 ReorderBufferDiskChange
 ReorderBufferIterTXNEntry
 ReorderBufferIterTXNState
+ReorderBufferMessageCB
 ReorderBufferTXN
 ReorderBufferTXNByIdEnt
 ReorderBufferToastEnt
@@ -1726,7 +1747,6 @@ ReservoirState
 ReservoirStateData
 ResourceArray
 ResourceOwner
-ResourceOwnerData
 ResourceReleaseCallback
 ResourceReleaseCallbackItem
 ResourceReleasePhase
@@ -1805,6 +1825,7 @@ STARTUPINFO
 STRLEN
 SV
 SampleScan
+SampleScanGetSampleSize_function
 SampleScanState
 SamplerRandomState
 ScalarArrayOpExpr
@@ -1989,8 +2010,8 @@ TParserSpecial
 TParserState
 TParserStateAction
 TParserStateActionItem
+TQueueDestReceiver
 TRGM
-TResult
 TSAnyCacheEntry
 TSConfigCacheEntry
 TSConfigInfo
@@ -2021,7 +2042,6 @@ TableDataInfo
 TableInfo
 TableLikeClause
 TableSampleClause
-TableSampleDesc
 TableSpaceCacheEntry
 TableSpaceOpts
 TablespaceList
@@ -2040,7 +2060,6 @@ TestDecodingData
 TestSpec
 TextFreq
 TextPositionState
-TextSortSupport
 TheLexeme
 TheSubstitute
 TidHashKey
@@ -2160,6 +2179,7 @@ Var
 VarBit
 VarChar
 VarParamState
+VarString
 VarStringSortSupport
 Variable
 VariableAssignHook
@@ -2235,6 +2255,7 @@ WriteExtraTocPtr
 WriteFunc
 WritebackContext
 X509
+X509_EXTENSION
 X509_NAME
 X509_NAME_ENTRY
 X509_STORE
@@ -2292,6 +2313,22 @@ _stringlist
 acquireLocksOnSubLinks_context
 adjust_appendrel_attrs_context
 allocfunc
+ambeginscan_function
+ambuild_function
+ambuildempty_function
+ambulkdelete_function
+amcanreturn_function
+amcostestimate_function
+amendscan_function
+amgetbitmap_function
+amgettuple_function
+aminsert_function
+ammarkpos_function
+amoptions_function
+amrescan_function
+amrestrpos_function
+amvacuumcleanup_function
+amvalidate_function
 array_iter
 array_unnest_fctx
 assign_collations_context
@@ -2308,13 +2345,10 @@ bgworker_main_type
 binaryheap
 binaryheap_comparator
 bitmapword
-bits16
 bits32
 bits8
 bool
-boolean
 brin_column_state
-brin_page_state
 bytea
 cached_re_str
 cashKEY
@@ -2342,6 +2376,7 @@ core_yy_extra_type
 core_yyscan_t
 cost_qual_eval_context
 count_agg_clauses_context
+create_upper_paths_hook_type
 createdb_failure_params
 crosstab_HashEnt
 crosstab_cat_desc
@@ -2533,7 +2568,6 @@ nodeitem
 normal_rand_fctx
 ntile_context
 numeric
-objectType
 object_access_hook_type
 off_t
 oidKEY
@@ -2542,7 +2576,6 @@ on_dsm_detach_callback
 on_exit_nicely_callback
 ossldata
 output_type
-pageCnvCtx
 pairingheap
 pairingheap_comparator
 pairingheap_node
