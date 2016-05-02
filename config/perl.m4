@@ -13,7 +13,7 @@ if test "$PERL"; then
   pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`
   AC_MSG_NOTICE([using perl $pgac_perl_version])
   if echo "$pgac_perl_version" | sed ['s/[.a-z_]/ /g'] | \
-    $AWK '{ if ([$]1 = 5 && [$]2 >= 8) exit 1; else exit 0;}'
+    $AWK '{ if ([$]1 == 5 && [$]2 >= 8) exit 1; else exit 0;}'
   then
     AC_MSG_WARN([
 *** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
