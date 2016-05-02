@@ -9265,7 +9265,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>
          <indexterm>
           <primary>setweight</primary>
-          <secondary>setweight by filter</secondary>
+          <secondary>setweight for specific lexeme(s)</secondary>
          </indexterm>
          <literal><function>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>"text"[]</>)</function></literal>
         </entry>
@@ -9290,7 +9290,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>
          <indexterm>
           <primary>delete</primary>
-          <secondary>delete lemexeme</secondary>
+          <secondary>delete lexeme(s) from tsvector</secondary>
          </indexterm>
          <literal><function>delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexeme</replaceable> <type>text</>)</function></literal>
         </entry>
@@ -9301,10 +9301,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry>
-         <indexterm>
-          <primary>delete</primary>
-          <secondary>delete lemexemes array</secondary>
-         </indexterm>
+         <!-- previous indexterm entry covers this too -->
          <literal><function>delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>text[]</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
@@ -9316,6 +9313,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>
          <indexterm>
           <primary>unnest</primary>
+          <secondary>for tsvector</secondary>
          </indexterm>
          <literal><function>unnest(<type>tsvector</>, OUT <replaceable class="PARAMETER">lexeme</> <type>text</>, OUT <replaceable class="PARAMETER">positions</> <type>smallint[]</>, OUT <replaceable class="PARAMETER">weights</> <type>text</>)</function></literal>
         </entry>
@@ -9352,6 +9350,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>
          <indexterm>
           <primary>filter</primary>
+          <secondary>for tsvector</secondary>
          </indexterm>
          <literal><function>filter(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weights</replaceable> <type>"char"[]</>)</function></literal>
         </entry>
