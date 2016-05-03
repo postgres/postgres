@@ -890,7 +890,7 @@ FROM pg_catalog.ts_parse(
     ) AS tt
 WHERE tt.tokid = parse.tokid
 $$
-LANGUAGE SQL STRICT STABLE;
+LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
 
 COMMENT ON FUNCTION ts_debug(regconfig,text) IS
     'debug function for text search configuration';
@@ -906,7 +906,7 @@ RETURNS SETOF record AS
 $$
     SELECT * FROM pg_catalog.ts_debug( pg_catalog.get_current_ts_config(), $1);
 $$
-LANGUAGE SQL STRICT STABLE;
+LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
 
 COMMENT ON FUNCTION ts_debug(text) IS
     'debug function for current text search configuration';
@@ -928,12 +928,12 @@ CREATE OR REPLACE FUNCTION
 -- legacy definition for compatibility with 9.3
 CREATE OR REPLACE FUNCTION
   json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
-  RETURNS anyelement LANGUAGE internal STABLE AS 'json_populate_record';
+  RETURNS anyelement LANGUAGE internal STABLE AS 'json_populate_record' PARALLEL SAFE;
 
 -- legacy definition for compatibility with 9.3
 CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
-  RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
+  RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset' PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION pg_logical_slot_get_changes(
     IN slot_name name, IN upto_lsn pg_lsn, IN upto_nchanges int, VARIADIC options text[] DEFAULT '{}',
@@ -981,7 +981,7 @@ CREATE OR REPLACE FUNCTION
                 secs double precision DEFAULT 0.0)
 RETURNS interval
 LANGUAGE INTERNAL
-STRICT IMMUTABLE
+STRICT IMMUTABLE PARALLEL SAFE
 AS 'make_interval';
 
 CREATE OR REPLACE FUNCTION
@@ -989,14 +989,14 @@ CREATE OR REPLACE FUNCTION
             create_if_missing boolean DEFAULT true)
 RETURNS jsonb
 LANGUAGE INTERNAL
-STRICT IMMUTABLE
+STRICT IMMUTABLE PARALLEL SAFE
 AS 'jsonb_set';
 
 CREATE OR REPLACE FUNCTION
   parse_ident(str text, strict boolean DEFAULT true)
 RETURNS text[]
 LANGUAGE INTERNAL
-STRICT IMMUTABLE
+STRICT IMMUTABLE PARALLEL SAFE
 AS 'parse_ident';
 
 CREATE OR REPLACE FUNCTION
@@ -1004,7 +1004,7 @@ CREATE OR REPLACE FUNCTION
             insert_after boolean DEFAULT false)
 RETURNS jsonb
 LANGUAGE INTERNAL
-STRICT IMMUTABLE
+STRICT IMMUTABLE PARALLEL SAFE
 AS 'jsonb_insert';
 
 -- The default permissions for functions mean that anyone can execute them.
