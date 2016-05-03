@@ -27,6 +27,10 @@
 
 #include "access/xlogrecord.h"
 
+#ifndef FRONTEND
+#include "nodes/pg_list.h"
+#endif
+
 typedef struct XLogReaderState XLogReaderState;
 
 /* Function type definition for the read_page callback */
@@ -160,6 +164,16 @@ struct XLogReaderState
 
 	/* beginning of the WAL record being read. */
 	XLogRecPtr	currRecPtr;
+	/* timeline to read it from, 0 if a lookup is required */
+	TimeLineID	currTLI;
+	/* timeline that follows currTLI */
+	TimeLineID  nextTLI;
+
+	/*
+	 * Safe point to read to in currTLI if current TLI is historical
+	 * (tliSwitchPoint) or InvalidXLogRecPtr if on current timeline.
+	 */
+	XLogRecPtr	currTLIValidUntil;
 
 	/* Buffer for current ReadRecord result (expandable) */
 	char	   *readRecordBuf;

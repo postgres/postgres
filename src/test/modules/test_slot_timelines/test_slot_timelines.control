@@ -1,0 +1,5 @@
+# test_slot_timelines extension
+comment = 'Test utility for slot timeline following and logical decoding'
+default_version = '1.0'
+module_pathname = '$libdir/test_slot_timelines'
+relocatable = true
