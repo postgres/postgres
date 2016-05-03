@@ -229,11 +229,12 @@ heap_page_items(PG_FUNCTION_ARGS)
 			{
 				if (tuphdr->t_infomask & HEAP_HASNULL)
 				{
-					int	bits_len =
-						((tuphdr->t_infomask2 & HEAP_NATTS_MASK) / 8 + 1) * 8;
+					int			bits_len;
 
+					bits_len =
+						((tuphdr->t_infomask2 & HEAP_NATTS_MASK) / 8 + 1) * 8;
 					values[11] = CStringGetTextDatum(
-								 bits_to_text(tuphdr->t_bits, bits_len));
+									 bits_to_text(tuphdr->t_bits, bits_len));
 				}
 				else
 					nulls[11] = true;

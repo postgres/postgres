@@ -400,8 +400,8 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	if (estate->es_instrument)
 	{
 		instrumentation_len =
-			offsetof(SharedExecutorInstrumentation, plan_node_id)
-			+ sizeof(int) * e.nnodes;
+			offsetof(SharedExecutorInstrumentation, plan_node_id) +
+			sizeof(int) * e.nnodes;
 		instrumentation_len = MAXALIGN(instrumentation_len);
 		instrument_offset = instrumentation_len;
 		instrumentation_len += sizeof(Instrumentation) * e.nnodes * nworkers;
@@ -513,7 +513,7 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 	/* Also store the per-worker detail. */
 	ibytes = instrumentation->num_workers * sizeof(Instrumentation);
 	planstate->worker_instrument =
-		palloc(offsetof(WorkerInstrumentation, instrument) + ibytes);
+		palloc(ibytes + offsetof(WorkerInstrumentation, instrument));
 	planstate->worker_instrument->num_workers = instrumentation->num_workers;
 	memcpy(&planstate->worker_instrument->instrument, instrument, ibytes);
 

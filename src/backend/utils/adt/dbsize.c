@@ -817,11 +817,14 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 		else if (pg_strcasecmp(strptr, "kb") == 0)
 			multiplier = (int64) 1024;
 		else if (pg_strcasecmp(strptr, "mb") == 0)
-			multiplier = (int64) 1024 * 1024;
+			multiplier = ((int64) 1024) * 1024;
+
 		else if (pg_strcasecmp(strptr, "gb") == 0)
-			multiplier = (int64) 1024 * 1024 * 1024;
+			multiplier = ((int64) 1024) * 1024 * 1024;
+
 		else if (pg_strcasecmp(strptr, "tb") == 0)
-			multiplier = (int64) 1024 * 1024 * 1024 * 1024;
+			multiplier = ((int64) 1024) * 1024 * 1024 * 1024;
+
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

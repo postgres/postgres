@@ -834,7 +834,8 @@ tsvector_filter(PG_FUNCTION_ARGS)
 				posvout->pos[npos++] = posvin->pos[k];
 		}
 
-		if (!npos) /* no satisfactory positions found, so skip that lexeme */
+		/* if no satisfactory positions found, skip lexeme */
+		if (!npos)
 			continue;
 
 		arrout[j].haspos = true;
