@@ -636,7 +636,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
 <programlisting>
 EXEC SQL INSERT INTO sometable VALUES (:v1, 'foo', :v2);
 </programlisting>
-    This statements refers to two C variables named
+    This statement refers to two C variables named
     <varname>v1</varname> and <varname>v2</varname> and also uses a
     regular SQL string literal, to illustrate that you are not
     restricted to use one kind of data or the other.
@@ -3917,7 +3917,7 @@ typedef struct sqlda_struct sqlda_t;
       <term><literal>sqln</></term>
       <listitem>
        <para>
-        It contains the number of input parameters for a parametrized query
+        It contains the number of input parameters for a parametrized query in
         case it's passed into <command>OPEN</command>, <command>DECLARE</command> or
         <command>EXECUTE</command> statements using the <literal>USING</literal>
         keyword. In case it's used as output of <command>SELECT</command>,
