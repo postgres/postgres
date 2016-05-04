@@ -149,7 +149,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-t <replaceable>timeline</replaceable></option></term>
-      <term><option>--timelime=<replaceable>timeline</replaceable></option></term>
+      <term><option>--timeline=<replaceable>timeline</replaceable></option></term>
       <listitem>
        <para>
         Timeline from which to read log records. The default is to use the
