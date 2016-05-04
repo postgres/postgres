@@ -163,23 +163,29 @@ static CycleCtr mdsync_cycle_ctr = 0;
 static CycleCtr mdckpt_cycle_ctr = 0;
 
 
-typedef enum					/* behavior for mdopen & _mdfd_getseg */
-{
-	/* ereport if segment not present, create in recovery */
-	EXTENSION_FAIL,
-	/* return NULL if not present, create in recovery */
-	EXTENSION_RETURN_NULL,
-	/* return NULL if not present */
-	EXTENSION_REALLY_RETURN_NULL,
-	/* create new segments as needed */
-	EXTENSION_CREATE
-} ExtensionBehavior;
+/*** behavior for mdopen & _mdfd_getseg ***/
+/* ereport if segment not present */
+#define EXTENSION_FAIL				(1 << 0)
+/* return NULL if segment not present */
+#define EXTENSION_RETURN_NULL		(1 << 1)
+/* create new segments as needed */
+#define EXTENSION_CREATE			(1 << 2)
+/* create new segments if needed during recovery */
+#define EXTENSION_CREATE_RECOVERY	(1 << 3)
+/*
+ * Allow opening segments which are preceded by segments smaller than
+ * RELSEG_SIZE, e.g. inactive segments (see above). Note that this is breaks
+ * mdnblocks() and related functionality henceforth - which currently is ok,
+ * because this is only required in the checkpointer which never uses
+ * mdnblocks().
+ */
+#define EXTENSION_DONT_CHECK_SIZE	(1 << 4)
+
 
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
 			 bool isRedo);
-static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum,
-	   ExtensionBehavior behavior);
+static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 					   MdfdVec *seg);
 static void register_unlink(RelFileNodeBackend rnode);
@@ -189,7 +195,7 @@ static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
 			  BlockNumber segno, int oflags);
 static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forkno,
-			 BlockNumber blkno, bool skipFsync, ExtensionBehavior behavior);
+			 BlockNumber blkno, bool skipFsync, int behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 		   MdfdVec *seg);
 
@@ -570,7 +576,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  * invent one out of whole cloth.
  */
 static MdfdVec *
-mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
+mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 {
 	MdfdVec    *mdfd;
 	char	   *path;
@@ -596,8 +602,7 @@ mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
 			fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 		if (fd < 0)
 		{
-			if ((behavior == EXTENSION_RETURN_NULL ||
-				 behavior == EXTENSION_REALLY_RETURN_NULL) &&
+			if ((behavior & EXTENSION_RETURN_NULL) &&
 				FILE_POSSIBLY_DELETED(errno))
 			{
 				pfree(path);
@@ -690,8 +695,8 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 		int			segnum_start,
 					segnum_end;
 
-		v = _mdfd_getseg(reln, forknum, blocknum, false,
-						 EXTENSION_REALLY_RETURN_NULL);
+		v = _mdfd_getseg(reln, forknum, blocknum, true /* not used */ ,
+						 EXTENSION_RETURN_NULL);
 
 		/*
 		 * We might be flushing buffers of already removed relations, that's
@@ -737,7 +742,8 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 										reln->smgr_rnode.node.relNode,
 										reln->smgr_rnode.backend);
 
-	v = _mdfd_getseg(reln, forknum, blocknum, false, EXTENSION_FAIL);
+	v = _mdfd_getseg(reln, forknum, blocknum, false,
+					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
 	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
 
@@ -812,7 +818,8 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 										 reln->smgr_rnode.node.relNode,
 										 reln->smgr_rnode.backend);
 
-	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, EXTENSION_FAIL);
+	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync,
+					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
 	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
 
@@ -1219,7 +1226,9 @@ mdsync(void)
 					/* Attempt to open and fsync the target segment */
 					seg = _mdfd_getseg(reln, forknum,
 							 (BlockNumber) segno * (BlockNumber) RELSEG_SIZE,
-									   false, EXTENSION_RETURN_NULL);
+									   false,
+									   EXTENSION_RETURN_NULL
+									   | EXTENSION_DONT_CHECK_SIZE);
 
 					INSTR_TIME_SET_CURRENT(sync_start);
 
@@ -1773,14 +1782,18 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
  */
 static MdfdVec *
 _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
-			 bool skipFsync, ExtensionBehavior behavior)
+			 bool skipFsync, int behavior)
 {
 	MdfdVec    *v = mdopen(reln, forknum, behavior);
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
+	/* some way to handle non-existant segments needs to be specified */
+	Assert(behavior &
+		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL));
+
 	if (!v)
-		return NULL;			/* if EXTENSION_(REALLY_)RETURN_NULL */
+		return NULL;			/* if behavior & EXTENSION_RETURN_NULL */
 
 	targetseg = blkno / ((BlockNumber) RELSEG_SIZE);
 	for (nextsegno = 1; nextsegno <= targetseg; nextsegno++)
@@ -1795,8 +1808,8 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			if (nblocks > ((BlockNumber) RELSEG_SIZE))
 				elog(FATAL, "segment too big");
 
-			if (behavior == EXTENSION_CREATE ||
-				(InRecovery && behavior != EXTENSION_REALLY_RETURN_NULL))
+			if ((behavior & EXTENSION_CREATE) ||
+				(InRecovery && (behavior & EXTENSION_CREATE_RECOVERY)))
 			{
 				/*
 				 * Normally we will create new segments only if authorized by
@@ -1827,15 +1840,16 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 				}
 				flags = O_CREAT;
 			}
-			else if (nblocks < ((BlockNumber) RELSEG_SIZE))
+			else if (!(behavior & EXTENSION_DONT_CHECK_SIZE) &&
+					 nblocks < ((BlockNumber) RELSEG_SIZE))
 			{
 				/*
-				 * When not extending, only open the next segment if the
-				 * current one is exactly RELSEG_SIZE.  If not (this branch),
-				 * either return NULL or fail.
+				 * When not extending (or explicitly including truncated
+				 * segments), only open the next segment if the current one is
+				 * exactly RELSEG_SIZE.  If not (this branch), either return
+				 * NULL or fail.
 				 */
-				if (behavior == EXTENSION_RETURN_NULL ||
-					behavior == EXTENSION_REALLY_RETURN_NULL)
+				if (behavior & EXTENSION_RETURN_NULL)
 				{
 					/*
 					 * Some callers discern between reasons for _mdfd_getseg()
@@ -1858,8 +1872,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 
 			if (v->mdfd_chain == NULL)
 			{
-				if ((behavior == EXTENSION_RETURN_NULL ||
-					 behavior == EXTENSION_REALLY_RETURN_NULL) &&
+				if ((behavior & EXTENSION_RETURN_NULL) &&
 					FILE_POSSIBLY_DELETED(errno))
 					return NULL;
 				ereport(ERROR,
