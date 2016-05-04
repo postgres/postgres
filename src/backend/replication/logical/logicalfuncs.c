@@ -234,6 +234,12 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	rsinfo->setResult = p->tupstore;
 	rsinfo->setDesc = p->tupdesc;
 
+	/* compute the current end-of-wal */
+	if (!RecoveryInProgress())
+		end_of_wal = GetFlushRecPtr();
+	else
+		end_of_wal = GetXLogReplayRecPtr(NULL);
+
 	ReplicationSlotAcquire(NameStr(*name));
 
 	PG_TRY();
@@ -273,12 +279,6 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		/* invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 
-		if (!RecoveryInProgress())
-			end_of_wal = GetFlushRecPtr();
-		else
-			end_of_wal = GetXLogReplayRecPtr(NULL);
-
-		/* Decode until we run out of records */
 		while ((startptr != InvalidXLogRecPtr && startptr < end_of_wal) ||
 			   (ctx->reader->EndRecPtr != InvalidXLogRecPtr && ctx->reader->EndRecPtr < end_of_wal))
 		{
