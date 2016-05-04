@@ -773,8 +773,8 @@ tsvector_filter(PG_FUNCTION_ARGS)
 	bool	   *nulls;
 	int			nweigths;
 	int			i, j;
-	char		mask = 0,
-				cur_pos = 0;
+	int			cur_pos = 0;
+	char		mask = 0;
 
 	deconstruct_array(weights, CHAROID, 1, true, 'c',
 					  &dweights, &nulls, &nweigths);
