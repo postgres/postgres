@@ -6190,7 +6190,7 @@ cc -c test_mod.c -o test_mod.o
 
    <para>
     Next, generate <filename>test_cpp.o</> by compiling
-    <filename>test_cpp.cpp</> with the C++ compiler:.
+    <filename>test_cpp.cpp</> with the C++ compiler:
 <programlisting>
 c++ -c test_cpp.cpp -o test_cpp.o
 </programlisting>
@@ -6296,9 +6296,9 @@ EXEC SQL ALLOCATE DESCRIPTOR mydesc;
 
    <refsynopsisdiv>
 <synopsis>
-CONNECT TO <replaceable>connection_target</replaceable> [ AS <replaceable>connection_name</replaceable> ] [ USER <replaceable>connection_user_name</replaceable> ]
+CONNECT TO <replaceable>connection_target</replaceable> [ AS <replaceable>connection_name</replaceable> ] [ USER <replaceable>connection_user</replaceable> ]
 CONNECT TO DEFAULT
-CONNECT <replaceable>connection_user_name</replaceable>
+CONNECT <replaceable>connection_user</replaceable>
 DATABASE <replaceable>connection_target</replaceable>
 </synopsis>
    </refsynopsisdiv>
@@ -7830,7 +7830,7 @@ main(void)
    this mode is active, it tries to behave as if it were the <productname>Informix</productname>
    precompiler for <productname>Informix</productname> E/SQL. Generally spoken this will allow you to use
    the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
-   embedded SQL commands.:
+   embedded SQL commands:
 <programlisting>
 $int j = 3;
 $CONNECT TO :dbname;
@@ -7902,7 +7902,7 @@ EXEC SQL FETCH MYCUR INTO :userid;
       <listitem>
        <para>
         This statement closes the current connection. In fact, this is a
-        synonym for ECPG's <literal>DISCONNECT CURRENT</>.:
+        synonym for ECPG's <literal>DISCONNECT CURRENT</>:
 <programlisting>
 $CLOSE DATABASE;                /* close the current connection */
 EXEC SQL CLOSE DATABASE;
