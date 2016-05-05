@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-05-02 (commit 21c2b1c61)</simpara>
+   <simpara>Current as of 2016-05-05 (commit 7a622b273)</simpara>
   </note>
 
   <sect2>
@@ -105,15 +105,16 @@
 2016-04-27 [59eb55127] Fix EXPLAIN VERBOSE output for parallel aggregate.
 -->
        <para>
-        Parallel queries (Robert Haas, Amit Kapila, many others)
+        Parallel queries (Robert Haas, Amit Kapila, David Rowley, many others)
        </para>
 
        <para>
-        With 9.6, <productname>PostgreSQL</> introduces initial support
-        for parallel execution of large queries.  Scans over large tables can
-        be parallelized, as can hash joins and computation of aggregate
-        functions.  Much remains to be done, but this is already a useful set
-        of features.
+        With 9.6, <productname>PostgreSQL</> introduces initial support for
+        parallel execution of large queries.  Only strictly read-only queries
+        where the driving table is accessed via a sequential scan can be
+        parallelized.  Hash joins and nested loops can be performed in
+        parallel, as can aggregation (for supported aggregates).  Much
+        remains to be done, but this is already a useful set of features.
        </para>
 
        <para>
@@ -123,10 +124,6 @@
         <xref linkend="guc-force-parallel-mode">,
         <xref linkend="guc-parallel-setup-cost">, and
         <xref linkend="guc-parallel-tuple-cost">.
-       </para>
-
-       <para>
-        This section needs to get fleshed out, but by how much?
        </para>
       </listitem>
 
@@ -317,6 +314,7 @@
 2016-04-13 [fa11a09fe] Fix assorted portability issues with using msync() for d
 2016-04-24 [8f91d87d4] Fix documentation & config inconsistencies around 428b1d
 2016-04-26 [72a98a639] Don't open formally non-existent segments in _mdfd_getse
+2016-05-04 [a71248708] Fix transient mdsync() errors of truncated relations due
 -->
        <para>
         Where feasible, trigger kernel writeback after a configurable number
@@ -564,11 +562,12 @@
 2016-04-08 [719c84c1b] Extend relations multiple blocks at a time to improve sc
 -->
        <para>
-        Extend relations multiple blocks at a time (Dilip Kumar)
+        Extend relations multiple blocks at a time, when there is contention
+        for the relation's extension lock (Dilip Kumar)
        </para>
 
        <para>
-        This reduces kernel traffic, and improves scalability when multiple
+        This reduces kernel traffic and improves scalability when multiple
         processes are inserting into the same relation.
        </para>
       </listitem>
@@ -1078,7 +1077,7 @@
 -->
        <para>
         Force backends to exit if the postmaster dies
-        (Rajeev Rastogi and Robert Haas)
+        (Rajeev Rastogi, Robert Haas)
        </para>
 
        <para>
@@ -1304,8 +1303,8 @@ XXX this is pending backpatch, may need to remove
 2016-01-28 [fbe5a3fb7] Only try to push down foreign joins if the user mapping
 -->
        <para>
-        Push down joins of foreign tables to the foreign data wrapper only
-        when the user mappings match (Shigeru Hanada, Ashutosh Bapat)
+        Consider performing joins of foreign tables remotely only when the
+        applicable user mappings match (Shigeru Hanada, Ashutosh Bapat)
        </para>
 
        <para>
@@ -1751,6 +1750,7 @@ XXX this is pending backpatch, may need to remove
       <listitem>
 <!--
 2015-11-14 [7d9a4737c] Improve type numeric's calculations for ln(), log(), exp
+2016-05-05 [18a02ad2a] Fix corner-case loss of precision in numeric pow() calcu
 -->
        <para>
         Improve the accuracy of the <function>ln()</>, <function>log()</>,
@@ -1792,7 +1792,7 @@ XXX this is pending backpatch, may need to remove
 -->
        <para>
         Ensure that trigonometric functions handle infinity and NaN inputs per
-        spec (Dean Rasheed)
+        the POSIX standard (Dean Rasheed)
        </para>
 
        <para>
@@ -1878,8 +1878,8 @@ XXX this is pending backpatch, may need to remove
        <para>
         An example usage is <literal>CHECK(num_nonnulls(a,b,c) = 1)</> which
         asserts that exactly one of a,b,c isn't NULL.  These functions can
-        also be pressed into service to count the number of null or nonnull
-        elements in an array.
+        also be used to count the number of null or nonnull elements in an
+        array.
        </para>
       </listitem>
 
@@ -1950,8 +1950,8 @@ XXX this is pending backpatch, may need to remove
        <para>
         This function converts strings like those produced
         by <function>pg_size_pretty()</> into sizes in bytes.  An example
-        usage is <literal>WHERE pg_total_relation_size(oid) &gt;
-        pg_size_bytes('10 GB')</>.
+        usage is <literal>SELECT oid::regclass FROM pg_class WHERE
+        pg_total_relation_size(oid) &gt; pg_size_bytes('10 GB')</>.
        </para>
       </listitem>
 
@@ -1960,8 +1960,13 @@ XXX this is pending backpatch, may need to remove
 2015-11-06 [8a1fab36a] pg_size_pretty: Format negative values similar to positi
 -->
        <para>
-        In <function>pg_size_pretty()</>, format negative numbers similarly to
-        positive ones (Adrian Vondendriesch)
+        In <function>pg_size_pretty()</>, format negative numbers similarly
+        to positive ones (Adrian Vondendriesch)
+       </para>
+
+       <para>
+        Previously, negative numbers were never abbreviated, just printed
+        in bytes.
        </para>
       </listitem>
 
@@ -1972,6 +1977,11 @@ XXX this is pending backpatch, may need to remove
        <para>
         Add an optional <replaceable>missing_ok</> argument to
         the <function>current_setting()</> function (David Christensen)
+       </para>
+
+       <para>
+        This allows avoiding an error for an unrecognized parameter name;
+        instead the result is NULL.
        </para>
       </listitem>
 
@@ -2446,6 +2456,7 @@ This commit is also listed under libpq and PL/pgSQL
 <!--
 2016-03-01 [7e137f846] Extend pgbench's expression syntax to support a few buil
 2016-03-28 [86c43f4e2] pgbench: Support double constants and functions.
+2016-05-05 [7a622b273] Rename pgbench min/max to least/greatest, and fix handli
 -->
        <para>
         Support some <link linkend="pgbench-builtin-functions">built-in
@@ -2572,8 +2583,14 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Improve error reporting during <application>initdb</>'s post-bootstrap
-        phase, by not reporting the entire input file as the <quote>failing
-        query</> (Tom Lane)
+        phase (Tom Lane)
+       </para>
+
+       <para>
+        Previously, an error here led to reporting the entire input file as
+        the <quote>failing query</>; now just the current query is reported.
+        To get the desired behavior, queries in <application>initdb</>'s
+        input files must be separated by blank lines.
        </para>
       </listitem>
 
@@ -3211,7 +3228,7 @@ This commit is also listed under libpq and PL/pgSQL
 2016-03-09 [aa09cd242] postgres_fdw: Consider foreign joining and foreign sorti
 -->
        <para>
-        Push down joins to the remote server when possible (Shigeru Hanada,
+        Consider performing joins on the remote server (Shigeru Hanada,
         Ashutosh Bapat)
        </para>
       </listitem>
