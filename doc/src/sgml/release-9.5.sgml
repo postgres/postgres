@@ -2176,7 +2176,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Report the processes holding replication slots in <link
-        linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</></>
+        linkend="view-pg-replication-slots"><structname>pg_replication_slots</></>
         (Craig Ringer)
        </para>
 
