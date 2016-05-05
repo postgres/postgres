@@ -9180,6 +9180,18 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        <row>
         <entry>
          <indexterm>
+          <primary>array_to_tsvector</primary>
+         </indexterm>
+         <literal><function>array_to_tsvector(<type>text[]</>)</function></literal>
+        </entry>
+        <entry><type>tsvector</type></entry>
+        <entry>convert array of lexemes to <type>tsvector</type></entry>
+        <entry><literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal></entry>
+        <entry><literal>'fat' 'cat' 'rat'</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
           <primary>get_current_ts_config</primary>
          </indexterm>
          <literal><function>get_current_ts_config()</function></literal>
@@ -9267,10 +9279,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
           <primary>setweight</primary>
           <secondary>setweight for specific lexeme(s)</secondary>
          </indexterm>
-         <literal><function>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>"text"[]</>)</function></literal>
+         <literal><function>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>text[]</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
-        <entry>assign <replaceable class="PARAMETER">weight</replaceable> to elements of <replaceable class="PARAMETER">vector</replaceable> that are listed in <replaceable class="PARAMETER">lexemes</replaceable> array</entry>
+        <entry>assign <replaceable class="PARAMETER">weight</replaceable> to elements of <replaceable class="PARAMETER">vector</replaceable> that are listed in <replaceable class="PARAMETER">lexemes</replaceable></entry>
         <entry><literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A', '{cat,rat}')</literal></entry>
         <entry><literal>'cat':3A 'fat':2,4 'rat':5A</literal></entry>
        </row>
@@ -9285,79 +9297,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>remove positions and weights from <type>tsvector</></entry>
         <entry><literal>strip('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
         <entry><literal>'cat' 'fat' 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>delete</primary>
-          <secondary>delete lexeme(s) from tsvector</secondary>
-         </indexterm>
-         <literal><function>delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexeme</replaceable> <type>text</>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>remove given <replaceable class="PARAMETER">lexeme</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
-        <entry><literal>delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal></entry>
-        <entry><literal>'cat':3 'rat':5A</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <!-- previous indexterm entry covers this too -->
-         <literal><function>delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>text[]</>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>remove any occurrence of lexemes in <replaceable class="PARAMETER">lexemes</replaceable> array from <replaceable class="PARAMETER">vector</replaceable></entry>
-        <entry><literal>delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal></entry>
-        <entry><literal>'cat':3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>unnest</primary>
-          <secondary>for tsvector</secondary>
-         </indexterm>
-         <literal><function>unnest(<type>tsvector</>, OUT <replaceable class="PARAMETER">lexeme</> <type>text</>, OUT <replaceable class="PARAMETER">positions</> <type>smallint[]</>, OUT <replaceable class="PARAMETER">weights</> <type>text</>)</function></literal>
-        </entry>
-        <entry><type>setof record</type></entry>
-        <entry>expand a tsvector to a set of rows</entry>
-        <entry><literal>unnest('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
-        <entry><literal>(cat,{3},{D}) ...</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>tsvector_to_array</primary>
-         </indexterm>
-         <literal><function>tsvector_to_array(<type>tsvector</>)</function></literal>
-        </entry>
-        <entry><type>text[]</type></entry>
-        <entry>convert <type>tsvector</> to array of lexemes</entry>
-        <entry><literal>tsvector_to_array('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
-        <entry><literal>{cat,fat,rat}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>array_to_tsvector</primary>
-         </indexterm>
-         <literal><function>array_to_tsvector(<type>text[]</>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>convert array of lexemes to <type>tsvector</type></entry>
-        <entry><literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal></entry>
-        <entry><literal>'fat' 'cat' 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>filter</primary>
-          <secondary>for tsvector</secondary>
-         </indexterm>
-         <literal><function>filter(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weights</replaceable> <type>"char"[]</>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>Select only elements with given <replaceable class="PARAMETER">weights</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
-        <entry><literal>filter('fat:2,4 cat:3b rat:5A'::tsvector, '{a,b}')</literal></entry>
-        <entry><literal>'cat':3B 'rat':5A</literal></entry>
        </row>
        <row>
         <entry>
@@ -9382,6 +9321,40 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>reduce document text to <type>tsvector</></entry>
         <entry><literal>to_tsvector('english', 'The Fat Rats')</literal></entry>
         <entry><literal>'fat':2 'rat':3</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>ts_delete</primary>
+         </indexterm>
+         <literal><function>ts_delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexeme</replaceable> <type>text</>)</function></literal>
+        </entry>
+        <entry><type>tsvector</type></entry>
+        <entry>remove given <replaceable class="PARAMETER">lexeme</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry><literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal></entry>
+        <entry><literal>'cat':3 'rat':5A</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <!-- previous indexterm entry covers this too -->
+         <literal><function>ts_delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>text[]</>)</function></literal>
+        </entry>
+        <entry><type>tsvector</type></entry>
+        <entry>remove any occurrence of lexemes in <replaceable class="PARAMETER">lexemes</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry><literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal></entry>
+        <entry><literal>'cat':3</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>ts_filter</primary>
+         </indexterm>
+         <literal><function>ts_filter(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weights</replaceable> <type>"char"[]</>)</function></literal>
+        </entry>
+        <entry><type>tsvector</type></entry>
+        <entry>Select only elements with given <replaceable class="PARAMETER">weights</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry><literal>ts_filter('fat:2,4 cat:3b rat:5A'::tsvector, '{a,b}')</literal></entry>
+        <entry><literal>'cat':3B 'rat':5A</literal></entry>
        </row>
        <row>
         <entry>
@@ -9462,6 +9435,18 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        <row>
         <entry>
          <indexterm>
+          <primary>tsvector_to_array</primary>
+         </indexterm>
+         <literal><function>tsvector_to_array(<type>tsvector</>)</function></literal>
+        </entry>
+        <entry><type>text[]</type></entry>
+        <entry>convert <type>tsvector</> to array of lexemes</entry>
+        <entry><literal>tsvector_to_array('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
+        <entry><literal>{cat,fat,rat}</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
           <primary>tsvector_update_trigger</primary>
          </indexterm>
          <literal><function>tsvector_update_trigger()</function></literal>
@@ -9482,6 +9467,19 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>trigger function for automatic <type>tsvector</> column update</entry>
         <entry><literal>CREATE TRIGGER ... tsvector_update_trigger_column(tsvcol, configcol, title, body)</literal></entry>
         <entry><literal></literal></entry>
+       </row>
+       <row>
+        <entry>
+         <indexterm>
+          <primary>unnest</primary>
+          <secondary>for tsvector</secondary>
+         </indexterm>
+         <literal><function>unnest(<type>tsvector</>, OUT <replaceable class="PARAMETER">lexeme</> <type>text</>, OUT <replaceable class="PARAMETER">positions</> <type>smallint[]</>, OUT <replaceable class="PARAMETER">weights</> <type>text</>)</function></literal>
+        </entry>
+        <entry><type>setof record</type></entry>
+        <entry>expand a tsvector to a set of rows</entry>
+        <entry><literal>unnest('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
+        <entry><literal>(cat,{3},{D}) ...</literal></entry>
        </row>
       </tbody>
      </tgroup>

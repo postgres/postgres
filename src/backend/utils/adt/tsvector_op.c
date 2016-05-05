@@ -506,7 +506,7 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 
 /*
  * Delete given lexeme from tsvector.
- * Implementation of user-level delete(tsvector, text).
+ * Implementation of user-level ts_delete(tsvector, text).
  */
 Datum
 tsvector_delete_str(PG_FUNCTION_ARGS)
@@ -530,7 +530,7 @@ tsvector_delete_str(PG_FUNCTION_ARGS)
 
 /*
  * Delete given array of lexemes from tsvector.
- * Implementation of user-level delete(tsvector, text[]).
+ * Implementation of user-level ts_delete(tsvector, text[]).
  */
 Datum
 tsvector_delete_arr(PG_FUNCTION_ARGS)
@@ -757,7 +757,7 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 }
 
 /*
- * Leave only elements with given weights from tsvector.
+ * ts_filter(): keep only lexemes with given weights in tsvector.
  */
 Datum
 tsvector_filter(PG_FUNCTION_ARGS)
@@ -771,15 +771,15 @@ tsvector_filter(PG_FUNCTION_ARGS)
 			   *dataout;
 	Datum	   *dweights;
 	bool	   *nulls;
-	int			nweigths;
+	int			nweights;
 	int			i, j;
 	int			cur_pos = 0;
 	char		mask = 0;
 
 	deconstruct_array(weights, CHAROID, 1, true, 'c',
-					  &dweights, &nulls, &nweigths);
+					  &dweights, &nulls, &nweights);
 
-	for (i = 0; i < nweigths; i++)
+	for (i = 0; i < nweights; i++)
 	{
 		char char_weight;
 
@@ -804,8 +804,9 @@ tsvector_filter(PG_FUNCTION_ARGS)
 				mask = mask | 1;
 				break;
 			default:
-				/* internal error */
-				elog(ERROR, "unrecognized weight: %c", char_weight);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized weight: \"%c\"", char_weight)));
 		}
 	}
 
