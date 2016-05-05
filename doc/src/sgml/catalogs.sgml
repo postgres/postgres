@@ -7575,8 +7575,8 @@
    be used by software packages that want to interface to
    <productname>PostgreSQL</> to facilitate finding the required header
    files and libraries. It provides the same basic information as the
-   <xref linkend="app-pgconfig"> <productname>PostgreSQL</> Client
-   Application.
+   <xref linkend="app-pgconfig"> <productname>PostgreSQL</> client
+   application.
   </para>
 
   <table>

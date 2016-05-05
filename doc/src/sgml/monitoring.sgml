@@ -1108,7 +1108,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 (2 rows)
 </programlisting>
    </para>
-   
+
   <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
    <title><structname>pg_stat_replication</structname> View</title>
    <tgroup cols="3">
@@ -2429,7 +2429,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
         See <xref linkend="wait-event-table"> for details.
         </entry>
       </row>
-      
+
      <row>
       <entry><literal><function>pg_stat_get_backend_wait_event(integer)</function></literal></entry>
       <entry><type>text</type></entry>
@@ -2524,7 +2524,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    view.
   </para>
 
-  <table id="pg-stat-progress-vacuum" xreflabel="pg_stat_progress_vacuum">
+  <table id="pg-stat-progress-vacuum-view" xreflabel="pg_stat_progress_vacuum">
    <title><structname>pg_stat_progress_vacuum</structname> View</title>
    <tgroup cols="3">
     <thead>
