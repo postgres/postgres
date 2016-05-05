@@ -131,7 +131,7 @@ make_op(yyscan_t yyscanner, const char *operator,
  * List of available functions:
  * - fname: function name
  * - nargs: number of arguments
- *			-1 is a special value for min & max meaning #args >= 1
+ *			-1 is a special value for least & greatest meaning #args >= 1
  * - tag: function identifier from PgBenchFunction enum
  */
 static const struct
@@ -162,10 +162,10 @@ static const struct
 		"abs", 1, PGBENCH_ABS
 	},
 	{
-		"min", -1, PGBENCH_MIN
+		"least", -1, PGBENCH_LEAST
 	},
 	{
-		"max", -1, PGBENCH_MAX
+		"greatest", -1, PGBENCH_GREATEST
 	},
 	{
 		"debug", 1, PGBENCH_DEBUG
@@ -274,7 +274,7 @@ make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args)
 		expr_yyerror_more(yyscanner, "unexpected number of arguments",
 						  PGBENCH_FUNCTIONS[fnumber].fname);
 
-	/* check at least one arg for min & max */
+	/* check at least one arg for least & greatest */
 	if (PGBENCH_FUNCTIONS[fnumber].nargs == -1 &&
 		elist_length(args) == 0)
 		expr_yyerror_more(yyscanner, "at least one argument expected",

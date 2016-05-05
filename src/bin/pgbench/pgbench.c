@@ -1298,31 +1298,63 @@ evalFunc(TState *thread, CState *st,
 				return true;
 			}
 
-		/* variable number of int arguments */
-		case PGBENCH_MIN:
-		case PGBENCH_MAX:
+		/* variable number of arguments */
+		case PGBENCH_LEAST:
+		case PGBENCH_GREATEST:
 			{
-				int64		extremum;
+				bool		havedouble;
 				int			i;
+
 				Assert(nargs >= 1);
 
-				if (!coerceToInt(&vargs[0], &extremum))
-					return false;
-
-				for (i = 1; i < nargs; i++)
+				/* need double result if any input is double */
+				havedouble = false;
+				for (i = 0; i < nargs; i++)
 				{
-					int64		ival;
-
-					if (!coerceToInt(&vargs[i], &ival))
-						return false;
-
-					if (func == PGBENCH_MIN)
-						extremum = extremum < ival ? extremum : ival;
-					else if (func == PGBENCH_MAX)
-						extremum = extremum > ival ? extremum : ival;
+					if (vargs[i].type == PGBT_DOUBLE)
+					{
+						havedouble = true;
+						break;
+					}
 				}
+				if (havedouble)
+				{
+					double		extremum;
 
-				setIntValue(retval, extremum);
+					if (!coerceToDouble(&vargs[0], &extremum))
+						return false;
+					for (i = 1; i < nargs; i++)
+					{
+						double		dval;
+
+						if (!coerceToDouble(&vargs[i], &dval))
+							return false;
+						if (func == PGBENCH_LEAST)
+							extremum = Min(extremum, dval);
+						else
+							extremum = Max(extremum, dval);
+					}
+					setDoubleValue(retval, extremum);
+				}
+				else
+				{
+					int64		extremum;
+
+					if (!coerceToInt(&vargs[0], &extremum))
+						return false;
+					for (i = 1; i < nargs; i++)
+					{
+						int64		ival;
+
+						if (!coerceToInt(&vargs[i], &ival))
+							return false;
+						if (func == PGBENCH_LEAST)
+							extremum = Min(extremum, ival);
+						else
+							extremum = Max(extremum, ival);
+					}
+					setIntValue(retval, extremum);
+				}
 				return true;
 			}
 

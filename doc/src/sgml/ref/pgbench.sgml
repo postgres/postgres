@@ -935,14 +935,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <row>
        <entry><literal><function>abs(<replaceable>a</>)</></></>
        <entry>same as <replaceable>a</></>
-       <entry>integer or double absolute value</>
+       <entry>absolute value</>
        <entry><literal>abs(-17)</></>
        <entry><literal>17</></>
       </row>
       <row>
        <entry><literal><function>debug(<replaceable>a</>)</></></>
        <entry>same as <replaceable>a</> </>
-       <entry>print to <systemitem>stderr</systemitem> the given argument</>
+       <entry>print <replaceable>a</> to <systemitem>stderr</systemitem>,
+        and return <replaceable>a</></>
        <entry><literal>debug(5432.1)</></>
        <entry><literal>5432.1</></>
       </row>
@@ -961,23 +962,23 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        <entry><literal>9</></>
       </row>
       <row>
-       <entry><literal><function>max(<replaceable>i</> [, <replaceable>...</> ] )</></></>
-       <entry>integer</>
-       <entry>maximum value</>
-       <entry><literal>max(5, 4, 3, 2)</></>
+       <entry><literal><function>greatest(<replaceable>a</> [, <replaceable>...</> ] )</></></>
+       <entry>double if any <replaceable>a</> is double, else integer</>
+       <entry>largest value among arguments</>
+       <entry><literal>greatest(5, 4, 3, 2)</></>
        <entry><literal>5</></>
       </row>
       <row>
-       <entry><literal><function>min(<replaceable>i</> [, <replaceable>...</> ] )</></></>
-       <entry>integer</>
-       <entry>minimum value</>
-       <entry><literal>min(5, 4, 3, 2)</></>
-       <entry><literal>2</></>
+       <entry><literal><function>least(<replaceable>a</> [, <replaceable>...</> ] )</></></>
+       <entry>double if any <replaceable>a</> is double, else integer</>
+       <entry>smallest value among arguments</>
+       <entry><literal>least(5, 4, 3, 2.1)</></>
+       <entry><literal>2.1</></>
       </row>
       <row>
        <entry><literal><function>pi()</></></>
        <entry>double</>
-       <entry>value of the PI constant</>
+       <entry>value of the constant PI</>
        <entry><literal>pi()</></>
        <entry><literal>3.14159265358979323846</></>
       </row>
