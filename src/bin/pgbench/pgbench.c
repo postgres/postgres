@@ -38,6 +38,7 @@
 #include "portability/instr_time.h"
 
 #include <ctype.h>
+#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <signal.h>
@@ -185,11 +186,20 @@ const char *progname;
 
 volatile bool timer_exceeded = false;	/* flag from signal handler */
 
-/* variable definitions */
+/*
+ * Variable definitions.  If a variable has a string value, "value" is that
+ * value, is_numeric is false, and num_value is undefined.  If the value is
+ * known to be numeric, is_numeric is true and num_value contains the value
+ * (in any permitted numeric variant).  In this case "value" contains the
+ * string equivalent of the number, if we've had occasion to compute that,
+ * or NULL if we haven't.
+ */
 typedef struct
 {
-	char	   *name;			/* variable name */
-	char	   *value;			/* its value */
+	char	   *name;			/* variable's name */
+	char	   *value;			/* its value in string form, if known */
+	bool		is_numeric;		/* is numeric value known? */
+	PgBenchValue num_value;		/* variable's value in numeric form */
 } Variable;
 
 #define MAX_SCRIPTS		128		/* max number of SQL scripts allowed */
@@ -237,7 +247,8 @@ typedef struct
 	bool		throttling;		/* whether nap is for throttling */
 	bool		is_throttled;	/* whether transaction throttling is done */
 	Variable   *variables;		/* array of variable definitions */
-	int			nvariables;
+	int			nvariables;		/* number of variables */
+	bool		vars_sorted;	/* are variables sorted by name? */
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
@@ -363,6 +374,8 @@ static const BuiltinScript builtin_script[] =
 
 
 /* Function prototypes */
+static void setIntValue(PgBenchValue *pv, int64 ival);
+static void setDoubleValue(PgBenchValue *pv, double dval);
 static bool evaluateExpr(TState *, CState *, PgBenchExpr *, PgBenchValue *);
 static void doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag);
@@ -836,33 +849,97 @@ discard_response(CState *state)
 	} while (res);
 }
 
+/* qsort comparator for Variable array */
 static int
-compareVariables(const void *v1, const void *v2)
+compareVariableNames(const void *v1, const void *v2)
 {
 	return strcmp(((const Variable *) v1)->name,
 				  ((const Variable *) v2)->name);
 }
 
-static char *
-getVariable(CState *st, char *name)
+/* Locate a variable by name; returns NULL if unknown */
+static Variable *
+lookupVariable(CState *st, char *name)
 {
-	Variable	key,
-			   *var;
+	Variable	key;
 
 	/* On some versions of Solaris, bsearch of zero items dumps core */
 	if (st->nvariables <= 0)
 		return NULL;
 
+	/* Sort if we have to */
+	if (!st->vars_sorted)
+	{
+		qsort((void *) st->variables, st->nvariables, sizeof(Variable),
+			  compareVariableNames);
+		st->vars_sorted = true;
+	}
+
+	/* Now we can search */
 	key.name = name;
-	var = (Variable *) bsearch((void *) &key,
-							   (void *) st->variables,
-							   st->nvariables,
-							   sizeof(Variable),
-							   compareVariables);
-	if (var != NULL)
-		return var->value;
+	return (Variable *) bsearch((void *) &key,
+								(void *) st->variables,
+								st->nvariables,
+								sizeof(Variable),
+								compareVariableNames);
+}
+
+/* Get the value of a variable, in string form; returns NULL if unknown */
+static char *
+getVariable(CState *st, char *name)
+{
+	Variable   *var;
+	char		stringform[64];
+
+	var = lookupVariable(st, name);
+	if (var == NULL)
+		return NULL;			/* not found */
+
+	if (var->value)
+		return var->value;		/* we have it in string form */
+
+	/* We need to produce a string equivalent of the numeric value */
+	Assert(var->is_numeric);
+	if (var->num_value.type == PGBT_INT)
+		snprintf(stringform, sizeof(stringform),
+				 INT64_FORMAT, var->num_value.u.ival);
 	else
-		return NULL;
+	{
+		Assert(var->num_value.type == PGBT_DOUBLE);
+		snprintf(stringform, sizeof(stringform),
+				 "%.*g", DBL_DIG, var->num_value.u.dval);
+	}
+	var->value = pg_strdup(stringform);
+	return var->value;
+}
+
+/* Try to convert variable to numeric form; return false on failure */
+static bool
+makeVariableNumeric(Variable *var)
+{
+	if (var->is_numeric)
+		return true;			/* no work */
+
+	if (is_an_int(var->value))
+	{
+		setIntValue(&var->num_value, strtoint64(var->value));
+		var->is_numeric = true;
+	}
+	else /* type should be double */
+	{
+		double dv;
+
+		if (sscanf(var->value, "%lf", &dv) != 1)
+		{
+			fprintf(stderr,
+					"malformed variable \"%s\" value: \"%s\"\n",
+					var->name, var->value);
+			return false;
+		}
+		setDoubleValue(&var->num_value, dv);
+		var->is_numeric = true;
+	}
+	return true;
 }
 
 /* check whether the name consists of alphabets, numerals and underscores. */
@@ -877,26 +954,20 @@ isLegalVariableName(const char *name)
 			return false;
 	}
 
-	return true;
+	return (i > 0);				/* must be non-empty */
 }
 
-static int
-putVariable(CState *st, const char *context, char *name, char *value)
+/*
+ * Lookup a variable by name, creating it if need be.
+ * Caller is expected to assign a value to the variable.
+ * Returns NULL on failure (bad name).
+ */
+static Variable *
+lookupCreateVariable(CState *st, const char *context, char *name)
 {
-	Variable	key,
-			   *var;
+	Variable   *var;
 
-	key.name = name;
-	/* On some versions of Solaris, bsearch of zero items dumps core */
-	if (st->nvariables > 0)
-		var = (Variable *) bsearch((void *) &key,
-								   (void *) st->variables,
-								   st->nvariables,
-								   sizeof(Variable),
-								   compareVariables);
-	else
-		var = NULL;
-
+	var = lookupVariable(st, name);
 	if (var == NULL)
 	{
 		Variable   *newvars;
@@ -909,9 +980,10 @@ putVariable(CState *st, const char *context, char *name, char *value)
 		{
 			fprintf(stderr, "%s: invalid variable name: \"%s\"\n",
 					context, name);
-			return false;
+			return NULL;
 		}
 
+		/* Create variable at the end of the array */
 		if (st->variables)
 			newvars = (Variable *) pg_realloc(st->variables,
 									(st->nvariables + 1) * sizeof(Variable));
@@ -923,25 +995,70 @@ putVariable(CState *st, const char *context, char *name, char *value)
 		var = &newvars[st->nvariables];
 
 		var->name = pg_strdup(name);
-		var->value = pg_strdup(value);
+		var->value = NULL;
+		/* caller is expected to initialize remaining fields */
 
 		st->nvariables++;
-
-		qsort((void *) st->variables, st->nvariables, sizeof(Variable),
-			  compareVariables);
+		/* we don't re-sort the array till we have to */
+		st->vars_sorted = false;
 	}
-	else
-	{
-		char	   *val;
 
-		/* dup then free, in case value is pointing at this variable */
-		val = pg_strdup(value);
+	return var;
+}
 
+/* Assign a string value to a variable, creating it if need be */
+/* Returns false on failure (bad name) */
+static bool
+putVariable(CState *st, const char *context, char *name, const char *value)
+{
+	Variable   *var;
+	char	   *val;
+
+	var = lookupCreateVariable(st, context, name);
+	if (!var)
+		return false;
+
+	/* dup then free, in case value is pointing at this variable */
+	val = pg_strdup(value);
+
+	if (var->value)
 		free(var->value);
-		var->value = val;
-	}
+	var->value = val;
+	var->is_numeric = false;
 
 	return true;
+}
+
+/* Assign a numeric value to a variable, creating it if need be */
+/* Returns false on failure (bad name) */
+static bool
+putVariableNumber(CState *st, const char *context, char *name,
+				  const PgBenchValue *value)
+{
+	Variable   *var;
+
+	var = lookupCreateVariable(st, context, name);
+	if (!var)
+		return false;
+
+	if (var->value)
+		free(var->value);
+	var->value = NULL;
+	var->is_numeric = true;
+	var->num_value = *value;
+
+	return true;
+}
+
+/* Assign an integer value to a variable, creating it if need be */
+/* Returns false on failure (bad name) */
+static bool
+putVariableInt(CState *st, const char *context, char *name, int64 value)
+{
+	PgBenchValue val;
+
+	setIntValue(&val, value);
+	return putVariableNumber(st, context, name, &val);
 }
 
 static char *
@@ -1260,7 +1377,7 @@ evalFunc(TState *thread, CState *st,
 				else
 				{
 					Assert(varg->type == PGBT_DOUBLE);
-					fprintf(stderr, "double %f\n", varg->u.dval);
+					fprintf(stderr, "double %.*g\n", DBL_DIG, varg->u.dval);
 				}
 
 				*retval = *varg;
@@ -1454,32 +1571,19 @@ evaluateExpr(TState *thread, CState *st, PgBenchExpr *expr, PgBenchValue *retval
 
 		case ENODE_VARIABLE:
 			{
-				char	   *var;
+				Variable   *var;
 
-				if ((var = getVariable(st, expr->u.variable.varname)) == NULL)
+				if ((var = lookupVariable(st, expr->u.variable.varname)) == NULL)
 				{
 					fprintf(stderr, "undefined variable \"%s\"\n",
 							expr->u.variable.varname);
 					return false;
 				}
 
-				if (is_an_int(var))
-				{
-					setIntValue(retval, strtoint64(var));
-				}
-				else /* type should be double */
-				{
-					double dv;
-					if (sscanf(var, "%lf", &dv) != 1)
-					{
-						fprintf(stderr,
-								"malformed variable \"%s\" value: \"%s\"\n",
-								expr->u.variable.varname, var);
-						return false;
-					}
-					setDoubleValue(retval, dv);
-				}
+				if (!makeVariableNumeric(var))
+					return false;
 
+				*retval = var->num_value;
 				return true;
 			}
 
@@ -1596,8 +1700,7 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 				argv[0], res);
 		return false;
 	}
-	snprintf(res, sizeof(res), "%d", retval);
-	if (!putVariable(st, "setshell", variable, res))
+	if (!putVariableInt(st, "setshell", variable, retval))
 		return false;
 
 #ifdef DEBUG
@@ -1973,7 +2076,6 @@ top:
 
 		if (pg_strcasecmp(argv[0], "set") == 0)
 		{
-			char		res[64];
 			PgBenchExpr *expr = commands[st->state]->expr;
 			PgBenchValue	result;
 
@@ -1983,15 +2085,7 @@ top:
 				return true;
 			}
 
-			if (result.type == PGBT_INT)
-				sprintf(res, INT64_FORMAT, result.u.ival);
-			else
-			{
-				Assert(result.type == PGBT_DOUBLE);
-				sprintf(res, "%.18e", result.u.dval);
-			}
-
-			if (!putVariable(st, argv[0], argv[1], res))
+			if (!putVariableNumber(st, argv[0], argv[1], &result))
 			{
 				st->ecnt++;
 				return true;
@@ -3325,8 +3419,6 @@ main(int argc, char **argv)
 	PGresult   *res;
 	char	   *env;
 
-	char		val[64];
-
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -3767,8 +3859,20 @@ main(int argc, char **argv)
 			state[i].id = i;
 			for (j = 0; j < state[0].nvariables; j++)
 			{
-				if (!putVariable(&state[i], "startup", state[0].variables[j].name, state[0].variables[j].value))
-					exit(1);
+				Variable   *var = &state[0].variables[j];
+
+				if (var->is_numeric)
+				{
+					if (!putVariableNumber(&state[i], "startup",
+									 var->name, &var->num_value))
+						exit(1);
+				}
+				else
+				{
+					if (!putVariable(&state[i], "startup",
+									 var->name, var->value))
+						exit(1);
+				}
 			}
 		}
 	}
@@ -3834,12 +3938,11 @@ main(int argc, char **argv)
 	 * :scale variables normally get -s or database scale, but don't override
 	 * an explicit -D switch
 	 */
-	if (getVariable(&state[0], "scale") == NULL)
+	if (lookupVariable(&state[0], "scale") == NULL)
 	{
-		snprintf(val, sizeof(val), "%d", scale);
 		for (i = 0; i < nclients; i++)
 		{
-			if (!putVariable(&state[i], "startup", "scale", val))
+			if (!putVariableInt(&state[i], "startup", "scale", scale))
 				exit(1);
 		}
 	}
@@ -3848,12 +3951,11 @@ main(int argc, char **argv)
 	 * Define a :client_id variable that is unique per connection. But don't
 	 * override an explicit -D switch.
 	 */
-	if (getVariable(&state[0], "client_id") == NULL)
+	if (lookupVariable(&state[0], "client_id") == NULL)
 	{
 		for (i = 0; i < nclients; i++)
 		{
-			snprintf(val, sizeof(val), "%d", i);
-			if (!putVariable(&state[i], "startup", "client_id", val))
+			if (!putVariableInt(&state[i], "startup", "client_id", i))
 				exit(1);
 		}
 	}
