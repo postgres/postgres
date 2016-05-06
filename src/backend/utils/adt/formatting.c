@@ -969,7 +969,6 @@ static char *get_th(char *num, int type);
 static char *str_numth(char *dest, char *num, int type);
 static int	adjust_partial_year_to_2020(int year);
 static int	strspace_len(char *str);
-static int	strdigits_len(char *str);
 static void from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode);
 static void from_char_set_int(int *dest, const int value, const FormatNode *node);
 static int	from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node);
@@ -1983,9 +1982,19 @@ asc_toupper_z(const char *buff)
 
 /* ----------
  * Skip TM / th in FROM_CHAR
+ *
+ * If S_THth is on, skip two chars, assuming there are two available
  * ----------
  */
-#define SKIP_THth(_suf)		(S_THth(_suf) ? 2 : 0)
+#define SKIP_THth(ptr, _suf) \
+	do { \
+		if (S_THth(_suf)) \
+		{ \
+			if (*(ptr)) (ptr)++; \
+			if (*(ptr)) (ptr)++; \
+		} \
+	} while (0)
+
 
 #ifdef DEBUG_TO_FROM_CHAR
 /* -----------
@@ -2089,23 +2098,6 @@ strspace_len(char *str)
 	{
 		str++;
 		len++;
-	}
-	return len;
-}
-
-static int
-strdigits_len(char *str)
-{
-	char	   *p = str;
-	int			len;
-
-	len = strspace_len(str);
-	p += len;
-
-	while (*p && isdigit((unsigned char) *p) && len <= DCH_MAX_ITEM_SIZ)
-	{
-		len++;
-		p++;
 	}
 	return len;
 }
@@ -2980,19 +2972,19 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_HH12:
 				from_char_parse_int_len(&out->hh, &s, 2, n);
 				out->clock = CLOCK_12_HOUR;
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_HH24:
 				from_char_parse_int_len(&out->hh, &s, 2, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_MI:
 				from_char_parse_int(&out->mi, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_SS:
 				from_char_parse_int(&out->ss, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_MS:		/* millisecond */
 				len = from_char_parse_int_len(&out->ms, &s, 3, n);
@@ -3003,7 +2995,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				out->ms *= len == 1 ? 100 :
 					len == 2 ? 10 : 1;
 
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_US:		/* microsecond */
 				len = from_char_parse_int_len(&out->us, &s, 6, n);
@@ -3014,11 +3006,11 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 					len == 4 ? 100 :
 					len == 5 ? 10 : 1;
 
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_SSSS:
 				from_char_parse_int(&out->ssss, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_tz:
 			case DCH_TZ:
@@ -3057,7 +3049,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_MM:
 				from_char_parse_int(&out->mm, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_DAY:
 			case DCH_Day:
@@ -3075,29 +3067,29 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_DDD:
 				from_char_parse_int(&out->ddd, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_IDDD:
 				from_char_parse_int_len(&out->ddd, &s, 3, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_DD:
 				from_char_parse_int(&out->dd, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_D:
 				from_char_parse_int(&out->d, &s, n);
 				out->d--;
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_ID:
 				from_char_parse_int_len(&out->d, &s, 1, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_WW:
 			case DCH_IW:
 				from_char_parse_int(&out->ww, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_Q:
 
@@ -3112,55 +3104,57 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				 * isn't stored anywhere in 'out'.
 				 */
 				from_char_parse_int((int *) NULL, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_CC:
 				from_char_parse_int(&out->cc, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_Y_YYY:
 				{
 					int			matched,
 								years,
-								millenia;
+								millenia,
+								nch;
 
-					matched = sscanf(s, "%d,%03d", &millenia, &years);
-					if (matched != 2)
+					matched = sscanf(s, "%d,%03d%n", &millenia, &years, &nch);
+					if (matched < 2)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 							  errmsg("invalid input string for \"Y,YYY\"")));
 					years += (millenia * 1000);
 					from_char_set_int(&out->year, years, n);
 					out->yysz = 4;
-					s += strdigits_len(s) + 4 + SKIP_THth(n->suffix);
+					s += nch;
+					SKIP_THth(s, n->suffix);
 				}
 				break;
 			case DCH_YYYY:
 			case DCH_IYYY:
 				from_char_parse_int(&out->year, &s, n);
 				out->yysz = 4;
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_YYY:
 			case DCH_IYY:
 				if (from_char_parse_int(&out->year, &s, n) < 4)
 					out->year = adjust_partial_year_to_2020(out->year);
 				out->yysz = 3;
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_YY:
 			case DCH_IY:
 				if (from_char_parse_int(&out->year, &s, n) < 4)
 					out->year = adjust_partial_year_to_2020(out->year);
 				out->yysz = 2;
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_Y:
 			case DCH_I:
 				if (from_char_parse_int(&out->year, &s, n) < 4)
 					out->year = adjust_partial_year_to_2020(out->year);
 				out->yysz = 1;
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_RM:
 				from_char_seq_search(&value, &s, rm_months_upper,
@@ -3174,11 +3168,11 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_W:
 				from_char_parse_int(&out->w, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_J:
 				from_char_parse_int(&out->j, &s, n);
-				s += SKIP_THth(n->suffix);
+				SKIP_THth(s, n->suffix);
 				break;
 		}
 	}
