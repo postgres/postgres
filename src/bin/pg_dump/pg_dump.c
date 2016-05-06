@@ -4673,11 +4673,7 @@ getAggregates(Archive *fout, int *numAggs)
 						  "p.pronamespace != "
 						  "(SELECT oid FROM pg_namespace "
 						  "WHERE nspname = 'pg_catalog') OR "
-						  "EXISTS (SELECT * FROM pg_init_privs pip "
-						  "WHERE p.oid = pip.objoid AND pip.classoid = "
-						  "(SELECT oid FROM pg_class "
-						  "WHERE relname = 'pg_proc') "
-						  "AND p.proacl IS DISTINCT FROM pip.initprivs)",
+						  "p.proacl IS DISTINCT FROM pip.initprivs",
 						  username_subquery,
 						  acl_subquery->data,
 						  racl_subquery->data,
@@ -4923,11 +4919,7 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "pronamespace != "
 						  "(SELECT oid FROM pg_namespace "
 						  "WHERE nspname = 'pg_catalog') OR "
-						  "EXISTS (SELECT * FROM pg_init_privs pip "
-						  "WHERE p.oid = pip.objoid AND pip.classoid = "
-						  "(SELECT oid FROM pg_class "
-						  "WHERE relname = 'pg_proc') "
-						  "AND p.proacl IS DISTINCT FROM pip.initprivs)",
+						  "p.proacl IS DISTINCT FROM pip.initprivs",
 						  acl_subquery->data,
 						  racl_subquery->data,
 						  initacl_subquery->data,
