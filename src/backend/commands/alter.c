@@ -747,9 +747,6 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
 	Oid			newowner = get_rolespec_oid(stmt->newowner, false);
 
-	check_rolespec_name(stmt->newowner,
-						"Cannot make reserved roles owners of objects.");
-
 	switch (stmt->objectType)
 	{
 		case OBJECT_DATABASE:
