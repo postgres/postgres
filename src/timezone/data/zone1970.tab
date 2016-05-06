@@ -286,14 +286,16 @@ RS,BA,HR,ME,MK,SI	+4450+02030	Europe/Belgrade
 RU	+5443+02030	Europe/Kaliningrad	MSK-01 - Kaliningrad
 RU	+554521+0373704	Europe/Moscow	MSK+00 - Moscow area
 RU	+4457+03406	Europe/Simferopol	MSK+00 - Crimea
-RU	+4844+04425	Europe/Volgograd	MSK+00 - Volgograd, Kirov, Saratov
+RU	+4844+04425	Europe/Volgograd	MSK+00 - Volgograd, Saratov
+RU	+5836+04939	Europe/Kirov	MSK+00 - Kirov
 RU	+4621+04803	Europe/Astrakhan	MSK+01 - Astrakhan
 RU	+5312+05009	Europe/Samara	MSK+01 - Samara, Udmurtia
 RU	+5420+04824	Europe/Ulyanovsk	MSK+01 - Ulyanovsk
 RU	+5651+06036	Asia/Yekaterinburg	MSK+02 - Urals
 RU	+5500+07324	Asia/Omsk	MSK+03 - Omsk
-RU	+5502+08255	Asia/Novosibirsk	MSK+03 - Novosibirsk, Tomsk
+RU	+5502+08255	Asia/Novosibirsk	MSK+03 - Novosibirsk
 RU	+5322+08345	Asia/Barnaul	MSK+04 - Altai
+RU	+5630+08458	Asia/Tomsk	MSK+04 - Tomsk
 RU	+5345+08707	Asia/Novokuznetsk	MSK+04 - Kemerovo
 RU	+5601+09250	Asia/Krasnoyarsk	MSK+04 - Krasnoyarsk area
 RU	+5216+10420	Asia/Irkutsk	MSK+05 - Irkutsk, Buryatia
@@ -302,7 +304,7 @@ RU	+6200+12940	Asia/Yakutsk	MSK+06 - Lena River
 RU	+623923+1353314	Asia/Khandyga	MSK+06 - Tomponsky, Ust-Maysky
 RU	+4310+13156	Asia/Vladivostok	MSK+07 - Amur River
 RU	+643337+1431336	Asia/Ust-Nera	MSK+07 - Oymyakonsky
-RU	+5934+15048	Asia/Magadan	MSK+07 - Magadan
+RU	+5934+15048	Asia/Magadan	MSK+08 - Magadan
 RU	+4658+14242	Asia/Sakhalin	MSK+08 - Sakhalin Island
 RU	+6728+15343	Asia/Srednekolymsk	MSK+08 - Sakha (E); North Kuril Is
 RU	+5301+15839	Asia/Kamchatka	MSK+09 - Kamchatka
