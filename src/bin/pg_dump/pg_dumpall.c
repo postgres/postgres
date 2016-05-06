@@ -676,6 +676,16 @@ dumpRoles(PGconn *conn)
 						  "FROM pg_authid "
 						  "WHERE rolname !~ '^pg_' "
 						  "ORDER BY 2");
+	else if (server_version >= 90500)
+		printfPQExpBuffer(buf,
+						  "SELECT oid, rolname, rolsuper, rolinherit, "
+						  "rolcreaterole, rolcreatedb, "
+						  "rolcanlogin, rolconnlimit, rolpassword, "
+						  "rolvaliduntil, rolreplication, rolbypassrls, "
+			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+						  "rolname = current_user AS is_current_user "
+						  "FROM pg_authid "
+						  "ORDER BY 2");
 	else if (server_version >= 90100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
