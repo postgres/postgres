@@ -2662,7 +2662,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_parallel_degree,
-		2, 0, MAX_BACKENDS,
+		2, 0, 1024,
 		NULL, NULL, NULL
 	},
 

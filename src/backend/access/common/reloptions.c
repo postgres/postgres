@@ -275,7 +275,7 @@ static relopt_int intRelOpts[] =
 			RELOPT_KIND_HEAP,
 			AccessExclusiveLock
 		},
-		-1, 0, MAX_BACKENDS
+		-1, 0, 1024
 	},
 
 	/* list terminator */
