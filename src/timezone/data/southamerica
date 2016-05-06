@@ -1755,9 +1755,25 @@ Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28
 # resolution publication)
 # http://www.globovision.com/news.php?nid=72208
 
+# From Alexander Krivenyshev (2016-04-15):
+# https://actualidad.rt.com/actualidad/204758-venezuela-modificar-huso-horario-sequia-elnino
+#
+# From Paul Eggert (2016-04-15):
+# Clocks advance 30 minutes on 2016-05-01 at 02:30. See:
+# Barboza AD. Huso horario en Venezuela volverá a 4 horas menos con
+# respecto al "Greenwich". Panorama 2016-04-15 12:20 -0430.
+# http://www.panorama.com.ve/ciudad/Huso-horario-en-Venezuela-volvera-a-4-horas-menos-con-respecto-al-Greenwich-20160415-0032.html
+#
+# "'Venezuela's new time-zone: hours without light, hours without water,
+# hours of presidential broadcasts, hours of lines," quipped comedian
+# Jean Mary Curro ...". See: Cawthorne A, Kai D. Venezuela scraps
+# half-hour time difference set by Chavez. Reuters 2016-04-15 14:50 -0400
+# http://www.reuters.com/article/us-venezuela-timezone-idUSKCN0XC2BE
+
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Caracas	-4:27:44 -	LMT	1890
 			-4:27:40 -	CMT	1912 Feb 12 # Caracas Mean Time?
 			-4:30	-	VET	1965 Jan  1  0:00 # Venezuela T.
 			-4:00	-	VET	2007 Dec  9  3:00
-			-4:30	-	VET
+			-4:30	-	VET	2016 May  1  2:30
+			-4:00	-	VET
