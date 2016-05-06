@@ -247,8 +247,7 @@ MAWT    Antarctica/Mawson  # Mawson Time (Antarctica)
 
 AFT     16200    # Afghanistan Time
                  #     (Asia/Kabul)
-ALMT    21600    # Alma-Ata Time
-                 #     (Asia/Almaty)
+ALMT    21600    # Alma-Ata Time (obsolete)
 ALMST   25200 D  # Alma-Ata Summer Time (obsolete)
 # CONFLICT! AMST is not unique
 # Other timezones:
