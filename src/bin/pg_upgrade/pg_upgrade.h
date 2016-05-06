@@ -137,15 +137,16 @@ extern char *output_files[];
  */
 typedef struct
 {
-	/* Can't use NAMEDATALEN;  not guaranteed to fit on client */
+	/* Can't use NAMEDATALEN; not guaranteed to be same on client */
 	char	   *nspname;		/* namespace name */
 	char	   *relname;		/* relation name */
-	Oid			reloid;			/* relation oid */
+	Oid			reloid;			/* relation OID */
 	Oid			relfilenode;	/* relation relfile node */
-	/* relation tablespace path, or "" for the cluster default */
-	char	   *tablespace;
-	bool		nsp_alloc;
-	bool		tblsp_alloc;
+	Oid			indtable;		/* if index, OID of its table, else 0 */
+	Oid			toastheap;		/* if toast table, OID of base table, else 0 */
+	char	   *tablespace;		/* tablespace path; "" for cluster default */
+	bool		nsp_alloc;		/* should nspname be freed? */
+	bool		tblsp_alloc;	/* should tablespace be freed? */
 } RelInfo;
 
 typedef struct
