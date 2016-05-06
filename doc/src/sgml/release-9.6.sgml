@@ -17,13 +17,46 @@
     Major enhancements in <productname>PostgreSQL</> 9.6 include:
    </para>
 
-   <!-- This list duplicates items below, but without authors or details-->
+   <!-- Items in this list summarize one or more items below -->
 
    <itemizedlist>
 
     <listitem>
      <para>
-      To be filled in, but see below for the long version
+      Parallel sequential scans, joins and aggregates
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Elimination of repetitive scanning of old data by autovacuum
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Synchronous replication now allows multiple standby servers for
+      increased reliability
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Full-text search for phrases
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support for remote joins, sorts, and updates
+      in <filename>postgres_fdw</>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Substantial performance improvements, especially in the area of
+      improving scalability on many-CPU servers
      </para>
     </listitem>
 
@@ -315,6 +348,7 @@
 2016-04-24 [8f91d87d4] Fix documentation & config inconsistencies around 428b1d
 2016-04-26 [72a98a639] Don't open formally non-existent segments in _mdfd_getse
 2016-05-04 [a71248708] Fix transient mdsync() errors of truncated relations due
+2016-02-16 [7975c5e0a] Allow the WAL writer to flush WAL at a reduced rate.
 -->
        <para>
         Where feasible, trigger kernel writeback after a configurable number
@@ -549,16 +583,6 @@
 
       <listitem>
 <!--
-2016-02-16 [7975c5e0a] Allow the WAL writer to flush WAL at a reduced rate.
--->
-       <para>
-        Reduce the WAL writer's flush rate to reduce storage bottlenecks
-        (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2016-04-08 [719c84c1b] Extend relations multiple blocks at a time to improve sc
 -->
        <para>
@@ -567,14 +591,14 @@
        </para>
 
        <para>
-        This reduces kernel traffic and improves scalability when multiple
-        processes are inserting into the same relation.
+        This improves scalability by decreasing contention.
        </para>
       </listitem>
 
       <listitem>
 <!--
 2016-04-08 [071180377] Use quicksort, not replacement selection, for external s
+2016-03-17 [0011c0091] Improve memory management for external sorts.
 -->
        <para>
         Improve sorting performance by using quicksort, not replacement
@@ -582,17 +606,11 @@
        </para>
 
        <para>
-        This behavior can be adjusted via the new configuration
-        parameter <xref linkend="guc-replacement-sort-tuples">.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-03-17 [0011c0091] Improve memory management for external sorts.
--->
-       <para>
-        Improve memory management for external sorts (Peter Geoghegan)
+        The new approach makes better use of CPU cache for typical cache
+        sizes and data volumes.  Where necessary, the behavior can be
+        adjusted via the new configuration
+        parameter <xref linkend="guc-replacement-sort-tuples">,
+        which see for further details.
        </para>
       </listitem>
 
@@ -610,9 +628,21 @@
       <listitem>
 <!--
 2015-11-06 [a76ef15d9] Add sort support routine for the UUID data type.
+2016-02-03 [b47b4dbf6] Extend sortsupport for text to more opclasses.
+2016-02-17 [f1f5ec1ef] Reuse abbreviated keys in ordered [set] aggregates.
 -->
        <para>
-        Speed up sorting of <type>uuid</>-type columns (Peter Geoghegan)
+        Speed up sorting of <type>uuid</>, <type>bytea</>,
+        and <type>char(n)</> fields by using <quote>abbreviated</> keys
+        (Peter Geoghegan)
+       </para>
+
+       <para>
+        Support for abbreviated keys has also been added to the non-default
+        operator classes <literal>text_pattern_ops</>,
+        <literal>varchar_pattern_ops</>, and <literal>bpchar_pattern_ops</>.
+        Processing of ordered-set aggregates can also now exploit
+        abbreviated keys.
        </para>
       </listitem>
 
@@ -623,16 +653,6 @@
        <para>
         Speed up <command>CREATE INDEX CONCURRENTLY</> by treating TIDs
         as 64-bit integers during the sort phase (Peter Geoghegan)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-02-17 [f1f5ec1ef] Reuse abbreviated keys in ordered [set] aggregates.
--->
-       <para>
-        Improve performance of ordered-set aggregates by reusing
-        abbreviated-key information (Peter Geoghegan)
        </para>
       </listitem>
 
@@ -1179,6 +1199,41 @@ XXX this is pending backpatch, may need to remove
 
       <listitem>
 <!--
+2016-04-06 [989be0810] Support multiple synchronous standby servers.
+2016-04-27 [4c804fbdf] Clean up parsing of synchronous_standby_names GUC variab
+2016-04-30 [17d5db352] Remove warning about num_sync being too large in synchro
+-->
+       <para>
+        Support synchronous replication with multiple synchronous standby
+        servers, not just one (Masahiko Sawada, Beena Emerson, Michael
+        Paquier, Fujii Masao, Kyotaro Horiguchi)
+       </para>
+
+       <para>
+        The number of standby servers that must acknowledge a commit before
+        it's considered done is now configurable.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-03-29 [314cbfc5d] Add new replication mode synchronous_commit = 'remote_ap
+-->
+       <para>
+        Add new setting <literal>remote_apply</> for configuration parameter
+        <xref linkend="guc-synchronous-commit"> (Thomas Munro)
+       </para>
+
+       <para>
+        In this mode, the master waits for the transaction to be applied on
+        the standby server, not just written to disk.  That means that you
+        can count on a transaction started on the standby to see all commits
+        previously acknowledged by the master.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-08-11 [6fcd88511] Allow pg_create_physical_replication_slot() to reserve W
 2015-09-06 [c314ead5b] Add ability to reserve WAL upon slot creation via replic
 -->
@@ -1219,36 +1274,6 @@ XXX this is pending backpatch, may need to remove
        <para>
         Extend <function>pg_start_backup()</> and <function>pg_stop_backup()</>
         to support non-exclusive backups (Magnus Hagander)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-06 [989be0810] Support multiple synchronous standby servers.
-2016-04-27 [4c804fbdf] Clean up parsing of synchronous_standby_names GUC variab
-2016-04-30 [17d5db352] Remove warning about num_sync being too large in synchro
--->
-       <para>
-        Support synchronous replication with multiple synchronous standby
-        servers, not just one (Sawada Masahiko, Beena Emerson, Michael
-        Paquier, Fujii Masao, Kyotaro Horiguchi)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-03-29 [314cbfc5d] Add new replication mode synchronous_commit = 'remote_ap
--->
-       <para>
-        Add new setting <literal>remote_apply</> for configuration parameter
-        <xref linkend="guc-synchronous-commit"> (Thomas Munro)
-       </para>
-
-       <para>
-        In this mode, the master waits for the transaction to be applied on
-        the standby server, not just written to disk.  That means that you
-        can count on a transaction started on the standby to see all commits
-        previously acknowledged by the master.
        </para>
       </listitem>
 
@@ -1379,7 +1404,7 @@ XXX this is pending backpatch, may need to remove
        <para>
         Add options to <command>ALTER OPERATOR</command> to change the
         selectivity functions associated with an existing operator
-        (Uriy Zhuravlev)
+        (Yury Zhuravlev)
        </para>
       </listitem>
 
@@ -1578,7 +1603,7 @@ XXX this is pending backpatch, may need to remove
        <para>
         Allow omitting one or both boundaries in an array slice specifier,
         for example <literal>array_col[3:]</>
-        (YUriy Zhuravlev)
+        (Yury Zhuravlev)
        </para>
 
        <para>
@@ -1637,7 +1662,7 @@ XXX this is pending backpatch, may need to remove
 2016-04-07 [bb140506d] Phrase full text search.
 -->
        <para>
-        Improve full text search to support searching for phrases, that is,
+        Improve full-text search to support searching for phrases, that is,
         lexemes appearing adjacent to each other in a specific order, or with
         at most a specified distance between them
         (Teodor Sigaev, Oleg Bartunov, Dmitry Ivanov)
@@ -1844,7 +1869,7 @@ XXX this is pending backpatch, may need to remove
        </para>
 
        <para>
-        These are <function>delete()</>, <function>filter()</>,
+        These are <function>ts_delete()</>, <function>ts_filter()</>,
         <function>unnest()</>, <function>tsvector_to_array()</>,
         <function>array_to_tsvector()</>, and a variant
         of <function>setweight()</> that sets the weight only for specified
@@ -1944,7 +1969,7 @@ XXX this is pending backpatch, may need to remove
 -->
        <para>
         Add <function>pg_size_bytes()</> function to convert human-readable
-        size strings to numbers (Pavel Stehule, Vitaly Burovoy)
+        size strings to numbers (Pavel Stehule, Vitaly Burovoy, Dean Rasheed)
        </para>
 
        <para>
@@ -2459,8 +2484,9 @@ This commit is also listed under libpq and PL/pgSQL
 2016-05-05 [7a622b273] Rename pgbench min/max to least/greatest, and fix handli
 -->
        <para>
-        Support some <link linkend="pgbench-builtin-functions">built-in
-        functions</> in expressions in backslash commands (Fabien Coelho)
+        Support floating-point arithmetic, as well as
+        some <link linkend="pgbench-builtin-functions">built-in functions</>,
+        in expressions in backslash commands (Fabien Coelho)
        </para>
       </listitem>
 
@@ -2756,16 +2782,6 @@ This commit is also listed under libpq and PL/pgSQL
 
       <listitem>
 <!--
-2016-02-03 [b47b4dbf6] Extend sortsupport for text to more opclasses.
--->
-       <para>
-        Generalize the SortSupport for <type>text</> so that it can be
-        used by other types such as <type>bpchar</> (Peter Geoghegan)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2016-02-04 [c1772ad92] Change the way that LWLocks for extensions are allocated
 -->
        <para>
@@ -3038,7 +3054,7 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Add selectivity estimation functions for <filename>contrib/intarray</>
-        operators, to improve plans for queries using those operators (Uriy
+        operators, to improve plans for queries using those operators (Yury
         Zhuravlev, Alexander Korotkov)
        </para>
       </listitem>
@@ -3189,31 +3205,6 @@ This commit is also listed under libpq and PL/pgSQL
 
       <listitem>
 <!--
-2016-01-28 [96198d94c] Avoid multiple foreign server connections when all use s
--->
-       <para>
-        Use a single foreign-server connection for local user IDs that all
-        map to the same remote user (Ashutosh Bapat)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-02-03 [dc203dc3a] postgres_fdw: Allow fetch_size to be set per-table or pe
--->
-       <para>
-        Allow the fetch size to be set as a server or table option
-        (Corey Huinker)
-       </para>
-
-       <para>
-        Formerly, <filename>postgres_fdw</> always fetched 100 rows at a time
-        from remote queries; now that behavior is adjustable.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2015-11-03 [f18c944b6] postgres_fdw: Add ORDER BY to some remote SQL queries.
 2015-12-22 [ccd8f9792] postgres_fdw: Consider requesting sorted data so we can
 -->
@@ -3248,6 +3239,31 @@ This commit is also listed under libpq and PL/pgSQL
         While that's still necessary if the operation requires any local
         processing, it can now be done remotely if all elements of the query
         are safe to send to the remote server.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-02-03 [dc203dc3a] postgres_fdw: Allow fetch_size to be set per-table or pe
+-->
+       <para>
+        Allow the fetch size to be set as a server or table option
+        (Corey Huinker)
+       </para>
+
+       <para>
+        Formerly, <filename>postgres_fdw</> always fetched 100 rows at a time
+        from remote queries; now that behavior is adjustable.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-01-28 [96198d94c] Avoid multiple foreign server connections when all use s
+-->
+       <para>
+        Use a single foreign-server connection for local user IDs that all
+        map to the same remote user (Ashutosh Bapat)
        </para>
       </listitem>
 
