@@ -261,8 +261,8 @@ static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer);
 static bool nonemptyReloptions(const char *reloptions);
-static void fmtReloptionsArray(Archive *fout, PQExpBuffer buffer,
-				   const char *reloptions, const char *prefix);
+static void appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
+						const char *prefix, Archive *fout);
 static char *get_synchronized_snapshot(Archive *fout);
 static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 static void setupDumpWorker(Archive *AHX);
@@ -15046,7 +15046,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (nonemptyReloptions(tbinfo->reloptions))
 		{
 			appendPQExpBufferStr(q, " WITH (");
-			fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
+			appendReloptionsArrayAH(q, tbinfo->reloptions, "", fout);
 			appendPQExpBufferChar(q, ')');
 		}
 		result = createViewAsClause(fout, tbinfo);
@@ -15301,13 +15301,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if (nonemptyReloptions(tbinfo->reloptions))
 			{
 				addcomma = true;
-				fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
+				appendReloptionsArrayAH(q, tbinfo->reloptions, "", fout);
 			}
 			if (nonemptyReloptions(tbinfo->toast_reloptions))
 			{
 				if (addcomma)
 					appendPQExpBufferStr(q, ", ");
-				fmtReloptionsArray(fout, q, tbinfo->toast_reloptions, "toast.");
+				appendReloptionsArrayAH(q, tbinfo->toast_reloptions, "toast.",
+										fout);
 			}
 			appendPQExpBufferChar(q, ')');
 		}
@@ -15908,7 +15909,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			if (nonemptyReloptions(indxinfo->indreloptions))
 			{
 				appendPQExpBufferStr(q, " WITH (");
-				fmtReloptionsArray(fout, q, indxinfo->indreloptions, "");
+				appendReloptionsArrayAH(q, indxinfo->indreloptions, "", fout);
 				appendPQExpBufferChar(q, ')');
 			}
 
@@ -16809,7 +16810,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	{
 		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (",
 						  fmtId(tbinfo->dobj.name));
-		fmtReloptionsArray(fout, cmd, rinfo->reloptions, "");
+		appendReloptionsArrayAH(cmd, rinfo->reloptions, "", fout);
 		appendPQExpBufferStr(cmd, ");\n");
 	}
 
@@ -17707,67 +17708,17 @@ nonemptyReloptions(const char *reloptions)
  * Format a reloptions array and append it to the given buffer.
  *
  * "prefix" is prepended to the option names; typically it's "" or "toast.".
- *
- * Note: this logic should generally match the backend's flatten_reloptions()
- * (in adt/ruleutils.c).
  */
 static void
-fmtReloptionsArray(Archive *fout, PQExpBuffer buffer, const char *reloptions,
-				   const char *prefix)
+appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
+						const char *prefix, Archive *fout)
 {
-	char	  **options;
-	int			noptions;
-	int			i;
+	bool		res;
 
-	if (!parsePGArray(reloptions, &options, &noptions))
-	{
+	res = appendReloptionsArray(buffer, reloptions, prefix, fout->encoding,
+								fout->std_strings);
+	if (!res)
 		write_msg(NULL, "WARNING: could not parse reloptions array\n");
-		if (options)
-			free(options);
-		return;
-	}
-
-	for (i = 0; i < noptions; i++)
-	{
-		char	   *option = options[i];
-		char	   *name;
-		char	   *separator;
-		char	   *value;
-
-		/*
-		 * Each array element should have the form name=value.  If the "=" is
-		 * missing for some reason, treat it like an empty value.
-		 */
-		name = option;
-		separator = strchr(option, '=');
-		if (separator)
-		{
-			*separator = '\0';
-			value = separator + 1;
-		}
-		else
-			value = "";
-
-		if (i > 0)
-			appendPQExpBufferStr(buffer, ", ");
-		appendPQExpBuffer(buffer, "%s%s=", prefix, fmtId(name));
-
-		/*
-		 * In general we need to quote the value; but to avoid unnecessary
-		 * clutter, do not quote if it is an identifier that would not need
-		 * quoting.  (We could also allow numbers, but that is a bit trickier
-		 * than it looks --- for example, are leading zeroes significant?  We
-		 * don't want to assume very much here about what custom reloptions
-		 * might mean.)
-		 */
-		if (strcmp(fmtId(value), value) == 0)
-			appendPQExpBufferStr(buffer, value);
-		else
-			appendStringLiteralAH(buffer, value, fout);
-	}
-
-	if (options)
-		free(options);
 }
 
 /*

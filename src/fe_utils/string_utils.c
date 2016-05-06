@@ -462,6 +462,78 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 
 
 /*
+ * Format a reloptions array and append it to the given buffer.
+ *
+ * "prefix" is prepended to the option names; typically it's "" or "toast.".
+ *
+ * Returns false if the reloptions array could not be parsed (in which case
+ * nothing will have been appended to the buffer), or true on success.
+ *
+ * Note: this logic should generally match the backend's flatten_reloptions()
+ * (in adt/ruleutils.c).
+ */
+bool
+appendReloptionsArray(PQExpBuffer buffer, const char *reloptions,
+					  const char *prefix, int encoding, bool std_strings)
+{
+	char	  **options;
+	int			noptions;
+	int			i;
+
+	if (!parsePGArray(reloptions, &options, &noptions))
+	{
+		if (options)
+			free(options);
+		return false;
+	}
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *option = options[i];
+		char	   *name;
+		char	   *separator;
+		char	   *value;
+
+		/*
+		 * Each array element should have the form name=value.  If the "=" is
+		 * missing for some reason, treat it like an empty value.
+		 */
+		name = option;
+		separator = strchr(option, '=');
+		if (separator)
+		{
+			*separator = '\0';
+			value = separator + 1;
+		}
+		else
+			value = "";
+
+		if (i > 0)
+			appendPQExpBufferStr(buffer, ", ");
+		appendPQExpBuffer(buffer, "%s%s=", prefix, fmtId(name));
+
+		/*
+		 * In general we need to quote the value; but to avoid unnecessary
+		 * clutter, do not quote if it is an identifier that would not need
+		 * quoting.  (We could also allow numbers, but that is a bit trickier
+		 * than it looks --- for example, are leading zeroes significant?  We
+		 * don't want to assume very much here about what custom reloptions
+		 * might mean.)
+		 */
+		if (strcmp(fmtId(value), value) == 0)
+			appendPQExpBufferStr(buffer, value);
+		else
+			appendStringLiteral(buffer, value, encoding, std_strings);
+	}
+
+	if (options)
+		free(options);
+
+	return true;
+}
+
+
+/*
  * processSQLNamePattern
  *
  * Scan a wildcard-pattern string and generate appropriate WHERE clauses
