@@ -2476,6 +2476,15 @@ Zone America/Merida	-5:58:28 -	LMT	1922 Jan  1  0:01:32
 			-5:00	-	EST	1982 Dec  2
 			-6:00	Mexico	C%sT
 # Coahuila, Nuevo León, Tamaulipas (near US border)
+# This includes the following municipalities:
+#   in Coahuila: Ocampo, Acuña, Zaragoza, Jiménez, Piedras Negras, Nava,
+#     Guerrero, Hidalgo.
+#   in Nuevo León: Anáhuac, Los Aldama.
+#   in Tamaulipas: Nuevo Laredo, Guerrero, Mier, Miguel Alemán, Camargo,
+#     Gustavo Díaz Ordaz, Reynosa, Río Bravo, Valle Hermoso, Matamoros.
+# See: Inicia mañana Horario de Verano en zona fronteriza, El Universal,
+# 2016-03-12
+# http://www.eluniversal.com.mx/articulo/estados/2016/03/12/inicia-manana-horario-de-verano-en-zona-fronteriza
 Zone America/Matamoros	-6:40:00 -	LMT	1921 Dec 31 23:20:00
 			-6:00	-	CST	1988
 			-6:00	US	C%sT	1989
@@ -2497,6 +2506,9 @@ Zone America/Mexico_City -6:36:36 -	LMT	1922 Jan  1  0:23:24
 			-6:00	-	CST	2002 Feb 20
 			-6:00	Mexico	C%sT
 # Chihuahua (near US border)
+# This includes the municipalities of Janos, Ascensión, Juárez, Guadalupe,
+# Práxedis G Guerrero, Coyame del Sotol, Ojinaga, and Manuel Benavides.
+# (See the 2016-03-12 El Universal source mentioned above.)
 Zone America/Ojinaga	-6:57:40 -	LMT	1922 Jan  1  0:02:20
 			-7:00	-	MST	1927 Jun 10 23:00
 			-6:00	-	CST	1930 Nov 15
