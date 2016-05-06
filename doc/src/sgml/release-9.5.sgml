@@ -3401,7 +3401,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
         <para>
          <application>psql</> now fails if the file specified by
          an <option>--output</> or <option>--log-file</> switch cannot be
-         written (Tom Lane, Daniel Verite)
+         written (Tom Lane, Daniel V&eacute;rit&eacute;)
         </para>
 
         <para>

@@ -548,8 +548,8 @@
 2016-03-10 [37c54863c] Rework wait for AccessExclusiveLocks on Hot Standby
 -->
        <para>
-        Avoid some spurious waits for AccessExclusiveLocks in hot-standby
-        queries (Jeff Janes)
+        Avoid some unnecessary cancellations of hot-standby queries during
+        replay of actions that take AccessExclusiveLocks (Jeff Janes)
        </para>
       </listitem>
 
@@ -962,8 +962,9 @@
 -->
        <para>
         Add new SSPI authentication parameters <varname>compat_realm</>
-        and <varname>upn_usename</>, to make it possible to make SSPI
-        work more like GSSAPI (Christian Ullrich)
+        and <varname>upn_username</>, to control whether NetBIOS or Kerberos
+        realm names and user names are used during SSPI authentication
+        (Christian Ullrich)
        </para>
       </listitem>
 
@@ -2294,7 +2295,7 @@ This commit is also listed under psql and PL/pgSQL
        <para>
         Add a <command>\crosstabview</> command that prints the
         results of a query in a cross-tabulated display
-        (Daniel Verit&eacute;)
+        (Daniel V&eacute;rit&eacute;)
        </para>
 
        <para>
