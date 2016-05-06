@@ -5953,8 +5953,11 @@ getTables(Archive *fout, int *numTables)
 		 *
 		 * NOTE: it'd be kinda nice to lock other relations too, not only
 		 * plain tables, but the backend doesn't presently allow that.
+		 *
+		 * We only need to lock the table for certain components; see pg_dump.h
 		 */
-		if (tblinfo[i].dobj.dump && tblinfo[i].relkind == RELKIND_RELATION)
+		if (tblinfo[i].dobj.dump && tblinfo[i].relkind == RELKIND_RELATION &&
+				(tblinfo[i].dobj.dump & DUMP_COMPONENTS_REQUIRING_LOCK))
 		{
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
