@@ -2077,6 +2077,19 @@ include_dir 'conf.d'
          allowed, please note that in many workloads extreme bloat or
          transaction ID wraparound may occur in much shorter time frames.
         </para>
+
+        <para>
+         This setting does not attempt to guarantee that an error will be
+         generated under any particular circumstances.  In fact, if the
+         correct results can be generated from (for example) a cursor which
+         has materialized a result set, no error will be generated even if the
+         underlying rows in the referenced table have been vacuumed away.
+         Some tables cannot safely be vacuumed early, and so will not be
+         affected by this setting.  Examples include system catalogs and any
+         table which has a hash index.  For such tables this setting will
+         neither reduce bloat nor create a possibility of a <literal>snapshot
+         too old</> error on scanning.
+        </para>
        </listitem>
       </varlistentry>
      </variablelist>

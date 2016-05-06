@@ -279,7 +279,6 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 		buf = so->hashso_curbuf;
 		Assert(BufferIsValid(buf));
 		page = BufferGetPage(buf);
-		TestForOldSnapshot(scan->xs_snapshot, rel, page);
 		maxoffnum = PageGetMaxOffsetNumber(page);
 		for (offnum = ItemPointerGetOffsetNumber(current);
 			 offnum <= maxoffnum;

@@ -1590,7 +1590,8 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 		&& old_snapshot_threshold >= 0
 		&& RelationNeedsWAL(relation)
 		&& !IsCatalogRelation(relation)
-		&& !RelationIsAccessibleInLogicalDecoding(relation))
+		&& !RelationIsAccessibleInLogicalDecoding(relation)
+		&& !RelationHasUnloggedIndex(relation))
 	{
 		int64		ts = GetSnapshotCurrentTimestamp();
 		TransactionId xlimit = recentXmin;
