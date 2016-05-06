@@ -928,8 +928,9 @@ makeVariableNumeric(Variable *var)
 	else /* type should be double */
 	{
 		double dv;
+		char xs;
 
-		if (sscanf(var->value, "%lf", &dv) != 1)
+		if (sscanf(var->value, "%lf%c", &dv, &xs) != 1)
 		{
 			fprintf(stderr,
 					"malformed variable \"%s\" value: \"%s\"\n",
