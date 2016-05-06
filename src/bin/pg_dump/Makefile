@@ -45,6 +45,9 @@ installdirs:
 check:
 	$(prove_check)
 
+installcheck:
+	$(prove_installcheck)
+
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, pg_dump$(X) pg_restore$(X) pg_dumpall$(X))
 
