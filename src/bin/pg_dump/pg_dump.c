@@ -1297,14 +1297,17 @@ checkExtensionMembership(DumpableObject *dobj, Archive *fout)
 	 * contents rather than replace the extension contents with something
 	 * different.
 	 */
-	if (!fout->dopt->binary_upgrade && fout->remoteVersion >= 90600)
-		dobj->dump = DUMP_COMPONENT_ACL |
-			DUMP_COMPONENT_SECLABEL |
-			DUMP_COMPONENT_POLICY;
-	else if (!fout->dopt->binary_upgrade)
-		dobj->dump = DUMP_COMPONENT_NONE;
-	else
+	if (fout->dopt->binary_upgrade)
 		dobj->dump = ext->dobj.dump;
+	else
+	{
+		if (fout->remoteVersion < 90600)
+			dobj->dump = DUMP_COMPONENT_NONE;
+		else
+			dobj->dump = ext->dobj.dump_contains & (DUMP_COMPONENT_ACL |
+					DUMP_COMPONENT_SECLABEL | DUMP_COMPONENT_POLICY);
+
+	}
 
 	return true;
 }
@@ -1452,7 +1455,7 @@ selectDumpableDefaultACL(DefaultACLInfo *dinfo, DumpOptions *dopt)
 
 	if (dinfo->dobj.namespace)
 		/* default ACLs are considered part of the namespace */
-		dinfo->dobj.dump = dinfo->dobj.namespace->dobj.dump;
+		dinfo->dobj.dump = dinfo->dobj.namespace->dobj.dump_contains;
 	else
 		dinfo->dobj.dump = dopt->include_everything ?
 			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
@@ -1473,6 +1476,10 @@ selectDumpableCast(CastInfo *cast, Archive *fout)
 	if (checkExtensionMembership(&cast->dobj, fout))
 		return;					/* extension membership overrides all else */
 
+	/*
+	 * This would be DUMP_COMPONENT_ACL for from-initdb casts, but they do not
+	 * support ACLs currently.
+	 */
 	if (cast->dobj.catId.oid < (Oid) FirstNormalObjectId)
 		cast->dobj.dump = DUMP_COMPONENT_NONE;
 	else
@@ -1494,11 +1501,23 @@ selectDumpableProcLang(ProcLangInfo *plang, Archive *fout)
 	if (checkExtensionMembership(&plang->dobj, fout))
 		return;					/* extension membership overrides all else */
 
-	if (plang->dobj.catId.oid < (Oid) FirstNormalObjectId)
+	/*
+	 * Only include procedural languages when we are dumping everything.
+	 *
+	 * For from-initdb procedural languages, only include ACLs, as we do for
+	 * the pg_catalog namespace.  We need this because procedural languages do
+	 * not live in any namespace.
+	 */
+	if (!fout->dopt->include_everything)
 		plang->dobj.dump = DUMP_COMPONENT_NONE;
 	else
-		plang->dobj.dump = fout->dopt->include_everything ?
-			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
+	{
+		if (plang->dobj.catId.oid < (Oid) FirstNormalObjectId)
+			plang->dobj.dump = fout->remoteVersion < 90600 ?
+				DUMP_COMPONENT_NONE : DUMP_COMPONENT_ACL;
+		else
+			plang->dobj.dump = DUMP_COMPONENT_ALL;
+	}
 }
 
 /*
@@ -1515,6 +1534,10 @@ selectDumpableAccessMethod(AccessMethodInfo *method, Archive *fout)
 	if (checkExtensionMembership(&method->dobj, fout))
 		return;					/* extension membership overrides all else */
 
+	/*
+	 * This would be DUMP_COMPONENT_ACL for from-initdb access methods, but
+	 * they do not support ACLs currently.
+	 */
 	if (method->dobj.catId.oid < (Oid) FirstNormalObjectId)
 		method->dobj.dump = DUMP_COMPONENT_NONE;
 	else
@@ -1535,11 +1558,17 @@ selectDumpableAccessMethod(AccessMethodInfo *method, Archive *fout)
 static void
 selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
 {
+	/*
+	 * Use DUMP_COMPONENT_ACL for from-initdb extensions, to allow users
+	 * to change permissions on those objects, if they wish to, and have
+	 * those changes preserved.
+	 */
 	if (dopt->binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
-		extinfo->dobj.dump = DUMP_COMPONENT_NONE;
+		extinfo->dobj.dump = DUMP_COMPONENT_ACL;
 	else
-		extinfo->dobj.dump = dopt->include_everything ?
-			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
+		extinfo->dobj.dump = extinfo->dobj.dump_contains =
+			dopt->include_everything ?  DUMP_COMPONENT_ALL :
+				DUMP_COMPONENT_NONE;
 }
 
 /*
@@ -4175,6 +4204,9 @@ getOperators(Archive *fout, int *numOprs)
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(oprinfo[i].dobj), fout);
 
+		/* Operators do not currently have ACLs. */
+		oprinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
+
 		if (strlen(oprinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of operator \"%s\" appears to be invalid\n",
 					  oprinfo[i].dobj.name);
@@ -4259,6 +4291,9 @@ getCollations(Archive *fout, int *numCollations)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(collinfo[i].dobj), fout);
+
+		/* Collations do not currently have ACLs. */
+		collinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -4340,6 +4375,9 @@ getConversions(Archive *fout, int *numConversions)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(convinfo[i].dobj), fout);
+
+		/* Conversions do not currently have ACLs. */
+		convinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -4413,6 +4451,9 @@ getAccessMethods(Archive *fout, int *numAccessMethods)
 
 		/* Decide whether we want to dump it */
 		selectDumpableAccessMethod(&(aminfo[i]), fout);
+
+		/* Access methods do not currently have ACLs. */
+		aminfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -4506,6 +4547,9 @@ getOpclasses(Archive *fout, int *numOpclasses)
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(opcinfo[i].dobj), fout);
 
+		/* Op Classes do not currently have ACLs. */
+		opcinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
+
 		if (fout->remoteVersion >= 70300)
 		{
 			if (strlen(opcinfo[i].rolname) == 0)
@@ -4593,6 +4637,9 @@ getOpfamilies(Archive *fout, int *numOpfamilies)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(opfinfo[i].dobj), fout);
+
+		/* Extensions do not currently have ACLs. */
+		opfinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 
 		if (fout->remoteVersion >= 70300)
 		{
@@ -5123,6 +5170,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastreloptions;
 	int			i_reloftype;
 	int			i_relpages;
+	int			i_changed_acl;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
@@ -5154,6 +5202,11 @@ getTables(Archive *fout, int *numTables)
 		PQExpBuffer initacl_subquery = createPQExpBuffer();
 		PQExpBuffer initracl_subquery = createPQExpBuffer();
 
+		PQExpBuffer attacl_subquery = createPQExpBuffer();
+		PQExpBuffer attracl_subquery = createPQExpBuffer();
+		PQExpBuffer attinitacl_subquery = createPQExpBuffer();
+		PQExpBuffer attinitracl_subquery = createPQExpBuffer();
+
 		/*
 		 * Left join to pick up dependency info linking sequences to their
 		 * owning column, if any (note this dependency is AUTO as of 8.2)
@@ -5165,6 +5218,10 @@ getTables(Archive *fout, int *numTables)
 		buildACLQueries(acl_subquery, racl_subquery, initacl_subquery,
 						initracl_subquery, "c.relacl", "c.relowner",
 				 "CASE WHEN c.relkind = 'S' THEN 's' ELSE 'r' END::\"char\"",
+						dopt->binary_upgrade);
+
+		buildACLQueries(attacl_subquery, attracl_subquery, attinitacl_subquery,
+						attinitracl_subquery, "at.attacl", "c.relowner", "'c'",
 						dopt->binary_upgrade);
 
 		appendPQExpBuffer(query,
@@ -5188,7 +5245,17 @@ getTables(Archive *fout, int *numTables)
 						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON"
+						  "(c.oid = pip.objoid AND pip.classoid = "
+						  "(SELECT oid FROM pg_class WHERE relname = 'pg_class') AND pip.objsubid = at.attnum)"
+						  "WHERE at.attrelid = c.oid AND ("
+						  "%s IS NOT NULL "
+						  "OR %s IS NOT NULL "
+						  "OR %s IS NOT NULL "
+						  "OR %s IS NOT NULL"
+						  "))"
+						  "AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5207,6 +5274,10 @@ getTables(Archive *fout, int *numTables)
 						  initacl_subquery->data,
 						  initracl_subquery->data,
 						  username_subquery,
+						  attacl_subquery->data,
+						  attracl_subquery->data,
+						  attinitacl_subquery->data,
+						  attinitracl_subquery->data,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
@@ -5216,6 +5287,11 @@ getTables(Archive *fout, int *numTables)
 		destroyPQExpBuffer(racl_subquery);
 		destroyPQExpBuffer(initacl_subquery);
 		destroyPQExpBuffer(initracl_subquery);
+
+		destroyPQExpBuffer(attacl_subquery);
+		destroyPQExpBuffer(attracl_subquery);
+		destroyPQExpBuffer(attinitacl_subquery);
+		destroyPQExpBuffer(attinitracl_subquery);
 	}
 	else if (fout->remoteVersion >= 90500)
 	{
@@ -5245,7 +5321,8 @@ getTables(Archive *fout, int *numTables)
 						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5290,7 +5367,8 @@ getTables(Archive *fout, int *numTables)
 						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5335,7 +5413,8 @@ getTables(Archive *fout, int *numTables)
 						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5378,7 +5457,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5421,7 +5501,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5463,7 +5544,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
-						  "tc.reloptions AS toast_reloptions "
+						  "tc.reloptions AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5505,7 +5587,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "c.reloptions AS reloptions, "
-						  "NULL AS toast_reloptions "
+						  "NULL AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5546,7 +5629,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
 						  "NULL AS reloptions, "
-						  "NULL AS toast_reloptions "
+						  "NULL AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5586,7 +5670,8 @@ getTables(Archive *fout, int *numTables)
 						  "d.refobjsubid AS owning_col, "
 						  "NULL AS reltablespace, "
 						  "NULL AS reloptions, "
-						  "NULL AS toast_reloptions "
+						  "NULL AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "LEFT JOIN pg_depend d ON "
 						  "(c.relkind = '%c' AND "
@@ -5623,7 +5708,8 @@ getTables(Archive *fout, int *numTables)
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
 						  "NULL AS reloptions, "
-						  "NULL AS toast_reloptions "
+						  "NULL AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class "
 						  "WHERE relkind IN ('%c', '%c', '%c') "
 						  "ORDER BY oid",
@@ -5655,7 +5741,8 @@ getTables(Archive *fout, int *numTables)
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
 						  "NULL AS reloptions, "
-						  "NULL AS toast_reloptions "
+						  "NULL AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class "
 						  "WHERE relkind IN ('%c', '%c', '%c') "
 						  "ORDER BY oid",
@@ -5695,7 +5782,8 @@ getTables(Archive *fout, int *numTables)
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
 						  "NULL AS reloptions, "
-						  "NULL AS toast_reloptions "
+						  "NULL AS toast_reloptions, "
+						  "NULL AS changed_acl "
 						  "FROM pg_class c "
 						  "WHERE relkind IN ('%c', '%c') "
 						  "ORDER BY oid",
@@ -5754,6 +5842,7 @@ getTables(Archive *fout, int *numTables)
 	i_checkoption = PQfnumber(res, "checkoption");
 	i_toastreloptions = PQfnumber(res, "toast_reloptions");
 	i_reloftype = PQfnumber(res, "reloftype");
+	i_changed_acl = PQfnumber(res, "changed_acl");
 
 	if (dopt->lockWaitTimeout && fout->remoteVersion >= 70300)
 	{
@@ -5834,6 +5923,21 @@ getTables(Archive *fout, int *numTables)
 			tblinfo[i].dobj.dump = DUMP_COMPONENT_NONE;
 		else
 			selectDumpableTable(&tblinfo[i], fout);
+
+		/*
+		 * If the table-level and all column-level ACLs for this table are
+		 * unchanged, then we don't need to worry about including the ACLs
+		 * for this table.  If any column-level ACLs have been changed, the
+		 * 'changed_acl' column from the query will indicate that.
+		 *
+		 * This can result in a significant performance improvement in cases
+		 * where we are only looking to dump out the ACL (eg: pg_catalog).
+		 */
+		if (PQgetisnull(res, i, i_relacl) && PQgetisnull(res, i, i_rrelacl) &&
+			PQgetisnull(res, i, i_initrelacl) &&
+			PQgetisnull(res, i, i_initrrelacl) &&
+			strcmp(PQgetvalue(res, i, i_changed_acl), "f") == 0)
+			tblinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 
 		tblinfo[i].interesting = tblinfo[i].dobj.dump ? true : false;
 
@@ -6989,6 +7093,9 @@ getEventTriggers(Archive *fout, int *numEventTriggers)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(evtinfo[i].dobj), fout);
+
+		/* Event Triggers do not currently have ACLs. */
+		evtinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -7350,6 +7457,9 @@ getCasts(Archive *fout, int *numCasts)
 
 		/* Decide whether we want to dump it */
 		selectDumpableCast(&(castinfo[i]), fout);
+
+		/* Casts do not currently have ACLs. */
+		castinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -8143,6 +8253,9 @@ getTSParsers(Archive *fout, int *numTSParsers)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(prsinfo[i].dobj), fout);
+
+		/* Text Search Parsers do not currently have ACLs. */
+		prsinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -8228,6 +8341,9 @@ getTSDictionaries(Archive *fout, int *numTSDicts)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(dictinfo[i].dobj), fout);
+
+		/* Text Search Dictionaries do not currently have ACLs. */
+		dictinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -8305,6 +8421,9 @@ getTSTemplates(Archive *fout, int *numTSTemplates)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(tmplinfo[i].dobj), fout);
+
+		/* Text Search Templates do not currently have ACLs. */
+		tmplinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -8383,6 +8502,9 @@ getTSConfigurations(Archive *fout, int *numTSConfigs)
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(cfginfo[i].dobj), fout);
+
+		/* Text Search Configurations do not currently have ACLs. */
+		cfginfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 	}
 
 	PQclear(res);
@@ -14873,13 +14995,21 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 				   " at.attrelid = pip.objoid AND at.attnum = pip.objsubid) "
 							  "WHERE at.attrelid = '%u' AND "
 							  "NOT at.attisdropped "
-							  "AND at.attacl IS NOT NULL "
+							  "AND ("
+							  "%s IS NOT NULL OR "
+							  "%s IS NOT NULL OR "
+							  "%s IS NOT NULL OR "
+							  "%s IS NOT NULL)"
 							  "ORDER BY at.attnum",
 							  acl_subquery->data,
 							  racl_subquery->data,
 							  initacl_subquery->data,
 							  initracl_subquery->data,
-							  tbinfo->dobj.catId.oid);
+							  tbinfo->dobj.catId.oid,
+							  acl_subquery->data,
+							  racl_subquery->data,
+							  initacl_subquery->data,
+							  initracl_subquery->data);
 
 			destroyPQExpBuffer(acl_subquery);
 			destroyPQExpBuffer(racl_subquery);
