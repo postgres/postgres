@@ -955,18 +955,18 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        <entry><literal>5432.0</></>
       </row>
       <row>
-       <entry><literal><function>int(<replaceable>x</>)</></></>
-       <entry>integer</>
-       <entry>cast to int</>
-       <entry><literal>int(5.4 + 3.8)</></>
-       <entry><literal>9</></>
-      </row>
-      <row>
        <entry><literal><function>greatest(<replaceable>a</> [, <replaceable>...</> ] )</></></>
        <entry>double if any <replaceable>a</> is double, else integer</>
        <entry>largest value among arguments</>
        <entry><literal>greatest(5, 4, 3, 2)</></>
        <entry><literal>5</></>
+      </row>
+      <row>
+       <entry><literal><function>int(<replaceable>x</>)</></></>
+       <entry>integer</>
+       <entry>cast to int</>
+       <entry><literal>int(5.4 + 3.8)</></>
+       <entry><literal>9</></>
       </row>
       <row>
        <entry><literal><function>least(<replaceable>a</> [, <replaceable>...</> ] )</></></>
