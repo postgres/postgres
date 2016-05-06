@@ -600,13 +600,9 @@ Rule	Russia	1981	1984	-	Apr	 1	 0:00	1:00	S
 Rule	Russia	1981	1983	-	Oct	 1	 0:00	0	-
 # Act No. 967 of the Council of Ministers of the USSR (1984-09-13), repeated in
 # Act No. 227 of the Council of Ministers of the USSR (1989-03-14):
-Rule	Russia	1984	1991	-	Sep	lastSun	 2:00s	0	-
-Rule	Russia	1985	1991	-	Mar	lastSun	 2:00s	1:00	S
+Rule	Russia	1984	1995	-	Sep	lastSun	 2:00s	0	-
+Rule	Russia	1985	2010	-	Mar	lastSun	 2:00s	1:00	S
 #
-Rule	Russia	1992	only	-	Mar	lastSat	 23:00	1:00	S
-Rule	Russia	1992	only	-	Sep	lastSat	 23:00	0	-
-Rule	Russia	1993	2010	-	Mar	lastSun	 2:00s	1:00	S
-Rule	Russia	1993	1995	-	Sep	lastSun	 2:00s	0	-
 Rule	Russia	1996	2010	-	Oct	lastSun	 2:00s	0	-
 # As described below, Russia's 2014 change affects Zone data, not Rule data.
 
@@ -629,6 +625,14 @@ Rule	Russia	1996	2010	-	Oct	lastSun	 2:00s	0	-
 # b) Astrakhan, Kirov, Kuybyshev, Ulyanovsk oblasts: second time belt
 # rules (Moscow time)
 # c) Uralsk oblast: third time belt rules (Moscow+1).
+
+# From Stepan Golosunov (2016-03-27):
+# Unamended version of the act of the
+# Government of the Russian Federation No. 23 from 08.01.1992
+# http://pravo.gov.ru/proxy/ips/?docbody=&nd=102014034&rdk=0
+# says that every year clocks were to be moved forward on last Sunday
+# of March at 2 hours and moved backwards on last Sunday of September
+# at 3 hours.  It was amended in 1996 to replace September with October.
 
 # From Alexander Krivenyshev (2011-06-14):
 # According to Kremlin press service, Russian President Dmitry Medvedev
@@ -2579,16 +2583,14 @@ Zone Europe/Volgograd	 2:57:40 -	LMT	1920 Jan  3
 # 43	RU-KIR	Kirov Oblast
 # The 1989 transition is from USSR act No. 227 (1989-03-14).
 #
-# Europe/Kirov is still in draft form and for now is commented out.
-#
-#Zone Europe/Kirov	 3:18:48 -	LMT	1919 Jul  1  2:00
-#			 3:00	-	+03	1930 Jun 21
-#			 4:00	Russia	+04/+05	1989 Mar 26  2:00s
-#			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
-#			 4:00	-	+04	1992 Mar 29  2:00s
-#			 3:00	Russia	+03/+04	2011 Mar 27  2:00s
-#			 4:00	-	+04	2014 Oct 26  2:00s
-#			 3:00	-	+03
+Zone Europe/Kirov	 3:18:48 -	LMT	1919 Jul  1  2:00
+			 3:00	-	+03	1930 Jun 21
+			 4:00	Russia	+04/+05	1989 Mar 26  2:00s
+			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
+			 4:00	-	+04	1992 Mar 29  2:00s
+			 3:00	Russia	+03/+04	2011 Mar 27  2:00s
+			 4:00	-	+04	2014 Oct 26  2:00s
+			 3:00	-	+03
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2001-08-25):
 # Europe/Samara covers...
@@ -2733,9 +2735,9 @@ Zone Asia/Novosibirsk	 5:31:40 -	LMT	1919 Dec 14  6:00
 # From Paul Eggert (2016-03-18):
 # Asia/Tomsk covers:
 # 70	RU-TOM	Tomsk Oblast
-#
-# Asia/Tomsk is still in draft form and for now is commented out.
-# Tomsk may be changing time zones in 2016 (not decided yet).
+
+# From Stepan Golosunov (2016-03-24):
+# Byalokoz listed Tomsk at 5:39:51.
 
 # From Stanislaw A. Kuzikowski (1994-06-29):
 # Tomsk is still 4 hours ahead of Moscow.
@@ -2750,14 +2752,34 @@ Zone Asia/Novosibirsk	 5:31:40 -	LMT	1919 Dec 14  6:00
 # with time zones in 2011 with different numberings (there was a
 # 2-hour gap between second and third zones in 2011-2014).
 
-#Zone Asia/Tomsk	 5:39:52 -	LMT	1919 Dec 22
-#			 6:00	-	+06	1930 Jun 21
-#			 7:00	Russia	+07/+08	1991 Mar 31  2:00s
-#			 6:00	Russia	+06/+07	1992 Jan 19  2:00s
-#			 7:00	Russia	+07/+08	2002 May  1  3:00
-#			 6:00	Russia	+06/+07	2011 Mar 27  2:00s
-#			 7:00	-	+07	2014 Oct 26  2:00s
-#			 6:00	-	+06
+# From Stepan Golosunov (2016-04-12):
+# http://asozd2.duma.gov.ru/main.nsf/(SpravkaNew)?OpenAgent&RN=1006865-6
+# This bill was approved in the first reading today.  It moves Tomsk oblast
+# from UTC+6 to UTC+7 and is supposed to come into effect on 2016-05-29 at
+# 2:00.  The bill needs to be approved in the second and the third readings by
+# the State Duma, approved by the Federation Council, signed by the President
+# and published to become a law.  Minor changes in the text are to be expected
+# before the second reading (references need to be updated to account for the
+# recent changes).
+#
+# Judging by the ultra-short one-day amendments period, recent similar laws,
+# the State Duma schedule and the Federation Council schedule
+# http://www.duma.gov.ru/legislative/planning/day-shedule/por_vesna_2016/
+# http://council.gov.ru/activity/meetings/schedule/63303
+# I speculate that the final text of the bill will be proposed tomorrow, the
+# bill will be approved in the second and the third readings on Friday,
+# approved by the Federation Council on 2016-04-20, signed by the President and
+# published as a law around 2016-04-26.
+
+Zone	Asia/Tomsk	 5:39:51 -	LMT	1919 Dec 22
+			 6:00	-	+06	1930 Jun 21
+			 7:00	Russia	+07/+08	1991 Mar 31  2:00s
+			 6:00	Russia	+06/+07	1992 Jan 19  2:00s
+			 7:00	Russia	+07/+08	2002 May  1  3:00
+			 6:00	Russia	+06/+07	2011 Mar 27  2:00s
+			 7:00	-	+07	2014 Oct 26  2:00s
+			 6:00	-	+06	2016 May 29  2:00s
+			 7:00	-	+07
 
 
 # From Tim Parenti (2014-07-03):
@@ -2990,13 +3012,13 @@ Zone Asia/Sakhalin	 9:30:48 -	LMT	1905 Aug 23
 # until now by Asia/Magadan, will instead move to UTC+11.  These regions will
 # need their own zone.
 
-# From Alexander Krivenyshev (2016-01-03):
-# Magadan Oblast / Magadan (draft bill date of entry 2015-12-08),
-# UTC+10 to UTC+11
-# From Stepan Golosunov (2016-03-17):
-# The bill is currently proposed to be approved in both the second and
-# the third readings on 2016-03-22. It might be in time to be approved
-# by the Federation Council on 2016-03-23.
+# From Alexander Krivenyshev (2016-03-27):
+# ... draft bill 948300-6 to change its time zone from UTC+10 to UTC+11 ...
+# will take ... effect ... on April 24, 2016 at 2 o'clock
+#
+# From Matt Johnson (2016-04-05):
+# ... signed by the President today ...
+# http://publication.pravo.gov.ru/Document/View/0001201604050038
 
 Zone Asia/Magadan	10:03:12 -	LMT	1924 May  2
 			10:00	-	MAGT	1930 Jun 21 # Magadan Time
@@ -3004,12 +3026,8 @@ Zone Asia/Magadan	10:03:12 -	LMT	1924 May  2
 			10:00	Russia	MAG%sT	1992 Jan 19  2:00s
 			11:00	Russia	MAG%sT	2011 Mar 27  2:00s
 			12:00	-	MAGT	2014 Oct 26  2:00s
-			10:00	-	MAGT
-# From Paul Eggert (2016-03-18):
-# If the bill passes as-is, replace the previous data line with:
-#			10:00	-	MAGT	2016 Apr 24  2:00s
-#			11:00	-	MAGT
-# and update zone1970.tab and zone.tab to say "MSK+08" for Asia/Magadan.
+			10:00	-	MAGT	2016 Apr 24  2:00s
+			11:00	-	MAGT
 
 
 # From Tim Parenti (2014-07-06):
