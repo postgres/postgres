@@ -1564,7 +1564,7 @@ selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
 	 * those changes preserved.
 	 */
 	if (dopt->binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
-		extinfo->dobj.dump = DUMP_COMPONENT_ACL;
+		extinfo->dobj.dump = extinfo->dobj.dump_contains = DUMP_COMPONENT_ACL;
 	else
 		extinfo->dobj.dump = extinfo->dobj.dump_contains =
 			dopt->include_everything ?  DUMP_COMPONENT_ALL :

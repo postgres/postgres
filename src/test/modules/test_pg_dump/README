@@ -1,0 +1,2 @@
+test_pg_dump is an extension explicitly to test pg_dump when
+extensions are present in the system.

@@ -42,6 +42,9 @@ install: all installdirs
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
+check:
+	$(prove_check)
+
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, pg_dump$(X) pg_restore$(X) pg_dumpall$(X))
 
