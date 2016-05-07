@@ -1167,26 +1167,6 @@ XXX this is pending backpatch, may need to remove
        </para>
       </listitem>
 
-      <listitem>
-<!--
-XXX this is pending backpatch, may need to remove
-2016-04-08 [7c7d4fdda] Distrust external OpenSSL clients; clear err queue
--->
-       <para>
-        Clear the OpenSSL error queue before OpenSSL calls, rather than
-        assuming it's clear already; and make sure we leave it clear
-        (Peter Geoghegan, Dave Vitek, Peter Eisentraut)
-       </para>
-
-       <para>
-        This avoids problems when there are multiple connections using
-        OpenSSL within a single process and not all the code involved
-        follows the same rules for when to clear the error queue.
-        While the problem is worse for <application>libpq</>, it's
-        possible for it to arise within the server as well.
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     </sect4>
