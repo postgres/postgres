@@ -11512,13 +11512,19 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
 
        <important>
         <para>
-         To avoid blocking concurrent transactions that obtain numbers from the
-         same sequence, a <function>nextval</function> operation is never
+         To avoid blocking concurrent transactions that obtain numbers from
+         the same sequence, a <function>nextval</function> operation is never
          rolled back; that is, once a value has been fetched it is considered
-         used, even if the transaction that did the
-         <function>nextval</function> later aborts.  This means that aborted
-         transactions might leave unused <quote>holes</quote> in the sequence
-         of assigned values.
+         used and will not be returned again.  This is true even if the
+         surrounding transaction later aborts, or if the calling query ends
+         up not using the value.  For example an <command>INSERT</> with
+         an <literal>ON CONFLICT</> clause will compute the to-be-inserted
+         tuple, including doing any required <function>nextval</function>
+         calls, before detecting any conflict that would cause it to follow
+         the <literal>ON CONFLICT</> rule instead.  Such cases will leave
+         unused <quote>holes</quote> in the sequence of assigned values.
+         Thus, <productname>PostgreSQL</> sequence objects <emphasis>cannot
+         be used to obtain <quote>gapless</> sequences</emphasis>.
         </para>
        </important>
 
@@ -11547,8 +11553,8 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         Return the value most recently returned by
         <function>nextval</> in the current session. This function is
         identical to <function>currval</function>, except that instead
-        of taking the sequence name as an argument it fetches the
-        value of the last sequence used by <function>nextval</function>
+        of taking the sequence name as an argument it refers to whichever
+        sequence <function>nextval</function> was most recently applied to
         in the current session. It is an error to call
         <function>lastval</function> if <function>nextval</function>
         has not yet been called in the current session.
