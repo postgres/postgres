@@ -591,40 +591,40 @@ my %tests = (
 			section_post_data => 1,
 		},
 	},
-	'BLOB load (contents are of test_table)' => {
-		create_order => 14,
-		create_sql =>
-		    "\\o '$tempdir/large_object_test.sql'\n"
-		  . "table dump_test.test_table;\n"
-		  . "\\o\n"
-		  . "\\lo_import '$tempdir/large_object_test.sql'\n",
-		regexp => qr/^
-			\QSELECT pg_catalog.lo_open\E \('\d+',\ \d+\);\n
-			\QSELECT pg_catalog.lowrite(0, \E
-			\Q'\x310a320a330a340a350a360a370a380a390a');\E\n
-			\QSELECT pg_catalog.lo_close(0);\E
-			$/xm,
-		like => {
-			clean => 1,
-			clean_if_exists => 1,
-			createdb => 1,
-			defaults => 1,
-			exclude_dump_test_schema => 1,
-			exclude_test_table => 1,
-			exclude_test_table_data => 1,
-			no_privs => 1,
-			section_data => 1,
-			test_schema_plus_blobs => 1,
-		},
-		unlike => {
-			binary_upgrade => 1,
-			only_dump_test_schema => 1,
-			only_dump_test_table => 1,
-			pg_dumpall_globals => 1,
-			schema_only => 1,
-			section_post_data => 1,
-		},
-	},
+#	'BLOB load (contents are of test_table)' => {
+#		create_order => 14,
+#		create_sql =>
+#		    "\\o '$tempdir/large_object_test.sql'\n"
+#		  . "table dump_test.test_table;\n"
+#		  . "\\o\n"
+#		  . "\\lo_import '$tempdir/large_object_test.sql'\n",
+#		regexp => qr/^
+#			\QSELECT pg_catalog.lo_open\E \('\d+',\ \d+\);\n
+#			\QSELECT pg_catalog.lowrite(0, \E
+#			\Q'\x310a320a330a340a350a360a370a380a390a');\E\n
+#			\QSELECT pg_catalog.lo_close(0);\E
+#			$/xm,
+#		like => {
+#			clean => 1,
+#			clean_if_exists => 1,
+#			createdb => 1,
+#			defaults => 1,
+#			exclude_dump_test_schema => 1,
+#			exclude_test_table => 1,
+#			exclude_test_table_data => 1,
+#			no_privs => 1,
+#			section_data => 1,
+#			test_schema_plus_blobs => 1,
+#		},
+#		unlike => {
+#			binary_upgrade => 1,
+#			only_dump_test_schema => 1,
+#			only_dump_test_table => 1,
+#			pg_dumpall_globals => 1,
+#			schema_only => 1,
+#			section_post_data => 1,
+#		},
+#	},
 	'COMMENT ON DATABASE postgres' => {
 		regexp => qr/^COMMENT ON DATABASE postgres IS .*;$/m,
 		like => {
