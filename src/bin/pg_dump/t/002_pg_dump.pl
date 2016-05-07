@@ -318,7 +318,7 @@ my %tests = (
 			\QALTER DEFAULT PRIVILEGES \E
 			\QFOR ROLE dump_test IN SCHEMA dump_test \E
 			\QGRANT SELECT ON TABLES  TO dump_test;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -346,7 +346,7 @@ my %tests = (
 			\QALTER ROLE dump_test WITH \E
 			\QNOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN \E
 			\QNOREPLICATION NOBYPASSRLS;\E
-			$/xm,
+			/xm,
 		like => {
 			pg_dumpall_globals => 1,
 		},
@@ -373,7 +373,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER FUNCTION dump_test.pltestlang_call_handler() \E
 			\QOWNER TO \E
-			.*;$/xm,
+			.*;/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -394,7 +394,7 @@ my %tests = (
 		},
 	},
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
-		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;$/m,
+		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -415,7 +415,7 @@ my %tests = (
 		},
 	},
 	'ALTER SCHEMA dump_test OWNER TO' => {
-		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;$/m,
+		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -436,7 +436,7 @@ my %tests = (
 		},
 	},
 	'ALTER SCHEMA dump_test_second_schema OWNER TO' => {
-		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;$/m,
+		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -460,7 +460,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER TABLE ONLY test_table\E \n^\s+
 			\QADD CONSTRAINT test_table_pkey PRIMARY KEY (col1);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -484,7 +484,7 @@ my %tests = (
 		},
 	},
 	'ALTER TABLE test_table OWNER TO' => {
-		regexp => qr/^ALTER TABLE test_table OWNER TO .*;$/m,
+		regexp => qr/^ALTER TABLE test_table OWNER TO .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -508,7 +508,7 @@ my %tests = (
 		create_order => 23,
 		create_sql => 'ALTER TABLE dump_test.test_table
 					   ENABLE ROW LEVEL SECURITY;',
-		regexp => qr/^ALTER TABLE test_table ENABLE ROW LEVEL SECURITY;$/m,
+		regexp => qr/^ALTER TABLE test_table ENABLE ROW LEVEL SECURITY;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -530,7 +530,7 @@ my %tests = (
 		},
 	},
 	'ALTER TABLE test_second_table OWNER TO' => {
-		regexp => qr/^ALTER TABLE test_second_table OWNER TO .*;$/m,
+		regexp => qr/^ALTER TABLE test_second_table OWNER TO .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -551,7 +551,7 @@ my %tests = (
 		},
 	},
 	'ALTER TABLE test_third_table OWNER TO' => {
-		regexp => qr/^ALTER TABLE test_third_table OWNER TO .*;$/m,
+		regexp => qr/^ALTER TABLE test_third_table OWNER TO .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -573,7 +573,7 @@ my %tests = (
 	},
 	# catch-all for ALTER ... OWNER (except LARGE OBJECTs)
 	'ALTER ... OWNER commands (except LARGE OBJECTs)' => {
-		regexp => qr/^ALTER (?!LARGE OBJECT)(.*) OWNER TO .*;$/m,
+		regexp => qr/^ALTER (?!LARGE OBJECT)(.*) OWNER TO .*;/m,
 		like => { }, # use more-specific options above
 		unlike => {
 			column_inserts => 1,
@@ -583,7 +583,7 @@ my %tests = (
 	},
 	# catch-all for ALTER ... OWNER
 	'ALTER ... OWNER commands' => {
-		regexp => qr/^ALTER .* OWNER TO .*;$/m,
+		regexp => qr/^ALTER .* OWNER TO .*;/m,
 		like => { }, # use more-specific options above
 		unlike => {
 			no_owner => 1,
@@ -603,7 +603,7 @@ my %tests = (
 #			\QSELECT pg_catalog.lowrite(0, \E
 #			\Q'\x310a320a330a340a350a360a370a380a390a');\E\n
 #			\QSELECT pg_catalog.lo_close(0);\E
-#			$/xm,
+#			/xm,
 #		like => {
 #			clean => 1,
 #			clean_if_exists => 1,
@@ -626,7 +626,7 @@ my %tests = (
 #		},
 #	},
 	'COMMENT ON DATABASE postgres' => {
-		regexp => qr/^COMMENT ON DATABASE postgres IS .*;$/m,
+		regexp => qr/^COMMENT ON DATABASE postgres IS .*;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -647,7 +647,7 @@ my %tests = (
 		},
 	},
 	'COMMENT ON EXTENSION plpgsql' => {
-		regexp => qr/^COMMENT ON EXTENSION plpgsql IS .*;$/m,
+		regexp => qr/^COMMENT ON EXTENSION plpgsql IS .*;/m,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -671,7 +671,7 @@ my %tests = (
 		create_order => 36,
 		create_sql => 'COMMENT ON TABLE dump_test.test_table
 					   IS \'comment on table\';',
-		regexp => qr/^COMMENT ON TABLE test_table IS 'comment on table';$/m,
+		regexp => qr/^COMMENT ON TABLE test_table IS 'comment on table';/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -697,7 +697,7 @@ my %tests = (
 					   IS \'comment on column\';',
 		regexp => qr/^
 			\QCOMMENT ON COLUMN test_table.col1 IS 'comment on column';\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -723,7 +723,7 @@ my %tests = (
 					   IS \'comment on column of type\';',
 		regexp => qr/^
 			\QCOMMENT ON COLUMN composite.f1 IS 'comment on column of type';\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -763,7 +763,7 @@ my %tests = (
 		regexp => qr/^
 			\QCOPY test_table (col1) FROM stdin;\E
 			\n(?:\d\n){9}\\\.\n
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -791,7 +791,7 @@ my %tests = (
 		regexp => qr/^
 			\QCOPY fk_reference_test_table (col1) FROM stdin;\E
 			\n(?:\d\n){5}\\\.\n
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -817,7 +817,7 @@ my %tests = (
 			\n(?:\d\n){9}\\\.\n.*
 			\QCOPY fk_reference_test_table (col1) FROM stdin;\E
 			\n(?:\d\n){5}\\\.\n
-			$/xms,
+			/xms,
 		like => {
 			data_only => 1,
 		},
@@ -836,7 +836,7 @@ my %tests = (
 		regexp => qr/^
 			\QCOPY test_second_table (col1, col2) FROM stdin;\E
 			\n(?:\d\t\d\n){9}\\\.\n
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -864,7 +864,7 @@ my %tests = (
 		regexp => qr/^
 			\QCOPY test_third_table (col1) FROM stdin;\E
 			\n(?:\d\n){9}\\\.\n
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -887,7 +887,7 @@ my %tests = (
 	'INSERT INTO test_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ test_table\ \(col1\)\ VALUES\ \(\d\);\n){9}
-			$/xm,
+			/xm,
 		like => {
 			column_inserts => 1,
 		},
@@ -911,7 +911,7 @@ my %tests = (
 	'INSERT INTO test_second_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ test_second_table\ \(col1,\ col2\)
-			   \ VALUES\ \(\d,\ '\d'\);\n){9}$/xm,
+			   \ VALUES\ \(\d,\ '\d'\);\n){9}/xm,
 		like => {
 			column_inserts => 1,
 		},
@@ -935,7 +935,7 @@ my %tests = (
 	'INSERT INTO test_third_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ test_third_table\ \(col1\)
-			   \ VALUES\ \(\d\);\n){9}$/xm,
+			   \ VALUES\ \(\d\);\n){9}/xm,
 		like => {
 			column_inserts => 1,
 		},
@@ -970,7 +970,7 @@ my %tests = (
 	'CREATE ROLE dump_test' => {
 		create_order => 1,
 		create_sql => 'CREATE ROLE dump_test;',
-		regexp => qr/^CREATE ROLE dump_test;$/m,
+		regexp => qr/^CREATE ROLE dump_test;/m,
 		like => {
 			pg_dumpall_globals => 1,
 		},
@@ -996,7 +996,7 @@ my %tests = (
 	'CREATE DATABASE postgres' => {
 		regexp => qr/^
 			\QCREATE DATABASE postgres WITH TEMPLATE = template0 \E
-			.*;$/xm,
+			.*;/xm,
 		like => {
 			createdb => 1,
 		},
@@ -1022,7 +1022,7 @@ my %tests = (
 	'CREATE EXTENSION ... plpgsql' => {
 		regexp => qr/^
 			\QCREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;\E
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -1060,7 +1060,7 @@ my %tests = (
 			\n\s+\QSTYPE = bigint[],\E
 			\n\s+\QINITCOND = '{0,0}',\E
 			\n\s+\QFINALFUNC = int8_avg\E
-			\n\);$/xm,
+			\n\);/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1095,7 +1095,7 @@ my %tests = (
 			\Q(((VALUE ~ '^\d{5}\E
 			\$\Q'::text) OR (VALUE ~ '^\d{5}-\d{4}\E\$
 			\Q'::text)));\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1129,7 +1129,7 @@ my %tests = (
 			\n\s+\QLANGUAGE c\E
 			\n\s+AS\ \'\$
 			\Qlibdir\/plpgsql', 'plpgsql_call_handler';\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1162,7 +1162,7 @@ my %tests = (
 			\n\s+\QLANGUAGE plpgsql\E
 			\n\s+AS\ \$\$
 			\Q BEGIN RETURN NULL; END;\E
-			\$\$;$/xm,
+			\$\$;/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1195,7 +1195,7 @@ my %tests = (
 			\n\s+\QLANGUAGE plpgsql\E
 			\n\s+AS\ \$\$
 			\Q BEGIN RETURN; END;\E
-			\$\$;$/xm,
+			\$\$;/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1227,7 +1227,7 @@ my %tests = (
 			\QCREATE EVENT TRIGGER test_event_trigger \E
 			\QON ddl_command_start\E
 			\n\s+\QEXECUTE PROCEDURE dump_test.event_trigger_func();\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1260,7 +1260,7 @@ my %tests = (
 			\QCREATE TRIGGER test_trigger BEFORE INSERT ON test_table \E
 			\QFOR EACH ROW WHEN ((new.col1 > 10)) \E
 			\QEXECUTE PROCEDURE trigger_func();\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1292,7 +1292,7 @@ my %tests = (
 			\n\s+'venus',
 			\n\s+'earth',
 			\n\s+'mars'
-			\n\);$/xm,
+			\n\);/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -1323,7 +1323,7 @@ my %tests = (
 			\QALTER TYPE dump_test.planets ADD VALUE 'earth';\E
 			\n.*^
 			\QALTER TYPE dump_test.planets ADD VALUE 'mars';\E
-			\n$/xms,
+			\n/xms,
 		like => {
 			binary_upgrade => 1,
 		},
@@ -1410,7 +1410,7 @@ my %tests = (
 			\QCREATE FUNCTION int42_in(cstring) RETURNS int42\E
 			\n\s+\QLANGUAGE internal IMMUTABLE STRICT\E
 			\n\s+AS\ \$\$int4in\$\$;
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1442,7 +1442,7 @@ my %tests = (
 			\QCREATE FUNCTION int42_out(int42) RETURNS cstring\E
 			\n\s+\QLANGUAGE internal IMMUTABLE STRICT\E
 			\n\s+AS\ \$\$int4out\$\$;
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1483,7 +1483,7 @@ my %tests = (
 			\n\s+\QALIGNMENT = int4,\E
 			\n\s+\QSTORAGE = plain,\E
 			\n\s+PASSEDBYVALUE\n\);
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -1516,7 +1516,7 @@ my %tests = (
 			\n\s+\Qf1 integer,\E
 			\n\s+\Qf2 int42\E
 			\n\);
-			$/xm,
+			/xm,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -1627,7 +1627,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE PROCEDURAL LANGUAGE pltestlang \E
 			\QHANDLER pltestlang_call_handler;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1659,7 +1659,7 @@ my %tests = (
 			\n\s+\QSELECT test_table.col1\E
 			\n\s+\QFROM test_table\E
 			\n\s+\QWITH NO DATA;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1692,7 +1692,7 @@ my %tests = (
 			\n\s+\QSELECT matview.col1\E
 			\n\s+\QFROM matview\E
 			\n\s+\QWITH NO DATA;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1723,7 +1723,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE POLICY p1 ON test_table FOR ALL TO PUBLIC \E
 			\QUSING (true) WITH CHECK (true);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1753,7 +1753,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE POLICY p2 ON test_table FOR SELECT TO dump_test \E
 			\QUSING (true);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1783,7 +1783,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE POLICY p3 ON test_table FOR INSERT \E
 			\QTO dump_test WITH CHECK (true);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1813,7 +1813,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE POLICY p4 ON test_table FOR UPDATE TO dump_test \E
 			\QUSING (true) WITH CHECK (true);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1843,7 +1843,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE POLICY p5 ON test_table FOR DELETE \E
 			\QTO dump_test USING (true);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1869,7 +1869,7 @@ my %tests = (
 	'CREATE SCHEMA dump_test' => {
 		create_order => 2,
 		create_sql => 'CREATE SCHEMA dump_test;',
-		regexp => qr/^CREATE SCHEMA dump_test;$/m,
+		regexp => qr/^CREATE SCHEMA dump_test;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1895,7 +1895,7 @@ my %tests = (
 	'CREATE SCHEMA dump_test_second_schema' => {
 		create_order => 9,
 		create_sql => 'CREATE SCHEMA dump_test_second_schema;',
-		regexp => qr/^CREATE SCHEMA dump_test_second_schema;$/m,
+		regexp => qr/^CREATE SCHEMA dump_test_second_schema;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1929,7 +1929,7 @@ my %tests = (
 			\n\s+\Qcol1 integer NOT NULL,\E
 			\n\s+\QCONSTRAINT test_table_col1_check CHECK \E
 			\Q((col1 <= 1000))\E
-			\n\);$/xm,
+			\n\);/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1961,7 +1961,7 @@ my %tests = (
 			\QCREATE TABLE fk_reference_test_table (\E
 			\n\s+\Qcol1 integer NOT NULL\E
 			\n\);
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -1995,7 +1995,7 @@ my %tests = (
 			\n\s+\Qcol1 integer,\E
 			\n\s+\Qcol2 text\E
 			\n\);
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2027,7 +2027,7 @@ my %tests = (
 			\QCREATE TABLE test_third_table (\E
 			\n\s+\Qcol1 integer NOT NULL\E
 			\n\);
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2058,7 +2058,7 @@ my %tests = (
 			\n\s+\QNO MINVALUE\E
 			\n\s+\QNO MAXVALUE\E
 			\n\s+\QCACHE 1;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2089,7 +2089,7 @@ my %tests = (
 			\n\s+\QNO MINVALUE\E
 			\n\s+\QNO MAXVALUE\E
 			\n\s+\QCACHE 1;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2119,7 +2119,7 @@ my %tests = (
 		regexp => qr/^
 			\QCREATE UNIQUE INDEX test_third_table_idx \E
 			\QON test_third_table USING btree (col1);\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2151,7 +2151,7 @@ my %tests = (
 		},
 	},
 	'DROP EXTENSION plpgsql' => {
-		regexp => qr/^DROP EXTENSION plpgsql;$/m,
+		regexp => qr/^DROP EXTENSION plpgsql;/m,
 		like => {
 			clean => 1,
 		},
@@ -2160,7 +2160,7 @@ my %tests = (
 		},
 	},
 	'DROP FUNCTION dump_test.pltestlang_call_handler()' => {
-		regexp => qr/^DROP FUNCTION dump_test\.pltestlang_call_handler\(\);$/m,
+		regexp => qr/^DROP FUNCTION dump_test\.pltestlang_call_handler\(\);/m,
 		like => {
 			clean => 1,
 		},
@@ -2169,7 +2169,7 @@ my %tests = (
 		},
 	},
 	'DROP LANGUAGE pltestlang' => {
-		regexp => qr/^DROP PROCEDURAL LANGUAGE pltestlang;$/m,
+		regexp => qr/^DROP PROCEDURAL LANGUAGE pltestlang;/m,
 		like => {
 			clean => 1,
 		},
@@ -2178,7 +2178,7 @@ my %tests = (
 		},
 	},
 	'DROP SCHEMA dump_test' => {
-		regexp => qr/^DROP SCHEMA dump_test;$/m,
+		regexp => qr/^DROP SCHEMA dump_test;/m,
 		like => {
 			clean => 1,
 		},
@@ -2187,7 +2187,7 @@ my %tests = (
 		},
 	},
 	'DROP SCHEMA dump_test_second_schema' => {
-		regexp => qr/^DROP SCHEMA dump_test_second_schema;$/m,
+		regexp => qr/^DROP SCHEMA dump_test_second_schema;/m,
 		like => {
 			clean => 1,
 		},
@@ -2196,7 +2196,7 @@ my %tests = (
 		},
 	},
 	'DROP TABLE test_table' => {
-		regexp => qr/^DROP TABLE dump_test\.test_table;$/m,
+		regexp => qr/^DROP TABLE dump_test\.test_table;/m,
 		like => {
 			clean => 1,
 		},
@@ -2205,7 +2205,7 @@ my %tests = (
 		},
 	},
 	'DROP TABLE fk_reference_test_table' => {
-		regexp => qr/^DROP TABLE dump_test\.fk_reference_test_table;$/m,
+		regexp => qr/^DROP TABLE dump_test\.fk_reference_test_table;/m,
 		like => {
 			clean => 1,
 		},
@@ -2214,7 +2214,7 @@ my %tests = (
 		},
 	},
 	'DROP TABLE test_second_table' => {
-		regexp => qr/^DROP TABLE dump_test\.test_second_table;$/m,
+		regexp => qr/^DROP TABLE dump_test\.test_second_table;/m,
 		like => {
 			clean => 1,
 		},
@@ -2223,7 +2223,7 @@ my %tests = (
 		},
 	},
 	'DROP TABLE test_third_table' => {
-		regexp => qr/^DROP TABLE dump_test_second_schema\.test_third_table;$/m,
+		regexp => qr/^DROP TABLE dump_test_second_schema\.test_third_table;/m,
 		like => {
 			clean => 1,
 		},
@@ -2232,7 +2232,7 @@ my %tests = (
 		},
 	},
 	'DROP EXTENSION IF EXISTS plpgsql' => {
-		regexp => qr/^DROP EXTENSION IF EXISTS plpgsql;$/m,
+		regexp => qr/^DROP EXTENSION IF EXISTS plpgsql;/m,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2243,7 +2243,7 @@ my %tests = (
 	'DROP FUNCTION IF EXISTS dump_test.pltestlang_call_handler()' => {
 		regexp => qr/^
 			\QDROP FUNCTION IF EXISTS dump_test.pltestlang_call_handler();\E
-			$/xm,
+			/xm,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2252,7 +2252,7 @@ my %tests = (
 		},
 	},
 	'DROP LANGUAGE IF EXISTS pltestlang' => {
-		regexp => qr/^DROP PROCEDURAL LANGUAGE IF EXISTS pltestlang;$/m,
+		regexp => qr/^DROP PROCEDURAL LANGUAGE IF EXISTS pltestlang;/m,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2261,7 +2261,7 @@ my %tests = (
 		},
 	},
 	'DROP SCHEMA IF EXISTS dump_test' => {
-		regexp => qr/^DROP SCHEMA IF EXISTS dump_test;$/m,
+		regexp => qr/^DROP SCHEMA IF EXISTS dump_test;/m,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2270,7 +2270,7 @@ my %tests = (
 		},
 	},
 	'DROP SCHEMA IF EXISTS dump_test_second_schema' => {
-		regexp => qr/^DROP SCHEMA IF EXISTS dump_test_second_schema;$/m,
+		regexp => qr/^DROP SCHEMA IF EXISTS dump_test_second_schema;/m,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2279,7 +2279,7 @@ my %tests = (
 		},
 	},
 	'DROP TABLE IF EXISTS test_table' => {
-		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_table;$/m,
+		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_table;/m,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2288,7 +2288,7 @@ my %tests = (
 		},
 	},
 	'DROP TABLE IF EXISTS test_second_table' => {
-		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_second_table;$/m,
+		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_second_table;/m,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2299,7 +2299,7 @@ my %tests = (
 	'DROP TABLE IF EXISTS test_third_table' => {
 		regexp => qr/^
 			\QDROP TABLE IF EXISTS dump_test_second_schema.test_third_table;\E
-			$/xm,
+			/xm,
 		like => {
 			clean_if_exists => 1,
 		},
@@ -2333,7 +2333,7 @@ my %tests = (
 						   TO dump_test;',
 		regexp => qr/^
 			\QGRANT USAGE ON SCHEMA dump_test_second_schema TO dump_test;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2358,7 +2358,7 @@ my %tests = (
 		create_order => 5,
 		create_sql => 'GRANT SELECT ON TABLE dump_test.test_table
 						   TO dump_test;',
-		regexp => qr/^GRANT SELECT ON TABLE test_table TO dump_test;$/m,
+		regexp => qr/^GRANT SELECT ON TABLE test_table TO dump_test;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2384,7 +2384,7 @@ my %tests = (
 		create_sql => 'GRANT SELECT ON
 						   TABLE dump_test_second_schema.test_third_table
 						   TO dump_test;',
-		regexp => qr/^GRANT SELECT ON TABLE test_third_table TO dump_test;$/m,
+		regexp => qr/^GRANT SELECT ON TABLE test_third_table TO dump_test;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2412,7 +2412,7 @@ my %tests = (
 						   TO dump_test;',
 		regexp => qr/^
 			\QGRANT ALL ON SEQUENCE test_third_table_col1_seq TO dump_test;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2439,7 +2439,7 @@ my %tests = (
 						   TO dump_test;',
 		regexp => qr/^
 			\QGRANT INSERT(col1) ON TABLE test_second_table TO dump_test;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2466,7 +2466,7 @@ my %tests = (
 						   TO dump_test;',
 		regexp => qr/^
 			\QGRANT ALL ON FUNCTION pg_sleep(double precision) TO dump_test;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2552,7 +2552,7 @@ my %tests = (
 		\QGRANT SELECT(prosrc) ON TABLE pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(probin) ON TABLE pg_proc TO PUBLIC;\E\n.*
 		\QGRANT SELECT(proconfig) ON TABLE pg_proc TO PUBLIC;\E\n.*
-		\QGRANT SELECT(proacl) ON TABLE pg_proc TO PUBLIC;\E$/xms,
+		\QGRANT SELECT(proacl) ON TABLE pg_proc TO PUBLIC;\E/xms,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2583,7 +2583,7 @@ my %tests = (
 		},
 	},
 	'REFRESH MATERIALIZED VIEW matview' => {
-		regexp => qr/^REFRESH MATERIALIZED VIEW matview;$/m,
+		regexp => qr/^REFRESH MATERIALIZED VIEW matview;/m,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -2611,7 +2611,7 @@ my %tests = (
 			\QREFRESH MATERIALIZED VIEW matview;\E
 			\n.*
 			\QREFRESH MATERIALIZED VIEW matview_second;\E
-			$/xms,
+			/xms,
 		like => {
 			clean => 1,
 			clean_if_exists => 1,
@@ -2640,7 +2640,7 @@ my %tests = (
 						   FROM public;',
 		regexp => qr/^
 			\QREVOKE ALL ON FUNCTION pg_sleep(double precision) FROM PUBLIC;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2663,7 +2663,7 @@ my %tests = (
 	'REVOKE SELECT ON TABLE pg_proc FROM public' => {
 		create_order => 45,
 		create_sql => 'REVOKE SELECT ON TABLE pg_proc FROM public;',
-		regexp => qr/^REVOKE SELECT ON TABLE pg_proc FROM PUBLIC;$/m,
+		regexp => qr/^REVOKE SELECT ON TABLE pg_proc FROM PUBLIC;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2689,7 +2689,7 @@ my %tests = (
 		regexp => qr/^
 			\QREVOKE ALL ON SCHEMA public FROM PUBLIC;\E
 			\n\QGRANT USAGE ON SCHEMA public TO PUBLIC;\E
-			$/xm,
+			/xm,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
@@ -2712,7 +2712,7 @@ my %tests = (
 	'REVOKE USAGE ON LANGUAGE plpgsql FROM public' => {
 		create_order => 16,
 		create_sql => 'REVOKE USAGE ON LANGUAGE plpgsql FROM public;',
-		regexp => qr/^REVOKE ALL ON LANGUAGE plpgsql FROM PUBLIC;$/m,
+		regexp => qr/^REVOKE ALL ON LANGUAGE plpgsql FROM PUBLIC;/m,
 		like => {
 			binary_upgrade => 1,
 			clean => 1,
