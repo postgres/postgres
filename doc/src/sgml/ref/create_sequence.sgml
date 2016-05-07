@@ -240,6 +240,16 @@ SELECT * FROM <replaceable>name</replaceable>;
   </para>
 
   <para>
+   Because <function>nextval</> and <function>setval</> calls are never
+   rolled back, sequence objects cannot be used if <quote>gapless</>
+   assignment of sequence numbers is needed.  It is possible to build
+   gapless assignment by using exclusive locking of a table containing a
+   counter; but this solution is much more expensive than sequence
+   objects, especially if many transactions need sequence numbers
+   concurrently.
+  </para>
+
+  <para>
    Unexpected results might be obtained if a <replaceable
    class="parameter">cache</replaceable> setting greater than one is
    used for a sequence object that will be used concurrently by
