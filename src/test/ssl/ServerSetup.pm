@@ -46,6 +46,7 @@ sub copy_files
 sub configure_test_server_for_ssl
 {
 	my $tempdir = $_[0];
+	my $serverhost = $_[1];
 
 	# Create test users and databases
 	psql 'postgres', "CREATE USER ssltestuser";
@@ -58,6 +59,7 @@ sub configure_test_server_for_ssl
 	print CONF "fsync=off\n";
 	print CONF "log_connections=on\n";
 	print CONF "log_hostname=on\n";
+	print CONF "listen_addresses='$serverhost'\n";
 	print CONF "log_statement=all\n";
 
 	# enable SSL and set up server key

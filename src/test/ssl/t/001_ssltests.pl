@@ -84,7 +84,7 @@ chmod 0600, "ssl/client.key";
 
 diag "setting up data directory in \"$tempdir\"...";
 start_test_server($tempdir);
-configure_test_server_for_ssl($tempdir);
+configure_test_server_for_ssl($tempdir, $SERVERHOSTADDR);
 switch_server_cert($tempdir, 'server-cn-only');
 
 ### Part 1. Run client-side tests.
