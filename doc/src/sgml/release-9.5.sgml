@@ -46,15 +46,18 @@ Branch: REL9_1_STABLE [9b676fd49] 2016-05-07 00:09:37 -0400
      <para>
       Clear the OpenSSL error queue before OpenSSL calls, rather than
       assuming it's clear already; and make sure we leave it clear
-      (Peter Geoghegan, Dave Vitek, Peter Eisentraut)
+      afterwards (Peter Geoghegan, Dave Vitek, Peter Eisentraut)
      </para>
 
      <para>
-      This avoids problems when there are multiple connections using
-      OpenSSL within a single process and not all the code involved
+      This change prevents problems when there are multiple connections
+      using OpenSSL within a single process and not all the code involved
       follows the same rules for when to clear the error queue.
-      While the problem is worse for <application>libpq</>, it's
-      possible for it to arise within the server as well.
+      Failures have been reported specifically when a client application
+      uses SSL connections in <application>libpq</> concurrently with
+      SSL connections using the PHP, Python, or Ruby wrappers for OpenSSL.
+      It's possible for similar problems to arise within the server as well,
+      if an extension module establishes an outgoing SSL connection.
      </para>
     </listitem>
 
@@ -197,8 +200,8 @@ Branch: REL9_5_STABLE [f3d17491c] 2016-04-04 18:05:23 -0400
 Branch: REL9_4_STABLE [28148e258] 2016-04-04 18:05:24 -0400
 -->
      <para>
-      Disallow newlines in parameter values to be set in <command>ALTER
-      SYSTEM</> (Tom Lane)
+      Disallow newlines in <command>ALTER SYSTEM</> parameter values
+      (Tom Lane)
      </para>
 
      <para>
@@ -228,7 +231,7 @@ Branch: master [93c301fc4] 2016-04-08 12:31:53 -0400
 Branch: REL9_5_STABLE [0da7cf6e8] 2016-04-08 12:31:42 -0400
 -->
      <para>
-      Avoid possible misbehavior after failed tablespace symlink removal
+      Avoid possible misbehavior after failing to remove a tablespace symlink
       (Tom Lane)
      </para>
     </listitem>
@@ -326,9 +329,9 @@ Branch: REL9_3_STABLE [e1d88f983] 2016-05-06 22:05:51 -0400
       <application>pg_upgrade</> had special-case code to handle the
       situation where the new <productname>PostgreSQL</> version thinks that
       a table should have a TOAST table while the old version did not.  That
-      code was broken, so remove it; there seems no reason to believe that we
-      can't get along fine without a TOAST table if that was okay according
-      to the old version's rules.
+      code was broken, so remove it, and instead do nothing in such cases;
+      there seems no reason to believe that we can't get along fine without
+      a TOAST table if that was okay according to the old version's rules.
      </para>
     </listitem>
 
@@ -340,30 +343,6 @@ Branch: REL9_5_STABLE [f9989482d] 2016-04-26 21:54:07 -0400
 -->
      <para>
       Fix atomic operations for PPC when using IBM's XLC compiler (Noah Misch)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_3_STABLE [f4f4f6990] 2016-04-15 16:49:48 -0400
-Branch: REL9_2_STABLE [d7dbc882d] 2016-04-15 16:49:48 -0400
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_3_STABLE [992df9658] 2016-04-16 10:42:07 -0400
-Branch: REL9_2_STABLE [9008922bf] 2016-04-16 10:41:57 -0400
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_3_STABLE [35166fd76] 2016-04-18 13:19:52 -0400
-Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
--->
-     <para>
-      Back-port 9.4-era memory-barrier code changes into 9.2 and 9.3 (Tom Lane)
-     </para>
-
-     <para>
-      These changes were not originally needed in pre-9.4 branches, but we
-      recently back-patched a fix that expected the barrier code to work
-      properly.  Only IA64 (using icc), HPPA, and Alpha platforms are
-      affected.
      </para>
     </listitem>
 
@@ -394,7 +373,7 @@ Branch: REL9_1_STABLE [cbff4b708] 2016-04-23 16:53:15 -0400
 -->
      <para>
       Rename internal function <function>strtoi()</>
-      to <function>strtoint()</> to dodge a conflict with a NetBSD library
+      to <function>strtoint()</> to avoid conflict with a NetBSD library
       function (Thomas Munro)
      </para>
     </listitem>
@@ -432,8 +411,8 @@ Branch: REL9_2_STABLE [9e77d0e3c] 2016-04-08 12:29:36 -0400
 Branch: REL9_1_STABLE [d2189a802] 2016-04-08 12:33:29 -0400
 -->
      <para>
-      Reduce verbosity of output while building with Microsoft Visual Studio
-      (Christian Ullrich)
+      Reduce verbosity of compiler output when building with Microsoft Visual
+      Studio (Christian Ullrich)
      </para>
     </listitem>
 
