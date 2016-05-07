@@ -341,7 +341,6 @@ void		disable_old_cluster(void);
 /* dump.c */
 
 void		generate_old_dump(void);
-void		optionally_create_toast_tables(void);
 
 
 /* exec.c */
