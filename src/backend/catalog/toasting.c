@@ -166,50 +166,38 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	if (rel->rd_rel->reltoastrelid != InvalidOid)
 		return false;
 
+	/*
+	 * Check to see whether the table actually needs a TOAST table.
+	 */
 	if (!IsBinaryUpgrade)
 	{
+		/* Normal mode, normal check */
 		if (!needs_toast_table(rel))
 			return false;
 	}
 	else
 	{
 		/*
-		 * Check to see whether the table needs a TOAST table.
+		 * In binary-upgrade mode, create a TOAST table if and only if
+		 * pg_upgrade told us to (ie, a TOAST table OID has been provided).
 		 *
-		 * If an update-in-place TOAST relfilenode is specified, force TOAST
-		 * file creation even if it seems not to need one.  This handles the
-		 * case where the old cluster needed a TOAST table but the new cluster
-		 * would not normally create one.
+		 * This indicates that the old cluster had a TOAST table for the
+		 * current table.  We must create a TOAST table to receive the old
+		 * TOAST file, even if the table seems not to need one.
+		 *
+		 * Contrariwise, if the old cluster did not have a TOAST table, we
+		 * should be able to get along without one even if the new version's
+		 * needs_toast_table rules suggest we should have one.  There is a lot
+		 * of daylight between where we will create a TOAST table and where
+		 * one is really necessary to avoid failures, so small cross-version
+		 * differences in the when-to-create heuristic shouldn't be a problem.
+		 * If we tried to create a TOAST table anyway, we would have the
+		 * problem that it might take up an OID that will conflict with some
+		 * old-cluster table we haven't seen yet.
 		 */
-
-		/*
-		 * If a TOAST oid is not specified, skip TOAST creation as we will do
-		 * it later so we don't create a TOAST table whose OID later conflicts
-		 * with a user-supplied OID.  This handles cases where the old cluster
-		 * didn't need a TOAST table, but the new cluster does.
-		 */
-		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid))
+		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid) ||
+			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 			return false;
-
-		/*
-		 * If a special TOAST value has been passed in, it means we are in
-		 * cleanup mode --- we are creating needed TOAST tables after all user
-		 * tables with specified OIDs have been created.  We let the system
-		 * assign a TOAST oid for us.  The tables are empty so the missing
-		 * TOAST tables were not a problem.
-		 */
-		if (binary_upgrade_next_toast_pg_class_oid == OPTIONALLY_CREATE_TOAST_OID)
-		{
-			/* clear as it is not to be used; it is just a flag */
-			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
-
-			if (!needs_toast_table(rel))
-				return false;
-		}
-
-		/* both should be set, or not set */
-		Assert(OidIsValid(binary_upgrade_next_toast_pg_class_oid) ==
-			   OidIsValid(binary_upgrade_next_toast_pg_type_oid));
 	}
 
 	/*

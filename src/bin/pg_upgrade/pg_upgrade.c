@@ -332,12 +332,10 @@ create_new_objects(void)
 
 	/*
 	 * We don't have minmxids for databases or relations in pre-9.3 clusters,
-	 * so set those after we have restores the schemas.
+	 * so set those after we have restored the schema.
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
 		set_frozenxids(true);
-
-	optionally_create_toast_tables();
 
 	/* regenerate now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
