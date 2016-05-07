@@ -78,10 +78,13 @@ typedef struct OldSnapshotControlData
 	 * Variables for old snapshot handling are shared among processes and are
 	 * only allowed to move forward.
 	 */
-	slock_t		mutex_current;			/* protect current timestamp */
+	slock_t		mutex_current;			/* protect current_timestamp */
 	int64		current_timestamp;		/* latest snapshot timestamp */
-	slock_t		mutex_latest_xmin;		/* protect latest snapshot xmin */
+	slock_t		mutex_latest_xmin;		/* protect latest_xmin
+										 * and next_map_update
+										 */
 	TransactionId latest_xmin;			/* latest snapshot xmin */
+	int64		next_map_update;		/* latest snapshot valid up to */
 	slock_t		mutex_threshold;		/* protect threshold fields */
 	int64		threshold_timestamp;	/* earlier snapshot is old */
 	TransactionId threshold_xid;		/* earlier xid may be gone */
@@ -95,7 +98,10 @@ typedef struct OldSnapshotControlData
 	 * count_used value of OLD_SNAPSHOT_TIME_MAP_ENTRIES means that the buffer
 	 * is full and the head must be advanced to add new entries.  Use
 	 * timestamps aligned to minute boundaries, since that seems less
-	 * surprising than aligning based on the first usage timestamp.
+	 * surprising than aligning based on the first usage timestamp.  The
+	 * latest bucket is effectively stored within latest_xmin.  The circular
+	 * buffer is updated when we get a new xmin value that doesn't fall into
+	 * the same interval.
 	 *
 	 * It is OK if the xid for a given time slot is from earlier than
 	 * calculated by adding the number of minutes corresponding to the
@@ -269,6 +275,7 @@ SnapMgrInit(void)
 		oldSnapshotControl->current_timestamp = 0;
 		SpinLockInit(&oldSnapshotControl->mutex_latest_xmin);
 		oldSnapshotControl->latest_xmin = InvalidTransactionId;
+		oldSnapshotControl->next_map_update = 0;
 		SpinLockInit(&oldSnapshotControl->mutex_threshold);
 		oldSnapshotControl->threshold_timestamp = 0;
 		oldSnapshotControl->threshold_xid = InvalidTransactionId;
@@ -1595,8 +1602,14 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 	{
 		int64		ts = GetSnapshotCurrentTimestamp();
 		TransactionId xlimit = recentXmin;
-		TransactionId latest_xmin = oldSnapshotControl->latest_xmin;
+		TransactionId latest_xmin;
+		int64		update_ts;
 		bool		same_ts_as_threshold = false;
+
+		SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
+		latest_xmin = oldSnapshotControl->latest_xmin;
+		update_ts = oldSnapshotControl->next_map_update;
+		SpinLockRelease(&oldSnapshotControl->mutex_latest_xmin);
 
 		/*
 		 * Zero threshold always overrides to latest xmin, if valid.  Without
@@ -1632,26 +1645,35 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 
 		if (!same_ts_as_threshold)
 		{
-			LWLockAcquire(OldSnapshotTimeMapLock, LW_SHARED);
-
-			if (oldSnapshotControl->count_used > 0
-				&& ts >= oldSnapshotControl->head_timestamp)
+			if (ts == update_ts)
 			{
-				int		offset;
-
-				offset = ((ts - oldSnapshotControl->head_timestamp)
-						  / USECS_PER_MINUTE);
-				if (offset > oldSnapshotControl->count_used - 1)
-					offset = oldSnapshotControl->count_used - 1;
-				offset = (oldSnapshotControl->head_offset + offset)
-						% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
-				xlimit = oldSnapshotControl->xid_by_minute[offset];
-
+				xlimit = latest_xmin;
 				if (NormalTransactionIdFollows(xlimit, recentXmin))
 					SetOldSnapshotThresholdTimestamp(ts, xlimit);
 			}
+			else
+			{
+				LWLockAcquire(OldSnapshotTimeMapLock, LW_SHARED);
 
-			LWLockRelease(OldSnapshotTimeMapLock);
+				if (oldSnapshotControl->count_used > 0
+					&& ts >= oldSnapshotControl->head_timestamp)
+				{
+					int offset;
+
+					offset = ((ts - oldSnapshotControl->head_timestamp)
+							  / USECS_PER_MINUTE);
+					if (offset > oldSnapshotControl->count_used - 1)
+						offset = oldSnapshotControl->count_used - 1;
+					offset = (oldSnapshotControl->head_offset + offset)
+							 % OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+					xlimit = oldSnapshotControl->xid_by_minute[offset];
+
+					if (NormalTransactionIdFollows(xlimit, recentXmin))
+						SetOldSnapshotThresholdTimestamp(ts, xlimit);
+				}
+
+				LWLockRelease(OldSnapshotTimeMapLock);
+			}
 		}
 
 		/*
@@ -1681,15 +1703,34 @@ void
 MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 {
 	int64		ts;
+	TransactionId latest_xmin;
+	int64		update_ts;
+	bool		map_update_required = false;
 
 	/* Never call this function when old snapshot checking is disabled. */
 	Assert(old_snapshot_threshold >= 0);
 
-	/* Keep track of the latest xmin seen by any process. */
+	ts = AlignTimestampToMinuteBoundary(whenTaken);
+
+	/*
+	 * Keep track of the latest xmin seen by any process. Update mapping
+	 * with a new value when we have crossed a bucket boundary.
+	 */
 	SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
-	if (TransactionIdFollows(xmin, oldSnapshotControl->latest_xmin))
+	latest_xmin = oldSnapshotControl->latest_xmin;
+	update_ts = oldSnapshotControl->next_map_update;
+	if (ts > update_ts)
+	{
+		oldSnapshotControl->next_map_update = ts;
+		map_update_required = true;
+	}
+	if (TransactionIdFollows(xmin, latest_xmin))
 		oldSnapshotControl->latest_xmin = xmin;
 	SpinLockRelease(&oldSnapshotControl->mutex_latest_xmin);
+
+	/* We only needed to update the most recent xmin value. */
+	if (!map_update_required)
+		return;
 
 	/* No further tracking needed for 0 (used for testing). */
 	if (old_snapshot_threshold == 0)
@@ -1715,8 +1756,6 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 			 (unsigned long) xmin);
 		return;
 	}
-
-	ts = AlignTimestampToMinuteBoundary(whenTaken);
 
 	LWLockAcquire(OldSnapshotTimeMapLock, LW_EXCLUSIVE);
 
