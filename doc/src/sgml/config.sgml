@@ -3407,16 +3407,14 @@ include_dir 'conf.d'
      <varlistentry id="guc-enable-indexonlyscan" xreflabel="enable_indexonlyscan">
       <term><varname>enable_indexonlyscan</varname> (<type>boolean</type>)
       <indexterm>
-       <primary>index-only scan</primary>
-      </indexterm>
-      <indexterm>
        <primary><varname>enable_indexonlyscan</> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of index-only-scan plan
-        types. The default is <literal>on</>.
+        types (see <xref linkend="indexes-index-only-scans">).
+        The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>

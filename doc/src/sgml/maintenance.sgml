@@ -102,8 +102,9 @@
      </listitem>
 
      <listitem>
-      <simpara>To update the visibility map, which speeds up index-only
-      scans.</simpara>
+      <simpara>To update the visibility map, which speeds
+      up <link linkend="indexes-index-only-scans">index-only
+      scans</link>.</simpara>
      </listitem>
 
      <listitem>
@@ -363,9 +364,11 @@
     Since <productname>PostgreSQL</productname> indexes don't contain tuple
     visibility information, a normal index scan fetches the heap tuple for each
     matching index entry, to check whether it should be seen by the current
-    transaction.  An <firstterm>index-only scan</>, on the other hand, checks
-    the visibility map first.  If it's known that all tuples on the page are
-    visible, the heap fetch can be skipped.  This is most noticeable on
+    transaction.
+    An <link linkend="indexes-index-only-scans"><firstterm>index-only
+    scan</></link>, on the other hand, checks the visibility map first.
+    If it's known that all tuples on the page are
+    visible, the heap fetch can be skipped.  This is most useful on
     large data sets where the visibility map can prevent disk accesses.
     The visibility map is vastly smaller than the heap, so it can easily be
     cached even when the heap is very large.
