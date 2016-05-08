@@ -3564,7 +3564,7 @@ main(int argc, char *argv[])
 
 	if (strncmp(username, "pg_", 3) == 0)
 	{
-		fprintf(stderr, _("%s: superuser name \"%s\" is reserved; role names can not begin with 'pg_'\n"), progname, username);
+		fprintf(stderr, _("%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"), progname, username);
 		exit(1);
 	}
 
