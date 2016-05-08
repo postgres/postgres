@@ -3562,6 +3562,12 @@ main(int argc, char *argv[])
 	if (strlen(username) == 0)
 		username = effective_user;
 
+	if (strncmp(username, "pg_", 3) == 0)
+	{
+		fprintf(stderr, _("%s: superuser name \"%s\" is reserved; role names can not begin with 'pg_'\n"), progname, username);
+		exit(1);
+	}
+
 	printf(_("The files belonging to this database system will be owned "
 			 "by user \"%s\".\n"
 			 "This user must also own the server process.\n\n"),
