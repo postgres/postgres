@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-05-05 (commit 7a622b273)</simpara>
+   <simpara>Current as of 2016-05-08 (commit 6f69b9639)</simpara>
   </note>
 
   <sect2>
@@ -405,6 +405,8 @@
       <listitem>
 <!--
 2016-04-08 [848ef42bb] Add the "snapshot too old" feature
+2016-05-06 [2cc41acd8] Fix hash index vs "snapshot too old" problemms
+2016-05-06 [7e3da1c47] Mitigate "snapshot too old" performance regression on NU
 -->
        <para>
         Allow old MVCC snapshots to be invalidated after a configurable
@@ -430,15 +432,14 @@
 2016-03-31 [f9aefcb91] Support using index-only scans with partial indexes in m
 -->
        <para>
-        Allow using an index-only scan with a partial index when the index's
-        predicate involves column(s) not stored in the index
-        (Tomas Vondra, Kyotaro Horiguchi)
+        Allow using an <link linkend="indexes-index-only-scans">index-only
+        scan</link> with a partial index when the index's predicate involves
+        column(s) not stored in the index (Tomas Vondra, Kyotaro Horiguchi)
        </para>
 
        <para>
         An index-only scan is now allowed if the query mentions such columns
-        only in <literal>WHERE</> clauses that match the index predicate (and
-        hence need not be rechecked at runtime).
+        only in <literal>WHERE</> clauses that match the index predicate.
        </para>
       </listitem>
 
@@ -762,6 +763,8 @@
         waiting for a heavyweight lock.  Now waits for lightweight locks
         and buffer pins are also shown in <structname>pg_stat_activity</>.
         Also, the type of lock being waited for is now visible.
+        These changes replace the <structfield>waiting</> column
+        with <structfield>wait_event_type</> and <structfield>wait_event</>.
        </para>
       </listitem>
 
@@ -782,8 +785,13 @@
 -->
        <para>
         Add <link linkend="view-pg-config"><structname>pg_config</></link>
-        system view to expose the same information available from
-        the <application>pg_config</> utility (Joe Conway)
+        system view (Joe Conway)
+       </para>
+
+       <para>
+        This view exposes the same information available from
+        the <application>pg_config</> utility, namely assorted compile-time
+        configuration information for <productname>PostgreSQL</>.
        </para>
       </listitem>
 
@@ -1192,7 +1200,8 @@ XXX this is pending backpatch, may need to remove
 
        <para>
         The number of standby servers that must acknowledge a commit before
-        it's considered done is now configurable.
+        it's considered done is now configurable as part of the
+        <xref linkend="guc-synchronous-standby-names"> parameter.
        </para>
       </listitem>
 
@@ -1545,6 +1554,8 @@ XXX this is pending backpatch, may need to remove
       <listitem>
 <!--
 2016-04-08 [293007898] Reserve the "pg_" namespace for roles
+2016-05-06 [a89505fd2] Remove various special checks around default roles
+2016-05-08 [7df974ee0] Disallow superuser names starting with 'pg_' in initdb
 -->
        <para>
         Treat role names beginning with <literal>pg_</> as reserved
@@ -1844,6 +1855,7 @@ XXX this is pending backpatch, may need to remove
       <listitem>
 <!--
 2016-03-11 [6943a946c] Tsvector editing functions
+2016-05-05 [0b9a23443] Rename tsvector delete() to ts_delete(), and filter() to
 -->
        <para>
         Add new functions for <type>tsvector</> data (Stas Kelvich)
@@ -2208,6 +2220,8 @@ This commit is also listed under psql and PL/pgSQL
 2016-04-06 [a9f0e8e5a] In pg_dump, use a bitmap to represent what to include
 2016-04-06 [d217b2c36] In pg_dump, split "dump" into "dump" and "dump_contains"
 2016-04-06 [23f34fa4b] In pg_dump, include pg_catalog and extension ACLs, if ch
+2016-05-06 [5d589993c] pg_dump performance and other fixes
+2016-05-06 [e1b120a8c] Only issue LOCK TABLE commands when necessary
 -->
        <para>
         In <application>pg_dump</>,
@@ -2305,6 +2319,7 @@ This commit is also listed under psql and PL/pgSQL
       <listitem>
 <!--
 2015-07-03 [8eb6407aa] Add psql \ev and \sv commands for editing and showing vi
+2016-05-06 [9b66aa006] Fix psql's \ev and \sv commands so that they handle view
 -->
        <para>
         Add <literal>\ev</> and <literal>\sv</> commands
@@ -2463,6 +2478,7 @@ This commit is also listed under libpq and PL/pgSQL
 2016-03-01 [7e137f846] Extend pgbench's expression syntax to support a few buil
 2016-03-28 [86c43f4e2] pgbench: Support double constants and functions.
 2016-05-05 [7a622b273] Rename pgbench min/max to least/greatest, and fix handli
+2016-05-06 [951529948] Improve handling of numeric-valued variables in pgbench.
 -->
        <para>
         Support floating-point arithmetic, as well as
@@ -2668,10 +2684,11 @@ This commit is also listed under libpq and PL/pgSQL
 2016-03-03 [2c83f435a] Rework PostgresNode's psql method
 2016-02-26 [49148645f] Add a test framework for recovery
 2016-02-26 [74d58425c] Apply last revision of recovery patch
+2016-05-06 [6bd356c33] Add TAP tests for pg_dump
 -->
        <para>
         Improve TAP testing infrastructure
-        (Michael Paquier, Craig Ringer, &Aacute;lvaro Herrera)
+        (Michael Paquier, Craig Ringer, &Aacute;lvaro Herrera, Stephen Frost)
        </para>
 
        <para>
