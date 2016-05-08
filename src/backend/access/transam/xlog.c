@@ -6179,7 +6179,7 @@ StartupXLOG(void)
 							   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 			else
 				ereport(LOG,
-						(errmsg("ignoring \"%s\" file because no \"%s\" file exists",
+						(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
 								TABLESPACE_MAP, BACKUP_LABEL_FILE),
 						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
 								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
