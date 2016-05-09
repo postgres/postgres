@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2015-05-18 02:52+0000\n"
-"PO-Revision-Date: 2015-12-10 22:34-0500\n"
+"PO-Revision-Date: 2016-04-13 09:58-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -1795,7 +1795,7 @@ msgstr "  \\e [DATEI] [ZEILE]     Anfragepuffer (oder Datei) mit externem Editor
 #: help.c:183
 #, c-format
 msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
-msgstr "  \\ef [FUNKNAME [LINE]]  Funktionsdefinition mit externem Editor bearbeiten\n"
+msgstr "  \\ef [FUNKNAME [ZEILE]] Funktionsdefinition mit externem Editor bearbeiten\n"
 
 #: help.c:184
 #, c-format
@@ -2046,7 +2046,7 @@ msgstr "  \\l[+]                  alle Datenbanken auflisten\n"
 #: help.c:238
 #, c-format
 msgid "  \\sf[+] FUNCNAME        show a function's definition\n"
-msgstr "  \\sf[+] [FUNKNAME]      Funktionsdefinition zeigen\n"
+msgstr "  \\sf[+] FUNKNAME        Funktionsdefinition zeigen\n"
 
 #: help.c:239
 #, c-format
