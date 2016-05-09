@@ -569,16 +569,16 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 9.1.21"
+#define PACKAGE_STRING "PostgreSQL 9.1.22"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.1.21"
+#define PACKAGE_VERSION "9.1.22"
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "9.1.21"
+#define PG_VERSION "9.1.22"
 
 /* PostgreSQL version as a number */
-#define PG_VERSION_NUM 90121
+#define PG_VERSION_NUM 90122
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "postgresql"
