@@ -16,24 +16,25 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 9.3\n"
+"Project-Id-Version: pltcl (PostgreSQL) 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-15 22:09+0000\n"
-"PO-Revision-Date: 2012-11-04 18:06+0100\n"
+"POT-Creation-Date: 2014-07-30 04:07+0000\n"
+"PO-Revision-Date: 2016-04-17 03:40+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: pltcl.c:1157
+#: pltcl.c:1210
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1158
+#: pltcl.c:1211
 #, c-format
 msgid ""
 "%s\n"
@@ -42,27 +43,27 @@ msgstr ""
 "%s\n"
 "nella funzione PL/Tcl \"%s\""
 
-#: pltcl.c:1262 pltcl.c:1269
+#: pltcl.c:1319 pltcl.c:1326
 #, c-format
 msgid "out of memory"
 msgstr "memoria esaurita"
 
-#: pltcl.c:1316
+#: pltcl.c:1374
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "le funzioni trigger possono essere chiamate esclusivamente da trigger"
 
-#: pltcl.c:1325
+#: pltcl.c:1383
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "le funzioni PL/Tcl non possono restituire il tipo %s"
 
-#: pltcl.c:1337
+#: pltcl.c:1395
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "le funzioni PL/Tcl non possono restituire tipi compositi"
 
-#: pltcl.c:1376
+#: pltcl.c:1434
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "le funzioni PL/Tcl non possono accettare il tipo %s"
