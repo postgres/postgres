@@ -49,6 +49,10 @@ sub CreateSolution
 	{
 		return new VS2013Solution(@_);
 	}
+	elsif ($visualStudioVersion eq '14.00')
+	{
+		return new VS2015Solution(@_);
+	}
 	else
 	{
 		croak "The requested Visual Studio version is not supported.";
@@ -84,6 +88,10 @@ sub CreateProject
 	{
 		return new VC2013Project(@_);
 	}
+	elsif ($visualStudioVersion eq '14.00')
+	{
+		return new VC2015Project(@_);
+	}
 	else
 	{
 		croak "The requested Visual Studio version is not supported.";
@@ -112,11 +120,11 @@ sub DetermineVisualStudioVersion
 sub _GetVisualStudioVersion
 {
 	my ($major, $minor) = @_;
-	if ($major > 12)
+	if ($major > 14)
 	{
 		carp
 "The determined version of Visual Studio is newer than the latest supported version. Returning the latest supported version instead.";
-		return '12.00';
+		return '14.00';
 	}
 	elsif ($major < 6)
 	{

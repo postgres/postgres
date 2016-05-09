@@ -381,12 +381,12 @@ DROP USER MAPPING IF EXISTS FOR CURRENT_ROLE SERVER sv9; --error
 DROP USER MAPPING IF EXISTS FOR nonexistent SERVER sv9;  -- error
 
 -- GRANT/REVOKE
-GRANT testrol0 TO pg_abc; -- error
-GRANT pg_abc TO pg_abcdef; -- error
+GRANT testrol0 TO pg_signal_backend; -- success
 
-SET ROLE pg_testrole; -- error
-SET ROLE pg_signal_backend; --error
-CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --error
+SET ROLE pg_signal_backend; --success
+RESET ROLE;
+CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --success
+SET ROLE testrol2;
 
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';

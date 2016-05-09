@@ -6,7 +6,7 @@
   </indexterm>
   <para>
    PostgreSQL provides infrastructure to stream the modifications performed
-   via SQL to external consumers.  This functionality can be used to for a
+   via SQL to external consumers.  This functionality can be used for a
    variety of purposes, including replication solutions and auditing.
   </para>
 
@@ -324,7 +324,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
    <title>System Catalogs Related to Logical Decoding</title>
 
    <para>
-    The <link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link>
+    The <link linkend="view-pg-replication-slots"><structname>pg_replication_slots</structname></link>
     view and the
     <link linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
     view provide information about the current state of replication slots and

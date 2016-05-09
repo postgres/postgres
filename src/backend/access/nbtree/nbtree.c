@@ -84,8 +84,8 @@ bthandler(PG_FUNCTION_ARGS)
 {
 	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
 
-	amroutine->amstrategies = 5;
-	amroutine->amsupport = 2;
+	amroutine->amstrategies = BTMaxStrategyNumber;
+	amroutine->amsupport = BTNProcs;
 	amroutine->amcanorder = true;
 	amroutine->amcanorderbyop = false;
 	amroutine->amcanbackward = true;

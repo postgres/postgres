@@ -18,6 +18,7 @@
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "storage/sinval.h"
+#include "storage/standbydefs.h"
 #include "utils/timestamp.h"
 
 /*
@@ -203,32 +204,9 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	}
 	if (parsed.nmsgs > 0)
 	{
-		if (XactCompletionRelcacheInitFileInval(parsed.xinfo))
-			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
-							 parsed.dbId, parsed.tsId);
-
-		appendStringInfoString(buf, "; inval msgs:");
-		for (i = 0; i < parsed.nmsgs; i++)
-		{
-			SharedInvalidationMessage *msg = &parsed.msgs[i];
-
-			if (msg->id >= 0)
-				appendStringInfo(buf, " catcache %d", msg->id);
-			else if (msg->id == SHAREDINVALCATALOG_ID)
-				appendStringInfo(buf, " catalog %u", msg->cat.catId);
-			else if (msg->id == SHAREDINVALRELCACHE_ID)
-				appendStringInfo(buf, " relcache %u", msg->rc.relId);
-			/* not expected, but print something anyway */
-			else if (msg->id == SHAREDINVALSMGR_ID)
-				appendStringInfoString(buf, " smgr");
-			/* not expected, but print something anyway */
-			else if (msg->id == SHAREDINVALRELMAP_ID)
-				appendStringInfoString(buf, " relmap");
-			else if (msg->id == SHAREDINVALSNAPSHOT_ID)
-				appendStringInfo(buf, " snapshot %u", msg->sn.relId);
-			else
-				appendStringInfo(buf, " unknown id %d", msg->id);
-		}
+		standby_desc_invalidations(
+			buf, parsed.nmsgs, parsed.msgs, parsed.dbId, parsed.tsId,
+			XactCompletionRelcacheInitFileInval(parsed.xinfo));
 	}
 
 	if (XactCompletionForceSyncCommit(parsed.xinfo))

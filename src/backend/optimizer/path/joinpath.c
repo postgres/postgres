@@ -223,12 +223,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 												 jointype, &extra);
 
 	/*
-	 * 6. Consider gathering partial paths.
-	 */
-	generate_gather_paths(root, joinrel);
-
-	/*
-	 * 7. Finally, give extensions a chance to manipulate the path list.
+	 * 6. Finally, give extensions a chance to manipulate the path list.
 	 */
 	if (set_join_pathlist_hook)
 		set_join_pathlist_hook(root, joinrel, outerrel, innerrel,

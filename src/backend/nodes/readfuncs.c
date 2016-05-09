@@ -556,6 +556,8 @@ _readAggref(void)
 	READ_NODE_FIELD(aggfilter);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggvariadic);
+	READ_BOOL_FIELD(aggcombine);
+	READ_BOOL_FIELD(aggpartial);
 	READ_CHAR_FIELD(aggkind);
 	READ_UINT_FIELD(agglevelsup);
 	READ_LOCATION_FIELD(location);

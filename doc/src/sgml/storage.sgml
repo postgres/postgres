@@ -636,9 +636,11 @@ Note that indexes do not have VMs.
 The visibility map stores two bits per heap page.  The first bit, if set,
 indicates that the page is all-visible, or in other words that the page does
 not contain any tuples that need to be vacuumed.
-This information can also be used by <firstterm>index-only scans</> to answer
-queries using only the index tuple.
+This information can also be used
+by <link linkend="indexes-index-only-scans"><firstterm>index-only
+scans</></link> to answer queries using only the index tuple.
 The second bit, if set, means that all tuples on the page have been frozen.
+That means that even an anti-wraparound vacuum need not revisit the page.
 </para>
 
 <para>

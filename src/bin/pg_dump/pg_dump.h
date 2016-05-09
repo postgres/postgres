@@ -93,6 +93,33 @@ typedef uint32 DumpComponents;	/* a bitmask of dump object components */
 #define DUMP_COMPONENT_USERMAP		(1 << 6)
 #define DUMP_COMPONENT_ALL			(0xFFFF)
 
+/*
+ * component types which require us to obtain a lock on the table
+ *
+ * Note that some components only require looking at the information
+ * in the pg_catalog tables and, for those components, we do not need
+ * to lock the table.  Be careful here though- some components use
+ * server-side functions which pull the latest information from
+ * SysCache and in those cases we *do* need to lock the table.
+ *
+ * We do not need locks for the COMMENT and SECLABEL components as
+ * those simply query their associated tables without using any
+ * server-side functions.  We do not need locks for the ACL component
+ * as we pull that information from pg_class without using any
+ * server-side functions that use SysCache.  The USERMAP component
+ * is only relevant for FOREIGN SERVERs and not tables, so no sense
+ * locking a table for that either (that can happen if we are going
+ * to dump "ALL" components for a table).
+ *
+ * We DO need locks for DEFINITION, due to various server-side
+ * functions that are used and POLICY due to pg_get_expr().  We set
+ * this up to grab the lock except in the cases we know to be safe.
+ */
+#define DUMP_COMPONENTS_REQUIRING_LOCK (\
+		DUMP_COMPONENT_DEFINITION |\
+		DUMP_COMPONENT_DATA |\
+		DUMP_COMPONENT_POLICY)
+
 typedef struct _dumpableObject
 {
 	DumpableObjectType objType;

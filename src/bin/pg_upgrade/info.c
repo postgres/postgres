@@ -18,6 +18,8 @@ static void create_rel_filename_map(const char *old_data, const char *new_data,
 						const DbInfo *old_db, const DbInfo *new_db,
 						const RelInfo *old_rel, const RelInfo *new_rel,
 						FileNameMap *map);
+static void report_unmatched_relation(const RelInfo *rel, const DbInfo *db,
+						  bool is_new_db);
 static void free_db_and_rel_infos(DbInfoArr *db_arr);
 static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
@@ -29,99 +31,125 @@ static void print_rel_infos(RelInfoArr *rel_arr);
 /*
  * gen_db_file_maps()
  *
- * generates database mappings for "old_db" and "new_db". Returns a malloc'ed
- * array of mappings. nmaps is a return parameter which refers to the number
- * mappings.
+ * generates a database mapping from "old_db" to "new_db".
+ *
+ * Returns a malloc'ed array of mappings.  The length of the array
+ * is returned into *nmaps.
  */
 FileNameMap *
 gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
-				 int *nmaps, const char *old_pgdata, const char *new_pgdata)
+				 int *nmaps,
+				 const char *old_pgdata, const char *new_pgdata)
 {
 	FileNameMap *maps;
 	int			old_relnum,
 				new_relnum;
 	int			num_maps = 0;
+	bool		all_matched = true;
 
+	/* There will certainly not be more mappings than there are old rels */
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
 
 	/*
-	 * The old database shouldn't have more relations than the new one. We
-	 * force the new cluster to have a TOAST table if the old table had one.
+	 * Each of the RelInfo arrays should be sorted by OID.  Scan through them
+	 * and match them up.  If we fail to match everything, we'll abort, but
+	 * first print as much info as we can about mismatches.
 	 */
-	if (old_db->rel_arr.nrels > new_db->rel_arr.nrels)
-		pg_fatal("old and new databases \"%s\" have a mismatched number of relations\n",
-				 old_db->db_name);
-
-	/* Drive the loop using new_relnum, which might be higher. */
-	for (old_relnum = new_relnum = 0; new_relnum < new_db->rel_arr.nrels;
-		 new_relnum++)
+	old_relnum = new_relnum = 0;
+	while (old_relnum < old_db->rel_arr.nrels ||
+		   new_relnum < new_db->rel_arr.nrels)
 	{
-		RelInfo    *old_rel;
-		RelInfo    *new_rel = &new_db->rel_arr.rels[new_relnum];
+		RelInfo    *old_rel = (old_relnum < old_db->rel_arr.nrels) ?
+		&old_db->rel_arr.rels[old_relnum] : NULL;
+		RelInfo    *new_rel = (new_relnum < new_db->rel_arr.nrels) ?
+		&new_db->rel_arr.rels[new_relnum] : NULL;
 
-		/*
-		 * It is possible that the new cluster has a TOAST table for a table
-		 * that didn't need one in the old cluster, e.g. 9.0 to 9.1 changed
-		 * the NUMERIC length computation.  Therefore, if we have a TOAST
-		 * table in the new cluster that doesn't match, skip over it and
-		 * continue processing.  It is possible this TOAST table used an OID
-		 * that was reserved in the old cluster, but we have no way of testing
-		 * that, and we would have already gotten an error at the new cluster
-		 * schema creation stage.  Fortunately, since we only restore the OID
-		 * counter after schema restore, and restore in OID order via pg_dump,
-		 * a conflict would only happen if the new TOAST table had a very low
-		 * OID.  However, TOAST tables created long after initial table
-		 * creation can have any OID, particularly after OID wraparound.
-		 */
-		if (old_relnum == old_db->rel_arr.nrels)
+		/* handle running off one array before the other */
+		if (!new_rel)
 		{
-			if (strcmp(new_rel->nspname, "pg_toast") == 0)
-				continue;
-			else
-				pg_fatal("Extra non-TOAST relation found in database \"%s\": new OID %d\n",
-						 old_db->db_name, new_rel->reloid);
+			/*
+			 * old_rel is unmatched.  This should never happen, because we
+			 * force new rels to have TOAST tables if the old one did.
+			 */
+			report_unmatched_relation(old_rel, old_db, false);
+			all_matched = false;
+			old_relnum++;
+			continue;
+		}
+		if (!old_rel)
+		{
+			/*
+			 * new_rel is unmatched.  This shouldn't really happen either, but
+			 * if it's a TOAST table, we can ignore it and continue
+			 * processing, assuming that the new server made a TOAST table
+			 * that wasn't needed.
+			 */
+			if (strcmp(new_rel->nspname, "pg_toast") != 0)
+			{
+				report_unmatched_relation(new_rel, new_db, true);
+				all_matched = false;
+			}
+			new_relnum++;
+			continue;
 		}
 
-		old_rel = &old_db->rel_arr.rels[old_relnum];
-
-		if (old_rel->reloid != new_rel->reloid)
+		/* check for mismatched OID */
+		if (old_rel->reloid < new_rel->reloid)
 		{
-			if (strcmp(new_rel->nspname, "pg_toast") == 0)
-				continue;
-			else
-				pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
-						 old_db->db_name, old_rel->reloid, new_rel->reloid);
+			/* old_rel is unmatched, see comment above */
+			report_unmatched_relation(old_rel, old_db, false);
+			all_matched = false;
+			old_relnum++;
+			continue;
+		}
+		else if (old_rel->reloid > new_rel->reloid)
+		{
+			/* new_rel is unmatched, see comment above */
+			if (strcmp(new_rel->nspname, "pg_toast") != 0)
+			{
+				report_unmatched_relation(new_rel, new_db, true);
+				all_matched = false;
+			}
+			new_relnum++;
+			continue;
 		}
 
 		/*
-		 * TOAST table names initially match the heap pg_class oid. In
-		 * pre-8.4, TOAST table names change during CLUSTER; in pre-9.0, TOAST
-		 * table names change during ALTER TABLE ALTER COLUMN SET TYPE. In >=
-		 * 9.0, TOAST relation names always use heap table oids, hence we
-		 * cannot check relation names when upgrading from pre-9.0. Clusters
-		 * upgraded to 9.0 will get matching TOAST names. If index names don't
-		 * match primary key constraint names, this will fail because pg_dump
-		 * dumps constraint names and pg_upgrade checks index names.
+		 * Verify that rels of same OID have same name.  The namespace name
+		 * should always match, but the relname might not match for TOAST
+		 * tables (and, therefore, their indexes).
+		 *
+		 * TOAST table names initially match the heap pg_class oid, but
+		 * pre-9.0 they can change during certain commands such as CLUSTER, so
+		 * don't insist on a match if old cluster is < 9.0.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
-			((GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
-			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
-			 strcmp(old_rel->relname, new_rel->relname) != 0))
-			pg_fatal("Mismatch of relation names in database \"%s\": "
-					 "old name \"%s.%s\", new name \"%s.%s\"\n",
-					 old_db->db_name, old_rel->nspname, old_rel->relname,
-					 new_rel->nspname, new_rel->relname);
+			(strcmp(old_rel->relname, new_rel->relname) != 0 &&
+			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
+			  strcmp(old_rel->nspname, "pg_toast") != 0)))
+		{
+			pg_log(PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
+				   "old name \"%s.%s\", new name \"%s.%s\"\n",
+				   old_rel->reloid, old_db->db_name,
+				   old_rel->nspname, old_rel->relname,
+				   new_rel->nspname, new_rel->relname);
+			all_matched = false;
+			old_relnum++;
+			new_relnum++;
+			continue;
+		}
 
+		/* OK, create a mapping entry */
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 								old_rel, new_rel, maps + num_maps);
 		num_maps++;
 		old_relnum++;
+		new_relnum++;
 	}
 
-	/* Did we fail to exhaust the old array? */
-	if (old_relnum != old_db->rel_arr.nrels)
-		pg_fatal("old and new databases \"%s\" have a mismatched number of relations\n",
+	if (!all_matched)
+		pg_fatal("Failed to match up old and new tables in database \"%s\"\n",
 				 old_db->db_name);
 
 	*nmaps = num_maps;
@@ -184,6 +212,71 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* used only for logging and error reporing, old/new are identical */
 	map->nspname = old_rel->nspname;
 	map->relname = old_rel->relname;
+}
+
+
+/*
+ * Complain about a relation we couldn't match to the other database,
+ * identifying it as best we can.
+ */
+static void
+report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
+{
+	Oid			reloid = rel->reloid;	/* we might change rel below */
+	char		reldesc[1000];
+	int			i;
+
+	snprintf(reldesc, sizeof(reldesc), "\"%s.%s\"",
+			 rel->nspname, rel->relname);
+	if (rel->indtable)
+	{
+		for (i = 0; i < db->rel_arr.nrels; i++)
+		{
+			const RelInfo *hrel = &db->rel_arr.rels[i];
+
+			if (hrel->reloid == rel->indtable)
+			{
+				snprintf(reldesc + strlen(reldesc),
+						 sizeof(reldesc) - strlen(reldesc),
+						 " which is an index on \"%s.%s\"",
+						 hrel->nspname, hrel->relname);
+				/* Shift attention to index's table for toast check */
+				rel = hrel;
+				break;
+			}
+		}
+		if (i >= db->rel_arr.nrels)
+			snprintf(reldesc + strlen(reldesc),
+					 sizeof(reldesc) - strlen(reldesc),
+					 " which is an index on OID %u", rel->indtable);
+	}
+	if (rel->toastheap)
+	{
+		for (i = 0; i < db->rel_arr.nrels; i++)
+		{
+			const RelInfo *brel = &db->rel_arr.rels[i];
+
+			if (brel->reloid == rel->toastheap)
+			{
+				snprintf(reldesc + strlen(reldesc),
+						 sizeof(reldesc) - strlen(reldesc),
+						 " which is the TOAST table for \"%s.%s\"",
+						 brel->nspname, brel->relname);
+				break;
+			}
+		}
+		if (i >= db->rel_arr.nrels)
+			snprintf(reldesc + strlen(reldesc),
+					 sizeof(reldesc) - strlen(reldesc),
+					 " which is the TOAST table for OID %u", rel->toastheap);
+	}
+
+	if (is_new_db)
+		pg_log(PG_WARNING, "No match found in old cluster for new relation with OID %u in database \"%s\": %s\n",
+			   reloid, db->db_name, reldesc);
+	else
+		pg_log(PG_WARNING, "No match found in new cluster for old relation with OID %u in database \"%s\": %s\n",
+			   reloid, db->db_name, reldesc);
 }
 
 
@@ -301,11 +394,11 @@ get_db_infos(ClusterInfo *cluster)
 /*
  * get_rel_infos()
  *
- * gets the relinfos for all the user tables of the database referred
- * by "db".
+ * gets the relinfos for all the user tables and indexes of the database
+ * referred to by "dbinfo".
  *
- * NOTE: we assume that relations/entities with oids greater than
- * FirstNormalObjectId belongs to the user
+ * Note: the resulting RelInfo array is assumed to be sorted by OID.
+ * This allows later processing to match up old and new databases efficiently.
  */
 static void
 get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
@@ -323,93 +416,98 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	int			i_spclocation,
 				i_nspname,
 				i_relname,
-				i_oid,
+				i_reloid,
+				i_indtable,
+				i_toastheap,
 				i_relfilenode,
 				i_reltablespace;
 	char		query[QUERY_ALLOC];
 	char	   *last_namespace = NULL,
 			   *last_tablespace = NULL;
 
+	query[0] = '\0';			/* initialize query string to empty */
+
 	/*
+	 * Create a CTE that collects OIDs of regular user tables, including
+	 * matviews and sequences, but excluding toast tables and indexes.  We
+	 * assume that relations with OIDs >= FirstNormalObjectId belong to the
+	 * user.  (That's probably redundant with the namespace-name exclusions,
+	 * but let's be safe.)
+	 *
 	 * pg_largeobject contains user data that does not appear in pg_dump
-	 * --schema-only output, so we have to copy that system table heap and
-	 * index.  We could grab the pg_largeobject oids from template1, but it is
-	 * easy to treat it as a normal table. Order by oid so we can join old/new
-	 * structures efficiently.
+	 * output, so we have to copy that system table.  It's easiest to do that
+	 * by treating it as a user table.  Likewise for pg_largeobject_metadata,
+	 * if it exists.
 	 */
-
-	snprintf(query, sizeof(query),
-	/* get regular heap */
-			 "WITH regular_heap (reloid) AS ( "
-			 "	SELECT c.oid "
-			 "	FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
-			 "		   ON c.relnamespace = n.oid "
-			 "	LEFT OUTER JOIN pg_catalog.pg_index i "
-			 "		   ON c.oid = i.indexrelid "
-			 "	WHERE relkind IN ('r', 'm', 'i', 'S') AND "
-
-	/*
-	 * pg_dump only dumps valid indexes;  testing indisready is necessary in
-	 * 9.2, and harmless in earlier/later versions.
-	 */
-			 "		i.indisvalid IS DISTINCT FROM false AND "
-			 "		i.indisready IS DISTINCT FROM false AND "
+	snprintf(query + strlen(query), sizeof(query) - strlen(query),
+			 "WITH regular_heap (reloid, indtable, toastheap) AS ( "
+			 "  SELECT c.oid, 0::oid, 0::oid "
+			 "  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
+			 "         ON c.relnamespace = n.oid "
+			 "  WHERE relkind IN ('r', 'm', 'S') AND "
 	/* exclude possible orphaned temp tables */
-			 "	  ((n.nspname !~ '^pg_temp_' AND "
-			 "	    n.nspname !~ '^pg_toast_temp_' AND "
-	/* skip pg_toast because toast index have relkind == 'i', not 't' */
-			 "	    n.nspname NOT IN ('pg_catalog', 'information_schema', "
-			 "							'binary_upgrade', 'pg_toast') AND "
-			 "		  c.oid >= %u) OR "
-			 "	  (n.nspname = 'pg_catalog' AND "
-			 "    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) ))), "
+			 "    ((n.nspname !~ '^pg_temp_' AND "
+			 "      n.nspname !~ '^pg_toast_temp_' AND "
+			 "      n.nspname NOT IN ('pg_catalog', 'information_schema', "
+			 "                        'binary_upgrade', 'pg_toast') AND "
+			 "      c.oid >= %u::pg_catalog.oid) OR "
+			 "     (n.nspname = 'pg_catalog' AND "
+			 "      relname IN ('pg_largeobject'%s) ))), ",
+			 FirstNormalObjectId,
+			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900) ?
+			 ", 'pg_largeobject_metadata'" : "");
 
 	/*
-	 * We have to gather the TOAST tables in later steps because we can't
-	 * schema-qualify TOAST tables.
+	 * Add a CTE that collects OIDs of toast tables belonging to the tables
+	 * selected by the regular_heap CTE.  (We have to do this separately
+	 * because the namespace-name rules above don't work for toast tables.)
 	 */
-	/* get TOAST heap */
-			 "	toast_heap (reloid) AS ( "
-			 "	SELECT reltoastrelid "
-			 "	FROM regular_heap JOIN pg_catalog.pg_class c "
-			 "		ON regular_heap.reloid = c.oid "
-			 "		AND c.reltoastrelid != %u), "
-	/* get indexes on regular and TOAST heap */
-			 "	all_index (reloid) AS ( "
-			 "	SELECT indexrelid "
-			 "	FROM pg_index "
-			 "	WHERE indisvalid "
-			 "    AND indrelid IN (SELECT reltoastrelid "
-			 "        FROM (SELECT reloid FROM regular_heap "
-			 "			   UNION ALL "
-			 "			   SELECT reloid FROM toast_heap) all_heap "
-			 "            JOIN pg_catalog.pg_class c "
-			 "            ON all_heap.reloid = c.oid "
-			 "            AND c.reltoastrelid != %u)) "
-	/* get all rels */
-			 "SELECT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, c.reltablespace, %s "
-			 "FROM (SELECT reloid FROM regular_heap "
-			 "	   UNION ALL "
-			 "	   SELECT reloid FROM toast_heap  "
-			 "	   UNION ALL "
-			 "	   SELECT reloid FROM all_index) all_rels "
+	snprintf(query + strlen(query), sizeof(query) - strlen(query),
+			 "  toast_heap (reloid, indtable, toastheap) AS ( "
+			 "  SELECT c.reltoastrelid, 0::oid, c.oid "
+			 "  FROM regular_heap JOIN pg_catalog.pg_class c "
+			 "      ON regular_heap.reloid = c.oid "
+			 "  WHERE c.reltoastrelid != 0), ");
+
+	/*
+	 * Add a CTE that collects OIDs of all valid indexes on the previously
+	 * selected tables.  We can ignore invalid indexes since pg_dump does.
+	 * Testing indisready is necessary in 9.2, and harmless in earlier/later
+	 * versions.
+	 */
+	snprintf(query + strlen(query), sizeof(query) - strlen(query),
+			 "  all_index (reloid, indtable, toastheap) AS ( "
+			 "  SELECT indexrelid, indrelid, 0::oid "
+			 "  FROM pg_catalog.pg_index "
+			 "  WHERE indisvalid AND indisready "
+			 "    AND indrelid IN "
+			 "        (SELECT reloid FROM regular_heap "
+			 "         UNION ALL "
+			 "         SELECT reloid FROM toast_heap)) ");
+
+	/*
+	 * And now we can write the query that retrieves the data we want for each
+	 * heap and index relation.  Make sure result is sorted by OID.
+	 */
+	snprintf(query + strlen(query), sizeof(query) - strlen(query),
+			 "SELECT all_rels.*, n.nspname, c.relname, "
+			 "  c.relfilenode, c.reltablespace, %s "
+			 "FROM (SELECT * FROM regular_heap "
+			 "      UNION ALL "
+			 "      SELECT * FROM toast_heap "
+			 "      UNION ALL "
+			 "      SELECT * FROM all_index) all_rels "
 			 "  JOIN pg_catalog.pg_class c "
-			 "		ON all_rels.reloid = c.oid "
+			 "      ON all_rels.reloid = c.oid "
 			 "  JOIN pg_catalog.pg_namespace n "
-			 "	   ON c.relnamespace = n.oid "
+			 "     ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-			 "	   ON c.reltablespace = t.oid "
-	/* we preserve pg_class.oid so we sort by it to match old/new */
+			 "     ON c.reltablespace = t.oid "
 			 "ORDER BY 1;",
-			 FirstNormalObjectId,
-	/* does pg_largeobject_metadata need to be migrated? */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
-	 "" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'",
-			 InvalidOid, InvalidOid,
-	/* 9.2 removed the spclocation column */
-			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
-			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+	/* 9.2 removed the pg_tablespace.spclocation column */
+			 (GET_MAJOR_VERSION(cluster->major_version) >= 902) ?
+			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation" :
+			 "t.spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -417,7 +515,9 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	relinfos = (RelInfo *) pg_malloc(sizeof(RelInfo) * ntups);
 
-	i_oid = PQfnumber(res, "oid");
+	i_reloid = PQfnumber(res, "reloid");
+	i_indtable = PQfnumber(res, "indtable");
+	i_toastheap = PQfnumber(res, "toastheap");
 	i_nspname = PQfnumber(res, "nspname");
 	i_relname = PQfnumber(res, "relname");
 	i_relfilenode = PQfnumber(res, "relfilenode");
@@ -428,7 +528,9 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	{
 		RelInfo    *curr = &relinfos[num_rels++];
 
-		curr->reloid = atooid(PQgetvalue(res, relnum, i_oid));
+		curr->reloid = atooid(PQgetvalue(res, relnum, i_reloid));
+		curr->indtable = atooid(PQgetvalue(res, relnum, i_indtable));
+		curr->toastheap = atooid(PQgetvalue(res, relnum, i_toastheap));
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
 		curr->nsp_alloc = false;
@@ -453,7 +555,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
 		curr->tblsp_alloc = false;
 
-		/* Is the tablespace oid non-zero? */
+		/* Is the tablespace oid non-default? */
 		if (atooid(PQgetvalue(res, relnum, i_reltablespace)) != 0)
 		{
 			/*

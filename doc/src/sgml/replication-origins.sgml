@@ -66,7 +66,7 @@
   <link linkend="pg-replication-origin-xact-setup"><function>pg_replication_origin_xact_setup()</function></link>.
   If that's done replication progress will persist in a crash safe
   manner. Replay progress for all replication origins can be seen in the
-  <link linkend="catalog-pg-replication-origin-status">
+  <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname>
   </link> view. An individual origin's progress, e.g. when resuming
   replication, can be acquired using

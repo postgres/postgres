@@ -50,14 +50,29 @@
 
 #define PARALLEL_TUPLE_QUEUE_SIZE		65536
 
-/* DSM structure for accumulating per-PlanState instrumentation. */
+/*
+ * DSM structure for accumulating per-PlanState instrumentation.
+ *
+ * instrument_options: Same meaning here as in instrument.c.
+ *
+ * instrument_offset: Offset, relative to the start of this structure,
+ * of the first Instrumentation object.  This will depend on the length of
+ * the plan_node_id array.
+ *
+ * num_workers: Number of workers.
+ *
+ * num_plan_nodes: Number of plan nodes.
+ *
+ * plan_node_id: Array of plan nodes for which we are gathering instrumentation
+ * from parallel workers.  The length of this array is given by num_plan_nodes.
+ */
 struct SharedExecutorInstrumentation
 {
-	int instrument_options;
-	int instrument_offset;		/* offset of first Instrumentation struct */
-	int num_workers;							/* # of workers */
-	int num_plan_nodes;							/* # of plan nodes */
-	int plan_node_id[FLEXIBLE_ARRAY_MEMBER];	/* array of plan node IDs */
+	int			instrument_options;
+	int			instrument_offset;
+	int			num_workers;
+	int			num_plan_nodes;
+	int			plan_node_id[FLEXIBLE_ARRAY_MEMBER];
 	/* array of num_plan_nodes * num_workers Instrumentation objects follows */
 };
 #define GetInstrumentationArray(sei) \
@@ -272,7 +287,8 @@ ExecParallelSetupTupleQueues(ParallelContext *pcxt, bool reinitialize)
 	if (!reinitialize)
 		tqueuespace =
 			shm_toc_allocate(pcxt->toc,
-							 PARALLEL_TUPLE_QUEUE_SIZE * pcxt->nworkers);
+							 mul_size(PARALLEL_TUPLE_QUEUE_SIZE,
+									  pcxt->nworkers));
 	else
 		tqueuespace = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_TUPLE_QUEUE);
 
@@ -281,7 +297,8 @@ ExecParallelSetupTupleQueues(ParallelContext *pcxt, bool reinitialize)
 	{
 		shm_mq	   *mq;
 
-		mq = shm_mq_create(tqueuespace + i * PARALLEL_TUPLE_QUEUE_SIZE,
+		mq = shm_mq_create(tqueuespace +
+						   ((Size) i) * PARALLEL_TUPLE_QUEUE_SIZE,
 						   (Size) PARALLEL_TUPLE_QUEUE_SIZE);
 
 		shm_mq_set_receiver(mq, MyProc);
@@ -365,12 +382,12 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	 * looking at pgBufferUsage, so do it unconditionally.
 	 */
 	shm_toc_estimate_chunk(&pcxt->estimator,
-						   sizeof(BufferUsage) * pcxt->nworkers);
+						   mul_size(sizeof(BufferUsage), pcxt->nworkers));
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/* Estimate space for tuple queues. */
 	shm_toc_estimate_chunk(&pcxt->estimator,
-						   PARALLEL_TUPLE_QUEUE_SIZE * pcxt->nworkers);
+						   mul_size(PARALLEL_TUPLE_QUEUE_SIZE, pcxt->nworkers));
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/*
@@ -385,11 +402,13 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	if (estate->es_instrument)
 	{
 		instrumentation_len =
-			offsetof(SharedExecutorInstrumentation, plan_node_id)
-			+ sizeof(int) * e.nnodes;
+			offsetof(SharedExecutorInstrumentation, plan_node_id) +
+			sizeof(int) * e.nnodes;
 		instrumentation_len = MAXALIGN(instrumentation_len);
 		instrument_offset = instrumentation_len;
-		instrumentation_len += sizeof(Instrumentation) * e.nnodes * nworkers;
+		instrumentation_len +=
+			mul_size(sizeof(Instrumentation),
+					 mul_size(e.nnodes, nworkers));
 		shm_toc_estimate_chunk(&pcxt->estimator, instrumentation_len);
 		shm_toc_estimate_keys(&pcxt->estimator, 1);
 	}
@@ -417,7 +436,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 
 	/* Allocate space for each worker's BufferUsage; no need to initialize. */
 	bufusage_space = shm_toc_allocate(pcxt->toc,
-									  sizeof(BufferUsage) * pcxt->nworkers);
+							  mul_size(sizeof(BufferUsage), pcxt->nworkers));
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_BUFFER_USAGE, bufusage_space);
 	pei->buffer_usage = bufusage_space;
 
@@ -496,9 +515,9 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 		InstrAggNode(planstate->instrument, &instrument[n]);
 
 	/* Also store the per-worker detail. */
-	ibytes = instrumentation->num_workers * sizeof(Instrumentation);
+	ibytes = mul_size(instrumentation->num_workers, sizeof(Instrumentation));
 	planstate->worker_instrument =
-		palloc(offsetof(WorkerInstrumentation, instrument) + ibytes);
+		palloc(ibytes + offsetof(WorkerInstrumentation, instrument));
 	planstate->worker_instrument->num_workers = instrumentation->num_workers;
 	memcpy(&planstate->worker_instrument->instrument, instrument, ibytes);
 

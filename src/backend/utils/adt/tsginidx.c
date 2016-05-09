@@ -222,9 +222,10 @@ TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem)
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
-		return checkcondition_gin_internal(gcv,
-										   (QueryOperand *) curitem,
-										   NULL /* don't have any position info */);
+		return
+			checkcondition_gin_internal(gcv,
+										(QueryOperand *) curitem,
+										NULL /* don't have position info */ );
 
 	switch (curitem->qoperator.oper)
 	{

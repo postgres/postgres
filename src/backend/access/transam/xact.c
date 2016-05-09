@@ -1164,6 +1164,24 @@ RecordTransactionCommit(void)
 		Assert(nchildren == 0);
 
 		/*
+		 * Transactions without an assigned xid can contain invalidation
+		 * messages (e.g. explicit relcache invalidations or catcache
+		 * invalidations for inplace updates); standbys need to process
+		 * those. We can't emit a commit record without an xid, and we don't
+		 * want to force assigning an xid, because that'd be problematic for
+		 * e.g. vacuum.  Hence we emit a bespoke record for the
+		 * invalidations. We don't want to use that in case a commit record is
+		 * emitted, so they happen synchronously with commits (besides not
+		 * wanting to emit more WAL recoreds).
+		 */
+		if (nmsgs != 0)
+		{
+			LogStandbyInvalidations(nmsgs, invalMessages,
+									RelcacheInitFileInval);
+			wrote_xlog = true; /* not strictly necessary */
+		}
+
+		/*
 		 * If we didn't create XLOG entries, we're done here; otherwise we
 		 * should trigger flushing those entries the same as a commit record
 		 * would.  This will primarily happen for HOT pruning and the like; we

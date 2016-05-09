@@ -947,7 +947,7 @@ extern void ginHeapTupleFastCollect(GinState *ginstate,
 						GinTupleCollector *collector,
 						OffsetNumber attnum, Datum value, bool isNull,
 						ItemPointer ht_ctid);
-extern void ginInsertCleanup(GinState *ginstate,
+extern void ginInsertCleanup(GinState *ginstate, bool full_clean,
 				 bool fill_fsm, IndexBulkDeleteResult *stats);
 
 /* ginpostinglist.c */

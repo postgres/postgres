@@ -40,12 +40,22 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
+	bool		ret;
+
+	/*
+	 * atomics.h specifies sequential consistency ("full barrier semantics")
+	 * for this interface.  Since "lwsync" provides acquire/release
+	 * consistency only, do not use it here.  GCC atomics observe the same
+	 * restriction; see its rs6000_pre_atomic_barrier().
+	 */
+	__asm__ __volatile__ ("	sync \n" ::: "memory");
+
 	/*
 	 * XXX: __compare_and_swap is defined to take signed parameters, but that
 	 * shouldn't matter since we don't perform any arithmetic operations.
 	 */
-	bool		ret = __compare_and_swap((volatile int*)&ptr->value,
-										 (int *)expected, (int)newval);
+	ret = __compare_and_swap((volatile int*)&ptr->value,
+							 (int *)expected, (int)newval);
 
 	/*
 	 * xlc's documentation tells us:
@@ -63,6 +73,10 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
+	/*
+	 * __fetch_and_add() emits a leading "sync" and trailing "isync", thereby
+	 * providing sequential consistency.  This is undocumented.
+	 */
 	return __fetch_and_add((volatile int *)&ptr->value, add_);
 }
 
@@ -73,8 +87,12 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool		ret = __compare_and_swaplp((volatile long*)&ptr->value,
-										   (long *)expected, (long)newval);
+	bool		ret;
+
+	__asm__ __volatile__ ("	sync \n" ::: "memory");
+
+	ret = __compare_and_swaplp((volatile long*)&ptr->value,
+							   (long *)expected, (long)newval);
 
 	__isync();
 

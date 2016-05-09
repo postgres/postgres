@@ -454,6 +454,7 @@ typedef struct xl_btree_newroot
 
 #define BTORDER_PROC		1
 #define BTSORTSUPPORT_PROC	2
+#define BTNProcs			2
 
 /*
  *	We need to be able to tell the difference between read and write

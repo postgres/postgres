@@ -790,6 +790,32 @@ sub new
 	return $self;
 }
 
+package VS2015Solution;
+
+#
+# Package that encapsulates a Visual Studio 2015 solution file
+#
+
+use Carp;
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{solutionFileVersion}        = '12.00';
+	$self->{vcver}                      = '14.00';
+	$self->{visualStudioName}           = 'Visual Studio 2015';
+	$self->{VisualStudioVersion}        = '14.0.24730.2';
+	$self->{MinimumVisualStudioVersion} = '10.0.40219.1';
+
+	return $self;
+}
+
 sub GetAdditionalHeaders
 {
 	my ($self, $f) = @_;

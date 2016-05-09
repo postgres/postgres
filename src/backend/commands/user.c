@@ -1262,17 +1262,9 @@ GrantRole(GrantRoleStmt *stmt)
 	ListCell   *item;
 
 	if (stmt->grantor)
-	{
-		check_rolespec_name(stmt->grantor,
-							"Cannot specify reserved role as grantor.");
 		grantor = get_rolespec_oid(stmt->grantor, false);
-	}
 	else
 		grantor = GetUserId();
-
-	foreach(item, stmt->grantee_roles)
-		check_rolespec_name(lfirst(item),
-							"Cannot GRANT roles to a reserved role.");
 
 	grantee_ids = roleSpecsToIds(stmt->grantee_roles);
 
@@ -1363,9 +1355,6 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to reassign objects")));
 	}
-
-	check_rolespec_name(stmt->newrole,
-						"Cannot specify reserved role as owner.");
 
 	/* Must have privileges on the receiving side too */
 	newrole = get_rolespec_oid(stmt->newrole, false);

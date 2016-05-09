@@ -73,8 +73,8 @@ blhandler(PG_FUNCTION_ARGS)
 {
 	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
 
-	amroutine->amstrategies = 1;
-	amroutine->amsupport = 1;
+	amroutine->amstrategies = BLOOM_NSTRATEGIES;
+	amroutine->amsupport = BLOOM_NPROC;
 	amroutine->amcanorder = false;
 	amroutine->amcanorderbyop = false;
 	amroutine->amcanbackward = false;

@@ -825,6 +825,16 @@ standby_redo(XLogReaderState *record)
 
 		ProcArrayApplyRecoveryInfo(&running);
 	}
+	else if (info == XLOG_INVALIDATIONS)
+	{
+		xl_invalidations *xlrec = (xl_invalidations *) XLogRecGetData(record);
+
+		ProcessCommittedInvalidationMessages(xlrec->msgs,
+											 xlrec->nmsgs,
+											 xlrec->relcacheInitFileInval,
+											 xlrec->dbId,
+											 xlrec->tsId);
+	}
 	else
 		elog(PANIC, "standby_redo: unknown op code %u", info);
 }
@@ -1067,4 +1077,29 @@ LogAccessExclusiveLockPrepare(void)
 	 * InvalidTransactionId which we later assert cannot happen.
 	 */
 	(void) GetTopTransactionId();
+}
+
+/*
+ * Emit WAL for invalidations. This currently is only used for commits without
+ * an xid but which contain invalidations.
+ */
+void
+LogStandbyInvalidations(int nmsgs, SharedInvalidationMessage *msgs,
+						bool relcacheInitFileInval)
+{
+	xl_invalidations xlrec;
+
+	/* prepare record */
+	memset(&xlrec, 0, sizeof(xlrec));
+	xlrec.dbId = MyDatabaseId;
+	xlrec.tsId = MyDatabaseTableSpace;
+	xlrec.relcacheInitFileInval = relcacheInitFileInval;
+	xlrec.nmsgs = nmsgs;
+
+	/* perform insertion */
+	XLogBeginInsert();
+	XLogRegisterData((char *) (&xlrec), MinSizeOfInvalidations);
+	XLogRegisterData((char *) msgs,
+					 nmsgs * sizeof(SharedInvalidationMessage));
+	XLogInsert(RM_STANDBY_ID, XLOG_INVALIDATIONS);
 }

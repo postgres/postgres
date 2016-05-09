@@ -113,7 +113,7 @@ int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 1.0e10;
 
-int			max_parallel_degree = 0;
+int			max_parallel_degree = 2;
 
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
@@ -3944,12 +3944,12 @@ quals_match_foreign_key(PlannerInfo *root, ForeignKeyOptInfo *fkinfo,
 			if (i > 0 && bms_is_member(quallstidx, qualmatches))
 				continue;
 
-			/*
-			 * Here since 'usefulquals' only contains bitmap indexes for quals
-			 * of type "var op var" we can safely skip checking this.
-			 */
 			rinfo = (RestrictInfo *) lfirst(lc);
 			clause = (OpExpr *) rinfo->clause;
+
+			/* only OpExprs are useful for consideration */
+			if (!IsA(clause, OpExpr))
+				continue;
 
 			/*
 			 * If the operator does not match then there's little point in

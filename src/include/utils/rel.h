@@ -505,5 +505,6 @@ typedef struct ViewOptions
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);
 extern void RelationDecrementReferenceCount(Relation rel);
+extern bool RelationHasUnloggedIndex(Relation rel);
 
 #endif   /* REL_H */

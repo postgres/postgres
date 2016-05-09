@@ -465,4 +465,27 @@ sub new
 	return $self;
 }
 
+package VC2015Project;
+
+#
+# Package that encapsulates a Visual C++ 2015 project file
+#
+
+use strict;
+use warnings;
+use base qw(VC2012Project);
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{vcver}           = '14.00';
+	$self->{PlatformToolset} = 'v140';
+	$self->{ToolsVersion}    = '14.0';
+
+	return $self;
+}
+
 1;

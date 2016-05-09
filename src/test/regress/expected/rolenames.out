@@ -816,19 +816,11 @@ LINE 1: DROP USER MAPPING IF EXISTS FOR CURRENT_ROLE SERVER sv9;
 DROP USER MAPPING IF EXISTS FOR nonexistent SERVER sv9;  -- error
 NOTICE:  role "nonexistent" does not exist, skipping
 -- GRANT/REVOKE
-GRANT testrol0 TO pg_abc; -- error
-ERROR:  role "pg_abc" is reserved
-DETAIL:  Cannot GRANT roles to a reserved role.
-GRANT pg_abc TO pg_abcdef; -- error
-ERROR:  role "pg_abcdef" is reserved
-DETAIL:  Cannot GRANT roles to a reserved role.
-SET ROLE pg_testrole; -- error
-ERROR:  invalid value for parameter "role": "pg_testrole"
-SET ROLE pg_signal_backend; --error
-ERROR:  invalid value for parameter "role": "pg_signal_backend"
-CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --error
-ERROR:  role "pg_signal_backend" is reserved
-DETAIL:  Cannot specify reserved role as owner.
+GRANT testrol0 TO pg_signal_backend; -- success
+SET ROLE pg_signal_backend; --success
+RESET ROLE;
+CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --success
+SET ROLE testrol2;
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
  proname  | proacl 

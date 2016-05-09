@@ -51,8 +51,8 @@ hashhandler(PG_FUNCTION_ARGS)
 {
 	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
 
-	amroutine->amstrategies = 1;
-	amroutine->amsupport = 1;
+	amroutine->amstrategies = HTMaxStrategyNumber;
+	amroutine->amsupport = HASHNProcs;
 	amroutine->amcanorder = false;
 	amroutine->amcanorderbyop = false;
 	amroutine->amcanbackward = true;
@@ -279,7 +279,6 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 		buf = so->hashso_curbuf;
 		Assert(BufferIsValid(buf));
 		page = BufferGetPage(buf);
-		TestForOldSnapshot(scan->xs_snapshot, rel, page);
 		maxoffnum = PageGetMaxOffsetNumber(page);
 		for (offnum = ItemPointerGetOffsetNumber(current);
 			 offnum <= maxoffnum;

@@ -73,7 +73,7 @@ static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				   RangeTblEntry *rte);
-static void create_parallel_paths(PlannerInfo *root, RelOptInfo *rel);
+static void create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel);
 static void set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 						  RangeTblEntry *rte);
 static bool function_rte_parallel_ok(RangeTblEntry *rte);
@@ -448,6 +448,16 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
+	 * If this is a baserel, consider gathering any partial paths we may have
+	 * created for it.  (If we tried to gather inheritance children, we could
+	 * end up with a very large number of gather nodes, each trying to grab
+	 * its own pool of workers, so don't do this for otherrels.  Instead,
+	 * we'll consider gathering partial paths for the parent appendrel.)
+	 */
+	if (rel->reloptkind == RELOPT_BASEREL)
+		generate_gather_paths(root, rel);
+
+	/*
 	 * Allow a plugin to editorialize on the set of Paths for this base
 	 * relation.  It could add new paths (such as CustomPaths) by calling
 	 * add_path(), or delete or modify paths added by the core code.
@@ -643,7 +653,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* If appropriate, consider parallel sequential scan */
 	if (rel->consider_parallel && required_outer == NULL)
-		create_parallel_paths(root, rel);
+		create_plain_partial_paths(root, rel);
 
 	/* Consider index scans */
 	create_index_paths(root, rel);
@@ -653,11 +663,11 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 }
 
 /*
- * create_parallel_paths
- *	  Build parallel access paths for a plain relation
+ * create_plain_partial_paths
+ *	  Build partial access paths for parallel scan of a plain relation
  */
 static void
-create_parallel_paths(PlannerInfo *root, RelOptInfo *rel)
+create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	int			parallel_degree = 1;
 
@@ -712,16 +722,6 @@ create_parallel_paths(PlannerInfo *root, RelOptInfo *rel)
 
 	/* Add an unordered partial path based on a parallel sequential scan. */
 	add_partial_path(rel, create_seqscan_path(root, rel, NULL, parallel_degree));
-
-	/*
-	 * If this is a baserel, consider gathering any partial paths we may have
-	 * just created.  If we gathered an inheritance child, we could end up
-	 * with a very large number of gather nodes, each trying to grab its own
-	 * pool of workers, so don't do this in that case.  Instead, we'll
-	 * consider gathering partial paths for the appendrel.
-	 */
-	if (rel->reloptkind == RELOPT_BASEREL)
-		generate_gather_paths(root, rel);
 }
 
 /*
@@ -1262,9 +1262,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		appendpath = create_append_path(rel, partial_subpaths, NULL,
 										parallel_degree);
 		add_partial_path(rel, (Path *) appendpath);
-
-		/* Consider gathering it. */
-		generate_gather_paths(root, rel);
 	}
 
 	/*
@@ -1970,6 +1967,10 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  * generate_gather_paths
  *		Generate parallel access paths for a relation by pushing a Gather on
  *		top of a partial path.
+ *
+ * This must not be called until after we're done creating all partial paths
+ * for the specified relation.  (Otherwise, add_partial_path might delete a
+ * path that some GatherPath has a reference to.)
  */
 void
 generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
@@ -1983,7 +1984,9 @@ generate_gather_paths(PlannerInfo *root, RelOptInfo *rel)
 
 	/*
 	 * The output of Gather is currently always unsorted, so there's only one
-	 * partial path of interest: the cheapest one.
+	 * partial path of interest: the cheapest one.  That will be the one at
+	 * the front of partial_pathlist because of the way add_partial_path
+	 * works.
 	 *
 	 * Eventually, we should have a Gather Merge operation that can merge
 	 * multiple tuple streams together while preserving their ordering.  We
@@ -2148,11 +2151,18 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 		join_search_one_level(root, lev);
 
 		/*
-		 * Do cleanup work on each just-processed rel.
+		 * Run generate_gather_paths() for each just-processed joinrel.  We
+		 * could not do this earlier because both regular and partial paths
+		 * can get added to a particular joinrel at multiple times within
+		 * join_search_one_level.  After that, we're done creating paths
+		 * for the joinrel, so run set_cheapest().
 		 */
 		foreach(lc, root->join_rel_level[lev])
 		{
 			rel = (RelOptInfo *) lfirst(lc);
+
+			/* Create GatherPaths for any useful partial paths for rel */
+			generate_gather_paths(root, rel);
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(rel);
@@ -2819,7 +2829,7 @@ remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
 #ifdef OPTIMIZER_DEBUG
 
 static void
-print_relids(Relids relids)
+print_relids(PlannerInfo *root, Relids relids)
 {
 	int			x;
 	bool		first = true;
@@ -2829,7 +2839,11 @@ print_relids(Relids relids)
 	{
 		if (!first)
 			printf(" ");
-		printf("%d", x);
+		if (x < root->simple_rel_array_size &&
+			root->simple_rte_array[x])
+			printf("%s", root->simple_rte_array[x]->eref->aliasname);
+		else
+			printf("%d", x);
 		first = false;
 	}
 }
@@ -3003,10 +3017,17 @@ print_path(PlannerInfo *root, Path *path, int indent)
 	if (path->parent)
 	{
 		printf("(");
-		print_relids(path->parent->relids);
-		printf(") rows=%.0f", path->parent->rows);
+		print_relids(root, path->parent->relids);
+		printf(")");
 	}
-	printf(" cost=%.2f..%.2f\n", path->startup_cost, path->total_cost);
+	if (path->param_info)
+	{
+		printf(" required_outer (");
+		print_relids(root, path->param_info->ppi_req_outer);
+		printf(")");
+	}
+	printf(" rows=%.0f cost=%.2f..%.2f\n",
+		   path->rows, path->startup_cost, path->total_cost);
 
 	if (path->pathkeys)
 	{
@@ -3052,7 +3073,7 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *l;
 
 	printf("RELOPTINFO (");
-	print_relids(rel->relids);
+	print_relids(root, rel->relids);
 	printf("): rows=%.0f width=%d\n", rel->rows, rel->reltarget->width);
 
 	if (rel->baserestrictinfo)
@@ -3072,6 +3093,12 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
 		print_path(root, lfirst(l), 1);
+	if (rel->cheapest_parameterized_paths)
+	{
+		printf("\n\tcheapest parameterized paths:\n");
+		foreach(l, rel->cheapest_parameterized_paths)
+			print_path(root, lfirst(l), 1);
+	}
 	if (rel->cheapest_startup_path)
 	{
 		printf("\n\tcheapest startup path:\n");

@@ -914,7 +914,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     </para>
     <para>
      Existing replication slots and their state can be seen in the
-     <link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link>
+     <link linkend="view-pg-replication-slots"><structname>pg_replication_slots</structname></link>
      view.
     </para>
     <para>

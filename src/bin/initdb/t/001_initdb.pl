@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 14;
+use Test::More tests => 15;
 
 my $tempdir = TestLib::tempdir;
 my $xlogdir = "$tempdir/pgxlog";
@@ -28,6 +28,10 @@ rmdir "$xlogdir/lost+found";
 command_fails(
 	[ 'initdb', '-X', 'pgxlog', $datadir ],
 	'relative xlog directory not allowed');
+
+command_fails(
+	[ 'initdb', '-U', 'pg_test', $datadir ],
+	'role names cannot being with "pg_"');
 
 mkdir $datadir;
 command_ok([ 'initdb', '-N', '-T', 'german', '-X', $xlogdir, $datadir ],

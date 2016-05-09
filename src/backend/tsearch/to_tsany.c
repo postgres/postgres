@@ -311,7 +311,8 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 				}
 			}
 
-			pos = prs.words[count].pos.pos; /* save current word's position */
+			/* save current word's position */
+			pos = prs.words[count].pos.pos;
 
 			/* Go through all variants obtained from this token */
 			cntvar = 0;
@@ -343,7 +344,11 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 			}
 
 			if (cntpos)
-				pushOperator(state, data->qoperator, 1); /* distance may be useful */
+			{
+				/* distance may be useful */
+				pushOperator(state, data->qoperator, 1);
+			}
+
 			cntpos++;
 		}
 

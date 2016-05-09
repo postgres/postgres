@@ -398,7 +398,7 @@ typedef Datum *DatumPtr;
  * the left of the width of bool, per comment above.
  */
 
-#define DatumGetBool(X) ((bool) (((bool) (X)) != 0))
+#define DatumGetBool(X) ((bool) (GET_1_BYTE(X) != 0))
 
 /*
  * BoolGetDatum

@@ -72,7 +72,7 @@
  *
  *		This should show how the executor works by having
  *		ExecInitNode(), ExecProcNode() and ExecEndNode() dispatch
- *		their work to the appopriate node support routines which may
+ *		their work to the appropriate node support routines which may
  *		in turn call these routines themselves on their subplans.
  */
 #include "postgres.h"

@@ -239,6 +239,7 @@ typedef HashMetaPageData *HashMetaPage;
  *	Since we only have one such proc in amproc, it's number 1.
  */
 #define HASHPROC		1
+#define HASHNProcs		1
 
 
 /* public routines */

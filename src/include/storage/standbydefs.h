@@ -17,17 +17,23 @@
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "storage/lockdefs.h"
+#include "storage/sinval.h"
 
 /* Recovery handlers for the Standby Rmgr (RM_STANDBY_ID) */
 extern void standby_redo(XLogReaderState *record);
 extern void standby_desc(StringInfo buf, XLogReaderState *record);
 extern const char *standby_identify(uint8 info);
+extern void standby_desc_invalidations(StringInfo buf,
+									   int nmsgs, SharedInvalidationMessage *msgs,
+									   Oid dbId, Oid tsId,
+									   bool relcacheInitFileInval);
 
 /*
  * XLOG message types
  */
 #define XLOG_STANDBY_LOCK			0x00
 #define XLOG_RUNNING_XACTS			0x10
+#define XLOG_INVALIDATIONS			0x20
 
 typedef struct xl_standby_locks
 {
@@ -49,5 +55,20 @@ typedef struct xl_running_xacts
 
 	TransactionId xids[FLEXIBLE_ARRAY_MEMBER];
 } xl_running_xacts;
+
+/*
+ * Invalidations for standby, currently only when transactions without an
+ * assigned xid commit.
+ */
+typedef struct xl_invalidations
+{
+	Oid			dbId;			/* MyDatabaseId */
+	Oid			tsId;			/* MyDatabaseTableSpace */
+	bool		relcacheInitFileInval;	/* invalidate relcache init file */
+	int			nmsgs;			/* number of shared inval msgs */
+	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
+} xl_invalidations;
+
+#define MinSizeOfInvalidations offsetof(xl_invalidations, msgs)
 
 #endif   /* STANDBYDEFS_H */

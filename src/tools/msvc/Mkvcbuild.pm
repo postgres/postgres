@@ -43,7 +43,7 @@ my $contrib_extrasource = {
 my @contrib_excludes = (
 	'commit_ts',       'hstore_plperl',    'hstore_plpython', 'intagg',
 	'ltree_plpython',  'pgcrypto',         'sepgsql',         'brin',
-	'test_extensions', 'snapshot_too_old');
+	'test_extensions', 'test_pg_dump', 'snapshot_too_old');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };

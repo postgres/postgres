@@ -55,7 +55,7 @@
 &Atilde;        A
 &Auml;        A
 &Aring;        A
-&AElig;        A
+&AElig;        AE
 </programlisting>
      The two characters must be separated by whitespace, and any leading or
      trailing whitespace on a line is ignored.
@@ -94,7 +94,10 @@
    A more complete example, which is directly useful for most European
    languages, can be found in <filename>unaccent.rules</>, which is installed
    in <filename>$SHAREDIR/tsearch_data/</> when the <filename>unaccent</>
-   module is installed.
+   module is installed.  This rules file translates characters with accents
+   to the same characters without accents, and it also expands ligatures
+   into the equivalent series of simple characters (for example, &AElig; to
+   AE).
   </para>
  </sect2>
 

@@ -1,6 +1,236 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-13">
+  <title>Release 9.3.13</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-05-12</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.3.12.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.13</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.3.9,
+    see <xref linkend="release-9-3-9">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Clear the OpenSSL error queue before OpenSSL calls, rather than
+      assuming it's clear already; and make sure we leave it clear
+      afterwards (Peter Geoghegan, Dave Vitek, Peter Eisentraut)
+     </para>
+
+     <para>
+      This change prevents problems when there are multiple connections
+      using OpenSSL within a single process and not all the code involved
+      follows the same rules for when to clear the error queue.
+      Failures have been reported specifically when a client application
+      uses SSL connections in <application>libpq</> concurrently with
+      SSL connections using the PHP, Python, or Ruby wrappers for OpenSSL.
+      It's possible for similar problems to arise within the server as well,
+      if an extension module establishes an outgoing SSL connection.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>failed to build any <replaceable>N</>-way joins</quote>
+      planner error with a full join enclosed in the right-hand side of a
+      left join (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect handling of equivalence-class tests in multilevel
+      nestloop plans (Tom Lane)
+     </para>
+
+     <para>
+      Given a three-or-more-way equivalence class of variables, such
+      as <literal>X.X = Y.Y = Z.Z</>, it was possible for the planner to omit
+      some of the tests needed to enforce that all the variables are actually
+      equal, leading to join rows being output that didn't satisfy
+      the <literal>WHERE</> clauses.  For various reasons, erroneous plans
+      were seldom selected in practice, so that this bug has gone undetected
+      for a long time.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible misbehavior of <literal>TH</>, <literal>th</>,
+      and <literal>Y,YYY</> format codes in <function>to_timestamp()</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      These could advance off the end of the input string, causing subsequent
+      format codes to read garbage.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dumping of rules and views in which the <replaceable>array</>
+      argument of a <literal><replaceable>value</> <replaceable>operator</>
+      ANY (<replaceable>array</>)</literal> construct is a sub-SELECT
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_regress</> use a startup timeout from the
+      <envar>PGCTLTIMEOUT</> environment variable, if that's set (Tom Lane)
+     </para>
+
+     <para>
+      This is for consistency with a behavior recently added
+      to <application>pg_ctl</>; it eases automated testing on slow machines.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</> to correctly restore extension
+      membership for operator families containing only one operator class
+      (Tom Lane)
+     </para>
+
+     <para>
+      In such a case, the operator family was restored into the new database,
+      but it was no longer marked as part of the extension.  This had no
+      immediate ill effects, but would cause later <application>pg_dump</>
+      runs to emit output that would cause (harmless) errors on restore.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</> to not fail when new-cluster TOAST rules
+      differ from old (Tom Lane)
+     </para>
+
+     <para>
+      <application>pg_upgrade</> had special-case code to handle the
+      situation where the new <productname>PostgreSQL</> version thinks that
+      a table should have a TOAST table while the old version did not.  That
+      code was broken, so remove it, and instead do nothing in such cases;
+      there seems no reason to believe that we can't get along fine without
+      a TOAST table if that was okay according to the old version's rules.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_3_STABLE [f4f4f6990] 2016-04-15 16:49:48 -0400
+Branch: REL9_2_STABLE [d7dbc882d] 2016-04-15 16:49:48 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_3_STABLE [992df9658] 2016-04-16 10:42:07 -0400
+Branch: REL9_2_STABLE [9008922bf] 2016-04-16 10:41:57 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_3_STABLE [35166fd76] 2016-04-18 13:19:52 -0400
+Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
+-->
+     <para>
+      Back-port 9.4-era memory-barrier code changes into 9.2 and 9.3 (Tom Lane)
+     </para>
+
+     <para>
+      These changes were not originally needed in pre-9.4 branches, but we
+      recently back-patched a fix that expected the barrier code to work
+      properly.  Only IA64 (when using icc), HPPA, and Alpha platforms are
+      affected.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce the number of SysV semaphores used by a build configured with
+      <option>--disable-spinlocks</> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rename internal function <function>strtoi()</>
+      to <function>strtoint()</> to avoid conflict with a NetBSD library
+      function (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix reporting of errors from <function>bind()</>
+      and <function>listen()</> system calls on Windows (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce verbosity of compiler output when building with Microsoft Visual
+      Studio (Christian Ullrich)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>putenv()</> to work properly with Visual Studio 2013
+      (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possibly-unsafe use of Windows' <function>FormatMessage()</>
+      function (Christian Ullrich)
+     </para>
+
+     <para>
+      Use the <literal>FORMAT_MESSAGE_IGNORE_INSERTS</> flag where
+      appropriate.  No live bug is known to exist here, but it seems like a
+      good idea to be careful.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016d
+      for DST law changes in Russia and Venezuela.  There are new zone
+      names <literal>Europe/Kirov</> and <literal>Asia/Tomsk</> to reflect
+      the fact that these regions now have different time zone histories from
+      adjacent regions.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3-12">
   <title>Release 9.3.12</title>
 

@@ -1810,26 +1810,8 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 	 * catalog and we need to update the caches according to that.
 	 */
 	if (txn->base_snapshot != NULL && txn->ninvalidations > 0)
-	{
-		bool		use_subtxn = IsTransactionOrTransactionBlock();
-
-		if (use_subtxn)
-			BeginInternalSubTransaction("replay");
-
-		/*
-		 * Force invalidations to happen outside of a valid transaction - that
-		 * way entries will just be marked as invalid without accessing the
-		 * catalog. That's advantageous because we don't need to setup the
-		 * full state necessary for catalog access.
-		 */
-		if (use_subtxn)
-			AbortCurrentTransaction();
-
-		ReorderBufferExecuteInvalidations(rb, txn);
-
-		if (use_subtxn)
-			RollbackAndReleaseCurrentSubTransaction();
-	}
+		ReorderBufferImmediateInvalidation(rb, txn->ninvalidations,
+										   txn->invalidations);
 	else
 		Assert(txn->ninvalidations == 0);
 
@@ -1837,6 +1819,37 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 	ReorderBufferCleanupTXN(rb, txn);
 }
 
+/*
+ * Execute invalidations happening outside the context of a decoded
+ * transaction. That currently happens either for xid-less commits
+ * (c.f. RecordTransactionCommit()) or for invalidations in uninteresting
+ * transactions (via ReorderBufferForget()).
+ */
+void
+ReorderBufferImmediateInvalidation(ReorderBuffer *rb, uint32 ninvalidations,
+								   SharedInvalidationMessage *invalidations)
+{
+	bool		use_subtxn = IsTransactionOrTransactionBlock();
+	int			i;
+
+	if (use_subtxn)
+		BeginInternalSubTransaction("replay");
+
+	/*
+	 * Force invalidations to happen outside of a valid transaction - that
+	 * way entries will just be marked as invalid without accessing the
+	 * catalog. That's advantageous because we don't need to setup the
+	 * full state necessary for catalog access.
+	 */
+	if (use_subtxn)
+		AbortCurrentTransaction();
+
+	for (i = 0; i < ninvalidations; i++)
+		LocalExecuteInvalidationMessage(&invalidations[i]);
+
+	if (use_subtxn)
+		RollbackAndReleaseCurrentSubTransaction();
+}
 
 /*
  * Tell reorderbuffer about an xid seen in the WAL stream. Has to be called at

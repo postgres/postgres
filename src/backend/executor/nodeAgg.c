@@ -3016,7 +3016,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		Expr	   *transfnexpr;
 
 		/*
-		 * Set up infrastructure for calling the transfn
+		 * Set up infrastructure for calling the transfn.  Note that invtrans
+		 * is not needed here.
 		 */
 		build_aggregate_transfn_expr(inputTypes,
 									 numArguments,
@@ -3025,7 +3026,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 									 aggtranstype,
 									 aggref->inputcollid,
 									 aggtransfn,
-									 InvalidOid,	/* invtrans is not needed here */
+									 InvalidOid,
 									 &transfnexpr,
 									 NULL);
 		fmgr_info(aggtransfn, &pertrans->transfn);

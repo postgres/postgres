@@ -1830,6 +1830,11 @@ BaseBackup(void)
 		int			r;
 #else
 		DWORD		status;
+		/*
+		 * get a pointer sized version of bgchild to avoid warnings about
+		 * casting to a different size on WIN64.
+		 */
+		intptr_t	bgchild_handle = bgchild;
 		uint32		hi,
 					lo;
 #endif
@@ -1892,7 +1897,7 @@ BaseBackup(void)
 		InterlockedIncrement(&has_xlogendptr);
 
 		/* First wait for the thread to exit */
-		if (WaitForSingleObjectEx((HANDLE) bgchild, INFINITE, FALSE) !=
+		if (WaitForSingleObjectEx((HANDLE) bgchild_handle, INFINITE, FALSE) !=
 			WAIT_OBJECT_0)
 		{
 			_dosmaperr(GetLastError());
@@ -1900,7 +1905,7 @@ BaseBackup(void)
 					progname, strerror(errno));
 			disconnect_and_exit(1);
 		}
-		if (GetExitCodeThread((HANDLE) bgchild, &status) == 0)
+		if (GetExitCodeThread((HANDLE) bgchild_handle, &status) == 0)
 		{
 			_dosmaperr(GetLastError());
 			fprintf(stderr, _("%s: could not get child thread exit status: %s\n"),

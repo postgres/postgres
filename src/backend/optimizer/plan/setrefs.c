@@ -2100,6 +2100,10 @@ search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,
 				continue;
 			if (aggref->aggvariadic != tlistaggref->aggvariadic)
 				continue;
+			/*
+			 * it would be harmless to compare aggcombine and aggpartial, but
+			 * it's also unnecessary
+			 */
 			if (aggref->aggkind != tlistaggref->aggkind)
 				continue;
 			if (aggref->agglevelsup != tlistaggref->agglevelsup)
@@ -2463,6 +2467,7 @@ fix_combine_agg_expr_mutator(Node *node, fix_upper_expr_context *context)
 			newtle = makeTargetEntry((Expr *) newvar, 1, NULL, false);
 			newaggref = (Aggref *) copyObject(aggref);
 			newaggref->args = list_make1(newtle);
+			newaggref->aggcombine = true;
 
 			return (Node *) newaggref;
 		}

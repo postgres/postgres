@@ -652,7 +652,7 @@
   </para>
 
    <table tocentry="1" id="xindex-brin-support-table">
-    <title>GIN Support Functions</title>
+    <title>BRIN Support Functions</title>
     <tgroup cols="3">
      <thead>
       <row>

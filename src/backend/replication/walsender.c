@@ -2487,13 +2487,14 @@ WalSndDone(WalSndSendDataCallback send_data)
 	send_data();
 
 	/*
-	 * Check a write location to see whether all the WAL have successfully
-	 * been replicated if this walsender is connecting to a standby such as
-	 * pg_receivexlog which always returns an invalid flush location.
-	 * Otherwise, check a flush location.
+	 * To figure out whether all WAL has successfully been replicated, check
+	 * flush location if valid, write otherwise. Tools like pg_receivexlog
+	 * will usually (unless in synchronous mode) return an invalid flush
+	 * location.
 	 */
 	replicatedPtr = XLogRecPtrIsInvalid(MyWalSnd->flush) ?
 		MyWalSnd->write : MyWalSnd->flush;
+
 	if (WalSndCaughtUp && sentPtr == replicatedPtr &&
 		!pq_is_send_pending())
 	{
@@ -2504,7 +2505,10 @@ WalSndDone(WalSndSendDataCallback send_data)
 		proc_exit(0);
 	}
 	if (!waiting_for_ping_response)
+	{
 		WalSndKeepalive(true);
+		waiting_for_ping_response = true;
+	}
 }
 
 /*
@@ -2780,22 +2784,11 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Allocate and update the config data of synchronous replication,
-	 * and then get the currently active synchronous standbys.
+	 * Get the currently active synchronous standbys.
 	 */
-	SyncRepUpdateConfig();
 	LWLockAcquire(SyncRepLock, LW_SHARED);
 	sync_standbys = SyncRepGetSyncStandbys(NULL);
 	LWLockRelease(SyncRepLock);
-
-	/*
-	 * Free the previously-allocated config data because a backend
-	 * no longer needs it. The next call of this function needs to
-	 * allocate and update the config data newly because the setting
-	 * of sync replication might be changed between the calls.
-	 */
-	SyncRepFreeConfig(SyncRepConfig);
-	SyncRepConfig = NULL;
 
 	for (i = 0; i < max_wal_senders; i++)
 	{

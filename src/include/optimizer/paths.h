@@ -135,6 +135,11 @@ extern List *generate_join_implied_equalities(PlannerInfo *root,
 								 Relids join_relids,
 								 Relids outer_relids,
 								 RelOptInfo *inner_rel);
+extern List *generate_join_implied_equalities_for_ecs(PlannerInfo *root,
+										 List *eclasses,
+										 Relids join_relids,
+										 Relids outer_relids,
+										 RelOptInfo *inner_rel);
 extern bool exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2);
 extern void add_child_rel_equivalences(PlannerInfo *root,
 						   AppendRelInfo *appinfo,

@@ -7591,6 +7591,7 @@ exp_var(NumericVar *arg, NumericVar *result, int rscale)
 	val = numericvar_to_double_no_overflow(&x);
 
 	/* Guard against overflow */
+	/* If you change this limit, see also power_var()'s limit */
 	if (Abs(val) >= NUMERIC_MAX_RESULT_SCALE * 3)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -7992,6 +7993,15 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 	 *
 	 * We want result = e ^ (exp * ln(base))
 	 * so result dweight = log10(result) = exp * ln(base) * log10(e)
+	 *
+	 * We also perform a crude overflow test here so that we can exit early if
+	 * the full-precision result is sure to overflow, and to guard against
+	 * integer overflow when determining the scale for the real calculation.
+	 * exp_var() supports inputs up to NUMERIC_MAX_RESULT_SCALE * 3, so the
+	 * result will overflow if exp * ln(base) >= NUMERIC_MAX_RESULT_SCALE * 3.
+	 * Since the values here are only approximations, we apply a small fuzz
+	 * factor to this overflow test and let exp_var() determine the exact
+	 * overflow threshold so that it is consistent for all inputs.
 	 *----------
 	 */
 	ln_dweight = estimate_ln_dweight(base);
@@ -8006,11 +8016,13 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 
 	val = numericvar_to_double_no_overflow(&ln_num);
 
-	val *= 0.434294481903252;	/* approximate decimal result weight */
+	/* initial overflow test with fuzz factor */
+	if (Abs(val) > NUMERIC_MAX_RESULT_SCALE * 3.01)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value overflows numeric format")));
 
-	/* limit to something that won't cause integer overflow */
-	val = Max(val, -NUMERIC_MAX_RESULT_SCALE);
-	val = Min(val, NUMERIC_MAX_RESULT_SCALE);
+	val *= 0.434294481903252;	/* approximate decimal result weight */
 
 	/* choose the result scale */
 	rscale = NUMERIC_MIN_SIG_DIGITS - (int) val;

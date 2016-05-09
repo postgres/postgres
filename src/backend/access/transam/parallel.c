@@ -241,7 +241,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 						 PARALLEL_ERROR_QUEUE_SIZE,
 						 "parallel error queue size not buffer-aligned");
 		shm_toc_estimate_chunk(&pcxt->estimator,
-							   PARALLEL_ERROR_QUEUE_SIZE * pcxt->nworkers);
+							   mul_size(PARALLEL_ERROR_QUEUE_SIZE,
+										pcxt->nworkers));
 		shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 		/* Estimate how much we'll need for extension entrypoint info. */
@@ -347,7 +348,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		 */
 		error_queue_space =
 			shm_toc_allocate(pcxt->toc,
-							 PARALLEL_ERROR_QUEUE_SIZE * pcxt->nworkers);
+							 mul_size(PARALLEL_ERROR_QUEUE_SIZE,
+									  pcxt->nworkers));
 		for (i = 0; i < pcxt->nworkers; ++i)
 		{
 			char	   *start;

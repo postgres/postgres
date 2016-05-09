@@ -73,6 +73,7 @@ For new features, add links to the documentation sections.
   The reason for splitting the release notes this way is so that appropriate
   subsets can easily be copied into back branches.
 -->
+&release-9.6;
 &release-9.5;
 &release-9.4;
 &release-9.3;

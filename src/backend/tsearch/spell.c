@@ -1338,9 +1338,10 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 			|| (sflaglen > 2 && Conf->flagMode == FM_LONG))
 			goto nextline;
 
-		/*
+		/*--------
 		 * Affix header. For example:
 		 * SFX \ N 1
+		 *--------
 		 */
 		if (fields_read == 4)
 		{
@@ -1350,9 +1351,10 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 			else
 				flagflags = 0;
 		}
-		/*
+		/*--------
 		 * Affix fields. For example:
-		 * SFX \   0	Y/L	[^Y]
+		 * SFX \   0	Y/L [^Y]
+		 *--------
 		 */
 		else
 		{
