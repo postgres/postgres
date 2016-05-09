@@ -7,18 +7,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-11-22 21:07+0000\n"
-"PO-Revision-Date: 2014-11-28 15:50+0800\n"
-"Last-Translator: Xiong He <iihero@qq.com>\n"
+"POT-Creation-Date: 2015-11-26 18:38+0000\n"
+"PO-Revision-Date: 2015-12-02 14:48+0800\n"
+"Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
 "Language-Team: Weibin <ssmei_2000@yahoo.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.5.7\n"
 
-#: pl_comp.c:436 pl_handler.c:438
+#: pl_comp.c:436 pl_handler.c:448
 #, c-format
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "PL/pgSQL函数不使用类型%s"
@@ -33,452 +33,454 @@ msgstr "无法确定多态函数\"%s\"的实际返回类型"
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: pl_comp.c:551 pl_handler.c:423
+#: pl_comp.c:551 pl_handler.c:433
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "PL/pgSQL函数不能返回类型%s"
 
-#: pl_comp.c:594
+#: pl_comp.c:592
 #, c-format
 msgid "trigger functions cannot have declared arguments"
 msgstr "触发器函数不能有已声明的参数"
 
-#: pl_comp.c:595
+#: pl_comp.c:593
 #, c-format
 msgid ""
 "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV "
 "instead."
 msgstr "触发器的参数可以通过TG_NARGS和TG_ARGV进行访问."
 
-#: pl_comp.c:697
+#: pl_comp.c:695
 #, c-format
 msgid "event trigger functions cannot have declared arguments"
 msgstr "事件触发器函数不能有已声明的参数"
 
-#: pl_comp.c:962
+#: pl_comp.c:957
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
 msgstr "在第%2$d行附件编译PL/pgSQL函数\"%1$s\""
 
-#: pl_comp.c:985
+#: pl_comp.c:980
 #, c-format
 msgid "parameter name \"%s\" used more than once"
 msgstr "多次使用参数名称 \"%s\""
 
-#: pl_comp.c:1095
+#: pl_comp.c:1090
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "字段关联 \"%s\" 是不明确的"
 
-#: pl_comp.c:1097
+#: pl_comp.c:1092
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "可以指向一个PL/pgSQL变量或表中的列"
 
-#: pl_comp.c:1277 pl_comp.c:1305 pl_exec.c:4179 pl_exec.c:4524 pl_exec.c:4609
-#: pl_exec.c:4700
+#: pl_comp.c:1272 pl_comp.c:1300 pl_exec.c:4447 pl_exec.c:4795 pl_exec.c:4880
+#: pl_exec.c:4971
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "记录\"%s\"没有字段\"%s\""
 
-#: pl_comp.c:1836
+#: pl_comp.c:1831
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "关系 \"%s\" 不存在"
 
-#: pl_comp.c:1945
+#: pl_comp.c:1940
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "变量\"%s\"具有伪类型%s"
 
-#: pl_comp.c:2011
+#: pl_comp.c:2006
 #, c-format
 msgid "relation \"%s\" is not a table"
 msgstr "关系 \"%s\"不是一张表"
 
-#: pl_comp.c:2171
+#: pl_comp.c:2166
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "类型 \"%s\" 只是一个 shell"
 
-#: pl_comp.c:2245 pl_comp.c:2298
+#: pl_comp.c:2255 pl_comp.c:2308
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "不可识别的异常条件\"%s\""
 
-#: pl_comp.c:2456
+#: pl_comp.c:2466
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "无法确定多态函数\"%s\"的实际参数类型"
 
-#: pl_exec.c:277 pl_exec.c:537 pl_exec.c:816
+#: pl_exec.c:321 pl_exec.c:614 pl_exec.c:893
 msgid "during initialization of execution state"
 msgstr "在执行状态的初始化期间"
 
-#: pl_exec.c:284
+#: pl_exec.c:328
 msgid "while storing call arguments into local variables"
 msgstr "在将调用的参数存储到本地变量时"
 
-#: pl_exec.c:326 pl_exec.c:694
+#: pl_exec.c:408 pl_exec.c:771
 msgid "during function entry"
 msgstr "在进入函数期间"
 
-#: pl_exec.c:357 pl_exec.c:725 pl_exec.c:857
+#: pl_exec.c:439 pl_exec.c:802 pl_exec.c:934
 #, c-format
 msgid "CONTINUE cannot be used outside a loop"
 msgstr "在循环的外部不能使用CONTINUE"
 
-#: pl_exec.c:361
+#: pl_exec.c:443
 #, c-format
 msgid "control reached end of function without RETURN"
 msgstr "控制流程到达函数的结束部分，但是没有看到RETURN"
 
-#: pl_exec.c:368
+#: pl_exec.c:450
 msgid "while casting return value to function's return type"
 msgstr "正在将返回值强行指派为函数的返回类型"
 
-#: pl_exec.c:381 pl_exec.c:2843
+#: pl_exec.c:463 pl_exec.c:2987
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "集值函数在不接受使用集合的环境中调用"
 
-#: pl_exec.c:419 pl_exec.c:2686
+#: pl_exec.c:501 pl_exec.c:2829
 msgid "returned record type does not match expected record type"
 msgstr "所返回的记录类型与所期待的记录类型不匹配"
 
-#: pl_exec.c:479 pl_exec.c:733 pl_exec.c:865
+#: pl_exec.c:556 pl_exec.c:810 pl_exec.c:942
 msgid "during function exit"
 msgstr "在函数退出期间"
 
-#: pl_exec.c:729 pl_exec.c:861
+#: pl_exec.c:806 pl_exec.c:938
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
 msgstr "控制流程到达触发器/存储过程的结束部分，但是没有看到RETURN"
 
-#: pl_exec.c:738
+#: pl_exec.c:815
 #, c-format
 msgid "trigger procedure cannot return a set"
 msgstr "触发器存储过程无法返回集合"
 
-#: pl_exec.c:760
+#: pl_exec.c:837
 msgid ""
 "returned row structure does not match the structure of the triggering table"
 msgstr "所返回的记录结构与触发表的结构不匹配"
 
-#: pl_exec.c:916
+#. translator: last %s is a phrase such as "during statement block
+#. local variable initialization"
+#.
+#: pl_exec.c:993
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "PL/pgSQL 函数%s在第%d行%s"
 
-#: pl_exec.c:927
+#. translator: last %s is a phrase such as "while storing call
+#. arguments into local variables"
+#.
+#: pl_exec.c:1004
 #, c-format
 msgid "PL/pgSQL function %s %s"
 msgstr "PL/pgSQL 函数%s %s"
 
 #. translator: last %s is a plpgsql statement type name
-#: pl_exec.c:935
+#: pl_exec.c:1012
 #, c-format
 msgid "PL/pgSQL function %s line %d at %s"
 msgstr "在%3$s的第%2$d行的PL/pgSQL函数%1$s"
 
-#: pl_exec.c:941
+#: pl_exec.c:1018
 #, c-format
 msgid "PL/pgSQL function %s"
 msgstr "PL/pgSQL函数 %s"
 
-#: pl_exec.c:1050
+#: pl_exec.c:1129
 msgid "during statement block local variable initialization"
 msgstr "在初始化语句块的局部变量期间"
 
-#: pl_exec.c:1092
+#: pl_exec.c:1169
 #, c-format
 msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
 msgstr "声明为NOT NULL的变量\"%s\"无法将缺省值设为NULL"
 
-#: pl_exec.c:1142
+#: pl_exec.c:1219
 msgid "during statement block entry"
 msgstr "在进入语句块期间"
 
-#: pl_exec.c:1163
+#: pl_exec.c:1240
 msgid "during statement block exit"
 msgstr "在退出语句块期间"
 
-#: pl_exec.c:1206
+#: pl_exec.c:1283
 msgid "during exception cleanup"
 msgstr "在清理异常期间"
 
-#: pl_exec.c:1559
+#: pl_exec.c:1634
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr "GET STACKED DIAGNOSTICS不能用于异常处理之外"
 
-#: pl_exec.c:1760
+#: pl_exec.c:1838
 #, c-format
 msgid "case not found"
 msgstr "没有找到CASE"
 
-#: pl_exec.c:1761
+#: pl_exec.c:1839
 #, c-format
 msgid "CASE statement is missing ELSE part."
 msgstr "在CASE语句结构中丢失ELSE部分"
 
-#: pl_exec.c:1913
+#: pl_exec.c:1993
 #, c-format
 msgid "lower bound of FOR loop cannot be null"
 msgstr "FOR循环的低位边界不能为空"
 
-#: pl_exec.c:1928
+#: pl_exec.c:2009
 #, c-format
 msgid "upper bound of FOR loop cannot be null"
 msgstr "FOR循环的高位边界不能为空"
 
-#: pl_exec.c:1945
+#: pl_exec.c:2027
 #, c-format
 msgid "BY value of FOR loop cannot be null"
 msgstr "FOR循环的BY值不能为空"
 
-#: pl_exec.c:1951
+#: pl_exec.c:2033
 #, c-format
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "FOR循环的BY值必须大于0"
 
-#: pl_exec.c:2121 pl_exec.c:3730
+#: pl_exec.c:2203 pl_exec.c:3963
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "游标\"%s\"已经在使用"
 
-#: pl_exec.c:2144 pl_exec.c:3792
+#: pl_exec.c:2226 pl_exec.c:4025
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "给不带有参数的游标指定参数"
 
-#: pl_exec.c:2163 pl_exec.c:3811
+#: pl_exec.c:2245 pl_exec.c:4044
 #, c-format
 msgid "arguments required for cursor"
 msgstr "游标需要参数"
 
-#: pl_exec.c:2250
+#: pl_exec.c:2330
 #, c-format
 msgid "FOREACH expression must not be null"
 msgstr "FOREACH表达式不能为空"
 
-#: pl_exec.c:2256
+#: pl_exec.c:2336
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
 msgstr "FOREACH表达式的结果必须是数组, 而不是类型 %s"
 
-#: pl_exec.c:2273
+#: pl_exec.c:2353
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
 msgstr "索引维数(%d)超出有效范围: 0..%d"
 
-#: pl_exec.c:2300
+#: pl_exec.c:2380
 #, c-format
 msgid "FOREACH ... SLICE loop variable must be of an array type"
 msgstr "FOREACH ... SLICE循环变量必须属于数组类型"
 
-#: pl_exec.c:2304
+#: pl_exec.c:2384
 #, c-format
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "FOREACH循环变量不能为数组类型"
 
-#: pl_exec.c:2525 pl_exec.c:2678
+#: pl_exec.c:2572 pl_exec.c:2654 pl_exec.c:2821
 #, c-format
 msgid ""
 "cannot return non-composite value from function returning composite type"
 msgstr "返回值为组合类型的函数不能返回非组合型的值"
 
-#: pl_exec.c:2569 pl_gram.y:3075
+#: pl_exec.c:2698 pl_gram.y:3112
 #, c-format
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "无法在非SETOF函数中使用RETURN NEXT"
 
-#: pl_exec.c:2597 pl_exec.c:2720
+#: pl_exec.c:2732 pl_exec.c:2863
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "在RETURN NEXT中提供了错误的结果类型"
 
-#: pl_exec.c:2620 pl_exec.c:4166 pl_exec.c:4491 pl_exec.c:4517 pl_exec.c:4583
-#: pl_exec.c:4602 pl_exec.c:4670 pl_exec.c:4693
+#: pl_exec.c:2761 pl_exec.c:4434 pl_exec.c:4762 pl_exec.c:4788 pl_exec.c:4854
+#: pl_exec.c:4873 pl_exec.c:4941 pl_exec.c:4964
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "记录 \"%s\"还没有分配"
 
-#: pl_exec.c:2622 pl_exec.c:4168 pl_exec.c:4493 pl_exec.c:4519 pl_exec.c:4585
-#: pl_exec.c:4604 pl_exec.c:4672 pl_exec.c:4695
+#: pl_exec.c:2763 pl_exec.c:4436 pl_exec.c:4764 pl_exec.c:4790 pl_exec.c:4856
+#: pl_exec.c:4875 pl_exec.c:4943 pl_exec.c:4966
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "未分配记录的元组结构未确定."
 
-#: pl_exec.c:2626 pl_exec.c:2646
+#: pl_exec.c:2767 pl_exec.c:2787
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "在RETURN NEXT中提供了错误的记录类型"
 
-#: pl_exec.c:2738
+#: pl_exec.c:2882
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT必须有一个参数"
 
-#: pl_exec.c:2771 pl_gram.y:3133
+#: pl_exec.c:2915 pl_gram.y:3174
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr "无法在非SETOF函数中使用RETURN QUERY"
 
-#: pl_exec.c:2791
+#: pl_exec.c:2935
 msgid "structure of query does not match function result type"
 msgstr "查询的结构与函数的返回类型不匹配"
 
-#: pl_exec.c:2871 pl_exec.c:3003
+#: pl_exec.c:3015 pl_exec.c:3145
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "已经指定了RAISE选项：%s"
 
-#: pl_exec.c:2904
+#: pl_exec.c:3048
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr "不带有参数的RAISE不能在异常处理的外部使用"
 
-#: pl_exec.c:2945
-#, c-format
-msgid "too few parameters specified for RAISE"
-msgstr "为RAISE子句指定参数过少"
-
-#: pl_exec.c:2973
-#, c-format
-msgid "too many parameters specified for RAISE"
-msgstr "为RAISE子句指定参数过多"
-
-#: pl_exec.c:2993
+#: pl_exec.c:3135
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "RAISE语句选项不能为空"
 
-#: pl_exec.c:3064
+#: pl_exec.c:3206
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:3241 pl_exec.c:3378 pl_exec.c:3569
+#: pl_exec.c:3279
+#, c-format
+#| msgid "Password encryption failed.\n"
+msgid "assertion failed"
+msgstr "断言失败"
+
+#: pl_exec.c:3469 pl_exec.c:3613 pl_exec.c:3802
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "无法在PL/pgSQL中从客户端或向客户端使用COPY命令"
 
-#: pl_exec.c:3245 pl_exec.c:3382 pl_exec.c:3573
+#: pl_exec.c:3473 pl_exec.c:3617 pl_exec.c:3806
 #, c-format
 msgid "cannot begin/end transactions in PL/pgSQL"
 msgstr "无法在PL/pgSQL中无法使用begin/end事务"
 
-#: pl_exec.c:3246 pl_exec.c:3383 pl_exec.c:3574
+#: pl_exec.c:3474 pl_exec.c:3618 pl_exec.c:3807
 #, c-format
 msgid "Use a BEGIN block with an EXCEPTION clause instead."
 msgstr "使用带有一个EXCEPTION子句的BEGIN代码块."
 
-#: pl_exec.c:3406 pl_exec.c:3598
+#: pl_exec.c:3641 pl_exec.c:3831
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "使用了带有无法返回数据的命令的INTO"
 
-#: pl_exec.c:3434 pl_exec.c:3626
+#: pl_exec.c:3669 pl_exec.c:3859
 #, c-format
 msgid "query returned no rows"
 msgstr "查询没有返回记录"
 
-#: pl_exec.c:3453 pl_exec.c:3645
+#: pl_exec.c:3688 pl_exec.c:3878
 #, c-format
 msgid "query returned more than one row"
 msgstr "查询返回多条记录"
 
-#: pl_exec.c:3470
+#: pl_exec.c:3705
 #, c-format
 msgid "query has no destination for result data"
 msgstr "对于结果数据，查询没有目标"
 
-#: pl_exec.c:3471
+#: pl_exec.c:3706
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "如果您想要放弃SELECT语句的结果，请使用PERFORM."
 
-#: pl_exec.c:3505 pl_exec.c:6480
+#: pl_exec.c:3738 pl_exec.c:7026
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "EXECUTE的查询字符串参数是空值"
 
-#: pl_exec.c:3561
+#: pl_exec.c:3794
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "没有执行EXECUTE of SELECT ... INTO "
 
-#: pl_exec.c:3562
+#: pl_exec.c:3795
 #, c-format
 msgid ""
 "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS "
 "instead."
 msgstr "您可以使用EXECUTE ... INTO或者EXECUTE CREATE TABLE ... AS语句来替代"
 
-#: pl_exec.c:3874 pl_exec.c:3966
+#: pl_exec.c:4105 pl_exec.c:4197
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "游标变量\"%s\"是空的"
 
-#: pl_exec.c:3881 pl_exec.c:3973
+#: pl_exec.c:4112 pl_exec.c:4204
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "游标 \"%s\" 不存在"
 
-#: pl_exec.c:3895
+#: pl_exec.c:4126
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "游标的相对或绝对位置是空的"
 
-#: pl_exec.c:4062
+#: pl_exec.c:4306
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "不能将声明为NOT NULL的变量\"%s\" 分配空值"
 
-#: pl_exec.c:4109
+#: pl_exec.c:4378
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "无法将非组合值分配给记录变量"
 
-#: pl_exec.c:4133
+#: pl_exec.c:4402
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "无法将非组合值分配给记录类型变量"
 
-#: pl_exec.c:4278
+#: pl_exec.c:4545
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "数组维数(%d)超过了最大允许值(%d)"
 
-#: pl_exec.c:4310
+#: pl_exec.c:4577
 #, c-format
 msgid "subscripted object is not an array"
 msgstr "下标对象不是一个数组"
 
-#: pl_exec.c:4347
+#: pl_exec.c:4614
 #, c-format
 msgid "array subscript in assignment must not be null"
 msgstr "在赋值中数组下标不能为空"
 
-#: pl_exec.c:4806
+#: pl_exec.c:5080
 #, c-format
 msgid "query \"%s\" did not return data"
 msgstr "查询\"%s\"没有返回数据"
 
-#: pl_exec.c:4814
+#: pl_exec.c:5088
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
 msgstr[0] "查询\"%s\"返回%d列"
 
-#: pl_exec.c:4840
+#: pl_exec.c:5115
 #, c-format
 msgid "query \"%s\" returned more than one row"
 msgstr "查询\"%s\"返回多条数据"
 
-#: pl_exec.c:4897
+#: pl_exec.c:5170
 #, c-format
 msgid "query \"%s\" is not a SELECT"
 msgstr "查询 \"%s\"不是SELECT语句"
@@ -507,410 +509,422 @@ msgstr "在游标上运行的FOR语句"
 msgid "FOREACH over array"
 msgstr "在数组上运行的FOREACH语句"
 
-#: pl_funcs.c:248
+#: pl_funcs.c:250
 msgid "SQL statement"
 msgstr "SQL语句"
 
-#: pl_funcs.c:250
-msgid "EXECUTE statement"
-msgstr "EXECUTE 语句"
-
-#: pl_funcs.c:252
+#: pl_funcs.c:254
 msgid "FOR over EXECUTE statement"
 msgstr "在EXECUTE语句上的FOR语句"
 
-#: pl_gram.y:469
+#: pl_gram.y:472
 #, c-format
 msgid "block label must be placed before DECLARE, not after"
 msgstr "代码块标签必须放在DECLARE的前面，而不是后面"
 
-#: pl_gram.y:489
+#: pl_gram.y:492
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "类型 %s不支持校对函数"
 
-#: pl_gram.y:504
+#: pl_gram.y:507
 #, c-format
 msgid "row or record variable cannot be CONSTANT"
 msgstr "记录或者记录类型变量不能是CONSTANT类型"
 
-#: pl_gram.y:514
+#: pl_gram.y:517
 #, c-format
 msgid "row or record variable cannot be NOT NULL"
 msgstr "记录或者记录类型变量不能是NOT NULL"
 
-#: pl_gram.y:525
+#: pl_gram.y:528
 #, c-format
 msgid "default value for row or record variable is not supported"
 msgstr "不支持为记录或记录类型变量设置缺省值"
 
-#: pl_gram.y:670 pl_gram.y:685 pl_gram.y:711
+#: pl_gram.y:673 pl_gram.y:688 pl_gram.y:714
 #, c-format
 msgid "variable \"%s\" does not exist"
 msgstr "变量 \"%s\" 不存在"
 
-#: pl_gram.y:729 pl_gram.y:757
+#: pl_gram.y:732 pl_gram.y:760
 msgid "duplicate declaration"
 msgstr "重复声明"
 
-#: pl_gram.y:740 pl_gram.y:768
+#: pl_gram.y:743 pl_gram.y:771
 #, c-format
-#| msgid "variable \"%s\" is hidden by a local variable"
 msgid "variable \"%s\" shadows a previously defined variable"
 msgstr "变量\"%s\"隐藏了前一个已定义的变量"
 
-#: pl_gram.y:955
+#: pl_gram.y:950
 #, c-format
 msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
 msgstr "诊断项 %s 不允许出现在GET STACKED DIAGNOSTICS的结果中"
 
-#: pl_gram.y:973
+#: pl_gram.y:968
 #, c-format
 msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
 msgstr "诊断项 %s 不允许出现在GET CURRENT DIAGNOSTICS的结果中"
 
-#: pl_gram.y:1071
+#: pl_gram.y:1066
 msgid "unrecognized GET DIAGNOSTICS item"
 msgstr "无法识别的项GET DIAGNOSTICS"
 
-#: pl_gram.y:1082 pl_gram.y:3320
+#: pl_gram.y:1077 pl_gram.y:3361
 #, c-format
 msgid "\"%s\" is not a scalar variable"
 msgstr "\"%s\" 不是一个标量变量"
 
-#: pl_gram.y:1334 pl_gram.y:1528
+#: pl_gram.y:1329 pl_gram.y:1523
 #, c-format
 msgid ""
 "loop variable of loop over rows must be a record or row variable or list of "
 "scalar variables"
 msgstr "在记录集上进行循环的循环变量必须是记录或记录类型变量或标量变量的列表"
 
-#: pl_gram.y:1368
+#: pl_gram.y:1363
 #, c-format
 msgid "cursor FOR loop must have only one target variable"
 msgstr "游标的FOR循环只能有一个目标变量"
 
-#: pl_gram.y:1375
+#: pl_gram.y:1370
 #, c-format
 msgid "cursor FOR loop must use a bound cursor variable"
 msgstr "游标的FOR循环必须使用有界游标变量"
 
-#: pl_gram.y:1459
+#: pl_gram.y:1454
 #, c-format
 msgid "integer FOR loop must have only one target variable"
 msgstr "整数FOR循环必须只能有一个目标变量"
 
-#: pl_gram.y:1495
+#: pl_gram.y:1490
 #, c-format
 msgid "cannot specify REVERSE in query FOR loop"
 msgstr "无法在查询FOR循环中指定REVERSE "
 
-#: pl_gram.y:1642
+#: pl_gram.y:1637
 #, c-format
 msgid "loop variable of FOREACH must be a known variable or list of variables"
 msgstr "FOREACH的循环变量必须是已知类型或者是变量列表"
 
-#: pl_gram.y:1694 pl_gram.y:1731 pl_gram.y:1779 pl_gram.y:2776 pl_gram.y:2857
-#: pl_gram.y:2968 pl_gram.y:3721
+#: pl_gram.y:1689 pl_gram.y:1726 pl_gram.y:1774 pl_gram.y:2814 pl_gram.y:2896
+#: pl_gram.y:3007 pl_gram.y:3763
 msgid "unexpected end of function definition"
 msgstr "在函数定义中意外出现的结束标志"
 
-#: pl_gram.y:1799 pl_gram.y:1823 pl_gram.y:1839 pl_gram.y:1845 pl_gram.y:1934
-#: pl_gram.y:1942 pl_gram.y:1956 pl_gram.y:2051 pl_gram.y:2232 pl_gram.y:2315
-#: pl_gram.y:2449 pl_gram.y:3563 pl_gram.y:3624 pl_gram.y:3702
+#: pl_gram.y:1794 pl_gram.y:1818 pl_gram.y:1834 pl_gram.y:1840 pl_gram.y:1954
+#: pl_gram.y:1962 pl_gram.y:1976 pl_gram.y:2071 pl_gram.y:2252 pl_gram.y:2335
+#: pl_gram.y:2486 pl_gram.y:3604 pl_gram.y:3665 pl_gram.y:3744
 msgid "syntax error"
 msgstr "语法错误"
 
-#: pl_gram.y:1827 pl_gram.y:1829 pl_gram.y:2236 pl_gram.y:2238
+#: pl_gram.y:1822 pl_gram.y:1824 pl_gram.y:2256 pl_gram.y:2258
 msgid "invalid SQLSTATE code"
 msgstr "无效的SQLSTATE代码"
 
-#: pl_gram.y:1998
+#: pl_gram.y:2018
 msgid "syntax error, expected \"FOR\""
 msgstr "语法错误，期望\"FOR\""
 
-#: pl_gram.y:2060
+#: pl_gram.y:2080
 #, c-format
 msgid "FETCH statement cannot return multiple rows"
 msgstr "FETCH语句无法返回多条记录"
 
-#: pl_gram.y:2116
+#: pl_gram.y:2136
 #, c-format
 msgid "cursor variable must be a simple variable"
 msgstr "游标变量必须是一个简单变量"
 
-#: pl_gram.y:2122
+#: pl_gram.y:2142
 #, c-format
 msgid "variable \"%s\" must be of type cursor or refcursor"
 msgstr "变量\"%s\" 必须属于游标类型或refcursor类型"
 
-#: pl_gram.y:2290
+#: pl_gram.y:2310
 msgid "label does not exist"
 msgstr "标签不存在"
 
-#: pl_gram.y:2420 pl_gram.y:2431
+#: pl_gram.y:2457 pl_gram.y:2468
 #, c-format
 msgid "\"%s\" is not a known variable"
 msgstr "\"%s\" 不是一个已知变量"
 
-#: pl_gram.y:2535 pl_gram.y:2545 pl_gram.y:2700
+#: pl_gram.y:2572 pl_gram.y:2582 pl_gram.y:2738
 msgid "mismatched parentheses"
 msgstr "括号不匹配"
 
-#: pl_gram.y:2549
+#: pl_gram.y:2586
 #, c-format
 msgid "missing \"%s\" at end of SQL expression"
 msgstr "在SQL表达式的结尾处丢失\"%s\""
 
-#: pl_gram.y:2555
+#: pl_gram.y:2592
 #, c-format
 msgid "missing \"%s\" at end of SQL statement"
 msgstr "在SQL语句的结尾处丢失\"%s\""
 
-#: pl_gram.y:2572
+#: pl_gram.y:2609
 msgid "missing expression"
 msgstr "缺少表达式"
 
-#: pl_gram.y:2574
+#: pl_gram.y:2611
 msgid "missing SQL statement"
 msgstr "缺少SQL语句"
 
-#: pl_gram.y:2702
+#: pl_gram.y:2740
 msgid "incomplete data type declaration"
 msgstr "未完成的数据类型声明"
 
-#: pl_gram.y:2725
+#: pl_gram.y:2763
 msgid "missing data type declaration"
 msgstr "丢失数据类型声明"
 
-#: pl_gram.y:2781
+#: pl_gram.y:2819
 msgid "INTO specified more than once"
 msgstr "多次指定INTO"
 
-#: pl_gram.y:2949
+#: pl_gram.y:2988
 msgid "expected FROM or IN"
 msgstr "期望关键字FROM或IN"
 
-#: pl_gram.y:3009
+#: pl_gram.y:3048
 #, c-format
 msgid "RETURN cannot have a parameter in function returning set"
 msgstr "在返回为集合的函数中RETURN不能带有参数"
 
-#: pl_gram.y:3010
+#: pl_gram.y:3049
 #, c-format
 msgid "Use RETURN NEXT or RETURN QUERY."
 msgstr "使用RETURN NEXT或RETURN QUERY."
 
-#: pl_gram.y:3018
+#: pl_gram.y:3057
 #, c-format
 msgid "RETURN cannot have a parameter in function with OUT parameters"
 msgstr "在带有输出参数的函数中RETURN不能有参数"
 
-#: pl_gram.y:3027
+#: pl_gram.y:3066
 #, c-format
 msgid "RETURN cannot have a parameter in function returning void"
 msgstr "在返回为空的函数中RETURN不能有参数"
 
-#: pl_gram.y:3089
+#: pl_gram.y:3126
 #, c-format
 msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
 msgstr "在带有输出参数的函数中RETURN NEXT不能有参数"
 
-#: pl_gram.y:3189
+#: pl_gram.y:3230
 #, c-format
 msgid "\"%s\" is declared CONSTANT"
 msgstr "\"%s\"被声明为常量"
 
-#: pl_gram.y:3251 pl_gram.y:3263
+#: pl_gram.y:3292 pl_gram.y:3304
 #, c-format
 msgid "record or row variable cannot be part of multiple-item INTO list"
 msgstr "记录或行类型变量不能作为带有多个项的INTO列表中的一部分"
 
-#: pl_gram.y:3308
+#: pl_gram.y:3349
 #, c-format
 msgid "too many INTO variables specified"
 msgstr "在INTO后面指定了太多的变量"
 
-#: pl_gram.y:3516
+#: pl_gram.y:3557
 #, c-format
 msgid "end label \"%s\" specified for unlabelled block"
 msgstr "为没有标签的代码块指定结束标签\"%s\" "
 
-#: pl_gram.y:3523
+#: pl_gram.y:3564
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
 msgstr "结束标签\"%s\" 与代码块标签\"%s\"不同"
 
-#: pl_gram.y:3558
+#: pl_gram.y:3599
 #, c-format
 msgid "cursor \"%s\" has no arguments"
 msgstr "游标\"%s\" 没有参数"
 
-#: pl_gram.y:3572
+#: pl_gram.y:3613
 #, c-format
 msgid "cursor \"%s\" has arguments"
 msgstr "游标\"%s\"有参数"
 
-#: pl_gram.y:3614
+#: pl_gram.y:3655
 #, c-format
 msgid "cursor \"%s\" has no argument named \"%s\""
 msgstr "游标\"%s\" 没有名为 \"%s\"的参数"
 
-#: pl_gram.y:3634
+#: pl_gram.y:3675
 #, c-format
 msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
 msgstr "游标\"%2$s\"中的参数值\"%1$s\"指定了多次"
 
-#: pl_gram.y:3659
+#: pl_gram.y:3700
 #, c-format
 msgid "not enough arguments for cursor \"%s\""
 msgstr "游标 \"%s\"没有足够的参数"
 
-#: pl_gram.y:3666
+#: pl_gram.y:3707
 #, c-format
 msgid "too many arguments for cursor \"%s\""
 msgstr "游标 \"%s\"给定的参数太多"
 
-#: pl_gram.y:3753
+#: pl_gram.y:3795
 msgid "unrecognized RAISE statement option"
 msgstr "无法识别的RAISE语句选项"
 
-#: pl_gram.y:3757
+#: pl_gram.y:3799
 msgid "syntax error, expected \"=\""
 msgstr "语法错误，期望\"=\""
 
-#: pl_handler.c:147
+#: pl_gram.y:3840
+#, c-format
+msgid "too many parameters specified for RAISE"
+msgstr "为RAISE子句指定参数过多"
+
+#: pl_gram.y:3844
+#, c-format
+msgid "too few parameters specified for RAISE"
+msgstr "为RAISE子句指定参数过少"
+
+#: pl_handler.c:149
 msgid ""
 "Sets handling of conflicts between PL/pgSQL variable names and table column "
 "names."
 msgstr "设置在PL/pgSQL变量名称和表中列名冲突时的处理原则"
 
-#: pl_handler.c:156
+#: pl_handler.c:158
 msgid ""
 "Print information about parameters in the DETAIL part of the error messages "
 "generated on INTO ... STRICT failures."
 msgstr "打印产生于INTO...STRICT失败时的详细的错误消息里的参数信息"
 
-#: pl_handler.c:164
+#: pl_handler.c:166
+msgid "Perform checks given in ASSERT statements."
+msgstr "执行在ASSERT语句中给定的检查。"
+
+#: pl_handler.c:174
 msgid "List of programming constructs that should produce a warning."
 msgstr "程序构造列表必须输出警告."
 
-#: pl_handler.c:174
+#: pl_handler.c:184
 msgid "List of programming constructs that should produce an error."
 msgstr "程序构造列表必须输出一个错误信息提示."
 
 #. translator: %s is typically the translation of "syntax error"
-#: pl_scanner.c:554
+#: pl_scanner.c:621
 #, c-format
 msgid "%s at end of input"
 msgstr "%s 在输入的末尾"
 
 #. translator: first %s is typically the translation of "syntax error"
-#: pl_scanner.c:570
+#: pl_scanner.c:637
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s 在 \"%s\" 或附近的"
 
-#~ msgid ""
-#~ "RETURN must specify a record or row variable in function returning row"
-#~ msgstr "在返回记录的函数中RETURN必须制定一个记录或记录类型变量"
+#~ msgid "relation \"%s.%s\" does not exist"
+#~ msgstr "关系 \"%s.%s\" 不存在"
+
+#~ msgid "expected \"[\""
+#~ msgstr "期望 \"[\""
+
+#~ msgid "row \"%s\" has no field \"%s\""
+#~ msgstr "记录\"%s\"没有字段\"%s\""
+
+#~ msgid "row \"%s.%s\" has no field \"%s\""
+#~ msgstr "记录\"%s.%s\"没有字段\"%s\""
+
+#~ msgid "type of \"%s\" does not match that when preparing the plan"
+#~ msgstr " \"%s\"类型与正在准备计划时的类型不匹配"
+
+#~ msgid "type of \"%s.%s\" does not match that when preparing the plan"
+#~ msgstr " \"%s.%s\"类型与正在准备计划时的类型不匹配"
+
+#~ msgid "type of tg_argv[%d] does not match that when preparing the plan"
+#~ msgstr "tg_argv[%d]的类型与正在准备计划时的类型不匹配"
+
+#~ msgid "N/A (dropped column)"
+#~ msgstr "N/A (已删除的列)"
 
 #~ msgid ""
-#~ "RETURN NEXT must specify a record or row variable in function returning "
-#~ "row"
-#~ msgstr "在返回记录的函数中RETURN NEXT必须指定记录或记录类型变量"
+#~ "Number of returned columns (%d) does not match expected column count (%d)."
+#~ msgstr "所返回列的数量（%d列）与所期望列的数量(%d)不匹配."
 
-#~ msgid "unterminated dollar-quoted string"
-#~ msgstr "未结束的$引用字符串"
+#~ msgid "Returned type %s does not match expected type %s in column \"%s\"."
+#~ msgstr "所返回的类型%1$s与列\"%3$s\"中期待的类型%2$s不匹配."
 
-#~ msgid "unterminated quoted string"
-#~ msgstr "未结束的引用字符串"
+#~ msgid "only positional parameters can be aliased"
+#~ msgstr "只有已定位的参数能使用化名"
 
-#~ msgid "unterminated /* comment"
-#~ msgstr "/* 注释没有结束"
+#~ msgid "function has no parameter \"%s\""
+#~ msgstr "函数中没有参数\"%s\""
 
-#~ msgid "unterminated quoted identifier"
-#~ msgstr "未结束的引用标识符"
+#~ msgid "expected an integer variable"
+#~ msgstr "期望一个整型变量"
 
-#~ msgid "qualified identifier cannot be used here: %s"
-#~ msgstr "在这里不能使用限定标识符：%s"
+#~ msgid "syntax error at \"%s\""
+#~ msgstr "在\"%s\"上出现语法错误"
 
-#~ msgid "unterminated \" in identifier: %s"
-#~ msgstr "在标识符中未结束的\"：%s"
+#~ msgid "Expected \"FOR\", to open a cursor for an unbound cursor variable."
+#~ msgstr "期望\"FOR\"来为无界游标变量打开游标"
 
-#~ msgid "variable \"%s\" does not exist in the current block"
-#~ msgstr "在当前代码块中不存在变量 \"%s\""
+#~ msgid "expected a cursor or refcursor variable"
+#~ msgstr "期望游标或refcursor类型变量"
 
-#~ msgid "expected \")\""
-#~ msgstr "期望\")\""
-
-#~ msgid "string literal in PL/PgSQL function \"%s\" near line %d"
-#~ msgstr "在PL/PgSQL函数 \"%s\" 第%d行附近的字符串常量"
-
-#~ msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
-#~ msgstr "在PL/PgSQL函数 \"%s\" 第%d行附近的SQL语句"
-
-#~ msgid ""
-#~ "Expected record variable, row variable, or list of scalar variables "
-#~ "following INTO."
-#~ msgstr "在INTO后期望记录类型变量，记录变量或标量变量的列表."
-
-#~ msgid "cannot assign to tg_argv"
-#~ msgstr "无法分配到tg_argv"
+#~ msgid "too many variables specified in SQL statement"
+#~ msgstr "在SQL语句中指定了太多的变量"
 
 #~ msgid ""
 #~ "RETURN cannot have a parameter in function returning set; use RETURN NEXT "
 #~ "or RETURN QUERY"
 #~ msgstr "在返回集合的函数中RETURN不能有参数;使用RETURN NEXT或RETURN QUERY"
 
-#~ msgid "too many variables specified in SQL statement"
-#~ msgstr "在SQL语句中指定了太多的变量"
-
-#~ msgid "expected a cursor or refcursor variable"
-#~ msgstr "期望游标或refcursor类型变量"
-
-#~ msgid "Expected \"FOR\", to open a cursor for an unbound cursor variable."
-#~ msgstr "期望\"FOR\"来为无界游标变量打开游标"
-
-#~ msgid "syntax error at \"%s\""
-#~ msgstr "在\"%s\"上出现语法错误"
-
-#~ msgid "expected an integer variable"
-#~ msgstr "期望一个整型变量"
-
-#~ msgid "function has no parameter \"%s\""
-#~ msgstr "函数中没有参数\"%s\""
-
-#~ msgid "only positional parameters can be aliased"
-#~ msgstr "只有已定位的参数能使用化名"
-
-#~ msgid "Returned type %s does not match expected type %s in column \"%s\"."
-#~ msgstr "所返回的类型%1$s与列\"%3$s\"中期待的类型%2$s不匹配."
+#~ msgid "cannot assign to tg_argv"
+#~ msgstr "无法分配到tg_argv"
 
 #~ msgid ""
-#~ "Number of returned columns (%d) does not match expected column count (%d)."
-#~ msgstr "所返回列的数量（%d列）与所期望列的数量(%d)不匹配."
+#~ "Expected record variable, row variable, or list of scalar variables "
+#~ "following INTO."
+#~ msgstr "在INTO后期望记录类型变量，记录变量或标量变量的列表."
 
-#~ msgid "N/A (dropped column)"
-#~ msgstr "N/A (已删除的列)"
+#~ msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
+#~ msgstr "在PL/PgSQL函数 \"%s\" 第%d行附近的SQL语句"
 
-#~ msgid "type of tg_argv[%d] does not match that when preparing the plan"
-#~ msgstr "tg_argv[%d]的类型与正在准备计划时的类型不匹配"
+#~ msgid "string literal in PL/PgSQL function \"%s\" near line %d"
+#~ msgstr "在PL/PgSQL函数 \"%s\" 第%d行附近的字符串常量"
 
-#~ msgid "type of \"%s.%s\" does not match that when preparing the plan"
-#~ msgstr " \"%s.%s\"类型与正在准备计划时的类型不匹配"
+#~ msgid "expected \")\""
+#~ msgstr "期望\")\""
 
-#~ msgid "type of \"%s\" does not match that when preparing the plan"
-#~ msgstr " \"%s\"类型与正在准备计划时的类型不匹配"
+#~ msgid "variable \"%s\" does not exist in the current block"
+#~ msgstr "在当前代码块中不存在变量 \"%s\""
 
-#~ msgid "row \"%s.%s\" has no field \"%s\""
-#~ msgstr "记录\"%s.%s\"没有字段\"%s\""
+#~ msgid "unterminated \" in identifier: %s"
+#~ msgstr "在标识符中未结束的\"：%s"
 
-#~ msgid "row \"%s\" has no field \"%s\""
-#~ msgstr "记录\"%s\"没有字段\"%s\""
+#~ msgid "qualified identifier cannot be used here: %s"
+#~ msgstr "在这里不能使用限定标识符：%s"
 
-#~ msgid "expected \"[\""
-#~ msgstr "期望 \"[\""
+#~ msgid "unterminated quoted identifier"
+#~ msgstr "未结束的引用标识符"
 
-#~ msgid "relation \"%s.%s\" does not exist"
-#~ msgstr "关系 \"%s.%s\" 不存在"
+#~ msgid "unterminated /* comment"
+#~ msgstr "/* 注释没有结束"
+
+#~ msgid "unterminated quoted string"
+#~ msgstr "未结束的引用字符串"
+
+#~ msgid "unterminated dollar-quoted string"
+#~ msgstr "未结束的$引用字符串"
+
+#~ msgid ""
+#~ "RETURN NEXT must specify a record or row variable in function returning "
+#~ "row"
+#~ msgstr "在返回记录的函数中RETURN NEXT必须指定记录或记录类型变量"
+
+#~ msgid ""
+#~ "RETURN must specify a record or row variable in function returning row"
+#~ msgstr "在返回记录的函数中RETURN必须制定一个记录或记录类型变量"
+
+#~ msgid "EXECUTE statement"
+#~ msgstr "EXECUTE 语句"

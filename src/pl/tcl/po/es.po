@@ -4,27 +4,57 @@
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012, 2015
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL 9.4)\n"
+"Project-Id-Version: pltcl (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-12-15 05:37+0000\n"
-"PO-Revision-Date: 2014-12-16 12:13-0300\n"
-"Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
+"POT-Creation-Date: 2016-05-02 20:07+0000\n"
+"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pltcl.c:1210
+#: pltcl.c:559
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "módulo «unknown» no encontrado en pltcl_modules"
+
+#: pltcl.c:597
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "no se pudo carga módulo «unknown»: %s"
+
+#: pltcl.c:1065
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "no se pudo separar el valor de retorno del disparador: %s"
+
+#: pltcl.c:1074
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "la lista de retorno del disparador debe tener un número par de elementos"
+
+#: pltcl.c:1109
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "atributo «%s» no reconocido"
+
+#: pltcl.c:1114
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "no se puede definir el atributo de sistema «%s»"
+
+#: pltcl.c:1230 pltcl.c:1655
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1211
+#: pltcl.c:1231
 #, c-format
 msgid ""
 "%s\n"
@@ -33,27 +63,32 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1319 pltcl.c:1326
+#: pltcl.c:1338 pltcl.c:1345
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: pltcl.c:1374
+#: pltcl.c:1393
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1383
+#: pltcl.c:1402
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1395
+#: pltcl.c:1414
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"
 
-#: pltcl.c:1434
+#: pltcl.c:1453
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
+
+#: pltcl.c:1576
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "no se pudo crear procedimiento interno «%s»: %s"

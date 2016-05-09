@@ -5,11 +5,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.0 beta 3\n"
+"Project-Id-Version: pltcl (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-20 12:58+0900\n"
-"PO-Revision-Date: 2013-09-04 20:34-0400\n"
-"Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
+"POT-Creation-Date: 2015-09-21 01:07+0000\n"
+"PO-Revision-Date: 2015-10-04 18:15+0900\n"
+"Last-Translator: KOIZUMI Satoru <koizumistr@minos.ocn.ne.jp>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -17,12 +17,42 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pltcl.c:1075
+#: pltcl.c:555
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "pltcl_modulesにモジュール\"unknown\"が見つかりません"
+
+#: pltcl.c:591
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "モジュール\"unknown\"をロードできませんでした: %s"
+
+#: pltcl.c:1047
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "トリガからの戻り値を分割できませんでした: %s"
+
+#: pltcl.c:1058
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "トリガが返すリストの要素は偶数個でなければなりません"
+
+#: pltcl.c:1094
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "未知の属性 \"%s\""
+
+#: pltcl.c:1099
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "システム属性\"%s\"を設定できません"
+
+#: pltcl.c:1222 pltcl.c:1648
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1076
+#: pltcl.c:1223
 #, c-format
 msgid ""
 "%s\n"
@@ -31,24 +61,32 @@ msgstr ""
 "%s\n"
 "PL/Tcl 関数 \"%s\""
 
-#: pltcl.c:1173
+#: pltcl.c:1331 pltcl.c:1338
+#, c-format
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: pltcl.c:1234
+#: pltcl.c:1386
+#, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "トリガー関数はトリガーとしてのみコールできます"
+msgstr "トリガ関数はトリガとしてのみコールできます"
 
-#: pltcl.c:1243
+#: pltcl.c:1395
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl 関数は戻り値の型 %s を返せません"
 
-#: pltcl.c:1255
+#: pltcl.c:1407
+#, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "PL/Tcl 関数は戻り値の型として複合型を返せません"
 
-#: pltcl.c:1294
+#: pltcl.c:1446
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl 関数は型 %s を受け付けません"
+
+#: pltcl.c:1564
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "内部プロシージャ \"%s\" を作成できませんでした: %s"

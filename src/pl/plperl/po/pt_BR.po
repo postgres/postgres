@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plperl
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2014.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.4\n"
+"Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 16:25-0300\n"
+"POT-Creation-Date: 2015-09-17 22:32-0300\n"
 "PO-Revision-Date: 2009-05-10 01:12-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -16,175 +16,200 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: plperl.c:401
+#: plperl.c:404
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr "Se verdadeiro, código Perl confiável e não-confiável será compilado em modo estrito."
 
-#: plperl.c:415
+#: plperl.c:418
 msgid "Perl initialization code to execute when a Perl interpreter is initialized."
 msgstr "Código de inicialização Perl executado quando um interpretador Perl for inicializado."
 
-#: plperl.c:437
+#: plperl.c:440
 msgid "Perl initialization code to execute once when plperl is first used."
 msgstr "Código de inicialização Perl executado quando plperl for utilizado pela primeira vez."
 
-#: plperl.c:445
+#: plperl.c:448
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "Código de inicialização Perl executado quando plperlu for utilizado pela primeira vez."
 
-#: plperl.c:662 plperl.c:836 plperl.c:841 plperl.c:954 plperl.c:965
-#: plperl.c:1006 plperl.c:1027 plperl.c:2045 plperl.c:2140 plperl.c:2202
-#: plperl.c:2259
+#: plperl.c:645
+#, c-format
+msgid "cannot allocate multiple Perl interpreters on this platform"
+msgstr "não pode alocar múltiplos interpretadores Perl nessa plataforma"
+
+#: plperl.c:665 plperl.c:840 plperl.c:846 plperl.c:960 plperl.c:972
+#: plperl.c:1015 plperl.c:1036 plperl.c:2068 plperl.c:2175 plperl.c:2242
+#: plperl.c:2304
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:663
+#: plperl.c:666
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "ao executar PostgreSQL::InServer::SPI::bootstrap"
 
-#: plperl.c:837
+#: plperl.c:841
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "ao analisar código de inicialização Perl"
 
-#: plperl.c:842
+#: plperl.c:847
 #, c-format
 msgid "while running Perl initialization"
 msgstr "ao executar código de inicialização Perl"
 
-#: plperl.c:955
+#: plperl.c:961
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr "ao executar PLC_TRUSTED"
 
-#: plperl.c:966
+#: plperl.c:973
 #, c-format
 msgid "while executing utf8fix"
 msgstr "ao executar utf8fix"
 
-#: plperl.c:1007
+#: plperl.c:1016
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "ao executar plperl.on_plperl_init"
 
-#: plperl.c:1028
+#: plperl.c:1037
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "ao executar plperl.on_plperlu_init"
 
-#: plperl.c:1072 plperl.c:1689
+#: plperl.c:1081 plperl.c:1710
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "hash Perl contém coluna inexistente \"%s\""
 
-#: plperl.c:1157
+#: plperl.c:1166
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "número de dimensões da matriz (%d) excede o máximo permitido (%d)"
 
-#: plperl.c:1169 plperl.c:1186
+#: plperl.c:1178 plperl.c:1195
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "matrizes multidimensionais devem ter expressões de matriz com dimensões correspondentes"
 
-#: plperl.c:1223
+#: plperl.c:1230
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "não pode converter array Perl para tipo que não é array %s"
 
-#: plperl.c:1319
+#: plperl.c:1332
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "não pode converter hash Perl para tipo não-composto %s"
 
-#: plperl.c:1330
+#: plperl.c:1343
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "função que retorna record foi chamada em um contexto que não pode aceitar tipo record"
 
-#: plperl.c:1345
+#: plperl.c:1358
 #, c-format
 msgid "PL/Perl function must return reference to hash or array"
 msgstr "função PL/Perl deve retornar referência a um hash ou uma matriz"
 
-#: plperl.c:1666
+#: plperl.c:1395
+#, c-format
+msgid "lookup failed for type %s"
+msgstr "falhou ao pesquisar por tipo %s"
+
+#: plperl.c:1687
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} não existe"
 
-#: plperl.c:1670
+#: plperl.c:1691
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} não é uma referência hash"
 
-#: plperl.c:1921 plperl.c:2718
+#: plperl.c:1944 plperl.c:2776
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "funções PL/Perl não podem retornar tipo %s"
 
-#: plperl.c:1934 plperl.c:2763
+#: plperl.c:1957 plperl.c:2821
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "funções PL/Perl não podem aceitar tipo %s"
 
-#: plperl.c:2049
+#: plperl.c:2073
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "não obteve uma referência CODE da compilação da função \"%s\""
 
-#: plperl.c:2304
+#: plperl.c:2163
+#, c-format
+msgid "didn't get a return item from function"
+msgstr "não obteve um item de retorno da função"
+
+#: plperl.c:2206 plperl.c:2272
+#, c-format
+msgid "couldn't fetch $_TD"
+msgstr "não pôde obter $_TD"
+
+#: plperl.c:2230 plperl.c:2292
+#, c-format
+msgid "didn't get a return item from trigger function"
+msgstr "não obteve um item de retorno da função de gatilho"
+
+#: plperl.c:2349
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "função que tem argumento do tipo conjunto foi chamada em um contexto que não pode aceitar um conjunto"
 
-#: plperl.c:2348
+#: plperl.c:2393
 #, c-format
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr "funçao PL/Perl que retorna conjunto deve retornar referência para matriz ou usar return_next"
 
-#: plperl.c:2462
+#: plperl.c:2507
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "ignorando registro modificado em gatilho DELETE"
 
-#: plperl.c:2470
+#: plperl.c:2515
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "resultado da função de gatilho PL/Perl deve ser undef, \"SKIP\" ou \"MODIFY\""
 
-#: plperl.c:2647 plperl.c:2657
+#: plperl.c:2694 plperl.c:2704
 #, c-format
 msgid "out of memory"
 msgstr "sem memória"
 
-#: plperl.c:2710
+#: plperl.c:2768
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: plperl.c:3083
+#: plperl.c:3144
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "não pode utilizar return_next em uma função que não retorna conjunto"
 
-#: plperl.c:3139
+#: plperl.c:3200
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "função PL/Perl que retorna um conjunto de tipo composto deve chamar return_next com referência a um hash"
 
-#: plperl.c:3873
+#: plperl.c:3934
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "função PL/Perl \"%s\""
 
-#: plperl.c:3885
+#: plperl.c:3946
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "compilação da função PL/Perl \"%s\""
 
-#: plperl.c:3894
+#: plperl.c:3955
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "bloco de código PL/Perl anônimo"

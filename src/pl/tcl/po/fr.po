@@ -6,23 +6,54 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.4\n"
+"Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-05 05:22+0000\n"
-"PO-Revision-Date: 2013-09-04 20:32-0400\n"
+"POT-Creation-Date: 2016-02-21 16:07+0000\n"
+"PO-Revision-Date: 2016-02-21 17:18+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.6\n"
 
-#: pltcl.c:1027
+#: pltcl.c:555
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "module « unkown » introuvable dans pltcl_modules"
+
+#: pltcl.c:591
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "n'a pas pu charger le module « unknown » : %s"
+
+#: pltcl.c:1047
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "n'a pas pu séparer la valeur de retour du trigger : %s"
+
+#: pltcl.c:1058
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "la liste de retour du trigger doit avoir un nombre pair d'éléments"
+
+#: pltcl.c:1094
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "attribut « %s » non reconnu"
+
+#: pltcl.c:1099
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "ne peut pas initialiser l'attribut système « %s »"
+
+#: pltcl.c:1222 pltcl.c:1648
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1028
+#: pltcl.c:1223
 #, c-format
 msgid ""
 "%s\n"
@@ -31,25 +62,32 @@ msgstr ""
 "%s\n"
 "dans la fonction PL/Tcl « %s »"
 
-#: pltcl.c:1127
+#: pltcl.c:1331 pltcl.c:1338
+#, c-format
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: pltcl.c:1192
+#: pltcl.c:1386
+#, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
-#: pltcl.c:1201
+#: pltcl.c:1395
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer le type %s"
 
-#: pltcl.c:1213
+#: pltcl.c:1407
+#, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer des types composites"
 
-#: pltcl.c:1253
+#: pltcl.c:1446
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "les fonctions PL/Tcl ne peuvent pas accepter le type %s"
 
+#: pltcl.c:1564
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "n'a pas pu créer la procédure interne « %s » : %s"

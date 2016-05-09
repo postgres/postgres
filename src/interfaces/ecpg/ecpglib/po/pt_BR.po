@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.4\n"
+"Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-05-17 15:50-0300\n"
+"POT-Creation-Date: 2015-09-17 22:32-0300\n"
 "PO-Revision-Date: 2009-02-09 13:00-0200\n"
 "Last-Translator: Fernando Ike de Oliveira <fike@midstorm.org>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -17,183 +17,183 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: connect.c:231
+#: connect.c:237
 msgid "empty message text"
 msgstr "mensagem vazia"
 
-#: connect.c:384 connect.c:413 connect.c:621
+#: connect.c:401 connect.c:430 connect.c:638
 msgid "<DEFAULT>"
 msgstr "<PADRÃO>"
 
-#: descriptor.c:807 misc.c:113
+#: descriptor.c:833 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:26
+#: error.c:33
 #, c-format
 msgid "no data found on line %d"
 msgstr "nenhum dado encontrado na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:33
+#: error.c:40
 #, c-format
 msgid "out of memory on line %d"
 msgstr "sem memória na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:40
+#: error.c:47
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
 msgstr "tipo \"%s\" não é suportado na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:47
+#: error.c:54
 #, c-format
 msgid "too many arguments on line %d"
 msgstr "muitos argumentos na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:54
+#: error.c:61
 #, c-format
 msgid "too few arguments on line %d"
 msgstr "poucos argumentos na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:61
+#: error.c:68
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
 msgstr "sintaxe de entrada é inválida para tipo inteiro: \"%s\", na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:68
+#: error.c:75
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
 msgstr "sintaxe de entrada é inválida para tipo inteiro não-sinalizado: \"%s\", na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:75
+#: error.c:82
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
 msgstr "sintaxe de entrada é inválida para tipo ponto flutuante: \"%s\", na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:83
+#: error.c:90
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
 msgstr "sintaxe de entrada é inválida par tipo booleano: \"%s\", na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:88
+#: error.c:95
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
 msgstr "não pôde converter valor booleano: tamanho não corresponde, na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:95
+#: error.c:102
 #, c-format
 msgid "empty query on line %d"
 msgstr "consulta vazia na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:102
+#: error.c:109
 #, c-format
 msgid "null value without indicator on line %d"
 msgstr "valor nulo sem indicador na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:109
+#: error.c:116
 #, c-format
 msgid "variable does not have an array type on line %d"
 msgstr "variável não tem um tipo matriz na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:116
+#: error.c:123
 #, c-format
 msgid "data read from server is not an array on line %d"
 msgstr "dado lido do servidor não é uma matriz na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:123
+#: error.c:130
 #, c-format
 msgid "inserting an array of variables is not supported on line %d"
 msgstr "inserir uma matriz de variáveis não é suportado na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:130
+#: error.c:137
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "conexão \"%s\" não existe na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:137
+#: error.c:144
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "não está conectado a conexão \"%s\" na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "nome de comando \"%s\" é inválido na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "descritor \"%s\" não foi encontrado na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "índice do descritor está fora do intervalo na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "item do descritor \"%s\" é desconhecido na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
+#: error.c:179
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "variável não tem um tipo numérico na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:179
+#: error.c:186
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "variável não tem um tipo caracter na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:186
+#: error.c:193
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "erro ao processar transação na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:193
+#: error.c:200
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "não pôde connectar  ao banco de dados \"%s\" na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "Erro SQL %d na linha %d"
 
-#: error.c:240
+#: error.c:254
 msgid "the connection to the server was lost"
 msgstr "a conexão com servidor foi perdida"
 
-#: error.c:327
+#: error.c:347
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "Erro SQL: %s\n"
 
-#: execute.c:2003
+#: execute.c:1972
 msgid "<empty>"
 msgstr "<vazio>"

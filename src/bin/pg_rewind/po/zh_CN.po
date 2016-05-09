@@ -1,0 +1,812 @@
+# LANGUAGE message translation file for pg_rewind
+# Copyright (C) 2015 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_rewind (PostgreSQL) 9.5\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2015-11-26 18:44+0000\n"
+"PO-Revision-Date: 2016-01-03 23:28-0500\n"
+"Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.5.7\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
+#: parsexlog.c:179
+#, c-format
+msgid "out of memory\n"
+msgstr "内存溢出\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "无法复制空指针 (内部错误)\n"
+
+#: ../../common/restricted_token.c:68
+#, c-format
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr "%s: WARNING: 无法为该平台创建受限制的令牌\n"
+
+#: ../../common/restricted_token.c:77
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "%s:无法打开进程令牌 (token): 错误码 %lu\n"
+
+#: ../../common/restricted_token.c:90
+#, c-format
+msgid "%s: could not allocate SIDs: error code %lu\n"
+msgstr "%s: 无法分配SID: 错误码 %lu\n"
+
+#: ../../common/restricted_token.c:110
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "%s: 无法创建受限令牌: 错误码为 %lu\n"
+
+#: ../../common/restricted_token.c:132
+#, c-format
+msgid "%s: could not start process for command \"%s\": error code %lu\n"
+msgstr "%s: 无法为命令 \"%s\"创建进程: 错误码 %lu\n"
+
+#: ../../common/restricted_token.c:170
+#, c-format
+msgid "%s: could not re-execute with restricted token: error code %lu\n"
+msgstr "%s: 无法使用受限令牌再次执行: 错误码 %lu\n"
+
+#: ../../common/restricted_token.c:186
+#, c-format
+msgid "%s: could not get exit code from subprocess: error code %lu\n"
+msgstr "%s: 无法从子进程得到退出码: 错误码 %lu\n"
+
+#: copy_fetch.c:64
+#, c-format
+msgid "could not open directory \"%s\": %s\n"
+msgstr "无法打开目录 \"%s\": %s\n"
+
+#: copy_fetch.c:93 filemap.c:112 filemap.c:267
+#, c-format
+msgid "could not stat file \"%s\": %s\n"
+msgstr "无法获取文件 \"%s\":%s 的状态\n"
+
+#: copy_fetch.c:122
+#, c-format
+msgid "could not read symbolic link \"%s\": %s\n"
+msgstr "无法读取符号链接\"%s\": %s\n"
+
+#: copy_fetch.c:125
+#, c-format
+msgid "symbolic link \"%s\" target is too long\n"
+msgstr "符号链接\"%s\"的目标过长\n"
+
+#: copy_fetch.c:140
+#, c-format
+msgid ""
+"\"%s\" is a symbolic link, but symbolic links are not supported on this "
+"platform\n"
+msgstr "\"%s\"是一个符号链接，但是这个平台上不支持平台链接\n"
+
+#: copy_fetch.c:147
+#, c-format
+msgid "could not read directory \"%s\": %s\n"
+msgstr "无法读取目录 \"%s\": %s\n"
+
+#: copy_fetch.c:151
+#, c-format
+msgid "could not close directory \"%s\": %s\n"
+msgstr "无法关闭目录 \"%s\": %s\n"
+
+#: copy_fetch.c:171
+#, c-format
+msgid "could not open source file \"%s\": %s\n"
+msgstr "无法打开源文件\"%s\": %s\n"
+
+#: copy_fetch.c:175
+#, c-format
+msgid "could not seek in source file: %s\n"
+msgstr "无法在源文件中定位（seek）：%s\n"
+
+#: copy_fetch.c:192 file_ops.c:301
+#, c-format
+msgid "could not read file \"%s\": %s\n"
+msgstr "无法读取文件\"%s\": %s\n"
+
+#: copy_fetch.c:195
+#, c-format
+msgid "unexpected EOF while reading file \"%s\"\n"
+msgstr "读取文件\"%s\"时遇到意料之外的EOF\n"
+
+#: copy_fetch.c:202
+#, c-format
+msgid "could not close file \"%s\": %s\n"
+msgstr "无法关闭文件\"%s\": %s\n"
+
+#: file_ops.c:64
+#, c-format
+msgid "could not open target file \"%s\": %s\n"
+msgstr "无法打开目标文件\"%s\": %s\n"
+
+#: file_ops.c:78
+#, c-format
+msgid "could not close target file \"%s\": %s\n"
+msgstr "无法关闭目标文件\"%s\": %s\n"
+
+#: file_ops.c:99
+#, c-format
+msgid "could not seek in target file \"%s\": %s\n"
+msgstr "无法在目标文件\"%s\"中定位（seek）: %s\n"
+
+#: file_ops.c:115
+#, c-format
+msgid "could not write file \"%s\": %s\n"
+msgstr "无法写文件\"%s\": %s\n"
+
+#: file_ops.c:165
+#, c-format
+msgid "invalid action (CREATE) for regular file\n"
+msgstr "对常规文件无效的动作（CREATE）\n"
+
+#: file_ops.c:180
+#, c-format
+msgid "could not remove file \"%s\": %s\n"
+msgstr "无法删除文件 \"%s\": %s\n"
+
+#: file_ops.c:197
+#, c-format
+msgid "could not open file \"%s\" for truncation: %s\n"
+msgstr "无法打开文件\"%s\"用于截断：%s\n"
+
+#: file_ops.c:201
+#, c-format
+msgid "could not truncate file \"%s\" to %u: %s\n"
+msgstr "无法截断文件\"%s\"到%u: %s\n"
+
+#: file_ops.c:217
+#, c-format
+msgid "could not create directory \"%s\": %s\n"
+msgstr "无法创建目录 \"%s\": %s\n"
+
+#: file_ops.c:231
+#, c-format
+msgid "could not remove directory \"%s\": %s\n"
+msgstr "无法移除目录\"%s\": %s\n"
+
+#: file_ops.c:245
+#, c-format
+msgid "could not create symbolic link at \"%s\": %s\n"
+msgstr "无法在\"%s\"创建符号链接: %s\n"
+
+#: file_ops.c:259
+#, c-format
+msgid "could not remove symbolic link \"%s\": %s\n"
+msgstr "无法移除符号链接\"%s\": %s\n"
+
+#: file_ops.c:289 file_ops.c:293
+#, c-format
+msgid "could not open file \"%s\" for reading: %s\n"
+msgstr "无法打开文件\"%s\"用于读取: %s\n"
+
+#: filemap.c:104
+#, c-format
+msgid "data file \"%s\" in source is not a regular file\n"
+msgstr "源头的数据文件\"%s\"不是一个常规文件\n"
+
+#: filemap.c:126
+#, c-format
+msgid "\"%s\" is not a directory\n"
+msgstr "\"%s\"不是一个目录\n"
+
+#: filemap.c:149
+#, c-format
+msgid "\"%s\" is not a symbolic link\n"
+msgstr "\"%s\"不是一个符号链接\n"
+
+#: filemap.c:161
+#, c-format
+msgid "\"%s\" is not a regular file\n"
+msgstr "\"%s\"不是一个常规文件\n"
+
+#: filemap.c:279
+#, c-format
+msgid "source file list is empty\n"
+msgstr "源文件列表为空\n"
+
+#: filemap.c:401
+#, c-format
+msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
+msgstr "对目录或符号链接\"%s\"的意料之外的页修改\n"
+
+#: libpq_fetch.c:55
+#, c-format
+msgid "could not connect to server: %s"
+msgstr "无法连接到服务器：%s"
+
+#: libpq_fetch.c:58
+#, c-format
+msgid "connected to server\n"
+msgstr "已连接服务器\n"
+
+#: libpq_fetch.c:68
+#, c-format
+msgid "source server must not be in recovery mode\n"
+msgstr "源服务器不能处于恢复模式\n"
+
+#: libpq_fetch.c:78
+#, c-format
+msgid "full_page_writes must be enabled in the source server\n"
+msgstr "源服务器中的full_page_writes必须被启用\n"
+
+#: libpq_fetch.c:95
+#, c-format
+msgid "error running query (%s) in source server: %s"
+msgstr "源服务器中有错误运行的查询（%s）：%s"
+
+#: libpq_fetch.c:100
+#, c-format
+msgid "unexpected result set from query\n"
+msgstr "从查询得到意料之外的结果集\n"
+
+#: libpq_fetch.c:123
+#, c-format
+msgid "unrecognized result \"%s\" for current WAL insert location\n"
+msgstr "当前WAL插入位置的未识别结果\"%s\"\n"
+
+#: libpq_fetch.c:173
+#, c-format
+msgid "could not fetch file list: %s"
+msgstr "无法取得文件列表：%s"
+
+#: libpq_fetch.c:178
+#, c-format
+msgid "unexpected result set while fetching file list\n"
+msgstr "在取得文件列表时得到意料之外的结果集\n"
+
+#: libpq_fetch.c:226
+#, c-format
+msgid "could not send query: %s"
+msgstr "无法发送查询：%s"
+
+#: libpq_fetch.c:228
+#, c-format
+msgid "getting file chunks\n"
+msgstr "获取文件块\n"
+
+#: libpq_fetch.c:231
+#, c-format
+msgid "could not set libpq connection to single row mode\n"
+msgstr "无法设置libpq连接为单行模式\n"
+
+#: libpq_fetch.c:251
+#, c-format
+msgid "unexpected result while fetching remote files: %s"
+msgstr "在取得远程文件时得到意料之外的结果：%s"
+
+#: libpq_fetch.c:257
+#, c-format
+msgid "unexpected result set size while fetching remote files\n"
+msgstr "在取得远程文件时得到意料之外的结果集大小\n"
+
+#: libpq_fetch.c:263
+#, c-format
+msgid ""
+"unexpected data types in result set while fetching remote files: %u %u %u\n"
+msgstr "在取得远程文件时结果集中有意料之外的数据类型：%u %u %u\n"
+
+#: libpq_fetch.c:271
+#, c-format
+msgid "unexpected result format while fetching remote files\n"
+msgstr "在取得远程文件时得到意料之外的结果格式\n"
+
+#: libpq_fetch.c:277
+#, c-format
+msgid "unexpected null values in result while fetching remote files\n"
+msgstr "在取得远程文件时结果中有意料之外的空值\n"
+
+#: libpq_fetch.c:281
+#, c-format
+msgid "unexpected result length while fetching remote files\n"
+msgstr "在取得远程文件时得到意料之外的结果长度\n"
+
+#: libpq_fetch.c:303
+#, c-format
+msgid "received null value for chunk for file \"%s\", file has been deleted\n"
+msgstr "收到的文件\"%s\"的块中有空值，文件已经被删除\n"
+
+#: libpq_fetch.c:310
+#, c-format
+msgid "received chunk for file \"%s\", offset %d, size %d\n"
+msgstr "收到文件\"%s\"的块，偏移量为%d，大小为%d\n"
+
+#: libpq_fetch.c:339
+#, c-format
+msgid "could not fetch remote file \"%s\": %s"
+msgstr "无法取得远程文件\"%s\": %s"
+
+#: libpq_fetch.c:344
+#, c-format
+msgid "unexpected result set while fetching remote file \"%s\"\n"
+msgstr "在取得远程文件\"%s\"时得到意料之外的结果集\n"
+
+#: libpq_fetch.c:355
+#, c-format
+msgid "fetched file \"%s\", length %d\n"
+msgstr "获取到文件\"%s\"，长度为%d\n"
+
+#: libpq_fetch.c:387
+#, c-format
+msgid "could not send COPY data: %s"
+msgstr "无法发送COPY数据：%s"
+
+#: libpq_fetch.c:413
+#, c-format
+msgid "could not create temporary table: %s"
+msgstr "无法创建临时表：%s"
+
+#: libpq_fetch.c:421
+#, c-format
+msgid "could not send file list: %s"
+msgstr "无法发送文件列表：%s"
+
+#: libpq_fetch.c:463
+#, c-format
+msgid "could not send end-of-COPY: %s"
+msgstr "无法发送COPY结束标记：%s"
+
+#: libpq_fetch.c:469
+#, c-format
+msgid "unexpected result while sending file list: %s"
+msgstr "在发送文件列表时得到意料之外的结果：%s"
+
+#: logging.c:57
+msgid "Failure, exiting\n"
+msgstr "故障，退出\n"
+
+#: logging.c:140
+#, c-format
+msgid "%*s/%s kB (%d%%) copied"
+msgstr "已复制%*s/%s kB (%d%%)"
+
+#: parsexlog.c:87 parsexlog.c:133
+#, c-format
+msgid "could not read WAL record at %X/%X: %s\n"
+msgstr "无法读取%X/%X处的WAL记录：%s\n"
+
+#: parsexlog.c:91 parsexlog.c:136
+#, c-format
+msgid "could not read WAL record at %X/%X\n"
+msgstr "无法读取%X/%X处的WAL记录\n"
+
+#: parsexlog.c:191
+#, c-format
+msgid "could not find previous WAL record at %X/%X: %s\n"
+msgstr "无法在%X/%X找到前一个WAL记录：%s\n"
+
+#: parsexlog.c:195
+#, c-format
+msgid "could not find previous WAL record at %X/%X\n"
+msgstr "无法在%X/%X找到前一个WAL记录\n"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: parsexlog.c:268
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "无法打开文件 \"%s\": %s\n"
+
+#: parsexlog.c:282
+#, c-format
+msgid "could not seek in file \"%s\": %s\n"
+msgstr "无法在文件\"%s\"中定位（seek）：%s\n"
+
+#: parsexlog.c:289
+#, c-format
+msgid "could not read from file \"%s\": %s\n"
+msgstr "无法读取文件 \"%s\": %s\n"
+
+#: parsexlog.c:357
+#, c-format
+msgid ""
+"WAL record modifies a relation, but record type is not recognized\n"
+"lsn: %X/%X, rmgr: %s, info: %02X\n"
+msgstr ""
+"WAL记录修改了一个关系，但是记录类型无法识别\n"
+"lsn: %X/%X, rmgr: %s, info: %02X\n"
+
+#: pg_rewind.c:59
+#, c-format
+msgid ""
+"%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
+"\n"
+msgstr ""
+"%s用一个PostgreSQL集簇的另一个拷贝重新同步了该集簇。\n"
+"\n"
+
+#: pg_rewind.c:60
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"用法:\n"
+"  %s [选项]...\n"
+"\n"
+
+#: pg_rewind.c:61
+#, c-format
+msgid "Options:\n"
+msgstr "选项:\n"
+
+#: pg_rewind.c:62
+#, c-format
+msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
+msgstr "  -D, --target-pgdata=DIRECTORY  已有的要修改的数据目录\n"
+
+#: pg_rewind.c:63
+#, c-format
+msgid ""
+"      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
+msgstr "      --source-pgdata=DIRECTORY  要与之同步的源数据目录\n"
+
+#: pg_rewind.c:64
+#, c-format
+msgid "      --source-server=CONNSTR    source server to synchronize with\n"
+msgstr "      --source-server=CONNSTR    要与之同步的源服务器\n"
+
+#: pg_rewind.c:65
+#, c-format
+msgid "  -n, --dry-run                  stop before modifying anything\n"
+msgstr "  -n, --dry-run                  在修改任何东西之前停止\n"
+
+#: pg_rewind.c:66
+#, c-format
+msgid "  -P, --progress                 write progress messages\n"
+msgstr "  -P, --progress                 写出进度消息\n"
+
+#: pg_rewind.c:67
+#, c-format
+msgid "      --debug                    write a lot of debug messages\n"
+msgstr "      --debug                    写出很多调试消息\n"
+
+#: pg_rewind.c:68
+#, c-format
+msgid ""
+"  -V, --version                  output version information, then exit\n"
+msgstr "  -V, --version                  输出版本信息，然后退出\n"
+
+#: pg_rewind.c:69
+#, c-format
+msgid "  -?, --help                     show this help, then exit\n"
+msgstr "  -?, --help                     显示本帮助，然后退出\n"
+
+#: pg_rewind.c:70
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"报告错误至 <pgql-bugs@postgresql.org>.\n"
+
+#: pg_rewind.c:125 pg_rewind.c:156 pg_rewind.c:163 pg_rewind.c:171
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#: pg_rewind.c:155
+#, c-format
+msgid "%s: no source specified (--source-pgdata or --source-server)\n"
+msgstr "%s：没有指定源 (--source-pgdata 或者 --source-server)\n"
+
+#: pg_rewind.c:162
+#, c-format
+msgid "%s: no target data directory specified (--target-pgdata)\n"
+msgstr "%s：没有指定目标数据目录 (--target-pgdata)\n"
+
+#: pg_rewind.c:169
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
+
+#: pg_rewind.c:184
+#, c-format
+msgid "cannot be executed by \"root\"\n"
+msgstr "不能由\"root\"执行\n"
+
+#: pg_rewind.c:185
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "您现在作为PostgreSQL超级用户运行%s.\n"
+
+#: pg_rewind.c:215
+#, c-format
+msgid "source and target cluster are on the same timeline\n"
+msgstr "源集簇和目标集簇处于同一时间线\n"
+
+#: pg_rewind.c:218
+#, c-format
+msgid "servers diverged at WAL position %X/%X on timeline %u\n"
+msgstr "服务器在时间线%3$u上的WAL位置%1$X/%2$X处发生了分歧\n"
+
+#: pg_rewind.c:253
+#, c-format
+msgid "no rewind required\n"
+msgstr "不需要倒带（rewind）\n"
+
+#: pg_rewind.c:259
+#, c-format
+msgid "rewinding from last common checkpoint at %X/%X on timeline %u\n"
+msgstr "从时间线%3$u上%1$X/%2$X处的最后一个普通检查点倒带\n"
+
+#: pg_rewind.c:267
+#, c-format
+msgid "reading source file list\n"
+msgstr "读取源文件列表\n"
+
+#: pg_rewind.c:269
+#, c-format
+msgid "reading target file list\n"
+msgstr "读取目标文件列表\n"
+
+#: pg_rewind.c:279
+#, c-format
+msgid "reading WAL in target\n"
+msgstr "读取目标中的WAL\n"
+
+#: pg_rewind.c:296
+#, c-format
+msgid "need to copy %lu MB (total source directory size is %lu MB)\n"
+msgstr "需要复制 %lu MB（整个源目录的大小是 %lu MB）\n"
+
+#: pg_rewind.c:313
+#, c-format
+msgid ""
+"\n"
+"creating backup label and updating control file\n"
+msgstr ""
+"\n"
+"正在创建备份标签并且更新控制文件\n"
+
+#: pg_rewind.c:341
+#, c-format
+msgid "Done!\n"
+msgstr "完成！\n"
+
+#: pg_rewind.c:353
+#, c-format
+msgid "source and target clusters are from different systems\n"
+msgstr "源集簇和目标集簇来自不同的系统\n"
+
+#: pg_rewind.c:361
+#, c-format
+msgid "clusters are not compatible with this version of pg_rewind\n"
+msgstr "集簇与这个pg_rewind的版本不兼容\n"
+
+#: pg_rewind.c:371
+#, c-format
+msgid ""
+"target server needs to use either data checksums or \"wal_log_hints = on\"\n"
+msgstr "目标服务器需要使用数据校验和或者让\"wal_log_hints = on\"\n"
+
+#: pg_rewind.c:381
+#, c-format
+msgid "target server must be shut down cleanly\n"
+msgstr "目标服务器必须被干净地关闭\n"
+
+#: pg_rewind.c:389
+#, c-format
+msgid "source data directory must be shut down cleanly\n"
+msgstr "源数据目录必须被干净地关闭\n"
+
+#: pg_rewind.c:456
+#, c-format
+msgid ""
+"could not find common ancestor of the source and target cluster's timelines\n"
+msgstr "无法找到源集簇和目标集簇的时间线的共同祖先\n"
+
+#: pg_rewind.c:496
+#, c-format
+msgid "backup label buffer too small\n"
+msgstr "备份标签缓冲太小\n"
+
+#: pg_rewind.c:518
+#, c-format
+msgid "unexpected control file CRC\n"
+msgstr "意料之外的控制文件CRC\n"
+
+#: pg_rewind.c:528
+#, c-format
+msgid "unexpected control file size %d, expected %d\n"
+msgstr "意料之外的控制文件大小%d，应该是%d\n"
+
+#: timeline.c:76 timeline.c:82
+#, c-format
+msgid "syntax error in history file: %s\n"
+msgstr "历史文件中有语法错误：%s\n"
+
+#: timeline.c:77
+#, c-format
+msgid "Expected a numeric timeline ID.\n"
+msgstr "需要一个数字形式的时间线 ID。\n"
+
+#: timeline.c:83
+#, c-format
+msgid "Expected a transaction log switchpoint location.\n"
+msgstr "需要一个事务日志切换点位置。\n"
+
+#: timeline.c:88
+#, c-format
+msgid "invalid data in history file: %s\n"
+msgstr "历史文件中有无效数据：%s\n"
+
+#: timeline.c:89
+#, c-format
+msgid "Timeline IDs must be in increasing sequence.\n"
+msgstr "时间线 ID 必须处于一个增序列中。\n"
+
+#: timeline.c:109
+#, c-format
+msgid "invalid data in history file\n"
+msgstr "历史文件中有无效数据\n"
+
+#: timeline.c:110
+#, c-format
+msgid "Timeline IDs must be less than child timeline's ID.\n"
+msgstr "时间线 ID 必须小于子时间线的 ID。\n"
+
+#: xlogreader.c:264
+#, c-format
+msgid "invalid record offset at %X/%X"
+msgstr "%X/%X处有无效的记录偏移量"
+
+#: xlogreader.c:272
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "%X/%X请求继续记录（contrecord）"
+
+#: xlogreader.c:312 xlogreader.c:603
+#, c-format
+msgid "invalid record length at %X/%X"
+msgstr "%X/%X处有无效记录长度"
+
+#: xlogreader.c:326
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "%2$X/%3$X处有的记录长度%1$u过长"
+
+#: xlogreader.c:367
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "%X/%X处没有继续记录标志"
+
+#: xlogreader.c:380
+#, c-format
+msgid "invalid contrecord length %u at %X/%X"
+msgstr "%2$X/%3$X处有无效的继续记录长度%1$u"
+
+#: xlogreader.c:610
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "%2$X/%3$X处有无效的资源管理器 ID %1$u"
+
+#: xlogreader.c:624 xlogreader.c:641
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "%3$X/%4$X处的记录有不正确的prev-link %1$X/%2$X"
+
+#: xlogreader.c:678
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "%X/%X处的记录中有不正确的资源管理器数据校验和"
+
+#: xlogreader.c:711
+#, c-format
+msgid "invalid magic number %04X in log segment %s, offset %u"
+msgstr "在日志段%2$s的偏移量%3$u处有无效的magic号%1$04X"
+
+#: xlogreader.c:725 xlogreader.c:776
+#, c-format
+msgid "invalid info bits %04X in log segment %s, offset %u"
+msgstr "在日志段%2$s的偏移量%3$u处有无效的info位%1$04X"
+
+#: xlogreader.c:751
+#, c-format
+msgid ""
+"WAL file is from different database system: WAL file database system "
+"identifier is %s, pg_control database system identifier is %s"
+msgstr ""
+"WAL文件来自于不同的数据库系统：WAL文件数据库系统标识符是%s，pg_control数据库"
+"系统标识符是%s"
+
+#: xlogreader.c:758
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect XLOG_SEG_SIZE in page "
+"header"
+msgstr "WAL文件来自于不同的数据库系统：页头部中有不正确的XLOG_SEG_SIZE"
+
+#: xlogreader.c:764
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
+"header"
+msgstr "WAL文件来自于不同的数据库系统：页头部中有不正确的XLOG_BLCKSZ"
+
+#: xlogreader.c:790
+#, c-format
+msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
+msgstr "在日志段%3$s的偏移量%4$u处有意料之外的pageaddr %1$X/%2$X"
+
+#: xlogreader.c:815
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
+msgstr "在日志段%3$s的偏移量%4$u处有失序的时间线 ID %1$u（在%2$u之后）"
+
+#: xlogreader.c:1024
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "在%2$X/%3$X处有无序的block_id %1$u"
+
+#: xlogreader.c:1046
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA已被设置，但是在%X/%X处没有包括数据"
+
+#: xlogreader.c:1053
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA没有被设置，但是在%2$X/%3$X处的数据长度为%1$u"
+
+#: xlogreader.c:1086
+#, c-format
+msgid ""
+"BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
+"%X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE已被设置，但是%4$X/%5$X处记录了洞偏移量为%1$u、长度为%2$u、"
+"块映像长度为%3$u"
+
+#: xlogreader.c:1102
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE没有被设置，但是%3$X/%4$X处记录了洞偏移量为%1$u、长度为%2$u"
+
+#: xlogreader.c:1117
+#, c-format
+msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
+msgstr "BKPIMAGE_IS_COMPRESSED已被设置，但是%2$X/%3$X处记录的块映像长度为%1$u"
+
+#: xlogreader.c:1132
+#, c-format
+msgid ""
+"neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image "
+"length is %u at %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE和BKPIMAGE_IS_COMPRESSED都没有被设置，但是%2$X/%3$X处记录的"
+"块映像长度为%1$u"
+
+#: xlogreader.c:1148
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "BKPBLOCK_SAME_REL已被设置，但是在%X/%X没有前一个关系"
+
+#: xlogreader.c:1160
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "%2$X/%3$X处有无效block_id %1$u"
+
+#: xlogreader.c:1225
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "%X/%X处的记录的长度无效"
+
+#: xlogreader.c:1314
+#, c-format
+msgid "invalid compressed image at %X/%X, block %d"
+msgstr "%X/%X处是块%d的无效压缩映像"

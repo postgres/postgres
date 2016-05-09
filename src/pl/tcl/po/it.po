@@ -16,24 +16,55 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 9.3\n"
+"Project-Id-Version: pltcl (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-15 22:09+0000\n"
-"PO-Revision-Date: 2012-11-04 18:06+0100\n"
+"POT-Creation-Date: 2016-04-17 00:07+0000\n"
+"PO-Revision-Date: 2016-04-17 03:40+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: pltcl.c:1157
+#: pltcl.c:559
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "modulo \"unknown\" not trovato nei moduli pltcl"
+
+#: pltcl.c:597
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "caricamento del modulo \"unknown\" fallito: %s"
+
+#: pltcl.c:1065
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "divisione del valore di ritorno del trigger fallita: %s"
+
+#: pltcl.c:1074
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "la lista restituita dal trigger deve avere un numero pari di elementi"
+
+#: pltcl.c:1109
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "attributo \"%s\" non riconosciuto"
+
+#: pltcl.c:1114
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "non è possibile impostare l'attributo di sistema \"%s\""
+
+#: pltcl.c:1230 pltcl.c:1655
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1158
+#: pltcl.c:1231
 #, c-format
 msgid ""
 "%s\n"
@@ -42,27 +73,32 @@ msgstr ""
 "%s\n"
 "nella funzione PL/Tcl \"%s\""
 
-#: pltcl.c:1262 pltcl.c:1269
+#: pltcl.c:1338 pltcl.c:1345
 #, c-format
 msgid "out of memory"
 msgstr "memoria esaurita"
 
-#: pltcl.c:1316
+#: pltcl.c:1393
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "le funzioni trigger possono essere chiamate esclusivamente da trigger"
 
-#: pltcl.c:1325
+#: pltcl.c:1402
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "le funzioni PL/Tcl non possono restituire il tipo %s"
 
-#: pltcl.c:1337
+#: pltcl.c:1414
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "le funzioni PL/Tcl non possono restituire tipi compositi"
 
-#: pltcl.c:1376
+#: pltcl.c:1453
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "le funzioni PL/Tcl non possono accettare il tipo %s"
+
+#: pltcl.c:1576
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "creazione della procedura interna \"%s\" fallita: %s"

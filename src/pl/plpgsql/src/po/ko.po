@@ -1,0 +1,819 @@
+# Korean message translation file for plpgsql
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Ioseph Kim <ioseph@uri.sarang.net>
+msgid ""
+msgstr ""
+"Project-Id-Version: plpgsql (PostgreSQL 9.5)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2015-12-27 23:56+0900\n"
+"PO-Revision-Date: 2015-12-28 00:36+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: pl_comp.c:436 pl_handler.c:448
+#, c-format
+msgid "PL/pgSQL functions cannot accept type %s"
+msgstr "PL/pgSQL 함수에 %s 형식을 사용할 수 없음"
+
+#: pl_comp.c:517
+#, c-format
+msgid "could not determine actual return type for polymorphic function \"%s\""
+msgstr "다형적 함수 \"%s\"의 실제 반환 형식을 확인할 수 없음"
+
+#: pl_comp.c:547
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "트리거 함수는 트리거로만 호출될 수 있음"
+
+#: pl_comp.c:551 pl_handler.c:433
+#, c-format
+msgid "PL/pgSQL functions cannot return type %s"
+msgstr "PL/pgSQL 함수는 %s 형식을 반환할 수 없음"
+
+#: pl_comp.c:592
+#, c-format
+msgid "trigger functions cannot have declared arguments"
+msgstr "트리거 함수는 선언된 인수를 포함할 수 없음"
+
+#: pl_comp.c:593
+#, c-format
+msgid ""
+"The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV "
+"instead."
+msgstr "대신 TG_NARGS 및 TG_ARGV를 통해 트리거의 인수에 액세스할 수 있습니다."
+
+#: pl_comp.c:695
+#, c-format
+msgid "event trigger functions cannot have declared arguments"
+msgstr "이벤트 트리거 함수는 선언된 인자(declare argument)를 사용할 수 없음"
+
+#: pl_comp.c:957
+#, c-format
+msgid "compilation of PL/pgSQL function \"%s\" near line %d"
+msgstr "PL/pgSQL 함수 \"%s\" 컴파일(%d번째 줄 근처)"
+
+#: pl_comp.c:980
+#, c-format
+msgid "parameter name \"%s\" used more than once"
+msgstr "\"%s\" 매개 변수가 여러 번 사용 됨"
+
+#: pl_comp.c:1090
+#, c-format
+msgid "column reference \"%s\" is ambiguous"
+msgstr "열 참조 \"%s\" 가 명확하지 않습니다."
+
+#: pl_comp.c:1092
+#, c-format
+msgid "It could refer to either a PL/pgSQL variable or a table column."
+msgstr ""
+
+#: pl_comp.c:1272 pl_comp.c:1300 pl_exec.c:4447 pl_exec.c:4795 pl_exec.c:4880
+#: pl_exec.c:4971
+#, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "\"%s\" 레코드에 \"%s\" 필드가 없음"
+
+#: pl_comp.c:1831
+#, c-format
+msgid "relation \"%s\" does not exist"
+msgstr "\"%s\" 이름의 릴레이션(relation)이 없습니다"
+
+#: pl_comp.c:1940
+#, c-format
+msgid "variable \"%s\" has pseudo-type %s"
+msgstr "\"%s\" 변수에 의사 형식 %s이(가) 있음"
+
+#: pl_comp.c:2006
+#, c-format
+msgid "relation \"%s\" is not a table"
+msgstr "\"%s\" 관계가 테이블이 아님"
+
+#: pl_comp.c:2166
+#, c-format
+msgid "type \"%s\" is only a shell"
+msgstr "자료형 \"%s\" 는 오로지 shell 에만 있습니다. "
+
+#: pl_comp.c:2255 pl_comp.c:2308
+#, c-format
+msgid "unrecognized exception condition \"%s\""
+msgstr "인식할 수 없는 예외 조건 \"%s\""
+
+#: pl_comp.c:2466
+#, c-format
+msgid ""
+"could not determine actual argument type for polymorphic function \"%s\""
+msgstr "다형적 함수 \"%s\"의 실제 인수 형식을 확인할 수 없음"
+
+#: pl_exec.c:321 pl_exec.c:614 pl_exec.c:893
+msgid "during initialization of execution state"
+msgstr "실행 상태를 초기화하는 동안"
+
+#: pl_exec.c:328
+msgid "while storing call arguments into local variables"
+msgstr "호출 인수를 로컬 변수에 저장하는 동안"
+
+#: pl_exec.c:408 pl_exec.c:771
+msgid "during function entry"
+msgstr "함수를 시작하는 동안"
+
+#: pl_exec.c:439 pl_exec.c:802 pl_exec.c:934
+#, c-format
+msgid "CONTINUE cannot be used outside a loop"
+msgstr "CONTINUE를 루프 외부에 사용할 수 없음"
+
+#: pl_exec.c:443
+#, c-format
+msgid "control reached end of function without RETURN"
+msgstr "컨트롤이 RETURN 없이 함수 끝에 도달함"
+
+#: pl_exec.c:450
+msgid "while casting return value to function's return type"
+msgstr "함수의 반환 형식으로 반환 값을 형변환하는 동안"
+
+#: pl_exec.c:463 pl_exec.c:2987
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr ""
+"set-values 함수(테이블 리턴 함수)가 set 정의 없이 사용되었습니다 (테이블과 해"
+"당 열 alias 지정하세요)"
+
+#: pl_exec.c:501 pl_exec.c:2829
+msgid "returned record type does not match expected record type"
+msgstr "반환된 레코드 형식이 필요한 레코드 형식과 일치하지 않음"
+
+#: pl_exec.c:556 pl_exec.c:810 pl_exec.c:942
+msgid "during function exit"
+msgstr "함수를 종료하는 동안"
+
+#: pl_exec.c:806 pl_exec.c:938
+#, c-format
+msgid "control reached end of trigger procedure without RETURN"
+msgstr "컨트롤이 RETURN 없이 트리거 프로시저 끝에 도달함"
+
+#: pl_exec.c:815
+#, c-format
+msgid "trigger procedure cannot return a set"
+msgstr "트리거 프로시저는 집합을 반환할 수 없음"
+
+#: pl_exec.c:837
+msgid ""
+"returned row structure does not match the structure of the triggering table"
+msgstr "반환된 행 구조가 트리거하는 테이블의 구조와 일치하지 않음"
+
+#: pl_exec.c:993
+#, c-format
+msgid "PL/pgSQL function %s line %d %s"
+msgstr "PL/pgSQL 함수 \"%s\" 의 %d번째 줄 %s"
+
+#: pl_exec.c:1004
+#, c-format
+msgid "PL/pgSQL function %s %s"
+msgstr "PL/pgSQL 함수 %s %s"
+
+#. translator: last %s is a plpgsql statement type name
+#: pl_exec.c:1012
+#, c-format
+msgid "PL/pgSQL function %s line %d at %s"
+msgstr "PL/pgSQL 함수 \"%s\" 의 %d번째 %s"
+
+#: pl_exec.c:1018
+#, c-format
+msgid "PL/pgSQL function %s"
+msgstr "PL/pgSQL 함수 %s"
+
+#: pl_exec.c:1129
+msgid "during statement block local variable initialization"
+msgstr "문 블록 로컬 변수를 초기화하는 동안"
+
+#: pl_exec.c:1169
+#, c-format
+msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
+msgstr "NOT NULL이 선언된 \"%s\" 변수의 기본 값이 NULL로 설정될 수 없음"
+
+#: pl_exec.c:1219
+msgid "during statement block entry"
+msgstr "문 블록을 시작하는 동안"
+
+#: pl_exec.c:1240
+msgid "during statement block exit"
+msgstr "문 블록을 종료하는 동안"
+
+#: pl_exec.c:1283
+msgid "during exception cleanup"
+msgstr "예외를 정리하는 동안"
+
+#: pl_exec.c:1634
+#, c-format
+msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
+msgstr "GET STACKED DIAGNOSTICS 구문은 예외처리 헨들러 밖에서 사용할 수 없음"
+
+#: pl_exec.c:1838
+#, c-format
+msgid "case not found"
+msgstr "사례를 찾지 못함"
+
+#: pl_exec.c:1839
+#, c-format
+msgid "CASE statement is missing ELSE part."
+msgstr "CASE 문에 ELSE 부분이 누락되었습니다."
+
+#: pl_exec.c:1993
+#, c-format
+msgid "lower bound of FOR loop cannot be null"
+msgstr "FOR 루프의 하한은 null일 수 없음"
+
+#: pl_exec.c:2009
+#, c-format
+msgid "upper bound of FOR loop cannot be null"
+msgstr "FOR 루프의 상한은 null일 수 없음"
+
+#: pl_exec.c:2027
+#, c-format
+msgid "BY value of FOR loop cannot be null"
+msgstr "FOR 루프의 BY 값은 null일 수 없음"
+
+#: pl_exec.c:2033
+#, c-format
+msgid "BY value of FOR loop must be greater than zero"
+msgstr "FOR 루프의 BY 값은 0보다 커야 함"
+
+#: pl_exec.c:2203 pl_exec.c:3963
+#, c-format
+msgid "cursor \"%s\" already in use"
+msgstr "\"%s\" 커서가 이미 사용 중임"
+
+#: pl_exec.c:2226 pl_exec.c:4025
+#, c-format
+msgid "arguments given for cursor without arguments"
+msgstr "인수가 없는 커서에 인수가 제공됨"
+
+#: pl_exec.c:2245 pl_exec.c:4044
+#, c-format
+msgid "arguments required for cursor"
+msgstr "커서에 인수 필요"
+
+#: pl_exec.c:2330
+#, c-format
+msgid "FOREACH expression must not be null"
+msgstr "FOREACH 구문은 null 이 아니여야 함"
+
+#: pl_exec.c:2336
+#, c-format
+msgid "FOREACH expression must yield an array, not type %s"
+msgstr ""
+
+#: pl_exec.c:2353
+#, c-format
+msgid "slice dimension (%d) is out of the valid range 0..%d"
+msgstr "slice dimension (%d) 값이 범위를 벗어남, 0..%d"
+
+#: pl_exec.c:2380
+#, c-format
+msgid "FOREACH ... SLICE loop variable must be of an array type"
+msgstr ""
+
+#: pl_exec.c:2384
+#, c-format
+msgid "FOREACH loop variable must not be of an array type"
+msgstr "FOREACH 반복 변수는 배열형이 아니여야 함"
+
+#: pl_exec.c:2572 pl_exec.c:2654 pl_exec.c:2821
+#, c-format
+msgid ""
+"cannot return non-composite value from function returning composite type"
+msgstr ""
+"함수의 반환값이 복합 자료형인데, 복합 자료형아닌 자료형을 반환하려고 함"
+
+#: pl_exec.c:2698 pl_gram.y:3112
+#, c-format
+msgid "cannot use RETURN NEXT in a non-SETOF function"
+msgstr "SETOF 함수가 아닌 함수에서 RETURN NEXT를 사용할 수 없음"
+
+#: pl_exec.c:2732 pl_exec.c:2863
+#, c-format
+msgid "wrong result type supplied in RETURN NEXT"
+msgstr "RETURN NEXT에 잘못된 결과 형식이 제공됨"
+
+#: pl_exec.c:2761 pl_exec.c:4434 pl_exec.c:4762 pl_exec.c:4788 pl_exec.c:4854
+#: pl_exec.c:4873 pl_exec.c:4941 pl_exec.c:4964
+#, c-format
+msgid "record \"%s\" is not assigned yet"
+msgstr "\"%s\" 레코드가 아직 할당되지 않음"
+
+#: pl_exec.c:2763 pl_exec.c:4436 pl_exec.c:4764 pl_exec.c:4790 pl_exec.c:4856
+#: pl_exec.c:4875 pl_exec.c:4943 pl_exec.c:4966
+#, c-format
+msgid "The tuple structure of a not-yet-assigned record is indeterminate."
+msgstr "아직 할당되지 않은 레코드의 튜플 구조는 미정입니다."
+
+#: pl_exec.c:2767 pl_exec.c:2787
+#, c-format
+msgid "wrong record type supplied in RETURN NEXT"
+msgstr "RETURN NEXT에 잘못된 레코드 형식이 제공됨"
+
+#: pl_exec.c:2882
+#, c-format
+msgid "RETURN NEXT must have a parameter"
+msgstr "RETURN NEXT에 매개 변수 필요"
+
+#: pl_exec.c:2915 pl_gram.y:3174
+#, c-format
+msgid "cannot use RETURN QUERY in a non-SETOF function"
+msgstr "SETOF 함수가 아닌 함수에서 RETURN QUERY를 사용할 수 없음"
+
+#: pl_exec.c:2935
+msgid "structure of query does not match function result type"
+msgstr "쿼리 구조가 함수 결과 형식과 일치하지 않음"
+
+#: pl_exec.c:3015 pl_exec.c:3145
+#, c-format
+msgid "RAISE option already specified: %s"
+msgstr "RAISE 옵션이 이미 지정됨: %s"
+
+#: pl_exec.c:3048
+#, c-format
+msgid "RAISE without parameters cannot be used outside an exception handler"
+msgstr "매개 변수 없는 RAISE를 예외 처리기 외부에 사용할 수 없음"
+
+#: pl_exec.c:3135
+#, c-format
+msgid "RAISE statement option cannot be null"
+msgstr "RAISE 문 옵션이 null일 수 없음"
+
+#: pl_exec.c:3206
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pl_exec.c:3279
+#, c-format
+msgid "assertion failed"
+msgstr "assertion 실패"
+
+#: pl_exec.c:3469 pl_exec.c:3613 pl_exec.c:3802
+#, c-format
+msgid "cannot COPY to/from client in PL/pgSQL"
+msgstr "PL/pgSQL의 클라이언트와 상호 복사할 수 없음"
+
+#: pl_exec.c:3473 pl_exec.c:3617 pl_exec.c:3806
+#, c-format
+msgid "cannot begin/end transactions in PL/pgSQL"
+msgstr "PL/pgSQL의 트랜잭션을 시작/종료할 수 없음"
+
+#: pl_exec.c:3474 pl_exec.c:3618 pl_exec.c:3807
+#, c-format
+msgid "Use a BEGIN block with an EXCEPTION clause instead."
+msgstr "대신 BEGIN 블록을 EXCEPTION 절과 함께 사용하십시오."
+
+#: pl_exec.c:3641 pl_exec.c:3831
+#, c-format
+msgid "INTO used with a command that cannot return data"
+msgstr "데이터를 반환할 수 없는 명령과 함께 INTO가 사용됨"
+
+#: pl_exec.c:3669 pl_exec.c:3859
+#, c-format
+msgid "query returned no rows"
+msgstr "쿼리에서 행을 반환하지 않음"
+
+#: pl_exec.c:3688 pl_exec.c:3878
+#, c-format
+msgid "query returned more than one row"
+msgstr "쿼리에서 두 개 이상의 행을 반환"
+
+#: pl_exec.c:3705
+#, c-format
+msgid "query has no destination for result data"
+msgstr "쿼리에 결과 데이터의 대상이 없음"
+
+#: pl_exec.c:3706
+#, c-format
+msgid "If you want to discard the results of a SELECT, use PERFORM instead."
+msgstr "SELECT의 결과를 취소하려면 대신 PERFORM을 사용하십시오."
+
+#: pl_exec.c:3738 pl_exec.c:7026
+#, c-format
+msgid "query string argument of EXECUTE is null"
+msgstr "EXECUTE의 쿼리 문자열 인수가 null임"
+
+#: pl_exec.c:3794
+#, c-format
+msgid "EXECUTE of SELECT ... INTO is not implemented"
+msgstr "SELECT의 EXECUTE... INTO가 구현되지 않음"
+
+#: pl_exec.c:3795
+#, c-format
+msgid ""
+"You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS "
+"instead."
+msgstr ""
+
+#: pl_exec.c:4105 pl_exec.c:4197
+#, c-format
+msgid "cursor variable \"%s\" is null"
+msgstr "커서 변수 \"%s\"이(가) null임"
+
+#: pl_exec.c:4112 pl_exec.c:4204
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "\"%s\" 이름의 커서가 없음"
+
+#: pl_exec.c:4126
+#, c-format
+msgid "relative or absolute cursor position is null"
+msgstr "상대 또는 절대 커서 위치가 null임"
+
+#: pl_exec.c:4306
+#, c-format
+msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
+msgstr "NOT NULL이 선언된 \"%s\" 변수에 null 값을 할당할 수 없음"
+
+#: pl_exec.c:4378
+#, c-format
+msgid "cannot assign non-composite value to a row variable"
+msgstr "행 변수에 비복합 값을 할당할 수 없음"
+
+#: pl_exec.c:4402
+#, c-format
+msgid "cannot assign non-composite value to a record variable"
+msgstr "레코드 변수에 비복합 값을 할당할 수 없음"
+
+#: pl_exec.c:4545
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "지정한 배열 크기(%d)가 최대치(%d)를 초과했습니다"
+
+#: pl_exec.c:4577
+#, c-format
+msgid "subscripted object is not an array"
+msgstr "하위 스크립트 개체는 배열이 아님"
+
+#: pl_exec.c:4614
+#, c-format
+msgid "array subscript in assignment must not be null"
+msgstr "배열 하위 스크립트로 지정하는 값으로 null 값을 사용할 수 없습니다"
+
+#: pl_exec.c:5080
+#, c-format
+msgid "query \"%s\" did not return data"
+msgstr "\"%s\" 쿼리에서 데이터를 반환하지 않음"
+
+#: pl_exec.c:5088
+#, c-format
+msgid "query \"%s\" returned %d column"
+msgid_plural "query \"%s\" returned %d columns"
+msgstr[0] "\"%s\" 쿼리가 %d 개의 칼럼을 반환함"
+
+#: pl_exec.c:5115
+#, c-format
+msgid "query \"%s\" returned more than one row"
+msgstr "\"%s\" 쿼리에서 두 개 이상의 행을 반환함"
+
+#: pl_exec.c:5170
+#, c-format
+msgid "query \"%s\" is not a SELECT"
+msgstr "\"%s\" 쿼리가 SELECT가 아님"
+
+#: pl_funcs.c:218
+msgid "statement block"
+msgstr "문 블록"
+
+#: pl_funcs.c:220
+msgid "assignment"
+msgstr "할당"
+
+#: pl_funcs.c:230
+msgid "FOR with integer loop variable"
+msgstr "정수 루프 변수를 포함하는 FOR"
+
+#: pl_funcs.c:232
+msgid "FOR over SELECT rows"
+msgstr "SELECT 행을 제어하는 FOR"
+
+#: pl_funcs.c:234
+msgid "FOR over cursor"
+msgstr "커서를 제어하는 FOR"
+
+#: pl_funcs.c:236
+msgid "FOREACH over array"
+msgstr "배열 초과된 FOREACH"
+
+#: pl_funcs.c:250
+msgid "SQL statement"
+msgstr "SQL 문"
+
+#: pl_funcs.c:254
+msgid "FOR over EXECUTE statement"
+msgstr "EXECUTE 문을 제어하는 FOR"
+
+#: pl_gram.y:472
+#, c-format
+msgid "block label must be placed before DECLARE, not after"
+msgstr ""
+
+#: pl_gram.y:492
+#, c-format
+msgid "collations are not supported by type %s"
+msgstr "%s 자료형은 collation 지원 안함"
+
+#: pl_gram.y:507
+#, c-format
+msgid "row or record variable cannot be CONSTANT"
+msgstr "행 또는 레코드 변수는 CONSTANT일 수 없음"
+
+#: pl_gram.y:517
+#, c-format
+msgid "row or record variable cannot be NOT NULL"
+msgstr "행 또는 레코드 변수는 NOT NULL일 수 없음"
+
+#: pl_gram.y:528
+#, c-format
+msgid "default value for row or record variable is not supported"
+msgstr "행 또는 레코드 변수의 기본 값이 지원되지 않음"
+
+#: pl_gram.y:673 pl_gram.y:688 pl_gram.y:714
+#, c-format
+msgid "variable \"%s\" does not exist"
+msgstr "\"%s\" 변수가 없음"
+
+#: pl_gram.y:732 pl_gram.y:760
+msgid "duplicate declaration"
+msgstr "중복 선언"
+
+#: pl_gram.y:743 pl_gram.y:771
+#, c-format
+msgid "variable \"%s\" shadows a previously defined variable"
+msgstr "variable \"%s\" shadows a previously defined variable"
+
+#: pl_gram.y:950
+#, c-format
+msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
+msgstr ""
+
+#: pl_gram.y:968
+#, c-format
+msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
+msgstr ""
+
+#: pl_gram.y:1066
+msgid "unrecognized GET DIAGNOSTICS item"
+msgstr "알 수 없는 GET DIAGNOSTICS 항목"
+
+#: pl_gram.y:1077 pl_gram.y:3361
+#, c-format
+msgid "\"%s\" is not a scalar variable"
+msgstr "\"%s\"은(는) 스칼라 변수가 아님"
+
+#: pl_gram.y:1329 pl_gram.y:1523
+#, c-format
+msgid ""
+"loop variable of loop over rows must be a record or row variable or list of "
+"scalar variables"
+msgstr ""
+"행에 있는 루프의 루프 변수는 레코드 또는 행 변수이거나 스칼라 변수의 목록이어"
+"야 함"
+
+#: pl_gram.y:1363
+#, c-format
+msgid "cursor FOR loop must have only one target variable"
+msgstr "커서 FOR 루프에 대상 변수가 한 개만 있어야 함"
+
+#: pl_gram.y:1370
+#, c-format
+msgid "cursor FOR loop must use a bound cursor variable"
+msgstr "커서 FOR 루프는 바인딩된 커서 변수를 한 개만 사용해야 함"
+
+#: pl_gram.y:1454
+#, c-format
+msgid "integer FOR loop must have only one target variable"
+msgstr "정수 FOR 루프에 대상 변수가 한 개만 있어야 함"
+
+#: pl_gram.y:1490
+#, c-format
+msgid "cannot specify REVERSE in query FOR loop"
+msgstr "쿼리 FOR 루프에 REVERSE를 지정할 수 없음"
+
+#: pl_gram.y:1637
+#, c-format
+msgid "loop variable of FOREACH must be a known variable or list of variables"
+msgstr "FOREACH의 반복 변수는 알려진 변수이거나 변수의 목록이어야 함"
+
+#: pl_gram.y:1689 pl_gram.y:1726 pl_gram.y:1774 pl_gram.y:2814 pl_gram.y:2896
+#: pl_gram.y:3007 pl_gram.y:3763
+msgid "unexpected end of function definition"
+msgstr "예기치 않은 함수 정의의 끝"
+
+#: pl_gram.y:1794 pl_gram.y:1818 pl_gram.y:1834 pl_gram.y:1840 pl_gram.y:1954
+#: pl_gram.y:1962 pl_gram.y:1976 pl_gram.y:2071 pl_gram.y:2252 pl_gram.y:2335
+#: pl_gram.y:2486 pl_gram.y:3604 pl_gram.y:3665 pl_gram.y:3744
+msgid "syntax error"
+msgstr "구문 오류"
+
+#: pl_gram.y:1822 pl_gram.y:1824 pl_gram.y:2256 pl_gram.y:2258
+msgid "invalid SQLSTATE code"
+msgstr "잘못된 SQLSTATE 코드"
+
+#: pl_gram.y:2018
+msgid "syntax error, expected \"FOR\""
+msgstr "구문 오류, \"FOR\" 필요"
+
+#: pl_gram.y:2080
+#, c-format
+msgid "FETCH statement cannot return multiple rows"
+msgstr "FETCH 구문은 다중 로우를 반환할 수 없음"
+
+#: pl_gram.y:2136
+#, c-format
+msgid "cursor variable must be a simple variable"
+msgstr "커서 변수는 단순 변수여야 함"
+
+#: pl_gram.y:2142
+#, c-format
+msgid "variable \"%s\" must be of type cursor or refcursor"
+msgstr "\"%s\" 변수는 커서 또는 ref 커서 형식이어야 함"
+
+#: pl_gram.y:2310
+msgid "label does not exist"
+msgstr "레이블이 없음"
+
+#: pl_gram.y:2457 pl_gram.y:2468
+#, c-format
+msgid "\"%s\" is not a known variable"
+msgstr "\"%s\" (은)는 알려진 변수가 아님"
+
+#: pl_gram.y:2572 pl_gram.y:2582 pl_gram.y:2738
+msgid "mismatched parentheses"
+msgstr "괄호의 짝이 맞지 않음"
+
+#: pl_gram.y:2586
+#, c-format
+msgid "missing \"%s\" at end of SQL expression"
+msgstr "SQL 식 끝에 \"%s\" 누락"
+
+#: pl_gram.y:2592
+#, c-format
+msgid "missing \"%s\" at end of SQL statement"
+msgstr "SQL 문 끝에 \"%s\" 누락"
+
+#: pl_gram.y:2609
+msgid "missing expression"
+msgstr "표현식 빠졌음"
+
+#: pl_gram.y:2611
+msgid "missing SQL statement"
+msgstr "SQL 문이 빠졌음"
+
+#: pl_gram.y:2740
+msgid "incomplete data type declaration"
+msgstr "불완전한 데이터 형식 선언"
+
+#: pl_gram.y:2763
+msgid "missing data type declaration"
+msgstr "데이터 형식 선언 누락"
+
+#: pl_gram.y:2819
+msgid "INTO specified more than once"
+msgstr "INTO가 여러 번 지정됨"
+
+#: pl_gram.y:2988
+msgid "expected FROM or IN"
+msgstr "FROM 또는 IN 필요"
+
+#: pl_gram.y:3048
+#, c-format
+msgid "RETURN cannot have a parameter in function returning set"
+msgstr "집합을 반환하는 함수에서 RETURN 구문에는 인자가 없음"
+
+#: pl_gram.y:3049
+#, c-format
+msgid "Use RETURN NEXT or RETURN QUERY."
+msgstr "RETURN NEXT 나 RETURN QUERY 구문을 사용하세요."
+
+#: pl_gram.y:3057
+#, c-format
+msgid "RETURN cannot have a parameter in function with OUT parameters"
+msgstr "RETURN은 OUT 매개 변수가 있는 함수에 매개 변수를 포함할 수 없음"
+
+#: pl_gram.y:3066
+#, c-format
+msgid "RETURN cannot have a parameter in function returning void"
+msgstr "RETURN은 void를 반환하는 함수에 매개 변수를 포함할 수 없음"
+
+#: pl_gram.y:3126
+#, c-format
+msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
+msgstr "RETURN NEXT는 OUT 매개 변수가 있는 함수에 매개 변수를 포함할 수 없음"
+
+#: pl_gram.y:3230
+#, c-format
+msgid "\"%s\" is declared CONSTANT"
+msgstr "\"%s\"이(가) CONSTANT로 선언됨"
+
+#: pl_gram.y:3292 pl_gram.y:3304
+#, c-format
+msgid "record or row variable cannot be part of multiple-item INTO list"
+msgstr ""
+
+#: pl_gram.y:3349
+#, c-format
+msgid "too many INTO variables specified"
+msgstr "너무 많은 INTO 변수가 지정됨"
+
+#: pl_gram.y:3557
+#, c-format
+msgid "end label \"%s\" specified for unlabelled block"
+msgstr "레이블이 없는 블록에 끝 레이블 \"%s\"이(가) 지정됨"
+
+#: pl_gram.y:3564
+#, c-format
+msgid "end label \"%s\" differs from block's label \"%s\""
+msgstr "끝 레이블 \"%s\"이(가) 블록의 \"%s\" 레이블과 다름"
+
+#: pl_gram.y:3599
+#, c-format
+msgid "cursor \"%s\" has no arguments"
+msgstr "\"%s\" 커서에 인수가 없음"
+
+#: pl_gram.y:3613
+#, c-format
+msgid "cursor \"%s\" has arguments"
+msgstr "\"%s\" 커서에 인수가 있음"
+
+#: pl_gram.y:3655
+#, c-format
+msgid "cursor \"%s\" has no argument named \"%s\""
+msgstr "\"%s\" 커서는 \"%s\" 이름의 인자가 없음"
+
+#: pl_gram.y:3675
+#, c-format
+msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
+msgstr "\"%s\" 이름의 인자가 \"%s\" 커서에서 중복됨"
+
+#: pl_gram.y:3700
+#, c-format
+msgid "not enough arguments for cursor \"%s\""
+msgstr "\"%s\" 커서를 위한 충분하지 않은 인자"
+
+#: pl_gram.y:3707
+#, c-format
+msgid "too many arguments for cursor \"%s\""
+msgstr "\"%s\" 커서를 위한 인자가 너무 많음"
+
+#: pl_gram.y:3795
+msgid "unrecognized RAISE statement option"
+msgstr "인식할 수 없는 RAISE 문 옵션"
+
+#: pl_gram.y:3799
+msgid "syntax error, expected \"=\""
+msgstr "구문 오류, \"=\" 필요"
+
+#: pl_gram.y:3840
+#, c-format
+msgid "too many parameters specified for RAISE"
+msgstr "RAISE에 지정된 매개 변수가 너무 많음"
+
+#: pl_gram.y:3844
+#, c-format
+msgid "too few parameters specified for RAISE"
+msgstr "RAISE에 지정된 매개 변수가 너무 적음"
+
+#: pl_handler.c:149
+msgid ""
+"Sets handling of conflicts between PL/pgSQL variable names and table column "
+"names."
+msgstr ""
+
+#: pl_handler.c:158
+msgid ""
+"Print information about parameters in the DETAIL part of the error messages "
+"generated on INTO ... STRICT failures."
+msgstr ""
+
+#: pl_handler.c:166
+msgid "Perform checks given in ASSERT statements."
+msgstr ""
+
+#: pl_handler.c:174
+msgid "List of programming constructs that should produce a warning."
+msgstr ""
+
+#: pl_handler.c:184
+msgid "List of programming constructs that should produce an error."
+msgstr ""
+
+#. translator: %s is typically the translation of "syntax error"
+#: pl_scanner.c:621
+#, c-format
+msgid "%s at end of input"
+msgstr "%s, 입력 끝부분"
+
+#. translator: first %s is typically the translation of "syntax error"
+#: pl_scanner.c:637
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s, \"%s\" 부근"

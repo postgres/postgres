@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.2\n"
+"Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-02-08 09:12+0000\n"
-"PO-Revision-Date: 2015-02-08 11:07+0100\n"
+"POT-Creation-Date: 2016-05-08 21:14+0000\n"
+"PO-Revision-Date: 2016-05-09 10:19+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -16,15 +16,15 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.7.3\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
-#: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
-#: ../../common/fe_memutils.c:83
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
-#: ../../common/fe_memutils.c:77
+#: ../../common/fe_memutils.c:92
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ne peut pas dupliquer un pointeur nul (erreur interne)\n"
@@ -54,7 +54,7 @@ msgstr "%s : l'ancien répertoire n'est pas un chemin absolu dans la correspondan
 msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
 msgstr "%s : le nouveau répertoire n'est pas un chemin absolu dans la correspondance de tablespace : %s\n"
 
-#: pg_basebackup.c:228
+#: pg_basebackup.c:231
 #, c-format
 msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
@@ -63,17 +63,17 @@ msgstr ""
 "%s prend une sauvegarde binaire d'un serveur PostgreSQL en cours d'exécution.\n"
 "\n"
 
-#: pg_basebackup.c:230 pg_receivexlog.c:60 pg_recvlogical.c:67
+#: pg_basebackup.c:233 pg_receivexlog.c:66 pg_recvlogical.c:69
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: pg_basebackup.c:231 pg_receivexlog.c:61 pg_recvlogical.c:68
+#: pg_basebackup.c:234 pg_receivexlog.c:67 pg_recvlogical.c:70
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [OPTION]...\n"
 
-#: pg_basebackup.c:232
+#: pg_basebackup.c:235
 #, c-format
 msgid ""
 "\n"
@@ -82,17 +82,17 @@ msgstr ""
 "\n"
 "Options contrôlant la sortie :\n"
 
-#: pg_basebackup.c:233
+#: pg_basebackup.c:236
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
 msgstr "  -D, --pgdata=RÉPERTOIRE      reçoit la sauvegarde de base dans ce répertoire\n"
 
-#: pg_basebackup.c:234
+#: pg_basebackup.c:237
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
 msgstr "  -F, --format=p|t             format en sortie (plain (par défaut), tar)\n"
 
-#: pg_basebackup.c:235
+#: pg_basebackup.c:238
 #, c-format
 msgid ""
 "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
@@ -102,14 +102,19 @@ msgstr ""
 "                               données (en Ko/s, ou utiliser le suffixe « k »\n"
 "                               ou « M »)\n"
 
-#: pg_basebackup.c:237
+#: pg_basebackup.c:240
 #, c-format
 msgid ""
 "  -R, --write-recovery-conf\n"
 "                         write recovery.conf after backup\n"
 msgstr "  -R, --write-recovery-conf    écrit le recovery.conf après la sauvegarde\n"
 
-#: pg_basebackup.c:239
+#: pg_basebackup.c:242 pg_receivexlog.c:74
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr "  -S, --slot=NOMREP            slot de réplication à utiliser\n"
+
+#: pg_basebackup.c:243
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -118,14 +123,14 @@ msgstr ""
 "  -T, --tablespace-mapping=ANCIENREP=NOUVEAUREP\n"
 "                               déplacer le répertoire ANCIENREP en NOUVEAUREP\n"
 
-#: pg_basebackup.c:241
+#: pg_basebackup.c:245
 #, c-format
 msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
 msgstr ""
 "  -x, --xlog                   inclut les journaux de transactions nécessaires\n"
 "                               dans la sauvegarde (mode fetch)\n"
 
-#: pg_basebackup.c:242
+#: pg_basebackup.c:246
 #, c-format
 msgid ""
 "  -X, --xlog-method=fetch|stream\n"
@@ -135,26 +140,26 @@ msgstr ""
 "                               inclut les journaux de transactions requis avec\n"
 "                               la méthode spécifiée\n"
 
-#: pg_basebackup.c:244
+#: pg_basebackup.c:248
 #, c-format
 msgid "      --xlogdir=XLOGDIR  location for the transaction log directory\n"
 msgstr ""
 "  -X, --xlogdir=RÉP_XLOG       emplacement du répertoire des journaux de\n"
 "                               transactions\n"
 
-#: pg_basebackup.c:245
+#: pg_basebackup.c:249
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
 msgstr "  -z, --gzip                   compresse la sortie tar\n"
 
-#: pg_basebackup.c:246
+#: pg_basebackup.c:250
 #, c-format
 msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
 msgstr ""
 "  -Z, --compress=0-9           compresse la sortie tar avec le niveau de\n"
 "                               compression indiqué\n"
 
-#: pg_basebackup.c:247
+#: pg_basebackup.c:251
 #, c-format
 msgid ""
 "\n"
@@ -163,39 +168,39 @@ msgstr ""
 "\n"
 "Options générales :\n"
 
-#: pg_basebackup.c:248
+#: pg_basebackup.c:252
 #, c-format
 msgid ""
 "  -c, --checkpoint=fast|spread\n"
 "                         set fast or spread checkpointing\n"
 msgstr "  -c, --checkpoint=fast|spread exécute un CHECKPOINT rapide ou réparti\n"
 
-#: pg_basebackup.c:250
+#: pg_basebackup.c:254
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
 msgstr "  -l, --label=LABEL            configure le label de sauvegarde\n"
 
-#: pg_basebackup.c:251
+#: pg_basebackup.c:255
 #, c-format
 msgid "  -P, --progress         show progress information\n"
 msgstr "  -P, --progress               affiche la progression de la sauvegarde\n"
 
-#: pg_basebackup.c:252 pg_receivexlog.c:68 pg_recvlogical.c:86
+#: pg_basebackup.c:256 pg_receivexlog.c:76 pg_recvlogical.c:89
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose                affiche des messages verbeux\n"
 
-#: pg_basebackup.c:253 pg_receivexlog.c:69 pg_recvlogical.c:87
+#: pg_basebackup.c:257 pg_receivexlog.c:77 pg_recvlogical.c:90
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version              affiche la version puis quitte\n"
 
-#: pg_basebackup.c:254 pg_receivexlog.c:70 pg_recvlogical.c:88
+#: pg_basebackup.c:258 pg_receivexlog.c:78 pg_recvlogical.c:91
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help                 affiche cette aide puis quitte\n"
 
-#: pg_basebackup.c:255 pg_receivexlog.c:71 pg_recvlogical.c:89
+#: pg_basebackup.c:259 pg_receivexlog.c:79 pg_recvlogical.c:92
 #, c-format
 msgid ""
 "\n"
@@ -204,26 +209,26 @@ msgstr ""
 "\n"
 "Options de connexion :\n"
 
-#: pg_basebackup.c:256 pg_receivexlog.c:72
+#: pg_basebackup.c:260 pg_receivexlog.c:80
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
 msgstr "  -d, --dbname=CONNSTR         chaîne de connexion\n"
 
-#: pg_basebackup.c:257 pg_receivexlog.c:73 pg_recvlogical.c:91
+#: pg_basebackup.c:261 pg_receivexlog.c:81 pg_recvlogical.c:94
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
 msgstr ""
 "  -h, --host=NOMHÔTE           hôte du serveur de bases de données ou\n"
 "                               répertoire des sockets\n"
 
-#: pg_basebackup.c:258 pg_receivexlog.c:74 pg_recvlogical.c:92
+#: pg_basebackup.c:262 pg_receivexlog.c:82 pg_recvlogical.c:95
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
 msgstr ""
 "  -p, --port=PORT              numéro de port du serveur de bases de\n"
 "                               données\n"
 
-#: pg_basebackup.c:259
+#: pg_basebackup.c:263
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
@@ -232,24 +237,24 @@ msgstr ""
 "  -s, --status-interval=INTERVAL durée entre l'envoi de paquets de statut au\n"
 "                                 serveur (en secondes)\n"
 
-#: pg_basebackup.c:261 pg_receivexlog.c:75 pg_recvlogical.c:93
+#: pg_basebackup.c:265 pg_receivexlog.c:83 pg_recvlogical.c:96
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
 msgstr "  -U, --username=NOM           se connecte avec cet utilisateur\n"
 
-#: pg_basebackup.c:262 pg_receivexlog.c:76 pg_recvlogical.c:94
+#: pg_basebackup.c:266 pg_receivexlog.c:84 pg_recvlogical.c:97
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
 msgstr "  -w, --no-password            ne demande jamais le mot de passe\n"
 
-#: pg_basebackup.c:263 pg_receivexlog.c:77 pg_recvlogical.c:95
+#: pg_basebackup.c:267 pg_receivexlog.c:85 pg_recvlogical.c:98
 #, c-format
 msgid "  -W, --password         force password prompt (should happen automatically)\n"
 msgstr ""
 "  -W, --password               force la demande du mot de passe (devrait arriver\n"
 "                               automatiquement)\n"
 
-#: pg_basebackup.c:264 pg_receivexlog.c:78 pg_recvlogical.c:96
+#: pg_basebackup.c:268 pg_receivexlog.c:89 pg_recvlogical.c:99
 #, c-format
 msgid ""
 "\n"
@@ -258,402 +263,389 @@ msgstr ""
 "\n"
 "Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_basebackup.c:307
+#: pg_basebackup.c:311
 #, c-format
 msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s : n'a pas pu lire à partir du tube : %s\n"
 
-#: pg_basebackup.c:315 pg_basebackup.c:408 pg_basebackup.c:1890
-#: pg_receivexlog.c:301 pg_recvlogical.c:937
+#: pg_basebackup.c:319 pg_basebackup.c:422 pg_basebackup.c:1892
+#: streamutil.c:285
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
 msgstr "%s : n'a pas pu analyser l'emplacement du journal des transactions « %s »\n"
 
-#: pg_basebackup.c:421
+#: pg_basebackup.c:435
 #, c-format
 msgid "%s: could not create pipe for background process: %s\n"
 msgstr "%s : n'a pas pu créer un tube pour le processus en tâche de fond : %s\n"
 
-#: pg_basebackup.c:446 pg_basebackup.c:501 pg_basebackup.c:1259
+#: pg_basebackup.c:460 pg_basebackup.c:515 pg_basebackup.c:1263
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le répertoire « %s » : %s\n"
 
-#: pg_basebackup.c:464
+#: pg_basebackup.c:478
 #, c-format
 msgid "%s: could not create background process: %s\n"
 msgstr "%s : n'a pas pu créer un processus en tâche de fond : %s\n"
 
-#: pg_basebackup.c:476
+#: pg_basebackup.c:490
 #, c-format
 msgid "%s: could not create background thread: %s\n"
 msgstr "%s : n'a pas pu créer un thread en tâche de fond : %s\n"
 
-#: pg_basebackup.c:520
+#: pg_basebackup.c:534
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s : le répertoire « %s » existe mais n'est pas vide\n"
 
-#: pg_basebackup.c:528
+#: pg_basebackup.c:542
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu accéder au répertoire « %s » : %s\n"
 
-#: pg_basebackup.c:590
+#: pg_basebackup.c:604
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
 msgstr[0] "%*s/%s Ko (100%%), %d/%d tablespace %*s"
 msgstr[1] "%*s/%s Ko (100%%), %d/%d tablespaces %*s"
 
-#: pg_basebackup.c:602
+#: pg_basebackup.c:616
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
 msgstr[0] "%*s/%s Ko (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgstr[1] "%*s/%s Ko (%d%%), %d/%d tablespaces (%s%-*.*s)"
 
-#: pg_basebackup.c:618
+#: pg_basebackup.c:632
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
 msgstr[0] "%*s/%s Ko (%d%%), %d/%d tablespace"
 msgstr[1] "%*s/%s Ko (%d%%), %d/%d tablespaces"
 
-#: pg_basebackup.c:640
+#: pg_basebackup.c:654
 #, c-format
 msgid "%s: transfer rate \"%s\" is not a valid value\n"
 msgstr "%s : le taux de transfert « %s » ne correspond pas à une valeur valide\n"
 
-#: pg_basebackup.c:647
+#: pg_basebackup.c:661
 #, c-format
 msgid "%s: invalid transfer rate \"%s\": %s\n"
 msgstr "%s : taux de transfert invalide (« %s ») : %s\n"
 
-#: pg_basebackup.c:657
+#: pg_basebackup.c:671
 #, c-format
 msgid "%s: transfer rate must be greater than zero\n"
 msgstr "%s : le taux de transfert doit être supérieur à zéro\n"
 
-#: pg_basebackup.c:691
+#: pg_basebackup.c:705
 #, c-format
 msgid "%s: invalid --max-rate unit: \"%s\"\n"
 msgstr "%s : unité invalide pour --max-rate : « %s »\n"
 
-#: pg_basebackup.c:700
+#: pg_basebackup.c:714
 #, c-format
 msgid "%s: transfer rate \"%s\" exceeds integer range\n"
 msgstr "%s : le taux de transfert « %s » dépasse l'échelle des entiers\n"
 
-#: pg_basebackup.c:712
+#: pg_basebackup.c:726
 #, c-format
 msgid "%s: transfer rate \"%s\" is out of range\n"
 msgstr "%s : le taux de transfert « %s » est en dehors des limites\n"
 
-#: pg_basebackup.c:736
+#: pg_basebackup.c:750
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire dans le fichier compressé « %s » : %s\n"
 
-#: pg_basebackup.c:746 pg_basebackup.c:1353 pg_basebackup.c:1571
+#: pg_basebackup.c:760 pg_basebackup.c:1357 pg_basebackup.c:1582
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire dans le fichier « %s » : %s\n"
 
-#: pg_basebackup.c:801 pg_basebackup.c:822 pg_basebackup.c:850
+#: pg_basebackup.c:815 pg_basebackup.c:836 pg_basebackup.c:864
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
 msgstr "%s : n'a pas pu configurer le niveau de compression %d : %s\n"
 
-#: pg_basebackup.c:871
+#: pg_basebackup.c:885
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le fichier compressé « %s » : %s\n"
 
-#: pg_basebackup.c:882 pg_basebackup.c:1313 pg_basebackup.c:1564
+#: pg_basebackup.c:896 pg_basebackup.c:1317 pg_basebackup.c:1575
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le fichier « %s » : %s\n"
 
-#: pg_basebackup.c:894 pg_basebackup.c:1158
+#: pg_basebackup.c:908 pg_basebackup.c:1172
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s : n'a pas pu obtenir le flux de données de COPY : %s"
 
-#: pg_basebackup.c:951
+#: pg_basebackup.c:965
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s : n'a pas pu fermer le fichier compressé « %s » : %s\n"
 
-#: pg_basebackup.c:964 pg_recvlogical.c:554 receivelog.c:193 receivelog.c:342
-#: receivelog.c:731
+#: pg_basebackup.c:978 pg_recvlogical.c:577 receivelog.c:203 receivelog.c:351
+#: receivelog.c:738
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s : n'a pas pu fermer le fichier « %s » : %s\n"
 
-#: pg_basebackup.c:975 pg_basebackup.c:1187 pg_recvlogical.c:420
-#: receivelog.c:947
+#: pg_basebackup.c:989 pg_basebackup.c:1201 pg_recvlogical.c:443
+#: receivelog.c:1019
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s : n'a pas pu lire les données du COPY : %s"
 
-#: pg_basebackup.c:1201
+#: pg_basebackup.c:1215
 #, c-format
 msgid "%s: invalid tar block header size: %d\n"
 msgstr "%s : taille invalide de l'en-tête de bloc du fichier tar : %d\n"
 
-#: pg_basebackup.c:1209
-#, c-format
-msgid "%s: could not parse file size\n"
-msgstr "%s : n'a pas pu analyser la taille du fichier\n"
-
-#: pg_basebackup.c:1217
-#, c-format
-msgid "%s: could not parse file mode\n"
-msgstr "%s : n'a pas pu analyser le mode du fichier\n"
-
-#: pg_basebackup.c:1267
+#: pg_basebackup.c:1271
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s : n'a pas configurer les droits sur le répertoire « %s » : %s\n"
 
-#: pg_basebackup.c:1291
+#: pg_basebackup.c:1295
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le lien symbolique de « %s » vers « %s » : %s\n"
 
-#: pg_basebackup.c:1300
+#: pg_basebackup.c:1304
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s : indicateur de lien « %c » non reconnu\n"
 
-#: pg_basebackup.c:1320
+#: pg_basebackup.c:1324
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s : n'a pas pu configurer les droits sur le fichier « %s » : %s\n"
 
-#: pg_basebackup.c:1379
+#: pg_basebackup.c:1383
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s : le flux COPY s'est terminé avant que le dernier fichier soit terminé\n"
 
-#: pg_basebackup.c:1465 pg_basebackup.c:1485 pg_basebackup.c:1492
-#: pg_basebackup.c:1539
+#: pg_basebackup.c:1469 pg_basebackup.c:1489 pg_basebackup.c:1496
+#: pg_basebackup.c:1550
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : mémoire épuisée\n"
 
-#: pg_basebackup.c:1616
+#: pg_basebackup.c:1627
 #, c-format
 msgid "%s: incompatible server version %s\n"
 msgstr "%s : version « %s » du serveur incompatible\n"
 
-#: pg_basebackup.c:1643 pg_basebackup.c:1677 pg_receivexlog.c:286
-#: pg_recvlogical.c:255 pg_recvlogical.c:853 pg_recvlogical.c:886
-#: pg_recvlogical.c:921 receivelog.c:526 receivelog.c:577 receivelog.c:618
+#: pg_basebackup.c:1674 pg_recvlogical.c:261 receivelog.c:536 receivelog.c:587
+#: receivelog.c:627 streamutil.c:255 streamutil.c:359 streamutil.c:405
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s : n'a pas pu envoyer la commande de réplication « %s » : %s"
 
-#: pg_basebackup.c:1650 pg_receivexlog.c:293 pg_recvlogical.c:861
-#: receivelog.c:534
-#, c-format
-msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
-msgstr ""
-"%s : n'a pas pu identifier le système, a récupéré %d lignes et %d champs,\n"
-"attendait %d lignes et %d champs (ou plus)\n"
-
-#: pg_basebackup.c:1688
+#: pg_basebackup.c:1685
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s : n'a pas pu initier la sauvegarde de base : %s"
 
-#: pg_basebackup.c:1695
+#: pg_basebackup.c:1692
 #, c-format
 msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s : le serveur a renvoyé une réponse inattendue à la commande BASE_BACKUP ; a récupéré %d lignes et %d champs, alors qu'il attendait %d lignes et %d champs\n"
 
-#: pg_basebackup.c:1715
+#: pg_basebackup.c:1712
 #, c-format
 msgid "transaction log start point: %s on timeline %u\n"
 msgstr "point de départ du journal de transactions : %s sur la timeline %u\n"
 
-#: pg_basebackup.c:1724
+#: pg_basebackup.c:1721
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s : n'a pas pu obtenir l'en-tête du serveur : %s"
 
-#: pg_basebackup.c:1730
+#: pg_basebackup.c:1727
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s : aucune donnée renvoyée du serveur\n"
 
-#: pg_basebackup.c:1762
+#: pg_basebackup.c:1759
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
 msgstr "%s : peut seulement écrire un tablespace sur la sortie standard, la base en a %d\n"
 
-#: pg_basebackup.c:1774
+#: pg_basebackup.c:1771
 #, c-format
 msgid "%s: starting background WAL receiver\n"
 msgstr "%s : lance le récepteur de journaux de transactions en tâche de fond\n"
 
-#: pg_basebackup.c:1805
+#: pg_basebackup.c:1802
 #, c-format
 msgid "%s: could not get transaction log end position from server: %s"
 msgstr ""
 "%s : n'a pas pu obtenir la position finale des journaux de transactions à\n"
 "partir du serveur : %s"
 
-#: pg_basebackup.c:1812
+#: pg_basebackup.c:1809
 #, c-format
 msgid "%s: no transaction log end position returned from server\n"
 msgstr "%s : aucune position de fin du journal de transactions renvoyée par le serveur\n"
 
-#: pg_basebackup.c:1824
+#: pg_basebackup.c:1821
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s : échec lors de la réception finale : %s"
 
-#: pg_basebackup.c:1842
+#: pg_basebackup.c:1844
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
 msgstr "%s : en attente que le processus en tâche de fond termine le flux...\n"
 
-#: pg_basebackup.c:1848
+#: pg_basebackup.c:1850
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
 msgstr "%s : n'a pas pu envoyer la commande au tube du processus : %s\n"
 
-#: pg_basebackup.c:1857
+#: pg_basebackup.c:1859
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
 msgstr "%s : n'a pas pu attendre le processus fils : %s\n"
 
-#: pg_basebackup.c:1863
+#: pg_basebackup.c:1865
 #, c-format
 msgid "%s: child %d died, expected %d\n"
 msgstr "%s : le fils %d est mort, %d attendu\n"
 
-#: pg_basebackup.c:1869
+#: pg_basebackup.c:1871
 #, c-format
 msgid "%s: child process did not exit normally\n"
 msgstr "%s : le processus fils n'a pas quitté normalement\n"
 
-#: pg_basebackup.c:1875
+#: pg_basebackup.c:1877
 #, c-format
 msgid "%s: child process exited with error %d\n"
 msgstr "%s : le processus fils a quitté avec le code erreur %d\n"
 
-#: pg_basebackup.c:1902
+#: pg_basebackup.c:1904
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
 msgstr "%s : n'a pas pu attendre le thread : %s\n"
 
-#: pg_basebackup.c:1909
+#: pg_basebackup.c:1911
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
 msgstr "%s : n'a pas pu obtenir le code de sortie du thread : %s\n"
 
-#: pg_basebackup.c:1915
+#: pg_basebackup.c:1917
 #, c-format
 msgid "%s: child thread exited with error %u\n"
 msgstr "%s : le thread a quitté avec le code d'erreur %u\n"
 
-#: pg_basebackup.c:2004
+#: pg_basebackup.c:2007
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr "%s : format de sortie « %s » invalide, doit être soit « plain » soit « tar »\n"
 
-#: pg_basebackup.c:2022 pg_basebackup.c:2034
+#: pg_basebackup.c:2028 pg_basebackup.c:2040
 #, c-format
 msgid "%s: cannot specify both --xlog and --xlog-method\n"
 msgstr "%s : ne peut pas spécifier à la fois --xlog et --xlog-method\n"
 
-#: pg_basebackup.c:2049
+#: pg_basebackup.c:2055
 #, c-format
 msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
 msgstr ""
 "%s : option xlog-method « %s » invalide, doit être soit « fetch » soit « stream »\n"
 "soit « stream »\n"
 
-#: pg_basebackup.c:2071
+#: pg_basebackup.c:2077
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s : niveau de compression « %s » invalide\n"
 
-#: pg_basebackup.c:2083
+#: pg_basebackup.c:2089
 #, c-format
 msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
 msgstr ""
 "%s : argument « %s » invalide pour le CHECKPOINT, doit être soit « fast »\n"
 "soit « spread »\n"
 
-#: pg_basebackup.c:2110 pg_receivexlog.c:429 pg_recvlogical.c:736
+#: pg_basebackup.c:2116 pg_receivexlog.c:445 pg_recvlogical.c:760
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s : intervalle « %s » invalide du statut\n"
 
-#: pg_basebackup.c:2126 pg_basebackup.c:2140 pg_basebackup.c:2151
-#: pg_basebackup.c:2164 pg_basebackup.c:2174 pg_basebackup.c:2186
-#: pg_basebackup.c:2197 pg_receivexlog.c:448 pg_receivexlog.c:462
-#: pg_receivexlog.c:473 pg_recvlogical.c:760 pg_recvlogical.c:774
-#: pg_recvlogical.c:785 pg_recvlogical.c:793 pg_recvlogical.c:801
-#: pg_recvlogical.c:809 pg_recvlogical.c:817 pg_recvlogical.c:825
+#: pg_basebackup.c:2132 pg_basebackup.c:2146 pg_basebackup.c:2157
+#: pg_basebackup.c:2170 pg_basebackup.c:2180 pg_basebackup.c:2190
+#: pg_basebackup.c:2202 pg_basebackup.c:2213 pg_receivexlog.c:477
+#: pg_receivexlog.c:491 pg_receivexlog.c:499 pg_receivexlog.c:509
+#: pg_receivexlog.c:520 pg_recvlogical.c:787 pg_recvlogical.c:801
+#: pg_recvlogical.c:812 pg_recvlogical.c:820 pg_recvlogical.c:828
+#: pg_recvlogical.c:836 pg_recvlogical.c:844 pg_recvlogical.c:852
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayer « %s --help » pour plus d'informations.\n"
 
-#: pg_basebackup.c:2138 pg_receivexlog.c:460 pg_recvlogical.c:772
+#: pg_basebackup.c:2144 pg_receivexlog.c:489 pg_recvlogical.c:799
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 
-#: pg_basebackup.c:2150 pg_receivexlog.c:472
+#: pg_basebackup.c:2156 pg_receivexlog.c:519
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s : aucun répertoire cible indiqué\n"
 
-#: pg_basebackup.c:2162
+#: pg_basebackup.c:2168
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s : seules les sauvegardes en mode tar peuvent être compressées\n"
 
-#: pg_basebackup.c:2172
+#: pg_basebackup.c:2178
 #, c-format
 msgid "%s: WAL streaming can only be used in plain mode\n"
 msgstr "%s : le flux de journaux de transactions peut seulement être utilisé en mode plain\n"
 
-#: pg_basebackup.c:2184
+#: pg_basebackup.c:2188
+#, c-format
+msgid "%s: replication slots can only be used with WAL streaming\n"
+msgstr "%s : les slots de réplications peuvent seulement être utilisés avec la réplication en flux des WAL\n"
+
+#: pg_basebackup.c:2200
 #, c-format
 msgid "%s: transaction log directory location can only be specified in plain mode\n"
 msgstr ""
 "%s : l'emplacement du répertoire des journaux de transactions doit être\n"
 "indiqué uniquement dans le mode plain\n"
 
-#: pg_basebackup.c:2195
+#: pg_basebackup.c:2211
 #, c-format
 msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr ""
 "%s : l'emplacement du répertoire des journaux de transactions doit être\n"
 "indiqué avec un chemin absolu\n"
 
-#: pg_basebackup.c:2207
+#: pg_basebackup.c:2223
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s : cette construction ne supporte pas la compression\n"
 
-#: pg_basebackup.c:2234
+#: pg_basebackup.c:2250
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le lien symbolique « %s » : %s\n"
 
-#: pg_basebackup.c:2239
+#: pg_basebackup.c:2255
 #, c-format
 msgid "%s: symlinks are not supported on this platform\n"
 msgstr "%s : les liens symboliques ne sont pas supportés sur cette plateforme\n"
 
-#: pg_receivexlog.c:58
+#: pg_receivexlog.c:64
 #, c-format
 msgid ""
 "%s receives PostgreSQL streaming transaction logs.\n"
@@ -662,7 +654,7 @@ msgstr ""
 "%s reçoit le flux des journaux de transactions PostgreSQL.\n"
 "\n"
 
-#: pg_receivexlog.c:62 pg_recvlogical.c:73
+#: pg_receivexlog.c:68 pg_recvlogical.c:75
 #, c-format
 msgid ""
 "\n"
@@ -671,19 +663,26 @@ msgstr ""
 "\n"
 "Options :\n"
 
-#: pg_receivexlog.c:63
+#: pg_receivexlog.c:69
 #, c-format
 msgid "  -D, --directory=DIR    receive transaction log files into this directory\n"
 msgstr ""
 "  -D, --directory=RÉP          reçoit les journaux de transactions dans ce\n"
 "                               répertoire\n"
 
-#: pg_receivexlog.c:64 pg_recvlogical.c:78
+#: pg_receivexlog.c:70 pg_recvlogical.c:79
+#, c-format
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr ""
+"      --if-not-exists          ne pas renvoyer une erreur si le slot existe\\n\n"
+"                               déjà lors de sa création\n"
+
+#: pg_receivexlog.c:71 pg_recvlogical.c:81
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
 msgstr "  -n, --no-loop                ne boucle pas en cas de perte de la connexion\n"
 
-#: pg_receivexlog.c:65 pg_recvlogical.c:83
+#: pg_receivexlog.c:72 pg_recvlogical.c:86
 #, c-format
 msgid ""
 "  -s, --status-interval=SECS\n"
@@ -692,82 +691,135 @@ msgstr ""
 "  -s, --status-interval=SECS   durée entre l'envoi de paquets de statut au\n"
 "                               (par défaut %d)\n"
 
-#: pg_receivexlog.c:67
+#: pg_receivexlog.c:75
 #, c-format
-msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
-msgstr "  -S, --slot=NOMREP            slot de réplication à utiliser\n"
+msgid "      --synchronous      flush transaction log immediately after writing\n"
+msgstr ""
+"      --synchronous            vider le journal de transactions immédiatement\\n\n"
+"                               après son écriture\n"
 
-#: pg_receivexlog.c:89
+#: pg_receivexlog.c:86
+#, c-format
+msgid ""
+"\n"
+"Optional actions:\n"
+msgstr ""
+"\n"
+"Actions optionnelles :\n"
+
+#: pg_receivexlog.c:87 pg_recvlogical.c:72
+#, c-format
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr ""
+"      --create-slot            créer un nouveau slot de réplication (pour le\n"
+"                               nom du slot, voir --slot)\n"
+
+#: pg_receivexlog.c:88 pg_recvlogical.c:73
+#, c-format
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr ""
+"      --drop-slot              supprimer un nouveau slot de réplication (pour\n"
+"                               le nom du slot, voir --slot)\n"
+
+#: pg_receivexlog.c:100
 #, c-format
 msgid "%s: finished segment at %X/%X (timeline %u)\n"
 msgstr "%s : segment terminé à %X/%X (timeline %u)\n"
 
-#: pg_receivexlog.c:102
+#: pg_receivexlog.c:113
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
 msgstr "%s : a basculé sur la timeline %u à %X/%X\n"
 
-#: pg_receivexlog.c:111
+#: pg_receivexlog.c:122
 #, c-format
 msgid "%s: received interrupt signal, exiting\n"
 msgstr "%s : a reçu un signal d'interruption, quitte\n"
 
-#: pg_receivexlog.c:137
+#: pg_receivexlog.c:142
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu ouvrir le répertoire « %s » : %s\n"
 
-#: pg_receivexlog.c:187
-#, c-format
-msgid "%s: could not stat file \"%s\": %s\n"
-msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
-
-#: pg_receivexlog.c:195
-#, c-format
-msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
-msgstr "%s : le segment « %s » a une taille %d incorrecte, ignoré\n"
-
-#: pg_receivexlog.c:214
-#, c-format
-msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s : n'a pas pu lire le répertoire « %s » : %s\n"
-
-#: pg_receivexlog.c:221
+#: pg_receivexlog.c:160
 #, c-format
 msgid "%s: could not close directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu fermer le répertoire « %s » : %s\n"
 
-#: pg_receivexlog.c:328
+#: pg_receivexlog.c:218 pg_recvlogical.c:343
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
+
+#: pg_receivexlog.c:226
+#, c-format
+msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
+msgstr "%s : le segment « %s » a une taille %d incorrecte, ignoré\n"
+
+#: pg_receivexlog.c:245
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s : n'a pas pu lire le répertoire « %s » : %s\n"
+
+#: pg_receivexlog.c:332
 #, c-format
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgstr "%s : commence le flux des journaux à %X/%X (timeline %u)\n"
 
-#: pg_receivexlog.c:410 pg_recvlogical.c:683
+#: pg_receivexlog.c:426 pg_recvlogical.c:707
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
 msgstr "%s : numéro de port invalide : « %s »\n"
 
-#: pg_receivexlog.c:495 pg_recvlogical.c:964
+#: pg_receivexlog.c:498
+#, c-format
+msgid "%s: cannot use --create-slot together with --drop-slot\n"
+msgstr "%s : ne peut pas utiliser --create-slot avec --drop-slot\n"
+
+#. translator: second %s is an option name
+#: pg_receivexlog.c:507
+#, c-format
+msgid "%s: %s needs a slot to be specified using --slot\n"
+msgstr "%s : %s a besoin du slot avec l'option --slot\n"
+
+#: pg_receivexlog.c:562
+#, c-format
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr ""
+"%s : la connexion de réplication utilisant le slot « %s » est spécifique à\n"
+"une base, ce qui est inattendu\n"
+
+#: pg_receivexlog.c:574 pg_recvlogical.c:892
+#, c-format
+msgid "%s: dropping replication slot \"%s\"\n"
+msgstr "%s : suppression du slot de réplication « %s »\n"
+
+#: pg_receivexlog.c:587 pg_recvlogical.c:904
+#, c-format
+msgid "%s: creating replication slot \"%s\"\n"
+msgstr "%s : création du slot de réplication « %s »\n"
+
+#: pg_receivexlog.c:614 pg_recvlogical.c:930
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s : déconnecté\n"
 
 #. translator: check source for value for %d
-#: pg_receivexlog.c:502 pg_recvlogical.c:971
+#: pg_receivexlog.c:621 pg_recvlogical.c:937
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s : déconnecté, attente de %d secondes avant une nouvelle tentative\n"
 
-#: pg_recvlogical.c:65
+#: pg_recvlogical.c:67
 #, c-format
 msgid ""
-"%s receives PostgreSQL logical change streams.\n"
+"%s controls PostgreSQL logical decoding streams.\n"
 "\n"
 msgstr ""
-"%s reçoit le flux des modifications logiques de PostgreSQL.\n"
+"%s contrôle le flux des modifications logiques de PostgreSQL.\n"
 "\n"
 
-#: pg_recvlogical.c:69
+#: pg_recvlogical.c:71
 #, c-format
 msgid ""
 "\n"
@@ -776,33 +828,19 @@ msgstr ""
 "\n"
 "Action à réaliser :\n"
 
-#: pg_recvlogical.c:70
-#, c-format
-msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
-msgstr ""
-"      --create-slot            créer un nouveau slot de réplication (pour le\n"
-"                               nom du slot, voir --slot)\n"
-
-#: pg_recvlogical.c:71
-#, c-format
-msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
-msgstr ""
-"      --drop-slot              supprimer un nouveau slot de réplication (pour\n"
-"                               le nom du slot, voir --slot)\n"
-
-#: pg_recvlogical.c:72
+#: pg_recvlogical.c:74
 #, c-format
 msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
 msgstr ""
 "      --start                  lance le flux dans un slot de réplication (pour\n"
 "                               le nom du slot, voir --slot)\n"
 
-#: pg_recvlogical.c:74
+#: pg_recvlogical.c:76
 #, c-format
 msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
 msgstr "  -f, --file=NOMFICHIER        trace la réception dans ce fichier, - pour stdout\n"
 
-#: pg_recvlogical.c:75
+#: pg_recvlogical.c:77
 #, c-format
 msgid ""
 "  -F  --fsync-interval=SECS\n"
@@ -811,14 +849,14 @@ msgstr ""
 "  -F  --fsync-interval=SECS    durée entre les fsyncs vers le fichier de sortie\n"
 "                               (par défaut %d)\n"
 
-#: pg_recvlogical.c:77
+#: pg_recvlogical.c:80
 #, c-format
 msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
 msgstr ""
 "  -I, --startpos=LSN           position de début du streaming dans le slot\n"
 "                               existant\n"
 
-#: pg_recvlogical.c:79
+#: pg_recvlogical.c:82
 #, c-format
 msgid ""
 "  -o, --option=NAME[=VALUE]\n"
@@ -828,324 +866,338 @@ msgstr ""
 "  -o, --option=NOM[=VALEUR]    passe l'option NAME avec la valeur optionnelle\n"
 "                               VALEUR au plugin en sortie\n"
 
-#: pg_recvlogical.c:82
+#: pg_recvlogical.c:85
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
 msgstr ""
 "  -P, --plugin=PLUGIN          utilise le plugin PLUGIN en sortie\n"
 "                               (par défaut %s)\n"
 
-#: pg_recvlogical.c:85
+#: pg_recvlogical.c:88
 #, c-format
 msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
 msgstr "  -S, --slot=NOMSLOT           nom du slot de réplication logique\n"
 
-#: pg_recvlogical.c:90
+#: pg_recvlogical.c:93
 #, c-format
 msgid "  -d, --dbname=DBNAME    database to connect to\n"
 msgstr "  -d, --dbname=NOMBASE      base de données de connexion\n"
 
-#: pg_recvlogical.c:123
+#: pg_recvlogical.c:126
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
 msgstr "%s : confirmation d'écriture jusqu'à %X/%X et de synchronisation jusqu'à %X/%X (slot %s)\n"
 
-#: pg_recvlogical.c:148 receivelog.c:395
+#: pg_recvlogical.c:151 receivelog.c:404
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s : n'a pas pu envoyer le paquet d'informations en retour : %s"
 
-#: pg_recvlogical.c:184
+#: pg_recvlogical.c:190
 #, c-format
 msgid "%s: could not fsync log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu synchroniser sur disque le fichier « %s » : %s\n"
 
-#: pg_recvlogical.c:223
+#: pg_recvlogical.c:229
 #, c-format
 msgid "%s: starting log streaming at %X/%X (slot %s)\n"
 msgstr "%s : commence le flux des journaux à %X/%X (slot %s)\n"
 
-#: pg_recvlogical.c:265
+#: pg_recvlogical.c:271
 #, c-format
 msgid "%s: streaming initiated\n"
 msgstr "%s : flux lancé\n"
 
-#: pg_recvlogical.c:328
+#: pg_recvlogical.c:336
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s » : %s\n"
 
-#: pg_recvlogical.c:397 receivelog.c:894
+#: pg_recvlogical.c:366 receivelog.c:933
+#, c-format
+msgid "%s: invalid socket: %s"
+msgstr "%s : socket invalide : %s"
+
+#: pg_recvlogical.c:420 receivelog.c:955
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s : échec de select() : %s\n"
 
-#: pg_recvlogical.c:406 receivelog.c:902
+#: pg_recvlogical.c:429 receivelog.c:1005
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s : n'a pas pu recevoir des données du flux de WAL : %s"
 
-#: pg_recvlogical.c:447 pg_recvlogical.c:486 receivelog.c:969
-#: receivelog.c:1023
+#: pg_recvlogical.c:470 pg_recvlogical.c:509 receivelog.c:1050
+#: receivelog.c:1117
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s : en-tête de flux trop petit : %d\n"
 
-#: pg_recvlogical.c:469 receivelog.c:1129
+#: pg_recvlogical.c:492 receivelog.c:898
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s : entête non reconnu du flux : « %c »\n"
 
-#: pg_recvlogical.c:515 pg_recvlogical.c:529
+#: pg_recvlogical.c:538 pg_recvlogical.c:552
 #, c-format
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire %u octets dans le journal de transactions « %s » : %s\n"
 
-#: pg_recvlogical.c:540 receivelog.c:684 receivelog.c:722
+#: pg_recvlogical.c:563 receivelog.c:691 receivelog.c:729
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s : fin inattendue du flux de réplication : %s"
 
-#: pg_recvlogical.c:662
+#: pg_recvlogical.c:686
 #, c-format
 msgid "%s: invalid fsync interval \"%s\"\n"
 msgstr "%s : intervalle fsync « %s » invalide\n"
 
-#: pg_recvlogical.c:703
+#: pg_recvlogical.c:727
 #, c-format
 msgid "%s: could not parse start position \"%s\"\n"
 msgstr "%s : n'a pas pu analyser la position de départ « %s »\n"
 
-#: pg_recvlogical.c:784
+#: pg_recvlogical.c:811
 #, c-format
 msgid "%s: no slot specified\n"
 msgstr "%s : aucun slot de réplication indiqué\n"
 
-#: pg_recvlogical.c:792
+#: pg_recvlogical.c:819
 #, c-format
 msgid "%s: no target file specified\n"
 msgstr "%s : aucun fichier cible indiqué\n"
 
-#: pg_recvlogical.c:800
+#: pg_recvlogical.c:827
 #, c-format
 msgid "%s: no database specified\n"
 msgstr "%s : aucun base de données indiquée\n"
 
-#: pg_recvlogical.c:808
+#: pg_recvlogical.c:835
 #, c-format
 msgid "%s: at least one action needs to be specified\n"
 msgstr "%s : au moins une action doit être indiquée\n"
 
-#: pg_recvlogical.c:816
+#: pg_recvlogical.c:843
 #, c-format
 msgid "%s: cannot use --create-slot or --start together with --drop-slot\n"
 msgstr "%s : ne peut pas utiliser --create-slot ou --start avec --drop-slot\n"
 
-#: pg_recvlogical.c:824
+#: pg_recvlogical.c:851
 #, c-format
 msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
 msgstr "%s : ne peut pas utiliser --create-slot ou --drop-slot avec --startpos\n"
 
-#: pg_recvlogical.c:878
+#: pg_recvlogical.c:882
 #, c-format
-msgid "%s: dropping replication slot \"%s\"\n"
-msgstr "%s : suppression du slot de réplication « %s »\n"
+msgid "%s: could not establish database-specific replication connection\n"
+msgstr "%s : n'a pas pu établir une connexion de réplication spécifique à la base\n"
 
-#: pg_recvlogical.c:894
-#, c-format
-msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s : n'a pas pu supprimer le slot de réplication « %s » : a récupéré %d lignes et %d champs,\n"
-"attendait %d lignes et %d champs\n"
-
-#: pg_recvlogical.c:912
-#, c-format
-msgid "%s: creating replication slot \"%s\"\n"
-msgstr "%s : création du slot de réplication « %s »\n"
-
-#: pg_recvlogical.c:929
-#, c-format
-msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s : n'a pas pu créer le slot de réplication « %s » : a récupéré %d lignes et %d champs,\n"
-"attendait %d lignes et %d champs\n"
-
-#: receivelog.c:55
+#: receivelog.c:66
 #, c-format
 msgid "%s: could not create archive status file \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le fichier de statut d'archivage « %s » : %s\n"
 
-#: receivelog.c:62 receivelog.c:186 receivelog.c:335 receivelog.c:990
+#: receivelog.c:73 receivelog.c:196 receivelog.c:344 receivelog.c:828
+#: receivelog.c:1071
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s : n'a pas pu synchroniser sur disque le fichier « %s » : %s\n"
 
-#: receivelog.c:101
+#: receivelog.c:111
 #, c-format
 msgid "%s: could not open transaction log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu ouvrir le journal des transactions « %s » : %s\n"
 
-#: receivelog.c:113
+#: receivelog.c:123
 #, c-format
 msgid "%s: could not stat transaction log file \"%s\": %s\n"
 msgstr ""
 "%s : n'a pas pu récupérer les informations sur le journal de transactions\n"
 "« %s » : %s\n"
 
-#: receivelog.c:127
+#: receivelog.c:137
 #, c-format
 msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
 msgstr ""
 "%s : le segment « %s » du journal de transactions comprend %d octets, cela\n"
 "devrait être 0 ou %d\n"
 
-#: receivelog.c:140
+#: receivelog.c:150
 #, c-format
 msgid "%s: could not pad transaction log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu remplir de zéros le journal de transactions « %s » : %s\n"
 
-#: receivelog.c:153
+#: receivelog.c:163
 #, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
 msgstr "%s : n'a pas pu rechercher le début du journal de transaction « %s » : %s\n"
 
-#: receivelog.c:179
+#: receivelog.c:189
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s : n'a pas pu déterminer la position de recherche dans le fichier d'archive « %s » : %s\n"
 
-#: receivelog.c:212
+#: receivelog.c:222
 #, c-format
 msgid "%s: could not rename file \"%s\": %s\n"
 msgstr "%s : n'a pas pu renommer le fichier « %s » : %s\n"
 
-#: receivelog.c:219
+#: receivelog.c:229
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr "%s : pas de renommage de « %s%s », le segment n'est pas complet\n"
 
-#: receivelog.c:265
+#: receivelog.c:275
 #, c-format
 msgid "%s: could not open timeline history file \"%s\": %s\n"
 msgstr "%s : n'a pas pu ouvrir le journal historique de la timeline « %s » : %s\n"
 
-#: receivelog.c:293
+#: receivelog.c:302
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr "%s : le serveur a renvoyé un nom de fichier historique inattendu pour la timeline %u : %s\n"
 
-#: receivelog.c:310
+#: receivelog.c:319
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le fichier historique de la timeline « %s » : %s\n"
 
-#: receivelog.c:327
+#: receivelog.c:336
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire dans le fichier historique de la timeline « %s » : %s\n"
 
-#: receivelog.c:352
+#: receivelog.c:361
 #, c-format
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
 msgstr "%s : n'a pas pu renommer le fichier « %s » en « %s » : %s\n"
 
-#: receivelog.c:429
+#: receivelog.c:438
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
 msgstr "%s : version %s du serveur incompatible ; le client ne supporte pas le streaming de versions plus anciennes que %s\n"
 
-#: receivelog.c:439
+#: receivelog.c:448
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
 msgstr "%s : version %s du serveur incompatible ; le client ne supporte pas le streaming de versions plus récentes que %s\n"
 
-#: receivelog.c:542
+#: receivelog.c:544 streamutil.c:264 streamutil.c:303
+#, c-format
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr ""
+"%s : n'a pas pu identifier le système, a récupéré %d lignes et %d champs,\n"
+"attendait %d lignes et %d champs (ou plus)\n"
+
+#: receivelog.c:552
 #, c-format
 msgid "%s: system identifier does not match between base backup and streaming connection\n"
 msgstr ""
 "%s : l'identifiant système ne correspond pas entre la sauvegarde des fichiers\n"
 "et la connexion de réplication\n"
 
-#: receivelog.c:550
+#: receivelog.c:560
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s : la timeline %u de départ n'est pas dans le serveur\n"
 
-#: receivelog.c:590
+#: receivelog.c:600
 #, c-format
 msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s : réponse inattendue à la commande TIMELINE_HISTORY : a récupéré %d lignes et %d champs, alors qu'il attendait %d lignes et %d champs\n"
 
-#: receivelog.c:665
+#: receivelog.c:672
 #, c-format
 msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
 msgstr "%s: le serveur a renvoyé une timeline suivante %u inattendue, après la timeline %u\n"
 
-#: receivelog.c:672
+#: receivelog.c:679
 #, c-format
 msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
 msgstr "%s : le serveur a arrêté l'envoi de la timeline %u à %X/%X, mais a indiqué que la timeline suivante, %u, commence à %X/%X\n"
 
-#: receivelog.c:713
+#: receivelog.c:720
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s : le flux de réplication a été abandonné avant d'arriver au point d'arrêt\n"
 
-#: receivelog.c:762
+#: receivelog.c:769
 #, c-format
 msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s : ensemble de résultats inattendu après la fin de la timeline : a récupéré %d lignes et %d champs, alors qu'il attendait %d lignes et %d champs\n"
 
-#: receivelog.c:772
+#: receivelog.c:779
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr "%s : n'a pas pu analyser la position de départ de la prochaine timeline « %s »\n"
 
-#: receivelog.c:827 receivelog.c:930 receivelog.c:1116
-#, c-format
-msgid "%s: could not send copy-end packet: %s"
-msgstr "%s : n'a pas pu envoyer le paquet de fin de copie : %s"
-
-#: receivelog.c:1042
+#: receivelog.c:1136
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
 msgstr ""
 "%s : a reçu l'enregistrement du journal de transactions pour le décalage %u\n"
 "sans fichier ouvert\n"
 
-#: receivelog.c:1054
+#: receivelog.c:1148
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s : a obtenu le décalage %08x pour les données du journal, attendait %08x\n"
 
-#: receivelog.c:1091
+#: receivelog.c:1184
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire %u octets dans le journal de transactions « %s » : %s\n"
 
-#: streamutil.c:142
+#: receivelog.c:1209 receivelog.c:1250 receivelog.c:1281
+#, c-format
+msgid "%s: could not send copy-end packet: %s"
+msgstr "%s : n'a pas pu envoyer le paquet de fin de copie : %s"
+
+#: streamutil.c:145
 msgid "Password: "
 msgstr "Mot de passe : "
 
-#: streamutil.c:166
+#: streamutil.c:169
 #, c-format
 msgid "%s: could not connect to server\n"
 msgstr "%s : n'a pas pu se connecter au serveur\n"
 
-#: streamutil.c:184
+#: streamutil.c:187
 #, c-format
-msgid "%s: could not connect to server: %s\n"
-msgstr "%s : n'a pas pu se connecter au serveur : %s\n"
+msgid "%s: could not connect to server: %s"
+msgstr "%s : n'a pas pu se connecter au serveur : %s"
 
-#: streamutil.c:208
+#: streamutil.c:211
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr "%s : n'a pas pu déterminer la configuration serveur de integer_datetimes\n"
 
-#: streamutil.c:221
+#: streamutil.c:224
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s : l'option de compilation integer_datetimes ne correspond pas au serveur\n"
+
+#: streamutil.c:371
+#, c-format
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr ""
+"%s : n'a pas pu créer le slot de réplication « %s » : a récupéré %d lignes et %d champs,\n"
+"attendait %d lignes et %d champs\n"
+
+#: streamutil.c:416
+#, c-format
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr ""
+"%s : n'a pas pu supprimer le slot de réplication « %s » : a récupéré %d lignes et %d champs,\n"
+"attendait %d lignes et %d champs\n"
+
+#~ msgid "%s: could not parse file size\n"
+#~ msgstr "%s : n'a pas pu analyser la taille du fichier\n"
+
+#~ msgid "%s: could not parse file mode\n"
+#~ msgstr "%s : n'a pas pu analyser le mode du fichier\n"
 
 #~ msgid "%s: could not parse transaction log file name \"%s\"\n"
 #~ msgstr "%s : n'a pas pu analyser le nom du journal de transactions « %s »\n"
@@ -1208,3 +1260,6 @@ msgstr "%s : l'option de compilation integer_datetimes ne correspond pas au serv
 
 #~ msgid "%s: no start point returned from server\n"
 #~ msgstr "%s : aucun point de redémarrage renvoyé du serveur\n"
+
+#~ msgid "%s: socket not open"
+#~ msgstr "%s : socket non ouvert"
