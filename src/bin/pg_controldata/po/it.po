@@ -24,7 +24,7 @@ msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-04-30 20:48+0000\n"
-"PO-Revision-Date: 2013-05-01 22:43+0100\n"
+"PO-Revision-Date: 2016-04-17 20:45+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -32,6 +32,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.5.4\n"
 
 #: pg_controldata.c:34
@@ -51,7 +52,7 @@ msgstr "Utilizzo:\n"
 #: pg_controldata.c:36
 #, c-format
 msgid "  %s [OPTION] [DATADIR]\n"
-msgstr "  %s [OPZIONE]... [DATADIR]\n"
+msgstr "  %s [OPZIONE] [DATADIR]\n"
 
 #: pg_controldata.c:37
 #, c-format
