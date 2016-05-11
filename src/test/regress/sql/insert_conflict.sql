@@ -261,6 +261,28 @@ insert into syscolconflicttest values (1) on conflict (key) do update set data =
 insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.oid::text;
 drop table syscolconflicttest;
 
+--
+-- Previous tests all managed to not test any expressions requiring
+-- planner preprocessing ...
+--
+create table insertconflict (a bigint, b bigint);
+
+create unique index insertconflicti1 on insertconflict(coalesce(a, 0));
+
+create unique index insertconflicti2 on insertconflict(b)
+  where coalesce(a, 1) > 0;
+
+insert into insertconflict values (1, 2)
+on conflict (coalesce(a, 0)) do nothing;
+
+insert into insertconflict values (1, 2)
+on conflict (b) where coalesce(a, 1) > 0 do nothing;
+
+insert into insertconflict values (1, 2)
+on conflict (b) where coalesce(a, 1) > 1 do nothing;
+
+drop table insertconflict;
+
 
 -- ******************************************************************
 -- *                                                                *
