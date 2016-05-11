@@ -1316,6 +1316,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>DEPENDS</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>DEPTH</token></entry>
     <entry></entry>
     <entry>non-reserved</entry>
@@ -2731,7 +2738,7 @@
    </row>
    <row>
     <entry><token>METHOD</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
@@ -3260,6 +3267,13 @@
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>PARALLEL</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>PARAMETER</token></entry>
