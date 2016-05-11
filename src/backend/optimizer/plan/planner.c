@@ -77,6 +77,7 @@ create_upper_paths_hook_type create_upper_paths_hook = NULL;
 #define EXPRKIND_APPINFO		7
 #define EXPRKIND_PHV			8
 #define EXPRKIND_TABLESAMPLE	9
+#define EXPRKIND_ARBITER_ELEM	10
 
 /* Passthrough data for standard_qp_callback */
 typedef struct
@@ -620,13 +621,23 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	if (parse->onConflict)
 	{
-		parse->onConflict->onConflictSet = (List *)
-			preprocess_expression(root, (Node *) parse->onConflict->onConflictSet,
-								  EXPRKIND_TARGET);
-
-		parse->onConflict->onConflictWhere =
-			preprocess_expression(root, (Node *) parse->onConflict->onConflictWhere,
+		parse->onConflict->arbiterElems = (List *)
+			preprocess_expression(root,
+								  (Node *) parse->onConflict->arbiterElems,
+								  EXPRKIND_ARBITER_ELEM);
+		parse->onConflict->arbiterWhere =
+			preprocess_expression(root,
+								  parse->onConflict->arbiterWhere,
 								  EXPRKIND_QUAL);
+		parse->onConflict->onConflictSet = (List *)
+			preprocess_expression(root,
+								  (Node *) parse->onConflict->onConflictSet,
+								  EXPRKIND_TARGET);
+		parse->onConflict->onConflictWhere =
+			preprocess_expression(root,
+								  parse->onConflict->onConflictWhere,
+								  EXPRKIND_QUAL);
+		/* exclRelTlist contains only Vars, so no preprocessing needed */
 	}
 
 	root->append_rel_list = (List *)

@@ -623,7 +623,6 @@ infer_arbiter_indexes(PlannerInfo *root)
 		Bitmapset  *indexedAttrs = NULL;
 		List	   *idxExprs;
 		List	   *predExprs;
-		List	   *whereExplicit;
 		AttrNumber	natt;
 		ListCell   *el;
 
@@ -685,6 +684,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		{
 			int			attno = idxRel->rd_index->indkey.values[natt];
 
+			/* XXX broken */
 			if (attno < 0)
 				elog(ERROR, "system column in index");
 
@@ -745,13 +745,12 @@ infer_arbiter_indexes(PlannerInfo *root)
 			goto next;
 
 		/*
-		 * Any user-supplied ON CONFLICT unique index inference WHERE clause
-		 * need only be implied by the cataloged index definitions predicate.
+		 * If it's a partial index, its predicate must be implied by the ON
+		 * CONFLICT's WHERE clause.
 		 */
 		predExprs = RelationGetIndexPredicate(idxRel);
-		whereExplicit = make_ands_implicit((Expr *) onconflict->arbiterWhere);
 
-		if (!predicate_implied_by(predExprs, whereExplicit))
+		if (!predicate_implied_by(predExprs, (List *) onconflict->arbiterWhere))
 			goto next;
 
 		results = lappend_oid(results, idxForm->indexrelid);
