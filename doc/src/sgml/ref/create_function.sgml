@@ -753,7 +753,7 @@ SELECT * FROM dup(42);
     malicious users from creating objects that mask objects used by the
     function.  Particularly important in this regard is the
     temporary-table schema, which is searched first by default, and
-    is normally writable by anyone.  A secure arrangement can be had
+    is normally writable by anyone.  A secure arrangement can be obtained
     by forcing the temporary schema to be searched last.  To do this,
     write <literal>pg_temp</><indexterm><primary>pg_temp</><secondary>securing functions</></> as the last entry in <varname>search_path</>.
     This function illustrates safe usage:

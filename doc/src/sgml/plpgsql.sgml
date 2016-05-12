@@ -528,7 +528,7 @@ $$ LANGUAGE plpgsql;
      </para>
 
      <para>
-      The same effect can be had by declaring one or more output parameters as
+      The same effect can be obtained by declaring one or more output parameters as
       polymorphic types.  In this case the
       special <literal>$0</literal> parameter is not used; the output
       parameters themselves serve the same purpose.  For example:
