@@ -7898,8 +7898,8 @@ heap_xlog_visible(XLogReaderState *record)
 			PageInit(vmpage, BLCKSZ, 0);
 
 		/*
-		 * XLogReplayBufferExtended locked the buffer. But visibilitymap_set
-		 * will handle locking itself.
+		 * XLogReadBufferForRedoExtended locked the buffer. But
+		 * visibilitymap_set will handle locking itself.
 		 */
 		LockBuffer(vmbuffer, BUFFER_LOCK_UNLOCK);
 
