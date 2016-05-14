@@ -656,10 +656,10 @@ X271	XMLValidate: data-driven case			NO
 X272	XMLValidate: ACCORDING TO clause			NO	
 X273	XMLValidate: ELEMENT clause			NO	
 X274	XMLValidate: schema location			NO	
-X281	XMLValidate: with DOCUMENT option			NO	
+X281	XMLValidate with DOCUMENT option			NO	
 X282	XMLValidate with CONTENT option			NO	
 X283	XMLValidate with SEQUENCE option			NO	
-X284	XMLValidate NAMESPACE without ELEMENT clause			NO	
+X284	XMLValidate: NAMESPACE without ELEMENT clause			NO	
 X286	XMLValidate: NO NAMESPACE with ELEMENT clause			NO	
 X300	XMLTable			NO	
 X301	XMLTable: derived column list option			NO	
