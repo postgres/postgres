@@ -23,8 +23,7 @@ For All Releases (major, minor, beta, RC)
 	   for the respective branch.
 	4. Run ".../admin/cp-po -L qualified-list-xxx.txt -g .../messages .../postgresql".
 	   This creates a commit in the postgresql repository.
-	5. Tag the messages: git tag RELx_y_z
-	6. Push everything.
+	5. Push everything.
 
 
 For Major Releases
