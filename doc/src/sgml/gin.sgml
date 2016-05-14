@@ -539,7 +539,7 @@
        <function>extractQuery</> to pass additional data to the
        <function>consistent</> and <function>comparePartial</> methods.
        To use it, <function>extractQuery</> must allocate
-       an array of <literal>*nkeys</> Pointers and store its address at
+       an array of <literal>*nkeys</> pointers and store its address at
        <literal>*extra_data</>, then store whatever it wants to into the
        individual pointers.  The variable is initialized to <symbol>NULL</symbol> before
        call, so this argument can simply be ignored by operator classes that
