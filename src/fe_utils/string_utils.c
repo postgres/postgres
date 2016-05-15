@@ -143,8 +143,8 @@ fmtId(const char *rawid)
  *
  * Like fmtId, use the result before calling again.
  *
- * Since we call fmtId and it also uses getThreadLocalPQExpBuffer() we cannot
- * use it until we're finished with calling fmtId().
+ * Since we call fmtId and it also uses getLocalPQExpBuffer() we cannot
+ * use that buffer until we're finished with calling fmtId().
  */
 const char *
 fmtQualifiedId(int remoteVersion, const char *schema, const char *id)
