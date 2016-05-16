@@ -677,8 +677,7 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					 * using an asynchronous execution function, the command
 					 * might not have yet completed.  Check to see if a command
 					 * is still being processed by the remote server, and if so,
-					 * request cancellation of the command; if not, abort
-					 * gracefully.
+					 * request cancellation of the command.
 					 */
 					if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
 					{
@@ -694,7 +693,6 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 												errbuf)));
 							PQfreeCancel(cancel);
 						}
-						break;
 					}
 
 					/* If we're aborting, abort all remote transactions too */
@@ -798,6 +796,30 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 		{
 			/* Assume we might have lost track of prepared statements */
 			entry->have_error = true;
+
+			/*
+			 * If a command has been submitted to the remote server by using an
+			 * asynchronous execution function, the command might not have yet
+			 * completed.  Check to see if a command is still being processed by
+			 * the remote server, and if so, request cancellation of the
+			 * command.
+			 */
+			if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
+			{
+				PGcancel   *cancel;
+				char		errbuf[256];
+
+				if ((cancel = PQgetCancel(entry->conn)))
+				{
+					if (!PQcancel(cancel, errbuf, sizeof(errbuf)))
+						ereport(WARNING,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("could not send cancel request: %s",
+										errbuf)));
+					PQfreeCancel(cancel);
+				}
+			}
+
 			/* Rollback all remote subtransactions during abort */
 			snprintf(sql, sizeof(sql),
 					 "ROLLBACK TO SAVEPOINT s%d; RELEASE SAVEPOINT s%d",
