@@ -52,7 +52,9 @@ typedef struct
 	Buffer		buffer;			/* registered buffer */
 	int			flags;			/* flags for this buffer */
 	int			deltaLen;		/* space consumed in delta field */
-	char		image[BLCKSZ];	/* copy of page image for modification */
+	char		*image;			/* copy of page image for modification,
+								 * do not do it in-place to have aligned
+								 * memory chunk */
 	char		delta[MAX_DELTA_SIZE];	/* delta between page images */
 } PageData;
 
@@ -268,7 +270,15 @@ GenericXLogStart(Relation relation)
 
 	state->isLogged = RelationNeedsWAL(relation);
 	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
+	{
+		/*
+		 * pre-alloc page's images to prevent allocation in
+		 * GenericXLogRegisterBuffer() which could be called in different
+		 * memory context(s)
+		 */
+		state->pages[i].image = palloc(BLCKSZ);
 		state->pages[i].buffer = InvalidBuffer;
+	}
 
 	return state;
 }
@@ -422,6 +432,8 @@ GenericXLogFinish(GenericXLogState *state)
 		lsn = InvalidXLogRecPtr;
 	}
 
+	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
+		pfree(state->pages[i].image);
 	pfree(state);
 
 	return lsn;
