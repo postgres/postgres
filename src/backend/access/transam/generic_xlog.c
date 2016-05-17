@@ -61,8 +61,14 @@ typedef struct
 /* State of generic xlog record construction */
 struct GenericXLogState
 {
-	bool		isLogged;
+	/*
+	 * page's images. Should be first in this struct to have MAXALIGN'ed
+	 * images addresses, because some code working with pages directly aligns
+	 * addresses, not an offsets from begining of page
+	 */
+	char		images[MAX_GENERIC_XLOG_PAGES * BLCKSZ];
 	PageData	pages[MAX_GENERIC_XLOG_PAGES];
+	bool		isLogged;
 };
 
 static void writeFragment(PageData *pageData, OffsetNumber offset,
@@ -267,16 +273,11 @@ GenericXLogStart(Relation relation)
 	int			i;
 
 	state = (GenericXLogState *) palloc(sizeof(GenericXLogState));
-
 	state->isLogged = RelationNeedsWAL(relation);
+
 	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
 	{
-		/*
-		 * pre-alloc page's images to prevent allocation in
-		 * GenericXLogRegisterBuffer() which could be called in different
-		 * memory context(s)
-		 */
-		state->pages[i].image = palloc(BLCKSZ);
+		state->pages[i].image = state->images + BLCKSZ * i;
 		state->pages[i].buffer = InvalidBuffer;
 	}
 
@@ -432,8 +433,6 @@ GenericXLogFinish(GenericXLogState *state)
 		lsn = InvalidXLogRecPtr;
 	}
 
-	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
-		pfree(state->pages[i].image);
 	pfree(state);
 
 	return lsn;
