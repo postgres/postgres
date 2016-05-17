@@ -906,8 +906,8 @@ SELECT * FROM pg_stop_backup(false);
     <para>
      Once the WAL segment files active during the backup are archived, you are
      done.  The file identified by <function>pg_stop_backup</>'s first return
-     value the last segment that is required to form a complete set of backup
-     files.  If <varname>archive_mode</> is enabled,
+     value is the last segment that is required to form a complete set of
+     backup files.  If <varname>archive_mode</> is enabled,
      <function>pg_stop_backup</> does not return until the last segment has
      been archived.
      Archiving of these files happens automatically since you have
