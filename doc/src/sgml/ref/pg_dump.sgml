@@ -1176,6 +1176,9 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    dump was taken from a server of that version.  Loading a dump file
    into an older server may require manual editing of the dump file
    to remove syntax not understood by the older server.
+   Use of the <option>--quote-all-identifiers</option> option is recommended
+   in cross-version cases, as it can prevent problems arising from varying
+   reserved-word lists in different <productname>PostgreSQL</> versions.
   </para>
  </refsect1>
 
