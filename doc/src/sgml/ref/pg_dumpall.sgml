@@ -368,9 +368,16 @@ PostgreSQL documentation
       <term><option>--quote-all-identifiers</></term>
       <listitem>
        <para>
-        Force quoting of all identifiers.  This may be useful when dumping a
-        database for migration to a future version that may have introduced
-        additional keywords.
+        Force quoting of all identifiers.  This option is recommended when
+        dumping a database from a server whose <productname>PostgreSQL</>
+        major version is different from <application>pg_dumpall</>'s, or when
+        the output is intended to be loaded into a server of a different
+        major version.  By default, <application>pg_dumpall</> quotes only
+        identifiers that are reserved words in its own major version.
+        This sometimes results in compatibility issues when dealing with
+        servers of other versions that may have slightly different sets
+        of reserved words.  Using <option>--quote-all-identifiers</> prevents
+        such issues, at the price of a harder-to-read dump script.
        </para>
       </listitem>
      </varlistentry>
