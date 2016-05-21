@@ -2118,6 +2118,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		rdata[2].data = NULL;
 		rdata[2].len = 0;
 		rdata[2].buffer = lbuf;
+		rdata[2].buffer_std = true;
 		rdata[2].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
