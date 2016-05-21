@@ -309,13 +309,15 @@ SELECT message.mid FROM message WHERE message.sections @@ '1&amp;2'::query_int;
 
   <para>
    The source directory <filename>contrib/intarray/bench</> contains a
-   benchmark test suite.  To run:
+   benchmark test suite, which can be run against an installed
+   <productname>PostgreSQL</> server.  (It also requires <filename>DBD::Pg</>
+   to be installed.)  To run:
   </para>
 
 <programlisting>
-cd .../bench
+cd .../contrib/intarray/bench
 createdb TEST
-psql TEST &lt; ../_int.sql
+psql -c "CREATE EXTENSION intarray" TEST
 ./create_test.pl | psql TEST
 ./bench.pl
 </programlisting>
