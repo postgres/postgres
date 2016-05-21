@@ -13102,8 +13102,9 @@ SELECT count(*) FROM sometable;
 SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 ]]></screen>
 
-   But this syntax is not allowed in the SQL standard, and is
-   not portable to other database systems.
+   Beware that this approach can fail if the outer query level contains
+   additional processing, such as a join, because that might cause the
+   subquery's output to be reordered before the aggregate is computed.
   </para>
 
   <para>
