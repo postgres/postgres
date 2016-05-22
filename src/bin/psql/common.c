@@ -134,7 +134,7 @@ psql_get_variable(const char *varname, bool escape, bool as_ident)
 
 		if (!pset.db)
 		{
-			psql_error("can't escape without active connection\n");
+			psql_error("cannot escape without active connection\n");
 			return NULL;
 		}
 
