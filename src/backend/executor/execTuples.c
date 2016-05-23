@@ -1325,33 +1325,32 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
  * Should only be used with a single-TEXT-attribute tupdesc.
  */
 void
-do_text_output_multiline(TupOutputState *tstate, char *text)
+do_text_output_multiline(TupOutputState *tstate, const char *txt)
 {
 	Datum		values[1];
 	bool		isnull[1] = {false};
 
-	while (*text)
+	while (*txt)
 	{
-		char	   *eol;
+		const char *eol;
 		int			len;
 
-		eol = strchr(text, '\n');
+		eol = strchr(txt, '\n');
 		if (eol)
 		{
-			len = eol - text;
-
+			len = eol - txt;
 			eol++;
 		}
 		else
 		{
-			len = strlen(text);
-			eol += len;
+			len = strlen(txt);
+			eol = txt + len;
 		}
 
-		values[0] = PointerGetDatum(cstring_to_text_with_len(text, len));
+		values[0] = PointerGetDatum(cstring_to_text_with_len(txt, len));
 		do_tup_output(tstate, values, isnull);
 		pfree(DatumGetPointer(values[0]));
-		text = eol;
+		txt = eol;
 	}
 }
 
