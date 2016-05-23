@@ -2991,8 +2991,10 @@ query_or_expression_tree_mutator(Node *node,
  * Unlike expression_tree_walker, there is no special rule about query
  * boundaries: we descend to everything that's possibly interesting.
  *
- * Currently, the node type coverage extends to SelectStmt and everything
- * that could appear under it, but not other statement types.
+ * Currently, the node type coverage here extends only to DML statements
+ * (SELECT/INSERT/UPDATE/DELETE) and nodes that can appear in them, because
+ * this is used mainly during analysis of CTEs, and only DML statements can
+ * appear in CTEs.
  */
 bool
 raw_expression_tree_walker(Node *node,

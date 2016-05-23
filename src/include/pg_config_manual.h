@@ -274,6 +274,13 @@
 /* #define COPY_PARSE_PLAN_TREES */
 
 /*
+ * Define this to force all raw parse trees for DML statements to be scanned
+ * by raw_expression_tree_walker(), to facilitate catching errors and
+ * omissions in that function.
+ */
+/* #define RAW_EXPRESSION_COVERAGE_TEST */
+
+/*
  * Enable debugging print statements for lock-related operations.
  */
 /* #define LOCK_DEBUG */
