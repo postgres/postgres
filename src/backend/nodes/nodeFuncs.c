@@ -3365,6 +3365,15 @@ raw_expression_tree_walker(Node *node,
 				/* for now, constraints are ignored */
 			}
 			break;
+		case T_IndexElem:
+			{
+				IndexElem  *indelem = (IndexElem *) node;
+
+				if (walker(indelem->expr, context))
+					return true;
+				/* collation and opclass names are deemed uninteresting */
+			}
+			break;
 		case T_GroupingSet:
 			return walker(((GroupingSet *) node)->content, context);
 		case T_LockingClause:
