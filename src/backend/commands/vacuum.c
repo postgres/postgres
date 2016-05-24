@@ -815,6 +815,12 @@ vac_truncate_clog(TransactionId frozenXID)
 	/*
 	 * Scan pg_database to compute the minimum datfrozenxid
 	 *
+	 * Since vac_update_datfrozenxid updates datfrozenxid in-place,
+	 * the values could change while we look at them.  Fetch each one just
+	 * once to ensure sane behavior of the comparison logic.  (Here, as in
+	 * many other places, we assume that fetching or updating an XID in shared
+	 * storage is atomic.)
+	 *
 	 * Note: we need not worry about a race condition with new entries being
 	 * inserted by CREATE DATABASE.  Any such entry will have a copy of some
 	 * existing DB's datfrozenxid, and that source DB cannot be ours because
@@ -830,15 +836,16 @@ vac_truncate_clog(TransactionId frozenXID)
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
+		volatile FormData_pg_database *dbform = (Form_pg_database) GETSTRUCT(tuple);
+		TransactionId datfrozenxid = dbform->datfrozenxid;
 
-		Assert(TransactionIdIsNormal(dbform->datfrozenxid));
+		Assert(TransactionIdIsNormal(datfrozenxid));
 
-		if (TransactionIdPrecedes(nextXID, dbform->datfrozenxid))
+		if (TransactionIdPrecedes(nextXID, datfrozenxid))
 			frozenAlreadyWrapped = true;
-		else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
+		else if (TransactionIdPrecedes(datfrozenxid, frozenXID))
 		{
-			frozenXID = dbform->datfrozenxid;
+			frozenXID = datfrozenxid;
 			oldest_datoid = HeapTupleGetOid(tuple);
 		}
 	}
