@@ -514,7 +514,7 @@ ComputeIoConcurrency(int io_concurrency, double *target)
 	*target = new_prefetch_pages;
 
 	/* This range check shouldn't fail, but let's be paranoid */
-	return (new_prefetch_pages > 0.0 && new_prefetch_pages < (double) INT_MAX);
+	return (new_prefetch_pages >= 0.0 && new_prefetch_pages < (double) INT_MAX);
 }
 
 /*
