@@ -1051,7 +1051,7 @@ vac_truncate_clog(TransactionId frozenXID,
 				  TransactionId lastSaneFrozenXid,
 				  MultiXactId lastSaneMinMulti)
 {
-	TransactionId myXID = GetCurrentTransactionId();
+	TransactionId nextXID = ReadNewTransactionId();
 	Relation	relation;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
@@ -1100,7 +1100,7 @@ vac_truncate_clog(TransactionId frozenXID,
 			MultiXactIdPrecedes(lastSaneMinMulti, dbform->datminmxid))
 			bogus = true;
 
-		if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
+		if (TransactionIdPrecedes(nextXID, dbform->datfrozenxid))
 			frozenAlreadyWrapped = true;
 		else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
 		{
