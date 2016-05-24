@@ -31,7 +31,7 @@ command_fails(
 
 command_fails(
 	[ 'initdb', '-U', 'pg_test', $datadir ],
-	'role names cannot being with "pg_"');
+	'role names cannot begin with "pg_"');
 
 mkdir $datadir;
 command_ok([ 'initdb', '-N', '-T', 'german', '-X', $xlogdir, $datadir ],
