@@ -4918,6 +4918,17 @@ CREATE FUNCTION
 
      <listitem>
       <para>
+       Data type names often need translation.  For example, in Oracle string
+       values are commonly declared as being of type <type>varchar2</>, which
+       is a non-SQL-standard type.  In <productname>PostgreSQL</productname>,
+       use type <type>varchar</> or <type>text</> instead.  Similarly, replace
+       type <type>number</> with <type>numeric</>, or use some other numeric
+       data type if there's a more appropriate one.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Instead of packages, use schemas to organize your functions
        into groups.
       </para>
@@ -4977,9 +4988,9 @@ CREATE FUNCTION
     <para>
      Here is an <productname>Oracle</productname> <application>PL/SQL</> function:
 <programlisting>
-CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar,
-                                                  v_version varchar)
-RETURN varchar IS
+CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar2,
+                                                  v_version varchar2)
+RETURN varchar2 IS
 BEGIN
     IF v_version IS NULL THEN
         RETURN v_name;
@@ -4996,6 +5007,15 @@ show errors;
      <application>PL/pgSQL</>:
 
      <itemizedlist>
+      <listitem>
+       <para>
+        The type name <type>varchar2</> has to be changed to <type>varchar</>
+        or <type>text</>.  In the examples in this section, we'll
+        use <type>varchar</>, but <type>text</> is often a better choice if
+        you do not need specific string length limits.
+       </para>
+      </listitem>
+
       <listitem>
        <para>
         The <literal>RETURN</literal> key word in the function
@@ -5071,8 +5091,8 @@ CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc IS
         ORDER BY try_order;
     func_cmd VARCHAR(4000);
 BEGIN
-    func_cmd := 'CREATE OR REPLACE FUNCTION cs_find_referrer_type(v_host IN VARCHAR,
-                 v_domain IN VARCHAR, v_url IN VARCHAR) RETURN VARCHAR IS BEGIN';
+    func_cmd := 'CREATE OR REPLACE FUNCTION cs_find_referrer_type(v_host IN VARCHAR2,
+                 v_domain IN VARCHAR2, v_url IN VARCHAR2) RETURN VARCHAR2 IS BEGIN';
 
     FOR referrer_key IN referrer_keys LOOP
         func_cmd := func_cmd ||
@@ -5167,10 +5187,10 @@ $func$ LANGUAGE plpgsql;
      This is the Oracle version:
 <programlisting>
 CREATE OR REPLACE PROCEDURE cs_parse_url(
-    v_url IN VARCHAR,
-    v_host OUT VARCHAR,  -- This will be passed back
-    v_path OUT VARCHAR,  -- This one too
-    v_query OUT VARCHAR) -- And this one
+    v_url IN VARCHAR2,
+    v_host OUT VARCHAR2,  -- This will be passed back
+    v_path OUT VARCHAR2,  -- This one too
+    v_query OUT VARCHAR2) -- And this one
 IS
     a_pos1 INTEGER;
     a_pos2 INTEGER;
