@@ -47,9 +47,11 @@ ALTER SYSTEM RESET ALL
 
   <para>
    Values set with <command>ALTER SYSTEM</command> will be effective after
-   the next server configuration reload (<systemitem>SIGHUP</>
-   or <literal>pg_ctl reload</>), or after the next server restart in the
-   case of parameters that can only be changed at server start.
+   the next server configuration reload, or after the next server restart
+   in the case of parameters that can only be changed at server start.
+   A server configuration reload can be commanded by calling the SQL
+   function <function>pg_reload_conf()</>, running <literal>pg_ctl reload</>,
+   or sending a <systemitem>SIGHUP</> signal to the main server process.
   </para>
 
   <para>
