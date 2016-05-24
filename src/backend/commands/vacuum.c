@@ -802,7 +802,7 @@ vac_update_datfrozenxid(void)
 static void
 vac_truncate_clog(TransactionId frozenXID)
 {
-	TransactionId myXID = GetCurrentTransactionId();
+	TransactionId nextXID = ReadNewTransactionId();
 	Relation	relation;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
@@ -834,7 +834,7 @@ vac_truncate_clog(TransactionId frozenXID)
 
 		Assert(TransactionIdIsNormal(dbform->datfrozenxid));
 
-		if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
+		if (TransactionIdPrecedes(nextXID, dbform->datfrozenxid))
 			frozenAlreadyWrapped = true;
 		else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
 		{
