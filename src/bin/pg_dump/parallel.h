@@ -42,9 +42,9 @@ typedef struct ParallelSlot
 	ParallelArgs *args;
 	T_WorkerStatus workerStatus;
 	int			status;
-	int			pipeRead;
+	int			pipeRead;		/* master's end of the pipes */
 	int			pipeWrite;
-	int			pipeRevRead;
+	int			pipeRevRead;	/* child's end of the pipes */
 	int			pipeRevWrite;
 #ifdef WIN32
 	uintptr_t	hThread;
