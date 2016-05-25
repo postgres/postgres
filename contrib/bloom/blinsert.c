@@ -18,6 +18,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
+#include "storage/smgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -159,12 +160,26 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 void
 blbuildempty(Relation index)
 {
-	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "index \"%s\" already contains data",
-			 RelationGetRelationName(index));
+	Page		metapage;
 
-	/* Initialize the meta page */
-	BloomInitMetapage(index);
+	/* Construct metapage. */
+	metapage = (Page) palloc(BLCKSZ);
+	BloomFillMetapage(index, metapage);
+
+	/* Write the page.  If archiving/streaming, XLOG it. */
+	PageSetChecksumInplace(metapage, BLOOM_METAPAGE_BLKNO);
+	smgrwrite(index->rd_smgr, INIT_FORKNUM, BLOOM_METAPAGE_BLKNO,
+			  (char *) metapage, true);
+	if (XLogIsNeeded())
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+					BLOOM_METAPAGE_BLKNO, metapage, false);
+
+	/*
+	 * An immediate sync is required even if we xlog'd the page, because the
+	 * write did not go through shared_buffers and therefore a concurrent
+	 * checkpoint may have moved the redo pointer past our xlog record.
+	 */
+	smgrimmedsync(index->rd_smgr, INIT_FORKNUM);
 }
 
 /*

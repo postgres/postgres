@@ -346,7 +346,7 @@ BloomNewBuffer(Relation index)
 }
 
 /*
- * Initialize bloom page.
+ * Initialize any page of a bloom index.
  */
 void
 BloomInitPage(Page page, uint16 flags)
@@ -363,6 +363,8 @@ BloomInitPage(Page page, uint16 flags)
 
 /*
  * Adjust options of bloom index.
+ *
+ * This must produce default options when *opts is initially all-zero.
  */
 static void
 adjustBloomOptions(BloomOptions *opts)
@@ -378,7 +380,7 @@ adjustBloomOptions(BloomOptions *opts)
 				 errmsg("length of bloom signature (%d) is greater than maximum %d",
 						opts->bloomLength, MAX_BLOOM_LENGTH)));
 
-	/* Check singnature length */
+	/* Check signature length */
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
 	{
 		/*
@@ -393,45 +395,66 @@ adjustBloomOptions(BloomOptions *opts)
 }
 
 /*
+ * Fill in metapage for bloom index.
+ */
+void
+BloomFillMetapage(Relation index, Page metaPage)
+{
+	BloomOptions *opts;
+	BloomMetaPageData *metadata;
+
+	/*
+	 * Choose the index's options.  If reloptions have been assigned, use
+	 * those, otherwise create default options by applying adjustBloomOptions
+	 * to a zeroed chunk of memory.  We apply adjustBloomOptions to existing
+	 * reloptions too, just out of paranoia; they should be valid already.
+	 */
+	opts = (BloomOptions *) index->rd_options;
+	if (!opts)
+		opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
+	adjustBloomOptions(opts);
+
+	/*
+	 * Initialize contents of meta page, including a copy of the options,
+	 * which are now frozen for the life of the index.
+	 */
+	BloomInitPage(metaPage, BLOOM_META);
+	metadata = BloomPageGetMeta(metaPage);
+	memset(metadata, 0, sizeof(BloomMetaPageData));
+	metadata->magickNumber = BLOOM_MAGICK_NUMBER;
+	metadata->opts = *opts;
+	((PageHeader) metaPage)->pd_lower += sizeof(BloomMetaPageData);
+}
+
+/*
  * Initialize metapage for bloom index.
  */
 void
 BloomInitMetapage(Relation index)
 {
-	Page		metaPage;
 	Buffer		metaBuffer;
-	BloomMetaPageData *metadata;
+	Page		metaPage;
 	GenericXLogState *state;
 
 	/*
-	 * Make a new buffer, since it first buffer it should be associated with
+	 * Make a new page; since it is first page it should be associated with
 	 * block number 0 (BLOOM_METAPAGE_BLKNO).
 	 */
 	metaBuffer = BloomNewBuffer(index);
 	Assert(BufferGetBlockNumber(metaBuffer) == BLOOM_METAPAGE_BLKNO);
 
-	/* Initialize bloom index options */
-	if (!index->rd_options)
-		index->rd_options = palloc0(sizeof(BloomOptions));
-	adjustBloomOptions((BloomOptions *) index->rd_options);
-
 	/* Initialize contents of meta page */
 	state = GenericXLogStart(index);
-	metaPage = GenericXLogRegisterBuffer(state, metaBuffer, GENERIC_XLOG_FULL_IMAGE);
-
-	BloomInitPage(metaPage, BLOOM_META);
-	metadata = BloomPageGetMeta(metaPage);
-	memset(metadata, 0, sizeof(BloomMetaPageData));
-	metadata->magickNumber = BLOOM_MAGICK_NUMBER;
-	metadata->opts = *((BloomOptions *) index->rd_options);
-	((PageHeader) metaPage)->pd_lower += sizeof(BloomMetaPageData);
-
+	metaPage = GenericXLogRegisterBuffer(state, metaBuffer,
+										 GENERIC_XLOG_FULL_IMAGE);
+	BloomFillMetapage(index, metaPage);
 	GenericXLogFinish(state);
+
 	UnlockReleaseBuffer(metaBuffer);
 }
 
 /*
- * Initialize options for bloom index.
+ * Parse reloptions for bloom index, producing a BloomOptions struct.
  */
 bytea *
 bloptions(Datum reloptions, bool validate)

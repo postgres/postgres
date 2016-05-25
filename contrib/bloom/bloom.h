@@ -166,6 +166,7 @@ typedef BloomScanOpaqueData *BloomScanOpaque;
 extern void _PG_init(void);
 extern Datum blhandler(PG_FUNCTION_ARGS);
 extern void initBloomState(BloomState * state, Relation index);
+extern void BloomFillMetapage(Relation index, Page metaPage);
 extern void BloomInitMetapage(Relation index);
 extern void BloomInitPage(Page page, uint16 flags);
 extern Buffer BloomNewBuffer(Relation index);

@@ -50,6 +50,28 @@ SELECT count(*) FROM tst WHERE i = 7;
 SELECT count(*) FROM tst WHERE t = '5';
 SELECT count(*) FROM tst WHERE i = 7 AND t = '5';
 
+-- Try an unlogged table too
+
+CREATE UNLOGGED TABLE tstu (
+	i	int4,
+	t	text
+);
+
+INSERT INTO tstu SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,2000) i;
+CREATE INDEX bloomidxu ON tstu USING bloom (i, t) WITH (col2 = 4);
+
+SET enable_seqscan=off;
+SET enable_bitmapscan=on;
+SET enable_indexscan=on;
+
+EXPLAIN (COSTS OFF) SELECT count(*) FROM tstu WHERE i = 7;
+EXPLAIN (COSTS OFF) SELECT count(*) FROM tstu WHERE t = '5';
+EXPLAIN (COSTS OFF) SELECT count(*) FROM tstu WHERE i = 7 AND t = '5';
+
+SELECT count(*) FROM tstu WHERE i = 7;
+SELECT count(*) FROM tstu WHERE t = '5';
+SELECT count(*) FROM tstu WHERE i = 7 AND t = '5';
+
 RESET enable_seqscan;
 RESET enable_bitmapscan;
 RESET enable_indexscan;
