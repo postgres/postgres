@@ -715,20 +715,20 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 	 * these are run the initial privileges will be in place, even in a
 	 * binary upgrade situation (see below).
 	 */
-	printfPQExpBuffer(acl_subquery, "(SELECT array_agg(acl) FROM "
-					  "(SELECT unnest(coalesce(%s,acldefault(%s,%s))) AS acl "
+	printfPQExpBuffer(acl_subquery, "(SELECT pg_catalog.array_agg(acl) FROM "
+					  "(SELECT pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) AS acl "
 					  "EXCEPT "
-		 "SELECT unnest(coalesce(pip.initprivs,acldefault(%s,%s)))) as foo)",
+		 "SELECT pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s)))) as foo)",
 					  acl_column,
 					  obj_kind,
 					  acl_owner,
 					  obj_kind,
 					  acl_owner);
 
-	printfPQExpBuffer(racl_subquery, "(SELECT array_agg(acl) FROM "
-		  "(SELECT unnest(coalesce(pip.initprivs,acldefault(%s,%s))) AS acl "
+	printfPQExpBuffer(racl_subquery, "(SELECT pg_catalog.array_agg(acl) FROM "
+		  "(SELECT pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s))) AS acl "
 					  "EXCEPT "
-					"SELECT unnest(coalesce(%s,acldefault(%s,%s)))) as foo)",
+					"SELECT pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s)))) as foo)",
 					  obj_kind,
 					  acl_owner,
 					  acl_column,
@@ -753,19 +753,19 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 	{
 		printfPQExpBuffer(init_acl_subquery,
 						  "CASE WHEN privtype = 'e' THEN "
-						  "(SELECT array_agg(acl) FROM "
-						  "(SELECT unnest(pip.initprivs) AS acl "
+						  "(SELECT pg_catalog.array_agg(acl) FROM "
+						  "(SELECT pg_catalog.unnest(pip.initprivs) AS acl "
 						  "EXCEPT "
-						  "SELECT unnest(acldefault(%s,%s))) as foo) END",
+						  "SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s))) as foo) END",
 						  obj_kind,
 						  acl_owner);
 
 		printfPQExpBuffer(init_racl_subquery,
 						  "CASE WHEN privtype = 'e' THEN "
-						  "(SELECT array_agg(acl) FROM "
-						  "(SELECT unnest(acldefault(%s,%s)) AS acl "
+						  "(SELECT pg_catalog.array_agg(acl) FROM "
+						  "(SELECT pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) AS acl "
 						  "EXCEPT "
-						  "SELECT unnest(pip.initprivs)) as foo) END",
+						  "SELECT pg_catalog.unnest(pip.initprivs)) as foo) END",
 						  obj_kind,
 						  acl_owner);
 	}

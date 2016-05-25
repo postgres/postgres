@@ -340,9 +340,9 @@ my %tests = (
 	},
 	'GRANT SELECT ON TABLE regress_pg_dump_table' => {
 		regexp => qr/^
-			\QSELECT binary_upgrade_set_record_init_privs(true);\E\n
+			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
 			\QGRANT SELECT ON TABLE regress_pg_dump_table TO dump_test;\E\n
-			\QSELECT binary_upgrade_set_record_init_privs(false);\E
+			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			$/xms,
 		like => {
 			binary_upgrade => 1,
@@ -362,9 +362,9 @@ my %tests = (
 	},
 	'GRANT SELECT(col1) ON regress_pg_dump_table' => {
 		regexp => qr/^
-			\QSELECT binary_upgrade_set_record_init_privs(true);\E\n
+			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
 			\QGRANT SELECT(col1) ON TABLE regress_pg_dump_table TO PUBLIC;\E\n
-			\QSELECT binary_upgrade_set_record_init_privs(false);\E
+			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			$/xms,
 		like => {
 			binary_upgrade => 1,

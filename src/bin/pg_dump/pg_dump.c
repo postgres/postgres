@@ -2825,8 +2825,8 @@ getBlobs(Archive *fout)
 						  "%s AS initrlomacl "
 						  "FROM pg_largeobject_metadata l "
 						  "LEFT JOIN pg_init_privs pip ON "
-						  "(l.oid = pip.objoid AND pip.classoid = "
-				"(SELECT oid FROM pg_class WHERE relname = 'pg_largeobject')"
+						  "(l.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_largeobject'::regclass "
 						  "AND pip.objsubid = 0) ",
 						  username_subquery,
 						  acl_subquery->data,
@@ -3569,8 +3569,8 @@ getNamespaces(Archive *fout, int *numNamespaces)
 						  "%s as initrnspacl "
 						  "FROM pg_namespace n "
 						  "LEFT JOIN pg_init_privs pip "
-						  "ON (n.oid = pip.objoid AND pip.classoid = "
-				 "(SELECT oid FROM pg_class WHERE relname = 'pg_namespace') "
+						  "ON (n.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_namespace'::regclass "
 						  "AND pip.objsubid = 0) ",
 						  username_subquery,
 						  acl_subquery->data,
@@ -3851,9 +3851,9 @@ getTypes(Archive *fout, int *numTypes)
 						  "t.typname[0] = '_' AND t.typelem != 0 AND "
 						  "(SELECT typarray FROM pg_type te WHERE oid = t.typelem) = t.oid AS isarray "
 						  "FROM pg_type t "
-						  "LEFT JOIN pg_init_privs pip "
-						  "ON (t.oid = pip.objoid AND pip.classoid = "
-					  "(SELECT oid FROM pg_class WHERE relname = 'pg_type') "
+						  "LEFT JOIN pg_init_privs pip ON "
+						  "(t.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_type'::regclass "
 						  "AND pip.objsubid = 0) ",
 						  acl_subquery->data,
 						  racl_subquery->data,
@@ -4713,8 +4713,8 @@ getAggregates(Archive *fout, int *numAggs)
 						  "%s AS initraggacl "
 						  "FROM pg_proc p "
 						  "LEFT JOIN pg_init_privs pip ON "
-						  "(p.oid = pip.objoid AND pip.classoid = "
-					  "(SELECT oid FROM pg_class WHERE relname = 'pg_proc') "
+						  "(p.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_proc'::regclass "
 						  "AND pip.objsubid = 0) "
 						  "WHERE p.proisagg AND ("
 						  "p.pronamespace != "
@@ -4956,8 +4956,8 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "(%s p.proowner) AS rolname "
 						  "FROM pg_proc p "
 						  "LEFT JOIN pg_init_privs pip ON "
-						  "(p.oid = pip.objoid AND pip.classoid = "
-					  "(SELECT oid FROM pg_class WHERE relname = 'pg_proc') "
+						  "(p.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_proc'::regclass "
 						  "AND pip.objsubid = 0) "
 						  "WHERE NOT proisagg "
 						  "AND NOT EXISTS (SELECT 1 FROM pg_depend "
@@ -5246,9 +5246,10 @@ getTables(Archive *fout, int *numTables)
 						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
 						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
 						  "tc.reloptions AS toast_reloptions, "
-						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON"
-						  "(c.oid = pip.objoid AND pip.classoid = "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_class') AND pip.objsubid = at.attnum)"
+						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON "
+						  "(c.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_class'::regclass "
+						  "AND pip.objsubid = at.attnum)"
 						  "WHERE at.attrelid = c.oid AND ("
 						  "%s IS NOT NULL "
 						  "OR %s IS NOT NULL "
@@ -5264,9 +5265,9 @@ getTables(Archive *fout, int *numTables)
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
 					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
 						  "LEFT JOIN pg_init_privs pip ON "
-						  "(c.oid = pip.objoid AND pip.classoid = "
-						  "(SELECT oid FROM pg_class "
-						  "WHERE relname = 'pg_class') AND pip.objsubid = 0) "
+						  "(c.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_class'::regclass "
+						  "AND pip.objsubid = 0) "
 				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "ORDER BY c.oid",
 						  acl_subquery->data,
@@ -7163,9 +7164,9 @@ getProcLangs(Archive *fout, int *numProcLangs)
 						  "%s AS initrlanacl, "
 						  "(%s l.lanowner) AS lanowner "
 						  "FROM pg_language l "
-						  "LEFT JOIN pg_init_privs pip "
-						  "ON (l.oid = pip.objoid AND pip.classoid = "
-					  "(SELECT oid FROM pg_class WHERE relname = 'pg_type') "
+						  "LEFT JOIN pg_init_privs pip ON "
+						  "(l.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_type'::regclass "
 						  "AND pip.objsubid = 0) "
 						  "WHERE l.lanispl "
 						  "ORDER BY l.oid",
@@ -8583,9 +8584,9 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 						  "ORDER BY option_name"
 						  "), E',\n    ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper f "
-						  "LEFT JOIN pg_init_privs pip "
-						  "ON (f.oid = pip.objoid AND pip.classoid = "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_foreign_data_wrapper') "
+						  "LEFT JOIN pg_init_privs pip ON "
+						  "(f.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_foreign_data_wrapper'::regclass "
 						  "AND pip.objsubid = 0) ",
 						  username_subquery,
 						  acl_subquery->data,
@@ -8753,8 +8754,8 @@ getForeignServers(Archive *fout, int *numForeignServers)
 						  "), E',\n    ') AS srvoptions "
 						  "FROM pg_foreign_server f "
 						  "LEFT JOIN pg_init_privs pip "
-						  "ON (f.oid = pip.objoid AND pip.classoid = "
-			"(SELECT oid FROM pg_class WHERE relname = 'pg_foreign_server') "
+						  "ON (f.oid = pip.objoid "
+						  "AND pip.classoid = 'pg_foreign_server'::regclass "
 						  "AND pip.objsubid = 0) ",
 						  username_subquery,
 						  acl_subquery->data,
@@ -14600,13 +14601,13 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 	 */
 	if (strlen(initacls) != 0 || strlen(initracls) != 0)
 	{
-		appendPQExpBuffer(sql, "SELECT binary_upgrade_set_record_init_privs(true);\n");
+		appendPQExpBuffer(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\n");
 		if (!buildACLCommands(name, subname, type, initacls, initracls, owner,
 							  "", fout->remoteVersion, sql))
 			exit_horribly(NULL,
 						  "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)\n",
 						  initacls, initracls, name, type);
-		appendPQExpBuffer(sql, "SELECT binary_upgrade_set_record_init_privs(false);\n");
+		appendPQExpBuffer(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\n");
 	}
 
 	if (!buildACLCommands(name, subname, type, acls, racls, owner,
@@ -14992,11 +14993,11 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 							  "%s AS initrattacl "
 							  "FROM pg_catalog.pg_attribute at "
 					   "JOIN pg_catalog.pg_class c ON (at.attrelid = c.oid) "
-							  "LEFT JOIN pg_init_privs pip ON "
-							  "(pip.classoid = "
-				 "(SELECT oid FROM pg_class WHERE relname = 'pg_class') AND "
-				   " at.attrelid = pip.objoid AND at.attnum = pip.objsubid) "
-							  "WHERE at.attrelid = '%u' AND "
+							  "LEFT JOIN pg_catalog.pg_init_privs pip ON "
+							  "(at.attrelid = pip.objoid "
+			  "AND pip.classoid = 'pg_catalog.pg_class'::pg_catalog.regclass "
+							  "AND at.attnum = pip.objsubid) "
+							  "WHERE at.attrelid = '%u'::pg_catalog.oid AND "
 							  "NOT at.attisdropped "
 							  "AND ("
 							  "%s IS NOT NULL OR "
@@ -15025,7 +15026,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 							  "SELECT attname, attacl, NULL as rattacl, "
 							  "NULL AS initattacl, NULL AS initrattacl "
 							  "FROM pg_catalog.pg_attribute "
-							  "WHERE attrelid = '%u' AND NOT attisdropped "
+							  "WHERE attrelid = '%u'::pg_catalog.oid AND NOT attisdropped "
 							  "AND attacl IS NOT NULL "
 							  "ORDER BY attnum",
 							  tbinfo->dobj.catId.oid);
