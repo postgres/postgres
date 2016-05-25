@@ -6928,7 +6928,13 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	 * consider the frozen xids as running.
 	 */
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(cutoff_xid, xlrec->node);
+	{
+		TransactionId latestRemovedXid = cutoff_xid;
+
+		TransactionIdRetreat(latestRemovedXid);
+
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, xlrec->node);
+	}
 
 	/* If we have a full-page image, restore it and we're done */
 	if (record->xl_info & XLR_BKP_BLOCK(0))
@@ -7103,7 +7109,13 @@ heap_xlog_freeze_page(XLogRecPtr lsn, XLogRecord *record)
 	 * consider the frozen xids as running.
 	 */
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(cutoff_xid, xlrec->node);
+	{
+		TransactionId latestRemovedXid = cutoff_xid;
+
+		TransactionIdRetreat(latestRemovedXid);
+
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, xlrec->node);
+	}
 
 	/* If we have a full-page image, restore it and we're done */
 	if (record->xl_info & XLR_BKP_BLOCK(0))
