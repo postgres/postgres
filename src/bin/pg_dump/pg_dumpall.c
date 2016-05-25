@@ -605,7 +605,13 @@ dropRoles(PGconn *conn)
 	int			i_rolname;
 	int			i;
 
-	if (server_version >= 80100)
+	if (server_version >= 90600)
+		res = executeQuery(conn,
+						   "SELECT rolname "
+						   "FROM pg_authid "
+						   "WHERE rolname !~ '^pg_' "
+						   "ORDER BY 1");
+	else if (server_version >= 80100)
 		res = executeQuery(conn,
 						   "SELECT rolname "
 						   "FROM pg_authid "

@@ -186,6 +186,14 @@ my %pgdump_runs = (
 			'-g',
 		],
 	},
+	pg_dumpall_globals_clean => {
+		dump_cmd => [
+			'pg_dumpall',
+			'-f', "$tempdir/pg_dumpall_globals_clean.sql",
+			'-g',
+			'-c',
+		],
+	},
 	no_privs => {
 		dump_cmd => [
 			'pg_dump',
@@ -337,6 +345,7 @@ my %tests = (
 			no_privs => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_pre_data => 1,
 			section_data => 1,
 		},
@@ -349,6 +358,7 @@ my %tests = (
 			/xm,
 		like => {
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 		unlike => {
 			binary_upgrade => 1,
@@ -478,7 +488,6 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
-			pg_dumpall_globals => 1,
 			section_pre_data => 1,
 			section_data => 1,
 		},
@@ -581,6 +590,18 @@ my %tests = (
 			section_data => 1,
 		},
 	},
+	# catch-all for ALTER TABLE ...
+	'ALTER TABLE ... commands' => {
+		regexp => qr/^ALTER TABLE .*;/m,
+		like => { }, # use more-specific options above
+		unlike => {
+			column_inserts => 1,
+			data_only => 1,
+			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
+			section_data => 1,
+		},
+	},
 	# catch-all for ALTER ... OWNER
 	'ALTER ... OWNER commands' => {
 		regexp => qr/^ALTER .* OWNER TO .*;/m,
@@ -588,6 +609,7 @@ my %tests = (
 		unlike => {
 			no_owner => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -751,6 +773,7 @@ my %tests = (
 			column_inserts => 1,
 			data_only => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_data => 1,
 			section_post_data => 1,
 		},
@@ -963,6 +986,7 @@ my %tests = (
 			binary_upgrade => 1,
 			column_inserts => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			schema_only => 1,
 			section_post_data => 1,
 		},
@@ -973,6 +997,7 @@ my %tests = (
 		regexp => qr/^CREATE ROLE dump_test;/m,
 		like => {
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 		unlike => {
 			binary_upgrade => 1,
@@ -1013,6 +1038,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			schema_only => 1,
 			section_pre_data => 1,
 			section_post_data => 1,
@@ -1041,6 +1067,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -1080,6 +1107,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1115,6 +1143,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1149,6 +1178,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1182,6 +1212,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1215,6 +1246,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1247,6 +1279,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			test_schema_plus_blobs => 1,
 		},
 	},
@@ -1281,6 +1314,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'CREATE TYPE dump_test.planets AS ENUM' => {
@@ -1311,6 +1345,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1343,6 +1378,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1373,6 +1409,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1398,6 +1435,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1430,6 +1468,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1462,6 +1501,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1502,6 +1542,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1535,6 +1576,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1560,6 +1602,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -1586,6 +1629,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -1645,6 +1689,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			only_dump_test_schema => 1,
 			test_schema_plus_blobs => 1,
@@ -1679,6 +1724,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1712,6 +1758,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1744,6 +1791,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'CREATE POLICY p2 ON test_table FOR SELECT' => {
@@ -1774,6 +1822,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'CREATE POLICY p3 ON test_table FOR INSERT' => {
@@ -1804,6 +1853,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'CREATE POLICY p4 ON test_table FOR UPDATE' => {
@@ -1834,6 +1884,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'CREATE POLICY p5 ON test_table FOR DELETE' => {
@@ -1864,6 +1915,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'CREATE SCHEMA dump_test' => {
@@ -1889,6 +1941,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1914,6 +1967,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -1949,6 +2003,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -1981,6 +2036,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -2015,6 +2071,7 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -2046,6 +2103,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -2078,6 +2136,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 		},
 	},
@@ -2108,6 +2167,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			section_post_data => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -2138,6 +2198,7 @@ my %tests = (
 			only_dump_test_schema => 1,
 			only_dump_test_table => 1,
 			pg_dumpall_globals => 1,
+			pg_dumpall_globals_clean => 1,
 			test_schema_plus_blobs => 1,
 		},
 	},
@@ -2305,6 +2366,30 @@ my %tests = (
 		},
 		unlike => {
 			clean => 1,
+		},
+	},
+	'DROP ROLE dump_test' => {
+		regexp => qr/^
+			\QDROP ROLE dump_test;\E
+			/xm,
+		like => {
+			pg_dumpall_globals_clean => 1,
+		},
+		unlike => {
+			clean => 1,
+			clean_if_exists => 1,
+		},
+	},
+	'DROP ROLE pg_' => {
+		regexp => qr/^
+			\QDROP ROLE pg_\E.*;
+			/xm,
+		like => {
+		},
+		unlike => {
+			clean => 1,
+			clean_if_exists => 1,
+			pg_dumpall_globals_clean => 1,
 		},
 	},
 	'DROP ... commands' => { # catch-all for DROP
