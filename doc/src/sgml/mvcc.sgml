@@ -461,7 +461,8 @@ COMMIT;
     even though they are not yet committed.)  This is a stronger
     guarantee than is required by the <acronym>SQL</acronym> standard
     for this isolation level, and prevents all of the phenomena described
-    in <xref linkend="mvcc-isolevel-table">.  As mentioned above, this is
+    in <xref linkend="mvcc-isolevel-table"> except for serialization
+    anomalies.  As mentioned above, this is
     specifically allowed by the standard, which only describes the
     <emphasis>minimum</emphasis> protections each isolation level must
     provide.
