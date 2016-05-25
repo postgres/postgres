@@ -124,7 +124,8 @@ typedef enum WalLevel
 	WAL_LEVEL_REPLICA,
 	WAL_LEVEL_LOGICAL
 } WalLevel;
-extern int	wal_level;
+
+extern PGDLLIMPORT int wal_level;
 
 /* Is WAL archiving enabled (always or only while server is running normally)? */
 #define XLogArchivingActive() \
