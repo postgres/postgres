@@ -93,6 +93,23 @@ vwrite_msg(const char *modulename, const char *fmt, va_list ap)
 	vfprintf(stderr, _(fmt), ap);
 }
 
+/*
+ * Fail and die, with a message to stderr.  Parameters as for write_msg.
+ *
+ * Note that on_exit_nicely callbacks will get run.
+ */
+void
+exit_horribly(const char *modulename, const char *fmt,...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+	vwrite_msg(modulename, fmt, ap);
+	va_end(ap);
+
+	exit_nicely(1);
+}
+
 /* Register a callback to be run when exit_nicely is invoked. */
 void
 on_exit_nicely(on_exit_nicely_callback function, void *arg)
@@ -106,7 +123,20 @@ on_exit_nicely(on_exit_nicely_callback function, void *arg)
 
 /*
  * Run accumulated on_exit_nicely callbacks in reverse order and then exit
- * quietly.  This needs to be thread-safe.
+ * without printing any message.
+ *
+ * If running in a parallel worker thread on Windows, we only exit the thread,
+ * not the whole process.
+ *
+ * Note that in parallel operation on Windows, the callback(s) will be run
+ * by each thread since the list state is necessarily shared by all threads;
+ * each callback must contain logic to ensure it does only what's appropriate
+ * for its thread.  On Unix, callbacks are also run by each process, but only
+ * for callbacks established before we fork off the child processes.  (It'd
+ * be cleaner to reset the list after fork(), and let each child establish
+ * its own callbacks; but then the behavior would be completely inconsistent
+ * between Windows and Unix.  For now, just be sure to establish callbacks
+ * before forking to avoid inconsistency.)
  */
 void
 exit_nicely(int code)
