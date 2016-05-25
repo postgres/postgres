@@ -5504,7 +5504,16 @@ pgstat_db_requested(Oid databaseid)
 {
 	slist_iter	iter;
 
-	/* Check the databases if they need to refresh the stats. */
+	/*
+	 * If any requests are outstanding at all, we should write the stats for
+	 * shared catalogs (the "database" with OID 0).  This ensures that
+	 * backends will see up-to-date stats for shared catalogs, even though
+	 * they send inquiry messages mentioning only their own DB.
+	 */
+	if (databaseid == InvalidOid && !slist_is_empty(&last_statrequests))
+		return true;
+
+	/* Search to see if there's an open request to write this database. */
 	slist_foreach(iter, &last_statrequests)
 	{
 		DBWriteRequest *req = slist_container(DBWriteRequest, next, iter.cur);
