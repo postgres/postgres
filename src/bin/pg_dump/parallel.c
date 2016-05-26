@@ -300,28 +300,26 @@ checkAborting(ArchiveHandle *AH)
 }
 
 /*
- * Shut down any remaining workers, this has an implicit do_wait == true.
- *
- * The fastest way we can make the workers terminate gracefully is when
- * they are listening for new commands and we just tell them to terminate.
+ * Shut down any remaining workers, waiting for them to finish.
  */
 static void
 ShutdownWorkersHard(ParallelState *pstate)
 {
-#ifndef WIN32
 	int			i;
 
 	/*
-	 * Close our write end of the sockets so that the workers know they can
-	 * exit.
+	 * Close our write end of the sockets so that any workers waiting for
+	 * commands know they can exit.
 	 */
 	for (i = 0; i < pstate->numWorkers; i++)
 		closesocket(pstate->parallelSlot[i].pipeWrite);
 
+#ifndef WIN32
+	/* On non-Windows, send SIGTERM to abort commands-in-progress. */
 	for (i = 0; i < pstate->numWorkers; i++)
 		kill(pstate->parallelSlot[i].pid, SIGTERM);
 #else
-	/* The workers monitor this event via checkAborting(). */
+	/* Non-idle workers monitor this event via checkAborting(). */
 	SetEvent(termEvent);
 #endif
 
