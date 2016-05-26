@@ -736,17 +736,28 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
 			 * this allows us to deal with some cases where a set-returning
 			 * function has been inlined, so that we now have more knowledge
 			 * about what it returns than we did when the original Var was
-			 * created.  Otherwise, use regular equal() to see if there's a
-			 * matching TLE.  (In current usage, only the Var case is actually
-			 * needed; but it seems best to have sane behavior here for
-			 * non-Vars too.)
+			 * created.  Otherwise, use regular equal() to find the matching
+			 * TLE.  (In current usage, only the Var case is actually needed;
+			 * but it seems best to have sane behavior here for non-Vars too.)
 			 */
 			if (expr && IsA(expr, Var))
 				tle = tlist_member_match_var((Var *) expr, tlist);
 			else
 				tle = tlist_member((Node *) expr, tlist);
-			if (tle)
-				tle->ressortgroupref = target->sortgrouprefs[i];
+
+			/*
+			 * Complain if noplace for the sortgrouprefs label, or if we'd
+			 * have to label a column twice.  (The case where it already has
+			 * the desired label probably can't happen, but we may as well
+			 * allow for it.)
+			 */
+			if (!tle)
+				elog(ERROR, "ORDER/GROUP BY expression not found in targetlist");
+			if (tle->ressortgroupref != 0 &&
+				tle->ressortgroupref != target->sortgrouprefs[i])
+				elog(ERROR, "targetlist item has multiple sortgroupref labels");
+
+			tle->ressortgroupref = target->sortgrouprefs[i];
 		}
 		i++;
 	}

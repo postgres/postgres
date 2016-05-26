@@ -35,6 +35,17 @@ SELECT DISTINCT two, string4, ten
 SELECT DISTINCT p.age FROM person* p ORDER BY age using >;
 
 --
+-- Check mentioning same column more than once
+--
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT count(*) FROM
+  (SELECT DISTINCT two, four, two FROM tenk1) ss;
+
+SELECT count(*) FROM
+  (SELECT DISTINCT two, four, two FROM tenk1) ss;
+
+--
 -- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
 -- very own regression file.
 --

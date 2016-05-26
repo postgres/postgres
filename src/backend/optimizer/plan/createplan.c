@@ -787,10 +787,14 @@ use_physical_tlist(PlannerInfo *root, Path *path, int flags)
 	 * to emit any sort/group columns that are not simple Vars.  (If they are
 	 * simple Vars, they should appear in the physical tlist, and
 	 * apply_pathtarget_labeling_to_tlist will take care of getting them
-	 * labeled again.)
+	 * labeled again.)	We also have to check that no two sort/group columns
+	 * are the same Var, else that element of the physical tlist would need
+	 * conflicting ressortgroupref labels.
 	 */
 	if ((flags & CP_LABEL_TLIST) && path->pathtarget->sortgrouprefs)
 	{
+		Bitmapset  *sortgroupatts = NULL;
+
 		i = 0;
 		foreach(lc, path->pathtarget->exprs)
 		{
@@ -799,7 +803,14 @@ use_physical_tlist(PlannerInfo *root, Path *path, int flags)
 			if (path->pathtarget->sortgrouprefs[i])
 			{
 				if (expr && IsA(expr, Var))
-					 /* okay */ ;
+				{
+					int			attno = ((Var *) expr)->varattno;
+
+					attno -= FirstLowInvalidHeapAttributeNumber;
+					if (bms_is_member(attno, sortgroupatts))
+						return false;
+					sortgroupatts = bms_add_member(sortgroupatts, attno);
+				}
 				else
 					return false;
 			}
