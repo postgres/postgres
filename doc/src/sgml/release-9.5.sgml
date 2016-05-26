@@ -2271,7 +2271,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Add per-table autovacuum logging control via new
-        <varname>log_min_autovacuum_duration</> storage parameter
+        <varname>log_autovacuum_min_duration</> storage parameter
         (Michael Paquier)
        </para>
       </listitem>
