@@ -264,7 +264,6 @@ static bool nonemptyReloptions(const char *reloptions);
 static void appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 						const char *prefix, Archive *fout);
 static char *get_synchronized_snapshot(Archive *fout);
-static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 static void setupDumpWorker(Archive *AHX);
 
 
@@ -657,23 +656,11 @@ main(int argc, char **argv)
 		dopt.no_security_labels = 1;
 
 	/*
-	 * When running against 9.0 or later, check if we are in recovery mode,
-	 * which means we are on a hot standby.
+	 * On hot standby slaves, never try to dump unlogged table data, since it
+	 * will just throw an error.
 	 */
-	if (fout->remoteVersion >= 90000)
-	{
-		PGresult   *res = ExecuteSqlQueryForSingleRow(fout, "SELECT pg_catalog.pg_is_in_recovery()");
-
-		if (strcmp(PQgetvalue(res, 0, 0), "t") == 0)
-		{
-			/*
-			 * On hot standby slaves, never try to dump unlogged table data,
-			 * since it will just throw an error.
-			 */
-			dopt.no_unlogged_table_data = true;
-		}
-		PQclear(res);
-	}
+	if (fout->isStandby)
+		dopt.no_unlogged_table_data = true;
 
 	/* Select the appropriate subquery to convert user IDs to names */
 	if (fout->remoteVersion >= 80100)
@@ -1105,7 +1092,16 @@ setup_connection(Archive *AH, const char *dumpencoding,
 	else if (AH->numWorkers > 1 &&
 			 AH->remoteVersion >= 90200 &&
 			 !dopt->no_synchronized_snapshots)
+	{
+		if (AH->isStandby)
+			exit_horribly(NULL,
+			 "Synchronized snapshots are not supported on standby servers.\n"
+						  "Run with --no-synchronized-snapshots instead if you do not need\n"
+						  "synchronized snapshots.\n");
+
+
 		AH->sync_snapshot_id = get_synchronized_snapshot(AH);
+	}
 }
 
 static void
@@ -17854,27 +17850,4 @@ appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 								fout->std_strings);
 	if (!res)
 		write_msg(NULL, "WARNING: could not parse reloptions array\n");
-}
-
-/*
- * Execute an SQL query and verify that we got exactly one row back.
- */
-static PGresult *
-ExecuteSqlQueryForSingleRow(Archive *fout, char *query)
-{
-	PGresult   *res;
-	int			ntups;
-
-	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-		exit_horribly(NULL,
-					  ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-							   ntups),
-					  ntups, query);
-
-	return res;
 }
