@@ -589,11 +589,20 @@ main(int argc, char **argv)
 	/* Custom and directory formats are compressed by default, others not */
 	if (compressLevel == -1)
 	{
+#ifdef HAVE_LIBZ
 		if (archiveFormat == archCustom || archiveFormat == archDirectory)
 			compressLevel = Z_DEFAULT_COMPRESSION;
 		else
+#endif
 			compressLevel = 0;
 	}
+
+#ifndef HAVE_LIBZ
+	if (compressLevel != 0)
+		write_msg(NULL, "WARNING: requested compression not available in this "
+				  "installation -- archive will be uncompressed\n");
+	compressLevel = 0;
+#endif
 
 	/*
 	 * On Windows we can only have at most MAXIMUM_WAIT_OBJECTS (= 64 usually)

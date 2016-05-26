@@ -3475,17 +3475,7 @@ WriteHead(ArchiveHandle *AH)
 	(*AH->WriteBytePtr) (AH, AH->intSize);
 	(*AH->WriteBytePtr) (AH, AH->offSize);
 	(*AH->WriteBytePtr) (AH, AH->format);
-
-#ifndef HAVE_LIBZ
-	if (AH->compression != 0)
-		write_msg(modulename, "WARNING: requested compression not available in this "
-				  "installation -- archive will be uncompressed\n");
-
-	AH->compression = 0;
-#endif
-
 	WriteInt(AH, AH->compression);
-
 	crtm = *localtime(&AH->createDate);
 	WriteInt(AH, crtm.tm_sec);
 	WriteInt(AH, crtm.tm_min);
