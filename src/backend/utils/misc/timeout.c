@@ -34,7 +34,7 @@ typedef struct timeout_params
 	timeout_handler_proc timeout_handler;
 
 	TimestampTz start_time;		/* time that timeout was last activated */
-	TimestampTz fin_time;		/* if active, time it is due to fire */
+	TimestampTz fin_time;		/* time it is, or was last, due to fire */
 } timeout_params;
 
 /*
@@ -653,4 +653,18 @@ TimestampTz
 get_timeout_start_time(TimeoutId id)
 {
 	return all_timeouts[id].start_time;
+}
+
+/*
+ * Return the time when the timeout is, or most recently was, due to fire
+ *
+ * Note: will return 0 if timeout has never been activated in this process.
+ * However, we do *not* reset the fin_time when a timeout occurs, so as
+ * not to create a race condition if SIGALRM fires just as some code is
+ * about to fetch the value.
+ */
+TimestampTz
+get_timeout_finish_time(TimeoutId id)
+{
+	return all_timeouts[id].fin_time;
 }

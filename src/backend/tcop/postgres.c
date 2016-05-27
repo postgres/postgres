@@ -2909,6 +2909,9 @@ ProcessInterrupts(void)
 
 	if (QueryCancelPending)
 	{
+		bool		lock_timeout_occurred;
+		bool		stmt_timeout_occurred;
+
 		/*
 		 * Don't allow query cancel interrupts while reading input from the
 		 * client, because we might lose sync in the FE/BE protocol.  (Die
@@ -2929,17 +2932,29 @@ ProcessInterrupts(void)
 
 		/*
 		 * If LOCK_TIMEOUT and STATEMENT_TIMEOUT indicators are both set, we
-		 * prefer to report the former; but be sure to clear both.
+		 * need to clear both, so always fetch both.
 		 */
-		if (get_timeout_indicator(LOCK_TIMEOUT, true))
+		lock_timeout_occurred = get_timeout_indicator(LOCK_TIMEOUT, true);
+		stmt_timeout_occurred = get_timeout_indicator(STATEMENT_TIMEOUT, true);
+
+		/*
+		 * If both were set, we want to report whichever timeout completed
+		 * earlier; this ensures consistent behavior if the machine is slow
+		 * enough that the second timeout triggers before we get here.  A tie
+		 * is arbitrarily broken in favor of reporting a lock timeout.
+		 */
+		if (lock_timeout_occurred && stmt_timeout_occurred &&
+			get_timeout_finish_time(STATEMENT_TIMEOUT) < get_timeout_finish_time(LOCK_TIMEOUT))
+			lock_timeout_occurred = false;		/* report stmt timeout */
+
+		if (lock_timeout_occurred)
 		{
-			(void) get_timeout_indicator(STATEMENT_TIMEOUT, true);
 			LockErrorCleanup();
 			ereport(ERROR,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("canceling statement due to lock timeout")));
 		}
-		if (get_timeout_indicator(STATEMENT_TIMEOUT, true))
+		if (stmt_timeout_occurred)
 		{
 			LockErrorCleanup();
 			ereport(ERROR,
