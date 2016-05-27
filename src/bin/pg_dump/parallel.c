@@ -327,7 +327,7 @@ ShutdownWorkersHard(ParallelState *pstate)
 }
 
 /*
- * Wait for the termination of the processes using the OS-specific method.
+ * Wait for all workers to terminate.
  */
 static void
 WaitForTerminatingWorkers(ParallelState *pstate)
@@ -338,39 +338,58 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 		int			j;
 
 #ifndef WIN32
+		/* On non-Windows, use wait() to wait for next worker to end */
 		int			status;
 		pid_t		pid = wait(&status);
 
+		/* Find dead worker's slot, and clear the PID field */
 		for (j = 0; j < pstate->numWorkers; j++)
-			if (pstate->parallelSlot[j].pid == pid)
-				slot = &(pstate->parallelSlot[j]);
-#else
-		uintptr_t	hThread;
-		DWORD		ret;
-		uintptr_t  *lpHandles = pg_malloc(sizeof(HANDLE) * pstate->numWorkers);
+		{
+			slot = &(pstate->parallelSlot[j]);
+			if (slot->pid == pid)
+			{
+				slot->pid = 0;
+				break;
+			}
+		}
+#else							/* WIN32 */
+		/* On Windows, we must use WaitForMultipleObjects() */
+		HANDLE	   *lpHandles = pg_malloc(sizeof(HANDLE) * pstate->numWorkers);
 		int			nrun = 0;
+		DWORD		ret;
+		uintptr_t	hThread;
 
 		for (j = 0; j < pstate->numWorkers; j++)
+		{
 			if (pstate->parallelSlot[j].workerStatus != WRKR_TERMINATED)
 			{
-				lpHandles[nrun] = pstate->parallelSlot[j].hThread;
+				lpHandles[nrun] = (HANDLE) pstate->parallelSlot[j].hThread;
 				nrun++;
 			}
-		ret = WaitForMultipleObjects(nrun, (HANDLE *) lpHandles, false, INFINITE);
+		}
+		ret = WaitForMultipleObjects(nrun, lpHandles, false, INFINITE);
 		Assert(ret != WAIT_FAILED);
-		hThread = lpHandles[ret - WAIT_OBJECT_0];
-
-		for (j = 0; j < pstate->numWorkers; j++)
-			if (pstate->parallelSlot[j].hThread == hThread)
-				slot = &(pstate->parallelSlot[j]);
-
+		hThread = (uintptr_t) lpHandles[ret - WAIT_OBJECT_0];
 		free(lpHandles);
-#endif
-		Assert(slot);
 
+		/* Find dead worker's slot, and clear the hThread field */
+		for (j = 0; j < pstate->numWorkers; j++)
+		{
+			slot = &(pstate->parallelSlot[j]);
+			if (slot->hThread == hThread)
+			{
+				/* For cleanliness, close handles for dead threads */
+				CloseHandle((HANDLE) slot->hThread);
+				slot->hThread = (uintptr_t) INVALID_HANDLE_VALUE;
+				break;
+			}
+		}
+#endif   /* WIN32 */
+
+		/* On all platforms, update workerStatus as well */
+		Assert(j < pstate->numWorkers);
 		slot->workerStatus = WRKR_TERMINATED;
 	}
-	Assert(HasEveryWorkerTerminated(pstate));
 }
 
 #ifndef WIN32
