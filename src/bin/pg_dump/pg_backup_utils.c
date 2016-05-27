@@ -149,7 +149,7 @@ exit_nicely(int code)
 
 #ifdef WIN32
 	if (parallel_init_done && GetCurrentThreadId() != mainThreadId)
-		ExitThread(code);
+		_endthreadex(code);
 #endif
 
 	exit(code);
