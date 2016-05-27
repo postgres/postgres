@@ -227,6 +227,10 @@ DROP OPERATOR FAMILY IF EXISTS test_operator_family USING btree;
 DROP OPERATOR FAMILY test_operator_family USING no_such_am;
 DROP OPERATOR FAMILY IF EXISTS test_operator_family USING no_such_am;
 
+-- access method
+DROP ACCESS METHOD no_such_am;
+DROP ACCESS METHOD IF EXISTS no_such_am;
+
 -- drop the table
 
 DROP TABLE IF EXISTS test_exists;
