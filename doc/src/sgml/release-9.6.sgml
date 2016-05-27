@@ -3165,7 +3165,7 @@ This commit is also listed under libpq and PL/pgSQL
         Extend <filename>contrib/unaccent</>'s
         standard <filename>unaccent.rules</> file to handle all diacritics
         known to Unicode, and expand ligatures correctly
-        (Thomas Munro, Leonard Benedetti)
+        (Thomas Munro, L&eacute;onard Benedetti)
        </para>
 
        <para>
