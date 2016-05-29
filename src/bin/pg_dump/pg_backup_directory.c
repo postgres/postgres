@@ -406,7 +406,12 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 	buflen = ZLIB_OUT_SIZE;
 
 	while ((cnt = cfread(buf, buflen, cfp)))
+	{
+		/* Are we aborting? */
+		checkAborting(AH);
+
 		ahwrite(buf, 1, cnt, AH);
+	}
 
 	free(buf);
 	if (cfclose(cfp) !=0)
@@ -542,6 +547,9 @@ static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+
+	/* Are we aborting? */
+	checkAborting(AH);
 
 	/*
 	 * If there was an I/O error, we already exited in cfread(), so here we
