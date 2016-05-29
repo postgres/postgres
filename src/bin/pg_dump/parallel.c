@@ -95,11 +95,7 @@ static int	piperead(int s, char *buf, int len);
 
 #else							/* !WIN32 */
 
-/*
- * Variables for handling signals.  aborting is only ever used in the master,
- * the workers just need wantAbort.
- */
-static bool aborting = false;
+/* Signal handler flag */
 static volatile sig_atomic_t wantAbort = 0;
 
 /* Non-Windows implementation of pipe access */
@@ -301,14 +297,6 @@ archive_close_connection(int code, void *arg)
 			if (si->AHX)
 				DisconnectDatabase(si->AHX);
 
-#ifndef WIN32
-
-			/*
-			 * Setting aborting to true shuts off error/warning messages that
-			 * are no longer useful once we start killing workers.
-			 */
-			aborting = true;
-#endif
 			ShutdownWorkersHard(si->pstate);
 		}
 		else
@@ -1178,11 +1166,9 @@ select_loop(int maxFd, fd_set *workerset)
 		/*
 		 * If we Ctrl-C the master process, it's likely that we interrupt
 		 * select() here. The signal handler will set wantAbort == true and
-		 * the shutdown journey starts from here. Note that we'll come back
-		 * here later when we tell all workers to terminate and read their
-		 * responses. But then we have aborting set to true.
+		 * the shutdown journey starts from here.
 		 */
-		if (wantAbort && !aborting)
+		if (wantAbort)
 			exit_horribly(modulename, "terminated by user\n");
 
 		if (i < 0 && errno == EINTR)
@@ -1279,17 +1265,9 @@ sendMessageToWorker(ParallelState *pstate, int worker, const char *str)
 
 	if (pipewrite(pstate->parallelSlot[worker].pipeWrite, str, len) != len)
 	{
-		/*
-		 * If we're already aborting anyway, don't care if we succeed or not.
-		 * The child might have gone already.  (XXX but if we're aborting
-		 * already, why are we here at all?)
-		 */
-#ifndef WIN32
-		if (!aborting)
-#endif
-			exit_horribly(modulename,
-						"could not write to the communication channel: %s\n",
-						  strerror(errno));
+		exit_horribly(modulename,
+					  "could not write to the communication channel: %s\n",
+					  strerror(errno));
 	}
 }
 
