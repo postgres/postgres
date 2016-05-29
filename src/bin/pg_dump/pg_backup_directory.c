@@ -411,7 +411,12 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 	buflen = ZLIB_OUT_SIZE;
 
 	while ((cnt = cfread(buf, buflen, cfp)))
+	{
+		/* Are we aborting? */
+		checkAborting(AH);
+
 		ahwrite(buf, 1, cnt, AH);
+	}
 
 	free(buf);
 	if (cfclose(cfp) !=0)
@@ -555,6 +560,9 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	size_t		res;
+
+	/* Are we aborting? */
+	checkAborting(AH);
 
 	res = cfread(buf, len, ctx->dataFH);
 
