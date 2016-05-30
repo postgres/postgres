@@ -272,6 +272,10 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 		/* If we land on a revmap page, start over */
 		if (BRIN_IS_REGULAR_PAGE(page))
 		{
+			if (*off > PageGetMaxOffsetNumber(page))
+				ereport(ERROR,
+						(errcode(ERRCODE_INDEX_CORRUPTED),
+						 errmsg_internal("corrupted BRIN index: inconsistent range map")));
 			lp = PageGetItemId(page, *off);
 			if (ItemIdIsUsed(lp))
 			{

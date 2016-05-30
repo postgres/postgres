@@ -407,11 +407,16 @@ do { \
  *		extern declarations
  * ----------------------------------------------------------------
  */
+#define PAI_OVERWRITE			(1 << 0)
+#define PAI_IS_HEAP				(1 << 1)
+#define PAI_ALLOW_FAR_OFFSET	(1 << 2)
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageIsVerified(Page page, BlockNumber blkno);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, bool overwrite, bool is_heap);
+extern OffsetNumber PageAddItemExtended(Page page, Item item, Size size,
+					OffsetNumber offsetNumber, int flags);
 extern Page PageGetTempPage(Page page);
 extern Page PageGetTempPageCopy(Page page);
 extern Page PageGetTempPageCopySpecial(Page page);
