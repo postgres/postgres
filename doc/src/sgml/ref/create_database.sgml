@@ -29,8 +29,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
-           [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ] ]
-           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
+           [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ]
+           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ] ]
 </synopsis>
  </refsynopsisdiv>
 
