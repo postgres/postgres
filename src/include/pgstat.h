@@ -219,7 +219,20 @@ typedef struct PgStat_MsgDummy
 
 /* ----------
  * PgStat_MsgInquiry			Sent by a backend to ask the collector
- *								to write the stats file.
+ *								to write the stats file(s).
+ *
+ * Ordinarily, an inquiry message prompts writing of the global stats file,
+ * the stats file for shared catalogs, and the stats file for the specified
+ * database.  If databaseid is InvalidOid, only the first two are written.
+ *
+ * New file(s) will be written only if the existing file has a timestamp
+ * older than the specified cutoff_time; this prevents duplicated effort
+ * when multiple requests arrive at nearly the same time, assuming that
+ * backends send requests with cutoff_times a little bit in the past.
+ *
+ * clock_time should be the requestor's current local time; the collector
+ * uses this to check for the system clock going backward, but it has no
+ * effect unless that occurs.  We assume clock_time >= cutoff_time, though.
  * ----------
  */
 
@@ -228,7 +241,7 @@ typedef struct PgStat_MsgInquiry
 	PgStat_MsgHdr m_hdr;
 	TimestampTz clock_time;		/* observed local clock time */
 	TimestampTz cutoff_time;	/* minimum acceptable file timestamp */
-	Oid			databaseid;		/* requested DB (InvalidOid => all DBs) */
+	Oid			databaseid;		/* requested DB (InvalidOid => shared only) */
 } PgStat_MsgInquiry;
 
 

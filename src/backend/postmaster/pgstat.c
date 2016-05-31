@@ -38,7 +38,6 @@
 #include "access/xact.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
-#include "lib/ilist.h"
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
@@ -221,17 +220,14 @@ static int	localNumBackends = 0;
 static PgStat_ArchiverStats archiverStats;
 static PgStat_GlobalStats globalStats;
 
-/* Write request info for each database */
-typedef struct DBWriteRequest
-{
-	Oid			databaseid;		/* OID of the database to write */
-	TimestampTz request_time;	/* timestamp of the last write request */
-	slist_node	next;
-} DBWriteRequest;
+/*
+ * List of OIDs of databases we need to write out.  If an entry is InvalidOid,
+ * it means to write only the shared-catalog stats ("DB 0"); otherwise, we
+ * will write both that DB's data and the shared stats.
+ */
+static List *pending_write_requests = NIL;
 
-/* Latest statistics request times from backends */
-static slist_head last_statrequests = SLIST_STATIC_INIT(last_statrequests);
-
+/* Signal handler flags */
 static volatile bool need_exit = false;
 static volatile bool got_SIGHUP = false;
 
@@ -3497,8 +3493,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	init_ps_display("stats collector process", "", "", "");
 
 	/*
-	 * Read in an existing statistics stats file or initialize the stats to
-	 * zero.
+	 * Read in existing stats files or initialize the stats to zero.
 	 */
 	pgStatRunningInCollector = true;
 	pgStatDBHash = pgstat_read_statsfiles(InvalidOid, true, true);
@@ -3544,8 +3539,8 @@ PgstatCollectorMain(int argc, char *argv[])
 			}
 
 			/*
-			 * Write the stats file if a new request has arrived that is not
-			 * satisfied by existing file.
+			 * Write the stats file(s) if a new request has arrived that is
+			 * not satisfied by existing file(s).
 			 */
 			if (pgstat_write_statsfile_needed())
 				pgstat_write_statsfiles(false, false);
@@ -3875,14 +3870,14 @@ pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry, Oid tableoid, bool create)
  * pgstat_write_statsfiles() -
  *		Write the global statistics file, as well as requested DB files.
  *
- *	If writing to the permanent files (happens when the collector is
- *	shutting down only), remove the temporary files so that backends
- *	starting up under a new postmaster can't read the old data before
- *	the new collector is ready.
+ *	'permanent' specifies writing to the permanent files not temporary ones.
+ *	When true (happens only when the collector is shutting down), also remove
+ *	the temporary files so that backends starting up under a new postmaster
+ *	can't read old data before the new collector is ready.
  *
  *	When 'allDbs' is false, only the requested databases (listed in
- *	last_statrequests) will be written; otherwise, all databases will be
- *	written.
+ *	pending_write_requests) will be written; otherwise, all databases
+ *	will be written.
  * ----------
  */
 static void
@@ -3942,15 +3937,14 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * Write out the tables and functions into the DB stat file, if
-		 * required.
-		 *
-		 * We need to do this before the dbentry write, to ensure the
-		 * timestamps written to both are consistent.
+		 * Write out the table and function stats for this DB into the
+		 * appropriate per-DB stat file, if required.
 		 */
 		if (allDbs || pgstat_db_requested(dbentry->databaseid))
 		{
+			/* Make DB's timestamp consistent with the global stats */
 			dbentry->stats_timestamp = globalStats.stats_timestamp;
+
 			pgstat_write_db_statsfile(dbentry, permanent);
 		}
 
@@ -4003,27 +3997,8 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 	 * Now throw away the list of requests.  Note that requests sent after we
 	 * started the write are still waiting on the network socket.
 	 */
-	if (!slist_is_empty(&last_statrequests))
-	{
-		slist_mutable_iter iter;
-
-		/*
-		 * Strictly speaking we should do slist_delete_current() before
-		 * freeing each request struct.  We skip that and instead
-		 * re-initialize the list header at the end.  Nonetheless, we must use
-		 * slist_foreach_modify, not just slist_foreach, since we will free
-		 * the node's storage before advancing.
-		 */
-		slist_foreach_modify(iter, &last_statrequests)
-		{
-			DBWriteRequest *req;
-
-			req = slist_container(DBWriteRequest, next, iter.cur);
-			pfree(req);
-		}
-
-		slist_init(&last_statrequests);
-	}
+	list_free(pending_write_requests);
+	pending_write_requests = NIL;
 }
 
 /*
@@ -4162,13 +4137,20 @@ pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent)
 /* ----------
  * pgstat_read_statsfiles() -
  *
- *	Reads in the existing statistics collector files and initializes the
- *	databases' hash table.  If the permanent file name is requested (which
- *	only happens in the stats collector itself), also remove the file after
- *	reading; the in-memory status is now authoritative, and the permanent file
- *	would be out of date in case somebody else reads it.
+ *	Reads in some existing statistics collector files and returns the
+ *	databases hash table that is the top level of the data.
  *
- *	If a deep read is requested, table/function stats are read also, otherwise
+ *	If 'onlydb' is not InvalidOid, it means we only want data for that DB
+ *	plus the shared catalogs ("DB 0").  We'll still populate the DB hash
+ *	table for all databases, but we don't bother even creating table/function
+ *	hash tables for other databases.
+ *
+ *	'permanent' specifies reading from the permanent files not temporary ones.
+ *	When true (happens only when the collector is starting up), remove the
+ *	files after reading; the in-memory status is now authoritative, and the
+ *	files would be out of date in case somebody else reads them.
+ *
+ *	If a 'deep' read is requested, table/function stats are read, otherwise
  *	the table/function hash tables remain empty.
  * ----------
  */
@@ -4305,8 +4287,8 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				dbentry->functions = NULL;
 
 				/*
-				 * Don't collect tables if not the requested DB (or the
-				 * shared-table info)
+				 * Don't create tables/functions hashtables for uninteresting
+				 * databases.
 				 */
 				if (onlydb != InvalidOid)
 				{
@@ -4334,9 +4316,7 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 
 				/*
 				 * If requested, read the data from the database-specific
-				 * file. If there was onlydb specified (!= InvalidOid), we
-				 * would not get here because of a break above. So we don't
-				 * need to recheck.
+				 * file.  Otherwise we just leave the hashtables empty.
 				 */
 				if (deep)
 					pgstat_read_db_statsfile(dbentry->databaseid,
@@ -4375,10 +4355,14 @@ done:
  * pgstat_read_db_statsfile() -
  *
  *	Reads in the existing statistics collector file for the given database,
- *	and initializes the tables and functions hash tables.
+ *	filling the passed-in tables and functions hash tables.
  *
- *	As pgstat_read_statsfiles, if the permanent file is requested, it is
+ *	As in pgstat_read_statsfiles, if the permanent file is requested, it is
  *	removed after reading.
+ *
+ *	Note: this code has the ability to skip storing per-table or per-function
+ *	data, if NULL is passed for the corresponding hashtable.  That's not used
+ *	at the moment though.
  * ----------
  */
 static void
@@ -4448,7 +4432,7 @@ pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash,
 				}
 
 				/*
-				 * Skip if table belongs to a not requested database.
+				 * Skip if table data not wanted.
 				 */
 				if (tabhash == NULL)
 					break;
@@ -4482,7 +4466,7 @@ pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash,
 				}
 
 				/*
-				 * Skip if function belongs to a not requested database.
+				 * Skip if function data not wanted.
 				 */
 				if (funchash == NULL)
 					break;
@@ -4524,8 +4508,6 @@ done:
 		elog(DEBUG2, "removing permanent stats file \"%s\"", statfile);
 		unlink(statfile);
 	}
-
-	return;
 }
 
 /* ----------
@@ -4669,12 +4651,24 @@ backend_read_statsfile(void)
 {
 	TimestampTz min_ts = 0;
 	TimestampTz ref_ts = 0;
+	Oid			inquiry_db;
 	int			count;
 
 	/* already read it? */
 	if (pgStatDBHash)
 		return;
 	Assert(!pgStatRunningInCollector);
+
+	/*
+	 * In a normal backend, we check staleness of the data for our own DB, and
+	 * so we send MyDatabaseId in inquiry messages.  In the autovac launcher,
+	 * check staleness of the shared-catalog data, and send InvalidOid in
+	 * inquiry messages so as not to force writing unnecessary data.
+	 */
+	if (IsAutoVacuumLauncherProcess())
+		inquiry_db = InvalidOid;
+	else
+		inquiry_db = MyDatabaseId;
 
 	/*
 	 * Loop until fresh enough stats file is available or we ran out of time.
@@ -4689,7 +4683,7 @@ backend_read_statsfile(void)
 
 		CHECK_FOR_INTERRUPTS();
 
-		ok = pgstat_read_db_statsfile_timestamp(MyDatabaseId, false, &file_ts);
+		ok = pgstat_read_db_statsfile_timestamp(inquiry_db, false, &file_ts);
 
 		cur_ts = GetCurrentTimestamp();
 		/* Calculate min acceptable timestamp, if we didn't already */
@@ -4748,7 +4742,7 @@ backend_read_statsfile(void)
 				pfree(mytime);
 			}
 
-			pgstat_send_inquiry(cur_ts, min_ts, MyDatabaseId);
+			pgstat_send_inquiry(cur_ts, min_ts, inquiry_db);
 			break;
 		}
 
@@ -4758,7 +4752,7 @@ backend_read_statsfile(void)
 
 		/* Not there or too old, so kick the collector and wait a bit */
 		if ((count % PGSTAT_INQ_LOOP_COUNT) == 0)
-			pgstat_send_inquiry(cur_ts, min_ts, MyDatabaseId);
+			pgstat_send_inquiry(cur_ts, min_ts, inquiry_db);
 
 		pg_usleep(PGSTAT_RETRY_DELAY * 1000L);
 	}
@@ -4770,7 +4764,8 @@ backend_read_statsfile(void)
 
 	/*
 	 * Autovacuum launcher wants stats about all databases, but a shallow read
-	 * is sufficient.
+	 * is sufficient.  Regular backends want a deep read for just the tables
+	 * they can see (MyDatabaseId + shared catalogs).
 	 */
 	if (IsAutoVacuumLauncherProcess())
 		pgStatDBHash = pgstat_read_statsfiles(InvalidOid, false, false);
@@ -4831,43 +4826,27 @@ pgstat_clear_snapshot(void)
 static void
 pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 {
-	slist_iter	iter;
-	DBWriteRequest *newreq;
 	PgStat_StatDBEntry *dbentry;
 
 	elog(DEBUG2, "received inquiry for database %u", msg->databaseid);
 
 	/*
-	 * Find the last write request for this DB.  If it's older than the
-	 * request's cutoff time, update it; otherwise there's nothing to do.
+	 * If there's already a write request for this DB, there's nothing to do.
 	 *
 	 * Note that if a request is found, we return early and skip the below
 	 * check for clock skew.  This is okay, since the only way for a DB
 	 * request to be present in the list is that we have been here since the
-	 * last write round.
+	 * last write round.  It seems sufficient to check for clock skew once per
+	 * write round.
 	 */
-	slist_foreach(iter, &last_statrequests)
-	{
-		DBWriteRequest *req = slist_container(DBWriteRequest, next, iter.cur);
-
-		if (req->databaseid != msg->databaseid)
-			continue;
-
-		if (msg->cutoff_time > req->request_time)
-			req->request_time = msg->cutoff_time;
+	if (list_member_oid(pending_write_requests, msg->databaseid))
 		return;
-	}
 
 	/*
-	 * There's no request for this DB yet, so create one.
-	 */
-	newreq = palloc(sizeof(DBWriteRequest));
-
-	newreq->databaseid = msg->databaseid;
-	newreq->request_time = msg->clock_time;
-	slist_push_head(&last_statrequests, &newreq->next);
-
-	/*
+	 * Check to see if we last wrote this database at a time >= the requested
+	 * cutoff time.  If so, this is a stale request that was generated before
+	 * we updated the DB file, and we don't need to do so again.
+	 *
 	 * If the requestor's local clock time is older than stats_timestamp, we
 	 * should suspect a clock glitch, ie system time going backwards; though
 	 * the more likely explanation is just delayed message receipt.  It is
@@ -4876,7 +4855,17 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 	 * to update the stats file for a long time.
 	 */
 	dbentry = pgstat_get_db_entry(msg->databaseid, false);
-	if ((dbentry != NULL) && (msg->clock_time < dbentry->stats_timestamp))
+	if (dbentry == NULL)
+	{
+		/*
+		 * We have no data for this DB.  Enter a write request anyway so that
+		 * the global stats will get updated.  This is needed to prevent
+		 * backend_read_statsfile from waiting for data that we cannot supply,
+		 * in the case of a new DB that nobody has yet reported any stats for.
+		 * See the behavior of pgstat_read_db_statsfile_timestamp.
+		 */
+	}
+	else if (msg->clock_time < dbentry->stats_timestamp)
 	{
 		TimestampTz cur_ts = GetCurrentTimestamp();
 
@@ -4897,11 +4886,27 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 				 writetime, mytime, dbentry->databaseid);
 			pfree(writetime);
 			pfree(mytime);
-
-			newreq->request_time = cur_ts;
-			dbentry->stats_timestamp = cur_ts - 1;
+		}
+		else
+		{
+			/*
+			 * Nope, it's just an old request.  Assuming msg's clock_time is
+			 * >= its cutoff_time, it must be stale, so we can ignore it.
+			 */
+			return;
 		}
 	}
+	else if (msg->cutoff_time <= dbentry->stats_timestamp)
+	{
+		/* Stale request, ignore it */
+		return;
+	}
+
+	/*
+	 * We need to write this DB, so create a request.
+	 */
+	pending_write_requests = lappend_oid(pending_write_requests,
+										 msg->databaseid);
 }
 
 
@@ -5480,13 +5485,13 @@ pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len)
 /* ----------
  * pgstat_write_statsfile_needed() -
  *
- *	Do we need to write out the files?
+ *	Do we need to write out any stats files?
  * ----------
  */
 static bool
 pgstat_write_statsfile_needed(void)
 {
-	if (!slist_is_empty(&last_statrequests))
+	if (pending_write_requests != NIL)
 		return true;
 
 	/* Everything was written recently */
@@ -5502,25 +5507,18 @@ pgstat_write_statsfile_needed(void)
 static bool
 pgstat_db_requested(Oid databaseid)
 {
-	slist_iter	iter;
-
 	/*
 	 * If any requests are outstanding at all, we should write the stats for
 	 * shared catalogs (the "database" with OID 0).  This ensures that
 	 * backends will see up-to-date stats for shared catalogs, even though
 	 * they send inquiry messages mentioning only their own DB.
 	 */
-	if (databaseid == InvalidOid && !slist_is_empty(&last_statrequests))
+	if (databaseid == InvalidOid && pending_write_requests != NIL)
 		return true;
 
 	/* Search to see if there's an open request to write this database. */
-	slist_foreach(iter, &last_statrequests)
-	{
-		DBWriteRequest *req = slist_container(DBWriteRequest, next, iter.cur);
-
-		if (req->databaseid == databaseid)
-			return true;
-	}
+	if (list_member_oid(pending_write_requests, databaseid))
+		return true;
 
 	return false;
 }
