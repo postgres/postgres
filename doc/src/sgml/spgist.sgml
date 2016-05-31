@@ -637,7 +637,7 @@ typedef struct spgInnerConsistentOut
        responsible for palloc'ing the
        <structfield>nodeNumbers</>, <structfield>levelAdds</> and
        <structfield>reconstructedValues</> arrays.
-       Sometimes accumulating some information is needed, while 
+       Sometimes accumulating some information is needed, while
        descending from parent to child node was happened. In this case
        <structfield>traversalValues</> array keeps pointers to
        specific data you need to accumulate for every child node.

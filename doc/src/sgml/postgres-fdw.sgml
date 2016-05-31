@@ -304,7 +304,7 @@
      <term><literal>fetch_size</literal></term>
      <listitem>
       <para>
-       This option specifies the number of rows <filename>postgres_fdw</> 
+       This option specifies the number of rows <filename>postgres_fdw</>
        should get in each fetch operation. It can be specified for a foreign
        table or a foreign server. The option specified on a table overrides
        an option specified for the server.

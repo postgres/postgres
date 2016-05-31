@@ -71,7 +71,7 @@ PostgreSQL documentation
    missing files from a WAL archive automatically is currently not supported.
    Besides, <application>pg_rewind</> use cases are not limited by failover.
    For instance, standby server could be promoted, run some writes and
-   then be returned back as standby. 
+   then be returned back as standby.
   </para>
 
   <para>
@@ -134,8 +134,8 @@ PostgreSQL documentation
        <para>
         Specifies a libpq connection string to connect to the source
         <productname>PostgreSQL</> server to synchronize the target with.
-        The connection must be a normal (non-replication) connection 
-        with superuser access. The server must be up and running, 
+        The connection must be a normal (non-replication) connection
+        with superuser access. The server must be up and running,
         and must not be in recovery mode.
        </para>
       </listitem>

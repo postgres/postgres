@@ -820,7 +820,7 @@ IterateDirectModify (ForeignScanState *node);
     </para>
 
     <para>
-     Whether the query has the clause or not, the query's reported row count 
+     Whether the query has the clause or not, the query's reported row count
      must be incremented by the FDW itself.  When the query doesn't have the
      clause, the FDW must also increment the row count for the
      <structname>ForeignScanState</> node in the <command>EXPLAIN ANALYZE</>

@@ -563,7 +563,7 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     <command>VACUUM</> normally only scans pages that have been modified
     since the last vacuum, but <structfield>relfrozenxid</> can only be
     advanced when every page of the table
-    that might contain unfrozen XIDs is scanned.  This happens when 
+    that might contain unfrozen XIDs is scanned.  This happens when
     <structfield>relfrozenxid</> is more than
     <varname>vacuum_freeze_table_age</> transactions old, when
     <command>VACUUM</>'s <literal>FREEZE</> option is used, or when all

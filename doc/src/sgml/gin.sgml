@@ -734,7 +734,7 @@
    from the indexed item). As of <productname>PostgreSQL</productname> 8.4,
    <acronym>GIN</> is capable of postponing much of this work by inserting
    new tuples into a temporary, unsorted list of pending entries.
-   When the table is vacuumed or autoanalyzed, or when 
+   When the table is vacuumed or autoanalyzed, or when
    <function>gin_clean_pending_list</function> function is called, or if the
    pending list becomes larger than
    <xref linkend="guc-gin-pending-list-limit">, the entries are moved to the

@@ -20,8 +20,8 @@
    The implementation of a
    <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</ulink>
    allows fast exclusion of non-candidate tuples via signatures.
-   Since a signature is a lossy representation of all indexed attributes, 
-   search results must be rechecked using heap information. 
+   Since a signature is a lossy representation of all indexed attributes,
+   search results must be rechecked using heap information.
    The user can specify signature length (in uint16, default is 5) and the
    number of bits, which can be set per attribute (1 < colN < 2048).
   </para>
@@ -33,7 +33,7 @@
    possible queries where one needs only a single bloom index.  A Bloom index
    supports only equality comparison.  Since it's a signature file, and not a
    tree, it always must be read fully, but sequentially, so that index search
-   performance is constant and doesn't depend on a query. 
+   performance is constant and doesn't depend on a query.
   </para>
  </sect2>
 

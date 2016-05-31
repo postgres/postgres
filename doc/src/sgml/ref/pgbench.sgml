@@ -1064,8 +1064,8 @@ f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1 - exp(-parameter))
       function of the standard normal distribution, with mean <literal>mu</>
       defined as <literal>(max + min) / 2.0</>, with
 <literallayout>
- f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
-        (2.0 * PHI(parameter) - 1)
+f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
+       (2.0 * PHI(parameter) - 1)
 </literallayout>
       then value <replaceable>i</> between <replaceable>min</> and
       <replaceable>max</> inclusive is drawn with probability:
@@ -1158,22 +1158,22 @@ END;
   <para>
    Here is a snippet of the log file generated:
 <screen>
- 0 199 2241 0 1175850568 995598
- 0 200 2465 0 1175850568 998079
- 0 201 2513 0 1175850569 608
- 0 202 2038 0 1175850569 2663
+0 199 2241 0 1175850568 995598
+0 200 2465 0 1175850568 998079
+0 201 2513 0 1175850569 608
+0 202 2038 0 1175850569 2663
 </screen>
 
    Another example with --rate=100 and --latency-limit=5 (note the additional
    <replaceable>schedule_lag</> column):
 <screen>
- 0 81 4621 0 1412881037 912698 3005
- 0 82 6173 0 1412881037 914578 4304
- 0 83 skipped 0 1412881037 914578 5217
- 0 83 skipped 0 1412881037 914578 5099
- 0 83 4722 0 1412881037 916203 3108
- 0 84 4142 0 1412881037 918023 2333
- 0 85 2465 0 1412881037 919759 740
+0 81 4621 0 1412881037 912698 3005
+0 82 6173 0 1412881037 914578 4304
+0 83 skipped 0 1412881037 914578 5217
+0 83 skipped 0 1412881037 914578 5099
+0 83 4722 0 1412881037 916203 3108
+0 84 4142 0 1412881037 918023 2333
+0 85 2465 0 1412881037 919759 740
 </screen>
    In this example, transaction 82 was late, because its latency (6.173 ms) was
    over the 5 ms limit. The next two transactions were skipped, because they
