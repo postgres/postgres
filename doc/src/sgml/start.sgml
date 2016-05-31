@@ -361,15 +361,15 @@ mydb=#
     <indexterm><primary>version</primary></indexterm>
 <screen>
 <prompt>mydb=&gt;</prompt> <userinput>SELECT version();</userinput>
-                               version
- -----------------------------------------------------------------------
- PostgreSQL &version; on i586-pc-linux-gnu, compiled by GCC 2.96, 32-bit
+                                         version
+------------------------------------------------------------------------------------------
+ PostgreSQL &version; on x86_64-pc-linux-gnu, compiled by gcc (Debian 4.9.2-10) 4.9.2, 64-bit
 (1 row)
 
 <prompt>mydb=&gt;</prompt> <userinput>SELECT current_date;</userinput>
     date
 ------------
- 2002-08-31
+ 2016-01-07
 (1 row)
 
 <prompt>mydb=&gt;</prompt> <userinput>SELECT 2 + 2;</userinput>
