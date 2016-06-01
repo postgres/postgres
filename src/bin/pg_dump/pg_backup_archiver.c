@@ -3729,6 +3729,7 @@ restore_toc_entries_postfork(ArchiveHandle *AH, TocEntry *pending_list)
 					ropt->pghost, ropt->pgport, ropt->username,
 					ropt->promptPassword);
 
+	/* re-establish fixed state */
 	_doSetFixedOutputState(AH);
 
 	/*
@@ -3908,10 +3909,9 @@ parallel_restore(ParallelArgs *args)
 	RestoreOptions *ropt = AH->ropt;
 	int			status;
 
-	_doSetFixedOutputState(AH);
-
 	Assert(AH->connection != NULL);
 
+	/* Count only errors associated with this TOC entry */
 	AH->public.n_errors = 0;
 
 	/* Restore the TOC item */
@@ -4280,10 +4280,14 @@ CloneArchive(ArchiveHandle *AH)
 		RestoreOptions *ropt = AH->ropt;
 
 		Assert(AH->connection == NULL);
+
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
 						ropt->promptPassword);
+
+		/* re-establish fixed state */
+		_doSetFixedOutputState(clone);
 	}
 	else
 	{
@@ -4291,7 +4295,6 @@ CloneArchive(ArchiveHandle *AH)
 		char	   *pghost;
 		char	   *pgport;
 		char	   *username;
-		const char *encname;
 
 		Assert(AH->connection != NULL);
 
@@ -4305,18 +4308,11 @@ CloneArchive(ArchiveHandle *AH)
 		pghost = PQhost(AH->connection);
 		pgport = PQport(AH->connection);
 		username = PQuser(AH->connection);
-		encname = pg_encoding_to_char(AH->public.encoding);
 
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, dbname, pghost, pgport, username, TRI_NO);
 
-		/*
-		 * Set the same encoding, whatever we set here is what we got from
-		 * pg_encoding_to_char(), so we really shouldn't run into an error
-		 * setting that very same value. Also see the comment in
-		 * SetupConnection().
-		 */
-		PQsetClientEncoding(clone->connection, encname);
+		/* setupDumpWorker will fix up connection state */
 	}
 
 	/* Let the format-specific code have a chance too */
