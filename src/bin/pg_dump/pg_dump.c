@@ -952,10 +952,7 @@ setup_connection(Archive *AH, const char *dumpencoding,
 	const char *std_strings;
 
 	/*
-	 * Set the client encoding if requested. If dumpencoding == NULL then
-	 * either it hasn't been requested or we're a cloned connection and then
-	 * this has already been set in CloneArchive according to the original
-	 * connection encoding.
+	 * Set the client encoding if requested.
 	 */
 	if (dumpencoding)
 	{
@@ -973,7 +970,11 @@ setup_connection(Archive *AH, const char *dumpencoding,
 	std_strings = PQparameterStatus(conn, "standard_conforming_strings");
 	AH->std_strings = (std_strings && strcmp(std_strings, "on") == 0);
 
-	/* Set the role if requested */
+	/*
+	 * Set the role if requested.  In a parallel dump worker, we'll be passed
+	 * use_role == NULL, but AH->use_role is already set (if user specified it
+	 * originally) and we should use that.
+	 */
 	if (!use_role && AH->use_role)
 		use_role = AH->use_role;
 
@@ -986,9 +987,9 @@ setup_connection(Archive *AH, const char *dumpencoding,
 		ExecuteSqlStatement(AH, query->data);
 		destroyPQExpBuffer(query);
 
-		/* save this for later use on parallel connections */
+		/* save it for possible later use by parallel workers */
 		if (!AH->use_role)
-			AH->use_role = strdup(use_role);
+			AH->use_role = pg_strdup(use_role);
 	}
 
 	/* Set the datestyle to ISO to ensure the dump's portability */
@@ -1074,11 +1075,12 @@ setup_connection(Archive *AH, const char *dumpencoding,
 							"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 
 	/*
-	 * define an export snapshot, either chosen by user or needed for parallel
-	 * dump.
+	 * If user specified a snapshot to use, select that.  In a parallel dump
+	 * worker, we'll be passed dumpsnapshot == NULL, but AH->sync_snapshot_id
+	 * is already set (if the server can handle it) and we should use that.
 	 */
 	if (dumpsnapshot)
-		AH->sync_snapshot_id = strdup(dumpsnapshot);
+		AH->sync_snapshot_id = pg_strdup(dumpsnapshot);
 
 	if (AH->sync_snapshot_id)
 	{
@@ -1104,21 +1106,31 @@ setup_connection(Archive *AH, const char *dumpencoding,
 	}
 }
 
+/* Set up connection for a parallel worker process */
 static void
-setupDumpWorker(Archive *AHX)
+setupDumpWorker(Archive *AH)
 {
-	setup_connection(AHX, NULL, NULL, NULL);
+	/*
+	 * We want to re-select all the same values the master connection is
+	 * using.  We'll have inherited directly-usable values in
+	 * AH->sync_snapshot_id and AH->use_role, but we need to translate the
+	 * inherited encoding value back to a string to pass to setup_connection.
+	 */
+	setup_connection(AH,
+					 pg_encoding_to_char(AH->encoding),
+					 NULL,
+					 NULL);
 }
 
 static char *
 get_synchronized_snapshot(Archive *fout)
 {
-	char	   *query = "SELECT pg_export_snapshot()";
+	char	   *query = "SELECT pg_catalog.pg_export_snapshot()";
 	char	   *result;
 	PGresult   *res;
 
 	res = ExecuteSqlQueryForSingleRow(fout, query);
-	result = strdup(PQgetvalue(res, 0, 0));
+	result = pg_strdup(PQgetvalue(res, 0, 0));
 	PQclear(res);
 
 	return result;

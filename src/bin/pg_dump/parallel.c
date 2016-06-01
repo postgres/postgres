@@ -802,7 +802,6 @@ IsEveryWorkerIdle(ParallelState *pstate)
 static void
 lockTableForWorker(ArchiveHandle *AH, TocEntry *te)
 {
-	Archive    *AHX = (Archive *) AH;
 	const char *qualId;
 	PQExpBuffer query;
 	PGresult   *res;
@@ -813,33 +812,10 @@ lockTableForWorker(ArchiveHandle *AH, TocEntry *te)
 
 	query = createPQExpBuffer();
 
-	/*
-	 * XXX this is an unbelievably expensive substitute for knowing how to dig
-	 * a table name out of a TocEntry.
-	 */
-	appendPQExpBuffer(query,
-					  "SELECT pg_namespace.nspname,"
-					  "       pg_class.relname "
-					  "  FROM pg_class "
-					"  JOIN pg_namespace on pg_namespace.oid = relnamespace "
-					  " WHERE pg_class.oid = %u", te->catalogId.oid);
-
-	res = PQexec(AH->connection, query->data);
-
-	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
-		exit_horribly(modulename,
-					  "could not get relation name for OID %u: %s\n",
-					  te->catalogId.oid, PQerrorMessage(AH->connection));
-
-	resetPQExpBuffer(query);
-
-	qualId = fmtQualifiedId(AHX->remoteVersion,
-							PQgetvalue(res, 0, 0),
-							PQgetvalue(res, 0, 1));
+	qualId = fmtQualifiedId(AH->public.remoteVersion, te->namespace, te->tag);
 
 	appendPQExpBuffer(query, "LOCK TABLE %s IN ACCESS SHARE MODE NOWAIT",
 					  qualId);
-	PQclear(res);
 
 	res = PQexec(AH->connection, query->data);
 
