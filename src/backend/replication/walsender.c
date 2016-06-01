@@ -841,7 +841,18 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		 * Export a plain (not of the snapbuild.c type) snapshot to the user
 		 * that can be imported into another session.
 		 */
-		snapshot_name = SnapBuildExportSnapshot(ctx->snapshot_builder);
+		if (!RecoveryInProgress())
+		{
+			snapshot_name = SnapBuildExportSnapshot(ctx->snapshot_builder);
+		}
+		else
+		{
+			/*
+			 * Can't assign an xid during recovery so we can't export a
+			 * snapshot.
+			 */
+			snapshot_name = "";
+		}
 
 		/* don't need the decoding context anymore */
 		FreeDecodingContext(ctx);
