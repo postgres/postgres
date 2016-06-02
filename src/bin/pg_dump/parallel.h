@@ -82,6 +82,6 @@ extern void DispatchJobForTocEntry(ArchiveHandle *AH,
 					   TocEntry *te, T_Action act);
 extern void ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate);
 
-extern void checkAborting(ArchiveHandle *AH);
+extern void set_archive_cancel_info(ArchiveHandle *AH, PGconn *conn);
 
 #endif   /* PG_DUMP_PARALLEL_H */

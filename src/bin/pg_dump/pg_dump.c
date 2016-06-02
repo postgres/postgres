@@ -1780,6 +1780,11 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	}
 	PQclear(res);
 
+	/* Do this to ensure we've pumped libpq back to idle state */
+	if (PQgetResult(conn) != NULL)
+		write_msg(NULL, "WARNING: unexpected extra results during COPY of table \"%s\"\n",
+				  classname);
+
 	destroyPQExpBuffer(q);
 	return 1;
 }

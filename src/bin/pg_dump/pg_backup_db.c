@@ -12,6 +12,7 @@
 #include "postgres_fe.h"
 
 #include "dumputils.h"
+#include "parallel.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
@@ -105,6 +106,9 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 		return 1;
 
 	newConn = _connectDB(AH, newdbname, newusername);
+
+	/* Update ArchiveHandle's connCancel before closing old connection */
+	set_archive_cancel_info(AH, newConn);
 
 	PQfinish(AH->connection);
 	AH->connection = newConn;
@@ -327,6 +331,9 @@ ConnectDatabase(Archive *AHX,
 	_check_database_version(AH);
 
 	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
+
+	/* arrange for SIGINT to issue a query cancel on this connection */
+	set_archive_cancel_info(AH, AH->connection);
 }
 
 /*
@@ -337,19 +344,25 @@ void
 DisconnectDatabase(Archive *AHX)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	PGcancel   *cancel;
 	char		errbuf[1];
 
 	if (!AH->connection)
 		return;
 
-	if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
+	if (AH->connCancel)
 	{
-		if ((cancel = PQgetCancel(AH->connection)))
-		{
-			PQcancel(cancel, errbuf, sizeof(errbuf));
-			PQfreeCancel(cancel);
-		}
+		/*
+		 * If we have an active query, send a cancel before closing.  This is
+		 * of no use for a normal exit, but might be helpful during
+		 * exit_horribly().
+		 */
+		if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
+			PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
+
+		/*
+		 * Prevent signal handler from sending a cancel after this.
+		 */
+		set_archive_cancel_info(AH, NULL);
 	}
 
 	PQfinish(AH->connection);
@@ -630,6 +643,11 @@ EndDBCopyMode(Archive *AHX, const char *tocEntryTag)
 			warn_or_exit_horribly(AH, modulename, "COPY failed for table \"%s\": %s",
 								tocEntryTag, PQerrorMessage(AH->connection));
 		PQclear(res);
+
+		/* Do this to ensure we've pumped libpq back to idle state */
+		if (PQgetResult(AH->connection) != NULL)
+			write_msg(NULL, "WARNING: unexpected extra results during COPY of table \"%s\"\n",
+					  tocEntryTag);
 
 		AH->pgCopyIn = false;
 	}
