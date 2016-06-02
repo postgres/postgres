@@ -356,9 +356,6 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
-	/* Are we aborting? */
-	checkAborting(AH);
-
 	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
 		WRITE_ERROR_EXIT;
 
@@ -407,9 +404,6 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 
 	while ((cnt = cfread(buf, buflen, cfp)))
 	{
-		/* Are we aborting? */
-		checkAborting(AH);
-
 		ahwrite(buf, 1, cnt, AH);
 	}
 
@@ -529,9 +523,6 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
-	/* Are we aborting? */
-	checkAborting(AH);
-
 	if (cfwrite(buf, len, ctx->dataFH) != len)
 		WRITE_ERROR_EXIT;
 
@@ -547,9 +538,6 @@ static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-
-	/* Are we aborting? */
-	checkAborting(AH);
 
 	/*
 	 * If there was an I/O error, we already exited in cfread(), so here we
