@@ -364,9 +364,6 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 	if (dLen == 0)
 		return 0;
 
-	/* Are we aborting? */
-	checkAborting(AH);
-
 	return cfwrite(data, dLen, ctx->dataFH);
 }
 
@@ -412,9 +409,6 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 
 	while ((cnt = cfread(buf, buflen, cfp)))
 	{
-		/* Are we aborting? */
-		checkAborting(AH);
-
 		ahwrite(buf, 1, cnt, AH);
 	}
 
@@ -539,9 +533,6 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	size_t		res;
 
-	/* Are we aborting? */
-	checkAborting(AH);
-
 	res = cfwrite(buf, len, ctx->dataFH);
 	if (res != len)
 		exit_horribly(modulename, "could not write to output file: %s\n",
@@ -560,9 +551,6 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	size_t		res;
-
-	/* Are we aborting? */
-	checkAborting(AH);
 
 	res = cfread(buf, len, ctx->dataFH);
 
