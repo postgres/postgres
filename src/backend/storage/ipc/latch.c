@@ -475,7 +475,7 @@ ResetLatch(volatile Latch *latch)
 /*
  * Create a WaitEventSet with space for nevents different events to wait for.
  *
- * These events can then efficiently waited upon together, using
+ * These events can then be efficiently waited upon together, using
  * WaitEventSetWait().
  */
 WaitEventSet *
@@ -485,35 +485,41 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	char	   *data;
 	Size		sz = 0;
 
-	sz += sizeof(WaitEventSet);
-	sz += sizeof(WaitEvent) * nevents;
+	/* 
+	 * Use MAXALIGN size/alignment to guarantee that later uses of memory are
+	 * aligned correctly. E.g. epoll_event might need 8 byte alignment on some
+	 * platforms, but earlier allocations like WaitEventSet and WaitEvent
+	 * might not sized to guarantee that when purely using sizeof().
+	 */
+	sz += MAXALIGN(sizeof(WaitEventSet));
+	sz += MAXALIGN(sizeof(WaitEvent) * nevents);
 
 #if defined(WAIT_USE_EPOLL)
-	sz += sizeof(struct epoll_event) * nevents;
+	sz += MAXALIGN(sizeof(struct epoll_event) * nevents);
 #elif defined(WAIT_USE_POLL)
-	sz += sizeof(struct pollfd) * nevents;
+	sz += MAXALIGN(sizeof(struct pollfd) * nevents);
 #elif defined(WAIT_USE_WIN32)
 	/* need space for the pgwin32_signal_event */
-	sz += sizeof(HANDLE) * (nevents + 1);
+	sz += MAXALIGN(sizeof(HANDLE) * (nevents + 1));
 #endif
 
 	data = (char *) MemoryContextAllocZero(context, sz);
 
 	set = (WaitEventSet *) data;
-	data += sizeof(WaitEventSet);
+	data += MAXALIGN(sizeof(WaitEventSet));
 
 	set->events = (WaitEvent *) data;
-	data += sizeof(WaitEvent) * nevents;
+	data += MAXALIGN(sizeof(WaitEvent) * nevents);
 
 #if defined(WAIT_USE_EPOLL)
 	set->epoll_ret_events = (struct epoll_event *) data;
-	data += sizeof(struct epoll_event) * nevents;
+	data += MAXALIGN(sizeof(struct epoll_event) * nevents);
 #elif defined(WAIT_USE_POLL)
 	set->pollfds = (struct pollfd *) data;
-	data += sizeof(struct pollfd) * nevents;
+	data += MAXALIGN(sizeof(struct pollfd) * nevents);
 #elif defined(WAIT_USE_WIN32)
 	set->handles = (HANDLE) data;
-	data += sizeof(HANDLE) * nevents;
+	data += MAXALIGN(sizeof(HANDLE) * nevents);
 #endif
 
 	set->latch = NULL;
@@ -616,7 +622,7 @@ AddWaitEventToSet(WaitEventSet *set, uint32 events, pgsocket fd, Latch *latch,
 		if (set->latch)
 			elog(ERROR, "cannot wait on more than one latch");
 		if ((events & WL_LATCH_SET) != WL_LATCH_SET)
-			elog(ERROR, "latch events only spuport being set");
+			elog(ERROR, "latch events only support being set");
 	}
 	else
 	{
