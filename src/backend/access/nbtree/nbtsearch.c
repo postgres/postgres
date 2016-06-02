@@ -1011,7 +1011,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		so->currPos.moreRight = false;
 	}
 	so->numKilled = 0;			/* just paranoia */
-	so->markItemIndex = -1;		/* ditto */
+	Assert(so->markItemIndex == -1);
 
 	/* position to the precise item on the page */
 	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, nextkey);

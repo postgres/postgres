@@ -608,25 +608,6 @@ btrestrpos(IndexScanDesc scan)
 		 */
 		so->currPos.itemIndex = so->markItemIndex;
 	}
-	else if (so->currPos.currPage == so->markPos.currPage)
-	{
-		/*
-		 * so->markItemIndex < 0 but mark and current positions are on the
-		 * same page.  This would be an unusual case, where the scan moved to
-		 * a new index page after the mark, restored, and later restored again
-		 * without moving off the marked page.  It is not clear that this code
-		 * can currently be reached, but it seems better to make this function
-		 * robust for this case than to Assert() or elog() that it can't
-		 * happen.
-		 *
-		 * We neither want to set so->markItemIndex >= 0 (because that could
-		 * cause a later move to a new page to redo the memcpy() executions)
-		 * nor re-execute the memcpy() functions for a restore within the same
-		 * page.  The previous restore to this page already set everything
-		 * except markPos as it should be.
-		 */
-		so->currPos.itemIndex = so->markPos.itemIndex;
-	}
 	else
 	{
 		/*
