@@ -86,7 +86,7 @@ extern void DispatchJobForTocEntry(struct _archiveHandle * AH,
 					   struct _tocEntry * te, T_Action act);
 extern void ParallelBackupEnd(struct _archiveHandle * AH, ParallelState *pstate);
 
-extern void checkAborting(struct _archiveHandle * AH);
+extern void set_archive_cancel_info(struct _archiveHandle * AH, PGconn *conn);
 
 extern void
 exit_horribly(const char *modulename, const char *fmt,...)
