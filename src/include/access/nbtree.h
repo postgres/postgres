@@ -522,7 +522,7 @@ typedef struct BTScanPosData
 	Buffer		buf;			/* if valid, the buffer is pinned */
 
 	XLogRecPtr	lsn;			/* pos in the WAL stream when page was read */
-	BlockNumber currPage;		/* page we've referencd by items array */
+	BlockNumber currPage;		/* page referenced by items array */
 	BlockNumber nextPage;		/* page's right link when we scanned it */
 
 	/*
