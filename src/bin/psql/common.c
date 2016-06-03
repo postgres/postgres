@@ -235,8 +235,18 @@ static PGcancel *volatile cancelConn = NULL;
 static CRITICAL_SECTION cancelConnLock;
 #endif
 
-/* Used from signal handlers, no buffering */
-#define write_stderr(str)	write(fileno(stderr), str, strlen(str))
+/*
+ * Write a simple string to stderr --- must be safe in a signal handler.
+ * We ignore the write() result since there's not much we could do about it.
+ * Certain compilers make that harder than it ought to be.
+ */
+#define write_stderr(str) \
+	do { \
+		const char *str_ = (str); \
+		int		rc_; \
+		rc_ = write(fileno(stderr), str_, strlen(str_)); \
+		(void) rc_; \
+	} while (0)
 
 
 #ifndef WIN32
@@ -245,7 +255,6 @@ static void
 handle_sigint(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-	int			rc;
 	char		errbuf[256];
 
 	/* if we are waiting for input, longjmp out of it */
@@ -262,16 +271,11 @@ handle_sigint(SIGNAL_ARGS)
 	if (cancelConn != NULL)
 	{
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
-		{
-			rc = write_stderr("Cancel request sent\n");
-			(void) rc;			/* ignore errors, nothing we can do here */
-		}
+			write_stderr("Cancel request sent\n");
 		else
 		{
-			rc = write_stderr("Could not send cancel request: ");
-			(void) rc;			/* ignore errors, nothing we can do here */
-			rc = write_stderr(errbuf);
-			(void) rc;			/* ignore errors, nothing we can do here */
+			write_stderr("Could not send cancel request: ");
+			write_stderr(errbuf);
 		}
 	}
 

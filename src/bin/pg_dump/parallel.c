@@ -137,8 +137,18 @@ static volatile DumpSignalInformation signal_info;
 static CRITICAL_SECTION signal_info_lock;
 #endif
 
-/* Used from signal handlers, no buffering */
-#define write_stderr(str)	write(fileno(stderr), str, strlen(str))
+/*
+ * Write a simple string to stderr --- must be safe in a signal handler.
+ * We ignore the write() result since there's not much we could do about it.
+ * Certain compilers make that harder than it ought to be.
+ */
+#define write_stderr(str) \
+	do { \
+		const char *str_ = (str); \
+		int		rc_; \
+		rc_ = write(fileno(stderr), str_, strlen(str_)); \
+		(void) rc_; \
+	} while (0)
 
 
 #ifdef WIN32
