@@ -239,6 +239,8 @@ typedef struct SerializedSnapshotData
 	bool		suboverflowed;
 	bool		takenDuringRecovery;
 	CommandId	curcid;
+	int64		whenTaken;
+	XLogRecPtr	lsn;
 } SerializedSnapshotData;
 
 Size
@@ -1936,6 +1938,8 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 	serialized_snapshot->suboverflowed = snapshot->suboverflowed;
 	serialized_snapshot->takenDuringRecovery = snapshot->takenDuringRecovery;
 	serialized_snapshot->curcid = snapshot->curcid;
+	serialized_snapshot->whenTaken = snapshot->whenTaken;
+	serialized_snapshot->lsn = snapshot->lsn;
 
 	/*
 	 * Ignore the SubXID array if it has overflowed, unless the snapshot was
@@ -2002,6 +2006,8 @@ RestoreSnapshot(char *start_address)
 	snapshot->suboverflowed = serialized_snapshot->suboverflowed;
 	snapshot->takenDuringRecovery = serialized_snapshot->takenDuringRecovery;
 	snapshot->curcid = serialized_snapshot->curcid;
+	snapshot->whenTaken = serialized_snapshot->whenTaken;
+	snapshot->lsn = serialized_snapshot->lsn;
 
 	/* Copy XIDs, if present. */
 	if (serialized_snapshot->xcnt > 0)
