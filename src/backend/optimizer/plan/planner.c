@@ -1759,19 +1759,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 
 		/*
-		 * Likewise for any partial paths, although this case is simpler, since
-		 * we don't track the cheapest path.
-		 */
-		foreach(lc, current_rel->partial_pathlist)
-		{
-			Path	   *subpath = (Path *) lfirst(lc);
-
-			Assert(subpath->param_info == NULL);
-			lfirst(lc) = apply_projection_to_path(root, current_rel,
-											subpath, scanjoin_target);
-		}
-
-		/*
 		 * Save the various upper-rel PathTargets we just computed into
 		 * root->upper_targets[].  The core code doesn't use this, but it
 		 * provides a convenient place for extensions to get at the info.  For
