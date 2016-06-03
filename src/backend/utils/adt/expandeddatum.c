@@ -85,34 +85,16 @@ EOH_flatten_into(ExpandedObjectHeader *eohptr,
 }
 
 /*
- * Does the Datum represent a writable expanded object?
- */
-bool
-DatumIsReadWriteExpandedObject(Datum d, bool isnull, int16 typlen)
-{
-	/* Reject if it's NULL or not a varlena type */
-	if (isnull || typlen != -1)
-		return false;
-
-	/* Reject if not a read-write expanded-object pointer */
-	if (!VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(d)))
-		return false;
-
-	return true;
-}
-
-/*
  * If the Datum represents a R/W expanded object, change it to R/O.
  * Otherwise return the original Datum.
+ *
+ * Caller must ensure that the datum is a non-null varlena value.  Typically
+ * this is invoked via MakeExpandedObjectReadOnly(), which checks that.
  */
 Datum
-MakeExpandedObjectReadOnly(Datum d, bool isnull, int16 typlen)
+MakeExpandedObjectReadOnlyInternal(Datum d)
 {
 	ExpandedObjectHeader *eohptr;
-
-	/* Nothing to do if it's NULL or not a varlena type */
-	if (isnull || typlen != -1)
-		return d;
 
 	/* Nothing to do if not a read-write expanded-object pointer */
 	if (!VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(d)))
