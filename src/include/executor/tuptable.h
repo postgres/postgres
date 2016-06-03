@@ -163,7 +163,6 @@ extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,
 			 TupleTableSlot *srcslot);
-extern TupleTableSlot *ExecMakeSlotContentsReadOnly(TupleTableSlot *slot);
 
 /* in access/common/heaptuple.c */
 extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
