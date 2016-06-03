@@ -1192,9 +1192,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		}
 
 		/*
-		 * If the page is marked as all-visible but not all-frozen, we should
-		 * so mark it.  Note that all_frozen is only valid if all_visible is
-		 * true, so we must check both.
+		 * If the all-visible page is turned out to be all-frozen but not marked,
+		 * we should so mark it.  Note that all_frozen is only valid if all_visible
+		 * is true, so we must check both.
 		 */
 		else if (all_visible_according_to_vm && all_visible && all_frozen &&
 				 !VM_ALL_FROZEN(onerel, blkno, &vmbuffer))
@@ -2068,6 +2068,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 		if (ItemIdIsDead(itemid))
 		{
 			all_visible = false;
+			*all_frozen = false;
 			break;
 		}
 
@@ -2087,6 +2088,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 					if (!HeapTupleHeaderXminCommitted(tuple.t_data))
 					{
 						all_visible = false;
+						*all_frozen = false;
 						break;
 					}
 
@@ -2098,6 +2100,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 					if (!TransactionIdPrecedes(xmin, OldestXmin))
 					{
 						all_visible = false;
+						*all_frozen = false;
 						break;
 					}
 
@@ -2116,23 +2119,16 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 			case HEAPTUPLE_RECENTLY_DEAD:
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
 			case HEAPTUPLE_DELETE_IN_PROGRESS:
-				all_visible = false;
-				break;
-
+				{
+					all_visible = false;
+					*all_frozen = false;
+					break;
+				}
 			default:
 				elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 				break;
 		}
 	}							/* scan along page */
-
-	/*
-	 * We don't bother clearing *all_frozen when the page is discovered not to
-	 * be all-visible, so do that now if necessary.  The page might fail to be
-	 * all-frozen for other reasons anyway, but if it's not all-visible, then
-	 * it definitely isn't all-frozen.
-	 */
-	if (!all_visible)
-		*all_frozen = false;
 
 	return all_visible;
 }

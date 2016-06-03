@@ -19,8 +19,8 @@
 #include "storage/buf.h"
 #include "utils/relcache.h"
 
+/* Number of bits for one heap page */
 #define BITS_PER_HEAPBLOCK 2
-#define HEAPBLOCKS_PER_BYTE (BITS_PER_BYTE / BITS_PER_HEAPBLOCK)
 
 /* Flags for bit map */
 #define VISIBILITYMAP_ALL_VISIBLE	0x01

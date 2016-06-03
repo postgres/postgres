@@ -33,7 +33,7 @@
  * is set, we know the condition is true, but if a bit is not set, it might or
  * might not be true.
  *
- * Clearing both visibility map bits is not separately WAL-logged.  The callers
+ * Clearing visibility map bits is not separately WAL-logged.  The callers
  * must make sure that whenever a bit is cleared, the bit is cleared on WAL
  * replay of the updating operation as well.
  *
@@ -104,13 +104,16 @@
  */
 #define MAPSIZE (BLCKSZ - MAXALIGN(SizeOfPageHeaderData))
 
+/* Number of heap blocks we can represent in one byte */
+#define HEAPBLOCKS_PER_BYTE (BITS_PER_BYTE / BITS_PER_HEAPBLOCK)
+
 /* Number of heap blocks we can represent in one visibility map page. */
 #define HEAPBLOCKS_PER_PAGE (MAPSIZE * HEAPBLOCKS_PER_BYTE)
 
 /* Mapping from heap block number to the right bit in the visibility map */
 #define HEAPBLK_TO_MAPBLOCK(x) ((x) / HEAPBLOCKS_PER_PAGE)
 #define HEAPBLK_TO_MAPBYTE(x) (((x) % HEAPBLOCKS_PER_PAGE) / HEAPBLOCKS_PER_BYTE)
-#define HEAPBLK_TO_MAPBIT(x) (((x) % HEAPBLOCKS_PER_BYTE) * BITS_PER_HEAPBLOCK)
+#define HEAPBLK_TO_OFFSET(x) (((x) % HEAPBLOCKS_PER_BYTE) * BITS_PER_HEAPBLOCK)
 
 /* tables for fast counting of set bits for visible and frozen */
 static const uint8 number_of_ones_for_visible[256] = {
@@ -156,7 +159,7 @@ static void vm_extend(Relation rel, BlockNumber nvmblocks);
 
 
 /*
- *	visibilitymap_clear - clear all bits in visibility map
+ *	visibilitymap_clear - clear all bits for one page in visibility map
  *
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
@@ -167,8 +170,8 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	int			mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
-	int			mapBit = HEAPBLK_TO_MAPBIT(heapBlk);
-	uint8		mask = VISIBILITYMAP_VALID_BITS << mapBit;
+	int			mapOffset = HEAPBLK_TO_OFFSET(heapBlk);
+	uint8		mask = VISIBILITYMAP_VALID_BITS << mapOffset;
 	char	   *map;
 
 #ifdef TRACE_VISIBILITYMAP
@@ -267,7 +270,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
-	uint8		mapBit = HEAPBLK_TO_MAPBIT(heapBlk);
+	uint8		mapOffset = HEAPBLK_TO_OFFSET(heapBlk);
 	Page		page;
 	uint8		*map;
 
@@ -291,11 +294,11 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	map = (uint8 *)PageGetContents(page);
 	LockBuffer(vmBuf, BUFFER_LOCK_EXCLUSIVE);
 
-	if (flags != (map[mapByte] >> mapBit & VISIBILITYMAP_VALID_BITS))
+	if (flags != (map[mapByte] >> mapOffset & VISIBILITYMAP_VALID_BITS))
 	{
 		START_CRIT_SECTION();
 
-		map[mapByte] |= (flags << mapBit);
+		map[mapByte] |= (flags << mapOffset);
 		MarkBufferDirty(vmBuf);
 
 		if (RelationNeedsWAL(rel))
@@ -338,8 +341,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
  * earlier call to visibilitymap_pin or visibilitymap_get_status on the same
  * relation. On return, *buf is a valid buffer with the map page containing
  * the bit for heapBlk, or InvalidBuffer. The caller is responsible for
- * releasing *buf after it's done testing and setting bits, and must pass flags
- * for which it needs to check the value in visibility map.
+ * releasing *buf after it's done testing and setting bits.
  *
  * NOTE: This function is typically called without a lock on the heap page,
  * so somebody else could change the bit just after we look at it.  In fact,
@@ -353,8 +355,9 @@ visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *buf)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
-	uint8		mapBit = HEAPBLK_TO_MAPBIT(heapBlk);
+	uint8		mapOffset = HEAPBLK_TO_OFFSET(heapBlk);
 	char	   *map;
+	uint8		result;
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_get_status %s %d", RelationGetRelationName(rel), heapBlk);
@@ -384,7 +387,8 @@ visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *buf)
 	 * here, but for performance reasons we make it the caller's job to worry
 	 * about that.
 	 */
-	return ((map[mapByte] >> mapBit) & VISIBILITYMAP_VALID_BITS);
+	result = ((map[mapByte] >> mapOffset) & VISIBILITYMAP_VALID_BITS);
+	return result;
 }
 
 /*
@@ -456,7 +460,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	/* last remaining block, byte, and bit */
 	BlockNumber truncBlock = HEAPBLK_TO_MAPBLOCK(nheapblocks);
 	uint32		truncByte = HEAPBLK_TO_MAPBYTE(nheapblocks);
-	uint8		truncBit = HEAPBLK_TO_MAPBIT(nheapblocks);
+	uint8		truncOffset = HEAPBLK_TO_OFFSET(nheapblocks);
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_truncate %s %d", RelationGetRelationName(rel), nheapblocks);
@@ -478,7 +482,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	 * because we don't get a chance to clear the bits if the heap is extended
 	 * again.
 	 */
-	if (truncByte != 0 || truncBit != 0)
+	if (truncByte != 0 || truncOffset != 0)
 	{
 		Buffer		mapBuffer;
 		Page		page;
@@ -511,7 +515,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 		 * ((1 << 7) - 1) = 01111111
 		 *----
 		 */
-		map[truncByte] &= (1 << truncBit) - 1;
+		map[truncByte] &= (1 << truncOffset) - 1;
 
 		MarkBufferDirty(mapBuffer);
 		UnlockReleaseBuffer(mapBuffer);
