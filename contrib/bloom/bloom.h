@@ -79,18 +79,31 @@ typedef BloomPageOpaqueData *BloomPageOpaque;
 #define BLOOM_HEAD_BLKNO		(1)		/* first data page */
 
 /*
- * Maximum of bloom signature length in uint16. Actual value
- * is 512 bytes
+ * We store Bloom signatures as arrays of uint16 words.
  */
-#define MAX_BLOOM_LENGTH		(256)
+typedef uint16 BloomSignatureWord;
+
+#define SIGNWORDBITS ((int) (BITS_PER_BYTE * sizeof(BloomSignatureWord)))
+
+/*
+ * Default and maximum Bloom signature length in bits.
+ */
+#define DEFAULT_BLOOM_LENGTH	(5 * SIGNWORDBITS)
+#define MAX_BLOOM_LENGTH		(256 * SIGNWORDBITS)
+
+/*
+ * Default and maximum signature bits generated per index key.
+ */
+#define DEFAULT_BLOOM_BITS		2
+#define MAX_BLOOM_BITS			(MAX_BLOOM_LENGTH - 1)
 
 /* Bloom index options */
 typedef struct BloomOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int			bloomLength;	/* length of signature in uint16 */
-	int			bitSize[INDEX_MAX_KEYS];		/* signature bits per index
-												 * key */
+	int			bloomLength;	/* length of signature in words (not bits!) */
+	int			bitSize[INDEX_MAX_KEYS];	/* # of bits generated for each
+											 * index key */
 }	BloomOptions;
 
 /*
@@ -143,12 +156,10 @@ typedef struct BloomState
 /*
  * Tuples are very different from all other relations
  */
-typedef uint16 SignType;
-
 typedef struct BloomTuple
 {
 	ItemPointerData heapPtr;
-	SignType	sign[FLEXIBLE_ARRAY_MEMBER];
+	BloomSignatureWord sign[FLEXIBLE_ARRAY_MEMBER];
 }	BloomTuple;
 
 #define BLOOMTUPLEHDRSZ offsetof(BloomTuple, sign)
@@ -156,7 +167,7 @@ typedef struct BloomTuple
 /* Opaque data structure for bloom index scan */
 typedef struct BloomScanOpaqueData
 {
-	SignType   *sign;			/* Scan signature */
+	BloomSignatureWord *sign;			/* Scan signature */
 	BloomState	state;
 }	BloomScanOpaqueData;
 
@@ -170,7 +181,7 @@ extern void BloomFillMetapage(Relation index, Page metaPage);
 extern void BloomInitMetapage(Relation index);
 extern void BloomInitPage(Page page, uint16 flags);
 extern Buffer BloomNewBuffer(Relation index);
-extern void signValue(BloomState * state, SignType * sign, Datum value, int attno);
+extern void signValue(BloomState * state, BloomSignatureWord * sign, Datum value, int attno);
 extern BloomTuple *BloomFormTuple(BloomState * state, ItemPointer iptr, Datum *values, bool *isnull);
 extern bool BloomPageAddItem(BloomState * state, Page page, BloomTuple * tuple);
 

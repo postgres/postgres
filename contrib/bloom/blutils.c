@@ -27,23 +27,26 @@
 
 #include "bloom.h"
 
-/* Signature dealing macros */
-#define BITSIGNTYPE (BITS_PER_BYTE * sizeof(SignType))
-#define GETWORD(x,i) ( *( (SignType*)(x) + (int)( (i) / BITSIGNTYPE ) ) )
-#define CLRBIT(x,i)   GETWORD(x,i) &= ~( 0x01 << ( (i) % BITSIGNTYPE ) )
-#define SETBIT(x,i)   GETWORD(x,i) |=  ( 0x01 << ( (i) % BITSIGNTYPE ) )
-#define GETBIT(x,i) ( (GETWORD(x,i) >> ( (i) % BITSIGNTYPE )) & 0x01 )
+/* Signature dealing macros - note i is assumed to be of type int */
+#define GETWORD(x,i) ( *( (BloomSignatureWord *)(x) + ( (i) / SIGNWORDBITS ) ) )
+#define CLRBIT(x,i)   GETWORD(x,i) &= ~( 0x01 << ( (i) % SIGNWORDBITS ) )
+#define SETBIT(x,i)   GETWORD(x,i) |=  ( 0x01 << ( (i) % SIGNWORDBITS ) )
+#define GETBIT(x,i) ( (GETWORD(x,i) >> ( (i) % SIGNWORDBITS )) & 0x01 )
 
 PG_FUNCTION_INFO_V1(blhandler);
 
-/* Kind of relation optioms for bloom index */
+/* Kind of relation options for bloom index */
 static relopt_kind bl_relopt_kind;
+/* parse table for fillRelOptions */
+static relopt_parse_elt bl_relopt_tab[INDEX_MAX_KEYS + 1];
 
 static int32 myRand(void);
 static void mySrand(uint32 seed);
 
 /*
- * Module initialize function: initilized relation options.
+ * Module initialize function: initialize info about Bloom relation options.
+ *
+ * Note: keep this in sync with makeDefaultBloomOptions().
  */
 void
 _PG_init(void)
@@ -53,15 +56,44 @@ _PG_init(void)
 
 	bl_relopt_kind = add_reloption_kind();
 
+	/* Option for length of signature */
 	add_int_reloption(bl_relopt_kind, "length",
-					  "Length of signature in uint16 type", 5, 1, 256);
+					  "Length of signature in bits",
+					  DEFAULT_BLOOM_LENGTH, 1, MAX_BLOOM_LENGTH);
+	bl_relopt_tab[0].optname = "length";
+	bl_relopt_tab[0].opttype = RELOPT_TYPE_INT;
+	bl_relopt_tab[0].offset = offsetof(BloomOptions, bloomLength);
 
+	/* Number of bits for each possible index column: col1, col2, ... */
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
 	{
-		snprintf(buf, 16, "col%d", i + 1);
+		snprintf(buf, sizeof(buf), "col%d", i + 1);
 		add_int_reloption(bl_relopt_kind, buf,
-					  "Number of bits for corresponding column", 2, 1, 2048);
+						  "Number of bits generated for each index column",
+						  DEFAULT_BLOOM_BITS, 1, MAX_BLOOM_BITS);
+		bl_relopt_tab[i + 1].optname = MemoryContextStrdup(TopMemoryContext,
+														   buf);
+		bl_relopt_tab[i + 1].opttype = RELOPT_TYPE_INT;
+		bl_relopt_tab[i + 1].offset = offsetof(BloomOptions, bitSize[i]);
 	}
+}
+
+/*
+ * Construct a default set of Bloom options.
+ */
+static BloomOptions *
+makeDefaultBloomOptions(void)
+{
+	BloomOptions *opts;
+	int			i;
+
+	opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
+	/* Convert DEFAULT_BLOOM_LENGTH from # of bits to # of words */
+	opts->bloomLength = (DEFAULT_BLOOM_LENGTH + SIGNWORDBITS - 1) / SIGNWORDBITS;
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
+		opts->bitSize[i] = DEFAULT_BLOOM_BITS;
+	SET_VARSIZE(opts, sizeof(BloomOptions));
+	return opts;
 }
 
 /*
@@ -157,7 +189,7 @@ initBloomState(BloomState *state, Relation index)
 
 	memcpy(&state->opts, index->rd_amcache, sizeof(state->opts));
 	state->sizeOfBloomTuple = BLOOMTUPLEHDRSZ +
-		sizeof(SignType) * state->opts.bloomLength;
+		sizeof(BloomSignatureWord) * state->opts.bloomLength;
 }
 
 /*
@@ -208,7 +240,7 @@ mySrand(uint32 seed)
  * Add bits of given value to the signature.
  */
 void
-signValue(BloomState *state, SignType *sign, Datum value, int attno)
+signValue(BloomState *state, BloomSignatureWord *sign, Datum value, int attno)
 {
 	uint32		hashVal;
 	int			nBit,
@@ -231,8 +263,8 @@ signValue(BloomState *state, SignType *sign, Datum value, int attno)
 
 	for (j = 0; j < state->opts.bitSize[attno]; j++)
 	{
-		/* prevent mutiple evaluation */
-		nBit = myRand() % (state->opts.bloomLength * BITSIGNTYPE);
+		/* prevent multiple evaluation in SETBIT macro */
+		nBit = myRand() % (state->opts.bloomLength * SIGNWORDBITS);
 		SETBIT(sign, nBit);
 	}
 }
@@ -362,39 +394,6 @@ BloomInitPage(Page page, uint16 flags)
 }
 
 /*
- * Adjust options of bloom index.
- *
- * This must produce default options when *opts is initially all-zero.
- */
-static void
-adjustBloomOptions(BloomOptions *opts)
-{
-	int				i;
-
-	/* Default length of bloom filter is 5 of 16-bit integers */
-	if (opts->bloomLength <= 0)
-		opts->bloomLength = 5;
-	else if (opts->bloomLength > MAX_BLOOM_LENGTH)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("length of bloom signature (%d) is greater than maximum %d",
-						opts->bloomLength, MAX_BLOOM_LENGTH)));
-
-	/* Check signature length */
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-	{
-		/*
-		 * Zero and negative number of bits is meaningless.  Also setting
-		 * more bits than signature have seems useless.  Replace both cases
-		 * with 2 bits default.
-		 */
-		if (opts->bitSize[i] <= 0
-			|| opts->bitSize[i] >= opts->bloomLength * sizeof(SignType) * BITS_PER_BYTE)
-			opts->bitSize[i] = 2;
-	}
-}
-
-/*
  * Fill in metapage for bloom index.
  */
 void
@@ -405,14 +404,11 @@ BloomFillMetapage(Relation index, Page metaPage)
 
 	/*
 	 * Choose the index's options.  If reloptions have been assigned, use
-	 * those, otherwise create default options by applying adjustBloomOptions
-	 * to a zeroed chunk of memory.  We apply adjustBloomOptions to existing
-	 * reloptions too, just out of paranoia; they should be valid already.
+	 * those, otherwise create default options.
 	 */
 	opts = (BloomOptions *) index->rd_options;
 	if (!opts)
-		opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
-	adjustBloomOptions(opts);
+		opts = makeDefaultBloomOptions();
 
 	/*
 	 * Initialize contents of meta page, including a copy of the options,
@@ -462,30 +458,15 @@ bloptions(Datum reloptions, bool validate)
 	relopt_value *options;
 	int			numoptions;
 	BloomOptions *rdopts;
-	relopt_parse_elt tab[INDEX_MAX_KEYS + 1];
-	int			i;
-	char		buf[16];
 
-	/* Option for length of signature */
-	tab[0].optname = "length";
-	tab[0].opttype = RELOPT_TYPE_INT;
-	tab[0].offset = offsetof(BloomOptions, bloomLength);
-
-	/* Number of bits for each of possible columns: col1, col2, ... */
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-	{
-		snprintf(buf, sizeof(buf), "col%d", i + 1);
-		tab[i + 1].optname = pstrdup(buf);
-		tab[i + 1].opttype = RELOPT_TYPE_INT;
-		tab[i + 1].offset = offsetof(BloomOptions, bitSize[i]);
-	}
-
+	/* Parse the user-given reloptions */
 	options = parseRelOptions(reloptions, validate, bl_relopt_kind, &numoptions);
 	rdopts = allocateReloptStruct(sizeof(BloomOptions), options, numoptions);
 	fillRelOptions((void *) rdopts, sizeof(BloomOptions), options, numoptions,
-				   validate, tab, INDEX_MAX_KEYS + 1);
+				   validate, bl_relopt_tab, lengthof(bl_relopt_tab));
 
-	adjustBloomOptions(rdopts);
+	/* Convert signature length from # of bits to # to words, rounding up */
+	rdopts->bloomLength = (rdopts->bloomLength + SIGNWORDBITS - 1) / SIGNWORDBITS;
 
 	return (bytea *) rdopts;
 }

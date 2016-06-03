@@ -8,8 +8,8 @@
  </indexterm>
 
  <para>
-  <literal>bloom</> is a module which implements an index access method.  It comes
-  as an example of custom access methods and generic WAL records usage.  But it
+  <literal>bloom</> is a module that implements an index access method.  It comes
+  as an example of custom access methods and generic WAL record usage.  But it
   is also useful in itself.
  </para>
 
@@ -22,8 +22,9 @@
    allows fast exclusion of non-candidate tuples via signatures.
    Since a signature is a lossy representation of all indexed attributes,
    search results must be rechecked using heap information.
-   The user can specify signature length (in uint16, default is 5) and the
-   number of bits, which can be set per attribute (1 < colN < 2048).
+   The user can specify signature length in bits (default 80, maximum 4096)
+   and the number of bits generated for each index column (default 2,
+   maximum 4095).
   </para>
 
   <para>
@@ -51,17 +52,17 @@
     <term><literal>length</></term>
     <listitem>
      <para>
-      Length of signature in uint16 type values
+      Length of signature in bits
      </para>
     </listitem>
    </varlistentry>
    </variablelist>
    <variablelist>
    <varlistentry>
-    <term><literal>col1 &mdash; col16</></term>
+    <term><literal>col1 &mdash; col32</></term>
     <listitem>
      <para>
-      Number of bits for corresponding column
+      Number of bits generated for each index column
      </para>
     </listitem>
    </varlistentry>
@@ -77,12 +78,12 @@
 
 <programlisting>
 CREATE INDEX bloomidx ON tbloom USING bloom (i1,i2,i3)
-       WITH (length=5, col1=2, col2=2, col3=4);
+       WITH (length=80, col1=2, col2=2, col3=4);
 </programlisting>
 
   <para>
    Here, we created a bloom index with a signature length of 80 bits,
-   and attributes i1 and i2 mapped to 2 bits, and attribute i3 to 4 bits.
+   and attributes i1 and i2 mapped to 2 bits, and attribute i3 mapped to 4 bits.
   </para>
 
   <para>
