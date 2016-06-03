@@ -14512,10 +14512,16 @@ doNegateFloat(Value *v)
 static Node *
 makeAndExpr(Node *lexpr, Node *rexpr, int location)
 {
+	Node	   *lexp = lexpr;
+
+	/* Look through AEXPR_PAREN nodes so they don't affect flattening */
+	while (IsA(lexp, A_Expr) &&
+		   ((A_Expr *) lexp)->kind == AEXPR_PAREN)
+		lexp = ((A_Expr *) lexp)->lexpr;
 	/* Flatten "a AND b AND c ..." to a single BoolExpr on sight */
-	if (IsA(lexpr, BoolExpr))
+	if (IsA(lexp, BoolExpr))
 	{
-		BoolExpr *blexpr = (BoolExpr *) lexpr;
+		BoolExpr *blexpr = (BoolExpr *) lexp;
 
 		if (blexpr->boolop == AND_EXPR)
 		{
@@ -14529,10 +14535,16 @@ makeAndExpr(Node *lexpr, Node *rexpr, int location)
 static Node *
 makeOrExpr(Node *lexpr, Node *rexpr, int location)
 {
+	Node	   *lexp = lexpr;
+
+	/* Look through AEXPR_PAREN nodes so they don't affect flattening */
+	while (IsA(lexp, A_Expr) &&
+		   ((A_Expr *) lexp)->kind == AEXPR_PAREN)
+		lexp = ((A_Expr *) lexp)->lexpr;
 	/* Flatten "a OR b OR c ..." to a single BoolExpr on sight */
-	if (IsA(lexpr, BoolExpr))
+	if (IsA(lexp, BoolExpr))
 	{
-		BoolExpr *blexpr = (BoolExpr *) lexpr;
+		BoolExpr *blexpr = (BoolExpr *) lexp;
 
 		if (blexpr->boolop == OR_EXPR)
 		{
