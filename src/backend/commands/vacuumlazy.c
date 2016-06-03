@@ -252,8 +252,8 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	vac_close_indexes(nindexes, Irel, NoLock);
 
 	/*
-	 * Compute whether we actually scanned the whole relation. If we did, we
-	 * can adjust relfrozenxid and relminmxid.
+	 * Compute whether we actually scanned the all unfrozen pages. If we did,
+	 * we can adjust relfrozenxid and relminmxid.
 	 *
 	 * NB: We need to check this before truncating the relation, because that
 	 * will change ->rel_pages.
