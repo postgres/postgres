@@ -5368,7 +5368,45 @@ ERROR:  value for domain orderedarray violates check constraint "sorted"
 CONTEXT:  PL/pgSQL function testoa(integer,integer,integer) line 5 at assignment
 drop function arrayassign1();
 drop function testoa(x1 int, x2 int, x3 int);
--- access to call stack
+--
+-- Test handling of expanded arrays
+--
+create function returns_rw_array(int) returns int[]
+language plpgsql as $$
+  declare r int[];
+  begin r := array[$1, $1]; return r; end;
+$$ stable;
+create function consumes_rw_array(int[]) returns int
+language plpgsql as $$
+  begin return $1[1]; end;
+$$ stable;
+-- bug #14174
+explain (verbose, costs off)
+select i, a from
+  (select returns_rw_array(1) as a offset 0) ss,
+  lateral consumes_rw_array(a) i;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Nested Loop
+   Output: i.i, (returns_rw_array(1))
+   ->  Result
+         Output: returns_rw_array(1)
+   ->  Function Scan on public.consumes_rw_array i
+         Output: i.i
+         Function Call: consumes_rw_array((returns_rw_array(1)))
+(7 rows)
+
+select i, a from
+  (select returns_rw_array(1) as a offset 0) ss,
+  lateral consumes_rw_array(a) i;
+ i |   a   
+---+-------
+ 1 | {1,1}
+(1 row)
+
+--
+-- Test access to call stack
+--
 create function inner_func(int)
 returns int as $$
 declare _context text;

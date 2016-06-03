@@ -4237,7 +4237,37 @@ select testoa(1,2,1); -- fail at update
 drop function arrayassign1();
 drop function testoa(x1 int, x2 int, x3 int);
 
--- access to call stack
+
+--
+-- Test handling of expanded arrays
+--
+
+create function returns_rw_array(int) returns int[]
+language plpgsql as $$
+  declare r int[];
+  begin r := array[$1, $1]; return r; end;
+$$ stable;
+
+create function consumes_rw_array(int[]) returns int
+language plpgsql as $$
+  begin return $1[1]; end;
+$$ stable;
+
+-- bug #14174
+explain (verbose, costs off)
+select i, a from
+  (select returns_rw_array(1) as a offset 0) ss,
+  lateral consumes_rw_array(a) i;
+
+select i, a from
+  (select returns_rw_array(1) as a offset 0) ss,
+  lateral consumes_rw_array(a) i;
+
+
+--
+-- Test access to call stack
+--
+
 create function inner_func(int)
 returns int as $$
 declare _context text;
