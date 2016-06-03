@@ -32,12 +32,12 @@ create event trigger regress_event_trigger_end on ddl_command_end
 
 -- should fail, food is not a valid filter variable
 create event trigger regress_event_trigger2 on ddl_command_start
-   when food in ('sandwhich')
+   when food in ('sandwich')
    execute procedure test_event_trigger();
 
--- should fail, sandwhich is not a valid command tag
+-- should fail, sandwich is not a valid command tag
 create event trigger regress_event_trigger2 on ddl_command_start
-   when tag in ('sandwhich')
+   when tag in ('sandwich')
    execute procedure test_event_trigger();
 
 -- should fail, create skunkcabbage is not a valid command tag

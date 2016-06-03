@@ -4,5 +4,5 @@ demonstration of how to use the datatype, and to provide some unit tests for
 it.
 
 The functions in this extension are intended to be able to process some
-part of the struct and produce some readable output, preferrably handling
+part of the struct and produce some readable output, preferably handling
 all possible cases so that SQL test code can be written.

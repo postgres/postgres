@@ -316,7 +316,7 @@ F831	Full cursor update			NO
 F831	Full cursor update	01	Updatable scrollable cursors	NO	
 F831	Full cursor update	02	Updatable ordered cursors	NO	
 F841	LIKE_REGEX predicate			NO	
-F842	OCCURENCES_REGEX function			NO	
+F842	OCCURRENCES_REGEX function			NO	
 F843	POSITION_REGEX function			NO	
 F844	SUBSTRING_REGEX function			NO	
 F845	TRANSLATE_REGEX function			NO	

@@ -45,7 +45,7 @@
  *	(3) the prefix of the current node
  *
  * If we visualize them on our simplified drawing (see the drawing above);
- * transfered boundaries of (1) would be the outer axis, relevant part
+ * transferred boundaries of (1) would be the outer axis, relevant part
  * of (2) would be the up right part of the other axis, and (3) would be
  * the inner axis.
  *

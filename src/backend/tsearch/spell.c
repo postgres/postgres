@@ -1162,7 +1162,7 @@ getAffixFlagSet(IspellDict *Conf, char *s)
 
 		if (curaffix > 0 && curaffix <= Conf->nAffixData)
 			/*
-			 * Do not substract 1 from curaffix
+			 * Do not subtract 1 from curaffix
 			 * because empty string was added in NIImportOOAffixes
 			 */
 			return Conf->AffixData[curaffix];

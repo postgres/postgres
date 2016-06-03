@@ -1973,7 +1973,7 @@ BufferSync(int flags)
 		}
 
 		/*
-		 * Measure progress independent of actualy having to flush the buffer
+		 * Measure progress independent of actually having to flush the buffer
 		 * - otherwise writing become unbalanced.
 		 */
 		ts_stat->progress += ts_stat->progress_slice;

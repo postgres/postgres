@@ -2518,7 +2518,7 @@ include_dir 'conf.d'
         less than <varname>wal_writer_flush_after</> bytes of WAL have been
         produced since, WAL is only written to the OS, not flushed to disk.
         If <varname>wal_writer_flush_after</> is set to <literal>0</> WAL is
-        flushed everytime the WAL writer has written WAL.  The default is
+        flushed every time the WAL writer has written WAL.  The default is
         <literal>1MB</literal>. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>

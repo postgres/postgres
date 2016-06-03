@@ -563,7 +563,7 @@ ReorderBufferTXNByXid(ReorderBuffer *rb, TransactionId xid, bool create,
 		}
 
 		/*
-		 * cached as non-existant, and asked not to create? Then nothing else
+		 * cached as non-existent, and asked not to create? Then nothing else
 		 * to do.
 		 */
 		if (!create)

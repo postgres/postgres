@@ -368,7 +368,7 @@ sub Save
 
 sub GetAdditionalLinkerDependencies
 {
-	my ($self, $cfgname, $seperator) = @_;
+	my ($self, $cfgname, $separator) = @_;
 	my $libcfg = (uc $cfgname eq "RELEASE") ? "MD" : "MDd";
 	my $libs = '';
 	foreach my $lib (@{ $self->{libraries} })
@@ -382,7 +382,7 @@ sub GetAdditionalLinkerDependencies
 				last;
 			}
 		}
-		$libs .= $xlib . $seperator;
+		$libs .= $xlib . $separator;
 	}
 	$libs =~ s/.$//;
 	$libs =~ s/__CFGNAME__/$cfgname/g;

@@ -236,7 +236,7 @@ buildACLCommands(const char *name, const char *subname,
 			 * manner by first REVOKE'ing the rights and then GRANT'ing them
 			 * after.  With 9.6 and above, what we need to REVOKE and what we
 			 * need to GRANT is figured out when we dump and stashed into
-			 * "racls" and "acls", respectivly.  See above.
+			 * "racls" and "acls", respectively.  See above.
 			 */
 			if (remoteVersion < 90600 && owner
 				&& strcmp(grantee->data, owner) == 0

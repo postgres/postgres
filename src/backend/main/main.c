@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 		 * read-only activities.  The -C case is important because pg_ctl may
 		 * try to invoke it while still holding administrator privileges on
 		 * Windows.  Note that while -C can normally be in any argv position,
-		 * if you wanna bypass the root check you gotta put it first.  This
+		 * if you want to bypass the root check you must put it first.  This
 		 * reduces the risk that we might misinterpret some other mode's -C
 		 * switch as being the postmaster/postgres one.
 		 */

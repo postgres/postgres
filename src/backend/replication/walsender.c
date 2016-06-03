@@ -747,7 +747,7 @@ StartReplication(StartReplicationCmd *cmd)
  *
  * Inside the walsender we can do better than logical_read_local_xlog_page,
  * which has to do a plain sleep/busy loop, because the walsender's latch gets
- * set everytime WAL is flushed.
+ * set every time WAL is flushed.
  */
 static int
 logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,

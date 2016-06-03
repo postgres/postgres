@@ -373,7 +373,7 @@ ResourceArrayGetAny(ResourceArray *resarr, Datum *value)
 	}
 	else
 	{
-		/* Hash: search forward from whereever we were last. */
+		/* Hash: search forward from wherever we were last. */
 		uint32		mask = resarr->capacity - 1;
 
 		for (;;)

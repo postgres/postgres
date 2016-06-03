@@ -9,7 +9,7 @@
  * Leave a higher value in place. When building with at least Visual
  * Studio 2015 the minimum requirement is Windows Vista (0x0600) to
  * get support for GetLocaleInfoEx() with locales. For everything else
- * the minumum version is Windows XP (0x0501).
+ * the minimum version is Windows XP (0x0501).
  * Also for VS2015, add a define that stops compiler complaints about
  * using the old Winsock API.
  */

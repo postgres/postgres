@@ -1788,7 +1788,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
-	/* some way to handle non-existant segments needs to be specified */
+	/* some way to handle non-existent segments needs to be specified */
 	Assert(behavior &
 		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL));
 

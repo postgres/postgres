@@ -64,7 +64,7 @@ struct GenericXLogState
 	/*
 	 * page's images. Should be first in this struct to have MAXALIGN'ed
 	 * images addresses, because some code working with pages directly aligns
-	 * addresses, not an offsets from begining of page
+	 * addresses, not offsets from beginning of page
 	 */
 	char		images[MAX_GENERIC_XLOG_PAGES * BLCKSZ];
 	PageData	pages[MAX_GENERIC_XLOG_PAGES];

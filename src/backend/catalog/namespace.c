@@ -297,7 +297,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 					namespaceId = LookupExplicitNamespace(relation->schemaname, missing_ok);
 
 					/*
-					 * For missing_ok, allow a non-existant schema name to
+					 * For missing_ok, allow a non-existent schema name to
 					 * return InvalidOid.
 					 */
 					if (namespaceId != myTempNamespace)
