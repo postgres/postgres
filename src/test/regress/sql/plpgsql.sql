@@ -4263,6 +4263,18 @@ select i, a from
   (select returns_rw_array(1) as a offset 0) ss,
   lateral consumes_rw_array(a) i;
 
+explain (verbose, costs off)
+select consumes_rw_array(a), a from returns_rw_array(1) a;
+
+select consumes_rw_array(a), a from returns_rw_array(1) a;
+
+explain (verbose, costs off)
+select consumes_rw_array(a), a from
+  (values (returns_rw_array(1)), (returns_rw_array(2))) v(a);
+
+select consumes_rw_array(a), a from
+  (values (returns_rw_array(1)), (returns_rw_array(2))) v(a);
+
 
 --
 -- Test access to call stack
