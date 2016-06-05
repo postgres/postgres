@@ -485,7 +485,7 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	char	   *data;
 	Size		sz = 0;
 
-	/* 
+	/*
 	 * Use MAXALIGN size/alignment to guarantee that later uses of memory are
 	 * aligned correctly. E.g. epoll_event might need 8 byte alignment on some
 	 * platforms, but earlier allocations like WaitEventSet and WaitEvent
