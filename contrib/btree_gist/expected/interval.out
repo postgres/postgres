@@ -89,3 +89,21 @@ SELECT a, a <-> '199 days 21:21:23' FROM intervaltmp ORDER BY a <-> '199 days 21
  @ 220 days 19 hours 5 mins 42 secs  | @ 21 days -2 hours -15 mins -41 secs
 (3 rows)
 
+SET enable_indexonlyscan=off;
+EXPLAIN (COSTS OFF)
+SELECT a, a <-> '199 days 21:21:23' FROM intervaltmp ORDER BY a <-> '199 days 21:21:23' LIMIT 3;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Limit
+   ->  Index Scan using intervalidx on intervaltmp
+         Order By: (a <-> '@ 199 days 21 hours 21 mins 23 secs'::interval)
+(3 rows)
+
+SELECT a, a <-> '199 days 21:21:23' FROM intervaltmp ORDER BY a <-> '199 days 21:21:23' LIMIT 3;
+                  a                  |               ?column?               
+-------------------------------------+--------------------------------------
+ @ 199 days 21 hours 21 mins 23 secs | @ 0
+ @ 183 days 6 hours 52 mins 48 secs  | @ 16 days 14 hours 28 mins 35 secs
+ @ 220 days 19 hours 5 mins 42 secs  | @ 21 days -2 hours -15 mins -41 secs
+(3 rows)
+
