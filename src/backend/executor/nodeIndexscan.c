@@ -967,9 +967,20 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 			Oid			orderbyop = lfirst_oid(lco);
 			Node	   *orderbyexpr = (Node *) lfirst(lcx);
 			Oid			orderbyType = exprType(orderbyexpr);
+			Oid			orderbyColl = exprCollation(orderbyexpr);
+			SortSupport orderbysort = &indexstate->iss_SortSupport[i];
 
-			PrepareSortSupportFromOrderingOp(orderbyop,
-											 &indexstate->iss_SortSupport[i]);
+			/* Initialize sort support */
+			orderbysort->ssup_cxt = CurrentMemoryContext;
+			orderbysort->ssup_collation = orderbyColl;
+			/* See cmp_orderbyvals() comments on NULLS LAST */
+			orderbysort->ssup_nulls_first = false;
+			/* ssup_attno is unused here and elsewhere */
+			orderbysort->ssup_attno = 0;
+			/* No abbreviation */
+			orderbysort->abbreviate = false;
+			PrepareSortSupportFromOrderingOp(orderbyop, orderbysort);
+
 			get_typlenbyval(orderbyType,
 							&indexstate->iss_OrderByTypLens[i],
 							&indexstate->iss_OrderByTypByVals[i]);
