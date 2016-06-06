@@ -367,10 +367,9 @@ bool		pid_lock_file_exists(const char *datadir);
 
 /* file.c */
 
-const char *copyFile(const char *src, const char *dst, bool force);
+const char *copyFile(const char *src, const char *dst);
 const char *linkFile(const char *src, const char *dst);
-const char *rewriteVisibilityMap(const char *fromfile, const char *tofile,
-								 bool force);
+const char *rewriteVisibilityMap(const char *fromfile, const char *tofile);
 
 void		check_hard_link(void);
 FILE	   *fopen_priv(const char *path, const char *mode);

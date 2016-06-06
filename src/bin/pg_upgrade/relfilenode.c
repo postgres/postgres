@@ -248,9 +248,9 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 
 			/* Rewrite visibility map if needed */
 			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-				msg = rewriteVisibilityMap(old_file, new_file, true);
+				msg = rewriteVisibilityMap(old_file, new_file);
 			else
-				msg = copyFile(old_file, new_file, true);
+				msg = copyFile(old_file, new_file);
 
 			if (msg)
 				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
@@ -262,7 +262,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 
 			/* Rewrite visibility map if needed */
 			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-				msg = rewriteVisibilityMap(old_file, new_file, true);
+				msg = rewriteVisibilityMap(old_file, new_file);
 			else
 				msg = linkFile(old_file, new_file);
 

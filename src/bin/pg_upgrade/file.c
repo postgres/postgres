@@ -22,7 +22,7 @@
 
 
 #ifndef WIN32
-static int	copy_file(const char *fromfile, const char *tofile, bool force);
+static int	copy_file(const char *fromfile, const char *tofile);
 #else
 static int	win32_pghardlink(const char *src, const char *dst);
 #endif
@@ -34,12 +34,12 @@ static int	win32_pghardlink(const char *src, const char *dst);
  *	Copies a relation file from src to dst.
  */
 const char *
-copyFile(const char *src, const char *dst, bool force)
+copyFile(const char *src, const char *dst)
 {
 #ifndef WIN32
-		if (copy_file(src, dst, force) == -1)
+		if (copy_file(src, dst) == -1)
 #else
-		if (CopyFile(src, dst, !force) == 0)
+		if (CopyFile(src, dst, true) == 0)
 #endif
 			return getErrorText();
 		else
@@ -68,7 +68,7 @@ linkFile(const char *src, const char *dst)
 
 #ifndef WIN32
 static int
-copy_file(const char *srcfile, const char *dstfile, bool force)
+copy_file(const char *srcfile, const char *dstfile)
 {
 #define COPY_BUF_SIZE (50 * BLCKSZ)
 
@@ -87,7 +87,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 	if ((src_fd = open(srcfile, O_RDONLY, 0)) < 0)
 		return -1;
 
-	if ((dest_fd = open(dstfile, O_RDWR | O_CREAT | (force ? 0 : O_EXCL), S_IRUSR | S_IWUSR)) < 0)
+	if ((dest_fd = open(dstfile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
 	{
 		save_errno = errno;
 
@@ -159,7 +159,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  * VACUUM.
  */
 const char *
-rewriteVisibilityMap(const char *fromfile, const char *tofile, bool force)
+rewriteVisibilityMap(const char *fromfile, const char *tofile)
 {
 	int			src_fd = 0;
 	int			dst_fd = 0;
@@ -186,7 +186,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile, bool force)
 		return getErrorText();
 	}
 
-	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | (force ? 0 : O_EXCL), S_IRUSR | S_IWUSR)) < 0)
+	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
 	{
 		close(src_fd);
 		return getErrorText();
