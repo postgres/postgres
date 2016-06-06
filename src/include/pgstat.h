@@ -359,6 +359,7 @@ typedef struct PgStat_MsgAnalyze
 	Oid			m_databaseid;
 	Oid			m_tableoid;
 	bool		m_autovacuum;
+	bool		m_resetcounter;
 	TimestampTz m_analyzetime;
 	PgStat_Counter m_live_tuples;
 	PgStat_Counter m_dead_tuples;
@@ -788,7 +789,8 @@ extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 					 PgStat_Counter tuples);
 extern void pgstat_report_analyze(Relation rel,
-					  PgStat_Counter livetuples, PgStat_Counter deadtuples);
+					  PgStat_Counter livetuples, PgStat_Counter deadtuples,
+					  bool resetcounter);
 
 extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);
