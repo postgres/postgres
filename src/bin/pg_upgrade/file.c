@@ -165,6 +165,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile, bool force)
 	int			dst_fd = 0;
 	char		buffer[BLCKSZ];
 	ssize_t		bytesRead;
+	ssize_t		totalBytesRead = 0;
 	ssize_t		src_filesize;
 	int			rewriteVmBytesPerPage;
 	BlockNumber new_blkno = 0;
@@ -200,13 +201,23 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile, bool force)
 	 * page is empty, we skip it, mostly to avoid turning one-page visibility
 	 * maps for small relations into two pages needlessly.
 	 */
-	while ((bytesRead = read(src_fd, buffer, BLCKSZ)) == BLCKSZ)
+	while (totalBytesRead < src_filesize)
 	{
 		char	   *old_cur;
 		char	   *old_break;
 		char	   *old_blkend;
 		PageHeaderData pageheader;
-		bool		old_lastblk = ((BLCKSZ * (new_blkno + 1)) == src_filesize);
+		bool		old_lastblk;
+
+		if ((bytesRead = read(src_fd, buffer, BLCKSZ)) != BLCKSZ)
+		{
+			close(dst_fd);
+			close(src_fd);
+			return getErrorText();
+		}
+
+		totalBytesRead += BLCKSZ;
+		old_lastblk = (totalBytesRead == src_filesize);
 
 		/* Save the page header data */
 		memcpy(&pageheader, buffer, SizeOfPageHeaderData);
