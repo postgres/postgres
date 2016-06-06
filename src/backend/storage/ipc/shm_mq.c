@@ -366,9 +366,15 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 		res = shm_mq_send_bytes(mqh, sizeof(Size) - mqh->mqh_partial_bytes,
 								((char *) &nbytes) +mqh->mqh_partial_bytes,
 								nowait, &bytes_written);
-		mqh->mqh_partial_bytes += bytes_written;
-		if (res != SHM_MQ_SUCCESS)
+
+		if (res == SHM_MQ_DETACHED)
+		{
+			/* Reset state in case caller tries to send another message. */
+			mqh->mqh_partial_bytes = 0;
+			mqh->mqh_length_word_complete = false;
 			return res;
+		}
+		mqh->mqh_partial_bytes += bytes_written;
 
 		if (mqh->mqh_partial_bytes >= sizeof(Size))
 		{
@@ -377,6 +383,9 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 			mqh->mqh_partial_bytes = 0;
 			mqh->mqh_length_word_complete = true;
 		}
+
+		if (res != SHM_MQ_SUCCESS)
+			return res;
 
 		/* Length word can't be split unless bigger than required alignment. */
 		Assert(mqh->mqh_length_word_complete || sizeof(Size) > MAXIMUM_ALIGNOF);
@@ -432,7 +441,17 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 						break;
 				}
 			}
+
 			res = shm_mq_send_bytes(mqh, j, tmpbuf, nowait, &bytes_written);
+
+			if (res == SHM_MQ_DETACHED)
+			{
+				/* Reset state in case caller tries to send another message. */
+				mqh->mqh_partial_bytes = 0;
+				mqh->mqh_length_word_complete = false;
+				return res;
+			}
+
 			mqh->mqh_partial_bytes += bytes_written;
 			if (res != SHM_MQ_SUCCESS)
 				return res;
@@ -449,6 +468,15 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 			chunksize = MAXALIGN_DOWN(chunksize);
 		res = shm_mq_send_bytes(mqh, chunksize, &iov[which_iov].data[offset],
 								nowait, &bytes_written);
+
+		if (res == SHM_MQ_DETACHED)
+		{
+			/* Reset state in case caller tries to send another message. */
+			mqh->mqh_length_word_complete = false;
+			mqh->mqh_partial_bytes = 0;
+			return res;
+		}
+
 		mqh->mqh_partial_bytes += bytes_written;
 		offset += bytes_written;
 		if (res != SHM_MQ_SUCCESS)
