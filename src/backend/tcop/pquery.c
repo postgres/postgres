@@ -1109,7 +1109,13 @@ RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 			if (!ok)
 				break;
 
-			(*dest->receiveSlot) (slot, dest);
+			/*
+			 * If we are not able to send the tuple, we assume the destination
+			 * has closed and no more tuples can be sent. If that's the case,
+			 * end the loop.
+			 */
+			if (!((*dest->receiveSlot) (slot, dest)))
+				break;
 
 			ExecClearTuple(slot);
 

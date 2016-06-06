@@ -4454,7 +4454,7 @@ copy_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 /*
  * copy_dest_receive --- receive one tuple
  */
-static void
+static bool
 copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_copy    *myState = (DR_copy *) self;
@@ -4466,6 +4466,8 @@ copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 	/* And send the data */
 	CopyOneRowTo(cstate, InvalidOid, slot->tts_values, slot->tts_isnull);
 	myState->processed++;
+
+	return true;
 }
 
 /*

@@ -37,8 +37,8 @@ typedef struct
 } TStoreState;
 
 
-static void tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self);
-static void tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self);
+static bool tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self);
+static bool tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self);
 
 
 /*
@@ -90,19 +90,21 @@ tstoreStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo)
  * Receive a tuple from the executor and store it in the tuplestore.
  * This is for the easy case where we don't have to detoast.
  */
-static void
+static bool
 tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self)
 {
 	TStoreState *myState = (TStoreState *) self;
 
 	tuplestore_puttupleslot(myState->tstore, slot);
+
+	return true;
 }
 
 /*
  * Receive a tuple from the executor and store it in the tuplestore.
  * This is for the case where we have to detoast any toasted values.
  */
-static void
+static bool
 tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 {
 	TStoreState *myState = (TStoreState *) self;
@@ -152,6 +154,8 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	/* And release any temporary detoasted values */
 	for (i = 0; i < nfree; i++)
 		pfree(DatumGetPointer(myState->tofree[i]));
+
+	return true;
 }
 
 /*

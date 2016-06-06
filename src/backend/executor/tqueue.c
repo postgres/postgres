@@ -115,12 +115,13 @@ static RemapInfo *BuildRemapInfo(TupleDesc tupledesc);
  * type over a range type over a range type over an array type over a record,
  * or something like that.
  */
-static void
+static bool
 tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 {
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
 	TupleDesc	tupledesc = slot->tts_tupleDescriptor;
 	HeapTuple	tuple;
+	shm_mq_result result;
 
 	/*
 	 * Test to see whether the tupledesc has changed; if so, set up for the
@@ -195,7 +196,16 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 	}
 
 	/* Send the tuple itself. */
-	shm_mq_send(tqueue->handle, tuple->t_len, tuple->t_data, false);
+	result = shm_mq_send(tqueue->handle, tuple->t_len, tuple->t_data, false);
+
+	if (result == SHM_MQ_DETACHED)
+		return false;
+	else if (result != SHM_MQ_SUCCESS)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("unable to send tuples")));
+
+	return true;
 }
 
 /*

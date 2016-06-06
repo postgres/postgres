@@ -104,7 +104,9 @@ typedef enum
  *		pointers that the executor must call.
  *
  * Note: the receiveSlot routine must be passed a slot containing a TupleDesc
- * identical to the one given to the rStartup routine.
+ * identical to the one given to the rStartup routine.  It returns bool where
+ * a "true" value means "continue processing" and a "false" value means
+ * "stop early, just as if we'd reached the end of the scan".
  * ----------------
  */
 typedef struct _DestReceiver DestReceiver;
@@ -112,7 +114,7 @@ typedef struct _DestReceiver DestReceiver;
 struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
-	void		(*receiveSlot) (TupleTableSlot *slot,
+	bool		(*receiveSlot) (TupleTableSlot *slot,
 											DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
 	void		(*rStartup) (DestReceiver *self,

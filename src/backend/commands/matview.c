@@ -56,7 +56,7 @@ typedef struct
 static int	matview_maintenance_depth = 0;
 
 static void transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
-static void transientrel_receive(TupleTableSlot *slot, DestReceiver *self);
+static bool transientrel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static void refresh_matview_datafill(DestReceiver *dest, Query *query,
@@ -467,7 +467,7 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 /*
  * transientrel_receive --- receive one tuple
  */
-static void
+static bool
 transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_transientrel *myState = (DR_transientrel *) self;
@@ -486,6 +486,8 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 				myState->bistate);
 
 	/* We know this is a newly created relation, so there are no indexes */
+
+	return true;
 }
 
 /*

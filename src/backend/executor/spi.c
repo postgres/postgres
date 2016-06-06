@@ -1774,7 +1774,7 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  *		store tuple retrieved by Executor into SPITupleTable
  *		of current SPI procedure
  */
-void
+bool
 spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 {
 	SPITupleTable *tuptable;
@@ -1809,6 +1809,8 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 	(tuptable->free)--;
 
 	MemoryContextSwitchTo(oldcxt);
+
+	return true;
 }
 
 /*

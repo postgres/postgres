@@ -45,9 +45,10 @@
  *		dummy DestReceiver functions
  * ----------------
  */
-static void
+static bool
 donothingReceive(TupleTableSlot *slot, DestReceiver *self)
 {
+	return true;
 }
 
 static void
