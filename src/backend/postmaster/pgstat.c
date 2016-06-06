@@ -1340,11 +1340,15 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
  * pgstat_report_analyze() -
  *
  *	Tell the collector about the table we just analyzed.
+ *
+ * Caller must provide new live- and dead-tuples estimates, as well as a
+ * flag indicating whether to reset the changes_since_analyze counter.
  * --------
  */
 void
 pgstat_report_analyze(Relation rel,
-					  PgStat_Counter livetuples, PgStat_Counter deadtuples)
+					  PgStat_Counter livetuples, PgStat_Counter deadtuples,
+					  bool resetcounter)
 {
 	PgStat_MsgAnalyze msg;
 
@@ -1381,6 +1385,7 @@ pgstat_report_analyze(Relation rel,
 	msg.m_databaseid = rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = RelationGetRelid(rel);
 	msg.m_autovacuum = IsAutoVacuumWorkerProcess();
+	msg.m_resetcounter = resetcounter;
 	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
@@ -5263,10 +5268,12 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	tabentry->n_dead_tuples = msg->m_dead_tuples;
 
 	/*
-	 * We reset changes_since_analyze to zero, forgetting any changes that
-	 * occurred while the ANALYZE was in progress.
+	 * If commanded, reset changes_since_analyze to zero.  This forgets any
+	 * changes that were committed while the ANALYZE was in progress, but we
+	 * have no good way to estimate how many of those there were.
 	 */
-	tabentry->changes_since_analyze = 0;
+	if (msg->m_resetcounter)
+		tabentry->changes_since_analyze = 0;
 
 	if (msg->m_autovacuum)
 	{

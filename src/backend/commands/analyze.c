@@ -611,10 +611,13 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	/*
 	 * Report ANALYZE to the stats collector, too.  However, if doing
 	 * inherited stats we shouldn't report, because the stats collector only
-	 * tracks per-table stats.
+	 * tracks per-table stats.  Reset the changes_since_analyze counter only
+	 * if we analyzed all columns; otherwise, there is still work for
+	 * auto-analyze to do.
 	 */
 	if (!inh)
-		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
+		pgstat_report_analyze(onerel, totalrows, totaldeadrows,
+							  (va_cols == NIL));
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
 	if (!(options & VACOPT_VACUUM))
