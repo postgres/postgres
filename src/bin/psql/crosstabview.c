@@ -122,13 +122,13 @@ PrintResultsInCrosstab(const PGresult *res)
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		psql_error(_("\\crosstabview: query must return results to be shown in crosstab\n"));
+		psql_error("\\crosstabview: query must return results to be shown in crosstab\n");
 		goto error_return;
 	}
 
 	if (PQnfields(res) < 3)
 	{
-		psql_error(_("\\crosstabview: query must return at least three columns\n"));
+		psql_error("\\crosstabview: query must return at least three columns\n");
 		goto error_return;
 	}
 
@@ -155,7 +155,7 @@ PrintResultsInCrosstab(const PGresult *res)
 	/* Insist that header columns be distinct */
 	if (field_for_columns == field_for_rows)
 	{
-		psql_error(_("\\crosstabview: vertical and horizontal headers must be different columns\n"));
+		psql_error("\\crosstabview: vertical and horizontal headers must be different columns\n");
 		goto error_return;
 	}
 
@@ -171,7 +171,7 @@ PrintResultsInCrosstab(const PGresult *res)
 		 */
 		if (PQnfields(res) != 3)
 		{
-			psql_error(_("\\crosstabview: data column must be specified when query returns more than three columns\n"));
+			psql_error("\\crosstabview: data column must be specified when query returns more than three columns\n");
 			goto error_return;
 		}
 
@@ -227,7 +227,7 @@ PrintResultsInCrosstab(const PGresult *res)
 
 		if (piv_columns.count > CROSSTABVIEW_MAX_COLUMNS)
 		{
-			psql_error(_("\\crosstabview: maximum number of columns (%d) exceeded\n"),
+			psql_error("\\crosstabview: maximum number of columns (%d) exceeded\n",
 					   CROSSTABVIEW_MAX_COLUMNS);
 			goto error_return;
 		}
@@ -395,7 +395,7 @@ printCrosstab(const PGresult *results,
 			 */
 			if (cont.cells[idx] != NULL)
 			{
-				psql_error(_("\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"\n"),
+				psql_error("\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"\n",
 							 piv_rows[row_number].name ? piv_rows[row_number].name :
 							 popt.nullPrint ? popt.nullPrint : "(null)",
 							 piv_columns[col_number].name ? piv_columns[col_number].name :
@@ -643,7 +643,7 @@ indexOfColumn(char *arg, const PGresult *res)
 		idx = atoi(arg) - 1;
 		if (idx < 0 || idx >= PQnfields(res))
 		{
-			psql_error(_("\\crosstabview: invalid column number: \"%s\"\n"), arg);
+			psql_error("\\crosstabview: invalid column number: \"%s\"\n", arg);
 			return -1;
 		}
 	}
@@ -667,7 +667,7 @@ indexOfColumn(char *arg, const PGresult *res)
 				if (idx >= 0)
 				{
 					/* another idx was already found for the same name */
-					psql_error(_("\\crosstabview: ambiguous column name: \"%s\"\n"), arg);
+					psql_error("\\crosstabview: ambiguous column name: \"%s\"\n", arg);
 					return -1;
 				}
 				idx = i;
@@ -675,7 +675,7 @@ indexOfColumn(char *arg, const PGresult *res)
 		}
 		if (idx == -1)
 		{
-			psql_error(_("\\crosstabview: column name not found: \"%s\"\n"), arg);
+			psql_error("\\crosstabview: column name not found: \"%s\"\n", arg);
 			return -1;
 		}
 	}
