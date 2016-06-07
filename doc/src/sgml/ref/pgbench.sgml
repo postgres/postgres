@@ -778,7 +778,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </para>
 
    <table id="pgbench-automatic-variables">
-    <title>Automatic variables</title>
+    <title>Automatic Variables</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -912,14 +912,14 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
  <refsect2 id="pgbench-builtin-functions">
   <title>Built-In Functions</title>
 
-   <para>
-     The following functions are built into <application>pgbench</> and
-     may be used in expressions appearing in
-     <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
-   </para>
+  <para>
+   The functions listed in <xref linkend="pgbench-functions"> are built
+   into <application>pgbench</> and may be used in expressions appearing in
+   <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
+  </para>
 
    <!-- list pgbench functions in alphabetical order -->
-   <table>
+   <table id="pgbench-functions">
     <title>pgbench Functions</title>
     <tgroup cols="5">
      <thead>
