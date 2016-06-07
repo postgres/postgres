@@ -1,4 +1,4 @@
 # intagg extension
 comment = 'integer aggregator and enumerator (obsolete)'
-default_version = '1.0'
+default_version = '1.1'
 relocatable = true
