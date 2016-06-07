@@ -129,6 +129,70 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 	return true;
 }
 
+/* \dA
+ * Takes an optional regexp to select particular access methods
+ */
+bool
+describeAccessMethods(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+	static const bool translate_columns[] = {false, true, false};
+
+	if (pset.sversion < 90600)
+	{
+		psql_error("The server (version %d.%d) does not support access methods.\n",
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT amname AS \"%s\",\n"
+					  "  CASE amtype"
+					  " WHEN 'i' THEN '%s'"
+					  " END AS \"%s\"",
+					  gettext_noop("Name"),
+					  gettext_noop("Index"),
+					  gettext_noop("Type"));
+
+	if (verbose)
+	{
+		appendPQExpBuffer(&buf,
+						  ",\n  amhandler AS \"%s\",\n"
+					  "  pg_catalog.obj_description(oid, 'pg_am') AS \"%s\"",
+						  gettext_noop("Handler"),
+						  gettext_noop("Description"));
+	}
+
+	appendPQExpBufferStr(&buf,
+						 "\nFROM pg_catalog.pg_am\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  NULL, "amname", NULL,
+						  NULL);
+
+	appendPQExpBufferStr(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of access methods");
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
+	myopt.n_translate_columns = lengthof(translate_columns);
+
+	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
 /* \db
  * Takes an optional regexp to select particular tablespaces
  */

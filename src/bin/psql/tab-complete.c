@@ -1276,7 +1276,7 @@ psql_completion(const char *text, int start, int end)
 	static const char *const backslash_commands[] = {
 		"\\a", "\\connect", "\\conninfo", "\\C", "\\cd", "\\copy",
 		"\\copyright", "\\crosstabview",
-		"\\d", "\\da", "\\db", "\\dc", "\\dC", "\\dd", "\\ddp", "\\dD",
+		"\\d", "\\da", "\\dA", "\\db", "\\dc", "\\dC", "\\dd", "\\ddp", "\\dD",
 		"\\des", "\\det", "\\deu", "\\dew", "\\dE", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", "\\dL",
 		"\\dm", "\\dn", "\\do", "\\dO", "\\dp", "\\drds", "\\ds", "\\dS",
@@ -1910,7 +1910,8 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches2("COMMENT", "ON"))
 	{
 		static const char *const list_COMMENT[] =
-		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "EVENT TRIGGER", "EXTENSION",
+		{"ACCESS METHOD", "CAST", "COLLATION", "CONVERSION", "DATABASE",
+			"EVENT TRIGGER", "EXTENSION",
 			"FOREIGN DATA WRAPPER", "FOREIGN TABLE",
 			"SERVER", "INDEX", "LANGUAGE", "POLICY", "RULE", "SCHEMA", "SEQUENCE",
 			"TABLE", "TYPE", "VIEW", "MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
@@ -1919,6 +1920,8 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
+	else if (Matches4("COMMENT", "ON", "ACCESS", "METHOD"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_access_methods);
 	else if (Matches3("COMMENT", "ON", "FOREIGN"))
 		COMPLETE_WITH_LIST2("DATA WRAPPER", "TABLE");
 	else if (Matches4("COMMENT", "ON", "TEXT", "SEARCH"))
@@ -2330,6 +2333,12 @@ psql_completion(const char *text, int start, int end)
 	}
 	else if (Matches5("DROP", "TRIGGER", MatchAny, "ON", MatchAny))
 		COMPLETE_WITH_LIST2("CASCADE", "RESTRICT");
+
+	/* DROP ACCESS METHOD */
+	else if (Matches2("DROP", "ACCESS"))
+		COMPLETE_WITH_CONST("METHOD");
+	else if (Matches3("DROP", "ACCESS", "METHOD"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_access_methods);
 
 	/* DROP EVENT TRIGGER */
 	else if (Matches2("DROP", "EVENT"))
@@ -2931,6 +2940,8 @@ psql_completion(const char *text, int start, int end)
 	}
 	else if (TailMatchesCS1("\\da*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);
+	else if (TailMatchesCS1("\\dA*"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_access_methods);
 	else if (TailMatchesCS1("\\db*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
 	else if (TailMatchesCS1("\\dD*"))

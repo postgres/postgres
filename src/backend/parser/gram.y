@@ -5693,7 +5693,8 @@ opt_restart_seqs:
  *	The COMMENT ON statement can take different forms based upon the type of
  *	the object associated with the comment. The form of the statement is:
  *
- *	COMMENT ON [ [ CONVERSION | COLLATION | DATABASE | DOMAIN |
+ *	COMMENT ON [ [ ACCESS METHOD | CONVERSION | COLLATION |
+ *                 DATABASE | DOMAIN |
  *                 EXTENSION | EVENT TRIGGER | FOREIGN DATA WRAPPER |
  *                 FOREIGN TABLE | INDEX | [PROCEDURAL] LANGUAGE |
  *                 MATERIALIZED VIEW | POLICY | ROLE | SCHEMA | SEQUENCE |
@@ -5713,7 +5714,7 @@ opt_restart_seqs:
  *				 OPERATOR FAMILY <name> USING <access-method> |
  *				 RULE <rulename> ON <relname> |
  *				 TRIGGER <triggername> ON <relname> ]
- *			   IS 'text'
+ *			   IS { 'text' | NULL }
  *
  *****************************************************************************/
 
@@ -5888,7 +5889,8 @@ CommentStmt:
 		;
 
 comment_type:
-			COLUMN								{ $$ = OBJECT_COLUMN; }
+			ACCESS METHOD						{ $$ = OBJECT_ACCESS_METHOD; }
+			| COLUMN							{ $$ = OBJECT_COLUMN; }
 			| DATABASE							{ $$ = OBJECT_DATABASE; }
 			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
 			| INDEX								{ $$ = OBJECT_INDEX; }

@@ -1130,6 +1130,19 @@ testdb=&gt;
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><literal>\dA[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+
+        <listitem>
+        <para>
+        Lists access methods. If <replaceable
+        class="parameter">pattern</replaceable> is specified, only access
+        methods whose names match the pattern are shown. If
+        <literal>+</literal> is appended to the command name, each access
+        method is listed with its associated handler function and description.
+        </para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><literal>\db[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>

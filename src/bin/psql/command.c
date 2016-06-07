@@ -402,6 +402,9 @@ exec_command(const char *cmd,
 					/* standard listing of interesting things */
 					success = listTables("tvmsE", NULL, show_verbose, show_system);
 				break;
+			case 'A':
+				success = describeAccessMethods(pattern, show_verbose);
+				break;
 			case 'a':
 				success = describeAggregates(pattern, show_verbose, show_system);
 				break;

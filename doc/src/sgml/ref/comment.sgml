@@ -23,6 +23,7 @@ PostgreSQL documentation
 <synopsis>
 COMMENT ON
 {
+  ACCESS METHOD <replaceable class="PARAMETER">object_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -89,6 +90,8 @@ COMMENT ON
    Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</> is
    that you must be superuser to comment on a superuser role, or have the
    <literal>CREATEROLE</> privilege to comment on non-superuser roles.
+   Likewise, access methods don't have owners either; you must be superuser
+   to comment on an access method.
    Of course, a superuser can comment on anything.
   </para>
 
@@ -296,6 +299,7 @@ COMMENT ON TABLE mytable IS NULL;
    Some more examples:
 
 <programlisting>
+COMMENT ON ACCESS METHOD rtree IS 'R-Tree access method';
 COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
 COMMENT ON CAST (text AS int4) IS 'Allow casts from text to int4';
 COMMENT ON COLLATION "fr_CA" IS 'Canadian French';
