@@ -28,7 +28,6 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
-#include "catalog/pg_constraint.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -42,7 +41,6 @@
 #include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
@@ -96,9 +94,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	Relation	relation;
 	bool		hasindex;
 	List	   *indexinfos = NIL;
-	List	   *fkinfos = NIL;
-	List	   *fkoidlist;
-	ListCell   *l;
 
 	/*
 	 * We need not lock the relation since it was already locked, either by
@@ -149,6 +144,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	if (hasindex)
 	{
 		List	   *indexoidlist;
+		ListCell   *l;
 		LOCKMODE	lmode;
 
 		indexoidlist = RelationGetIndexList(relation);
@@ -394,85 +390,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	}
 
 	rel->indexlist = indexinfos;
-
-	/*
-	 * Load foreign key data. Note this is the definitional data from the
-	 * catalog only and does not lock the referenced tables here. The
-	 * precise definition of the FK is important and may affect the usage
-	 * elsewhere in the planner, e.g. if the constraint is deferred or
-	 * if the constraint is not valid then relying upon this in the executor
-	 * may not be accurate, though might be considered a useful estimate for
-	 * planning purposes.
-	 */
-	fkoidlist = RelationGetFKeyList(relation);
-
-	foreach(l, fkoidlist)
-	{
-		Oid			fkoid = lfirst_oid(l);
-		HeapTuple	htup;
-		Form_pg_constraint constraint;
-		ForeignKeyOptInfo *info;
-		Datum		adatum;
-		bool		isnull;
-		ArrayType  *arr;
-		int			numkeys;
-		int			i;
-
-		htup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(fkoid));
-		if (!HeapTupleIsValid(htup)) /* should not happen */
-			elog(ERROR, "cache lookup failed for constraint %u", fkoid);
-		constraint = (Form_pg_constraint) GETSTRUCT(htup);
-
-		Assert(constraint->contype == CONSTRAINT_FOREIGN);
-
-		info = makeNode(ForeignKeyOptInfo);
-
-		info->conrelid = constraint->conrelid;
-		info->confrelid = constraint->confrelid;
-
-		/* conkey */
-		adatum = SysCacheGetAttr(CONSTROID, htup,
-									Anum_pg_constraint_conkey, &isnull);
-		Assert(!isnull);
-
-		arr = DatumGetArrayTypeP(adatum);
-		numkeys = ARR_DIMS(arr)[0];
-		info->conkeys = (int*)palloc(numkeys * sizeof(int));
-		for (i = 0; i < numkeys; i++)
-			info->conkeys[i] = ((int16 *) ARR_DATA_PTR(arr))[i];
-
-		/* confkey */
-		adatum = SysCacheGetAttr(CONSTROID, htup,
-									Anum_pg_constraint_confkey, &isnull);
-		Assert(!isnull);
-
-		arr = DatumGetArrayTypeP(adatum);
-		Assert(numkeys == ARR_DIMS(arr)[0]);
-		info->confkeys = (int*)palloc(numkeys * sizeof(int));
-		for (i = 0; i < numkeys; i++)
-			info->confkeys[i] = ((int16 *) ARR_DATA_PTR(arr))[i];
-
-		/* conpfeqop */
-		adatum = SysCacheGetAttr(CONSTROID, htup,
-									Anum_pg_constraint_conpfeqop, &isnull);
-		Assert(!isnull);
-
-		arr = DatumGetArrayTypeP(adatum);
-		Assert(numkeys == ARR_DIMS(arr)[0]);
-		info->conpfeqop = (Oid*)palloc(numkeys * sizeof(Oid));
-		for (i = 0; i < numkeys; i++)
-			info->conpfeqop[i] = ((Oid *) ARR_DATA_PTR(arr))[i];
-
-		info->nkeys = numkeys;
-
-		ReleaseSysCache(htup);
-
-		fkinfos = lappend(fkinfos, info);
-	}
-
-	list_free(fkoidlist);
-
-	rel->fkeylist = fkinfos;
 
 	/* Grab foreign-table info using the relcache, while we have it */
 	if (relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)

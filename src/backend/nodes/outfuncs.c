@@ -2138,16 +2138,6 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 }
 
 static void
-_outForeignKeyOptInfo(StringInfo str, const ForeignKeyOptInfo *node)
-{
-	WRITE_NODE_TYPE("FOREIGNKEYOPTINFO");
-
-	WRITE_OID_FIELD(conrelid);
-	WRITE_OID_FIELD(confrelid);
-	WRITE_INT_FIELD(nkeys);
-}
-
-static void
 _outEquivalenceClass(StringInfo str, const EquivalenceClass *node)
 {
 	/*
@@ -3616,9 +3606,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_IndexOptInfo:
 				_outIndexOptInfo(str, obj);
-				break;
-			case T_ForeignKeyOptInfo:
-				_outForeignKeyOptInfo(str, obj);
 				break;
 			case T_EquivalenceClass:
 				_outEquivalenceClass(str, obj);

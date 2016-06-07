@@ -516,7 +516,6 @@ typedef struct RelOptInfo
 	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
 	Relids		lateral_referencers;	/* rels that reference me laterally */
 	List	   *indexlist;		/* list of IndexOptInfo */
-	List	   *fkeylist;			/* list of ForeignKeyOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
 	double		allvisfrac;
@@ -623,27 +622,6 @@ typedef struct IndexOptInfo
 	void		(*amcostestimate) ();	/* AM's cost estimator */
 } IndexOptInfo;
 
-/*
- * ForeignKeyOptInfo
- *		Per-foreign-key information for planning/optimization
- *
- * Only includes columns from pg_constraint related to foreign keys.
- *
- * conkeys[], confkeys[] and conpfeqop[] each have nkeys entries.
- */
-typedef struct ForeignKeyOptInfo
-{
-	NodeTag		type;
-
-	Oid			conrelid;	/* relation constrained by the foreign key */
-	Oid			confrelid;	/* relation referenced by the foreign key */
-
-	int			nkeys;		/* number of columns in the foreign key */
-	int		   *conkeys;	/* attnums of columns in the constrained table */
-	int		   *confkeys;	/* attnums of columns in the referenced table */
-	Oid		   *conpfeqop;	/* OIDs of equality operators used by the FK */
-
-} ForeignKeyOptInfo;
 
 /*
  * EquivalenceClasses

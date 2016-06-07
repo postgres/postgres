@@ -877,15 +877,6 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
-	{
-		{"enable_fkey_estimates", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables use of foreign keys for estimating joins."),
-			NULL
-		},
-		&enable_fkey_estimates,
-		true,
-		NULL, NULL, NULL
-	},
 
 	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
