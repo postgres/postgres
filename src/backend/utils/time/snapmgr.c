@@ -20,7 +20,7 @@
  * tracked by any resource owner.
  *
  * The same is true for historic snapshots used during logical decoding,
- * their lifetime is managed separately (as they life longer as one xact.c
+ * their lifetime is managed separately (as they live longer as one xact.c
  * transaction).
  *
  * These arrangements let us reset MyPgXact->xmin when there are no snapshots
@@ -228,7 +228,7 @@ static void SnapshotResetXmin(void);
  * Snapshot fields to be serialized.
  *
  * Only these fields need to be sent to the cooperating backend; the
- * remaining ones can (and must) set by the receiver upon restore.
+ * remaining ones can (and must) be set by the receiver upon restore.
  */
 typedef struct SerializedSnapshotData
 {
@@ -709,8 +709,8 @@ UpdateActiveSnapshotCommandId(void)
 
 	/*
 	 * Don't allow modification of the active snapshot during parallel
-	 * operation.  We share the snapshot to worker backends at beginning of
-	 * parallel operation, so any change to snapshot can lead to
+	 * operation.  We share the snapshot to worker backends at the beginning of
+	 * parallel operation, so any change to the snapshot can lead to
 	 * inconsistencies.  We have other defenses against
 	 * CommandCounterIncrement, but there are a few places that call this
 	 * directly, so we put an additional guard here.
@@ -1892,7 +1892,7 @@ HistoricSnapshotGetTupleCids(void)
 
 /*
  * EstimateSnapshotSpace
- *		Returns the size need to store the given snapshot.
+ *		Returns the size needed to store the given snapshot.
  *
  * We are exporting only required fields from the Snapshot, stored in
  * SerializedSnapshotData.
