@@ -849,13 +849,13 @@ parse_ident(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("string is not a valid identifier: \"%s\"",
 								text_to_cstring(qualname)),
-					 errdetail("No valid identifier before \".\" symbol.")));
+					 errdetail("No valid identifier before \".\".")));
 			else if (after_dot)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("string is not a valid identifier: \"%s\"",
 								text_to_cstring(qualname)),
-					  errdetail("No valid identifier after \".\" symbol.")));
+					  errdetail("No valid identifier after \".\".")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

@@ -459,7 +459,7 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 		else if (controlFile == &ControlFile_target)
 			histfile = slurpFile(datadir_target, path, NULL);
 		else
-			pg_fatal("Invalid control file");
+			pg_fatal("invalid control file");
 
 		history = rewind_parseTimeLineHistory(histfile, tli, nentries);
 		pg_free(histfile);
@@ -685,7 +685,7 @@ syncTargetDirectory(const char *argv0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-			pg_fatal("The program \"initdb\" is needed by %s but was \n"
+			pg_fatal("The program \"initdb\" is needed by %s but was\n"
 					 "not found in the same directory as \"%s\".\n"
 					 "Check your installation.\n", progname, full_path);
 		else

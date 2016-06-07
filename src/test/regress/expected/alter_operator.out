@@ -110,17 +110,17 @@ ORDER BY 1;
 -- Test invalid options.
 --
 ALTER OPERATOR === (boolean, boolean) SET (COMMUTATOR = ====);
-ERROR:  operator attribute "commutator" can not be changed
+ERROR:  operator attribute "commutator" cannot be changed
 ALTER OPERATOR === (boolean, boolean) SET (NEGATOR = ====);
-ERROR:  operator attribute "negator" can not be changed
+ERROR:  operator attribute "negator" cannot be changed
 ALTER OPERATOR === (boolean, boolean) SET (RESTRICT = non_existent_func);
 ERROR:  function non_existent_func(internal, oid, internal, integer) does not exist
 ALTER OPERATOR === (boolean, boolean) SET (JOIN = non_existent_func);
 ERROR:  function non_existent_func(internal, oid, internal, smallint, internal) does not exist
 ALTER OPERATOR === (boolean, boolean) SET (COMMUTATOR = !==);
-ERROR:  operator attribute "commutator" can not be changed
+ERROR:  operator attribute "commutator" cannot be changed
 ALTER OPERATOR === (boolean, boolean) SET (NEGATOR = !==);
-ERROR:  operator attribute "negator" can not be changed
+ERROR:  operator attribute "negator" cannot be changed
 --
 -- Test permission check. Must be owner to ALTER OPERATOR.
 --

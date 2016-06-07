@@ -344,7 +344,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		if (transTypeId != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("a serialization type must only be specified when the aggregate transition data type is \"%s\"",
+					 errmsg("a serialization type must only be specified when the aggregate transition data type is %s",
 						 format_type_be(INTERNALOID))));
 
 		serialTypeId = typenameTypeId(NULL, serialType);
@@ -366,7 +366,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		if (serialTypeId == INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						errmsg("aggregate serialization type cannot be \"%s\"",
+						errmsg("aggregate serialization data type cannot be %s",
 							format_type_be(serialTypeId))));
 
 		/*

@@ -42,7 +42,7 @@ ginCombineData(RBNode *existing, const RBNode *newdata, void *arg)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("posting list is too long"),
-					 errhint("Reduce maintenance_work_mem")));
+					 errhint("Reduce maintenance_work_mem.")));
 
 		accum->allocatedMemory -= GetMemoryChunkSpace(eo->list);
 		eo->maxcount *= 2;

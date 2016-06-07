@@ -448,7 +448,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("operator attribute \"%s\" can not be changed",
+					 errmsg("operator attribute \"%s\" cannot be changed",
 							defel->defname)));
 		}
 		else

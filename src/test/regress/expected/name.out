@@ -154,10 +154,10 @@ SELECT parse_ident(' ');
 ERROR:  string is not a valid identifier: " "
 SELECT parse_ident(' .aaa');
 ERROR:  string is not a valid identifier: " .aaa"
-DETAIL:  No valid identifier before "." symbol.
+DETAIL:  No valid identifier before ".".
 SELECT parse_ident(' aaa . ');
 ERROR:  string is not a valid identifier: " aaa . "
-DETAIL:  No valid identifier after "." symbol.
+DETAIL:  No valid identifier after ".".
 SELECT parse_ident('aaa.a%b');
 ERROR:  string is not a valid identifier: "aaa.a%b"
 SELECT parse_ident(E'X\rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
@@ -188,10 +188,10 @@ SELECT parse_ident('10.20');
 ERROR:  string is not a valid identifier: "10.20"
 SELECT parse_ident('.');
 ERROR:  string is not a valid identifier: "."
-DETAIL:  No valid identifier before "." symbol.
+DETAIL:  No valid identifier before ".".
 SELECT parse_ident('.1020');
 ERROR:  string is not a valid identifier: ".1020"
-DETAIL:  No valid identifier before "." symbol.
+DETAIL:  No valid identifier before ".".
 SELECT parse_ident('xxx.1020');
 ERROR:  string is not a valid identifier: "xxx.1020"
-DETAIL:  No valid identifier after "." symbol.
+DETAIL:  No valid identifier after ".".

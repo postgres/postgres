@@ -109,7 +109,7 @@ CREATE AGGREGATE myavg (numeric)
 	sfunc = numeric_avg_accum,
 	serialtype = internal
 );
-ERROR:  aggregate serialization type cannot be "internal"
+ERROR:  aggregate serialization data type cannot be internal
 -- if serialtype is specified we need a serialfunc and deserialfunc
 CREATE AGGREGATE myavg (numeric)
 (

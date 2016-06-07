@@ -153,7 +153,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("non-exclusive backup in progress"),
-				 errhint("did you mean to use pg_stop_backup('f')?")));
+				 errhint("Did you mean to use pg_stop_backup('f')?")));
 
 	/*
 	 * Exclusive backups were typically started in a different connection,
@@ -227,7 +227,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("non-exclusive backup in progress"),
-					 errhint("did you mean to use pg_stop_backup('f')?")));
+					 errhint("Did you mean to use pg_stop_backup('f')?")));
 
 		/*
 		 * Stop the exclusive backup, and since we're in an exclusive backup
@@ -245,7 +245,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("non-exclusive backup is not in progress"),
-					 errhint("did you mean to use pg_stop_backup('t')?")));
+					 errhint("Did you mean to use pg_stop_backup('t')?")));
 
 		/*
 		 * Stop the non-exclusive backup. Return a copy of the backup
