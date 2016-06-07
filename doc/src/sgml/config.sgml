@@ -4453,7 +4453,7 @@ local0.*    /var/log/postgresql
          sequence number (such as <literal>[2]</literal>).  This circumvents
          the <quote>--- last message repeated N times ---</quote> suppression
          that many syslog implementations perform by default.  In more modern
-         syslog implementations, repeat message suppression can be configured
+         syslog implementations, repeated message suppression can be configured
          (for example, <literal>$RepeatedMsgReduction</literal>
          in <productname>rsyslog</productname>), so this might not be
          necessary.  Also, you could turn this off if you actually want to
