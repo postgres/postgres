@@ -1,4 +1,4 @@
-/* contrib/citext/citext--1.1.sql */
+/* contrib/citext/citext--1.2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION citext" to load this file. \quit
@@ -22,22 +22,22 @@ CREATE TYPE citext;
 CREATE FUNCTION citextin(cstring)
 RETURNS citext
 AS 'textin'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citextout(citext)
 RETURNS cstring
 AS 'textout'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citextrecv(internal)
 RETURNS citext
 AS 'textrecv'
-LANGUAGE internal STABLE STRICT;
+LANGUAGE internal STABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citextsend(citext)
 RETURNS bytea
 AS 'textsend'
-LANGUAGE internal STABLE STRICT;
+LANGUAGE internal STABLE STRICT PARALLEL SAFE;
 
 --
 --  The type itself.
@@ -64,17 +64,17 @@ CREATE TYPE citext (
 CREATE FUNCTION citext(bpchar)
 RETURNS citext
 AS 'rtrim1'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext(boolean)
 RETURNS citext
 AS 'booltext'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext(inet)
 RETURNS citext
 AS 'network_show'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 --
 --  Implicit and assignment type casts.
@@ -96,32 +96,32 @@ CREATE CAST (inet AS citext)    WITH FUNCTION citext(inet)    AS ASSIGNMENT;
 CREATE FUNCTION citext_eq( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext_ne( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext_lt( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext_le( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext_gt( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext_ge( citext, citext )
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 --
 -- Operators.
@@ -196,12 +196,12 @@ CREATE OPERATOR > (
 CREATE FUNCTION citext_cmp(citext, citext)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT IMMUTABLE;
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION citext_hash(citext)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT IMMUTABLE;
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 --
 -- The btree indexing operator class.
@@ -232,23 +232,27 @@ DEFAULT FOR TYPE citext USING hash AS
 CREATE FUNCTION citext_smaller(citext, citext)
 RETURNS citext
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION citext_larger(citext, citext)
 RETURNS citext
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE AGGREGATE min(citext)  (
     SFUNC = citext_smaller,
     STYPE = citext,
-    SORTOP = <
+    SORTOP = <,
+    PARALLEL = SAFE,
+    COMBINEFUNC = citext_smaller
 );
 
 CREATE AGGREGATE max(citext)  (
     SFUNC = citext_larger,
     STYPE = citext,
-    SORTOP = >
+    SORTOP = >,
+    PARALLEL = SAFE,
+    COMBINEFUNC = citext_larger
 );
 
 --
@@ -257,19 +261,19 @@ CREATE AGGREGATE max(citext)  (
 
 CREATE FUNCTION texticlike(citext, citext)
 RETURNS bool AS 'texticlike'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION texticnlike(citext, citext)
 RETURNS bool AS 'texticnlike'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION texticregexeq(citext, citext)
 RETURNS bool AS 'texticregexeq'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION texticregexne(citext, citext)
 RETURNS bool AS 'texticregexne'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR ~ (
     PROCEDURE = texticregexeq,
@@ -349,19 +353,19 @@ CREATE OPERATOR !~~* (
 
 CREATE FUNCTION texticlike(citext, text)
 RETURNS bool AS 'texticlike'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION texticnlike(citext, text)
 RETURNS bool AS 'texticnlike'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION texticregexeq(citext, text)
 RETURNS bool AS 'texticregexeq'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION texticregexne(citext, text)
 RETURNS bool AS 'texticregexne'
-LANGUAGE internal IMMUTABLE STRICT;
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR ~ (
     PROCEDURE = texticregexeq,
@@ -442,48 +446,48 @@ CREATE OPERATOR !~~* (
 
 CREATE FUNCTION regexp_matches( citext, citext ) RETURNS SETOF TEXT[] AS $$
     SELECT pg_catalog.regexp_matches( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
-$$ LANGUAGE SQL IMMUTABLE STRICT ROWS 1;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE ROWS 1;
 
 CREATE FUNCTION regexp_matches( citext, citext, text ) RETURNS SETOF TEXT[] AS $$
     SELECT pg_catalog.regexp_matches( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
-$$ LANGUAGE SQL IMMUTABLE STRICT ROWS 10;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE ROWS 10;
 
 CREATE FUNCTION regexp_replace( citext, citext, text ) returns TEXT AS $$
     SELECT pg_catalog.regexp_replace( $1::pg_catalog.text, $2::pg_catalog.text, $3, 'i');
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION regexp_replace( citext, citext, text, text ) returns TEXT AS $$
     SELECT pg_catalog.regexp_replace( $1::pg_catalog.text, $2::pg_catalog.text, $3, CASE WHEN pg_catalog.strpos($4, 'c') = 0 THEN  $4 || 'i' ELSE $4 END);
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION regexp_split_to_array( citext, citext ) RETURNS TEXT[] AS $$
     SELECT pg_catalog.regexp_split_to_array( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION regexp_split_to_array( citext, citext, text ) RETURNS TEXT[] AS $$
     SELECT pg_catalog.regexp_split_to_array( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION regexp_split_to_table( citext, citext ) RETURNS SETOF TEXT AS $$
     SELECT pg_catalog.regexp_split_to_table( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION regexp_split_to_table( citext, citext, text ) RETURNS SETOF TEXT AS $$
     SELECT pg_catalog.regexp_split_to_table( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION strpos( citext, citext ) RETURNS INT AS $$
     SELECT pg_catalog.strpos( pg_catalog.lower( $1::pg_catalog.text ), pg_catalog.lower( $2::pg_catalog.text ) );
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION replace( citext, citext, citext ) RETURNS TEXT AS $$
     SELECT pg_catalog.regexp_replace( $1::pg_catalog.text, pg_catalog.regexp_replace($2::pg_catalog.text, '([^a-zA-Z_0-9])', E'\\\\\\1', 'g'), $3::pg_catalog.text, 'gi' );
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION split_part( citext, citext, int ) RETURNS TEXT AS $$
     SELECT (pg_catalog.regexp_split_to_array( $1::pg_catalog.text, pg_catalog.regexp_replace($2::pg_catalog.text, '([^a-zA-Z_0-9])', E'\\\\\\1', 'g'), 'i'))[$3];
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION translate( citext, citext, text ) RETURNS TEXT AS $$
     SELECT pg_catalog.translate( pg_catalog.translate( $1::pg_catalog.text, pg_catalog.lower($2::pg_catalog.text), $3), pg_catalog.upper($2::pg_catalog.text), $3);
-$$ LANGUAGE SQL IMMUTABLE STRICT;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
