@@ -84,6 +84,7 @@ REGRESS = \
 	plpython_trigger \
 	plpython_types \
 	plpython_error \
+	plpython_ereport \
 	plpython_unicode \
 	plpython_quote \
 	plpython_composite \
