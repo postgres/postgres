@@ -2300,7 +2300,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <entry>
        Reset some cluster-wide statistics counters to zero, depending on the
        argument (requires superuser privileges by default, but EXECUTE for
-       this functiion can be granted to others).
+       this function can be granted to others).
        Calling <literal>pg_stat_reset_shared('bgwriter')</> will zero all the
        counters shown in the <structname>pg_stat_bgwriter</> view.
        Calling <literal>pg_stat_reset_shared('archiver')</> will zero all the
