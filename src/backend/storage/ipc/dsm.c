@@ -245,7 +245,7 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	}
 
 	/*
-	 * OK, the control segment looks basically valid, so we can get use it to
+	 * OK, the control segment looks basically valid, so we can use it to
 	 * get a list of segments that need to be removed.
 	 */
 	nitems = old_control->nitems;
@@ -903,7 +903,7 @@ dsm_segment_map_length(dsm_segment *seg)
  * memory mapping.  That process should then call dsm_segment_handle() to
  * obtain a handle for the mapping, and pass that handle to the
  * coordinating backend via some means (e.g. bgw_main_arg, or via the
- * main shared memory segment).  The recipient, once in position of the
+ * main shared memory segment).  The recipient, once in possession of the
  * handle, should call dsm_attach().
  */
 dsm_handle
