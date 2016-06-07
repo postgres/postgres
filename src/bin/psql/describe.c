@@ -138,7 +138,7 @@ describeAccessMethods(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, true, false};
+	static const bool translate_columns[] = {false, true, false, false};
 
 	if (pset.sversion < 90600)
 	{
