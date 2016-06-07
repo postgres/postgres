@@ -138,9 +138,9 @@ COMMENT ON
     <term><replaceable class="parameter">domain_name</replaceable></term>
     <listitem>
      <para>
-      When creating a comment on a constraint, a table, a domain or
+      When creating a comment on a constraint, a trigger, a rule or
       a policy these parameters specify the name of the table or domain on
-      which the constraint is defined.
+      which that object is defined.
      </para>
     </listitem>
    </varlistentry>
