@@ -8,43 +8,42 @@
  </indexterm>
 
  <para>
-  <literal>bloom</> is a module that implements an index access method.  It comes
-  as an example of custom access methods and generic WAL record usage.  But it
-  is also useful in itself.
+  <literal>bloom</> provides an index access method based on
+  <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filters</ulink>.
  </para>
 
- <sect2>
-  <title>Introduction</title>
+ <para>
+  A Bloom filter is a space-efficient data structure that is used to test
+  whether an element is a member of a set.  In the case of an index access
+  method, it allows fast exclusion of non-matching tuples via signatures
+  whose size is determined at index creation.
+ </para>
 
-  <para>
-   The implementation of a
-   <ulink url="http://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</ulink>
-   allows fast exclusion of non-candidate tuples via signatures.
-   Since a signature is a lossy representation of all indexed attributes,
-   search results must be rechecked using heap information.
-   The user can specify signature length in bits (default 80, maximum 4096)
-   and the number of bits generated for each index column (default 2,
-   maximum 4095).
-  </para>
+ <para>
+  A signature is a lossy representation of the indexed attribute(s), and as
+  such is prone to reporting false positives; that is, it may be reported
+  that an element is in the set, when it is not.  So index search results
+  must always be rechecked using the actual attribute values from the heap
+  entry.  Larger signatures reduce the odds of a false positive and thus
+  reduce the number of useless heap visits, but of course also make the index
+  larger and hence slower to scan.
+ </para>
 
-  <para>
-   This index is useful if a table has many attributes and queries include
-   arbitrary combinations of them.  A traditional <literal>btree</> index is
-   faster than a bloom index, but it can require many indexes to support all
-   possible queries where one needs only a single bloom index.  A Bloom index
-   supports only equality comparison.  Since it's a signature file, and not a
-   tree, it always must be read fully, but sequentially, so that index search
-   performance is constant and doesn't depend on a query.
-  </para>
- </sect2>
+ <para>
+  This type of index is most useful when a table has many attributes and
+  queries test arbitrary combinations of them.  A traditional btree index is
+  faster than a bloom index, but it can require many btree indexes to support
+  all possible queries where one needs only a single bloom index.  Note
+  however that bloom indexes only support equality queries, whereas btree
+  indexes can also perform inequality and range searches.
+ </para>
 
  <sect2>
   <title>Parameters</title>
 
   <para>
-   <literal>bloom</> indexes accept the following parameters in the
-   <literal>WITH</>
-   clause.
+   A <literal>bloom</> index accepts the following parameters in its
+   <literal>WITH</> clause:
   </para>
 
    <variablelist>
@@ -52,7 +51,8 @@
     <term><literal>length</></term>
     <listitem>
      <para>
-      Length of signature in bits
+      Length of each signature (index entry) in bits. The default
+      is <literal>80</> bits and maximum is <literal>4096</>.
      </para>
     </listitem>
    </varlistentry>
@@ -62,7 +62,10 @@
     <term><literal>col1 &mdash; col32</></term>
     <listitem>
      <para>
-      Number of bits generated for each index column
+      Number of bits generated for each index column. Each parameter's name
+      refers to the number of the index column that it controls.  The default
+      is <literal>2</> bits and maximum is <literal>4095</>.  Parameters for
+      index columns not actually used are ignored.
      </para>
     </listitem>
    </varlistentry>
@@ -73,7 +76,7 @@
   <title>Examples</title>
 
   <para>
-   An example of an index definition is given below.
+   This is an example of creating a bloom index:
   </para>
 
 <programlisting>
@@ -82,92 +85,135 @@ CREATE INDEX bloomidx ON tbloom USING bloom (i1,i2,i3)
 </programlisting>
 
   <para>
-   Here, we created a bloom index with a signature length of 80 bits,
-   and attributes i1 and i2 mapped to 2 bits, and attribute i3 mapped to 4 bits.
+   The index is created with a signature length of 80 bits, with attributes
+   i1 and i2 mapped to 2 bits, and attribute i3 mapped to 4 bits.  We could
+   have omitted the <literal>length</>, <literal>col1</>,
+   and <literal>col2</> specifications since those have the default values.
   </para>
 
   <para>
-   Here is a fuller example of index definition and usage:
+   Here is a more complete example of bloom index definition and usage, as
+   well as a comparison with equivalent btree indexes.  The bloom index is
+   considerably smaller than the btree index, and can perform better.
   </para>
 
 <programlisting>
-CREATE TABLE tbloom AS
-SELECT
-    random()::int as i1,
-    random()::int as i2,
-    random()::int as i3,
-    random()::int as i4,
-    random()::int as i5,
-    random()::int as i6,
-    random()::int as i7,
-    random()::int as i8,
-    random()::int as i9,
-    random()::int as i10,
-    random()::int as i11,
-    random()::int as i12,
-    random()::int as i13
-FROM
-    generate_series(1,1000);
-CREATE INDEX bloomidx ON tbloom USING
-             bloom (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12);
-SELECT pg_relation_size('bloomidx');
-CREATE index btree_idx ON tbloom(i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12);
-SELECT pg_relation_size('btree_idx');
+=# CREATE TABLE tbloom AS
+   SELECT
+     (random() * 1000000)::int as i1,
+     (random() * 1000000)::int as i2,
+     (random() * 1000000)::int as i3,
+     (random() * 1000000)::int as i4,
+     (random() * 1000000)::int as i5,
+     (random() * 1000000)::int as i6
+   FROM
+  generate_series(1,10000000);
+SELECT 10000000
+=# CREATE INDEX bloomidx ON tbloom USING bloom (i1, i2, i3, i4, i5, i6);
+CREATE INDEX
+=# SELECT pg_size_pretty(pg_relation_size('bloomidx'));
+ pg_size_pretty
+----------------
+ 153 MB
+(1 row)
+=# CREATE index btreeidx ON tbloom (i1, i2, i3, i4, i5, i6);
+CREATE INDEX
+=# SELECT pg_size_pretty(pg_relation_size('btreeidx'));
+ pg_size_pretty
+----------------
+ 387 MB
+(1 row)
 </programlisting>
 
+  <para>
+   A sequential scan over this large table takes a long time:
 <programlisting>
-=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 20 AND i10 = 15;
-                                                   QUERY PLAN
------------------------------------------------------------------------------------------------------------------
- Bitmap Heap Scan on tbloom  (cost=1.50..5.52 rows=1 width=52) (actual time=0.057..0.057 rows=0 loops=1)
-   Recheck Cond: ((i2 = 20) AND (i10 = 15))
-   ->  Bitmap Index Scan on bloomidx  (cost=0.00..1.50 rows=1 width=0) (actual time=0.041..0.041 rows=9 loops=1)
-         Index Cond: ((i2 = 20) AND (i10 = 15))
- Total runtime: 0.081 ms
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                 QUERY PLAN
+------------------------------------------------------------------------------------------------------------
+ Seq Scan on tbloom  (cost=0.00..213694.08 rows=1 width=24) (actual time=1445.438..1445.438 rows=0 loops=1)
+   Filter: ((i2 = 898732) AND (i5 = 123451))
+   Rows Removed by Filter: 10000000
+ Planning time: 0.177 ms
+ Execution time: 1445.473 ms
 (5 rows)
 </programlisting>
-
-  <para>
-   Seqscan is slow.
   </para>
 
+  <para>
+   So the planner will usually select an index scan if possible.
+   With a btree index, we get results like this:
 <programlisting>
-=# SET enable_bitmapscan = off;
-=# SET enable_indexscan = off;
-=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 20 AND i10 = 15;
-                                            QUERY PLAN
---------------------------------------------------------------------------------------------------
- Seq Scan on tbloom  (cost=0.00..25.00 rows=1 width=52) (actual time=0.162..0.162 rows=0 loops=1)
-   Filter: ((i2 = 20) AND (i10 = 15))
- Total runtime: 0.181 ms
-(3 rows)
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                           QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using btreeidx on tbloom  (cost=0.56..298311.96 rows=1 width=24) (actual time=445.709..445.709 rows=0 loops=1)
+   Index Cond: ((i2 = 898732) AND (i5 = 123451))
+   Heap Fetches: 0
+ Planning time: 0.193 ms
+ Execution time: 445.770 ms
+(5 rows)
 </programlisting>
+  </para>
 
- <para>
-  A btree index will be not used for this query.
- </para>
-
+  <para>
+   Bloom is better than btree in handling this type of search:
 <programlisting>
-=# DROP INDEX bloomidx;
-=# CREATE INDEX btree_idx ON tbloom(i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12);
-=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 20 AND i10 = 15;
-                                            QUERY PLAN
---------------------------------------------------------------------------------------------------
- Seq Scan on tbloom (cost=0.00..25.00 rows=1 width=52) (actual time=0.210..0.210 rows=0 loops=1)
-   Filter: ((i2 = 20) AND (i10 = 15))
- Total runtime: 0.250 ms
-(3 rows)
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                        QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=178435.39..178439.41 rows=1 width=24) (actual time=76.698..76.698 rows=0 loops=1)
+   Recheck Cond: ((i2 = 898732) AND (i5 = 123451))
+   Rows Removed by Index Recheck: 2439
+   Heap Blocks: exact=2408
+   -&gt;  Bitmap Index Scan on bloomidx  (cost=0.00..178435.39 rows=1 width=0) (actual time=72.455..72.455 rows=2439 loops=1)
+         Index Cond: ((i2 = 898732) AND (i5 = 123451))
+ Planning time: 0.475 ms
+ Execution time: 76.778 ms
+(8 rows)
 </programlisting>
+   Note the relatively large number of false positives: 2439 rows were
+   selected to be visited in the heap, but none actually matched the
+   query.  We could reduce that by specifying a larger signature length.
+   In this example, creating the index with <literal>length=200</>
+   reduced the number of false positives to 55; but it doubled the index size
+   (to 306 MB) and ended up being slower for this query (125 ms overall).
+  </para>
+
+  <para>
+   Now, the main problem with the btree search is that btree is inefficient
+   when the search conditions do not constrain the leading index column(s).
+   A better strategy for btree is to create a separate index on each column.
+   Then the planner will choose something like this:
+<programlisting>
+=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                          QUERY PLAN
+------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=9.29..13.30 rows=1 width=24) (actual time=0.148..0.148 rows=0 loops=1)
+   Recheck Cond: ((i5 = 123451) AND (i2 = 898732))
+   -&gt;  BitmapAnd  (cost=9.29..9.29 rows=1 width=0) (actual time=0.145..0.145 rows=0 loops=1)
+         -&gt;  Bitmap Index Scan on tbloom_i5_idx  (cost=0.00..4.52 rows=11 width=0) (actual time=0.089..0.089 rows=10 loops=1)
+               Index Cond: (i5 = 123451)
+         -&gt;  Bitmap Index Scan on tbloom_i2_idx  (cost=0.00..4.52 rows=11 width=0) (actual time=0.048..0.048 rows=8 loops=1)
+               Index Cond: (i2 = 898732)
+ Planning time: 2.049 ms
+ Execution time: 0.280 ms
+(9 rows)
+</programlisting>
+   Although this query runs much faster than with either of the single
+   indexes, we pay a large penalty in index size.  Each of the single-column
+   btree indexes occupies 214 MB, so the total space needed is over 1.2GB,
+   more than 8 times the space used by the bloom index.
+  </para>
  </sect2>
 
  <sect2>
-  <title>Opclass interface</title>
+  <title>Operator Class Interface</title>
 
   <para>
-   The Bloom opclass interface is simple.  It requires 1 supporting function:
-   a hash function for the indexing datatype.  It provides 1 search operator:
-   the equality operator.  The example below shows <literal>opclass</>
-   definition for <literal>text</> datatype.
+   An operator class for bloom indexes requires only a hash function for the
+   indexed datatype and an equality operator for searching. This example
+   shows the opclass definition for the <type>text</> data type:
   </para>
 
 <programlisting>
@@ -179,22 +225,21 @@ DEFAULT FOR TYPE text USING bloom AS
  </sect2>
 
  <sect2>
-  <title>Limitation</title>
+  <title>Limitations</title>
   <para>
-
    <itemizedlist>
     <listitem>
      <para>
-      For now, only opclasses for <literal>int4</>, <literal>text</> come
-      with the module.  However, users may define more of them.
+      Only operator classes for <type>int4</> and <type>text</> are
+      included with the module.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Only the <literal>=</literal> operator is supported for search at the
-      moment.  But it's possible to add support for arrays with contains and
-      intersection operations in the future.
+      Only the <literal>=</literal> operator is supported for search.  But
+      it is possible to add support for arrays with union and intersection
+      operations in the future.
      </para>
     </listitem>
    </itemizedlist>
