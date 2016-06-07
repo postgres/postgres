@@ -10,6 +10,8 @@ VALUES
    ('v0','h4','dbl', -3, '2014-12-15'),
    ('v0',NULL,'qux', 5, '2014-07-15'),
    ('v1','h2','quux',7, '2015-04-04');
+-- make plans more stable
+ANALYZE ctv_data;
 -- running \crosstabview after query uses query in buffer
 SELECT v, EXTRACT(year FROM d), count(*)
  FROM ctv_data
