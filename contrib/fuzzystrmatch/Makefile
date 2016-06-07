@@ -4,7 +4,8 @@ MODULE_big = fuzzystrmatch
 OBJS = fuzzystrmatch.o dmetaphone.o $(WIN32RES)
 
 EXTENSION = fuzzystrmatch
-DATA = fuzzystrmatch--1.0.sql fuzzystrmatch--unpackaged--1.0.sql
+DATA = fuzzystrmatch--1.1.sql fuzzystrmatch--1.0--1.1.sql \
+	fuzzystrmatch--unpackaged--1.0.sql
 PGFILEDESC = "fuzzystrmatch - similarities and distance between strings"
 
 ifdef USE_PGXS
