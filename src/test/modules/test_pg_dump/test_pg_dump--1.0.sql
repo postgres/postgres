@@ -13,3 +13,5 @@ GRANT SELECT(col1) ON regress_pg_dump_table TO public;
 
 GRANT SELECT(col2) ON regress_pg_dump_table TO dump_test;
 REVOKE SELECT(col2) ON regress_pg_dump_table FROM dump_test;
+
+CREATE ACCESS METHOD regress_test_am TYPE INDEX HANDLER bthandler;

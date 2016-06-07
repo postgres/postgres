@@ -12472,20 +12472,22 @@ dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
 	appendPQExpBuffer(labelq, "ACCESS METHOD %s",
 					  qamname);
 
-	ArchiveEntry(fout, aminfo->dobj.catId, aminfo->dobj.dumpId,
-				 aminfo->dobj.name,
-				 NULL,
-				 NULL,
-				 "",
-				 false, "ACCESS METHOD", SECTION_PRE_DATA,
-				 q->data, delq->data, NULL,
-				 NULL, 0,
-				 NULL, NULL);
+	if (aminfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
+		ArchiveEntry(fout, aminfo->dobj.catId, aminfo->dobj.dumpId,
+					 aminfo->dobj.name,
+					 NULL,
+					 NULL,
+					 "",
+					 false, "ACCESS METHOD", SECTION_PRE_DATA,
+					 q->data, delq->data, NULL,
+					 NULL, 0,
+					 NULL, NULL);
 
 	/* Dump Access Method Comments */
-	dumpComment(fout, labelq->data,
-				NULL, "",
-				aminfo->dobj.catId, 0, aminfo->dobj.dumpId);
+	if (aminfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		dumpComment(fout, labelq->data,
+					NULL, "",
+					aminfo->dobj.catId, 0, aminfo->dobj.dumpId);
 
 	pg_free(qamname);
 
