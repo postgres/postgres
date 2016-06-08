@@ -29,7 +29,7 @@
  </para>
 
  <para>
-  Functions which display information about <literal>PG_ALL_VISIBLE</>
+  Functions which display information about <literal>PD_ALL_VISIBLE</>
   are much more costly than those which only consult the visibility map,
   because they must read the relation's data blocks rather than only the
   (much smaller) visibility map.
