@@ -6,7 +6,7 @@ OBJS = 	ltree_io.o ltree_op.o lquery_op.o _ltree_op.o crc32.o \
 PG_CPPFLAGS = -DLOWER_NODE
 
 EXTENSION = ltree
-DATA = ltree--1.0.sql ltree--unpackaged--1.0.sql
+DATA = ltree--1.1.sql ltree--1.0--1.1.sql ltree--unpackaged--1.0.sql
 PGFILEDESC = "ltree - hierarchical label data type"
 
 REGRESS = ltree

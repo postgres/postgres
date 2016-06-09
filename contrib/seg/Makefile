@@ -4,7 +4,7 @@ MODULE_big = seg
 OBJS = seg.o segparse.o $(WIN32RES)
 
 EXTENSION = seg
-DATA = seg--1.0.sql seg--unpackaged--1.0.sql
+DATA = seg--1.1.sql seg--1.0--1.1.sql seg--unpackaged--1.0.sql
 PGFILEDESC = "seg - line segment data type"
 
 REGRESS = seg

@@ -1,4 +1,4 @@
-/* contrib/btree_gist/btree_gist--1.0.sql */
+/* contrib/btree_gist/btree_gist--1.2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION btree_gist" to load this file. \quit

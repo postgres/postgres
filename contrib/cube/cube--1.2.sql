@@ -1,4 +1,4 @@
-/* contrib/cube/cube--1.1.sql */
+/* contrib/cube/cube--1.2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION cube" to load this file. \quit

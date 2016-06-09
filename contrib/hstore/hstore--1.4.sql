@@ -1,4 +1,4 @@
-/* contrib/hstore/hstore--1.3.sql */
+/* contrib/hstore/hstore--1.4.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION hstore" to load this file. \quit

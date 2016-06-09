@@ -1,5 +1,5 @@
 # intarray extension
 comment = 'functions, operators, and index support for 1-D arrays of integers'
-default_version = '1.1'
+default_version = '1.2'
 module_pathname = '$libdir/_int'
 relocatable = true

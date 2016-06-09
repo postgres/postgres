@@ -5,7 +5,8 @@ OBJS = _int_bool.o _int_gist.o _int_op.o _int_tool.o \
 	_intbig_gist.o _int_gin.o _int_selfuncs.o $(WIN32RES)
 
 EXTENSION = intarray
-DATA = intarray--1.1.sql intarray--1.0--1.1.sql intarray--unpackaged--1.0.sql
+DATA = intarray--1.2.sql intarray--1.1--1.2.sql intarray--1.0--1.1.sql \
+	intarray--unpackaged--1.0.sql
 PGFILEDESC = "intarray - functions and operators for arrays of integers"
 
 REGRESS = _int

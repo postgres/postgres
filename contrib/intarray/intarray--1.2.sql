@@ -1,4 +1,4 @@
-/* contrib/intarray/intarray--1.1.sql */
+/* contrib/intarray/intarray--1.2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION intarray" to load this file. \quit
