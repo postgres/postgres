@@ -12,4 +12,4 @@ CREATE FUNCTION pgrowlocks(IN relname text,
     OUT pids INTEGER[])		-- locker's process id
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pgrowlocks'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
