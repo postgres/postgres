@@ -221,6 +221,7 @@ BloomPageOpaque
 BloomPageOpaqueData
 BloomScanOpaque
 BloomScanOpaqueData
+BloomSignatureWord
 BloomState
 BloomTuple
 BlowfishContext
@@ -428,7 +429,6 @@ CustomScanMethods
 CustomScanState
 CycleCtr
 DBState
-DBWriteRequest
 DCHCacheEntry
 DEADLOCK_INFO
 DECountItem
@@ -493,6 +493,7 @@ DropdbStmt
 DumpComponents
 DumpId
 DumpOptions
+DumpSignalInformation
 DumpableObject
 DumpableObjectType
 DynamicFileList
@@ -574,7 +575,6 @@ ExprStateEvalFunc
 ExtensibleNode
 ExtensibleNodeEntry
 ExtensibleNodeMethods
-ExtensionBehavior
 ExtensionControlFile
 ExtensionInfo
 ExtensionMemberId
@@ -612,7 +612,6 @@ FmgrBuiltin
 FmgrHookEventType
 FmgrInfo
 ForeignDataWrapper
-ForeignKeyOptInfo
 ForeignPath
 ForeignScan
 ForeignScanState
@@ -1888,7 +1887,6 @@ ShmemIndexEnt
 ShutdownInformation
 ShutdownMode
 SignTSVector
-SignType
 SimpleActionList
 SimpleActionListCell
 SimpleEcontextStackEntry
