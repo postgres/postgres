@@ -9081,10 +9081,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
     <table id="textsearch-operators-table">
      <title>Text Search Operators</title>
-     <tgroup cols="4">
+     <tgroup cols="5">
       <thead>
        <row>
         <entry>Operator</entry>
+        <entry>Return Type</entry>
         <entry>Description</entry>
         <entry>Example</entry>
         <entry>Result</entry>
@@ -9093,54 +9094,63 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
       <tbody>
        <row>
         <entry> <literal>@@</literal> </entry>
+        <entry><type>boolean</></entry>
         <entry><type>tsvector</> matches <type>tsquery</> ?</entry>
         <entry><literal>to_tsvector('fat cats ate rats') @@ to_tsquery('cat &amp; rat')</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
        <row>
         <entry> <literal>@@@</literal> </entry>
+        <entry><type>boolean</></entry>
         <entry>deprecated synonym for <literal>@@</></entry>
         <entry><literal>to_tsvector('fat cats ate rats') @@@ to_tsquery('cat &amp; rat')</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
        <row>
         <entry> <literal>||</literal> </entry>
+        <entry><type>tsvector</></entry>
         <entry>concatenate <type>tsvector</>s</entry>
         <entry><literal>'a:1 b:2'::tsvector || 'c:1 d:2 b:3'::tsvector</literal></entry>
         <entry><literal>'a':1 'b':2,5 'c':3 'd':4</literal></entry>
        </row>
        <row>
         <entry> <literal>&amp;&amp;</literal> </entry>
+        <entry><type>tsquery</></entry>
         <entry>AND <type>tsquery</>s together</entry>
         <entry><literal>'fat | rat'::tsquery &amp;&amp; 'cat'::tsquery</literal></entry>
         <entry><literal>( 'fat' | 'rat' ) &amp; 'cat'</literal></entry>
        </row>
        <row>
         <entry> <literal>||</literal> </entry>
+        <entry><type>tsquery</></entry>
         <entry>OR <type>tsquery</>s together</entry>
         <entry><literal>'fat | rat'::tsquery || 'cat'::tsquery</literal></entry>
         <entry><literal>( 'fat' | 'rat' ) | 'cat'</literal></entry>
        </row>
        <row>
         <entry> <literal>!!</literal> </entry>
+        <entry><type>tsquery</></entry>
         <entry>negate a <type>tsquery</></entry>
         <entry><literal>!! 'cat'::tsquery</literal></entry>
         <entry><literal>!'cat'</literal></entry>
        </row>
        <row>
         <entry> <literal>&lt;-&gt;</literal> </entry>
+        <entry><type>tsquery</></entry>
         <entry><type>tsquery</> followed by <type>tsquery</></entry>
         <entry><literal>to_tsquery('fat') &lt;-&gt; to_tsquery('rat')</literal></entry>
         <entry><literal>'fat' &lt;-&gt; 'rat'</literal></entry>
        </row>
        <row>
         <entry> <literal>@&gt;</literal> </entry>
+        <entry><type>boolean</></entry>
         <entry><type>tsquery</> contains another ?</entry>
         <entry><literal>'cat'::tsquery @&gt; 'cat &amp; rat'::tsquery</literal></entry>
         <entry><literal>f</literal></entry>
        </row>
        <row>
         <entry> <literal>&lt;@</literal> </entry>
+        <entry><type>boolean</></entry>
         <entry><type>tsquery</> is contained in ?</entry>
         <entry><literal>'cat'::tsquery &lt;@ 'cat &amp; rat'::tsquery</literal></entry>
         <entry><literal>t</literal></entry>
@@ -9245,7 +9255,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <literal><function>phraseto_tsquery(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
-        <entry>produce <type>tsquery</> ignoring punctuation</entry>
+        <entry>produce <type>tsquery</> that searches for a phrase,
+         ignoring punctuation</entry>
         <entry><literal>phraseto_tsquery('english', 'The Fat Rats')</literal></entry>
         <entry><literal>'fat' &lt;-&gt; 'rat'</literal></entry>
        </row>
@@ -9400,7 +9411,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <literal><function>ts_rewrite(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
-        <entry>replace target with substitute within query</entry>
+        <entry>replace <replaceable>target</> with <replaceable>substitute</>
+         within query</entry>
         <entry><literal>ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'foo|bar'::tsquery)</literal></entry>
         <entry><literal>'b' &amp; ( 'foo' | 'bar' )</literal></entry>
        </row>
@@ -9419,7 +9431,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <literal><function>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
-        <entry>implementation of <literal>&lt;-&gt;</> (FOLLOWED BY) operator</entry>
+        <entry>make query that searches for <replaceable>query1</> followed
+         by <replaceable>query2</> (same as <literal>&lt;-&gt;</>
+         operator)</entry>
         <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'))</literal></entry>
         <entry><literal>'fat' &lt;-&gt; 'cat'</literal></entry>
        </row>
@@ -9428,7 +9442,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <literal><function>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">distance</replaceable> <type>integer</>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
-        <entry>phrase-concatenate with distance</entry>
+        <entry>make query that searches for <replaceable>query1</> followed by
+         <replaceable>query2</> at maximum distance <replaceable>distance</></entry>
         <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10)</literal></entry>
         <entry><literal>'fat' &lt;10&gt; 'cat'</literal></entry>
        </row>

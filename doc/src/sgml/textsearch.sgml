@@ -263,12 +263,12 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     As the above example suggests, a <type>tsquery</type> is not just raw
     text, any more than a <type>tsvector</type> is.  A <type>tsquery</type>
     contains search terms, which must be already-normalized lexemes, and
-    may combine multiple terms using AND, OR, NOT and FOLLOWED BY operators.
-    (For details see <xref linkend="datatype-textsearch">.)  There are
-    functions <function>to_tsquery</>, <function>plainto_tsquery</>
+    may combine multiple terms using AND, OR, NOT, and FOLLOWED BY operators.
+    (For details see <xref linkend="datatype-tsquery">.)  There are
+    functions <function>to_tsquery</>, <function>plainto_tsquery</>,
     and <function>phraseto_tsquery</>
     that are helpful in converting user-written text into a proper
-    <type>tsquery</type>, for example by normalizing words appearing in
+    <type>tsquery</type>, primarily by normalizing words appearing in
     the text.  Similarly, <function>to_tsvector</> is used to parse and
     normalize a document string.  So in practice a text search match would
     look more like this:
@@ -295,35 +295,6 @@ SELECT 'fat cats ate fat rats'::tsvector @@ to_tsquery('fat &amp; rat');
    </para>
 
    <para>
-    Phrase search is made possible with the help of the <literal>&lt;-&gt;</>
-    (FOLLOWED BY) operator, which enforces lexeme order. This allows you
-    to discard strings not containing the desired phrase, for example:
-
-<programlisting>
-SELECT q @@ to_tsquery('fatal &lt;-&gt; error')
-FROM unnest(array[to_tsvector('fatal error'),
-                  to_tsvector('error is not fatal')]) AS q;
- ?column?
-----------
- t
- f
-</programlisting>
-
-    A more generic version of the FOLLOWED BY operator takes form of
-    <literal>&lt;N&gt;</>, where N stands for the greatest allowed distance
-    between the specified lexemes. The <literal>phraseto_tsquery</>
-    function makes use of this behavior in order to construct a
-    <literal>tsquery</> capable of matching the provided phrase:
-
-<programlisting>
-SELECT phraseto_tsquery('cat ate some rats');
-       phraseto_tsquery
--------------------------------
- ( 'cat' &lt;-&gt; 'ate' ) &lt;2&gt; 'rat'
-</programlisting>
-   </para>
-
-   <para>
     The <literal>@@</literal> operator also
     supports <type>text</type> input, allowing explicit conversion of a text
     string to <type>tsvector</type> or <type>tsquery</> to be skipped
@@ -343,6 +314,57 @@ text @@ text
     is equivalent to <literal>to_tsvector(x) @@ y</literal>.
     The form <type>text</type> <literal>@@</literal> <type>text</type>
     is equivalent to <literal>to_tsvector(x) @@ plainto_tsquery(y)</literal>.
+   </para>
+
+   <para>
+    Within a <type>tsquery</>, the <literal>&amp;</literal> (AND) operator
+    specifies that both its arguments must appear in the document to have a
+    match.  Similarly, the <literal>|</literal> (OR) operator specifies that
+    at least one of its arguments must appear, while the <literal>!</> (NOT)
+    operator specifies that its argument must <emphasis>not</> appear in
+    order to have a match.  Parentheses can be used to control nesting of
+    these operators.
+   </para>
+
+   <para>
+    Searching for phrases is possible with the help of
+    the <literal>&lt;-&gt;</> (FOLLOWED BY) <type>tsquery</> operator, which
+    matches only if its arguments have matches that are adjacent and in the
+    given order.  For example:
+
+<programlisting>
+SELECT to_tsvector('fatal error') @@ to_tsquery('fatal &lt;-&gt; error');
+ ?column? 
+----------
+ t
+
+SELECT to_tsvector('error is not fatal') @@ to_tsquery('fatal &lt;-&gt; error');
+ ?column? 
+----------
+ f
+</programlisting>
+
+    There is a more general version of the FOLLOWED BY operator having the
+    form <literal>&lt;<replaceable>N</>&gt;</literal>,
+    where <replaceable>N</> is an integer standing for the greatest distance
+    allowed between the matching lexemes.  <literal>&lt;1&gt;</literal> is
+    the same as <literal>&lt;-&gt;</>, while <literal>&lt;2&gt;</literal>
+    allows one other lexeme to optionally appear between the matches, and so
+    on.  The <literal>phraseto_tsquery</> function makes use of this
+    operator to construct a <literal>tsquery</> that can match a multi-word
+    phrase when some of the words are stop words.  For example:
+
+<programlisting>
+SELECT phraseto_tsquery('cats ate rats');
+       phraseto_tsquery        
+-------------------------------
+ ( 'cat' &lt;-&gt; 'ate' ) &lt;-&gt; 'rat'
+
+SELECT phraseto_tsquery('the cats ate the rats');
+       phraseto_tsquery        
+-------------------------------
+ ( 'cat' &lt;-&gt; 'ate' ) &lt;2&gt; 'rat'
+</programlisting>
    </para>
   </sect2>
 
@@ -740,12 +762,12 @@ UPDATE tt SET ti =
    <para>
     <productname>PostgreSQL</productname> provides the
     functions <function>to_tsquery</function>,
-    <function>plainto_tsquery</function> and
+    <function>plainto_tsquery</function>, and
     <function>phraseto_tsquery</function>
     for converting a query to the <type>tsquery</type> data type.
     <function>to_tsquery</function> offers access to more features
-    than both <function>plainto_tsquery</function> and
-    <function>phraseto_tsquery</function>, but is less forgiving
+    than either <function>plainto_tsquery</function> or
+    <function>phraseto_tsquery</function>, but it is less forgiving
     about its input.
    </para>
 
@@ -760,15 +782,15 @@ to_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>
    <para>
     <function>to_tsquery</function> creates a <type>tsquery</> value from
     <replaceable>querytext</replaceable>, which must consist of single tokens
-    separated by the Boolean operators <literal>&amp;</literal> (AND),
-    <literal>|</literal> (OR), <literal>!</literal> (NOT), and also the
-    <literal>&lt;-&gt;</literal> (FOLLOWED BY) phrase search operator. These operators
-    can be grouped using parentheses.  In other words, the input to
+    separated by the <type>tsquery</> operators <literal>&amp;</literal> (AND),
+    <literal>|</literal> (OR), <literal>!</literal> (NOT), and
+    <literal>&lt;-&gt;</literal> (FOLLOWED BY), possibly grouped
+    using parentheses.  In other words, the input to
     <function>to_tsquery</function> must already follow the general rules for
     <type>tsquery</> input, as described in <xref
-    linkend="datatype-textsearch">.  The difference is that while basic
+    linkend="datatype-tsquery">.  The difference is that while basic
     <type>tsquery</> input takes the tokens at face value,
-    <function>to_tsquery</function> normalizes each token to a lexeme using
+    <function>to_tsquery</function> normalizes each token into a lexeme using
     the specified or default configuration, and discards any tokens that are
     stop words according to the configuration.  For example:
 
@@ -818,7 +840,8 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
 </screen>
 
     Without quotes, <function>to_tsquery</function> will generate a syntax
-    error for tokens that are not separated by an AND or OR operator.
+    error for tokens that are not separated by an AND, OR, or FOLLOWED BY
+    operator.
    </para>
 
    <indexterm>
@@ -830,11 +853,11 @@ plainto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <
 </synopsis>
 
    <para>
-    <function>plainto_tsquery</> transforms unformatted text
-    <replaceable>querytext</replaceable> to <type>tsquery</type>.
+    <function>plainto_tsquery</> transforms the unformatted text
+    <replaceable>querytext</replaceable> to a <type>tsquery</type> value.
     The text is parsed and normalized much as for <function>to_tsvector</>,
-    then the <literal>&amp;</literal> (AND) Boolean operator is inserted
-    between surviving words.
+    then the <literal>&amp;</literal> (AND) <type>tsquery</type> operator is
+    inserted between surviving words.
    </para>
 
    <para>
@@ -847,8 +870,8 @@ SELECT plainto_tsquery('english', 'The Fat Rats');
  'fat' &amp; 'rat'
 </screen>
 
-    Note that <function>plainto_tsquery</> cannot
-    recognize Boolean and phrase search operators, weight labels,
+    Note that <function>plainto_tsquery</> will not
+    recognize <type>tsquery</type> operators, weight labels,
     or prefix-match labels in its input:
 
 <screen>
@@ -871,11 +894,14 @@ phraseto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> 
 
    <para>
     <function>phraseto_tsquery</> behaves much like
-    <function>plainto_tsquery</>, with the exception
-    that it utilizes the <literal>&lt;-&gt;</literal> (FOLLOWED BY) phrase search
-    operator instead of the <literal>&amp;</literal> (AND) Boolean operator.
-    This is particularly useful when searching for exact lexeme sequences,
-    since the phrase search operator helps to maintain lexeme order.
+    <function>plainto_tsquery</>, except that it inserts
+    the <literal>&lt;-&gt;</literal> (FOLLOWED BY) operator between
+    surviving words instead of the <literal>&amp;</literal> (AND) operator.
+    Also, stop words are not simply discarded, but are accounted for by
+    inserting <literal>&lt;<replaceable>N</>&gt;</literal> operators rather
+    than <literal>&lt;-&gt;</literal> operators.  This function is useful
+    when searching for exact lexeme sequences, since the FOLLOWED BY
+    operators check lexeme order not just the presence of all the lexemes.
    </para>
 
    <para>
@@ -888,9 +914,9 @@ SELECT phraseto_tsquery('english', 'The Fat Rats');
  'fat' &lt;-&gt; 'rat'
 </screen>
 
-    Just like the <function>plainto_tsquery</>, the
-    <function>phraseto_tsquery</> function cannot
-    recognize Boolean and phrase search operators, weight labels,
+    Like <function>plainto_tsquery</>, the
+    <function>phraseto_tsquery</> function will not
+    recognize <type>tsquery</type> operators, weight labels,
     or prefix-match labels in its input:
 
 <screen>
@@ -898,17 +924,6 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
       phraseto_tsquery
 -----------------------------
  ( 'fat' &lt;-&gt; 'rat' ) &lt;-&gt; 'c'
-</screen>
-
-    It is possible to specify the configuration to be used to parse the document,
-    for example, we could create a new one using the hunspell dictionary
-    (namely 'eng_hunspell') in order to match phrases with different word forms:
-
-<screen>
-SELECT phraseto_tsquery('eng_hunspell', 'developer of the building which collapsed');
-                                      phraseto_tsquery
---------------------------------------------------------------------------------------------
- ( 'developer' &lt;3&gt; 'building' ) &lt;2&gt; 'collapse' | ( 'developer' &lt;3&gt; 'build' ) &lt;2&gt; 'collapse'
 </screen>
    </para>
 
@@ -1400,10 +1415,13 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
      <listitem>
       <para>
-       Returns a vector which lists the same lexemes as the given vector, but
-       which lacks any position or weight information.  While the returned
-       vector is much less useful than an unstripped vector for relevance
-       ranking, it will usually be much smaller.
+       Returns a vector that lists the same lexemes as the given vector, but
+       lacks any position or weight information.  The result is usually much
+       smaller than an unstripped vector, but it is also less useful.
+       Relevance ranking does not work as well on stripped vectors as
+       unstripped ones.  Also, when given stripped input,
+       the <literal>&lt;-&gt;</> (FOLLOWED BY) <type>tsquery</> operator
+       effectively degenerates to a simple <literal>&amp;</> (AND) test.
       </para>
      </listitem>
 
@@ -1481,7 +1499,10 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
      <listitem>
       <para>
-       Returns the phrase-concatenation of the two given queries.
+       Returns a query that searches for a match to the first given query
+       immediately followed by a match to the second given query, using
+       the <literal>&lt;-&gt;</> (FOLLOWED BY)
+       <type>tsquery</> operator.  For example:
 
 <screen>
 SELECT to_tsquery('fat') &lt;-&gt; to_tsquery('cat | rat');
@@ -1506,8 +1527,11 @@ SELECT to_tsquery('fat') &lt;-&gt; to_tsquery('cat | rat');
 
      <listitem>
       <para>
-       Returns the distanced phrase-concatenation of the two given queries.
-       This function lies in the implementation of the <literal>&lt;-&gt;</> operator.
+       Returns a query that searches for a match to the first given query
+       followed by a match to the second given query at a distance of at
+       most <replaceable>distance</replaceable> lexemes, using
+       the <literal>&lt;<replaceable>N</>&gt;</literal>
+       <type>tsquery</> operator.  For example:
 
 <screen>
 SELECT tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10);
@@ -3784,6 +3808,11 @@ Parser: "pg_catalog.default"
     <listitem>
      <para>Position values in <type>tsvector</> must be greater than 0 and
      no more than 16,383</para>
+    </listitem>
+    <listitem>
+     <para>The match distance in a <literal>&lt;<replaceable>N</>&gt;</literal>
+     (FOLLOWED BY) <type>tsquery</> operator cannot be more than
+     16,384</para>
     </listitem>
     <listitem>
      <para>No more than 256 positions per lexeme</para>
