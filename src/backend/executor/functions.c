@@ -497,8 +497,8 @@ init_execution_state(List *queryTree_list,
 				stmt = queryTree->utilityStmt;
 			else
 				stmt = (Node *) pg_plan_query(queryTree,
-					fcache->readonly_func ? CURSOR_OPT_PARALLEL_OK : 0,
-					NULL);
+						  fcache->readonly_func ? CURSOR_OPT_PARALLEL_OK : 0,
+											  NULL);
 
 			/* Precheck all commands for validity in a function */
 			if (IsA(stmt, TransactionStmt))

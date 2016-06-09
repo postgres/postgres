@@ -28,9 +28,9 @@ typedef struct
 {
 	uint32		val:8,
 				isword:1,
-				/* Stores compound flags listed below */
+	/* Stores compound flags listed below */
 				compoundflag:4,
-				/* Reference to an entry of the AffixData field */
+	/* Reference to an entry of the AffixData field */
 				affix:19;
 	struct SPNode *node;
 } SPNodeData;
@@ -63,8 +63,8 @@ typedef struct spell_struct
 	union
 	{
 		/*
-		 * flag is filled in by NIImportDictionary(). After NISortDictionary(),
-		 * d is used instead of flag.
+		 * flag is filled in by NIImportDictionary(). After
+		 * NISortDictionary(), d is used instead of flag.
 		 */
 		char	   *flag;
 		/* d is used in mkSPNode() */
@@ -87,7 +87,7 @@ typedef struct spell_struct
 typedef struct aff_struct
 {
 	char	   *flag;
-				/* FF_SUFFIX or FF_PREFIX */
+	/* FF_SUFFIX or FF_PREFIX */
 	uint32		type:1,
 				flagflags:7,
 				issimple:1,
@@ -151,9 +151,9 @@ typedef struct
  */
 typedef enum
 {
-	FM_CHAR, /* one character (like ispell) */
-	FM_LONG, /* two characters */
-	FM_NUM   /* number, >= 0 and < 65536 */
+	FM_CHAR,					/* one character (like ispell) */
+	FM_LONG,					/* two characters */
+	FM_NUM						/* number, >= 0 and < 65536 */
 } FlagMode;
 
 /*
@@ -202,11 +202,11 @@ typedef struct
 	 */
 
 	/* Array of Hunspell options in affix file */
-	CompoundAffixFlag   *CompoundAffixFlags;
+	CompoundAffixFlag *CompoundAffixFlags;
 	/* number of entries in CompoundAffixFlags array */
-	int					nCompoundAffixFlag;
+	int			nCompoundAffixFlag;
 	/* allocated length of CompoundAffixFlags array */
-	int					mCompoundAffixFlag;
+	int			mCompoundAffixFlag;
 
 	/*
 	 * Remaining fields are only used during dictionary construction; they are

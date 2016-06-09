@@ -275,8 +275,8 @@ ValidateRestrictionEstimator(List *restrictionName)
 	if (get_func_rettype(restrictionOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("restriction estimator function %s must return type %s",
-						NameListToString(restrictionName), "float8")));
+			  errmsg("restriction estimator function %s must return type %s",
+					 NameListToString(restrictionName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */
 	aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
@@ -321,8 +321,8 @@ ValidateJoinEstimator(List *joinName)
 	if (get_func_rettype(joinOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("join estimator function %s must return type %s",
-					NameListToString(joinName), "float8")));
+				 errmsg("join estimator function %s must return type %s",
+						NameListToString(joinName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */
 	aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);

@@ -64,21 +64,21 @@ static void get_policies_for_relation(Relation relation,
 
 static List *sort_policies_by_name(List *policies);
 
-static int row_security_policy_cmp(const void *a, const void *b);
+static int	row_security_policy_cmp(const void *a, const void *b);
 
 static void add_security_quals(int rt_index,
-							   List *permissive_policies,
-							   List *restrictive_policies,
-							   List **securityQuals,
-							   bool *hasSubLinks);
+				   List *permissive_policies,
+				   List *restrictive_policies,
+				   List **securityQuals,
+				   bool *hasSubLinks);
 
 static void add_with_check_options(Relation rel,
-								   int rt_index,
-								   WCOKind kind,
-								   List *permissive_policies,
-								   List *restrictive_policies,
-								   List **withCheckOptions,
-								   bool *hasSubLinks);
+					   int rt_index,
+					   WCOKind kind,
+					   List *permissive_policies,
+					   List *restrictive_policies,
+					   List **withCheckOptions,
+					   bool *hasSubLinks);
 
 static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 
@@ -163,29 +163,31 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	rel = heap_open(rte->relid, NoLock);
 
 	commandType = rt_index == root->resultRelation ?
-				  root->commandType : CMD_SELECT;
+		root->commandType : CMD_SELECT;
 
 	/*
 	 * In some cases, we need to apply USING policies (which control the
 	 * visibility of records) associated with multiple command types (see
 	 * specific cases below).
 	 *
-	 * When considering the order in which to apply these USING policies,
-	 * we prefer to apply higher privileged policies, those which allow the
-	 * user to lock records (UPDATE and DELETE), first, followed by policies
-	 * which don't (SELECT).
+	 * When considering the order in which to apply these USING policies, we
+	 * prefer to apply higher privileged policies, those which allow the user
+	 * to lock records (UPDATE and DELETE), first, followed by policies which
+	 * don't (SELECT).
 	 *
 	 * Note that the optimizer is free to push down and reorder quals which
 	 * use leakproof functions.
 	 *
 	 * In all cases, if there are no policy clauses allowing access to rows in
-	 * the table for the specific type of operation, then a single always-false
-	 * clause (a default-deny policy) will be added (see add_security_quals).
+	 * the table for the specific type of operation, then a single
+	 * always-false clause (a default-deny policy) will be added (see
+	 * add_security_quals).
 	 */
 
 	/*
 	 * For a SELECT, if UPDATE privileges are required (eg: the user has
-	 * specified FOR [KEY] UPDATE/SHARE), then add the UPDATE USING quals first.
+	 * specified FOR [KEY] UPDATE/SHARE), then add the UPDATE USING quals
+	 * first.
 	 *
 	 * This way, we filter out any records from the SELECT FOR SHARE/UPDATE
 	 * which the user does not have access to via the UPDATE USING policies,
@@ -232,8 +234,8 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * a WHERE clause which involves columns from the relation), we collect up
 	 * CMD_SELECT policies and add them via add_security_quals first.
 	 *
-	 * This way, we filter out any records which are not visible through an ALL
-	 * or SELECT USING policy.
+	 * This way, we filter out any records which are not visible through an
+	 * ALL or SELECT USING policy.
 	 */
 	if ((commandType == CMD_UPDATE || commandType == CMD_DELETE) &&
 		rte->requiredPerms & ACL_SELECT)
@@ -272,9 +274,9 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 							   hasSubLinks);
 
 		/*
-		 * Get and add ALL/SELECT policies, if SELECT rights are required
-		 * for this relation (eg: when RETURNING is used).  These are added as
-		 * WCO policies rather than security quals to ensure that an error is
+		 * Get and add ALL/SELECT policies, if SELECT rights are required for
+		 * this relation (eg: when RETURNING is used).  These are added as WCO
+		 * policies rather than security quals to ensure that an error is
 		 * raised if a policy is violated; otherwise, we might end up silently
 		 * dropping rows to be added.
 		 */
@@ -288,7 +290,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 									  &select_restrictive_policies);
 			add_with_check_options(rel, rt_index,
 								   commandType == CMD_INSERT ?
-								   WCO_RLS_INSERT_CHECK : WCO_RLS_UPDATE_CHECK,
+								 WCO_RLS_INSERT_CHECK : WCO_RLS_UPDATE_CHECK,
 								   select_permissive_policies,
 								   select_restrictive_policies,
 								   withCheckOptions,
@@ -324,11 +326,11 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 								   hasSubLinks);
 
 			/*
-			 * Get and add ALL/SELECT policies, as WCO_RLS_CONFLICT_CHECK
-			 * WCOs to ensure they are considered when taking the UPDATE
-			 * path of an INSERT .. ON CONFLICT DO UPDATE, if SELECT
-			 * rights are required for this relation, also as WCO policies,
-			 * again, to avoid silently dropping data.  See above.
+			 * Get and add ALL/SELECT policies, as WCO_RLS_CONFLICT_CHECK WCOs
+			 * to ensure they are considered when taking the UPDATE path of an
+			 * INSERT .. ON CONFLICT DO UPDATE, if SELECT rights are required
+			 * for this relation, also as WCO policies, again, to avoid
+			 * silently dropping data.  See above.
 			 */
 			if (rte->requiredPerms & ACL_SELECT)
 			{
@@ -336,7 +338,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 				List	   *conflict_select_restrictive_policies = NIL;
 
 				get_policies_for_relation(rel, CMD_SELECT, user_id,
-									  &conflict_select_permissive_policies,
+										&conflict_select_permissive_policies,
 									  &conflict_select_restrictive_policies);
 				add_with_check_options(rel, rt_index,
 									   WCO_RLS_CONFLICT_CHECK,
@@ -392,8 +394,8 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	 */
 	foreach(item, relation->rd_rsdesc->policies)
 	{
-		bool				cmd_matches = false;
-		RowSecurityPolicy  *policy = (RowSecurityPolicy *) lfirst(item);
+		bool		cmd_matches = false;
+		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
 
 		/* Always add ALL policies, if they exist. */
 		if (policy->polcmd == '*')
@@ -427,8 +429,8 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 		}
 
 		/*
-		 * Add this policy to the list of permissive policies if it
-		 * applies to the specified role.
+		 * Add this policy to the list of permissive policies if it applies to
+		 * the specified role.
 		 */
 		if (cmd_matches && check_role_for_policy(policy->roles, user_id))
 			*permissive_policies = lappend(*permissive_policies, policy);
@@ -442,7 +444,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	if (row_security_policy_hook_restrictive)
 	{
 		List	   *hook_policies =
-			(*row_security_policy_hook_restrictive) (cmd, relation);
+		(*row_security_policy_hook_restrictive) (cmd, relation);
 
 		/*
 		 * We sort restrictive policies by name so that any WCOs they generate
@@ -462,7 +464,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	if (row_security_policy_hook_permissive)
 	{
 		List	   *hook_policies =
-			(*row_security_policy_hook_permissive) (cmd, relation);
+		(*row_security_policy_hook_permissive) (cmd, relation);
 
 		foreach(item, hook_policies)
 		{
@@ -498,6 +500,7 @@ sort_policies_by_name(List *policies)
 	foreach(item, policies)
 	{
 		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
+
 		pols[ii++] = *policy;
 	}
 
@@ -551,8 +554,8 @@ add_security_quals(int rt_index,
 	Expr	   *rowsec_expr;
 
 	/*
-	 * First collect up the permissive quals.  If we do not find any permissive
-	 * policies then no rows are visible (this is handled below).
+	 * First collect up the permissive quals.  If we do not find any
+	 * permissive policies then no rows are visible (this is handled below).
 	 */
 	foreach(item, permissive_policies)
 	{
@@ -577,8 +580,8 @@ add_security_quals(int rt_index,
 		/*
 		 * We now know that permissive policies exist, so we can now add
 		 * security quals based on the USING clauses from the restrictive
-		 * policies.  Since these need to be "AND"d together, we can
-		 * just add them one at a time.
+		 * policies.  Since these need to be "AND"d together, we can just add
+		 * them one at a time.
 		 */
 		foreach(item, restrictive_policies)
 		{
@@ -608,6 +611,7 @@ add_security_quals(int rt_index,
 		*securityQuals = list_append_unique(*securityQuals, rowsec_expr);
 	}
 	else
+
 		/*
 		 * A permissive policy must exist for rows to be visible at all.
 		 * Therefore, if there were no permissive policies found, return a
@@ -647,7 +651,7 @@ add_with_check_options(Relation rel,
 	List	   *permissive_quals = NIL;
 
 #define QUAL_FOR_WCO(policy) \
-	( kind != WCO_RLS_CONFLICT_CHECK &&	\
+	( kind != WCO_RLS_CONFLICT_CHECK && \
 	  (policy)->with_check_qual != NULL ? \
 	  (policy)->with_check_qual : (policy)->qual )
 
@@ -668,11 +672,11 @@ add_with_check_options(Relation rel,
 	}
 
 	/*
-	 * There must be at least one permissive qual found or no rows are
-	 * allowed to be added.  This is the same as in add_security_quals.
+	 * There must be at least one permissive qual found or no rows are allowed
+	 * to be added.  This is the same as in add_security_quals.
 	 *
-	 * If there are no permissive_quals then we fall through and return a single
-	 * 'false' WCO, preventing all new rows.
+	 * If there are no permissive_quals then we fall through and return a
+	 * single 'false' WCO, preventing all new rows.
 	 */
 	if (permissive_quals != NIL)
 	{

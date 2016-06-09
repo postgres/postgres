@@ -241,8 +241,8 @@ be_tls_init(void)
 			(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("private key file \"%s\" has group or world access",
-							ssl_key_file),
+				  errmsg("private key file \"%s\" has group or world access",
+						 ssl_key_file),
 					 errdetail("File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root.")));
 #endif
 
@@ -316,7 +316,7 @@ be_tls_init(void)
 			else
 				ereport(FATAL,
 						(errmsg("could not load SSL certificate revocation list file \"%s\": %s",
-								ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+							 ssl_crl_file, SSLerrmessage(ERR_get_error()))));
 		}
 	}
 
@@ -377,11 +377,12 @@ be_tls_open_server(Port *port)
 	port->ssl_in_use = true;
 
 aloop:
+
 	/*
 	 * Prepare to call SSL_get_error() by clearing thread's OpenSSL error
 	 * queue.  In general, the current thread's error queue must be empty
-	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error()
-	 * will not work reliably.  An extension may have failed to clear the
+	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error() will
+	 * not work reliably.  An extension may have failed to clear the
 	 * per-thread error queue following another call to an OpenSSL I/O
 	 * routine.
 	 */
@@ -393,12 +394,11 @@ aloop:
 
 		/*
 		 * Other clients of OpenSSL in the backend may fail to call
-		 * ERR_get_error(), but we always do, so as to not cause problems
-		 * for OpenSSL clients that don't call ERR_clear_error()
-		 * defensively.  Be sure that this happens by calling now.
-		 * SSL_get_error() relies on the OpenSSL per-thread error queue
-		 * being intact, so this is the earliest possible point
-		 * ERR_get_error() may be called.
+		 * ERR_get_error(), but we always do, so as to not cause problems for
+		 * OpenSSL clients that don't call ERR_clear_error() defensively.  Be
+		 * sure that this happens by calling now. SSL_get_error() relies on
+		 * the OpenSSL per-thread error queue being intact, so this is the
+		 * earliest possible point ERR_get_error() may be called.
 		 */
 		ecode = ERR_get_error();
 		switch (err)

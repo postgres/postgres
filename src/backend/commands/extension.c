@@ -1419,7 +1419,7 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 				CreateExtensionStmt *ces;
 				ListCell   *lc;
 				ObjectAddress addr;
-				List *cascade_parents;
+				List	   *cascade_parents;
 
 				/* Check extension name validity before trying to cascade */
 				check_valid_extension_name(curreq);

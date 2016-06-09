@@ -245,8 +245,8 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	}
 
 	/*
-	 * OK, the control segment looks basically valid, so we can use it to
-	 * get a list of segments that need to be removed.
+	 * OK, the control segment looks basically valid, so we can use it to get
+	 * a list of segments that need to be removed.
 	 */
 	nitems = old_control->nitems;
 	for (i = 0; i < nitems; ++i)

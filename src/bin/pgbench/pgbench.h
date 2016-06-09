@@ -43,10 +43,10 @@ typedef struct
 	PgBenchValueType type;
 	union
 	{
-		int64 ival;
-		double dval;
+		int64		ival;
+		double		dval;
 		/* add other types here */
-	} u;
+	}			u;
 } PgBenchValue;
 
 /* Types of expression nodes */
@@ -87,7 +87,7 @@ struct PgBenchExpr
 	PgBenchExprType etype;
 	union
 	{
-		PgBenchValue	constant;
+		PgBenchValue constant;
 		struct
 		{
 			char	   *varname;

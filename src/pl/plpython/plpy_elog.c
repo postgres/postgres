@@ -24,12 +24,12 @@ PyObject   *PLy_exc_spi_error = NULL;
 static void PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			  char **xmsg, char **tbmsg, int *tb_depth);
 static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
-			char **hint, char **query, int *position,
-			char **schema_name, char **table_name, char **column_name,
-			char **datatype_name, char **constraint_name);
+					   char **hint, char **query, int *position,
+				   char **schema_name, char **table_name, char **column_name,
+					   char **datatype_name, char **constraint_name);
 static void PLy_get_error_data(PyObject *exc, int *sqlerrcode, char **detail,
-			char **hint, char **schema_name, char **table_name, char **column_name,
-			char **datatype_name, char **constraint_name);
+	  char **hint, char **schema_name, char **table_name, char **column_name,
+				   char **datatype_name, char **constraint_name);
 static char *get_source_line(const char *src, int lineno);
 
 static void get_string_attr(PyObject *obj, char *attrname, char **str);
@@ -136,8 +136,8 @@ PLy_elog(int elevel, const char *fmt,...)
 													column_name) : 0,
 				 (datatype_name) ? err_generic_string(PG_DIAG_DATATYPE_NAME,
 													  datatype_name) : 0,
-				 (constraint_name) ? err_generic_string(PG_DIAG_CONSTRAINT_NAME,
-														constraint_name) : 0));
+			  (constraint_name) ? err_generic_string(PG_DIAG_CONSTRAINT_NAME,
+													 constraint_name) : 0));
 	}
 	PG_CATCH();
 	{
@@ -544,7 +544,7 @@ PLy_exception_set_with_details(PyObject *excclass, ErrorData *edata)
 		goto failure;
 
 	if (!set_string_attr(error, "sqlstate",
-							unpack_sql_state(edata->sqlerrcode)))
+						 unpack_sql_state(edata->sqlerrcode)))
 		goto failure;
 
 	if (!set_string_attr(error, "detail", edata->detail))
@@ -589,7 +589,7 @@ failure:
 static void
 get_string_attr(PyObject *obj, char *attrname, char **str)
 {
-	PyObject *val;
+	PyObject   *val;
 
 	val = PyObject_GetAttrString(obj, attrname);
 	if (val != NULL && val != Py_None)
@@ -605,8 +605,8 @@ get_string_attr(PyObject *obj, char *attrname, char **str)
 static bool
 set_string_attr(PyObject *obj, char *attrname, char *str)
 {
-	int result;
-	PyObject *val;
+	int			result;
+	PyObject   *val;
 
 	if (str != NULL)
 	{

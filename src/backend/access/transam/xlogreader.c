@@ -322,7 +322,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		if (total_len < SizeOfXLogRecord)
 		{
 			report_invalid_record(state,
-						"invalid record length at %X/%X: wanted %u, got %u",
+						 "invalid record length at %X/%X: wanted %u, got %u",
 								  (uint32) (RecPtr >> 32), (uint32) RecPtr,
 								  (uint32) SizeOfXLogRecord, total_len);
 			goto err;
@@ -621,7 +621,7 @@ ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 	if (record->xl_tot_len < SizeOfXLogRecord)
 	{
 		report_invalid_record(state,
-						"invalid record length at %X/%X: wanted %u, got %u",
+						 "invalid record length at %X/%X: wanted %u, got %u",
 							  (uint32) (RecPtr >> 32), (uint32) RecPtr,
 							  (uint32) SizeOfXLogRecord, record->xl_tot_len);
 		return false;

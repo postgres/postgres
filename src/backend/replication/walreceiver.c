@@ -463,7 +463,7 @@ WalReceiverMain(void)
 				 */
 				Assert(wait_fd != PGINVALID_SOCKET);
 				rc = WaitLatchOrSocket(&walrcv->latch,
-									   WL_POSTMASTER_DEATH | WL_SOCKET_READABLE |
+								   WL_POSTMASTER_DEATH | WL_SOCKET_READABLE |
 									   WL_TIMEOUT | WL_LATCH_SET,
 									   wait_fd,
 									   NAPTIME_PER_CYCLE);
@@ -475,8 +475,8 @@ WalReceiverMain(void)
 						/*
 						 * The recovery process has asked us to send apply
 						 * feedback now.  Make sure the flag is really set to
-						 * false in shared memory before sending the reply,
-						 * so we don't miss a new request for a reply.
+						 * false in shared memory before sending the reply, so
+						 * we don't miss a new request for a reply.
 						 */
 						walrcv->force_reply = false;
 						pg_memory_barrier();
@@ -1318,10 +1318,10 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	TimeLineID	receive_start_tli;
 	XLogRecPtr	received_lsn;
 	TimeLineID	received_tli;
-	TimestampTz	last_send_time;
-	TimestampTz	last_receipt_time;
+	TimestampTz last_send_time;
+	TimestampTz last_receipt_time;
 	XLogRecPtr	latest_end_lsn;
-	TimestampTz	latest_end_time;
+	TimestampTz latest_end_time;
 	char	   *slotname;
 
 	/* No WAL receiver, just return a tuple with NULL values */
@@ -1379,8 +1379,8 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	if (!superuser())
 	{
 		/*
-		 * Only superusers can see details. Other users only get the pid
-		 * value to know whether it is a WAL receiver, but no details.
+		 * Only superusers can see details. Other users only get the pid value
+		 * to know whether it is a WAL receiver, but no details.
 		 */
 		MemSet(&nulls[1], true, PG_STAT_GET_WAL_RECEIVER_COLS - 1);
 	}
@@ -1422,5 +1422,5 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(
-						  heap_form_tuple(tupdesc, values, nulls)));
+								   heap_form_tuple(tupdesc, values, nulls)));
 }

@@ -395,7 +395,8 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 * Check for a conflict-in as we would if we were going to
 					 * write to this page.  We aren't actually going to write,
 					 * but we want a chance to report SSI conflicts that would
-					 * otherwise be masked by this unique constraint violation.
+					 * otherwise be masked by this unique constraint
+					 * violation.
 					 */
 					CheckForSerializableConflictIn(rel, NULL, buf);
 

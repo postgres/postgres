@@ -33,16 +33,17 @@ typedef struct
  *	which context it is allowed in. We require three states here as there are
  *	two different contexts in which partial aggregation is safe. For aggregates
  *	which have an 'stype' of INTERNAL, it is okay to pass a pointer to the
- *  aggregate state within a single process, since the datum is just a
+ *	aggregate state within a single process, since the datum is just a
  *	pointer. In cases where the aggregate state must be passed between
- *  different processes, for example during parallel aggregation, passing
- *  pointers directly is not going to work.
+ *	different processes, for example during parallel aggregation, passing
+ *	pointers directly is not going to work.
  */
 typedef enum
 {
-	PAT_ANY = 0,		/* Any type of partial aggregation is okay. */
-	PAT_INTERNAL_ONLY,	/* Some aggregates support only internal mode. */
-	PAT_DISABLED		/* Some aggregates don't support partial mode at all */
+	PAT_ANY = 0,				/* Any type of partial aggregation is okay. */
+	PAT_INTERNAL_ONLY,			/* Some aggregates support only internal mode. */
+	PAT_DISABLED				/* Some aggregates don't support partial mode
+								 * at all */
 } PartialAggType;
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,

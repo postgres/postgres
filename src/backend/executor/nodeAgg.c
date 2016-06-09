@@ -491,9 +491,9 @@ static void finalize_aggregate(AggState *aggstate,
 				   AggStatePerGroup pergroupstate,
 				   Datum *resultVal, bool *resultIsNull);
 static void finalize_partialaggregate(AggState *aggstate,
-				   AggStatePerAgg peragg,
-				   AggStatePerGroup pergroupstate,
-				   Datum *resultVal, bool *resultIsNull);
+						  AggStatePerAgg peragg,
+						  AggStatePerGroup pergroupstate,
+						  Datum *resultVal, bool *resultIsNull);
 static void prepare_projection_slot(AggState *aggstate,
 						TupleTableSlot *slot,
 						int currentSet);
@@ -981,17 +981,18 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 		if (OidIsValid(pertrans->deserialfn_oid))
 		{
 			/*
-			 * Don't call a strict deserialization function with NULL input.
-			 * A strict deserialization function and a null value means we skip
-			 * calling the combine function for this state. We assume that this
-			 * would be a waste of time and effort anyway so just skip it.
+			 * Don't call a strict deserialization function with NULL input. A
+			 * strict deserialization function and a null value means we skip
+			 * calling the combine function for this state. We assume that
+			 * this would be a waste of time and effort anyway so just skip
+			 * it.
 			 */
 			if (pertrans->deserialfn.fn_strict && slot->tts_isnull[0])
 				continue;
 			else
 			{
-				FunctionCallInfo	dsinfo = &pertrans->deserialfn_fcinfo;
-				MemoryContext		oldContext;
+				FunctionCallInfo dsinfo = &pertrans->deserialfn_fcinfo;
+				MemoryContext oldContext;
 
 				dsinfo->arg[0] = slot->tts_values[0];
 				dsinfo->argnull[0] = slot->tts_isnull[0];
@@ -1423,14 +1424,14 @@ finalize_partialaggregate(AggState *aggstate,
 						  AggStatePerGroup pergroupstate,
 						  Datum *resultVal, bool *resultIsNull)
 {
-	AggStatePerTrans	pertrans = &aggstate->pertrans[peragg->transno];
-	MemoryContext		oldContext;
+	AggStatePerTrans pertrans = &aggstate->pertrans[peragg->transno];
+	MemoryContext oldContext;
 
 	oldContext = MemoryContextSwitchTo(aggstate->ss.ps.ps_ExprContext->ecxt_per_tuple_memory);
 
 	/*
-	 * serialfn_oid will be set if we must serialize the input state
-	 * before calling the combine function on the state.
+	 * serialfn_oid will be set if we must serialize the input state before
+	 * calling the combine function on the state.
 	 */
 	if (OidIsValid(pertrans->serialfn_oid))
 	{
@@ -1443,6 +1444,7 @@ finalize_partialaggregate(AggState *aggstate,
 		else
 		{
 			FunctionCallInfo fcinfo = &pertrans->serialfn_fcinfo;
+
 			fcinfo->arg[0] = pergroupstate->transValue;
 			fcinfo->argnull[0] = pergroupstate->transValueIsNull;
 
@@ -1459,7 +1461,7 @@ finalize_partialaggregate(AggState *aggstate,
 	/* If result is pass-by-ref, make sure it is in the right context. */
 	if (!peragg->resulttypeByVal && !*resultIsNull &&
 		!MemoryContextContains(CurrentMemoryContext,
-								DatumGetPointer(*resultVal)))
+							   DatumGetPointer(*resultVal)))
 		*resultVal = datumCopy(*resultVal,
 							   peragg->resulttypeByVal,
 							   peragg->resulttypeLen);
@@ -2627,21 +2629,21 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 *
 	 * 1. An aggregate function appears more than once in query:
 	 *
-	 *    SELECT SUM(x) FROM ... HAVING SUM(x) > 0
+	 *	  SELECT SUM(x) FROM ... HAVING SUM(x) > 0
 	 *
-	 *    Since the aggregates are the identical, we only need to calculate
-	 *    the calculate it once. Both aggregates will share the same 'aggno'
-	 *    value.
+	 *	  Since the aggregates are the identical, we only need to calculate
+	 *	  the calculate it once. Both aggregates will share the same 'aggno'
+	 *	  value.
 	 *
 	 * 2. Two different aggregate functions appear in the query, but the
-	 *    aggregates have the same transition function and initial value, but
-	 *    different final function:
+	 *	  aggregates have the same transition function and initial value, but
+	 *	  different final function:
 	 *
-	 *    SELECT SUM(x), AVG(x) FROM ...
+	 *	  SELECT SUM(x), AVG(x) FROM ...
 	 *
-	 *    In this case we must create a new peragg for the varying aggregate,
-	 *    and need to call the final functions separately, but can share the
-	 *    same transition state.
+	 *	  In this case we must create a new peragg for the varying aggregate,
+	 *	  and need to call the final functions separately, but can share the
+	 *	  same transition state.
 	 *
 	 * For either of these optimizations to be valid, the aggregate's
 	 * arguments must be the same, including any modifiers such as ORDER BY,
@@ -2889,8 +2891,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 */
 		existing_transno = find_compatible_pertrans(aggstate, aggref,
 													transfn_oid, aggtranstype,
-												  serialfn_oid, deserialfn_oid,
-													initValue, initValueIsNull,
+												serialfn_oid, deserialfn_oid,
+												  initValue, initValueIsNull,
 													same_input_transnos);
 		if (existing_transno != -1)
 		{
@@ -3366,9 +3368,9 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
 		/*
 		 * The serialization and deserialization functions must match, if
 		 * present, as we're unable to share the trans state for aggregates
-		 * which will serialize or deserialize into different formats. Remember
-		 * that these will be InvalidOid if they're not required for this agg
-		 * node.
+		 * which will serialize or deserialize into different formats.
+		 * Remember that these will be InvalidOid if they're not required for
+		 * this agg node.
 		 */
 		if (aggserialfn != pertrans->serialfn_oid ||
 			aggdeserialfn != pertrans->deserialfn_oid)

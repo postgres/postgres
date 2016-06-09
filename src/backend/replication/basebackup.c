@@ -117,8 +117,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	TimeLineID	starttli;
 	XLogRecPtr	endptr;
 	TimeLineID	endtli;
-	StringInfo  labelfile;
-	StringInfo  tblspc_map_file = NULL;
+	StringInfo	labelfile;
+	StringInfo	tblspc_map_file = NULL;
 	int			datadirpathlen;
 	List	   *tablespaces = NIL;
 

@@ -725,7 +725,7 @@ retry:
 	{
 		TransactionId xwait;
 		ItemPointerData ctid_wait;
-		XLTW_Oper		reason_wait;
+		XLTW_Oper	reason_wait;
 		Datum		existing_values[INDEX_MAX_KEYS];
 		bool		existing_isnull[INDEX_MAX_KEYS];
 		char	   *error_new;

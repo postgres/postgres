@@ -1851,25 +1851,25 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					if (wco->polname != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row-level security policy \"%s\" for table \"%s\"",
-									wco->polname, wco->relname)));
+								 errmsg("new row violates row-level security policy \"%s\" for table \"%s\"",
+										wco->polname, wco->relname)));
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row-level security policy for table \"%s\"",
-									wco->relname)));
+								 errmsg("new row violates row-level security policy for table \"%s\"",
+										wco->relname)));
 					break;
 				case WCO_RLS_CONFLICT_CHECK:
 					if (wco->polname != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row-level security policy \"%s\" (USING expression) for table \"%s\"",
-									wco->polname, wco->relname)));
+								 errmsg("new row violates row-level security policy \"%s\" (USING expression) for table \"%s\"",
+										wco->polname, wco->relname)));
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("new row violates row-level security policy (USING expression) for table \"%s\"",
-									wco->relname)));
+								 errmsg("new row violates row-level security policy (USING expression) for table \"%s\"",
+										wco->relname)));
 					break;
 				default:
 					elog(ERROR, "unrecognized WCO kind: %u", wco->kind);

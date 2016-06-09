@@ -78,7 +78,7 @@ extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);
 extern bool ThereAreNoPriorRegisteredSnapshots(void);
 extern TransactionId TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
-														 Relation relation);
+									Relation relation);
 extern void MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin);
 
 extern char *ExportSnapshot(Snapshot snapshot);

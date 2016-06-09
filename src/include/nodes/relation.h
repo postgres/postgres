@@ -490,7 +490,7 @@ typedef struct RelOptInfo
 
 	/* default result targetlist for Paths scanning this relation */
 	struct PathTarget *reltarget;		/* list of Vars/Exprs, cost, width */
-	bool		reltarget_has_non_vars;	/* true if any expression in
+	bool		reltarget_has_non_vars; /* true if any expression in
 										 * PathTarget is a non-Var */
 
 	/* materialization information */
@@ -852,7 +852,8 @@ typedef struct Path
 
 	bool		parallel_aware; /* engage parallel-aware logic? */
 	bool		parallel_safe;	/* OK to use as part of parallel plan? */
-	int			parallel_workers;	/* desired # of workers; 0 = not parallel */
+	int			parallel_workers;		/* desired # of workers; 0 = not
+										 * parallel */
 
 	/* estimated size/costs for path (see costsize.c for more info) */
 	double		rows;			/* estimated number of result tuples */

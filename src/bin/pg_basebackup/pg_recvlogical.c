@@ -861,8 +861,8 @@ main(int argc, char **argv)
 
 	/*
 	 * Obtain a connection to server. This is not really necessary but it
-	 * helps to get more precise error messages about authentication,
-	 * required GUC parameters and such.
+	 * helps to get more precise error messages about authentication, required
+	 * GUC parameters and such.
 	 */
 	conn = GetConnection();
 	if (!conn)

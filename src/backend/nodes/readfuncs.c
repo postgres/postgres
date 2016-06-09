@@ -1836,8 +1836,8 @@ _readCustomScan(void)
 	READ_BITMAPSET_FIELD(custom_relids);
 
 	/* Lookup CustomScanMethods by CustomName */
-	token = pg_strtok(&length);		/* skip methods: */
-	token = pg_strtok(&length);		/* CustomName */
+	token = pg_strtok(&length); /* skip methods: */
+	token = pg_strtok(&length); /* CustomName */
 	custom_name = nullable_string(token, length);
 	methods = GetCustomScanMethods(custom_name, false);
 	local_node->methods = methods;
@@ -2227,11 +2227,12 @@ _readExtensibleNode(void)
 {
 	const ExtensibleNodeMethods *methods;
 	ExtensibleNode *local_node;
-	const char	   *extnodename;
+	const char *extnodename;
+
 	READ_TEMP_LOCALS();
 
-	token = pg_strtok(&length);		/* skip: extnodename */
-	token = pg_strtok(&length);		/* get extnodename */
+	token = pg_strtok(&length); /* skip: extnodename */
+	token = pg_strtok(&length); /* get extnodename */
 
 	extnodename = nullable_string(token, length);
 	if (!extnodename)

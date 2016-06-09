@@ -1305,7 +1305,7 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 			case jbvBool:
 				if (aScalar->val.boolean == bScalar->val.boolean)
 					return 0;
-				else if (aScalar->val.boolean >bScalar->val.boolean)
+				else if (aScalar->val.boolean > bScalar->val.boolean)
 					return 1;
 				else
 					return -1;

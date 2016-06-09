@@ -366,8 +366,8 @@ calc_rank(const float *w, TSVector t, TSQuery q, int32 method)
 	/* XXX: What about NOT? */
 	res = (item->type == QI_OPR && (item->qoperator.oper == OP_AND ||
 									item->qoperator.oper == OP_PHRASE)) ?
-			calc_rank_and(w, t, q) :
-			calc_rank_or(w, t, q);
+		calc_rank_and(w, t, q) :
+		calc_rank_or(w, t, q);
 
 	if (res < 0)
 		res = 1e-20f;
@@ -498,17 +498,21 @@ ts_rank_tt(PG_FUNCTION_ARGS)
 
 typedef struct
 {
-	union {
-		struct { /* compiled doc representation */
+	union
+	{
+		struct
+		{						/* compiled doc representation */
 			QueryItem **items;
 			int16		nitem;
-		} query;
-		struct { /* struct is used for preparing doc representation */
+		}			query;
+		struct
+		{						/* struct is used for preparing doc
+								 * representation */
 			QueryItem  *item;
 			WordEntry  *entry;
-		} map;
-	} data;
-	WordEntryPos		pos;
+		}			map;
+	}			data;
+	WordEntryPos pos;
 } DocRepresentation;
 
 static int
@@ -536,16 +540,16 @@ compareDocR(const void *va, const void *vb)
 #define MAXQROPOS	MAXENTRYPOS
 typedef struct
 {
-	bool			operandexists;
-	bool			reverseinsert; /* indicates insert order,
-									  true means descending order */
-	uint32			npos;
-	WordEntryPos	pos[MAXQROPOS];
+	bool		operandexists;
+	bool		reverseinsert;	/* indicates insert order, true means
+								 * descending order */
+	uint32		npos;
+	WordEntryPos pos[MAXQROPOS];
 } QueryRepresentationOperand;
 
 typedef struct
 {
-	TSQuery						query;
+	TSQuery		query;
 	QueryRepresentationOperand *operandData;
 } QueryRepresentation;
 
@@ -555,8 +559,8 @@ typedef struct
 static bool
 checkcondition_QueryOperand(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
-	QueryRepresentation			*qr = (QueryRepresentation *) checkval;
-	QueryRepresentationOperand	*opData = QR_GET_OPERAND_DATA(qr, val);
+	QueryRepresentation *qr = (QueryRepresentation *) checkval;
+	QueryRepresentationOperand *opData = QR_GET_OPERAND_DATA(qr, val);
 
 	if (!opData->operandexists)
 		return false;
@@ -584,9 +588,9 @@ typedef struct
 static void
 resetQueryRepresentation(QueryRepresentation *qr, bool reverseinsert)
 {
-	int i;
+	int			i;
 
-	for(i = 0; i < qr->query->size; i++)
+	for (i = 0; i < qr->query->size; i++)
 	{
 		qr->operandData[i].operandexists = false;
 		qr->operandData[i].reverseinsert = reverseinsert;
@@ -597,8 +601,8 @@ resetQueryRepresentation(QueryRepresentation *qr, bool reverseinsert)
 static void
 fillQueryRepresentationData(QueryRepresentation *qr, DocRepresentation *entry)
 {
-	int							i;
-	int							lastPos;
+	int			i;
+	int			lastPos;
 	QueryRepresentationOperand *opData;
 
 	for (i = 0; i < entry->data.query.nitem; i++)
@@ -619,14 +623,14 @@ fillQueryRepresentationData(QueryRepresentation *qr, DocRepresentation *entry)
 		}
 
 		lastPos = opData->reverseinsert ?
-					(MAXQROPOS - opData->npos) :
-					(opData->npos - 1);
+			(MAXQROPOS - opData->npos) :
+			(opData->npos - 1);
 
 		if (WEP_GETPOS(opData->pos[lastPos]) != WEP_GETPOS(entry->pos))
 		{
 			lastPos = opData->reverseinsert ?
-						(MAXQROPOS - 1 - opData->npos) :
-						(opData->npos);
+				(MAXQROPOS - 1 - opData->npos) :
+				(opData->npos);
 
 			opData->pos[lastPos] = entry->pos;
 			opData->npos++;
@@ -637,9 +641,9 @@ fillQueryRepresentationData(QueryRepresentation *qr, DocRepresentation *entry)
 static bool
 Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 {
-	DocRepresentation	*ptr;
-	int					 lastpos = ext->pos;
-	bool				 found = false;
+	DocRepresentation *ptr;
+	int			lastpos = ext->pos;
+	bool		found = false;
 
 	/*
 	 * since this function recurses, it could be driven to stack overflow.
@@ -720,7 +724,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 	WordEntry  *entry,
 			   *firstentry;
 	WordEntryPos *post;
-	int32		dimt,	/* number of 'post' items */
+	int32		dimt,			/* number of 'post' items */
 				j,
 				i,
 				nitem;
@@ -731,8 +735,8 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
 
 	/*
-	 * Iterate through query to make DocRepresentaion for words and it's entries
-	 * satisfied by query
+	 * Iterate through query to make DocRepresentaion for words and it's
+	 * entries satisfied by query
 	 */
 	for (i = 0; i < qr->query->size; i++)
 	{
@@ -787,9 +791,9 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 
 	if (cur > 0)
 	{
-		DocRepresentation  *rptr = doc + 1,
-						   *wptr = doc,
-							storage;
+		DocRepresentation *rptr = doc + 1,
+				   *wptr = doc,
+					storage;
 
 		/*
 		 * Sort representation in ascending order by pos and entry
@@ -806,8 +810,8 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 
 		while (rptr - doc < cur)
 		{
-			if (rptr->pos == (rptr-1)->pos &&
-				rptr->data.map.entry == (rptr-1)->data.map.entry)
+			if (rptr->pos == (rptr - 1)->pos &&
+				rptr->data.map.entry == (rptr - 1)->data.map.entry)
 			{
 				storage.data.query.items[storage.data.query.nitem] = rptr->data.map.item;
 				storage.data.query.nitem++;
@@ -865,7 +869,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 
 	qr.query = query;
 	qr.operandData = (QueryRepresentationOperand *)
-						palloc0(sizeof(QueryRepresentationOperand) * query->size);
+		palloc0(sizeof(QueryRepresentationOperand) * query->size);
 
 	doc = get_docrep(txt, &qr, &doclen);
 	if (!doc)

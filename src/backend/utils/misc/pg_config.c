@@ -25,17 +25,17 @@
 Datum
 pg_config(PG_FUNCTION_ARGS)
 {
-	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Tuplestorestate	   *tupstore;
-	HeapTuple			tuple;
-	TupleDesc			tupdesc;
-	AttInMetadata	   *attinmeta;
-	MemoryContext		per_query_ctx;
-	MemoryContext		oldcontext;
-	ConfigData		   *configdata;
-	size_t				configdata_len;
-	char			   *values[2];
-	int					i = 0;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	Tuplestorestate *tupstore;
+	HeapTuple	tuple;
+	TupleDesc	tupdesc;
+	AttInMetadata *attinmeta;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	ConfigData *configdata;
+	size_t		configdata_len;
+	char	   *values[2];
+	int			i = 0;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
@@ -91,10 +91,10 @@ pg_config(PG_FUNCTION_ARGS)
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
-	 * tuples are in our tuplestore and passed back through
-	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
-	 * that we actually used to build our tuples with, so the caller can
-	 * verify we did what it was expecting.
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
 	 */
 	rsinfo->setDesc = tupdesc;
 	MemoryContextSwitchTo(oldcontext);

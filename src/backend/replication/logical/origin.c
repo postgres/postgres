@@ -148,7 +148,7 @@ typedef struct ReplicationStateCtl
 } ReplicationStateCtl;
 
 /* external variables */
-RepOriginId replorigin_session_origin = InvalidRepOriginId;	/* assumed identity */
+RepOriginId replorigin_session_origin = InvalidRepOriginId;		/* assumed identity */
 XLogRecPtr	replorigin_session_origin_lsn = InvalidXLogRecPtr;
 TimestampTz replorigin_session_origin_timestamp = 0;
 

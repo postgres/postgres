@@ -82,9 +82,9 @@ AggregateCreate(const char *aggName,
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
-	Oid			combinefn = InvalidOid;	/* can be omitted */
+	Oid			combinefn = InvalidOid; /* can be omitted */
 	Oid			serialfn = InvalidOid;	/* can be omitted */
-	Oid			deserialfn = InvalidOid;	/* can be omitted */
+	Oid			deserialfn = InvalidOid;		/* can be omitted */
 	Oid			mtransfn = InvalidOid;	/* can be omitted */
 	Oid			minvtransfn = InvalidOid;		/* can be omitted */
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
@@ -407,11 +407,11 @@ AggregateCreate(const char *aggName,
 	/* handle the combinefn, if supplied */
 	if (aggcombinefnName)
 	{
-		Oid combineType;
+		Oid			combineType;
 
 		/*
-		 * Combine function must have 2 argument, each of which is the
-		 * trans type
+		 * Combine function must have 2 argument, each of which is the trans
+		 * type
 		 */
 		fnArgs[0] = aggTransType;
 		fnArgs[1] = aggTransType;
@@ -423,9 +423,9 @@ AggregateCreate(const char *aggName,
 		if (combineType != aggTransType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("return type of combine function %s is not %s",
-				   NameListToString(aggcombinefnName),
-				   format_type_be(aggTransType))));
+					 errmsg("return type of combine function %s is not %s",
+							NameListToString(aggcombinefnName),
+							format_type_be(aggTransType))));
 
 		/*
 		 * A combine function to combine INTERNAL states must accept nulls and
@@ -440,8 +440,9 @@ AggregateCreate(const char *aggName,
 	}
 
 	/*
-	 * Validate the serialization function, if present. We must ensure that the
-	 * return type of this function is the same as the specified serialType.
+	 * Validate the serialization function, if present. We must ensure that
+	 * the return type of this function is the same as the specified
+	 * serialType.
 	 */
 	if (aggserialfnName)
 	{
@@ -454,9 +455,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != aggSerialType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("return type of serialization function %s is not %s",
-							NameListToString(aggserialfnName),
-							format_type_be(aggSerialType))));
+				 errmsg("return type of serialization function %s is not %s",
+						NameListToString(aggserialfnName),
+						format_type_be(aggSerialType))));
 	}
 
 	/*
@@ -474,9 +475,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != aggTransType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("return type of deserialization function %s is not %s",
-							NameListToString(aggdeserialfnName),
-							format_type_be(aggTransType))));
+			   errmsg("return type of deserialization function %s is not %s",
+					  NameListToString(aggdeserialfnName),
+					  format_type_be(aggTransType))));
 	}
 
 	/*

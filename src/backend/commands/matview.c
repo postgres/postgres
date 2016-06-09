@@ -217,21 +217,20 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 			 RelationGetRelationName(matviewRel));
 
 	/*
-	 * Check that there is a unique index with no WHERE clause on
-	 * one or more columns of the materialized view if CONCURRENTLY
-	 * is specified.
+	 * Check that there is a unique index with no WHERE clause on one or more
+	 * columns of the materialized view if CONCURRENTLY is specified.
 	 */
 	if (concurrent)
 	{
-		List		*indexoidlist = RelationGetIndexList(matviewRel);
-		ListCell 	*indexoidscan;
+		List	   *indexoidlist = RelationGetIndexList(matviewRel);
+		ListCell   *indexoidscan;
 		bool		hasUniqueIndex = false;
 
 		foreach(indexoidscan, indexoidlist)
 		{
 			Oid			indexoid = lfirst_oid(indexoidscan);
 			Relation	indexRel;
-			Form_pg_index	indexStruct;
+			Form_pg_index indexStruct;
 
 			indexRel = index_open(indexoid, AccessShareLock);
 			indexStruct = indexRel->rd_index;
@@ -255,9 +254,9 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 		if (!hasUniqueIndex)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("cannot refresh materialized view \"%s\" concurrently",
-							quote_qualified_identifier(get_namespace_name(RelationGetNamespace(matviewRel)),
-													   RelationGetRelationName(matviewRel))),
+			   errmsg("cannot refresh materialized view \"%s\" concurrently",
+					  quote_qualified_identifier(get_namespace_name(RelationGetNamespace(matviewRel)),
+									   RelationGetRelationName(matviewRel))),
 					 errhint("Create a unique index with no WHERE clause on one or more columns of the materialized view.")));
 	}
 
@@ -745,8 +744,8 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	/*
 	 * There must be at least one unique index on the matview.
 	 *
-	 * ExecRefreshMatView() checks that after taking the exclusive lock on
-	 * the matview. So at least one unique index is guaranteed to exist here
+	 * ExecRefreshMatView() checks that after taking the exclusive lock on the
+	 * matview. So at least one unique index is guaranteed to exist here
 	 * because the lock is still being held.
 	 */
 	Assert(foundUniqueIndex);

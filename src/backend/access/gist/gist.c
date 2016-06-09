@@ -1498,8 +1498,9 @@ static void
 gistvacuumpage(Relation rel, Page page, Buffer buffer)
 {
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
-	int			 ndeletable = 0;
-	OffsetNumber offnum, maxoff;
+	int			ndeletable = 0;
+	OffsetNumber offnum,
+				maxoff;
 
 	Assert(GistPageIsLeaf(page));
 

@@ -256,7 +256,7 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  *		PG_END_TRY();
  *
  * (The braces are not actually necessary, but are recommended so that
- * pgindent will indent the construct nicely.)  The error recovery code
+ * pgindent will indent the construct nicely.)	The error recovery code
  * can optionally do PG_RE_THROW() to propagate the same error outwards.
  *
  * Note: while the system will correctly propagate any new ereport(ERROR)

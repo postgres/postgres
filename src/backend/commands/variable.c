@@ -880,9 +880,9 @@ check_role(char **newval, void **extra, GucSource source)
 		ReleaseSysCache(roleTup);
 
 		/*
-		 * Verify that session user is allowed to become this role, but
-		 * skip this in parallel mode, where we must blindly recreate the
-		 * parallel leader's state.
+		 * Verify that session user is allowed to become this role, but skip
+		 * this in parallel mode, where we must blindly recreate the parallel
+		 * leader's state.
 		 */
 		if (!InitializingParallelWorker &&
 			!is_member_of_role(GetSessionUserId(), roleid))

@@ -570,7 +570,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	 */
 	if (!inh)
 	{
-		BlockNumber		relallvisible;
+		BlockNumber relallvisible;
 
 		visibilitymap_count(onerel, &relallvisible, NULL);
 

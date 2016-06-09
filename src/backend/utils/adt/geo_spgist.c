@@ -101,19 +101,19 @@ typedef struct
 {
 	double		low;
 	double		high;
-}	Range;
+} Range;
 
 typedef struct
 {
 	Range		left;
 	Range		right;
-}	RangeBox;
+} RangeBox;
 
 typedef struct
 {
 	RangeBox	range_box_x;
 	RangeBox	range_box_y;
-}	RectBox;
+} RectBox;
 
 /*
  * Calculate the quadrant
@@ -173,7 +173,7 @@ getRangeBox(BOX *box)
 static RectBox *
 initRectBox(void)
 {
-	RectBox	   *rect_box = (RectBox *) palloc(sizeof(RectBox));
+	RectBox    *rect_box = (RectBox *) palloc(sizeof(RectBox));
 	double		infinity = get_float8_infinity();
 
 	rect_box->range_box_x.left.low = -infinity;
@@ -201,7 +201,7 @@ initRectBox(void)
 static RectBox *
 nextRectBox(RectBox *rect_box, RangeBox *centroid, uint8 quadrant)
 {
-	RectBox	   *next_rect_box = (RectBox *) palloc(sizeof(RectBox));
+	RectBox    *next_rect_box = (RectBox *) palloc(sizeof(RectBox));
 
 	memcpy(next_rect_box, rect_box, sizeof(RectBox));
 
@@ -233,7 +233,7 @@ static bool
 overlap2D(RangeBox *range_box, Range *query)
 {
 	return FPge(range_box->right.high, query->low) &&
-		   FPle(range_box->left.low, query->high);
+		FPle(range_box->left.low, query->high);
 }
 
 /* Can any rectangle from rect_box overlap with this argument? */
@@ -241,7 +241,7 @@ static bool
 overlap4D(RectBox *rect_box, RangeBox *query)
 {
 	return overlap2D(&rect_box->range_box_x, &query->left) &&
-		   overlap2D(&rect_box->range_box_y, &query->right);
+		overlap2D(&rect_box->range_box_y, &query->right);
 }
 
 /* Can any range from range_box contain this argument? */
@@ -249,15 +249,15 @@ static bool
 contain2D(RangeBox *range_box, Range *query)
 {
 	return FPge(range_box->right.high, query->high) &&
-		   FPle(range_box->left.low, query->low);
+		FPle(range_box->left.low, query->low);
 }
 
 /* Can any rectangle from rect_box contain this argument? */
 static bool
-contain4D(RectBox *rect_box, RangeBox * query)
+contain4D(RectBox *rect_box, RangeBox *query)
 {
 	return contain2D(&rect_box->range_box_x, &query->left) &&
-		   contain2D(&rect_box->range_box_y, &query->right);
+		contain2D(&rect_box->range_box_y, &query->right);
 }
 
 /* Can any range from range_box be contained by this argument? */
@@ -265,9 +265,9 @@ static bool
 contained2D(RangeBox *range_box, Range *query)
 {
 	return FPle(range_box->left.low, query->high) &&
-		   FPge(range_box->left.high, query->low) &&
-		   FPle(range_box->right.low, query->high) &&
-		   FPge(range_box->right.high, query->low);
+		FPge(range_box->left.high, query->low) &&
+		FPle(range_box->right.low, query->high) &&
+		FPge(range_box->right.high, query->low);
 }
 
 /* Can any rectangle from rect_box be contained by this argument? */
@@ -275,7 +275,7 @@ static bool
 contained4D(RectBox *rect_box, RangeBox *query)
 {
 	return contained2D(&rect_box->range_box_x, &query->left) &&
-		   contained2D(&rect_box->range_box_y, &query->right);
+		contained2D(&rect_box->range_box_y, &query->right);
 }
 
 /* Can any range from range_box to be lower than this argument? */
@@ -283,7 +283,7 @@ static bool
 lower2D(RangeBox *range_box, Range *query)
 {
 	return FPlt(range_box->left.low, query->low) &&
-		   FPlt(range_box->right.low, query->low);
+		FPlt(range_box->right.low, query->low);
 }
 
 /* Can any range from range_box to be higher than this argument? */
@@ -291,7 +291,7 @@ static bool
 higher2D(RangeBox *range_box, Range *query)
 {
 	return FPgt(range_box->left.high, query->high) &&
-		   FPgt(range_box->right.high, query->high);
+		FPgt(range_box->right.high, query->high);
 }
 
 /* Can any rectangle from rect_box be left of this argument? */
@@ -396,8 +396,8 @@ spg_box_quad_choose(PG_FUNCTION_ARGS)
 Datum
 spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 {
-	spgPickSplitIn	*in = (spgPickSplitIn *) PG_GETARG_POINTER(0);
-	spgPickSplitOut	*out = (spgPickSplitOut *) PG_GETARG_POINTER(1);
+	spgPickSplitIn *in = (spgPickSplitIn *) PG_GETARG_POINTER(0);
+	spgPickSplitOut *out = (spgPickSplitOut *) PG_GETARG_POINTER(1);
 	BOX		   *centroid;
 	int			median,
 				i;
@@ -409,7 +409,7 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 	/* Calculate median of all 4D coordinates */
 	for (i = 0; i < in->nTuples; i++)
 	{
-		BOX  *box = DatumGetBoxP(in->datums[i]);
+		BOX		   *box = DatumGetBoxP(in->datums[i]);
 
 		lowXs[i] = box->low.x;
 		highXs[i] = box->high.x;
@@ -442,13 +442,13 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 	out->leafTupleDatums = palloc(sizeof(Datum) * in->nTuples);
 
 	/*
-	 * Assign ranges to corresponding nodes according to quadrants
-	 * relative to the "centroid" range
+	 * Assign ranges to corresponding nodes according to quadrants relative to
+	 * the "centroid" range
 	 */
 	for (i = 0; i < in->nTuples; i++)
 	{
-		BOX  *box = DatumGetBoxP(in->datums[i]);
-		uint8 quadrant = getQuadrant(centroid, box);
+		BOX		   *box = DatumGetBoxP(in->datums[i]);
+		uint8		quadrant = getQuadrant(centroid, box);
 
 		out->leafTupleDatums[i] = BoxPGetDatum(box);
 		out->mapTuplesToNodes[i] = quadrant;
@@ -465,12 +465,12 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	int				i;
-	MemoryContext	old_ctx;
-	RectBox		   *rect_box;
-	uint8			quadrant;
-	RangeBox	   *centroid,
-				  **queries;
+	int			i;
+	MemoryContext old_ctx;
+	RectBox    *rect_box;
+	uint8		quadrant;
+	RangeBox   *centroid,
+			  **queries;
 
 	if (in->allTheSame)
 	{
@@ -484,8 +484,8 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * We are saving the traversal value or initialize it an unbounded
-	 * one, if we have just begun to walk the tree.
+	 * We are saving the traversal value or initialize it an unbounded one, if
+	 * we have just begun to walk the tree.
 	 */
 	if (in->traversalValue)
 		rect_box = in->traversalValue;
@@ -493,8 +493,8 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 		rect_box = initRectBox();
 
 	/*
-	 * We are casting the prefix and queries to RangeBoxes for ease of
-	 * the following operations.
+	 * We are casting the prefix and queries to RangeBoxes for ease of the
+	 * following operations.
 	 */
 	centroid = getRangeBox(DatumGetBoxP(in->prefixDatum));
 	queries = (RangeBox **) palloc(in->nkeys * sizeof(RangeBox *));
@@ -507,15 +507,15 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 	out->traversalValues = (void **) palloc(sizeof(void *) * in->nNodes);
 
 	/*
-	 * We switch memory context, because we want to allocate memory for
-	 * new traversal values (next_rect_box) and pass these pieces of
-	 * memory to further call of this function.
+	 * We switch memory context, because we want to allocate memory for new
+	 * traversal values (next_rect_box) and pass these pieces of memory to
+	 * further call of this function.
 	 */
 	old_ctx = MemoryContextSwitchTo(in->traversalMemoryContext);
 
 	for (quadrant = 0; quadrant < in->nNodes; quadrant++)
 	{
-		RectBox	   *next_rect_box = nextRectBox(rect_box, centroid, quadrant);
+		RectBox    *next_rect_box = nextRectBox(rect_box, centroid, quadrant);
 		bool		flag = true;
 
 		for (i = 0; i < in->nkeys; i++)
@@ -587,8 +587,8 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * If this node is not selected, we don't need to keep
-			 * the next traversal value in the memory context.
+			 * If this node is not selected, we don't need to keep the next
+			 * traversal value in the memory context.
 			 */
 			pfree(next_rect_box);
 		}

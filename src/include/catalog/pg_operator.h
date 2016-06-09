@@ -142,7 +142,7 @@ DESCR("prepend element onto front of array");
 DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f f 2277 2277 2277 0 0 array_cat	   -	   -	 ));
 DESCR("concatenate");
 
-DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16	352	  3315 xideq eqsel eqjoinsel ));
+DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16	352   3315 xideq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	0	  3316 xideqint4 eqsel eqjoinsel ));
 DESCR("equal");
@@ -1676,7 +1676,7 @@ DESCR("AND-concatenate");
 DATA(insert OID = 3681 (  "||"	   PGNSP PGUID b f f 3615	 3615	 3615  0	0	 tsquery_or   -		-	  ));
 DESCR("OR-concatenate");
 /* <-> operation calls tsquery_phrase, but function is polymorphic. So, point to OID of the tsquery_phrase */
-DATA(insert OID = 5005 (  "<->"	   PGNSP PGUID b f f 3615    3615    3615  0    0    5003   -       -     ));
+DATA(insert OID = 5005 (  "<->"    PGNSP PGUID b f f 3615	 3615	 3615  0	0	 5003	-		-	  ));
 DESCR("phrase-concatenate");
 DATA(insert OID = 3682 (  "!!"	   PGNSP PGUID l f f 0		 3615	 3615  0	0	 tsquery_not   -	-	  ));
 DESCR("NOT tsquery");

@@ -1007,8 +1007,8 @@ shm_mq_receive_bytes(shm_mq *mq, Size bytes_needed, bool nowait,
 static bool
 shm_mq_counterparty_gone(volatile shm_mq *mq, BackgroundWorkerHandle *handle)
 {
-	bool	detached;
-	pid_t	pid;
+	bool		detached;
+	pid_t		pid;
 
 	/* Acquire the lock just long enough to check the pointer. */
 	SpinLockAcquire(&mq->mq_mutex);

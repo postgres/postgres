@@ -86,9 +86,9 @@ static void SyncRepCancelWait(void);
 static int	SyncRepWakeQueue(bool all, int mode);
 
 static bool SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr,
-									   XLogRecPtr *flushPtr,
-									   XLogRecPtr *applyPtr,
-									   bool *am_sync);
+						   XLogRecPtr *flushPtr,
+						   XLogRecPtr *applyPtr,
+						   bool *am_sync);
 static int	SyncRepGetStandbyPriority(void);
 
 #ifdef USE_ASSERT_CHECKING
@@ -212,8 +212,8 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		/*
 		 * If a wait for synchronous replication is pending, we can neither
 		 * acknowledge the commit nor raise ERROR or FATAL.  The latter would
-		 * lead the client to believe that the transaction aborted, which
-		 * is not true: it's already committed locally. The former is no good
+		 * lead the client to believe that the transaction aborted, which is
+		 * not true: it's already committed locally. The former is no good
 		 * either: the client has requested synchronous replication, and is
 		 * entitled to assume that an acknowledged commit is also replicated,
 		 * which might not be true. So in this case we issue a WARNING (which
@@ -400,8 +400,8 @@ SyncRepReleaseWaiters(void)
 	/*
 	 * If this WALSender is serving a standby that is not on the list of
 	 * potential sync standbys then we have nothing to do. If we are still
-	 * starting up, still running base backup or the current flush position
-	 * is still invalid, then leave quickly also.
+	 * starting up, still running base backup or the current flush position is
+	 * still invalid, then leave quickly also.
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||
 		MyWalSnd->state < WALSNDSTATE_STREAMING ||
@@ -412,21 +412,21 @@ SyncRepReleaseWaiters(void)
 	}
 
 	/*
-	 * We're a potential sync standby. Release waiters if there are
-	 * enough sync standbys and we are considered as sync.
+	 * We're a potential sync standby. Release waiters if there are enough
+	 * sync standbys and we are considered as sync.
 	 */
 	LWLockAcquire(SyncRepLock, LW_EXCLUSIVE);
 
 	/*
-	 * Check whether we are a sync standby or not, and calculate
-	 * the oldest positions among all sync standbys.
+	 * Check whether we are a sync standby or not, and calculate the oldest
+	 * positions among all sync standbys.
 	 */
 	got_oldest = SyncRepGetOldestSyncRecPtr(&writePtr, &flushPtr,
 											&applyPtr, &am_sync);
 
 	/*
-	 * If we are managing a sync standby, though we weren't
-	 * prior to this, then announce we are now a sync standby.
+	 * If we are managing a sync standby, though we weren't prior to this,
+	 * then announce we are now a sync standby.
 	 */
 	if (announce_next_takeover && am_sync)
 	{
@@ -489,8 +489,8 @@ static bool
 SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 						   XLogRecPtr *applyPtr, bool *am_sync)
 {
-	List		*sync_standbys;
-	ListCell	*cell;
+	List	   *sync_standbys;
+	ListCell   *cell;
 
 	*writePtr = InvalidXLogRecPtr;
 	*flushPtr = InvalidXLogRecPtr;
@@ -513,12 +513,12 @@ SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 	}
 
 	/*
-	 * Scan through all sync standbys and calculate the oldest
-	 * Write, Flush and Apply positions.
+	 * Scan through all sync standbys and calculate the oldest Write, Flush
+	 * and Apply positions.
 	 */
-	foreach (cell, sync_standbys)
+	foreach(cell, sync_standbys)
 	{
-		WalSnd *walsnd = &WalSndCtl->walsnds[lfirst_int(cell)];
+		WalSnd	   *walsnd = &WalSndCtl->walsnds[lfirst_int(cell)];
 		XLogRecPtr	write;
 		XLogRecPtr	flush;
 		XLogRecPtr	apply;
@@ -554,16 +554,16 @@ SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 List *
 SyncRepGetSyncStandbys(bool *am_sync)
 {
-	List	*result = NIL;
-	List	*pending = NIL;
-	int	lowest_priority;
-	int	next_highest_priority;
-	int	this_priority;
-	int	priority;
-	int	i;
-	bool	am_in_pending = false;
-	volatile WalSnd	*walsnd;		/* Use volatile pointer to prevent
-									 * code rearrangement */
+	List	   *result = NIL;
+	List	   *pending = NIL;
+	int			lowest_priority;
+	int			next_highest_priority;
+	int			this_priority;
+	int			priority;
+	int			i;
+	bool		am_in_pending = false;
+	volatile WalSnd *walsnd;	/* Use volatile pointer to prevent code
+								 * rearrangement */
 
 	/* Set default result */
 	if (am_sync != NULL)
@@ -577,9 +577,9 @@ SyncRepGetSyncStandbys(bool *am_sync)
 	next_highest_priority = lowest_priority + 1;
 
 	/*
-	 * Find the sync standbys which have the highest priority (i.e, 1).
-	 * Also store all the other potential sync standbys into the pending list,
-	 * in order to scan it later and find other sync standbys from it quickly.
+	 * Find the sync standbys which have the highest priority (i.e, 1). Also
+	 * store all the other potential sync standbys into the pending list, in
+	 * order to scan it later and find other sync standbys from it quickly.
 	 */
 	for (i = 0; i < max_wal_senders; i++)
 	{
@@ -603,9 +603,9 @@ SyncRepGetSyncStandbys(bool *am_sync)
 			continue;
 
 		/*
-		 * If the priority is equal to 1, consider this standby as sync
-		 * and append it to the result. Otherwise append this standby
-		 * to the pending list to check if it's actually sync or not later.
+		 * If the priority is equal to 1, consider this standby as sync and
+		 * append it to the result. Otherwise append this standby to the
+		 * pending list to check if it's actually sync or not later.
 		 */
 		if (this_priority == 1)
 		{
@@ -615,7 +615,7 @@ SyncRepGetSyncStandbys(bool *am_sync)
 			if (list_length(result) == SyncRepConfig->num_sync)
 			{
 				list_free(pending);
-				return result;		/* Exit if got enough sync standbys */
+				return result;	/* Exit if got enough sync standbys */
 			}
 		}
 		else
@@ -626,10 +626,10 @@ SyncRepGetSyncStandbys(bool *am_sync)
 
 			/*
 			 * Track the highest priority among the standbys in the pending
-			 * list, in order to use it as the starting priority for later scan
-			 * of the list. This is useful to find quickly the sync standbys
-			 * from the pending list later because we can skip unnecessary
-			 * scans for the unused priorities.
+			 * list, in order to use it as the starting priority for later
+			 * scan of the list. This is useful to find quickly the sync
+			 * standbys from the pending list later because we can skip
+			 * unnecessary scans for the unused priorities.
 			 */
 			if (this_priority < next_highest_priority)
 				next_highest_priority = this_priority;
@@ -663,9 +663,9 @@ SyncRepGetSyncStandbys(bool *am_sync)
 	priority = next_highest_priority;
 	while (priority <= lowest_priority)
 	{
-		ListCell	*cell;
-		ListCell	*prev = NULL;
-		ListCell	*next;
+		ListCell   *cell;
+		ListCell   *prev = NULL;
+		ListCell   *next;
 
 		next_highest_priority = lowest_priority + 1;
 
@@ -685,8 +685,8 @@ SyncRepGetSyncStandbys(bool *am_sync)
 
 				/*
 				 * We should always exit here after the scan of pending list
-				 * starts because we know that the list has enough elements
-				 * to reach SyncRepConfig->num_sync.
+				 * starts because we know that the list has enough elements to
+				 * reach SyncRepConfig->num_sync.
 				 */
 				if (list_length(result) == SyncRepConfig->num_sync)
 				{
@@ -695,8 +695,8 @@ SyncRepGetSyncStandbys(bool *am_sync)
 				}
 
 				/*
-				 * Remove the entry for this sync standby from the list
-				 * to prevent us from looking at the same entry again.
+				 * Remove the entry for this sync standby from the list to
+				 * prevent us from looking at the same entry again.
 				 */
 				pending = list_delete_cell(pending, cell, prev);
 

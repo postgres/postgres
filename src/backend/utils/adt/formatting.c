@@ -5074,9 +5074,9 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	{
 		Numeric		x;
 		Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-													 Int32GetDatum(10)));
+														 Int32GetDatum(10)));
 		Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-											  Int32GetDatum(-Num.multi)));
+												 Int32GetDatum(-Num.multi)));
 
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
 												NumericGetDatum(a),

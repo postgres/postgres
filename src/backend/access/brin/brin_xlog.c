@@ -47,7 +47,7 @@ brin_xlog_insert_update(XLogReaderState *record,
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		buffer;
-	BlockNumber	regpgno;
+	BlockNumber regpgno;
 	Page		page;
 	XLogRedoAction action;
 

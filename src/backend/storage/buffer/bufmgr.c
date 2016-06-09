@@ -4291,8 +4291,8 @@ void
 TestForOldSnapshot_impl(Snapshot snapshot, Relation relation)
 {
 	if (!IsCatalogRelation(relation)
-	 && !RelationIsAccessibleInLogicalDecoding(relation)
-	 && (snapshot)->whenTaken < GetOldSnapshotThresholdTimestamp())
+		&& !RelationIsAccessibleInLogicalDecoding(relation)
+		&& (snapshot)->whenTaken < GetOldSnapshotThresholdTimestamp())
 		ereport(ERROR,
 				(errcode(ERRCODE_SNAPSHOT_TOO_OLD),
 				 errmsg("snapshot too old")));

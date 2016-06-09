@@ -1166,19 +1166,19 @@ RecordTransactionCommit(void)
 		/*
 		 * Transactions without an assigned xid can contain invalidation
 		 * messages (e.g. explicit relcache invalidations or catcache
-		 * invalidations for inplace updates); standbys need to process
-		 * those. We can't emit a commit record without an xid, and we don't
-		 * want to force assigning an xid, because that'd be problematic for
-		 * e.g. vacuum.  Hence we emit a bespoke record for the
-		 * invalidations. We don't want to use that in case a commit record is
-		 * emitted, so they happen synchronously with commits (besides not
-		 * wanting to emit more WAL recoreds).
+		 * invalidations for inplace updates); standbys need to process those.
+		 * We can't emit a commit record without an xid, and we don't want to
+		 * force assigning an xid, because that'd be problematic for e.g.
+		 * vacuum.  Hence we emit a bespoke record for the invalidations. We
+		 * don't want to use that in case a commit record is emitted, so they
+		 * happen synchronously with commits (besides not wanting to emit more
+		 * WAL recoreds).
 		 */
 		if (nmsgs != 0)
 		{
 			LogStandbyInvalidations(nmsgs, invalMessages,
 									RelcacheInitFileInval);
-			wrote_xlog = true; /* not strictly necessary */
+			wrote_xlog = true;	/* not strictly necessary */
 		}
 
 		/*
@@ -1272,8 +1272,8 @@ RecordTransactionCommit(void)
 	 * this case, but we don't currently try to do that.  It would certainly
 	 * cause problems at least in Hot Standby mode, where the
 	 * KnownAssignedXids machinery requires tracking every XID assignment.  It
-	 * might be OK to skip it only when wal_level < replica, but for now
-	 * we don't.)
+	 * might be OK to skip it only when wal_level < replica, but for now we
+	 * don't.)
 	 *
 	 * However, if we're doing cleanup of any non-temp rels or committing any
 	 * command that wanted to force sync commit, then we must flush XLOG
@@ -5486,8 +5486,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 
 	/*
 	 * If asked by the primary (because someone is waiting for a synchronous
-	 * commit = remote_apply), we will need to ask walreceiver to send a
-	 * reply immediately.
+	 * commit = remote_apply), we will need to ask walreceiver to send a reply
+	 * immediately.
 	 */
 	if (XactCompletionApplyFeedback(parsed->xinfo))
 		XLogRequestWalReceiverReply();

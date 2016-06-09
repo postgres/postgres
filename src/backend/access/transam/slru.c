@@ -152,7 +152,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	sz += MAXALIGN(nslots * sizeof(bool));		/* page_dirty[] */
 	sz += MAXALIGN(nslots * sizeof(int));		/* page_number[] */
 	sz += MAXALIGN(nslots * sizeof(int));		/* page_lru_count[] */
-	sz += MAXALIGN(nslots * sizeof(LWLockPadded)); /* buffer_locks[] */
+	sz += MAXALIGN(nslots * sizeof(LWLockPadded));		/* buffer_locks[] */
 
 	if (nlsns > 0)
 		sz += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));	/* group_lsn[] */
@@ -224,7 +224,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		for (slotno = 0; slotno < nslots; slotno++)
 		{
 			LWLockInitialize(&shared->buffer_locks[slotno].lock,
-				shared->lwlock_tranche_id);
+							 shared->lwlock_tranche_id);
 
 			shared->page_buffer[slotno] = ptr;
 			shared->page_status[slotno] = SLRU_PAGE_EMPTY;

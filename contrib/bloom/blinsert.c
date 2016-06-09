@@ -33,11 +33,11 @@ PG_MODULE_MAGIC;
 typedef struct
 {
 	BloomState	blstate;		/* bloom index state */
-	MemoryContext tmpCtx;		/* temporary memory context reset after
-								 * each tuple */
+	MemoryContext tmpCtx;		/* temporary memory context reset after each
+								 * tuple */
 	char		data[BLCKSZ];	/* cached page */
 	int64		count;			/* number of tuples in cached page */
-}	BloomBuildState;
+} BloomBuildState;
 
 /*
  * Flush page cached in BloomBuildState.
@@ -140,8 +140,8 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 								   bloomBuildCallback, (void *) &buildstate);
 
 	/*
-	 * There are could be some items in cached page.  Flush this page
-	 * if needed.
+	 * There are could be some items in cached page.  Flush this page if
+	 * needed.
 	 */
 	if (buildstate.count > 0)
 		flushCachedPage(index, &buildstate);

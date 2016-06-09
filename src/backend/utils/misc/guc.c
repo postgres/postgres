@@ -2869,7 +2869,7 @@ static struct config_real ConfigureNamesReal[] =
 	{
 		{"parallel_setup_cost", PGC_USERSET, QUERY_TUNING_COST,
 			gettext_noop("Sets the planner's estimate of the cost of "
-				  "starting up worker processes for parallel query."),
+						 "starting up worker processes for parallel query."),
 			NULL
 		},
 		&parallel_setup_cost,
@@ -5926,13 +5926,14 @@ set_config_option(const char *name, const char *value,
 				 * don't re-read the config file during backend start.
 				 *
 				 * In EXEC_BACKEND builds, this works differently: we load all
-				 * non-default settings from the CONFIG_EXEC_PARAMS file during
-				 * backend start.  In that case we must accept PGC_SIGHUP
-				 * settings, so as to have the same value as if we'd forked
-				 * from the postmaster.  This can also happen when using
-				 * RestoreGUCState() within a background worker that needs to
-				 * have the same settings as the user backend that started it.
-				 * is_reload will be true when either situation applies.
+				 * non-default settings from the CONFIG_EXEC_PARAMS file
+				 * during backend start.  In that case we must accept
+				 * PGC_SIGHUP settings, so as to have the same value as if
+				 * we'd forked from the postmaster.  This can also happen when
+				 * using RestoreGUCState() within a background worker that
+				 * needs to have the same settings as the user backend that
+				 * started it. is_reload will be true when either situation
+				 * applies.
 				 */
 				if (IsUnderPostmaster && !is_reload)
 					return -1;

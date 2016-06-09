@@ -31,14 +31,13 @@
 /* Opaque for bloom pages */
 typedef struct BloomPageOpaqueData
 {
-	OffsetNumber	maxoff;			/* number of index tuples on page */
-	uint16			flags;			/* see bit definitions below */
-	uint16			unused;			/* placeholder to force maxaligning of size
-									 * of BloomPageOpaqueData and to place
-									 * bloom_page_id exactly at the end of page
-									 */
-	uint16			bloom_page_id;	/* for identification of BLOOM indexes */
-}	BloomPageOpaqueData;
+	OffsetNumber maxoff;		/* number of index tuples on page */
+	uint16		flags;			/* see bit definitions below */
+	uint16		unused;			/* placeholder to force maxaligning of size of
+								 * BloomPageOpaqueData and to place
+								 * bloom_page_id exactly at the end of page */
+	uint16		bloom_page_id;	/* for identification of BLOOM indexes */
+} BloomPageOpaqueData;
 
 typedef BloomPageOpaqueData *BloomPageOpaque;
 
@@ -102,9 +101,9 @@ typedef struct BloomOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			bloomLength;	/* length of signature in words (not bits!) */
-	int			bitSize[INDEX_MAX_KEYS];	/* # of bits generated for each
-											 * index key */
-}	BloomOptions;
+	int			bitSize[INDEX_MAX_KEYS];		/* # of bits generated for
+												 * each index key */
+} BloomOptions;
 
 /*
  * FreeBlockNumberArray - array of block numbers sized so that metadata fill
@@ -125,7 +124,7 @@ typedef struct BloomMetaPageData
 	uint16		nEnd;
 	BloomOptions opts;
 	FreeBlockNumberArray notFullPage;
-}	BloomMetaPageData;
+} BloomMetaPageData;
 
 /* Magic number to distinguish bloom pages among anothers */
 #define BLOOM_MAGICK_NUMBER (0xDBAC0DED)
@@ -146,7 +145,7 @@ typedef struct BloomState
 	 * precompute it
 	 */
 	Size		sizeOfBloomTuple;
-}	BloomState;
+} BloomState;
 
 #define BloomPageGetFreeSpace(state, page) \
 	(BLCKSZ - MAXALIGN(SizeOfPageHeaderData) \
@@ -160,30 +159,30 @@ typedef struct BloomTuple
 {
 	ItemPointerData heapPtr;
 	BloomSignatureWord sign[FLEXIBLE_ARRAY_MEMBER];
-}	BloomTuple;
+} BloomTuple;
 
 #define BLOOMTUPLEHDRSZ offsetof(BloomTuple, sign)
 
 /* Opaque data structure for bloom index scan */
 typedef struct BloomScanOpaqueData
 {
-	BloomSignatureWord *sign;			/* Scan signature */
+	BloomSignatureWord *sign;	/* Scan signature */
 	BloomState	state;
-}	BloomScanOpaqueData;
+} BloomScanOpaqueData;
 
 typedef BloomScanOpaqueData *BloomScanOpaque;
 
 /* blutils.c */
 extern void _PG_init(void);
 extern Datum blhandler(PG_FUNCTION_ARGS);
-extern void initBloomState(BloomState * state, Relation index);
+extern void initBloomState(BloomState *state, Relation index);
 extern void BloomFillMetapage(Relation index, Page metaPage);
 extern void BloomInitMetapage(Relation index);
 extern void BloomInitPage(Page page, uint16 flags);
 extern Buffer BloomNewBuffer(Relation index);
-extern void signValue(BloomState * state, BloomSignatureWord * sign, Datum value, int attno);
-extern BloomTuple *BloomFormTuple(BloomState * state, ItemPointer iptr, Datum *values, bool *isnull);
-extern bool BloomPageAddItem(BloomState * state, Page page, BloomTuple * tuple);
+extern void signValue(BloomState *state, BloomSignatureWord *sign, Datum value, int attno);
+extern BloomTuple *BloomFormTuple(BloomState *state, ItemPointer iptr, Datum *values, bool *isnull);
+extern bool BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple);
 
 /* blvalidate.c */
 extern bool blvalidate(Oid opclassoid);

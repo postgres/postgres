@@ -1548,7 +1548,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SERVER <name> */
 	else if (Matches3("ALTER", "SERVER", MatchAny))
 		COMPLETE_WITH_LIST4("VERSION", "OPTIONS", "OWNER TO", "RENAME TO");
-	/* ALTER SERVER <name> VERSION <version>*/
+	/* ALTER SERVER <name> VERSION <version> */
 	else if (Matches5("ALTER", "SERVER", MatchAny, "VERSION", MatchAny))
 		COMPLETE_WITH_CONST("OPTIONS");
 	/* ALTER SYSTEM SET, RESET, RESET ALL */
@@ -2030,8 +2030,11 @@ psql_completion(const char *text, int start, int end)
 	/* First off we complete CREATE UNIQUE with "INDEX" */
 	else if (TailMatches2("CREATE", "UNIQUE"))
 		COMPLETE_WITH_CONST("INDEX");
-	/* If we have CREATE|UNIQUE INDEX, then add "ON", "CONCURRENTLY",
-	   and existing indexes */
+
+	/*
+	 * If we have CREATE|UNIQUE INDEX, then add "ON", "CONCURRENTLY", and
+	 * existing indexes
+	 */
 	else if (TailMatches2("CREATE|UNIQUE", "INDEX"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
 								   " UNION SELECT 'ON'"
@@ -2040,7 +2043,11 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches3("INDEX|CONCURRENTLY", MatchAny, "ON") ||
 			 TailMatches2("INDEX|CONCURRENTLY", "ON"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
-	/* Complete CREATE|UNIQUE INDEX CONCURRENTLY with "ON" and existing indexes */
+
+	/*
+	 * Complete CREATE|UNIQUE INDEX CONCURRENTLY with "ON" and existing
+	 * indexes
+	 */
 	else if (TailMatches3("CREATE|UNIQUE", "INDEX", "CONCURRENTLY"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
 								   " UNION SELECT 'ON'");
@@ -3226,6 +3233,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 	static int	list_index,
 				byte_length;
 	static PGresult *result = NULL;
+
 	/*
 	 * If this is the first time for this completion, we fetch a list of our
 	 * "things" from the backend.
@@ -3242,7 +3250,10 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		list_index = 0;
 		byte_length = strlen(text);
 
-		/* Count length as number of characters (not bytes), for passing to substring */
+		/*
+		 * Count length as number of characters (not bytes), for passing to
+		 * substring
+		 */
 		while (*pstr)
 		{
 			char_length++;

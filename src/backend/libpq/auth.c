@@ -1875,7 +1875,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	retval = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
 								hostinfo, sizeof(hostinfo), NULL, 0,
-								port->hba->pam_use_hostname ? 0 : NI_NUMERICHOST | NI_NUMERICSERV);
+		  port->hba->pam_use_hostname ? 0 : NI_NUMERICHOST | NI_NUMERICSERV);
 	if (retval != 0)
 	{
 		ereport(WARNING,
@@ -1934,7 +1934,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	{
 		ereport(LOG,
 				(errmsg("pam_set_item(PAM_RHOST) failed: %s",
-					pam_strerror(pamh, retval))));
+						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;
 		return STATUS_ERROR;
 	}
@@ -1996,8 +1996,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 static int
 CheckBSDAuth(Port *port, char *user)
 {
-	char *passwd;
-	int retval;
+	char	   *passwd;
+	int			retval;
 
 	/* Send regular password request to client, and get the response */
 	sendAuthRequest(port, AUTH_REQ_PASSWORD);
@@ -2539,11 +2539,10 @@ CheckRADIUSAuth(Port *port)
 	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
 
 	/*
-	 * RADIUS password attributes are calculated as:
-	 *   e[0] = p[0] XOR MD5(secret + Request Authenticator)
-	 * for the first group of 16 octets, and then:
-	 *   e[i] = p[i] XOR MD5(secret + e[i-1])
-	 * for the following ones (if necessary)
+	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR
+	 * MD5(secret + Request Authenticator) for the first group of 16 octets,
+	 * and then: e[i] = p[i] XOR MD5(secret + e[i-1]) for the following ones
+	 * (if necessary)
 	 */
 	encryptedpasswordlen = ((strlen(passwd) + RADIUS_VECTOR_LENGTH - 1) / RADIUS_VECTOR_LENGTH) * RADIUS_VECTOR_LENGTH;
 	cryptvector = palloc(strlen(port->hba->radiussecret) + RADIUS_VECTOR_LENGTH);
@@ -2554,7 +2553,11 @@ CheckRADIUSAuth(Port *port)
 	for (i = 0; i < encryptedpasswordlen; i += RADIUS_VECTOR_LENGTH)
 	{
 		memcpy(cryptvector + strlen(port->hba->radiussecret), md5trailer, RADIUS_VECTOR_LENGTH);
-		/* .. and for subsequent iterations the result of the previous XOR (calculated below) */
+
+		/*
+		 * .. and for subsequent iterations the result of the previous XOR
+		 * (calculated below)
+		 */
 		md5trailer = encryptedpassword + i;
 
 		if (!pg_md5_binary(cryptvector, strlen(port->hba->radiussecret) + RADIUS_VECTOR_LENGTH, encryptedpassword + i))
@@ -2565,7 +2568,7 @@ CheckRADIUSAuth(Port *port)
 			return STATUS_ERROR;
 		}
 
-		for (j = i; j < i+RADIUS_VECTOR_LENGTH; j++)
+		for (j = i; j < i + RADIUS_VECTOR_LENGTH; j++)
 		{
 			if (j < strlen(passwd))
 				encryptedpassword[j] = passwd[j] ^ encryptedpassword[j];

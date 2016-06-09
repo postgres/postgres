@@ -51,7 +51,7 @@ XLogRecPtr
 LogLogicalMessage(const char *prefix, const char *message, size_t size,
 				  bool transactional)
 {
-	xl_logical_message	xlrec;
+	xl_logical_message xlrec;
 
 	/*
 	 * Force xid to be allocated if we're emitting a transactional message.
@@ -87,7 +87,7 @@ logicalmsg_redo(XLogReaderState *record)
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info != XLOG_LOGICAL_MESSAGE)
-			elog(PANIC, "logicalmsg_redo: unknown op code %u", info);
+		elog(PANIC, "logicalmsg_redo: unknown op code %u", info);
 
 	/* This is only interesting for logical decoding, see decode.c. */
 }

@@ -733,7 +733,7 @@ typedef enum ProgressCommandType
 {
 	PROGRESS_COMMAND_INVALID,
 	PROGRESS_COMMAND_VACUUM
-}	ProgressCommandType;
+} ProgressCommandType;
 
 #define PGSTAT_NUM_PROGRESS_PARAM	10
 

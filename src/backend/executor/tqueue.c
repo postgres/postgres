@@ -44,13 +44,13 @@ typedef enum
 	TQUEUE_REMAP_ARRAY,			/* array */
 	TQUEUE_REMAP_RANGE,			/* range */
 	TQUEUE_REMAP_RECORD			/* composite type, named or anonymous */
-}	RemapClass;
+} RemapClass;
 
 typedef struct
 {
 	int			natts;
 	RemapClass	mapping[FLEXIBLE_ARRAY_MEMBER];
-}	RemapInfo;
+} RemapInfo;
 
 typedef struct
 {
@@ -61,13 +61,13 @@ typedef struct
 	char		mode;
 	TupleDesc	tupledesc;
 	RemapInfo  *remapinfo;
-}	TQueueDestReceiver;
+} TQueueDestReceiver;
 
 typedef struct RecordTypemodMap
 {
 	int			remotetypmod;
 	int			localtypmod;
-}	RecordTypemodMap;
+} RecordTypemodMap;
 
 struct TupleQueueReader
 {
@@ -81,19 +81,19 @@ struct TupleQueueReader
 #define		TUPLE_QUEUE_MODE_CONTROL			'c'
 #define		TUPLE_QUEUE_MODE_DATA				'd'
 
-static void tqueueWalk(TQueueDestReceiver * tqueue, RemapClass walktype,
+static void tqueueWalk(TQueueDestReceiver *tqueue, RemapClass walktype,
 		   Datum value);
-static void tqueueWalkRecord(TQueueDestReceiver * tqueue, Datum value);
-static void tqueueWalkArray(TQueueDestReceiver * tqueue, Datum value);
-static void tqueueWalkRange(TQueueDestReceiver * tqueue, Datum value);
-static void tqueueSendTypmodInfo(TQueueDestReceiver * tqueue, int typmod,
+static void tqueueWalkRecord(TQueueDestReceiver *tqueue, Datum value);
+static void tqueueWalkArray(TQueueDestReceiver *tqueue, Datum value);
+static void tqueueWalkRange(TQueueDestReceiver *tqueue, Datum value);
+static void tqueueSendTypmodInfo(TQueueDestReceiver *tqueue, int typmod,
 					 TupleDesc tupledesc);
 static void TupleQueueHandleControlMessage(TupleQueueReader *reader,
 							   Size nbytes, char *data);
 static HeapTuple TupleQueueHandleDataMessage(TupleQueueReader *reader,
 							Size nbytes, HeapTupleHeader data);
 static HeapTuple TupleQueueRemapTuple(TupleQueueReader *reader,
-					 TupleDesc tupledesc, RemapInfo * remapinfo,
+					 TupleDesc tupledesc, RemapInfo *remapinfo,
 					 HeapTuple tuple);
 static Datum TupleQueueRemap(TupleQueueReader *reader, RemapClass remapclass,
 				Datum value);
@@ -212,7 +212,7 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
  * Invoke the appropriate walker function based on the given RemapClass.
  */
 static void
-tqueueWalk(TQueueDestReceiver * tqueue, RemapClass walktype, Datum value)
+tqueueWalk(TQueueDestReceiver *tqueue, RemapClass walktype, Datum value)
 {
 	check_stack_depth();
 
@@ -237,7 +237,7 @@ tqueueWalk(TQueueDestReceiver * tqueue, RemapClass walktype, Datum value)
  * contained therein.
  */
 static void
-tqueueWalkRecord(TQueueDestReceiver * tqueue, Datum value)
+tqueueWalkRecord(TQueueDestReceiver *tqueue, Datum value)
 {
 	HeapTupleHeader tup;
 	Oid			typeid;
@@ -304,7 +304,7 @@ tqueueWalkRecord(TQueueDestReceiver * tqueue, Datum value)
  * contained therein.
  */
 static void
-tqueueWalkArray(TQueueDestReceiver * tqueue, Datum value)
+tqueueWalkArray(TQueueDestReceiver *tqueue, Datum value)
 {
 	ArrayType  *arr = DatumGetArrayTypeP(value);
 	Oid			typeid = ARR_ELEMTYPE(arr);
@@ -342,7 +342,7 @@ tqueueWalkArray(TQueueDestReceiver * tqueue, Datum value)
  * contained therein.
  */
 static void
-tqueueWalkRange(TQueueDestReceiver * tqueue, Datum value)
+tqueueWalkRange(TQueueDestReceiver *tqueue, Datum value)
 {
 	RangeType  *range = DatumGetRangeType(value);
 	Oid			typeid = RangeTypeGetOid(range);
@@ -386,7 +386,7 @@ tqueueWalkRange(TQueueDestReceiver * tqueue, Datum value)
  * already done so previously.
  */
 static void
-tqueueSendTypmodInfo(TQueueDestReceiver * tqueue, int typmod,
+tqueueSendTypmodInfo(TQueueDestReceiver *tqueue, int typmod,
 					 TupleDesc tupledesc)
 {
 	StringInfoData buf;
@@ -613,7 +613,7 @@ TupleQueueHandleDataMessage(TupleQueueReader *reader,
  */
 static HeapTuple
 TupleQueueRemapTuple(TupleQueueReader *reader, TupleDesc tupledesc,
-					 RemapInfo * remapinfo, HeapTuple tuple)
+					 RemapInfo *remapinfo, HeapTuple tuple)
 {
 	Datum	   *values;
 	bool	   *isnull;

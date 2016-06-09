@@ -175,7 +175,7 @@ output_get_descr(char *desc_name, char *index)
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		const struct variable *v = find_variable(results->variable);
-		char *str_zero = mm_strdup("0");
+		char	   *str_zero = mm_strdup("0");
 
 		switch (results->value)
 		{
@@ -295,7 +295,8 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_length:
 			case ECPGd_type:
 				{
-					char *str_zero = mm_strdup("0");
+					char	   *str_zero = mm_strdup("0");
+
 					fprintf(yyout, "%s,", get_dtype(results->value));
 					ECPGdump_a_type(yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
 					free(str_zero);

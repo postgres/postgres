@@ -3355,10 +3355,10 @@ numeric_accum(PG_FUNCTION_ARGS)
 Datum
 numeric_combine(PG_FUNCTION_ARGS)
 {
-	NumericAggState	   *state1;
-	NumericAggState	   *state2;
-	MemoryContext		agg_context;
-	MemoryContext		old_context;
+	NumericAggState *state1;
+	NumericAggState *state2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -3397,8 +3397,8 @@ numeric_combine(PG_FUNCTION_ARGS)
 		state1->NaNcount += state2->NaNcount;
 
 		/*
-		 * These are currently only needed for moving aggregates, but let's
-		 * do the right thing anyway...
+		 * These are currently only needed for moving aggregates, but let's do
+		 * the right thing anyway...
 		 */
 		if (state2->maxScale > state1->maxScale)
 		{
@@ -3446,10 +3446,10 @@ numeric_avg_accum(PG_FUNCTION_ARGS)
 Datum
 numeric_avg_combine(PG_FUNCTION_ARGS)
 {
-	NumericAggState	   *state1;
-	NumericAggState	   *state2;
-	MemoryContext		agg_context;
-	MemoryContext		old_context;
+	NumericAggState *state1;
+	NumericAggState *state2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -3485,8 +3485,8 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 		state1->NaNcount += state2->NaNcount;
 
 		/*
-		 * These are currently only needed for moving aggregates, but let's
-		 * do the right thing anyway...
+		 * These are currently only needed for moving aggregates, but let's do
+		 * the right thing anyway...
 		 */
 		if (state2->maxScale > state1->maxScale)
 		{
@@ -3518,11 +3518,11 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 Datum
 numeric_avg_serialize(PG_FUNCTION_ARGS)
 {
-	NumericAggState	   *state;
-	StringInfoData		buf;
-	Datum				temp;
-	bytea			   *sumX;
-	bytea			   *result;
+	NumericAggState *state;
+	StringInfoData buf;
+	Datum		temp;
+	bytea	   *sumX;
+	bytea	   *result;
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -3549,7 +3549,7 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 	pq_sendbytes(&buf, VARDATA(sumX), VARSIZE(sumX) - VARHDRSZ);
 
 	/* maxScale */
-	pq_sendint(&buf,  state->maxScale, 4);
+	pq_sendint(&buf, state->maxScale, 4);
 
 	/* maxScaleCount */
 	pq_sendint64(&buf, state->maxScaleCount);
@@ -3564,7 +3564,7 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 
 /*
  * numeric_avg_deserialize
- *		Deserialize bytea into NumericAggState  for numeric aggregates that
+ *		Deserialize bytea into NumericAggState	for numeric aggregates that
  *		don't require sumX2. Deserializes bytea into NumericAggState using the
  *		standard pq API.
  *
@@ -3574,10 +3574,10 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 Datum
 numeric_avg_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	NumericAggState	   *result;
-	Datum				temp;
-	StringInfoData		buf;
+	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	NumericAggState *result;
+	Datum		temp;
+	StringInfoData buf;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -3628,12 +3628,12 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 Datum
 numeric_serialize(PG_FUNCTION_ARGS)
 {
-	NumericAggState	   *state;
-	StringInfoData		buf;
-	Datum				temp;
-	bytea			   *sumX;
-	bytea			   *sumX2;
-	bytea			   *result;
+	NumericAggState *state;
+	StringInfoData buf;
+	Datum		temp;
+	bytea	   *sumX;
+	bytea	   *sumX2;
+	bytea	   *result;
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -3667,7 +3667,7 @@ numeric_serialize(PG_FUNCTION_ARGS)
 	pq_sendbytes(&buf, VARDATA(sumX2), VARSIZE(sumX2) - VARHDRSZ);
 
 	/* maxScale */
-	pq_sendint(&buf,  state->maxScale, 4);
+	pq_sendint(&buf, state->maxScale, 4);
 
 	/* maxScaleCount */
 	pq_sendint64(&buf, state->maxScaleCount);
@@ -3692,10 +3692,10 @@ numeric_serialize(PG_FUNCTION_ARGS)
 Datum
 numeric_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	NumericAggState	   *result;
-	Datum				temp;
-	StringInfoData		buf;
+	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	NumericAggState *result;
+	Datum		temp;
+	StringInfoData buf;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -3932,8 +3932,8 @@ numeric_poly_combine(PG_FUNCTION_ARGS)
 {
 	PolyNumAggState *state1;
 	PolyNumAggState *state2;
-	MemoryContext	agg_context;
-	MemoryContext	old_context;
+	MemoryContext agg_context;
+	MemoryContext old_context;
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -4001,11 +4001,11 @@ numeric_poly_combine(PG_FUNCTION_ARGS)
 Datum
 numeric_poly_serialize(PG_FUNCTION_ARGS)
 {
-	PolyNumAggState	   *state;
-	StringInfoData		buf;
-	bytea			   *sumX;
-	bytea			   *sumX2;
-	bytea			   *result;
+	PolyNumAggState *state;
+	StringInfoData buf;
+	bytea	   *sumX;
+	bytea	   *sumX2;
+	bytea	   *result;
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -4040,11 +4040,11 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 		free_var(&num);
 #else
 		temp = DirectFunctionCall1(numeric_send,
-								   NumericGetDatum(make_result(&state->sumX)));
+								 NumericGetDatum(make_result(&state->sumX)));
 		sumX = DatumGetByteaP(temp);
 
 		temp = DirectFunctionCall1(numeric_send,
-								  NumericGetDatum(make_result(&state->sumX2)));
+								NumericGetDatum(make_result(&state->sumX2)));
 		sumX2 = DatumGetByteaP(temp);
 #endif
 	}
@@ -4076,11 +4076,11 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 Datum
 numeric_poly_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	PolyNumAggState	   *result;
-	Datum				sumX;
-	Datum				sumX2;
-	StringInfoData		buf;
+	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	PolyNumAggState *result;
+	Datum		sumX;
+	Datum		sumX2;
+	StringInfoData buf;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -4105,13 +4105,13 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 
 	/* sumX2 */
 	sumX2 = DirectFunctionCall3(numeric_recv,
-							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
+								PointerGetDatum(&buf),
+								InvalidOid,
+								-1);
 
 #ifdef HAVE_INT128
 	{
-		NumericVar num;
+		NumericVar	num;
 
 		init_var(&num);
 		set_var_from_num(DatumGetNumeric(sumX), &num);
@@ -4170,10 +4170,10 @@ int8_avg_accum(PG_FUNCTION_ARGS)
 Datum
 int8_avg_combine(PG_FUNCTION_ARGS)
 {
-	PolyNumAggState	   *state1;
-	PolyNumAggState	   *state2;
-	MemoryContext		agg_context;
-	MemoryContext		old_context;
+	PolyNumAggState *state1;
+	PolyNumAggState *state2;
+	MemoryContext agg_context;
+	MemoryContext old_context;
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -4233,10 +4233,10 @@ int8_avg_combine(PG_FUNCTION_ARGS)
 Datum
 int8_avg_serialize(PG_FUNCTION_ARGS)
 {
-	PolyNumAggState	   *state;
-	StringInfoData		buf;
-	bytea			   *sumX;
-	bytea			   *result;
+	PolyNumAggState *state;
+	StringInfoData buf;
+	bytea	   *sumX;
+	bytea	   *result;
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -4265,7 +4265,7 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 		sumX = DatumGetByteaP(temp);
 #else
 		temp = DirectFunctionCall1(numeric_send,
-								   NumericGetDatum(make_result(&state->sumX)));
+								 NumericGetDatum(make_result(&state->sumX)));
 		sumX = DatumGetByteaP(temp);
 #endif
 	}
@@ -4293,10 +4293,10 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 Datum
 int8_avg_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	PolyNumAggState	   *result;
-	StringInfoData		buf;
-	Datum				temp;
+	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	PolyNumAggState *result;
+	StringInfoData buf;
+	Datum		temp;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -4321,7 +4321,7 @@ int8_avg_deserialize(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT128
 	{
-		NumericVar num;
+		NumericVar	num;
 
 		init_var(&num);
 		set_var_from_num(DatumGetNumeric(temp), &num);

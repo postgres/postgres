@@ -20,8 +20,8 @@ PG_MODULE_MAGIC;
 
 typedef struct vbits
 {
-	BlockNumber	next;
-	BlockNumber	count;
+	BlockNumber next;
+	BlockNumber count;
 	uint8		bits[FLEXIBLE_ARRAY_MEMBER];
 } vbits;
 
@@ -129,7 +129,7 @@ pg_visibility_map_rel(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		Oid			relid = PG_GETARG_OID(0);
-		MemoryContext	oldcontext;
+		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -173,7 +173,7 @@ pg_visibility_rel(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		Oid			relid = PG_GETARG_OID(0);
-		MemoryContext	oldcontext;
+		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -214,8 +214,8 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	rel;
-	BlockNumber	nblocks;
-	BlockNumber	blkno;
+	BlockNumber nblocks;
+	BlockNumber blkno;
 	Buffer		vmbuffer = InvalidBuffer;
 	int64		all_visible = 0;
 	int64		all_frozen = 0;
@@ -292,16 +292,16 @@ static vbits *
 collect_visibility_data(Oid relid, bool include_pd)
 {
 	Relation	rel;
-	BlockNumber	nblocks;
+	BlockNumber nblocks;
 	vbits	   *info;
-	BlockNumber	blkno;
+	BlockNumber blkno;
 	Buffer		vmbuffer = InvalidBuffer;
-	BufferAccessStrategy	bstrategy = GetAccessStrategy(BAS_BULKREAD);
+	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	rel = relation_open(relid, AccessShareLock);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
-	info = palloc0(offsetof(vbits, bits) + nblocks);
+	info = palloc0(offsetof(vbits, bits) +nblocks);
 	info->next = 0;
 	info->count = nblocks;
 
@@ -320,8 +320,8 @@ collect_visibility_data(Oid relid, bool include_pd)
 			info->bits[blkno] |= (1 << 1);
 
 		/*
-		 * Page-level data requires reading every block, so only get it if
-		 * the caller needs it.  Use a buffer access strategy, too, to prevent
+		 * Page-level data requires reading every block, so only get it if the
+		 * caller needs it.  Use a buffer access strategy, too, to prevent
 		 * cache-trashing.
 		 */
 		if (include_pd)

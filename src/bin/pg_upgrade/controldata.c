@@ -200,8 +200,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			/*
 			 * Delimiter changed from '/' to ':' in 9.6.  We don't test for
 			 * the catalog version of the change because the catalog version
-			 * is pulled from pg_controldata too, and it isn't worth adding
-			 * an order dependency for this --- we just check the string.
+			 * is pulled from pg_controldata too, and it isn't worth adding an
+			 * order dependency for this --- we just check the string.
 			 */
 			if (strchr(p, '/') != NULL)
 				p = strchr(p, '/');

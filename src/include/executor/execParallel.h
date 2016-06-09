@@ -22,13 +22,13 @@ typedef struct SharedExecutorInstrumentation SharedExecutorInstrumentation;
 
 typedef struct ParallelExecutorInfo
 {
-	PlanState *planstate;
+	PlanState  *planstate;
 	ParallelContext *pcxt;
 	BufferUsage *buffer_usage;
 	SharedExecutorInstrumentation *instrumentation;
 	shm_mq_handle **tqueue;
-	bool	finished;
-}	ParallelExecutorInfo;
+	bool		finished;
+} ParallelExecutorInfo;
 
 extern ParallelExecutorInfo *ExecInitParallelPlan(PlanState *planstate,
 					 EState *estate, int nworkers);

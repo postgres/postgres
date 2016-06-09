@@ -53,4 +53,4 @@ typedef struct xl_standby_lock
 	Oid			relOid;
 } xl_standby_lock;
 
-#endif /* LOCKDEF_H_ */
+#endif   /* LOCKDEF_H_ */

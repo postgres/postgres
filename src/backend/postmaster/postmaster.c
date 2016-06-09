@@ -1182,23 +1182,22 @@ PostmasterMain(int argc, char *argv[])
 	RemovePgTempFiles();
 
 	/*
-	 * Forcibly remove the files signaling a standby promotion
-	 * request. Otherwise, the existence of those files triggers
-	 * a promotion too early, whether a user wants that or not.
+	 * Forcibly remove the files signaling a standby promotion request.
+	 * Otherwise, the existence of those files triggers a promotion too early,
+	 * whether a user wants that or not.
 	 *
-	 * This removal of files is usually unnecessary because they
-	 * can exist only during a few moments during a standby
-	 * promotion. However there is a race condition: if pg_ctl promote
-	 * is executed and creates the files during a promotion,
-	 * the files can stay around even after the server is brought up
-	 * to new master. Then, if new standby starts by using the backup
-	 * taken from that master, the files can exist at the server
+	 * This removal of files is usually unnecessary because they can exist
+	 * only during a few moments during a standby promotion. However there is
+	 * a race condition: if pg_ctl promote is executed and creates the files
+	 * during a promotion, the files can stay around even after the server is
+	 * brought up to new master. Then, if new standby starts by using the
+	 * backup taken from that master, the files can exist at the server
 	 * startup and should be removed in order to avoid an unexpected
 	 * promotion.
 	 *
-	 * Note that promotion signal files need to be removed before
-	 * the startup process is invoked. Because, after that, they can
-	 * be used by postmaster's SIGUSR1 signal handler.
+	 * Note that promotion signal files need to be removed before the startup
+	 * process is invoked. Because, after that, they can be used by
+	 * postmaster's SIGUSR1 signal handler.
 	 */
 	RemovePromoteSignalFiles();
 
@@ -2053,9 +2052,9 @@ retry1:
 				else if (!parse_bool(valptr, &am_walsender))
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for parameter \"%s\": \"%s\"",
-									"replication",
-									valptr),
+						 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								"replication",
+								valptr),
 							 errhint("Valid values are: \"false\", 0, \"true\", 1, \"database\".")));
 			}
 			else
@@ -2607,6 +2606,7 @@ pmdie(SIGNAL_ARGS)
 			if (pmState == PM_RECOVERY)
 			{
 				SignalSomeChildren(SIGTERM, BACKEND_TYPE_BGWORKER);
+
 				/*
 				 * Only startup, bgwriter, walreceiver, possibly bgworkers,
 				 * and/or checkpointer should be active in this state; we just
@@ -3074,9 +3074,9 @@ CleanupBackgroundWorker(int pid,
 
 		/*
 		 * It's possible that this background worker started some OTHER
-		 * background worker and asked to be notified when that worker
-		 * started or stopped.  If so, cancel any notifications destined
-		 * for the now-dead backend.
+		 * background worker and asked to be notified when that worker started
+		 * or stopped.  If so, cancel any notifications destined for the
+		 * now-dead backend.
 		 */
 		if (rw->rw_backend->bgworker_notify)
 			BackgroundWorkerStopNotifications(rw->rw_pid);
@@ -5696,9 +5696,8 @@ maybe_start_bgworker(void)
 			rw->rw_crashed_at = 0;
 
 			/*
-			 * Allocate and assign the Backend element.  Note we
-			 * must do this before forking, so that we can handle out of
-			 * memory properly.
+			 * Allocate and assign the Backend element.  Note we must do this
+			 * before forking, so that we can handle out of memory properly.
 			 */
 			if (!assign_backendlist_entry(rw))
 				return;

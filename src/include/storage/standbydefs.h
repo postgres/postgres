@@ -24,9 +24,9 @@ extern void standby_redo(XLogReaderState *record);
 extern void standby_desc(StringInfo buf, XLogReaderState *record);
 extern const char *standby_identify(uint8 info);
 extern void standby_desc_invalidations(StringInfo buf,
-									   int nmsgs, SharedInvalidationMessage *msgs,
-									   Oid dbId, Oid tsId,
-									   bool relcacheInitFileInval);
+						   int nmsgs, SharedInvalidationMessage *msgs,
+						   Oid dbId, Oid tsId,
+						   bool relcacheInitFileInval);
 
 /*
  * XLOG message types

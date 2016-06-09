@@ -20,8 +20,8 @@
 
 typedef struct MorphOpaque
 {
-	Oid		cfg_id;
-	int		qoperator;	/* query operator */
+	Oid			cfg_id;
+	int			qoperator;		/* query operator */
 } MorphOpaque;
 
 
@@ -274,14 +274,14 @@ to_tsvector(PG_FUNCTION_ARGS)
 static void
 pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, int16 weight, bool prefix)
 {
-	int32			count = 0;
-	ParsedText		prs;
-	uint32			variant,
-					pos = 0,
-					cntvar = 0,
-					cntpos = 0,
-					cnt = 0;
-	MorphOpaque	   *data = (MorphOpaque *) DatumGetPointer(opaque);
+	int32		count = 0;
+	ParsedText	prs;
+	uint32		variant,
+				pos = 0,
+				cntvar = 0,
+				cntpos = 0,
+				cnt = 0;
+	MorphOpaque *data = (MorphOpaque *) DatumGetPointer(opaque);
 
 	prs.lenwords = 4;
 	prs.curwords = 0;
@@ -295,8 +295,8 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 		while (count < prs.curwords)
 		{
 			/*
-			 * Were any stop words removed? If so, fill empty positions
-			 * with placeholders linked by an appropriate operator.
+			 * Were any stop words removed? If so, fill empty positions with
+			 * placeholders linked by an appropriate operator.
 			 */
 			if (pos > 0 && pos + 1 < prs.words[count].pos.pos)
 			{
@@ -330,7 +330,7 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 							  prs.words[count].word,
 							  prs.words[count].len,
 							  weight,
-							  ((prs.words[count].flags & TSL_PREFIX) || prefix));
+						  ((prs.words[count].flags & TSL_PREFIX) || prefix));
 					pfree(prs.words[count].word);
 					if (cnt)
 						pushOperator(state, OP_AND, 0);
@@ -362,9 +362,9 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 Datum
 to_tsquery_byid(PG_FUNCTION_ARGS)
 {
-	text		   *in = PG_GETARG_TEXT_P(1);
-	TSQuery			query;
-	MorphOpaque		data;
+	text	   *in = PG_GETARG_TEXT_P(1);
+	TSQuery		query;
+	MorphOpaque data;
 
 	data.cfg_id = PG_GETARG_OID(0);
 	data.qoperator = OP_AND;
@@ -392,9 +392,9 @@ to_tsquery(PG_FUNCTION_ARGS)
 Datum
 plainto_tsquery_byid(PG_FUNCTION_ARGS)
 {
-	text		   *in = PG_GETARG_TEXT_P(1);
-	TSQuery			query;
-	MorphOpaque		data;
+	text	   *in = PG_GETARG_TEXT_P(1);
+	TSQuery		query;
+	MorphOpaque data;
 
 	data.cfg_id = PG_GETARG_OID(0);
 	data.qoperator = OP_AND;
@@ -423,9 +423,9 @@ plainto_tsquery(PG_FUNCTION_ARGS)
 Datum
 phraseto_tsquery_byid(PG_FUNCTION_ARGS)
 {
-	text		   *in = PG_GETARG_TEXT_P(1);
-	TSQuery			query;
-	MorphOpaque		data;
+	text	   *in = PG_GETARG_TEXT_P(1);
+	TSQuery		query;
+	MorphOpaque data;
 
 	data.cfg_id = PG_GETARG_OID(0);
 	data.qoperator = OP_PHRASE;

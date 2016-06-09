@@ -2727,6 +2727,7 @@ pgstat_bestart(void)
 	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
 	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
 	beentry->st_progress_command_target = InvalidOid;
+
 	/*
 	 * we don't zero st_progress_param here to save cycles; nobody should
 	 * examine it until st_progress_command has been set to something other
@@ -2909,7 +2910,7 @@ pgstat_progress_update_multi_param(int nparam, const int *index,
 								   const int64 *val)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
-	int		i;
+	int			i;
 
 	if (!beentry || !pgstat_track_activities || nparam == 0)
 		return;

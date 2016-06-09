@@ -66,7 +66,7 @@ typedef struct
 #define STATHDRSIZE (offsetof(TSVectorStat, data))
 
 static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
-static int tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len);
+static int	tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len);
 
 /*
  * Order: haspos, len, word, for all positions (pos, weight)
@@ -276,16 +276,20 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 
 	switch (char_weight)
 	{
-		case 'A': case 'a':
+		case 'A':
+		case 'a':
 			weight = 3;
 			break;
-		case 'B': case 'b':
+		case 'B':
+		case 'b':
 			weight = 2;
 			break;
-		case 'C': case 'c':
+		case 'C':
+		case 'c':
 			weight = 1;
 			break;
-		case 'D': case 'd':
+		case 'D':
+		case 'd':
 			weight = 0;
 			break;
 		default:
@@ -301,15 +305,15 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 					  &dlexemes, &nulls, &nlexemes);
 
 	/*
-	 * Assuming that lexemes array is significantly shorter than tsvector
-	 * we can iterate through lexemes performing binary search
-	 * of each lexeme from lexemes in tsvector.
+	 * Assuming that lexemes array is significantly shorter than tsvector we
+	 * can iterate through lexemes performing binary search of each lexeme
+	 * from lexemes in tsvector.
 	 */
 	for (i = 0; i < nlexemes; i++)
 	{
-		char   *lex;
-		int		lex_len,
-				lex_pos;
+		char	   *lex;
+		int			lex_len,
+					lex_pos;
 
 		if (nulls[i])
 			ereport(ERROR,
@@ -323,6 +327,7 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 		if (lex_pos >= 0 && (j = POSDATALEN(tsout, entry + lex_pos)) != 0)
 		{
 			WordEntryPos *p = POSDATAPTR(tsout, entry + lex_pos);
+
 			while (j--)
 			{
 				WEP_SETWEIGHT(*p, weight);
@@ -393,18 +398,18 @@ tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len)
 
 	while (StopLow < StopHigh)
 	{
-		StopMiddle = (StopLow + StopHigh)/2;
+		StopMiddle = (StopLow + StopHigh) / 2;
 
 		cmp = tsCompareString(lexeme, lexeme_len,
-			STRPTR(tsv) + arrin[StopMiddle].pos,
-			arrin[StopMiddle].len,
-			false);
+							  STRPTR(tsv) + arrin[StopMiddle].pos,
+							  arrin[StopMiddle].len,
+							  false);
 
 		if (cmp < 0)
 			StopHigh = StopMiddle;
 		else if (cmp > 0)
 			StopLow = StopMiddle + 1;
-		else /* found it */
+		else	/* found it */
 			return StopMiddle;
 	}
 
@@ -440,13 +445,15 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 			   *arrout;
 	char	   *data = STRPTR(tsv),
 			   *dataout;
-	int			i, j, k,
+	int			i,
+				j,
+				k,
 				curoff;
 
 	/*
 	 * Here we overestimates tsout size, since we don't know exact size
-	 * occupied by positions and weights. We will set exact size later
-	 * after a pass through TSVector.
+	 * occupied by positions and weights. We will set exact size later after a
+	 * pass through TSVector.
 	 */
 	tsout = (TSVector) palloc0(VARSIZE(tsv));
 	arrout = ARRPTR(tsout);
@@ -465,10 +472,11 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	{
 		/*
 		 * Here we should check whether current i is present in
-		 * indices_to_delete or not. Since indices_to_delete is already
-		 * sorted we can advance it index only when we have match.
+		 * indices_to_delete or not. Since indices_to_delete is already sorted
+		 * we can advance it index only when we have match.
 		 */
-		if (k < indices_count && i == indices_to_delete[k]){
+		if (k < indices_count && i == indices_to_delete[k])
+		{
 			k++;
 			continue;
 		}
@@ -481,8 +489,9 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 		curoff += arrin[i].len;
 		if (arrin[i].haspos)
 		{
-			int len = POSDATALEN(tsv, arrin+i) * sizeof(WordEntryPos) +
-					  sizeof(uint16);
+			int			len = POSDATALEN(tsv, arrin + i) * sizeof(WordEntryPos) +
+			sizeof(uint16);
+
 			curoff = SHORTALIGN(curoff);
 			memcpy(dataout + curoff,
 				   STRPTR(tsv) + SHORTALIGN(arrin[i].pos + arrin[i].len),
@@ -494,9 +503,10 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	}
 
 	/*
-	 * After the pass through TSVector k should equals exactly to indices_count.
-	 * If it isn't then the caller provided us with indices outside of
-	 * [0, tsv->size) range and estimation of tsout's size is wrong.
+	 * After the pass through TSVector k should equals exactly to
+	 * indices_count. If it isn't then the caller provided us with indices
+	 * outside of [0, tsv->size) range and estimation of tsout's size is
+	 * wrong.
 	 */
 	Assert(k == indices_count);
 
@@ -538,7 +548,8 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 	TSVector	tsin = PG_GETARG_TSVECTOR(0),
 				tsout;
 	ArrayType  *lexemes = PG_GETARG_ARRAYTYPE_P(1);
-	int			i, nlex,
+	int			i,
+				nlex,
 				skip_count,
 			   *skip_indices;
 	Datum	   *dlexemes;
@@ -548,16 +559,16 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 					  &dlexemes, &nulls, &nlex);
 
 	/*
-	 * In typical use case array of lexemes to delete is relatively small.
-	 * So here we optimizing things for that scenario: iterate through lexarr
+	 * In typical use case array of lexemes to delete is relatively small. So
+	 * here we optimizing things for that scenario: iterate through lexarr
 	 * performing binary search of each lexeme from lexarr in tsvector.
 	 */
 	skip_indices = palloc0(nlex * sizeof(int));
 	for (i = skip_count = 0; i < nlex; i++)
 	{
-		char *lex;
-		int lex_len,
-			lex_pos;
+		char	   *lex;
+		int			lex_len,
+					lex_pos;
 
 		if (nulls[i])
 			ereport(ERROR,
@@ -583,15 +594,15 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 
 /*
  * Expand tsvector as table with following columns:
- *     lexeme: lexeme text
- *     positions: integer array of lexeme positions
- *     weights: char array of weights corresponding to positions
+ *	   lexeme: lexeme text
+ *	   positions: integer array of lexeme positions
+ *	   weights: char array of weights corresponding to positions
  */
 Datum
 tsvector_unnest(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	TSVector			tsin;
+	FuncCallContext *funcctx;
+	TSVector	tsin;
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -629,8 +640,8 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 		Datum		values[3];
 
 		values[0] = PointerGetDatum(
-				cstring_to_text_with_len(data + arrin[i].pos, arrin[i].len)
-		);
+				  cstring_to_text_with_len(data + arrin[i].pos, arrin[i].len)
+			);
 
 		if (arrin[i].haspos)
 		{
@@ -641,25 +652,25 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 
 			/*
 			 * Internally tsvector stores position and weight in the same
-			 * uint16 (2 bits for weight, 14 for position). Here we extract that
-			 * in two separate arrays.
+			 * uint16 (2 bits for weight, 14 for position). Here we extract
+			 * that in two separate arrays.
 			 */
 			posv = _POSVECPTR(tsin, arrin + i);
 			positions = palloc(posv->npos * sizeof(Datum));
-			weights   = palloc(posv->npos * sizeof(Datum));
+			weights = palloc(posv->npos * sizeof(Datum));
 			for (j = 0; j < posv->npos; j++)
 			{
 				positions[j] = Int16GetDatum(WEP_GETPOS(posv->pos[j]));
 				weight = 'D' - WEP_GETWEIGHT(posv->pos[j]);
 				weights[j] = PointerGetDatum(
-									cstring_to_text_with_len(&weight, 1)
-							);
+										 cstring_to_text_with_len(&weight, 1)
+					);
 			}
 
 			values[1] = PointerGetDatum(
-				construct_array(positions, posv->npos, INT2OID, 2, true, 's'));
+			  construct_array(positions, posv->npos, INT2OID, 2, true, 's'));
 			values[2] = PointerGetDatum(
-				construct_array(weights, posv->npos, TEXTOID, -1, false, 'i'));
+			  construct_array(weights, posv->npos, TEXTOID, -1, false, 'i'));
 		}
 		else
 		{
@@ -682,19 +693,19 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 Datum
 tsvector_to_array(PG_FUNCTION_ARGS)
 {
-	TSVector			tsin  = PG_GETARG_TSVECTOR(0);
-	WordEntry		   *arrin = ARRPTR(tsin);
-	Datum				*elements;
-	int					i;
-	ArrayType		   *array;
+	TSVector	tsin = PG_GETARG_TSVECTOR(0);
+	WordEntry  *arrin = ARRPTR(tsin);
+	Datum	   *elements;
+	int			i;
+	ArrayType  *array;
 
 	elements = palloc(tsin->size * sizeof(Datum));
 
 	for (i = 0; i < tsin->size; i++)
 	{
 		elements[i] = PointerGetDatum(
-			cstring_to_text_with_len(STRPTR(tsin) + arrin[i].pos, arrin[i].len)
-		);
+		  cstring_to_text_with_len(STRPTR(tsin) + arrin[i].pos, arrin[i].len)
+			);
 	}
 
 	array = construct_array(elements, tsin->size, TEXTOID, -1, false, 'i');
@@ -742,8 +753,8 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nitems; i++)
 	{
-		char *lex = VARDATA(dlexemes[i]);
-		int lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		char	   *lex = VARDATA(dlexemes[i]);
+		int			lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
 
 		memcpy(cur, lex, lex_len);
 		arrout[i].haspos = 0;
@@ -772,7 +783,8 @@ tsvector_filter(PG_FUNCTION_ARGS)
 	Datum	   *dweights;
 	bool	   *nulls;
 	int			nweights;
-	int			i, j;
+	int			i,
+				j;
 	int			cur_pos = 0;
 	char		mask = 0;
 
@@ -781,7 +793,7 @@ tsvector_filter(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nweights; i++)
 	{
-		char char_weight;
+		char		char_weight;
 
 		if (nulls[i])
 			ereport(ERROR,
@@ -791,22 +803,26 @@ tsvector_filter(PG_FUNCTION_ARGS)
 		char_weight = DatumGetChar(dweights[i]);
 		switch (char_weight)
 		{
-			case 'A': case 'a':
+			case 'A':
+			case 'a':
 				mask = mask | 8;
 				break;
-			case 'B': case 'b':
+			case 'B':
+			case 'b':
 				mask = mask | 4;
 				break;
-			case 'C': case 'c':
+			case 'C':
+			case 'c':
 				mask = mask | 2;
 				break;
-			case 'D': case 'd':
+			case 'D':
+			case 'd':
 				mask = mask | 1;
 				break;
 			default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized weight: \"%c\"", char_weight)));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized weight: \"%c\"", char_weight)));
 		}
 	}
 
@@ -818,16 +834,16 @@ tsvector_filter(PG_FUNCTION_ARGS)
 	for (i = j = 0; i < tsin->size; i++)
 	{
 		WordEntryPosVector *posvin,
-						   *posvout;
-		int npos = 0;
-		int k;
+				   *posvout;
+		int			npos = 0;
+		int			k;
 
 		if (!arrin[i].haspos)
 			continue;
 
-		posvin  = _POSVECPTR(tsin, arrin + i);
+		posvin = _POSVECPTR(tsin, arrin + i);
 		posvout = (WordEntryPosVector *)
-						(dataout + SHORTALIGN(cur_pos + arrin[i].len));
+			(dataout + SHORTALIGN(cur_pos + arrin[i].len));
 
 		for (k = 0; k < posvin->npos; k++)
 		{
@@ -846,8 +862,8 @@ tsvector_filter(PG_FUNCTION_ARGS)
 		memcpy(dataout + cur_pos, datain + arrin[i].pos, arrin[i].len);
 		posvout->npos = npos;
 		cur_pos += SHORTALIGN(arrin[i].len);
-		cur_pos += POSDATALEN(tsout, arrout+j) * sizeof(WordEntryPos) +
-				   sizeof(uint16);
+		cur_pos += POSDATALEN(tsout, arrout + j) * sizeof(WordEntryPos) +
+			sizeof(uint16);
 		j++;
 	}
 
@@ -1129,11 +1145,11 @@ static bool
 checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 			   ExecPhraseData *data)
 {
-	bool result = false;
+	bool		result = false;
 
 	if (entry->haspos && (val->weight || data))
 	{
-		WordEntryPosVector	*posvec;
+		WordEntryPosVector *posvec;
 
 		/*
 		 * We can't use the _POSVECPTR macro here because the pointer to the
@@ -1144,8 +1160,8 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 
 		if (val->weight && data)
 		{
-			WordEntryPos	*posvec_iter = posvec->pos;
-			WordEntryPos	*dptr;
+			WordEntryPos *posvec_iter = posvec->pos;
+			WordEntryPos *dptr;
 
 			/*
 			 * Filter position information by weights
@@ -1173,7 +1189,7 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 		}
 		else if (val->weight)
 		{
-			WordEntryPos	*posvec_iter = posvec->pos;
+			WordEntryPos *posvec_iter = posvec->pos;
 
 			/* Is there a position with a matching weight? */
 			while (posvec_iter < posvec->pos + posvec->npos)
@@ -1181,16 +1197,16 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 				if (val->weight & (1 << WEP_GETWEIGHT(*posvec_iter)))
 				{
 					result = true;
-					break; /* no need to go further */
+					break;		/* no need to go further */
 				}
 
 				posvec_iter++;
 			}
 		}
-		else /* data != NULL */
+		else	/* data != NULL */
 		{
 			data->npos = posvec->npos;
-			data->pos  = posvec->pos;
+			data->pos = posvec->pos;
 			data->allocated = false;
 			result = true;
 		}
@@ -1213,7 +1229,7 @@ static int
 uniqueLongPos(WordEntryPos *pos, int npos)
 {
 	WordEntryPos *pos_iter,
-				 *result;
+			   *result;
 
 	if (npos <= 1)
 		return npos;
@@ -1273,9 +1289,10 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 
 	if ((!res || data) && val->prefix)
 	{
-		WordEntryPos	   *allpos = NULL;
-		int					npos = 0,
-							totalpos = 0;
+		WordEntryPos *allpos = NULL;
+		int			npos = 0,
+					totalpos = 0;
+
 		/*
 		 * there was a failed exact search, so we should scan further to find
 		 * a prefix match. We also need to do so if caller needs position info
@@ -1355,11 +1372,11 @@ TS_phrase_execute(QueryItem *curitem,
 	}
 	else
 	{
-		ExecPhraseData  Ldata = {0, false, NULL},
-						Rdata = {0, false, NULL};
-		WordEntryPos   *Lpos,
-					   *Rpos,
-					   *pos_iter = NULL;
+		ExecPhraseData Ldata = {0, false, NULL},
+					Rdata = {0, false, NULL};
+		WordEntryPos *Lpos,
+				   *Rpos,
+				   *pos_iter = NULL;
 
 		Assert(curitem->qoperator.oper == OP_PHRASE);
 
@@ -1371,22 +1388,24 @@ TS_phrase_execute(QueryItem *curitem,
 			return false;
 
 		/*
-		 * if at least one of the operands has no position
-		 * information, fallback to AND operation.
+		 * if at least one of the operands has no position information,
+		 * fallback to AND operation.
 		 */
 		if (Ldata.npos == 0 || Rdata.npos == 0)
 			return true;
 
 		/*
-		 * Result of the operation is a list of the
-		 * corresponding positions of RIGHT operand.
+		 * Result of the operation is a list of the corresponding positions of
+		 * RIGHT operand.
 		 */
 		if (data)
 		{
 			if (!Rdata.allocated)
+
 				/*
-				 * OP_PHRASE is based on the OP_AND, so the number of resulting
-				 * positions could not be greater than the total amount of operands.
+				 * OP_PHRASE is based on the OP_AND, so the number of
+				 * resulting positions could not be greater than the total
+				 * amount of operands.
 				 */
 				data->pos = palloc(sizeof(WordEntryPos) * Min(Ldata.npos, Rdata.npos));
 			else
@@ -1423,8 +1442,8 @@ TS_phrase_execute(QueryItem *curitem,
 							*pos_iter = WEP_GETPOS(*Rpos);
 							pos_iter++;
 
-							break; /* We need to build a unique result
-									* array, so go to the next Rpos */
+							break;		/* We need to build a unique result
+										 * array, so go to the next Rpos */
 						}
 						else
 						{
@@ -1439,8 +1458,8 @@ TS_phrase_execute(QueryItem *curitem,
 				else
 				{
 					/*
-					 * Go to the next Rpos, because Lpos
-					 * is ahead of the current Rpos
+					 * Go to the next Rpos, because Lpos is ahead of the
+					 * current Rpos
 					 */
 					break;
 				}
@@ -1477,14 +1496,14 @@ TS_phrase_execute(QueryItem *curitem,
  */
 bool
 TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
-		   bool (*chkcond) (void *checkval, QueryOperand *val, ExecPhraseData *data))
+   bool (*chkcond) (void *checkval, QueryOperand *val, ExecPhraseData *data))
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
 		return chkcond(checkval, (QueryOperand *) curitem,
-					   NULL /* we don't need position info */);
+					   NULL /* we don't need position info */ );
 
 	switch (curitem->qoperator.oper)
 	{
@@ -1546,6 +1565,7 @@ tsquery_requires_match(QueryItem *curitem)
 			return false;
 
 		case OP_PHRASE:
+
 			/*
 			 * Treat OP_PHRASE as OP_AND here
 			 */
@@ -1972,7 +1992,7 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 	if (SPI_tuptable == NULL ||
 		SPI_tuptable->tupdesc->natts != 1 ||
 		!IsBinaryCoercible(SPI_gettypeid(SPI_tuptable->tupdesc, 1),
-						  TSVECTOROID))
+						   TSVECTOROID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("ts_stat query must return one tsvector column")));
@@ -2160,7 +2180,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 				 errmsg("tsvector column \"%s\" does not exist",
 						trigger->tgargs[0])));
 	if (!IsBinaryCoercible(SPI_gettypeid(rel->rd_att, tsvector_attr_num),
-						  TSVECTOROID))
+						   TSVECTOROID))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("column \"%s\" is not of tsvector type",
@@ -2178,7 +2198,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 					 errmsg("configuration column \"%s\" does not exist",
 							trigger->tgargs[1])));
 		if (!IsBinaryCoercible(SPI_gettypeid(rel->rd_att, config_attr_num),
-							  REGCONFIGOID))
+							   REGCONFIGOID))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("column \"%s\" is not of regconfig type",

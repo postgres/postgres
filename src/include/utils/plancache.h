@@ -135,7 +135,7 @@ typedef struct CachedPlan
 								 * changes from this value */
 	int			generation;		/* parent's generation number for this plan */
 	int			refcount;		/* count of live references to this struct */
-	bool		has_foreign_join; /* plan has pushed down a foreign join */
+	bool		has_foreign_join;		/* plan has pushed down a foreign join */
 	MemoryContext context;		/* context containing this CachedPlan */
 } CachedPlan;
 

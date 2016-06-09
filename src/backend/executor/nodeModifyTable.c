@@ -1221,10 +1221,10 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	/*
 	 * Note that it is possible that the target tuple has been modified in
 	 * this session, after the above heap_lock_tuple. We choose to not error
-	 * out in that case, in line with ExecUpdate's treatment of similar
-	 * cases. This can happen if an UPDATE is triggered from within
-	 * ExecQual(), ExecWithCheckOptions() or ExecProject() above, e.g. by
-	 * selecting from a wCTE in the ON CONFLICT's SET.
+	 * out in that case, in line with ExecUpdate's treatment of similar cases.
+	 * This can happen if an UPDATE is triggered from within ExecQual(),
+	 * ExecWithCheckOptions() or ExecProject() above, e.g. by selecting from a
+	 * wCTE in the ON CONFLICT's SET.
 	 */
 
 	/* Execute UPDATE with projection */
@@ -1595,7 +1595,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/* Initialize the usesFdwDirectModify flag */
 		resultRelInfo->ri_usesFdwDirectModify = bms_is_member(i,
-												node->fdwDirectModifyPlans);
+												 node->fdwDirectModifyPlans);
 
 		/*
 		 * Verify result relation is a valid target for the current operation

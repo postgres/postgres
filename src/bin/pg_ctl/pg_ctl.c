@@ -1747,8 +1747,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
 		/*
-		 * Most Windows targets make DWORD a 32-bit unsigned long, but
-		 * in case it doesn't cast DWORD before printing.
+		 * Most Windows targets make DWORD a 32-bit unsigned long, but in case
+		 * it doesn't cast DWORD before printing.
 		 */
 		write_stderr(_("%s: could not open process token: error code %lu\n"),
 					 progname, (unsigned long) GetLastError());

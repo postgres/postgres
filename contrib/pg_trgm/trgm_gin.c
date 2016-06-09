@@ -265,13 +265,13 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 Datum
 gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 {
-	GinTernaryValue  *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
+	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
 	/* text    *query = PG_GETARG_TEXT_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
-	GinTernaryValue	res = GIN_MAYBE;
+	GinTernaryValue res = GIN_MAYBE;
 	int32		i,
 				ntrue;
 	bool	   *boolcheck;
@@ -293,11 +293,12 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * See comment in gin_trgm_consistent() about * upper bound formula
+			 * See comment in gin_trgm_consistent() about * upper bound
+			 * formula
 			 */
 			res = (nkeys == 0)
 				? GIN_FALSE : (((((float4) ntrue) / ((float4) nkeys)) >= nlimit)
-							? GIN_MAYBE : GIN_FALSE);
+							   ? GIN_MAYBE : GIN_FALSE);
 			break;
 		case ILikeStrategyNumber:
 #ifndef IGNORECASE
@@ -330,9 +331,9 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * As trigramsMatchGraph implements a monotonic boolean function,
-				 * promoting all GIN_MAYBE keys to GIN_TRUE will give a
-				 * conservative result.
+				 * As trigramsMatchGraph implements a monotonic boolean
+				 * function, promoting all GIN_MAYBE keys to GIN_TRUE will
+				 * give a conservative result.
 				 */
 				boolcheck = (bool *) palloc(sizeof(bool) * nkeys);
 				for (i = 0; i < nkeys; i++)
@@ -345,7 +346,7 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
-			res = GIN_FALSE;		/* keep compiler quiet */
+			res = GIN_FALSE;	/* keep compiler quiet */
 			break;
 	}
 

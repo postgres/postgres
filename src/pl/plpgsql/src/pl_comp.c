@@ -1326,10 +1326,10 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = dno + 1;
 	plpgsql_exec_get_datum_type_info(estate,
-							 datum,
-							 &param->paramtype,
-							 &param->paramtypmod,
-							 &param->paramcollid);
+									 datum,
+									 &param->paramtype,
+									 &param->paramtypmod,
+									 &param->paramcollid);
 	param->location = location;
 
 	return (Node *) param;

@@ -105,8 +105,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		OldestXmin = RecentGlobalXmin;
 	else
 		OldestXmin =
-				TransactionIdLimitedForOldSnapshots(RecentGlobalDataXmin,
-													relation);
+			TransactionIdLimitedForOldSnapshots(RecentGlobalDataXmin,
+												relation);
 
 	Assert(TransactionIdIsValid(OldestXmin));
 

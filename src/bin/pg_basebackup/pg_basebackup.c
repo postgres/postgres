@@ -1830,6 +1830,7 @@ BaseBackup(void)
 		int			r;
 #else
 		DWORD		status;
+
 		/*
 		 * get a pointer sized version of bgchild to avoid warnings about
 		 * casting to a different size on WIN64.

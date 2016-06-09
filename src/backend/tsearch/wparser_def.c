@@ -2033,7 +2033,7 @@ static bool
 checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 {
 	int			i;
-	hlCheck	   *checkval = (hlCheck *) opaque;
+	hlCheck    *checkval = (hlCheck *) opaque;
 
 	for (i = 0; i < checkval->len; i++)
 	{

@@ -80,7 +80,7 @@ typedef struct _avl_tree
 
 
 static bool printCrosstab(const PGresult *results,
-			  int num_columns, pivot_field *piv_columns, int field_for_columns,
+			int num_columns, pivot_field *piv_columns, int field_for_columns,
 			  int num_rows, pivot_field *piv_rows, int field_for_rows,
 			  int field_for_data);
 static void avlInit(avl_tree *tree);
@@ -285,7 +285,7 @@ error_return:
  */
 static bool
 printCrosstab(const PGresult *results,
-			  int num_columns, pivot_field *piv_columns, int field_for_columns,
+			int num_columns, pivot_field *piv_columns, int field_for_columns,
 			  int num_rows, pivot_field *piv_rows, int field_for_rows,
 			  int field_for_data)
 {
@@ -396,10 +396,10 @@ printCrosstab(const PGresult *results,
 			if (cont.cells[idx] != NULL)
 			{
 				psql_error("\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"\n",
-							 piv_rows[row_number].name ? piv_rows[row_number].name :
-							 popt.nullPrint ? popt.nullPrint : "(null)",
-							 piv_columns[col_number].name ? piv_columns[col_number].name :
-							 popt.nullPrint ? popt.nullPrint : "(null)");
+					  piv_rows[row_number].name ? piv_rows[row_number].name :
+						   popt.nullPrint ? popt.nullPrint : "(null)",
+				piv_columns[col_number].name ? piv_columns[col_number].name :
+						   popt.nullPrint ? popt.nullPrint : "(null)");
 				goto error;
 			}
 
@@ -548,7 +548,7 @@ avlInsertNode(avl_tree *tree, avl_node **node, pivot_field field)
 		if (cmp != 0)
 		{
 			avlInsertNode(tree,
-						  cmp > 0 ? &current->children[1] : &current->children[0],
+					 cmp > 0 ? &current->children[1] : &current->children[0],
 						  field);
 			avlAdjustBalance(tree, node);
 		}

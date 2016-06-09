@@ -230,8 +230,8 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 			ScanKey		skey = scan->keyData + i;
 
 			/*
-			 * Copy consistent support function to ScanKey structure
-			 * instead of function implementing filtering operator.
+			 * Copy consistent support function to ScanKey structure instead
+			 * of function implementing filtering operator.
 			 */
 			fmgr_info_copy(&(skey->sk_func),
 						   &(so->giststate->consistentFn[skey->sk_attno - 1]),
@@ -303,8 +303,8 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 			so->orderByTypes[i] = get_func_rettype(skey->sk_func.fn_oid);
 
 			/*
-			 * Copy distance support function to ScanKey structure
-			 * instead of function implementing ordering operator.
+			 * Copy distance support function to ScanKey structure instead of
+			 * function implementing ordering operator.
 			 */
 			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
 

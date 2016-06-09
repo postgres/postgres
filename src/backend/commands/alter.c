@@ -400,18 +400,17 @@ ExecRenameStmt(RenameStmt *stmt)
 ObjectAddress
 ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddress)
 {
-	ObjectAddress	address;
-	ObjectAddress	refAddr;
-	Relation		rel;
+	ObjectAddress address;
+	ObjectAddress refAddr;
+	Relation	rel;
 
 	address =
 		get_object_address_rv(stmt->objectType, stmt->relation, stmt->objname,
-							  stmt->objargs, &rel, AccessExclusiveLock, false);
+							stmt->objargs, &rel, AccessExclusiveLock, false);
 
 	/*
-	 * If a relation was involved, it would have been opened and locked.
-	 * We don't need the relation here, but we'll retain the lock until
-	 * commit.
+	 * If a relation was involved, it would have been opened and locked. We
+	 * don't need the relation here, but we'll retain the lock until commit.
 	 */
 	if (rel)
 		heap_close(rel, NoLock);
@@ -630,8 +629,8 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	oldNspOid = DatumGetObjectId(namespace);
 
 	/*
-	 * If the object is already in the correct namespace, we don't need
-	 * to do anything except fire the object access hook.
+	 * If the object is already in the correct namespace, we don't need to do
+	 * anything except fire the object access hook.
 	 */
 	if (oldNspOid == nspOid)
 	{

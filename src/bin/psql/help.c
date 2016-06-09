@@ -85,8 +85,8 @@ usage(unsigned short int pager)
 	fprintf(output, _("  -f, --file=FILENAME      execute commands from file, then exit\n"));
 	fprintf(output, _("  -l, --list               list available databases, then exit\n"));
 	fprintf(output, _("  -v, --set=, --variable=NAME=VALUE\n"
-					  "                           set psql variable NAME to VALUE\n"
-					  "                           (e.g., -v ON_ERROR_STOP=1)\n"));
+			   "                           set psql variable NAME to VALUE\n"
+				 "                           (e.g., -v ON_ERROR_STOP=1)\n"));
 	fprintf(output, _("  -V, --version            output version information, then exit\n"));
 	fprintf(output, _("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
 	fprintf(output, _("  -1 (\"one\"), --single-transaction\n"

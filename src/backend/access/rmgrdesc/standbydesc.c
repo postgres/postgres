@@ -100,7 +100,7 @@ standby_desc_invalidations(StringInfo buf,
 						   Oid dbId, Oid tsId,
 						   bool relcacheInitFileInval)
 {
-	int i;
+	int			i;
 
 	if (relcacheInitFileInval)
 		appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",

@@ -2887,7 +2887,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 
 	while (true)
 	{
-		uint64			i;
+		uint64		i;
 
 		SPI_cursor_fetch(portal, true, 50);
 		if (SPI_processed == 0)
@@ -4767,7 +4767,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
  */
 Oid
 plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
-					PLpgSQL_datum *datum)
+							PLpgSQL_datum *datum)
 {
 	Oid			typeid;
 
@@ -4849,8 +4849,8 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
  */
 void
 plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
-						 PLpgSQL_datum *datum,
-						 Oid *typeid, int32 *typmod, Oid *collation)
+								 PLpgSQL_datum *datum,
+								 Oid *typeid, int32 *typmod, Oid *collation)
 {
 	switch (datum->dtype)
 	{
@@ -5089,7 +5089,7 @@ exec_run_select(PLpgSQL_execstate *estate,
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr, parallelOK ?
-			CURSOR_OPT_PARALLEL_OK : 0);
+						  CURSOR_OPT_PARALLEL_OK : 0);
 
 	/*
 	 * If a portal was requested, put the query into the portal

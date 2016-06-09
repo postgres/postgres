@@ -666,8 +666,8 @@ ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
 	}
 	else
 	{
-		ReorderBufferTXN   *txn = NULL;
-		volatile Snapshot	snapshot_now = snapshot;
+		ReorderBufferTXN *txn = NULL;
+		volatile Snapshot snapshot_now = snapshot;
 
 		if (xid != InvalidTransactionId)
 			txn = ReorderBufferTXNByXid(rb, xid, true, NULL, lsn, true);
@@ -1836,10 +1836,10 @@ ReorderBufferImmediateInvalidation(ReorderBuffer *rb, uint32 ninvalidations,
 		BeginInternalSubTransaction("replay");
 
 	/*
-	 * Force invalidations to happen outside of a valid transaction - that
-	 * way entries will just be marked as invalid without accessing the
-	 * catalog. That's advantageous because we don't need to setup the
-	 * full state necessary for catalog access.
+	 * Force invalidations to happen outside of a valid transaction - that way
+	 * entries will just be marked as invalid without accessing the catalog.
+	 * That's advantageous because we don't need to setup the full state
+	 * necessary for catalog access.
 	 */
 	if (use_subtxn)
 		AbortCurrentTransaction();
@@ -2543,14 +2543,14 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				change->data.msg.prefix = MemoryContextAlloc(rb->context,
 															 prefix_size);
 				memcpy(change->data.msg.prefix, data, prefix_size);
-				Assert(change->data.msg.prefix[prefix_size-1] == '\0');
+				Assert(change->data.msg.prefix[prefix_size - 1] == '\0');
 				data += prefix_size;
 
 				/* read the messsage */
 				memcpy(&change->data.msg.message_size, data, sizeof(Size));
 				data += sizeof(Size);
 				change->data.msg.message = MemoryContextAlloc(rb->context,
-												change->data.msg.message_size);
+											  change->data.msg.message_size);
 				memcpy(change->data.msg.message, data,
 					   change->data.msg.message_size);
 				data += change->data.msg.message_size;

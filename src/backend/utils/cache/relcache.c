@@ -5251,9 +5251,9 @@ RelationIdIsInInitFile(Oid relationId)
 bool
 RelationHasUnloggedIndex(Relation rel)
 {
-	List		   *indexoidlist;
-	ListCell	   *indexoidscan;
-	bool			result = false;
+	List	   *indexoidlist;
+	ListCell   *indexoidscan;
+	bool		result = false;
 
 	indexoidlist = RelationGetIndexList(rel);
 

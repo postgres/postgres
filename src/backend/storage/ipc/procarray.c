@@ -460,7 +460,7 @@ ProcArrayEndTransactionInternal(PGPROC *proc, PGXACT *pgxact,
 	pgxact->xmin = InvalidTransactionId;
 	/* must be cleared with xid/xmin: */
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-	pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
+	pgxact->delayChkpt = false; /* be sure this is cleared in abort */
 	proc->recoveryConflictPending = false;
 
 	/* Clear the subtransaction-XID cache too while holding the lock */
@@ -559,8 +559,8 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	/* Walk the list and clear all XIDs. */
 	while (nextidx != INVALID_PGPROCNO)
 	{
-		PGPROC	*proc = &allProcs[nextidx];
-		PGXACT	*pgxact = &allPgXact[nextidx];
+		PGPROC	   *proc = &allProcs[nextidx];
+		PGXACT	   *pgxact = &allPgXact[nextidx];
 
 		ProcArrayEndTransactionInternal(proc, pgxact, proc->procArrayGroupMemberXid);
 
@@ -580,7 +580,7 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	 */
 	while (wakeidx != INVALID_PGPROCNO)
 	{
-		PGPROC	*proc = &allProcs[wakeidx];
+		PGPROC	   *proc = &allProcs[wakeidx];
 
 		wakeidx = pg_atomic_read_u32(&proc->procArrayGroupNext);
 		pg_atomic_write_u32(&proc->procArrayGroupNext, INVALID_PGPROCNO);
@@ -642,8 +642,8 @@ ProcArrayInitRecovery(TransactionId initializedUptoXID)
 	Assert(TransactionIdIsNormal(initializedUptoXID));
 
 	/*
-	 * we set latestObservedXid to the xid SUBTRANS has been initialized up to,
-	 * so we can extend it from that point onwards in
+	 * we set latestObservedXid to the xid SUBTRANS has been initialized up
+	 * to, so we can extend it from that point onwards in
 	 * RecordKnownAssignedTransactionIds, and when we get consistent in
 	 * ProcArrayApplyRecoveryInfo().
 	 */
@@ -2591,8 +2591,8 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 			/*
 			 * We ignore an invalid pxmin because this means that backend has
 			 * no snapshot currently. We hold a Share lock to avoid contention
-			 * with users taking snapshots.  That is not a problem because
-			 * the current xmin is always at least one higher than the latest
+			 * with users taking snapshots.  That is not a problem because the
+			 * current xmin is always at least one higher than the latest
 			 * removed xid, so any new snapshot would never conflict with the
 			 * test here.
 			 */

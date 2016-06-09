@@ -482,7 +482,7 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 {
 	HeapTuple	roleTup;
 	Form_pg_authid rform;
-	char 	*rname;
+	char	   *rname;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs

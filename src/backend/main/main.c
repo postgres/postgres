@@ -270,19 +270,22 @@ startup_hacks(const char *progname)
 		SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
 #if defined(_M_AMD64) && _MSC_VER == 1800
+
 		/*
-		 * Avoid crashing in certain floating-point operations if
-		 * we were compiled for x64 with MS Visual Studio 2013 and
-		 * are running on Windows prior to 7/2008R2 SP1 on an
-		 * AVX2-capable CPU.
+		 * Avoid crashing in certain floating-point operations if we were
+		 * compiled for x64 with MS Visual Studio 2013 and are running on
+		 * Windows prior to 7/2008R2 SP1 on an AVX2-capable CPU.
 		 *
-		 * Ref: https://connect.microsoft.com/VisualStudio/feedback/details/811093/visual-studio-2013-rtm-c-x64-code-generation-bug-for-avx2-instructions
+		 * Ref:
+		 * https://connect.microsoft.com/VisualStudio/feedback/details/811093/v
+		 * isual-studio-2013-rtm-c-x64-code-generation-bug-for-avx2-instruction
+		 * s
 		 */
 		if (!IsWindows7SP1OrGreater())
 		{
 			_set_FMA3_enable(0);
 		}
-#endif /* defined(_M_AMD64) && _MSC_VER == 1800 */
+#endif   /* defined(_M_AMD64) && _MSC_VER == 1800 */
 
 	}
 #endif   /* WIN32 */

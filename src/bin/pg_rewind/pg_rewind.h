@@ -29,7 +29,7 @@ extern bool dry_run;
 
 /* Target history */
 extern TimeLineHistoryEntry *targetHistory;
-extern int targetNentries;
+extern int	targetNentries;
 
 /* in parsexlog.c */
 extern void extractPageMap(const char *datadir, XLogRecPtr startpoint,

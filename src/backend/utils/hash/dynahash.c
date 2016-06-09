@@ -130,7 +130,7 @@ typedef struct
 	slock_t		mutex;			/* spinlock */
 	long		nentries;		/* number of entries */
 	HASHELEMENT *freeList;		/* list of free elements */
-}	FreeListData;
+} FreeListData;
 
 /*
  * Header structure for a hash table --- contains all changeable info

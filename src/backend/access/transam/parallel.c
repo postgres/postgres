@@ -134,9 +134,9 @@ CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers)
 		nworkers = 0;
 
 	/*
-	 * If we are running under serializable isolation, we can't use
-	 * parallel workers, at least not until somebody enhances that mechanism
-	 * to be parallel-aware.
+	 * If we are running under serializable isolation, we can't use parallel
+	 * workers, at least not until somebody enhances that mechanism to be
+	 * parallel-aware.
 	 */
 	if (IsolationIsSerializable())
 		nworkers = 0;
@@ -646,9 +646,9 @@ DestroyParallelContext(ParallelContext *pcxt)
 	}
 
 	/*
-	 * We can't finish transaction commit or abort until all of the
-	 * workers have exited.  This means, in particular, that we can't respond
-	 * to interrupts at this stage.
+	 * We can't finish transaction commit or abort until all of the workers
+	 * have exited.  This means, in particular, that we can't respond to
+	 * interrupts at this stage.
 	 */
 	HOLD_INTERRUPTS();
 	WaitForParallelWorkersToExit(pcxt);
@@ -918,7 +918,7 @@ ParallelWorkerMain(Datum main_arg)
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			   errmsg("invalid magic number in dynamic shared memory segment")));
+		   errmsg("invalid magic number in dynamic shared memory segment")));
 
 	/* Look up fixed parallel state. */
 	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED);
@@ -958,9 +958,9 @@ ParallelWorkerMain(Datum main_arg)
 	 */
 
 	/*
-	 * Join locking group.  We must do this before anything that could try
-	 * to acquire a heavyweight lock, because any heavyweight locks acquired
-	 * to this point could block either directly against the parallel group
+	 * Join locking group.  We must do this before anything that could try to
+	 * acquire a heavyweight lock, because any heavyweight locks acquired to
+	 * this point could block either directly against the parallel group
 	 * leader or against some process which in turn waits for a lock that
 	 * conflicts with the parallel group leader, causing an undetected
 	 * deadlock.  (If we can't join the lock group, the leader has gone away,

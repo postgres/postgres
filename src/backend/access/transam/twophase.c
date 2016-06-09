@@ -140,13 +140,13 @@ typedef struct GlobalTransactionData
 	TimestampTz prepared_at;	/* time of preparation */
 
 	/*
-	 * Note that we need to keep track of two LSNs for each GXACT.
-	 * We keep track of the start LSN because this is the address we must
-	 * use to read state data back from WAL when committing a prepared GXACT.
-	 * We keep track of the end LSN because that is the LSN we need to wait
-	 * for prior to commit.
+	 * Note that we need to keep track of two LSNs for each GXACT. We keep
+	 * track of the start LSN because this is the address we must use to read
+	 * state data back from WAL when committing a prepared GXACT. We keep
+	 * track of the end LSN because that is the LSN we need to wait for prior
+	 * to commit.
 	 */
-	XLogRecPtr	prepare_start_lsn;	/* XLOG offset of prepare record start */
+	XLogRecPtr	prepare_start_lsn;		/* XLOG offset of prepare record start */
 	XLogRecPtr	prepare_end_lsn;	/* XLOG offset of prepare record end */
 
 	Oid			owner;			/* ID of user that executed the xact */
@@ -980,7 +980,7 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels);
 	hdr.ninvalmsgs = xactGetCommittedInvalidationMessages(&invalmsgs,
 														  &hdr.initfileinval);
-	hdr.gidlen = strlen(gxact->gid) + 1; /* Include '\0' */
+	hdr.gidlen = strlen(gxact->gid) + 1;		/* Include '\0' */
 
 	save_state_data(&hdr, sizeof(TwoPhaseFileHeader));
 	save_state_data(gxact->gid, hdr.gidlen);
@@ -1259,28 +1259,28 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory"),
-				 errdetail("Failed while allocating an XLog reading processor.")));
+		   errdetail("Failed while allocating an XLog reading processor.")));
 
 	record = XLogReadRecord(xlogreader, lsn, &errormsg);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read two-phase state from xlog at %X/%X",
-							(uint32) (lsn >> 32),
-							(uint32) lsn)));
+						(uint32) (lsn >> 32),
+						(uint32) lsn)));
 
 	if (XLogRecGetRmid(xlogreader) != RM_XACT_ID ||
 		(XLogRecGetInfo(xlogreader) & XLOG_XACT_OPMASK) != XLOG_XACT_PREPARE)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("expected two-phase state data is not present in xlog at %X/%X",
-							(uint32) (lsn >> 32),
-							(uint32) lsn)));
+						(uint32) (lsn >> 32),
+						(uint32) lsn)));
 
 	if (len != NULL)
 		*len = XLogRecGetDataLen(xlogreader);
 
-	*buf = palloc(sizeof(char)*XLogRecGetDataLen(xlogreader));
+	*buf = palloc(sizeof(char) * XLogRecGetDataLen(xlogreader));
 	memcpy(*buf, XLogRecGetData(xlogreader), sizeof(char) * XLogRecGetDataLen(xlogreader));
 
 	XLogReaderFree(xlogreader);
@@ -1347,10 +1347,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	xid = pgxact->xid;
 
 	/*
-	 * Read and validate 2PC state data.
-	 * State data will typically be stored in WAL files if the LSN is after the
-	 * last checkpoint record, or moved to disk if for some reason they have
-	 * lived for a long time.
+	 * Read and validate 2PC state data. State data will typically be stored
+	 * in WAL files if the LSN is after the last checkpoint record, or moved
+	 * to disk if for some reason they have lived for a long time.
 	 */
 	if (gxact->ondisk)
 		buf = ReadTwoPhaseFile(xid, true);
@@ -1605,22 +1604,20 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_START();
 
 	/*
-	 * We are expecting there to be zero GXACTs that need to be
-	 * copied to disk, so we perform all I/O while holding
-	 * TwoPhaseStateLock for simplicity. This prevents any new xacts
-	 * from preparing while this occurs, which shouldn't be a problem
-	 * since the presence of long-lived prepared xacts indicates the
-	 * transaction manager isn't active.
+	 * We are expecting there to be zero GXACTs that need to be copied to
+	 * disk, so we perform all I/O while holding TwoPhaseStateLock for
+	 * simplicity. This prevents any new xacts from preparing while this
+	 * occurs, which shouldn't be a problem since the presence of long-lived
+	 * prepared xacts indicates the transaction manager isn't active.
 	 *
-	 * It's also possible to move I/O out of the lock, but on
-	 * every error we should check whether somebody committed our
-	 * transaction in different backend. Let's leave this optimisation
-	 * for future, if somebody will spot that this place cause
-	 * bottleneck.
+	 * It's also possible to move I/O out of the lock, but on every error we
+	 * should check whether somebody committed our transaction in different
+	 * backend. Let's leave this optimisation for future, if somebody will
+	 * spot that this place cause bottleneck.
 	 *
-	 * Note that it isn't possible for there to be a GXACT with
-	 * a prepare_end_lsn set prior to the last checkpoint yet
-	 * is marked invalid, because of the efforts with delayChkpt.
+	 * Note that it isn't possible for there to be a GXACT with a
+	 * prepare_end_lsn set prior to the last checkpoint yet is marked invalid,
+	 * because of the efforts with delayChkpt.
 	 */
 	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
@@ -1633,7 +1630,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 			gxact->prepare_end_lsn <= redo_horizon)
 		{
 			char	   *buf;
-			int 		len;
+			int			len;
 
 			XlogReadTwoPhaseData(gxact->prepare_start_lsn, &buf, &len);
 			RecreateTwoPhaseFile(pgxact->xid, buf, len);
@@ -1920,7 +1917,7 @@ RecoverPreparedTransactions(void)
 			TwoPhaseFileHeader *hdr;
 			TransactionId *subxids;
 			GlobalTransaction gxact;
-			const char	*gid;
+			const char *gid;
 			int			i;
 
 			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);

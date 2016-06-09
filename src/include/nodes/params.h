@@ -72,7 +72,7 @@ typedef struct ParamListInfoData
 	ParserSetupHook parserSetup;	/* parser setup hook */
 	void	   *parserSetupArg;
 	int			numParams;		/* number of ParamExternDatas following */
-	struct Bitmapset *paramMask; /* if non-NULL, can ignore omitted params */
+	struct Bitmapset *paramMask;	/* if non-NULL, can ignore omitted params */
 	ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
 }	ParamListInfoData;
 

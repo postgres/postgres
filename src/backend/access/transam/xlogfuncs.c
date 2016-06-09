@@ -104,8 +104,8 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext;
 
 		/*
-		 * Label file and tablespace map file need to be long-lived, since they
-		 * are read in pg_stop_backup.
+		 * Label file and tablespace map file need to be long-lived, since
+		 * they are read in pg_stop_backup.
 		 */
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		label_file = makeStringInfo();
@@ -113,7 +113,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, label_file,
-										dir, NULL, tblspc_map_file, false, true);
+									dir, NULL, tblspc_map_file, false, true);
 		nonexclusive_backup_running = true;
 
 		before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
@@ -138,8 +138,8 @@ pg_start_backup(PG_FUNCTION_ARGS)
  * Note: different from CancelBackup which just cancels online backup mode.
  *
  * Note: this version is only called to stop an exclusive backup. The function
- *       pg_stop_backup_v2 (overloaded as pg_stop_backup in SQL) is called to
- *       stop non-exclusive backups.
+ *		 pg_stop_backup_v2 (overloaded as pg_stop_backup in SQL) is called to
+ *		 stop non-exclusive backups.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -156,10 +156,10 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				 errhint("Did you mean to use pg_stop_backup('f')?")));
 
 	/*
-	 * Exclusive backups were typically started in a different connection,
-	 * so don't try to verify that exclusive_backup_running is set in this one.
-	 * Actual verification that an exclusive backup is in fact running is handled
-	 * inside do_pg_stop_backup.
+	 * Exclusive backups were typically started in a different connection, so
+	 * don't try to verify that exclusive_backup_running is set in this one.
+	 * Actual verification that an exclusive backup is in fact running is
+	 * handled inside do_pg_stop_backup.
 	 */
 	stoppoint = do_pg_stop_backup(NULL, true, NULL);
 
@@ -182,16 +182,16 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup_v2(PG_FUNCTION_ARGS)
 {
-	ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc		tupdesc;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
-	MemoryContext	per_query_ctx;
-	MemoryContext	oldcontext;
-	Datum			values[3];
-	bool			nulls[3];
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	Datum		values[3];
+	bool		nulls[3];
 
-	bool			exclusive = PG_GETARG_BOOL(0);
-	XLogRecPtr		stoppoint;
+	bool		exclusive = PG_GETARG_BOOL(0);
+	XLogRecPtr	stoppoint;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -248,9 +248,8 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 					 errhint("Did you mean to use pg_stop_backup('t')?")));
 
 		/*
-		 * Stop the non-exclusive backup. Return a copy of the backup
-		 * label and tablespace map so they can be written to disk by
-		 * the caller.
+		 * Stop the non-exclusive backup. Return a copy of the backup label
+		 * and tablespace map so they can be written to disk by the caller.
 		 */
 		stoppoint = do_pg_stop_backup(label_file->data, true, NULL);
 		nonexclusive_backup_running = false;
@@ -269,7 +268,7 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 	}
 
 	/* Stoppoint is included on both exclusive and nonexclusive backups */
-	values[0]  = LSNGetDatum(stoppoint);
+	values[0] = LSNGetDatum(stoppoint);
 
 	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	tuplestore_donestoring(typstore);

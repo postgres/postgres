@@ -848,14 +848,15 @@ repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
 	if (typeInfo->shellType)
 	{
 		addObjectDependency(funcobj, typeInfo->shellType->dobj.dumpId);
+
 		/*
-		 * Mark shell type (always including the definition, as we need
-		 * the shell type defined to identify the function fully) as to be
-		 * dumped if any such function is
+		 * Mark shell type (always including the definition, as we need the
+		 * shell type defined to identify the function fully) as to be dumped
+		 * if any such function is
 		 */
 		if (funcobj->dump)
 			typeInfo->shellType->dobj.dump = funcobj->dump |
-											 DUMP_COMPONENT_DEFINITION;
+				DUMP_COMPONENT_DEFINITION;
 	}
 }
 

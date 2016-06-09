@@ -56,7 +56,7 @@ bool		dry_run = false;
 
 /* Target history */
 TimeLineHistoryEntry *targetHistory;
-int targetNentries;
+int			targetNentries;
 
 static void
 usage(const char *progname)
@@ -229,9 +229,9 @@ main(int argc, char **argv)
 			   targetHistory[lastcommontliIndex].tli);
 
 		/*
-		 * Check for the possibility that the target is in fact a direct ancestor
-		 * of the source. In that case, there is no divergent history in the
-		 * target that needs rewinding.
+		 * Check for the possibility that the target is in fact a direct
+		 * ancestor of the source. In that case, there is no divergent history
+		 * in the target that needs rewinding.
 		 */
 		if (ControlFile_target.checkPoint >= divergerec)
 		{
@@ -248,9 +248,9 @@ main(int argc, char **argv)
 
 			/*
 			 * If the histories diverged exactly at the end of the shutdown
-			 * checkpoint record on the target, there are no WAL records in the
-			 * target that don't belong in the source's history, and no rewind is
-			 * needed.
+			 * checkpoint record on the target, there are no WAL records in
+			 * the target that don't belong in the source's history, and no
+			 * rewind is needed.
 			 */
 			if (chkptendrec == divergerec)
 				rewind_needed = false;
@@ -430,14 +430,14 @@ MinXLogRecPtr(XLogRecPtr a, XLogRecPtr b)
 static TimeLineHistoryEntry *
 getTimelineHistory(ControlFileData *controlFile, int *nentries)
 {
-	TimeLineHistoryEntry   *history;
-	TimeLineID				tli;
+	TimeLineHistoryEntry *history;
+	TimeLineID	tli;
 
 	tli = controlFile->checkPointCopy.ThisTimeLineID;
 
 	/*
-	 * Timeline 1 does not have a history file, so there is no need to check and
-	 * fake an entry with infinite start and end positions.
+	 * Timeline 1 does not have a history file, so there is no need to check
+	 * and fake an entry with infinite start and end positions.
 	 */
 	if (tli == 1)
 	{
@@ -467,7 +467,7 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 
 	if (debug)
 	{
-		int		i;
+		int			i;
 
 		if (controlFile == &ControlFile_source)
 			pg_log(PG_DEBUG, "Source timeline history:\n");
@@ -511,7 +511,8 @@ findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex)
 {
 	TimeLineHistoryEntry *sourceHistory;
 	int			sourceNentries;
-	int			i, n;
+	int			i,
+				n;
 
 	/* Retrieve timelines for both source and target */
 	sourceHistory = getTimelineHistory(&ControlFile_source, &sourceNentries);
@@ -669,17 +670,17 @@ updateControlFile(ControlFileData *ControlFile)
 static void
 syncTargetDirectory(const char *argv0)
 {
-	int		ret;
+	int			ret;
 #define MAXCMDLEN (2 * MAXPGPATH)
-	char	exec_path[MAXPGPATH];
-	char	cmd[MAXCMDLEN];
+	char		exec_path[MAXPGPATH];
+	char		cmd[MAXCMDLEN];
 
 	/* locate initdb binary */
 	if ((ret = find_other_exec(argv0, "initdb",
 							   "initdb (PostgreSQL) " PG_VERSION "\n",
 							   exec_path)) < 0)
 	{
-		char        full_path[MAXPGPATH];
+		char		full_path[MAXPGPATH];
 
 		if (find_my_exec(argv0, full_path) < 0)
 			strlcpy(full_path, progname, sizeof(full_path));

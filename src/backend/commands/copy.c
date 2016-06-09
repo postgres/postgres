@@ -875,7 +875,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			if (is_from)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("COPY FROM not supported with row-level security"),
+				   errmsg("COPY FROM not supported with row-level security"),
 						 errhint("Use INSERT statements instead.")));
 
 			/* Build target list */
@@ -1399,16 +1399,16 @@ BeginCopy(bool is_from,
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("DO INSTEAD NOTHING rules are not supported for COPY")));
+			 errmsg("DO INSTEAD NOTHING rules are not supported for COPY")));
 		}
 		else if (list_length(rewritten) > 1)
 		{
-			ListCell *lc;
+			ListCell   *lc;
 
 			/* examine queries to determine which error message to issue */
 			foreach(lc, rewritten)
 			{
-				Query	  *q = (Query *) lfirst(lc);
+				Query	   *q = (Query *) lfirst(lc);
 
 				if (q->querySource == QSRC_QUAL_INSTEAD_RULE)
 					ereport(ERROR,
@@ -1417,7 +1417,7 @@ BeginCopy(bool is_from,
 				if (q->querySource == QSRC_NON_INSTEAD_RULE)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("DO ALSO rules are not supported for the COPY")));
+					errmsg("DO ALSO rules are not supported for the COPY")));
 			}
 
 			ereport(ERROR,
@@ -1448,8 +1448,8 @@ BeginCopy(bool is_from,
 				   query->commandType == CMD_DELETE);
 
 			ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("COPY query must have a RETURNING clause")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("COPY query must have a RETURNING clause")));
 		}
 
 		/* plan the query */

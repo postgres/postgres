@@ -722,7 +722,7 @@ extern int32 _bt_compare(Relation rel, int keysz, ScanKey scankey,
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
-							   Snapshot snapshot);
+				 Snapshot snapshot);
 
 /*
  * prototypes for functions in nbtutils.c

@@ -138,8 +138,8 @@ ExecGather(GatherState *node)
 	/*
 	 * Initialize the parallel context and workers on first execution. We do
 	 * this on first execution rather than during node initialization, as it
-	 * needs to allocate large dynamic segment, so it is better to do if it
-	 * is really needed.
+	 * needs to allocate large dynamic segment, so it is better to do if it is
+	 * really needed.
 	 */
 	if (!node->initialized)
 	{
@@ -147,8 +147,8 @@ ExecGather(GatherState *node)
 		Gather	   *gather = (Gather *) node->ps.plan;
 
 		/*
-		 * Sometimes we might have to run without parallelism; but if
-		 * parallel mode is active then we can try to fire up some workers.
+		 * Sometimes we might have to run without parallelism; but if parallel
+		 * mode is active then we can try to fire up some workers.
 		 */
 		if (gather->num_workers > 0 && IsInParallelMode())
 		{
@@ -186,7 +186,7 @@ ExecGather(GatherState *node)
 			}
 			else
 			{
-				/* No workers?  Then never mind. */
+				/* No workers?	Then never mind. */
 				ExecShutdownGatherWorkers(node);
 			}
 		}
@@ -314,7 +314,7 @@ gather_getnext(GatherState *gatherstate)
 static HeapTuple
 gather_readnext(GatherState *gatherstate)
 {
-	int		waitpos = gatherstate->nextreader;
+	int			waitpos = gatherstate->nextreader;
 
 	for (;;)
 	{
@@ -330,8 +330,8 @@ gather_readnext(GatherState *gatherstate)
 		tup = TupleQueueReaderNext(reader, true, &readerdone);
 
 		/*
-		 * If this reader is done, remove it.  If all readers are done,
-		 * clean up remaining worker state.
+		 * If this reader is done, remove it.  If all readers are done, clean
+		 * up remaining worker state.
 		 */
 		if (readerdone)
 		{
@@ -402,7 +402,7 @@ ExecShutdownGatherWorkers(GatherState *node)
 	/* Shut down tuple queue readers before shutting down workers. */
 	if (node->reader != NULL)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < node->nreaders; ++i)
 			DestroyTupleQueueReader(node->reader[i]);
@@ -452,10 +452,10 @@ void
 ExecReScanGather(GatherState *node)
 {
 	/*
-	 * Re-initialize the parallel workers to perform rescan of relation.
-	 * We want to gracefully shutdown all the workers so that they
-	 * should be able to propagate any error or other information to master
-	 * backend before dying.  Parallel context will be reused for rescan.
+	 * Re-initialize the parallel workers to perform rescan of relation. We
+	 * want to gracefully shutdown all the workers so that they should be able
+	 * to propagate any error or other information to master backend before
+	 * dying.  Parallel context will be reused for rescan.
 	 */
 	ExecShutdownGatherWorkers(node);
 

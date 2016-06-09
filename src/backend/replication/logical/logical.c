@@ -63,8 +63,8 @@ static void commit_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 static void change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 				  Relation relation, ReorderBufferChange *change);
 static void message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
-				  XLogRecPtr message_lsn, bool transactional,
-				  const char *prefix, Size message_size, const char *message);
+				   XLogRecPtr message_lsn, bool transactional,
+				 const char *prefix, Size message_size, const char *message);
 
 static void LoadOutputPlugin(OutputPluginCallbacks *callbacks, char *plugin);
 

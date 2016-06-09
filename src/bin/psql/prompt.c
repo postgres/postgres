@@ -166,7 +166,8 @@ get_prompt(promptStatus_t status)
 				case 'p':
 					if (pset.db)
 					{
-						int pid = PQbackendPID(pset.db);
+						int			pid = PQbackendPID(pset.db);
+
 						if (pid)
 							snprintf(buf, sizeof(buf), "%d", pid);
 					}

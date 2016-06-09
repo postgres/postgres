@@ -37,10 +37,10 @@
 ControlFileData *
 get_controlfile(char *DataDir, const char *progname)
 {
-	ControlFileData	   *ControlFile;
-	int					fd;
-	char				ControlFilePath[MAXPGPATH];
-	pg_crc32c			crc;
+	ControlFileData *ControlFile;
+	int			fd;
+	char		ControlFilePath[MAXPGPATH];
+	pg_crc32c	crc;
 
 	ControlFile = palloc(sizeof(ControlFileData));
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
@@ -49,8 +49,8 @@ get_controlfile(char *DataDir, const char *progname)
 #ifndef FRONTEND
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				errmsg("could not open file \"%s\" for reading: %m",
-					   ControlFilePath)));
+				 errmsg("could not open file \"%s\" for reading: %m",
+						ControlFilePath)));
 #else
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
@@ -63,7 +63,7 @@ get_controlfile(char *DataDir, const char *progname)
 #ifndef FRONTEND
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				errmsg("could not read file \"%s\": %m", ControlFilePath)));
+				 errmsg("could not read file \"%s\": %m", ControlFilePath)));
 #else
 	{
 		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
@@ -77,8 +77,8 @@ get_controlfile(char *DataDir, const char *progname)
 	/* Check the CRC. */
 	INIT_CRC32C(crc);
 	COMP_CRC32C(crc,
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
+				(char *) ControlFile,
+				offsetof(ControlFileData, crc));
 	FIN_CRC32C(crc);
 
 	if (!EQ_CRC32C(crc, ControlFile->crc))

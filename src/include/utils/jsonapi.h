@@ -108,7 +108,7 @@ extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
  * number of elements in passed array lex context. It should be called from an
  * array_start action.
  */
-extern int json_count_array_elements(JsonLexContext *lex);
+extern int	json_count_array_elements(JsonLexContext *lex);
 
 /*
  * constructors for JsonLexContext, with or without strval element.

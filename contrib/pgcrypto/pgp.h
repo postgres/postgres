@@ -124,7 +124,7 @@ struct PGP_S2K
 	uint8		mode;
 	uint8		digest_algo;
 	uint8		salt[8];
-	uint8		iter;		/* encoded (one-octet) count */
+	uint8		iter;			/* encoded (one-octet) count */
 	/* calculated: */
 	uint8		key[PGP_MAX_KEY];
 	uint8		key_len;

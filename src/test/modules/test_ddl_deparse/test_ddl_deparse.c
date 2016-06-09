@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
  * test_ddl_deparse.c
- * 		Support functions for the test_ddl_deparse module
+ *		Support functions for the test_ddl_deparse module
  *
  * Copyright (c) 2014-2016, PostgreSQL Global Development Group
  *

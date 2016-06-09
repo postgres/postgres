@@ -106,7 +106,7 @@ static void PlanCacheRelCallback(Datum arg, Oid relid);
 static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheUserMappingCallback(Datum arg, int cacheid,
-										 uint32 hashvalue);
+							 uint32 hashvalue);
 
 
 /*
@@ -610,10 +610,11 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 		plansource->is_valid = false;
 
 	/*
-	 * If we have a join pushed down to the foreign server and the current user
-	 * is different from the one for which the plan was created, invalidate the
-	 * generic plan since user mapping for the new user might make the join
-	 * unsafe to push down, or change which user mapping is used.
+	 * If we have a join pushed down to the foreign server and the current
+	 * user is different from the one for which the plan was created,
+	 * invalidate the generic plan since user mapping for the new user might
+	 * make the join unsafe to push down, or change which user mapping is
+	 * used.
 	 */
 	if (plansource->is_valid &&
 		plansource->gplan &&
@@ -901,7 +902,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	bool		spi_pushed;
 	MemoryContext plan_context;
 	MemoryContext oldcxt = CurrentMemoryContext;
-	ListCell	*lc;
+	ListCell   *lc;
 
 	/*
 	 * Normally the querytree should be valid already, but if it's not,
@@ -1016,7 +1017,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	plan->has_foreign_join = false;
 	foreach(lc, plist)
 	{
-		PlannedStmt	*plan_stmt = (PlannedStmt *) lfirst(lc);
+		PlannedStmt *plan_stmt = (PlannedStmt *) lfirst(lc);
 
 		if (IsA(plan_stmt, PlannedStmt))
 			plan->has_foreign_join =
@@ -1888,9 +1889,9 @@ PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue)
 
 /*
  * PlanCacheUserMappingCallback
- * 		Syscache inval callback function for user mapping cache invalidation.
+ *		Syscache inval callback function for user mapping cache invalidation.
  *
- * 	Invalidates plans which have pushed down foreign joins.
+ *	Invalidates plans which have pushed down foreign joins.
  */
 static void
 PlanCacheUserMappingCallback(Datum arg, int cacheid, uint32 hashvalue)
@@ -1911,9 +1912,9 @@ PlanCacheUserMappingCallback(Datum arg, int cacheid, uint32 hashvalue)
 
 		/*
 		 * If the plan has pushed down foreign joins, those join may become
-		 * unsafe to push down because of user mapping changes. Invalidate only
-		 * the generic plan, since changes to user mapping do not invalidate the
-		 * parse tree.
+		 * unsafe to push down because of user mapping changes. Invalidate
+		 * only the generic plan, since changes to user mapping do not
+		 * invalidate the parse tree.
 		 */
 		if (plansource->gplan && plansource->gplan->has_foreign_join)
 			plansource->gplan->is_valid = false;

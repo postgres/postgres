@@ -776,11 +776,11 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
 void
 apply_partialaggref_adjustment(PathTarget *target)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	foreach(lc, target->exprs)
 	{
-		Aggref *aggref = (Aggref *) lfirst(lc);
+		Aggref	   *aggref = (Aggref *) lfirst(lc);
 
 		if (IsA(aggref, Aggref))
 		{

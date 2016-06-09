@@ -392,15 +392,15 @@ btree_xlog_vacuum(XLogReaderState *record)
 	xl_btree_vacuum *xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
 
 	/*
-	 * This section of code is thought to be no longer needed, after
-	 * analysis of the calling paths. It is retained to allow the code
-	 * to be reinstated if a flaw is revealed in that thinking.
+	 * This section of code is thought to be no longer needed, after analysis
+	 * of the calling paths. It is retained to allow the code to be reinstated
+	 * if a flaw is revealed in that thinking.
 	 *
 	 * If we are running non-MVCC scans using this index we need to do some
 	 * additional work to ensure correctness, which is known as a "pin scan"
 	 * described in more detail in next paragraphs. We used to do the extra
-	 * work in all cases, whereas we now avoid that work in most cases.
-	 * If lastBlockVacuumed is set to InvalidBlockNumber then we skip the
+	 * work in all cases, whereas we now avoid that work in most cases. If
+	 * lastBlockVacuumed is set to InvalidBlockNumber then we skip the
 	 * additional work required for the pin scan.
 	 *
 	 * Avoiding this extra work is important since it requires us to touch

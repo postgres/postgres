@@ -3499,7 +3499,7 @@ planstate_tree_walker(PlanState *planstate,
 				return true;
 			break;
 		case T_CustomScan:
-			foreach (lc, ((CustomScanState *) planstate)->custom_ps)
+			foreach(lc, ((CustomScanState *) planstate)->custom_ps)
 			{
 				if (walker((PlanState *) lfirst(lc), context))
 					return true;

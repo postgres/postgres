@@ -5004,9 +5004,9 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
-								"recovery_target_action",
-								item->value),
+				errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
+					   "recovery_target_action",
+					   item->value),
 						 errhint("Valid values are \"pause\", \"promote\", and \"shutdown\".")));
 
 			ereport(DEBUG2,
@@ -5087,9 +5087,9 @@ readRecoveryCommandFile(void)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
-								"recovery_target",
-								item->value),
+				errmsg("invalid value for recovery parameter \"%s\": \"%s\"",
+					   "recovery_target",
+					   item->value),
 					   errhint("The only allowed value is \"immediate\".")));
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target = '%s'",
@@ -5880,8 +5880,8 @@ CheckRequiredParameterValues(void)
 	}
 
 	/*
-	 * For Hot Standby, the WAL must be generated with 'replica' mode, and
-	 * we must have at least as many backend slots as the primary.
+	 * For Hot Standby, the WAL must be generated with 'replica' mode, and we
+	 * must have at least as many backend slots as the primary.
 	 */
 	if (ArchiveRecoveryRequested && EnableHotStandby)
 	{
@@ -6163,26 +6163,26 @@ StartupXLOG(void)
 		 * is no use of such file.  There is no harm in retaining it, but it
 		 * is better to get rid of the map file so that we don't have any
 		 * redundant file in data directory and it will avoid any sort of
-		 * confusion.  It seems prudent though to just rename the file out
-		 * of the way rather than delete it completely, also we ignore any
-		 * error that occurs in rename operation as even if map file is
-		 * present without backup_label file, it is harmless.
+		 * confusion.  It seems prudent though to just rename the file out of
+		 * the way rather than delete it completely, also we ignore any error
+		 * that occurs in rename operation as even if map file is present
+		 * without backup_label file, it is harmless.
 		 */
 		if (stat(TABLESPACE_MAP, &st) == 0)
 		{
 			unlink(TABLESPACE_MAP_OLD);
 			if (durable_rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD, DEBUG1) == 0)
 				ereport(LOG,
-					(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
-							TABLESPACE_MAP, BACKUP_LABEL_FILE),
-					 errdetail("File \"%s\" was renamed to \"%s\".",
-							   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+				(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
+						TABLESPACE_MAP, BACKUP_LABEL_FILE),
+				 errdetail("File \"%s\" was renamed to \"%s\".",
+						   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 			else
 				ereport(LOG,
-						(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
-								TABLESPACE_MAP, BACKUP_LABEL_FILE),
-						 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
-								   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
+				(errmsg("ignoring file \"%s\" because no file \"%s\" exists",
+						TABLESPACE_MAP, BACKUP_LABEL_FILE),
+				 errdetail("Could not rename file \"%s\" to \"%s\": %m.",
+						   TABLESPACE_MAP, TABLESPACE_MAP_OLD)));
 		}
 
 		/*
@@ -6314,24 +6314,24 @@ StartupXLOG(void)
 	ereport(DEBUG1,
 			(errmsg_internal("redo record is at %X/%X; shutdown %s",
 				  (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
-					wasShutdown ? "TRUE" : "FALSE")));
+							 wasShutdown ? "TRUE" : "FALSE")));
 	ereport(DEBUG1,
 			(errmsg_internal("next transaction ID: %u:%u; next OID: %u",
-					checkPoint.nextXidEpoch, checkPoint.nextXid,
-					checkPoint.nextOid)));
+							 checkPoint.nextXidEpoch, checkPoint.nextXid,
+							 checkPoint.nextOid)));
 	ereport(DEBUG1,
 			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
-					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
+						 checkPoint.nextMulti, checkPoint.nextMultiOffset)));
 	ereport(DEBUG1,
-			(errmsg_internal("oldest unfrozen transaction ID: %u, in database %u",
-					checkPoint.oldestXid, checkPoint.oldestXidDB)));
+	   (errmsg_internal("oldest unfrozen transaction ID: %u, in database %u",
+						checkPoint.oldestXid, checkPoint.oldestXidDB)));
 	ereport(DEBUG1,
 			(errmsg_internal("oldest MultiXactId: %u, in database %u",
-					checkPoint.oldestMulti, checkPoint.oldestMultiDB)));
+						 checkPoint.oldestMulti, checkPoint.oldestMultiDB)));
 	ereport(DEBUG1,
 			(errmsg_internal("commit timestamp Xid oldest/newest: %u/%u",
-					checkPoint.oldestCommitTsXid,
-					checkPoint.newestCommitTsXid)));
+							 checkPoint.oldestCommitTsXid,
+							 checkPoint.newestCommitTsXid)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
@@ -6883,8 +6883,8 @@ StartupXLOG(void)
 				SpinLockRelease(&XLogCtl->info_lck);
 
 				/*
-				 * If rm_redo called XLogRequestWalReceiverReply, then we
-				 * wake up the receiver so that it notices the updated
+				 * If rm_redo called XLogRequestWalReceiverReply, then we wake
+				 * up the receiver so that it notices the updated
 				 * lastReplayedEndRecPtr and sends a reply to the master.
 				 */
 				if (doRequestWalReceiverReply)

@@ -65,9 +65,9 @@ static void pg_decode_change(LogicalDecodingContext *ctx,
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
 				 RepOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,
-							  ReorderBufferTXN *txn, XLogRecPtr message_lsn,
-							  bool transactional, const char *prefix,
-							  Size sz, const char *message);
+				  ReorderBufferTXN *txn, XLogRecPtr message_lsn,
+				  bool transactional, const char *prefix,
+				  Size sz, const char *message);
 
 void
 _PG_init(void)

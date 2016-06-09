@@ -192,6 +192,7 @@ PerformAuthentication(Port *port)
 	 * FIXME: [fork/exec] Ugh.  Is there a way around this overhead?
 	 */
 #ifdef EXEC_BACKEND
+
 	/*
 	 * load_hba() and load_ident() want to work within the PostmasterContext,
 	 * so create that if it doesn't exist (which it won't).  We'll delete it
@@ -870,9 +871,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		/*
 		 * If this is a background worker not bound to any particular
-		 * database, we're done now.  Everything that follows only makes
-		 * sense if we are bound to a specific database.  We do need to
-		 * close the transaction we started before returning.
+		 * database, we're done now.  Everything that follows only makes sense
+		 * if we are bound to a specific database.  We do need to close the
+		 * transaction we started before returning.
 		 */
 		if (!bootstrap)
 			CommitTransactionCommand();

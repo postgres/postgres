@@ -230,11 +230,11 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	ReplicationSlotValidateName(name, ERROR);
 
 	/*
-	 * If some other backend ran this code concurrently with us, we'd likely both
-	 * allocate the same slot, and that would be bad.  We'd also be at risk of
-	 * missing a name collision.  Also, we don't want to try to create a new
-	 * slot while somebody's busy cleaning up an old one, because we might
-	 * both be monkeying with the same directory.
+	 * If some other backend ran this code concurrently with us, we'd likely
+	 * both allocate the same slot, and that would be bad.  We'd also be at
+	 * risk of missing a name collision.  Also, we don't want to try to create
+	 * a new slot while somebody's busy cleaning up an old one, because we
+	 * might both be monkeying with the same directory.
 	 */
 	LWLockAcquire(ReplicationSlotAllocationLock, LW_EXCLUSIVE);
 
@@ -352,8 +352,8 @@ ReplicationSlotAcquire(const char *name)
 	if (active_pid != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-			   errmsg("replication slot \"%s\" is active for PID %d",
-					  name, active_pid)));
+				 errmsg("replication slot \"%s\" is active for PID %d",
+						name, active_pid)));
 
 	/* We made this slot active, so it's ours now. */
 	MyReplicationSlot = slot;
@@ -533,6 +533,7 @@ void
 ReplicationSlotMarkDirty(void)
 {
 	ReplicationSlot *slot = MyReplicationSlot;
+
 	Assert(MyReplicationSlot != NULL);
 
 	SpinLockAcquire(&slot->mutex);

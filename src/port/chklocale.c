@@ -239,8 +239,8 @@ win32_langinfo(const char *ctype)
 	MultiByteToWideChar(CP_ACP, 0, ctype, -1, wctype, LOCALE_NAME_MAX_LENGTH);
 
 	if (GetLocaleInfoEx(wctype,
-			LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-			(LPWSTR) &cp, sizeof(cp) / sizeof(WCHAR)) > 0)
+						LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+						(LPWSTR) &cp, sizeof(cp) / sizeof(WCHAR)) > 0)
 	{
 		r = malloc(16);			/* excess */
 		if (r != NULL)
@@ -249,7 +249,6 @@ win32_langinfo(const char *ctype)
 	else
 #endif
 	{
-
 		/*
 		 * Locale format on Win32 is <Language>_<Country>.<CodePage> . For
 		 * example, English_United States.1252.

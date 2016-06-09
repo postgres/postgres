@@ -49,7 +49,7 @@ typedef struct
 #define MAXSTRLEN ( (1<<11) - 1)
 #define MAXSTRPOS ( (1<<20) - 1)
 
-extern int compareWordEntryPos(const void *a, const void *b);
+extern int	compareWordEntryPos(const void *a, const void *b);
 
 /*
  * Equivalent to
@@ -230,16 +230,15 @@ typedef struct
 
 extern const int tsearch_op_priority[OP_COUNT];
 
-#define NOT_PHRASE_P	5	/*
-							 * OP_PHRASE negation operations must have greater
-							 * priority in order to force infix() to surround
-							 * the whole OP_PHRASE expression with parentheses.
-							 */
+#define NOT_PHRASE_P	5		/* OP_PHRASE negation operations must have
+								 * greater priority in order to force infix()
+								 * to surround the whole OP_PHRASE expression
+								 * with parentheses. */
 
-#define TOP_PRIORITY	6	/* highest priority for val nodes */
+#define TOP_PRIORITY	6		/* highest priority for val nodes */
 
 /* get operation priority  by its code*/
-#define	OP_PRIORITY(x)	( tsearch_op_priority[(x) - 1] )
+#define OP_PRIORITY(x)	( tsearch_op_priority[(x) - 1] )
 /* get QueryOperator priority */
 #define QO_PRIORITY(x)	OP_PRIORITY(((QueryOperator *) (x))->oper)
 /* special case: get QueryOperator priority for correct printing !(a <-> b>) */

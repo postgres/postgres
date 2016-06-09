@@ -244,7 +244,7 @@ struct JsonbValue
 	union
 	{
 		Numeric numeric;
-		bool boolean;
+		bool		boolean;
 		struct
 		{
 			int			len;

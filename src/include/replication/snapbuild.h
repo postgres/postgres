@@ -64,7 +64,7 @@ extern void SnapBuildClearExportedSnapshot(void);
 
 extern SnapBuildState SnapBuildCurrentState(SnapBuild *snapstate);
 extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder,
-											TransactionId xid);
+							TransactionId xid);
 
 extern bool SnapBuildXactNeedsSkip(SnapBuild *snapstate, XLogRecPtr ptr);
 

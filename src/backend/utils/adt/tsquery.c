@@ -24,12 +24,12 @@
 #include "utils/pg_crc.h"
 
 /* FTS operator priorities, see ts_type.h */
-const int tsearch_op_priority[OP_COUNT] =
+const int	tsearch_op_priority[OP_COUNT] =
 {
-	3,	/* OP_NOT */
-	2,	/* OP_AND */
-	1,	/* OP_OR */
-	4	/* OP_PHRASE */
+	3,							/* OP_NOT */
+	2,							/* OP_AND */
+	1,							/* OP_OR */
+	4							/* OP_PHRASE */
 };
 
 struct TSQueryParserStateData
@@ -128,15 +128,15 @@ parse_phrase_operator(char *buf, int16 *distance)
 		PHRASE_CLOSE,
 		PHRASE_ERR,
 		PHRASE_FINISH
-	}		state = PHRASE_OPEN;
+	}			state = PHRASE_OPEN;
 
-	char   *ptr = buf;
-	char   *endptr;
-	long	l = 1;
+	char	   *ptr = buf;
+	char	   *endptr;
+	long		l = 1;
 
 	while (*ptr)
 	{
-		switch(state)
+		switch (state)
 		{
 			case PHRASE_OPEN:
 				Assert(t_iseq(ptr, '<'));
@@ -192,7 +192,7 @@ parse_phrase_operator(char *buf, int16 *distance)
 		}
 	}
 
-	err:
+err:
 	*distance = -1;
 	return buf;
 }
@@ -440,18 +440,18 @@ makepol(TSQueryParserState state,
 		PushFunction pushval,
 		Datum opaque)
 {
-	int8			operator = 0;
-	ts_tokentype	type;
-	int				lenval = 0;
-	char		   *strval = NULL;
+	int8		operator = 0;
+	ts_tokentype type;
+	int			lenval = 0;
+	char	   *strval = NULL;
 	struct
 	{
-		int8	op;
-		int16	distance;
-	}				opstack[STACKDEPTH];
-	int				lenstack = 0;
-	int16			weight = 0;
-	bool			prefix;
+		int8		op;
+		int16		distance;
+	}			opstack[STACKDEPTH];
+	int			lenstack = 0;
+	int16		weight = 0;
+	bool		prefix;
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
@@ -538,7 +538,7 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes, bool *needcleanup)
 	}
 	else if (ptr[*pos].type == QI_VALSTOP)
 	{
-		*needcleanup = true; /* we'll have to remove stop words */
+		*needcleanup = true;	/* we'll have to remove stop words */
 		(*pos)++;
 	}
 	else
@@ -547,7 +547,7 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes, bool *needcleanup)
 
 		if (ptr[*pos].qoperator.oper == OP_NOT)
 		{
-			ptr[*pos].qoperator.left = 1; /* fixed offset */
+			ptr[*pos].qoperator.left = 1;		/* fixed offset */
 			(*pos)++;
 
 			/* process the only argument */
@@ -555,15 +555,15 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes, bool *needcleanup)
 		}
 		else
 		{
-			QueryOperator  *curitem = &ptr[*pos].qoperator;
-			int				tmp = *pos; /* save current position */
+			QueryOperator *curitem = &ptr[*pos].qoperator;
+			int			tmp = *pos;		/* save current position */
 
 			Assert(curitem->oper == OP_AND ||
 				   curitem->oper == OP_OR ||
 				   curitem->oper == OP_PHRASE);
 
 			if (curitem->oper == OP_PHRASE)
-				*needcleanup = true; /* push OP_PHRASE down later */
+				*needcleanup = true;	/* push OP_PHRASE down later */
 
 			(*pos)++;
 
@@ -669,7 +669,7 @@ parse_tsquery(char *buf,
 	i = 0;
 	foreach(cell, state.polstr)
 	{
-		QueryItem *item = (QueryItem *) lfirst(cell);
+		QueryItem  *item = (QueryItem *) lfirst(cell);
 
 		switch (item->type)
 		{
@@ -696,8 +696,8 @@ parse_tsquery(char *buf,
 	findoprnd(ptr, query->size, &needcleanup);
 
 	/*
-	 * QI_VALSTOP nodes should be cleaned and
-	 * and OP_PHRASE should be pushed down
+	 * QI_VALSTOP nodes should be cleaned and and OP_PHRASE should be pushed
+	 * down
 	 */
 	if (needcleanup)
 		return cleanup_fakeval_and_phrase(query);
@@ -819,7 +819,7 @@ infix(INFIX *in, int parentPriority)
 	}
 	else if (in->curpol->qoperator.oper == OP_NOT)
 	{
-		int		priority = PRINT_PRIORITY(in->curpol);
+		int			priority = PRINT_PRIORITY(in->curpol);
 
 		if (priority < parentPriority)
 		{
@@ -852,8 +852,9 @@ infix(INFIX *in, int parentPriority)
 		in->curpol++;
 		if (priority < parentPriority ||
 			(op == OP_PHRASE &&
-				(priority == parentPriority || /* phrases are not commutative! */
-					parentPriority == OP_PRIORITY(OP_AND))))
+			 (priority == parentPriority ||		/* phrases are not
+												 * commutative! */
+			  parentPriority == OP_PRIORITY(OP_AND))))
 		{
 			needParenthesis = true;
 			RESIZEBUF(in, 2);
@@ -874,7 +875,7 @@ infix(INFIX *in, int parentPriority)
 		infix(in, priority);
 
 		/* print operator & right operand */
-		RESIZEBUF(in, 3 + (2 + 10 /* distance */) + (nrm.cur - nrm.buf));
+		RESIZEBUF(in, 3 + (2 + 10 /* distance */ ) + (nrm.cur - nrm.buf));
 		switch (op)
 		{
 			case OP_OR:
@@ -923,7 +924,7 @@ tsqueryout(PG_FUNCTION_ARGS)
 	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
 	*(nrm.cur) = '\0';
 	nrm.op = GETOPERAND(query);
-	infix(&nrm, -1 /* lowest priority */);
+	infix(&nrm, -1 /* lowest priority */ );
 
 	PG_FREE_IF_COPY(query, 0);
 	PG_RETURN_CSTRING(nrm.buf);
@@ -989,16 +990,16 @@ tsquerysend(PG_FUNCTION_ARGS)
 Datum
 tsqueryrecv(PG_FUNCTION_ARGS)
 {
-	StringInfo		buf = (StringInfo) PG_GETARG_POINTER(0);
-	TSQuery			query;
-	int				i,
-					len;
-	QueryItem	   *item;
-	int				datalen;
-	char		   *ptr;
-	uint32			size;
-	const char	  **operands;
-	bool			needcleanup;
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	TSQuery		query;
+	int			i,
+				len;
+	QueryItem  *item;
+	int			datalen;
+	char	   *ptr;
+	uint32		size;
+	const char **operands;
+	bool		needcleanup;
 
 	size = pq_getmsgint(buf, sizeof(uint32));
 	if (size > (MaxAllocSize / sizeof(QueryItem)))

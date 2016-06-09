@@ -4063,19 +4063,20 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 
 	/*
 	 * Pull the other remote conditions from the joining relations into join
-	 * clauses or other remote clauses (remote_conds) of this relation wherever
-	 * possible. This avoids building subqueries at every join step, which is
-	 * not currently supported by the deparser logic.
+	 * clauses or other remote clauses (remote_conds) of this relation
+	 * wherever possible. This avoids building subqueries at every join step,
+	 * which is not currently supported by the deparser logic.
 	 *
 	 * For an inner join, clauses from both the relations are added to the
-	 * other remote clauses. For LEFT and RIGHT OUTER join, the clauses from the
-	 * outer side are added to remote_conds since those can be evaluated after
-	 * the join is evaluated. The clauses from inner side are added to the
-	 * joinclauses, since they need to evaluated while constructing the join.
+	 * other remote clauses. For LEFT and RIGHT OUTER join, the clauses from
+	 * the outer side are added to remote_conds since those can be evaluated
+	 * after the join is evaluated. The clauses from inner side are added to
+	 * the joinclauses, since they need to evaluated while constructing the
+	 * join.
 	 *
-	 * For a FULL OUTER JOIN, the other clauses from either relation can not be
-	 * added to the joinclauses or remote_conds, since each relation acts as an
-	 * outer relation for the other. Consider such full outer join as
+	 * For a FULL OUTER JOIN, the other clauses from either relation can not
+	 * be added to the joinclauses or remote_conds, since each relation acts
+	 * as an outer relation for the other. Consider such full outer join as
 	 * unshippable because of the reasons mentioned above in this comment.
 	 *
 	 * The joining sides can not have local conditions, thus no need to test

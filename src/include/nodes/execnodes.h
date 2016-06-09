@@ -1031,7 +1031,7 @@ typedef struct PlanState
 								 * top-level plan */
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
-	WorkerInstrumentation *worker_instrument; /* per-worker instrumentation */
+	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
 
 	/*
 	 * Common structural data for all Plan types.  These links to subsidiary
@@ -1586,7 +1586,7 @@ typedef struct WorkTableScanState
 typedef struct ForeignScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *fdw_recheck_quals;	/* original quals not in ss.ps.qual */
+	List	   *fdw_recheck_quals;		/* original quals not in ss.ps.qual */
 	Size		pscan_len;		/* size of parallel coordination information */
 	/* use struct pointer to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
@@ -1831,7 +1831,7 @@ typedef struct AggState
 	AggStatePerTrans pertrans;	/* per-Trans state information */
 	ExprContext **aggcontexts;	/* econtexts for long-lived data (per GS) */
 	ExprContext *tmpcontext;	/* econtext for input expressions */
-	AggStatePerTrans curpertrans;	/* currently active trans state */
+	AggStatePerTrans curpertrans;		/* currently active trans state */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
 	bool		combineStates;	/* input tuples contain transition states */

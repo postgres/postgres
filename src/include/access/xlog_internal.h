@@ -138,7 +138,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define MAXFNAMELEN		64
 
 /* Length of XLog file name */
-#define XLOG_FNAME_LEN     24
+#define XLOG_FNAME_LEN	   24
 
 #define XLogFileName(fname, tli, logSegNo)	\
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,		\

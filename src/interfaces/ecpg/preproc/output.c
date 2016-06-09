@@ -197,9 +197,9 @@ output_escaped_str(char *str, bool quoted)
 	int			i = 0;
 	int			len = strlen(str);
 
-	if (quoted && str[0] == '"' && str[len - 1] == '"')		/* do not escape quotes
-																 * at beginning and end
-																 * if quoted string */
+	if (quoted && str[0] == '"' && str[len - 1] == '"') /* do not escape quotes
+														 * at beginning and end
+														 * if quoted string */
 	{
 		i = 1;
 		len--;

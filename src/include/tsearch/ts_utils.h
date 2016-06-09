@@ -106,9 +106,9 @@ extern text *generateHeadline(HeadlineParsedText *prs);
  */
 typedef struct ExecPhraseData
 {
-	int				npos;
-	bool			allocated;
-	WordEntryPos   *pos;
+	int			npos;
+	bool		allocated;
+	WordEntryPos *pos;
 } ExecPhraseData;
 
 extern bool TS_execute(QueryItem *curitem, void *checkval, bool calcnot,

@@ -27,7 +27,7 @@ typedef struct ReorderBufferTupleBuf
 	HeapTupleData tuple;
 
 	/* pre-allocated size of tuple buffer, different from tuple size */
-	Size	alloc_tuple_size;
+	Size		alloc_tuple_size;
 
 	/* actual tuple data follows */
 } ReorderBufferTupleBuf;
@@ -102,10 +102,10 @@ typedef struct ReorderBufferChange
 		/* Message with arbitrary data. */
 		struct
 		{
-			char   *prefix;
-			Size	message_size;
-			char   *message;
-		} msg;
+			char	   *prefix;
+			Size		message_size;
+			char	   *message;
+		}			msg;
 
 		/* New snapshot, set when action == *_INTERNAL_SNAPSHOT */
 		Snapshot	snapshot;
@@ -285,12 +285,12 @@ typedef void (*ReorderBufferCommitCB) (
 
 /* message callback signature */
 typedef void (*ReorderBufferMessageCB) (
-												   ReorderBuffer *rb,
-												   ReorderBufferTXN *txn,
-												   XLogRecPtr message_lsn,
-												   bool transactional,
-												   const char *prefix, Size sz,
-												   const char *message);
+													ReorderBuffer *rb,
+													ReorderBufferTXN *txn,
+													XLogRecPtr message_lsn,
+													bool transactional,
+												 const char *prefix, Size sz,
+													const char *message);
 
 struct ReorderBuffer
 {
@@ -369,9 +369,9 @@ ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *);
 void		ReorderBufferReturnChange(ReorderBuffer *, ReorderBufferChange *);
 
 void		ReorderBufferQueueChange(ReorderBuffer *, TransactionId, XLogRecPtr lsn, ReorderBufferChange *);
-void		ReorderBufferQueueMessage(ReorderBuffer *, TransactionId, Snapshot snapshot, XLogRecPtr lsn,
-									  bool transactional, const char *prefix,
-									  Size message_size, const char *message);
+void ReorderBufferQueueMessage(ReorderBuffer *, TransactionId, Snapshot snapshot, XLogRecPtr lsn,
+						  bool transactional, const char *prefix,
+						  Size message_size, const char *message);
 void ReorderBufferCommit(ReorderBuffer *, TransactionId,
 					XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
 	  TimestampTz commit_time, RepOriginId origin_id, XLogRecPtr origin_lsn);
@@ -392,7 +392,7 @@ void ReorderBufferAddNewTupleCids(ReorderBuffer *, TransactionId, XLogRecPtr lsn
 void ReorderBufferAddInvalidations(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
 							  Size nmsgs, SharedInvalidationMessage *msgs);
 void ReorderBufferImmediateInvalidation(ReorderBuffer *, uint32 ninvalidations,
-										SharedInvalidationMessage *invalidations);
+								   SharedInvalidationMessage *invalidations);
 void		ReorderBufferProcessXid(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
 void		ReorderBufferXidSetCatalogChanges(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
 bool		ReorderBufferXidHasCatalogChanges(ReorderBuffer *, TransactionId xid);

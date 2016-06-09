@@ -143,9 +143,9 @@ mq_putmessage(char msgtype, const char *s, size_t len)
 
 	/*
 	 * If the message queue is already gone, just ignore the message. This
-	 * doesn't necessarily indicate a problem; for example, DEBUG messages
-	 * can be generated late in the shutdown sequence, after all DSMs have
-	 * already been detached.
+	 * doesn't necessarily indicate a problem; for example, DEBUG messages can
+	 * be generated late in the shutdown sequence, after all DSMs have already
+	 * been detached.
 	 */
 	if (pq_mq == NULL)
 		return 0;

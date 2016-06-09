@@ -79,8 +79,8 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 		return;
 
 	/*
-	 * Pretend that pg_xlog is a directory, even if it's really a symlink.
-	 * We don't want to mess with the symlink itself, nor complain if it's a
+	 * Pretend that pg_xlog is a directory, even if it's really a symlink. We
+	 * don't want to mess with the symlink itself, nor complain if it's a
 	 * symlink in source but not in target or vice versa.
 	 */
 	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)

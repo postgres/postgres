@@ -29,11 +29,11 @@
 Datum
 pg_control_system(PG_FUNCTION_ARGS)
 {
-	Datum				values[4];
-	bool				nulls[4];
-	TupleDesc			tupdesc;
-	HeapTuple			htup;
-	ControlFileData	   *ControlFile;
+	Datum		values[4];
+	bool		nulls[4];
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+	ControlFileData *ControlFile;
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
@@ -73,13 +73,13 @@ pg_control_system(PG_FUNCTION_ARGS)
 Datum
 pg_control_checkpoint(PG_FUNCTION_ARGS)
 {
-	Datum				values[19];
-	bool				nulls[19];
-	TupleDesc			tupdesc;
-	HeapTuple			htup;
-	ControlFileData	   *ControlFile;
-	XLogSegNo			segno;
-	char				xlogfilename[MAXFNAMELEN];
+	Datum		values[19];
+	bool		nulls[19];
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+	ControlFileData *ControlFile;
+	XLogSegNo	segno;
+	char		xlogfilename[MAXFNAMELEN];
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
@@ -159,8 +159,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	nulls[6] = false;
 
 	values[7] = CStringGetTextDatum(psprintf("%u:%u",
-								ControlFile->checkPointCopy.nextXidEpoch,
-								ControlFile->checkPointCopy.nextXid));
+									ControlFile->checkPointCopy.nextXidEpoch,
+									   ControlFile->checkPointCopy.nextXid));
 	nulls[7] = false;
 
 	values[8] = ObjectIdGetDatum(ControlFile->checkPointCopy.nextOid);
@@ -205,11 +205,11 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 Datum
 pg_control_recovery(PG_FUNCTION_ARGS)
 {
-	Datum				values[5];
-	bool				nulls[5];
-	TupleDesc			tupdesc;
-	HeapTuple			htup;
-	ControlFileData	   *ControlFile;
+	Datum		values[5];
+	bool		nulls[5];
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+	ControlFileData *ControlFile;
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
@@ -254,11 +254,11 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 Datum
 pg_control_init(PG_FUNCTION_ARGS)
 {
-	Datum				values[13];
-	bool				nulls[13];
-	TupleDesc			tupdesc;
-	HeapTuple			htup;
-	ControlFileData	   *ControlFile;
+	Datum		values[13];
+	bool		nulls[13];
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+	ControlFileData *ControlFile;
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this

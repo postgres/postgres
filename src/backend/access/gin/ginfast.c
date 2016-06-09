@@ -524,7 +524,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 		int64		nDeletedHeapTuples = 0;
 		ginxlogDeleteListPages data;
 		Buffer		buffers[GIN_NDELETE_AT_ONCE];
-		BlockNumber	freespace[GIN_NDELETE_AT_ONCE];
+		BlockNumber freespace[GIN_NDELETE_AT_ONCE];
 
 		data.ndeleted = 0;
 		while (data.ndeleted < GIN_NDELETE_AT_ONCE && blknoToDelete != newHead)
@@ -745,30 +745,29 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 	bool		inVacuum = (stats == NULL);
 
 	/*
-	 * We would like to prevent concurrent cleanup process. For
-	 * that we will lock metapage in exclusive mode using LockPage()
-	 * call. Nobody other will use that lock for metapage, so
-	 * we keep possibility of concurrent insertion into pending list
+	 * We would like to prevent concurrent cleanup process. For that we will
+	 * lock metapage in exclusive mode using LockPage() call. Nobody other
+	 * will use that lock for metapage, so we keep possibility of concurrent
+	 * insertion into pending list
 	 */
 
 	if (inVacuum)
 	{
 		/*
-		 * We are called from [auto]vacuum/analyze or
-		 * gin_clean_pending_list() and we would like to wait
-		 * concurrent cleanup to finish.
+		 * We are called from [auto]vacuum/analyze or gin_clean_pending_list()
+		 * and we would like to wait concurrent cleanup to finish.
 		 */
 		LockPage(index, GIN_METAPAGE_BLKNO, ExclusiveLock);
 		workMemory =
 			(IsAutoVacuumWorkerProcess() && autovacuum_work_mem != -1) ?
-				autovacuum_work_mem : maintenance_work_mem;
+			autovacuum_work_mem : maintenance_work_mem;
 	}
 	else
 	{
 		/*
-		 * We are called from regular insert and if we see
-		 * concurrent cleanup just exit in hope that concurrent
-		 * process will clean up pending list.
+		 * We are called from regular insert and if we see concurrent cleanup
+		 * just exit in hope that concurrent process will clean up pending
+		 * list.
 		 */
 		if (!ConditionalLockPage(index, GIN_METAPAGE_BLKNO, ExclusiveLock))
 			return;
@@ -829,9 +828,10 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 		Assert(!GinPageIsDeleted(page));
 
 		/*
-		 * Are we walk through the page which as we remember was a tail when we
-		 * start our cleanup?  But if caller asks us to clean up whole pending
-		 * list then ignore old tail, we will work until list becomes empty.
+		 * Are we walk through the page which as we remember was a tail when
+		 * we start our cleanup?  But if caller asks us to clean up whole
+		 * pending list then ignore old tail, we will work until list becomes
+		 * empty.
 		 */
 		if (blkno == blknoFinish && full_clean == false)
 			cleanupFinish = true;
@@ -917,8 +917,8 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 												 * locking */
 
 			/*
-			 * remove read pages from pending list, at this point all
-			 * content of read pages is in regular structure
+			 * remove read pages from pending list, at this point all content
+			 * of read pages is in regular structure
 			 */
 			shiftList(index, metabuffer, blkno, fill_fsm, stats);
 
@@ -961,9 +961,9 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 	ReleaseBuffer(metabuffer);
 
 	/*
-	 * As pending list pages can have a high churn rate, it is
-	 * desirable to recycle them immediately to the FreeSpace Map when
-	 * ordinary backends clean the list.
+	 * As pending list pages can have a high churn rate, it is desirable to
+	 * recycle them immediately to the FreeSpace Map when ordinary backends
+	 * clean the list.
 	 */
 	if (fsm_vac && fill_fsm)
 		IndexFreeSpaceMapVacuum(index);
@@ -989,7 +989,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-				 errhint("GIN pending list cannot be cleaned up during recovery.")));
+		 errhint("GIN pending list cannot be cleaned up during recovery.")));
 
 	/* Must be a GIN index */
 	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||

@@ -57,13 +57,13 @@ static PyMethodDef PLy_methods[] = {
 	/*
 	 * logging methods
 	 */
-	{"debug", (PyCFunction) PLy_debug, METH_VARARGS|METH_KEYWORDS, NULL},
-	{"log", (PyCFunction) PLy_log, METH_VARARGS|METH_KEYWORDS, NULL},
-	{"info", (PyCFunction) PLy_info, METH_VARARGS|METH_KEYWORDS, NULL},
-	{"notice", (PyCFunction) PLy_notice, METH_VARARGS|METH_KEYWORDS, NULL},
-	{"warning", (PyCFunction) PLy_warning, METH_VARARGS|METH_KEYWORDS, NULL},
-	{"error", (PyCFunction) PLy_error, METH_VARARGS|METH_KEYWORDS, NULL},
-	{"fatal", (PyCFunction) PLy_fatal, METH_VARARGS|METH_KEYWORDS, NULL},
+	{"debug", (PyCFunction) PLy_debug, METH_VARARGS | METH_KEYWORDS, NULL},
+	{"log", (PyCFunction) PLy_log, METH_VARARGS | METH_KEYWORDS, NULL},
+	{"info", (PyCFunction) PLy_info, METH_VARARGS | METH_KEYWORDS, NULL},
+	{"notice", (PyCFunction) PLy_notice, METH_VARARGS | METH_KEYWORDS, NULL},
+	{"warning", (PyCFunction) PLy_warning, METH_VARARGS | METH_KEYWORDS, NULL},
+	{"error", (PyCFunction) PLy_error, METH_VARARGS | METH_KEYWORDS, NULL},
+	{"fatal", (PyCFunction) PLy_fatal, METH_VARARGS | METH_KEYWORDS, NULL},
 
 	/*
 	 * create a stored plan
@@ -272,7 +272,7 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
  * don't confuse these with PLy_elog
  */
 static PyObject *PLy_output(volatile int level, PyObject *self,
-										  PyObject *args, PyObject *kw);
+		   PyObject *args, PyObject *kw);
 
 static PyObject *
 PLy_debug(PyObject *self, PyObject *args, PyObject *kw)
@@ -375,11 +375,11 @@ object_to_string(PyObject *obj)
 {
 	if (obj)
 	{
-		PyObject *so = PyObject_Str(obj);
+		PyObject   *so = PyObject_Str(obj);
 
 		if (so != NULL)
 		{
-			char *str;
+			char	   *str;
 
 			str = pstrdup(PyString_AsString(so));
 			Py_DECREF(so);
@@ -394,20 +394,21 @@ object_to_string(PyObject *obj)
 static PyObject *
 PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 {
-	int sqlstate = 0;
-	char *volatile sqlstatestr = NULL;
-	char *volatile message = NULL;
-	char *volatile detail = NULL;
-	char *volatile hint = NULL;
-	char *volatile column = NULL;
-	char *volatile constraint = NULL;
-	char *volatile datatype = NULL;
-	char *volatile table = NULL;
-	char *volatile schema = NULL;
+	int			sqlstate = 0;
+	char	   *volatile sqlstatestr = NULL;
+	char	   *volatile message = NULL;
+	char	   *volatile detail = NULL;
+	char	   *volatile hint = NULL;
+	char	   *volatile column = NULL;
+	char	   *volatile constraint = NULL;
+	char	   *volatile datatype = NULL;
+	char	   *volatile table = NULL;
+	char	   *volatile schema = NULL;
 	volatile MemoryContext oldcontext;
-	PyObject *key, *value;
-	PyObject *volatile so;
-	Py_ssize_t pos = 0;
+	PyObject   *key,
+			   *value;
+	PyObject   *volatile so;
+	Py_ssize_t	pos = 0;
 
 	if (PyTuple_Size(args) == 1)
 	{
@@ -437,7 +438,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	{
 		while (PyDict_Next(kw, &pos, &key, &value))
 		{
-			char *keyword = PyString_AsString(key);
+			char	   *keyword = PyString_AsString(key);
 
 			if (strcmp(keyword, "message") == 0)
 			{
@@ -465,9 +466,9 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 				datatype = object_to_string(value);
 			else if (strcmp(keyword, "constraint") == 0)
 				constraint = object_to_string(value);
-		else
-			PLy_elog(ERROR, "'%s' is an invalid keyword argument for this function",
-								keyword);
+			else
+				PLy_elog(ERROR, "'%s' is an invalid keyword argument for this function",
+						 keyword);
 		}
 	}
 
@@ -480,10 +481,10 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 			PLy_elog(ERROR, "invalid SQLSTATE code");
 
 		sqlstate = MAKE_SQLSTATE(sqlstatestr[0],
-							  sqlstatestr[1],
-							  sqlstatestr[2],
-							  sqlstatestr[3],
-							  sqlstatestr[4]);
+								 sqlstatestr[1],
+								 sqlstatestr[2],
+								 sqlstatestr[3],
+								 sqlstatestr[4]);
 	}
 
 	oldcontext = CurrentMemoryContext;
@@ -524,7 +525,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	}
 	PG_CATCH();
 	{
-		ErrorData	*edata;
+		ErrorData  *edata;
 
 		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();

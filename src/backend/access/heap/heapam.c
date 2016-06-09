@@ -1687,7 +1687,7 @@ heap_parallelscan_nextpage(HeapScanDesc scan)
 {
 	BlockNumber page = InvalidBlockNumber;
 	BlockNumber sync_startpage = InvalidBlockNumber;
-	BlockNumber	report_page = InvalidBlockNumber;
+	BlockNumber report_page = InvalidBlockNumber;
 	ParallelHeapScanDesc parallel_scan;
 
 	Assert(scan->rs_parallel);

@@ -925,10 +925,10 @@ makeVariableNumeric(Variable *var)
 		setIntValue(&var->num_value, strtoint64(var->value));
 		var->is_numeric = true;
 	}
-	else /* type should be double */
+	else	/* type should be double */
 	{
-		double dv;
-		char xs;
+		double		dv;
+		char		xs;
 
 		if (sscanf(var->value, "%lf%c", &dv, &xs) != 1)
 		{
@@ -1159,7 +1159,8 @@ coerceToInt(PgBenchValue *pval, int64 *ival)
 	}
 	else
 	{
-		double dval = pval->u.dval;
+		double		dval = pval->u.dval;
+
 		Assert(pval->type == PGBT_DOUBLE);
 		if (dval < PG_INT64_MIN || PG_INT64_MAX < dval)
 		{
@@ -1215,8 +1216,8 @@ evalFunc(TState *thread, CState *st,
 		 PgBenchFunction func, PgBenchExprLink *args, PgBenchValue *retval)
 {
 	/* evaluate all function arguments */
-	int	 			nargs = 0;
-	PgBenchValue 	vargs[MAX_FARGS];
+	int			nargs = 0;
+	PgBenchValue vargs[MAX_FARGS];
 	PgBenchExprLink *l = args;
 
 	for (nargs = 0; nargs < MAX_FARGS && l != NULL; nargs++, l = l->next)
@@ -1233,22 +1234,24 @@ evalFunc(TState *thread, CState *st,
 	/* then evaluate function */
 	switch (func)
 	{
-		/* overloaded operators */
+			/* overloaded operators */
 		case PGBENCH_ADD:
 		case PGBENCH_SUB:
 		case PGBENCH_MUL:
 		case PGBENCH_DIV:
 		case PGBENCH_MOD:
 			{
-				PgBenchValue	*lval = &vargs[0],
-								*rval = &vargs[1];
+				PgBenchValue *lval = &vargs[0],
+						   *rval = &vargs[1];
+
 				Assert(nargs == 2);
 
 				/* overloaded type management, double if some double */
 				if ((lval->type == PGBT_DOUBLE ||
 					 rval->type == PGBT_DOUBLE) && func != PGBENCH_MOD)
 				{
-					double ld, rd;
+					double		ld,
+								rd;
 
 					if (!coerceToDouble(lval, &ld) ||
 						!coerceToDouble(rval, &rd))
@@ -1277,9 +1280,10 @@ evalFunc(TState *thread, CState *st,
 							Assert(0);
 					}
 				}
-				else  /* we have integer operands, or % */
+				else	/* we have integer operands, or % */
 				{
-					int64 li, ri;
+					int64		li,
+								ri;
 
 					if (!coerceToInt(lval, &li) ||
 						!coerceToInt(rval, &ri))
@@ -1318,7 +1322,7 @@ evalFunc(TState *thread, CState *st,
 										return false;
 									}
 									else
-										setIntValue(retval, - li);
+										setIntValue(retval, -li);
 								}
 								else
 									setIntValue(retval, 0);
@@ -1327,7 +1331,7 @@ evalFunc(TState *thread, CState *st,
 							/* else divisor is not -1 */
 							if (func == PGBENCH_DIV)
 								setIntValue(retval, li / ri);
-							else /* func == PGBENCH_MOD */
+							else	/* func == PGBENCH_MOD */
 								setIntValue(retval, li % ri);
 
 							return true;
@@ -1339,27 +1343,30 @@ evalFunc(TState *thread, CState *st,
 				}
 			}
 
-		/* no arguments */
+			/* no arguments */
 		case PGBENCH_PI:
 			setDoubleValue(retval, M_PI);
 			return true;
 
-		/* 1 overloaded argument */
+			/* 1 overloaded argument */
 		case PGBENCH_ABS:
 			{
 				PgBenchValue *varg = &vargs[0];
+
 				Assert(nargs == 1);
 
 				if (varg->type == PGBT_INT)
 				{
-					int64 i = varg->u.ival;
+					int64		i = varg->u.ival;
+
 					setIntValue(retval, i < 0 ? -i : i);
 				}
 				else
 				{
-					double d = varg->u.dval;
+					double		d = varg->u.dval;
+
 					Assert(varg->type == PGBT_DOUBLE);
-					setDoubleValue(retval, d < 0.0 ? -d: d);
+					setDoubleValue(retval, d < 0.0 ? -d : d);
 				}
 
 				return true;
@@ -1368,13 +1375,14 @@ evalFunc(TState *thread, CState *st,
 		case PGBENCH_DEBUG:
 			{
 				PgBenchValue *varg = &vargs[0];
+
 				Assert(nargs == 1);
 
-				fprintf(stderr,	"debug(script=%d,command=%d): ",
-						st->use_file, st->state+1);
+				fprintf(stderr, "debug(script=%d,command=%d): ",
+						st->use_file, st->state + 1);
 
 				if (varg->type == PGBT_INT)
-					fprintf(stderr,	"int "INT64_FORMAT"\n", varg->u.ival);
+					fprintf(stderr, "int " INT64_FORMAT "\n", varg->u.ival);
 				else
 				{
 					Assert(varg->type == PGBT_DOUBLE);
@@ -1386,11 +1394,12 @@ evalFunc(TState *thread, CState *st,
 				return true;
 			}
 
-		/* 1 double argument */
+			/* 1 double argument */
 		case PGBENCH_DOUBLE:
 		case PGBENCH_SQRT:
 			{
-				double dval;
+				double		dval;
+
 				Assert(nargs == 1);
 
 				if (!coerceToDouble(&vargs[0], &dval))
@@ -1403,10 +1412,11 @@ evalFunc(TState *thread, CState *st,
 				return true;
 			}
 
-		/* 1 int argument */
+			/* 1 int argument */
 		case PGBENCH_INT:
 			{
-				int64 ival;
+				int64		ival;
+
 				Assert(nargs == 1);
 
 				if (!coerceToInt(&vargs[0], &ival))
@@ -1416,7 +1426,7 @@ evalFunc(TState *thread, CState *st,
 				return true;
 			}
 
-		/* variable number of arguments */
+			/* variable number of arguments */
 		case PGBENCH_LEAST:
 		case PGBENCH_GREATEST:
 			{
@@ -1476,74 +1486,77 @@ evalFunc(TState *thread, CState *st,
 				return true;
 			}
 
-		/* random functions */
+			/* random functions */
 		case PGBENCH_RANDOM:
 		case PGBENCH_RANDOM_EXPONENTIAL:
 		case PGBENCH_RANDOM_GAUSSIAN:
-		{
-			int64       imin, imax;
-			Assert(nargs >= 2);
-
-			if (!coerceToInt(&vargs[0], &imin) ||
-				!coerceToInt(&vargs[1], &imax))
-				return false;
-
-			/* check random range */
-			if (imin > imax)
 			{
-				fprintf(stderr, "empty range given to random\n");
-				return false;
-			}
-			else if (imax - imin < 0 || (imax - imin) + 1 < 0)
-			{
-				/* prevent int overflows in random functions */
-				fprintf(stderr, "random range is too large\n");
-				return false;
-			}
+				int64		imin,
+							imax;
 
-			if (func == PGBENCH_RANDOM)
-			{
-				Assert(nargs == 2);
-				setIntValue(retval, getrand(thread, imin, imax));
-			}
-			else /* gaussian & exponential */
-			{
-				double param;
-				Assert(nargs == 3);
+				Assert(nargs >= 2);
 
-				if (!coerceToDouble(&vargs[2], &param))
+				if (!coerceToInt(&vargs[0], &imin) ||
+					!coerceToInt(&vargs[1], &imax))
 					return false;
 
-				if (func == PGBENCH_RANDOM_GAUSSIAN)
+				/* check random range */
+				if (imin > imax)
 				{
-					if (param < MIN_GAUSSIAN_PARAM)
-					{
-						fprintf(stderr,
-								"gaussian parameter must be at least %f "
-								"(not %f)\n", MIN_GAUSSIAN_PARAM, param);
-						return false;
-					}
-
-					setIntValue(retval,
-								getGaussianRand(thread, imin, imax,	param));
+					fprintf(stderr, "empty range given to random\n");
+					return false;
 				}
-				else /* exponential */
+				else if (imax - imin < 0 || (imax - imin) + 1 < 0)
 				{
-					if (param <= 0.0)
-					{
-						fprintf(stderr,
-								"exponential parameter must be greater than zero"
-								" (got %f)\n", param);
-						return false;
-					}
-
-					setIntValue(retval,
-								getExponentialRand(thread, imin, imax, param));
+					/* prevent int overflows in random functions */
+					fprintf(stderr, "random range is too large\n");
+					return false;
 				}
+
+				if (func == PGBENCH_RANDOM)
+				{
+					Assert(nargs == 2);
+					setIntValue(retval, getrand(thread, imin, imax));
+				}
+				else	/* gaussian & exponential */
+				{
+					double		param;
+
+					Assert(nargs == 3);
+
+					if (!coerceToDouble(&vargs[2], &param))
+						return false;
+
+					if (func == PGBENCH_RANDOM_GAUSSIAN)
+					{
+						if (param < MIN_GAUSSIAN_PARAM)
+						{
+							fprintf(stderr,
+									"gaussian parameter must be at least %f "
+									"(not %f)\n", MIN_GAUSSIAN_PARAM, param);
+							return false;
+						}
+
+						setIntValue(retval,
+								 getGaussianRand(thread, imin, imax, param));
+					}
+					else	/* exponential */
+					{
+						if (param <= 0.0)
+						{
+							fprintf(stderr,
+							"exponential parameter must be greater than zero"
+									" (got %f)\n", param);
+							return false;
+						}
+
+						setIntValue(retval,
+							  getExponentialRand(thread, imin, imax, param));
+					}
+				}
+
+				return true;
 			}
-
-			return true;
-		}
 
 		default:
 			/* cannot get here */
@@ -2078,7 +2091,7 @@ top:
 		if (pg_strcasecmp(argv[0], "set") == 0)
 		{
 			PgBenchExpr *expr = commands[st->state]->expr;
-			PgBenchValue	result;
+			PgBenchValue result;
 
 			if (!evaluateExpr(thread, st, expr, &result))
 			{
@@ -2173,7 +2186,7 @@ static void
 doLog(TState *thread, CState *st, instr_time *now,
 	  StatsData *agg, bool skipped, double latency, double lag)
 {
-	FILE   *logfile = thread->logfile;
+	FILE	   *logfile = thread->logfile;
 
 	Assert(use_log);
 
@@ -3865,7 +3878,7 @@ main(int argc, char **argv)
 				if (var->is_numeric)
 				{
 					if (!putVariableNumber(&state[i], "startup",
-									 var->name, &var->num_value))
+										   var->name, &var->num_value))
 						exit(1);
 				}
 				else
@@ -3997,7 +4010,7 @@ main(int argc, char **argv)
 		thread->random_state[0] = random();
 		thread->random_state[1] = random();
 		thread->random_state[2] = random();
-		thread->logfile = NULL;		/* filled in later */
+		thread->logfile = NULL; /* filled in later */
 		thread->latency_late = 0;
 		initStats(&thread->stats, 0.0);
 
@@ -4025,7 +4038,7 @@ main(int argc, char **argv)
 		/* compute when to stop */
 		if (duration > 0)
 			end_time = INSTR_TIME_GET_MICROSEC(thread->start_time) +
-				(int64) 1000000 * duration;
+				(int64) 1000000 *duration;
 
 		/* the first thread (i = 0) is executed by main thread */
 		if (i > 0)
@@ -4048,7 +4061,7 @@ main(int argc, char **argv)
 	/* compute when to stop */
 	if (duration > 0)
 		end_time = INSTR_TIME_GET_MICROSEC(threads[0].start_time) +
-			(int64) 1000000 * duration;
+			(int64) 1000000 *duration;
 	threads[0].thread = INVALID_THREAD;
 #endif   /* ENABLE_THREAD_SAFETY */
 

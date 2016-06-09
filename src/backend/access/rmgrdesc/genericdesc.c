@@ -29,8 +29,8 @@ generic_desc(StringInfo buf, XLogReaderState *record)
 
 	while (ptr < end)
 	{
-		OffsetNumber	offset,
-						length;
+		OffsetNumber offset,
+					length;
 
 		memcpy(&offset, ptr, sizeof(offset));
 		ptr += sizeof(offset);

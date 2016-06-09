@@ -261,15 +261,15 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 
 		/*
 		 * Since incomplete segments are copied into next timelines, switch to
-		 * the timeline holding the required segment. Assuming this scan can be
-		 * done both forward and backward, consider also switching timeline
+		 * the timeline holding the required segment. Assuming this scan can
+		 * be done both forward and backward, consider also switching timeline
 		 * accordingly.
 		 */
 		while (private->tliIndex < targetNentries - 1 &&
-				targetHistory[private->tliIndex].end < targetSegEnd)
+			   targetHistory[private->tliIndex].end < targetSegEnd)
 			private->tliIndex++;
 		while (private->tliIndex > 0 &&
-				targetHistory[private->tliIndex].begin >= targetSegEnd)
+			   targetHistory[private->tliIndex].begin >= targetSegEnd)
 			private->tliIndex--;
 
 		XLogFileName(xlogfname, targetHistory[private->tliIndex].tli, xlogreadsegno);

@@ -3083,8 +3083,8 @@ errorMissingColumn(ParseState *pstate,
 				 errmsg("column %s.%s does not exist", relname, colname) :
 				 errmsg("column \"%s\" does not exist", colname),
 				 state->rfirst ? closestfirst ?
-		  errhint("Perhaps you meant to reference the column \"%s.%s\".",
-				  state->rfirst->eref->aliasname, closestfirst) :
+			  errhint("Perhaps you meant to reference the column \"%s.%s\".",
+					  state->rfirst->eref->aliasname, closestfirst) :
 				 errhint("There is a column named \"%s\" in table \"%s\", but it cannot be referenced from this part of the query.",
 						 colname, state->rfirst->eref->aliasname) : 0,
 				 parser_errposition(pstate, location)));

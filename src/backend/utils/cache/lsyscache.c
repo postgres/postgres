@@ -1819,9 +1819,9 @@ get_rel_tablespace(Oid relid)
 char
 get_rel_persistence(Oid relid)
 {
-	HeapTuple		tp;
-	Form_pg_class	reltup;
-	char 			result;
+	HeapTuple	tp;
+	Form_pg_class reltup;
+	char		result;
 
 	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tp))

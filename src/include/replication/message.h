@@ -19,11 +19,11 @@
  */
 typedef struct xl_logical_message
 {
-	Oid         dbId;							/* database Oid emitted from */
-	bool		transactional;					/* is message transactional? */
-	Size		prefix_size;					/* length of prefix */
-	Size		message_size;					/* size of the message */
-	char		message[FLEXIBLE_ARRAY_MEMBER];	/* message including the null
+	Oid			dbId;			/* database Oid emitted from */
+	bool		transactional;	/* is message transactional? */
+	Size		prefix_size;	/* length of prefix */
+	Size		message_size;	/* size of the message */
+	char		message[FLEXIBLE_ARRAY_MEMBER]; /* message including the null
 												 * terminated prefix of length
 												 * prefix_size */
 } xl_logical_message;
@@ -31,7 +31,7 @@ typedef struct xl_logical_message
 #define SizeOfLogicalMessage	(offsetof(xl_logical_message, message))
 
 extern XLogRecPtr LogLogicalMessage(const char *prefix, const char *message,
-									size_t size, bool transactional);
+				  size_t size, bool transactional);
 
 /* RMGR API*/
 #define XLOG_LOGICAL_MESSAGE	0x00

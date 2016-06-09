@@ -83,7 +83,7 @@ struct SharedExecutorInstrumentation
 typedef struct ExecParallelEstimateContext
 {
 	ParallelContext *pcxt;
-	int nnodes;
+	int			nnodes;
 } ExecParallelEstimateContext;
 
 /* Context object for ExecParallelInitializeDSM. */
@@ -91,7 +91,7 @@ typedef struct ExecParallelInitializeDSMContext
 {
 	ParallelContext *pcxt;
 	SharedExecutorInstrumentation *instrumentation;
-	int nnodes;
+	int			nnodes;
 } ExecParallelInitializeDSMContext;
 
 /* Helper functions that run in the parallel leader. */
@@ -99,11 +99,11 @@ static char *ExecSerializePlan(Plan *plan, EState *estate);
 static bool ExecParallelEstimate(PlanState *node,
 					 ExecParallelEstimateContext *e);
 static bool ExecParallelInitializeDSM(PlanState *node,
-					 ExecParallelInitializeDSMContext *d);
+						  ExecParallelInitializeDSMContext *d);
 static shm_mq_handle **ExecParallelSetupTupleQueues(ParallelContext *pcxt,
 							 bool reinitialize);
 static bool ExecParallelRetrieveInstrumentation(PlanState *planstate,
-						  SharedExecutorInstrumentation *instrumentation);
+							 SharedExecutorInstrumentation *instrumentation);
 
 /* Helper functions that run in the parallel worker. */
 static void ParallelQueryMain(dsm_segment *seg, shm_toc *toc);
@@ -387,12 +387,12 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 
 	/* Estimate space for tuple queues. */
 	shm_toc_estimate_chunk(&pcxt->estimator,
-						   mul_size(PARALLEL_TUPLE_QUEUE_SIZE, pcxt->nworkers));
+						mul_size(PARALLEL_TUPLE_QUEUE_SIZE, pcxt->nworkers));
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/*
-	 * Give parallel-aware nodes a chance to add to the estimates, and get
-	 * a count of how many PlanState nodes there are.
+	 * Give parallel-aware nodes a chance to add to the estimates, and get a
+	 * count of how many PlanState nodes there are.
 	 */
 	e.pcxt = pcxt;
 	e.nnodes = 0;
@@ -444,14 +444,14 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
 	pei->tqueue = ExecParallelSetupTupleQueues(pcxt, false);
 
 	/*
-	 * If instrumentation options were supplied, allocate space for the
-	 * data.  It only gets partially initialized here; the rest happens
-	 * during ExecParallelInitializeDSM.
+	 * If instrumentation options were supplied, allocate space for the data.
+	 * It only gets partially initialized here; the rest happens during
+	 * ExecParallelInitializeDSM.
 	 */
 	if (estate->es_instrument)
 	{
 		Instrumentation *instrument;
-		int		i;
+		int			i;
 
 		instrumentation = shm_toc_allocate(pcxt->toc, instrumentation_len);
 		instrumentation->instrument_options = estate->es_instrument;
@@ -493,13 +493,13 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers)
  */
 static bool
 ExecParallelRetrieveInstrumentation(PlanState *planstate,
-						  SharedExecutorInstrumentation *instrumentation)
+							  SharedExecutorInstrumentation *instrumentation)
 {
 	Instrumentation *instrument;
-	int		i;
-	int		n;
-	int		ibytes;
-	int		plan_node_id = planstate->plan->plan_node_id;
+	int			i;
+	int			n;
+	int			ibytes;
+	int			plan_node_id = planstate->plan->plan_node_id;
 
 	/* Find the instumentation for this node. */
 	for (i = 0; i < instrumentation->num_plan_nodes; ++i)
@@ -532,7 +532,7 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 void
 ExecParallelFinish(ParallelExecutorInfo *pei)
 {
-	int		i;
+	int			i;
 
 	if (pei->finished)
 		return;
@@ -626,19 +626,19 @@ ExecParallelGetQueryDesc(shm_toc *toc, DestReceiver *receiver,
  */
 static bool
 ExecParallelReportInstrumentation(PlanState *planstate,
-						  SharedExecutorInstrumentation *instrumentation)
+							  SharedExecutorInstrumentation *instrumentation)
 {
-	int		i;
-	int		plan_node_id = planstate->plan->plan_node_id;
+	int			i;
+	int			plan_node_id = planstate->plan->plan_node_id;
 	Instrumentation *instrument;
 
 	InstrEndLoop(planstate->instrument);
 
 	/*
 	 * If we shuffled the plan_node_id values in ps_instrument into sorted
-	 * order, we could use binary search here.  This might matter someday
-	 * if we're pushing down sufficiently large plan trees.  For now, do it
-	 * the slow, dumb way.
+	 * order, we could use binary search here.  This might matter someday if
+	 * we're pushing down sufficiently large plan trees.  For now, do it the
+	 * slow, dumb way.
 	 */
 	for (i = 0; i < instrumentation->num_plan_nodes; ++i)
 		if (instrumentation->plan_node_id[i] == plan_node_id)

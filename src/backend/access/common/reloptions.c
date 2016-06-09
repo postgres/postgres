@@ -101,7 +101,8 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs table pages only to this percentage",
 			RELOPT_KIND_HEAP,
-			ShareUpdateExclusiveLock /* since it applies only to later inserts */
+			ShareUpdateExclusiveLock	/* since it applies only to later
+										 * inserts */
 		},
 		HEAP_DEFAULT_FILLFACTOR, HEAP_MIN_FILLFACTOR, 100
 	},
@@ -110,7 +111,8 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs btree index pages only to this percentage",
 			RELOPT_KIND_BTREE,
-			ShareUpdateExclusiveLock /* since it applies only to later inserts */
+			ShareUpdateExclusiveLock	/* since it applies only to later
+										 * inserts */
 		},
 		BTREE_DEFAULT_FILLFACTOR, BTREE_MIN_FILLFACTOR, 100
 	},
@@ -119,7 +121,8 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs hash index pages only to this percentage",
 			RELOPT_KIND_HASH,
-			ShareUpdateExclusiveLock /* since it applies only to later inserts */
+			ShareUpdateExclusiveLock	/* since it applies only to later
+										 * inserts */
 		},
 		HASH_DEFAULT_FILLFACTOR, HASH_MIN_FILLFACTOR, 100
 	},
@@ -128,7 +131,8 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs gist index pages only to this percentage",
 			RELOPT_KIND_GIST,
-			ShareUpdateExclusiveLock /* since it applies only to later inserts */
+			ShareUpdateExclusiveLock	/* since it applies only to later
+										 * inserts */
 		},
 		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
 	},
@@ -137,7 +141,8 @@ static relopt_int intRelOpts[] =
 			"fillfactor",
 			"Packs spgist index pages only to this percentage",
 			RELOPT_KIND_SPGIST,
-			ShareUpdateExclusiveLock /* since it applies only to later inserts */
+			ShareUpdateExclusiveLock	/* since it applies only to later
+										 * inserts */
 		},
 		SPGIST_DEFAULT_FILLFACTOR, SPGIST_MIN_FILLFACTOR, 100
 	},
@@ -1475,8 +1480,8 @@ tablespace_reloptions(Datum reloptions, bool validate)
 LOCKMODE
 AlterTableGetRelOptionsLockLevel(List *defList)
 {
-	LOCKMODE    lockmode = NoLock;
-	ListCell    *cell;
+	LOCKMODE	lockmode = NoLock;
+	ListCell   *cell;
 
 	if (defList == NIL)
 		return AccessExclusiveLock;
@@ -1486,8 +1491,8 @@ AlterTableGetRelOptionsLockLevel(List *defList)
 
 	foreach(cell, defList)
 	{
-		DefElem *def = (DefElem *) lfirst(cell);
-		int		i;
+		DefElem    *def = (DefElem *) lfirst(cell);
+		int			i;
 
 		for (i = 0; relOpts[i]; i++)
 		{

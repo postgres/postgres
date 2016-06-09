@@ -296,6 +296,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 
 			if (GIST_LEAF(entry))
 			{					/* all leafs contains orig trgm */
+
 				/*
 				 * Prevent gcc optimizing the tmpsml variable using volatile
 				 * keyword. Otherwise comparison of nlimit and tmpsml may give
@@ -476,12 +477,14 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 			*recheck = strategy == WordDistanceStrategyNumber;
 			if (GIST_LEAF(entry))
 			{					/* all leafs contains orig trgm */
+
 				/*
 				 * Prevent gcc optimizing the sml variable using volatile
 				 * keyword. Otherwise res can differ from the
 				 * word_similarity_dist_op() function.
 				 */
 				float4 volatile sml = cnt_sml(qtrg, key, *recheck);
+
 				res = 1.0 - sml;
 			}
 			else if (ISALLTRUE(key))

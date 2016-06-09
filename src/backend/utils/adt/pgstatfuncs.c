@@ -27,7 +27,7 @@
 #include "utils/inet.h"
 #include "utils/timestamp.h"
 
-#define UINT32_ACCESS_ONCE(var)      ((uint32)(*((volatile uint32 *)&(var))))
+#define UINT32_ACCESS_ONCE(var)		 ((uint32)(*((volatile uint32 *)&(var))))
 
 /* bogus ... these externs should be in a header file */
 extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);
@@ -540,7 +540,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	char	   *cmd = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	ProgressCommandType	cmdtype;
+	ProgressCommandType cmdtype;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -582,8 +582,8 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
 	{
-		LocalPgBackendStatus   *local_beentry;
-		PgBackendStatus		   *beentry;
+		LocalPgBackendStatus *local_beentry;
+		PgBackendStatus *beentry;
 		Datum		values[PG_STAT_GET_PROGRESS_COLS];
 		bool		nulls[PG_STAT_GET_PROGRESS_COLS];
 		int			i;
@@ -613,14 +613,14 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		if (has_privs_of_role(GetUserId(), beentry->st_userid))
 		{
 			values[2] = ObjectIdGetDatum(beentry->st_progress_command_target);
-			for(i = 0; i < PGSTAT_NUM_PROGRESS_PARAM; i++)
-				values[i+3] = Int64GetDatum(beentry->st_progress_param[i]);
+			for (i = 0; i < PGSTAT_NUM_PROGRESS_PARAM; i++)
+				values[i + 3] = Int64GetDatum(beentry->st_progress_param[i]);
 		}
 		else
 		{
 			nulls[2] = true;
 			for (i = 0; i < PGSTAT_NUM_PROGRESS_PARAM; i++)
-				nulls[i+3] = true;
+				nulls[i + 3] = true;
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
@@ -787,7 +787,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			proc = BackendPidGetProc(beentry->st_procpid);
 			if (proc != NULL)
 			{
-				uint32	raw_wait_event;
+				uint32		raw_wait_event;
 
 				raw_wait_event = UINT32_ACCESS_ONCE(proc->wait_event_info);
 				wait_event_type = pgstat_get_wait_event_type(raw_wait_event);

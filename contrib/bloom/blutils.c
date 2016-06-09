@@ -37,6 +37,7 @@ PG_FUNCTION_INFO_V1(blhandler);
 
 /* Kind of relation options for bloom index */
 static relopt_kind bl_relopt_kind;
+
 /* parse table for fillRelOptions */
 static relopt_parse_elt bl_relopt_tab[INDEX_MAX_KEYS + 1];
 
@@ -215,7 +216,9 @@ myRand(void)
 	 * October 1988, p. 1195.
 	 *----------
 	 */
-	int32 hi, lo, x;
+	int32		hi,
+				lo,
+				x;
 
 	/* Must be in [1, 0x7ffffffe] range at this point. */
 	hi = next / 127773;

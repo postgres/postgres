@@ -150,8 +150,8 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
  * both log_line_prefix and csv logs.
  */
 
-static struct timeval	saved_timeval;
-static bool				saved_timeval_set = false;
+static struct timeval saved_timeval;
+static bool saved_timeval_set = false;
 
 #define FORMATTED_TS_LEN 128
 static char formatted_start_time[FORMATTED_TS_LEN];
@@ -1467,9 +1467,9 @@ EmitErrorReport(void)
 	 * mechanisms.
 	 *
 	 * The log hook has access to both the translated and original English
-	 * error message text, which is passed through to allow it to be used
-	 * as a message identifier. Note that the original text is not available
-	 * for detail, detail_log, hint and context text elements.
+	 * error message text, which is passed through to allow it to be used as a
+	 * message identifier. Note that the original text is not available for
+	 * detail, detail_log, hint and context text elements.
 	 */
 	if (edata->output_to_server && emit_log_hook)
 		(*emit_log_hook) (edata);
@@ -2467,7 +2467,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				break;
 			case 'n':
 				{
-					char	strfbuf[128];
+					char		strfbuf[128];
 
 					if (!saved_timeval_set)
 					{
@@ -2476,7 +2476,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 					}
 
 					sprintf(strfbuf, "%ld.%03d", saved_timeval.tv_sec,
-							(int)(saved_timeval.tv_usec / 1000));
+							(int) (saved_timeval.tv_usec / 1000));
 
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, strfbuf);

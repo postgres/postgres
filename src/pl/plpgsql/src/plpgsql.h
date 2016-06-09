@@ -1000,10 +1000,10 @@ extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);
 extern Oid plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
-					PLpgSQL_datum *datum);
+							PLpgSQL_datum *datum);
 extern void plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
-						 PLpgSQL_datum *datum,
-						 Oid *typeid, int32 *typmod, Oid *collation);
+								 PLpgSQL_datum *datum,
+								 Oid *typeid, int32 *typmod, Oid *collation);
 
 /* ----------
  * Functions for namespace handling in pl_funcs.c

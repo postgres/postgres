@@ -414,8 +414,8 @@ DefineQueryRewrite(char *rulename,
 		 * any triggers, indexes, child tables, policies, or RLS enabled.
 		 * (Note: these tests are too strict, because they will reject
 		 * relations that once had such but don't anymore.  But we don't
-		 * really care, because this whole business of converting relations
-		 * to views is just a kluge to allow dump/reload of views that
+		 * really care, because this whole business of converting relations to
+		 * views is just a kluge to allow dump/reload of views that
 		 * participate in circular dependencies.)
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW &&

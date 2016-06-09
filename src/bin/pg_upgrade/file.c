@@ -37,13 +37,13 @@ const char *
 copyFile(const char *src, const char *dst)
 {
 #ifndef WIN32
-		if (copy_file(src, dst) == -1)
+	if (copy_file(src, dst) == -1)
 #else
-		if (CopyFile(src, dst, true) == 0)
+	if (CopyFile(src, dst, true) == 0)
 #endif
-			return getErrorText();
-		else
-			return NULL;
+		return getErrorText();
+	else
+		return NULL;
 }
 
 

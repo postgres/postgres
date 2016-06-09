@@ -78,12 +78,12 @@ typedef void (*LogicalDecodeCommitCB) (
  */
 typedef void (*LogicalDecodeMessageCB) (
 											 struct LogicalDecodingContext *,
-											 ReorderBufferTXN *txn,
-											 XLogRecPtr message_lsn,
-											 bool transactional,
-											 const char *prefix,
-											 Size message_size,
-											 const char *message);
+													ReorderBufferTXN *txn,
+													XLogRecPtr message_lsn,
+													bool transactional,
+													const char *prefix,
+													Size message_size,
+													const char *message);
 
 /*
  * Filter changes by origin.

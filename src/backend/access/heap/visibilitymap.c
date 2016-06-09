@@ -272,7 +272,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
 	uint8		mapOffset = HEAPBLK_TO_OFFSET(heapBlk);
 	Page		page;
-	uint8		*map;
+	uint8	   *map;
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_set %s %d", RelationGetRelationName(rel), heapBlk);
@@ -291,7 +291,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 		elog(ERROR, "wrong VM buffer passed to visibilitymap_set");
 
 	page = BufferGetPage(vmBuf);
-	map = (uint8 *)PageGetContents(page);
+	map = (uint8 *) PageGetContents(page);
 	LockBuffer(vmBuf, BUFFER_LOCK_EXCLUSIVE);
 
 	if (flags != (map[mapByte] >> mapOffset & VISIBILITYMAP_VALID_BITS))

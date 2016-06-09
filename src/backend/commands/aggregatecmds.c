@@ -338,14 +338,14 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		/*
 		 * There's little point in having a serialization/deserialization
 		 * function on aggregates that don't have an internal state, so let's
-		 * just disallow this as it may help clear up any confusion or needless
-		 * authoring of these functions.
+		 * just disallow this as it may help clear up any confusion or
+		 * needless authoring of these functions.
 		 */
 		if (transTypeId != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("a serialization type must only be specified when the aggregate transition data type is %s",
-						 format_type_be(INTERNALOID))));
+							format_type_be(INTERNALOID))));
 
 		serialTypeId = typenameTypeId(NULL, serialType);
 
@@ -358,15 +358,15 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 
 		/*
 		 * We disallow INTERNAL serialType as the whole point of the
-		 * serialized types is to allow the aggregate state to be output,
-		 * and we cannot output INTERNAL. This check, combined with the one
-		 * above ensures that the trans type and serialization type are not the
+		 * serialized types is to allow the aggregate state to be output, and
+		 * we cannot output INTERNAL. This check, combined with the one above
+		 * ensures that the trans type and serialization type are not the
 		 * same.
 		 */
 		if (serialTypeId == INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						errmsg("aggregate serialization data type cannot be %s",
+					 errmsg("aggregate serialization data type cannot be %s",
 							format_type_be(serialTypeId))));
 
 		/*
@@ -392,14 +392,14 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		 */
 		if (serialfuncName != NIL)
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("must specify serialization type when specifying serialization function")));
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("must specify serialization type when specifying serialization function")));
 
 		/* likewise for the deserialization function */
 		if (deserialfuncName != NIL)
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("must specify serialization type when specifying deserialization function")));
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("must specify serialization type when specifying deserialization function")));
 	}
 
 	/*
@@ -493,7 +493,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   mfinalfuncExtraArgs,
 						   sortoperatorName,	/* sort operator name */
 						   transTypeId, /* transition data type */
-						   serialTypeId, /* serialization data type */
+						   serialTypeId,		/* serialization data type */
 						   transSpace,	/* transition space */
 						   mtransTypeId,		/* transition data type */
 						   mtransSpace, /* transition space */

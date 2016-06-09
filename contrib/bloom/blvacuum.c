@@ -78,7 +78,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		/* Iterate over the tuples */
 		itup = itupPtr = BloomPageGetTuple(&state, page, FirstOffsetNumber);
 		itupEnd = BloomPageGetTuple(&state, page,
-								OffsetNumberNext(BloomPageGetMaxOffset(page)));
+							  OffsetNumberNext(BloomPageGetMaxOffset(page)));
 		while (itup < itupEnd)
 		{
 			/* Do we have to delete this tuple? */
@@ -106,11 +106,11 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		}
 
 		Assert(itupPtr == BloomPageGetTuple(&state, page,
-								OffsetNumberNext(BloomPageGetMaxOffset(page))));
+							 OffsetNumberNext(BloomPageGetMaxOffset(page))));
 
 		/*
-		 * Add page to notFullPage list if we will not mark page as deleted and
-		 * there is a free space on it
+		 * Add page to notFullPage list if we will not mark page as deleted
+		 * and there is a free space on it
 		 */
 		if (BloomPageGetMaxOffset(page) != 0 &&
 			BloomPageGetFreeSpace(&state, page) > state.sizeOfBloomTuple &&

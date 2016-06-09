@@ -212,14 +212,15 @@ pgtls_read(PGconn *conn, void *ptr, size_t len)
 	unsigned long ecode;
 
 rloop:
+
 	/*
 	 * Prepare to call SSL_get_error() by clearing thread's OpenSSL error
 	 * queue.  In general, the current thread's error queue must be empty
-	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error()
-	 * will not work reliably.  Since the possibility exists that other
-	 * OpenSSL clients running in the same thread but not under our control
-	 * will fail to call ERR_get_error() themselves (after their own I/O
-	 * operations), pro-actively clear the per-thread error queue now.
+	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error() will
+	 * not work reliably.  Since the possibility exists that other OpenSSL
+	 * clients running in the same thread but not under our control will fail
+	 * to call ERR_get_error() themselves (after their own I/O operations),
+	 * pro-actively clear the per-thread error queue now.
 	 */
 	SOCK_ERRNO_SET(0);
 	ERR_clear_error();
@@ -228,11 +229,11 @@ rloop:
 
 	/*
 	 * Other clients of OpenSSL may fail to call ERR_get_error(), but we
-	 * always do, so as to not cause problems for OpenSSL clients that
-	 * don't call ERR_clear_error() defensively.  Be sure that this
-	 * happens by calling now.  SSL_get_error() relies on the OpenSSL
-	 * per-thread error queue being intact, so this is the earliest
-	 * possible point ERR_get_error() may be called.
+	 * always do, so as to not cause problems for OpenSSL clients that don't
+	 * call ERR_clear_error() defensively.  Be sure that this happens by
+	 * calling now.  SSL_get_error() relies on the OpenSSL per-thread error
+	 * queue being intact, so this is the earliest possible point
+	 * ERR_get_error() may be called.
 	 */
 	ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
 	switch (err)

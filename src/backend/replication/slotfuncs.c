@@ -40,7 +40,7 @@ Datum
 pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 {
 	Name		name = PG_GETARG_NAME(0);
-	bool 		immediately_reserve = PG_GETARG_BOOL(1);
+	bool		immediately_reserve = PG_GETARG_BOOL(1);
 	Datum		values[2];
 	bool		nulls[2];
 	TupleDesc	tupdesc;

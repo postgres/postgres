@@ -666,7 +666,7 @@ dttofmtasc(timestamp * ts, char *output, int str_len, char *fmtstr)
 int
 intoasc(interval * i, char *str)
 {
-	char *tmp;
+	char	   *tmp;
 
 	errno = 0;
 	tmp = PGTYPESinterval_to_asc(i);
@@ -1032,6 +1032,7 @@ void
 ECPG_informix_reset_sqlca(void)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+
 	if (sqlca == NULL)
 		return;
 

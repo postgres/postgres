@@ -370,6 +370,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 		 * We're already behind, so clear a path as quickly as possible.
 		 */
 		VirtualTransactionId *backends;
+
 		backends = GetLockConflicts(&locktag, AccessExclusiveLock);
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
 											 PROCSIG_RECOVERY_CONFLICT_LOCK);

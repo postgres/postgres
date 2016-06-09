@@ -760,13 +760,14 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			/* Save previous prefix if needed */
 			if (needPrevious)
 			{
-				Datum previousCentroid;
+				Datum		previousCentroid;
 
-				/* We know, that in->prefixDatum in this place is varlena,
+				/*
+				 * We know, that in->prefixDatum in this place is varlena,
 				 * because it's range
 				 */
 				previousCentroid = datumCopy(in->prefixDatum, false, -1);
-				out->traversalValues[out->nNodes] = (void *)previousCentroid;
+				out->traversalValues[out->nNodes] = (void *) previousCentroid;
 			}
 			out->nodeNumbers[out->nNodes] = i - 1;
 			out->nNodes++;

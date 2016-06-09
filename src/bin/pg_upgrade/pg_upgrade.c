@@ -535,9 +535,9 @@ set_frozenxids(bool minmxid_only)
 		/*
 		 * We must update databases where datallowconn = false, e.g.
 		 * template0, because autovacuum increments their datfrozenxids,
-		 * relfrozenxids, and relminmxid even if autovacuum is turned off,
-		 * and even though all the data rows are already frozen.  To enable
-		 * this, we temporarily change datallowconn.
+		 * relfrozenxids, and relminmxid even if autovacuum is turned off, and
+		 * even though all the data rows are already frozen.  To enable this,
+		 * we temporarily change datallowconn.
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,

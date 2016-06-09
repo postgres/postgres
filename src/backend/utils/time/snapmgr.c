@@ -78,16 +78,15 @@ typedef struct OldSnapshotControlData
 	 * Variables for old snapshot handling are shared among processes and are
 	 * only allowed to move forward.
 	 */
-	slock_t		mutex_current;			/* protect current_timestamp */
+	slock_t		mutex_current;	/* protect current_timestamp */
 	int64		current_timestamp;		/* latest snapshot timestamp */
-	slock_t		mutex_latest_xmin;		/* protect latest_xmin
-										 * and next_map_update
-										 */
-	TransactionId latest_xmin;			/* latest snapshot xmin */
-	int64		next_map_update;		/* latest snapshot valid up to */
-	slock_t		mutex_threshold;		/* protect threshold fields */
+	slock_t		mutex_latest_xmin;		/* protect latest_xmin and
+										 * next_map_update */
+	TransactionId latest_xmin;	/* latest snapshot xmin */
+	int64		next_map_update;	/* latest snapshot valid up to */
+	slock_t		mutex_threshold;	/* protect threshold fields */
 	int64		threshold_timestamp;	/* earlier snapshot is old */
-	TransactionId threshold_xid;		/* earlier xid may be gone */
+	TransactionId threshold_xid;	/* earlier xid may be gone */
 
 	/*
 	 * Keep one xid per minute for old snapshot error handling.
@@ -117,11 +116,11 @@ typedef struct OldSnapshotControlData
 	 *
 	 * Persistence is not needed.
 	 */
-	int			head_offset;		/* subscript of oldest tracked time */
-	int64		head_timestamp;		/* time corresponding to head xid */
-	int			count_used;			/* how many slots are in use */
+	int			head_offset;	/* subscript of oldest tracked time */
+	int64		head_timestamp; /* time corresponding to head xid */
+	int			count_used;		/* how many slots are in use */
 	TransactionId xid_by_minute[FLEXIBLE_ARRAY_MEMBER];
-}	OldSnapshotControlData;
+} OldSnapshotControlData;
 
 static volatile OldSnapshotControlData *oldSnapshotControl;
 
@@ -709,8 +708,8 @@ UpdateActiveSnapshotCommandId(void)
 
 	/*
 	 * Don't allow modification of the active snapshot during parallel
-	 * operation.  We share the snapshot to worker backends at the beginning of
-	 * parallel operation, so any change to the snapshot can lead to
+	 * operation.  We share the snapshot to worker backends at the beginning
+	 * of parallel operation, so any change to the snapshot can lead to
 	 * inconsistencies.  We have other defenses against
 	 * CommandCounterIncrement, but there are a few places that call this
 	 * directly, so we put an additional guard here.
@@ -1634,7 +1633,7 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 		}
 
 		ts = AlignTimestampToMinuteBoundary(ts)
-			 - (old_snapshot_threshold * USECS_PER_MINUTE);
+			- (old_snapshot_threshold * USECS_PER_MINUTE);
 
 		/* Check for fast exit without LW locking. */
 		SpinLockAcquire(&oldSnapshotControl->mutex_threshold);
@@ -1660,14 +1659,14 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 				if (oldSnapshotControl->count_used > 0
 					&& ts >= oldSnapshotControl->head_timestamp)
 				{
-					int offset;
+					int			offset;
 
 					offset = ((ts - oldSnapshotControl->head_timestamp)
 							  / USECS_PER_MINUTE);
 					if (offset > oldSnapshotControl->count_used - 1)
 						offset = oldSnapshotControl->count_used - 1;
 					offset = (oldSnapshotControl->head_offset + offset)
-							 % OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+						% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 					xlimit = oldSnapshotControl->xid_by_minute[offset];
 
 					if (NormalTransactionIdFollows(xlimit, recentXmin))
@@ -1715,8 +1714,8 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 	ts = AlignTimestampToMinuteBoundary(whenTaken);
 
 	/*
-	 * Keep track of the latest xmin seen by any process. Update mapping
-	 * with a new value when we have crossed a bucket boundary.
+	 * Keep track of the latest xmin seen by any process. Update mapping with
+	 * a new value when we have crossed a bucket boundary.
 	 */
 	SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
 	latest_xmin = oldSnapshotControl->latest_xmin;
@@ -1747,7 +1746,7 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 	if (whenTaken < 0)
 	{
 		elog(DEBUG1,
-			 "MaintainOldSnapshotTimeMapping called with negative whenTaken = %ld",
+		"MaintainOldSnapshotTimeMapping called with negative whenTaken = %ld",
 			 (long) whenTaken);
 		return;
 	}
@@ -1789,10 +1788,10 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 					 * USECS_PER_MINUTE)))
 	{
 		/* existing mapping; advance xid if possible */
-		int		bucket = (oldSnapshotControl->head_offset
-						  + ((ts - oldSnapshotControl->head_timestamp)
-							 / USECS_PER_MINUTE))
-						 % OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+		int			bucket = (oldSnapshotControl->head_offset
+							  + ((ts - oldSnapshotControl->head_timestamp)
+								 / USECS_PER_MINUTE))
+		% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 		if (TransactionIdPrecedes(oldSnapshotControl->xid_by_minute[bucket], xmin))
 			oldSnapshotControl->xid_by_minute[bucket] = xmin;
@@ -1800,8 +1799,8 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 	else
 	{
 		/* We need a new bucket, but it might not be the very next one. */
-		int		advance = ((ts - oldSnapshotControl->head_timestamp)
-						   / USECS_PER_MINUTE);
+		int			advance = ((ts - oldSnapshotControl->head_timestamp)
+							   / USECS_PER_MINUTE);
 
 		oldSnapshotControl->head_timestamp = ts;
 
@@ -1815,14 +1814,14 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 		else
 		{
 			/* Store the new value in one or more buckets. */
-			int i;
+			int			i;
 
 			for (i = 0; i < advance; i++)
 			{
 				if (oldSnapshotControl->count_used == OLD_SNAPSHOT_TIME_MAP_ENTRIES)
 				{
 					/* Map full and new value replaces old head. */
-					int		old_head = oldSnapshotControl->head_offset;
+					int			old_head = oldSnapshotControl->head_offset;
 
 					if (old_head == (OLD_SNAPSHOT_TIME_MAP_ENTRIES - 1))
 						oldSnapshotControl->head_offset = 0;
@@ -1833,9 +1832,9 @@ MaintainOldSnapshotTimeMapping(int64 whenTaken, TransactionId xmin)
 				else
 				{
 					/* Extend map to unused entry. */
-					int		new_tail = (oldSnapshotControl->head_offset
-										+ oldSnapshotControl->count_used)
-									   % OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+					int			new_tail = (oldSnapshotControl->head_offset
+											+ oldSnapshotControl->count_used)
+					% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 					oldSnapshotControl->count_used++;
 					oldSnapshotControl->xid_by_minute[new_tail] = xmin;

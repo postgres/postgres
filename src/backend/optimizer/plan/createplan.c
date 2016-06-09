@@ -1428,15 +1428,14 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
 	 * We might not really need a Result node here.  There are several ways
 	 * that this can happen.  For example, MergeAppend doesn't project, so we
 	 * would have thought that we needed a projection to attach resjunk sort
-	 * columns to its output ... but create_merge_append_plan might have
-	 * added those same resjunk sort columns to both MergeAppend and its
-	 * children.  Alternatively, apply_projection_to_path might have created
-	 * a projection path as the subpath of a Gather node even though the
-	 * subpath was projection-capable.  So, if the subpath is capable of
-	 * projection or the desired tlist is the same expression-wise as the
-	 * subplan's, just jam it in there.  We'll have charged for a Result that
-	 * doesn't actually appear in the plan, but that's better than having a
-	 * Result we don't need.
+	 * columns to its output ... but create_merge_append_plan might have added
+	 * those same resjunk sort columns to both MergeAppend and its children.
+	 * Alternatively, apply_projection_to_path might have created a projection
+	 * path as the subpath of a Gather node even though the subpath was
+	 * projection-capable.  So, if the subpath is capable of projection or the
+	 * desired tlist is the same expression-wise as the subplan's, just jam it
+	 * in there.  We'll have charged for a Result that doesn't actually appear
+	 * in the plan, but that's better than having a Result we don't need.
 	 */
 	if (is_projection_capable_path(best_path->subpath) ||
 		tlist_same_exprs(tlist, subplan->targetlist))
@@ -3248,8 +3247,8 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	/*
 	 * If a join between foreign relations was pushed down, remember it. The
 	 * push-down safety of the join depends upon the server and user mapping
-	 * being same. That can change between planning and execution time, in which
-	 * case the plan should be invalidated.
+	 * being same. That can change between planning and execution time, in
+	 * which case the plan should be invalidated.
 	 */
 	if (scan_relid == 0)
 		root->glob->hasForeignJoin = true;
@@ -3257,8 +3256,8 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	/*
 	 * Replace any outer-relation variables with nestloop params in the qual,
 	 * fdw_exprs and fdw_recheck_quals expressions.  We do this last so that
-	 * the FDW doesn't have to be involved.  (Note that parts of fdw_exprs
-	 * or fdw_recheck_quals could have come from join clauses, so doing this
+	 * the FDW doesn't have to be involved.  (Note that parts of fdw_exprs or
+	 * fdw_recheck_quals could have come from join clauses, so doing this
 	 * beforehand on the scan_clauses wouldn't work.)  We assume
 	 * fdw_scan_tlist contains no such variables.
 	 */
@@ -3279,8 +3278,8 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	 * 0, but there can be no Var with relid 0 in the rel's targetlist or the
 	 * restriction clauses, so we skip this in that case.  Note that any such
 	 * columns in base relations that were joined are assumed to be contained
-	 * in fdw_scan_tlist.)  This is a bit of a kluge and might go away someday,
-	 * so we intentionally leave it out of the API presented to FDWs.
+	 * in fdw_scan_tlist.)	This is a bit of a kluge and might go away
+	 * someday, so we intentionally leave it out of the API presented to FDWs.
 	 */
 	scan_plan->fsSystemCol = false;
 	if (scan_relid > 0)
@@ -5899,7 +5898,7 @@ make_gather(List *qptlist,
 	plan->righttree = NULL;
 	node->num_workers = nworkers;
 	node->single_copy = single_copy;
-	node->invisible	= false;
+	node->invisible = false;
 
 	return node;
 }

@@ -199,10 +199,10 @@ output_completion_banner(char *analyze_script_file_name,
 			   deletion_script_file_name);
 	else
 		pg_log(PG_REPORT,
-		  "Could not create a script to delete the old cluster's data files\n"
-		  "because user-defined tablespaces or the new cluster's data directory\n"
-		  "exist in the old cluster directory.  The old cluster's contents must\n"
-		  "be deleted manually.\n");
+		 "Could not create a script to delete the old cluster's data files\n"
+			   "because user-defined tablespaces or the new cluster's data directory\n"
+			   "exist in the old cluster directory.  The old cluster's contents must\n"
+			   "be deleted manually.\n");
 }
 
 
@@ -501,7 +501,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 {
 	FILE	   *script = NULL;
 	int			tblnum;
-	char		old_cluster_pgdata[MAXPGPATH], new_cluster_pgdata[MAXPGPATH];
+	char		old_cluster_pgdata[MAXPGPATH],
+				new_cluster_pgdata[MAXPGPATH];
 
 	*deletion_script_file_name = psprintf("%sdelete_old_cluster.%s",
 										  SCRIPT_PREFIX, SCRIPT_EXT);
@@ -516,7 +517,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	if (path_is_prefix_of_path(old_cluster_pgdata, new_cluster_pgdata))
 	{
 		pg_log(PG_WARNING,
-		   "\nWARNING:  new data directory should not be inside the old data directory, e.g. %s\n", old_cluster_pgdata);
+			   "\nWARNING:  new data directory should not be inside the old data directory, e.g. %s\n", old_cluster_pgdata);
 
 		/* Unlink file in case it is left over from a previous run. */
 		unlink(*deletion_script_file_name);

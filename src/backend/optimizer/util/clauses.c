@@ -101,7 +101,7 @@ typedef struct
 } has_parallel_hazard_arg;
 
 static bool aggregates_allow_partial_walker(Node *node,
-											partial_agg_context *context);
+								partial_agg_context *context);
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool count_agg_clauses_walker(Node *node,
 						 count_agg_clauses_context *context);
@@ -112,9 +112,9 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool has_parallel_hazard_walker(Node *node,
-				has_parallel_hazard_arg *context);
+						   has_parallel_hazard_arg *context);
 static bool parallel_too_dangerous(char proparallel,
-				has_parallel_hazard_arg *context);
+					   has_parallel_hazard_arg *context);
 static bool typeid_is_temp(Oid typeid);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_leaked_vars_walker(Node *node, void *context);
@@ -446,7 +446,7 @@ aggregates_allow_partial_walker(Node *node, partial_agg_context *context)
 		if (aggref->aggdistinct || aggref->aggorder)
 		{
 			context->allowedtype = PAT_DISABLED;
-			return true;	/* abort search */
+			return true;		/* abort search */
 		}
 		aggTuple = SearchSysCache1(AGGFNOID,
 								   ObjectIdGetDatum(aggref->aggfnoid));
@@ -463,7 +463,7 @@ aggregates_allow_partial_walker(Node *node, partial_agg_context *context)
 		{
 			ReleaseSysCache(aggTuple);
 			context->allowedtype = PAT_DISABLED;
-			return true;	/* abort search */
+			return true;		/* abort search */
 		}
 
 		/*
@@ -479,7 +479,7 @@ aggregates_allow_partial_walker(Node *node, partial_agg_context *context)
 			context->allowedtype = PAT_INTERNAL_ONLY;
 
 		ReleaseSysCache(aggTuple);
-		return false; /* continue searching */
+		return false;			/* continue searching */
 	}
 	return expression_tree_walker(node, aggregates_allow_partial_walker,
 								  (void *) context);
@@ -1354,7 +1354,7 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 bool
 has_parallel_hazard(Node *node, bool allow_restricted)
 {
-	has_parallel_hazard_arg	context;
+	has_parallel_hazard_arg context;
 
 	context.allow_restricted = allow_restricted;
 	return has_parallel_hazard_walker(node, &context);
@@ -1371,16 +1371,16 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	 * recurse through Query objects to as to locate parallel-unsafe
 	 * constructs anywhere in the tree.
 	 *
-	 * Later, we'll be called again for specific quals, possibly after
-	 * some planning has been done, we may encounter SubPlan, SubLink,
-	 * or AlternativeSubLink nodes.  Currently, there's no need to recurse
-	 * through these; they can't be unsafe, since we've already cleared
-	 * the entire query of unsafe operations, and they're definitely
+	 * Later, we'll be called again for specific quals, possibly after some
+	 * planning has been done, we may encounter SubPlan, SubLink, or
+	 * AlternativeSubLink nodes.  Currently, there's no need to recurse
+	 * through these; they can't be unsafe, since we've already cleared the
+	 * entire query of unsafe operations, and they're definitely
 	 * parallel-restricted.
 	 */
 	if (IsA(node, Query))
 	{
-		Query *query = (Query *) node;
+		Query	   *query = (Query *) node;
 
 		if (query->rowMarks != NULL)
 			return true;
@@ -1390,12 +1390,12 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 								 has_parallel_hazard_walker,
 								 context, 0);
 	}
-	else if (IsA(node, SubPlan) || IsA(node, SubLink) ||
-			 IsA(node, AlternativeSubPlan) || IsA(node, Param))
+	else if (IsA(node, SubPlan) ||IsA(node, SubLink) ||
+			 IsA(node, AlternativeSubPlan) ||IsA(node, Param))
 	{
 		/*
-		 * Since we don't have the ability to push subplans down to workers
-		 * at present, we treat subplan references as parallel-restricted.
+		 * Since we don't have the ability to push subplans down to workers at
+		 * present, we treat subplan references as parallel-restricted.
 		 */
 		if (!context->allow_restricted)
 			return true;
@@ -1405,12 +1405,14 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	if (IsA(node, RestrictInfo))
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) node;
+
 		return has_parallel_hazard_walker((Node *) rinfo->clause, context);
 	}
 
 	/*
 	 * It is an error for a parallel worker to touch a temporary table in any
-	 * way, so we can't handle nodes whose type is the rowtype of such a table.
+	 * way, so we can't handle nodes whose type is the rowtype of such a
+	 * table.
 	 */
 	if (!context->allow_restricted)
 	{
@@ -1534,7 +1536,8 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 
 		foreach(opid, rcexpr->opnos)
 		{
-			Oid	opfuncid = get_opcode(lfirst_oid(opid));
+			Oid			opfuncid = get_opcode(lfirst_oid(opid));
+
 			if (parallel_too_dangerous(func_parallel(opfuncid), context))
 				return true;
 		}
@@ -1558,7 +1561,7 @@ parallel_too_dangerous(char proparallel, has_parallel_hazard_arg *context)
 static bool
 typeid_is_temp(Oid typeid)
 {
-	Oid				relid = get_typ_typrelid(typeid);
+	Oid			relid = get_typ_typrelid(typeid);
 
 	if (!OidIsValid(relid))
 		return false;
@@ -1870,8 +1873,8 @@ contain_leaked_vars_walker(Node *node, void *context)
 			/*
 			 * WHERE CURRENT OF doesn't contain function calls.  Moreover, it
 			 * is important that this can be pushed down into a
-			 * security_barrier view, since the planner must always generate
-			 * a TID scan when CURRENT OF is present -- c.f. cost_tidscan.
+			 * security_barrier view, since the planner must always generate a
+			 * TID scan when CURRENT OF is present -- c.f. cost_tidscan.
 			 */
 			return false;
 

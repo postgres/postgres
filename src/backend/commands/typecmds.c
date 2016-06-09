@@ -450,8 +450,8 @@ DefineType(List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(WARNING,
-					(errmsg("changing return type of function %s from %s to %s",
-							NameListToString(inputName), "opaque", typeName)));
+				 (errmsg("changing return type of function %s from %s to %s",
+						 NameListToString(inputName), "opaque", typeName)));
 			SetFunctionReturnType(inputOid, typoid);
 		}
 		else
@@ -467,15 +467,15 @@ DefineType(List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(WARNING,
-					(errmsg("changing return type of function %s from %s to %s",
-							NameListToString(outputName), "opaque", "cstring")));
+				 (errmsg("changing return type of function %s from %s to %s",
+						 NameListToString(outputName), "opaque", "cstring")));
 			SetFunctionReturnType(outputOid, CSTRINGOID);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("type output function %s must return type %s",
-					  NameListToString(outputName), "cstring")));
+					 errmsg("type output function %s must return type %s",
+							NameListToString(outputName), "cstring")));
 	}
 	if (receiveOid)
 	{
@@ -492,8 +492,8 @@ DefineType(List *names, List *parameters)
 		if (resulttype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				   errmsg("type send function %s must return type %s",
-						  NameListToString(sendName), "bytea")));
+					 errmsg("type send function %s must return type %s",
+							NameListToString(sendName), "bytea")));
 	}
 
 	/*
@@ -1888,8 +1888,8 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 	if (get_func_rettype(procOid) != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			  errmsg("type analyze function %s must return type %s",
-					 NameListToString(procname), "boolean")));
+				 errmsg("type analyze function %s must return type %s",
+						NameListToString(procname), "boolean")));
 
 	return procOid;
 }
@@ -3313,9 +3313,9 @@ AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/*
-	 * If it's a composite type, invoke ATExecChangeOwner so that we fix up the
-	 * pg_class entry properly.  That will call back to AlterTypeOwnerInternal
-	 * to take care of the pg_type entry(s).
+	 * If it's a composite type, invoke ATExecChangeOwner so that we fix up
+	 * the pg_class entry properly.  That will call back to
+	 * AlterTypeOwnerInternal to take care of the pg_type entry(s).
 	 */
 	if (typTup->typtype == TYPTYPE_COMPOSITE)
 		ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);

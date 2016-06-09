@@ -138,7 +138,7 @@ RemoveAccessMethodById(Oid amOid)
 
 /*
  * get_am_type_oid
- * 		Worker for various get_am_*_oid variants
+ *		Worker for various get_am_*_oid variants
  *
  * If missing_ok is false, throw an error if access method not found.  If
  * true, just return InvalidOid.
@@ -188,7 +188,7 @@ get_index_am_oid(const char *amname, bool missing_ok)
 
 /*
  * get_am_oid - given an access method name, look up its OID.
- * 		The type is not checked.
+ *		The type is not checked.
  */
 Oid
 get_am_oid(const char *amname, bool missing_ok)

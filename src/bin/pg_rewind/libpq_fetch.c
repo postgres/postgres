@@ -300,7 +300,7 @@ receiveFileChunks(const char *sql)
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log(PG_DEBUG,
-			  "received null value for chunk for file \"%s\", file has been deleted\n",
+				   "received null value for chunk for file \"%s\", file has been deleted\n",
 				   filename);
 			pg_free(filename);
 			PQclear(res);

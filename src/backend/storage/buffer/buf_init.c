@@ -187,11 +187,12 @@ BufferShmemSize(void)
 
 	/*
 	 * It would be nice to include the I/O locks in the BufferDesc, but that
-	 * would increase the size of a BufferDesc to more than one cache line, and
-	 * benchmarking has shown that keeping every BufferDesc aligned on a cache
-	 * line boundary is important for performance.  So, instead, the array of
-	 * I/O locks is allocated in a separate tranche.  Because those locks are
-	 * not highly contentended, we lay out the array with minimal padding.
+	 * would increase the size of a BufferDesc to more than one cache line,
+	 * and benchmarking has shown that keeping every BufferDesc aligned on a
+	 * cache line boundary is important for performance.  So, instead, the
+	 * array of I/O locks is allocated in a separate tranche.  Because those
+	 * locks are not highly contentended, we lay out the array with minimal
+	 * padding.
 	 */
 	size = add_size(size, mul_size(NBuffers, sizeof(LWLockMinimallyPadded)));
 	/* to allow aligning the above */

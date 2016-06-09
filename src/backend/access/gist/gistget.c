@@ -36,13 +36,13 @@
 static void
 gistkillitems(IndexScanDesc scan)
 {
-	GISTScanOpaque 	so = (GISTScanOpaque) scan->opaque;
-	Buffer			buffer;
-	Page			page;
-	OffsetNumber	offnum;
-	ItemId			iid;
-	int				i;
-	bool			killedsomething = false;
+	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
+	Buffer		buffer;
+	Page		page;
+	OffsetNumber offnum;
+	ItemId		iid;
+	int			i;
+	bool		killedsomething = false;
 
 	Assert(so->curBlkno != InvalidBlockNumber);
 	Assert(!XLogRecPtrIsInvalid(so->curPageLSN));
@@ -57,21 +57,22 @@ gistkillitems(IndexScanDesc scan)
 	page = BufferGetPage(buffer);
 
 	/*
-	 * If page LSN differs it means that the page was modified since the last read.
-	 * killedItems could be not valid so LP_DEAD hints applying is not safe.
+	 * If page LSN differs it means that the page was modified since the last
+	 * read. killedItems could be not valid so LP_DEAD hints applying is not
+	 * safe.
 	 */
-	if(PageGetLSN(page) != so->curPageLSN)
+	if (PageGetLSN(page) != so->curPageLSN)
 	{
 		UnlockReleaseBuffer(buffer);
-		so->numKilled = 0; /* reset counter */
+		so->numKilled = 0;		/* reset counter */
 		return;
 	}
 
 	Assert(GistPageIsLeaf(page));
 
 	/*
-	 * Mark all killedItems as dead. We need no additional recheck,
-	 * because, if page was modified, pageLSN must have changed.
+	 * Mark all killedItems as dead. We need no additional recheck, because,
+	 * if page was modified, pageLSN must have changed.
 	 */
 	for (i = 0; i < so->numKilled; i++)
 	{
@@ -390,7 +391,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-		ItemId      iid = PageGetItemId(page, i);
+		ItemId		iid = PageGetItemId(page, i);
 		IndexTuple	it;
 		bool		match;
 		bool		recheck;
@@ -400,10 +401,11 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		 * If the scan specifies not to return killed tuples, then we treat a
 		 * killed tuple as not passing the qual.
 		 */
-		if(scan->ignore_killed_tuples && ItemIdIsDead(iid))
+		if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
 			continue;
 
 		it = (IndexTuple) PageGetItem(page, iid);
+
 		/*
 		 * Must call gistindex_keytest in tempCxt, and clean up any leftover
 		 * junk afterward.
@@ -665,11 +667,11 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 					if (so->killedItems == NULL)
 					{
 						MemoryContext oldCxt =
-							MemoryContextSwitchTo(so->giststate->scanCxt);
+						MemoryContextSwitchTo(so->giststate->scanCxt);
 
 						so->killedItems =
 							(OffsetNumber *) palloc(MaxIndexTuplesPerPage
-								* sizeof(OffsetNumber));
+													* sizeof(OffsetNumber));
 
 						MemoryContextSwitchTo(oldCxt);
 					}
@@ -702,11 +704,11 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 				if (so->killedItems == NULL)
 				{
 					MemoryContext oldCxt =
-						MemoryContextSwitchTo(so->giststate->scanCxt);
+					MemoryContextSwitchTo(so->giststate->scanCxt);
 
 					so->killedItems =
 						(OffsetNumber *) palloc(MaxIndexTuplesPerPage
-							* sizeof(OffsetNumber));
+												* sizeof(OffsetNumber));
 
 					MemoryContextSwitchTo(oldCxt);
 				}

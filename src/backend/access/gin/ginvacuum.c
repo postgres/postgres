@@ -540,8 +540,10 @@ ginbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	{
 		/* Yes, so initialize stats to zeroes */
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+
 		/*
-		 * and cleanup any pending inserts  */
+		 * and cleanup any pending inserts
+		 */
 		ginInsertCleanup(&gvs.ginstate, !IsAutoVacuumWorkerProcess(),
 						 false, stats);
 	}

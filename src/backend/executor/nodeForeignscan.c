@@ -285,8 +285,8 @@ ExecReScanForeignScan(ForeignScanState *node)
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.  outerPlan may also be NULL, in which case there
-	 * is nothing to rescan at all.
+	 * first ExecProcNode.  outerPlan may also be NULL, in which case there is
+	 * nothing to rescan at all.
 	 */
 	if (outerPlan != NULL && outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan);

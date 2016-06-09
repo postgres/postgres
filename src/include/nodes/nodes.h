@@ -557,7 +557,7 @@ extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
 			 const struct Bitmapset *bms);
 extern void outDatum(struct StringInfoData *str, uintptr_t value,
-					 int typlen, bool typbyval);
+		 int typlen, bool typbyval);
 
 /*
  * nodes/{readfuncs.c,read.c}

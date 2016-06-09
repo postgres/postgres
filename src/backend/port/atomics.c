@@ -35,8 +35,7 @@ pg_spinlock_barrier(void)
 	 *
 	 * We use kill(0) for the fallback barrier as we assume that kernels on
 	 * systems old enough to require fallback barrier support will include an
-	 * appropriate barrier while checking the existence of the postmaster
-	 * pid.
+	 * appropriate barrier while checking the existence of the postmaster pid.
 	 */
 	(void) kill(PostmasterPid, 0);
 }

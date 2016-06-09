@@ -988,8 +988,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 			char	   *oldest_datname = get_database_name(oldest_datoid);
 
 			/*
-			 * Immediately kick autovacuum into action as we're already
-			 * in ERROR territory.
+			 * Immediately kick autovacuum into action as we're already in
+			 * ERROR territory.
 			 */
 			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
 
@@ -1134,8 +1134,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg_plural("database with OID %u must be vacuumed before %d more multixact member is used",
 							   "database with OID %u must be vacuumed before %d more multixact members are used",
-						MultiXactState->offsetStopLimit - nextOffset + nmembers,
-						MultiXactState->oldestMultiXactDB,
+					 MultiXactState->offsetStopLimit - nextOffset + nmembers,
+							   MultiXactState->oldestMultiXactDB,
 					MultiXactState->offsetStopLimit - nextOffset + nmembers),
 				 errhint("Execute a database-wide VACUUM in that database with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.")));
 

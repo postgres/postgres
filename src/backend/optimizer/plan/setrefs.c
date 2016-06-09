@@ -2100,6 +2100,7 @@ search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,
 				continue;
 			if (aggref->aggvariadic != tlistaggref->aggvariadic)
 				continue;
+
 			/*
 			 * it would be harmless to compare aggcombine and aggpartial, but
 			 * it's also unnecessary

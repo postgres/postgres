@@ -178,7 +178,7 @@ static void
 RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 {
 	Page		page;
-	BlockNumber	blockNum = InvalidBlockNumber,
+	BlockNumber blockNum = InvalidBlockNumber,
 				firstBlock = InvalidBlockNumber;
 	int			extraBlocks = 0;
 	int			lockWaiters = 0;
@@ -191,10 +191,10 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 		return;
 
 	/*
-	 * It might seem like multiplying the number of lock waiters by as much
-	 * as 20 is too aggressive, but benchmarking revealed that smaller numbers
-	 * were insufficient.  512 is just an arbitrary cap to prevent pathological
-	 * results.
+	 * It might seem like multiplying the number of lock waiters by as much as
+	 * 20 is too aggressive, but benchmarking revealed that smaller numbers
+	 * were insufficient.  512 is just an arbitrary cap to prevent
+	 * pathological results.
 	 */
 	extraBlocks = Min(512, lockWaiters * 20);
 
@@ -225,10 +225,10 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 	}
 
 	/*
-	 * Updating the upper levels of the free space map is too expensive
-	 * to do for every block, but it's worth doing once at the end to make
-	 * sure that subsequent insertion activity sees all of those nifty free
-	 * pages we just inserted.
+	 * Updating the upper levels of the free space map is too expensive to do
+	 * for every block, but it's worth doing once at the end to make sure that
+	 * subsequent insertion activity sees all of those nifty free pages we
+	 * just inserted.
 	 *
 	 * Note that we're using the freespace value that was reported for the
 	 * last block we added as if it were the freespace value for every block
@@ -547,8 +547,8 @@ loop:
 	}
 
 	/*
-	 * In addition to whatever extension we performed above, we always add
-	 * at least one block to satisfy our own request.
+	 * In addition to whatever extension we performed above, we always add at
+	 * least one block to satisfy our own request.
 	 *
 	 * XXX This does an lseek - rather expensive - but at the moment it is the
 	 * only way to accurately determine how many blocks are in a relation.  Is
