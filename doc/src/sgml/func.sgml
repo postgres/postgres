@@ -702,7 +702,7 @@
         <literal><function>ceil(<type>dp</type> or <type>numeric</type>)</function></literal>
        </entry>
        <entry>(same as input)</entry>
-       <entry>smallest integer not less than argument</entry>
+       <entry>nearest integer greater than or equal to argument</entry>
        <entry><literal>ceil(-42.8)</literal></entry>
        <entry><literal>-42</literal></entry>
       </row>
@@ -715,7 +715,7 @@
         <literal><function>ceiling(<type>dp</type> or <type>numeric</type>)</function></literal>
        </entry>
        <entry>(same as input)</entry>
-       <entry>smallest integer not less than argument (alias for <function>ceil</function>)</entry>
+       <entry>nearest integer greater than or equal to argument (same as <function>ceil</function>)</entry>
        <entry><literal>ceiling(-95.3)</literal></entry>
        <entry><literal>-95</literal></entry>
       </row>
@@ -768,7 +768,7 @@
         <literal><function>floor(<type>dp</type> or <type>numeric</type>)</function></literal>
        </entry>
        <entry>(same as input)</entry>
-       <entry>largest integer not greater than argument</entry>
+       <entry>nearest integer less than or equal to argument</entry>
        <entry><literal>floor(-42.8)</literal></entry>
        <entry><literal>-43</literal></entry>
       </row>
