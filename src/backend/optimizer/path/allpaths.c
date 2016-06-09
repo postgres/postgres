@@ -669,26 +669,26 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 {
-	int			parallel_degree = 1;
+	int			parallel_workers = 1;
 
 	/*
-	 * If the user has set the parallel_degree reloption, we decide what to do
+	 * If the user has set the parallel_workers reloption, we decide what to do
 	 * based on the value of that option.  Otherwise, we estimate a value.
 	 */
-	if (rel->rel_parallel_degree != -1)
+	if (rel->rel_parallel_workers != -1)
 	{
 		/*
-		 * If parallel_degree = 0 is set for this relation, bail out.  The
+		 * If parallel_workers = 0 is set for this relation, bail out.  The
 		 * user does not want a parallel path for this relation.
 		 */
-		if (rel->rel_parallel_degree == 0)
+		if (rel->rel_parallel_workers == 0)
 			return;
 
 		/*
-		 * Use the table parallel_degree, but don't go further than
-		 * max_parallel_degree.
+		 * Use the table parallel_workers, but don't go further than
+		 * max_parallel_workers_per_gather.
 		 */
-		parallel_degree = Min(rel->rel_parallel_degree, max_parallel_degree);
+		parallel_workers = Min(rel->rel_parallel_workers, max_parallel_workers_per_gather);
 	}
 	else
 	{
@@ -711,9 +711,9 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * sophisticated, but we need something here for now.
 		 */
 		while (rel->pages > parallel_threshold * 3 &&
-			   parallel_degree < max_parallel_degree)
+			   parallel_workers < max_parallel_workers_per_gather)
 		{
-			parallel_degree++;
+			parallel_workers++;
 			parallel_threshold *= 3;
 			if (parallel_threshold >= PG_INT32_MAX / 3)
 				break;
@@ -721,7 +721,7 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	/* Add an unordered partial path based on a parallel sequential scan. */
-	add_partial_path(rel, create_seqscan_path(root, rel, NULL, parallel_degree));
+	add_partial_path(rel, create_seqscan_path(root, rel, NULL, parallel_workers));
 }
 
 /*
@@ -1242,11 +1242,11 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	{
 		AppendPath *appendpath;
 		ListCell   *lc;
-		int			parallel_degree = 0;
+		int			parallel_workers = 0;
 
 		/*
-		 * Decide what parallel degree to request for this append path.  For
-		 * now, we just use the maximum parallel degree of any member.  It
+		 * Decide on the numebr of workers to request for this append path.  For
+		 * now, we just use the maximum value from among the members.  It
 		 * might be useful to use a higher number if the Append node were
 		 * smart enough to spread out the workers, but it currently isn't.
 		 */
@@ -1254,13 +1254,13 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		{
 			Path	   *path = lfirst(lc);
 
-			parallel_degree = Max(parallel_degree, path->parallel_degree);
+			parallel_workers = Max(parallel_workers, path->parallel_workers);
 		}
-		Assert(parallel_degree > 0);
+		Assert(parallel_workers > 0);
 
 		/* Generate a partial append path. */
 		appendpath = create_append_path(rel, partial_subpaths, NULL,
-										parallel_degree);
+										parallel_workers);
 		add_partial_path(rel, (Path *) appendpath);
 	}
 

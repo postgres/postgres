@@ -941,7 +941,7 @@ add_partial_path_precheck(RelOptInfo *parent_rel, Cost total_cost,
  */
 Path *
 create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
-					Relids required_outer, int parallel_degree)
+					Relids required_outer, int parallel_workers)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -950,9 +950,9 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->pathtarget = rel->reltarget;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
-	pathnode->parallel_aware = parallel_degree > 0 ? true : false;
+	pathnode->parallel_aware = parallel_workers > 0 ? true : false;
 	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = parallel_degree;
+	pathnode->parallel_workers = parallel_workers;
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
 
 	cost_seqscan(pathnode, root, rel, pathnode->param_info);
@@ -976,7 +976,7 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
 													 required_outer);
 	pathnode->parallel_aware = false;
 	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = 0;
+	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* samplescan has unordered result */
 
 	cost_samplescan(pathnode, root, rel, pathnode->param_info);
@@ -1033,7 +1033,7 @@ create_index_path(PlannerInfo *root,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = pathkeys;
 
 	/* Convert clauses to indexquals the executor can handle */
@@ -1082,7 +1082,7 @@ create_bitmap_heap_path(PlannerInfo *root,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->bitmapqual = bitmapqual;
@@ -1118,7 +1118,7 @@ create_bitmap_and_path(PlannerInfo *root,
 	 */
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
@@ -1154,7 +1154,7 @@ create_bitmap_or_path(PlannerInfo *root,
 	 */
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
@@ -1183,7 +1183,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->tidquals = tidquals;
@@ -1203,7 +1203,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
  */
 AppendPath *
 create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
-				   int parallel_degree)
+				   int parallel_workers)
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 	ListCell   *l;
@@ -1215,7 +1215,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
 															required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = parallel_degree;
+	pathnode->path.parallel_workers = parallel_workers;
 	pathnode->path.pathkeys = NIL;		/* result is always considered
 										 * unsorted */
 	pathnode->subpaths = subpaths;
@@ -1274,7 +1274,7 @@ create_merge_append_path(PlannerInfo *root,
 															required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpaths = subpaths;
 
@@ -1357,7 +1357,7 @@ create_result_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.param_info = NULL;	/* there are no other rels... */
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = NIL;
 	pathnode->quals = resconstantqual;
 
@@ -1398,7 +1398,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->path.pathkeys = subpath->pathkeys;
 
 	pathnode->subpath = subpath;
@@ -1463,7 +1463,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 
 	/*
 	 * Assume the output is unsorted, since we don't necessarily have pathkeys
@@ -1681,15 +1681,15 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = false;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->path.pathkeys = NIL;		/* Gather has unordered result */
 
 	pathnode->subpath = subpath;
 	pathnode->single_copy = false;
 
-	if (pathnode->path.parallel_degree == 0)
+	if (pathnode->path.parallel_workers == 0)
 	{
-		pathnode->path.parallel_degree = 1;
+		pathnode->path.parallel_workers = 1;
 		pathnode->path.pathkeys = subpath->pathkeys;
 		pathnode->single_copy = true;
 	}
@@ -1718,7 +1718,7 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 
@@ -1745,7 +1745,7 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 													 required_outer);
 	pathnode->parallel_aware = false;
 	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = 0;
+	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = pathkeys;
 
 	cost_functionscan(pathnode, root, rel, pathnode->param_info);
@@ -1771,7 +1771,7 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 													 required_outer);
 	pathnode->parallel_aware = false;
 	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = 0;
+	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	cost_valuesscan(pathnode, root, rel, pathnode->param_info);
@@ -1796,7 +1796,7 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 													 required_outer);
 	pathnode->parallel_aware = false;
 	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = 0;
+	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
 
 	cost_ctescan(pathnode, root, rel, pathnode->param_info);
@@ -1822,7 +1822,7 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 													 required_outer);
 	pathnode->parallel_aware = false;
 	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_degree = 0;
+	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	/* Cost is the same as for a regular CTE scan */
@@ -1861,7 +1861,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.rows = rows;
 	pathnode->path.startup_cost = startup_cost;
 	pathnode->path.total_cost = total_cost;
@@ -2001,8 +2001,8 @@ create_nestloop_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = joinrel->consider_parallel &&
 		outer_path->parallel_safe && inner_path->parallel_safe;
-	/* This is a foolish way to estimate parallel_degree, but for now... */
-	pathnode->path.parallel_degree = outer_path->parallel_degree;
+	/* This is a foolish way to estimate parallel_workers, but for now... */
+	pathnode->path.parallel_workers = outer_path->parallel_workers;
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->jointype = jointype;
 	pathnode->outerjoinpath = outer_path;
@@ -2064,8 +2064,8 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->jpath.path.parallel_aware = false;
 	pathnode->jpath.path.parallel_safe = joinrel->consider_parallel &&
 		outer_path->parallel_safe && inner_path->parallel_safe;
-	/* This is a foolish way to estimate parallel_degree, but for now... */
-	pathnode->jpath.path.parallel_degree = outer_path->parallel_degree;
+	/* This is a foolish way to estimate parallel_workers, but for now... */
+	pathnode->jpath.path.parallel_workers = outer_path->parallel_workers;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->jpath.jointype = jointype;
 	pathnode->jpath.outerjoinpath = outer_path;
@@ -2126,8 +2126,8 @@ create_hashjoin_path(PlannerInfo *root,
 	pathnode->jpath.path.parallel_aware = false;
 	pathnode->jpath.path.parallel_safe = joinrel->consider_parallel &&
 		outer_path->parallel_safe && inner_path->parallel_safe;
-	/* This is a foolish way to estimate parallel_degree, but for now... */
-	pathnode->jpath.path.parallel_degree = outer_path->parallel_degree;
+	/* This is a foolish way to estimate parallel_workers, but for now... */
+	pathnode->jpath.path.parallel_workers = outer_path->parallel_workers;
 
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
@@ -2177,7 +2177,7 @@ create_projection_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Projection does not change the sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
 
@@ -2303,7 +2303,7 @@ create_sort_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->path.pathkeys = pathkeys;
 
 	pathnode->subpath = subpath;
@@ -2348,7 +2348,7 @@ create_group_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Group doesn't change sort ordering */
 	pathnode->path.pathkeys = subpath->pathkeys;
 
@@ -2405,7 +2405,7 @@ create_upper_unique_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Unique doesn't change the input ordering */
 	pathnode->path.pathkeys = subpath->pathkeys;
 
@@ -2464,7 +2464,7 @@ create_agg_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	if (aggstrategy == AGG_SORTED)
 		pathnode->path.pathkeys = subpath->pathkeys;	/* preserves order */
 	else
@@ -2532,7 +2532,7 @@ create_groupingsets_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->subpath = subpath;
 
 	/*
@@ -2647,7 +2647,7 @@ create_minmaxagg_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	/* A MinMaxAggPath implies use of subplans, so cannot be parallel-safe */
 	pathnode->path.parallel_safe = false;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	/* Result is one unordered row */
 	pathnode->path.rows = 1;
 	pathnode->path.pathkeys = NIL;
@@ -2705,7 +2705,7 @@ create_windowagg_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* WindowAgg preserves the input sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
 
@@ -2773,7 +2773,7 @@ create_setop_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* SetOp preserves the input sort order if in sort mode */
 	pathnode->path.pathkeys =
 		(strategy == SETOP_SORTED) ? subpath->pathkeys : NIL;
@@ -2833,7 +2833,7 @@ create_recursiveunion_path(PlannerInfo *root,
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		leftpath->parallel_safe && rightpath->parallel_safe;
 	/* Foolish, but we'll do it like joins for now: */
-	pathnode->path.parallel_degree = leftpath->parallel_degree;
+	pathnode->path.parallel_workers = leftpath->parallel_workers;
 	/* RecursiveUnion result is always unsorted */
 	pathnode->path.pathkeys = NIL;
 
@@ -2871,7 +2871,7 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.param_info = NULL;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = false;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.rows = subpath->rows;
 
 	/*
@@ -2942,7 +2942,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.param_info = NULL;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = false;
-	pathnode->path.parallel_degree = 0;
+	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = NIL;
 
 	/*
@@ -3029,7 +3029,7 @@ create_limit_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe;
-	pathnode->path.parallel_degree = subpath->parallel_degree;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->path.rows = subpath->rows;
 	pathnode->path.startup_cost = subpath->startup_cost;
 	pathnode->path.total_cost = subpath->total_cost;

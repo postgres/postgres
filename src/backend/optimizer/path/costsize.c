@@ -113,7 +113,7 @@ int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 1.0e10;
 
-int			max_parallel_degree = 2;
+int			max_parallel_workers_per_gather = 2;
 
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
@@ -229,9 +229,9 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	cpu_run_cost += path->pathtarget->cost.per_tuple * path->rows;
 
 	/* Adjust costing for parallelism, if used. */
-	if (path->parallel_degree > 0)
+	if (path->parallel_workers > 0)
 	{
-		double		parallel_divisor = path->parallel_degree;
+		double		parallel_divisor = path->parallel_workers;
 		double		leader_contribution;
 
 		/*
@@ -245,7 +245,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 		 * estimate that the leader spends 30% of its time servicing each
 		 * worker, and the remainder executing the parallel plan.
 		 */
-		leader_contribution = 1.0 - (0.3 * path->parallel_degree);
+		leader_contribution = 1.0 - (0.3 * path->parallel_workers);
 		if (leader_contribution > 0)
 			parallel_divisor += leader_contribution;
 

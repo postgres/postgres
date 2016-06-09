@@ -270,7 +270,7 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
-			"parallel_degree",
+			"parallel_workers",
 			"Number of parallel processes that can be used per executor node for this relation.",
 			RELOPT_KIND_HEAP,
 			AccessExclusiveLock
@@ -1301,8 +1301,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)},
 		{"user_catalog_table", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, user_catalog_table)},
-		{"parallel_degree", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, parallel_degree)}
+		{"parallel_workers", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, parallel_workers)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);

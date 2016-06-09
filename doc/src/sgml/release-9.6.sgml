@@ -153,7 +153,7 @@
        <para>
         Use of parallel query execution can be controlled through the new
         configuration parameters
-        <xref linkend="guc-max-parallel-degree">,
+        <xref linkend="guc-max-parallel-workers-per-gather">,
         <xref linkend="guc-force-parallel-mode">,
         <xref linkend="guc-parallel-setup-cost">, and
         <xref linkend="guc-parallel-tuple-cost">.

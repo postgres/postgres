@@ -245,7 +245,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
 		parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
-		parse->utilityStmt == NULL && max_parallel_degree > 0 &&
+		parse->utilityStmt == NULL && max_parallel_workers_per_gather > 0 &&
 		!IsParallelWorker() && !IsolationIsSerializable() &&
 		!has_parallel_hazard((Node *) parse, true);
 
@@ -3622,7 +3622,7 @@ create_grouping_paths(PlannerInfo *root,
 		if (grouped_rel->partial_pathlist)
 		{
 			Path   *path = (Path *) linitial(grouped_rel->partial_pathlist);
-			double total_groups = path->rows * path->parallel_degree;
+			double total_groups = path->rows * path->parallel_workers;
 
 			path = (Path *) create_gather_path(root,
 											   grouped_rel,
@@ -3717,7 +3717,7 @@ create_grouping_paths(PlannerInfo *root,
 
 			if (hashaggtablesize < work_mem * 1024L)
 			{
-				double total_groups = path->rows * path->parallel_degree;
+				double total_groups = path->rows * path->parallel_workers;
 
 				path = (Path *) create_gather_path(root,
 												   grouped_rel,

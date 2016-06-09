@@ -1394,7 +1394,7 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 
 	gather_plan = make_gather(tlist,
 							  NIL,
-							  best_path->path.parallel_degree,
+							  best_path->path.parallel_workers,
 							  best_path->single_copy,
 							  subplan);
 
