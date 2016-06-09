@@ -235,19 +235,20 @@ typedef struct StdRdOptions
 /*
  * RelationIsUsedAsCatalogTable
  *		Returns whether the relation should be treated as a catalog table
- *		from the pov of logical decoding.  Note multiple eval or argument!
+ *		from the pov of logical decoding.  Note multiple eval of argument!
  */
 #define RelationIsUsedAsCatalogTable(relation)	\
 	((relation)->rd_options ?				\
 	 ((StdRdOptions *) (relation)->rd_options)->user_catalog_table : false)
 
 /*
- * RelationGetParallelDegree
- *		Returns the relation's parallel_workers.  Note multiple eval of argument!
+ * RelationGetParallelWorkers
+ *		Returns the relation's parallel_workers reloption setting.
+ *		Note multiple eval of argument!
  */
-#define RelationGetParallelDegree(relation, defaultpd) \
+#define RelationGetParallelWorkers(relation, defaultpw) \
 	((relation)->rd_options ? \
-	 ((StdRdOptions *) (relation)->rd_options)->parallel_workers : (defaultpd))
+	 ((StdRdOptions *) (relation)->rd_options)->parallel_workers : (defaultpw))
 
 
 /*

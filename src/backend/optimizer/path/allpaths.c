@@ -669,27 +669,14 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 {
-	int			parallel_workers = 1;
+	int			parallel_workers;
 
 	/*
-	 * If the user has set the parallel_workers reloption, we decide what to do
-	 * based on the value of that option.  Otherwise, we estimate a value.
+	 * If the user has set the parallel_workers reloption, use that; otherwise
+	 * select a default number of workers.
 	 */
 	if (rel->rel_parallel_workers != -1)
-	{
-		/*
-		 * If parallel_workers = 0 is set for this relation, bail out.  The
-		 * user does not want a parallel path for this relation.
-		 */
-		if (rel->rel_parallel_workers == 0)
-			return;
-
-		/*
-		 * Use the table parallel_workers, but don't go further than
-		 * max_parallel_workers_per_gather.
-		 */
-		parallel_workers = Min(rel->rel_parallel_workers, max_parallel_workers_per_gather);
-	}
+		parallel_workers = rel->rel_parallel_workers;
 	else
 	{
 		int			parallel_threshold = 1000;
@@ -706,19 +693,28 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 			return;
 
 		/*
-		 * Limit the degree of parallelism logarithmically based on the size
-		 * of the relation.  This probably needs to be a good deal more
+		 * Select the number of workers based on the log of the size of the
+		 * relation.  This probably needs to be a good deal more
 		 * sophisticated, but we need something here for now.
 		 */
-		while (rel->pages > parallel_threshold * 3 &&
-			   parallel_workers < max_parallel_workers_per_gather)
+		parallel_workers = 1;
+		while (rel->pages > parallel_threshold * 3)
 		{
 			parallel_workers++;
 			parallel_threshold *= 3;
 			if (parallel_threshold >= PG_INT32_MAX / 3)
-				break;
+				break;			/* avoid overflow */
 		}
 	}
+
+	/*
+	 * In no case use more than max_parallel_workers_per_gather workers.
+	 */
+	parallel_workers = Min(parallel_workers, max_parallel_workers_per_gather);
+
+	/* If any limit was set to zero, the user doesn't want a parallel scan. */
+	if (parallel_workers <= 0)
+		return;
 
 	/* Add an unordered partial path based on a parallel sequential scan. */
 	add_partial_path(rel, create_seqscan_path(root, rel, NULL, parallel_workers));
