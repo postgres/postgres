@@ -490,6 +490,8 @@ typedef struct RelOptInfo
 
 	/* default result targetlist for Paths scanning this relation */
 	struct PathTarget *reltarget;		/* list of Vars/Exprs, cost, width */
+	bool		reltarget_has_non_vars;	/* true if any expression in
+										 * PathTarget is a non-Var */
 
 	/* materialization information */
 	List	   *pathlist;		/* Path structures */

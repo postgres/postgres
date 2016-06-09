@@ -393,6 +393,7 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 
 			rel->reltarget->exprs = lappend(rel->reltarget->exprs,
 											copyObject(phinfo->ph_var));
+			rel->reltarget_has_non_vars = true;
 			/* reltarget's cost and width fields will be updated later */
 		}
 	}
@@ -427,6 +428,7 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 				/* Yup, add it to the output */
 				joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
 													phinfo->ph_var);
+				joinrel->reltarget_has_non_vars = true;
 				joinrel->reltarget->width += phinfo->ph_width;
 
 				/*

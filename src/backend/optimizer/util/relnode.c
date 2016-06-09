@@ -109,6 +109,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->consider_parallel = false;		/* might get changed later */
 	rel->rel_parallel_workers = -1; /* set up in GetRelationInfo */
 	rel->reltarget = create_empty_pathtarget();
+	rel->reltarget_has_non_vars = false;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
 	rel->partial_pathlist = NIL;
@@ -396,6 +397,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->consider_param_startup = false;
 	joinrel->consider_parallel = false;
 	joinrel->reltarget = create_empty_pathtarget();
+	joinrel->reltarget_has_non_vars = false;
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
 	joinrel->partial_pathlist = NIL;
@@ -506,8 +508,8 @@ build_join_rel(PlannerInfo *root,
 	 * Set the consider_parallel flag if this joinrel could potentially be
 	 * scanned within a parallel worker.  If this flag is false for either
 	 * inner_rel or outer_rel, then it must be false for the joinrel also.
-	 * Even if both are true, there might be parallel-restricted quals at our
-	 * level.
+	 * Even if both are true, there might be parallel-restricted expressions
+	 * in the targetlist or quals.
 	 *
 	 * Note that if there are more than two rels in this relation, they could
 	 * be divided between inner_rel and outer_rel in any arbitrary way.  We
@@ -517,7 +519,9 @@ build_join_rel(PlannerInfo *root,
 	 * here.
 	 */
 	if (inner_rel->consider_parallel && outer_rel->consider_parallel &&
-		!has_parallel_hazard((Node *) restrictlist, false))
+		!has_parallel_hazard((Node *) restrictlist, false) &&
+		!(joinrel->reltarget_has_non_vars &&
+		  has_parallel_hazard((Node *) joinrel->reltarget->exprs, false)))
 		joinrel->consider_parallel = true;
 
 	/*

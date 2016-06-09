@@ -608,6 +608,15 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 	if (has_parallel_hazard((Node *) rel->baserestrictinfo, false))
 		return;
 
+	/*
+	 * If the relation's outputs are not parallel-safe, we must give up.
+	 * In the common case where the relation only outputs Vars, this check is
+	 * very cheap; otherwise, we have to do more work.
+	 */
+	if (rel->reltarget_has_non_vars &&
+		has_parallel_hazard((Node *) rel->reltarget->exprs, false))
+		return;
+
 	/* We have a winner. */
 	rel->consider_parallel = true;
 }
@@ -971,6 +980,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->reltarget->exprs,
 								   appinfo);
+		childrel->reltarget_has_non_vars = rel->reltarget_has_non_vars;
 
 		/*
 		 * We have to make child entries in the EquivalenceClass data
