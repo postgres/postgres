@@ -4,7 +4,8 @@ MODULE_big = pg_buffercache
 OBJS = pg_buffercache_pages.o $(WIN32RES)
 
 EXTENSION = pg_buffercache
-DATA = pg_buffercache--1.1.sql pg_buffercache--1.0--1.1.sql pg_buffercache--unpackaged--1.0.sql
+DATA = pg_buffercache--1.2.sql pg_buffercache--1.1--1.2.sql \
+	pg_buffercache--1.0--1.1.sql pg_buffercache--unpackaged--1.0.sql
 PGFILEDESC = "pg_buffercache - monitoring of shared buffer cache in real-time"
 
 ifdef USE_PGXS
