@@ -1,4 +1,4 @@
-/* contrib/pageinspect/pageinspect--1.4.sql */
+/* contrib/pageinspect/pageinspect--1.5.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pageinspect" to load this file. \quit
@@ -9,12 +9,12 @@
 CREATE FUNCTION get_raw_page(text, int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'get_raw_page'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 CREATE FUNCTION get_raw_page(text, text, int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'get_raw_page_fork'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- page_header()
@@ -30,7 +30,7 @@ CREATE FUNCTION page_header(IN page bytea,
     OUT version smallint,
     OUT prune_xid xid)
 AS 'MODULE_PATHNAME', 'page_header'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- heap_page_items()
@@ -52,7 +52,7 @@ CREATE FUNCTION heap_page_items(IN page bytea,
     OUT t_data bytea)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'heap_page_items'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- tuple_data_split()
@@ -64,7 +64,7 @@ CREATE FUNCTION tuple_data_split(rel_oid oid,
     t_bits text)
 RETURNS bytea[]
 AS 'MODULE_PATHNAME','tuple_data_split'
-LANGUAGE C;
+LANGUAGE C PARALLEL SAFE;
 
 CREATE FUNCTION tuple_data_split(rel_oid oid,
     t_data bytea,
@@ -74,7 +74,7 @@ CREATE FUNCTION tuple_data_split(rel_oid oid,
     do_detoast bool)
 RETURNS bytea[]
 AS 'MODULE_PATHNAME','tuple_data_split'
-LANGUAGE C;
+LANGUAGE C PARALLEL SAFE;
 
 --
 -- heap_page_item_attrs()
@@ -121,7 +121,7 @@ SELECT lp,
          do_detoast)
          AS t_attrs
   FROM heap_page_items(page);
-$$ LANGUAGE SQL;
+$$ LANGUAGE SQL PARALLEL SAFE;
 
 CREATE FUNCTION heap_page_item_attrs(IN page bytea, IN rel_oid regclass,
     OUT lp smallint,
@@ -141,7 +141,7 @@ CREATE FUNCTION heap_page_item_attrs(IN page bytea, IN rel_oid regclass,
     )
 RETURNS SETOF record AS $$
 SELECT * from heap_page_item_attrs(page, rel_oid, false);
-$$ LANGUAGE SQL;
+$$ LANGUAGE SQL PARALLEL SAFE;
 
 --
 -- bt_metap()
@@ -154,7 +154,7 @@ CREATE FUNCTION bt_metap(IN relname text,
     OUT fastroot int4,
     OUT fastlevel int4)
 AS 'MODULE_PATHNAME', 'bt_metap'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- bt_page_stats()
@@ -172,7 +172,7 @@ CREATE FUNCTION bt_page_stats(IN relname text, IN blkno int4,
     OUT btpo int4,
     OUT btpo_flags int4)
 AS 'MODULE_PATHNAME', 'bt_page_stats'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- bt_page_items()
@@ -186,7 +186,7 @@ CREATE FUNCTION bt_page_items(IN relname text, IN blkno int4,
     OUT data text)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'bt_page_items'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- brin_page_type()
@@ -194,7 +194,7 @@ LANGUAGE C STRICT;
 CREATE FUNCTION brin_page_type(IN page bytea)
 RETURNS text
 AS 'MODULE_PATHNAME', 'brin_page_type'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- brin_metapage_info()
@@ -202,7 +202,7 @@ LANGUAGE C STRICT;
 CREATE FUNCTION brin_metapage_info(IN page bytea, OUT magic text,
 	OUT version integer, OUT pagesperrange integer, OUT lastrevmappage bigint)
 AS 'MODULE_PATHNAME', 'brin_metapage_info'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- brin_revmap_data()
@@ -211,7 +211,7 @@ CREATE FUNCTION brin_revmap_data(IN page bytea,
 	OUT pages tid)
 RETURNS SETOF tid
 AS 'MODULE_PATHNAME', 'brin_revmap_data'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- brin_page_items()
@@ -226,7 +226,7 @@ CREATE FUNCTION brin_page_items(IN page bytea, IN index_oid regclass,
 	OUT value text)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'brin_page_items'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- fsm_page_contents()
@@ -234,7 +234,7 @@ LANGUAGE C STRICT;
 CREATE FUNCTION fsm_page_contents(IN page bytea)
 RETURNS text
 AS 'MODULE_PATHNAME', 'fsm_page_contents'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- GIN functions
@@ -255,7 +255,7 @@ CREATE FUNCTION gin_metapage_info(IN page bytea,
     OUT n_entries bigint,
     OUT version int4)
 AS 'MODULE_PATHNAME', 'gin_metapage_info'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- gin_page_opaque_info()
@@ -265,7 +265,7 @@ CREATE FUNCTION gin_page_opaque_info(IN page bytea,
     OUT maxoff int4,
     OUT flags text[])
 AS 'MODULE_PATHNAME', 'gin_page_opaque_info'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
 
 --
 -- gin_leafpage_items()
@@ -276,4 +276,4 @@ CREATE FUNCTION gin_leafpage_items(IN page bytea,
     OUT tids tid[])
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'gin_leafpage_items'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT PARALLEL SAFE;
