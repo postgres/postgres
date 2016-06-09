@@ -4,7 +4,8 @@ MODULE_big = pg_freespacemap
 OBJS = pg_freespacemap.o $(WIN32RES)
 
 EXTENSION = pg_freespacemap
-DATA = pg_freespacemap--1.0.sql pg_freespacemap--unpackaged--1.0.sql
+DATA = pg_freespacemap--1.1.sql pg_freespacemap--1.0--1.1.sql \
+	pg_freespacemap--unpackaged--1.0.sql
 PGFILEDESC = "pg_freespacemap - monitoring of free space map"
 
 ifdef USE_PGXS

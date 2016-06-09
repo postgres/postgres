@@ -1,5 +1,5 @@
 # pg_freespacemap extension
 comment = 'examine the free space map (FSM)'
-default_version = '1.0'
+default_version = '1.1'
 module_pathname = '$libdir/pg_freespacemap'
 relocatable = true
