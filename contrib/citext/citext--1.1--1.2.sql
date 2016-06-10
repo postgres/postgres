@@ -42,13 +42,13 @@ ALTER FUNCTION split_part(citext, citext, int) PARALLEL SAFE;
 ALTER FUNCTION translate(citext, citext, text) PARALLEL SAFE;
 
 UPDATE pg_proc SET proparallel = 's'
-WHERE oid = 'min(citext)'::regprocedure;
+WHERE oid = 'min(citext)'::pg_catalog.regprocedure;
 
 UPDATE pg_proc SET proparallel = 's'
-WHERE oid = 'max(citext)'::regprocedure;
+WHERE oid = 'max(citext)'::pg_catalog.regprocedure;
 
 UPDATE pg_aggregate SET aggcombinefn = 'citext_smaller'
-WHERE aggfnoid = 'max(citext)'::regprocedure;
+WHERE aggfnoid = 'max(citext)'::pg_catalog.regprocedure;
 
 UPDATE pg_aggregate SET aggcombinefn = 'citext_larger'
-WHERE aggfnoid = 'max(citext)'::regprocedure;
+WHERE aggfnoid = 'max(citext)'::pg_catalog.regprocedure;
