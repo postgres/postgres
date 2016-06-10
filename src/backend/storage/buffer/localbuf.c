@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "access/parallel.h"
 #include "catalog/catalog.h"
 #include "executor/instrument.h"
 #include "storage/buf_internals.h"
@@ -411,6 +412,19 @@ InitLocalBuffers(void)
 	int			nbufs = num_temp_buffers;
 	HASHCTL		info;
 	int			i;
+
+	/*
+	 * Parallel workers can't access data in temporary tables, because they
+	 * have no visibility into the local buffers of their leader.  This is a
+	 * convenient, low-cost place to provide a backstop check for that.  Note
+	 * that we don't wish to prevent a parallel worker from accessing catalog
+	 * metadata about a temp table, so checks at higher levels would be
+	 * inappropriate.
+	 */
+	if (IsParallelWorker())
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot access temporary tables during a parallel operation")));
 
 	/* Allocate and zero buffer headers and auxiliary arrays */
 	LocalBufferDescriptors = (BufferDesc *) calloc(nbufs, sizeof(BufferDesc));

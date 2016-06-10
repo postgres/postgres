@@ -1131,13 +1131,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
-	{
-		if (IsParallelWorker())
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-					 errmsg("cannot access temporary tables during a parallel operation")));
 		MyXactAccessedTempRel = true;
-	}
 
 	pgstat_initstats(r);
 
@@ -1183,13 +1177,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
-	{
-		if (IsParallelWorker())
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-					 errmsg("cannot access temporary tables during a parallel operation")));
 		MyXactAccessedTempRel = true;
-	}
 
 	pgstat_initstats(r);
 

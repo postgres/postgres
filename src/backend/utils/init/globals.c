@@ -71,6 +71,8 @@ char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
 
 BackendId	MyBackendId = InvalidBackendId;
 
+BackendId	ParallelMasterBackendId = InvalidBackendId;
+
 Oid			MyDatabaseId = InvalidOid;
 
 Oid			MyDatabaseTableSpace = InvalidOid;

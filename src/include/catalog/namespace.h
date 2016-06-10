@@ -125,6 +125,10 @@ extern bool isAnyTempNamespace(Oid namespaceId);
 extern bool isOtherTempNamespace(Oid namespaceId);
 extern int	GetTempNamespaceBackendId(Oid namespaceId);
 extern Oid	GetTempToastNamespace(void);
+extern void GetTempNamespaceState(Oid *tempNamespaceId,
+					  Oid *tempToastNamespaceId);
+extern void SetTempNamespaceState(Oid tempNamespaceId,
+					  Oid tempToastNamespaceId);
 extern void ResetTempTableNamespace(void);
 
 extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);

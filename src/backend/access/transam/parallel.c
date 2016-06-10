@@ -17,6 +17,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/parallel.h"
+#include "catalog/namespace.h"
 #include "commands/async.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -67,6 +68,8 @@ typedef struct FixedParallelState
 	Oid			database_id;
 	Oid			authenticated_user_id;
 	Oid			current_user_id;
+	Oid			temp_namespace_id;
+	Oid			temp_toast_namespace_id;
 	int			sec_context;
 	PGPROC	   *parallel_master_pgproc;
 	pid_t		parallel_master_pid;
@@ -288,6 +291,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	fps->database_id = MyDatabaseId;
 	fps->authenticated_user_id = GetAuthenticatedUserId();
 	GetUserIdAndSecContext(&fps->current_user_id, &fps->sec_context);
+	GetTempNamespaceState(&fps->temp_namespace_id,
+						  &fps->temp_toast_namespace_id);
 	fps->parallel_master_pgproc = MyProc;
 	fps->parallel_master_pid = MyProcPid;
 	fps->parallel_master_backend_id = MyBackendId;
@@ -1018,6 +1023,13 @@ ParallelWorkerMain(Datum main_arg)
 
 	/* Restore user ID and security context. */
 	SetUserIdAndSecContext(fps->current_user_id, fps->sec_context);
+
+	/* Restore temp-namespace state to ensure search path matches leader's. */
+	SetTempNamespaceState(fps->temp_namespace_id,
+						  fps->temp_toast_namespace_id);
+
+	/* Set ParallelMasterBackendId so we know how to address temp relations. */
+	ParallelMasterBackendId = fps->parallel_master_backend_id;
 
 	/*
 	 * We've initialized all of our state now; nothing should change

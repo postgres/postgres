@@ -1004,7 +1004,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 			break;
 		case RELPERSISTENCE_TEMP:
 			if (isTempOrTempToastNamespace(relform->relnamespace))
-				backend = MyBackendId;
+				backend = BackendIdForTempRelations();
 			else
 			{
 				/* Do it the hard way. */

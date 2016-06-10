@@ -115,7 +115,6 @@ static bool has_parallel_hazard_walker(Node *node,
 						   has_parallel_hazard_arg *context);
 static bool parallel_too_dangerous(char proparallel,
 					   has_parallel_hazard_arg *context);
-static bool typeid_is_temp(Oid typeid);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_leaked_vars_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
@@ -1410,49 +1409,6 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	}
 
 	/*
-	 * It is an error for a parallel worker to touch a temporary table in any
-	 * way, so we can't handle nodes whose type is the rowtype of such a
-	 * table.
-	 */
-	if (!context->allow_restricted)
-	{
-		switch (nodeTag(node))
-		{
-			case T_Var:
-			case T_Const:
-			case T_Param:
-			case T_Aggref:
-			case T_WindowFunc:
-			case T_ArrayRef:
-			case T_FuncExpr:
-			case T_NamedArgExpr:
-			case T_OpExpr:
-			case T_DistinctExpr:
-			case T_NullIfExpr:
-			case T_FieldSelect:
-			case T_FieldStore:
-			case T_RelabelType:
-			case T_CoerceViaIO:
-			case T_ArrayCoerceExpr:
-			case T_ConvertRowtypeExpr:
-			case T_CaseExpr:
-			case T_CaseTestExpr:
-			case T_ArrayExpr:
-			case T_RowExpr:
-			case T_CoalesceExpr:
-			case T_MinMaxExpr:
-			case T_CoerceToDomain:
-			case T_CoerceToDomainValue:
-			case T_SetToDefault:
-				if (typeid_is_temp(exprType(node)))
-					return true;
-				break;
-			default:
-				break;
-		}
-	}
-
-	/*
 	 * For each node that might potentially call a function, we need to
 	 * examine the pg_proc.proparallel marking for that function to see
 	 * whether it's safe enough for the current value of allow_restricted.
@@ -1556,17 +1512,6 @@ parallel_too_dangerous(char proparallel, has_parallel_hazard_arg *context)
 		return proparallel == PROPARALLEL_UNSAFE;
 	else
 		return proparallel != PROPARALLEL_SAFE;
-}
-
-static bool
-typeid_is_temp(Oid typeid)
-{
-	Oid			relid = get_typ_typrelid(typeid);
-
-	if (!OidIsValid(relid))
-		return false;
-
-	return (get_rel_persistence(relid) == RELPERSISTENCE_TEMP);
 }
 
 /*****************************************************************************
