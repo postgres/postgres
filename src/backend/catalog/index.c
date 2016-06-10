@@ -3408,7 +3408,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		HeapTuple	indexTuple;
 		Form_pg_index indexForm;
 		bool		index_bad;
-		bool		early_vacuum_enabled = EarlyPruningEnabled(heapRelation);
+		bool		early_pruning_enabled = EarlyPruningEnabled(heapRelation);
 
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
@@ -3423,11 +3423,11 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 					 !indexForm->indislive);
 		if (index_bad ||
 			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain) ||
-			early_vacuum_enabled)
+			early_pruning_enabled)
 		{
-			if (!indexInfo->ii_BrokenHotChain && !early_vacuum_enabled)
+			if (!indexInfo->ii_BrokenHotChain && !early_pruning_enabled)
 				indexForm->indcheckxmin = false;
-			else if (index_bad || early_vacuum_enabled)
+			else if (index_bad || early_pruning_enabled)
 				indexForm->indcheckxmin = true;
 			indexForm->indisvalid = true;
 			indexForm->indisready = true;
