@@ -113,8 +113,6 @@ static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool has_parallel_hazard_walker(Node *node,
 						   has_parallel_hazard_arg *context);
-static bool parallel_too_dangerous(char proparallel,
-					   has_parallel_hazard_arg *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_leaked_vars_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
@@ -994,95 +992,33 @@ contain_mutable_functions(Node *clause)
 }
 
 static bool
+contain_mutable_functions_checker(Oid func_id, void *context)
+{
+	return (func_volatile(func_id) != PROVOLATILE_IMMUTABLE);
+}
+
+static bool
 contain_mutable_functions_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
+	/* Check for mutable functions in node itself */
+	if (check_functions_in_node(node, contain_mutable_functions_checker,
+								context))
+		return true;
 
-		if (func_volatile(expr->funcid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
+	/*
+	 * It should be safe to treat MinMaxExpr as immutable, because it will
+	 * depend on a non-cross-type btree comparison function, and those should
+	 * always be immutable.  Treating XmlExpr as immutable is more dubious,
+	 * and treating CoerceToDomain as immutable is outright dangerous.  But we
+	 * have done so historically, and changing this would probably cause more
+	 * problems than it would fix.  In practice, if you have a non-immutable
+	 * domain constraint you are in for pain anyhow.
+	 */
 
-		set_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, DistinctExpr))
-	{
-		DistinctExpr *expr = (DistinctExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ScalarArrayOpExpr))
-	{
-		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-		set_sa_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, CoerceViaIO))
-	{
-		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid			iofunc;
-		Oid			typioparam;
-		bool		typisvarlena;
-
-		/* check the result type's input function */
-		getTypeInputInfo(expr->resulttype,
-						 &iofunc, &typioparam);
-		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* check the input type's output function */
-		getTypeOutputInfo(exprType((Node *) expr->arg),
-						  &iofunc, &typisvarlena);
-		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ArrayCoerceExpr))
-	{
-		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-
-		if (OidIsValid(expr->elemfuncid) &&
-			func_volatile(expr->elemfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, RowCompareExpr))
-	{
-		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
-		ListCell   *opid;
-
-		foreach(opid, rcexpr->opnos)
-		{
-			if (op_volatile(lfirst_oid(opid)) != PROVOLATILE_IMMUTABLE)
-				return true;
-		}
-		/* else fall through to check args */
-	}
-	else if (IsA(node, Query))
+	/* Recurse to check arguments */
+	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
 		return query_tree_walker((Query *) node,
@@ -1122,110 +1058,29 @@ contain_volatile_functions(Node *clause)
 	return contain_volatile_functions_walker(clause, NULL);
 }
 
-bool
-contain_volatile_functions_not_nextval(Node *clause)
+static bool
+contain_volatile_functions_checker(Oid func_id, void *context)
 {
-	return contain_volatile_functions_not_nextval_walker(clause, NULL);
+	return (func_volatile(func_id) == PROVOLATILE_VOLATILE);
 }
 
-/*
- * General purpose code for checking expression volatility.
- *
- * Special purpose code for use in COPY is almost identical to this,
- * so any changes here may also be needed in other contain_volatile...
- * functions.
- */
 static bool
 contain_volatile_functions_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
+	/* Check for volatile functions in node itself */
+	if (check_functions_in_node(node, contain_volatile_functions_checker,
+								context))
+		return true;
 
-		if (func_volatile(expr->funcid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
+	/*
+	 * See notes in contain_mutable_functions_walker about why we treat
+	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable.
+	 */
 
-		set_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, DistinctExpr))
-	{
-		DistinctExpr *expr = (DistinctExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ScalarArrayOpExpr))
-	{
-		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-		set_sa_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, CoerceViaIO))
-	{
-		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid			iofunc;
-		Oid			typioparam;
-		bool		typisvarlena;
-
-		/* check the result type's input function */
-		getTypeInputInfo(expr->resulttype,
-						 &iofunc, &typioparam);
-		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
-			return true;
-		/* check the input type's output function */
-		getTypeOutputInfo(exprType((Node *) expr->arg),
-						  &iofunc, &typisvarlena);
-		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ArrayCoerceExpr))
-	{
-		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-
-		if (OidIsValid(expr->elemfuncid) &&
-			func_volatile(expr->elemfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, RowCompareExpr))
-	{
-		/* RowCompare probably can't have volatile ops, but check anyway */
-		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
-		ListCell   *opid;
-
-		foreach(opid, rcexpr->opnos)
-		{
-			if (op_volatile(lfirst_oid(opid)) == PROVOLATILE_VOLATILE)
-				return true;
-		}
-		/* else fall through to check args */
-	}
-	else if (IsA(node, Query))
+	/* Recurse to check arguments */
+	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
 		return query_tree_walker((Query *) node,
@@ -1237,104 +1092,48 @@ contain_volatile_functions_walker(Node *node, void *context)
 }
 
 /*
- * Special purpose version of contain_volatile_functions for use in COPY
+ * Special purpose version of contain_volatile_functions() for use in COPY:
+ * ignore nextval(), but treat all other functions normally.
  */
+bool
+contain_volatile_functions_not_nextval(Node *clause)
+{
+	return contain_volatile_functions_not_nextval_walker(clause, NULL);
+}
+
+static bool
+contain_volatile_functions_not_nextval_checker(Oid func_id, void *context)
+{
+	return (func_id != F_NEXTVAL_OID &&
+			func_volatile(func_id) == PROVOLATILE_VOLATILE);
+}
+
 static bool
 contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
+	/* Check for volatile functions in node itself */
+	if (check_functions_in_node(node,
+							  contain_volatile_functions_not_nextval_checker,
+								context))
+		return true;
 
-		/*
-		 * For this case only, we want to ignore the volatility of the
-		 * nextval() function, since some callers want this.
-		 */
-		if (expr->funcid != F_NEXTVAL_OID &&
-			func_volatile(expr->funcid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
+	/*
+	 * See notes in contain_mutable_functions_walker about why we treat
+	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable.
+	 */
 
-		set_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, DistinctExpr))
+	/* Recurse to check arguments */
+	if (IsA(node, Query))
 	{
-		DistinctExpr *expr = (DistinctExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
+		/* Recurse into subselects */
+		return query_tree_walker((Query *) node,
+							   contain_volatile_functions_not_nextval_walker,
+								 context, 0);
 	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ScalarArrayOpExpr))
-	{
-		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-		set_sa_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, CoerceViaIO))
-	{
-		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid			iofunc;
-		Oid			typioparam;
-		bool		typisvarlena;
-
-		/* check the result type's input function */
-		getTypeInputInfo(expr->resulttype,
-						 &iofunc, &typioparam);
-		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
-			return true;
-		/* check the input type's output function */
-		getTypeOutputInfo(exprType((Node *) expr->arg),
-						  &iofunc, &typisvarlena);
-		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ArrayCoerceExpr))
-	{
-		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-
-		if (OidIsValid(expr->elemfuncid) &&
-			func_volatile(expr->elemfuncid) == PROVOLATILE_VOLATILE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, RowCompareExpr))
-	{
-		/* RowCompare probably can't have volatile ops, but check anyway */
-		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
-		ListCell   *opid;
-
-		foreach(opid, rcexpr->opnos)
-		{
-			if (op_volatile(lfirst_oid(opid)) == PROVOLATILE_VOLATILE)
-				return true;
-		}
-		/* else fall through to check args */
-	}
-	return expression_tree_walker(node, contain_volatile_functions_not_nextval_walker,
+	return expression_tree_walker(node,
+							   contain_volatile_functions_not_nextval_walker,
 								  context);
 }
 
@@ -1343,12 +1142,12 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
  *****************************************************************************/
 
 /*
- * Check whether a node tree contains parallel hazards.  This is used both
- * on the entire query tree, to see whether the query can be parallelized at
- * all, and also to evaluate whether a particular expression is safe to
- * run in a parallel worker.  We could separate these concerns into two
- * different functions, but there's enough overlap that it doesn't seem
- * worthwhile.
+ * Check whether a node tree contains parallel hazards.  This is used both on
+ * the entire query tree, to see whether the query can be parallelized at all
+ * (with allow_restricted = true), and also to evaluate whether a particular
+ * expression is safe to run within a parallel worker (with allow_restricted =
+ * false).  We could separate these concerns into two different functions, but
+ * there's enough overlap that it doesn't seem worthwhile.
  */
 bool
 has_parallel_hazard(Node *node, bool allow_restricted)
@@ -1360,27 +1159,89 @@ has_parallel_hazard(Node *node, bool allow_restricted)
 }
 
 static bool
+has_parallel_hazard_checker(Oid func_id, void *context)
+{
+	char		proparallel = func_parallel(func_id);
+
+	if (((has_parallel_hazard_arg *) context)->allow_restricted)
+		return (proparallel == PROPARALLEL_UNSAFE);
+	else
+		return (proparallel != PROPARALLEL_SAFE);
+}
+
+static bool
 has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 {
 	if (node == NULL)
 		return false;
 
+	/* Check for hazardous functions in node itself */
+	if (check_functions_in_node(node, has_parallel_hazard_checker,
+								context))
+		return true;
+
 	/*
-	 * When we're first invoked on a completely unplanned tree, we must
-	 * recurse through Query objects to as to locate parallel-unsafe
-	 * constructs anywhere in the tree.
-	 *
-	 * Later, we'll be called again for specific quals, possibly after some
-	 * planning has been done, we may encounter SubPlan, SubLink, or
-	 * AlternativeSubLink nodes.  Currently, there's no need to recurse
-	 * through these; they can't be unsafe, since we've already cleared the
-	 * entire query of unsafe operations, and they're definitely
+	 * It should be OK to treat MinMaxExpr as parallel-safe, since btree
+	 * opclass support functions are generally parallel-safe.  XmlExpr is a
+	 * bit more dubious but we can probably get away with it.  We err on the
+	 * side of caution by treating CoerceToDomain as parallel-restricted.
+	 * (Note: in principle that's wrong because a domain constraint could
+	 * contain a parallel-unsafe function; but useful constraints probably
+	 * never would have such, and assuming they do would cripple use of
+	 * parallel query in the presence of domain types.)
+	 */
+	if (IsA(node, CoerceToDomain))
+	{
+		if (!context->allow_restricted)
+			return true;
+	}
+
+	/*
+	 * As a notational convenience for callers, look through RestrictInfo.
+	 */
+	else if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) node;
+
+		return has_parallel_hazard_walker((Node *) rinfo->clause, context);
+	}
+
+	/*
+	 * Since we don't have the ability to push subplans down to workers at
+	 * present, we treat subplan references as parallel-restricted.  We need
+	 * not worry about examining their contents; if they are unsafe, we would
+	 * have found that out while examining the whole tree before reduction of
+	 * sublinks to subplans.  (Really we should not see SubLink during a
+	 * not-allow_restricted scan, but if we do, return true.)
+	 */
+	else if (IsA(node, SubLink) ||
+			 IsA(node, SubPlan) ||
+			 IsA(node, AlternativeSubPlan))
+	{
+		if (!context->allow_restricted)
+			return true;
+	}
+
+	/*
+	 * We can't pass Params to workers at the moment either, so they are also
 	 * parallel-restricted.
 	 */
-	if (IsA(node, Query))
+	else if (IsA(node, Param))
+	{
+		if (!context->allow_restricted)
+			return true;
+	}
+
+	/*
+	 * When we're first invoked on a completely unplanned tree, we must
+	 * recurse into subqueries so to as to locate parallel-unsafe constructs
+	 * anywhere in the tree.
+	 */
+	else if (IsA(node, Query))
 	{
 		Query	   *query = (Query *) node;
 
+		/* SELECT FOR UPDATE/SHARE must be treated as unsafe */
 		if (query->rowMarks != NULL)
 			return true;
 
@@ -1389,129 +1250,11 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 								 has_parallel_hazard_walker,
 								 context, 0);
 	}
-	else if (IsA(node, SubPlan) ||IsA(node, SubLink) ||
-			 IsA(node, AlternativeSubPlan) ||IsA(node, Param))
-	{
-		/*
-		 * Since we don't have the ability to push subplans down to workers at
-		 * present, we treat subplan references as parallel-restricted.
-		 */
-		if (!context->allow_restricted)
-			return true;
-	}
 
-	/* This is just a notational convenience for callers. */
-	if (IsA(node, RestrictInfo))
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) node;
-
-		return has_parallel_hazard_walker((Node *) rinfo->clause, context);
-	}
-
-	/*
-	 * For each node that might potentially call a function, we need to
-	 * examine the pg_proc.proparallel marking for that function to see
-	 * whether it's safe enough for the current value of allow_restricted.
-	 */
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
-
-		if (parallel_too_dangerous(func_parallel(expr->funcid), context))
-			return true;
-	}
-	else if (IsA(node, Aggref))
-	{
-		Aggref	   *aggref = (Aggref *) node;
-
-		if (parallel_too_dangerous(func_parallel(aggref->aggfnoid), context))
-			return true;
-	}
-	else if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
-
-		set_opfuncid(expr);
-		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
-			return true;
-	}
-	else if (IsA(node, DistinctExpr))
-	{
-		DistinctExpr *expr = (DistinctExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
-			return true;
-	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
-			return true;
-	}
-	else if (IsA(node, ScalarArrayOpExpr))
-	{
-		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-		set_sa_opfuncid(expr);
-		if (parallel_too_dangerous(func_parallel(expr->opfuncid), context))
-			return true;
-	}
-	else if (IsA(node, CoerceViaIO))
-	{
-		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid			iofunc;
-		Oid			typioparam;
-		bool		typisvarlena;
-
-		/* check the result type's input function */
-		getTypeInputInfo(expr->resulttype,
-						 &iofunc, &typioparam);
-		if (parallel_too_dangerous(func_parallel(iofunc), context))
-			return true;
-		/* check the input type's output function */
-		getTypeOutputInfo(exprType((Node *) expr->arg),
-						  &iofunc, &typisvarlena);
-		if (parallel_too_dangerous(func_parallel(iofunc), context))
-			return true;
-	}
-	else if (IsA(node, ArrayCoerceExpr))
-	{
-		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-
-		if (OidIsValid(expr->elemfuncid) &&
-			parallel_too_dangerous(func_parallel(expr->elemfuncid), context))
-			return true;
-	}
-	else if (IsA(node, RowCompareExpr))
-	{
-		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
-		ListCell   *opid;
-
-		foreach(opid, rcexpr->opnos)
-		{
-			Oid			opfuncid = get_opcode(lfirst_oid(opid));
-
-			if (parallel_too_dangerous(func_parallel(opfuncid), context))
-				return true;
-		}
-	}
-
-	/* ... and recurse to check substructure */
+	/* Recurse to check arguments */
 	return expression_tree_walker(node,
 								  has_parallel_hazard_walker,
 								  context);
-}
-
-static bool
-parallel_too_dangerous(char proparallel, has_parallel_hazard_arg *context)
-{
-	if (context->allow_restricted)
-		return proparallel == PROPARALLEL_UNSAFE;
-	else
-		return proparallel != PROPARALLEL_SAFE;
 }
 
 /*****************************************************************************
@@ -1537,6 +1280,12 @@ contain_nonstrict_functions(Node *clause)
 }
 
 static bool
+contain_nonstrict_functions_checker(Oid func_id, void *context)
+{
+	return !func_strict(func_id);
+}
+
+static bool
 contain_nonstrict_functions_walker(Node *node, void *context)
 {
 	if (node == NULL)
@@ -1544,6 +1293,14 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, Aggref))
 	{
 		/* an aggregate could return non-null with null input */
+		return true;
+	}
+	if (IsA(node, GroupingFunc))
+	{
+		/*
+		 * A GroupingFunc doesn't evaluate its arguments, and therefore must
+		 * be treated as nonstrict.
+		 */
 		return true;
 	}
 	if (IsA(node, WindowFunc))
@@ -1558,37 +1315,15 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
-
-		if (!func_strict(expr->funcid))
-			return true;
-		/* else fall through to check args */
-	}
-	if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
-
-		set_opfuncid(expr);
-		if (!func_strict(expr->opfuncid))
-			return true;
-		/* else fall through to check args */
-	}
 	if (IsA(node, DistinctExpr))
 	{
 		/* IS DISTINCT FROM is inherently non-strict */
 		return true;
 	}
 	if (IsA(node, NullIfExpr))
-		return true;
-	if (IsA(node, ScalarArrayOpExpr))
 	{
-		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-		if (!is_strict_saop(expr, false))
-			return true;
-		/* else fall through to check args */
+		/* NULLIF is inherently non-strict */
+		return true;
 	}
 	if (IsA(node, BoolExpr))
 	{
@@ -1613,7 +1348,6 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, AlternativeSubPlan))
 		return true;
-	/* ArrayCoerceExpr is strict at the array level, regardless of elemfunc */
 	if (IsA(node, FieldStore))
 		return true;
 	if (IsA(node, CaseExpr))
@@ -1633,6 +1367,15 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, NullTest))
 		return true;
 	if (IsA(node, BooleanTest))
+		return true;
+
+	/*
+	 * Check other function-containing nodes; but ArrayCoerceExpr is strict at
+	 * the array level, regardless of elemfunc.
+	 */
+	if (!IsA(node, ArrayCoerceExpr) &&
+		check_functions_in_node(node, contain_nonstrict_functions_checker,
+								context))
 		return true;
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
@@ -1662,6 +1405,12 @@ contain_leaked_vars(Node *clause)
 }
 
 static bool
+contain_leaked_vars_checker(Oid func_id, void *context)
+{
+	return !get_func_leakproof(func_id);
+}
+
+static bool
 contain_leaked_vars_walker(Node *node, void *context)
 {
 	if (node == NULL)
@@ -1672,10 +1421,14 @@ contain_leaked_vars_walker(Node *node, void *context)
 		case T_Var:
 		case T_Const:
 		case T_Param:
+		case T_ArrayRef:
 		case T_ArrayExpr:
+		case T_FieldSelect:
+		case T_FieldStore:
 		case T_NamedArgExpr:
 		case T_BoolExpr:
 		case T_RelabelType:
+		case T_CollateExpr:
 		case T_CaseExpr:
 		case T_CaseTestExpr:
 		case T_RowExpr:
@@ -1691,114 +1444,35 @@ contain_leaked_vars_walker(Node *node, void *context)
 			break;
 
 		case T_FuncExpr:
-			{
-				FuncExpr   *expr = (FuncExpr *) node;
-
-				if (!get_func_leakproof(expr->funcid) &&
-					contain_var_clause((Node *) expr->args))
-					return true;
-			}
-			break;
-
 		case T_OpExpr:
-		case T_DistinctExpr:	/* struct-equivalent to OpExpr */
-		case T_NullIfExpr:		/* struct-equivalent to OpExpr */
-			{
-				OpExpr	   *expr = (OpExpr *) node;
-
-				set_opfuncid(expr);
-				if (!get_func_leakproof(expr->opfuncid) &&
-					contain_var_clause((Node *) expr->args))
-					return true;
-			}
-			break;
-
+		case T_DistinctExpr:
+		case T_NullIfExpr:
 		case T_ScalarArrayOpExpr:
-			{
-				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-				set_sa_opfuncid(expr);
-				if (!get_func_leakproof(expr->opfuncid) &&
-					contain_var_clause((Node *) expr->args))
-					return true;
-			}
-			break;
-
 		case T_CoerceViaIO:
-			{
-				CoerceViaIO *expr = (CoerceViaIO *) node;
-				Oid			funcid;
-				Oid			ioparam;
-				bool		leakproof;
-				bool		varlena;
-
-				/*
-				 * Data may be leaked if either the input or the output
-				 * function is leaky.
-				 */
-				getTypeInputInfo(exprType((Node *) expr->arg),
-								 &funcid, &ioparam);
-				leakproof = get_func_leakproof(funcid);
-
-				/*
-				 * If the input function is leakproof, then check the output
-				 * function.
-				 */
-				if (leakproof)
-				{
-					getTypeOutputInfo(expr->resulttype, &funcid, &varlena);
-					leakproof = get_func_leakproof(funcid);
-				}
-
-				if (!leakproof &&
-					contain_var_clause((Node *) expr->arg))
-					return true;
-			}
-			break;
-
 		case T_ArrayCoerceExpr:
-			{
-				ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-				Oid			funcid;
-				Oid			ioparam;
-				bool		leakproof;
-				bool		varlena;
 
-				/*
-				 * Data may be leaked if either the input or the output
-				 * function is leaky.
-				 */
-				getTypeInputInfo(exprType((Node *) expr->arg),
-								 &funcid, &ioparam);
-				leakproof = get_func_leakproof(funcid);
-
-				/*
-				 * If the input function is leakproof, then check the output
-				 * function.
-				 */
-				if (leakproof)
-				{
-					getTypeOutputInfo(expr->resulttype, &funcid, &varlena);
-					leakproof = get_func_leakproof(funcid);
-				}
-
-				if (!leakproof &&
-					contain_var_clause((Node *) expr->arg))
-					return true;
-			}
+			/*
+			 * If node contains a leaky function call, and there's any Var
+			 * underneath it, reject.
+			 */
+			if (check_functions_in_node(node, contain_leaked_vars_checker,
+										context) &&
+				contain_var_clause(node))
+				return true;
 			break;
 
 		case T_RowCompareExpr:
 			{
+				/*
+				 * It's worth special-casing this because a leaky comparison
+				 * function only compromises one pair of row elements, which
+				 * might not contain Vars while others do.
+				 */
 				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 				ListCell   *opid;
 				ListCell   *larg;
 				ListCell   *rarg;
 
-				/*
-				 * Check the comparison function and arguments passed to it
-				 * for each pair of row elements.
-				 */
 				forthree(opid, rcexpr->opnos,
 						 larg, rcexpr->largs,
 						 rarg, rcexpr->rargs)

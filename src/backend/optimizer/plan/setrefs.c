@@ -147,7 +147,6 @@ static List *set_returning_clause_references(PlannerInfo *root,
 								Plan *topplan,
 								Index resultRelation,
 								int rtoffset);
-static bool fix_opfuncids_walker(Node *node, void *context);
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerInfo *context);
 
@@ -2555,68 +2554,6 @@ set_returning_clause_references(PlannerInfo *root,
 	return rlist;
 }
 
-
-/*****************************************************************************
- *					OPERATOR REGPROC LOOKUP
- *****************************************************************************/
-
-/*
- * fix_opfuncids
- *	  Calculate opfuncid field from opno for each OpExpr node in given tree.
- *	  The given tree can be anything expression_tree_walker handles.
- *
- * The argument is modified in-place.  (This is OK since we'd want the
- * same change for any node, even if it gets visited more than once due to
- * shared structure.)
- */
-void
-fix_opfuncids(Node *node)
-{
-	/* This tree walk requires no special setup, so away we go... */
-	fix_opfuncids_walker(node, NULL);
-}
-
-static bool
-fix_opfuncids_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, OpExpr))
-		set_opfuncid((OpExpr *) node);
-	else if (IsA(node, DistinctExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, NullIfExpr))
-		set_opfuncid((OpExpr *) node);	/* rely on struct equivalence */
-	else if (IsA(node, ScalarArrayOpExpr))
-		set_sa_opfuncid((ScalarArrayOpExpr *) node);
-	return expression_tree_walker(node, fix_opfuncids_walker, context);
-}
-
-/*
- * set_opfuncid
- *		Set the opfuncid (procedure OID) in an OpExpr node,
- *		if it hasn't been set already.
- *
- * Because of struct equivalence, this can also be used for
- * DistinctExpr and NullIfExpr nodes.
- */
-void
-set_opfuncid(OpExpr *opexpr)
-{
-	if (opexpr->opfuncid == InvalidOid)
-		opexpr->opfuncid = get_opcode(opexpr->opno);
-}
-
-/*
- * set_sa_opfuncid
- *		As above, for ScalarArrayOpExpr nodes.
- */
-void
-set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
-{
-	if (opexpr->opfuncid == InvalidOid)
-		opexpr->opfuncid = get_opcode(opexpr->opno);
-}
 
 /*****************************************************************************
  *					QUERY DEPENDENCY MANAGEMENT

@@ -25,6 +25,9 @@
 #define QTW_EXAMINE_RTES			0x10		/* examine RTEs */
 #define QTW_DONT_COPY_QUERY			0x20		/* do not copy top Query */
 
+/* callback function for check_functions_in_node */
+typedef bool (*check_function_callback) (Oid func_id, void *context);
+
 
 extern Oid	exprType(const Node *expr);
 extern int32 exprTypmod(const Node *expr);
@@ -39,6 +42,13 @@ extern void exprSetCollation(Node *expr, Oid collation);
 extern void exprSetInputCollation(Node *expr, Oid inputcollation);
 
 extern int	exprLocation(const Node *expr);
+
+extern void fix_opfuncids(Node *node);
+extern void set_opfuncid(OpExpr *opexpr);
+extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
+
+extern bool check_functions_in_node(Node *node, check_function_callback checker,
+						void *context);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
 											   void *context);

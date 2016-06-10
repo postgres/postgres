@@ -107,9 +107,6 @@ extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
  * prototypes for plan/setrefs.c
  */
 extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
-extern void fix_opfuncids(Node *node);
-extern void set_opfuncid(OpExpr *opexpr);
-extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);
 extern void extract_query_dependencies(Node *query,
 						   List **relationOids,
