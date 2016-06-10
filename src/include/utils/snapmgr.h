@@ -31,6 +31,19 @@
 #define OLD_SNAPSHOT_PADDING_ENTRIES 10
 #define OLD_SNAPSHOT_TIME_MAP_ENTRIES (old_snapshot_threshold + OLD_SNAPSHOT_PADDING_ENTRIES)
 
+/*
+ * Common definition of relation properties that allow early pruning/vacuuming
+ * when old_snapshot_threshold >= 0.
+ */
+#define RelationAllowsEarlyPruning(rel) \
+( \
+	 RelationNeedsWAL(rel) \
+  && !IsCatalogRelation(rel) \
+  && !RelationIsAccessibleInLogicalDecoding(rel) \
+  && !RelationHasUnloggedIndex(rel) \
+)
+
+#define EarlyPruningEnabled(rel) (old_snapshot_threshold >= 0 && RelationAllowsEarlyPruning(rel))
 
 /* GUC variables */
 extern PGDLLIMPORT int old_snapshot_threshold;

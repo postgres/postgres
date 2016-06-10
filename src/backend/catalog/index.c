@@ -2040,18 +2040,24 @@ index_build(Relation heapRelation,
 	/*
 	 * If we found any potentially broken HOT chains, mark the index as not
 	 * being usable until the current transaction is below the event horizon.
-	 * See src/backend/access/heap/README.HOT for discussion.
+	 * See src/backend/access/heap/README.HOT for discussion.  Also set this
+	 * if early pruning/vacuuming is enabled for the heap relation.  While it
+	 * might become safe to use the index earlier based on actual cleanup
+	 * activity and other active transactions, the test for that would be much
+	 * more complex and would require some form of blocking, so keep it simple
+	 * and fast by just using the current transaction.
 	 *
 	 * However, when reindexing an existing index, we should do nothing here.
 	 * Any HOT chains that are broken with respect to the index must predate
 	 * the index's original creation, so there is no need to change the
 	 * index's usability horizon.  Moreover, we *must not* try to change the
 	 * index's pg_index entry while reindexing pg_index itself, and this
-	 * optimization nicely prevents that.
+	 * optimization nicely prevents that.  The more complex rules needed for a
+	 * reindex are handled separately after this function returns.
 	 *
 	 * We also need not set indcheckxmin during a concurrent index build,
 	 * because we won't set indisvalid true until all transactions that care
-	 * about the broken HOT chains are gone.
+	 * about the broken HOT chains or early pruning/vacuuming are gone.
 	 *
 	 * Therefore, this code path can only be taken during non-concurrent
 	 * CREATE INDEX.  Thus the fact that heap_update will set the pg_index
@@ -2060,7 +2066,8 @@ index_build(Relation heapRelation,
 	 * about any concurrent readers of the tuple; no other transaction can see
 	 * it yet.
 	 */
-	if (indexInfo->ii_BrokenHotChain && !isreindex &&
+	if ((indexInfo->ii_BrokenHotChain || EarlyPruningEnabled(heapRelation)) &&
+		!isreindex &&
 		!indexInfo->ii_Concurrent)
 	{
 		Oid			indexId = RelationGetRelid(indexRelation);
@@ -3389,6 +3396,11 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 * reindexing pg_index itself, we must not try to update tuples in it.
 	 * pg_index's indexes should always have these flags in their clean state,
 	 * so that won't happen.
+	 *
+	 * If early pruning/vacuuming is enabled for the heap relation, the
+	 * usability horizon must be advanced to the current transaction on every
+	 * build or rebuild.  pg_index is OK in this regard because catalog tables
+	 * are not subject to early cleanup.
 	 */
 	if (!skipped_constraint)
 	{
@@ -3396,6 +3408,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		HeapTuple	indexTuple;
 		Form_pg_index indexForm;
 		bool		index_bad;
+		bool		early_vacuum_enabled = EarlyPruningEnabled(heapRelation);
 
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
@@ -3409,11 +3422,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 					 !indexForm->indisready ||
 					 !indexForm->indislive);
 		if (index_bad ||
-			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
+			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain) ||
+			early_vacuum_enabled)
 		{
-			if (!indexInfo->ii_BrokenHotChain)
+			if (!indexInfo->ii_BrokenHotChain && !early_vacuum_enabled)
 				indexForm->indcheckxmin = false;
-			else if (index_bad)
+			else if (index_bad || early_vacuum_enabled)
 				indexForm->indcheckxmin = true;
 			indexForm->indisvalid = true;
 			indexForm->indisready = true;
