@@ -2038,9 +2038,9 @@ include_dir 'conf.d'
          than the OS's page cache, where performance might degrade.  This
          setting may have no effect on some platforms.  The valid range is
          between <literal>0</literal>, which disables controlled writeback,
-         and <literal>2MB</literal>.  The default is <literal>128Kb</> on
-         Linux, <literal>0</> elsewhere.  (Non-default values of
-         <symbol>BLCKSZ</symbol> change the default and maximum.)
+         and <literal>2MB</literal>.  The default is <literal>0</> (i.e. no
+         flush control).  (Non-default values of <symbol>BLCKSZ</symbol>
+         change the maximum.)
         </para>
        </listitem>
       </varlistentry>
