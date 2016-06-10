@@ -4,7 +4,9 @@ MODULE_big	= pgstattuple
 OBJS		= pgstattuple.o pgstatindex.o pgstatapprox.o $(WIN32RES)
 
 EXTENSION = pgstattuple
-DATA = pgstattuple--1.3.sql pgstattuple--1.2--1.3.sql pgstattuple--1.1--1.2.sql pgstattuple--1.0--1.1.sql pgstattuple--unpackaged--1.0.sql
+DATA = pgstattuple--1.4.sql pgstattuple--1.3--1.4.sql \
+	pgstattuple--1.2--1.3.sql pgstattuple--1.1--1.2.sql \
+	pgstattuple--1.0--1.1.sql pgstattuple--unpackaged--1.0.sql
 PGFILEDESC = "pgstattuple - tuple-level statistics"
 
 REGRESS = pgstattuple
