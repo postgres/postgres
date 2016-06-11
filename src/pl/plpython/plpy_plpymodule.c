@@ -399,11 +399,11 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	char	   *volatile message = NULL;
 	char	   *volatile detail = NULL;
 	char	   *volatile hint = NULL;
-	char	   *volatile column = NULL;
-	char	   *volatile constraint = NULL;
-	char	   *volatile datatype = NULL;
-	char	   *volatile table = NULL;
-	char	   *volatile schema = NULL;
+	char	   *volatile column_name = NULL;
+	char	   *volatile constraint_name = NULL;
+	char	   *volatile datatype_name = NULL;
+	char	   *volatile table_name = NULL;
+	char	   *volatile schema_name = NULL;
 	volatile MemoryContext oldcontext;
 	PyObject   *key,
 			   *value;
@@ -456,16 +456,16 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 				hint = object_to_string(value);
 			else if (strcmp(keyword, "sqlstate") == 0)
 				sqlstatestr = object_to_string(value);
-			else if (strcmp(keyword, "schema") == 0)
-				schema = object_to_string(value);
-			else if (strcmp(keyword, "table") == 0)
-				table = object_to_string(value);
-			else if (strcmp(keyword, "column") == 0)
-				column = object_to_string(value);
-			else if (strcmp(keyword, "datatype") == 0)
-				datatype = object_to_string(value);
-			else if (strcmp(keyword, "constraint") == 0)
-				constraint = object_to_string(value);
+			else if (strcmp(keyword, "schema_name") == 0)
+				schema_name = object_to_string(value);
+			else if (strcmp(keyword, "table_name") == 0)
+				table_name = object_to_string(value);
+			else if (strcmp(keyword, "column_name") == 0)
+				column_name = object_to_string(value);
+			else if (strcmp(keyword, "datatype_name") == 0)
+				datatype_name = object_to_string(value);
+			else if (strcmp(keyword, "constraint_name") == 0)
+				constraint_name = object_to_string(value);
 			else
 				PLy_elog(ERROR, "'%s' is an invalid keyword argument for this function",
 						 keyword);
@@ -496,32 +496,32 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 			pg_verifymbstr(detail, strlen(detail), false);
 		if (hint != NULL)
 			pg_verifymbstr(hint, strlen(hint), false);
-		if (schema != NULL)
-			pg_verifymbstr(schema, strlen(schema), false);
-		if (table != NULL)
-			pg_verifymbstr(table, strlen(table), false);
-		if (column != NULL)
-			pg_verifymbstr(column, strlen(column), false);
-		if (datatype != NULL)
-			pg_verifymbstr(datatype, strlen(datatype), false);
-		if (constraint != NULL)
-			pg_verifymbstr(constraint, strlen(constraint), false);
+		if (schema_name != NULL)
+			pg_verifymbstr(schema_name, strlen(schema_name), false);
+		if (table_name != NULL)
+			pg_verifymbstr(table_name, strlen(table_name), false);
+		if (column_name != NULL)
+			pg_verifymbstr(column_name, strlen(column_name), false);
+		if (datatype_name != NULL)
+			pg_verifymbstr(datatype_name, strlen(datatype_name), false);
+		if (constraint_name != NULL)
+			pg_verifymbstr(constraint_name, strlen(constraint_name), false);
 
 		ereport(level,
 				((sqlstate != 0) ? errcode(sqlstate) : 0,
 				 (message != NULL) ? errmsg_internal("%s", message) : 0,
 				 (detail != NULL) ? errdetail_internal("%s", detail) : 0,
 				 (hint != NULL) ? errhint("%s", hint) : 0,
-				 (column != NULL) ?
-				 err_generic_string(PG_DIAG_COLUMN_NAME, column) : 0,
-				 (constraint != NULL) ?
-				 err_generic_string(PG_DIAG_CONSTRAINT_NAME, constraint) : 0,
-				 (datatype != NULL) ?
-				 err_generic_string(PG_DIAG_DATATYPE_NAME, datatype) : 0,
-				 (table != NULL) ?
-				 err_generic_string(PG_DIAG_TABLE_NAME, table) : 0,
-				 (schema != NULL) ?
-				 err_generic_string(PG_DIAG_SCHEMA_NAME, schema) : 0));
+				 (column_name != NULL) ?
+				 err_generic_string(PG_DIAG_COLUMN_NAME, column_name) : 0,
+				 (constraint_name != NULL) ?
+				 err_generic_string(PG_DIAG_CONSTRAINT_NAME, constraint_name) : 0,
+				 (datatype_name != NULL) ?
+				 err_generic_string(PG_DIAG_DATATYPE_NAME, datatype_name) : 0,
+				 (table_name != NULL) ?
+				 err_generic_string(PG_DIAG_TABLE_NAME, table_name) : 0,
+				 (schema_name != NULL) ?
+				 err_generic_string(PG_DIAG_SCHEMA_NAME, schema_name) : 0));
 	}
 	PG_CATCH();
 	{

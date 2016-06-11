@@ -1374,9 +1374,9 @@ $$ LANGUAGE plpythonu;
    The following keyword-only arguments are accepted:
    <literal>
    <replaceable>detail</replaceable>, <replaceable>hint</replaceable>,
-   <replaceable>sqlstate</replaceable>, <replaceable>schema</replaceable>,
-   <replaceable>table</replaceable>, <replaceable>column</replaceable>,
-   <replaceable>datatype</replaceable> , <replaceable>constraint</replaceable>
+   <replaceable>sqlstate</replaceable>, <replaceable>schema_name</replaceable>,
+   <replaceable>table_name</replaceable>, <replaceable>column_name</replaceable>,
+   <replaceable>datatype_name</replaceable> , <replaceable>constraint_name</replaceable>
    </literal>.
    The string representation of the objects passed as keyword-only arguments
    is used to enrich the messages reported to the client. For example:
