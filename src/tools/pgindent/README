@@ -32,7 +32,8 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 7) Remove any files that generate errors and restore their original
    versions.
 
-8) Indent the Perl code:
+8) Indent the Perl code using perltidy v20090616 (perltidy changes formatting
+   decisions, so older and newer versions are incompatible):
 
 	(
 		find . -name \*.pl -o -name \*.pm
