@@ -53,7 +53,8 @@ elsif (uc($ARGV[0]) ne "RELEASE")
 if ($buildwhat and $vcver >= 10.00)
 {
 	system(
-"msbuild $buildwhat.vcxproj /verbosity:normal /p:Configuration=$bconf");
+		"msbuild $buildwhat.vcxproj /verbosity:normal /p:Configuration=$bconf"
+	);
 }
 elsif ($buildwhat)
 {

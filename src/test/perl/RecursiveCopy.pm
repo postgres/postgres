@@ -65,7 +65,7 @@ sub copypath
 	{
 		die "if specified, filterfn must be a subroutine reference"
 		  unless defined(ref $params{filterfn})
-		  and (ref $params{filterfn} eq 'CODE');
+			  and (ref $params{filterfn} eq 'CODE');
 
 		$filterfn = $params{filterfn};
 	}
@@ -93,7 +93,8 @@ sub _copypath_recurse
 
 	# Can't handle symlinks or other weird things
 	die "Source path \"$srcpath\" is not a regular file or directory"
-	  unless -f $srcpath or -d $srcpath;
+	  unless -f $srcpath
+		  or -d $srcpath;
 
 	# Abort if destination path already exists.  Should we allow directories
 	# to exist already?

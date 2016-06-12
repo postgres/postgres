@@ -51,10 +51,13 @@ my $result =
 print "standby 1: $result\n";
 is($result, qq(1002), 'check streamed content on standby 1');
 
-$result = $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
+$result =
+  $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "standby 2: $result\n";
 is($result, qq(1002), 'check streamed content on standby 2');
 
 # Check that only READ-only queries can run on standbys
-is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'), 3, 'Read-only queries on standby 1');
-is($node_standby_2->psql('postgres', 'INSERT INTO tab_int VALUES (1)'), 3, 'Read-only queries on standby 2');
+is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
+	3, 'Read-only queries on standby 1');
+is($node_standby_2->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
+	3, 'Read-only queries on standby 2');

@@ -63,8 +63,8 @@ $node_standby_1->poll_query_until('postgres',
 	"SELECT pg_is_in_recovery() <> true");
 $node_standby_1->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-$until_lsn =
-  $node_standby_1->safe_psql('postgres', "SELECT pg_current_xlog_location();");
+$until_lsn = $node_standby_1->safe_psql('postgres',
+	"SELECT pg_current_xlog_location();");
 $caughtup_query =
   "SELECT '$until_lsn'::pg_lsn <= pg_last_xlog_replay_location()";
 $node_standby_2->poll_query_until('postgres', $caughtup_query)

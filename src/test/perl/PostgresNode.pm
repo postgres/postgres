@@ -103,6 +103,7 @@ our ($test_localhost, $test_pghost, $last_port_assigned, @all_nodes);
 
 INIT
 {
+
 	# PGHOST is set once and for all through a single series of tests when
 	# this module is loaded.
 	$test_localhost = "127.0.0.1";
@@ -540,11 +541,12 @@ sub _backup_fs
 
 	if ($hot)
 	{
+
 		# We ignore pg_stop_backup's return value. We also assume archiving
 		# is enabled; otherwise the caller will have to copy the remaining
 		# segments.
-		my $stdout = $self->safe_psql('postgres',
-			'SELECT * FROM pg_stop_backup();');
+		my $stdout =
+		  $self->safe_psql('postgres', 'SELECT * FROM pg_stop_backup();');
 		print "# pg_stop_backup: $stdout\n";
 	}
 
@@ -842,6 +844,7 @@ sub get_new_node
 
 	while ($found == 0)
 	{
+
 		# advance $port, wrapping correctly around range end
 		$port = 49152 if ++$port >= 65536;
 		print "# Checking port $port\n";
@@ -896,6 +899,7 @@ sub get_new_node
 # order, later when the File::Temp objects are destroyed.
 END
 {
+
 	# take care not to change the script's exit value
 	my $exit_code = $?;
 
@@ -1078,7 +1082,7 @@ sub psql
 	  IPC::Run::timeout($params{timeout}, exception => $timeout_exception)
 	  if (defined($params{timeout}));
 
-	${$params{timed_out}} = 0 if defined $params{timed_out};
+	${ $params{timed_out} } = 0 if defined $params{timed_out};
 
 	# IPC::Run would otherwise append to existing contents:
 	$$stdout = "" if ref($stdout);
@@ -1107,6 +1111,7 @@ sub psql
 		my $exc_save = $@;
 		if ($exc_save)
 		{
+
 			# IPC::Run::run threw an exception. re-throw unless it's a
 			# timeout, which we'll handle by testing is_expired
 			die $exc_save

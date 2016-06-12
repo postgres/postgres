@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 our $config = {
-	asserts  => 0,    # --enable-cassert
+	asserts => 0,    # --enable-cassert
 	  # integer_datetimes=>1,   # --enable-integer-datetimes - on is now default
 	  # float4byval=>1,         # --disable-float4-byval, on by default
 

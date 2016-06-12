@@ -41,9 +41,12 @@ my $contrib_extrasource = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ], };
 my @contrib_excludes = (
-	'commit_ts',       'hstore_plperl',    'hstore_plpython', 'intagg',
-	'ltree_plpython',  'pgcrypto',         'sepgsql',         'brin',
-	'test_extensions', 'test_pg_dump', 'snapshot_too_old');
+	'commit_ts',       'hstore_plperl',
+	'hstore_plpython', 'intagg',
+	'ltree_plpython',  'pgcrypto',
+	'sepgsql',         'brin',
+	'test_extensions', 'test_pg_dump',
+	'snapshot_too_old');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
@@ -63,9 +66,9 @@ my $frontend_extralibs = {
 	'psql'       => ['ws2_32.lib'] };
 my $frontend_extraincludes = {
 	'initdb' => ['src/timezone'],
-	'psql'   => [ 'src/backend' ] };
+	'psql'   => ['src/backend'] };
 my $frontend_extrasource = {
-	'psql' => [ 'src/bin/psql/psqlscanslash.l' ],
+	'psql' => ['src/bin/psql/psqlscanslash.l'],
 	'pgbench' =>
 	  [ 'src/bin/pgbench/exprscan.l', 'src/bin/pgbench/exprparse.y' ] };
 my @frontend_excludes = (
@@ -155,8 +158,10 @@ sub mkvcbuild
 	$postgres->AddFiles('src/backend/bootstrap', 'bootscanner.l',
 		'bootparse.y');
 	$postgres->AddFiles('src/backend/utils/misc', 'guc-file.l');
-	$postgres->AddFiles('src/backend/replication', 'repl_scanner.l',
-		'repl_gram.y', 'syncrep_scanner.l', 'syncrep_gram.y');
+	$postgres->AddFiles(
+		'src/backend/replication', 'repl_scanner.l',
+		'repl_gram.y',             'syncrep_scanner.l',
+		'syncrep_gram.y');
 	$postgres->AddDefine('BUILDING_DLL');
 	$postgres->AddLibrary('secur32.lib');
 	$postgres->AddLibrary('ws2_32.lib');
@@ -625,8 +630,7 @@ sub mkvcbuild
 			}
 		}
 		$proj->AddIncludeDir('src/interfaces/libpq');
-		$proj->AddReference($libpq, $libpgfeutils, $libpgcommon,
-				    $libpgport);
+		$proj->AddReference($libpq, $libpgfeutils, $libpgcommon, $libpgport);
 		$proj->AddDirResourceFile('src/bin/scripts');
 		$proj->AddLibrary('ws2_32.lib');
 	}

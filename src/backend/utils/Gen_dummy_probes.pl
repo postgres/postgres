@@ -224,6 +224,7 @@ sub printQ()
 	{
 		if (ref($q))
 		{
+
 			# flush open w files so that reading this file gets it all
 			if (exists($wFiles{$$q}) && $wFiles{$$q} ne '')
 			{

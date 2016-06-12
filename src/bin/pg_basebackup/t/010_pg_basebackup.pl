@@ -114,7 +114,8 @@ SKIP:
 	mkdir "$tempdir/tblspc1";
 	$node->safe_psql('postgres',
 		"CREATE TABLESPACE tblspc1 LOCATION '$shorter_tempdir/tblspc1';");
-	$node->safe_psql('postgres', "CREATE TABLE test1 (a int) TABLESPACE tblspc1;");
+	$node->safe_psql('postgres',
+		"CREATE TABLE test1 (a int) TABLESPACE tblspc1;");
 	$node->command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup2", '-Ft' ],
 		'tar format with tablespaces');
 	ok(-f "$tempdir/tarbackup2/base.tar", 'backup tar was created');

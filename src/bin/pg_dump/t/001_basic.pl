@@ -23,14 +23,22 @@ program_options_handling_ok('pg_dump');
 command_exit_is([ 'pg_dump', 'qqq', 'abc' ],
 	1, 'pg_dump: too many command-line arguments (first is "asd")');
 
-command_exit_is([ 'pg_dump', '-s', '-a' ],
-	1, 'pg_dump: options -s/--schema-only and -a/--data-only cannot be used together');
+command_exit_is(
+	[ 'pg_dump', '-s', '-a' ],
+	1,
+'pg_dump: options -s/--schema-only and -a/--data-only cannot be used together'
+);
 
-command_exit_is([ 'pg_dump', '-c', '-a' ],
-	1, 'pg_dump: options -c/--clean and -a/--data-only cannot be used together');
+command_exit_is(
+	[ 'pg_dump', '-c', '-a' ],
+	1,
+	'pg_dump: options -c/--clean and -a/--data-only cannot be used together');
 
-command_exit_is([ 'pg_dump', '--inserts', '-o' ],
-	1, 'pg_dump: options --inserts/--column-inserts and -o/--oids cannot be used together');
+command_exit_is(
+	[ 'pg_dump', '--inserts', '-o' ],
+	1,
+'pg_dump: options --inserts/--column-inserts and -o/--oids cannot be used together'
+);
 
 command_exit_is([ 'pg_dump', '--if-exists' ],
 	1, 'pg_dump: option --if-exists requires option -c/--clean');

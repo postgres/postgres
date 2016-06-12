@@ -6,7 +6,8 @@ use TestLib;
 use Test::More tests => 8;
 
 # Query checking sync_priority and sync_state of each standby
-my $check_sql = "SELECT application_name, sync_priority, sync_state FROM pg_stat_replication ORDER BY application_name;";
+my $check_sql =
+"SELECT application_name, sync_priority, sync_state FROM pg_stat_replication ORDER BY application_name;";
 
 # Check that sync_state of each standby is expected.
 # If $setting is given, synchronous_standby_names is set to it and
@@ -18,12 +19,12 @@ sub test_sync_state
 	if (defined($setting))
 	{
 		$self->psql('postgres',
-					"ALTER SYSTEM SET synchronous_standby_names = '$setting';");
+			"ALTER SYSTEM SET synchronous_standby_names = '$setting';");
 		$self->reload;
 	}
 
 	my $timeout_max = 30;
-	my $timeout = 0;
+	my $timeout     = 0;
 	my $result;
 
 	# A reload may take some time to take effect on busy machines,
@@ -71,7 +72,8 @@ $node_standby_3->start;
 
 # Check that sync_state is determined correctly when
 # synchronous_standby_names is specified in old syntax.
-test_sync_state($node_master, qq(standby1|1|sync
+test_sync_state(
+	$node_master, qq(standby1|1|sync
 standby2|2|potential
 standby3|0|async),
 	'old syntax of synchronous_standby_names',
@@ -82,7 +84,8 @@ standby3|0|async),
 # Note that standby1 is chosen as sync standby because
 # it's stored in the head of WalSnd array which manages
 # all the standbys though they have the same priority.
-test_sync_state($node_master, qq(standby1|1|sync
+test_sync_state(
+	$node_master, qq(standby1|1|sync
 standby2|1|potential
 standby3|1|potential),
 	'asterisk in synchronous_standby_names',
@@ -100,7 +103,8 @@ $node_standby_3->start;
 
 # Specify 2 as the number of sync standbys.
 # Check that two standbys are in 'sync' state.
-test_sync_state($node_master, qq(standby2|2|sync
+test_sync_state(
+	$node_master, qq(standby2|2|sync
 standby3|3|sync),
 	'2 synchronous standbys',
 	'2(standby1,standby2,standby3)');
@@ -111,14 +115,15 @@ $node_standby_1->start;
 # Create standby4 linking to master
 my $node_standby_4 = get_new_node('standby4');
 $node_standby_4->init_from_backup($node_master, $backup_name,
-								  has_streaming => 1);
+	has_streaming => 1);
 $node_standby_4->start;
 
 # Check that standby1 and standby2 whose names appear earlier in
 # synchronous_standby_names are considered as sync. Also check that
 # standby3 appearing later represents potential, and standby4 is
 # in 'async' state because it's not in the list.
-test_sync_state($node_master, qq(standby1|1|sync
+test_sync_state(
+	$node_master, qq(standby1|1|sync
 standby2|2|sync
 standby3|3|potential
 standby4|0|async),
@@ -127,7 +132,8 @@ standby4|0|async),
 # Check that sync_state of each standby is determined correctly
 # when num_sync exceeds the number of names of potential sync standbys
 # specified in synchronous_standby_names.
-test_sync_state($node_master, qq(standby1|0|async
+test_sync_state(
+	$node_master, qq(standby1|0|async
 standby2|4|sync
 standby3|3|sync
 standby4|1|sync),
@@ -138,7 +144,8 @@ standby4|1|sync),
 # but does not make sense in most cases. Check that sync_state is
 # chosen properly even in case of that setting.
 # The priority of standby2 should be 2 because it matches * first.
-test_sync_state($node_master, qq(standby1|1|sync
+test_sync_state(
+	$node_master, qq(standby1|1|sync
 standby2|2|sync
 standby3|2|potential
 standby4|2|potential),
@@ -147,7 +154,8 @@ standby4|2|potential),
 
 # Check that the setting of '2(*)' chooses standby2 and standby3 that are stored
 # earlier in WalSnd array as sync standbys.
-test_sync_state($node_master, qq(standby1|1|potential
+test_sync_state(
+	$node_master, qq(standby1|1|potential
 standby2|1|sync
 standby3|1|sync
 standby4|1|potential),
@@ -159,7 +167,8 @@ $node_standby_3->stop;
 
 # Check that the state of standby1 stored earlier in WalSnd array than
 # standby4 is transited from potential to sync.
-test_sync_state($node_master, qq(standby1|1|sync
+test_sync_state(
+	$node_master, qq(standby1|1|sync
 standby2|1|sync
 standby4|1|potential),
 	'potential standby found earlier in array is promoted to sync');

@@ -109,6 +109,7 @@ INIT
 
 END
 {
+
 	# Preserve temporary directory for this test on failure
 	$File::Temp::KEEP_ALL = 1 unless all_tests_passing();
 }

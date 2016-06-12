@@ -48,5 +48,6 @@ my $caughtup_query =
 $node_standby->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for standby to catch up";
 
-my $result = $node_standby->safe_psql('postgres', "SELECT count(*) FROM tab_int");
+my $result =
+  $node_standby->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 is($result, qq(1000), 'check content from archives');

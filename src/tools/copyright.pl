@@ -16,8 +16,8 @@ use File::Find;
 use File::Basename;
 use Tie::File;
 
-my $pgdg = 'PostgreSQL Global Development Group';
-my $cc   = 'Copyright \(c\)';
+my $pgdg      = 'PostgreSQL Global Development Group';
+my $cc        = 'Copyright \(c\)';
 my $ccliteral = 'Copyright (c)';
 
 # year-1900 is what localtime(time) puts in element 5

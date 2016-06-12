@@ -66,7 +66,8 @@ $node_master->backup('my_backup');
 # target TXID.
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-my $recovery_txid = $node_master->safe_psql('postgres', "SELECT txid_current()");
+my $recovery_txid =
+  $node_master->safe_psql('postgres', "SELECT txid_current()");
 my $lsn2 =
   $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
 

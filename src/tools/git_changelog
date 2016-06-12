@@ -66,24 +66,24 @@ my @BRANCHES = qw(master
 # Might want to make this parameter user-settable.
 my $timestamp_slop = 24 * 60 * 60;
 
-my $brief         = 0;
-my $details_after = 0;
-my $post_date     = 0;
-my $master_only   = 0;
+my $brief           = 0;
+my $details_after   = 0;
+my $post_date       = 0;
+my $master_only     = 0;
 my $non_master_only = 0;
-my $oldest_first  = 0;
+my $oldest_first    = 0;
 my $since;
 my @output_buffer;
 my $output_line = '';
 
 Getopt::Long::GetOptions(
-	'brief'         => \$brief,
-	'details-after' => \$details_after,
-	'master-only'   => \$master_only,
+	'brief'           => \$brief,
+	'details-after'   => \$details_after,
+	'master-only'     => \$master_only,
 	'non-master-only' => \$non_master_only,
-	'post-date'     => \$post_date,
-	'oldest-first'  => \$oldest_first,
-	'since=s'       => \$since) || usage();
+	'post-date'       => \$post_date,
+	'oldest-first'    => \$oldest_first,
+	'since=s'         => \$since) || usage();
 usage() if @ARGV;
 
 my @git = qw(git log --format=fuller --date=iso);
@@ -250,7 +250,7 @@ while (1)
 	if ($master_only)
 	{
 		$print_it = (@{ $winner->{'commits'} } == 1)
-			&& ($winner->{'commits'}[0]->{'branch'} eq 'master');
+		  && ($winner->{'commits'}[0]->{'branch'} eq 'master');
 	}
 	elsif ($non_master_only)
 	{
@@ -374,20 +374,20 @@ sub output_details
 		{
 			$item->{'message'} =~ m/^\s*(.*)/;
 
-			output_str("%s [%s] %s\n",
-				   substr($c->{'date'}, 0, 10),
-				   substr($c->{'commit'}, 0, 9),
-				   substr($1, 0, 56));
+			output_str(
+				"%s [%s] %s\n",
+				substr($c->{'date'},   0, 10),
+				substr($c->{'commit'}, 0, 9),
+				substr($1,             0, 56));
 		}
 		else
 		{
 			output_str("Branch: %s ", $c->{'branch'})
-			    if (!$master_only);
+			  if (!$master_only);
 			output_str("Release: %s ", $c->{'last_tag'})
-			    if (defined $c->{'last_tag'});
-			output_str("[%s] %s\n",
-				   substr($c->{'commit'}, 0, 9),
-				   $c->{'date'});
+			  if (defined $c->{'last_tag'});
+			output_str("[%s] %s\n", substr($c->{'commit'}, 0, 9),
+				$c->{'date'});
 		}
 	}
 	output_str("\n");

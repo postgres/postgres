@@ -184,11 +184,11 @@ sub tap_check
 	my $dir = shift;
 	chdir $dir;
 
-	my @args = ( "prove", "--verbose", "t/*.pl");
+	my @args = ("prove", "--verbose", "t/*.pl");
 
 	# adjust the environment for just this test
 	local %ENV = %ENV;
-	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
+	$ENV{PERL5LIB}   = "$topdir/src/test/perl;$ENV{PERL5LIB}";
 	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
 
 	$ENV{TESTDIR} = "$dir";
@@ -332,6 +332,7 @@ sub contribcheck
 	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
+
 		# these configuration-based exclusions must match Install.pm
 		next if ($module eq "uuid-ossp"     && !defined($config->{uuid}));
 		next if ($module eq "sslinfo"       && !defined($config->{openssl}));
@@ -365,8 +366,8 @@ sub recoverycheck
 {
 	InstallTemp();
 
-	my $mstat = 0;
-	my $dir = "$topdir/src/test/recovery";
+	my $mstat  = 0;
+	my $dir    = "$topdir/src/test/recovery";
 	my $status = tap_check($dir);
 	exit $status if $status;
 }
@@ -547,20 +548,20 @@ sub InstallTemp
 sub usage
 {
 	print STDERR
-		"Usage: vcregress.pl <mode> [ <schedule> ]\n\n",
-		"Options for <mode>:\n",
-		"  bincheck       run tests of utilities in src/bin/\n",
-		"  check          deploy instance and run regression tests on it\n",
-		"  contribcheck   run tests of modules in contrib/\n",
-		"  ecpgcheck      run regression tests of ECPG\n",
-		"  installcheck   run regression tests on existing instance\n",
-		"  isolationcheck run isolation tests\n",
-		"  modulescheck   run tests of modules in src/test/modules/\n",
-		"  plcheck        run tests of PL languages\n",
-		"  recoverycheck  run recovery test suite\n",
-		"  upgradecheck   run tests of pg_upgrade\n",
-		"\nOptions for <schedule>:\n",
-		"  serial         serial mode\n",
-		"  parallel       parallel mode\n";
+	  "Usage: vcregress.pl <mode> [ <schedule> ]\n\n",
+	  "Options for <mode>:\n",
+	  "  bincheck       run tests of utilities in src/bin/\n",
+	  "  check          deploy instance and run regression tests on it\n",
+	  "  contribcheck   run tests of modules in contrib/\n",
+	  "  ecpgcheck      run regression tests of ECPG\n",
+	  "  installcheck   run regression tests on existing instance\n",
+	  "  isolationcheck run isolation tests\n",
+	  "  modulescheck   run tests of modules in src/test/modules/\n",
+	  "  plcheck        run tests of PL languages\n",
+	  "  recoverycheck  run recovery test suite\n",
+	  "  upgradecheck   run tests of pg_upgrade\n",
+	  "\nOptions for <schedule>:\n",
+	  "  serial         serial mode\n",
+	  "  parallel       parallel mode\n";
 	exit(1);
 }

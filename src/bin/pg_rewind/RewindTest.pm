@@ -114,6 +114,7 @@ sub check_query
 
 sub setup_cluster
 {
+
 	# Initialize master, data checksums are mandatory
 	$node_master = get_new_node('master');
 	$node_master->init(allows_streaming => 1);

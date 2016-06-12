@@ -54,8 +54,8 @@ while (<FILE>)
 			|| (   ($code >= 0x879a)
 				&& ($code <= 0x879c)))
 		{
-			printf STDERR
-			  "Warning: duplicate UTF8: UCS=0x%04x SJIS=0x%04x\n", $ucs,
+			printf STDERR "Warning: duplicate UTF8: UCS=0x%04x SJIS=0x%04x\n",
+			  $ucs,
 			  $code;
 			next;
 		}
