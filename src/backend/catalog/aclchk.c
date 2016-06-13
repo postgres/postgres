@@ -3870,7 +3870,8 @@ pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 	tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdw_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				(errmsg("foreign-data wrapper with OID %u does not exist",
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign-data wrapper with OID %u does not exist",
 						fdw_oid)));
 	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
 
@@ -3931,7 +3932,8 @@ pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
 	tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srv_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				(errmsg("foreign server with OID %u does not exist",
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign server with OID %u does not exist",
 						srv_oid)));
 	srvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
 
