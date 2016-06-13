@@ -4108,7 +4108,8 @@ pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 	tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdw_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				(errmsg("foreign-data wrapper with OID %u does not exist",
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign-data wrapper with OID %u does not exist",
 						fdw_oid)));
 	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
 
@@ -4169,7 +4170,8 @@ pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
 	tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srv_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				(errmsg("foreign server with OID %u does not exist",
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign server with OID %u does not exist",
 						srv_oid)));
 	srvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
 
@@ -4228,27 +4230,30 @@ pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				(errmsg("type with OID %u does not exist",
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type with OID %u does not exist",
 						type_oid)));
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
-	/* "True" array types don't manage permissions of their own */
-	if (typeForm->typelem != 0 && typeForm->typlen == -1)
+	/*
+	 * "True" array types don't manage permissions of their own; consult the
+	 * element type instead.
+	 */
+	if (OidIsValid(typeForm->typelem) && typeForm->typlen == -1)
 	{
 		Oid			elttype_oid = typeForm->typelem;
 
 		ReleaseSysCache(tuple);
 
 		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(elttype_oid));
+		/* this case is not a user-facing error, so elog not ereport */
 		if (!HeapTupleIsValid(tuple))
-			ereport(ERROR,
-					(errmsg("type with OID %u does not exist",
-							type_oid)));
+			elog(ERROR, "cache lookup failed for type %u", elttype_oid);
 		typeForm = (Form_pg_type) GETSTRUCT(tuple);
 	}
 
 	/*
-	 * Normal case: get the type's ACL from pg_type
+	 * Now get the type's owner and ACL from the tuple
 	 */
 	ownerId = typeForm->typowner;
 
