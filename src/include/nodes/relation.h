@@ -783,6 +783,10 @@ typedef struct PathTarget
 	int			width;			/* estimated avg width of result tuples */
 } PathTarget;
 
+/* Convenience macro to get a sort/group refno from a PathTarget */
+#define get_pathtarget_sortgroupref(target, colno) \
+	((target)->sortgrouprefs ? (target)->sortgrouprefs[colno] : (Index) 0)
+
 
 /*
  * ParamPathInfo

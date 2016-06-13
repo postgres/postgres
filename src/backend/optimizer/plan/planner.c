@@ -4222,7 +4222,7 @@ make_group_input_target(PlannerInfo *root, PathTarget *final_target)
 	foreach(lc, final_target->exprs)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
-		Index		sgref = final_target->sortgrouprefs[i];
+		Index		sgref = get_pathtarget_sortgroupref(final_target, i);
 
 		if (sgref && parse->groupClause &&
 			get_sortgroupref_clause_noerr(sgref, parse->groupClause) != NULL)
@@ -4304,7 +4304,7 @@ make_partialgroup_input_target(PlannerInfo *root, PathTarget *final_target)
 	foreach(lc, final_target->exprs)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
-		Index		sgref = final_target->sortgrouprefs[i];
+		Index		sgref = get_pathtarget_sortgroupref(final_target, i);
 
 		if (sgref && parse->groupClause &&
 			get_sortgroupref_clause_noerr(sgref, parse->groupClause) != NULL)
@@ -4556,7 +4556,7 @@ make_window_input_target(PlannerInfo *root,
 	foreach(lc, final_target->exprs)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
-		Index		sgref = final_target->sortgrouprefs[i];
+		Index		sgref = get_pathtarget_sortgroupref(final_target, i);
 
 		/*
 		 * Don't want to deconstruct window clauses or GROUP BY items.  (Note
@@ -4757,7 +4757,7 @@ make_sort_input_target(PlannerInfo *root,
 		 * only be Vars anyway.  There don't seem to be any cases where it
 		 * would be worth the trouble to double-check.
 		 */
-		if (final_target->sortgrouprefs[i] == 0)
+		if (get_pathtarget_sortgroupref(final_target, i) == 0)
 		{
 			/*
 			 * Check for SRF or volatile functions.  Check the SRF case first
@@ -4847,7 +4847,7 @@ make_sort_input_target(PlannerInfo *root,
 			postponable_cols = lappend(postponable_cols, expr);
 		else
 			add_column_to_pathtarget(input_target, expr,
-									 final_target->sortgrouprefs[i]);
+							   get_pathtarget_sortgroupref(final_target, i));
 
 		i++;
 	}
