@@ -70,11 +70,11 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   </para>
 
   <para>
-   Prepared statements have the largest performance advantage when a
-   single session is being used to execute a large number of similar
+   Prepared statements potentially have the largest performance advantage
+   when a single session is being used to execute a large number of similar
    statements. The performance difference will be particularly
-   significant if the statements are complex to plan or rewrite, for
-   example, if the query involves a join of many tables or requires
+   significant if the statements are complex to plan or rewrite, e.g. 
+   if the query involves a join of many tables or requires
    the application of several rules. If the statement is relatively simple
    to plan and rewrite but relatively expensive to execute, the
    performance advantage of prepared statements will be less noticeable.
@@ -123,26 +123,44 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   </variablelist>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="SQL-PREPARE-notes">
   <title>Notes</title>
 
   <para>
-   If a prepared statement is executed enough times, the server may eventually
-   decide to save and re-use a generic plan rather than re-planning each time.
-   This will occur immediately if the prepared statement has no parameters;
-   otherwise it occurs only if the generic plan appears to be not much more
-   expensive than a plan that depends on specific parameter values.
-   Typically, a generic plan will be selected only if the query's performance
-   is estimated to be fairly insensitive to the specific parameter values
-   supplied.
+   Prepared statements can use generic plans rather than re-planning with
+   each set of supplied <command>EXECUTE</command> values.  This occurs
+   immediately for prepared statements with no parameters; otherwise
+   it occurs only after five or more executions produce plans whose
+   estimated cost average (including planning overhead) is more expensive
+   than the generic plan cost estimate.  Once a generic plan is chosen,
+   it is used for the remaining lifetime of the prepared statement.
+   Using <command>EXECUTE</command> values which are rare in columns with
+   many duplicates can generate custom plans that are so much cheaper
+   than the generic plan, even after adding planning overhead, that the
+   generic plan might never be used.
+  </para>
+
+  <para>
+   A generic plan assumes that each value supplied to
+   <command>EXECUTE</command> is one of the column's distinct values
+   and that column values are uniformly distributed.  For example,
+   if statistics record three distinct column values, a generic plan
+   assumes a column equality comparison will match 33% of processed rows.
+   Column statistics also allow generic plans to accurately compute the
+   selectivity of unique columns.  Comparisons on non-uniformly-distributed
+   columns and specification of non-existent values affects the average
+   plan cost, and hence if and when a generic plan is chosen.
   </para>
 
   <para>
    To examine the query plan <productname>PostgreSQL</productname> is using
-   for a prepared statement, use <xref linkend="sql-explain">.
+   for a prepared statement, use <xref linkend="sql-explain">, e.g.
+   <command>EXPLAIN EXECUTE</>.
    If a generic plan is in use, it will contain parameter symbols
    <literal>$<replaceable>n</></literal>, while a custom plan will have the
-   current actual parameter values substituted into it.
+   supplied parameter values substituted into it.
+   The row estimates in the generic plan reflect the selectivity
+   computed for the parameters.
   </para>
 
   <para>
