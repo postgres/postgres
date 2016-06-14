@@ -1112,8 +1112,10 @@ deparseExplicitTargetList(List *tlist, List **retrieved_attrs,
 		/* Extract expression if TargetEntry node */
 		Assert(IsA(tle, TargetEntry));
 		var = (Var *) tle->expr;
+
 		/* We expect only Var nodes here */
-		Assert(IsA(var, Var));
+		if (!IsA(var, Var))
+			elog(ERROR, "non-Var not expected in target list");
 
 		if (i > 0)
 			appendStringInfoString(buf, ", ");
