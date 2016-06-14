@@ -4,7 +4,7 @@ MODULE_big = uuid-ossp
 OBJS = uuid-ossp.o $(UUID_EXTRA_OBJS) $(WIN32RES)
 
 EXTENSION = uuid-ossp
-DATA = uuid-ossp--1.0.sql uuid-ossp--unpackaged--1.0.sql
+DATA = uuid-ossp--1.1.sql uuid-ossp--1.0--1.1.sql uuid-ossp--unpackaged--1.0.sql
 PGFILEDESC = "uuid-ossp - UUID generation"
 
 REGRESS = uuid_ossp
