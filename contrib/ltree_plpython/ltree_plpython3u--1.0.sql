@@ -1,3 +1,8 @@
+/* contrib/ltree_plpython/ltree_plpython3u--1.0.sql */
+
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION ltree_plpython3u" to load this file. \quit
+
 -- make sure the prerequisite libraries are loaded
 LOAD 'plpython3';
 SELECT NULL::ltree;

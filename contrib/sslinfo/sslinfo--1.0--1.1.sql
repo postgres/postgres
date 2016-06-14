@@ -3,7 +3,7 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "ALTER EXTENSION sslinfo UPDATE TO '1.1'" to load this file. \quit
 
-CREATE OR REPLACE FUNCTION
+CREATE FUNCTION
 ssl_extension_info(OUT name text,
 	OUT value text,
     OUT critical boolean

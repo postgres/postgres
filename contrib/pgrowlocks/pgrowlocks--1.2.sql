@@ -1,4 +1,4 @@
-/* contrib/pgrowlocks/pgrowlocks--1.1.sql */
+/* contrib/pgrowlocks/pgrowlocks--1.2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pgrowlocks" to load this file. \quit

@@ -1,4 +1,9 @@
-CREATE OR REPLACE FUNCTION blhandler(internal)
+/* contrib/bloom/bloom--1.0.sql */
+
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION bloom" to load this file. \quit
+
+CREATE FUNCTION blhandler(internal)
 RETURNS index_am_handler
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
