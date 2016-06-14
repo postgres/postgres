@@ -731,7 +731,9 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 	 * We require columns specified in foreignrel->reltarget->exprs and those
 	 * required for evaluating the local conditions.
 	 */
-	tlist = add_to_flat_tlist(tlist, foreignrel->reltarget->exprs);
+	tlist = add_to_flat_tlist(tlist,
+					   pull_var_clause((Node *) foreignrel->reltarget->exprs,
+									   PVC_RECURSE_PLACEHOLDERS));
 	tlist = add_to_flat_tlist(tlist,
 							  pull_var_clause((Node *) fpinfo->local_conds,
 											  PVC_RECURSE_PLACEHOLDERS));

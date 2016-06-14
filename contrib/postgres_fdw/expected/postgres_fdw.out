@@ -2202,6 +2202,64 @@ SELECT t1.c1, t2.c1 FROM (ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1)) left join (ft
                Remote SQL: SELECT c1 FROM "S 1"."T 4"
 (27 rows)
 
+-- non-Var items in targelist of the nullable rel of a join preventing
+-- push-down in some cases
+-- unable to push {ft1, ft2}
+EXPLAIN (COSTS false, VERBOSE)
+SELECT q.a, ft2.c1 FROM (SELECT 13 FROM ft1 WHERE c1 = 13) q(a) RIGHT JOIN ft2 ON (q.a = ft2.c1) WHERE ft2.c1 BETWEEN 10 AND 15;
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   Output: (13), ft2.c1
+   Join Filter: (13 = ft2.c1)
+   ->  Foreign Scan on public.ft2
+         Output: ft2.c1
+         Remote SQL: SELECT "C 1" FROM "S 1"."T 1" WHERE (("C 1" >= 10)) AND (("C 1" <= 15)) ORDER BY "C 1" ASC NULLS LAST
+   ->  Materialize
+         Output: (13)
+         ->  Foreign Scan on public.ft1
+               Output: 13
+               Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE (("C 1" = 13))
+(11 rows)
+
+SELECT q.a, ft2.c1 FROM (SELECT 13 FROM ft1 WHERE c1 = 13) q(a) RIGHT JOIN ft2 ON (q.a = ft2.c1) WHERE ft2.c1 BETWEEN 10 AND 15;
+ a  | c1 
+----+----
+    | 10
+    | 11
+    | 12
+ 13 | 13
+    | 14
+    | 15
+(6 rows)
+
+-- ok to push {ft1, ft2} but not {ft1, ft2, ft4}
+EXPLAIN (COSTS false, VERBOSE)
+SELECT ft4.c1, q.* FROM ft4 LEFT JOIN (SELECT 13, ft1.c1, ft2.c1 FROM ft1 RIGHT JOIN ft2 ON (ft1.c1 = ft2.c1) WHERE ft1.c1 = 12) q(a, b, c) ON (ft4.c1 = q.b) WHERE ft4.c1 BETWEEN 10 AND 15;
+                                                                                    QUERY PLAN                                                                                     
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   Output: ft4.c1, (13), ft1.c1, ft2.c1
+   Join Filter: (ft4.c1 = ft1.c1)
+   ->  Foreign Scan on public.ft4
+         Output: ft4.c1, ft4.c2, ft4.c3
+         Remote SQL: SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 10)) AND ((c1 <= 15))
+   ->  Materialize
+         Output: ft1.c1, ft2.c1, (13)
+         ->  Foreign Scan
+               Output: ft1.c1, ft2.c1, 13
+               Relations: (public.ft1) INNER JOIN (public.ft2)
+               Remote SQL: SELECT r4."C 1", r5."C 1" FROM ("S 1"."T 1" r4 INNER JOIN "S 1"."T 1" r5 ON (((r5."C 1" = 12)) AND ((r4."C 1" = 12)))) ORDER BY r4."C 1" ASC NULLS LAST
+(12 rows)
+
+SELECT ft4.c1, q.* FROM ft4 LEFT JOIN (SELECT 13, ft1.c1, ft2.c1 FROM ft1 RIGHT JOIN ft2 ON (ft1.c1 = ft2.c1) WHERE ft1.c1 = 12) q(a, b, c) ON (ft4.c1 = q.b) WHERE ft4.c1 BETWEEN 10 AND 15;
+ c1 | a  | b  | c  
+----+----+----+----
+ 10 |    |    |   
+ 12 | 13 | 12 | 12
+ 14 |    |    |   
+(3 rows)
+
 -- recreate the dropped user mapping for further tests
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
 DROP USER MAPPING FOR PUBLIC SERVER loopback;
