@@ -2859,11 +2859,12 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 
-	/* Disable statement_timeout since restore is probably slow */
+	/*
+	 * Disable timeouts to allow for slow commands, idle parallel workers, etc
+	 */
 	ahprintf(AH, "SET statement_timeout = 0;\n");
-
-	/* Likewise for lock_timeout */
 	ahprintf(AH, "SET lock_timeout = 0;\n");
+	ahprintf(AH, "SET idle_in_transaction_session_timeout = 0;\n");
 
 	/* Select the correct character set encoding */
 	ahprintf(AH, "SET client_encoding = '%s';\n",
