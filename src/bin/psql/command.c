@@ -2943,7 +2943,7 @@ static bool
 do_watch(PQExpBuffer query_buf, long sleep)
 {
 	printQueryOpt myopt = pset.popt;
-	char		title[50];
+	char		title[256];
 
 	if (!query_buf || query_buf->len <= 0)
 	{
