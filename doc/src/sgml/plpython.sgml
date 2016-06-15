@@ -1341,13 +1341,15 @@ $$ LANGUAGE plpythonu;
   <title>Utility Functions</title>
   <para>
    The <literal>plpy</literal> module also provides the functions
-   <literal>plpy.debug(<replaceable>msg, **kwargs</>)</literal>,
-   <literal>plpy.log(<replaceable>msg, **kwargs</>)</literal>,
-   <literal>plpy.info(<replaceable>msg, **kwargs</>)</literal>,
-   <literal>plpy.notice(<replaceable>msg, **kwargs</>)</literal>,
-   <literal>plpy.warning(<replaceable>msg, **kwargs</>)</literal>,
-   <literal>plpy.error(<replaceable>msg, **kwargs</>)</literal>, and
-   <literal>plpy.fatal(<replaceable>msg, **kwargs</>)</literal>.
+   <simplelist>
+    <member><literal>plpy.debug(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.log(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.info(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.notice(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.warning(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.error(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.fatal(<replaceable>msg, **kwargs</>)</literal></member>
+   </simplelist>
    <indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
    <function>plpy.error</function> and <function>plpy.fatal</function>
    actually raise a Python exception which, if uncaught, propagates out to
@@ -1366,35 +1368,42 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
-
    The <replaceable>msg</> argument is given as a positional argument.  For
    backward compatibility, more than one positional argument can be given. In
    that case, the string representation of the tuple of positional arguments
    becomes the message reported to the client.
+  </para>
+
+  <para>
    The following keyword-only arguments are accepted:
-   <literal>
-   <replaceable>detail</replaceable>, <replaceable>hint</replaceable>,
-   <replaceable>sqlstate</replaceable>, <replaceable>schema_name</replaceable>,
-   <replaceable>table_name</replaceable>, <replaceable>column_name</replaceable>,
-   <replaceable>datatype_name</replaceable> , <replaceable>constraint_name</replaceable>
-   </literal>.
+   <simplelist>
+    <member><literal>detail</literal></member>
+    <member><literal>hint</literal></member>
+    <member><literal>sqlstate</literal></member>
+    <member><literal>schema_name</literal></member>
+    <member><literal>table_name</literal></member>
+    <member><literal>column_name</literal></member>
+    <member><literal>datatype_name</literal></member>
+    <member><literal>constraint_name</literal></member>
+   </simplelist>
    The string representation of the objects passed as keyword-only arguments
    is used to enrich the messages reported to the client. For example:
 
 <programlisting>
 CREATE FUNCTION raise_custom_exception() RETURNS void AS $$
-plpy.error("custom exception message", detail = "some info about exception", hint = "hint for users")
+plpy.error("custom exception message",
+           detail="some info about exception",
+           hint="hint for users")
 $$ LANGUAGE plpythonu;
 
-postgres=# select raise_custom_exception();
-ERROR:  XX000: plpy.Error: custom exception message
+=# SELECT raise_custom_exception();
+ERROR:  plpy.Error: custom exception message
 DETAIL:  some info about exception
 HINT:  hint for users
 CONTEXT:  Traceback (most recent call last):
-  PL/Python function "raise_custom_exception", line 2, in &lt;module&gt;
-    plpy.error("custom exception message", detail = "some info about exception", hint = "hint for users")
+  PL/Python function "raise_custom_exception", line 4, in &lt;module&gt;
+    hint="hint for users")
 PL/Python function "raise_custom_exception"
-LOCATION:  PLy_elog, plpy_elog.c:132
 </programlisting>
   </para>
 
