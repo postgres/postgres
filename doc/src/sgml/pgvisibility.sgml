@@ -32,7 +32,8 @@
   Functions which display information about <literal>PD_ALL_VISIBLE</>
   are much more costly than those which only consult the visibility map,
   because they must read the relation's data blocks rather than only the
-  (much smaller) visibility map.
+  (much smaller) visibility map.  Functions that check the relation's
+  data blocks are similarly expensive.
  </para>
 
  <sect2>
@@ -89,6 +90,31 @@
      <para>
       Returns the number of all-visible pages and the number of all-frozen
       pages in the relation according to the visibility map.
+     </para>
+    </listitem>
+   </varlistentry>
+  
+   <varlistentry>
+    <term><function>pg_check_frozen(regclass, t_ctid OUT tid) returns setof tid</function></term>
+
+    <listitem>
+     <para>
+      Returns the TIDs of non-frozen tuples present in pages marked all-frozen
+      in the visibility map.  If this function returns a non-empty set of
+      TIDs, the database is corrupt.
+     </para>
+    </listitem>
+   </varlistentry>
+     
+    <varlistentry>
+    <term><function>pg_check_visible(regclass, t_ctid OUT tid) returns setof tid</function></term>
+
+    <listitem>
+     <para>
+      Returns the TIDs of tuples which are not all-visible despite the fact
+      that the pages which contain them are marked as all-visible in the
+      visibility map.  If this function returns a non-empty set of TIDs, the
+      database is corrupt.
      </para>
     </listitem>
    </varlistentry>

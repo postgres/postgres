@@ -14,6 +14,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/procarray.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
@@ -25,14 +26,28 @@ typedef struct vbits
 	uint8		bits[FLEXIBLE_ARRAY_MEMBER];
 } vbits;
 
+typedef struct corrupt_items
+{
+	BlockNumber next;
+	BlockNumber count;
+	ItemPointer tids;
+} corrupt_items;
+
 PG_FUNCTION_INFO_V1(pg_visibility_map);
 PG_FUNCTION_INFO_V1(pg_visibility_map_rel);
 PG_FUNCTION_INFO_V1(pg_visibility);
 PG_FUNCTION_INFO_V1(pg_visibility_rel);
 PG_FUNCTION_INFO_V1(pg_visibility_map_summary);
+PG_FUNCTION_INFO_V1(pg_check_frozen);
+PG_FUNCTION_INFO_V1(pg_check_visible);
 
 static TupleDesc pg_visibility_tupdesc(bool include_blkno, bool include_pd);
 static vbits *collect_visibility_data(Oid relid, bool include_pd);
+static corrupt_items *collect_corrupt_items(Oid relid, bool all_visible,
+					  bool all_frozen);
+static void record_corrupt_item(corrupt_items *items, ItemPointer tid);
+static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
+				  Buffer buffer);
 
 /*
  * Visibility map information for a single block of a relation.
@@ -259,6 +274,68 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Return the TIDs of non-frozen tuples present in pages marked all-frozen
+ * in the visibility map.  We hope no one will ever find any, but there could
+ * be bugs, database corruption, etc.
+ */
+Datum
+pg_check_frozen(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	corrupt_items *items;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		Oid			relid = PG_GETARG_OID(0);
+		MemoryContext oldcontext;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		funcctx->user_fctx = collect_corrupt_items(relid, false, true);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	items = (corrupt_items *) funcctx->user_fctx;
+
+	if (items->next < items->count)
+		SRF_RETURN_NEXT(funcctx, PointerGetDatum(&items->tids[items->next++]));
+
+	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * Return the TIDs of not-all-visible tuples in pages marked all-visible
+ * in the visibility map.  We hope no one will ever find any, but there could
+ * be bugs, database corruption, etc.
+ */
+Datum
+pg_check_visible(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	corrupt_items *items;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		Oid			relid = PG_GETARG_OID(0);
+		MemoryContext oldcontext;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		funcctx->user_fctx = collect_corrupt_items(relid, true, false);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	items = (corrupt_items *) funcctx->user_fctx;
+
+	if (items->next < items->count)
+		SRF_RETURN_NEXT(funcctx, PointerGetDatum(&items->tids[items->next++]));
+
+	SRF_RETURN_DONE(funcctx);
+}
+
+/*
  * Helper function to construct whichever TupleDesc we need for a particular
  * call.
  */
@@ -347,4 +424,240 @@ collect_visibility_data(Oid relid, bool include_pd)
 	relation_close(rel, AccessShareLock);
 
 	return info;
+}
+
+/*
+ * Returns a list of items whose visibility map information does not match
+ * the status of the tuples on the page.
+ *
+ * If all_visible is passed as true, this will include all items which are
+ * on pages marked as all-visible in the visibility map but which do not
+ * seem to in fact be all-visible.
+ *
+ * If all_frozen is passed as true, this will include all items which are
+ * on pages marked as all-frozen but which do not seem to in fact be frozen.
+ */
+static corrupt_items *
+collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
+{
+	Relation	rel;
+	BlockNumber nblocks;
+	corrupt_items *items;
+	BlockNumber blkno;
+	Buffer		vmbuffer = InvalidBuffer;
+	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
+	TransactionId OldestXmin = InvalidTransactionId;
+
+	if (all_visible)
+	{
+		/* Don't pass rel; that will fail in recovery. */
+		OldestXmin = GetOldestXmin(NULL, true);
+	}
+
+	rel = relation_open(relid, AccessShareLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+		   errmsg("\"%s\" is not a table, materialized view, or TOAST table",
+				  RelationGetRelationName(rel))));
+
+	nblocks = RelationGetNumberOfBlocks(rel);
+
+	/*
+	 * Guess an initial array size. We don't expect many corrupted tuples, so
+	 * start with a small array.  This function uses the "next" field to track
+	 * the next offset where we can store an item (which is the same thing as
+	 * the number of items found so far) and the "count" field to track the
+	 * number of entries allocated.  We'll repurpose these fields before
+	 * returning.
+	 */
+	items = palloc0(sizeof(corrupt_items));
+	items->next = 0;
+	items->count = 64;
+	items->tids = palloc(items->count * sizeof(ItemPointerData));
+
+	/* Loop over every block in the relation. */
+	for (blkno = 0; blkno < nblocks; ++blkno)
+	{
+		bool		check_frozen = false;
+		bool		check_visible = false;
+		Buffer		buffer;
+		Page		page;
+		OffsetNumber offnum,
+					maxoff;
+
+		/* Make sure we are interruptible. */
+		CHECK_FOR_INTERRUPTS();
+
+		/* Use the visibility map to decide whether to check this page. */
+		if (all_frozen && VM_ALL_FROZEN(rel, blkno, &vmbuffer))
+			check_frozen = true;
+		if (all_visible && VM_ALL_VISIBLE(rel, blkno, &vmbuffer))
+			check_visible = true;
+		if (!check_visible && !check_frozen)
+			continue;
+
+		/* Read and lock the page. */
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+									bstrategy);
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
+
+		page = BufferGetPage(buffer);
+		maxoff = PageGetMaxOffsetNumber(page);
+
+		/*
+		 * The visibility map bits might have changed while we were acquiring
+		 * the page lock.  Recheck to avoid returning spurious results.
+		 */
+		if (check_frozen && !VM_ALL_FROZEN(rel, blkno, &vmbuffer))
+			check_frozen = false;
+		if (check_visible && !VM_ALL_VISIBLE(rel, blkno, &vmbuffer))
+			check_visible = false;
+		if (!check_visible && !check_frozen)
+		{
+			UnlockReleaseBuffer(buffer);
+			continue;
+		}
+
+		/* Iterate over each tuple on the page. */
+		for (offnum = FirstOffsetNumber;
+			 offnum <= maxoff;
+			 offnum = OffsetNumberNext(offnum))
+		{
+			HeapTupleData tuple;
+			ItemId		itemid;
+
+			itemid = PageGetItemId(page, offnum);
+
+			/* Unused or redirect line pointers are of no interest. */
+			if (!ItemIdIsUsed(itemid) || ItemIdIsRedirected(itemid))
+				continue;
+
+			/* Dead line pointers are neither all-visible nor frozen. */
+			if (ItemIdIsDead(itemid))
+			{
+				ItemPointerData tid;
+
+				ItemPointerSet(&tid, blkno, offnum);
+				record_corrupt_item(items, &tid);
+				continue;
+			}
+
+			/* Initialize a HeapTupleData structure for checks below. */
+			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
+			tuple.t_len = ItemIdGetLength(itemid);
+			tuple.t_tableOid = relid;
+
+			/*
+			 * If we're checking whether the page is all-visible, we expect
+			 * the tuple to be all-visible.
+			 */
+			if (check_visible &&
+				!tuple_all_visible(&tuple, OldestXmin, buffer))
+			{
+				TransactionId RecomputedOldestXmin;
+
+				/*
+				 * Time has passed since we computed OldestXmin, so it's
+				 * possible that this tuple is all-visible in reality even
+				 * though it doesn't appear so based on our
+				 * previously-computed value.  Let's compute a new value so we
+				 * can be certain whether there is a problem.
+				 *
+				 * From a concurrency point of view, it sort of sucks to
+				 * retake ProcArrayLock here while we're holding the buffer
+				 * exclusively locked, but it should be safe against
+				 * deadlocks, because surely GetOldestXmin() should never take
+				 * a buffer lock. And this shouldn't happen often, so it's
+				 * worth being careful so as to avoid false positives.
+				 */
+				RecomputedOldestXmin = GetOldestXmin(NULL, true);
+
+				if (!TransactionIdPrecedes(OldestXmin, RecomputedOldestXmin))
+					record_corrupt_item(items, &tuple.t_data->t_ctid);
+				else
+				{
+					OldestXmin = RecomputedOldestXmin;
+					if (!tuple_all_visible(&tuple, OldestXmin, buffer))
+						record_corrupt_item(items, &tuple.t_data->t_ctid);
+				}
+			}
+
+			/*
+			 * If we're checking whether the page is all-frozen, we expect the
+			 * tuple to be in a state where it will never need freezing.
+			 */
+			if (check_frozen)
+			{
+				if (heap_tuple_needs_eventual_freeze(tuple.t_data))
+					record_corrupt_item(items, &tuple.t_data->t_ctid);
+			}
+		}
+
+		UnlockReleaseBuffer(buffer);
+	}
+
+	/* Clean up. */
+	if (vmbuffer != InvalidBuffer)
+		ReleaseBuffer(vmbuffer);
+	relation_close(rel, AccessShareLock);
+
+	/*
+	 * Before returning, repurpose the fields to match caller's expectations.
+	 * next is now the next item that should be read (rather than written) and
+	 * count is now the number of items we wrote (rather than the number we
+	 * allocated).
+	 */
+	items->count = items->next;
+	items->next = 0;
+
+	return items;
+}
+
+/*
+ * Remember one corrupt item.
+ */
+static void
+record_corrupt_item(corrupt_items *items, ItemPointer tid)
+{
+	/* enlarge output array if needed. */
+	if (items->next >= items->count)
+	{
+		items->count *= 2;
+		items->tids = repalloc(items->tids,
+							   items->count * sizeof(ItemPointerData));
+	}
+	/* and add the new item */
+	items->tids[items->next++] = *tid;
+}
+
+/*
+ * Check whether a tuple is all-visible relative to a given OldestXmin value.
+ * The buffer should contain the tuple and should be locked and pinned.
+ */
+static bool
+tuple_all_visible(HeapTuple tup, TransactionId OldestXmin, Buffer buffer)
+{
+	HTSV_Result state;
+	TransactionId xmin;
+
+	state = HeapTupleSatisfiesVacuum(tup, OldestXmin, buffer);
+	if (state != HEAPTUPLE_LIVE)
+		return false;			/* all-visible implies live */
+
+	/*
+	 * Neither lazy_scan_heap nor heap_page_is_all_visible will mark a page
+	 * all-visible unless every tuple is hinted committed. However, those hint
+	 * bits could be lost after a crash, so we can't be certain that they'll
+	 * be set here.  So just check the xmin.
+	 */
+
+	xmin = HeapTupleHeaderGetXmin(tup->t_data);
+	if (!TransactionIdPrecedes(xmin, OldestXmin))
+		return false;			/* xmin not old enough for all to see */
+
+	return true;
 }

@@ -1,4 +1,4 @@
-/* contrib/pg_visibility/pg_visibility--1.0.sql */
+/* contrib/pg_visibility/pg_visibility--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_visibility" to load this file. \quit
@@ -44,9 +44,24 @@ RETURNS record
 AS 'MODULE_PATHNAME', 'pg_visibility_map_summary'
 LANGUAGE C STRICT;
 
+-- Show tupleids of non-frozen tuples if any in all_frozen pages
+-- for a relation.
+CREATE FUNCTION pg_check_frozen(regclass, t_ctid OUT tid)
+RETURNS SETOF tid
+AS 'MODULE_PATHNAME', 'pg_check_frozen'
+LANGUAGE C STRICT;
+
+-- Show tupleids of dead tuples if any in all_visible pages for a relation.
+CREATE FUNCTION pg_check_visible(regclass, t_ctid OUT tid)
+RETURNS SETOF tid
+AS 'MODULE_PATHNAME', 'pg_check_visible'
+LANGUAGE C STRICT;
+
 -- Don't want these to be available to public.
 REVOKE ALL ON FUNCTION pg_visibility_map(regclass, bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_visibility(regclass, bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_visibility_map(regclass) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_visibility(regclass) FROM PUBLIC;
 REVOKE ALL ON FUNCTION pg_visibility_map_summary(regclass) FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_check_frozen(regclass) FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_check_visible(regclass) FROM PUBLIC;

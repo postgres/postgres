@@ -2372,6 +2372,7 @@ convert_testexpr_context
 core_YYSTYPE
 core_yy_extra_type
 core_yyscan_t
+corrupt_items
 cost_qual_eval_context
 count_agg_clauses_context
 create_upper_paths_hook_type
