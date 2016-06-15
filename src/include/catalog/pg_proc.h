@@ -1347,9 +1347,9 @@ DATA(insert OID = 1291 (  suppress_redundant_updates_trigger	PGNSP PGUID 12 1 0 
 DESCR("trigger to suppress updates when new and old records match");
 
 DATA(insert OID = 1292 ( tideq			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "27 27" _null_ _null_ _null_ _null_ _null_ tideq _null_ _null_ _null_ ));
-DATA(insert OID = 1293 ( currtid		   PGNSP PGUID 12 1 0 0 0 f f f f t f v s 2 0 27 "26 27" _null_ _null_ _null_ _null_ _null_ currtid_byreloid _null_ _null_ _null_ ));
+DATA(insert OID = 1293 ( currtid		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 27 "26 27" _null_ _null_ _null_ _null_ _null_ currtid_byreloid _null_ _null_ _null_ ));
 DESCR("latest tid of a tuple");
-DATA(insert OID = 1294 ( currtid2		   PGNSP PGUID 12 1 0 0 0 f f f f t f v s 2 0 27 "25 27" _null_ _null_ _null_ _null_ _null_ currtid_byrelname _null_ _null_ _null_ ));
+DATA(insert OID = 1294 ( currtid2		   PGNSP PGUID 12 1 0 0 0 f f f f t f v u 2 0 27 "25 27" _null_ _null_ _null_ _null_ _null_ currtid_byrelname _null_ _null_ _null_ ));
 DESCR("latest tid of a tuple");
 DATA(insert OID = 1265 ( tidne			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "27 27" _null_ _null_ _null_ _null_ _null_ tidne _null_ _null_ _null_ ));
 DATA(insert OID = 2790 ( tidgt			   PGNSP PGUID 12 1 0 0 0 f f f t t f i s 2 0 16 "27 27" _null_ _null_ _null_ _null_ _null_ tidgt _null_ _null_ _null_ ));
@@ -3135,7 +3135,7 @@ DESCR("xlog filename, given an xlog location");
 DATA(insert OID = 3165 ( pg_xlog_location_diff		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1700 "3220 3220" _null_ _null_ _null_ _null_ _null_ pg_xlog_location_diff _null_ _null_ _null_ ));
 DESCR("difference in bytes, given two xlog locations");
 
-DATA(insert OID = 3809 ( pg_export_snapshot		PGNSP PGUID 12 1 0 0 0 f f f f t f v r 0 0 25 "" _null_ _null_ _null_ _null_ _null_ pg_export_snapshot _null_ _null_ _null_ ));
+DATA(insert OID = 3809 ( pg_export_snapshot		PGNSP PGUID 12 1 0 0 0 f f f f t f v u 0 0 25 "" _null_ _null_ _null_ _null_ _null_ pg_export_snapshot _null_ _null_ _null_ ));
 DESCR("export a snapshot");
 
 DATA(insert OID = 3810 (  pg_is_in_recovery		PGNSP PGUID 12 1 0 0 0 f f f f t f v s 0 0 16 "" _null_ _null_ _null_ _null_ _null_ pg_is_in_recovery _null_ _null_ _null_ ));
