@@ -1054,6 +1054,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			}
 			else
 			{
+				bool	tuple_totally_frozen;
+
 				num_tuples += 1;
 				hastup = true;
 
@@ -1062,9 +1064,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 * freezing.  Note we already have exclusive buffer lock.
 				 */
 				if (heap_prepare_freeze_tuple(tuple.t_data, FreezeLimit,
-										  MultiXactCutoff, &frozen[nfrozen]))
+										  MultiXactCutoff, &frozen[nfrozen],
+											&tuple_totally_frozen))
 					frozen[nfrozen++].offset = offnum;
-				else if (heap_tuple_needs_eventual_freeze(tuple.t_data))
+
+				if (!tuple_totally_frozen)
 					all_frozen = false;
 			}
 		}						/* scan along page */
