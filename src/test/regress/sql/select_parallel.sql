@@ -21,9 +21,11 @@ explain (costs off)
 
 do $$begin
   -- Provoke error in worker.  The original message CONTEXT contains a worker
-  -- PID that must be hidden in the test output.  PL/pgSQL conveniently
-  -- substitutes its own CONTEXT.
-  select stringu1::int2 from tenk1 where unique1 = 1;
+  -- PID that must be hidden in the test output.
+  perform stringu1::int2 from tenk1 where unique1 = 1;
+  exception
+	when others then
+		raise 'SQLERRM: %', sqlerrm;
 end$$;
 
 rollback;
