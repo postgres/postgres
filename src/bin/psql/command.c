@@ -3066,6 +3066,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 {
 	long		sleep_ms = (long) (sleep * 1000);
 	printQueryOpt myopt = pset.popt;
+	const char *strftime_fmt;
 	const char *user_title;
 	char	   *title;
 	int			title_len;
@@ -3078,6 +3079,13 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	}
 
 	/*
+	 * Choose format for timestamps.  We might eventually make this a \pset
+	 * option.  In the meantime, using a variable for the format suppresses
+	 * overly-anal-retentive gcc warnings about %c being Y2K sensitive.
+	 */
+	strftime_fmt = "%c";
+
+	/*
 	 * Set up rendering options, in particular, disable the pager, because
 	 * nobody wants to be prompted while watching the output of 'watch'.
 	 */
@@ -3085,16 +3093,17 @@ do_watch(PQExpBuffer query_buf, double sleep)
 
 	/*
 	 * If there's a title in the user configuration, make sure we have room
-	 * for it in the title buffer.
+	 * for it in the title buffer.  Allow 128 bytes for the timestamp plus 128
+	 * bytes for the rest.
 	 */
 	user_title = myopt.title;
-	title_len = (user_title ? strlen(user_title) : 0) + 100;
+	title_len = (user_title ? strlen(user_title) : 0) + 256;
 	title = pg_malloc(title_len);
 
 	for (;;)
 	{
 		time_t		timer;
-		char		asctimebuf[64];
+		char		timebuf[128];
 		long		i;
 
 		/*
@@ -3103,18 +3112,14 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		 * makes for reasonably nicely formatted output in simple cases.
 		 */
 		timer = time(NULL);
-		strlcpy(asctimebuf, asctime(localtime(&timer)), sizeof(asctimebuf));
-		/* strip trailing newline from asctime's output */
-		i = strlen(asctimebuf);
-		while (i > 0 && asctimebuf[--i] == '\n')
-			asctimebuf[i] = '\0';
+		strftime(timebuf, sizeof(timebuf), strftime_fmt, localtime(&timer));
 
 		if (user_title)
 			snprintf(title, title_len, _("%s\t%s (every %gs)\n"),
-					 user_title, asctimebuf, sleep);
+					 user_title, timebuf, sleep);
 		else
 			snprintf(title, title_len, _("%s (every %gs)\n"),
-					 asctimebuf, sleep);
+					 timebuf, sleep);
 		myopt.title = title;
 
 		/* Run the query and print out the results */
