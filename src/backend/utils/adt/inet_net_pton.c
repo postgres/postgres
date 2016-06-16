@@ -496,7 +496,7 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size)
 			else if (*src == '\0')
 				goto enoent;
 			if (tp + NS_INT16SZ > endp)
-				return (0);
+				goto enoent;
 			*tp++ = (u_char) (val >> 8) & 0xff;
 			*tp++ = (u_char) val & 0xff;
 			saw_xdigit = 0;
