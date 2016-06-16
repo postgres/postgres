@@ -273,7 +273,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile)
 				new_cur += BITS_PER_HEAPBLOCK;
 			}
 
-			/* If the last part of the old page is empty, skip to write it */
+			/* If the last part of the old page is empty, skip writing it */
 			if (old_lastpart && empty)
 				break;
 
