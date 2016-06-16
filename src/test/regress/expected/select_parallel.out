@@ -1,12 +1,21 @@
 --
 -- PARALLEL
 --
+create or replace function parallel_restricted(int) returns int as $$
+begin
+  perform * from pg_stat_activity where client_port is null;
+  if (found) then
+    raise 'parallel restricted function run in worker';
+  end if;
+  return $1;
+end$$ language plpgsql parallel restricted;
 -- Serializable isolation would disable parallel query, so explicitly use an
 -- arbitrary other level.
 begin isolation level repeatable read;
 -- setup parallel test
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;
+set max_parallel_workers_per_gather=4;
 explain (costs off)
   select count(*) from a_star;
                      QUERY PLAN                      
@@ -29,6 +38,45 @@ select count(*) from a_star;
 -------
     50
 (1 row)
+
+-- test that parallel_restricted function doesn't run in worker
+alter table tenk1 set (parallel_workers = 4);
+explain (verbose, costs off)
+select parallel_restricted(unique1) from tenk1
+  where stringu1 = 'GRAAAA' order by 1;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Sort
+   Output: (parallel_restricted(unique1))
+   Sort Key: (parallel_restricted(tenk1.unique1))
+   ->  Gather
+         Output: parallel_restricted(unique1)
+         Workers Planned: 4
+         ->  Parallel Seq Scan on public.tenk1
+               Output: unique1
+               Filter: (tenk1.stringu1 = 'GRAAAA'::name)
+(9 rows)
+
+select parallel_restricted(unique1) from tenk1
+  where stringu1 = 'GRAAAA' order by 1;
+ parallel_restricted 
+---------------------
+                 448
+                1124
+                1800
+                2476
+                3152
+                3828
+                4504
+                5180
+                5856
+                6532
+                7208
+                7884
+                8560
+                9236
+                9912
+(15 rows)
 
 set force_parallel_mode=1;
 explain (costs off)
