@@ -304,6 +304,7 @@
 #cpu_operator_cost = 0.0025		# same scale as above
 #parallel_tuple_cost = 0.1		# same scale as above
 #parallel_setup_cost = 1000.0	# same scale as above
+#min_parallel_relation_size = 8MB
 #effective_cache_size = 4GB
 
 # - Genetic Query Optimizer -

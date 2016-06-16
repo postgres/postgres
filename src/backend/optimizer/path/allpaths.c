@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include <limits.h>
 #include <math.h>
 
 #include "access/sysattr.h"
@@ -56,6 +57,7 @@ typedef struct pushdown_safety_info
 /* These parameters are set by GUC */
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
+int			min_parallel_relation_size;
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 set_rel_pathlist_hook_type set_rel_pathlist_hook = NULL;
@@ -690,7 +692,7 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 		parallel_workers = rel->rel_parallel_workers;
 	else
 	{
-		int			parallel_threshold = 1000;
+		int			parallel_threshold;
 
 		/*
 		 * If this relation is too small to be worth a parallel scan, just
@@ -699,21 +701,24 @@ create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * might not be worthwhile just for this relation, but when combined
 		 * with all of its inheritance siblings it may well pay off.
 		 */
-		if (rel->pages < parallel_threshold &&
+		if (rel->pages < (BlockNumber) min_parallel_relation_size &&
 			rel->reloptkind == RELOPT_BASEREL)
 			return;
 
 		/*
 		 * Select the number of workers based on the log of the size of the
 		 * relation.  This probably needs to be a good deal more
-		 * sophisticated, but we need something here for now.
+		 * sophisticated, but we need something here for now.  Note that the
+		 * upper limit of the min_parallel_relation_size GUC is chosen to
+		 * prevent overflow here.
 		 */
 		parallel_workers = 1;
-		while (rel->pages > parallel_threshold * 3)
+		parallel_threshold = Max(min_parallel_relation_size, 1);
+		while (rel->pages >= (BlockNumber) (parallel_threshold * 3))
 		{
 			parallel_workers++;
 			parallel_threshold *= 3;
-			if (parallel_threshold >= PG_INT32_MAX / 3)
+			if (parallel_threshold > INT_MAX / 3)
 				break;			/* avoid overflow */
 		}
 	}

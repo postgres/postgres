@@ -2748,6 +2748,17 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"min_parallel_relation_size", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the minimum size of relations to be considered for parallel scan."),
+			NULL,
+			GUC_UNIT_BLOCKS,
+		},
+		&min_parallel_relation_size,
+		1024, 0, INT_MAX / 3,
+		NULL, NULL, NULL
+	},
+
+	{
 		/* Can't be set in postgresql.conf */
 		{"server_version_num", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the server version as an integer."),

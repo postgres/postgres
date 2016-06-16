@@ -3699,6 +3699,20 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-min-parallel-relation-size" xreflabel="min_parallel_relation_size">
+      <term><varname>min_parallel_relation_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>min_parallel_relation_size</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the minimum size of relations to be considered for parallel scan.
+        The default is 8 megabytes (<literal>8MB</>).
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-effective-cache-size" xreflabel="effective_cache_size">
       <term><varname>effective_cache_size</varname> (<type>integer</type>)
       <indexterm>
