@@ -827,10 +827,14 @@ PostmasterMain(int argc, char *argv[])
 	if (output_config_variable != NULL)
 	{
 		/*
-		 * permission is handled because the user is reading inside the data
-		 * dir
+		 * "-C guc" was specified, so print GUC's value and exit.  No extra
+		 * permission check is needed because the user is reading inside the
+		 * data dir.
 		 */
-		puts(GetConfigOption(output_config_variable, false, false));
+		const char *config_val = GetConfigOption(output_config_variable,
+												 false, false);
+
+		puts(config_val ? config_val : "(null)");
 		ExitPostmaster(0);
 	}
 
