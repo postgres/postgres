@@ -4264,16 +4264,15 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	fpinfo->attrs_used = NULL;
 
 	/*
-	 * In case there is a possibility that EvalPlanQual will be executed, we
-	 * should be able to reconstruct the row, from base relations applying all
-	 * the conditions. We create a local plan from a suitable local path
-	 * available in the path list. In case such a path doesn't exist, we can
-	 * not push the join to the foreign server since we won't be able to
+	 * If there is a possibility that EvalPlanQual will be executed, we need
+	 * to be able to reconstruct the row using scans of the base relations.
+	 * GetExistingLocalJoinPath will find a suitable path for this purpose in
+	 * the path list of the joinrel, if one exists.  We must be careful to
+	 * call it before adding any ForeignPath, since the ForeignPath might
+	 * dominate the only suitable local path available.  We also do it before
 	 * reconstruct the row for EvalPlanQual(). Find an alternative local path
-	 * before we add ForeignPath, lest the new path would kick possibly the
-	 * only local path. Do this before calling foreign_join_ok(), since that
-	 * function updates fpinfo and marks it as pushable if the join is found
-	 * to be pushable.
+	 * calling foreign_join_ok(), since that function updates fpinfo and marks
+	 * it as pushable if the join is found to be pushable.
 	 */
 	if (root->parse->commandType == CMD_DELETE ||
 		root->parse->commandType == CMD_UPDATE ||
