@@ -627,7 +627,7 @@ of optimising for performance. When a hint is written we use
 MarkBufferDirtyHint() to mark the block dirty.
 
 If the buffer is clean and checksums are in use then
-MarkBufferDirtyHint() inserts an XLOG_HINT record to ensure that we
+MarkBufferDirtyHint() inserts an XLOG_FPI record to ensure that we
 take a full page image that includes the hint. We do this to avoid
 a partial page write, when we write the dirtied page. WAL is not
 written during recovery, so we simply skip dirtying blocks because
