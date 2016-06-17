@@ -3819,7 +3819,7 @@
   </para>
 
   <table>
-   <title><structname>pg_inherits</> Columns</title>
+   <title><structname>pg_init_privs</> Columns</title>
 
    <tgroup cols="4">
     <thead>
