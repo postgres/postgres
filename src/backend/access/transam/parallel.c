@@ -788,7 +788,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				 */
 				save_error_context_stack = error_context_stack;
 				errctx.callback = ParallelErrorContext;
-				errctx.arg = &pcxt->worker[i].pid;
+				errctx.arg = NULL;
 				errctx.previous = pcxt->error_context_stack;
 				error_context_stack = &errctx;
 
@@ -1095,7 +1095,7 @@ static void
 ParallelErrorContext(void *arg)
 {
 	if (force_parallel_mode != FORCE_PARALLEL_REGRESS)
-		errcontext("parallel worker, PID %d", *(int32 *) arg);
+		errcontext("parallel worker");
 }
 
 /*

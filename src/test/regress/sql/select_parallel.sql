@@ -30,8 +30,8 @@ explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
 
 do $$begin
-  -- Provoke error in worker.  The original message CONTEXT contains a worker
-  -- PID that must be hidden in the test output.
+  -- Provoke error, possibly in worker.  If this error happens to occur in
+  -- the worker, there will be a CONTEXT line which must be hidden.
   perform stringu1::int2 from tenk1 where unique1 = 1;
   exception
 	when others then
