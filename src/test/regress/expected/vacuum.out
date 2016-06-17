@@ -79,5 +79,6 @@ ERROR:  ANALYZE cannot be executed from VACUUM or ANALYZE
 CONTEXT:  SQL function "do_analyze" statement 1
 SQL function "wrap_do_analyze" statement 1
 VACUUM FULL vactst;
+VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
 DROP TABLE vaccluster;
 DROP TABLE vactst;

@@ -186,6 +186,15 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 						stmttype)));
 
 	/*
+	 * Sanity check DISABLE_PAGE_SKIPPING option.
+	 */
+	if ((options & VACOPT_FULL) != 0 &&
+		(options & VACOPT_DISABLE_PAGE_SKIPPING) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("VACUUM option DISABLE_PAGE_SKIPPING cannot be used with FULL")));
+
+	/*
 	 * Send info about dead objects to the statistics collector, unless we are
 	 * in autovacuum --- autovacuum.c does this for itself.
 	 */

@@ -137,8 +137,9 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-			   Relation *Irel, int nindexes, bool aggressive);
+static void lazy_scan_heap(Relation onerel, int options,
+			   LVRelStats *vacrelstats, Relation *Irel, int nindexes,
+			   bool aggressive);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static bool lazy_check_needs_freeze(Buffer buf, bool *hastup);
 static void lazy_vacuum_index(Relation indrel,
@@ -223,15 +224,17 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 						  &MultiXactCutoff, &mxactFullScanLimit);
 
 	/*
-	 * We request an aggressive scan if either the table's frozen Xid is now
-	 * older than or equal to the requested Xid full-table scan limit; or if
-	 * the table's minimum MultiXactId is older than or equal to the requested
-	 * mxid full-table scan limit.
+	 * We request an aggressive scan if the table's frozen Xid is now older
+	 * than or equal to the requested Xid full-table scan limit; or if the
+	 * table's minimum MultiXactId is older than or equal to the requested
+	 * mxid full-table scan limit; or if DISABLE_PAGE_SKIPPING was specified.
 	 */
 	aggressive = TransactionIdPrecedesOrEquals(onerel->rd_rel->relfrozenxid,
 											   xidFullScanLimit);
 	aggressive |= MultiXactIdPrecedesOrEquals(onerel->rd_rel->relminmxid,
 											  mxactFullScanLimit);
+	if (options & VACOPT_DISABLE_PAGE_SKIPPING)
+		aggressive = true;
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
@@ -246,7 +249,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	vacrelstats->hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, aggressive);
+	lazy_scan_heap(onerel, options, vacrelstats, Irel, nindexes, aggressive);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
@@ -441,7 +444,7 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
  *		reference them have been killed.
  */
 static void
-lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
+lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			   Relation *Irel, int nindexes, bool aggressive)
 {
 	BlockNumber nblocks,
@@ -542,25 +545,28 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * the last page.  This is worth avoiding mainly because such a lock must
 	 * be replayed on any hot standby, where it can be disruptive.
 	 */
-	for (next_unskippable_block = 0;
-		 next_unskippable_block < nblocks;
-		 next_unskippable_block++)
+	next_unskippable_block = 0;
+	if ((options & VACOPT_DISABLE_PAGE_SKIPPING) == 0)
 	{
-		uint8		vmstatus;
+		while (next_unskippable_block < nblocks)
+		{
+			uint8		vmstatus;
 
-		vmstatus = visibilitymap_get_status(onerel, next_unskippable_block,
-											&vmbuffer);
-		if (aggressive)
-		{
-			if ((vmstatus & VISIBILITYMAP_ALL_FROZEN) == 0)
-				break;
+			vmstatus = visibilitymap_get_status(onerel, next_unskippable_block,
+												&vmbuffer);
+			if (aggressive)
+			{
+				if ((vmstatus & VISIBILITYMAP_ALL_FROZEN) == 0)
+					break;
+			}
+			else
+			{
+				if ((vmstatus & VISIBILITYMAP_ALL_VISIBLE) == 0)
+					break;
+			}
+			vacuum_delay_point();
+			next_unskippable_block++;
 		}
-		else
-		{
-			if ((vmstatus & VISIBILITYMAP_ALL_VISIBLE) == 0)
-				break;
-		}
-		vacuum_delay_point();
 	}
 
 	if (next_unskippable_block >= SKIP_PAGES_THRESHOLD)
@@ -594,26 +600,29 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (blkno == next_unskippable_block)
 		{
 			/* Time to advance next_unskippable_block */
-			for (next_unskippable_block++;
-				 next_unskippable_block < nblocks;
-				 next_unskippable_block++)
+			next_unskippable_block++;
+			if ((options & VACOPT_DISABLE_PAGE_SKIPPING) == 0)
 			{
-				uint8		vmskipflags;
+				while (next_unskippable_block < nblocks)
+				{
+					uint8		vmskipflags;
 
-				vmskipflags = visibilitymap_get_status(onerel,
-													   next_unskippable_block,
-													   &vmbuffer);
-				if (aggressive)
-				{
-					if ((vmskipflags & VISIBILITYMAP_ALL_FROZEN) == 0)
-						break;
+					vmskipflags = visibilitymap_get_status(onerel,
+													  next_unskippable_block,
+														   &vmbuffer);
+					if (aggressive)
+					{
+						if ((vmskipflags & VISIBILITYMAP_ALL_FROZEN) == 0)
+							break;
+					}
+					else
+					{
+						if ((vmskipflags & VISIBILITYMAP_ALL_VISIBLE) == 0)
+							break;
+					}
+					vacuum_delay_point();
+					next_unskippable_block++;
 				}
-				else
-				{
-					if ((vmskipflags & VISIBILITYMAP_ALL_VISIBLE) == 0)
-						break;
-				}
-				vacuum_delay_point();
 			}
 
 			/*
@@ -1054,7 +1063,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			}
 			else
 			{
-				bool	tuple_totally_frozen;
+				bool		tuple_totally_frozen;
 
 				num_tuples += 1;
 				hastup = true;
@@ -1064,8 +1073,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 * freezing.  Note we already have exclusive buffer lock.
 				 */
 				if (heap_prepare_freeze_tuple(tuple.t_data, FreezeLimit,
-										  MultiXactCutoff, &frozen[nfrozen],
-											&tuple_totally_frozen))
+										   MultiXactCutoff, &frozen[nfrozen],
+											  &tuple_totally_frozen))
 					frozen[nfrozen++].offset = offnum;
 
 				if (!tuple_totally_frozen)

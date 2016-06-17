@@ -9370,6 +9370,16 @@ vacuum_option_elem:
 			| VERBOSE			{ $$ = VACOPT_VERBOSE; }
 			| FREEZE			{ $$ = VACOPT_FREEZE; }
 			| FULL				{ $$ = VACOPT_FULL; }
+			| IDENT
+				{
+					if (strcmp($1, "disable_page_skipping") == 0)
+						$$ = VACOPT_DISABLE_PAGE_SKIPPING;
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("unrecognized VACUUM option \"%s\"", $1),
+									 parser_errposition(@1)));
+				}
 		;
 
 AnalyzeStmt:
