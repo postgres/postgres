@@ -37,7 +37,8 @@ smgr_desc(StringInfo buf, XLogReaderState *record)
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
 		char	   *path = relpathperm(xlrec->rnode, MAIN_FORKNUM);
 
-		appendStringInfo(buf, "%s to %u blocks", path, xlrec->blkno);
+		appendStringInfo(buf, "%s to %u blocks flags %d", path,
+						 xlrec->blkno, xlrec->flags);
 		pfree(path);
 	}
 }

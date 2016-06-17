@@ -9,14 +9,16 @@
 
  <para>
   The <filename>pg_visibility</> module provides a means for examining the
-  visibility map (VM) and page-level visibility information.
+  visibility map (VM) and page-level visibility information.  It also
+  provides functions to check the integrity of the visibility map and to
+  force it to be rebuilt.
  </para>
 
  <para>
-  These routines return information about three different bits.  The
-  all-visible bit in the visibility map indicates that every tuple on
-  a given page of a relation is visible to every current transaction.  The
-  all-frozen bit in the visibility map indicates that every tuple on the
+  Three different bits are used to store information about page-level
+  visibility.  The all-visible bit in the visibility map indicates that every
+  tuple on a given page of a relation is visible to every current transaction.
+  The all-frozen bit in the visibility map indicates that every tuple on the
   page is frozen; that is, no future vacuum will need to modify the page
   until such time as a tuple is inserted, updated, deleted, or locked on
   that page.  The page-level <literal>PD_ALL_VISIBLE</literal> bit has the
@@ -25,7 +27,8 @@
   will normally agree, but the page-level bit can sometimes be set while the
   visibility map bit is clear after a crash recovery; or they can disagree
   because of a change which occurs after <literal>pg_visibility</> examines
-  the visibility map and before it examines the data page.
+  the visibility map and before it examines the data page.  Any event which
+  causes data corruption can also cause these bits to disagree.
  </para>
 
  <para>
@@ -115,6 +118,21 @@
       that the pages which contain them are marked as all-visible in the
       visibility map.  If this function returns a non-empty set of TIDs, the
       database is corrupt.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><function>pg_truncate_visibility_map(regclass) returns void</function></term>
+
+    <listitem>
+     <para>
+      Truncates the visibility map for the given relation.  This function
+      is only expected to be useful if you suspect that the visibility map
+      for the indicated relation is corrupt and wish to rebuild it.  The first
+      <command>VACUUM</> executed on the given relation after this function
+      is executed will scan every page in the relation and rebuild the
+      visibility map.
      </para>
     </listitem>
    </varlistentry>

@@ -11,10 +11,12 @@
 #include "access/htup_details.h"
 #include "access/visibilitymap.h"
 #include "catalog/pg_type.h"
+#include "catalog/storage_xlog.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
+#include "storage/smgr.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
@@ -40,6 +42,7 @@ PG_FUNCTION_INFO_V1(pg_visibility_rel);
 PG_FUNCTION_INFO_V1(pg_visibility_map_summary);
 PG_FUNCTION_INFO_V1(pg_check_frozen);
 PG_FUNCTION_INFO_V1(pg_check_visible);
+PG_FUNCTION_INFO_V1(pg_truncate_visibility_map);
 
 static TupleDesc pg_visibility_tupdesc(bool include_blkno, bool include_pd);
 static vbits *collect_visibility_data(Oid relid, bool include_pd);
@@ -333,6 +336,75 @@ pg_check_visible(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(&items->tids[items->next++]));
 
 	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * Remove the visibility map fork for a relation.  If there turn out to be
+ * any bugs in the visibility map code that require rebuilding the VM, this
+ * provides users with a way to do it that is cleaner than shutting down the
+ * server and removing files by hand.
+ *
+ * This is a cut-down version of RelationTruncate.
+ */
+Datum
+pg_truncate_visibility_map(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+
+	rel = relation_open(relid, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+		   errmsg("\"%s\" is not a table, materialized view, or TOAST table",
+				  RelationGetRelationName(rel))));
+
+	RelationOpenSmgr(rel);
+	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
+
+	visibilitymap_truncate(rel, 0);
+
+	if (RelationNeedsWAL(rel))
+	{
+		xl_smgr_truncate xlrec;
+
+		xlrec.blkno = 0;
+		xlrec.rnode = rel->rd_node;
+		xlrec.flags = SMGR_TRUNCATE_VM;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+
+		XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLR_SPECIAL_REL_UPDATE);
+	}
+
+	/*
+	 * Release the lock right away, not at commit time.
+	 *
+	 * It would be a problem to release the lock prior to commit if this
+	 * truncate operation sends any transactional invalidation messages. Other
+	 * backends would potentially be able to lock the relation without
+	 * processing them in the window of time between when we release the lock
+	 * here and when we sent the messages at our eventual commit.  However,
+	 * we're currently only sending a non-transactional smgr invalidation,
+	 * which will have been posted to shared memory immediately from within
+	 * visibilitymap_truncate.  Therefore, there should be no race here.
+	 *
+	 * The reason why it's desirable to release the lock early here is because
+	 * of the possibility that someone will need to use this to blow away many
+	 * visibility map forks at once.  If we can't release the lock until
+	 * commit time, the transaction doing this will accumulate
+	 * AccessExclusiveLocks on all of those relations at the same time, which
+	 * is undesirable. However, if this turns out to be unsafe we may have no
+	 * choice...
+	 */
+	relation_close(rel, AccessExclusiveLock);
+
+	/* Nothing to return. */
+	PG_RETURN_VOID();
 }
 
 /*

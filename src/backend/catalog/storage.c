@@ -268,6 +268,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 
 		xlrec.blkno = nblocks;
 		xlrec.rnode = rel->rd_node;
+		xlrec.flags = SMGR_TRUNCATE_ALL;
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
@@ -522,17 +523,22 @@ smgr_redo(XLogReaderState *record)
 		 */
 		XLogFlush(lsn);
 
-		smgrtruncate(reln, MAIN_FORKNUM, xlrec->blkno);
+		if ((xlrec->flags & SMGR_TRUNCATE_HEAP) != 0)
+		{
+			smgrtruncate(reln, MAIN_FORKNUM, xlrec->blkno);
 
-		/* Also tell xlogutils.c about it */
-		XLogTruncateRelation(xlrec->rnode, MAIN_FORKNUM, xlrec->blkno);
+			/* Also tell xlogutils.c about it */
+			XLogTruncateRelation(xlrec->rnode, MAIN_FORKNUM, xlrec->blkno);
+		}
 
 		/* Truncate FSM and VM too */
 		rel = CreateFakeRelcacheEntry(xlrec->rnode);
 
-		if (smgrexists(reln, FSM_FORKNUM))
+		if ((xlrec->flags & SMGR_TRUNCATE_FSM) != 0 &&
+			smgrexists(reln, FSM_FORKNUM))
 			FreeSpaceMapTruncateRel(rel, xlrec->blkno);
-		if (smgrexists(reln, VISIBILITYMAP_FORKNUM))
+		if ((xlrec->flags & SMGR_TRUNCATE_VM) != 0 &&
+			smgrexists(reln, VISIBILITYMAP_FORKNUM))
 			visibilitymap_truncate(rel, xlrec->blkno);
 
 		FreeFakeRelcacheEntry(rel);
