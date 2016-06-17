@@ -325,7 +325,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 									 refnames_tlist);
 
 		path = apply_projection_to_path(root, rel, path,
-										create_pathtarget(root, tlist));
+										create_pathtarget(root, tlist),
+										false);
 
 		/* Return the fully-fledged tlist to caller, too */
 		*pTargetList = tlist;
@@ -394,7 +395,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 											path->parent,
 											path,
 											create_pathtarget(root,
-															  *pTargetList));
+															  *pTargetList),
+											false);
 		}
 		return path;
 	}

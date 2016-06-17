@@ -24,6 +24,17 @@ explain (verbose, costs off)
 select parallel_restricted(unique1) from tenk1
   where stringu1 = 'GRAAAA' order by 1;
 
+-- test parallel plan when group by expression is in target list.
+explain (costs off)
+	select length(stringu1) from tenk1 group by length(stringu1);
+select length(stringu1) from tenk1 group by length(stringu1);
+
+-- test that parallel plan for aggregates is not selected when
+-- target list contains parallel restricted clause.
+explain (costs off)
+	select  sum(parallel_restricted(unique1)) from tenk1
+	group by(parallel_restricted(unique1));
+
 set force_parallel_mode=1;
 
 explain (costs off)

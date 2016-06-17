@@ -465,7 +465,8 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 * cheapest path.)
 	 */
 	sorted_path = apply_projection_to_path(subroot, final_rel, sorted_path,
-										   create_pathtarget(subroot, tlist));
+										   create_pathtarget(subroot, tlist),
+										   false);
 
 	/*
 	 * Determine cost to get just the first row of the presorted path.

@@ -1500,6 +1500,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		PathTarget *grouping_target;
 		PathTarget *scanjoin_target;
 		bool		have_grouping;
+		bool		scanjoin_target_parallel_safe = false;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
 		List	   *rollup_lists = NIL;
@@ -1730,7 +1731,16 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			scanjoin_target = grouping_target;
 
 		/*
-		 * Forcibly apply that target to all the Paths for the scan/join rel.
+		 * Check whether scan/join target is parallel safe ... unless there
+		 * are no partial paths, in which case we don't care.
+		 */
+		if (current_rel->partial_pathlist &&
+			!has_parallel_hazard((Node *) scanjoin_target->exprs, false))
+			scanjoin_target_parallel_safe = true;
+
+		/*
+		 * Forcibly apply scan/join target to all the Paths for the scan/join
+		 * rel.
 		 *
 		 * In principle we should re-run set_cheapest() here to identify the
 		 * cheapest path, but it seems unlikely that adding the same tlist
@@ -1746,7 +1756,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 			Assert(subpath->param_info == NULL);
 			path = apply_projection_to_path(root, current_rel,
-											subpath, scanjoin_target);
+											subpath, scanjoin_target,
+											scanjoin_target_parallel_safe);
 			/* If we had to add a Result, path is different from subpath */
 			if (path != subpath)
 			{
@@ -1756,6 +1767,70 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				if (subpath == current_rel->cheapest_total_path)
 					current_rel->cheapest_total_path = path;
 			}
+		}
+
+		/*
+		 * Upper planning steps which make use of the top scan/join rel's
+		 * partial pathlist will expect partial paths for that rel to produce
+		 * the same output as complete paths ... and we just changed the
+		 * output for the complete paths, so we'll need to do the same thing
+		 * for partial paths.
+		 */
+		if (scanjoin_target_parallel_safe)
+		{
+			/*
+			 * Apply the scan/join target to each partial path.  Otherwise,
+			 * anything that attempts to use the partial paths for further
+			 * upper planning may go wrong.
+			 */
+			foreach(lc, current_rel->partial_pathlist)
+			{
+				Path	   *subpath = (Path *) lfirst(lc);
+				Path	   *newpath;
+
+				/*
+				 * We can't use apply_projection_to_path() here, because there
+				 * could already be pointers to these paths, and therefore we
+				 * cannot modify them in place.  Instead, we must use
+				 * create_projection_path().  The good news is this won't
+				 * actually insert a Result node into the final plan unless
+				 * it's needed, but the bad news is that it will charge for
+				 * the node whether it's needed or not.  Therefore, if the
+				 * target list is already what we need it to be, just leave
+				 * this partial path alone.
+				 */
+				if (equal(scanjoin_target->exprs, subpath->pathtarget->exprs))
+					continue;
+
+				Assert(subpath->param_info == NULL);
+				newpath = (Path *) create_projection_path(root,
+														  current_rel,
+														  subpath,
+														  scanjoin_target);
+				if (is_projection_capable_path(subpath))
+				{
+					/*
+					 * Since the target lists differ, a projection path is
+					 * essential, but it will disappear at plan creation time
+					 * because the subpath is projection-capable.  So avoid
+					 * charging anything for the disappearing node.
+					 */
+					newpath->startup_cost = subpath->startup_cost;
+					newpath->total_cost = subpath->total_cost;
+				}
+
+				lfirst(lc) = newpath;
+			}
+		}
+		else
+		{
+			/*
+			 * In the unfortunate event that scanjoin_target is not
+			 * parallel-safe, we can't apply it to the partial paths; in that
+			 * case, we'll need to forget about the partial paths, which
+			 * aren't valid input for upper planning steps.
+			 */
+			current_rel->partial_pathlist = NIL;
 		}
 
 		/*
@@ -4153,7 +4228,7 @@ create_ordered_paths(PlannerInfo *root,
 			/* Add projection step if needed */
 			if (path->pathtarget != target)
 				path = apply_projection_to_path(root, ordered_rel,
-												path, target);
+												path, target, false);
 
 			add_path(ordered_rel, path);
 		}

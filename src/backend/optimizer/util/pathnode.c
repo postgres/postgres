@@ -2217,12 +2217,14 @@ create_projection_path(PlannerInfo *root,
  * 'rel' is the parent relation associated with the result
  * 'path' is the path representing the source of data
  * 'target' is the PathTarget to be computed
+ * 'target_parallel' indicates that target expressions are all parallel-safe
  */
 Path *
 apply_projection_to_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *path,
-						 PathTarget *target)
+						 PathTarget *target,
+						 bool target_parallel)
 {
 	QualCost	oldcost;
 
@@ -2248,8 +2250,7 @@ apply_projection_to_path(PlannerInfo *root,
 	 * project. But if there is something that is not parallel-safe in the
 	 * target expressions, then we can't.
 	 */
-	if (IsA(path, GatherPath) &&
-		!has_parallel_hazard((Node *) target->exprs, false))
+	if (IsA(path, GatherPath) &&target_parallel)
 	{
 		GatherPath *gpath = (GatherPath *) path;
 

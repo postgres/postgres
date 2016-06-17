@@ -51,6 +51,38 @@ select parallel_restricted(unique1) from tenk1
                Filter: (tenk1.stringu1 = 'GRAAAA'::name)
 (9 rows)
 
+-- test parallel plan when group by expression is in target list.
+explain (costs off)
+	select length(stringu1) from tenk1 group by length(stringu1);
+                    QUERY PLAN                     
+---------------------------------------------------
+ Finalize HashAggregate
+   Group Key: (length((stringu1)::text))
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial HashAggregate
+               Group Key: length((stringu1)::text)
+               ->  Parallel Seq Scan on tenk1
+(7 rows)
+
+select length(stringu1) from tenk1 group by length(stringu1);
+ length 
+--------
+      6
+(1 row)
+
+-- test that parallel plan for aggregates is not selected when
+-- target list contains parallel restricted clause.
+explain (costs off)
+	select  sum(parallel_restricted(unique1)) from tenk1
+	group by(parallel_restricted(unique1));
+                     QUERY PLAN                     
+----------------------------------------------------
+ HashAggregate
+   Group Key: parallel_restricted(unique1)
+   ->  Index Only Scan using tenk1_unique1 on tenk1
+(3 rows)
+
 set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
