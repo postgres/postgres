@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-05-08 (commit 6f69b9639)</simpara>
+   <simpara>Current as of 2016-06-18 (commit 100340e2d)</simpara>
   </note>
 
   <sect2>
@@ -136,6 +136,8 @@
 2016-04-05 [11c8669c0] Add parallel query support functions for assorted aggreg
 2016-04-08 [25fe8b5f1] Add a 'parallel_degree' reloption.
 2016-04-27 [59eb55127] Fix EXPLAIN VERBOSE output for parallel aggregate.
+2016-06-09 [c9ce4a1c6] Eliminate "parallel degree" terminology.
+2016-06-16 [75be66464] Invent min_parallel_relation_size GUC to replace a hard-
 -->
        <para>
         Parallel queries (Robert Haas, Amit Kapila, David Rowley, many others)
@@ -155,8 +157,9 @@
         configuration parameters
         <xref linkend="guc-max-parallel-workers-per-gather">,
         <xref linkend="guc-force-parallel-mode">,
-        <xref linkend="guc-parallel-setup-cost">, and
-        <xref linkend="guc-parallel-tuple-cost">.
+        <xref linkend="guc-parallel-setup-cost">,
+        <xref linkend="guc-parallel-tuple-cost">, and
+        <xref linkend="guc-min-parallel-relation-size">.
        </para>
       </listitem>
 
@@ -255,6 +258,7 @@
 2016-03-08 [77a1d1e79] Department of second thoughts: remove PD_ALL_FROZEN.
 2016-03-10 [fd31cd265] Don't vacuum all-frozen pages.
 2016-03-11 [7087166a8] pg_upgrade: Convert old visibility map format to new for
+2016-06-17 [ede62e56f] Add VACUUM (DISABLE_PAGE_SKIPPING) for emergencies.
 -->
        <para>
         Avoid re-vacuuming pages containing only frozen tuples
@@ -268,6 +272,13 @@
         visibility map, and can be skipped by vacuum even when it's doing
         transaction wraparound prevention.  This should greatly reduce the
         cost of maintaining large tables containing mostly-unchanging data.
+       </para>
+
+       <para>
+        If necessary, vacuum can be forced to process all-frozen pages
+        using its new <literal>DISABLE_PAGE_SKIPPING</> option.  This
+        should never be needed normally, but it might help for example
+        in recovering from visibility-map corruption.
        </para>
       </listitem>
 
@@ -349,6 +360,7 @@
 2016-04-26 [72a98a639] Don't open formally non-existent segments in _mdfd_getse
 2016-05-04 [a71248708] Fix transient mdsync() errors of truncated relations due
 2016-02-16 [7975c5e0a] Allow the WAL writer to flush WAL at a reduced rate.
+2016-06-10 [4bc0f165c] Change default of backend_flush_after GUC to 0 (disabled
 -->
        <para>
         Where feasible, trigger kernel writeback after a configurable number
@@ -446,14 +458,16 @@
       <listitem>
 <!--
 2016-04-08 [137805f89] Use Foreign Key relationships to infer multi-column join
+2016-06-07 [77ba61080] Revert "Use Foreign Key relationships to infer multi-col
+2016-06-18 [100340e2d] Restore foreign-key-aware estimation of join relation si
 -->
        <para>
-        Use foreign key relationships to infer selectivity for multi-column
+        Use foreign key relationships to infer selectivity for
         join predicates (Tomas Vondra, David Rowley)
        </para>
 
        <para>
-        If a table <literal>t</> has a multi-column foreign key restriction,
+        If a table <literal>t</> has a foreign key restriction,
         say <literal>(a,b) REFERENCES r (x,y)</>, then a <literal>WHERE</>
         condition such as <literal>t.a = r.x AND t.b = r.y</> cannot select
         more than one <literal>r</> row per <literal>t</> row.  The planner
@@ -2044,6 +2058,7 @@ This commit is also listed under libpq and psql
       <listitem>
 <!--
 2016-04-08 [5c3c3cd0a] Enhanced custom error in PLPythonu
+2016-06-11 [020140d84] PL/Python: Rename new keyword arguments of plpy.error()
 -->
        <para>
         Extend PL/Python's error-reporting and message-reporting functions to
@@ -2366,6 +2381,7 @@ This commit is also listed under psql and PL/pgSQL
       <listitem>
 <!--
 2016-03-21 [dea2b5960] Improve header output from psql's \watch command.
+2016-06-15 [9901d8ac2] Use strftime("%c") to format timestamps in psql's \watch
 -->
        <para>
         Improve the headers output by the <command>\watch</> command
@@ -2376,6 +2392,8 @@ This commit is also listed under psql and PL/pgSQL
         Include the <command>\pset title</> string if one has been set, and
         shorten the prefabricated part of the header to be
         <literal><replaceable>timestamp</> (every <replaceable>N</>s)</literal>.
+        Also, the timestamp format now obeys <application>psql</>'s locale
+        environment.
        </para>
       </listitem>
 
@@ -3268,6 +3286,7 @@ This commit is also listed under libpq and PL/pgSQL
       <listitem>
 <!--
 2016-04-21 [f039eaac7] Allow queries submitted by postgres_fdw to be canceled.
+2016-05-16 [1b812afb0] Fix multiple problems in postgres_fdw query cancellation
 -->
        <para>
         Transmit query cancellation requests to the remote server
