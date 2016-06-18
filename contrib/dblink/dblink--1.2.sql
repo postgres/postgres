@@ -151,17 +151,17 @@ LANGUAGE C STRICT PARALLEL RESTRICTED;
 CREATE FUNCTION dblink_build_sql_insert (text, int2vector, int, _text, _text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_insert'
-LANGUAGE C STRICT PARALLEL SAFE;
+LANGUAGE C STRICT PARALLEL RESTRICTED;
 
 CREATE FUNCTION dblink_build_sql_delete (text, int2vector, int, _text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_delete'
-LANGUAGE C STRICT PARALLEL SAFE;
+LANGUAGE C STRICT PARALLEL RESTRICTED;
 
 CREATE FUNCTION dblink_build_sql_update (text, int2vector, int, _text, _text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_update'
-LANGUAGE C STRICT PARALLEL SAFE;
+LANGUAGE C STRICT PARALLEL RESTRICTED;
 
 CREATE FUNCTION dblink_current_query ()
 RETURNS text
