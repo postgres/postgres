@@ -223,6 +223,7 @@ typedef enum NodeTag
 	T_PlannerGlobal,
 	T_RelOptInfo,
 	T_IndexOptInfo,
+	T_ForeignKeyOptInfo,
 	T_ParamPathInfo,
 	T_Path,
 	T_IndexPath,
@@ -478,7 +479,8 @@ typedef enum NodeTag
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
 	T_IndexAmRoutine,			/* in access/amapi.h */
-	T_TsmRoutine				/* in access/tsmapi.h */
+	T_TsmRoutine,				/* in access/tsmapi.h */
+	T_ForeignKeyCacheInfo		/* in utils/rel.h */
 } NodeTag;
 
 /*

@@ -90,6 +90,10 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include rowsecurity.h: */
 	struct RowSecurityDesc *rd_rsdesc;	/* row security policies, or NULL */
 
+	/* data managed by RelationGetFKeyList: */
+	List	   *rd_fkeylist;	/* list of ForeignKeyCacheInfo (see below) */
+	bool		rd_fkeyvalid;	/* true if list has been computed */
+
 	/* data managed by RelationGetIndexList: */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
 	Oid			rd_oidindex;	/* OID of unique index on OID, if any */
@@ -169,6 +173,34 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 } RelationData;
+
+
+/*
+ * ForeignKeyCacheInfo
+ *		Information the relcache can cache about foreign key constraints
+ *
+ * This is basically just an image of relevant columns from pg_constraint.
+ * We make it a subclass of Node so that copyObject() can be used on a list
+ * of these, but we also ensure it is a "flat" object without substructure,
+ * so that list_free_deep() is sufficient to free such a list.
+ * The per-FK-column arrays can be fixed-size because we allow at most
+ * INDEX_MAX_KEYS columns in a foreign key constraint.
+ *
+ * Currently, we only cache fields of interest to the planner, but the
+ * set of fields could be expanded in future.
+ */
+typedef struct ForeignKeyCacheInfo
+{
+	NodeTag		type;
+	Oid			conrelid;		/* relation constrained by the foreign key */
+	Oid			confrelid;		/* relation referenced by the foreign key */
+	int			nkeys;			/* number of columns in the foreign key */
+	/* these arrays each have nkeys valid entries: */
+	AttrNumber	conkey[INDEX_MAX_KEYS]; /* cols in referencing table */
+	AttrNumber	confkey[INDEX_MAX_KEYS];		/* cols in referenced table */
+	Oid			conpfeqop[INDEX_MAX_KEYS];		/* PK = FK operator OIDs */
+} ForeignKeyCacheInfo;
+
 
 /*
  * StdRdOptions

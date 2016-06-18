@@ -52,6 +52,8 @@ int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
+static void get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
+						  Relation relation);
 static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 							  List *idxExprs);
 static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
@@ -76,6 +78,8 @@ static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
  *	fdwroutine	if it's a foreign table, the FDW function pointers
  *	pages		number of pages
  *	tuples		number of tuples
+ *
+ * Also, add information about the relation's foreign keys to root->fkey_list.
  *
  * Also, initialize the attr_needed[] and attr_widths[] arrays.  In most
  * cases these are left as zeroes, but sometimes we need to compute attr
@@ -403,6 +407,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 		rel->fdwroutine = NULL;
 	}
 
+	/* Collect info about relation's foreign keys, if relevant */
+	get_relation_foreign_keys(root, rel, relation);
+
 	heap_close(relation, NoLock);
 
 	/*
@@ -412,6 +419,97 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 */
 	if (get_relation_info_hook)
 		(*get_relation_info_hook) (root, relationObjectId, inhparent, rel);
+}
+
+/*
+ * get_relation_foreign_keys -
+ *	  Retrieves foreign key information for a given relation.
+ *
+ * ForeignKeyOptInfos for relevant foreign keys are created and added to
+ * root->fkey_list.  We do this now while we have the relcache entry open.
+ * We could sometimes avoid making useless ForeignKeyOptInfos if we waited
+ * until all RelOptInfos have been built, but the cost of re-opening the
+ * relcache entries would probably exceed any savings.
+ */
+static void
+get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
+						  Relation relation)
+{
+	List	   *rtable = root->parse->rtable;
+	List	   *cachedfkeys;
+	ListCell   *lc;
+
+	/*
+	 * If it's not a baserel, we don't care about its FKs.  Also, if the query
+	 * references only a single relation, we can skip the lookup since no FKs
+	 * could satisfy the requirements below.
+	 */
+	if (rel->reloptkind != RELOPT_BASEREL ||
+		list_length(rtable) < 2)
+		return;
+
+	/*
+	 * Extract data about relation's FKs from the relcache.  Note that this
+	 * list belongs to the relcache and might disappear in a cache flush, so
+	 * we must not do any further catalog access within this function.
+	 */
+	cachedfkeys = RelationGetFKeyList(relation);
+
+	/*
+	 * Figure out which FKs are of interest for this query, and create
+	 * ForeignKeyOptInfos for them.  We want only FKs that reference some
+	 * other RTE of the current query.  In queries containing self-joins,
+	 * there might be more than one other RTE for a referenced table, and we
+	 * should make a ForeignKeyOptInfo for each occurrence.
+	 *
+	 * Ideally, we would ignore RTEs that correspond to non-baserels, but it's
+	 * too hard to identify those here, so we might end up making some useless
+	 * ForeignKeyOptInfos.  If so, match_foreign_keys_to_quals() will remove
+	 * them again.
+	 */
+	foreach(lc, cachedfkeys)
+	{
+		ForeignKeyCacheInfo *cachedfk = (ForeignKeyCacheInfo *) lfirst(lc);
+		Index		rti;
+		ListCell   *lc2;
+
+		/* conrelid should always be that of the table we're considering */
+		Assert(cachedfk->conrelid == RelationGetRelid(relation));
+
+		/* Scan to find other RTEs matching confrelid */
+		rti = 0;
+		foreach(lc2, rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
+			ForeignKeyOptInfo *info;
+
+			rti++;
+			/* Ignore if not the correct table */
+			if (rte->rtekind != RTE_RELATION ||
+				rte->relid != cachedfk->confrelid)
+				continue;
+			/* Ignore self-referential FKs; we only care about joins */
+			if (rti == rel->relid)
+				continue;
+
+			/* OK, let's make an entry */
+			info = makeNode(ForeignKeyOptInfo);
+			info->con_relid = rel->relid;
+			info->ref_relid = rti;
+			info->nkeys = cachedfk->nkeys;
+			memcpy(info->conkey, cachedfk->conkey, sizeof(info->conkey));
+			memcpy(info->confkey, cachedfk->confkey, sizeof(info->confkey));
+			memcpy(info->conpfeqop, cachedfk->conpfeqop, sizeof(info->conpfeqop));
+			/* zero out fields to be filled by match_foreign_keys_to_quals */
+			info->nmatched_ec = 0;
+			info->nmatched_rcols = 0;
+			info->nmatched_ri = 0;
+			memset(info->eclass, 0, sizeof(info->eclass));
+			memset(info->rinfos, 0, sizeof(info->rinfos));
+
+			root->fkey_list = lappend(root->fkey_list, info);
+		}
+	}
 }
 
 /*

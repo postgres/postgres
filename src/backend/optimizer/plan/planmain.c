@@ -115,6 +115,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
 	root->placeholder_list = NIL;
+	root->fkey_list = NIL;
 	root->initial_rels = NIL;
 
 	/*
@@ -204,6 +205,14 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * PlaceHolderVar eval levels.
 	 */
 	create_lateral_join_info(root);
+
+	/*
+	 * Match foreign keys to equivalence classes and join quals.  This must be
+	 * done after finalizing equivalence classes, and it's useful to wait till
+	 * after join removal so that we can skip processing foreign keys
+	 * involving removed relations.
+	 */
+	match_foreign_keys_to_quals(root);
 
 	/*
 	 * Look for join OR clauses that we can extract single-relation

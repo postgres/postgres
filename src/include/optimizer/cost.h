@@ -167,8 +167,8 @@ extern double get_parameterized_baserel_size(PlannerInfo *root,
 							   List *param_clauses);
 extern double get_parameterized_joinrel_size(PlannerInfo *root,
 							   RelOptInfo *rel,
-							   double outer_rows,
-							   double inner_rows,
+							   Path *outer_path,
+							   Path *inner_path,
 							   SpecialJoinInfo *sjinfo,
 							   List *restrict_clauses);
 extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,

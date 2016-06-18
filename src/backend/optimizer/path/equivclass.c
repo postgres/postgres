@@ -1926,6 +1926,85 @@ exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2)
 
 
 /*
+ * match_eclasses_to_foreign_key_col
+ *	  See whether a foreign key column match is proven by any eclass.
+ *
+ * If the referenced and referencing Vars of the fkey's colno'th column are
+ * known equal due to any eclass, return that eclass; otherwise return NULL.
+ * (In principle there might be more than one matching eclass if multiple
+ * collations are involved, but since collation doesn't matter for equality,
+ * we ignore that fine point here.)  This is much like exprs_known_equal,
+ * except that we insist on the comparison operator matching the eclass, so
+ * that the result is definite not approximate.
+ */
+EquivalenceClass *
+match_eclasses_to_foreign_key_col(PlannerInfo *root,
+								  ForeignKeyOptInfo *fkinfo,
+								  int colno)
+{
+	Index		var1varno = fkinfo->con_relid;
+	AttrNumber	var1attno = fkinfo->conkey[colno];
+	Index		var2varno = fkinfo->ref_relid;
+	AttrNumber	var2attno = fkinfo->confkey[colno];
+	Oid			eqop = fkinfo->conpfeqop[colno];
+	List	   *opfamilies = NIL;		/* compute only if needed */
+	ListCell   *lc1;
+
+	foreach(lc1, root->eq_classes)
+	{
+		EquivalenceClass *ec = (EquivalenceClass *) lfirst(lc1);
+		bool		item1member = false;
+		bool		item2member = false;
+		ListCell   *lc2;
+
+		/* Never match to a volatile EC */
+		if (ec->ec_has_volatile)
+			continue;
+		/* Note: it seems okay to match to "broken" eclasses here */
+
+		foreach(lc2, ec->ec_members)
+		{
+			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
+			Var		   *var;
+
+			if (em->em_is_child)
+				continue;		/* ignore children here */
+
+			/* EM must be a Var, possibly with RelabelType */
+			var = (Var *) em->em_expr;
+			while (var && IsA(var, RelabelType))
+				var = (Var *) ((RelabelType *) var)->arg;
+			if (!(var && IsA(var, Var)))
+				continue;
+
+			/* Match? */
+			if (var->varno == var1varno && var->varattno == var1attno)
+				item1member = true;
+			else if (var->varno == var2varno && var->varattno == var2attno)
+				item2member = true;
+
+			/* Have we found both PK and FK column in this EC? */
+			if (item1member && item2member)
+			{
+				/*
+				 * Succeed if eqop matches EC's opfamilies.  We could test
+				 * this before scanning the members, but it's probably cheaper
+				 * to test for member matches first.
+				 */
+				if (opfamilies == NIL)	/* compute if we didn't already */
+					opfamilies = get_mergejoin_opfamilies(eqop);
+				if (equal(opfamilies, ec->ec_opfamilies))
+					return ec;
+				/* Otherwise, done with this EC, move on to the next */
+				break;
+			}
+		}
+	}
+	return NULL;
+}
+
+
+/*
  * add_child_rel_equivalences
  *	  Search for EC members that reference the parent_rel, and
  *	  add transformed members referencing the child_rel.

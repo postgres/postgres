@@ -140,6 +140,9 @@ extern List *generate_join_implied_equalities_for_ecs(PlannerInfo *root,
 										 Relids outer_relids,
 										 RelOptInfo *inner_rel);
 extern bool exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2);
+extern EquivalenceClass *match_eclasses_to_foreign_key_col(PlannerInfo *root,
+								  ForeignKeyOptInfo *fkinfo,
+								  int colno);
 extern void add_child_rel_equivalences(PlannerInfo *root,
 						   AppendRelInfo *appinfo,
 						   RelOptInfo *parent_rel,

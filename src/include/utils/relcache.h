@@ -37,6 +37,7 @@ extern void RelationClose(Relation relation);
 /*
  * Routines to compute/retrieve additional cached information
  */
+extern List *RelationGetFKeyList(Relation relation);
 extern List *RelationGetIndexList(Relation relation);
 extern Oid	RelationGetOidIndex(Relation relation);
 extern Oid	RelationGetReplicaIndex(Relation relation);

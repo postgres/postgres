@@ -433,6 +433,11 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 			distribute_restrictinfo_to_rels(root, rinfo);
 		}
 	}
+
+	/*
+	 * There may be references to the rel in root->fkey_list, but if so,
+	 * match_foreign_keys_to_quals() will get rid of them.
+	 */
 }
 
 /*
