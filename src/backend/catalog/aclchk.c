@@ -2592,7 +2592,8 @@ ExecGrant_Language(InternalGrant *istmt)
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("language \"%s\" is not trusted",
 							NameStr(pg_language_tuple->lanname)),
-				   errhint("Only superusers can use untrusted languages.")));
+					 errdetail("GRANT and REVOKE are not allowed on untrusted languages, "
+				   "because only superusers can use untrusted languages.")));
 
 		/*
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,

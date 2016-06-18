@@ -536,7 +536,7 @@ REVOKE ALL PRIVILEGES ON LANGUAGE sql FROM PUBLIC;
 GRANT USAGE ON LANGUAGE sql TO regressuser1; -- ok
 GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
 ERROR:  language "c" is not trusted
-HINT:  Only superusers can use untrusted languages.
+DETAIL:  GRANT and REVOKE are not allowed on untrusted languages, because only superusers can use untrusted languages.
 SET SESSION AUTHORIZATION regressuser1;
 GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
 WARNING:  no privileges were granted for "sql"
