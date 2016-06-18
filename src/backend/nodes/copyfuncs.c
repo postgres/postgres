@@ -1237,6 +1237,8 @@ _copyAggref(const Aggref *from)
 	COPY_SCALAR_FIELD(aggoutputtype);
 	COPY_SCALAR_FIELD(aggcollid);
 	COPY_SCALAR_FIELD(inputcollid);
+	COPY_SCALAR_FIELD(aggtranstype);
+	COPY_NODE_FIELD(aggargtypes);
 	COPY_NODE_FIELD(aggdirectargs);
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(aggorder);

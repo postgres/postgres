@@ -549,6 +549,8 @@ _readAggref(void)
 	READ_OID_FIELD(aggoutputtype);
 	READ_OID_FIELD(aggcollid);
 	READ_OID_FIELD(inputcollid);
+	READ_OID_FIELD(aggtranstype);
+	READ_NODE_FIELD(aggargtypes);
 	READ_NODE_FIELD(aggdirectargs);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(aggorder);

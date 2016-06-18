@@ -1033,6 +1033,8 @@ _outAggref(StringInfo str, const Aggref *node)
 	WRITE_OID_FIELD(aggoutputtype);
 	WRITE_OID_FIELD(aggcollid);
 	WRITE_OID_FIELD(inputcollid);
+	WRITE_OID_FIELD(aggtranstype);
+	WRITE_NODE_FIELD(aggargtypes);
 	WRITE_NODE_FIELD(aggdirectargs);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(aggorder);

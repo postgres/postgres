@@ -256,6 +256,18 @@ typedef struct Param
  * The direct arguments appear in aggdirectargs (as a list of plain
  * expressions, not TargetEntry nodes).
  *
+ * aggtranstype is the data type of the state transition values for this
+ * aggregate (resolved to an actual type, if agg's transtype is polymorphic).
+ * This is determined during planning and is InvalidOid before that.
+ *
+ * aggargtypes is an OID list of the data types of the direct and regular
+ * arguments.  Normally it's redundant with the aggdirectargs and args lists,
+ * but in a combining aggregate, it's not because the args list has been
+ * replaced with a single argument representing the partial-aggregate
+ * transition values.
+ *
+ * XXX need more documentation about partial aggregation here
+ *
  * 'aggtype' and 'aggoutputtype' are the same except when we're performing
  * partal aggregation; in that case, we output transition states.  Nothing
  * interesting happens in the Aggref itself, but we must set the output data
@@ -272,6 +284,8 @@ typedef struct Aggref
 	Oid			aggoutputtype;	/* type Oid of result of this aggregate */
 	Oid			aggcollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
+	Oid			aggtranstype;	/* type Oid of aggregate's transition value */
+	List	   *aggargtypes;	/* type Oids of direct and aggregated args */
 	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
 	List	   *args;			/* aggregated arguments and sort expressions */
 	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */

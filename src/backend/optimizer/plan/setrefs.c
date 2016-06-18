@@ -2085,6 +2085,7 @@ search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,
 				continue;
 			if (aggref->inputcollid != tlistaggref->inputcollid)
 				continue;
+			/* ignore aggtranstype and aggargtypes, should be redundant */
 			if (!equal(aggref->aggdirectargs, tlistaggref->aggdirectargs))
 				continue;
 			if (!equal(aggref->args, tlistaggref->args))

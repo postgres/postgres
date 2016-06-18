@@ -523,7 +523,7 @@ contain_agg_clause_walker(Node *node, void *context)
 /*
  * count_agg_clauses
  *	  Recursively count the Aggref nodes in an expression tree, and
- *	  accumulate other cost information about them too.
+ *	  accumulate other information about them too.
  *
  *	  Note: this also checks for nested aggregates, which are an error.
  *
@@ -531,6 +531,10 @@ contain_agg_clause_walker(Node *node, void *context)
  * attempt to estimate the total space needed for their transition state
  * values if all are evaluated in parallel (as would be done in a HashAgg
  * plan).  See AggClauseCosts for the exact set of statistics collected.
+ *
+ * In addition, we mark Aggref nodes with the correct aggtranstype, so
+ * that that doesn't need to be done repeatedly.  (That makes this function's
+ * name a bit of a misnomer.)
  *
  * NOTE that the counts/costs are ADDED to those already in *costs ... so
  * the caller is responsible for zeroing the struct initially.
@@ -572,8 +576,6 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		Oid			aggtranstype;
 		int32		aggtransspace;
 		QualCost	argcosts;
-		Oid			inputTypes[FUNC_MAX_ARGS];
-		int			numArguments;
 
 		Assert(aggref->agglevelsup == 0);
 
@@ -596,6 +598,28 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		aggtranstype = aggform->aggtranstype;
 		aggtransspace = aggform->aggtransspace;
 		ReleaseSysCache(aggTuple);
+
+		/*
+		 * Resolve the possibly-polymorphic aggregate transition type, unless
+		 * already done in a previous pass over the expression.
+		 */
+		if (OidIsValid(aggref->aggtranstype))
+			aggtranstype = aggref->aggtranstype;
+		else
+		{
+			Oid			inputTypes[FUNC_MAX_ARGS];
+			int			numArguments;
+
+			/* extract argument types (ignoring any ORDER BY expressions) */
+			numArguments = get_aggregate_argtypes(aggref, inputTypes);
+
+			/* resolve actual type of transition state, if polymorphic */
+			aggtranstype = resolve_aggregate_transtype(aggref->aggfnoid,
+													   aggtranstype,
+													   inputTypes,
+													   numArguments);
+			aggref->aggtranstype = aggtranstype;
+		}
 
 		/* count it; note ordered-set aggs always have nonempty aggorder */
 		costs->numAggs++;
@@ -668,15 +692,6 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 			costs->finalCost += argcosts.per_tuple;
 		}
 
-		/* extract argument types (ignoring any ORDER BY expressions) */
-		numArguments = get_aggregate_argtypes(aggref, inputTypes);
-
-		/* resolve actual type of transition state, if polymorphic */
-		aggtranstype = resolve_aggregate_transtype(aggref->aggfnoid,
-												   aggtranstype,
-												   inputTypes,
-												   numArguments);
-
 		/*
 		 * If the transition type is pass-by-value then it doesn't add
 		 * anything to the required size of the hashtable.  If it is
@@ -698,14 +713,15 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 				 * This works for cases like MAX/MIN and is probably somewhat
 				 * reasonable otherwise.
 				 */
-				int			numdirectargs = list_length(aggref->aggdirectargs);
-				int32		aggtranstypmod;
+				int32		aggtranstypmod = -1;
 
-				if (numArguments > numdirectargs &&
-					aggtranstype == inputTypes[numdirectargs])
-					aggtranstypmod = exprTypmod((Node *) linitial(aggref->args));
-				else
-					aggtranstypmod = -1;
+				if (aggref->args)
+				{
+					TargetEntry *tle = (TargetEntry *) linitial(aggref->args);
+
+					if (aggtranstype == exprType((Node *) tle->expr))
+						aggtranstypmod = exprTypmod((Node *) tle->expr);
+				}
 
 				avgwidth = get_typavgwidth(aggtranstype, aggtranstypmod);
 			}

@@ -77,10 +77,10 @@ static List *expand_groupingset_node(GroupingSet *gs);
  *		Finish initial transformation of an aggregate call
  *
  * parse_func.c has recognized the function as an aggregate, and has set up
- * all the fields of the Aggref except aggdirectargs, args, aggorder,
- * aggdistinct and agglevelsup.  The passed-in args list has been through
- * standard expression transformation and type coercion to match the agg's
- * declared arg types, while the passed-in aggorder list hasn't been
+ * all the fields of the Aggref except aggargtypes, aggdirectargs, args,
+ * aggorder, aggdistinct and agglevelsup.  The passed-in args list has been
+ * through standard expression transformation and type coercion to match the
+ * agg's declared arg types, while the passed-in aggorder list hasn't been
  * transformed at all.
  *
  * Here we separate the args list into direct and aggregated args, storing the
@@ -101,12 +101,25 @@ void
 transformAggregateCall(ParseState *pstate, Aggref *agg,
 					   List *args, List *aggorder, bool agg_distinct)
 {
+	List	   *argtypes = NIL;
 	List	   *tlist = NIL;
 	List	   *torder = NIL;
 	List	   *tdistinct = NIL;
 	AttrNumber	attno = 1;
 	int			save_next_resno;
 	ListCell   *lc;
+
+	/*
+	 * Before separating the args into direct and aggregated args, make a list
+	 * of their data type OIDs for use later.
+	 */
+	foreach(lc, args)
+	{
+		Expr	   *arg = (Expr *) lfirst(lc);
+
+		argtypes = lappend_oid(argtypes, exprType((Node *) arg));
+	}
+	agg->aggargtypes = argtypes;
 
 	if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
 	{
@@ -1763,26 +1776,11 @@ get_aggregate_argtypes(Aggref *aggref, Oid *inputTypes)
 	int			numArguments = 0;
 	ListCell   *lc;
 
-	/* Any direct arguments of an ordered-set aggregate come first */
-	foreach(lc, aggref->aggdirectargs)
+	Assert(list_length(aggref->aggargtypes) <= FUNC_MAX_ARGS);
+
+	foreach(lc, aggref->aggargtypes)
 	{
-		Node	   *expr = (Node *) lfirst(lc);
-
-		inputTypes[numArguments] = exprType(expr);
-		numArguments++;
-	}
-
-	/* Now get the regular (aggregated) arguments */
-	foreach(lc, aggref->args)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-		/* Ignore ordering columns of a plain aggregate */
-		if (tle->resjunk)
-			continue;
-
-		inputTypes[numArguments] = exprType((Node *) tle->expr);
-		numArguments++;
+		inputTypes[numArguments++] = lfirst_oid(lc);
 	}
 
 	return numArguments;
@@ -1795,8 +1793,8 @@ get_aggregate_argtypes(Aggref *aggref, Oid *inputTypes)
  * This function resolves a polymorphic aggregate's state datatype.
  * It must be passed the aggtranstype from the aggregate's catalog entry,
  * as well as the actual argument types extracted by get_aggregate_argtypes.
- * (We could fetch these values internally, but for all existing callers that
- * would just duplicate work the caller has to do too, so we pass them in.)
+ * (We could fetch pg_aggregate.aggtranstype internally, but all existing
+ * callers already have the value at hand, so we make them pass it.)
  */
 Oid
 resolve_aggregate_transtype(Oid aggfuncid,

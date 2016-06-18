@@ -797,11 +797,20 @@ apply_partialaggref_adjustment(PathTarget *target)
 
 			newaggref = (Aggref *) copyObject(aggref);
 
-			/* use the serialization type, if one exists */
+			/*
+			 * Use the serialization type, if one exists.  Note that we don't
+			 * support it being a polymorphic type.  (XXX really we ought to
+			 * hardwire this as INTERNAL -> BYTEA, and avoid a catalog lookup
+			 * here altogether?)
+			 */
 			if (OidIsValid(aggform->aggserialtype))
 				newaggref->aggoutputtype = aggform->aggserialtype;
 			else
-				newaggref->aggoutputtype = aggform->aggtranstype;
+			{
+				/* Otherwise, we return the aggregate's transition type */
+				Assert(OidIsValid(newaggref->aggtranstype));
+				newaggref->aggoutputtype = newaggref->aggtranstype;
+			}
 
 			/* flag it as partial */
 			newaggref->aggpartial = true;

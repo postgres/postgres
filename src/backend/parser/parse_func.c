@@ -650,11 +650,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/* default the outputtype to be the same as aggtype */
 		aggref->aggtype = aggref->aggoutputtype = rettype;
 		/* aggcollid and inputcollid will be set by parse_collate.c */
+		aggref->aggtranstype = InvalidOid;		/* will be set by planner */
+		/* aggargtypes will be set by transformAggregateCall */
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
 		aggref->aggfilter = agg_filter;
 		aggref->aggstar = agg_star;
 		aggref->aggvariadic = func_variadic;
+		/* at this point, the Aggref is never partial or combining */
+		aggref->aggcombine = aggref->aggpartial = false;
 		aggref->aggkind = aggkind;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;

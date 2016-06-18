@@ -2715,6 +2715,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 						   get_func_name(aggref->aggfnoid));
 		InvokeFunctionExecuteHook(aggref->aggfnoid);
 
+		/* planner recorded transition state type in the Aggref itself */
+		aggtranstype = aggref->aggtranstype;
+		Assert(OidIsValid(aggtranstype));
+
 		/*
 		 * If this aggregation is performing state combines, then instead of
 		 * using the transition function, we'll use the combine function
@@ -2745,7 +2749,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * aggregate states. This is only required if the aggregate state is
 		 * internal.
 		 */
-		if (aggstate->serialStates && aggform->aggtranstype == INTERNALOID)
+		if (aggstate->serialStates && aggtranstype == INTERNALOID)
 		{
 			/*
 			 * The planner should only have generated an agg node with
@@ -2834,12 +2838,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		/* Count the "direct" arguments, if any */
 		numDirectArgs = list_length(aggref->aggdirectargs);
-
-		/* resolve actual type of transition state, if polymorphic */
-		aggtranstype = resolve_aggregate_transtype(aggref->aggfnoid,
-												   aggform->aggtranstype,
-												   inputTypes,
-												   numArguments);
 
 		/* Detect how many arguments to pass to the finalfn */
 		if (aggform->aggfinalextra)
@@ -3304,6 +3302,7 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 
 		/* all of the following must be the same or it's no match */
 		if (newagg->inputcollid != existingRef->inputcollid ||
+			newagg->aggtranstype != existingRef->aggtranstype ||
 			newagg->aggstar != existingRef->aggstar ||
 			newagg->aggvariadic != existingRef->aggvariadic ||
 			newagg->aggkind != existingRef->aggkind ||

@@ -2451,6 +2451,8 @@ expression_tree_mutator(Node *node,
 				Aggref	   *newnode;
 
 				FLATCOPY(newnode, aggref, Aggref);
+				/* assume mutation doesn't change types of arguments */
+				newnode->aggargtypes = list_copy(aggref->aggargtypes);
 				MUTATE(newnode->aggdirectargs, aggref->aggdirectargs, List *);
 				MUTATE(newnode->args, aggref->args, List *);
 				MUTATE(newnode->aggorder, aggref->aggorder, List *);
