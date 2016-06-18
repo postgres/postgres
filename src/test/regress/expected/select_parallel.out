@@ -6,9 +6,10 @@ create or replace function parallel_restricted(int) returns int as
 -- Serializable isolation would disable parallel query, so explicitly use an
 -- arbitrary other level.
 begin isolation level repeatable read;
--- setup parallel test
+-- encourage use of parallel plans
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;
+set min_parallel_relation_size=0;
 set max_parallel_workers_per_gather=4;
 explain (costs off)
   select count(*) from a_star;
@@ -70,6 +71,21 @@ select length(stringu1) from tenk1 group by length(stringu1);
 --------
       6
 (1 row)
+
+explain (costs off)
+	select stringu1, count(*) from tenk1 group by stringu1 order by stringu1;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Sort
+   Sort Key: stringu1
+   ->  Finalize HashAggregate
+         Group Key: stringu1
+         ->  Gather
+               Workers Planned: 4
+               ->  Partial HashAggregate
+                     Group Key: stringu1
+                     ->  Parallel Seq Scan on tenk1
+(9 rows)
 
 -- test that parallel plan for aggregates is not selected when
 -- target list contains parallel restricted clause.

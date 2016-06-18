@@ -9,9 +9,10 @@ create or replace function parallel_restricted(int) returns int as
 -- arbitrary other level.
 begin isolation level repeatable read;
 
--- setup parallel test
+-- encourage use of parallel plans
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;
+set min_parallel_relation_size=0;
 set max_parallel_workers_per_gather=4;
 
 explain (costs off)
@@ -28,6 +29,9 @@ select parallel_restricted(unique1) from tenk1
 explain (costs off)
 	select length(stringu1) from tenk1 group by length(stringu1);
 select length(stringu1) from tenk1 group by length(stringu1);
+
+explain (costs off)
+	select stringu1, count(*) from tenk1 group by stringu1 order by stringu1;
 
 -- test that parallel plan for aggregates is not selected when
 -- target list contains parallel restricted clause.

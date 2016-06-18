@@ -1788,35 +1788,38 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				Path	   *subpath = (Path *) lfirst(lc);
 				Path	   *newpath;
 
+				/* Shouldn't have any parameterized paths anymore */
+				Assert(subpath->param_info == NULL);
+
 				/*
 				 * We can't use apply_projection_to_path() here, because there
 				 * could already be pointers to these paths, and therefore we
-				 * cannot modify them in place.  Instead, we must use
-				 * create_projection_path().  The good news is this won't
-				 * actually insert a Result node into the final plan unless
-				 * it's needed, but the bad news is that it will charge for
-				 * the node whether it's needed or not.  Therefore, if the
-				 * target list is already what we need it to be, just leave
-				 * this partial path alone.
+				 * dare not modify them in place.  Instead, we must use
+				 * create_projection_path() unconditionally.
 				 */
-				if (equal(scanjoin_target->exprs, subpath->pathtarget->exprs))
-					continue;
-
-				Assert(subpath->param_info == NULL);
 				newpath = (Path *) create_projection_path(root,
 														  current_rel,
 														  subpath,
 														  scanjoin_target);
-				if (is_projection_capable_path(subpath))
+
+				/*
+				 * Although create_projection_path() inserts a ProjectionPath
+				 * unconditionally, create_projection_plan() will only insert
+				 * a Result node if the subpath is not projection-capable, so
+				 * we should discount the cost of that node if it will not
+				 * actually get inserted.  (This is pretty grotty but we can
+				 * improve it later if it seems important.)
+				 */
+				if (equal(scanjoin_target->exprs, subpath->pathtarget->exprs))
 				{
-					/*
-					 * Since the target lists differ, a projection path is
-					 * essential, but it will disappear at plan creation time
-					 * because the subpath is projection-capable.  So avoid
-					 * charging anything for the disappearing node.
-					 */
+					/* at most we need a relabeling of the subpath */
 					newpath->startup_cost = subpath->startup_cost;
 					newpath->total_cost = subpath->total_cost;
+				}
+				else if (is_projection_capable_path(subpath))
+				{
+					/* need to project, but we don't need a Result */
+					newpath->total_cost -= cpu_tuple_cost * subpath->rows;
 				}
 
 				lfirst(lc) = newpath;
