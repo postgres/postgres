@@ -3535,11 +3535,12 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
     and special escape sequences that describe the appearance of the
     prompt. Prompt 1 is the normal prompt that is issued when
     <application>psql</application> requests a new command. Prompt 2 is
-    issued when more input is expected during command input because the
-    command was not terminated with a semicolon or a quote was not closed.
-    Prompt 3 is issued when you run an <acronym>SQL</acronym>
-    <command>COPY</command> command and you are expected to type in the
-    row values on the terminal.
+    issued when more input is expected during command entry, for example
+    because the command was not terminated with a semicolon or a quote
+    was not closed.
+    Prompt 3 is issued when you are running an <acronym>SQL</acronym>
+    <command>COPY FROM STDIN</command> command and you need to type in
+    a row value on the terminal.
     </para>
 
     <para>
@@ -3626,17 +3627,20 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
         <term><literal>%R</literal></term>
         <listitem>
         <para>
-        In prompt 1 normally <literal>=</literal>, but <literal>^</literal> if
-        in single-line mode, and <literal>!</literal> if the session is
-        disconnected from the database (which can happen if
-        <command>\connect</command> fails). In prompt 2 the sequence is
-        replaced by <literal>-</literal>, <literal>*</literal>, a single quote,
-        a double quote, or a dollar sign, depending on whether
-        <application>psql</application> expects more input because the
-        command wasn't terminated yet, because you are inside a
-        <literal>/* ... */</literal> comment, or because you are inside
-        a quoted or dollar-escaped string. In prompt 3 the sequence doesn't
-        produce anything.
+        In prompt 1 normally <literal>=</literal>,
+        but <literal>^</literal> if in single-line mode,
+        or <literal>!</literal> if the session is disconnected from the
+        database (which can happen if <command>\connect</command> fails).
+        In prompt 2 <literal>%R</literal> is replaced by a character that
+        depends on why <application>psql</application> expects more input:
+        <literal>-</literal> if the command simply wasn't terminated yet,
+        but <literal>*</literal> if there is an unfinished
+        <literal>/* ... */</literal> comment,
+        a single quote if there is an unfinished quoted string,
+        a double quote if there is an unfinished quoted identifier,
+        a dollar sign if there is an unfinished dollar-quoted string,
+        or <literal>(</literal> if there is an unmatched left parenthesis.
+        In prompt 3 <literal>%R</literal> doesn't produce anything.
         </para>
         </listitem>
       </varlistentry>
