@@ -28,7 +28,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #ifdef HAVE_SYS_RESOURCE_H
@@ -155,10 +154,10 @@ static int pgwin32_is_service(void);
 
 static pgpid_t get_pgpid(void);
 static char **readfile(const char *path);
-static pgpid_t start_postmaster(void);
+static int	start_postmaster(void);
 static void read_post_opts(void);
 
-static PGPing test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint);
+static PGPing test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
@@ -402,73 +401,36 @@ readfile(const char *path)
  * start/test/stop routines
  */
 
-/*
- * Start the postmaster and return its PID.
- *
- * Currently, on Windows what we return is the PID of the shell process
- * that launched the postmaster (and, we trust, is waiting for it to exit).
- * So the PID is usable for "is the postmaster still running" checks,
- * but cannot be compared directly to postmaster.pid.
- *
- * On Windows, we also save aside a handle to the shell process in
- * "postmasterProcess", which the caller should close when done with it.
- */
-static pgpid_t
+static int
 start_postmaster(void)
 {
 	char		cmd[MAXPGPATH];
 
 #ifndef WIN32
-	pgpid_t		pm_pid;
-
-	/* Flush stdio channels just before fork, to avoid double-output problems */
-	fflush(stdout);
-	fflush(stderr);
-
-	pm_pid = fork();
-	if (pm_pid < 0)
-	{
-		/* fork failed */
-		write_stderr(_("%s: could not start server: %s\n"),
-					 progname, strerror(errno));
-		exit(1);
-	}
-	if (pm_pid > 0)
-	{
-		/* fork succeeded, in parent */
-		return pm_pid;
-	}
-
-	/* fork succeeded, in child */
 
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
-	 * everything to a shell to process them.  Use exec so that the postmaster
-	 * has the same PID as the current child process.
+	 * everything to a shell to process them.
+	 *
+	 * XXX it would be better to fork and exec so that we would know the child
+	 * postmaster's PID directly; then test_postmaster_connection could use
+	 * the PID without having to rely on reading it back from the pidfile.
 	 */
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
+		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
 				 exec_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file);
 	else
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" 2>&1",
+		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
 
-	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
-
-	/* exec failed */
-	write_stderr(_("%s: could not start server: %s\n"),
-				 progname, strerror(errno));
-	exit(1);
-
-	return 0;					/* keep dumb compilers quiet */
-
+	return system(cmd);
 #else							/* WIN32 */
 
 	/*
-	 * As with the Unix case, it's easiest to use the shell (CMD.EXE) to
-	 * handle redirection etc.  Unfortunately CMD.EXE lacks any equivalent of
-	 * "exec", so we don't get to find out the postmaster's PID immediately.
+	 * On win32 we don't use system(). So we don't need to use & (which would
+	 * be START /B on win32). However, we still call the shell (CMD.EXE) with
+	 * it to handle redirection etc.
 	 */
 	PROCESS_INFORMATION pi;
 
@@ -480,15 +442,10 @@ start_postmaster(void)
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (!CreateRestrictedProcess(cmd, &pi, false))
-	{
-		write_stderr(_("%s: could not start server: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
-		exit(1);
-	}
-	/* Don't close command process handle here; caller must do so */
-	postmasterProcess = pi.hProcess;
+		return GetLastError();
+	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
-	return pi.dwProcessId;		/* Shell's PID, not postmaster's! */
+	return 0;
 #endif   /* WIN32 */
 }
 
@@ -497,21 +454,15 @@ start_postmaster(void)
 /*
  * Find the pgport and try a connection
  *
- * On Unix, pm_pid is the PID of the just-launched postmaster.  On Windows,
- * it may be the PID of an ancestor shell process, so we can't check the
- * contents of postmaster.pid quite as carefully.
- *
- * On Windows, the static variable postmasterProcess is an implicit argument
- * to this routine; it contains a handle to the postmaster process or an
- * ancestor shell process thereof.
- *
  * Note that the checkpoint parameter enables a Windows service control
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
 static PGPing
-test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
+test_postmaster_connection(bool do_checkpoint)
 {
 	PGPing		ret = PQPING_NO_RESPONSE;
+	bool		found_stale_pidfile = false;
+	pgpid_t		pm_pid = 0;
 	char		connstr[MAXPGPATH * 2 + 256];
 	int			i;
 
@@ -566,27 +517,29 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 						 optlines[5] != NULL)
 				{
 					/* File is complete enough for us, parse it */
-					pgpid_t		pmpid;
+					long		pmpid;
 					time_t		pmstart;
 
 					/*
-					 * Make sanity checks.  If it's for the wrong PID, or the
-					 * recorded start time is before pg_ctl started, then
-					 * either we are looking at the wrong data directory, or
-					 * this is a pre-existing pidfile that hasn't (yet?) been
-					 * overwritten by our child postmaster.  Allow 2 seconds
-					 * slop for possible cross-process clock skew.
+					 * Make sanity checks.  If it's for a standalone backend
+					 * (negative PID), or the recorded start time is before
+					 * pg_ctl started, then either we are looking at the wrong
+					 * data directory, or this is a pre-existing pidfile that
+					 * hasn't (yet?) been overwritten by our child postmaster.
+					 * Allow 2 seconds slop for possible cross-process clock
+					 * skew.
 					 */
 					pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
 					pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
-					if (pmstart >= start_time - 2 &&
-#ifndef WIN32
-						pmpid == pm_pid
-#else
-					/* Windows can only reject standalone-backend PIDs */
-						pmpid > 0
-#endif
-						)
+					if (pmpid <= 0 || pmstart < start_time - 2)
+					{
+						/*
+						 * Set flag to report stale pidfile if it doesn't get
+						 * overwritten before we give up waiting.
+						 */
+						found_stale_pidfile = true;
+					}
+					else
 					{
 						/*
 						 * OK, seems to be a valid pidfile from our child.
@@ -595,6 +548,9 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 						char	   *sockdir;
 						char	   *hostaddr;
 						char		host_str[MAXPGPATH];
+
+						found_stale_pidfile = false;
+						pm_pid = (pgpid_t) pmpid;
 
 						/*
 						 * Extract port number and host string to use. Prefer
@@ -667,23 +623,37 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 		}
 
 		/*
-		 * Check whether the child postmaster process is still alive.  This
-		 * lets us exit early if the postmaster fails during startup.
-		 *
-		 * On Windows, we may be checking the postmaster's parent shell, but
-		 * that's fine for this purpose.
+		 * The postmaster should create postmaster.pid very soon after being
+		 * started.  If it's not there after we've waited 5 or more seconds,
+		 * assume startup failed and give up waiting.  (Note this covers both
+		 * cases where the pidfile was never created, and where it was created
+		 * and then removed during postmaster exit.)  Also, if there *is* a
+		 * file there but it appears stale, issue a suitable warning and give
+		 * up waiting.
 		 */
-#ifndef WIN32
+		if (i >= 5)
 		{
-			int			exitstatus;
+			struct stat statbuf;
 
-			if (waitpid((pid_t) pm_pid, &exitstatus, WNOHANG) == (pid_t) pm_pid)
+			if (stat(pid_file, &statbuf) != 0)
 				return PQPING_NO_RESPONSE;
+
+			if (found_stale_pidfile)
+			{
+				write_stderr(_("\n%s: this data directory appears to be running a pre-existing postmaster\n"),
+							 progname);
+				return PQPING_NO_RESPONSE;
+			}
 		}
-#else
-		if (WaitForSingleObject(postmasterProcess, 0) == WAIT_OBJECT_0)
+
+		/*
+		 * If we've been able to identify the child postmaster's PID, check
+		 * the process is still alive.  This covers cases where the postmaster
+		 * successfully created the pidfile but then crashed without removing
+		 * it.
+		 */
+		if (pm_pid > 0 && !postmaster_is_alive((pid_t) pm_pid))
 			return PQPING_NO_RESPONSE;
-#endif
 
 		/* No response, or startup still in process; wait */
 #if defined(WIN32)
@@ -846,7 +816,7 @@ static void
 do_start(void)
 {
 	pgpid_t		old_pid = 0;
-	pgpid_t		pm_pid;
+	int			exitcode;
 
 	if (ctl_command != RESTART_COMMAND)
 	{
@@ -886,13 +856,19 @@ do_start(void)
 	}
 #endif
 
-	pm_pid = start_postmaster();
+	exitcode = start_postmaster();
+	if (exitcode != 0)
+	{
+		write_stderr(_("%s: could not start server: exit code was %d\n"),
+					 progname, exitcode);
+		exit(1);
+	}
 
 	if (do_wait)
 	{
 		print_msg(_("waiting for server to start..."));
 
-		switch (test_postmaster_connection(pm_pid, false))
+		switch (test_postmaster_connection(false))
 		{
 			case PQPING_OK:
 				print_msg(_(" done\n"));
@@ -918,12 +894,6 @@ do_start(void)
 	}
 	else
 		print_msg(_("server starting\n"));
-
-#ifdef WIN32
-	/* Now we don't need the handle to the shell process anymore */
-	CloseHandle(postmasterProcess);
-	postmasterProcess = INVALID_HANDLE_VALUE;
-#endif
 }
 
 
@@ -1528,7 +1498,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	if (do_wait)
 	{
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Waiting for server startup...\n"));
-		if (test_postmaster_connection(postmasterPID, true) != PQPING_OK)
+		if (test_postmaster_connection(true) != PQPING_OK)
 		{
 			write_eventlog(EVENTLOG_ERROR_TYPE, _("Timed out waiting for server startup\n"));
 			pgwin32_SetServiceStatus(SERVICE_STOPPED);
@@ -1555,9 +1525,10 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 			{
 				/*
 				 * status.dwCheckPoint can be incremented by
-				 * test_postmaster_connection(), so it might not start from 0.
+				 * test_postmaster_connection(true), so it might not
+				 * start from 0.
 				 */
-				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;
+				int maxShutdownCheckPoint = status.dwCheckPoint + 12;;
 
 				kill(postmasterPID, SIGINT);
 
