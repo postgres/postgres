@@ -607,7 +607,7 @@ test_postmaster_connection(bool do_checkpoint)
 						 * timeout first.
 						 */
 						snprintf(connstr, sizeof(connstr),
-						"dbname=postgres port=%d host='%s' connect_timeout=5",
+						"dbname=postgres port=%d host='%s' connect_timeout=10",
 								 portnum, host_str);
 					}
 				}
@@ -624,14 +624,14 @@ test_postmaster_connection(bool do_checkpoint)
 
 		/*
 		 * The postmaster should create postmaster.pid very soon after being
-		 * started.  If it's not there after we've waited 5 or more seconds,
+		 * started.  If it's not there after we've waited 10 or more seconds,
 		 * assume startup failed and give up waiting.  (Note this covers both
 		 * cases where the pidfile was never created, and where it was created
 		 * and then removed during postmaster exit.)  Also, if there *is* a
 		 * file there but it appears stale, issue a suitable warning and give
 		 * up waiting.
 		 */
-		if (i >= 5)
+		if (i >= 10)
 		{
 			struct stat statbuf;
 
