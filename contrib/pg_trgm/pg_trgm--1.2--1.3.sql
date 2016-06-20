@@ -23,7 +23,7 @@ UPDATE pg_catalog.pg_proc SET
   prorettype = 'gtrgm'::pg_catalog.regtype
 WHERE oid = pg_catalog.to_regprocedure('gtrgm_union(internal,internal)');
 
-ALTER FUNCTION set_limit(float4) PARALLEL RESTRICTED;
+ALTER FUNCTION set_limit(float4) PARALLEL UNSAFE;
 ALTER FUNCTION show_limit() PARALLEL SAFE;
 ALTER FUNCTION show_trgm(text) PARALLEL SAFE;
 ALTER FUNCTION similarity(text, text) PARALLEL SAFE;
