@@ -8919,6 +8919,16 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      </row>
 
      <row>
+      <entry><structfield>rolbypassrls</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       Role bypasses every row level security policy, see
+       <xref linkend="ddl-rowsecurity"> for more information.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>rolconfig</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry></entry>
