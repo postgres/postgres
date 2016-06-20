@@ -122,8 +122,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies path to the data directory of the source server, to
-        synchronize the target with. When <option>--source-pgdata</> is
-        used, the source server must be cleanly shut down.
+        synchronize the target with. This option requires the source server
+        to be cleanly shut down.
        </para>
       </listitem>
      </varlistentry>
@@ -135,8 +135,8 @@ PostgreSQL documentation
         Specifies a libpq connection string to connect to the source
         <productname>PostgreSQL</> server to synchronize the target with.
         The connection must be a normal (non-replication) connection
-        with superuser access. The server must be up and running,
-        and must not be in recovery mode.
+        with superuser access. This option requires the server to be running
+        and not in recovery mode.
        </para>
       </listitem>
      </varlistentry>
