@@ -110,6 +110,8 @@ plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source)
 	}
 
 	myextra = (int *) malloc(sizeof(int));
+	if (!myextra)
+		return false;
 	*myextra = extrachecks;
 	*extra = (void *) myextra;
 
