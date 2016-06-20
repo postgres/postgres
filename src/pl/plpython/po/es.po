@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:07+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"PO-Revision-Date: 2016-05-25 12:29-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.7.1\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: plpy_cursorobject.c:101
 #, c-format
@@ -61,7 +61,7 @@ msgstr "haciendo «fetch» en un cursor cerrado"
 #: plpy_cursorobject.c:467 plpy_spi.c:438
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
-msgstr ""
+msgstr "el resultado de la consulta tiene demasiados registros y no entran en una lista de Python"
 
 #: plpy_cursorobject.c:508
 #, c-format
@@ -182,13 +182,12 @@ msgstr "abortando una subtransacción que no se ha cerrado"
 #: plpy_main.c:125
 #, c-format
 msgid "multiple Python libraries are present in session"
-msgstr ""
+msgstr "hay múltiples librerías de Python presentes en esta sesión"
 
 #: plpy_main.c:126
-#, fuzzy, c-format
-#| msgid "Python major version mismatch in session"
+#, c-format
 msgid "Only one Python major version can be used in one session."
-msgstr "las versiones mayores de Python no coinciden en esta sesión"
+msgstr "Sólo se puede usar una versión mayor de Python en cada sesión."
 
 #: plpy_main.c:142
 #, c-format
@@ -255,16 +254,14 @@ msgid "could not parse error message in plpy.elog"
 msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 
 #: plpy_plpymodule.c:446
-#, fuzzy, c-format
-#| msgid "type \"%s\" is already defined"
+#, c-format
 msgid "the message is already specified"
-msgstr "el tipo «%s» ya está definido"
+msgstr "el mensaje ya está definido"
 
 #: plpy_plpymodule.c:469
-#, fuzzy, c-format
-#| msgid "%s: invalid argument for option %s\n"
+#, c-format
 msgid "'%s' is an invalid keyword argument for this function"
-msgstr "%s: argumento no válido para la opción %s\n"
+msgstr "«%s» no es un argumento válido para esta función"
 
 #: plpy_plpymodule.c:477 plpy_plpymodule.c:480
 #, c-format

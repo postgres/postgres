@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"PO-Revision-Date: 2016-05-24 10:42-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.7.1\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -354,7 +354,7 @@ msgstr "%s: no se pudo cambiar los permisos de «%s»: %s\n"
 #: initdb.c:1444
 #, c-format
 msgid "running bootstrap script ... "
-msgstr ""
+msgstr "ejecutando script de inicio (bootstrap) ... "
 
 #: initdb.c:1460
 #, c-format
@@ -917,7 +917,7 @@ msgstr "creando subdirectorios ... "
 
 #: initdb.c:3291
 msgid "performing post-bootstrap initialization ... "
-msgstr ""
+msgstr "realizando inicialización post-bootstrap ... "
 
 #: initdb.c:3442
 #, c-format

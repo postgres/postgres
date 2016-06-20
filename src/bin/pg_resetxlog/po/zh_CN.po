@@ -5,10 +5,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-11-26 18:43+0000\n"
-"PO-Revision-Date: 2015-12-01 20:30+0800\n"
+"POT-Creation-Date: 2016-04-18 04:44+0000\n"
+"PO-Revision-Date: 2016-05-19 20:41+0800\n"
 "Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
-"Language-Team: Chinese (Simplified)\n"
+"Language-Team: Chinese (Simplified) <ywpeng@whu.edu.cn>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -55,7 +55,6 @@ msgstr "%s: 无法从子进程得到退出码: 错误码 %lu\n"
 #: pg_resetxlog.c:201 pg_resetxlog.c:216 pg_resetxlog.c:224 pg_resetxlog.c:250
 #: pg_resetxlog.c:264
 #, c-format
-#| msgid "%s: invalid argument for option -e\n"
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s:：选项%s的参数无效\n"
 
@@ -78,7 +77,6 @@ msgstr "%s: 事务 ID (-x) 不能为 0\n"
 
 #: pg_resetxlog.c:185 pg_resetxlog.c:192
 #, c-format
-#| msgid "%s: transfer rate must be greater than zero\n"
 msgid ""
 "%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"
 msgstr "%s：事务ID (-c) 必须是0或者大于等于2\n"
@@ -249,8 +247,9 @@ msgstr "开启"
 
 #: pg_resetxlog.c:649
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "最新检查点的 NextXID:                     %u/%u\n"
+#| msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "最新检查点的NextXID:          %u:%u\n"
 
 #: pg_resetxlog.c:652
 #, c-format
@@ -294,15 +293,15 @@ msgstr "最新检查点的oldestMulti所在的数据库: %u\n"
 
 #: pg_resetxlog.c:668
 #, c-format
-#| msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "最新检查点的oldestCommitTs：%u\n"
+#| msgid "Latest checkpoint's oldestCommitTs:   %u\n"
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "最新检查点的oldestCommitTsXid:%u\n"
 
 #: pg_resetxlog.c:670
 #, c-format
-#| msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgid "Latest checkpoint's newestCommitTs:   %u\n"
-msgstr "最新检查点的newestCommitTs：%u\n"
+#| msgid "Latest checkpoint's newestCommitTs:   %u\n"
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "最新检查点的newestCommitTsXid:%u\n"
 
 #: pg_resetxlog.c:672
 #, c-format
@@ -450,15 +449,15 @@ msgstr "NextXID 末端:                        %u\n"
 
 #: pg_resetxlog.c:756
 #, c-format
-#| msgid "OldestMultiXid:                       %u\n"
-msgid "oldestCommitTs:                       %u\n"
-msgstr "oldestCommitTs：          %u\n"
+#| msgid "oldestCommitTs:                       %u\n"
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "oldestCommitTsXid：          %u\n"
 
 #: pg_resetxlog.c:761
 #, c-format
-#| msgid "OldestMultiXid:                       %u\n"
-msgid "newestCommitTs:                       %u\n"
-msgstr "newestCommitTs：          %u\n"
+#| msgid "newestCommitTs:                       %u\n"
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "newestCommitTsXid：          %u\n"
 
 #: pg_resetxlog.c:827
 #, c-format
@@ -539,7 +538,6 @@ msgstr "选项:\n"
 
 #: pg_resetxlog.c:1170
 #, c-format
-#| msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
 msgid ""
 "  -c XID,XID       set oldest and newest transactions bearing commit "
 "timestamp\n"
@@ -547,13 +545,11 @@ msgstr "  -c XID,XID       设置承受提交时间戳的最旧和最新事务\n
 
 #: pg_resetxlog.c:1171
 #, c-format
-#| msgid "  -O                 allow system table structure changes\n"
 msgid "                   (zero in either value means no change)\n"
 msgstr "                   （任一值中的零表示没有改变）\n"
 
 #: pg_resetxlog.c:1172
 #, c-format
-#| msgid "  -D DATADIR         database directory\n"
 msgid " [-D] DATADIR      data directory\n"
 msgstr " [-D] DATADIR      数据目录\n"
 
@@ -619,47 +615,47 @@ msgstr ""
 "\n"
 "报告错误至 <pgsql-bugs@postgresql.org>.\n"
 
-#~ msgid "%s: could not read from directory \"%s\": %s\n"
-#~ msgstr "%s: 无法从目录 \"%s\" 中读取: %s\n"
-
-#~ msgid "  --help          show this help, then exit\n"
-#~ msgstr "  --help            显示此帮助信息, 然后退出\n"
-
-#~ msgid "  --version       output version information, then exit\n"
-#~ msgstr "  --version         输出版本信息, 然后退出\n"
-
-#~ msgid "%s: invalid LC_COLLATE setting\n"
-#~ msgstr "%s: 无效的 LC_COLLATE 设置\n"
-
-#~ msgid "%s: invalid LC_CTYPE setting\n"
-#~ msgstr "%s: 无效的 LC_CTYPE 设置\n"
-
-#~ msgid "Maximum number of function arguments: %u\n"
-#~ msgstr "函数参数的最大个数:                   %u\n"
-
-#~ msgid "Latest checkpoint's StartUpID:        %u\n"
-#~ msgstr "最新检查点的 StartUpID:               %u\n"
-
-#~ msgid "%s: invalid argument for -x option\n"
+#~ msgid "%s: invalid argument for option -x\n"
 #~ msgstr "%s: 为 -x 选项的无效参数\n"
-
-#~ msgid "%s: invalid argument for -o option\n"
-#~ msgstr "%s: 为 -o 选项的无效参数\n"
-
-#~ msgid "First log file ID after reset:        %u\n"
-#~ msgstr "重置后的第一个日志文件ID:               %u\n"
-
-#~ msgid "%s: invalid argument for option -l\n"
-#~ msgstr "%s: 为 -l 选项的无效参数\n"
-
-#~ msgid "%s: invalid argument for option -O\n"
-#~ msgstr "%s: 对于选项-O 参数无效\n"
-
-#~ msgid "%s: invalid argument for option -m\n"
-#~ msgstr "%s: 对于选项-m 参数无效\n"
 
 #~ msgid "%s: invalid argument for option -o\n"
 #~ msgstr "%s: 为 -o 选项的无效参数\n"
 
-#~ msgid "%s: invalid argument for option -x\n"
+#~ msgid "%s: invalid argument for option -m\n"
+#~ msgstr "%s: 对于选项-m 参数无效\n"
+
+#~ msgid "%s: invalid argument for option -O\n"
+#~ msgstr "%s: 对于选项-O 参数无效\n"
+
+#~ msgid "%s: invalid argument for option -l\n"
+#~ msgstr "%s: 为 -l 选项的无效参数\n"
+
+#~ msgid "First log file ID after reset:        %u\n"
+#~ msgstr "重置后的第一个日志文件ID:               %u\n"
+
+#~ msgid "%s: invalid argument for -o option\n"
+#~ msgstr "%s: 为 -o 选项的无效参数\n"
+
+#~ msgid "%s: invalid argument for -x option\n"
 #~ msgstr "%s: 为 -x 选项的无效参数\n"
+
+#~ msgid "Latest checkpoint's StartUpID:        %u\n"
+#~ msgstr "最新检查点的 StartUpID:               %u\n"
+
+#~ msgid "Maximum number of function arguments: %u\n"
+#~ msgstr "函数参数的最大个数:                   %u\n"
+
+#~ msgid "%s: invalid LC_CTYPE setting\n"
+#~ msgstr "%s: 无效的 LC_CTYPE 设置\n"
+
+#~ msgid "%s: invalid LC_COLLATE setting\n"
+#~ msgstr "%s: 无效的 LC_COLLATE 设置\n"
+
+#~ msgid "  --version       output version information, then exit\n"
+#~ msgstr "  --version         输出版本信息, 然后退出\n"
+
+#~ msgid "  --help          show this help, then exit\n"
+#~ msgstr "  --help            显示此帮助信息, 然后退出\n"
+
+#~ msgid "%s: could not read from directory \"%s\": %s\n"
+#~ msgstr "%s: 无法从目录 \"%s\" 中读取: %s\n"

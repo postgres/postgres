@@ -8,17 +8,17 @@ msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"PO-Revision-Date: 2016-05-24 12:18-0500\n"
+"Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
-#: parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -126,7 +126,7 @@ msgstr "no se pudo cerrar el archivo «%s»: %s\n"
 #: datapagemap.c:124
 #, c-format
 msgid "  block %u\n"
-msgstr ""
+msgstr "  bloque %u\n"
 
 #: file_ops.c:64
 #, c-format
@@ -225,10 +225,9 @@ msgstr "modificación de página inesperada para el directorio o link simbólico
 
 #. translator: first %s is a file path, second is a keyword such as COPY
 #: filemap.c:537
-#, fuzzy, c-format
-#| msgid "%s (%s/%s) "
+#, c-format
 msgid "%s (%s)\n"
-msgstr "%s (%s/%s) "
+msgstr "%s (%s)\n"
 
 #: libpq_fetch.c:55
 #, c-format
@@ -577,10 +576,9 @@ msgstr ""
 "creando etiqueta de respaldo y actualizando archivo de control\n"
 
 #: pg_rewind.c:353
-#, fuzzy, c-format
-#| msgid "%s: failed to remove data directory\n"
+#, c-format
 msgid "syncing target data directory\n"
-msgstr "%s: no se pudo eliminar el directorio de datos\n"
+msgstr "sincronizando directorio de datos de destino\n"
 
 #: pg_rewind.c:356
 #, c-format
@@ -613,28 +611,25 @@ msgid "source data directory must be shut down cleanly\n"
 msgstr "el directorio de origen debe estar apagado limpiamente\n"
 
 #: pg_rewind.c:462
-#, fuzzy, c-format
-#| msgid "Invalid character value."
+#, c-format
 msgid "Invalid control file"
-msgstr "Valor de carácter no válido."
+msgstr "Archivo de control no válido."
 
 #: pg_rewind.c:473
-#, fuzzy, c-format
-#| msgid "source file list is empty\n"
+#, c-format
 msgid "Source timeline history:\n"
-msgstr "el listado de archivos de origen está vacío\n"
+msgstr "Historia de timeline origen:\n"
 
 #: pg_rewind.c:475
-#, fuzzy, c-format
-#| msgid "new target timeline is %u"
+#, c-format
 msgid "Target timeline history:\n"
-msgstr "el nuevo timeline destino es %u"
+msgstr "Historia de timeline destino:\n"
 
 #. translator: %d is a timeline number, others are LSN positions
 #: pg_rewind.c:489
 #, c-format
 msgid "%d: %X/%X - %X/%X\n"
-msgstr ""
+msgstr "%d: %X/%X - %X/%X\n"
 
 #: pg_rewind.c:547
 #, c-format
@@ -657,40 +652,31 @@ msgid "unexpected control file size %d, expected %d\n"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d\n"
 
 #: pg_rewind.c:688
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" is needed by %s but was not found in the\n"
-#| "same directory as \"%s\".\n"
-#| "Check your installation.\n"
+#, c-format
 msgid ""
 "The program \"initdb\" is needed by %s but was \n"
 "not found in the same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
+"%s necesita el programa «initdb», pero no pudo encontrarlo en el mismo\n"
 "directorio que «%s».\n"
 "Verifique su instalación.\n"
 
 #: pg_rewind.c:692
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" was found by \"%s\"\n"
-#| "but was not the same version as %s.\n"
-#| "Check your installation.\n"
+#, c-format
 msgid ""
 "The program \"initdb\" was found by \"%s\"\n"
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"El programa «%s» fue encontrado por «%s», pero no es\n"
-"de la misma versión que «%s».\n"
+"El programa «initdb» fue encontrado por «%s», pero no es\n"
+"de la misma versión que %s.\n"
 "Verifique su instalación.\n"
 
 #: pg_rewind.c:710
-#, fuzzy, c-format
-#| msgid "%s: no target directory specified\n"
+#, c-format
 msgid "sync of target directory failed\n"
-msgstr "%s: no se especificó un directorio de salida\n"
+msgstr "falló sincronización de directorio destino\n"
 
 #: timeline.c:76 timeline.c:82
 #, c-format
@@ -738,10 +724,9 @@ msgid "contrecord is requested by %X/%X"
 msgstr "contrecord solicitado por %X/%X"
 
 #: xlogreader.c:334 xlogreader.c:633
-#, fuzzy, c-format
-#| msgid "invalid record length at %X/%X"
+#, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
-msgstr "largo de registro no válido en %X/%X"
+msgstr "largo de registro no válido en %X/%X: se esperaba %u, se obtuvo %u"
 
 #: xlogreader.c:349
 #, c-format

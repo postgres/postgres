@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"PO-Revision-Date: 2016-05-24 10:40-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.7.1\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -110,10 +110,9 @@ msgid "reading extensions\n"
 msgstr "leyendo las extensiones\n"
 
 #: common.c:126
-#, fuzzy, c-format
-#| msgid "finding extension members\n"
+#, c-format
 msgid "identifying extension members\n"
-msgstr "buscando miembros de extensión\n"
+msgstr "identificando miembros de extensión\n"
 
 #: common.c:130
 #, c-format
@@ -151,10 +150,9 @@ msgid "reading user-defined operators\n"
 msgstr "leyendo los operadores definidos por el usuario\n"
 
 #: common.c:174
-#, fuzzy, c-format
-#| msgid "reading user-defined conversions\n"
+#, c-format
 msgid "reading user-defined access methods\n"
-msgstr "leyendo las conversiones definidas por el usuario\n"
+msgstr "leyendo los métodos de acceso definidos por el usuario\n"
 
 #: common.c:178
 #, c-format
@@ -234,10 +232,9 @@ msgid "reading event triggers\n"
 msgstr "leyendo los disparadores por eventos\n"
 
 #: common.c:240
-#, fuzzy, c-format
-#| msgid "finding extension members\n"
+#, c-format
 msgid "finding extension tables\n"
-msgstr "buscando miembros de extensión\n"
+msgstr "buscando tablas de extensión\n"
 
 #: common.c:245
 #, c-format
@@ -794,34 +791,29 @@ msgid "invalid STDSTRINGS item: %s\n"
 msgstr "elemento STDSTRINGS no válido: %s\n"
 
 #: pg_backup_archiver.c:2661
-#, fuzzy, c-format
-#| msgid "service file \"%s\" not found\n"
+#, c-format
 msgid "schema \"%s\" not found\n"
-msgstr "el archivo de servicio «%s» no fue encontrado\n"
+msgstr "esquema «%s» no encontrado\n"
 
 #: pg_backup_archiver.c:2668
-#, fuzzy, c-format
-#| msgid "option \"%s\" not found"
+#, c-format
 msgid "table \"%s\" not found\n"
-msgstr "opción «%s» no encontrada"
+msgstr "tabla «%s» no encontrada\n"
 
 #: pg_backup_archiver.c:2675
-#, fuzzy, c-format
-#| msgid "option \"%s\" not found"
+#, c-format
 msgid "index \"%s\" not found\n"
-msgstr "opción «%s» no encontrada"
+msgstr "índice «%s» no encontrado\n"
 
 #: pg_backup_archiver.c:2682
-#, fuzzy, c-format
-#| msgid "option \"%s\" not found"
+#, c-format
 msgid "function \"%s\" not found\n"
-msgstr "opción «%s» no encontrada"
+msgstr "función «%s» no encontrada\n"
 
 #: pg_backup_archiver.c:2689
-#, fuzzy, c-format
-#| msgid "option \"%s\" not found"
+#, c-format
 msgid "trigger \"%s\" not found\n"
-msgstr "opción «%s» no encontrada"
+msgstr "disparador «%s» no encontrado\n"
 
 #: pg_backup_archiver.c:2920
 #, c-format
@@ -1344,10 +1336,9 @@ msgstr[0] "se encontró un encabezado incompleto (%lu byte)\n"
 msgstr[1] "se encontró un encabezado incompleto (%lu bytes)\n"
 
 #: pg_backup_tar.c:1276
-#, fuzzy, c-format
-#| msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
+#, c-format
 msgid "TOC Entry %s at %s (length %s, checksum %d)\n"
-msgstr "entrada TOC %s en %s (tamaño %lu, suma de integridad %d)\n"
+msgstr "entrada TOC %s en %s (tamaño %s, suma de integridad %d)\n"
 
 #: pg_backup_tar.c:1287
 #, c-format
@@ -1439,16 +1430,14 @@ msgid "last built-in OID is %u\n"
 msgstr "el último OID interno es %u\n"
 
 #: pg_dump.c:709
-#, fuzzy, c-format
-#| msgid "No matching schemas were found\n"
+#, c-format
 msgid "no matching schemas were found\n"
-msgstr "No se encontraron esquemas coincidentes\n"
+msgstr "no se encontraron esquemas coincidentes\n"
 
 #: pg_dump.c:723
-#, fuzzy, c-format
-#| msgid "No matching tables were found\n"
+#, c-format
 msgid "no matching tables were found\n"
-msgstr "No se encontraron tablas coincidentes\n"
+msgstr "no se encontraron tablas coincidentes\n"
 
 #: pg_dump.c:882
 #, c-format
@@ -1706,16 +1695,13 @@ msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
 msgstr "  --snapshot=SNAPSHOT          use el snapshot dado para la extracción\n"
 
 #: pg_dump.c:930 pg_restore.c:475
-#, fuzzy, c-format
-#| msgid ""
-#| "  --interactive             prompt for missing role name and attributes rather\n"
-#| "                            than using defaults\n"
+#, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
 "                               match at least one entity each\n"
 msgstr ""
-"  --interactive             preguntar los nombres y atributos de rol faltantes\n"
-"                            en lugar de asumir los valores por omisión\n"
+"  --strict-names           requerir al menos una coincidencia para cada patrón\n"
+"                           de nombre de tablas y esquemas\n"
 
 #: pg_dump.c:932 pg_dumpall.c:578 pg_restore.c:477
 #, c-format
@@ -1812,10 +1798,9 @@ msgstr ""
 "selección de esquema\n"
 
 #: pg_dump.c:1193 pg_dump.c:1246
-#, fuzzy, c-format
-#| msgid "No matching tables were found\n"
+#, c-format
 msgid "no matching tables were found for pattern \"%s\"\n"
-msgstr "No se encontraron tablas coincidentes\n"
+msgstr "no se encontraron tablas coincidentes para el patrón «%s»\n"
 
 #: pg_dump.c:1596
 #, c-format
@@ -2037,10 +2022,9 @@ msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "el valor del atributo «provolatile» para la función «%s» es desconocido\n"
 
 #: pg_dump.c:11582 pg_dump.c:13641
-#, fuzzy, c-format
-#| msgid "unrecognized provolatile value for function \"%s\"\n"
+#, c-format
 msgid "unrecognized proparallel value for function \"%s\"\n"
-msgstr "el valor del atributo «provolatile» para la función «%s» es desconocido\n"
+msgstr "el valor del atributo «proparallel» para la función «%s» es desconocido\n"
 
 #: pg_dump.c:11734
 #, c-format
@@ -2075,7 +2059,7 @@ msgstr "PRECAUCIÓN: no se pudo encontrar el operador con OID %s\n"
 #: pg_dump.c:12318
 #, c-format
 msgid "WARNING: invalid type \"%c\" of access method \"%s\"\n"
-msgstr ""
+msgstr "PRECAUCIÓN: el tipo «%c» para el método de acceso «%s» no es válido\n"
 
 #: pg_dump.c:13525
 #, c-format
@@ -2095,16 +2079,14 @@ msgid "could not parse default ACL list (%s)\n"
 msgstr "no se pudo interpretar la lista de ACL (%s)\n"
 
 #: pg_dump.c:14490
-#, fuzzy, c-format
-#| msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
+#, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)\n"
-msgstr "no se pudo interpretar la lista de ACL (%s) para el objeto «%s» (%s)\n"
+msgstr "no se pudo interpretar la lista inicial de GRANT ACL (%s) o la lista inicial de REVOKE ACL (%s) para el objeto «%s» (%s)\n"
 
 #: pg_dump.c:14498
-#, fuzzy, c-format
-#| msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
+#, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)\n"
-msgstr "no se pudo interpretar la lista de ACL (%s) para el objeto «%s» (%s)\n"
+msgstr "no se pudo interpretar la lista de GRANT ACL (%s) o la lista de REVOKE ACL (%s) para el objeto «%s» (%s)\n"
 
 #: pg_dump.c:14974
 #, c-format
@@ -2169,10 +2151,9 @@ msgid "reading dependency data\n"
 msgstr "obteniendo datos de dependencias\n"
 
 #: pg_dump.c:17724
-#, fuzzy, c-format
-#| msgid "WARNING: could not parse proconfig array\n"
+#, c-format
 msgid "WARNING: could not parse reloptions array\n"
-msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo proconfig\n"
+msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo reloptions\n"
 
 #: pg_dump.c:17788
 #, c-format
@@ -2368,10 +2349,9 @@ msgstr ""
 "\n"
 
 #: pg_dumpall.c:777
-#, fuzzy, c-format
-#| msgid "%s: locale name too long, skipped: \"%s\"\n"
+#, c-format
 msgid "%s: role name starting with \"pg_\" skipped (%s)\n"
-msgstr "%s: nombre de configuración regional demasiado largo, saltando: «%s»\n"
+msgstr "%s: omitido nombre de rol que empieza con «pg_» (%s)\n"
 
 #: pg_dumpall.c:1128
 #, c-format
@@ -2590,10 +2570,9 @@ msgstr ""
 "                           para deshabilitar los disparadores (triggers)\n"
 
 #: pg_restore.c:463
-#, fuzzy, c-format
-#| msgid "  -t, --table=NAME             restore named table\n"
+#, c-format
 msgid "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
-msgstr "  -t, --table=NOMBRE       reestablece la tabla nombrada\n"
+msgstr "  -t, --table=NOMBRE       reestablece la relación (tabla, vista, etc.) nombrada\n"
 
 #: pg_restore.c:464
 #, c-format

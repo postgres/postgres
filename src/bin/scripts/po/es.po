@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"PO-Revision-Date: 2016-05-25 11:14-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.7.1\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -223,8 +223,8 @@ msgstr "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PUERTO         puerto del servidor\n"
 
-#: clusterdb.c:276 createlang.c:247 dropdb.c:166 droplang.c:248
-#: reindexdb.c:410 vacuumdb.c:960
+#: clusterdb.c:276 createlang.c:247 dropdb.c:166 droplang.c:248 reindexdb.c:410
+#: vacuumdb.c:960
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USUARIO    nombre de usuario para la conexión\n"
@@ -271,10 +271,9 @@ msgid "Password: "
 msgstr "Contraseña: "
 
 #: common.c:113
-#, fuzzy, c-format
-#| msgid "%s: could not connect to database %s\n"
+#, c-format
 msgid "%s: could not connect to database %s: out of memory\n"
-msgstr "%s: no se pudo conectar a la base de datos %s\n"
+msgstr "%s: no se pudo conectar a la base de datos %s: memoria agotada\n"
 
 #: common.c:141
 #, c-format
@@ -1019,8 +1018,7 @@ msgstr ""
 "Lea la descripción de la orden REINDEX de SQL para obtener mayores detalles.\n"
 
 #: vacuumdb.c:191
-#, fuzzy, c-format
-#| msgid "%s: number of parallel \"jobs\" must be at least 1\n"
+#, c-format
 msgid "%s: number of parallel jobs must be at least 1\n"
 msgstr "%s: número de trabajos en paralelo debe ser al menos 1\n"
 
@@ -1087,10 +1085,9 @@ msgstr ""
 "%s"
 
 #: vacuumdb.c:929
-#, fuzzy, c-format
-#| msgid "%s: invalid argument: %s\n"
+#, c-format
 msgid "%s: invalid socket: %s"
-msgstr "%s: el argumento no es válido: %s\n"
+msgstr "%s: el socket no es válido: %s"
 
 #: vacuumdb.c:938
 #, c-format

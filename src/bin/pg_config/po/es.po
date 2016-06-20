@@ -10,23 +10,22 @@ msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
-"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"PO-Revision-Date: 2016-05-23 09:38-0500\n"
+"Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/config_info.c:131 ../../common/config_info.c:139
 #: ../../common/config_info.c:147 ../../common/config_info.c:155
 #: ../../common/config_info.c:163 ../../common/config_info.c:171
 #: ../../common/config_info.c:179 ../../common/config_info.c:187
 #: ../../common/config_info.c:195
-#, fuzzy
-#| msgid "not recorded\n"
 msgid "not recorded"
-msgstr "no registrado\n"
+msgstr "no registrado"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format

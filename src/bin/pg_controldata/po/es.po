@@ -12,13 +12,14 @@ msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:15+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"PO-Revision-Date: 2016-05-23 09:44-0500\n"
+"Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/controldata_utils.c:56
 #, c-format
@@ -32,7 +33,7 @@ msgstr "%s: no se pudo leer el archivo «%s»: %s\n"
 
 #: ../../common/controldata_utils.c:86
 msgid "calculated CRC checksum does not match value stored in file"
-msgstr ""
+msgstr "la suma de verificación calculada no coincide con el valor almacenado en el archivo"
 
 #: ../../common/controldata_utils.c:88
 #, c-format
@@ -49,10 +50,8 @@ msgstr ""
 "\n"
 
 #: ../../common/controldata_utils.c:97
-#, fuzzy
-#| msgid "%s: encoding mismatch\n"
 msgid "byte ordering mismatch"
-msgstr "%s: codificaciones no coinciden\n"
+msgstr "discordancia en orden de bytes"
 
 #: ../../common/controldata_utils.c:99
 #, c-format
@@ -249,10 +248,9 @@ msgid "on"
 msgstr "activado"
 
 #: pg_controldata.c:217
-#, fuzzy, c-format
-#| msgid "Latest checkpoint's NextXID:          %u/%u\n"
+#, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
-msgstr "NextXID del checkpoint más reciente:        %u/%u\n"
+msgstr "NextXID de último checkpoint:               %u/%u\n"
 
 #: pg_controldata.c:220
 #, c-format
@@ -295,16 +293,14 @@ msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "DB del oldestMultiXid del últ. checkpoint:  %u\n"
 
 #: pg_controldata.c:236
-#, fuzzy, c-format
-#| msgid "Latest checkpoint's oldestCommitTs:   %u\n"
+#, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
-msgstr "oldestCommitTs del último checkpoint:       %u\n"
+msgstr "oldestCommitTsXid del último checkpoint:    %u\n"
 
 #: pg_controldata.c:238
-#, fuzzy, c-format
-#| msgid "Latest checkpoint's newestCommitTs:   %u\n"
+#, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
-msgstr "newestCommitTs del último checkpoint:       %u\n"
+msgstr "newestCommitTsXid del último checkpoint:    %u\n"
 
 #: pg_controldata.c:240
 #, c-format

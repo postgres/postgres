@@ -13,14 +13,14 @@ msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
-"Last-Translator: Martín Marqués <martin@2ndquadrant.com>\n"
+"PO-Revision-Date: 2016-05-24 10:56-0500\n"
+"Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/restricted_token.c:68
 #, c-format
@@ -249,10 +249,9 @@ msgid "on"
 msgstr "activado"
 
 #: pg_resetxlog.c:649
-#, fuzzy, c-format
-#| msgid "Latest checkpoint's NextXID:          %u/%u\n"
+#, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
-msgstr "NextXID del checkpoint más reciente:             %u/%u\n"
+msgstr "NextXID del checkpoint más reciente:             %u:%u\n"
 
 #: pg_resetxlog.c:652
 #, c-format
@@ -295,16 +294,14 @@ msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "BD del oldestMultiXid del checkpt. más reciente: %u\n"
 
 #: pg_resetxlog.c:668
-#, fuzzy, c-format
-#| msgid "Latest checkpoint's oldestCommitTs:   %u\n"
+#, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
-msgstr "oldestCommitTs del último checkpoint:            %u\n"
+msgstr "oldestCommitTsXid del último checkpoint:         %u\n"
 
 #: pg_resetxlog.c:670
-#, fuzzy, c-format
-#| msgid "Latest checkpoint's newestCommitTs:   %u\n"
+#, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
-msgstr "newestCommitTs del último checkpoint:            %u\n"
+msgstr "newestCommitTsXid del último checkpoint:         %u\n"
 
 #: pg_resetxlog.c:672
 #, c-format
@@ -451,16 +448,14 @@ msgid "NextXID epoch:                        %u\n"
 msgstr "Epoch del NextXID:                    %u\n"
 
 #: pg_resetxlog.c:756
-#, fuzzy, c-format
-#| msgid "oldestCommitTs:                       %u\n"
+#, c-format
 msgid "oldestCommitTsXid:                    %u\n"
-msgstr "OldestCommitTs:                       %u\n"
+msgstr "oldestCommitTsXid:                    %u\n"
 
 #: pg_resetxlog.c:761
-#, fuzzy, c-format
-#| msgid "newestCommitTs:                       %u\n"
+#, c-format
 msgid "newestCommitTsXid:                    %u\n"
-msgstr "newestCommitTs:                       %u\n"
+msgstr "newestCommitTsXid:                    %u\n"
 
 #: pg_resetxlog.c:827
 #, c-format

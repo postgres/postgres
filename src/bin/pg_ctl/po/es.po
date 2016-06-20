@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:14+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"PO-Revision-Date: 2016-05-23 09:50-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.7.1\n"
+"X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -138,16 +138,14 @@ msgid "%s: invalid data in PID file \"%s\"\n"
 msgstr "%s: datos no válidos en archivo de PID «%s»\n"
 
 #: pg_ctl.c:444 pg_ctl.c:472
-#, fuzzy, c-format
-#| msgid "%s: could not connect to server: %s"
+#, c-format
 msgid "%s: could not start server: %s\n"
-msgstr "%s: no se pudo conectar al servidor: %s"
+msgstr "%s: no se pudo iniciar el servidor: %s\n"
 
 #: pg_ctl.c:496
-#, fuzzy, c-format
-#| msgid "%s: could not start service \"%s\": error code %lu\n"
+#, c-format
 msgid "%s: could not start server: error code %lu\n"
-msgstr "%s: no se pudo iniciar el servicio «%s»: código de error %lu\n"
+msgstr "%s: no se pudo iniciar el servidor: código de error %lu\n"
 
 #: pg_ctl.c:573
 #, c-format
@@ -585,7 +583,7 @@ msgstr "  -D, --pgdata DATADIR   ubicación del área de almacenamiento de datos
 #: pg_ctl.c:1929
 #, c-format
 msgid "  -e SOURCE              event source for logging when running as a service\n"
-msgstr ""
+msgstr "  -e ORIGEN              origen para el log de eventos cuando se ejecuta como servicio\n"
 
 #: pg_ctl.c:1931
 #, c-format
