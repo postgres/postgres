@@ -113,3 +113,24 @@ select * from test2 where t ~ 'z foo bar';
 select * from test2 where t ~ ' z foo bar';
 select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
+
+-- Check similarity threshold (bug #14202)
+
+CREATE TEMP TABLE restaurants (city text);
+INSERT INTO restaurants SELECT 'Warsaw' FROM generate_series(1, 10000);
+INSERT INTO restaurants SELECT 'Szczecin' FROM generate_series(1, 10000);
+CREATE INDEX ON restaurants USING gist(city gist_trgm_ops);
+
+-- Similarity of the two names (for reference).
+SELECT similarity('Szczecin', 'Warsaw');
+
+-- Should get only 'Warsaw' for either setting of set_limit.
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
+  FROM restaurants WHERE city % 'Warsaw';
+SELECT set_limit(0.3);
+SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
+  FROM restaurants WHERE city % 'Warsaw';
+SELECT set_limit(0.5);
+SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
+  FROM restaurants WHERE city % 'Warsaw';
