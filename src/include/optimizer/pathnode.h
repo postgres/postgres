@@ -143,8 +143,7 @@ extern ProjectionPath *create_projection_path(PlannerInfo *root,
 extern Path *apply_projection_to_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *path,
-						 PathTarget *target,
-						 bool target_parallel);
+						 PathTarget *target);
 extern SortPath *create_sort_path(PlannerInfo *root,
 				 RelOptInfo *rel,
 				 Path *subpath,

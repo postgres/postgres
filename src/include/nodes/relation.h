@@ -1274,15 +1274,22 @@ typedef struct HashPath
 /*
  * ProjectionPath represents a projection (that is, targetlist computation)
  *
- * This path node represents using a Result plan node to do a projection.
- * It's only needed atop a node that doesn't support projection (such as
- * Sort); otherwise we just jam the new desired PathTarget into the lower
- * path node, and adjust that node's estimated cost accordingly.
+ * Nominally, this path node represents using a Result plan node to do a
+ * projection step.  However, if the input plan node supports projection,
+ * we can just modify its output targetlist to do the required calculations
+ * directly, and not need a Result.  In some places in the planner we can just
+ * jam the desired PathTarget into the input path node (and adjust its cost
+ * accordingly), so we don't need a ProjectionPath.  But in other places
+ * it's necessary to not modify the input path node, so we need a separate
+ * ProjectionPath node, which is marked dummy to indicate that we intend to
+ * assign the work to the input plan node.  The estimated cost for the
+ * ProjectionPath node will account for whether a Result will be used or not.
  */
 typedef struct ProjectionPath
 {
 	Path		path;
 	Path	   *subpath;		/* path representing input source */
+	bool		dummypp;		/* true if no separate Result is needed */
 } ProjectionPath;
 
 /*

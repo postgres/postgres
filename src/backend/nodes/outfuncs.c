@@ -1809,6 +1809,7 @@ _outProjectionPath(StringInfo str, const ProjectionPath *node)
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_NODE_FIELD(subpath);
+	WRITE_BOOL_FIELD(dummypp);
 }
 
 static void

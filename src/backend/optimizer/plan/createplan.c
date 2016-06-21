@@ -1409,8 +1409,9 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 /*
  * create_projection_plan
  *
- *	  Create a Result node to do a projection step and (recursively) plans
- *	  for its subpaths.
+ *	  Create a plan tree to do a projection step and (recursively) plans
+ *	  for its subpaths.  We may need a Result node for the projection,
+ *	  but sometimes we can just let the subplan do the work.
  */
 static Plan *
 create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
@@ -1425,31 +1426,37 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
 	tlist = build_path_tlist(root, &best_path->path);
 
 	/*
-	 * We might not really need a Result node here.  There are several ways
-	 * that this can happen.  For example, MergeAppend doesn't project, so we
-	 * would have thought that we needed a projection to attach resjunk sort
-	 * columns to its output ... but create_merge_append_plan might have added
-	 * those same resjunk sort columns to both MergeAppend and its children.
-	 * Alternatively, apply_projection_to_path might have created a projection
-	 * path as the subpath of a Gather node even though the subpath was
-	 * projection-capable.  So, if the subpath is capable of projection or the
-	 * desired tlist is the same expression-wise as the subplan's, just jam it
-	 * in there.  We'll have charged for a Result that doesn't actually appear
-	 * in the plan, but that's better than having a Result we don't need.
+	 * We might not really need a Result node here, either because the subplan
+	 * can project or because it's returning the right list of expressions
+	 * anyway.  Usually create_projection_path will have detected that and set
+	 * dummypp if we don't need a Result; but its decision can't be final,
+	 * because some createplan.c routines change the tlists of their nodes.
+	 * (An example is that create_merge_append_plan might add resjunk sort
+	 * columns to a MergeAppend.)  So we have to recheck here.  If we do
+	 * arrive at a different answer than create_projection_path did, we'll
+	 * have made slightly wrong cost estimates; but label the plan with the
+	 * cost estimates we actually used, not "corrected" ones.  (XXX this could
+	 * be cleaned up if we moved more of the sortcolumn setup logic into Path
+	 * creation, but that would add expense to creating Paths we might end up
+	 * not using.)
 	 */
 	if (is_projection_capable_path(best_path->subpath) ||
 		tlist_same_exprs(tlist, subplan->targetlist))
 	{
+		/* Don't need a separate Result, just assign tlist to subplan */
 		plan = subplan;
 		plan->targetlist = tlist;
 
-		/* Adjust cost to match what we thought during planning */
+		/* Label plan with the estimated costs we actually used */
 		plan->startup_cost = best_path->path.startup_cost;
 		plan->total_cost = best_path->path.total_cost;
+		plan->plan_rows = best_path->path.rows;
+		plan->plan_width = best_path->path.pathtarget->width;
 		/* ... but be careful not to munge subplan's parallel-aware flag */
 	}
 	else
 	{
+		/* We need a Result node */
 		plan = (Plan *) make_result(tlist, NULL, subplan);
 
 		copy_generic_path_info(plan, (Path *) best_path);

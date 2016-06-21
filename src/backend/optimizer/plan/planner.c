@@ -1500,7 +1500,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		PathTarget *grouping_target;
 		PathTarget *scanjoin_target;
 		bool		have_grouping;
-		bool		scanjoin_target_parallel_safe = false;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
 		List	   *rollup_lists = NIL;
@@ -1731,14 +1730,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			scanjoin_target = grouping_target;
 
 		/*
-		 * Check whether scan/join target is parallel safe ... unless there
-		 * are no partial paths, in which case we don't care.
-		 */
-		if (current_rel->partial_pathlist &&
-			!has_parallel_hazard((Node *) scanjoin_target->exprs, false))
-			scanjoin_target_parallel_safe = true;
-
-		/*
 		 * Forcibly apply scan/join target to all the Paths for the scan/join
 		 * rel.
 		 *
@@ -1756,8 +1747,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 			Assert(subpath->param_info == NULL);
 			path = apply_projection_to_path(root, current_rel,
-											subpath, scanjoin_target,
-											scanjoin_target_parallel_safe);
+											subpath, scanjoin_target);
 			/* If we had to add a Result, path is different from subpath */
 			if (path != subpath)
 			{
@@ -1774,15 +1764,13 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * partial pathlist will expect partial paths for that rel to produce
 		 * the same output as complete paths ... and we just changed the
 		 * output for the complete paths, so we'll need to do the same thing
-		 * for partial paths.
+		 * for partial paths.  But only parallel-safe expressions can be
+		 * computed by partial paths.
 		 */
-		if (scanjoin_target_parallel_safe)
+		if (current_rel->partial_pathlist &&
+			!has_parallel_hazard((Node *) scanjoin_target->exprs, false))
 		{
-			/*
-			 * Apply the scan/join target to each partial path.  Otherwise,
-			 * anything that attempts to use the partial paths for further
-			 * upper planning may go wrong.
-			 */
+			/* Apply the scan/join target to each partial path */
 			foreach(lc, current_rel->partial_pathlist)
 			{
 				Path	   *subpath = (Path *) lfirst(lc);
@@ -1792,36 +1780,14 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				Assert(subpath->param_info == NULL);
 
 				/*
-				 * We can't use apply_projection_to_path() here, because there
-				 * could already be pointers to these paths, and therefore we
-				 * dare not modify them in place.  Instead, we must use
-				 * create_projection_path() unconditionally.
+				 * Don't use apply_projection_to_path() here, because there
+				 * could be other pointers to these paths, and therefore we
+				 * mustn't modify them in place.
 				 */
 				newpath = (Path *) create_projection_path(root,
 														  current_rel,
 														  subpath,
 														  scanjoin_target);
-
-				/*
-				 * Although create_projection_path() inserts a ProjectionPath
-				 * unconditionally, create_projection_plan() will only insert
-				 * a Result node if the subpath is not projection-capable, so
-				 * we should discount the cost of that node if it will not
-				 * actually get inserted.  (This is pretty grotty but we can
-				 * improve it later if it seems important.)
-				 */
-				if (equal(scanjoin_target->exprs, subpath->pathtarget->exprs))
-				{
-					/* at most we need a relabeling of the subpath */
-					newpath->startup_cost = subpath->startup_cost;
-					newpath->total_cost = subpath->total_cost;
-				}
-				else if (is_projection_capable_path(subpath))
-				{
-					/* need to project, but we don't need a Result */
-					newpath->total_cost -= cpu_tuple_cost * subpath->rows;
-				}
-
 				lfirst(lc) = newpath;
 			}
 		}
@@ -4231,7 +4197,7 @@ create_ordered_paths(PlannerInfo *root,
 			/* Add projection step if needed */
 			if (path->pathtarget != target)
 				path = apply_projection_to_path(root, ordered_rel,
-												path, target, false);
+												path, target);
 
 			add_path(ordered_rel, path);
 		}
