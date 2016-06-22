@@ -13,6 +13,18 @@ SELECT	ctid, aggfinalfn
 FROM	pg_catalog.pg_aggregate fk
 WHERE	aggfinalfn != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggfinalfn);
+SELECT	ctid, aggcombinefn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggcombinefn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggcombinefn);
+SELECT	ctid, aggserialfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggserialfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggserialfn);
+SELECT	ctid, aggdeserialfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggdeserialfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggdeserialfn);
 SELECT	ctid, aggmtransfn
 FROM	pg_catalog.pg_aggregate fk
 WHERE	aggmtransfn != 0 AND
@@ -241,6 +253,10 @@ SELECT	ctid, inhparent
 FROM	pg_catalog.pg_inherits fk
 WHERE	inhparent != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.inhparent);
+SELECT	ctid, classoid
+FROM	pg_catalog.pg_init_privs fk
+WHERE	classoid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.classoid);
 SELECT	ctid, lanowner
 FROM	pg_catalog.pg_language fk
 WHERE	lanowner != 0 AND

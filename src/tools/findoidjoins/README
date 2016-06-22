@@ -16,9 +16,11 @@ catalogs in interesting ways.
 Note that unexpected matches may indicate bogus entries in system tables;
 don't accept a peculiar match without question.  In particular, a field
 shown as joining to more than one target table is probably messed up.
-In 9.6devel, the *only* fields that should join to more than one target
-table are pg_description.objoid, pg_depend.objid, pg_depend.refobjid,
-pg_shdescription.objoid, pg_shdepend.objid, and pg_shdepend.refobjid.
+In 9.6, the *only* fields that should join to more than one target
+table are:
+pg_description.objoid, pg_depend.objid, pg_depend.refobjid,
+pg_shdescription.objoid, pg_shdepend.objid, pg_shdepend.refobjid,
+and pg_init_privs.objoid.
 (Running make_oidjoins_check is an easy way to spot fields joining to more
 than one table, BTW.)
 
@@ -33,7 +35,7 @@ regression test.  The oidjoins test should be updated after any
 revision in the patterns of cross-links between system tables.
 (Typically we update it at the end of each development cycle.)
 
-NOTE: as of 9.6devel, make_oidjoins_check produces two bogus join checks:
+NOTE: as of 9.6, make_oidjoins_check produces two bogus join checks:
 Join pg_catalog.pg_class.relfilenode => pg_catalog.pg_class.oid
 Join pg_catalog.pg_database.datlastsysoid => pg_catalog.pg_database.oid
 These are artifacts and should not be added to the oidjoins regression test.
@@ -45,6 +47,9 @@ neither of which should be added to the regression test.
 Join pg_catalog.pg_aggregate.aggfnoid => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_aggregate.aggtransfn => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_aggregate.aggfinalfn => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_aggregate.aggcombinefn => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_aggregate.aggserialfn => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_aggregate.aggdeserialfn => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_aggregate.aggmtransfn => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_aggregate.aggminvtransfn => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_aggregate.aggmfinalfn => pg_catalog.pg_proc.oid
@@ -102,6 +107,7 @@ Join pg_catalog.pg_index.indexrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_index.indrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_inherits.inhrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_inherits.inhparent => pg_catalog.pg_class.oid
+Join pg_catalog.pg_init_privs.classoid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_language.lanowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_language.lanplcallfoid => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_language.laninline => pg_catalog.pg_proc.oid

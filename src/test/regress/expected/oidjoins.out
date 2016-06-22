@@ -25,6 +25,30 @@ WHERE	aggfinalfn != 0 AND
 ------+------------
 (0 rows)
 
+SELECT	ctid, aggcombinefn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggcombinefn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggcombinefn);
+ ctid | aggcombinefn 
+------+--------------
+(0 rows)
+
+SELECT	ctid, aggserialfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggserialfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggserialfn);
+ ctid | aggserialfn 
+------+-------------
+(0 rows)
+
+SELECT	ctid, aggdeserialfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggdeserialfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggdeserialfn);
+ ctid | aggdeserialfn 
+------+---------------
+(0 rows)
+
 SELECT	ctid, aggmtransfn
 FROM	pg_catalog.pg_aggregate fk
 WHERE	aggmtransfn != 0 AND
@@ -479,6 +503,14 @@ WHERE	inhparent != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.inhparent);
  ctid | inhparent 
 ------+-----------
+(0 rows)
+
+SELECT	ctid, classoid
+FROM	pg_catalog.pg_init_privs fk
+WHERE	classoid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.classoid);
+ ctid | classoid 
+------+----------
 (0 rows)
 
 SELECT	ctid, lanowner
