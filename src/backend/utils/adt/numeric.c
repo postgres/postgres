@@ -3510,10 +3510,7 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 /*
  * numeric_avg_serialize
  *		Serialize NumericAggState for numeric aggregates that don't require
- *		sumX2. Serializes NumericAggState into bytea using the standard pq API.
- *
- * numeric_avg_deserialize(numeric_avg_serialize(state)) must result in a state
- * which matches the original input state.
+ *		sumX2.
  */
 Datum
 numeric_avg_serialize(PG_FUNCTION_ARGS)
@@ -3564,23 +3561,21 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 
 /*
  * numeric_avg_deserialize
- *		Deserialize bytea into NumericAggState	for numeric aggregates that
- *		don't require sumX2. Deserializes bytea into NumericAggState using the
- *		standard pq API.
- *
- * numeric_avg_serialize(numeric_avg_deserialize(bytea)) must result in a value
- * which matches the original bytea value.
+ *		Deserialize bytea into NumericAggState for numeric aggregates that
+ *		don't require sumX2.
  */
 Datum
 numeric_avg_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	bytea	   *sstate;
 	NumericAggState *result;
 	Datum		temp;
 	StringInfoData buf;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	sstate = PG_GETARG_BYTEA_P(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
@@ -3619,11 +3614,7 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 /*
  * numeric_serialize
  *		Serialization function for NumericAggState for numeric aggregates that
- *		require sumX2. Serializes NumericAggState into bytea using the standard
- *		pq API.
- *
- * numeric_deserialize(numeric_serialize(state)) must result in a state which
- * matches the original input state.
+ *		require sumX2.
  */
 Datum
 numeric_serialize(PG_FUNCTION_ARGS)
@@ -3683,22 +3674,20 @@ numeric_serialize(PG_FUNCTION_ARGS)
 /*
  * numeric_deserialize
  *		Deserialization function for NumericAggState for numeric aggregates that
- *		require sumX2. Deserializes bytea into into NumericAggState using the
- *		standard pq API.
- *
- * numeric_serialize(numeric_deserialize(bytea)) must result in a value which
- * matches the original bytea value.
+ *		require sumX2.
  */
 Datum
 numeric_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	bytea	   *sstate;
 	NumericAggState *result;
 	Datum		temp;
 	StringInfoData buf;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	sstate = PG_GETARG_BYTEA_P(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
@@ -3992,11 +3981,8 @@ numeric_poly_combine(PG_FUNCTION_ARGS)
 
 /*
  * numeric_poly_serialize
- *		Serialize PolyNumAggState into bytea using the standard pq API for
- *		aggregate functions which require sumX2.
- *
- * numeric_poly_deserialize(numeric_poly_serialize(state)) must result in a
- * state which matches the original input state.
+ *		Serialize PolyNumAggState into bytea for aggregate functions which
+ *		require sumX2.
  */
 Datum
 numeric_poly_serialize(PG_FUNCTION_ARGS)
@@ -4067,16 +4053,13 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 
 /*
  * numeric_poly_deserialize
- *		Deserialize PolyNumAggState from bytea using the standard pq API for
- *		aggregate functions which require sumX2.
- *
- * numeric_poly_serialize(numeric_poly_deserialize(bytea)) must result in a
- * state which matches the original input state.
+ *		Deserialize PolyNumAggState from bytea for aggregate functions which
+ *		require sumX2.
  */
 Datum
 numeric_poly_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	bytea	   *sstate;
 	PolyNumAggState *result;
 	Datum		sumX;
 	Datum		sumX2;
@@ -4084,6 +4067,8 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	sstate = PG_GETARG_BYTEA_P(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
@@ -4226,9 +4211,6 @@ int8_avg_combine(PG_FUNCTION_ARGS)
 /*
  * int8_avg_serialize
  *		Serialize PolyNumAggState into bytea using the standard pq API.
- *
- * int8_avg_deserialize(int8_avg_serialize(state)) must result in a state which
- * matches the original input state.
  */
 Datum
 int8_avg_serialize(PG_FUNCTION_ARGS)
@@ -4286,20 +4268,19 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 /*
  * int8_avg_deserialize
  *		Deserialize bytea back into PolyNumAggState.
- *
- * int8_avg_serialize(int8_avg_deserialize(bytea)) must result in a value which
- * matches the original bytea value.
  */
 Datum
 int8_avg_deserialize(PG_FUNCTION_ARGS)
 {
-	bytea	   *sstate = PG_GETARG_BYTEA_P(0);
+	bytea	   *sstate;
 	PolyNumAggState *result;
 	StringInfoData buf;
 	Datum		temp;
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	sstate = PG_GETARG_BYTEA_P(0);
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the

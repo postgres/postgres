@@ -228,9 +228,8 @@ ORDER BY 1, 2;
 -- Look for functions that return type "internal" and do not have any
 -- "internal" argument.  Such a function would be a security hole since
 -- it might be used to call an internal function from an SQL command.
--- As of 7.3 this query should find internal_in, and as of 9.6 aggregate
--- deserialization will be found too. These should contain a runtime check to
--- ensure they can only be called in an aggregate context.
+-- As of 7.3 this query should find only internal_in, which is safe because
+-- it always throws an error when called.
 
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
@@ -937,6 +936,72 @@ WHERE a.aggfnoid = p.oid AND
     a.aggminvtransfn = iptr.oid AND
     ptr.proisstrict != iptr.proisstrict;
 
+-- Check that all combine functions have signature
+-- combine(transtype, transtype) returns transtype
+-- NOTE: use physically_coercible here, not binary_coercible, because
+-- max and min on abstime are implemented using int4larger/int4smaller.
+
+SELECT a.aggfnoid, p.proname
+FROM pg_aggregate as a, pg_proc as p
+WHERE a.aggcombinefn = p.oid AND
+    (p.pronargs != 2 OR
+     p.prorettype != p.proargtypes[0] OR
+     p.prorettype != p.proargtypes[1] OR
+     NOT physically_coercible(a.aggtranstype, p.proargtypes[0]));
+
+-- Check that no combine function for an INTERNAL transtype is strict.
+
+SELECT a.aggfnoid, p.proname
+FROM pg_aggregate as a, pg_proc as p
+WHERE a.aggcombinefn = p.oid AND
+    a.aggtranstype = 'internal'::regtype AND p.proisstrict;
+
+-- serialize/deserialize functions should be specified only for aggregates
+-- with transtype internal and a combine function, and we should have both
+-- or neither of them.
+
+SELECT aggfnoid, aggtranstype, aggserialfn, aggdeserialfn
+FROM pg_aggregate
+WHERE (aggserialfn != 0 OR aggdeserialfn != 0)
+  AND (aggtranstype != 'internal'::regtype OR aggcombinefn = 0 OR
+       aggserialfn = 0 OR aggdeserialfn = 0);
+
+-- Check that all serialization functions have signature
+-- serialize(internal) returns bytea
+-- Also insist that they be strict; it's wasteful to run them on NULLs.
+
+SELECT a.aggfnoid, p.proname
+FROM pg_aggregate as a, pg_proc as p
+WHERE a.aggserialfn = p.oid AND
+    (p.prorettype != 'bytea'::regtype OR p.pronargs != 1 OR
+     p.proargtypes[0] != 'internal'::regtype OR
+     NOT p.proisstrict);
+
+-- Check that all deserialization functions have signature
+-- deserialize(bytea, internal) returns internal
+-- Also insist that they be strict; it's wasteful to run them on NULLs.
+
+SELECT a.aggfnoid, p.proname
+FROM pg_aggregate as a, pg_proc as p
+WHERE a.aggdeserialfn = p.oid AND
+    (p.prorettype != 'internal'::regtype OR p.pronargs != 2 OR
+     p.proargtypes[0] != 'bytea'::regtype OR
+     p.proargtypes[1] != 'internal'::regtype OR
+     NOT p.proisstrict);
+
+-- Check that aggregates which have the same transition function also have
+-- the same combine, serialization, and deserialization functions.
+-- While that isn't strictly necessary, it's fishy if they don't.
+
+SELECT a.aggfnoid, a.aggcombinefn, a.aggserialfn, a.aggdeserialfn,
+       b.aggfnoid, b.aggcombinefn, b.aggserialfn, b.aggdeserialfn
+FROM
+    pg_aggregate a, pg_aggregate b
+WHERE
+    a.aggfnoid < b.aggfnoid AND a.aggtransfn = b.aggtransfn AND
+    (a.aggcombinefn != b.aggcombinefn OR a.aggserialfn != b.aggserialfn
+     OR a.aggdeserialfn != b.aggdeserialfn);
+
 -- Cross-check aggsortop (if present) against pg_operator.
 -- We expect to find entries for bool_and, bool_or, every, max, and min.
 
@@ -1004,64 +1069,6 @@ SELECT p.oid, proname
 FROM pg_proc AS p JOIN pg_aggregate AS a ON a.aggfnoid = p.oid
 WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
 
--- Check that all serial functions have a return type the same as the serial
--- type.
-SELECT a.aggserialfn,a.aggserialtype,p.prorettype
-FROM pg_aggregate a
-INNER JOIN pg_proc p ON a.aggserialfn = p.oid
-WHERE a.aggserialtype <> p.prorettype;
-
--- Check that all the deserial functions have the same input type as the
--- serialtype
-SELECT a.aggserialfn,a.aggserialtype,p.proargtypes[0]
-FROM pg_aggregate a
-INNER JOIN pg_proc p ON a.aggdeserialfn = p.oid
-WHERE p.proargtypes[0] <> a.aggserialtype;
-
--- An aggregate should either have a complete set of serialtype, serial func
--- and deserial func, or none of them.
-SELECT aggserialtype,aggserialfn,aggdeserialfn
-FROM pg_aggregate
-WHERE (aggserialtype <> 0 OR aggserialfn <> 0 OR aggdeserialfn <> 0)
-  AND (aggserialtype = 0 OR aggserialfn = 0 OR aggdeserialfn = 0);
-
--- Check that all aggregates with serialtypes have internal states.
--- (There's no point in serializing anything apart from internal)
-SELECT aggfnoid,aggserialtype,aggtranstype
-FROM pg_aggregate
-WHERE aggserialtype <> 0 AND aggtranstype <> 'internal'::regtype;
-
--- Check that all serial functions are strict. It's wasteful for these to be
--- called with NULL values.
-SELECT aggfnoid,aggserialfn
-FROM pg_aggregate a
-INNER JOIN pg_proc p ON a.aggserialfn = p.oid
-WHERE p.proisstrict = false;
-
--- Check that all deserial functions are strict. It's wasteful for these to be
--- called with NULL values.
-SELECT aggfnoid,aggdeserialfn
-FROM pg_aggregate a
-INNER JOIN pg_proc p ON a.aggdeserialfn = p.oid
-WHERE p.proisstrict = false;
-
--- Check that no combine functions with an INTERNAL return type are strict.
-SELECT aggfnoid,aggcombinefn
-FROM pg_aggregate a
-INNER JOIN pg_proc p ON a.aggcombinefn = p.oid
-INNER JOIN pg_type t ON a.aggtranstype = t.oid
-WHERE t.typname = 'internal' AND p.proisstrict = true;
-
--- Check that aggregates which have the same transition function also have
--- the same combine, serialization, and deserialization functions.
-SELECT a.aggfnoid, a.aggcombinefn, a.aggserialfn, a.aggdeserialfn,
-       b.aggfnoid, b.aggcombinefn, b.aggserialfn, b.aggdeserialfn
-FROM
-    pg_aggregate a, pg_aggregate b
-WHERE
-    a.aggfnoid < b.aggfnoid AND a.aggtransfn = b.aggtransfn AND
-    (a.aggcombinefn != b.aggcombinefn OR a.aggserialfn != b.aggserialfn
-     OR a.aggdeserialfn != b.aggdeserialfn);
 
 -- **************** pg_opfamily ****************
 

@@ -465,13 +465,11 @@ aggregates_allow_partial_walker(Node *node, partial_agg_context *context)
 
 		/*
 		 * If we find any aggs with an internal transtype then we must check
-		 * that these have a serialization type, serialization func and
-		 * deserialization func; otherwise, we set the maximum allowed type to
-		 * PAT_INTERNAL_ONLY.
+		 * whether these have serialization/deserialization functions;
+		 * otherwise, we set the maximum allowed type to PAT_INTERNAL_ONLY.
 		 */
 		if (aggform->aggtranstype == INTERNALOID &&
-			(!OidIsValid(aggform->aggserialtype) ||
-			 !OidIsValid(aggform->aggserialfn) ||
+			(!OidIsValid(aggform->aggserialfn) ||
 			 !OidIsValid(aggform->aggdeserialfn)))
 			context->allowedtype = PAT_INTERNAL_ONLY;
 

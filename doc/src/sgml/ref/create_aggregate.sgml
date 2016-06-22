@@ -30,7 +30,6 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
     [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
     [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
-    [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
@@ -50,10 +49,6 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
-    [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
-    [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
-    [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , HYPOTHETICAL ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
@@ -72,7 +67,6 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
     [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
     [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
-    [ , SERIALTYPE = <replaceable class="PARAMETER">serialtype</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
@@ -255,7 +249,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    To be able to create an aggregate function, you must
    have <literal>USAGE</literal> privilege on the argument types, the state
    type(s), and the return type, as well as <literal>EXECUTE</literal>
-   privilege on the transition and final functions.
+   privilege on the supporting functions.
   </para>
  </refsect1>
 
@@ -412,38 +406,51 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <term><replaceable class="PARAMETER">combinefunc</replaceable></term>
     <listitem>
      <para>
-      The <replaceable class="PARAMETER">combinefunc</replaceable> may
-      optionally be specified in order to allow the aggregate function to
-      support partial aggregation. This is a prerequisite to allow the
-      aggregate to participate in certain optimizations such as parallel
-      aggregation.
+      The <replaceable class="PARAMETER">combinefunc</replaceable> function
+      may optionally be specified to allow the aggregate function to support
+      partial aggregation. This is a prerequisite to allow the aggregate to
+      participate in certain optimizations such as parallel aggregation.
      </para>
 
      <para>
-      This function can be thought of as an <replaceable class="PARAMETER">
-      sfunc</replaceable>, where instead of acting upon individual input rows
-      and adding these to the aggregate state, it adds other aggregate states
-      to the aggregate state.
+      If provided,
+      the <replaceable class="PARAMETER">combinefunc</replaceable> must
+      combine two <replaceable class="PARAMETER">state_data_type</replaceable>
+      values, each containing the result of aggregation over some subset of
+      the input values, to produce a
+      new <replaceable class="PARAMETER">state_data_type</replaceable> that
+      represents the result of aggregating over both sets of inputs.  This
+      function can be thought of as
+      an <replaceable class="PARAMETER">sfunc</replaceable>, where instead of
+      acting upon individual input rows and adding these to the aggregate
+      state, it adds another aggregate state to the aggregate state.
+      Typically, it is not possible to define
+      a <replaceable class="PARAMETER">combinefunc</replaceable> for aggregate
+      functions that are sensitive to the order of the input values, since the
+      relative ordering of the inputs that went into the subset states is
+      indeterminate.
      </para>
 
      <para>
       The <replaceable class="PARAMETER">combinefunc</replaceable> must accept
-      two arguments of <replaceable class="PARAMETER">state_data_type
-      </replaceable> and return <replaceable class="PARAMETER">state_data_type
-      </replaceable>. Optionally this function may be <quote>strict</quote>. In
-      this case the function will not be called when either of the input states
-      are null.
+      two arguments of
+      the <replaceable class="PARAMETER">state_data_type</replaceable> and
+      return a value of
+      the <replaceable class="PARAMETER">state_data_type</replaceable>.
+      Optionally this function may be <quote>strict</quote>. In this case the
+      function will not be called when either of the input states are null;
+      the other state will be taken as the correct result.
      </para>
- 
+
      <para>
-      For aggregate functions with an <literal>INTERNAL</literal>
-      <replaceable class="PARAMETER">state_data_type</replaceable> the
-      <replaceable class="PARAMETER">combinefunc</replaceable> must not be
-      <quote>strict</quote>. In this scenario the
-      <replaceable class="PARAMETER">combinefunc</replaceable> must take charge
-      and ensure that the null states are handled correctly and that the state
-      being returned is a pointer to memory which belongs in the aggregate
-      memory context.
+      For aggregate functions
+      whose <replaceable class="PARAMETER">state_data_type</replaceable>
+      is <type>internal</type>,
+      the <replaceable class="PARAMETER">combinefunc</replaceable> must not be
+      strict. In this scenario
+      the <replaceable class="PARAMETER">combinefunc</replaceable> must ensure
+      that null states are handled correctly and that the state being returned
+      is properly stored in the aggregate memory context.
      </para>
     </listitem>
    </varlistentry>
@@ -452,14 +459,13 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <term><replaceable class="PARAMETER">serialfunc</replaceable></term>
     <listitem>
      <para>
-      In order to allow aggregate functions with an <literal>INTERNAL</>
-      <replaceable class="PARAMETER">state_data_type</replaceable> to
-      participate in parallel aggregation, the aggregate must have a valid
-      <replaceable class="PARAMETER">serialfunc</replaceable>, which must
-      serialize the aggregate state into <replaceable class="PARAMETER">
-      serialtype</replaceable>. This function must take a single argument of
-      <replaceable class="PARAMETER">state_data_type</replaceable> and return
-      <replaceable class="PARAMETER">serialtype</replaceable>. A
+      An aggregate function
+      whose <replaceable class="PARAMETER">state_data_type</replaceable>
+      is <type>internal</> can participate in parallel aggregation only if it
+      has a <replaceable class="PARAMETER">serialfunc</replaceable> function,
+      which must serialize the aggregate state into a <type>bytea</> value for
+      transmission to another process.  This function must take a single
+      argument of type <type>internal</> and return type <type>bytea</>.  A
       corresponding <replaceable class="PARAMETER">deserialfunc</replaceable>
       is also required.
      </para>
@@ -470,21 +476,12 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <term><replaceable class="PARAMETER">deserialfunc</replaceable></term>
     <listitem>
      <para>
-      Deserializes a previously serialized aggregate state back into
+      Deserialize a previously serialized aggregate state back into
       <replaceable class="PARAMETER">state_data_type</replaceable>. This
-      function must take a single argument of <replaceable class="PARAMETER">
-      serialtype</replaceable> and return <replaceable class="PARAMETER">
-      state_data_type</replaceable>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="PARAMETER">serialtype</replaceable></term>
-    <listitem>
-     <para>
-      The data type to into which an <literal>INTERNAL</literal> aggregate
-      state should be serialized.
+      function must take two arguments of types <type>bytea</>
+      and <type>internal</>, and produce a result of type <type>internal</>.
+      (Note: the second, <type>internal</> argument is unused, but is required
+      for type safety reasons.)
      </para>
     </listitem>
    </varlistentry>

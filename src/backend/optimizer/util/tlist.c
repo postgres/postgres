@@ -15,7 +15,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "catalog/pg_aggregate.h"
+#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
@@ -766,8 +766,8 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
 /*
  * apply_partialaggref_adjustment
  *	  Convert PathTarget to be suitable for a partial aggregate node. We simply
- *	  adjust any Aggref nodes found in the target and set the aggoutputtype to
- *	  the aggtranstype or aggserialtype. This allows exprType() to return the
+ *	  adjust any Aggref nodes found in the target and set the aggoutputtype
+ *	  appropriately. This allows exprType() to return the
  *	  actual type that will be produced.
  *
  * Note: We expect 'target' to be a flat target list and not have Aggrefs buried
@@ -784,40 +784,29 @@ apply_partialaggref_adjustment(PathTarget *target)
 
 		if (IsA(aggref, Aggref))
 		{
-			HeapTuple	aggTuple;
-			Form_pg_aggregate aggform;
 			Aggref	   *newaggref;
-
-			aggTuple = SearchSysCache1(AGGFNOID,
-									   ObjectIdGetDatum(aggref->aggfnoid));
-			if (!HeapTupleIsValid(aggTuple))
-				elog(ERROR, "cache lookup failed for aggregate %u",
-					 aggref->aggfnoid);
-			aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
 			newaggref = (Aggref *) copyObject(aggref);
 
 			/*
-			 * Use the serialization type, if one exists.  Note that we don't
-			 * support it being a polymorphic type.  (XXX really we ought to
-			 * hardwire this as INTERNAL -> BYTEA, and avoid a catalog lookup
-			 * here altogether?)
+			 * Normally, a partial aggregate returns the aggregate's
+			 * transition type, but if that's INTERNAL, it returns BYTEA
+			 * instead.  (XXX this assumes we're doing parallel aggregate with
+			 * serialization; later we might need an argument to tell this
+			 * function whether we're doing parallel or just local partial
+			 * aggregation.)
 			 */
-			if (OidIsValid(aggform->aggserialtype))
-				newaggref->aggoutputtype = aggform->aggserialtype;
+			Assert(OidIsValid(newaggref->aggtranstype));
+
+			if (newaggref->aggtranstype == INTERNALOID)
+				newaggref->aggoutputtype = BYTEAOID;
 			else
-			{
-				/* Otherwise, we return the aggregate's transition type */
-				Assert(OidIsValid(newaggref->aggtranstype));
 				newaggref->aggoutputtype = newaggref->aggtranstype;
-			}
 
 			/* flag it as partial */
 			newaggref->aggpartial = true;
 
 			lfirst(lc) = newaggref;
-
-			ReleaseSysCache(aggTuple);
 		}
 	}
 }

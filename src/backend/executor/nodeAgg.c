@@ -514,10 +514,9 @@ static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
 						  AggState *aggsate, EState *estate,
 						  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
-						  Oid aggserialtype, Oid aggserialfn,
-						  Oid aggdeserialfn, Datum initValue,
-						  bool initValueIsNull, Oid *inputTypes,
-						  int numArguments);
+						  Oid aggserialfn, Oid aggdeserialfn,
+						  Datum initValue, bool initValueIsNull,
+						  Oid *inputTypes, int numArguments);
 static int find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 					   int lastaggno, List **same_input_transnos);
 static int find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
@@ -996,6 +995,9 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 
 				dsinfo->arg[0] = slot->tts_values[0];
 				dsinfo->argnull[0] = slot->tts_isnull[0];
+				/* Dummy second argument for type-safety reasons */
+				dsinfo->arg[1] = PointerGetDatum(NULL);
+				dsinfo->argnull[1] = false;
 
 				/*
 				 * We run the deserialization functions in per-input-tuple
@@ -2669,8 +2671,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
-		Oid			serialtype_oid,
-					serialfn_oid,
+		Oid			serialfn_oid,
 					deserialfn_oid;
 		Expr	   *finalfnexpr;
 		Oid			aggtranstype;
@@ -2740,7 +2741,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 			peragg->finalfn_oid = finalfn_oid = InvalidOid;
 
-		serialtype_oid = InvalidOid;
 		serialfn_oid = InvalidOid;
 		deserialfn_oid = InvalidOid;
 
@@ -2753,13 +2753,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		{
 			/*
 			 * The planner should only have generated an agg node with
-			 * serialStates if every aggregate with an INTERNAL state has a
-			 * serialization type, serialization function and deserialization
-			 * function. Let's ensure it didn't mess that up.
+			 * serialStates if every aggregate with an INTERNAL state has
+			 * serialization/deserialization functions.  Verify that.
 			 */
-			if (!OidIsValid(aggform->aggserialtype))
-				elog(ERROR, "serialtype not set during serialStates aggregation step");
-
 			if (!OidIsValid(aggform->aggserialfn))
 				elog(ERROR, "serialfunc not set during serialStates aggregation step");
 
@@ -2768,17 +2764,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 			/* serialization func only required when not finalizing aggs */
 			if (!aggstate->finalizeAggs)
-			{
 				serialfn_oid = aggform->aggserialfn;
-				serialtype_oid = aggform->aggserialtype;
-			}
 
 			/* deserialization func only required when combining states */
 			if (aggstate->combineStates)
-			{
 				deserialfn_oid = aggform->aggdeserialfn;
-				serialtype_oid = aggform->aggserialtype;
-			}
 		}
 
 		/* Check that aggregate owner has permission to call component fns */
@@ -2906,10 +2896,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			pertrans = &pertransstates[++transno];
 			build_pertrans_for_aggref(pertrans, aggstate, estate,
 									  aggref, transfn_oid, aggtranstype,
-									  serialtype_oid, serialfn_oid,
-									  deserialfn_oid, initValue,
-									  initValueIsNull, inputTypes,
-									  numArguments);
+									  serialfn_oid, deserialfn_oid,
+									  initValue, initValueIsNull,
+									  inputTypes, numArguments);
 			peragg->transno = transno;
 		}
 		ReleaseSysCache(aggTuple);
@@ -2937,7 +2926,7 @@ static void
 build_pertrans_for_aggref(AggStatePerTrans pertrans,
 						  AggState *aggstate, EState *estate,
 						  Aggref *aggref,
-						  Oid aggtransfn, Oid aggtranstype, Oid aggserialtype,
+						  Oid aggtransfn, Oid aggtranstype,
 						  Oid aggserialfn, Oid aggdeserialfn,
 						  Datum initValue, bool initValueIsNull,
 						  Oid *inputTypes, int numArguments)
@@ -3065,10 +3054,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 	if (OidIsValid(aggserialfn))
 	{
-		build_aggregate_serialfn_expr(aggtranstype,
-									  aggserialtype,
-									  aggref->inputcollid,
-									  aggserialfn,
+		build_aggregate_serialfn_expr(aggserialfn,
 									  &serialfnexpr);
 		fmgr_info(aggserialfn, &pertrans->serialfn);
 		fmgr_info_set_expr((Node *) serialfnexpr, &pertrans->serialfn);
@@ -3076,24 +3062,21 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		InitFunctionCallInfoData(pertrans->serialfn_fcinfo,
 								 &pertrans->serialfn,
 								 1,
-								 pertrans->aggCollation,
+								 InvalidOid,
 								 (void *) aggstate, NULL);
 	}
 
 	if (OidIsValid(aggdeserialfn))
 	{
-		build_aggregate_serialfn_expr(aggserialtype,
-									  aggtranstype,
-									  aggref->inputcollid,
-									  aggdeserialfn,
-									  &deserialfnexpr);
+		build_aggregate_deserialfn_expr(aggdeserialfn,
+										&deserialfnexpr);
 		fmgr_info(aggdeserialfn, &pertrans->deserialfn);
 		fmgr_info_set_expr((Node *) deserialfnexpr, &pertrans->deserialfn);
 
 		InitFunctionCallInfoData(pertrans->deserialfn_fcinfo,
 								 &pertrans->deserialfn,
-								 1,
-								 pertrans->aggCollation,
+								 2,
+								 InvalidOid,
 								 (void *) aggstate, NULL);
 
 	}

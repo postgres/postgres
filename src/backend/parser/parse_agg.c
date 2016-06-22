@@ -71,6 +71,8 @@ static bool finalize_grouping_exprs_walker(Node *node,
 							   check_ungrouped_columns_context *context);
 static void check_agglevels_and_constraints(ParseState *pstate, Node *expr);
 static List *expand_groupingset_node(GroupingSet *gs);
+static Node *make_agg_arg(Oid argtype, Oid argcollation);
+
 
 /*
  * transformAggregateCall -
@@ -1863,37 +1865,19 @@ build_aggregate_transfn_expr(Oid *agg_input_types,
 							 Expr **transfnexpr,
 							 Expr **invtransfnexpr)
 {
-	Param	   *argp;
 	List	   *args;
 	FuncExpr   *fexpr;
 	int			i;
 
 	/*
-	 * Build arg list to use in the transfn FuncExpr node. We really only care
-	 * that transfn can discover the actual argument types at runtime using
-	 * get_fn_expr_argtype(), so it's okay to use Param nodes that don't
-	 * correspond to any real Param.
+	 * Build arg list to use in the transfn FuncExpr node.
 	 */
-	argp = makeNode(Param);
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = agg_state_type;
-	argp->paramtypmod = -1;
-	argp->paramcollid = agg_input_collation;
-	argp->location = -1;
-
-	args = list_make1(argp);
+	args = list_make1(make_agg_arg(agg_state_type, agg_input_collation));
 
 	for (i = agg_num_direct_inputs; i < agg_num_inputs; i++)
 	{
-		argp = makeNode(Param);
-		argp->paramkind = PARAM_EXEC;
-		argp->paramid = -1;
-		argp->paramtype = agg_input_types[i];
-		argp->paramtypmod = -1;
-		argp->paramcollid = agg_input_collation;
-		argp->location = -1;
-		args = lappend(args, argp);
+		args = lappend(args,
+					   make_agg_arg(agg_input_types[i], agg_input_collation));
 	}
 
 	fexpr = makeFuncExpr(transfn_oid,
@@ -1936,20 +1920,13 @@ build_aggregate_combinefn_expr(Oid agg_state_type,
 							   Oid combinefn_oid,
 							   Expr **combinefnexpr)
 {
-	Param	   *argp;
+	Node	   *argp;
 	List	   *args;
 	FuncExpr   *fexpr;
 
-	/* Build arg list to use in the combinefn FuncExpr node. */
-	argp = makeNode(Param);
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = agg_state_type;
-	argp->paramtypmod = -1;
-	argp->paramcollid = agg_input_collation;
-	argp->location = -1;
+	/* combinefn takes two arguments of the aggregate state type */
+	argp = make_agg_arg(agg_state_type, agg_input_collation);
 
-	/* transition state type is arg 1 and 2 */
 	args = list_make2(argp, argp);
 
 	fexpr = makeFuncExpr(combinefn_oid,
@@ -1958,47 +1935,55 @@ build_aggregate_combinefn_expr(Oid agg_state_type,
 						 InvalidOid,
 						 agg_input_collation,
 						 COERCE_EXPLICIT_CALL);
-	fexpr->funcvariadic = false;
+	/* combinefn is currently never treated as variadic */
 	*combinefnexpr = (Expr *) fexpr;
 }
 
 /*
  * Like build_aggregate_transfn_expr, but creates an expression tree for the
- * serialization or deserialization function of an aggregate, rather than the
- * transition function. This may be used for either the serialization or
- * deserialization function by swapping the first two parameters over.
+ * serialization function of an aggregate.
  */
 void
-build_aggregate_serialfn_expr(Oid agg_input_type,
-							  Oid agg_output_type,
-							  Oid agg_input_collation,
-							  Oid serialfn_oid,
+build_aggregate_serialfn_expr(Oid serialfn_oid,
 							  Expr **serialfnexpr)
 {
-	Param	   *argp;
 	List	   *args;
 	FuncExpr   *fexpr;
 
-	/* Build arg list to use in the FuncExpr node. */
-	argp = makeNode(Param);
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = agg_input_type;
-	argp->paramtypmod = -1;
-	argp->paramcollid = agg_input_collation;
-	argp->location = -1;
-
-	/* takes a single arg of the agg_input_type */
-	args = list_make1(argp);
+	/* serialfn always takes INTERNAL and returns BYTEA */
+	args = list_make1(make_agg_arg(INTERNALOID, InvalidOid));
 
 	fexpr = makeFuncExpr(serialfn_oid,
-						 agg_output_type,
+						 BYTEAOID,
 						 args,
 						 InvalidOid,
-						 agg_input_collation,
+						 InvalidOid,
 						 COERCE_EXPLICIT_CALL);
-	fexpr->funcvariadic = false;
 	*serialfnexpr = (Expr *) fexpr;
+}
+
+/*
+ * Like build_aggregate_transfn_expr, but creates an expression tree for the
+ * deserialization function of an aggregate.
+ */
+void
+build_aggregate_deserialfn_expr(Oid deserialfn_oid,
+								Expr **deserialfnexpr)
+{
+	List	   *args;
+	FuncExpr   *fexpr;
+
+	/* deserialfn always takes BYTEA, INTERNAL and returns INTERNAL */
+	args = list_make2(make_agg_arg(BYTEAOID, InvalidOid),
+					  make_agg_arg(INTERNALOID, InvalidOid));
+
+	fexpr = makeFuncExpr(deserialfn_oid,
+						 INTERNALOID,
+						 args,
+						 InvalidOid,
+						 InvalidOid,
+						 COERCE_EXPLICIT_CALL);
+	*deserialfnexpr = (Expr *) fexpr;
 }
 
 /*
@@ -2014,33 +1999,19 @@ build_aggregate_finalfn_expr(Oid *agg_input_types,
 							 Oid finalfn_oid,
 							 Expr **finalfnexpr)
 {
-	Param	   *argp;
 	List	   *args;
 	int			i;
 
 	/*
 	 * Build expr tree for final function
 	 */
-	argp = makeNode(Param);
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = agg_state_type;
-	argp->paramtypmod = -1;
-	argp->paramcollid = agg_input_collation;
-	argp->location = -1;
-	args = list_make1(argp);
+	args = list_make1(make_agg_arg(agg_state_type, agg_input_collation));
 
 	/* finalfn may take additional args, which match agg's input types */
 	for (i = 0; i < num_finalfn_inputs - 1; i++)
 	{
-		argp = makeNode(Param);
-		argp->paramkind = PARAM_EXEC;
-		argp->paramid = -1;
-		argp->paramtype = agg_input_types[i];
-		argp->paramtypmod = -1;
-		argp->paramcollid = agg_input_collation;
-		argp->location = -1;
-		args = lappend(args, argp);
+		args = lappend(args,
+					   make_agg_arg(agg_input_types[i], agg_input_collation));
 	}
 
 	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
@@ -2050,4 +2021,25 @@ build_aggregate_finalfn_expr(Oid *agg_input_types,
 										 agg_input_collation,
 										 COERCE_EXPLICIT_CALL);
 	/* finalfn is currently never treated as variadic */
+}
+
+/*
+ * Convenience function to build dummy argument expressions for aggregates.
+ *
+ * We really only care that an aggregate support function can discover its
+ * actual argument types at runtime using get_fn_expr_argtype(), so it's okay
+ * to use Param nodes that don't correspond to any real Param.
+ */
+static Node *
+make_agg_arg(Oid argtype, Oid argcollation)
+{
+	Param	   *argp = makeNode(Param);
+
+	argp->paramkind = PARAM_EXEC;
+	argp->paramid = -1;
+	argp->paramtype = argtype;
+	argp->paramtypmod = -1;
+	argp->paramcollid = argcollation;
+	argp->location = -1;
+	return (Node *) argp;
 }

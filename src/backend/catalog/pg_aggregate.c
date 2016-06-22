@@ -67,7 +67,6 @@ AggregateCreate(const char *aggName,
 				bool mfinalfnExtraArgs,
 				List *aggsortopName,
 				Oid aggTransType,
-				Oid aggSerialType,
 				int32 aggTransSpace,
 				Oid aggmTransType,
 				int32 aggmTransSpace,
@@ -440,44 +439,42 @@ AggregateCreate(const char *aggName,
 	}
 
 	/*
-	 * Validate the serialization function, if present. We must ensure that
-	 * the return type of this function is the same as the specified
-	 * serialType.
+	 * Validate the serialization function, if present.
 	 */
 	if (aggserialfnName)
 	{
-		fnArgs[0] = aggTransType;
+		fnArgs[0] = INTERNALOID;
 
 		serialfn = lookup_agg_function(aggserialfnName, 1,
 									   fnArgs, variadicArgType,
 									   &rettype);
 
-		if (rettype != aggSerialType)
+		if (rettype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("return type of serialization function %s is not %s",
 						NameListToString(aggserialfnName),
-						format_type_be(aggSerialType))));
+						format_type_be(BYTEAOID))));
 	}
 
 	/*
-	 * Validate the deserialization function, if present. We must ensure that
-	 * the return type of this function is the same as the transType.
+	 * Validate the deserialization function, if present.
 	 */
 	if (aggdeserialfnName)
 	{
-		fnArgs[0] = aggSerialType;
+		fnArgs[0] = BYTEAOID;
+		fnArgs[1] = INTERNALOID;	/* dummy argument for type safety */
 
-		deserialfn = lookup_agg_function(aggdeserialfnName, 1,
+		deserialfn = lookup_agg_function(aggdeserialfnName, 2,
 										 fnArgs, variadicArgType,
 										 &rettype);
 
-		if (rettype != aggTransType)
+		if (rettype != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 			   errmsg("return type of deserialization function %s is not %s",
 					  NameListToString(aggdeserialfnName),
-					  format_type_be(aggTransType))));
+					  format_type_be(INTERNALOID))));
 	}
 
 	/*
@@ -661,7 +658,6 @@ AggregateCreate(const char *aggName,
 	values[Anum_pg_aggregate_aggmfinalextra - 1] = BoolGetDatum(mfinalfnExtraArgs);
 	values[Anum_pg_aggregate_aggsortop - 1] = ObjectIdGetDatum(sortop);
 	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(aggTransType);
-	values[Anum_pg_aggregate_aggserialtype - 1] = ObjectIdGetDatum(aggSerialType);
 	values[Anum_pg_aggregate_aggtransspace - 1] = Int32GetDatum(aggTransSpace);
 	values[Anum_pg_aggregate_aggmtranstype - 1] = ObjectIdGetDatum(aggmTransType);
 	values[Anum_pg_aggregate_aggmtransspace - 1] = Int32GetDatum(aggmTransSpace);
@@ -688,8 +684,7 @@ AggregateCreate(const char *aggName,
 	 * Create dependencies for the aggregate (above and beyond those already
 	 * made by ProcedureCreate).  Note: we don't need an explicit dependency
 	 * on aggTransType since we depend on it indirectly through transfn.
-	 * Likewise for aggmTransType using the mtransfunc, and also for
-	 * aggSerialType using the serialfn, if they exist.
+	 * Likewise for aggmTransType using the mtransfunc, if it exists.
 	 */
 
 	/* Depends on transition function */
