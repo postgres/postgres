@@ -50,9 +50,8 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
-    [ , HYPOTHETICAL ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
-
+    [ , HYPOTHETICAL ]
 )
 
 <phrase>or the old syntax</phrase>
@@ -219,6 +218,17 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    in number and data types, the aggregated argument columns.  This allows
    the values of those direct arguments to be added to the collection of
    aggregate-input rows as an additional <quote>hypothetical</> row.
+  </para>
+
+  <para>
+   An aggregate can optionally support <firstterm>partial aggregation</>,
+   as described in <xref linkend="xaggr-partial-aggregates">.
+   This requires specifying the <literal>COMBINEFUNC</> parameter.
+   If the <replaceable class="PARAMETER">state_data_type</replaceable>
+   is <type>internal</>, it's usually also appropriate to provide the
+   <literal>SERIALFUNC</> and <literal>DESERIALFUNC</> parameters so that
+   parallel aggregation is possible.  Note that the aggregate must also be
+   marked <literal>PARALLEL SAFE</> to enable parallel aggregation.
   </para>
 
   <para>
@@ -408,12 +418,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The <replaceable class="PARAMETER">combinefunc</replaceable> function
       may optionally be specified to allow the aggregate function to support
-      partial aggregation. This is a prerequisite to allow the aggregate to
-      participate in certain optimizations such as parallel aggregation.
-     </para>
-
-     <para>
-      If provided,
+      partial aggregation.  If provided,
       the <replaceable class="PARAMETER">combinefunc</replaceable> must
       combine two <replaceable class="PARAMETER">state_data_type</replaceable>
       values, each containing the result of aggregation over some subset of
@@ -422,20 +427,15 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       represents the result of aggregating over both sets of inputs.  This
       function can be thought of as
       an <replaceable class="PARAMETER">sfunc</replaceable>, where instead of
-      acting upon individual input rows and adding these to the aggregate
-      state, it adds another aggregate state to the aggregate state.
-      Typically, it is not possible to define
-      a <replaceable class="PARAMETER">combinefunc</replaceable> for aggregate
-      functions that are sensitive to the order of the input values, since the
-      relative ordering of the inputs that went into the subset states is
-      indeterminate.
+      acting upon an individual input row and adding it to the running
+      aggregate state, it adds another aggregate state to the running state.
      </para>
 
      <para>
-      The <replaceable class="PARAMETER">combinefunc</replaceable> must accept
-      two arguments of
+      The <replaceable class="PARAMETER">combinefunc</replaceable> must be
+      declared as taking two arguments of
       the <replaceable class="PARAMETER">state_data_type</replaceable> and
-      return a value of
+      returning a value of
       the <replaceable class="PARAMETER">state_data_type</replaceable>.
       Optionally this function may be <quote>strict</quote>. In this case the
       function will not be called when either of the input states are null;
@@ -446,11 +446,11 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       For aggregate functions
       whose <replaceable class="PARAMETER">state_data_type</replaceable>
       is <type>internal</type>,
-      the <replaceable class="PARAMETER">combinefunc</replaceable> must not be
-      strict. In this scenario
-      the <replaceable class="PARAMETER">combinefunc</replaceable> must ensure
-      that null states are handled correctly and that the state being returned
-      is properly stored in the aggregate memory context.
+      the <replaceable class="PARAMETER">combinefunc</replaceable> must not
+      be strict. In this case
+      the <replaceable class="PARAMETER">combinefunc</replaceable> must
+      ensure that null states are handled correctly and that the state being
+      returned is properly stored in the aggregate memory context.
      </para>
     </listitem>
    </varlistentry>
@@ -587,6 +587,22 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
+    <term><literal>PARALLEL</literal></term>
+    <listitem>
+     <para>
+      The meanings of <literal>PARALLEL SAFE</>, <literal>PARALLEL
+      RESTRICTED</>, and <literal>PARALLEL UNSAFE</> are the same as
+      for <xref linkend="sql-createfunction">.  An aggregate will not be
+      considered for parallelization if it is marked <literal>PARALLEL
+      UNSAFE</> (which is the default!) or <literal>PARALLEL RESTRICTED</>.
+      Note that the parallel-safety markings of the aggregate's support
+      functions are not consulted by the planner, only the marking of the
+      aggregate itself.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>HYPOTHETICAL</literal></term>
     <listitem>
      <para>
@@ -686,10 +702,11 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </para>
 
    <para>
-    The meaning of <literal>PARALLEL SAFE</>, <literal>PARALLEL RESTRICTED</>,
-    and <literal>PARALLEL UNSAFE</> is the same as for
-    <xref linkend="sql-createfunction">.
-   </para>
+    Partial (including parallel) aggregation is currently not supported for
+    ordered-set aggregates.  Also, it will never be used for aggregate calls
+    that include <literal>DISTINCT</> or <literal>ORDER BY</> clauses, since
+    those semantics cannot be supported during partial aggregation.
+  </para>
  </refsect1>
 
  <refsect1>

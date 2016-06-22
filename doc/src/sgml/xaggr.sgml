@@ -23,7 +23,7 @@
    A <firstterm>final function</firstterm>
    can also be specified, in case the desired result of the aggregate
    is different from the data that needs to be kept in the running
-   state value.  The final function takes the last state value
+   state value.  The final function takes the ending state value
    and returns whatever is wanted as the aggregate result.
    In principle, the transition and final functions are just ordinary
    functions that could also be used outside the context of the
@@ -511,6 +511,102 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
 
  </sect2>
 
+  <sect2 id="xaggr-partial-aggregates">
+  <title>Partial Aggregation</title>
+
+  <indexterm>
+   <primary>aggregate function</primary>
+   <secondary>partial aggregation</secondary>
+  </indexterm>
+
+  <para>
+   Optionally, an aggregate function can support <firstterm>partial
+   aggregation</>.  The idea of partial aggregation is to run the aggregate's
+   state transition function over different subsets of the input data
+   independently, and then to combine the state values resulting from those
+   subsets to produce the same state value that would have resulted from
+   scanning all the input in a single operation.  This mode can be used for
+   parallel aggregation by having different worker processes scan different
+   portions of a table.  Each worker produces a partial state value, and at
+   the end those state values are combined to produce a final state value.
+   (In the future this mode might also be used for purposes such as combining
+   aggregations over local and remote tables; but that is not implemented
+   yet.)
+  </para>
+
+  <para>
+   To support partial aggregation, the aggregate definition must provide
+   a <firstterm>combine function</>, which takes two values of the
+   aggregate's state type (representing the results of aggregating over two
+   subsets of the input rows) and produces a new value of the state type,
+   representing what the state would have been after aggregating over the
+   combination of those sets of rows.  It is unspecified what the relative
+   order of the input rows from the two sets would have been.  This means
+   that it's usually impossible to define a useful combine function for
+   aggregates that are sensitive to input row order.
+  </para>
+
+  <para>
+   As simple examples, <literal>MAX</> and <literal>MIN</> aggregates can be
+   made to support partial aggregation by specifying the combine function as
+   the same greater-of-two or lesser-of-two comparison function that is used
+   as their transition function.  <literal>SUM</> aggregates just need an
+   addition function as combine function.  (Again, this is the same as their
+   transition function, unless the state value is wider than the input data
+   type.)
+  </para>
+
+  <para>
+   The combine function is treated much like a transition function that
+   happens to take a value of the state type, not of the underlying input
+   type, as its second argument.  In particular, the rules for dealing
+   with null values and strict functions are similar.  Also, if the aggregate
+   definition specifies a non-null <literal>initcond</>, keep in mind that
+   that will be used not only as the initial state for each partial
+   aggregation run, but also as the initial state for the combine function,
+   which will be called to combine each partial result into that state.
+  </para>
+
+  <para>
+   If the aggregate's state type is declared as <type>internal</>, it is
+   the combine function's responsibility that its result is allocated in
+   the correct memory context for aggregate state values.  This means in
+   particular that when the first input is <literal>NULL</> it's invalid
+   to simply return the second input, as that value will be in the wrong
+   context and will not have sufficient lifespan.
+  </para>
+
+  <para>
+   When the aggregate's state type is declared as <type>internal</>, it is
+   usually also appropriate for the aggregate definition to provide a
+   <firstterm>serialization function</> and a <firstterm>deserialization
+   function</>, which allow such a state value to be copied from one process
+   to another.  Without these functions, parallel aggregation cannot be
+   performed, and future applications such as local/remote aggregation will
+   probably not work either.
+  </para>
+
+  <para>
+   A serialization function must take a single argument of
+   type <type>internal</> and return a result of type <type>bytea</>, which
+   represents the state value packaged up into a flat blob of bytes.
+   Conversely, a deserialization function reverses that conversion.  It must
+   take two arguments of types <type>bytea</> and <type>internal</>, and
+   return a result of type <type>internal</>.  (The second argument is unused
+   and is always zero, but it is required for type-safety reasons.)  The
+   result of the deserialization function should simply be allocated in the
+   current memory context, as unlike the combine function's result, it is not
+   long-lived.
+  </para>
+
+  <para>
+   Worth noting also is that for an aggregate to be executed in parallel,
+   the aggregate itself must be marked <literal>PARALLEL SAFE</>.  The
+   parallel-safety markings on its support functions are not consulted.
+  </para>
+
+ </sect2>
+
  <sect2 id="xaggr-support-functions">
   <title>Support Functions for Aggregates</title>
 
@@ -521,7 +617,7 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
 
   <para>
    A function written in C can detect that it is being called as an
-   aggregate transition or final function by calling
+   aggregate support function by calling
    <function>AggCheckCallContext</>, for example:
 <programlisting>
 if (AggCheckCallContext(fcinfo, NULL))
