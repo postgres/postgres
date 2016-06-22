@@ -441,6 +441,7 @@ SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
 -- clean up
 \c
 
+DROP SCHEMA test_schema;
 DROP OWNED BY testrol0, "Public", "current_user", testrol1, testrol2, testrolx CASCADE;
 DROP ROLE testrol0, testrol1, testrol2, testrolx;
 DROP ROLE "Public", "None", "current_user", "session_user", "user";
