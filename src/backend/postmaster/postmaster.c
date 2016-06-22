@@ -834,7 +834,7 @@ PostmasterMain(int argc, char *argv[])
 		const char *config_val = GetConfigOption(output_config_variable,
 												 false, false);
 
-		puts(config_val ? config_val : "(null)");
+		puts(config_val ? config_val : "");
 		ExitPostmaster(0);
 	}
 
