@@ -543,6 +543,11 @@ SELECT ft4.c1, q.* FROM ft4 LEFT JOIN (SELECT 13, ft1.c1, ft2.c1 FROM ft1 RIGHT 
 CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
 DROP USER MAPPING FOR PUBLIC SERVER loopback;
 
+-- join with nullable side with some columns with null values
+UPDATE ft5 SET c3 = null where c1 % 9 = 0;
+EXPLAIN VERBOSE SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5.c1 = ft4.c1 WHERE ft4.c1 BETWEEN 10 and 30 ORDER BY ft5.c1, ft4.c1;
+SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5.c1 = ft4.c1 WHERE ft4.c1 BETWEEN 10 and 30 ORDER BY ft5.c1, ft4.c1;
+
 -- ===================================================================
 -- parameterized queries
 -- ===================================================================
