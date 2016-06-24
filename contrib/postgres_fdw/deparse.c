@@ -1210,7 +1210,6 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 
 		heap_close(rel, NoLock);
 	}
-	return;
 }
 
 /*
