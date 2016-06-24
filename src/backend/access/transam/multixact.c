@@ -1173,19 +1173,25 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 
 /*
  * GetMultiXactIdMembers
- *		Returns the set of MultiXactMembers that make up a MultiXactId
+ *		Return the set of MultiXactMembers that make up a MultiXactId
  *
- * If the given MultiXactId is older than the value we know to be oldest, we
- * return -1.  The caller is expected to allow that only in permissible cases,
- * i.e. when the infomask lets it presuppose that the tuple had been
- * share-locked before a pg_upgrade; this means that the HEAP_XMAX_LOCK_ONLY
- * needs to be set, but HEAP_XMAX_KEYSHR_LOCK and HEAP_XMAX_EXCL_LOCK are not
- * set.
+ * Return value is the number of members found, or -1 if there are none,
+ * and *members is set to a newly palloc'ed array of members.  It's the
+ * caller's responsibility to free it when done with it.
  *
- * Other border conditions, such as trying to read a value that's larger than
- * the value currently known as the next to assign, raise an error.  Previously
- * these also returned -1, but since this can lead to the wrong visibility
- * results, it is dangerous to do that.
+ * from_pgupgrade must be passed as true if and only if only the multixact
+ * corresponds to a value from a tuple that was locked in a 9.2-or-older
+ * installation and later pg_upgrade'd (that is, the infomask is
+ * HEAP_LOCKED_UPGRADED).  In this case, we know for certain that no members
+ * can still be running, so we return -1 just like for an empty multixact
+ * without any further checking.  It would be wrong to try to resolve such a
+ * multixact: either the multixact is within the current valid multixact
+ * range, in which case the returned result would be bogus, or outside that
+ * range, in which case an error would be raised.
+ *
+ * In all other cases, the passed multixact must be within the known valid
+ * range, that is, greater to or equal than oldestMultiXactId, and less than
+ * nextMXact.  Otherwise, an error is raised.
  *
  * onlyLock must be set to true if caller is certain that the given multi
  * is used only to lock tuples; can be false without loss of correctness,
@@ -1194,7 +1200,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  */
 int
 GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
-					  bool allow_old, bool onlyLock)
+					  bool from_pgupgrade, bool onlyLock)
 {
 	int			pageno;
 	int			prev_pageno;
@@ -1213,7 +1219,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 
 	debug_elog3(DEBUG2, "GetMembers: asked for %u", multi);
 
-	if (!MultiXactIdIsValid(multi))
+	if (!MultiXactIdIsValid(multi) || from_pgupgrade)
 		return -1;
 
 	/* See if the MultiXactId is in the local cache */
@@ -1246,18 +1252,11 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 *
 	 * An ID older than MultiXactState->oldestMultiXactId cannot possibly be
 	 * useful; it has already been removed, or will be removed shortly, by
-	 * truncation.  Returning the wrong values could lead to an incorrect
-	 * visibility result.  However, to support pg_upgrade we need to allow an
-	 * empty set to be returned regardless, if the caller is willing to accept
-	 * it; the caller is expected to check that it's an allowed condition
-	 * (such as ensuring that the infomask bits set on the tuple are
-	 * consistent with the pg_upgrade scenario).  If the caller is expecting
-	 * this to be called only on recently created multis, then we raise an
-	 * error.
+	 * truncation.  If one is passed, an error is raised.
 	 *
-	 * Conversely, an ID >= nextMXact shouldn't ever be seen here; if it is
-	 * seen, it implies undetected ID wraparound has occurred.  This raises a
-	 * hard error.
+	 * Also, an ID >= nextMXact shouldn't ever be seen here; if it is seen, it
+	 * implies undetected ID wraparound has occurred.  This raises a hard
+	 * error.
 	 *
 	 * Shared lock is enough here since we aren't modifying any global state.
 	 * Acquire it just long enough to grab the current counter values.  We may
@@ -1273,7 +1272,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 
 	if (MultiXactIdPrecedes(multi, oldestMXact))
 	{
-		ereport(allow_old ? DEBUG1 : ERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 		 errmsg("MultiXactId %u does no longer exist -- apparent wraparound",
 				multi)));
