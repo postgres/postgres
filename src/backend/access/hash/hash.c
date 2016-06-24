@@ -176,19 +176,25 @@ hashbuildCallback(Relation index,
 				  void *state)
 {
 	HashBuildState *buildstate = (HashBuildState *) state;
+	Datum		index_values[1];
+	bool		index_isnull[1];
 	IndexTuple	itup;
 
-	/* Hash indexes don't index nulls, see notes in hashinsert */
-	if (isnull[0])
+	/* convert data to a hash key; on failure, do not insert anything */
+	if (!_hash_convert_tuple(index,
+							 values, isnull,
+							 index_values, index_isnull))
 		return;
 
 	/* Either spool the tuple for sorting, or just put it into the index */
 	if (buildstate->spool)
-		_h_spool(buildstate->spool, &htup->t_self, values, isnull);
+		_h_spool(buildstate->spool, &htup->t_self,
+				 index_values, index_isnull);
 	else
 	{
 		/* form an index tuple and point it at the heap tuple */
-		itup = _hash_form_tuple(index, values, isnull);
+		itup = index_form_tuple(RelationGetDescr(index),
+								index_values, index_isnull);
 		itup->t_tid = htup->t_self;
 		_hash_doinsert(index, itup);
 		pfree(itup);
@@ -208,22 +214,18 @@ hashinsert(Relation rel, Datum *values, bool *isnull,
 		   ItemPointer ht_ctid, Relation heapRel,
 		   IndexUniqueCheck checkUnique)
 {
+	Datum		index_values[1];
+	bool		index_isnull[1];
 	IndexTuple	itup;
 
-	/*
-	 * If the single index key is null, we don't insert it into the index.
-	 * Hash tables support scans on '='. Relational algebra says that A = B
-	 * returns null if either A or B is null.  This means that no
-	 * qualification used in an index scan could ever return true on a null
-	 * attribute.  It also means that indices can't be used by ISNULL or
-	 * NOTNULL scans, but that's an artifact of the strategy map architecture
-	 * chosen in 1986, not of the way nulls are handled here.
-	 */
-	if (isnull[0])
+	/* convert data to a hash key; on failure, do not insert anything */
+	if (!_hash_convert_tuple(rel,
+							 values, isnull,
+							 index_values, index_isnull))
 		return false;
 
-	/* generate an index tuple */
-	itup = _hash_form_tuple(rel, values, isnull);
+	/* form an index tuple and point it at the heap tuple */
+	itup = index_form_tuple(RelationGetDescr(rel), index_values, index_isnull);
 	itup->t_tid = *ht_ctid;
 
 	_hash_doinsert(rel, itup);

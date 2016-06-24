@@ -240,27 +240,37 @@ _hash_get_indextuple_hashkey(IndexTuple itup)
 }
 
 /*
- * _hash_form_tuple - form an index tuple containing hash code only
+ * _hash_convert_tuple - convert raw index data to hash key
+ *
+ * Inputs: values and isnull arrays for the user data column(s)
+ * Outputs: values and isnull arrays for the index tuple, suitable for
+ *		passing to index_form_tuple().
+ *
+ * Returns true if successful, false if not (because there are null values).
+ * On a false result, the given data need not be indexed.
+ *
+ * Note: callers know that the index-column arrays are always of length 1.
+ * In principle, there could be more than one input column, though we do not
+ * currently support that.
  */
-IndexTuple
-_hash_form_tuple(Relation index, Datum *values, bool *isnull)
+bool
+_hash_convert_tuple(Relation index,
+					Datum *user_values, bool *user_isnull,
+					Datum *index_values, bool *index_isnull)
 {
-	IndexTuple	itup;
 	uint32		hashkey;
-	Datum		hashkeydatum;
-	TupleDesc	hashdesc;
 
-	if (isnull[0])
-		hashkeydatum = (Datum) 0;
-	else
-	{
-		hashkey = _hash_datum2hashkey(index, values[0]);
-		hashkeydatum = UInt32GetDatum(hashkey);
-	}
-	hashdesc = RelationGetDescr(index);
-	Assert(hashdesc->natts == 1);
-	itup = index_form_tuple(hashdesc, &hashkeydatum, isnull);
-	return itup;
+	/*
+	 * We do not insert null values into hash indexes.  This is okay because
+	 * the only supported search operator is '=', and we assume it is strict.
+	 */
+	if (user_isnull[0])
+		return false;
+
+	hashkey = _hash_datum2hashkey(index, user_values[0]);
+	index_values[0] = UInt32GetDatum(hashkey);
+	index_isnull[0] = false;
+	return true;
 }
 
 /*

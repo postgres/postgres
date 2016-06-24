@@ -359,8 +359,9 @@ extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 extern uint32 _hash_log2(uint32 num);
 extern void _hash_checkpage(Relation rel, Buffer buf, int flags);
 extern uint32 _hash_get_indextuple_hashkey(IndexTuple itup);
-extern IndexTuple _hash_form_tuple(Relation index,
-				 Datum *values, bool *isnull);
+extern bool _hash_convert_tuple(Relation index,
+					Datum *user_values, bool *user_isnull,
+					Datum *index_values, bool *index_isnull);
 extern OffsetNumber _hash_binsearch(Page page, uint32 hash_value);
 extern OffsetNumber _hash_binsearch_last(Page page, uint32 hash_value);
 
