@@ -122,7 +122,7 @@ PrintResultsInCrosstab(const PGresult *res)
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		psql_error("\\crosstabview: query must return results to be shown in crosstab\n");
+		psql_error("\\crosstabview: statement did not return a result set\n");
 		goto error_return;
 	}
 
@@ -643,7 +643,8 @@ indexOfColumn(char *arg, const PGresult *res)
 		idx = atoi(arg) - 1;
 		if (idx < 0 || idx >= PQnfields(res))
 		{
-			psql_error("\\crosstabview: invalid column number: \"%s\"\n", arg);
+			psql_error("\\crosstabview: column number %d is out of range 1..%d\n",
+					   idx + 1, PQnfields(res));
 			return -1;
 		}
 	}

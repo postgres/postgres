@@ -188,7 +188,7 @@ SELECT 1 as "22", 2 as b, 3 as "Foo"
 -- error: bad column number
 SELECT v,h,i,c FROM ctv_data
  \crosstabview 2 1 5
-\crosstabview: invalid column number: "5"
+\crosstabview: column number 5 is out of range 1..4
 -- error: same H and V columns
 SELECT v,h,i,c FROM ctv_data
  \crosstabview 2 h 4
