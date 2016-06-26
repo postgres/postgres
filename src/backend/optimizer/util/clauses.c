@@ -52,10 +52,6 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-typedef struct
-{
-	PartialAggType allowedtype;
-} partial_agg_context;
 
 typedef struct
 {
@@ -98,8 +94,6 @@ typedef struct
 	bool		allow_restricted;
 } has_parallel_hazard_arg;
 
-static bool aggregates_allow_partial_walker(Node *node,
-								partial_agg_context *context);
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool get_agg_clause_costs_walker(Node *node,
 							get_agg_clause_costs_context *context);
@@ -404,81 +398,6 @@ make_ands_implicit(Expr *clause)
  *****************************************************************************/
 
 /*
- * aggregates_allow_partial
- *		Recursively search for Aggref clauses and determine the maximum
- *		level of partial aggregation which can be supported.
- */
-PartialAggType
-aggregates_allow_partial(Node *clause)
-{
-	partial_agg_context context;
-
-	/* initially any type is okay, until we find Aggrefs which say otherwise */
-	context.allowedtype = PAT_ANY;
-
-	if (!aggregates_allow_partial_walker(clause, &context))
-		return context.allowedtype;
-	return context.allowedtype;
-}
-
-static bool
-aggregates_allow_partial_walker(Node *node, partial_agg_context *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Aggref))
-	{
-		Aggref	   *aggref = (Aggref *) node;
-		HeapTuple	aggTuple;
-		Form_pg_aggregate aggform;
-
-		Assert(aggref->agglevelsup == 0);
-
-		/*
-		 * We can't perform partial aggregation with Aggrefs containing a
-		 * DISTINCT or ORDER BY clause.
-		 */
-		if (aggref->aggdistinct || aggref->aggorder)
-		{
-			context->allowedtype = PAT_DISABLED;
-			return true;		/* abort search */
-		}
-		aggTuple = SearchSysCache1(AGGFNOID,
-								   ObjectIdGetDatum(aggref->aggfnoid));
-		if (!HeapTupleIsValid(aggTuple))
-			elog(ERROR, "cache lookup failed for aggregate %u",
-				 aggref->aggfnoid);
-		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
-
-		/*
-		 * If there is no combine function, then partial aggregation is not
-		 * possible.
-		 */
-		if (!OidIsValid(aggform->aggcombinefn))
-		{
-			ReleaseSysCache(aggTuple);
-			context->allowedtype = PAT_DISABLED;
-			return true;		/* abort search */
-		}
-
-		/*
-		 * If we find any aggs with an internal transtype then we must check
-		 * whether these have serialization/deserialization functions;
-		 * otherwise, we set the maximum allowed type to PAT_INTERNAL_ONLY.
-		 */
-		if (aggform->aggtranstype == INTERNALOID &&
-			(!OidIsValid(aggform->aggserialfn) ||
-			 !OidIsValid(aggform->aggdeserialfn)))
-			context->allowedtype = PAT_INTERNAL_ONLY;
-
-		ReleaseSysCache(aggTuple);
-		return false;			/* continue searching */
-	}
-	return expression_tree_walker(node, aggregates_allow_partial_walker,
-								  (void *) context);
-}
-
-/*
  * contain_agg_clause
  *	  Recursively search for Aggref/GroupingFunc nodes within a clause.
  *
@@ -529,8 +448,9 @@ contain_agg_clause_walker(Node *node, void *context)
  *
  * We count the nodes, estimate their execution costs, and estimate the total
  * space needed for their transition state values if all are evaluated in
- * parallel (as would be done in a HashAgg plan).  See AggClauseCosts for
- * the exact set of statistics collected.
+ * parallel (as would be done in a HashAgg plan).  Also, we check whether
+ * partial aggregation is feasible.  See AggClauseCosts for the exact set
+ * of statistics collected.
  *
  * In addition, we mark Aggref nodes with the correct aggtranstype, so
  * that that doesn't need to be done repeatedly.  (That makes this function's
@@ -616,10 +536,40 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 			aggref->aggtranstype = aggtranstype;
 		}
 
-		/* count it; note ordered-set aggs always have nonempty aggorder */
+		/*
+		 * Count it, and check for cases requiring ordered input.  Note that
+		 * ordered-set aggs always have nonempty aggorder.  Any ordered-input
+		 * case also defeats partial aggregation.
+		 */
 		costs->numAggs++;
 		if (aggref->aggorder != NIL || aggref->aggdistinct != NIL)
+		{
 			costs->numOrderedAggs++;
+			costs->hasNonPartial = true;
+		}
+
+		/*
+		 * Check whether partial aggregation is feasible, unless we already
+		 * found out that we can't do it.
+		 */
+		if (!costs->hasNonPartial)
+		{
+			/*
+			 * If there is no combine function, then partial aggregation is
+			 * not possible.
+			 */
+			if (!OidIsValid(aggcombinefn))
+				costs->hasNonPartial = true;
+
+			/*
+			 * If we have any aggs with transtype INTERNAL then we must check
+			 * whether they have serialization/deserialization functions; if
+			 * not, we can't serialize partial-aggregation results.
+			 */
+			else if (aggtranstype == INTERNALOID &&
+					 (!OidIsValid(aggserialfn) || !OidIsValid(aggdeserialfn)))
+				costs->hasNonSerial = true;
+		}
 
 		/*
 		 * Add the appropriate component function execution costs to

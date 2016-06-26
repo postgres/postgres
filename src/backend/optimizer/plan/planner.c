@@ -110,8 +110,10 @@ static double get_number_of_groups(PlannerInfo *root,
 					 List *rollup_groupclauses);
 static void set_grouped_rel_consider_parallel(PlannerInfo *root,
 								  RelOptInfo *grouped_rel,
-								  PathTarget *target);
-static Size estimate_hashagg_tablesize(Path *path, AggClauseCosts *agg_costs,
+								  PathTarget *target,
+								  const AggClauseCosts *agg_costs);
+static Size estimate_hashagg_tablesize(Path *path,
+						   const AggClauseCosts *agg_costs,
 						   double dNumGroups);
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
@@ -3207,7 +3209,8 @@ get_number_of_groups(PlannerInfo *root,
  */
 static void
 set_grouped_rel_consider_parallel(PlannerInfo *root, RelOptInfo *grouped_rel,
-								  PathTarget *target)
+								  PathTarget *target,
+								  const AggClauseCosts *agg_costs)
 {
 	Query	   *parse = root->parse;
 
@@ -3240,15 +3243,14 @@ set_grouped_rel_consider_parallel(PlannerInfo *root, RelOptInfo *grouped_rel,
 		return;
 
 	/*
-	 * All that's left to check now is to make sure all aggregate functions
-	 * support partial mode. If there's no aggregates then we can skip
-	 * checking that.
+	 * If we have any non-partial-capable aggregates, or if any of them can't
+	 * be serialized, we can't go parallel.
 	 */
-	if (!parse->hasAggs)
-		grouped_rel->consider_parallel = true;
-	else if (aggregates_allow_partial((Node *) target->exprs) == PAT_ANY &&
-			 aggregates_allow_partial(root->parse->havingQual) == PAT_ANY)
-		grouped_rel->consider_parallel = true;
+	if (agg_costs->hasNonPartial || agg_costs->hasNonSerial)
+		return;
+
+	/* OK, consider parallelization */
+	grouped_rel->consider_parallel = true;
 }
 
 /*
@@ -3257,7 +3259,7 @@ set_grouped_rel_consider_parallel(PlannerInfo *root, RelOptInfo *grouped_rel,
  *	  require based on the agg_costs, path width and dNumGroups.
  */
 static Size
-estimate_hashagg_tablesize(Path *path, AggClauseCosts *agg_costs,
+estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
 						   double dNumGroups)
 {
 	Size		hashentrysize;
@@ -3411,7 +3413,8 @@ create_grouping_paths(PlannerInfo *root,
 	 * going to be safe to do so.
 	 */
 	if (input_rel->partial_pathlist != NIL)
-		set_grouped_rel_consider_parallel(root, grouped_rel, target);
+		set_grouped_rel_consider_parallel(root, grouped_rel,
+										  target, &agg_costs);
 
 	/*
 	 * Determine whether it's possible to perform sort-based implementations
