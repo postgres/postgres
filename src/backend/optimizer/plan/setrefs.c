@@ -679,7 +679,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 * partial-aggregate subexpressions that will be available
 				 * from the child plan node.
 				 */
-				if (agg->combineStates)
+				if (DO_AGGSPLIT_COMBINE(agg->aggsplit))
 				{
 					plan->targetlist = (List *)
 						convert_combining_aggrefs((Node *) plan->targetlist,
@@ -1772,16 +1772,16 @@ convert_combining_aggrefs(Node *node, void *context)
 
 		/*
 		 * Now, set up child_agg to represent the first phase of partial
-		 * aggregation.  XXX assume serialization required.
+		 * aggregation.  For now, assume serialization is required.
 		 */
-		mark_partial_aggref(child_agg, true);
+		mark_partial_aggref(child_agg, AGGSPLIT_INITIAL_SERIAL);
 
 		/*
 		 * And set up parent_agg to represent the second phase.
 		 */
 		parent_agg->args = list_make1(makeTargetEntry((Expr *) child_agg,
 													  1, NULL, false));
-		parent_agg->aggcombine = true;
+		mark_partial_aggref(parent_agg, AGGSPLIT_FINAL_DESERIAL);
 
 		return (Node *) parent_agg;
 	}

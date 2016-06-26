@@ -711,9 +711,7 @@ typedef struct Agg
 {
 	Plan		plan;
 	AggStrategy aggstrategy;	/* basic strategy, see nodes.h */
-	bool		combineStates;	/* input tuples contain transition states */
-	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
-	bool		serialStates;	/* should agg states be (de)serialized? */
+	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
 	int			numCols;		/* number of grouping columns */
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
 	Oid		   *grpOperators;	/* equality operators to compare with */

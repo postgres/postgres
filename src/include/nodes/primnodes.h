@@ -266,22 +266,18 @@ typedef struct Param
  * replaced with a single argument representing the partial-aggregate
  * transition values.
  *
- * XXX need more documentation about partial aggregation here
- *
- * 'aggtype' and 'aggoutputtype' are the same except when we're performing
- * partal aggregation; in that case, we output transition states.  Nothing
- * interesting happens in the Aggref itself, but we must set the output data
- * type to whatever type is used for transition values.
- *
- * Note: If you are adding fields here you may also need to add a comparison
- * in search_indexed_tlist_for_partial_aggref()
+ * aggsplit indicates the expected partial-aggregation mode for the Aggref's
+ * parent plan node.  It's always set to AGGSPLIT_SIMPLE in the parser, but
+ * the planner might change it to something else.  We use this mainly as
+ * a crosscheck that the Aggrefs match the plan; but note that when aggsplit
+ * indicates a non-final mode, aggtype reflects the transition data type
+ * not the SQL-level output type of the aggregate.
  */
 typedef struct Aggref
 {
 	Expr		xpr;
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
-	Oid			aggtype;		/* type Oid of final result of the aggregate */
-	Oid			aggoutputtype;	/* type Oid of result of this aggregate */
+	Oid			aggtype;		/* type Oid of result of the aggregate */
 	Oid			aggcollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
 	Oid			aggtranstype;	/* type Oid of aggregate's transition value */
@@ -294,10 +290,9 @@ typedef struct Aggref
 	bool		aggstar;		/* TRUE if argument list was really '*' */
 	bool		aggvariadic;	/* true if variadic arguments have been
 								 * combined into an array last argument */
-	bool		aggcombine;		/* combining agg; input is a transvalue */
-	bool		aggpartial;		/* partial agg; output is a transvalue */
 	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
+	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 

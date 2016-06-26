@@ -3391,10 +3391,10 @@ create_grouping_paths(PlannerInfo *root,
 	MemSet(&agg_costs, 0, sizeof(AggClauseCosts));
 	if (parse->hasAggs)
 	{
-		count_agg_clauses(root, (Node *) target->exprs, &agg_costs, true,
-						  false, false);
-		count_agg_clauses(root, parse->havingQual, &agg_costs, true, false,
-						  false);
+		get_agg_clause_costs(root, (Node *) target->exprs, AGGSPLIT_SIMPLE,
+							 &agg_costs);
+		get_agg_clause_costs(root, parse->havingQual, AGGSPLIT_SIMPLE,
+							 &agg_costs);
 	}
 
 	/*
@@ -3480,14 +3480,17 @@ create_grouping_paths(PlannerInfo *root,
 		if (parse->hasAggs)
 		{
 			/* partial phase */
-			count_agg_clauses(root, (Node *) partial_grouping_target->exprs,
-							  &agg_partial_costs, false, false, true);
+			get_agg_clause_costs(root, (Node *) partial_grouping_target->exprs,
+								 AGGSPLIT_INITIAL_SERIAL,
+								 &agg_partial_costs);
 
 			/* final phase */
-			count_agg_clauses(root, (Node *) target->exprs, &agg_final_costs,
-							  true, true, true);
-			count_agg_clauses(root, parse->havingQual, &agg_final_costs, true,
-							  true, true);
+			get_agg_clause_costs(root, (Node *) target->exprs,
+								 AGGSPLIT_FINAL_DESERIAL,
+								 &agg_final_costs);
+			get_agg_clause_costs(root, parse->havingQual,
+								 AGGSPLIT_FINAL_DESERIAL,
+								 &agg_final_costs);
 		}
 
 		if (can_sort)
@@ -3523,13 +3526,11 @@ create_grouping_paths(PlannerInfo *root,
 														 path,
 													 partial_grouping_target,
 								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+													 AGGSPLIT_INITIAL_SERIAL,
 														 parse->groupClause,
 														 NIL,
 														 &agg_partial_costs,
-														 dNumPartialGroups,
-														 false,
-														 false,
-														 true));
+														 dNumPartialGroups));
 					else
 						add_partial_path(grouped_rel, (Path *)
 										 create_group_path(root,
@@ -3565,13 +3566,11 @@ create_grouping_paths(PlannerInfo *root,
 												 cheapest_partial_path,
 												 partial_grouping_target,
 												 AGG_HASHED,
+												 AGGSPLIT_INITIAL_SERIAL,
 												 parse->groupClause,
 												 NIL,
 												 &agg_partial_costs,
-												 dNumPartialGroups,
-												 false,
-												 false,
-												 true));
+												 dNumPartialGroups));
 			}
 		}
 	}
@@ -3630,13 +3629,11 @@ create_grouping_paths(PlannerInfo *root,
 											 path,
 											 target,
 								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+											 AGGSPLIT_SIMPLE,
 											 parse->groupClause,
 											 (List *) parse->havingQual,
 											 &agg_costs,
-											 dNumGroups,
-											 false,
-											 true,
-											 false));
+											 dNumGroups));
 				}
 				else if (parse->groupClause)
 				{
@@ -3697,13 +3694,11 @@ create_grouping_paths(PlannerInfo *root,
 										 path,
 										 target,
 								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
+										 AGGSPLIT_FINAL_DESERIAL,
 										 parse->groupClause,
 										 (List *) parse->havingQual,
 										 &agg_final_costs,
-										 dNumGroups,
-										 true,
-										 true,
-										 true));
+										 dNumGroups));
 			else
 				add_path(grouped_rel, (Path *)
 						 create_group_path(root,
@@ -3740,13 +3735,11 @@ create_grouping_paths(PlannerInfo *root,
 									 cheapest_path,
 									 target,
 									 AGG_HASHED,
+									 AGGSPLIT_SIMPLE,
 									 parse->groupClause,
 									 (List *) parse->havingQual,
 									 &agg_costs,
-									 dNumGroups,
-									 false,
-									 true,
-									 false));
+									 dNumGroups));
 		}
 
 		/*
@@ -3779,13 +3772,11 @@ create_grouping_paths(PlannerInfo *root,
 										 path,
 										 target,
 										 AGG_HASHED,
+										 AGGSPLIT_FINAL_DESERIAL,
 										 parse->groupClause,
 										 (List *) parse->havingQual,
 										 &agg_final_costs,
-										 dNumGroups,
-										 true,
-										 true,
-										 true));
+										 dNumGroups));
 			}
 		}
 	}
@@ -4123,13 +4114,11 @@ create_distinct_paths(PlannerInfo *root,
 								 cheapest_input_path,
 								 cheapest_input_path->pathtarget,
 								 AGG_HASHED,
+								 AGGSPLIT_SIMPLE,
 								 parse->distinctClause,
 								 NIL,
 								 NULL,
-								 numDistinctRows,
-								 false,
-								 true,
-								 false));
+								 numDistinctRows));
 	}
 
 	/* Give a helpful error if we failed to find any implementation */
@@ -4414,8 +4403,8 @@ make_partial_grouping_target(PlannerInfo *root, PathTarget *grouping_target)
 			newaggref = makeNode(Aggref);
 			memcpy(newaggref, aggref, sizeof(Aggref));
 
-			/* XXX assume serialization required */
-			mark_partial_aggref(newaggref, true);
+			/* For now, assume serialization is required */
+			mark_partial_aggref(newaggref, AGGSPLIT_INITIAL_SERIAL);
 
 			lfirst(lc) = newaggref;
 		}
@@ -4431,27 +4420,33 @@ make_partial_grouping_target(PlannerInfo *root, PathTarget *grouping_target)
 
 /*
  * mark_partial_aggref
- *	  Adjust an Aggref to make it represent the output of partial aggregation.
+ *	  Adjust an Aggref to make it represent a partial-aggregation step.
  *
  * The Aggref node is modified in-place; caller must do any copying required.
  */
 void
-mark_partial_aggref(Aggref *agg, bool serialize)
+mark_partial_aggref(Aggref *agg, AggSplit aggsplit)
 {
 	/* aggtranstype should be computed by this point */
 	Assert(OidIsValid(agg->aggtranstype));
+	/* ... but aggsplit should still be as the parser left it */
+	Assert(agg->aggsplit == AGGSPLIT_SIMPLE);
+
+	/* Mark the Aggref with the intended partial-aggregation mode */
+	agg->aggsplit = aggsplit;
 
 	/*
-	 * Normally, a partial aggregate returns the aggregate's transition type;
-	 * but if that's INTERNAL and we're serializing, it returns BYTEA instead.
+	 * Adjust result type if needed.  Normally, a partial aggregate returns
+	 * the aggregate's transition type; but if that's INTERNAL and we're
+	 * serializing, it returns BYTEA instead.
 	 */
-	if (agg->aggtranstype == INTERNALOID && serialize)
-		agg->aggoutputtype = BYTEAOID;
-	else
-		agg->aggoutputtype = agg->aggtranstype;
-
-	/* flag it as partial */
-	agg->aggpartial = true;
+	if (DO_AGGSPLIT_SKIPFINAL(aggsplit))
+	{
+		if (agg->aggtranstype == INTERNALOID && DO_AGGSPLIT_SERIALIZE(aggsplit))
+			agg->aggtype = BYTEAOID;
+		else
+			agg->aggtype = agg->aggtranstype;
+	}
 }
 
 /*

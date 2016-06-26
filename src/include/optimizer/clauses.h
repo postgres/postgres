@@ -67,9 +67,8 @@ extern List *make_ands_implicit(Expr *clause);
 
 extern PartialAggType aggregates_allow_partial(Node *clause);
 extern bool contain_agg_clause(Node *clause);
-extern void count_agg_clauses(PlannerInfo *root, Node *clause,
-				  AggClauseCosts *costs, bool finalizeAggs,
-				  bool combineStates, bool serialStates);
+extern void get_agg_clause_costs(PlannerInfo *root, Node *clause,
+					 AggSplit aggsplit, AggClauseCosts *costs);
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);

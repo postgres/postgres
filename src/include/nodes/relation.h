@@ -1347,12 +1347,10 @@ typedef struct AggPath
 	Path		path;
 	Path	   *subpath;		/* path representing input source */
 	AggStrategy aggstrategy;	/* basic strategy, see nodes.h */
+	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
 	double		numGroups;		/* estimated number of groups in input */
 	List	   *groupClause;	/* a list of SortGroupClause's */
 	List	   *qual;			/* quals (HAVING quals), if any */
-	bool		combineStates;	/* input is partially aggregated agg states */
-	bool		finalizeAggs;	/* should the executor call the finalfn? */
-	bool		serialStates;	/* should agg states be (de)serialized? */
 } AggPath;
 
 /*

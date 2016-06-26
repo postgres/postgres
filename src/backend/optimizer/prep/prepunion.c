@@ -861,13 +861,11 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 										path,
 										create_pathtarget(root, tlist),
 										AGG_HASHED,
+										AGGSPLIT_SIMPLE,
 										groupList,
 										NIL,
 										NULL,
-										dNumGroups,
-										false,
-										true,
-										false);
+										dNumGroups);
 	}
 	else
 	{

@@ -2466,12 +2466,11 @@ create_upper_unique_path(PlannerInfo *root,
  * 'subpath' is the path representing the source of data
  * 'target' is the PathTarget to be computed
  * 'aggstrategy' is the Agg node's basic implementation strategy
+ * 'aggsplit' is the Agg node's aggregate-splitting mode
  * 'groupClause' is a list of SortGroupClause's representing the grouping
  * 'qual' is the HAVING quals if any
  * 'aggcosts' contains cost info about the aggregate functions to be computed
  * 'numGroups' is the estimated number of groups (1 if not grouping)
- * 'combineStates' is set to true if the Agg node should combine agg states
- * 'finalizeAggs' is set to false if the Agg node should not call the finalfn
  */
 AggPath *
 create_agg_path(PlannerInfo *root,
@@ -2479,13 +2478,11 @@ create_agg_path(PlannerInfo *root,
 				Path *subpath,
 				PathTarget *target,
 				AggStrategy aggstrategy,
+				AggSplit aggsplit,
 				List *groupClause,
 				List *qual,
 				const AggClauseCosts *aggcosts,
-				double numGroups,
-				bool combineStates,
-				bool finalizeAggs,
-				bool serialStates)
+				double numGroups)
 {
 	AggPath    *pathnode = makeNode(AggPath);
 
@@ -2505,12 +2502,10 @@ create_agg_path(PlannerInfo *root,
 	pathnode->subpath = subpath;
 
 	pathnode->aggstrategy = aggstrategy;
+	pathnode->aggsplit = aggsplit;
 	pathnode->numGroups = numGroups;
 	pathnode->groupClause = groupClause;
 	pathnode->qual = qual;
-	pathnode->finalizeAggs = finalizeAggs;
-	pathnode->combineStates = combineStates;
-	pathnode->serialStates = serialStates;
 
 	cost_agg(&pathnode->path, root,
 			 aggstrategy, aggcosts,

@@ -546,7 +546,6 @@ _readAggref(void)
 
 	READ_OID_FIELD(aggfnoid);
 	READ_OID_FIELD(aggtype);
-	READ_OID_FIELD(aggoutputtype);
 	READ_OID_FIELD(aggcollid);
 	READ_OID_FIELD(inputcollid);
 	READ_OID_FIELD(aggtranstype);
@@ -558,10 +557,9 @@ _readAggref(void)
 	READ_NODE_FIELD(aggfilter);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggvariadic);
-	READ_BOOL_FIELD(aggcombine);
-	READ_BOOL_FIELD(aggpartial);
 	READ_CHAR_FIELD(aggkind);
 	READ_UINT_FIELD(agglevelsup);
+	READ_ENUM_FIELD(aggsplit, AggSplit);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1989,9 +1987,7 @@ _readAgg(void)
 	ReadCommonPlan(&local_node->plan);
 
 	READ_ENUM_FIELD(aggstrategy, AggStrategy);
-	READ_BOOL_FIELD(combineStates);
-	READ_BOOL_FIELD(finalizeAggs);
-	READ_BOOL_FIELD(serialStates);
+	READ_ENUM_FIELD(aggsplit, AggSplit);
 	READ_INT_FIELD(numCols);
 	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
 	READ_OID_ARRAY(grpOperators, local_node->numCols);

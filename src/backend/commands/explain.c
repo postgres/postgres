@@ -947,9 +947,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			{
 				Agg		   *agg = (Agg *) plan;
 
-				if (agg->finalizeAggs == false)
+				if (DO_AGGSPLIT_SKIPFINAL(agg->aggsplit))
 					operation = "Partial";
-				else if (agg->combineStates == true)
+				else if (DO_AGGSPLIT_COMBINE(agg->aggsplit))
 					operation = "Finalize";
 
 				switch (agg->aggstrategy)

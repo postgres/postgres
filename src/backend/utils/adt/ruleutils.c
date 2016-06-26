@@ -8285,7 +8285,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 	 * one element, which will point to a partial Aggref that supplies us with
 	 * transition states to combine.
 	 */
-	if (aggref->aggcombine)
+	if (DO_AGGSPLIT_COMBINE(aggref->aggsplit))
 	{
 		TargetEntry *tle = linitial(aggref->args);
 
@@ -8296,8 +8296,11 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 		return;
 	}
 
-	/* Mark as PARTIAL, if appropriate. */
-	if (original_aggref->aggpartial)
+	/*
+	 * Mark as PARTIAL, if appropriate.  We look to the original aggref so as
+	 * to avoid printing this when recursing from the code just above.
+	 */
+	if (DO_AGGSPLIT_SKIPFINAL(original_aggref->aggsplit))
 		appendStringInfoString(buf, "PARTIAL ");
 
 	/* Extract the argument types as seen by the parser */

@@ -60,11 +60,9 @@ typedef struct
 typedef struct
 {
 	PlannerInfo *root;
+	AggSplit	aggsplit;
 	AggClauseCosts *costs;
-	bool		finalizeAggs;
-	bool		combineStates;
-	bool		serialStates;
-} count_agg_clauses_context;
+} get_agg_clause_costs_context;
 
 typedef struct
 {
@@ -103,8 +101,8 @@ typedef struct
 static bool aggregates_allow_partial_walker(Node *node,
 								partial_agg_context *context);
 static bool contain_agg_clause_walker(Node *node, void *context);
-static bool count_agg_clauses_walker(Node *node,
-						 count_agg_clauses_context *context);
+static bool get_agg_clause_costs_walker(Node *node,
+							get_agg_clause_costs_context *context);
 static bool find_window_functions_walker(Node *node, WindowFuncLists *lists);
 static bool expression_returns_set_rows_walker(Node *node, double *count);
 static bool contain_subplans_walker(Node *node, void *context);
@@ -519,44 +517,43 @@ contain_agg_clause_walker(Node *node, void *context)
 }
 
 /*
- * count_agg_clauses
- *	  Recursively count the Aggref nodes in an expression tree, and
- *	  accumulate other information about them too.
+ * get_agg_clause_costs
+ *	  Recursively find the Aggref nodes in an expression tree, and
+ *	  accumulate cost information about them.
  *
- *	  Note: this also checks for nested aggregates, which are an error.
+ * 'aggsplit' tells us the expected partial-aggregation mode, which affects
+ * the cost estimates.
  *
- * We not only count the nodes, but estimate their execution costs, and
- * attempt to estimate the total space needed for their transition state
- * values if all are evaluated in parallel (as would be done in a HashAgg
- * plan).  See AggClauseCosts for the exact set of statistics collected.
+ * NOTE that the counts/costs are ADDED to those already in *costs ... so
+ * the caller is responsible for zeroing the struct initially.
+ *
+ * We count the nodes, estimate their execution costs, and estimate the total
+ * space needed for their transition state values if all are evaluated in
+ * parallel (as would be done in a HashAgg plan).  See AggClauseCosts for
+ * the exact set of statistics collected.
  *
  * In addition, we mark Aggref nodes with the correct aggtranstype, so
  * that that doesn't need to be done repeatedly.  (That makes this function's
  * name a bit of a misnomer.)
- *
- * NOTE that the counts/costs are ADDED to those already in *costs ... so
- * the caller is responsible for zeroing the struct initially.
  *
  * This does not descend into subqueries, and so should be used only after
  * reduction of sublinks to subplans, or in contexts where it's known there
  * are no subqueries.  There mustn't be outer-aggregate references either.
  */
 void
-count_agg_clauses(PlannerInfo *root, Node *clause, AggClauseCosts *costs,
-				  bool finalizeAggs, bool combineStates, bool serialStates)
+get_agg_clause_costs(PlannerInfo *root, Node *clause, AggSplit aggsplit,
+					 AggClauseCosts *costs)
 {
-	count_agg_clauses_context context;
+	get_agg_clause_costs_context context;
 
 	context.root = root;
+	context.aggsplit = aggsplit;
 	context.costs = costs;
-	context.finalizeAggs = finalizeAggs;
-	context.combineStates = combineStates;
-	context.serialStates = serialStates;
-	(void) count_agg_clauses_walker(clause, &context);
+	(void) get_agg_clause_costs_walker(clause, &context);
 }
 
 static bool
-count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
+get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -628,34 +625,28 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		 * Add the appropriate component function execution costs to
 		 * appropriate totals.
 		 */
-		if (context->combineStates)
+		if (DO_AGGSPLIT_COMBINE(context->aggsplit))
 		{
 			/* charge for combining previously aggregated states */
 			costs->transCost.per_tuple += get_func_cost(aggcombinefn) * cpu_operator_cost;
-
-			/* charge for deserialization, when appropriate */
-			if (context->serialStates && OidIsValid(aggdeserialfn))
-				costs->transCost.per_tuple += get_func_cost(aggdeserialfn) * cpu_operator_cost;
 		}
 		else
 			costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
-
-		if (context->finalizeAggs)
-		{
-			if (OidIsValid(aggfinalfn))
-				costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
-		}
-		else if (context->serialStates)
-		{
-			if (OidIsValid(aggserialfn))
-				costs->finalCost += get_func_cost(aggserialfn) * cpu_operator_cost;
-		}
+		if (DO_AGGSPLIT_DESERIALIZE(context->aggsplit) &&
+			OidIsValid(aggdeserialfn))
+			costs->transCost.per_tuple += get_func_cost(aggdeserialfn) * cpu_operator_cost;
+		if (DO_AGGSPLIT_SERIALIZE(context->aggsplit) &&
+			OidIsValid(aggserialfn))
+			costs->finalCost += get_func_cost(aggserialfn) * cpu_operator_cost;
+		if (!DO_AGGSPLIT_SKIPFINAL(context->aggsplit) &&
+			OidIsValid(aggfinalfn))
+			costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
 
 		/*
-		 * Some costs will already have been incurred by the initial aggregate
-		 * node, so we mustn't include these again.
+		 * These costs are incurred only by the initial aggregate node, so we
+		 * mustn't include them again at upper levels.
 		 */
-		if (!context->combineStates)
+		if (!DO_AGGSPLIT_COMBINE(context->aggsplit))
 		{
 			/* add the input expressions' cost to per-input-row costs */
 			cost_qual_eval_node(&argcosts, (Node *) aggref->args, context->root);
@@ -747,14 +738,12 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		/*
 		 * We assume that the parser checked that there are no aggregates (of
 		 * this level anyway) in the aggregated arguments, direct arguments,
-		 * or filter clause.  Hence, we need not recurse into any of them. (If
-		 * either the parser or the planner screws up on this point, the
-		 * executor will still catch it; see ExecInitExpr.)
+		 * or filter clause.  Hence, we need not recurse into any of them.
 		 */
 		return false;
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, count_agg_clauses_walker,
+	return expression_tree_walker(node, get_agg_clause_costs_walker,
 								  (void *) context);
 }
 
