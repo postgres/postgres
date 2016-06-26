@@ -23,6 +23,7 @@
 #include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/pg_constraint_fn.h"
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "foreign/fdwapi.h"
@@ -140,8 +141,8 @@ static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 double limit_tuples);
 static PathTarget *make_group_input_target(PlannerInfo *root,
 						PathTarget *final_target);
-static PathTarget *make_partialgroup_input_target(PlannerInfo *root,
-							   PathTarget *final_target);
+static PathTarget *make_partial_grouping_target(PlannerInfo *root,
+							 PathTarget *grouping_target);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
 static PathTarget *make_window_input_target(PlannerInfo *root,
@@ -3456,12 +3457,13 @@ create_grouping_paths(PlannerInfo *root,
 		Path	   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
 
 		/*
-		 * Build target list for partial aggregate paths. We cannot reuse the
-		 * final target as Aggrefs must be set in partial mode, and we must
-		 * also include Aggrefs from the HAVING clause in the target as these
-		 * may not be present in the final target.
+		 * Build target list for partial aggregate paths.  These paths cannot
+		 * just emit the same tlist as regular aggregate paths, because (1) we
+		 * must include Vars and Aggrefs needed in HAVING, which might not
+		 * appear in the result tlist, and (2) the Aggrefs must be set in
+		 * partial mode.
 		 */
-		partial_grouping_target = make_partialgroup_input_target(root, target);
+		partial_grouping_target = make_partial_grouping_target(root, target);
 
 		/* Estimate number of partial groups. */
 		dNumPartialGroups = get_number_of_groups(root,
@@ -4317,46 +4319,48 @@ make_group_input_target(PlannerInfo *root, PathTarget *final_target)
 }
 
 /*
- * make_partialgroup_input_target
- *	  Generate appropriate PathTarget for input for Partial Aggregate nodes.
+ * make_partial_grouping_target
+ *	  Generate appropriate PathTarget for output of partial aggregate
+ *	  (or partial grouping, if there are no aggregates) nodes.
  *
- * Similar to make_group_input_target(), only we don't recurse into Aggrefs, as
- * we need these to remain intact so that they can be found later in Combine
- * Aggregate nodes during set_combineagg_references(). Vars will be still
- * pulled out of non-Aggref nodes as these will still be required by the
- * combine aggregate phase.
+ * A partial aggregation node needs to emit all the same aggregates that
+ * a regular aggregation node would, plus any aggregates used in HAVING;
+ * except that the Aggref nodes should be marked as partial aggregates.
  *
- * We also convert any Aggrefs which we do find and put them into partial mode,
- * this adjusts the Aggref's return type so that the partially calculated
- * aggregate value can make its way up the execution tree up to the Finalize
- * Aggregate node.
+ * In addition, we'd better emit any Vars and PlaceholderVars that are
+ * used outside of Aggrefs in the aggregation tlist and HAVING.  (Presumably,
+ * these would be Vars that are grouped by or used in grouping expressions.)
+ *
+ * grouping_target is the tlist to be emitted by the topmost aggregation step.
+ * We get the HAVING clause out of *root.
  */
 static PathTarget *
-make_partialgroup_input_target(PlannerInfo *root, PathTarget *final_target)
+make_partial_grouping_target(PlannerInfo *root, PathTarget *grouping_target)
 {
 	Query	   *parse = root->parse;
-	PathTarget *input_target;
+	PathTarget *partial_target;
 	List	   *non_group_cols;
 	List	   *non_group_exprs;
 	int			i;
 	ListCell   *lc;
 
-	input_target = create_empty_pathtarget();
+	partial_target = create_empty_pathtarget();
 	non_group_cols = NIL;
 
 	i = 0;
-	foreach(lc, final_target->exprs)
+	foreach(lc, grouping_target->exprs)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
-		Index		sgref = get_pathtarget_sortgroupref(final_target, i);
+		Index		sgref = get_pathtarget_sortgroupref(grouping_target, i);
 
 		if (sgref && parse->groupClause &&
 			get_sortgroupref_clause_noerr(sgref, parse->groupClause) != NULL)
 		{
 			/*
-			 * It's a grouping column, so add it to the input target as-is.
+			 * It's a grouping column, so add it to the partial_target as-is.
+			 * (This allows the upper agg step to repeat the grouping calcs.)
 			 */
-			add_column_to_pathtarget(input_target, expr, sgref);
+			add_column_to_pathtarget(partial_target, expr, sgref);
 		}
 		else
 		{
@@ -4371,35 +4375,83 @@ make_partialgroup_input_target(PlannerInfo *root, PathTarget *final_target)
 	}
 
 	/*
-	 * If there's a HAVING clause, we'll need the Aggrefs it uses, too.
+	 * If there's a HAVING clause, we'll need the Vars/Aggrefs it uses, too.
 	 */
 	if (parse->havingQual)
 		non_group_cols = lappend(non_group_cols, parse->havingQual);
 
 	/*
-	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
-	 * add them to the input target if not already present.  (A Var used
-	 * directly as a GROUP BY item will be present already.)  Note this
-	 * includes Vars used in resjunk items, so we are covering the needs of
-	 * ORDER BY and window specifications.  Vars used within Aggrefs will be
-	 * ignored and the Aggrefs themselves will be added to the PathTarget.
+	 * Pull out all the Vars, PlaceHolderVars, and Aggrefs mentioned in
+	 * non-group cols (plus HAVING), and add them to the partial_target if not
+	 * already present.  (An expression used directly as a GROUP BY item will
+	 * be present already.)  Note this includes Vars used in resjunk items, so
+	 * we are covering the needs of ORDER BY and window specifications.
 	 */
 	non_group_exprs = pull_var_clause((Node *) non_group_cols,
 									  PVC_INCLUDE_AGGREGATES |
 									  PVC_RECURSE_WINDOWFUNCS |
 									  PVC_INCLUDE_PLACEHOLDERS);
 
-	add_new_columns_to_pathtarget(input_target, non_group_exprs);
+	add_new_columns_to_pathtarget(partial_target, non_group_exprs);
+
+	/*
+	 * Adjust Aggrefs to put them in partial mode.  At this point all Aggrefs
+	 * are at the top level of the target list, so we can just scan the list
+	 * rather than recursing through the expression trees.
+	 */
+	foreach(lc, partial_target->exprs)
+	{
+		Aggref	   *aggref = (Aggref *) lfirst(lc);
+
+		if (IsA(aggref, Aggref))
+		{
+			Aggref	   *newaggref;
+
+			/*
+			 * We shouldn't need to copy the substructure of the Aggref node,
+			 * but flat-copy the node itself to avoid damaging other trees.
+			 */
+			newaggref = makeNode(Aggref);
+			memcpy(newaggref, aggref, sizeof(Aggref));
+
+			/* XXX assume serialization required */
+			mark_partial_aggref(newaggref, true);
+
+			lfirst(lc) = newaggref;
+		}
+	}
 
 	/* clean up cruft */
 	list_free(non_group_exprs);
 	list_free(non_group_cols);
 
-	/* Adjust Aggrefs to put them in partial mode. */
-	apply_partialaggref_adjustment(input_target);
-
 	/* XXX this causes some redundant cost calculation ... */
-	return set_pathtarget_cost_width(root, input_target);
+	return set_pathtarget_cost_width(root, partial_target);
+}
+
+/*
+ * mark_partial_aggref
+ *	  Adjust an Aggref to make it represent the output of partial aggregation.
+ *
+ * The Aggref node is modified in-place; caller must do any copying required.
+ */
+void
+mark_partial_aggref(Aggref *agg, bool serialize)
+{
+	/* aggtranstype should be computed by this point */
+	Assert(OidIsValid(agg->aggtranstype));
+
+	/*
+	 * Normally, a partial aggregate returns the aggregate's transition type;
+	 * but if that's INTERNAL and we're serializing, it returns BYTEA instead.
+	 */
+	if (agg->aggtranstype == INTERNALOID && serialize)
+		agg->aggoutputtype = BYTEAOID;
+	else
+		agg->aggoutputtype = agg->aggtranstype;
+
+	/* flag it as partial */
+	agg->aggpartial = true;
 }
 
 /*

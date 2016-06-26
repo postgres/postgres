@@ -104,8 +104,7 @@ static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
 static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
 static void set_join_references(PlannerInfo *root, Join *join, int rtoffset);
 static void set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset);
-static void set_combineagg_references(PlannerInfo *root, Plan *plan,
-						  int rtoffset);
+static Node *convert_combining_aggrefs(Node *node, void *context);
 static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
@@ -119,8 +118,6 @@ static Var *search_indexed_tlist_for_sortgroupref(Node *node,
 									  Index sortgroupref,
 									  indexed_tlist *itlist,
 									  Index newvarno);
-static Var *search_indexed_tlist_for_partial_aggref(Aggref *aggref,
-									  indexed_tlist *itlist, Index newvarno);
 static List *fix_join_expr(PlannerInfo *root,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
@@ -135,13 +132,6 @@ static Node *fix_upper_expr(PlannerInfo *root,
 			   int rtoffset);
 static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
-static Node *fix_combine_agg_expr(PlannerInfo *root,
-					 Node *node,
-					 indexed_tlist *subplan_itlist,
-					 Index newvarno,
-					 int rtoffset);
-static Node *fix_combine_agg_expr_mutator(Node *node,
-							 fix_upper_expr_context *context);
 static List *set_returning_clause_references(PlannerInfo *root,
 								List *rlist,
 								Plan *topplan,
@@ -171,20 +161,23 @@ static bool extract_query_dependencies_walker(Node *node,
  * 3. We adjust Vars in upper plan nodes to refer to the outputs of their
  * subplans.
  *
- * 4. PARAM_MULTIEXPR Params are replaced by regular PARAM_EXEC Params,
+ * 4. Aggrefs in Agg plan nodes need to be adjusted in some cases involving
+ * partial aggregation or minmax aggregate optimization.
+ *
+ * 5. PARAM_MULTIEXPR Params are replaced by regular PARAM_EXEC Params,
  * now that we have finished planning all MULTIEXPR subplans.
  *
- * 5. We compute regproc OIDs for operators (ie, we look up the function
+ * 6. We compute regproc OIDs for operators (ie, we look up the function
  * that implements each op).
  *
- * 6. We create lists of specific objects that the plan depends on.
+ * 7. We create lists of specific objects that the plan depends on.
  * This will be used by plancache.c to drive invalidation of cached plans.
  * Relation dependencies are represented by OIDs, and everything else by
  * PlanInvalItems (this distinction is motivated by the shared-inval APIs).
  * Currently, relations and user-defined functions are the only types of
  * objects that are explicitly tracked this way.
  *
- * 7. We assign every plan node in the tree a unique ID.
+ * 8. We assign every plan node in the tree a unique ID.
  *
  * We also perform one final optimization step, which is to delete
  * SubqueryScan plan nodes that aren't doing anything useful (ie, have
@@ -678,15 +671,27 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			break;
 		case T_Agg:
 			{
-				Agg		   *aggplan = (Agg *) plan;
+				Agg		   *agg = (Agg *) plan;
 
-				if (aggplan->combineStates)
-					set_combineagg_references(root, plan, rtoffset);
-				else
-					set_upper_references(root, plan, rtoffset);
+				/*
+				 * If this node is combining partial-aggregation results, we
+				 * must convert its Aggrefs to contain references to the
+				 * partial-aggregate subexpressions that will be available
+				 * from the child plan node.
+				 */
+				if (agg->combineStates)
+				{
+					plan->targetlist = (List *)
+						convert_combining_aggrefs((Node *) plan->targetlist,
+												  NULL);
+					plan->qual = (List *)
+						convert_combining_aggrefs((Node *) plan->qual,
+												  NULL);
+				}
 
-				break;
+				set_upper_references(root, plan, rtoffset);
 			}
+			break;
 		case T_Group:
 			set_upper_references(root, plan, rtoffset);
 			break;
@@ -1720,70 +1725,68 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 }
 
 /*
- * set_combineagg_references
- *	  This serves the same function as set_upper_references(), but treats
- *	  Aggrefs differently. Here we transform Aggref nodes args to suit the
- *	  combine aggregate phase. This means that the Aggref->args are converted
- *	  to reference the corresponding aggregate function in the subplan rather
- *	  than simple Var(s), as would be the case for a non-combine aggregate
- *	  node.
+ * Recursively scan an expression tree and convert Aggrefs to the proper
+ * intermediate form for combining aggregates.  This means (1) replacing each
+ * one's argument list with a single argument that is the original Aggref
+ * modified to show partial aggregation and (2) changing the upper Aggref to
+ * show combining aggregation.
+ *
+ * After this step, set_upper_references will replace the partial Aggrefs
+ * with Vars referencing the lower Agg plan node's outputs, so that the final
+ * form seen by the executor is a combining Aggref with a Var as input.
+ *
+ * It's rather messy to postpone this step until setrefs.c; ideally it'd be
+ * done in createplan.c.  The difficulty is that once we modify the Aggref
+ * expressions, they will no longer be equal() to their original form and
+ * so cross-plan-node-level matches will fail.  So this has to happen after
+ * the plan node above the Agg has resolved its subplan references.
  */
-static void
-set_combineagg_references(PlannerInfo *root, Plan *plan, int rtoffset)
+static Node *
+convert_combining_aggrefs(Node *node, void *context)
 {
-	Plan	   *subplan = plan->lefttree;
-	indexed_tlist *subplan_itlist;
-	List	   *output_targetlist;
-	ListCell   *l;
-
-	Assert(IsA(plan, Agg));
-	Assert(((Agg *) plan)->combineStates);
-
-	subplan_itlist = build_tlist_index(subplan->targetlist);
-
-	output_targetlist = NIL;
-
-	foreach(l, plan->targetlist)
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Aggref))
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		Node	   *newexpr;
+		Aggref	   *orig_agg = (Aggref *) node;
+		Aggref	   *child_agg;
+		Aggref	   *parent_agg;
 
-		/* If it's a non-Var sort/group item, first try to match by sortref */
-		if (tle->ressortgroupref != 0 && !IsA(tle->expr, Var))
-		{
-			newexpr = (Node *)
-				search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
-													  tle->ressortgroupref,
-													  subplan_itlist,
-													  OUTER_VAR);
-			if (!newexpr)
-				newexpr = fix_combine_agg_expr(root,
-											   (Node *) tle->expr,
-											   subplan_itlist,
-											   OUTER_VAR,
-											   rtoffset);
-		}
-		else
-			newexpr = fix_combine_agg_expr(root,
-										   (Node *) tle->expr,
-										   subplan_itlist,
-										   OUTER_VAR,
-										   rtoffset);
-		tle = flatCopyTargetEntry(tle);
-		tle->expr = (Expr *) newexpr;
-		output_targetlist = lappend(output_targetlist, tle);
+		/*
+		 * Since aggregate calls can't be nested, we needn't recurse into the
+		 * arguments.  But for safety, flat-copy the Aggref node itself rather
+		 * than modifying it in-place.
+		 */
+		child_agg = makeNode(Aggref);
+		memcpy(child_agg, orig_agg, sizeof(Aggref));
+
+		/*
+		 * For the parent Aggref, we want to copy all the fields of the
+		 * original aggregate *except* the args list.  Rather than explicitly
+		 * knowing what they all are here, we can momentarily modify child_agg
+		 * to provide a source for copyObject.
+		 */
+		child_agg->args = NIL;
+		parent_agg = (Aggref *) copyObject(child_agg);
+		child_agg->args = orig_agg->args;
+
+		/*
+		 * Now, set up child_agg to represent the first phase of partial
+		 * aggregation.  XXX assume serialization required.
+		 */
+		mark_partial_aggref(child_agg, true);
+
+		/*
+		 * And set up parent_agg to represent the second phase.
+		 */
+		parent_agg->args = list_make1(makeTargetEntry((Expr *) child_agg,
+													  1, NULL, false));
+		parent_agg->aggcombine = true;
+
+		return (Node *) parent_agg;
 	}
-
-	plan->targetlist = output_targetlist;
-
-	plan->qual = (List *)
-		fix_combine_agg_expr(root,
-							 (Node *) plan->qual,
-							 subplan_itlist,
-							 OUTER_VAR,
-							 rtoffset);
-
-	pfree(subplan_itlist);
+	return expression_tree_mutator(node, convert_combining_aggrefs,
+								   (void *) context);
 }
 
 /*
@@ -2053,74 +2056,6 @@ search_indexed_tlist_for_sortgroupref(Node *node,
 }
 
 /*
- * search_indexed_tlist_for_partial_aggref - find an Aggref in an indexed tlist
- *
- * Aggrefs for partial aggregates have their aggoutputtype adjusted to set it
- * to the aggregate state's type, or serialization type. This means that a
- * standard equal() comparison won't match when comparing an Aggref which is
- * in partial mode with an Aggref which is not. Here we manually compare all of
- * the fields apart from aggoutputtype.
- */
-static Var *
-search_indexed_tlist_for_partial_aggref(Aggref *aggref, indexed_tlist *itlist,
-										Index newvarno)
-{
-	ListCell   *lc;
-
-	foreach(lc, itlist->tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-		if (IsA(tle->expr, Aggref))
-		{
-			Aggref	   *tlistaggref = (Aggref *) tle->expr;
-			Var		   *newvar;
-
-			if (aggref->aggfnoid != tlistaggref->aggfnoid)
-				continue;
-			if (aggref->aggtype != tlistaggref->aggtype)
-				continue;
-			/* ignore aggoutputtype */
-			if (aggref->aggcollid != tlistaggref->aggcollid)
-				continue;
-			if (aggref->inputcollid != tlistaggref->inputcollid)
-				continue;
-			/* ignore aggtranstype and aggargtypes, should be redundant */
-			if (!equal(aggref->aggdirectargs, tlistaggref->aggdirectargs))
-				continue;
-			if (!equal(aggref->args, tlistaggref->args))
-				continue;
-			if (!equal(aggref->aggorder, tlistaggref->aggorder))
-				continue;
-			if (!equal(aggref->aggdistinct, tlistaggref->aggdistinct))
-				continue;
-			if (!equal(aggref->aggfilter, tlistaggref->aggfilter))
-				continue;
-			if (aggref->aggstar != tlistaggref->aggstar)
-				continue;
-			if (aggref->aggvariadic != tlistaggref->aggvariadic)
-				continue;
-
-			/*
-			 * it would be harmless to compare aggcombine and aggpartial, but
-			 * it's also unnecessary
-			 */
-			if (aggref->aggkind != tlistaggref->aggkind)
-				continue;
-			if (aggref->agglevelsup != tlistaggref->agglevelsup)
-				continue;
-
-			newvar = makeVarFromTargetEntry(newvarno, tle);
-			newvar->varnoold = 0;		/* wasn't ever a plain Var */
-			newvar->varoattno = 0;
-
-			return newvar;
-		}
-	}
-	return NULL;
-}
-
-/*
  * fix_join_expr
  *	   Create a new set of targetlist entries or join qual clauses by
  *	   changing the varno/varattno values of variables in the clauses
@@ -2387,106 +2322,6 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	fix_expr_common(context->root, node);
 	return expression_tree_mutator(node,
 								   fix_upper_expr_mutator,
-								   (void *) context);
-}
-
-/*
- * fix_combine_agg_expr
- *	  Like fix_upper_expr() but additionally adjusts the Aggref->args of
- *	  Aggrefs so that they references the corresponding Aggref in the subplan.
- */
-static Node *
-fix_combine_agg_expr(PlannerInfo *root,
-					 Node *node,
-					 indexed_tlist *subplan_itlist,
-					 Index newvarno,
-					 int rtoffset)
-{
-	fix_upper_expr_context context;
-
-	context.root = root;
-	context.subplan_itlist = subplan_itlist;
-	context.newvarno = newvarno;
-	context.rtoffset = rtoffset;
-	return fix_combine_agg_expr_mutator(node, &context);
-}
-
-static Node *
-fix_combine_agg_expr_mutator(Node *node, fix_upper_expr_context *context)
-{
-	Var		   *newvar;
-
-	if (node == NULL)
-		return NULL;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		newvar = search_indexed_tlist_for_var(var,
-											  context->subplan_itlist,
-											  context->newvarno,
-											  context->rtoffset);
-		if (!newvar)
-			elog(ERROR, "variable not found in subplan target list");
-		return (Node *) newvar;
-	}
-	if (IsA(node, PlaceHolderVar))
-	{
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
-
-		/* See if the PlaceHolderVar has bubbled up from a lower plan node */
-		if (context->subplan_itlist->has_ph_vars)
-		{
-			newvar = search_indexed_tlist_for_non_var((Node *) phv,
-													  context->subplan_itlist,
-													  context->newvarno);
-			if (newvar)
-				return (Node *) newvar;
-		}
-		/* If not supplied by input plan, evaluate the contained expr */
-		return fix_upper_expr_mutator((Node *) phv->phexpr, context);
-	}
-	if (IsA(node, Param))
-		return fix_param_node(context->root, (Param *) node);
-	if (IsA(node, Aggref))
-	{
-		Aggref	   *aggref = (Aggref *) node;
-
-		newvar = search_indexed_tlist_for_partial_aggref(aggref,
-													 context->subplan_itlist,
-														 context->newvarno);
-		if (newvar)
-		{
-			Aggref	   *newaggref;
-			TargetEntry *newtle;
-
-			/*
-			 * Now build a new TargetEntry for the Aggref's arguments which is
-			 * a single Var which references the corresponding AggRef in the
-			 * node below.
-			 */
-			newtle = makeTargetEntry((Expr *) newvar, 1, NULL, false);
-			newaggref = (Aggref *) copyObject(aggref);
-			newaggref->args = list_make1(newtle);
-			newaggref->aggcombine = true;
-
-			return (Node *) newaggref;
-		}
-		else
-			elog(ERROR, "Aggref not found in subplan target list");
-	}
-	/* Try matching more complex expressions too, if tlist has any */
-	if (context->subplan_itlist->has_non_vars)
-	{
-		newvar = search_indexed_tlist_for_non_var(node,
-												  context->subplan_itlist,
-												  context->newvarno);
-		if (newvar)
-			return (Node *) newvar;
-	}
-	fix_expr_common(context->root, node);
-	return expression_tree_mutator(node,
-								   fix_combine_agg_expr_mutator,
 								   (void *) context);
 }
 

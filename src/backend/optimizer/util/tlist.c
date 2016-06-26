@@ -14,12 +14,9 @@
  */
 #include "postgres.h"
 
-#include "access/htup_details.h"
-#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
-#include "utils/syscache.h"
 
 
 /*****************************************************************************
@@ -760,53 +757,5 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
 			tle->ressortgroupref = target->sortgrouprefs[i];
 		}
 		i++;
-	}
-}
-
-/*
- * apply_partialaggref_adjustment
- *	  Convert PathTarget to be suitable for a partial aggregate node. We simply
- *	  adjust any Aggref nodes found in the target and set the aggoutputtype
- *	  appropriately. This allows exprType() to return the
- *	  actual type that will be produced.
- *
- * Note: We expect 'target' to be a flat target list and not have Aggrefs buried
- * within other expressions.
- */
-void
-apply_partialaggref_adjustment(PathTarget *target)
-{
-	ListCell   *lc;
-
-	foreach(lc, target->exprs)
-	{
-		Aggref	   *aggref = (Aggref *) lfirst(lc);
-
-		if (IsA(aggref, Aggref))
-		{
-			Aggref	   *newaggref;
-
-			newaggref = (Aggref *) copyObject(aggref);
-
-			/*
-			 * Normally, a partial aggregate returns the aggregate's
-			 * transition type, but if that's INTERNAL, it returns BYTEA
-			 * instead.  (XXX this assumes we're doing parallel aggregate with
-			 * serialization; later we might need an argument to tell this
-			 * function whether we're doing parallel or just local partial
-			 * aggregation.)
-			 */
-			Assert(OidIsValid(newaggref->aggtranstype));
-
-			if (newaggref->aggtranstype == INTERNALOID)
-				newaggref->aggoutputtype = BYTEAOID;
-			else
-				newaggref->aggoutputtype = newaggref->aggtranstype;
-
-			/* flag it as partial */
-			newaggref->aggpartial = true;
-
-			lfirst(lc) = newaggref;
-		}
 	}
 }

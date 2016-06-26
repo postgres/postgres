@@ -46,6 +46,8 @@ extern bool is_dummy_plan(Plan *plan);
 extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
 					LockClauseStrength strength);
 
+extern void mark_partial_aggref(Aggref *agg, bool serialize);
+
 extern Path *get_cheapest_fractional_path(RelOptInfo *rel,
 							 double tuple_fraction);
 
