@@ -111,8 +111,25 @@ typedef struct ExecPhraseData
 	WordEntryPos *pos;
 } ExecPhraseData;
 
-extern bool TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
+/*
+ * Evaluates tsquery, flags are followe below
+ */
+extern bool TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
 		   bool (*chkcond) (void *, QueryOperand *, ExecPhraseData *));
+
+#define TS_EXEC_EMPTY			(0x00)
+/*
+ * if TS_EXEC_CALC_NOT is not set then NOT expression evaluated to be true,
+ * used in cases where NOT cannot be accurately computed (GiST) or
+ * it isn't important (ranking)
+ */
+#define TS_EXEC_CALC_NOT		(0x01)
+/*
+ * Treat OP_PHRASE as OP_AND. Used when posiotional information is not
+ * accessible, like in consistent methods of GIN/GiST indexes
+ */
+#define TS_EXEC_PHRASE_AS_AND	(0x02)
+
 extern bool tsquery_requires_match(QueryItem *curitem);
 
 /*

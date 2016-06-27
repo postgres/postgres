@@ -662,7 +662,8 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 	{
 		fillQueryRepresentationData(qr, ptr);
 
-		if (TS_execute(GETQUERY(qr->query), (void *) qr, false, checkcondition_QueryOperand))
+		if (TS_execute(GETQUERY(qr->query), (void *) qr,
+					   TS_EXEC_EMPTY, checkcondition_QueryOperand))
 		{
 			if (WEP_GETPOS(ptr->pos) > ext->q)
 			{
@@ -691,7 +692,8 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 		 */
 		fillQueryRepresentationData(qr, ptr);
 
-		if (TS_execute(GETQUERY(qr->query), (void *) qr, true, checkcondition_QueryOperand))
+		if (TS_execute(GETQUERY(qr->query), (void *) qr,
+					   TS_EXEC_CALC_NOT, checkcondition_QueryOperand))
 		{
 			if (WEP_GETPOS(ptr->pos) < ext->p)
 			{

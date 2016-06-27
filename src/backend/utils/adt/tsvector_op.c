@@ -1360,7 +1360,7 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
  */
 static bool
 TS_phrase_execute(QueryItem *curitem,
-				  void *checkval, bool calcnot, ExecPhraseData *data,
+				  void *checkval, uint32 flags, ExecPhraseData *data,
 				  bool (*chkcond) (void *, QueryOperand *, ExecPhraseData *))
 {
 	/* since this function recurses, it could be driven to stack overflow */
@@ -1382,18 +1382,19 @@ TS_phrase_execute(QueryItem *curitem,
 		Assert(curitem->qoperator.oper == OP_PHRASE);
 
 		if (!TS_phrase_execute(curitem + curitem->qoperator.left,
-							   checkval, calcnot, &Ldata, chkcond))
+							   checkval, flags, &Ldata, chkcond))
 			return false;
 
-		if (!TS_phrase_execute(curitem + 1, checkval, calcnot, &Rdata, chkcond))
+		if (!TS_phrase_execute(curitem + 1, checkval, flags, &Rdata, chkcond))
 			return false;
 
 		/*
 		 * if at least one of the operands has no position information,
-		 * fallback to AND operation.
+		 * then return false. But if TS_EXEC_PHRASE_AS_AND flag is set then
+		 * we return true as it is a AND operation
 		 */
 		if (Ldata.npos == 0 || Rdata.npos == 0)
-			return true;
+			return (flags & TS_EXEC_PHRASE_AS_AND) ? true : false;
 
 		/*
 		 * Result of the operation is a list of the corresponding positions of
@@ -1498,13 +1499,11 @@ TS_phrase_execute(QueryItem *curitem,
  * chkcond is a callback function used to evaluate each VAL node in the query.
  * checkval can be used to pass information to the callback. TS_execute doesn't
  * do anything with it.
- * if calcnot is false, NOT expressions are always evaluated to be true. This
- * is used in ranking.
  * It believes that ordinary operators are always closier to root than phrase
  * operator, so, TS_execute() may not take care of lexeme's position at all.
  */
 bool
-TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
+TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
    bool (*chkcond) (void *checkval, QueryOperand *val, ExecPhraseData *data))
 {
 	/* since this function recurses, it could be driven to stack overflow */
@@ -1517,25 +1516,29 @@ TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
-			if (calcnot)
-				return !TS_execute(curitem + 1, checkval, calcnot, chkcond);
+			if (flags & TS_EXEC_CALC_NOT)
+				return !TS_execute(curitem + 1, checkval, flags, chkcond);
 			else
 				return true;
 
 		case OP_AND:
-			if (TS_execute(curitem + curitem->qoperator.left, checkval, calcnot, chkcond))
-				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
+			if (TS_execute(curitem + curitem->qoperator.left, checkval, flags, chkcond))
+				return TS_execute(curitem + 1, checkval, flags, chkcond);
 			else
 				return false;
 
 		case OP_OR:
-			if (TS_execute(curitem + curitem->qoperator.left, checkval, calcnot, chkcond))
+			if (TS_execute(curitem + curitem->qoperator.left, checkval, flags, chkcond))
 				return true;
 			else
-				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
+				return TS_execute(curitem + 1, checkval, flags, chkcond);
 
 		case OP_PHRASE:
-			return TS_phrase_execute(curitem, checkval, calcnot, NULL, chkcond);
+			/*
+			 * do not check TS_EXEC_PHRASE_AS_AND here because chkcond()
+			 * could do something more if it's called from TS_phrase_execute()
+			 */
+			return TS_phrase_execute(curitem, checkval, flags, NULL, chkcond);
 
 		default:
 			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
@@ -1633,7 +1636,7 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	result = TS_execute(
 						GETQUERY(query),
 						&chkval,
-						true,
+						TS_EXEC_CALC_NOT,
 						checkcondition_str
 		);
 

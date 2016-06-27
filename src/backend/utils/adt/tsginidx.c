@@ -308,7 +308,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 
 		res = TS_execute(GETQUERY(query),
 						 &gcv,
-						 true,
+						 TS_EXEC_CALC_NOT | TS_EXEC_PHRASE_AS_AND,
 						 checkcondition_gin);
 	}
 

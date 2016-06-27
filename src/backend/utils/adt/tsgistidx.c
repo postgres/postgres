@@ -361,7 +361,8 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 
 		PG_RETURN_BOOL(TS_execute(
 								  GETQUERY(query),
-								  (void *) GETSIGN(key), false,
+								  (void *) GETSIGN(key),
+								  TS_EXEC_PHRASE_AS_AND,
 								  checkcondition_bit
 								  ));
 	}
@@ -373,7 +374,8 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 		chkval.arre = chkval.arrb + ARRNELEM(key);
 		PG_RETURN_BOOL(TS_execute(
 								  GETQUERY(query),
-								  (void *) &chkval, true,
+								  (void *) &chkval,
+								  TS_EXEC_PHRASE_AS_AND | TS_EXEC_CALC_NOT,
 								  checkcondition_arr
 								  ));
 	}
