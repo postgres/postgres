@@ -25,11 +25,18 @@ typedef struct NODE
 	QueryItem  *valnode;
 } NODE;
 
-/* Non-operator nodes have fake (but highest) priority */
+/*
+ * To simplify walking on query tree and pushing down of phrase operator
+ * we define some fake priority here: phrase operator has highest priority
+ * of any other operators (and we believe here that OP_PHRASE is a highest
+ * code of operations) and value node has ever highest priority.
+ * Priority values of other operations don't matter until they are less than
+ * phrase operator and value node.
+ */
+#define VALUE_PRIORITY			(OP_COUNT + 1)
 #define NODE_PRIORITY(x) \
 	( ((x)->valnode->qoperator.type == QI_OPR) ? \
-			QO_PRIORITY((x)->valnode) : \
-			TOP_PRIORITY )
+		(x)->valnode->qoperator.oper : VALUE_PRIORITY )
 
 /*
  * make query tree from plain view of query
@@ -416,6 +423,10 @@ normalize_phrase_tree(NODE *node)
 		node->left = normalize_phrase_tree(node->left);
 		node->right = normalize_phrase_tree(node->right);
 
+		/*
+		 * if subtree contains only nodes with higher "priority" then
+		 * we are done. See comment near NODE_PRIORITY()
+		 */
 		if (NODE_PRIORITY(node) <= NODE_PRIORITY(node->right) &&
 			NODE_PRIORITY(node) <= NODE_PRIORITY(node->left))
 			return node;

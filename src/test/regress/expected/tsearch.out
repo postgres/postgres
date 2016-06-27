@@ -778,9 +778,9 @@ SELECT to_tsquery('english', 'foo <-> a <-> the <-> bar');
 (1 row)
 
 SELECT phraseto_tsquery('english', 'PostgreSQL can be extended by the user in many ways');
-                           phraseto_tsquery                            
------------------------------------------------------------------------
- ( ( ( 'postgresql' <3> 'extend' ) <3> 'user' ) <2> 'mani' ) <-> 'way'
+                     phraseto_tsquery                      
+-----------------------------------------------------------
+ 'postgresql' <3> 'extend' <3> 'user' <2> 'mani' <-> 'way'
 (1 row)
 
 SELECT ts_rank_cd(to_tsvector('english', '
@@ -1215,15 +1215,15 @@ SELECT ts_rewrite('1 & (2 <-> 3)', 'SELECT keyword, sample FROM test_tsquery'::t
 (1 row)
 
 SELECT ts_rewrite('1 & (2 <2> 3)', 'SELECT keyword, sample FROM test_tsquery'::text );
-      ts_rewrite       
------------------------
- '1' & ( '2' <2> '3' )
+    ts_rewrite     
+-------------------
+ '1' & '2' <2> '3'
 (1 row)
 
 SELECT ts_rewrite('5 <-> (1 & (2 <-> 3))', 'SELECT keyword, sample FROM test_tsquery'::text );
-                  ts_rewrite                   
------------------------------------------------
- ( '5' <-> '1' ) & ( '5' <-> ( '2' <-> '3' ) )
+              ts_rewrite               
+---------------------------------------
+ '5' <-> '1' & '5' <-> ( '2' <-> '3' )
 (1 row)
 
 SELECT ts_rewrite('5 <-> (6 | 8)', 'SELECT keyword, sample FROM test_tsquery'::text );
