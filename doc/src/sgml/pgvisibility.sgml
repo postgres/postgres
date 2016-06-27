@@ -59,13 +59,13 @@
      <para>
       Returns the all-visible and all-frozen bits in the visibility map for
       the given block of the given relation, plus the
-      <literal>PD_ALL_VISIBILE</> bit for that block.
+      <literal>PD_ALL_VISIBLE</> bit for that block.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><function>pg_visibility_map(regclass, blkno OUT bigint, all_visible OUT boolean, all_frozen OUT boolean) returns record</function></term>
+    <term><function>pg_visibility_map(regclass, blkno OUT bigint, all_visible OUT boolean, all_frozen OUT boolean) returns setof record</function></term>
     <listitem>
      <para>
       Returns the all-visible and all-frozen bits in the visibility map for
@@ -75,7 +75,7 @@
    </varlistentry>
 
    <varlistentry>
-    <term><function>pg_visibility(regclass, blkno OUT bigint, all_visible OUT boolean, all_frozen OUT boolean, pd_all_visible OUT boolean) returns record</function></term>
+    <term><function>pg_visibility(regclass, blkno OUT bigint, all_visible OUT boolean, all_frozen OUT boolean, pd_all_visible OUT boolean) returns setof record</function></term>
 
     <listitem>
      <para>
