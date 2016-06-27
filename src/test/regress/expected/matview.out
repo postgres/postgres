@@ -455,13 +455,23 @@ DROP TABLE mvtest_boxes CASCADE;
 NOTICE:  drop cascades to materialized view mvtest_boxmv
 -- make sure that column names are handled correctly
 CREATE TABLE mvtest_v (i int, j int);
-CREATE MATERIALIZED VIEW mvtest_mv_v (ii) AS SELECT i, j AS jj FROM mvtest_v;
+CREATE MATERIALIZED VIEW mvtest_mv_v (ii, jj, kk) AS SELECT i, j FROM mvtest_v; -- error
+ERROR:  too many column names were specified
+CREATE MATERIALIZED VIEW mvtest_mv_v (ii, jj) AS SELECT i, j FROM mvtest_v; -- ok
+CREATE MATERIALIZED VIEW mvtest_mv_v_2 (ii) AS SELECT i, j FROM mvtest_v; -- ok
+CREATE MATERIALIZED VIEW mvtest_mv_v_3 (ii, jj, kk) AS SELECT i, j FROM mvtest_v WITH NO DATA; -- error
+ERROR:  too many column names were specified
+CREATE MATERIALIZED VIEW mvtest_mv_v_3 (ii, jj) AS SELECT i, j FROM mvtest_v WITH NO DATA; -- ok
+CREATE MATERIALIZED VIEW mvtest_mv_v_4 (ii) AS SELECT i, j FROM mvtest_v WITH NO DATA; -- ok
 ALTER TABLE mvtest_v RENAME COLUMN i TO x;
 INSERT INTO mvtest_v values (1, 2);
 CREATE UNIQUE INDEX mvtest_mv_v_ii ON mvtest_mv_v (ii);
 REFRESH MATERIALIZED VIEW mvtest_mv_v;
 UPDATE mvtest_v SET j = 3 WHERE x = 1;
 REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv_v;
+REFRESH MATERIALIZED VIEW mvtest_mv_v_2;
+REFRESH MATERIALIZED VIEW mvtest_mv_v_3;
+REFRESH MATERIALIZED VIEW mvtest_mv_v_4;
 SELECT * FROM mvtest_v;
  x | j 
 ---+---
@@ -474,8 +484,37 @@ SELECT * FROM mvtest_mv_v;
   1 |  3
 (1 row)
 
+SELECT * FROM mvtest_mv_v_2;
+ ii | j 
+----+---
+  1 | 3
+(1 row)
+
+SELECT * FROM mvtest_mv_v_3;
+ ii | jj 
+----+----
+  1 |  3
+(1 row)
+
+SELECT * FROM mvtest_mv_v_4;
+ ii | j 
+----+---
+  1 | 3
+(1 row)
+
 DROP TABLE mvtest_v CASCADE;
-NOTICE:  drop cascades to materialized view mvtest_mv_v
+NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to materialized view mvtest_mv_v
+drop cascades to materialized view mvtest_mv_v_2
+drop cascades to materialized view mvtest_mv_v_3
+drop cascades to materialized view mvtest_mv_v_4
+-- make sure that create WITH NO DATA does not plan the query (bug #13907)
+create materialized view mvtest_error as select 1/0 as x;  -- fail
+ERROR:  division by zero
+create materialized view mvtest_error as select 1/0 as x with no data;
+refresh materialized view mvtest_error;  -- fail here
+ERROR:  division by zero
+drop materialized view mvtest_error;
 -- make sure that matview rows can be referenced as source rows (bug #9398)
 CREATE TABLE mvtest_v AS SELECT generate_series(1,10) AS a;
 CREATE MATERIALIZED VIEW mvtest_mv_v AS SELECT a FROM mvtest_v WHERE a <= 5;

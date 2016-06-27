@@ -82,25 +82,14 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	attrList = NIL;
 	foreach(t, tlist)
 	{
-		TargetEntry *tle = lfirst(t);
+		TargetEntry *tle = (TargetEntry *) lfirst(t);
 
 		if (!tle->resjunk)
 		{
-			ColumnDef  *def = makeNode(ColumnDef);
-
-			def->colname = pstrdup(tle->resname);
-			def->typeName = makeTypeNameFromOid(exprType((Node *) tle->expr),
-											 exprTypmod((Node *) tle->expr));
-			def->inhcount = 0;
-			def->is_local = true;
-			def->is_not_null = false;
-			def->is_from_type = false;
-			def->storage = 0;
-			def->raw_default = NULL;
-			def->cooked_default = NULL;
-			def->collClause = NULL;
-			def->collOid = exprCollation((Node *) tle->expr);
-			def->location = -1;
+			ColumnDef  *def = makeColumnDef(tle->resname,
+											exprType((Node *) tle->expr),
+											exprTypmod((Node *) tle->expr),
+										  exprCollation((Node *) tle->expr));
 
 			/*
 			 * It's possible that the column is of a collatable type but the
@@ -117,7 +106,6 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 			}
 			else
 				Assert(!OidIsValid(def->collOid));
-			def->constraints = NIL;
 
 			attrList = lappend(attrList, def);
 		}
