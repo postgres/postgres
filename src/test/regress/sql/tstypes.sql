@@ -130,9 +130,10 @@ SELECT 'supeznova supernova'::tsvector @@ 'super:*'::tsquery AS "true";
 
 --phrase search
 SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <-> 2' AS "true";
-SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <2> 2' AS "true";
+SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <2> 2' AS "false";
 SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <-> 3' AS "false";
 SELECT to_tsvector('simple', '1 2 3 1') @@ '1 <2> 3' AS "true";
+SELECT to_tsvector('simple', '1 2 1 2') @@ '1 <3> 2' AS "true";
 
 SELECT to_tsvector('simple', '1 2 11 3') @@ '1 <-> 3' AS "false";
 SELECT to_tsvector('simple', '1 2 11 3') @@ '1:* <-> 3' AS "true";
@@ -180,12 +181,12 @@ SELECT ts_rank_cd(' a:1 sa:2A sb:2D g'::tsvector, 'a <-> s:* <-> sa:B');
 SELECT 'a:1 b:2'::tsvector @@ 'a <-> b'::tsquery AS "true";
 SELECT 'a:1 b:2'::tsvector @@ 'a <0> b'::tsquery AS "false";
 SELECT 'a:1 b:2'::tsvector @@ 'a <1> b'::tsquery AS "true";
-SELECT 'a:1 b:2'::tsvector @@ 'a <2> b'::tsquery AS "true";
+SELECT 'a:1 b:2'::tsvector @@ 'a <2> b'::tsquery AS "false";
 SELECT 'a:1 b:3'::tsvector @@ 'a <-> b'::tsquery AS "false";
 SELECT 'a:1 b:3'::tsvector @@ 'a <0> b'::tsquery AS "false";
 SELECT 'a:1 b:3'::tsvector @@ 'a <1> b'::tsquery AS "false";
 SELECT 'a:1 b:3'::tsvector @@ 'a <2> b'::tsquery AS "true";
-SELECT 'a:1 b:3'::tsvector @@ 'a <3> b'::tsquery AS "true";
+SELECT 'a:1 b:3'::tsvector @@ 'a <3> b'::tsquery AS "false";
 
 -- tsvector editing operations
 

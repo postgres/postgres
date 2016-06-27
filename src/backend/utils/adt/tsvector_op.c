@@ -1375,6 +1375,7 @@ TS_phrase_execute(QueryItem *curitem,
 		ExecPhraseData Ldata = {0, false, NULL},
 					Rdata = {0, false, NULL};
 		WordEntryPos *Lpos,
+				   *LposStart,
 				   *Rpos,
 				   *pos_iter = NULL;
 
@@ -1416,52 +1417,60 @@ TS_phrase_execute(QueryItem *curitem,
 			pos_iter = data->pos;
 		}
 
-		Lpos = Ldata.pos;
-		Rpos = Rdata.pos;
-
 		/*
 		 * Find matches by distance, WEP_GETPOS() is needed because
 		 * ExecPhraseData->data can point to the tsvector's WordEntryPosVector
 		 */
 
+		Rpos = Rdata.pos;
+		LposStart = Ldata.pos;
 		while (Rpos < Rdata.pos + Rdata.npos)
 		{
+			/*
+			 * We need to check all possible distances, so reset Lpos
+			 * to guranteed not yet satisfied position.
+			 */
+			Lpos = LposStart;
 			while (Lpos < Ldata.pos + Ldata.npos)
 			{
-				if (WEP_GETPOS(*Lpos) <= WEP_GETPOS(*Rpos))
+				if (WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) ==
+					curitem->qoperator.distance)
 				{
-					/*
-					 * Lpos is behind the Rpos, so we have to check the
-					 * distance condition
-					 */
-					if (WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) <= curitem->qoperator.distance)
+					/* MATCH! */
+					if (data)
 					{
-						/* MATCH! */
-						if (data)
-						{
-							*pos_iter = WEP_GETPOS(*Rpos);
-							pos_iter++;
+						/* Store position for upper phrase operator */
+						*pos_iter = WEP_GETPOS(*Rpos);
+						pos_iter++;
 
-							break;		/* We need to build a unique result
-										 * array, so go to the next Rpos */
-						}
-						else
-						{
-							/*
-							 * We are in the root of the phrase tree and hence
-							 * we don't have to store the resulting positions
-							 */
-							return true;
-						}
+						/*
+						 * Set left start position to next, because current one
+						 * could not satisfy distance for any other right
+						 * position
+						 */
+						LposStart = Lpos + 1;
+						break;
 					}
+					else
+					{
+						/*
+						 * We are in the root of the phrase tree and hence
+						 * we don't have to store the resulting positions
+						 */
+						return true;
+					}
+
 				}
-				else
+				else if (WEP_GETPOS(*Rpos) <= WEP_GETPOS(*Lpos) ||
+						 WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) <
+							curitem->qoperator.distance)
 				{
 					/*
-					 * Go to the next Rpos, because Lpos is ahead of the
-					 * current Rpos
+					 * Go to the next Rpos, because Lpos is ahead or on less
+					 * distance than required by current operator
 					 */
 					break;
+
 				}
 
 				Lpos++;
