@@ -53,6 +53,25 @@ RESET SESSION AUTHORIZATION;
 DROP SCHEMA selinto_schema CASCADE;
 DROP USER selinto_user;
 
+-- Tests for WITH NO DATA and column name consistency
+CREATE TABLE ctas_base (i int, j int);
+INSERT INTO ctas_base VALUES (1, 2);
+CREATE TABLE ctas_nodata (ii, jj, kk) AS SELECT i, j FROM ctas_base; -- Error
+CREATE TABLE ctas_nodata (ii, jj, kk) AS SELECT i, j FROM ctas_base WITH NO DATA; -- Error
+CREATE TABLE ctas_nodata (ii, jj) AS SELECT i, j FROM ctas_base; -- OK
+CREATE TABLE ctas_nodata_2 (ii, jj) AS SELECT i, j FROM ctas_base WITH NO DATA; -- OK
+CREATE TABLE ctas_nodata_3 (ii) AS SELECT i, j FROM ctas_base; -- OK
+CREATE TABLE ctas_nodata_4 (ii) AS SELECT i, j FROM ctas_base WITH NO DATA; -- OK
+SELECT * FROM ctas_nodata;
+SELECT * FROM ctas_nodata_2;
+SELECT * FROM ctas_nodata_3;
+SELECT * FROM ctas_nodata_4;
+DROP TABLE ctas_base;
+DROP TABLE ctas_nodata;
+DROP TABLE ctas_nodata_2;
+DROP TABLE ctas_nodata_3;
+DROP TABLE ctas_nodata_4;
+
 --
 -- CREATE TABLE AS/SELECT INTO as last command in a SQL function
 -- have been known to cause problems
