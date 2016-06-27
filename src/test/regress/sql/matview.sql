@@ -175,17 +175,34 @@ SELECT * FROM boxmv ORDER BY id;
 DROP TABLE boxes CASCADE;
 
 -- make sure that column names are handled correctly
-CREATE TABLE v (i int, j int);
-CREATE MATERIALIZED VIEW mv_v (ii) AS SELECT i, j AS jj FROM v;
-ALTER TABLE v RENAME COLUMN i TO x;
-INSERT INTO v values (1, 2);
-CREATE UNIQUE INDEX mv_v_ii ON mv_v (ii);
-REFRESH MATERIALIZED VIEW mv_v;
-UPDATE v SET j = 3 WHERE x = 1;
-REFRESH MATERIALIZED VIEW CONCURRENTLY mv_v;
-SELECT * FROM v;
-SELECT * FROM mv_v;
-DROP TABLE v CASCADE;
+CREATE TABLE mvtest_v (i int, j int);
+CREATE MATERIALIZED VIEW mvtest_mv_v (ii, jj, kk) AS SELECT i, j FROM mvtest_v; -- error
+CREATE MATERIALIZED VIEW mvtest_mv_v (ii, jj) AS SELECT i, j FROM mvtest_v; -- ok
+CREATE MATERIALIZED VIEW mvtest_mv_v_2 (ii) AS SELECT i, j FROM mvtest_v; -- ok
+CREATE MATERIALIZED VIEW mvtest_mv_v_3 (ii, jj, kk) AS SELECT i, j FROM mvtest_v WITH NO DATA; -- error
+CREATE MATERIALIZED VIEW mvtest_mv_v_3 (ii, jj) AS SELECT i, j FROM mvtest_v WITH NO DATA; -- ok
+CREATE MATERIALIZED VIEW mvtest_mv_v_4 (ii) AS SELECT i, j FROM mvtest_v WITH NO DATA; -- ok
+ALTER TABLE mvtest_v RENAME COLUMN i TO x;
+INSERT INTO mvtest_v values (1, 2);
+CREATE UNIQUE INDEX mvtest_mv_v_ii ON mvtest_mv_v (ii);
+REFRESH MATERIALIZED VIEW mvtest_mv_v;
+UPDATE mvtest_v SET j = 3 WHERE x = 1;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_mv_v;
+REFRESH MATERIALIZED VIEW mvtest_mv_v_2;
+REFRESH MATERIALIZED VIEW mvtest_mv_v_3;
+REFRESH MATERIALIZED VIEW mvtest_mv_v_4;
+SELECT * FROM mvtest_v;
+SELECT * FROM mvtest_mv_v;
+SELECT * FROM mvtest_mv_v_2;
+SELECT * FROM mvtest_mv_v_3;
+SELECT * FROM mvtest_mv_v_4;
+DROP TABLE mvtest_v CASCADE;
+
+-- make sure that create WITH NO DATA does not plan the query (bug #13907)
+create materialized view mvtest_error as select 1/0 as x;  -- fail
+create materialized view mvtest_error as select 1/0 as x with no data;
+refresh materialized view mvtest_error;  -- fail here
+drop materialized view mvtest_error;
 
 -- make sure that matview rows can be referenced as source rows (bug #9398)
 CREATE TABLE v AS SELECT generate_series(1,10) AS a;
