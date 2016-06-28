@@ -7578,7 +7578,7 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
         The time zone offset from UTC, measured in seconds.  Positive values
         correspond to time zones east of UTC, negative values to
         zones west of UTC.  (Technically,
-        <productname>PostgreSQL</productname> uses <acronym>UT1</> because
+        <productname>PostgreSQL</productname> does not use UTC because
         leap seconds are not handled.)
        </para>
       </listitem>

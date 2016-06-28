@@ -9804,8 +9804,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    of time zone names that are recognized by <command>SET TIMEZONE</>,
    along with their associated abbreviations, UTC offsets,
    and daylight-savings status.  (Technically,
-   <productname>PostgreSQL</productname> uses <acronym>UT1</> rather
-   than UTC because leap seconds are not handled.)
+   <productname>PostgreSQL</productname> does not use UTC because leap
+   seconds are not handled.)
    Unlike the abbreviations shown in <link
    linkend="view-pg-timezone-abbrevs"><structname>pg_timezone_abbrevs</structname></link>, many of these names imply a set of daylight-savings transition
    date rules.  Therefore, the associated information changes across local DST
