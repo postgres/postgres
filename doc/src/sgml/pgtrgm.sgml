@@ -355,9 +355,6 @@ SELECT * FROM test_trgm WHERE t ~ '(foo|bar)';
   <para>
    The choice between GiST and GIN indexing depends on the relative
    performance characteristics of GiST and GIN, which are discussed elsewhere.
-   As a rule of thumb, a GIN index is faster to search than a GiST index, but
-   slower to build or update; so GIN is better suited for static data and GiST
-   for often-updated data.
   </para>
  </sect2>
 
