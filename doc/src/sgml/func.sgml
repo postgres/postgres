@@ -14609,7 +14609,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
    Boolean (true/false) results.
   </para>
 
-  <sect2>
+  <sect2 id="functions-comparisons-in-scalar">
    <title><literal>IN</literal></title>
 
 <synopsis>

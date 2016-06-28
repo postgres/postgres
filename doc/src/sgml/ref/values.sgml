@@ -219,7 +219,8 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
   <tip>
    <para>
     For simple <literal>IN</> tests, it's better to rely on the
-    list-of-scalars form of <literal>IN</> than to write a <command>VALUES</>
+    <link linkend="functions-comparisons-in-scalar">list-of-scalars</link>
+    form of <literal>IN</> than to write a <command>VALUES</>
     query as shown above.  The list of scalars method requires less writing
     and is often more efficient.
    </para>
