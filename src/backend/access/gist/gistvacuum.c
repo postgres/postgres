@@ -223,7 +223,7 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 				{
 					XLogRecPtr	recptr;
 
-					recptr = gistXLogUpdate(rel->rd_node, buffer,
+					recptr = gistXLogUpdate(buffer,
 											todelete, ntodelete,
 											NULL, 0, InvalidBuffer);
 					PageSetLSN(page, recptr);

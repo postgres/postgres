@@ -465,13 +465,12 @@ extern const char *gist_identify(uint8 info);
 extern void gist_xlog_startup(void);
 extern void gist_xlog_cleanup(void);
 
-extern XLogRecPtr gistXLogUpdate(RelFileNode node, Buffer buffer,
+extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
 			   IndexTuple *itup, int ntup,
 			   Buffer leftchild);
 
-extern XLogRecPtr gistXLogSplit(RelFileNode node,
-			  BlockNumber blkno, bool page_is_leaf,
+extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
 			  SplitedPageLayout *dist,
 			  BlockNumber origrlink, GistNSN oldnsn,
 			  Buffer leftchild, bool markfollowright);

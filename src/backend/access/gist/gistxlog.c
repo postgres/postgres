@@ -323,7 +323,7 @@ gist_xlog_cleanup(void)
  * Write WAL record of a page split.
  */
 XLogRecPtr
-gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
+gistXLogSplit(bool page_is_leaf,
 			  SplitedPageLayout *dist,
 			  BlockNumber origrlink, GistNSN orignsn,
 			  Buffer leftchildbuf, bool markfollowright)
@@ -387,7 +387,7 @@ gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
  * to log the whole buffer contents instead.
  */
 XLogRecPtr
-gistXLogUpdate(RelFileNode node, Buffer buffer,
+gistXLogUpdate(Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
 			   IndexTuple *itup, int ituplen,
 			   Buffer leftchildbuf)

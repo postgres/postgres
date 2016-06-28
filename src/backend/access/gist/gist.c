@@ -467,7 +467,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 
 		/* Write the WAL record */
 		if (RelationNeedsWAL(rel))
-			recptr = gistXLogSplit(rel->rd_node, blkno, is_leaf,
+			recptr = gistXLogSplit(is_leaf,
 								   dist, oldrlink, oldnsn, leftchildbuf,
 								   markfollowright);
 		else
@@ -523,7 +523,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				ndeloffs = 1;
 			}
 
-			recptr = gistXLogUpdate(rel->rd_node, buffer,
+			recptr = gistXLogUpdate(buffer,
 									deloffs, ndeloffs, itup, ntup,
 									leftchildbuf);
 
@@ -1541,7 +1541,7 @@ gistvacuumpage(Relation rel, Page page, Buffer buffer)
 		{
 			XLogRecPtr	recptr;
 
-			recptr = gistXLogUpdate(rel->rd_node, buffer,
+			recptr = gistXLogUpdate(buffer,
 									deletable, ndeletable,
 									NULL, 0, InvalidBuffer);
 
