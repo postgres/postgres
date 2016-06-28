@@ -751,6 +751,25 @@ select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  9999 | 1
 (3 rows)
 
+-- interesting corner case: constant gets optimized into a seqscan
+explain (costs off)
+  select max(100) from tenk1;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Result
+                 One-Time Filter: (100 IS NOT NULL)
+                 ->  Seq Scan on tenk1
+(6 rows)
+
+select max(100) from tenk1;
+ max 
+-----
+ 100
+(1 row)
+
 -- try it on an inheritance tree
 create table minmaxtest(f1 int);
 create table minmaxtest1() inherits (minmaxtest);

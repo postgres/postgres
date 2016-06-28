@@ -270,6 +270,11 @@ explain (costs off)
   select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
 
+-- interesting corner case: constant gets optimized into a seqscan
+explain (costs off)
+  select max(100) from tenk1;
+select max(100) from tenk1;
+
 -- try it on an inheritance tree
 create table minmaxtest(f1 int);
 create table minmaxtest1() inherits (minmaxtest);
