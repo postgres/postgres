@@ -4219,7 +4219,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
 
    <para>
     When using binary mode to pass query parameters to the server
-    and query results back to the client, no character set conversion
+    and query results back to the client, no encoding conversion
     is performed, so the situation is different.  In this case, an
     encoding declaration in the XML data will be observed, and if it
     is absent, the data will be assumed to be in UTF-8 (as required by
