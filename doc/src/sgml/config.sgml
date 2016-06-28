@@ -1944,20 +1944,16 @@ include_dir 'conf.d'
         </para>
 
         <para>
-         A good starting point for this setting is the number of separate
+         For magnetic drives, a good starting point for this setting is the
+         number of separate
          drives comprising a RAID 0 stripe or RAID 1 mirror being used for the
          database.  (For RAID 5 the parity drive should not be counted.)
          However, if the database is often busy with multiple queries issued in
          concurrent sessions, lower values may be sufficient to keep the disk
          array busy.  A value higher than needed to keep the disks busy will
          only result in extra CPU overhead.
-        </para>
-
-        <para>
-         For more exotic systems, such as memory-based storage or a RAID array
-         that is limited by bus bandwidth, the correct value might be the
-         number of I/O paths available.  Some experimentation may be needed
-         to find the best value.
+         SSDs and other memory-based storage can often process many
+         concurrent requests, so the best value might be in the hundreds.
         </para>
 
         <para>
