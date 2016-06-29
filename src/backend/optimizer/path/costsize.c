@@ -3914,8 +3914,10 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 						   double outer_rows,
 						   double inner_rows,
 						   SpecialJoinInfo *sjinfo,
-						   List *restrictlist)
+						   List *restrictlist_in)
 {
+	/* This apparently-useless variable dodges a compiler bug in VS2013: */
+	List	   *restrictlist = restrictlist_in;
 	JoinType	jointype = sjinfo->jointype;
 	Selectivity fkselec;
 	Selectivity jselec;
