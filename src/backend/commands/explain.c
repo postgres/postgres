@@ -807,6 +807,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	const char *pname;			/* node type name for text output */
 	const char *sname;			/* node type name for non-text output */
 	const char *strategy = NULL;
+	const char *partialmode = NULL;
 	const char *operation = NULL;
 	const char *custom_name = NULL;
 	int			save_indent = es->indent;
@@ -943,15 +944,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			pname = sname = "Group";
 			break;
 		case T_Agg:
-			sname = "Aggregate";
 			{
 				Agg		   *agg = (Agg *) plan;
 
-				if (DO_AGGSPLIT_SKIPFINAL(agg->aggsplit))
-					operation = "Partial";
-				else if (DO_AGGSPLIT_COMBINE(agg->aggsplit))
-					operation = "Finalize";
-
+				sname = "Aggregate";
 				switch (agg->aggstrategy)
 				{
 					case AGG_PLAIN:
@@ -972,8 +968,18 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						break;
 				}
 
-				if (operation != NULL)
-					pname = psprintf("%s %s", operation, pname);
+				if (DO_AGGSPLIT_SKIPFINAL(agg->aggsplit))
+				{
+					partialmode = "Partial";
+					pname = psprintf("%s %s", partialmode, pname);
+				}
+				else if (DO_AGGSPLIT_COMBINE(agg->aggsplit))
+				{
+					partialmode = "Finalize";
+					pname = psprintf("%s %s", partialmode, pname);
+				}
+				else
+					partialmode = "Simple";
 			}
 			break;
 		case T_WindowAgg:
@@ -1042,6 +1048,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		ExplainPropertyText("Node Type", sname, es);
 		if (strategy)
 			ExplainPropertyText("Strategy", strategy, es);
+		if (partialmode)
+			ExplainPropertyText("Partial Mode", partialmode, es);
 		if (operation)
 			ExplainPropertyText("Operation", operation, es);
 		if (relationship)
@@ -1050,8 +1058,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyText("Subplan Name", plan_name, es);
 		if (custom_name)
 			ExplainPropertyText("Custom Plan Provider", custom_name, es);
-		if (plan->parallel_aware)
-			ExplainPropertyText("Parallel Aware", "true", es);
+		ExplainPropertyBool("Parallel Aware", plan->parallel_aware, es);
 	}
 
 	switch (nodeTag(plan))
@@ -1349,10 +1356,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					ExplainPropertyInteger("Workers Launched",
 										   nworkers, es);
 				}
-				if (gather->single_copy)
-					ExplainPropertyText("Single Copy",
-									  gather->single_copy ? "true" : "false",
-										es);
+				if (gather->single_copy || es->format != EXPLAIN_FORMAT_TEXT)
+					ExplainPropertyBool("Single Copy", gather->single_copy, es);
 			}
 			break;
 		case T_FunctionScan:
@@ -3029,6 +3034,15 @@ ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
 
 	snprintf(buf, sizeof(buf), "%.*f", ndigits, value);
 	ExplainProperty(qlabel, buf, true, es);
+}
+
+/*
+ * Explain a bool-valued property.
+ */
+void
+ExplainPropertyBool(const char *qlabel, bool value, ExplainState *es)
+{
+	ExplainProperty(qlabel, value ? "true" : "false", true, es);
 }
 
 /*

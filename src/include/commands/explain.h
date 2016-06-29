@@ -93,5 +93,7 @@ extern void ExplainPropertyLong(const char *qlabel, long value,
 					ExplainState *es);
 extern void ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
 					 ExplainState *es);
+extern void ExplainPropertyBool(const char *qlabel, bool value,
+					ExplainState *es);
 
 #endif   /* EXPLAIN_H */
