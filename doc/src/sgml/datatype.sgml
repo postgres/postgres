@@ -3885,12 +3885,12 @@ SELECT 'a:1A fat:2B,4C cat:5D'::tsvector;
 
     <para>
      It is important to understand that the
-     <type>tsvector</type> type itself does not perform any normalization;
-     it assumes the words it is given are normalized appropriately
-     for the application.  For example,
+     <type>tsvector</type> type itself does not perform any word
+     normalization; it assumes the words it is given are normalized
+     appropriately for the application.  For example,
 
 <programlisting>
-select 'The Fat Rats'::tsvector;
+SELECT 'The Fat Rats'::tsvector;
       tsvector      
 --------------------
  'Fat' 'Rats' 'The'
@@ -3929,12 +3929,20 @@ SELECT to_tsvector('english', 'The Fat Rats');
      <literal>&lt;-&gt;</> (FOLLOWED BY).  There is also a variant
      <literal>&lt;<replaceable>N</>&gt;</literal> of the FOLLOWED BY
      operator, where <replaceable>N</> is an integer constant that
-     specifies a maximum distance between the two lexemes being searched
+     specifies the distance between the two lexemes being searched
      for.  <literal>&lt;-&gt;</> is equivalent to <literal>&lt;1&gt;</>.
     </para>
 
     <para>
-     Parentheses can be used to enforce grouping of the operators:
+     Parentheses can be used to enforce grouping of these operators.
+     In the absence of parentheses, <literal>!</> (NOT) binds most tightly,
+     <literal>&lt;-&gt;</literal> (FOLLOWED BY) next most tightly, then
+     <literal>&amp;</literal> (AND), with <literal>|</literal> (OR) binding
+     the least tightly.
+    </para>
+
+    <para>
+     Here are some examples:
 
 <programlisting>
 SELECT 'fat &amp; rat'::tsquery;
@@ -3951,17 +3959,21 @@ SELECT 'fat &amp; rat &amp; ! cat'::tsquery;
         tsquery         
 ------------------------
  'fat' &amp; 'rat' &amp; !'cat'
+
+SELECT '(fat | rat) &lt;-&gt; cat'::tsquery;
+              tsquery
+-----------------------------------
+ 'fat' &lt;-&gt; 'cat' | 'rat' &lt;-&gt; 'cat'
 </programlisting>
 
-     In the absence of parentheses, <literal>!</> (NOT) binds most tightly,
-     and <literal>&amp;</literal> (AND) and <literal>&lt;-&gt;</literal> (FOLLOWED BY)
-     both bind more tightly than <literal>|</literal> (OR).
+     The last example demonstrates that <type>tsquery</type> sometimes
+     rearranges nested operators into a logically equivalent formulation.
     </para>
 
     <para>
      Optionally, lexemes in a <type>tsquery</type> can be labeled with
      one or more weight letters, which restricts them to match only
-     <type>tsvector</> lexemes with matching weights:
+     <type>tsvector</> lexemes with one of those weights:
 
 <programlisting>
 SELECT 'fat:ab &amp; cat'::tsquery;
@@ -3981,25 +3993,7 @@ SELECT 'super:*'::tsquery;
  'super':*
 </programlisting>
      This query will match any word in a <type>tsvector</> that begins
-     with <quote>super</>.  Note that prefixes are first processed by
-     text search configurations, which means this comparison returns
-     true:
-<programlisting>
-SELECT to_tsvector( 'postgraduate' ) @@ to_tsquery( 'postgres:*' );
- ?column? 
-----------
- t
-(1 row)
-</programlisting>
-     because <literal>postgres</> gets stemmed to <literal>postgr</>:
-<programlisting>
-SELECT to_tsquery('postgres:*');
- to_tsquery 
-------------
- 'postgr':*
-(1 row)
-</programlisting>
-     which then matches <literal>postgraduate</>.
+     with <quote>super</>.
     </para>
 
     <para>
@@ -4015,6 +4009,24 @@ SELECT to_tsquery('Fat:ab &amp; Cats');
 ------------------
  'fat':AB &amp; 'cat'
 </programlisting>
+
+     Note that <function>to_tsquery</> will process prefixes in the same way
+     as other words, which means this comparison returns true:
+
+<programlisting>
+SELECT to_tsvector( 'postgraduate' ) @@ to_tsquery( 'postgres:*' );
+ ?column?
+----------
+ t
+</programlisting>
+     because <literal>postgres</> gets stemmed to <literal>postgr</>:
+<programlisting>
+SELECT to_tsvector( 'postgraduate' ), to_tsquery( 'postgres:*' );
+  to_tsvector  | to_tsquery
+---------------+------------
+ 'postgradu':1 | 'postgr':*
+</programlisting>
+     which will match the stemmed form of <literal>postgraduate</>.
     </para>
 
    </sect2>

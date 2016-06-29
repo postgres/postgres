@@ -322,8 +322,7 @@ text @@ text
     match.  Similarly, the <literal>|</literal> (OR) operator specifies that
     at least one of its arguments must appear, while the <literal>!</> (NOT)
     operator specifies that its argument must <emphasis>not</> appear in
-    order to have a match.  Parentheses can be used to control nesting of
-    these operators.
+    order to have a match.
    </para>
 
    <para>
@@ -346,10 +345,10 @@ SELECT to_tsvector('error is not fatal') @@ to_tsquery('fatal &lt;-&gt; error');
 
     There is a more general version of the FOLLOWED BY operator having the
     form <literal>&lt;<replaceable>N</>&gt;</literal>,
-    where <replaceable>N</> is an integer standing for the exact distance
-    allowed between the matching lexemes.  <literal>&lt;1&gt;</literal> is
+    where <replaceable>N</> is an integer standing for the difference between
+    the positions of the matching lexemes.  <literal>&lt;1&gt;</literal> is
     the same as <literal>&lt;-&gt;</>, while <literal>&lt;2&gt;</literal>
-    allows one other lexeme to appear between the matches, and so
+    allows exactly one other lexeme to appear between the matches, and so
     on.  The <literal>phraseto_tsquery</> function makes use of this
     operator to construct a <literal>tsquery</> that can match a multi-word
     phrase when some of the words are stop words.  For example:
@@ -366,9 +365,17 @@ SELECT phraseto_tsquery('the cats ate the rats');
  'cat' &lt;-&gt; 'ate' &lt;2&gt; 'rat'
 </programlisting>
    </para>
+
    <para>
-     The precedence of tsquery operators is as follows: <literal>|</literal>, <literal>&amp;</literal>, 
-     <literal>&lt;-&gt;</literal>, <literal>!</literal>.
+    A special case that's sometimes useful is that <literal>&lt;0&gt;</literal>
+    can be used to require that two patterns match the same word.
+   </para>
+
+   <para>
+    Parentheses can be used to control nesting of the <type>tsquery</>
+    operators.  Without parentheses, <literal>|</literal> binds least tightly,
+    then <literal>&amp;</literal>, then <literal>&lt;-&gt;</literal>,
+    and <literal>!</literal> most tightly.
    </para>
   </sect2>
 
@@ -1423,9 +1430,10 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
        lacks any position or weight information.  The result is usually much
        smaller than an unstripped vector, but it is also less useful.
        Relevance ranking does not work as well on stripped vectors as
-       unstripped ones.  Also, when given stripped input,
+       unstripped ones.  Also,
        the <literal>&lt;-&gt;</> (FOLLOWED BY) <type>tsquery</> operator
-       effectively degenerates to a simple <literal>&amp;</> (AND) test.
+       will never match stripped input, since it cannot determine the
+       distance between lexeme occurrences.
       </para>
      </listitem>
 
