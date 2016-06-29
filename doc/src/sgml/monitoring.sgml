@@ -1302,6 +1302,14 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry><type>text</></entry>
      <entry>Replication slot name used by this WAL receiver</entry>
     </row>
+    <row>
+     <entry><structfield>conn_info</></entry>
+     <entry><type>text</></entry>
+     <entry>
+      Connection string used by this WAL receiver,
+      with security-sensitive fields obfuscated.
+     </entry>
+    </row>
    </tbody>
    </tgroup>
   </table>

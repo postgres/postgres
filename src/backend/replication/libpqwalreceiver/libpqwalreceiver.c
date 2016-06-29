@@ -20,6 +20,7 @@
 #include <sys/time.h>
 
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
 #include "replication/walreceiver.h"
@@ -47,6 +48,7 @@ static char *recvBuf = NULL;
 
 /* Prototypes for interface functions */
 static void libpqrcv_connect(char *conninfo);
+static char *libpqrcv_get_conninfo(void);
 static void libpqrcv_identify_system(TimeLineID *primary_tli);
 static void libpqrcv_readtimelinehistoryfile(TimeLineID tli, char **filename, char **content, int *len);
 static bool libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint,
@@ -74,6 +76,7 @@ _PG_init(void)
 		walrcv_disconnect != NULL)
 		elog(ERROR, "libpqwalreceiver already loaded");
 	walrcv_connect = libpqrcv_connect;
+	walrcv_get_conninfo = libpqrcv_get_conninfo;
 	walrcv_identify_system = libpqrcv_identify_system;
 	walrcv_readtimelinehistoryfile = libpqrcv_readtimelinehistoryfile;
 	walrcv_startstreaming = libpqrcv_startstreaming;
@@ -115,6 +118,55 @@ libpqrcv_connect(char *conninfo)
 		ereport(ERROR,
 				(errmsg("could not connect to the primary server: %s",
 						PQerrorMessage(streamConn))));
+}
+
+/*
+ * Return a user-displayable conninfo string.  Any security-sensitive fields
+ * are obfuscated.
+ */
+static char *
+libpqrcv_get_conninfo(void)
+{
+	PQconninfoOption *conn_opts;
+	PQconninfoOption *conn_opt;
+	PQExpBufferData	buf;
+	char	   *retval;
+
+	Assert(streamConn != NULL);
+
+	initPQExpBuffer(&buf);
+	conn_opts = PQconninfo(streamConn);
+
+	if (conn_opts == NULL)
+		ereport(ERROR,
+				(errmsg("could not parse connection string: %s",
+						_("out of memory"))));
+
+	/* build a clean connection string from pieces */
+	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
+	{
+		bool	obfuscate;
+
+		/* Skip debug and empty options */
+		if (strchr(conn_opt->dispchar, 'D') ||
+			conn_opt->val == NULL ||
+			conn_opt->val[0] == '\0')
+			continue;
+
+		/* Obfuscate security-sensitive options */
+		obfuscate = strchr(conn_opt->dispchar, '*') != NULL;
+
+		appendPQExpBuffer(&buf, "%s%s=%s",
+						  buf.len == 0 ? "" : " ",
+						  conn_opt->keyword,
+						  obfuscate ? "********" : conn_opt->val);
+	}
+
+	PQconninfoFree(conn_opts);
+
+	retval = PQExpBufferDataBroken(buf) ? NULL : pstrdup(buf.data);
+	termPQExpBuffer(&buf);
+	return retval;
 }
 
 /*

@@ -75,6 +75,7 @@ bool		hot_standby_feedback;
 
 /* libpqreceiver hooks to these when loaded */
 walrcv_connect_type walrcv_connect = NULL;
+walrcv_get_conninfo_type walrcv_get_conninfo = NULL;
 walrcv_identify_system_type walrcv_identify_system = NULL;
 walrcv_startstreaming_type walrcv_startstreaming = NULL;
 walrcv_endstreaming_type walrcv_endstreaming = NULL;
@@ -192,6 +193,7 @@ void
 WalReceiverMain(void)
 {
 	char		conninfo[MAXCONNINFO];
+	char	   *tmp_conninfo;
 	char		slotname[NAMEDATALEN];
 	XLogRecPtr	startpoint;
 	TimeLineID	startpointTLI;
@@ -282,7 +284,9 @@ WalReceiverMain(void)
 
 	/* Load the libpq-specific functions */
 	load_file("libpqwalreceiver", false);
-	if (walrcv_connect == NULL || walrcv_startstreaming == NULL ||
+	if (walrcv_connect == NULL ||
+		walrcv_get_conninfo == NULL ||
+		walrcv_startstreaming == NULL ||
 		walrcv_endstreaming == NULL ||
 		walrcv_identify_system == NULL ||
 		walrcv_readtimelinehistoryfile == NULL ||
@@ -303,6 +307,21 @@ WalReceiverMain(void)
 	EnableWalRcvImmediateExit();
 	walrcv_connect(conninfo);
 	DisableWalRcvImmediateExit();
+
+	/*
+	 * Save user-visible connection string.  This clobbers the original
+	 * conninfo, for security.
+	 */
+	tmp_conninfo = walrcv_get_conninfo();
+	SpinLockAcquire(&walrcv->mutex);
+	memset(walrcv->conninfo, 0, MAXCONNINFO);
+	if (tmp_conninfo)
+	{
+		strlcpy((char *) walrcv->conninfo, tmp_conninfo, MAXCONNINFO);
+		pfree(tmp_conninfo);
+	}
+	walrcv->ready_to_display = true;
+	SpinLockRelease(&walrcv->mutex);
 
 	first_stream = true;
 	for (;;)
@@ -1308,10 +1327,9 @@ WalRcvGetStateString(WalRcvState state)
 Datum
 pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_WAL_RECEIVER_COLS	11
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_WAL_RECEIVER_COLS];
-	bool		nulls[PG_STAT_GET_WAL_RECEIVER_COLS];
+	Datum	   *values;
+	bool	   *nulls;
 	WalRcvData *walrcv = WalRcv;
 	WalRcvState state;
 	XLogRecPtr	receive_start_lsn;
@@ -1323,41 +1341,33 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	XLogRecPtr	latest_end_lsn;
 	TimestampTz latest_end_time;
 	char	   *slotname;
+	char	   *conninfo;
 
 	/* No WAL receiver, just return a tuple with NULL values */
 	if (walrcv->pid == 0)
 		PG_RETURN_NULL();
 
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
+	/*
+	 * Users attempting to read this data mustn't be shown security sensitive
+	 * data, so sleep until everything has been properly obfuscated.
+	 */
+retry:
+	SpinLockAcquire(&walrcv->mutex);
+	if (!walrcv->ready_to_display)
+	{
+		SpinLockRelease(&walrcv->mutex);
+		CHECK_FOR_INTERRUPTS();
+		pg_usleep(1000);
+		goto retry;
+	}
+	SpinLockRelease(&walrcv->mutex);
 
-	/* Initialise attributes information in the tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_RECEIVER_COLS, false);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pid",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "status",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "receive_start_lsn",
-					   LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "receive_start_tli",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "received_lsn",
-					   LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "received_tli",
-					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "last_msg_send_time",
-					   TIMESTAMPTZOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "last_msg_receipt_time",
-					   TIMESTAMPTZOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "latest_end_lsn",
-					   LSNOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "latest_end_time",
-					   TIMESTAMPTZOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "slot_name",
-					   TEXTOID, -1, 0);
+	/* determine result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
-	BlessTupleDesc(tupdesc);
+	values = palloc0(sizeof(Datum) * tupdesc->natts);
+	nulls = palloc0(sizeof(bool) * tupdesc->natts);
 
 	/* Take a lock to ensure value consistency */
 	SpinLockAcquire(&walrcv->mutex);
@@ -1371,6 +1381,7 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	latest_end_lsn = walrcv->latestWalEnd;
 	latest_end_time = walrcv->latestWalEndTime;
 	slotname = pstrdup(walrcv->slotname);
+	conninfo = pstrdup(walrcv->conninfo);
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Fetch values */
@@ -1382,7 +1393,7 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 		 * Only superusers can see details. Other users only get the pid value
 		 * to know whether it is a WAL receiver, but no details.
 		 */
-		MemSet(&nulls[1], true, PG_STAT_GET_WAL_RECEIVER_COLS - 1);
+		MemSet(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
 	}
 	else
 	{
@@ -1418,6 +1429,10 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 			nulls[10] = true;
 		else
 			values[10] = CStringGetTextDatum(slotname);
+		if (*conninfo == '\0')
+			nulls[11] = true;
+		else
+			values[11] = CStringGetTextDatum(conninfo);
 	}
 
 	/* Returns the record as Datum */

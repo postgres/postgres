@@ -100,7 +100,8 @@ typedef struct
 	TimestampTz latestWalEndTime;
 
 	/*
-	 * connection string; is used for walreceiver to connect with the primary.
+	 * connection string; initially set to connect to the primary, and later
+	 * clobbered to hide security-sensitive fields.
 	 */
 	char		conninfo[MAXCONNINFO];
 
@@ -118,6 +119,9 @@ typedef struct
 	 */
 	bool		force_reply;
 
+	/* set true once conninfo is ready to display (obfuscated pwds etc) */
+	bool		ready_to_display;
+
 	/*
 	 * Latch used by startup process to wake up walreceiver after telling it
 	 * where to start streaming (after setting receiveStart and
@@ -132,6 +136,9 @@ extern WalRcvData *WalRcv;
 /* libpqwalreceiver hooks */
 typedef void (*walrcv_connect_type) (char *conninfo);
 extern PGDLLIMPORT walrcv_connect_type walrcv_connect;
+
+typedef char *(*walrcv_get_conninfo_type) (void);
+extern PGDLLIMPORT walrcv_get_conninfo_type walrcv_get_conninfo;
 
 typedef void (*walrcv_identify_system_type) (TimeLineID *primary_tli);
 extern PGDLLIMPORT walrcv_identify_system_type walrcv_identify_system;
