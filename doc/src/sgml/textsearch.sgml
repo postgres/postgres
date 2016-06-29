@@ -358,13 +358,17 @@ SELECT to_tsvector('error is not fatal') @@ to_tsquery('fatal &lt;-&gt; error');
 SELECT phraseto_tsquery('cats ate rats');
        phraseto_tsquery        
 -------------------------------
- ( 'cat' &lt;-&gt; 'ate' ) &lt;-&gt; 'rat'
+ 'cat' &lt;-&gt; 'ate' &lt;-&gt; 'rat'
 
 SELECT phraseto_tsquery('the cats ate the rats');
        phraseto_tsquery        
 -------------------------------
- ( 'cat' &lt;-&gt; 'ate' ) &lt;2&gt; 'rat'
+ 'cat' &lt;-&gt; 'ate' &lt;2&gt; 'rat'
 </programlisting>
+   </para>
+   <para>
+     The precedence of tsquery operators is as follows: <literal>|</literal>, <literal>&amp;</literal>, 
+     <literal>&lt;-&gt;</literal>, <literal>!</literal>.
    </para>
   </sect2>
 
@@ -923,7 +927,7 @@ SELECT phraseto_tsquery('english', 'The Fat Rats');
 SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
       phraseto_tsquery
 -----------------------------
- ( 'fat' &lt;-&gt; 'rat' ) &lt;-&gt; 'c'
+ 'fat' &lt;-&gt; 'rat' &lt;-&gt; 'c'
 </screen>
    </para>
 
