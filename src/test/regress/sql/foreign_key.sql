@@ -1009,3 +1009,13 @@ update pp set f1=f1+1;
 insert into cc values(13);
 update pp set f1=f1+1; -- fail
 drop table pp, cc;
+
+--
+-- Test interaction of foreign-key optimization with rules (bug #14219)
+--
+create temp table t1 (a integer primary key, b text);
+create temp table t2 (a integer primary key, b integer references t1);
+create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
+
+explain (costs off) delete from t1 where a = 1;
+delete from t1 where a = 1;

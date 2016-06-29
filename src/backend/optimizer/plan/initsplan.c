@@ -2329,9 +2329,24 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 	foreach(lc, root->fkey_list)
 	{
 		ForeignKeyOptInfo *fkinfo = (ForeignKeyOptInfo *) lfirst(lc);
-		RelOptInfo *con_rel = find_base_rel(root, fkinfo->con_relid);
-		RelOptInfo *ref_rel = find_base_rel(root, fkinfo->ref_relid);
+		RelOptInfo *con_rel;
+		RelOptInfo *ref_rel;
 		int			colno;
+
+		/*
+		 * Either relid might identify a rel that is in the query's rtable but
+		 * isn't referenced by the jointree so won't have a RelOptInfo.  Hence
+		 * don't use find_base_rel() here.  We can ignore such FKs.
+		 */
+		if (fkinfo->con_relid >= root->simple_rel_array_size ||
+			fkinfo->ref_relid >= root->simple_rel_array_size)
+			continue;			/* just paranoia */
+		con_rel = root->simple_rel_array[fkinfo->con_relid];
+		if (con_rel == NULL)
+			continue;
+		ref_rel = root->simple_rel_array[fkinfo->ref_relid];
+		if (ref_rel == NULL)
+			continue;
 
 		/*
 		 * Ignore FK unless both rels are baserels.  This gets rid of FKs that

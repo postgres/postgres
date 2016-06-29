@@ -1359,3 +1359,25 @@ update pp set f1=f1+1; -- fail
 ERROR:  update or delete on table "pp" violates foreign key constraint "cc_f1_fkey" on table "cc"
 DETAIL:  Key (f1)=(13) is still referenced from table "cc".
 drop table pp, cc;
+--
+-- Test interaction of foreign-key optimization with rules (bug #14219)
+--
+create temp table t1 (a integer primary key, b text);
+create temp table t2 (a integer primary key, b integer references t1);
+create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
+explain (costs off) delete from t1 where a = 1;
+                 QUERY PLAN                 
+--------------------------------------------
+ Delete on t2
+   ->  Nested Loop
+         ->  Index Scan using t1_pkey on t1
+               Index Cond: (a = 1)
+         ->  Seq Scan on t2
+               Filter: (b = 1)
+ 
+ Delete on t1
+   ->  Index Scan using t1_pkey on t1
+         Index Cond: (a = 1)
+(10 rows)
+
+delete from t1 where a = 1;
