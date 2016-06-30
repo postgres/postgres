@@ -232,7 +232,7 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 			pq_getmsgend(msg);
 			break;
 		}
-		value = pq_getmsgstring(msg);
+		value = pq_getmsgrawstring(msg);
 
 		switch (code)
 		{

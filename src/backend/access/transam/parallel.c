@@ -810,7 +810,17 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 		case 'A':				/* NotifyResponse */
 			{
 				/* Propagate NotifyResponse. */
-				pq_putmessage(msg->data[0], &msg->data[1], msg->len - 1);
+				int32		pid;
+				const char *channel;
+				const char *payload;
+
+				pid = pq_getmsgint(msg, 4);
+				channel = pq_getmsgrawstring(msg);
+				payload = pq_getmsgrawstring(msg);
+				pq_endmessage(msg);
+
+				NotifyMyFrontEnd(channel, payload, pid);
+
 				break;
 			}
 
@@ -987,6 +997,12 @@ ParallelWorkerMain(Datum main_arg)
 	/* Restore database connection. */
 	BackgroundWorkerInitializeConnectionByOid(fps->database_id,
 											  fps->authenticated_user_id);
+
+	/*
+	 * Set the client encoding to the database encoding, since that is what
+	 * the leader will expect.
+	 */
+	SetClientEncoding(GetDatabaseEncoding());
 
 	/* Restore GUC values from launching backend. */
 	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC);

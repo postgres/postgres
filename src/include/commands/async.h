@@ -28,6 +28,10 @@ extern volatile sig_atomic_t notifyInterruptPending;
 extern Size AsyncShmemSize(void);
 extern void AsyncShmemInit(void);
 
+extern void NotifyMyFrontEnd(const char *channel,
+							 const char *payload,
+							 int32 srcPid);
+
 /* notify-related SQL statements */
 extern void Async_Notify(const char *channel, const char *payload);
 extern void Async_Listen(const char *channel);
