@@ -2016,7 +2016,8 @@ RestoreSnapshot(char *start_address)
 	/* Copy SubXIDs, if present. */
 	if (serialized_snapshot->subxcnt > 0)
 	{
-		snapshot->subxip = snapshot->xip + serialized_snapshot->xcnt;
+		snapshot->subxip = ((TransactionId *) (snapshot + 1)) +
+			serialized_snapshot->xcnt;
 		memcpy(snapshot->subxip, serialized_xids + serialized_snapshot->xcnt,
 			   serialized_snapshot->subxcnt * sizeof(TransactionId));
 	}
