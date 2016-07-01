@@ -4528,6 +4528,7 @@ conversion_error_callback(void *arg)
 {
 	const char *attname = NULL;
 	const char *relname = NULL;
+	bool		is_wholerow = false;
 	ConversionLocation *errpos = (ConversionLocation *) arg;
 
 	if (errpos->rel)
@@ -4560,12 +4561,22 @@ conversion_error_callback(void *arg)
 		Assert(IsA(var, Var));
 
 		rte = rt_fetch(var->varno, estate->es_range_table);
+
+		if (var->varattno == 0)
+			is_wholerow = true;
+		else
+			attname = get_relid_attribute_name(rte->relid, var->varattno);
+
 		relname = get_rel_name(rte->relid);
-		attname = get_relid_attribute_name(rte->relid, var->varattno);
 	}
 
-	if (attname && relname)
-		errcontext("column \"%s\" of foreign table \"%s\"", attname, relname);
+	if (relname)
+	{
+		if (is_wholerow)
+			errcontext("whole-row reference to foreign table \"%s\"", relname);
+		else if (attname)
+			errcontext("column \"%s\" of foreign table \"%s\"", attname, relname);
+	}
 }
 
 /*
