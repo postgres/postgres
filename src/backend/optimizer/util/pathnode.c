@@ -2177,7 +2177,8 @@ create_projection_path(PlannerInfo *root,
 	pathnode->path.param_info = NULL;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
-		subpath->parallel_safe;
+		subpath->parallel_safe &&
+		!has_parallel_hazard((Node *) target->exprs, false);
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Projection does not change the sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
@@ -2303,6 +2304,16 @@ apply_projection_to_path(PlannerInfo *root,
 								   gpath->subpath->parent,
 								   gpath->subpath,
 								   target);
+	}
+	else if (path->parallel_safe &&
+			 has_parallel_hazard((Node *) target->exprs, false))
+	{
+		/*
+		 * We're inserting a parallel-restricted target list into a path
+		 * currently marked parallel-safe, so we have to mark it as no longer
+		 * safe.
+		 */
+		path->parallel_safe = false;
 	}
 
 	return path;

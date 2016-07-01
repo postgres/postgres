@@ -320,10 +320,6 @@ create_plan(PlannerInfo *root, Path *best_path)
 	 */
 	SS_attach_initplans(root, plan);
 
-	/* Update parallel safety information if needed. */
-	if (!best_path->parallel_safe)
-		root->glob->wholePlanParallelSafe = false;
-
 	/* Check we successfully assigned all NestLoopParams to plan nodes */
 	if (root->curOuterParams != NIL)
 		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");

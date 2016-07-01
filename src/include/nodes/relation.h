@@ -127,8 +127,6 @@ typedef struct PlannerGlobal
 
 	bool		parallelModeNeeded;		/* parallel mode actually required? */
 
-	bool		wholePlanParallelSafe;	/* is the entire plan parallel safe? */
-
 	bool		hasForeignJoin; /* does have a pushed down foreign join */
 } PlannerGlobal;
 
@@ -655,7 +653,7 @@ typedef struct ForeignKeyOptInfo
 	struct EquivalenceClass *eclass[INDEX_MAX_KEYS];
 	/* List of non-EC RestrictInfos matching each column's condition */
 	List	   *rinfos[INDEX_MAX_KEYS];
-} ForeignKeyOptInfo;
+}	ForeignKeyOptInfo;
 
 
 /*

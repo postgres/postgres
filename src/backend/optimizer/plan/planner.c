@@ -108,10 +108,6 @@ static double get_number_of_groups(PlannerInfo *root,
 					 double path_rows,
 					 List *rollup_lists,
 					 List *rollup_groupclauses);
-static void set_grouped_rel_consider_parallel(PlannerInfo *root,
-								  RelOptInfo *grouped_rel,
-								  PathTarget *target,
-								  const AggClauseCosts *agg_costs);
 static Size estimate_hashagg_tablesize(Path *path,
 						   const AggClauseCosts *agg_costs,
 						   double dNumGroups);
@@ -255,29 +251,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	/*
 	 * glob->parallelModeNeeded should tell us whether it's necessary to
 	 * impose the parallel mode restrictions, but we don't actually want to
-	 * impose them unless we choose a parallel plan, so that people who
-	 * mislabel their functions but don't use parallelism anyway aren't
-	 * harmed. But when force_parallel_mode is set, we enable the restrictions
-	 * whenever possible for testing purposes.
-	 *
-	 * glob->wholePlanParallelSafe should tell us whether it's OK to stick a
-	 * Gather node on top of the entire plan.  However, it only needs to be
-	 * accurate when force_parallel_mode is 'on' or 'regress', so we don't
-	 * bother doing the work otherwise.  The value we set here is just a
-	 * preliminary guess; it may get changed from true to false later, but not
-	 * vice versa.
+	 * impose them unless we choose a parallel plan, so it is normally set
+	 * only if a parallel plan is chosen (see create_gather_plan).  That way,
+	 * people who mislabel their functions but don't use parallelism anyway
+	 * aren't harmed.  But when force_parallel_mode is set, we enable the
+	 * restrictions whenever possible for testing purposes.
 	 */
-	if (force_parallel_mode == FORCE_PARALLEL_OFF || !glob->parallelModeOK)
-	{
-		glob->parallelModeNeeded = false;
-		glob->wholePlanParallelSafe = false;	/* either false or don't care */
-	}
-	else
-	{
-		glob->parallelModeNeeded = true;
-		glob->wholePlanParallelSafe =
-			!has_parallel_hazard((Node *) parse, false);
-	}
+	glob->parallelModeNeeded = glob->parallelModeOK &&
+		(force_parallel_mode != FORCE_PARALLEL_OFF);
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (cursorOptions & CURSOR_OPT_FAST_PLAN)
@@ -328,19 +309,10 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	}
 
 	/*
-	 * At present, we don't copy subplans to workers.  The presence of a
-	 * subplan in one part of the plan doesn't preclude the use of parallelism
-	 * in some other part of the plan, but it does preclude the possibility of
-	 * regarding the entire plan parallel-safe.
-	 */
-	if (glob->subplans != NULL)
-		glob->wholePlanParallelSafe = false;
-
-	/*
 	 * Optionally add a Gather node for testing purposes, provided this is
 	 * actually a safe thing to do.
 	 */
-	if (glob->wholePlanParallelSafe &&
+	if (best_path->parallel_safe &&
 		force_parallel_mode != FORCE_PARALLEL_OFF)
 	{
 		Gather	   *gather = makeNode(Gather);
@@ -1925,6 +1897,21 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	 */
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
 
+	/*
+	 * If the input rel is marked consider_parallel and there's nothing that's
+	 * not parallel-safe in the LIMIT clause, then the final_rel can be marked
+	 * consider_parallel as well.  Note that if the query has rowMarks or is
+	 * not a SELECT, consider_parallel will be false for every relation in the
+	 * query.
+	 */
+	if (current_rel->consider_parallel &&
+		!has_parallel_hazard(parse->limitOffset, false) &&
+		!has_parallel_hazard(parse->limitCount, false))
+		final_rel->consider_parallel = true;
+
+	/*
+	 * Generate paths for the final rel.
+	 */
 	foreach(lc, current_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
@@ -3204,56 +3191,6 @@ get_number_of_groups(PlannerInfo *root,
 }
 
 /*
- * set_grouped_rel_consider_parallel
- *	  Determine if it's safe to generate partial paths for grouping.
- */
-static void
-set_grouped_rel_consider_parallel(PlannerInfo *root, RelOptInfo *grouped_rel,
-								  PathTarget *target,
-								  const AggClauseCosts *agg_costs)
-{
-	Query	   *parse = root->parse;
-
-	Assert(grouped_rel->reloptkind == RELOPT_UPPER_REL);
-
-	/*
-	 * If there are no aggregates or GROUP BY clause, then no parallel
-	 * aggregation is possible.  At present, it doesn't matter whether
-	 * consider_parallel gets set in this case, because none of the upper rels
-	 * on top of this one try to set the flag or examine it, so we just bail
-	 * out as quickly as possible.  We might need to be more clever here in
-	 * the future.
-	 */
-	if (!parse->hasAggs && parse->groupClause == NIL)
-		return;
-
-	/*
-	 * Similarly, bail out quickly if GROUPING SETS are present; we can't
-	 * support those at present.
-	 */
-	if (parse->groupingSets)
-		return;
-
-	/*
-	 * If parallel-restricted functions are present in the target list or the
-	 * HAVING clause, we cannot safely go parallel.
-	 */
-	if (has_parallel_hazard((Node *) target->exprs, false) ||
-		has_parallel_hazard((Node *) parse->havingQual, false))
-		return;
-
-	/*
-	 * If we have any non-partial-capable aggregates, or if any of them can't
-	 * be serialized, we can't go parallel.
-	 */
-	if (agg_costs->hasNonPartial || agg_costs->hasNonSerial)
-		return;
-
-	/* OK, consider parallelization */
-	grouped_rel->consider_parallel = true;
-}
-
-/*
  * estimate_hashagg_tablesize
  *	  estimate the number of bytes that a hash aggregate hashtable will
  *	  require based on the agg_costs, path width and dNumGroups.
@@ -3314,11 +3251,22 @@ create_grouping_paths(PlannerInfo *root,
 	double		dNumPartialGroups = 0;
 	bool		can_hash;
 	bool		can_sort;
+	bool		try_parallel_aggregation;
 
 	ListCell   *lc;
 
 	/* For now, do all work in the (GROUP_AGG, NULL) upperrel */
 	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
+
+	/*
+	 * If the input relation is not parallel-safe, then the grouped relation
+	 * can't be parallel-safe, either.  Otherwise, it's parallel-safe if the
+	 * target list and HAVING quals are parallel-safe.
+	 */
+	if (input_rel->consider_parallel &&
+		!has_parallel_hazard((Node *) target->exprs, false) &&
+		!has_parallel_hazard((Node *) parse->havingQual, false))
+		grouped_rel->consider_parallel = true;
 
 	/*
 	 * Check for degenerate grouping.
@@ -3408,15 +3356,6 @@ create_grouping_paths(PlannerInfo *root,
 									  rollup_groupclauses);
 
 	/*
-	 * Partial paths in the input rel could allow us to perform aggregation in
-	 * parallel. set_grouped_rel_consider_parallel() will determine if it's
-	 * going to be safe to do so.
-	 */
-	if (input_rel->partial_pathlist != NIL)
-		set_grouped_rel_consider_parallel(root, grouped_rel,
-										  target, &agg_costs);
-
-	/*
 	 * Determine whether it's possible to perform sort-based implementations
 	 * of grouping.  (Note that if groupClause is empty,
 	 * grouping_is_sortable() is trivially true, and all the
@@ -3448,6 +3387,46 @@ create_grouping_paths(PlannerInfo *root,
 				grouping_is_hashable(parse->groupClause));
 
 	/*
+	 * If grouped_rel->consider_parallel is true, then paths that we generate
+	 * for this grouping relation could be run inside of a worker, but that
+	 * doesn't mean we can actually use the PartialAggregate/FinalizeAggregate
+	 * execution strategy.  Figure that out.
+	 */
+	if (!grouped_rel->consider_parallel)
+	{
+		/* Not even parallel-safe. */
+		try_parallel_aggregation = false;
+	}
+	else if (input_rel->partial_pathlist == NIL)
+	{
+		/* Nothing to use as input for partial aggregate. */
+		try_parallel_aggregation = false;
+	}
+	else if (!parse->hasAggs && parse->groupClause == NIL)
+	{
+		/*
+		 * We don't know how to do parallel aggregation unless we have either
+		 * some aggregates or a grouping clause.
+		 */
+		try_parallel_aggregation = false;
+	}
+	else if (parse->groupingSets)
+	{
+		/* We don't know how to do grouping sets in parallel. */
+		try_parallel_aggregation = false;
+	}
+	else if (agg_costs.hasNonPartial || agg_costs.hasNonSerial)
+	{
+		/* Insufficient support for partial mode. */
+		try_parallel_aggregation = false;
+	}
+	else
+	{
+		/* Everything looks good. */
+		try_parallel_aggregation = true;
+	}
+
+	/*
 	 * Before generating paths for grouped_rel, we first generate any possible
 	 * partial paths; that way, later code can easily consider both parallel
 	 * and non-parallel approaches to grouping.  Note that the partial paths
@@ -3455,7 +3434,7 @@ create_grouping_paths(PlannerInfo *root,
 	 * Gather node on top is insufficient to create a final path, as would be
 	 * the case for a scan/join rel.
 	 */
-	if (grouped_rel->consider_parallel)
+	if (try_parallel_aggregation)
 	{
 		Path	   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
 
@@ -3498,7 +3477,7 @@ create_grouping_paths(PlannerInfo *root,
 
 		if (can_sort)
 		{
-			/* Checked in set_grouped_rel_consider_parallel() */
+			/* This was checked before setting try_parallel_aggregation */
 			Assert(parse->hasAggs || parse->groupClause);
 
 			/*
@@ -3832,6 +3811,16 @@ create_window_paths(PlannerInfo *root,
 	window_rel = fetch_upper_rel(root, UPPERREL_WINDOW, NULL);
 
 	/*
+	 * If the input relation is not parallel-safe, then the window relation
+	 * can't be parallel-safe, either.  Otherwise, we need to examine the
+	 * target list and active windows for non-parallel-safe constructs.
+	 */
+	if (input_rel->consider_parallel &&
+		!has_parallel_hazard((Node *) output_target->exprs, false) &&
+		!has_parallel_hazard((Node *) activeWindows, false))
+		window_rel->consider_parallel = true;
+
+	/*
 	 * Consider computing window functions starting from the existing
 	 * cheapest-total path (which will likely require a sort) as well as any
 	 * existing paths that satisfy root->window_pathkeys (which won't).
@@ -3985,6 +3974,15 @@ create_distinct_paths(PlannerInfo *root,
 
 	/* For now, do all work in the (DISTINCT, NULL) upperrel */
 	distinct_rel = fetch_upper_rel(root, UPPERREL_DISTINCT, NULL);
+
+	/*
+	 * We don't compute anything at this level, so distinct_rel will be
+	 * parallel-safe if the input rel is parallel-safe.  In particular, if
+	 * there is a DISTINCT ON (...) clause, any path for the input_rel will
+	 * output those expressions, and will not be parallel-safe unless those
+	 * expressions are parallel-safe.
+	 */
+	distinct_rel->consider_parallel = input_rel->consider_parallel;
 
 	/* Estimate number of distinct rows there will be */
 	if (parse->groupClause || parse->groupingSets || parse->hasAggs ||
@@ -4168,6 +4166,15 @@ create_ordered_paths(PlannerInfo *root,
 
 	/* For now, do all work in the (ORDERED, NULL) upperrel */
 	ordered_rel = fetch_upper_rel(root, UPPERREL_ORDERED, NULL);
+
+	/*
+	 * If the input relation is not parallel-safe, then the ordered relation
+	 * can't be parallel-safe, either.  Otherwise, it's parallel-safe if the
+	 * target list is parallel-safe.
+	 */
+	if (input_rel->consider_parallel &&
+		!has_parallel_hazard((Node *) target->exprs, false))
+		ordered_rel->consider_parallel = true;
 
 	foreach(lc, input_rel->pathlist)
 	{
