@@ -300,7 +300,7 @@ extern CkptSortItem *CkptBufferIds;
  * Internal buffer management routines
  */
 /* bufmgr.c */
-extern void WritebackContextInit(WritebackContext *context, int *max_coalesce);
+extern void WritebackContextInit(WritebackContext *context, int *max_pending);
 extern void IssuePendingWritebacks(WritebackContext *context);
 extern void ScheduleBufferTagForWriteback(WritebackContext *context, BufferTag *tag);
 
