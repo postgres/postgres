@@ -246,6 +246,7 @@ WalReceiverMain(void)
 	walrcv->walRcvState = WALRCV_STREAMING;
 
 	/* Fetch information required to start streaming */
+	walrcv->ready_to_display = false;
 	strlcpy(conninfo, (char *) walrcv->conninfo, MAXCONNINFO);
 	strlcpy(slotname, (char *) walrcv->slotname, NAMEDATALEN);
 	startpoint = walrcv->receiveStart;
@@ -770,6 +771,7 @@ WalRcvDie(int code, Datum arg)
 	Assert(walrcv->pid == MyProcPid);
 	walrcv->walRcvState = WALRCV_STOPPED;
 	walrcv->pid = 0;
+	walrcv->ready_to_display = false;
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Terminate the connection gracefully. */
@@ -1343,24 +1345,12 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	char	   *slotname;
 	char	   *conninfo;
 
-	/* No WAL receiver, just return a tuple with NULL values */
-	if (walrcv->pid == 0)
-		PG_RETURN_NULL();
-
 	/*
-	 * Users attempting to read this data mustn't be shown security sensitive
-	 * data, so sleep until everything has been properly obfuscated.
+	 * No WAL receiver (or not ready yet), just return a tuple with NULL
+	 * values
 	 */
-retry:
-	SpinLockAcquire(&walrcv->mutex);
-	if (!walrcv->ready_to_display)
-	{
-		SpinLockRelease(&walrcv->mutex);
-		CHECK_FOR_INTERRUPTS();
-		pg_usleep(1000);
-		goto retry;
-	}
-	SpinLockRelease(&walrcv->mutex);
+	if (walrcv->pid == 0 || !walrcv->ready_to_display)
+		PG_RETURN_NULL();
 
 	/* determine result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
