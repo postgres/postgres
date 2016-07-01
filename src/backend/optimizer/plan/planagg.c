@@ -205,7 +205,10 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 	 * will likely always win, but we need not assume that here.)
 	 *
 	 * Note: grouping_planner won't have created this upperrel yet, but it's
-	 * fine for us to create it first.
+	 * fine for us to create it first.  We will not have inserted the correct
+	 * consider_parallel value in it, but MinMaxAggPath paths are currently
+	 * never parallel-safe anyway, so that doesn't matter.  Likewise, it
+	 * doesn't matter that we haven't filled FDW-related fields in the rel.
 	 */
 	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
 	add_path(grouped_rel, (Path *)

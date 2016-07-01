@@ -174,6 +174,10 @@ plan_set_operations(PlannerInfo *root)
 	 */
 	setop_rel = fetch_upper_rel(root, UPPERREL_SETOP, NULL);
 
+	/*
+	 * We don't currently worry about setting setop_rel's consider_parallel
+	 * flag, nor about allowing FDWs to contribute paths to it.
+	 */
 
 	/*
 	 * If the topmost node is a recursive union, it needs special processing.

@@ -357,7 +357,9 @@ GetForeignJoinPaths (PlannerInfo *root,
 <programlisting>
 void
 GetForeignUpperPaths (PlannerInfo *root,
-                      RelOptInfo *scan_join_rel);
+                      UpperRelationKind stage,
+                      RelOptInfo *input_rel,
+                      RelOptInfo *output_rel);
 </programlisting>
      Create possible access paths for <firstterm>upper relation</> processing,
      which is the planner's term for all post-scan/join query processing, such
@@ -365,11 +367,24 @@ GetForeignUpperPaths (PlannerInfo *root,
      optional function is called during query planning.  Currently, it is
      called only if all base relation(s) involved in the query belong to the
      same FDW.  This function should generate <structname>ForeignPath</>
-     path(s) for the steps that the FDW knows how to perform remotely, and
-     call <function>add_path</> to add these paths to the appropriate upper
-     relation.  As with <function>GetForeignJoinPaths</>, it is not necessary
-     that this function succeed in creating any paths, since paths involving
-     local processing are always possible.
+     path(s) for any post-scan/join processing that the FDW knows how to
+     perform remotely, and call <function>add_path</> to add these paths to
+     the indicated upper relation.  As with <function>GetForeignJoinPaths</>,
+     it is not necessary that this function succeed in creating any paths,
+     since paths involving local processing are always possible.
+    </para>
+
+    <para>
+     The <literal>stage</> parameter identifies which post-scan/join step is
+     currently being considered.  <literal>output_rel</> is the upper relation
+     that should receive paths representing computation of this step,
+     and <literal>input_rel</> is the relation representing the input to this
+     step.  (Note that <structname>ForeignPath</> paths added
+     to <literal>output_rel</> would typically not have any direct dependency
+     on paths of the <literal>input_rel</>, since their processing is expected
+     to be done externally.  However, examining paths previously generated for
+     the previous processing step can be useful to avoid redundant planning
+     work.)
     </para>
 
     <para>
@@ -1530,20 +1545,20 @@ GetForeignServerByName(const char *name, bool missing_ok);
     <para>
      An FDW might additionally support direct execution of some plan actions
      that are above the level of scans and joins, such as grouping or
-     aggregation.  To offer such options, the FDW should generate paths
-     and insert them into the
-     appropriate <firstterm>upper relation</>.  For example, a path
-     representing remote aggregation should be inserted into the relation
-     obtained from <literal>fetch_upper_rel(root, UPPERREL_GROUP_AGG,
-     NULL)</>, using <function>add_path</>.  This path will be compared on a
-     cost basis with local aggregation performed by reading a simple scan path
-     for the foreign relation (note that such a path must also be supplied,
-     else there will be an error at plan time).  If the remote-aggregation
-     path wins, which it usually would, it will be converted into a plan in
-     the usual way, by calling <function>GetForeignPlan</>.
-     Usually the most convenient place to generate such paths is in
-     the <function>GetForeignUpperPaths</> callback function, although
-     it can be done earlier if that seems appropriate.
+     aggregation.  To offer such options, the FDW should generate paths and
+     insert them into the appropriate <firstterm>upper relation</>.  For
+     example, a path representing remote aggregation should be inserted into
+     the <literal>UPPERREL_GROUP_AGG</> relation, using <function>add_path</>.
+     This path will be compared on a cost basis with local aggregation
+     performed by reading a simple scan path for the foreign relation (note
+     that such a path must also be supplied, else there will be an error at
+     plan time).  If the remote-aggregation path wins, which it usually would,
+     it will be converted into a plan in the usual way, by
+     calling <function>GetForeignPlan</>.  The recommended place to generate
+     such paths is in the <function>GetForeignUpperPaths</>
+     callback function, which is called for each upper relation (i.e., each
+     post-scan/join processing step), if all the base relations of the query
+     come from the same FDW.
     </para>
 
     <para>

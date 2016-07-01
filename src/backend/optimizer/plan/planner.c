@@ -1292,6 +1292,12 @@ inheritance_planner(PlannerInfo *root)
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
 
 	/*
+	 * We don't currently worry about setting final_rel's consider_parallel
+	 * flag in this case, nor about allowing FDWs or create_upper_paths_hook
+	 * to get control here.
+	 */
+
+	/*
 	 * If we managed to exclude every child rel, return a dummy plan; it
 	 * doesn't even need a ModifyTable node.
 	 */
@@ -1789,21 +1795,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		root->upper_targets[UPPERREL_GROUP_AGG] = grouping_target;
 
 		/*
-		 * If there is an FDW that's responsible for the final scan/join rel,
-		 * let it consider injecting extension Paths into the query's
-		 * upperrels, where they will compete with the Paths we create below.
-		 * We pass the final scan/join rel because that's not so easily
-		 * findable from the PlannerInfo struct; anything else the FDW wants
-		 * to know should be obtainable via "root".
-		 *
-		 * Note: CustomScan providers, as well as FDWs that don't want to use
-		 * this hook, can use the create_upper_paths_hook; see below.
-		 */
-		if (current_rel->fdwroutine &&
-			current_rel->fdwroutine->GetForeignUpperPaths)
-			current_rel->fdwroutine->GetForeignUpperPaths(root, current_rel);
-
-		/*
 		 * If we have grouping and/or aggregation, consider ways to implement
 		 * that.  We build a new upperrel representing the output of this
 		 * phase.
@@ -1891,9 +1882,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	}
 
 	/*
-	 * Now we are prepared to build the final-output upperrel.  Insert all
-	 * surviving paths, with LockRows, Limit, and/or ModifyTable steps added
-	 * if needed.
+	 * Now we are prepared to build the final-output upperrel.
 	 */
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
 
@@ -1910,7 +1899,15 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		final_rel->consider_parallel = true;
 
 	/*
-	 * Generate paths for the final rel.
+	 * If the current_rel belongs to a single FDW, so does the final_rel.
+	 */
+	final_rel->serverid = current_rel->serverid;
+	final_rel->umid = current_rel->umid;
+	final_rel->fdwroutine = current_rel->fdwroutine;
+
+	/*
+	 * Generate paths for the final_rel.  Insert all surviving paths, with
+	 * LockRows, Limit, and/or ModifyTable steps added if needed.
 	 */
 	foreach(lc, current_rel->pathlist)
 	{
@@ -1993,6 +1990,15 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		/* And shove it into final_rel */
 		add_path(final_rel, path);
 	}
+
+	/*
+	 * If there is an FDW that's responsible for all baserels of the query,
+	 * let it consider adding ForeignPaths.
+	 */
+	if (final_rel->fdwroutine &&
+		final_rel->fdwroutine->GetForeignUpperPaths)
+		final_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_FINAL,
+													current_rel, final_rel);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
@@ -3269,6 +3275,13 @@ create_grouping_paths(PlannerInfo *root,
 		grouped_rel->consider_parallel = true;
 
 	/*
+	 * If the input rel belongs to a single FDW, so does the grouped rel.
+	 */
+	grouped_rel->serverid = input_rel->serverid;
+	grouped_rel->umid = input_rel->umid;
+	grouped_rel->fdwroutine = input_rel->fdwroutine;
+
+	/*
 	 * Check for degenerate grouping.
 	 */
 	if ((root->hasHavingQual || parse->groupingSets) &&
@@ -3770,6 +3783,15 @@ create_grouping_paths(PlannerInfo *root,
 				 errmsg("could not implement GROUP BY"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 
+	/*
+	 * If there is an FDW that's responsible for all baserels of the query,
+	 * let it consider adding ForeignPaths.
+	 */
+	if (grouped_rel->fdwroutine &&
+		grouped_rel->fdwroutine->GetForeignUpperPaths)
+		grouped_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_GROUP_AGG,
+													  input_rel, grouped_rel);
+
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_GROUP_AGG,
@@ -3821,6 +3843,13 @@ create_window_paths(PlannerInfo *root,
 		window_rel->consider_parallel = true;
 
 	/*
+	 * If the input rel belongs to a single FDW, so does the window rel.
+	 */
+	window_rel->serverid = input_rel->serverid;
+	window_rel->umid = input_rel->umid;
+	window_rel->fdwroutine = input_rel->fdwroutine;
+
+	/*
 	 * Consider computing window functions starting from the existing
 	 * cheapest-total path (which will likely require a sort) as well as any
 	 * existing paths that satisfy root->window_pathkeys (which won't).
@@ -3840,6 +3869,15 @@ create_window_paths(PlannerInfo *root,
 								   wflists,
 								   activeWindows);
 	}
+
+	/*
+	 * If there is an FDW that's responsible for all baserels of the query,
+	 * let it consider adding ForeignPaths.
+	 */
+	if (window_rel->fdwroutine &&
+		window_rel->fdwroutine->GetForeignUpperPaths)
+		window_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_WINDOW,
+													 input_rel, window_rel);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
@@ -3983,6 +4021,13 @@ create_distinct_paths(PlannerInfo *root,
 	 * expressions are parallel-safe.
 	 */
 	distinct_rel->consider_parallel = input_rel->consider_parallel;
+
+	/*
+	 * If the input rel belongs to a single FDW, so does the distinct_rel.
+	 */
+	distinct_rel->serverid = input_rel->serverid;
+	distinct_rel->umid = input_rel->umid;
+	distinct_rel->fdwroutine = input_rel->fdwroutine;
 
 	/* Estimate number of distinct rows there will be */
 	if (parse->groupClause || parse->groupingSets || parse->hasAggs ||
@@ -4129,6 +4174,15 @@ create_distinct_paths(PlannerInfo *root,
 				 errmsg("could not implement DISTINCT"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 
+	/*
+	 * If there is an FDW that's responsible for all baserels of the query,
+	 * let it consider adding ForeignPaths.
+	 */
+	if (distinct_rel->fdwroutine &&
+		distinct_rel->fdwroutine->GetForeignUpperPaths)
+		distinct_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_DISTINCT,
+													input_rel, distinct_rel);
+
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
 		(*create_upper_paths_hook) (root, UPPERREL_DISTINCT,
@@ -4176,6 +4230,13 @@ create_ordered_paths(PlannerInfo *root,
 		!has_parallel_hazard((Node *) target->exprs, false))
 		ordered_rel->consider_parallel = true;
 
+	/*
+	 * If the input rel belongs to a single FDW, so does the ordered_rel.
+	 */
+	ordered_rel->serverid = input_rel->serverid;
+	ordered_rel->umid = input_rel->umid;
+	ordered_rel->fdwroutine = input_rel->fdwroutine;
+
 	foreach(lc, input_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
@@ -4203,6 +4264,15 @@ create_ordered_paths(PlannerInfo *root,
 			add_path(ordered_rel, path);
 		}
 	}
+
+	/*
+	 * If there is an FDW that's responsible for all baserels of the query,
+	 * let it consider adding ForeignPaths.
+	 */
+	if (ordered_rel->fdwroutine &&
+		ordered_rel->fdwroutine->GetForeignUpperPaths)
+		ordered_rel->fdwroutine->GetForeignUpperPaths(root, UPPERREL_ORDERED,
+													  input_rel, ordered_rel);
 
 	/* Let extensions possibly add some more paths */
 	if (create_upper_paths_hook)
