@@ -5967,7 +5967,8 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 		tle = get_tle_by_resno(dpns->inner_tlist, var->varattno);
 		if (!tle)
-			elog(ERROR, "bogus varattno for subquery var: %d", var->varattno);
+			elog(ERROR, "invalid attnum %d for relation \"%s\"",
+				 var->varattno, rte->eref->aliasname);
 
 		Assert(netlevelsup == 0);
 		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
@@ -6028,9 +6029,13 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	else if (attnum > 0)
 	{
 		/* Get column name to use from the colinfo struct */
-		Assert(attnum <= colinfo->num_cols);
+		if (attnum > colinfo->num_cols)
+			elog(ERROR, "invalid attnum %d for relation \"%s\"",
+				 attnum, rte->eref->aliasname);
 		attname = colinfo->colnames[attnum - 1];
-		Assert(attname != NULL);
+		if (attname == NULL)	/* dropped column? */
+			elog(ERROR, "invalid attnum %d for relation \"%s\"",
+				 attnum, rte->eref->aliasname);
 	}
 	else
 	{
