@@ -17,9 +17,6 @@ SUBDIRS = \
 		  test_shm_mq \
 		  worker_spi
 
-all: submake-errcodes
-
-submake-errcodes:
-	$(MAKE) -C $(top_builddir)/src/backend submake-errcodes
+all: submake-generated-headers
 
 $(recurse)

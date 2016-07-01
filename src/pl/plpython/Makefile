@@ -95,7 +95,7 @@ REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-all: all-lib
+all: submake-generated-headers all-lib
 
 
 install: all install-lib install-data
@@ -119,15 +119,15 @@ uninstall-data:
 include $(srcdir)/regress-python3-mangle.mk
 
 
-check: submake
+check: submake-pg-regress
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
-installcheck: submake
+installcheck: submake-pg-regress
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 
 
-.PHONY: submake
-submake:
+.PHONY: submake-pg-regress
+submake-pg-regress:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 clean distclean: clean-lib

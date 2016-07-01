@@ -494,6 +494,10 @@ libpq_pgport += $(LDAP_LIBS_FE)
 endif
 
 
+##########################################################################
+#
+# Commonly used submake targets
+
 submake-libpq:
 	$(MAKE) -C $(libpq_builddir) all
 
@@ -506,7 +510,10 @@ submake-libpgfeutils:
 	$(MAKE) -C $(top_builddir)/src/common all
 	$(MAKE) -C $(top_builddir)/src/fe_utils all
 
-.PHONY: submake-libpq submake-libpgport submake-libpgfeutils
+submake-generated-headers:
+	$(MAKE) -C $(top_builddir)/src/backend generated-headers
+
+.PHONY: submake-libpq submake-libpgport submake-libpgfeutils submake-generated-headers
 
 
 ##########################################################################
