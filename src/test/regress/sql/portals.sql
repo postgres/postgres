@@ -484,3 +484,19 @@ fetch all from c;
 move backward all in c;
 fetch all from c;
 rollback;
+
+-- Check handling of non-backwards-scan-capable plans with scroll cursors
+begin;
+explain (costs off) declare c1 cursor for select (select 42) as x;
+explain (costs off) declare c1 scroll cursor for select (select 42) as x;
+declare c1 scroll cursor for select (select 42) as x;
+fetch all in c1;
+fetch backward all in c1;
+rollback;
+begin;
+explain (costs off) declare c2 cursor for select generate_series(1,3) as g;
+explain (costs off) declare c2 scroll cursor for select generate_series(1,3) as g;
+declare c2 scroll cursor for select generate_series(1,3) as g;
+fetch all in c2;
+fetch backward all in c2;
+rollback;

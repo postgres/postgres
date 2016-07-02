@@ -305,15 +305,33 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	if (cursorOptions & CURSOR_OPT_SCROLL)
 	{
 		if (!ExecSupportsBackwardScan(top_plan))
-			top_plan = materialize_finished_plan(top_plan);
+		{
+			Plan	   *sub_plan = top_plan;
+
+			top_plan = materialize_finished_plan(sub_plan);
+
+			/*
+			 * XXX horrid kluge: if there are any initPlans attached to the
+			 * formerly-top plan node, move them up to the Material node. This
+			 * prevents failure in SS_finalize_plan, which see for comments.
+			 * We don't bother adjusting the sub_plan's cost estimate for
+			 * this.
+			 */
+			top_plan->initPlan = sub_plan->initPlan;
+			sub_plan->initPlan = NIL;
+		}
 	}
 
 	/*
 	 * Optionally add a Gather node for testing purposes, provided this is
-	 * actually a safe thing to do.
+	 * actually a safe thing to do.  (Note: we assume adding a Material node
+	 * above did not change the parallel safety of the plan, so we can still
+	 * rely on best_path->parallel_safe.  However, that flag doesn't account
+	 * for initPlans, which render the plan parallel-unsafe.)
 	 */
-	if (best_path->parallel_safe &&
-		force_parallel_mode != FORCE_PARALLEL_OFF)
+	if (force_parallel_mode != FORCE_PARALLEL_OFF &&
+		best_path->parallel_safe &&
+		top_plan->initPlan == NIL)
 	{
 		Gather	   *gather = makeNode(Gather);
 

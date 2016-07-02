@@ -2187,7 +2187,7 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
  *
  * Attach any initplans created in the current query level to the specified
  * plan node, which should normally be the topmost node for the query level.
- * (The initPlans could actually go in any node at or above where they're
+ * (In principle the initPlans could go in any node at or above where they're
  * referenced; but there seems no reason to put them any lower than the
  * topmost node, so we don't bother to track exactly where they came from.)
  * We do not touch the plan node's cost; the initplans should have been
@@ -2226,9 +2226,22 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
  * recursion.
  *
  * The return value is the computed allParam set for the given Plan node.
- * This is just an internal notational convenience.
+ * This is just an internal notational convenience: we can add a child
+ * plan's allParams to the set of param IDs of interest to this level
+ * in the same statement that recurses to that child.
  *
  * Do not scribble on caller's values of valid_params or scan_params!
+ *
+ * Note: although we attempt to deal with initPlans anywhere in the tree, the
+ * logic is not really right.  The problem is that a plan node might return an
+ * output Param of its initPlan as a targetlist item, in which case it's valid
+ * for the parent plan level to reference that same Param; the parent's usage
+ * will be converted into a Var referencing the child plan node by setrefs.c.
+ * But this function would see the parent's reference as out of scope and
+ * complain about it.  For now, this does not matter because the planner only
+ * attaches initPlans to the topmost plan node in a query level, so the case
+ * doesn't arise.  If we ever merge this processing into setrefs.c, maybe it
+ * can be handled more cleanly.
  */
 static Bitmapset *
 finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,

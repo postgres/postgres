@@ -1285,3 +1285,68 @@ fetch all from c;
 (3 rows)
 
 rollback;
+-- Check handling of non-backwards-scan-capable plans with scroll cursors
+begin;
+explain (costs off) declare c1 cursor for select (select 42) as x;
+        QUERY PLAN         
+---------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Result
+(3 rows)
+
+explain (costs off) declare c1 scroll cursor for select (select 42) as x;
+        QUERY PLAN         
+---------------------------
+ Materialize
+   InitPlan 1 (returns $0)
+     ->  Result
+   ->  Result
+(4 rows)
+
+declare c1 scroll cursor for select (select 42) as x;
+fetch all in c1;
+ x  
+----
+ 42
+(1 row)
+
+fetch backward all in c1;
+ x  
+----
+ 42
+(1 row)
+
+rollback;
+begin;
+explain (costs off) declare c2 cursor for select generate_series(1,3) as g;
+ QUERY PLAN 
+------------
+ Result
+(1 row)
+
+explain (costs off) declare c2 scroll cursor for select generate_series(1,3) as g;
+  QUERY PLAN  
+--------------
+ Materialize
+   ->  Result
+(2 rows)
+
+declare c2 scroll cursor for select generate_series(1,3) as g;
+fetch all in c2;
+ g 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+fetch backward all in c2;
+ g 
+---
+ 3
+ 2
+ 1
+(3 rows)
+
+rollback;

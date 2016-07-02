@@ -314,9 +314,10 @@ create_plan(PlannerInfo *root, Path *best_path)
 
 	/*
 	 * Attach any initPlans created in this query level to the topmost plan
-	 * node.  (The initPlans could actually go in any plan node at or above
-	 * where they're referenced, but there seems no reason to put them any
-	 * lower than the topmost node for the query level.)
+	 * node.  (In principle the initplans could go in any plan node at or
+	 * above where they're referenced, but there seems no reason to put them
+	 * any lower than the topmost node for the query level.  Also, see
+	 * comments for SS_finalize_plan before you try to change this.)
 	 */
 	SS_attach_initplans(root, plan);
 
