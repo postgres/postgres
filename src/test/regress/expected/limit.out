@@ -296,3 +296,27 @@ order by s2 desc;
   0 |  0
 (3 rows)
 
+-- test for failure to set all aggregates' aggtranstype
+explain (verbose, costs off)
+select sum(tenthous) as s1, sum(tenthous) + random()*0 as s2
+  from tenk1 group by thousand order by thousand limit 3;
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: (sum(tenthous)), (((sum(tenthous))::double precision + (random() * '0'::double precision))), thousand
+   ->  GroupAggregate
+         Output: sum(tenthous), ((sum(tenthous))::double precision + (random() * '0'::double precision)), thousand
+         Group Key: tenk1.thousand
+         ->  Index Only Scan using tenk1_thous_tenthous on public.tenk1
+               Output: thousand, tenthous
+(7 rows)
+
+select sum(tenthous) as s1, sum(tenthous) + random()*0 as s2
+  from tenk1 group by thousand order by thousand limit 3;
+  s1   |  s2   
+-------+-------
+ 45000 | 45000
+ 45010 | 45010
+ 45020 | 45020
+(3 rows)
+

@@ -91,3 +91,11 @@ order by s2 desc;
 
 select generate_series(0,2) as s1, generate_series((random()*.1)::int,2) as s2
 order by s2 desc;
+
+-- test for failure to set all aggregates' aggtranstype
+explain (verbose, costs off)
+select sum(tenthous) as s1, sum(tenthous) + random()*0 as s2
+  from tenk1 group by thousand order by thousand limit 3;
+
+select sum(tenthous) as s1, sum(tenthous) + random()*0 as s2
+  from tenk1 group by thousand order by thousand limit 3;
