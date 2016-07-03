@@ -575,15 +575,19 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 		case RTE_SUBQUERY:
 
 			/*
-			 * Subplans currently aren't passed to workers.  Even if they
-			 * were, the subplan might be using parallelism internally, and we
-			 * can't support nested Gather nodes at present.  Finally, we
-			 * don't have a good way of knowing whether the subplan involves
-			 * any parallel-restricted operations.  It would be nice to relax
-			 * this restriction some day, but it's going to take a fair amount
-			 * of work.
+			 * There's no intrinsic problem with scanning a subquery-in-FROM
+			 * (as distinct from a SubPlan or InitPlan) in a parallel worker.
+			 * If the subquery doesn't happen to have any parallel-safe paths,
+			 * then flagging it as consider_parallel won't change anything,
+			 * but that's true for plain tables, too.  We must set
+			 * consider_parallel based on the rel's own quals and targetlist,
+			 * so that if a subquery path is parallel-safe but the quals and
+			 * projection we're sticking onto it are not, we correctly mark
+			 * the SubqueryScanPath as not parallel-safe.  (Note that
+			 * set_subquery_pathlist() might push some of these quals down
+			 * into the subquery itself, but that doesn't change anything.)
 			 */
-			return;
+			break;
 
 		case RTE_JOIN:
 			/* Shouldn't happen; we're only considering baserels here. */
