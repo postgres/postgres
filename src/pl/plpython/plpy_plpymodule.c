@@ -444,7 +444,10 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 			{
 				/* the message should not be overwriten */
 				if (PyTuple_Size(args) != 0)
-					PLy_elog(ERROR, "the message is already specified");
+				{
+					PLy_exception_set(PyExc_TypeError, "Argument 'message' given by name and position");
+					return NULL;
+				}
 
 				if (message)
 					pfree(message);
@@ -467,18 +470,28 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 			else if (strcmp(keyword, "constraint_name") == 0)
 				constraint_name = object_to_string(value);
 			else
-				PLy_elog(ERROR, "'%s' is an invalid keyword argument for this function",
-						 keyword);
+			{
+				PLy_exception_set(PyExc_TypeError,
+								  "'%s' is an invalid keyword argument for this function",
+								  keyword);
+				return NULL;
+			}
 		}
 	}
 
 	if (sqlstatestr != NULL)
 	{
 		if (strlen(sqlstatestr) != 5)
-			PLy_elog(ERROR, "invalid SQLSTATE code");
+		{
+			PLy_exception_set(PyExc_ValueError, "invalid SQLSTATE code");
+			return NULL;
+		}
 
 		if (strspn(sqlstatestr, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") != 5)
-			PLy_elog(ERROR, "invalid SQLSTATE code");
+		{
+			PLy_exception_set(PyExc_ValueError, "invalid SQLSTATE code");
+			return NULL;
+		}
 
 		sqlstate = MAKE_SQLSTATE(sqlstatestr[0],
 								 sqlstatestr[1],

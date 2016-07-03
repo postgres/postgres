@@ -56,17 +56,29 @@ INFO:  other types
 DETAIL:  ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
 -- should fail
 DO $$ plpy.info('wrong sqlstate', sqlstate='54444A') $$ LANGUAGE plpythonu;
-ERROR:  invalid SQLSTATE code
-CONTEXT:  PL/Python anonymous code block
+ERROR:  ValueError: invalid SQLSTATE code
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 1, in <module>
+    plpy.info('wrong sqlstate', sqlstate='54444A') 
+PL/Python anonymous code block
 DO $$ plpy.info('unsupported argument', blabla='fooboo') $$ LANGUAGE plpythonu;
-ERROR:  'blabla' is an invalid keyword argument for this function
-CONTEXT:  PL/Python anonymous code block
+ERROR:  TypeError: 'blabla' is an invalid keyword argument for this function
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 1, in <module>
+    plpy.info('unsupported argument', blabla='fooboo') 
+PL/Python anonymous code block
 DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpythonu;
-ERROR:  the message is already specified
-CONTEXT:  PL/Python anonymous code block
+ERROR:  TypeError: Argument 'message' given by name and position
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 1, in <module>
+    plpy.info('first message', message='second message') 
+PL/Python anonymous code block
 DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpythonu;
-ERROR:  the message is already specified
-CONTEXT:  PL/Python anonymous code block
+ERROR:  TypeError: Argument 'message' given by name and position
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 1, in <module>
+    plpy.info('first message', 'second message', message='third message') 
+PL/Python anonymous code block
 -- raise exception in python, handle exception in plgsql
 CREATE OR REPLACE FUNCTION raise_exception(_message text, _detail text DEFAULT NULL, _hint text DEFAULT NULL,
                                            _sqlstate text DEFAULT NULL,
