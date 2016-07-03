@@ -538,7 +538,6 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 				if (has_parallel_hazard((Node *) rte->tablesample->args,
 										false))
 					return;
-				return;
 			}
 
 			/*
