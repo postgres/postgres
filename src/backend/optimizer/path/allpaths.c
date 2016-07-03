@@ -1303,7 +1303,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		int			parallel_workers = 0;
 
 		/*
-		 * Decide on the numebr of workers to request for this append path.
+		 * Decide on the number of workers to request for this append path.
 		 * For now, we just use the maximum value from among the members.  It
 		 * might be useful to use a higher number if the Append node were
 		 * smart enough to spread out the workers, but it currently isn't.
