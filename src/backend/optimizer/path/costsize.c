@@ -263,7 +263,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 		 * because they'll anticipate receiving more rows than any given copy
 		 * will actually get.
 		 */
-		path->rows /= parallel_divisor;
+		path->rows = clamp_row_est(path->rows / parallel_divisor);
 
 		/* The CPU cost is divided among all the workers. */
 		cpu_run_cost /= parallel_divisor;
