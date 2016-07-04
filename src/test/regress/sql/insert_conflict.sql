@@ -407,3 +407,17 @@ insert into dropcol(key, keep1, keep2) values(1, '5', 5) on conflict(key)
 ;
 
 DROP TABLE dropcol;
+
+-- check handling of regular btree constraint along with gist constraint
+
+create table twoconstraints (f1 int unique, f2 box,
+                             exclude using gist(f2 with &&));
+insert into twoconstraints values(1, '((0,0),(1,1))');
+insert into twoconstraints values(1, '((2,2),(3,3))');  -- fail on f1
+insert into twoconstraints values(2, '((0,0),(1,2))');  -- fail on f2
+insert into twoconstraints values(2, '((0,0),(1,2))')
+  on conflict on constraint twoconstraints_f1_key do nothing;  -- fail on f2
+insert into twoconstraints values(2, '((0,0),(1,2))')
+  on conflict on constraint twoconstraints_f2_excl do nothing;  -- do nothing
+select * from twoconstraints;
+drop table twoconstraints;
