@@ -1849,7 +1849,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 	single_scalar = false;
 
 	/*
-	 * values can be anything, including structured and null, so we treate
+	 * values can be anything, including structured and null, so we treat
 	 * them as in json_agg_transfn, except that single scalars are always
 	 * pushed as WJB_VALUE items.
 	 */
