@@ -161,7 +161,7 @@
 #bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
 #bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
 #bgwriter_flush_after = 0		# 0 disables,
-					# default is 512kb on linux, 0 otherwise
+					# default is 512kB on linux, 0 otherwise
 
 # - Asynchronous Behavior -
 
@@ -212,7 +212,7 @@
 #min_wal_size = 80MB
 #checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
 #checkpoint_flush_after = 0		# 0 disables,
-					# default is 256kb on linux, 0 otherwise
+					# default is 256kB on linux, 0 otherwise
 #checkpoint_warning = 30s		# 0 disables
 
 # - Archiving -
