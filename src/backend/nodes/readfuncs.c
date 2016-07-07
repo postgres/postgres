@@ -2229,7 +2229,7 @@ _readExtensibleNode(void)
 
 	READ_TEMP_LOCALS();
 
-	token = pg_strtok(&length); /* skip: extnodename */
+	token = pg_strtok(&length); /* skip :extnodename */
 	token = pg_strtok(&length); /* get extnodename */
 
 	extnodename = nullable_string(token, length);
