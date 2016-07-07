@@ -1603,7 +1603,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies the maximum amount of disk space that a session can use
+        Specifies the maximum amount of disk space that a process can use
         for temporary files, such as sort and hash temporary files, or the
         storage file for a held cursor.  A transaction attempting to exceed
         this limit will be canceled.
@@ -1613,7 +1613,7 @@ include_dir 'conf.d'
        </para>
        <para>
         This setting constrains the total space used at any instant by all
-        temporary files used by a given <productname>PostgreSQL</> session.
+        temporary files used by a given <productname>PostgreSQL</> process.
         It should be noted that disk space used for explicit temporary
         tables, as opposed to temporary files used behind-the-scenes in query
         execution, does <emphasis>not</emphasis> count against this limit.
@@ -2010,6 +2010,22 @@ include_dir 'conf.d'
          occurs, the plan will run with fewer workers than expected, which may
          be inefficient.  The default value is 2.  Setting this value to 0
          disables parallel query execution.
+        </para>
+
+        <para>
+         Note that parallel queries may consume very substantially more
+         resources than non-parallel queries, because each worker process is
+         a completely separate process which has roughly the same impact on the
+         system as an additional user session.  This should be taken into
+         account when choosing a value for this setting, as well as when
+         configuring other settings that control resource utilization, such
+         as <xref linkend="guc-work-mem">.  Resource limits such as
+         <varname>work_mem</> are applied individually to each worker,
+         which means the total utilization may be much higher across all
+         processes than it would normally be for any single process.
+         For example, a parallel query using 4 workers may use up to 5 times
+         as much CPU time, memory, I/O bandwidth, and so forth as a query which
+         uses no workers at all.
         </para>
        </listitem>
       </varlistentry>
