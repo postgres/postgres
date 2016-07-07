@@ -432,16 +432,6 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>--strict-names</></term>
-      <listitem>
-       <para>
-        Require that each schema (-n / --schema) and table (-t / --table)
-        qualifier match at least one schema/table in the backup file.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-T <replaceable class="parameter">trigger</replaceable></option></term>
       <term><option>--trigger=<replaceable class="parameter">trigger</replaceable></option></term>
       <listitem>
@@ -613,6 +603,18 @@
           Pre-data items consist of all other data definition items.
          </para>
        </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--strict-names</></term>
+      <listitem>
+       <para>
+        Require that each schema
+        (<option>-n</option>/<option>--schema</option>) and table
+        (<option>-t</option>/<option>--table</option>) qualifier match at
+        least one schema/table in the backup file.
+       </para>
+      </listitem>
      </varlistentry>
 
      <varlistentry>

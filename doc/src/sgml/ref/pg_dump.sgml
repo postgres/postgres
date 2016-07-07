@@ -545,23 +545,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--strict-names</></term>
-      <listitem>
-       <para>
-        Require that each schema (-n / --schema) and table (-t / --table)
-        qualifier match at least one schema/table in the database to be dumped.
-        Note that if none of the schema/table qualifiers find matches pg_dump
-        will generate an error even without --strict-names.
-       </para>
-       <para>
-        This option has no effect on -N/--exclude-schema, -T/--exclude_table
-        or --exclude-table-date. An exclude pattern failing to match
-        any objects is not considered an error.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-T <replaceable class="parameter">table</replaceable></option></term>
       <term><option>--exclude-table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
@@ -923,6 +906,28 @@ PostgreSQL documentation
           option is used rather than taking a new snapshot.
          </para>
        </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--strict-names</></term>
+      <listitem>
+       <para>
+        Require that each schema
+        (<option>-n</option>/<option>--schema</option>) and table
+        (<option>-t</option>/<option>--table</option>) qualifier match at
+        least one schema/table in the database to be dumped.  Note that if
+        none of the schema/table qualifiers find
+        matches, <application>pg_dump</application> will generate an error
+        even without <option>--strict-names</option>.
+       </para>
+       <para>
+        This option has no effect
+        on <option>-N</option>/<option>--exclude-schema</option>,
+        <option>-T</option>/<option>--exclude-table</option>,
+        or <option>--exclude-table-data</option>.  An exclude pattern failing
+        to match any objects is not considered an error.
+       </para>
+      </listitem>
      </varlistentry>
 
      <varlistentry>
