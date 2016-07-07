@@ -542,7 +542,7 @@ static void inittapes(Tuplesortstate *state);
 static void selectnewtape(Tuplesortstate *state);
 static void mergeruns(Tuplesortstate *state);
 static void mergeonerun(Tuplesortstate *state);
-static void beginmerge(Tuplesortstate *state, bool finalMerge);
+static void beginmerge(Tuplesortstate *state, bool finalMergeBatch);
 static void batchmemtuples(Tuplesortstate *state);
 static void mergebatch(Tuplesortstate *state, int64 spacePerTape);
 static void mergebatchone(Tuplesortstate *state, int srcTape,
