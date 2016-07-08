@@ -1201,7 +1201,7 @@ ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
 
     <para>
 <programlisting>
-Size
+bool
 IsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
                           RangeTblEntry *rte);
 </programlisting>
