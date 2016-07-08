@@ -3660,18 +3660,27 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
    <secondary>in PL/pgSQL</secondary>
   </indexterm>
 
+  <para>
+   <application>PL/pgSQL</application> can be used to define trigger
+   procedures on data changes or database events.
+   A trigger procedure is created with the <command>CREATE FUNCTION</>
+   command, declaring it as a function with no arguments and a return type of
+   <type>trigger</> (for data change triggers) or
+   <type>event_trigger</> (for database event triggers).
+   Special local variables named <varname>PG_<replaceable>something</></> are
+   automatically defined to describe the condition that triggered the call.
+  </para>
+
   <sect2 id="plpgsql-dml-trigger">
    <title>Triggers on Data Changes</title>
 
-   <para>
-    <application>PL/pgSQL</application> can be used to define trigger
-    procedures. A trigger procedure is created with the
-    <command>CREATE FUNCTION</> command, declaring it as a function with
-    no arguments and a return type of <type>trigger</type>.  Note that
-    the function must be declared with no arguments even if it expects
-    to receive arguments specified in <command>CREATE TRIGGER</> &mdash;
-    trigger arguments are passed via <varname>TG_ARGV</>, as described
-    below.
+  <para>
+   A <link linkend="triggers">data change trigger</> is declared as a
+   function with no arguments and a return type of <type>trigger</>.
+   Note that the function must be declared with no arguments even if it
+   expects to receive some arguments specified in <command>CREATE TRIGGER</>
+   &mdash; such arguments are passed via <varname>TG_ARGV</>, as described
+   below.
   </para>
 
   <para>
@@ -4218,8 +4227,9 @@ SELECT * FROM sales_summary_bytime;
    <title>Triggers on Events</title>
 
    <para>
-    <application>PL/pgSQL</application> can be used to define event
-    triggers.  <productname>PostgreSQL</> requires that a procedure that
+    <application>PL/pgSQL</application> can be used to define
+    <link linkend="event-triggers">event triggers</>.
+    <productname>PostgreSQL</> requires that a procedure that
     is to be called as an event trigger must be declared as a function with
     no arguments and a return type of <literal>event_trigger</>.
    </para>
