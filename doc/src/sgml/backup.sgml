@@ -830,7 +830,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
      A non-exclusive low level backup is one that allows other
      concurrent backups to be running (both those started using
      the same backup API and those started using
-     <xref linkend="app-pgbasebackup">.
+     <xref linkend="app-pgbasebackup">).
     </para>
     <para>
   <orderedlist>
