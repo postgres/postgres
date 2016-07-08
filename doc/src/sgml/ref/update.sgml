@@ -123,7 +123,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
       The column name can be qualified with a subfield name or array
       subscript, if needed.  Do not include the table's name in the
       specification of a target column &mdash; for example,
-      <literal>UPDATE tab SET tab.col = 1</> is invalid.
+      <literal>UPDATE table_name SET table_name.col = 1</> is invalid.
      </para>
     </listitem>
    </varlistentry>
