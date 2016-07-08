@@ -35,6 +35,9 @@
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
 
+extern long max_measured_stack_depth;
+extern long max_measured_register_stack_depth;
+
 
 /*
  * This flag is set during proc_exit() to change ereport()'s behavior,
@@ -120,6 +123,15 @@ report_stack_size(void)
 	snprintf(sysbuf, sizeof(sysbuf), "pmap -x %d | grep -i stack 1>&2",
 			 (int) getpid());
 	(void) system(sysbuf);
+#endif
+
+#if defined(__ia64__) || defined(__ia64)
+	fprintf(stderr, "max measured stack depths %ldkB, %ldkB\n",
+			(max_measured_stack_depth + 1023) / 1024,
+			(max_measured_register_stack_depth + 1023) / 1024);
+#else
+	fprintf(stderr, "max measured stack depth %ldkB\n",
+			(max_measured_stack_depth + 1023) / 1024);
 #endif
 }
 

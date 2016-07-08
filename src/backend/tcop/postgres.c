@@ -96,6 +96,9 @@ int			max_stack_depth = 100;
 /* wait N seconds to allow attach from a debugger */
 int			PostAuthDelay = 0;
 
+/* Exported for use by proc_exit */
+long		max_measured_stack_depth = 0;
+long		max_measured_register_stack_depth = 0;
 
 
 /* ----------------
@@ -3137,6 +3140,11 @@ stack_is_too_deep(void)
 	if (stack_depth < 0)
 		stack_depth = -stack_depth;
 
+	/* Track max measured depth for reporting by proc_exit */
+	if (stack_depth > max_measured_stack_depth &&
+		stack_base_ptr != NULL)
+		max_measured_stack_depth = stack_depth;
+
 	/*
 	 * Trouble?
 	 *
@@ -3159,6 +3167,10 @@ stack_is_too_deep(void)
 	 */
 #if defined(__ia64__) || defined(__ia64)
 	stack_depth = (long) (ia64_get_bsp() - register_stack_base_ptr);
+
+	if (stack_depth > max_measured_register_stack_depth &&
+		register_stack_base_ptr != NULL)
+		max_measured_register_stack_depth = stack_depth;
 
 	if (stack_depth > max_stack_depth_bytes &&
 		register_stack_base_ptr != NULL)
