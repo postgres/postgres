@@ -194,8 +194,8 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
         column leaves the other fields null.)  When referencing a
         column with <literal>ON CONFLICT DO UPDATE</>, do not include
         the table's name in the specification of a target column.  For
-        example, <literal>INSERT ... ON CONFLICT DO UPDATE tab SET
-        table_name.col = 1</> is invalid (this follows the general
+        example, <literal>INSERT INTO table_name ... ON CONFLICT DO UPDATE
+        SET table_name.col = 1</> is invalid (this follows the general
         behavior for <command>UPDATE</>).
        </para>
       </listitem>
