@@ -94,12 +94,14 @@ report_stack_size(void)
 #if defined(__hpux)
 	/* HPUX: examine process's memory map with pstat_getprocvm() */
 	int			targetpid = getpid();
-	struct pst_vm_status buf;
-	int			res;
 	int			ndx;
 
 	for (ndx = 0;; ndx++)
 	{
+		struct pst_vm_status buf;
+		const char *pagetype;
+		int			res;
+
 		res = pstat_getprocvm(&buf, sizeof(buf), targetpid, ndx);
 		if (res < 0)
 		{
@@ -108,13 +110,25 @@ report_stack_size(void)
 		}
 		if (res != 1)
 			break;
-		if (buf.pst_type != PS_STACK)
-			continue;
-		fprintf(stderr, "%d: stack addr 0x%lx, length %ld, physical pages %ld\n",
+		switch (buf.pst_type)
+		{
+			case PS_STACK:
+				pagetype = "STACK";
+				break;
+#ifdef PS_RSESTACK
+			case PS_RSESTACK:
+				pagetype = "REGSTACK";
+				break;
+#endif
+			default:
+				continue;
+		}
+		fprintf(stderr, "%d: stack addr 0x%lx, length %ld, physical pages %ld, type %s\n",
 				targetpid,
 				buf.pst_vaddr,
 				buf.pst_length,
-				buf.pst_phys_pages);
+				buf.pst_phys_pages,
+				pagetype);
 	}
 #else							/* non HPUX */
 	/* Otherwise: try to use pmap.  No error if that doesn't work. */
