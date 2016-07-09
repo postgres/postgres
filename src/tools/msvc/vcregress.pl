@@ -412,35 +412,41 @@ sub upgradecheck
 	print "\nRunning initdb on old cluster\n\n";
 	standard_initdb() or exit 1;
 	print "\nStarting old cluster\n\n";
-	system("pg_ctl start -l $logdir/postmaster1.log -w") == 0 or exit 1;
+	my @args = ('pg_ctl', 'start', '-l', "$logdir/postmaster1.log", '-w');
+	system(@args) == 0 or exit 1;
 	print "\nSetting up data for upgrading\n\n";
 	installcheck();
 
 	# now we can chdir into the source dir
 	chdir "$topdir/src/bin/pg_upgrade";
 	print "\nDumping old cluster\n\n";
-	system("pg_dumpall -f $tmp_root/dump1.sql") == 0 or exit 1;
+	@args = ('pg_dumpall', '-f', "$tmp_root/dump1.sql");
+	system(@args) == 0 or exit 1;
 	print "\nStopping old cluster\n\n";
 	system("pg_ctl -m fast stop") == 0 or exit 1;
 	$ENV{PGDATA} = "$data";
 	print "\nSetting up new cluster\n\n";
 	standard_initdb() or exit 1;
 	print "\nRunning pg_upgrade\n\n";
-	system("pg_upgrade -d $data.old -D $data -b $bindir -B $bindir") == 0
-	  or exit 1;
+	@args = ('pg_upgrade', '-d', "$data.old", '-D', $data, '-b', $bindir,
+			 '-B', $bindir);
+	system(@args) == 0 or exit 1;
 	print "\nStarting new cluster\n\n";
-	system("pg_ctl -l $logdir/postmaster2.log -w start") == 0 or exit 1;
+	@args = ('pg_ctl', '-l', "$logdir/postmaster2.log", '-w', 'start');
+	system(@args) == 0 or exit 1;
 	print "\nSetting up stats on new cluster\n\n";
 	system(".\\analyze_new_cluster.bat") == 0 or exit 1;
 	print "\nDumping new cluster\n\n";
-	system("pg_dumpall -f $tmp_root/dump2.sql") == 0 or exit 1;
+	@args = ('pg_dumpall', '-f', "$tmp_root/dump2.sql");
+	system(@args) == 0 or exit 1;
 	print "\nStopping new cluster\n\n";
 	system("pg_ctl -m fast stop") == 0 or exit 1;
 	print "\nDeleting old cluster\n\n";
 	system(".\\delete_old_cluster.bat") == 0 or exit 1;
 	print "\nComparing old and new cluster dumps\n\n";
 
-	system("diff -q $tmp_root/dump1.sql $tmp_root/dump2.sql");
+	@args = ('diff', '-q', "$tmp_root/dump1.sql", "$tmp_root/dump2.sql");
+	system(@args);
 	$status = $?;
 	if (!$status)
 	{

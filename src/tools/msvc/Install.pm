@@ -381,12 +381,21 @@ sub GenerateTimezoneFiles
 	my $mf     = read_file("src/timezone/Makefile");
 	$mf =~ s{\\\r?\n}{}g;
 	$mf =~ /^TZDATA\s*:?=\s*(.*)$/m
-	  || die "Could not find TZDATA row in timezone makefile\n";
+	  || die "Could not find TZDATA line in timezone makefile\n";
 	my @tzfiles = split /\s+/, $1;
-	unshift @tzfiles, '';
+
 	print "Generating timezone files...";
-	system("$conf\\zic\\zic -d \"$target/share/timezone\" "
-		  . join(" src/timezone/data/", @tzfiles));
+
+	my @args = ("$conf/zic/zic",
+				'-d',
+				"$target/share/timezone");
+	foreach (@tzfiles)
+	{
+		my $tzfile = $_;
+		push(@args, "src/timezone/data/$tzfile")
+	}
+
+	system(@args);
 	print "\n";
 }
 
@@ -634,9 +643,10 @@ sub CopyIncludeFiles
 		next unless (-d "src/include/$d");
 
 		EnsureDirectories("$target/include/server/$d");
-		system(
-qq{xcopy /s /i /q /r /y src\\include\\$d\\*.h "$ctarget\\include\\server\\$d\\"}
-		) && croak("Failed to copy include directory $d\n");
+		my @args = ('xcopy', '/s', '/i', '/q', '/r', '/y',
+				 "src\\include\\$d\\*.h",
+				 "$ctarget\\include\\server\\$d\\");
+		system(@args) && croak("Failed to copy include directory $d\n");
 	}
 	closedir($D);
 
@@ -689,9 +699,11 @@ sub GenerateNLSFiles
 
 			EnsureDirectories($target, "share/locale/$lang",
 				"share/locale/$lang/LC_MESSAGES");
-			system(
-"\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo\" $_"
-			) && croak("Could not run msgfmt on $dir\\$_");
+			my @args = ("$nlspath\\bin\\msgfmt",
+			   '-o',
+			   "$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
+			   $_);
+			system(@args) && croak("Could not run msgfmt on $dir\\$_");
 			print ".";
 		}
 	}
