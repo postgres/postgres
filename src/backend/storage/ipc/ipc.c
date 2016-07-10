@@ -22,10 +22,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#if defined(__hpux)
-#include <sys/param.h>
-#include <sys/pstat.h>
-#endif
 
 #include "miscadmin.h"
 #ifdef PROFILE_PID_DIR
@@ -34,9 +30,6 @@
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
-
-extern long max_measured_stack_depth;
-extern long max_measured_register_stack_depth;
 
 
 /*
@@ -87,69 +80,6 @@ static int	on_proc_exit_index,
 			before_shmem_exit_index;
 
 
-/* Report process's stack consumption to stderr */
-static void
-report_stack_size(void)
-{
-#if defined(__hpux)
-	/* HPUX: examine process's memory map with pstat_getprocvm() */
-	int			targetpid = getpid();
-	int			ndx;
-
-	for (ndx = 0;; ndx++)
-	{
-		struct pst_vm_status buf;
-		const char *pagetype;
-		int			res;
-
-		res = pstat_getprocvm(&buf, sizeof(buf), targetpid, ndx);
-		if (res < 0)
-		{
-			perror("getprocvm");
-			break;
-		}
-		if (res != 1)
-			break;
-		switch (buf.pst_type)
-		{
-			case PS_STACK:
-				pagetype = "STACK";
-				break;
-#ifdef PS_RSESTACK
-			case PS_RSESTACK:
-				pagetype = "REGSTACK";
-				break;
-#endif
-			default:
-				continue;
-		}
-		fprintf(stderr, "%d: stack addr 0x%lx, length %ld, physical pages %ld, type %s\n",
-				targetpid,
-				buf.pst_vaddr,
-				buf.pst_length,
-				buf.pst_phys_pages,
-				pagetype);
-	}
-#else							/* non HPUX */
-	/* Otherwise: try to use pmap.  No error if that doesn't work. */
-	char		sysbuf[128];
-
-	snprintf(sysbuf, sizeof(sysbuf), "pmap -x %d | grep -i stack 1>&2",
-			 (int) getpid());
-	(void) system(sysbuf);
-#endif
-
-#if defined(__ia64__) || defined(__ia64)
-	fprintf(stderr, "max measured stack depths %ldkB, %ldkB\n",
-			(max_measured_stack_depth + 1023) / 1024,
-			(max_measured_register_stack_depth + 1023) / 1024);
-#else
-	fprintf(stderr, "max measured stack depth %ldkB\n",
-			(max_measured_stack_depth + 1023) / 1024);
-#endif
-}
-
-
 /* ----------------------------------------------------------------
  *		proc_exit
  *
@@ -170,9 +100,6 @@ proc_exit(int code)
 {
 	/* Clean up everything that must be cleaned up */
 	proc_exit_prepare(code);
-
-	/* report stack size to stderr */
-	report_stack_size();
 
 #ifdef PROFILE_PID_DIR
 	{
