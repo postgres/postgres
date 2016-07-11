@@ -9974,7 +9974,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		} while (!gotUniqueStartpoint);
 
 		XLByteToSeg(startpoint, _logSegNo);
-		XLogFileName(xlogfilename, ThisTimeLineID, _logSegNo);
+		XLogFileName(xlogfilename, starttli, _logSegNo);
 
 		/*
 		 * Construct tablespace_map file
