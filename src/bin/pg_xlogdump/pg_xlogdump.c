@@ -855,7 +855,7 @@ main(int argc, char **argv)
 		if (!verify_directory(private.inpath))
 		{
 			fprintf(stderr,
-					"%s: path \"%s\" cannot be opened: %s",
+					"%s: path \"%s\" cannot be opened: %s\n",
 					progname, private.inpath, strerror(errno));
 			goto bad_argument;
 		}
