@@ -1367,9 +1367,9 @@ testdb=&gt;
 
         <listitem>
         <para>
-        Lists functions, together with their arguments, return types, and
-        function types, which are classified as <quote>agg</> (aggregate),
-        <quote>normal</>, <quote>trigger</>, or <quote>window</>.
+        Lists functions, together with their result data types, argument data
+        types, and function types, which are classified as <quote>agg</>
+        (aggregate), <quote>normal</>, <quote>trigger</>, or <quote>window</>.
         To display only functions
         of specific type(s), add the corresponding letters <literal>a</>,
         <literal>n</>, <literal>t</>, or <literal>w</> to the command.
@@ -1380,14 +1380,15 @@ testdb=&gt;
         objects are shown; supply a pattern or the <literal>S</literal>
         modifier to include system objects.
         If the form <literal>\df+</literal> is used, additional information
-        about each function is shown, including security classification,
-        volatility, owner, language, source code and description.
+        about each function is shown, including volatility,
+        parallel safety, owner, security classification, access privileges,
+        language, source code and description.
         </para>
 
         <tip>
         <para>
         To look up functions taking arguments or returning values of a specific
-        type, use your pager's search capability to scroll through the
+        data type, use your pager's search capability to scroll through the
         <literal>\df</> output.
         </para>
         </tip>
