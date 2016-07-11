@@ -565,8 +565,9 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
  *	  convert a QueryDesc's plan tree to text and append it to es->str
  *
  * The caller should have set up the options fields of *es, as well as
- * initializing the output buffer es->str.  Other fields in *es are
- * initialized here.
+ * initializing the output buffer es->str.  Also, output formatting state
+ * such as the indent level is assumed valid.  Plan-tree-specific fields
+ * in *es are initialized here.
  *
  * NB: will not work on utility statements
  */
@@ -576,6 +577,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	Bitmapset  *rels_used = NULL;
 	PlanState  *ps;
 
+	/* Set up ExplainState fields associated with this plan tree */
 	Assert(queryDesc->plannedstmt != NULL);
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
@@ -583,6 +585,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
 	es->deparse_cxt = deparse_context_for_plan_rtable(es->rtable,
 													  es->rtable_names);
+	es->printed_subplans = NULL;
 
 	/*
 	 * Sometimes we mark a Gather node as "invisible", which means that it's
@@ -2797,6 +2800,21 @@ ExplainSubPlans(List *plans, List *ancestors,
 	{
 		SubPlanState *sps = (SubPlanState *) lfirst(lst);
 		SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
+
+		/*
+		 * There can be multiple SubPlan nodes referencing the same physical
+		 * subplan (same plan_id, which is its index in PlannedStmt.subplans).
+		 * We should print a subplan only once, so track which ones we already
+		 * printed.  This state must be global across the plan tree, since the
+		 * duplicate nodes could be in different plan nodes, eg both a bitmap
+		 * indexscan's indexqual and its parent heapscan's recheck qual.  (We
+		 * do not worry too much about which plan node we show the subplan as
+		 * attached to in such cases.)
+		 */
+		if (bms_is_member(sp->plan_id, es->printed_subplans))
+			continue;
+		es->printed_subplans = bms_add_member(es->printed_subplans,
+											  sp->plan_id);
 
 		ExplainNode(sps->planstate, ancestors,
 					relationship, sp->plan_name, es);
