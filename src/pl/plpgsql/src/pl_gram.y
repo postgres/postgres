@@ -287,6 +287,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_GET
 %token <keyword>	K_HINT
 %token <keyword>	K_IF
+%token <keyword>	K_IMPORT
 %token <keyword>	K_IN
 %token <keyword>	K_INFO
 %token <keyword>	K_INSERT
@@ -1929,7 +1930,11 @@ loop_body		: proc_sect K_END K_LOOP opt_label ';'
  * assignment.  Give an appropriate complaint for that, instead of letting
  * the core parser throw an unhelpful "syntax error".
  */
-stmt_execsql	: K_INSERT
+stmt_execsql	: K_IMPORT
+					{
+						$$ = make_execsql_stmt(K_IMPORT, @1);
+					}
+				| K_INSERT
 					{
 						$$ = make_execsql_stmt(K_INSERT, @1);
 					}
@@ -2418,6 +2423,7 @@ unreserved_keyword	:
 				| K_FORWARD
 				| K_GET
 				| K_HINT
+				| K_IMPORT
 				| K_INFO
 				| K_INSERT
 				| K_IS
@@ -2843,12 +2849,32 @@ make_execsql_stmt(int firsttoken, int location)
 	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 
 	/*
-	 * We have to special-case the sequence INSERT INTO, because we don't want
-	 * that to be taken as an INTO-variables clause.  Fortunately, this is the
-	 * only valid use of INTO in a pl/pgsql SQL command, and INTO is already a
-	 * fully reserved word in the main grammar.  We have to treat it that way
-	 * anywhere in the string, not only at the start; consider CREATE RULE
-	 * containing an INSERT statement.
+	 * Scan to the end of the SQL command.  Identify any INTO-variables
+	 * clause lurking within it, and parse that via read_into_target().
+	 *
+	 * Because INTO is sometimes used in the main SQL grammar, we have to be
+	 * careful not to take any such usage of INTO as a pl/pgsql INTO clause.
+	 * There are currently three such cases:
+	 *
+	 * 1. SELECT ... INTO.  We don't care, we just override that with the
+	 * pl/pgsql definition.
+	 *
+	 * 2. INSERT INTO.  This is relatively easy to recognize since the words
+	 * must appear adjacently; but we can't assume INSERT starts the command,
+	 * because it can appear in CREATE RULE or WITH.  Unfortunately, INSERT is
+	 * *not* fully reserved, so that means there is a chance of a false match;
+	 * but it's not very likely.
+	 *
+	 * 3. IMPORT FOREIGN SCHEMA ... INTO.  This is not allowed in CREATE RULE
+	 * or WITH, so we just check for IMPORT as the command's first token.
+	 * (If IMPORT FOREIGN SCHEMA returned data someone might wish to capture
+	 * with an INTO-variables clause, we'd have to work much harder here.)
+	 *
+	 * Fortunately, INTO is a fully reserved word in the main grammar, so
+	 * at least we need not worry about it appearing as an identifier.
+	 *
+	 * Any future additional uses of INTO in the main grammar will doubtless
+	 * break this logic again ... beware!
 	 */
 	tok = firsttoken;
 	for (;;)
@@ -2861,9 +2887,12 @@ make_execsql_stmt(int firsttoken, int location)
 			break;
 		if (tok == 0)
 			yyerror("unexpected end of function definition");
-
-		if (tok == K_INTO && prev_tok != K_INSERT)
+		if (tok == K_INTO)
 		{
+			if (prev_tok == K_INSERT)
+				continue;		/* INSERT INTO is not an INTO-target */
+			if (firsttoken == K_IMPORT)
+				continue;		/* IMPORT ... INTO is not an INTO-target */
 			if (have_into)
 				yyerror("INTO specified more than once");
 			have_into = true;
