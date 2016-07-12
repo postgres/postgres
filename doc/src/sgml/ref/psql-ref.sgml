@@ -1772,32 +1772,6 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\ev <optional> <replaceable class="parameter">view_name</> <optional>  <replaceable class="parameter">line_number</> </optional> </optional> </literal></term>
-
-        <listitem>
-        <para>
-         This command fetches and edits the definition of the named view,
-         in the form of a <command>CREATE OR REPLACE VIEW</> command.
-         Editing is done in the same way as for <literal>\edit</>.
-         After the editor exits, the updated command waits in the query buffer;
-         type semicolon or <literal>\g</> to send it, or <literal>\r</>
-         to cancel.
-        </para>
-
-        <para>
-         If no view is specified, a blank <command>CREATE VIEW</>
-         template is presented for editing.
-        </para>
-
-        <para>
-         If a line number is specified, <application>psql</application> will
-         position the cursor on the specified line of the view definition.
-        </para>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
         <term><literal>\encoding [ <replaceable class="parameter">encoding</replaceable> ]</literal></term>
 
         <listitem>
@@ -1818,6 +1792,32 @@ Tue Oct 26 21:40:57 CEST 1999
         verbosity, as though <varname>VERBOSITY</varname> were set
         to <literal>verbose</> and <varname>SHOW_CONTEXT</varname> were
         set to <literal>always</>.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\ev <optional> <replaceable class="parameter">view_name</> <optional>  <replaceable class="parameter">line_number</> </optional> </optional> </literal></term>
+
+        <listitem>
+        <para>
+         This command fetches and edits the definition of the named view,
+         in the form of a <command>CREATE OR REPLACE VIEW</> command.
+         Editing is done in the same way as for <literal>\edit</>.
+         After the editor exits, the updated command waits in the query buffer;
+         type semicolon or <literal>\g</> to send it, or <literal>\r</>
+         to cancel.
+        </para>
+
+        <para>
+         If no view is specified, a blank <command>CREATE VIEW</>
+         template is presented for editing.
+        </para>
+
+        <para>
+         If a line number is specified, <application>psql</application> will
+         position the cursor on the specified line of the view definition.
         </para>
         </listitem>
       </varlistentry>
@@ -3577,13 +3577,6 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>%p</literal></term>
-        <listitem>
-         <para>The process ID of the backend currently connected to.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><literal>%&gt;</literal></term>
         <listitem><para>The port number at which the database server is listening.</para></listitem>
       </varlistentry>
@@ -3621,6 +3614,13 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
           session as the result of the command <command>SET SESSION
           AUTHORIZATION</command>.)
          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>%p</literal></term>
+        <listitem>
+         <para>The process ID of the backend currently connected to.</para>
         </listitem>
       </varlistentry>
 
