@@ -854,7 +854,7 @@ void
 EndDirectModify (ForeignScanState *node);
 </programlisting>
 
-     Clean up following a direc modification on the remote server.  It is
+     Clean up following a direct modification on the remote server.  It is
      normally not important to release palloc'd memory, but for example open
      files and connections to the remote server should be cleaned up.
     </para>
