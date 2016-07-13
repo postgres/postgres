@@ -184,7 +184,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   </para>
 
   <para>
-   Non<literal>C</> and and non-<literal>POSIX</> locales rely on the
+   Non-<literal>C</> and and non-<literal>POSIX</> locales rely on the
    operating system's collation library for character set ordering.
    This controls the ordering of keys stored in indexes.  For this reason,
    a cluster cannot switch to an incompatible collation library version,
