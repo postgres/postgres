@@ -228,7 +228,6 @@ reset maintenance_work_mem;
 reset replacement_sort_tuples;
 
 -- clean up
-\c -
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
 DROP TABLE clstr_2;
