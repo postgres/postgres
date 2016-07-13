@@ -5193,6 +5193,10 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	IndexPath  *indexScanPath;
 	ListCell   *lc;
 
+	/* We can short-circuit the cost comparison if indexscans are disabled */
+	if (!enable_indexscan)
+		return true;			/* use sort */
+
 	/* Set up mostly-dummy planner state */
 	query = makeNode(Query);
 	query->commandType = CMD_SELECT;
