@@ -90,8 +90,6 @@ float8		degree_c_one_half = 0.5;
 float8		degree_c_one = 1.0;
 
 /* Local function prototypes */
-static int	float4_cmp_internal(float4 a, float4 b);
-static int	float8_cmp_internal(float8 a, float8 b);
 static double sind_q1(double x);
 static double cosd_q1(double x);
 static void init_degree_constants(void);
@@ -936,7 +934,7 @@ float8div(PG_FUNCTION_ARGS)
 /*
  *		float4{eq,ne,lt,le,gt,ge}		- float4/float4 comparison operations
  */
-static int
+int
 float4_cmp_internal(float4 a, float4 b)
 {
 	/*
@@ -1050,7 +1048,7 @@ btfloat4sortsupport(PG_FUNCTION_ARGS)
 /*
  *		float8{eq,ne,lt,le,gt,ge}		- float8/float8 comparison operations
  */
-static int
+int
 float8_cmp_internal(float8 a, float8 b)
 {
 	/*
