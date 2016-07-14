@@ -68,9 +68,6 @@ do {															\
 int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
 
 
-static int	float4_cmp_internal(float4 a, float4 b);
-static int	float8_cmp_internal(float8 a, float8 b);
-
 #ifndef HAVE_CBRT
 /*
  * Some machines (in particular, some versions of AIX) have an extern
@@ -867,7 +864,7 @@ float8div(PG_FUNCTION_ARGS)
 /*
  *		float4{eq,ne,lt,le,gt,ge}		- float4/float4 comparison operations
  */
-static int
+int
 float4_cmp_internal(float4 a, float4 b)
 {
 	/*
@@ -981,7 +978,7 @@ btfloat4sortsupport(PG_FUNCTION_ARGS)
 /*
  *		float8{eq,ne,lt,le,gt,ge}		- float8/float8 comparison operations
  */
-static int
+int
 float8_cmp_internal(float8 a, float8 b)
 {
 	/*
