@@ -2432,9 +2432,10 @@ record_plan_function_dependency(PlannerInfo *root, Oid funcid)
 
 /*
  * extract_query_dependencies
- *		Given a not-yet-planned query or queries (i.e. a Query node or list
- *		of Query nodes), extract dependencies just as set_plan_references
- *		would do.
+ *		Given a rewritten, but not yet planned, query or queries
+ *		(i.e. a Query node or list of Query nodes), extract dependencies
+ *		just as set_plan_references would do.  Also detect whether any
+ *		rewrite steps were affected by RLS.
  *
  * This is needed by plancache.c to handle invalidation of cached unplanned
  * queries.
@@ -2453,7 +2454,8 @@ extract_query_dependencies(Node *query,
 	glob.type = T_PlannerGlobal;
 	glob.relationOids = NIL;
 	glob.invalItems = NIL;
-	glob.hasRowSecurity = false;
+	/* Hack: we use glob.dependsOnRole to collect hasRowSecurity flags */
+	glob.dependsOnRole = false;
 
 	MemSet(&root, 0, sizeof(root));
 	root.type = T_PlannerInfo;
@@ -2463,7 +2465,7 @@ extract_query_dependencies(Node *query,
 
 	*relationOids = glob.relationOids;
 	*invalItems = glob.invalItems;
-	*hasRowSecurity = glob.hasRowSecurity;
+	*hasRowSecurity = glob.dependsOnRole;
 }
 
 static bool
@@ -2479,10 +2481,6 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		Query	   *query = (Query *) node;
 		ListCell   *lc;
 
-		/* Collect row security information */
-		if (query->hasRowSecurity)
-			context->glob->hasRowSecurity = true;
-
 		if (query->commandType == CMD_UTILITY)
 		{
 			/*
@@ -2493,6 +2491,10 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 			if (query == NULL)
 				return false;
 		}
+
+		/* Remember if any Query has RLS quals applied by rewriter */
+		if (query->hasRowSecurity)
+			context->glob->dependsOnRole = true;
 
 		/* Collect relation OIDs in this Query's rtable */
 		foreach(lc, query->rtable)

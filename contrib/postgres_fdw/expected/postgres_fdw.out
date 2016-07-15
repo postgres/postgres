@@ -192,7 +192,7 @@ ALTER FOREIGN TABLE ft2 OPTIONS (use_remote_estimate 'true');
 -- simple queries
 -- ===================================================================
 -- single table without alias
-EXPLAIN (COSTS false) SELECT * FROM ft1 ORDER BY c3, c1 OFFSET 100 LIMIT 10;
+EXPLAIN (COSTS OFF) SELECT * FROM ft1 ORDER BY c3, c1 OFFSET 100 LIMIT 10;
         QUERY PLAN         
 ---------------------------
  Limit
@@ -215,7 +215,7 @@ SELECT * FROM ft1 ORDER BY c3, c1 OFFSET 100 LIMIT 10;
 (10 rows)
 
 -- single table with alias - also test that tableoid sort is not pushed to remote side
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1, t1.tableoid OFFSET 100 LIMIT 10;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1, t1.tableoid OFFSET 100 LIMIT 10;
                                      QUERY PLAN                                      
 -------------------------------------------------------------------------------------
  Limit
@@ -244,7 +244,7 @@ SELECT * FROM ft1 t1 ORDER BY t1.c3, t1.c1, t1.tableoid OFFSET 100 LIMIT 10;
 (10 rows)
 
 -- whole-row reference
-EXPLAIN (VERBOSE, COSTS false) SELECT t1 FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT t1 FROM ft1 t1 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
                                                            QUERY PLAN                                                           
 --------------------------------------------------------------------------------------------------------------------------------
  Limit
@@ -276,7 +276,7 @@ SELECT * FROM ft1 WHERE false;
 (0 rows)
 
 -- with WHERE clause
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = 101 AND t1.c6 = '1' AND t1.c7 >= '1';
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE t1.c1 = 101 AND t1.c6 = '1' AND t1.c7 >= '1';
                                                                    QUERY PLAN                                                                   
 ------------------------------------------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -291,7 +291,7 @@ SELECT * FROM ft1 t1 WHERE t1.c1 = 101 AND t1.c6 = '1' AND t1.c7 >= '1';
 (1 row)
 
 -- with FOR UPDATE/SHARE
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = 101 FOR UPDATE;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = 101 FOR UPDATE;
                                                    QUERY PLAN                                                   
 ----------------------------------------------------------------------------------------------------------------
  LockRows
@@ -307,7 +307,7 @@ SELECT * FROM ft1 t1 WHERE c1 = 101 FOR UPDATE;
  101 |  1 | 00101 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = 102 FOR SHARE;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = 102 FOR SHARE;
                                                   QUERY PLAN                                                   
 ---------------------------------------------------------------------------------------------------------------
  LockRows
@@ -380,7 +380,7 @@ SELECT 'fixed', NULL FROM ft1 t1 WHERE c1 = 1;
 SET enable_hashjoin TO false;
 SET enable_nestloop TO false;
 -- inner join; expressions in the clauses appear in the equivalence class list
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
@@ -413,7 +413,7 @@ SELECT t1.c1, t2."C 1" FROM ft2 t1 JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFF
 
 -- outer join; expressions in the clauses do not appear in equivalence class
 -- list but no output change as compared to the previous query
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1") OFFSET 100 LIMIT 10;
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
@@ -446,7 +446,7 @@ SELECT t1.c1, t2."C 1" FROM ft2 t1 LEFT JOIN "S 1"."T 1" t2 ON (t1.c1 = t2."C 1"
 
 -- A join between local table and foreign join. ORDER BY clause is added to the
 -- foreign join so that the local table can be joined using merge join strategy.
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT t1."C 1" FROM "S 1"."T 1" t1 left join ft1 t2 join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
                                                                        QUERY PLAN                                                                        
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -481,7 +481,7 @@ SELECT t1."C 1" FROM "S 1"."T 1" t1 left join ft1 t2 join ft2 t3 on (t2.c1 = t3.
 -- Test similar to above, except that the full join prevents any equivalence
 -- classes from being merged. This produces single relation equivalence classes
 -- included in join restrictions.
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT t1."C 1", t2.c1, t3.c1 FROM "S 1"."T 1" t1 left join ft1 t2 full join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
                                                                             QUERY PLAN                                                                            
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -514,7 +514,7 @@ SELECT t1."C 1", t2.c1, t3.c1 FROM "S 1"."T 1" t1 left join ft1 t2 full join ft2
 (10 rows)
 
 -- Test similar to above with all full outer joins
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT t1."C 1", t2.c1, t3.c1 FROM "S 1"."T 1" t1 full join ft1 t2 full join ft2 t3 on (t2.c1 = t3.c1) on (t3.c1 = t1."C 1") OFFSET 100 LIMIT 10;
                                                                             QUERY PLAN                                                                            
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -551,7 +551,7 @@ RESET enable_nestloop;
 -- ===================================================================
 -- WHERE with remotely-executable conditions
 -- ===================================================================
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = 1;         -- Var, OpExpr(b), Const
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE t1.c1 = 1;         -- Var, OpExpr(b), Const
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -559,7 +559,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = 1;         -- 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = 100 AND t1.c2 = 0; -- BoolExpr
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE t1.c1 = 100 AND t1.c2 = 0; -- BoolExpr
                                                   QUERY PLAN                                                  
 --------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -567,7 +567,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE t1.c1 = 100 AND t1.c2 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 100)) AND ((c2 = 0))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 IS NULL;        -- NullTest
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 IS NULL;        -- NullTest
                                            QUERY PLAN                                            
 -------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -575,7 +575,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 IS NULL;        -- 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" IS NULL))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 IS NOT NULL;    -- NullTest
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 IS NOT NULL;    -- NullTest
                                              QUERY PLAN                                              
 -----------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -583,7 +583,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 IS NOT NULL;    -- 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" IS NOT NULL))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE round(abs(c1), 0) = 1; -- FuncExpr
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE round(abs(c1), 0) = 1; -- FuncExpr
                                                      QUERY PLAN                                                      
 ---------------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -591,7 +591,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE round(abs(c1), 0) = 1;
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((round(abs("C 1"), 0) = 1::numeric))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = -c1;          -- OpExpr(l)
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = -c1;          -- OpExpr(l)
                                              QUERY PLAN                                              
 -----------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -599,7 +599,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = -c1;          -- 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = (- "C 1")))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE 1 = c1!;           -- OpExpr(r)
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE 1 = c1!;           -- OpExpr(r)
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -607,7 +607,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE 1 = c1!;           -- 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((1::numeric = ("C 1" !)))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE (c1 IS NOT NULL) IS DISTINCT FROM (c1 IS NOT NULL); -- DistinctExpr
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE (c1 IS NOT NULL) IS DISTINCT FROM (c1 IS NOT NULL); -- DistinctExpr
                                                                  QUERY PLAN                                                                 
 --------------------------------------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -615,7 +615,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE (c1 IS NOT NULL) IS DI
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((("C 1" IS NOT NULL) IS DISTINCT FROM ("C 1" IS NOT NULL)))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = ANY(ARRAY[c2, 1, c1 + 0]); -- ScalarArrayOpExpr
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = ANY(ARRAY[c2, 1, c1 + 0]); -- ScalarArrayOpExpr
                                                         QUERY PLAN                                                         
 ---------------------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -623,7 +623,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = ANY(ARRAY[c2, 1, 
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = ANY (ARRAY[c2, 1, ("C 1" + 0)])))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = (ARRAY[c1,c2,3])[1]; -- ArrayRef
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c1 = (ARRAY[c1,c2,3])[1]; -- ArrayRef
                                                       QUERY PLAN                                                      
 ----------------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -631,7 +631,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c1 = (ARRAY[c1,c2,3])[
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = ((ARRAY["C 1", c2, 3])[1])))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c6 = E'foo''s\\bar';  -- check special chars
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c6 = E'foo''s\\bar';  -- check special chars
                                                  QUERY PLAN                                                  
 -------------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -639,7 +639,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c6 = E'foo''s\\bar';  
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((c6 = E'foo''s\\bar'::text))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c8 = 'foo';  -- can't be sent to remote
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 t1 WHERE c8 = 'foo';  -- can't be sent to remote
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -649,7 +649,7 @@ EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 t1 WHERE c8 = 'foo';  -- can't 
 (4 rows)
 
 -- parameterized remote path for foreign table
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT * FROM "S 1"."T 1" a, ft2 b WHERE a."C 1" = 47 AND b.c1 = a.c2;
                                                  QUERY PLAN                                                  
 -------------------------------------------------------------------------------------------------------------
@@ -670,7 +670,7 @@ SELECT * FROM ft2 a, ft2 b WHERE a.c1 = 47 AND b.c1 = a.c2;
 (1 row)
 
 -- check both safe and unsafe join conditions
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT * FROM ft2 a, ft2 b
   WHERE a.c2 = 6 AND b.c1 = a.c1 AND a.c8 = 'foo' AND b.c7 = upper(a.c7);
                                                  QUERY PLAN                                                  
@@ -814,7 +814,7 @@ SELECT * FROM ft2 WHERE c1 = ANY (ARRAY(SELECT c1 FROM ft1 WHERE c1 < 5));
 
 -- we should not push order by clause with volatile expressions or unsafe
 -- collations
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT * FROM ft2 ORDER BY ft2.c1, random();
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
@@ -826,7 +826,7 @@ EXPLAIN (VERBOSE, COSTS false)
          Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
 (6 rows)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 	SELECT * FROM ft2 ORDER BY ft2.c1, ft2.c3 collate "C";
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
@@ -851,7 +851,7 @@ CREATE OPERATOR === (
     COMMUTATOR = ===
 );
 -- built-in operators and functions can be shipped for remote execution
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -868,7 +868,7 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
      9
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
                              QUERY PLAN                              
 ---------------------------------------------------------------------
@@ -886,7 +886,7 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
 (1 row)
 
 -- by default, user-defined ones cannot
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
                         QUERY PLAN                         
 -----------------------------------------------------------
@@ -904,7 +904,7 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
      9
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
                         QUERY PLAN                         
 -----------------------------------------------------------
@@ -927,7 +927,7 @@ ALTER EXTENSION postgres_fdw ADD FUNCTION postgres_fdw_abs(int);
 ALTER EXTENSION postgres_fdw ADD OPERATOR === (int, int);
 ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
 -- ... now they can be shipped
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
@@ -944,7 +944,7 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
      9
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
                                        QUERY PLAN                                       
 ----------------------------------------------------------------------------------------
@@ -969,7 +969,7 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
 ANALYZE ft4;
 ANALYZE ft5;
 -- join two tables
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
                                                                                         QUERY PLAN                                                                                        
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -997,7 +997,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
 (10 rows)
 
 -- join three tables
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) JOIN ft4 t3 ON (t3.c1 = t1.c1) ORDER BY t1.c3, t1.c1 OFFSET 10 LIMIT 10;
                                                                                             QUERY PLAN                                                                                             
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1028,7 +1028,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) JOIN ft4 t
 (10 rows)
 
 -- left outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
                                                                             QUERY PLAN                                                                             
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1056,7 +1056,7 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.
 (10 rows)
 
 -- left outer join three tables
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1086,7 +1086,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT 
 -- left outer join + placement of clauses.
 -- clauses within the nullable side are not pulled up, but top level clause on
 -- non-nullable side is pushed into non-nullable side
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE c1 < 10) t2 ON (t1.c1 = t2.c1) WHERE t1.c1 < 10;
                                                                           QUERY PLAN                                                                           
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1107,7 +1107,7 @@ SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE
 
 -- clauses within the nullable side are not pulled up, but the top level clause
 -- on nullable side is not pushed down into nullable side
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE c1 < 10) t2 ON (t1.c1 = t2.c1)
 			WHERE (t2.c1 < 10 OR t2.c1 IS NULL) AND t1.c1 < 10;
                                                                                               QUERY PLAN                                                                                               
@@ -1129,7 +1129,7 @@ SELECT t1.c1, t1.c2, t2.c1, t2.c2 FROM ft4 t1 LEFT JOIN (SELECT * FROM ft5 WHERE
 (4 rows)
 
 -- right outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2.c1, t1.c1 OFFSET 10 LIMIT 10;
                                                                             QUERY PLAN                                                                             
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1157,7 +1157,7 @@ SELECT t1.c1, t2.c1 FROM ft5 t1 RIGHT JOIN ft4 t2 ON (t1.c1 = t2.c1) ORDER BY t2
 (10 rows)
 
 -- right outer join three tables
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1185,7 +1185,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGH
 (10 rows)
 
 -- full outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 45 LIMIT 10;
                                                                             QUERY PLAN                                                                             
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1213,7 +1213,7 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.
 (10 rows)
 
 -- full outer join with restrictions on the joining relations
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL JOIN (SELECT c1 FROM ft5 WHERE c1 between 50 and 60) t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1;
                                            QUERY PLAN                                           
 ------------------------------------------------------------------------------------------------
@@ -1247,7 +1247,7 @@ SELECT t1.c1, t2.c1 FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1 FULL
 (8 rows)
 
 -- full outer join + inner join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1, t3.c1 FROM ft4 t1 INNER JOIN ft5 t2 ON (t1.c1 = t2.c1 + 1 and t1.c1 between 50 and 60) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) ORDER BY t1.c1, t2.c1, t3.c1 LIMIT 10;
                                                                                                                                            QUERY PLAN                                                                                                                                            
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1275,7 +1275,7 @@ SELECT t1.c1, t2.c1, t3.c1 FROM ft4 t1 INNER JOIN ft5 t2 ON (t1.c1 = t2.c1 + 1 a
 (10 rows)
 
 -- full outer join three tables
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1303,7 +1303,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL 
 (10 rows)
 
 -- full outer join + right outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1331,7 +1331,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT
 (10 rows)
 
 -- right outer join + full outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1359,7 +1359,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL
 (10 rows)
 
 -- full outer join + left outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1387,7 +1387,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 FULL JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT 
 (10 rows)
 
 -- left outer join + full outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1415,7 +1415,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) FULL 
 (10 rows)
 
 -- right outer join + left outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                     
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1443,7 +1443,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 RIGHT JOIN ft2 t2 ON (t1.c1 = t2.c1) LEFT
 (10 rows)
 
 -- left outer join + right outer join
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT JOIN ft4 t3 ON (t2.c1 = t3.c1) OFFSET 10 LIMIT 10;
                                                                                      QUERY PLAN                                                                                      
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1471,7 +1471,7 @@ SELECT t1.c1, t2.c2, t3.c3 FROM ft2 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) RIGHT
 (10 rows)
 
 -- full outer join + WHERE clause, only matched rows
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) WHERE (t1.c1 = t2.c1 OR t1.c1 IS NULL) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
                                                                             QUERY PLAN                                                                            
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1503,7 +1503,7 @@ SELECT t1.c1, t2.c1 FROM ft4 t1 FULL JOIN ft5 t2 ON (t1.c1 = t2.c1) WHERE (t1.c1
 
 -- join two tables with FOR UPDATE clause
 -- tests whole-row reference for row marks
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE OF t1;
                                                                                                                                                                                                                QUERY PLAN                                                                                                                                                                                                                
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1547,7 +1547,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
  110 | 110
 (10 rows)
 
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR UPDATE;
                                                                                                                                                                                                                         QUERY PLAN                                                                                                                                                                                                                        
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1592,7 +1592,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
 (10 rows)
 
 -- join two tables with FOR SHARE clause
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE OF t1;
                                                                                                                                                                                                                QUERY PLAN                                                                                                                                                                                                               
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1636,7 +1636,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
  110 | 110
 (10 rows)
 
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10 FOR SHARE;
                                                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                                                       
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1681,7 +1681,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t
 (10 rows)
 
 -- join in CTE
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 WITH t (c1_1, c1_3, c2_1) AS (SELECT t1.c1, t1.c3, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1)) SELECT c1_1, c2_1 FROM t ORDER BY c1_3, c1_1 OFFSET 100 LIMIT 10;
                                                              QUERY PLAN                                                              
 -------------------------------------------------------------------------------------------------------------------------------------
@@ -1715,7 +1715,7 @@ WITH t (c1_1, c1_3, c2_1) AS (SELECT t1.c1, t1.c3, t2.c1 FROM ft1 t1 JOIN ft2 t2
 (10 rows)
 
 -- ctid with whole-row reference
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
                                                                                                                                                                                                    QUERY PLAN                                                                                                                                                                                                    
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1728,7 +1728,7 @@ SELECT t1.ctid, t1, t2, t1.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) ORDER B
 (6 rows)
 
 -- SEMI JOIN, not pushed down
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
@@ -1763,7 +1763,7 @@ SELECT t1.c1 FROM ft1 t1 WHERE EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c1)
 (10 rows)
 
 -- ANTI JOIN, not pushed down
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2.c2) ORDER BY t1.c1 OFFSET 100 LIMIT 10;
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
@@ -1798,7 +1798,7 @@ SELECT t1.c1 FROM ft1 t1 WHERE NOT EXISTS (SELECT 1 FROM ft2 t2 WHERE t1.c1 = t2
 (10 rows)
 
 -- CROSS JOIN, not pushed down
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 CROSS JOIN ft2 t2 ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
                              QUERY PLAN                              
 ---------------------------------------------------------------------
@@ -1835,7 +1835,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 CROSS JOIN ft2 t2 ORDER BY t1.c1, t2.c1 OFFSET 1
 (10 rows)
 
 -- different server, not pushed down. No result expected.
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
@@ -1861,7 +1861,7 @@ SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN ft6 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t
 
 -- unsafe join conditions (c8 has a UDT), not pushed down. Practically a CROSS
 -- JOIN since c8 in both tables has same value.
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c8 = t2.c8) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -1903,7 +1903,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c8 = t2.c8) ORDER BY t1.
 (10 rows)
 
 -- unsafe conditions on one side (c8 has a UDT), not pushed down.
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = 'foo' ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
@@ -1945,7 +1945,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 LEFT JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 
 -- in the SELECT clause. In this test unsafe clause needs to have column
 -- references from both joining sides so that the clause is not pushed down
 -- into one of the joining sides.
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = t2.c8 ORDER BY t1.c3, t1.c1 OFFSET 100 LIMIT 10;
                                                                       QUERY PLAN                                                                       
 -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1977,7 +1977,7 @@ SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) WHERE t1.c8 = t2.
 (10 rows)
 
 -- Aggregate after UNION, for testing setrefs
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1c1, avg(t1c1 + t2c1) FROM (SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1) UNION SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 ON (t1.c1 = t2.c1)) AS t (t1c1, t2c1) GROUP BY t1c1 ORDER BY t1c1 OFFSET 100 LIMIT 10;
                                                                      QUERY PLAN                                                                     
 ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2019,7 +2019,7 @@ SELECT t1c1, avg(t1c1 + t2c1) FROM (SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 
 (10 rows)
 
 -- join with lateral reference
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1."C 1" FROM "S 1"."T 1" t1, LATERAL (SELECT DISTINCT t2.c1, t3.c1 FROM ft1 t2, ft2 t3 WHERE t2.c1 = t3.c1 AND t2.c2 = t1.c2) q ORDER BY t1."C 1" OFFSET 10 LIMIT 10;
                                                                              QUERY PLAN                                                                             
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2053,159 +2053,10 @@ SELECT t1."C 1" FROM "S 1"."T 1" t1, LATERAL (SELECT DISTINCT t2.c1, t3.c1 FROM 
    1
 (10 rows)
 
--- create another user for permission, user mapping, effective user tests
-CREATE USER view_owner;
--- grant privileges on ft4 and ft5 to view_owner
-GRANT ALL ON ft4 TO view_owner;
-GRANT ALL ON ft5 TO view_owner;
--- prepare statement with current session user
-PREPARE join_stmt AS SELECT t1.c1, t2.c1 FROM ft4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
-EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
-                                                                            QUERY PLAN                                                                             
--------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Limit
-   Output: t1.c1, t2.c1
-   ->  Foreign Scan
-         Output: t1.c1, t2.c1
-         Relations: (public.ft4 t1) LEFT JOIN (public.ft5 t2)
-         Remote SQL: SELECT r1.c1, r2.c1 FROM ("S 1"."T 3" r1 LEFT JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) ORDER BY r1.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST
-(6 rows)
-
-EXECUTE join_stmt;
- c1 | c1 
-----+----
- 22 |   
- 24 | 24
- 26 |   
- 28 |   
- 30 | 30
- 32 |   
- 34 |   
- 36 | 36
- 38 |   
- 40 |   
-(10 rows)
-
--- change the session user to view_owner and execute the statement. Because of
--- change in session user, the plan should get invalidated and created again.
--- The join will not be pushed down since the joining relations do not have a
--- valid user mapping.
-SET SESSION ROLE view_owner;
-EXPLAIN (COSTS OFF, VERBOSE) EXECUTE join_stmt;
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Limit
-   Output: t1.c1, t2.c1
-   ->  Sort
-         Output: t1.c1, t2.c1
-         Sort Key: t1.c1, t2.c1
-         ->  Hash Left Join
-               Output: t1.c1, t2.c1
-               Hash Cond: (t1.c1 = t2.c1)
-               ->  Foreign Scan on public.ft4 t1
-                     Output: t1.c1, t1.c2, t1.c3
-                     Remote SQL: SELECT c1 FROM "S 1"."T 3"
-               ->  Hash
-                     Output: t2.c1
-                     ->  Foreign Scan on public.ft5 t2
-                           Output: t2.c1
-                           Remote SQL: SELECT c1 FROM "S 1"."T 4"
-(16 rows)
-
-RESET ROLE;
-DEALLOCATE join_stmt;
-CREATE VIEW v_ft5 AS SELECT * FROM ft5;
--- change owner of v_ft5 to view_owner so that the effective user for scan on
--- ft5 is view_owner and not the current user.
-ALTER VIEW v_ft5 OWNER TO view_owner;
--- create a public user mapping for loopback server
--- drop user mapping for current_user.
-DROP USER MAPPING FOR CURRENT_USER SERVER loopback;
-CREATE USER MAPPING FOR PUBLIC SERVER loopback;
--- different effective user for permission check, but same user mapping for the
--- joining sides, join pushed down, no result expected.
-PREPARE join_stmt AS SELECT t1.c1, t2.c1 FROM ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 100 LIMIT 10;
-EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
-                                                                  QUERY PLAN                                                                  
-----------------------------------------------------------------------------------------------------------------------------------------------
- Limit
-   Output: t1.c1, ft5.c1
-   ->  Foreign Scan
-         Output: t1.c1, ft5.c1
-         Relations: (public.ft5 t1) INNER JOIN (public.ft5)
-         Remote SQL: SELECT r1.c1, r6.c1 FROM ("S 1"."T 4" r1 INNER JOIN "S 1"."T 4" r6 ON (((r1.c1 = r6.c1)))) ORDER BY r1.c1 ASC NULLS LAST
-(6 rows)
-
-EXECUTE join_stmt;
- c1 | c1 
-----+----
-(0 rows)
-
--- create user mapping for view_owner and execute the prepared statement
--- the join should not be pushed down since joining relations now use two
--- different user mappings
-CREATE USER MAPPING FOR view_owner SERVER loopback;
-EXPLAIN (COSTS false, VERBOSE) EXECUTE join_stmt;
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
- Limit
-   Output: t1.c1, ft5.c1
-   ->  Merge Join
-         Output: t1.c1, ft5.c1
-         Merge Cond: (t1.c1 = ft5.c1)
-         ->  Foreign Scan on public.ft5 t1
-               Output: t1.c1, t1.c2, t1.c3
-               Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC NULLS LAST
-         ->  Materialize
-               Output: ft5.c1, ft5.c2, ft5.c3
-               ->  Foreign Scan on public.ft5
-                     Output: ft5.c1, ft5.c2, ft5.c3
-                     Remote SQL: SELECT c1 FROM "S 1"."T 4" ORDER BY c1 ASC NULLS LAST
-(13 rows)
-
-EXECUTE join_stmt;
- c1 | c1 
-----+----
-(0 rows)
-
--- If a sub-join can't be pushed down, upper level join shouldn't be either.
-EXPLAIN (COSTS false, VERBOSE)
-SELECT t1.c1, t2.c1 FROM (ft5 t1 JOIN v_ft5 t2 ON (t1.c1 = t2.c1)) left join (ft5 t3 JOIN v_ft5 t4 ON (t3.c1 = t4.c1)) ON (t1.c1 = t3.c1);
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Hash Join
-   Output: t1.c1, ft5.c1
-   Hash Cond: (t1.c1 = ft5.c1)
-   ->  Hash Right Join
-         Output: t1.c1
-         Hash Cond: (t3.c1 = t1.c1)
-         ->  Hash Join
-               Output: t3.c1
-               Hash Cond: (t3.c1 = ft5_1.c1)
-               ->  Foreign Scan on public.ft5 t3
-                     Output: t3.c1, t3.c2, t3.c3
-                     Remote SQL: SELECT c1 FROM "S 1"."T 4"
-               ->  Hash
-                     Output: ft5_1.c1
-                     ->  Foreign Scan on public.ft5 ft5_1
-                           Output: ft5_1.c1
-                           Remote SQL: SELECT c1 FROM "S 1"."T 4"
-         ->  Hash
-               Output: t1.c1
-               ->  Foreign Scan on public.ft5 t1
-                     Output: t1.c1
-                     Remote SQL: SELECT c1 FROM "S 1"."T 4"
-   ->  Hash
-         Output: ft5.c1
-         ->  Foreign Scan on public.ft5
-               Output: ft5.c1
-               Remote SQL: SELECT c1 FROM "S 1"."T 4"
-(27 rows)
-
 -- non-Var items in targelist of the nullable rel of a join preventing
 -- push-down in some cases
 -- unable to push {ft1, ft2}
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT q.a, ft2.c1 FROM (SELECT 13 FROM ft1 WHERE c1 = 13) q(a) RIGHT JOIN ft2 ON (q.a = ft2.c1) WHERE ft2.c1 BETWEEN 10 AND 15;
                                                         QUERY PLAN                                                         
 ---------------------------------------------------------------------------------------------------------------------------
@@ -2234,7 +2085,7 @@ SELECT q.a, ft2.c1 FROM (SELECT 13 FROM ft1 WHERE c1 = 13) q(a) RIGHT JOIN ft2 O
 (6 rows)
 
 -- ok to push {ft1, ft2} but not {ft1, ft2, ft4}
-EXPLAIN (COSTS false, VERBOSE)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT ft4.c1, q.* FROM ft4 LEFT JOIN (SELECT 13, ft1.c1, ft2.c1 FROM ft1 RIGHT JOIN ft2 ON (ft1.c1 = ft2.c1) WHERE ft1.c1 = 12) q(a, b, c) ON (ft4.c1 = q.b) WHERE ft4.c1 BETWEEN 10 AND 15;
                                                                                     QUERY PLAN                                                                                     
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2260,15 +2111,13 @@ SELECT ft4.c1, q.* FROM ft4 LEFT JOIN (SELECT 13, ft1.c1, ft2.c1 FROM ft1 RIGHT 
  14 |    |    |   
 (3 rows)
 
--- recreate the dropped user mapping for further tests
-CREATE USER MAPPING FOR CURRENT_USER SERVER loopback;
-DROP USER MAPPING FOR PUBLIC SERVER loopback;
 -- join with nullable side with some columns with null values
 UPDATE ft5 SET c3 = null where c1 % 9 = 0;
-EXPLAIN VERBOSE SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5.c1 = ft4.c1 WHERE ft4.c1 BETWEEN 10 and 30 ORDER BY ft5.c1, ft4.c1;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5.c1 = ft4.c1 WHERE ft4.c1 BETWEEN 10 and 30 ORDER BY ft5.c1, ft4.c1;
                                                                                                                                 QUERY PLAN                                                                                                                                 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Foreign Scan  (cost=100.00..106.81 rows=7 width=62)
+ Foreign Scan
    Output: ft5.*, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2
    Relations: (public.ft5) INNER JOIN (public.ft4)
    Remote SQL: SELECT CASE WHEN (r1.*)::text IS NOT NULL THEN ROW(r1.c1, r1.c2, r1.c3) END, r1.c1, r1.c2, r1.c3, r2.c1, r2.c2 FROM ("S 1"."T 4" r1 INNER JOIN "S 1"."T 3" r2 ON (((r1.c1 = r2.c1)) AND ((r2.c1 >= 10)) AND ((r2.c1 <= 30)))) ORDER BY r1.c1 ASC NULLS LAST
@@ -2283,12 +2132,154 @@ SELECT ft5, ft5.c1, ft5.c2, ft5.c3, ft4.c1, ft4.c2 FROM ft5 left join ft4 on ft5
  (30,31,AAA030) | 30 | 31 | AAA030 | 30 | 31
 (4 rows)
 
+-- check join pushdown in situations where multiple userids are involved
+CREATE ROLE regress_view_owner;
+CREATE USER MAPPING FOR regress_view_owner SERVER loopback;
+GRANT SELECT ON ft4 TO regress_view_owner;
+GRANT SELECT ON ft5 TO regress_view_owner;
+CREATE VIEW v4 AS SELECT * FROM ft4;
+CREATE VIEW v5 AS SELECT * FROM ft5;
+ALTER VIEW v5 OWNER TO regress_view_owner;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN v5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;  -- can't be pushed down, different view owners
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Limit
+   Output: ft4.c1, ft5.c2, ft5.c1
+   ->  Sort
+         Output: ft4.c1, ft5.c2, ft5.c1
+         Sort Key: ft4.c1, ft5.c1
+         ->  Hash Left Join
+               Output: ft4.c1, ft5.c2, ft5.c1
+               Hash Cond: (ft4.c1 = ft5.c1)
+               ->  Foreign Scan on public.ft4
+                     Output: ft4.c1, ft4.c2, ft4.c3
+                     Remote SQL: SELECT c1 FROM "S 1"."T 3"
+               ->  Hash
+                     Output: ft5.c2, ft5.c1
+                     ->  Foreign Scan on public.ft5
+                           Output: ft5.c2, ft5.c1
+                           Remote SQL: SELECT c1, c2 FROM "S 1"."T 4"
+(16 rows)
+
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN v5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+ c1 | c2 
+----+----
+ 22 |   
+ 24 | 25
+ 26 |   
+ 28 |   
+ 30 | 31
+ 32 |   
+ 34 |   
+ 36 | 37
+ 38 |   
+ 40 |   
+(10 rows)
+
+ALTER VIEW v4 OWNER TO regress_view_owner;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN v5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;  -- can be pushed down
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: ft4.c1, ft5.c2, ft5.c1
+   ->  Foreign Scan
+         Output: ft4.c1, ft5.c2, ft5.c1
+         Relations: (public.ft4) LEFT JOIN (public.ft5)
+         Remote SQL: SELECT r6.c1, r9.c2, r9.c1 FROM ("S 1"."T 3" r6 LEFT JOIN "S 1"."T 4" r9 ON (((r6.c1 = r9.c1)))) ORDER BY r6.c1 ASC NULLS LAST, r9.c1 ASC NULLS LAST
+(6 rows)
+
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN v5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+ c1 | c2 
+----+----
+ 22 |   
+ 24 | 25
+ 26 |   
+ 28 |   
+ 30 | 31
+ 32 |   
+ 34 |   
+ 36 | 37
+ 38 |   
+ 40 |   
+(10 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;  -- can't be pushed down, view owner not current user
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Limit
+   Output: ft4.c1, t2.c2, t2.c1
+   ->  Sort
+         Output: ft4.c1, t2.c2, t2.c1
+         Sort Key: ft4.c1, t2.c1
+         ->  Hash Left Join
+               Output: ft4.c1, t2.c2, t2.c1
+               Hash Cond: (ft4.c1 = t2.c1)
+               ->  Foreign Scan on public.ft4
+                     Output: ft4.c1, ft4.c2, ft4.c3
+                     Remote SQL: SELECT c1 FROM "S 1"."T 3"
+               ->  Hash
+                     Output: t2.c2, t2.c1
+                     ->  Foreign Scan on public.ft5 t2
+                           Output: t2.c2, t2.c1
+                           Remote SQL: SELECT c1, c2 FROM "S 1"."T 4"
+(16 rows)
+
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+ c1 | c2 
+----+----
+ 22 |   
+ 24 | 25
+ 26 |   
+ 28 |   
+ 30 | 31
+ 32 |   
+ 34 |   
+ 36 | 37
+ 38 |   
+ 40 |   
+(10 rows)
+
+ALTER VIEW v4 OWNER TO CURRENT_USER;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;  -- can be pushed down
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: ft4.c1, t2.c2, t2.c1
+   ->  Foreign Scan
+         Output: ft4.c1, t2.c2, t2.c1
+         Relations: (public.ft4) LEFT JOIN (public.ft5 t2)
+         Remote SQL: SELECT r6.c1, r2.c2, r2.c1 FROM ("S 1"."T 3" r6 LEFT JOIN "S 1"."T 4" r2 ON (((r6.c1 = r2.c1)))) ORDER BY r6.c1 ASC NULLS LAST, r2.c1 ASC NULLS LAST
+(6 rows)
+
+SELECT t1.c1, t2.c2 FROM v4 t1 LEFT JOIN ft5 t2 ON (t1.c1 = t2.c1) ORDER BY t1.c1, t2.c1 OFFSET 10 LIMIT 10;
+ c1 | c2 
+----+----
+ 22 |   
+ 24 | 25
+ 26 |   
+ 28 |   
+ 30 | 31
+ 32 |   
+ 34 |   
+ 36 | 37
+ 38 |   
+ 40 |   
+(10 rows)
+
+ALTER VIEW v4 OWNER TO regress_view_owner;
+-- cleanup
+DROP OWNED BY regress_view_owner;
+DROP ROLE regress_view_owner;
 -- ===================================================================
 -- parameterized queries
 -- ===================================================================
 -- simple join
 PREPARE st1(int, int) AS SELECT t1.c3, t2.c3 FROM ft1 t1, ft2 t2 WHERE t1.c1 = $1 AND t2.c1 = $2;
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st1(1, 2);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st1(1, 2);
                                                           QUERY PLAN                                                          
 ------------------------------------------------------------------------------------------------------------------------------
  Foreign Scan
@@ -2311,7 +2302,7 @@ EXECUTE st1(101, 101);
 
 -- subquery using stable function (can't be sent to remote)
 PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c4) = '1970-01-17'::date) ORDER BY c1;
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st2(10, 20);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st2(10, 20);
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
  Sort
@@ -2345,7 +2336,7 @@ EXECUTE st2(101, 121);
 
 -- subquery using immutable function (can be sent to remote)
 PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c5) = '1970-01-17'::date) ORDER BY c1;
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st3(10, 20);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st3(10, 20);
                                                       QUERY PLAN                                                       
 -----------------------------------------------------------------------------------------------------------------------
  Sort
@@ -2377,7 +2368,7 @@ EXECUTE st3(20, 30);
 
 -- custom plan should be chosen initially
 PREPARE st4(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 = $1;
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2385,7 +2376,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2393,7 +2384,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2401,7 +2392,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2409,7 +2400,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (3 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2418,7 +2409,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
 (3 rows)
 
 -- once we try it enough times, should switch to generic plan
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st4(1);
                                               QUERY PLAN                                               
 -------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2428,7 +2419,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st4(1);
 
 -- value of $1 should not be sent to remote
 PREPARE st5(user_enum,int) AS SELECT * FROM ft1 t1 WHERE c8 = $1 and c1 = $2;
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st5('foo', 1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2437,7 +2428,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (4 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st5('foo', 1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2446,7 +2437,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (4 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st5('foo', 1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2455,7 +2446,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (4 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st5('foo', 1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2464,7 +2455,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (4 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st5('foo', 1);
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2473,7 +2464,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" = 1))
 (4 rows)
 
-EXPLAIN (VERBOSE, COSTS false) EXECUTE st5('foo', 1);
+EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st5('foo', 1);
                                               QUERY PLAN                                               
 -------------------------------------------------------------------------------------------------------
  Foreign Scan on public.ft1 t1
@@ -2495,7 +2486,7 @@ DEALLOCATE st3;
 DEALLOCATE st4;
 DEALLOCATE st5;
 -- System columns, except ctid, should not be sent to remote
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM ft1 t1 WHERE t1.tableoid = 'pg_class'::regclass LIMIT 1;
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
@@ -2513,7 +2504,7 @@ SELECT * FROM ft1 t1 WHERE t1.tableoid = 'ft1'::regclass LIMIT 1;
   1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT tableoid::regclass, * FROM ft1 t1 LIMIT 1;
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
@@ -2530,7 +2521,7 @@ SELECT tableoid::regclass, * FROM ft1 t1 LIMIT 1;
  ft1      |  1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM ft1 t1 WHERE t1.ctid = '(0,2)';
                                               QUERY PLAN                                               
 -------------------------------------------------------------------------------------------------------
@@ -2545,7 +2536,7 @@ SELECT * FROM ft1 t1 WHERE t1.ctid = '(0,2)';
   2 |  2 | 00002 | Sat Jan 03 00:00:00 1970 PST | Sat Jan 03 00:00:00 1970 | 2  | 2          | foo
 (1 row)
 
-EXPLAIN (VERBOSE, COSTS false)
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT ctid, * FROM ft1 t1 LIMIT 1;
                                      QUERY PLAN                                      
 -------------------------------------------------------------------------------------
@@ -4344,7 +4335,7 @@ select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
 -- Above DMLs add data with c6 as NULL in ft1, so test ORDER BY NULLS LAST and NULLs
 -- FIRST behavior here.
 -- ORDER BY DESC NULLS LAST options
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795 LIMIT 10;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795 LIMIT 10;
                                                            QUERY PLAN                                                            
 ---------------------------------------------------------------------------------------------------------------------------------
  Limit
@@ -4370,7 +4361,7 @@ SELECT * FROM ft1 ORDER BY c6 DESC NULLS LAST, c1 OFFSET 795  LIMIT 10;
 (10 rows)
 
 -- ORDER BY DESC NULLS FIRST options
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
                                                             QUERY PLAN                                                            
 ----------------------------------------------------------------------------------------------------------------------------------
  Limit
@@ -4396,7 +4387,7 @@ SELECT * FROM ft1 ORDER BY c6 DESC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
 (10 rows)
 
 -- ORDER BY ASC NULLS FIRST options
-EXPLAIN (VERBOSE, COSTS false) SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
                                                            QUERY PLAN                                                            
 ---------------------------------------------------------------------------------------------------------------------------------
  Limit
@@ -4426,7 +4417,7 @@ SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
 -- ===================================================================
 -- Consistent check constraints provide consistent results
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2positive CHECK (c2 >= 0);
-EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 < 0;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 < 0;
                             QUERY PLAN                             
 -------------------------------------------------------------------
  Aggregate
@@ -4442,7 +4433,7 @@ SELECT count(*) FROM ft1 WHERE c2 < 0;
 (1 row)
 
 SET constraint_exclusion = 'on';
-EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 < 0;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 < 0;
            QUERY PLAN           
 --------------------------------
  Aggregate
@@ -4470,7 +4461,7 @@ CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = (- c2) WHERE (("C 1" =
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c2positive;
 -- But inconsistent check constraints provide inconsistent results
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2negative CHECK (c2 < 0);
-EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 >= 0;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 >= 0;
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Aggregate
@@ -4486,7 +4477,7 @@ SELECT count(*) FROM ft1 WHERE c2 >= 0;
 (1 row)
 
 SET constraint_exclusion = 'on';
-EXPLAIN (VERBOSE, COSTS false) SELECT count(*) FROM ft1 WHERE c2 >= 0;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 >= 0;
            QUERY PLAN           
 --------------------------------
  Aggregate
@@ -5867,6 +5858,3 @@ AND ftoptions @> array['fetch_size=60000'];
 (1 row)
 
 ROLLBACK;
--- Cleanup
-DROP OWNED BY view_owner;
-DROP USER view_owner;

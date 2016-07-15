@@ -145,10 +145,12 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt = makeNode(PlannedStmt);
 	pstmt->commandType = CMD_SELECT;
 	pstmt->queryId = 0;
-	pstmt->hasReturning = 0;
-	pstmt->hasModifyingCTE = 0;
-	pstmt->canSetTag = 1;
-	pstmt->transientPlan = 0;
+	pstmt->hasReturning = false;
+	pstmt->hasModifyingCTE = false;
+	pstmt->canSetTag = true;
+	pstmt->transientPlan = false;
+	pstmt->dependsOnRole = false;
+	pstmt->parallelModeNeeded = false;
 	pstmt->planTree = plan;
 	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
@@ -156,11 +158,9 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->subplans = NIL;
 	pstmt->rewindPlanIDs = NULL;
 	pstmt->rowMarks = NIL;
-	pstmt->nParamExec = estate->es_plannedstmt->nParamExec;
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
-	pstmt->hasRowSecurity = false;
-	pstmt->hasForeignJoin = false;
+	pstmt->nParamExec = estate->es_plannedstmt->nParamExec;
 
 	/* Return serialized copy of our dummy PlannedStmt. */
 	return nodeToString(pstmt);

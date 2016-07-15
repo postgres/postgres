@@ -121,13 +121,11 @@ typedef struct PlannerGlobal
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
-	bool		hasRowSecurity; /* row security applied? */
+	bool		dependsOnRole;	/* is plan specific to current role? */
 
 	bool		parallelModeOK; /* parallel mode potentially OK? */
 
 	bool		parallelModeNeeded;		/* parallel mode actually required? */
-
-	bool		hasForeignJoin; /* does have a pushed down foreign join */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -426,11 +424,12 @@ typedef struct PlannerInfo
  *		in just as for a baserel, except we don't bother with lateral_vars.
  *
  * If the relation is either a foreign table or a join of foreign tables that
- * all belong to the same foreign server and use the same user mapping, these
- * fields will be set:
+ * all belong to the same foreign server and are assigned to the same user to
+ * check access permissions as (cf checkAsUser), these fields will be set:
  *
  *		serverid - OID of foreign server, if foreign table (else InvalidOid)
- *		umid - OID of user mapping, if foreign table (else InvalidOid)
+ *		userid - OID of user to check access as (InvalidOid means current user)
+ *		useridiscurrent - we've assumed that userid equals current user
  *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
  *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
@@ -528,8 +527,8 @@ typedef struct RelOptInfo
 
 	/* Information about foreign tables and foreign joins */
 	Oid			serverid;		/* identifies server for the table or join */
-	Oid			umid;			/* identifies user mapping for the table or
-								 * join */
+	Oid			userid;			/* identifies user to check access as */
+	bool		useridiscurrent;	/* join is only valid for current user */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;
 	void	   *fdw_private;
@@ -653,7 +652,7 @@ typedef struct ForeignKeyOptInfo
 	struct EquivalenceClass *eclass[INDEX_MAX_KEYS];
 	/* List of non-EC RestrictInfos matching each column's condition */
 	List	   *rinfos[INDEX_MAX_KEYS];
-}	ForeignKeyOptInfo;
+} ForeignKeyOptInfo;
 
 
 /*

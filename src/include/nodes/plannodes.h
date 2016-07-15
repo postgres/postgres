@@ -49,6 +49,10 @@ typedef struct PlannedStmt
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
+	bool		dependsOnRole;	/* is plan specific to current role? */
+
+	bool		parallelModeNeeded;		/* parallel mode required to execute? */
+
 	struct Plan *planTree;		/* tree of Plan nodes */
 
 	List	   *rtable;			/* list of RangeTblEntry nodes */
@@ -69,11 +73,6 @@ typedef struct PlannedStmt
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
-
-	bool		hasRowSecurity; /* row security applied? */
-
-	bool		parallelModeNeeded;		/* parallel mode required to execute? */
-	bool		hasForeignJoin; /* Plan has a pushed down foreign join */
 } PlannedStmt;
 
 /* macro for fetching the Plan associated with a SubPlan node */

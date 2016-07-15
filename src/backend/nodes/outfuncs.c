@@ -261,6 +261,8 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_BOOL_FIELD(hasModifyingCTE);
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
+	WRITE_BOOL_FIELD(dependsOnRole);
+	WRITE_BOOL_FIELD(parallelModeNeeded);
 	WRITE_NODE_FIELD(planTree);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
@@ -271,9 +273,6 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_INT_FIELD(nParamExec);
-	WRITE_BOOL_FIELD(hasRowSecurity);
-	WRITE_BOOL_FIELD(parallelModeNeeded);
-	WRITE_BOOL_FIELD(hasForeignJoin);
 }
 
 /*
@@ -2014,11 +2013,11 @@ _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
 	WRITE_INT_FIELD(nParamExec);
 	WRITE_UINT_FIELD(lastPHId);
 	WRITE_UINT_FIELD(lastRowMarkId);
+	WRITE_INT_FIELD(lastPlanNodeId);
 	WRITE_BOOL_FIELD(transientPlan);
-	WRITE_BOOL_FIELD(hasRowSecurity);
+	WRITE_BOOL_FIELD(dependsOnRole);
 	WRITE_BOOL_FIELD(parallelModeOK);
 	WRITE_BOOL_FIELD(parallelModeNeeded);
-	WRITE_BOOL_FIELD(hasForeignJoin);
 }
 
 static void
@@ -2106,7 +2105,10 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_FLOAT_FIELD(allvisfrac, "%.6f");
 	WRITE_NODE_FIELD(subroot);
 	WRITE_NODE_FIELD(subplan_params);
+	WRITE_INT_FIELD(rel_parallel_workers);
 	WRITE_OID_FIELD(serverid);
+	WRITE_OID_FIELD(userid);
+	WRITE_BOOL_FIELD(useridiscurrent);
 	/* we don't try to print fdwroutine or fdw_private */
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);

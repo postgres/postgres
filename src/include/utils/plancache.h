@@ -93,8 +93,10 @@ typedef struct CachedPlanSource
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 	struct OverrideSearchPath *search_path;		/* search_path used for
 												 * parsing and planning */
-	Oid			planUserId;		/* User-id that the plan depends on */
 	MemoryContext query_context;	/* context holding the above, or NULL */
+	Oid			rewriteRoleId;	/* Role ID we did rewriting for */
+	bool		rewriteRowSecurity;		/* row_security used during rewrite */
+	bool		dependsOnRLS;	/* is rewritten query specific to the above? */
 	/* If we have a generic plan, this is a reference-counted link to it: */
 	struct CachedPlan *gplan;	/* generic plan, or NULL if not valid */
 	/* Some state flags: */
@@ -109,8 +111,6 @@ typedef struct CachedPlanSource
 	double		generic_cost;	/* cost of generic plan, or -1 if not known */
 	double		total_custom_cost;		/* total cost of custom plans so far */
 	int			num_custom_plans;		/* number of plans included in total */
-	bool		hasRowSecurity; /* planned with row security? */
-	bool		row_security_env;		/* row security setting when planned */
 } CachedPlanSource;
 
 /*
@@ -131,11 +131,12 @@ typedef struct CachedPlan
 	bool		is_oneshot;		/* is it a "oneshot" plan? */
 	bool		is_saved;		/* is CachedPlan in a long-lived context? */
 	bool		is_valid;		/* is the stmt_list currently valid? */
+	Oid			planRoleId;		/* Role ID the plan was created for */
+	bool		dependsOnRole;	/* is plan specific to that role? */
 	TransactionId saved_xmin;	/* if valid, replan when TransactionXmin
 								 * changes from this value */
 	int			generation;		/* parent's generation number for this plan */
 	int			refcount;		/* count of live references to this struct */
-	bool		has_foreign_join;		/* plan has pushed down a foreign join */
 	MemoryContext context;		/* context containing this CachedPlan */
 } CachedPlan;
 

@@ -15,8 +15,6 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
-#include "catalog/pg_class.h"
-#include "foreign/foreign.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -107,7 +105,6 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->consider_startup = (root->tuple_fraction > 0);
 	rel->consider_param_startup = false;		/* might get changed later */
 	rel->consider_parallel = false;		/* might get changed later */
-	rel->rel_parallel_workers = -1;		/* set up in GetRelationInfo */
 	rel->reltarget = create_empty_pathtarget();
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
@@ -129,8 +126,10 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->allvisfrac = 0;
 	rel->subroot = NULL;
 	rel->subplan_params = NIL;
+	rel->rel_parallel_workers = -1;		/* set up in GetRelationInfo */
 	rel->serverid = InvalidOid;
-	rel->umid = InvalidOid;
+	rel->userid = rte->checkAsUser;
+	rel->useridiscurrent = false;
 	rel->fdwroutine = NULL;
 	rel->fdw_private = NULL;
 	rel->baserestrictinfo = NIL;
@@ -169,30 +168,6 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 				 (int) rte->rtekind);
 			break;
 	}
-
-	/* For foreign tables get the user mapping */
-	if (rte->relkind == RELKIND_FOREIGN_TABLE)
-	{
-		/*
-		 * This should match what ExecCheckRTEPerms() does.
-		 *
-		 * Note that if the plan ends up depending on the user OID in any way
-		 * - e.g. if it depends on the computed user mapping OID - we must
-		 * ensure that it gets invalidated in the case of a user OID change.
-		 * See RevalidateCachedQuery and more generally the hasForeignJoin
-		 * flags in PlannerGlobal and PlannedStmt.
-		 *
-		 * It's possible, and not necessarily an error, for rel->umid to be
-		 * InvalidOid even though rel->serverid is set.  That just means there
-		 * is a server with no user mapping.
-		 */
-		Oid			userid;
-
-		userid = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
-		rel->umid = GetUserMappingId(userid, rel->serverid, true);
-	}
-	else
-		rel->umid = InvalidOid;
 
 	/* Save the finished struct in the query's simple_rel_array */
 	root->simple_rel_array[relid] = rel;
@@ -423,8 +398,10 @@ build_join_rel(PlannerInfo *root,
 	joinrel->allvisfrac = 0;
 	joinrel->subroot = NULL;
 	joinrel->subplan_params = NIL;
+	joinrel->rel_parallel_workers = -1;
 	joinrel->serverid = InvalidOid;
-	joinrel->umid = InvalidOid;
+	joinrel->userid = InvalidOid;
+	joinrel->useridiscurrent = false;
 	joinrel->fdwroutine = NULL;
 	joinrel->fdw_private = NULL;
 	joinrel->baserestrictinfo = NIL;
@@ -435,24 +412,43 @@ build_join_rel(PlannerInfo *root,
 
 	/*
 	 * Set up foreign-join fields if outer and inner relation are foreign
-	 * tables (or joins) belonging to the same server and using the same user
-	 * mapping.
+	 * tables (or joins) belonging to the same server and assigned to the same
+	 * user to check access permissions as.  In addition to an exact match of
+	 * userid, we allow the case where one side has zero userid (implying
+	 * current user) and the other side has explicit userid that happens to
+	 * equal the current user; but in that case, pushdown of the join is only
+	 * valid for the current user.  The useridiscurrent field records whether
+	 * we had to make such an assumption for this join or any sub-join.
 	 *
-	 * Otherwise those fields are left invalid, so FDW API will not be called
-	 * for the join relation.
-	 *
-	 * For FDWs like file_fdw, which ignore user mapping, the user mapping id
-	 * associated with the joining relation may be invalid. A valid serverid
-	 * distinguishes between a pushed down join with no user mapping and a
-	 * join which can not be pushed down because of user mapping mismatch.
+	 * Otherwise these fields are left invalid, so GetForeignJoinPaths will
+	 * not be called for the join relation.
 	 */
 	if (OidIsValid(outer_rel->serverid) &&
-		inner_rel->serverid == outer_rel->serverid &&
-		inner_rel->umid == outer_rel->umid)
+		inner_rel->serverid == outer_rel->serverid)
 	{
-		joinrel->serverid = outer_rel->serverid;
-		joinrel->umid = outer_rel->umid;
-		joinrel->fdwroutine = outer_rel->fdwroutine;
+		if (inner_rel->userid == outer_rel->userid)
+		{
+			joinrel->serverid = outer_rel->serverid;
+			joinrel->userid = outer_rel->userid;
+			joinrel->useridiscurrent = outer_rel->useridiscurrent || inner_rel->useridiscurrent;
+			joinrel->fdwroutine = outer_rel->fdwroutine;
+		}
+		else if (!OidIsValid(inner_rel->userid) &&
+				 outer_rel->userid == GetUserId())
+		{
+			joinrel->serverid = outer_rel->serverid;
+			joinrel->userid = outer_rel->userid;
+			joinrel->useridiscurrent = true;
+			joinrel->fdwroutine = outer_rel->fdwroutine;
+		}
+		else if (!OidIsValid(outer_rel->userid) &&
+				 inner_rel->userid == GetUserId())
+		{
+			joinrel->serverid = outer_rel->serverid;
+			joinrel->userid = inner_rel->userid;
+			joinrel->useridiscurrent = true;
+			joinrel->fdwroutine = outer_rel->fdwroutine;
+		}
 	}
 
 	/*
