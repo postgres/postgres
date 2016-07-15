@@ -406,6 +406,8 @@ normalize_phrase_tree(NODE *node)
 
 	if (node->valnode->qoperator.oper == OP_NOT)
 	{
+		NODE *orignode = node;
+
 		/* eliminate NOT sequence */
 		while (node->valnode->type == QI_OPR &&
 		node->valnode->qoperator.oper == node->right->valnode->qoperator.oper)
@@ -413,7 +415,11 @@ normalize_phrase_tree(NODE *node)
 			node = node->right->right;
 		}
 
-		node->right = normalize_phrase_tree(node->right);
+		if (orignode != node)
+			/* current node isn't checked yet */
+			node = normalize_phrase_tree(node);
+		else
+			node->right = normalize_phrase_tree(node->right);
 	}
 	else if (node->valnode->qoperator.oper == OP_PHRASE)
 	{

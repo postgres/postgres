@@ -555,6 +555,18 @@ SELECT plainto_tsquery('english', 'foo bar') && 'asd | fg';
 (1 row)
 
 -- Check stop word deletion, a and s are stop-words
+SELECT to_tsquery('english', '!(a & !b) & c');
+ to_tsquery 
+------------
+ 'b' & 'c'
+(1 row)
+
+SELECT to_tsquery('english', '!(a & !b)');
+ to_tsquery 
+------------
+ 'b'
+(1 row)
+
 SELECT to_tsquery('english', '(1 <-> 2) <-> a');
  to_tsquery  
 -------------

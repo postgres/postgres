@@ -130,6 +130,9 @@ SELECT plainto_tsquery('english', 'foo bar') || !!plainto_tsquery('english', 'as
 SELECT plainto_tsquery('english', 'foo bar') && 'asd | fg';
 
 -- Check stop word deletion, a and s are stop-words
+SELECT to_tsquery('english', '!(a & !b) & c');
+SELECT to_tsquery('english', '!(a & !b)');
+
 SELECT to_tsquery('english', '(1 <-> 2) <-> a');
 SELECT to_tsquery('english', '(1 <-> a) <-> 2');
 SELECT to_tsquery('english', '(a <-> 1) <-> 2');
