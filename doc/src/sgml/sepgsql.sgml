@@ -675,13 +675,13 @@ ERROR:  SELinux: security policy violation
      </row>
      <row>
       <entry><literal>sepgsql_mcstrans_in(text) returns text</literal></entry>
-      <entry>Translates the given qualifies MLS/MCS range into raw format if
+      <entry>Translates the given qualified MLS/MCS range into raw format if
       the mcstrans daemon is running.
       </entry>
      </row>
      <row>
       <entry><literal>sepgsql_mcstrans_out(text) returns text</literal></entry>
-      <entry>Translates the given raw MCS/MCS range into qualified format if
+      <entry>Translates the given raw MLS/MCS range into qualified format if
       the mcstrans daemon is running.
       </entry>
      </row>

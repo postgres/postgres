@@ -98,7 +98,7 @@ INSERT 0 1
   <title>Authors</title>
 
   <para>
-   Teodor Sigaev (<email>teodor@stack.net</email>) ,
+   Teodor Sigaev (<email>teodor@stack.net</email>),
    Oleg Bartunov (<email>oleg@sai.msu.su</email>), and
    Janko Richter (<email>jankorichter@yahoo.de</email>).  See
    <ulink url="http://www.sai.msu.su/~megera/postgres/gist/"></ulink>
