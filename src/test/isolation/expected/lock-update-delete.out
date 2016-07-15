@@ -156,7 +156,7 @@ t
 step s1l: <... completed>
 key            value          
 
-1              2              
+1              1              
 
 starting permutation: s2b s1l s2u s2_blocker1 s2r s2_unlock
 pg_advisory_lock
