@@ -57,6 +57,12 @@ SELECT '1&(2&(4&(5|!6)))'::tsquery;
 SELECT E'1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
 SELECT $$'\\as'$$::tsquery;
 SELECT 'a:* & nbb:*ac | doo:a* | goo'::tsquery;
+SELECT '!!b'::tsquery;
+SELECT '!!!b'::tsquery;
+SELECT '!(!b)'::tsquery;
+SELECT 'a & !!b'::tsquery;
+SELECT '!!a & b'::tsquery;
+SELECT '!!a & !!b'::tsquery;
 
 -- phrase transformation
 SELECT 'a <-> (b|c)'::tsquery;

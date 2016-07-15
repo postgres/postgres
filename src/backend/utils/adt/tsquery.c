@@ -455,7 +455,9 @@ cleanOpStack(TSQueryParserState state,
 
 	while(*lenstack)
 	{
-		if (opPriority > OP_PRIORITY(stack[*lenstack - 1].op))
+		/* NOT is right associative unlike to others */
+		if ((op != OP_NOT && opPriority > OP_PRIORITY(stack[*lenstack - 1].op)) ||
+			(op == OP_NOT && opPriority >=  OP_PRIORITY(stack[*lenstack - 1].op)))
 			break;
 
 		(*lenstack)--;

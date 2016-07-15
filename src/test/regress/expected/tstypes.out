@@ -330,6 +330,42 @@ SELECT 'a:* & nbb:*ac | doo:a* | goo'::tsquery;
  'a':* & 'nbb':*AC | 'doo':*A | 'goo'
 (1 row)
 
+SELECT '!!b'::tsquery;
+ tsquery 
+---------
+ !!'b'
+(1 row)
+
+SELECT '!!!b'::tsquery;
+ tsquery 
+---------
+ !!!'b'
+(1 row)
+
+SELECT '!(!b)'::tsquery;
+ tsquery 
+---------
+ !!'b'
+(1 row)
+
+SELECT 'a & !!b'::tsquery;
+   tsquery   
+-------------
+ 'a' & !!'b'
+(1 row)
+
+SELECT '!!a & b'::tsquery;
+   tsquery   
+-------------
+ !!'a' & 'b'
+(1 row)
+
+SELECT '!!a & !!b'::tsquery;
+    tsquery    
+---------------
+ !!'a' & !!'b'
+(1 row)
+
 -- phrase transformation
 SELECT 'a <-> (b|c)'::tsquery;
           tsquery          
