@@ -419,7 +419,7 @@ HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
 
 		/*
 		 * An invalid Xmin can be left behind by a speculative insertion that
-		 * is cancelled by super-deleting the tuple.  We shouldn't see any of
+		 * is canceled by super-deleting the tuple.  We shouldn't see any of
 		 * those in TOAST tables, but better safe than sorry.
 		 */
 		else if (!TransactionIdIsValid(HeapTupleHeaderGetXmin(tuple)))

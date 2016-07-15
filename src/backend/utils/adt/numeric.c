@@ -7289,7 +7289,7 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 		 * But having said that: div[qi] can be more than INT_MAX/NBASE, as
 		 * noted above, which means that the product div[qi] * NBASE *can*
 		 * overflow.  When that happens, adding it to div[qi + 1] will always
-		 * cause a cancelling overflow so that the end result is correct.  We
+		 * cause a canceling overflow so that the end result is correct.  We
 		 * could avoid the intermediate overflow by doing the multiplication
 		 * and addition in int64 arithmetic, but so far there appears no need.
 		 */

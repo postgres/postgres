@@ -532,7 +532,7 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * By computing the intended stop time initially, we avoid accumulation of
 	 * extra delay across multiple sleeps.  This also ensures we won't delay
 	 * less than the specified time when WaitLatch is terminated early by a
-	 * non-query-cancelling signal such as SIGHUP.
+	 * non-query-canceling signal such as SIGHUP.
 	 */
 
 #ifdef HAVE_INT64_TIMESTAMP

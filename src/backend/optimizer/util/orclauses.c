@@ -54,7 +54,7 @@ static void consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
  * fault is not really in the transformation, but in clauselist_selectivity's
  * inability to recognize redundant conditions.)  We can compensate for this
  * redundancy by changing the cached selectivity of the original OR clause,
- * cancelling out the (valid) reduction in the estimated sizes of the base
+ * canceling out the (valid) reduction in the estimated sizes of the base
  * relations so that the estimated joinrel size remains the same.  This is
  * a MAJOR HACK: it depends on the fact that clause selectivities are cached
  * and on the fact that the same RestrictInfo node will appear in every
