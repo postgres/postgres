@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_xlogdump</refname>
-  <refpurpose>Display a human-readable rendering of the write-ahead log of a <productname>PostgreSQL</productname> database cluster</refpurpose>
+  <refpurpose>display a human-readable rendering of the write-ahead log of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
