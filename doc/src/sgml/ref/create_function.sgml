@@ -750,14 +750,14 @@ SELECT * FROM dup(42);
     ensure that the function cannot be misused.  For security,
     <xref linkend="guc-search-path"> should be set to exclude any schemas
     writable by untrusted users.  This prevents
-    malicious users from creating objects that mask objects used by the
-    function.  Particularly important in this regard is the
+    malicious users from creating objects (e.g., tables, functions, and
+    operators) that mask objects intended to be used by the function.
+    Particularly important in this regard is the
     temporary-table schema, which is searched first by default, and
     is normally writable by anyone.  A secure arrangement can be obtained
     by forcing the temporary schema to be searched last.  To do this,
     write <literal>pg_temp</><indexterm><primary>pg_temp</><secondary>securing functions</></> as the last entry in <varname>search_path</>.
     This function illustrates safe usage:
-   </para>
 
 <programlisting>
 CREATE FUNCTION check_password(uname TEXT, pass TEXT)
@@ -776,11 +776,17 @@ $$  LANGUAGE plpgsql
     SET search_path = admin, pg_temp;
 </programlisting>
 
+    This function's intention is to access a table <literal>admin.pwds</>.
+    But without the <literal>SET</> clause, or with a <literal>SET</> clause
+    mentioning only <literal>admin</>, the function could be subverted by
+    creating a temporary table named <literal>pwds</>.
+   </para>
+
    <para>
     Before <productname>PostgreSQL</productname> version 8.3, the
-    <literal>SET</> option was not available, and so older functions may
+    <literal>SET</> clause was not available, and so older functions may
     contain rather complicated logic to save, set, and restore
-    <varname>search_path</>.  The <literal>SET</> option is far easier
+    <varname>search_path</>.  The <literal>SET</> clause is far easier
     to use for this purpose.
    </para>
 
