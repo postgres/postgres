@@ -1,0 +1,55 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s2b s2u s2c s1u1 s1u2 s1c
+step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2u: UPDATE users SET sometime = '1830-10-04' WHERE id = 1;
+step s2c: COMMIT;
+step s1u1: UPDATE orders SET name = 'order of olivier (2)', user_id = 1 WHERE id = 1;
+step s1u2: UPDATE orders SET name = 'order of olivier (3)', user_id = 1 WHERE id = 1;
+step s1c: COMMIT;
+
+starting permutation: s1b s2b s2u s1u1 s2c s1u2 s1c
+step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2u: UPDATE users SET sometime = '1830-10-04' WHERE id = 1;
+step s1u1: UPDATE orders SET name = 'order of olivier (2)', user_id = 1 WHERE id = 1;
+step s2c: COMMIT;
+step s1u2: UPDATE orders SET name = 'order of olivier (3)', user_id = 1 WHERE id = 1;
+step s1c: COMMIT;
+
+starting permutation: s1b s2b s1u1 s2u s2c s1u2 s1c
+step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u1: UPDATE orders SET name = 'order of olivier (2)', user_id = 1 WHERE id = 1;
+step s2u: UPDATE users SET sometime = '1830-10-04' WHERE id = 1;
+step s2c: COMMIT;
+step s1u2: UPDATE orders SET name = 'order of olivier (3)', user_id = 1 WHERE id = 1;
+step s1c: COMMIT;
+
+starting permutation: s1b s1u1 s2b s2u s2c s1u2 s1c
+step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u1: UPDATE orders SET name = 'order of olivier (2)', user_id = 1 WHERE id = 1;
+step s2b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2u: UPDATE users SET sometime = '1830-10-04' WHERE id = 1;
+step s2c: COMMIT;
+step s1u2: UPDATE orders SET name = 'order of olivier (3)', user_id = 1 WHERE id = 1;
+step s1c: COMMIT;
+
+starting permutation: s1b s1u1 s2b s1u2 s2u s2c s1c
+step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u1: UPDATE orders SET name = 'order of olivier (2)', user_id = 1 WHERE id = 1;
+step s2b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u2: UPDATE orders SET name = 'order of olivier (3)', user_id = 1 WHERE id = 1;
+step s2u: UPDATE users SET sometime = '1830-10-04' WHERE id = 1;
+step s2c: COMMIT;
+step s1c: COMMIT;
+
+starting permutation: s1b s1u1 s1u2 s2b s2u s2c s1c
+step s1b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u1: UPDATE orders SET name = 'order of olivier (2)', user_id = 1 WHERE id = 1;
+step s1u2: UPDATE orders SET name = 'order of olivier (3)', user_id = 1 WHERE id = 1;
+step s2b: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2u: UPDATE users SET sometime = '1830-10-04' WHERE id = 1;
+step s2c: COMMIT;
+step s1c: COMMIT;

@@ -4540,7 +4540,7 @@ l3:
 		 */
 		return HeapTupleInvisible;
 	}
-	else if (result == HeapTupleBeingUpdated)
+	else if (result == HeapTupleBeingUpdated || result == HeapTupleUpdated)
 	{
 		TransactionId xwait;
 		uint16		infomask;
@@ -4800,12 +4800,22 @@ l3:
 		}
 
 		/*
+		 * Time to sleep on the other transaction/multixact, if necessary.
+		 *
+		 * If the other transaction is an update that's already committed,
+		 * then sleeping cannot possibly do any good: if we're required to
+		 * sleep, get out to raise an error instead.
+		 *
 		 * By here, we either have already acquired the buffer exclusive lock,
 		 * or we must wait for the locking transaction or multixact; so below
 		 * we ensure that we grab buffer lock after the sleep.
 		 */
-
-		if (require_sleep)
+		if (require_sleep && result == HeapTupleUpdated)
+		{
+			LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
+			goto failed;
+		}
+		else if (require_sleep)
 		{
 			/*
 			 * Acquire tuple lock to establish our priority for the tuple, or
