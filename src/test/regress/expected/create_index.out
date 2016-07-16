@@ -2351,6 +2351,23 @@ DROP TABLE unlogged_hash_table;
 SET maintenance_work_mem = '1MB';
 CREATE INDEX hash_tuplesort_idx ON tenk1 USING hash (stringu1 name_ops) WITH (fillfactor = 10);
 WARNING:  hash indexes are not WAL-logged and their use is discouraged
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: (stringu1 = 'TVAAAA'::name)
+         ->  Bitmap Index Scan on hash_tuplesort_idx
+               Index Cond: (stringu1 = 'TVAAAA'::name)
+(5 rows)
+
+SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
+ count 
+-------
+    14
+(1 row)
+
 DROP INDEX hash_tuplesort_idx;
 RESET maintenance_work_mem;
 --
