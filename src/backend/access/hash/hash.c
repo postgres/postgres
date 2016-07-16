@@ -22,6 +22,7 @@
 #include "access/relscan.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "miscadmin.h"
 #include "optimizer/plancat.h"
 #include "utils/index_selfuncs.h"
 #include "utils/rel.h"
@@ -97,6 +98,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	double		reltuples;
 	double		allvisfrac;
 	uint32		num_buckets;
+	long		sort_threshold;
 	HashBuildState buildstate;
 
 	/*
@@ -120,12 +122,24 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * then we'll thrash horribly.  To prevent that scenario, we can sort the
 	 * tuples by (expected) bucket number.  However, such a sort is useless
 	 * overhead when the index does fit in RAM.  We choose to sort if the
-	 * initial index size exceeds NBuffers.
+	 * initial index size exceeds maintenance_work_mem, or the number of
+	 * buffers usable for the index, whichever is less.  (Limiting by the
+	 * number of buffers should reduce thrashing between PG buffers and kernel
+	 * buffers, which seems useful even if no physical I/O results.  Limiting
+	 * by maintenance_work_mem is useful to allow easy testing of the sort
+	 * code path, and may be useful to DBAs as an additional control knob.)
 	 *
 	 * NOTE: this test will need adjustment if a bucket is ever different from
-	 * one page.
+	 * one page.  Also, "initial index size" accounting does not include the
+	 * metapage, nor the first bitmap page.
 	 */
-	if (num_buckets >= (uint32) NBuffers)
+	sort_threshold = (maintenance_work_mem * 1024L) / BLCKSZ;
+	if (index->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
+		sort_threshold = Min(sort_threshold, NBuffers);
+	else
+		sort_threshold = Min(sort_threshold, NLocBuffer);
+
+	if (num_buckets >= (uint32) sort_threshold)
 		buildstate.spool = _h_spoolinit(heap, index, num_buckets);
 	else
 		buildstate.spool = NULL;

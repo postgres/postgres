@@ -37,6 +37,7 @@ struct HSpool
 {
 	Tuplesortstate *sortstate;	/* state data for tuplesort.c */
 	Relation	index;
+	uint32		hash_mask;		/* bitmask for hash codes */
 };
 
 
@@ -47,7 +48,6 @@ HSpool *
 _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 {
 	HSpool	   *hspool = (HSpool *) palloc0(sizeof(HSpool));
-	uint32		hash_mask;
 
 	hspool->index = index;
 
@@ -60,7 +60,7 @@ _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 	 * we could just compute num_buckets - 1.  We prefer not to assume that
 	 * here, though.
 	 */
-	hash_mask = (((uint32) 1) << _hash_log2(num_buckets)) - 1;
+	hspool->hash_mask = (((uint32) 1) << _hash_log2(num_buckets)) - 1;
 
 	/*
 	 * We size the sort area as maintenance_work_mem rather than work_mem to
@@ -69,7 +69,7 @@ _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 	 */
 	hspool->sortstate = tuplesort_begin_index_hash(heap,
 												   index,
-												   hash_mask,
+												   hspool->hash_mask,
 												   maintenance_work_mem,
 												   false);
 
@@ -105,12 +105,29 @@ _h_indexbuild(HSpool *hspool)
 {
 	IndexTuple	itup;
 	bool		should_free;
+#ifdef USE_ASSERT_CHECKING
+	uint32		hashkey = 0;
+#endif
 
 	tuplesort_performsort(hspool->sortstate);
 
 	while ((itup = tuplesort_getindextuple(hspool->sortstate,
 										   true, &should_free)) != NULL)
 	{
+		/*
+		 * Technically, it isn't critical that hash keys be found in sorted
+		 * order, since this sorting is only used to increase locality of
+		 * access as a performance optimization.  It still seems like a good
+		 * idea to test tuplesort.c's handling of hash index tuple sorts
+		 * through an assertion, though.
+		 */
+#ifdef USE_ASSERT_CHECKING
+		uint32		lasthashkey = hashkey;
+
+		hashkey = _hash_get_indextuple_hashkey(itup) & hspool->hash_mask;
+		Assert(hashkey >= lasthashkey);
+#endif
+
 		_hash_doinsert(hspool->index, itup);
 		if (should_free)
 			pfree(itup);

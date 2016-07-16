@@ -690,6 +690,13 @@ DROP TABLE unlogged_hash_table;
 
 -- CREATE INDEX hash_ovfl_index ON hash_ovfl_heap USING hash (x int4_ops);
 
+-- Test hash index build tuplesorting.  Force hash tuplesort using low
+-- maintenance_work_mem setting and fillfactor:
+SET maintenance_work_mem = '1MB';
+CREATE INDEX hash_tuplesort_idx ON tenk1 USING hash (stringu1 name_ops) WITH (fillfactor = 10);
+DROP INDEX hash_tuplesort_idx;
+RESET maintenance_work_mem;
+
 
 --
 -- Test functional index
