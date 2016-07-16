@@ -547,6 +547,15 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        specify options for the authentication method. Details about which
        options are available for which authentication methods appear below.
       </para>
+
+      <para>
+       In addition to the method-specific options listed below, there is one
+       method-independent authentication option <literal>clientcert</>, which
+       can be specified in any <literal>hostssl</> record.  When set
+       to <literal>1</>, this option requires the client to present a valid
+       (trusted) SSL certificate, in addition to the other requirements of the
+       authentication method.
+      </para>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -1632,9 +1641,9 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
     This authentication method uses SSL client certificates to perform
     authentication. It is therefore only available for SSL connections.
     When using this authentication method, the server will require that
-    the client provide a valid certificate. No password prompt will be sent
-    to the client. The <literal>cn</literal> (Common Name) attribute of the
-    certificate
+    the client provide a valid, trusted certificate.  No password prompt
+    will be sent to the client.  The <literal>cn</literal> (Common Name)
+    attribute of the certificate
     will be compared to the requested database user name, and if they match
     the login will be allowed.  User name mapping can be used to allow
     <literal>cn</literal> to be different from the database user name.
@@ -1654,6 +1663,16 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
       </listitem>
      </varlistentry>
     </variablelist>
+   </para>
+
+   <para>
+    In a <filename>pg_hba.conf</> record specifying certificate
+    authentication, the authentication option <literal>clientcert</> is
+    assumed to be <literal>1</>, and it cannot be turned off since a client
+    certificate is necessary for this method.  What the <literal>cert</>
+    method adds to the basic <literal>clientcert</> certificate validity test
+    is a check that the <literal>cn</literal> attribute matches the database
+    user name.
    </para>
   </sect2>
 

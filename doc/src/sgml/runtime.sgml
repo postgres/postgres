@@ -2189,20 +2189,23 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   <sect2 id="ssl-client-certificates">
    <title>Using Client Certificates</title>
 
-   <para>
+  <para>
    To require the client to supply a trusted certificate, place
    certificates of the certificate authorities (<acronym>CA</acronym>s)
    you trust in the file <filename>root.crt</filename> in the data
    directory, set the parameter <xref linkend="guc-ssl-ca-file"> in
    <filename>postgresql.conf</filename> to <literal>root.crt</literal>,
-   and set the <literal>clientcert</literal> parameter
-   to 1 on the appropriate <literal>hostssl</> line(s) in
-   <filename>pg_hba.conf</>.
+   and add the authentication option <literal>clientcert=1</literal> to the
+   appropriate <literal>hostssl</> line(s) in <filename>pg_hba.conf</>.
    A certificate will then be requested from the client during
    SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
    description of how to set up certificates on the client.)  The server will
    verify that the client's certificate is signed by one of the trusted
-   certificate authorities.  If intermediate <acronym>CA</>s appear in
+   certificate authorities.
+  </para>
+
+  <para>
+   If intermediate <acronym>CA</>s appear in
    <filename>root.crt</filename>, the file must also contain certificate
    chains to their root <acronym>CA</>s.  Certificate Revocation List
    (CRL) entries
@@ -2214,12 +2217,12 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
-   The <literal>clientcert</literal> option in <filename>pg_hba.conf</> is
-   available for all authentication methods, but only for rows specified as
-   <literal>hostssl</>.  When <literal>clientcert</literal> is not specified
-   or is set to 0, the server will still verify presented client
-   certificates against its CA list, if one is configured,
-   &mdash; but it will not insist that a client certificate be presented.
+   The <literal>clientcert</literal> authentication option is available for
+   all authentication methods, but only in <filename>pg_hba.conf</> lines
+   specified as <literal>hostssl</>.  When <literal>clientcert</literal> is
+   not specified or is set to 0, the server will still verify any presented
+   client certificates against its CA file, if one is configured &mdash; but
+   it will not insist that a client certificate be presented.
   </para>
 
   <para>
@@ -2234,7 +2237,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    If you are setting up client certificates, you may wish to use
    the <literal>cert</> authentication method, so that the certificates
    control user authentication as well as providing connection security.
-   See <xref linkend="auth-cert"> for details.
+   See <xref linkend="auth-cert"> for details.  (It is not necessary to
+   specify <literal>clientcert=1</literal> explicitly when using
+   the <literal>cert</> authentication method.)
   </para>
   </sect2>
 
