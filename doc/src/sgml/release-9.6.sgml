@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-06-18 (commit 100340e2d)</simpara>
+   <simpara>Current as of 2016-07-16 (commit 606ccc5e7)</simpara>
   </note>
 
   <sect2>
@@ -823,6 +823,8 @@
       <listitem>
 <!--
 2016-01-07 [b1a9bad9e] pgstat: add WAL receiver status view & SRF
+2016-06-29 [9ed551e0a] Add conninfo to pg_stat_wal_receiver
+2016-07-07 [60d50769b] Rename pg_stat_wal_receiver.conn_info to conninfo.
 -->
        <para>
         Add <link linkend="pg-stat-wal-receiver-view"><structname>pg_stat_wal_receiver</></link>
@@ -1274,6 +1276,7 @@ XXX this is pending backpatch, may need to remove
       <listitem>
 <!--
 2016-04-05 [711768546] Implement backup API functions for non-exclusive backups
+2016-07-11 [87d84d67b] Fix start WAL filename for concurrent backups from stand
 -->
        <para>
         Extend <function>pg_start_backup()</> and <function>pg_stop_backup()</>
@@ -1330,10 +1333,12 @@ XXX this is pending backpatch, may need to remove
       <listitem>
 <!--
 2016-01-28 [fbe5a3fb7] Only try to push down foreign joins if the user mapping
+2016-07-15 [45639a052] Avoid invalidating all foreign-join cached plans when us
 -->
        <para>
         Consider performing joins of foreign tables remotely only when the
-        applicable user mappings match (Shigeru Hanada, Ashutosh Bapat)
+        tables will be accessed under the same role ID (Shigeru Hanada,
+        Ashutosh Bapat, Etsuro Fujita)
        </para>
 
        <para>
@@ -1341,7 +1346,7 @@ XXX this is pending backpatch, may need to remove
         of security entirely up to individual foreign data wrappers, but it
         would be easy for an FDW to inadvertently open up subtle security
         holes that way.  So, make it the core code's job to determine which
-        user mapping OID is relevant, and don't attempt join pushdown unless
+        role ID will access each table, and don't attempt join pushdown unless
         it's the same for all relevant relations.
        </para>
       </listitem>
@@ -1520,6 +1525,22 @@ XXX this is pending backpatch, may need to remove
 
       <listitem>
 <!--
+2016-07-11 [4d042999f] Print a given subplan only once in EXPLAIN.
+-->
+       <para>
+        Do not show the same subplan twice in <command>EXPLAIN</> output
+        (Tom Lane)
+       </para>
+
+       <para>
+        In certain cases, typically involving SubPlan nodes in index
+        conditions, <command>EXPLAIN</> would print data for the same
+        subplan twice.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2016-04-16 [c34df8a00] Disallow creation of indexes on system columns (except f
 -->
        <para>
@@ -1666,11 +1687,14 @@ XXX this is pending backpatch, may need to remove
       <listitem>
 <!--
 2016-04-07 [bb140506d] Phrase full text search.
+2016-06-27 [028350f61] Make exact distance match for FTS phrase operator
+2016-06-27 [3dbbd0f02] Do not fallback to AND for FTS phrase operator.
+2016-06-27 [6734a1cac] Change predecence of phrase operator.
 -->
        <para>
         Improve full-text search to support searching for phrases, that is,
         lexemes appearing adjacent to each other in a specific order, or with
-        at most a specified distance between them
+        a specified distance between them
         (Teodor Sigaev, Oleg Bartunov, Dmitry Ivanov)
        </para>
 
@@ -1679,8 +1703,8 @@ XXX this is pending backpatch, may need to remove
         using the new operators <literal>&lt;-&gt;</> and
         <literal>&lt;<replaceable>N</>&gt;</literal>.  The former means that
         the lexemes before and after it must appear adjacent to each other in
-        that order.  The latter means they can be separated by up
-        to <replaceable>N</> other lexemes.
+        that order.  The latter means they must be exactly <replaceable>N</>
+        lexemes apart.
        </para>
       </listitem>
 
@@ -2059,6 +2083,7 @@ This commit is also listed under libpq and psql
 <!--
 2016-04-08 [5c3c3cd0a] Enhanced custom error in PLPythonu
 2016-06-11 [020140d84] PL/Python: Rename new keyword arguments of plpy.error()
+2016-07-02 [3a4a33ad4] PL/Python: Report argument parsing errors using exceptio
 -->
        <para>
         Extend PL/Python's error-reporting and message-reporting functions to
@@ -2464,6 +2489,16 @@ This commit is also listed under libpq and PL/pgSQL
        </para>
       </listitem>
 
+      <listitem>
+<!--
+2016-07-11 [a670c24c3] Improve output of psql's \df+ command.
+-->
+       <para>
+        Make <command>\df+</> show function access privileges and
+        parallel-safety attributes (Michael Paquier)
+       </para>
+      </listitem>
+
       </itemizedlist>
 
     </sect4>
@@ -2842,6 +2877,8 @@ This commit is also listed under libpq and PL/pgSQL
 2016-01-07 [c44d01383] Delay creation of subplan tlist until after create_plan(
 2016-02-18 [19a541143] Add an explicit representation of the output targetlist
 2016-03-07 [3fc6e2d7f] Make the upper part of the planner work by generating an
+2016-07-01 [5ce5e4a12] Set consider_parallel correctly for upper planner rels.
+2016-07-01 [9e703987a] Rethink the GetForeignUpperPaths API (again).
 -->
        <para>
         Make the planner deal with post-scan/join query steps by generating
@@ -2858,6 +2895,8 @@ This commit is also listed under libpq and PL/pgSQL
       <listitem>
 <!--
 2016-01-20 [a7de3dc5c] Support multi-stage aggregation.
+2016-06-22 [f8ace5477] Fix type-safety problem with parallel aggregate serial/d
+2016-06-26 [19e972d55] Rethink node-level representation of partial-aggregation
 -->
        <para>
         Support partial aggregation (David Rowley, Simon Riggs)
@@ -2991,6 +3030,22 @@ This commit is also listed under libpq and PL/pgSQL
        </para>
       </listitem>
 
+      <listitem>
+<!--
+2016-07-01 [548af97fc] Provide and use a makefile target to build all generated
+-->
+       <para>
+        Provide a makefile target to build all generated headers (Michael
+        Paquier, Tom Lane)
+       </para>
+
+       <para>
+        <literal>submake-generated-headers</> can now be invoked to ensure
+        that generated backend header files are up-to-date.  This is useful in
+        subdirectories that might be built <quote>standalone</>.
+       </para>
+      </listitem>
+
      </itemizedlist>
 
    </sect3>
@@ -3118,6 +3173,7 @@ This commit is also listed under libpq and PL/pgSQL
       <listitem>
 <!--
 2016-03-16 [5871b8848] GUC variable pg_trgm.similarity_threshold insead of set_
+2016-06-20 [9c852566a] Fix comparison of similarity to threshold in GIST trigra
 -->
        <para>
         Add configuration parameter <varname>pg_trgm.similarity_threshold</>
@@ -3155,6 +3211,7 @@ This commit is also listed under libpq and PL/pgSQL
       <listitem>
 <!--
 2016-03-08 [ba0a198fb] Add pg_visibility contrib module.
+2016-06-17 [71d05a2c7] pg_visibility: Add pg_truncate_visibility_map function.
 -->
        <para>
         Add <filename>contrib/pg_visibility</> module to allow examining
