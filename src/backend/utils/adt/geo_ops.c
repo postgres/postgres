@@ -2848,7 +2848,7 @@ close_ps(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * at this point the "normal" from point will hit lseg. The closet point
+	 * at this point the "normal" from point will hit lseg. The closest point
 	 * will be somewhere on the lseg
 	 */
 	tmp = line_construct_pm(pt, invm);
@@ -2857,7 +2857,15 @@ close_ps(PG_FUNCTION_ARGS)
 		   tmp->A, tmp->B, tmp->C);
 #endif
 	result = interpt_sl(lseg, tmp);
-	Assert(result != NULL);
+
+	/*
+	 * ordinarily we should always find an intersection point, but that could
+	 * fail in the presence of NaN coordinates, and perhaps even from simple
+	 * roundoff issues.  Return a SQL NULL if so.
+	 */
+	if (result == NULL)
+		PG_RETURN_NULL();
+
 #ifdef GEODEBUG
 	printf("close_ps- result.x %f  result.y %f\n", result->x, result->y);
 #endif
