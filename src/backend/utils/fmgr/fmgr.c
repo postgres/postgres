@@ -1306,10 +1306,6 @@ FunctionCall1Coll(FmgrInfo *flinfo, Oid collation, Datum arg1)
 Datum
 FunctionCall2Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2)
 {
-	/*
-	 * XXX if you change this routine, see also the inlined version in
-	 * utils/sort/tuplesort.c!
-	 */
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
