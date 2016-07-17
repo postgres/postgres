@@ -223,10 +223,7 @@ GIN_SUPPORT(int4, false, leftmostvalue_int4, btint4cmp)
 static Datum
 leftmostvalue_int8(void)
 {
-	/*
-	 * Use sequence's definition to keep compatibility.
-	 */
-	return Int64GetDatum(SEQ_MINVALUE);
+	return Int64GetDatum(PG_INT64_MIN);
 }
 
 GIN_SUPPORT(int8, false, leftmostvalue_int8, btint8cmp)
@@ -250,10 +247,7 @@ GIN_SUPPORT(float8, false, leftmostvalue_float8, btfloat8cmp)
 static Datum
 leftmostvalue_money(void)
 {
-	/*
-	 * Use sequence's definition to keep compatibility.
-	 */
-	return Int64GetDatum(SEQ_MINVALUE);
+	return Int64GetDatum(PG_INT64_MIN);
 }
 
 GIN_SUPPORT(money, false, leftmostvalue_money, cash_cmp)
