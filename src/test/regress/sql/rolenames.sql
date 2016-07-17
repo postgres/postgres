@@ -26,7 +26,7 @@ SELECT COALESCE(d.datname, 'ALL'), COALESCE(r.rolname, 'ALL'),
              (SESSION_USER, 'session_user'))
       AS v(uname, keyword)
       ON (r.rolname = v.uname)
-   WHERE (r.rolname) IN ('Public', 'current_user', 'testrol1', 'testrol2')
+   WHERE (r.rolname) IN ('Public', 'current_user', 'regress_testrol1', 'regress_testrol2')
 ORDER BY 1, 2;
 $$ LANGUAGE SQL;
 
@@ -62,14 +62,14 @@ CREATE ROLE "pg_abc"; -- error
 CREATE ROLE pg_abcdef; -- error
 CREATE ROLE "pg_abcdef"; -- error
 
-CREATE ROLE testrol0 SUPERUSER LOGIN;
-CREATE ROLE testrolx SUPERUSER LOGIN;
-CREATE ROLE testrol2 SUPERUSER;
-CREATE ROLE testrol1 SUPERUSER LOGIN IN ROLE testrol2;
+CREATE ROLE regress_testrol0 SUPERUSER LOGIN;
+CREATE ROLE regress_testrolx SUPERUSER LOGIN;
+CREATE ROLE regress_testrol2 SUPERUSER;
+CREATE ROLE regress_testrol1 SUPERUSER LOGIN IN ROLE regress_testrol2;
 
 \c -
-SET SESSION AUTHORIZATION testrol1;
-SET ROLE testrol2;
+SET SESSION AUTHORIZATION regress_testrol1;
+SET ROLE regress_testrol2;
 
 --  ALTER ROLE
 BEGIN;
@@ -85,8 +85,8 @@ SELECT * FROM chkrolattr();
 ALTER USER "Public" WITH REPLICATION;
 ALTER USER "None" WITH REPLICATION;
 SELECT * FROM chkrolattr();
-ALTER USER testrol1 WITH NOREPLICATION;
-ALTER USER testrol2 WITH NOREPLICATION;
+ALTER USER regress_testrol1 WITH NOREPLICATION;
+ALTER USER regress_testrol2 WITH NOREPLICATION;
 SELECT * FROM chkrolattr();
 ROLLBACK;
 
@@ -114,8 +114,8 @@ SELECT * FROM chkrolattr();
 ALTER USER "Public" WITH REPLICATION;
 ALTER USER "None" WITH REPLICATION;
 SELECT * FROM chkrolattr();
-ALTER USER testrol1 WITH NOREPLICATION;
-ALTER USER testrol2 WITH NOREPLICATION;
+ALTER USER regress_testrol1 WITH NOREPLICATION;
+ALTER USER regress_testrol2 WITH NOREPLICATION;
 SELECT * FROM chkrolattr();
 ROLLBACK;
 
@@ -137,7 +137,7 @@ ALTER ROLE "current_user" SET application_name to 'FOOFOO';
 ALTER ROLE "Public" SET application_name to 'BARBAR';
 ALTER ROLE ALL SET application_name to 'SLAP';
 SELECT * FROM chksetconfig();
-ALTER ROLE testrol1 SET application_name to 'SLAM';
+ALTER ROLE regress_testrol1 SET application_name to 'SLAM';
 SELECT * FROM chksetconfig();
 ALTER ROLE CURRENT_USER RESET application_name;
 ALTER ROLE SESSION_USER RESET application_name;
@@ -160,7 +160,7 @@ ALTER USER "current_user" SET application_name to 'FOOFOO';
 ALTER USER "Public" SET application_name to 'BARBAR';
 ALTER USER ALL SET application_name to 'SLAP';
 SELECT * FROM chksetconfig();
-ALTER USER testrol1 SET application_name to 'SLAM';
+ALTER USER regress_testrol1 SET application_name to 'SLAM';
 SELECT * FROM chksetconfig();
 ALTER USER CURRENT_USER RESET application_name;
 ALTER USER SESSION_USER RESET application_name;
@@ -181,7 +181,7 @@ set client_min_messages to error;
 CREATE SCHEMA newschema1 AUTHORIZATION CURRENT_USER;
 CREATE SCHEMA newschema2 AUTHORIZATION "current_user";
 CREATE SCHEMA newschema3 AUTHORIZATION SESSION_USER;
-CREATE SCHEMA newschema4 AUTHORIZATION testrolx;
+CREATE SCHEMA newschema4 AUTHORIZATION regress_testrolx;
 CREATE SCHEMA newschema5 AUTHORIZATION "Public";
 
 CREATE SCHEMA newschema6 AUTHORIZATION USER; -- error
@@ -198,7 +198,7 @@ SELECT n.nspname, r.rolname FROM pg_namespace n
 CREATE SCHEMA IF NOT EXISTS newschema1 AUTHORIZATION CURRENT_USER;
 CREATE SCHEMA IF NOT EXISTS newschema2 AUTHORIZATION "current_user";
 CREATE SCHEMA IF NOT EXISTS newschema3 AUTHORIZATION SESSION_USER;
-CREATE SCHEMA IF NOT EXISTS newschema4 AUTHORIZATION testrolx;
+CREATE SCHEMA IF NOT EXISTS newschema4 AUTHORIZATION regress_testrolx;
 CREATE SCHEMA IF NOT EXISTS newschema5 AUTHORIZATION "Public";
 
 CREATE SCHEMA IF NOT EXISTS newschema6 AUTHORIZATION USER; -- error
@@ -214,7 +214,7 @@ SELECT n.nspname, r.rolname FROM pg_namespace n
 
 -- ALTER TABLE OWNER TO
 \c -
-SET SESSION AUTHORIZATION testrol0;
+SET SESSION AUTHORIZATION regress_testrol0;
 set client_min_messages to error;
 CREATE TABLE testtab1 (a int);
 CREATE TABLE testtab2 (a int);
@@ -224,13 +224,13 @@ CREATE TABLE testtab5 (a int);
 CREATE TABLE testtab6 (a int);
 
 \c -
-SET SESSION AUTHORIZATION testrol1;
-SET ROLE testrol2;
+SET SESSION AUTHORIZATION regress_testrol1;
+SET ROLE regress_testrol2;
 
 ALTER TABLE testtab1 OWNER TO CURRENT_USER;
 ALTER TABLE testtab2 OWNER TO "current_user";
 ALTER TABLE testtab3 OWNER TO SESSION_USER;
-ALTER TABLE testtab4 OWNER TO testrolx;
+ALTER TABLE testtab4 OWNER TO regress_testrolx;
 ALTER TABLE testtab5 OWNER TO "Public";
 
 ALTER TABLE testtab6 OWNER TO CURRENT_ROLE; -- error
@@ -249,7 +249,7 @@ SELECT c.relname, r.rolname
 
 -- ALTER AGGREGATE
 \c -
-SET SESSION AUTHORIZATION testrol0;
+SET SESSION AUTHORIZATION regress_testrol0;
 CREATE AGGREGATE testagg1(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg2(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg3(int2) (SFUNC = int2_sum, STYPE = int8);
@@ -262,13 +262,13 @@ CREATE AGGREGATE testagg8(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg9(int2) (SFUNC = int2_sum, STYPE = int8);
 
 \c -
-SET SESSION AUTHORIZATION testrol1;
-SET ROLE testrol2;
+SET SESSION AUTHORIZATION regress_testrol1;
+SET ROLE regress_testrol2;
 
 ALTER AGGREGATE testagg1(int2) OWNER TO CURRENT_USER;
 ALTER AGGREGATE testagg2(int2) OWNER TO "current_user";
 ALTER AGGREGATE testagg3(int2) OWNER TO SESSION_USER;
-ALTER AGGREGATE testagg4(int2) OWNER TO testrolx;
+ALTER AGGREGATE testagg4(int2) OWNER TO regress_testrolx;
 ALTER AGGREGATE testagg5(int2) OWNER TO "Public";
 
 ALTER AGGREGATE testagg5(int2) OWNER TO CURRENT_ROLE; -- error
@@ -301,7 +301,7 @@ CREATE USER MAPPING FOR "user" SERVER sv4 OPTIONS (user '"USER"');
 CREATE USER MAPPING FOR SESSION_USER SERVER sv5 OPTIONS (user 'SESSION_USER');
 CREATE USER MAPPING FOR PUBLIC SERVER sv6 OPTIONS (user 'PUBLIC');
 CREATE USER MAPPING FOR "Public" SERVER sv7 OPTIONS (user '"Public"');
-CREATE USER MAPPING FOR testrolx SERVER sv8 OPTIONS (user 'testrolx');
+CREATE USER MAPPING FOR regress_testrolx SERVER sv8 OPTIONS (user 'regress_testrolx');
 
 CREATE USER MAPPING FOR CURRENT_ROLE SERVER sv9
 	    OPTIONS (user 'CURRENT_ROLE'); -- error
@@ -325,8 +325,8 @@ ALTER USER MAPPING FOR PUBLIC SERVER sv6
  OPTIONS (SET user 'public_alt');
 ALTER USER MAPPING FOR "Public" SERVER sv7
  OPTIONS (SET user '"Public"_alt');
-ALTER USER MAPPING FOR testrolx SERVER sv8
- OPTIONS (SET user 'testrolx_alt');
+ALTER USER MAPPING FOR regress_testrolx SERVER sv8
+ OPTIONS (SET user 'regress_testrolx_alt');
 
 ALTER USER MAPPING FOR CURRENT_ROLE SERVER sv9
  OPTIONS (SET user 'CURRENT_ROLE_alt');
@@ -343,7 +343,7 @@ DROP USER MAPPING FOR "user" SERVER sv4;
 DROP USER MAPPING FOR SESSION_USER SERVER sv5;
 DROP USER MAPPING FOR PUBLIC SERVER sv6;
 DROP USER MAPPING FOR "Public" SERVER sv7;
-DROP USER MAPPING FOR testrolx SERVER sv8;
+DROP USER MAPPING FOR regress_testrolx SERVER sv8;
 
 DROP USER MAPPING FOR CURRENT_ROLE SERVER sv9; -- error
 DROP USER MAPPING FOR nonexistent SERVER sv;  -- error
@@ -356,7 +356,7 @@ CREATE USER MAPPING FOR "user" SERVER sv4 OPTIONS (user '"USER"');
 CREATE USER MAPPING FOR SESSION_USER SERVER sv5 OPTIONS (user 'SESSION_USER');
 CREATE USER MAPPING FOR PUBLIC SERVER sv6 OPTIONS (user 'PUBLIC');
 CREATE USER MAPPING FOR "Public" SERVER sv7 OPTIONS (user '"Public"');
-CREATE USER MAPPING FOR testrolx SERVER sv8 OPTIONS (user 'testrolx');
+CREATE USER MAPPING FOR regress_testrolx SERVER sv8 OPTIONS (user 'regress_testrolx');
 SELECT * FROM chkumapping();
 
 -- DROP USER MAPPING IF EXISTS
@@ -374,19 +374,19 @@ DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER sv6;
 SELECT * FROM chkumapping();
 DROP USER MAPPING IF EXISTS FOR "Public" SERVER sv7;
 SELECT * FROM chkumapping();
-DROP USER MAPPING IF EXISTS FOR testrolx SERVER sv8;
+DROP USER MAPPING IF EXISTS FOR regress_testrolx SERVER sv8;
 SELECT * FROM chkumapping();
 
 DROP USER MAPPING IF EXISTS FOR CURRENT_ROLE SERVER sv9; --error
 DROP USER MAPPING IF EXISTS FOR nonexistent SERVER sv9;  -- error
 
 -- GRANT/REVOKE
-GRANT testrol0 TO pg_signal_backend; -- success
+GRANT regress_testrol0 TO pg_signal_backend; -- success
 
 SET ROLE pg_signal_backend; --success
 RESET ROLE;
 CREATE SCHEMA test_schema AUTHORIZATION pg_signal_backend; --success
-SET ROLE testrol2;
+SET ROLE regress_testrol2;
 
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
@@ -405,10 +405,10 @@ GRANT ALL PRIVILEGES ON FUNCTION testagg2(int2) TO CURRENT_USER;
 GRANT ALL PRIVILEGES ON FUNCTION testagg3(int2) TO "current_user";
 GRANT ALL PRIVILEGES ON FUNCTION testagg4(int2) TO SESSION_USER;
 GRANT ALL PRIVILEGES ON FUNCTION testagg5(int2) TO "Public";
-GRANT ALL PRIVILEGES ON FUNCTION testagg6(int2) TO testrolx;
+GRANT ALL PRIVILEGES ON FUNCTION testagg6(int2) TO regress_testrolx;
 GRANT ALL PRIVILEGES ON FUNCTION testagg7(int2) TO "public";
 GRANT ALL PRIVILEGES ON FUNCTION testagg8(int2)
-	   TO current_user, public, testrolx;
+	   TO current_user, public, regress_testrolx;
 
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
 
@@ -424,10 +424,10 @@ REVOKE ALL PRIVILEGES ON FUNCTION testagg2(int2) FROM CURRENT_USER;
 REVOKE ALL PRIVILEGES ON FUNCTION testagg3(int2) FROM "current_user";
 REVOKE ALL PRIVILEGES ON FUNCTION testagg4(int2) FROM SESSION_USER;
 REVOKE ALL PRIVILEGES ON FUNCTION testagg5(int2) FROM "Public";
-REVOKE ALL PRIVILEGES ON FUNCTION testagg6(int2) FROM testrolx;
+REVOKE ALL PRIVILEGES ON FUNCTION testagg6(int2) FROM regress_testrolx;
 REVOKE ALL PRIVILEGES ON FUNCTION testagg7(int2) FROM "public";
 REVOKE ALL PRIVILEGES ON FUNCTION testagg8(int2)
-	   FROM current_user, public, testrolx;
+	   FROM current_user, public, regress_testrolx;
 
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
 
@@ -442,6 +442,6 @@ SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
 \c
 
 DROP SCHEMA test_schema;
-DROP OWNED BY testrol0, "Public", "current_user", testrol1, testrol2, testrolx CASCADE;
-DROP ROLE testrol0, testrol1, testrol2, testrolx;
+DROP OWNED BY regress_testrol0, "Public", "current_user", regress_testrol1, regress_testrol2, regress_testrolx CASCADE;
+DROP ROLE regress_testrol0, regress_testrol1, regress_testrol2, regress_testrolx;
 DROP ROLE "Public", "None", "current_user", "session_user", "user";

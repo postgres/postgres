@@ -64,27 +64,27 @@ ERROR:  type "test_domain_exists" does not exist
 ---
 --- role/user/group
 ---
-CREATE USER tu1;
-CREATE ROLE tr1;
-CREATE GROUP tg1;
-DROP USER tu2;
-ERROR:  role "tu2" does not exist
-DROP USER IF EXISTS tu1, tu2;
-NOTICE:  role "tu2" does not exist, skipping
-DROP USER tu1;
-ERROR:  role "tu1" does not exist
-DROP ROLE tr2;
-ERROR:  role "tr2" does not exist
-DROP ROLE IF EXISTS tr1, tr2;
-NOTICE:  role "tr2" does not exist, skipping
-DROP ROLE tr1;
-ERROR:  role "tr1" does not exist
-DROP GROUP tg2;
-ERROR:  role "tg2" does not exist
-DROP GROUP IF EXISTS tg1, tg2;
-NOTICE:  role "tg2" does not exist, skipping
-DROP GROUP tg1;
-ERROR:  role "tg1" does not exist
+CREATE USER regress_test_u1;
+CREATE ROLE regress_test_r1;
+CREATE GROUP regress_test_g1;
+DROP USER regress_test_u2;
+ERROR:  role "regress_test_u2" does not exist
+DROP USER IF EXISTS regress_test_u1, regress_test_u2;
+NOTICE:  role "regress_test_u2" does not exist, skipping
+DROP USER regress_test_u1;
+ERROR:  role "regress_test_u1" does not exist
+DROP ROLE regress_test_r2;
+ERROR:  role "regress_test_r2" does not exist
+DROP ROLE IF EXISTS regress_test_r1, regress_test_r2;
+NOTICE:  role "regress_test_r2" does not exist, skipping
+DROP ROLE regress_test_r1;
+ERROR:  role "regress_test_r1" does not exist
+DROP GROUP regress_test_g2;
+ERROR:  role "regress_test_g2" does not exist
+DROP GROUP IF EXISTS regress_test_g1, regress_test_g2;
+NOTICE:  role "regress_test_g2" does not exist, skipping
+DROP GROUP regress_test_g1;
+ERROR:  role "regress_test_g1" does not exist
 -- collation
 DROP COLLATION IF EXISTS test_collation_exists;
 NOTICE:  collation "test_collation_exists" does not exist, skipping

@@ -4,25 +4,22 @@
 CREATE EXTENSION dummy_seclabel;
 -- initial setups
 SET client_min_messages TO 'warning';
-DROP ROLE IF EXISTS dummy_seclabel_user1;
-DROP ROLE IF EXISTS dummy_seclabel_user2;
-DROP TABLE IF EXISTS dummy_seclabel_tbl1;
-DROP TABLE IF EXISTS dummy_seclabel_tbl2;
-DROP TABLE IF EXISTS dummy_seclabel_tbl3;
-CREATE USER dummy_seclabel_user1 WITH CREATEROLE;
-CREATE USER dummy_seclabel_user2;
+DROP ROLE IF EXISTS regress_dummy_seclabel_user1;
+DROP ROLE IF EXISTS regress_dummy_seclabel_user2;
+RESET client_min_messages;
+CREATE USER regress_dummy_seclabel_user1 WITH CREATEROLE;
+CREATE USER regress_dummy_seclabel_user2;
 CREATE TABLE dummy_seclabel_tbl1 (a int, b text);
 CREATE TABLE dummy_seclabel_tbl2 (x int, y text);
 CREATE VIEW dummy_seclabel_view1 AS SELECT * FROM dummy_seclabel_tbl2;
 CREATE FUNCTION dummy_seclabel_four() RETURNS integer AS $$SELECT 4$$ language sql;
 CREATE DOMAIN dummy_seclabel_domain AS text;
-ALTER TABLE dummy_seclabel_tbl1 OWNER TO dummy_seclabel_user1;
-ALTER TABLE dummy_seclabel_tbl2 OWNER TO dummy_seclabel_user2;
-RESET client_min_messages;
+ALTER TABLE dummy_seclabel_tbl1 OWNER TO regress_dummy_seclabel_user1;
+ALTER TABLE dummy_seclabel_tbl2 OWNER TO regress_dummy_seclabel_user2;
 --
 -- Test of SECURITY LABEL statement with a plugin
 --
-SET SESSION AUTHORIZATION dummy_seclabel_user1;
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user1;
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'classified';			-- OK
 SECURITY LABEL ON COLUMN dummy_seclabel_tbl1.a IS 'unclassified';		-- OK
 SECURITY LABEL ON COLUMN dummy_seclabel_tbl1 IS 'unclassified';	-- fail
@@ -38,26 +35,26 @@ SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'secret';		-- fail (not superuser
 ERROR:  only superuser can set 'secret' label
 SECURITY LABEL ON TABLE dummy_seclabel_tbl3 IS 'unclassified';	-- fail (not found)
 ERROR:  relation "dummy_seclabel_tbl3" does not exist
-SET SESSION AUTHORIZATION dummy_seclabel_user2;
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'unclassified';		-- fail
 ERROR:  must be owner of relation dummy_seclabel_tbl1
 SECURITY LABEL ON TABLE dummy_seclabel_tbl2 IS 'classified';			-- OK
 --
 -- Test for shared database object
 --
-SET SESSION AUTHORIZATION dummy_seclabel_user1;
-SECURITY LABEL ON ROLE dummy_seclabel_user1 IS 'classified';			-- OK
-SECURITY LABEL ON ROLE dummy_seclabel_user1 IS '...invalid label...';	-- fail
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user1;
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS 'classified';			-- OK
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS '...invalid label...';	-- fail
 ERROR:  '...invalid label...' is not a valid security label
-SECURITY LABEL FOR 'dummy' ON ROLE dummy_seclabel_user2 IS 'unclassified';	-- OK
-SECURITY LABEL FOR 'unknown_seclabel' ON ROLE dummy_seclabel_user1 IS 'unclassified';	-- fail
+SECURITY LABEL FOR 'dummy' ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- OK
+SECURITY LABEL FOR 'unknown_seclabel' ON ROLE regress_dummy_seclabel_user1 IS 'unclassified';	-- fail
 ERROR:  security label provider "unknown_seclabel" is not loaded
-SECURITY LABEL ON ROLE dummy_seclabel_user1 IS 'secret';	-- fail (not superuser)
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS 'secret';	-- fail (not superuser)
 ERROR:  only superuser can set 'secret' label
-SECURITY LABEL ON ROLE dummy_seclabel_user3 IS 'unclassified';	-- fail (not found)
-ERROR:  role "dummy_seclabel_user3" does not exist
-SET SESSION AUTHORIZATION dummy_seclabel_user2;
-SECURITY LABEL ON ROLE dummy_seclabel_user2 IS 'unclassified';	-- fail (not privileged)
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user3 IS 'unclassified';	-- fail (not found)
+ERROR:  role "regress_dummy_seclabel_user3" does not exist
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- fail (not privileged)
 ERROR:  must have CREATEROLE privilege
 RESET SESSION AUTHORIZATION;
 --
@@ -72,17 +69,17 @@ CREATE SCHEMA dummy_seclabel_test;
 SECURITY LABEL ON SCHEMA dummy_seclabel_test IS 'unclassified';		-- OK
 SELECT objtype, objname, provider, label FROM pg_seclabels
 	ORDER BY objtype, objname;
- objtype  |        objname        | provider |    label     
-----------+-----------------------+----------+--------------
- column   | dummy_seclabel_tbl1.a | dummy    | unclassified
- domain   | dummy_seclabel_domain | dummy    | classified
- function | dummy_seclabel_four() | dummy    | classified
- role     | dummy_seclabel_user1  | dummy    | classified
- role     | dummy_seclabel_user2  | dummy    | unclassified
- schema   | dummy_seclabel_test   | dummy    | unclassified
- table    | dummy_seclabel_tbl1   | dummy    | top secret
- table    | dummy_seclabel_tbl2   | dummy    | classified
- view     | dummy_seclabel_view1  | dummy    | classified
+ objtype  |           objname            | provider |    label     
+----------+------------------------------+----------+--------------
+ column   | dummy_seclabel_tbl1.a        | dummy    | unclassified
+ domain   | dummy_seclabel_domain        | dummy    | classified
+ function | dummy_seclabel_four()        | dummy    | classified
+ role     | regress_dummy_seclabel_user1 | dummy    | classified
+ role     | regress_dummy_seclabel_user2 | dummy    | unclassified
+ schema   | dummy_seclabel_test          | dummy    | unclassified
+ table    | dummy_seclabel_tbl1          | dummy    | top secret
+ table    | dummy_seclabel_tbl2          | dummy    | classified
+ view     | dummy_seclabel_view1         | dummy    | classified
 (9 rows)
 
 -- check for event trigger
@@ -102,4 +99,9 @@ EXECUTE PROCEDURE event_trigger_test();
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'classified';
 NOTICE:  event ddl_command_start: SECURITY LABEL
 NOTICE:  event ddl_command_end: SECURITY LABEL
+-- clean up
 DROP EVENT TRIGGER always_start, always_end, always_drop, always_rewrite;
+DROP VIEW dummy_seclabel_view1;
+DROP TABLE dummy_seclabel_tbl1, dummy_seclabel_tbl2;
+DROP ROLE regress_dummy_seclabel_user1;
+DROP ROLE regress_dummy_seclabel_user2;

@@ -1,8 +1,8 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 30: query: create table test1 ( a int , b text ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 30: query: create table test1 ( a int , b text ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -16,7 +16,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 34: name foo3; query: "SELECT * from test1 where $1 = a"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 36: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 36: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 36: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 41: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 41: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,7 +36,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 41: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 46: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 46: query: INSERT INTO test1 VALUES ($1, $2); with 2 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -48,7 +48,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 48: name Foo-1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: query: SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 53: query: SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexecPrepared for "SELECT * from test1 where a = $1 and b = $2"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -64,7 +64,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 55: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 59: query: declare c1 cursor for SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 59: query: declare c1 cursor for SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 59: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -74,7 +74,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 59: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 61: query: fetch next from c1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 61: query: fetch next from c1; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 61: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -84,13 +84,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 61: RESULT: one offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 65: query: close c1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 65: query: close c1; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 65: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 65: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 71: query: declare c2 cursor for SELECT * from test1 where $1 = a; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 71: query: declare c2 cursor for SELECT * from test1 where $1 = a; with 1 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -98,7 +98,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 71: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 73: query: fetch next from c2; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 73: query: fetch next from c2; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 73: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -108,13 +108,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 73: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 76: query: close c2; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 76: query: close c2; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 76: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 76: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 78: query: select * from test1 where a = 3; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 78: query: select * from test1 where a = 3; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 78: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -124,7 +124,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 78: RESULT: this is a long test offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 81: query: drop table test1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 81: query: drop table test1; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 81: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -136,5 +136,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 82: name foo1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

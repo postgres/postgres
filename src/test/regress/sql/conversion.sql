@@ -1,8 +1,8 @@
 --
 -- create user defined conversion
 --
-CREATE USER conversion_test_user WITH NOCREATEDB NOCREATEROLE;
-SET SESSION AUTHORIZATION conversion_test_user;
+CREATE USER regress_conversion_user WITH NOCREATEDB NOCREATEROLE;
+SET SESSION AUTHORIZATION regress_conversion_user;
 CREATE CONVERSION myconv FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;
 --
 -- cannot make same name conversion in same schema
@@ -33,4 +33,4 @@ DROP CONVERSION mydef;
 -- return to the super user
 --
 RESET SESSION AUTHORIZATION;
-DROP USER conversion_test_user;
+DROP USER regress_conversion_user;

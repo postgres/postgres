@@ -85,7 +85,7 @@ main (void)
 	ECPGdebug(1, stderr);
 
 	strcpy(msg, "connect");
-	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 1, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 27 "describe.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

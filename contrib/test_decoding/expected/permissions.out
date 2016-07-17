@@ -1,12 +1,12 @@
 -- predictability
 SET synchronous_commit = on;
 -- setup
-CREATE ROLE lr_normal;
-CREATE ROLE lr_superuser SUPERUSER;
-CREATE ROLE lr_replication REPLICATION;
+CREATE ROLE regress_lr_normal;
+CREATE ROLE regress_lr_superuser SUPERUSER;
+CREATE ROLE regress_lr_replication REPLICATION;
 CREATE TABLE lr_test(data text);
 -- superuser can control replication
-SET ROLE lr_superuser;
+SET ROLE regress_lr_superuser;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
  ?column? 
 ----------
@@ -30,7 +30,7 @@ SELECT pg_drop_replication_slot('regression_slot');
 
 RESET ROLE;
 -- replication user can control replication
-SET ROLE lr_replication;
+SET ROLE regress_lr_replication;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
  ?column? 
 ----------
@@ -52,7 +52,7 @@ SELECT pg_drop_replication_slot('regression_slot');
 
 RESET ROLE;
 -- plain user *can't* can control replication
-SET ROLE lr_normal;
+SET ROLE regress_lr_normal;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 ERROR:  must be superuser or replication role to use replication slots
 INSERT INTO lr_test VALUES('lr_superuser_init');
@@ -63,7 +63,7 @@ SELECT pg_drop_replication_slot('regression_slot');
 ERROR:  must be superuser or replication role to use replication slots
 RESET ROLE;
 -- replication users can drop superuser created slots
-SET ROLE lr_superuser;
+SET ROLE regress_lr_superuser;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
  ?column? 
 ----------
@@ -71,7 +71,7 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 (1 row)
 
 RESET ROLE;
-SET ROLE lr_replication;
+SET ROLE regress_lr_replication;
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 
 --------------------------
@@ -80,7 +80,7 @@ SELECT pg_drop_replication_slot('regression_slot');
 
 RESET ROLE;
 -- normal users can't drop existing slots
-SET ROLE lr_superuser;
+SET ROLE regress_lr_superuser;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
  ?column? 
 ----------
@@ -88,12 +88,12 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 (1 row)
 
 RESET ROLE;
-SET ROLE lr_normal;
+SET ROLE regress_lr_normal;
 SELECT pg_drop_replication_slot('regression_slot');
 ERROR:  must be superuser or replication role to use replication slots
 RESET ROLE;
 -- all users can see existing slots
-SET ROLE lr_superuser;
+SET ROLE regress_lr_superuser;
 SELECT slot_name, plugin FROM pg_replication_slots;
     slot_name    |    plugin     
 -----------------+---------------
@@ -101,7 +101,7 @@ SELECT slot_name, plugin FROM pg_replication_slots;
 (1 row)
 
 RESET ROLE;
-SET ROLE lr_replication;
+SET ROLE regress_lr_replication;
 SELECT slot_name, plugin FROM pg_replication_slots;
     slot_name    |    plugin     
 -----------------+---------------
@@ -109,7 +109,7 @@ SELECT slot_name, plugin FROM pg_replication_slots;
 (1 row)
 
 RESET ROLE;
-SET ROLE lr_normal;
+SET ROLE regress_lr_normal;
 SELECT slot_name, plugin FROM pg_replication_slots;
     slot_name    |    plugin     
 -----------------+---------------
@@ -124,7 +124,7 @@ SELECT pg_drop_replication_slot('regression_slot');
  
 (1 row)
 
-DROP ROLE lr_normal;
-DROP ROLE lr_superuser;
-DROP ROLE lr_replication;
+DROP ROLE regress_lr_normal;
+DROP ROLE regress_lr_superuser;
+DROP ROLE regress_lr_replication;
 DROP TABLE lr_test;

@@ -218,7 +218,7 @@ if (sqlca.sqlcode < 0) error ( );
 #line 45 "dyntest.pgc"
 
 
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
+  { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 47 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error ( );}

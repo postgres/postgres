@@ -170,7 +170,7 @@ int main(void)
 
 	ECPGdebug(1, stderr);
 
-	strcpy(dbname, "regress1");
+	strcpy(dbname, "ecpg1_regression");
 	{ ECPGconnect(__LINE__, 1, dbname , NULL, NULL , NULL, 0); 
 #line 63 "test_informix2.pgc"
 

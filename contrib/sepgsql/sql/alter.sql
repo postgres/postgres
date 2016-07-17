@@ -4,9 +4,9 @@
 
 -- clean-up in case a prior regression run failed
 SET client_min_messages TO 'warning';
-DROP DATABASE IF EXISTS regtest_sepgsql_test_database_1;
-DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
-DROP USER IF EXISTS regtest_sepgsql_test_user;
+DROP DATABASE IF EXISTS sepgsql_test_regression_1;
+DROP DATABASE IF EXISTS sepgsql_test_regression;
+DROP USER IF EXISTS regress_sepgsql_test_user;
 RESET client_min_messages;
 
 -- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0
@@ -14,9 +14,9 @@ RESET client_min_messages;
 --
 -- CREATE Objects to be altered (with debug_audit being silent)
 --
-CREATE DATABASE regtest_sepgsql_test_database_1;
+CREATE DATABASE sepgsql_test_regression_1;
 
-CREATE USER regtest_sepgsql_test_user;
+CREATE USER regress_sepgsql_test_user;
 
 CREATE SCHEMA regtest_schema_1;
 CREATE SCHEMA regtest_schema_2;
@@ -49,18 +49,18 @@ SET client_min_messages = LOG;
 -- XXX: It should take db_xxx:{setattr} permission checks even if
 --      owner is not actually changed.
 --
-ALTER DATABASE regtest_sepgsql_test_database_1 OWNER TO regtest_sepgsql_test_user;
-ALTER DATABASE regtest_sepgsql_test_database_1 OWNER TO regtest_sepgsql_test_user;
-ALTER SCHEMA regtest_schema_1 OWNER TO regtest_sepgsql_test_user;
-ALTER SCHEMA regtest_schema_1 OWNER TO regtest_sepgsql_test_user;
-ALTER TABLE regtest_table_1 OWNER TO regtest_sepgsql_test_user;
-ALTER TABLE regtest_table_1 OWNER TO regtest_sepgsql_test_user;
-ALTER SEQUENCE regtest_seq_1 OWNER TO regtest_sepgsql_test_user;
-ALTER SEQUENCE regtest_seq_1 OWNER TO regtest_sepgsql_test_user;
-ALTER VIEW regtest_view_1 OWNER TO regtest_sepgsql_test_user;
-ALTER VIEW regtest_view_1 OWNER TO regtest_sepgsql_test_user;
-ALTER FUNCTION regtest_func_1(text) OWNER TO regtest_sepgsql_test_user;
-ALTER FUNCTION regtest_func_1(text) OWNER TO regtest_sepgsql_test_user;
+ALTER DATABASE sepgsql_test_regression_1 OWNER TO regress_sepgsql_test_user;
+ALTER DATABASE sepgsql_test_regression_1 OWNER TO regress_sepgsql_test_user;
+ALTER SCHEMA regtest_schema_1 OWNER TO regress_sepgsql_test_user;
+ALTER SCHEMA regtest_schema_1 OWNER TO regress_sepgsql_test_user;
+ALTER TABLE regtest_table_1 OWNER TO regress_sepgsql_test_user;
+ALTER TABLE regtest_table_1 OWNER TO regress_sepgsql_test_user;
+ALTER SEQUENCE regtest_seq_1 OWNER TO regress_sepgsql_test_user;
+ALTER SEQUENCE regtest_seq_1 OWNER TO regress_sepgsql_test_user;
+ALTER VIEW regtest_view_1 OWNER TO regress_sepgsql_test_user;
+ALTER VIEW regtest_view_1 OWNER TO regress_sepgsql_test_user;
+ALTER FUNCTION regtest_func_1(text) OWNER TO regress_sepgsql_test_user;
+ALTER FUNCTION regtest_func_1(text) OWNER TO regress_sepgsql_test_user;
 
 --
 -- ALTER xxx SET SCHEMA
@@ -73,7 +73,7 @@ ALTER FUNCTION regtest_func_1(text) SET SCHEMA regtest_schema_2;
 --
 -- ALTER xxx RENAME TO
 --
-ALTER DATABASE regtest_sepgsql_test_database_1 RENAME TO regtest_sepgsql_test_database;
+ALTER DATABASE sepgsql_test_regression_1 RENAME TO sepgsql_test_regression;
 ALTER SCHEMA regtest_schema_1 RENAME TO regtest_schema;
 ALTER TABLE regtest_table_1 RENAME TO regtest_table;
 ALTER SEQUENCE regtest_seq_1 RENAME TO regtest_seq;
@@ -85,8 +85,8 @@ SET search_path = regtest_schema, regtest_schema_2, public;
 --
 -- misc ALTER commands
 --
-ALTER DATABASE regtest_sepgsql_test_database CONNECTION LIMIT 999;
-ALTER DATABASE regtest_sepgsql_test_database SET search_path TO regtest_schema, public; -- not supported yet
+ALTER DATABASE sepgsql_test_regression CONNECTION LIMIT 999;
+ALTER DATABASE sepgsql_test_regression SET search_path TO regtest_schema, public; -- not supported yet
 
 ALTER TABLE regtest_table ADD COLUMN d float;
 ALTER TABLE regtest_table DROP COLUMN d;
@@ -130,7 +130,7 @@ ALTER SEQUENCE regtest_seq INCREMENT BY 10 START WITH 1000;
 --
 RESET sepgsql.debug_audit;
 RESET client_min_messages;
-DROP DATABASE regtest_sepgsql_test_database;
+DROP DATABASE sepgsql_test_regression;
 DROP SCHEMA regtest_schema CASCADE;
 DROP SCHEMA regtest_schema_2 CASCADE;
-DROP USER regtest_sepgsql_test_user;
+DROP USER regress_sepgsql_test_user;

@@ -3020,13 +3020,13 @@ REINDEX SCHEMA schema_to_reindex; -- failure, cannot run in a transaction
 ERROR:  REINDEX SCHEMA cannot run inside a transaction block
 END;
 -- Failure for unauthorized user
-CREATE ROLE regression_reindexuser NOLOGIN;
-SET SESSION ROLE regression_reindexuser;
+CREATE ROLE regress_reindexuser NOLOGIN;
+SET SESSION ROLE regress_reindexuser;
 REINDEX SCHEMA schema_to_reindex;
 ERROR:  must be owner of schema schema_to_reindex
 -- Clean up
 RESET ROLE;
-DROP ROLE regression_reindexuser;
+DROP ROLE regress_reindexuser;
 SET client_min_messages TO 'warning';
 DROP SCHEMA schema_to_reindex CASCADE;
 RESET client_min_messages;

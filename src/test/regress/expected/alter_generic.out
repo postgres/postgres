@@ -3,13 +3,13 @@
 --
 -- Clean up in case a prior regression run failed
 SET client_min_messages TO 'warning';
-DROP ROLE IF EXISTS regtest_alter_user1;
-DROP ROLE IF EXISTS regtest_alter_user2;
-DROP ROLE IF EXISTS regtest_alter_user3;
+DROP ROLE IF EXISTS regress_alter_user1;
+DROP ROLE IF EXISTS regress_alter_user2;
+DROP ROLE IF EXISTS regress_alter_user3;
 RESET client_min_messages;
-CREATE USER regtest_alter_user3;
-CREATE USER regtest_alter_user2;
-CREATE USER regtest_alter_user1 IN ROLE regtest_alter_user3;
+CREATE USER regress_alter_user3;
+CREATE USER regress_alter_user2;
+CREATE USER regress_alter_user1 IN ROLE regress_alter_user3;
 CREATE SCHEMA alt_nsp1;
 CREATE SCHEMA alt_nsp2;
 GRANT ALL ON SCHEMA alt_nsp1, alt_nsp2 TO public;
@@ -17,7 +17,7 @@ SET search_path = alt_nsp1, public;
 --
 -- Function and Aggregate
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
+SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql
   AS 'SELECT $1 + 1';
 CREATE FUNCTION alt_func2(int) RETURNS int LANGUAGE sql
@@ -30,26 +30,26 @@ CREATE AGGREGATE alt_agg2 (
 );
 ALTER AGGREGATE alt_func1(int) RENAME TO alt_func3;  -- failed (not aggregate)
 ERROR:  function alt_func1(integer) is not an aggregate
-ALTER AGGREGATE alt_func1(int) OWNER TO regtest_alter_user3;  -- failed (not aggregate)
+ALTER AGGREGATE alt_func1(int) OWNER TO regress_alter_user3;  -- failed (not aggregate)
 ERROR:  function alt_func1(integer) is not an aggregate
 ALTER AGGREGATE alt_func1(int) SET SCHEMA alt_nsp2;  -- failed (not aggregate)
 ERROR:  function alt_func1(integer) is not an aggregate
 ALTER FUNCTION alt_func1(int) RENAME TO alt_func2;  -- failed (name conflict)
 ERROR:  function alt_func2(integer) already exists in schema "alt_nsp1"
 ALTER FUNCTION alt_func1(int) RENAME TO alt_func3;  -- OK
-ALTER FUNCTION alt_func2(int) OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER FUNCTION alt_func2(int) OWNER TO regtest_alter_user3;  -- OK
+ALTER FUNCTION alt_func2(int) OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER FUNCTION alt_func2(int) OWNER TO regress_alter_user3;  -- OK
 ALTER FUNCTION alt_func2(int) SET SCHEMA alt_nsp1;  -- OK, already there
 ALTER FUNCTION alt_func2(int) SET SCHEMA alt_nsp2;  -- OK
 ALTER AGGREGATE alt_agg1(int) RENAME TO alt_agg2;   -- failed (name conflict)
 ERROR:  function alt_agg2(integer) already exists in schema "alt_nsp1"
 ALTER AGGREGATE alt_agg1(int) RENAME TO alt_agg3;   -- OK
-ALTER AGGREGATE alt_agg2(int) OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER AGGREGATE alt_agg2(int) OWNER TO regtest_alter_user3;  -- OK
+ALTER AGGREGATE alt_agg2(int) OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER AGGREGATE alt_agg2(int) OWNER TO regress_alter_user3;  -- OK
 ALTER AGGREGATE alt_agg2(int) SET SCHEMA alt_nsp2;  -- OK
-SET SESSION AUTHORIZATION regtest_alter_user2;
+SET SESSION AUTHORIZATION regress_alter_user2;
 CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql
   AS 'SELECT $1 + 2';
 CREATE FUNCTION alt_func2(int) RETURNS int LANGUAGE sql
@@ -63,10 +63,10 @@ CREATE AGGREGATE alt_agg2 (
 ALTER FUNCTION alt_func3(int) RENAME TO alt_func4;	-- failed (not owner)
 ERROR:  must be owner of function alt_func3
 ALTER FUNCTION alt_func1(int) RENAME TO alt_func4;	-- OK
-ALTER FUNCTION alt_func3(int) OWNER TO regtest_alter_user2;	-- failed (not owner)
+ALTER FUNCTION alt_func3(int) OWNER TO regress_alter_user2;	-- failed (not owner)
 ERROR:  must be owner of function alt_func3
-ALTER FUNCTION alt_func2(int) OWNER TO regtest_alter_user3;	-- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER FUNCTION alt_func2(int) OWNER TO regress_alter_user3;	-- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER FUNCTION alt_func3(int) SET SCHEMA alt_nsp2;      -- failed (not owner)
 ERROR:  must be owner of function alt_func3
 ALTER FUNCTION alt_func2(int) SET SCHEMA alt_nsp2;	-- failed (name conflicts)
@@ -74,10 +74,10 @@ ERROR:  function alt_func2(integer) already exists in schema "alt_nsp2"
 ALTER AGGREGATE alt_agg3(int) RENAME TO alt_agg4;   -- failed (not owner)
 ERROR:  must be owner of function alt_agg3
 ALTER AGGREGATE alt_agg1(int) RENAME TO alt_agg4;   -- OK
-ALTER AGGREGATE alt_agg3(int) OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER AGGREGATE alt_agg3(int) OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of function alt_agg3
-ALTER AGGREGATE alt_agg2(int) OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER AGGREGATE alt_agg2(int) OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER AGGREGATE alt_agg3(int) SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of function alt_agg3
 ALTER AGGREGATE alt_agg2(int) SET SCHEMA alt_nsp2;  -- failed (name conflict)
@@ -90,14 +90,14 @@ SELECT n.nspname, proname, prorettype::regtype, proisagg, a.rolname
   ORDER BY nspname, proname;
  nspname  |  proname  | prorettype | proisagg |       rolname       
 ----------+-----------+------------+----------+---------------------
- alt_nsp1 | alt_agg2  | integer    | t        | regtest_alter_user2
- alt_nsp1 | alt_agg3  | integer    | t        | regtest_alter_user1
- alt_nsp1 | alt_agg4  | integer    | t        | regtest_alter_user2
- alt_nsp1 | alt_func2 | integer    | f        | regtest_alter_user2
- alt_nsp1 | alt_func3 | integer    | f        | regtest_alter_user1
- alt_nsp1 | alt_func4 | integer    | f        | regtest_alter_user2
- alt_nsp2 | alt_agg2  | integer    | t        | regtest_alter_user3
- alt_nsp2 | alt_func2 | integer    | f        | regtest_alter_user3
+ alt_nsp1 | alt_agg2  | integer    | t        | regress_alter_user2
+ alt_nsp1 | alt_agg3  | integer    | t        | regress_alter_user1
+ alt_nsp1 | alt_agg4  | integer    | t        | regress_alter_user2
+ alt_nsp1 | alt_func2 | integer    | f        | regress_alter_user2
+ alt_nsp1 | alt_func3 | integer    | f        | regress_alter_user1
+ alt_nsp1 | alt_func4 | integer    | f        | regress_alter_user2
+ alt_nsp2 | alt_agg2  | integer    | t        | regress_alter_user3
+ alt_nsp2 | alt_func2 | integer    | f        | regress_alter_user3
 (8 rows)
 
 --
@@ -107,26 +107,26 @@ SELECT n.nspname, proname, prorettype::regtype, proisagg, a.rolname
 --
 -- Conversion
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
+SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE CONVERSION alt_conv1 FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;
 CREATE CONVERSION alt_conv2 FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;
 ALTER CONVERSION alt_conv1 RENAME TO alt_conv2;  -- failed (name conflict)
 ERROR:  conversion "alt_conv2" already exists in schema "alt_nsp1"
 ALTER CONVERSION alt_conv1 RENAME TO alt_conv3;  -- OK
-ALTER CONVERSION alt_conv2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER CONVERSION alt_conv2 OWNER TO regtest_alter_user3;  -- OK
+ALTER CONVERSION alt_conv2 OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER CONVERSION alt_conv2 OWNER TO regress_alter_user3;  -- OK
 ALTER CONVERSION alt_conv2 SET SCHEMA alt_nsp2;  -- OK
-SET SESSION AUTHORIZATION regtest_alter_user2;
+SET SESSION AUTHORIZATION regress_alter_user2;
 CREATE CONVERSION alt_conv1 FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;
 CREATE CONVERSION alt_conv2 FOR 'LATIN1' TO 'UTF8' FROM iso8859_1_to_utf8;
 ALTER CONVERSION alt_conv3 RENAME TO alt_conv4;  -- failed (not owner)
 ERROR:  must be owner of conversion alt_conv3
 ALTER CONVERSION alt_conv1 RENAME TO alt_conv4;  -- OK
-ALTER CONVERSION alt_conv3 OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER CONVERSION alt_conv3 OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of conversion alt_conv3
-ALTER CONVERSION alt_conv2 OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER CONVERSION alt_conv2 OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER CONVERSION alt_conv3 SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of conversion alt_conv3
 ALTER CONVERSION alt_conv2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
@@ -139,10 +139,10 @@ SELECT n.nspname, c.conname, a.rolname
   ORDER BY nspname, conname;
  nspname  |  conname  |       rolname       
 ----------+-----------+---------------------
- alt_nsp1 | alt_conv2 | regtest_alter_user2
- alt_nsp1 | alt_conv3 | regtest_alter_user1
- alt_nsp1 | alt_conv4 | regtest_alter_user2
- alt_nsp2 | alt_conv2 | regtest_alter_user3
+ alt_nsp1 | alt_conv2 | regress_alter_user2
+ alt_nsp1 | alt_conv3 | regress_alter_user1
+ alt_nsp1 | alt_conv4 | regress_alter_user2
+ alt_nsp2 | alt_conv2 | regress_alter_user3
 (4 rows)
 
 --
@@ -177,19 +177,19 @@ SELECT srvname FROM pg_foreign_server WHERE srvname like 'alt_fserv%';
 --
 CREATE LANGUAGE alt_lang1 HANDLER plpgsql_call_handler;
 CREATE LANGUAGE alt_lang2 HANDLER plpgsql_call_handler;
-ALTER LANGUAGE alt_lang1 OWNER TO regtest_alter_user1;  -- OK
-ALTER LANGUAGE alt_lang2 OWNER TO regtest_alter_user2;  -- OK
-SET SESSION AUTHORIZATION regtest_alter_user1;
+ALTER LANGUAGE alt_lang1 OWNER TO regress_alter_user1;  -- OK
+ALTER LANGUAGE alt_lang2 OWNER TO regress_alter_user2;  -- OK
+SET SESSION AUTHORIZATION regress_alter_user1;
 ALTER LANGUAGE alt_lang1 RENAME TO alt_lang2;   -- failed (name conflict)
 ERROR:  language "alt_lang2" already exists
 ALTER LANGUAGE alt_lang2 RENAME TO alt_lang3;   -- failed (not owner)
 ERROR:  must be owner of language alt_lang2
 ALTER LANGUAGE alt_lang1 RENAME TO alt_lang3;   -- OK
-ALTER LANGUAGE alt_lang2 OWNER TO regtest_alter_user3;  -- failed (not owner)
+ALTER LANGUAGE alt_lang2 OWNER TO regress_alter_user3;  -- failed (not owner)
 ERROR:  must be owner of language alt_lang2
-ALTER LANGUAGE alt_lang3 OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER LANGUAGE alt_lang3 OWNER TO regtest_alter_user3;  -- OK
+ALTER LANGUAGE alt_lang3 OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER LANGUAGE alt_lang3 OWNER TO regress_alter_user3;  -- OK
 RESET SESSION AUTHORIZATION;
 SELECT lanname, a.rolname
   FROM pg_language l, pg_authid a
@@ -197,26 +197,26 @@ SELECT lanname, a.rolname
   ORDER BY lanname;
   lanname  |       rolname       
 -----------+---------------------
- alt_lang2 | regtest_alter_user2
- alt_lang3 | regtest_alter_user3
+ alt_lang2 | regress_alter_user2
+ alt_lang3 | regress_alter_user3
 (2 rows)
 
 --
 -- Operator
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
+SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE OPERATOR @-@ ( leftarg = int4, rightarg = int4, procedure = int4mi );
 CREATE OPERATOR @+@ ( leftarg = int4, rightarg = int4, procedure = int4pl );
-ALTER OPERATOR @+@(int4, int4) OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER OPERATOR @+@(int4, int4) OWNER TO regtest_alter_user3;  -- OK
+ALTER OPERATOR @+@(int4, int4) OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER OPERATOR @+@(int4, int4) OWNER TO regress_alter_user3;  -- OK
 ALTER OPERATOR @-@(int4, int4) SET SCHEMA alt_nsp2;           -- OK
-SET SESSION AUTHORIZATION regtest_alter_user2;
+SET SESSION AUTHORIZATION regress_alter_user2;
 CREATE OPERATOR @-@ ( leftarg = int4, rightarg = int4, procedure = int4mi );
-ALTER OPERATOR @+@(int4, int4) OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER OPERATOR @+@(int4, int4) OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of operator @+@
-ALTER OPERATOR @-@(int4, int4) OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER OPERATOR @-@(int4, int4) OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER OPERATOR @+@(int4, int4) SET SCHEMA alt_nsp2;   -- failed (not owner)
 ERROR:  must be owner of operator @+@
 -- can't test this: the error message includes the raw oid of namespace
@@ -230,9 +230,9 @@ SELECT n.nspname, oprname, a.rolname,
   ORDER BY nspname, oprname;
  nspname  | oprname |       rolname       | oprleft | oprright | oprcode 
 ----------+---------+---------------------+---------+----------+---------
- alt_nsp1 | @+@     | regtest_alter_user3 | integer | integer  | int4pl
- alt_nsp1 | @-@     | regtest_alter_user2 | integer | integer  | int4mi
- alt_nsp2 | @-@     | regtest_alter_user1 | integer | integer  | int4mi
+ alt_nsp1 | @+@     | regress_alter_user3 | integer | integer  | int4pl
+ alt_nsp1 | @-@     | regress_alter_user2 | integer | integer  | int4mi
+ alt_nsp2 | @-@     | regress_alter_user1 | integer | integer  | int4mi
 (3 rows)
 
 --
@@ -240,44 +240,44 @@ SELECT n.nspname, oprname, a.rolname,
 --
 CREATE OPERATOR FAMILY alt_opf1 USING hash;
 CREATE OPERATOR FAMILY alt_opf2 USING hash;
-ALTER OPERATOR FAMILY alt_opf1 USING hash OWNER TO regtest_alter_user1;
-ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user1;
+ALTER OPERATOR FAMILY alt_opf1 USING hash OWNER TO regress_alter_user1;
+ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regress_alter_user1;
 CREATE OPERATOR CLASS alt_opc1 FOR TYPE uuid USING hash AS STORAGE uuid;
 CREATE OPERATOR CLASS alt_opc2 FOR TYPE uuid USING hash AS STORAGE uuid;
-ALTER OPERATOR CLASS alt_opc1 USING hash OWNER TO regtest_alter_user1;
-ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user1;
-SET SESSION AUTHORIZATION regtest_alter_user1;
+ALTER OPERATOR CLASS alt_opc1 USING hash OWNER TO regress_alter_user1;
+ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regress_alter_user1;
+SET SESSION AUTHORIZATION regress_alter_user1;
 ALTER OPERATOR FAMILY alt_opf1 USING hash RENAME TO alt_opf2;  -- failed (name conflict)
 ERROR:  operator family "alt_opf2" for access method "hash" already exists in schema "alt_nsp1"
 ALTER OPERATOR FAMILY alt_opf1 USING hash RENAME TO alt_opf3;  -- OK
-ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user3;  -- OK
+ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regress_alter_user3;  -- OK
 ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- OK
 ALTER OPERATOR CLASS alt_opc1 USING hash RENAME TO alt_opc2;  -- failed (name conflict)
 ERROR:  operator class "alt_opc2" for access method "hash" already exists in schema "alt_nsp1"
 ALTER OPERATOR CLASS alt_opc1 USING hash RENAME TO alt_opc3;  -- OK
-ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user3;  -- OK
+ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regress_alter_user3;  -- OK
 ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- OK
 RESET SESSION AUTHORIZATION;
 CREATE OPERATOR FAMILY alt_opf1 USING hash;
 CREATE OPERATOR FAMILY alt_opf2 USING hash;
-ALTER OPERATOR FAMILY alt_opf1 USING hash OWNER TO regtest_alter_user2;
-ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user2;
+ALTER OPERATOR FAMILY alt_opf1 USING hash OWNER TO regress_alter_user2;
+ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regress_alter_user2;
 CREATE OPERATOR CLASS alt_opc1 FOR TYPE macaddr USING hash AS STORAGE macaddr;
 CREATE OPERATOR CLASS alt_opc2 FOR TYPE macaddr USING hash AS STORAGE macaddr;
-ALTER OPERATOR CLASS alt_opc1 USING hash OWNER TO regtest_alter_user2;
-ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user2;
-SET SESSION AUTHORIZATION regtest_alter_user2;
+ALTER OPERATOR CLASS alt_opc1 USING hash OWNER TO regress_alter_user2;
+ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regress_alter_user2;
+SET SESSION AUTHORIZATION regress_alter_user2;
 ALTER OPERATOR FAMILY alt_opf3 USING hash RENAME TO alt_opf4;	-- failed (not owner)
 ERROR:  must be owner of operator family alt_opf3
 ALTER OPERATOR FAMILY alt_opf1 USING hash RENAME TO alt_opf4;  -- OK
-ALTER OPERATOR FAMILY alt_opf3 USING hash OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER OPERATOR FAMILY alt_opf3 USING hash OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of operator family alt_opf3
-ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER OPERATOR FAMILY alt_opf3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of operator family alt_opf3
 ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
@@ -285,10 +285,10 @@ ERROR:  operator family "alt_opf2" for access method "hash" already exists in sc
 ALTER OPERATOR CLASS alt_opc3 USING hash RENAME TO alt_opc4;	-- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
 ALTER OPERATOR CLASS alt_opc1 USING hash RENAME TO alt_opc4;  -- OK
-ALTER OPERATOR CLASS alt_opc3 USING hash OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER OPERATOR CLASS alt_opc3 USING hash OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
-ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER OPERATOR CLASS alt_opc3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
 ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
@@ -302,10 +302,10 @@ SELECT nspname, opfname, amname, rolname
   ORDER BY nspname, opfname;
  nspname  | opfname  | amname |       rolname       
 ----------+----------+--------+---------------------
- alt_nsp1 | alt_opf2 | hash   | regtest_alter_user2
- alt_nsp1 | alt_opf3 | hash   | regtest_alter_user1
- alt_nsp1 | alt_opf4 | hash   | regtest_alter_user2
- alt_nsp2 | alt_opf2 | hash   | regtest_alter_user3
+ alt_nsp1 | alt_opf2 | hash   | regress_alter_user2
+ alt_nsp1 | alt_opf3 | hash   | regress_alter_user1
+ alt_nsp1 | alt_opf4 | hash   | regress_alter_user2
+ alt_nsp2 | alt_opf2 | hash   | regress_alter_user3
 (4 rows)
 
 SELECT nspname, opcname, amname, rolname
@@ -315,10 +315,10 @@ SELECT nspname, opcname, amname, rolname
   ORDER BY nspname, opcname;
  nspname  | opcname  | amname |       rolname       
 ----------+----------+--------+---------------------
- alt_nsp1 | alt_opc2 | hash   | regtest_alter_user2
- alt_nsp1 | alt_opc3 | hash   | regtest_alter_user1
- alt_nsp1 | alt_opc4 | hash   | regtest_alter_user2
- alt_nsp2 | alt_opc2 | hash   | regtest_alter_user3
+ alt_nsp1 | alt_opc2 | hash   | regress_alter_user2
+ alt_nsp1 | alt_opc3 | hash   | regress_alter_user1
+ alt_nsp1 | alt_opc4 | hash   | regress_alter_user2
+ alt_nsp2 | alt_opc2 | hash   | regress_alter_user3
 (4 rows)
 
 -- ALTER OPERATOR FAMILY ... ADD/DROP
@@ -362,9 +362,9 @@ ERROR:  STORAGE cannot be specified in ALTER OPERATOR FAMILY
 DROP OPERATOR FAMILY alt_opf4 USING btree;
 -- Should fail. Need to be SUPERUSER to do ALTER OPERATOR FAMILY .. ADD / DROP
 BEGIN TRANSACTION;
-CREATE ROLE regtest_alter_user5 NOSUPERUSER;
+CREATE ROLE regress_alter_user5 NOSUPERUSER;
 CREATE OPERATOR FAMILY alt_opf5 USING btree;
-SET ROLE regtest_alter_user5;
+SET ROLE regress_alter_user5;
 ALTER OPERATOR FAMILY alt_opf5 USING btree ADD OPERATOR 1 < (int4, int2), FUNCTION 1 btint42cmp(int4, int2);
 ERROR:  must be superuser to alter an operator family
 RESET ROLE;
@@ -374,11 +374,11 @@ ERROR:  current transaction is aborted, commands ignored until end of transactio
 ROLLBACK;
 -- Should fail. Need rights to namespace for ALTER OPERATOR FAMILY .. ADD / DROP
 BEGIN TRANSACTION;
-CREATE ROLE regtest_alter_user6;
+CREATE ROLE regress_alter_user6;
 CREATE SCHEMA alt_nsp6;
-REVOKE ALL ON SCHEMA alt_nsp6 FROM regtest_alter_user6;
+REVOKE ALL ON SCHEMA alt_nsp6 FROM regress_alter_user6;
 CREATE OPERATOR FAMILY alt_nsp6.alt_opf6 USING btree;
-SET ROLE regtest_alter_user6;
+SET ROLE regress_alter_user6;
 ALTER OPERATOR FAMILY alt_nsp6.alt_opf6 USING btree ADD OPERATOR 1 < (int4, int2);
 ERROR:  permission denied for schema alt_nsp6
 ROLLBACK;
@@ -499,26 +499,26 @@ DROP OPERATOR FAMILY alt_opf18 USING btree;
 --
 -- Text Search Dictionary
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
+SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE TEXT SEARCH DICTIONARY alt_ts_dict1 (template=simple);
 CREATE TEXT SEARCH DICTIONARY alt_ts_dict2 (template=simple);
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 RENAME TO alt_ts_dict2;  -- failed (name conflict)
 ERROR:  text search dictionary "alt_ts_dict2" already exists in schema "alt_nsp1"
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 RENAME TO alt_ts_dict3;  -- OK
-ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regtest_alter_user3;  -- OK
+ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regress_alter_user3;  -- OK
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 SET SCHEMA alt_nsp2;  -- OK
-SET SESSION AUTHORIZATION regtest_alter_user2;
+SET SESSION AUTHORIZATION regress_alter_user2;
 CREATE TEXT SEARCH DICTIONARY alt_ts_dict1 (template=simple);
 CREATE TEXT SEARCH DICTIONARY alt_ts_dict2 (template=simple);
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict3 RENAME TO alt_ts_dict4;  -- failed (not owner)
 ERROR:  must be owner of text search dictionary alt_ts_dict3
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 RENAME TO alt_ts_dict4;  -- OK
-ALTER TEXT SEARCH DICTIONARY alt_ts_dict3 OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER TEXT SEARCH DICTIONARY alt_ts_dict3 OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of text search dictionary alt_ts_dict3
-ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict3 SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of text search dictionary alt_ts_dict3
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
@@ -531,35 +531,35 @@ SELECT nspname, dictname, rolname
   ORDER BY nspname, dictname;
  nspname  |   dictname   |       rolname       
 ----------+--------------+---------------------
- alt_nsp1 | alt_ts_dict2 | regtest_alter_user2
- alt_nsp1 | alt_ts_dict3 | regtest_alter_user1
- alt_nsp1 | alt_ts_dict4 | regtest_alter_user2
- alt_nsp2 | alt_ts_dict2 | regtest_alter_user3
+ alt_nsp1 | alt_ts_dict2 | regress_alter_user2
+ alt_nsp1 | alt_ts_dict3 | regress_alter_user1
+ alt_nsp1 | alt_ts_dict4 | regress_alter_user2
+ alt_nsp2 | alt_ts_dict2 | regress_alter_user3
 (4 rows)
 
 --
 -- Text Search Configuration
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
+SET SESSION AUTHORIZATION regress_alter_user1;
 CREATE TEXT SEARCH CONFIGURATION alt_ts_conf1 (copy=english);
 CREATE TEXT SEARCH CONFIGURATION alt_ts_conf2 (copy=english);
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 RENAME TO alt_ts_conf2;  -- failed (name conflict)
 ERROR:  text search configuration "alt_ts_conf2" already exists in schema "alt_nsp1"
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 RENAME TO alt_ts_conf3;  -- OK
-ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regtest_alter_user3;  -- OK
+ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regress_alter_user3;  -- OK
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 SET SCHEMA alt_nsp2;  -- OK
-SET SESSION AUTHORIZATION regtest_alter_user2;
+SET SESSION AUTHORIZATION regress_alter_user2;
 CREATE TEXT SEARCH CONFIGURATION alt_ts_conf1 (copy=english);
 CREATE TEXT SEARCH CONFIGURATION alt_ts_conf2 (copy=english);
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf3 RENAME TO alt_ts_conf4;  -- failed (not owner)
 ERROR:  must be owner of text search configuration alt_ts_conf3
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 RENAME TO alt_ts_conf4;  -- OK
-ALTER TEXT SEARCH CONFIGURATION alt_ts_conf3 OWNER TO regtest_alter_user2;  -- failed (not owner)
+ALTER TEXT SEARCH CONFIGURATION alt_ts_conf3 OWNER TO regress_alter_user2;  -- failed (not owner)
 ERROR:  must be owner of text search configuration alt_ts_conf3
-ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
+ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regress_alter_user3;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf3 SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of text search configuration alt_ts_conf3
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
@@ -572,10 +572,10 @@ SELECT nspname, cfgname, rolname
   ORDER BY nspname, cfgname;
  nspname  |   cfgname    |       rolname       
 ----------+--------------+---------------------
- alt_nsp1 | alt_ts_conf2 | regtest_alter_user2
- alt_nsp1 | alt_ts_conf3 | regtest_alter_user1
- alt_nsp1 | alt_ts_conf4 | regtest_alter_user2
- alt_nsp2 | alt_ts_conf2 | regtest_alter_user3
+ alt_nsp1 | alt_ts_conf2 | regress_alter_user2
+ alt_nsp1 | alt_ts_conf3 | regress_alter_user1
+ alt_nsp1 | alt_ts_conf4 | regress_alter_user2
+ alt_nsp2 | alt_ts_conf2 | regress_alter_user3
 (4 rows)
 
 --
@@ -677,6 +677,6 @@ drop cascades to text search dictionary alt_ts_dict2
 drop cascades to text search configuration alt_ts_conf2
 drop cascades to text search template alt_ts_temp2
 drop cascades to text search parser alt_ts_prs2
-DROP USER regtest_alter_user1;
-DROP USER regtest_alter_user2;
-DROP USER regtest_alter_user3;
+DROP USER regress_alter_user1;
+DROP USER regress_alter_user2;
+DROP USER regress_alter_user3;

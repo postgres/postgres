@@ -99,7 +99,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "desc.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 28 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

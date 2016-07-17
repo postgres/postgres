@@ -97,13 +97,13 @@ main (void)
 	ECPGdebug(1, stderr);
 
 	strcpy(msg, "connect");
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , "test1", 0); 
+	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , "test1", 0); 
 #line 39 "cursor.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
 #line 39 "cursor.pgc"
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "test2", 0); 
+	{ ECPGconnect(__LINE__, 0, "ecpg2_regression" , NULL, NULL , "test2", 0); 
 #line 40 "cursor.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

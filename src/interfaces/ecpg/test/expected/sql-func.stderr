@@ -1,46 +1,46 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGsetcommit on line 13: action "on"; connection "regress1"
+[NO_PID]: ECPGsetcommit on line 13: action "on"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 17: query: create table My_Table ( Item1 int , Item2 text ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 17: query: create table My_Table ( Item1 int , Item2 text ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 17: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 17: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 18: query: create table Log ( name text , w text ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 18: query: create table Log ( name text , w text ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 18: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 18: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 20: query: create function My_Table_Check ( ) returns trigger as $test$    BEGIN	INSERT INTO Log VALUES(TG_NAME, TG_WHEN);	RETURN NEW;    END; $test$ language plpgsql; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 20: query: create function My_Table_Check ( ) returns trigger as $test$    BEGIN	INSERT INTO Log VALUES(TG_NAME, TG_WHEN);	RETURN NEW;    END; $test$ language plpgsql; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 20: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 20: OK: CREATE FUNCTION
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 28: query: create trigger My_Table_Check_Trigger before insert on My_Table for each row execute procedure My_Table_Check ( ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 28: query: create trigger My_Table_Check_Trigger before insert on My_Table for each row execute procedure My_Table_Check ( ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 28: OK: CREATE TRIGGER
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 34: query: insert into My_Table values ( 1234 , 'Some random text' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 34: query: insert into My_Table values ( 1234 , 'Some random text' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 34: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 34: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: query: insert into My_Table values ( 5678 , 'The Quick Brown' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 35: query: insert into My_Table values ( 5678 , 'The Quick Brown' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 35: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 36: query: select name from Log limit 1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 36: query: select name from Log limit 1; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -48,29 +48,29 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 36: RESULT: my_table_check_trigger offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 39: query: drop trigger My_Table_Check_Trigger on My_Table; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 39: query: drop trigger My_Table_Check_Trigger on My_Table; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 39: OK: DROP TRIGGER
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 40: query: drop function My_Table_Check ( ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 40: query: drop function My_Table_Check ( ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 40: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 40: OK: DROP FUNCTION
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 41: query: drop table Log; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 41: query: drop table Log; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 41: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 42: query: drop table My_Table; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 42: query: drop table My_Table; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 42: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 42: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -162,7 +162,7 @@ my %pgdump_runs = (
 	role => {
 		dump_cmd => [
 			'pg_dump',                          '-f',
-			"$tempdir/role.sql",                '--role=dump_test',
+			"$tempdir/role.sql",                '--role=regress_dump_test_role',
 			'--schema=dump_test_second_schema', 'postgres', ], },
 	schema_only => {
 		dump_cmd =>
@@ -224,15 +224,15 @@ my %pgdump_runs = (
 # as the regexps are used for each run the test applies to.
 
 my %tests = (
-	'ALTER DEFAULT PRIVILEGES FOR ROLE dump_test' => {
+	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role' => {
 		create_order => 14,
 		create_sql   => 'ALTER DEFAULT PRIVILEGES
-					   FOR ROLE dump_test IN SCHEMA dump_test
-					   GRANT SELECT ON TABLES TO dump_test;',
+					   FOR ROLE regress_dump_test_role IN SCHEMA dump_test
+					   GRANT SELECT ON TABLES TO regress_dump_test_role;',
 		regexp => qr/^
 			\QALTER DEFAULT PRIVILEGES \E
-			\QFOR ROLE dump_test IN SCHEMA dump_test \E
-			\QGRANT SELECT ON TABLES  TO dump_test;\E
+			\QFOR ROLE regress_dump_test_role IN SCHEMA dump_test \E
+			\QGRANT SELECT ON TABLES  TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -255,9 +255,9 @@ my %tests = (
 			pg_dumpall_globals_clean => 1,
 			section_pre_data         => 1,
 			section_data             => 1, }, },
-	'ALTER ROLE dump_test' => {
+	'ALTER ROLE regress_dump_test_role' => {
 		regexp => qr/^
-			\QALTER ROLE dump_test WITH \E
+			\QALTER ROLE regress_dump_test_role WITH \E
 			\QNOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN \E
 			\QNOREPLICATION NOBYPASSRLS;\E
 			/xm,
@@ -838,10 +838,10 @@ my %tests = (
 			pg_dumpall_globals_clean => 1,
 			schema_only              => 1,
 			section_post_data        => 1, }, },
-	'CREATE ROLE dump_test' => {
+	'CREATE ROLE regress_dump_test_role' => {
 		create_order => 1,
-		create_sql   => 'CREATE ROLE dump_test;',
-		regexp       => qr/^CREATE ROLE dump_test;/m,
+		create_sql   => 'CREATE ROLE regress_dump_test_role;',
+		regexp       => qr/^CREATE ROLE regress_dump_test_role;/m,
 		like         => {
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_globals       => 1,
@@ -1621,9 +1621,9 @@ my %tests = (
 	'CREATE POLICY p2 ON test_table FOR SELECT' => {
 		create_order => 24,
 		create_sql   => 'CREATE POLICY p2 ON dump_test.test_table
-						   FOR SELECT TO dump_test USING (true);',
+						   FOR SELECT TO regress_dump_test_role USING (true);',
 		regexp => qr/^
-			\QCREATE POLICY p2 ON test_table FOR SELECT TO dump_test \E
+			\QCREATE POLICY p2 ON test_table FOR SELECT TO regress_dump_test_role \E
 			\QUSING (true);\E
 			/xm,
 		like => {
@@ -1650,10 +1650,10 @@ my %tests = (
 	'CREATE POLICY p3 ON test_table FOR INSERT' => {
 		create_order => 25,
 		create_sql   => 'CREATE POLICY p3 ON dump_test.test_table
-						   FOR INSERT TO dump_test WITH CHECK (true);',
+						   FOR INSERT TO regress_dump_test_role WITH CHECK (true);',
 		regexp => qr/^
 			\QCREATE POLICY p3 ON test_table FOR INSERT \E
-			\QTO dump_test WITH CHECK (true);\E
+			\QTO regress_dump_test_role WITH CHECK (true);\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -1679,9 +1679,9 @@ my %tests = (
 	'CREATE POLICY p4 ON test_table FOR UPDATE' => {
 		create_order => 26,
 		create_sql   => 'CREATE POLICY p4 ON dump_test.test_table FOR UPDATE
-						   TO dump_test USING (true) WITH CHECK (true);',
+						   TO regress_dump_test_role USING (true) WITH CHECK (true);',
 		regexp => qr/^
-			\QCREATE POLICY p4 ON test_table FOR UPDATE TO dump_test \E
+			\QCREATE POLICY p4 ON test_table FOR UPDATE TO regress_dump_test_role \E
 			\QUSING (true) WITH CHECK (true);\E
 			/xm,
 		like => {
@@ -1708,10 +1708,10 @@ my %tests = (
 	'CREATE POLICY p5 ON test_table FOR DELETE' => {
 		create_order => 27,
 		create_sql   => 'CREATE POLICY p5 ON dump_test.test_table
-						   FOR DELETE TO dump_test USING (true);',
+						   FOR DELETE TO regress_dump_test_role USING (true);',
 		regexp => qr/^
 			\QCREATE POLICY p5 ON test_table FOR DELETE \E
-			\QTO dump_test USING (true);\E
+			\QTO regress_dump_test_role USING (true);\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -2079,9 +2079,9 @@ my %tests = (
 			/xm,
 		like   => { clean_if_exists => 1, },
 		unlike => { clean           => 1, }, },
-	'DROP ROLE dump_test' => {
+	'DROP ROLE regress_dump_test_role' => {
 		regexp => qr/^
-			\QDROP ROLE dump_test;\E
+			\QDROP ROLE regress_dump_test_role;\E
 			/xm,
 		like   => { pg_dumpall_globals_clean => 1, },
 		unlike => {
@@ -2118,9 +2118,9 @@ my %tests = (
 	'GRANT USAGE ON SCHEMA dump_test_second_schema' => {
 		create_order => 10,
 		create_sql   => 'GRANT USAGE ON SCHEMA dump_test_second_schema
-						   TO dump_test;',
+						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT USAGE ON SCHEMA dump_test_second_schema TO dump_test;\E
+			\QGRANT USAGE ON SCHEMA dump_test_second_schema TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -2142,9 +2142,9 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 	'GRANT CREATE ON DATABASE dump_test' => {
 		create_order => 48,
-		create_sql   => 'GRANT CREATE ON DATABASE dump_test TO dump_test;',
+		create_sql   => 'GRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT CREATE ON DATABASE dump_test TO dump_test;\E
+			\QGRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			pg_dumpall_dbprivs       => 1, },
@@ -2167,8 +2167,8 @@ my %tests = (
 	'GRANT SELECT ON TABLE test_table' => {
 		create_order => 5,
 		create_sql   => 'GRANT SELECT ON TABLE dump_test.test_table
-						   TO dump_test;',
-		regexp => qr/^GRANT SELECT ON TABLE test_table TO dump_test;/m,
+						   TO regress_dump_test_role;',
+		regexp => qr/^GRANT SELECT ON TABLE test_table TO regress_dump_test_role;/m,
 		like   => {
 			binary_upgrade          => 1,
 			clean                   => 1,
@@ -2191,8 +2191,8 @@ my %tests = (
 		create_order => 19,
 		create_sql   => 'GRANT SELECT ON
 						   TABLE dump_test_second_schema.test_third_table
-						   TO dump_test;',
-		regexp => qr/^GRANT SELECT ON TABLE test_third_table TO dump_test;/m,
+						   TO regress_dump_test_role;',
+		regexp => qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
 		like   => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -2215,9 +2215,9 @@ my %tests = (
 		create_order => 28,
 		create_sql   => 'GRANT ALL ON SEQUENCE
 						   dump_test_second_schema.test_third_table_col1_seq
-						   TO dump_test;',
+						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON SEQUENCE test_third_table_col1_seq TO dump_test;\E
+			\QGRANT ALL ON SEQUENCE test_third_table_col1_seq TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -2241,9 +2241,9 @@ my %tests = (
 		create_order => 8,
 		create_sql =>
 		  'GRANT INSERT (col1) ON TABLE dump_test.test_second_table
-						   TO dump_test;',
+						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT INSERT(col1) ON TABLE test_second_table TO dump_test;\E
+			\QGRANT INSERT(col1) ON TABLE test_second_table TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade          => 1,
@@ -2263,12 +2263,12 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			only_dump_test_table     => 1,
 			pg_dumpall_globals       => 1, }, },
-	'GRANT EXECUTE ON FUNCTION pg_sleep() TO dump_test' => {
+	'GRANT EXECUTE ON FUNCTION pg_sleep() TO regress_dump_test_role' => {
 		create_order => 16,
 		create_sql   => 'GRANT EXECUTE ON FUNCTION pg_sleep(float8)
-						   TO dump_test;',
+						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT ALL ON FUNCTION pg_sleep(double precision) TO dump_test;\E
+			\QGRANT ALL ON FUNCTION pg_sleep(double precision) TO regress_dump_test_role;\E
 			/xm,
 		like => {
 			binary_upgrade           => 1,
@@ -2640,7 +2640,7 @@ command_exit_is(
 'pg_dump: [archiver (db)] connection to database "qqq" failed: FATAL:  database "qqq" does not exist'
 );
 
-command_exit_is([ 'pg_dump', '-p', "$port", '--role=dump_test' ],
+command_exit_is([ 'pg_dump', '-p', "$port", '--role=regress_dump_test_role' ],
 	1,
 	'pg_dump: [archiver (db)] query failed: ERROR:  permission denied for');
 

@@ -55,7 +55,7 @@ int main(void)
 #line 19 "test_informix.pgc"
 
 
-	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 1, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 21 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint ( );}

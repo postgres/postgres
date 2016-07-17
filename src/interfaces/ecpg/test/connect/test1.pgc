@@ -19,46 +19,46 @@ exec sql end declare section;
 
 	ECPGdebug(1, stderr);
 
-	exec sql connect to connectdb as main;
-	exec sql alter user connectuser ENCRYPTED PASSWORD 'connectpw';
+	exec sql connect to ecpg2_regression as main;
+	exec sql alter user regress_ecpg_user1 ENCRYPTED PASSWORD 'connectpw';
 	exec sql disconnect;  /* <-- "main" not specified */
 
-	exec sql connect to connectdb@localhost as main;
+	exec sql connect to ecpg2_regression@localhost as main;
 	exec sql disconnect main;
 
-	exec sql connect to @localhost as main user connectdb;
+	exec sql connect to @localhost as main user regress_ecpg_user2;
 	exec sql disconnect main;
 
-	/* exec sql connect to :@TEMP_PORT@ as main user connectdb;
+	/* exec sql connect to :@TEMP_PORT@ as main user regress_ecpg_user2;
 	exec sql disconnect main; */
 
-	exec sql connect to tcp:postgresql://localhost/connectdb user connectuser identified by connectpw;
+	exec sql connect to tcp:postgresql://localhost/ecpg2_regression user regress_ecpg_user1 identified by connectpw;
 	exec sql disconnect;
 
-	exec sql connect to tcp:postgresql://localhost/ user connectdb;
+	exec sql connect to tcp:postgresql://localhost/ user regress_ecpg_user2;
 	exec sql disconnect;
 
 	strcpy(pw, "connectpw");
-	strcpy(db, "tcp:postgresql://localhost/connectdb");
-	exec sql connect to :db user connectuser using :pw;
+	strcpy(db, "tcp:postgresql://localhost/ecpg2_regression");
+	exec sql connect to :db user regress_ecpg_user1 using :pw;
 	exec sql disconnect;
 
-	exec sql connect to unix:postgresql://localhost/connectdb user connectuser using "connectpw";
+	exec sql connect to unix:postgresql://localhost/ecpg2_regression user regress_ecpg_user1 using "connectpw";
 	exec sql disconnect;
 
-	exec sql connect to unix:postgresql://localhost/connectdb?connect_timeout=14 user connectuser;
+	exec sql connect to unix:postgresql://localhost/ecpg2_regression?connect_timeout=14 user regress_ecpg_user1;
 	exec sql disconnect;
 
 	/* wrong db */
-	exec sql connect to tcp:postgresql://localhost/nonexistant user connectuser identified by connectpw;
+	exec sql connect to tcp:postgresql://localhost/nonexistant user regress_ecpg_user1 identified by connectpw;
 	exec sql disconnect;
 
 	/* wrong port */
-	exec sql connect to tcp:postgresql://localhost:20/connectdb user connectuser identified by connectpw;
+	exec sql connect to tcp:postgresql://localhost:20/ecpg2_regression user regress_ecpg_user1 identified by connectpw;
 	/* no disconnect necessary */
 
 	/* wrong password */
-	exec sql connect to unix:postgresql://localhost/connectdb user connectuser identified by "wrongpw";
+	exec sql connect to unix:postgresql://localhost/ecpg2_regression user regress_ecpg_user1 identified by "wrongpw";
 	/* no disconnect necessary */
 
 	return (0);

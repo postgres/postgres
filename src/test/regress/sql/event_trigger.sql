@@ -86,8 +86,8 @@ comment on event trigger regress_event_trigger is 'test comment';
 comment on event trigger wrong.regress_event_trigger is 'test comment';
 
 -- drop as non-superuser should fail
-create role regression_bob;
-set role regression_bob;
+create role regress_evt_user;
+set role regress_evt_user;
 create event trigger regress_event_trigger_noperms on ddl_command_start
    execute procedure test_event_trigger();
 reset role;
@@ -109,16 +109,16 @@ revoke all on table event_trigger_fire1 from public;
 drop table event_trigger_fire1;
 create foreign data wrapper useless;
 create server useless_server foreign data wrapper useless;
-create user mapping for regression_bob server useless_server;
-alter default privileges for role regression_bob
- revoke delete on tables from regression_bob;
+create user mapping for regress_evt_user server useless_server;
+alter default privileges for role regress_evt_user
+ revoke delete on tables from regress_evt_user;
 
 -- alter owner to non-superuser should fail
-alter event trigger regress_event_trigger owner to regression_bob;
+alter event trigger regress_event_trigger owner to regress_evt_user;
 
 -- alter owner to superuser should work
-alter role regression_bob superuser;
-alter event trigger regress_event_trigger owner to regression_bob;
+alter role regress_evt_user superuser;
+alter event trigger regress_event_trigger owner to regress_evt_user;
 
 -- should fail, name collision
 alter event trigger regress_event_trigger rename to regress_event_trigger2;
@@ -129,8 +129,8 @@ alter event trigger regress_event_trigger rename to regress_event_trigger3;
 -- should fail, doesn't exist any more
 drop event trigger regress_event_trigger;
 
--- should fail, regression_bob owns some objects
-drop role regression_bob;
+-- should fail, regress_evt_user owns some objects
+drop role regress_evt_user;
 
 -- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE
@@ -140,11 +140,11 @@ drop event trigger regress_event_trigger3;
 drop event trigger regress_event_trigger_end;
 
 -- test support for dropped objects
-CREATE SCHEMA schema_one authorization regression_bob;
-CREATE SCHEMA schema_two authorization regression_bob;
-CREATE SCHEMA audit_tbls authorization regression_bob;
+CREATE SCHEMA schema_one authorization regress_evt_user;
+CREATE SCHEMA schema_two authorization regress_evt_user;
+CREATE SCHEMA audit_tbls authorization regress_evt_user;
 CREATE TEMP TABLE a_temp_tbl ();
-SET SESSION AUTHORIZATION regression_bob;
+SET SESSION AUTHORIZATION regress_evt_user;
 
 CREATE TABLE schema_one.table_one(a int);
 CREATE TABLE schema_one."table two"(a int);
@@ -235,10 +235,10 @@ DROP SCHEMA schema_one, schema_two CASCADE;
 
 SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
 
-DROP OWNED BY regression_bob;
+DROP OWNED BY regress_evt_user;
 SELECT * FROM dropped_objects WHERE type = 'schema';
 
-DROP ROLE regression_bob;
+DROP ROLE regress_evt_user;
 
 DROP EVENT TRIGGER regress_event_trigger_drop_objects;
 DROP EVENT TRIGGER undroppable;

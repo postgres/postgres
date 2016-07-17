@@ -391,22 +391,22 @@ DROP TABLE base_tbl CASCADE;
 
 -- permissions checks
 
-CREATE USER view_user1;
-CREATE USER view_user2;
+CREATE USER regress_view_user1;
+CREATE USER regress_view_user2;
 
-SET SESSION AUTHORIZATION view_user1;
+SET SESSION AUTHORIZATION regress_view_user1;
 CREATE TABLE base_tbl(a int, b text, c float);
 INSERT INTO base_tbl VALUES (1, 'Row 1', 1.0);
 CREATE VIEW rw_view1 AS SELECT b AS bb, c AS cc, a AS aa FROM base_tbl;
 INSERT INTO rw_view1 VALUES ('Row 2', 2.0, 2);
 
-GRANT SELECT ON base_tbl TO view_user2;
-GRANT SELECT ON rw_view1 TO view_user2;
-GRANT UPDATE (a,c) ON base_tbl TO view_user2;
-GRANT UPDATE (bb,cc) ON rw_view1 TO view_user2;
+GRANT SELECT ON base_tbl TO regress_view_user2;
+GRANT SELECT ON rw_view1 TO regress_view_user2;
+GRANT UPDATE (a,c) ON base_tbl TO regress_view_user2;
+GRANT UPDATE (bb,cc) ON rw_view1 TO regress_view_user2;
 RESET SESSION AUTHORIZATION;
 
-SET SESSION AUTHORIZATION view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
 CREATE VIEW rw_view2 AS SELECT b AS bb, c AS cc, a AS aa FROM base_tbl;
 SELECT * FROM base_tbl; -- ok
 SELECT * FROM rw_view1; -- ok
@@ -428,11 +428,11 @@ DELETE FROM rw_view1; -- not allowed
 DELETE FROM rw_view2; -- not allowed
 RESET SESSION AUTHORIZATION;
 
-SET SESSION AUTHORIZATION view_user1;
-GRANT INSERT, DELETE ON base_tbl TO view_user2;
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT INSERT, DELETE ON base_tbl TO regress_view_user2;
 RESET SESSION AUTHORIZATION;
 
-SET SESSION AUTHORIZATION view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
 INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- ok
 INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- not allowed
 INSERT INTO rw_view2 VALUES ('Row 4', 4.0, 4); -- ok
@@ -442,12 +442,12 @@ DELETE FROM rw_view2 WHERE aa=2; -- ok
 SELECT * FROM base_tbl;
 RESET SESSION AUTHORIZATION;
 
-SET SESSION AUTHORIZATION view_user1;
-REVOKE INSERT, DELETE ON base_tbl FROM view_user2;
-GRANT INSERT, DELETE ON rw_view1 TO view_user2;
+SET SESSION AUTHORIZATION regress_view_user1;
+REVOKE INSERT, DELETE ON base_tbl FROM regress_view_user2;
+GRANT INSERT, DELETE ON rw_view1 TO regress_view_user2;
 RESET SESSION AUTHORIZATION;
 
-SET SESSION AUTHORIZATION view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
 INSERT INTO base_tbl VALUES (5, 'Row 5', 5.0); -- not allowed
 INSERT INTO rw_view1 VALUES ('Row 5', 5.0, 5); -- ok
 INSERT INTO rw_view2 VALUES ('Row 6', 6.0, 6); -- not allowed
@@ -459,8 +459,8 @@ RESET SESSION AUTHORIZATION;
 
 DROP TABLE base_tbl CASCADE;
 
-DROP USER view_user1;
-DROP USER view_user2;
+DROP USER regress_view_user1;
+DROP USER regress_view_user2;
 
 -- column defaults
 

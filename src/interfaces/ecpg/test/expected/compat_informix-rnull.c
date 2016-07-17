@@ -98,7 +98,7 @@ int main(void)
 #line 27 "rnull.pgc"
 
 
-	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 1, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 29 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}

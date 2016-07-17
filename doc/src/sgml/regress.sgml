@@ -112,8 +112,14 @@ make installcheck-parallel
    <envar>PGPORT</envar> environment variables.  The tests will be run in a
    database named <literal>regression</>; any existing database by this name
    will be dropped.
+  </para>
+
+  <para>
    The tests will also transiently create some cluster-wide objects, such as
-   user identities named <literal>regressuser<replaceable>N</></literal>.
+   roles and tablespaces.  These objects will have names beginning with
+   <literal>regress_</literal>.  Beware of using <literal>installcheck</>
+   mode in installations that have any actual users or tablespaces named
+   that way.
   </para>
   </sect2>
 
@@ -195,8 +201,8 @@ make installcheck-world
   <para>
    When using <literal>installcheck</> mode, these tests will destroy any
    existing databases named <literal>pl_regression</>,
-   <literal>contrib_regression</>, <literal>isolationtest</>,
-   <literal>regress1</>, or <literal>connectdb</>, as well as
+   <literal>contrib_regression</>, <literal>isolation_regression</>,
+   <literal>ecpg1_regression</>, or <literal>ecpg2_regression</>, as well as
    <literal>regression</>.
   </para>
   </sect2>

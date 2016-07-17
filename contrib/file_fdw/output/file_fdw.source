@@ -2,34 +2,34 @@
 -- Test foreign-data wrapper file_fdw.
 --
 -- Clean up in case a prior regression run failed
-SET client_min_messages TO 'error';
-DROP ROLE IF EXISTS file_fdw_superuser, file_fdw_user, no_priv_user;
+SET client_min_messages TO 'warning';
+DROP ROLE IF EXISTS regress_file_fdw_superuser, regress_file_fdw_user, regress_no_priv_user;
 RESET client_min_messages;
-CREATE ROLE file_fdw_superuser LOGIN SUPERUSER; -- is a superuser
-CREATE ROLE file_fdw_user LOGIN;                -- has priv and user mapping
-CREATE ROLE no_priv_user LOGIN;                 -- has priv but no user mapping
+CREATE ROLE regress_file_fdw_superuser LOGIN SUPERUSER; -- is a superuser
+CREATE ROLE regress_file_fdw_user LOGIN;                -- has priv and user mapping
+CREATE ROLE regress_no_priv_user LOGIN;                 -- has priv but no user mapping
 -- Install file_fdw
 CREATE EXTENSION file_fdw;
--- file_fdw_superuser owns fdw-related objects
-SET ROLE file_fdw_superuser;
+-- regress_file_fdw_superuser owns fdw-related objects
+SET ROLE regress_file_fdw_superuser;
 CREATE SERVER file_server FOREIGN DATA WRAPPER file_fdw;
 -- privilege tests
-SET ROLE file_fdw_user;
+SET ROLE regress_file_fdw_user;
 CREATE FOREIGN DATA WRAPPER file_fdw2 HANDLER file_fdw_handler VALIDATOR file_fdw_validator;   -- ERROR
 ERROR:  permission denied to create foreign-data wrapper "file_fdw2"
 HINT:  Must be superuser to create a foreign-data wrapper.
 CREATE SERVER file_server2 FOREIGN DATA WRAPPER file_fdw;   -- ERROR
 ERROR:  permission denied for foreign-data wrapper file_fdw
-CREATE USER MAPPING FOR file_fdw_user SERVER file_server;   -- ERROR
+CREATE USER MAPPING FOR regress_file_fdw_user SERVER file_server;   -- ERROR
 ERROR:  permission denied for foreign server file_server
-SET ROLE file_fdw_superuser;
-GRANT USAGE ON FOREIGN SERVER file_server TO file_fdw_user;
-SET ROLE file_fdw_user;
-CREATE USER MAPPING FOR file_fdw_user SERVER file_server;
+SET ROLE regress_file_fdw_superuser;
+GRANT USAGE ON FOREIGN SERVER file_server TO regress_file_fdw_user;
+SET ROLE regress_file_fdw_user;
+CREATE USER MAPPING FOR regress_file_fdw_user SERVER file_server;
 -- create user mappings and grant privilege to test users
-SET ROLE file_fdw_superuser;
-CREATE USER MAPPING FOR file_fdw_superuser SERVER file_server;
-CREATE USER MAPPING FOR no_priv_user SERVER file_server;
+SET ROLE regress_file_fdw_superuser;
+CREATE USER MAPPING FOR regress_file_fdw_superuser SERVER file_server;
+CREATE USER MAPPING FOR regress_no_priv_user SERVER file_server;
 -- validator tests
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
 ERROR:  COPY format "xml" not recognized
@@ -82,7 +82,7 @@ CREATE FOREIGN TABLE agg_text (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'text', filename '@abs_srcdir@/data/agg.data', delimiter '	', null '\N');
-GRANT SELECT ON agg_text TO file_fdw_user;
+GRANT SELECT ON agg_text TO regress_file_fdw_user;
 CREATE FOREIGN TABLE agg_csv (
 	a	int2,
 	b	float4
@@ -290,7 +290,7 @@ SELECT tableoid::regclass, * FROM agg FOR UPDATE;
 ALTER FOREIGN TABLE agg_csv NO INHERIT agg;
 DROP TABLE agg;
 -- privilege tests
-SET ROLE file_fdw_superuser;
+SET ROLE regress_file_fdw_superuser;
 SELECT * FROM agg_text ORDER BY a;
   a  |    b    
 -----+---------
@@ -300,7 +300,7 @@ SELECT * FROM agg_text ORDER BY a;
  100 |  99.097
 (4 rows)
 
-SET ROLE file_fdw_user;
+SET ROLE regress_file_fdw_user;
 SELECT * FROM agg_text ORDER BY a;
   a  |    b    
 -----+---------
@@ -310,10 +310,10 @@ SELECT * FROM agg_text ORDER BY a;
  100 |  99.097
 (4 rows)
 
-SET ROLE no_priv_user;
+SET ROLE regress_no_priv_user;
 SELECT * FROM agg_text ORDER BY a;   -- ERROR
 ERROR:  permission denied for relation agg_text
-SET ROLE file_fdw_user;
+SET ROLE regress_file_fdw_user;
 \t on
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
  Foreign Scan on public.agg_text
@@ -323,7 +323,7 @@ EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
 
 \t off
 -- file FDW allows foreign tables to be accessed without user mapping
-DROP USER MAPPING FOR file_fdw_user SERVER file_server;
+DROP USER MAPPING FOR regress_file_fdw_user SERVER file_server;
 SELECT * FROM agg_text ORDER BY a;
   a  |    b    
 -----+---------
@@ -334,22 +334,22 @@ SELECT * FROM agg_text ORDER BY a;
 (4 rows)
 
 -- privilege tests for object
-SET ROLE file_fdw_superuser;
-ALTER FOREIGN TABLE agg_text OWNER TO file_fdw_user;
+SET ROLE regress_file_fdw_superuser;
+ALTER FOREIGN TABLE agg_text OWNER TO regress_file_fdw_user;
 ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
-SET ROLE file_fdw_user;
+SET ROLE regress_file_fdw_user;
 ALTER FOREIGN TABLE agg_text OPTIONS (SET format 'text');
 ERROR:  only superuser can change options of a file_fdw foreign table
-SET ROLE file_fdw_superuser;
+SET ROLE regress_file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
 NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to server file_server
-drop cascades to user mapping for file_fdw_superuser on server file_server
-drop cascades to user mapping for no_priv_user on server file_server
+drop cascades to user mapping for regress_file_fdw_superuser on server file_server
+drop cascades to user mapping for regress_no_priv_user on server file_server
 drop cascades to foreign table agg_text
 drop cascades to foreign table agg_csv
 drop cascades to foreign table agg_bad
 drop cascades to foreign table text_csv
-DROP ROLE file_fdw_superuser, file_fdw_user, no_priv_user;
+DROP ROLE regress_file_fdw_superuser, regress_file_fdw_user, regress_no_priv_user;

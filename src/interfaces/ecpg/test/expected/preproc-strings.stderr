@@ -1,14 +1,14 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 13: query: set standard_conforming_strings to on; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 13: query: set standard_conforming_strings to on; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 13: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 13: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 15: query: select 'abcdef' , N'abcdef' as foo , E'abc\bdef' as "foo" , U&'d\0061t\0061' as U&"foo" , U&'d!+000061t!+000061' uescape '!' , $foo$abc$def$foo$; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 15: query: select 'abcdef' , N'abcdef' as foo , E'abc\bdef' as "foo" , U&'d\0061t\0061' as U&"foo" , U&'d!+000061t!+000061' uescape '!' , $foo$abc$def$foo$; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 15: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -38,5 +38,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 15: RESULT: abc$def offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

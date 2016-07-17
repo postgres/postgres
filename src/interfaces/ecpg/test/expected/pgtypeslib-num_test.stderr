@@ -1,16 +1,16 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGsetcommit on line 34: action "off"; connection "regress1"
+[NO_PID]: ECPGsetcommit on line 34: action "off"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: query: create table test ( text char ( 5 ) , num numeric ( 14 , 7 ) ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 35: query: create table test ( text char ( 5 ) , num numeric ( 14 , 7 ) ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 35: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 60: query: insert into test ( text , num ) values ( 'test' , $1  ); with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 60: query: insert into test ( text , num ) values ( 'test' , $1  ); with 1 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 60: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -18,7 +18,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 60: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 66: query: select num from test where text = 'test'; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 66: query: select num from test where text = 'test'; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 66: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 66: RESULT: 2369.7000000 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 93: action "rollback"; connection "regress1"
+[NO_PID]: ECPGtrans on line 93: action "rollback"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

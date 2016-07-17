@@ -172,7 +172,7 @@ main (void)
 		n[j] = *value;
 	}
 
-        { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
+        { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 53 "array.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

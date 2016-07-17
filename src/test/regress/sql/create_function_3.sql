@@ -3,7 +3,7 @@
 --
 -- sanity check of pg_proc catalog to the given parameters
 --
-CREATE USER regtest_unpriv_user;
+CREATE USER regress_unpriv_user;
 
 CREATE SCHEMA temp_func_test;
 GRANT ALL ON SCHEMA temp_func_test TO public;
@@ -94,10 +94,10 @@ SELECT proname, proleakproof FROM pg_proc
                      'functext_E_2'::regproc) ORDER BY proname;
 
 -- it takes superuser privilege to turn on leakproof, but not for turn off
-ALTER FUNCTION functext_E_1(int) OWNER TO regtest_unpriv_user;
-ALTER FUNCTION functext_E_2(int) OWNER TO regtest_unpriv_user;
+ALTER FUNCTION functext_E_1(int) OWNER TO regress_unpriv_user;
+ALTER FUNCTION functext_E_2(int) OWNER TO regress_unpriv_user;
 
-SET SESSION AUTHORIZATION regtest_unpriv_user;
+SET SESSION AUTHORIZATION regress_unpriv_user;
 SET search_path TO temp_func_test, public;
 ALTER FUNCTION functext_E_1(int) NOT LEAKPROOF;
 ALTER FUNCTION functext_E_2(int) LEAKPROOF;
@@ -159,5 +159,5 @@ SELECT routine_name, ordinal_position, parameter_name, parameter_default
 
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
-DROP USER regtest_unpriv_user;
+DROP USER regress_unpriv_user;
 RESET search_path;

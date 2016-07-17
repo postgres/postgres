@@ -47,10 +47,10 @@ main(void)
 	ECPGdebug(1, stderr);
 
 	strcpy(id, "first");
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , id, 0); }
+	{ ECPGconnect(__LINE__, 0, "ecpg2_regression" , NULL, NULL , id, 0); }
 #line 24 "test2.pgc"
 
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , "second", 0); }
+	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , "second", 0); }
 #line 25 "test2.pgc"
 
 

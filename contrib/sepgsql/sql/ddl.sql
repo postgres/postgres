@@ -4,8 +4,8 @@
 
 -- clean-up in case a prior regression run failed
 SET client_min_messages TO 'warning';
-DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
-DROP USER IF EXISTS regtest_sepgsql_test_user;
+DROP DATABASE IF EXISTS sepgsql_test_regression;
+DROP USER IF EXISTS regress_sepgsql_test_user;
 RESET client_min_messages;
 
 -- confirm required permissions using audit messages
@@ -16,13 +16,13 @@ SET client_min_messages = LOG;
 --
 -- CREATE Permission checks
 --
-CREATE DATABASE regtest_sepgsql_test_database;
+CREATE DATABASE sepgsql_test_regression;
 
-CREATE USER regtest_sepgsql_test_user;
+CREATE USER regress_sepgsql_test_user;
 
 CREATE SCHEMA regtest_schema;
 
-GRANT ALL ON SCHEMA regtest_schema TO regtest_sepgsql_test_user;
+GRANT ALL ON SCHEMA regtest_schema TO regress_sepgsql_test_user;
 
 SET search_path = regtest_schema, public;
 
@@ -52,7 +52,7 @@ CREATE AGGREGATE regtest_agg (
 );
 
 -- CREATE objects owned by others
-SET SESSION AUTHORIZATION regtest_sepgsql_test_user;
+SET SESSION AUTHORIZATION regress_sepgsql_test_user;
 
 SET search_path = regtest_schema, public;
 
@@ -92,8 +92,8 @@ ALTER TABLE regtest_table_2 SET WITHOUT OIDS;
 
 DROP TABLE regtest_table;
 
-DROP OWNED BY regtest_sepgsql_test_user;
+DROP OWNED BY regress_sepgsql_test_user;
 
-DROP DATABASE regtest_sepgsql_test_database;
-DROP USER regtest_sepgsql_test_user;
+DROP DATABASE sepgsql_test_regression;
+DROP USER regress_sepgsql_test_user;
 DROP SCHEMA IF EXISTS regtest_schema CASCADE;

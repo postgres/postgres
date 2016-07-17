@@ -2,7 +2,7 @@
 -- regproc
 --
 /* If objects exist, return oids */
-CREATE ROLE regtestrole;
+CREATE ROLE regress_regrole_test;
 -- without schemaname
 SELECT regoper('||/');
  regoper 
@@ -144,16 +144,16 @@ SELECT to_regtype('pg_catalog.int4');
 (1 row)
 
 -- schemaname not applicable
-SELECT regrole('regtestrole');
-   regrole   
--------------
- regtestrole
+SELECT regrole('regress_regrole_test');
+       regrole        
+----------------------
+ regress_regrole_test
 (1 row)
 
-SELECT regrole('"regtestrole"');
-   regrole   
--------------
- regtestrole
+SELECT regrole('"regress_regrole_test"');
+       regrole        
+----------------------
+ regress_regrole_test
 (1 row)
 
 SELECT regnamespace('pg_catalog');
@@ -168,16 +168,16 @@ SELECT regnamespace('"pg_catalog"');
  pg_catalog
 (1 row)
 
-SELECT to_regrole('regtestrole');
- to_regrole  
--------------
- regtestrole
+SELECT to_regrole('regress_regrole_test');
+      to_regrole      
+----------------------
+ regress_regrole_test
 (1 row)
 
-SELECT to_regrole('"regtestrole"');
- to_regrole  
--------------
- regtestrole
+SELECT to_regrole('"regress_regrole_test"');
+      to_regrole      
+----------------------
+ regress_regrole_test
 (1 row)
 
 SELECT to_regnamespace('pg_catalog');
@@ -193,7 +193,7 @@ SELECT to_regnamespace('"pg_catalog"');
 (1 row)
 
 /* If objects don't exist, raise errors. */
-DROP ROLE regtestrole;
+DROP ROLE regress_regrole_test;
 -- without schemaname
 SELECT regoper('||//');
 ERROR:  operator does not exist: ||//
@@ -245,13 +245,13 @@ ERROR:  schema "ng_catalog" does not exist
 LINE 1: SELECT regtype('ng_catalog.int4');
                        ^
 -- schemaname not applicable
-SELECT regrole('regtestrole');
-ERROR:  role "regtestrole" does not exist
-LINE 1: SELECT regrole('regtestrole');
+SELECT regrole('regress_regrole_test');
+ERROR:  role "regress_regrole_test" does not exist
+LINE 1: SELECT regrole('regress_regrole_test');
                        ^
-SELECT regrole('"regtestrole"');
-ERROR:  role "regtestrole" does not exist
-LINE 1: SELECT regrole('"regtestrole"');
+SELECT regrole('"regress_regrole_test"');
+ERROR:  role "regress_regrole_test" does not exist
+LINE 1: SELECT regrole('"regress_regrole_test"');
                        ^
 SELECT regrole('Nonexistent');
 ERROR:  role "nonexistent" does not exist
@@ -353,13 +353,13 @@ SELECT to_regtype('ng_catalog.int4');
 (1 row)
 
 -- schemaname not applicable
-SELECT to_regrole('regtestrole');
+SELECT to_regrole('regress_regrole_test');
  to_regrole 
 ------------
  
 (1 row)
 
-SELECT to_regrole('"regtestrole"');
+SELECT to_regrole('"regress_regrole_test"');
  to_regrole 
 ------------
  

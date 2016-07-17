@@ -4,10 +4,10 @@
 
 -- Clean up in case a prior regression run failed
 SET client_min_messages TO 'warning';
+DROP ROLE IF EXISTS regress_addr_user;
+RESET client_min_messages;
 
-DROP ROLE IF EXISTS regtest_addr_user;
-
-CREATE USER regtest_addr_user;
+CREATE USER regress_addr_user;
 
 -- Test generic object addressing/identification functions
 CREATE SCHEMA addr_nsp;
@@ -33,9 +33,9 @@ CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
 CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
-CREATE USER MAPPING FOR regtest_addr_user SERVER "integer";
-ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regtest_addr_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE regtest_addr_user REVOKE DELETE ON TABLES FROM regtest_addr_user;
+CREATE USER MAPPING FOR regress_addr_user SERVER "integer";
+ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regress_addr_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM regress_addr_user;
 CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION varchar_transform(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
@@ -157,14 +157,14 @@ WITH objects (type, name, args) AS (VALUES
 				('text search dictionary', '{addr_ts_dict}', '{}'),
 				('text search template', '{addr_ts_temp}', '{}'),
 				('text search configuration', '{addr_ts_conf}', '{}'),
-				('role', '{regtest_addr_user}', '{}'),
+				('role', '{regress_addr_user}', '{}'),
 				-- database
 				-- tablespace
 				('foreign-data wrapper', '{addr_fdw}', '{}'),
 				('server', '{addr_fserv}', '{}'),
-				('user mapping', '{regtest_addr_user}', '{integer}'),
-				('default acl', '{regtest_addr_user,public}', '{r}'),
-				('default acl', '{regtest_addr_user}', '{r}'),
+				('user mapping', '{regress_addr_user}', '{integer}'),
+				('default acl', '{regress_addr_user,public}', '{r}'),
+				('default acl', '{regress_addr_user}', '{r}'),
 				-- extension
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}'),
@@ -183,9 +183,11 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
 ---
 --- Cleanup resources
 ---
+SET client_min_messages TO 'warning';
+
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 
 DROP SCHEMA addr_nsp CASCADE;
 
-DROP OWNED BY regtest_addr_user;
-DROP USER regtest_addr_user;
+DROP OWNED BY regress_addr_user;
+DROP USER regress_addr_user;

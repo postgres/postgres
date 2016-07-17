@@ -84,8 +84,8 @@ comment on event trigger regress_event_trigger is 'test comment';
 comment on event trigger wrong.regress_event_trigger is 'test comment';
 ERROR:  event trigger name cannot be qualified
 -- drop as non-superuser should fail
-create role regression_bob;
-set role regression_bob;
+create role regress_evt_user;
+set role regress_evt_user;
 create event trigger regress_event_trigger_noperms on ddl_command_start
    execute procedure test_event_trigger();
 ERROR:  permission denied to create event trigger "regress_event_trigger_noperms"
@@ -114,18 +114,18 @@ create foreign data wrapper useless;
 NOTICE:  test_event_trigger: ddl_command_end CREATE FOREIGN DATA WRAPPER
 create server useless_server foreign data wrapper useless;
 NOTICE:  test_event_trigger: ddl_command_end CREATE SERVER
-create user mapping for regression_bob server useless_server;
+create user mapping for regress_evt_user server useless_server;
 NOTICE:  test_event_trigger: ddl_command_end CREATE USER MAPPING
-alter default privileges for role regression_bob
- revoke delete on tables from regression_bob;
+alter default privileges for role regress_evt_user
+ revoke delete on tables from regress_evt_user;
 NOTICE:  test_event_trigger: ddl_command_end ALTER DEFAULT PRIVILEGES
 -- alter owner to non-superuser should fail
-alter event trigger regress_event_trigger owner to regression_bob;
+alter event trigger regress_event_trigger owner to regress_evt_user;
 ERROR:  permission denied to change owner of event trigger "regress_event_trigger"
 HINT:  The owner of an event trigger must be a superuser.
 -- alter owner to superuser should work
-alter role regression_bob superuser;
-alter event trigger regress_event_trigger owner to regression_bob;
+alter role regress_evt_user superuser;
+alter event trigger regress_event_trigger owner to regress_evt_user;
 -- should fail, name collision
 alter event trigger regress_event_trigger rename to regress_event_trigger2;
 ERROR:  event trigger "regress_event_trigger2" already exists
@@ -134,12 +134,12 @@ alter event trigger regress_event_trigger rename to regress_event_trigger3;
 -- should fail, doesn't exist any more
 drop event trigger regress_event_trigger;
 ERROR:  event trigger "regress_event_trigger" does not exist
--- should fail, regression_bob owns some objects
-drop role regression_bob;
-ERROR:  role "regression_bob" cannot be dropped because some objects depend on it
+-- should fail, regress_evt_user owns some objects
+drop role regress_evt_user;
+ERROR:  role "regress_evt_user" cannot be dropped because some objects depend on it
 DETAIL:  owner of event trigger regress_event_trigger3
-owner of default privileges on new relations belonging to role regression_bob
-owner of user mapping for regression_bob on server useless_server
+owner of default privileges on new relations belonging to role regress_evt_user
+owner of user mapping for regress_evt_user on server useless_server
 -- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE
 drop event trigger if exists regress_event_trigger2;
@@ -148,11 +148,11 @@ NOTICE:  event trigger "regress_event_trigger2" does not exist, skipping
 drop event trigger regress_event_trigger3;
 drop event trigger regress_event_trigger_end;
 -- test support for dropped objects
-CREATE SCHEMA schema_one authorization regression_bob;
-CREATE SCHEMA schema_two authorization regression_bob;
-CREATE SCHEMA audit_tbls authorization regression_bob;
+CREATE SCHEMA schema_one authorization regress_evt_user;
+CREATE SCHEMA schema_two authorization regress_evt_user;
+CREATE SCHEMA audit_tbls authorization regress_evt_user;
 CREATE TEMP TABLE a_temp_tbl ();
-SET SESSION AUTHORIZATION regression_bob;
+SET SESSION AUTHORIZATION regress_evt_user;
 CREATE TABLE schema_one.table_one(a int);
 CREATE TABLE schema_one."table two"(a int);
 CREATE TABLE schema_one.table_three(a int);
@@ -299,7 +299,7 @@ SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
  type         | schema_one | schema_one.table_three[]
 (23 rows)
 
-DROP OWNED BY regression_bob;
+DROP OWNED BY regress_evt_user;
 NOTICE:  schema "audit_tbls" does not exist, skipping
 SELECT * FROM dropped_objects WHERE type = 'schema';
   type  | schema |   object   
@@ -309,7 +309,7 @@ SELECT * FROM dropped_objects WHERE type = 'schema';
  schema |        | audit_tbls
 (3 rows)
 
-DROP ROLE regression_bob;
+DROP ROLE regress_evt_user;
 DROP EVENT TRIGGER regress_event_trigger_drop_objects;
 DROP EVENT TRIGGER undroppable;
 CREATE OR REPLACE FUNCTION event_trigger_report_dropped()

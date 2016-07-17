@@ -4,7 +4,7 @@
 
 /* If objects exist, return oids */
 
-CREATE ROLE regtestrole;
+CREATE ROLE regress_regrole_test;
 
 -- without schemaname
 
@@ -39,19 +39,19 @@ SELECT to_regtype('pg_catalog.int4');
 
 -- schemaname not applicable
 
-SELECT regrole('regtestrole');
-SELECT regrole('"regtestrole"');
+SELECT regrole('regress_regrole_test');
+SELECT regrole('"regress_regrole_test"');
 SELECT regnamespace('pg_catalog');
 SELECT regnamespace('"pg_catalog"');
 
-SELECT to_regrole('regtestrole');
-SELECT to_regrole('"regtestrole"');
+SELECT to_regrole('regress_regrole_test');
+SELECT to_regrole('"regress_regrole_test"');
 SELECT to_regnamespace('pg_catalog');
 SELECT to_regnamespace('"pg_catalog"');
 
 /* If objects don't exist, raise errors. */
 
-DROP ROLE regtestrole;
+DROP ROLE regress_regrole_test;
 
 -- without schemaname
 
@@ -73,8 +73,8 @@ SELECT regtype('ng_catalog.int4');
 
 -- schemaname not applicable
 
-SELECT regrole('regtestrole');
-SELECT regrole('"regtestrole"');
+SELECT regrole('regress_regrole_test');
+SELECT regrole('"regress_regrole_test"');
 SELECT regrole('Nonexistent');
 SELECT regrole('"Nonexistent"');
 SELECT regrole('foo.bar');
@@ -104,8 +104,8 @@ SELECT to_regtype('ng_catalog.int4');
 
 -- schemaname not applicable
 
-SELECT to_regrole('regtestrole');
-SELECT to_regrole('"regtestrole"');
+SELECT to_regrole('regress_regrole_test');
+SELECT to_regrole('"regress_regrole_test"');
 SELECT to_regrole('foo.bar');
 SELECT to_regrole('Nonexistent');
 SELECT to_regrole('"Nonexistent"');

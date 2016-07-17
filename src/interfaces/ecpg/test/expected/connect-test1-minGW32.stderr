@@ -1,44 +1,58 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 23: query: alter user connectuser   encrypted password 'connectpw'; with 0 parameter(s) on connection main
+[NO_PID]: ecpg_execute on line 23: query: alter user regress_ecpg_user1 encrypted password 'connectpw'; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 23: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 23: OK: ALTER ROLE
+[NO_PID]: ecpg_process_output on line 23: OK: ALTER ROLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on localhost port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user connectdb
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user regress_ecpg_user2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: could not open database: FATAL:  database "regress_ecpg_user2" does not exist
+
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT>  for user connectuser
+[NO_PID]: raising sqlcode -402 on line 29: could not connect to database "<DEFAULT>" on line 29
+[NO_PID]: sqlca: code: -402, state: 08001
+[NO_PID]: raising sqlcode -220 on line 30: connection "main" does not exist on line 30
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on localhost port <DEFAULT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection connectdb closed
+[NO_PID]: ecpg_finish: connection ecpg2_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user connectdb
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT>  for user regress_ecpg_user2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: could not open database: FATAL:  database "regress_ecpg_user2" does not exist
+
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection (null) closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT>  for user connectuser
+[NO_PID]: raising sqlcode -402 on line 38: could not connect to database "<DEFAULT>" on line 38
+[NO_PID]: sqlca: code: -402, state: 08001
+[NO_PID]: raising sqlcode -220 on line 39: connection "CURRENT" does not exist on line 39
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on localhost port <DEFAULT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection connectdb closed
+[NO_PID]: ecpg_finish: connection ecpg2_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on <DEFAULT> port <DEFAULT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection connectdb closed
+[NO_PID]: ecpg_finish: connection ecpg2_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> with options connect_timeout=14 for user connectuser
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on <DEFAULT> port <DEFAULT> with options connect_timeout=14 for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection connectdb closed
+[NO_PID]: ecpg_finish: connection ecpg2_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database nonexistant on localhost port <DEFAULT>  for user connectuser
+[NO_PID]: ECPGconnect: opening database nonexistant on localhost port <DEFAULT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: could not open database: FATAL:  database "nonexistant" does not exist
 
@@ -47,18 +61,18 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode -402 on line 53: could not connect to database "nonexistant" on line 53
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: raising sqlcode -220 on line 54: no such connection CURRENT on line 54
+[NO_PID]: raising sqlcode -220 on line 54: connection "CURRENT" does not exist on line 54
 [NO_PID]: sqlca: code: -220, state: 08003
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on localhost port <REGRESSION_PORT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: could not open database: could not connect to server: Connection refused (0x0000274D/10061)
 	Is the server running on host "localhost" and accepting
 	TCP/IP connections on port 20?
 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection connectdb closed
+[NO_PID]: ecpg_finish: connection ecpg2_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -402 on line 57: could not connect to database "connectdb" on line 57
+[NO_PID]: raising sqlcode -402 on line 57: could not connect to database "ecpg2_regression" on line 57
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT>  for user connectuser
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on <DEFAULT> port <DEFAULT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000

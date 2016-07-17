@@ -110,7 +110,7 @@ main (void)
   ECPGdebug (1, stderr);
 
   empl.idnum = 1;
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); }
 #line 43 "type.pgc"
 
   if (sqlca.sqlcode)

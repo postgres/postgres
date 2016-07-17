@@ -15,58 +15,58 @@ main(void)
 exec sql begin declare section;
 	char db[200];
 	char id[200];
-	char *user="connectuser";
+	char *user="regress_ecpg_user1";
 exec sql end declare section;
 
 	ECPGdebug(1, stderr);
 
-	exec sql connect to connectdb as main;
-	exec sql alter user connectdb ENCRYPTED PASSWORD 'insecure';
-	exec sql alter user connectuser ENCRYPTED PASSWORD 'connectpw';
+	exec sql connect to ecpg2_regression as main;
+	exec sql alter user regress_ecpg_user2 ENCRYPTED PASSWORD 'insecure';
+	exec sql alter user regress_ecpg_user1 ENCRYPTED PASSWORD 'connectpw';
 	exec sql commit;
 	exec sql disconnect;  /* <-- "main" not specified */
 
-	strcpy(db, "connectdb");
+	strcpy(db, "ecpg2_regression");
 	strcpy(id, "main");
 	exec sql connect to :db as :id;
 	exec sql disconnect :id;
 
-	exec sql connect to connectdb as main;
+	exec sql connect to ecpg2_regression as main;
 	exec sql disconnect main;
 
-	exec sql connect to "connectdb" as main;
+	exec sql connect to "ecpg2_regression" as main;
 	exec sql disconnect main;
 
-	exec sql connect to 'connectdb' as main;
+	exec sql connect to 'ecpg2_regression' as main;
 	exec sql disconnect main;
 
-	exec sql connect to as main user connectdb/insecure;
+	exec sql connect to as main user regress_ecpg_user2/insecure;
 	exec sql disconnect main;
 
-	exec sql connect to connectdb as main user connectuser/connectpw;
+	exec sql connect to ecpg2_regression as main user regress_ecpg_user1/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/connectdb as main user connectuser/connectpw;
+	exec sql connect to unix:postgresql://localhost/ecpg2_regression as main user regress_ecpg_user1/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to "unix:postgresql://localhost/connectdb" as main user connectuser/connectpw;
+	exec sql connect to "unix:postgresql://localhost/ecpg2_regression" as main user regress_ecpg_user1/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to 'unix:postgresql://localhost/connectdb' as main user :user USING "connectpw";
+	exec sql connect to 'unix:postgresql://localhost/ecpg2_regression' as main user :user USING "connectpw";
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/connectdb?connect_timeout=14&client_encoding=latin1 as main user connectuser/connectpw;
+	exec sql connect to unix:postgresql://localhost/ecpg2_regression?connect_timeout=14&client_encoding=latin1 as main user regress_ecpg_user1/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to "unix:postgresql://200.46.204.71/connectdb" as main user connectuser/connectpw;
+	exec sql connect to "unix:postgresql://200.46.204.71/ecpg2_regression" as main user regress_ecpg_user1/connectpw;
 	exec sql disconnect main;
 
-	exec sql connect to unix:postgresql://localhost/ as main user connectdb IDENTIFIED BY insecure;
+	exec sql connect to unix:postgresql://localhost/ as main user regress_ecpg_user2 IDENTIFIED BY insecure;
 	exec sql disconnect main;
 
 	/* connect twice */
-	exec sql connect to connectdb as main;
-	exec sql connect to connectdb as main;
+	exec sql connect to ecpg2_regression as main;
+	exec sql connect to ecpg2_regression as main;
 	exec sql disconnect main;
 
 	/* not connected */

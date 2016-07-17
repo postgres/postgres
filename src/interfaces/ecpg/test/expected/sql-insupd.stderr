@@ -1,26 +1,26 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 18: query: create table insupd_test ( a int , b int ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 18: query: create table insupd_test ( a int , b int ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 18: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 18: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 20: query: insert into insupd_test ( a , b ) values ( 1 , 1 ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 20: query: insert into insupd_test ( a , b ) values ( 1 , 1 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 20: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 20: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 21: query: insert into insupd_test ( a , b ) values ( 2 , 2 ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 21: query: insert into insupd_test ( a , b ) values ( 2 , 2 ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 21: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 21: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 22: query: insert into insupd_test ( a , b ) values ( 3 , 3 ) returning a; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 22: query: insert into insupd_test ( a , b ) values ( 3 , 3 ) returning a; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 22: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -28,7 +28,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 22: RESULT: 3 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 24: query: update insupd_test set a = a + 1 returning a; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 24: query: update insupd_test set a = a + 1 returning a; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -40,19 +40,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 24: RESULT: 4 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 25: query: update insupd_test set ( a , b ) = ( 5 , 5 ) where a = 4; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 25: query: update insupd_test set ( a , b ) = ( 5 , 5 ) where a = 4; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 25: OK: UPDATE 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 26: query: update insupd_test set a = 4 where a = 3; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 26: query: update insupd_test set a = 4 where a = 3; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 26: OK: UPDATE 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 28: query: select a , b from insupd_test order by a; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 28: query: select a , b from insupd_test order by a; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -70,5 +70,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 28: RESULT: 5 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

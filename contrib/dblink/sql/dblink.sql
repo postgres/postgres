@@ -394,7 +394,7 @@ SELECT dblink_error_message('dtest1');
 SELECT dblink_disconnect('dtest1');
 
 -- test foreign data wrapper functionality
-CREATE ROLE dblink_regression_test;
+CREATE ROLE regress_dblink_user;
 DO $d$
     BEGIN
         EXECUTE $$CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
@@ -408,10 +408,10 @@ CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
 
-GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
-GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test;
+GRANT USAGE ON FOREIGN SERVER fdtest TO regress_dblink_user;
+GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO regress_dblink_user;
 
-SET SESSION AUTHORIZATION dblink_regression_test;
+SET SESSION AUTHORIZATION regress_dblink_user;
 -- should fail
 SELECT dblink_connect('myconn', 'fdtest');
 -- should succeed
@@ -419,9 +419,9 @@ SELECT dblink_connect_u('myconn', 'fdtest');
 SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
 
 \c - -
-REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
-REVOKE EXECUTE ON FUNCTION dblink_connect_u(text, text) FROM dblink_regression_test;
-DROP USER dblink_regression_test;
+REVOKE USAGE ON FOREIGN SERVER fdtest FROM regress_dblink_user;
+REVOKE EXECUTE ON FUNCTION dblink_connect_u(text, text) FROM regress_dblink_user;
+DROP USER regress_dblink_user;
 DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
 

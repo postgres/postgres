@@ -1,6 +1,6 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: query: set datestyle to iso; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -284,7 +284,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 189: name st_id3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 218: name st_id4; query: "SELECT * FROM t1 WHERE id = $1"
 [NO_PID]: sqlca: code: 0, state: 00000

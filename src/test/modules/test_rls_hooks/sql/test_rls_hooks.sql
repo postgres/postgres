@@ -7,9 +7,9 @@ CREATE TABLE rls_test_permissive (
 );
 
 -- initial test data
-INSERT INTO rls_test_permissive VALUES ('r1','s1',4);
-INSERT INTO rls_test_permissive VALUES ('r2','s2',5);
-INSERT INTO rls_test_permissive VALUES ('r3','s3',6);
+INSERT INTO rls_test_permissive VALUES ('regress_r1','regress_s1',4);
+INSERT INTO rls_test_permissive VALUES ('regress_r2','regress_s2',5);
+INSERT INTO rls_test_permissive VALUES ('regress_r3','regress_s3',6);
 
 CREATE TABLE rls_test_restrictive (
     username        name,
@@ -24,9 +24,9 @@ CREATE TABLE rls_test_restrictive (
 CREATE POLICY p1 ON rls_test_restrictive USING (true);
 
 -- initial test data
-INSERT INTO rls_test_restrictive VALUES ('r1','s1',1);
-INSERT INTO rls_test_restrictive VALUES ('r2','s2',2);
-INSERT INTO rls_test_restrictive VALUES ('r3','s3',3);
+INSERT INTO rls_test_restrictive VALUES ('regress_r1','regress_s1',1);
+INSERT INTO rls_test_restrictive VALUES ('regress_r2','regress_s2',2);
+INSERT INTO rls_test_restrictive VALUES ('regress_r3','regress_s3',3);
 
 CREATE TABLE rls_test_both (
     username        name,
@@ -35,26 +35,26 @@ CREATE TABLE rls_test_both (
 );
 
 -- initial test data
-INSERT INTO rls_test_both VALUES ('r1','s1',7);
-INSERT INTO rls_test_both VALUES ('r2','s2',8);
-INSERT INTO rls_test_both VALUES ('r3','s3',9);
+INSERT INTO rls_test_both VALUES ('regress_r1','regress_s1',7);
+INSERT INTO rls_test_both VALUES ('regress_r2','regress_s2',8);
+INSERT INTO rls_test_both VALUES ('regress_r3','regress_s3',9);
 
 ALTER TABLE rls_test_permissive ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rls_test_restrictive ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rls_test_both ENABLE ROW LEVEL SECURITY;
 
-CREATE ROLE r1;
-CREATE ROLE s1;
+CREATE ROLE regress_r1;
+CREATE ROLE regress_s1;
 
-GRANT SELECT,INSERT ON rls_test_permissive TO r1;
-GRANT SELECT,INSERT ON rls_test_restrictive TO r1;
-GRANT SELECT,INSERT ON rls_test_both TO r1;
+GRANT SELECT,INSERT ON rls_test_permissive TO regress_r1;
+GRANT SELECT,INSERT ON rls_test_restrictive TO regress_r1;
+GRANT SELECT,INSERT ON rls_test_both TO regress_r1;
 
-GRANT SELECT,INSERT ON rls_test_permissive TO s1;
-GRANT SELECT,INSERT ON rls_test_restrictive TO s1;
-GRANT SELECT,INSERT ON rls_test_both TO s1;
+GRANT SELECT,INSERT ON rls_test_permissive TO regress_s1;
+GRANT SELECT,INSERT ON rls_test_restrictive TO regress_s1;
+GRANT SELECT,INSERT ON rls_test_both TO regress_s1;
 
-SET ROLE r1;
+SET ROLE regress_r1;
 
 -- With only the hook's policies, permissive
 -- hook's policy is current_user = username
@@ -63,12 +63,12 @@ EXPLAIN (costs off) SELECT * FROM rls_test_permissive;
 SELECT * FROM rls_test_permissive;
 
 -- success
-INSERT INTO rls_test_permissive VALUES ('r1','s1',10);
+INSERT INTO rls_test_permissive VALUES ('regress_r1','regress_s1',10);
 
 -- failure
-INSERT INTO rls_test_permissive VALUES ('r4','s4',10);
+INSERT INTO rls_test_permissive VALUES ('regress_r4','regress_s4',10);
 
-SET ROLE s1;
+SET ROLE regress_s1;
 
 -- With only the hook's policies, restrictive
 -- hook's policy is current_user = supervisor
@@ -77,12 +77,12 @@ EXPLAIN (costs off) SELECT * FROM rls_test_restrictive;
 SELECT * FROM rls_test_restrictive;
 
 -- success
-INSERT INTO rls_test_restrictive VALUES ('r1','s1',10);
+INSERT INTO rls_test_restrictive VALUES ('regress_r1','regress_s1',10);
 
 -- failure
-INSERT INTO rls_test_restrictive VALUES ('r4','s4',10);
+INSERT INTO rls_test_restrictive VALUES ('regress_r4','regress_s4',10);
 
-SET ROLE s1;
+SET ROLE regress_s1;
 
 -- With only the hook's policies, both
 -- permissive hook's policy is current_user = username
@@ -93,13 +93,13 @@ EXPLAIN (costs off) SELECT * FROM rls_test_both;
 SELECT * FROM rls_test_both;
 
 -- failure
-INSERT INTO rls_test_both VALUES ('r1','s1',10);
+INSERT INTO rls_test_both VALUES ('regress_r1','regress_s1',10);
 
 -- failure
-INSERT INTO rls_test_both VALUES ('r4','s1',10);
+INSERT INTO rls_test_both VALUES ('regress_r4','regress_s1',10);
 
 -- failure
-INSERT INTO rls_test_both VALUES ('r4','s4',10);
+INSERT INTO rls_test_both VALUES ('regress_r4','regress_s4',10);
 
 RESET ROLE;
 
@@ -113,7 +113,7 @@ CREATE POLICY p1 ON rls_test_restrictive USING (data % 2 = 0);
 
 CREATE POLICY p1 ON rls_test_both USING (data % 2 = 0);
 
-SET ROLE r1;
+SET ROLE regress_r1;
 
 -- With both internal and hook policies, permissive
 EXPLAIN (costs off) SELECT * FROM rls_test_permissive;
@@ -121,15 +121,15 @@ EXPLAIN (costs off) SELECT * FROM rls_test_permissive;
 SELECT * FROM rls_test_permissive;
 
 -- success
-INSERT INTO rls_test_permissive VALUES ('r1','s1',7);
+INSERT INTO rls_test_permissive VALUES ('regress_r1','regress_s1',7);
 
 -- success
-INSERT INTO rls_test_permissive VALUES ('r3','s3',10);
+INSERT INTO rls_test_permissive VALUES ('regress_r3','regress_s3',10);
 
 -- failure
-INSERT INTO rls_test_permissive VALUES ('r4','s4',7);
+INSERT INTO rls_test_permissive VALUES ('regress_r4','regress_s4',7);
 
-SET ROLE s1;
+SET ROLE regress_s1;
 
 -- With both internal and hook policies, restrictive
 EXPLAIN (costs off) SELECT * FROM rls_test_restrictive;
@@ -137,16 +137,16 @@ EXPLAIN (costs off) SELECT * FROM rls_test_restrictive;
 SELECT * FROM rls_test_restrictive;
 
 -- success
-INSERT INTO rls_test_restrictive VALUES ('r1','s1',8);
+INSERT INTO rls_test_restrictive VALUES ('regress_r1','regress_s1',8);
 
 -- failure
-INSERT INTO rls_test_restrictive VALUES ('r3','s3',10);
+INSERT INTO rls_test_restrictive VALUES ('regress_r3','regress_s3',10);
 
 -- failure
-INSERT INTO rls_test_restrictive VALUES ('r1','s1',7);
+INSERT INTO rls_test_restrictive VALUES ('regress_r1','regress_s1',7);
 
 -- failure
-INSERT INTO rls_test_restrictive VALUES ('r4','s4',7);
+INSERT INTO rls_test_restrictive VALUES ('regress_r4','regress_s4',7);
 
 -- With both internal and hook policies, both permissive
 -- and restrictive hook policies
@@ -155,16 +155,16 @@ EXPLAIN (costs off) SELECT * FROM rls_test_both;
 SELECT * FROM rls_test_both;
 
 -- success
-INSERT INTO rls_test_both VALUES ('r1','s1',8);
+INSERT INTO rls_test_both VALUES ('regress_r1','regress_s1',8);
 
 -- failure
-INSERT INTO rls_test_both VALUES ('r3','s3',10);
+INSERT INTO rls_test_both VALUES ('regress_r3','regress_s3',10);
 
 -- failure
-INSERT INTO rls_test_both VALUES ('r1','s1',7);
+INSERT INTO rls_test_both VALUES ('regress_r1','regress_s1',7);
 
 -- failure
-INSERT INTO rls_test_both VALUES ('r4','s4',7);
+INSERT INTO rls_test_both VALUES ('regress_r4','regress_s4',7);
 
 RESET ROLE;
 
@@ -172,5 +172,5 @@ DROP TABLE rls_test_restrictive;
 DROP TABLE rls_test_permissive;
 DROP TABLE rls_test_both;
 
-DROP ROLE r1;
-DROP ROLE s1;
+DROP ROLE regress_r1;
+DROP ROLE regress_s1;

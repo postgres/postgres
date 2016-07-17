@@ -13,11 +13,11 @@ my $node = get_new_node('main');
 $node->init;
 $node->start;
 
-$node->safe_psql('postgres', 'CREATE ROLE foobar1');
+$node->safe_psql('postgres', 'CREATE ROLE regress_foobar1');
 $node->issues_sql_like(
-	[ 'dropuser', 'foobar1' ],
-	qr/statement: DROP ROLE foobar1/,
+	[ 'dropuser', 'regress_foobar1' ],
+	qr/statement: DROP ROLE regress_foobar1/,
 	'SQL DROP ROLE run');
 
-$node->command_fails([ 'dropuser', 'nonexistent' ],
+$node->command_fails([ 'dropuser', 'regress_nonexistent' ],
 	'fails with nonexistent user');

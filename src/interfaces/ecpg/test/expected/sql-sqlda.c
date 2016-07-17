@@ -194,7 +194,7 @@ main (void)
 	ECPGdebug(1, stderr);
 
 	strcpy(msg, "connect");
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , "regress1", 0); 
+	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , "regress1", 0); 
 #line 70 "sqlda.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -428,7 +428,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	 * on a named connection
 	 */
 
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , "con2", 0); 
+	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , "con2", 0); 
 #line 199 "sqlda.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

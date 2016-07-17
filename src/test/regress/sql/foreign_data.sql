@@ -5,20 +5,20 @@
 -- Clean up in case a prior regression run failed
 
 -- Suppress NOTICE messages when roles don't exist
-SET client_min_messages TO 'error';
+SET client_min_messages TO 'warning';
 
-DROP ROLE IF EXISTS foreign_data_user, regress_test_role, regress_test_role2, regress_test_role_super, regress_test_indirect, unpriviled_role;
+DROP ROLE IF EXISTS regress_foreign_data_user, regress_test_role, regress_test_role2, regress_test_role_super, regress_test_indirect, regress_unprivileged_role;
 
 RESET client_min_messages;
 
-CREATE ROLE foreign_data_user LOGIN SUPERUSER;
-SET SESSION AUTHORIZATION 'foreign_data_user';
+CREATE ROLE regress_foreign_data_user LOGIN SUPERUSER;
+SET SESSION AUTHORIZATION 'regress_foreign_data_user';
 
 CREATE ROLE regress_test_role;
 CREATE ROLE regress_test_role2;
 CREATE ROLE regress_test_role_super SUPERUSER;
 CREATE ROLE regress_test_indirect;
-CREATE ROLE unprivileged_role;
+CREATE ROLE regress_unprivileged_role;
 
 CREATE FOREIGN DATA WRAPPER dummy;
 COMMENT ON FOREIGN DATA WRAPPER dummy IS 'useless';
@@ -438,15 +438,15 @@ ALTER USER MAPPING FOR regress_test_role SERVER s6 OPTIONS (DROP username);
 ALTER FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 
 -- Privileges
-SET ROLE unprivileged_role;
+SET ROLE regress_unprivileged_role;
 CREATE FOREIGN DATA WRAPPER foobar;                             -- ERROR
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
-ALTER FOREIGN DATA WRAPPER foo OWNER TO unprivileged_role;      -- ERROR
+ALTER FOREIGN DATA WRAPPER foo OWNER TO regress_unprivileged_role; -- ERROR
 DROP FOREIGN DATA WRAPPER foo;                                  -- ERROR
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_role;   -- ERROR
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;                      -- ERROR
 ALTER SERVER s4 VERSION '0.5';                                  -- ERROR
-ALTER SERVER s4 OWNER TO unprivileged_role;                     -- ERROR
+ALTER SERVER s4 OWNER TO regress_unprivileged_role;             -- ERROR
 DROP SERVER s4;                                                 -- ERROR
 GRANT USAGE ON FOREIGN SERVER s4 TO regress_test_role;          -- ERROR
 CREATE USER MAPPING FOR public SERVER s4;                       -- ERROR
@@ -454,9 +454,9 @@ ALTER USER MAPPING FOR regress_test_role SERVER s6 OPTIONS (gotcha 'true'); -- E
 DROP USER MAPPING FOR regress_test_role SERVER s6;              -- ERROR
 RESET ROLE;
 
-GRANT USAGE ON FOREIGN DATA WRAPPER postgresql TO unprivileged_role;
-GRANT USAGE ON FOREIGN DATA WRAPPER foo TO unprivileged_role WITH GRANT OPTION;
-SET ROLE unprivileged_role;
+GRANT USAGE ON FOREIGN DATA WRAPPER postgresql TO regress_unprivileged_role;
+GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_unprivileged_role WITH GRANT OPTION;
+SET ROLE regress_unprivileged_role;
 CREATE FOREIGN DATA WRAPPER foobar;                             -- ERROR
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
 DROP FOREIGN DATA WRAPPER foo;                                  -- ERROR
@@ -473,9 +473,9 @@ ALTER USER MAPPING FOR regress_test_role SERVER s6 OPTIONS (gotcha 'true'); -- E
 DROP USER MAPPING FOR regress_test_role SERVER s6;              -- ERROR
 RESET ROLE;
 
-REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM unprivileged_role; -- ERROR
-REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM unprivileged_role CASCADE;
-SET ROLE unprivileged_role;
+REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM regress_unprivileged_role; -- ERROR
+REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM regress_unprivileged_role CASCADE;
+SET ROLE regress_unprivileged_role;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_role;   -- ERROR
 CREATE SERVER s10 FOREIGN DATA WRAPPER foo;                     -- ERROR
 ALTER SERVER s9 VERSION '1.1';
@@ -484,8 +484,8 @@ CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
-GRANT USAGE ON FOREIGN SERVER s9 TO unprivileged_role;
-SET ROLE unprivileged_role;
+GRANT USAGE ON FOREIGN SERVER s9 TO regress_unprivileged_role;
+SET ROLE regress_unprivileged_role;
 ALTER SERVER s9 VERSION '1.2';                                  -- ERROR
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;          -- WARNING
 CREATE USER MAPPING FOR current_user SERVER s9;
@@ -697,14 +697,14 @@ DROP FOREIGN DATA WRAPPER foo CASCADE;
 DROP SERVER s8 CASCADE;
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
-DROP ROLE unprivileged_role;                                -- ERROR
-REVOKE ALL ON FOREIGN DATA WRAPPER postgresql FROM unprivileged_role;
-DROP ROLE unprivileged_role;
+DROP ROLE regress_unprivileged_role;                        -- ERROR
+REVOKE ALL ON FOREIGN DATA WRAPPER postgresql FROM regress_unprivileged_role;
+DROP ROLE regress_unprivileged_role;
 DROP ROLE regress_test_role2;
 DROP FOREIGN DATA WRAPPER postgresql CASCADE;
 DROP FOREIGN DATA WRAPPER dummy CASCADE;
 \c
-DROP ROLE foreign_data_user;
+DROP ROLE regress_foreign_data_user;
 
 -- At this point we should have no wrappers, no servers, and no mappings.
 SELECT fdwname, fdwhandler, fdwvalidator, fdwoptions FROM pg_foreign_data_wrapper;

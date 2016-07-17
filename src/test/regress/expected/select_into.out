@@ -15,11 +15,11 @@ DROP TABLE tmp1;
 -- SELECT INTO and INSERT permission, if owner is not allowed to insert.
 --
 CREATE SCHEMA selinto_schema;
-CREATE USER selinto_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE selinto_user
-	  REVOKE INSERT ON TABLES FROM selinto_user;
+CREATE USER regress_selinto_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE regress_selinto_user
+	  REVOKE INSERT ON TABLES FROM regress_selinto_user;
 GRANT ALL ON SCHEMA selinto_schema TO public;
-SET SESSION AUTHORIZATION selinto_user;
+SET SESSION AUTHORIZATION regress_selinto_user;
 SELECT * INTO TABLE selinto_schema.tmp1
 	  FROM pg_class WHERE relname like '%a%';	-- Error
 ERROR:  permission denied for relation tmp1
@@ -32,9 +32,9 @@ CREATE TABLE selinto_schema.tmp3 (a,b,c)
 	   WHERE relname like '%c%';	-- Error
 ERROR:  permission denied for relation tmp3
 RESET SESSION AUTHORIZATION;
-ALTER DEFAULT PRIVILEGES FOR ROLE selinto_user
-	  GRANT INSERT ON TABLES TO selinto_user;
-SET SESSION AUTHORIZATION selinto_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE regress_selinto_user
+	  GRANT INSERT ON TABLES TO regress_selinto_user;
+SET SESSION AUTHORIZATION regress_selinto_user;
 SELECT * INTO TABLE selinto_schema.tmp1
 	  FROM pg_class WHERE relname like '%a%';	-- OK
 SELECT oid AS clsoid, relname, relnatts + 10 AS x
@@ -49,7 +49,7 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table selinto_schema.tmp1
 drop cascades to table selinto_schema.tmp2
 drop cascades to table selinto_schema.tmp3
-DROP USER selinto_user;
+DROP USER regress_selinto_user;
 -- Tests for WITH NO DATA and column name consistency
 CREATE TABLE ctas_base (i int, j int);
 INSERT INTO ctas_base VALUES (1, 2);

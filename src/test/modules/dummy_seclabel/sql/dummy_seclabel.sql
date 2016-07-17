@@ -6,15 +6,13 @@ CREATE EXTENSION dummy_seclabel;
 -- initial setups
 SET client_min_messages TO 'warning';
 
-DROP ROLE IF EXISTS dummy_seclabel_user1;
-DROP ROLE IF EXISTS dummy_seclabel_user2;
+DROP ROLE IF EXISTS regress_dummy_seclabel_user1;
+DROP ROLE IF EXISTS regress_dummy_seclabel_user2;
 
-DROP TABLE IF EXISTS dummy_seclabel_tbl1;
-DROP TABLE IF EXISTS dummy_seclabel_tbl2;
-DROP TABLE IF EXISTS dummy_seclabel_tbl3;
+RESET client_min_messages;
 
-CREATE USER dummy_seclabel_user1 WITH CREATEROLE;
-CREATE USER dummy_seclabel_user2;
+CREATE USER regress_dummy_seclabel_user1 WITH CREATEROLE;
+CREATE USER regress_dummy_seclabel_user2;
 
 CREATE TABLE dummy_seclabel_tbl1 (a int, b text);
 CREATE TABLE dummy_seclabel_tbl2 (x int, y text);
@@ -22,15 +20,13 @@ CREATE VIEW dummy_seclabel_view1 AS SELECT * FROM dummy_seclabel_tbl2;
 CREATE FUNCTION dummy_seclabel_four() RETURNS integer AS $$SELECT 4$$ language sql;
 CREATE DOMAIN dummy_seclabel_domain AS text;
 
-ALTER TABLE dummy_seclabel_tbl1 OWNER TO dummy_seclabel_user1;
-ALTER TABLE dummy_seclabel_tbl2 OWNER TO dummy_seclabel_user2;
-
-RESET client_min_messages;
+ALTER TABLE dummy_seclabel_tbl1 OWNER TO regress_dummy_seclabel_user1;
+ALTER TABLE dummy_seclabel_tbl2 OWNER TO regress_dummy_seclabel_user2;
 
 --
 -- Test of SECURITY LABEL statement with a plugin
 --
-SET SESSION AUTHORIZATION dummy_seclabel_user1;
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user1;
 
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'classified';			-- OK
 SECURITY LABEL ON COLUMN dummy_seclabel_tbl1.a IS 'unclassified';		-- OK
@@ -42,24 +38,24 @@ SECURITY LABEL ON TABLE dummy_seclabel_tbl2 IS 'unclassified';	-- fail (not owne
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'secret';		-- fail (not superuser)
 SECURITY LABEL ON TABLE dummy_seclabel_tbl3 IS 'unclassified';	-- fail (not found)
 
-SET SESSION AUTHORIZATION dummy_seclabel_user2;
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'unclassified';		-- fail
 SECURITY LABEL ON TABLE dummy_seclabel_tbl2 IS 'classified';			-- OK
 
 --
 -- Test for shared database object
 --
-SET SESSION AUTHORIZATION dummy_seclabel_user1;
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user1;
 
-SECURITY LABEL ON ROLE dummy_seclabel_user1 IS 'classified';			-- OK
-SECURITY LABEL ON ROLE dummy_seclabel_user1 IS '...invalid label...';	-- fail
-SECURITY LABEL FOR 'dummy' ON ROLE dummy_seclabel_user2 IS 'unclassified';	-- OK
-SECURITY LABEL FOR 'unknown_seclabel' ON ROLE dummy_seclabel_user1 IS 'unclassified';	-- fail
-SECURITY LABEL ON ROLE dummy_seclabel_user1 IS 'secret';	-- fail (not superuser)
-SECURITY LABEL ON ROLE dummy_seclabel_user3 IS 'unclassified';	-- fail (not found)
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS 'classified';			-- OK
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS '...invalid label...';	-- fail
+SECURITY LABEL FOR 'dummy' ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- OK
+SECURITY LABEL FOR 'unknown_seclabel' ON ROLE regress_dummy_seclabel_user1 IS 'unclassified';	-- fail
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user1 IS 'secret';	-- fail (not superuser)
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user3 IS 'unclassified';	-- fail (not found)
 
-SET SESSION AUTHORIZATION dummy_seclabel_user2;
-SECURITY LABEL ON ROLE dummy_seclabel_user2 IS 'unclassified';	-- fail (not privileged)
+SET SESSION AUTHORIZATION regress_dummy_seclabel_user2;
+SECURITY LABEL ON ROLE regress_dummy_seclabel_user2 IS 'unclassified';	-- fail (not privileged)
 
 RESET SESSION AUTHORIZATION;
 
@@ -99,4 +95,11 @@ EXECUTE PROCEDURE event_trigger_test();
 -- should trigger ddl_command_{start,end}
 SECURITY LABEL ON TABLE dummy_seclabel_tbl1 IS 'classified';
 
+-- clean up
 DROP EVENT TRIGGER always_start, always_end, always_drop, always_rewrite;
+
+DROP VIEW dummy_seclabel_view1;
+DROP TABLE dummy_seclabel_tbl1, dummy_seclabel_tbl2;
+
+DROP ROLE regress_dummy_seclabel_user1;
+DROP ROLE regress_dummy_seclabel_user2;

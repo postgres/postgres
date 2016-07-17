@@ -207,10 +207,10 @@ my %tests = (
 			binary_upgrade     => 1,
 			pg_dumpall_globals => 1,
 			section_post_data  => 1, }, },
-	'CREATE ROLE dump_test' => {
+	'CREATE ROLE regress_dump_test_role' => {
 		create_order => 1,
-		create_sql   => 'CREATE ROLE dump_test;',
-		regexp       => qr/^CREATE ROLE dump_test;$/m,
+		create_sql   => 'CREATE ROLE regress_dump_test_role;',
+		regexp       => qr/^CREATE ROLE regress_dump_test_role;$/m,
 		like         => { pg_dumpall_globals => 1, },
 		unlike       => {
 			binary_upgrade    => 1,
@@ -278,7 +278,7 @@ my %tests = (
 	'GRANT SELECT ON TABLE regress_pg_dump_table' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\E\n
-			\QGRANT SELECT ON TABLE regress_pg_dump_table TO dump_test;\E\n
+			\QGRANT SELECT ON TABLE regress_pg_dump_table TO regress_dump_test_role;\E\n
 			\QSELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\E
 			$/xms,
 		like   => { binary_upgrade => 1, },
@@ -311,12 +311,12 @@ my %tests = (
 			no_privs           => 1,
 			pg_dumpall_globals => 1,
 			section_post_data  => 1, }, },
-	'GRANT SELECT(col2) ON regress_pg_dump_table TO dump_test' => {
+	'GRANT SELECT(col2) ON regress_pg_dump_table TO regress_dump_test_role' => {
 		create_order => 4,
 		create_sql   => 'GRANT SELECT(col2) ON regress_pg_dump_table
-						   TO dump_test;',
+						   TO regress_dump_test_role;',
 		regexp => qr/^
-			\QGRANT SELECT(col2) ON TABLE regress_pg_dump_table TO dump_test;\E
+			\QGRANT SELECT(col2) ON TABLE regress_pg_dump_table TO regress_dump_test_role;\E
 			$/xm,
 		like => {
 			binary_upgrade   => 1,

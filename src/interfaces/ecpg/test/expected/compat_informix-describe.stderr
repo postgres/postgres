@@ -1,44 +1,44 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 30: query: set datestyle to iso; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 30: query: set datestyle to iso; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 30: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 33: query: create table descr_t1 ( id serial primary key , t text ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 33: query: create table descr_t1 ( id serial primary key , t text ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 33: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 33: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 36: query: insert into descr_t1 ( id , t ) values ( default , 'a' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 36: query: insert into descr_t1 ( id , t ) values ( default , 'a' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 36: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 37: query: insert into descr_t1 ( id , t ) values ( default , 'b' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 37: query: insert into descr_t1 ( id , t ) values ( default , 'b' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 37: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 38: query: insert into descr_t1 ( id , t ) values ( default , 'c' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 38: query: insert into descr_t1 ( id , t ) values ( default , 'c' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 38: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 38: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 39: query: insert into descr_t1 ( id , t ) values ( default , 'd' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 39: query: insert into descr_t1 ( id , t ) values ( default , 'd' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 39: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 42: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 42: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 55: name st_id1; query: "SELECT id, t FROM descr_t1"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -100,13 +100,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 185: name st_id2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 190: query: drop table descr_t1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 190: query: drop table descr_t1; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 190: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 190: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 193: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 193: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

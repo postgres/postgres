@@ -8,10 +8,10 @@ CREATE TABLE regress_pg_dump_table (
 	col2 int
 );
 
-GRANT SELECT ON regress_pg_dump_table TO dump_test;
+GRANT SELECT ON regress_pg_dump_table TO regress_dump_test_role;
 GRANT SELECT(col1) ON regress_pg_dump_table TO public;
 
-GRANT SELECT(col2) ON regress_pg_dump_table TO dump_test;
-REVOKE SELECT(col2) ON regress_pg_dump_table FROM dump_test;
+GRANT SELECT(col2) ON regress_pg_dump_table TO regress_dump_test_role;
+REVOKE SELECT(col2) ON regress_pg_dump_table FROM regress_dump_test_role;
 
 CREATE ACCESS METHOD regress_test_am TYPE INDEX HANDLER bthandler;

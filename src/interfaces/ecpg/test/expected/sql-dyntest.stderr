@@ -1,26 +1,26 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 49: query: set datestyle to german; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 49: query: set datestyle to german; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 49: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 49: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 51: query: create table dyntest ( name char ( 14 ) , d float8 , i int , bignumber int8 , b boolean , comment text , day date ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 51: query: create table dyntest ( name char ( 14 ) , d float8 , i int , bignumber int8 , b boolean , comment text , day date ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 51: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 51: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 54: query: insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 54: query: insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 54: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 54: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: query: insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 55: query: insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 55: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -28,13 +28,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 57: name myquery; query: "select * from dyntest"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 60: query: declare MYCURS cursor for select * from dyntest; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 60: query: declare MYCURS cursor for select * from dyntest; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 60: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 60: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -204,7 +204,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 176: RESULT: 14.07.1987 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -374,7 +374,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 176: RESULT: 05.11.1999 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -382,7 +382,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 64: no data found on line 64
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 194: query: close MYCURS; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 194: query: close MYCURS; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 194: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000

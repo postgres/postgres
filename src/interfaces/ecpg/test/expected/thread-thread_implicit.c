@@ -67,7 +67,7 @@ int main()
  /* ECPGdebug(1, stderr); */
 
   /* setup test_thread table */
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); }
 #line 47 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test_thread", ECPGt_EOIT, ECPGt_EORT);}
@@ -114,7 +114,7 @@ int main()
   free(threads);
 
   /* and check results */
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); }
 #line 86 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select count ( * ) from test_thread", ECPGt_EOIT, 
@@ -161,7 +161,7 @@ void *test_thread(void *arg)
   /* exec sql whenever sqlerror  sqlprint ; */
 #line 112 "thread_implicit.pgc"
 
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , l_connection, 0); 
+  { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , l_connection, 0); 
 #line 113 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

@@ -59,7 +59,7 @@ int main(void)
 
 	ECPGdebug(1, stderr);
 
-	strcpy(dbname, "regress1");
+	strcpy(dbname, "ecpg1_regression");
 	EXEC SQL connect to :dbname;
 	sql_check("main", "connect", 0);
 

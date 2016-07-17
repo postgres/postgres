@@ -1,26 +1,26 @@
 [NO_PID]: ECPGdebug: set to 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 56: query: create table customers ( c varchar ( 50 ) , p int ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 56: query: create table customers ( c varchar ( 50 ) , p int ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 56: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: query: insert into customers values ( 'John Doe' , '12345' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 57: query: insert into customers values ( 'John Doe' , '12345' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 57: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 58: query: insert into customers values ( 'Jane Doe' , '67890' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 58: query: insert into customers values ( 'Jane Doe' , '67890' ); with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 58: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 58: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 60: query: select * from customers limit 2; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 60: query: select * from customers limit 2; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 60: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -34,7 +34,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 60: RESULT: 67890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 68: query: select * from customers limit 2; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 68: query: select * from customers limit 2; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 68: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -48,7 +48,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 68: RESULT: 67890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 76: query: select * from customers limit 2; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 76: query: select * from customers limit 2; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 76: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -62,7 +62,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 76: RESULT: 67890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 84: query: select * from customers limit 1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 84: query: select * from customers limit 1; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 84: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -72,7 +72,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 84: RESULT: 12345 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 89: query: select c from customers limit 2; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 89: query: select c from customers limit 2; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 89: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -82,5 +82,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 89: RESULT: Jane Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: connection regress1 closed
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -20,7 +20,7 @@ exec sql end declare section;
 	ECPGdebug(1, stderr);
 
 	strcpy(id, "first");
-	exec sql connect to connectdb as :id;
+	exec sql connect to ecpg2_regression as :id;
 	exec sql connect to REGRESSDB1 as second;
 
 	/* this selects from "second" which was opened last */
@@ -34,7 +34,7 @@ exec sql end declare section;
 	/* will close "second" */
 	exec sql disconnect DEFAULT;
 
-	exec sql connect to "connectdb" as second;
+	exec sql connect to "ecpg2_regression" as second;
 	exec sql disconnect ALL;
 
 	exec sql disconnect CURRENT;

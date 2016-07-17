@@ -14,21 +14,21 @@ $node->init;
 $node->start;
 
 $node->issues_sql_like(
-	[ 'createuser', 'user1' ],
-qr/statement: CREATE ROLE user1 NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN;/,
+	[ 'createuser', 'regress_user1' ],
+qr/statement: CREATE ROLE regress_user1 NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN;/,
 	'SQL CREATE USER run');
 $node->issues_sql_like(
-	[ 'createuser', '-L', 'role1' ],
-qr/statement: CREATE ROLE role1 NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT NOLOGIN;/,
+	[ 'createuser', '-L', 'regress_role1' ],
+qr/statement: CREATE ROLE regress_role1 NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT NOLOGIN;/,
 	'create a non-login role');
 $node->issues_sql_like(
-	[ 'createuser', '-r', 'user2' ],
-qr/statement: CREATE ROLE user2 NOSUPERUSER NOCREATEDB CREATEROLE INHERIT LOGIN;/,
+	[ 'createuser', '-r', 'regress_user2' ],
+qr/statement: CREATE ROLE regress_user2 NOSUPERUSER NOCREATEDB CREATEROLE INHERIT LOGIN;/,
 	'create a CREATEROLE user');
 $node->issues_sql_like(
-	[ 'createuser', '-s', 'user3' ],
-qr/statement: CREATE ROLE user3 SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;/,
+	[ 'createuser', '-s', 'regress_user3' ],
+qr/statement: CREATE ROLE regress_user3 SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;/,
 	'create a superuser');
 
-$node->command_fails([ 'createuser', 'user1' ],
+$node->command_fails([ 'createuser', 'regress_user1' ],
 	'fails if role already exists');

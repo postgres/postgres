@@ -13,11 +13,11 @@ CREATE TABLE lotest_stash_values (loid oid, fd integer);
 INSERT INTO lotest_stash_values (loid) SELECT lo_creat(42);
 
 -- Test ALTER LARGE OBJECT
-CREATE ROLE regresslo;
+CREATE ROLE regress_lo_user;
 DO $$
   BEGIN
     EXECUTE 'ALTER LARGE OBJECT ' || (select loid from lotest_stash_values)
-		|| ' OWNER TO regresslo';
+		|| ' OWNER TO regress_lo_user';
   END
 $$;
 SELECT
@@ -255,4 +255,4 @@ SELECT lo_get(:newloid);
 
 DROP TABLE lotest_stash_values;
 
-DROP ROLE regresslo;
+DROP ROLE regress_lo_user;

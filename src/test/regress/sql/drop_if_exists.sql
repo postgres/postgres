@@ -86,27 +86,27 @@ DROP DOMAIN test_domain_exists;
 --- role/user/group
 ---
 
-CREATE USER tu1;
-CREATE ROLE tr1;
-CREATE GROUP tg1;
+CREATE USER regress_test_u1;
+CREATE ROLE regress_test_r1;
+CREATE GROUP regress_test_g1;
 
-DROP USER tu2;
+DROP USER regress_test_u2;
 
-DROP USER IF EXISTS tu1, tu2;
+DROP USER IF EXISTS regress_test_u1, regress_test_u2;
 
-DROP USER tu1;
+DROP USER regress_test_u1;
 
-DROP ROLE tr2;
+DROP ROLE regress_test_r2;
 
-DROP ROLE IF EXISTS tr1, tr2;
+DROP ROLE IF EXISTS regress_test_r1, regress_test_r2;
 
-DROP ROLE tr1;
+DROP ROLE regress_test_r1;
 
-DROP GROUP tg2;
+DROP GROUP regress_test_g2;
 
-DROP GROUP IF EXISTS tg1, tg2;
+DROP GROUP IF EXISTS regress_test_g1, regress_test_g2;
 
-DROP GROUP tg1;
+DROP GROUP regress_test_g1;
 
 -- collation
 DROP COLLATION IF EXISTS test_collation_exists;

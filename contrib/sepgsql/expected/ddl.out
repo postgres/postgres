@@ -3,8 +3,8 @@
 --
 -- clean-up in case a prior regression run failed
 SET client_min_messages TO 'warning';
-DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
-DROP USER IF EXISTS regtest_sepgsql_test_user;
+DROP DATABASE IF EXISTS sepgsql_test_regression;
+DROP USER IF EXISTS regress_sepgsql_test_user;
 RESET client_min_messages;
 -- confirm required permissions using audit messages
 SELECT sepgsql_getcon();	-- confirm client privilege
@@ -18,14 +18,14 @@ SET client_min_messages = LOG;
 --
 -- CREATE Permission checks
 --
-CREATE DATABASE regtest_sepgsql_test_database;
+CREATE DATABASE sepgsql_test_regression;
 LOG:  SELinux: allowed { getattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_db_t:s0 tclass=db_database name="template1"
-LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database"
-CREATE USER regtest_sepgsql_test_user;
+LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="sepgsql_test_regression"
+CREATE USER regress_sepgsql_test_user;
 CREATE SCHEMA regtest_schema;
 LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
-GRANT ALL ON SCHEMA regtest_schema TO regtest_sepgsql_test_user;
+GRANT ALL ON SCHEMA regtest_schema TO regress_sepgsql_test_user;
 SET search_path = regtest_schema, public;
 CREATE TABLE regtest_table (x serial primary key, y text);
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
@@ -101,7 +101,7 @@ CREATE AGGREGATE regtest_agg (
 LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema.regtest_agg(integer)"
 -- CREATE objects owned by others
-SET SESSION AUTHORIZATION regtest_sepgsql_test_user;
+SET SESSION AUTHORIZATION regress_sepgsql_test_user;
 SET search_path = regtest_schema, public;
 CREATE TABLE regtest_table_3 (x int, y serial);
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
@@ -248,7 +248,7 @@ LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regte
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table.ctid"
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table.x"
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table.z"
-DROP OWNED BY regtest_sepgsql_test_user;
+DROP OWNED BY regress_sepgsql_test_user;
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
@@ -267,9 +267,9 @@ LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regte
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_3.ctid"
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_3.x"
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_3.y"
-DROP DATABASE regtest_sepgsql_test_database;
-LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="regtest_sepgsql_test_database"
-DROP USER regtest_sepgsql_test_user;
+DROP DATABASE sepgsql_test_regression;
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_db_t:s0 tclass=db_database name="sepgsql_test_regression"
+DROP USER regress_sepgsql_test_user;
 DROP SCHEMA IF EXISTS regtest_schema CASCADE;
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="public"
