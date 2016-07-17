@@ -2002,6 +2002,9 @@ setup_dictionary(FILE *cmdfd)
  * time.  This is used by pg_dump to allow users to change privileges
  * on catalog objects and to have those privilege changes preserved
  * across dump/reload and pg_upgrade.
+ *
+ * Note that pg_init_privs is only for per-database objects and therefore
+ * we don't include databases or tablespaces.
  */
 static void
 setup_privileges(FILE *cmdfd)
@@ -2107,30 +2110,6 @@ setup_privileges(FILE *cmdfd)
 		"        pg_namespace"
 		"    WHERE"
 		"        nspacl IS NOT NULL;",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_database'),"
-		"        0,"
-		"        datacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_database"
-		"    WHERE"
-		"        datacl IS NOT NULL;",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_tablespace'),"
-		"        0,"
-		"        spcacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_tablespace"
-		"    WHERE"
-		"        spcacl IS NOT NULL;",
 		"INSERT INTO pg_init_privs "
 		"  (objoid, classoid, objsubid, initprivs, privtype)"
 		"    SELECT"
