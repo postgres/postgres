@@ -40,6 +40,13 @@
 </xsl:template>
 
 
+<!-- Make superscripts visible in man pages (default is no decoration) -->
+<xsl:template match="superscript">
+  <xsl:text>^</xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
+
 <xsl:template match="refentry" mode="xref-to">
   <xsl:param name="referrer"/>
   <xsl:param name="xrefstyle"/>
