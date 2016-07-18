@@ -7308,7 +7308,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Add ability to retrieve the current PL/PgSQL call stack
-        using <link linkend="plpgsql-get-diagnostics-context"><command>GET
+        using <link linkend="plpgsql-call-stack"><command>GET
         DIAGNOSTICS</></link>
         (Pavel Stehule, Stephen Frost)
        </para>
