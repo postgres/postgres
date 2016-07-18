@@ -1179,7 +1179,8 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 		{
 			elog(WARNING, "page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
 				 relname, blkno);
-			visibilitymap_clear(onerel, blkno, vmbuffer);
+			visibilitymap_clear(onerel, blkno, vmbuffer,
+								VISIBILITYMAP_VALID_BITS);
 		}
 
 		/*
@@ -1201,7 +1202,8 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 				 relname, blkno);
 			PageClearAllVisible(page);
 			MarkBufferDirty(buf);
-			visibilitymap_clear(onerel, blkno, vmbuffer);
+			visibilitymap_clear(onerel, blkno, vmbuffer,
+								VISIBILITYMAP_VALID_BITS);
 		}
 
 		/*

@@ -11,7 +11,7 @@
  *	  src/backend/access/heap/visibilitymap.c
  *
  * INTERFACE ROUTINES
- *		visibilitymap_clear  - clear a bit in the visibility map
+ *		visibilitymap_clear  - clear bits for one page in the visibility map
  *		visibilitymap_pin	 - pin a map page for setting a bit
  *		visibilitymap_pin_ok - check whether correct map page is already pinned
  *		visibilitymap_set	 - set a bit in a previously pinned page
@@ -159,20 +159,23 @@ static void vm_extend(Relation rel, BlockNumber nvmblocks);
 
 
 /*
- *	visibilitymap_clear - clear all bits for one page in visibility map
+ *	visibilitymap_clear - clear specified bits for one page in visibility map
  *
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
- * any I/O.
+ * any I/O.  Returns true if any bits have been cleared and false otherwise.
  */
-void
-visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf)
+bool
+visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf, uint8 flags)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	int			mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
 	int			mapOffset = HEAPBLK_TO_OFFSET(heapBlk);
-	uint8		mask = VISIBILITYMAP_VALID_BITS << mapOffset;
+	uint8		mask = flags << mapOffset;
 	char	   *map;
+	bool		cleared = false;
+
+	Assert(flags & VISIBILITYMAP_VALID_BITS);
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_clear %s %d", RelationGetRelationName(rel), heapBlk);
@@ -189,9 +192,12 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf)
 		map[mapByte] &= ~mask;
 
 		MarkBufferDirty(buf);
+		cleared = true;
 	}
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
+	return cleared;
 }
 
 /*
