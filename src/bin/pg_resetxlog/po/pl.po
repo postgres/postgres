@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-01-05 23:13+0000\n"
-"PO-Revision-Date: 2016-01-06 09:12+0200\n"
+"POT-Creation-Date: 2016-07-03 03:14+0000\n"
+"PO-Revision-Date: 2016-07-03 17:54+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -247,8 +247,9 @@ msgstr "włączone"
 
 #: pg_resetxlog.c:649
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "NextXID najnowszego punktu kontrolnego:          %u/%u\n"
+#| msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "NextXID najnowszego punktu kontrolnego:          %u:%u\n"
 
 #: pg_resetxlog.c:652
 #, c-format
@@ -292,13 +293,11 @@ msgstr "DB oldestMulti'u najnowszego punktu kontrolnego:  %u\n"
 
 #: pg_resetxlog.c:668
 #, c-format
-#| msgid "Latest checkpoint's oldestCommitTs:   %u\n"
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "oldestCommitTsXid najnowszego punktu kontrolnego: %u\n"
 
 #: pg_resetxlog.c:670
 #, c-format
-#| msgid "Latest checkpoint's newestCommitTs:   %u\n"
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "newestCommitTsXid najnowszego punktu kontrolnego: %u\n"
 
@@ -448,21 +447,18 @@ msgstr "Epoka NextXID:                                    %u\n"
 
 #: pg_resetxlog.c:756
 #, c-format
-#| msgid "oldestCommitTs:                       %u\n"
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                                %u\n"
 
 #: pg_resetxlog.c:761
 #, c-format
-#| msgid "newestCommitTs:                       %u\n"
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                                %u\n"
 
 #: pg_resetxlog.c:827
 #, c-format
 msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
-msgstr "%s: błąd wewnętrzny -- sizeof(ControlFileData) jest zbyt duża ... popraw "
-"PG_CONTROL_SIZE\n"
+msgstr "%s: błąd wewnętrzny -- sizeof(ControlFileData) jest zbyt duża ... popraw PG_CONTROL_SIZE\n"
 
 #: pg_resetxlog.c:842
 #, c-format
@@ -608,23 +604,23 @@ msgstr ""
 "\n"
 "Błędy proszę przesyłać na adres <pgsql-bugs@postgresql.org>.\n"
 
-#~ msgid "First log file ID after reset:        %u\n"
-#~ msgstr "Pierwszy plik dziennika po resecie:              %u\n"
-
-#~ msgid "%s: could not read from directory \"%s\": %s\n"
-#~ msgstr "%s: nie można odczytać katalogu \"%s\": %s\n"
-
-#~ msgid "%s: invalid argument for option -l\n"
-#~ msgstr "%s: niepoprawny argument dla opcji -l\n"
-
-#~ msgid "%s: invalid argument for option -O\n"
-#~ msgstr "%s: niepoprawny argument dla opcji -O\n"
-
-#~ msgid "%s: invalid argument for option -m\n"
-#~ msgstr "%s: niepoprawny argument dla opcji -m\n"
+#~ msgid "%s: invalid argument for option -x\n"
+#~ msgstr "%s: niepoprawny argument dla opcji -x\n"
 
 #~ msgid "%s: invalid argument for option -o\n"
 #~ msgstr "%s: niepoprawny argument dla opcji -o\n"
 
-#~ msgid "%s: invalid argument for option -x\n"
-#~ msgstr "%s: niepoprawny argument dla opcji -x\n"
+#~ msgid "%s: invalid argument for option -m\n"
+#~ msgstr "%s: niepoprawny argument dla opcji -m\n"
+
+#~ msgid "%s: invalid argument for option -O\n"
+#~ msgstr "%s: niepoprawny argument dla opcji -O\n"
+
+#~ msgid "%s: invalid argument for option -l\n"
+#~ msgstr "%s: niepoprawny argument dla opcji -l\n"
+
+#~ msgid "%s: could not read from directory \"%s\": %s\n"
+#~ msgstr "%s: nie można odczytać katalogu \"%s\": %s\n"
+
+#~ msgid "First log file ID after reset:        %u\n"
+#~ msgstr "Pierwszy plik dziennika po resecie:              %u\n"

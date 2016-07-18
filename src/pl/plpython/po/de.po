@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-05-04 01:37+0000\n"
-"PO-Revision-Date: 2016-05-03 23:20-0400\n"
+"POT-Creation-Date: 2016-07-04 20:37+0000\n"
+"PO-Revision-Date: 2016-07-04 19:11-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -66,7 +66,7 @@ msgstr "Anfrageergebnis hat zu viele Zeilen, um in eine Python-Liste zu passen"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "Schließen eines Cursors in einer abgebrochenen Subtransaktion"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:513
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -241,28 +241,26 @@ msgstr "konnte die SPI-Basisausnahmen nicht erzeugen"
 msgid "could not generate SPI exceptions"
 msgstr "konnte SPI-Ausnahmen nicht erzeugen"
 
-#: plpy_plpymodule.c:421
+#: plpy_plpymodule.c:422
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "konnte Argumente in plpy.elog nicht entpacken"
 
-#: plpy_plpymodule.c:430
+#: plpy_plpymodule.c:431
 msgid "could not parse error message in plpy.elog"
 msgstr "konnte Fehlermeldung in plpy.elog nicht parsen"
 
-#: plpy_plpymodule.c:446
-#, fuzzy, c-format
-#| msgid "type \"%s\" is already defined"
-msgid "the message is already specified"
-msgstr "Typ „%s“ ist bereits definiert"
+#: plpy_plpymodule.c:448
+#, c-format
+msgid "Argument 'message' given by name and position"
+msgstr "Argument „message“ wurde durch Namen und Position angegeben"
 
-#: plpy_plpymodule.c:469
-#, fuzzy, c-format
-#| msgid "%s: invalid argument for option %s\n"
+#: plpy_plpymodule.c:475
+#, c-format
 msgid "'%s' is an invalid keyword argument for this function"
-msgstr "%s: ungültiges Argument für Option %s\n"
+msgstr "„%s“ ist ein ungültiges Schlüsselwortargument für diese Funktion"
 
-#: plpy_plpymodule.c:477 plpy_plpymodule.c:480
+#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "ungültiger SQLSTATE-Code"

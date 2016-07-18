@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:13+0000\n"
-"PO-Revision-Date: 2016-05-03 12:18-0300\n"
+"PO-Revision-Date: 2016-07-12 09:16-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -604,7 +604,7 @@ msgstr "El título ha sido indefinido.\n"
 #: command.c:2869
 #, c-format
 msgid "Tuples only is on.\n"
-msgstr "Mostrar sólo filas está desactivado.\n"
+msgstr "Mostrar sólo filas está activado.\n"
 
 #: command.c:2871
 #, c-format

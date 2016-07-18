@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-06-17 17:13+0000\n"
-"PO-Revision-Date: 2016-06-17 16:32-0400\n"
+"POT-Creation-Date: 2016-07-17 14:13+0000\n"
+"PO-Revision-Date: 2016-07-17 16:32-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -818,8 +818,8 @@ msgstr "versuche, den COPY-Modus zu verlassen"
 
 #: crosstabview.c:125
 #, c-format
-msgid "\\crosstabview: query must return results to be shown in crosstab\n"
-msgstr "\\crosstabview: Anfrage muss Ergebnisse zurückgeben, um sie als Kreuztabelle anzeigen zu können\n"
+msgid "\\crosstabview: statement did not return a result set\n"
+msgstr "\\crosstabview: Anweisung hat keine Ergebnismenge zurückgegeben\n"
 
 #: crosstabview.c:131
 #, c-format
@@ -848,52 +848,52 @@ msgstr "\\crosstabview: Anfrageergebnis enthält mehrfache Datenwerte für Zeile
 
 #: crosstabview.c:646
 #, c-format
-msgid "\\crosstabview: invalid column number: \"%s\"\n"
-msgstr "\\crosstabview: ungültige Spaltennummer: „%s“\n"
+msgid "\\crosstabview: column number %d is out of range 1..%d\n"
+msgstr "\\crosstabview: Spaltennummer %d ist außerhalb des zulässigen Bereichs 1..%d\n"
 
-#: crosstabview.c:670
+#: crosstabview.c:671
 #, c-format
 msgid "\\crosstabview: ambiguous column name: \"%s\"\n"
 msgstr "\\crosstabview: zweideutiger Spaltenname: „%s“\n"
 
-#: crosstabview.c:678
+#: crosstabview.c:679
 #, c-format
 msgid "\\crosstabview: column name not found: \"%s\"\n"
 msgstr "\\crosstabview: Spaltenname nicht gefunden: „%s“\n"
 
-#: describe.c:71 describe.c:328 describe.c:560 describe.c:690 describe.c:833
-#: describe.c:950 describe.c:1020 describe.c:2995 describe.c:3200
-#: describe.c:3290 describe.c:3535 describe.c:3672 describe.c:3901
-#: describe.c:3973 describe.c:3984 describe.c:4043 describe.c:4451
-#: describe.c:4531
+#: describe.c:71 describe.c:331 describe.c:588 describe.c:718 describe.c:861
+#: describe.c:978 describe.c:1048 describe.c:3023 describe.c:3228
+#: describe.c:3318 describe.c:3563 describe.c:3700 describe.c:3929
+#: describe.c:4001 describe.c:4012 describe.c:4071 describe.c:4479
+#: describe.c:4559
 msgid "Schema"
 msgstr "Schema"
 
-#: describe.c:72 describe.c:157 describe.c:220 describe.c:228 describe.c:329
-#: describe.c:561 describe.c:691 describe.c:752 describe.c:834 describe.c:1021
-#: describe.c:2996 describe.c:3122 describe.c:3201 describe.c:3291
-#: describe.c:3370 describe.c:3536 describe.c:3600 describe.c:3673
-#: describe.c:3902 describe.c:3974 describe.c:3985 describe.c:4044
-#: describe.c:4233 describe.c:4314 describe.c:4529
+#: describe.c:72 describe.c:157 describe.c:220 describe.c:228 describe.c:332
+#: describe.c:589 describe.c:719 describe.c:780 describe.c:862 describe.c:1049
+#: describe.c:3024 describe.c:3150 describe.c:3229 describe.c:3319
+#: describe.c:3398 describe.c:3564 describe.c:3628 describe.c:3701
+#: describe.c:3930 describe.c:4002 describe.c:4013 describe.c:4072
+#: describe.c:4261 describe.c:4342 describe.c:4557
 msgid "Name"
 msgstr "Name"
 
-#: describe.c:73 describe.c:341 describe.c:387 describe.c:404
+#: describe.c:73 describe.c:344 describe.c:390 describe.c:407
 msgid "Result data type"
 msgstr "Ergebnisdatentyp"
 
-#: describe.c:81 describe.c:94 describe.c:98 describe.c:342 describe.c:388
-#: describe.c:405
+#: describe.c:81 describe.c:94 describe.c:98 describe.c:345 describe.c:391
+#: describe.c:408
 msgid "Argument data types"
 msgstr "Argumentdatentypen"
 
-#: describe.c:105 describe.c:167 describe.c:251 describe.c:434 describe.c:609
-#: describe.c:706 describe.c:777 describe.c:1023 describe.c:1636
-#: describe.c:2796 describe.c:3029 describe.c:3153 describe.c:3227
-#: describe.c:3300 describe.c:3383 describe.c:3451 describe.c:3543
-#: describe.c:3609 describe.c:3674 describe.c:3810 describe.c:3850
-#: describe.c:3918 describe.c:3977 describe.c:3986 describe.c:4045
-#: describe.c:4259 describe.c:4336 describe.c:4465 describe.c:4532
+#: describe.c:105 describe.c:167 describe.c:251 describe.c:453 describe.c:637
+#: describe.c:734 describe.c:805 describe.c:1051 describe.c:1664
+#: describe.c:2824 describe.c:3057 describe.c:3181 describe.c:3255
+#: describe.c:3328 describe.c:3411 describe.c:3479 describe.c:3571
+#: describe.c:3637 describe.c:3702 describe.c:3838 describe.c:3878
+#: describe.c:3946 describe.c:4005 describe.c:4014 describe.c:4073
+#: describe.c:4287 describe.c:4364 describe.c:4493 describe.c:4560
 #: large_obj.c:289 large_obj.c:299
 msgid "Description"
 msgstr "Beschreibung"
@@ -911,13 +911,13 @@ msgstr "Der Server (Version %d.%d) unterstützt keine Zugriffsmethoden.\n"
 msgid "Index"
 msgstr "Index"
 
-#: describe.c:159 describe.c:348 describe.c:393 describe.c:410 describe.c:840
-#: describe.c:959 describe.c:1605 describe.c:3004 describe.c:3202
-#: describe.c:4333
+#: describe.c:159 describe.c:351 describe.c:396 describe.c:413 describe.c:868
+#: describe.c:987 describe.c:1633 describe.c:3032 describe.c:3230
+#: describe.c:4361
 msgid "Type"
 msgstr "Typ"
 
-#: describe.c:166 describe.c:4238
+#: describe.c:166 describe.c:4266
 msgid "Handler"
 msgstr "Handler"
 
@@ -930,9 +930,9 @@ msgstr "Liste der Zugriffsmethoden"
 msgid "The server (version %d.%d) does not support tablespaces.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Tablespaces.\n"
 
-#: describe.c:221 describe.c:229 describe.c:431 describe.c:599 describe.c:753
-#: describe.c:949 describe.c:3005 describe.c:3126 describe.c:3372
-#: describe.c:3601 describe.c:4234 describe.c:4315 large_obj.c:288
+#: describe.c:221 describe.c:229 describe.c:441 describe.c:627 describe.c:781
+#: describe.c:977 describe.c:3033 describe.c:3154 describe.c:3400
+#: describe.c:3629 describe.c:4262 describe.c:4343 large_obj.c:288
 msgid "Owner"
 msgstr "Eigentümer"
 
@@ -940,12 +940,12 @@ msgstr "Eigentümer"
 msgid "Location"
 msgstr "Pfad"
 
-#: describe.c:241 describe.c:2607
+#: describe.c:241 describe.c:2635
 msgid "Options"
 msgstr "Optionen"
 
-#: describe.c:246 describe.c:572 describe.c:769 describe.c:3021
-#: describe.c:3025
+#: describe.c:246 describe.c:600 describe.c:797 describe.c:3049
+#: describe.c:3053
 msgid "Size"
 msgstr "Größe"
 
@@ -953,836 +953,852 @@ msgstr "Größe"
 msgid "List of tablespaces"
 msgstr "Liste der Tablespaces"
 
-#: describe.c:305
+#: describe.c:308
 #, c-format
 msgid "\\df only takes [antwS+] as options\n"
 msgstr "\\df akzeptiert nur [antwS+] als Optionen\n"
 
-#: describe.c:311
+#: describe.c:314
 #, c-format
 msgid "\\df does not take a \"w\" option with server version %d.%d\n"
 msgstr "\\df akzeptiert die Option „w“ nicht mit Serverversion %d.%d\n"
 
 #. translator: "agg" is short for "aggregate"
-#: describe.c:344 describe.c:390 describe.c:407
+#: describe.c:347 describe.c:393 describe.c:410
 msgid "agg"
 msgstr "Agg"
 
-#: describe.c:345
+#: describe.c:348
 msgid "window"
 msgstr "Fenster"
 
-#: describe.c:346 describe.c:391 describe.c:408 describe.c:1157
+#: describe.c:349 describe.c:394 describe.c:411 describe.c:1185
 msgid "trigger"
 msgstr "Trigger"
 
-#: describe.c:347 describe.c:392 describe.c:409
+#: describe.c:350 describe.c:395 describe.c:412
 msgid "normal"
 msgstr "normal"
 
-#: describe.c:424
-msgid "definer"
-msgstr "definer"
-
-#: describe.c:425
-msgid "invoker"
-msgstr "invoker"
-
-#: describe.c:426
-msgid "Security"
-msgstr "Sicherheit"
-
-#: describe.c:427
+#: describe.c:423
 msgid "immutable"
 msgstr "unveränderlich"
 
-#: describe.c:428
+#: describe.c:424
 msgid "stable"
 msgstr "stabil"
 
-#: describe.c:429
+#: describe.c:425
 msgid "volatile"
 msgstr "volatil"
 
-#: describe.c:430
+#: describe.c:426
 msgid "Volatility"
 msgstr "Volatilität"
 
-#: describe.c:432
+#: describe.c:434
+msgid "restricted"
+msgstr "beschränkt"
+
+#: describe.c:435
+msgid "safe"
+msgstr "sicher"
+
+#: describe.c:436
+msgid "unsafe"
+msgstr "unsicher"
+
+#: describe.c:437
+msgid "Parallel"
+msgstr "Parallel"
+
+#: describe.c:442
+msgid "definer"
+msgstr "definer"
+
+#: describe.c:443
+msgid "invoker"
+msgstr "invoker"
+
+#: describe.c:444
+msgid "Security"
+msgstr "Sicherheit"
+
+#: describe.c:451
 msgid "Language"
 msgstr "Sprache"
 
-#: describe.c:433
+#: describe.c:452
 msgid "Source code"
 msgstr "Quelltext"
 
-#: describe.c:531
+#: describe.c:551
 msgid "List of functions"
 msgstr "Liste der Funktionen"
 
-#: describe.c:571
+#: describe.c:599
 msgid "Internal name"
 msgstr "Interner Name"
 
-#: describe.c:593
+#: describe.c:621
 msgid "Elements"
 msgstr "Elemente"
 
-#: describe.c:649
+#: describe.c:677
 msgid "List of data types"
 msgstr "Liste der Datentypen"
 
-#: describe.c:692
+#: describe.c:720
 msgid "Left arg type"
 msgstr "Linker Typ"
 
-#: describe.c:693
+#: describe.c:721
 msgid "Right arg type"
 msgstr "Rechter Typ"
 
-#: describe.c:694
+#: describe.c:722
 msgid "Result type"
 msgstr "Ergebnistyp"
 
-#: describe.c:699 describe.c:3442 describe.c:3809
+#: describe.c:727 describe.c:3470 describe.c:3837
 msgid "Function"
 msgstr "Funktion"
 
-#: describe.c:724
+#: describe.c:752
 msgid "List of operators"
 msgstr "Liste der Operatoren"
 
-#: describe.c:754
+#: describe.c:782
 msgid "Encoding"
 msgstr "Kodierung"
 
-#: describe.c:759 describe.c:3537
+#: describe.c:787 describe.c:3565
 msgid "Collate"
 msgstr "Sortierfolge"
 
-#: describe.c:760 describe.c:3538
+#: describe.c:788 describe.c:3566
 msgid "Ctype"
 msgstr "Zeichentyp"
 
-#: describe.c:773
+#: describe.c:801
 msgid "Tablespace"
 msgstr "Tablespace"
 
-#: describe.c:795
+#: describe.c:823
 msgid "List of databases"
 msgstr "Liste der Datenbanken"
 
-#: describe.c:835 describe.c:952 describe.c:2997
+#: describe.c:863 describe.c:980 describe.c:3025
 msgid "table"
 msgstr "Tabelle"
 
-#: describe.c:836 describe.c:2998
+#: describe.c:864 describe.c:3026
 msgid "view"
 msgstr "Sicht"
 
-#: describe.c:837 describe.c:2999
+#: describe.c:865 describe.c:3027
 msgid "materialized view"
 msgstr "materialisierte Sicht"
 
-#: describe.c:838 describe.c:954 describe.c:3001
+#: describe.c:866 describe.c:982 describe.c:3029
 msgid "sequence"
 msgstr "Sequenz"
 
-#: describe.c:839 describe.c:3003
+#: describe.c:867 describe.c:3031
 msgid "foreign table"
 msgstr "Fremdtabelle"
 
-#: describe.c:851
+#: describe.c:879
 msgid "Column privileges"
 msgstr "Spaltenprivilegien"
 
-#: describe.c:882
+#: describe.c:910
 msgid "Policies"
 msgstr "Policys"
 
-#: describe.c:908 describe.c:4676 describe.c:4680
+#: describe.c:936 describe.c:4704 describe.c:4708
 msgid "Access privileges"
 msgstr "Zugriffsprivilegien"
 
-#: describe.c:937
+#: describe.c:965
 #, c-format
 msgid "The server (version %d.%d) does not support altering default privileges.\n"
 msgstr "Der Server (Version %d.%d) unterstützt kein Ändern der Vorgabeprivilegien.\n"
 
-#: describe.c:956
+#: describe.c:984
 msgid "function"
 msgstr "Funktion"
 
-#: describe.c:958
+#: describe.c:986
 msgid "type"
 msgstr "Typ"
 
-#: describe.c:982
+#: describe.c:1010
 msgid "Default access privileges"
 msgstr "Vorgegebene Zugriffsprivilegien"
 
-#: describe.c:1022
+#: describe.c:1050
 msgid "Object"
 msgstr "Objekt"
 
-#: describe.c:1036
+#: describe.c:1064
 msgid "table constraint"
 msgstr "Tabellen-Constraint"
 
-#: describe.c:1058
+#: describe.c:1086
 msgid "domain constraint"
 msgstr "Domänen-Constraint"
 
-#: describe.c:1086
+#: describe.c:1114
 msgid "operator class"
 msgstr "Operatorklasse"
 
-#: describe.c:1115
+#: describe.c:1143
 msgid "operator family"
 msgstr "Operatorfamilie"
 
-#: describe.c:1137
+#: describe.c:1165
 msgid "rule"
 msgstr "Rule"
 
-#: describe.c:1179
+#: describe.c:1207
 msgid "Object descriptions"
 msgstr "Objektbeschreibungen"
 
-#: describe.c:1233
+#: describe.c:1261
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Keine Relationen namens „%s“ gefunden\n"
 
-#: describe.c:1443
+#: describe.c:1471
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Keine Relation mit OID %s gefunden.\n"
 
-#: describe.c:1549
+#: describe.c:1577
 #, c-format
 msgid "Unlogged table \"%s.%s\""
 msgstr "Ungeloggte Tabelle „%s.%s“"
 
-#: describe.c:1552
+#: describe.c:1580
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Tabelle „%s.%s“"
 
-#: describe.c:1556
+#: describe.c:1584
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Sicht „%s.%s“"
 
-#: describe.c:1561
+#: describe.c:1589
 #, c-format
 msgid "Unlogged materialized view \"%s.%s\""
 msgstr "Ungeloggte materialisierte Sicht „%s.%s“"
 
-#: describe.c:1564
+#: describe.c:1592
 #, c-format
 msgid "Materialized view \"%s.%s\""
 msgstr "Materialisierte Sicht „%s.%s“"
 
-#: describe.c:1568
+#: describe.c:1596
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Sequenz „%s.%s“"
 
-#: describe.c:1573
+#: describe.c:1601
 #, c-format
 msgid "Unlogged index \"%s.%s\""
 msgstr "Ungeloggter Index „%s.%s“"
 
-#: describe.c:1576
+#: describe.c:1604
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Index „%s.%s“"
 
-#: describe.c:1581
+#: describe.c:1609
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Spezielle Relation „%s.%s“"
 
-#: describe.c:1585
+#: describe.c:1613
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-Tabelle „%s.%s“"
 
-#: describe.c:1589
+#: describe.c:1617
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Zusammengesetzter Typ „%s.%s“"
 
-#: describe.c:1593
+#: describe.c:1621
 #, c-format
 msgid "Foreign table \"%s.%s\""
 msgstr "Fremdtabelle „%s.%s“"
 
-#: describe.c:1604
+#: describe.c:1632
 msgid "Column"
 msgstr "Spalte"
 
-#: describe.c:1613
+#: describe.c:1641
 msgid "Modifiers"
 msgstr "Attribute"
 
-#: describe.c:1618
+#: describe.c:1646
 msgid "Value"
 msgstr "Wert"
 
-#: describe.c:1621
+#: describe.c:1649
 msgid "Definition"
 msgstr "Definition"
 
-#: describe.c:1624 describe.c:4254 describe.c:4335 describe.c:4403
-#: describe.c:4464
+#: describe.c:1652 describe.c:4282 describe.c:4363 describe.c:4431
+#: describe.c:4492
 msgid "FDW Options"
 msgstr "FDW-Optionen"
 
-#: describe.c:1628
+#: describe.c:1656
 msgid "Storage"
 msgstr "Speicherung"
 
-#: describe.c:1631
+#: describe.c:1659
 msgid "Stats target"
 msgstr "Statistikziel"
 
-#: describe.c:1681
+#: describe.c:1709
 #, c-format
 msgid "collate %s"
 msgstr "Sortierfolge %s"
 
-#: describe.c:1689
+#: describe.c:1717
 msgid "not null"
 msgstr "not null"
 
 #. translator: default values of column definitions
-#: describe.c:1699
+#: describe.c:1727
 #, c-format
 msgid "default %s"
 msgstr "Vorgabewert %s"
 
-#: describe.c:1814
+#: describe.c:1842
 msgid "primary key, "
 msgstr "Primärschlüssel, "
 
-#: describe.c:1816
+#: describe.c:1844
 msgid "unique, "
 msgstr "eindeutig, "
 
-#: describe.c:1822
+#: describe.c:1850
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "für Tabelle „%s.%s“"
 
-#: describe.c:1826
+#: describe.c:1854
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", Prädikat (%s)"
 
-#: describe.c:1829
+#: describe.c:1857
 msgid ", clustered"
 msgstr ", geclustert"
 
-#: describe.c:1832
+#: describe.c:1860
 msgid ", invalid"
 msgstr ", ungültig"
 
-#: describe.c:1835
+#: describe.c:1863
 msgid ", deferrable"
 msgstr ", DEFERRABLE"
 
-#: describe.c:1838
+#: describe.c:1866
 msgid ", initially deferred"
 msgstr ", INITIALLY DEFERRED"
 
-#: describe.c:1841
+#: describe.c:1869
 msgid ", replica identity"
 msgstr ", Replika-Identität"
 
-#: describe.c:1876
+#: describe.c:1904
 #, c-format
 msgid "Owned by: %s"
 msgstr "Eigentümer: %s"
 
-#: describe.c:1936
+#: describe.c:1964
 msgid "Indexes:"
 msgstr "Indexe:"
 
-#: describe.c:2020
+#: describe.c:2048
 msgid "Check constraints:"
 msgstr "Check-Constraints:"
 
-#: describe.c:2051
+#: describe.c:2079
 msgid "Foreign-key constraints:"
 msgstr "Fremdschlüssel-Constraints:"
 
-#: describe.c:2082
+#: describe.c:2110
 msgid "Referenced by:"
 msgstr "Fremdschlüsselverweise von:"
 
-#: describe.c:2127
+#: describe.c:2155
 msgid "Policies:"
 msgstr "Policys:"
 
-#: describe.c:2130
+#: describe.c:2158
 msgid "Policies (forced row security enabled):"
 msgstr "Policys (Sicherheit auf Zeilenebene erzwungen):"
 
-#: describe.c:2133
+#: describe.c:2161
 msgid "Policies (row security enabled): (none)"
 msgstr "Policys (Sicherheit auf Zeilenebene eingeschaltet): (keine)"
 
-#: describe.c:2136
+#: describe.c:2164
 msgid "Policies (forced row security enabled): (none)"
 msgstr "Policys (Sicherheit auf Zeilenebene erzwungen): (keine)"
 
-#: describe.c:2139
+#: describe.c:2167
 msgid "Policies (row security disabled):"
 msgstr "Policys (Sicherheit auf Zeilenebene ausgeschaltet):"
 
-#: describe.c:2239 describe.c:2289
+#: describe.c:2267 describe.c:2317
 msgid "Rules:"
 msgstr "Regeln:"
 
-#: describe.c:2242
+#: describe.c:2270
 msgid "Disabled rules:"
 msgstr "Abgeschaltete Regeln:"
 
-#: describe.c:2245
+#: describe.c:2273
 msgid "Rules firing always:"
 msgstr "Regeln, die immer aktiv werden:"
 
-#: describe.c:2248
+#: describe.c:2276
 msgid "Rules firing on replica only:"
 msgstr "Regeln, die nur im Replikat aktiv werden:"
 
-#: describe.c:2272
+#: describe.c:2300
 msgid "View definition:"
 msgstr "Sichtdefinition:"
 
-#: describe.c:2407
+#: describe.c:2435
 msgid "Triggers:"
 msgstr "Trigger:"
 
-#: describe.c:2411
+#: describe.c:2439
 msgid "Disabled user triggers:"
 msgstr "Abgeschaltete Benutzer-Trigger:"
 
-#: describe.c:2413
+#: describe.c:2441
 msgid "Disabled triggers:"
 msgstr "Abgeschaltete Trigger:"
 
-#: describe.c:2416
+#: describe.c:2444
 msgid "Disabled internal triggers:"
 msgstr "Abgeschaltete interne Trigger:"
 
-#: describe.c:2419
+#: describe.c:2447
 msgid "Triggers firing always:"
 msgstr "Trigger, die immer aktiv werden:"
 
-#: describe.c:2422
+#: describe.c:2450
 msgid "Triggers firing on replica only:"
 msgstr "Trigger, die nur im Replikat aktiv werden:"
 
-#: describe.c:2501
+#: describe.c:2529
 msgid "Inherits"
 msgstr "Erbt von"
 
-#: describe.c:2540
+#: describe.c:2568
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
 msgstr "Anzahl Kindtabellen: %d (Mit \\d+ alle anzeigen.)"
 
-#: describe.c:2547
+#: describe.c:2575
 msgid "Child tables"
 msgstr "Kindtabellen"
 
-#: describe.c:2569
+#: describe.c:2597
 #, c-format
 msgid "Typed table of type: %s"
 msgstr "Getypte Tabelle vom Typ: %s"
 
-#: describe.c:2583
+#: describe.c:2611
 msgid "Replica Identity"
 msgstr "Replika-Identität"
 
-#: describe.c:2596
+#: describe.c:2624
 msgid "Has OIDs: yes"
 msgstr "Hat OIDs: ja"
 
-#: describe.c:2684
+#: describe.c:2712
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace: „%s“"
 
 #. translator: before this string there's an index description like
 #. '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:2696
+#: describe.c:2724
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr ", Tablespace „%s“"
 
-#: describe.c:2789
+#: describe.c:2817
 msgid "List of roles"
 msgstr "Liste der Rollen"
 
-#: describe.c:2791
+#: describe.c:2819
 msgid "Role name"
 msgstr "Rollenname"
 
-#: describe.c:2792
+#: describe.c:2820
 msgid "Attributes"
 msgstr "Attribute"
 
-#: describe.c:2793
+#: describe.c:2821
 msgid "Member of"
 msgstr "Mitglied von"
 
-#: describe.c:2804
+#: describe.c:2832
 msgid "Superuser"
 msgstr "Superuser"
 
-#: describe.c:2807
+#: describe.c:2835
 msgid "No inheritance"
 msgstr "keine Vererbung"
 
-#: describe.c:2810
+#: describe.c:2838
 msgid "Create role"
 msgstr "Rolle erzeugen"
 
-#: describe.c:2813
+#: describe.c:2841
 msgid "Create DB"
 msgstr "DB erzeugen"
 
-#: describe.c:2816
+#: describe.c:2844
 msgid "Cannot login"
 msgstr "kann nicht einloggen"
 
-#: describe.c:2820
+#: describe.c:2848
 msgid "Replication"
 msgstr "Replikation"
 
-#: describe.c:2824
+#: describe.c:2852
 msgid "Bypass RLS"
 msgstr "Bypass RLS"
 
-#: describe.c:2833
+#: describe.c:2861
 msgid "No connections"
 msgstr "keine Verbindungen"
 
-#: describe.c:2835
+#: describe.c:2863
 #, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
 msgstr[0] "%d Verbindung"
 msgstr[1] "%d Verbindungen"
 
-#: describe.c:2845
+#: describe.c:2873
 msgid "Password valid until "
 msgstr "Passwort gültig bis "
 
-#: describe.c:2901
+#: describe.c:2929
 msgid "Role"
 msgstr "Rolle"
 
-#: describe.c:2902
+#: describe.c:2930
 msgid "Database"
 msgstr "Datenbank"
 
-#: describe.c:2903
+#: describe.c:2931
 msgid "Settings"
 msgstr "Einstellung"
 
-#: describe.c:2913
+#: describe.c:2941
 #, c-format
 msgid "No per-database role settings support in this server version.\n"
 msgstr "Keine Unterstützung für Rolleneinstellungen pro Datenbank in dieser Serverversion.\n"
 
-#: describe.c:2924
+#: describe.c:2952
 #, c-format
 msgid "No matching settings found.\n"
 msgstr "Keine passenden Einstellungen gefunden.\n"
 
-#: describe.c:2926
+#: describe.c:2954
 #, c-format
 msgid "No settings found.\n"
 msgstr "Keine Einstellungen gefunden.\n"
 
-#: describe.c:2931
+#: describe.c:2959
 msgid "List of settings"
 msgstr "Liste der Einstellungen"
 
-#: describe.c:3000
+#: describe.c:3028
 msgid "index"
 msgstr "Index"
 
-#: describe.c:3002
+#: describe.c:3030
 msgid "special"
 msgstr "speziell"
 
-#: describe.c:3010 describe.c:4452
+#: describe.c:3038 describe.c:4480
 msgid "Table"
 msgstr "Tabelle"
 
-#: describe.c:3086
+#: describe.c:3114
 #, c-format
 msgid "No matching relations found.\n"
 msgstr "Keine passenden Relationen gefunden.\n"
 
-#: describe.c:3088
+#: describe.c:3116
 #, c-format
 msgid "No relations found.\n"
 msgstr "Keine Relationen gefunden.\n"
 
-#: describe.c:3093
+#: describe.c:3121
 msgid "List of relations"
 msgstr "Liste der Relationen"
 
-#: describe.c:3130
+#: describe.c:3158
 msgid "Trusted"
 msgstr "Vertraut"
 
-#: describe.c:3138
+#: describe.c:3166
 msgid "Internal Language"
 msgstr "Interne Sprache"
 
-#: describe.c:3139
+#: describe.c:3167
 msgid "Call Handler"
 msgstr "Call-Handler"
 
-#: describe.c:3140 describe.c:4241
+#: describe.c:3168 describe.c:4269
 msgid "Validator"
 msgstr "Validator"
 
-#: describe.c:3143
+#: describe.c:3171
 msgid "Inline Handler"
 msgstr "Inline-Handler"
 
-#: describe.c:3171
+#: describe.c:3199
 msgid "List of languages"
 msgstr "Liste der Sprachen"
 
-#: describe.c:3215
+#: describe.c:3243
 msgid "Modifier"
 msgstr "Attribut"
 
-#: describe.c:3216
+#: describe.c:3244
 msgid "Check"
 msgstr "Check"
 
-#: describe.c:3258
+#: describe.c:3286
 msgid "List of domains"
 msgstr "Liste der Domänen"
 
-#: describe.c:3292
+#: describe.c:3320
 msgid "Source"
 msgstr "Quelle"
 
-#: describe.c:3293
+#: describe.c:3321
 msgid "Destination"
 msgstr "Ziel"
 
-#: describe.c:3294 describe.c:3443
+#: describe.c:3322 describe.c:3471
 msgid "no"
 msgstr "nein"
 
-#: describe.c:3294 describe.c:3445
+#: describe.c:3322 describe.c:3473
 msgid "yes"
 msgstr "ja"
 
-#: describe.c:3295
+#: describe.c:3323
 msgid "Default?"
 msgstr "Standard?"
 
-#: describe.c:3332
+#: describe.c:3360
 msgid "List of conversions"
 msgstr "Liste der Konversionen"
 
-#: describe.c:3371
+#: describe.c:3399
 msgid "Event"
 msgstr "Ereignis"
 
-#: describe.c:3373
+#: describe.c:3401
 msgid "enabled"
 msgstr "eingeschaltet"
 
-#: describe.c:3374
+#: describe.c:3402
 msgid "replica"
 msgstr "Replika"
 
-#: describe.c:3375
+#: describe.c:3403
 msgid "always"
 msgstr "immer"
 
-#: describe.c:3376
+#: describe.c:3404
 msgid "disabled"
 msgstr "ausgeschaltet"
 
-#: describe.c:3377
+#: describe.c:3405
 msgid "Enabled"
 msgstr "Eingeschaltet"
 
-#: describe.c:3378
+#: describe.c:3406
 msgid "Procedure"
 msgstr "Prozedur"
 
-#: describe.c:3379
+#: describe.c:3407
 msgid "Tags"
 msgstr "Tags"
 
-#: describe.c:3398
+#: describe.c:3426
 msgid "List of event triggers"
 msgstr "Liste der Ereignistrigger"
 
-#: describe.c:3440
+#: describe.c:3468
 msgid "Source type"
 msgstr "Quelltyp"
 
-#: describe.c:3441
+#: describe.c:3469
 msgid "Target type"
 msgstr "Zieltyp"
 
-#: describe.c:3444
+#: describe.c:3472
 msgid "in assignment"
 msgstr "in Zuweisung"
 
-#: describe.c:3446
+#: describe.c:3474
 msgid "Implicit?"
 msgstr "Implizit?"
 
-#: describe.c:3497
+#: describe.c:3525
 msgid "List of casts"
 msgstr "Liste der Typumwandlungen"
 
-#: describe.c:3523
+#: describe.c:3551
 #, c-format
 msgid "The server (version %d.%d) does not support collations.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Sortierfolgen.\n"
 
-#: describe.c:3573
+#: describe.c:3601
 msgid "List of collations"
 msgstr "Liste der Sortierfolgen"
 
-#: describe.c:3632
+#: describe.c:3660
 msgid "List of schemas"
 msgstr "Liste der Schemas"
 
-#: describe.c:3655 describe.c:3890 describe.c:3958 describe.c:4026
+#: describe.c:3683 describe.c:3918 describe.c:3986 describe.c:4054
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Volltextsuche.\n"
 
-#: describe.c:3689
+#: describe.c:3717
 msgid "List of text search parsers"
 msgstr "Liste der Textsucheparser"
 
-#: describe.c:3732
+#: describe.c:3760
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "Kein Textsucheparser namens „%s“ gefunden\n"
 
-#: describe.c:3807
+#: describe.c:3835
 msgid "Start parse"
 msgstr "Parsen starten"
 
-#: describe.c:3808
+#: describe.c:3836
 msgid "Method"
 msgstr "Methode"
 
-#: describe.c:3812
+#: describe.c:3840
 msgid "Get next token"
 msgstr "Nächstes Token lesen"
 
-#: describe.c:3814
+#: describe.c:3842
 msgid "End parse"
 msgstr "Parsen beenden"
 
-#: describe.c:3816
+#: describe.c:3844
 msgid "Get headline"
 msgstr "Überschrift ermitteln"
 
-#: describe.c:3818
+#: describe.c:3846
 msgid "Get token types"
 msgstr "Tokentypen ermitteln"
 
-#: describe.c:3828
+#: describe.c:3856
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Textsucheparser „%s.%s“"
 
-#: describe.c:3830
+#: describe.c:3858
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "Textsucheparser „%s“"
 
-#: describe.c:3849
+#: describe.c:3877
 msgid "Token name"
 msgstr "Tokenname"
 
-#: describe.c:3860
+#: describe.c:3888
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "Tokentypen für Parser „%s.%s“"
 
-#: describe.c:3862
+#: describe.c:3890
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "Tokentypen für Parser „%s“"
 
-#: describe.c:3912
+#: describe.c:3940
 msgid "Template"
 msgstr "Vorlage"
 
-#: describe.c:3913
+#: describe.c:3941
 msgid "Init options"
 msgstr "Initialisierungsoptionen"
 
-#: describe.c:3935
+#: describe.c:3963
 msgid "List of text search dictionaries"
 msgstr "Liste der Textsuchewörterbücher"
 
-#: describe.c:3975
+#: describe.c:4003
 msgid "Init"
 msgstr "Init"
 
-#: describe.c:3976
+#: describe.c:4004
 msgid "Lexize"
 msgstr "Lexize"
 
-#: describe.c:4003
+#: describe.c:4031
 msgid "List of text search templates"
 msgstr "Liste der Textsuchevorlagen"
 
-#: describe.c:4060
+#: describe.c:4088
 msgid "List of text search configurations"
 msgstr "Liste der Textsuchekonfigurationen"
 
-#: describe.c:4104
+#: describe.c:4132
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "Keine Textsuchekonfiguration namens „%s“ gefunden\n"
 
-#: describe.c:4170
+#: describe.c:4198
 msgid "Token"
 msgstr "Token"
 
-#: describe.c:4171
+#: describe.c:4199
 msgid "Dictionaries"
 msgstr "Wörterbücher"
 
-#: describe.c:4182
+#: describe.c:4210
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Textsuchekonfiguration „%s.%s“"
 
-#: describe.c:4185
+#: describe.c:4213
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Textsuchekonfiguration „%s“"
 
-#: describe.c:4189
+#: describe.c:4217
 #, c-format
 msgid ""
 "\n"
@@ -1791,7 +1807,7 @@ msgstr ""
 "\n"
 "Parser: „%s.%s“"
 
-#: describe.c:4192
+#: describe.c:4220
 #, c-format
 msgid ""
 "\n"
@@ -1800,82 +1816,82 @@ msgstr ""
 "\n"
 "Parser: „%s“"
 
-#: describe.c:4224
+#: describe.c:4252
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Fremddaten-Wrapper.\n"
 
-#: describe.c:4281
+#: describe.c:4309
 msgid "List of foreign-data wrappers"
 msgstr "Liste der Fremddaten-Wrapper"
 
-#: describe.c:4304
+#: describe.c:4332
 #, c-format
 msgid "The server (version %d.%d) does not support foreign servers.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Fremdserver.\n"
 
-#: describe.c:4316
+#: describe.c:4344
 msgid "Foreign-data wrapper"
 msgstr "Fremddaten-Wrapper"
 
-#: describe.c:4334 describe.c:4530
+#: describe.c:4362 describe.c:4558
 msgid "Version"
 msgstr "Version"
 
-#: describe.c:4360
+#: describe.c:4388
 msgid "List of foreign servers"
 msgstr "Liste der Fremdserver"
 
-#: describe.c:4383
+#: describe.c:4411
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Benutzerabbildungen.\n"
 
-#: describe.c:4392 describe.c:4453
+#: describe.c:4420 describe.c:4481
 msgid "Server"
 msgstr "Server"
 
-#: describe.c:4393
+#: describe.c:4421
 msgid "User name"
 msgstr "Benutzername"
 
-#: describe.c:4418
+#: describe.c:4446
 msgid "List of user mappings"
 msgstr "Liste der Benutzerabbildungen"
 
-#: describe.c:4441
+#: describe.c:4469
 #, c-format
 msgid "The server (version %d.%d) does not support foreign tables.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Fremdtabellen.\n"
 
-#: describe.c:4493
+#: describe.c:4521
 msgid "List of foreign tables"
 msgstr "Liste der Fremdtabellen"
 
-#: describe.c:4516 describe.c:4570
+#: describe.c:4544 describe.c:4598
 #, c-format
 msgid "The server (version %d.%d) does not support extensions.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Erweiterungen.\n"
 
-#: describe.c:4547
+#: describe.c:4575
 msgid "List of installed extensions"
 msgstr "Liste der installierten Erweiterungen"
 
-#: describe.c:4597
+#: describe.c:4625
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
 msgstr "Keine Erweiterungen namens „%s“ gefunden\n"
 
-#: describe.c:4600
+#: describe.c:4628
 #, c-format
 msgid "Did not find any extensions.\n"
 msgstr "Keine Erweiterungen gefunden\n"
 
-#: describe.c:4644
+#: describe.c:4672
 msgid "Object Description"
 msgstr "Objektbeschreibung"
 
-#: describe.c:4653
+#: describe.c:4681
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "Objekte in Erweiterung „%s“"
@@ -2950,13 +2966,13 @@ msgstr ""
 
 #: help.c:375
 #, c-format
-msgid "  format             set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
-msgstr "  format             Ausgabeformat setzen [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+msgid "  footer             enable or disable display of the table footer [on, off]\n"
+msgstr "  footer             Tabellenfußzeile ein- oder auschalten [on, off]\n"
 
 #: help.c:376
 #, c-format
-msgid "  footer             enable or disable display of the table footer [on, off]\n"
-msgstr "  footer             Tabellenfußzeile ein- oder auschalten [on, off]\n"
+msgid "  format             set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+msgstr "  format             Ausgabeformat setzen [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
 
 #: help.c:377
 #, c-format
@@ -3285,32 +3301,32 @@ msgstr "%s: Speicher aufgebraucht\n"
 #: sql_help.c:1190 sql_help.c:1193 sql_help.c:1195 sql_help.c:1197
 #: sql_help.c:1247 sql_help.c:1285 sql_help.c:1288 sql_help.c:1290
 #: sql_help.c:1292 sql_help.c:1294 sql_help.c:1296 sql_help.c:1299
-#: sql_help.c:1339 sql_help.c:1544 sql_help.c:1615 sql_help.c:1635
-#: sql_help.c:1652 sql_help.c:1707 sql_help.c:1711 sql_help.c:1721
-#: sql_help.c:1741 sql_help.c:1766 sql_help.c:1784 sql_help.c:1813
-#: sql_help.c:1888 sql_help.c:1930 sql_help.c:1952 sql_help.c:1972
-#: sql_help.c:1973 sql_help.c:2008 sql_help.c:2028 sql_help.c:2050
-#: sql_help.c:2063 sql_help.c:2094 sql_help.c:2119 sql_help.c:2163
-#: sql_help.c:2349 sql_help.c:2362 sql_help.c:2379 sql_help.c:2395
-#: sql_help.c:2434 sql_help.c:2485 sql_help.c:2489 sql_help.c:2491
-#: sql_help.c:2497 sql_help.c:2515 sql_help.c:2542 sql_help.c:2577
-#: sql_help.c:2589 sql_help.c:2598 sql_help.c:2642 sql_help.c:2656
-#: sql_help.c:2684 sql_help.c:2692 sql_help.c:2700 sql_help.c:2708
-#: sql_help.c:2716 sql_help.c:2724 sql_help.c:2732 sql_help.c:2740
-#: sql_help.c:2749 sql_help.c:2760 sql_help.c:2768 sql_help.c:2776
-#: sql_help.c:2784 sql_help.c:2792 sql_help.c:2802 sql_help.c:2811
-#: sql_help.c:2820 sql_help.c:2828 sql_help.c:2837 sql_help.c:2845
-#: sql_help.c:2854 sql_help.c:2862 sql_help.c:2870 sql_help.c:2878
-#: sql_help.c:2886 sql_help.c:2894 sql_help.c:2902 sql_help.c:2910
-#: sql_help.c:2918 sql_help.c:2935 sql_help.c:2944 sql_help.c:2952
-#: sql_help.c:2969 sql_help.c:2984 sql_help.c:3249 sql_help.c:3300
-#: sql_help.c:3329 sql_help.c:3337 sql_help.c:3756 sql_help.c:3804
-#: sql_help.c:3945
+#: sql_help.c:1339 sql_help.c:1544 sql_help.c:1608 sql_help.c:1627
+#: sql_help.c:1640 sql_help.c:1694 sql_help.c:1698 sql_help.c:1708
+#: sql_help.c:1728 sql_help.c:1753 sql_help.c:1771 sql_help.c:1800
+#: sql_help.c:1875 sql_help.c:1917 sql_help.c:1939 sql_help.c:1959
+#: sql_help.c:1960 sql_help.c:1995 sql_help.c:2015 sql_help.c:2037
+#: sql_help.c:2050 sql_help.c:2081 sql_help.c:2106 sql_help.c:2150
+#: sql_help.c:2336 sql_help.c:2349 sql_help.c:2366 sql_help.c:2382
+#: sql_help.c:2421 sql_help.c:2472 sql_help.c:2476 sql_help.c:2478
+#: sql_help.c:2484 sql_help.c:2502 sql_help.c:2529 sql_help.c:2564
+#: sql_help.c:2576 sql_help.c:2585 sql_help.c:2629 sql_help.c:2643
+#: sql_help.c:2671 sql_help.c:2679 sql_help.c:2687 sql_help.c:2695
+#: sql_help.c:2703 sql_help.c:2711 sql_help.c:2719 sql_help.c:2727
+#: sql_help.c:2736 sql_help.c:2747 sql_help.c:2755 sql_help.c:2763
+#: sql_help.c:2771 sql_help.c:2779 sql_help.c:2789 sql_help.c:2798
+#: sql_help.c:2807 sql_help.c:2815 sql_help.c:2824 sql_help.c:2832
+#: sql_help.c:2841 sql_help.c:2849 sql_help.c:2857 sql_help.c:2865
+#: sql_help.c:2873 sql_help.c:2881 sql_help.c:2889 sql_help.c:2897
+#: sql_help.c:2905 sql_help.c:2922 sql_help.c:2931 sql_help.c:2939
+#: sql_help.c:2956 sql_help.c:2971 sql_help.c:3236 sql_help.c:3287
+#: sql_help.c:3316 sql_help.c:3324 sql_help.c:3743 sql_help.c:3791
+#: sql_help.c:3932
 msgid "name"
 msgstr "Name"
 
 #: sql_help.c:37 sql_help.c:40 sql_help.c:43 sql_help.c:309 sql_help.c:1405
-#: sql_help.c:2657 sql_help.c:3552
+#: sql_help.c:2644 sql_help.c:3539
 msgid "aggregate_signature"
 msgstr "Aggregatsignatur"
 
@@ -3329,7 +3345,7 @@ msgstr "neuer_Name"
 #: sql_help.c:592 sql_help.c:651 sql_help.c:672 sql_help.c:701 sql_help.c:756
 #: sql_help.c:856 sql_help.c:882 sql_help.c:902 sql_help.c:1045
 #: sql_help.c:1063 sql_help.c:1106 sql_help.c:1127 sql_help.c:1189
-#: sql_help.c:1291 sql_help.c:2335
+#: sql_help.c:1291 sql_help.c:2322
 msgid "new_owner"
 msgstr "neuer_Eigentümer"
 
@@ -3341,63 +3357,63 @@ msgstr "neuer_Eigentümer"
 msgid "new_schema"
 msgstr "neues_Schema"
 
-#: sql_help.c:45 sql_help.c:1458 sql_help.c:2658 sql_help.c:3571
+#: sql_help.c:45 sql_help.c:1458 sql_help.c:2645 sql_help.c:3558
 msgid "where aggregate_signature is:"
 msgstr "wobei Aggregatsignatur Folgendes ist:"
 
 #: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:319 sql_help.c:344
 #: sql_help.c:347 sql_help.c:350 sql_help.c:490 sql_help.c:495 sql_help.c:500
 #: sql_help.c:505 sql_help.c:510 sql_help.c:1423 sql_help.c:1459
-#: sql_help.c:1462 sql_help.c:1465 sql_help.c:1616 sql_help.c:1636
-#: sql_help.c:1639 sql_help.c:1889 sql_help.c:2659 sql_help.c:2662
-#: sql_help.c:2665 sql_help.c:2750 sql_help.c:3135 sql_help.c:3467
-#: sql_help.c:3558 sql_help.c:3572 sql_help.c:3575 sql_help.c:3578
+#: sql_help.c:1462 sql_help.c:1465 sql_help.c:1609 sql_help.c:1628
+#: sql_help.c:1631 sql_help.c:1876 sql_help.c:2646 sql_help.c:2649
+#: sql_help.c:2652 sql_help.c:2737 sql_help.c:3122 sql_help.c:3454
+#: sql_help.c:3545 sql_help.c:3559 sql_help.c:3562 sql_help.c:3565
 msgid "argmode"
 msgstr "Argmodus"
 
 #: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:320 sql_help.c:345
 #: sql_help.c:348 sql_help.c:351 sql_help.c:491 sql_help.c:496 sql_help.c:501
 #: sql_help.c:506 sql_help.c:511 sql_help.c:1424 sql_help.c:1460
-#: sql_help.c:1463 sql_help.c:1466 sql_help.c:1617 sql_help.c:1637
-#: sql_help.c:1640 sql_help.c:1890 sql_help.c:2660 sql_help.c:2663
-#: sql_help.c:2666 sql_help.c:2751 sql_help.c:3559 sql_help.c:3573
-#: sql_help.c:3576 sql_help.c:3579
+#: sql_help.c:1463 sql_help.c:1466 sql_help.c:1610 sql_help.c:1629
+#: sql_help.c:1632 sql_help.c:1877 sql_help.c:2647 sql_help.c:2650
+#: sql_help.c:2653 sql_help.c:2738 sql_help.c:3546 sql_help.c:3560
+#: sql_help.c:3563 sql_help.c:3566
 msgid "argname"
 msgstr "Argname"
 
 #: sql_help.c:48 sql_help.c:51 sql_help.c:54 sql_help.c:321 sql_help.c:346
 #: sql_help.c:349 sql_help.c:352 sql_help.c:492 sql_help.c:497 sql_help.c:502
 #: sql_help.c:507 sql_help.c:512 sql_help.c:1425 sql_help.c:1461
-#: sql_help.c:1464 sql_help.c:1467 sql_help.c:1891 sql_help.c:2661
-#: sql_help.c:2664 sql_help.c:2667 sql_help.c:2752 sql_help.c:3560
-#: sql_help.c:3574 sql_help.c:3577 sql_help.c:3580
+#: sql_help.c:1464 sql_help.c:1467 sql_help.c:1878 sql_help.c:2648
+#: sql_help.c:2651 sql_help.c:2654 sql_help.c:2739 sql_help.c:3547
+#: sql_help.c:3561 sql_help.c:3564 sql_help.c:3567
 msgid "argtype"
 msgstr "Argtyp"
 
 #: sql_help.c:110 sql_help.c:368 sql_help.c:446 sql_help.c:458 sql_help.c:814
 #: sql_help.c:899 sql_help.c:1122 sql_help.c:1242 sql_help.c:1270
-#: sql_help.c:1515 sql_help.c:1521 sql_help.c:1816 sql_help.c:1848
-#: sql_help.c:1855 sql_help.c:1931 sql_help.c:2095 sql_help.c:2184
-#: sql_help.c:2364 sql_help.c:2543 sql_help.c:2565 sql_help.c:3003
-#: sql_help.c:3169
+#: sql_help.c:1515 sql_help.c:1521 sql_help.c:1803 sql_help.c:1835
+#: sql_help.c:1842 sql_help.c:1918 sql_help.c:2082 sql_help.c:2171
+#: sql_help.c:2351 sql_help.c:2530 sql_help.c:2552 sql_help.c:2990
+#: sql_help.c:3156
 msgid "option"
 msgstr "Option"
 
-#: sql_help.c:111 sql_help.c:815 sql_help.c:1243 sql_help.c:1932
-#: sql_help.c:2096 sql_help.c:2544
+#: sql_help.c:111 sql_help.c:815 sql_help.c:1243 sql_help.c:1919
+#: sql_help.c:2083 sql_help.c:2531
 msgid "where option can be:"
 msgstr "wobei Option Folgendes sein kann:"
 
-#: sql_help.c:112 sql_help.c:1748
+#: sql_help.c:112 sql_help.c:1735
 msgid "allowconn"
 msgstr "allowconn"
 
-#: sql_help.c:113 sql_help.c:816 sql_help.c:1244 sql_help.c:1749
-#: sql_help.c:2097 sql_help.c:2545
+#: sql_help.c:113 sql_help.c:816 sql_help.c:1244 sql_help.c:1736
+#: sql_help.c:2084 sql_help.c:2532
 msgid "connlimit"
 msgstr "Verbindungslimit"
 
-#: sql_help.c:114 sql_help.c:1750
+#: sql_help.c:114 sql_help.c:1737
 msgid "istemplate"
 msgstr "istemplate"
 
@@ -3409,7 +3425,7 @@ msgstr "neuer_Tablespace"
 #: sql_help.c:122 sql_help.c:125 sql_help.c:127 sql_help.c:517 sql_help.c:519
 #: sql_help.c:520 sql_help.c:823 sql_help.c:827 sql_help.c:830 sql_help.c:915
 #: sql_help.c:918 sql_help.c:1250 sql_help.c:1253 sql_help.c:1255
-#: sql_help.c:1900 sql_help.c:3354 sql_help.c:3745
+#: sql_help.c:1887 sql_help.c:3341 sql_help.c:3732
 msgid "configuration_parameter"
 msgstr "Konfigurationsparameter"
 
@@ -3417,11 +3433,11 @@ msgstr "Konfigurationsparameter"
 #: sql_help.c:518 sql_help.c:566 sql_help.c:643 sql_help.c:649 sql_help.c:824
 #: sql_help.c:900 sql_help.c:916 sql_help.c:917 sql_help.c:1020
 #: sql_help.c:1040 sql_help.c:1066 sql_help.c:1123 sql_help.c:1251
-#: sql_help.c:1271 sql_help.c:1817 sql_help.c:1849 sql_help.c:1856
-#: sql_help.c:1901 sql_help.c:1902 sql_help.c:1960 sql_help.c:1992
-#: sql_help.c:2185 sql_help.c:2259 sql_help.c:2267 sql_help.c:2299
-#: sql_help.c:2321 sql_help.c:2338 sql_help.c:2365 sql_help.c:2566
-#: sql_help.c:3170 sql_help.c:3746 sql_help.c:3747
+#: sql_help.c:1271 sql_help.c:1804 sql_help.c:1836 sql_help.c:1843
+#: sql_help.c:1888 sql_help.c:1889 sql_help.c:1947 sql_help.c:1979
+#: sql_help.c:2172 sql_help.c:2246 sql_help.c:2254 sql_help.c:2286
+#: sql_help.c:2308 sql_help.c:2325 sql_help.c:2352 sql_help.c:2553
+#: sql_help.c:3157 sql_help.c:3733 sql_help.c:3734
 msgid "value"
 msgstr "Wert"
 
@@ -3429,9 +3445,9 @@ msgstr "Wert"
 msgid "target_role"
 msgstr "Zielrolle"
 
-#: sql_help.c:186 sql_help.c:1800 sql_help.c:2143 sql_help.c:2148
-#: sql_help.c:3117 sql_help.c:3124 sql_help.c:3138 sql_help.c:3144
-#: sql_help.c:3449 sql_help.c:3456 sql_help.c:3470 sql_help.c:3476
+#: sql_help.c:186 sql_help.c:1787 sql_help.c:2130 sql_help.c:2135
+#: sql_help.c:3104 sql_help.c:3111 sql_help.c:3125 sql_help.c:3131
+#: sql_help.c:3436 sql_help.c:3443 sql_help.c:3457 sql_help.c:3463
 msgid "schema_name"
 msgstr "Schemaname"
 
@@ -3446,31 +3462,31 @@ msgstr "wobei abgekürztes_Grant_oder_Revoke Folgendes sein kann:"
 #: sql_help.c:189 sql_help.c:190 sql_help.c:191 sql_help.c:192 sql_help.c:193
 #: sql_help.c:194 sql_help.c:195 sql_help.c:196 sql_help.c:542 sql_help.c:570
 #: sql_help.c:636 sql_help.c:777 sql_help.c:834 sql_help.c:1000
-#: sql_help.c:1258 sql_help.c:1935 sql_help.c:1936 sql_help.c:1937
-#: sql_help.c:1938 sql_help.c:1939 sql_help.c:2065 sql_help.c:2100
-#: sql_help.c:2101 sql_help.c:2102 sql_help.c:2103 sql_help.c:2104
-#: sql_help.c:2548 sql_help.c:2549 sql_help.c:2550 sql_help.c:2551
-#: sql_help.c:2552 sql_help.c:3151 sql_help.c:3152 sql_help.c:3153
-#: sql_help.c:3450 sql_help.c:3454 sql_help.c:3457 sql_help.c:3459
-#: sql_help.c:3461 sql_help.c:3463 sql_help.c:3465 sql_help.c:3471
-#: sql_help.c:3473 sql_help.c:3475 sql_help.c:3477 sql_help.c:3479
-#: sql_help.c:3481 sql_help.c:3482 sql_help.c:3483 sql_help.c:3766
+#: sql_help.c:1258 sql_help.c:1922 sql_help.c:1923 sql_help.c:1924
+#: sql_help.c:1925 sql_help.c:1926 sql_help.c:2052 sql_help.c:2087
+#: sql_help.c:2088 sql_help.c:2089 sql_help.c:2090 sql_help.c:2091
+#: sql_help.c:2535 sql_help.c:2536 sql_help.c:2537 sql_help.c:2538
+#: sql_help.c:2539 sql_help.c:3138 sql_help.c:3139 sql_help.c:3140
+#: sql_help.c:3437 sql_help.c:3441 sql_help.c:3444 sql_help.c:3446
+#: sql_help.c:3448 sql_help.c:3450 sql_help.c:3452 sql_help.c:3458
+#: sql_help.c:3460 sql_help.c:3462 sql_help.c:3464 sql_help.c:3466
+#: sql_help.c:3468 sql_help.c:3469 sql_help.c:3470 sql_help.c:3753
 msgid "role_name"
 msgstr "Rollenname"
 
 #: sql_help.c:222 sql_help.c:434 sql_help.c:1011 sql_help.c:1013
-#: sql_help.c:1287 sql_help.c:1769 sql_help.c:1773 sql_help.c:1859
-#: sql_help.c:1863 sql_help.c:1956 sql_help.c:2271 sql_help.c:2281
-#: sql_help.c:2303 sql_help.c:3200 sql_help.c:3215 sql_help.c:3217
-#: sql_help.c:3631 sql_help.c:3632 sql_help.c:3641 sql_help.c:3682
-#: sql_help.c:3683 sql_help.c:3684 sql_help.c:3685 sql_help.c:3686
-#: sql_help.c:3687 sql_help.c:3720 sql_help.c:3721 sql_help.c:3726
-#: sql_help.c:3731 sql_help.c:3870 sql_help.c:3871 sql_help.c:3880
-#: sql_help.c:3921 sql_help.c:3922 sql_help.c:3923 sql_help.c:3924
-#: sql_help.c:3925 sql_help.c:3926 sql_help.c:3973 sql_help.c:3975
-#: sql_help.c:4008 sql_help.c:4064 sql_help.c:4065 sql_help.c:4074
-#: sql_help.c:4115 sql_help.c:4116 sql_help.c:4117 sql_help.c:4118
-#: sql_help.c:4119 sql_help.c:4120
+#: sql_help.c:1287 sql_help.c:1756 sql_help.c:1760 sql_help.c:1846
+#: sql_help.c:1850 sql_help.c:1943 sql_help.c:2258 sql_help.c:2268
+#: sql_help.c:2290 sql_help.c:3187 sql_help.c:3202 sql_help.c:3204
+#: sql_help.c:3618 sql_help.c:3619 sql_help.c:3628 sql_help.c:3669
+#: sql_help.c:3670 sql_help.c:3671 sql_help.c:3672 sql_help.c:3673
+#: sql_help.c:3674 sql_help.c:3707 sql_help.c:3708 sql_help.c:3713
+#: sql_help.c:3718 sql_help.c:3857 sql_help.c:3858 sql_help.c:3867
+#: sql_help.c:3908 sql_help.c:3909 sql_help.c:3910 sql_help.c:3911
+#: sql_help.c:3912 sql_help.c:3913 sql_help.c:3960 sql_help.c:3962
+#: sql_help.c:3995 sql_help.c:4051 sql_help.c:4052 sql_help.c:4061
+#: sql_help.c:4102 sql_help.c:4103 sql_help.c:4104 sql_help.c:4105
+#: sql_help.c:4106 sql_help.c:4107
 msgid "expression"
 msgstr "Ausdruck"
 
@@ -3480,9 +3496,9 @@ msgstr "Domänen-Constraint"
 
 #: sql_help.c:227 sql_help.c:229 sql_help.c:232 sql_help.c:449 sql_help.c:450
 #: sql_help.c:993 sql_help.c:1026 sql_help.c:1027 sql_help.c:1028
-#: sql_help.c:1048 sql_help.c:1411 sql_help.c:1413 sql_help.c:1772
-#: sql_help.c:1858 sql_help.c:1862 sql_help.c:2270 sql_help.c:2280
-#: sql_help.c:3212
+#: sql_help.c:1048 sql_help.c:1411 sql_help.c:1413 sql_help.c:1759
+#: sql_help.c:1845 sql_help.c:1849 sql_help.c:2257 sql_help.c:2267
+#: sql_help.c:3199
 msgid "constraint_name"
 msgstr "Constraint-Name"
 
@@ -3502,17 +3518,17 @@ msgstr "Elementobjekt"
 msgid "where member_object is:"
 msgstr "wobei Elementobjekt Folgendes ist:"
 
-#: sql_help.c:308 sql_help.c:1404 sql_help.c:3551
+#: sql_help.c:308 sql_help.c:1404 sql_help.c:3538
 msgid "aggregate_name"
 msgstr "Aggregatname"
 
-#: sql_help.c:310 sql_help.c:1406 sql_help.c:1687 sql_help.c:1691
-#: sql_help.c:1693 sql_help.c:2675
+#: sql_help.c:310 sql_help.c:1406 sql_help.c:1674 sql_help.c:1678
+#: sql_help.c:1680 sql_help.c:2662
 msgid "source_type"
 msgstr "Quelltyp"
 
-#: sql_help.c:311 sql_help.c:1407 sql_help.c:1688 sql_help.c:1692
-#: sql_help.c:1694 sql_help.c:2676
+#: sql_help.c:311 sql_help.c:1407 sql_help.c:1675 sql_help.c:1679
+#: sql_help.c:1681 sql_help.c:2663
 msgid "target_type"
 msgstr "Zieltyp"
 
@@ -3526,51 +3542,51 @@ msgstr "Zieltyp"
 #: sql_help.c:1434 sql_help.c:1438 sql_help.c:1439 sql_help.c:1442
 #: sql_help.c:1443 sql_help.c:1444 sql_help.c:1445 sql_help.c:1446
 #: sql_help.c:1447 sql_help.c:1448 sql_help.c:1449 sql_help.c:1450
-#: sql_help.c:1455 sql_help.c:1456 sql_help.c:3548 sql_help.c:3553
-#: sql_help.c:3554 sql_help.c:3555 sql_help.c:3556 sql_help.c:3562
-#: sql_help.c:3563 sql_help.c:3564 sql_help.c:3565 sql_help.c:3566
-#: sql_help.c:3567 sql_help.c:3568 sql_help.c:3569
+#: sql_help.c:1455 sql_help.c:1456 sql_help.c:3535 sql_help.c:3540
+#: sql_help.c:3541 sql_help.c:3542 sql_help.c:3543 sql_help.c:3549
+#: sql_help.c:3550 sql_help.c:3551 sql_help.c:3552 sql_help.c:3553
+#: sql_help.c:3554 sql_help.c:3555 sql_help.c:3556
 msgid "object_name"
 msgstr "Objektname"
 
-#: sql_help.c:318 sql_help.c:741 sql_help.c:1422 sql_help.c:1689
-#: sql_help.c:1724 sql_help.c:1787 sql_help.c:2009 sql_help.c:2040
-#: sql_help.c:2439 sql_help.c:3134 sql_help.c:3466 sql_help.c:3557
-#: sql_help.c:3660 sql_help.c:3664 sql_help.c:3668 sql_help.c:3671
-#: sql_help.c:3899 sql_help.c:3903 sql_help.c:3907 sql_help.c:3910
-#: sql_help.c:4093 sql_help.c:4097 sql_help.c:4101 sql_help.c:4104
+#: sql_help.c:318 sql_help.c:741 sql_help.c:1422 sql_help.c:1676
+#: sql_help.c:1711 sql_help.c:1774 sql_help.c:1996 sql_help.c:2027
+#: sql_help.c:2426 sql_help.c:3121 sql_help.c:3453 sql_help.c:3544
+#: sql_help.c:3647 sql_help.c:3651 sql_help.c:3655 sql_help.c:3658
+#: sql_help.c:3886 sql_help.c:3890 sql_help.c:3894 sql_help.c:3897
+#: sql_help.c:4080 sql_help.c:4084 sql_help.c:4088 sql_help.c:4091
 msgid "function_name"
 msgstr "Funktionsname"
 
-#: sql_help.c:323 sql_help.c:734 sql_help.c:1429 sql_help.c:2033
+#: sql_help.c:323 sql_help.c:734 sql_help.c:1429 sql_help.c:2020
 msgid "operator_name"
 msgstr "Operatorname"
 
 #: sql_help.c:324 sql_help.c:670 sql_help.c:674 sql_help.c:678 sql_help.c:1430
-#: sql_help.c:2010 sql_help.c:2793
+#: sql_help.c:1997 sql_help.c:2780
 msgid "left_type"
 msgstr "linker_Typ"
 
 #: sql_help.c:325 sql_help.c:671 sql_help.c:675 sql_help.c:679 sql_help.c:1431
-#: sql_help.c:2011 sql_help.c:2794
+#: sql_help.c:1998 sql_help.c:2781
 msgid "right_type"
 msgstr "rechter_Typ"
 
 #: sql_help.c:327 sql_help.c:329 sql_help.c:697 sql_help.c:700 sql_help.c:703
 #: sql_help.c:732 sql_help.c:744 sql_help.c:752 sql_help.c:755 sql_help.c:758
-#: sql_help.c:1433 sql_help.c:1435 sql_help.c:2030 sql_help.c:2051
-#: sql_help.c:2286 sql_help.c:2803 sql_help.c:2812
+#: sql_help.c:1433 sql_help.c:1435 sql_help.c:2017 sql_help.c:2038
+#: sql_help.c:2273 sql_help.c:2790 sql_help.c:2799
 msgid "index_method"
 msgstr "Indexmethode"
 
-#: sql_help.c:339 sql_help.c:1044 sql_help.c:1451 sql_help.c:1897
-#: sql_help.c:2262 sql_help.c:2408 sql_help.c:2926 sql_help.c:3148
-#: sql_help.c:3480
+#: sql_help.c:339 sql_help.c:1044 sql_help.c:1451 sql_help.c:1884
+#: sql_help.c:2249 sql_help.c:2395 sql_help.c:2913 sql_help.c:3135
+#: sql_help.c:3467
 msgid "type_name"
 msgstr "Typname"
 
-#: sql_help.c:340 sql_help.c:1452 sql_help.c:1896 sql_help.c:2409
-#: sql_help.c:2633 sql_help.c:2927 sql_help.c:3140 sql_help.c:3472
+#: sql_help.c:340 sql_help.c:1452 sql_help.c:1883 sql_help.c:2396
+#: sql_help.c:2620 sql_help.c:2914 sql_help.c:3127 sql_help.c:3459
 msgid "lang_name"
 msgstr "Sprachname"
 
@@ -3578,16 +3594,16 @@ msgstr "Sprachname"
 msgid "and aggregate_signature is:"
 msgstr "und Aggregatsignatur Folgendes ist:"
 
-#: sql_help.c:366 sql_help.c:1546 sql_help.c:1814
+#: sql_help.c:366 sql_help.c:1546 sql_help.c:1801
 msgid "handler_function"
 msgstr "Handler-Funktion"
 
-#: sql_help.c:367 sql_help.c:1815
+#: sql_help.c:367 sql_help.c:1802
 msgid "validator_function"
 msgstr "Validator-Funktion"
 
 #: sql_help.c:416 sql_help.c:493 sql_help.c:625 sql_help.c:988 sql_help.c:1187
-#: sql_help.c:2277 sql_help.c:2278 sql_help.c:2294 sql_help.c:2295
+#: sql_help.c:2264 sql_help.c:2265 sql_help.c:2281 sql_help.c:2282
 msgid "action"
 msgstr "Aktion"
 
@@ -3599,15 +3615,15 @@ msgstr "Aktion"
 #: sql_help.c:1015 sql_help.c:1016 sql_help.c:1018 sql_help.c:1021
 #: sql_help.c:1023 sql_help.c:1286 sql_help.c:1289 sql_help.c:1309
 #: sql_help.c:1410 sql_help.c:1512 sql_help.c:1517 sql_help.c:1531
-#: sql_help.c:1532 sql_help.c:1533 sql_help.c:1846 sql_help.c:1894
-#: sql_help.c:1955 sql_help.c:1990 sql_help.c:2170 sql_help.c:2250
-#: sql_help.c:2263 sql_help.c:2282 sql_help.c:2284 sql_help.c:2291
-#: sql_help.c:2302 sql_help.c:2319 sql_help.c:2442 sql_help.c:2578
-#: sql_help.c:3119 sql_help.c:3120 sql_help.c:3199 sql_help.c:3214
-#: sql_help.c:3216 sql_help.c:3218 sql_help.c:3451 sql_help.c:3452
-#: sql_help.c:3550 sql_help.c:3691 sql_help.c:3930 sql_help.c:3972
-#: sql_help.c:3974 sql_help.c:3976 sql_help.c:3993 sql_help.c:3996
-#: sql_help.c:4124
+#: sql_help.c:1532 sql_help.c:1533 sql_help.c:1833 sql_help.c:1881
+#: sql_help.c:1942 sql_help.c:1977 sql_help.c:2157 sql_help.c:2237
+#: sql_help.c:2250 sql_help.c:2269 sql_help.c:2271 sql_help.c:2278
+#: sql_help.c:2289 sql_help.c:2306 sql_help.c:2429 sql_help.c:2565
+#: sql_help.c:3106 sql_help.c:3107 sql_help.c:3186 sql_help.c:3201
+#: sql_help.c:3203 sql_help.c:3205 sql_help.c:3438 sql_help.c:3439
+#: sql_help.c:3537 sql_help.c:3678 sql_help.c:3917 sql_help.c:3959
+#: sql_help.c:3961 sql_help.c:3963 sql_help.c:3980 sql_help.c:3983
+#: sql_help.c:4111
 msgid "column_name"
 msgstr "Spaltenname"
 
@@ -3621,20 +3637,20 @@ msgid "where action is one of:"
 msgstr "wobei Aktion Folgendes sein kann:"
 
 #: sql_help.c:426 sql_help.c:431 sql_help.c:1004 sql_help.c:1009
-#: sql_help.c:1202 sql_help.c:1206 sql_help.c:1767 sql_help.c:1847
-#: sql_help.c:2029 sql_help.c:2251 sql_help.c:2487 sql_help.c:3301
+#: sql_help.c:1202 sql_help.c:1206 sql_help.c:1754 sql_help.c:1834
+#: sql_help.c:2016 sql_help.c:2238 sql_help.c:2474 sql_help.c:3288
 msgid "data_type"
 msgstr "Datentyp"
 
 #: sql_help.c:427 sql_help.c:432 sql_help.c:1005 sql_help.c:1010
-#: sql_help.c:1203 sql_help.c:1207 sql_help.c:1768 sql_help.c:1850
-#: sql_help.c:1957 sql_help.c:2252 sql_help.c:2488 sql_help.c:2494
-#: sql_help.c:3209
+#: sql_help.c:1203 sql_help.c:1207 sql_help.c:1755 sql_help.c:1837
+#: sql_help.c:1944 sql_help.c:2239 sql_help.c:2475 sql_help.c:2481
+#: sql_help.c:3196
 msgid "collation"
 msgstr "Sortierfolge"
 
-#: sql_help.c:428 sql_help.c:1006 sql_help.c:1851 sql_help.c:2253
-#: sql_help.c:2264
+#: sql_help.c:428 sql_help.c:1006 sql_help.c:1838 sql_help.c:2240
+#: sql_help.c:2251
 msgid "column_constraint"
 msgstr "Spalten-Constraint"
 
@@ -3647,8 +3663,8 @@ msgstr "ganze_Zahl"
 msgid "attribute_option"
 msgstr "Attributoption"
 
-#: sql_help.c:448 sql_help.c:1024 sql_help.c:1852 sql_help.c:2254
-#: sql_help.c:2265
+#: sql_help.c:448 sql_help.c:1024 sql_help.c:1839 sql_help.c:2241
+#: sql_help.c:2252
 msgid "table_constraint"
 msgstr "Tabellen-Constraint"
 
@@ -3658,40 +3674,40 @@ msgid "trigger_name"
 msgstr "Triggername"
 
 #: sql_help.c:455 sql_help.c:456 sql_help.c:1042 sql_help.c:1043
-#: sql_help.c:1853 sql_help.c:2257
+#: sql_help.c:1840 sql_help.c:2244
 msgid "parent_table"
 msgstr "Elterntabelle"
 
 #: sql_help.c:513 sql_help.c:563 sql_help.c:627 sql_help.c:1167
-#: sql_help.c:1799
+#: sql_help.c:1786
 msgid "extension_name"
 msgstr "Erweiterungsname"
 
-#: sql_help.c:515 sql_help.c:1898
+#: sql_help.c:515 sql_help.c:1885
 msgid "execution_cost"
 msgstr "Ausführungskosten"
 
-#: sql_help.c:516 sql_help.c:1899
+#: sql_help.c:516 sql_help.c:1886
 msgid "result_rows"
 msgstr "Ergebniszeilen"
 
 #: sql_help.c:537 sql_help.c:539 sql_help.c:813 sql_help.c:821 sql_help.c:825
 #: sql_help.c:828 sql_help.c:831 sql_help.c:1241 sql_help.c:1249
-#: sql_help.c:1252 sql_help.c:1254 sql_help.c:1256 sql_help.c:2144
-#: sql_help.c:2146 sql_help.c:2149 sql_help.c:2150 sql_help.c:3118
-#: sql_help.c:3122 sql_help.c:3125 sql_help.c:3127 sql_help.c:3129
-#: sql_help.c:3131 sql_help.c:3133 sql_help.c:3139 sql_help.c:3141
-#: sql_help.c:3143 sql_help.c:3145 sql_help.c:3147 sql_help.c:3149
+#: sql_help.c:1252 sql_help.c:1254 sql_help.c:1256 sql_help.c:2131
+#: sql_help.c:2133 sql_help.c:2136 sql_help.c:2137 sql_help.c:3105
+#: sql_help.c:3109 sql_help.c:3112 sql_help.c:3114 sql_help.c:3116
+#: sql_help.c:3118 sql_help.c:3120 sql_help.c:3126 sql_help.c:3128
+#: sql_help.c:3130 sql_help.c:3132 sql_help.c:3134 sql_help.c:3136
 msgid "role_specification"
 msgstr "Rollenangabe"
 
-#: sql_help.c:538 sql_help.c:540 sql_help.c:1268 sql_help.c:1742
-#: sql_help.c:2152 sql_help.c:2563 sql_help.c:2960 sql_help.c:3776
+#: sql_help.c:538 sql_help.c:540 sql_help.c:1268 sql_help.c:1729
+#: sql_help.c:2139 sql_help.c:2550 sql_help.c:2947 sql_help.c:3763
 msgid "user_name"
 msgstr "Benutzername"
 
-#: sql_help.c:541 sql_help.c:833 sql_help.c:1257 sql_help.c:2151
-#: sql_help.c:3150
+#: sql_help.c:541 sql_help.c:833 sql_help.c:1257 sql_help.c:2138
+#: sql_help.c:3137
 msgid "where role_specification can be:"
 msgstr "wobei Rollenangabe Folgendes sein kann:"
 
@@ -3699,19 +3715,19 @@ msgstr "wobei Rollenangabe Folgendes sein kann:"
 msgid "group_name"
 msgstr "Gruppenname"
 
-#: sql_help.c:561 sql_help.c:1747 sql_help.c:1961 sql_help.c:1993
-#: sql_help.c:2260 sql_help.c:2268 sql_help.c:2300 sql_help.c:2322
-#: sql_help.c:2334 sql_help.c:3146 sql_help.c:3478
+#: sql_help.c:561 sql_help.c:1734 sql_help.c:1948 sql_help.c:1980
+#: sql_help.c:2247 sql_help.c:2255 sql_help.c:2287 sql_help.c:2309
+#: sql_help.c:2321 sql_help.c:3133 sql_help.c:3465
 msgid "tablespace_name"
 msgstr "Tablespace-Name"
 
 #: sql_help.c:565 sql_help.c:568 sql_help.c:648 sql_help.c:650 sql_help.c:1039
-#: sql_help.c:1041 sql_help.c:1959 sql_help.c:1991 sql_help.c:2258
-#: sql_help.c:2266 sql_help.c:2298 sql_help.c:2320
+#: sql_help.c:1041 sql_help.c:1946 sql_help.c:1978 sql_help.c:2245
+#: sql_help.c:2253 sql_help.c:2285 sql_help.c:2307
 msgid "storage_parameter"
 msgstr "Storage-Parameter"
 
-#: sql_help.c:591 sql_help.c:1427 sql_help.c:3561
+#: sql_help.c:591 sql_help.c:1427 sql_help.c:3548
 msgid "large_object_oid"
 msgstr "Large-Object-OID"
 
@@ -3720,89 +3736,89 @@ msgstr "Large-Object-OID"
 msgid "index_name"
 msgstr "Indexname"
 
-#: sql_help.c:680 sql_help.c:2014
+#: sql_help.c:680 sql_help.c:2001
 msgid "res_proc"
 msgstr "Res-Funktion"
 
-#: sql_help.c:681 sql_help.c:2015
+#: sql_help.c:681 sql_help.c:2002
 msgid "join_proc"
 msgstr "Join-Funktion"
 
-#: sql_help.c:733 sql_help.c:745 sql_help.c:2032
+#: sql_help.c:733 sql_help.c:745 sql_help.c:2019
 msgid "strategy_number"
 msgstr "Strategienummer"
 
 #: sql_help.c:735 sql_help.c:736 sql_help.c:739 sql_help.c:740 sql_help.c:746
-#: sql_help.c:747 sql_help.c:749 sql_help.c:750 sql_help.c:2034
-#: sql_help.c:2035 sql_help.c:2038 sql_help.c:2039
+#: sql_help.c:747 sql_help.c:749 sql_help.c:750 sql_help.c:2021
+#: sql_help.c:2022 sql_help.c:2025 sql_help.c:2026
 msgid "op_type"
 msgstr "Optyp"
 
-#: sql_help.c:737 sql_help.c:2036
+#: sql_help.c:737 sql_help.c:2023
 msgid "sort_family_name"
 msgstr "Sortierfamilienname"
 
-#: sql_help.c:738 sql_help.c:748 sql_help.c:2037
+#: sql_help.c:738 sql_help.c:748 sql_help.c:2024
 msgid "support_number"
 msgstr "Unterst-Nummer"
 
-#: sql_help.c:742 sql_help.c:1690 sql_help.c:2041 sql_help.c:2411
-#: sql_help.c:2413
+#: sql_help.c:742 sql_help.c:1677 sql_help.c:2028 sql_help.c:2398
+#: sql_help.c:2400
 msgid "argument_type"
 msgstr "Argumenttyp"
 
 #: sql_help.c:773 sql_help.c:776 sql_help.c:843 sql_help.c:879 sql_help.c:1163
 #: sql_help.c:1166 sql_help.c:1308 sql_help.c:1348 sql_help.c:1412
 #: sql_help.c:1437 sql_help.c:1441 sql_help.c:1454 sql_help.c:1511
-#: sql_help.c:1516 sql_help.c:1845 sql_help.c:1953 sql_help.c:1989
-#: sql_help.c:2064 sql_help.c:2121 sql_help.c:2169 sql_help.c:2249
-#: sql_help.c:2261 sql_help.c:2318 sql_help.c:2436 sql_help.c:2612
-#: sql_help.c:2829 sql_help.c:2846 sql_help.c:2936 sql_help.c:3116
-#: sql_help.c:3121 sql_help.c:3166 sql_help.c:3197 sql_help.c:3448
-#: sql_help.c:3453 sql_help.c:3549 sql_help.c:3646 sql_help.c:3648
-#: sql_help.c:3697 sql_help.c:3736 sql_help.c:3885 sql_help.c:3887
-#: sql_help.c:3936 sql_help.c:3970 sql_help.c:3992 sql_help.c:3994
-#: sql_help.c:3995 sql_help.c:4079 sql_help.c:4081 sql_help.c:4130
+#: sql_help.c:1516 sql_help.c:1832 sql_help.c:1940 sql_help.c:1976
+#: sql_help.c:2051 sql_help.c:2108 sql_help.c:2156 sql_help.c:2236
+#: sql_help.c:2248 sql_help.c:2305 sql_help.c:2423 sql_help.c:2599
+#: sql_help.c:2816 sql_help.c:2833 sql_help.c:2923 sql_help.c:3103
+#: sql_help.c:3108 sql_help.c:3153 sql_help.c:3184 sql_help.c:3435
+#: sql_help.c:3440 sql_help.c:3536 sql_help.c:3633 sql_help.c:3635
+#: sql_help.c:3684 sql_help.c:3723 sql_help.c:3872 sql_help.c:3874
+#: sql_help.c:3923 sql_help.c:3957 sql_help.c:3979 sql_help.c:3981
+#: sql_help.c:3982 sql_help.c:4066 sql_help.c:4068 sql_help.c:4117
 msgid "table_name"
 msgstr "Tabellenname"
 
-#: sql_help.c:778 sql_help.c:2066
+#: sql_help.c:778 sql_help.c:2053
 msgid "using_expression"
 msgstr "Using-Ausdruck"
 
-#: sql_help.c:779 sql_help.c:2067
+#: sql_help.c:779 sql_help.c:2054
 msgid "check_expression"
 msgstr "Check-Ausdruck"
 
-#: sql_help.c:817 sql_help.c:1245 sql_help.c:1933 sql_help.c:2098
-#: sql_help.c:2546
+#: sql_help.c:817 sql_help.c:1245 sql_help.c:1920 sql_help.c:2085
+#: sql_help.c:2533
 msgid "password"
 msgstr "Passwort"
 
-#: sql_help.c:818 sql_help.c:1246 sql_help.c:1934 sql_help.c:2099
-#: sql_help.c:2547
+#: sql_help.c:818 sql_help.c:1246 sql_help.c:1921 sql_help.c:2086
+#: sql_help.c:2534
 msgid "timestamp"
 msgstr "Zeit"
 
-#: sql_help.c:822 sql_help.c:826 sql_help.c:829 sql_help.c:832 sql_help.c:3126
-#: sql_help.c:3458
+#: sql_help.c:822 sql_help.c:826 sql_help.c:829 sql_help.c:832 sql_help.c:3113
+#: sql_help.c:3445
 msgid "database_name"
 msgstr "Datenbankname"
 
-#: sql_help.c:873 sql_help.c:2164
+#: sql_help.c:873 sql_help.c:2151
 msgid "increment"
 msgstr "Inkrement"
 
-#: sql_help.c:874 sql_help.c:2165
+#: sql_help.c:874 sql_help.c:2152
 msgid "minvalue"
 msgstr "Minwert"
 
-#: sql_help.c:875 sql_help.c:2166
+#: sql_help.c:875 sql_help.c:2153
 msgid "maxvalue"
 msgstr "Maxwert"
 
-#: sql_help.c:876 sql_help.c:2167 sql_help.c:3644 sql_help.c:3734
-#: sql_help.c:3883 sql_help.c:4012 sql_help.c:4077
+#: sql_help.c:876 sql_help.c:2154 sql_help.c:3631 sql_help.c:3721
+#: sql_help.c:3870 sql_help.c:3999 sql_help.c:4064
 msgid "start"
 msgstr "Start"
 
@@ -3810,7 +3826,7 @@ msgstr "Start"
 msgid "restart"
 msgstr "Restart"
 
-#: sql_help.c:878 sql_help.c:2168
+#: sql_help.c:878 sql_help.c:2155
 msgid "cache"
 msgstr "Cache"
 
@@ -3826,7 +3842,7 @@ msgstr "Regelname"
 msgid "and table_constraint_using_index is:"
 msgstr "und Tabellen-Constraint-für-Index Folgendes ist:"
 
-#: sql_help.c:1065 sql_help.c:1068 sql_help.c:2337
+#: sql_help.c:1065 sql_help.c:1068 sql_help.c:2324
 msgid "tablespace_option"
 msgstr "Tablespace-Option"
 
@@ -3847,7 +3863,7 @@ msgid "new_dictionary"
 msgstr "neues_Wörterbuch"
 
 #: sql_help.c:1191 sql_help.c:1201 sql_help.c:1204 sql_help.c:1205
-#: sql_help.c:2486
+#: sql_help.c:2473
 msgid "attribute_name"
 msgstr "Attributname"
 
@@ -3863,24 +3879,24 @@ msgstr "neuer_Enum-Wert"
 msgid "existing_enum_value"
 msgstr "existierender_Enum-Wert"
 
-#: sql_help.c:1269 sql_help.c:1854 sql_help.c:2180 sql_help.c:2564
-#: sql_help.c:2961 sql_help.c:3132 sql_help.c:3167 sql_help.c:3464
+#: sql_help.c:1269 sql_help.c:1841 sql_help.c:2167 sql_help.c:2551
+#: sql_help.c:2948 sql_help.c:3119 sql_help.c:3154 sql_help.c:3451
 msgid "server_name"
 msgstr "Servername"
 
-#: sql_help.c:1297 sql_help.c:1300 sql_help.c:2579
+#: sql_help.c:1297 sql_help.c:1300 sql_help.c:2566
 msgid "view_option_name"
 msgstr "Sichtoptionsname"
 
-#: sql_help.c:1298 sql_help.c:2580
+#: sql_help.c:1298 sql_help.c:2567
 msgid "view_option_value"
 msgstr "Sichtoptionswert"
 
-#: sql_help.c:1323 sql_help.c:3792 sql_help.c:3794 sql_help.c:3818
+#: sql_help.c:1323 sql_help.c:3779 sql_help.c:3781 sql_help.c:3805
 msgid "transaction_mode"
 msgstr "Transaktionsmodus"
 
-#: sql_help.c:1324 sql_help.c:3795 sql_help.c:3819
+#: sql_help.c:1324 sql_help.c:3782 sql_help.c:3806
 msgid "where transaction_mode is one of:"
 msgstr "wobei Transaktionsmodus Folgendes sein kann:"
 
@@ -3888,7 +3904,7 @@ msgstr "wobei Transaktionsmodus Folgendes sein kann:"
 msgid "relation_name"
 msgstr "Relationsname"
 
-#: sql_help.c:1414 sql_help.c:3128 sql_help.c:3460
+#: sql_help.c:1414 sql_help.c:3115 sql_help.c:3447
 msgid "domain_name"
 msgstr "Domänenname"
 
@@ -3904,25 +3920,25 @@ msgstr "Regelname"
 msgid "text"
 msgstr "Text"
 
-#: sql_help.c:1482 sql_help.c:3310 sql_help.c:3498
+#: sql_help.c:1482 sql_help.c:3297 sql_help.c:3485
 msgid "transaction_id"
 msgstr "Transaktions-ID"
 
-#: sql_help.c:1513 sql_help.c:1519 sql_help.c:3236
+#: sql_help.c:1513 sql_help.c:1519 sql_help.c:3223
 msgid "filename"
 msgstr "Dateiname"
 
-#: sql_help.c:1514 sql_help.c:1520 sql_help.c:2123 sql_help.c:2124
-#: sql_help.c:2125
+#: sql_help.c:1514 sql_help.c:1520 sql_help.c:2110 sql_help.c:2111
+#: sql_help.c:2112
 msgid "command"
 msgstr "Befehl"
 
-#: sql_help.c:1518 sql_help.c:1994 sql_help.c:2323 sql_help.c:2581
-#: sql_help.c:2599 sql_help.c:3201
+#: sql_help.c:1518 sql_help.c:1981 sql_help.c:2310 sql_help.c:2568
+#: sql_help.c:2586 sql_help.c:3188
 msgid "query"
 msgstr "Anfrage"
 
-#: sql_help.c:1522 sql_help.c:3006
+#: sql_help.c:1522 sql_help.c:2993
 msgid "where option can be one of:"
 msgstr "wobei Option eine der folgenden sein kann:"
 
@@ -3930,8 +3946,8 @@ msgstr "wobei Option eine der folgenden sein kann:"
 msgid "format_name"
 msgstr "Formatname"
 
-#: sql_help.c:1524 sql_help.c:1525 sql_help.c:1528 sql_help.c:3007
-#: sql_help.c:3008 sql_help.c:3009 sql_help.c:3010 sql_help.c:3011
+#: sql_help.c:1524 sql_help.c:1525 sql_help.c:1528 sql_help.c:2994
+#: sql_help.c:2995 sql_help.c:2996 sql_help.c:2997 sql_help.c:2998
 msgid "boolean"
 msgstr "boolean"
 
@@ -3959,1325 +3975,1321 @@ msgstr "Kodierungsname"
 msgid "access_method_type"
 msgstr "Zugriffsmethodentyp"
 
-#: sql_help.c:1618 sql_help.c:1638 sql_help.c:1641
+#: sql_help.c:1611 sql_help.c:1630 sql_help.c:1633
 msgid "arg_data_type"
 msgstr "Arg-Datentyp"
 
-#: sql_help.c:1619 sql_help.c:1642 sql_help.c:1654
+#: sql_help.c:1612 sql_help.c:1634 sql_help.c:1642
 msgid "sfunc"
 msgstr "Übergangsfunktion"
 
-#: sql_help.c:1620 sql_help.c:1643 sql_help.c:1655
+#: sql_help.c:1613 sql_help.c:1635 sql_help.c:1643
 msgid "state_data_type"
 msgstr "Zustandsdatentyp"
 
-#: sql_help.c:1621 sql_help.c:1644 sql_help.c:1656
+#: sql_help.c:1614 sql_help.c:1636 sql_help.c:1644
 msgid "state_data_size"
 msgstr "Zustandsdatengröße"
 
-#: sql_help.c:1622 sql_help.c:1645 sql_help.c:1657
+#: sql_help.c:1615 sql_help.c:1637 sql_help.c:1645
 msgid "ffunc"
 msgstr "Abschlussfunktion"
 
-#: sql_help.c:1623 sql_help.c:1646 sql_help.c:1658
+#: sql_help.c:1616 sql_help.c:1646
 msgid "combinefunc"
 msgstr "Combine-Funktion"
 
-#: sql_help.c:1624 sql_help.c:1647 sql_help.c:1659
+#: sql_help.c:1617 sql_help.c:1647
 msgid "serialfunc"
 msgstr "Serialisierungsfunktion"
 
-#: sql_help.c:1625 sql_help.c:1648 sql_help.c:1660
+#: sql_help.c:1618 sql_help.c:1648
 msgid "deserialfunc"
 msgstr "Deserialisierungsfunktion"
 
-#: sql_help.c:1626 sql_help.c:1649 sql_help.c:1661
-msgid "serialtype"
-msgstr "Serialisierungstyp"
-
-#: sql_help.c:1627 sql_help.c:1650 sql_help.c:1662
+#: sql_help.c:1619 sql_help.c:1638 sql_help.c:1649
 msgid "initial_condition"
 msgstr "Anfangswert"
 
-#: sql_help.c:1628 sql_help.c:1663
+#: sql_help.c:1620 sql_help.c:1650
 msgid "msfunc"
 msgstr "Moving-Übergangsfunktion"
 
-#: sql_help.c:1629 sql_help.c:1664
+#: sql_help.c:1621 sql_help.c:1651
 msgid "minvfunc"
 msgstr "Moving-Inversfunktion"
 
-#: sql_help.c:1630 sql_help.c:1665
+#: sql_help.c:1622 sql_help.c:1652
 msgid "mstate_data_type"
 msgstr "Moving-Zustandsdatentyp"
 
-#: sql_help.c:1631 sql_help.c:1666
+#: sql_help.c:1623 sql_help.c:1653
 msgid "mstate_data_size"
 msgstr "Moving-Zustandsdatengröße"
 
-#: sql_help.c:1632 sql_help.c:1667
+#: sql_help.c:1624 sql_help.c:1654
 msgid "mffunc"
 msgstr "Moving-Abschlussfunktion"
 
-#: sql_help.c:1633 sql_help.c:1668
+#: sql_help.c:1625 sql_help.c:1655
 msgid "minitial_condition"
 msgstr "Moving-Anfangswert"
 
-#: sql_help.c:1634 sql_help.c:1669
+#: sql_help.c:1626 sql_help.c:1656
 msgid "sort_operator"
 msgstr "Sortieroperator"
 
-#: sql_help.c:1651
+#: sql_help.c:1639
 msgid "or the old syntax"
 msgstr "oder die alte Syntax"
 
-#: sql_help.c:1653
+#: sql_help.c:1641
 msgid "base_type"
 msgstr "Basistyp"
 
-#: sql_help.c:1708
+#: sql_help.c:1695
 msgid "locale"
 msgstr "Locale"
 
-#: sql_help.c:1709 sql_help.c:1745
+#: sql_help.c:1696 sql_help.c:1732
 msgid "lc_collate"
 msgstr "lc_collate"
 
-#: sql_help.c:1710 sql_help.c:1746
+#: sql_help.c:1697 sql_help.c:1733
 msgid "lc_ctype"
 msgstr "lc_ctype"
 
-#: sql_help.c:1712
+#: sql_help.c:1699
 msgid "existing_collation"
 msgstr "existierende_Sortierfolge"
 
-#: sql_help.c:1722
+#: sql_help.c:1709
 msgid "source_encoding"
 msgstr "Quellkodierung"
 
-#: sql_help.c:1723
+#: sql_help.c:1710
 msgid "dest_encoding"
 msgstr "Zielkodierung"
 
-#: sql_help.c:1743 sql_help.c:2363
+#: sql_help.c:1730 sql_help.c:2350
 msgid "template"
 msgstr "Vorlage"
 
-#: sql_help.c:1744
+#: sql_help.c:1731
 msgid "encoding"
 msgstr "Kodierung"
 
-#: sql_help.c:1770
+#: sql_help.c:1757
 msgid "constraint"
 msgstr "Constraint"
 
-#: sql_help.c:1771
+#: sql_help.c:1758
 msgid "where constraint is:"
 msgstr "wobei Constraint Folgendes ist:"
 
-#: sql_help.c:1785 sql_help.c:2120 sql_help.c:2435
+#: sql_help.c:1772 sql_help.c:2107 sql_help.c:2422
 msgid "event"
 msgstr "Ereignis"
 
-#: sql_help.c:1786
+#: sql_help.c:1773
 msgid "filter_variable"
 msgstr "Filtervariable"
 
-#: sql_help.c:1801
+#: sql_help.c:1788
 msgid "version"
 msgstr "Version"
 
-#: sql_help.c:1802
+#: sql_help.c:1789
 msgid "old_version"
 msgstr "alte_Version"
 
-#: sql_help.c:1857 sql_help.c:2269
+#: sql_help.c:1844 sql_help.c:2256
 msgid "where column_constraint is:"
 msgstr "wobei Spalten-Constraint Folgendes ist:"
 
-#: sql_help.c:1860 sql_help.c:1892 sql_help.c:2272
+#: sql_help.c:1847 sql_help.c:1879 sql_help.c:2259
 msgid "default_expr"
 msgstr "Vorgabeausdruck"
 
-#: sql_help.c:1861 sql_help.c:2279
+#: sql_help.c:1848 sql_help.c:2266
 msgid "and table_constraint is:"
 msgstr "und Tabellen-Constraint Folgendes ist:"
 
-#: sql_help.c:1893
+#: sql_help.c:1880
 msgid "rettype"
 msgstr "Rückgabetyp"
 
-#: sql_help.c:1895
+#: sql_help.c:1882
 msgid "column_type"
 msgstr "Spaltentyp"
 
-#: sql_help.c:1903
+#: sql_help.c:1890
 msgid "definition"
 msgstr "Definition"
 
-#: sql_help.c:1904
+#: sql_help.c:1891
 msgid "obj_file"
 msgstr "Objektdatei"
 
-#: sql_help.c:1905
+#: sql_help.c:1892
 msgid "link_symbol"
 msgstr "Linksymbol"
 
-#: sql_help.c:1906
+#: sql_help.c:1893
 msgid "attribute"
 msgstr "Attribut"
 
-#: sql_help.c:1940 sql_help.c:2105 sql_help.c:2553
+#: sql_help.c:1927 sql_help.c:2092 sql_help.c:2540
 msgid "uid"
 msgstr "Uid"
 
-#: sql_help.c:1954
+#: sql_help.c:1941
 msgid "method"
 msgstr "Methode"
 
-#: sql_help.c:1958 sql_help.c:2304 sql_help.c:3210
+#: sql_help.c:1945 sql_help.c:2291 sql_help.c:3197
 msgid "opclass"
 msgstr "Opklasse"
 
-#: sql_help.c:1962 sql_help.c:2290
+#: sql_help.c:1949 sql_help.c:2277
 msgid "predicate"
 msgstr "Prädikat"
 
-#: sql_help.c:1974
+#: sql_help.c:1961
 msgid "call_handler"
 msgstr "Handler"
 
-#: sql_help.c:1975
+#: sql_help.c:1962
 msgid "inline_handler"
 msgstr "Inline-Handler"
 
-#: sql_help.c:1976
+#: sql_help.c:1963
 msgid "valfunction"
 msgstr "Valfunktion"
 
-#: sql_help.c:2012
+#: sql_help.c:1999
 msgid "com_op"
 msgstr "Kommutator-Op"
 
-#: sql_help.c:2013
+#: sql_help.c:2000
 msgid "neg_op"
 msgstr "Umkehrungs-Op"
 
-#: sql_help.c:2031
+#: sql_help.c:2018
 msgid "family_name"
 msgstr "Familienname"
 
-#: sql_help.c:2042
+#: sql_help.c:2029
 msgid "storage_type"
 msgstr "Storage-Typ"
 
-#: sql_help.c:2122 sql_help.c:2438 sql_help.c:2615 sql_help.c:3220
-#: sql_help.c:3635 sql_help.c:3637 sql_help.c:3725 sql_help.c:3727
-#: sql_help.c:3874 sql_help.c:3876 sql_help.c:3979 sql_help.c:4068
-#: sql_help.c:4070
+#: sql_help.c:2109 sql_help.c:2425 sql_help.c:2602 sql_help.c:3207
+#: sql_help.c:3622 sql_help.c:3624 sql_help.c:3712 sql_help.c:3714
+#: sql_help.c:3861 sql_help.c:3863 sql_help.c:3966 sql_help.c:4055
+#: sql_help.c:4057
 msgid "condition"
 msgstr "Bedingung"
 
-#: sql_help.c:2126 sql_help.c:2441
+#: sql_help.c:2113 sql_help.c:2428
 msgid "where event can be one of:"
 msgstr "wobei Ereignis eins der folgenden sein kann:"
 
-#: sql_help.c:2145 sql_help.c:2147
+#: sql_help.c:2132 sql_help.c:2134
 msgid "schema_element"
 msgstr "Schemaelement"
 
-#: sql_help.c:2181
+#: sql_help.c:2168
 msgid "server_type"
 msgstr "Servertyp"
 
-#: sql_help.c:2182
+#: sql_help.c:2169
 msgid "server_version"
 msgstr "Serverversion"
 
-#: sql_help.c:2183 sql_help.c:3130 sql_help.c:3462
+#: sql_help.c:2170 sql_help.c:3117 sql_help.c:3449
 msgid "fdw_name"
 msgstr "FDW-Name"
 
-#: sql_help.c:2255
+#: sql_help.c:2242
 msgid "source_table"
 msgstr "Quelltabelle"
 
-#: sql_help.c:2256
+#: sql_help.c:2243
 msgid "like_option"
 msgstr "Like-Option"
 
-#: sql_help.c:2273 sql_help.c:2274 sql_help.c:2283 sql_help.c:2285
-#: sql_help.c:2289
+#: sql_help.c:2260 sql_help.c:2261 sql_help.c:2270 sql_help.c:2272
+#: sql_help.c:2276
 msgid "index_parameters"
 msgstr "Indexparameter"
 
-#: sql_help.c:2275 sql_help.c:2292
+#: sql_help.c:2262 sql_help.c:2279
 msgid "reftable"
 msgstr "Reftabelle"
 
-#: sql_help.c:2276 sql_help.c:2293
+#: sql_help.c:2263 sql_help.c:2280
 msgid "refcolumn"
 msgstr "Refspalte"
 
-#: sql_help.c:2287
+#: sql_help.c:2274
 msgid "exclude_element"
 msgstr "Exclude-Element"
 
-#: sql_help.c:2288 sql_help.c:3642 sql_help.c:3732 sql_help.c:3881
-#: sql_help.c:4010 sql_help.c:4075
+#: sql_help.c:2275 sql_help.c:3629 sql_help.c:3719 sql_help.c:3868
+#: sql_help.c:3997 sql_help.c:4062
 msgid "operator"
 msgstr "Operator"
 
-#: sql_help.c:2296
+#: sql_help.c:2283
 msgid "and like_option is:"
 msgstr "und Like-Option Folgendes ist:"
 
-#: sql_help.c:2297
+#: sql_help.c:2284
 msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
 msgstr "Indexparameter bei UNIQUE-, PRIMARY KEY- und EXCLUDE-Constraints sind:"
 
-#: sql_help.c:2301
+#: sql_help.c:2288
 msgid "exclude_element in an EXCLUDE constraint is:"
 msgstr "Exclude-Element in einem EXCLUDE-Constraint ist:"
 
-#: sql_help.c:2336
+#: sql_help.c:2323
 msgid "directory"
 msgstr "Verzeichnis"
 
-#: sql_help.c:2350
+#: sql_help.c:2337
 msgid "parser_name"
 msgstr "Parser-Name"
 
-#: sql_help.c:2351
+#: sql_help.c:2338
 msgid "source_config"
 msgstr "Quellkonfig"
 
-#: sql_help.c:2380
+#: sql_help.c:2367
 msgid "start_function"
 msgstr "Startfunktion"
 
-#: sql_help.c:2381
+#: sql_help.c:2368
 msgid "gettoken_function"
 msgstr "Gettext-Funktion"
 
-#: sql_help.c:2382
+#: sql_help.c:2369
 msgid "end_function"
 msgstr "Endfunktion"
 
-#: sql_help.c:2383
+#: sql_help.c:2370
 msgid "lextypes_function"
 msgstr "Lextypenfunktion"
 
-#: sql_help.c:2384
+#: sql_help.c:2371
 msgid "headline_function"
 msgstr "Headline-Funktion"
 
-#: sql_help.c:2396
+#: sql_help.c:2383
 msgid "init_function"
 msgstr "Init-Funktion"
 
-#: sql_help.c:2397
+#: sql_help.c:2384
 msgid "lexize_function"
 msgstr "Lexize-Funktion"
 
-#: sql_help.c:2410
+#: sql_help.c:2397
 msgid "from_sql_function_name"
 msgstr "From-SQL-Funktionsname"
 
-#: sql_help.c:2412
+#: sql_help.c:2399
 msgid "to_sql_function_name"
 msgstr "To-SQL-Funktionsname"
 
-#: sql_help.c:2437
+#: sql_help.c:2424
 msgid "referenced_table_name"
 msgstr "verwiesener_Tabellenname"
 
-#: sql_help.c:2440
+#: sql_help.c:2427
 msgid "arguments"
 msgstr "Argumente"
 
-#: sql_help.c:2490 sql_help.c:3570
+#: sql_help.c:2477 sql_help.c:3557
 msgid "label"
 msgstr "Label"
 
-#: sql_help.c:2492
+#: sql_help.c:2479
 msgid "subtype"
 msgstr "Untertyp"
 
-#: sql_help.c:2493
+#: sql_help.c:2480
 msgid "subtype_operator_class"
 msgstr "Untertyp-Operatorklasse"
 
-#: sql_help.c:2495
+#: sql_help.c:2482
 msgid "canonical_function"
 msgstr "Canonical-Funktion"
 
-#: sql_help.c:2496
+#: sql_help.c:2483
 msgid "subtype_diff_function"
 msgstr "Untertyp-Diff-Funktion"
 
-#: sql_help.c:2498
+#: sql_help.c:2485
 msgid "input_function"
 msgstr "Eingabefunktion"
 
-#: sql_help.c:2499
+#: sql_help.c:2486
 msgid "output_function"
 msgstr "Ausgabefunktion"
 
-#: sql_help.c:2500
+#: sql_help.c:2487
 msgid "receive_function"
 msgstr "Empfangsfunktion"
 
-#: sql_help.c:2501
+#: sql_help.c:2488
 msgid "send_function"
 msgstr "Sendefunktion"
 
-#: sql_help.c:2502
+#: sql_help.c:2489
 msgid "type_modifier_input_function"
 msgstr "Typmod-Eingabefunktion"
 
-#: sql_help.c:2503
+#: sql_help.c:2490
 msgid "type_modifier_output_function"
 msgstr "Typmod-Ausgabefunktion"
 
-#: sql_help.c:2504
+#: sql_help.c:2491
 msgid "analyze_function"
 msgstr "Analyze-Funktion"
 
-#: sql_help.c:2505
+#: sql_help.c:2492
 msgid "internallength"
 msgstr "interne_Länge"
 
-#: sql_help.c:2506
+#: sql_help.c:2493
 msgid "alignment"
 msgstr "Ausrichtung"
 
-#: sql_help.c:2507
+#: sql_help.c:2494
 msgid "storage"
 msgstr "Speicherung"
 
-#: sql_help.c:2508
+#: sql_help.c:2495
 msgid "like_type"
 msgstr "wie_Typ"
 
-#: sql_help.c:2509
+#: sql_help.c:2496
 msgid "category"
 msgstr "Kategorie"
 
-#: sql_help.c:2510
+#: sql_help.c:2497
 msgid "preferred"
 msgstr "bevorzugt"
 
-#: sql_help.c:2511
+#: sql_help.c:2498
 msgid "default"
 msgstr "Vorgabewert"
 
-#: sql_help.c:2512
+#: sql_help.c:2499
 msgid "element"
 msgstr "Element"
 
-#: sql_help.c:2513
+#: sql_help.c:2500
 msgid "delimiter"
 msgstr "Trennzeichen"
 
-#: sql_help.c:2514
+#: sql_help.c:2501
 msgid "collatable"
 msgstr "sortierbar"
 
-#: sql_help.c:2611 sql_help.c:3196 sql_help.c:3630 sql_help.c:3719
-#: sql_help.c:3869 sql_help.c:3969 sql_help.c:4063
+#: sql_help.c:2598 sql_help.c:3183 sql_help.c:3617 sql_help.c:3706
+#: sql_help.c:3856 sql_help.c:3956 sql_help.c:4050
 msgid "with_query"
 msgstr "With-Anfrage"
 
-#: sql_help.c:2613 sql_help.c:3198 sql_help.c:3649 sql_help.c:3655
-#: sql_help.c:3658 sql_help.c:3662 sql_help.c:3666 sql_help.c:3674
-#: sql_help.c:3888 sql_help.c:3894 sql_help.c:3897 sql_help.c:3901
-#: sql_help.c:3905 sql_help.c:3913 sql_help.c:3971 sql_help.c:4082
-#: sql_help.c:4088 sql_help.c:4091 sql_help.c:4095 sql_help.c:4099
-#: sql_help.c:4107
+#: sql_help.c:2600 sql_help.c:3185 sql_help.c:3636 sql_help.c:3642
+#: sql_help.c:3645 sql_help.c:3649 sql_help.c:3653 sql_help.c:3661
+#: sql_help.c:3875 sql_help.c:3881 sql_help.c:3884 sql_help.c:3888
+#: sql_help.c:3892 sql_help.c:3900 sql_help.c:3958 sql_help.c:4069
+#: sql_help.c:4075 sql_help.c:4078 sql_help.c:4082 sql_help.c:4086
+#: sql_help.c:4094
 msgid "alias"
 msgstr "Alias"
 
-#: sql_help.c:2614
+#: sql_help.c:2601
 msgid "using_list"
 msgstr "Using-Liste"
 
-#: sql_help.c:2616 sql_help.c:3037 sql_help.c:3277 sql_help.c:3980
+#: sql_help.c:2603 sql_help.c:3024 sql_help.c:3264 sql_help.c:3967
 msgid "cursor_name"
 msgstr "Cursor-Name"
 
-#: sql_help.c:2617 sql_help.c:3204 sql_help.c:3981
+#: sql_help.c:2604 sql_help.c:3191 sql_help.c:3968
 msgid "output_expression"
 msgstr "Ausgabeausdruck"
 
-#: sql_help.c:2618 sql_help.c:3205 sql_help.c:3633 sql_help.c:3722
-#: sql_help.c:3872 sql_help.c:3982 sql_help.c:4066
+#: sql_help.c:2605 sql_help.c:3192 sql_help.c:3620 sql_help.c:3709
+#: sql_help.c:3859 sql_help.c:3969 sql_help.c:4053
 msgid "output_name"
 msgstr "Ausgabename"
 
-#: sql_help.c:2634
+#: sql_help.c:2621
 msgid "code"
 msgstr "Code"
 
-#: sql_help.c:2985
+#: sql_help.c:2972
 msgid "parameter"
 msgstr "Parameter"
 
-#: sql_help.c:3004 sql_help.c:3005 sql_help.c:3302
+#: sql_help.c:2991 sql_help.c:2992 sql_help.c:3289
 msgid "statement"
 msgstr "Anweisung"
 
-#: sql_help.c:3036 sql_help.c:3276
+#: sql_help.c:3023 sql_help.c:3263
 msgid "direction"
 msgstr "Richtung"
 
-#: sql_help.c:3038 sql_help.c:3278
+#: sql_help.c:3025 sql_help.c:3265
 msgid "where direction can be empty or one of:"
 msgstr "wobei Richtung leer sein kann oder Folgendes:"
 
-#: sql_help.c:3039 sql_help.c:3040 sql_help.c:3041 sql_help.c:3042
-#: sql_help.c:3043 sql_help.c:3279 sql_help.c:3280 sql_help.c:3281
-#: sql_help.c:3282 sql_help.c:3283 sql_help.c:3643 sql_help.c:3645
-#: sql_help.c:3733 sql_help.c:3735 sql_help.c:3882 sql_help.c:3884
-#: sql_help.c:4011 sql_help.c:4013 sql_help.c:4076 sql_help.c:4078
+#: sql_help.c:3026 sql_help.c:3027 sql_help.c:3028 sql_help.c:3029
+#: sql_help.c:3030 sql_help.c:3266 sql_help.c:3267 sql_help.c:3268
+#: sql_help.c:3269 sql_help.c:3270 sql_help.c:3630 sql_help.c:3632
+#: sql_help.c:3720 sql_help.c:3722 sql_help.c:3869 sql_help.c:3871
+#: sql_help.c:3998 sql_help.c:4000 sql_help.c:4063 sql_help.c:4065
 msgid "count"
 msgstr "Anzahl"
 
-#: sql_help.c:3123 sql_help.c:3455
+#: sql_help.c:3110 sql_help.c:3442
 msgid "sequence_name"
 msgstr "Sequenzname"
 
-#: sql_help.c:3136 sql_help.c:3468
+#: sql_help.c:3123 sql_help.c:3455
 msgid "arg_name"
 msgstr "Argname"
 
-#: sql_help.c:3137 sql_help.c:3469
+#: sql_help.c:3124 sql_help.c:3456
 msgid "arg_type"
 msgstr "Argtyp"
 
-#: sql_help.c:3142 sql_help.c:3474
+#: sql_help.c:3129 sql_help.c:3461
 msgid "loid"
 msgstr "Large-Object-OID"
 
-#: sql_help.c:3165
+#: sql_help.c:3152
 msgid "remote_schema"
 msgstr "fernes_Schema"
 
-#: sql_help.c:3168
+#: sql_help.c:3155
 msgid "local_schema"
 msgstr "lokales_Schema"
 
-#: sql_help.c:3202
+#: sql_help.c:3189
 msgid "conflict_target"
 msgstr "Konfliktziel"
 
-#: sql_help.c:3203
+#: sql_help.c:3190
 msgid "conflict_action"
 msgstr "Konfliktaktion"
 
-#: sql_help.c:3206
+#: sql_help.c:3193
 msgid "where conflict_target can be one of:"
 msgstr "wobei Konfliktziel Folgendes sein kann:"
 
-#: sql_help.c:3207
+#: sql_help.c:3194
 msgid "index_column_name"
 msgstr "Indexspaltenname"
 
-#: sql_help.c:3208
+#: sql_help.c:3195
 msgid "index_expression"
 msgstr "Indexausdruck"
 
-#: sql_help.c:3211
+#: sql_help.c:3198
 msgid "index_predicate"
 msgstr "Indexprädikat"
 
-#: sql_help.c:3213
+#: sql_help.c:3200
 msgid "and conflict_action is one of:"
 msgstr "und Konfliktaktion Folgendes sein kann:"
 
-#: sql_help.c:3219 sql_help.c:3977
+#: sql_help.c:3206 sql_help.c:3964
 msgid "sub-SELECT"
 msgstr "Sub-SELECT"
 
-#: sql_help.c:3228 sql_help.c:3291 sql_help.c:3953
+#: sql_help.c:3215 sql_help.c:3278 sql_help.c:3940
 msgid "channel"
 msgstr "Kanal"
 
-#: sql_help.c:3250
+#: sql_help.c:3237
 msgid "lockmode"
 msgstr "Sperrmodus"
 
-#: sql_help.c:3251
+#: sql_help.c:3238
 msgid "where lockmode is one of:"
 msgstr "wobei Sperrmodus Folgendes sein kann:"
 
-#: sql_help.c:3292
+#: sql_help.c:3279
 msgid "payload"
 msgstr "Payload"
 
-#: sql_help.c:3319
+#: sql_help.c:3306
 msgid "old_role"
 msgstr "alte_Rolle"
 
-#: sql_help.c:3320
+#: sql_help.c:3307
 msgid "new_role"
 msgstr "neue_Rolle"
 
-#: sql_help.c:3345 sql_help.c:3506 sql_help.c:3514
+#: sql_help.c:3332 sql_help.c:3493 sql_help.c:3501
 msgid "savepoint_name"
 msgstr "Sicherungspunktsname"
 
-#: sql_help.c:3547
+#: sql_help.c:3534
 msgid "provider"
 msgstr "Provider"
 
-#: sql_help.c:3634 sql_help.c:3676 sql_help.c:3678 sql_help.c:3724
-#: sql_help.c:3873 sql_help.c:3915 sql_help.c:3917 sql_help.c:4067
-#: sql_help.c:4109 sql_help.c:4111
+#: sql_help.c:3621 sql_help.c:3663 sql_help.c:3665 sql_help.c:3711
+#: sql_help.c:3860 sql_help.c:3902 sql_help.c:3904 sql_help.c:4054
+#: sql_help.c:4096 sql_help.c:4098
 msgid "from_item"
 msgstr "From-Element"
 
-#: sql_help.c:3636 sql_help.c:3688 sql_help.c:3875 sql_help.c:3927
-#: sql_help.c:4069 sql_help.c:4121
+#: sql_help.c:3623 sql_help.c:3675 sql_help.c:3862 sql_help.c:3914
+#: sql_help.c:4056 sql_help.c:4108
 msgid "grouping_element"
 msgstr "Gruppierelement"
 
-#: sql_help.c:3638 sql_help.c:3728 sql_help.c:3877 sql_help.c:4071
+#: sql_help.c:3625 sql_help.c:3715 sql_help.c:3864 sql_help.c:4058
 msgid "window_name"
 msgstr "Fenstername"
 
-#: sql_help.c:3639 sql_help.c:3729 sql_help.c:3878 sql_help.c:4072
+#: sql_help.c:3626 sql_help.c:3716 sql_help.c:3865 sql_help.c:4059
 msgid "window_definition"
 msgstr "Fensterdefinition"
 
-#: sql_help.c:3640 sql_help.c:3654 sql_help.c:3692 sql_help.c:3730
-#: sql_help.c:3879 sql_help.c:3893 sql_help.c:3931 sql_help.c:4073
-#: sql_help.c:4087 sql_help.c:4125
+#: sql_help.c:3627 sql_help.c:3641 sql_help.c:3679 sql_help.c:3717
+#: sql_help.c:3866 sql_help.c:3880 sql_help.c:3918 sql_help.c:4060
+#: sql_help.c:4074 sql_help.c:4112
 msgid "select"
 msgstr "Select"
 
-#: sql_help.c:3647 sql_help.c:3886 sql_help.c:4080
+#: sql_help.c:3634 sql_help.c:3873 sql_help.c:4067
 msgid "where from_item can be one of:"
 msgstr "wobei From-Element Folgendes sein kann:"
 
-#: sql_help.c:3650 sql_help.c:3656 sql_help.c:3659 sql_help.c:3663
-#: sql_help.c:3675 sql_help.c:3889 sql_help.c:3895 sql_help.c:3898
-#: sql_help.c:3902 sql_help.c:3914 sql_help.c:4083 sql_help.c:4089
-#: sql_help.c:4092 sql_help.c:4096 sql_help.c:4108
+#: sql_help.c:3637 sql_help.c:3643 sql_help.c:3646 sql_help.c:3650
+#: sql_help.c:3662 sql_help.c:3876 sql_help.c:3882 sql_help.c:3885
+#: sql_help.c:3889 sql_help.c:3901 sql_help.c:4070 sql_help.c:4076
+#: sql_help.c:4079 sql_help.c:4083 sql_help.c:4095
 msgid "column_alias"
 msgstr "Spaltenalias"
 
-#: sql_help.c:3651 sql_help.c:3890 sql_help.c:4084
+#: sql_help.c:3638 sql_help.c:3877 sql_help.c:4071
 msgid "sampling_method"
 msgstr "Stichprobenmethode"
 
-#: sql_help.c:3652 sql_help.c:3661 sql_help.c:3665 sql_help.c:3669
-#: sql_help.c:3672 sql_help.c:3891 sql_help.c:3900 sql_help.c:3904
-#: sql_help.c:3908 sql_help.c:3911 sql_help.c:4085 sql_help.c:4094
-#: sql_help.c:4098 sql_help.c:4102 sql_help.c:4105
+#: sql_help.c:3639 sql_help.c:3648 sql_help.c:3652 sql_help.c:3656
+#: sql_help.c:3659 sql_help.c:3878 sql_help.c:3887 sql_help.c:3891
+#: sql_help.c:3895 sql_help.c:3898 sql_help.c:4072 sql_help.c:4081
+#: sql_help.c:4085 sql_help.c:4089 sql_help.c:4092
 msgid "argument"
 msgstr "Argument"
 
-#: sql_help.c:3653 sql_help.c:3892 sql_help.c:4086
+#: sql_help.c:3640 sql_help.c:3879 sql_help.c:4073
 msgid "seed"
 msgstr "Startwert"
 
-#: sql_help.c:3657 sql_help.c:3690 sql_help.c:3896 sql_help.c:3929
-#: sql_help.c:4090 sql_help.c:4123
+#: sql_help.c:3644 sql_help.c:3677 sql_help.c:3883 sql_help.c:3916
+#: sql_help.c:4077 sql_help.c:4110
 msgid "with_query_name"
 msgstr "With-Anfragename"
 
-#: sql_help.c:3667 sql_help.c:3670 sql_help.c:3673 sql_help.c:3906
-#: sql_help.c:3909 sql_help.c:3912 sql_help.c:4100 sql_help.c:4103
-#: sql_help.c:4106
+#: sql_help.c:3654 sql_help.c:3657 sql_help.c:3660 sql_help.c:3893
+#: sql_help.c:3896 sql_help.c:3899 sql_help.c:4087 sql_help.c:4090
+#: sql_help.c:4093
 msgid "column_definition"
 msgstr "Spaltendefinition"
 
-#: sql_help.c:3677 sql_help.c:3916 sql_help.c:4110
+#: sql_help.c:3664 sql_help.c:3903 sql_help.c:4097
 msgid "join_type"
 msgstr "Verbundtyp"
 
-#: sql_help.c:3679 sql_help.c:3918 sql_help.c:4112
+#: sql_help.c:3666 sql_help.c:3905 sql_help.c:4099
 msgid "join_condition"
 msgstr "Verbundbedingung"
 
-#: sql_help.c:3680 sql_help.c:3919 sql_help.c:4113
+#: sql_help.c:3667 sql_help.c:3906 sql_help.c:4100
 msgid "join_column"
 msgstr "Verbundspalte"
 
-#: sql_help.c:3681 sql_help.c:3920 sql_help.c:4114
+#: sql_help.c:3668 sql_help.c:3907 sql_help.c:4101
 msgid "and grouping_element can be one of:"
 msgstr "und Gruppierelement eins der folgenden sein kann:"
 
-#: sql_help.c:3689 sql_help.c:3928 sql_help.c:4122
+#: sql_help.c:3676 sql_help.c:3915 sql_help.c:4109
 msgid "and with_query is:"
 msgstr "und With-Anfrage ist:"
 
-#: sql_help.c:3693 sql_help.c:3932 sql_help.c:4126
+#: sql_help.c:3680 sql_help.c:3919 sql_help.c:4113
 msgid "values"
 msgstr "values"
 
-#: sql_help.c:3694 sql_help.c:3933 sql_help.c:4127
+#: sql_help.c:3681 sql_help.c:3920 sql_help.c:4114
 msgid "insert"
 msgstr "insert"
 
-#: sql_help.c:3695 sql_help.c:3934 sql_help.c:4128
+#: sql_help.c:3682 sql_help.c:3921 sql_help.c:4115
 msgid "update"
 msgstr "update"
 
-#: sql_help.c:3696 sql_help.c:3935 sql_help.c:4129
+#: sql_help.c:3683 sql_help.c:3922 sql_help.c:4116
 msgid "delete"
 msgstr "delete"
 
-#: sql_help.c:3723
+#: sql_help.c:3710
 msgid "new_table"
 msgstr "neue_Tabelle"
 
-#: sql_help.c:3748
+#: sql_help.c:3735
 msgid "timezone"
 msgstr "Zeitzone"
 
-#: sql_help.c:3793
+#: sql_help.c:3780
 msgid "snapshot_id"
 msgstr "Snapshot-ID"
 
-#: sql_help.c:3978
+#: sql_help.c:3965
 msgid "from_list"
 msgstr "From-Liste"
 
-#: sql_help.c:4009
+#: sql_help.c:3996
 msgid "sort_expression"
 msgstr "Sortierausdruck"
 
-#: sql_help.c:4136 sql_help.c:4876
+#: sql_help.c:4123 sql_help.c:4863
 msgid "abort the current transaction"
 msgstr "bricht die aktuelle Transaktion ab"
 
-#: sql_help.c:4141
+#: sql_help.c:4128
 msgid "change the definition of an aggregate function"
 msgstr "ändert die Definition einer Aggregatfunktion"
 
-#: sql_help.c:4146
+#: sql_help.c:4133
 msgid "change the definition of a collation"
 msgstr "ändert die Definition einer Sortierfolge"
 
-#: sql_help.c:4151
+#: sql_help.c:4138
 msgid "change the definition of a conversion"
 msgstr "ändert die Definition einer Zeichensatzkonversion"
 
-#: sql_help.c:4156
+#: sql_help.c:4143
 msgid "change a database"
 msgstr "ändert eine Datenbank"
 
-#: sql_help.c:4161
+#: sql_help.c:4148
 msgid "define default access privileges"
 msgstr "definiert vorgegebene Zugriffsprivilegien"
 
-#: sql_help.c:4166
+#: sql_help.c:4153
 msgid "change the definition of a domain"
 msgstr "ändert die Definition einer Domäne"
 
-#: sql_help.c:4171
+#: sql_help.c:4158
 msgid "change the definition of an event trigger"
 msgstr "ändert die Definition eines Ereignistriggers"
 
-#: sql_help.c:4176
+#: sql_help.c:4163
 msgid "change the definition of an extension"
 msgstr "ändert die Definition einer Erweiterung"
 
-#: sql_help.c:4181
+#: sql_help.c:4168
 msgid "change the definition of a foreign-data wrapper"
 msgstr "ändert die Definition eines Fremddaten-Wrappers"
 
-#: sql_help.c:4186
+#: sql_help.c:4173
 msgid "change the definition of a foreign table"
 msgstr "ändert die Definition einer Fremdtabelle"
 
-#: sql_help.c:4191
+#: sql_help.c:4178
 msgid "change the definition of a function"
 msgstr "ändert die Definition einer Funktion"
 
-#: sql_help.c:4196
+#: sql_help.c:4183
 msgid "change role name or membership"
 msgstr "ändert Rollenname oder -mitglieder"
 
-#: sql_help.c:4201
+#: sql_help.c:4188
 msgid "change the definition of an index"
 msgstr "ändert die Definition eines Index"
 
-#: sql_help.c:4206
+#: sql_help.c:4193
 msgid "change the definition of a procedural language"
 msgstr "ändert die Definition einer prozeduralen Sprache"
 
-#: sql_help.c:4211
+#: sql_help.c:4198
 msgid "change the definition of a large object"
 msgstr "ändert die Definition eines Large Object"
 
-#: sql_help.c:4216
+#: sql_help.c:4203
 msgid "change the definition of a materialized view"
 msgstr "ändert die Definition einer materialisierten Sicht"
 
-#: sql_help.c:4221
+#: sql_help.c:4208
 msgid "change the definition of an operator"
 msgstr "ändert die Definition eines Operators"
 
-#: sql_help.c:4226
+#: sql_help.c:4213
 msgid "change the definition of an operator class"
 msgstr "ändert die Definition einer Operatorklasse"
 
-#: sql_help.c:4231
+#: sql_help.c:4218
 msgid "change the definition of an operator family"
 msgstr "ändert die Definition einer Operatorfamilie"
 
-#: sql_help.c:4236
+#: sql_help.c:4223
 msgid "change the definition of a row level security policy"
 msgstr "ändert die Definition einer Policy für Sicherheit auf Zeilenebene"
 
-#: sql_help.c:4241 sql_help.c:4311
+#: sql_help.c:4228 sql_help.c:4298
 msgid "change a database role"
 msgstr "ändert eine Datenbankrolle"
 
-#: sql_help.c:4246
+#: sql_help.c:4233
 msgid "change the definition of a rule"
 msgstr "ändert die Definition einer Regel"
 
-#: sql_help.c:4251
+#: sql_help.c:4238
 msgid "change the definition of a schema"
 msgstr "ändert die Definition eines Schemas"
 
-#: sql_help.c:4256
+#: sql_help.c:4243
 msgid "change the definition of a sequence generator"
 msgstr "ändert die Definition eines Sequenzgenerators"
 
-#: sql_help.c:4261
+#: sql_help.c:4248
 msgid "change the definition of a foreign server"
 msgstr "ändert die Definition eines Fremdservers"
 
-#: sql_help.c:4266
+#: sql_help.c:4253
 msgid "change a server configuration parameter"
 msgstr "ändert einen Server-Konfigurationsparameter"
 
-#: sql_help.c:4271
+#: sql_help.c:4258
 msgid "change the definition of a table"
 msgstr "ändert die Definition einer Tabelle"
 
-#: sql_help.c:4276
+#: sql_help.c:4263
 msgid "change the definition of a tablespace"
 msgstr "ändert die Definition eines Tablespace"
 
-#: sql_help.c:4281
+#: sql_help.c:4268
 msgid "change the definition of a text search configuration"
 msgstr "ändert die Definition einer Textsuchekonfiguration"
 
-#: sql_help.c:4286
+#: sql_help.c:4273
 msgid "change the definition of a text search dictionary"
 msgstr "ändert die Definition eines Textsuchewörterbuchs"
 
-#: sql_help.c:4291
+#: sql_help.c:4278
 msgid "change the definition of a text search parser"
 msgstr "ändert die Definition eines Textsucheparsers"
 
-#: sql_help.c:4296
+#: sql_help.c:4283
 msgid "change the definition of a text search template"
 msgstr "ändert die Definition einer Textsuchevorlage"
 
-#: sql_help.c:4301
+#: sql_help.c:4288
 msgid "change the definition of a trigger"
 msgstr "ändert die Definition eines Triggers"
 
-#: sql_help.c:4306
+#: sql_help.c:4293
 msgid "change the definition of a type"
 msgstr "ändert die Definition eines Typs"
 
-#: sql_help.c:4316
+#: sql_help.c:4303
 msgid "change the definition of a user mapping"
 msgstr "ändert die Definition einer Benutzerabbildung"
 
-#: sql_help.c:4321
+#: sql_help.c:4308
 msgid "change the definition of a view"
 msgstr "ändert die Definition einer Sicht"
 
-#: sql_help.c:4326
+#: sql_help.c:4313
 msgid "collect statistics about a database"
 msgstr "sammelt Statistiken über eine Datenbank"
 
-#: sql_help.c:4331 sql_help.c:4941
+#: sql_help.c:4318 sql_help.c:4928
 msgid "start a transaction block"
 msgstr "startet einen Transaktionsblock"
 
-#: sql_help.c:4336
+#: sql_help.c:4323
 msgid "force a transaction log checkpoint"
 msgstr "erzwingt einen Checkpoint im Transaktionslog"
 
-#: sql_help.c:4341
+#: sql_help.c:4328
 msgid "close a cursor"
 msgstr "schließt einen Cursor"
 
-#: sql_help.c:4346
+#: sql_help.c:4333
 msgid "cluster a table according to an index"
 msgstr "clustert eine Tabelle nach einem Index"
 
-#: sql_help.c:4351
+#: sql_help.c:4338
 msgid "define or change the comment of an object"
 msgstr "definiert oder ändert den Kommentar eines Objektes"
 
-#: sql_help.c:4356 sql_help.c:4776
+#: sql_help.c:4343 sql_help.c:4763
 msgid "commit the current transaction"
 msgstr "schließt die aktuelle Transaktion ab"
 
-#: sql_help.c:4361
+#: sql_help.c:4348
 msgid "commit a transaction that was earlier prepared for two-phase commit"
 msgstr "schließt eine Transaktion ab, die vorher für Two-Phase-Commit vorbereitet worden war"
 
-#: sql_help.c:4366
+#: sql_help.c:4353
 msgid "copy data between a file and a table"
 msgstr "kopiert Daten zwischen einer Datei und einer Tabelle"
 
-#: sql_help.c:4371
+#: sql_help.c:4358
 msgid "define a new access method"
 msgstr "definiert eine neue Zugriffsmethode"
 
-#: sql_help.c:4376
+#: sql_help.c:4363
 msgid "define a new aggregate function"
 msgstr "definiert eine neue Aggregatfunktion"
 
-#: sql_help.c:4381
+#: sql_help.c:4368
 msgid "define a new cast"
 msgstr "definiert eine neue Typumwandlung"
 
-#: sql_help.c:4386
+#: sql_help.c:4373
 msgid "define a new collation"
 msgstr "definiert eine neue Sortierfolge"
 
-#: sql_help.c:4391
+#: sql_help.c:4378
 msgid "define a new encoding conversion"
 msgstr "definiert eine neue Kodierungskonversion"
 
-#: sql_help.c:4396
+#: sql_help.c:4383
 msgid "create a new database"
 msgstr "erzeugt eine neue Datenbank"
 
-#: sql_help.c:4401
+#: sql_help.c:4388
 msgid "define a new domain"
 msgstr "definiert eine neue Domäne"
 
-#: sql_help.c:4406
+#: sql_help.c:4393
 msgid "define a new event trigger"
 msgstr "definiert einen neuen Ereignistrigger"
 
-#: sql_help.c:4411
+#: sql_help.c:4398
 msgid "install an extension"
 msgstr "installiert eine Erweiterung"
 
-#: sql_help.c:4416
+#: sql_help.c:4403
 msgid "define a new foreign-data wrapper"
 msgstr "definiert einen neuen Fremddaten-Wrapper"
 
-#: sql_help.c:4421
+#: sql_help.c:4408
 msgid "define a new foreign table"
 msgstr "definiert eine neue Fremdtabelle"
 
-#: sql_help.c:4426
+#: sql_help.c:4413
 msgid "define a new function"
 msgstr "definiert eine neue Funktion"
 
-#: sql_help.c:4431 sql_help.c:4471 sql_help.c:4546
+#: sql_help.c:4418 sql_help.c:4458 sql_help.c:4533
 msgid "define a new database role"
 msgstr "definiert eine neue Datenbankrolle"
 
-#: sql_help.c:4436
+#: sql_help.c:4423
 msgid "define a new index"
 msgstr "definiert einen neuen Index"
 
-#: sql_help.c:4441
+#: sql_help.c:4428
 msgid "define a new procedural language"
 msgstr "definiert eine neue prozedurale Sprache"
 
-#: sql_help.c:4446
+#: sql_help.c:4433
 msgid "define a new materialized view"
 msgstr "definiert eine neue materialisierte Sicht"
 
-#: sql_help.c:4451
+#: sql_help.c:4438
 msgid "define a new operator"
 msgstr "definiert einen neuen Operator"
 
-#: sql_help.c:4456
+#: sql_help.c:4443
 msgid "define a new operator class"
 msgstr "definiert eine neue Operatorklasse"
 
-#: sql_help.c:4461
+#: sql_help.c:4448
 msgid "define a new operator family"
 msgstr "definiert eine neue Operatorfamilie"
 
-#: sql_help.c:4466
+#: sql_help.c:4453
 msgid "define a new row level security policy for a table"
 msgstr "definiert eine neue Policy für Sicherheit auf Zeilenebene für eine Tabelle"
 
-#: sql_help.c:4476
+#: sql_help.c:4463
 msgid "define a new rewrite rule"
 msgstr "definiert eine neue Umschreiberegel"
 
-#: sql_help.c:4481
+#: sql_help.c:4468
 msgid "define a new schema"
 msgstr "definiert ein neues Schema"
 
-#: sql_help.c:4486
+#: sql_help.c:4473
 msgid "define a new sequence generator"
 msgstr "definiert einen neuen Sequenzgenerator"
 
-#: sql_help.c:4491
+#: sql_help.c:4478
 msgid "define a new foreign server"
 msgstr "definiert einen neuen Fremdserver"
 
-#: sql_help.c:4496
+#: sql_help.c:4483
 msgid "define a new table"
 msgstr "definiert eine neue Tabelle"
 
-#: sql_help.c:4501 sql_help.c:4906
+#: sql_help.c:4488 sql_help.c:4893
 msgid "define a new table from the results of a query"
 msgstr "definiert eine neue Tabelle aus den Ergebnissen einer Anfrage"
 
-#: sql_help.c:4506
+#: sql_help.c:4493
 msgid "define a new tablespace"
 msgstr "definiert einen neuen Tablespace"
 
-#: sql_help.c:4511
+#: sql_help.c:4498
 msgid "define a new text search configuration"
 msgstr "definiert eine neue Textsuchekonfiguration"
 
-#: sql_help.c:4516
+#: sql_help.c:4503
 msgid "define a new text search dictionary"
 msgstr "definiert ein neues Textsuchewörterbuch"
 
-#: sql_help.c:4521
+#: sql_help.c:4508
 msgid "define a new text search parser"
 msgstr "definiert einen neuen Textsucheparser"
 
-#: sql_help.c:4526
+#: sql_help.c:4513
 msgid "define a new text search template"
 msgstr "definiert eine neue Textsuchevorlage"
 
-#: sql_help.c:4531
+#: sql_help.c:4518
 msgid "define a new transform"
 msgstr "definiert eine neue Transformation"
 
-#: sql_help.c:4536
+#: sql_help.c:4523
 msgid "define a new trigger"
 msgstr "definiert einen neuen Trigger"
 
-#: sql_help.c:4541
+#: sql_help.c:4528
 msgid "define a new data type"
 msgstr "definiert einen neuen Datentyp"
 
-#: sql_help.c:4551
+#: sql_help.c:4538
 msgid "define a new mapping of a user to a foreign server"
 msgstr "definiert eine neue Abbildung eines Benutzers auf einen Fremdserver"
 
-#: sql_help.c:4556
+#: sql_help.c:4543
 msgid "define a new view"
 msgstr "definiert eine neue Sicht"
 
-#: sql_help.c:4561
+#: sql_help.c:4548
 msgid "deallocate a prepared statement"
 msgstr "gibt einen vorbereiteten Befehl frei"
 
-#: sql_help.c:4566
+#: sql_help.c:4553
 msgid "define a cursor"
 msgstr "definiert einen Cursor"
 
-#: sql_help.c:4571
+#: sql_help.c:4558
 msgid "delete rows of a table"
 msgstr "löscht Zeilen einer Tabelle"
 
-#: sql_help.c:4576
+#: sql_help.c:4563
 msgid "discard session state"
 msgstr "verwirft den Sitzungszustand"
 
-#: sql_help.c:4581
+#: sql_help.c:4568
 msgid "execute an anonymous code block"
 msgstr "führt einen anonymen Codeblock aus"
 
-#: sql_help.c:4586
+#: sql_help.c:4573
 msgid "remove an access method"
 msgstr "entfernt eine Zugriffsmethode"
 
-#: sql_help.c:4591
+#: sql_help.c:4578
 msgid "remove an aggregate function"
 msgstr "entfernt eine Aggregatfunktion"
 
-#: sql_help.c:4596
+#: sql_help.c:4583
 msgid "remove a cast"
 msgstr "entfernt eine Typumwandlung"
 
-#: sql_help.c:4601
+#: sql_help.c:4588
 msgid "remove a collation"
 msgstr "entfernt eine Sortierfolge"
 
-#: sql_help.c:4606
+#: sql_help.c:4593
 msgid "remove a conversion"
 msgstr "entfernt eine Zeichensatzkonversion"
 
-#: sql_help.c:4611
+#: sql_help.c:4598
 msgid "remove a database"
 msgstr "entfernt eine Datenbank"
 
-#: sql_help.c:4616
+#: sql_help.c:4603
 msgid "remove a domain"
 msgstr "entfernt eine Domäne"
 
-#: sql_help.c:4621
+#: sql_help.c:4608
 msgid "remove an event trigger"
 msgstr "entfernt einen Ereignistrigger"
 
-#: sql_help.c:4626
+#: sql_help.c:4613
 msgid "remove an extension"
 msgstr "entfernt eine Erweiterung"
 
-#: sql_help.c:4631
+#: sql_help.c:4618
 msgid "remove a foreign-data wrapper"
 msgstr "entfernt einen Fremddaten-Wrapper"
 
-#: sql_help.c:4636
+#: sql_help.c:4623
 msgid "remove a foreign table"
 msgstr "entfernt eine Fremdtabelle"
 
-#: sql_help.c:4641
+#: sql_help.c:4628
 msgid "remove a function"
 msgstr "entfernt eine Funktion"
 
-#: sql_help.c:4646 sql_help.c:4691 sql_help.c:4761
+#: sql_help.c:4633 sql_help.c:4678 sql_help.c:4748
 msgid "remove a database role"
 msgstr "entfernt eine Datenbankrolle"
 
-#: sql_help.c:4651
+#: sql_help.c:4638
 msgid "remove an index"
 msgstr "entfernt einen Index"
 
-#: sql_help.c:4656
+#: sql_help.c:4643
 msgid "remove a procedural language"
 msgstr "entfernt eine prozedurale Sprache"
 
-#: sql_help.c:4661
+#: sql_help.c:4648
 msgid "remove a materialized view"
 msgstr "entfernt eine materialisierte Sicht"
 
-#: sql_help.c:4666
+#: sql_help.c:4653
 msgid "remove an operator"
 msgstr "entfernt einen Operator"
 
-#: sql_help.c:4671
+#: sql_help.c:4658
 msgid "remove an operator class"
 msgstr "entfernt eine Operatorklasse"
 
-#: sql_help.c:4676
+#: sql_help.c:4663
 msgid "remove an operator family"
 msgstr "entfernt eine Operatorfamilie"
 
-#: sql_help.c:4681
+#: sql_help.c:4668
 msgid "remove database objects owned by a database role"
 msgstr "entfernt die einer Datenbankrolle gehörenden Datenbankobjekte"
 
-#: sql_help.c:4686
+#: sql_help.c:4673
 msgid "remove a row level security policy from a table"
 msgstr "entfernt eine Policy für Sicherheit auf Zeilenebene von einer Tabelle"
 
-#: sql_help.c:4696
+#: sql_help.c:4683
 msgid "remove a rewrite rule"
 msgstr "entfernt eine Umschreiberegel"
 
-#: sql_help.c:4701
+#: sql_help.c:4688
 msgid "remove a schema"
 msgstr "entfernt ein Schema"
 
-#: sql_help.c:4706
+#: sql_help.c:4693
 msgid "remove a sequence"
 msgstr "entfernt eine Sequenz"
 
-#: sql_help.c:4711
+#: sql_help.c:4698
 msgid "remove a foreign server descriptor"
 msgstr "entfernt einen Fremdserverdeskriptor"
 
-#: sql_help.c:4716
+#: sql_help.c:4703
 msgid "remove a table"
 msgstr "entfernt eine Tabelle"
 
-#: sql_help.c:4721
+#: sql_help.c:4708
 msgid "remove a tablespace"
 msgstr "entfernt einen Tablespace"
 
-#: sql_help.c:4726
+#: sql_help.c:4713
 msgid "remove a text search configuration"
 msgstr "entfernt eine Textsuchekonfiguration"
 
-#: sql_help.c:4731
+#: sql_help.c:4718
 msgid "remove a text search dictionary"
 msgstr "entfernt ein Textsuchewörterbuch"
 
-#: sql_help.c:4736
+#: sql_help.c:4723
 msgid "remove a text search parser"
 msgstr "entfernt einen Textsucheparser"
 
-#: sql_help.c:4741
+#: sql_help.c:4728
 msgid "remove a text search template"
 msgstr "entfernt eine Textsuchevorlage"
 
-#: sql_help.c:4746
+#: sql_help.c:4733
 msgid "remove a transform"
 msgstr "entfernt eine Transformation"
 
-#: sql_help.c:4751
+#: sql_help.c:4738
 msgid "remove a trigger"
 msgstr "entfernt einen Trigger"
 
-#: sql_help.c:4756
+#: sql_help.c:4743
 msgid "remove a data type"
 msgstr "entfernt einen Datentyp"
 
-#: sql_help.c:4766
+#: sql_help.c:4753
 msgid "remove a user mapping for a foreign server"
 msgstr "entfernt eine Benutzerabbildung für einen Fremdserver"
 
-#: sql_help.c:4771
+#: sql_help.c:4758
 msgid "remove a view"
 msgstr "entfernt eine Sicht"
 
-#: sql_help.c:4781
+#: sql_help.c:4768
 msgid "execute a prepared statement"
 msgstr "führt einen vorbereiteten Befehl aus"
 
-#: sql_help.c:4786
+#: sql_help.c:4773
 msgid "show the execution plan of a statement"
 msgstr "zeigt den Ausführungsplan eines Befehls"
 
-#: sql_help.c:4791
+#: sql_help.c:4778
 msgid "retrieve rows from a query using a cursor"
 msgstr "liest Zeilen aus einer Anfrage mit einem Cursor"
 
-#: sql_help.c:4796
+#: sql_help.c:4783
 msgid "define access privileges"
 msgstr "definiert Zugriffsprivilegien"
 
-#: sql_help.c:4801
+#: sql_help.c:4788
 msgid "import table definitions from a foreign server"
 msgstr "importiert Tabellendefinitionen von einem Fremdserver"
 
-#: sql_help.c:4806
+#: sql_help.c:4793
 msgid "create new rows in a table"
 msgstr "erzeugt neue Zeilen in einer Tabelle"
 
-#: sql_help.c:4811
+#: sql_help.c:4798
 msgid "listen for a notification"
 msgstr "hört auf eine Benachrichtigung"
 
-#: sql_help.c:4816
+#: sql_help.c:4803
 msgid "load a shared library file"
 msgstr "lädt eine dynamische Bibliotheksdatei"
 
-#: sql_help.c:4821
+#: sql_help.c:4808
 msgid "lock a table"
 msgstr "sperrt eine Tabelle"
 
-#: sql_help.c:4826
+#: sql_help.c:4813
 msgid "position a cursor"
 msgstr "positioniert einen Cursor"
 
-#: sql_help.c:4831
+#: sql_help.c:4818
 msgid "generate a notification"
 msgstr "erzeugt eine Benachrichtigung"
 
-#: sql_help.c:4836
+#: sql_help.c:4823
 msgid "prepare a statement for execution"
 msgstr "bereitet einen Befehl zur Ausführung vor"
 
-#: sql_help.c:4841
+#: sql_help.c:4828
 msgid "prepare the current transaction for two-phase commit"
 msgstr "bereitet die aktuelle Transaktion für Two-Phase-Commit vor"
 
-#: sql_help.c:4846
+#: sql_help.c:4833
 msgid "change the ownership of database objects owned by a database role"
 msgstr "ändert den Eigentümer der der Rolle gehörenden Datenbankobjekte"
 
-#: sql_help.c:4851
+#: sql_help.c:4838
 msgid "replace the contents of a materialized view"
 msgstr "ersetzt den Inhalt einer materialisierten Sicht"
 
-#: sql_help.c:4856
+#: sql_help.c:4843
 msgid "rebuild indexes"
 msgstr "baut Indexe neu"
 
-#: sql_help.c:4861
+#: sql_help.c:4848
 msgid "destroy a previously defined savepoint"
 msgstr "gibt einen zuvor definierten Sicherungspunkt frei"
 
-#: sql_help.c:4866
+#: sql_help.c:4853
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "setzt einen Konfigurationsparameter auf die Voreinstellung zurück"
 
-#: sql_help.c:4871
+#: sql_help.c:4858
 msgid "remove access privileges"
 msgstr "entfernt Zugriffsprivilegien"
 
-#: sql_help.c:4881
+#: sql_help.c:4868
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
 msgstr "storniert eine Transaktion, die vorher für Two-Phase-Commit vorbereitet worden war"
 
-#: sql_help.c:4886
+#: sql_help.c:4873
 msgid "roll back to a savepoint"
 msgstr "rollt eine Transaktion bis zu einem Sicherungspunkt zurück"
 
-#: sql_help.c:4891
+#: sql_help.c:4878
 msgid "define a new savepoint within the current transaction"
 msgstr "definiert einen neuen Sicherungspunkt in der aktuellen Transaktion"
 
-#: sql_help.c:4896
+#: sql_help.c:4883
 msgid "define or change a security label applied to an object"
 msgstr "definiert oder ändert ein Security-Label eines Objektes"
 
-#: sql_help.c:4901 sql_help.c:4946 sql_help.c:4976
+#: sql_help.c:4888 sql_help.c:4933 sql_help.c:4963
 msgid "retrieve rows from a table or view"
 msgstr "liest Zeilen aus einer Tabelle oder Sicht"
 
-#: sql_help.c:4911
+#: sql_help.c:4898
 msgid "change a run-time parameter"
 msgstr "ändert einen Konfigurationsparameter"
 
-#: sql_help.c:4916
+#: sql_help.c:4903
 msgid "set constraint check timing for the current transaction"
 msgstr "setzt die Zeitsteuerung für Check-Constraints in der aktuellen Transaktion"
 
-#: sql_help.c:4921
+#: sql_help.c:4908
 msgid "set the current user identifier of the current session"
 msgstr "setzt den aktuellen Benutzernamen der aktuellen Sitzung"
 
-#: sql_help.c:4926
+#: sql_help.c:4913
 msgid "set the session user identifier and the current user identifier of the current session"
 msgstr "setzt den Sitzungsbenutzernamen und den aktuellen Benutzernamen der aktuellen Sitzung"
 
-#: sql_help.c:4931
+#: sql_help.c:4918
 msgid "set the characteristics of the current transaction"
 msgstr "setzt die Charakteristika der aktuellen Transaktion"
 
-#: sql_help.c:4936
+#: sql_help.c:4923
 msgid "show the value of a run-time parameter"
 msgstr "zeigt den Wert eines Konfigurationsparameters"
 
-#: sql_help.c:4951
+#: sql_help.c:4938
 msgid "empty a table or set of tables"
 msgstr "leert eine oder mehrere Tabellen"
 
-#: sql_help.c:4956
+#: sql_help.c:4943
 msgid "stop listening for a notification"
 msgstr "beendet das Hören auf eine Benachrichtigung"
 
-#: sql_help.c:4961
+#: sql_help.c:4948
 msgid "update rows of a table"
 msgstr "aktualisiert Zeilen einer Tabelle"
 
-#: sql_help.c:4966
+#: sql_help.c:4953
 msgid "garbage-collect and optionally analyze a database"
 msgstr "säubert und analysiert eine Datenbank"
 
-#: sql_help.c:4971
+#: sql_help.c:4958
 msgid "compute a set of rows"
 msgstr "berechnet eine Zeilenmenge"
 

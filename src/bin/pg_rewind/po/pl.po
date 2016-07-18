@@ -2,13 +2,13 @@
 # Copyright (C) 2015 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
-# grzegorz <begina.felicysym@wp.eu>, 2015.
+# grzegorz <begina.felicysym@wp.eu>, 2015, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-29 01:44+0000\n"
-"PO-Revision-Date: 2015-10-29 21:20+0200\n"
+"POT-Creation-Date: 2016-07-03 03:14+0000\n"
+"PO-Revision-Date: 2016-07-04 20:38+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -111,7 +111,7 @@ msgstr "nie można otworzyć pliku źródłowego \"%s\": %s\n"
 msgid "could not seek in source file: %s\n"
 msgstr "nie można pozycjonować w pliku wyjścia %s\n"
 
-#: copy_fetch.c:192 file_ops.c:301
+#: copy_fetch.c:192 file_ops.c:300
 #, c-format
 msgid "could not read file \"%s\": %s\n"
 msgstr "nie można czytać pliku \"%s\": %s\n"
@@ -126,6 +126,11 @@ msgstr "nieoczekiwany EOF podczas czytania pliku \"%s\"\n"
 msgid "could not close file \"%s\": %s\n"
 msgstr "nie można zamknąć pliku \"%s\": %s\n"
 
+#: datapagemap.c:124
+#, c-format
+msgid "  block %u\n"
+msgstr "  blok %u\n"
+
 #: file_ops.c:64
 #, c-format
 msgid "could not open target file \"%s\": %s\n"
@@ -136,58 +141,57 @@ msgstr "nie można otworzyć pliku docelowego \"%s\": %s\n"
 msgid "could not close target file \"%s\": %s\n"
 msgstr "nie można zamknąć pliku docelowego \"%s\": %s\n"
 
-#: file_ops.c:99
+#: file_ops.c:98
 #, c-format
 msgid "could not seek in target file \"%s\": %s\n"
 msgstr "nie można przeszukiwać pliku docelowego \"%s\": %s\n"
 
-#: file_ops.c:115
+#: file_ops.c:114
 #, c-format
 msgid "could not write file \"%s\": %s\n"
 msgstr "nie można pisać do pliku \"%s\": %s\n"
 
-#: file_ops.c:165
+#: file_ops.c:164
 #, c-format
 msgid "invalid action (CREATE) for regular file\n"
 msgstr "nieprawidłowe działanie (CREATE) dla zwykłego pliku\n"
 
-#: file_ops.c:180
+#: file_ops.c:179
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "nie można usunąć pliku \"%s\": %s\n"
 
-#: file_ops.c:197
+#: file_ops.c:196
 #, c-format
 msgid "could not open file \"%s\" for truncation: %s\n"
 msgstr "nie można otworzyć pliku \"%s\" do obcięcia: %s\n"
 
-#: file_ops.c:201
+#: file_ops.c:200
 #, c-format
-#| msgid "could not truncate file \"%s\" to %u: %m"
 msgid "could not truncate file \"%s\" to %u: %s\n"
 msgstr "nie można obciąć pliku \"%s\" do %u: %s\n"
 
-#: file_ops.c:217
+#: file_ops.c:216
 #, c-format
 msgid "could not create directory \"%s\": %s\n"
 msgstr "nie można utworzyć folderu \"%s\": %s\n"
 
-#: file_ops.c:231
+#: file_ops.c:230
 #, c-format
 msgid "could not remove directory \"%s\": %s\n"
 msgstr "nie można usunąć folderu \"%s\": %s\n"
 
-#: file_ops.c:245
+#: file_ops.c:244
 #, c-format
 msgid "could not create symbolic link at \"%s\": %s\n"
 msgstr "nie można utworzyć linku symbolicznego na \"%s\": %s\n"
 
-#: file_ops.c:259
+#: file_ops.c:258
 #, c-format
 msgid "could not remove symbolic link \"%s\": %s\n"
 msgstr "nie można usunąć linku symbolicznego \"%s\": %s\n"
 
-#: file_ops.c:289 file_ops.c:293
+#: file_ops.c:288 file_ops.c:292
 #, c-format
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "nie można otworzyć pliku \"%s\" do odczytu: %s\n"
@@ -222,6 +226,13 @@ msgstr "źródłowa lista plików jest pusta\n"
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "nieoczekiwana modyfikacja strony dla folderu lub linku symbolicznego \"%s\"\n"
 
+#. translator: first %s is a file path, second is a keyword such as COPY
+#: filemap.c:537
+#, c-format
+#| msgid "%s (%s/%s) "
+msgid "%s (%s)\n"
+msgstr "%s (%s)\n"
+
 #: libpq_fetch.c:55
 #, c-format
 msgid "could not connect to server: %s"
@@ -254,7 +265,6 @@ msgstr "nieoczekiwany zbiór wynikowy z zapytania\n"
 
 #: libpq_fetch.c:123
 #, c-format
-#| msgid "unrecognized result \"%s\" for current XLOG insert location\n"
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr "nierozpoznany wynik \"%s\" dla bieżącego położenia wstawiania WAL\n"
 
@@ -285,7 +295,6 @@ msgstr "nie można ustalić połączenia libpq na tryb pojedynczego wiersza\n"
 
 #: libpq_fetch.c:251
 #, c-format
-#| msgid "unexpected result while fetching remote files: %s\n"
 msgid "unexpected result while fetching remote files: %s"
 msgstr "nieoczekiwany wynik przy pobieraniu plików zdalnych: %s"
 
@@ -316,7 +325,6 @@ msgstr "nieoczekiwana długość wyniku przy pobieraniu plików zdalnych\n"
 
 #: libpq_fetch.c:303
 #, c-format
-#| msgid "received NULL chunk for file \"%s\", file has been deleted\n"
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "otrzymano wartość null dla pliku \"%s\", plik został usunięty\n"
 
@@ -394,22 +402,22 @@ msgstr "nie udało się odnaleźć poprzedniego rekordu WAL na %X/%X: %s\n"
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "nie udało się odnaleźć poprzedniego rekordu WAL na %X/%X\n"
 
-#: parsexlog.c:268
+#: parsexlog.c:283
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "nie można otworzyć pliku \"%s\": %s\n"
 
-#: parsexlog.c:282
+#: parsexlog.c:297
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "nie można pozycjonować w pliku \"%s\": %s\n"
 
-#: parsexlog.c:289
+#: parsexlog.c:304
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "nie można czytać z pliku \"%s\": %s\n"
 
-#: parsexlog.c:357
+#: parsexlog.c:372
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
@@ -418,7 +426,7 @@ msgstr ""
 "rekord WAL zmienia relację, butale typ rekordu nie został rozpoznany\n"
 "lsn: %X/%X, rmgr: %s, info: %02X\n"
 
-#: pg_rewind.c:59
+#: pg_rewind.c:64
 #, c-format
 msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
@@ -427,7 +435,7 @@ msgstr ""
 "%s resynchronizuje klaster PostgreSQL z inną kopią tego klastra.\n"
 "\n"
 
-#: pg_rewind.c:60
+#: pg_rewind.c:65
 #, c-format
 msgid ""
 "Usage:\n"
@@ -438,54 +446,52 @@ msgstr ""
 "  %s [OPCJE]...\n"
 "\n"
 
-#: pg_rewind.c:61
+#: pg_rewind.c:66
 #, c-format
 msgid "Options:\n"
 msgstr "Opcje:\n"
 
-#: pg_rewind.c:62
+#: pg_rewind.c:67
 #, c-format
 msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
 msgstr "  -D, --target-pgdata=FOLDER     istniejący folder danych do zmiany\n"
 
-#: pg_rewind.c:63
+#: pg_rewind.c:68
 #, c-format
-#| msgid "      --source-pgdata=DIRECTORY  source data directory to sync with\n"
 msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
 msgstr "      --source-pgdata=FOLDER     źródłowy folder danych do zsynchronizowania\n"
 
-#: pg_rewind.c:64
+#: pg_rewind.c:69
 #, c-format
-#| msgid "      --source-server=CONNSTR    source server to sync with\n"
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
 msgstr "      --source-server=CONNSTR    serwer źródłowy do zsynchronizowania\n"
 
-#: pg_rewind.c:65
+#: pg_rewind.c:70
 #, c-format
 msgid "  -n, --dry-run                  stop before modifying anything\n"
 msgstr "  -n, --dry-run                  zatrzymaj przed zmianą czegokolwiek\n"
 
-#: pg_rewind.c:66
+#: pg_rewind.c:71
 #, c-format
 msgid "  -P, --progress                 write progress messages\n"
 msgstr "  -P, --progress                 wypisz komunikaty postępu\n"
 
-#: pg_rewind.c:67
+#: pg_rewind.c:72
 #, c-format
 msgid "      --debug                    write a lot of debug messages\n"
 msgstr "      --debug                    wypisz masę komunikatów debugowania\n"
 
-#: pg_rewind.c:68
+#: pg_rewind.c:73
 #, c-format
 msgid "  -V, --version                  output version information, then exit\n"
 msgstr "  -V, --version                  pokaż informacje o wersji i zakończ\n"
 
-#: pg_rewind.c:69
+#: pg_rewind.c:74
 #, c-format
 msgid "  -?, --help                     show this help, then exit\n"
 msgstr "  -?, --help                     pokaż tą pomoc i zakończ działanie\n"
 
-#: pg_rewind.c:70
+#: pg_rewind.c:75
 #, c-format
 msgid ""
 "\n"
@@ -494,81 +500,77 @@ msgstr ""
 "\n"
 "Błędy proszę przesyłać na adres <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_rewind.c:125 pg_rewind.c:156 pg_rewind.c:163 pg_rewind.c:171
+#: pg_rewind.c:130 pg_rewind.c:161 pg_rewind.c:168 pg_rewind.c:176
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Użyj \"%s --help\" aby uzyskać więcej informacji.\n"
 
-#: pg_rewind.c:155
+#: pg_rewind.c:160
 #, c-format
 msgid "%s: no source specified (--source-pgdata or --source-server)\n"
 msgstr "%s: nie wskazano źródła (--source-pgdata lub --source-server)\n"
 
-#: pg_rewind.c:162
+#: pg_rewind.c:167
 #, c-format
 msgid "%s: no target data directory specified (--target-pgdata)\n"
 msgstr "%s: nie wskazano docelowego folderu danych (--target-pgdata)\n"
 
-#: pg_rewind.c:169
+#: pg_rewind.c:174
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: za duża ilość parametrów (pierwszy to \"%s\")\n"
 
-#: pg_rewind.c:184
+#: pg_rewind.c:189
 #, c-format
 msgid "cannot be executed by \"root\"\n"
 msgstr "nie może być wykonywane pod \"rootem\"\n"
 
-#: pg_rewind.c:185
+#: pg_rewind.c:190
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Musisz uruchomić %s jako superużytkownik PostgreSQL.\n"
 
-#: pg_rewind.c:215
+#: pg_rewind.c:221
 #, c-format
 msgid "source and target cluster are on the same timeline\n"
 msgstr "klaster źródłowy i docelowy są na tej samej linii czasowej\n"
 
-#: pg_rewind.c:218
+#: pg_rewind.c:227
 #, c-format
-#| msgid "The servers diverged at WAL position %X/%X on timeline %u.\n"
 msgid "servers diverged at WAL position %X/%X on timeline %u\n"
 msgstr "serwery rozeszły się na pozycji WAL %X/%X linii czasowej %u\n"
 
-#: pg_rewind.c:253
+#: pg_rewind.c:264
 #, c-format
-#| msgid "No rewind required.\n"
 msgid "no rewind required\n"
 msgstr "przewinięcie nie jest konieczne\n"
 
-#: pg_rewind.c:259
+#: pg_rewind.c:271
 #, c-format
-#| msgid "Rewinding from last common checkpoint at %X/%X on timeline %u\n"
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u\n"
-msgstr "przewinięcie do ostatniego zgodnego punktu kontrolnego na %X/%X linii "
-"czasowej %u\n"
+msgstr "przewinięcie do ostatniego zgodnego punktu kontrolnego na %X/%X linii czasowej %u\n"
 
-#: pg_rewind.c:267
+#: pg_rewind.c:279
 #, c-format
 msgid "reading source file list\n"
 msgstr "odczyt źródłowej listy plików\n"
 
-#: pg_rewind.c:269
+#: pg_rewind.c:281
 #, c-format
 msgid "reading target file list\n"
 msgstr "odczyt docelowej listy plików\n"
 
-#: pg_rewind.c:279
+#: pg_rewind.c:291
 #, c-format
 msgid "reading WAL in target\n"
 msgstr "odczyt WAL docelowy\n"
 
-#: pg_rewind.c:296
+#: pg_rewind.c:308
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)\n"
 msgstr "potrzeba skopiować %lu MB (pełna wielkość folderu źródłowego to %lu MB)\n"
 
-#: pg_rewind.c:313
+#: pg_rewind.c:325
 #, c-format
 msgid ""
 "\n"
@@ -577,55 +579,121 @@ msgstr ""
 "\n"
 "tworzenie etykiety kopii zapasowej i aktualizacja pliku sterującego\n"
 
-#: pg_rewind.c:341
+#: pg_rewind.c:353
+#, c-format
+#| msgid "%s: failed to remove data directory\n"
+msgid "syncing target data directory\n"
+msgstr "docelowy katalog danych synchronizacji\n"
+
+#: pg_rewind.c:356
 #, c-format
 msgid "Done!\n"
 msgstr "Wykonano!\n"
 
-#: pg_rewind.c:353
+#: pg_rewind.c:368
 #, c-format
 msgid "source and target clusters are from different systems\n"
 msgstr "klastry źródłowy i docelowy pochodzą z innych systemów\n"
 
-#: pg_rewind.c:361
+#: pg_rewind.c:376
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind\n"
 msgstr "klastry nie są kompatybilne z tą wersją pg_rewind\n"
 
-#: pg_rewind.c:371
+#: pg_rewind.c:386
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\"\n"
 msgstr "serwer docelowy wymaga użycia albo sum kontrolnych albo \"wal_log_hints = on\"\n"
 
-#: pg_rewind.c:381
+#: pg_rewind.c:397
 #, c-format
 msgid "target server must be shut down cleanly\n"
 msgstr "serwer docelowy musi zostać czysto wyłączony\n"
 
-#: pg_rewind.c:389
+#: pg_rewind.c:407
 #, c-format
 msgid "source data directory must be shut down cleanly\n"
 msgstr "źródłowy folder danych musi być czysto wyłączony\n"
 
-#: pg_rewind.c:456
+#: pg_rewind.c:462
+#, c-format
+#| msgid "invalid data in history file\n"
+msgid "invalid control file"
+msgstr "niepoprawny plik kontrolny"
+
+#: pg_rewind.c:473
+#, c-format
+#| msgid "source file list is empty\n"
+msgid "Source timeline history:\n"
+msgstr "Historia źródłowej linii czasu:\n"
+
+#: pg_rewind.c:475
+#, c-format
+#| msgid "new target timeline is %u"
+msgid "Target timeline history:\n"
+msgstr "Historia docelowej linii czasu:\n"
+
+#. translator: %d is a timeline number, others are LSN positions
+#: pg_rewind.c:489
+#, c-format
+msgid "%d: %X/%X - %X/%X\n"
+msgstr "%d: %X/%X - %X/%X\n"
+
+#: pg_rewind.c:548
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines\n"
 msgstr "nie można znaleźć wspólnego przodka źródłowej i docelowej osi czasu klastra\n"
 
-#: pg_rewind.c:496
+#: pg_rewind.c:589
 #, c-format
 msgid "backup label buffer too small\n"
 msgstr "bufor etykiety kopii zapasowej jest za mały\n"
 
-#: pg_rewind.c:518
+#: pg_rewind.c:612
 #, c-format
 msgid "unexpected control file CRC\n"
 msgstr "nieoczekiwane CRC pliku kontrolnego\n"
 
-#: pg_rewind.c:528
+#: pg_rewind.c:622
 #, c-format
 msgid "unexpected control file size %d, expected %d\n"
 msgstr "nieoczekiwana długość pliku kontrolnego %d, oczekiwano %d\n"
+
+#: pg_rewind.c:689
+#, c-format
+#| msgid ""
+#| "The program \"%s\" is needed by %s but was not found in the\n"
+#| "same directory as \"%s\".\n"
+#| "Check your installation.\n"
+msgid ""
+"The program \"initdb\" is needed by %s but was\n"
+"not found in the same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Program \"initdb\" jest wymagany przez %s ale nie został\n"
+"znaleziony w tym samym folderze co \"%s\".\n"
+"Sprawdź instalację.\n"
+
+#: pg_rewind.c:693
+#, c-format
+#| msgid ""
+#| "The program \"%s\" was found by \"%s\"\n"
+#| "but was not the same version as %s.\n"
+#| "Check your installation.\n"
+msgid ""
+"The program \"initdb\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"Program \"initdb\" został znaleziony przez \"%s\"\n"
+"ale nie jest w tej samej wersji co %s.\n"
+"Sprawdź instalację.\n"
+
+#: pg_rewind.c:711
+#, c-format
+#| msgid "%s: no target directory specified\n"
+msgid "sync of target directory failed\n"
+msgstr "nie powiodło się sync folderu docelowego\n"
 
 #: timeline.c:76 timeline.c:82
 #, c-format
@@ -639,7 +707,6 @@ msgstr "Oczekiwano numerycznego ID linii czasu.\n"
 
 #: timeline.c:83
 #, c-format
-#| msgid "Expected a transaction log switchpoint location."
 msgid "Expected a transaction log switchpoint location.\n"
 msgstr "Oczekiwano położenia przełączenia dziennika transakcji.\n"
 
@@ -663,153 +730,144 @@ msgstr "niepoprawne dane w pliku historii\n"
 msgid "Timeline IDs must be less than child timeline's ID.\n"
 msgstr "IDy linii czasu muszą być mniejsze niż ID potomnej linii czasu.\n"
 
-#: xlogreader.c:264
+#: xlogreader.c:276
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "niepoprawne przesunięcie rekordu w %X/%X"
 
-#: xlogreader.c:272
+#: xlogreader.c:284
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "wymagany kontrekord w %X/%X"
 
-#: xlogreader.c:312 xlogreader.c:603
+#: xlogreader.c:325 xlogreader.c:624
 #, c-format
-msgid "invalid record length at %X/%X"
-msgstr "niepoprawna długość rekordu w %X/%X"
+#| msgid "invalid record length at %X/%X"
+msgid "invalid record length at %X/%X: wanted %u, got %u"
+msgstr "niepoprawna długość rekordu w %X/%X: oczekiwana %u, jest %u"
 
-#: xlogreader.c:326
+#: xlogreader.c:340
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "za duża długość rekordu %u w %X/%X"
 
-#: xlogreader.c:367
+#: xlogreader.c:381
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "brak flagi kontrekordu na %X/%X"
 
-#: xlogreader.c:380
+#: xlogreader.c:394
 #, c-format
 msgid "invalid contrecord length %u at %X/%X"
 msgstr "niepoprawna długość kontrekordu %u na %X/%X"
 
-#: xlogreader.c:610
+#: xlogreader.c:632
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "niepoprawny ID menażera zasobów %u w %X/%X"
 
-#: xlogreader.c:624 xlogreader.c:641
+#: xlogreader.c:646 xlogreader.c:663
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "rekord z niepoprawnym poprz-linkiem %X/%X w %X/%X"
 
-#: xlogreader.c:678
+#: xlogreader.c:700
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "niepoprawna suma kontrolna danych menadżera zasobów w rekordzie w %X/%X"
 
-#: xlogreader.c:711
+#: xlogreader.c:733
 #, c-format
 msgid "invalid magic number %04X in log segment %s, offset %u"
 msgstr "niepoprawny magiczny numer %04X w segmencie dziennika %s, przesunięcie %u"
 
-#: xlogreader.c:725 xlogreader.c:776
+#: xlogreader.c:747 xlogreader.c:798
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
 msgstr "niepoprawny bity informacji %04X w segmencie dziennika %s, przesunięcie %u"
 
-#: xlogreader.c:751
+#: xlogreader.c:773
 #, c-format
-#| msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s."
 msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
-msgstr ""
-"plik WAL pochodzi z innego systemu bazy danych: identyfikator systemu bazy "
-"danych z pliku WAL to %s, a identyfikator systemu bazy danych z pg_control "
-"to %s"
+msgstr "plik WAL pochodzi z innego systemu bazy danych: identyfikator systemu bazy danych z pliku WAL to %s, a identyfikator systemu bazy danych z pg_control to %s"
 
-#: xlogreader.c:758
+#: xlogreader.c:780
 #, c-format
-#| msgid "WAL file is from different database system: Incorrect XLOG_SEG_SIZE in page header."
 msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
-msgstr ""
-"plik WAL pochodzi z innego systemu bazy danych: niepoprawny XLOG_SEG_SIZE w "
-"nagłówku strony"
+msgstr "plik WAL pochodzi z innego systemu bazy danych: niepoprawny XLOG_SEG_SIZE w nagłówku strony"
 
-#: xlogreader.c:764
+#: xlogreader.c:786
 #, c-format
-#| msgid "WAL file is from different database system: Incorrect XLOG_BLCKSZ in page header."
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr ""
-"plik WAL pochodzi z innego systemu bazy danych: niepoprawny XLOG_BLCKSZ w "
-"nagłówku strony"
+msgstr "plik WAL pochodzi z innego systemu bazy danych: niepoprawny XLOG_BLCKSZ w nagłówku strony"
 
-#: xlogreader.c:790
+#: xlogreader.c:812
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
 msgstr "nieoczekiwany adrstrony %X/%X w segmencie dziennika %s, przesunięcie %u"
 
-#: xlogreader.c:815
+#: xlogreader.c:837
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
 msgstr "nieoczekiwany ID linii czasu %u (po %u) w segmencie dziennika %s, przesunięcie %u"
 
-#: xlogreader.c:1024
+#: xlogreader.c:1044
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "poza porządkiem block_id %u na %X/%X"
 
-#: xlogreader.c:1046
+#: xlogreader.c:1066
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA jest ustawione, ale nie załączono danych na %X/%X"
 
-#: xlogreader.c:1053
+#: xlogreader.c:1073
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA nie jest ustawione, długość danych to %u na %X/%X"
 
-#: xlogreader.c:1086
+#: xlogreader.c:1106
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE jest ustawione, ale przesunięcie dziury %u długości %u blok obrazu o długości %u na %X/%X"
 
-#: xlogreader.c:1102
+#: xlogreader.c:1122
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE nie jest ustawione, ale przesunięcie dziury %u o długości %u na %X/%X"
 
-#: xlogreader.c:1117
+#: xlogreader.c:1137
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_IS_COMPRESSED jest ustawione, ale blok obrazu o długości %u na %X/%X"
 
-#: xlogreader.c:1132
+#: xlogreader.c:1152
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "ani BKPIMAGE_HAS_HOLE ani BKPIMAGE_IS_COMPRESSED nie jest ustawione, ale długość bloku obrazu to %u na %X/%X"
 
-#: xlogreader.c:1148
+#: xlogreader.c:1168
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL jest ustawione ale brak poprzedniej rel na %X/%X"
 
-#: xlogreader.c:1160
+#: xlogreader.c:1180
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "niepoprawny block_id %u na %X/%X"
 
-#: xlogreader.c:1225
+#: xlogreader.c:1245
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "rekord o niepoprawnej długości w %X/%X"
 
-#: xlogreader.c:1314
+#: xlogreader.c:1334
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "niepoprawny skompresowany obraz na %X/%X, blok %d"
 
-#~ msgid "Expected an XLOG switchpoint location.\n"
-#~ msgstr "Oczekiwano położenia przełączenia XLOG.\n"
-
 #~ msgid "could not truncate file \"%s\" to %u bytes: %s\n"
 #~ msgstr "nie można obciąć pliku \"%s\" do %u bajtów: %s\n"
+
+#~ msgid "Expected an XLOG switchpoint location.\n"
+#~ msgstr "Oczekiwano położenia przełączenia XLOG.\n"
