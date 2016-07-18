@@ -703,13 +703,13 @@ typedef struct BrinOpcInfo
     </row>
     <row>
      <entry>Operator Strategy 4</entry>
-     <entry>operator right-of</entry>
-     <entry>Operator Strategy 2</entry>
+     <entry>operator does-not-extend-to-the-left-of</entry>
+     <entry>Operator Strategy 1</entry>
     </row>
     <row>
      <entry>Operator Strategy 5</entry>
-     <entry>operator does-not-extend-to-the-right-of</entry>
-     <entry>Operator Strategy 1</entry>
+     <entry>operator right-of</entry>
+     <entry>Operator Strategy 2</entry>
     </row>
     <row>
      <entry>Operator Strategy 6, 18</entry>
@@ -749,12 +749,12 @@ typedef struct BrinOpcInfo
     <row>
      <entry>Operator Strategy 20</entry>
      <entry>operator less-than</entry>
-     <entry>Operator Strategy 4</entry>
+     <entry>Operator Strategy 5</entry>
     </row>
     <row>
      <entry>Operator Strategy 21</entry>
      <entry>operator less-than-or-equal-to</entry>
-     <entry>Operator Strategy 4</entry>
+     <entry>Operator Strategy 5</entry>
     </row>
     <row>
      <entry>Operator Strategy 22</entry>
