@@ -1441,27 +1441,55 @@ EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
 GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>item</replaceable> <optional> , ... </optional>;
 </synopsis>
 
-     This command allows retrieval of system status indicators.  Each
-     <replaceable>item</replaceable> is a key word identifying a status
-     value to be assigned to the specified variable (which should be
-     of the right data type to receive it).  The currently available
-     status items are <varname>ROW_COUNT</>, the number of rows
-     processed by the last <acronym>SQL</acronym> command sent to
-     the <acronym>SQL</acronym> engine, and <varname>RESULT_OID</>,
-     the OID of the last row inserted by the most recent
-     <acronym>SQL</acronym> command.  Note that <varname>RESULT_OID</>
-     is only useful after an <command>INSERT</command> command into a
-     table containing OIDs.
-     Colon-equal (<literal>:=</>) can be used instead of SQL-standard
-     <literal>=</> for <command>GET DIAGNOSTICS</>.
-    </para>
-
-    <para>
-     An example:
+     This command allows retrieval of system status indicators.
+     <literal>CURRENT</> is a noise word (but see also <command>GET STACKED
+     DIAGNOSTICS</command> in <xref linkend="plpgsql-exception-diagnostics">).
+     Each <replaceable>item</replaceable> is a key word identifying a status
+     value to be assigned to the specified <replaceable>variable</replaceable>
+     (which should be of the right data type to receive it).  The currently
+     available status items are shown
+     in <xref linkend="plpgsql-current-diagnostics-values">.  Colon-equal
+     (<literal>:=</>) can be used instead of the SQL-standard <literal>=</>
+     token.  An example:
 <programlisting>
 GET DIAGNOSTICS integer_var = ROW_COUNT;
 </programlisting>
     </para>
+
+     <table id="plpgsql-current-diagnostics-values">
+      <title>Available Diagnostics Items</title>
+      <tgroup cols="3">
+       <thead>
+        <row>
+         <entry>Name</entry>
+         <entry>Type</entry>
+         <entry>Description</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry><varname>ROW_COUNT</varname></entry>
+         <entry><type>bigint</></entry>
+         <entry>the number of rows processed by the most
+          recent <acronym>SQL</acronym> command</entry>
+        </row>
+        <row>
+         <entry><varname>RESULT_OID</varname></entry>
+         <entry><type>oid</></entry>
+         <entry>the OID of the last row inserted by the most
+          recent <acronym>SQL</acronym> command (only useful after
+          an <command>INSERT</command> command into a table having
+          OIDs)</entry>
+        </row>
+        <row>
+         <entry><literal>PG_CONTEXT</literal></entry>
+         <entry><type>text</></entry>
+         <entry>line(s) of text describing the current call stack
+          (see <xref linkend="plpgsql-call-stack">)</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </table>
 
     <para>
      The second method to determine the effects of a command is to check the
@@ -1828,13 +1856,13 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
      <application>PL/pgSQL</> has three forms of <command>IF</>:
     <itemizedlist>
      <listitem>
-      <para><literal>IF ... THEN</></>
+      <para><literal>IF ... THEN ... END IF</></>
      </listitem>
      <listitem>
-      <para><literal>IF ... THEN ... ELSE</></>
+      <para><literal>IF ... THEN ... ELSE ... END IF</></>
      </listitem>
      <listitem>
-      <para><literal>IF ... THEN ... ELSIF ... THEN ... ELSE</></>
+      <para><literal>IF ... THEN ... ELSIF ... THEN ... ELSE ... END IF</></>
      </listitem>
     </itemizedlist>
 
@@ -2699,13 +2727,14 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
 </synopsis>
 
      Each <replaceable>item</replaceable> is a key word identifying a status
-     value to be assigned to the specified variable (which should be
-     of the right data type to receive it).  The currently available
-     status items are shown in <xref linkend="plpgsql-exception-diagnostics-values">.
+     value to be assigned to the specified <replaceable>variable</replaceable>
+     (which should be of the right data type to receive it).  The currently
+     available status items are shown
+     in <xref linkend="plpgsql-exception-diagnostics-values">.
     </para>
 
      <table id="plpgsql-exception-diagnostics-values">
-      <title>Error Diagnostics Values</title>
+      <title>Error Diagnostics Items</title>
       <tgroup cols="3">
        <thead>
         <row>
@@ -2717,53 +2746,54 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
        <tbody>
         <row>
          <entry><literal>RETURNED_SQLSTATE</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the SQLSTATE error code of the exception</entry>
         </row>
         <row>
          <entry><literal>COLUMN_NAME</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the name of the column related to exception</entry>
         </row>
         <row>
          <entry><literal>CONSTRAINT_NAME</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the name of the constraint related to exception</entry>
         </row>
         <row>
          <entry><literal>PG_DATATYPE_NAME</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the name of the data type related to exception</entry>
         </row>
         <row>
          <entry><literal>MESSAGE_TEXT</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the text of the exception's primary message</entry>
         </row>
         <row>
          <entry><literal>TABLE_NAME</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the name of the table related to exception</entry>
         </row>
         <row>
          <entry><literal>SCHEMA_NAME</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the name of the schema related to exception</entry>
         </row>
         <row>
          <entry><literal>PG_EXCEPTION_DETAIL</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the text of the exception's detail message, if any</entry>
         </row>
         <row>
          <entry><literal>PG_EXCEPTION_HINT</literal></entry>
-         <entry>text</entry>
+         <entry><type>text</></entry>
          <entry>the text of the exception's hint message, if any</entry>
         </row>
         <row>
          <entry><literal>PG_EXCEPTION_CONTEXT</literal></entry>
-         <entry>text</entry>
-         <entry>line(s) of text describing the call stack</entry>
+         <entry><type>text</></entry>
+         <entry>line(s) of text describing the call stack at the time of the
+          exception (see <xref linkend="plpgsql-call-stack">)</entry>
         </row>
        </tbody>
       </tgroup>
@@ -2794,26 +2824,19 @@ END;
    </sect3>
   </sect2>
 
-  <sect2 id="plpgsql-get-diagnostics-context">
-   <title>Obtaining Current Execution Information</title>
+  <sect2 id="plpgsql-call-stack">
+   <title>Obtaining Execution Location Information</title>
 
    <para>
-    The <command>GET <optional> CURRENT </optional> DIAGNOSTICS</command>
-    command retrieves information about current execution state (whereas
-    the <command>GET STACKED DIAGNOSTICS</command> command discussed above
-    reports information about the execution state as of a previous error).
-    This command has the form:
-   </para>
-
-<synopsis>
-GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>item</replaceable> <optional> , ... </optional>;
-</synopsis>
-
-   <para>
-    Currently only one information item is supported.  Status
-    item <literal>PG_CONTEXT</> will return a text string with line(s) of
-    text describing the call stack.  The first line refers to the
-    current function and currently executing <command>GET DIAGNOSTICS</command>
+    The <command>GET DIAGNOSTICS</command> command, previously described
+    in <xref linkend="plpgsql-statements-diagnostics">, retrieves information
+    about current execution state (whereas the <command>GET STACKED
+    DIAGNOSTICS</command> command discussed above reports information about
+    the execution state as of a previous error).  Its <literal>PG_CONTEXT</>
+    status item is useful for identifying the current execution
+    location.  <literal>PG_CONTEXT</> returns a text string with line(s)
+    of text describing the call stack.  The first line refers to the current
+    function and currently executing <command>GET DIAGNOSTICS</command>
     command.  The second and any subsequent lines refer to calling functions
     further up the call stack.  For example:
 
@@ -2846,6 +2869,12 @@ CONTEXT:  PL/pgSQL function outer_func() line 3 at RETURN
 (1 row)
 </programlisting>
 
+   </para>
+
+   <para>
+    <literal>GET STACKED DIAGNOSTICS ... PG_EXCEPTION_CONTEXT</literal>
+    returns the same sort of stack trace, but describing the location
+    at which an error was detected, rather than the current location.
    </para>
   </sect2>
   </sect1>
@@ -4235,7 +4264,7 @@ SELECT * FROM sales_summary_bytime;
    </para>
 
    <para>
-    When a <application>PL/pgSQL</application> function is called as a
+    When a <application>PL/pgSQL</application> function is called as an
     event trigger, several special variables are created automatically
     in the top-level block. They are:
 
@@ -4263,7 +4292,7 @@ SELECT * FROM sales_summary_bytime;
   </para>
 
    <para>
-    <xref linkend="plpgsql-event-trigger-example"> shows an example of a
+    <xref linkend="plpgsql-event-trigger-example"> shows an example of an
     event trigger procedure in <application>PL/pgSQL</application>.
    </para>
 
