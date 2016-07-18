@@ -901,7 +901,7 @@ SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid)
 	/*
 	 * NB: This handles subtransactions correctly even if we started from
 	 * suboverflowed xl_running_xacts because we only keep track of toplevel
-	 * transactions. Since the latter are always are allocated before their
+	 * transactions. Since the latter are always allocated before their
 	 * subxids and since they end at the same time it's sufficient to deal
 	 * with them here.
 	 */
@@ -981,7 +981,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		 * we reached consistency.
 		 */
 		forced_timetravel = true;
-		elog(DEBUG1, "forced to assume catalog changes for xid %u because it was running to early", xid);
+		elog(DEBUG1, "forced to assume catalog changes for xid %u because it was running too early", xid);
 	}
 
 	for (nxact = 0; nxact < nsubxacts; nxact++)
