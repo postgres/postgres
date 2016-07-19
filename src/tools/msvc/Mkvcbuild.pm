@@ -435,8 +435,7 @@ sub mkvcbuild
 	$pgrestore->AddLibrary('ws2_32.lib');
 
 	my $zic = $solution->AddProject('zic', 'exe', 'utils');
-	$zic->AddFiles('src\timezone', 'zic.c', 'ialloc.c', 'scheck.c',
-		'localtime.c');
+	$zic->AddFiles('src\timezone', 'zic.c');
 	$zic->AddReference($libpgport, $libpgcommon);
 
 	if ($solution->{options}->{xml})
