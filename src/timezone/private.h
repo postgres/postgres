@@ -25,6 +25,18 @@
 
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
+/*
+ * IANA has a bunch of HAVE_FOO #defines here, but in PG we want pretty
+ * much all of that to be done by PG's configure script.
+ */
+
+#ifndef ENOTSUP
+#define ENOTSUP EINVAL
+#endif
+#ifndef EOVERFLOW
+#define EOVERFLOW EINVAL
+#endif
+
 #ifndef WIFEXITED
 #define WIFEXITED(status)	(((status) & 0xff) == 0)
 #endif   /* !defined WIFEXITED */
@@ -34,6 +46,10 @@
 
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
+
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t) -1)
+#endif
 
 /*
  * SunOS 4.1.1 libraries lack remove.
@@ -45,30 +61,10 @@ extern int	unlink(const char *filename);
 #define remove	unlink
 #endif   /* !defined remove */
 
-/*
- * Private function declarations.
- */
-extern char *icalloc(int nelem, int elsize);
-extern char *icatalloc(char *old, const char *new);
-extern char *icpyalloc(const char *string);
-extern char *imalloc(int n);
-extern void *irealloc(void *pointer, int size);
-extern void icfree(char *pointer);
-extern void ifree(char *pointer);
-extern const char *scheck(const char *string, const char *format);
-
 
 /*
  * Finally, some convenience items.
  */
-
-#ifndef TRUE
-#define TRUE	1
-#endif   /* !defined TRUE */
-
-#ifndef FALSE
-#define FALSE	0
-#endif   /* !defined FALSE */
 
 #ifndef TYPE_BIT
 #define TYPE_BIT(type)	(sizeof (type) * CHAR_BIT)
@@ -78,14 +74,18 @@ extern const char *scheck(const char *string, const char *format);
 #define TYPE_SIGNED(type) (((type) -1) < 0)
 #endif   /* !defined TYPE_SIGNED */
 
-/*
- * Since the definition of TYPE_INTEGRAL contains floating point numbers,
- * it cannot be used in preprocessor directives.
- */
+#define TWOS_COMPLEMENT(t) ((t) ~ (t) 0 < 0)
 
-#ifndef TYPE_INTEGRAL
-#define TYPE_INTEGRAL(type) (((type) 0.5) != 0.5)
-#endif   /* !defined TYPE_INTEGRAL */
+/*
+ * Max and min values of the integer type T, of which only the bottom
+ * B bits are used, and where the highest-order used bit is considered
+ * to be a sign bit if T is signed.
+ */
+#define MAXVAL(t, b)						\
+  ((t) (((t) 1 << ((b) - 1 - TYPE_SIGNED(t)))			\
+	- 1 + ((t) 1 << ((b) - 1 - TYPE_SIGNED(t)))))
+#define MINVAL(t, b)						\
+  ((t) (TYPE_SIGNED(t) ? - TWOS_COMPLEMENT(t) - MAXVAL(t, b) : 0))
 
 #ifndef INT_STRLEN_MAXIMUM
 /*
@@ -95,34 +95,36 @@ extern const char *scheck(const char *string, const char *format);
  * add one more for a minus sign if the type is signed.
  */
 #define INT_STRLEN_MAXIMUM(type) \
-	((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + 1 + TYPE_SIGNED(type))
+	((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + \
+	1 + TYPE_SIGNED(type))
 #endif   /* !defined INT_STRLEN_MAXIMUM */
+
+/*
+ * INITIALIZE(x)
+ */
+#define INITIALIZE(x)  ((x) = 0)
 
 #undef _
 #define _(msgid) (msgid)
 
 #ifndef YEARSPERREPEAT
-#define YEARSPERREPEAT			400		/* years before a Gregorian repeat */
+#define YEARSPERREPEAT		400 /* years before a Gregorian repeat */
 #endif   /* !defined YEARSPERREPEAT */
 
 /*
-** The Gregorian year averages 365.2425 days, which is 31556952 seconds.
-*/
+ * The Gregorian year averages 365.2425 days, which is 31556952 seconds.
+ */
 
 #ifndef AVGSECSPERYEAR
-#define AVGSECSPERYEAR			31556952L
+#define AVGSECSPERYEAR		31556952L
 #endif   /* !defined AVGSECSPERYEAR */
 
 #ifndef SECSPERREPEAT
-#define SECSPERREPEAT			((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
+#define SECSPERREPEAT		((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
 #endif   /* !defined SECSPERREPEAT */
 
 #ifndef SECSPERREPEAT_BITS
-#define SECSPERREPEAT_BITS		34		/* ceil(log2(SECSPERREPEAT)) */
+#define SECSPERREPEAT_BITS	34	/* ceil(log2(SECSPERREPEAT)) */
 #endif   /* !defined SECSPERREPEAT_BITS */
-
-/*
- * UNIX was a registered trademark of The Open Group in 2003.
- */
 
 #endif   /* !defined PRIVATE_H */

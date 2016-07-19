@@ -287,9 +287,9 @@ score_timezone(const char *tzname, struct tztry * tt)
 	 * Load timezone directly. Don't use pg_tzset, because we don't want all
 	 * timezones loaded in the cache at startup.
 	 */
-	if (tzload(tzname, NULL, &tz.state, TRUE) != 0)
+	if (tzload(tzname, NULL, &tz.state, true) != 0)
 	{
-		if (tzname[0] == ':' || tzparse(tzname, &tz.state, FALSE) != 0)
+		if (tzname[0] == ':' || !tzparse(tzname, &tz.state, false))
 		{
 			return -1;			/* can't handle the TZ name at all */
 		}
@@ -1301,9 +1301,9 @@ pg_tzset(const char *name)
 		return &tzp->tz;
 	}
 
-	if (tzload(uppername, canonname, &tzstate, TRUE) != 0)
+	if (tzload(uppername, canonname, &tzstate, true) != 0)
 	{
-		if (uppername[0] == ':' || tzparse(uppername, &tzstate, FALSE) != 0)
+		if (uppername[0] == ':' || !tzparse(uppername, &tzstate, false))
 		{
 			/* Unknown timezone. Fail our call instead of loading GMT! */
 			return NULL;
@@ -1470,7 +1470,7 @@ pg_timezone_pre_initialize(void)
 	 * timezone variable will only be used for emergency fallback purposes, it
 	 * seems OK to just use the "lastditch" case provided by tzparse().
 	 */
-	if (tzparse("GMT", &gmt_timezone_data.state, TRUE) != 0)
+	if (!tzparse("GMT", &gmt_timezone_data.state, true))
 		elog(FATAL, "could not initialize GMT time zone");
 	strcpy(gmt_timezone_data.TZname, "GMT");
 	gmt_timezone = &gmt_timezone_data;
@@ -1646,7 +1646,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		 * the cache
 		 */
 		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state,
-				   TRUE) != 0)
+				   true) != 0)
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;
