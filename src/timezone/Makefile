@@ -19,7 +19,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS= localtime.o strftime.o pgtz.o
 
 # files needed to build zic utility program
-ZICOBJS= zic.o ialloc.o scheck.o localtime.o $(WIN32RES)
+ZICOBJS= zic.o $(WIN32RES)
 
 # timezone data files
 TZDATA = africa antarctica asia australasia europe northamerica southamerica \
