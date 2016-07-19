@@ -2092,6 +2092,15 @@ include_dir 'conf.d'
         </para>
 
         <para>
+         When this feature is enabled, freed space at the end of a relation
+         cannot be released to the operating system, since that could remove
+         information needed to detect the <literal>snapshot too old</>
+         condition.  All space allocated to a relation remains associated with
+         that relation for reuse only within that relation unless explicitly
+         freed (for example, with <command>VACUUM FULL</>).
+        </para>
+
+        <para>
          This setting does not attempt to guarantee that an error will be
          generated under any particular circumstances.  In fact, if the
          correct results can be generated from (for example) a cursor which

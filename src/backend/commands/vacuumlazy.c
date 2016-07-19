@@ -1663,6 +1663,15 @@ lazy_cleanup_index(Relation indrel,
  * Don't even think about it unless we have a shot at releasing a goodly
  * number of pages.  Otherwise, the time taken isn't worth it.
  *
+ * Also don't attempt it if we are doing early pruning/vacuuming, because a
+ * scan which cannot find a truncated heap page cannot determine that the
+ * snapshot is too old to read that page.  We might be able to get away with
+ * truncating all except one of the pages, setting its LSN to (at least) the
+ * maximum of the truncated range if we also treated an index leaf tuple
+ * pointing to a missing heap page as something to trigger the "snapshot too
+ * old" error, but that seems fragile and seems like it deserves its own patch
+ * if we consider it.
+ *
  * This is split out so that we can test whether truncation is going to be
  * called for before we actually do it.  If you change the logic here, be
  * careful to depend only on fields that lazy_scan_heap updates on-the-fly.
