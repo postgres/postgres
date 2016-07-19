@@ -62,8 +62,6 @@
 					# (change requires restart)
 #port = 5432				# (change requires restart)
 #max_connections = 100			# (change requires restart)
-# Note:  Increasing max_connections costs ~400 bytes of shared memory per
-# connection slot, plus lock space (see max_locks_per_transaction).
 #superuser_reserved_connections = 3	# (change requires restart)
 #unix_socket_directories = '/tmp'	# comma-separated list of directories
 					# (change requires restart)
@@ -119,10 +117,8 @@
 #temp_buffers = 8MB			# min 800kB
 #max_prepared_transactions = 0		# zero disables the feature
 					# (change requires restart)
-# Note:  Increasing max_prepared_transactions costs ~600 bytes of shared memory
-# per transaction slot, plus lock space (see max_locks_per_transaction).
-# It is not advisable to set max_prepared_transactions nonzero unless you
-# actively intend to use prepared transactions.
+# Caution: it is not advisable to set max_prepared_transactions nonzero unless
+# you actively intend to use prepared transactions.
 #work_mem = 4MB				# min 64kB
 #maintenance_work_mem = 64MB		# min 1MB
 #replacement_sort_tuples = 150000	# limits use of replacement selection sort
@@ -593,9 +589,6 @@
 #deadlock_timeout = 1s
 #max_locks_per_transaction = 64		# min 10
 					# (change requires restart)
-# Note:  Each lock table slot uses ~270 bytes of shared memory, and there are
-# max_locks_per_transaction * (max_connections + max_prepared_transactions)
-# lock table slots.
 #max_pred_locks_per_transaction = 64	# min 10
 					# (change requires restart)
 
