@@ -16,25 +16,26 @@
 #ifndef _PGTZ_H
 #define _PGTZ_H
 
-#include "tzfile.h"
 #include "pgtime.h"
+#include "tzfile.h"
 
 
+#define SMALLEST(a, b)	(((a) < (b)) ? (a) : (b))
 #define BIGGEST(a, b)	(((a) > (b)) ? (a) : (b))
 
 struct ttinfo
 {								/* time type information */
-	long		tt_gmtoff;		/* UTC offset in seconds */
-	int			tt_isdst;		/* used to set tm_isdst */
+	int32		tt_gmtoff;		/* UT offset in seconds */
+	bool		tt_isdst;		/* used to set tm_isdst */
 	int			tt_abbrind;		/* abbreviation list index */
-	int			tt_ttisstd;		/* TRUE if transition is std time */
-	int			tt_ttisgmt;		/* TRUE if transition is UTC */
+	bool		tt_ttisstd;		/* transition is std time */
+	bool		tt_ttisgmt;		/* transition is UT */
 };
 
 struct lsinfo
 {								/* leap second information */
 	pg_time_t	ls_trans;		/* transition time */
-	long		ls_corr;		/* correction to apply */
+	int64		ls_corr;		/* correction to apply */
 };
 
 struct state
@@ -43,14 +44,15 @@ struct state
 	int			timecnt;
 	int			typecnt;
 	int			charcnt;
-	int			goback;
-	int			goahead;
+	bool		goback;
+	bool		goahead;
 	pg_time_t	ats[TZ_MAX_TIMES];
 	unsigned char types[TZ_MAX_TIMES];
 	struct ttinfo ttis[TZ_MAX_TYPES];
 	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 3 /* sizeof gmt */ ),
 										  (2 * (TZ_STRLEN_MAX + 1)))];
 	struct lsinfo lsis[TZ_MAX_LEAPS];
+	int			defaulttype;	/* for early times or if no transitions */
 };
 
 
@@ -67,7 +69,7 @@ extern int	pg_open_tzfile(const char *name, char *canonname);
 
 /* in localtime.c */
 extern int tzload(const char *name, char *canonname, struct state * sp,
-	   int doextend);
-extern int	tzparse(const char *name, struct state * sp, int lastditch);
+	   bool doextend);
+extern bool tzparse(const char *name, struct state * sp, bool lastditch);
 
 #endif   /* _PGTZ_H */
