@@ -256,7 +256,7 @@ pg_tzset(const char *name)
 	 */
 	if (strcmp(uppername, "GMT") == 0)
 	{
-		if (tzparse(uppername, &tzstate, TRUE) != 0)
+		if (!tzparse(uppername, &tzstate, true))
 		{
 			/* This really, really should not happen ... */
 			elog(ERROR, "could not initialize GMT time zone");
@@ -264,9 +264,9 @@ pg_tzset(const char *name)
 		/* Use uppercase name as canonical */
 		strcpy(canonname, uppername);
 	}
-	else if (tzload(uppername, canonname, &tzstate, TRUE) != 0)
+	else if (tzload(uppername, canonname, &tzstate, true) != 0)
 	{
-		if (uppername[0] == ':' || tzparse(uppername, &tzstate, FALSE) != 0)
+		if (uppername[0] == ':' || !tzparse(uppername, &tzstate, false))
 		{
 			/* Unknown timezone. Fail our call instead of loading GMT! */
 			return NULL;
@@ -460,7 +460,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		 * the cache
 		 */
 		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state,
-				   TRUE) != 0)
+				   true) != 0)
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;

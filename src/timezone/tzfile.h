@@ -33,8 +33,8 @@
 struct tzhead
 {
 	char		tzh_magic[4];	/* TZ_MAGIC */
-	char		tzh_version[1]; /* '\0' or '2' as of 2005 */
-	char		tzh_reserved[15];		/* reserved--must be zero */
+	char		tzh_version[1]; /* '\0' or '2' or '3' as of 2013 */
+	char		tzh_reserved[15];		/* reserved; must be zero */
 	char		tzh_ttisgmtcnt[4];		/* coded number of trans. time flags */
 	char		tzh_ttisstdcnt[4];		/* coded number of trans. time flags */
 	char		tzh_leapcnt[4]; /* coded number of leap seconds */
@@ -43,30 +43,29 @@ struct tzhead
 	char		tzh_charcnt[4]; /* coded number of abbr. chars */
 };
 
-/*----------
+/*
  * . . .followed by. . .
  *
  *	tzh_timecnt (char [4])s		coded transition times a la time(2)
  *	tzh_timecnt (unsigned char)s	types of local time starting at above
  *	tzh_typecnt repetitions of
- *		one (char [4])		coded UTC offset in seconds
+ *		one (char [4])		coded UT offset in seconds
  *		one (unsigned char) used to set tm_isdst
  *		one (unsigned char) that's an abbreviation list index
  *	tzh_charcnt (char)s		'\0'-terminated zone abbreviations
  *	tzh_leapcnt repetitions of
  *		one (char [4])		coded leap second transition times
  *		one (char [4])		total correction after above
- *	tzh_ttisstdcnt (char)s		indexed by type; if TRUE, transition
- *					time is standard time, if FALSE,
+ *	tzh_ttisstdcnt (char)s		indexed by type; if 1, transition
+ *					time is standard time, if 0,
  *					transition time is wall clock time
  *					if absent, transition times are
  *					assumed to be wall clock time
- *	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
- *					time is UTC, if FALSE,
+ *	tzh_ttisgmtcnt (char)s		indexed by type; if 1, transition
+ *					time is UT, if 0,
  *					transition time is local time
  *					if absent, transition times are
  *					assumed to be local time
- *----------
  */
 
 /*
@@ -77,6 +76,13 @@ struct tzhead
  * instants after the last transition time stored in the file
  * (with nothing between the newlines if there is no POSIX representation for
  * such instants).
+ *
+ * If tz_version is '3' or greater, the above is extended as follows.
+ * First, the POSIX TZ string's hour offset may range from -167
+ * through 167 as compared to the POSIX-required 0 through 24.
+ * Second, its DST start time may be January 1 at 00:00 and its stop
+ * time December 31 at 24:00 plus the difference between DST and
+ * standard time, indicating DST all year.
  */
 
 /*
@@ -84,8 +90,9 @@ struct tzhead
  * exceed any of the limits below.
  */
 
-#define TZ_MAX_TIMES	1200
+#define TZ_MAX_TIMES	2000
 
+/* This must be at least 17 for Europe/Samara and Europe/Vilnius.  */
 #define TZ_MAX_TYPES	256		/* Limited by what (unsigned char)'s can hold */
 
 #define TZ_MAX_CHARS	50		/* Maximum number of abbreviation characters */
@@ -100,7 +107,7 @@ struct tzhead
 #define DAYSPERNYEAR	365
 #define DAYSPERLYEAR	366
 #define SECSPERHOUR (SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	((int32) SECSPERHOUR * HOURSPERDAY)
 #define MONSPERYEAR 12
 
 #define TM_SUNDAY	0
@@ -143,6 +150,6 @@ struct tzhead
  * We use this to avoid addition overflow problems.
  */
 
-#define isleap_sum(a, b)	  isleap((a) % 400 + (b) % 400)
+#define isleap_sum(a, b)	isleap((a) % 400 + (b) % 400)
 
 #endif   /* !defined TZFILE_H */
