@@ -96,7 +96,7 @@ PostgreSQL documentation
       <term><option>--if-not-exists</option></term>
       <listitem>
        <para>
-        Do not not error out when <option>--create-slot</option> is specified
+        Do not error out when <option>--create-slot</option> is specified
         and a slot with the specified name already exists.
        </para>
       </listitem>
