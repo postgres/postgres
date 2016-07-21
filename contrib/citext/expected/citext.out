@@ -175,7 +175,7 @@ SELECT 'a'::citext >= 'B'::varchar AS t;  -- varchar wins.
  t
 (1 row)
 
--- A couple of longer examlpes to ensure that we don't get any issues with bad
+-- A couple of longer examples to ensure that we don't get any issues with bad
 -- conversions to char[] in the c code. Yes, I did do this.
 SELECT 'aardvark'::citext = 'aardvark'::citext AS t;
  t 
@@ -272,14 +272,14 @@ DETAIL:  Key (name)=(A) already exists.
 INSERT INTO try (name) VALUES ('aB');
 ERROR:  duplicate key value violates unique constraint "try_pkey"
 DETAIL:  Key (name)=(aB) already exists.
--- Make sure that citext_smaller() and citext_lager() work properly.
-SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;
+-- Make sure that citext_smaller() and citext_larger() work properly.
+SELECT citext_smaller( 'ab'::citext, 'ac'::citext ) = 'ab' AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT citext_smaller( 'AAAA'::citext, 'bbbb'::citext ) = 'AAAA' AS t;
+SELECT citext_smaller( 'ABC'::citext, 'bbbb'::citext ) = 'ABC' AS t;
  t 
 ---
  t
@@ -297,13 +297,13 @@ SELECT citext_smaller( 'aardvark'::citext, 'AARDVARK'::citext ) = 'AARDVARK' AS 
  t
 (1 row)
 
-SELECT citext_larger( 'aa'::citext, 'ab'::citext ) = 'ab' AS t;
+SELECT citext_larger( 'ab'::citext, 'ac'::citext ) = 'ac' AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT citext_larger( 'AAAA'::citext, 'bbbb'::citext ) = 'bbbb' AS t;
+SELECT citext_larger( 'ABC'::citext, 'bbbb'::citext ) = 'bbbb' AS t;
  t 
 ---
  t
@@ -320,17 +320,16 @@ CREATE TEMP TABLE srt (
    name CITEXT
 );
 INSERT INTO srt (name)
-VALUES ('aardvark'),
-       ('AAA'),
-       ('aba'),
+VALUES ('abb'),
+       ('ABA'),
        ('ABC'),
        ('abd');
 -- Check the min() and max() aggregates, with and without index.
 set enable_seqscan = off;
-SELECT MIN(name) AS "AAA" FROM srt;
- AAA 
+SELECT MIN(name) AS "ABA" FROM srt;
+ ABA 
 -----
- AAA
+ ABA
 (1 row)
 
 SELECT MAX(name) AS abd FROM srt;
@@ -341,10 +340,10 @@ SELECT MAX(name) AS abd FROM srt;
 
 reset enable_seqscan;
 set enable_indexscan = off;
-SELECT MIN(name) AS "AAA" FROM srt;
- AAA 
+SELECT MIN(name) AS "ABA" FROM srt;
+ ABA 
 -----
- AAA
+ ABA
 (1 row)
 
 SELECT MAX(name) AS abd FROM srt;
@@ -357,162 +356,146 @@ reset enable_indexscan;
 -- Check sorting likewise
 set enable_seqscan = off;
 SELECT name FROM srt ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 reset enable_seqscan;
 set enable_indexscan = off;
 SELECT name FROM srt ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 reset enable_indexscan;
 -- Test assignment casts.
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::text;
- aaa 
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::text;
+ aba 
 -----
- aaa
+ aba
 (1 row)
 
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::varchar;
- aaa 
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::varchar;
+ aba 
 -----
- aaa
+ aba
 (1 row)
 
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::bpchar;
- aaa 
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::bpchar;
+ aba 
 -----
- aaa
+ aba
 (1 row)
 
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA';
- aaa 
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA';
+ aba 
 -----
- aaa
+ aba
 (1 row)
 
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::citext;
- aaa 
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::citext;
+ aba 
 -----
- aaa
+ aba
 (1 row)
 
 -- LIKE should be case-insensitive
 SELECT name FROM srt WHERE name     LIKE '%a%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 SELECT name FROM srt WHERE name NOT LIKE '%b%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
-(2 rows)
+ name 
+------
+(0 rows)
 
 SELECT name FROM srt WHERE name     LIKE '%A%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 SELECT name FROM srt WHERE name NOT LIKE '%B%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
-(2 rows)
+ name 
+------
+(0 rows)
 
 -- ~~ should be case-insensitive
 SELECT name FROM srt WHERE name ~~  '%a%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 SELECT name FROM srt WHERE name !~~ '%b%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
-(2 rows)
+ name 
+------
+(0 rows)
 
 SELECT name FROM srt WHERE name ~~  '%A%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 SELECT name FROM srt WHERE name !~~ '%B%' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
-(2 rows)
+ name 
+------
+(0 rows)
 
 -- ~ should be case-insensitive
 SELECT name FROM srt WHERE name ~  '^a' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 SELECT name FROM srt WHERE name !~ 'a$' ORDER BY name;
-   name   
-----------
- aardvark
+ name 
+------
+ abb
  ABC
  abd
 (3 rows)
 
 SELECT name FROM srt WHERE name ~  '^A' ORDER BY name;
-   name   
-----------
- AAA
- aardvark
- aba
+ name 
+------
+ ABA
+ abb
  ABC
  abd
-(5 rows)
+(4 rows)
 
 SELECT name FROM srt WHERE name !~ 'A$' ORDER BY name;
-   name   
-----------
- aardvark
+ name 
+------
+ abb
  ABC
  abd
 (3 rows)
@@ -521,16 +504,14 @@ SELECT name FROM srt WHERE name !~ 'A$' ORDER BY name;
 SELECT name FROM srt WHERE name SIMILAR TO '%a.*';
  name 
 ------
- AAA
- aba
-(2 rows)
+ ABA
+(1 row)
 
 SELECT name FROM srt WHERE name SIMILAR TO '%A.*';
  name 
 ------
- AAA
- aba
-(2 rows)
+ ABA
+(1 row)
 
 -- Explicit casts.
 SELECT true::citext = 'true' AS t;
@@ -1502,8 +1483,7 @@ SELECT bit_length( name ) = bit_length( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT textlen( name ) = textlen( name::text ) AS t FROM srt;
  t 
@@ -1512,8 +1492,7 @@ SELECT textlen( name ) = textlen( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT char_length( name ) = char_length( name::text ) AS t FROM srt;
  t 
@@ -1522,8 +1501,7 @@ SELECT char_length( name ) = char_length( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT lower( name ) = lower( name::text ) AS t FROM srt;
  t 
@@ -1532,8 +1510,7 @@ SELECT lower( name ) = lower( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT octet_length( name ) = octet_length( name::text ) AS t FROM srt;
  t 
@@ -1542,8 +1519,7 @@ SELECT octet_length( name ) = octet_length( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT overlay( name placing 'hom' from 2 for 4) = overlay( name::text placing 'hom' from 2 for 4) AS t FROM srt;
  t 
@@ -1552,8 +1528,7 @@ SELECT overlay( name placing 'hom' from 2 for 4) = overlay( name::text placing '
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT position( 'a' IN name ) = position( 'a' IN name::text ) AS t FROM srt;
  t 
@@ -1562,8 +1537,7 @@ SELECT position( 'a' IN name ) = position( 'a' IN name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT substr('alphabet'::citext, 3)       = 'phabet' AS t;
  t 
@@ -1644,8 +1618,7 @@ SELECT upper( name ) = upper( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 -- Table 9-6. Other String Functions.
 SELECT ascii( name ) = ascii( name::text ) AS t FROM srt;
@@ -1655,8 +1628,7 @@ SELECT ascii( name ) = ascii( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT btrim('    trim'::citext                   ) = 'trim' AS t;
  t 
@@ -1697,8 +1669,7 @@ SELECT convert_to( name, 'ISO-8859-1' ) = convert_to( name::text, 'ISO-8859-1' )
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT decode('MTIzAAE='::citext, 'base64') = decode('MTIzAAE='::text, 'base64') AS t;
  t 
@@ -1720,8 +1691,7 @@ SELECT length( name ) = length( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT lpad('hi'::citext, 5              ) = '   hi' AS t;
  t 
@@ -1778,8 +1748,7 @@ SELECT md5( name ) = md5( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 -- pg_client_encoding() takes no args and returns name.
 SELECT quote_ident( name ) = quote_ident( name::text ) AS t FROM srt;
@@ -1789,8 +1758,7 @@ SELECT quote_ident( name ) = quote_ident( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT quote_literal( name ) = quote_literal( name::text ) AS t FROM srt;
  t 
@@ -1799,8 +1767,7 @@ SELECT quote_literal( name ) = quote_literal( name::text ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT regexp_matches('foobarbequebaz'::citext, '(bar)(beque)') = ARRAY[ 'bar', 'beque' ] AS t;
  t 
@@ -2098,37 +2065,37 @@ SELECT split_part('abcTdefTghi', 't'::citext, 2) = 'def' AS t;
  t
 (1 row)
 
-SELECT strpos('high'::citext, 'ig'        ) = 2 AS t;
+SELECT strpos('high'::citext, 'gh'        ) = 3 AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT strpos('high',         'ig'::citext) = 2 AS t;
+SELECT strpos('high',         'gh'::citext) = 3 AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT strpos('high'::citext, 'ig'::citext) = 2 AS t;
+SELECT strpos('high'::citext, 'gh'::citext) = 3 AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT strpos('high'::citext, 'IG'        ) = 2 AS t;
+SELECT strpos('high'::citext, 'GH'        ) = 3 AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT strpos('high',         'IG'::citext) = 2 AS t;
+SELECT strpos('high',         'GH'::citext) = 3 AS t;
  t 
 ---
  t
 (1 row)
 
-SELECT strpos('high'::citext, 'IG'::citext) = 2 AS t;
+SELECT strpos('high'::citext, 'GH'::citext) = 3 AS t;
  t 
 ---
  t
@@ -2262,8 +2229,7 @@ SELECT like_escape( name, '' ) = like_escape( name::text, '' ) AS t FROM srt;
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
 SELECT like_escape( name::text, ''::citext ) = like_escape( name::text, '' ) AS t FROM srt;
  t 
@@ -2272,6 +2238,5 @@ SELECT like_escape( name::text, ''::citext ) = like_escape( name::text, '' ) AS 
  t
  t
  t
- t
-(5 rows)
+(4 rows)
 
