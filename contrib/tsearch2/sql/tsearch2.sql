@@ -230,14 +230,14 @@ select rank(' a:1 s:2 d g'::tsvector, 'a & s');
 
 insert into test_tsvector (t) values ('foo bar foo the over foo qq bar');
 drop trigger tsvectorupdate on test_tsvector;
-select * from stat('select a from test_tsvector') order by ndoc desc, nentry desc, word;
+select * from stat('select a from test_tsvector') order by ndoc desc, nentry desc, word collate "C";
 insert into test_tsvector values ('1', 'a:1a,2,3b b:5a,6a,7c,8');
 insert into test_tsvector values ('1', 'a:1a,2,3c b:5a,6b,7c,8b');
-select * from stat('select a from test_tsvector','a') order by ndoc desc, nentry desc, word;
-select * from stat('select a from test_tsvector','b') order by ndoc desc, nentry desc, word;
-select * from stat('select a from test_tsvector','c') order by ndoc desc, nentry desc, word;
-select * from stat('select a from test_tsvector','d') order by ndoc desc, nentry desc, word;
-select * from stat('select a from test_tsvector','ad') order by ndoc desc, nentry desc, word;
+select * from stat('select a from test_tsvector','a') order by ndoc desc, nentry desc, word collate "C";
+select * from stat('select a from test_tsvector','b') order by ndoc desc, nentry desc, word collate "C";
+select * from stat('select a from test_tsvector','c') order by ndoc desc, nentry desc, word collate "C";
+select * from stat('select a from test_tsvector','d') order by ndoc desc, nentry desc, word collate "C";
+select * from stat('select a from test_tsvector','ad') order by ndoc desc, nentry desc, word collate "C";
 
 select to_tsquery('english', 'skies & books');
 
