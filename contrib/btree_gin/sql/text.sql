@@ -4,7 +4,7 @@ CREATE TABLE test_text (
 	i text
 );
 
-INSERT INTO test_text VALUES ('aaa'),('a'),('abc'),('abb'),('axy'),('xyz');
+INSERT INTO test_text VALUES ('a'),('ab'),('abc'),('abb'),('axy'),('xyz');
 
 CREATE INDEX idx_text ON test_text USING gin (i);
 
