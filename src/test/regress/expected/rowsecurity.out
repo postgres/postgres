@@ -664,7 +664,7 @@ EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 SELECT * FROM t1 WHERE f_leak(b);
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
 NOTICE:  f_leak => ddd
@@ -677,7 +677,7 @@ NOTICE:  f_leak => yyy
 NOTICE:  f_leak => zzz
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  2 | bbb
  3 | ccc
  4 | ddd
@@ -706,7 +706,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 SET SESSION AUTHORIZATION regress_rls_exempt_user;
 SET row_security TO OFF;
 SELECT * FROM t1 WHERE f_leak(b);
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
 NOTICE:  f_leak => ddd
@@ -719,7 +719,7 @@ NOTICE:  f_leak => yyy
 NOTICE:  f_leak => zzz
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  2 | bbb
  3 | ccc
  4 | ddd
@@ -952,7 +952,7 @@ EXPLAIN (COSTS OFF) EXECUTE p1(2);
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 SELECT * FROM t1 WHERE f_leak(b);
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
 NOTICE:  f_leak => ddd
@@ -965,7 +965,7 @@ NOTICE:  f_leak => yyy
 NOTICE:  f_leak => zzz
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  2 | bbb
  3 | ccc
  4 | ddd
@@ -994,7 +994,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 EXECUTE p1(2);
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  2 | bbb
  1 | abc
  2 | bcd
@@ -1345,7 +1345,7 @@ SET row_security TO OFF;
 SELECT * FROM t1 ORDER BY a,b;
  a |      b      
 ---+-------------
- 1 | aaa
+ 1 | aba
  1 | abc
  1 | xxx
  2 | bbbbbb_updt
@@ -1653,7 +1653,7 @@ CREATE TABLE z2 (a int, b text);
 GRANT SELECT ON z1,z2 TO regress_rls_group1, regress_rls_group2,
     regress_rls_bob, regress_rls_carol;
 INSERT INTO z1 VALUES
-    (1, 'aaa'),
+    (1, 'aba'),
     (2, 'bbb'),
     (3, 'ccc'),
     (4, 'ddd');
@@ -1777,11 +1777,11 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM z1 WHERE f_leak(b);
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => ccc
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  3 | ccc
 (2 rows)
 
@@ -1833,11 +1833,11 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 SET ROLE regress_rls_group2;
 SELECT * FROM z1 WHERE f_leak(b);
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => ccc
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  3 | ccc
 (2 rows)
 
@@ -1897,13 +1897,13 @@ GRANT SELECT ON rls_view TO regress_rls_bob;
 -- Query as role that is not owner of view or table.  Should return all records.
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM rls_view;
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
 NOTICE:  f_leak => ddd
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  2 | bbb
  3 | ccc
  4 | ddd
@@ -1919,13 +1919,13 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
 -- Query as view/table owner.  Should return all records.
 SET SESSION AUTHORIZATION regress_rls_alice;
 SELECT * FROM rls_view;
-NOTICE:  f_leak => aaa
+NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
 NOTICE:  f_leak => ddd
  a |  b  
 ---+-----
- 1 | aaa
+ 1 | aba
  2 | bbb
  3 | ccc
  4 | ddd

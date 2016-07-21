@@ -200,7 +200,7 @@ ALTER TABLE t1 DROP COLUMN junk1;    -- just a disturbing factor
 GRANT ALL ON t1 TO public;
 
 COPY t1 FROM stdin WITH (oids);
-101	1	aaa
+101	1	aba
 102	2	bbb
 103	3	ccc
 104	4	ddd
@@ -635,7 +635,7 @@ GRANT SELECT ON z1,z2 TO regress_rls_group1, regress_rls_group2,
     regress_rls_bob, regress_rls_carol;
 
 INSERT INTO z1 VALUES
-    (1, 'aaa'),
+    (1, 'aba'),
     (2, 'bbb'),
     (3, 'ccc'),
     (4, 'ddd');
