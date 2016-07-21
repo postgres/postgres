@@ -631,8 +631,6 @@ typedef struct XLogCtlData
 	TimeLineID	replayEndTLI;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
 	TimestampTz recoveryLastXTime;
-	/* current effective recovery target timeline */
-	TimeLineID	RecoveryTargetTLI;
 
 	/*
 	 * timestamp of when we started replaying the current chunk of WAL data,
