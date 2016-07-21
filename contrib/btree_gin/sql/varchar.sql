@@ -4,7 +4,7 @@ CREATE TABLE test_varchar (
 	i varchar
 );
 
-INSERT INTO test_varchar VALUES ('aaa'),('a'),('abc'),('abb'),('axy'),('xyz');
+INSERT INTO test_varchar VALUES ('a'),('ab'),('abc'),('abb'),('axy'),('xyz');
 
 CREATE INDEX idx_varchar ON test_varchar USING gin (i);
 

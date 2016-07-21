@@ -72,7 +72,7 @@ SELECT 'B'::citext <= 'a'::varchar AS t;  -- varchar wins.
 SELECT 'a'::citext >  'B'::varchar AS t;  -- varchar wins.
 SELECT 'a'::citext >= 'B'::varchar AS t;  -- varchar wins.
 
--- A couple of longer examlpes to ensure that we don't get any issues with bad
+-- A couple of longer examples to ensure that we don't get any issues with bad
 -- conversions to char[] in the c code. Yes, I did do this.
 
 SELECT 'aardvark'::citext = 'aardvark'::citext AS t;
@@ -104,14 +104,14 @@ INSERT INTO try (name) VALUES ('a');
 INSERT INTO try (name) VALUES ('A');
 INSERT INTO try (name) VALUES ('aB');
 
--- Make sure that citext_smaller() and citext_lager() work properly.
-SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;
-SELECT citext_smaller( 'AAAA'::citext, 'bbbb'::citext ) = 'AAAA' AS t;
+-- Make sure that citext_smaller() and citext_larger() work properly.
+SELECT citext_smaller( 'ab'::citext, 'ac'::citext ) = 'ab' AS t;
+SELECT citext_smaller( 'ABC'::citext, 'bbbb'::citext ) = 'ABC' AS t;
 SELECT citext_smaller( 'aardvark'::citext, 'Aaba'::citext ) = 'Aaba' AS t;
 SELECT citext_smaller( 'aardvark'::citext, 'AARDVARK'::citext ) = 'AARDVARK' AS t;
 
-SELECT citext_larger( 'aa'::citext, 'ab'::citext ) = 'ab' AS t;
-SELECT citext_larger( 'AAAA'::citext, 'bbbb'::citext ) = 'bbbb' AS t;
+SELECT citext_larger( 'ab'::citext, 'ac'::citext ) = 'ac' AS t;
+SELECT citext_larger( 'ABC'::citext, 'bbbb'::citext ) = 'bbbb' AS t;
 SELECT citext_larger( 'aardvark'::citext, 'Aaba'::citext ) = 'aardvark' AS t;
 
 -- Test aggregate functions and sort ordering
@@ -121,9 +121,8 @@ CREATE TEMP TABLE srt (
 );
 
 INSERT INTO srt (name)
-VALUES ('aardvark'),
-       ('AAA'),
-       ('aba'),
+VALUES ('abb'),
+       ('ABA'),
        ('ABC'),
        ('abd');
 
@@ -131,11 +130,11 @@ CREATE INDEX srt_name ON srt (name);
 
 -- Check the min() and max() aggregates, with and without index.
 set enable_seqscan = off;
-SELECT MIN(name) AS "AAA" FROM srt;
+SELECT MIN(name) AS "ABA" FROM srt;
 SELECT MAX(name) AS abd FROM srt;
 reset enable_seqscan;
 set enable_indexscan = off;
-SELECT MIN(name) AS "AAA" FROM srt;
+SELECT MIN(name) AS "ABA" FROM srt;
 SELECT MAX(name) AS abd FROM srt;
 reset enable_indexscan;
 
@@ -148,11 +147,11 @@ SELECT name FROM srt ORDER BY name;
 reset enable_indexscan;
 
 -- Test assignment casts.
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::text;
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::varchar;
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::bpchar;
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA';
-SELECT LOWER(name) as aaa FROM srt WHERE name = 'AAA'::citext;
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::text;
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::varchar;
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::bpchar;
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA';
+SELECT LOWER(name) as aba FROM srt WHERE name = 'ABA'::citext;
 
 -- LIKE should be case-insensitive
 SELECT name FROM srt WHERE name     LIKE '%a%' ORDER BY name;
@@ -657,12 +656,12 @@ SELECT split_part('abcTdefTghi'::citext, 't', 2) = 'def' AS t;
 SELECT split_part('abcTdefTghi'::citext, 't'::citext, 2) = 'def' AS t;
 SELECT split_part('abcTdefTghi', 't'::citext, 2) = 'def' AS t;
 
-SELECT strpos('high'::citext, 'ig'        ) = 2 AS t;
-SELECT strpos('high',         'ig'::citext) = 2 AS t;
-SELECT strpos('high'::citext, 'ig'::citext) = 2 AS t;
-SELECT strpos('high'::citext, 'IG'        ) = 2 AS t;
-SELECT strpos('high',         'IG'::citext) = 2 AS t;
-SELECT strpos('high'::citext, 'IG'::citext) = 2 AS t;
+SELECT strpos('high'::citext, 'gh'        ) = 3 AS t;
+SELECT strpos('high',         'gh'::citext) = 3 AS t;
+SELECT strpos('high'::citext, 'gh'::citext) = 3 AS t;
+SELECT strpos('high'::citext, 'GH'        ) = 3 AS t;
+SELECT strpos('high',         'GH'::citext) = 3 AS t;
+SELECT strpos('high'::citext, 'GH'::citext) = 3 AS t;
 
 -- to_ascii() does not support UTF-8.
 -- to_hex() takes a numeric argument.
