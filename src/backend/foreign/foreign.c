@@ -31,8 +31,6 @@
 extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
 extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
-static HeapTuple find_user_mapping(Oid userid, Oid serverid);
-
 
 /*
  * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
@@ -161,54 +159,6 @@ GetForeignServerByName(const char *srvname, bool missing_ok)
 	return GetForeignServer(serverid);
 }
 
-/*
- * GetUserMappingById - look up the user mapping by its OID.
- */
-UserMapping *
-GetUserMappingById(Oid umid)
-{
-	Datum		datum;
-	HeapTuple	tp;
-	bool		isnull;
-	UserMapping *um;
-
-	tp = SearchSysCache1(USERMAPPINGOID, ObjectIdGetDatum(umid));
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup failed for user mapping %u", umid);
-
-	um = (UserMapping *) palloc(sizeof(UserMapping));
-	um->umid = umid;
-
-	/* Extract the umuser */
-	datum = SysCacheGetAttr(USERMAPPINGOID,
-							tp,
-							Anum_pg_user_mapping_umuser,
-							&isnull);
-	Assert(!isnull);
-	um->userid = DatumGetObjectId(datum);
-
-	/* Extract the umserver */
-	datum = SysCacheGetAttr(USERMAPPINGOID,
-							tp,
-							Anum_pg_user_mapping_umserver,
-							&isnull);
-	Assert(!isnull);
-	um->serverid = DatumGetObjectId(datum);
-
-	/* Extract the umoptions */
-	datum = SysCacheGetAttr(USERMAPPINGOID,
-							tp,
-							Anum_pg_user_mapping_umoptions,
-							&isnull);
-	if (isnull)
-		um->options = NIL;
-	else
-		um->options = untransformRelOptions(datum);
-
-	ReleaseSysCache(tp);
-
-	return um;
-}
 
 /*
  * GetUserMapping - look up the user mapping.
@@ -224,7 +174,23 @@ GetUserMapping(Oid userid, Oid serverid)
 	bool		isnull;
 	UserMapping *um;
 
-	tp = find_user_mapping(userid, serverid);
+	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+						 ObjectIdGetDatum(userid),
+						 ObjectIdGetDatum(serverid));
+
+	if (!HeapTupleIsValid(tp))
+	{
+		/* Not found for the specific user -- try PUBLIC */
+		tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+							 ObjectIdGetDatum(InvalidOid),
+							 ObjectIdGetDatum(serverid));
+	}
+
+	if (!HeapTupleIsValid(tp))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user mapping not found for \"%s\"",
+						MappingUserName(userid))));
 
 	um = (UserMapping *) palloc(sizeof(UserMapping));
 	um->umid = HeapTupleGetOid(tp);
@@ -244,60 +210,6 @@ GetUserMapping(Oid userid, Oid serverid)
 	ReleaseSysCache(tp);
 
 	return um;
-}
-
-/*
- * GetUserMappingId - look up the user mapping, and return its OID
- *
- * If no mapping is found for the supplied user, we also look for
- * PUBLIC mappings (userid == InvalidOid).
- */
-Oid
-GetUserMappingId(Oid userid, Oid serverid)
-{
-	HeapTuple	tp;
-	Oid			umid;
-
-	tp = find_user_mapping(userid, serverid);
-
-	/* Extract the Oid */
-	umid = HeapTupleGetOid(tp);
-
-	ReleaseSysCache(tp);
-
-	return umid;
-}
-
-/*
- * find_user_mapping - Guts of GetUserMapping family.
- *
- * If no mapping is found for the supplied user, we also look for
- * PUBLIC mappings (userid == InvalidOid).
- */
-static HeapTuple
-find_user_mapping(Oid userid, Oid serverid)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
-						 ObjectIdGetDatum(userid),
-						 ObjectIdGetDatum(serverid));
-
-	if (HeapTupleIsValid(tp))
-		return tp;
-
-	/* Not found for the specific user -- try PUBLIC */
-	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
-						 ObjectIdGetDatum(InvalidOid),
-						 ObjectIdGetDatum(serverid));
-
-	if (!HeapTupleIsValid(tp))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user mapping not found for \"%s\"",
-						MappingUserName(userid))));
-
-	return tp;
 }
 
 

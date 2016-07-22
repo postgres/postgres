@@ -1323,20 +1323,6 @@ GetForeignTable(Oid relid);
 
     <para>
 <programlisting>
-UserMapping *
-GetUserMappingById(Oid umid);
-</programlisting>
-
-     This function returns the <structname>UserMapping</structname> object for
-     the given user mapping OID.  The OID of a user mapping for a foreign scan
-     is available in the <structname>RelOptInfo</structname>.
-     If there is no mapping for the OID, this function will throw an error.
-     A <structname>UserMapping</structname> object contains properties of the
-     user mapping (see <filename>foreign/foreign.h</filename> for details).
-    </para>
-
-    <para>
-<programlisting>
 List *
 GetForeignColumnOptions(Oid relid, AttrNumber attnum);
 </programlisting>
