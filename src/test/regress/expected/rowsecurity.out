@@ -488,7 +488,7 @@ SELECT * FROM t1;
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
  2 | bcd
  4 | def
  2 | yyy
@@ -508,14 +508,14 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
 
 SELECT * FROM t1 WHERE f_leak(b);
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
  2 | bcd
  4 | def
  2 | yyy
@@ -540,7 +540,7 @@ SELECT oid, * FROM t1;
  oid | a |  b  
 -----+---+-----
  102 | 2 | bbb
- 104 | 4 | ddd
+ 104 | 4 | dad
  202 | 2 | bcd
  204 | 4 | def
  302 | 2 | yyy
@@ -563,7 +563,7 @@ SELECT *, t1 FROM t1;
  a |  b  |   t1    
 ---+-----+---------
  2 | bbb | (2,bbb)
- 4 | ddd | (4,ddd)
+ 4 | dad | (4,dad)
  2 | bcd | (2,bcd)
  4 | def | (4,def)
  2 | yyy | (2,yyy)
@@ -586,7 +586,7 @@ SELECT * FROM t1 FOR SHARE;
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
  2 | bcd
  4 | def
  2 | yyy
@@ -610,14 +610,14 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
 
 SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
  2 | bcd
  4 | def
  2 | yyy
@@ -667,7 +667,7 @@ SELECT * FROM t1 WHERE f_leak(b);
 NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
 NOTICE:  f_leak => abc
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => cde
@@ -680,7 +680,7 @@ NOTICE:  f_leak => zzz
  1 | aba
  2 | bbb
  3 | ccc
- 4 | ddd
+ 4 | dad
  1 | abc
  2 | bcd
  3 | cde
@@ -709,7 +709,7 @@ SELECT * FROM t1 WHERE f_leak(b);
 NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
 NOTICE:  f_leak => abc
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => cde
@@ -722,7 +722,7 @@ NOTICE:  f_leak => zzz
  1 | aba
  2 | bbb
  3 | ccc
- 4 | ddd
+ 4 | dad
  1 | abc
  2 | bcd
  3 | cde
@@ -955,7 +955,7 @@ SELECT * FROM t1 WHERE f_leak(b);
 NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
 NOTICE:  f_leak => abc
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => cde
@@ -968,7 +968,7 @@ NOTICE:  f_leak => zzz
  1 | aba
  2 | bbb
  3 | ccc
- 4 | ddd
+ 4 | dad
  1 | abc
  2 | bcd
  3 | cde
@@ -1088,7 +1088,7 @@ EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
 
 UPDATE t1 SET b = b || b WHERE f_leak(b);
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
@@ -1105,27 +1105,27 @@ EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 NOTICE:  f_leak => bbbbbb
-NOTICE:  f_leak => dddddd
+NOTICE:  f_leak => daddad
 -- returning clause with system column
 UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
-NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => daddad_updt
  oid | a |      b      |       t1        
 -----+---+-------------+-----------------
  102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 104 | 4 | dddddd_updt | (4,dddddd_updt)
+ 104 | 4 | daddad_updt | (4,daddad_updt)
 (2 rows)
 
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
 NOTICE:  f_leak => bbbbbb_updt
-NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => bcdbcd
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => yyyyyy
  a |      b      
 ---+-------------
  2 | bbbbbb_updt
- 4 | dddddd_updt
+ 4 | daddad_updt
  2 | bcdbcd
  4 | defdef
  2 | yyyyyy
@@ -1133,14 +1133,14 @@ NOTICE:  f_leak => yyyyyy
 
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
-NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => bcdbcd
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => yyyyyy
  oid | a |      b      |       t1        
 -----+---+-------------+-----------------
  102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 104 | 4 | dddddd_updt | (4,dddddd_updt)
+ 104 | 4 | daddad_updt | (4,daddad_updt)
  202 | 2 | bcdbcd      | (2,bcdbcd)
  204 | 4 | defdef      | (4,defdef)
  302 | 2 | yyyyyy      | (2,yyyyyy)
@@ -1328,15 +1328,15 @@ AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
 UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
 AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
-NOTICE:  f_leak => dddddd_updt
-NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => daddad_updt
+NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => defdef
-NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => defdef
  a |      b      | a |      b      |      t1_1       |      t1_2       
 ---+-------------+---+-------------+-----------------+-----------------
- 4 | dddddd_updt | 4 | dddddd_updt | (4,dddddd_updt) | (4,dddddd_updt)
+ 4 | daddad_updt | 4 | daddad_updt | (4,daddad_updt) | (4,daddad_updt)
  4 | defdef      | 4 | defdef      | (4,defdef)      | (4,defdef)
 (2 rows)
 
@@ -1354,7 +1354,7 @@ SELECT * FROM t1 ORDER BY a,b;
  3 | ccc
  3 | cde
  3 | zzz
- 4 | dddddd_updt
+ 4 | daddad_updt
  4 | defdef
 (11 rows)
 
@@ -1397,11 +1397,11 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
 
 DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
-NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => daddad_updt
  oid | a |      b      |       t1        
 -----+---+-------------+-----------------
  102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 104 | 4 | dddddd_updt | (4,dddddd_updt)
+ 104 | 4 | daddad_updt | (4,daddad_updt)
 (2 rows)
 
 DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
@@ -1656,18 +1656,18 @@ INSERT INTO z1 VALUES
     (1, 'aba'),
     (2, 'bbb'),
     (3, 'ccc'),
-    (4, 'ddd');
+    (4, 'dad');
 CREATE POLICY p1 ON z1 TO regress_rls_group1 USING (a % 2 = 0);
 CREATE POLICY p2 ON z1 TO regress_rls_group2 USING (a % 2 = 1);
 ALTER TABLE z1 ENABLE ROW LEVEL SECURITY;
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM z1 WHERE f_leak(b);
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
@@ -1722,11 +1722,11 @@ EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 SET ROLE regress_rls_group1;
 SELECT * FROM z1 WHERE f_leak(b);
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
@@ -1900,13 +1900,13 @@ SELECT * FROM rls_view;
 NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  1 | aba
  2 | bbb
  3 | ccc
- 4 | ddd
+ 4 | dad
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
@@ -1922,13 +1922,13 @@ SELECT * FROM rls_view;
 NOTICE:  f_leak => aba
 NOTICE:  f_leak => bbb
 NOTICE:  f_leak => ccc
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  1 | aba
  2 | bbb
  3 | ccc
- 4 | ddd
+ 4 | dad
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
@@ -1948,11 +1948,11 @@ GRANT SELECT ON rls_view TO regress_rls_alice;
 SET SESSION AUTHORIZATION regress_rls_alice;
 SELECT * FROM rls_view;
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
@@ -1969,11 +1969,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM rls_view;
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;
@@ -1996,11 +1996,11 @@ SET SESSION AUTHORIZATION regress_rls_bob;
 GRANT SELECT ON rls_view TO regress_rls_carol;
 SELECT * FROM rls_view;
 NOTICE:  f_leak => bbb
-NOTICE:  f_leak => ddd
+NOTICE:  f_leak => dad
  a |  b  
 ---+-----
  2 | bbb
- 4 | ddd
+ 4 | dad
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_view;

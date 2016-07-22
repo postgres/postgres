@@ -203,7 +203,7 @@ COPY t1 FROM stdin WITH (oids);
 101	1	aba
 102	2	bbb
 103	3	ccc
-104	4	ddd
+104	4	dad
 \.
 
 CREATE TABLE t2 (c float) INHERITS (t1);
@@ -638,7 +638,7 @@ INSERT INTO z1 VALUES
     (1, 'aba'),
     (2, 'bbb'),
     (3, 'ccc'),
-    (4, 'ddd');
+    (4, 'dad');
 
 CREATE POLICY p1 ON z1 TO regress_rls_group1 USING (a % 2 = 0);
 CREATE POLICY p2 ON z1 TO regress_rls_group2 USING (a % 2 = 1);
