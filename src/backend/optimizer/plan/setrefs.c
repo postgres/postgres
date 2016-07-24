@@ -1752,6 +1752,10 @@ convert_combining_aggrefs(Node *node, void *context)
 		Aggref	   *child_agg;
 		Aggref	   *parent_agg;
 
+		/* Assert we've not chosen to partial-ize any unsupported cases */
+		Assert(orig_agg->aggorder == NIL);
+		Assert(orig_agg->aggdistinct == NIL);
+
 		/*
 		 * Since aggregate calls can't be nested, we needn't recurse into the
 		 * arguments.  But for safety, flat-copy the Aggref node itself rather
@@ -1762,13 +1766,17 @@ convert_combining_aggrefs(Node *node, void *context)
 
 		/*
 		 * For the parent Aggref, we want to copy all the fields of the
-		 * original aggregate *except* the args list.  Rather than explicitly
-		 * knowing what they all are here, we can momentarily modify child_agg
-		 * to provide a source for copyObject.
+		 * original aggregate *except* the args list, which we'll replace
+		 * below, and the aggfilter expression, which should be applied only
+		 * by the child not the parent.  Rather than explicitly knowing about
+		 * all the other fields here, we can momentarily modify child_agg to
+		 * provide a suitable source for copyObject.
 		 */
 		child_agg->args = NIL;
+		child_agg->aggfilter = NULL;
 		parent_agg = (Aggref *) copyObject(child_agg);
 		child_agg->args = orig_agg->args;
+		child_agg->aggfilter = orig_agg->aggfilter;
 
 		/*
 		 * Now, set up child_agg to represent the first phase of partial
