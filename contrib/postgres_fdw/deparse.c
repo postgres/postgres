@@ -1637,7 +1637,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root,
 
 		/*
 		 * In case the whole-row reference is under an outer join then it has
-		 * to go NULL whenver the rest of the row goes NULL. Deparsing a join
+		 * to go NULL whenever the rest of the row goes NULL. Deparsing a join
 		 * query would always involve multiple relations, thus qualify_col
 		 * would be true.
 		 */
