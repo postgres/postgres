@@ -1192,7 +1192,7 @@ sub poll_query_until
 {
 	my ($self, $dbname, $query) = @_;
 
-	my $max_attempts = 90;
+	my $max_attempts = 180;
 	my $attempts     = 0;
 	my ($stdout, $stderr);
 
