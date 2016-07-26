@@ -276,8 +276,8 @@ sub command_like
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
-	ok($result, "@$cmd exit code 0");
-	is($stderr, '', "@$cmd no stderr");
+	ok($result, "$test_name: exit code 0");
+	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
