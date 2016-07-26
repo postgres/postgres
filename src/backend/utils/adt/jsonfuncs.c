@@ -3869,7 +3869,7 @@ setPathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			{
 				/*
 				 * called from jsonb_insert(), it forbids redefining an
-				 * existsing value
+				 * existing value
 				 */
 				if (op_type & (JB_PATH_INSERT_BEFORE | JB_PATH_INSERT_AFTER))
 					ereport(ERROR,
