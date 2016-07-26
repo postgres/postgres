@@ -7431,12 +7431,6 @@ StartupXLOG(void)
 	 */
 	InRecovery = false;
 
-	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-	ControlFile->state = DB_IN_PRODUCTION;
-	ControlFile->time = (pg_time_t) time(NULL);
-	UpdateControlFile();
-	LWLockRelease(ControlFileLock);
-
 	/* start the archive_timeout timer running */
 	XLogCtl->lastSegSwitchTime = (pg_time_t) time(NULL);
 
@@ -7494,14 +7488,31 @@ StartupXLOG(void)
 	CompleteCommitTsInitialization();
 
 	/*
-	 * All done.  Allow backends to write WAL.  (Although the bool flag is
-	 * probably atomic in itself, we use the info_lck here to ensure that
-	 * there are no race conditions concerning visibility of other recent
-	 * updates to shared memory.)
+	 * All done with end-of-recovery actions.
+	 *
+	 * Now allow backends to write WAL and update the control file status in
+	 * consequence.  The boolean flag allowing backends to write WAL is
+	 * updated while holding ControlFileLock to prevent other backends to look
+	 * at an inconsistent state of the control file in shared memory.  There
+	 * is still a small window during which backends can write WAL and the
+	 * control file is still referring to a system not in DB_IN_PRODUCTION
+	 * state while looking at the on-disk control file.
+	 *
+	 * Also, although the boolean flag to allow WAL is probably atomic in
+	 * itself, we use the info_lck here to ensure that there are no race
+	 * conditions concerning visibility of other recent updates to shared
+	 * memory.
 	 */
+	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+	ControlFile->state = DB_IN_PRODUCTION;
+	ControlFile->time = (pg_time_t) time(NULL);
+
 	SpinLockAcquire(&XLogCtl->info_lck);
 	XLogCtl->SharedRecoveryInProgress = false;
 	SpinLockRelease(&XLogCtl->info_lck);
+
+	UpdateControlFile();
+	LWLockRelease(ControlFileLock);
 
 	/*
 	 * If there were cascading standby servers connected to us, nudge any wal
