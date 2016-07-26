@@ -41,7 +41,7 @@ against them and evaluate the results. For example:
     $node->init;
     $node->start;
 
-    my $ret = $node->psql('postgres', 'SELECT 1');
+    my $ret = $node->safe_psql('postgres', 'SELECT 1');
     is($ret, '1', 'SELECT 1 returns 1');
 
     $node->stop('fast');
