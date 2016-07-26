@@ -257,11 +257,110 @@
    </para>
 
    <para>
+    There are also some comparison predicates, as shown in <xref
+    linkend="functions-comparison-pred-table">.  These behave much like
+    operators, but have special syntax mandated by the SQL standard.
+   </para>
+
+   <table id="functions-comparison-pred-table">
+    <title>Comparison Predicates</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Predicate</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry> <replaceable>a</> <literal>BETWEEN</> <replaceable>x</> <literal>AND</> <replaceable>y</> </entry>
+       <entry>between</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>a</> <literal>NOT BETWEEN</> <replaceable>x</> <literal>AND</> <replaceable>y</> </entry>
+       <entry>not between</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>a</> <literal>BETWEEN SYMMETRIC</> <replaceable>x</> <literal>AND</> <replaceable>y</> </entry>
+       <entry>between, after sorting the comparison values</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>a</> <literal>NOT BETWEEN SYMMETRIC</> <replaceable>x</> <literal>AND</> <replaceable>y</> </entry>
+       <entry>not between, after sorting the comparison values</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>a</> <literal>IS DISTINCT FROM</> <replaceable>b</> </entry>
+       <entry>not equal, treating null like an ordinary value</entry>
+      </row>
+
+      <row>
+       <entry><replaceable>a</> <literal>IS NOT DISTINCT FROM</> <replaceable>b</></entry>
+       <entry>equal, treating null like an ordinary value</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>expression</> <literal>IS NULL</> </entry>
+       <entry>is null</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>expression</> <literal>IS NOT NULL</> </entry>
+       <entry>is not null</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>expression</> <literal>ISNULL</> </entry>
+       <entry>is null (nonstandard syntax)</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>expression</> <literal>NOTNULL</> </entry>
+       <entry>is not null (nonstandard syntax)</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>boolean_expression</> <literal>IS TRUE</> </entry>
+       <entry>is true</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>boolean_expression</> <literal>IS NOT TRUE</> </entry>
+       <entry>is false or unknown</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>boolean_expression</> <literal>IS FALSE</> </entry>
+       <entry>is false</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>boolean_expression</> <literal>IS NOT FALSE</> </entry>
+       <entry>is true or unknown</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>boolean_expression</> <literal>IS UNKNOWN</> </entry>
+       <entry>is unknown</entry>
+      </row>
+
+      <row>
+       <entry> <replaceable>boolean_expression</> <literal>IS NOT UNKNOWN</> </entry>
+       <entry>is true or false</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
     <indexterm>
      <primary>BETWEEN</primary>
     </indexterm>
-    In addition to the comparison operators, the special
-    <token>BETWEEN</token> construct is available:
+    The <token>BETWEEN</token> predicate simplifies range tests:
 <synopsis>
 <replaceable>a</replaceable> BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
 </synopsis>
@@ -282,11 +381,37 @@
     <indexterm>
      <primary>BETWEEN SYMMETRIC</primary>
     </indexterm>
-    <literal>BETWEEN SYMMETRIC</> is the same as <literal>BETWEEN</>
+    <literal>BETWEEN SYMMETRIC</> is like <literal>BETWEEN</>
     except there is no requirement that the argument to the left of
     <literal>AND</> be less than or equal to the argument on the right.
     If it is not, those two arguments are automatically swapped, so that
     a nonempty range is always implied.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>IS DISTINCT FROM</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT DISTINCT FROM</primary>
+    </indexterm>
+    Ordinary comparison operators yield null (signifying <quote>unknown</>),
+    not true or false, when either input is null.  For example,
+    <literal>7 = NULL</> yields null, as does <literal>7 &lt;&gt; NULL</>.  When
+    this behavior is not suitable, use the
+    <literal>IS <optional> NOT </> DISTINCT FROM</literal> predicates:
+<synopsis>
+<replaceable>a</replaceable> IS DISTINCT FROM <replaceable>b</replaceable>
+<replaceable>a</replaceable> IS NOT DISTINCT FROM <replaceable>b</replaceable>
+</synopsis>
+    For non-null inputs, <literal>IS DISTINCT FROM</literal> is
+    the same as the <literal>&lt;&gt;</> operator.  However, if both
+    inputs are null it returns false, and if only one input is
+    null it returns true.  Similarly, <literal>IS NOT DISTINCT
+    FROM</literal> is identical to <literal>=</literal> for non-null
+    inputs, but it returns true when both inputs are null, and false when only
+    one input is null. Thus, these predicates effectively act as though null
+    were a normal data value, rather than <quote>unknown</>.
    </para>
 
    <para>
@@ -302,12 +427,12 @@
     <indexterm>
      <primary>NOTNULL</primary>
     </indexterm>
-    To check whether a value is or is not null, use the constructs:
+    To check whether a value is or is not null, use the predicates:
 <synopsis>
 <replaceable>expression</replaceable> IS NULL
 <replaceable>expression</replaceable> IS NOT NULL
 </synopsis>
-    or the equivalent, but nonstandard, constructs:
+    or the equivalent, but nonstandard, predicates:
 <synopsis>
 <replaceable>expression</replaceable> ISNULL
 <replaceable>expression</replaceable> NOTNULL
@@ -320,8 +445,7 @@
     <literal><replaceable>expression</replaceable> = NULL</literal>
     because <literal>NULL</> is not <quote>equal to</quote>
     <literal>NULL</>.  (The null value represents an unknown value,
-    and it is not known whether two unknown values are equal.) This
-    behavior conforms to the SQL standard.
+    and it is not known whether two unknown values are equal.)
    </para>
 
   <tip>
@@ -338,7 +462,6 @@
    </para>
   </tip>
 
-  <note>
    <para>
     If the <replaceable>expression</replaceable> is row-valued, then
     <literal>IS NULL</> is true when the row expression itself is null
@@ -346,39 +469,13 @@
     <literal>IS NOT NULL</> is true when the row expression itself is non-null
     and all the row's fields are non-null.  Because of this behavior,
     <literal>IS NULL</> and <literal>IS NOT NULL</> do not always return
-    inverse results for row-valued expressions, i.e., a row-valued
-    expression that contains both NULL and non-null values will return false
-    for both tests.
-    This definition conforms to the SQL standard, and is a change from the
-    inconsistent behavior exhibited by <productname>PostgreSQL</productname>
-    versions prior to 8.2.
-   </para>
-  </note>
-
-   <para>
-    <indexterm>
-     <primary>IS DISTINCT FROM</primary>
-    </indexterm>
-    <indexterm>
-     <primary>IS NOT DISTINCT FROM</primary>
-    </indexterm>
-    Ordinary comparison operators yield null (signifying <quote>unknown</>),
-    not true or false, when either input is null.  For example,
-    <literal>7 = NULL</> yields null, as does <literal>7 &lt;&gt; NULL</>.  When
-    this behavior is not suitable, use the
-    <literal>IS <optional> NOT </> DISTINCT FROM</literal> constructs:
-<synopsis>
-<replaceable>expression</replaceable> IS DISTINCT FROM <replaceable>expression</replaceable>
-<replaceable>expression</replaceable> IS NOT DISTINCT FROM <replaceable>expression</replaceable>
-</synopsis>
-    For non-null inputs, <literal>IS DISTINCT FROM</literal> is
-    the same as the <literal>&lt;&gt;</> operator.  However, if both
-    inputs are null it returns false, and if only one input is
-    null it returns true.  Similarly, <literal>IS NOT DISTINCT
-    FROM</literal> is identical to <literal>=</literal> for non-null
-    inputs, but it returns true when both inputs are null, and false when only
-    one input is null. Thus, these constructs effectively act as though null
-    were a normal data value, rather than <quote>unknown</>.
+    inverse results for row-valued expressions; in particular, a row-valued
+    expression that contains both null and non-null fields will return false
+    for both tests.  In some cases, it may be preferable to
+    write <replaceable>row</replaceable> <literal>IS DISTINCT FROM NULL</>
+    or <replaceable>row</replaceable> <literal>IS NOT DISTINCT FROM NULL</>,
+    which will simply check whether the overall row value is null without any
+    additional tests on the row fields.
    </para>
 
    <para>
@@ -400,14 +497,14 @@
     <indexterm>
      <primary>IS NOT UNKNOWN</primary>
     </indexterm>
-    Boolean values can also be tested using the constructs
+    Boolean values can also be tested using the predicates
 <synopsis>
-<replaceable>expression</replaceable> IS TRUE
-<replaceable>expression</replaceable> IS NOT TRUE
-<replaceable>expression</replaceable> IS FALSE
-<replaceable>expression</replaceable> IS NOT FALSE
-<replaceable>expression</replaceable> IS UNKNOWN
-<replaceable>expression</replaceable> IS NOT UNKNOWN
+<replaceable>boolean_expression</replaceable> IS TRUE
+<replaceable>boolean_expression</replaceable> IS NOT TRUE
+<replaceable>boolean_expression</replaceable> IS FALSE
+<replaceable>boolean_expression</replaceable> IS NOT FALSE
+<replaceable>boolean_expression</replaceable> IS UNKNOWN
+<replaceable>boolean_expression</replaceable> IS NOT UNKNOWN
 </synopsis>
     These will always return true or false, never a null value, even when the
     operand is null.
@@ -427,7 +524,7 @@
      <primary>IS NOT OF</primary>
     </indexterm>
     It is possible to check the data type of an expression using the
-    constructs
+    predicates
 <synopsis>
 <replaceable>expression</replaceable> IS OF (typename, ...)
 <replaceable>expression</replaceable> IS NOT OF (typename, ...)
@@ -461,7 +558,7 @@
          </indexterm>
          <literal>num_nonnulls(VARIADIC "any")</literal>
        </entry>
-       <entry>returns the number of non-NULL arguments</entry>
+       <entry>returns the number of non-null arguments</entry>
        <entry><literal>num_nonnulls(1, NULL, 2)</literal></entry>
        <entry><literal>2</literal></entry>
       </row>
@@ -472,7 +569,7 @@
          </indexterm>
          <literal>num_nulls(VARIADIC "any")</literal>
        </entry>
-       <entry>returns the number of NULL arguments</entry>
+       <entry>returns the number of null arguments</entry>
        <entry><literal>num_nulls(1, NULL, 2)</literal></entry>
        <entry><literal>1</literal></entry>
       </row>

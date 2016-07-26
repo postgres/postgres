@@ -3815,6 +3815,21 @@ ExecEvalNullTest(NullTestState *nstate,
 
 	if (ntest->argisrow && !(*isNull))
 	{
+		/*
+		 * The SQL standard defines IS [NOT] NULL for a non-null rowtype
+		 * argument as:
+		 *
+		 * "R IS NULL" is true if every field is the null value.
+		 *
+		 * "R IS NOT NULL" is true if no field is the null value.
+		 *
+		 * This definition is (apparently intentionally) not recursive; so our
+		 * tests on the fields are primitive attisnull tests, not recursive
+		 * checks to see if they are all-nulls or no-nulls rowtypes.
+		 *
+		 * The standard does not consider the possibility of zero-field rows,
+		 * but here we consider them to vacuously satisfy both predicates.
+		 */
 		HeapTupleHeader tuple;
 		Oid			tupType;
 		int32		tupTypmod;

@@ -657,3 +657,57 @@ select row_to_json(r) from (select q2,q1 from tt1 offset 0) r;
  {"q2":0,"q1":0}
 (3 rows)
 
+--
+-- IS [NOT] NULL should not recurse into nested composites (bug #14235)
+--
+explain (verbose, costs off)
+select r, r is null as isnull, r is not null as isnotnull
+from (values (1,row(1,2)), (1,row(null,null)), (1,null),
+             (null,row(1,2)), (null,row(null,null)), (null,null) ) r(a,b);
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Values Scan on "*VALUES*"
+   Output: ROW("*VALUES*".column1, "*VALUES*".column2), (("*VALUES*".column1 IS NULL) AND ("*VALUES*".column2 IS NULL)), (("*VALUES*".column1 IS NOT NULL) AND ("*VALUES*".column2 IS NOT NULL))
+(2 rows)
+
+select r, r is null as isnull, r is not null as isnotnull
+from (values (1,row(1,2)), (1,row(null,null)), (1,null),
+             (null,row(1,2)), (null,row(null,null)), (null,null) ) r(a,b);
+      r      | isnull | isnotnull 
+-------------+--------+-----------
+ (1,"(1,2)") | f      | t
+ (1,"(,)")   | f      | t
+ (1,)        | f      | f
+ (,"(1,2)")  | f      | f
+ (,"(,)")    | f      | f
+ (,)         | t      | f
+(6 rows)
+
+explain (verbose, costs off)
+with r(a,b) as
+  (values (1,row(1,2)), (1,row(null,null)), (1,null),
+          (null,row(1,2)), (null,row(null,null)), (null,null) )
+select r, r is null as isnull, r is not null as isnotnull from r;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ CTE Scan on r
+   Output: r.*, (r.* IS NULL), (r.* IS NOT NULL)
+   CTE r
+     ->  Values Scan on "*VALUES*"
+           Output: "*VALUES*".column1, "*VALUES*".column2
+(5 rows)
+
+with r(a,b) as
+  (values (1,row(1,2)), (1,row(null,null)), (1,null),
+          (null,row(1,2)), (null,row(null,null)), (null,null) )
+select r, r is null as isnull, r is not null as isnotnull from r;
+      r      | isnull | isnotnull 
+-------------+--------+-----------
+ (1,"(1,2)") | f      | t
+ (1,"(,)")   | f      | t
+ (1,)        | f      | f
+ (,"(1,2)")  | f      | f
+ (,"(,)")    | f      | f
+ (,)         | t      | f
+(6 rows)
+

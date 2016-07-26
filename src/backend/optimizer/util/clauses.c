@@ -3273,7 +3273,7 @@ eval_const_expressions_mutator(Node *node,
 
 				arg = eval_const_expressions_mutator((Node *) ntest->arg,
 													 context);
-				if (arg && IsA(arg, RowExpr))
+				if (ntest->argisrow && arg && IsA(arg, RowExpr))
 				{
 					/*
 					 * We break ROW(...) IS [NOT] NULL into separate tests on
@@ -3284,8 +3284,6 @@ eval_const_expressions_mutator(Node *node,
 					RowExpr    *rarg = (RowExpr *) arg;
 					List	   *newargs = NIL;
 					ListCell   *l;
-
-					Assert(ntest->argisrow);
 
 					foreach(l, rarg->args)
 					{
@@ -3305,10 +3303,17 @@ eval_const_expressions_mutator(Node *node,
 								return makeBoolConst(false, false);
 							continue;
 						}
+
+						/*
+						 * Else, make a scalar (argisrow == false) NullTest
+						 * for this field.  Scalar semantics are required
+						 * because IS [NOT] NULL doesn't recurse; see comments
+						 * in ExecEvalNullTest().
+						 */
 						newntest = makeNode(NullTest);
 						newntest->arg = (Expr *) relem;
 						newntest->nulltesttype = ntest->nulltesttype;
-						newntest->argisrow = type_is_rowtype(exprType(relem));
+						newntest->argisrow = false;
 						newntest->location = ntest->location;
 						newargs = lappend(newargs, newntest);
 					}
