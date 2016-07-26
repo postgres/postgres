@@ -2980,7 +2980,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		if (pertrans->transfn.fn_strict && aggtranstype == INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("combine function for aggregate %u must to be declared as strict",
+					 errmsg("combine function for aggregate %u must be declared as STRICT",
 							aggref->aggfnoid)));
 	}
 	else

@@ -1467,7 +1467,7 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("required extension \"%s\" is not installed",
 								curreq),
-						 errhint("Use CREATE EXTENSION CASCADE to install required extensions too.")));
+						 errhint("Use CREATE EXTENSION ... CASCADE to install required extensions too.")));
 		}
 
 		reqschema = get_extension_schema(reqext);

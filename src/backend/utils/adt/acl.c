@@ -5276,13 +5276,13 @@ check_rolespec_name(const Node *node, const char *detail_msg)
 		if (detail_msg)
 			ereport(ERROR,
 					(errcode(ERRCODE_RESERVED_NAME),
-					 errmsg("role \"%s\" is reserved",
+					 errmsg("role name \"%s\" is reserved",
 							role->rolename),
 					 errdetail("%s", detail_msg)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_RESERVED_NAME),
-					 errmsg("role \"%s\" is reserved",
+					 errmsg("role name \"%s\" is reserved",
 							role->rolename)));
 	}
 }

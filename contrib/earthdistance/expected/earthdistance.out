@@ -9,7 +9,7 @@
 --
 CREATE EXTENSION earthdistance;  -- fail, must install cube first
 ERROR:  required extension "cube" is not installed
-HINT:  Use CREATE EXTENSION CASCADE to install required extensions too.
+HINT:  Use CREATE EXTENSION ... CASCADE to install required extensions too.
 CREATE EXTENSION cube;
 CREATE EXTENSION earthdistance;
 --

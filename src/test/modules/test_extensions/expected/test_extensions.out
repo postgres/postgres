@@ -1,7 +1,7 @@
 -- test some errors
 CREATE EXTENSION test_ext1;
 ERROR:  required extension "test_ext2" is not installed
-HINT:  Use CREATE EXTENSION CASCADE to install required extensions too.
+HINT:  Use CREATE EXTENSION ... CASCADE to install required extensions too.
 CREATE EXTENSION test_ext1 SCHEMA test_ext1;
 ERROR:  schema "test_ext1" does not exist
 CREATE EXTENSION test_ext1 SCHEMA test_ext;
