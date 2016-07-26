@@ -291,6 +291,32 @@
 
    <para>
     <indexterm>
+     <primary>IS DISTINCT FROM</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT DISTINCT FROM</primary>
+    </indexterm>
+    Ordinary comparison operators yield null (signifying <quote>unknown</>),
+    not true or false, when either input is null.  For example,
+    <literal>7 = NULL</> yields null, as does <literal>7 &lt;&gt; NULL</>.  When
+    this behavior is not suitable, use the
+    <literal>IS <optional> NOT </> DISTINCT FROM</literal> constructs:
+<synopsis>
+<replaceable>a</replaceable> IS DISTINCT FROM <replaceable>b</replaceable>
+<replaceable>a</replaceable> IS NOT DISTINCT FROM <replaceable>b</replaceable>
+</synopsis>
+    For non-null inputs, <literal>IS DISTINCT FROM</literal> is
+    the same as the <literal>&lt;&gt;</> operator.  However, if both
+    inputs are null it returns false, and if only one input is
+    null it returns true.  Similarly, <literal>IS NOT DISTINCT
+    FROM</literal> is identical to <literal>=</literal> for non-null
+    inputs, but it returns true when both inputs are null, and false when only
+    one input is null. Thus, these constructs effectively act as though null
+    were a normal data value, rather than <quote>unknown</>.
+   </para>
+
+   <para>
+    <indexterm>
      <primary>IS NULL</primary>
     </indexterm>
     <indexterm>
@@ -320,8 +346,7 @@
     <literal><replaceable>expression</replaceable> = NULL</literal>
     because <literal>NULL</> is not <quote>equal to</quote>
     <literal>NULL</>.  (The null value represents an unknown value,
-    and it is not known whether two unknown values are equal.) This
-    behavior conforms to the SQL standard.
+    and it is not known whether two unknown values are equal.)
    </para>
 
   <tip>
@@ -338,7 +363,6 @@
    </para>
   </tip>
 
-  <note>
    <para>
     If the <replaceable>expression</replaceable> is row-valued, then
     <literal>IS NULL</> is true when the row expression itself is null
@@ -346,39 +370,13 @@
     <literal>IS NOT NULL</> is true when the row expression itself is non-null
     and all the row's fields are non-null.  Because of this behavior,
     <literal>IS NULL</> and <literal>IS NOT NULL</> do not always return
-    inverse results for row-valued expressions, i.e., a row-valued
-    expression that contains both NULL and non-null values will return false
-    for both tests.
-    This definition conforms to the SQL standard, and is a change from the
-    inconsistent behavior exhibited by <productname>PostgreSQL</productname>
-    versions prior to 8.2.
-   </para>
-  </note>
-
-   <para>
-    <indexterm>
-     <primary>IS DISTINCT FROM</primary>
-    </indexterm>
-    <indexterm>
-     <primary>IS NOT DISTINCT FROM</primary>
-    </indexterm>
-    Ordinary comparison operators yield null (signifying <quote>unknown</>),
-    not true or false, when either input is null.  For example,
-    <literal>7 = NULL</> yields null, as does <literal>7 &lt;&gt; NULL</>.  When
-    this behavior is not suitable, use the
-    <literal>IS <optional> NOT </> DISTINCT FROM</literal> constructs:
-<synopsis>
-<replaceable>expression</replaceable> IS DISTINCT FROM <replaceable>expression</replaceable>
-<replaceable>expression</replaceable> IS NOT DISTINCT FROM <replaceable>expression</replaceable>
-</synopsis>
-    For non-null inputs, <literal>IS DISTINCT FROM</literal> is
-    the same as the <literal>&lt;&gt;</> operator.  However, if both
-    inputs are null it returns false, and if only one input is
-    null it returns true.  Similarly, <literal>IS NOT DISTINCT
-    FROM</literal> is identical to <literal>=</literal> for non-null
-    inputs, but it returns true when both inputs are null, and false when only
-    one input is null. Thus, these constructs effectively act as though null
-    were a normal data value, rather than <quote>unknown</>.
+    inverse results for row-valued expressions; in particular, a row-valued
+    expression that contains both null and non-null fields will return false
+    for both tests.  In some cases, it may be preferable to
+    write <replaceable>row</replaceable> <literal>IS DISTINCT FROM NULL</>
+    or <replaceable>row</replaceable> <literal>IS NOT DISTINCT FROM NULL</>,
+    which will simply check whether the overall row value is null without any
+    additional tests on the row fields.
    </para>
 
    <para>
