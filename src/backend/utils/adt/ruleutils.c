@@ -314,9 +314,9 @@ static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
 static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
-					   int prettyFlags);
+					   int prettyFlags, bool missing_ok);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
-							int prettyFlags);
+							int prettyFlags, bool missing_ok);
 static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
@@ -466,9 +466,16 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 {
 	Oid			ruleoid = PG_GETARG_OID(0);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_ruledef_worker(ruleoid, prettyFlags)));
+
+	res = pg_get_ruledef_worker(ruleoid, prettyFlags);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 
@@ -478,9 +485,16 @@ pg_get_ruledef_ext(PG_FUNCTION_ARGS)
 	Oid			ruleoid = PG_GETARG_OID(0);
 	bool		pretty = PG_GETARG_BOOL(1);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_ruledef_worker(ruleoid, prettyFlags)));
+
+	res = pg_get_ruledef_worker(ruleoid, prettyFlags);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 
@@ -532,7 +546,12 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for rule %u", ruleoid);
 	if (SPI_processed != 1)
-		appendStringInfoChar(&buf, '-');
+	{
+		/*
+		 * There is no tuple data available here, just keep the output buffer
+		 * empty.
+		 */
+	}
 	else
 	{
 		/*
@@ -549,6 +568,9 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
 
+	if (buf.len == 0)
+		return NULL;
+
 	return buf.data;
 }
 
@@ -564,9 +586,16 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	/* By OID */
 	Oid			viewoid = PG_GETARG_OID(0);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT)));
+
+	res = pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 
@@ -577,9 +606,16 @@ pg_get_viewdef_ext(PG_FUNCTION_ARGS)
 	Oid			viewoid = PG_GETARG_OID(0);
 	bool		pretty = PG_GETARG_BOOL(1);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT)));
+
+	res = pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 Datum
@@ -589,10 +625,17 @@ pg_get_viewdef_wrap(PG_FUNCTION_ARGS)
 	Oid			viewoid = PG_GETARG_OID(0);
 	int			wrap = PG_GETARG_INT32(1);
 	int			prettyFlags;
+	char	   *res;
 
 	/* calling this implies we want pretty printing */
 	prettyFlags = PRETTYFLAG_PAREN | PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, wrap)));
+
+	res = pg_get_viewdef_worker(viewoid, prettyFlags, wrap);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 Datum
@@ -603,6 +646,7 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	RangeVar   *viewrel;
 	Oid			viewoid;
+	char	   *res;
 
 	prettyFlags = PRETTYFLAG_INDENT;
 
@@ -610,7 +654,12 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname));
 	viewoid = RangeVarGetRelid(viewrel, NoLock, false);
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT)));
+	res = pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 
@@ -687,7 +736,12 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags, int wrapColumn)
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for view %u", viewoid);
 	if (SPI_processed != 1)
-		appendStringInfoString(&buf, "Not a view");
+	{
+		/*
+		 * There is no tuple data available here, just keep the output buffer
+		 * empty.
+		 */
+	}
 	else
 	{
 		/*
@@ -704,6 +758,9 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags, int wrapColumn)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
 
+	if (buf.len == 0)
+		return NULL;
+
 	return buf.data;
 }
 
@@ -715,8 +772,14 @@ Datum
 pg_get_triggerdef(PG_FUNCTION_ARGS)
 {
 	Oid			trigid = PG_GETARG_OID(0);
+	char	   *res;
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_triggerdef_worker(trigid, false)));
+	res = pg_get_triggerdef_worker(trigid, false);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 Datum
@@ -724,8 +787,14 @@ pg_get_triggerdef_ext(PG_FUNCTION_ARGS)
 {
 	Oid			trigid = PG_GETARG_OID(0);
 	bool		pretty = PG_GETARG_BOOL(1);
+	char	   *res;
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_triggerdef_worker(trigid, pretty)));
+	res = pg_get_triggerdef_worker(trigid, pretty);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 static char *
@@ -759,7 +828,11 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	ht_trig = systable_getnext(tgscan);
 
 	if (!HeapTupleIsValid(ht_trig))
-		elog(ERROR, "could not find tuple for trigger %u", trigid);
+	{
+		systable_endscan(tgscan);
+		heap_close(tgrel, AccessShareLock);
+		return NULL;
+	}
 
 	trigrec = (Form_pg_trigger) GETSTRUCT(ht_trig);
 
@@ -968,12 +1041,17 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 {
 	Oid			indexrelid = PG_GETARG_OID(0);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0,
-														   NULL,
-														   false, false,
-														   prettyFlags)));
+
+	res = pg_get_indexdef_worker(indexrelid, 0, NULL, false, false,
+								 prettyFlags, true);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 Datum
@@ -983,20 +1061,24 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 	int32		colno = PG_GETARG_INT32(1);
 	bool		pretty = PG_GETARG_BOOL(2);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
-														   NULL,
-														   colno != 0,
-														   false,
-														   prettyFlags)));
+
+	res = pg_get_indexdef_worker(indexrelid, colno, NULL, colno != 0, false,
+								 prettyFlags, true);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 /* Internal version that returns a palloc'd C string; no pretty-printing */
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, 0);
+	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, 0, false);
 }
 
 /* Internal version that just reports the column definitions */
@@ -1006,7 +1088,8 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false, prettyFlags);
+	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false,
+								  prettyFlags, false);
 }
 
 /*
@@ -1019,7 +1102,7 @@ static char *
 pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
-					   int prettyFlags)
+					   int prettyFlags, bool missing_ok)
 {
 	/* might want a separate isConstraint parameter later */
 	bool		isConstraint = (excludeOps != NULL);
@@ -1051,7 +1134,11 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	 */
 	ht_idx = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexrelid));
 	if (!HeapTupleIsValid(ht_idx))
+	{
+		if (missing_ok)
+			return NULL;
 		elog(ERROR, "cache lookup failed for index %u", indexrelid);
+	}
 	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
 
 	indrelid = idxrec->indrelid;
@@ -1309,11 +1396,16 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 {
 	Oid			constraintId = PG_GETARG_OID(0);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
-																false,
-															  prettyFlags)));
+
+	res = pg_get_constraintdef_worker(constraintId, false, prettyFlags, true);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 Datum
@@ -1322,11 +1414,16 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 	Oid			constraintId = PG_GETARG_OID(0);
 	bool		pretty = PG_GETARG_BOOL(1);
 	int			prettyFlags;
+	char	   *res;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
-	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
-																false,
-															  prettyFlags)));
+
+	res = pg_get_constraintdef_worker(constraintId, false, prettyFlags, true);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 /*
@@ -1335,7 +1432,7 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 char *
 pg_get_constraintdef_command(Oid constraintId)
 {
-	return pg_get_constraintdef_worker(constraintId, true, 0);
+	return pg_get_constraintdef_worker(constraintId, true, 0, false);
 }
 
 /*
@@ -1343,7 +1440,7 @@ pg_get_constraintdef_command(Oid constraintId)
  */
 static char *
 pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
-							int prettyFlags)
+							int prettyFlags, bool missing_ok)
 {
 	HeapTuple	tup;
 	Form_pg_constraint conForm;
@@ -1373,8 +1470,16 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 	UnregisterSnapshot(snapshot);
 
-	if (!HeapTupleIsValid(tup)) /* should not happen */
+	if (!HeapTupleIsValid(tup))
+	{
+		if (missing_ok)
+		{
+			systable_endscan(scandesc);
+			heap_close(relation, AccessShareLock);
+			return NULL;
+		}
 		elog(ERROR, "cache lookup failed for constraint %u", constraintId);
+	}
 
 	conForm = (Form_pg_constraint) GETSTRUCT(tup);
 
@@ -1646,7 +1751,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 															  operators,
 															  false,
 															  false,
-															  prettyFlags));
+															  prettyFlags,
+															  false));
 				break;
 			}
 		default:
@@ -1955,7 +2061,8 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	/* Look up the function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
+		PG_RETURN_NULL();
+
 	proc = (Form_pg_proc) GETSTRUCT(proctup);
 	name = NameStr(proc->proname);
 
@@ -4310,7 +4417,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 
 	if (list_length(actions) != 1)
 	{
-		appendStringInfoString(buf, "Not a view");
+		/* keep output buffer empty and leave */
 		return;
 	}
 
@@ -4319,7 +4426,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	if (ev_type != '1' || !is_instead ||
 		strcmp(ev_qual, "<>") != 0 || query->commandType != CMD_SELECT)
 	{
-		appendStringInfoString(buf, "Not a view");
+		/* keep output buffer empty and leave */
 		return;
 	}
 

@@ -3057,3 +3057,40 @@ SELECT * FROM hat_data WHERE hat_name IN ('h8', 'h9', 'h7') ORDER BY hat_name;
 DROP RULE hat_upsert ON hats;
 drop table hats;
 drop table hat_data;
+-- tests for pg_get_*def with invalid objects
+SELECT pg_get_constraintdef(0);
+ pg_get_constraintdef 
+----------------------
+ 
+(1 row)
+
+SELECT pg_get_functiondef(0);
+ pg_get_functiondef 
+--------------------
+ 
+(1 row)
+
+SELECT pg_get_indexdef(0);
+ pg_get_indexdef 
+-----------------
+ 
+(1 row)
+
+SELECT pg_get_ruledef(0);
+ pg_get_ruledef 
+----------------
+ 
+(1 row)
+
+SELECT pg_get_triggerdef(0);
+ pg_get_triggerdef 
+-------------------
+ 
+(1 row)
+
+SELECT pg_get_viewdef(0);
+ pg_get_viewdef 
+----------------
+ 
+(1 row)
+
