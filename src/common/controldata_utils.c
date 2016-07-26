@@ -33,9 +33,11 @@
  *
  * Get controlfile values. The caller is responsible
  * for pfreeing the result.
+ *
+ * Returns NULL if the CRC did not match.
  */
 ControlFileData *
-get_controlfile(char *DataDir, const char *progname)
+get_controlfile(const char *DataDir, const char *progname)
 {
 	ControlFileData *ControlFile;
 	int			fd;
@@ -82,13 +84,10 @@ get_controlfile(char *DataDir, const char *progname)
 	FIN_CRC32C(crc);
 
 	if (!EQ_CRC32C(crc, ControlFile->crc))
-#ifndef FRONTEND
-		elog(ERROR, _("calculated CRC checksum does not match value stored in file"));
-#else
-		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
-				 "Either the file is corrupt, or it has a different layout than this program\n"
-				 "is expecting.  The results below are untrustworthy.\n\n"));
-#endif
+	{
+		pfree(ControlFile);
+		return NULL;
+	}
 
 	/* Make sure the control file is valid byte order. */
 	if (ControlFile->pg_control_version % 65536 == 0 &&

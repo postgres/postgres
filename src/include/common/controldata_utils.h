@@ -12,6 +12,6 @@
 
 #include "catalog/pg_control.h"
 
-extern ControlFileData *get_controlfile(char *DataDir, const char *progname);
+extern ControlFileData *get_controlfile(const char *DataDir, const char *progname);
 
 #endif   /* COMMON_CONTROLDATA_UTILS_H */

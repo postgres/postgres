@@ -19,6 +19,8 @@
 
 #include "postgres_fe.h"
 
+#include "catalog/pg_control.h"
+#include "common/controldata_utils.h"
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
@@ -96,7 +98,6 @@ static char postopts_file[MAXPGPATH];
 static char version_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
-static char recovery_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 
 #ifdef WIN32
@@ -157,6 +158,8 @@ static bool postmaster_is_alive(pid_t pid);
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
 #endif
+
+static DBState get_control_dbstate(void);
 
 
 #ifdef WIN32
@@ -988,12 +991,12 @@ do_stop(void)
 		/*
 		 * If backup_label exists, an online backup is running. Warn the user
 		 * that smart shutdown will wait for it to finish. However, if
-		 * recovery.conf is also present, we're recovering from an online
+		 * the server is in archive recovery, we're recovering from an online
 		 * backup instead of performing one.
 		 */
 		if (shutdown_mode == SMART_MODE &&
 			stat(backup_file, &statbuf) == 0 &&
-			stat(recovery_file, &statbuf) != 0)
+			get_control_dbstate() != DB_IN_ARCHIVE_RECOVERY)
 		{
 			print_msg(_("WARNING: online backup mode is active\n"
 						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
@@ -1076,12 +1079,12 @@ do_restart(void)
 		/*
 		 * If backup_label exists, an online backup is running. Warn the user
 		 * that smart shutdown will wait for it to finish. However, if
-		 * recovery.conf is also present, we're recovering from an online
+		 * the server is in archive recovery, we're recovering from an online
 		 * backup instead of performing one.
 		 */
 		if (shutdown_mode == SMART_MODE &&
 			stat(backup_file, &statbuf) == 0 &&
-			stat(recovery_file, &statbuf) != 0)
+			get_control_dbstate() != DB_IN_ARCHIVE_RECOVERY)
 		{
 			print_msg(_("WARNING: online backup mode is active\n"
 						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
@@ -1168,7 +1171,6 @@ do_promote(void)
 {
 	FILE	   *prmfile;
 	pgpid_t		pid;
-	struct stat statbuf;
 
 	pid = get_pgpid(false);
 
@@ -1187,8 +1189,7 @@ do_promote(void)
 		exit(1);
 	}
 
-	/* If recovery.conf doesn't exist, the server is not in standby mode */
-	if (stat(recovery_file, &statbuf) != 0)
+	if (get_control_dbstate() != DB_IN_ARCHIVE_RECOVERY)
 	{
 		write_stderr(_("%s: cannot promote server; "
 					   "server is not in standby mode\n"),
@@ -2115,6 +2116,35 @@ adjust_data_dir(void)
 }
 
 
+static DBState
+get_control_dbstate(void)
+{
+	DBState ret;
+
+	for (;;)
+	{
+		ControlFileData *control_file_data = get_controlfile(pg_data, progname);
+
+		if (control_file_data)
+		{
+			ret = control_file_data->state;
+			pfree(control_file_data);
+			return ret;
+		}
+
+		if (wait_seconds > 0)
+		{
+			pg_usleep(1000000);		/* 1 sec */
+			wait_seconds--;
+			continue;
+		}
+
+		write_stderr(_("%s: control file appears to be corrupt\n"), progname);
+		exit(1);
+	}
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -2401,7 +2431,6 @@ main(int argc, char **argv)
 		snprintf(version_file, MAXPGPATH, "%s/PG_VERSION", pg_data);
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
-		snprintf(recovery_file, MAXPGPATH, "%s/recovery.conf", pg_data);
 	}
 
 	switch (ctl_command)

@@ -156,6 +156,10 @@ main(int argc, char *argv[])
 
 	/* get a copy of the control file */
 	ControlFile = get_controlfile(DataDir, progname);
+	if (!ControlFile)
+		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
+				 "Either the file is corrupt, or it has a different layout than this program\n"
+				 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/*
 	 * This slightly-chintzy coding will work as long as the control file
