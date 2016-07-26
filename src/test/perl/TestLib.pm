@@ -34,6 +34,7 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
+  command_fails_like
 
   $windows_os
 );
@@ -279,6 +280,16 @@ sub command_like
 	ok($result, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
+}
+
+sub command_fails_like
+{
+	my ($cmd, $expected_stderr, $test_name) = @_;
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok(!$result, "$test_name: exit code not 0");
+	like($stderr, $expected_stderr, "$test_name: matches");
 }
 
 1;
