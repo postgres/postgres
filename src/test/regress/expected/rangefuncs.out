@@ -2076,3 +2076,33 @@ select x from int8_tbl, extractq2_2_opt(int8_tbl) f(x);
  -4567890123456789
 (5 rows)
 
+-- check handling of nulls in SRF results (bug #7808)
+create type foo2 as (a integer, b text);
+select *, row_to_json(u) from unnest(array[(1,'foo')::foo2, null::foo2]) u;
+ a |  b  |     row_to_json     
+---+-----+---------------------
+ 1 | foo | {"a":1,"b":"foo"}
+   |     | {"a":null,"b":null}
+(2 rows)
+
+select *, row_to_json(u) from unnest(array[null::foo2, null::foo2]) u;
+ a | b |     row_to_json     
+---+---+---------------------
+   |   | {"a":null,"b":null}
+   |   | {"a":null,"b":null}
+(2 rows)
+
+select *, row_to_json(u) from unnest(array[null::foo2, (1,'foo')::foo2, null::foo2]) u;
+ a |  b  |     row_to_json     
+---+-----+---------------------
+   |     | {"a":null,"b":null}
+ 1 | foo | {"a":1,"b":"foo"}
+   |     | {"a":null,"b":null}
+(3 rows)
+
+select *, row_to_json(u) from unnest(array[]::foo2[]) u;
+ a | b | row_to_json 
+---+---+-------------
+(0 rows)
+
+drop type foo2;

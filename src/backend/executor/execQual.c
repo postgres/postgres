@@ -2229,45 +2229,16 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				break;
 
 			/*
-			 * Can't do anything very useful with NULL rowtype values. For a
-			 * function returning set, we consider this a protocol violation
-			 * (but another alternative would be to just ignore the result and
-			 * "continue" to get another row).  For a function not returning
-			 * set, we fall out of the loop; we'll cons up an all-nulls result
-			 * row below.
-			 */
-			if (returnsTuple && fcinfo.isnull)
-			{
-				if (!returnsSet)
-					break;
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("function returning set of rows cannot return null value")));
-			}
-
-			/*
-			 * If first time through, build tupdesc and tuplestore for result
+			 * If first time through, build tuplestore for result.  For a
+			 * scalar function result type, also make a suitable tupdesc.
 			 */
 			if (first_time)
 			{
 				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-				if (returnsTuple)
+				tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+				rsinfo.setResult = tupstore;
+				if (!returnsTuple)
 				{
-					/*
-					 * Use the type info embedded in the rowtype Datum to look
-					 * up the needed tupdesc.  Make a copy for the query.
-					 */
-					HeapTupleHeader td;
-
-					td = DatumGetHeapTupleHeader(result);
-					tupdesc = lookup_rowtype_tupdesc_copy(HeapTupleHeaderGetTypeId(td),
-											   HeapTupleHeaderGetTypMod(td));
-				}
-				else
-				{
-					/*
-					 * Scalar type, so make a single-column descriptor
-					 */
 					tupdesc = CreateTemplateTupleDesc(1, false);
 					TupleDescInitEntry(tupdesc,
 									   (AttrNumber) 1,
@@ -2275,11 +2246,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 									   funcrettype,
 									   -1,
 									   0);
+					rsinfo.setDesc = tupdesc;
 				}
-				tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 				MemoryContextSwitchTo(oldcontext);
-				rsinfo.setResult = tupstore;
-				rsinfo.setDesc = tupdesc;
 			}
 
 			/*
@@ -2287,31 +2256,69 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			 */
 			if (returnsTuple)
 			{
-				HeapTupleHeader td;
+				if (!fcinfo.isnull)
+				{
+					HeapTupleHeader td = DatumGetHeapTupleHeader(result);
 
-				td = DatumGetHeapTupleHeader(result);
+					if (tupdesc == NULL)
+					{
+						/*
+						 * This is the first non-NULL result from the
+						 * function.  Use the type info embedded in the
+						 * rowtype Datum to look up the needed tupdesc.  Make
+						 * a copy for the query.
+						 */
+						oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+						tupdesc = lookup_rowtype_tupdesc_copy(HeapTupleHeaderGetTypeId(td),
+											   HeapTupleHeaderGetTypMod(td));
+						rsinfo.setDesc = tupdesc;
+						MemoryContextSwitchTo(oldcontext);
+					}
+					else
+					{
+						/*
+						 * Verify all later returned rows have same subtype;
+						 * necessary in case the type is RECORD.
+						 */
+						if (HeapTupleHeaderGetTypeId(td) != tupdesc->tdtypeid ||
+							HeapTupleHeaderGetTypMod(td) != tupdesc->tdtypmod)
+							ereport(ERROR,
+									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									 errmsg("rows returned by function are not all of the same row type")));
+					}
 
-				/*
-				 * Verify all returned rows have same subtype; necessary in
-				 * case the type is RECORD.
-				 */
-				if (HeapTupleHeaderGetTypeId(td) != tupdesc->tdtypeid ||
-					HeapTupleHeaderGetTypMod(td) != tupdesc->tdtypmod)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("rows returned by function are not all of the same row type")));
+					/*
+					 * tuplestore_puttuple needs a HeapTuple not a bare
+					 * HeapTupleHeader, but it doesn't need all the fields.
+					 */
+					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+					tmptup.t_data = td;
 
-				/*
-				 * tuplestore_puttuple needs a HeapTuple not a bare
-				 * HeapTupleHeader, but it doesn't need all the fields.
-				 */
-				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-				tmptup.t_data = td;
+					tuplestore_puttuple(tupstore, &tmptup);
+				}
+				else
+				{
+					/*
+					 * NULL result from a tuple-returning function; expand it
+					 * to a row of all nulls.  We rely on the expectedDesc to
+					 * form such rows.  (Note: this would be problematic if
+					 * tuplestore_putvalues saved the tdtypeid/tdtypmod from
+					 * the provided descriptor, since that might not match
+					 * what we get from the function itself.  But it doesn't.)
+					 */
+					int			natts = expectedDesc->natts;
+					bool	   *nullflags;
 
-				tuplestore_puttuple(tupstore, &tmptup);
+					nullflags = (bool *) palloc(natts * sizeof(bool));
+					memset(nullflags, true, natts * sizeof(bool));
+					tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
+				}
 			}
 			else
+			{
+				/* Scalar-type case: just store the function result */
 				tuplestore_putvalues(tupstore, tupdesc, &result, &fcinfo.isnull);
+			}
 
 			/*
 			 * Are we done?
@@ -2343,7 +2350,8 @@ no_function_result:
 	/*
 	 * If we got nothing from the function (ie, an empty-set or NULL result),
 	 * we have to create the tuplestore to return, and if it's a
-	 * non-set-returning function then insert a single all-nulls row.
+	 * non-set-returning function then insert a single all-nulls row.  As
+	 * above, we depend on the expectedDesc to manufacture the dummy row.
 	 */
 	if (rsinfo.setResult == NULL)
 	{
@@ -2353,15 +2361,12 @@ no_function_result:
 		if (!returnsSet)
 		{
 			int			natts = expectedDesc->natts;
-			Datum	   *nulldatums;
 			bool	   *nullflags;
 
 			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-			nulldatums = (Datum *) palloc0(natts * sizeof(Datum));
 			nullflags = (bool *) palloc(natts * sizeof(bool));
 			memset(nullflags, true, natts * sizeof(bool));
-			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			tuplestore_putvalues(tupstore, expectedDesc, nulldatums, nullflags);
+			tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
 		}
 	}
 
