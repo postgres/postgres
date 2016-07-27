@@ -3114,11 +3114,21 @@ cost_rescan(PlannerInfo *root, Path *path,
 		case T_HashJoin:
 
 			/*
-			 * Assume that all of the startup cost represents hash table
-			 * building, which we won't have to do over.
+			 * If it's a single-batch join, we don't need to rebuild the hash
+			 * table during a rescan.
 			 */
-			*rescan_startup_cost = 0;
-			*rescan_total_cost = path->total_cost - path->startup_cost;
+			if (((HashPath *) path)->num_batches == 1)
+			{
+				/* Startup cost is exactly the cost of hash table building */
+				*rescan_startup_cost = 0;
+				*rescan_total_cost = path->total_cost - path->startup_cost;
+			}
+			else
+			{
+				/* Otherwise, no special treatment */
+				*rescan_startup_cost = path->startup_cost;
+				*rescan_total_cost = path->total_cost;
+			}
 			break;
 		case T_CteScan:
 		case T_WorkTableScan:
