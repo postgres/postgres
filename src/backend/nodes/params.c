@@ -61,8 +61,8 @@ copyParamList(ParamListInfo from)
 		bool		typByVal;
 
 		/* Ignore parameters we don't need, to save cycles and space. */
-		if (retval->paramMask != NULL &&
-			!bms_is_member(i, retval->paramMask))
+		if (from->paramMask != NULL &&
+			!bms_is_member(i, from->paramMask))
 		{
 			nprm->value = (Datum) 0;
 			nprm->isnull = true;
