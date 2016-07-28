@@ -112,7 +112,7 @@ brinvalidate(Oid opclassoid)
 				{
 					ereport(INFO,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("brin opfamily %s contains function %s with invalid support number %d",
+							 errmsg("brin operator family \"%s\" contains function %s with invalid support number %d",
 									opfamilyname,
 									format_procedure(procform->amproc),
 									procform->amprocnum)));
@@ -128,7 +128,7 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin opfamily %s contains function %s with wrong signature for support number %d",
+					 errmsg("brin operator family \"%s\" contains function %s with wrong signature for support number %d",
 							opfamilyname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
@@ -150,7 +150,7 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin opfamily %s contains operator %s with invalid strategy number %d",
+					 errmsg("brin operator family \"%s\" contains operator %s with invalid strategy number %d",
 							opfamilyname,
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
@@ -179,7 +179,7 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin opfamily %s contains invalid ORDER BY specification for operator %s",
+					 errmsg("brin operator family \"%s\" contains invalid ORDER BY specification for operator %s",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -192,7 +192,7 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin opfamily %s contains operator %s with wrong signature",
+					 errmsg("brin operator family \"%s\" contains operator %s with wrong signature",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -230,7 +230,7 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin opfamily %s is missing operator(s) for types %s and %s",
+					 errmsg("brin operator family \"%s\" is missing operator(s) for types %s and %s",
 							opfamilyname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
@@ -240,7 +240,7 @@ brinvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("brin opfamily %s is missing support function(s) for types %s and %s",
+					 errmsg("brin operator family \"%s\" is missing support function(s) for types %s and %s",
 							opfamilyname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
@@ -253,7 +253,7 @@ brinvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("brin opclass %s is missing operator(s)",
+				 errmsg("brin operator class \"%s\" is missing operator(s)",
 						opclassname)));
 		result = false;
 	}
@@ -264,7 +264,7 @@ brinvalidate(Oid opclassoid)
 			continue;			/* got it */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("brin opclass %s is missing support function %d",
+				 errmsg("brin operator class \"%s\" is missing support function %d",
 						opclassname, i)));
 		result = false;
 	}

@@ -89,7 +89,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s contains support procedure %s with cross-type registration",
+					 errmsg("spgist operator family \"%s\" contains support procedure %s with cross-type registration",
 							opfamilyname,
 							format_procedure(procform->amproc))));
 			result = false;
@@ -112,7 +112,7 @@ spgvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("spgist opfamily %s contains function %s with invalid support number %d",
+						 errmsg("spgist operator family \"%s\" contains function %s with invalid support number %d",
 								opfamilyname,
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
@@ -124,7 +124,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s contains function %s with wrong signature for support number %d",
+					 errmsg("spgist operator family \"%s\" contains function %s with wrong signature for support number %d",
 							opfamilyname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
@@ -143,7 +143,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s contains operator %s with invalid strategy number %d",
+					 errmsg("spgist operator family \"%s\" contains operator %s with invalid strategy number %d",
 							opfamilyname,
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
@@ -156,7 +156,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s contains invalid ORDER BY specification for operator %s",
+					 errmsg("spgist operator family \"%s\" contains invalid ORDER BY specification for operator %s",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -169,7 +169,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s contains operator %s with wrong signature",
+					 errmsg("spgist operator family \"%s\" contains operator %s with wrong signature",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -197,7 +197,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s is missing operator(s) for types %s and %s",
+					 errmsg("spgist operator family \"%s\" is missing operator(s) for types %s and %s",
 							opfamilyname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
@@ -217,7 +217,7 @@ spgvalidate(Oid opclassoid)
 				continue;		/* got it */
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("spgist opfamily %s is missing support function %d for type %s",
+					 errmsg("spgist operator family \"%s\" is missing support function %d for type %s",
 							opfamilyname, i,
 							format_type_be(thisgroup->lefttype))));
 			result = false;
@@ -230,7 +230,7 @@ spgvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("spgist opclass %s is missing operator(s)",
+				 errmsg("spgist operator class \"%s\" is missing operator(s)",
 						opclassname)));
 		result = false;
 	}

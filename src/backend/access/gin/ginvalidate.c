@@ -89,7 +89,7 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %s contains support procedure %s with cross-type registration",
+					 errmsg("gin operator family \"%s\" contains support procedure %s with cross-type registration",
 							opfamilyname,
 							format_procedure(procform->amproc))));
 			result = false;
@@ -145,7 +145,7 @@ ginvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("gin opfamily %s contains function %s with invalid support number %d",
+						 errmsg("gin operator family \"%s\" contains function %s with invalid support number %d",
 								opfamilyname,
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
@@ -157,7 +157,7 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %s contains function %s with wrong signature for support number %d",
+					 errmsg("gin operator family \"%s\" contains function %s with wrong signature for support number %d",
 							opfamilyname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
@@ -176,7 +176,7 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %s contains operator %s with invalid strategy number %d",
+					 errmsg("gin operator family \"%s\" contains operator %s with invalid strategy number %d",
 							opfamilyname,
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
@@ -189,7 +189,7 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %s contains invalid ORDER BY specification for operator %s",
+					 errmsg("gin operator family \"%s\" contains invalid ORDER BY specification for operator %s",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -202,7 +202,7 @@ ginvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gin opfamily %s contains operator %s with wrong signature",
+					 errmsg("gin operator family \"%s\" contains operator %s with wrong signature",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -243,7 +243,7 @@ ginvalidate(Oid opclassoid)
 			continue;			/* don't need both, see check below loop */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gin opclass %s is missing support function %d",
+				 errmsg("gin operator class \"%s\" is missing support function %d",
 						opclassname, i)));
 		result = false;
 	}
@@ -253,7 +253,7 @@ ginvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gin opclass %s is missing support function %d or %d",
+				 errmsg("gin operator class \"%s\" is missing support function %d or %d",
 						opclassname,
 						GIN_CONSISTENT_PROC, GIN_TRICONSISTENT_PROC)));
 		result = false;

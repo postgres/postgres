@@ -203,7 +203,7 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 	else if (result != SHM_MQ_SUCCESS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("unable to send tuples")));
+				 errmsg("could not send tuples")));
 
 	return true;
 }

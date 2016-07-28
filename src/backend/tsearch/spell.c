@@ -433,7 +433,7 @@ getNextFlagFromString(IspellDict *Conf, char **sflagset, char *sflag)
 	if (Conf->flagMode == FM_LONG && maxstep > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("invalid affix flag \"%s\" with long flag value", sbuf)));
+			errmsg("invalid affix flag \"%s\" with \"long\" flag value", sbuf)));
 
 	*sflag = '\0';
 }

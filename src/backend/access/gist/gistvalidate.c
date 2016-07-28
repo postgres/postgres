@@ -89,7 +89,7 @@ gistvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gist opfamily %s contains support procedure %s with cross-type registration",
+					 errmsg("gist operator family \"%s\" contains support procedure %s with cross-type registration",
 							opfamilyname,
 							format_procedure(procform->amproc))));
 			result = false;
@@ -142,7 +142,7 @@ gistvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("gist opfamily %s contains function %s with invalid support number %d",
+						 errmsg("gist operator family \"%s\" contains function %s with invalid support number %d",
 								opfamilyname,
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
@@ -154,7 +154,7 @@ gistvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gist opfamily %s contains function %s with wrong signature for support number %d",
+					 errmsg("gist operator family \"%s\" contains function %s with wrong signature for support number %d",
 							opfamilyname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
@@ -174,7 +174,7 @@ gistvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gist opfamily %s contains operator %s with invalid strategy number %d",
+					 errmsg("gist operator family \"%s\" contains operator %s with invalid strategy number %d",
 							opfamilyname,
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
@@ -192,7 +192,7 @@ gistvalidate(Oid opclassoid)
 			{
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("gist opfamily %s contains unsupported ORDER BY specification for operator %s",
+						 errmsg("gist operator family \"%s\" contains unsupported ORDER BY specification for operator %s",
 								opfamilyname,
 								format_operator(oprform->amopopr))));
 				result = false;
@@ -203,7 +203,7 @@ gistvalidate(Oid opclassoid)
 			{
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("gist opfamily %s contains incorrect ORDER BY opfamily specification for operator %s",
+						 errmsg("gist operator family \"%s\" contains incorrect ORDER BY opfamily specification for operator %s",
 								opfamilyname,
 								format_operator(oprform->amopopr))));
 				result = false;
@@ -222,7 +222,7 @@ gistvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gist opfamily %s contains operator %s with wrong signature",
+					 errmsg("gist operator family \"%s\" contains operator %s with wrong signature",
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -261,7 +261,7 @@ gistvalidate(Oid opclassoid)
 			continue;			/* optional methods */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gist opclass %s is missing support function %d",
+				 errmsg("gist operator class \"%s\" is missing support function %d",
 						opclassname, i)));
 		result = false;
 	}

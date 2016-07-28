@@ -1645,9 +1645,12 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 
 	if (log_checkpoints && serialized_xacts > 0)
 		ereport(LOG,
-				(errmsg("%u two-phase state files were written "
-						"for long-running prepared transactions",
-						serialized_xacts)));
+				(errmsg_plural("%u two-phase state file was written "
+							   "for long-running prepared transactions",
+							   "%u two-phase state files were written "
+							   "for long-running prepared transactions",
+							   serialized_xacts,
+							   serialized_xacts)));
 }
 
 /*
