@@ -229,7 +229,7 @@ gets_fromFile(FILE *source)
 		}
 
 		/* EOL? */
-		if (buffer->data[buffer->len - 1] == '\n')
+		if (buffer->len > 0 && buffer->data[buffer->len - 1] == '\n')
 		{
 			buffer->data[buffer->len - 1] = '\0';
 			return pg_strdup(buffer->data);
