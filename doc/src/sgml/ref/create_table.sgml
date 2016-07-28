@@ -329,26 +329,33 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       table.
      </para>
      <para>
-      Default expressions for the copied column definitions will only be
-      copied if <literal>INCLUDING DEFAULTS</literal> is specified.
-      Defaults that call database-modification functions, like
-      <function>nextval</>, create a linkage between the original and
-      new tables.  The
+      Default expressions for the copied column definitions will be copied
+      only if <literal>INCLUDING DEFAULTS</literal> is specified.  The
       default behavior is to exclude default expressions, resulting in the
       copied columns in the new table having null defaults.
+      Note that copying defaults that call database-modification functions,
+      such as <function>nextval</>, may create a functional linkage between
+      the original and new tables.
      </para>
      <para>
       Not-null constraints are always copied to the new table.
       <literal>CHECK</literal> constraints will be copied only if
       <literal>INCLUDING CONSTRAINTS</literal> is specified.
-      Indexes, <literal>PRIMARY KEY</>, and <literal>UNIQUE</> constraints
-      on the original table will be created on the new table only if the
-      <literal>INCLUDING INDEXES</literal> clause is specified.
       No distinction is made between column constraints and table
       constraints.
      </para>
-     <para><literal>STORAGE</> settings for the copied column definitions will only
-      be copied if <literal>INCLUDING STORAGE</literal> is specified.  The
+     <para>
+      Indexes, <literal>PRIMARY KEY</>, <literal>UNIQUE</>,
+      and <literal>EXCLUDE</> constraints on the original table will be
+      created on the new table only if <literal>INCLUDING INDEXES</literal>
+      is specified.  Names for the new indexes and constraints are
+      chosen according to the default rules, regardless of how the originals
+      were named.  (This behavior avoids possible duplicate-name failures for
+      the new indexes.)
+     </para>
+     <para>
+      <literal>STORAGE</> settings for the copied column definitions will be
+      copied only if <literal>INCLUDING STORAGE</literal> is specified.  The
       default behavior is to exclude <literal>STORAGE</> settings, resulting
       in the copied columns in the new table having type-specific default
       settings.  For more on <literal>STORAGE</> settings, see
@@ -356,24 +363,26 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
      <para>
       Comments for the copied columns, constraints, and indexes
-      will only be copied if <literal>INCLUDING COMMENTS</literal>
+      will be copied only if <literal>INCLUDING COMMENTS</literal>
       is specified. The default behavior is to exclude comments, resulting in
       the copied columns and constraints in the new table having no comments.
      </para>
-     <para><literal>INCLUDING ALL</literal> is an abbreviated form of
+     <para>
+      <literal>INCLUDING ALL</literal> is an abbreviated form of
       <literal>INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
      </para>
      <para>
-      Note also that unlike <literal>INHERITS</literal>, columns and
+      Note that unlike <literal>INHERITS</literal>, columns and
       constraints copied by <literal>LIKE</> are not merged with similarly
       named columns and constraints.
       If the same name is specified explicitly or in another
       <literal>LIKE</literal> clause, an error is signaled.
      </para>
      <para>
-      The <literal>LIKE</literal> clause can also be used to copy columns from
-      views, foreign tables, or composite types.  Inapplicable options (e.g., <literal>INCLUDING
-      INDEXES</literal> from a view) are ignored.
+      The <literal>LIKE</literal> clause can also be used to copy column
+      definitions from views, foreign tables, or composite types.
+      Inapplicable options (e.g., <literal>INCLUDING INDEXES</literal> from
+      a view) are ignored.
      </para>
     </listitem>
    </varlistentry>
@@ -1496,6 +1505,17 @@ CREATE TABLE employees OF employee_type (
     tables.  Zero-column tables are not in themselves very useful, but
     disallowing them creates odd special cases for <command>ALTER TABLE
     DROP COLUMN</>, so it seems cleaner to ignore this spec restriction.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>LIKE</> Clause</title>
+
+   <para>
+    While a <literal>LIKE</> clause exists in the SQL standard, many of the
+    options that <productname>PostgreSQL</productname> accepts for it are not
+    in the standard, and some of the standard's options are not implemented
+    by <productname>PostgreSQL</productname>.
    </para>
   </refsect2>
 

@@ -1143,7 +1143,9 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 
 	/*
 	 * We don't try to preserve the name of the source index; instead, just
-	 * let DefineIndex() choose a reasonable name.
+	 * let DefineIndex() choose a reasonable name.  (If we tried to preserve
+	 * the name, we'd get duplicate-relation-name failures unless the source
+	 * table was in a different schema.)
 	 */
 	index->idxname = NULL;
 
