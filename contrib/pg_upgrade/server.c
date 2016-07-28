@@ -175,9 +175,10 @@ start_postmaster(ClusterInfo *cluster)
 {
 	char		cmd[MAXPGPATH * 4 + 1000];
 	PGconn	   *conn;
-	bool		exit_hook_registered = false;
 	bool		pg_ctl_return = false;
 	char		socket_string[MAXPGPATH + 200];
+
+	static bool exit_hook_registered = false;
 
 	if (!exit_hook_registered)
 	{
