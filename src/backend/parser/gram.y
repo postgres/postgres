@@ -11839,9 +11839,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr IS NOT DISTINCT FROM a_expr		%prec IS
 				{
-					$$ = makeNotExpr((Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
-															   "=", $1, $6, @2),
-									 @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_NOT_DISTINCT, "=", $1, $6, @2);
 				}
 			| a_expr IS OF '(' type_list ')'			%prec IS
 				{
@@ -12025,9 +12023,7 @@ b_expr:		c_expr
 				}
 			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
 				{
-					$$ = makeNotExpr((Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
-															   "=", $1, $6, @2),
-									 @2);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_NOT_DISTINCT, "=", $1, $6, @2);
 				}
 			| b_expr IS OF '(' type_list ')'		%prec IS
 				{

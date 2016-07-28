@@ -124,6 +124,8 @@ static Node *make_row_distinct_op(ParseState *pstate, List *opname,
 					 RowExpr *lrow, RowExpr *rrow, int location);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
 				 Node *ltree, Node *rtree, int location);
+static Node *make_nulltest_from_distinct(ParseState *pstate,
+							A_Expr *distincta, Node *arg);
 static int	operator_precedence_group(Node *node, const char **nodename);
 static void emit_precedence_warnings(ParseState *pstate,
 						 int opgroup, const char *opname,
@@ -224,6 +226,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						result = transformAExprOpAll(pstate, a);
 						break;
 					case AEXPR_DISTINCT:
+					case AEXPR_NOT_DISTINCT:
 						result = transformAExprDistinct(pstate, a);
 						break;
 					case AEXPR_NULLIF:
@@ -991,11 +994,22 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 {
 	Node	   *lexpr = a->lexpr;
 	Node	   *rexpr = a->rexpr;
+	Node	   *result;
 
 	if (operator_precedence_warning)
 		emit_precedence_warnings(pstate, PREC_GROUP_INFIX_IS, "IS",
 								 lexpr, rexpr,
 								 a->location);
+
+	/*
+	 * If either input is an undecorated NULL literal, transform to a NullTest
+	 * on the other input. That's simpler to process than a full DistinctExpr,
+	 * and it avoids needing to require that the datatype have an = operator.
+	 */
+	if (exprIsNullConstant(rexpr))
+		return make_nulltest_from_distinct(pstate, a, lexpr);
+	if (exprIsNullConstant(lexpr))
+		return make_nulltest_from_distinct(pstate, a, rexpr);
 
 	lexpr = transformExprRecurse(pstate, lexpr);
 	rexpr = transformExprRecurse(pstate, rexpr);
@@ -1004,20 +1018,31 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 		rexpr && IsA(rexpr, RowExpr))
 	{
 		/* ROW() op ROW() is handled specially */
-		return make_row_distinct_op(pstate, a->name,
-									(RowExpr *) lexpr,
-									(RowExpr *) rexpr,
-									a->location);
+		result = make_row_distinct_op(pstate, a->name,
+									  (RowExpr *) lexpr,
+									  (RowExpr *) rexpr,
+									  a->location);
 	}
 	else
 	{
 		/* Ordinary scalar operator */
-		return (Node *) make_distinct_op(pstate,
-										 a->name,
-										 lexpr,
-										 rexpr,
-										 a->location);
+		result = (Node *) make_distinct_op(pstate,
+										   a->name,
+										   lexpr,
+										   rexpr,
+										   a->location);
 	}
+
+	/*
+	 * If it's NOT DISTINCT, we first build a DistinctExpr and then stick a
+	 * NOT on top.
+	 */
+	if (a->kind == AEXPR_NOT_DISTINCT)
+		result = (Node *) makeBoolExpr(NOT_EXPR,
+									   list_make1(result),
+									   a->location);
+
+	return result;
 }
 
 static Node *
@@ -2870,6 +2895,28 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 }
 
 /*
+ * Produce a NullTest node from an IS [NOT] DISTINCT FROM NULL construct
+ *
+ * "arg" is the untransformed other argument
+ */
+static Node *
+make_nulltest_from_distinct(ParseState *pstate, A_Expr *distincta, Node *arg)
+{
+	NullTest   *nt = makeNode(NullTest);
+
+	nt->arg = (Expr *) transformExprRecurse(pstate, arg);
+	/* the argument can be any type, so don't coerce it */
+	if (distincta->kind == AEXPR_NOT_DISTINCT)
+		nt->nulltesttype = IS_NULL;
+	else
+		nt->nulltesttype = IS_NOT_NULL;
+	/* argisrow = false is correct whether or not arg is composite */
+	nt->argisrow = false;
+	nt->location = distincta->location;
+	return (Node *) nt;
+}
+
+/*
  * Identify node's group for operator precedence warnings
  *
  * For items in nonzero groups, also return a suitable node name into *nodename
@@ -2971,7 +3018,8 @@ operator_precedence_group(Node *node, const char **nodename)
 			*nodename = strVal(llast(aexpr->name));
 			group = PREC_GROUP_POSTFIX_OP;
 		}
-		else if (aexpr->kind == AEXPR_DISTINCT)
+		else if (aexpr->kind == AEXPR_DISTINCT ||
+				 aexpr->kind == AEXPR_NOT_DISTINCT)
 		{
 			*nodename = "IS";
 			group = PREC_GROUP_INFIX_IS;

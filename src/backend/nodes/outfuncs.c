@@ -2903,6 +2903,10 @@ _outAExpr(StringInfo str, const A_Expr *node)
 			appendStringInfoString(str, " DISTINCT ");
 			WRITE_NODE_FIELD(name);
 			break;
+		case AEXPR_NOT_DISTINCT:
+			appendStringInfoString(str, " NOT_DISTINCT ");
+			WRITE_NODE_FIELD(name);
+			break;
 		case AEXPR_NULLIF:
 			appendStringInfoString(str, " NULLIF ");
 			WRITE_NODE_FIELD(name);
