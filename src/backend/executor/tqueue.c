@@ -402,7 +402,8 @@ tqueueSendTypmodInfo(TQueueDestReceiver *tqueue, int typmod,
 		ctl.entrysize = sizeof(int);
 		ctl.hcxt = TopMemoryContext;
 		tqueue->recordhtab = hash_create("tqueue record hashtable",
-										 100, &ctl, HASH_ELEM | HASH_CONTEXT);
+										 100, &ctl,
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* Have we already seen this record type?  If not, must report it. */
@@ -877,7 +878,8 @@ TupleQueueHandleControlMessage(TupleQueueReader *reader, Size nbytes,
 		ctl.entrysize = sizeof(RecordTypemodMap);
 		ctl.hcxt = CurTransactionContext;
 		reader->typmodmap = hash_create("typmodmap hashtable",
-										100, &ctl, HASH_ELEM | HASH_CONTEXT);
+										100, &ctl,
+									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* Create map entry. */
