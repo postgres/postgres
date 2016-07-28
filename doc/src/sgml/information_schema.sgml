@@ -5881,7 +5881,7 @@ ORDER BY c.ordinal_position;
    The view <literal>udt_privileges</literal> identifies
    <literal>USAGE</literal> privileges granted on user-defined types to a
    currently enabled role or by a currently enabled role.  There is one row for
-   each combination of column, grantor, and grantee.  This view shows only
+   each combination of type, grantor, and grantee.  This view shows only
    composite types (see under <xref linkend="infoschema-user-defined-types">
    for why); see
    <xref linkend="infoschema-usage-privileges"> for domain privileges.
