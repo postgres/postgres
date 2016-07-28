@@ -144,8 +144,9 @@ start_postmaster(ClusterInfo *cluster)
 {
 	char		cmd[MAXPGPATH];
 	PGconn	   *conn;
-	bool		exit_hook_registered = false;
 	int			pg_ctl_return = 0;
+
+	static bool exit_hook_registered = false;
 
 #ifndef WIN32
 	char	   *output_filename = log_opts.filename;
