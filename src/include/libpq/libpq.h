@@ -43,7 +43,7 @@ extern PGDLLIMPORT PQcommMethods *PqCommMethods;
 #define pq_putmessage(msgtype, s, len) \
 	(PqCommMethods->putmessage(msgtype, s, len))
 #define pq_putmessage_noblock(msgtype, s, len) \
-	(PqCommMethods->putmessage(msgtype, s, len))
+	(PqCommMethods->putmessage_noblock(msgtype, s, len))
 #define pq_startcopyout() (PqCommMethods->startcopyout())
 #define pq_endcopyout(errorAbort) (PqCommMethods->endcopyout(errorAbort))
 
