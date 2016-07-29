@@ -212,8 +212,8 @@ CREATE INDEX
 
   <para>
    An operator class for bloom indexes requires only a hash function for the
-   indexed datatype and an equality operator for searching. This example
-   shows the opclass definition for the <type>text</> data type:
+   indexed data type and an equality operator for searching. This example
+   shows the operator class definition for the <type>text</> data type:
   </para>
 
 <programlisting>

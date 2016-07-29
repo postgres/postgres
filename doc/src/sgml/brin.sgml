@@ -625,7 +625,7 @@ typedef struct BrinOpcInfo
  </table>
 
  <para>
-  To write an operator class for a complex datatype which has values
+  To write an operator class for a complex data type which has values
   included within another type, it's possible to use the inclusion support
   procedures alongside the corresponding operators, as shown
   in <xref linkend="brin-extensibility-inclusion-table">.  It requires
@@ -774,16 +774,16 @@ typedef struct BrinOpcInfo
     Support procedure numbers 1-10 are reserved for the BRIN internal
     functions, so the SQL level functions start with number 11.  Support
     function number 11 is the main function required to build the index.
-    It should accept two arguments with the same datatype as the opclass,
-    and return the union of them.  The inclusion opclass can store union
-    values with different datatypes if it is defined with the
+    It should accept two arguments with the same data type as the operator class,
+    and return the union of them.  The inclusion operator class can store union
+    values with different data types if it is defined with the
     <literal>STORAGE</> parameter.  The return value of the union
-    function should match the <literal>STORAGE</> datatype.
+    function should match the <literal>STORAGE</> data type.
  </para>
 
  <para>
     Support procedure numbers 12 and 14 are provided to support
-    irregularities of built-in datatypes.  Procedure number 12
+    irregularities of built-in data types.  Procedure number 12
     is used to support network addresses from different families which
     are not mergeable.  Procedure number 14 is used to support
     empty ranges.  Procedure number 13 is an optional but
@@ -794,17 +794,17 @@ typedef struct BrinOpcInfo
  </para>
 
  <para>
-    Both minmax and inclusion opclasses support cross-datatype
+    Both minmax and inclusion operator classes support cross-data-type
     operators, though with these the dependencies become more complicated.
-    The minmax opclass requires a full set of operators to be
-    defined with both arguments having the same datatype.  It allows
-    additional datatypes to be supported by defining extra sets
-    of operators.  Inclusion opclass operator strategies are dependent
+    The minmax operator class requires a full set of operators to be
+    defined with both arguments having the same data type.  It allows
+    additional data types to be supported by defining extra sets
+    of operators.  Inclusion operator class operator strategies are dependent
     on another operator strategy as shown in
     <xref linkend="brin-extensibility-inclusion-table">, or the same
     operator strategy as themselves.  They require the dependency
-    operator to be defined with the <literal>STORAGE</> datatype as the
-    left-hand-side argument and the other supported datatype to be the
+    operator to be defined with the <literal>STORAGE</> data type as the
+    left-hand-side argument and the other supported data type to be the
     right-hand-side argument of the supported operator.  See
     <literal>float4_minmax_ops</> as an example of minmax, and
     <literal>box_inclusion_ops</> as an example of inclusion.

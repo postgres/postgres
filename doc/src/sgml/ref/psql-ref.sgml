@@ -4164,7 +4164,7 @@ second | four
 
 <para>
   When suitable, query results can be shown in a crosstab representation
-  with the \crosstabview command:
+  with the <command>\crosstabview</command> command:
 <programlisting>
 testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;</userinput>
  first | second | ge2 

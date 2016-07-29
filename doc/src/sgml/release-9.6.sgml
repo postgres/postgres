@@ -347,7 +347,7 @@
         output list are executed in the order suggested by <literal>ORDER
         BY</>, and that they are not evaluated more times than required when
         there's a <literal>LIMIT</>.  Previously, these properties held if
-        the ordering was performed by an indexscan or pre-mergejoin sort,
+        the ordering was performed by an index scan or pre-merge-join sort,
         but not if it was performed by a top-level sort step.
        </para>
       </listitem>
@@ -543,7 +543,7 @@
 2016-01-26 [cc988fbb0] Improve ResourceOwners' behavior for large numbers of ow
 -->
        <para>
-        Improve performance of ResourceOwners with many tracked objects
+        Improve performance of resource owners with many tracked objects
         (Aleksander Alekseev)
        </para>
       </listitem>

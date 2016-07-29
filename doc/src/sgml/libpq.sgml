@@ -7345,7 +7345,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <para>
    In <literal>verify-full</> mode, the host name is matched against the
    certificate's Subject Alternative Name attribute(s), or against the
-   Common Name attribute if no Subject Alternative Name of type dNSName is
+   Common Name attribute if no Subject Alternative Name of type <literal>dNSName</literal> is
    present.  If the certificate's name attribute starts with an asterisk
    (<literal>*</>), the asterisk will be treated as
    a wildcard, which will match all characters <emphasis>except</> a dot
@@ -7505,7 +7505,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
   <para>
    All <acronym>SSL</> options carry overhead in the form of encryption and
-   key-exchange, so there is a tradeoff that has to be made between performance
+   key-exchange, so there is a trade-off that has to be made between performance
    and security. <xref linkend="libpq-ssl-sslmode-statements">
    illustrates the risks the different <literal>sslmode</> values
    protect against, and what statement they make about security and overhead.

@@ -870,7 +870,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>BtreeVacuumLock</></entry>
           <entry>Waiting to read or update vacuum-related information for a
-          Btree index.</entry>
+          B-tree index.</entry>
         </row>
         <row>
          <entry><literal>AddinShmemInitLock</></entry>

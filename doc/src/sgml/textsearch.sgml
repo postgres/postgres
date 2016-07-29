@@ -2798,7 +2798,7 @@ SELECT plainto_tsquery('supernova star');
       to extract <filename>.aff</> and <filename>.dic</> files, change
       extensions to <filename>.affix</> and <filename>.dict</>. For some
       dictionary files it is also needed to convert characters to the UTF-8
-      encoding with commands (for example, for norwegian language dictionary):
+      encoding with commands (for example, for a Norwegian language dictionary):
 <programlisting>
 iconv -f ISO_8859-1 -t UTF-8 -o nn_no.affix nn_NO.aff
 iconv -f ISO_8859-1 -t UTF-8 -o nn_no.dict nn_NO.dic

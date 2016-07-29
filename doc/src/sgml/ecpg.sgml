@@ -3782,7 +3782,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     keywords are different. A Descriptor Area can also be manually built to
     provide the input parameters for a query or a cursor and
     <literal>USING SQL DESCRIPTOR <replaceable>name</replaceable></literal>
-    is the way to pass the input parameters into a parametrized query. The statement
+    is the way to pass the input parameters into a parameterized query. The statement
     to build a named SQL Descriptor Area is below:
 <programlisting>
 EXEC SQL SET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</replaceable> <replaceable>field</replaceable> = :<replaceable>hostvar</replaceable>;
@@ -3917,7 +3917,7 @@ typedef struct sqlda_struct sqlda_t;
       <term><literal>sqln</></term>
       <listitem>
        <para>
-        It contains the number of input parameters for a parametrized query in
+        It contains the number of input parameters for a parameterized query in
         case it's passed into <command>OPEN</command>, <command>DECLARE</command> or
         <command>EXECUTE</command> statements using the <literal>USING</literal>
         keyword. In case it's used as output of <command>SELECT</command>,
@@ -8121,7 +8121,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
       <listitem>
        <para>
         Type of the NULL indicator data. It's always SQLSMINT when returning data from the server.
-        When the <literal>SQLDA</literal> is used for a parametrized query, the data is treated
+        When the <literal>SQLDA</literal> is used for a parameterized query, the data is treated
         according to the set type.
        </para>
       </listitem>

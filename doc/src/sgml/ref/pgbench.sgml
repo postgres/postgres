@@ -266,13 +266,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--builtin</>=<replaceable>scriptname[@weight]</></term>
       <listitem>
        <para>
-        Add the specified builtin script to the list of executed scripts.
+        Add the specified built-in script to the list of executed scripts.
         An optional integer weight after <literal>@</> allows to adjust the
         probability of drawing the script.  If not specified, it is set to 1.
-        Available builtin scripts are: <literal>tpcb-like</>,
+        Available built-in scripts are: <literal>tpcb-like</>,
         <literal>simple-update</> and <literal>select-only</>.
-        Unambiguous prefixes of builtin names are accepted.
-        With special name <literal>list</>, show the list of builtin scripts
+        Unambiguous prefixes of built-in names are accepted.
+        With special name <literal>list</>, show the list of built-in scripts
         and exit immediately.
        </para>
       </listitem>
@@ -422,7 +422,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--skip-some-updates</option></term>
       <listitem>
        <para>
-        Run builtin simple-update script.
+        Run built-in simple-update script.
         Shorthand for <option>-b simple-update</>.
        </para>
       </listitem>
@@ -702,7 +702,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
  </para>
 
   <para>
-   The default builtin transaction script (also invoked with <option>-b tpcb-like</>)
+   The default built-in transaction script (also invoked with <option>-b tpcb-like</>)
    issues seven commands per transaction over randomly chosen <literal>aid</>,
    <literal>tid</>, <literal>bid</> and <literal>balance</>.
    The scenario is inspired by the TPC-B benchmark, but is not actually TPC-B,
@@ -720,14 +720,14 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </orderedlist>
 
   <para>
-   If you select the <literal>simple-update</> builtin (also <option>-N</>),
+   If you select the <literal>simple-update</> built-in (also <option>-N</>),
    steps 4 and 5 aren't included in the transaction.
    This will avoid update contention on these tables, but
    it makes the test case even less like TPC-B.
   </para>
 
   <para>
-   If you select the <literal>select-only</> builtin (also <option>-S</>),
+   If you select the <literal>select-only</> built-in (also <option>-S</>),
    only the <command>SELECT</> is issued.
   </para>
  </refsect2>
@@ -1000,7 +1000,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <row>
        <entry><literal><function>random_gaussian(<replaceable>lb</>, <replaceable>ub</>, <replaceable>parameter</>)</></></>
        <entry>integer</>
-       <entry>gaussian-distributed random integer in <literal>[lb, ub]</>,
+       <entry>Gaussian-distributed random integer in <literal>[lb, ub]</>,
               see below</>
        <entry><literal>random_gaussian(1, 10, 2.5)</></>
        <entry>an integer between <literal>1</> and <literal>10</></>

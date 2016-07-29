@@ -460,7 +460,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         with <literal>ROWS FROM( ... )</>.  The output of such an item is the
         concatenation of the first row from each function, then the second
         row from each function, etc.  If some of the functions produce fewer
-        rows than others, NULLs are substituted for the missing data, so
+        rows than others, null values are substituted for the missing data, so
         that the total number of rows returned is always the same as for the
         function that produced the most rows.
        </para>

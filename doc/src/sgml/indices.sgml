@@ -1315,7 +1315,7 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
    But there's a problem: the <literal>WHERE</> clause refers
    to <literal>success</> which is not available as a result column of the
    index.  Nonetheless, an index-only scan is possible because the plan does
-   not need to recheck that part of the <literal>WHERE</> clause at runtime:
+   not need to recheck that part of the <literal>WHERE</> clause at run time:
    all entries found in the index necessarily have <literal>success = true</>
    so this need not be explicitly checked in the
    plan.  <productname>PostgreSQL</> versions 9.6 and later will recognize
