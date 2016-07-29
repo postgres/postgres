@@ -524,13 +524,18 @@ DestroyTupleQueueReader(TupleQueueReader *reader)
 /*
  * Fetch a tuple from a tuple queue reader.
  *
+ * The return value is NULL if there are no remaining tuples or if
+ * nowait = true and no tuple is ready to return.  *done, if not NULL,
+ * is set to true when there are no remaining tuples and otherwise to false.
+ *
+ * The returned tuple, if any, is allocated in CurrentMemoryContext.
+ * That should be a short-lived (tuple-lifespan) context, because we are
+ * pretty cavalier about leaking memory in that context if we have to do
+ * tuple remapping.
+ *
  * Even when shm_mq_receive() returns SHM_MQ_WOULD_BLOCK, this can still
  * accumulate bytes from a partially-read message, so it's useful to call
  * this with nowait = true even if nothing is returned.
- *
- * The return value is NULL if there are no remaining queues or if
- * nowait = true and no tuple is ready to return.  *done, if not NULL,
- * is set to true when queue is detached and otherwise to false.
  */
 HeapTuple
 TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
@@ -565,10 +570,11 @@ TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 		 * OK, we got a message.  Process it.
 		 *
 		 * One-byte messages are mode switch messages, so that we can switch
-		 * between "control" and "data" mode.  When in "data" mode, each
-		 * message (unless exactly one byte) is a tuple.  When in "control"
-		 * mode, each message provides a transient-typmod-to-tupledesc mapping
-		 * so we can interpret future tuples.
+		 * between "control" and "data" mode.  Otherwise, when in "data" mode,
+		 * each message is a tuple.  When in "control" mode, each message
+		 * provides a transient-typmod-to-tupledesc mapping to let us
+		 * interpret future tuples.  Both of those cases certainly require
+		 * more than one byte, so no confusion is possible.
 		 */
 		if (nbytes == 1)
 		{

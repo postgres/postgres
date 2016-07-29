@@ -17,15 +17,17 @@
 #include "storage/shm_mq.h"
 #include "tcop/dest.h"
 
+/* Opaque struct, only known inside tqueue.c. */
+typedef struct TupleQueueReader TupleQueueReader;
+
 /* Use this to send tuples to a shm_mq. */
 extern DestReceiver *CreateTupleQueueDestReceiver(shm_mq_handle *handle);
 
 /* Use these to receive tuples from a shm_mq. */
-typedef struct TupleQueueReader TupleQueueReader;
 extern TupleQueueReader *CreateTupleQueueReader(shm_mq_handle *handle,
 					   TupleDesc tupledesc);
-extern void DestroyTupleQueueReader(TupleQueueReader *funnel);
-extern HeapTuple TupleQueueReaderNext(TupleQueueReader *,
+extern void DestroyTupleQueueReader(TupleQueueReader *reader);
+extern HeapTuple TupleQueueReaderNext(TupleQueueReader *reader,
 					 bool nowait, bool *done);
 
 #endif   /* TQUEUE_H */
