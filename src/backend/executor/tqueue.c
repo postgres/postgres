@@ -371,7 +371,7 @@ tqueueWalkRange(TQueueDestReceiver *tqueue, Datum value)
 	 * called in the first place: GetRemapClass should have returned NULL when
 	 * asked about this range type.
 	 */
-	remapclass = GetRemapClass(typeid);
+	remapclass = GetRemapClass(typcache->rngelemtype->type_id);
 	Assert(remapclass != TQUEUE_REMAP_NONE);
 
 	/* Walk each bound, if present. */
@@ -749,7 +749,7 @@ TupleQueueRemapRange(TupleQueueReader *reader, Datum value)
 	 * called in the first place: GetRemapClass should have returned NULL when
 	 * asked about this range type.
 	 */
-	remapclass = GetRemapClass(typeid);
+	remapclass = GetRemapClass(typcache->rngelemtype->type_id);
 	Assert(remapclass != TQUEUE_REMAP_NONE);
 
 	/* Remap each bound, if present. */
