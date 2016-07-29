@@ -3094,3 +3094,33 @@ SELECT pg_get_viewdef(0);
  
 (1 row)
 
+SELECT pg_get_function_arguments(0);
+ pg_get_function_arguments 
+---------------------------
+ 
+(1 row)
+
+SELECT pg_get_function_identity_arguments(0);
+ pg_get_function_identity_arguments 
+------------------------------------
+ 
+(1 row)
+
+SELECT pg_get_function_result(0);
+ pg_get_function_result 
+------------------------
+ 
+(1 row)
+
+SELECT pg_get_function_arg_default(0, 0);
+ pg_get_function_arg_default 
+-----------------------------
+ 
+(1 row)
+
+SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
+ pg_get_function_arg_default 
+-----------------------------
+ 
+(1 row)
+

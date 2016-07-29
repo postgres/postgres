@@ -1152,3 +1152,8 @@ SELECT pg_get_indexdef(0);
 SELECT pg_get_ruledef(0);
 SELECT pg_get_triggerdef(0);
 SELECT pg_get_viewdef(0);
+SELECT pg_get_function_arguments(0);
+SELECT pg_get_function_identity_arguments(0);
+SELECT pg_get_function_result(0);
+SELECT pg_get_function_arg_default(0, 0);
+SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
