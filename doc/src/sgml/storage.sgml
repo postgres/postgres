@@ -217,11 +217,11 @@ function.
 </caution>
 
 <para>
-When a table or index exceeds 1 GB, it is divided into gigabyte-sized
+When a table or index exceeds 1GB, it is divided into gigabyte-sized
 <firstterm>segments</>.  The first segment's file name is the same as the
 filenode; subsequent segments are named filenode.1, filenode.2, etc.
 This arrangement avoids problems on platforms that have file size limitations.
-(Actually, 1 GB is just the default segment size.  The segment size can be
+(Actually, 1GB is just the default segment size.  The segment size can be
 adjusted using the configuration option <option>--with-segsize</option>
 when building <productname>PostgreSQL</>.)
 In principle, free space map and visibility map forks could require multiple
@@ -303,7 +303,7 @@ Oversized-Attribute Storage Technique).
 
 <para>
 <productname>PostgreSQL</productname> uses a fixed page size (commonly
-8 kB), and does not allow tuples to span multiple pages.  Therefore, it is
+8kB), and does not allow tuples to span multiple pages.  Therefore, it is
 not possible to store very large field values directly.  To overcome
 this limitation, large field values are compressed and/or broken up into
 multiple physical rows.  This happens transparently to the user, with only
@@ -336,7 +336,7 @@ See <xref linkend="xtypes-toast"> for more detail.)
 <acronym>TOAST</> usurps two bits of the varlena length word (the high-order
 bits on big-endian machines, the low-order bits on little-endian machines),
 thereby limiting the logical size of any value of a <acronym>TOAST</>-able
-data type to 1 GB (2<superscript>30</> - 1 bytes).  When both bits are zero,
+data type to 1GB (2<superscript>30</> - 1 bytes).  When both bits are zero,
 the value is an ordinary un-<acronym>TOAST</>ed value of the data type, and
 the remaining bits of the length word give the total datum size (including
 length word) in bytes.  When the highest-order or lowest-order bit is set,
@@ -344,7 +344,7 @@ the value has only a single-byte header instead of the normal four-byte
 header, and the remaining bits of that byte give the total datum size
 (including length byte) in bytes.  This alternative supports space-efficient
 storage of values shorter than 127 bytes, while still allowing the data type
-to grow to 1 GB at need.  Values with single-byte headers aren't aligned on
+to grow to 1GB at need.  Values with single-byte headers aren't aligned on
 any particular boundary, whereas values with four-byte headers are aligned on
 at least a four-byte boundary; this omission of alignment padding provides
 additional space savings that is significant compared to short values.
@@ -420,10 +420,10 @@ bytes regardless of the actual size of the represented value.
 <para>
 The <acronym>TOAST</> management code is triggered only
 when a row value to be stored in a table is wider than
-<symbol>TOAST_TUPLE_THRESHOLD</> bytes (normally 2 kB).
+<symbol>TOAST_TUPLE_THRESHOLD</> bytes (normally 2kB).
 The <acronym>TOAST</> code will compress and/or move
 field values out-of-line until the row value is shorter than
-<symbol>TOAST_TUPLE_TARGET</> bytes (also normally 2 kB)
+<symbol>TOAST_TUPLE_TARGET</> bytes (also normally 2kB)
 or no more gains can be had.  During an UPDATE
 operation, values of unchanged fields are normally preserved as-is; so an
 UPDATE of a row with out-of-line values incurs no <acronym>TOAST</> costs if
@@ -491,7 +491,7 @@ containing typical HTML pages and their URLs was stored in about half of the
 raw data size including the <acronym>TOAST</> table, and that the main table
 contained only about 10% of the entire data (the URLs and some small HTML
 pages). There was no run time difference compared to an un-<acronym>TOAST</>ed
-comparison table, in which all the HTML pages were cut down to 7 kB to fit.
+comparison table, in which all the HTML pages were cut down to 7kB to fit.
 </para>
 
 </sect2>
@@ -512,7 +512,7 @@ pointers to <firstterm>expanded</> data.
 Indirect <acronym>TOAST</> pointers simply point at a non-indirect varlena
 value stored somewhere in memory.  This case was originally created merely
 as a proof of concept, but it is currently used during logical decoding to
-avoid possibly having to create physical tuples exceeding 1 GB (as pulling
+avoid possibly having to create physical tuples exceeding 1GB (as pulling
 all out-of-line field values into the tuple might do).  The case is of
 limited use since the creator of the pointer datum is entirely responsible
 that the referenced data survives for as long as the pointer could exist,
@@ -703,7 +703,7 @@ an item is a row; in an index, an item is an index entry.
 
 <para>
 Every table and index is stored as an array of <firstterm>pages</> of a
-fixed size (usually 8 kB, although a different page size can be selected
+fixed size (usually 8kB, although a different page size can be selected
 when compiling the server).  In a table, all the pages are logically
 equivalent, so a particular item (row) can be stored in any page.  In
 indexes, the first page is generally reserved as a <firstterm>metapage</>

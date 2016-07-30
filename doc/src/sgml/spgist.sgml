@@ -755,7 +755,7 @@ typedef struct spgLeafConsistentOut
 
   <para>
    Individual leaf tuples and inner tuples must fit on a single index page
-   (8KB by default).  Therefore, when indexing values of variable-length
+   (8kB by default).  Therefore, when indexing values of variable-length
    data types, long values can only be supported by methods such as radix
    trees, in which each level of the tree includes a prefix that is short
    enough to fit on a page, and the final leaf level includes a suffix also

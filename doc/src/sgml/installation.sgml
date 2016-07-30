@@ -326,12 +326,12 @@ su - postgres
 
   <para>
    Also check that you have sufficient disk space. You will need about
-   100 MB for the source tree during compilation and about 20 MB for
+   100MB for the source tree during compilation and about 20MB for
    the installation directory. An empty database cluster takes about
-   35 MB; databases take about five times the amount of space that a
+   35MB; databases take about five times the amount of space that a
    flat text file with the same data would take. If you are going to
    run the regression tests you will temporarily need up to an extra
-   150 MB. Use the <command>df</command> command to check free disk
+   150MB. Use the <command>df</command> command to check free disk
    space.
   </para>
  </sect1>
@@ -2241,7 +2241,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
 createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": Bad address
 </screen>
      Another example is out of memory errors in the PostgreSQL server
-     logs, with every memory allocation near or greater than 256 MB
+     logs, with every memory allocation near or greater than 256MB
      failing.
     </para>
 
@@ -2250,8 +2250,8 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
      and memory model used by the server process.  By default, all
      binaries built on AIX are 32-bit.  This does not depend upon
      hardware type or kernel in use.  These 32-bit processes are
-     limited to 4 GB of memory laid out in 256 MB segments using one
-     of a few models.  The default allows for less than 256 MB in the
+     limited to 4GB of memory laid out in 256MB segments using one
+     of a few models.  The default allows for less than 256MB in the
      heap as it shares a single segment with the stack.
     </para>
 
@@ -2282,7 +2282,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
      settings to find a configuration that works satisfactorily.  This
      use of <symbol>LDR_CNTRL</symbol> tells AIX that you want the
      server to have <symbol>MAXDATA</symbol> bytes set aside for the
-     heap, allocated in 256 MB segments.  When you find a workable
+     heap, allocated in 256MB segments.  When you find a workable
      configuration,
      <command>ldedit</command> can be used to modify the binaries so
      that they default to using the desired heap size.  PostgreSQL can

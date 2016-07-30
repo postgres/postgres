@@ -50,8 +50,8 @@
     larger than a single database page into a secondary storage area per table.
     This makes the large object facility partially obsolete.  One
     remaining advantage of the large object facility is that it allows values
-    up to 4 TB in size, whereas <acronym>TOAST</acronym>ed fields can be at
-    most 1 GB.  Also, reading and updating portions of a large object can be
+    up to 4TB in size, whereas <acronym>TOAST</acronym>ed fields can be at
+    most 1GB.  Also, reading and updating portions of a large object can be
     done efficiently, while most operations on a <acronym>TOAST</acronym>ed
     field will read or write the whole value as a unit.
    </para>

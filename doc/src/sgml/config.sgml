@@ -1903,7 +1903,7 @@ include_dir 'conf.d'
          cache, where performance might degrade.  This setting may have no
          effect on some platforms.  The valid range is between
          <literal>0</literal>, which disables controlled writeback, and
-         <literal>2MB</literal>.  The default is <literal>512Kb</> on Linux,
+         <literal>2MB</literal>.  The default is <literal>512kB</> on Linux,
          <literal>0</> elsewhere.  (Non-default values of
          <symbol>BLCKSZ</symbol> change the default and maximum.)
          This parameter can only be set in the <filename>postgresql.conf</>
@@ -2660,7 +2660,7 @@ include_dir 'conf.d'
         than the OS's page cache, where performance might degrade.  This
         setting may have no effect on some platforms.  The valid range is
         between <literal>0</literal>, which disables controlled writeback,
-        and <literal>2MB</literal>.  The default is <literal>256Kb</> on
+        and <literal>2MB</literal>.  The default is <literal>256kB</> on
         Linux, <literal>0</> elsewhere.  (Non-default values of
         <symbol>BLCKSZ</symbol> change the default and maximum.)
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -2702,7 +2702,7 @@ include_dir 'conf.d'
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</> under special circumstances, like
         under heavy load, a failing <varname>archive_command</>, or a high
-        <varname>wal_keep_segments</> setting. The default is 1 GB.
+        <varname>wal_keep_segments</> setting. The default is 1GB.
         Increasing this parameter can increase the amount of time needed for
         crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -2723,7 +2723,7 @@ include_dir 'conf.d'
         always recycled for future use at a checkpoint, rather than removed.
         This can be used to ensure that enough WAL space is reserved to
         handle spikes in WAL usage, for example when running large batch
-        jobs. The default is 80 MB.
+        jobs. The default is 80MB.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

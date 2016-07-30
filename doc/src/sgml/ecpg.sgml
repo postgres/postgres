@@ -8165,7 +8165,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      <term><literal>sqlilongdata</></term>
       <listitem>
        <para>
-        It equals to <literal>sqldata</literal> if <literal>sqllen</literal> is larger than 32KB.
+        It equals to <literal>sqldata</literal> if <literal>sqllen</literal> is larger than 32kB.
        </para>
       </listitem>
      </varlistentry>

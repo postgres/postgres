@@ -1973,7 +1973,7 @@ The commands accepted in walsender mode are:
           Limit (throttle) the maximum amount of data transferred from server
           to client per unit of time.  The expected unit is kilobytes per second.
           If this option is specified, the value must either be equal to zero
-          or it must fall within the range from 32 kB through 1 GB (inclusive).
+          or it must fall within the range from 32kB through 1GB (inclusive).
           If zero is passed or the option is not specified, no restriction is
           imposed on the transfer.
          </para>
