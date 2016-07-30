@@ -1202,7 +1202,7 @@ END;
    within the interval, <replaceable>latency_sum</replaceable> is a sum of latencies
    (so you can compute average latency easily). The following two fields are useful
    for variance estimation - <replaceable>latency_sum</> is a sum of latencies and
-   <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The last two
+   <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The next two
    fields are <replaceable>min_latency</> - a minimum latency within the interval, and
    <replaceable>max_latency</> - maximum latency within the interval. A transaction is
    counted into the interval when it was committed. The fields in the end,
