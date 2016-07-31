@@ -568,16 +568,7 @@ Indexes:
    dependent on the setting of <xref linkend="guc-maintenance-work-mem">.
    Larger values will reduce the time needed for index creation, so long
    as you don't make it larger than the amount of memory really available,
-   which would drive the machine into swapping.  For hash indexes, the
-   value of <xref linkend="guc-effective-cache-size"> is also relevant to
-   index creation time: <productname>PostgreSQL</productname> will use one
-   of two different hash index creation methods depending on whether the
-   estimated index size is more or less than <varname>effective_cache_size</>.
-   For best results, make sure that this parameter is also set to something
-   reflective of available memory, and be careful that the sum of
-   <varname>maintenance_work_mem</> and <varname>effective_cache_size</> is
-   less than the machine's RAM less whatever space is needed by other
-   programs.
+   which would drive the machine into swapping.
   </para>
 
   <para>
