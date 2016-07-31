@@ -453,7 +453,7 @@ Hint:       the addendum
     verbose mode, or perhaps a pop-up error-details window.  Also, details and
     hints would normally be suppressed from the server log to save
     space. Reference to implementation details is best avoided since users
-    don't know the details anyway.
+    aren't expected to know the details.
    </para>
 
   </simplesect>
