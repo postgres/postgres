@@ -4,9 +4,13 @@
 \echo Use "CREATE EXTENSION test_pg_dump" to load this file. \quit
 
 CREATE TABLE regress_pg_dump_table (
-	col1 int,
+	col1 serial,
 	col2 int
 );
+
+CREATE SEQUENCE regress_pg_dump_seq;
+
+GRANT USAGE ON regress_pg_dump_seq TO regress_dump_test_role;
 
 GRANT SELECT ON regress_pg_dump_table TO regress_dump_test_role;
 GRANT SELECT(col1) ON regress_pg_dump_table TO public;

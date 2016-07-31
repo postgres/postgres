@@ -361,6 +361,56 @@ my %tests = (
 			only_dump_test_schema  => 1,
 			only_dump_test_table   => 1,
 			test_schema_plus_blobs => 1, }, },
+	'ALTER SEQUENCE test_table_col1_seq' => {
+		regexp => qr/^
+			\QALTER SEQUENCE test_table_col1_seq OWNED BY test_table.col1;\E
+			/xm,
+		like => {
+			binary_upgrade          => 1,
+			clean                   => 1,
+			clean_if_exists         => 1,
+			createdb                => 1,
+			defaults                => 1,
+			exclude_test_table_data => 1,
+			no_privs                => 1,
+			no_owner                => 1,
+			only_dump_test_schema   => 1,
+			only_dump_test_table    => 1,
+			pg_dumpall_dbprivs      => 1,
+			schema_only             => 1,
+			section_pre_data        => 1,
+			test_schema_plus_blobs  => 1, },
+		unlike => {
+			exclude_test_table       => 1,
+			exclude_dump_test_schema => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			section_post_data        => 1, }, },
+	'ALTER SEQUENCE test_third_table_col1_seq' => {
+		regexp => qr/^
+			\QALTER SEQUENCE test_third_table_col1_seq OWNED BY test_third_table.col1;\E
+			/xm,
+		like => {
+			binary_upgrade           => 1,
+			clean                    => 1,
+			clean_if_exists          => 1,
+			createdb                 => 1,
+			defaults                 => 1,
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+			exclude_test_table_data  => 1,
+			no_privs                 => 1,
+			no_owner                 => 1,
+			pg_dumpall_dbprivs       => 1,
+			schema_only              => 1,
+			section_pre_data         => 1, },
+		unlike => {
+			only_dump_test_schema    => 1,
+			only_dump_test_table     => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+			section_post_data        => 1,
+			test_schema_plus_blobs   => 1, }, },
 	'ALTER TABLE ONLY test_table ADD CONSTRAINT ... PRIMARY KEY' => {
 		regexp => qr/^
 			\QALTER TABLE ONLY test_table\E \n^\s+
