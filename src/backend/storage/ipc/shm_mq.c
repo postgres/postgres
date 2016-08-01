@@ -763,11 +763,11 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, void *data, bool nowait,
 			 */
 			WaitLatch(&MyProc->procLatch, WL_LATCH_SET, 0);
 
-			/* An interrupt may have occurred while we were waiting. */
-			CHECK_FOR_INTERRUPTS();
-
 			/* Reset the latch so we don't spin. */
 			ResetLatch(&MyProc->procLatch);
+
+			/* An interrupt may have occurred while we were waiting. */
+			CHECK_FOR_INTERRUPTS();
 		}
 		else
 		{
@@ -860,11 +860,11 @@ shm_mq_receive_bytes(shm_mq *mq, Size bytes_needed, bool nowait,
 		 */
 		WaitLatch(&MyProc->procLatch, WL_LATCH_SET, 0);
 
-		/* An interrupt may have occurred while we were waiting. */
-		CHECK_FOR_INTERRUPTS();
-
 		/* Reset the latch so we don't spin. */
 		ResetLatch(&MyProc->procLatch);
+
+		/* An interrupt may have occurred while we were waiting. */
+		CHECK_FOR_INTERRUPTS();
 	}
 }
 
@@ -966,11 +966,11 @@ shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
 			/* Wait to be signalled. */
 			WaitLatch(&MyProc->procLatch, WL_LATCH_SET, 0);
 
-			/* An interrupt may have occurred while we were waiting. */
-			CHECK_FOR_INTERRUPTS();
-
 			/* Reset the latch so we don't spin. */
 			ResetLatch(&MyProc->procLatch);
+
+			/* An interrupt may have occurred while we were waiting. */
+			CHECK_FOR_INTERRUPTS();
 		}
 	}
 	PG_CATCH();
