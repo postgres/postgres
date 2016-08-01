@@ -2073,7 +2073,7 @@ main(int argc, char **argv)
 				break;
 			case 'Z':
 				compresslevel = atoi(optarg);
-				if (compresslevel <= 0 || compresslevel > 9)
+				if (compresslevel < 0 || compresslevel > 9)
 				{
 					fprintf(stderr, _("%s: invalid compression level \"%s\"\n"),
 							progname, optarg);
