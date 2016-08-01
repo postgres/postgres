@@ -19,7 +19,6 @@
 #include "postmaster/bgworker.h"
 #include "storage/shm_mq.h"
 #include "storage/shm_toc.h"
-#include "utils/elog.h"
 
 typedef void (*parallel_worker_main_type) (dsm_segment *seg, shm_toc *toc);
 
@@ -47,7 +46,7 @@ typedef struct ParallelContext
 	ParallelWorkerInfo *worker;
 } ParallelContext;
 
-extern bool ParallelMessagePending;
+extern volatile bool ParallelMessagePending;
 extern int	ParallelWorkerNumber;
 extern bool InitializingParallelWorker;
 
@@ -55,17 +54,17 @@ extern bool InitializingParallelWorker;
 
 extern ParallelContext *CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers);
 extern ParallelContext *CreateParallelContextForExternalFunction(char *library_name, char *function_name, int nworkers);
-extern void InitializeParallelDSM(ParallelContext *);
+extern void InitializeParallelDSM(ParallelContext *pcxt);
 extern void ReinitializeParallelDSM(ParallelContext *pcxt);
-extern void LaunchParallelWorkers(ParallelContext *);
-extern void WaitForParallelWorkersToFinish(ParallelContext *);
-extern void DestroyParallelContext(ParallelContext *);
+extern void LaunchParallelWorkers(ParallelContext *pcxt);
+extern void WaitForParallelWorkersToFinish(ParallelContext *pcxt);
+extern void DestroyParallelContext(ParallelContext *pcxt);
 extern bool ParallelContextActive(void);
 
 extern void HandleParallelMessageInterrupt(void);
 extern void HandleParallelMessages(void);
 extern void AtEOXact_Parallel(bool isCommit);
 extern void AtEOSubXact_Parallel(bool isCommit, SubTransactionId mySubId);
-extern void ParallelWorkerReportLastRecEnd(XLogRecPtr);
+extern void ParallelWorkerReportLastRecEnd(XLogRecPtr last_xlog_end);
 
 #endif   /* PARALLEL_H */
