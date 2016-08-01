@@ -375,8 +375,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 #ifdef HAVE_STRTOULL
 				case ECPGt_unsigned_long_long:
 					*((unsigned long long int *) (var + offset * act_tuple)) = strtoull(pval, &scan_length, 10);
-					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))		/* Garbage left */
+					if (garbage_left(isarray, scan_length, compat))
 					{
 						ecpg_raise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
