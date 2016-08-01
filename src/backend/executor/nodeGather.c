@@ -330,8 +330,8 @@ gather_readnext(GatherState *gatherstate)
 		HeapTuple	tup;
 		bool		readerdone;
 
-		/* Make sure we've read all messages from workers. */
-		HandleParallelMessages();
+		/* Check for async events, particularly messages from workers. */
+		CHECK_FOR_INTERRUPTS();
 
 		/* Attempt to read a tuple, but don't block if none is available. */
 		reader = gatherstate->reader[gatherstate->nextreader];
@@ -388,7 +388,6 @@ gather_readnext(GatherState *gatherstate)
 
 			/* Nothing to do except wait for developments. */
 			WaitLatch(MyLatch, WL_LATCH_SET, 0);
-			CHECK_FOR_INTERRUPTS();
 			ResetLatch(MyLatch);
 			nvisited = 0;
 		}

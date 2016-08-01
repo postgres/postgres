@@ -281,11 +281,11 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 		/* Wait to be signalled. */
 		WaitLatch(MyLatch, WL_LATCH_SET, 0);
 
-		/* An interrupt may have occurred while we were waiting. */
-		CHECK_FOR_INTERRUPTS();
-
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);
+
+		/* An interrupt may have occurred while we were waiting. */
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	if (!result)

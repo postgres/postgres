@@ -231,8 +231,8 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 			 * for us to do.
 			 */
 			WaitLatch(MyLatch, WL_LATCH_SET, 0);
-			CHECK_FOR_INTERRUPTS();
 			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
 		}
 	}
 
