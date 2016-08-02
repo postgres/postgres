@@ -704,14 +704,21 @@ HandleParallelMessages(void)
 {
 	dlist_iter	iter;
 
+	/*
+	 * This is invoked from ProcessInterrupts(), and since some of the
+	 * functions it calls contain CHECK_FOR_INTERRUPTS(), there is a potential
+	 * for recursive calls if more signals are received while this runs.  It's
+	 * unclear that recursive entry would be safe, and it doesn't seem useful
+	 * even if it is safe, so let's block interrupts until done.
+	 */
+	HOLD_INTERRUPTS();
+
 	ParallelMessagePending = false;
 
 	dlist_foreach(iter, &pcxt_list)
 	{
 		ParallelContext *pcxt;
 		int			i;
-		Size		nbytes;
-		void	   *data;
 
 		pcxt = dlist_container(ParallelContext, node, iter.cur);
 		if (pcxt->worker == NULL)
@@ -721,13 +728,15 @@ HandleParallelMessages(void)
 		{
 			/*
 			 * Read as many messages as we can from each worker, but stop when
-			 * either (1) the error queue goes away, which can happen if we
-			 * receive a Terminate message from the worker; or (2) no more
-			 * messages can be read from the worker without blocking.
+			 * either (1) the worker's error queue goes away, which can happen
+			 * if we receive a Terminate message from the worker; or (2) no
+			 * more messages can be read from the worker without blocking.
 			 */
 			while (pcxt->worker[i].error_mqh != NULL)
 			{
 				shm_mq_result res;
+				Size		nbytes;
+				void	   *data;
 
 				res = shm_mq_receive(pcxt->worker[i].error_mqh, &nbytes,
 									 &data, true);
@@ -749,6 +758,8 @@ HandleParallelMessages(void)
 			}
 		}
 	}
+
+	RESUME_INTERRUPTS();
 }
 
 /*
