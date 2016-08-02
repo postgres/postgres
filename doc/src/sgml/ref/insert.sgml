@@ -295,8 +295,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
     inference, it consists of one or more <replaceable
     class="PARAMETER">index_column_name</replaceable> columns and/or
     <replaceable class="PARAMETER">index_expression</replaceable>
-    expressions, and an optional <replaceable class="PARAMETER">
-    index_predicate</replaceable>.  All <replaceable
+    expressions, and an optional <replaceable class="PARAMETER">index_predicate</replaceable>.  All <replaceable
     class="PARAMETER">table_name</replaceable> unique indexes that,
     without regard to order, contain exactly the
     <parameter>conflict_target</parameter>-specified

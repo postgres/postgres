@@ -32,9 +32,6 @@ DROP ACCESS METHOD [ IF EXISTS ] <replaceable class="parameter">name</replaceabl
    <command>DROP ACCESS METHOD</command> removes an existing access method.
    Only superusers can drop access methods.
   </para>
-
-  <para>
-  </para>
  </refsect1>
 
  <refsect1>

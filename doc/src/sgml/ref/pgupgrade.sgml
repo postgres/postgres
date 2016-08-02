@@ -410,8 +410,7 @@ pg_upgrade.exe
    </step>
 
    <step>
-    <title>Upgrade Streaming Replication and Log-Shipping standby
-    servers</title>
+    <title>Upgrade Streaming Replication and Log-Shipping standby servers</title>
 
     <para>
      If you have Streaming Replication (see <xref
@@ -434,8 +433,7 @@ pg_upgrade.exe
      </step>
 
      <step>
-      <title>Make sure the new standby data directories do <emphasis>not</>
-      exist</title>
+      <title>Make sure the new standby data directories do <emphasis>not</> exist</title>
 
       <para>
        Make sure the new standby data directories do <emphasis>not</>
@@ -514,8 +512,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
      </step>
 
      <step>
-      <title>Configure streaming replication and log-shipping standby
-      servers</title>
+      <title>Configure streaming replication and log-shipping standby servers</title>
 
       <para>
        Configure the servers for log shipping.  (You do not need to run
