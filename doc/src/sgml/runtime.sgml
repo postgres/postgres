@@ -188,8 +188,8 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    operating system's collation library for character set ordering.
    This controls the ordering of keys stored in indexes.  For this reason,
    a cluster cannot switch to an incompatible collation library version,
-   either through snapshot restore, binary streaming replication, or
-   <application>pg_upgrade</> run.
+   either through snapshot restore, binary streaming replication, a
+   different operating system, or an operating system upgrade.
   </para>
 
   <sect2 id="creating-cluster-mount-points">
