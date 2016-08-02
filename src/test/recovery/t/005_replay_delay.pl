@@ -66,4 +66,4 @@ die "Maximum number of attempts reached ($remaining remain)"
 # This test is successful if and only if the LSN has been applied with at least
 # the configured apply delay.
 ok(time() - $master_insert_time >= $delay,
-	"Check that standby applies WAL only after replication delay");
+	"standby applies WAL only after replication delay");

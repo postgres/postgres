@@ -98,10 +98,10 @@ test_recovery_standby('immediate target',
 test_recovery_standby('XID', 'standby_2', $node_master, \@recovery_params,
 	"2000", $lsn2);
 @recovery_params = ("recovery_target_time = '$recovery_time'");
-test_recovery_standby('Time', 'standby_3', $node_master, \@recovery_params,
+test_recovery_standby('time', 'standby_3', $node_master, \@recovery_params,
 	"3000", $lsn3);
 @recovery_params = ("recovery_target_name = '$recovery_name'");
-test_recovery_standby('Name', 'standby_4', $node_master, \@recovery_params,
+test_recovery_standby('name', 'standby_4', $node_master, \@recovery_params,
 	"4000", $lsn4);
 
 # Multiple targets
@@ -111,17 +111,17 @@ test_recovery_standby('Name', 'standby_4', $node_master, \@recovery_params,
 	"recovery_target_name = '$recovery_name'",
 	"recovery_target_xid  = '$recovery_txid'",
 	"recovery_target_time = '$recovery_time'");
-test_recovery_standby('Name + XID + Time',
+test_recovery_standby('name + XID + time',
 	'standby_5', $node_master, \@recovery_params, "3000", $lsn3);
 @recovery_params = (
 	"recovery_target_time = '$recovery_time'",
 	"recovery_target_name = '$recovery_name'",
 	"recovery_target_xid  = '$recovery_txid'");
-test_recovery_standby('Time + Name + XID',
+test_recovery_standby('time + name + XID',
 	'standby_6', $node_master, \@recovery_params, "2000", $lsn2);
 @recovery_params = (
 	"recovery_target_xid  = '$recovery_txid'",
 	"recovery_target_time = '$recovery_time'",
 	"recovery_target_name = '$recovery_name'");
-test_recovery_standby('XID + Time + Name',
+test_recovery_standby('XID + time + name',
 	'standby_7', $node_master, \@recovery_params, "4000", $lsn4);

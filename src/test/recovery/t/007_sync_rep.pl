@@ -127,7 +127,7 @@ test_sync_state(
 standby2|2|sync
 standby3|3|potential
 standby4|0|async),
-	'2 sync, 1 potential and 1 async');
+	'2 sync, 1 potential, and 1 async');
 
 # Check that sync_state of each standby is determined correctly
 # when num_sync exceeds the number of names of potential sync standbys
