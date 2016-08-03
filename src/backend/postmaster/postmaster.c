@@ -5181,7 +5181,7 @@ CountChildren(int target)
 /*
  * StartChildProcess -- start an auxiliary process for the postmaster
  *
- * xlop determines what kind of child will be started.  All child types
+ * "type" determines what kind of child will be started.  All child types
  * initially go to AuxiliaryProcessMain, which will handle common setup.
  *
  * Return value of StartChildProcess is subprocess' PID, or 0 if failed
@@ -5529,9 +5529,19 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
-			/* Do NOT release postmaster's working memory context */
+			/*
+			 * Before blowing away PostmasterContext, save this bgworker's
+			 * data where it can find it.
+			 */
+			MyBgworkerEntry = (BackgroundWorker *)
+				MemoryContextAlloc(TopMemoryContext, sizeof(BackgroundWorker));
+			memcpy(MyBgworkerEntry, &rw->rw_worker, sizeof(BackgroundWorker));
 
-			MyBgworkerEntry = &rw->rw_worker;
+			/* Release postmaster's working memory context */
+			MemoryContextSwitchTo(TopMemoryContext);
+			MemoryContextDelete(PostmasterContext);
+			PostmasterContext = NULL;
+
 			StartBackgroundWorker();
 			break;
 #endif
@@ -5539,6 +5549,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			rw->rw_pid = worker_pid;
 			rw->rw_backend->pid = rw->rw_pid;
 			ReportBackgroundWorkerPID(rw);
+			break;
 	}
 }
 

@@ -160,10 +160,12 @@ running with CurrentMemoryContext pointing here.
 PostmasterContext --- this is the postmaster's normal working context.
 After a backend is spawned, it can delete PostmasterContext to free its
 copy of memory the postmaster was using that it doesn't need.
-(Anything that has to be passed from postmaster to backends is passed
-in TopMemoryContext.  The postmaster has only TopMemoryContext,
-PostmasterContext, and ErrorContext --- the remaining top-level contexts
-are set up in each backend during startup.)
+Note that in non-EXEC_BACKEND builds, the postmaster's copy of pg_hba.conf
+and pg_ident.conf data is used directly during authentication in backend
+processes; so backends can't delete PostmasterContext until that's done.
+(The postmaster has only TopMemoryContext, PostmasterContext, and
+ErrorContext --- the remaining top-level contexts are set up in each
+backend during startup.)
 
 CacheMemoryContext --- permanent storage for relcache, catcache, and
 related modules.  This will never be reset or deleted, either, so it's
