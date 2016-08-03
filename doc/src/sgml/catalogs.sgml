@@ -8496,7 +8496,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>boolean</type></entry>
       <entry>
        <literal>true</literal> if the prepared statement was created
-       via the <command>PREPARE</command> SQL statement;
+       via the <command>PREPARE</command> SQL command;
        <literal>false</literal> if the statement was prepared via the
        frontend/backend protocol
       </entry>
