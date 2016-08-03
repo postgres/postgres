@@ -773,7 +773,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    </para>
   </note>
 
-  <table id="wait-event-table" xreflabel="wait_event">
+  <table id="wait-event-table">
    <title><structname>wait_event</structname> Description</title>
 
     <tgroup cols="3">
@@ -2629,7 +2629,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    </tgroup>
   </table>
 
-  <table id="vacuum-phases" xreflabel="VACUUM phases">
+  <table id="vacuum-phases">
    <title>VACUUM phases</title>
    <tgroup cols="2">
     <thead>
