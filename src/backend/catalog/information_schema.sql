@@ -2742,9 +2742,9 @@ CREATE VIEW _pg_foreign_table_columns AS
  */
 CREATE VIEW column_options AS
     SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
-           c.nspname AS table_schema,
-           c.relname AS table_name,
-           c.attname AS column_name,
+           CAST(c.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(c.attname AS sql_identifier) AS column_name,
            CAST((pg_options_to_table(c.attfdwoptions)).option_name AS sql_identifier) AS option_name,
            CAST((pg_options_to_table(c.attfdwoptions)).option_value AS character_data) AS option_value
     FROM _pg_foreign_table_columns c;
@@ -2849,8 +2849,8 @@ GRANT SELECT ON foreign_servers TO PUBLIC;
 CREATE VIEW _pg_foreign_tables AS
     SELECT
            CAST(current_database() AS sql_identifier) AS foreign_table_catalog,
-           n.nspname AS foreign_table_schema,
-           c.relname AS foreign_table_name,
+           CAST(n.nspname AS sql_identifier) AS foreign_table_schema,
+           CAST(c.relname AS sql_identifier) AS foreign_table_name,
            t.ftoptions AS ftoptions,
            CAST(current_database() AS sql_identifier) AS foreign_server_catalog,
            CAST(srvname AS sql_identifier) AS foreign_server_name,
