@@ -68,7 +68,7 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
   <para>
    When <command>NOTIFY</command> is used to signal the occurrence of changes
    to a particular table, a useful programming technique is to put the
-   <command>NOTIFY</command> in a rule that is triggered by table updates.
+   <command>NOTIFY</command> in a statement trigger that is triggered by table updates.
    In this way, notification happens automatically when the table is changed,
    and the application programmer cannot accidentally forget to do it.
   </para>
