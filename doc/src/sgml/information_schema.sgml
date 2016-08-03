@@ -2898,18 +2898,6 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>foreign_server_catalog</literal></entry>
-      <entry><type>sql_identifier</type></entry>
-      <entry>Name of the database that the foreign server is defined in (always the current database)</entry>
-     </row>
-
-     <row>
-      <entry><literal>foreign_server_name</literal></entry>
-      <entry><type>sql_identifier</type></entry>
-      <entry>Name of the foreign server</entry>
-     </row>
-
-     <row>
       <entry><literal>option_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of an option</entry>
