@@ -787,7 +787,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="40"><literal>LWLockNamed</></entry>
+        <entry morerows="41"><literal>LWLockNamed</></entry>
         <entry><literal>ShmemIndexLock</></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -967,6 +967,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>MultiXactTruncationLock</></entry>
          <entry>Waiting to read or truncate multixact information.</entry>
+        </row>
+        <row>
+         <entry><literal>OldSnapshotTimeMapLock</></entry>
+         <entry>Waiting to read or update old snapshot control information.</entry>
         </row>
         <row>
          <entry morerows="15"><literal>LWLockTranche</></entry>
