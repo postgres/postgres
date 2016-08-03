@@ -164,15 +164,16 @@ CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replac
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal></term>
-    <listitem>
-     <para>
+    <term><literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal>
       <indexterm zone="SQL-CREATEVIEW">
        <primary>CHECK OPTION</primary>
       </indexterm>
       <indexterm zone="SQL-CREATEVIEW">
        <primary>WITH CHECK OPTION</primary>
       </indexterm>
+    </term>
+    <listitem>
+     <para>
       This option controls the behavior of automatically updatable views.  When
       this option is specified, <command>INSERT</> and <command>UPDATE</>
       commands on the view will be checked to ensure that new rows satisfy the
