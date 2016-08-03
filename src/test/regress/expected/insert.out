@@ -81,3 +81,82 @@ select col1, col2, char_length(col3) from inserttest;
 (8 rows)
 
 drop table inserttest;
+--
+-- check indirection (field/array assignment), cf bug #14265
+--
+-- these tests are aware that transformInsertStmt has 3 separate code paths
+--
+create type insert_test_type as (if1 int, if2 text[]);
+create table inserttest (f1 int, f2 int[],
+                         f3 insert_test_type, f4 insert_test_type[]);
+insert into inserttest (f2[1], f2[2]) values (1,2);
+insert into inserttest (f2[1], f2[2]) values (3,4), (5,6);
+insert into inserttest (f2[1], f2[2]) select 7,8;
+insert into inserttest (f2[1], f2[2]) values (1,default);  -- not supported
+ERROR:  cannot set an array element to DEFAULT
+LINE 1: insert into inserttest (f2[1], f2[2]) values (1,default);
+                                       ^
+insert into inserttest (f3.if1, f3.if2) values (1,array['foo']);
+insert into inserttest (f3.if1, f3.if2) values (1,'{foo}'), (2,'{bar}');
+insert into inserttest (f3.if1, f3.if2) select 3, '{baz,quux}';
+insert into inserttest (f3.if1, f3.if2) values (1,default);  -- not supported
+ERROR:  cannot set a subfield to DEFAULT
+LINE 1: insert into inserttest (f3.if1, f3.if2) values (1,default);
+                                        ^
+insert into inserttest (f3.if2[1], f3.if2[2]) values ('foo', 'bar');
+insert into inserttest (f3.if2[1], f3.if2[2]) values ('foo', 'bar'), ('baz', 'quux');
+insert into inserttest (f3.if2[1], f3.if2[2]) select 'bear', 'beer';
+insert into inserttest (f4[1].if2[1], f4[1].if2[2]) values ('foo', 'bar');
+insert into inserttest (f4[1].if2[1], f4[1].if2[2]) values ('foo', 'bar'), ('baz', 'quux');
+insert into inserttest (f4[1].if2[1], f4[1].if2[2]) select 'bear', 'beer';
+select * from inserttest;
+ f1 |  f2   |        f3        |           f4           
+----+-------+------------------+------------------------
+    | {1,2} |                  | 
+    | {3,4} |                  | 
+    | {5,6} |                  | 
+    | {7,8} |                  | 
+    |       | (1,{foo})        | 
+    |       | (1,{foo})        | 
+    |       | (2,{bar})        | 
+    |       | (3,"{baz,quux}") | 
+    |       | (,"{foo,bar}")   | 
+    |       | (,"{foo,bar}")   | 
+    |       | (,"{baz,quux}")  | 
+    |       | (,"{bear,beer}") | 
+    |       |                  | {"(,\"{foo,bar}\")"}
+    |       |                  | {"(,\"{foo,bar}\")"}
+    |       |                  | {"(,\"{baz,quux}\")"}
+    |       |                  | {"(,\"{bear,beer}\")"}
+(16 rows)
+
+-- also check reverse-listing
+create table inserttest2 (f1 bigint, f2 text);
+create rule irule1 as on insert to inserttest2 do also
+  insert into inserttest (f3.if2[1], f3.if2[2])
+  values (new.f1,new.f2);
+create rule irule2 as on insert to inserttest2 do also
+  insert into inserttest (f4[1].if1, f4[1].if2[2])
+  values (1,'fool'),(new.f1,new.f2);
+create rule irule3 as on insert to inserttest2 do also
+  insert into inserttest (f4[1].if1, f4[1].if2[2])
+  select new.f1, new.f2;
+\d+ inserttest2
+                     Table "public.inserttest2"
+ Column |  Type  | Modifiers | Storage  | Stats target | Description 
+--------+--------+-----------+----------+--------------+-------------
+ f1     | bigint |           | plain    |              | 
+ f2     | text   |           | extended |              | 
+Rules:
+    irule1 AS
+    ON INSERT TO inserttest2 DO  INSERT INTO inserttest (f3.if2[1], f3.if2[2])
+  VALUES (new.f1, new.f2)
+    irule2 AS
+    ON INSERT TO inserttest2 DO  INSERT INTO inserttest (f4[1].if1, f4[1].if2[2]) VALUES (1,'fool'::text), (new.f1,new.f2)
+    irule3 AS
+    ON INSERT TO inserttest2 DO  INSERT INTO inserttest (f4[1].if1, f4[1].if2[2])  SELECT new.f1,
+            new.f2
+
+drop table inserttest2;
+drop table inserttest;
+drop type insert_test_type;

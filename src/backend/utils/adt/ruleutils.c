@@ -438,8 +438,7 @@ static void get_tablesample_def(TableSampleClause *tablesample,
 					deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
-static Node *processIndirection(Node *node, deparse_context *context,
-				   bool printit);
+static Node *processIndirection(Node *node, deparse_context *context);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
@@ -4551,11 +4550,9 @@ get_values_def(List *values_lists, deparse_context *context)
 				appendStringInfoChar(buf, ',');
 
 			/*
-			 * Strip any top-level nodes representing indirection assignments,
-			 * then print the result.  Whole-row Vars need special treatment.
+			 * Print the value.  Whole-row Vars need special treatment.
 			 */
-			get_rule_expr_toplevel(processIndirection(col, context, false),
-								   context, false);
+			get_rule_expr_toplevel(col, context, false);
 		}
 		appendStringInfoChar(buf, ')');
 	}
@@ -5512,7 +5509,6 @@ get_insert_query_def(Query *query, deparse_context *context)
 	RangeTblEntry *values_rte = NULL;
 	RangeTblEntry *rte;
 	char	   *sep;
-	ListCell   *values_cell;
 	ListCell   *l;
 	List	   *strippedexprs;
 
@@ -5563,17 +5559,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 						 quote_identifier(rte->alias->aliasname));
 
 	/*
-	 * Add the insert-column-names list.  To handle indirection properly, we
-	 * need to look for indirection nodes in the top targetlist (if it's
-	 * INSERT ... SELECT or INSERT ... single VALUES), or in the first
-	 * expression list of the VALUES RTE (if it's INSERT ... multi VALUES). We
-	 * assume that all the expression lists will have similar indirection in
-	 * the latter case.
+	 * Add the insert-column-names list.  Any indirection decoration needed on
+	 * the column names can be inferred from the top targetlist.
 	 */
-	if (values_rte)
-		values_cell = list_head((List *) linitial(values_rte->values_lists));
-	else
-		values_cell = NULL;
 	strippedexprs = NIL;
 	sep = "";
 	if (query->targetList)
@@ -5599,20 +5587,14 @@ get_insert_query_def(Query *query, deparse_context *context)
 		/*
 		 * Print any indirection needed (subfields or subscripts), and strip
 		 * off the top-level nodes representing the indirection assignments.
+		 * Add the stripped expressions to strippedexprs.  (If it's a
+		 * single-VALUES statement, the stripped expressions are the VALUES to
+		 * print below.  Otherwise they're just Vars and not really
+		 * interesting.)
 		 */
-		if (values_cell)
-		{
-			/* we discard the stripped expression in this case */
-			processIndirection((Node *) lfirst(values_cell), context, true);
-			values_cell = lnext(values_cell);
-		}
-		else
-		{
-			/* we keep a list of the stripped expressions in this case */
-			strippedexprs = lappend(strippedexprs,
-									processIndirection((Node *) tle->expr,
-													   context, true));
-		}
+		strippedexprs = lappend(strippedexprs,
+								processIndirection((Node *) tle->expr,
+												   context));
 	}
 	if (query->targetList)
 		appendStringInfoString(buf, ") ");
@@ -5891,7 +5873,7 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 		 * Print any indirection needed (subfields or subscripts), and strip
 		 * off the top-level nodes representing the indirection assignments.
 		 */
-		expr = processIndirection((Node *) tle->expr, context, true);
+		expr = processIndirection((Node *) tle->expr, context);
 
 		/*
 		 * If we're in a multiassignment, skip printing anything more, unless
@@ -7296,7 +7278,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					 * subscripting in immediate descendants.  It returns the
 					 * RHS expr that is actually being "assigned".
 					 */
-					refassgnexpr = processIndirection(node, context, true);
+					refassgnexpr = processIndirection(node, context);
 					appendStringInfoString(buf, " := ");
 					get_rule_expr(refassgnexpr, context, showimplicit);
 				}
@@ -9561,12 +9543,12 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
  * processIndirection - take care of array and subfield assignment
  *
  * We strip any top-level FieldStore or assignment ArrayRef nodes that
- * appear in the input, and return the subexpression that's to be assigned.
- * If printit is true, we also print out the appropriate decoration for the
- * base column name (that the caller just printed).
+ * appear in the input, printing them as decoration for the base column
+ * name (which we assume the caller just printed).  Return the subexpression
+ * that's to be assigned.
  */
 static Node *
-processIndirection(Node *node, deparse_context *context, bool printit)
+processIndirection(Node *node, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 
@@ -9594,8 +9576,7 @@ processIndirection(Node *node, deparse_context *context, bool printit)
 			Assert(list_length(fstore->fieldnums) == 1);
 			fieldname = get_relid_attribute_name(typrelid,
 											linitial_int(fstore->fieldnums));
-			if (printit)
-				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
+			appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 
 			/*
 			 * We ignore arg since it should be an uninteresting reference to
@@ -9609,8 +9590,7 @@ processIndirection(Node *node, deparse_context *context, bool printit)
 
 			if (aref->refassgnexpr == NULL)
 				break;
-			if (printit)
-				printSubscripts(aref, context);
+			printSubscripts(aref, context);
 
 			/*
 			 * We ignore refexpr since it should be an uninteresting reference
