@@ -661,7 +661,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	/*
 	 * Caller tuple (e.g. IndexTuple) memory context.
 	 *
-	 * A dedicated child content used exclusively for caller passed tuples
+	 * A dedicated child context used exclusively for caller passed tuples
 	 * eases memory management.  Resetting at key points reduces
 	 * fragmentation. Note that the memtuples array of SortTuples is allocated
 	 * in the parent context, not this context, because there is no need to
