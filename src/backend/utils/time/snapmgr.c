@@ -188,6 +188,9 @@ typedef struct ActiveSnapshotElt
 /* Top of the stack of active snapshots */
 static ActiveSnapshotElt *ActiveSnapshot = NULL;
 
+/* Bottom of the stack of active snapshots */
+static ActiveSnapshotElt *OldestActiveSnapshot = NULL;
+
 /*
  * Currently registered Snapshots.  Ordered in a heap by xmin, so that we can
  * quickly find the one with lowest xmin, to advance our MyPgXat->xmin.
@@ -391,6 +394,34 @@ GetLatestSnapshot(void)
 	SecondarySnapshot = GetSnapshotData(&SecondarySnapshotData);
 
 	return SecondarySnapshot;
+}
+
+/*
+ * GetOldestSnapshot
+ *
+ *		Get the oldest known snapshot, as judged by the LSN.
+ */
+Snapshot
+GetOldestSnapshot(void)
+{
+	Snapshot	OldestRegisteredSnapshot = NULL;
+	XLogRecPtr	RegisteredLSN = InvalidXLogRecPtr;
+	XLogRecPtr	ActiveLSN = InvalidXLogRecPtr;
+
+	if (!pairingheap_is_empty(&RegisteredSnapshots))
+	{
+		OldestRegisteredSnapshot = pairingheap_container(SnapshotData, ph_node,
+									pairingheap_first(&RegisteredSnapshots));
+		RegisteredLSN = OldestRegisteredSnapshot->lsn;
+	}
+
+	if (OldestActiveSnapshot != NULL)
+		ActiveLSN = OldestActiveSnapshot->as_snap->lsn;
+
+	if (XLogRecPtrIsInvalid(RegisteredLSN) || RegisteredLSN > ActiveLSN)
+		return OldestActiveSnapshot->as_snap;
+
+	return OldestRegisteredSnapshot;
 }
 
 /*
@@ -674,6 +705,8 @@ PushActiveSnapshot(Snapshot snap)
 	newactive->as_snap->active_count++;
 
 	ActiveSnapshot = newactive;
+	if (OldestActiveSnapshot == NULL)
+		OldestActiveSnapshot = ActiveSnapshot;
 }
 
 /*
@@ -744,6 +777,8 @@ PopActiveSnapshot(void)
 
 	pfree(ActiveSnapshot);
 	ActiveSnapshot = newstack;
+	if (ActiveSnapshot == NULL)
+		OldestActiveSnapshot = NULL;
 
 	SnapshotResetXmin();
 }
@@ -953,6 +988,8 @@ AtSubAbort_Snapshot(int level)
 		pfree(ActiveSnapshot);
 
 		ActiveSnapshot = next;
+		if (ActiveSnapshot == NULL)
+			OldestActiveSnapshot = NULL;
 	}
 
 	SnapshotResetXmin();
@@ -1037,6 +1074,7 @@ AtEOXact_Snapshot(bool isCommit)
 	 * it'll go away with TopTransactionContext.
 	 */
 	ActiveSnapshot = NULL;
+	OldestActiveSnapshot = NULL;
 	pairingheap_reset(&RegisteredSnapshots);
 
 	CurrentSnapshot = NULL;

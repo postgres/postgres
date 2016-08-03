@@ -16,25 +16,16 @@
 #define TQUAL_H
 
 #include "utils/snapshot.h"
+#include "access/xlogdefs.h"
 
 
 /* Static variables representing various special snapshot semantics */
 extern PGDLLIMPORT SnapshotData SnapshotSelfData;
 extern PGDLLIMPORT SnapshotData SnapshotAnyData;
-extern PGDLLIMPORT SnapshotData SnapshotToastData;
 extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 
 #define SnapshotSelf		(&SnapshotSelfData)
 #define SnapshotAny			(&SnapshotAnyData)
-#define SnapshotToast		(&SnapshotToastData)
-
-/*
- * We don't provide a static SnapshotDirty variable because it would be
- * non-reentrant.  Instead, users of that snapshot type should declare a
- * local variable of type SnapshotData, and initialize it with this macro.
- */
-#define InitDirtySnapshot(snapshotdata)  \
-	((snapshotdata).satisfies = HeapTupleSatisfiesDirty)
 
 /* This macro encodes the knowledge of which snapshots are MVCC-safe */
 #define IsMVCCSnapshot(snapshot)  \
@@ -100,4 +91,25 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 							  HeapTuple htup,
 							  Buffer buffer,
 							  CommandId *cmin, CommandId *cmax);
+
+/*
+ * We don't provide a static SnapshotDirty variable because it would be
+ * non-reentrant.  Instead, users of that snapshot type should declare a
+ * local variable of type SnapshotData, and initialize it with this macro.
+ */
+#define InitDirtySnapshot(snapshotdata)  \
+	((snapshotdata).satisfies = HeapTupleSatisfiesDirty)
+
+/*
+ * Similarly, some initialization is required for SnapshotToast.  We need
+ * to set lsn and whenTaken correctly to support snapshot_too_old.
+ */
+static inline void
+InitToastSnapshot(Snapshot snapshot, XLogRecPtr lsn, int64 whenTaken)
+{
+	snapshot->satisfies = HeapTupleSatisfiesToast;
+	snapshot->lsn = lsn;
+	snapshot->whenTaken = whenTaken;
+}
+
 #endif   /* TQUAL_H */

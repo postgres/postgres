@@ -279,7 +279,8 @@ TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 
 	if (old_snapshot_threshold >= 0
 		&& (snapshot) != NULL
-		&& (snapshot)->satisfies == HeapTupleSatisfiesMVCC
+		&& ((snapshot)->satisfies == HeapTupleSatisfiesMVCC
+			|| (snapshot)->satisfies == HeapTupleSatisfiesToast)
 		&& !XLogRecPtrIsInvalid((snapshot)->lsn)
 		&& PageGetLSN(page) > (snapshot)->lsn)
 		TestForOldSnapshot_impl(snapshot, relation);

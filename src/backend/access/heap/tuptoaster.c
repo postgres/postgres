@@ -40,6 +40,7 @@
 #include "utils/expandeddatum.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/typcache.h"
 #include "utils/tqual.h"
 
@@ -81,6 +82,7 @@ static int toast_open_indexes(Relation toastrel,
 				   int *num_indexes);
 static void toast_close_indexes(Relation *toastidxs, int num_indexes,
 					LOCKMODE lock);
+static void init_toast_snapshot(Snapshot toast_snapshot);
 
 
 /* ----------
@@ -1665,6 +1667,7 @@ toast_delete_datum(Relation rel, Datum value)
 	HeapTuple	toasttup;
 	int			num_indexes;
 	int			validIndex;
+	SnapshotData	SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		return;
@@ -1696,8 +1699,9 @@ toast_delete_datum(Relation rel, Datum value)
 	 * sequence or not, but since we've already locked the index we might as
 	 * well use systable_beginscan_ordered.)
 	 */
+	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										   SnapshotToast, 1, &toastkey);
+										   &SnapshotToast, 1, &toastkey);
 	while ((toasttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
@@ -1730,6 +1734,7 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	int			num_indexes;
 	int			validIndex;
 	Relation   *toastidxs;
+	SnapshotData	SnapshotToast;
 
 	/* Fetch a valid index relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -1748,9 +1753,10 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	/*
 	 * Is there any such chunk?
 	 */
+	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan(toastrel,
 								   RelationGetRelid(toastidxs[validIndex]),
-								   true, SnapshotToast, 1, &toastkey);
+								   true, &SnapshotToast, 1, &toastkey);
 
 	if (systable_getnext(toastscan) != NULL)
 		result = true;
@@ -1813,6 +1819,7 @@ toast_fetch_datum(struct varlena * attr)
 	int32		chunksize;
 	int			num_indexes;
 	int			validIndex;
+	SnapshotData	SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum shouldn't be called for non-ondisk datums");
@@ -1859,8 +1866,9 @@ toast_fetch_datum(struct varlena * attr)
 	 */
 	nextidx = 0;
 
+	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										   SnapshotToast, 1, &toastkey);
+										   &SnapshotToast, 1, &toastkey);
 	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
@@ -1990,6 +1998,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	int32		chcpyend;
 	int			num_indexes;
 	int			validIndex;
+	SnapshotData	SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum_slice shouldn't be called for non-ondisk datums");
@@ -2082,9 +2091,10 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 *
 	 * The index is on (valueid, chunkidx) so they will come in order
 	 */
+	init_toast_snapshot(&SnapshotToast);
 	nextidx = startchunk;
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										 SnapshotToast, nscankeys, toastkey);
+										 &SnapshotToast, nscankeys, toastkey);
 	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
@@ -2288,4 +2298,23 @@ toast_close_indexes(Relation *toastidxs, int num_indexes, LOCKMODE lock)
 	for (i = 0; i < num_indexes; i++)
 		index_close(toastidxs[i], lock);
 	pfree(toastidxs);
+}
+
+/* ----------
+ * init_toast_snapshot
+ *
+ *	Initialize an appropriate TOAST snapshot.  We must use an MVCC snapshot
+ *	to initialize the TOAST snapshot; since we don't know which one to use,
+ *	just use the oldest one.  This is safe: at worst, we will get a "snapshot
+ *	too old" error that might have been avoided otherwise.
+ */
+static void
+init_toast_snapshot(Snapshot toast_snapshot)
+{
+	Snapshot	snapshot = GetOldestSnapshot();
+
+	if (snapshot == NULL)
+		elog(ERROR, "no known snapshots");
+
+	InitToastSnapshot(toast_snapshot, snapshot->lsn, snapshot->whenTaken);
 }
