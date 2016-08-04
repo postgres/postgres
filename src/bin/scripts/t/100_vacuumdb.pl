@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 18;
+use Test::More tests => 19;
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -33,3 +33,5 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
 	qr/statement: ANALYZE;/,
 	'vacuumdb -Z');
+$node->command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
+				  'vacuumdb with connection string');

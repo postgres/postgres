@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 program_help_ok('clusterdb');
 program_version_ok('clusterdb');
@@ -28,3 +28,6 @@ $node->issues_sql_like(
 	[ 'clusterdb', '-t', 'test1' ],
 	qr/statement: CLUSTER test1;/,
 	'cluster specific table');
+
+$node->command_ok([qw(clusterdb --echo --verbose dbname=template1)],
+				  'clusterdb with connection string');

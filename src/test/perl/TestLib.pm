@@ -20,6 +20,7 @@ use SimpleTee;
 use Test::More;
 
 our @EXPORT = qw(
+  generate_ascii_string
   slurp_dir
   slurp_file
   append_to_file
@@ -164,6 +165,19 @@ sub run_log
 {
 	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
 	return IPC::Run::run(@_);
+}
+
+# Generate a string made of the given range of ASCII characters
+sub generate_ascii_string
+{
+	my ($from_char, $to_char) = @_;
+	my $res;
+
+	for my $i ($from_char .. $to_char)
+	{
+		$res .= sprintf("%c", $i);
+	}
+	return $res;
 }
 
 sub slurp_dir

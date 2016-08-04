@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 20;
+use Test::More tests => 23;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
@@ -42,3 +42,10 @@ $node->issues_sql_like(
 	[ 'reindexdb', '-v', '-t', 'test1', 'postgres' ],
 	qr/statement: REINDEX \(VERBOSE\) TABLE test1;/,
 	'reindex with verbose output');
+
+$node->command_ok([qw(reindexdb --echo --table=pg_am dbname=template1)],
+				  'reindexdb table with connection string');
+$node->command_ok([qw(reindexdb --echo dbname=template1)],
+				  'reindexdb database with connection string');
+$node->command_ok([qw(reindexdb --echo --system dbname=template1)],
+				  'reindexdb system with connection string');

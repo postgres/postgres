@@ -133,7 +133,7 @@ sub create_standby
 	$node_standby = get_new_node('standby');
 	$node_master->backup('my_backup');
 	$node_standby->init_from_backup($node_master, 'my_backup');
-	my $connstr_master = $node_master->connstr('postgres');
+	my $connstr_master = $node_master->connstr();
 
 	$node_standby->append_conf(
 		"recovery.conf", qq(

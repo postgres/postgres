@@ -876,6 +876,29 @@ initialize_environment(void)
 	load_resultmap();
 }
 
+pg_attribute_unused()
+static const char *
+fmtHba(const char *raw)
+{
+	static char *ret;
+	const char *rp;
+	char	   *wp;
+
+	wp = ret = realloc(ret, 3 + strlen(raw) * 2);
+
+	*wp++ = '"';
+	for (rp = raw; *rp; rp++)
+	{
+		if (*rp == '"')
+			*wp++ = '"';
+		*wp++ = *rp;
+	}
+	*wp++ = '"';
+	*wp++ = '\0';
+
+	return ret;
+}
+
 #ifdef ENABLE_SSPI
 /*
  * Get account and domain/realm names for the current user.  This is based on
@@ -1037,11 +1060,11 @@ config_sspi_auth(const char *pgdata)
 	 * '#'.  Windows forbids the double-quote character itself, so don't
 	 * bother escaping embedded double-quote characters.
 	 */
-	CW(fprintf(ident, "regress  \"%s@%s\"  \"%s\"\n",
-			   accountname, domainname, username) >= 0);
+	CW(fprintf(ident, "regress  \"%s@%s\"  %s\n",
+			   accountname, domainname, fmtHba(username)) >= 0);
 	for (sl = extraroles; sl; sl = sl->next)
-		CW(fprintf(ident, "regress  \"%s@%s\"  \"%s\"\n",
-				   accountname, domainname, sl->str) >= 0);
+		CW(fprintf(ident, "regress  \"%s@%s\"  %s\n",
+				   accountname, domainname, fmtHba(sl->str)) >= 0);
 	CW(fclose(ident) == 0);
 }
 #endif
@@ -2064,7 +2087,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 * before we add the specified one.
 				 */
 				free_stringlist(&dblist);
-				split_to_stringlist(optarg, ", ", &dblist);
+				split_to_stringlist(optarg, ",", &dblist);
 				break;
 			case 2:
 				debug = true;
@@ -2114,7 +2137,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				dlpath = pg_strdup(optarg);
 				break;
 			case 18:
-				split_to_stringlist(optarg, ", ", &extraroles);
+				split_to_stringlist(optarg, ",", &extraroles);
 				break;
 			case 19:
 				add_stringlist_item(&temp_configs, optarg);

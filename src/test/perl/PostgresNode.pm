@@ -243,7 +243,13 @@ sub connstr
 	{
 		return "port=$pgport host=$pghost";
 	}
-	return "port=$pgport host=$pghost dbname=$dbname";
+
+	# Escape properly the database string before using it, only
+	# single quotes and backslashes need to be treated this way.
+	$dbname =~ s#\\#\\\\#g;
+	$dbname =~ s#\'#\\\'#g;
+
+	return "port=$pgport host=$pghost dbname='$dbname'";
 }
 
 =pod
@@ -396,7 +402,8 @@ sub init
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
 
-	TestLib::system_or_bail('initdb', '-D', $pgdata, '-A', 'trust', '-N');
+	TestLib::system_or_bail('initdb', '-D', $pgdata, '-A', 'trust', '-N',
+		@{ $params{extra} });
 	TestLib::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata);
 
 	open my $conf, ">>$pgdata/postgresql.conf";
@@ -1296,6 +1303,24 @@ sub issues_sql_like
 	ok($result, "@$cmd exit code 0");
 	my $log = TestLib::slurp_file($self->logfile);
 	like($log, $expected_sql, "$test_name: SQL found in server log");
+}
+
+=pod
+
+=item $node->run_log(...)
+
+Runs a shell command like TestLib::run_log, but with PGPORT set so
+that the command will default to connecting to this PostgresNode.
+
+=cut
+
+sub run_log
+{
+	my $self = shift;
+
+	local $ENV{PGPORT} = $self->port;
+
+	TestLib::run_log(@_);
 }
 
 =pod
