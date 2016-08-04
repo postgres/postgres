@@ -504,6 +504,8 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
       </para>
 
       <para>
+       Unfortunately, <application>rsync</> also needlessly copies the
+       files associated with temporary and unlogged tables.
        If you have tablespaces, you will need to run a similar
        <application>rsync</> command for each tablespace directory.  If you
        have relocated <filename>pg_xlog</> outside the data directories,
