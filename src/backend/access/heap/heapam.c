@@ -4585,9 +4585,10 @@ heap_lock_tuple(Relation relation, HeapTuple tuple,
 	block = ItemPointerGetBlockNumber(tid);
 
 	/*
-	 * Before locking the buffer, pin the visibility map page if it may be
-	 * necessary. XXX: It might be possible for this to change after acquiring
-	 * the lock below. We don't yet deal with that case.
+	 * Before locking the buffer, pin the visibility map page if it appears to
+	 * be necessary.  Since we haven't got the lock yet, someone else might be
+	 * in the middle of changing this, so we'll need to recheck after we have
+	 * the lock.
 	 */
 	if (PageIsAllVisible(BufferGetPage(*buffer)))
 		visibilitymap_pin(relation, block, &vmbuffer);
@@ -5073,6 +5074,23 @@ failed:
 		else
 			hufd->cmax = InvalidCommandId;
 		goto out_locked;
+	}
+
+	/*
+	 * If we didn't pin the visibility map page and the page has become all
+	 * visible while we were busy locking the buffer, or during some
+	 * subsequent window during which we had it unlocked, we'll have to unlock
+	 * and re-lock, to avoid holding the buffer lock across I/O.  That's a bit
+	 * unfortunate, especially since we'll now have to recheck whether the
+	 * tuple has been locked or updated under us, but hopefully it won't
+	 * happen very often.
+	 */
+	if (vmbuffer == InvalidBuffer && PageIsAllVisible(page))
+	{
+		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
+		visibilitymap_pin(relation, block, &vmbuffer);
+		LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
+		goto l3;
 	}
 
 	xmax = HeapTupleHeaderGetRawXmax(tuple->t_data);
@@ -5665,9 +5683,10 @@ l4:
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * Before locking the buffer, pin the visibility map page if it may be
-		 * necessary.  XXX: It might be possible for this to change after
-		 * acquiring the lock below. We don't yet deal with that case.
+		 * Before locking the buffer, pin the visibility map page if it
+		 * appears to be necessary.  Since we haven't got the lock yet,
+		 * someone else might be in the middle of changing this, so we'll need
+		 * to recheck after we have the lock.
 		 */
 		if (PageIsAllVisible(BufferGetPage(buf)))
 			visibilitymap_pin(rel, block, &vmbuffer);
@@ -5675,6 +5694,19 @@ l4:
 			vmbuffer = InvalidBuffer;
 
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+
+		/*
+		 * If we didn't pin the visibility map page and the page has become
+		 * all visible while we were busy locking the buffer, we'll have to
+		 * unlock and re-lock, to avoid holding the buffer lock across I/O.
+		 * That's a bit unfortunate, but hopefully shouldn't happen often.
+		 */
+		if (vmbuffer == InvalidBuffer && PageIsAllVisible(BufferGetPage(buf)))
+		{
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			visibilitymap_pin(rel, block, &vmbuffer);
+			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+		}
 
 		/*
 		 * Check the tuple XMIN against prior XMAX, if any.  If we reached the
