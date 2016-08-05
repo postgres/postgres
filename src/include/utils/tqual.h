@@ -105,7 +105,7 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
  * to set lsn and whenTaken correctly to support snapshot_too_old.
  */
 #define InitToastSnapshot(snapshotdata, l, w)  \
-	((snapshotdata).satisfies = HeapTupleSatisfiesDirty, \
+	((snapshotdata).satisfies = HeapTupleSatisfiesToast, \
 	 (snapshotdata).lsn = (l),					\
 	 (snapshotdata).whenTaken = (w))
 
