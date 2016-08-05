@@ -1389,9 +1389,9 @@ TS_phrase_execute(QueryItem *curitem,
 			return false;
 
 		/*
-		 * if at least one of the operands has no position information,
-		 * then return false. But if TS_EXEC_PHRASE_AS_AND flag is set then
-		 * we return true as it is a AND operation
+		 * if at least one of the operands has no position information, then
+		 * return false. But if TS_EXEC_PHRASE_AS_AND flag is set then we
+		 * return true as it is a AND operation
 		 */
 		if (Ldata.npos == 0 || Rdata.npos == 0)
 			return (flags & TS_EXEC_PHRASE_AS_AND) ? true : false;
@@ -1428,8 +1428,8 @@ TS_phrase_execute(QueryItem *curitem,
 		while (Rpos < Rdata.pos + Rdata.npos)
 		{
 			/*
-			 * We need to check all possible distances, so reset Lpos
-			 * to guranteed not yet satisfied position.
+			 * We need to check all possible distances, so reset Lpos to
+			 * guaranteed not yet satisfied position.
 			 */
 			Lpos = LposStart;
 			while (Lpos < Ldata.pos + Ldata.npos)
@@ -1445,8 +1445,8 @@ TS_phrase_execute(QueryItem *curitem,
 						pos_iter++;
 
 						/*
-						 * Set left start position to next, because current one
-						 * could not satisfy distance for any other right
+						 * Set left start position to next, because current
+						 * one could not satisfy distance for any other right
 						 * position
 						 */
 						LposStart = Lpos + 1;
@@ -1455,8 +1455,8 @@ TS_phrase_execute(QueryItem *curitem,
 					else
 					{
 						/*
-						 * We are in the root of the phrase tree and hence
-						 * we don't have to store the resulting positions
+						 * We are in the root of the phrase tree and hence we
+						 * don't have to store the resulting positions
 						 */
 						return true;
 					}
@@ -1464,7 +1464,7 @@ TS_phrase_execute(QueryItem *curitem,
 				}
 				else if (WEP_GETPOS(*Rpos) <= WEP_GETPOS(*Lpos) ||
 						 WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) <
-							curitem->qoperator.distance)
+						 curitem->qoperator.distance)
 				{
 					/*
 					 * Go to the next Rpos, because Lpos is ahead or on less
@@ -1534,9 +1534,10 @@ TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
 				return TS_execute(curitem + 1, checkval, flags, chkcond);
 
 		case OP_PHRASE:
+
 			/*
-			 * do not check TS_EXEC_PHRASE_AS_AND here because chkcond()
-			 * could do something more if it's called from TS_phrase_execute()
+			 * do not check TS_EXEC_PHRASE_AS_AND here because chkcond() could
+			 * do something more if it's called from TS_phrase_execute()
 			 */
 			return TS_phrase_execute(curitem, checkval, flags, NULL, chkcond);
 
