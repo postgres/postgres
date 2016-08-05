@@ -17519,7 +17519,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_replication_origin_xact_reset</primary>
         </indexterm>
-        <literal><function>pg_replication_origin_xact_reset()</function></literal>
+        <literal><function>pg_replication_origin_xact_reset(<parameter>origin_lsn</parameter> <type>pg_lsn</type>, <parameter>origin_timestamp</parameter> <type>timestamptz</type>)</function></literal>
        </entry>
        <entry>
         void
@@ -17527,6 +17527,12 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         Cancel the effects of
         <function>pg_replication_origin_xact_setup()</function>.
+        Note that two arguments were introduced <emphasis>by mistake</>
+        during the <productname>PostgreSQL</> 9.5 development cycle while
+        <function>pg_replication_origin_xact_reset()</function> actually
+        doesn't use them at all. Therefore, any dummy values except
+        <literal>NULL</> can be safely specified as the arguments.
+        This mistake will be fixed in a future release.
        </entry>
       </row>
 
