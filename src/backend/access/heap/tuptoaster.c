@@ -2316,5 +2316,5 @@ init_toast_snapshot(Snapshot toast_snapshot)
 	if (snapshot == NULL)
 		elog(ERROR, "no known snapshots");
 
-	InitToastSnapshot(toast_snapshot, snapshot->lsn, snapshot->whenTaken);
+	InitToastSnapshot(*toast_snapshot, snapshot->lsn, snapshot->whenTaken);
 }
