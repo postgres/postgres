@@ -9294,7 +9294,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><type>tsvector</type></entry>
         <entry>convert array of lexemes to <type>tsvector</type></entry>
         <entry><literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal></entry>
-        <entry><literal>'fat' 'cat' 'rat'</literal></entry>
+        <entry><literal>'cat' 'fat' 'rat'</literal></entry>
        </row>
        <row>
         <entry>

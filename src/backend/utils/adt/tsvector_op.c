@@ -416,15 +416,32 @@ tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len)
 	return -1;
 }
 
+/*
+ * qsort comparator functions
+ */
+
 static int
-compareint(const void *va, const void *vb)
+compare_int(const void *va, const void *vb)
 {
-	int32		a = *((const int32 *) va);
-	int32		b = *((const int32 *) vb);
+	int			a = *((const int *) va);
+	int			b = *((const int *) vb);
 
 	if (a == b)
 		return 0;
 	return (a > b) ? 1 : -1;
+}
+
+static int
+compare_text_lexemes(const void *va, const void *vb)
+{
+	Datum		a = *((const Datum *) va);
+	Datum		b = *((const Datum *) vb);
+	char	   *alex = VARDATA_ANY(a);
+	int			alex_len = VARSIZE_ANY_EXHDR(a);
+	char	   *blex = VARDATA_ANY(b);
+	int			blex_len = VARSIZE_ANY_EXHDR(b);
+
+	return tsCompareString(alex, alex_len, blex, blex_len, false);
 }
 
 /*
@@ -459,7 +476,7 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	{
 		int			kp;
 
-		qsort(indices_to_delete, indices_count, sizeof(int), compareint);
+		qsort(indices_to_delete, indices_count, sizeof(int), compare_int);
 		kp = 0;
 		for (k = 1; k < indices_count; k++)
 		{
@@ -743,32 +760,50 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	bool	   *nulls;
 	int			nitems,
 				i,
+				j,
 				tslen,
 				datalen = 0;
 	char	   *cur;
 
 	deconstruct_array(v, TEXTOID, -1, false, 'i', &dlexemes, &nulls, &nitems);
 
+	/* Reject nulls (maybe we should just ignore them, instead?) */
 	for (i = 0; i < nitems; i++)
 	{
 		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
-
-		datalen += VARSIZE_ANY_EXHDR(dlexemes[i]);
 	}
 
+	/* Sort and de-dup, because this is required for a valid tsvector. */
+	if (nitems > 1)
+	{
+		qsort(dlexemes, nitems, sizeof(Datum), compare_text_lexemes);
+		j = 0;
+		for (i = 1; i < nitems; i++)
+		{
+			if (compare_text_lexemes(&dlexemes[j], &dlexemes[i]) < 0)
+				dlexemes[++j] = dlexemes[i];
+		}
+		nitems = ++j;
+	}
+
+	/* Calculate space needed for surviving lexemes. */
+	for (i = 0; i < nitems; i++)
+		datalen += VARSIZE_ANY_EXHDR(dlexemes[i]);
 	tslen = CALCDATASIZE(nitems, datalen);
+
+	/* Allocate and fill tsvector. */
 	tsout = (TSVector) palloc0(tslen);
 	SET_VARSIZE(tsout, tslen);
 	tsout->size = nitems;
+
 	arrout = ARRPTR(tsout);
 	cur = STRPTR(tsout);
-
 	for (i = 0; i < nitems; i++)
 	{
-		char	   *lex = VARDATA(dlexemes[i]);
+		char	   *lex = VARDATA_ANY(dlexemes[i]);
 		int			lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
 
 		memcpy(cur, lex, lex_len);
