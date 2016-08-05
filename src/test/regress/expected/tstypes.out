@@ -1087,6 +1087,12 @@ SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceshi
  'base' 'hidden' 'strike'
 (1 row)
 
+SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel','rebel']);
+        ts_delete         
+--------------------------
+ 'base' 'hidden' 'strike'
+(1 row)
+
 SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel', NULL]);
 ERROR:  lexeme array may not contain nulls
 SELECT unnest('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
