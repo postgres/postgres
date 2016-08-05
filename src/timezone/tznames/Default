@@ -263,7 +263,6 @@ ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
 ANAT    Asia/Anadyr  # Anadyr Time
                  #     (Asia/Anadyr)
 AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
-                 #     (Asia/Baku)
 AZT     Asia/Baku  # Azerbaijan Time
                  #     (Asia/Baku)
 BDT     21600    # Bangladesh Time
@@ -317,8 +316,7 @@ MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
 NOVST   Asia/Novosibirsk  # Novosibirsk Summer Time (obsolete)
-NOVT    Asia/Novosibirsk  # Novosibirsk Time
-                 #     (Asia/Novosibirsk)
+NOVT    Asia/Novosibirsk  # Novosibirsk Time (obsolete)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
 OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
