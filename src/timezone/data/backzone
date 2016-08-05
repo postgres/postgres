@@ -395,7 +395,7 @@ Zone America/Tortola	-4:18:28 -	LMT	1911 Jul # Road Town
 			-4:00	-	AST
 
 # McMurdo, Ross Island, since 1955-12
-Zone Antarctica/McMurdo	0	-	zzz	1956
+Zone Antarctica/McMurdo	0	-	-00	1956
 			12:00	NZ	NZ%sT
 Link Antarctica/McMurdo Antarctica/South_Pole
 
