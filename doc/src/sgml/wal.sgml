@@ -475,7 +475,7 @@
    linkend="guc-checkpoint-timeout"> seconds, or if
    <xref linkend="guc-max-wal-size"> is about to be exceeded,
    whichever comes first.
-   The default settings are 5 minutes and 1GB, respectively.
+   The default settings are 5 minutes and 1 GB, respectively.
    If no WAL has been written since the previous checkpoint, new checkpoints
    will be skipped even if <varname>checkpoint_timeout</> has passed.
    (If WAL archiving is being used and you want to put a lower limit on how
@@ -735,10 +735,10 @@
   <para>
    <acronym>WAL</acronym> logs are stored in the directory
    <filename>pg_xlog</filename> under the data directory, as a set of
-   segment files, normally each 16MB in size (but the size can be changed
+   segment files, normally each 16 MB in size (but the size can be changed
    by altering the <option>--with-wal-segsize</> configure option when
    building the server).  Each segment is divided into pages, normally
-   8kB each (this size can be changed via the <option>--with-wal-blocksize</>
+   8 kB each (this size can be changed via the <option>--with-wal-blocksize</>
    configure option).  The log record headers are described in
    <filename>access/xlogrecord.h</filename>; the record content is dependent
    on the type of event that is being logged.  Segment files are given

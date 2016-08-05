@@ -2702,7 +2702,7 @@ include_dir 'conf.d'
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</> under special circumstances, like
         under heavy load, a failing <varname>archive_command</>, or a high
-        <varname>wal_keep_segments</> setting. The default is 1GB.
+        <varname>wal_keep_segments</> setting. The default is 1 GB.
         Increasing this parameter can increase the amount of time needed for
         crash recovery.
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -2723,7 +2723,7 @@ include_dir 'conf.d'
         always recycled for future use at a checkpoint, rather than removed.
         This can be used to ensure that enough WAL space is reserved to
         handle spikes in WAL usage, for example when running large batch
-        jobs. The default is 80MB.
+        jobs. The default is 80 MB.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

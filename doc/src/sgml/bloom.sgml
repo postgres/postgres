@@ -177,7 +177,7 @@ CREATE INDEX
    query.  We could reduce that by specifying a larger signature length.
    In this example, creating the index with <literal>length=200</>
    reduced the number of false positives to 55; but it doubled the index size
-   (to 306MB) and ended up being slower for this query (125 ms overall).
+   (to 306 MB) and ended up being slower for this query (125 ms overall).
   </para>
 
   <para>
@@ -202,7 +202,7 @@ CREATE INDEX
 </programlisting>
    Although this query runs much faster than with either of the single
    indexes, we pay a large penalty in index size.  Each of the single-column
-   btree indexes occupies 214MB, so the total space needed is over 1.2GB,
+   btree indexes occupies 214 MB, so the total space needed is over 1.2GB,
    more than 8 times the space used by the bloom index.
   </para>
  </sect2>

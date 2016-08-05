@@ -968,7 +968,7 @@ option        SEMMAP=256
       </term>
       <listitem>
        <para>
-        The default maximum segment size is 32MB, and the
+        The default maximum segment size is 32 MB, and the
         default maximum total size is 2097152
         pages.  A page is almost always 4096 bytes except in unusual
         kernel configurations with <quote>huge pages</quote>
@@ -977,7 +977,7 @@ option        SEMMAP=256
 
        <para>
         The shared memory size settings can be changed via the
-        <command>sysctl</command> interface.  For example, to allow 16GB:
+        <command>sysctl</command> interface.  For example, to allow 16 GB:
 <screen>
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmmax=17179869184</userinput>
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmall=4194304</userinput>
@@ -1032,7 +1032,7 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        <varname>SHMALL</> is measured in 4kB pages on this platform.
+        <varname>SHMALL</> is measured in 4 kB pages on this platform.
        </para>
 
        <para>
@@ -1075,7 +1075,7 @@ sysctl -w kern.sysv.shmall
       </term>
       <listitem>
        <para>
-        In the default configuration, only 512kB of shared memory per
+        In the default configuration, only 512 kB of shared memory per
         segment is allowed. To increase the setting, first change to the
         directory <filename>/etc/conf/cf.d</>. To display the current value of
         <varname>SHMMAX</>, run:
@@ -1180,7 +1180,7 @@ project.max-msg-ids=(priv,4096,deny)
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared
-        memory segments is 512kB in the default configuration.
+        memory segments is 512 kB in the default configuration.
         To display the current value of <varname>SHMMAX</>, run:
 <programlisting>
 /etc/conf/bin/idtune -g SHMMAX

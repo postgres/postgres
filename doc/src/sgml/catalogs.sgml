@@ -4021,7 +4021,7 @@
    segments or <quote>pages</> small enough to be conveniently stored as rows
    in <structname>pg_largeobject</structname>.
    The amount of data per page is defined to be <symbol>LOBLKSIZE</> (which is currently
-   <literal>BLCKSZ/4</>, or typically 2kB).
+   <literal>BLCKSZ/4</>, or typically 2 kB).
   </para>
 
   <para>

@@ -1120,7 +1120,7 @@ SELECT '52093.89'::money::numeric::float8;
     the physical requirement on disk might be less. Very long values are also
     stored in background tables so that they do not interfere with rapid
     access to shorter column values. In any case, the longest
-    possible character string that can be stored is about 1GB. (The
+    possible character string that can be stored is about 1 GB. (The
     maximum value that will be allowed for <replaceable>n</> in the data
     type declaration is less than that. It wouldn't be useful to
     change this because with multibyte character encodings the number of
