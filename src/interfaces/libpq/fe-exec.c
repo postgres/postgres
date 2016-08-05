@@ -983,14 +983,31 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 
 		cnt = sscanf(value, "%d.%d.%d", &vmaj, &vmin, &vrev);
 
-		if (cnt < 2)
-			conn->sversion = 0; /* unknown */
-		else
+		if (cnt == 3)
 		{
-			if (cnt == 2)
-				vrev = 0;
+			/* old style, e.g. 9.6.1 */
 			conn->sversion = (100 * vmaj + vmin) * 100 + vrev;
 		}
+		else if (cnt == 2)
+		{
+			if (vmaj >= 10)
+			{
+				/* new style, e.g. 10.1 */
+				conn->sversion = 100 * 100 * vmaj + vmin;
+			}
+			else
+			{
+				/* old style without minor version, e.g. 9.6devel */
+				conn->sversion = (100 * vmaj + vmin) * 100;
+			}
+		}
+		else if (cnt == 1)
+		{
+			/* new style without minor version, e.g. 10devel */
+			conn->sversion = 100 * 100 * vmaj;
+		}
+		else
+			conn->sversion = 0; /* unknown */
 	}
 }
 
