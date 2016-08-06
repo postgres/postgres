@@ -91,6 +91,8 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>promote</option></arg>
+   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
    <arg choice="opt"><option>-s</option></arg>
    <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
@@ -361,8 +363,8 @@ PostgreSQL documentation
       <term><option>--timeout</option></term>
       <listitem>
        <para>
-        The maximum number of seconds to wait when waiting for startup or
-        shutdown to complete.  Defaults to the value of the
+        The maximum number of seconds to wait when waiting for an operation
+        to complete (see option <option>-w</option>). Defaults to the value of the
         <envar>PGCTLTIMEOUT</> environment variable or, if not set, to 60
         seconds.
        </para>
@@ -383,8 +385,23 @@ PostgreSQL documentation
       <term><option>-w</option></term>
       <listitem>
        <para>
-        Wait for the startup or shutdown to complete.
-        Waiting is the default option for shutdowns, but not startups.
+        Wait for an operation to complete.  This is supported for the
+        modes <literal>start</literal>, <literal>stop</literal>,
+        <literal>restart</literal>, <literal>promote</literal>,
+        and <literal>register</literal>.
+       </para>
+
+       <para>
+        Waiting is the default option for shutdowns, but not startups,
+        restarts, or promotions.  This is mainly for historical reasons; the
+        waiting option is almost always preferable.  If waiting is not
+        selected, the requested action is triggered, but there is no feedback
+        about its success.  In that case, the server log file or an external
+        monitoring system would have to be used to check the progress and
+        success of the operation.
+       </para>
+
+       <para>
         When waiting for startup, <command>pg_ctl</command> repeatedly
         attempts to connect to the server.
         When waiting for shutdown, <command>pg_ctl</command> waits for
@@ -400,8 +417,8 @@ PostgreSQL documentation
       <term><option>-W</option></term>
       <listitem>
        <para>
-        Do not wait for startup or shutdown to complete.  This is the
-        default for start and restart modes.
+        Do not wait for an operation to complete.  This is the opposite of the
+        option <option>-w</option>.
        </para>
       </listitem>
      </varlistentry>

@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 9;
+use Test::More tests => 12;
 
 my $tempdir = TestLib::tempdir;
 
@@ -37,3 +37,19 @@ command_ok([ 'pg_ctl', '-D', $node_standby->data_dir, 'promote' ],
 
 ok($node_standby->poll_query_until('postgres', 'SELECT NOT pg_is_in_recovery()'),
    'promoted standby is not in recovery');
+
+# same again with wait option
+$node_standby = get_new_node('standby2');
+$node_standby->init_from_backup($node_primary, 'my_backup', has_streaming => 1);
+$node_standby->start;
+
+is($node_standby->safe_psql('postgres', 'SELECT pg_is_in_recovery()'),
+   't', 'standby is in recovery');
+
+command_ok([ 'pg_ctl', '-D', $node_standby->data_dir, '-w', 'promote' ],
+		   'pg_ctl -w promote of standby runs');
+
+# no wait here
+
+is($node_standby->safe_psql('postgres', 'SELECT pg_is_in_recovery()'),
+   'f', 'promoted standby is not in recovery');

@@ -1228,7 +1228,34 @@ do_promote(void)
 		exit(1);
 	}
 
-	print_msg(_("server promoting\n"));
+	if (do_wait)
+	{
+		DBState state = DB_STARTUP;
+
+		print_msg(_("waiting for server to promote..."));
+		while (wait_seconds > 0)
+		{
+			state = get_control_dbstate();
+			if (state == DB_IN_PRODUCTION)
+				break;
+
+			print_msg(".");
+			pg_usleep(1000000);     /* 1 sec */
+			wait_seconds--;
+		}
+		if (state == DB_IN_PRODUCTION)
+		{
+			print_msg(_(" done\n"));
+			print_msg(_("server promoted\n"));
+		}
+		else
+		{
+			print_msg(_(" stopped waiting\n"));
+			print_msg(_("server is still promoting\n"));
+		}
+	}
+	else
+		print_msg(_("server promoting\n"));
 }
 
 
@@ -2405,18 +2432,10 @@ main(int argc, char **argv)
 
 	if (!wait_set)
 	{
-		switch (ctl_command)
-		{
-			case RESTART_COMMAND:
-			case START_COMMAND:
-				do_wait = false;
-				break;
-			case STOP_COMMAND:
-				do_wait = true;
-				break;
-			default:
-				break;
-		}
+		if (ctl_command == STOP_COMMAND)
+			do_wait = true;
+		else
+			do_wait = false;
 	}
 
 	if (ctl_command == RELOAD_COMMAND)
