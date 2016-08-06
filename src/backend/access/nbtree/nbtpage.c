@@ -1284,7 +1284,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 		{
 			if (!_bt_unlink_halfdead_page(rel, buf, &rightsib_empty))
 			{
-				_bt_relbuf(rel, buf);
+				/* _bt_unlink_halfdead_page already released buffer */
 				return ndeleted;
 			}
 			ndeleted++;
@@ -1501,6 +1501,11 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
  * Returns 'false' if the page could not be unlinked (shouldn't happen).
  * If the (new) right sibling of the page is empty, *rightsib_empty is set
  * to true.
+ *
+ * Must hold pin and lock on leafbuf at entry (read or write doesn't matter).
+ * On success exit, we'll be holding pin and write lock.  On failure exit,
+ * we'll release both pin and lock before returning (we define it that way
+ * to avoid having to reacquire a lock we already released).
  */
 static bool
 _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
@@ -1543,11 +1548,13 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	/*
 	 * If the leaf page still has a parent pointing to it (or a chain of
 	 * parents), we don't unlink the leaf page yet, but the topmost remaining
-	 * parent in the branch.
+	 * parent in the branch.  Set 'target' and 'buf' to reference the page
+	 * actually being unlinked.
 	 */
 	if (ItemPointerIsValid(leafhikey))
 	{
 		target = ItemPointerGetBlockNumber(leafhikey);
+		Assert(target != leafblkno);
 
 		/* fetch the block number of the topmost parent's left sibling */
 		buf = _bt_getbuf(rel, target, BT_READ);
@@ -1567,7 +1574,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 		target = leafblkno;
 
 		buf = leafbuf;
-		leftsib = opaque->btpo_prev;
+		leftsib = leafleftsib;
 		targetlevel = 0;
 	}
 
@@ -1598,8 +1605,20 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 			_bt_relbuf(rel, lbuf);
 			if (leftsib == P_NONE)
 			{
-				elog(LOG, "no left sibling (concurrent deletion?) in \"%s\"",
+				elog(LOG, "no left sibling (concurrent deletion?) of block %u in \"%s\"",
+					 target,
 					 RelationGetRelationName(rel));
+				if (target != leafblkno)
+				{
+					/* we have only a pin on target, but pin+lock on leafbuf */
+					ReleaseBuffer(buf);
+					_bt_relbuf(rel, leafbuf);
+				}
+				else
+				{
+					/* we have only a pin on leafbuf */
+					ReleaseBuffer(leafbuf);
+				}
 				return false;
 			}
 			lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
