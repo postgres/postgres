@@ -4684,6 +4684,7 @@ double
 get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 {
 	double		stadistinct;
+	double		stanullfrac = 0.0;
 	double		ntuples;
 
 	*isdefault = false;
@@ -4691,7 +4692,8 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 	/*
 	 * Determine the stadistinct value to use.  There are cases where we can
 	 * get an estimate even without a pg_statistic entry, or can get a better
-	 * value than is in pg_statistic.
+	 * value than is in pg_statistic.  Grab stanullfrac too if we can find it
+	 * (otherwise, assume no nulls, for lack of any better idea).
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
@@ -4700,6 +4702,7 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 
 		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 		stadistinct = stats->stadistinct;
+		stanullfrac = stats->stanullfrac;
 	}
 	else if (vardata->vartype == BOOLOID)
 	{
@@ -4723,7 +4726,7 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 			{
 				case ObjectIdAttributeNumber:
 				case SelfItemPointerAttributeNumber:
-					stadistinct = -1.0; /* unique */
+					stadistinct = -1.0; /* unique (and all non null) */
 					break;
 				case TableOidAttributeNumber:
 					stadistinct = 1.0;	/* only 1 value */
@@ -4745,10 +4748,11 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 	 * If there is a unique index or DISTINCT clause for the variable, assume
 	 * it is unique no matter what pg_statistic says; the statistics could be
 	 * out of date, or we might have found a partial unique index that proves
-	 * the var is unique for this query.
+	 * the var is unique for this query.  However, we'd better still believe
+	 * the null-fraction statistic.
 	 */
 	if (vardata->isunique)
-		stadistinct = -1.0;
+		stadistinct = -1.0 * (1.0 - stanullfrac);
 
 	/*
 	 * If we had an absolute estimate, use that.

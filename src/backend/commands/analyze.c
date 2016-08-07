@@ -2043,8 +2043,11 @@ compute_distinct_stats(VacAttrStatsP stats,
 
 		if (nmultiple == 0)
 		{
-			/* If we found no repeated values, assume it's a unique column */
-			stats->stadistinct = -1.0;
+			/*
+			 * If we found no repeated non-null values, assume it's a unique
+			 * column; but be sure to discount for any nulls we found.
+			 */
+			stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 		}
 		else if (track_cnt < track_max && toowide_cnt == 0 &&
 				 nmultiple == track_cnt)
@@ -2398,8 +2401,11 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 		if (nmultiple == 0)
 		{
-			/* If we found no repeated values, assume it's a unique column */
-			stats->stadistinct = -1.0;
+			/*
+			 * If we found no repeated non-null values, assume it's a unique
+			 * column; but be sure to discount for any nulls we found.
+			 */
+			stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 		}
 		else if (toowide_cnt == 0 && nmultiple == ndistinct)
 		{
@@ -2703,7 +2709,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		else
 			stats->stawidth = stats->attrtype->typlen;
 		/* Assume all too-wide values are distinct, so it's a unique column */
-		stats->stadistinct = -1.0;
+		stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 	}
 	else if (null_cnt > 0)
 	{
