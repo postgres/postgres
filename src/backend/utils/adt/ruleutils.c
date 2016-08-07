@@ -671,6 +671,7 @@ pg_get_viewdef_name_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	RangeVar   *viewrel;
 	Oid			viewoid;
+	char	   *res;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 
@@ -678,7 +679,12 @@ pg_get_viewdef_name_ext(PG_FUNCTION_ARGS)
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname));
 	viewoid = RangeVarGetRelid(viewrel, NoLock, false);
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT)));
+	res = pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT);
+
+	if (res == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
 /*
