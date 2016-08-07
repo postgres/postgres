@@ -203,7 +203,9 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		/* Do the simple null-frac and width stats */
 		stats->stanullfrac = (double) null_cnt / (double) samplerows;
 		stats->stawidth = total_width / (double) non_null_cnt;
-		stats->stadistinct = -1.0;
+
+		/* Estimate that non-null values are unique */
+		stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 
 		/* Must copy the target values into anl_context */
 		old_cxt = MemoryContextSwitchTo(stats->anl_context);
