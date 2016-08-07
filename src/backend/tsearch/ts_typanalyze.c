@@ -295,7 +295,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		stats->stawidth = total_width / (double) nonnull_cnt;
 
 		/* Assume it's a unique column (see notes above) */
-		stats->stadistinct = -1.0;
+		stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 
 		/*
 		 * Construct an array of the interesting hashtable items, that is,
