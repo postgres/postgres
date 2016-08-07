@@ -399,14 +399,14 @@ GetLatestSnapshot(void)
 /*
  * GetOldestSnapshot
  *
- *		Get the oldest known snapshot, as judged by the LSN.
+ *		Get the transaction's oldest known snapshot, as judged by the LSN.
+ *		Will return NULL if there are no active or registered snapshots.
  */
 Snapshot
 GetOldestSnapshot(void)
 {
 	Snapshot	OldestRegisteredSnapshot = NULL;
 	XLogRecPtr	RegisteredLSN = InvalidXLogRecPtr;
-	XLogRecPtr	ActiveLSN = InvalidXLogRecPtr;
 
 	if (!pairingheap_is_empty(&RegisteredSnapshots))
 	{
@@ -416,10 +416,12 @@ GetOldestSnapshot(void)
 	}
 
 	if (OldestActiveSnapshot != NULL)
-		ActiveLSN = OldestActiveSnapshot->as_snap->lsn;
+	{
+		XLogRecPtr	ActiveLSN = OldestActiveSnapshot->as_snap->lsn;
 
-	if (XLogRecPtrIsInvalid(RegisteredLSN) || RegisteredLSN > ActiveLSN)
-		return OldestActiveSnapshot->as_snap;
+		if (XLogRecPtrIsInvalid(RegisteredLSN) || RegisteredLSN > ActiveLSN)
+			return OldestActiveSnapshot->as_snap;
+	}
 
 	return OldestRegisteredSnapshot;
 }
