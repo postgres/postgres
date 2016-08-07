@@ -5849,9 +5849,9 @@
       <entry>The number of distinct nonnull data values in the column.
       A value greater than zero is the actual number of distinct values.
       A value less than zero is the negative of a multiplier for the number
-      of rows in the table; for example, a column in which values appear about
-      twice on the average could be represented by
-      <structfield>stadistinct</> = -0.5.
+      of rows in the table; for example, a column in which about 80% of the
+      values are nonnull and each nonnull value appears about twice on
+      average could be represented by <structfield>stadistinct</> = -0.4.
       A zero value means the number of distinct values is unknown.
       </entry>
      </row>
