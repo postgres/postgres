@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
 /*
@@ -351,6 +352,7 @@ PortalCreateHoldStore(Portal portal)
 
 	Assert(portal->holdContext == NULL);
 	Assert(portal->holdStore == NULL);
+	Assert(portal->holdSnapshot == NULL);
 
 	/*
 	 * Create the memory context that is used for storage of the tuple set.
@@ -525,6 +527,20 @@ PortalDrop(Portal portal, bool isTopCommit)
 
 	/* drop cached plan reference, if any */
 	PortalReleaseCachedPlan(portal);
+
+	/*
+	 * If portal has a snapshot protecting its data, release that.  This needs
+	 * a little care since the registration will be attached to the portal's
+	 * resowner; if the portal failed, we will already have released the
+	 * resowner (and the snapshot) during transaction abort.
+	 */
+	if (portal->holdSnapshot)
+	{
+		if (portal->resowner)
+			UnregisterSnapshotFromOwner(portal->holdSnapshot,
+										portal->resowner);
+		portal->holdSnapshot = NULL;
+	}
 
 	/*
 	 * Release any resources still attached to the portal.  There are several

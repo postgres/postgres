@@ -43,9 +43,11 @@ static uint64 RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 			 DestReceiver *dest);
 static uint64 PortalRunSelect(Portal portal, bool forward, long count,
 				DestReceiver *dest);
-static void PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
+static void PortalRunUtility(Portal portal, Node *utilityStmt,
+				 bool isTopLevel, bool setHoldSnapshot,
 				 DestReceiver *dest, char *completionTag);
-static void PortalRunMulti(Portal portal, bool isTopLevel,
+static void PortalRunMulti(Portal portal,
+			   bool isTopLevel, bool setHoldSnapshot,
 			   DestReceiver *dest, DestReceiver *altdest,
 			   char *completionTag);
 static uint64 DoPortalRunFetch(Portal portal,
@@ -810,7 +812,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 				break;
 
 			case PORTAL_MULTI_QUERY:
-				PortalRunMulti(portal, isTopLevel,
+				PortalRunMulti(portal, isTopLevel, false,
 							   dest, altdest, completionTag);
 
 				/* Prevent portal's commands from being re-executed */
@@ -1039,15 +1041,16 @@ FillPortalStore(Portal portal, bool isTopLevel)
 			/*
 			 * Run the portal to completion just as for the default
 			 * MULTI_QUERY case, but send the primary query's output to the
-			 * tuplestore. Auxiliary query outputs are discarded.
+			 * tuplestore.  Auxiliary query outputs are discarded.  Set the
+			 * portal's holdSnapshot to the snapshot used (or a copy of it).
 			 */
-			PortalRunMulti(portal, isTopLevel,
+			PortalRunMulti(portal, isTopLevel, true,
 						   treceiver, None_Receiver, completionTag);
 			break;
 
 		case PORTAL_UTIL_SELECT:
 			PortalRunUtility(portal, (Node *) linitial(portal->stmts),
-							 isTopLevel, treceiver, completionTag);
+							 isTopLevel, true, treceiver, completionTag);
 			break;
 
 		default:
@@ -1142,10 +1145,11 @@ RunFromStore(Portal portal, ScanDirection direction, uint64 count,
  *		Execute a utility statement inside a portal.
  */
 static void
-PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
+PortalRunUtility(Portal portal, Node *utilityStmt,
+				 bool isTopLevel, bool setHoldSnapshot,
 				 DestReceiver *dest, char *completionTag)
 {
-	bool		active_snapshot_set;
+	Snapshot	snapshot;
 
 	elog(DEBUG3, "ProcessUtility");
 
@@ -1172,11 +1176,19 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 		  IsA(utilityStmt, UnlistenStmt) ||
 		  IsA(utilityStmt, CheckPointStmt)))
 	{
-		PushActiveSnapshot(GetTransactionSnapshot());
-		active_snapshot_set = true;
+		snapshot = GetTransactionSnapshot();
+		/* If told to, register the snapshot we're using and save in portal */
+		if (setHoldSnapshot)
+		{
+			snapshot = RegisterSnapshot(snapshot);
+			portal->holdSnapshot = snapshot;
+		}
+		PushActiveSnapshot(snapshot);
+		/* PushActiveSnapshot might have copied the snapshot */
+		snapshot = GetActiveSnapshot();
 	}
 	else
-		active_snapshot_set = false;
+		snapshot = NULL;
 
 	ProcessUtility(utilityStmt,
 				   portal->sourceText,
@@ -1190,12 +1202,11 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 
 	/*
 	 * Some utility commands may pop the ActiveSnapshot stack from under us,
-	 * so we only pop the stack if we actually see a snapshot set.  Note that
-	 * the set of utility commands that do this must be the same set
-	 * disallowed to run inside a transaction; otherwise, we could be popping
-	 * a snapshot that belongs to some other operation.
+	 * so be careful to only pop the stack if our snapshot is still at the
+	 * top.
 	 */
-	if (active_snapshot_set && ActiveSnapshotSet())
+	if (snapshot != NULL && ActiveSnapshotSet() &&
+		snapshot == GetActiveSnapshot())
 		PopActiveSnapshot();
 }
 
@@ -1205,7 +1216,8 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
  *		or non-SELECT-like queries)
  */
 static void
-PortalRunMulti(Portal portal, bool isTopLevel,
+PortalRunMulti(Portal portal,
+			   bool isTopLevel, bool setHoldSnapshot,
 			   DestReceiver *dest, DestReceiver *altdest,
 			   char *completionTag)
 {
@@ -1261,7 +1273,25 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			 */
 			if (!active_snapshot_set)
 			{
-				PushActiveSnapshot(GetTransactionSnapshot());
+				Snapshot	snapshot = GetTransactionSnapshot();
+
+				/* If told to, register the snapshot and save in portal */
+				if (setHoldSnapshot)
+				{
+					snapshot = RegisterSnapshot(snapshot);
+					portal->holdSnapshot = snapshot;
+				}
+
+				/*
+				 * We can't have the holdSnapshot also be the active one,
+				 * because UpdateActiveSnapshotCommandId would complain.  So
+				 * force an extra snapshot copy.  Plain PushActiveSnapshot
+				 * would have copied the transaction snapshot anyway, so this
+				 * only adds a copy step when setHoldSnapshot is true.  (It's
+				 * okay for the command ID of the active snapshot to diverge
+				 * from what holdSnapshot has.)
+				 */
+				PushCopiedSnapshot(snapshot);
 				active_snapshot_set = true;
 			}
 			else
@@ -1309,14 +1339,14 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			{
 				Assert(!active_snapshot_set);
 				/* statement can set tag string */
-				PortalRunUtility(portal, stmt, isTopLevel,
+				PortalRunUtility(portal, stmt, isTopLevel, false,
 								 dest, completionTag);
 			}
 			else
 			{
 				Assert(IsA(stmt, NotifyStmt));
 				/* stmt added by rewrite cannot set tag */
-				PortalRunUtility(portal, stmt, isTopLevel,
+				PortalRunUtility(portal, stmt, isTopLevel, false,
 								 altdest, NULL);
 			}
 		}
