@@ -32,7 +32,7 @@ dropdb: dropdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
 droplang: droplang.o common.o print.o mbprint.o | submake-libpq
 dropuser: dropuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
 clusterdb: clusterdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-vacuumdb: vacuumdb.o common.o | submake-libpq
+vacuumdb: vacuumdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
 reindexdb: reindexdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
 
 dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%

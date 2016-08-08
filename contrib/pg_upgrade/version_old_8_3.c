@@ -364,8 +364,13 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
-					fprintf(script, "\\connect %s\n\n",
-							quote_identifier(active_db->db_name));
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					appendPQExpBufferChar(&connectbuf, '\n');
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
 					db_used = true;
 				}
 
@@ -480,8 +485,12 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
-					fprintf(script, "\\connect %s\n",
-							quote_identifier(active_db->db_name));
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
@@ -599,8 +608,12 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
-					fprintf(script, "\\connect %s\n",
-							quote_identifier(active_db->db_name));
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
@@ -721,8 +734,13 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
-				fprintf(script, "\\connect %s\n\n",
-						quote_identifier(active_db->db_name));
+				PQExpBufferData connectbuf;
+
+				initPQExpBuffer(&connectbuf);
+				appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+				appendPQExpBufferChar(&connectbuf, '\n');
+				fputs(connectbuf.data, script);
+				termPQExpBuffer(&connectbuf);
 				db_used = true;
 			}
 

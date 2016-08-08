@@ -640,9 +640,16 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 		/* If we created a DB, connect to it... */
 		if (strcmp(te->desc, "DATABASE") == 0)
 		{
+			PQExpBufferData connstr;
+
+			initPQExpBuffer(&connstr);
+			appendPQExpBufferStr(&connstr, "dbname=");
+			appendConnStrVal(&connstr, te->tag);
+			/* Abandon struct, but keep its buffer until process exit. */
+
 			ahlog(AH, 1, "connecting to new database \"%s\"\n", te->tag);
 			_reconnectToDB(AH, te->tag);
-			ropt->dbname = pg_strdup(te->tag);
+			ropt->dbname = connstr.data;
 		}
 	}
 
@@ -2721,12 +2728,17 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname)
 		ReconnectToServer(AH, dbname, NULL);
 	else
 	{
-		PQExpBuffer qry = createPQExpBuffer();
+		if (dbname)
+		{
+			PQExpBufferData connectbuf;
 
-		appendPQExpBuffer(qry, "\\connect %s\n\n",
-						  dbname ? fmtId(dbname) : "-");
-		ahprintf(AH, "%s", qry->data);
-		destroyPQExpBuffer(qry);
+			initPQExpBuffer(&connectbuf);
+			appendPsqlMetaConnect(&connectbuf, dbname);
+			ahprintf(AH, "%s\n", connectbuf.data);
+			termPQExpBuffer(&connectbuf);
+		}
+		else
+			ahprintf(AH, "%s\n", "\\connect -\n");
 	}
 
 	/*

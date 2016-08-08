@@ -123,6 +123,7 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 static PGconn *
 _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 {
+	PQExpBufferData connstr;
 	PGconn	   *newConn;
 	const char *newdb;
 	const char *newuser;
@@ -149,6 +150,10 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			exit_horribly(modulename, "out of memory\n");
 	}
 
+	initPQExpBuffer(&connstr);
+	appendPQExpBuffer(&connstr, "dbname=");
+	appendConnStrVal(&connstr, newdb);
+
 	do
 	{
 #define PARAMS_ARRAY_SIZE	7
@@ -164,7 +169,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		keywords[3] = "password";
 		values[3] = password;
 		keywords[4] = "dbname";
-		values[4] = newdb;
+		values[4] = connstr.data;
 		keywords[5] = "fallback_application_name";
 		values[5] = progname;
 		keywords[6] = NULL;
@@ -207,6 +212,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	} while (new_pass);
 
 	AH->savedPassword = password;
+
+	termPQExpBuffer(&connstr);
 
 	/* check for version mismatch */
 	_check_database_version(AH);

@@ -130,7 +130,7 @@ typedef struct _restoreOptions
 	char	   *triggerNames;
 
 	int			useDB;
-	char	   *dbname;
+	char	   *dbname;			/* subject to expand_dbname */
 	char	   *pgport;
 	char	   *pghost;
 	char	   *username;
