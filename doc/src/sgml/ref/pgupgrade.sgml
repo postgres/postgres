@@ -501,11 +501,11 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
        <application>rsync</> will be fast when <application>pg_upgrade</>'s
        <option>--link</> mode is used because it will create hard links
        on the remote server rather than transferring user data.
+       Unfortunately, <application>rsync</> needlessly copies the
+       files associated with temporary and unlogged tables.
       </para>
 
       <para>
-       Unfortunately, <application>rsync</> also needlessly copies the
-       files associated with temporary and unlogged tables.
        If you have tablespaces, you will need to run a similar
        <application>rsync</> command for each tablespace directory.  If you
        have relocated <filename>pg_xlog</> outside the data directories,
