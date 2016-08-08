@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-17 05:43+0000\n"
+"POT-Creation-Date: 2016-05-26 20:51+0000\n"
 "PO-Revision-Date: 2015-10-18 18:13+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-translators@postgresql.org>\n"
@@ -20,8 +20,7 @@ msgstr ""
 "X-Generator: Lokalize 2.0\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
-#: parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -117,7 +116,7 @@ msgstr "не удалось открыть исходный файл \"%s\": %s\
 msgid "could not seek in source file: %s\n"
 msgstr "не удалось переместиться в исходном файле: %s\n"
 
-#: copy_fetch.c:192 file_ops.c:301
+#: copy_fetch.c:192 file_ops.c:300
 #, c-format
 msgid "could not read file \"%s\": %s\n"
 msgstr "не удалось прочитать файл \"%s\": %s\n"
@@ -142,57 +141,57 @@ msgstr "не удалось открыть целевой файл \"%s\": %s\n"
 msgid "could not close target file \"%s\": %s\n"
 msgstr "не удалось закрыть целевой файл \"%s\": %s\n"
 
-#: file_ops.c:99
+#: file_ops.c:98
 #, c-format
 msgid "could not seek in target file \"%s\": %s\n"
 msgstr "не удалось переместиться в целевом файле \"%s\": %s\n"
 
-#: file_ops.c:115
+#: file_ops.c:114
 #, c-format
 msgid "could not write file \"%s\": %s\n"
 msgstr "не удалось записать файл \"%s\": %s\n"
 
-#: file_ops.c:165
+#: file_ops.c:164
 #, c-format
 msgid "invalid action (CREATE) for regular file\n"
 msgstr "неверное действие (CREATE) для обычного файла\n"
 
-#: file_ops.c:180
+#: file_ops.c:179
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "не удалось стереть файл \"%s\": %s\n"
 
-#: file_ops.c:197
+#: file_ops.c:196
 #, c-format
 msgid "could not open file \"%s\" for truncation: %s\n"
 msgstr "не удалось открыть файл \"%s\" для усечения: %s\n"
 
-#: file_ops.c:201
+#: file_ops.c:200
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %s\n"
 msgstr "не удалось усечь файл \"%s\" до нужного размера (%u): %s\n"
 
-#: file_ops.c:217
+#: file_ops.c:216
 #, c-format
 msgid "could not create directory \"%s\": %s\n"
 msgstr "создать каталог \"%s\" не удалось: %s\n"
 
-#: file_ops.c:231
+#: file_ops.c:230
 #, c-format
 msgid "could not remove directory \"%s\": %s\n"
 msgstr "ошибка при удалении каталога \"%s\": %s\n"
 
-#: file_ops.c:245
+#: file_ops.c:244
 #, c-format
 msgid "could not create symbolic link at \"%s\": %s\n"
 msgstr "не удалось создать символическую ссылку \"%s\": %s\n"
 
-#: file_ops.c:259
+#: file_ops.c:258
 #, c-format
 msgid "could not remove symbolic link \"%s\": %s\n"
 msgstr "ошибка при удалении символической ссылки \"%s\": %s\n"
 
-#: file_ops.c:289 file_ops.c:293
+#: file_ops.c:288 file_ops.c:292
 #, c-format
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "не удалось открыть файл \"%s\" для чтения: %s\n"
@@ -427,7 +426,7 @@ msgstr ""
 "Запись WAL модифицирует отношение, но тип записи не распознан\n"
 "lsn: %X/%X, rmgr: %s, info: %02X\n"
 
-#: pg_rewind.c:59
+#: pg_rewind.c:60
 #, c-format
 msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
@@ -436,7 +435,7 @@ msgstr ""
 "%s синхронизирует кластер PostgreSQL с другой копией кластера.\n"
 "\n"
 
-#: pg_rewind.c:60
+#: pg_rewind.c:61
 #, c-format
 msgid ""
 "Usage:\n"
@@ -447,19 +446,19 @@ msgstr ""
 "  %s [ПАРАМЕТР]...\n"
 "\n"
 
-#: pg_rewind.c:61
+#: pg_rewind.c:62
 #, c-format
 msgid "Options:\n"
 msgstr "Параметры:\n"
 
-#: pg_rewind.c:62
+#: pg_rewind.c:63
 #, c-format
 msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
 msgstr ""
 "  -D, --target-pgdata=КАТАЛОГ    существующий каталог, куда будут записаны "
 "данные\n"
 
-#: pg_rewind.c:63
+#: pg_rewind.c:64
 #, c-format
 msgid ""
 "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
@@ -467,43 +466,43 @@ msgstr ""
 "      --source-pgdata=КАТАЛОГ    исходный каталог, с которым будет проведена "
 "синхронизация\n"
 
-#: pg_rewind.c:64
+#: pg_rewind.c:65
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
 msgstr ""
 "      --source-server=СТР_ПОДКЛ  сервер, с которым будет проведена "
 "синхронизация\n"
 
-#: pg_rewind.c:65
+#: pg_rewind.c:66
 #, c-format
 msgid "  -n, --dry-run                  stop before modifying anything\n"
 msgstr ""
 "  -n, --dry-run                  остановиться до внесения каких-либо "
 "изменений\n"
 
-#: pg_rewind.c:66
+#: pg_rewind.c:67
 #, c-format
 msgid "  -P, --progress                 write progress messages\n"
 msgstr "  -P, --progress                 выводить сообщения о ходе процесса\n"
 
-#: pg_rewind.c:67
+#: pg_rewind.c:68
 #, c-format
 msgid "      --debug                    write a lot of debug messages\n"
 msgstr ""
 "      --debug                    выдавать множество отладочных сообщений\n"
 
-#: pg_rewind.c:68
+#: pg_rewind.c:69
 #, c-format
 msgid ""
 "  -V, --version                  output version information, then exit\n"
 msgstr "  -V, --version                  показать версию и выйти\n"
 
-#: pg_rewind.c:69
+#: pg_rewind.c:70
 #, c-format
 msgid "  -?, --help                     show this help, then exit\n"
 msgstr "  -?, --help                     показать эту справку и выйти\n"
 
-#: pg_rewind.c:70
+#: pg_rewind.c:71
 #, c-format
 msgid ""
 "\n"
@@ -512,81 +511,81 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_rewind.c:125 pg_rewind.c:156 pg_rewind.c:163 pg_rewind.c:171
+#: pg_rewind.c:126 pg_rewind.c:157 pg_rewind.c:164 pg_rewind.c:172
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_rewind.c:155
+#: pg_rewind.c:156
 #, c-format
 msgid "%s: no source specified (--source-pgdata or --source-server)\n"
 msgstr ""
 "%s: источник не указан (требуется --source-pgdata или --source-server)\n"
 
-#: pg_rewind.c:162
+#: pg_rewind.c:163
 #, c-format
 msgid "%s: no target data directory specified (--target-pgdata)\n"
 msgstr "%s: целевой каталог данных не указан (--target-pgdata)\n"
 
-#: pg_rewind.c:169
+#: pg_rewind.c:170
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_rewind.c:184
+#: pg_rewind.c:185
 #, c-format
 msgid "cannot be executed by \"root\"\n"
 msgstr "программу не должен запускать root\n"
 
-#: pg_rewind.c:185
+#: pg_rewind.c:186
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Запускать %s нужно от имени суперпользователя PostgreSQL.\n"
 
-#: pg_rewind.c:215
+#: pg_rewind.c:217
 #, c-format
 msgid "source and target cluster are on the same timeline\n"
 msgstr "исходный и целевой кластер уже на одной линии времени\n"
 
-#: pg_rewind.c:218
+#: pg_rewind.c:223
 #, c-format
 msgid "servers diverged at WAL position %X/%X on timeline %u\n"
 msgstr "Серверы разошлись в позиции WAL %X/%X на линии времени %u.\n"
 
-#: pg_rewind.c:253
+#: pg_rewind.c:259
 #, c-format
 msgid "no rewind required\n"
 msgstr "перемотка не требуется.\n"
 
-#: pg_rewind.c:259
+#: pg_rewind.c:265
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u\n"
 msgstr ""
 "перемотка от последней общей контрольной точки в позиции %X/%X на линии "
 "времени %u\n"
 
-#: pg_rewind.c:267
+#: pg_rewind.c:273
 #, c-format
 msgid "reading source file list\n"
 msgstr "чтение списка исходных файлов\n"
 
-#: pg_rewind.c:269
+#: pg_rewind.c:275
 #, c-format
 msgid "reading target file list\n"
 msgstr "чтение списка целевых файлов\n"
 
-#: pg_rewind.c:279
+#: pg_rewind.c:285
 #, c-format
 msgid "reading WAL in target\n"
 msgstr "чтение WAL в целевом кластере\n"
 
-#: pg_rewind.c:296
+#: pg_rewind.c:302
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)\n"
 msgstr ""
 "требуется скопировать %lu МБ (общий размер исходного каталога: %lu МБ)\n"
 
-#: pg_rewind.c:313
+#: pg_rewind.c:319
 #, c-format
 msgid ""
 "\n"
@@ -595,22 +594,27 @@ msgstr ""
 "\n"
 "создание метки копии и модификация управляющего файла\n"
 
-#: pg_rewind.c:341
+#: pg_rewind.c:347
+#, c-format
+msgid "syncing target data directory\n"
+msgstr "синхронизация целевого каталога данных\n"
+
+#: pg_rewind.c:350
 #, c-format
 msgid "Done!\n"
 msgstr "Готово!\n"
 
-#: pg_rewind.c:353
+#: pg_rewind.c:362
 #, c-format
 msgid "source and target clusters are from different systems\n"
 msgstr "исходный и целевой кластеры относятся к разным системам\n"
 
-#: pg_rewind.c:361
+#: pg_rewind.c:370
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind\n"
 msgstr "кластеры несовместимы с этой версией pg_rewind\n"
 
-#: pg_rewind.c:371
+#: pg_rewind.c:380
 #, c-format
 msgid ""
 "target server needs to use either data checksums or \"wal_log_hints = on\"\n"
@@ -618,37 +622,64 @@ msgstr ""
 "на целевом сервере должны быть контрольные суммы данных или \"wal_log_hints "
 "= on\"\n"
 
-#: pg_rewind.c:381
+#: pg_rewind.c:391
 #, c-format
 msgid "target server must be shut down cleanly\n"
 msgstr "целевой сервер должен быть выключен штатно\n"
 
-#: pg_rewind.c:389
+#: pg_rewind.c:401
 #, c-format
 msgid "source data directory must be shut down cleanly\n"
 msgstr "работа с исходным каталогом данных должна быть завершена штатно\n"
 
-#: pg_rewind.c:456
+#: pg_rewind.c:468
 #, c-format
 msgid ""
 "could not find common ancestor of the source and target cluster's timelines\n"
 msgstr ""
-"не удалось найти общего предка линий времени исходного и целевых кластеров\n"
+"не удалось найти общего предка линий времени исходного и целевого кластеров\n"
 
-#: pg_rewind.c:496
+#: pg_rewind.c:508
 #, c-format
 msgid "backup label buffer too small\n"
 msgstr "буфер для метки копии слишком мал\n"
 
-#: pg_rewind.c:518
+#: pg_rewind.c:531
 #, c-format
 msgid "unexpected control file CRC\n"
 msgstr "неверная контрольная сумма управляющего файла\n"
 
-#: pg_rewind.c:528
+#: pg_rewind.c:541
 #, c-format
 msgid "unexpected control file size %d, expected %d\n"
 msgstr "неверный размер управляющего файла (%d), ожидалось: %d\n"
+
+#: pg_rewind.c:608
+#, c-format
+msgid ""
+"The program \"initdb\" is needed by %s but was \n"
+"not found in the same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Для %s необходима программа \"initdb\", но она не найдена\n"
+"в каталоге \"%s\".\n"
+"Проверьте вашу установку PostgreSQL.\n"
+
+#: pg_rewind.c:612
+#, c-format
+msgid ""
+"The program \"initdb\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"Программа \"initdb\" найдена в \"%s\",\n"
+"но её версия отличается от версии %s.\n"
+"Проверьте вашу установку PostgreSQL.\n"
+
+#: pg_rewind.c:630
+#, c-format
+msgid "sync of target directory failed\n"
+msgstr "сбой синхронизации целевого каталога\n"
 
 #: timeline.c:76 timeline.c:82
 #, c-format

@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2015.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -49,14 +49,14 @@ msgstr "Fehler beim Nachschlagen des Benutzernamens: Fehlercode %lu"
 #: vacuumdb.c:209 vacuumdb.c:228
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: clusterdb.c:127 createdb.c:136 createlang.c:117 createuser.c:181
 #: dropdb.c:109 droplang.c:116 dropuser.c:102 pg_isready.c:105 reindexdb.c:147
 #: vacuumdb.c:226
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: zu viele Kommandozeilenargumente (das erste ist „%s“)\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
 #: clusterdb.c:139
 #, c-format
@@ -71,17 +71,17 @@ msgstr "%s: kann nicht bestimmte Tabelle(n) in allen Datenbanken clustern\n"
 #: clusterdb.c:211
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: Clustern der Tabelle „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Clustern der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
 #: clusterdb.c:214
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
-msgstr "%s: Clustern der Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Clustern der Datenbank »%s« fehlgeschlagen: %s"
 
 #: clusterdb.c:245
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
-msgstr "%s: clustere Datenbank „%s“\n"
+msgstr "%s: clustere Datenbank »%s«\n"
 
 #: clusterdb.c:261
 #, c-format
@@ -271,7 +271,7 @@ msgstr "%s (%s/%s) "
 #: common.c:292
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
-msgstr "Bitte antworten Sie „%s“ oder „%s“.\n"
+msgstr "Bitte antworten Sie »%s« oder »%s«.\n"
 
 #: common.c:371 common.c:408
 #, c-format
@@ -296,7 +296,7 @@ msgstr "%s: --locale und --lc-collate können nicht zusammen angegeben werden\n"
 #: createdb.c:164
 #, c-format
 msgid "%s: \"%s\" is not a valid encoding name\n"
-msgstr "%s: „%s“ ist kein gültiger Kodierungsname\n"
+msgstr "%s: »%s« ist kein gültiger Kodierungsname\n"
 
 #: createdb.c:213
 #, c-format
@@ -442,7 +442,7 @@ msgstr "%s: Sprachenname als Argument fehlt\n"
 #: createlang.c:197
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-msgstr "%s: Sprache „%s“ ist bereits in Datenbank „%s“ installiert\n"
+msgstr "%s: Sprache »%s« ist bereits in Datenbank »%s« installiert\n"
 
 #: createlang.c:219
 #, c-format
@@ -643,7 +643,7 @@ msgstr "%s: Datenbankname als Argument fehlt\n"
 #: dropdb.c:117
 #, c-format
 msgid "Database \"%s\" will be permanently removed.\n"
-msgstr "Datenbank „%s“ wird unwiderruflich gelöscht werden.\n"
+msgstr "Datenbank »%s« wird unwiderruflich gelöscht werden.\n"
 
 #: dropdb.c:118 dropuser.c:123
 msgid "Are you sure?"
@@ -681,7 +681,7 @@ msgstr "  --if-exists              keinen Fehler ausgeben, wenn Datenbank nicht 
 #: droplang.c:203
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-msgstr "%s: Sprache „%s“ ist nicht in Datenbank „%s“ installiert\n"
+msgstr "%s: Sprache »%s« ist nicht in Datenbank »%s« installiert\n"
 
 #: droplang.c:221
 #, c-format
@@ -716,12 +716,12 @@ msgstr "%s: Rollenname als Argument fehlt\n"
 #: dropuser.c:122
 #, c-format
 msgid "Role \"%s\" will be permanently removed.\n"
-msgstr "Rolle „%s“ wird unwiderruflich gelöscht werden.\n"
+msgstr "Rolle »%s« wird unwiderruflich gelöscht werden.\n"
 
 #: dropuser.c:140
 #, c-format
 msgid "%s: removal of role \"%s\" failed: %s"
-msgstr "%s: Löschen der Rolle „%s“ fehlgeschlagen: %s"
+msgstr "%s: Löschen der Rolle »%s« fehlgeschlagen: %s"
 
 #: dropuser.c:155
 #, c-format
@@ -885,27 +885,27 @@ msgstr "%s: kann nicht bestimmte Index und Systemkataloge gleichzeitig reindizie
 #: reindexdb.c:306
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: Reindizieren der Tabelle „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Reindizieren der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
 #: reindexdb.c:309
 #, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: Reindizieren des Index „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Reindizieren des Index »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
 #: reindexdb.c:312
 #, c-format
 msgid "%s: reindexing of schema \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: Reindizieren des Schemas „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Reindizieren des Schemas »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
 #: reindexdb.c:315
 #, c-format
 msgid "%s: reindexing of database \"%s\" failed: %s"
-msgstr "%s: Reindizieren der Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Reindizieren der Datenbank »%s« fehlgeschlagen: %s"
 
 #: reindexdb.c:346
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
-msgstr "%s: reindiziere Datenbank „%s“\n"
+msgstr "%s: reindiziere Datenbank »%s«\n"
 
 #: reindexdb.c:379
 #, c-format
@@ -974,7 +974,7 @@ msgstr "%s: zu viele parallele Jobs angefordert (Maximum: %d)\n"
 #: vacuumdb.c:236 vacuumdb.c:242
 #, c-format
 msgid "%s: cannot use the \"%s\" option when performing only analyze\n"
-msgstr "%s: kann Option „%s“ nicht verwenden, wenn nur Analyze durchgeführt wird\n"
+msgstr "%s: kann Option »%s« nicht verwenden, wenn nur Analyze durchgeführt wird\n"
 
 #: vacuumdb.c:259
 #, c-format
@@ -1001,22 +1001,22 @@ msgstr "Erzeuge volle Optimierer-Statistiken"
 #: vacuumdb.c:374
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
-msgstr "%s: bearbeite Datenbank „%s“: %s\n"
+msgstr "%s: bearbeite Datenbank »%s«: %s\n"
 
 #: vacuumdb.c:377
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
-msgstr "%s: führe Vacuum in Datenbank „%s“ aus\n"
+msgstr "%s: führe Vacuum in Datenbank »%s« aus\n"
 
 #: vacuumdb.c:738
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: Vacuum der Tabelle „%s“ in Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Vacuum der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
 #: vacuumdb.c:741 vacuumdb.c:858
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr "%s: Vacuum der Datenbank „%s“ fehlgeschlagen: %s"
+msgstr "%s: Vacuum der Datenbank »%s« fehlgeschlagen: %s"
 
 #: vacuumdb.c:974
 #, c-format
