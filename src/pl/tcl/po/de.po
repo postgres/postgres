@@ -1,7 +1,7 @@
 # German message translation file for PL/Tcl
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2015.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -19,12 +19,12 @@ msgstr ""
 #: pltcl.c:555
 #, c-format
 msgid "module \"unknown\" not found in pltcl_modules"
-msgstr "Modul „unknown“ nicht in pltcl_modules gefunden"
+msgstr "Modul »unknown« nicht in pltcl_modules gefunden"
 
 #: pltcl.c:591
 #, c-format
 msgid "could not load module \"unknown\": %s"
-msgstr "konnte Modul „unknown“ nicht laden: %s"
+msgstr "konnte Modul »unknown« nicht laden: %s"
 
 #: pltcl.c:1047
 #, c-format
@@ -39,12 +39,12 @@ msgstr "Rückgabeliste des Triggers muss gerade Anzahl Elemente haben"
 #: pltcl.c:1094
 #, c-format
 msgid "unrecognized attribute \"%s\""
-msgstr "unbekanntes Attribute „%s“"
+msgstr "unbekanntes Attribute »%s«"
 
 #: pltcl.c:1099
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "Systemattribut „%s“ kann nicht gesetzt werden"
+msgstr "Systemattribut »%s« kann nicht gesetzt werden"
 
 #: pltcl.c:1222 pltcl.c:1648
 #, c-format
@@ -58,7 +58,7 @@ msgid ""
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"in PL/Tcl-Funktion „%s“"
+"in PL/Tcl-Funktion »%s«"
 
 #: pltcl.c:1331 pltcl.c:1338
 #, c-format
@@ -88,4 +88,4 @@ msgstr "PL/Tcl-Funktionen können Typ %s nicht annehmen"
 #: pltcl.c:1564
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "konnte interne Prozedur „%s“ nicht erzeugen: %s"
+msgstr "konnte interne Prozedur »%s« nicht erzeugen: %s"

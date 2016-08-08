@@ -1,7 +1,7 @@
 # German message translation file for pg_ctl
 # Peter Eisentraut <peter_e@gmx.net>, 2004 - 2015.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -24,27 +24,27 @@ msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 #: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "ungültige Programmdatei „%s“"
+msgstr "ungültige Programmdatei »%s«"
 
 #: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "konnte Programmdatei „%s“ nicht lesen"
+msgstr "konnte Programmdatei »%s« nicht lesen"
 
 #: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "konnte kein „%s“ zum Ausführen finden"
+msgstr "konnte kein »%s« zum Ausführen finden"
 
 #: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
-msgstr "konnte nicht in Verzeichnis „%s“ wechseln: %s"
+msgstr "konnte nicht in Verzeichnis »%s« wechseln: %s"
 
 #: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "konnte symbolische Verknüpfung „%s“ nicht lesen"
+msgstr "konnte symbolische Verknüpfung »%s« nicht lesen"
 
 #: ../../common/exec.c:523
 #, c-format
@@ -106,32 +106,32 @@ msgstr "konnte aktuelles Arbeitsverzeichnis nicht ermitteln: %s\n"
 #: pg_ctl.c:258
 #, c-format
 msgid "%s: directory \"%s\" does not exist\n"
-msgstr "%s: Verzeichnis „%s“ existiert nicht\n"
+msgstr "%s: Verzeichnis »%s« existiert nicht\n"
 
 #: pg_ctl.c:261
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: konnte nicht auf Verzeichnis „%s“ zugreifen: %s\n"
+msgstr "%s: konnte nicht auf Verzeichnis »%s« zugreifen: %s\n"
 
 #: pg_ctl.c:275
 #, c-format
 msgid "%s: directory \"%s\" is not a database cluster directory\n"
-msgstr "%s: Verzeichnis „%s“ ist kein Datenbankclusterverzeichnis\n"
+msgstr "%s: Verzeichnis »%s« ist kein Datenbankclusterverzeichnis\n"
 
 #: pg_ctl.c:288
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s: konnte PID-Datei „%s“ nicht öffnen: %s\n"
+msgstr "%s: konnte PID-Datei »%s« nicht öffnen: %s\n"
 
 #: pg_ctl.c:297
 #, c-format
 msgid "%s: the PID file \"%s\" is empty\n"
-msgstr "%s: die PID-Datei „%s“ ist leer\n"
+msgstr "%s: die PID-Datei »%s« ist leer\n"
 
 #: pg_ctl.c:300
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
-msgstr "%s: ungültige Daten in PID-Datei „%s“\n"
+msgstr "%s: ungültige Daten in PID-Datei »%s«\n"
 
 #: pg_ctl.c:450 pg_ctl.c:478
 #, c-format
@@ -169,12 +169,12 @@ msgstr "%s: kann Grenzwert für Core-Datei-Größe nicht setzen; durch harten Gr
 #: pg_ctl.c:760
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s: konnte Datei „%s“ nicht lesen\n"
+msgstr "%s: konnte Datei »%s« nicht lesen\n"
 
 #: pg_ctl.c:765
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s: Optionsdatei „%s“ muss genau eine Zeile haben\n"
+msgstr "%s: Optionsdatei »%s« muss genau eine Zeile haben\n"
 
 #: pg_ctl.c:816
 #, c-format
@@ -183,8 +183,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Das Programm „%s“ wird von %s benötigt, aber wurde nicht im\n"
-"selben Verzeichnis wie „%s“ gefunden.\n"
+"Das Programm »%s« wird von %s benötigt, aber wurde nicht im\n"
+"selben Verzeichnis wie »%s« gefunden.\n"
 "Prüfen Sie Ihre Installation.\n"
 
 #: pg_ctl.c:822
@@ -194,7 +194,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Das Programm „%s“ wurde von %s gefunden,\n"
+"Das Programm »%s« wurde von %s gefunden,\n"
 "aber es hatte nicht die gleiche Version wie %s.\n"
 "Prüfen Sie Ihre Installation.\n"
 
@@ -253,7 +253,7 @@ msgstr "Server startet\n"
 #: pg_ctl.c:956 pg_ctl.c:1042 pg_ctl.c:1132 pg_ctl.c:1172
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
-msgstr "%s: PID-Datei „%s“ existiert nicht\n"
+msgstr "%s: PID-Datei »%s« existiert nicht\n"
 
 #: pg_ctl.c:957 pg_ctl.c:1044 pg_ctl.c:1133 pg_ctl.c:1173
 msgid "Is server running?\n"
@@ -297,7 +297,7 @@ msgid ""
 "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
 msgstr ""
-"TIPP: Die Option „-m fast“ beendet Sitzungen sofort, statt auf das Beenden\n"
+"TIPP: Die Option »-m fast« beendet Sitzungen sofort, statt auf das Beenden\n"
 "durch die Sitzungen selbst zu warten.\n"
 
 #: pg_ctl.c:1022 pg_ctl.c:1112
@@ -349,12 +349,12 @@ msgstr "%s: kann Server nicht befördern; Server ist nicht im Standby-Modus\n"
 #: pg_ctl.c:1203
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
-msgstr "%s: konnte Signaldatei zum Befördern „%s“ nicht erzeugen: %s\n"
+msgstr "%s: konnte Signaldatei zum Befördern »%s« nicht erzeugen: %s\n"
 
 #: pg_ctl.c:1209
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
-msgstr "%s: konnte Signaldatei zum Befördern „%s“ nicht schreiben: %s\n"
+msgstr "%s: konnte Signaldatei zum Befördern »%s« nicht schreiben: %s\n"
 
 #: pg_ctl.c:1217
 #, c-format
@@ -364,7 +364,7 @@ msgstr "%s: konnte Signal zum Befördern nicht senden (PID: %ld): %s\n"
 #: pg_ctl.c:1220
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
-msgstr "%s: konnte Signaldatei zum Befördern „%s“ nicht entfernen: %s\n"
+msgstr "%s: konnte Signaldatei zum Befördern »%s« nicht entfernen: %s\n"
 
 #: pg_ctl.c:1225
 msgid "server promoting\n"
@@ -398,7 +398,7 @@ msgstr "%s: konnte eigene Programmdatei nicht finden\n"
 #: pg_ctl.c:1386
 #, c-format
 msgid "%s: could not find postgres program executable\n"
-msgstr "%s: konnte „postgres“ Programmdatei nicht finden\n"
+msgstr "%s: konnte »postgres« Programmdatei nicht finden\n"
 
 #: pg_ctl.c:1469 pg_ctl.c:1503
 #, c-format
@@ -408,27 +408,27 @@ msgstr "%s: konnte Servicemanager nicht öffnen\n"
 #: pg_ctl.c:1475
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s: Systemdienst „%s“ ist bereits registriert\n"
+msgstr "%s: Systemdienst »%s« ist bereits registriert\n"
 
 #: pg_ctl.c:1486
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
-msgstr "%s: konnte Systemdienst „%s“ nicht registrieren: Fehlercode %lu\n"
+msgstr "%s: konnte Systemdienst »%s« nicht registrieren: Fehlercode %lu\n"
 
 #: pg_ctl.c:1509
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s: Systemdienst „%s“ ist nicht registriert\n"
+msgstr "%s: Systemdienst »%s« ist nicht registriert\n"
 
 #: pg_ctl.c:1516
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
-msgstr "%s: konnte Systemdienst „%s“ nicht öffnen: Fehlercode %lu\n"
+msgstr "%s: konnte Systemdienst »%s« nicht öffnen: Fehlercode %lu\n"
 
 #: pg_ctl.c:1525
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
-msgstr "%s: konnte Systemdienst „%s“ nicht deregistrieren: Fehlercode %lu\n"
+msgstr "%s: konnte Systemdienst »%s« nicht deregistrieren: Fehlercode %lu\n"
 
 #: pg_ctl.c:1612
 msgid "Waiting for server startup...\n"
@@ -445,7 +445,7 @@ msgstr "Server wurde gestartet und nimmt Verbindungen an\n"
 #: pg_ctl.c:1674
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
-msgstr "%s: konnte Systemdienst „%s“ nicht starten: Fehlercode %lu\n"
+msgstr "%s: konnte Systemdienst »%s« nicht starten: Fehlercode %lu\n"
 
 #: pg_ctl.c:1748
 #, c-format
@@ -475,7 +475,7 @@ msgstr "%s: WARNUNG: konnte nicht alle Job-Objekt-Funtionen in der System-API fi
 #: pg_ctl.c:1914
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_ctl.c:1922
 #, c-format
@@ -670,7 +670,7 @@ msgstr ""
 #: pg_ctl.c:1964
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m, --mode=MODUS       MODUS kann „smart“, „fast“ oder „immediate“ sein\n"
+msgstr "  -m, --mode=MODUS       MODUS kann »smart«, »fast« oder »immediate« sein\n"
 
 #: pg_ctl.c:1966
 #, c-format
@@ -705,7 +705,7 @@ msgid ""
 "Allowed signal names for kill:\n"
 msgstr ""
 "\n"
-"Erlaubte Signalnamen für „kill“:\n"
+"Erlaubte Signalnamen für »kill«:\n"
 
 #: pg_ctl.c:1975
 #, c-format
@@ -714,7 +714,7 @@ msgid ""
 "Options for register and unregister:\n"
 msgstr ""
 "\n"
-"Optionen für „register“ und „unregister“:\n"
+"Optionen für »register« und »unregister«:\n"
 
 #: pg_ctl.c:1976
 #, c-format
@@ -769,22 +769,22 @@ msgstr ""
 #: pg_ctl.c:2011
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: unbekannter Shutdown-Modus „%s“\n"
+msgstr "%s: unbekannter Shutdown-Modus »%s«\n"
 
 #: pg_ctl.c:2043
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s: unbekannter Signalname „%s“\n"
+msgstr "%s: unbekannter Signalname »%s«\n"
 
 #: pg_ctl.c:2060
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
-msgstr "%s: unbekannter Starttyp „%s“\n"
+msgstr "%s: unbekannter Starttyp »%s«\n"
 
 #: pg_ctl.c:2115
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
-msgstr "%s: konnte das Datenverzeichnis mit Befehl „%s“ nicht ermitteln\n"
+msgstr "%s: konnte das Datenverzeichnis mit Befehl »%s« nicht ermitteln\n"
 
 #: pg_ctl.c:2187
 #, c-format
@@ -794,7 +794,7 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s: kann nicht als root ausgeführt werden\n"
-"Bitte loggen Sie sich (z.B. mit „su“) als der (unprivilegierte) Benutzer\n"
+"Bitte loggen Sie sich (z.B. mit »su«) als der (unprivilegierte) Benutzer\n"
 "ein, der Eigentümer des Serverprozesses sein soll.\n"
 
 #: pg_ctl.c:2266
@@ -805,17 +805,17 @@ msgstr "%s: Option -S wird auf dieser Plattform nicht unterstützt\n"
 #: pg_ctl.c:2304
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: zu viele Kommandozeilenargumente (das erste ist „%s“)\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
 #: pg_ctl.c:2328
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
-msgstr "%s: fehlende Argumente für „kill“-Modus\n"
+msgstr "%s: fehlende Argumente für »kill«-Modus\n"
 
 #: pg_ctl.c:2346
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: unbekannter Operationsmodus „%s“\n"
+msgstr "%s: unbekannter Operationsmodus »%s«\n"
 
 #: pg_ctl.c:2356
 #, c-format

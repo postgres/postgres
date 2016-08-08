@@ -1,7 +1,7 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004 - 2016.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -32,27 +32,27 @@ msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 #: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "ungültige Programmdatei „%s“"
+msgstr "ungültige Programmdatei »%s«"
 
 #: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "konnte Programmdatei „%s“ nicht lesen"
+msgstr "konnte Programmdatei »%s« nicht lesen"
 
 #: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "konnte kein „%s“ zum Ausführen finden"
+msgstr "konnte kein »%s« zum Ausführen finden"
 
 #: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
-msgstr "konnte nicht in Verzeichnis „%s“ wechseln: %s"
+msgstr "konnte nicht in Verzeichnis »%s« wechseln: %s"
 
 #: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "konnte symbolische Verknüpfung „%s“ nicht lesen"
+msgstr "konnte symbolische Verknüpfung »%s« nicht lesen"
 
 #: ../../common/exec.c:523
 #, c-format
@@ -172,7 +172,7 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           zeige Optionen des „configure“-Skriptes beim Bauen\n"
+"  --configure           zeige Optionen des »configure«-Skriptes beim Bauen\n"
 "                        von PostgreSQL\n"
 
 #: pg_config.c:94
@@ -244,7 +244,7 @@ msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
 #: pg_config.c:111
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_config.c:153
 #, c-format

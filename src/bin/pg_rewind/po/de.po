@@ -51,7 +51,7 @@ msgstr "%s: konnte beschränktes Token nicht erzeugen: Fehlercode %lu\n"
 #: ../../common/restricted_token.c:132
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: konnte Prozess für Befehl „%s“ nicht starten: Fehlercode %lu\n"
+msgstr "%s: konnte Prozess für Befehl »%s« nicht starten: Fehlercode %lu\n"
 
 #: ../../common/restricted_token.c:170
 #, c-format
@@ -66,42 +66,42 @@ msgstr "%s: konnte Statuscode des Subprozesses nicht ermitteln: Fehlercode %lu\n
 #: copy_fetch.c:64
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis „%s“ nicht öffnen: %s\n"
+msgstr "konnte Verzeichnis »%s« nicht öffnen: %s\n"
 
 #: copy_fetch.c:93 filemap.c:112 filemap.c:267
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
-msgstr "konnte „stat“ für Datei „%s“ nicht ausführen: %s\n"
+msgstr "konnte »stat« für Datei »%s« nicht ausführen: %s\n"
 
 #: copy_fetch.c:122
 #, c-format
 msgid "could not read symbolic link \"%s\": %s\n"
-msgstr "konnte symbolische Verknüpfung „%s“ nicht lesen: %s\n"
+msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %s\n"
 
 #: copy_fetch.c:125
 #, c-format
 msgid "symbolic link \"%s\" target is too long\n"
-msgstr "Ziel für symbolische Verknüpfung „%s“ ist zu lang\n"
+msgstr "Ziel für symbolische Verknüpfung »%s« ist zu lang\n"
 
 #: copy_fetch.c:140
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform\n"
-msgstr "„%s“ ist eine symbolische Verknüpfung, aber symbolische Verknüpfungen werden auf dieser Plattform nicht unterstützt\n"
+msgstr "»%s« ist eine symbolische Verknüpfung, aber symbolische Verknüpfungen werden auf dieser Plattform nicht unterstützt\n"
 
 #: copy_fetch.c:147
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis „%s“ nicht lesen: %s\n"
+msgstr "konnte Verzeichnis »%s« nicht lesen: %s\n"
 
 #: copy_fetch.c:151
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis „%s“ nicht schließen: %s\n"
+msgstr "konnte Verzeichnis »%s« nicht schließen: %s\n"
 
 #: copy_fetch.c:171
 #, c-format
 msgid "could not open source file \"%s\": %s\n"
-msgstr "konnte Quelldatei „%s“ nicht öffnen: %s\n"
+msgstr "konnte Quelldatei »%s« nicht öffnen: %s\n"
 
 #: copy_fetch.c:175
 #, c-format
@@ -111,17 +111,17 @@ msgstr "konnte Positionszeiger in Quelldatei nicht setzen: %s\n"
 #: copy_fetch.c:192 file_ops.c:300
 #, c-format
 msgid "could not read file \"%s\": %s\n"
-msgstr "konnte Datei „%s“ nicht lesen: %s\n"
+msgstr "konnte Datei »%s« nicht lesen: %s\n"
 
 #: copy_fetch.c:195
 #, c-format
 msgid "unexpected EOF while reading file \"%s\"\n"
-msgstr "unerwartetes EOF beim Lesen der Datei „%s“\n"
+msgstr "unerwartetes EOF beim Lesen der Datei »%s«\n"
 
 #: copy_fetch.c:202
 #, c-format
 msgid "could not close file \"%s\": %s\n"
-msgstr "konnte Datei „%s“ nicht schließen: %s\n"
+msgstr "konnte Datei »%s« nicht schließen: %s\n"
 
 #: datapagemap.c:124
 #, c-format
@@ -131,22 +131,22 @@ msgstr "  Block %u\n"
 #: file_ops.c:64
 #, c-format
 msgid "could not open target file \"%s\": %s\n"
-msgstr "konnte Zieldatei „%s“ nicht öffnen: %s\n"
+msgstr "konnte Zieldatei »%s« nicht öffnen: %s\n"
 
 #: file_ops.c:78
 #, c-format
 msgid "could not close target file \"%s\": %s\n"
-msgstr "konnte Zieldatei „%s“ nicht schließen: %s\n"
+msgstr "konnte Zieldatei »%s« nicht schließen: %s\n"
 
 #: file_ops.c:98
 #, c-format
 msgid "could not seek in target file \"%s\": %s\n"
-msgstr "konnte Positionszeiger in Zieldatei „%s“ nicht setzen: %s\n"
+msgstr "konnte Positionszeiger in Zieldatei »%s« nicht setzen: %s\n"
 
 #: file_ops.c:114
 #, c-format
 msgid "could not write file \"%s\": %s\n"
-msgstr "konnte Datei „%s“ nicht schreiben: %s\n"
+msgstr "konnte Datei »%s« nicht schreiben: %s\n"
 
 #: file_ops.c:164
 #, c-format
@@ -156,62 +156,62 @@ msgstr "ungültige Aktion (CREATE) für normale Datei\n"
 #: file_ops.c:179
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
-msgstr "konnte Datei „%s“ nicht löschen: %s\n"
+msgstr "konnte Datei »%s« nicht löschen: %s\n"
 
 #: file_ops.c:196
 #, c-format
 msgid "could not open file \"%s\" for truncation: %s\n"
-msgstr "konnte Datei „%s“ nicht zum Kürzen öffnen: %s\n"
+msgstr "konnte Datei »%s« nicht zum Kürzen öffnen: %s\n"
 
 #: file_ops.c:200
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %s\n"
-msgstr "konnte Datei „%s“ nicht auf %u kürzen: %s\n"
+msgstr "konnte Datei »%s« nicht auf %u kürzen: %s\n"
 
 #: file_ops.c:216
 #, c-format
 msgid "could not create directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis „%s“ nicht erzeugen: %s\n"
+msgstr "konnte Verzeichnis »%s« nicht erzeugen: %s\n"
 
 #: file_ops.c:230
 #, c-format
 msgid "could not remove directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis „%s“ nicht löschen: %s\n"
+msgstr "konnte Verzeichnis »%s« nicht löschen: %s\n"
 
 #: file_ops.c:244
 #, c-format
 msgid "could not create symbolic link at \"%s\": %s\n"
-msgstr "konnte symbolische Verknüpfung „%s“ nicht erstellen: %s\n"
+msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %s\n"
 
 #: file_ops.c:258
 #, c-format
 msgid "could not remove symbolic link \"%s\": %s\n"
-msgstr "konnte symbolische Verknüpfung „%s“ nicht löschen: %s\n"
+msgstr "konnte symbolische Verknüpfung »%s« nicht löschen: %s\n"
 
 #: file_ops.c:288 file_ops.c:292
 #, c-format
 msgid "could not open file \"%s\" for reading: %s\n"
-msgstr "konnte Datei „%s“ nicht zum Lesen öffnen: %s\n"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
 
 #: filemap.c:104
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
-msgstr "Datendatei „%s“ in der Quelle ist keine normale Datei\n"
+msgstr "Datendatei »%s« in der Quelle ist keine normale Datei\n"
 
 #: filemap.c:126
 #, c-format
 msgid "\"%s\" is not a directory\n"
-msgstr "„%s“ ist kein Verzeichnis\n"
+msgstr "»%s« ist kein Verzeichnis\n"
 
 #: filemap.c:149
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
-msgstr "„%s“ ist keine symbolische Verknüpfung\n"
+msgstr "»%s« ist keine symbolische Verknüpfung\n"
 
 #: filemap.c:161
 #, c-format
 msgid "\"%s\" is not a regular file\n"
-msgstr "„%s“ ist keine normale Datei\n"
+msgstr "»%s« ist keine normale Datei\n"
 
 #: filemap.c:279
 #, c-format
@@ -221,7 +221,7 @@ msgstr "Quelldateiliste ist leer\n"
 #: filemap.c:401
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
-msgstr "unerwartete Seitenänderung für Verzeichnis oder symbolische Verknüpfung „%s“\n"
+msgstr "unerwartete Seitenänderung für Verzeichnis oder symbolische Verknüpfung »%s«\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
 #: filemap.c:537
@@ -262,7 +262,7 @@ msgstr "Anfrage ergab unerwartete Ergebnismenge\n"
 #: libpq_fetch.c:123
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
-msgstr "unbekanntes Ergebnis „%s“ für aktuelle WAL-Einfügeposition\n"
+msgstr "unbekanntes Ergebnis »%s« für aktuelle WAL-Einfügeposition\n"
 
 #: libpq_fetch.c:173
 #, c-format
@@ -322,27 +322,27 @@ msgstr "unerwartete Ergebnislänge beim Holen von fernen Dateien\n"
 #: libpq_fetch.c:303
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
-msgstr "NULL-Wert für Stück von Datei „%s“ empfangen, Datei wurde gelöscht\n"
+msgstr "NULL-Wert für Stück von Datei »%s« empfangen, Datei wurde gelöscht\n"
 
 #: libpq_fetch.c:310
 #, c-format
 msgid "received chunk for file \"%s\", offset %d, size %d\n"
-msgstr "Stück von Datei „%s“ empfangen, Offset %d, Größe %d\n"
+msgstr "Stück von Datei »%s« empfangen, Offset %d, Größe %d\n"
 
 #: libpq_fetch.c:339
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
-msgstr "konnte ferne Datei „%s“ nicht holen: %s"
+msgstr "konnte ferne Datei »%s« nicht holen: %s"
 
 #: libpq_fetch.c:344
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
-msgstr "unerwartete Ergebnismenge beim Holen der fernen Datei „%s“\n"
+msgstr "unerwartete Ergebnismenge beim Holen der fernen Datei »%s«\n"
 
 #: libpq_fetch.c:355
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
-msgstr "Datei „%s“ geholt, Länge %d\n"
+msgstr "Datei »%s« geholt, Länge %d\n"
 
 #: libpq_fetch.c:387
 #, c-format
@@ -401,17 +401,17 @@ msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden\n"
 #: parsexlog.c:283
 #, c-format
 msgid "could not open file \"%s\": %s\n"
-msgstr "konnte Datei „%s“ nicht öffnen: %s\n"
+msgstr "konnte Datei »%s« nicht öffnen: %s\n"
 
 #: parsexlog.c:297
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
-msgstr "konnte Positionszeiger in Datei „%s“ nicht setzen: %s\n"
+msgstr "konnte Positionszeiger in Datei »%s« nicht setzen: %s\n"
 
 #: parsexlog.c:304
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
-msgstr "konnte nicht aus Datei „%s“ nicht lesen: %s\n"
+msgstr "konnte nicht aus Datei »%s« nicht lesen: %s\n"
 
 #: parsexlog.c:372
 #, c-format
@@ -501,7 +501,7 @@ msgstr ""
 #: pg_rewind.c:130 pg_rewind.c:161 pg_rewind.c:168 pg_rewind.c:176
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_rewind.c:160
 #, c-format
@@ -516,12 +516,12 @@ msgstr "%s: kein Zielverzeichnis angegeben (--target-pgdata)\n"
 #: pg_rewind.c:174
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: zu viele Kommandozeilenargumente (das erste ist „%s“)\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
 #: pg_rewind.c:189
 #, c-format
 msgid "cannot be executed by \"root\"\n"
-msgstr "kann nicht von „root“ ausgeführt werden\n"
+msgstr "kann nicht von »root« ausgeführt werden\n"
 
 #: pg_rewind.c:190
 #, c-format
@@ -600,7 +600,7 @@ msgstr "die Cluster sind nicht mit dieser Version von pg_rewind kompatibel\n"
 #: pg_rewind.c:386
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\"\n"
-msgstr "Zielserver muss entweder Datenprüfsummen oder „wal_log_hints = on“ verwenden\n"
+msgstr "Zielserver muss entweder Datenprüfsummen oder »wal_log_hints = on« verwenden\n"
 
 #: pg_rewind.c:397
 #, c-format
@@ -660,8 +660,8 @@ msgid ""
 "not found in the same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Das Programm „initdb“ wird von %s benötigt, aber wurde nicht im\n"
-"selben Verzeichnis wie „%s“ gefunden.\n"
+"Das Programm »initdb« wird von %s benötigt, aber wurde nicht im\n"
+"selben Verzeichnis wie »%s« gefunden.\n"
 "Prüfen Sie Ihre Installation.\n"
 
 #: pg_rewind.c:693
@@ -671,7 +671,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Das Programm „initdb“ wurde von %s gefunden,\n"
+"Das Programm »initdb« wurde von %s gefunden,\n"
 "aber es hatte nicht die gleiche Version wie %s.\n"
 "Prüfen Sie Ihre Installation.\n"
 

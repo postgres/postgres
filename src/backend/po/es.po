@@ -59,7 +59,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-05-02 20:08+0000\n"
-"PO-Revision-Date: 2016-05-03 12:17-0300\n"
+"PO-Revision-Date: 2016-07-22 19:04-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -2687,7 +2687,7 @@ msgstr "pg_stop_backup completado, todos los segmentos de WAL requeridos han sid
 #: access/transam/xlog.c:10573
 #, c-format
 msgid "WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup"
-msgstr "el archivado de WAL no está activo; debe asegurarse que todos los segmentos WAL requeridos se copian por algún otro mecanism para completar el respaldo"
+msgstr "el archivado de WAL no está activo; debe asegurarse que todos los segmentos WAL requeridos se copian por algún otro mecanismo para completar el respaldo"
 
 #. translator: %s is an XLog record description
 #: access/transam/xlog.c:10858

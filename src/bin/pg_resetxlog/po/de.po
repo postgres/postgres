@@ -1,7 +1,7 @@
 # German message translation file for pg_resetxlog
 # Peter Eisentraut <peter_e@gmx.net>, 2002 - 2016.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -39,7 +39,7 @@ msgstr "%s: konnte beschränktes Token nicht erzeugen: Fehlercode %lu\n"
 #: ../../common/restricted_token.c:132
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: konnte Prozess für Befehl „%s“ nicht starten: Fehlercode %lu\n"
+msgstr "%s: konnte Prozess für Befehl »%s« nicht starten: Fehlercode %lu\n"
 
 #: ../../common/restricted_token.c:170
 #, c-format
@@ -64,7 +64,7 @@ msgstr "%s: ungültiges Argument für Option %s\n"
 #: pg_resetxlog.c:265 pg_resetxlog.c:272 pg_resetxlog.c:285 pg_resetxlog.c:293
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_resetxlog.c:146
 #, c-format
@@ -104,7 +104,7 @@ msgstr "%s: Multitransaktions-Offset (-O) darf nicht -1 sein\n"
 #: pg_resetxlog.c:283
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: zu viele Kommandozeilenargumente (das erste ist „%s“)\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
 #: pg_resetxlog.c:292
 #, c-format
@@ -114,7 +114,7 @@ msgstr "%s: kein Datenverzeichnis angegeben\n"
 #: pg_resetxlog.c:306
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
-msgstr "%s: kann nicht von „root“ ausgeführt werden\n"
+msgstr "%s: kann nicht von »root« ausgeführt werden\n"
 
 #: pg_resetxlog.c:308
 #, c-format
@@ -124,12 +124,12 @@ msgstr "Sie müssen %s als PostgreSQL-Superuser ausführen.\n"
 #: pg_resetxlog.c:318
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
-msgstr "%s: konnte nicht in Verzeichnis „%s“ wechseln: %s\n"
+msgstr "%s: konnte nicht in Verzeichnis »%s« wechseln: %s\n"
 
 #: pg_resetxlog.c:331 pg_resetxlog.c:477
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: konnte Datei „%s“ nicht zum Lesen öffnen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
 
 #: pg_resetxlog.c:338
 #, c-format
@@ -137,7 +137,7 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s: Sperrdatei „%s“ existiert bereits\n"
+"%s: Sperrdatei »%s« existiert bereits\n"
 "Läuft der Server?  Wenn nicht, dann Sperrdatei löschen und nochmal versuchen.\n"
 
 #: pg_resetxlog.c:425
@@ -181,7 +181,7 @@ msgstr ""
 #: pg_resetxlog.c:493
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: konnte Datei „%s“ nicht lesen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht lesen: %s\n"
 
 #: pg_resetxlog.c:516
 #, c-format
@@ -476,32 +476,32 @@ msgstr "%s: fsync-Fehler: %s\n"
 #: pg_resetxlog.c:900 pg_resetxlog.c:971 pg_resetxlog.c:1022
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: konnte Verzeichnis „%s“ nicht öffnen: %s\n"
+msgstr "%s: konnte Verzeichnis »%s« nicht öffnen: %s\n"
 
 #: pg_resetxlog.c:936 pg_resetxlog.c:993 pg_resetxlog.c:1047
 #, c-format
 msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s: konnte Verzeichnis „%s“ nicht lesen: %s\n"
+msgstr "%s: konnte Verzeichnis »%s« nicht lesen: %s\n"
 
 #: pg_resetxlog.c:943 pg_resetxlog.c:1000 pg_resetxlog.c:1054
 #, c-format
 msgid "%s: could not close directory \"%s\": %s\n"
-msgstr "%s: konnte Verzeichnis „%s“ nicht schließen: %s\n"
+msgstr "%s: konnte Verzeichnis »%s« nicht schließen: %s\n"
 
 #: pg_resetxlog.c:984 pg_resetxlog.c:1038
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s: konnte Datei „%s“ nicht löschen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht löschen: %s\n"
 
 #: pg_resetxlog.c:1123
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: konnte Datei „%s“ nicht öffnen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht öffnen: %s\n"
 
 #: pg_resetxlog.c:1134 pg_resetxlog.c:1148
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: konnte Datei „%s“ nicht schreiben: %s\n"
+msgstr "%s: konnte Datei »%s« nicht schreiben: %s\n"
 
 #: pg_resetxlog.c:1167
 #, c-format

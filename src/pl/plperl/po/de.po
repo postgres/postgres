@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2016.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -20,7 +20,7 @@ msgstr ""
 
 #: plperl.c:405
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
-msgstr "Wenn wahr, dann wird vertrauenswürdiger und nicht vertrauenswürdiger Perl-Code im „strict“-Modus kompiliert."
+msgstr "Wenn wahr, dann wird vertrauenswürdiger und nicht vertrauenswürdiger Perl-Code im »strict«-Modus kompiliert."
 
 #: plperl.c:419
 msgid "Perl initialization code to execute when a Perl interpreter is initialized."
@@ -84,7 +84,7 @@ msgstr "beim Ausführen von plperl.on_plperlu_init"
 #: plperl.c:1082 plperl.c:1722
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
-msgstr "Perl-Hash enthält nicht existierende Spalte „%s“"
+msgstr "Perl-Hash enthält nicht existierende Spalte »%s«"
 
 #: plperl.c:1167
 #, c-format
@@ -144,7 +144,7 @@ msgstr "PL/Perl-Funktionen können Typ %s nicht annehmen"
 #: plperl.c:2085
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
-msgstr "keine CODE-Referenz erhalten beim Kompilieren von Funktion „%s“"
+msgstr "keine CODE-Referenz erhalten beim Kompilieren von Funktion »%s«"
 
 #: plperl.c:2177
 #, c-format
@@ -179,7 +179,7 @@ msgstr "geänderte Zeile im DELETE-Trigger wird ignoriert"
 #: plperl.c:2529
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
-msgstr "Ergebnis einer PL/Perl-Triggerfunktion muss undef, „SKIP“ oder „MODIFY“ sein"
+msgstr "Ergebnis einer PL/Perl-Triggerfunktion muss undef, »SKIP« oder »MODIFY« sein"
 
 #: plperl.c:2708 plperl.c:2718
 #, c-format
@@ -209,12 +209,12 @@ msgstr "PL/Perl-Funktion, die SETOF eines zusammengesetzten Typs zurückgibt, mu
 #: plperl.c:3954
 #, c-format
 msgid "PL/Perl function \"%s\""
-msgstr "PL/Perl-Funktion „%s“"
+msgstr "PL/Perl-Funktion »%s«"
 
 #: plperl.c:3966
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
-msgstr "Kompilierung der PL/Perl-Funktion „%s“"
+msgstr "Kompilierung der PL/Perl-Funktion »%s«"
 
 #: plperl.c:3975
 #, c-format

@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2016.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -99,7 +99,7 @@ msgstr "Fehler beim Auslesen des nächsten Elements vom Iterator"
 #: plpy_exec.c:210
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
-msgstr "PL/Python-Funktion mit Rückgabetyp „void“ hat nicht None zurückgegeben"
+msgstr "PL/Python-Funktion mit Rückgabetyp »void« hat nicht None zurückgegeben"
 
 #: plpy_exec.c:374 plpy_exec.c:400
 #, c-format
@@ -164,7 +164,7 @@ msgstr "Dictionary-Schlüssel auf Position %d in TD[\"new\"] ist keine Zeichenke
 #: plpy_exec.c:964
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
-msgstr "in TD[\"new\"] gefundener Schlüssel „%s“ existiert nicht als Spalte in der den Trigger auslösenden Zeile"
+msgstr "in TD[\"new\"] gefundener Schlüssel »%s« existiert nicht als Spalte in der den Trigger auslösenden Zeile"
 
 #: plpy_exec.c:1044
 #, c-format
@@ -194,7 +194,7 @@ msgstr "nicht abgefangener Fehler bei der Initialisierung"
 #: plpy_main.c:165
 #, c-format
 msgid "could not import \"__main__\" module"
-msgstr "konnte Modul „__main__“ nicht importieren"
+msgstr "konnte Modul »__main__« nicht importieren"
 
 #: plpy_main.c:170
 #, c-format
@@ -209,7 +209,7 @@ msgstr "konnte globale Objekte nicht initialisieren"
 #: plpy_main.c:389
 #, c-format
 msgid "PL/Python function \"%s\""
-msgstr "PL/Python-Funktion „%s“"
+msgstr "PL/Python-Funktion »%s«"
 
 #: plpy_main.c:396
 #, c-format
@@ -224,12 +224,12 @@ msgstr "plan.status nimmt keine Argumente"
 #: plpy_plpymodule.c:178 plpy_plpymodule.c:181
 #, c-format
 msgid "could not import \"plpy\" module"
-msgstr "konnte Modul „plpy“ nicht importieren"
+msgstr "konnte Modul »plpy« nicht importieren"
 
 #: plpy_plpymodule.c:196
 #, c-format
 msgid "could not add the spiexceptions module"
-msgstr "konnte das Modul „spiexceptions“ nicht hinzufügen"
+msgstr "konnte das Modul »spiexceptions« nicht hinzufügen"
 
 #: plpy_plpymodule.c:217
 #, c-format
@@ -253,12 +253,12 @@ msgstr "konnte Fehlermeldung in plpy.elog nicht parsen"
 #: plpy_plpymodule.c:448
 #, c-format
 msgid "Argument 'message' given by name and position"
-msgstr "Argument „message“ wurde durch Namen und Position angegeben"
+msgstr "Argument »message« wurde durch Namen und Position angegeben"
 
 #: plpy_plpymodule.c:475
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
-msgstr "„%s“ ist ein ungültiges Schlüsselwortargument für diese Funktion"
+msgstr "»%s« ist ein ungültiges Schlüsselwortargument für diese Funktion"
 
 #: plpy_plpymodule.c:486 plpy_plpymodule.c:492
 #, c-format
@@ -283,7 +283,7 @@ msgstr "PL/Python-Funktionen können Typ %s nicht annehmen"
 #: plpy_procedure.c:414
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
-msgstr "konnte PL/Python-Funktion „%s“ nicht kompilieren"
+msgstr "konnte PL/Python-Funktion »%s« nicht kompilieren"
 
 #: plpy_procedure.c:417
 #, c-format
@@ -353,12 +353,12 @@ msgstr "konnte neues Dictionary nicht erzeugen"
 #: plpy_typeio.c:560
 #, c-format
 msgid "could not import a module for Decimal constructor"
-msgstr "konnte kein Modul für den „Decimal“-Konstruktor importieren"
+msgstr "konnte kein Modul für den »Decimal«-Konstruktor importieren"
 
 #: plpy_typeio.c:564
 #, c-format
 msgid "no Decimal attribute in module"
-msgstr "kein Attribut „Decimal“ im Modul"
+msgstr "kein Attribut »Decimal« im Modul"
 
 #: plpy_typeio.c:570
 #, c-format
@@ -403,7 +403,7 @@ msgstr "Rückgabewert von Funktion mit Array-Rückgabetyp ist keine Python-Seque
 #: plpy_typeio.c:1000
 #, c-format
 msgid "key \"%s\" not found in mapping"
-msgstr "Schlüssel „%s“ nicht in Mapping gefunden"
+msgstr "Schlüssel »%s« nicht in Mapping gefunden"
 
 #: plpy_typeio.c:1001
 #, c-format
@@ -418,7 +418,7 @@ msgstr "Länge der zurückgegebenen Sequenz hat nicht mit der Anzahl der Spalten
 #: plpy_typeio.c:1163
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
-msgstr "Attribut „%s“ existiert nicht in Python-Objekt"
+msgstr "Attribut »%s« existiert nicht in Python-Objekt"
 
 #: plpy_typeio.c:1164
 #, c-format

@@ -1,7 +1,7 @@
 # German message translation file for pg_controldata
 # Peter Eisentraut <peter_e@gmx.net>, 2002 - 2016.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -19,12 +19,12 @@ msgstr ""
 #: ../../common/controldata_utils.c:56
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: konnte Datei „%s“ nicht zum Lesen öffnen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
 
 #: ../../common/controldata_utils.c:69
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: konnte Datei „%s“ nicht lesen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht lesen: %s\n"
 
 #: ../../common/controldata_utils.c:86
 msgid "calculated CRC checksum does not match value stored in file"
@@ -162,12 +162,12 @@ msgstr "unbekanntes wal_level"
 #: pg_controldata.c:127 pg_controldata.c:145 pg_controldata.c:153
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_controldata.c:143
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: zu viele Kommandozeilenargumente (das erste ist „%s“)\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
 #: pg_controldata.c:152
 #, c-format
