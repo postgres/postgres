@@ -206,6 +206,210 @@ quote_identifier(const char *s)
 
 
 /*
+ * Append the given string to the shell command being built in the buffer,
+ * with suitable shell-style quoting to create exactly one argument.
+ *
+ * Forbid LF or CR characters, which have scant practical use beyond designing
+ * security breaches.  The Windows command shell is unusable as a conduit for
+ * arguments containing LF or CR characters.  A future major release should
+ * reject those characters in CREATE ROLE and CREATE DATABASE, because use
+ * there eventually leads to errors here.
+ */
+void
+appendShellString(PQExpBuffer buf, const char *str)
+{
+	const char *p;
+
+#ifndef WIN32
+	appendPQExpBufferChar(buf, '\'');
+	for (p = str; *p; p++)
+	{
+		if (*p == '\n' || *p == '\r')
+		{
+			fprintf(stderr,
+					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
+					str);
+			exit(EXIT_FAILURE);
+		}
+
+		if (*p == '\'')
+			appendPQExpBufferStr(buf, "'\"'\"'");
+		else
+			appendPQExpBufferChar(buf, *p);
+	}
+	appendPQExpBufferChar(buf, '\'');
+#else							/* WIN32 */
+	int			backslash_run_length = 0;
+
+	/*
+	 * A Windows system() argument experiences two layers of interpretation.
+	 * First, cmd.exe interprets the string.  Its behavior is undocumented,
+	 * but a caret escapes any byte except LF or CR that would otherwise have
+	 * special meaning.  Handling of a caret before LF or CR differs between
+	 * "cmd.exe /c" and other modes, and it is unusable here.
+	 *
+	 * Second, the new process parses its command line to construct argv (see
+	 * https://msdn.microsoft.com/en-us/library/17w5ykft.aspx).  This treats
+	 * backslash-double quote sequences specially.
+	 */
+	appendPQExpBufferStr(buf, "^\"");
+	for (p = str; *p; p++)
+	{
+		if (*p == '\n' || *p == '\r')
+		{
+			fprintf(stderr,
+					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
+					str);
+			exit(EXIT_FAILURE);
+		}
+
+		/* Change N backslashes before a double quote to 2N+1 backslashes. */
+		if (*p == '"')
+		{
+			while (backslash_run_length)
+			{
+				appendPQExpBufferStr(buf, "^\\");
+				backslash_run_length--;
+			}
+			appendPQExpBufferStr(buf, "^\\");
+		}
+		else if (*p == '\\')
+			backslash_run_length++;
+		else
+			backslash_run_length = 0;
+
+		/*
+		 * Decline to caret-escape the most mundane characters, to ease
+		 * debugging and lest we approach the command length limit.
+		 */
+		if (!((*p >= 'a' && *p <= 'z') ||
+			  (*p >= 'A' && *p <= 'Z') ||
+			  (*p >= '0' && *p <= '9')))
+			appendPQExpBufferChar(buf, '^');
+		appendPQExpBufferChar(buf, *p);
+	}
+
+	/*
+	 * Change N backslashes at end of argument to 2N backslashes, because they
+	 * precede the double quote that terminates the argument.
+	 */
+	while (backslash_run_length)
+	{
+		appendPQExpBufferStr(buf, "^\\");
+		backslash_run_length--;
+	}
+	appendPQExpBufferStr(buf, "^\"");
+#endif   /* WIN32 */
+}
+
+
+/*
+ * Append the given string to the buffer, with suitable quoting for passing
+ * the string as a value, in a keyword/pair value in a libpq connection
+ * string
+ */
+void
+appendConnStrVal(PQExpBuffer buf, const char *str)
+{
+	const char *s;
+	bool		needquotes;
+
+	/*
+	 * If the string is one or more plain ASCII characters, no need to quote
+	 * it. This is quite conservative, but better safe than sorry.
+	 */
+	needquotes = true;
+	for (s = str; *s; s++)
+	{
+		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
+			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
+		{
+			needquotes = true;
+			break;
+		}
+		needquotes = false;
+	}
+
+	if (needquotes)
+	{
+		appendPQExpBufferChar(buf, '\'');
+		while (*str)
+		{
+			/* ' and \ must be escaped by to \' and \\ */
+			if (*str == '\'' || *str == '\\')
+				appendPQExpBufferChar(buf, '\\');
+
+			appendPQExpBufferChar(buf, *str);
+			str++;
+		}
+		appendPQExpBufferChar(buf, '\'');
+	}
+	else
+		appendPQExpBufferStr(buf, str);
+}
+
+
+/*
+ * Append a psql meta-command that connects to the given database with the
+ * then-current connection's user, host and port.
+ */
+void
+appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
+{
+	const char *s;
+	bool		complex;
+
+	/*
+	 * If the name is plain ASCII characters, emit a trivial "\connect "foo"".
+	 * For other names, even many not technically requiring it, skip to the
+	 * general case.  No database has a zero-length name.
+	 */
+	complex = false;
+	for (s = dbname; *s; s++)
+	{
+		if (*s == '\n' || *s == '\r')
+		{
+			fprintf(stderr,
+					_("database name contains a newline or carriage return: \"%s\"\n"),
+					dbname);
+			exit(EXIT_FAILURE);
+		}
+
+		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
+			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
+		{
+			complex = true;
+		}
+	}
+
+	appendPQExpBufferStr(buf, "\\connect ");
+	if (complex)
+	{
+		PQExpBufferData connstr;
+
+		initPQExpBuffer(&connstr);
+		appendPQExpBuffer(&connstr, "dbname=");
+		appendConnStrVal(&connstr, dbname);
+
+		appendPQExpBuffer(buf, "-reuse-previous=on ");
+
+		/*
+		 * As long as the name does not contain a newline, SQL identifier
+		 * quoting satisfies the psql meta-command parser.  Prefer not to
+		 * involve psql-interpreted single quotes, which behaved differently
+		 * before PostgreSQL 9.2.
+		 */
+		appendPQExpBufferStr(buf, quote_identifier(connstr.data));
+
+		termPQExpBuffer(&connstr);
+	}
+	else
+		appendPQExpBufferStr(buf, quote_identifier(dbname));
+	appendPQExpBufferChar(buf, '\n');
+}
+
+
+/*
  * get_user_info()
  */
 int

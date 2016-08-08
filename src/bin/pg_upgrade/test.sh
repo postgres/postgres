@@ -153,6 +153,20 @@ set -x
 
 standard_initdb "$oldbindir"/initdb
 "$oldbindir"/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
+
+# Create databases with names covering the ASCII bytes other than NUL, BEL,
+# LF, or CR.  BEL would ring the terminal bell in the course of this test, and
+# it is not otherwise a special case.  PostgreSQL doesn't support the rest.
+dbname1=`awk 'BEGIN { for (i= 1; i < 46; i++)
+	if (i != 7 && i != 10 && i != 13) printf "%c", i }' </dev/null`
+# Exercise backslashes adjacent to double quotes, a Windows special case.
+dbname1='\"\'$dbname1'\\"\\\'
+dbname2=`awk 'BEGIN { for (i = 46; i <  91; i++) printf "%c", i }' </dev/null`
+dbname3=`awk 'BEGIN { for (i = 91; i < 128; i++) printf "%c", i }' </dev/null`
+createdb "$dbname1" || createdb_status=$?
+createdb "$dbname2" || createdb_status=$?
+createdb "$dbname3" || createdb_status=$?
+
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 	if [ "$newsrc" != "$oldsrc" ]; then
@@ -178,6 +192,9 @@ else
 	make_installcheck_status=$?
 fi
 "$oldbindir"/pg_ctl -m fast stop
+if [ -n "$createdb_status" ]; then
+	exit 1
+fi
 if [ -n "$make_installcheck_status" ]; then
 	exit 1
 fi

@@ -539,6 +539,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 {
 	PGconn	   *conn;
 	PGresult   *result;
+	PQExpBufferData connstr;
 	int			stage;
 	int			i;
 
@@ -549,6 +550,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 						  progname, echo);
 	PQfinish(conn);
 
+	initPQExpBuffer(&connstr);
 	if (analyze_in_stages)
 	{
 		/*
@@ -563,10 +565,11 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 		{
 			for (i = 0; i < PQntuples(result); i++)
 			{
-				const char *dbname;
+				resetPQExpBuffer(&connstr);
+				appendPQExpBuffer(&connstr, "dbname=");
+				appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
 
-				dbname = PQgetvalue(result, i, 0);
-				vacuum_one_database(dbname, vacopts,
+				vacuum_one_database(connstr.data, vacopts,
 									stage,
 									NULL,
 									host, port, username, prompt_password,
@@ -579,10 +582,11 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	{
 		for (i = 0; i < PQntuples(result); i++)
 		{
-			const char *dbname;
+			resetPQExpBuffer(&connstr);
+			appendPQExpBuffer(&connstr, "dbname=");
+			appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
 
-			dbname = PQgetvalue(result, i, 0);
-			vacuum_one_database(dbname, vacopts,
+			vacuum_one_database(connstr.data, vacopts,
 								ANALYZE_NO_STAGE,
 								NULL,
 								host, port, username, prompt_password,
@@ -590,6 +594,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 								progname, echo, quiet);
 		}
 	}
+	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }
