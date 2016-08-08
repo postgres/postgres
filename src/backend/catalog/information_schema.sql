@@ -1471,7 +1471,7 @@ CREATE VIEW routines AS
            CAST(null AS cardinal_number) AS result_cast_char_octet_length,
            CAST(null AS sql_identifier) AS result_cast_char_set_catalog,
            CAST(null AS sql_identifier) AS result_cast_char_set_schema,
-           CAST(null AS sql_identifier) AS result_cast_character_set_name,
+           CAST(null AS sql_identifier) AS result_cast_char_set_name,
            CAST(null AS sql_identifier) AS result_cast_collation_catalog,
            CAST(null AS sql_identifier) AS result_cast_collation_schema,
            CAST(null AS sql_identifier) AS result_cast_collation_name,
