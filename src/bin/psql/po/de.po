@@ -2118,7 +2118,7 @@ msgid ""
 "                         connect to new database (currently \"%s\")\n"
 msgstr ""
 "  \\c[onnect] {[DBNAME|- BENUTZER|- HOST|- PORT|-] | conninfo}\n"
-"                         mit neuer Datenbank verbinden (aktuell „%s“)\n"
+"                         mit neuer Datenbank verbinden (aktuell »%s«)\n"
 
 #: help.c:262
 #, c-format

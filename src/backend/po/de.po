@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-03-27 16:26+0000\n"
-"PO-Revision-Date: 2016-03-28 00:49+0200\n"
+"PO-Revision-Date: 2016-07-25 12:24-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -714,7 +714,7 @@ msgstr "kann nicht mehr als 2^32-1 Befehle in einer Transaktion ausführen"
 #: access/transam/xact.c:1350
 #, c-format
 msgid "maximum number of committed subtransactions (%d) exceeded"
-msgstr "maximale Anzahl committeter Subtransaktionen (%d) erreicht"
+msgstr "maximale Anzahl committeter Subtransaktionen (%d) überschritten"
 
 #: access/transam/xact.c:2123
 #, c-format
@@ -14221,7 +14221,7 @@ msgstr "konnte Affixdatei »%s« nicht öffnen: %m"
 #: tsearch/spell.c:825
 #, c-format
 msgid "Ispell dictionary supports only default flag value"
-msgstr "Ispell-Wörterbuch unterstützt nur den Default-Flag-Wert"
+msgstr "Ispell-Wörterbuch unterstützt nur den Flag-Wert »default«"
 
 #: tsearch/spell.c:1050
 #, c-format
@@ -17123,7 +17123,7 @@ msgstr "zu viele Verbindungen von Rolle »%s«"
 #: utils/init/miscinit.c:538
 #, c-format
 msgid "permission denied to set session authorization"
-msgstr "keine Berechtigung, um Sitzungsauthorisierung zu setzen"
+msgstr "keine Berechtigung, um Sitzungsautorisierung zu setzen"
 
 #: utils/init/miscinit.c:618
 #, c-format
@@ -17249,12 +17249,12 @@ msgstr "Bibliothek »%s« geladen"
 #: utils/init/postinit.c:225
 #, c-format
 msgid "replication connection authorized: user=%s"
-msgstr "Replikationsverbindung authorisiert: Benutzer=%s"
+msgstr "Replikationsverbindung autorisiert: Benutzer=%s"
 
 #: utils/init/postinit.c:229
 #, c-format
 msgid "connection authorized: user=%s database=%s"
-msgstr "Verbindung authorisiert: Benutzer=%s Datenbank=%s"
+msgstr "Verbindung autorisiert: Benutzer=%s Datenbank=%s"
 
 #: utils/init/postinit.c:260
 #, c-format
