@@ -2970,19 +2970,30 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 	/*
 	 * If there's a test expression, we have to evaluate it and save the value
-	 * where the CaseTestExpr placeholders can find it. We must save and
+	 * where the CaseTestExpr placeholders can find it.  We must save and
 	 * restore prior setting of econtext's caseValue fields, in case this node
-	 * is itself within a larger CASE.
+	 * is itself within a larger CASE.  Furthermore, don't assign to the
+	 * econtext fields until after returning from evaluation of the test
+	 * expression.  We used to pass &econtext->caseValue_isNull to the
+	 * recursive call, but that leads to aliasing that variable within said
+	 * call, which can (and did) produce bugs when the test expression itself
+	 * contains a CASE.
+	 *
+	 * If there's no test expression, we don't actually need to save and
+	 * restore these fields; but it's less code to just do so unconditionally.
 	 */
 	save_datum = econtext->caseValue_datum;
 	save_isNull = econtext->caseValue_isNull;
 
 	if (caseExpr->arg)
 	{
+		bool		arg_isNull;
+
 		econtext->caseValue_datum = ExecEvalExpr(caseExpr->arg,
 												 econtext,
-												 &econtext->caseValue_isNull,
+												 &arg_isNull,
 												 NULL);
+		econtext->caseValue_isNull = arg_isNull;
 	}
 
 	/*
@@ -2994,10 +3005,11 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 	{
 		CaseWhenState *wclause = lfirst(clause);
 		Datum		clause_value;
+		bool		clause_isNull;
 
 		clause_value = ExecEvalExpr(wclause->expr,
 									econtext,
-									isNull,
+									&clause_isNull,
 									NULL);
 
 		/*
@@ -3005,7 +3017,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 		 * statement is satisfied.  A NULL result from the test is not
 		 * considered true.
 		 */
-		if (DatumGetBool(clause_value) && !*isNull)
+		if (DatumGetBool(clause_value) && !clause_isNull)
 		{
 			econtext->caseValue_datum = save_datum;
 			econtext->caseValue_isNull = save_isNull;
