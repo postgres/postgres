@@ -65,7 +65,8 @@ static backslashResult exec_command(const char *cmd,
 			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		int lineno, bool *edited);
-static bool do_connect(char *dbname, char *user, char *host, char *port);
+static bool do_connect(enum trivalue reuse_previous_specification,
+		   char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 static bool do_watch(PQExpBuffer query_buf, double sleep);
 static bool lookup_object_oid(EditableObjectType obj_type, const char *desc,
@@ -231,12 +232,9 @@ exec_command(const char *cmd,
 	/*
 	 * \c or \connect -- connect to database using the specified parameters.
 	 *
-	 * \c dbname user host port
+	 * \c [-reuse-previous=BOOL] dbname user host port
 	 *
-	 * If any of these parameters are omitted or specified as '-', the current
-	 * value of the parameter will be used instead. If the parameter has no
-	 * current value, the default value for that parameter will be used. Some
-	 * examples:
+	 * Specifying a parameter as '-' is equivalent to omitting it.  Examples:
 	 *
 	 * \c - - hst		Connect to current database on current port of host
 	 * "hst" as current user. \c - usr - prt   Connect to current database on
@@ -245,17 +243,31 @@ exec_command(const char *cmd,
 	 */
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
 	{
+		static const char prefix[] = "-reuse-previous=";
 		char	   *opt1,
 				   *opt2,
 				   *opt3,
 				   *opt4;
+		enum trivalue reuse_previous;
 
 		opt1 = read_connect_arg(scan_state);
+		if (opt1 != NULL && strncmp(opt1, prefix, sizeof(prefix) - 1) == 0)
+		{
+			reuse_previous =
+				ParseVariableBool(opt1 + sizeof(prefix) - 1, prefix) ?
+				TRI_YES : TRI_NO;
+
+			free(opt1);
+			opt1 = read_connect_arg(scan_state);
+		}
+		else
+			reuse_previous = TRI_DEFAULT;
+
 		opt2 = read_connect_arg(scan_state);
 		opt3 = read_connect_arg(scan_state);
 		opt4 = read_connect_arg(scan_state);
 
-		success = do_connect(opt1, opt2, opt3, opt4);
+		success = do_connect(reuse_previous, opt1, opt2, opt3, opt4);
 
 		free(opt1);
 		free(opt2);
@@ -1754,22 +1766,25 @@ param_is_newly_set(const char *old_val, const char *new_val)
 /*
  * do_connect -- handler for \connect
  *
- * Connects to a database with given parameters. If there exists an
- * established connection, NULL values will be replaced with the ones
- * in the current connection. Otherwise NULL will be passed for that
- * parameter to PQconnectdbParams(), so the libpq defaults will be used.
+ * Connects to a database with given parameters. Absent an established
+ * connection, all parameters are required. Given -reuse-previous=off or a
+ * connection string without -reuse-previous=on, NULL values will pass through
+ * to PQconnectdbParams(), so the libpq defaults will be used. Otherwise, NULL
+ * values will be replaced with the ones in the current connection.
  *
  * In interactive mode, if connection fails with the given parameters,
  * the old connection will be kept.
  */
 static bool
-do_connect(char *dbname, char *user, char *host, char *port)
+do_connect(enum trivalue reuse_previous_specification,
+		   char *dbname, char *user, char *host, char *port)
 {
 	PGconn	   *o_conn = pset.db,
 			   *n_conn;
 	char	   *password = NULL;
 	bool		keep_password;
 	bool		has_connection_string;
+	bool		reuse_previous;
 
 	if (!o_conn && (!dbname || !user || !host || !port))
 	{
@@ -1783,16 +1798,35 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		return false;
 	}
 
-	/* grab values from the old connection, unless supplied by caller */
-	if (!user)
-		user = PQuser(o_conn);
-	if (!host)
-		host = PQhost(o_conn);
-	if (!port)
-		port = PQport(o_conn);
+	has_connection_string = dbname ?
+		recognized_connection_string(dbname) : false;
+	switch (reuse_previous_specification)
+	{
+		case TRI_YES:
+			reuse_previous = true;
+			break;
+		case TRI_NO:
+			reuse_previous = false;
+			break;
+		default:
+			reuse_previous = !has_connection_string;
+			break;
+	}
+	/* Silently ignore arguments subsequent to a connection string. */
+	if (has_connection_string)
+	{
+		user = NULL;
+		host = NULL;
+		port = NULL;
+	}
 
-	has_connection_string =
-		dbname ? recognized_connection_string(dbname) : false;
+	/* grab missing values from the old connection */
+	if (!user && reuse_previous)
+		user = PQuser(o_conn);
+	if (!host && reuse_previous)
+		host = PQhost(o_conn);
+	if (!port && reuse_previous)
+		port = PQport(o_conn);
 
 	/*
 	 * Any change in the parameters read above makes us discard the password.
@@ -1808,10 +1842,10 @@ do_connect(char *dbname, char *user, char *host, char *port)
 			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
 
 	/*
-	 * Grab dbname from old connection unless supplied by caller.  No password
-	 * discard if this changes: passwords aren't (usually) database-specific.
+	 * Grab missing dbname from old connection.  No password discard if this
+	 * changes: passwords aren't (usually) database-specific.
 	 */
-	if (!dbname)
+	if (!dbname && reuse_previous)
 		dbname = PQdb(o_conn);
 
 	/*
@@ -1842,20 +1876,27 @@ do_connect(char *dbname, char *user, char *host, char *port)
 #define PARAMS_ARRAY_SIZE	8
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-		int			paramnum = 0;
+		int			paramnum = -1;
 
-		keywords[0] = "dbname";
-		values[0] = dbname;
+		keywords[++paramnum] = "host";
+		values[paramnum] = host;
+		keywords[++paramnum] = "port";
+		values[paramnum] = port;
+		keywords[++paramnum] = "user";
+		values[paramnum] = user;
 
-		if (!has_connection_string)
-		{
-			keywords[++paramnum] = "host";
-			values[paramnum] = host;
-			keywords[++paramnum] = "port";
-			values[paramnum] = port;
-			keywords[++paramnum] = "user";
-			values[paramnum] = user;
-		}
+		/*
+		 * Position in the array matters when the dbname is a connection
+		 * string, because settings in a connection string override earlier
+		 * array entries only.  Thus, user= in the connection string always
+		 * takes effect, but client_encoding= often will not.
+		 *
+		 * If you change this code, also change the initial-connection code in
+		 * main().  For no good reason, a connection string password= takes
+		 * precedence in main() but not here.
+		 */
+		keywords[++paramnum] = "dbname";
+		values[paramnum] = dbname;
 		keywords[++paramnum] = "password";
 		values[paramnum] = password;
 		keywords[++paramnum] = "fallback_application_name";
