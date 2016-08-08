@@ -430,6 +430,9 @@ CREATE INDEX words_idx ON words USING GIN (word gin_trgm_ops);
    Teodor Sigaev <email>teodor@sigaev.ru</email>, Moscow, Delta-Soft Ltd.,Russia
   </para>
   <para>
+   Alexander Korotkov <email>a.korotkov@postgrespro.ru</email>, Moscow, Postgres Professional, Russia
+  </para>
+  <para>
    Documentation: Christopher Kings-Lynne
   </para>
   <para>
