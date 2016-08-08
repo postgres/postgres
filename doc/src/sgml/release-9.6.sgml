@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-08-07 (commit 19322c0a7)</simpara>
+   <simpara>Current as of 2016-08-08 (commit 34927b292)</simpara>
   </note>
 
   <sect2>
@@ -753,6 +753,34 @@
        <para>
         Avoid reducing the <literal>SO_SNDBUF</> setting below its default on
         recent Windows versions (Chen Huajun)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>System Catalogs</title>
+
+     <itemizedlist>
+
+      <listitem>
+<!--
+2016-08-07 [d8710f18f] Correct column name in information schema
+-->
+       <para>
+        Change column name
+        in <structname>information_schema</>.<structname>routines</> view
+        from <structfield>result_cast_character_set_name</>
+        to <structfield>result_cast_char_set_name</>
+        (Cl&eacute;ment Pr&eacute;vost)
+       </para>
+
+       <para>
+        SQL:2011 specifies the longer name, but that appears to be a mistake,
+        because adjacent column names use the shorter style, as do
+        other <structname>information_schema</> views.
        </para>
       </listitem>
 
