@@ -1605,7 +1605,8 @@ psql_scan_slash_option(PsqlScanState state,
 							/* Keep the first quote, remove the second */
 							cp++;
 						}
-						inquotes = !inquotes;
+						else
+							inquotes = !inquotes;
 						/* Collapse out quote at *cp */
 						memmove(cp, cp + 1, strlen(cp));
 						mybuf.len--;
