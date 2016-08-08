@@ -4188,11 +4188,11 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		 (id == NUM_0 || id == NUM_9) ? "NUM_0/9" : id == NUM_DEC ? "NUM_DEC" : "???");
 #endif
 
-	if (*Np->inout_p == ' ')
-		Np->inout_p++;
-
 #define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
 #define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
+
+	if (OVERLOAD_TEST)
+		return;
 
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
@@ -4331,7 +4331,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		 * next char is not digit
 		 */
 		if (IS_LSIGN(Np->Num) && isread &&
-			(Np->inout_p + 1) <= Np->inout + input_len &&
+			(Np->inout_p + 1) < Np->inout + input_len &&
 			!isdigit((unsigned char) *(Np->inout_p + 1)))
 		{
 			int			x;
