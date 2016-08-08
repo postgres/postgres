@@ -157,8 +157,51 @@ UPDATE CASE_TBL
 SELECT * FROM CASE_TBL;
 
 --
+-- Nested CASE expressions
+--
+
+-- This test exercises a bug caused by aliasing econtext->caseValue_isNull
+-- with the isNull argument of the inner CASE's ExecEvalCase() call.  After
+-- evaluating the vol(null) expression in the inner CASE's second WHEN-clause,
+-- the isNull flag for the case test value incorrectly became true, causing
+-- the third WHEN-clause not to match.  The volatile function calls are needed
+-- to prevent constant-folding in the planner, which would hide the bug.
+
+CREATE FUNCTION vol(text) returns text as
+  'begin return $1; end' language plpgsql volatile;
+
+SELECT CASE
+  (CASE vol('bar')
+    WHEN 'foo' THEN 'it was foo!'
+    WHEN vol(null) THEN 'null input'
+    WHEN 'bar' THEN 'it was bar!' END
+  )
+  WHEN 'it was foo!' THEN 'foo recognized'
+  WHEN 'it was bar!' THEN 'bar recognized'
+  ELSE 'unrecognized' END;
+
+-- In this case, we can't inline the SQL function without confusing things.
+CREATE DOMAIN foodomain AS text;
+
+CREATE FUNCTION volfoo(text) returns foodomain as
+  'begin return $1::foodomain; end' language plpgsql volatile;
+
+CREATE FUNCTION inline_eq(foodomain, foodomain) returns boolean as
+  'SELECT CASE $2::text WHEN $1::text THEN true ELSE false END' language sql;
+
+CREATE OPERATOR = (procedure = inline_eq,
+                   leftarg = foodomain, rightarg = foodomain);
+
+SELECT CASE volfoo('bar') WHEN 'foo'::foodomain THEN 'is foo' ELSE 'is not foo' END;
+
+--
 -- Clean up
 --
 
 DROP TABLE CASE_TBL;
 DROP TABLE CASE2_TBL;
+DROP OPERATOR = (foodomain, foodomain);
+DROP FUNCTION inline_eq(foodomain, foodomain);
+DROP FUNCTION volfoo(text);
+DROP DOMAIN foodomain;
+DROP FUNCTION vol(text);
