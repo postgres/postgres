@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-07-16 (commit 606ccc5e7)</simpara>
+   <simpara>Current as of 2016-08-07 (commit 19322c0a7)</simpara>
   </note>
 
   <sect2>
@@ -259,10 +259,12 @@
 2016-03-10 [fd31cd265] Don't vacuum all-frozen pages.
 2016-03-11 [7087166a8] pg_upgrade: Convert old visibility map format to new for
 2016-06-17 [ede62e56f] Add VACUUM (DISABLE_PAGE_SKIPPING) for emergencies.
+2016-07-18 [eca0f1db1] Clear all-frozen visibilitymap status when locking tuple
+2016-08-04 [e7caacf73] Fix hard to hit race condition in heapam's tuple locking
 -->
        <para>
         Avoid re-vacuuming pages containing only frozen tuples
-        (Masahiko Sawada, Robert Haas)
+        (Masahiko Sawada, Robert Haas, Andres Freund)
        </para>
 
        <para>
@@ -419,6 +421,8 @@
 2016-04-08 [848ef42bb] Add the "snapshot too old" feature
 2016-05-06 [2cc41acd8] Fix hash index vs "snapshot too old" problemms
 2016-05-06 [7e3da1c47] Mitigate "snapshot too old" performance regression on NU
+2016-08-03 [3e2f3c2e4] Prevent "snapshot too old" from trying to return pruned
+2016-08-07 [9ee1cf04a] Fix TOAST access failure in RETURNING queries.
 -->
        <para>
         Allow old MVCC snapshots to be invalidated after a configurable
@@ -1295,6 +1299,41 @@ XXX this is pending backpatch, may need to remove
 
       <listitem>
 <!--
+2016-07-26 [d8411a6c8] Allow functions that return sets of tuples to return sim
+-->
+       <para>
+        Allow functions that return sets of tuples to return simple NULLs
+        (Andrew Gierth, Tom Lane)
+       </para>
+
+       <para>
+        In the context of <literal>SELECT FROM function(...)</>, a function
+        that returned a set of composite values was previously not allowed
+        to return a plain NULL value as part of the set.  Now that is
+        allowed and interpreted as a row of NULLs.  This avoids corner-case
+        errors with, for example, unnesting an array of composite values.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-08-03 [a3c7a993d] Make INSERT-from-multiple-VALUES-rows handle targetlist
+-->
+       <para>
+        Fully support array subscripts and field selections in the target
+        column list of an <command>INSERT</> with
+        multiple <literal>VALUES</> rows (Tom Lane)
+       </para>
+
+       <para>
+        Previously, such cases failed if the same target column was
+        mentioned more than once, e.g., <literal>INSERT INTO tab (x[1],
+        x[2]) VALUES ...</>.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2016-03-12 [23a27b039] Widen query numbers-of-tuples-processed counters to uint
 2016-03-14 [74a379b98] Use repalloc_huge() to enlarge a SPITupleTable's tuple p
 -->
@@ -2038,6 +2077,42 @@ XXX this is pending backpatch, may need to remove
        <para>
         This allows avoiding an error for an unrecognized parameter name;
         instead the result is NULL.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-07-26 [976b24fb4] Change various deparsing functions to return NULL for in
+2016-07-29 [3153b1a52] Eliminate a few more user-visible "cache lookup failed"
+2016-08-07 [8a8c6b538] Fix crash when pg_get_viewdef_name_ext() is passed a non
+-->
+       <para>
+        Change various catalog-inspection functions to return NULL for
+        invalid input (Michael Paquier)
+       </para>
+
+       <para>
+        <function>pg_get_viewdef()</> now returns NULL if given an invalid
+        view OID, and several similar functions likewise return NULL for
+        bad input.  Previously, such cases usually led to <quote>cache
+        lookup failed</> errors, which are not meant to occur in
+        user-facing cases.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-08-02 [dd5eb805d] Remove unused arguments from pg_replication_origin_xact_
+-->
+       <para>
+        Fix <function>pg_replication_origin_xact_reset()</> to not have any
+        arguments (Fujii Masao)
+       </para>
+
+       <para>
+        The documentation said that it has no arguments, and the C code
+        didn't expect any arguments, but the entry in <structname>pg_proc</>
+        mistakenly specified two arguments.
        </para>
       </listitem>
 
