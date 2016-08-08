@@ -1620,7 +1620,7 @@ dumpDatabases(PGconn *conn)
 static int
 runPgDump(const char *dbname)
 {
-	PQExpBuffer connstr = createPQExpBuffer();
+	PQExpBuffer connstrbuf = createPQExpBuffer();
 	PQExpBuffer cmd = createPQExpBuffer();
 	int			ret;
 
@@ -1642,11 +1642,10 @@ runPgDump(const char *dbname)
 	 * database name as is, but if it contains any = characters, it would
 	 * incorrectly treat it as a connection string.
 	 */
-	appendPQExpBuffer(connstr, "dbname='");
-	doConnStrQuoting(connstr, dbname);
-	appendPQExpBuffer(connstr, "'");
+	appendPQExpBufferStr(connstrbuf, "dbname=");
+	doConnStrQuoting(connstrbuf, dbname);
 
-	doShellQuoting(cmd, connstr->data);
+	doShellQuoting(cmd, connstrbuf->data);
 
 	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
 
@@ -1659,7 +1658,7 @@ runPgDump(const char *dbname)
 	ret = system(cmd->data);
 
 	destroyPQExpBuffer(cmd);
-	destroyPQExpBuffer(connstr);
+	destroyPQExpBuffer(connstrbuf);
 
 	return ret;
 }
@@ -1891,15 +1890,40 @@ dumpTimestamp(char *msg)
 static void
 doConnStrQuoting(PQExpBuffer buf, const char *str)
 {
-	while (*str)
-	{
-		/* ' and \ must be escaped by to \' and \\ */
-		if (*str == '\'' || *str == '\\')
-			appendPQExpBufferChar(buf, '\\');
+	const char *s;
+	bool		needquotes;
 
-		appendPQExpBufferChar(buf, *str);
-		str++;
+	/*
+	 * If the string consists entirely of plain ASCII characters, no need to
+	 * quote it. This is quite conservative, but better safe than sorry.
+	 */
+	needquotes = false;
+	for (s = str; *s; s++)
+	{
+		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
+			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
+		{
+			needquotes = true;
+			break;
+		}
 	}
+
+	if (needquotes)
+	{
+		appendPQExpBufferChar(buf, '\'');
+		while (*str)
+		{
+			/* ' and \ must be escaped by to \' and \\ */
+			if (*str == '\'' || *str == '\\')
+				appendPQExpBufferChar(buf, '\\');
+
+			appendPQExpBufferChar(buf, *str);
+			str++;
+		}
+		appendPQExpBufferChar(buf, '\'');
+	}
+	else
+		appendPQExpBufferStr(buf, str);
 }
 
 /*
