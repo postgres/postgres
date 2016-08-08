@@ -572,19 +572,19 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 9.3.13"
+#define PACKAGE_STRING "PostgreSQL 9.3.14"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.3.13"
+#define PACKAGE_VERSION "9.3.14"
 
 /* Define to the name of a signed 64-bit integer type. */
 #define PG_INT64_TYPE long long int
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "9.3.13"
+#define PG_VERSION "9.3.14"
 
 /* PostgreSQL version as a number */
-#define PG_VERSION_NUM 90313
+#define PG_VERSION_NUM 90314
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "postgresql"
