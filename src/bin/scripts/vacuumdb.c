@@ -236,16 +236,16 @@ main(int argc, char *argv[])
 
 
 static void
-run_vacuum_command(PGconn *conn, const char *sql, bool echo, const char *dbname, const char *table, const char *progname)
+run_vacuum_command(PGconn *conn, const char *sql, bool echo, const char *table, const char *progname)
 {
 	if (!executeMaintenanceCommand(conn, sql, echo))
 	{
 		if (table)
 			fprintf(stderr, _("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, dbname, PQerrorMessage(conn));
+					progname, table, PQdb(conn), PQerrorMessage(conn));
 		else
 			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, dbname, PQerrorMessage(conn));
+					progname, PQdb(conn), PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}
@@ -348,7 +348,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 					fflush(stdout);
 				}
 				executeCommand(conn, stage_commands[i], progname, echo);
-				run_vacuum_command(conn, sql.data, echo, dbname, table, progname);
+				run_vacuum_command(conn, sql.data, echo, table, progname);
 			}
 		}
 		else
@@ -361,12 +361,12 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 				fflush(stdout);
 			}
 			executeCommand(conn, stage_commands[stage], progname, echo);
-			run_vacuum_command(conn, sql.data, echo, dbname, table, progname);
+			run_vacuum_command(conn, sql.data, echo, table, progname);
 		}
 
 	}
 	else
-		run_vacuum_command(conn, sql.data, echo, dbname, NULL, progname);
+		run_vacuum_command(conn, sql.data, echo, NULL, progname);
 
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
