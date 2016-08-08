@@ -36,6 +36,72 @@
 
     <listitem>
      <para>
+      Fix possible mis-evaluation of
+      nested <literal>CASE</>-<literal>WHEN</> expressions (Heikki
+      Linnakangas, Michael Paquier, Tom Lane)
+     </para>
+
+     <para>
+      A <literal>CASE</> expression appearing within the test value
+      subexpression of another <literal>CASE</> could become confused about
+      whether its own test value was null or not.  Also, inlining of a SQL
+      function implementing the equality operator used by
+      a <literal>CASE</> expression could result in passing the wrong test
+      value to functions called within a <literal>CASE</> expression in the
+      SQL function's body.  If the test values were of different data
+      types, a crash might result; moreover such situations could be abused
+      to allow disclosure of portions of server memory.  (CVE-2016-5423)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix client programs' handling of special characters in database and
+      role names (Noah Misch, Nathan Bossart, Michael Paquier)
+     </para>
+
+     <para>
+      Numerous places in <application>vacuumdb</> and other client programs
+      could become confused by database and role names containing double
+      quotes or backslashes.  Tighten up quoting rules to make that safe.
+      Also, ensure that when a conninfo string is used as a database name
+      parameter to these programs, it is correctly treated as such throughout.
+     </para>
+
+     <para>
+      Fix handling of paired double quotes
+      in <application>psql</>'s <command>\connect</>
+      and <command>\password</> commands to match the documentation.
+     </para>
+
+     <para>
+      Introduce a new <option>-reuse-previous</> option
+      in <application>psql</>'s <command>\connect</> command to allow
+      explicit control of whether to re-use connection parameters from a
+      previous connection.  (Without this, the choice is based on whether
+      the database name looks like a conninfo string, as before.)  This
+      allows secure handling of database names containing special
+      characters in <application>pg_dumpall</> scripts.
+     </para>
+
+     <para>
+      <application>pg_dumpall</> now refuses to deal with database and role
+      names containing carriage returns or newlines, as it seems impractical
+      to quote those characters safely on Windows.  In future we may reject
+      such names on the server side, but that step has not been taken yet.
+     </para>
+
+     <para>
+      These are considered security fixes because crafted object names
+      containing special characters could have been used to execute
+      commands with superuser privileges the next time a superuser
+      executes <application>pg_dumpall</> or other routine maintenance
+      operations.  (CVE-2016-5424)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix corner-case misbehaviors for <literal>IS NULL</>/<literal>IS NOT
       NULL</> applied to nested composite values (Andrew Gierth, Tom Lane)
      </para>
@@ -68,6 +134,20 @@
 
      <para>
       Make it return NULL instead of crashing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix several one-byte buffer over-reads in <function>to_number()</>
+      (Peter Eisentraut)
+     </para>
+
+     <para>
+      In several cases the <function>to_number()</> function would read one
+      more character than it should from the input string.  There is a
+      small chance of a crash, if the input happens to be adjacent to the
+      end of memory.
      </para>
     </listitem>
 
