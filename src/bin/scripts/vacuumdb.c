@@ -57,14 +57,12 @@ static void prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
 					   vacuumingOptions *vacopts, const char *table);
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
-				   const char *dbname, const char *table,
-				   const char *progname, bool async);
+				   const char *table, const char *progname, bool async);
 
 static ParallelSlot *GetIdleSlot(ParallelSlot slots[], int numslots,
-			const char *dbname, const char *progname);
+			const char *progname);
 
-static bool GetQueryResult(PGconn *conn, const char *dbname,
-			   const char *progname);
+static bool GetQueryResult(PGconn *conn, const char *progname);
 
 static void DisconnectDatabase(ParallelSlot *slot);
 
@@ -355,18 +353,19 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	Assert(stage == ANALYZE_NO_STAGE ||
 		   (stage >= 0 && stage < ANALYZE_NUM_STAGES));
 
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, false, true);
+
 	if (!quiet)
 	{
 		if (stage != ANALYZE_NO_STAGE)
-			printf(_("%s: processing database \"%s\": %s\n"), progname, dbname,
-				   stage_messages[stage]);
+			printf(_("%s: processing database \"%s\": %s\n"),
+				   progname, PQdb(conn), stage_messages[stage]);
 		else
-			printf(_("%s: vacuuming database \"%s\"\n"), progname, dbname);
+			printf(_("%s: vacuuming database \"%s\"\n"),
+				   progname, PQdb(conn));
 		fflush(stdout);
 	}
-
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false, true);
 
 	initPQExpBuffer(&sql);
 
@@ -473,7 +472,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 			 * Get a free slot, waiting until one becomes free if none
 			 * currently is.
 			 */
-			free_slot = GetIdleSlot(slots, concurrentCons, dbname, progname);
+			free_slot = GetIdleSlot(slots, concurrentCons, progname);
 			if (!free_slot)
 			{
 				failed = true;
@@ -491,7 +490,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		 * errors in GetQueryResult through GetIdleSlot.)
 		 */
 		run_vacuum_command(free_slot->connection, sql.data,
-						   echo, dbname, tabname, progname, parallel);
+						   echo, tabname, progname, parallel);
 
 		if (cell)
 			cell = cell->next;
@@ -504,7 +503,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (j = 0; j < concurrentCons; j++)
 		{
 			/* wait for all connection to return the results */
-			if (!GetQueryResult((slots + j)->connection, dbname, progname))
+			if (!GetQueryResult((slots + j)->connection, progname))
 				goto finish;
 
 			(slots + j)->isFree = true;
@@ -672,8 +671,7 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
  */
 static void
 run_vacuum_command(PGconn *conn, const char *sql, bool echo,
-				   const char *dbname, const char *table,
-				   const char *progname, bool async)
+				   const char *table, const char *progname, bool async)
 {
 	bool		status;
 
@@ -692,10 +690,10 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 		if (table)
 			fprintf(stderr,
 			_("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, dbname, PQerrorMessage(conn));
+					progname, table, PQdb(conn), PQerrorMessage(conn));
 		else
 			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, dbname, PQerrorMessage(conn));
+					progname, PQdb(conn), PQerrorMessage(conn));
 
 		if (!async)
 		{
@@ -721,7 +719,7 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo,
  * If an error occurs, NULL is returned.
  */
 static ParallelSlot *
-GetIdleSlot(ParallelSlot slots[], int numslots, const char *dbname,
+GetIdleSlot(ParallelSlot slots[], int numslots,
 			const char *progname)
 {
 	int			i;
@@ -761,7 +759,7 @@ GetIdleSlot(ParallelSlot slots[], int numslots, const char *dbname,
 			 * We set the cancel-receiving connection to the one in the zeroth
 			 * slot above, so fetch the error from there.
 			 */
-			GetQueryResult(slots->connection, dbname, progname);
+			GetQueryResult(slots->connection, progname);
 			return NULL;
 		}
 		Assert(i != 0);
@@ -777,7 +775,7 @@ GetIdleSlot(ParallelSlot slots[], int numslots, const char *dbname,
 
 			(slots + i)->isFree = true;
 
-			if (!GetQueryResult((slots + i)->connection, dbname, progname))
+			if (!GetQueryResult((slots + i)->connection, progname))
 				return NULL;
 
 			if (firstFree < 0)
@@ -796,7 +794,7 @@ GetIdleSlot(ParallelSlot slots[], int numslots, const char *dbname,
  * reported and subsequently ignored.
  */
 static bool
-GetQueryResult(PGconn *conn, const char *dbname, const char *progname)
+GetQueryResult(PGconn *conn, const char *progname)
 {
 	PGresult   *result;
 
@@ -812,7 +810,7 @@ GetQueryResult(PGconn *conn, const char *dbname, const char *progname)
 			char	   *sqlState = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 
 			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, dbname, PQerrorMessage(conn));
+					progname, PQdb(conn), PQerrorMessage(conn));
 
 			if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) != 0)
 			{
