@@ -49,8 +49,6 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 					   const char *name2);
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(char *msg);
-static void appendShellString(PQExpBuffer buf, const char *str);
-static void appendConnStrVal(PQExpBuffer buf, const char *str);
 
 static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn, const char *catalog_name,
@@ -1399,7 +1397,7 @@ dumpCreateDB(PGconn *conn)
 							  fdbname, fmtId(dbtablespace));
 
 			/* connect to original database */
-			appendPQExpBuffer(buf, "\\connect %s\n", fdbname);
+			appendPsqlMetaConnect(buf, dbname);
 		}
 
 		if (binary_upgrade)
@@ -1627,11 +1625,15 @@ dumpDatabases(PGconn *conn)
 		int			ret;
 
 		char	   *dbname = PQgetvalue(res, i, 0);
+		PQExpBufferData connectbuf;
 
 		if (verbose)
 			fprintf(stderr, _("%s: dumping database \"%s\"...\n"), progname, dbname);
 
-		fprintf(OPF, "\\connect %s\n\n", fmtId(dbname));
+		initPQExpBuffer(&connectbuf);
+		appendPsqlMetaConnect(&connectbuf, dbname);
+		fprintf(OPF, "%s\n", connectbuf.data);
+		termPQExpBuffer(&connectbuf);
 
 		/*
 		 * Restore will need to write to the target cluster.  This connection
@@ -1789,7 +1791,9 @@ connectDatabase(const char *dbname, const char *connection_string,
 
 		/*
 		 * Merge the connection info inputs given in form of connection string
-		 * and other options.
+		 * and other options.  Explicitly discard any dbname value in the
+		 * connection string; otherwise, PQconnectdbParams() would interpret
+		 * that value as being itself a connection string.
 		 */
 		if (connection_string)
 		{
@@ -1802,7 +1806,8 @@ connectDatabase(const char *dbname, const char *connection_string,
 
 			for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 			{
-				if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
+				if (conn_opt->val != NULL && conn_opt->val[0] != '\0' &&
+					strcmp(conn_opt->keyword, "dbname") != 0)
 					argcount++;
 			}
 
@@ -1811,7 +1816,8 @@ connectDatabase(const char *dbname, const char *connection_string,
 
 			for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 			{
-				if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
+				if (conn_opt->val != NULL && conn_opt->val[0] != '\0' &&
+					strcmp(conn_opt->keyword, "dbname") != 0)
 				{
 					keywords[i] = conn_opt->keyword;
 					values[i] = conn_opt->val;
@@ -2067,146 +2073,4 @@ dumpTimestamp(char *msg)
 #endif
 				 localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
-}
-
-
-/*
- * Append the given string to the buffer, with suitable quoting for passing
- * the string as a value, in a keyword/pair value in a libpq connection
- * string
- */
-static void
-appendConnStrVal(PQExpBuffer buf, const char *str)
-{
-	const char *s;
-	bool		needquotes;
-
-	/*
-	 * If the string consists entirely of plain ASCII characters, no need to
-	 * quote it. This is quite conservative, but better safe than sorry.
-	 */
-	needquotes = false;
-	for (s = str; *s; s++)
-	{
-		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
-			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
-		{
-			needquotes = true;
-			break;
-		}
-	}
-
-	if (needquotes)
-	{
-		appendPQExpBufferChar(buf, '\'');
-		while (*str)
-		{
-			/* ' and \ must be escaped by to \' and \\ */
-			if (*str == '\'' || *str == '\\')
-				appendPQExpBufferChar(buf, '\\');
-
-			appendPQExpBufferChar(buf, *str);
-			str++;
-		}
-		appendPQExpBufferChar(buf, '\'');
-	}
-	else
-		appendPQExpBufferStr(buf, str);
-}
-
-/*
- * Append the given string to the shell command being built in the buffer,
- * with suitable shell-style quoting to create exactly one argument.
- *
- * Forbid LF or CR characters, which have scant practical use beyond designing
- * security breaches.  The Windows command shell is unusable as a conduit for
- * arguments containing LF or CR characters.  A future major release should
- * reject those characters in CREATE ROLE and CREATE DATABASE, because use
- * there eventually leads to errors here.
- */
-static void
-appendShellString(PQExpBuffer buf, const char *str)
-{
-	const char *p;
-
-#ifndef WIN32
-	appendPQExpBufferChar(buf, '\'');
-	for (p = str; *p; p++)
-	{
-		if (*p == '\n' || *p == '\r')
-		{
-			fprintf(stderr,
-					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-					str);
-			exit(EXIT_FAILURE);
-		}
-
-		if (*p == '\'')
-			appendPQExpBuffer(buf, "'\"'\"'");
-		else
-			appendPQExpBufferChar(buf, *p);
-	}
-	appendPQExpBufferChar(buf, '\'');
-#else							/* WIN32 */
-	int			backslash_run_length = 0;
-
-	/*
-	 * A Windows system() argument experiences two layers of interpretation.
-	 * First, cmd.exe interprets the string.  Its behavior is undocumented,
-	 * but a caret escapes any byte except LF or CR that would otherwise have
-	 * special meaning.  Handling of a caret before LF or CR differs between
-	 * "cmd.exe /c" and other modes, and it is unusable here.
-	 *
-	 * Second, the new process parses its command line to construct argv (see
-	 * https://msdn.microsoft.com/en-us/library/17w5ykft.aspx).  This treats
-	 * backslash-double quote sequences specially.
-	 */
-	appendPQExpBufferStr(buf, "^\"");
-	for (p = str; *p; p++)
-	{
-		if (*p == '\n' || *p == '\r')
-		{
-			fprintf(stderr,
-					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-					str);
-			exit(EXIT_FAILURE);
-		}
-
-		/* Change N backslashes before a double quote to 2N+1 backslashes. */
-		if (*p == '"')
-		{
-			while (backslash_run_length)
-			{
-				appendPQExpBufferStr(buf, "^\\");
-				backslash_run_length--;
-			}
-			appendPQExpBufferStr(buf, "^\\");
-		}
-		else if (*p == '\\')
-			backslash_run_length++;
-		else
-			backslash_run_length = 0;
-
-		/*
-		 * Decline to caret-escape the most mundane characters, to ease
-		 * debugging and lest we approach the command length limit.
-		 */
-		if (!((*p >= 'a' && *p <= 'z') ||
-			  (*p >= 'A' && *p <= 'Z') ||
-			  (*p >= '0' && *p <= '9')))
-			appendPQExpBufferChar(buf, '^');
-		appendPQExpBufferChar(buf, *p);
-	}
-
-	/*
-	 * Change N backslashes at end of argument to 2N backslashes, because they
-	 * precede the double quote that terminates the argument.
-	 */
-	while (backslash_run_length)
-	{
-		appendPQExpBufferStr(buf, "^\\");
-		backslash_run_length--;
-	}
-	appendPQExpBufferStr(buf, "^\"");
-#endif   /* WIN32 */
 }

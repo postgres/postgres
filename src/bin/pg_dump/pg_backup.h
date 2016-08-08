@@ -136,7 +136,7 @@ typedef struct _restoreOptions
 	SimpleStringList tableNames;
 
 	int			useDB;
-	char	   *dbname;
+	char	   *dbname;			/* subject to expand_dbname */
 	char	   *pgport;
 	char	   *pghost;
 	char	   *username;

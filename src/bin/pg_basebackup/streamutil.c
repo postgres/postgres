@@ -49,6 +49,9 @@ GetConnection(void)
 	/*
 	 * Merge the connection info inputs given in form of connection string,
 	 * options and default values (dbname=replication, replication=true, etc.)
+	 * Explicitly discard any dbname value in the connection string;
+	 * otherwise, PQconnectdbParams() would interpret that value as being
+	 * itself a connection string.
 	 */
 	i = 0;
 	if (connection_string)
@@ -62,7 +65,8 @@ GetConnection(void)
 
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 		{
-			if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
+			if (conn_opt->val != NULL && conn_opt->val[0] != '\0' &&
+				strcmp(conn_opt->keyword, "dbname") != 0)
 				argcount++;
 		}
 
@@ -71,7 +75,8 @@ GetConnection(void)
 
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 		{
-			if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
+			if (conn_opt->val != NULL && conn_opt->val[0] != '\0' &&
+				strcmp(conn_opt->keyword, "dbname") != 0)
 			{
 				keywords[i] = conn_opt->keyword;
 				values[i] = conn_opt->val;
