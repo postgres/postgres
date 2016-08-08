@@ -1,6 +1,448 @@
 <!-- doc/src/sgml/release-9.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-4-9">
+  <title>Release 9.4.9</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-08-11</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.4.8.
+   For information about new features in the 9.4 major release, see
+   <xref linkend="release-9-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.4.9</title>
+
+   <para>
+    A dump/restore is not required for those running 9.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.4.6,
+    see <xref linkend="release-9-4-6">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix corner-case misbehaviors for <literal>IS NULL</>/<literal>IS NOT
+      NULL</> applied to nested composite values (Andrew Gierth, Tom Lane)
+     </para>
+
+     <para>
+      The SQL standard specifies that <literal>IS NULL</> should return
+      TRUE for a row of all null values (thus <literal>ROW(NULL,NULL) IS
+      NULL</> yields TRUE), but this is not meant to apply recursively
+      (thus <literal>ROW(NULL, ROW(NULL,NULL)) IS NULL</> yields FALSE).
+      The core executor got this right, but certain planner optimizations
+      treated the test as recursive (thus producing TRUE in both cases),
+      and <filename>contrib/postgres_fdw</> could produce remote queries
+      that misbehaved similarly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make the <type>inet</> and <type>cidr</> data types properly reject
+      IPv6 addresses with too many colon-separated fields (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent crash in <function>close_ps()</>
+      (the <type>point</> <literal>##</> <type>lseg</> operator)
+      for NaN input coordinates (Tom Lane)
+     </para>
+
+     <para>
+      Make it return NULL instead of crashing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible crash in <function>pg_get_expr()</> when inconsistent
+      values are passed to it (Michael Paquier, Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Do not run the planner on the query contained in <literal>CREATE
+      MATERIALIZED VIEW</> or <literal>CREATE TABLE AS</>
+      when <literal>WITH NO DATA</> is specified (Michael Paquier,
+      Tom Lane)
+     </para>
+
+     <para>
+      This avoids some unnecessary failure conditions, for example if a
+      stable function invoked by the materialized view depends on a table
+      that doesn't exist yet.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unsafe intermediate state during expensive paths
+      through <function>heap_update()</> (Masahiko Sawada, Andres Freund)
+     </para>
+
+     <para>
+      Previously, these cases locked the target tuple (by setting its XMAX)
+      but did not WAL-log that action, thus risking data integrity problems
+      if the page were spilled to disk and then a database crash occurred
+      before the tuple update could be completed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix hint bit update during WAL replay of row locking operations
+      (Andres Freund)
+     </para>
+
+     <para>
+      The only known consequence of this problem is that row locks held by
+      a prepared, but uncommitted, transaction might fail to be enforced
+      after a crash and restart.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary <quote>could not serialize access</> errors when
+      acquiring <literal>FOR KEY SHARE</> row locks in serializable mode
+      (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash in <literal>postgres -C</> when the specified variable
+      has a null string value (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible loss of large subtransactions in logical decoding
+      (Petru-Florin Mihancea)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure of logical decoding when a subtransaction contains no
+      actual changes (Marko Tiikkaja, Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that backends see up-to-date statistics for shared catalogs
+      (Tom Lane)
+     </para>
+
+     <para>
+      The statistics collector failed to update the statistics file for
+      shared catalogs after a request from a regular backend.  This problem
+      was partially masked because the autovacuum launcher regularly makes
+      requests that did cause such updates; however, it became obvious with
+      autovacuum disabled.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid redundant writes of the statistics files when multiple
+      backends request updates close together (Tom Lane, Tomas Vondra)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid consuming a transaction ID during <command>VACUUM</>
+      (Alexander Korotkov)
+     </para>
+
+     <para>
+      Some cases in <command>VACUUM</> unnecessarily caused an XID to be
+      assigned to the current transaction.  Normally this is negligible,
+      but if one is up against the XID wraparound limit, consuming more
+      XIDs during anti-wraparound vacuums is a very bad thing.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: REL9_4_STABLE [7a0f09da7] 2016-05-25 19:39:49 -0400
+Branch: REL9_3_STABLE [6537a48c5] 2016-05-25 19:39:49 -0400
+Branch: REL9_2_STABLE [294509ea9] 2016-05-25 19:39:49 -0400
+Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
+-->
+     <para>
+      Avoid canceling hot-standby queries during <command>VACUUM FREEZE</>
+      (Simon Riggs, &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      <command>VACUUM FREEZE</> on an otherwise-idle master server could
+      result in unnecessary cancellations of queries on its standby
+      servers.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible failure when vacuuming multixact IDs in an
+      installation that has been pg_upgrade'd from pre-9.3 (Andrew Gierth,
+      &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      The usual symptom of this bug is errors
+      like <quote>MultiXactId <replaceable>NNN</> has not been created
+      yet -- apparent wraparound</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When a manual <command>ANALYZE</> specifies a column list, don't
+      reset the table's <literal>changes_since_analyze</> counter
+      (Tom Lane)
+     </para>
+
+     <para>
+      If we're only analyzing some columns, we should not prevent routine
+      auto-analyze from happening for the other columns.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ANALYZE</>'s overestimation of <literal>n_distinct</>
+      for a unique or nearly-unique column with many null entries (Tom
+      Lane)
+     </para>
+
+     <para>
+      The nulls could get counted as though they were themselves distinct
+      values, leading to serious planner misestimates in some types of
+      queries.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent autovacuum from starting multiple workers for the same shared
+      catalog (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      Normally this isn't much of a problem because the vacuum doesn't take
+      long anyway; but in the case of a severely bloated catalog, it could
+      result in all but one worker uselessly waiting instead of doing
+      useful work on other tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid duplicate buffer lock release when abandoning a b-tree index
+      page deletion attempt (Tom Lane)
+     </para>
+
+     <para>
+      This mistake prevented <command>VACUUM</> from completing in some
+      cases involving corrupt b-tree indexes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent infinite loop in GiST index build for geometric columns
+      containing NaN component values (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/btree_gin</> to handle the smallest
+      possible <type>bigint</> value correctly (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Teach libpq to correctly decode server version from future servers
+      (Peter Eisentraut)
+     </para>
+
+     <para>
+      It's planned to switch to two-part instead of three-part server
+      version numbers for releases after 9.6.  Make sure
+      that <function>PQserverVersion()</> returns the correct value for
+      such cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s code for <literal>unsigned long long</>
+      array elements (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_dump</> with both <option>-c</> and <option>-C</>
+      options, avoid emitting an unwanted <literal>CREATE SCHEMA public</>
+      command (David Johnston, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of <systemitem>SIGTERM</>/control-C in
+      parallel <application>pg_dump</> and <application>pg_restore</> (Tom
+      Lane)
+     </para>
+
+     <para>
+      Make sure that the worker processes will exit promptly, and also arrange
+      to send query-cancel requests to the connected backends, in case they
+      are doing something long-running such as a <command>CREATE INDEX</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix error reporting in parallel <application>pg_dump</>
+      and <application>pg_restore</> (Tom Lane)
+     </para>
+
+     <para>
+      Previously, errors reported by <application>pg_dump</>
+      or <application>pg_restore</> worker processes might never make it to
+      the user's console, because the messages went through the master
+      process, and there were various deadlock scenarios that would prevent
+      the master process from passing on the messages.  Instead, just print
+      everything to <literal>stderr</>.  In some cases this will result in
+      duplicate messages (for instance, if all the workers report a server
+      shutdown), but that seems better than no message.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that parallel <application>pg_dump</>
+      or <application>pg_restore</> on Windows will shut down properly
+      after an error (Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      Previously, it would report the error, but then just sit until
+      manually stopped by the user.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_dump</> behave better when built without zlib
+      support (Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      It didn't work right for parallel dumps, and emitted some rather
+      pointless warnings in other cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_basebackup</> accept <literal>-Z 0</> as
+      specifying no compression (Fujii Masao)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix makefiles' rule for building AIX shared libraries to be safe for
+      parallel make (Noah Misch)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix TAP tests and MSVC scripts to work when build directory's path
+      name contains spaces (Michael Paquier, Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Be more predictable about reporting <quote>statement timeout</>
+      versus <quote>lock timeout</> (Tom Lane)
+     </para>
+
+     <para>
+      On heavily loaded machines, the regression tests sometimes failed due
+      to reporting <quote>lock timeout</> even though the statement timeout
+      should have occurred first.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make regression tests safe for Danish and Welsh locales (Jeff Janes,
+      Tom Lane)
+     </para>
+
+     <para>
+      Change some test data that triggered the unusual sorting rules of
+      these locales.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update our copy of the timezone code to match
+      IANA's <application>tzcode</> release 2016c (Tom Lane)
+     </para>
+
+     <para>
+      This is needed to cope with anticipated future changes in the time
+      zone data files.  It also fixes some corner-case bugs in coping with
+      unusual time zones.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016f
+      for DST law changes in Kemerovo and Novosibirsk, plus historical
+      corrections for Azerbaijan, Belarus, and Morocco.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-4-8">
   <title>Release 9.4.8</title>
 
