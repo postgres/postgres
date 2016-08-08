@@ -9,6 +9,7 @@
 
 #include "postgres_fe.h"
 
+#include "fe_utils/string_utils.h"
 #include "pg_upgrade.h"
 
 
@@ -51,18 +52,25 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 static PGconn *
 get_db_conn(ClusterInfo *cluster, const char *db_name)
 {
-	char		conn_opts[2 * NAMEDATALEN + MAXPGPATH + 100];
+	PQExpBufferData conn_opts;
+	PGconn	   *conn;
 
+	/* Build connection string with proper quoting */
+	initPQExpBuffer(&conn_opts);
+	appendPQExpBufferStr(&conn_opts, "dbname=");
+	appendConnStrVal(&conn_opts, db_name);
+	appendPQExpBufferStr(&conn_opts, " user=");
+	appendConnStrVal(&conn_opts, os_info.user);
+	appendPQExpBuffer(&conn_opts, " port=%d", cluster->port);
 	if (cluster->sockdir)
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "dbname = '%s' user = '%s' host = '%s' port = %d",
-				 db_name, os_info.user, cluster->sockdir, cluster->port);
-	else
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "dbname = '%s' user = '%s' port = %d",
-				 db_name, os_info.user, cluster->port);
+	{
+		appendPQExpBufferStr(&conn_opts, " host=");
+		appendConnStrVal(&conn_opts, cluster->sockdir);
+	}
 
-	return PQconnectdb(conn_opts);
+	conn = PQconnectdb(conn_opts.data);
+	termPQExpBuffer(&conn_opts);
+	return conn;
 }
 
 
@@ -74,23 +82,28 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
  * sets, but the utilities we need aren't very consistent about the treatment
  * of database name options, so we leave that out.
  *
- * Note result is in static storage, so use it right away.
+ * Result is valid until the next call to this function.
  */
 char *
 cluster_conn_opts(ClusterInfo *cluster)
 {
-	static char conn_opts[MAXPGPATH + NAMEDATALEN + 100];
+	static PQExpBuffer buf;
+
+	if (buf == NULL)
+		buf = createPQExpBuffer();
+	else
+		resetPQExpBuffer(buf);
 
 	if (cluster->sockdir)
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "--host \"%s\" --port %d --username \"%s\"",
-				 cluster->sockdir, cluster->port, os_info.user);
-	else
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "--port %d --username \"%s\"",
-				 cluster->port, os_info.user);
+	{
+		appendPQExpBufferStr(buf, "--host ");
+		appendShellString(buf, cluster->sockdir);
+		appendPQExpBufferChar(buf, ' ');
+	}
+	appendPQExpBuffer(buf, "--port %d --username ", cluster->port);
+	appendShellString(buf, os_info.user);
 
-	return conn_opts;
+	return buf->data;
 }
 
 

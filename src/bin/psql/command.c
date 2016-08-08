@@ -1785,6 +1785,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	bool		keep_password;
 	bool		has_connection_string;
 	bool		reuse_previous;
+	PQExpBufferData connstr;
 
 	if (!o_conn && (!dbname || !user || !host || !port))
 	{
@@ -1846,7 +1847,15 @@ do_connect(enum trivalue reuse_previous_specification,
 	 * changes: passwords aren't (usually) database-specific.
 	 */
 	if (!dbname && reuse_previous)
-		dbname = PQdb(o_conn);
+	{
+		initPQExpBuffer(&connstr);
+		appendPQExpBuffer(&connstr, "dbname=");
+		appendConnStrVal(&connstr, PQdb(o_conn));
+		dbname = connstr.data;
+		/* has_connection_string=true would be a dead store */
+	}
+	else
+		connstr.data = NULL;
 
 	/*
 	 * If the user asked to be prompted for a password, ask for one now. If
@@ -1955,8 +1964,12 @@ do_connect(enum trivalue reuse_previous_specification,
 		}
 
 		PQfinish(n_conn);
+		if (connstr.data)
+			termPQExpBuffer(&connstr);
 		return false;
 	}
+	if (connstr.data)
+		termPQExpBuffer(&connstr);
 
 	/*
 	 * Replace the old connection with the new one, and update

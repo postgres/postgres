@@ -42,6 +42,7 @@ extern void appendByteaLiteral(PQExpBuffer buf,
 
 extern void appendShellString(PQExpBuffer buf, const char *str);
 extern void appendConnStrVal(PQExpBuffer buf, const char *str);
+extern void appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname);
 
 extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
 

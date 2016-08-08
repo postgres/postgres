@@ -10,6 +10,7 @@
 #include "postgres_fe.h"
 
 #include "catalog/pg_authid.h"
+#include "fe_utils/string_utils.h"
 #include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
@@ -414,12 +415,17 @@ void
 create_script_for_cluster_analyze(char **analyze_script_file_name)
 {
 	FILE	   *script = NULL;
-	char	   *user_specification = "";
+	PQExpBufferData user_specification;
 
 	prep_status("Creating script to analyze new cluster");
 
+	initPQExpBuffer(&user_specification);
 	if (os_info.user_specified)
-		user_specification = psprintf("-U \"%s\" ", os_info.user);
+	{
+		appendPQExpBufferStr(&user_specification, "-U ");
+		appendShellString(&user_specification, os_info.user);
+		appendPQExpBufferChar(&user_specification, ' ');
+	}
 
 	*analyze_script_file_name = psprintf("%sanalyze_new_cluster.%s",
 										 SCRIPT_PREFIX, SCRIPT_EXT);
@@ -459,18 +465,18 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	fprintf(script, "echo %sthis script and run:%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s    \"%s/vacuumdb\" %s--all %s%s\n", ECHO_QUOTE,
-			new_cluster.bindir, user_specification,
+			new_cluster.bindir, user_specification.data,
 	/* Did we copy the free space files? */
 			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
 			"--analyze-only" : "--analyze", ECHO_QUOTE);
 	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-in-stages\n",
-			new_cluster.bindir, user_specification);
+			new_cluster.bindir, user_specification.data);
 	/* Did we copy the free space files? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 804)
 		fprintf(script, "\"%s/vacuumdb\" %s--all\n", new_cluster.bindir,
-				user_specification);
+				user_specification.data);
 
 	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 	fprintf(script, "echo %sDone%s\n",
@@ -484,8 +490,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 				 *analyze_script_file_name, getErrorText());
 #endif
 
-	if (os_info.user_specified)
-		pg_free(user_specification);
+	termPQExpBuffer(&user_specification);
 
 	check_ok();
 }
