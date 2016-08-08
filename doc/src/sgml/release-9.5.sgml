@@ -323,6 +323,19 @@ Branch: REL9_4_STABLE [1843d88e0] 2016-06-30 12:37:02 -0400
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bcbecbce2] 2016-08-07 13:15:55 -0400
+Branch: REL9_5_STABLE [71dca408c] 2016-08-07 13:15:55 -0400
+Branch: REL9_4_STABLE [c63588feb] 2016-08-07 13:15:55 -0400
+-->
+     <para>
+      Fix failure of logical decoding when a subtransaction contains no
+      actual changes (Marko Tiikkaja, Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [52e8fc3e2] 2016-05-25 17:48:15 -0400
 Branch: REL9_5_STABLE [b2355a29c] 2016-05-25 17:48:15 -0400
 Branch: REL9_4_STABLE [4b612a78f] 2016-05-25 17:48:15 -0400
@@ -388,26 +401,6 @@ Branch: REL9_1_STABLE [5551dac59] 2016-05-24 15:47:51 -0400
     <listitem>
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: REL9_4_STABLE [7a0f09da7] 2016-05-25 19:39:49 -0400
-Branch: REL9_3_STABLE [6537a48c5] 2016-05-25 19:39:49 -0400
-Branch: REL9_2_STABLE [294509ea9] 2016-05-25 19:39:49 -0400
-Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
--->
-     <para>
-      Avoid canceling hot-standby queries during <command>VACUUM FREEZE</>
-      (Simon Riggs, &Aacute;lvaro Herrera)
-     </para>
-
-     <para>
-      <command>VACUUM FREEZE</> on an otherwise-idle master server could
-      result in unnecessary cancellations of queries on its standby
-      servers.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [e3ad3ffa6] 2016-06-24 18:29:28 -0400
 Branch: REL9_5_STABLE [d372cb173] 2016-06-24 18:29:28 -0400
 Branch: REL9_4_STABLE [61b24fef8] 2016-06-24 18:29:28 -0400
@@ -445,6 +438,29 @@ Branch: REL9_1_STABLE [32ceb8dfb] 2016-06-06 17:44:18 -0400
      <para>
       If we're only analyzing some columns, we should not prevent routine
       auto-analyze from happening for the other columns.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [95bee941b] 2016-08-07 18:52:02 -0400
+Branch: REL9_5_STABLE [cb5c14984] 2016-08-07 18:52:02 -0400
+Branch: REL9_4_STABLE [8f180a6cc] 2016-08-07 18:52:02 -0400
+Branch: REL9_3_STABLE [20a859504] 2016-08-07 18:52:02 -0400
+Branch: REL9_2_STABLE [127d73009] 2016-08-07 18:52:02 -0400
+Branch: REL9_1_STABLE [a449ad095] 2016-08-07 18:52:02 -0400
+-->
+     <para>
+      Fix <command>ANALYZE</>'s overestimation of <literal>n_distinct</>
+      for a unique or nearly-unique column with many null entries (Tom
+      Lane)
+     </para>
+
+     <para>
+      The nulls could get counted as though they were themselves distinct
+      values, leading to serious planner misestimates in some types of
+      queries.
      </para>
     </listitem>
 
@@ -778,23 +794,6 @@ Branch: REL9_1_STABLE [366f4a962] 2016-08-01 17:38:05 +0900
      <para>
       Make <application>pg_basebackup</> accept <literal>-Z 0</> as
       specifying no compression (Fujii Masao)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_1_STABLE [d56c02f1a] 2016-06-19 13:45:03 -0400
-Branch: REL9_1_STABLE [354b3a3ac] 2016-06-19 14:01:17 -0400
--->
-     <para>
-      Revert to the old heuristic timeout for <literal>pg_ctl start -w</>
-      (Tom Lane)
-     </para>
-
-     <para>
-      The new method adopted as of release 9.1.20 does not work
-      when <varname>silent_mode</> is enabled, so go back to the old way.
      </para>
     </listitem>
 
