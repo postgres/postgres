@@ -207,9 +207,9 @@ select format('Hello %%%%');
 
 -- should fail
 select format('Hello %s %s', 'World');
-ERROR:  too few arguments for format
+ERROR:  too few arguments for format()
 select format('Hello %s');
-ERROR:  too few arguments for format
+ERROR:  too few arguments for format()
 select format('Hello %x', 20);
 ERROR:  unrecognized format() type specifier "x"
 HINT:  For a single "%" use "%%".
@@ -256,9 +256,9 @@ select format('%1$s %12$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 
 -- should fail
 select format('%1$s %4$s', 1, 2, 3);
-ERROR:  too few arguments for format
+ERROR:  too few arguments for format()
 select format('%1$s %13$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
-ERROR:  too few arguments for format
+ERROR:  too few arguments for format()
 select format('%0$s', 'Hello');
 ERROR:  format specifies argument 0, but arguments are numbered from 1
 select format('%*0$s', 'Hello');
