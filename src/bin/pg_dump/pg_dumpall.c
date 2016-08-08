@@ -48,8 +48,8 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 					   const char *name2);
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(char *msg);
-static void doShellQuoting(PQExpBuffer buf, const char *str);
-static void doConnStrQuoting(PQExpBuffer buf, const char *str);
+static void appendShellString(PQExpBuffer buf, const char *str);
+static void appendConnStrVal(PQExpBuffer buf, const char *str);
 
 static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn, const char *catalog_name,
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 			case 'f':
 				filename = optarg;
 				appendPQExpBuffer(pgdumpopts, " -f ");
-				doShellQuoting(pgdumpopts, filename);
+				appendShellString(pgdumpopts, filename);
 				break;
 
 			case 'g':
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 			case 'h':
 				pghost = optarg;
 				appendPQExpBuffer(pgdumpopts, " -h ");
-				doShellQuoting(pgdumpopts, pghost);
+				appendShellString(pgdumpopts, pghost);
 				break;
 
 			case 'i':
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 			case 'p':
 				pgport = optarg;
 				appendPQExpBuffer(pgdumpopts, " -p ");
-				doShellQuoting(pgdumpopts, pgport);
+				appendShellString(pgdumpopts, pgport);
 				break;
 
 			case 'r':
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 
 			case 'S':
 				appendPQExpBuffer(pgdumpopts, " -S ");
-				doShellQuoting(pgdumpopts, optarg);
+				appendShellString(pgdumpopts, optarg);
 				break;
 
 			case 't':
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 			case 'U':
 				pguser = optarg;
 				appendPQExpBuffer(pgdumpopts, " -U ");
-				doShellQuoting(pgdumpopts, pguser);
+				appendShellString(pgdumpopts, pguser);
 				break;
 
 			case 'v':
@@ -286,13 +286,13 @@ main(int argc, char *argv[])
 
 			case 2:
 				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout ");
-				doShellQuoting(pgdumpopts, optarg);
+				appendShellString(pgdumpopts, optarg);
 				break;
 
 			case 3:
 				use_role = optarg;
 				appendPQExpBuffer(pgdumpopts, " --role ");
-				doShellQuoting(pgdumpopts, use_role);
+				appendShellString(pgdumpopts, use_role);
 				break;
 
 			default:
@@ -1679,9 +1679,9 @@ runPgDump(const char *dbname)
 	 * incorrectly treat it as a connection string.
 	 */
 	appendPQExpBufferStr(connstrbuf, "dbname=");
-	doConnStrQuoting(connstrbuf, dbname);
+	appendConnStrVal(connstrbuf, dbname);
 
-	doShellQuoting(cmd, connstrbuf->data);
+	appendShellString(cmd, connstrbuf->data);
 
 	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
 
@@ -1940,7 +1940,7 @@ dumpTimestamp(char *msg)
  * string
  */
 static void
-doConnStrQuoting(PQExpBuffer buf, const char *str)
+appendConnStrVal(PQExpBuffer buf, const char *str)
 {
 	const char *s;
 	bool		needquotes;
@@ -1989,7 +1989,7 @@ doConnStrQuoting(PQExpBuffer buf, const char *str)
  * there eventually leads to errors here.
  */
 static void
-doShellQuoting(PQExpBuffer buf, const char *str)
+appendShellString(PQExpBuffer buf, const char *str)
 {
 	const char *p;
 
