@@ -359,9 +359,9 @@ prepare_new_cluster(void)
 	 */
 	prep_status("Analyzing all rows in the new cluster");
 	exec_prog(true,
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
+			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username %s "
 			  "--all --analyze >> \"%s\" 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user,
+	  new_cluster.bindir, new_cluster.port, os_info.user_shell_arg,
 #ifndef WIN32
 	  log_opts.filename
 #else
@@ -378,9 +378,9 @@ prepare_new_cluster(void)
 	 */
 	prep_status("Freezing all rows on the new cluster");
 	exec_prog(true,
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
+			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username %s "
 			  "--all --freeze >> \"%s\" 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user,
+	  new_cluster.bindir, new_cluster.port, os_info.user_shell_arg,
 #ifndef WIN32
 	  log_opts.filename
 #else
@@ -421,9 +421,10 @@ prepare_new_databases(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
 	/* --no-psqlrc prevents AUTOCOMMIT=off */
-			  "--no-psqlrc --port %d --username \"%s\" "
+			  "--no-psqlrc --port %d --username %s "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
+			  new_cluster.bindir, new_cluster.port,
+			  os_info.user_shell_arg, os_info.cwd,
 			  GLOBALS_DUMP_FILE,
 #ifndef WIN32
 			  log_opts.filename
@@ -458,9 +459,10 @@ create_new_objects(void)
 	prep_status("Restoring database schema to new cluster");
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
-			  "--no-psqlrc --port %d --username \"%s\" "
+			  "--no-psqlrc --port %d --username %s "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
+			  new_cluster.bindir, new_cluster.port,
+			  os_info.user_shell_arg, os_info.cwd,
 			  DB_DUMP_FILE,
 #ifndef WIN32
 			  log_opts.filename

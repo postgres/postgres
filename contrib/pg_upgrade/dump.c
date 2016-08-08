@@ -21,10 +21,11 @@ generate_old_dump(void)
 	 * restores the frozenid's for databases and relations.
 	 */
 	exec_prog(true,
-			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
+			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username %s "
 			  "--schema-only --quote-all-identifiers --binary-upgrade "
 			  "-f \"%s/" ALL_DUMP_FILE "\""
-			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user, os_info.cwd);
+			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port,
+			  os_info.user_shell_arg, os_info.cwd);
 	check_ok();
 }
 

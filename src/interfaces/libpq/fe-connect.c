@@ -4377,10 +4377,15 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * Defaults are supplied (from a service file, environment variables, etc)
  * for unspecified options, but only if use_defaults is TRUE.
  *
- * If expand_dbname is non-zero, and the value passed for keyword "dbname"
- * contains an "=", assume it is a conninfo string and process it,
- * overriding any previously processed conflicting keywords. Subsequent
- * keywords will take precedence, however.
+ * If expand_dbname is non-zero, and the value passed for the first occurrence
+ * of "dbname" keyword contains an "=", assume it is a conninfo string and
+ * process it, overriding any previously processed conflicting
+ * keywords. Subsequent keywords will take precedence, however.  In-tree
+ * programs generally specify expand_dbname=true, so command-line arguments
+ * naming a database can use a connection string.  Some code acquires
+ * arbitrary database names from known-literal sources like PQdb(),
+ * PQconninfoParse() and pg_database.datname.  When connecting to such a
+ * database, in-tree code first wraps the name in a connection string.
  */
 static PQconninfoOption *
 conninfo_array_parse(const char **keywords, const char **values,

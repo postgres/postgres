@@ -14,6 +14,7 @@
 #include <sys/time.h>
 
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 
 /* Allocate for null byte */
 #define USER_NAME_SIZE		128
@@ -236,6 +237,7 @@ typedef struct
 	const char *progname;		/* complete pathname for this program */
 	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
+	char	   *user_shell_arg; /* the same, with shell quoting */
 	char		cwd[MAXPGPATH]; /* current working directory, used for output */
 	char	  **tablespaces;	/* tablespaces */
 	int			num_tablespaces;
@@ -381,6 +383,9 @@ void		check_pghost_envvar(void);
 /* util.c */
 
 char	   *quote_identifier(const char *s);
+extern void appendShellString(PQExpBuffer buf, const char *str);
+extern void appendConnStrVal(PQExpBuffer buf, const char *str);
+extern void appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname);
 int			get_user_info(char **user_name);
 void		check_ok(void);
 void		report_status(eLogType type, const char *fmt,...);

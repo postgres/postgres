@@ -49,13 +49,20 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 static PGconn *
 get_db_conn(ClusterInfo *cluster, const char *db_name)
 {
-	char		conn_opts[MAXPGPATH];
+	PQExpBufferData conn_opts;
+	PGconn	   *conn;
 
-	snprintf(conn_opts, sizeof(conn_opts),
-			 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user,
-			 cluster->port);
+	/* Build connection string with proper quoting */
+	initPQExpBuffer(&conn_opts);
+	appendPQExpBufferStr(&conn_opts, "dbname=");
+	appendConnStrVal(&conn_opts, db_name);
+	appendPQExpBufferStr(&conn_opts, " user=");
+	appendConnStrVal(&conn_opts, os_info.user);
+	appendPQExpBuffer(&conn_opts, " port=%d", cluster->port);
 
-	return PQconnectdb(conn_opts);
+	conn = PQconnectdb(conn_opts.data);
+	termPQExpBuffer(&conn_opts);
+	return conn;
 }
 
 

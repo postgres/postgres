@@ -52,6 +52,7 @@ parseCommandLine(int argc, char *argv[])
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 	int			os_user_effective_id;
+	PQExpBufferData userbuf;
 
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 
@@ -211,6 +212,11 @@ parseCommandLine(int argc, char *argv[])
 							"old cluster data resides");
 	validateDirectoryOption(&new_cluster.pgdata, "NEWDATADIR", "-D",
 							"new cluster data resides");
+
+	initPQExpBuffer(&userbuf);
+	appendShellString(&userbuf, os_info.user);
+	/* Abandon struct, but keep its buffer until process exit. */
+	os_info.user_shell_arg = userbuf.data;
 }
 
 

@@ -218,9 +218,10 @@ issue_warnings(char *sequence_script_file_name)
 			prep_status("Adjusting sequences");
 			exec_prog(true,
 					  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
-					  "--no-psqlrc --port %d --username \"%s\" "
+					  "--no-psqlrc --port %d --username %s "
 					  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-					  new_cluster.bindir, new_cluster.port, os_info.user,
+					  new_cluster.bindir, new_cluster.port,
+					  os_info.user_shell_arg,
 					  sequence_script_file_name, log_opts.filename);
 			unlink(sequence_script_file_name);
 			check_ok();

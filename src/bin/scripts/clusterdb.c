@@ -204,12 +204,14 @@ cluster_all_databases(bool verbose, const char *host, const char *port,
 {
 	PGconn	   *conn;
 	PGresult   *result;
+	PQExpBufferData connstr;
 	int			i;
 
 	conn = connectDatabase("postgres", host, port, username, prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
+	initPQExpBuffer(&connstr);
 	for (i = 0; i < PQntuples(result); i++)
 	{
 		char	   *dbname = PQgetvalue(result, i, 0);
@@ -220,10 +222,15 @@ cluster_all_databases(bool verbose, const char *host, const char *port,
 			fflush(stdout);
 		}
 
-		cluster_one_database(dbname, verbose, NULL,
+		resetPQExpBuffer(&connstr);
+		appendPQExpBuffer(&connstr, "dbname=");
+		appendConnStrVal(&connstr, dbname);
+
+		cluster_one_database(connstr.data, verbose, NULL,
 							 host, port, username, prompt_password,
 							 progname, echo);
 	}
+	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }
