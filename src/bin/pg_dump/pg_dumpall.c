@@ -2218,6 +2218,12 @@ doConnStrQuoting(PQExpBuffer buf, const char *str)
 /*
  * Append the given string to the shell command being built in the buffer,
  * with suitable shell-style quoting.
+ *
+ * Forbid LF or CR characters, which have scant practical use beyond designing
+ * security breaches.  The Windows command shell is unusable as a conduit for
+ * arguments containing LF or CR characters.  A future major release should
+ * reject those characters in CREATE ROLE and CREATE DATABASE, because use
+ * there eventually leads to errors here.
  */
 static void
 doShellQuoting(PQExpBuffer buf, const char *str)
@@ -2228,6 +2234,14 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	appendPQExpBufferChar(buf, '\'');
 	for (p = str; *p; p++)
 	{
+		if (*p == '\n' || *p == '\r')
+		{
+			fprintf(stderr,
+					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
+					str);
+			exit(EXIT_FAILURE);
+		}
+
 		if (*p == '\'')
 			appendPQExpBufferStr(buf, "'\"'\"'");
 		else
@@ -2239,6 +2253,14 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	appendPQExpBufferChar(buf, '"');
 	for (p = str; *p; p++)
 	{
+		if (*p == '\n' || *p == '\r')
+		{
+			fprintf(stderr,
+					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
+					str);
+			exit(EXIT_FAILURE);
+		}
+
 		if (*p == '"')
 			appendPQExpBufferStr(buf, "\\\"");
 		else
