@@ -288,10 +288,10 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 	{
 		if (table)
 			fprintf(stderr, _("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, dbname, PQerrorMessage(conn));
+					progname, table, PQdb(conn), PQerrorMessage(conn));
 		else
 			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, dbname, PQerrorMessage(conn));
+					progname, PQdb(conn), PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}
