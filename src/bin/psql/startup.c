@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 		values[2] = options.username;
 		keywords[3] = "password";
 		values[3] = password;
-		keywords[4] = "dbname";
+		keywords[4] = "dbname"; /* see do_connect() */
 		values[4] = (options.action == ACT_LIST_DB &&
 					 options.dbname == NULL) ?
 			"postgres" : options.dbname;
