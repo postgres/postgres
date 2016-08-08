@@ -7,7 +7,8 @@
  *	Win32 needs double quotes at the beginning and end of system()
  *	strings.  If not, it gets confused with multiple quoted strings.
  *	It also requires double-quotes around the executable name and
- *	any files used for redirection.  Other args can use single-quotes.
+ *	any files used for redirection.  Filter other args through
+ *	appendShellString() to quote them.
  *
  *	Generated using Win32 "CMD /?":
  *

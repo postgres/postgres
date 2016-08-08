@@ -2,8 +2,8 @@
  *
  * String-processing utility routines for frontend code
  *
- * Assorted utility functions that are useful in constructing SQL queries
- * and interpreting backend output.
+ * Utility functions that interpret backend output or quote strings for
+ * assorted contexts.
  *
  *
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
@@ -39,6 +39,9 @@ extern void appendStringLiteralDQ(PQExpBuffer buf, const char *str,
 extern void appendByteaLiteral(PQExpBuffer buf,
 				   const unsigned char *str, size_t length,
 				   bool std_strings);
+
+extern void appendShellString(PQExpBuffer buf, const char *str);
+extern void appendConnStrVal(PQExpBuffer buf, const char *str);
 
 extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
 

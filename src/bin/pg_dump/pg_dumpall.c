@@ -50,8 +50,6 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 					   const char *name2);
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(const char *msg);
-static void doShellQuoting(PQExpBuffer buf, const char *str);
-static void doConnStrQuoting(PQExpBuffer buf, const char *str);
 
 static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn, const char *catalog_name,
@@ -215,7 +213,7 @@ main(int argc, char *argv[])
 			case 'f':
 				filename = pg_strdup(optarg);
 				appendPQExpBufferStr(pgdumpopts, " -f ");
-				doShellQuoting(pgdumpopts, filename);
+				appendShellString(pgdumpopts, filename);
 				break;
 
 			case 'g':
@@ -252,7 +250,7 @@ main(int argc, char *argv[])
 
 			case 'S':
 				appendPQExpBufferStr(pgdumpopts, " -S ");
-				doShellQuoting(pgdumpopts, optarg);
+				appendShellString(pgdumpopts, optarg);
 				break;
 
 			case 't':
@@ -288,13 +286,13 @@ main(int argc, char *argv[])
 
 			case 2:
 				appendPQExpBufferStr(pgdumpopts, " --lock-wait-timeout ");
-				doShellQuoting(pgdumpopts, optarg);
+				appendShellString(pgdumpopts, optarg);
 				break;
 
 			case 3:
 				use_role = pg_strdup(optarg);
 				appendPQExpBufferStr(pgdumpopts, " --role ");
-				doShellQuoting(pgdumpopts, use_role);
+				appendShellString(pgdumpopts, use_role);
 				break;
 
 			default:
@@ -1814,9 +1812,9 @@ runPgDump(const char *dbname)
 	 * string.
 	 */
 	appendPQExpBuffer(connstrbuf, "%s dbname=", connstr);
-	doConnStrQuoting(connstrbuf, dbname);
+	appendConnStrVal(connstrbuf, dbname);
 
-	doShellQuoting(cmd, connstrbuf->data);
+	appendShellString(cmd, connstrbuf->data);
 
 	if (verbose)
 		fprintf(stderr, _("%s: running \"%s\"\n"), progname, cmd->data);
@@ -2096,7 +2094,7 @@ constructConnStr(const char **keywords, const char **values)
 			appendPQExpBufferChar(buf, ' ');
 		firstkeyword = false;
 		appendPQExpBuffer(buf, "%s=", keywords[i]);
-		doConnStrQuoting(buf, values[i]);
+		appendConnStrVal(buf, values[i]);
 	}
 
 	connstr = pg_strdup(buf->data);
@@ -2168,146 +2166,4 @@ dumpTimestamp(const char *msg)
 
 	if (strftime(buf, sizeof(buf), PGDUMP_STRFTIME_FMT, localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
-}
-
-
-/*
- * Append the given string to the buffer, with suitable quoting for passing
- * the string as a value, in a keyword/pair value in a libpq connection
- * string
- */
-static void
-doConnStrQuoting(PQExpBuffer buf, const char *str)
-{
-	const char *s;
-	bool		needquotes;
-
-	/*
-	 * If the string consists entirely of plain ASCII characters, no need to
-	 * quote it. This is quite conservative, but better safe than sorry.
-	 */
-	needquotes = false;
-	for (s = str; *s; s++)
-	{
-		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
-			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
-		{
-			needquotes = true;
-			break;
-		}
-	}
-
-	if (needquotes)
-	{
-		appendPQExpBufferChar(buf, '\'');
-		while (*str)
-		{
-			/* ' and \ must be escaped by to \' and \\ */
-			if (*str == '\'' || *str == '\\')
-				appendPQExpBufferChar(buf, '\\');
-
-			appendPQExpBufferChar(buf, *str);
-			str++;
-		}
-		appendPQExpBufferChar(buf, '\'');
-	}
-	else
-		appendPQExpBufferStr(buf, str);
-}
-
-/*
- * Append the given string to the shell command being built in the buffer,
- * with suitable shell-style quoting to create exactly one argument.
- *
- * Forbid LF or CR characters, which have scant practical use beyond designing
- * security breaches.  The Windows command shell is unusable as a conduit for
- * arguments containing LF or CR characters.  A future major release should
- * reject those characters in CREATE ROLE and CREATE DATABASE, because use
- * there eventually leads to errors here.
- */
-static void
-doShellQuoting(PQExpBuffer buf, const char *str)
-{
-	const char *p;
-
-#ifndef WIN32
-	appendPQExpBufferChar(buf, '\'');
-	for (p = str; *p; p++)
-	{
-		if (*p == '\n' || *p == '\r')
-		{
-			fprintf(stderr,
-					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-					str);
-			exit(EXIT_FAILURE);
-		}
-
-		if (*p == '\'')
-			appendPQExpBufferStr(buf, "'\"'\"'");
-		else
-			appendPQExpBufferChar(buf, *p);
-	}
-	appendPQExpBufferChar(buf, '\'');
-#else							/* WIN32 */
-	int			backslash_run_length = 0;
-
-	/*
-	 * A Windows system() argument experiences two layers of interpretation.
-	 * First, cmd.exe interprets the string.  Its behavior is undocumented,
-	 * but a caret escapes any byte except LF or CR that would otherwise have
-	 * special meaning.  Handling of a caret before LF or CR differs between
-	 * "cmd.exe /c" and other modes, and it is unusable here.
-	 *
-	 * Second, the new process parses its command line to construct argv (see
-	 * https://msdn.microsoft.com/en-us/library/17w5ykft.aspx).  This treats
-	 * backslash-double quote sequences specially.
-	 */
-	appendPQExpBufferStr(buf, "^\"");
-	for (p = str; *p; p++)
-	{
-		if (*p == '\n' || *p == '\r')
-		{
-			fprintf(stderr,
-					_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-					str);
-			exit(EXIT_FAILURE);
-		}
-
-		/* Change N backslashes before a double quote to 2N+1 backslashes. */
-		if (*p == '"')
-		{
-			while (backslash_run_length)
-			{
-				appendPQExpBufferStr(buf, "^\\");
-				backslash_run_length--;
-			}
-			appendPQExpBufferStr(buf, "^\\");
-		}
-		else if (*p == '\\')
-			backslash_run_length++;
-		else
-			backslash_run_length = 0;
-
-		/*
-		 * Decline to caret-escape the most mundane characters, to ease
-		 * debugging and lest we approach the command length limit.
-		 */
-		if (!((*p >= 'a' && *p <= 'z') ||
-			  (*p >= 'A' && *p <= 'Z') ||
-			  (*p >= '0' && *p <= '9')))
-			appendPQExpBufferChar(buf, '^');
-		appendPQExpBufferChar(buf, *p);
-	}
-
-	/*
-	 * Change N backslashes at end of argument to 2N backslashes, because they
-	 * precede the double quote that terminates the argument.
-	 */
-	while (backslash_run_length)
-	{
-		appendPQExpBufferStr(buf, "^\\");
-		backslash_run_length--;
-	}
-	appendPQExpBufferStr(buf, "^\"");
-#endif   /* WIN32 */
 }
