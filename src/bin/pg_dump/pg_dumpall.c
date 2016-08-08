@@ -2217,7 +2217,7 @@ doConnStrQuoting(PQExpBuffer buf, const char *str)
 
 /*
  * Append the given string to the shell command being built in the buffer,
- * with suitable shell-style quoting.
+ * with suitable shell-style quoting to create exactly one argument.
  *
  * Forbid LF or CR characters, which have scant practical use beyond designing
  * security breaches.  The Windows command shell is unusable as a conduit for
@@ -2249,8 +2249,20 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	}
 	appendPQExpBufferChar(buf, '\'');
 #else							/* WIN32 */
+	int			backslash_run_length = 0;
 
-	appendPQExpBufferChar(buf, '"');
+	/*
+	 * A Windows system() argument experiences two layers of interpretation.
+	 * First, cmd.exe interprets the string.  Its behavior is undocumented,
+	 * but a caret escapes any byte except LF or CR that would otherwise have
+	 * special meaning.  Handling of a caret before LF or CR differs between
+	 * "cmd.exe /c" and other modes, and it is unusable here.
+	 *
+	 * Second, the new process parses its command line to construct argv (see
+	 * https://msdn.microsoft.com/en-us/library/17w5ykft.aspx).  This treats
+	 * backslash-double quote sequences specially.
+	 */
+	appendPQExpBufferStr(buf, "^\"");
 	for (p = str; *p; p++)
 	{
 		if (*p == '\n' || *p == '\r')
@@ -2261,11 +2273,41 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 			exit(EXIT_FAILURE);
 		}
 
+		/* Change N backslashes before a double quote to 2N+1 backslashes. */
 		if (*p == '"')
-			appendPQExpBufferStr(buf, "\\\"");
+		{
+			while (backslash_run_length)
+			{
+				appendPQExpBufferStr(buf, "^\\");
+				backslash_run_length--;
+			}
+			appendPQExpBufferStr(buf, "^\\");
+		}
+		else if (*p == '\\')
+			backslash_run_length++;
 		else
-			appendPQExpBufferChar(buf, *p);
+			backslash_run_length = 0;
+
+		/*
+		 * Decline to caret-escape the most mundane characters, to ease
+		 * debugging and lest we approach the command length limit.
+		 */
+		if (!((*p >= 'a' && *p <= 'z') ||
+			  (*p >= 'A' && *p <= 'Z') ||
+			  (*p >= '0' && *p <= '9')))
+			appendPQExpBufferChar(buf, '^');
+		appendPQExpBufferChar(buf, *p);
 	}
-	appendPQExpBufferChar(buf, '"');
+
+	/*
+	 * Change N backslashes at end of argument to 2N backslashes, because they
+	 * precede the double quote that terminates the argument.
+	 */
+	while (backslash_run_length)
+	{
+		appendPQExpBufferStr(buf, "^\\");
+		backslash_run_length--;
+	}
+	appendPQExpBufferStr(buf, "^\"");
 #endif   /* WIN32 */
 }
