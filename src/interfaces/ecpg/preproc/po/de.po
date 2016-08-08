@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009-2013.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -22,17 +22,17 @@ msgstr ""
 #: descriptor.c:64
 #, c-format
 msgid "variable \"%s\" must have a numeric type"
-msgstr "Variable „%s“ muss einen numerischen Typ haben"
+msgstr "Variable »%s« muss einen numerischen Typ haben"
 
 #: descriptor.c:124 descriptor.c:146
 #, c-format
 msgid "descriptor \"%s\" does not exist"
-msgstr "Deskriptor „%s“ existiert nicht"
+msgstr "Deskriptor »%s« existiert nicht"
 
 #: descriptor.c:161 descriptor.c:210
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
-msgstr "Deskriptorkopfelement „%d“ existiert nicht"
+msgstr "Deskriptorkopfelement »%d« existiert nicht"
 
 #: descriptor.c:182
 #, c-format
@@ -47,12 +47,12 @@ msgstr "key_member ist immer 0"
 #: descriptor.c:277
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
-msgstr "Deskriptorelement „%s“ ist nicht implementiert"
+msgstr "Deskriptorelement »%s« ist nicht implementiert"
 
 #: descriptor.c:287
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
-msgstr "Deskriptorelement „%s“ kann nicht gesetzt werden"
+msgstr "Deskriptorelement »%s« kann nicht gesetzt werden"
 
 #: ecpg.c:35
 #, c-format
@@ -95,7 +95,7 @@ msgid ""
 "                 \"INFORMIX\", \"INFORMIX_SE\"\n"
 msgstr ""
 "  -C MODUS       Kompatibilitätsmodus setzen; MODUS kann sein:\n"
-"                 „INFORMIX“ oder „INFORMIX_SE“\n"
+"                 »INFORMIX« oder »INFORMIX_SE«\n"
 
 #: ecpg.c:46
 #, c-format
@@ -110,7 +110,7 @@ msgstr "  -D SYMBOL      SYMBOL definieren\n"
 #: ecpg.c:49
 #, c-format
 msgid "  -h             parse a header file, this option includes option \"-c\"\n"
-msgstr "  -h             eine Headerdatei parsen, schließt Option „-c“ ein\n"
+msgstr "  -h             eine Headerdatei parsen, schließt Option »-c« ein\n"
 
 #: ecpg.c:50
 #, c-format
@@ -134,7 +134,7 @@ msgid ""
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
 "  -r OPTION      Laufzeitverhalten bestimmen; OPTION kann sein:\n"
-"                 „no_indicator“, „prepare“, „questionmarks“\n"
+"                 »no_indicator«, »prepare«, »questionmarks«\n"
 
 #: ecpg.c:55
 #, c-format
@@ -179,12 +179,12 @@ msgstr ""
 #: ecpg.c:182 ecpg.c:333 ecpg.c:343
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: konnte Datei „%s“ nicht öffnen: %s\n"
+msgstr "%s: konnte Datei »%s« nicht öffnen: %s\n"
 
 #: ecpg.c:221 ecpg.c:234 ecpg.c:250 ecpg.c:275
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: ecpg.c:245
 #, c-format
@@ -214,12 +214,12 @@ msgstr "%s: keine Eingabedateien angegeben\n"
 #: ecpg.c:466
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
-msgstr "Cursor „%s“ wurde deklariert aber nicht geöffnet"
+msgstr "Cursor »%s« wurde deklariert aber nicht geöffnet"
 
 #: ecpg.c:479 preproc.y:109
 #, c-format
 msgid "could not remove output file \"%s\"\n"
-msgstr "konnte Ausgabedatei „%s“ nicht entfernen\n"
+msgstr "konnte Ausgabedatei »%s« nicht entfernen\n"
 
 #: pgc.l:403
 #, c-format
@@ -264,12 +264,12 @@ msgstr "fehlender Bezeichner im Befehl EXEC SQL UNDEF"
 #: pgc.l:987 pgc.l:1001
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
-msgstr "passendes „EXEC SQL IFDEF“ / „EXEC SQL IFNDEF“ fehlt"
+msgstr "passendes »EXEC SQL IFDEF« / »EXEC SQL IFNDEF« fehlt"
 
 #: pgc.l:990 pgc.l:1003 pgc.l:1179
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
-msgstr "„EXEC SQL ENDIF;“ fehlt"
+msgstr "»EXEC SQL ENDIF;« fehlt"
 
 #: pgc.l:1019 pgc.l:1038
 #, c-format
@@ -309,12 +309,12 @@ msgstr "interner Fehler: unerreichbarer Zustand; bitte an <pgsql-bugs@postgresql
 #: pgc.l:1343
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
-msgstr "Fehler: Include-Pfad „%s/%s“ ist zu lang auf Zeile %d, wird übersprungen\n"
+msgstr "Fehler: Include-Pfad »%s/%s« ist zu lang auf Zeile %d, wird übersprungen\n"
 
 #: pgc.l:1365
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
-msgstr "konnte Include-Datei „%s“ nicht öffnen auf Zeile %d"
+msgstr "konnte Include-Datei »%s« nicht öffnen auf Zeile %d"
 
 #: preproc.y:31
 msgid "syntax error"
@@ -333,7 +333,7 @@ msgstr "FEHLER: "
 #: preproc.y:491
 #, c-format
 msgid "cursor \"%s\" does not exist"
-msgstr "Cursor „%s“ existiert nicht"
+msgstr "Cursor »%s« existiert nicht"
 
 #: preproc.y:520
 #, c-format
@@ -343,12 +343,12 @@ msgstr "Initialisierungswert nicht erlaubt in Typdefinition"
 #: preproc.y:522
 #, c-format
 msgid "type name \"string\" is reserved in Informix mode"
-msgstr "Typname „string“ ist im Informix-Modus reserviert"
+msgstr "Typname »string« ist im Informix-Modus reserviert"
 
 #: preproc.y:529 preproc.y:13273
 #, c-format
 msgid "type \"%s\" is already defined"
-msgstr "Typ „%s“ ist bereits definiert"
+msgstr "Typ »%s« ist bereits definiert"
 
 #: preproc.y:553 preproc.y:13926 preproc.y:14247 variable.c:610
 #, c-format
@@ -419,12 +419,12 @@ msgstr "COPY FROM STDIN ist nicht implementiert"
 #: preproc.y:8153 preproc.y:12862
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
-msgstr "Verwendung der Variable „%s“ in verschiedenen DECLARE-Anweisungen wird nicht unterstützt"
+msgstr "Verwendung der Variable »%s« in verschiedenen DECLARE-Anweisungen wird nicht unterstützt"
 
 #: preproc.y:8155 preproc.y:12864
 #, c-format
 msgid "cursor \"%s\" is already defined"
-msgstr "Cursor „%s“ ist bereits definiert"
+msgstr "Cursor »%s« ist bereits definiert"
 
 #: preproc.y:8573
 #, c-format
@@ -444,27 +444,27 @@ msgstr "CREATE TABLE AS kann INTO nicht verwenden"
 #: preproc.y:12628
 #, c-format
 msgid "expected \"@\", found \"%s\""
-msgstr "„@“ erwartet, „%s“ gefunden"
+msgstr "»@« erwartet, »%s« gefunden"
 
 #: preproc.y:12640
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
-msgstr "er werden nur die Protokolle „tcp“ und „unix“ und der Datenbanktyp „postgresql“ unterstützt"
+msgstr "er werden nur die Protokolle »tcp« und »unix« und der Datenbanktyp »postgresql« unterstützt"
 
 #: preproc.y:12643
 #, c-format
 msgid "expected \"://\", found \"%s\""
-msgstr "„://“ erwartet, „%s“ gefunden"
+msgstr "»://« erwartet, »%s« gefunden"
 
 #: preproc.y:12648
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
-msgstr "Unix-Domain-Sockets funktionieren nur mit „localhost“, aber nicht mit „%s“"
+msgstr "Unix-Domain-Sockets funktionieren nur mit »localhost«, aber nicht mit »%s«"
 
 #: preproc.y:12674
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
-msgstr "„postgresql“ erwartet, „%s“ gefunden"
+msgstr "»postgresql« erwartet, »%s« gefunden"
 
 #: preproc.y:12677
 #, c-format
@@ -474,7 +474,7 @@ msgstr "ungültiger Verbindungstyp: %s"
 #: preproc.y:12686
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
-msgstr "„@“ oder „://“ erwartet, „%s“ gefunden"
+msgstr "»@« oder »://« erwartet, »%s« gefunden"
 
 #: preproc.y:12761 preproc.y:12779
 #, c-format
@@ -489,7 +489,7 @@ msgstr "unvollständige Anweisung"
 #: preproc.y:12793 preproc.y:12810
 #, c-format
 msgid "unrecognized token \"%s\""
-msgstr "nicht erkanntes Token „%s“"
+msgstr "nicht erkanntes Token »%s«"
 
 #: preproc.y:13084
 #, c-format
@@ -530,7 +530,7 @@ msgstr "Array aus Indikatoren bei der Eingabe nicht erlaubt"
 #: preproc.y:14459
 #, c-format
 msgid "%s at or near \"%s\""
-msgstr "%s bei „%s“"
+msgstr "%s bei »%s«"
 
 #: type.c:18 type.c:30
 #, c-format
@@ -545,22 +545,22 @@ msgstr "unbekannter Variablentypcode %d"
 #: type.c:261
 #, c-format
 msgid "variable \"%s\" is hidden by a local variable of a different type"
-msgstr "Variable „%s“ wird durch eine lokale Variable eines anderen Typs versteckt"
+msgstr "Variable »%s« wird durch eine lokale Variable eines anderen Typs versteckt"
 
 #: type.c:263
 #, c-format
 msgid "variable \"%s\" is hidden by a local variable"
-msgstr "Variable „%s“ wird durch eine lokale Variable versteckt"
+msgstr "Variable »%s« wird durch eine lokale Variable versteckt"
 
 #: type.c:275
 #, c-format
 msgid "indicator variable \"%s\" is hidden by a local variable of a different type"
-msgstr "Indikatorvariable „%s“ wird durch eine lokale Variable eines anderen Typs versteckt"
+msgstr "Indikatorvariable »%s« wird durch eine lokale Variable eines anderen Typs versteckt"
 
 #: type.c:277
 #, c-format
 msgid "indicator variable \"%s\" is hidden by a local variable"
-msgstr "Indikatorvariable „%s“ wird durch eine lokale Variable versteckt"
+msgstr "Indikatorvariable »%s« wird durch eine lokale Variable versteckt"
 
 #: type.c:285
 #, c-format
@@ -590,32 +590,32 @@ msgstr "unbekannter Deskriptorelementcode %d"
 #: variable.c:89 variable.c:112
 #, c-format
 msgid "incorrectly formed variable \"%s\""
-msgstr "falsch geformte Variable „%s“"
+msgstr "falsch geformte Variable »%s«"
 
 #: variable.c:135
 #, c-format
 msgid "variable \"%s\" is not a pointer"
-msgstr "Variable „%s“ ist kein Zeiger"
+msgstr "Variable »%s« ist kein Zeiger"
 
 #: variable.c:138 variable.c:163
 #, c-format
 msgid "variable \"%s\" is not a pointer to a structure or a union"
-msgstr "Variable „%s“ ist kein Zeiger auf eine Struktur oder Union"
+msgstr "Variable »%s« ist kein Zeiger auf eine Struktur oder Union"
 
 #: variable.c:150
 #, c-format
 msgid "variable \"%s\" is neither a structure nor a union"
-msgstr "Variable „%s“ ist keine Struktur oder Union"
+msgstr "Variable »%s« ist keine Struktur oder Union"
 
 #: variable.c:160
 #, c-format
 msgid "variable \"%s\" is not an array"
-msgstr "Variable „%s“ ist kein Array"
+msgstr "Variable »%s« ist kein Array"
 
 #: variable.c:229 variable.c:251
 #, c-format
 msgid "variable \"%s\" is not declared"
-msgstr "Variable „%s“ ist nicht deklariert"
+msgstr "Variable »%s« ist nicht deklariert"
 
 #: variable.c:484
 #, c-format
@@ -625,7 +625,7 @@ msgstr "Indikatorvariable muss einen ganzzahligen Typ haben"
 #: variable.c:496
 #, c-format
 msgid "unrecognized data type name \"%s\""
-msgstr "unbekannter Datentypname „%s“"
+msgstr "unbekannter Datentypname »%s«"
 
 #: variable.c:507 variable.c:515 variable.c:532 variable.c:535
 #, c-format

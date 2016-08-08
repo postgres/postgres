@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2013.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -27,7 +27,7 @@ msgstr "PL/pgSQL-Funktionen können Typ %s nicht annehmen"
 #: pl_comp.c:513
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
-msgstr "konnte den tatsächlichen Rückgabetyp der polymorphischen Funktion „%s“ nicht ermitteln"
+msgstr "konnte den tatsächlichen Rückgabetyp der polymorphischen Funktion »%s« nicht ermitteln"
 
 #: pl_comp.c:543
 #, c-format
@@ -57,17 +57,17 @@ msgstr "Ereignistriggerfunktionen können keine deklarierten Argumente haben"
 #: pl_comp.c:950
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
-msgstr "Kompilierung der PL/pgSQL-Funktion „%s“ nahe Zeile %d"
+msgstr "Kompilierung der PL/pgSQL-Funktion »%s« nahe Zeile %d"
 
 #: pl_comp.c:973
 #, c-format
 msgid "parameter name \"%s\" used more than once"
-msgstr "Parametername „%s“ mehrmals angegeben"
+msgstr "Parametername »%s« mehrmals angegeben"
 
 #: pl_comp.c:1083
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
-msgstr "Spaltenverweis „%s“ ist nicht eindeutig"
+msgstr "Spaltenverweis »%s« ist nicht eindeutig"
 
 #: pl_comp.c:1085
 #, c-format
@@ -78,37 +78,37 @@ msgstr "Er könnte sich entweder auf eine PL/pgSQL-Variable oder eine Tabellensp
 #: pl_exec.c:4563
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
-msgstr "Record „%s“ hat kein Feld „%s“"
+msgstr "Record »%s« hat kein Feld »%s«"
 
 #: pl_comp.c:1824
 #, c-format
 msgid "relation \"%s\" does not exist"
-msgstr "Relation „%s“ existiert nicht"
+msgstr "Relation »%s« existiert nicht"
 
 #: pl_comp.c:1933
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
-msgstr "Variable „%s“ hat Pseudotyp %s"
+msgstr "Variable »%s« hat Pseudotyp %s"
 
 #: pl_comp.c:1999
 #, c-format
 msgid "relation \"%s\" is not a table"
-msgstr "Relation „%s“ ist keine Tabelle"
+msgstr "Relation »%s« ist keine Tabelle"
 
 #: pl_comp.c:2159
 #, c-format
 msgid "type \"%s\" is only a shell"
-msgstr "Typ „%s“ ist nur eine Hülle"
+msgstr "Typ »%s« ist nur eine Hülle"
 
 #: pl_comp.c:2233 pl_comp.c:2286
 #, c-format
 msgid "unrecognized exception condition \"%s\""
-msgstr "unbekannte Ausnahmebedingung „%s“"
+msgstr "unbekannte Ausnahmebedingung »%s«"
 
 #: pl_comp.c:2444
 #, c-format
 msgid "could not determine actual argument type for polymorphic function \"%s\""
-msgstr "konnte den tatsächlichen Argumenttyp der polymorphischen Funktion „%s“ nicht ermitteln"
+msgstr "konnte den tatsächlichen Argumenttyp der polymorphischen Funktion »%s« nicht ermitteln"
 
 #: pl_exec.c:254 pl_exec.c:514 pl_exec.c:793
 msgid "during initialization of execution state"
@@ -191,7 +191,7 @@ msgstr "bei der Initialisierung der lokalen Variablen des Anweisungsblocks"
 #: pl_exec.c:1069
 #, c-format
 msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
-msgstr "Variable „%s“ ist als NOT NULL deklariert und kann daher nicht den Ausgangswert NULL haben"
+msgstr "Variable »%s« ist als NOT NULL deklariert und kann daher nicht den Ausgangswert NULL haben"
 
 #: pl_exec.c:1119
 msgid "during statement block entry"
@@ -243,7 +243,7 @@ msgstr "BY-Wert einer FOR-Schleife muss größer als null sein"
 #: pl_exec.c:2057 pl_exec.c:3582
 #, c-format
 msgid "cursor \"%s\" already in use"
-msgstr "Cursor „%s“ ist bereits in Verwendung"
+msgstr "Cursor »%s« ist bereits in Verwendung"
 
 #: pl_exec.c:2080 pl_exec.c:3644
 #, c-format
@@ -299,7 +299,7 @@ msgstr "falscher Ergebnistyp angegeben in RETURN NEXT"
 #: pl_exec.c:4465 pl_exec.c:4533 pl_exec.c:4556
 #, c-format
 msgid "record \"%s\" is not assigned yet"
-msgstr "Record „%s“ hat noch keinen Wert"
+msgstr "Record »%s« hat noch keinen Wert"
 
 #: pl_exec.c:2558 pl_exec.c:4020 pl_exec.c:4346 pl_exec.c:4381 pl_exec.c:4448
 #: pl_exec.c:4467 pl_exec.c:4535 pl_exec.c:4558
@@ -414,12 +414,12 @@ msgstr "Sie könnten stattdessen EXECUTE ... INTO oder EXECUTE CREATE TABLE ... 
 #: pl_exec.c:3726 pl_exec.c:3818
 #, c-format
 msgid "cursor variable \"%s\" is null"
-msgstr "Cursor-Variable „%s“ ist NULL"
+msgstr "Cursor-Variable »%s« ist NULL"
 
 #: pl_exec.c:3733 pl_exec.c:3825
 #, c-format
 msgid "cursor \"%s\" does not exist"
-msgstr "Cursor „%s“ existiert nicht"
+msgstr "Cursor »%s« existiert nicht"
 
 #: pl_exec.c:3747
 #, c-format
@@ -429,7 +429,7 @@ msgstr "relative oder absolute Cursorposition ist NULL"
 #: pl_exec.c:3914
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
-msgstr "NULL-Wert kann der Variable „%s“ nicht zugewiesen werden, weil sie als NOT NULL deklariert ist"
+msgstr "NULL-Wert kann der Variable »%s« nicht zugewiesen werden, weil sie als NOT NULL deklariert ist"
 
 #: pl_exec.c:3961
 #, c-format
@@ -459,24 +459,24 @@ msgstr "Arrayindex in Zuweisung darf nicht NULL sein"
 #: pl_exec.c:4671
 #, c-format
 msgid "query \"%s\" did not return data"
-msgstr "Anfrage „%s“ hat keine Daten zurückgegeben"
+msgstr "Anfrage »%s« hat keine Daten zurückgegeben"
 
 #: pl_exec.c:4679
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] "Anfrage „%s“ hat %d Spalte zurückgegeben"
-msgstr[1] "Anfrage „%s“ hat %d Spalten zurückgegeben"
+msgstr[0] "Anfrage »%s« hat %d Spalte zurückgegeben"
+msgstr[1] "Anfrage »%s« hat %d Spalten zurückgegeben"
 
 #: pl_exec.c:4705
 #, c-format
 msgid "query \"%s\" returned more than one row"
-msgstr "Anfrage „%s“ hat mehr als eine Zeile zurückgegeben"
+msgstr "Anfrage »%s« hat mehr als eine Zeile zurückgegeben"
 
 #: pl_exec.c:4762
 #, c-format
 msgid "query \"%s\" is not a SELECT"
-msgstr "Anfrage „%s“ ist kein SELECT"
+msgstr "Anfrage »%s« ist kein SELECT"
 
 #: pl_funcs.c:218
 msgid "statement block"
@@ -542,7 +542,7 @@ msgstr "Vorgabewerte werden für Zeilen- oder Record-Variablen nicht unterstütz
 #: pl_gram.y:640 pl_gram.y:655 pl_gram.y:681
 #, c-format
 msgid "variable \"%s\" does not exist"
-msgstr "Variable „%s“ existiert nicht"
+msgstr "Variable »%s« existiert nicht"
 
 #: pl_gram.y:699 pl_gram.y:712
 msgid "duplicate declaration"
@@ -565,7 +565,7 @@ msgstr "unbekanntes Element in GET DIAGNOSTICS"
 #: pl_gram.y:991 pl_gram.y:3217
 #, c-format
 msgid "\"%s\" is not a scalar variable"
-msgstr "„%s“ ist keine skalare Variable"
+msgstr "»%s« ist keine skalare Variable"
 
 #: pl_gram.y:1243 pl_gram.y:1437
 #, c-format
@@ -614,7 +614,7 @@ msgstr "ungültiger SQLSTATE-Code"
 
 #: pl_gram.y:1907
 msgid "syntax error, expected \"FOR\""
-msgstr "Syntaxfehler, „FOR“ erwartet"
+msgstr "Syntaxfehler, »FOR« erwartet"
 
 #: pl_gram.y:1969
 #, c-format
@@ -629,7 +629,7 @@ msgstr "Cursor-Variable muss eine einfache Variable sein"
 #: pl_gram.y:2031
 #, c-format
 msgid "variable \"%s\" must be of type cursor or refcursor"
-msgstr "Variable „%s“ muss Typ cursor oder refcursor haben"
+msgstr "Variable »%s« muss Typ cursor oder refcursor haben"
 
 #: pl_gram.y:2199
 msgid "label does not exist"
@@ -638,7 +638,7 @@ msgstr "Label existiert nicht"
 #: pl_gram.y:2317 pl_gram.y:2328
 #, c-format
 msgid "\"%s\" is not a known variable"
-msgstr "„%s“ ist keine bekannte Variable"
+msgstr "»%s« ist keine bekannte Variable"
 
 #: pl_gram.y:2432 pl_gram.y:2442 pl_gram.y:2597
 msgid "mismatched parentheses"
@@ -647,12 +647,12 @@ msgstr "Klammern passen nicht"
 #: pl_gram.y:2446
 #, c-format
 msgid "missing \"%s\" at end of SQL expression"
-msgstr "„%s“ fehlt am Ende des SQL-Ausdrucks"
+msgstr "»%s« fehlt am Ende des SQL-Ausdrucks"
 
 #: pl_gram.y:2452
 #, c-format
 msgid "missing \"%s\" at end of SQL statement"
-msgstr "„%s“ fehlt am Ende der SQL-Anweisung"
+msgstr "»%s« fehlt am Ende der SQL-Anweisung"
 
 #: pl_gram.y:2469
 msgid "missing expression"
@@ -696,7 +696,7 @@ msgstr "RETURN kann keinen Parameter haben in einer Funktion mit OUT-Parametern"
 #: pl_gram.y:2924
 #, c-format
 msgid "RETURN cannot have a parameter in function returning void"
-msgstr "RETURN kann keinen Parameter haben in einer Funktion, die „void“ zurückgibt"
+msgstr "RETURN kann keinen Parameter haben in einer Funktion, die »void« zurückgibt"
 
 #: pl_gram.y:2986
 #, c-format
@@ -706,7 +706,7 @@ msgstr "RETURN NEXT kann keinen Parameter haben in einer Funktion mit OUT-Parame
 #: pl_gram.y:3086
 #, c-format
 msgid "\"%s\" is declared CONSTANT"
-msgstr "„%s“ wurde als CONSTANT deklariert"
+msgstr "»%s« wurde als CONSTANT deklariert"
 
 #: pl_gram.y:3148 pl_gram.y:3160
 #, c-format
@@ -721,42 +721,42 @@ msgstr "zu viele INTO-Variablen angegeben"
 #: pl_gram.y:3413
 #, c-format
 msgid "end label \"%s\" specified for unlabelled block"
-msgstr "Endlabel „%s“ für ungelabelten Block angegeben"
+msgstr "Endlabel »%s« für ungelabelten Block angegeben"
 
 #: pl_gram.y:3420
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
-msgstr "Endlabel „%s“ unterscheidet sich vom Label des Blocks „%s“"
+msgstr "Endlabel »%s« unterscheidet sich vom Label des Blocks »%s«"
 
 #: pl_gram.y:3455
 #, c-format
 msgid "cursor \"%s\" has no arguments"
-msgstr "Cursor „%s“ hat keine Argumente"
+msgstr "Cursor »%s« hat keine Argumente"
 
 #: pl_gram.y:3469
 #, c-format
 msgid "cursor \"%s\" has arguments"
-msgstr "Cursor „%s“ hat Argumente"
+msgstr "Cursor »%s« hat Argumente"
 
 #: pl_gram.y:3511
 #, c-format
 msgid "cursor \"%s\" has no argument named \"%s\""
-msgstr "Cursor „%s“ hat kein Argument namens „%s“"
+msgstr "Cursor »%s« hat kein Argument namens »%s«"
 
 #: pl_gram.y:3531
 #, c-format
 msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
-msgstr "Wert für Parameter „%s“ von Cursor „%s“ mehrmals angegeben"
+msgstr "Wert für Parameter »%s« von Cursor »%s« mehrmals angegeben"
 
 #: pl_gram.y:3556
 #, c-format
 msgid "not enough arguments for cursor \"%s\""
-msgstr "nicht genügend Argumente für Cursor „%s“"
+msgstr "nicht genügend Argumente für Cursor »%s«"
 
 #: pl_gram.y:3563
 #, c-format
 msgid "too many arguments for cursor \"%s\""
-msgstr "zu viele Argumente für Cursor „%s“"
+msgstr "zu viele Argumente für Cursor »%s«"
 
 #: pl_gram.y:3635
 msgid "unrecognized RAISE statement option"
@@ -764,7 +764,7 @@ msgstr "unbekannte Option für RAISE-Anweisung"
 
 #: pl_gram.y:3639
 msgid "syntax error, expected \"=\""
-msgstr "Syntaxfehler, „=“ erwartet"
+msgstr "Syntaxfehler, »=« erwartet"
 
 #: pl_handler.c:61
 msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
@@ -780,4 +780,4 @@ msgstr "%s am Ende der Eingabe"
 #: pl_scanner.c:557
 #, c-format
 msgid "%s at or near \"%s\""
-msgstr "%s bei „%s“"
+msgstr "%s bei »%s«"

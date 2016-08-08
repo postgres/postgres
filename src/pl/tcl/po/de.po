@@ -1,7 +1,7 @@
 # German message translation file for PL/Tcl
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2013.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -28,7 +28,7 @@ msgid ""
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"in PL/Tcl-Funktion „%s“"
+"in PL/Tcl-Funktion »%s«"
 
 #: pltcl.c:1127
 msgid "out of memory"

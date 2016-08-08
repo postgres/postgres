@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2013.
 #
-# Use these quotes: „%s“
+# Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
@@ -23,7 +23,7 @@ msgid ""
 "If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr ""
 "Wenn wahr, dann wird vertrauenswürdiger und nicht vertrauenswürdiger Perl-"
-"Code im „strict“-Modus kompiliert."
+"Code im »strict«-Modus kompiliert."
 
 #: plperl.c:378
 msgid ""
@@ -81,7 +81,7 @@ msgstr "beim Ausführen von plperl.on_plperlu_init"
 #: plperl.c:1014 plperl.c:1614
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
-msgstr "Perl-Hash enthält nicht existierende Spalte „%s“"
+msgstr "Perl-Hash enthält nicht existierende Spalte »%s«"
 
 #: plperl.c:1099
 #, c-format
@@ -138,7 +138,7 @@ msgstr "PL/Perl-Funktionen können Typ %s nicht annehmen"
 #: plperl.c:1946
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
-msgstr "keine CODE-Referenz erhalten beim Kompilieren von Funktion „%s“"
+msgstr "keine CODE-Referenz erhalten beim Kompilieren von Funktion »%s«"
 
 #: plperl.c:2150
 msgid "set-valued function called in context that cannot accept a set"
@@ -162,7 +162,7 @@ msgstr "geänderte Zeile im DELETE-Trigger wird ignoriert"
 msgid ""
 "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr ""
-"Ergebnis einer PL/Perl-Triggerfunktion muss undef, „SKIP“ oder „MODIFY“ sein"
+"Ergebnis einer PL/Perl-Triggerfunktion muss undef, »SKIP« oder »MODIFY« sein"
 
 #: plperl.c:2448 plperl.c:2454
 msgid "out of memory"
@@ -188,12 +188,12 @@ msgstr ""
 #: plperl.c:3655
 #, c-format
 msgid "PL/Perl function \"%s\""
-msgstr "PL/Perl-Funktion „%s“"
+msgstr "PL/Perl-Funktion »%s«"
 
 #: plperl.c:3667
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
-msgstr "Kompilierung der PL/Perl-Funktion „%s“"
+msgstr "Kompilierung der PL/Perl-Funktion »%s«"
 
 #: plperl.c:3676
 msgid "PL/Perl anonymous code block"
