@@ -46,19 +46,19 @@ SELECT v, to_char(d, 'Mon') AS "month name", EXTRACT(month FROM d) AS num,
 (3 rows)
 
 -- ordered months in vertical header, ordered years in horizontal header
-SELECT EXTRACT(year FROM d) AS year, to_char(d,'Mon') AS "month name",
+SELECT EXTRACT(year FROM d) AS year, to_char(d,'Mon') AS """month"" name",
   EXTRACT(month FROM d) AS month,
   format('sum=%s avg=%s', sum(i), avg(i)::numeric(2,1))
   FROM ctv_data
   GROUP BY EXTRACT(year FROM d), to_char(d,'Mon'), EXTRACT(month FROM d)
 ORDER BY month
-\crosstabview "month name" year format year
- month name |      2014       |      2015      
-------------+-----------------+----------------
- Jan        |                 | sum=3 avg=3.0
- Apr        |                 | sum=10 avg=5.0
- Jul        | sum=5 avg=5.0   | sum=4 avg=4.0
- Dec        | sum=-3 avg=-3.0 | 
+\crosstabview """month"" name" year format year
+ "month" name |      2014       |      2015      
+--------------+-----------------+----------------
+ Jan          |                 | sum=3 avg=3.0
+ Apr          |                 | sum=10 avg=5.0
+ Jul          | sum=5 avg=5.0   | sum=4 avg=4.0
+ Dec          | sum=-3 avg=-3.0 | 
 (4 rows)
 
 -- combine contents vertically into the same cell (V/H duplicates)

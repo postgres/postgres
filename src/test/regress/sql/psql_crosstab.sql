@@ -29,13 +29,13 @@ SELECT v, to_char(d, 'Mon') AS "month name", EXTRACT(month FROM d) AS num,
  \crosstabview v "month name" 4 num
 
 -- ordered months in vertical header, ordered years in horizontal header
-SELECT EXTRACT(year FROM d) AS year, to_char(d,'Mon') AS "month name",
+SELECT EXTRACT(year FROM d) AS year, to_char(d,'Mon') AS """month"" name",
   EXTRACT(month FROM d) AS month,
   format('sum=%s avg=%s', sum(i), avg(i)::numeric(2,1))
   FROM ctv_data
   GROUP BY EXTRACT(year FROM d), to_char(d,'Mon'), EXTRACT(month FROM d)
 ORDER BY month
-\crosstabview "month name" year format year
+\crosstabview """month"" name" year format year
 
 -- combine contents vertically into the same cell (V/H duplicates)
 SELECT v, h, string_agg(c, E'\n') FROM ctv_data GROUP BY v, h ORDER BY 1,2,3

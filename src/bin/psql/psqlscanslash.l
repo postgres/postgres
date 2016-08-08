@@ -671,7 +671,8 @@ dequote_downcase_identifier(char *str, bool downcase, int encoding)
 				/* Keep the first quote, remove the second */
 				cp++;
 			}
-			inquotes = !inquotes;
+			else
+				inquotes = !inquotes;
 			/* Collapse out quote at *cp */
 			memmove(cp, cp + 1, strlen(cp));
 			/* do not advance cp */
