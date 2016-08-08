@@ -382,12 +382,15 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 {
 	PGconn	   *conn;
 	PGresult   *result;
+	PQExpBufferData connstr;
 	int			stage;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
 									  username, prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
+
+	initPQExpBuffer(&connstr);
 
 	/* If analyzing in stages, then run through all stages.  Otherwise just
 	 * run once, passing -1 as the stage. */
@@ -407,12 +410,17 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 				fflush(stdout);
 			}
 
-			vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
-								analyze_in_stages, stage,
+			resetPQExpBuffer(&connstr);
+			appendPQExpBuffer(&connstr, "dbname=");
+			appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
+
+			vacuum_one_database(connstr.data, full, verbose, and_analyze,
+								analyze_only, analyze_in_stages, stage,
 							freeze, NULL, host, port, username, prompt_password,
 								progname, echo, quiet);
 		}
 	}
+	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }
