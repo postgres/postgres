@@ -36,6 +36,128 @@
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f0c7b789a] 2016-08-08 10:33:46 -0400
+Branch: REL9_5_STABLE [98b0c6280] 2016-08-08 10:33:46 -0400
+Branch: REL9_4_STABLE [f40618092] 2016-08-08 10:33:47 -0400
+Branch: REL9_3_STABLE [6c954a6a5] 2016-08-08 10:33:47 -0400
+Branch: REL9_2_STABLE [8b32516db] 2016-08-08 10:33:47 -0400
+Branch: REL9_1_STABLE [5327b764a] 2016-08-08 10:33:47 -0400
+-->
+     <para>
+      Fix possible mis-evaluation of
+      nested <literal>CASE</>-<literal>WHEN</> expressions (Heikki
+      Linnakangas, Michael Paquier, Tom Lane)
+     </para>
+
+     <para>
+      A <literal>CASE</> expression appearing within the test value
+      subexpression of another <literal>CASE</> could become confused about
+      whether its own test value was null or not.  Also, inlining of a SQL
+      function implementing the equality operator used by
+      a <literal>CASE</> expression could result in passing the wrong test
+      value to functions called within a <literal>CASE</> expression in the
+      SQL function's body.  If the test values were of different data
+      types, a crash might result; moreover such situations could be abused
+      to allow disclosure of portions of server memory.  (CVE-2016-5423)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [fcd15f135] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [286c8bc64] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [254eb04f1] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [95a6855c5] 2016-08-08 10:07:52 -0400
+Branch: REL9_2_STABLE [e8f4922c8] 2016-08-08 10:07:53 -0400
+Branch: REL9_1_STABLE [a2385cac1] 2016-08-08 10:07:54 -0400
+Branch: master [41f18f021] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [8adff3783] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [6df8ff49d] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [c1b048f49] 2016-08-08 10:07:52 -0400
+Branch: REL9_2_STABLE [f1d0b09cf] 2016-08-08 10:07:53 -0400
+Branch: REL9_1_STABLE [d2dd5df51] 2016-08-08 10:07:54 -0400
+Branch: REL9_2_STABLE [a19edcd24] 2016-08-08 10:07:53 -0400
+Branch: REL9_1_STABLE [c761c9fee] 2016-08-08 10:07:54 -0400
+Branch: master [bd6537185] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [2e5e90d8d] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [18392ed4a] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [395d565ac] 2016-08-08 10:07:52 -0400
+Branch: REL9_2_STABLE [483715529] 2016-08-08 10:07:53 -0400
+Branch: REL9_1_STABLE [2d69f5b12] 2016-08-08 10:07:54 -0400
+Branch: master [142c24c23] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [ec3aebdbd] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [6bec1a6c8] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [0f679d2c1] 2016-08-08 10:07:52 -0400
+Branch: REL9_2_STABLE [ffbdab65d] 2016-08-08 10:07:53 -0400
+Branch: REL9_1_STABLE [61c2cd88d] 2016-08-08 10:07:53 -0400
+Branch: master [c40071717] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [640768ceb] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [aed038795] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [05abd3bcf] 2016-08-08 10:07:52 -0400
+Branch: REL9_2_STABLE [a466ea33c] 2016-08-08 10:07:52 -0400
+Branch: REL9_1_STABLE [ba8c4089d] 2016-08-08 10:07:53 -0400
+Branch: master [9d924e9a6] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [6655c0757] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [afabfcc0e] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [dfb2d8039] 2016-08-08 10:07:51 -0400
+Branch: REL9_2_STABLE [f744e8906] 2016-08-08 10:07:52 -0400
+Branch: REL9_1_STABLE [cf7e5f55b] 2016-08-08 10:07:53 -0400
+Branch: master [984e5beb3] 2016-08-08 10:07:46 -0400
+Branch: REL9_5_STABLE [db951dd19] 2016-08-08 10:07:50 -0400
+Branch: REL9_4_STABLE [fed83cdac] 2016-08-08 10:07:51 -0400
+Branch: REL9_3_STABLE [a44d71351] 2016-08-08 10:07:51 -0400
+Branch: REL9_2_STABLE [0cc3b12d2] 2016-08-08 10:07:52 -0400
+Branch: REL9_1_STABLE [aed766ab5] 2016-08-08 10:07:53 -0400
+-->
+     <para>
+      Fix client programs' handling of special characters in database and
+      role names (Noah Misch, Nathan Bossart, Michael Paquier)
+     </para>
+
+     <para>
+      Numerous places in <application>vacuumdb</> and other client programs
+      could become confused by database and role names containing double
+      quotes or backslashes.  Tighten up quoting rules to make that safe.
+      Also, ensure that when a conninfo string is used as a database name
+      parameter to these programs, it is correctly treated as such throughout.
+     </para>
+
+     <para>
+      Fix handling of paired double quotes
+      in <application>psql</>'s <command>\connect</>
+      and <command>\password</> commands to match the documentation.
+     </para>
+
+     <para>
+      Introduce a new <option>-reuse-previous</> option
+      in <application>psql</>'s <command>\connect</> command to allow
+      explicit control of whether to re-use connection parameters from a
+      previous connection.  (Without this, the choice is based on whether
+      the database name looks like a conninfo string, as before.)  This
+      allows secure handling of database names containing special
+      characters in <application>pg_dumpall</> scripts.
+     </para>
+
+     <para>
+      <application>pg_dumpall</> now refuses to deal with database and role
+      names containing carriage returns or newlines, as it seems impractical
+      to quote those characters safely on Windows.  In future we may reject
+      such names on the server side, but that step has not been taken yet.
+     </para>
+
+     <para>
+      These are considered security fixes because crafted object names
+      containing special characters could have been used to execute
+      commands with superuser privileges the next time a superuser
+      executes <application>pg_dumpall</> or other routine maintenance
+      operations.  (CVE-2016-5424)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [4452000f3] 2016-07-26 15:25:02 -0400
 Branch: REL9_5_STABLE [d2ef7758d] 2016-07-26 15:25:02 -0400
 Branch: REL9_4_STABLE [0733188cc] 2016-07-26 15:25:02 -0400
@@ -170,6 +292,29 @@ Branch: REL9_3_STABLE [b0f20c2ea] 2016-07-01 11:40:22 -0400
      <para>
       Avoid possible crash in <function>pg_get_expr()</> when inconsistent
       values are passed to it (Michael Paquier, Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [9a46324fd] 2016-08-08 11:12:59 -0400
+Branch: REL9_5_STABLE [04cee8f83] 2016-08-08 11:13:25 -0400
+Branch: REL9_4_STABLE [20f870fd7] 2016-08-08 11:13:34 -0400
+Branch: REL9_3_STABLE [43d7a0af5] 2016-08-08 11:13:40 -0400
+Branch: REL9_2_STABLE [b0134fe84] 2016-08-08 11:13:45 -0400
+Branch: REL9_1_STABLE [d555d2642] 2016-08-08 11:13:51 -0400
+-->
+     <para>
+      Fix several one-byte buffer over-reads in <function>to_number()</>
+      (Peter Eisentraut)
+     </para>
+
+     <para>
+      In several cases the <function>to_number()</> function would read one
+      more character than it should from the input string.  There is a
+      small chance of a crash, if the input happens to be adjacent to the
+      end of memory.
      </para>
     </listitem>
 
