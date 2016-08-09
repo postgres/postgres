@@ -48,7 +48,7 @@ static const struct error_desc px_err_list[] = {
 	{PXE_BAD_OPTION, "Unknown option"},
 	{PXE_BAD_FORMAT, "Badly formatted type"},
 	{PXE_KEY_TOO_BIG, "Key was too big"},
-	{PXE_CIPHER_INIT, "Cipher cannot be initalized ?"},
+	{PXE_CIPHER_INIT, "Cipher cannot be initialized ?"},
 	{PXE_HASH_UNUSABLE_FOR_HMAC, "This hash algorithm is unusable for HMAC"},
 	{PXE_DEV_READ_ERROR, "Error reading from random device"},
 	{PXE_OSSL_RAND_ERROR, "OpenSSL PRNG error"},
