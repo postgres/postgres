@@ -259,8 +259,9 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
         setting is removed, so that the function executes with the value
         present in its environment.  Use <literal>RESET
         ALL</literal> to clear all function-local settings.
-        <literal>SET FROM CURRENT</> saves the session's current value of
-        the parameter as the value to be applied when the function is entered.
+        <literal>SET FROM CURRENT</> saves the value of the parameter that
+        is current when <command>ALTER FUNCTION</> is executed as the value
+        to be applied when the function is entered.
        </para>
 
        <para>

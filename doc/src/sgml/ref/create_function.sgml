@@ -486,8 +486,9 @@ CREATE [ OR REPLACE ] FUNCTION
        The <literal>SET</> clause causes the specified configuration
        parameter to be set to the specified value when the function is
        entered, and then restored to its prior value when the function exits.
-       <literal>SET FROM CURRENT</> saves the session's current value of
-       the parameter as the value to be applied when the function is entered.
+       <literal>SET FROM CURRENT</> saves the value of the parameter that
+       is current when <command>CREATE FUNCTION</> is executed as the value
+       to be applied when the function is entered.
       </para>
 
       <para>
