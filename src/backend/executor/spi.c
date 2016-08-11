@@ -2226,8 +2226,12 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 							pg_strtouint64(completionTag + 7, NULL, 10);
 					else
 					{
-						/* Must be an IF NOT EXISTS that did nothing */
-						Assert(ctastmt->if_not_exists);
+						/*
+						 * Must be an IF NOT EXISTS that did nothing, or a
+						 * CREATE ... WITH NO DATA.
+						 */
+						Assert(ctastmt->if_not_exists ||
+							   ctastmt->into->skipData);
 						_SPI_current->processed = 0;
 					}
 
