@@ -119,24 +119,24 @@ blhandler(PG_FUNCTION_ARGS)
 	amroutine->amstorage = false;
 	amroutine->amclusterable = false;
 	amroutine->ampredlocks = false;
-	amroutine->amkeytype = 0;
+	amroutine->amkeytype = InvalidOid;
 
-	amroutine->aminsert = blinsert;
-	amroutine->ambeginscan = blbeginscan;
-	amroutine->amgettuple = NULL;
-	amroutine->amgetbitmap = blgetbitmap;
-	amroutine->amrescan = blrescan;
-	amroutine->amendscan = blendscan;
-	amroutine->ammarkpos = NULL;
-	amroutine->amrestrpos = NULL;
 	amroutine->ambuild = blbuild;
 	amroutine->ambuildempty = blbuildempty;
+	amroutine->aminsert = blinsert;
 	amroutine->ambulkdelete = blbulkdelete;
 	amroutine->amvacuumcleanup = blvacuumcleanup;
 	amroutine->amcanreturn = NULL;
 	amroutine->amcostestimate = blcostestimate;
 	amroutine->amoptions = bloptions;
 	amroutine->amvalidate = blvalidate;
+	amroutine->ambeginscan = blbeginscan;
+	amroutine->amrescan = blrescan;
+	amroutine->amgettuple = NULL;
+	amroutine->amgetbitmap = blgetbitmap;
+	amroutine->amendscan = blendscan;
+	amroutine->ammarkpos = NULL;
+	amroutine->amrestrpos = NULL;
 
 	PG_RETURN_POINTER(amroutine);
 }
