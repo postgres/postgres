@@ -477,3 +477,28 @@ SELECT * FROM mv_v;
 
 DROP TABLE v CASCADE;
 NOTICE:  drop cascades to materialized view mv_v
+-- make sure that create WITH NO DATA works via SPI
+BEGIN;
+CREATE FUNCTION mvtest_func()
+  RETURNS void AS $$
+BEGIN
+  CREATE MATERIALIZED VIEW mvtest1 AS SELECT 1 AS x;
+  CREATE MATERIALIZED VIEW mvtest2 AS SELECT 1 AS x WITH NO DATA;
+END;
+$$ LANGUAGE plpgsql;
+SELECT mvtest_func();
+ mvtest_func 
+-------------
+ 
+(1 row)
+
+SELECT * FROM mvtest1;
+ x 
+---
+ 1
+(1 row)
+
+SELECT * FROM mvtest2;
+ERROR:  materialized view "mvtest2" has not been populated
+HINT:  Use the REFRESH MATERIALIZED VIEW command.
+ROLLBACK;

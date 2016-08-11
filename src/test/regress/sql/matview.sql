@@ -166,3 +166,17 @@ DELETE FROM v WHERE EXISTS ( SELECT * FROM mv_v WHERE mv_v.a = v.a );
 SELECT * FROM v;
 SELECT * FROM mv_v;
 DROP TABLE v CASCADE;
+
+-- make sure that create WITH NO DATA works via SPI
+BEGIN;
+CREATE FUNCTION mvtest_func()
+  RETURNS void AS $$
+BEGIN
+  CREATE MATERIALIZED VIEW mvtest1 AS SELECT 1 AS x;
+  CREATE MATERIALIZED VIEW mvtest2 AS SELECT 1 AS x WITH NO DATA;
+END;
+$$ LANGUAGE plpgsql;
+SELECT mvtest_func();
+SELECT * FROM mvtest1;
+SELECT * FROM mvtest2;
+ROLLBACK;
