@@ -18,7 +18,7 @@
  <para>
   The functions shown in <xref linkend="functions-adminpack-table"> provide
   write access to files on the machine hosting the server.  (See also the
-  functions in <xref linkend="functions-admin-genfile-table">, which
+  functions in <xref linkend="functions-admin-genfile">, which
   provide read-only access.)
   Only files within the database cluster directory can be accessed, but
   either a relative or absolute path is allowable.
@@ -118,7 +118,7 @@
   in <xref linkend="functions-adminpack-deprecated-table"> are deprecated
   and should not be used in new applications; instead use those shown
   in <xref linkend="functions-admin-signal-table">
-  and <xref linkend="functions-admin-genfile-table">.  These functions are
+  and <xref linkend="functions-admin-genfile">.  These functions are
   provided in <filename>adminpack</> only for compatibility with old
   versions of <application>pgAdmin</>.
  </para>
