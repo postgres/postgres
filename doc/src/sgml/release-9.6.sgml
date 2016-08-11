@@ -42,7 +42,7 @@
 
     <listitem>
      <para>
-      Allow Full-text search for phrases (multiple adjacent words)
+      Allow full-text search for phrases (multiple adjacent words)
      </para>
     </listitem>
 
@@ -380,8 +380,8 @@ This commit is also listed under libpq and psql
 2015-09-16 [7aea8e4f2] Determine whether it's safe to attempt a parallel plan f
 -->
        <para>
-        Provide infrastructure for marking functions as parallel-safe or
-        not (Robert Haas, Amit Kapila)
+        Provide infrastructure for marking the parallel-safe status of
+        functions  (Robert Haas, Amit Kapila)
        </para>
       </listitem>
 
@@ -412,8 +412,12 @@ This commit is also listed under libpq and psql
 -->
        <para>
         Add pages deleted from a GIN index's pending list to the free space
-        map immediately, to reduce bloat if the table is not vacuumed often
+        map immediately
         (Jeff Janes, Teodor Sigaev)
+       </para>
+
+       <para>
+        This reduces bloat if the table is not vacuumed often.
        </para>
       </listitem>
 
@@ -494,7 +498,7 @@ This commit is also listed under libpq and psql
        <para>
         If necessary, vacuum can be forced to process all-frozen
         pages using the new <literal>DISABLE_PAGE_SKIPPING</> option.
-        This should never be needed normally, but it might help in
+        Normally, this should never be needed but it might help in
         recovering from visibility-map corruption.
        </para>
       </listitem>
@@ -527,7 +531,7 @@ This commit is also listed under libpq and psql
 
        <para>
         This change avoids substantial replication delays that sometimes
-        occurred while replaying such operations.
+        occurre while replaying such operations.
        </para>
       </listitem>
 
@@ -543,7 +547,7 @@ This commit is also listed under libpq and psql
        <para>
         If a <literal>GROUP BY</> clause includes all columns of a
         non-deferred primary key, as well as other columns of the same
-        relation, those other columns are redundant and can be dropped
+        table, those other columns are redundant and can be dropped
         from the grouping.  This saves computation in many common cases.
        </para>
       </listitem>
@@ -598,11 +602,11 @@ This commit is also listed under libpq and psql
 
        <para>
         On Linux, <function>sync_file_range()</> is used for this purpose,
-        and the feature is on by default because that function has few
-        downsides.  The feature is also available on other platforms
+        and the feature is on by default on Linux because that function has few
+        downsides.  This sync capability is also available on other platforms
         that have <function>msync()</> or <function>posix_fadvise()</>,
         but those interfaces have some undesirable side-effects so the
-        feature is not enabled by default on other platforms.
+        feature is disabled by default on non-Linux platforms.
        </para>
 
        <para>
@@ -672,9 +676,11 @@ This commit is also listed under libpq and psql
        </para>
 
        <para>
-        For example, <command>CREATE INDEX tidx_partial ON t(b) WHERE a >
-        0</> could not previously be used for an index-only scan because
-        <literal>a</> is not an indexed value like <literal>b</> is.
+        For example, <command>CREATE INDEX tidx_partial ON t(b) WHERE a
+        &gt; 0</> could not previously be used for an index-only scan by a
+        query that only referenced <literal>a</> in its <literal>WHERE</>
+        clause because <literal>a</> is not an indexed value like
+        <literal>b</> is.
        </para>
 
       </listitem>
@@ -695,11 +701,11 @@ This commit is also listed under libpq and psql
         <literal>(a,b) REFERENCES r (x,y)</>, then a <literal>WHERE</>
         condition such as <literal>t.a = r.x AND t.b = r.y</> cannot
         select more than one <literal>r</> row per <literal>t</> row.
-        The planner formerly considered the <literal>AND</>'ed conditions
-        to be independent and would often drastically misestimate the
+        The planner formerly considered <literal>AND</> conditions
+        to be independent and would often drastically misestimate
         selectivity as a result.  Now it compares the <literal>WHERE</>
-        conditions to applicable foreign key constraints and produces a
-        better estimate.
+        conditions to applicable foreign key constraints and produces
+        better estimates.
        </para>
       </listitem>
 
@@ -783,9 +789,9 @@ This commit is also listed under libpq and psql
 2016-02-06 [aa2387e2f] Improve speed of timestamp/time/date output functions.
 -->
        <para>
-        Improve speed of the output functions for <type>timestamp</> with
-        and without timezone, <type>time</>, and <type>date</> data types
-        (David Rowley, Andres Freund)
+        Improve speed of the output functions for <type>timestamp</>,
+        <type>time</>, and <type>date</> data types (David Rowley,
+        Andres Freund)
        </para>
       </listitem>
 
@@ -812,9 +818,9 @@ This commit is also listed under libpq and psql
        </para>
 
        <para>
-        Previously it tended to underestimate the number of
-        non-<literal>NULL</> distinct values in a column with many
-        <literal>NULL</>s, and it also was inaccurate in computing the
+        Previously <command>ANALYZE</> tended to underestimate the number
+        of non-<literal>NULL</> distinct values in a column with many
+        <literal>NULL</>s, and was also inaccurate in computing the
         most-common values.
        </para>
       </listitem>
@@ -850,7 +856,8 @@ This commit is also listed under libpq and psql
 -->
        <para>
         Improve sorting performance by using quicksort, not replacement
-        selection when performing external sort steps (Peter Geoghegan)
+        selection sort, when performing external sort steps (Peter
+        Geoghegan)
        </para>
 
        <para>
@@ -879,16 +886,17 @@ This commit is also listed under libpq and psql
 2016-02-17 [f1f5ec1ef] Reuse abbreviated keys in ordered [set] aggregates.
 -->
        <para>
-        Speed up the sorting of <type>uuid</>, <type>bytea</>, and
+        Speed up sorting of <type>uuid</>, <type>bytea</>, and
         <type>char(n)</> fields by using <quote>abbreviated</> keys
         (Peter Geoghegan)
        </para>
 
        <para>
-        Support for abbreviated keys has also
-        been added to the non-default operator classes
-        <literal>text_pattern_ops</>, <literal>varchar_pattern_ops</>,
-        and <literal>bpchar_pattern_ops</>.  Processing of ordered-set
+        Support for abbreviated keys has also been
+        added to the non-default operator classes <link
+        linkend="indexes-opclass"><literal>text_pattern_ops</></>,
+        <literal>varchar_pattern_ops</>, and
+        <literal>bpchar_pattern_ops</>.  Processing of ordered-set
         aggregates can also now exploit abbreviated keys.
        </para>
       </listitem>
@@ -899,7 +907,7 @@ This commit is also listed under libpq and psql
 -->
        <para>
         Speed up <command>CREATE INDEX CONCURRENTLY</> by treating
-        <acronym>TID</>s as 64-bit integers during the sort phase (Peter
+        <acronym>TID</>s as 64-bit integers during sorting (Peter
         Geoghegan)
        </para>
       </listitem>
@@ -1064,11 +1072,11 @@ This commit is also listed under libpq and psql
         This function returns an array of the process IDs of any
         sessions that are blocking the session with the given process ID.
         Historically users have obtained such information using a self-join
-        on the <structname>pg_locks</> view; but it is unreasonably tedious
-        to do it that way with any modicum of correctness, and the addition
-        of parallel queries has made the approach entirely impractical,
-        since locks might be held or awaited by child worker processes
-        rather than the session's main process.
+        on the <structname>pg_locks</> view.  However,  it is unreasonably
+        tedious to do it that way with any modicum of correctness, and
+        the addition of parallel queries has made the approach entirely
+        impractical, since locks might be held or awaited by child worker
+        processes rather than the session's main process.
        </para>
       </listitem>
 
@@ -1118,9 +1126,9 @@ This commit is also listed under libpq and psql
        </para>
 
        <para>
-        The memory usage dump printed to the postmaster log during an
+        The memory usage dump output to the postmaster log during an
         out-of-memory failure now summarizes statistics when there are a
-        large number of memory contexts, rather than possibly printing
+        large number of memory contexts, rather than possibly generating
         a very large report.  There is also a <quote>grand total</>
         summary line now.
        </para>
@@ -1214,7 +1222,7 @@ This commit is also listed under libpq and psql
 2016-02-02 [7d17e683f] Add support for systemd service notifications
 -->
        <para>
-        Add <option>--with-systemd</> configure option to enable
+        Add configure option <option>--with-systemd</> to enable
         calling <function>sd_notify()</> at server start and stop (Peter
         Eisentraut)
        </para>
@@ -1231,9 +1239,9 @@ This commit is also listed under libpq and psql
 2015-09-08 [1aba62ec6] Allow per-tablespace effective_io_concurrency
 -->
        <para>
-        Allow <varname>effective_io_concurrency</> to be set as a
-        tablespace parameter to support cases where different tablespaces
-        have different I/O characteristics (Julien Rouhaud)
+        Allow <varname>effective_io_concurrency</> to be set per-tablespace
+        to support cases where different tablespaces have different I/O
+        characteristics (Julien Rouhaud)
        </para>
       </listitem>
 
@@ -1307,14 +1315,14 @@ This commit is also listed under libpq and psql
        </para>
 
        <para>
-        Formerly, we insisted on the key file being owned by the
+        Formerly, we insisted the key file be owned by the
         user running the <productname>PostgreSQL</> server, but
-        that is inconvenient for some systems (such as <systemitem
+        that is inconvenient on some systems (such as <systemitem
         class="osname">Debian</>) that are configured to manage
         certificates centrally.  Therefore, allow the case where the key
         file is owned by <literal>root</> and has group read access.
-        It is up to the root admin to ensure that the group does not
-        include any untrusted users.
+        It is up to the operating system administrator to ensure that
+        the group does not include any untrusted users.
        </para>
       </listitem>
 
@@ -1340,7 +1348,7 @@ This commit is also listed under libpq and psql
         Under normal circumstances the postmaster should always outlive
         its child processes.  If for some reason the postmaster dies,
         force backend sessions to exit with an error.  Formerly, existing
-        backends would continue to run until their client disconnects,
+        backends would continue to run until their clients disconnect,
         but that is unsafe and inefficient.  It also prevents a new
         postmaster from being started until the last old backend has
         exited.  Backends will detect postmaster death when waiting for
@@ -1422,9 +1430,9 @@ XXX this is pending backpatch, may need to remove
 2016-04-30 [17d5db352] Remove warning about num_sync being too large in synchro
 -->
        <para>
-        Support synchronous replication using multiple synchronous
-        standby servers, not just one (Masahiko Sawada, Beena Emerson,
-        Michael Paquier, Fujii Masao, Kyotaro Horiguchi)
+        Allow synchronous replication to support multiple simultaneous
+        synchronous standby servers, not just one (Masahiko Sawada,
+        Beena Emerson, Michael Paquier, Fujii Masao, Kyotaro Horiguchi)
        </para>
 
        <para>
@@ -1459,15 +1467,16 @@ XXX this is pending backpatch, may need to remove
 -->
        <para>
         Add a feature to the replication
-        protocol, and a corresponding option to the <link
-        linkend="functions-replication-table"><function>pg_create_physical_replication_slot()</></>
-        function, to allow reserving <acronym>WAL</> immediately when
-        creating a replication slot (Gurjeet Singh, Michael Paquier)
+        protocol, and a corresponding option to <link
+        linkend="functions-replication-table"><function>pg_create_physical_replication_slot()</></>,
+        to allow reserving <acronym>WAL</> immediately when creating a
+        replication slot (Gurjeet Singh, Michael Paquier)
        </para>
 
        <para>
-        This allows creation of a replication slot to guarantee that all
-        the <acronym>WAL</> for a base backup will be available afterwards.
+        This allows the creation of a replication slot to guarantee
+        that all the <acronym>WAL</> needed for a base backup will be
+        available.
        </para>
       </listitem>
 
@@ -1552,7 +1561,8 @@ XXX this is pending backpatch, may need to remove
 2016-03-14 [74a379b98] Use repalloc_huge() to enlarge a SPITupleTable's tuple p
 -->
        <para>
-        Widen tuples-processed counters to 64 bits (Andreas Scherbaum)
+        Widen counters recording the number of tuples processed to 64 bits
+        (Andreas Scherbaum)
        </para>
 
        <para>
@@ -1738,7 +1748,7 @@ XXX this is pending backpatch, may need to remove
        </para>
 
        <para>
-        This possible because the table has no existing rows.  This matches
+        This is possible because the table has no existing rows.  This matches
         the longstanding behavior of <literal>FOREIGN KEY</> constraints.
        </para>
       </listitem>
@@ -1820,8 +1830,8 @@ XXX this is pending backpatch, may need to remove
         are now gone in favor of making <application>initdb</> revoke the
         default public <literal>EXECUTE</> privilege on these functions.
         This allows installations to choose to grant usage of such
-        functions to trusted roles that need not have full superuser
-        privilege.
+        functions to trusted roles that do not need all superuser
+        privileges.
        </para>
       </listitem>
 
@@ -1893,9 +1903,9 @@ XXX this is pending backpatch, may need to remove
 2016-03-30 [50861cd68] Improve portability of I/O behavior for the geometric ty
 -->
        <para>
-        In the geometric data types, make sure that <literal>infinity</>
-        and <literal>NaN</> component values are treated consistently
-        during input and output (Tom Lane)
+        For geometric data types, make sure <literal>infinity</> and
+        <literal>NaN</> component values are treated consistently during
+        input and output (Tom Lane)
        </para>
 
        <para>
@@ -1979,9 +1989,10 @@ XXX this is pending backpatch, may need to remove
 2015-11-07 [c5e86ea93] Add "xid <> xid" and "xid <> int4" operators.
 -->
        <para>
-        Add <type>xid</> <literal>&lt;&gt;</> <type>xid</> and <type>xid</>
-        <literal>&lt;&gt;</> <type>int4</> operators, for consistency
-        with the corresponding <literal>=</> operators (Michael Paquier)
+        Add transaction id operators <type>xid</> <literal>&lt;&gt;</>
+        <type>xid</> and <type>xid</> <literal>&lt;&gt;</> <type>int4</>,
+        for consistency with the corresponding equality operators
+        (Michael Paquier)
        </para>
       </listitem>
 
@@ -2060,8 +2071,8 @@ XXX this is pending backpatch, may need to remove
        <para>
         The <acronym>POSIX</> standard says that these functions should
         return <literal>NaN</> for NaN input, and should throw an error for
-        out-of-range inputs including <literal>infinity</>; but previously,
-        our actual behavior varied across platforms.
+        out-of-range inputs including <literal>infinity</>.  Previously our
+        behavior varied across platforms.
        </para>
       </listitem>
 
@@ -2090,7 +2101,7 @@ XXX this is pending backpatch, may need to remove
        </para>
 
        <para>
-        These are <link
+        The new functions are <link
         linkend="textsearch-functions-table"><function>ts_delete()</></>,
         <function>ts_filter()</>, <function>unnest()</>,
         <function>tsvector_to_array()</>, <function>array_to_tsvector()</>,
@@ -2188,7 +2199,7 @@ XXX this is pending backpatch, may need to remove
 
        <para>
         This function converts strings like those produced by
-        <function>pg_size_pretty()</> into sizes in bytes.  An example
+        <function>pg_size_pretty()</> into bytes.  An example
         usage is <literal>SELECT oid::regclass FROM pg_class WHERE
         pg_total_relation_size(oid) &gt; pg_size_bytes('10 GB')</>.
        </para>
@@ -2222,8 +2233,8 @@ XXX this is pending backpatch, may need to remove
        </para>
 
        <para>
-        This allows avoiding an error for an unrecognized parameter name;
-        instead the result is <literal>NULL</>.
+        This allows avoiding an error for an unrecognized parameter
+        name, and instead return a <literal>NULL</>.
        </para>
       </listitem>
 
@@ -2479,7 +2490,7 @@ This commit is also listed under psql and PL/pgSQL
 2016-05-06 [e1b120a8c] Only issue LOCK TABLE commands when necessary
 -->
        <para>
-        In <application>pg_dump</>, dump locally-made changes in privilege
+        In <application>pg_dump</>, dump locally-made changes of privilege
         assignments for system objects (Stephen Frost)
        </para>
 
@@ -2706,11 +2717,10 @@ This commit is also listed under libpq and PL/pgSQL
        </para>
 
        <para>
-        This change allows SQL commands in scripts to span multiple
-        lines.  Existing custom scripts will need to be modified to add a
-        semicolon at the end of each line that does not have one already.
-        (Doing so does not break the script for use with older versions
-        of <application>pgbench</>.)
+        This change allows SQL commands in scripts to span multiple lines.
+        Existing custom scripts will need to be modified to add a semicolon
+        at the end of each line if missing.  (Doing so does not break
+        the script for use with older versions of <application>pgbench</>.)
        </para>
       </listitem>
 
@@ -3022,7 +3032,7 @@ This commit is also listed under libpq and PL/pgSQL
         This infrastructure allows <application>pg_dump</> to dump changes
         that an installation may have made in privileges attached to
         system objects.  Formerly, such changes would be lost in a dump
-        and reload, but now they can be preserved.
+        and reload, but now they are preserved.
        </para>
       </listitem>
 
@@ -3130,7 +3140,7 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Separate out <application>psql</>'s <application>flex</> lexer to
-        make it usable by other client programs too (Tom Lane, Kyotaro
+        make it usable by other client programs (Tom Lane, Kyotaro
         Horiguchi)
        </para>
 
@@ -3173,7 +3183,7 @@ This commit is also listed under libpq and PL/pgSQL
 
        <para>
         This change allows extensions to write <acronym>WAL</> records for
-        changes to pages with standard layout.  The problem of needing to
+        changes to pages using a standard layout.  The problem of needing to
         replay <acronym>WAL</> without access to the extension is solved by
         having generic replay code.  This allows extensions to implement,
         for example, index access methods and have <acronym>WAL</>
@@ -3286,7 +3296,7 @@ This commit is also listed under libpq and PL/pgSQL
        <para>
         This is primarily a proof-of-concept for non-core index access
         methods, but it could be useful in its own right for queries that
-        involve searches on many columns.
+        search many columns.
        </para>
       </listitem>
 
@@ -3329,7 +3339,7 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Add selectivity estimation functions for
-        <filename>contrib/intarray</> operators, to improve plans for
+        <filename>contrib/intarray</> operators to improve plans for
         queries using those operators (Yury Zhuravlev, Alexander Korotkov)
        </para>
       </listitem>
@@ -3340,7 +3350,7 @@ This commit is also listed under libpq and PL/pgSQL
 -->
        <para>
         Make <link
-        linkend="pageinspect"><filename>contrib/pageinspect</>'s</>
+        linkend="pageinspect"><filename>contrib/pageinspect</></>'s
         <function>heap_page_items()</> function show the raw data in each
         tuple, and add new functions <function>tuple_data_split()</> and
         <function>heap_page_item_attrs()</> for inspection of individual
