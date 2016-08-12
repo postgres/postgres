@@ -2611,7 +2611,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    if they are inherited
    from any parent tables. If you wish to remove a table and all of its
    descendants, one easy way is to drop the parent table with the
-   <literal>CASCADE</literal> option.
+   <literal>CASCADE</literal> option (see <xref linkend="ddl-depend">).
   </para>
 
   <para>
@@ -3586,20 +3586,22 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 <screen>
 DROP TABLE products CASCADE;
 </screen>
-   and all the dependent objects will be removed.  In this case, it
-   doesn't remove the orders table, it only removes the foreign key
-   constraint.  (If you want to check what <command>DROP ... CASCADE</> will do,
+   and all the dependent objects will be removed, as will any objects
+   that depend on them, recursively.  In this case, it doesn't remove
+   the orders table, it only removes the foreign key constraint.
+   It stops there because nothing depends on the foreign key constraint.
+   (If you want to check what <command>DROP ... CASCADE</> will do,
    run <command>DROP</> without <literal>CASCADE</> and read the
    <literal>DETAIL</> output.)
   </para>
 
   <para>
-   All <command>DROP</> commands in <productname>PostgreSQL</> support
+   Almost all <command>DROP</> commands in <productname>PostgreSQL</> support
    specifying <literal>CASCADE</literal>.  Of course, the nature of
    the possible dependencies varies with the type of the object.  You
    can also write <literal>RESTRICT</literal> instead of
    <literal>CASCADE</literal> to get the default behavior, which is to
-   prevent the dropping of objects that other objects depend on.
+   prevent dropping objects that any other objects depend on.
   </para>
 
   <note>
@@ -3612,6 +3614,15 @@ DROP TABLE products CASCADE;
     across systems.
    </para>
   </note>
+
+  <para>
+   If a <command>DROP</> command lists multiple
+   objects, <literal>CASCADE</literal> is only required when there are
+   dependencies outside the specified group.  For example, when saying
+   <literal>DROP TABLE tab1, tab2</literal> the existence of a foreign
+   key referencing <literal>tab1</> from <literal>tab2</> would not mean
+   that <literal>CASCADE</literal> is needed to succeed.
+  </para>
 
   <para>
    For user-defined functions, <productname>PostgreSQL</productname> tracks

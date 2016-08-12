@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
+DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -68,6 +68,18 @@ DROP POLICY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON <
      <para>
       The name (optionally schema-qualified) of the table that
       the policy is on.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <term><literal>RESTRICT</literal></term>
+
+    <listitem>
+     <para>
+      These key words do not have any effect, since there are no
+      dependencies on policies.
      </para>
     </listitem>
    </varlistentry>

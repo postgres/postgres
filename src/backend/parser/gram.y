@@ -1126,9 +1126,9 @@ AlterUserSetStmt:
  *
  * Drop a postgresql DBMS role
  *
- * XXX Ideally this would have CASCADE/RESTRICT options, but since a role
- * might own objects in multiple databases, there is presently no way to
- * implement either cascading or restricting.  Caveat DBA.
+ * XXX Ideally this would have CASCADE/RESTRICT options, but a role
+ * might own objects in multiple databases, and there is presently no way to
+ * implement cascading to other databases.  So we always behave as RESTRICT.
  *****************************************************************************/
 
 DropRoleStmt:
@@ -1152,9 +1152,7 @@ DropRoleStmt:
  *
  * Drop a postgresql DBMS user
  *
- * XXX Ideally this would have CASCADE/RESTRICT options, but since a user
- * might own objects in multiple databases, there is presently no way to
- * implement either cascading or restricting.  Caveat DBA.
+ * XXX As with DROP ROLE, no CASCADE/RESTRICT here.
  *****************************************************************************/
 
 DropUserStmt:
@@ -1220,7 +1218,7 @@ add_drop:	ADD_P									{ $$ = +1; }
  *
  * Drop a postgresql group
  *
- * XXX see above notes about cascading DROP USER; groups have same problem.
+ * XXX As with DROP ROLE, no CASCADE/RESTRICT here.
  *****************************************************************************/
 
 DropGroupStmt:
@@ -4574,6 +4572,8 @@ auth_ident: RoleSpec			{ $$ = $1; }
  *		QUERY :
  *				DROP USER MAPPING FOR auth_ident SERVER name
  *
+ * XXX you'd think this should have a CASCADE/RESTRICT option, even if it's
+ * only pro forma; but the SQL standard doesn't show one.
  ****************************************************************************/
 
 DropUserMappingStmt: DROP USER MAPPING FOR auth_ident SERVER name

@@ -18,7 +18,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-DROP TRANSFORM [ IF EXISTS ] FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable>
+DROP TRANSFORM [ IF EXISTS ] FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -74,7 +74,9 @@ DROP TRANSFORM [ IF EXISTS ] FOR <replaceable>type_name</replaceable> LANGUAGE <
      <term><literal>CASCADE</literal></term>
      <listitem>
       <para>
-       Automatically drop objects that depend on the transform.
+       Automatically drop objects that depend on the transform,
+       and in turn all objects that depend on those objects
+       (see <xref linkend="ddl-depend">).
       </para>
      </listitem>
     </varlistentry>

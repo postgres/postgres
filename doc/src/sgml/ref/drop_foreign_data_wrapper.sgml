@@ -63,7 +63,9 @@ DROP FOREIGN DATA WRAPPER [ IF EXISTS ] <replaceable class="parameter">name</rep
     <listitem>
      <para>
       Automatically drop objects that depend on the foreign-data
-      wrapper (such as servers).
+      wrapper (such as foreign tables and servers),
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>
@@ -72,7 +74,7 @@ DROP FOREIGN DATA WRAPPER [ IF EXISTS ] <replaceable class="parameter">name</rep
     <term><literal>RESTRICT</literal></term>
     <listitem>
      <para>
-      Refuse to drop the foreign-data wrappers if any objects depend
+      Refuse to drop the foreign-data wrapper if any objects depend
       on it.  This is the default.
      </para>
     </listitem>

@@ -67,7 +67,9 @@ DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
     <listitem>
      <para>
       Automatically drop objects (tables, functions, etc.) that are
-      contained in the schema.
+      contained in the schema,
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>
@@ -82,6 +84,15 @@ DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, .
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Using the <literal>CASCADE</literal> option might make the command
+   remove objects in other schemas besides the one(s) named.
+  </para>
  </refsect1>
 
  <refsect1>

@@ -823,7 +823,9 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       <listitem>
        <para>
         Automatically drop objects that depend on the dropped column
-        or constraint (for example, views referencing the column).
+        or constraint (for example, views referencing the column),
+        and in turn all objects that depend on those objects
+        (see <xref linkend="ddl-depend">).
        </para>
       </listitem>
      </varlistentry>

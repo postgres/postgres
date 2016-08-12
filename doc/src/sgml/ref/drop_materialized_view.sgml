@@ -64,7 +64,9 @@ DROP MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replac
     <listitem>
      <para>
       Automatically drop objects that depend on the materialized view (such as
-      other materialized views, or regular views).
+      other materialized views, or regular views),
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>

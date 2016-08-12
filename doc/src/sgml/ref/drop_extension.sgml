@@ -66,7 +66,9 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [
     <term><literal>CASCADE</literal></term>
     <listitem>
      <para>
-      Automatically drop objects that depend on the extension.
+      Automatically drop objects that depend on the extension,
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>

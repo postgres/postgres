@@ -59,7 +59,8 @@ DROP FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceabl
     <listitem>
      <para>
       Automatically drop objects that depend on the foreign table (such as
-      views).
+      views), and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>

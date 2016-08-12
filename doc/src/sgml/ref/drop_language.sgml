@@ -74,7 +74,9 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
     <listitem>
      <para>
       Automatically drop objects that depend on the language (such as
-      functions in the language).
+      functions in the language),
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>

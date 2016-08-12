@@ -63,7 +63,9 @@ DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] <replaceable class="PARAMETER">name</rep
     <term><literal>CASCADE</literal></term>
     <listitem>
      <para>
-      Automatically drop objects that depend on the text search template.
+      Automatically drop objects that depend on the text search template,
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>

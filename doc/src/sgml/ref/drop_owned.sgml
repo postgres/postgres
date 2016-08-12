@@ -55,7 +55,9 @@ DROP OWNED BY { <replaceable class="PARAMETER">name</replaceable> | CURRENT_USER
     <term><literal>CASCADE</literal></term>
     <listitem>
      <para>
-      Automatically drop objects that depend on the affected objects.
+      Automatically drop objects that depend on the affected objects,
+      and in turn all objects that depend on those objects
+      (see <xref linkend="ddl-depend">).
      </para>
     </listitem>
    </varlistentry>
