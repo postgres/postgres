@@ -189,24 +189,16 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 */
 	for (;;)
 	{
-		int			syncRepState;
-
 		/* Must reset the latch before testing state. */
 		ResetLatch(MyLatch);
 
 		/*
-		 * Try checking the state without the lock first.  There's no
-		 * guarantee that we'll read the most up-to-date value, so if it looks
-		 * like we're still waiting, recheck while holding the lock.  But if
-		 * it looks like we're done, we must really be done, because once
-		 * walsender changes the state to SYNC_REP_WAIT_COMPLETE, it will
-		 * never update it again, so we can't be seeing a stale value in that
-		 * case.
+		 * Acquiring the lock is not needed, the latch ensures proper barriers.
+		 * If it looks like we're done, we must really be done, because once
+		 * walsender changes the state to SYNC_REP_WAIT_COMPLETE, it will never
+		 * update it again, so we can't be seeing a stale value in that case.
 		 */
-		syncRepState = MyProc->syncRepState;
-		if (syncRepState == SYNC_REP_WAITING)
-			syncRepState = MyProc->syncRepState;
-		if (syncRepState == SYNC_REP_WAIT_COMPLETE)
+		if (MyProc->syncRepState == SYNC_REP_WAIT_COMPLETE)
 			break;
 
 		/*
