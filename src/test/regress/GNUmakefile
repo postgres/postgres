@@ -116,14 +116,19 @@ autoinc$(DLSUFFIX): $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX)
 dummy_seclabel$(DLSUFFIX): $(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX)
 	cp $< $@
 
-$(top_builddir)/contrib/spi/refint$(DLSUFFIX): $(top_srcdir)/contrib/spi/refint.c
-	$(MAKE) -C $(top_builddir)/contrib/spi refint$(DLSUFFIX)
+$(top_builddir)/contrib/spi/refint$(DLSUFFIX): | submake-contrib-spi ;
 
-$(top_builddir)/contrib/spi/autoinc$(DLSUFFIX): $(top_srcdir)/contrib/spi/autoinc.c
-	$(MAKE) -C $(top_builddir)/contrib/spi autoinc$(DLSUFFIX)
+$(top_builddir)/contrib/spi/autoinc$(DLSUFFIX): | submake-contrib-spi ;
 
-$(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX): $(top_builddir)/contrib/dummy_seclabel/dummy_seclabel.c
-	$(MAKE) -C $(top_builddir)/contrib/dummy_seclabel dummy_seclabel$(DLSUFFIX)
+$(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX): | submake-contrib-dummy_seclabel ;
+
+submake-contrib-spi:
+	$(MAKE) -C $(top_builddir)/contrib/spi
+
+submake-contrib-dummy_seclabel:
+	$(MAKE) -C $(top_builddir)/contrib/dummy_seclabel
+
+.PHONY: submake-contrib-spi submake-contrib-dummy_seclabel
 
 # Tablespace setup
 
