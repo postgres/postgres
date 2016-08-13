@@ -366,7 +366,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						stmt->amname)));
 
 	amoid = HeapTupleGetOid(tup);
-	amroutine = GetIndexAmRoutineByAmId(amoid);
+	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	ReleaseSysCache(tup);
 
 	maxOpNumber = amroutine->amstrategies;
@@ -791,7 +791,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 						stmt->amname)));
 
 	amoid = HeapTupleGetOid(tup);
-	amroutine = GetIndexAmRoutineByAmId(amoid);
+	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	ReleaseSysCache(tup);
 
 	maxOpNumber = amroutine->amstrategies;
@@ -1103,7 +1103,7 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 		 * the family has been created but not yet populated with the required
 		 * operators.)
 		 */
-		IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid);
+		IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid, false);
 
 		if (!amroutine->amcanorderbyop)
 			ereport(ERROR,

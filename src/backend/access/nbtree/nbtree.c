@@ -108,6 +108,7 @@ bthandler(PG_FUNCTION_ARGS)
 	amroutine->amcanreturn = btcanreturn;
 	amroutine->amcostestimate = btcostestimate;
 	amroutine->amoptions = btoptions;
+	amroutine->amproperty = btproperty;
 	amroutine->amvalidate = btvalidate;
 	amroutine->ambeginscan = btbeginscan;
 	amroutine->amrescan = btrescan;

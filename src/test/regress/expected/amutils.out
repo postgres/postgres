@@ -1,0 +1,208 @@
+--
+-- Test index AM property-reporting functions
+--
+select prop,
+       pg_indexam_has_property(a.oid, prop) as "AM",
+       pg_index_has_property('onek_hundred'::regclass, prop) as "Index",
+       pg_index_column_has_property('onek_hundred'::regclass, 1, prop) as "Column"
+  from pg_am a,
+       unnest(array['asc', 'desc', 'nulls_first', 'nulls_last',
+                    'orderable', 'distance_orderable', 'returnable',
+                    'search_array', 'search_nulls',
+                    'clusterable', 'index_scan', 'bitmap_scan',
+                    'backward_scan',
+                    'can_order', 'can_unique', 'can_multi_col',
+                    'can_exclude',
+                    'bogus']::text[])
+         with ordinality as u(prop,ord)
+ where a.amname = 'btree'
+ order by ord;
+        prop        | AM | Index | Column 
+--------------------+----+-------+--------
+ asc                |    |       | t
+ desc               |    |       | f
+ nulls_first        |    |       | f
+ nulls_last         |    |       | t
+ orderable          |    |       | t
+ distance_orderable |    |       | f
+ returnable         |    |       | t
+ search_array       |    |       | t
+ search_nulls       |    |       | t
+ clusterable        |    | t     | 
+ index_scan         |    | t     | 
+ bitmap_scan        |    | t     | 
+ backward_scan      |    | t     | 
+ can_order          | t  |       | 
+ can_unique         | t  |       | 
+ can_multi_col      | t  |       | 
+ can_exclude        | t  |       | 
+ bogus              |    |       | 
+(18 rows)
+
+select prop,
+       pg_indexam_has_property(a.oid, prop) as "AM",
+       pg_index_has_property('gcircleind'::regclass, prop) as "Index",
+       pg_index_column_has_property('gcircleind'::regclass, 1, prop) as "Column"
+  from pg_am a,
+       unnest(array['asc', 'desc', 'nulls_first', 'nulls_last',
+                    'orderable', 'distance_orderable', 'returnable',
+                    'search_array', 'search_nulls',
+                    'clusterable', 'index_scan', 'bitmap_scan',
+                    'backward_scan',
+                    'can_order', 'can_unique', 'can_multi_col',
+                    'can_exclude',
+                    'bogus']::text[])
+         with ordinality as u(prop,ord)
+ where a.amname = 'gist'
+ order by ord;
+        prop        | AM | Index | Column 
+--------------------+----+-------+--------
+ asc                |    |       | f
+ desc               |    |       | f
+ nulls_first        |    |       | f
+ nulls_last         |    |       | f
+ orderable          |    |       | f
+ distance_orderable |    |       | t
+ returnable         |    |       | f
+ search_array       |    |       | f
+ search_nulls       |    |       | t
+ clusterable        |    | t     | 
+ index_scan         |    | t     | 
+ bitmap_scan        |    | t     | 
+ backward_scan      |    | f     | 
+ can_order          | f  |       | 
+ can_unique         | f  |       | 
+ can_multi_col      | t  |       | 
+ can_exclude        | t  |       | 
+ bogus              |    |       | 
+(18 rows)
+
+select prop,
+       pg_index_column_has_property('onek_hundred'::regclass, 1, prop) as btree,
+       pg_index_column_has_property('hash_i4_index'::regclass, 1, prop) as hash,
+       pg_index_column_has_property('gcircleind'::regclass, 1, prop) as gist,
+       pg_index_column_has_property('sp_radix_ind'::regclass, 1, prop) as spgist,
+       pg_index_column_has_property('botharrayidx'::regclass, 1, prop) as gin,
+       pg_index_column_has_property('brinidx'::regclass, 1, prop) as brin
+  from unnest(array['asc', 'desc', 'nulls_first', 'nulls_last',
+                    'orderable', 'distance_orderable', 'returnable',
+                    'search_array', 'search_nulls',
+                    'bogus']::text[])
+         with ordinality as u(prop,ord)
+ order by ord;
+        prop        | btree | hash | gist | spgist | gin | brin 
+--------------------+-------+------+------+--------+-----+------
+ asc                | t     | f    | f    | f      | f   | f
+ desc               | f     | f    | f    | f      | f   | f
+ nulls_first        | f     | f    | f    | f      | f   | f
+ nulls_last         | t     | f    | f    | f      | f   | f
+ orderable          | t     | f    | f    | f      | f   | f
+ distance_orderable | f     | f    | t    | f      | f   | f
+ returnable         | t     | f    | f    | t      | f   | f
+ search_array       | t     | f    | f    | f      | f   | f
+ search_nulls       | t     | f    | t    | t      | f   | t
+ bogus              |       |      |      |        |     | 
+(10 rows)
+
+select prop,
+       pg_index_has_property('onek_hundred'::regclass, prop) as btree,
+       pg_index_has_property('hash_i4_index'::regclass, prop) as hash,
+       pg_index_has_property('gcircleind'::regclass, prop) as gist,
+       pg_index_has_property('sp_radix_ind'::regclass, prop) as spgist,
+       pg_index_has_property('botharrayidx'::regclass, prop) as gin,
+       pg_index_has_property('brinidx'::regclass, prop) as brin
+  from unnest(array['clusterable', 'index_scan', 'bitmap_scan',
+                    'backward_scan',
+                    'bogus']::text[])
+         with ordinality as u(prop,ord)
+ order by ord;
+     prop      | btree | hash | gist | spgist | gin | brin 
+---------------+-------+------+------+--------+-----+------
+ clusterable   | t     | f    | t    | f      | f   | f
+ index_scan    | t     | t    | t    | t      | f   | f
+ bitmap_scan   | t     | t    | t    | t      | t   | t
+ backward_scan | t     | t    | f    | f      | f   | f
+ bogus         |       |      |      |        |     | 
+(5 rows)
+
+select amname, prop, pg_indexam_has_property(a.oid, prop) as p
+  from pg_am a,
+       unnest(array['can_order', 'can_unique', 'can_multi_col',
+                    'can_exclude', 'bogus']::text[])
+         with ordinality as u(prop,ord)
+ where amtype = 'i'
+ order by amname, ord;
+ amname |     prop      | p 
+--------+---------------+---
+ brin   | can_order     | f
+ brin   | can_unique    | f
+ brin   | can_multi_col | t
+ brin   | can_exclude   | f
+ brin   | bogus         | 
+ btree  | can_order     | t
+ btree  | can_unique    | t
+ btree  | can_multi_col | t
+ btree  | can_exclude   | t
+ btree  | bogus         | 
+ gin    | can_order     | f
+ gin    | can_unique    | f
+ gin    | can_multi_col | t
+ gin    | can_exclude   | f
+ gin    | bogus         | 
+ gist   | can_order     | f
+ gist   | can_unique    | f
+ gist   | can_multi_col | t
+ gist   | can_exclude   | t
+ gist   | bogus         | 
+ hash   | can_order     | f
+ hash   | can_unique    | f
+ hash   | can_multi_col | f
+ hash   | can_exclude   | t
+ hash   | bogus         | 
+ spgist | can_order     | f
+ spgist | can_unique    | f
+ spgist | can_multi_col | f
+ spgist | can_exclude   | t
+ spgist | bogus         | 
+(30 rows)
+
+--
+-- additional checks for pg_index_column_has_property
+--
+CREATE TEMP TABLE foo (f1 int, f2 int, f3 int, f4 int);
+CREATE INDEX fooindex ON foo (f1 desc, f2 asc, f3 nulls first, f4 nulls last);
+select col, prop, pg_index_column_has_property(o, col, prop)
+  from (values ('fooindex'::regclass)) v1(o),
+       (values (1,'orderable'),(2,'asc'),(3,'desc'),
+               (4,'nulls_first'),(5,'nulls_last'),
+               (6, 'bogus')) v2(idx,prop),
+       generate_series(1,4) col
+ order by col, idx;
+ col |    prop     | pg_index_column_has_property 
+-----+-------------+------------------------------
+   1 | orderable   | t
+   1 | asc         | f
+   1 | desc        | t
+   1 | nulls_first | t
+   1 | nulls_last  | f
+   1 | bogus       | 
+   2 | orderable   | t
+   2 | asc         | t
+   2 | desc        | f
+   2 | nulls_first | f
+   2 | nulls_last  | t
+   2 | bogus       | 
+   3 | orderable   | t
+   3 | asc         | t
+   3 | desc        | f
+   3 | nulls_first | t
+   3 | nulls_last  | f
+   3 | bogus       | 
+   4 | orderable   | t
+   4 | asc         | t
+   4 | desc        | f
+   4 | nulls_first | f
+   4 | nulls_last  | t
+   4 | bogus       | 
+(24 rows)
+

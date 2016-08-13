@@ -129,6 +129,7 @@ typedef struct IndexAmRoutine
     amcanreturn_function amcanreturn;   /* can be NULL */
     amcostestimate_function amcostestimate;
     amoptions_function amoptions;
+    amproperty_function amproperty;     /* can be NULL */
     amvalidate_function amvalidate;
     ambeginscan_function ambeginscan;
     amrescan_function amrescan;
@@ -402,6 +403,55 @@ amoptions (ArrayType *reloptions,
    be found if the access method has changed its rules for options, and in
    that case ignoring obsolete entries is appropriate.)
    It is OK to return NULL if default behavior is wanted.
+  </para>
+
+  <para>
+<programlisting>
+bool
+amproperty (Oid index_oid, int attno,
+            IndexAMProperty prop, const char *propname,
+            bool *res, bool *isnull);
+</programlisting>
+   The <function>amproperty</> method allows index access methods to override
+   the default behavior of <function>pg_index_column_has_property</function>
+   and related functions.
+   If the access method does not have any special behavior for index property
+   inquiries, the <structfield>amproperty</> field in
+   its <structname>IndexAmRoutine</> struct can be set to NULL.
+   Otherwise, the <function>amproperty</> method will be called with
+   <parameter>index_oid</> and <parameter>attno</> both zero for
+   <function>pg_indexam_has_property</function> calls,
+   or with <parameter>index_oid</> valid and <parameter>attno</> zero for
+   <function>pg_index_has_property</function> calls,
+   or with <parameter>index_oid</> valid and <parameter>attno</> greater than
+   zero for <function>pg_index_column_has_property</function> calls.
+   <parameter>prop</> is an enum value identifying the property being tested,
+   while <parameter>propname</> is the original property name string.
+   If the core code does not recognize the property name
+   then <parameter>prop</> is <literal>AMPROP_UNKNOWN</>.
+   Access methods can define custom property names by
+   checking <parameter>propname</> for a match (use <function>pg_strcasecmp</>
+   to match, for consistency with the core code); for names known to the core
+   code, it's better to inspect <parameter>prop</>.
+   If the <structfield>amproperty</> method returns <literal>true</> then
+   it has determined the property test result: it must set <literal>*res</>
+   to the boolean value to return, or set <literal>*isnull</>
+   to <literal>true</> to return a NULL.  (Both of the referenced variables
+   are initialized to <literal>false</> before the call.)
+   If the <structfield>amproperty</> method returns <literal>false</> then
+   the core code will proceed with its normal logic for determining the
+   property test result.
+  </para>
+
+  <para>
+   Access methods that support ordering operators should
+   implement <literal>AMPROP_DISTANCE_ORDERABLE</> property testing, as the
+   core code does not know how to do that and will return NULL.  It may
+   also be advantageous to implement <literal>AMPROP_RETURNABLE</> testing,
+   if that can be done more cheaply than by opening the index and calling
+   <structfield>amcanreturn</>, which is the core code's default behavior.
+   The default behavior should be satisfactory for all other standard
+   properties.
   </para>
 
   <para>

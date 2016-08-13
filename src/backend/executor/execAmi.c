@@ -555,7 +555,7 @@ IndexSupportsBackwardScan(Oid indexid)
 	idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
 
 	/* Fetch the index AM's API struct */
-	amroutine = GetIndexAmRoutineByAmId(idxrelrec->relam);
+	amroutine = GetIndexAmRoutineByAmId(idxrelrec->relam, false);
 
 	result = amroutine->amcanbackward;
 

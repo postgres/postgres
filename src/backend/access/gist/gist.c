@@ -79,6 +79,7 @@ gisthandler(PG_FUNCTION_ARGS)
 	amroutine->amcanreturn = gistcanreturn;
 	amroutine->amcostestimate = gistcostestimate;
 	amroutine->amoptions = gistoptions;
+	amroutine->amproperty = gistproperty;
 	amroutine->amvalidate = gistvalidate;
 	amroutine->ambeginscan = gistbeginscan;
 	amroutine->amrescan = gistrescan;

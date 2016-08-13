@@ -529,10 +529,11 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_am</structname> stores information about index
-   access methods.  There is one row for each index access method supported by
-   the system.  The requirements for index access methods are discussed in
-   detail in <xref linkend="indexam">.
+   The catalog <structname>pg_am</structname> stores information about
+   relation access methods.  There is one row for each access method supported
+   by the system.
+   Currently, only indexes have access methods.  The requirements for index
+   access methods are discussed in detail in <xref linkend="indexam">.
   </para>
 
   <table>
@@ -573,9 +574,29 @@
       </entry>
      </row>
 
+     <row>
+      <entry><structfield>amtype</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Currently always <literal>i</literal> to indicate an index access
+       method; other values may be allowed in future
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
+
+  <note>
+   <para>
+    Before <productname>PostgreSQL</> 9.6, <structname>pg_am</structname>
+    contained many additional columns representing properties of index access
+    methods.  That data is now only directly visible at the C code level.
+    However, <function>pg_index_column_has_property()</function> and related
+    functions have been added to allow SQL queries to inspect index access
+    method properties; see <xref linkend="functions-info-catalog-table">.
+   </para>
+  </note>
 
  </sect1>
 

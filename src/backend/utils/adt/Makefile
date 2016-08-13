@@ -9,7 +9,7 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 # keep this list arranged alphabetically or it gets to be a mess
-OBJS = acl.o arrayfuncs.o array_expanded.o array_selfuncs.o \
+OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	array_typanalyze.o array_userfuncs.o arrayutils.o ascii.o \
 	bool.o cash.o char.o date.o datetime.o datum.o dbsize.o domains.o \
 	encode.o enum.o expandeddatum.o \
