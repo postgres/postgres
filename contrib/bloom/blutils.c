@@ -299,7 +299,7 @@ BloomFormTuple(BloomState *state, ItemPointer iptr, Datum *values, bool *isnull)
 
 /*
  * Add new bloom tuple to the page.  Returns true if new tuple was successfully
- * added to the page.  Returns false if it doesn't fit the page.
+ * added to the page.  Returns false if it doesn't fit on the page.
  */
 bool
 BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
@@ -308,7 +308,10 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 	BloomPageOpaque opaque;
 	Pointer		ptr;
 
-	/* Does new tuple fit the page */
+	/* We shouldn't be pointed to an invalid page */
+	Assert(!PageIsNew(page) && !BloomPageIsDeleted(page));
+
+	/* Does new tuple fit on the page? */
 	if (BloomPageGetFreeSpace(state, page) < state->sizeOfBloomTuple)
 		return false;
 
@@ -321,6 +324,9 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 	opaque->maxoff++;
 	ptr = (Pointer) BloomPageGetTuple(state, page, opaque->maxoff + 1);
 	((PageHeader) page)->pd_lower = ptr - page;
+
+	/* Assert we didn't overrun available space */
+	Assert(((PageHeader) page)->pd_lower <= ((PageHeader) page)->pd_upper);
 
 	return true;
 }
@@ -424,6 +430,9 @@ BloomFillMetapage(Relation index, Page metaPage)
 	metadata->magickNumber = BLOOM_MAGICK_NUMBER;
 	metadata->opts = *opts;
 	((PageHeader) metaPage)->pd_lower += sizeof(BloomMetaPageData);
+
+	/* If this fails, probably FreeBlockNumberArray size calc is wrong: */
+	Assert(((PageHeader) metaPage)->pd_lower <= ((PageHeader) metaPage)->pd_upper);
 }
 
 /*

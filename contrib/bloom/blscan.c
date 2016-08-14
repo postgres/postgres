@@ -135,7 +135,7 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		page = BufferGetPage(buffer);
 		TestForOldSnapshot(scan->xs_snapshot, scan->indexRelation, page);
 
-		if (!BloomPageIsDeleted(page))
+		if (!PageIsNew(page) && !BloomPageIsDeleted(page))
 		{
 			OffsetNumber offset,
 						maxOffset = BloomPageGetMaxOffset(page);

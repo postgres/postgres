@@ -237,6 +237,13 @@ blinsert(Relation index, Datum *values, bool *isnull,
 		state = GenericXLogStart(index);
 		page = GenericXLogRegisterBuffer(state, buffer, 0);
 
+		/*
+		 * We might have found a page that was recently deleted by VACUUM.  If
+		 * so, we can reuse it, but we must reinitialize it.
+		 */
+		if (PageIsNew(page) || BloomPageIsDeleted(page))
+			BloomInitPage(page, 0);
+
 		if (BloomPageAddItem(&blstate, page, itup))
 		{
 			/* Success!  Apply the change, clean up, and exit */
@@ -294,6 +301,10 @@ blinsert(Relation index, Datum *values, bool *isnull,
 		buffer = ReadBuffer(index, blkno);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		page = GenericXLogRegisterBuffer(state, buffer, 0);
+
+		/* Basically same logic as above */
+		if (PageIsNew(page) || BloomPageIsDeleted(page))
+			BloomInitPage(page, 0);
 
 		if (BloomPageAddItem(&blstate, page, itup))
 		{
