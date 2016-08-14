@@ -263,8 +263,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 			return -1;
 		}
 		(*ptr) = endptr;
-		if (exponent > NUMERIC_MAX_PRECISION ||
-			exponent < -NUMERIC_MAX_PRECISION)
+		if (exponent >= INT_MAX / 2 || exponent <= -(INT_MAX / 2))
 		{
 			errno = PGTYPES_NUM_BAD_NUMERIC;
 			return -1;

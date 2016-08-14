@@ -753,10 +753,6 @@ numeric_recv(PG_FUNCTION_ARGS)
 	init_var(&value);
 
 	len = (uint16) pq_getmsgint(buf, sizeof(uint16));
-	if (len < 0 || len > NUMERIC_MAX_PRECISION + NUMERIC_MAX_RESULT_SCALE)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid length in external \"numeric\" value")));
 
 	alloc_var(&value, len);
 
@@ -5456,12 +5452,19 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 					 errmsg("invalid input syntax for type numeric: \"%s\"",
 							str)));
 		cp = endptr;
-		if (exponent > NUMERIC_MAX_PRECISION ||
-			exponent < -NUMERIC_MAX_PRECISION)
+
+		/*
+		 * At this point, dweight and dscale can't be more than about
+		 * INT_MAX/2 due to the MaxAllocSize limit on string length, so
+		 * constraining the exponent similarly should be enough to prevent
+		 * integer overflow in this function.  If the value is too large to
+		 * fit in storage format, make_result() will complain about it later;
+		 * for consistency use the same ereport errcode/text as make_result().
+		 */
+		if (exponent >= INT_MAX / 2 || exponent <= -(INT_MAX / 2))
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type numeric: \"%s\"",
-							str)));
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value overflows numeric format")));
 		dweight += (int) exponent;
 		dscale -= (int) exponent;
 		if (dscale < 0)

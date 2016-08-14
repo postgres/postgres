@@ -759,23 +759,15 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	/* Part (4): optional exponent */
 	if (*endptr == 'e' || *endptr == 'E')
 	{
-		long		exponent;
 		char	   *cp;
 
 		/*
-		 * Note we might one day support EB units, so if what follows isn't a
-		 * number, just treat it all as a unit to be parsed.
+		 * Note we might one day support EB units, so if what follows 'E'
+		 * isn't a number, just treat it all as a unit to be parsed.
 		 */
-		exponent = strtol(endptr + 1, &cp, 10);
+		(void) strtol(endptr + 1, &cp, 10);
 		if (cp > endptr + 1)
-		{
-			if (exponent > NUMERIC_MAX_PRECISION ||
-				exponent < -NUMERIC_MAX_PRECISION)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid size: \"%s\"", str)));
 			endptr = cp;
-		}
 	}
 
 	/*

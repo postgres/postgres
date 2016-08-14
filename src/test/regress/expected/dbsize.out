@@ -119,7 +119,7 @@ ERROR:  bigint out of range
 SELECT pg_size_bytes('1e100');
 ERROR:  bigint out of range
 SELECT pg_size_bytes('1e1000000000000000000');
-ERROR:  invalid size: "1e1000000000000000000"
+ERROR:  value overflows numeric format
 SELECT pg_size_bytes('1 byte');  -- the singular "byte" is not supported
 ERROR:  invalid size: "1 byte"
 DETAIL:  Invalid size unit: "byte".
