@@ -776,7 +776,7 @@ assign_client_encoding(const char *newval, void *extra)
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot change client_encoding in a parallel worker")));
+			  errmsg("cannot change client_encoding in a parallel worker")));
 	}
 
 	/* We do not expect an error if PrepareClientEncoding succeeded */

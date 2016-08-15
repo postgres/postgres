@@ -186,9 +186,9 @@ hashvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("hash operator family \"%s\" lacks support function for operator %s",
-				   opfamilyname,
-				   format_operator(oprform->amopopr))));
+					 errmsg("hash operator family \"%s\" lacks support function for operator %s",
+							opfamilyname,
+							format_operator(oprform->amopopr))));
 			result = false;
 		}
 	}

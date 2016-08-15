@@ -243,8 +243,8 @@ ginvalidate(Oid opclassoid)
 			continue;			/* don't need both, see check below loop */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gin operator class \"%s\" is missing support function %d",
-						opclassname, i)));
+		   errmsg("gin operator class \"%s\" is missing support function %d",
+				  opclassname, i)));
 		result = false;
 	}
 	if (!opclassgroup ||

@@ -261,8 +261,8 @@ gistvalidate(Oid opclassoid)
 			continue;			/* optional methods */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("gist operator class \"%s\" is missing support function %d",
-						opclassname, i)));
+		  errmsg("gist operator class \"%s\" is missing support function %d",
+				 opclassname, i)));
 		result = false;
 	}
 

@@ -29,8 +29,8 @@ extern Size AsyncShmemSize(void);
 extern void AsyncShmemInit(void);
 
 extern void NotifyMyFrontEnd(const char *channel,
-							 const char *payload,
-							 int32 srcPid);
+				 const char *payload,
+				 int32 srcPid);
 
 /* notify-related SQL statements */
 extern void Async_Notify(const char *channel, const char *payload);

@@ -161,8 +161,8 @@ my %pgdump_runs = (
 			'postgres', ], },
 	role => {
 		dump_cmd => [
-			'pg_dump',                          '-f',
-			"$tempdir/role.sql",                '--role=regress_dump_test_role',
+			'pg_dump', '-f', "$tempdir/role.sql",
+			'--role=regress_dump_test_role',
 			'--schema=dump_test_second_schema', 'postgres', ], },
 	schema_only => {
 		dump_cmd =>
@@ -939,8 +939,8 @@ my %tests = (
 			test_schema_plus_blobs   => 1, }, },
 	'CREATE DATABASE dump_test' => {
 		create_order => 47,
-		create_sql => 'CREATE DATABASE dump_test;',
-		regexp => qr/^
+		create_sql   => 'CREATE DATABASE dump_test;',
+		regexp       => qr/^
 			\QCREATE DATABASE dump_test WITH TEMPLATE = template0 \E
 			.*;/xm,
 		like   => { pg_dumpall_dbprivs => 1, },
@@ -2192,12 +2192,12 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 	'GRANT CREATE ON DATABASE dump_test' => {
 		create_order => 48,
-		create_sql   => 'GRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;',
+		create_sql =>
+		  'GRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;',
 		regexp => qr/^
 			\QGRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;\E
 			/xm,
-		like => {
-			pg_dumpall_dbprivs       => 1, },
+		like   => { pg_dumpall_dbprivs => 1, },
 		unlike => {
 			binary_upgrade           => 1,
 			clean                    => 1,
@@ -2212,14 +2212,15 @@ my %tests = (
 			only_dump_test_table     => 1,
 			pg_dumpall_globals       => 1,
 			schema_only              => 1,
-			section_pre_data         => 1, ,
+			section_pre_data         => 1,
 			test_schema_plus_blobs   => 1, }, },
 	'GRANT SELECT ON TABLE test_table' => {
 		create_order => 5,
 		create_sql   => 'GRANT SELECT ON TABLE dump_test.test_table
 						   TO regress_dump_test_role;',
-		regexp => qr/^GRANT SELECT ON TABLE test_table TO regress_dump_test_role;/m,
-		like   => {
+		regexp =>
+		  qr/^GRANT SELECT ON TABLE test_table TO regress_dump_test_role;/m,
+		like => {
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -2242,8 +2243,9 @@ my %tests = (
 		create_sql   => 'GRANT SELECT ON
 						   TABLE dump_test_second_schema.test_third_table
 						   TO regress_dump_test_role;',
-		regexp => qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
-		like   => {
+		regexp =>
+qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
+		like => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -2480,12 +2482,11 @@ my %tests = (
 	'REVOKE CONNECT ON DATABASE dump_test FROM public' => {
 		create_order => 49,
 		create_sql   => 'REVOKE CONNECT ON DATABASE dump_test FROM public;',
-		regexp => qr/^
+		regexp       => qr/^
 			\QREVOKE CONNECT,TEMPORARY ON DATABASE dump_test FROM PUBLIC;\E\n
 			\QGRANT TEMPORARY ON DATABASE dump_test TO PUBLIC;\E
 			/xm,
-		like => {
-			pg_dumpall_dbprivs       => 1, },
+		like   => { pg_dumpall_dbprivs => 1, },
 		unlike => {
 			binary_upgrade           => 1,
 			clean                    => 1,

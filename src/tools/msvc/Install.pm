@@ -386,13 +386,11 @@ sub GenerateTimezoneFiles
 
 	print "Generating timezone files...";
 
-	my @args = ("$conf/zic/zic",
-				'-d',
-				"$target/share/timezone");
+	my @args = ("$conf/zic/zic", '-d', "$target/share/timezone");
 	foreach (@tzfiles)
 	{
 		my $tzfile = $_;
-		push(@args, "src/timezone/data/$tzfile")
+		push(@args, "src/timezone/data/$tzfile");
 	}
 
 	system(@args);
@@ -643,9 +641,9 @@ sub CopyIncludeFiles
 		next unless (-d "src/include/$d");
 
 		EnsureDirectories("$target/include/server/$d");
-		my @args = ('xcopy', '/s', '/i', '/q', '/r', '/y',
-				 "src\\include\\$d\\*.h",
-				 "$ctarget\\include\\server\\$d\\");
+		my @args = (
+			'xcopy', '/s', '/i', '/q', '/r', '/y', "src\\include\\$d\\*.h",
+			"$ctarget\\include\\server\\$d\\");
 		system(@args) && croak("Failed to copy include directory $d\n");
 	}
 	closedir($D);
@@ -699,10 +697,11 @@ sub GenerateNLSFiles
 
 			EnsureDirectories($target, "share/locale/$lang",
 				"share/locale/$lang/LC_MESSAGES");
-			my @args = ("$nlspath\\bin\\msgfmt",
-			   '-o',
-			   "$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
-			   $_);
+			my @args = (
+				"$nlspath\\bin\\msgfmt",
+				'-o',
+"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
+				$_);
 			system(@args) && croak("Could not run msgfmt on $dir\\$_");
 			print ".";
 		}

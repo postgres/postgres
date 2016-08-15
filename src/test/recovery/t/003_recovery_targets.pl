@@ -66,15 +66,15 @@ $node_master->backup('my_backup');
 # target TXID.
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-my $ret =
-  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location(), txid_current();");
+my $ret = $node_master->safe_psql('postgres',
+	"SELECT pg_current_xlog_location(), txid_current();");
 my ($lsn2, $recovery_txid) = split /\|/, $ret;
 
 # More data, with recovery target timestamp
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(2001,3000))");
-$ret =
-  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location(), now();");
+$ret = $node_master->safe_psql('postgres',
+	"SELECT pg_current_xlog_location(), now();");
 my ($lsn3, $recovery_time) = split /\|/, $ret;
 
 # Even more data, this time with a recovery target name

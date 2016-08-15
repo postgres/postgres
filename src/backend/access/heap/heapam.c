@@ -4571,7 +4571,7 @@ heap_lock_tuple(Relation relation, HeapTuple tuple,
 	ItemId		lp;
 	Page		page;
 	Buffer		vmbuffer = InvalidBuffer;
-	BlockNumber	block;
+	BlockNumber block;
 	TransactionId xid,
 				xmax;
 	uint16		old_infomask,
@@ -5643,7 +5643,7 @@ static HTSU_Result
 heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 							LockTupleMode mode)
 {
-	HTSU_Result	result;
+	HTSU_Result result;
 	ItemPointerData tupid;
 	HeapTupleData mytup;
 	Buffer		buf;
@@ -6698,6 +6698,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	if (tuple->t_infomask & HEAP_MOVED)
 	{
 		xid = HeapTupleHeaderGetXvac(tuple);
+
 		/*
 		 * For Xvac, we ignore the cutoff_xid and just always perform the
 		 * freeze operation.  The oldest release in which such a value can
@@ -8841,9 +8842,9 @@ heap_xlog_lock(XLogReaderState *record)
 	 */
 	if (xlrec->flags & XLH_LOCK_ALL_FROZEN_CLEARED)
 	{
-		RelFileNode	rnode;
+		RelFileNode rnode;
 		Buffer		vmbuffer = InvalidBuffer;
-		BlockNumber	block;
+		BlockNumber block;
 		Relation	reln;
 
 		XLogRecGetBlockTag(record, 0, &rnode, NULL, &block);
@@ -8914,9 +8915,9 @@ heap_xlog_lock_updated(XLogReaderState *record)
 	 */
 	if (xlrec->flags & XLH_LOCK_ALL_FROZEN_CLEARED)
 	{
-		RelFileNode	rnode;
+		RelFileNode rnode;
 		Buffer		vmbuffer = InvalidBuffer;
-		BlockNumber	block;
+		BlockNumber block;
 		Relation	reln;
 
 		XLogRecGetBlockTag(record, 0, &rnode, NULL, &block);

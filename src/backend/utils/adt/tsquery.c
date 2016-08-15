@@ -430,15 +430,16 @@ pushStop(TSQueryParserState state)
 
 #define STACKDEPTH	32
 
-typedef struct OperatorElement {
-	int8	op;
-	int16	distance;
+typedef struct OperatorElement
+{
+	int8		op;
+	int16		distance;
 } OperatorElement;
 
 static void
 pushOpStack(OperatorElement *stack, int *lenstack, int8 op, int16 distance)
 {
-	if (*lenstack == STACKDEPTH) /* internal error */
+	if (*lenstack == STACKDEPTH)	/* internal error */
 		elog(ERROR, "tsquery stack too small");
 
 	stack[*lenstack].op = op;
@@ -449,20 +450,20 @@ pushOpStack(OperatorElement *stack, int *lenstack, int8 op, int16 distance)
 
 static void
 cleanOpStack(TSQueryParserState state,
-		   OperatorElement *stack, int *lenstack, int8 op)
+			 OperatorElement *stack, int *lenstack, int8 op)
 {
-	int	opPriority = OP_PRIORITY(op);
+	int			opPriority = OP_PRIORITY(op);
 
-	while(*lenstack)
+	while (*lenstack)
 	{
 		/* NOT is right associative unlike to others */
 		if ((op != OP_NOT && opPriority > OP_PRIORITY(stack[*lenstack - 1].op)) ||
-			(op == OP_NOT && opPriority >=  OP_PRIORITY(stack[*lenstack - 1].op)))
+		(op == OP_NOT && opPriority >= OP_PRIORITY(stack[*lenstack - 1].op)))
 			break;
 
 		(*lenstack)--;
 		pushOperator(state, stack[*lenstack].op,
-							stack[*lenstack].distance);
+					 stack[*lenstack].distance);
 	}
 }
 
@@ -480,7 +481,7 @@ makepol(TSQueryParserState state,
 	ts_tokentype type;
 	int			lenval = 0;
 	char	   *strval = NULL;
-	OperatorElement	opstack[STACKDEPTH];
+	OperatorElement opstack[STACKDEPTH];
 	int			lenstack = 0;
 	int16		weight = 0;
 	bool		prefix;
@@ -503,7 +504,7 @@ makepol(TSQueryParserState state,
 				makepol(state, pushval, opaque);
 				break;
 			case PT_CLOSE:
-				cleanOpStack(state, opstack, &lenstack, OP_OR /* lowest */);
+				cleanOpStack(state, opstack, &lenstack, OP_OR /* lowest */ );
 				return;
 			case PT_ERR:
 			default:
@@ -514,7 +515,7 @@ makepol(TSQueryParserState state,
 		}
 	}
 
-	cleanOpStack(state, opstack, &lenstack, OP_OR /* lowest */);
+	cleanOpStack(state, opstack, &lenstack, OP_OR /* lowest */ );
 }
 
 static void
@@ -845,8 +846,8 @@ infix(INFIX *in, int parentPriority, bool rightPhraseOp)
 
 		in->curpol++;
 		if (priority < parentPriority ||
-			 /* phrase operator depends on order */
-			 (op == OP_PHRASE && rightPhraseOp))
+		/* phrase operator depends on order */
+			(op == OP_PHRASE && rightPhraseOp))
 		{
 			needParenthesis = true;
 			RESIZEBUF(in, 2);
@@ -916,7 +917,7 @@ tsqueryout(PG_FUNCTION_ARGS)
 	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
 	*(nrm.cur) = '\0';
 	nrm.op = GETOPERAND(query);
-	infix(&nrm, -1 /* lowest priority */, false);
+	infix(&nrm, -1 /* lowest priority */ , false);
 
 	PG_FREE_IF_COPY(query, 0);
 	PG_RETURN_CSTRING(nrm.buf);

@@ -406,7 +406,7 @@ normalize_phrase_tree(NODE *node)
 
 	if (node->valnode->qoperator.oper == OP_NOT)
 	{
-		NODE *orignode = node;
+		NODE	   *orignode = node;
 
 		/* eliminate NOT sequence */
 		while (node->valnode->type == QI_OPR &&
@@ -430,8 +430,8 @@ normalize_phrase_tree(NODE *node)
 		node->right = normalize_phrase_tree(node->right);
 
 		/*
-		 * if subtree contains only nodes with higher "priority" then
-		 * we are done. See comment near NODE_PRIORITY()
+		 * if subtree contains only nodes with higher "priority" then we are
+		 * done. See comment near NODE_PRIORITY()
 		 */
 		if (NODE_PRIORITY(node) <= NODE_PRIORITY(node->right) &&
 			NODE_PRIORITY(node) <= NODE_PRIORITY(node->left))

@@ -1667,7 +1667,7 @@ toast_delete_datum(Relation rel, Datum value)
 	HeapTuple	toasttup;
 	int			num_indexes;
 	int			validIndex;
-	SnapshotData	SnapshotToast;
+	SnapshotData SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		return;
@@ -1734,7 +1734,7 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	int			num_indexes;
 	int			validIndex;
 	Relation   *toastidxs;
-	SnapshotData	SnapshotToast;
+	SnapshotData SnapshotToast;
 
 	/* Fetch a valid index relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -1819,7 +1819,7 @@ toast_fetch_datum(struct varlena * attr)
 	int32		chunksize;
 	int			num_indexes;
 	int			validIndex;
-	SnapshotData	SnapshotToast;
+	SnapshotData SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum shouldn't be called for non-ondisk datums");
@@ -1998,7 +1998,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	int32		chcpyend;
 	int			num_indexes;
 	int			validIndex;
-	SnapshotData	SnapshotToast;
+	SnapshotData SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum_slice shouldn't be called for non-ondisk datums");
@@ -2094,7 +2094,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	init_toast_snapshot(&SnapshotToast);
 	nextidx = startchunk;
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										 &SnapshotToast, nscankeys, toastkey);
+										&SnapshotToast, nscankeys, toastkey);
 	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*

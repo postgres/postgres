@@ -264,8 +264,8 @@ brinvalidate(Oid opclassoid)
 			continue;			/* got it */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("brin operator class \"%s\" is missing support function %d",
-						opclassname, i)));
+		  errmsg("brin operator class \"%s\" is missing support function %d",
+				 opclassname, i)));
 		result = false;
 	}
 

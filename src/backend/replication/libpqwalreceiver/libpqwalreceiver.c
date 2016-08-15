@@ -129,7 +129,7 @@ libpqrcv_get_conninfo(void)
 {
 	PQconninfoOption *conn_opts;
 	PQconninfoOption *conn_opt;
-	PQExpBufferData	buf;
+	PQExpBufferData buf;
 	char	   *retval;
 
 	Assert(streamConn != NULL);
@@ -145,7 +145,7 @@ libpqrcv_get_conninfo(void)
 	/* build a clean connection string from pieces */
 	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 	{
-		bool	obfuscate;
+		bool		obfuscate;
 
 		/* Skip debug and empty options */
 		if (strchr(conn_opt->dispchar, 'D') ||
