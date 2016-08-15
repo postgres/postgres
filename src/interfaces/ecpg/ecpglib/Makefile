@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 PGFILEDESC = "ECPG - embedded SQL in C"
 NAME= ecpg
 SO_MAJOR_VERSION= 6
-SO_MINOR_VERSION= 8
+SO_MINOR_VERSION= 9
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)

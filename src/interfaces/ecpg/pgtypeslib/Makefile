@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 PGFILEDESC = "pgtypes - library for data type mapping"
 NAME= pgtypes
 SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 7
+SO_MINOR_VERSION= 8
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-DFRONTEND $(CPPFLAGS)
