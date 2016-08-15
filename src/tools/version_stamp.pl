@@ -22,8 +22,7 @@
 
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
-$major1 = 9;
-$major2 = 6;
+$majorversion = 10;
 
 # Validate argument and compute derived variables
 $minor = shift;
@@ -60,7 +59,6 @@ else
 }
 
 # Create various required forms of the version number
-$majorversion = $major1 . "." . $major2;
 if ($dotneeded)
 {
 	$fullversion = $majorversion . "." . $minor;
@@ -70,7 +68,7 @@ else
 	$fullversion = $majorversion . $minor;
 }
 $numericversion = $majorversion . "." . $numericminor;
-$padnumericversion = sprintf("%d%02d%02d", $major1, $major2, $numericminor);
+$padnumericversion = sprintf("%d%04d", $majorversion, $numericminor);
 
 # Get the autoconf version number for eventual nag message
 # (this also ensures we're in the right directory)
@@ -110,15 +108,15 @@ sed_file("src/include/pg_config.h.win32",
 );
 
 sed_file("src/interfaces/libpq/libpq.rc.in",
-"-e 's/FILEVERSION [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION $major1,$major2,$numericminor,0/' "
-	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $major1,$major2,$numericminor,0/' "
+"-e 's/FILEVERSION [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION $majorversion,0,$numericminor,0/' "
+	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $majorversion,0,$numericminor,0/' "
 	  . "-e 's/VALUE \"FileVersion\", \"[0-9.]*/VALUE \"FileVersion\", \"$numericversion/' "
 	  . "-e 's/VALUE \"ProductVersion\", \"[0-9.]*/VALUE \"ProductVersion\", \"$numericversion/'"
 );
 
 sed_file("src/port/win32ver.rc",
-"-e 's/FILEVERSION    [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION    $major1,$major2,$numericminor,0/' "
-	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $major1,$major2,$numericminor,0/'"
+"-e 's/FILEVERSION    [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION    $majorversion,0,$numericminor,0/' "
+	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $majorversion,0,$numericminor,0/'"
 );
 
 print "Stamped these files with version number $fullversion:\n$fixedfiles";

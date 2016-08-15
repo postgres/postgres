@@ -131,12 +131,12 @@ sub GenerateFiles
 		if (/^AC_INIT\(\[PostgreSQL\], \[([^\]]+)\]/)
 		{
 			$self->{strver} = $1;
-			if ($self->{strver} !~ /^(\d+)\.(\d+)(?:\.(\d+))?/)
+			if ($self->{strver} !~ /^(\d+)(?:\.(\d+))?/)
 			{
 				confess "Bad format of version: $self->{strver}\n";
 			}
-			$self->{numver} = sprintf("%d%02d%02d", $1, $2, $3 ? $3 : 0);
-			$self->{majorver} = sprintf("%d.%d", $1, $2);
+			$self->{numver} = sprintf("%d%04d", $1, $2 ? $2 : 0);
+			$self->{majorver} = sprintf("%d", $1);
 		}
 	}
 	close(C);

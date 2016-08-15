@@ -1601,17 +1601,26 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   <productname>PostgreSQL</> major versions are represented by the
-   first two digit groups of the version number, e.g., 8.4.
-   <productname>PostgreSQL</> minor versions are represented by the
-   third group of version digits, e.g., 8.4.2 is the second minor
-   release of 8.4.  Minor releases never change the internal storage
-   format and are always compatible with earlier and later minor
-   releases of the same major version number, e.g., 8.4.2 is compatible
-   with 8.4, 8.4.1 and 8.4.6.  To update between compatible versions,
-   you simply replace the executables while the server is down and
-   restart the server.  The data directory remains unchanged &mdash;
-   minor upgrades are that simple.
+   Current <productname>PostgreSQL</productname> version numbers consist of a
+   major and a minor version number.  For example, in the version number 10.1,
+   the 10 is the major version number and the 1 is the minor version number,
+   meaning this would be the first minor release of the major release 10.  For
+   releases before <productname>PostgreSQL</productname> version 10.0, version
+   numbers consist of three numbers, for example, 9.5.3.  In those cases, the
+   major version consists of the first two digit groups of the version number,
+   e.g., 9.5, and the minor version is the third number, e.g., 3, meaning this
+   would be the third minor release of the major release 9.5.
+  </para>
+
+  <para>
+   Minor releases never change the internal storage format and are always
+   compatible with earlier and later minor releases of the same major version
+   number.  For example, version 10.1 is compatible with version 10.0 and
+   version 10.6.  Similarly, for example, 9.5.3 is compatible with 9.5.0,
+   9.5.1, and 9.5.6.  To update between compatible versions, you simply
+   replace the executables while the server is down and restart the server.
+   The data directory remains unchanged &mdash; minor upgrades are that
+   simple.
   </para>
 
   <para>

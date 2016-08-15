@@ -43,8 +43,8 @@ while (@ARGV)
 	elsif ($arg =~ /^--set-version=(.*)$/)
 	{
 		$major_version = $1;
-		die "Version must be in format nn.nn.\n"
-		  if !($major_version =~ /^\d+\.\d+$/);
+		die "Invalid version string.\n"
+		  if !($major_version =~ /^\d+$/);
 	}
 	else
 	{

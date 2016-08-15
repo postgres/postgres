@@ -1082,8 +1082,8 @@ get_bin_version(ClusterInfo *cluster)
 	char		cmd[MAXPGPATH],
 				cmd_output[MAX_STRING];
 	FILE	   *output;
-	int			pre_dot,
-				post_dot;
+	int			pre_dot = 0,
+				post_dot = 0;
 
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
 
@@ -1098,7 +1098,7 @@ get_bin_version(ClusterInfo *cluster)
 	if (strchr(cmd_output, '\n') != NULL)
 		*strchr(cmd_output, '\n') = '\0';
 
-	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) != 2)
+	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) < 1)
 		pg_fatal("could not get version from %s\n", cmd);
 
 	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
