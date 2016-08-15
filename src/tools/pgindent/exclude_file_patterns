@@ -1,4 +1,4 @@
-#list of file patterns to exclude from pgindent runs
+#list of file patterns to exclude from pgindent runs, see notes in README
 /s_lock\.h$
 /atomics/
 /ecpg/test/expected/

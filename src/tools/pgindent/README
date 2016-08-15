@@ -1,64 +1,104 @@
-pgindent
-========
+pgindent'ing the PostgreSQL source tree
+=======================================
 
-This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
-*.l files.
+We run this process at least once in each development cycle,
+to maintain uniform layout style in our C and Perl code.
 
-1) Install pg_bsd_indent (see below for details).
+You might find this blog post interesting:
+http://adpgtech.blogspot.com/2015/05/running-pgindent-on-non-core-code-or.html
+
+
+PREREQUISITES:
+
+1) Install pg_bsd_indent in your PATH (see below for details).
 
 2) Install entab (src/tools/entab/).
 
-3) Change directory to the top of the build tree.
+3) Install perltidy.  Please be sure it is v20090616 (older and newer
+   versions make different formatting choices, and we want consistency).
 
-4) Remove all derived files (pgindent has trouble with one of the flex macros):
+DOING THE INDENT RUN:
+
+1) Change directory to the top of the source tree.
+
+2) Remove all derived files (pgindent has trouble with flex files, and it
+   would be pointless to run it on them anyway):
 
 	make maintainer-clean
-
    Or:
-
 	git clean -fdx
 
-5) Download the typedef file from the buildfarm:
+3) Download the latest typedef file from the buildfarm:
 
 	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
-   (see http://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full list of typedefs,
-    also http://adpgtech.blogspot.com/2015/05/running-pgindent-on-non-core-code-or.html)
+   (See http://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full
+   list of typedef files, if you want to indent some back branch.)
 
-6) Run pgindent:
+4) Run pgindent on the C files:
 
 	src/tools/pgindent/pgindent
 
-7) Remove any files that generate errors and restore their original
-   versions.
+   If any files generate errors, restore their original versions with
+   "git checkout", and see below for cleanup ideas.
 
-8) Indent the Perl code using perltidy v20090616 (perltidy changes formatting
-   decisions, so older and newer versions are incompatible):
+5) Indent the Perl code using perltidy:
 
-	(
-		find . -name \*.pl -o -name \*.pm
+	src/tools/pgindent/pgperltidy
 
-		find . -type f -exec file {} \; |
-		egrep -i ':.*perl[0-9]*\>' |
-		cut -d: -f1
-	) |
-	sort -u |
-	xargs perltidy --profile=src/tools/pgindent/perltidyrc
+   If you want to use some perltidy version that's not in your PATH,
+   first set the PERLTIDY environment variable to point to it.
 
-9) Do a full test build:
+VALIDATION:
 
-	> run configure
-	# stop is only necessary if it's going to install in a location with an
-	# already running server
-	pg_ctl stop
-	run configure
-	make -C src install
-	make -C contrib install
-	run initdb
-	pg_ctl start
-	make installcheck-world
+1) Check for any newly-created files using "git status"; there shouldn't
+   be any.  (perltidy tends to leave *.LOG files behind if it has trouble.)
 
-10) Remove Perl backup files after testing (*.bak)
+2) Do a full test build:
+
+	./configure ...
+	make -s all	# look for unexpected warnings, and errors of course
+	make check-world
+
+   Your configure switches should include at least --enable-tap-tests
+   or else much of the Perl code won't get exercised.
+
+3) If you have the patience, it's worth eyeballing the "git diff" output
+   for any egregiously ugly changes.  See below for cleanup ideas.
+
+
+When you're done, "git commit" everything including the typedefs.list file
+you used.
+
+
+---------------------------------------------------------------------------
+
+Cleaning up in case of failure or ugly output
+---------------------------------------------
+
+If you don't like the results for any particular file, "git checkout"
+that file to undo the changes, patch the file as needed, then repeat
+the indent process.
+
+pgindent will reflow any comment block that's not at the left margin.
+If this messes up manual formatting that ought to be preserved, protect
+the comment block with some dashes:
+
+	/*----------
+	 * Text here will not be touched by pgindent.
+	 *----------
+	 */
+
+Odd spacing around typedef names might indicate an incomplete typedefs list.
+
+pgindent can get confused by #if sequences that look correct to the compiler
+but have mismatched braces/parentheses when considered as a whole.  Usually
+that looks pretty unreadable to humans too, so best practice is to rearrange
+the #if tests to avoid it.
+
+Sometimes, if pgindent or perltidy produces odd-looking output, it's because
+of minor bugs like extra commas.  Don't hesitate to clean that up while
+you're at it.
 
 ---------------------------------------------------------------------------
 
@@ -82,33 +122,25 @@ see:
 
 ---------------------------------------------------------------------------
 
-Notes about excluded files
---------------------------
+Which files are processed
+-------------------------
+
+The pgindent run processes (nearly) all PostgreSQL *.c and *.h files,
+but we currently exclude *.y and *.l files.  Exceptions are listed
+in exclude_file_patterns:
 
 src/include/storage/s_lock.h and src/include/port/atomics/ are excluded
 because they contain assembly code that pgindent tends to mess up.
-
-src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
-are excluded because those files are imported from an external project,
-not maintained locally, and are machine-generated anyway.
 
 src/interfaces/ecpg/test/expected/ is excluded to avoid breaking the ecpg
 regression tests.  Several *.h files are included in regression output so
 should not be changed.
 
----------------------------------------------------------------------------
+src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
+are excluded because those files are imported from an external project,
+not maintained locally, and are machine-generated anyway.  Likewise for
+plperl/ppport.h.
 
-Obsolete typedef list creation instructions
--------------------------------------------
-
-To use pgindent:
-
-1) Build the source tree with _debug_ symbols and all possible configure options
-
-2) Install to /usr/local/pgsql
-
-3) Install all contrib modules
-
-4) Save a list of typedefs by running:
-
-	src/tools/find_typedef /usr/local/pgsql/bin /usr/local/pgsql/lib > /tmp/pgtypedefs
+The perltidy run processes all *.pl and *.pm files, plus a few
+executable Perl scripts that are not named that way.  See the "find"
+rules in pgperltidy for details.
