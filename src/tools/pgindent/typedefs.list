@@ -2668,6 +2668,9 @@ printTextRule
 priv_map
 process_file_callback_t
 process_sublinks_context
+proclist_head
+proclist_mutable_iter
+proclist_node
 promptStatus_t
 pthread_attr_t
 pthread_key_t

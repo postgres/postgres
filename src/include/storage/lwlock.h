@@ -18,7 +18,7 @@
 #error "lwlock.h may not be included from frontend code"
 #endif
 
-#include "lib/ilist.h"
+#include "storage/proclist_types.h"
 #include "storage/s_lock.h"
 #include "port/atomics.h"
 
@@ -59,7 +59,7 @@ typedef struct LWLock
 {
 	uint16		tranche;		/* tranche ID */
 	pg_atomic_uint32 state;		/* state of exclusive/nonexclusive lockers */
-	dlist_head	waiters;		/* list of waiting PGPROCs */
+	proclist_head waiters;		/* list of waiting PGPROCs */
 #ifdef LOCK_DEBUG
 	pg_atomic_uint32 nwaiters;	/* number of waiters */
 	struct PGPROC *owner;		/* last exclusive owner of the lock */

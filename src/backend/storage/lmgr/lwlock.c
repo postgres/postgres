@@ -84,6 +84,7 @@
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
+#include "storage/proclist.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"
 
@@ -717,7 +718,7 @@ LWLockInitialize(LWLock *lock, int tranche_id)
 	pg_atomic_init_u32(&lock->nwaiters, 0);
 #endif
 	lock->tranche = tranche_id;
-	dlist_init(&lock->waiters);
+	proclist_init(&lock->waiters);
 }
 
 /*
@@ -920,25 +921,25 @@ LWLockWakeup(LWLock *lock)
 {
 	bool		new_release_ok;
 	bool		wokeup_somebody = false;
-	dlist_head	wakeup;
-	dlist_mutable_iter iter;
+	proclist_head wakeup;
+	proclist_mutable_iter iter;
 
-	dlist_init(&wakeup);
+	proclist_init(&wakeup);
 
 	new_release_ok = true;
 
 	/* lock wait list while collecting backends to wake up */
 	LWLockWaitListLock(lock);
 
-	dlist_foreach_modify(iter, &lock->waiters)
+	proclist_foreach_modify(iter, &lock->waiters, lwWaitLink)
 	{
-		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+		PGPROC	   *waiter = GetPGProcByNumber(iter.cur);
 
 		if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
 			continue;
 
-		dlist_delete(&waiter->lwWaitLink);
-		dlist_push_tail(&wakeup, &waiter->lwWaitLink);
+		proclist_delete(&lock->waiters, iter.cur, lwWaitLink);
+		proclist_push_tail(&wakeup, iter.cur, lwWaitLink);
 
 		if (waiter->lwWaitMode != LW_WAIT_UNTIL_FREE)
 		{
@@ -963,7 +964,7 @@ LWLockWakeup(LWLock *lock)
 			break;
 	}
 
-	Assert(dlist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
+	Assert(proclist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
 
 	/* unset required flags, and release lock, in one fell swoop */
 	{
@@ -982,7 +983,7 @@ LWLockWakeup(LWLock *lock)
 			else
 				desired_state &= ~LW_FLAG_RELEASE_OK;
 
-			if (dlist_is_empty(&wakeup))
+			if (proclist_is_empty(&wakeup))
 				desired_state &= ~LW_FLAG_HAS_WAITERS;
 
 			desired_state &= ~LW_FLAG_LOCKED;	/* release lock */
@@ -994,12 +995,12 @@ LWLockWakeup(LWLock *lock)
 	}
 
 	/* Awaken any waiters I removed from the queue. */
-	dlist_foreach_modify(iter, &wakeup)
+	proclist_foreach_modify(iter, &wakeup, lwWaitLink)
 	{
-		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+		PGPROC	   *waiter = GetPGProcByNumber(iter.cur);
 
 		LOG_LWDEBUG("LWLockRelease", lock, "release waiter");
-		dlist_delete(&waiter->lwWaitLink);
+		proclist_delete(&wakeup, iter.cur, lwWaitLink);
 
 		/*
 		 * Guarantee that lwWaiting being unset only becomes visible once the
@@ -1046,9 +1047,9 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)
-		dlist_push_head(&lock->waiters, &MyProc->lwWaitLink);
+		proclist_push_head(&lock->waiters, MyProc->pgprocno, lwWaitLink);
 	else
-		dlist_push_tail(&lock->waiters, &MyProc->lwWaitLink);
+		proclist_push_tail(&lock->waiters, MyProc->pgprocno, lwWaitLink);
 
 	/* Can release the mutex now */
 	LWLockWaitListUnlock(lock);
@@ -1070,7 +1071,7 @@ static void
 LWLockDequeueSelf(LWLock *lock)
 {
 	bool		found = false;
-	dlist_mutable_iter iter;
+	proclist_mutable_iter iter;
 
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
@@ -1086,19 +1087,17 @@ LWLockDequeueSelf(LWLock *lock)
 	 * Can't just remove ourselves from the list, but we need to iterate over
 	 * all entries as somebody else could have unqueued us.
 	 */
-	dlist_foreach_modify(iter, &lock->waiters)
+	proclist_foreach_modify(iter, &lock->waiters, lwWaitLink)
 	{
-		PGPROC	   *proc = dlist_container(PGPROC, lwWaitLink, iter.cur);
-
-		if (proc == MyProc)
+		if (iter.cur == MyProc->pgprocno)
 		{
 			found = true;
-			dlist_delete(&proc->lwWaitLink);
+			proclist_delete(&lock->waiters, iter.cur, lwWaitLink);
 			break;
 		}
 	}
 
-	if (dlist_is_empty(&lock->waiters) &&
+	if (proclist_is_empty(&lock->waiters) &&
 		(pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS) != 0)
 	{
 		pg_atomic_fetch_and_u32(&lock->state, ~LW_FLAG_HAS_WAITERS);
@@ -1719,12 +1718,12 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 void
 LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 {
-	dlist_head	wakeup;
-	dlist_mutable_iter iter;
+	proclist_head wakeup;
+	proclist_mutable_iter iter;
 
 	PRINT_LWDEBUG("LWLockUpdateVar", lock, LW_EXCLUSIVE);
 
-	dlist_init(&wakeup);
+	proclist_init(&wakeup);
 
 	LWLockWaitListLock(lock);
 
@@ -1737,15 +1736,15 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 	 * See if there are any LW_WAIT_UNTIL_FREE waiters that need to be woken
 	 * up. They are always in the front of the queue.
 	 */
-	dlist_foreach_modify(iter, &lock->waiters)
+	proclist_foreach_modify(iter, &lock->waiters, lwWaitLink)
 	{
-		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+		PGPROC	   *waiter = GetPGProcByNumber(iter.cur);
 
 		if (waiter->lwWaitMode != LW_WAIT_UNTIL_FREE)
 			break;
 
-		dlist_delete(&waiter->lwWaitLink);
-		dlist_push_tail(&wakeup, &waiter->lwWaitLink);
+		proclist_delete(&lock->waiters, iter.cur, lwWaitLink);
+		proclist_push_tail(&wakeup, iter.cur, lwWaitLink);
 	}
 
 	/* We are done updating shared state of the lock itself. */
@@ -1754,11 +1753,11 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 	/*
 	 * Awaken any waiters I removed from the queue.
 	 */
-	dlist_foreach_modify(iter, &wakeup)
+	proclist_foreach_modify(iter, &wakeup, lwWaitLink)
 	{
-		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+		PGPROC	   *waiter = GetPGProcByNumber(iter.cur);
 
-		dlist_delete(&waiter->lwWaitLink);
+		proclist_delete(&wakeup, iter.cur, lwWaitLink);
 		/* check comment in LWLockWakeup() about this barrier */
 		pg_write_barrier();
 		waiter->lwWaiting = false;

@@ -19,6 +19,7 @@
 #include "storage/latch.h"
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
+#include "storage/proclist_types.h"
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -112,7 +113,7 @@ struct PGPROC
 	/* Info about LWLock the process is currently waiting for, if any. */
 	bool		lwWaiting;		/* true if waiting for an LW lock */
 	uint8		lwWaitMode;		/* lwlock mode being waited for */
-	dlist_node	lwWaitLink;		/* position in LW lock wait list */
+	proclist_node lwWaitLink;	/* position in LW lock wait list */
 
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitProcLock are NULL if not currently waiting. */
@@ -242,6 +243,9 @@ typedef struct PROC_HDR
 extern PROC_HDR *ProcGlobal;
 
 extern PGPROC *PreparedXactProcs;
+
+/* Accessor for PGPROC given a pgprocno. */
+#define GetPGProcByNumber(n) (&ProcGlobal->allProcs[(n)])
 
 /*
  * We set aside some extra PGPROC structures for auxiliary processes,
