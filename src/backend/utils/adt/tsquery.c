@@ -691,7 +691,7 @@ parse_tsquery(char *buf,
 	findoprnd(ptr, query->size, &needcleanup);
 
 	/*
-	 * QI_VALSTOP nodes should be cleaned and and OP_PHRASE should be pushed
+	 * QI_VALSTOP nodes should be cleaned and OP_PHRASE should be pushed
 	 * down
 	 */
 	if (needcleanup)

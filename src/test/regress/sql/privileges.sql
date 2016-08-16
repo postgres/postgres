@@ -259,7 +259,7 @@ INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLU
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLUDED.three;
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set one = 8; -- fails (due to UPDATE)
 INSERT INTO atest5(three) VALUES (4) ON CONFLICT (two) DO UPDATE set three = 10; -- fails (due to INSERT)
--- Check that the the columns in the inference require select privileges
+-- Check that the columns in the inference require select privileges
 -- Error. No privs on four
 INSERT INTO atest5(three) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 10;
 

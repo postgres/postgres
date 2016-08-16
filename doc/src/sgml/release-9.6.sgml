@@ -1026,7 +1026,7 @@ This commit is also listed under libpq and psql
 
        <para>
         This view exposes the same information available from
-        the the <application>pg_config</> comand-line utility,
+        the <application>pg_config</> comand-line utility,
         namely assorted compile-time configuration information for
         <productname>PostgreSQL</>.
        </para>
