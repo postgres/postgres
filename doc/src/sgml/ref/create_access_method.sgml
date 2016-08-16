@@ -57,29 +57,28 @@ CREATE ACCESS METHOD <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>access_method_type</literal></term>
+    <term><replaceable class="parameter">access_method_type</replaceable></term>
     <listitem>
      <para>
-      This clause specifies type of access method to define.
+      This clause specifies the type of access method to define.
       Only <literal>INDEX</literal> is supported at present.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>HANDLER <replaceable class="parameter">handler_function</replaceable></literal></term>
+    <term><replaceable class="parameter">handler_function</replaceable></term>
     <listitem>
-     <para><replaceable class="parameter">handler_function</replaceable> is the
-      name of a previously registered function that will be called to
-      retrieve the struct which contains required parameters and functions
-      of access method to the core.  The handler function must take single
-      argument of type <type>internal</>, and its return type depends on the
-      type of access method; for <literal>INDEX</literal> access methods, it
-      must be <type>index_am_handler</type>.
-     </para>
-
      <para>
-      See <xref linkend="index-api"> for index access methods API.
+      <replaceable class="parameter">handler_function</replaceable> is the
+      name (possibly schema-qualified) of a previously registered function
+      that represents the access method.  The handler function must be
+      declared to take a single argument of type <type>internal</>,
+      and its return type depends on the type of access method;
+      for <literal>INDEX</literal> access methods, it must
+      be <type>index_am_handler</type>.  The C-level API that the handler
+      function must implement varies depending on the type of access method.
+      The index access method API is described in <xref linkend="indexam">.
      </para>
     </listitem>
    </varlistentry>
@@ -90,7 +89,7 @@ CREATE ACCESS METHOD <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create an access method <literal>heptree</> with
+   Create an index access method <literal>heptree</> with
    handler function <literal>heptree_handler</>:
 <programlisting>
 CREATE ACCESS METHOD heptree TYPE INDEX HANDLER heptree_handler;
