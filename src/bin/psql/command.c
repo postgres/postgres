@@ -635,8 +635,11 @@ exec_command(const char *cmd,
 
 		if (pset.sversion < 80400)
 		{
-			psql_error("The server (version %d.%d) does not support editing function source.\n",
-					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			char		sverbuf[32];
+
+			psql_error("The server (version %s) does not support editing function source.\n",
+					   formatPGVersionNumber(pset.sversion, false,
+											 sverbuf, sizeof(sverbuf)));
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
@@ -731,8 +734,11 @@ exec_command(const char *cmd,
 
 		if (pset.sversion < 70400)
 		{
-			psql_error("The server (version %d.%d) does not support editing view definitions.\n",
-					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			char		sverbuf[32];
+
+			psql_error("The server (version %s) does not support editing view definitions.\n",
+					   formatPGVersionNumber(pset.sversion, false,
+											 sverbuf, sizeof(sverbuf)));
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
@@ -1362,8 +1368,11 @@ exec_command(const char *cmd,
 									  OT_WHOLE_LINE, NULL, true);
 		if (pset.sversion < 80400)
 		{
-			psql_error("The server (version %d.%d) does not support showing function source.\n",
-					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			char		sverbuf[32];
+
+			psql_error("The server (version %s) does not support showing function source.\n",
+					   formatPGVersionNumber(pset.sversion, false,
+											 sverbuf, sizeof(sverbuf)));
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!func)
@@ -1441,8 +1450,11 @@ exec_command(const char *cmd,
 									  OT_WHOLE_LINE, NULL, true);
 		if (pset.sversion < 70400)
 		{
-			psql_error("The server (version %d.%d) does not support showing view definitions.\n",
-					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			char		sverbuf[32];
+
+			psql_error("The server (version %s) does not support showing view definitions.\n",
+					   formatPGVersionNumber(pset.sversion, false,
+											 sverbuf, sizeof(sverbuf)));
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!view)
@@ -2014,22 +2026,21 @@ connection_warnings(bool in_startup)
 	if (!pset.quiet && !pset.notty)
 	{
 		int			client_ver = PG_VERSION_NUM;
+		char		cverbuf[32];
+		char		sverbuf[32];
 
 		if (pset.sversion != client_ver)
 		{
 			const char *server_version;
-			char		server_ver_str[16];
 
 			/* Try to get full text form, might include "devel" etc */
 			server_version = PQparameterStatus(pset.db, "server_version");
+			/* Otherwise fall back on pset.sversion */
 			if (!server_version)
 			{
-				snprintf(server_ver_str, sizeof(server_ver_str),
-						 "%d.%d.%d",
-						 pset.sversion / 10000,
-						 (pset.sversion / 100) % 100,
-						 pset.sversion % 100);
-				server_version = server_ver_str;
+				formatPGVersionNumber(pset.sversion, true,
+									  sverbuf, sizeof(sverbuf));
+				server_version = sverbuf;
 			}
 
 			printf(_("%s (%s, server %s)\n"),
@@ -2040,10 +2051,13 @@ connection_warnings(bool in_startup)
 			printf("%s (%s)\n", pset.progname, PG_VERSION);
 
 		if (pset.sversion / 100 > client_ver / 100)
-			printf(_("WARNING: %s major version %d.%d, server major version %d.%d.\n"
+			printf(_("WARNING: %s major version %s, server major version %s.\n"
 					 "         Some psql features might not work.\n"),
-				 pset.progname, client_ver / 10000, (client_ver / 100) % 100,
-				   pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.progname,
+				   formatPGVersionNumber(client_ver, false,
+										 cverbuf, sizeof(cverbuf)),
+				   formatPGVersionNumber(pset.sversion, false,
+										 sverbuf, sizeof(sverbuf)));
 
 #ifdef WIN32
 		checkWin32Codepage();

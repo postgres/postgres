@@ -169,6 +169,44 @@ fmtQualifiedId(int remoteVersion, const char *schema, const char *id)
 
 
 /*
+ * Format a Postgres version number (in the PG_VERSION_NUM integer format
+ * returned by PQserverVersion()) as a string.  This exists mainly to
+ * encapsulate knowledge about two-part vs. three-part version numbers.
+ *
+ * For re-entrancy, caller must supply the buffer the string is put in.
+ * Recommended size of the buffer is 32 bytes.
+ *
+ * Returns address of 'buf', as a notational convenience.
+ */
+char *
+formatPGVersionNumber(int version_number, bool include_minor,
+					  char *buf, size_t buflen)
+{
+	if (version_number >= 100000)
+	{
+		/* New two-part style */
+		if (include_minor)
+			snprintf(buf, buflen, "%d.%d", version_number / 10000,
+					 version_number % 10000);
+		else
+			snprintf(buf, buflen, "%d", version_number / 10000);
+	}
+	else
+	{
+		/* Old three-part style */
+		if (include_minor)
+			snprintf(buf, buflen, "%d.%d.%d", version_number / 10000,
+					 (version_number / 100) % 100,
+					 version_number % 100);
+		else
+			snprintf(buf, buflen, "%d.%d", version_number / 10000,
+					 (version_number / 100) % 100);
+	}
+	return buf;
+}
+
+
+/*
  * Convert a string value to an SQL string literal and append it to
  * the given buffer.  We assume the specified client_encoding and
  * standard_conforming_strings settings.
