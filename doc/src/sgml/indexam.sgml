@@ -51,16 +51,9 @@
    <link linkend="catalog-pg-am"><structname>pg_am</structname></link>
    system catalog.  The <structname>pg_am</structname> entry
    specifies a name and a <firstterm>handler function</> for the access
-   method.  There is not currently any special support
-   for creating or deleting <structname>pg_am</structname> entries;
-   anyone able to write a new access method is expected to be competent
-   to insert an appropriate row for themselves.
-  </para>
-
-  <para>
-   Index access methods can be defined and dropped using
+   method.  These entries can be created and deleted using the
    <xref linkend="sql-create-access-method"> and
-    <xref linkend="sql-drop-access-method"> SQL commands respectively.
+   <xref linkend="sql-drop-access-method"> SQL commands.
   </para>
 
   <para>
