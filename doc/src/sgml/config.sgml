@@ -2008,7 +2008,7 @@ include_dir 'conf.d'
          <xref linkend="guc-max-worker-processes">.  Note that the requested
          number of workers may not actually be available at run time.  If this
          occurs, the plan will run with fewer workers than expected, which may
-         be inefficient.  The default value is 2.  Setting this value to 0
+         be inefficient.  Setting this value to 0, which is the default,
          disables parallel query execution.
         </para>
 

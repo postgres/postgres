@@ -2652,7 +2652,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_parallel_workers_per_gather,
-		2, 0, 1024,
+		0, 0, 1024,
 		NULL, NULL, NULL
 	},
 
