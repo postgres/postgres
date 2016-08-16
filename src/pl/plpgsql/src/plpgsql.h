@@ -34,9 +34,8 @@
 #undef _
 #define _(x) dgettext(TEXTDOMAIN, x)
 
-/* ----------
+/*
  * Compiler's namespace item types
- * ----------
  */
 enum
 {
@@ -46,9 +45,8 @@ enum
 	PLPGSQL_NSTYPE_REC
 };
 
-/* ----------
+/*
  * A PLPGSQL_NSTYPE_LABEL stack entry must be one of these types
- * ----------
  */
 enum PLpgSQL_label_types
 {
@@ -57,9 +55,8 @@ enum PLpgSQL_label_types
 	PLPGSQL_LABEL_OTHER			/* anything else */
 };
 
-/* ----------
+/*
  * Datum array node types
- * ----------
  */
 enum
 {
@@ -71,9 +68,8 @@ enum
 	PLPGSQL_DTYPE_EXPR
 };
 
-/* ----------
+/*
  * Variants distinguished in PLpgSQL_type structs
- * ----------
  */
 enum
 {
@@ -83,9 +79,8 @@ enum
 	PLPGSQL_TTYPE_PSEUDO		/* other pseudotypes */
 };
 
-/* ----------
+/*
  * Execution tree node types
- * ----------
  */
 enum PLpgSQL_stmt_types
 {
@@ -115,10 +110,8 @@ enum PLpgSQL_stmt_types
 	PLPGSQL_STMT_PERFORM
 };
 
-
-/* ----------
+/*
  * Execution node return codes
- * ----------
  */
 enum
 {
@@ -128,9 +121,8 @@ enum
 	PLPGSQL_RC_CONTINUE
 };
 
-/* ----------
+/*
  * GET DIAGNOSTICS information items
- * ----------
  */
 enum
 {
@@ -149,9 +141,8 @@ enum
 	PLPGSQL_GETDIAG_SCHEMA_NAME
 };
 
-/* --------
+/*
  * RAISE statement options
- * --------
  */
 enum
 {
@@ -166,9 +157,8 @@ enum
 	PLPGSQL_RAISEOPTION_SCHEMA
 };
 
-/* --------
+/*
  * Behavioral modes for plpgsql variable resolution
- * --------
  */
 typedef enum
 {
@@ -182,9 +172,11 @@ typedef enum
  * Node and structure definitions
  **********************************************************************/
 
-
-typedef struct
-{								/* Postgres data type */
+/*
+ * Postgres data type
+ */
+typedef struct PLpgSQL_type
+{
 	char	   *typname;		/* (simple) name of the type */
 	Oid			typoid;			/* OID of the data type */
 	int			ttype;			/* PLPGSQL_TTYPE_ code */
@@ -197,31 +189,37 @@ typedef struct
 	int32		atttypmod;		/* typmod (taken from someplace else) */
 } PLpgSQL_type;
 
-
 /*
+ * Generic datum array item
+ *
  * PLpgSQL_datum is the common supertype for PLpgSQL_expr, PLpgSQL_var,
  * PLpgSQL_row, PLpgSQL_rec, PLpgSQL_recfield, and PLpgSQL_arrayelem
  */
-typedef struct
-{								/* Generic datum array item		*/
+typedef struct PLpgSQL_datum
+{
 	int			dtype;
 	int			dno;
 } PLpgSQL_datum;
 
 /*
+ * Scalar or composite variable
+ *
  * The variants PLpgSQL_var, PLpgSQL_row, and PLpgSQL_rec share these
  * fields
  */
-typedef struct
-{								/* Scalar or composite variable */
+typedef struct PLpgSQL_variable
+{
 	int			dtype;
 	int			dno;
 	char	   *refname;
 	int			lineno;
 } PLpgSQL_variable;
 
+/*
+ * SQL Query to plan and execute
+ */
 typedef struct PLpgSQL_expr
-{								/* SQL Query to plan and execute	*/
+{
 	int			dtype;
 	int			dno;
 	char	   *query;
@@ -252,9 +250,11 @@ typedef struct PLpgSQL_expr
 	LocalTransactionId expr_simple_lxid;
 } PLpgSQL_expr;
 
-
-typedef struct
-{								/* Scalar variable */
+/*
+ * Scalar variable
+ */
+typedef struct PLpgSQL_var
+{
 	int			dtype;
 	int			dno;
 	char	   *refname;
@@ -273,19 +273,20 @@ typedef struct
 	bool		freeval;
 } PLpgSQL_var;
 
-
-typedef struct
-{								/* Row variable */
+/*
+ * Row variable
+ */
+typedef struct PLpgSQL_row
+{
 	int			dtype;
 	int			dno;
 	char	   *refname;
 	int			lineno;
 
+	/* Note: TupleDesc is only set up for named rowtypes, else it is NULL. */
 	TupleDesc	rowtupdesc;
 
 	/*
-	 * Note: TupleDesc is only set up for named rowtypes, else it is NULL.
-	 *
 	 * Note: if the underlying rowtype contains a dropped column, the
 	 * corresponding fieldnames[] entry will be NULL, and there is no
 	 * corresponding var (varnos[] will be -1).
@@ -295,9 +296,11 @@ typedef struct
 	int		   *varnos;
 } PLpgSQL_row;
 
-
-typedef struct
-{								/* Record variable (non-fixed structure) */
+/*
+ * Record variable (non-fixed structure)
+ */
+typedef struct PLpgSQL_rec
+{
 	int			dtype;
 	int			dno;
 	char	   *refname;
@@ -309,22 +312,27 @@ typedef struct
 	bool		freetupdesc;
 } PLpgSQL_rec;
 
-
-typedef struct
-{								/* Field in record */
+/*
+ * Field in record
+ */
+typedef struct PLpgSQL_recfield
+{
 	int			dtype;
 	int			dno;
 	char	   *fieldname;
 	int			recparentno;	/* dno of parent record */
 } PLpgSQL_recfield;
 
-
-typedef struct
-{								/* Element of array variable */
+/*
+ * Element of array variable
+ */
+typedef struct PLpgSQL_arrayelem
+{
 	int			dtype;
 	int			dno;
 	PLpgSQL_expr *subscript;
 	int			arrayparentno;	/* dno of parent array variable */
+
 	/* Remaining fields are cached info about the array variable's type */
 	Oid			parenttypoid;	/* type of array variable; 0 if not yet set */
 	int32		parenttypmod;	/* typmod of array variable */
@@ -337,49 +345,65 @@ typedef struct
 	char		elemtypalign;	/* typalign of element type */
 } PLpgSQL_arrayelem;
 
-
+/*
+ * Item in the compilers namespace tree
+ */
 typedef struct PLpgSQL_nsitem
-{								/* Item in the compilers namespace tree */
+{
 	int			itemtype;
+	/*
+	 * For labels, itemno is a value of enum PLpgSQL_label_types. For other
+	 * itemtypes, itemno is the associated PLpgSQL_datum's dno.
+	 */
 	int			itemno;
-	/* For labels, itemno is a value of enum PLpgSQL_label_types. */
-	/* For other itemtypes, itemno is the associated PLpgSQL_datum's dno. */
 	struct PLpgSQL_nsitem *prev;
 	char		name[FLEXIBLE_ARRAY_MEMBER];	/* nul-terminated string */
 } PLpgSQL_nsitem;
 
-
-typedef struct
-{								/* Generic execution node		*/
+/*
+ * Generic execution node
+ */
+typedef struct PLpgSQL_stmt
+{
 	int			cmd_type;
 	int			lineno;
 } PLpgSQL_stmt;
 
-
+/*
+ * One EXCEPTION condition name
+ */
 typedef struct PLpgSQL_condition
-{								/* One EXCEPTION condition name */
+{
 	int			sqlerrstate;	/* SQLSTATE code */
 	char	   *condname;		/* condition name (for debugging) */
 	struct PLpgSQL_condition *next;
 } PLpgSQL_condition;
 
-typedef struct
+/*
+ * EXCEPTION block
+ */
+typedef struct PLpgSQL_exception_block
 {
 	int			sqlstate_varno;
 	int			sqlerrm_varno;
 	List	   *exc_list;		/* List of WHEN clauses */
 } PLpgSQL_exception_block;
 
-typedef struct
-{								/* One EXCEPTION ... WHEN clause */
+/*
+ * One EXCEPTION ... WHEN clause
+ */
+typedef struct PLpgSQL_exception
+{
 	int			lineno;
 	PLpgSQL_condition *conditions;
 	List	   *action;			/* List of statements */
 } PLpgSQL_exception;
 
-
-typedef struct
-{								/* Block of statements			*/
+/*
+ * Block of statements
+ */
+typedef struct PLpgSQL_stmt_block
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -389,39 +413,52 @@ typedef struct
 	PLpgSQL_exception_block *exceptions;
 } PLpgSQL_stmt_block;
 
-
-typedef struct
-{								/* Assign statement			*/
+/*
+ * Assign statement
+ */
+typedef struct PLpgSQL_stmt_assign
+{
 	int			cmd_type;
 	int			lineno;
 	int			varno;
 	PLpgSQL_expr *expr;
 } PLpgSQL_stmt_assign;
 
-typedef struct
-{								/* PERFORM statement		*/
+/*
+ * PERFORM statement
+ */
+typedef struct PLpgSQL_stmt_perform
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *expr;
 } PLpgSQL_stmt_perform;
 
-typedef struct
-{								/* Get Diagnostics item		*/
+/*
+ * GET DIAGNOSTICS item
+ */
+typedef struct PLpgSQL_diag_item
+{
 	int			kind;			/* id for diagnostic value desired */
 	int			target;			/* where to assign it */
 } PLpgSQL_diag_item;
 
-typedef struct
-{								/* Get Diagnostics statement		*/
+/*
+ * GET DIAGNOSTICS statement
+ */
+typedef struct PLpgSQL_stmt_getdiag
+{
 	int			cmd_type;
 	int			lineno;
 	bool		is_stacked;		/* STACKED or CURRENT diagnostics area? */
 	List	   *diag_items;		/* List of PLpgSQL_diag_item */
 } PLpgSQL_stmt_getdiag;
 
-
-typedef struct
-{								/* IF statement				*/
+/*
+ * IF statement
+ */
+typedef struct PLpgSQL_stmt_if
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *cond;			/* boolean expression for THEN */
@@ -430,15 +467,20 @@ typedef struct
 	List	   *else_body;		/* List of statements */
 } PLpgSQL_stmt_if;
 
-typedef struct					/* one ELSIF arm of IF statement */
+/*
+ * one ELSIF arm of IF statement
+ */
+typedef struct PLpgSQL_if_elsif
 {
 	int			lineno;
 	PLpgSQL_expr *cond;			/* boolean expression for this case */
 	List	   *stmts;			/* List of statements */
 } PLpgSQL_if_elsif;
 
-
-typedef struct					/* CASE statement */
+/*
+ * CASE statement
+ */
+typedef struct PLpgSQL_stmt_case
 {
 	int			cmd_type;
 	int			lineno;
@@ -449,25 +491,32 @@ typedef struct					/* CASE statement */
 	List	   *else_stmts;		/* List of statements */
 } PLpgSQL_stmt_case;
 
-typedef struct					/* one arm of CASE statement */
+/*
+ * one arm of CASE statement
+ */
+typedef struct PLpgSQL_case_when
 {
 	int			lineno;
 	PLpgSQL_expr *expr;			/* boolean expression for this case */
 	List	   *stmts;			/* List of statements */
 } PLpgSQL_case_when;
 
-
-typedef struct
-{								/* Unconditional LOOP statement		*/
+/*
+ * Unconditional LOOP statement
+ */
+typedef struct PLpgSQL_stmt_loop
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_loop;
 
-
-typedef struct
-{								/* WHILE cond LOOP statement		*/
+/*
+ * WHILE cond LOOP statement
+ */
+typedef struct PLpgSQL_stmt_while
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -475,9 +524,11 @@ typedef struct
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_while;
 
-
-typedef struct
-{								/* FOR statement with integer loopvar	*/
+/*
+ * FOR statement with integer loopvar
+ */
+typedef struct PLpgSQL_stmt_fori
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -489,13 +540,12 @@ typedef struct
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_fori;
 
-
 /*
  * PLpgSQL_stmt_forq represents a FOR statement running over a SQL query.
  * It is the common supertype of PLpgSQL_stmt_fors, PLpgSQL_stmt_forc
  * and PLpgSQL_dynfors.
  */
-typedef struct
+typedef struct PLpgSQL_stmt_forq
 {
 	int			cmd_type;
 	int			lineno;
@@ -505,8 +555,11 @@ typedef struct
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_forq;
 
-typedef struct
-{								/* FOR statement running over SELECT	*/
+/*
+ * FOR statement running over SELECT
+ */
+typedef struct PLpgSQL_stmt_fors
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -517,8 +570,11 @@ typedef struct
 	PLpgSQL_expr *query;
 } PLpgSQL_stmt_fors;
 
-typedef struct
-{								/* FOR statement running over cursor	*/
+/*
+ * FOR statement running over cursor
+ */
+typedef struct PLpgSQL_stmt_forc
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -530,8 +586,11 @@ typedef struct
 	PLpgSQL_expr *argquery;		/* cursor arguments if any */
 } PLpgSQL_stmt_forc;
 
-typedef struct
-{								/* FOR statement running over EXECUTE	*/
+/*
+ * FOR statement running over EXECUTE
+ */
+typedef struct PLpgSQL_stmt_dynfors
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -543,9 +602,11 @@ typedef struct
 	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_dynfors;
 
-
-typedef struct
-{								/* FOREACH item in array loop */
+/*
+ * FOREACH item in array loop
+ */
+typedef struct PLpgSQL_stmt_foreach_a
+{
 	int			cmd_type;
 	int			lineno;
 	char	   *label;
@@ -555,9 +616,11 @@ typedef struct
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_foreach_a;
 
-
-typedef struct
-{								/* OPEN a curvar					*/
+/*
+ * OPEN a curvar
+ */
+typedef struct PLpgSQL_stmt_open
+{
 	int			cmd_type;
 	int			lineno;
 	int			curvar;
@@ -569,9 +632,11 @@ typedef struct
 	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_open;
 
-
-typedef struct
-{								/* FETCH or MOVE statement */
+/*
+ * FETCH or MOVE statement
+ */
+typedef struct PLpgSQL_stmt_fetch
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_rec *rec;			/* target, as record or row */
@@ -584,17 +649,21 @@ typedef struct
 	bool		returns_multiple_rows;	/* can return more than one row? */
 } PLpgSQL_stmt_fetch;
 
-
-typedef struct
-{								/* CLOSE curvar						*/
+/*
+ * CLOSE curvar
+ */
+typedef struct PLpgSQL_stmt_close
+{
 	int			cmd_type;
 	int			lineno;
 	int			curvar;
 } PLpgSQL_stmt_close;
 
-
-typedef struct
-{								/* EXIT or CONTINUE statement			*/
+/*
+ * EXIT or CONTINUE statement
+ */
+typedef struct PLpgSQL_stmt_exit
+{
 	int			cmd_type;
 	int			lineno;
 	bool		is_exit;		/* Is this an exit or a continue? */
@@ -602,25 +671,33 @@ typedef struct
 	PLpgSQL_expr *cond;
 } PLpgSQL_stmt_exit;
 
-
-typedef struct
-{								/* RETURN statement			*/
+/*
+ * RETURN statement
+ */
+typedef struct PLpgSQL_stmt_return
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *expr;
 	int			retvarno;
 } PLpgSQL_stmt_return;
 
-typedef struct
-{								/* RETURN NEXT statement */
+/*
+ * RETURN NEXT statement
+ */
+typedef struct PLpgSQL_stmt_return_next
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *expr;
 	int			retvarno;
 } PLpgSQL_stmt_return_next;
 
-typedef struct
-{								/* RETURN QUERY statement */
+/*
+ * RETURN QUERY statement
+ */
+typedef struct PLpgSQL_stmt_return_query
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *query;		/* if static query */
@@ -628,8 +705,11 @@ typedef struct
 	List	   *params;			/* USING arguments for dynamic query */
 } PLpgSQL_stmt_return_query;
 
-typedef struct
-{								/* RAISE statement			*/
+/*
+ * RAISE statement
+ */
+typedef struct PLpgSQL_stmt_raise
+{
 	int			cmd_type;
 	int			lineno;
 	int			elog_level;
@@ -639,36 +719,47 @@ typedef struct
 	List	   *options;		/* list of PLpgSQL_raise_option */
 } PLpgSQL_stmt_raise;
 
-typedef struct
-{								/* RAISE statement option */
+/*
+ * RAISE statement option
+ */
+typedef struct PLpgSQL_raise_option
+{
 	int			opt_type;
 	PLpgSQL_expr *expr;
 } PLpgSQL_raise_option;
 
-typedef struct
-{								/* ASSERT statement */
+/*
+ * ASSERT statement
+ */
+typedef struct PLpgSQL_stmt_assert
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *cond;
 	PLpgSQL_expr *message;
 } PLpgSQL_stmt_assert;
 
-typedef struct
-{								/* Generic SQL statement to execute */
+/*
+ * Generic SQL statement to execute
+ */
+typedef struct PLpgSQL_stmt_execsql
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
-	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE? */
-	/* note: mod_stmt is set when we plan the query */
+	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE?  Note:
+								   mod_stmt is set when we plan the query */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
 	PLpgSQL_rec *rec;			/* INTO target, if record */
 	PLpgSQL_row *row;			/* INTO target, if row */
 } PLpgSQL_stmt_execsql;
 
-
-typedef struct
-{								/* Dynamic SQL string to execute */
+/*
+ * Dynamic SQL string to execute
+ */
+typedef struct PLpgSQL_stmt_dynexecute
+{
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *query;		/* string expression */
@@ -679,9 +770,11 @@ typedef struct
 	List	   *params;			/* USING expressions */
 } PLpgSQL_stmt_dynexecute;
 
-
+/*
+ * Hash lookup key for functions
+ */
 typedef struct PLpgSQL_func_hashkey
-{								/* Hash lookup key for functions */
+{
 	Oid			funcOid;
 
 	bool		isTrigger;		/* true if called as a trigger */
@@ -710,6 +803,9 @@ typedef struct PLpgSQL_func_hashkey
 	Oid			argtypes[FUNC_MAX_ARGS];
 } PLpgSQL_func_hashkey;
 
+/*
+ * Trigger type
+ */
 typedef enum PLpgSQL_trigtype
 {
 	PLPGSQL_DML_TRIGGER,
@@ -717,8 +813,11 @@ typedef enum PLpgSQL_trigtype
 	PLPGSQL_NOT_TRIGGER
 } PLpgSQL_trigtype;
 
+/*
+ * Complete compiled function
+ */
 typedef struct PLpgSQL_function
-{								/* Complete compiled function	  */
+{
 	char	   *fn_signature;
 	Oid			fn_oid;
 	TransactionId fn_xmin;
@@ -777,9 +876,11 @@ typedef struct PLpgSQL_function
 	unsigned long use_count;
 } PLpgSQL_function;
 
-
+/*
+ * Runtime execution data
+ */
 typedef struct PLpgSQL_execstate
-{								/* Runtime execution data	*/
+{
 	PLpgSQL_function *func;		/* function being executed */
 
 	Datum		retval;
@@ -835,7 +936,6 @@ typedef struct PLpgSQL_execstate
 	void	   *plugin_info;	/* reserved for use by optional plugin */
 } PLpgSQL_execstate;
 
-
 /*
  * A PLpgSQL_plugin structure represents an instrumentation plugin.
  * To instrument PL/pgSQL, a plugin library must access the rendezvous
@@ -850,24 +950,23 @@ typedef struct PLpgSQL_execstate
  * (if the pointers are non-NULL) to give the plugin a chance to watch
  * what we are doing.
  *
- *	func_setup is called when we start a function, before we've initialized
- *	the local variables defined by the function.
+ * func_setup is called when we start a function, before we've initialized
+ * the local variables defined by the function.
  *
- *	func_beg is called when we start a function, after we've initialized
- *	the local variables.
+ * func_beg is called when we start a function, after we've initialized
+ * the local variables.
  *
- *	func_end is called at the end of a function.
+ * func_end is called at the end of a function.
  *
- *	stmt_beg and stmt_end are called before and after (respectively) each
- *	statement.
+ * stmt_beg and stmt_end are called before and after (respectively) each
+ * statement.
  *
  * Also, immediately before any call to func_setup, PL/pgSQL fills in the
  * error_callback and assign_expr fields with pointers to its own
  * plpgsql_exec_error_callback and exec_assign_expr functions.  This is
  * a somewhat ad-hoc expedient to simplify life for debugger plugins.
  */
-
-typedef struct
+typedef struct PLpgSQL_plugin
 {
 	/* Function pointers set up by the plugin */
 	void		(*func_setup) (PLpgSQL_execstate *estate, PLpgSQL_function *func);
@@ -882,21 +981,22 @@ typedef struct
 											PLpgSQL_expr *expr);
 } PLpgSQL_plugin;
 
+/*
+ * Struct types used during parsing
+ */
 
-/* Struct types used during parsing */
-
-typedef struct
+typedef struct PLword
 {
 	char	   *ident;			/* palloc'd converted identifier */
 	bool		quoted;			/* Was it double-quoted? */
 } PLword;
 
-typedef struct
+typedef struct PLcword
 {
 	List	   *idents;			/* composite identifiers (list of String) */
 } PLcword;
 
-typedef struct
+typedef struct PLwdatum
 {
 	PLpgSQL_datum *datum;		/* referenced variable */
 	char	   *ident;			/* valid if simple name */
@@ -950,9 +1050,8 @@ extern PLpgSQL_plugin **plpgsql_plugin_ptr;
  * Function declarations
  **********************************************************************/
 
-/* ----------
+/*
  * Functions in pl_comp.c
- * ----------
  */
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 				bool forValidator);
@@ -983,15 +1082,13 @@ extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_HashTableInit(void);
 
-/* ----------
+/*
  * Functions in pl_handler.c
- * ----------
  */
 extern void _PG_init(void);
 
-/* ----------
+/*
  * Functions in pl_exec.c
- * ----------
  */
 extern Datum plpgsql_exec_function(PLpgSQL_function *func,
 					  FunctionCallInfo fcinfo,
@@ -1009,9 +1106,8 @@ extern void plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 								 PLpgSQL_datum *datum,
 								 Oid *typeid, int32 *typmod, Oid *collation);
 
-/* ----------
+/*
  * Functions for namespace handling in pl_funcs.c
- * ----------
  */
 extern void plpgsql_ns_init(void);
 extern void plpgsql_ns_push(const char *label,
@@ -1026,18 +1122,16 @@ extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
 						const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_find_nearest_loop(PLpgSQL_nsitem *ns_cur);
 
-/* ----------
+/*
  * Other functions in pl_funcs.c
- * ----------
  */
 extern const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
 extern const char *plpgsql_getdiag_kindname(int kind);
 extern void plpgsql_free_function_memory(PLpgSQL_function *func);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 
-/* ----------
+/*
  * Scanner functions in pl_scanner.c
- * ----------
  */
 extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
@@ -1055,9 +1149,8 @@ extern int	plpgsql_latest_lineno(void);
 extern void plpgsql_scanner_init(const char *str);
 extern void plpgsql_scanner_finish(void);
 
-/* ----------
+/*
  * Externs in gram.y
- * ----------
  */
 extern int	plpgsql_yyparse(void);
 
