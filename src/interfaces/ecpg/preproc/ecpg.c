@@ -150,8 +150,7 @@ main(int argc, char *const argv[])
 		switch (c)
 		{
 			case ECPG_GETOPT_LONG_VERSION:
-				printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
-					   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+				printf("ecpg %s\n", PG_VERSION);
 				exit(0);
 			case ECPG_GETOPT_LONG_HELP:
 				help(progname);
@@ -264,8 +263,9 @@ main(int argc, char *const argv[])
 
 	if (verbose)
 	{
-		fprintf(stderr, _("%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"),
-				progname, MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+		fprintf(stderr,
+				_("%s, the PostgreSQL embedded C preprocessor, version %s\n"),
+				progname, PG_VERSION);
 		fprintf(stderr, _("EXEC SQL INCLUDE ... search starts here:\n"));
 		for (ip = include_paths; ip != NULL; ip = ip->next)
 			fprintf(stderr, " %s\n", ip->path);
@@ -440,7 +440,7 @@ main(int argc, char *const argv[])
 				if (regression_mode)
 					fprintf(yyout, "/* Processed by ecpg (regression mode) */\n");
 				else
-					fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+					fprintf(yyout, "/* Processed by ecpg (%s) */\n", PG_VERSION);
 
 				if (header_mode == false)
 				{

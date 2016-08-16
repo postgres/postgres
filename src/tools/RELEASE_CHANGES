@@ -80,13 +80,11 @@ Starting a New Development Cycle
 * Add version tag to src/tools/git_changelog
 
 * Bump minor library versions, major if appropriate (see below)
-  o Look for SO_MINOR_VERSION and MINOR_VERSION macros in
+  o Look for SO_MINOR_VERSION macros in
 	src/interfaces/ecpg/compatlib/Makefile
 	src/interfaces/ecpg/ecpglib/Makefile
 	src/interfaces/ecpg/pgtypeslib/Makefile
-	src/interfaces/ecpg/preproc/Makefile
 	src/interfaces/libpq/Makefile
-	src/tools/msvc/Mkvcbuild.pm
 
 
 Creating Back-Branch Release Notes
