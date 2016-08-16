@@ -23,6 +23,7 @@
 #include "settings.h"
 #include "command.h"
 #include "copy.h"
+#include "dumputils.h"
 #include "mbprint.h"
 
 
@@ -1037,8 +1038,11 @@ SendQuery(const char *query)
 	{
 		if (on_error_rollback_warning == false && pset.sversion < 80000)
 		{
-			psql_error("The server (version %d.%d) does not support savepoints for ON_ERROR_ROLLBACK.\n",
-					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			char		sverbuf[32];
+
+			psql_error("The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n",
+					   formatPGVersionNumber(pset.sversion, false,
+											 sverbuf, sizeof(sverbuf)));
 			on_error_rollback_warning = true;
 		}
 		else
