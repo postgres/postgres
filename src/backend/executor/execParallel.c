@@ -500,6 +500,7 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 	int			n;
 	int			ibytes;
 	int			plan_node_id = planstate->plan->plan_node_id;
+	MemoryContext oldcontext;
 
 	/* Find the instumentation for this node. */
 	for (i = 0; i < instrumentation->num_plan_nodes; ++i)
@@ -514,10 +515,19 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 	for (n = 0; n < instrumentation->num_workers; ++n)
 		InstrAggNode(planstate->instrument, &instrument[n]);
 
-	/* Also store the per-worker detail. */
+	/*
+	 * Also store the per-worker detail.
+	 *
+	 * Worker instrumentation should be allocated in the same context as
+	 * the regular instrumentation information, which is the per-query
+	 * context. Switch into per-query memory context.
+	 */
+	oldcontext = MemoryContextSwitchTo(planstate->state->es_query_cxt);
 	ibytes = mul_size(instrumentation->num_workers, sizeof(Instrumentation));
 	planstate->worker_instrument =
 		palloc(ibytes + offsetof(WorkerInstrumentation, instrument));
+	MemoryContextSwitchTo(oldcontext);
+
 	planstate->worker_instrument->num_workers = instrumentation->num_workers;
 	memcpy(&planstate->worker_instrument->instrument, instrument, ibytes);
 
