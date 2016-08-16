@@ -73,18 +73,11 @@ Starting a New Development Cycle
 	  for example,
 		git push origin master:refs/heads/REL9_2_STABLE
 
+* Add new branch's name to list in src/tools/git_changelog
+
 * Increment the major version number in src/tools/version_stamp.pl
 
 * Run "src/tools/version_stamp.pl devel", then run autoconf
-
-* Add version tag to src/tools/git_changelog
-
-* Bump minor library versions, major if appropriate (see below)
-  o Look for SO_MINOR_VERSION macros in
-	src/interfaces/ecpg/compatlib/Makefile
-	src/interfaces/ecpg/ecpglib/Makefile
-	src/interfaces/ecpg/pgtypeslib/Makefile
-	src/interfaces/libpq/Makefile
 
 
 Creating Back-Branch Release Notes
@@ -139,8 +132,7 @@ function which would give the new field a suitable default value.
 Adding a new function should NOT force an increase in the major version
 number. (Packagers will see the standard minor number update and install
 the new library.)  When the major version is increased all applications
-which link to the library MUST be recompiled - this is not desirable. When
-the major version is updated the minor version gets reset.
+which link to the library MUST be recompiled - this is not desirable.
 
 Minor Version
 =============
@@ -150,9 +142,19 @@ the library has changed, typically a change in source code between releases
 would mean an increase in the minor version number so long as it does not
 require a major version increase.
 
-Given that we make at least minor changes to our libraries in every major
-PostgreSQL version, we always bump all minor library version numbers at the
-start of each development cycle as a matter of policy.
+Given that we make at least some changes to our libraries in every major
+PostgreSQL version, we always bump all minor library version numbers in
+each development cycle as a matter of policy.  This is currently mechanized
+by referencing the MAJORVERSION make macro in the value of SO_MINOR_VERSION
+for each shared library.  As of v10, SO_MINOR_VERSION is simply equal to
+MAJORVERSION in all cases.  If we ever make an incompatible break in a
+library's API, forcing a major version bump, we could continue to increase
+SO_MINOR_VERSION (thus, perhaps, going from libpq.so.5.12 to libpq.so.6.13),
+or we could reset SO_MINOR_VERSION to zero, using makefile code along the
+lines of
+	SO_MINOR_VERSION= $(shell expr $(MAJORVERSION) - 13)
+so that the number continues to increase automatically in later branches.
+For now, that complication is not necessary.
 
 Minimizing Changes
 ==================
