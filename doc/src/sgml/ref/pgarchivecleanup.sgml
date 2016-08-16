@@ -122,7 +122,7 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
       <term><option>-x</option> <replaceable>extension</></term>
       <listitem>
        <para>
-        When using the program as a standalone utility, provide an extension
+        Provide an extension
         that will be stripped from all file names before deciding if they
         should be deleted.  This is typically useful for cleaning up archives
         that have been compressed during storage, and therefore have had an
