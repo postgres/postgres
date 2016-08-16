@@ -30,6 +30,9 @@ extern const char *fmtId(const char *identifier);
 extern const char *fmtQualifiedId(int remoteVersion,
 			   const char *schema, const char *id);
 
+extern char *formatPGVersionNumber(int version_number, bool include_minor,
+					  char *buf, size_t buflen);
+
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
 					int encoding, bool std_strings);
 extern void appendStringLiteralConn(PQExpBuffer buf, const char *str,
