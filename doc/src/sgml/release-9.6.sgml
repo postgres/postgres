@@ -401,7 +401,7 @@ This commit is also listed under libpq and psql
        <para>
         Allow <link linkend="GIN"><acronym>GIN</></> index builds to
         make effective use of <xref linkend="guc-maintenance-work-mem">
-        settings larger than 1GB (Robert Abraham, Teodor Sigaev)
+        settings larger than 1 GB (Robert Abraham, Teodor Sigaev)
        </para>
       </listitem>
 
@@ -467,7 +467,217 @@ This commit is also listed under libpq and psql
     </sect4>
 
     <sect4>
-     <title>General Performance</title>
+     <title>Sorting</title>
+
+     <itemizedlist>
+
+      <listitem>
+<!--
+2016-04-08 [071180377] Use quicksort, not replacement selection, for external s
+2016-03-17 [0011c0091] Improve memory management for external sorts.
+-->
+       <para>
+        Improve sorting performance by using quicksort, not replacement
+        selection sort, when performing external sort steps (Peter
+        Geoghegan)
+       </para>
+
+       <para>
+        The new approach makes better use of the <acronym>CPU</> cache
+        for typical cache sizes and data volumes.  Where necessary,
+        the behavior can be adjusted via the new configuration parameter
+        <xref linkend="guc-replacement-sort-tuples">.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-10-09 [0e57b4d8b] Speed up text sorts where the same strings occur multipl
+2015-10-20 [5be94a9eb] Be a bit more rigorous about how we cache strcoll and st
+-->
+       <para>
+        Speed up text sorts where the same string occurs multiple times
+        (Peter Geoghegan)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-11-06 [a76ef15d9] Add sort support routine for the UUID data type.
+2016-02-03 [b47b4dbf6] Extend sortsupport for text to more opclasses.
+2016-02-17 [f1f5ec1ef] Reuse abbreviated keys in ordered [set] aggregates.
+-->
+       <para>
+        Speed up sorting of <type>uuid</>, <type>bytea</>, and
+        <type>char(n)</> fields by using <quote>abbreviated</> keys
+        (Peter Geoghegan)
+       </para>
+
+       <para>
+        Support for abbreviated keys has also been
+        added to the non-default operator classes <link
+        linkend="indexes-opclass"><literal>text_pattern_ops</></>,
+        <literal>varchar_pattern_ops</>, and
+        <literal>bpchar_pattern_ops</>.  Processing of ordered-set
+        aggregates can also now exploit abbreviated keys.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-12-16 [b648b7034] Speed up CREATE INDEX CONCURRENTLY's TID sort.
+-->
+       <para>
+        Speed up <command>CREATE INDEX CONCURRENTLY</> by treating
+        <acronym>TID</>s as 64-bit integers during sorting (Peter
+        Geoghegan)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>Locking</title>
+
+     <itemizedlist>
+
+      <listitem>
+<!--
+2015-08-06 [0e141c0fb] Reduce ProcArrayLock contention by removing backends in
+2015-09-03 [4aec49899] Assorted code review for recent ProcArrayLock patch.
+-->
+       <para>
+        Reduce contention for the <literal>ProcArrayLock</> (Amit Kapila,
+        Robert Haas)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2015-12-15 [6150a1b08] Move buffer I/O and content LWLocks out of the main tran
+-->
+       <para>
+        Improve performance by moving buffer content locks into the buffer
+        descriptors (Andres Freund, Simon Riggs)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-04-10 [48354581a] Allow Pin/UnpinBuffer to operate in a lockfree manner.
+-->
+       <para>
+        Replace shared-buffer header spinlocks with atomic operations to
+        improve scalability (Alexander Korotkov, Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-04-10 [008608b9d] Avoid the use of a separate spinlock to protect a LWLock
+-->
+       <para>
+        Use atomic operations, rather than a spinlock, to protect an
+        <literal>LWLock</>'s wait queue (Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-03-23 [44ca4022f] Partition the freelist for shared dynahash tables.
+-->
+       <para>
+        Partition the shared hash table freelist to reduce contention on
+        multi-<acronym>CPU</>-socket servers (Aleksander Alekseev)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-01-09 [687f2cd7a] Avoid pin scan for replay of XLOG_BTREE_VACUUM
+2016-04-03 [3e4b7d879] Avoid pin scan for replay of XLOG_BTREE_VACUUM in all ca
+-->
+       <para>
+        Reduce interlocking on standby servers during the replay of btree
+        index vacuuming operations (Simon Riggs)
+       </para>
+
+       <para>
+        This change avoids substantial replication delays that sometimes
+        occurred while replaying such operations.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>Optimizer Statistics</title>
+
+     <itemizedlist>
+
+      <listitem>
+<!--
+2016-04-01 [be4b4dc75] Omit null rows when applying the Haas-Stokes estimator f
+2016-04-01 [3d3bf62f3] Omit null rows when setting the threshold for what's a m
+2016-04-04 [391159e03] Partially revert commit 3d3bf62f30200500637b24fdb7b992a9
+-->
+       <para>
+        Improve <command>ANALYZE</>'s estimates for columns with many nulls
+        (Tomas Vondra, Alex Shulgin)
+       </para>
+
+       <para>
+        Previously <command>ANALYZE</> tended to underestimate the number
+        of non-<literal>NULL</> distinct values in a column with many
+        <literal>NULL</>s, and was also inaccurate in computing the
+        most-common values.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-04-04 [84f9a35e3] Improve estimate of distinct values in estimate_num_grou
+-->
+       <para>
+        Improve planner's estimate of the number of distinct values in
+        a query result (Tomas Vondra)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-04-08 [137805f89] Use Foreign Key relationships to infer multi-column join
+2016-06-07 [77ba61080] Revert "Use Foreign Key relationships to infer multi-col
+2016-06-18 [100340e2d] Restore foreign-key-aware estimation of join relation si
+-->
+       <para>
+        Use foreign key relationships to infer selectivity for join
+        predicates (Tomas Vondra, David Rowley)
+       </para>
+
+       <para>
+        If a table <literal>t</> has a foreign key restriction, say
+        <literal>(a,b) REFERENCES r (x,y)</>, then a <literal>WHERE</>
+        condition such as <literal>t.a = r.x AND t.b = r.y</> cannot
+        select more than one <literal>r</> row per <literal>t</> row.
+        The planner formerly considered <literal>AND</> conditions
+        to be independent and would often drastically misestimate
+        selectivity as a result.  Now it compares the <literal>WHERE</>
+        conditions to applicable foreign key constraints and produces
+        better estimates.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title><command>VACUUM</></title>
 
      <itemizedlist>
 
@@ -519,19 +729,40 @@ This commit is also listed under libpq and psql
        </para>
       </listitem>
 
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>General Performance</title>
+
+     <itemizedlist>
+
       <listitem>
 <!--
-2016-01-09 [687f2cd7a] Avoid pin scan for replay of XLOG_BTREE_VACUUM
-2016-04-03 [3e4b7d879] Avoid pin scan for replay of XLOG_BTREE_VACUUM in all ca
+2016-04-08 [848ef42bb] Add the "snapshot too old" feature
+2016-05-06 [2cc41acd8] Fix hash index vs "snapshot too old" problemms
+2016-05-06 [7e3da1c47] Mitigate "snapshot too old" performance regression on NU
+2016-08-03 [3e2f3c2e4] Prevent "snapshot too old" from trying to return pruned
+2016-08-07 [9ee1cf04a] Fix TOAST access failure in RETURNING queries.
 -->
        <para>
-        Reduce interlocking on standby servers during the replay of btree
-        index vacuuming operations (Simon Riggs)
+        Allow old <acronym>MVCC</> snapshots to be invalidated after a
+        configurable timeout (Kevin Grittner)
        </para>
 
        <para>
-        This change avoids substantial replication delays that sometimes
-        occurre while replaying such operations.
+        Normally, deleted tuples cannot be physically removed by
+        vacuuming until the last transaction that could <quote>see</>
+        them is gone.  A transaction that stays open for a long
+        time can thus cause considerable table bloat because
+        space cannot be recycled.  This feature allows setting
+        a time-based limit, via the new configuration parameter
+        <xref linkend="guc-old-snapshot-threshold">, on how long an
+        <acronym>MVCC</> snapshot is guaranteed to be valid.  After that,
+        dead tuples are candidates for removal.  A transaction using an
+        outdated snapshot will get an error if it attempts to read a page
+        that potentially could have contained such data.
        </para>
       </listitem>
 
@@ -576,6 +807,45 @@ This commit is also listed under libpq and psql
 
       <listitem>
 <!--
+2016-03-31 [f9aefcb91] Support using index-only scans with partial indexes in m
+-->
+       <para>
+        Allow use of an <link linkend="indexes-index-only-scans">index-only
+        scan</link> on a partial index when the index's <literal>WHERE</>
+        clause references columns which are not indexed (Tomas Vondra,
+        Kyotaro Horiguchi)
+       </para>
+
+       <para>
+        For example, <command>CREATE INDEX tidx_partial ON t(b) WHERE a
+        &gt; 0</> could not previously be used for an index-only scan by a
+        query that only referenced <literal>a</> in its <literal>WHERE</>
+        clause because <literal>a</> is not an indexed value like
+        <literal>b</> is.
+       </para>
+
+      </listitem>
+
+      <listitem>
+<!--
+2016-03-10 [9cd00c457] Checkpoint sorting and balancing.
+-->
+       <para>
+        Perform checkpoint writes in sorted order (Fabien Coelho,
+        Andres Freund)
+       </para>
+
+       <para>
+        Previously, checkpoints wrote out dirty pages in whatever order
+        they happen to appear in shared buffers, which usually is nearly
+        random.  That performs poorly, especially on rotating media.
+        This change causes checkpoint-driven writes to be done in order
+        by file and block number, and to be balanced across tablespaces.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2016-03-10 [428b1d6b2] Allow to trigger kernel writeback after a configurable n
 2016-04-13 [fa11a09fe] Fix assorted portability issues with using msync() for d
 2016-04-24 [8f91d87d4] Fix documentation & config inconsistencies around 428b1d
@@ -615,97 +885,6 @@ This commit is also listed under libpq and psql
         linkend="guc-bgwriter-flush-after">, <xref
         linkend="guc-checkpoint-flush-after">, and <xref
         linkend="guc-wal-writer-flush-after"> control this behavior.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-03-10 [9cd00c457] Checkpoint sorting and balancing.
--->
-       <para>
-        Perform checkpoint writes in sorted order (Fabien Coelho,
-        Andres Freund)
-       </para>
-
-       <para>
-        Previously, checkpoints wrote out dirty pages in whatever order
-        they happen to appear in shared buffers, which usually is nearly
-        random.  That performs poorly, especially on rotating media.
-        This change causes checkpoint-driven writes to be done in order
-        by file and block number, and to be balanced across tablespaces.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-08 [848ef42bb] Add the "snapshot too old" feature
-2016-05-06 [2cc41acd8] Fix hash index vs "snapshot too old" problemms
-2016-05-06 [7e3da1c47] Mitigate "snapshot too old" performance regression on NU
-2016-08-03 [3e2f3c2e4] Prevent "snapshot too old" from trying to return pruned
-2016-08-07 [9ee1cf04a] Fix TOAST access failure in RETURNING queries.
--->
-       <para>
-        Allow old <acronym>MVCC</> snapshots to be invalidated after a
-        configurable timeout (Kevin Grittner)
-       </para>
-
-       <para>
-        Normally, deleted tuples cannot be physically removed by
-        vacuuming until the last transaction that could <quote>see</>
-        them is gone.  A transaction that stays open for a long
-        time can thus cause considerable table bloat because
-        space cannot be recycled.  This feature allows setting
-        a time-based limit, via the new configuration parameter
-        <xref linkend="guc-old-snapshot-threshold">, on how long an
-        <acronym>MVCC</> snapshot is guaranteed to be valid.  After that,
-        dead tuples are candidates for removal.  A transaction using an
-        outdated snapshot will get an error if it attempts to read a page
-        that potentially could have contained such data.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-03-31 [f9aefcb91] Support using index-only scans with partial indexes in m
--->
-       <para>
-        Allow use of an <link linkend="indexes-index-only-scans">index-only
-        scan</link> on a partial index when the index's <literal>WHERE</>
-        clause references columns which are not indexed (Tomas Vondra,
-        Kyotaro Horiguchi)
-       </para>
-
-       <para>
-        For example, <command>CREATE INDEX tidx_partial ON t(b) WHERE a
-        &gt; 0</> could not previously be used for an index-only scan by a
-        query that only referenced <literal>a</> in its <literal>WHERE</>
-        clause because <literal>a</> is not an indexed value like
-        <literal>b</> is.
-       </para>
-
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-08 [137805f89] Use Foreign Key relationships to infer multi-column join
-2016-06-07 [77ba61080] Revert "Use Foreign Key relationships to infer multi-col
-2016-06-18 [100340e2d] Restore foreign-key-aware estimation of join relation si
--->
-       <para>
-        Use foreign key relationships to infer selectivity for join
-        predicates (Tomas Vondra, David Rowley)
-       </para>
-
-       <para>
-        If a table <literal>t</> has a foreign key restriction, say
-        <literal>(a,b) REFERENCES r (x,y)</>, then a <literal>WHERE</>
-        condition such as <literal>t.a = r.x AND t.b = r.y</> cannot
-        select more than one <literal>r</> row per <literal>t</> row.
-        The planner formerly considered <literal>AND</> conditions
-        to be independent and would often drastically misestimate
-        selectivity as a result.  Now it compares the <literal>WHERE</>
-        conditions to applicable foreign key constraints and produces
-        better estimates.
        </para>
       </listitem>
 
@@ -808,35 +987,6 @@ This commit is also listed under libpq and psql
 
       <listitem>
 <!--
-2016-04-01 [be4b4dc75] Omit null rows when applying the Haas-Stokes estimator f
-2016-04-01 [3d3bf62f3] Omit null rows when setting the threshold for what's a m
-2016-04-04 [391159e03] Partially revert commit 3d3bf62f30200500637b24fdb7b992a9
--->
-       <para>
-        Improve <command>ANALYZE</>'s estimates for columns with many nulls
-        (Tomas Vondra, Alex Shulgin)
-       </para>
-
-       <para>
-        Previously <command>ANALYZE</> tended to underestimate the number
-        of non-<literal>NULL</> distinct values in a column with many
-        <literal>NULL</>s, and was also inaccurate in computing the
-        most-common values.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-04 [84f9a35e3] Improve estimate of distinct values in estimate_num_grou
--->
-       <para>
-        Improve planner's estimate of the number of distinct values in
-        a query result (Tomas Vondra)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2016-04-08 [719c84c1b] Extend relations multiple blocks at a time to improve sc
 -->
        <para>
@@ -851,125 +1001,11 @@ This commit is also listed under libpq and psql
 
       <listitem>
 <!--
-2016-04-08 [071180377] Use quicksort, not replacement selection, for external s
-2016-03-17 [0011c0091] Improve memory management for external sorts.
--->
-       <para>
-        Improve sorting performance by using quicksort, not replacement
-        selection sort, when performing external sort steps (Peter
-        Geoghegan)
-       </para>
-
-       <para>
-        The new approach makes better use of the <acronym>CPU</> cache
-        for typical cache sizes and data volumes.  Where necessary,
-        the behavior can be adjusted via the new configuration parameter
-        <xref linkend="guc-replacement-sort-tuples">.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-10-09 [0e57b4d8b] Speed up text sorts where the same strings occur multipl
-2015-10-20 [5be94a9eb] Be a bit more rigorous about how we cache strcoll and st
--->
-       <para>
-        Speed up text sorts where the same string occurs multiple times
-        (Peter Geoghegan)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-11-06 [a76ef15d9] Add sort support routine for the UUID data type.
-2016-02-03 [b47b4dbf6] Extend sortsupport for text to more opclasses.
-2016-02-17 [f1f5ec1ef] Reuse abbreviated keys in ordered [set] aggregates.
--->
-       <para>
-        Speed up sorting of <type>uuid</>, <type>bytea</>, and
-        <type>char(n)</> fields by using <quote>abbreviated</> keys
-        (Peter Geoghegan)
-       </para>
-
-       <para>
-        Support for abbreviated keys has also been
-        added to the non-default operator classes <link
-        linkend="indexes-opclass"><literal>text_pattern_ops</></>,
-        <literal>varchar_pattern_ops</>, and
-        <literal>bpchar_pattern_ops</>.  Processing of ordered-set
-        aggregates can also now exploit abbreviated keys.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-12-16 [b648b7034] Speed up CREATE INDEX CONCURRENTLY's TID sort.
--->
-       <para>
-        Speed up <command>CREATE INDEX CONCURRENTLY</> by treating
-        <acronym>TID</>s as 64-bit integers during sorting (Peter
-        Geoghegan)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2016-04-08 [5364b357f] Increase maximum number of clog buffers.
 -->
        <para>
         Increase the number of clog buffers for better scalability (Amit
         Kapila, Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-08-06 [0e141c0fb] Reduce ProcArrayLock contention by removing backends in
-2015-09-03 [4aec49899] Assorted code review for recent ProcArrayLock patch.
--->
-       <para>
-        Reduce contention for the <literal>ProcArrayLock</> (Amit Kapila,
-        Robert Haas)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2015-12-15 [6150a1b08] Move buffer I/O and content LWLocks out of the main tran
--->
-       <para>
-        Improve performance by moving buffer content locks into the buffer
-        descriptors (Andres Freund, Simon Riggs)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-10 [48354581a] Allow Pin/UnpinBuffer to operate in a lockfree manner.
--->
-       <para>
-        Replace shared-buffer header spinlocks with atomic operations to
-        improve scalability (Alexander Korotkov, Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-10 [008608b9d] Avoid the use of a separate spinlock to protect a LWLock
--->
-       <para>
-        Use atomic operations, rather than a spinlock, to protect an
-        <literal>LWLock</>'s wait queue (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-03-23 [44ca4022f] Partition the freelist for shared dynahash tables.
--->
-       <para>
-        Partition the shared hash table freelist to reduce contention on
-        multi-<acronym>CPU</>-socket servers (Aleksander Alekseev)
        </para>
       </listitem>
 
@@ -1012,6 +1048,21 @@ This commit is also listed under libpq and psql
         linkend="pg-stat-progress-vacuum-view"><structname>pg_stat_progress_vacuum</></link>
         system view to provide progress reporting for <command>VACUUM</>
         operations (Amit Langote, Robert Haas, Vinayak Pokale, Rahila Syed)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-03-05 [dc7d70ea0] Expose control file data via SQL accessible functions.
+-->
+       <para>
+        Add <link
+        linkend="functions-controldata"><function>pg_control_system()</></>,
+        <function>pg_control_checkpoint()</>,
+        <function>pg_control_recovery()</>, and
+        <function>pg_control_init()</> functions to expose fields of
+        <filename>pg_control</> to <acronym>SQL</> (Joe Conway, Michael
+        Paquier)
        </para>
       </listitem>
 
@@ -1077,21 +1128,6 @@ This commit is also listed under libpq and psql
         the addition of parallel queries has made the approach entirely
         impractical, since locks might be held or awaited by child worker
         processes rather than the session's main process.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-03-05 [dc7d70ea0] Expose control file data via SQL accessible functions.
--->
-       <para>
-        Add <link
-        linkend="functions-controldata"><function>pg_control_system()</></>,
-        <function>pg_control_checkpoint()</>,
-        <function>pg_control_recovery()</>, and
-        <function>pg_control_init()</> functions to expose fields of
-        <filename>pg_control</> to <acronym>SQL</> (Joe Conway, Michael
-        Paquier)
        </para>
       </listitem>
 
@@ -1219,18 +1255,18 @@ This commit is also listed under libpq and psql
 
       <listitem>
 <!--
-2016-02-02 [7d17e683f] Add support for systemd service notifications
+2016-03-16 [c6dda1f48] Add idle_in_transaction_session_timeout.
 -->
        <para>
-        Add configure option <option>--with-systemd</> to enable
-        calling <function>sd_notify()</> at server start and stop (Peter
-        Eisentraut)
+        Allow sessions to be terminated automatically if they are in
+        idle-in-transaction state for too long (Vik Fearing)
        </para>
 
        <para>
-        This allows the use of <application>systemd</> service units of
-        type <literal>notify</>, which greatly simplifies the management
-        of <productname>PostgreSQL</> under <application>systemd</>.
+        This behavior is controlled by the new configuration parameter
+        <xref linkend="guc-idle-in-transaction-session-timeout">.  It can
+        be useful to prevent forgotten transactions from holding locks
+        or preventing vacuum cleanup for too long.
        </para>
       </listitem>
 
@@ -1247,18 +1283,18 @@ This commit is also listed under libpq and psql
 
       <listitem>
 <!--
-2016-03-16 [c6dda1f48] Add idle_in_transaction_session_timeout.
+2016-02-02 [7d17e683f] Add support for systemd service notifications
 -->
        <para>
-        Allow sessions to be terminated automatically if they are in
-        idle-in-transaction state for too long (Vik Fearing)
+        Add configure option <option>--with-systemd</> to enable
+        calling <function>sd_notify()</> at server start and stop (Peter
+        Eisentraut)
        </para>
 
        <para>
-        This behavior is controlled by the new configuration parameter
-        <xref linkend="guc-idle-in-transaction-session-timeout">.  It can
-        be useful to prevent forgotten transactions from holding locks
-        or preventing vacuum cleanup for too long.
+        This allows the use of <application>systemd</> service units of
+        type <literal>notify</>, which greatly simplifies the management
+        of <productname>PostgreSQL</> under <application>systemd</>.
        </para>
       </listitem>
 
@@ -1857,6 +1893,30 @@ XXX this is pending backpatch, may need to remove
 
       <listitem>
 <!--
+2016-04-07 [bb140506d] Phrase full text search.
+2016-06-27 [028350f61] Make exact distance match for FTS phrase operator
+2016-06-27 [3dbbd0f02] Do not fallback to AND for FTS phrase operator.
+2016-06-27 [6734a1cac] Change predecence of phrase operator.
+-->
+       <para>
+        Improve full-text search to support searching for phrases, that
+        is, lexemes appearing adjacent to each other in a specific order,
+        or with a specified distance between them (Teodor Sigaev, Oleg
+        Bartunov, Dmitry Ivanov)
+       </para>
+
+       <para>
+        A phrase-search query can be specified in <type>tsquery</>
+        input using the new operators <literal>&lt;-&gt;</> and
+        <literal>&lt;<replaceable>N</>&gt;</literal>.  The former means
+        that the lexemes before and after it must appear adjacent to
+        each other in that order.  The latter means they must be exactly
+        <replaceable>N</> lexemes apart.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-12-22 [6efbded6e] Allow omitting one or both boundaries in an array slice
 -->
        <para>
@@ -1912,30 +1972,6 @@ XXX this is pending backpatch, may need to remove
         Such values will now always print the same as they would in
         a simple <type>float8</> column, and be accepted the same way
         on input.  Previously the behavior was platform-dependent.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-2016-04-07 [bb140506d] Phrase full text search.
-2016-06-27 [028350f61] Make exact distance match for FTS phrase operator
-2016-06-27 [3dbbd0f02] Do not fallback to AND for FTS phrase operator.
-2016-06-27 [6734a1cac] Change predecence of phrase operator.
--->
-       <para>
-        Improve full-text search to support searching for phrases, that
-        is, lexemes appearing adjacent to each other in a specific order,
-        or with a specified distance between them (Teodor Sigaev, Oleg
-        Bartunov, Dmitry Ivanov)
-       </para>
-
-       <para>
-        A phrase-search query can be specified in <type>tsquery</>
-        input using the new operators <literal>&lt;-&gt;</> and
-        <literal>&lt;<replaceable>N</>&gt;</literal>.  The former means
-        that the lexemes before and after it must appear adjacent to
-        each other in that order.  The latter means they must be exactly
-        <replaceable>N</> lexemes apart.
        </para>
       </listitem>
 
