@@ -1912,10 +1912,14 @@ DATA(insert OID =  2284 ( regexp_replace	   PGNSP PGUID 12 1 0 0 0 f f f f t f i
 DESCR("replace text using regexp");
 DATA(insert OID =  2285 ( regexp_replace	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 4 0 25 "25 25 25 25" _null_ _null_ _null_ _null_ _null_ textregexreplace _null_ _null_ _null_ ));
 DESCR("replace text using regexp");
+DATA(insert OID =  3396 ( regexp_match	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1009 "25 25" _null_ _null_ _null_ _null_ _null_ regexp_match_no_flags _null_ _null_ _null_ ));
+DESCR("find first match for regexp");
+DATA(insert OID =  3397 ( regexp_match	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 1009 "25 25 25" _null_ _null_ _null_ _null_ _null_ regexp_match _null_ _null_ _null_ ));
+DESCR("find first match for regexp");
 DATA(insert OID =  2763 ( regexp_matches   PGNSP PGUID 12 1 1 0 0 f f f f t t i s 2 0 1009 "25 25" _null_ _null_ _null_ _null_ _null_ regexp_matches_no_flags _null_ _null_ _null_ ));
-DESCR("find all match groups for regexp");
+DESCR("find match(es) for regexp");
 DATA(insert OID =  2764 ( regexp_matches   PGNSP PGUID 12 1 10 0 0 f f f f t t i s 3 0 1009 "25 25 25" _null_ _null_ _null_ _null_ _null_ regexp_matches _null_ _null_ _null_ ));
-DESCR("find all match groups for regexp");
+DESCR("find match(es) for regexp");
 DATA(insert OID =  2088 ( split_part   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 25 "25 25 23" _null_ _null_ _null_ _null_ _null_	split_text _null_ _null_ _null_ ));
 DESCR("split string by field_sep and return field_num");
 DATA(insert OID =  2765 ( regexp_split_to_table PGNSP PGUID 12 1 1000 0 0 f f f f t t i s 2 0 25 "25 25" _null_ _null_ _null_ _null_ _null_ regexp_split_to_table_no_flags _null_ _null_ _null_ ));

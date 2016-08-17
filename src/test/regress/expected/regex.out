@@ -90,6 +90,34 @@ select substring('a' from '((a)+)');
  a
 (1 row)
 
+-- Test regexp_match()
+select regexp_match('abc', '');
+ regexp_match 
+--------------
+ {""}
+(1 row)
+
+select regexp_match('abc', 'bc');
+ regexp_match 
+--------------
+ {bc}
+(1 row)
+
+select regexp_match('abc', 'd') is null;
+ ?column? 
+----------
+ t
+(1 row)
+
+select regexp_match('abc', '(B)(c)', 'i');
+ regexp_match 
+--------------
+ {b,c}
+(1 row)
+
+select regexp_match('abc', 'Bd', 'ig'); -- error
+ERROR:  regexp_match does not support the global option
+HINT:  Use the regexp_matches function instead.
 -- Test lookahead constraints
 select regexp_matches('ab', 'a(?=b)b*');
  regexp_matches 

@@ -681,9 +681,9 @@ SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e',
 ERROR:  invalid regexp option: "z"
 -- global option meaningless for regexp_split
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'g') AS foo;
-ERROR:  regexp_split does not support the global option
+ERROR:  regexp_split_to_table does not support the global option
 SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'g');
-ERROR:  regexp_split does not support the global option
+ERROR:  regexp_split_to_array does not support the global option
 -- change NULL-display back
 \pset null ''
 -- E021-11 position expression

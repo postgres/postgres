@@ -25,6 +25,13 @@ select substring('asd TO foo' from ' TO (([a-z0-9._]+|"([^"]+|"")+")+)');
 select substring('a' from '((a))+');
 select substring('a' from '((a)+)');
 
+-- Test regexp_match()
+select regexp_match('abc', '');
+select regexp_match('abc', 'bc');
+select regexp_match('abc', 'd') is null;
+select regexp_match('abc', '(B)(c)', 'i');
+select regexp_match('abc', 'Bd', 'ig'); -- error
+
 -- Test lookahead constraints
 select regexp_matches('ab', 'a(?=b)b*');
 select regexp_matches('a', 'a(?=b)b*');

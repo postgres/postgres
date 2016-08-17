@@ -47,7 +47,7 @@ typedef struct pg_re_flags
 	bool		glob;			/* do it globally (for each occurrence) */
 } pg_re_flags;
 
-/* cross-call state for regexp_matches(), also regexp_split() */
+/* cross-call state for regexp_match and regexp_split functions */
 typedef struct regexp_matches_ctx
 {
 	text	   *orig_str;		/* data string in original TEXT form */
@@ -57,7 +57,7 @@ typedef struct regexp_matches_ctx
 	/* so the number of entries in match_locs is nmatches * npatterns * 2 */
 	int		   *match_locs;		/* 0-based character indexes */
 	int			next_match;		/* 0-based index of next match to process */
-	/* workspace for build_regexp_matches_result() */
+	/* workspace for build_regexp_match_result() */
 	Datum	   *elems;			/* has npatterns elements */
 	bool	   *nulls;			/* has npatterns elements */
 } regexp_matches_ctx;
@@ -107,13 +107,12 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
-					 text *flags,
+					 pg_re_flags *flags,
 					 Oid collation,
-					 bool force_glob,
 					 bool use_subpatterns,
 					 bool ignore_degenerate);
 static void cleanup_regexp_matches(regexp_matches_ctx *matchctx);
-static ArrayType *build_regexp_matches_result(regexp_matches_ctx *matchctx);
+static ArrayType *build_regexp_match_result(regexp_matches_ctx *matchctx);
 static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
 
 
@@ -350,7 +349,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 
 
 /*
- * parse_re_flags - parse the options argument of regexp_matches and friends
+ * parse_re_flags - parse the options argument of regexp_match and friends
  *
  *	flags --- output argument, filled with desired options
  *	opts --- TEXT object, or NULL for defaults
@@ -841,8 +840,52 @@ similar_escape(PG_FUNCTION_ARGS)
 }
 
 /*
+ * regexp_match()
+ *		Return the first substring(s) matching a pattern within a string.
+ */
+Datum
+regexp_match(PG_FUNCTION_ARGS)
+{
+	text	   *orig_str = PG_GETARG_TEXT_PP(0);
+	text	   *pattern = PG_GETARG_TEXT_PP(1);
+	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(2);
+	pg_re_flags re_flags;
+	regexp_matches_ctx *matchctx;
+
+	/* Determine options */
+	parse_re_flags(&re_flags, flags);
+	/* User mustn't specify 'g' */
+	if (re_flags.glob)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("regexp_match does not support the global option"),
+				 errhint("Use the regexp_matches function instead.")));
+
+	matchctx = setup_regexp_matches(orig_str, pattern, &re_flags,
+									PG_GET_COLLATION(), true, false);
+
+	if (matchctx->nmatches == 0)
+		PG_RETURN_NULL();
+
+	Assert(matchctx->nmatches == 1);
+
+	/* Create workspace that build_regexp_match_result needs */
+	matchctx->elems = (Datum *) palloc(sizeof(Datum) * matchctx->npatterns);
+	matchctx->nulls = (bool *) palloc(sizeof(bool) * matchctx->npatterns);
+
+	PG_RETURN_DATUM(PointerGetDatum(build_regexp_match_result(matchctx)));
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_match_no_flags(PG_FUNCTION_ARGS)
+{
+	return regexp_match(fcinfo);
+}
+
+/*
  * regexp_matches()
- *		Return a table of matches of a pattern within a string.
+ *		Return a table of all matches of a pattern within a string.
  */
 Datum
 regexp_matches(PG_FUNCTION_ARGS)
@@ -854,18 +897,22 @@ regexp_matches(PG_FUNCTION_ARGS)
 	{
 		text	   *pattern = PG_GETARG_TEXT_PP(1);
 		text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(2);
+		pg_re_flags re_flags;
 		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
+		/* Determine options */
+		parse_re_flags(&re_flags, flags);
+
 		/* be sure to copy the input string into the multi-call ctx */
 		matchctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
-										flags,
+										&re_flags,
 										PG_GET_COLLATION(),
-										false, true, false);
+										true, false);
 
-		/* Pre-create workspace that build_regexp_matches_result needs */
+		/* Pre-create workspace that build_regexp_match_result needs */
 		matchctx->elems = (Datum *) palloc(sizeof(Datum) * matchctx->npatterns);
 		matchctx->nulls = (bool *) palloc(sizeof(bool) * matchctx->npatterns);
 
@@ -880,7 +927,7 @@ regexp_matches(PG_FUNCTION_ARGS)
 	{
 		ArrayType  *result_ary;
 
-		result_ary = build_regexp_matches_result(matchctx);
+		result_ary = build_regexp_match_result(matchctx);
 		matchctx->next_match++;
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(result_ary));
 	}
@@ -899,28 +946,27 @@ regexp_matches_no_flags(PG_FUNCTION_ARGS)
 }
 
 /*
- * setup_regexp_matches --- do the initial matching for regexp_matches()
- *		or regexp_split()
+ * setup_regexp_matches --- do the initial matching for regexp_match
+ *		and regexp_split functions
  *
  * To avoid having to re-find the compiled pattern on each call, we do
  * all the matching in one swoop.  The returned regexp_matches_ctx contains
  * the locations of all the substrings matching the pattern.
  *
- * The three bool parameters have only two patterns (one for each caller)
- * but it seems clearer to distinguish the functionality this way than to
- * key it all off one "is_split" flag.
+ * The two bool parameters have only two patterns (one for matching, one for
+ * splitting) but it seems clearer to distinguish the functionality this way
+ * than to key it all off one "is_split" flag.
  */
 static regexp_matches_ctx *
-setup_regexp_matches(text *orig_str, text *pattern, text *flags,
+setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 					 Oid collation,
-					 bool force_glob, bool use_subpatterns,
+					 bool use_subpatterns,
 					 bool ignore_degenerate)
 {
 	regexp_matches_ctx *matchctx = palloc0(sizeof(regexp_matches_ctx));
 	int			orig_len;
 	pg_wchar   *wide_str;
 	int			wide_len;
-	pg_re_flags re_flags;
 	regex_t    *cpattern;
 	regmatch_t *pmatch;
 	int			pmatch_len;
@@ -937,21 +983,8 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	wide_str = (pg_wchar *) palloc(sizeof(pg_wchar) * (orig_len + 1));
 	wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
 
-	/* determine options */
-	parse_re_flags(&re_flags, flags);
-	if (force_glob)
-	{
-		/* user mustn't specify 'g' for regexp_split */
-		if (re_flags.glob)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("regexp_split does not support the global option")));
-		/* but we find all the matches anyway */
-		re_flags.glob = true;
-	}
-
 	/* set up the compiled pattern */
-	cpattern = RE_compile_and_cache(pattern, re_flags.cflags, collation);
+	cpattern = RE_compile_and_cache(pattern, re_flags->cflags, collation);
 
 	/* do we want to remember subpatterns? */
 	if (use_subpatterns && cpattern->re_nsub > 0)
@@ -970,7 +1003,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	pmatch = palloc(sizeof(regmatch_t) * pmatch_len);
 
 	/* the real output space (grown dynamically if needed) */
-	array_len = re_flags.glob ? 256 : 32;
+	array_len = re_flags->glob ? 256 : 32;
 	matchctx->match_locs = (int *) palloc(sizeof(int) * array_len);
 	array_idx = 0;
 
@@ -1018,7 +1051,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 		prev_match_end = pmatch[0].rm_eo;
 
 		/* if not glob, stop after one match */
-		if (!re_flags.glob)
+		if (!re_flags->glob)
 			break;
 
 		/*
@@ -1057,10 +1090,10 @@ cleanup_regexp_matches(regexp_matches_ctx *matchctx)
 }
 
 /*
- * build_regexp_matches_result - build output array for current match
+ * build_regexp_match_result - build output array for current match
  */
 static ArrayType *
-build_regexp_matches_result(regexp_matches_ctx *matchctx)
+build_regexp_match_result(regexp_matches_ctx *matchctx)
 {
 	Datum	   *elems = matchctx->elems;
 	bool	   *nulls = matchctx->nulls;
@@ -1114,16 +1147,27 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 	{
 		text	   *pattern = PG_GETARG_TEXT_PP(1);
 		text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(2);
+		pg_re_flags re_flags;
 		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
+		/* Determine options */
+		parse_re_flags(&re_flags, flags);
+		/* User mustn't specify 'g' */
+		if (re_flags.glob)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("regexp_split_to_table does not support the global option")));
+		/* But we find all the matches anyway */
+		re_flags.glob = true;
+
 		/* be sure to copy the input string into the multi-call ctx */
 		splitctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
-										flags,
+										&re_flags,
 										PG_GET_COLLATION(),
-										true, false, true);
+										false, true);
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = (void *) splitctx;
@@ -1162,13 +1206,24 @@ Datum
 regexp_split_to_array(PG_FUNCTION_ARGS)
 {
 	ArrayBuildState *astate = NULL;
+	pg_re_flags re_flags;
 	regexp_matches_ctx *splitctx;
+
+	/* Determine options */
+	parse_re_flags(&re_flags, PG_GETARG_TEXT_PP_IF_EXISTS(2));
+	/* User mustn't specify 'g' */
+	if (re_flags.glob)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		errmsg("regexp_split_to_array does not support the global option")));
+	/* But we find all the matches anyway */
+	re_flags.glob = true;
 
 	splitctx = setup_regexp_matches(PG_GETARG_TEXT_PP(0),
 									PG_GETARG_TEXT_PP(1),
-									PG_GETARG_TEXT_PP_IF_EXISTS(2),
+									&re_flags,
 									PG_GET_COLLATION(),
-									true, false, true);
+									false, true);
 
 	while (splitctx->next_match <= splitctx->nmatches)
 	{

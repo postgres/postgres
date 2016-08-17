@@ -2068,7 +2068,7 @@ CREATE VIEW triggers AS
            -- XXX strange hacks follow
            CAST(
              CASE WHEN pg_has_role(c.relowner, 'USAGE')
-               THEN (SELECT m[1] FROM regexp_matches(pg_get_triggerdef(t.oid), E'.{35,} WHEN \\((.+)\\) EXECUTE PROCEDURE') AS rm(m) LIMIT 1)
+               THEN (regexp_match(pg_get_triggerdef(t.oid), E'.{35,} WHEN \\((.+)\\) EXECUTE PROCEDURE'))[1]
                ELSE null END
              AS character_data) AS action_condition,
            CAST(
