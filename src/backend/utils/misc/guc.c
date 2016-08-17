@@ -1210,7 +1210,11 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Enables updating of the process title every time a new SQL command is received by the server.")
 		},
 		&update_process_title,
+#ifdef WIN32
+		false,
+#else
 		true,
+#endif
 		NULL, NULL, NULL
 	},
 

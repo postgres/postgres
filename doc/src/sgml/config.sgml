@@ -5430,6 +5430,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         is received by the server.  The process title is typically viewed
         by the <command>ps</> command,
         or in Windows by using the <application>Process Explorer</>.
+        This value defaults to off on Windows platforms due to the
+        platform's significant overhead for updating the process title.
         Only superusers can change this setting.
        </para>
       </listitem>
