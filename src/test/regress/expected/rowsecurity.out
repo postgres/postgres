@@ -182,7 +182,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
          Filter: (dlevel <= $0)
          InitPlan 1 (returns $0)
            ->  Index Scan using uaccount_pkey on uaccount
-                 Index Cond: (pguser = "current_user"())
+                 Index Cond: (pguser = CURRENT_USER)
 (7 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
@@ -198,7 +198,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
                      Filter: (dlevel <= $0)
                      InitPlan 1 (returns $0)
                        ->  Index Scan using uaccount_pkey on uaccount
-                             Index Cond: (pguser = "current_user"())
+                             Index Cond: (pguser = CURRENT_USER)
 (11 rows)
 
 -- only owner can change policies
@@ -265,22 +265,22 @@ NOTICE:  f_leak => great manga
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
-                  QUERY PLAN                  
-----------------------------------------------
+                QUERY PLAN                
+------------------------------------------
  Subquery Scan on document
    Filter: f_leak(document.dtitle)
    ->  Seq Scan on document document_1
-         Filter: (dauthor = "current_user"())
+         Filter: (dauthor = CURRENT_USER)
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle);
-                     QUERY PLAN                     
-----------------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Nested Loop
    ->  Subquery Scan on document
          Filter: f_leak(document.dtitle)
          ->  Seq Scan on document document_1
-               Filter: (dauthor = "current_user"())
+               Filter: (dauthor = CURRENT_USER)
    ->  Index Scan using category_pkey on category
          Index Cond: (cid = document.cid)
 (7 rows)

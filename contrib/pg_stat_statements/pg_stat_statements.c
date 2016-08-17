@@ -2632,6 +2632,15 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) mmexpr->args);
 			}
 			break;
+		case T_SQLValueFunction:
+			{
+				SQLValueFunction *svf = (SQLValueFunction *) node;
+
+				APP_JUMB(svf->op);
+				/* type is fully determined by op */
+				APP_JUMB(svf->typmod);
+			}
+			break;
 		case T_XmlExpr:
 			{
 				XmlExpr    *xexpr = (XmlExpr *) node;

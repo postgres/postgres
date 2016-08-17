@@ -1326,10 +1326,10 @@ NOTICE:  f_leak => hamburger
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_property_normal WHERE f_leak(passwd);
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Seq Scan on customer
-   Filter: (f_leak(passwd) AND (name = ("current_user"())::text))
+   Filter: (f_leak(passwd) AND (name = (CURRENT_USER)::text))
 (2 rows)
 
 SELECT * FROM my_property_secure WHERE f_leak(passwd);
@@ -1340,12 +1340,12 @@ NOTICE:  f_leak => passwd123
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure WHERE f_leak(passwd);
-                    QUERY PLAN                     
----------------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Subquery Scan on my_property_secure
    Filter: f_leak(my_property_secure.passwd)
    ->  Seq Scan on customer
-         Filter: (name = ("current_user"())::text)
+         Filter: (name = (CURRENT_USER)::text)
 (4 rows)
 
 --
@@ -1367,10 +1367,10 @@ NOTICE:  f_leak => hamburger
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_property_normal v
 		WHERE f_leak('passwd') AND f_leak(passwd);
-                                         QUERY PLAN                                          
----------------------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Seq Scan on customer
-   Filter: (f_leak('passwd'::text) AND f_leak(passwd) AND (name = ("current_user"())::text))
+   Filter: (f_leak('passwd'::text) AND f_leak(passwd) AND (name = (CURRENT_USER)::text))
 (2 rows)
 
 SELECT * FROM my_property_secure v
@@ -1386,12 +1386,12 @@ NOTICE:  f_leak => passwd
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure v
 		WHERE f_leak('passwd') AND f_leak(passwd);
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Subquery Scan on v
    Filter: f_leak(v.passwd)
    ->  Seq Scan on customer
-         Filter: (f_leak('passwd'::text) AND (name = ("current_user"())::text))
+         Filter: (f_leak('passwd'::text) AND (name = (CURRENT_USER)::text))
 (4 rows)
 
 --
@@ -1409,15 +1409,15 @@ NOTICE:  f_leak => 9801-2345-6789-0123
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_normal WHERE f_leak(cnum);
-                       QUERY PLAN                        
----------------------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Hash Join
    Hash Cond: (r.cid = l.cid)
    ->  Seq Scan on credit_card r
          Filter: f_leak(cnum)
    ->  Hash
          ->  Seq Scan on customer l
-               Filter: (name = ("current_user"())::text)
+               Filter: (name = (CURRENT_USER)::text)
 (7 rows)
 
 SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
@@ -1428,8 +1428,8 @@ NOTICE:  f_leak => 1111-2222-3333-4444
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Subquery Scan on my_credit_card_secure
    Filter: f_leak(my_credit_card_secure.cnum)
    ->  Hash Join
@@ -1437,7 +1437,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
          ->  Seq Scan on credit_card r
          ->  Hash
                ->  Seq Scan on customer l
-                     Filter: (name = ("current_user"())::text)
+                     Filter: (name = (CURRENT_USER)::text)
 (8 rows)
 
 --
@@ -1471,7 +1471,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
                      ->  Seq Scan on credit_card r_1
                      ->  Hash
                            ->  Seq Scan on customer l_1
-                                 Filter: (name = ("current_user"())::text)
+                                 Filter: (name = (CURRENT_USER)::text)
 (13 rows)
 
 SELECT * FROM my_credit_card_usage_secure
@@ -1502,7 +1502,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
                      ->  Seq Scan on credit_card r_1
                      ->  Hash
                            ->  Seq Scan on customer l
-                                 Filter: (name = ("current_user"())::text)
+                                 Filter: (name = (CURRENT_USER)::text)
 (13 rows)
 
 --

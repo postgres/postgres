@@ -53,8 +53,10 @@
 #include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
@@ -147,6 +149,9 @@ static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalSQLValueFunction(ExprState *svfExpr,
+						 ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
@@ -3531,6 +3536,75 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalSQLValueFunction
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalSQLValueFunction(ExprState *svfExpr,
+						 ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone)
+{
+	Datum		result = (Datum) 0;
+	SQLValueFunction *svf = (SQLValueFunction *) svfExpr->expr;
+	FunctionCallInfoData fcinfo;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	/*
+	 * Note: current_schema() can return NULL.  current_user() etc currently
+	 * cannot, but might as well code those cases the same way for safety.
+	 */
+	switch (svf->op)
+	{
+		case SVFOP_CURRENT_DATE:
+			result = DateADTGetDatum(GetSQLCurrentDate());
+			break;
+		case SVFOP_CURRENT_TIME:
+		case SVFOP_CURRENT_TIME_N:
+			result = TimeTzADTPGetDatum(GetSQLCurrentTime(svf->typmod));
+			break;
+		case SVFOP_CURRENT_TIMESTAMP:
+		case SVFOP_CURRENT_TIMESTAMP_N:
+			result = TimestampTzGetDatum(GetSQLCurrentTimestamp(svf->typmod));
+			break;
+		case SVFOP_LOCALTIME:
+		case SVFOP_LOCALTIME_N:
+			result = TimeADTGetDatum(GetSQLLocalTime(svf->typmod));
+			break;
+		case SVFOP_LOCALTIMESTAMP:
+		case SVFOP_LOCALTIMESTAMP_N:
+			result = TimestampGetDatum(GetSQLLocalTimestamp(svf->typmod));
+			break;
+		case SVFOP_CURRENT_ROLE:
+		case SVFOP_CURRENT_USER:
+		case SVFOP_USER:
+			InitFunctionCallInfoData(fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			result = current_user(&fcinfo);
+			*isNull = fcinfo.isnull;
+			break;
+		case SVFOP_SESSION_USER:
+			InitFunctionCallInfoData(fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			result = session_user(&fcinfo);
+			*isNull = fcinfo.isnull;
+			break;
+		case SVFOP_CURRENT_CATALOG:
+			InitFunctionCallInfoData(fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			result = current_database(&fcinfo);
+			*isNull = fcinfo.isnull;
+			break;
+		case SVFOP_CURRENT_SCHEMA:
+			InitFunctionCallInfoData(fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			result = current_schema(&fcinfo);
+			*isNull = fcinfo.isnull;
+			break;
+	}
+
+	return result;
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalXml
  * ----------------------------------------------------------------
  */
@@ -5085,6 +5159,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
 				state = (ExprState *) mstate;
 			}
+			break;
+		case T_SQLValueFunction:
+			state = (ExprState *) makeNode(ExprState);
+			state->evalfunc = ExecEvalSQLValueFunction;
 			break;
 		case T_XmlExpr:
 			{

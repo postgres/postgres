@@ -6494,6 +6494,9 @@ exec_simple_check_node(Node *node)
 				return TRUE;
 			}
 
+		case T_SQLValueFunction:
+			return TRUE;
+
 		case T_XmlExpr:
 			{
 				XmlExpr    *expr = (XmlExpr *) node;

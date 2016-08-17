@@ -72,13 +72,13 @@ static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
 static TimestampTz timestamp2timestamptz(Timestamp timestamp);
+static Timestamp timestamptz2timestamp(TimestampTz timestamp);
 
 
 /* common code for timestamptypmodin and timestamptztypmodin */
 static int32
 anytimestamp_typmodin(bool istz, ArrayType *ta)
 {
-	int32		typmod;
 	int32	   *tl;
 	int			n;
 
@@ -93,22 +93,27 @@ anytimestamp_typmodin(bool istz, ArrayType *ta)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid type modifier")));
 
-	if (*tl < 0)
+	return anytimestamp_typmod_check(istz, tl[0]);
+}
+
+/* exported so parse_expr.c can use it */
+int32
+anytimestamp_typmod_check(bool istz, int32 typmod)
+{
+	if (typmod < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIMESTAMP(%d)%s precision must not be negative",
-						*tl, (istz ? " WITH TIME ZONE" : ""))));
-	if (*tl > MAX_TIMESTAMP_PRECISION)
+						typmod, (istz ? " WITH TIME ZONE" : ""))));
+	if (typmod > MAX_TIMESTAMP_PRECISION)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		   errmsg("TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
-				  *tl, (istz ? " WITH TIME ZONE" : ""),
+				  typmod, (istz ? " WITH TIME ZONE" : ""),
 				  MAX_TIMESTAMP_PRECISION)));
 		typmod = MAX_TIMESTAMP_PRECISION;
 	}
-	else
-		typmod = *tl;
 
 	return typmod;
 }
@@ -336,6 +341,10 @@ timestamp_scale(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
+/*
+ * AdjustTimestampForTypmod --- round off a timestamp to suit given typmod
+ * Works for either timestamp or timestamptz.
+ */
 static void
 AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 {
@@ -1685,6 +1694,34 @@ IntegerTimestampToTimestampTz(int64 timestamp)
 	return result;
 }
 #endif
+
+/*
+ * GetSQLCurrentTimestamp -- implements CURRENT_TIMESTAMP, CURRENT_TIMESTAMP(n)
+ */
+TimestampTz
+GetSQLCurrentTimestamp(int32 typmod)
+{
+	TimestampTz ts;
+
+	ts = GetCurrentTransactionStartTimestamp();
+	if (typmod >= 0)
+		AdjustTimestampForTypmod(&ts, typmod);
+	return ts;
+}
+
+/*
+ * GetSQLLocalTimestamp -- implements LOCALTIMESTAMP, LOCALTIMESTAMP(n)
+ */
+Timestamp
+GetSQLLocalTimestamp(int32 typmod)
+{
+	Timestamp	ts;
+
+	ts = timestamptz2timestamp(GetCurrentTransactionStartTimestamp());
+	if (typmod >= 0)
+		AdjustTimestampForTypmod(&ts, typmod);
+	return ts;
+}
 
 /*
  * TimestampDifference -- convert the difference between two timestamps
@@ -5415,6 +5452,13 @@ Datum
 timestamptz_timestamp(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
+
+	PG_RETURN_TIMESTAMP(timestamptz2timestamp(timestamp));
+}
+
+static Timestamp
+timestamptz2timestamp(TimestampTz timestamp)
+{
 	Timestamp	result;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -5434,7 +5478,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
 	}
-	PG_RETURN_TIMESTAMP(result);
+	return result;
 }
 
 /* timestamptz_zone()

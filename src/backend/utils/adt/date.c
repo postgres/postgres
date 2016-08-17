@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "access/hash.h"
+#include "access/xact.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -51,7 +52,6 @@ static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 static int32
 anytime_typmodin(bool istz, ArrayType *ta)
 {
-	int32		typmod;
 	int32	   *tl;
 	int			n;
 
@@ -66,22 +66,27 @@ anytime_typmodin(bool istz, ArrayType *ta)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid type modifier")));
 
-	if (*tl < 0)
+	return anytime_typmod_check(istz, tl[0]);
+}
+
+/* exported so parse_expr.c can use it */
+int32
+anytime_typmod_check(bool istz, int32 typmod)
+{
+	if (typmod < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIME(%d)%s precision must not be negative",
-						*tl, (istz ? " WITH TIME ZONE" : ""))));
-	if (*tl > MAX_TIME_PRECISION)
+						typmod, (istz ? " WITH TIME ZONE" : ""))));
+	if (typmod > MAX_TIME_PRECISION)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("TIME(%d)%s precision reduced to maximum allowed, %d",
-						*tl, (istz ? " WITH TIME ZONE" : ""),
+						typmod, (istz ? " WITH TIME ZONE" : ""),
 						MAX_TIME_PRECISION)));
 		typmod = MAX_TIME_PRECISION;
 	}
-	else
-		typmod = *tl;
 
 	return typmod;
 }
@@ -295,6 +300,80 @@ EncodeSpecialDate(DateADT dt, char *str)
 		strcpy(str, LATE);
 	else	/* shouldn't happen */
 		elog(ERROR, "invalid argument for EncodeSpecialDate");
+}
+
+
+/*
+ * GetSQLCurrentDate -- implements CURRENT_DATE
+ */
+DateADT
+GetSQLCurrentDate(void)
+{
+	TimestampTz ts;
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	int			tz;
+
+	ts = GetCurrentTransactionStartTimestamp();
+
+	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	return date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+}
+
+/*
+ * GetSQLCurrentTime -- implements CURRENT_TIME, CURRENT_TIME(n)
+ */
+TimeTzADT *
+GetSQLCurrentTime(int32 typmod)
+{
+	TimeTzADT  *result;
+	TimestampTz ts;
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	int			tz;
+
+	ts = GetCurrentTransactionStartTimestamp();
+
+	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+	tm2timetz(tm, fsec, tz, result);
+	AdjustTimeForTypmod(&(result->time), typmod);
+	return result;
+}
+
+/*
+ * GetSQLLocalTime -- implements LOCALTIME, LOCALTIME(n)
+ */
+TimeADT
+GetSQLLocalTime(int32 typmod)
+{
+	TimeADT		result;
+	TimestampTz ts;
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	int			tz;
+
+	ts = GetCurrentTransactionStartTimestamp();
+
+	if (timestamp2tm(ts, &tz, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	tm2time(tm, fsec, &result);
+	AdjustTimeForTypmod(&result, typmod);
+	return result;
 }
 
 

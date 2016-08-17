@@ -89,8 +89,12 @@ typedef struct
 
 
 /* date.c */
+extern int32 anytime_typmod_check(bool istz, int32 typmod);
 extern double date2timestamp_no_overflow(DateADT dateVal);
 extern void EncodeSpecialDate(DateADT dt, char *str);
+extern DateADT GetSQLCurrentDate(void);
+extern TimeTzADT *GetSQLCurrentTime(int32 typmod);
+extern TimeADT GetSQLLocalTime(int32 typmod);
 
 extern Datum date_in(PG_FUNCTION_ARGS);
 extern Datum date_out(PG_FUNCTION_ARGS);

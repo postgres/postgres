@@ -1753,6 +1753,22 @@ _copyMinMaxExpr(const MinMaxExpr *from)
 }
 
 /*
+ * _copySQLValueFunction
+ */
+static SQLValueFunction *
+_copySQLValueFunction(const SQLValueFunction *from)
+{
+	SQLValueFunction *newnode = makeNode(SQLValueFunction);
+
+	COPY_SCALAR_FIELD(op);
+	COPY_SCALAR_FIELD(type);
+	COPY_SCALAR_FIELD(typmod);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
  * _copyXmlExpr
  */
 static XmlExpr *
@@ -4524,6 +4540,9 @@ copyObject(const void *from)
 			break;
 		case T_MinMaxExpr:
 			retval = _copyMinMaxExpr(from);
+			break;
+		case T_SQLValueFunction:
+			retval = _copySQLValueFunction(from);
 			break;
 		case T_XmlExpr:
 			retval = _copyXmlExpr(from);

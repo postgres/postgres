@@ -620,6 +620,17 @@ _equalMinMaxExpr(const MinMaxExpr *a, const MinMaxExpr *b)
 }
 
 static bool
+_equalSQLValueFunction(const SQLValueFunction *a, const SQLValueFunction *b)
+{
+	COMPARE_SCALAR_FIELD(op);
+	COMPARE_SCALAR_FIELD(type);
+	COMPARE_SCALAR_FIELD(typmod);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
 _equalXmlExpr(const XmlExpr *a, const XmlExpr *b)
 {
 	COMPARE_SCALAR_FIELD(op);
@@ -2841,6 +2852,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_MinMaxExpr:
 			retval = _equalMinMaxExpr(a, b);
+			break;
+		case T_SQLValueFunction:
+			retval = _equalSQLValueFunction(a, b);
 			break;
 		case T_XmlExpr:
 			retval = _equalXmlExpr(a, b);

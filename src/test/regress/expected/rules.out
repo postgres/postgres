@@ -2269,14 +2269,14 @@ pg_settings|pg_settings_u|CREATE RULE pg_settings_u AS
    WHERE (new.name = old.name) DO  SELECT set_config(old.name, new.setting, false) AS set_config;
 rtest_emp|rtest_emp_del|CREATE RULE rtest_emp_del AS
     ON DELETE TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (old.ename, "current_user"(), 'fired'::bpchar, '$0.00'::money, old.salary);
+  VALUES (old.ename, CURRENT_USER, 'fired'::bpchar, '$0.00'::money, old.salary);
 rtest_emp|rtest_emp_ins|CREATE RULE rtest_emp_ins AS
     ON INSERT TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (new.ename, "current_user"(), 'hired'::bpchar, new.salary, '$0.00'::money);
+  VALUES (new.ename, CURRENT_USER, 'hired'::bpchar, new.salary, '$0.00'::money);
 rtest_emp|rtest_emp_upd|CREATE RULE rtest_emp_upd AS
     ON UPDATE TO rtest_emp
    WHERE (new.salary <> old.salary) DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (new.ename, "current_user"(), 'honored'::bpchar, new.salary, old.salary);
+  VALUES (new.ename, CURRENT_USER, 'honored'::bpchar, new.salary, old.salary);
 rtest_nothn1|rtest_nothn_r1|CREATE RULE rtest_nothn_r1 AS
     ON INSERT TO rtest_nothn1
    WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD NOTHING;

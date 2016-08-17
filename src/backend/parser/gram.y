@@ -165,6 +165,8 @@ static Node *makeAndExpr(Node *lexpr, Node *rexpr, int location);
 static Node *makeOrExpr(Node *lexpr, Node *rexpr, int location);
 static Node *makeNotExpr(Node *expr, int location);
 static Node *makeAArrayExpr(List *elements, int location);
+static Node *makeSQLValueFunction(SQLValueFunctionOp op, int32 typmod,
+								  int location);
 static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args,
 						 List *args, int location);
 static List *mergeTableFuncParameters(List *func_args, List *columns);
@@ -12330,143 +12332,63 @@ func_expr_common_subexpr:
 				}
 			| CURRENT_DATE
 				{
-					/*
-					 * Translate as "'now'::text::date".
-					 *
-					 * We cannot use "'now'::date" because coerce_type() will
-					 * immediately reduce that to a constant representing
-					 * today's date.  We need to delay the conversion until
-					 * runtime, else the wrong things will happen when
-					 * CURRENT_DATE is used in a column default value or rule.
-					 *
-					 * This could be simplified if we had a way to generate
-					 * an expression tree representing runtime application
-					 * of type-input conversion functions.  (As of PG 7.3
-					 * that is actually possible, but not clear that we want
-					 * to rely on it.)
-					 *
-					 * The token location is attached to the run-time
-					 * typecast, not to the Const, for the convenience of
-					 * pg_stat_statements (which doesn't want these constructs
-					 * to appear to be replaceable constants).
-					 */
-					Node *n;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					$$ = makeTypeCast(n, SystemTypeName("date"), @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_DATE, -1, @1);
 				}
 			| CURRENT_TIME
 				{
-					/*
-					 * Translate as "'now'::text::timetz".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					$$ = makeTypeCast(n, SystemTypeName("timetz"), @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIME, -1, @1);
 				}
 			| CURRENT_TIME '(' Iconst ')'
 				{
-					/*
-					 * Translate as "'now'::text::timetz(n)".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					TypeName *d;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					d = SystemTypeName("timetz");
-					d->typmods = list_make1(makeIntConst($3, @3));
-					$$ = makeTypeCast(n, d, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIME_N, $3, @1);
 				}
 			| CURRENT_TIMESTAMP
 				{
-					/*
-					 * Translate as "now()", since we have a function that
-					 * does exactly what is needed.
-					 */
-					$$ = (Node *) makeFuncCall(SystemFuncName("now"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIMESTAMP, -1, @1);
 				}
 			| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
-					/*
-					 * Translate as "'now'::text::timestamptz(n)".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					TypeName *d;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					d = SystemTypeName("timestamptz");
-					d->typmods = list_make1(makeIntConst($3, @3));
-					$$ = makeTypeCast(n, d, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_TIMESTAMP_N, $3, @1);
 				}
 			| LOCALTIME
 				{
-					/*
-					 * Translate as "'now'::text::time".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					$$ = makeTypeCast((Node *)n, SystemTypeName("time"), @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIME, -1, @1);
 				}
 			| LOCALTIME '(' Iconst ')'
 				{
-					/*
-					 * Translate as "'now'::text::time(n)".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					TypeName *d;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					d = SystemTypeName("time");
-					d->typmods = list_make1(makeIntConst($3, @3));
-					$$ = makeTypeCast((Node *)n, d, @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIME_N, $3, @1);
 				}
 			| LOCALTIMESTAMP
 				{
-					/*
-					 * Translate as "'now'::text::timestamp".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					$$ = makeTypeCast(n, SystemTypeName("timestamp"), @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIMESTAMP, -1, @1);
 				}
 			| LOCALTIMESTAMP '(' Iconst ')'
 				{
-					/*
-					 * Translate as "'now'::text::timestamp(n)".
-					 * See comments for CURRENT_DATE.
-					 */
-					Node *n;
-					TypeName *d;
-					n = makeStringConstCast("now", -1, SystemTypeName("text"));
-					d = SystemTypeName("timestamp");
-					d->typmods = list_make1(makeIntConst($3, @3));
-					$$ = makeTypeCast(n, d, @1);
+					$$ = makeSQLValueFunction(SVFOP_LOCALTIMESTAMP_N, $3, @1);
 				}
 			| CURRENT_ROLE
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_user"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_ROLE, -1, @1);
 				}
 			| CURRENT_USER
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_user"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_USER, -1, @1);
 				}
 			| SESSION_USER
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("session_user"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_SESSION_USER, -1, @1);
 				}
 			| USER
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_user"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_USER, -1, @1);
 				}
 			| CURRENT_CATALOG
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_database"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_CATALOG, -1, @1);
 				}
 			| CURRENT_SCHEMA
 				{
-					$$ = (Node *) makeFuncCall(SystemFuncName("current_schema"), NIL, @1);
+					$$ = makeSQLValueFunction(SVFOP_CURRENT_SCHEMA, -1, @1);
 				}
 			| CAST '(' a_expr AS Typename ')'
 				{ $$ = makeTypeCast($3, $5, @1); }
@@ -14708,6 +14630,18 @@ makeAArrayExpr(List *elements, int location)
 	n->elements = elements;
 	n->location = location;
 	return (Node *) n;
+}
+
+static Node *
+makeSQLValueFunction(SQLValueFunctionOp op, int32 typmod, int location)
+{
+	SQLValueFunction *svf = makeNode(SQLValueFunction);
+
+	svf->op = op;
+	/* svf->type will be filled during parse analysis */
+	svf->typmod = typmod;
+	svf->location = location;
+	return (Node *) svf;
 }
 
 static Node *

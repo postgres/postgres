@@ -962,6 +962,12 @@ contain_mutable_functions_walker(Node *node, void *context)
 								context))
 		return true;
 
+	if (IsA(node, SQLValueFunction))
+	{
+		/* all variants of SQLValueFunction are stable */
+		return true;
+	}
+
 	/*
 	 * It should be safe to treat MinMaxExpr as immutable, because it will
 	 * depend on a non-cross-type btree comparison function, and those should
@@ -1031,7 +1037,8 @@ contain_volatile_functions_walker(Node *node, void *context)
 
 	/*
 	 * See notes in contain_mutable_functions_walker about why we treat
-	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable.
+	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable, while
+	 * SQLValueFunction is stable.  Hence, none of them are of interest here.
 	 */
 
 	/* Recurse to check arguments */
@@ -1076,7 +1083,8 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 
 	/*
 	 * See notes in contain_mutable_functions_walker about why we treat
-	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable.
+	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable, while
+	 * SQLValueFunction is stable.  Hence, none of them are of interest here.
 	 */
 
 	/* Recurse to check arguments */
@@ -1143,7 +1151,8 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	 * (Note: in principle that's wrong because a domain constraint could
 	 * contain a parallel-unsafe function; but useful constraints probably
 	 * never would have such, and assuming they do would cripple use of
-	 * parallel query in the presence of domain types.)
+	 * parallel query in the presence of domain types.)  SQLValueFunction
+	 * should be safe in all cases.
 	 */
 	if (IsA(node, CoerceToDomain))
 	{
@@ -1458,6 +1467,7 @@ contain_leaked_vars_walker(Node *node, void *context)
 		case T_CaseTestExpr:
 		case T_RowExpr:
 		case T_MinMaxExpr:
+		case T_SQLValueFunction:
 		case T_NullTest:
 		case T_BooleanTest:
 		case T_List:
