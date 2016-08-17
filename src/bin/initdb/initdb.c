@@ -1292,6 +1292,12 @@ setup_config(void)
 							  "#effective_io_concurrency = 0");
 #endif
 
+#ifdef WIN32
+	conflines = replace_token(conflines,
+							  "#update_process_title = on",
+							  "#update_process_title = off");
+#endif
+
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
