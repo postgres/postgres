@@ -820,6 +820,13 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "  WHERE (%d = pg_catalog.length('%s'))"\
 "    AND pg_catalog.quote_ident(name)='%s'"
 
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_list_of_available_extension_versions_with_TO \
+" SELECT 'TO ' || pg_catalog.quote_ident(version) "\
+"   FROM pg_catalog.pg_available_extension_versions "\
+"  WHERE (%d = pg_catalog.length('%s'))"\
+"    AND pg_catalog.quote_ident(name)='%s'"
+
 #define Query_for_list_of_prepared_statements \
 " SELECT pg_catalog.quote_ident(name) "\
 "   FROM pg_catalog.pg_prepared_statements "\
@@ -1413,6 +1420,20 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER EXTENSION <name> */
 	else if (Matches3("ALTER", "EXTENSION", MatchAny))
 		COMPLETE_WITH_LIST4("ADD", "DROP", "UPDATE", "SET SCHEMA");
+
+	/* ALTER EXTENSION <name> UPDATE */
+	else if (Matches4("ALTER", "EXTENSION", MatchAny, "UPDATE"))
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_available_extension_versions_with_TO);
+	}
+
+	/* ALTER EXTENSION <name> UPDATE TO */
+	else if (Matches5("ALTER", "EXTENSION", MatchAny, "UPDATE", "TO"))
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_available_extension_versions);
+	}
 
 	/* ALTER FOREIGN */
 	else if (Matches2("ALTER", "FOREIGN"))
