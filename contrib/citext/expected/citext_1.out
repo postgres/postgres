@@ -1770,6 +1770,60 @@ SELECT quote_literal( name ) = quote_literal( name::text ) AS t FROM srt;
  t
 (4 rows)
 
+SELECT regexp_match('foobarbequebaz'::citext, '(bar)(beque)') = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)') = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)'::citext) = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)'::citext, '') = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)', '') = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_match('foobarbequebaz', '(BAR)(BEQUE)'::citext, '') = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)'::citext, ''::citext) = ARRAY[ 'bar', 'beque' ] AS t;
+ t 
+---
+ t
+(1 row)
+
+-- c forces case-sensitive
+SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)'::citext, 'c'::citext) = ARRAY[ 'bar', 'beque' ] AS "no result";
+ no result 
+-----------
+ 
+(1 row)
+
+-- g is not allowed
+SELECT regexp_match('foobarbequebazmorebarbequetoo'::citext, '(BAR)(BEQUE)'::citext, 'g') AS "error";
+ERROR:  regexp_match does not support the global option
+HINT:  Use the regexp_matches function instead.
+CONTEXT:  SQL function "regexp_match" statement 1
 SELECT regexp_matches('foobarbequebaz'::citext, '(bar)(beque)') = ARRAY[ 'bar', 'beque' ] AS t;
  t 
 ---

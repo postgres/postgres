@@ -1,4 +1,4 @@
-/* contrib/citext/citext--1.2.sql */
+/* contrib/citext/citext--1.4.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION citext" to load this file. \quit
@@ -443,6 +443,14 @@ CREATE OPERATOR !~~* (
 -- Matching citext in string comparison functions.
 -- XXX TODO Ideally these would be implemented in C.
 --
+
+CREATE FUNCTION regexp_match( citext, citext ) RETURNS TEXT[] AS $$
+    SELECT pg_catalog.regexp_match( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION regexp_match( citext, citext, text ) RETURNS TEXT[] AS $$
+    SELECT pg_catalog.regexp_match( $1::pg_catalog.text, $2::pg_catalog.text, CASE WHEN pg_catalog.strpos($3, 'c') = 0 THEN  $3 || 'i' ELSE $3 END );
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION regexp_matches( citext, citext ) RETURNS SETOF TEXT[] AS $$
     SELECT pg_catalog.regexp_matches( $1::pg_catalog.text, $2::pg_catalog.text, 'i' );

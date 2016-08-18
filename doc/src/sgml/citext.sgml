@@ -126,6 +126,11 @@ SELECT * FROM users WHERE nick = 'Larry';
   <itemizedlist>
    <listitem>
     <para>
+      <function>regexp_match()</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
       <function>regexp_matches()</>
     </para>
    </listitem>
