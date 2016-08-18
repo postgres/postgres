@@ -142,7 +142,7 @@ extern HeapTuple toast_insert_or_update(Relation rel,
  *	Called by heap_delete().
  * ----------
  */
-extern void toast_delete(Relation rel, HeapTuple oldtup);
+extern void toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative);
 
 /* ----------
  * heap_tuple_fetch_attr() -

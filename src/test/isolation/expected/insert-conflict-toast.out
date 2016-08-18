@@ -1,0 +1,15 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s2insert s3insert s1commit
+pg_advisory_xact_lock
+
+               
+step s2insert: 
+  INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
+ <waiting ...>
+step s3insert: 
+  INSERT INTO ctoast (key, val) VALUES (1, ctoast_large_val()) ON CONFLICT DO NOTHING;
+ <waiting ...>
+step s1commit: COMMIT;
+step s2insert: <... completed>
+step s3insert: <... completed>
