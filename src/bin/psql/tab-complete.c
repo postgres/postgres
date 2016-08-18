@@ -3033,6 +3033,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_encodings);
 	else if (TailMatchesCS1("\\h") || TailMatchesCS1("\\help"))
 		COMPLETE_WITH_LIST(sql_commands);
+	else if (TailMatchesCS1("\\l*") && !TailMatchesCS1("\\lo*"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	else if (TailMatchesCS1("\\password"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (TailMatchesCS1("\\pset"))
