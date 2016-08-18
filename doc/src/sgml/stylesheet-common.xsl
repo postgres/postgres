@@ -7,10 +7,9 @@
   all output formats (HTML, HTML Help, XSL-FO, etc.).
   -->
 
+<xsl:include href="stylesheet-speedup-common.xsl" />
 
 <!-- Parameters -->
-
-<xsl:param name="pg.fast" select="'0'"/>
 
 <!--
 <xsl:param name="draft.mode">
@@ -31,9 +30,8 @@
 <xsl:param name="callout.graphics" select="'0'"></xsl:param>
 <xsl:param name="toc.section.depth">2</xsl:param>
 <xsl:param name="linenumbering.extension" select="'0'"></xsl:param>
-<xsl:param name="generate.index" select="1 - $pg.fast"></xsl:param>
-<xsl:param name="section.autolabel" select="1 - $pg.fast"></xsl:param>
-<xsl:param name="section.label.includes.component.label" select="1 - $pg.fast"></xsl:param>
+<xsl:param name="section.autolabel" select="1"></xsl:param>
+<xsl:param name="section.label.includes.component.label" select="1"></xsl:param>
 <xsl:param name="refentry.xref.manvolnum" select="0"/>
 <xsl:param name="formal.procedures" select="0"></xsl:param>
 <xsl:param name="punct.honorific" select="''"></xsl:param>

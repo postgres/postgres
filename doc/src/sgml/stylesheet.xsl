@@ -6,6 +6,7 @@
 
 <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/chunk.xsl"/>
 <xsl:include href="stylesheet-common.xsl" />
+<xsl:include href="stylesheet-speedup-xhtml.xsl" />
 
 
 <!-- Parameters -->
