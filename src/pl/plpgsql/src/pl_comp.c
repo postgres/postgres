@@ -93,7 +93,7 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
-static void add_parameter_name(int itemtype, int itemno, const char *name);
+static void add_parameter_name(PLpgSQL_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLpgSQL_function *function);
 static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
@@ -410,7 +410,7 @@ do_compile(FunctionCallInfo fcinfo,
 				char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
 				PLpgSQL_type *argdtype;
 				PLpgSQL_variable *argvariable;
-				int			argitemtype;
+				PLpgSQL_nsitem_type argitemtype;
 
 				/* Create $n name for variable */
 				snprintf(buf, sizeof(buf), "$%d", i + 1);
@@ -946,7 +946,7 @@ plpgsql_compile_error_callback(void *arg)
  * Add a name for a function parameter to the function's namespace
  */
 static void
-add_parameter_name(int itemtype, int itemno, const char *name)
+add_parameter_name(PLpgSQL_nsitem_type itemtype, int itemno, const char *name)
 {
 	/*
 	 * Before adding the name, check for duplicates.  We need this even though
