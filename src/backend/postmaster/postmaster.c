@@ -404,7 +404,7 @@ static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(void);
 static long PostmasterRandom(void);
-static void RandomSalt(char *md5Salt);
+static void RandomSalt(char *salt, int len);
 static void signal_child(pid_t pid, int signal);
 static bool SignalSomeChildren(int signal, int targets);
 static void TerminateChildren(int signal);
@@ -2342,7 +2342,7 @@ ConnCreate(int serverFd)
 	 * after.  Else the postmaster's random sequence won't get advanced, and
 	 * all backends would end up using the same salt...
 	 */
-	RandomSalt(port->md5Salt);
+	RandomSalt(port->md5Salt, sizeof(port->md5Salt));
 
 	/*
 	 * Allocate GSSAPI specific state struct
@@ -5083,23 +5083,21 @@ StartupPacketTimeoutHandler(void)
  * RandomSalt
  */
 static void
-RandomSalt(char *md5Salt)
+RandomSalt(char *salt, int len)
 {
 	long		rand;
+	int			i;
 
 	/*
 	 * We use % 255, sacrificing one possible byte value, so as to ensure that
 	 * all bits of the random() value participate in the result. While at it,
 	 * add one to avoid generating any null bytes.
 	 */
-	rand = PostmasterRandom();
-	md5Salt[0] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[1] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[2] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[3] = (rand % 255) + 1;
+	for (i = 0; i < len; i++)
+	{
+		rand = PostmasterRandom();
+		salt[i] = (rand % 255) + 1;
+	}
 }
 
 /*
