@@ -2192,14 +2192,19 @@ build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 	/* NB: this is only used to decide whether to apply expand_array */
 	if (typeStruct->typtype == TYPTYPE_BASE)
 	{
-		/* this test should match what get_element_type() checks */
+		/*
+		 * This test should include what get_element_type() checks.  We also
+		 * disallow non-toastable array types (i.e. oidvector and int2vector).
+		 */
 		typ->typisarray = (typeStruct->typlen == -1 &&
-						   OidIsValid(typeStruct->typelem));
+						   OidIsValid(typeStruct->typelem) &&
+						   typeStruct->typstorage != 'p');
 	}
 	else if (typeStruct->typtype == TYPTYPE_DOMAIN)
 	{
 		/* we can short-circuit looking up base types if it's not varlena */
 		typ->typisarray = (typeStruct->typlen == -1 &&
+						   typeStruct->typstorage != 'p' &&
 				 OidIsValid(get_base_element_type(typeStruct->typbasetype)));
 	}
 	else

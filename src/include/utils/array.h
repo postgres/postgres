@@ -36,7 +36,7 @@
  *
  * The OIDVECTOR and INT2VECTOR datatypes are storage-compatible with
  * generic arrays, but they support only one-dimensional arrays with no
- * nulls (and no null bitmap).
+ * nulls (and no null bitmap).  They don't support being toasted, either.
  *
  * There are also some "fixed-length array" datatypes, such as NAME and
  * POINT.  These are simply a sequence of a fixed number of items each
