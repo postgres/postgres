@@ -69,7 +69,7 @@ usage(unsigned short int pager)
 	 * Keep this line count in sync with the number of lines printed below!
 	 * Use "psql --help=options | wc" to count correctly.
 	 */
-	output = PageOutput(60, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(61, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
 	fprintf(output, _("Usage:\n"));
@@ -168,7 +168,7 @@ slashUsage(unsigned short int pager)
 	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
 	 * the USE_READLINE line even in builds without that.
 	 */
-	output = PageOutput(111, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(113, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -325,7 +325,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one more line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(87, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(88, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
