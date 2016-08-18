@@ -65,7 +65,7 @@ usage(unsigned short int pager)
 		}
 	}
 
-	output = PageOutput(59, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(61, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
 	fprintf(output, _("Usage:\n"));
@@ -159,7 +159,7 @@ slashUsage(unsigned short int pager)
 
 	currdb = PQdb(pset.db);
 
-	output = PageOutput(103, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(107, pager ? &(pset.popt.topt) : NULL);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -306,7 +306,7 @@ helpVariables(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(85, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(87, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
