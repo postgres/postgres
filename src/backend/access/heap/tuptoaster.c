@@ -66,7 +66,7 @@ typedef struct toast_compress_header
 #define TOAST_COMPRESS_SET_RAWSIZE(ptr, len) \
 	(((toast_compress_header *) (ptr))->rawsize = (len))
 
-static void toast_delete_datum(Relation rel, Datum value);
+static void toast_delete_datum(Relation rel, Datum value, bool is_speculative);
 static Datum toast_save_datum(Relation rel, Datum value,
 				 struct varlena * oldexternal, int options);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
@@ -459,7 +459,7 @@ toast_datum_size(Datum value)
  * ----------
  */
 void
-toast_delete(Relation rel, HeapTuple oldtup)
+toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
 {
 	TupleDesc	tupleDesc;
 	Form_pg_attribute *att;
@@ -506,7 +506,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 			if (toast_isnull[i])
 				continue;
 			else if (VARATT_IS_EXTERNAL_ONDISK(PointerGetDatum(value)))
-				toast_delete_datum(rel, value);
+				toast_delete_datum(rel, value, is_speculative);
 		}
 	}
 }
@@ -1062,7 +1062,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	if (need_delold)
 		for (i = 0; i < numAttrs; i++)
 			if (toast_delold[i])
-				toast_delete_datum(rel, toast_oldvalues[i]);
+				toast_delete_datum(rel, toast_oldvalues[i], false);
 
 	return result_tuple;
 }
@@ -1654,7 +1654,7 @@ toast_save_datum(Relation rel, Datum value,
  * ----------
  */
 static void
-toast_delete_datum(Relation rel, Datum value)
+toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 {
 	struct varlena *attr = (struct varlena *) DatumGetPointer(value);
 	struct varatt_external toast_pointer;
@@ -1703,7 +1703,10 @@ toast_delete_datum(Relation rel, Datum value)
 		/*
 		 * Have a chunk, delete it
 		 */
-		simple_heap_delete(toastrel, &toasttup->t_self);
+		if (is_speculative)
+			heap_abort_speculative(toastrel, toasttup);
+		else
+			simple_heap_delete(toastrel, &toasttup->t_self);
 	}
 
 	/*
