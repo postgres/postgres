@@ -28,6 +28,7 @@ test: insert-conflict-do-nothing
 test: insert-conflict-do-update
 test: insert-conflict-do-update-2
 test: insert-conflict-do-update-3
+test: insert-conflict-toast
 test: delete-abort-savept
 test: delete-abort-savept-2
 test: aborted-keyrevoke
