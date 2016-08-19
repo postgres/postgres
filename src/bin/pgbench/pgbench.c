@@ -1898,6 +1898,7 @@ top:
 			{
 				case PGRES_COMMAND_OK:
 				case PGRES_TUPLES_OK:
+				case PGRES_EMPTY_QUERY:
 					break;		/* OK */
 				default:
 					fprintf(stderr, "client %d aborted in state %d: %s",
