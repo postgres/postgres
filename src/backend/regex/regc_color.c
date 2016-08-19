@@ -148,7 +148,7 @@ cmtreefree(struct colormap * cm,
 static color					/* previous color */
 setcolor(struct colormap * cm,
 		 chr c,
-		 pcolor co)
+		 color co)
 {
 	uchr		uc = c;
 	int			shift;
@@ -199,7 +199,7 @@ setcolor(struct colormap * cm,
 
 	b = uc & BYTMASK;
 	prev = t->tcolor[b];
-	t->tcolor[b] = (color) co;
+	t->tcolor[b] = co;
 	return prev;
 }
 
@@ -293,7 +293,7 @@ newcolor(struct colormap * cm)
  */
 static void
 freecolor(struct colormap * cm,
-		  pcolor co)
+		  color co)
 {
 	struct colordesc *cd = &cm->cd[co];
 	color		pco,
@@ -393,7 +393,7 @@ subcolor(struct colormap * cm, chr c)
  */
 static color
 newsub(struct colormap * cm,
-	   pcolor co)
+	   color co)
 {
 	color		sco;			/* new subcolor */
 
@@ -658,7 +658,7 @@ static void
 rainbow(struct nfa * nfa,
 		struct colormap * cm,
 		int type,
-		pcolor but,				/* COLORLESS if no exceptions */
+		color but,				/* COLORLESS if no exceptions */
 		struct state * from,
 		struct state * to)
 {

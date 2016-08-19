@@ -603,7 +603,7 @@ static struct sset *
 miss(struct vars * v,
 	 struct dfa * d,
 	 struct sset * css,
-	 pcolor co,
+	 color co,
 	 chr *cp,					/* next chr */
 	 chr *start)				/* where the attempt got started */
 {
@@ -731,7 +731,7 @@ miss(struct vars * v,
 		css->outs[co] = p;
 		css->inchain[co] = p->ins;
 		p->ins.ss = css;
-		p->ins.co = (color) co;
+		p->ins.co = co;
 	}
 	return p;
 }
@@ -743,7 +743,7 @@ static int						/* predicate:  constraint satisfied? */
 lacon(struct vars * v,
 	  struct cnfa * pcnfa,		/* parent cnfa */
 	  chr *cp,
-	  pcolor co)				/* "color" of the lookaround constraint */
+	  color co)					/* "color" of the lookaround constraint */
 {
 	int			n;
 	struct subre *sub;

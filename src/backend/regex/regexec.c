@@ -159,8 +159,8 @@ static struct dfa *newdfa(struct vars *, struct cnfa *, struct colormap *, struc
 static void freedfa(struct dfa *);
 static unsigned hash(unsigned *, int);
 static struct sset *initialize(struct vars *, struct dfa *, chr *);
-static struct sset *miss(struct vars *, struct dfa *, struct sset *, pcolor, chr *, chr *);
-static int	lacon(struct vars *, struct cnfa *, chr *, pcolor);
+static struct sset *miss(struct vars *, struct dfa *, struct sset *, color, chr *, chr *);
+static int	lacon(struct vars *, struct cnfa *, chr *, color);
 static struct sset *getvacant(struct vars *, struct dfa *, chr *, chr *);
 static struct sset *pickss(struct vars *, struct dfa *, chr *, chr *);
 

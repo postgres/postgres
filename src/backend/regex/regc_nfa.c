@@ -275,7 +275,7 @@ destroystate(struct nfa * nfa,
 static void
 newarc(struct nfa * nfa,
 	   int t,
-	   pcolor co,
+	   color co,
 	   struct state * from,
 	   struct state * to)
 {
@@ -321,7 +321,7 @@ newarc(struct nfa * nfa,
 static void
 createarc(struct nfa * nfa,
 		  int t,
-		  pcolor co,
+		  color co,
 		  struct state * from,
 		  struct state * to)
 {
@@ -334,7 +334,7 @@ createarc(struct nfa * nfa,
 	assert(a != NULL);
 
 	a->type = t;
-	a->co = (color) co;
+	a->co = co;
 	a->to = to;
 	a->from = from;
 
@@ -553,7 +553,7 @@ hasnonemptyout(struct state * s)
 static struct arc *
 findarc(struct state * s,
 		int type,
-		pcolor co)
+		color co)
 {
 	struct arc *a;
 
