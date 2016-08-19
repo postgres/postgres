@@ -78,7 +78,6 @@ static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
 static void create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel);
 static void set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 						  RangeTblEntry *rte);
-static bool function_rte_parallel_ok(RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_tablesample_rel_size(PlannerInfo *root, RelOptInfo *rel,
@@ -596,16 +595,14 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 		case RTE_FUNCTION:
 			/* Check for parallel-restricted functions. */
-			if (!function_rte_parallel_ok(rte))
+			if (has_parallel_hazard((Node *) rte->functions, false))
 				return;
 			break;
 
 		case RTE_VALUES:
-
-			/*
-			 * The data for a VALUES clause is stored in the plan tree itself,
-			 * so scanning it in a worker is fine.
-			 */
+			/* Check for parallel-restricted functions. */
+			if (has_parallel_hazard((Node *) rte->values_lists, false))
+				return;
 			break;
 
 		case RTE_CTE:
@@ -641,26 +638,6 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 	/* We have a winner. */
 	rel->consider_parallel = true;
-}
-
-/*
- * Check whether a function RTE is scanning something parallel-restricted.
- */
-static bool
-function_rte_parallel_ok(RangeTblEntry *rte)
-{
-	ListCell   *lc;
-
-	foreach(lc, rte->functions)
-	{
-		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
-
-		Assert(IsA(rtfunc, RangeTblFunction));
-		if (has_parallel_hazard(rtfunc->funcexpr, false))
-			return false;
-	}
-
-	return true;
 }
 
 /*
