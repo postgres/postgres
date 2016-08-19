@@ -210,10 +210,10 @@ static pg_wchar pg_wc_toupper(pg_wchar c);
 static pg_wchar pg_wc_tolower(pg_wchar c);
 
 /* === regc_locale.c === */
-static celt element(struct vars *, const chr *, const chr *);
-static struct cvec *range(struct vars *, celt, celt, int);
-static int	before(celt, celt);
-static struct cvec *eclass(struct vars *, celt, int);
+static chr	element(struct vars *, const chr *, const chr *);
+static struct cvec *range(struct vars *, chr, chr, int);
+static int	before(chr, chr);
+static struct cvec *eclass(struct vars *, chr, int);
 static struct cvec *cclass(struct vars *, const chr *, const chr *, int);
 static struct cvec *allcases(struct vars *, chr);
 static int	cmp(const chr *, const chr *, size_t);
@@ -1424,8 +1424,8 @@ brackpart(struct vars * v,
 		  struct state * lp,
 		  struct state * rp)
 {
-	celt		startc;
-	celt		endc;
+	chr			startc;
+	chr			endc;
 	struct cvec *cv;
 	const chr  *startp;
 	const chr  *endp;

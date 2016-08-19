@@ -58,15 +58,13 @@
 /* internal character type and related */
 typedef pg_wchar chr;			/* the type itself */
 typedef unsigned uchr;			/* unsigned type that will hold a chr */
-typedef int celt;				/* type to hold chr, or NOCELT */
 
-#define NOCELT	(-1)			/* celt value which is not valid chr */
 #define CHR(c)	((unsigned char) (c))	/* turn char literal into chr literal */
 #define DIGITVAL(c) ((c)-'0')	/* turn chr digit into its value */
 #define CHRBITS 32				/* bits in a chr; must not use sizeof */
 #define CHR_MIN 0x00000000		/* smallest and largest chr; the value */
 #define CHR_MAX 0x7ffffffe		/* CHR_MAX-CHR_MIN+1 must fit in an int, and
-								 * CHR_MAX+1 must fit in both chr and celt */
+								 * CHR_MAX+1 must fit in a chr variable */
 
 /*
  * Check if a chr value is in range.  Ideally we'd just write this as

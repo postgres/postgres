@@ -361,9 +361,9 @@ static const struct cname
 
 
 /*
- * element - map collating-element name to celt
+ * element - map collating-element name to chr
  */
-static celt
+static chr
 element(struct vars * v,		/* context */
 		const chr *startp,		/* points to start of name */
 		const chr *endp)		/* points just past end of name */
@@ -401,13 +401,13 @@ element(struct vars * v,		/* context */
  */
 static struct cvec *
 range(struct vars * v,			/* context */
-	  celt a,					/* range start */
-	  celt b,					/* range end, might equal a */
+	  chr a,					/* range start */
+	  chr b,					/* range end, might equal a */
 	  int cases)				/* case-independent? */
 {
 	int			nchrs;
 	struct cvec *cv;
-	celt		c,
+	chr			c,
 				cc;
 
 	if (a != b && !before(a, b))
@@ -444,7 +444,7 @@ range(struct vars * v,			/* context */
 
 	for (c = a; c <= b; c++)
 	{
-		cc = pg_wc_tolower((chr) c);
+		cc = pg_wc_tolower(c);
 		if (cc != c &&
 			(before(cc, a) || before(b, cc)))
 		{
@@ -455,7 +455,7 @@ range(struct vars * v,			/* context */
 			}
 			addchr(cv, cc);
 		}
-		cc = pg_wc_toupper((chr) c);
+		cc = pg_wc_toupper(c);
 		if (cc != c &&
 			(before(cc, a) || before(b, cc)))
 		{
@@ -477,10 +477,10 @@ range(struct vars * v,			/* context */
 }
 
 /*
- * before - is celt x before celt y, for purposes of range legality?
+ * before - is chr x before chr y, for purposes of range legality?
  */
 static int						/* predicate */
-before(celt x, celt y)
+before(chr x, chr y)
 {
 	if (x < y)
 		return 1;
@@ -493,7 +493,7 @@ before(celt x, celt y)
  */
 static struct cvec *
 eclass(struct vars * v,			/* context */
-	   celt c,					/* Collating element representing the
+	   chr c,					/* Collating element representing the
 								 * equivalence class. */
 	   int cases)				/* all cases? */
 {
@@ -503,12 +503,12 @@ eclass(struct vars * v,			/* context */
 	if ((v->cflags & REG_FAKE) && c == 'x')
 	{
 		cv = getcvec(v, 4, 0);
-		addchr(cv, (chr) 'x');
-		addchr(cv, (chr) 'y');
+		addchr(cv, CHR('x'));
+		addchr(cv, CHR('y'));
 		if (cases)
 		{
-			addchr(cv, (chr) 'X');
-			addchr(cv, (chr) 'Y');
+			addchr(cv, CHR('X'));
+			addchr(cv, CHR('Y'));
 		}
 		return cv;
 	}
@@ -518,7 +518,7 @@ eclass(struct vars * v,			/* context */
 		return allcases(v, c);
 	cv = getcvec(v, 1, 0);
 	assert(cv != NULL);
-	addchr(cv, (chr) c);
+	addchr(cv, c);
 	return cv;
 }
 
@@ -673,15 +673,14 @@ cclass(struct vars * v,			/* context */
  */
 static struct cvec *
 allcases(struct vars * v,		/* context */
-		 chr pc)				/* character to get case equivs of */
+		 chr c)					/* character to get case equivs of */
 {
 	struct cvec *cv;
-	chr			c = (chr) pc;
 	chr			lc,
 				uc;
 
-	lc = pg_wc_tolower((chr) c);
-	uc = pg_wc_toupper((chr) c);
+	lc = pg_wc_tolower(c);
+	uc = pg_wc_toupper(c);
 
 	cv = getcvec(v, 2, 0);
 	addchr(cv, lc);

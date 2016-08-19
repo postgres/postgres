@@ -870,7 +870,7 @@ lexescape(struct vars * v)
 			if (v->now == save || ((int) c > 0 && (int) c <= v->nsubexp))
 			{
 				NOTE(REG_UBACKREF);
-				RETV(BACKREF, (chr) c);
+				RETV(BACKREF, c);
 			}
 			/* oops, doesn't look like it's a backref after all... */
 			v->now = save;
@@ -986,10 +986,8 @@ lexdigits(struct vars * v,
  */
 static int						/* 1 normal, 0 failure */
 brenext(struct vars * v,
-		chr pc)
+		chr c)
 {
-	chr			c = (chr) pc;
-
 	switch (c)
 	{
 		case CHR('*'):
@@ -1153,7 +1151,7 @@ chrnamed(struct vars * v,
 		 const chr *endp,		/* just past end of name */
 		 chr lastresort)		/* what to return if name lookup fails */
 {
-	celt		c;
+	chr			c;
 	int			errsave;
 	int			e;
 	struct cvec *cv;
@@ -1165,10 +1163,10 @@ chrnamed(struct vars * v,
 	v->err = errsave;
 
 	if (e != 0)
-		return (chr) lastresort;
+		return lastresort;
 
 	cv = range(v, c, c, 0);
 	if (cv->nchrs == 0)
-		return (chr) lastresort;
+		return lastresort;
 	return cv->chrs[0];
 }

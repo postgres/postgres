@@ -78,7 +78,7 @@ addchr(struct cvec * cv,		/* character vector */
 	   chr c)					/* character to add */
 {
 	assert(cv->nchrs < cv->chrspace);
-	cv->chrs[cv->nchrs++] = (chr) c;
+	cv->chrs[cv->nchrs++] = c;
 }
 
 /*
@@ -90,8 +90,8 @@ addrange(struct cvec * cv,		/* character vector */
 		 chr to)				/* last character of range */
 {
 	assert(cv->nranges < cv->rangespace);
-	cv->ranges[cv->nranges * 2] = (chr) from;
-	cv->ranges[cv->nranges * 2 + 1] = (chr) to;
+	cv->ranges[cv->nranges * 2] = from;
+	cv->ranges[cv->nranges * 2 + 1] = to;
 	cv->nranges++;
 }
 
