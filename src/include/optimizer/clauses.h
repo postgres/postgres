@@ -61,7 +61,8 @@ extern bool contain_subplans(Node *clause);
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);
 extern bool contain_volatile_functions_not_nextval(Node *clause);
-extern bool has_parallel_hazard(Node *node, bool allow_restricted);
+extern char max_parallel_hazard(Query *parse);
+extern bool is_parallel_safe(PlannerInfo *root, Node *node);
 extern bool contain_nonstrict_functions(Node *clause);
 extern bool contain_leaked_vars(Node *clause);
 

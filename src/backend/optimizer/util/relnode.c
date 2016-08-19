@@ -513,8 +513,8 @@ build_join_rel(PlannerInfo *root,
 	 * here.
 	 */
 	if (inner_rel->consider_parallel && outer_rel->consider_parallel &&
-		!has_parallel_hazard((Node *) restrictlist, false) &&
-		!has_parallel_hazard((Node *) joinrel->reltarget->exprs, false))
+		is_parallel_safe(root, (Node *) restrictlist) &&
+		is_parallel_safe(root, (Node *) joinrel->reltarget->exprs))
 		joinrel->consider_parallel = true;
 
 	/*

@@ -71,14 +71,13 @@ query_planner(PlannerInfo *root, List *tlist,
 
 		/*
 		 * If query allows parallelism in general, check whether the quals are
-		 * parallel-restricted.  There's currently no real benefit to setting
-		 * this flag correctly because we can't yet reference subplans from
-		 * parallel workers.  But that might change someday, so set this
-		 * correctly anyway.
+		 * parallel-restricted.  (We need not check final_rel->reltarget
+		 * because it's empty at this point.  Anything parallel-restricted in
+		 * the query tlist will be dealt with later.)
 		 */
 		if (root->glob->parallelModeOK)
 			final_rel->consider_parallel =
-				!has_parallel_hazard(parse->jointree->quals, false);
+				is_parallel_safe(root, parse->jointree->quals);
 
 		/* The only path for it is a trivial Result path */
 		add_path(final_rel, (Path *)

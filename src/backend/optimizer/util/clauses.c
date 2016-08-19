@@ -91,8 +91,9 @@ typedef struct
 
 typedef struct
 {
-	bool		allow_restricted;
-} has_parallel_hazard_arg;
+	char		max_hazard;		/* worst proparallel hazard found so far */
+	char		max_interesting;	/* worst proparallel hazard of interest */
+} max_parallel_hazard_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool get_agg_clause_costs_walker(Node *node,
@@ -103,8 +104,8 @@ static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
-static bool has_parallel_hazard_walker(Node *node,
-						   has_parallel_hazard_arg *context);
+static bool max_parallel_hazard_walker(Node *node,
+						   max_parallel_hazard_context *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_context_dependent_node(Node *clause);
 static bool contain_context_dependent_node_walker(Node *node, int *flags);
@@ -1100,46 +1101,98 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 								  context);
 }
 
+
 /*****************************************************************************
  *		Check queries for parallel unsafe and/or restricted constructs
  *****************************************************************************/
 
 /*
- * Check whether a node tree contains parallel hazards.  This is used both on
- * the entire query tree, to see whether the query can be parallelized at all
- * (with allow_restricted = true), and also to evaluate whether a particular
- * expression is safe to run within a parallel worker (with allow_restricted =
- * false).  We could separate these concerns into two different functions, but
- * there's enough overlap that it doesn't seem worthwhile.
+ * max_parallel_hazard
+ *		Find the worst parallel-hazard level in the given query
+ *
+ * Returns the worst function hazard property (the earliest in this list:
+ * PROPARALLEL_UNSAFE, PROPARALLEL_RESTRICTED, PROPARALLEL_SAFE) that can
+ * be found in the given parsetree.  We use this to find out whether the query
+ * can be parallelized at all.  The caller will also save the result in
+ * PlannerGlobal so as to short-circuit checks of portions of the querytree
+ * later, in the common case where everything is SAFE.
+ */
+char
+max_parallel_hazard(Query *parse)
+{
+	max_parallel_hazard_context context;
+
+	context.max_hazard = PROPARALLEL_SAFE;
+	context.max_interesting = PROPARALLEL_UNSAFE;
+	(void) max_parallel_hazard_walker((Node *) parse, &context);
+	return context.max_hazard;
+}
+
+/*
+ * is_parallel_safe
+ *		Detect whether the given expr contains only parallel-safe functions
+ *
+ * root->glob->maxParallelHazard must previously have been set to the
+ * result of max_parallel_hazard() on the whole query.
  */
 bool
-has_parallel_hazard(Node *node, bool allow_restricted)
+is_parallel_safe(PlannerInfo *root, Node *node)
 {
-	has_parallel_hazard_arg context;
+	max_parallel_hazard_context context;
 
-	context.allow_restricted = allow_restricted;
-	return has_parallel_hazard_walker(node, &context);
+	/* If max_parallel_hazard found nothing unsafe, we don't need to look */
+	if (root->glob->maxParallelHazard == PROPARALLEL_SAFE)
+		return true;
+	/* Else use max_parallel_hazard's search logic, but stop on RESTRICTED */
+	context.max_hazard = PROPARALLEL_SAFE;
+	context.max_interesting = PROPARALLEL_RESTRICTED;
+	return !max_parallel_hazard_walker(node, &context);
+}
+
+/* core logic for all parallel-hazard checks */
+static bool
+max_parallel_hazard_test(char proparallel, max_parallel_hazard_context *context)
+{
+	switch (proparallel)
+	{
+		case PROPARALLEL_SAFE:
+			/* nothing to see here, move along */
+			break;
+		case PROPARALLEL_RESTRICTED:
+			/* increase max_hazard to RESTRICTED */
+			Assert(context->max_hazard != PROPARALLEL_UNSAFE);
+			context->max_hazard = proparallel;
+			/* done if we are not expecting any unsafe functions */
+			if (context->max_interesting == proparallel)
+				return true;
+			break;
+		case PROPARALLEL_UNSAFE:
+			context->max_hazard = proparallel;
+			/* we're always done at the first unsafe construct */
+			return true;
+		default:
+			elog(ERROR, "unrecognized proparallel value \"%c\"", proparallel);
+			break;
+	}
+	return false;
+}
+
+/* check_functions_in_node callback */
+static bool
+max_parallel_hazard_checker(Oid func_id, void *context)
+{
+	return max_parallel_hazard_test(func_parallel(func_id),
+									(max_parallel_hazard_context *) context);
 }
 
 static bool
-has_parallel_hazard_checker(Oid func_id, void *context)
-{
-	char		proparallel = func_parallel(func_id);
-
-	if (((has_parallel_hazard_arg *) context)->allow_restricted)
-		return (proparallel == PROPARALLEL_UNSAFE);
-	else
-		return (proparallel != PROPARALLEL_SAFE);
-}
-
-static bool
-has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
+max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 {
 	if (node == NULL)
 		return false;
 
 	/* Check for hazardous functions in node itself */
-	if (check_functions_in_node(node, has_parallel_hazard_checker,
+	if (check_functions_in_node(node, max_parallel_hazard_checker,
 								context))
 		return true;
 
@@ -1156,7 +1209,7 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	 */
 	if (IsA(node, CoerceToDomain))
 	{
-		if (!context->allow_restricted)
+		if (max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
 			return true;
 	}
 
@@ -1167,7 +1220,7 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) node;
 
-		return has_parallel_hazard_walker((Node *) rinfo->clause, context);
+		return max_parallel_hazard_walker((Node *) rinfo->clause, context);
 	}
 
 	/*
@@ -1176,13 +1229,13 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	 * not worry about examining their contents; if they are unsafe, we would
 	 * have found that out while examining the whole tree before reduction of
 	 * sublinks to subplans.  (Really we should not see SubLink during a
-	 * not-allow_restricted scan, but if we do, return true.)
+	 * max_interesting == restricted scan, but if we do, return true.)
 	 */
 	else if (IsA(node, SubLink) ||
 			 IsA(node, SubPlan) ||
 			 IsA(node, AlternativeSubPlan))
 	{
-		if (!context->allow_restricted)
+		if (max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
 			return true;
 	}
 
@@ -1192,7 +1245,7 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	 */
 	else if (IsA(node, Param))
 	{
-		if (!context->allow_restricted)
+		if (max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
 			return true;
 	}
 
@@ -1207,19 +1260,23 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 
 		/* SELECT FOR UPDATE/SHARE must be treated as unsafe */
 		if (query->rowMarks != NULL)
+		{
+			context->max_hazard = PROPARALLEL_UNSAFE;
 			return true;
+		}
 
 		/* Recurse into subselects */
 		return query_tree_walker(query,
-								 has_parallel_hazard_walker,
+								 max_parallel_hazard_walker,
 								 context, 0);
 	}
 
 	/* Recurse to check arguments */
 	return expression_tree_walker(node,
-								  has_parallel_hazard_walker,
+								  max_parallel_hazard_walker,
 								  context);
 }
+
 
 /*****************************************************************************
  *		Check clauses for nonstrict functions

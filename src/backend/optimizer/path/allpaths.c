@@ -78,7 +78,6 @@ static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
 static void create_plain_partial_paths(PlannerInfo *root, RelOptInfo *rel);
 static void set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 						  RangeTblEntry *rte);
-static bool function_rte_parallel_ok(RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_tablesample_rel_size(PlannerInfo *root, RelOptInfo *rel,
@@ -542,8 +541,7 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 				if (proparallel != PROPARALLEL_SAFE)
 					return;
-				if (has_parallel_hazard((Node *) rte->tablesample->args,
-										false))
+				if (!is_parallel_safe(root, (Node *) rte->tablesample->args))
 					return;
 			}
 
@@ -596,7 +594,7 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 		case RTE_FUNCTION:
 			/* Check for parallel-restricted functions. */
-			if (!function_rte_parallel_ok(rte))
+			if (!is_parallel_safe(root, (Node *) rte->functions))
 				return;
 			break;
 
@@ -629,38 +627,18 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 	 * outer join clauses work correctly.  It would likely break equivalence
 	 * classes, too.
 	 */
-	if (has_parallel_hazard((Node *) rel->baserestrictinfo, false))
+	if (!is_parallel_safe(root, (Node *) rel->baserestrictinfo))
 		return;
 
 	/*
 	 * Likewise, if the relation's outputs are not parallel-safe, give up.
 	 * (Usually, they're just Vars, but sometimes they're not.)
 	 */
-	if (has_parallel_hazard((Node *) rel->reltarget->exprs, false))
+	if (!is_parallel_safe(root, (Node *) rel->reltarget->exprs))
 		return;
 
 	/* We have a winner. */
 	rel->consider_parallel = true;
-}
-
-/*
- * Check whether a function RTE is scanning something parallel-restricted.
- */
-static bool
-function_rte_parallel_ok(RangeTblEntry *rte)
-{
-	ListCell   *lc;
-
-	foreach(lc, rte->functions)
-	{
-		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
-
-		Assert(IsA(rtfunc, RangeTblFunction));
-		if (has_parallel_hazard(rtfunc->funcexpr, false))
-			return false;
-	}
-
-	return true;
 }
 
 /*

@@ -2178,7 +2178,7 @@ create_projection_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
 		subpath->parallel_safe &&
-		!has_parallel_hazard((Node *) target->exprs, false);
+		is_parallel_safe(root, (Node *) target->exprs);
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Projection does not change the sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
@@ -2285,7 +2285,7 @@ apply_projection_to_path(PlannerInfo *root,
 	 * target expressions, then we can't.
 	 */
 	if (IsA(path, GatherPath) &&
-		!has_parallel_hazard((Node *) target->exprs, false))
+		is_parallel_safe(root, (Node *) target->exprs))
 	{
 		GatherPath *gpath = (GatherPath *) path;
 
@@ -2306,7 +2306,7 @@ apply_projection_to_path(PlannerInfo *root,
 								   target);
 	}
 	else if (path->parallel_safe &&
-			 has_parallel_hazard((Node *) target->exprs, false))
+			 !is_parallel_safe(root, (Node *) target->exprs))
 	{
 		/*
 		 * We're inserting a parallel-restricted target list into a path
