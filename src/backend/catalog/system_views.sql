@@ -642,9 +642,9 @@ CREATE VIEW pg_stat_activity AS
             S.backend_xid,
             s.backend_xmin,
             S.query
-    FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
-    WHERE S.datid = D.oid AND
-            S.usesysid = U.oid;
+    FROM pg_stat_get_activity(NULL) AS S
+        LEFT JOIN pg_database AS D ON (S.datid = D.oid)
+        LEFT JOIN pg_authid AS U ON (S.usesysid = U.oid);
 
 CREATE VIEW pg_stat_replication AS
     SELECT
@@ -664,10 +664,9 @@ CREATE VIEW pg_stat_replication AS
             W.replay_location,
             W.sync_priority,
             W.sync_state
-    FROM pg_stat_get_activity(NULL) AS S, pg_authid U,
-            pg_stat_get_wal_senders() AS W
-    WHERE S.usesysid = U.oid AND
-            S.pid = W.pid;
+    FROM pg_stat_get_activity(NULL) AS S
+        JOIN pg_stat_get_wal_senders() AS W ON (S.pid = W.pid)
+        LEFT JOIN pg_authid AS U ON (S.usesysid = U.oid);
 
 CREATE VIEW pg_stat_wal_receiver AS
     SELECT
@@ -813,7 +812,7 @@ CREATE VIEW pg_stat_progress_vacuum AS
 		S.param4 AS heap_blks_vacuumed, S.param5 AS index_vacuum_count,
 		S.param6 AS max_dead_tuples, S.param7 AS num_dead_tuples
     FROM pg_stat_get_progress_info('VACUUM') AS S
-		 JOIN pg_database D ON S.datid = D.oid;
+		LEFT JOIN pg_database D ON S.datid = D.oid;
 
 CREATE VIEW pg_user_mappings AS
     SELECT
@@ -832,11 +831,10 @@ CREATE VIEW pg_user_mappings AS
             NULL
         END AS umoptions
     FROM pg_user_mapping U
-         LEFT JOIN pg_authid A ON (A.oid = U.umuser) JOIN
-        pg_foreign_server S ON (U.umserver = S.oid);
+        JOIN pg_foreign_server S ON (U.umserver = S.oid)
+        LEFT JOIN pg_authid A ON (A.oid = U.umuser);
 
 REVOKE ALL on pg_user_mapping FROM public;
-
 
 CREATE VIEW pg_replication_origin_status AS
     SELECT *

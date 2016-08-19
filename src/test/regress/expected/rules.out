@@ -1664,10 +1664,9 @@ pg_stat_activity| SELECT s.datid,
     s.backend_xid,
     s.backend_xmin,
     s.query
-   FROM pg_database d,
-    pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, ssl, sslversion, sslcipher, sslbits, sslcompression, sslclientdn),
-    pg_authid u
-  WHERE ((s.datid = d.oid) AND (s.usesysid = u.oid));
+   FROM ((pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, ssl, sslversion, sslcipher, sslbits, sslcompression, sslclientdn)
+     LEFT JOIN pg_database d ON ((s.datid = d.oid)))
+     LEFT JOIN pg_authid u ON ((s.usesysid = u.oid)));
 pg_stat_all_indexes| SELECT c.oid AS relid,
     i.oid AS indexrelid,
     n.nspname AS schemaname,
@@ -1776,7 +1775,7 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param6 AS max_dead_tuples,
     s.param7 AS num_dead_tuples
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10)
-     JOIN pg_database d ON ((s.datid = d.oid)));
+     LEFT JOIN pg_database d ON ((s.datid = d.oid)));
 pg_stat_replication| SELECT s.pid,
     s.usesysid,
     u.rolname AS usename,
@@ -1793,10 +1792,9 @@ pg_stat_replication| SELECT s.pid,
     w.replay_location,
     w.sync_priority,
     w.sync_state
-   FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, ssl, sslversion, sslcipher, sslbits, sslcompression, sslclientdn),
-    pg_authid u,
-    pg_stat_get_wal_senders() w(pid, state, sent_location, write_location, flush_location, replay_location, sync_priority, sync_state)
-  WHERE ((s.usesysid = u.oid) AND (s.pid = w.pid));
+   FROM ((pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, wait_event_type, wait_event, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin, ssl, sslversion, sslcipher, sslbits, sslcompression, sslclientdn)
+     JOIN pg_stat_get_wal_senders() w(pid, state, sent_location, write_location, flush_location, replay_location, sync_priority, sync_state) ON ((s.pid = w.pid)))
+     LEFT JOIN pg_authid u ON ((s.usesysid = u.oid)));
 pg_stat_ssl| SELECT s.pid,
     s.ssl,
     s.sslversion AS version,
@@ -2155,8 +2153,8 @@ pg_user_mappings| SELECT u.oid AS umid,
             ELSE NULL::text[]
         END AS umoptions
    FROM ((pg_user_mapping u
-     LEFT JOIN pg_authid a ON ((a.oid = u.umuser)))
-     JOIN pg_foreign_server s ON ((u.umserver = s.oid)));
+     JOIN pg_foreign_server s ON ((u.umserver = s.oid)))
+     LEFT JOIN pg_authid a ON ((a.oid = u.umuser)));
 pg_views| SELECT n.nspname AS schemaname,
     c.relname AS viewname,
     pg_get_userbyid(c.relowner) AS viewowner,
