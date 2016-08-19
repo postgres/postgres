@@ -1922,7 +1922,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
-   The simplest way to prevent spoofing for <literal>local</>
+   On way to prevent spoofing of <literal>local</>
    connections is to use a Unix domain socket directory (<xref
    linkend="guc-unix-socket-directories">) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
@@ -1932,6 +1932,13 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    startup create a symbolic link <filename>/tmp/.s.PGSQL.5432</> that points
    to the relocated socket file.  You also might need to modify your
    <filename>/tmp</> cleanup script to prevent removal of the symbolic link.
+  </para>
+
+  <para>
+   Another option for <literal>local</> connections is for clients to use
+   <link linkend="libpq-connect-requirepeer"><literal>requirepeer</></>
+   to specify the required owner of the server process connected to
+   the socket.
   </para>
 
   <para>
