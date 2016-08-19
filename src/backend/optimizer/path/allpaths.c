@@ -599,11 +599,9 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 			break;
 
 		case RTE_VALUES:
-
-			/*
-			 * The data for a VALUES clause is stored in the plan tree itself,
-			 * so scanning it in a worker is fine.
-			 */
+			/* Check for parallel-restricted functions. */
+			if (!is_parallel_safe(root, (Node *) rte->values_lists))
+				return;
 			break;
 
 		case RTE_CTE:
