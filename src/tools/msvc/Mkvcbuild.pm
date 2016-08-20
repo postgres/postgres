@@ -50,7 +50,7 @@ my @contrib_excludes = (
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
-my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql');
+my @frontend_uselibpq = ('pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
 my @frontend_uselibpgport = (
 	'pg_archivecleanup', 'pg_test_fsync',
 	'pg_test_timing',    'pg_upgrade',
