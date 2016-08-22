@@ -26,6 +26,7 @@
 #endif
 
 #include "common/string.h"
+#include "fe_utils/string_utils.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
@@ -1393,69 +1394,6 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 }
 
 /*
- * Escape a parameter value so that it can be used as part of a libpq
- * connection string, e.g. in:
- *
- * application_name=<value>
- *
- * The returned string is malloc'd. Return NULL on out-of-memory.
- */
-static char *
-escapeConnectionParameter(const char *src)
-{
-	bool		need_quotes = false;
-	bool		need_escaping = false;
-	const char *p;
-	char	   *dstbuf;
-	char	   *dst;
-
-	/*
-	 * First check if quoting is needed. Any quote (') or backslash (\)
-	 * characters need to be escaped. Parameters are separated by whitespace,
-	 * so any string containing whitespace characters need to be quoted. An
-	 * empty string is represented by ''.
-	 */
-	if (strchr(src, '\'') != NULL || strchr(src, '\\') != NULL)
-		need_escaping = true;
-
-	for (p = src; *p; p++)
-	{
-		if (isspace((unsigned char) *p))
-		{
-			need_quotes = true;
-			break;
-		}
-	}
-
-	if (*src == '\0')
-		return pg_strdup("''");
-
-	if (!need_quotes && !need_escaping)
-		return pg_strdup(src);	/* no quoting or escaping needed */
-
-	/*
-	 * Allocate a buffer large enough for the worst case that all the source
-	 * characters need to be escaped, plus quotes.
-	 */
-	dstbuf = pg_malloc(strlen(src) * 2 + 2 + 1);
-
-	dst = dstbuf;
-	if (need_quotes)
-		*(dst++) = '\'';
-	for (; *src; src++)
-	{
-		if (*src == '\'' || *src == '\\')
-			*(dst++) = '\\';
-		*(dst++) = *src;
-	}
-	if (need_quotes)
-		*(dst++) = '\'';
-	*dst = '\0';
-
-	return dstbuf;
-}
-
-/*
  * Escape a string so that it can be used as a value in a key-value pair
  * a configuration file.
  */
@@ -1523,9 +1461,8 @@ GenerateRecoveryConf(PGconn *conn)
 		 * Write "keyword=value" pieces, the value string is escaped and/or
 		 * quoted if necessary.
 		 */
-		escaped = escapeConnectionParameter(option->val);
-		appendPQExpBuffer(&conninfo_buf, "%s=%s", option->keyword, escaped);
-		free(escaped);
+		appendPQExpBuffer(&conninfo_buf, "%s=", option->keyword);
+		appendConnStrVal(&conninfo_buf, option->val);
 	}
 
 	/*
