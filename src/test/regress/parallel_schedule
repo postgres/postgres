@@ -92,7 +92,10 @@ test: brin gin gist spgist privileges init_privs security_label collate matview 
 test: alter_generic alter_operator misc psql async dbsize misc_functions
 
 # rules cannot run concurrently with any test that creates a view
-test: rules psql_crosstab select_parallel amutils
+test: rules psql_crosstab amutils
+
+# run by itself so it can run parallel workers
+test: select_parallel
 
 # ----------
 # Another group of parallel tests

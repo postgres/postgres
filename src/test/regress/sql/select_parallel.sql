@@ -44,13 +44,7 @@ set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
 
-do $$begin
-  -- Provoke error, possibly in worker.  If this error happens to occur in
-  -- the worker, there will be a CONTEXT line which must be hidden.
-  perform stringu1::int2 from tenk1 where unique1 = 1;
-  exception
-	when others then
-		raise 'SQLERRM: %', sqlerrm;
-end$$;
+-- provoke error in worker
+select stringu1::int2 from tenk1 where unique1 = 1;
 
 rollback;
