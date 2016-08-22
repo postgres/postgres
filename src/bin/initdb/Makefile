@@ -30,7 +30,7 @@ OBJS=	initdb.o findtimezone.o localtime.o encnames.o $(WIN32RES)
 
 all: initdb
 
-initdb: $(OBJS) | submake-libpgport
+initdb: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 # We used to pull in all of libpq to get encnames.c, but that
