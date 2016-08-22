@@ -1922,7 +1922,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
-   On way to prevent spoofing of <literal>local</>
+   One way to prevent spoofing of <literal>local</>
    connections is to use a Unix domain socket directory (<xref
    linkend="guc-unix-socket-directories">) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
