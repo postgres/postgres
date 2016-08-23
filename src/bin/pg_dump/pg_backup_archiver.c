@@ -171,6 +171,7 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 	dopt->lockWaitTimeout = ropt->lockWaitTimeout;
 	dopt->include_everything = ropt->include_everything;
 	dopt->enable_row_security = ropt->enable_row_security;
+	dopt->sequence_data = ropt->sequence_data;
 
 	return dopt;
 }
@@ -2855,7 +2856,10 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 
 	/* Mask it if we only want schema */
 	if (ropt->schemaOnly)
-		res = res & REQ_SCHEMA;
+	{
+		if (!(ropt->sequence_data && strcmp(te->desc, "SEQUENCE SET") == 0))
+			res = res & REQ_SCHEMA;
+	}
 
 	/* Mask it if we only want data */
 	if (ropt->dataOnly)

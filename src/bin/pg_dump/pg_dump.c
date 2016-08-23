@@ -216,7 +216,7 @@ static void addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 						DumpableObject *boundaryObjs);
 
 static void getDomainConstraints(Archive *fout, TypeInfo *tyinfo);
-static void getTableData(DumpOptions *dopt, TableInfo *tblinfo, int numTables, bool oids);
+static void getTableData(DumpOptions *dopt, TableInfo *tblinfo, int numTables, bool oids, char relkind);
 static void makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo, bool oids);
 static void buildMatViewRefreshDependencies(Archive *fout);
 static void getTableDataFKConstraints(void);
@@ -546,6 +546,12 @@ main(int argc, char **argv)
 	if (dopt.column_inserts)
 		dopt.dump_inserts = 1;
 
+	/* Binary upgrade mode implies dumping sequence data even in schema-only
+	 * mode.  This is not exposed as a separate option, but kept separate
+	 * internally for clarity. */
+	if (dopt.binary_upgrade)
+		dopt.sequence_data = 1;
+
 	if (dopt.dataOnly && dopt.schemaOnly)
 	{
 		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
@@ -722,11 +728,14 @@ main(int argc, char **argv)
 
 	if (!dopt.schemaOnly)
 	{
-		getTableData(&dopt, tblinfo, numTables, dopt.oids);
+		getTableData(&dopt, tblinfo, numTables, dopt.oids, 0);
 		buildMatViewRefreshDependencies(fout);
 		if (dopt.dataOnly)
 			getTableDataFKConstraints();
 	}
+
+	if (dopt.schemaOnly && dopt.sequence_data)
+		getTableData(&dopt, tblinfo, numTables, dopt.oids, RELKIND_SEQUENCE);
 
 	if (dopt.outputBlobs)
 		getBlobs(fout);
@@ -806,6 +815,7 @@ main(int argc, char **argv)
 	ropt->lockWaitTimeout = dopt.lockWaitTimeout;
 	ropt->include_everything = dopt.include_everything;
 	ropt->enable_row_security = dopt.enable_row_security;
+	ropt->sequence_data = dopt.sequence_data;
 
 	if (compressLevel == -1)
 		ropt->compression = 0;
@@ -2039,13 +2049,14 @@ refreshMatViewData(Archive *fout, TableDataInfo *tdinfo)
  *	  set up dumpable objects representing the contents of tables
  */
 static void
-getTableData(DumpOptions *dopt, TableInfo *tblinfo, int numTables, bool oids)
+getTableData(DumpOptions *dopt, TableInfo *tblinfo, int numTables, bool oids, char relkind)
 {
 	int			i;
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (tblinfo[i].dobj.dump & DUMP_COMPONENT_DATA)
+		if (tblinfo[i].dobj.dump & DUMP_COMPONENT_DATA &&
+			(!relkind || tblinfo[i].relkind == relkind))
 			makeTableDataInfo(dopt, &(tblinfo[i]), oids);
 	}
 }
