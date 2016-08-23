@@ -33,7 +33,7 @@
  * constraint violations.  It's theoretically possible that a backend sees a
  * tuple that was speculatively inserted by another backend, but before it has
  * started waiting on the token, the other backend completes its insertion,
- * and then then performs 2^32 unrelated insertions.  And after all that, the
+ * and then performs 2^32 unrelated insertions.  And after all that, the
  * first backend finally calls SpeculativeInsertionLockAcquire(), with the
  * intention of waiting for the first insertion to complete, but ends up
  * waiting for the latest unrelated insertion instead.  Even then, nothing
