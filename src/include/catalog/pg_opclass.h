@@ -113,6 +113,7 @@ DATA(insert (	405		float8_ops			PGNSP PGUID 1971  701 t 0 ));
 DATA(insert (	403		inet_ops			PGNSP PGUID 1974  869 t 0 ));
 DATA(insert (	405		inet_ops			PGNSP PGUID 1975  869 t 0 ));
 DATA(insert (	783		inet_ops			PGNSP PGUID 3550  869 f 0 ));
+DATA(insert (	4000	inet_ops			PGNSP PGUID 3794  869 t 0 ));
 DATA(insert OID = 1979 ( 403	int2_ops	PGNSP PGUID 1976   21 t 0 ));
 #define INT2_BTREE_OPS_OID 1979
 DATA(insert (	405		int2_ops			PGNSP PGUID 1977   21 t 0 ));

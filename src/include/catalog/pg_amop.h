@@ -863,6 +863,21 @@ DATA(insert (	3550	869 869 25 s	932 783 0 ));
 DATA(insert (	3550	869 869 26 s	933 783 0 ));
 DATA(insert (	3550	869 869 27 s	934 783 0 ));
 
+/*
+ * SP-GiST inet_ops
+ */
+DATA(insert (	3794	869 869 3 s		3552 4000 0 ));
+DATA(insert (	3794	869 869 18 s	1201 4000 0 ));
+DATA(insert (	3794	869 869 19 s	1202 4000 0 ));
+DATA(insert (	3794	869 869 20 s	1203 4000 0 ));
+DATA(insert (	3794	869 869 21 s	1204 4000 0 ));
+DATA(insert (	3794	869 869 22 s	1205 4000 0 ));
+DATA(insert (	3794	869 869 23 s	1206 4000 0 ));
+DATA(insert (	3794	869 869 24 s	931 4000 0 ));
+DATA(insert (	3794	869 869 25 s	932 4000 0 ));
+DATA(insert (	3794	869 869 26 s	933 4000 0 ));
+DATA(insert (	3794	869 869 27 s	934 4000 0 ));
+
 /* BRIN opclasses */
 /* minmax bytea */
 DATA(insert (	4064	 17   17 1 s	  1957	  3580 0 ));

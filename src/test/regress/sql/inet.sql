@@ -93,6 +93,29 @@ SELECT i FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i;
 SET enable_seqscan TO on;
 DROP INDEX inet_idx2;
 
+-- check that spgist index works correctly
+CREATE INDEX inet_idx3 ON inet_tbl using spgist (i);
+SET enable_seqscan TO off;
+SELECT * FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i <<= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i && '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i >>= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i >> '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i < '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i <= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i = '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i >= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i > '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i <> '192.168.1.0/24'::cidr ORDER BY i;
+
+-- test index-only scans
+EXPLAIN (COSTS OFF)
+SELECT i FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i;
+SELECT i FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i;
+
+SET enable_seqscan TO on;
+DROP INDEX inet_idx3;
+
 -- simple tests of inet boolean and arithmetic operators
 SELECT i, ~i AS "~i" FROM inet_tbl;
 SELECT i, c, i & c AS "and" FROM inet_tbl;

@@ -2212,6 +2212,18 @@ DESCR("GiST support");
 DATA(insert OID = 3559 (  inet_gist_same		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "869 869 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_same _null_ _null_ _null_ ));
 DESCR("GiST support");
 
+/* SP-GiST support for inet and cidr */
+DATA(insert OID = 3795 (  inet_spg_config		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_spg_config _null_ _null_ _null_ ));
+DESCR("SP-GiST support");
+DATA(insert OID = 3796 (  inet_spg_choose		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_spg_choose _null_ _null_ _null_ ));
+DESCR("SP-GiST support");
+DATA(insert OID = 3797 (  inet_spg_picksplit	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_spg_picksplit _null_ _null_ _null_ ));
+DESCR("SP-GiST support");
+DATA(insert OID = 3798 (  inet_spg_inner_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_spg_inner_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support");
+DATA(insert OID = 3799 (  inet_spg_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "2281 2281" _null_ _null_ _null_ _null_ _null_ inet_spg_leaf_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support");
+
 /* Selectivity estimation for inet and cidr */
 DATA(insert OID = 3560 (  networksel		   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ _null_	networksel _null_ _null_ _null_ ));
 DESCR("restriction selectivity for network operators");
