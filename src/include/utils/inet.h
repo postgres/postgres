@@ -28,10 +28,12 @@ typedef struct
 } inet_struct;
 
 /*
+ * We use these values for the "family" field.
+ *
  * Referencing all of the non-AF_INET types to AF_INET lets us work on
  * machines which may not have the appropriate address family (like
  * inet6 addresses when AF_INET6 isn't present) but doesn't cause a
- * dump/reload requirement.  Existing databases used AF_INET for the family
+ * dump/reload requirement.  Pre-7.4 databases used AF_INET for the family
  * type on disk.
  */
 #define PGSQL_AF_INET	(AF_INET + 0)
@@ -117,6 +119,7 @@ typedef struct macaddr
 /*
  * Support functions in network.c
  */
+extern inet *cidr_set_masklen_internal(const inet *src, int bits);
 extern int	bitncmp(const unsigned char *l, const unsigned char *r, int n);
 extern int	bitncommon(const unsigned char *l, const unsigned char *r, int n);
 
