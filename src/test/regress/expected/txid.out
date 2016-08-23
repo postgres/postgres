@@ -238,3 +238,19 @@ SELECT txid_snapshot '1:9223372036854775808:3';
 ERROR:  invalid input syntax for type txid_snapshot: "1:9223372036854775808:3"
 LINE 1: SELECT txid_snapshot '1:9223372036854775808:3';
                              ^
+-- test txid_current_if_assigned
+BEGIN;
+SELECT txid_current_if_assigned() IS NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT txid_current() \gset
+SELECT txid_current_if_assigned() IS NOT DISTINCT FROM BIGINT :'txid_current';
+ ?column? 
+----------
+ t
+(1 row)
+
+COMMIT;

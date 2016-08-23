@@ -4904,6 +4904,8 @@ DATA(insert OID = 2942 (  txid_snapshot_send		PGNSP PGUID 12 1  0 0 0 f f f f t 
 DESCR("I/O");
 DATA(insert OID = 2943 (  txid_current				PGNSP PGUID 12 1  0 0 0 f f f f t f s u 0 0 20 "" _null_ _null_ _null_ _null_ _null_ txid_current _null_ _null_ _null_ ));
 DESCR("get current transaction ID");
+DATA(insert OID = 3348 (  txid_current_if_assigned	PGNSP PGUID 12 1  0 0 0 f f f f t f s u 0 0 20 "" _null_ _null_ _null_ _null_ _null_ txid_current_if_assigned _null_ _null_ _null_ ));
+DESCR("get current transaction ID");
 DATA(insert OID = 2944 (  txid_current_snapshot		PGNSP PGUID 12 1  0 0 0 f f f f t f s s 0 0 2970 "" _null_ _null_ _null_ _null_ _null_ txid_current_snapshot _null_ _null_ _null_ ));
 DESCR("get current snapshot");
 DATA(insert OID = 2945 (  txid_snapshot_xmin		PGNSP PGUID 12 1  0 0 0 f f f f t f i s 1 0 20 "2970" _null_ _null_ _null_ _null_ _null_ txid_snapshot_xmin _null_ _null_ _null_ ));

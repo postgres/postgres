@@ -17120,6 +17120,10 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </indexterm>
 
    <indexterm>
+    <primary>txid_current_if_assigned</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>txid_current_snapshot</primary>
    </indexterm>
 
@@ -17158,6 +17162,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
        <entry><literal><function>txid_current()</function></literal></entry>
        <entry><type>bigint</type></entry>
        <entry>get current transaction ID, assigning a new one if the current transaction does not have one</entry>
+      </row>
+      <row>
+       <entry><literal><function>txid_current_if_assigned()</function></literal></entry>
+       <entry><type>bigint</type></entry>
+       <entry>same as <function>txid_current()</function> but returns null instead of assigning an xid if none is already assigned</entry>
       </row>
       <row>
        <entry><literal><function>txid_current_snapshot()</function></literal></entry>

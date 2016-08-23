@@ -1221,6 +1221,7 @@ extern Datum txid_snapshot_out(PG_FUNCTION_ARGS);
 extern Datum txid_snapshot_recv(PG_FUNCTION_ARGS);
 extern Datum txid_snapshot_send(PG_FUNCTION_ARGS);
 extern Datum txid_current(PG_FUNCTION_ARGS);
+extern Datum txid_current_if_assigned(PG_FUNCTION_ARGS);
 extern Datum txid_current_snapshot(PG_FUNCTION_ARGS);
 extern Datum txid_snapshot_xmin(PG_FUNCTION_ARGS);
 extern Datum txid_snapshot_xmax(PG_FUNCTION_ARGS);

@@ -377,6 +377,27 @@ txid_current(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Same as txid_current() but doesn't assign a new xid if there isn't one
+ * yet.
+ */
+Datum
+txid_current_if_assigned(PG_FUNCTION_ARGS)
+{
+	txid		val;
+	TxidEpoch	state;
+	TransactionId	topxid = GetTopTransactionIdIfAny();
+
+	if (topxid == InvalidTransactionId)
+		PG_RETURN_NULL();
+
+	load_xid_epoch(&state);
+
+	val = convert_xid(topxid, &state);
+
+	PG_RETURN_INT64(val);
+}
+
+/*
  * txid_current_snapshot() returns txid_snapshot
  *
  *		Return current snapshot in TXID format

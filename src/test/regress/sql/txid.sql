@@ -52,3 +52,10 @@ select txid_visible_in_snapshot('1000100010001015', '1000100010001000:1000100010
 -- test 64bit overflow
 SELECT txid_snapshot '1:9223372036854775807:3';
 SELECT txid_snapshot '1:9223372036854775808:3';
+
+-- test txid_current_if_assigned
+BEGIN;
+SELECT txid_current_if_assigned() IS NULL;
+SELECT txid_current() \gset
+SELECT txid_current_if_assigned() IS NOT DISTINCT FROM BIGINT :'txid_current';
+COMMIT;
