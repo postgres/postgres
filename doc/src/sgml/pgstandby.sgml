@@ -363,7 +363,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
    The <literal>copy</> command on Windows sets the final file size
    before the file is completely copied, which would ordinarily confuse
    <application>pg_standby</application>.  Therefore
-   <application>pg_standby</application> waits <literal>sleeptime</>
+   <application>pg_standby</application> waits <replaceable>sleeptime</>
    seconds once it sees the proper file size.  GNUWin32's <literal>cp</>
    sets the file size only after the file copy is complete.
   </para>

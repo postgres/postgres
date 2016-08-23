@@ -153,7 +153,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Timeline from which to read log records. The default is to use the
-        value in <literal>startseg</>, if that is specified; otherwise, the
+        value in <replaceable>startseg</>, if that is specified; otherwise, the
         default is 1.
        </para>
       </listitem>

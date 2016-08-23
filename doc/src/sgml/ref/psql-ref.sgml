@@ -830,7 +830,7 @@ testdb=&gt;
         <para>
         Establishes a new connection to a <productname>PostgreSQL</>
         server.  The connection parameters to use can be specified either
-        using a positional syntax, or using <literal>conninfo</> connection
+        using a positional syntax, or using <replaceable>conninfo</> connection
         strings as detailed in <xref linkend="libpq-connstring">.
         </para>
 
@@ -838,7 +838,7 @@ testdb=&gt;
         Where the command omits database name, user, host, or port, the new
         connection can reuse values from the previous connection.  By default,
         values from the previous connection are reused except when processing
-        a <literal>conninfo</> string.  Passing a first argument
+        a <replaceable>conninfo</> string.  Passing a first argument
         of <literal>-reuse-previous=on</>
         or <literal>-reuse-previous=off</literal> overrides that default.
         When the command neither specifies nor reuses a particular parameter,

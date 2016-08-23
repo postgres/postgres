@@ -433,7 +433,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--progress=</option><replaceable>sec</></term>
       <listitem>
        <para>
-        Show progress report every <literal>sec</> seconds.  The report
+        Show progress report every <replaceable>sec</> seconds.  The report
         includes the time since the beginning of the run, the tps since the
         last report, and the transaction latency average and standard
         deviation since the last report.  Under throttling (<option>-R</>),
