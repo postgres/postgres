@@ -47,14 +47,15 @@ static const int dbObjectTypePriority[] =
 	11,							/* DO_CONVERSION */
 	18,							/* DO_TABLE */
 	20,							/* DO_ATTRDEF */
-	27,							/* DO_INDEX */
-	28,							/* DO_RULE */
-	29,							/* DO_TRIGGER */
-	26,							/* DO_CONSTRAINT */
-	30,							/* DO_FK_CONSTRAINT */
+	28,							/* DO_INDEX */
+	29,							/* DO_RULE */
+	30,							/* DO_TRIGGER */
+	27,							/* DO_CONSTRAINT */
+	31,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	10,							/* DO_CAST */
 	23,							/* DO_TABLE_DATA */
+	24,							/* DO_SEQUENCE_SET */
 	19,							/* DO_DUMMY_TYPE */
 	12,							/* DO_TSPARSER */
 	14,							/* DO_TSDICT */
@@ -62,15 +63,15 @@ static const int dbObjectTypePriority[] =
 	15,							/* DO_TSCONFIG */
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
-	31,							/* DO_DEFAULT_ACL */
+	32,							/* DO_DEFAULT_ACL */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
-	24,							/* DO_BLOB_DATA */
+	25,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
-	25,							/* DO_POST_DATA_BOUNDARY */
-	32,							/* DO_EVENT_TRIGGER */
-	33,							/* DO_REFRESH_MATVIEW */
-	34							/* DO_POLICY */
+	26,							/* DO_POST_DATA_BOUNDARY */
+	33,							/* DO_EVENT_TRIGGER */
+	34,							/* DO_REFRESH_MATVIEW */
+	35							/* DO_POLICY */
 };
 
 static DumpId preDataBoundId;
@@ -1343,6 +1344,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_TABLE_DATA:
 			snprintf(buf, bufsize,
 					 "TABLE DATA %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_SEQUENCE_SET:
+			snprintf(buf, bufsize,
+					 "SEQUENCE SET %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_DUMMY_TYPE:
