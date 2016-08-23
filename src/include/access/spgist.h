@@ -90,10 +90,13 @@ typedef struct spgChooseOut
 		}			addNode;
 		struct					/* results for spgSplitTuple */
 		{
-			/* Info to form new inner tuple with one node */
+			/* Info to form new upper-level inner tuple with one child tuple */
 			bool		prefixHasPrefix;		/* tuple should have a prefix? */
 			Datum		prefixPrefixDatum;		/* if so, its value */
-			Datum		nodeLabel;		/* node's label */
+			int			prefixNNodes;	/* number of nodes */
+			Datum	   *prefixNodeLabels;		/* their labels (or NULL for
+												 * no labels) */
+			int			childNodeN;		/* which node gets child tuple */
 
 			/* Info to form new lower-level inner tuple with all old nodes */
 			bool		postfixHasPrefix;		/* tuple should have a prefix? */
@@ -134,7 +137,8 @@ typedef struct spgInnerConsistentIn
 
 	Datum		reconstructedValue;		/* value reconstructed at parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
-	MemoryContext traversalMemoryContext;
+	MemoryContext traversalMemoryContext;		/* put new traverse values
+												 * here */
 	int			level;			/* current level (counting from zero) */
 	bool		returnData;		/* original data must be returned? */
 
@@ -163,8 +167,8 @@ typedef struct spgLeafConsistentIn
 	ScanKey		scankeys;		/* array of operators and comparison values */
 	int			nkeys;			/* length of array */
 
-	void	   *traversalValue; /* opclass-specific traverse value */
 	Datum		reconstructedValue;		/* value reconstructed at parent */
+	void	   *traversalValue; /* opclass-specific traverse value */
 	int			level;			/* current level (counting from zero) */
 	bool		returnData;		/* original data must be returned? */
 

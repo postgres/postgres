@@ -114,7 +114,7 @@
      </row>
      <row>
       <entry><literal>box_ops</></entry>
-      <entry>box</entry>
+      <entry><type>box</></entry>
       <entry>
        <literal>&lt;&lt;</>
        <literal>&amp;&lt;</>
@@ -183,11 +183,14 @@
   Inner tuples are more complex, since they are branching points in the
   search tree.  Each inner tuple contains a set of one or more
   <firstterm>nodes</>, which represent groups of similar leaf values.
-  A node contains a downlink that leads to either another, lower-level inner
-  tuple, or a short list of leaf tuples that all lie on the same index page.
-  Each node has a <firstterm>label</> that describes it; for example,
+  A node contains a downlink that leads either to another, lower-level inner
+  tuple, or to a short list of leaf tuples that all lie on the same index page.
+  Each node normally has a <firstterm>label</> that describes it; for example,
   in a radix tree the node label could be the next character of the string
-  value.  Optionally, an inner tuple can have a <firstterm>prefix</> value
+  value.  (Alternatively, an operator class can omit the node labels, if it
+  works with a fixed set of nodes for all inner tuples;
+  see <xref linkend="spgist-null-labels">.)
+  Optionally, an inner tuple can have a <firstterm>prefix</> value
   that describes all its members.  In a radix tree this could be the common
   prefix of the represented strings.  The prefix value is not necessarily
   really a prefix, but can be any data needed by the operator class;
@@ -202,7 +205,8 @@
   tuple, so the <acronym>SP-GiST</acronym> core provides the possibility for
   operator classes to manage level counting while descending the tree.
   There is also support for incrementally reconstructing the represented
-  value when that is needed.
+  value when that is needed, and for passing down additional data (called
+  <firstterm>traverse values</>) during a tree descent.
  </para>
 
  <note>
@@ -343,10 +347,13 @@ typedef struct spgChooseOut
         }           addNode;
         struct                  /* results for spgSplitTuple */
         {
-            /* Info to form new inner tuple with one node */
+            /* Info to form new upper-level inner tuple with one child tuple */
             bool        prefixHasPrefix;    /* tuple should have a prefix? */
             Datum       prefixPrefixDatum;  /* if so, its value */
-            Datum       nodeLabel;          /* node's label */
+            int         prefixNNodes;       /* number of nodes */
+            Datum      *prefixNodeLabels;   /* their labels (or NULL for
+                                             * no labels) */
+            int         childNodeN;         /* which node gets child tuple */
 
             /* Info to form new lower-level inner tuple with all old nodes */
             bool        postfixHasPrefix;   /* tuple should have a prefix? */
@@ -416,29 +423,33 @@ typedef struct spgChooseOut
        set <structfield>resultType</> to <literal>spgSplitTuple</>.
        This action moves all the existing nodes into a new lower-level
        inner tuple, and replaces the existing inner tuple with a tuple
-       having a single node that links to the new lower-level inner tuple.
+       having a single downlink pointing to the new lower-level inner tuple.
        Set <structfield>prefixHasPrefix</> to indicate whether the new
        upper tuple should have a prefix, and if so set
        <structfield>prefixPrefixDatum</> to the prefix value.  This new
        prefix value must be sufficiently less restrictive than the original
-       to accept the new value to be indexed, and it should be no longer
-       than the original prefix.
-       Set <structfield>nodeLabel</> to the label to be used for the
-       node that will point to the new lower-level inner tuple.
+       to accept the new value to be indexed.
+       Set <structfield>prefixNNodes</> to the number of nodes needed in the
+       new tuple, and set <structfield>prefixNodeLabels</> to a palloc'd array
+       holding their labels, or to NULL if node labels are not required.
+       Note that the total size of the new upper tuple must be no more
+       than the total size of the tuple it is replacing; this constrains
+       the lengths of the new prefix and new labels.
+       Set <structfield>childNodeN</> to the index (from zero) of the node
+       that will downlink to the new lower-level inner tuple.
        Set <structfield>postfixHasPrefix</> to indicate whether the new
        lower-level inner tuple should have a prefix, and if so set
        <structfield>postfixPrefixDatum</> to the prefix value.  The
-       combination of these two prefixes and the additional label must
-       have the same meaning as the original prefix, because there is
-       no opportunity to alter the node labels that are moved to the new
-       lower-level tuple, nor to change any child index entries.
+       combination of these two prefixes and the downlink node's label
+       (if any) must have the same meaning as the original prefix, because
+       there is no opportunity to alter the node labels that are moved to
+       the new lower-level tuple, nor to change any child index entries.
        After the node has been split, the <function>choose</function>
        function will be called again with the replacement inner tuple.
-       That call will usually result in an <literal>spgAddNode</> result,
-       since presumably the node label added in the split step will not
-       match the new value; so after that, there will be a third call
-       that finally returns <literal>spgMatchNode</> and allows the
-       insertion to descend to the leaf level.
+       That call may return an <literal>spgAddNode</> result, if no suitable
+       node was created by the <literal>spgSplitTuple</> action.  Eventually
+       <function>choose</function> must return <literal>spgMatchNode</> to
+       allow the insertion to descend to the next level.
       </para>
      </listitem>
     </varlistentry>
@@ -492,9 +503,8 @@ typedef struct spgPickSplitOut
        <structfield>prefixDatum</> to the prefix value.
        Set <structfield>nNodes</> to indicate the number of nodes that
        the new inner tuple will contain, and
-       set <structfield>nodeLabels</> to an array of their label values.
-       (If the nodes do not require labels, set <structfield>nodeLabels</>
-       to NULL; see <xref linkend="spgist-null-labels"> for details.)
+       set <structfield>nodeLabels</> to an array of their label values,
+       or to NULL if node labels are not required.
        Set <structfield>mapTuplesToNodes</> to an array that gives the index
        (from zero) of the node that each leaf tuple should be assigned to.
        Set <structfield>leafTupleDatums</> to an array of the values to
@@ -561,7 +571,7 @@ typedef struct spgInnerConsistentIn
 
     Datum       reconstructedValue;     /* value reconstructed at parent */
     void       *traversalValue; /* opclass-specific traverse value */
-    MemoryContext traversalMemoryContext;
+    MemoryContext traversalMemoryContext;   /* put new traverse values here */
     int         level;          /* current level (counting from zero) */
     bool        returnData;     /* original data must be returned? */
 
@@ -580,7 +590,6 @@ typedef struct spgInnerConsistentOut
     int        *levelAdds;      /* increment level by this much for each */
     Datum      *reconstructedValues;    /* associated reconstructed values */
     void      **traversalValues;        /* opclass-specific traverse values */
-
 } spgInnerConsistentOut;
 </programlisting>
 
@@ -599,6 +608,11 @@ typedef struct spgInnerConsistentOut
        parent tuple; it is <literal>(Datum) 0</> at the root level or if the
        <function>inner_consistent</> function did not provide a value at the
        parent level.
+       <structfield>traversalValue</> is a pointer to any traverse data
+       passed down from the previous call of <function>inner_consistent</>
+       on the parent index tuple, or NULL at the root level.
+       <structfield>traversalMemoryContext</> is the memory context in which
+       to store output traverse values (see below).
        <structfield>level</> is the current inner tuple's level, starting at
        zero for the root level.
        <structfield>returnData</> is <literal>true</> if reconstructed data is
@@ -615,9 +629,6 @@ typedef struct spgInnerConsistentOut
        inner tuple, and
        <structfield>nodeLabels</> is an array of their label values, or
        NULL if the nodes do not have labels.
-       <structfield>traversalValue</> is a pointer to data that
-       <function>inner_consistent</> gets when called on child nodes from an
-       outer call of <function>inner_consistent</> on parent nodes.
       </para>
 
       <para>
@@ -633,17 +644,19 @@ typedef struct spgInnerConsistentOut
        <structfield>reconstructedValues</> to an array of the values
        reconstructed for each child node to be visited; otherwise, leave
        <structfield>reconstructedValues</> as NULL.
+       If it is desired to pass down additional out-of-band information
+       (<quote>traverse values</>) to lower levels of the tree search,
+       set <structfield>traversalValues</> to an array of the appropriate
+       traverse values, one for each child node to be visited; otherwise,
+       leave <structfield>traversalValues</> as NULL.
        Note that the <function>inner_consistent</> function is
        responsible for palloc'ing the
-       <structfield>nodeNumbers</>, <structfield>levelAdds</> and
-       <structfield>reconstructedValues</> arrays.
-       Sometimes accumulating some information is needed, while
-       descending from parent to child node was happened. In this case
-       <structfield>traversalValues</> array keeps pointers to
-       specific data you need to accumulate for every child node.
-       Memory for <structfield>traversalValues</> should be allocated in
-       the default context, but each element of it should be allocated in
-       <structfield>traversalMemoryContext</>.
+       <structfield>nodeNumbers</>, <structfield>levelAdds</>,
+       <structfield>reconstructedValues</>, and
+       <structfield>traversalValues</> arrays in the current memory context.
+       However, any output traverse values pointed to by
+       the <structfield>traversalValues</> array should be allocated
+       in <structfield>traversalMemoryContext</>.
       </para>
      </listitem>
     </varlistentry>
@@ -670,8 +683,8 @@ typedef struct spgLeafConsistentIn
     ScanKey     scankeys;       /* array of operators and comparison values */
     int         nkeys;          /* length of array */
 
-    void       *traversalValue; /* opclass-specific traverse value */
     Datum       reconstructedValue;     /* value reconstructed at parent */
+    void       *traversalValue; /* opclass-specific traverse value */
     int         level;          /* current level (counting from zero) */
     bool        returnData;     /* original data must be returned? */
 
@@ -700,6 +713,9 @@ typedef struct spgLeafConsistentOut
        parent tuple; it is <literal>(Datum) 0</> at the root level or if the
        <function>inner_consistent</> function did not provide a value at the
        parent level.
+       <structfield>traversalValue</> is a pointer to any traverse data
+       passed down from the previous call of <function>inner_consistent</>
+       on the parent index tuple, or NULL at the root level.
        <structfield>level</> is the current leaf tuple's level, starting at
        zero for the root level.
        <structfield>returnData</> is <literal>true</> if reconstructed data is
@@ -797,7 +813,10 @@ typedef struct spgLeafConsistentOut
    point.  In such a case the code typically works with the nodes by
    number, and there is no need for explicit node labels.  To suppress
    node labels (and thereby save some space), the <function>picksplit</>
-   function can return NULL for the <structfield>nodeLabels</> array.
+   function can return NULL for the <structfield>nodeLabels</> array,
+   and likewise the <function>choose</> function can return NULL for
+   the <structfield>prefixNodeLabels</> array during
+   a <literal>spgSplitTuple</> action.
    This will in turn result in <structfield>nodeLabels</> being NULL during
    subsequent calls to <function>choose</> and <function>inner_consistent</>.
    In principle, node labels could be used for some inner tuples and omitted
@@ -807,10 +826,7 @@ typedef struct spgLeafConsistentOut
   <para>
    When working with an inner tuple having unlabeled nodes, it is an error
    for <function>choose</> to return <literal>spgAddNode</>, since the set
-   of nodes is supposed to be fixed in such cases.  Also, there is no
-   provision for generating an unlabeled node in <literal>spgSplitTuple</>
-   actions, since it is expected that an <literal>spgAddNode</> action will
-   be needed as well.
+   of nodes is supposed to be fixed in such cases.
   </para>
  </sect2>
 
@@ -859,11 +875,10 @@ typedef struct spgLeafConsistentOut
 
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
-  several examples of index operator classes for
-  <acronym>SP-GiST</acronym>.  The core system currently provides radix
-  trees over text columns and two types of trees over points: quad-tree and
-  k-d tree.  Look into <filename>src/backend/access/spgist/</> to see the
-  code.
+  several examples of index operator classes for <acronym>SP-GiST</acronym>,
+  as described in <xref linkend="spgist-builtin-opclasses-table">.  Look
+  into <filename>src/backend/access/spgist/</>
+  and <filename>src/backend/utils/adt/</> to see the code.
  </para>
 
 </sect1>

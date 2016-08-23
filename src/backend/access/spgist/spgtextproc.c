@@ -212,8 +212,13 @@ spg_text_choose(PG_FUNCTION_ARGS)
 				out->result.splitTuple.prefixPrefixDatum =
 					formTextDatum(prefixStr, commonLen);
 			}
-			out->result.splitTuple.nodeLabel =
+			out->result.splitTuple.prefixNNodes = 1;
+			out->result.splitTuple.prefixNodeLabels =
+				(Datum *) palloc(sizeof(Datum));
+			out->result.splitTuple.prefixNodeLabels[0] =
 				Int16GetDatum(*(unsigned char *) (prefixStr + commonLen));
+
+			out->result.splitTuple.childNodeN = 0;
 
 			if (prefixSize - commonLen == 1)
 			{
@@ -280,7 +285,10 @@ spg_text_choose(PG_FUNCTION_ARGS)
 		out->resultType = spgSplitTuple;
 		out->result.splitTuple.prefixHasPrefix = in->hasPrefix;
 		out->result.splitTuple.prefixPrefixDatum = in->prefixDatum;
-		out->result.splitTuple.nodeLabel = Int16GetDatum(-2);
+		out->result.splitTuple.prefixNNodes = 1;
+		out->result.splitTuple.prefixNodeLabels = (Datum *) palloc(sizeof(Datum));
+		out->result.splitTuple.prefixNodeLabels[0] = Int16GetDatum(-2);
+		out->result.splitTuple.childNodeN = 0;
 		out->result.splitTuple.postfixHasPrefix = false;
 	}
 	else
