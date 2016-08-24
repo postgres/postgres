@@ -86,6 +86,16 @@ select
   (select max((select i.unique2 from tenk1 i where i.unique1 = o.unique1)))
 from tenk1 o;
 
+-- Test handling of Params within aggregate arguments in hashed aggregation.
+-- Per bug report from Jeevan Chalke.
+explain (verbose, costs off)
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+
 --
 -- test for bitwise integer aggregates
 --

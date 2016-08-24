@@ -632,6 +632,8 @@ typedef struct Agg
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
+	Bitmapset  *aggParams;		/* IDs of Params used in Aggref inputs */
+	/* Note: planner provides numGroups & aggParams only in AGG_HASHED case */
 } Agg;
 
 /* ----------------

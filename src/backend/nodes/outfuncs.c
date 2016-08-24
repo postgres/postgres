@@ -644,6 +644,7 @@ _outAgg(StringInfo str, const Agg *node)
 		appendStringInfo(str, " %u", node->grpOperators[i]);
 
 	WRITE_LONG_FIELD(numGroups);
+	WRITE_BITMAPSET_FIELD(aggParams);
 }
 
 static void

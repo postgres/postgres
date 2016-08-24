@@ -4152,6 +4152,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
 	node->numGroups = numGroups;
+	node->aggParams = NULL;		/* SS_finalize_plan() will fill this */
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_agg(&agg_path, root,

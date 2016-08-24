@@ -305,6 +305,38 @@ from tenk1 o;
  9999
 (1 row)
 
+-- Test handling of Params within aggregate arguments in hashed aggregation.
+-- Per bug report from Jeevan Chalke.
+explain (verbose, costs off)
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Function Scan on pg_catalog.generate_series x
+   Output: (SubPlan 1)
+   Function Call: generate_series(1, 3)
+   SubPlan 1
+     ->  Sort
+           Output: (sum(($0 + y.y))), y.y
+           Sort Key: (sum(($0 + y.y)))
+           ->  HashAggregate
+                 Output: sum((x.x + y.y)), y.y
+                 ->  Function Scan on pg_catalog.generate_series y
+                       Output: y.y
+                       Function Call: generate_series(1, 3)
+(12 rows)
+
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+  array  
+---------
+ {2,3,4}
+ {3,4,5}
+ {4,5,6}
+(3 rows)
+
 --
 -- test for bitwise integer aggregates
 --

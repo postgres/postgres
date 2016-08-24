@@ -1909,13 +1909,14 @@ void
 ExecReScanAgg(AggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+	Agg		   *aggnode = (Agg *) node->ss.ps.plan;
 	int			aggno;
 
 	node->agg_done = false;
 
 	node->ss.ps.ps_TupFromTlist = false;
 
-	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
+	if (aggnode->aggstrategy == AGG_HASHED)
 	{
 		/*
 		 * In the hashed case, if we haven't yet built the hash table then we
@@ -1927,11 +1928,13 @@ ExecReScanAgg(AggState *node)
 			return;
 
 		/*
-		 * If we do have the hash table and the subplan does not have any
-		 * parameter changes, then we can just rescan the existing hash table;
-		 * no need to build it again.
+		 * If we do have the hash table, and the subplan does not have any
+		 * parameter changes, and none of our own parameter changes affect
+		 * input expressions of the aggregated functions, then we can just
+		 * rescan the existing hash table; no need to build it again.
 		 */
-		if (node->ss.ps.lefttree->chgParam == NULL)
+		if (node->ss.ps.lefttree->chgParam == NULL &&
+			!bms_overlap(node->ss.ps.chgParam, aggnode->aggParams))
 		{
 			ResetTupleHashIterator(node->hashtable, &node->hashiter);
 			return;
@@ -1968,7 +1971,7 @@ ExecReScanAgg(AggState *node)
 	 */
 	MemoryContextResetAndDeleteChildren(node->aggcontext);
 
-	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
+	if (aggnode->aggstrategy == AGG_HASHED)
 	{
 		/* Rebuild an empty hash table */
 		build_hash_table(node);
