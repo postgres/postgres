@@ -23,13 +23,13 @@ OBJS=receivelog.o streamutil.o $(WIN32RES)
 
 all: pg_basebackup pg_receivexlog pg_recvlogical
 
-pg_basebackup: pg_basebackup.o $(OBJS) | submake-libpq submake-libpgport
+pg_basebackup: pg_basebackup.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) pg_basebackup.o $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-pg_receivexlog: pg_receivexlog.o $(OBJS) | submake-libpq submake-libpgport
+pg_receivexlog: pg_receivexlog.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) pg_receivexlog.o $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-pg_recvlogical: pg_recvlogical.o $(OBJS) | submake-libpq submake-libpgport
+pg_recvlogical: pg_recvlogical.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) pg_recvlogical.o $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs
