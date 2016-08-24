@@ -14,7 +14,6 @@
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-#include "catalog/catalog.h"
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
