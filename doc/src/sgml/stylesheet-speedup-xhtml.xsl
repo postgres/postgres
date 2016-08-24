@@ -122,7 +122,8 @@
 
       <a>
         <xsl:apply-templates select="." mode="class.attribute"/>
-        <xsl:call-template name="id.attribute"/>
+<!--    Optimization for pgsql-docs: this call adds nothing but fails with docbook-xsl 1.76 -->
+<!--    <xsl:call-template name="id.attribute"/> -->
         <xsl:attribute name="href">
           <xsl:call-template name="href.target">
             <xsl:with-param name="object" select="$target[1]"/>
@@ -146,7 +147,8 @@
 
       <a>
         <xsl:apply-templates select="." mode="class.attribute"/>
-        <xsl:call-template name="id.attribute"/>
+<!--    Optimization for pgsql-docs: this call adds nothing but fails with docbook-xsl 1.76 -->
+<!--    <xsl:call-template name="id.attribute"/> -->
         <xsl:attribute name="href">
           <xsl:call-template name="href.target">
             <xsl:with-param name="object" select="$target[1]"/>
