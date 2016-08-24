@@ -82,6 +82,7 @@ static Bitmapset *finalize_plan(PlannerInfo *root,
 			  Bitmapset *valid_params,
 			  Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
+static bool finalize_agg_primnode(Node *node, finalize_primnode_context *context);
 
 
 /*
@@ -2652,6 +2653,29 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 										 locally_added_param);
 			break;
 
+		case T_Agg:
+			{
+				Agg		   *agg = (Agg *) plan;
+
+				/*
+				 * AGG_HASHED plans need to know which Params are referenced
+				 * in aggregate calls.  Do a separate scan to identify them.
+				 */
+				if (agg->aggstrategy == AGG_HASHED)
+				{
+					finalize_primnode_context aggcontext;
+
+					aggcontext.root = root;
+					aggcontext.paramids = NULL;
+					finalize_agg_primnode((Node *) agg->plan.targetlist,
+										  &aggcontext);
+					finalize_agg_primnode((Node *) agg->plan.qual,
+										  &aggcontext);
+					agg->aggParams = aggcontext.paramids;
+				}
+			}
+			break;
+
 		case T_WindowAgg:
 			finalize_primnode(((WindowAgg *) plan)->startOffset,
 							  &context);
@@ -2660,7 +2684,6 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			break;
 
 		case T_Hash:
-		case T_Agg:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
@@ -2808,6 +2831,29 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 		return false;			/* no more to do here */
 	}
 	return expression_tree_walker(node, finalize_primnode,
+								  (void *) context);
+}
+
+/*
+ * finalize_agg_primnode: find all Aggref nodes in the given expression tree,
+ * and add IDs of all PARAM_EXEC params appearing within their aggregated
+ * arguments to the result set.
+ */
+static bool
+finalize_agg_primnode(Node *node, finalize_primnode_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *agg = (Aggref *) node;
+
+		/* we should not consider the direct arguments, if any */
+		finalize_primnode((Node *) agg->args, context);
+		finalize_primnode((Node *) agg->aggfilter, context);
+		return false;			/* there can't be any Aggrefs below here */
+	}
+	return expression_tree_walker(node, finalize_agg_primnode,
 								  (void *) context);
 }
 
