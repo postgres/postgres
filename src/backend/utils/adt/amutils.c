@@ -115,7 +115,7 @@ test_indoption(Oid relid, int attno, bool guard,
 			   bool *res)
 {
 	HeapTuple	tuple;
-	Form_pg_index rd_index;
+	Form_pg_index rd_index PG_USED_FOR_ASSERTS_ONLY;
 	Datum		datum;
 	bool		isnull;
 	int2vector *indoption;
