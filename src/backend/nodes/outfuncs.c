@@ -683,7 +683,7 @@ _outAgg(StringInfo str, const Agg *node)
 		appendStringInfo(str, " %u", node->grpOperators[i]);
 
 	WRITE_LONG_FIELD(numGroups);
-
+	WRITE_BITMAPSET_FIELD(aggParams);
 	WRITE_NODE_FIELD(groupingSets);
 	WRITE_NODE_FIELD(chain);
 }
