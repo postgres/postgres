@@ -484,7 +484,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	fpinfo = (PgFdwRelationInfo *) palloc0(sizeof(PgFdwRelationInfo));
 	baserel->fdw_private = (void *) fpinfo;
 
-	/* Base foreign tables need to be push down always. */
+	/* Base foreign tables need to be pushed down always. */
 	fpinfo->pushdown_safe = true;
 
 	/* Look up foreign-table catalog info. */
@@ -2637,7 +2637,9 @@ estimate_path_cost_size(PlannerInfo *root,
 			 * rows.
 			 */
 
-			/* Calculate the cost of clauses pushed down the foreign server */
+			/*
+			 * Calculate the cost of clauses pushed down to the foreign server
+			 */
 			cost_qual_eval(&remote_conds_cost, fpinfo->remote_conds, root);
 			/* Calculate the cost of applying join clauses */
 			cost_qual_eval(&join_cost, fpinfo->joinclauses, root);

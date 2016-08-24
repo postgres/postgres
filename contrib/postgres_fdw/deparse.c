@@ -939,7 +939,7 @@ deparseTargetList(StringInfo buf,
 }
 
 /*
- * Deparse the appropriate locking clause (FOR SELECT or FOR SHARE) for a
+ * Deparse the appropriate locking clause (FOR UPDATE or FOR SHARE) for a
  * given relation (context->foreignrel).
  */
 static void
@@ -1163,7 +1163,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		/*
 		 * For a join relation FROM clause entry is deparsed as
 		 *
-		 * ((outer relation) <join type> (inner relation) ON (joinclauses)
+		 * ((outer relation) <join type> (inner relation) ON (joinclauses))
 		 */
 		appendStringInfo(buf, "(%s %s JOIN %s ON ", join_sql_o.data,
 					   get_jointype_name(fpinfo->jointype), join_sql_i.data);
