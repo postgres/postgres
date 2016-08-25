@@ -3802,6 +3802,7 @@ l2:
 			ReleaseBuffer(vmbuffer);
 		bms_free(hot_attrs);
 		bms_free(key_attrs);
+		bms_free(id_attrs);
 		return result;
 	}
 
@@ -4268,6 +4269,7 @@ l2:
 
 	bms_free(hot_attrs);
 	bms_free(key_attrs);
+	bms_free(id_attrs);
 
 	return HeapTupleMayBeUpdated;
 }
