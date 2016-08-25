@@ -101,7 +101,7 @@ SELECT SESSION_USER, CURRENT_USER;
    The SQL standard allows some other expressions to appear in place
    of the literal <replaceable>user_name</replaceable>, but these options
    are not important in practice.  <productname>PostgreSQL</productname>
-   allows identifier syntax (<literal>"username"</literal>), which SQL
+   allows identifier syntax (<literal>"<replaceable>username</>"</literal>), which SQL
    does not.  SQL does not allow this command during a transaction;
    <productname>PostgreSQL</productname> does not make this
    restriction because there is no reason to.

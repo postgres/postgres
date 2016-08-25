@@ -204,8 +204,8 @@ SELECT clean_emp();
 
     <para>
      If an argument is of a composite type, then the dot notation,
-     e.g., <literal>argname.fieldname</literal> or
-     <literal>$1.fieldname</literal>, can be used to access attributes of the
+     e.g., <literal><replaceable>argname</>.<replaceable>fieldname</></literal> or
+     <literal>$1.<replaceable>fieldname</></literal>, can be used to access attributes of the
      argument.  Again, you might need to qualify the argument's name with the
      function name to make the form with an argument name unambiguous.
     </para>
@@ -527,7 +527,8 @@ LINE 1: SELECT new_emp().name;
      Another option is to use
      functional notation for extracting an attribute.  The  simple  way
      to explain this is that we can use the
-     notations <literal>attribute(table)</>  and  <literal>table.attribute</>
+     notations <literal><replaceable>attribute</>(<replaceable>table</>)</>
+     and  <literal><replaceable>table</>.<replaceable>attribute</></>
      interchangeably.
 
 <screen>
@@ -1305,12 +1306,15 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
    <para>
     A function that takes a single argument of a composite type should
     generally not have the same name as any attribute (field) of that type.
-    Recall that <literal>attribute(table)</literal> is considered equivalent
-    to <literal>table.attribute</literal>.  In the case that there is an
+    Recall that <literal><replaceable>attribute</>(<replaceable>table</>)</literal>
+    is considered equivalent
+    to <literal><replaceable>table</>.<replaceable>attribute</></literal>.
+    In the case that there is an
     ambiguity between a function on a composite type and an attribute of
     the composite type, the attribute will always be used.  It is possible
     to override that choice by schema-qualifying the function name
-    (that is, <literal>schema.func(table)</literal>) but it's better to
+    (that is, <literal><replaceable>schema</>.<replaceable>func</>(<replaceable>table</>)
+    </literal>) but it's better to
     avoid the problem by not choosing conflicting names.
    </para>
 
@@ -2818,7 +2822,7 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, Datum *values, bool *isnull)
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
      to build a <structname>HeapTuple</> given user data
-     in C string form.  <literal>values</literal> is an array of C strings,
+     in C string form.  <parameter>values</parameter> is an array of C strings,
      one for each attribute of the return row. Each C string should be in
      the form expected by the input function of the attribute data
      type. In order to return a null value for one of the attributes,

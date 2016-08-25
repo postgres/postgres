@@ -1227,8 +1227,8 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        If this is on, you should create users as <literal>username@dbname</>.
-        When <literal>username</> is passed by a connecting client,
+        If this is on, you should create users as <replaceable>username@dbname</>.
+        When <replaceable>username</> is passed by a connecting client,
         <literal>@</> and the database name are appended to the user
         name and that database-specific user name is looked up by the
         server. Note that when you create users with names containing

@@ -13800,7 +13800,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
       <entry>No</entry>
       <entry>
        multiple continuous percentile: returns an array of results matching
-       the shape of the <literal>fractions</literal> parameter, with each
+       the shape of the <replaceable>fractions</replaceable> parameter, with each
        non-null element replaced by the value corresponding to that percentile
       </entry>
      </row>
@@ -13845,7 +13845,7 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
       <entry>No</entry>
       <entry>
        multiple discrete percentile: returns an array of results matching the
-       shape of the <literal>fractions</literal> parameter, with each non-null
+       shape of the <replaceable>fractions</replaceable> parameter, with each non-null
        element replaced by the input value corresponding to that percentile
       </entry>
      </row>
@@ -16850,7 +16850,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>pg_options_to_table</function> returns the set of storage
    option name/value pairs
-   (<literal>option_name</>/<literal>option_value</>) when passed
+   (<replaceable>option_name</>/<replaceable>option_value</>) when passed
    <structname>pg_class</>.<structfield>reloptions</> or
    <structname>pg_attribute</>.<structfield>attoptions</>.
   </para>

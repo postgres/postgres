@@ -349,7 +349,7 @@ END;
    <itemizedlist>
     <listitem>
      <para>
-      The standard's <literal>AS &lt;data type&gt;</literal> expression is not
+      The standard's <literal>AS <replaceable>data_type</></literal> expression is not
       supported.
      </para>
     </listitem>

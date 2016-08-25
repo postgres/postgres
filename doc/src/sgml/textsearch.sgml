@@ -3622,10 +3622,10 @@ SELECT plainto_tsquery('supernovae stars');
   </para>
 
   <para>
-   The optional parameter <literal>PATTERN</literal> can be the name of
+   The optional parameter <replaceable>PATTERN</replaceable> can be the name of
    a text search object, optionally schema-qualified.  If
-   <literal>PATTERN</literal> is omitted then information about all
-   visible objects will be displayed.  <literal>PATTERN</literal> can be a
+   <replaceable>PATTERN</replaceable> is omitted then information about all
+   visible objects will be displayed.  <replaceable>PATTERN</replaceable> can be a
    regular expression and can provide <emphasis>separate</emphasis> patterns
    for the schema and object names.  The following examples illustrate this:
 
