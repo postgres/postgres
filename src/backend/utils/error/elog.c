@@ -1601,7 +1601,10 @@ FlushErrorState(void)
 /*
  * ThrowErrorData --- report an error described by an ErrorData structure
  *
- * This is intended to be used to re-report errors originally thrown by
+ * This is somewhat like ReThrowError, but it allows elevels besides ERROR,
+ * and the boolean flags such as output_to_server are computed via the
+ * default rules rather than being copied from the given ErrorData.
+ * This is primarily used to re-report errors originally reported by
  * background worker processes and then propagated (with or without
  * modification) to the backend responsible for them.
  */
@@ -1613,13 +1616,14 @@ ThrowErrorData(ErrorData *edata)
 
 	if (!errstart(edata->elevel, edata->filename, edata->lineno,
 				  edata->funcname, NULL))
-		return;
+		return;					/* error is not to be reported at all */
 
 	newedata = &errordata[errordata_stack_depth];
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	recursion_depth++;
+	oldcontext = MemoryContextSwitchTo(newedata->assoc_context);
 
-	/* Copy the supplied fields to the error stack. */
-	if (edata->sqlerrcode > 0)
+	/* Copy the supplied fields to the error stack entry. */
+	if (edata->sqlerrcode != 0)
 		newedata->sqlerrcode = edata->sqlerrcode;
 	if (edata->message)
 		newedata->message = pstrdup(edata->message);
@@ -1631,6 +1635,7 @@ ThrowErrorData(ErrorData *edata)
 		newedata->hint = pstrdup(edata->hint);
 	if (edata->context)
 		newedata->context = pstrdup(edata->context);
+	/* assume message_id is not available */
 	if (edata->schema_name)
 		newedata->schema_name = pstrdup(edata->schema_name);
 	if (edata->table_name)
@@ -1641,11 +1646,15 @@ ThrowErrorData(ErrorData *edata)
 		newedata->datatype_name = pstrdup(edata->datatype_name);
 	if (edata->constraint_name)
 		newedata->constraint_name = pstrdup(edata->constraint_name);
+	newedata->cursorpos = edata->cursorpos;
+	newedata->internalpos = edata->internalpos;
 	if (edata->internalquery)
 		newedata->internalquery = pstrdup(edata->internalquery);
 
 	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
 
+	/* Process the error. */
 	errfinish(0);
 }
 
