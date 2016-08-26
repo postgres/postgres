@@ -108,7 +108,6 @@ static dlist_head pcxt_list = DLIST_STATIC_INIT(pcxt_list);
 
 /* Private functions. */
 static void HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg);
-static void ParallelErrorContext(void *arg);
 static void ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc);
 static void ParallelWorkerMain(Datum main_arg);
 static void WaitForParallelWorkersToExit(ParallelContext *pcxt);
@@ -788,19 +787,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 		case 'N':				/* NoticeResponse */
 			{
 				ErrorData	edata;
-				ErrorContextCallback errctx;
 				ErrorContextCallback *save_error_context_stack;
-
-				/*
-				 * Rethrow the error using the error context callbacks that
-				 * were in effect when the context was created, not the
-				 * current ones.
-				 */
-				save_error_context_stack = error_context_stack;
-				errctx.callback = ParallelErrorContext;
-				errctx.arg = NULL;
-				errctx.previous = pcxt->error_context_stack;
-				error_context_stack = &errctx;
 
 				/* Parse ErrorResponse or NoticeResponse. */
 				pq_parse_errornotice(msg, &edata);
@@ -808,10 +795,35 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				/* Death of a worker isn't enough justification for suicide. */
 				edata.elevel = Min(edata.elevel, ERROR);
 
-				/* Rethrow error or notice. */
+				/*
+				 * If desired, add a context line to show that this is a
+				 * message propagated from a parallel worker.  Otherwise, it
+				 * can sometimes be confusing to understand what actually
+				 * happened.  (We don't do this in FORCE_PARALLEL_REGRESS mode
+				 * because it causes test-result instability depending on
+				 * whether a parallel worker is actually used or not.)
+				 */
+				if (force_parallel_mode != FORCE_PARALLEL_REGRESS)
+				{
+					if (edata.context)
+						edata.context = psprintf("%s\n%s", edata.context,
+												 _("parallel worker"));
+					else
+						edata.context = pstrdup(_("parallel worker"));
+				}
+
+				/*
+				 * Context beyond that should use the error context callbacks
+				 * that were in effect when the ParallelContext was created,
+				 * not the current ones.
+				 */
+				save_error_context_stack = error_context_stack;
+				error_context_stack = pcxt->error_context_stack;
+
+				/* Rethrow error or print notice. */
 				ThrowErrorData(&edata);
 
-				/* Restore previous context. */
+				/* Not an error, so restore previous context stack. */
 				error_context_stack = save_error_context_stack;
 
 				break;
@@ -1110,18 +1122,6 @@ ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc)
 	entrypt = (parallel_worker_main_type)
 		load_external_function(library_name, function_name, true, NULL);
 	entrypt(seg, toc);
-}
-
-/*
- * Give the user a hint that this is a message propagated from a parallel
- * worker.  Otherwise, it can sometimes be confusing to understand what
- * actually happened.
- */
-static void
-ParallelErrorContext(void *arg)
-{
-	if (force_parallel_mode != FORCE_PARALLEL_REGRESS)
-		errcontext("parallel worker");
 }
 
 /*
