@@ -4374,6 +4374,7 @@ make_tuple_from_result_row(PGresult *res,
 	Datum	   *values;
 	bool	   *nulls;
 	ItemPointer ctid = NULL;
+	Oid			oid = InvalidOid;
 	ConversionLocation errpos;
 	ErrorContextCallback errcallback;
 	MemoryContext oldcontext;
@@ -4431,7 +4432,11 @@ make_tuple_from_result_row(PGresult *res,
 		else
 			valstr = PQgetvalue(res, row, j);
 
-		/* convert value to internal representation */
+		/*
+		 * convert value to internal representation
+		 *
+		 * Note: we ignore system columns other than ctid and oid in result
+		 */
 		errpos.cur_attno = i;
 		if (i > 0)
 		{
@@ -4446,13 +4451,24 @@ make_tuple_from_result_row(PGresult *res,
 		}
 		else if (i == SelfItemPointerAttributeNumber)
 		{
-			/* ctid --- note we ignore any other system column in result */
+			/* ctid */
 			if (valstr != NULL)
 			{
 				Datum		datum;
 
 				datum = DirectFunctionCall1(tidin, CStringGetDatum(valstr));
 				ctid = (ItemPointer) DatumGetPointer(datum);
+			}
+		}
+		else if (i == ObjectIdAttributeNumber)
+		{
+			/* oid */
+			if (valstr != NULL)
+			{
+				Datum		datum;
+
+				datum = DirectFunctionCall1(oidin, CStringGetDatum(valstr));
+				oid = DatumGetObjectId(datum);
 			}
 		}
 		errpos.cur_attno = 0;
@@ -4498,6 +4514,12 @@ make_tuple_from_result_row(PGresult *res,
 	HeapTupleHeaderSetXmin(tuple->t_data, InvalidTransactionId);
 	HeapTupleHeaderSetCmin(tuple->t_data, InvalidTransactionId);
 
+	/*
+	 * If we have an OID to return, install it.
+	 */
+	if (OidIsValid(oid))
+		HeapTupleSetOid(tuple, oid);
+
 	/* Clean up */
 	MemoryContextReset(temp_context);
 
@@ -4525,6 +4547,8 @@ conversion_error_callback(void *arg)
 			attname = NameStr(tupdesc->attrs[errpos->cur_attno - 1]->attname);
 		else if (errpos->cur_attno == SelfItemPointerAttributeNumber)
 			attname = "ctid";
+		else if (errpos->cur_attno == ObjectIdAttributeNumber)
+			attname = "oid";
 
 		relname = RelationGetRelationName(errpos->rel);
 	}

@@ -287,13 +287,14 @@ foreign_expr_walker(Node *node,
 					/* Var belongs to foreign table */
 
 					/*
-					 * System columns other than ctid should not be sent to
-					 * the remote, since we don't make any effort to ensure
-					 * that local and remote values match (tableoid, in
+					 * System columns other than ctid and oid should not be
+					 * sent to the remote, since we don't make any effort to
+					 * ensure that local and remote values match (tableoid, in
 					 * particular, almost certainly doesn't match).
 					 */
 					if (var->varattno < 0 &&
-						var->varattno != SelfItemPointerAttributeNumber)
+						var->varattno != SelfItemPointerAttributeNumber &&
+						var->varattno != ObjectIdAttributeNumber)
 						return false;
 
 					/* Else check the collation */
@@ -913,8 +914,8 @@ deparseTargetList(StringInfo buf,
 	}
 
 	/*
-	 * Add ctid if needed.  We currently don't support retrieving any other
-	 * system columns.
+	 * Add ctid and oid if needed.  We currently don't support retrieving any
+	 * other system columns.
 	 */
 	if (bms_is_member(SelfItemPointerAttributeNumber - FirstLowInvalidHeapAttributeNumber,
 					  attrs_used))
@@ -931,6 +932,22 @@ deparseTargetList(StringInfo buf,
 
 		*retrieved_attrs = lappend_int(*retrieved_attrs,
 									   SelfItemPointerAttributeNumber);
+	}
+	if (bms_is_member(ObjectIdAttributeNumber - FirstLowInvalidHeapAttributeNumber,
+					  attrs_used))
+	{
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		else if (is_returning)
+			appendStringInfoString(buf, " RETURNING ");
+		first = false;
+
+		if (qualify_col)
+			ADD_REL_QUALIFIER(buf, rtindex);
+		appendStringInfoString(buf, "oid");
+
+		*retrieved_attrs = lappend_int(*retrieved_attrs,
+									   ObjectIdAttributeNumber);
 	}
 
 	/* Don't generate bad syntax if no undropped columns */
@@ -1574,12 +1591,18 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root,
 {
 	RangeTblEntry *rte;
 
+	/* We support fetching the remote side's CTID and OID. */
 	if (varattno == SelfItemPointerAttributeNumber)
 	{
-		/* We support fetching the remote side's CTID. */
 		if (qualify_col)
 			ADD_REL_QUALIFIER(buf, varno);
 		appendStringInfoString(buf, "ctid");
+	}
+	else if (varattno == ObjectIdAttributeNumber)
+	{
+		if (qualify_col)
+			ADD_REL_QUALIFIER(buf, varno);
+		appendStringInfoString(buf, "oid");
 	}
 	else if (varattno < 0)
 	{
