@@ -49,6 +49,7 @@ typedef PG_INT64_TYPE pg_int64;
  * applications.
  */
 #define PG_DIAG_SEVERITY		'S'
+#define PG_DIAG_SEVERITY_NONLOCALIZED 'V'
 #define PG_DIAG_SQLSTATE		'C'
 #define PG_DIAG_MESSAGE_PRIMARY 'M'
 #define PG_DIAG_MESSAGE_DETAIL	'D'
