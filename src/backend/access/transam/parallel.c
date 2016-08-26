@@ -702,6 +702,9 @@ void
 HandleParallelMessages(void)
 {
 	dlist_iter	iter;
+	MemoryContext oldcontext;
+
+	static MemoryContext hpm_context = NULL;
 
 	/*
 	 * This is invoked from ProcessInterrupts(), and since some of the
@@ -712,6 +715,23 @@ HandleParallelMessages(void)
 	 */
 	HOLD_INTERRUPTS();
 
+	/*
+	 * Moreover, CurrentMemoryContext might be pointing almost anywhere.  We
+	 * don't want to risk leaking data into long-lived contexts, so let's do
+	 * our work here in a private context that we can reset on each use.
+	 */
+	if (hpm_context == NULL)	/* first time through? */
+		hpm_context = AllocSetContextCreate(TopMemoryContext,
+											"HandleParallelMessages context",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+	else
+		MemoryContextReset(hpm_context);
+
+	oldcontext = MemoryContextSwitchTo(hpm_context);
+
+	/* OK to process messages.  Reset the flag saying there are more to do. */
 	ParallelMessagePending = false;
 
 	dlist_foreach(iter, &pcxt_list)
@@ -757,6 +777,11 @@ HandleParallelMessages(void)
 			}
 		}
 	}
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Might as well clear the context on our way out */
+	MemoryContextReset(hpm_context);
 
 	RESUME_INTERRUPTS();
 }
