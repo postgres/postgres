@@ -237,10 +237,26 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 		switch (code)
 		{
 			case PG_DIAG_SEVERITY:
+				/* ignore, trusting we'll get a nonlocalized version */
+				break;
+			case PG_DIAG_SEVERITY_NONLOCALIZED:
 				if (strcmp(value, "DEBUG") == 0)
-					edata->elevel = DEBUG1;		/* or some other DEBUG level */
+				{
+					/*
+					 * We can't reconstruct the exact DEBUG level, but
+					 * presumably it was >= client_min_messages, so select
+					 * DEBUG1 to ensure we'll pass it on to the client.
+					 */
+					edata->elevel = DEBUG1;
+				}
 				else if (strcmp(value, "LOG") == 0)
-					edata->elevel = LOG;		/* can't be COMMERROR */
+				{
+					/*
+					 * It can't be LOG_SERVER_ONLY, or the worker wouldn't
+					 * have sent it to us; so LOG is the correct value.
+					 */
+					edata->elevel = LOG;
+				}
 				else if (strcmp(value, "INFO") == 0)
 					edata->elevel = INFO;
 				else if (strcmp(value, "NOTICE") == 0)
@@ -254,11 +270,11 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 				else if (strcmp(value, "PANIC") == 0)
 					edata->elevel = PANIC;
 				else
-					elog(ERROR, "unknown error severity");
+					elog(ERROR, "unrecognized error severity: \"%s\"", value);
 				break;
 			case PG_DIAG_SQLSTATE:
 				if (strlen(value) != 5)
-					elog(ERROR, "malformed sql state");
+					elog(ERROR, "invalid SQLSTATE: \"%s\"", value);
 				edata->sqlerrcode = MAKE_SQLSTATE(value[0], value[1], value[2],
 												  value[3], value[4]);
 				break;
@@ -308,7 +324,7 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 				edata->funcname = pstrdup(value);
 				break;
 			default:
-				elog(ERROR, "unknown error field: %d", (int) code);
+				elog(ERROR, "unrecognized error field code: %d", (int) code);
 				break;
 		}
 	}

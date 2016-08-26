@@ -2753,7 +2753,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* Error severity */
-	appendStringInfoString(&buf, error_severity(edata->elevel));
+	appendStringInfoString(&buf, _(error_severity(edata->elevel)));
 	appendStringInfoChar(&buf, ',');
 
 	/* SQL state code */
@@ -2870,7 +2870,7 @@ send_message_to_server_log(ErrorData *edata)
 	formatted_log_time[0] = '\0';
 
 	log_line_prefix(&buf, edata);
-	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+	appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
 
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
 		appendStringInfo(&buf, "%s: ", unpack_sql_state(edata->sqlerrcode));
@@ -3153,12 +3153,16 @@ send_message_to_frontend(ErrorData *edata)
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
 		/* New style with separate fields */
+		const char *sev;
 		char		tbuf[12];
 		int			ssval;
 		int			i;
 
+		sev = error_severity(edata->elevel);
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
-		err_sendstring(&msgbuf, error_severity(edata->elevel));
+		err_sendstring(&msgbuf, _(sev));
+		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY_NONLOCALIZED);
+		err_sendstring(&msgbuf, sev);
 
 		/* unpack MAKE_SQLSTATE code */
 		ssval = edata->sqlerrcode;
@@ -3277,7 +3281,7 @@ send_message_to_frontend(ErrorData *edata)
 
 		initStringInfo(&buf);
 
-		appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+		appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
 
 		if (edata->show_funcname && edata->funcname)
 			appendStringInfo(&buf, "%s: ", edata->funcname);
@@ -3587,7 +3591,10 @@ get_errno_symbol(int errnum)
 
 
 /*
- * error_severity --- get localized string representing elevel
+ * error_severity --- get string representing elevel
+ *
+ * The string is not localized here, but we mark the strings for translation
+ * so that callers can invoke _() on the result.
  */
 static const char *
 error_severity(int elevel)
@@ -3601,29 +3608,29 @@ error_severity(int elevel)
 		case DEBUG3:
 		case DEBUG4:
 		case DEBUG5:
-			prefix = _("DEBUG");
+			prefix = gettext_noop("DEBUG");
 			break;
 		case LOG:
 		case LOG_SERVER_ONLY:
-			prefix = _("LOG");
+			prefix = gettext_noop("LOG");
 			break;
 		case INFO:
-			prefix = _("INFO");
+			prefix = gettext_noop("INFO");
 			break;
 		case NOTICE:
-			prefix = _("NOTICE");
+			prefix = gettext_noop("NOTICE");
 			break;
 		case WARNING:
-			prefix = _("WARNING");
+			prefix = gettext_noop("WARNING");
 			break;
 		case ERROR:
-			prefix = _("ERROR");
+			prefix = gettext_noop("ERROR");
 			break;
 		case FATAL:
-			prefix = _("FATAL");
+			prefix = gettext_noop("FATAL");
 			break;
 		case PANIC:
-			prefix = _("PANIC");
+			prefix = gettext_noop("PANIC");
 			break;
 		default:
 			prefix = "???";
