@@ -529,9 +529,7 @@ createTrgmNFA(text *text_re, Oid collation,
 	 */
 	tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
 									   "createTrgmNFA temporary context",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_INITSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
+									   ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(tmpcontext);
 
 	/*

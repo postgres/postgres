@@ -201,9 +201,7 @@ RelationBuildRowSecurity(Relation relation)
 	 */
 	rscxt = AllocSetContextCreate(CacheMemoryContext,
 								  "row security descriptor",
-								  ALLOCSET_SMALL_MINSIZE,
-								  ALLOCSET_SMALL_INITSIZE,
-								  ALLOCSET_SMALL_MAXSIZE);
+								  ALLOCSET_SMALL_SIZES);
 
 	/*
 	 * Since rscxt lives under CacheMemoryContext, it is long-lived.  Use a

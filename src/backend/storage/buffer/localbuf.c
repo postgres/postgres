@@ -511,9 +511,7 @@ GetLocalBufferStorage(void)
 			LocalBufferContext =
 				AllocSetContextCreate(TopMemoryContext,
 									  "LocalBufferContext",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 
 		/* Start with a 16-buffer request; subsequent ones double each time */
 		num_bufs = Max(num_bufs_in_block * 2, 16);

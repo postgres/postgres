@@ -756,9 +756,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 	/* Create a dummy PLyTypeInfo */
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"PL/Python temp context",
-								ALLOCSET_DEFAULT_MINSIZE,
-								ALLOCSET_DEFAULT_INITSIZE,
-								ALLOCSET_DEFAULT_MAXSIZE);
+								ALLOCSET_DEFAULT_SIZES);
 	MemSet(&info, 0, sizeof(PLyTypeInfo));
 	PLy_typeinfo_init(&info, cxt);
 	/* Mark it as needing output routines lookup */
@@ -923,9 +921,7 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string)
 	/* Create a dummy PLyTypeInfo */
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"PL/Python temp context",
-								ALLOCSET_DEFAULT_MINSIZE,
-								ALLOCSET_DEFAULT_INITSIZE,
-								ALLOCSET_DEFAULT_MAXSIZE);
+								ALLOCSET_DEFAULT_SIZES);
 	MemSet(&locinfo, 0, sizeof(PLyTypeInfo));
 	PLy_typeinfo_init(&locinfo, cxt);
 

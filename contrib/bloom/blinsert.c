@@ -130,9 +130,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	initBloomState(&buildstate.blstate, index);
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
 											  "Bloom build temporary context",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_DEFAULT_SIZES);
 	initCachedPage(&buildstate);
 
 	/* Do the heap scan */
@@ -204,9 +202,7 @@ blinsert(Relation index, Datum *values, bool *isnull,
 
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "Bloom insert temporary context",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 
 	oldCtx = MemoryContextSwitchTo(insertCtx);
 

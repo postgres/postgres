@@ -295,9 +295,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			/* Create private memory context the first time through */
 			saveCtx = AllocSetContextCreate(CacheMemoryContext,
 											NameStr(dict->dictname),
-											ALLOCSET_SMALL_MINSIZE,
-											ALLOCSET_SMALL_INITSIZE,
-											ALLOCSET_SMALL_MAXSIZE);
+											ALLOCSET_SMALL_SIZES);
 		}
 		else
 		{

@@ -289,9 +289,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	/* allocate memory in own context, to have better accountability */
 	context = AllocSetContextCreate(CurrentMemoryContext,
 									"snapshot builder context",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(context);
 
 	builder = palloc0(sizeof(SnapBuild));

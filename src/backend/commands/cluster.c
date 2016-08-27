@@ -204,9 +204,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 */
 		cluster_context = AllocSetContextCreate(PortalContext,
 												"Cluster",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_SIZES);
 
 		/*
 		 * Build the list of relations to cluster.  Note that this lives in

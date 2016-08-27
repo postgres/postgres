@@ -600,9 +600,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 */
 	fcontext = AllocSetContextCreate(finfo->fn_mcxt,
 									 "SQL function data",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
+									 ALLOCSET_DEFAULT_SIZES);
 
 	oldcontext = MemoryContextSwitchTo(fcontext);
 

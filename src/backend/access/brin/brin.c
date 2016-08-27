@@ -165,9 +165,7 @@ brininsert(Relation idxRel, Datum *values, bool *nulls,
 			bdesc = brin_build_desc(idxRel);
 			tupcxt = AllocSetContextCreate(CurrentMemoryContext,
 										   "brininsert cxt",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_DEFAULT_SIZES);
 			oldcxt = MemoryContextSwitchTo(tupcxt);
 		}
 
@@ -347,9 +345,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 */
 	perRangeCxt = AllocSetContextCreate(CurrentMemoryContext,
 										"bringetbitmap cxt",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(perRangeCxt);
 
 	/*
@@ -856,9 +852,7 @@ brin_build_desc(Relation rel)
 
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"brin desc cxt",
-								ALLOCSET_SMALL_INITSIZE,
-								ALLOCSET_SMALL_MINSIZE,
-								ALLOCSET_SMALL_MAXSIZE);
+								ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
 	tupdesc = RelationGetDescr(rel);
 
@@ -1169,9 +1163,7 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 	/* Use our own memory context to avoid retail pfree */
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"brin union",
-								ALLOCSET_DEFAULT_MINSIZE,
-								ALLOCSET_DEFAULT_INITSIZE,
-								ALLOCSET_DEFAULT_MAXSIZE);
+								ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
 	db = brin_deform_tuple(bdesc, b);
 	MemoryContextSwitchTo(oldcxt);

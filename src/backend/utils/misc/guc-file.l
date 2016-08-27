@@ -145,9 +145,7 @@ ProcessConfigFile(GucContext context)
 	 */
 	config_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									   "config file processing",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
+									   ALLOCSET_DEFAULT_SIZES);
 	caller_cxt = MemoryContextSwitchTo(config_cxt);
 
 	/*

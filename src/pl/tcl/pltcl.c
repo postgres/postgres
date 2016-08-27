@@ -2331,9 +2331,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	plan_cxt = AllocSetContextCreate(TopMemoryContext,
 									 "PL/TCL spi_prepare query",
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
+									 ALLOCSET_SMALL_SIZES);
 	MemoryContextSwitchTo(plan_cxt);
 	qdesc = (pltcl_query_desc *) palloc0(sizeof(pltcl_query_desc));
 	snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);

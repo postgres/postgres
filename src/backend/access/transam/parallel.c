@@ -722,10 +722,8 @@ HandleParallelMessages(void)
 	 */
 	if (hpm_context == NULL)	/* first time through? */
 		hpm_context = AllocSetContextCreate(TopMemoryContext,
-											"HandleParallelMessages context",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											"HandleParallelMessages",
+											ALLOCSET_DEFAULT_SIZES);
 	else
 		MemoryContextReset(hpm_context);
 
@@ -962,10 +960,8 @@ ParallelWorkerMain(Datum main_arg)
 	Assert(CurrentResourceOwner == NULL);
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "parallel toplevel");
 	CurrentMemoryContext = AllocSetContextCreate(TopMemoryContext,
-												 "parallel worker",
-												 ALLOCSET_DEFAULT_MINSIZE,
-												 ALLOCSET_DEFAULT_INITSIZE,
-												 ALLOCSET_DEFAULT_MAXSIZE);
+												 "Parallel worker",
+												 ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Now that we have a resource owner, we can attach to the dynamic shared

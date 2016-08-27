@@ -200,15 +200,11 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 		rustate->tempContext =
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "RecursiveUnion",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 		rustate->tableContext =
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "RecursiveUnion hash table",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 	}
 
 	/*

@@ -367,9 +367,7 @@ brin_new_memtuple(BrinDesc *brdesc)
 
 	dtup->bt_context = AllocSetContextCreate(CurrentMemoryContext,
 											 "brin dtuple",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
+											 ALLOCSET_DEFAULT_SIZES);
 	return dtup;
 }
 

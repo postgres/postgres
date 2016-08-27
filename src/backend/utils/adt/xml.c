@@ -1455,10 +1455,8 @@ xml_memory_init(void)
 	/* Create memory context if not there already */
 	if (LibxmlContext == NULL)
 		LibxmlContext = AllocSetContextCreate(TopMemoryContext,
-											  "LibxmlContext",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  "Libxml context",
+											  ALLOCSET_DEFAULT_SIZES);
 
 	/* Re-establish the callbacks even if already set */
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);

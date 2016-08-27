@@ -285,9 +285,7 @@ init_lwlock_stats(void)
 	 */
 	lwlock_stats_cxt = AllocSetContextCreate(TopMemoryContext,
 											 "LWLock stats",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
+											 ALLOCSET_DEFAULT_SIZES);
 	MemoryContextAllowInCriticalSection(lwlock_stats_cxt, true);
 
 	MemSet(&ctl, 0, sizeof(ctl));

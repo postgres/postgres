@@ -498,13 +498,11 @@ sepgsql_avc_init(void)
 	int			rc;
 
 	/*
-	 * All the avc stuff shall be allocated on avc_mem_cxt
+	 * All the avc stuff shall be allocated in avc_mem_cxt
 	 */
 	avc_mem_cxt = AllocSetContextCreate(TopMemoryContext,
 										"userspace access vector cache",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 	memset(avc_slots, 0, sizeof(avc_slots));
 	avc_num_caches = 0;
 	avc_lru_hint = 0;

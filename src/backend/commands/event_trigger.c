@@ -1018,9 +1018,7 @@ EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata)
 	 */
 	context = AllocSetContextCreate(CurrentMemoryContext,
 									"event trigger context",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(context);
 
 	/* Call each event trigger. */
@@ -1226,9 +1224,7 @@ EventTriggerBeginCompleteQuery(void)
 
 	cxt = AllocSetContextCreate(TopMemoryContext,
 								"event trigger state",
-								ALLOCSET_DEFAULT_MINSIZE,
-								ALLOCSET_DEFAULT_INITSIZE,
-								ALLOCSET_DEFAULT_MAXSIZE);
+								ALLOCSET_DEFAULT_SIZES);
 	state = MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState));
 	state->cxt = cxt;
 	slist_init(&(state->SQLDropList));

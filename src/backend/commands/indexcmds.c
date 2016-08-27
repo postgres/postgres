@@ -1903,9 +1903,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	 */
 	private_context = AllocSetContextCreate(PortalContext,
 											"ReindexMultipleTables",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											ALLOCSET_SMALL_SIZES);
 
 	/*
 	 * Define the search keys to find the objects to reindex. For a schema, we

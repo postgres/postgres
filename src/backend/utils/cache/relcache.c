@@ -659,14 +659,11 @@ RelationBuildRuleLock(Relation relation)
 	int			maxlocks;
 
 	/*
-	 * Make the private context.  Parameters are set on the assumption that
-	 * it'll probably not contain much data.
+	 * Make the private context.  Assume it'll not contain much data.
 	 */
 	rulescxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
+									 ALLOCSET_SMALL_SIZES);
 	relation->rd_rulescxt = rulescxt;
 
 	/*
@@ -1248,15 +1245,10 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * Make the private context to hold index access info.  The reason we need
 	 * a context, and not just a couple of pallocs, is so that we won't leak
 	 * any subsidiary info attached to fmgr lookup records.
-	 *
-	 * Context parameters are set on the assumption that it'll probably not
-	 * contain much data.
 	 */
 	indexcxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
+									 ALLOCSET_SMALL_SIZES);
 	relation->rd_indexcxt = indexcxt;
 
 	/*
@@ -4948,9 +4940,7 @@ load_relcache_init_file(bool shared)
 			 */
 			indexcxt = AllocSetContextCreate(CacheMemoryContext,
 											 RelationGetRelationName(rel),
-											 ALLOCSET_SMALL_MINSIZE,
-											 ALLOCSET_SMALL_INITSIZE,
-											 ALLOCSET_SMALL_MAXSIZE);
+											 ALLOCSET_SMALL_SIZES);
 			rel->rd_indexcxt = indexcxt;
 
 			/*

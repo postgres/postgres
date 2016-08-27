@@ -208,9 +208,7 @@ mdinit(void)
 {
 	MdCxt = AllocSetContextCreate(TopMemoryContext,
 								  "MdSmgr",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Create pending-operations hashtable if we need it.  Currently, we need
@@ -231,10 +229,8 @@ mdinit(void)
 		 * practice.
 		 */
 		pendingOpsCxt = AllocSetContextCreate(MdCxt,
-											  "Pending Ops Context",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  "Pending ops context",
+											  ALLOCSET_DEFAULT_SIZES);
 		MemoryContextAllowInCriticalSection(pendingOpsCxt, true);
 
 		MemSet(&hash_ctl, 0, sizeof(hash_ctl));

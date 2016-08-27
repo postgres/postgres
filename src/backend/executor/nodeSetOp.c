@@ -507,9 +507,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	setopstate->tempContext =
 		AllocSetContextCreate(CurrentMemoryContext,
 							  "SetOp",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * If hashing, we also need a longer-lived context to store the hash
@@ -520,9 +518,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 		setopstate->tableContext =
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "SetOp hash table",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Tuple table initialization

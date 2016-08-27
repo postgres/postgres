@@ -4957,9 +4957,7 @@ initArrayResult(Oid element_type, MemoryContext rcontext, bool subcontext)
 	if (subcontext)
 		arr_context = AllocSetContextCreate(rcontext,
 											"accumArrayResult",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											ALLOCSET_DEFAULT_SIZES);
 
 	astate = (ArrayBuildState *)
 		MemoryContextAlloc(arr_context, sizeof(ArrayBuildState));
@@ -5161,9 +5159,7 @@ initArrayResultArr(Oid array_type, Oid element_type, MemoryContext rcontext,
 	if (subcontext)
 		arr_context = AllocSetContextCreate(rcontext,
 											"accumArrayResultArr",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											ALLOCSET_DEFAULT_SIZES);
 
 	/* Note we initialize all fields to zero */
 	astate = (ArrayBuildStateArr *)

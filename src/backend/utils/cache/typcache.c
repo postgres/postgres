@@ -756,9 +756,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 				cxt = AllocSetContextCreate(CurrentMemoryContext,
 											"Domain constraints",
-											ALLOCSET_SMALL_INITSIZE,
-											ALLOCSET_SMALL_MINSIZE,
-											ALLOCSET_SMALL_MAXSIZE);
+											ALLOCSET_SMALL_SIZES);
 				dcc = (DomainConstraintCache *)
 					MemoryContextAlloc(cxt, sizeof(DomainConstraintCache));
 				dcc->constraints = NIL;
@@ -841,9 +839,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 			cxt = AllocSetContextCreate(CurrentMemoryContext,
 										"Domain constraints",
-										ALLOCSET_SMALL_INITSIZE,
-										ALLOCSET_SMALL_MINSIZE,
-										ALLOCSET_SMALL_MAXSIZE);
+										ALLOCSET_SMALL_SIZES);
 			dcc = (DomainConstraintCache *)
 				MemoryContextAlloc(cxt, sizeof(DomainConstraintCache));
 			dcc->constraints = NIL;

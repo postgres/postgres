@@ -450,9 +450,7 @@ load_tzoffsets(const char *filename)
 	 */
 	tmpContext = AllocSetContextCreate(CurrentMemoryContext,
 									   "TZParserMemory",
-									   ALLOCSET_SMALL_MINSIZE,
-									   ALLOCSET_SMALL_INITSIZE,
-									   ALLOCSET_SMALL_MAXSIZE);
+									   ALLOCSET_SMALL_SIZES);
 	oldContext = MemoryContextSwitchTo(tmpContext);
 
 	/* Initialize array at a reasonable size */

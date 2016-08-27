@@ -1503,9 +1503,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 
 	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"jsonb_each temporary cxt",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 
 	it = JsonbIteratorInit(&jb->root);
 
@@ -1641,9 +1639,7 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 	state->lex = lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										   "json_each temporary cxt",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_DEFAULT_SIZES);
 
 	pg_parse_json(lex, sem);
 
@@ -1822,9 +1818,7 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 
 	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"jsonb_array_elements temporary cxt",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 
 	it = JsonbIteratorInit(&jb->root);
 
@@ -1962,9 +1956,7 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	state->lex = lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										 "json_array_elements temporary cxt",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_DEFAULT_SIZES);
 
 	pg_parse_json(lex, sem);
 

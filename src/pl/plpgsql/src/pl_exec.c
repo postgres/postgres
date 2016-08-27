@@ -1092,9 +1092,7 @@ get_stmt_mcontext(PLpgSQL_execstate *estate)
 		estate->stmt_mcontext =
 			AllocSetContextCreate(estate->stmt_mcontext_parent,
 								  "PLpgSQL per-statement data",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 	}
 	return estate->stmt_mcontext;
 }
@@ -3479,9 +3477,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 		{
 			shared_cast_context = AllocSetContextCreate(TopMemoryContext,
 														"PLpgSQL cast info",
-													ALLOCSET_DEFAULT_MINSIZE,
-												   ALLOCSET_DEFAULT_INITSIZE,
-												   ALLOCSET_DEFAULT_MAXSIZE);
+													 ALLOCSET_DEFAULT_SIZES);
 			memset(&ctl, 0, sizeof(ctl));
 			ctl.keysize = sizeof(plpgsql_CastHashKey);
 			ctl.entrysize = sizeof(plpgsql_CastHashEntry);

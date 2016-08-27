@@ -134,9 +134,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
 										   "SP-GiST build temporary context",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_DEFAULT_SIZES);
 
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
 								   spgistBuildCallback, (void *) &buildstate);
@@ -213,9 +211,7 @@ spginsert(Relation index, Datum *values, bool *isnull,
 
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "SP-GiST insert temporary context",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 	oldCtx = MemoryContextSwitchTo(insertCtx);
 
 	initSpGistState(&spgstate, index);

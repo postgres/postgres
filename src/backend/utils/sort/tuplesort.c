@@ -654,9 +654,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	 */
 	sortcontext = AllocSetContextCreate(CurrentMemoryContext,
 										"TupleSort main",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Caller tuple (e.g. IndexTuple) memory context.
@@ -669,9 +667,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	 */
 	tuplecontext = AllocSetContextCreate(sortcontext,
 										 "Caller tuples",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+										 ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Make the Tuplesortstate within the per-sort context.  This way, we

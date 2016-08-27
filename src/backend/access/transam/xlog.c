@@ -4663,9 +4663,7 @@ XLOGShmemInit(void)
 	{
 		walDebugCxt = AllocSetContextCreate(TopMemoryContext,
 											"WAL Debug",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											ALLOCSET_DEFAULT_SIZES);
 		MemoryContextAllowInCriticalSection(walDebugCxt, true);
 	}
 #endif

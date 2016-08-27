@@ -749,13 +749,12 @@ gin_xlog_startup(void)
 {
 	opCtx = AllocSetContextCreate(CurrentMemoryContext,
 								  "GIN recovery temporary context",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 }
 
 void
 gin_xlog_cleanup(void)
 {
 	MemoryContextDelete(opCtx);
+	opCtx = NULL;
 }

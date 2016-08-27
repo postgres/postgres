@@ -142,9 +142,7 @@ WalWriterMain(void)
 	 */
 	walwriter_context = AllocSetContextCreate(TopMemoryContext,
 											  "Wal Writer",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(walwriter_context);
 
 	/*

@@ -332,9 +332,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	 */
 	anl_context = AllocSetContextCreate(CurrentMemoryContext,
 										"Analyze",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 	caller_context = MemoryContextSwitchTo(anl_context);
 
 	/*
@@ -504,9 +502,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 
 		col_context = AllocSetContextCreate(anl_context,
 											"Analyze Column",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											ALLOCSET_DEFAULT_SIZES);
 		old_context = MemoryContextSwitchTo(col_context);
 
 		for (i = 0; i < attr_cnt; i++)
@@ -688,9 +684,7 @@ compute_index_stats(Relation onerel, double totalrows,
 
 	ind_context = AllocSetContextCreate(anl_context,
 										"Analyze Index",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 	old_context = MemoryContextSwitchTo(ind_context);
 
 	for (ind = 0; ind < nindexes; ind++)
