@@ -4747,9 +4747,7 @@ strlist_to_textarray(List *list)
 
 	memcxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "strlist to array",
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_INITSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
+								   ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
 	datums = palloc(sizeof(text *) * list_length(list));

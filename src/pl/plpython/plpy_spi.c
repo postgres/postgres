@@ -66,9 +66,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 
 	plan->mcxt = AllocSetContextCreate(TopMemoryContext,
 									   "PL/Python plan context",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_INITSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
+									   ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(plan->mcxt);
 
 	nargs = list ? PySequence_Length(list) : 0;
@@ -413,9 +411,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 		cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"PL/Python temp context",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 		PLy_typeinfo_init(&args, cxt);
 
 		oldcontext = CurrentMemoryContext;

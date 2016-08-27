@@ -3205,9 +3205,7 @@ plperl_return_next(SV *sv)
 		current_call_data->tmp_cxt =
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "PL/Perl return_next temporary cxt",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 	}
 
 	old_cxt = MemoryContextSwitchTo(current_call_data->tmp_cxt);
@@ -3460,9 +3458,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		 ************************************************************/
 		plan_cxt = AllocSetContextCreate(TopMemoryContext,
 										 "PL/Perl spi_prepare query",
-										 ALLOCSET_SMALL_MINSIZE,
-										 ALLOCSET_SMALL_INITSIZE,
-										 ALLOCSET_SMALL_MAXSIZE);
+										 ALLOCSET_SMALL_SIZES);
 		MemoryContextSwitchTo(plan_cxt);
 		qdesc = (plperl_query_desc *) palloc0(sizeof(plperl_query_desc));
 		snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
@@ -3479,9 +3475,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		 ************************************************************/
 		work_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										 "PL/Perl spi_prepare workspace",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+										 ALLOCSET_DEFAULT_SIZES);
 		MemoryContextSwitchTo(work_cxt);
 
 		/************************************************************

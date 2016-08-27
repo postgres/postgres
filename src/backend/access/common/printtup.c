@@ -135,9 +135,7 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	myState->tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
 												"printtup",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_SIZES);
 
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 	{

@@ -1801,10 +1801,8 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/* Create long-lived context for storage of partition-local memory etc */
 	winstate->partcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
-							  "WindowAgg_Partition",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  "WindowAgg Partition",
+							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Create mid-lived context for aggregate trans values etc.
@@ -1814,10 +1812,8 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 */
 	winstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
-							  "WindowAgg_Aggregates",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  "WindowAgg Aggregates",
+							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * tuple table initialization
@@ -2321,10 +2317,8 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	if (OidIsValid(invtransfn_oid))
 		peraggstate->aggcontext =
 			AllocSetContextCreate(CurrentMemoryContext,
-								  "WindowAgg_AggregatePrivate",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  "WindowAgg Per Aggregate",
+								  ALLOCSET_DEFAULT_SIZES);
 	else
 		peraggstate->aggcontext = winstate->aggcontext;
 

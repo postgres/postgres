@@ -427,10 +427,14 @@ randomize_mem(char *ptr, size_t size)
  *		Create a new AllocSet context.
  *
  * parent: parent context, or NULL if top-level context
- * name: name of context (for debugging --- string will be copied)
+ * name: name of context (for debugging only, need not be unique)
  * minContextSize: minimum context size
  * initBlockSize: initial allocation block size
  * maxBlockSize: maximum allocation block size
+ *
+ * Notes: the name string will be copied into context-lifespan storage.
+ * Most callers should abstract the context size parameters using a macro
+ * such as ALLOCSET_DEFAULT_SIZES.
  */
 MemoryContext
 AllocSetContextCreate(MemoryContext parent,

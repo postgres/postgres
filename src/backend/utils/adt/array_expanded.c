@@ -63,9 +63,7 @@ expand_array(Datum arraydatum, MemoryContext parentcontext,
 	 */
 	objcxt = AllocSetContextCreate(parentcontext,
 								   "expanded array",
-								   ALLOCSET_SMALL_MINSIZE,
-								   ALLOCSET_SMALL_INITSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
+								   ALLOCSET_START_SMALL_SIZES);
 
 	/* Set up expanded array header */
 	eah = (ExpandedArrayHeader *)

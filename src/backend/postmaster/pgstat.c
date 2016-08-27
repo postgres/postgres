@@ -4792,9 +4792,7 @@ pgstat_setup_memcxt(void)
 	if (!pgStatLocalContext)
 		pgStatLocalContext = AllocSetContextCreate(TopMemoryContext,
 												   "Statistics snapshot",
-												   ALLOCSET_SMALL_MINSIZE,
-												   ALLOCSET_SMALL_INITSIZE,
-												   ALLOCSET_SMALL_MAXSIZE);
+												   ALLOCSET_SMALL_SIZES);
 }
 
 

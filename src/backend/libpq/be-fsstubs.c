@@ -79,9 +79,7 @@ static MemoryContext fscxt = NULL;
 		if (fscxt == NULL) \
 			fscxt = AllocSetContextCreate(TopMemoryContext, \
 										  "Filesystem", \
-										  ALLOCSET_DEFAULT_MINSIZE, \
-										  ALLOCSET_DEFAULT_INITSIZE, \
-										  ALLOCSET_DEFAULT_MAXSIZE); \
+										  ALLOCSET_DEFAULT_SIZES); \
 	} while (0)
 
 

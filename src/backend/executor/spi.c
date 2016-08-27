@@ -142,14 +142,10 @@ SPI_connect(void)
 	 */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Proc",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_SIZES);
 	_SPI_current->execCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Exec",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_SIZES);
 	/* ... and switch to procedure's context */
 	_SPI_current->savedcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 
@@ -1744,9 +1740,7 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	tuptabcxt = AllocSetContextCreate(CurrentMemoryContext,
 									  "SPI TupTable",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(tuptabcxt);
 
 	_SPI_current->tuptable = tuptable = (SPITupleTable *)
@@ -2615,14 +2609,11 @@ _SPI_make_plan_non_temp(SPIPlanPtr plan)
 
 	/*
 	 * Create a memory context for the plan, underneath the procedure context.
-	 * We don't expect the plan to be very large, so use smaller-than-default
-	 * alloc parameters.
+	 * We don't expect the plan to be very large.
 	 */
 	plancxt = AllocSetContextCreate(parentcxt,
 									"SPI Plan",
-									ALLOCSET_SMALL_MINSIZE,
-									ALLOCSET_SMALL_INITSIZE,
-									ALLOCSET_SMALL_MAXSIZE);
+									ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(plancxt);
 
 	/* Copy the SPI_plan struct and subsidiary data into the new context */
@@ -2689,9 +2680,7 @@ _SPI_save_plan(SPIPlanPtr plan)
 	 */
 	plancxt = AllocSetContextCreate(CurrentMemoryContext,
 									"SPI Plan",
-									ALLOCSET_SMALL_MINSIZE,
-									ALLOCSET_SMALL_INITSIZE,
-									ALLOCSET_SMALL_MAXSIZE);
+									ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(plancxt);
 
 	/* Copy the SPI plan into its own context */

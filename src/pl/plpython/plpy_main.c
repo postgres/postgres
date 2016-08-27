@@ -315,9 +315,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	MemSet(&proc, 0, sizeof(PLyProcedure));
 	proc.mcxt = AllocSetContextCreate(TopMemoryContext,
 									  "__plpython_inline_block",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 	proc.pyname = MemoryContextStrdup(proc.mcxt, "__plpython_inline_block");
 	proc.langid = codeblock->langOid;
 	proc.result.out.d.typoid = VOIDOID;
@@ -416,9 +414,7 @@ PLy_get_scratch_context(PLyExecutionContext *context)
 		context->scratch_ctx =
 			AllocSetContextCreate(TopTransactionContext,
 								  "PL/Python scratch context",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 	return context->scratch_ctx;
 }
 

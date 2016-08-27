@@ -159,15 +159,13 @@ CreateCachedPlan(Node *raw_parse_tree,
 	/*
 	 * Make a dedicated memory context for the CachedPlanSource and its
 	 * permanent subsidiary data.  It's probably not going to be large, but
-	 * just in case, use the default maxsize parameter.  Initially it's a
-	 * child of the caller's context (which we assume to be transient), so
-	 * that it will be cleaned up on error.
+	 * just in case, allow it to grow large.  Initially it's a child of the
+	 * caller's context (which we assume to be transient), so that it will be
+	 * cleaned up on error.
 	 */
 	source_context = AllocSetContextCreate(CurrentMemoryContext,
 										   "CachedPlanSource",
-										   ALLOCSET_SMALL_MINSIZE,
-										   ALLOCSET_SMALL_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_START_SMALL_SIZES);
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the new context.
@@ -359,9 +357,7 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 		/* Again, it's a good bet the querytree_context can be small */
 		querytree_context = AllocSetContextCreate(source_context,
 												  "CachedPlanQuery",
-												  ALLOCSET_SMALL_MINSIZE,
-												  ALLOCSET_SMALL_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_START_SMALL_SIZES);
 		MemoryContextSwitchTo(querytree_context);
 		querytree_list = (List *) copyObject(querytree_list);
 	}
@@ -733,9 +729,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	 */
 	querytree_context = AllocSetContextCreate(CurrentMemoryContext,
 											  "CachedPlanQuery",
-											  ALLOCSET_SMALL_MINSIZE,
-											  ALLOCSET_SMALL_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_START_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(querytree_context);
 
 	qlist = (List *) copyObject(tlist);
@@ -955,17 +949,14 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	/*
 	 * Normally we make a dedicated memory context for the CachedPlan and its
 	 * subsidiary data.  (It's probably not going to be large, but just in
-	 * case, use the default maxsize parameter.  It's transient for the
-	 * moment.)  But for a one-shot plan, we just leave it in the caller's
-	 * memory context.
+	 * case, allow it to grow large.  It's transient for the moment.)  But for
+	 * a one-shot plan, we just leave it in the caller's memory context.
 	 */
 	if (!plansource->is_oneshot)
 	{
 		plan_context = AllocSetContextCreate(CurrentMemoryContext,
 											 "CachedPlan",
-											 ALLOCSET_SMALL_MINSIZE,
-											 ALLOCSET_SMALL_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
+											 ALLOCSET_START_SMALL_SIZES);
 
 		/*
 		 * Copy plan into the new context.
@@ -1351,9 +1342,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 
 	source_context = AllocSetContextCreate(CurrentMemoryContext,
 										   "CachedPlanSource",
-										   ALLOCSET_SMALL_MINSIZE,
-										   ALLOCSET_SMALL_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_START_SMALL_SIZES);
 
 	oldcxt = MemoryContextSwitchTo(source_context);
 
@@ -1384,9 +1373,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 
 	querytree_context = AllocSetContextCreate(source_context,
 											  "CachedPlanQuery",
-											  ALLOCSET_SMALL_MINSIZE,
-											  ALLOCSET_SMALL_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_START_SMALL_SIZES);
 	MemoryContextSwitchTo(querytree_context);
 	newsource->query_list = (List *) copyObject(plansource->query_list);
 	newsource->relationOids = (List *) copyObject(plansource->relationOids);
