@@ -674,6 +674,7 @@ typedef struct spgInnerConsistentOut
        However, any output traverse values pointed to by
        the <structfield>traversalValues</> array should be allocated
        in <structfield>traversalMemoryContext</>.
+       Each traverse value must be a single palloc'd chunk.
       </para>
      </listitem>
     </varlistentry>

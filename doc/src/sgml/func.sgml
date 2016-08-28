@@ -18580,7 +18580,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_drop(<parameter>node_name</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
-        void
+        <type>void</>
        </entry>
        <entry>
         Delete a previously created replication origin, including any
@@ -18612,7 +18612,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_session_setup(<parameter>node_name</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
-        void
+        <type>void</>
        </entry>
        <entry>
         Mark the current session as replaying from the given
@@ -18630,7 +18630,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_session_reset()</function></literal>
        </entry>
        <entry>
-        void
+        <type>void</>
        </entry>
        <entry>
         Cancel the effects
@@ -18679,7 +18679,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_xact_setup(<parameter>origin_lsn</parameter> <type>pg_lsn</type>, <parameter>origin_timestamp</parameter> <type>timestamptz</type>)</function></literal>
        </entry>
        <entry>
-        void
+        <type>void</>
        </entry>
        <entry>
         Mark the current transaction as replaying a transaction that has
@@ -18698,7 +18698,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_replication_origin_xact_reset()</function></literal>
        </entry>
        <entry>
-        void
+        <type>void</>
        </entry>
        <entry>
         Cancel the effects of
@@ -18714,7 +18714,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal>pg_replication_origin_advance<function>(<parameter>node_name</parameter> <type>text</type>, <parameter>pos</parameter> <type>pg_lsn</type>)</function></literal>
        </entry>
        <entry>
-        void
+        <type>void</>
        </entry>
        <entry>
         Set replication progress for the given node to the given
@@ -19174,7 +19174,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
      <tbody>
       <row>
        <entry>
-        <literal><function>brin_summarize_new_values(<parameter>index_oid</> <type>regclass</>)</function></literal>
+        <literal><function>brin_summarize_new_values(<parameter>index</> <type>regclass</>)</function></literal>
        </entry>
        <entry><type>integer</type></entry>
        <entry>summarize page ranges not already summarized</entry>
@@ -19191,8 +19191,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </table>
 
    <para>
-    <function>brin_summarize_new_values</> receives a BRIN index OID as
-    argument and inspects the index to find page ranges in the base table
+    <function>brin_summarize_new_values</> accepts the OID or name of a
+    BRIN index and inspects the index to find page ranges in the base table
     that are not currently summarized by the index; for any such range
     it creates a new summary index tuple by scanning the table pages.
     It returns the number of new page range summaries that were inserted
@@ -19201,12 +19201,12 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     <function>gin_clean_pending_list</> accepts the OID or name of
-    a GIN index and cleans up the pending list of the specified GIN index
+    a GIN index and cleans up the pending list of the specified index
     by moving entries in it to the main GIN data structure in bulk.
-    It returns the number of pages cleaned up from the pending list.
-    Note that if the argument is a GIN index built with <literal>fastupdate</>
-    option disabled, the cleanup does not happen and the return value is 0
-    because the index doesn't have a pending list.
+    It returns the number of pages removed from the pending list.
+    Note that if the argument is a GIN index built with
+    the <literal>fastupdate</> option disabled, no cleanup happens and the
+    return value is 0, because the index doesn't have a pending list.
     Please see <xref linkend="gin-fast-update"> and <xref linkend="gin-tips">
     for details of the pending list and <literal>fastupdate</> option.
    </para>
