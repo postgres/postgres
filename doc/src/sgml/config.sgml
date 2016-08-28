@@ -5388,9 +5388,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
     <title>Process Title</title>
 
     <para>
-     These settings control how the process title as seen
-     by <command>ps</command> is modified.  See <xref linkend="monitoring-ps">
-     for details.
+     These settings control how process titles of server processes are
+     modified.  Process titles are typically viewed using programs like
+     <application>ps</> or, on Windows, <application>Process Explorer</>.
+     See <xref linkend="monitoring-ps"> for details.
     </para>
 
     <variablelist>
@@ -5403,17 +5404,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Sets the cluster name that appears in the process title for all
-        processes in this cluster. The name can be any string of less than
-        <symbol>NAMEDATALEN</> characters (64 characters in a standard
+        server processes in this cluster. The name can be any string of less
+        than <symbol>NAMEDATALEN</> characters (64 characters in a standard
         build). Only printable ASCII characters may be used in the
         <varname>cluster_name</varname> value. Other characters will be
         replaced with question marks (<literal>?</literal>).  No name is shown
         if this parameter is set to the empty string <literal>''</> (which is
         the default). This parameter can only be set at server start.
-       </para>
-       <para>
-        The process title is typically viewed using programs like
-        <application>ps</> or, on Windows, <application>Process Explorer</>.
        </para>
       </listitem>
      </varlistentry>
@@ -5427,11 +5424,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Enables updating of the process title every time a new SQL command
-        is received by the server.  The process title is typically viewed
-        by the <command>ps</> command,
-        or in Windows by using the <application>Process Explorer</>.
-        This value defaults to off on Windows platforms due to the
-        platform's significant overhead for updating the process title.
+        is received by the server.
+        This setting defaults to <literal>on</> on most platforms, but it
+        defaults to <literal>off</> on Windows due to that platform's larger
+        overhead for updating the process title.
         Only superusers can change this setting.
        </para>
       </listitem>

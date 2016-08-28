@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-08-08 (commit 34927b292)</simpara>
+   <simpara>Current as of 2016-08-27 (commit b9fe6cbc8)</simpara>
   </note>
 
   <sect2>
@@ -348,6 +348,7 @@ This commit is also listed under libpq and psql
 2016-04-27 [59eb55127] Fix EXPLAIN VERBOSE output for parallel aggregate.
 2016-06-09 [c9ce4a1c6] Eliminate "parallel degree" terminology.
 2016-06-16 [75be66464] Invent min_parallel_relation_size GUC to replace a hard-
+2016-08-16 [f85b1a841] Disable parallel query by default.
 -->
        <para>
         Parallel queries (Robert Haas, Amit Kapila, David Rowley,
@@ -365,9 +366,11 @@ This commit is also listed under libpq and psql
        </para>
 
        <para>
-        Use of parallel query execution can be controlled
-        through the new configuration parameters <xref
-        linkend="guc-max-parallel-workers-per-gather">,
+        Parallel query execution is not (yet) enabled by default.
+        To allow it, set the new configuration
+        parameter <xref linkend="guc-max-parallel-workers-per-gather"> to a
+        value larger than zero.  Additional control over use of parallelism
+        is available through other new configuration parameters
         <xref linkend="guc-force-parallel-mode">,
         <xref linkend="guc-parallel-setup-cost">, <xref
         linkend="guc-parallel-tuple-cost">, and <xref
@@ -1027,6 +1030,22 @@ This commit is also listed under libpq and psql
        <para>
         Avoid reducing the <literal>SO_SNDBUF</> setting below its default
         on recent Windows versions (Chen Huajun)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-08-17 [9b33c7e80] Disable update_process_title by default on Windows
+-->
+       <para>
+        Disable <xref linkend="guc-update-process-title"> by default on
+        Windows (Takayuki Tsunakawa)
+       </para>
+
+       <para>
+        The overhead of updating the process title is much larger on Windows
+        than most other platforms, and it is also less useful to do it since
+        most Windows users do not have tools that can display process titles.
        </para>
       </listitem>
 
@@ -2431,6 +2450,22 @@ XXX this is pending backpatch, may need to remove
 
       <listitem>
 <!--
+2016-08-26 [e796d0aba] Add a nonlocalized version of the severity field to clie
+-->
+       <para>
+        Add a nonlocalized version of the severity field in error and notice
+        messages (Tom Lane)
+       </para>
+
+       <para>
+        This change allows client code to determine severity of an error or
+        notice without having to worry about localized variants of the
+        severity strings.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-09-05 [0426f349e] Rearrange the handling of error context reports.
 This commit is also listed under psql and PL/pgSQL
 -->
@@ -2957,6 +2992,25 @@ This commit is also listed under libpq and PL/pgSQL
 
       <listitem>
 <!--
+2016-08-27 [b9fe6cbc8] Add macros to make AllocSetContextCreate() calls simpler
+-->
+       <para>
+        Add macros to make <function>AllocSetContextCreate()</> calls simpler
+        and safer (Tom Lane)
+       </para>
+
+       <para>
+        Writing out the individual sizing parameters for a memory context
+        is now deprecated in favor of using one of the new
+        macros <symbol>ALLOCSET_DEFAULT_SIZES</>,
+        <symbol>ALLOCSET_SMALL_SIZES</>,
+        or <symbol>ALLOCSET_START_SMALL_SIZES</>.
+        Existing code continues to work, however.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-08-05 [de6fd1c89] Rely on inline functions even if that causes warnings in
 -->
        <para>
@@ -3038,19 +3092,24 @@ This commit is also listed under libpq and PL/pgSQL
 <!--
 2016-01-17 [65c5fcd35] Restructure index access method API to hide most of it a
 2016-01-21 [be44ed27b] Improve index AMs' opclass validation procedures.
+2016-08-13 [ed0097e4f] Add SQL-accessible functions for inspecting index AM pro
 -->
        <para>
         Restructure index access method <acronym>API</> to hide most of
-        it at the <application>C</> level (Alexander Korotkov)
+        it at the <application>C</> level (Alexander Korotkov, Andrew Gierth)
        </para>
 
        <para>
         This change modernizes the index <acronym>AM API</> to look more
         like the designs we have adopted for foreign data wrappers and
         tablesample handlers.  This simplifies the <application>C</> code
-        and should make it more feasible to define index access methods in
+        and makes it much more practical to define index access methods in
         installable extensions.  A consequence is that most of the columns
         of the <structname>pg_am</> system catalog have disappeared.
+        New <link linkend="functions-info-catalog-table">inspection
+        functions</link> have been added to allow SQL queries to determine
+        index AM properties that used to be discoverable
+        from <structname>pg_am</>.
        </para>
       </listitem>
 
