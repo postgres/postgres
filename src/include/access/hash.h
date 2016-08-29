@@ -20,7 +20,6 @@
 #include "access/amapi.h"
 #include "access/itup.h"
 #include "access/sdir.h"
-#include "access/xlogreader.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
@@ -364,10 +363,5 @@ extern bool _hash_convert_tuple(Relation index,
 					Datum *index_values, bool *index_isnull);
 extern OffsetNumber _hash_binsearch(Page page, uint32 hash_value);
 extern OffsetNumber _hash_binsearch_last(Page page, uint32 hash_value);
-
-/* hash.c */
-extern void hash_redo(XLogReaderState *record);
-extern void hash_desc(StringInfo buf, XLogReaderState *record);
-extern const char *hash_identify(uint8 info);
 
 #endif   /* HASH_H */

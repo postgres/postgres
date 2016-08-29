@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/hash_xlog.h"
 #include "access/relscan.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"

@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
+#include "access/hash_xlog.h"
 
 void
 hash_desc(StringInfo buf, XLogReaderState *record)
