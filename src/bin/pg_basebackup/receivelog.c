@@ -534,7 +534,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 	}
 	else
 	{
-		if (stream->synchronous)
+		if (synchronous)
 			reportFlushPosition = true;
 		else
 			reportFlushPosition = false;
