@@ -431,7 +431,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * It is straightforward to support the equality strategies with
 			 * the contains operator.  Generally, inequality strategies do not
 			 * make much sense for the types which will be used with the
-			 * inclusion BRIN family of opclasses, but is is possible to
+			 * inclusion BRIN family of opclasses, but is possible to
 			 * implement them with logical negation of the left-of and
 			 * right-of operators.
 			 *
