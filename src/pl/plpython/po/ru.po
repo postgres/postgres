@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-05-27 16:07+0000\n"
+"POT-Creation-Date: 2016-08-11 03:37+0000\n"
 "PO-Revision-Date: 2016-01-17 08:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-translators@postgresql.org>\n"
@@ -73,7 +73,7 @@ msgstr ""
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закрытие курсора в прерванной подтранзакции"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:513
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -262,26 +262,26 @@ msgstr "не удалось создать базовые объекты иск�
 msgid "could not generate SPI exceptions"
 msgstr "не удалось сгенерировать исключения SPI"
 
-#: plpy_plpymodule.c:421
+#: plpy_plpymodule.c:422
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не удалось распаковать аргументы в plpy.elog"
 
-#: plpy_plpymodule.c:430
+#: plpy_plpymodule.c:431
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpy_plpymodule.c:446
+#: plpy_plpymodule.c:448
 #, c-format
-msgid "the message is already specified"
-msgstr "сообщение уже указано"
+msgid "Argument 'message' given by name and position"
+msgstr "Аргумент 'message' задан и по имени, и по позиции"
 
-#: plpy_plpymodule.c:469
+#: plpy_plpymodule.c:475
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' - недопустимое ключевое слово (аргумент) для этой функции"
 
-#: plpy_plpymodule.c:477 plpy_plpymodule.c:480
+#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "неверный код SQLSTATE"
@@ -470,6 +470,9 @@ msgstr "не удалось преобразовать объект Python Unico
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
+
+#~ msgid "the message is already specified"
+#~ msgstr "сообщение уже указано"
 
 #~ msgid "Python major version mismatch in session"
 #~ msgstr "несовпадение базовой версии Python в сеансе"
