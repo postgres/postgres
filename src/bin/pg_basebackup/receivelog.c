@@ -503,26 +503,28 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	if (!CheckServerVersionForStreaming(conn))
 		return false;
 
+	/*
+	 * Decide whether we want to report the flush position. If we report
+	 * the flush position, the primary will know what WAL we'll
+	 * possibly re-request, and it can then remove older WAL safely.
+	 * We must always do that when we are using slots.
+	 *
+	 * Reporting the flush position makes one eligible as a synchronous
+	 * replica. People shouldn't include generic names in
+	 * synchronous_standby_names, but we've protected them against it so
+	 * far, so let's continue to do so unless specifically requested.
+	 */
 	if (replication_slot != NULL)
 	{
-		/*
-		 * Report the flush position, so the primary can know what WAL we'll
-		 * possibly re-request, and remove older WAL safely.
-		 *
-		 * We only report it when a slot has explicitly been used, because
-		 * reporting the flush position makes one eligible as a synchronous
-		 * replica. People shouldn't include generic names in
-		 * synchronous_standby_names, but we've protected them against it so
-		 * far, so let's continue to do so in the situations when possible. If
-		 * they've got a slot, though, we need to report the flush position,
-		 * so that the master can remove WAL.
-		 */
 		reportFlushPosition = true;
 		sprintf(slotcmd, "SLOT \"%s\" ", replication_slot);
 	}
 	else
 	{
-		reportFlushPosition = false;
+		if (stream->synchronous)
+			reportFlushPosition = true;
+		else
+			reportFlushPosition = false;
 		slotcmd[0] = 0;
 	}
 
