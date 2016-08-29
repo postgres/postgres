@@ -252,10 +252,17 @@ su - postgres
 
     <listitem>
      <para>
-      You need <application>Kerberos</>, <productname>OpenSSL</>,
-      <productname>OpenLDAP</>, and/or
-      <application>PAM</>, if you want to support authentication or
-      encryption using those services.
+      You need <productname>OpenSSL</>, if you want to support
+      encrypted client connections. The minimum required version is
+      0.9.8.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      You need <application>Kerberos</>, <productname>OpenLDAP</>,
+      and/or <application>PAM</>, if you want to support authentication
+      using those services.
      </para>
     </listitem>
 
@@ -2823,30 +2830,6 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
      If you prefer
      sources, look
      at <ulink url="http://www.gnu.org/order/ftp.html"></ulink>.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Problems with OpenSSL</title>
-
-    <para>
-     When you build PostgreSQL with OpenSSL support you might get
-     compilation errors in the following files:
-     <itemizedlist>
-      <listitem><para><filename>src/backend/libpq/crypt.c</filename></para></listitem>
-      <listitem><para><filename>src/backend/libpq/password.c</filename></para></listitem>
-      <listitem><para><filename>src/interfaces/libpq/fe-auth.c</filename></para></listitem>
-      <listitem><para><filename>src/interfaces/libpq/fe-connect.c</filename></para></listitem>
-     </itemizedlist>
-
-     This is because of a namespace conflict between the standard
-     <filename>/usr/include/crypt.h</filename> header and the header
-     files provided by OpenSSL.
-    </para>
-
-    <para>
-     Upgrading your OpenSSL installation to version 0.9.6a fixes this
-     problem.  Solaris 9 and above has a newer version of OpenSSL.
     </para>
    </sect3>
 

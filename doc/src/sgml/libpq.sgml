@@ -1238,8 +1238,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
        <para>
         If set to 1 (default), data sent over SSL connections will be
-        compressed (this requires <productname>OpenSSL</> version
-        0.9.8 or later).
+        compressed.
         If set to 0, compression will be disabled (this requires
         <productname>OpenSSL</> 1.0.0 or later).
         This parameter is ignored if a connection without SSL is made,

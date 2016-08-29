@@ -1184,12 +1184,12 @@ gen_random_uuid() returns uuid
       <row>
        <entry>SHA224/256/384/512</entry>
        <entry>yes</entry>
-       <entry>yes (Note 1)</entry>
+       <entry>yes</entry>
       </row>
       <row>
        <entry>Other digest algorithms</entry>
        <entry>no</entry>
-       <entry>yes (Note 2)</entry>
+       <entry>yes (Note 1)</entry>
       </row>
       <row>
        <entry>Blowfish</entry>
@@ -1199,7 +1199,7 @@ gen_random_uuid() returns uuid
       <row>
        <entry>AES</entry>
        <entry>yes</entry>
-       <entry>yes (Note 3)</entry>
+       <entry>yes</entry>
       </row>
       <row>
        <entry>DES/3DES/CAST5</entry>
@@ -1232,21 +1232,9 @@ gen_random_uuid() returns uuid
    <orderedlist>
     <listitem>
      <para>
-      SHA2 algorithms were added to OpenSSL in version 0.9.8.  For
-      older versions, <filename>pgcrypto</> will use built-in code.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
       Any digest algorithm OpenSSL supports is automatically picked up.
       This is not possible with ciphers, which need to be supported
       explicitly.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      AES is included in OpenSSL since version 0.9.7.  For
-      older versions, <filename>pgcrypto</> will use built-in code.
      </para>
     </listitem>
    </orderedlist>

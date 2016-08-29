@@ -54,9 +54,7 @@
 #endif
 
 #include <openssl/ssl.h>
-#if (SSLEAY_VERSION_NUMBER >= 0x00907000L)
 #include <openssl/conf.h>
-#endif
 #ifdef USE_SSL_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -848,9 +846,7 @@ pgtls_init(PGconn *conn)
 	{
 		if (pq_init_ssl_lib)
 		{
-#if SSLEAY_VERSION_NUMBER >= 0x00907000L
 			OPENSSL_config(NULL);
-#endif
 			SSL_library_init();
 			SSL_load_error_strings();
 		}
