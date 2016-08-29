@@ -445,6 +445,26 @@ AllocSetContextCreate(MemoryContext parent,
 {
 	AllocSet	set;
 
+	/*
+	 * First, validate allocation parameters.  (If we're going to throw an
+	 * error, we should do so before the context is created, not after.)  We
+	 * somewhat arbitrarily enforce a minimum 1K block size.
+	 */
+	if (initBlockSize != MAXALIGN(initBlockSize) ||
+		initBlockSize < 1024)
+		elog(ERROR, "invalid initBlockSize for memory context: %zu",
+			 initBlockSize);
+	if (maxBlockSize != MAXALIGN(maxBlockSize) ||
+		maxBlockSize < initBlockSize ||
+		!AllocHugeSizeIsValid(maxBlockSize))	/* must be safe to double */
+		elog(ERROR, "invalid maxBlockSize for memory context: %zu",
+			 maxBlockSize);
+	if (minContextSize != 0 &&
+		(minContextSize != MAXALIGN(minContextSize) ||
+		 minContextSize <= ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
+		elog(ERROR, "invalid minContextSize for memory context: %zu",
+			 minContextSize);
+
 	/* Do the type-independent part of context creation */
 	set = (AllocSet) MemoryContextCreate(T_AllocSetContext,
 										 sizeof(AllocSetContext),
@@ -452,18 +472,7 @@ AllocSetContextCreate(MemoryContext parent,
 										 parent,
 										 name);
 
-	/*
-	 * Make sure alloc parameters are reasonable, and save them.
-	 *
-	 * We somewhat arbitrarily enforce a minimum 1K block size.
-	 */
-	initBlockSize = MAXALIGN(initBlockSize);
-	if (initBlockSize < 1024)
-		initBlockSize = 1024;
-	maxBlockSize = MAXALIGN(maxBlockSize);
-	if (maxBlockSize < initBlockSize)
-		maxBlockSize = initBlockSize;
-	Assert(AllocHugeSizeIsValid(maxBlockSize)); /* must be safe to double */
+	/* Save allocation parameters */
 	set->initBlockSize = initBlockSize;
 	set->maxBlockSize = maxBlockSize;
 	set->nextBlockSize = initBlockSize;
@@ -495,9 +504,9 @@ AllocSetContextCreate(MemoryContext parent,
 	/*
 	 * Grab always-allocated space, if requested
 	 */
-	if (minContextSize > ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ)
+	if (minContextSize > 0)
 	{
-		Size		blksize = MAXALIGN(minContextSize);
+		Size		blksize = minContextSize;
 		AllocBlock	block;
 
 		block = (AllocBlock) malloc(blksize);
