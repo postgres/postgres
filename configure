@@ -11569,6 +11569,7 @@ if ${ac_cv_var_tzname+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+#include <stdlib.h>
 #include <time.h>
 #ifndef tzname /* For SGI.  */
 extern char *tzname[]; /* RS6000 and others reject char **tzname.  */
@@ -13754,6 +13755,7 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
+#include <string.h>
 typedef long long int ac_int64;
 #define INT64_FORMAT "%${pgac_modifier}d"
 

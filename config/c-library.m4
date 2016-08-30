@@ -42,7 +42,8 @@ if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
 fi
 AC_CACHE_CHECK(for tzname, ac_cv_var_tzname,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM(
-[[#include <time.h>
+[[#include <stdlib.h>
+#include <time.h>
 #ifndef tzname /* For SGI.  */
 extern char *tzname[]; /* RS6000 and others reject char **tzname.  */
 #endif
@@ -184,6 +185,7 @@ AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_MODIFIER],
 AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_modifier,
 [for pgac_modifier in 'll' 'q' 'I64'; do
 AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
+#include <string.h>
 typedef long long int ac_int64;
 #define INT64_FORMAT "%${pgac_modifier}d"
 
