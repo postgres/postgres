@@ -75,7 +75,7 @@ _PG_init(void)
 		bl_relopt_tab[i + 1].optname = MemoryContextStrdup(TopMemoryContext,
 														   buf);
 		bl_relopt_tab[i + 1].opttype = RELOPT_TYPE_INT;
-		bl_relopt_tab[i + 1].offset = offsetof(BloomOptions, bitSize[i]);
+		bl_relopt_tab[i + 1].offset = offsetof(BloomOptions, bitSize[0]) + sizeof(int) * i;
 	}
 }
 
