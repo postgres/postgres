@@ -204,8 +204,10 @@ int does_int64_snprintf_work()
     return 0;			/* either multiply or snprintf is busted */
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_snprintf_work());
+  return (! does_int64_snprintf_work());
 }]])],
 [pgac_cv_snprintf_long_long_int_modifier=$pgac_modifier; break],
 [],

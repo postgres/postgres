@@ -71,8 +71,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }])],
 [Ac_cachevar=yes],
 [Ac_cachevar=no],
