@@ -242,7 +242,7 @@ vacuumlo(const char *database, const struct _param * param)
 
 		if (!schema || !table || !field)
 		{
-			fprintf(stderr, "Out of memory\n");
+			fprintf(stderr, "%s", PQerrorMessage(conn));
 			PQclear(res);
 			PQfinish(conn);
 			if (schema != NULL)
@@ -519,7 +519,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'U':
-				param.pg_user = strdup(optarg);
+				param.pg_user = pg_strdup(optarg);
 				break;
 			case 'w':
 				param.pg_prompt = TRI_NO;
@@ -534,10 +534,10 @@ main(int argc, char **argv)
 					fprintf(stderr, "%s: invalid port number: %s\n", progname, optarg);
 					exit(1);
 				}
-				param.pg_port = strdup(optarg);
+				param.pg_port = pg_strdup(optarg);
 				break;
 			case 'h':
-				param.pg_host = strdup(optarg);
+				param.pg_host = pg_strdup(optarg);
 				break;
 		}
 	}

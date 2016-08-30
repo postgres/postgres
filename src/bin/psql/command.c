@@ -1182,15 +1182,23 @@ exec_command(const char *cmd,
 					fflush(stdout);
 				}
 				result = gets_fromFile(stdin);
+				if (!result)
+				{
+					psql_error("\\%s: could not read value for variable\n",
+							   cmd);
+					success = false;
+				}
 			}
 
-			if (!SetVariable(pset.vars, opt, result))
+			if (result &&
+				!SetVariable(pset.vars, opt, result))
 			{
 				psql_error("\\%s: error while setting variable\n", cmd);
 				success = false;
 			}
 
-			free(result);
+			if (result)
+				free(result);
 			if (prompt_text)
 				free(prompt_text);
 			free(opt);

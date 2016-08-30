@@ -56,7 +56,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <qstr>\"		{
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(string_literal);
 				}
@@ -72,7 +72,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <sql>{space}*"}" {
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(sqlblock);
 				}

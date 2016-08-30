@@ -113,6 +113,9 @@ static char **save_argv;
  * overwritten during init_ps_display.  Also, the physical location of the
  * environment strings may be moved, so this should be called before any code
  * that might try to hang onto a getenv() result.)
+ *
+ * Note that in case of failure this cannot call elog() as that is not
+ * initialized yet.  We rely on write_stderr() instead.
  */
 char	  **
 save_ps_display_args(int argc, char **argv)
@@ -163,8 +166,20 @@ save_ps_display_args(int argc, char **argv)
 		 * move the environment out of the way
 		 */
 		new_environ = (char **) malloc((i + 1) * sizeof(char *));
+		if (!new_environ)
+		{
+			write_stderr("out of memory\n");
+			exit(1);
+		}
 		for (i = 0; environ[i] != NULL; i++)
+		{
 			new_environ[i] = strdup(environ[i]);
+			if (!new_environ[i])
+			{
+				write_stderr("out of memory\n");
+				exit(1);
+			}
+		}
 		new_environ[i] = NULL;
 		environ = new_environ;
 	}
@@ -189,8 +204,20 @@ save_ps_display_args(int argc, char **argv)
 		int			i;
 
 		new_argv = (char **) malloc((argc + 1) * sizeof(char *));
+		if (!new_argv)
+		{
+			write_stderr("out of memory\n");
+			exit(1);
+		}
 		for (i = 0; i < argc; i++)
+		{
 			new_argv[i] = strdup(argv[i]);
+			if (!new_argv[i])
+			{
+				write_stderr("out of memory\n");
+				exit(1);
+			}
+		}
 		new_argv[argc] = NULL;
 
 #if defined(__darwin__)

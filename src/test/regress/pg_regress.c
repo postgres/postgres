@@ -151,10 +151,10 @@ unlimit_core_size(void)
 void
 add_stringlist_item(_stringlist **listhead, const char *str)
 {
-	_stringlist *newentry = malloc(sizeof(_stringlist));
+	_stringlist *newentry = pg_malloc(sizeof(_stringlist));
 	_stringlist *oldentry;
 
-	newentry->str = strdup(str);
+	newentry->str = pg_strdup(str);
 	newentry->next = NULL;
 	if (*listhead == NULL)
 		*listhead = newentry;
@@ -187,7 +187,7 @@ free_stringlist(_stringlist **listhead)
 static void
 split_to_stringlist(const char *s, const char *delim, _stringlist **listhead)
 {
-	char	   *sc = strdup(s);
+	char	   *sc = pg_strdup(s);
 	char	   *token = strtok(sc, delim);
 
 	while (token)
@@ -327,7 +327,7 @@ signal_remove_temp(int signum)
 static const char *
 make_temp_sockdir(void)
 {
-	char	   *template = strdup("/tmp/pg_regress-XXXXXX");
+	char	   *template = pg_strdup("/tmp/pg_regress-XXXXXX");
 
 	temp_sockdir = mkdtemp(template);
 	if (temp_sockdir == NULL)
@@ -441,7 +441,7 @@ replace_string(char *string, char *replace, char *replacement)
 
 	while ((ptr = strstr(string, replace)) != NULL)
 	{
-		char	   *dup = strdup(string);
+		char	   *dup = pg_strdup(string);
 
 		strlcpy(string, dup, ptr - string + 1);
 		strcat(string, replacement);
@@ -661,11 +661,11 @@ load_resultmap(void)
 		 */
 		if (string_matches_pattern(host_platform, platform))
 		{
-			_resultmap *entry = malloc(sizeof(_resultmap));
+			_resultmap *entry = pg_malloc(sizeof(_resultmap));
 
-			entry->test = strdup(buf);
-			entry->type = strdup(file_type);
-			entry->resultfile = strdup(expected);
+			entry->test = pg_strdup(buf);
+			entry->type = pg_strdup(file_type);
+			entry->resultfile = pg_strdup(expected);
 			entry->next = resultmap;
 			resultmap = entry;
 		}
@@ -908,7 +908,7 @@ current_windows_user(const char **acct, const char **dom)
 				progname, GetLastError());
 		exit(2);
 	}
-	tokenuser = malloc(retlen);
+	tokenuser = pg_malloc(retlen);
 	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
 	{
 		fprintf(stderr,
@@ -1460,7 +1460,7 @@ wait_for_tests(PID_TYPE * pids, int *statuses, char **names, int num_tests)
 	int			i;
 
 #ifdef WIN32
-	PID_TYPE   *active_pids = malloc(num_tests * sizeof(PID_TYPE));
+	PID_TYPE   *active_pids = pg_malloc(num_tests * sizeof(PID_TYPE));
 
 	memcpy(active_pids, pids, num_tests * sizeof(PID_TYPE));
 #endif
@@ -1848,7 +1848,7 @@ open_result_files(void)
 
 	/* create the log file (copy of running status output) */
 	snprintf(file, sizeof(file), "%s/regression.out", outputdir);
-	logfilename = strdup(file);
+	logfilename = pg_strdup(file);
 	logfile = fopen(logfilename, "w");
 	if (!logfile)
 	{
@@ -1859,7 +1859,7 @@ open_result_files(void)
 
 	/* create the diffs file as empty */
 	snprintf(file, sizeof(file), "%s/regression.diffs", outputdir);
-	difffilename = strdup(file);
+	difffilename = pg_strdup(file);
 	difffile = fopen(difffilename, "w");
 	if (!difffile)
 	{
@@ -2064,13 +2064,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 * before we add the specified one.
 				 */
 				free_stringlist(&dblist);
-				split_to_stringlist(strdup(optarg), ", ", &dblist);
+				split_to_stringlist(pg_strdup(optarg), ", ", &dblist);
 				break;
 			case 2:
 				debug = true;
 				break;
 			case 3:
-				inputdir = strdup(optarg);
+				inputdir = pg_strdup(optarg);
 				break;
 			case 4:
 				add_stringlist_item(&loadlanguage, optarg);
@@ -2079,10 +2079,10 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				max_connections = atoi(optarg);
 				break;
 			case 6:
-				encoding = strdup(optarg);
+				encoding = pg_strdup(optarg);
 				break;
 			case 7:
-				outputdir = strdup(optarg);
+				outputdir = pg_strdup(optarg);
 				break;
 			case 8:
 				add_stringlist_item(&schedulelist, optarg);
@@ -2094,27 +2094,27 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				nolocale = true;
 				break;
 			case 13:
-				hostname = strdup(optarg);
+				hostname = pg_strdup(optarg);
 				break;
 			case 14:
 				port = atoi(optarg);
 				port_specified_by_user = true;
 				break;
 			case 15:
-				user = strdup(optarg);
+				user = pg_strdup(optarg);
 				break;
 			case 16:
 				/* "--bindir=" means to use PATH */
 				if (strlen(optarg))
-					bindir = strdup(optarg);
+					bindir = pg_strdup(optarg);
 				else
 					bindir = NULL;
 				break;
 			case 17:
-				dlpath = strdup(optarg);
+				dlpath = pg_strdup(optarg);
 				break;
 			case 18:
-				split_to_stringlist(strdup(optarg), ", ", &extraroles);
+				split_to_stringlist(pg_strdup(optarg), ", ", &extraroles);
 				break;
 			case 19:
 				add_stringlist_item(&temp_configs, optarg);
@@ -2123,13 +2123,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				use_existing = true;
 				break;
 			case 21:
-				launcher = strdup(optarg);
+				launcher = pg_strdup(optarg);
 				break;
 			case 22:
 				add_stringlist_item(&loadextension, optarg);
 				break;
 			case 24:
-				config_auth_datadir = pstrdup(optarg);
+				config_auth_datadir = pg_strdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

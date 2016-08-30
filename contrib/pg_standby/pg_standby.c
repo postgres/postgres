@@ -632,7 +632,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 't':			/* Trigger file */
-				triggerPath = strdup(optarg);
+				triggerPath = pg_strdup(optarg);
 				break;
 			case 'w':			/* Max wait time */
 				maxwaittime = atoi(optarg);

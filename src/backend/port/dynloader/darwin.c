@@ -78,6 +78,9 @@ pg_dlsym(void *handle, char *funcname)
 	NSSymbol symbol;
 	char	   *symname = (char *) malloc(strlen(funcname) + 2);
 
+	if (!symname)
+		return NULL;
+
 	sprintf(symname, "_%s", funcname);
 	if (NSIsSymbolNameDefined(symname))
 	{

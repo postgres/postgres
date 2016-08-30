@@ -119,7 +119,7 @@ main(int argc, char **argv)
 	for (i = 0; i < testspec->nsessions; i++)
 		nallsteps += testspec->sessions[i]->nsteps;
 
-	allsteps = malloc(nallsteps * sizeof(Step *));
+	allsteps = pg_malloc(nallsteps * sizeof(Step *));
 
 	n = 0;
 	for (i = 0; i < testspec->nsessions; i++)
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		{
 			if (PQntuples(res) == 1 && PQnfields(res) == 1)
-				backend_pids[i] = strdup(PQgetvalue(res, 0, 0));
+				backend_pids[i] = pg_strdup(PQgetvalue(res, 0, 0));
 			else
 			{
 				fprintf(stderr, "backend pid query returned %d rows and %d columns, expected 1 row and 1 column",
@@ -286,7 +286,7 @@ run_all_permutations(TestSpec *testspec)
 	for (i = 0; i < testspec->nsessions; i++)
 		nsteps += testspec->sessions[i]->nsteps;
 
-	steps = malloc(sizeof(Step *) * nsteps);
+	steps = pg_malloc(sizeof(Step *) * nsteps);
 
 	/*
 	 * To generate the permutations, we conceptually put the steps of each
@@ -297,7 +297,7 @@ run_all_permutations(TestSpec *testspec)
 	 * A pile is actually just an integer which tells how many steps we've
 	 * already picked from this pile.
 	 */
-	piles = malloc(sizeof(int) * testspec->nsessions);
+	piles = pg_malloc(sizeof(int) * testspec->nsessions);
 	for (i = 0; i < testspec->nsessions; i++)
 		piles[i] = 0;
 
@@ -345,7 +345,7 @@ run_named_permutations(TestSpec *testspec)
 		Permutation *p = testspec->permutations[i];
 		Step	  **steps;
 
-		steps = malloc(p->nsteps * sizeof(Step *));
+		steps = pg_malloc(p->nsteps * sizeof(Step *));
 
 		/* Find all the named steps using the lookup table */
 		for (j = 0; j < p->nsteps; j++)
@@ -476,8 +476,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		return;
 	}
 
-	waiting = malloc(sizeof(Step *) * testspec->nsessions);
-	errorstep = malloc(sizeof(Step *) * testspec->nsessions);
+	waiting = pg_malloc(sizeof(Step *) * testspec->nsessions);
+	errorstep = pg_malloc(sizeof(Step *) * testspec->nsessions);
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)

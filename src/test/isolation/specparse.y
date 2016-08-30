@@ -73,8 +73,8 @@ setup_list:
 			}
 			| setup_list setup
 			{
-				$$.elements = realloc($1.elements,
-									  ($1.nelements + 1) * sizeof(void *));
+				$$.elements = pg_realloc($1.elements,
+										 ($1.nelements + 1) * sizeof(void *));
 				$$.elements[$1.nelements] = $2;
 				$$.nelements = $1.nelements + 1;
 			}
@@ -97,15 +97,15 @@ opt_teardown:
 session_list:
 			session_list session
 			{
-				$$.elements = realloc($1.elements,
-									  ($1.nelements + 1) * sizeof(void *));
+				$$.elements = pg_realloc($1.elements,
+										 ($1.nelements + 1) * sizeof(void *));
 				$$.elements[$1.nelements] = $2;
 				$$.nelements = $1.nelements + 1;
 			}
 			| session
 			{
 				$$.nelements = 1;
-				$$.elements = malloc(sizeof(void *));
+				$$.elements = pg_malloc(sizeof(void *));
 				$$.elements[0] = $1;
 			}
 		;
@@ -113,7 +113,7 @@ session_list:
 session:
 			SESSION string_literal opt_setup step_list opt_teardown
 			{
-				$$ = malloc(sizeof(Session));
+				$$ = pg_malloc(sizeof(Session));
 				$$->name = $2;
 				$$->setupsql = $3;
 				$$->steps = (Step **) $4.elements;
@@ -125,15 +125,15 @@ session:
 step_list:
 			step_list step
 			{
-				$$.elements = realloc($1.elements,
-									  ($1.nelements + 1) * sizeof(void *));
+				$$.elements = pg_realloc($1.elements,
+										 ($1.nelements + 1) * sizeof(void *));
 				$$.elements[$1.nelements] = $2;
 				$$.nelements = $1.nelements + 1;
 			}
 			| step
 			{
 				$$.nelements = 1;
-				$$.elements = malloc(sizeof(void *));
+				$$.elements = pg_malloc(sizeof(void *));
 				$$.elements[0] = $1;
 			}
 		;
@@ -142,7 +142,7 @@ step_list:
 step:
 			STEP string_literal sqlblock
 			{
-				$$ = malloc(sizeof(Step));
+				$$ = pg_malloc(sizeof(Step));
 				$$->name = $2;
 				$$->sql = $3;
 				$$->errormsg = NULL;
@@ -164,15 +164,15 @@ opt_permutation_list:
 permutation_list:
 			permutation_list permutation
 			{
-				$$.elements = realloc($1.elements,
-									  ($1.nelements + 1) * sizeof(void *));
+				$$.elements = pg_realloc($1.elements,
+										 ($1.nelements + 1) * sizeof(void *));
 				$$.elements[$1.nelements] = $2;
 				$$.nelements = $1.nelements + 1;
 			}
 			| permutation
 			{
 				$$.nelements = 1;
-				$$.elements = malloc(sizeof(void *));
+				$$.elements = pg_malloc(sizeof(void *));
 				$$.elements[0] = $1;
 			}
 		;
@@ -181,7 +181,7 @@ permutation_list:
 permutation:
 			PERMUTATION string_literal_list
 			{
-				$$ = malloc(sizeof(Permutation));
+				$$ = pg_malloc(sizeof(Permutation));
 				$$->stepnames = (char **) $2.elements;
 				$$->nsteps = $2.nelements;
 			}
@@ -190,15 +190,15 @@ permutation:
 string_literal_list:
 			string_literal_list string_literal
 			{
-				$$.elements = realloc($1.elements,
-									  ($1.nelements + 1) * sizeof(void *));
+				$$.elements = pg_realloc($1.elements,
+										 ($1.nelements + 1) * sizeof(void *));
 				$$.elements[$1.nelements] = $2;
 				$$.nelements = $1.nelements + 1;
 			}
 			| string_literal
 			{
 				$$.nelements = 1;
-				$$.elements = malloc(sizeof(void *));
+				$$.elements = pg_malloc(sizeof(void *));
 				$$.elements[0] = $1;
 			}
 		;
