@@ -36,13 +36,4 @@
 
 #include "fmgr.h"
 
-/*
- * External declarations
- */
-extern Datum normal_rand(PG_FUNCTION_ARGS);
-extern Datum crosstab(PG_FUNCTION_ARGS);
-extern Datum crosstab_hash(PG_FUNCTION_ARGS);
-extern Datum connectby_text(PG_FUNCTION_ARGS);
-extern Datum connectby_text_serial(PG_FUNCTION_ARGS);
-
 #endif   /* TABLEFUNC_H */

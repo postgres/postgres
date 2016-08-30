@@ -34,17 +34,4 @@
 
 #include "fmgr.h"
 
-/* exported functions */
-Datum		pg_digest(PG_FUNCTION_ARGS);
-Datum		pg_hmac(PG_FUNCTION_ARGS);
-Datum		pg_gen_salt(PG_FUNCTION_ARGS);
-Datum		pg_gen_salt_rounds(PG_FUNCTION_ARGS);
-Datum		pg_crypt(PG_FUNCTION_ARGS);
-Datum		pg_encrypt(PG_FUNCTION_ARGS);
-Datum		pg_decrypt(PG_FUNCTION_ARGS);
-Datum		pg_encrypt_iv(PG_FUNCTION_ARGS);
-Datum		pg_decrypt_iv(PG_FUNCTION_ARGS);
-Datum		pg_random_bytes(PG_FUNCTION_ARGS);
-Datum		pg_random_uuid(PG_FUNCTION_ARGS);
-
 #endif

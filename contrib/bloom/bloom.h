@@ -174,7 +174,6 @@ typedef BloomScanOpaqueData *BloomScanOpaque;
 
 /* blutils.c */
 extern void _PG_init(void);
-extern Datum blhandler(PG_FUNCTION_ARGS);
 extern void initBloomState(BloomState *state, Relation index);
 extern void BloomFillMetapage(Relation index, Page metaPage);
 extern void BloomInitMetapage(Relation index);
