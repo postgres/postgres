@@ -135,6 +135,7 @@ static const char *default_text_search_config = "";
 static char *username = "";
 static bool pwprompt = false;
 static char *pwfilename = NULL;
+static char *superuser_password = NULL;
 static const char *authmethodhost = "";
 static const char *authmethodlocal = "";
 static bool debug = false;
@@ -255,7 +256,7 @@ static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
 static void setup_auth(FILE *cmdfd);
-static void get_set_pwd(FILE *cmdfd);
+static void get_su_pwd(void);
 static void setup_depend(FILE *cmdfd);
 static void setup_sysviews(FILE *cmdfd);
 static void setup_description(FILE *cmdfd);
@@ -1544,13 +1545,17 @@ setup_auth(FILE *cmdfd)
 
 	for (line = pg_authid_setup; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
+
+	if (superuser_password)
+		PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
+					   username, escape_quotes(superuser_password));
 }
 
 /*
- * get the superuser password if required, and call postgres to set it
+ * get the superuser password if required
  */
 static void
-get_set_pwd(FILE *cmdfd)
+get_su_pwd(void)
 {
 	char	   *pwd1,
 			   *pwd2;
@@ -1560,6 +1565,8 @@ get_set_pwd(FILE *cmdfd)
 		/*
 		 * Read password from terminal
 		 */
+		printf("\n");
+		fflush(stdout);
 		pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
 		pwd2 = simple_prompt("Enter it again: ", 100, false);
 		if (strcmp(pwd1, pwd2) != 0)
@@ -1609,10 +1616,7 @@ get_set_pwd(FILE *cmdfd)
 
 	}
 
-	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
-				   username, escape_quotes(pwd1));
-
-	free(pwd1);
+	superuser_password = pwd1;
 }
 
 /*
@@ -3279,8 +3283,6 @@ initialize_data_directory(void)
 	PG_CMD_OPEN;
 
 	setup_auth(cmdfd);
-	if (pwprompt || pwfilename)
-		get_set_pwd(cmdfd);
 
 	setup_depend(cmdfd);
 
@@ -3568,6 +3570,9 @@ main(int argc, char *argv[])
 		printf(_("Data page checksums are enabled.\n"));
 	else
 		printf(_("Data page checksums are disabled.\n"));
+
+	if (pwprompt || pwfilename)
+		get_su_pwd();
 
 	printf("\n");
 
