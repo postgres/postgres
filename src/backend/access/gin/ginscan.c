@@ -147,7 +147,7 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	key->nuserentries = nUserQueryValues;
 
 	key->scanEntry = (GinScanEntry *) palloc(sizeof(GinScanEntry) * nQueryValues);
-	key->entryRes = (bool *) palloc0(sizeof(bool) * nQueryValues);
+	key->entryRes = (GinTernaryValue *) palloc0(sizeof(GinTernaryValue) * nQueryValues);
 
 	key->query = query;
 	key->queryValues = queryValues;
