@@ -12,33 +12,31 @@
  *
  *-------------------------------------------------------------------------
  */
-
-
-/*
- * simple_prompt
- *
- * Generalized function especially intended for reading in usernames and
- * password interactively. Reads from /dev/tty or stdin/stderr.
- *
- * prompt:		The prompt to print
- * maxlen:		How many characters to accept
- * echo:		Set to false if you want to hide what is entered (for passwords)
- *
- * Returns a malloc()'ed string with the input (w/o trailing newline).
- */
 #include "c.h"
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
 
-extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
-char *
-simple_prompt(const char *prompt, int maxlen, bool echo)
+/*
+ * simple_prompt
+ *
+ * Generalized function especially intended for reading in usernames and
+ * passwords interactively.  Reads from /dev/tty or stdin/stderr.
+ *
+ * prompt:		The prompt to print, or NULL if none (automatically localized)
+ * destination: buffer in which to store result
+ * destlen:		allocated length of destination
+ * echo:		Set to false if you want to hide what is entered (for passwords)
+ *
+ * The input (without trailing newline) is returned in the destination buffer,
+ * with a '\0' appended.
+ */
+void
+simple_prompt(const char *prompt, char *destination, size_t destlen, bool echo)
 {
 	int			length;
-	char	   *destination;
 	FILE	   *termin,
 			   *termout;
 
@@ -48,13 +46,9 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #else
 #ifdef WIN32
 	HANDLE		t = NULL;
-	LPDWORD		t_orig = NULL;
+	DWORD		t_orig = 0;
 #endif
 #endif
-
-	destination = (char *) malloc(maxlen + 1);
-	if (!destination)
-		return NULL;
 
 #ifdef WIN32
 
@@ -118,11 +112,10 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!echo)
 	{
 		/* get a new handle to turn echo off */
-		t_orig = (LPDWORD) malloc(sizeof(DWORD));
 		t = GetStdHandle(STD_INPUT_HANDLE);
 
 		/* save the old configuration first */
-		GetConsoleMode(t, t_orig);
+		GetConsoleMode(t, &t_orig);
 
 		/* set to the new mode */
 		SetConsoleMode(t, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
@@ -136,7 +129,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		fflush(termout);
 	}
 
-	if (fgets(destination, maxlen + 1, termin) == NULL)
+	if (fgets(destination, destlen, termin) == NULL)
 		destination[0] = '\0';
 
 	length = strlen(destination);
@@ -170,10 +163,9 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!echo)
 	{
 		/* reset to the original console mode */
-		SetConsoleMode(t, *t_orig);
+		SetConsoleMode(t, t_orig);
 		fputs("\n", termout);
 		fflush(termout);
-		free(t_orig);
 	}
 #endif
 #endif
@@ -183,6 +175,4 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		fclose(termin);
 		fclose(termout);
 	}
-
-	return destination;
 }

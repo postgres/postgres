@@ -68,18 +68,18 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 				const char *progname, bool fail_ok, bool allow_password_reuse)
 {
 	PGconn	   *conn;
-	static char *password = NULL;
 	bool		new_pass;
+	static bool have_password = false;
+	static char password[100];
 
 	if (!allow_password_reuse)
-	{
-		if (password)
-			free(password);
-		password = NULL;
-	}
+		have_password = false;
 
-	if (password == NULL && prompt_password == TRI_YES)
-		password = simple_prompt("Password: ", 100, false);
+	if (!have_password && prompt_password == TRI_YES)
+	{
+		simple_prompt("Password: ", password, sizeof(password), false);
+		have_password = true;
+	}
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -97,7 +97,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		keywords[2] = "user";
 		values[2] = pguser;
 		keywords[3] = "password";
-		values[3] = password;
+		values[3] = have_password ? password : NULL;
 		keywords[4] = "dbname";
 		values[4] = dbname;
 		keywords[5] = "fallback_application_name";
@@ -123,9 +123,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
-			if (password)
-				free(password);
-			password = simple_prompt("Password: ", 100, false);
+			simple_prompt("Password: ", password, sizeof(password), false);
+			have_password = true;
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -275,22 +274,15 @@ yesno_prompt(const char *question)
 
 	for (;;)
 	{
-		char	   *resp;
+		char		resp[10];
 
-		resp = simple_prompt(prompt, 1, true);
+		simple_prompt(prompt, resp, sizeof(resp), true);
 
 		if (strcmp(resp, _(PG_YESLETTER)) == 0)
-		{
-			free(resp);
 			return true;
-		}
-		else if (strcmp(resp, _(PG_NOLETTER)) == 0)
-		{
-			free(resp);
+		if (strcmp(resp, _(PG_NOLETTER)) == 0)
 			return false;
-		}
 
-		free(resp);
 		printf(_("Please answer \"%s\" or \"%s\".\n"),
 			   _(PG_YESLETTER), _(PG_NOLETTER));
 	}

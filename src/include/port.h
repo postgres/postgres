@@ -203,7 +203,8 @@ extern char *pgwin32_setlocale(int category, const char *locale);
 #endif   /* WIN32 */
 
 /* Portable prompt handling */
-extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
+extern void simple_prompt(const char *prompt, char *destination, size_t destlen,
+			  bool echo);
 
 #ifdef WIN32
 #define PG_SIGNAL_COUNT 32

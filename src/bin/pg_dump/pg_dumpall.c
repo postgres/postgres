@@ -1884,13 +1884,17 @@ connectDatabase(const char *dbname, const char *connection_string,
 	bool		new_pass;
 	const char *remoteversion_str;
 	int			my_version;
-	static char *password = NULL;
 	const char **keywords = NULL;
 	const char **values = NULL;
 	PQconninfoOption *conn_opts = NULL;
+	static bool have_password = false;
+	static char password[100];
 
-	if (prompt_password == TRI_YES && !password)
-		password = simple_prompt("Password: ", 100, false);
+	if (prompt_password == TRI_YES && !have_password)
+	{
+		simple_prompt("Password: ", password, sizeof(password), false);
+		have_password = true;
+	}
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -1970,7 +1974,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 			values[i] = pguser;
 			i++;
 		}
-		if (password)
+		if (have_password)
 		{
 			keywords[i] = "password";
 			values[i] = password;
@@ -1998,11 +2002,12 @@ connectDatabase(const char *dbname, const char *connection_string,
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL &&
+			!have_password &&
 			prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
-			password = simple_prompt("Password: ", 100, false);
+			simple_prompt("Password: ", password, sizeof(password), false);
+			have_password = true;
 			new_pass = true;
 		}
 	} while (new_pass);

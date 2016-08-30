@@ -46,6 +46,7 @@ main(int argc, char *argv[])
 	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		echo = false;
 	bool		interactive = false;
+	char		dropuser_buf[128];
 
 	PQExpBufferData sql;
 
@@ -108,7 +109,11 @@ main(int argc, char *argv[])
 	if (dropuser == NULL)
 	{
 		if (interactive)
-			dropuser = simple_prompt("Enter name of role to drop: ", 128, true);
+		{
+			simple_prompt("Enter name of role to drop: ",
+						  dropuser_buf, sizeof(dropuser_buf), true);
+			dropuser = dropuser_buf;
+		}
 		else
 		{
 			fprintf(stderr, _("%s: missing required argument role name\n"), progname);

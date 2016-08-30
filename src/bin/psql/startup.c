@@ -103,7 +103,8 @@ main(int argc, char *argv[])
 {
 	struct adhoc_opts options;
 	int			successResult;
-	char	   *password = NULL;
+	bool		have_password = false;
+	char		password[100];
 	char	   *password_prompt = NULL;
 	bool		new_pass;
 
@@ -210,7 +211,10 @@ main(int argc, char *argv[])
 								   options.username);
 
 	if (pset.getPassword == TRI_YES)
-		password = simple_prompt(password_prompt, 100, false);
+	{
+		simple_prompt(password_prompt, password, sizeof(password), false);
+		have_password = true;
+	}
 
 	/* loop until we have a password if requested by backend */
 	do
@@ -226,7 +230,7 @@ main(int argc, char *argv[])
 		keywords[2] = "user";
 		values[2] = options.username;
 		keywords[3] = "password";
-		values[3] = password;
+		values[3] = have_password ? password : NULL;
 		keywords[4] = "dbname"; /* see do_connect() */
 		values[4] = (options.list_dbs && options.dbname == NULL) ?
 			"postgres" : options.dbname;
@@ -244,16 +248,16 @@ main(int argc, char *argv[])
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(pset.db) &&
-			password == NULL &&
+			!have_password &&
 			pset.getPassword != TRI_NO)
 		{
 			PQfinish(pset.db);
-			password = simple_prompt(password_prompt, 100, false);
+			simple_prompt(password_prompt, password, sizeof(password), false);
+			have_password = true;
 			new_pass = true;
 		}
 	} while (new_pass);
 
-	free(password);
 	free(password_prompt);
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)

@@ -66,6 +66,8 @@ main(int argc, char *argv[])
 	char	   *conn_limit = NULL;
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
+	char		newuser_buf[128];
+	char		newpassword_buf[100];
 
 	/* Tri-valued variables.  */
 	enum trivalue createdb = TRI_DEFAULT,
@@ -188,7 +190,11 @@ main(int argc, char *argv[])
 	if (newuser == NULL)
 	{
 		if (interactive)
-			newuser = simple_prompt("Enter name of role to add: ", 128, true);
+		{
+			simple_prompt("Enter name of role to add: ",
+						  newuser_buf, sizeof(newuser_buf), true);
+			newuser = newuser_buf;
+		}
 		else
 		{
 			if (getenv("PGUSER"))
@@ -200,18 +206,17 @@ main(int argc, char *argv[])
 
 	if (pwprompt)
 	{
-		char	   *pw1,
-				   *pw2;
+		char		pw2[100];
 
-		pw1 = simple_prompt("Enter password for new role: ", 100, false);
-		pw2 = simple_prompt("Enter it again: ", 100, false);
-		if (strcmp(pw1, pw2) != 0)
+		simple_prompt("Enter password for new role: ",
+					  newpassword_buf, sizeof(newpassword_buf), false);
+		simple_prompt("Enter it again: ", pw2, sizeof(pw2), false);
+		if (strcmp(newpassword_buf, pw2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
 			exit(1);
 		}
-		newpassword = pw1;
-		free(pw2);
+		newpassword = newpassword_buf;
 	}
 
 	if (superuser == 0)

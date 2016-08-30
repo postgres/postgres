@@ -773,8 +773,9 @@ static PGconn *
 doConnect(void)
 {
 	PGconn	   *conn;
-	static char *password = NULL;
 	bool		new_pass;
+	static bool have_password = false;
+	static char password[100];
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -794,7 +795,7 @@ doConnect(void)
 		keywords[2] = "user";
 		values[2] = login;
 		keywords[3] = "password";
-		values[3] = password;
+		values[3] = have_password ? password : NULL;
 		keywords[4] = "dbname";
 		values[4] = dbName;
 		keywords[5] = "fallback_application_name";
@@ -815,10 +816,11 @@ doConnect(void)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL)
+			!have_password)
 		{
 			PQfinish(conn);
-			password = simple_prompt("Password: ", 100, false);
+			simple_prompt("Password: ", password, sizeof(password), false);
+			have_password = true;
 			new_pass = true;
 		}
 	} while (new_pass);

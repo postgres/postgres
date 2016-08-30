@@ -41,7 +41,8 @@ char	   *dbport = NULL;
 char	   *replication_slot = NULL;
 char	   *dbname = NULL;
 int			dbgetpassword = 0;	/* 0=auto, -1=never, 1=always */
-static char *dbpassword = NULL;
+static bool have_password = false;
+static char password[100];
 PGconn	   *conn = NULL;
 
 /*
@@ -141,24 +142,23 @@ GetConnection(void)
 	}
 
 	/* If -W was given, force prompt for password, but only the first time */
-	need_password = (dbgetpassword == 1 && dbpassword == NULL);
+	need_password = (dbgetpassword == 1 && !have_password);
 
 	do
 	{
 		/* Get a new password if appropriate */
 		if (need_password)
 		{
-			if (dbpassword)
-				free(dbpassword);
-			dbpassword = simple_prompt(_("Password: "), 100, false);
+			simple_prompt("Password: ", password, sizeof(password), false);
+			have_password = true;
 			need_password = false;
 		}
 
 		/* Use (or reuse, on a subsequent connection) password if we have it */
-		if (dbpassword)
+		if (have_password)
 		{
 			keywords[i] = "password";
-			values[i] = dbpassword;
+			values[i] = password;
 		}
 		else
 		{

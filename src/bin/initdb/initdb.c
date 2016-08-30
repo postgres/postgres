@@ -1557,8 +1557,8 @@ setup_auth(FILE *cmdfd)
 static void
 get_su_pwd(void)
 {
-	char	   *pwd1,
-			   *pwd2;
+	char		pwd1[100];
+	char		pwd2[100];
 
 	if (pwprompt)
 	{
@@ -1567,14 +1567,13 @@ get_su_pwd(void)
 		 */
 		printf("\n");
 		fflush(stdout);
-		pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
-		pwd2 = simple_prompt("Enter it again: ", 100, false);
+		simple_prompt("Enter new superuser password: ", pwd1, sizeof(pwd1), false);
+		simple_prompt("Enter it again: ", pwd2, sizeof(pwd2), false);
 		if (strcmp(pwd1, pwd2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
 			exit_nicely();
 		}
-		free(pwd2);
 	}
 	else
 	{
@@ -1587,7 +1586,6 @@ get_su_pwd(void)
 		 * for now.
 		 */
 		FILE	   *pwf = fopen(pwfilename, "r");
-		char		pwdbuf[MAXPGPATH];
 		int			i;
 
 		if (!pwf)
@@ -1596,7 +1594,7 @@ get_su_pwd(void)
 					progname, pwfilename, strerror(errno));
 			exit_nicely();
 		}
-		if (!fgets(pwdbuf, sizeof(pwdbuf), pwf))
+		if (!fgets(pwd1, sizeof(pwd1), pwf))
 		{
 			if (ferror(pwf))
 				fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
@@ -1608,15 +1606,12 @@ get_su_pwd(void)
 		}
 		fclose(pwf);
 
-		i = strlen(pwdbuf);
-		while (i > 0 && (pwdbuf[i - 1] == '\r' || pwdbuf[i - 1] == '\n'))
-			pwdbuf[--i] = '\0';
-
-		pwd1 = pg_strdup(pwdbuf);
-
+		i = strlen(pwd1);
+		while (i > 0 && (pwd1[i - 1] == '\r' || pwd1[i - 1] == '\n'))
+			pwd1[--i] = '\0';
 	}
 
-	superuser_password = pwd1;
+	superuser_password = pg_strdup(pwd1);
 }
 
 /*

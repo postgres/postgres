@@ -134,6 +134,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	const char *newdb;
 	const char *newuser;
 	char	   *password;
+	char		passbuf[100];
 	bool		new_pass;
 
 	if (!reqdb)
@@ -149,13 +150,12 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	ahlog(AH, 1, "connecting to database \"%s\" as user \"%s\"\n",
 		  newdb, newuser);
 
-	password = AH->savedPassword ? pg_strdup(AH->savedPassword) : NULL;
+	password = AH->savedPassword;
 
 	if (AH->promptPassword == TRI_YES && password == NULL)
 	{
-		password = simple_prompt("Password: ", 100, false);
-		if (password == NULL)
-			exit_horribly(modulename, "out of memory\n");
+		simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
+		password = passbuf;
 	}
 
 	initPQExpBuffer(&connstr);
@@ -201,16 +201,14 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			fprintf(stderr, "Connecting to %s as %s\n",
 					newdb, newuser);
 
-			if (password)
-				free(password);
-
 			if (AH->promptPassword != TRI_NO)
-				password = simple_prompt("Password: ", 100, false);
+			{
+				simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
+				password = passbuf;
+			}
 			else
 				exit_horribly(modulename, "connection needs password\n");
 
-			if (password == NULL)
-				exit_horribly(modulename, "out of memory\n");
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -225,8 +223,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			free(AH->savedPassword);
 		AH->savedPassword = pg_strdup(PQpass(newConn));
 	}
-	if (password)
-		free(password);
 
 	termPQExpBuffer(&connstr);
 
@@ -258,18 +254,18 @@ ConnectDatabase(Archive *AHX,
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password;
+	char		passbuf[100];
 	bool		new_pass;
 
 	if (AH->connection)
 		exit_horribly(modulename, "already connected to a database\n");
 
-	password = AH->savedPassword ? pg_strdup(AH->savedPassword) : NULL;
+	password = AH->savedPassword;
 
 	if (prompt_password == TRI_YES && password == NULL)
 	{
-		password = simple_prompt("Password: ", 100, false);
-		if (password == NULL)
-			exit_horribly(modulename, "out of memory\n");
+		simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
+		password = passbuf;
 	}
 	AH->promptPassword = prompt_password;
 
@@ -309,9 +305,8 @@ ConnectDatabase(Archive *AHX,
 			prompt_password != TRI_NO)
 		{
 			PQfinish(AH->connection);
-			password = simple_prompt("Password: ", 100, false);
-			if (password == NULL)
-				exit_horribly(modulename, "out of memory\n");
+			simple_prompt("Password: ", passbuf, sizeof(passbuf), false);
+			password = passbuf;
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -332,8 +327,6 @@ ConnectDatabase(Archive *AHX,
 			free(AH->savedPassword);
 		AH->savedPassword = pg_strdup(PQpass(AH->connection));
 	}
-	if (password)
-		free(password);
 
 	/* check for version mismatch */
 	_check_database_version(AH);
