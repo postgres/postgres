@@ -55,7 +55,7 @@ static const char *modulename = gettext_noop("archiver");
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	 const int compression, bool dosync, ArchiveMode mode,
-	 SetupWorkerPtr setupWorkerPtr);
+	 SetupWorkerPtrType setupWorkerPtr);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
 					  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass);
@@ -204,7 +204,7 @@ setupRestoreWorker(Archive *AHX)
 Archive *
 CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 			  const int compression, bool dosync, ArchiveMode mode,
-			  SetupWorkerPtr setupDumpWorker)
+			  SetupWorkerPtrType setupDumpWorker)
 
 {
 	ArchiveHandle *AH = _allocAH(FileSpec, fmt, compression, dosync,
@@ -2273,7 +2273,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 static ArchiveHandle *
 _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, bool dosync, ArchiveMode mode,
-		 SetupWorkerPtr setupWorkerPtr)
+		 SetupWorkerPtrType setupWorkerPtr)
 {
 	ArchiveHandle *AH;
 
@@ -2446,8 +2446,8 @@ mark_dump_job_done(ArchiveHandle *AH,
 void
 WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te)
 {
-	StartDataPtr startPtr;
-	EndDataPtr	endPtr;
+	StartDataPtrType startPtr;
+	EndDataPtrType	endPtr;
 
 	AH->currToc = te;
 

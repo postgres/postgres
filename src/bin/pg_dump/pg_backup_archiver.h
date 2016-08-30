@@ -143,36 +143,36 @@ typedef enum T_Action
 	ACT_RESTORE
 } T_Action;
 
-typedef void (*ClosePtr) (ArchiveHandle *AH);
-typedef void (*ReopenPtr) (ArchiveHandle *AH);
-typedef void (*ArchiveEntryPtr) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*ClosePtrType) (ArchiveHandle *AH);
+typedef void (*ReopenPtrType) (ArchiveHandle *AH);
+typedef void (*ArchiveEntryPtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef void (*StartDataPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*WriteDataPtr) (ArchiveHandle *AH, const void *data, size_t dLen);
-typedef void (*EndDataPtr) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartDataPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*WriteDataPtrType) (ArchiveHandle *AH, const void *data, size_t dLen);
+typedef void (*EndDataPtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef void (*StartBlobsPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*StartBlobPtr) (ArchiveHandle *AH, TocEntry *te, Oid oid);
-typedef void (*EndBlobPtr) (ArchiveHandle *AH, TocEntry *te, Oid oid);
-typedef void (*EndBlobsPtr) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartBlobsPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartBlobPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
+typedef void (*EndBlobPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
+typedef void (*EndBlobsPtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef int (*WriteBytePtr) (ArchiveHandle *AH, const int i);
-typedef int (*ReadBytePtr) (ArchiveHandle *AH);
-typedef void (*WriteBufPtr) (ArchiveHandle *AH, const void *c, size_t len);
-typedef void (*ReadBufPtr) (ArchiveHandle *AH, void *buf, size_t len);
-typedef void (*SaveArchivePtr) (ArchiveHandle *AH);
-typedef void (*WriteExtraTocPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*ReadExtraTocPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*PrintExtraTocPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*PrintTocDataPtr) (ArchiveHandle *AH, TocEntry *te);
+typedef int (*WriteBytePtrType) (ArchiveHandle *AH, const int i);
+typedef int (*ReadBytePtrType) (ArchiveHandle *AH);
+typedef void (*WriteBufPtrType) (ArchiveHandle *AH, const void *c, size_t len);
+typedef void (*ReadBufPtrType) (ArchiveHandle *AH, void *buf, size_t len);
+typedef void (*SaveArchivePtrType) (ArchiveHandle *AH);
+typedef void (*WriteExtraTocPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*ReadExtraTocPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*PrintExtraTocPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*PrintTocDataPtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef void (*ClonePtr) (ArchiveHandle *AH);
-typedef void (*DeClonePtr) (ArchiveHandle *AH);
+typedef void (*ClonePtrType) (ArchiveHandle *AH);
+typedef void (*DeClonePtrType) (ArchiveHandle *AH);
 
-typedef int (*WorkerJobDumpPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef int (*WorkerJobRestorePtr) (ArchiveHandle *AH, TocEntry *te);
+typedef int (*WorkerJobDumpPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef int (*WorkerJobRestorePtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef size_t (*CustomOutPtr) (ArchiveHandle *AH, const void *buf, size_t len);
+typedef size_t (*CustomOutPtrType) (ArchiveHandle *AH, const void *buf, size_t len);
 
 typedef enum
 {
@@ -242,39 +242,39 @@ struct _archiveHandle
 	size_t		lookaheadLen;	/* Length of data in lookahead */
 	pgoff_t		lookaheadPos;	/* Current read position in lookahead buffer */
 
-	ArchiveEntryPtr ArchiveEntryPtr;	/* Called for each metadata object */
-	StartDataPtr StartDataPtr;	/* Called when table data is about to be
+	ArchiveEntryPtrType ArchiveEntryPtr;	/* Called for each metadata object */
+	StartDataPtrType StartDataPtr;	/* Called when table data is about to be
 								 * dumped */
-	WriteDataPtr WriteDataPtr;	/* Called to send some table data to the
+	WriteDataPtrType WriteDataPtr;	/* Called to send some table data to the
 								 * archive */
-	EndDataPtr EndDataPtr;		/* Called when table data dump is finished */
-	WriteBytePtr WriteBytePtr;	/* Write a byte to output */
-	ReadBytePtr ReadBytePtr;	/* Read a byte from an archive */
-	WriteBufPtr WriteBufPtr;	/* Write a buffer of output to the archive */
-	ReadBufPtr ReadBufPtr;		/* Read a buffer of input from the archive */
-	ClosePtr ClosePtr;			/* Close the archive */
-	ReopenPtr ReopenPtr;		/* Reopen the archive */
-	WriteExtraTocPtr WriteExtraTocPtr;	/* Write extra TOC entry data
+	EndDataPtrType EndDataPtr;		/* Called when table data dump is finished */
+	WriteBytePtrType WriteBytePtr;	/* Write a byte to output */
+	ReadBytePtrType ReadBytePtr;	/* Read a byte from an archive */
+	WriteBufPtrType WriteBufPtr;	/* Write a buffer of output to the archive */
+	ReadBufPtrType ReadBufPtr;		/* Read a buffer of input from the archive */
+	ClosePtrType ClosePtr;			/* Close the archive */
+	ReopenPtrType ReopenPtr;		/* Reopen the archive */
+	WriteExtraTocPtrType WriteExtraTocPtr;	/* Write extra TOC entry data
 										 * associated with the current archive
 										 * format */
-	ReadExtraTocPtr ReadExtraTocPtr;	/* Read extr info associated with
+	ReadExtraTocPtrType ReadExtraTocPtr;	/* Read extr info associated with
 										 * archie format */
-	PrintExtraTocPtr PrintExtraTocPtr;	/* Extra TOC info for format */
-	PrintTocDataPtr PrintTocDataPtr;
+	PrintExtraTocPtrType PrintExtraTocPtr;	/* Extra TOC info for format */
+	PrintTocDataPtrType PrintTocDataPtr;
 
-	StartBlobsPtr StartBlobsPtr;
-	EndBlobsPtr EndBlobsPtr;
-	StartBlobPtr StartBlobPtr;
-	EndBlobPtr EndBlobPtr;
+	StartBlobsPtrType StartBlobsPtr;
+	EndBlobsPtrType EndBlobsPtr;
+	StartBlobPtrType StartBlobPtr;
+	EndBlobPtrType EndBlobPtr;
 
-	SetupWorkerPtr SetupWorkerPtr;
-	WorkerJobDumpPtr WorkerJobDumpPtr;
-	WorkerJobRestorePtr WorkerJobRestorePtr;
+	SetupWorkerPtrType SetupWorkerPtr;
+	WorkerJobDumpPtrType WorkerJobDumpPtr;
+	WorkerJobRestorePtrType WorkerJobRestorePtr;
 
-	ClonePtr ClonePtr;			/* Clone format-specific fields */
-	DeClonePtr DeClonePtr;		/* Clean up cloned fields */
+	ClonePtrType ClonePtr;			/* Clone format-specific fields */
+	DeClonePtrType DeClonePtr;		/* Clean up cloned fields */
 
-	CustomOutPtr CustomOutPtr;	/* Alternative script output routine */
+	CustomOutPtrType CustomOutPtr;	/* Alternative script output routine */
 
 	/* Stuff for direct DB connection */
 	char	   *archdbname;		/* DB name *read* from archive */
