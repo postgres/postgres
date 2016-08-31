@@ -1087,7 +1087,8 @@ struct CustomPathMethods;
 typedef struct CustomPath
 {
 	Path		path;
-	uint32		flags;			/* mask of CUSTOMPATH_* flags, see above */
+	uint32		flags;			/* mask of CUSTOMPATH_* flags, see
+								 * nodes/extensible.h */
 	List	   *custom_paths;	/* list of child Path nodes, if any */
 	List	   *custom_private;
 	const struct CustomPathMethods *methods;
