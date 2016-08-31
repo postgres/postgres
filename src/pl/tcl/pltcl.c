@@ -114,21 +114,33 @@ typedef struct pltcl_interp_desc
 
 /**********************************************************************
  * The information we cache about loaded procedures
+ *
+ * The pltcl_proc_desc struct itself, as well as all subsidiary data,
+ * is stored in the memory context identified by the fn_cxt field.
+ * We can reclaim all the data by deleting that context, and should do so
+ * when the fn_refcount goes to zero.  (But note that we do not bother
+ * trying to clean up Tcl's copy of the procedure definition: it's Tcl's
+ * problem to manage its memory when we replace a proc definition.  We do
+ * not clean up pltcl_proc_descs when a pg_proc row is deleted, only when
+ * it is updated, and the same policy applies to Tcl's copy as well.)
  **********************************************************************/
 typedef struct pltcl_proc_desc
 {
-	char	   *user_proname;
-	char	   *internal_proname;
-	TransactionId fn_xmin;
-	ItemPointerData fn_tid;
-	bool		fn_readonly;
-	bool		lanpltrusted;
-	pltcl_interp_desc *interp_desc;
-	FmgrInfo	result_in_func;
-	Oid			result_typioparam;
-	int			nargs;
-	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
-	bool		arg_is_rowtype[FUNC_MAX_ARGS];
+	char	   *user_proname;	/* user's name (from pg_proc.proname) */
+	char	   *internal_proname;		/* Tcl name (based on function OID) */
+	MemoryContext fn_cxt;		/* memory context for this procedure */
+	unsigned long fn_refcount;	/* number of active references */
+	TransactionId fn_xmin;		/* xmin of pg_proc row */
+	ItemPointerData fn_tid;		/* TID of pg_proc row */
+	bool		fn_readonly;	/* is function readonly? */
+	bool		lanpltrusted;	/* is it pltcl (vs. pltclu)? */
+	pltcl_interp_desc *interp_desc;		/* interpreter to use */
+	FmgrInfo	result_in_func; /* input function for fn's result type */
+	Oid			result_typioparam;		/* param to pass to same */
+	int			nargs;			/* number of arguments */
+	/* these arrays have nargs entries: */
+	FmgrInfo   *arg_out_func;	/* output fns for arg types */
+	bool	   *arg_is_rowtype; /* is each arg composite? */
 } pltcl_proc_desc;
 
 
@@ -311,23 +323,6 @@ pltcl_WaitForEvent(CONST86 Tcl_Time *timePtr)
 	return 0;
 }
 
-
-/*
- * This routine is a crock, and so is everyplace that calls it.  The problem
- * is that the cached form of pltcl functions/queries is allocated permanently
- * (mostly via malloc()) and never released until backend exit.  Subsidiary
- * data structures such as fmgr info records therefore must live forever
- * as well.  A better implementation would store all this stuff in a per-
- * function memory context that could be reclaimed at need.  In the meantime,
- * fmgr_info_cxt must be called specifying TopMemoryContext so that whatever
- * it might allocate, and whatever the eventual function might allocate using
- * fn_mcxt, will live forever too.
- */
-static void
-perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
-{
-	fmgr_info_cxt(functionId, finfo, TopMemoryContext);
-}
 
 /*
  * _PG_init()			- library load-time initialization
@@ -636,12 +631,23 @@ pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	Datum		retval;
 	FunctionCallInfo save_fcinfo;
 	pltcl_proc_desc *save_prodesc;
+	pltcl_proc_desc *this_prodesc;
 
 	/*
 	 * Ensure that static pointers are saved/restored properly
 	 */
 	save_fcinfo = pltcl_current_fcinfo;
 	save_prodesc = pltcl_current_prodesc;
+
+	/*
+	 * Reset pltcl_current_prodesc to null.  Anything that sets it non-null
+	 * should increase the prodesc's fn_refcount at the same time.  We'll
+	 * decrease the refcount, and then delete the prodesc if it's no longer
+	 * referenced, on the way out of this function.  This ensures that
+	 * prodescs live as long as needed even if somebody replaces the
+	 * originating pg_proc row while they're executing.
+	 */
+	pltcl_current_prodesc = NULL;
 
 	PG_TRY();
 	{
@@ -668,14 +674,31 @@ pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	}
 	PG_CATCH();
 	{
+		/* Restore globals, then clean up the prodesc refcount if any */
+		this_prodesc = pltcl_current_prodesc;
 		pltcl_current_fcinfo = save_fcinfo;
 		pltcl_current_prodesc = save_prodesc;
+		if (this_prodesc != NULL)
+		{
+			Assert(this_prodesc->fn_refcount > 0);
+			if (--this_prodesc->fn_refcount == 0)
+				MemoryContextDelete(this_prodesc->fn_cxt);
+		}
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
+	/* Restore globals, then clean up the prodesc refcount if any */
+	/* (We're being paranoid in case an error is thrown in context deletion) */
+	this_prodesc = pltcl_current_prodesc;
 	pltcl_current_fcinfo = save_fcinfo;
 	pltcl_current_prodesc = save_prodesc;
+	if (this_prodesc != NULL)
+	{
+		Assert(this_prodesc->fn_refcount > 0);
+		if (--this_prodesc->fn_refcount == 0)
+			MemoryContextDelete(this_prodesc->fn_cxt);
+	}
 
 	return retval;
 }
@@ -703,6 +726,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted)
 									 false, pltrusted);
 
 	pltcl_current_prodesc = prodesc;
+	prodesc->fn_refcount++;
 
 	interp = prodesc->interp_desc->interp;
 
@@ -864,6 +888,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 									 pltrusted);
 
 	pltcl_current_prodesc = prodesc;
+	prodesc->fn_refcount++;
 
 	interp = prodesc->interp_desc->interp;
 
@@ -1180,6 +1205,7 @@ pltcl_event_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 									 InvalidOid, true, pltrusted);
 
 	pltcl_current_prodesc = prodesc;
+	prodesc->fn_refcount++;
 
 	interp = prodesc->interp_desc->interp;
 
@@ -1249,6 +1275,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	pltcl_proc_ptr *proc_ptr;
 	bool		found;
 	pltcl_proc_desc *prodesc;
+	pltcl_proc_desc *old_prodesc;
+	volatile MemoryContext proc_cxt = NULL;
+	Tcl_DString proc_internal_def;
+	Tcl_DString proc_internal_body;
 
 	/* We'll need the pg_proc tuple in any case... */
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
@@ -1256,7 +1286,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
-	/* Try to find function in pltcl_proc_htab */
+	/*
+	 * Look up function in pltcl_proc_htab; if it's not there, create an entry
+	 * and set the entry's proc_ptr to NULL.
+	 */
 	proc_key.proc_id = fn_oid;
 	proc_key.is_trigger = OidIsValid(tgreloid);
 	proc_key.user_id = pltrusted ? GetUserId() : InvalidOid;
@@ -1274,18 +1307,13 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	 * This is needed because CREATE OR REPLACE FUNCTION can modify the
 	 * function's pg_proc entry without changing its OID.
 	 ************************************************************/
-	if (prodesc != NULL)
+	if (prodesc != NULL &&
+		prodesc->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
+		ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self))
 	{
-		bool		uptodate;
-
-		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
-					ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
-
-		if (!uptodate)
-		{
-			proc_ptr->proc_ptr = NULL;
-			prodesc = NULL;
-		}
+		/* It's still up-to-date, so we can use it */
+		ReleaseSysCache(procTup);
+		return prodesc;
 	}
 
 	/************************************************************
@@ -1296,14 +1324,14 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	 *
 	 * Then we load the procedure into the Tcl interpreter.
 	 ************************************************************/
-	if (prodesc == NULL)
+	Tcl_DStringInit(&proc_internal_def);
+	Tcl_DStringInit(&proc_internal_body);
+	PG_TRY();
 	{
 		bool		is_trigger = OidIsValid(tgreloid);
 		char		internal_proname[128];
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
-		Tcl_DString proc_internal_def;
-		Tcl_DString proc_internal_body;
 		char		proc_internal_args[33 * FUNC_MAX_ARGS];
 		Datum		prosrcdatum;
 		bool		isnull;
@@ -1312,39 +1340,47 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		Tcl_Interp *interp;
 		int			i;
 		int			tcl_rc;
+		MemoryContext oldcontext;
 
 		/************************************************************
 		 * Build our internal proc name from the function's Oid.  Append
 		 * "_trigger" when appropriate to ensure the normal and trigger
 		 * cases are kept separate.  Note name must be all-ASCII.
 		 ************************************************************/
-		if (!is_trigger && !is_event_trigger)
-			snprintf(internal_proname, sizeof(internal_proname),
-					 "__PLTcl_proc_%u", fn_oid);
-		else if (is_event_trigger)
+		if (is_event_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
 					 "__PLTcl_proc_%u_evttrigger", fn_oid);
 		else if (is_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
 					 "__PLTcl_proc_%u_trigger", fn_oid);
+		else
+			snprintf(internal_proname, sizeof(internal_proname),
+					 "__PLTcl_proc_%u", fn_oid);
 
 		/************************************************************
-		 * Allocate a new procedure description block
+		 * Allocate a context that will hold all PG data for the procedure.
+		 * We use the internal proc name as the context name.
 		 ************************************************************/
-		prodesc = (pltcl_proc_desc *) malloc(sizeof(pltcl_proc_desc));
-		if (prodesc == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		MemSet(prodesc, 0, sizeof(pltcl_proc_desc));
-		prodesc->user_proname = strdup(NameStr(procStruct->proname));
-		prodesc->internal_proname = strdup(internal_proname);
-		if (prodesc->user_proname == NULL || prodesc->internal_proname == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
+		proc_cxt = AllocSetContextCreate(TopMemoryContext,
+										 internal_proname,
+										 ALLOCSET_SMALL_SIZES);
+
+		/************************************************************
+		 * Allocate and fill a new procedure description block.
+		 * struct prodesc and subsidiary data must all live in proc_cxt.
+		 ************************************************************/
+		oldcontext = MemoryContextSwitchTo(proc_cxt);
+		prodesc = (pltcl_proc_desc *) palloc0(sizeof(pltcl_proc_desc));
+		prodesc->user_proname = pstrdup(NameStr(procStruct->proname));
+		prodesc->internal_proname = pstrdup(internal_proname);
+		prodesc->fn_cxt = proc_cxt;
+		prodesc->fn_refcount = 0;
 		prodesc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 		prodesc->fn_tid = procTup->t_self;
+		prodesc->nargs = procStruct->pronargs;
+		prodesc->arg_out_func = (FmgrInfo *) palloc0(prodesc->nargs * sizeof(FmgrInfo));
+		prodesc->arg_is_rowtype = (bool *) palloc0(prodesc->nargs * sizeof(bool));
+		MemoryContextSwitchTo(oldcontext);
 
 		/* Remember if function is STABLE/IMMUTABLE */
 		prodesc->fn_readonly =
@@ -1368,13 +1404,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 				SearchSysCache1(TYPEOID,
 								ObjectIdGetDatum(procStruct->prorettype));
 			if (!HeapTupleIsValid(typeTup))
-			{
-				free(prodesc->user_proname);
-				free(prodesc->internal_proname);
-				free(prodesc);
 				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
-			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID */
@@ -1384,37 +1415,24 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 					 /* okay */ ;
 				else if (procStruct->prorettype == TRIGGEROID ||
 						 procStruct->prorettype == EVTTRIGGEROID)
-				{
-					free(prodesc->user_proname);
-					free(prodesc->internal_proname);
-					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called as triggers")));
-				}
 				else
-				{
-					free(prodesc->user_proname);
-					free(prodesc->internal_proname);
-					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("PL/Tcl functions cannot return type %s",
 									format_type_be(procStruct->prorettype))));
-				}
 			}
 
 			if (typeStruct->typtype == TYPTYPE_COMPOSITE)
-			{
-				free(prodesc->user_proname);
-				free(prodesc->internal_proname);
-				free(prodesc);
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				  errmsg("PL/Tcl functions cannot return composite types")));
-			}
 
-			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
+			fmgr_info_cxt(typeStruct->typinput,
+						  &(prodesc->result_in_func),
+						  proc_cxt);
 			prodesc->result_typioparam = getTypeIOParam(typeTup);
 
 			ReleaseSysCache(typeTup);
@@ -1422,37 +1440,26 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 
 		/************************************************************
 		 * Get the required information for output conversion
-		 * of all procedure arguments
+		 * of all procedure arguments, and set up argument naming info.
 		 ************************************************************/
 		if (!is_trigger && !is_event_trigger)
 		{
-			prodesc->nargs = procStruct->pronargs;
 			proc_internal_args[0] = '\0';
 			for (i = 0; i < prodesc->nargs; i++)
 			{
 				typeTup = SearchSysCache1(TYPEOID,
 						ObjectIdGetDatum(procStruct->proargtypes.values[i]));
 				if (!HeapTupleIsValid(typeTup))
-				{
-					free(prodesc->user_proname);
-					free(prodesc->internal_proname);
-					free(prodesc);
 					elog(ERROR, "cache lookup failed for type %u",
 						 procStruct->proargtypes.values[i]);
-				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 				/* Disallow pseudotype argument */
 				if (typeStruct->typtype == TYPTYPE_PSEUDO)
-				{
-					free(prodesc->user_proname);
-					free(prodesc->internal_proname);
-					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("PL/Tcl functions cannot accept type %s",
 						format_type_be(procStruct->proargtypes.values[i]))));
-				}
 
 				if (typeStruct->typtype == TYPTYPE_COMPOSITE)
 				{
@@ -1462,8 +1469,9 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 				else
 				{
 					prodesc->arg_is_rowtype[i] = false;
-					perm_fmgr_info(typeStruct->typoutput,
-								   &(prodesc->arg_out_func[i]));
+					fmgr_info_cxt(typeStruct->typoutput,
+								  &(prodesc->arg_out_func[i]),
+								  proc_cxt);
 					snprintf(buf, sizeof(buf), "%d", i + 1);
 				}
 
@@ -1490,12 +1498,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * Create the tcl command to define the internal
 		 * procedure
 		 *
-		 * leave this code as DString - it's a text processing function
-		 * that only gets invoked when the tcl function is invoked
-		 * for the first time
+		 * Leave this code as DString - performance is not critical here,
+		 * and we don't want to duplicate the knowledge of the Tcl quoting
+		 * rules that's embedded in Tcl_DStringAppendElement.
 		 ************************************************************/
-		Tcl_DStringInit(&proc_internal_def);
-		Tcl_DStringInit(&proc_internal_body);
 		Tcl_DStringAppendElement(&proc_internal_def, "proc");
 		Tcl_DStringAppendElement(&proc_internal_def, internal_proname);
 		Tcl_DStringAppendElement(&proc_internal_def, proc_internal_args);
@@ -1514,7 +1520,6 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 							  "array set NEW $__PLTcl_Tup_NEW\n", -1);
 			Tcl_DStringAppend(&proc_internal_body,
 							  "array set OLD $__PLTcl_Tup_OLD\n", -1);
-
 			Tcl_DStringAppend(&proc_internal_body,
 							  "set i 0\n"
 							  "set v 0\n"
@@ -1556,7 +1561,6 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
 								 Tcl_DStringValue(&proc_internal_body));
-		Tcl_DStringFree(&proc_internal_body);
 
 		/************************************************************
 		 * Create the procedure in the interpreter
@@ -1565,27 +1569,51 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 							Tcl_DStringValue(&proc_internal_def),
 							Tcl_DStringLength(&proc_internal_def),
 							TCL_EVAL_GLOBAL);
-		Tcl_DStringFree(&proc_internal_def);
 		if (tcl_rc != TCL_OK)
-		{
-			free(prodesc->user_proname);
-			free(prodesc->internal_proname);
-			free(prodesc);
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 					 errmsg("could not create internal procedure \"%s\": %s",
 							internal_proname,
 							utf_u2e(Tcl_GetStringResult(interp)))));
-		}
-
-		/************************************************************
-		 * Add the proc description block to the hashtable.  Note we do not
-		 * attempt to free any previously existing prodesc block.  This is
-		 * annoying, but necessary since there could be active calls using
-		 * the old prodesc.
-		 ************************************************************/
-		proc_ptr->proc_ptr = prodesc;
 	}
+	PG_CATCH();
+	{
+		/*
+		 * If we failed anywhere above, clean up whatever got allocated.  It
+		 * should all be in the proc_cxt, except for the DStrings.
+		 */
+		if (proc_cxt)
+			MemoryContextDelete(proc_cxt);
+		Tcl_DStringFree(&proc_internal_def);
+		Tcl_DStringFree(&proc_internal_body);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/*
+	 * Install the new proc description block in the hashtable, incrementing
+	 * its refcount (the hashtable link counts as a reference).  Then, if
+	 * there was a previous definition of the function, decrement that one's
+	 * refcount, and delete it if no longer referenced.  The order of
+	 * operations here is important: if something goes wrong during the
+	 * MemoryContextDelete, leaking some memory for the old definition is OK,
+	 * but we don't want to corrupt the live hashtable entry.  (Likewise,
+	 * freeing the DStrings is pretty low priority if that happens.)
+	 */
+	old_prodesc = proc_ptr->proc_ptr;
+
+	proc_ptr->proc_ptr = prodesc;
+	prodesc->fn_refcount++;
+
+	if (old_prodesc != NULL)
+	{
+		Assert(old_prodesc->fn_refcount > 0);
+		if (--old_prodesc->fn_refcount == 0)
+			MemoryContextDelete(old_prodesc->fn_cxt);
+	}
+
+	Tcl_DStringFree(&proc_internal_def);
+	Tcl_DStringFree(&proc_internal_body);
 
 	ReleaseSysCache(procTup);
 
