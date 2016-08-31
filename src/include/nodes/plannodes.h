@@ -560,7 +560,8 @@ struct CustomScanMethods;
 typedef struct CustomScan
 {
 	Scan		scan;
-	uint32		flags;			/* mask of CUSTOMPATH_* flags, see relation.h */
+	uint32		flags;			/* mask of CUSTOMPATH_* flags, see
+								 * nodes/extensible.h */
 	List	   *custom_plans;	/* list of Plan nodes, if any */
 	List	   *custom_exprs;	/* expressions that custom code may evaluate */
 	List	   *custom_private; /* private data for custom code */
