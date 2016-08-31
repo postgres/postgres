@@ -4220,7 +4220,8 @@ readRecoveryCommandFile(void)
 				rtli = (TimeLineID) strtoul(item->value, NULL, 0);
 				if (errno == EINVAL || errno == ERANGE)
 					ereport(FATAL,
-							(errmsg("recovery_target_timeline is not a valid number: \"%s\"",
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("recovery_target_timeline is not a valid number: \"%s\"",
 									item->value)));
 			}
 			if (rtli)
@@ -4236,7 +4237,8 @@ readRecoveryCommandFile(void)
 			recoveryTargetXid = (TransactionId) strtoul(item->value, NULL, 0);
 			if (errno == EINVAL || errno == ERANGE)
 				ereport(FATAL,
-				 (errmsg("recovery_target_xid is not a valid number: \"%s\"",
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				  errmsg("recovery_target_xid is not a valid number: \"%s\"",
 						 item->value)));
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target_xid = %u",
@@ -4327,7 +4329,8 @@ readRecoveryCommandFile(void)
 		}
 		else
 			ereport(FATAL,
-					(errmsg("unrecognized recovery parameter \"%s\"",
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized recovery parameter \"%s\"",
 							item->name)));
 	}
 
@@ -4346,9 +4349,19 @@ readRecoveryCommandFile(void)
 	{
 		if (recoveryRestoreCommand == NULL)
 			ereport(FATAL,
-					(errmsg("recovery command file \"%s\" must specify restore_command when standby mode is not enabled",
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("recovery command file \"%s\" must specify restore_command when standby mode is not enabled",
 							RECOVERY_COMMAND_FILE)));
 	}
+
+	/*
+	 * We don't support standby_mode in standalone backends; that requires
+	 * other processes such as the WAL receiver to be alive.
+	 */
+	if (StandbyModeRequested && !IsUnderPostmaster)
+		ereport(FATAL,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			errmsg("standby mode is not supported by single-user servers")));
 
 	/* Enable fetching from archive recovery area */
 	ArchiveRecoveryRequested = true;
@@ -4366,7 +4379,8 @@ readRecoveryCommandFile(void)
 			/* Timeline 1 does not have a history file, all else should */
 			if (rtli != 1 && !existsTimeLineHistory(rtli))
 				ereport(FATAL,
-						(errmsg("recovery target timeline %u does not exist",
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("recovery target timeline %u does not exist",
 								rtli)));
 			recoveryTargetTLI = rtli;
 			recoveryTargetIsLatest = false;
