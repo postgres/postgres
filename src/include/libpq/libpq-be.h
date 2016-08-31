@@ -192,7 +192,6 @@ typedef struct Port
 #ifdef USE_OPENSSL
 	SSL		   *ssl;
 	X509	   *peer;
-	unsigned long count;
 #endif
 } Port;
 
