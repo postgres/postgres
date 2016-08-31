@@ -2126,10 +2126,7 @@ fmgr(Oid procedureId,...)
  *
  * int8, float4, and float8 can be passed by value if Datum is wide enough.
  * (For backwards-compatibility reasons, we allow pass-by-ref to be chosen
- * at compile time even if pass-by-val is possible.)  For the float types,
- * we need a support routine even if we are passing by value, because many
- * machines pass int and float function parameters/results differently;
- * so we need to play weird games with unions.
+ * at compile time even if pass-by-val is possible.)
  *
  * Note: there is only one switch controlling the pass-by-value option for
  * both int8 and float8; this is to avoid making things unduly complicated
@@ -2149,77 +2146,29 @@ Int64GetDatum(int64 X)
 }
 #endif   /* USE_FLOAT8_BYVAL */
 
+#ifndef USE_FLOAT4_BYVAL
+
 Datum
 Float4GetDatum(float4 X)
 {
-#ifdef USE_FLOAT4_BYVAL
-	union
-	{
-		float4		value;
-		int32		retval;
-	}			myunion;
-
-	myunion.value = X;
-	return SET_4_BYTES(myunion.retval);
-#else
 	float4	   *retval = (float4 *) palloc(sizeof(float4));
 
 	*retval = X;
 	return PointerGetDatum(retval);
+}
 #endif
-}
 
-#ifdef USE_FLOAT4_BYVAL
-
-float4
-DatumGetFloat4(Datum X)
-{
-	union
-	{
-		int32		value;
-		float4		retval;
-	}			myunion;
-
-	myunion.value = GET_4_BYTES(X);
-	return myunion.retval;
-}
-#endif   /* USE_FLOAT4_BYVAL */
+#ifndef USE_FLOAT8_BYVAL
 
 Datum
 Float8GetDatum(float8 X)
 {
-#ifdef USE_FLOAT8_BYVAL
-	union
-	{
-		float8		value;
-		int64		retval;
-	}			myunion;
-
-	myunion.value = X;
-	return SET_8_BYTES(myunion.retval);
-#else
 	float8	   *retval = (float8 *) palloc(sizeof(float8));
 
 	*retval = X;
 	return PointerGetDatum(retval);
+}
 #endif
-}
-
-#ifdef USE_FLOAT8_BYVAL
-
-float8
-DatumGetFloat8(Datum X)
-{
-	union
-	{
-		int64		value;
-		float8		retval;
-	}			myunion;
-
-	myunion.value = GET_8_BYTES(X);
-	return myunion.retval;
-}
-#endif   /* USE_FLOAT8_BYVAL */
 
 
 /*-------------------------------------------------------------------------

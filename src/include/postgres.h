@@ -657,6 +657,14 @@ extern Datum Int64GetDatum(int64 X);
 #endif
 
 /*
+ * Float <-> Datum conversions
+ *
+ * These have to be implemented as inline functions rather than macros, when
+ * passing by value, because many machines pass int and float function
+ * parameters/results differently; so we need to play weird games with unions.
+ */
+
+/*
  * DatumGetFloat4
  *		Returns 4-byte floating point value of a datum.
  *
@@ -664,7 +672,18 @@ extern Datum Int64GetDatum(int64 X);
  */
 
 #ifdef USE_FLOAT4_BYVAL
-extern float4 DatumGetFloat4(Datum X);
+static inline float4
+DatumGetFloat4(Datum X)
+{
+	union
+	{
+		int32		value;
+		float4		retval;
+	}			myunion;
+
+	myunion.value = GET_4_BYTES(X);
+	return myunion.retval;
+}
 #else
 #define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
 #endif
@@ -676,8 +695,22 @@ extern float4 DatumGetFloat4(Datum X);
  * Note: if float4 is pass by reference, this function returns a reference
  * to palloc'd space.
  */
+#ifdef USE_FLOAT4_BYVAL
+static inline Datum
+Float4GetDatum(float4 X)
+{
+	union
+	{
+		float4		value;
+		int32		retval;
+	}			myunion;
 
+	myunion.value = X;
+	return SET_4_BYTES(myunion.retval);
+}
+#else
 extern Datum Float4GetDatum(float4 X);
+#endif
 
 /*
  * DatumGetFloat8
@@ -687,7 +720,18 @@ extern Datum Float4GetDatum(float4 X);
  */
 
 #ifdef USE_FLOAT8_BYVAL
-extern float8 DatumGetFloat8(Datum X);
+static inline float8
+DatumGetFloat8(Datum X)
+{
+	union
+	{
+		int64		value;
+		float8		retval;
+	}			myunion;
+
+	myunion.value = GET_8_BYTES(X);
+	return myunion.retval;
+}
 #else
 #define DatumGetFloat8(X) (* ((float8 *) DatumGetPointer(X)))
 #endif
@@ -700,7 +744,22 @@ extern float8 DatumGetFloat8(Datum X);
  * to palloc'd space.
  */
 
+#ifdef USE_FLOAT8_BYVAL
+static inline Datum
+Float8GetDatum(float8 X)
+{
+	union
+	{
+		float8		value;
+		int64		retval;
+	}			myunion;
+
+	myunion.value = X;
+	return SET_8_BYTES(myunion.retval);
+}
+#else
 extern Datum Float8GetDatum(float8 X);
+#endif
 
 
 /*
