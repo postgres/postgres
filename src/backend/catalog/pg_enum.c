@@ -315,21 +315,21 @@ restart:
 			newelemorder = nbr_en->enumsortorder + 1;
 		else
 		{
-			other_nbr_en = (Form_pg_enum) GETSTRUCT(existing[other_nbr_index]);
-			newelemorder = (nbr_en->enumsortorder +
-							other_nbr_en->enumsortorder) / 2;
-
 			/*
-			 * On some machines, newelemorder may be in a register that's
-			 * wider than float4.  We need to force it to be rounded to float4
-			 * precision before making the following comparisons, or we'll get
-			 * wrong results.  (Such behavior violates the C standard, but
-			 * fixing the compilers is out of our reach.)
+			 * The midpoint value computed here has to be rounded to float4
+			 * precision, else our equality comparisons against the adjacent
+			 * values are meaningless.  The most portable way of forcing that
+			 * to happen with non-C-standard-compliant compilers is to store
+			 * it into a volatile variable.
 			 */
-			newelemorder = DatumGetFloat4(Float4GetDatum(newelemorder));
+			volatile float4 midpoint;
 
-			if (newelemorder == nbr_en->enumsortorder ||
-				newelemorder == other_nbr_en->enumsortorder)
+			other_nbr_en = (Form_pg_enum) GETSTRUCT(existing[other_nbr_index]);
+			midpoint = (nbr_en->enumsortorder +
+						other_nbr_en->enumsortorder) / 2;
+
+			if (midpoint == nbr_en->enumsortorder ||
+				midpoint == other_nbr_en->enumsortorder)
 			{
 				RenumberEnumType(pg_enum, existing, nelems);
 				/* Clean up and start over */
@@ -337,6 +337,8 @@ restart:
 				ReleaseCatCacheList(list);
 				goto restart;
 			}
+
+			newelemorder = midpoint;
 		}
 	}
 
