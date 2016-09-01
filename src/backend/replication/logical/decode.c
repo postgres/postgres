@@ -702,16 +702,16 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		memcpy(&xlhdr, data, sizeof(xlhdr));
 		data += offsetof(xl_heap_header_len, header);
 
-		datalen = xlhdr.t_len + SizeOfHeapHeader;
-		tuplelen = xlhdr.t_len;
+		/* t_len is inconsistent with other cases, see log_heap_update */
+		tuplelen = xlhdr.t_len - offsetof(HeapTupleHeaderData, t_bits);
+		datalen = tuplelen + SizeOfHeapHeader;
 
 		change->data.tp.oldtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple(data, datalen, change->data.tp.oldtuple);
 #ifdef NOT_USED
-		data += SizeOfHeapHeader;
-		data += xlhdr.t_len;
+		data += datalen;
 #endif
 	}
 
