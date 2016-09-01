@@ -194,14 +194,10 @@ InitProcGlobal(void)
 	 * between groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
+	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
 	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
 	ProcGlobal->allProcCount = MaxBackends + NUM_AUXILIARY_PROCS;
-	if (!procs)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
-	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
 
 	/*
 	 * Also allocate a separate array of PGXACT structures.  This is separate

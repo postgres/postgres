@@ -163,14 +163,31 @@ InitShmemAllocation(void)
 /*
  * ShmemAlloc -- allocate max-aligned chunk from shared memory
  *
- * Assumes ShmemLock and ShmemSegHdr are initialized.
+ * Throws error if request cannot be satisfied.
  *
- * Returns: real pointer to memory or NULL if we are out
- *		of space.  Has to return a real pointer in order
- *		to be compatible with malloc().
+ * Assumes ShmemLock and ShmemSegHdr are initialized.
  */
 void *
 ShmemAlloc(Size size)
+{
+	void	   *newSpace;
+
+	newSpace = ShmemAllocNoError(size);
+	if (!newSpace)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory (%zu bytes requested)",
+						size)));
+	return newSpace;
+}
+
+/*
+ * ShmemAllocNoError -- allocate max-aligned chunk from shared memory
+ *
+ * As ShmemAlloc, but returns NULL if out of space, rather than erroring.
+ */
+void *
+ShmemAllocNoError(Size size)
 {
 	Size		newStart;
 	Size		newFree;
@@ -206,11 +223,7 @@ ShmemAlloc(Size size)
 
 	SpinLockRelease(ShmemLock);
 
-	if (!newSpace)
-		ereport(WARNING,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
-
+	/* note this assert is okay with newSpace == NULL */
 	Assert(newSpace == (void *) CACHELINEALIGN(newSpace));
 
 	return newSpace;
@@ -293,7 +306,7 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 	 * The shared memory allocator must be specified too.
 	 */
 	infoP->dsize = infoP->max_dsize = hash_select_dirsize(max_size);
-	infoP->alloc = ShmemAlloc;
+	infoP->alloc = ShmemAllocNoError;
 	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
 
 	/* look it up in the shmem index */
@@ -364,12 +377,6 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 */
 			Assert(shmemseghdr->index == NULL);
 			structPtr = ShmemAlloc(size);
-			if (structPtr == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("not enough shared memory for data structure"
-								" \"%s\" (%zu bytes requested)",
-								name, size)));
 			shmemseghdr->index = structPtr;
 			*foundPtr = FALSE;
 		}
@@ -410,7 +417,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	else
 	{
 		/* It isn't in the table yet. allocate and initialize it */
-		structPtr = ShmemAlloc(size);
+		structPtr = ShmemAllocNoError(size);
 		if (structPtr == NULL)
 		{
 			/* out of memory; remove the failed ShmemIndex entry */
