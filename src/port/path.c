@@ -82,7 +82,11 @@ skip_drive(const char *path)
 bool
 has_drive_prefix(const char *path)
 {
+#ifdef WIN32
 	return skip_drive(path) != path;
+#else
+	return false;
+#endif
 }
 
 /*
