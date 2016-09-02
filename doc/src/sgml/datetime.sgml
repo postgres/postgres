@@ -384,18 +384,37 @@
 
    <para>
     A <replaceable>zone_abbreviation</replaceable> is just the abbreviation
-    being defined.  The <replaceable>offset</replaceable> is the equivalent
-    offset in seconds from UTC, positive being east from Greenwich and
-    negative being west.  For example, -18000 would be five hours west
-    of Greenwich, or North American east coast standard time.  <literal>D</>
-    indicates that the zone name represents local daylight-savings time rather
-    than standard time.  Alternatively, a <replaceable>time_zone_name</> can
-    be given, in which case that time zone definition is consulted, and the
-    abbreviation's meaning in that zone is used.  This alternative is
-    recommended only for abbreviations whose meaning has historically varied,
-    as looking up the meaning is noticeably more expensive than just using
-    a fixed integer value.
+    being defined.  An <replaceable>offset</replaceable> is an integer giving
+    the equivalent offset in seconds from UTC, positive being east from
+    Greenwich and negative being west.  For example, -18000 would be five
+    hours west of Greenwich, or North American east coast standard time.
+    <literal>D</> indicates that the zone name represents local
+    daylight-savings time rather than standard time.
    </para>
+
+   <para>
+    Alternatively, a <replaceable>time_zone_name</> can be given, referencing
+    a zone name defined in the IANA timezone database.  The zone's definition
+    is consulted to see whether the abbreviation is or has been in use in
+    that zone, and if so, the appropriate meaning is used &mdash; that is,
+    the meaning that was currently in use at the timestamp whose value is
+    being determined, or the meaning in use immediately before that if it
+    wasn't current at that time, or the oldest meaning if it was used only
+    after that time.  This behavior is essential for dealing with
+    abbreviations whose meaning has historically varied.  It is also allowed
+    to define an abbreviation in terms of a zone name in which that
+    abbreviation does not appear; then using the abbreviation is just
+    equivalent to writing out the zone name.
+   </para>
+
+   <tip>
+    <para>
+     Using a simple integer <replaceable>offset</replaceable> is preferred
+     when defining an abbreviation whose offset from UTC has never changed,
+     as such abbreviations are much cheaper to process than those that
+     require consulting a time zone definition.
+    </para>
+   </tip>
 
    <para>
     The <literal>@INCLUDE</> syntax allows inclusion of another file in the
