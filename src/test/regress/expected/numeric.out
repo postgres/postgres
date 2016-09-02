@@ -1909,3 +1909,19 @@ select scale(-13.000000000000000);
     15
 (1 row)
 
+--
+-- Tests for SUM()
+--
+-- cases that need carry propagation
+SELECT SUM(9999::numeric) FROM generate_series(1, 100000);
+    sum    
+-----------
+ 999900000
+(1 row)
+
+SELECT SUM((-9999)::numeric) FROM generate_series(1, 100000);
+    sum     
+------------
+ -999900000
+(1 row)
+
