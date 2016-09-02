@@ -38,7 +38,7 @@
 #include "access/xact.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
-#include "libpq/ip.h"
+#include "common/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"

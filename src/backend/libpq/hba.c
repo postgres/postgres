@@ -26,7 +26,8 @@
 #include <unistd.h>
 
 #include "catalog/pg_collation.h"
-#include "libpq/ip.h"
+#include "common/ip.h"
+#include "libpq/ifaddr.h"
 #include "libpq/libpq.h"
 #include "postmaster/postmaster.h"
 #include "regex/regex.h"

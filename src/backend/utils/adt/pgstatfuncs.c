@@ -16,8 +16,8 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "common/ip.h"
 #include "funcapi.h"
-#include "libpq/ip.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/proc.h"

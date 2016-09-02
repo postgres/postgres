@@ -38,9 +38,9 @@
 #include <pwd.h>
 #endif
 
+#include "common/md5.h"
 #include "libpq-fe.h"
 #include "fe-auth.h"
-#include "libpq/md5.h"
 
 
 #ifdef ENABLE_GSS

@@ -21,8 +21,8 @@
 #endif
 
 #include "commands/user.h"
+#include "common/md5.h"
 #include "fmgr.h"
-#include "libpq/md5.h"
 
 PG_MODULE_MAGIC;
 

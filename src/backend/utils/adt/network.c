@@ -14,7 +14,7 @@
 
 #include "access/hash.h"
 #include "catalog/pg_type.h"
-#include "libpq/ip.h"
+#include "common/ip.h"
 #include "libpq/libpq-be.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"

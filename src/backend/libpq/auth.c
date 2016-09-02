@@ -21,12 +21,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "common/ip.h"
+#include "common/md5.h"
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
-#include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"

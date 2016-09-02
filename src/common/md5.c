@@ -14,13 +14,16 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/libpq/md5.c
+ *	  src/common/md5.c
  */
 
-/* This is intended to be used in both frontend and backend, so use c.h */
-#include "c.h"
+#ifndef FRONTEND
+#include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
-#include "libpq/md5.h"
+#include "common/md5.h"
 
 
 /*

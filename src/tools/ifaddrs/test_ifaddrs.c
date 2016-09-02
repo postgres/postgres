@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "libpq/ip.h"
+#include "libpq/ifaddr.h"
 
 
 static void

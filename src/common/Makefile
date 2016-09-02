@@ -6,10 +6,14 @@
 # This makefile generates two outputs:
 #
 #	libpgcommon.a - contains object files with FRONTEND defined,
-#		for use by client application and libraries
+#		for use by client applications
 #
 #	libpgcommon_srv.a - contains object files without FRONTEND defined,
 #		for use only by the backend binaries
+#
+# You can also symlink/copy individual source files from this directory,
+# to compile with different options. (libpq does that, because it needs
+# to use -fPIC on some platforms.)
 #
 # IDENTIFICATION
 #    src/common/Makefile
@@ -36,8 +40,8 @@ override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
 override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
 
-OBJS_COMMON = config_info.o controldata_utils.o exec.o keywords.o \
-	pg_lzcompress.o pgfnames.o psprintf.o relpath.o rmtree.o \
+OBJS_COMMON = config_info.o controldata_utils.o exec.o ip.o keywords.o \
+	md5.o pg_lzcompress.o pgfnames.o psprintf.o relpath.o rmtree.o \
 	string.o username.o wait_error.o
 
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o restricted_token.o

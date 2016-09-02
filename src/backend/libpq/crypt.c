@@ -21,8 +21,8 @@
 #endif
 
 #include "catalog/pg_authid.h"
+#include "common/md5.h"
 #include "libpq/crypt.h"
-#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"

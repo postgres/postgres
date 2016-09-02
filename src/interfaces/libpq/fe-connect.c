@@ -72,7 +72,7 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				  PQExpBuffer errorMessage);
 #endif
 
-#include "libpq/ip.h"
+#include "common/ip.h"
 #include "mb/pg_wchar.h"
 
 #ifndef FD_CLOEXEC
