@@ -919,6 +919,7 @@ typedef struct
 	GinEntryAccumulator *entryallocator;
 	uint32		eas_used;
 	RBTree	   *tree;
+	RBTreeIterator tree_walk;
 } BuildAccumulator;
 
 extern void ginInitBA(BuildAccumulator *accum);

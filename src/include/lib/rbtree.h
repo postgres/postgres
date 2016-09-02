@@ -22,7 +22,6 @@
  */
 typedef struct RBNode
 {
-	char		iteratorState;	/* workspace for iterating through tree */
 	char color;					/* node's current color, red or black */
 	struct RBNode *left;		/* left child, or RBNIL if none */
 	struct RBNode *right;		/* right child, or RBNIL if none */
@@ -40,6 +39,22 @@ typedef enum RBOrderControl
 	DirectWalk,					/* preorder: node, left child, right child */
 	InvertedWalk				/* postorder: left child, right child, node */
 } RBOrderControl;
+
+/*
+ * RBTreeIterator holds state while traversing a tree.  This is declared
+ * here so that callers can stack-allocate this, but must otherwise be
+ * treated as an opaque struct.
+ */
+typedef struct RBTreeIterator RBTreeIterator;
+
+struct RBTreeIterator
+{
+	RBTree	   *rb;
+	RBNode	   *(*iterate) (RBTreeIterator *iter);
+	RBNode	   *last_visited;
+	char		next_step;
+	bool		is_over;
+};
 
 /* Support functions to be provided by caller */
 typedef int (*rb_comparator) (const RBNode *a, const RBNode *b, void *arg);
@@ -60,7 +75,8 @@ extern RBNode *rb_leftmost(RBTree *rb);
 extern RBNode *rb_insert(RBTree *rb, const RBNode *data, bool *isNew);
 extern void rb_delete(RBTree *rb, RBNode *node);
 
-extern void rb_begin_iterate(RBTree *rb, RBOrderControl ctrl);
-extern RBNode *rb_iterate(RBTree *rb);
+extern void rb_begin_iterate(RBTree *rb, RBOrderControl ctrl,
+				 RBTreeIterator *iter);
+extern RBNode *rb_iterate(RBTreeIterator *iter);
 
 #endif   /* RBTREE_H */

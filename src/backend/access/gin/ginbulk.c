@@ -255,7 +255,7 @@ qsortCompareItemPointers(const void *a, const void *b)
 void
 ginBeginBAScan(BuildAccumulator *accum)
 {
-	rb_begin_iterate(accum->tree, LeftRightWalk);
+	rb_begin_iterate(accum->tree, LeftRightWalk, &accum->tree_walk);
 }
 
 /*
@@ -271,7 +271,7 @@ ginGetBAEntry(BuildAccumulator *accum,
 	GinEntryAccumulator *entry;
 	ItemPointerData *list;
 
-	entry = (GinEntryAccumulator *) rb_iterate(accum->tree);
+	entry = (GinEntryAccumulator *) rb_iterate(&accum->tree_walk);
 
 	if (entry == NULL)
 		return NULL;			/* no more entries */
