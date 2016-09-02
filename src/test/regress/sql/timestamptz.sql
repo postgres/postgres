@@ -468,3 +468,14 @@ SELECT '2007-12-09 07:00:00 UTC'::timestamptz AT TIME ZONE 'VET';
 SELECT '2007-12-09 07:00:01 UTC'::timestamptz AT TIME ZONE 'VET';
 SELECT '2007-12-09 07:29:59 UTC'::timestamptz AT TIME ZONE 'VET';
 SELECT '2007-12-09 07:30:00 UTC'::timestamptz AT TIME ZONE 'VET';
+
+--
+-- Test that the pg_timezone_names and pg_timezone_abbrevs views are
+-- more-or-less working.  We can't test their contents in any great detail
+-- without the outputs changing anytime IANA updates the underlying data,
+-- but it seems reasonable to expect at least one entry per major meridian.
+-- (At the time of writing, the actual counts are around 38 because of
+-- zones using fractional GMT offsets, so this is a pretty loose test.)
+--
+select count(distinct utc_offset) >= 24 as ok from pg_timezone_names;
+select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;

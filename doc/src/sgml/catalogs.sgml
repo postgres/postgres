@@ -9811,6 +9811,13 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    </tgroup>
   </table>
 
+  <para>
+   While most timezone abbreviations represent fixed offsets from UTC,
+   there are some that have historically varied in value
+   (see <xref linkend="datetime-config-files"> for more information).
+   In such cases this view presents their current meaning.
+  </para>
+
  </sect1>
 
  <sect1 id="view-pg-timezone-names">
