@@ -2789,8 +2789,11 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
        <term><literal>\timing [ <replaceable class="parameter">on</replaceable> | <replaceable class="parameter">off</replaceable> ]</literal></term>
         <listitem>
         <para>
-         Without parameter, toggles a display of how long each SQL statement
-         takes, in milliseconds.  With parameter, sets same.
+         With a parameter, turns displaying of how long each SQL statement
+         takes on or off.  Without a parameter, toggles the display between
+         on and off.  The display is in milliseconds; intervals longer than
+         1 second are also shown in minutes:seconds format, with hours and
+         days fields added if needed.
         </para>
        </listitem>
       </varlistentry>

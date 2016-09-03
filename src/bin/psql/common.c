@@ -10,6 +10,7 @@
 
 #include <ctype.h>
 #include <limits.h>
+#include <math.h>
 #include <signal.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */
@@ -532,6 +533,57 @@ ClearOrSaveResult(PGresult *result)
 
 
 /*
+ * Print microtiming output.  Always print raw milliseconds; if the interval
+ * is >= 1 second, also break it down into days/hours/minutes/seconds.
+ */
+static void
+PrintTiming(double elapsed_msec)
+{
+	double		seconds;
+	double		minutes;
+	double		hours;
+	double		days;
+
+	if (elapsed_msec < 1000.0)
+	{
+		/* This is the traditional (pre-v10) output format */
+		printf(_("Time: %.3f ms\n"), elapsed_msec);
+		return;
+	}
+
+	/*
+	 * Note: we could print just seconds, in a format like %06.3f, when the
+	 * total is less than 1min.  But that's hard to interpret unless we tack
+	 * on "s" or otherwise annotate it.  Forcing the display to include
+	 * minutes seems like a better solution.
+	 */
+	seconds = elapsed_msec / 1000.0;
+	minutes = floor(seconds / 60.0);
+	seconds -= 60.0 * minutes;
+	if (minutes < 60.0)
+	{
+		printf(_("Time: %.3f ms (%02d:%06.3f)\n"),
+			   elapsed_msec, (int) minutes, seconds);
+		return;
+	}
+
+	hours = floor(minutes / 60.0);
+	minutes -= 60.0 * hours;
+	if (hours < 24.0)
+	{
+		printf(_("Time: %.3f ms (%02d:%02d:%06.3f)\n"),
+			   elapsed_msec, (int) hours, (int) minutes, seconds);
+		return;
+	}
+
+	days = floor(hours / 24.0);
+	hours -= 24.0 * days;
+	printf(_("Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"),
+		   elapsed_msec, days, (int) hours, (int) minutes, seconds);
+}
+
+
+/*
  * PSQLexec
  *
  * This is the way to send "backdoor" queries (those not directly entered
@@ -679,7 +731,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt)
 
 	/* Possible microtiming output */
 	if (pset.timing)
-		printf(_("Time: %.3f ms\n"), elapsed_msec);
+		PrintTiming(elapsed_msec);
 
 	return 1;
 }
@@ -1332,7 +1384,7 @@ SendQuery(const char *query)
 
 	/* Possible microtiming output */
 	if (pset.timing)
-		printf(_("Time: %.3f ms\n"), elapsed_msec);
+		PrintTiming(elapsed_msec);
 
 	/* check for events that may occur during query execution */
 
