@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 # Create and test a standby from given backup, with a certain
 # recovery target.
@@ -86,6 +86,16 @@ my $lsn4 =
 $node_master->safe_psql('postgres',
 	"SELECT pg_create_restore_point('$recovery_name');");
 
+# And now for a recovery target LSN
+$node_master->safe_psql('postgres',
+	"INSERT INTO tab_int VALUES (generate_series(4001,5000))");
+my $recovery_lsn = $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location()");
+my $lsn5 =
+  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location();");
+
+$node_master->safe_psql('postgres',
+	"INSERT INTO tab_int VALUES (generate_series(5001,6000))");
+
 # Force archiving of WAL file
 $node_master->safe_psql('postgres', "SELECT pg_switch_xlog()");
 
@@ -102,6 +112,9 @@ test_recovery_standby('time', 'standby_3', $node_master, \@recovery_params,
 @recovery_params = ("recovery_target_name = '$recovery_name'");
 test_recovery_standby('name', 'standby_4', $node_master, \@recovery_params,
 	"4000", $lsn4);
+@recovery_params = ("recovery_target_lsn = '$recovery_lsn'");
+test_recovery_standby('LSN', 'standby_5', $node_master, \@recovery_params,
+	"5000", $lsn5);
 
 # Multiple targets
 # Last entry has priority (note that an array respects the order of items
@@ -111,16 +124,23 @@ test_recovery_standby('name', 'standby_4', $node_master, \@recovery_params,
 	"recovery_target_xid  = '$recovery_txid'",
 	"recovery_target_time = '$recovery_time'");
 test_recovery_standby('name + XID + time',
-	'standby_5', $node_master, \@recovery_params, "3000", $lsn3);
+	'standby_6', $node_master, \@recovery_params, "3000", $lsn3);
 @recovery_params = (
 	"recovery_target_time = '$recovery_time'",
 	"recovery_target_name = '$recovery_name'",
 	"recovery_target_xid  = '$recovery_txid'");
 test_recovery_standby('time + name + XID',
-	'standby_6', $node_master, \@recovery_params, "2000", $lsn2);
+	'standby_7', $node_master, \@recovery_params, "2000", $lsn2);
 @recovery_params = (
 	"recovery_target_xid  = '$recovery_txid'",
 	"recovery_target_time = '$recovery_time'",
 	"recovery_target_name = '$recovery_name'");
 test_recovery_standby('XID + time + name',
-	'standby_7', $node_master, \@recovery_params, "4000", $lsn4);
+	'standby_8', $node_master, \@recovery_params, "4000", $lsn4);
+@recovery_params = (
+	"recovery_target_xid  = '$recovery_txid'",
+	"recovery_target_time = '$recovery_time'",
+	"recovery_target_name = '$recovery_name'",
+	"recovery_target_lsn = '$recovery_lsn'",);
+test_recovery_standby('XID + time + name + LSN',
+	'standby_9', $node_master, \@recovery_params, "5000", $lsn5);

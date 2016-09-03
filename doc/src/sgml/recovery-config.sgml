@@ -157,9 +157,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       By default, recovery will recover to the end of the WAL log. The
       following parameters can be used to specify an earlier stopping point.
       At most one of <varname>recovery_target</>,
-      <varname>recovery_target_name</>, <varname>recovery_target_time</>, or
-      <varname>recovery_target_xid</> can be used; if more than one of these
-      is specified in the configuration file, the last entry will be used.
+      <varname>recovery_target_lsn</>, <varname>recovery_target_name</>,
+      <varname>recovery_target_time</>, or <varname>recovery_target_xid</>
+      can be used; if more than one of these is specified in the configuration
+      file, the last entry will be used.
      </para>
 
      <variablelist>
@@ -229,6 +230,23 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         before (and optionally including) the specified one.
         The precise stopping point is also influenced by
         <xref linkend="recovery-target-inclusive">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-lsn" xreflabel="recovery_target_lsn">
+      <term><varname>recovery_target_lsn</varname> (<type>pg_lsn</type>)
+      <indexterm>
+        <primary><varname>recovery_target_lsn</> recovery parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter specifies the LSN of the transaction log location up
+        to which recovery will proceed. The precise stopping point is also
+        influenced by <xref linkend="recovery-target-inclusive">. This
+        parameter is parsed using the system data type
+        <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>.
        </para>
       </listitem>
      </varlistentry>

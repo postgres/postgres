@@ -67,6 +67,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
@@ -254,6 +255,7 @@ static RecoveryTargetAction recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
 static char *recoveryTargetName;
+static XLogRecPtr recoveryTargetLSN;
 static int	recovery_min_apply_delay = 0;
 static TimestampTz recoveryDelayUntilTime;
 
@@ -275,6 +277,7 @@ static bool fast_promote = false;
  */
 static TransactionId recoveryStopXid;
 static TimestampTz recoveryStopTime;
+static XLogRecPtr recoveryStopLSN;
 static char recoveryStopName[MAXFNAMELEN];
 static bool recoveryStopAfter;
 
@@ -5078,6 +5081,23 @@ readRecoveryCommandFile(void)
 					(errmsg_internal("recovery_target_name = '%s'",
 									 recoveryTargetName)));
 		}
+		else if (strcmp(item->name, "recovery_target_lsn") == 0)
+		{
+			recoveryTarget = RECOVERY_TARGET_LSN;
+
+			/*
+			 * Convert the LSN string given by the user to XLogRecPtr form.
+			 */
+			recoveryTargetLSN =
+				DatumGetLSN(DirectFunctionCall3(pg_lsn_in,
+												CStringGetDatum(item->value),
+												ObjectIdGetDatum(InvalidOid),
+														Int32GetDatum(-1)));
+			ereport(DEBUG2,
+					(errmsg_internal("recovery_target_lsn = '%X/%X'",
+									 (uint32) (recoveryTargetLSN >> 32),
+									 (uint32) recoveryTargetLSN)));
+		}
 		else if (strcmp(item->name, "recovery_target") == 0)
 		{
 			if (strcmp(item->value, "immediate") == 0)
@@ -5400,8 +5420,26 @@ recoveryStopsBefore(XLogReaderState *record)
 
 		recoveryStopAfter = false;
 		recoveryStopXid = InvalidTransactionId;
+		recoveryStopLSN = InvalidXLogRecPtr;
 		recoveryStopTime = 0;
 		recoveryStopName[0] = '\0';
+		return true;
+	}
+
+	/* Check if target LSN has been reached */
+	if (recoveryTarget == RECOVERY_TARGET_LSN &&
+		!recoveryTargetInclusive &&
+		record->ReadRecPtr >= recoveryTargetLSN)
+	{
+		recoveryStopAfter = false;
+		recoveryStopXid = InvalidTransactionId;
+		recoveryStopLSN = record->ReadRecPtr;
+		recoveryStopTime = 0;
+		recoveryStopName[0] = '\0';
+		ereport(LOG,
+				(errmsg("recovery stopping before WAL position (LSN) \"%X/%X\"",
+						(uint32) (recoveryStopLSN >> 32),
+						(uint32) recoveryStopLSN)));
 		return true;
 	}
 
@@ -5479,6 +5517,7 @@ recoveryStopsBefore(XLogReaderState *record)
 		recoveryStopAfter = false;
 		recoveryStopXid = recordXid;
 		recoveryStopTime = recordXtime;
+		recoveryStopLSN = InvalidXLogRecPtr;
 		recoveryStopName[0] = '\0';
 
 		if (isCommit)
@@ -5532,6 +5571,7 @@ recoveryStopsAfter(XLogReaderState *record)
 		{
 			recoveryStopAfter = true;
 			recoveryStopXid = InvalidTransactionId;
+			recoveryStopLSN = InvalidXLogRecPtr;
 			(void) getRecordTimestamp(record, &recoveryStopTime);
 			strlcpy(recoveryStopName, recordRestorePointData->rp_name, MAXFNAMELEN);
 
@@ -5541,6 +5581,23 @@ recoveryStopsAfter(XLogReaderState *record)
 						timestamptz_to_str(recoveryStopTime))));
 			return true;
 		}
+	}
+
+	/* Check if the target LSN has been reached */
+	if (recoveryTarget == RECOVERY_TARGET_LSN &&
+		recoveryTargetInclusive &&
+		record->ReadRecPtr >= recoveryTargetLSN)
+	{
+		recoveryStopAfter = true;
+		recoveryStopXid = InvalidTransactionId;
+		recoveryStopLSN = record->ReadRecPtr;
+		recoveryStopTime = 0;
+		recoveryStopName[0] = '\0';
+		ereport(LOG,
+				(errmsg("recovery stopping after WAL position (LSN) \"%X/%X\"",
+						(uint32) (recoveryStopLSN >> 32),
+						(uint32) recoveryStopLSN)));
+		return true;
 	}
 
 	if (rmid != RM_XACT_ID)
@@ -5598,6 +5655,7 @@ recoveryStopsAfter(XLogReaderState *record)
 			recoveryStopAfter = true;
 			recoveryStopXid = recordXid;
 			recoveryStopTime = recordXtime;
+			recoveryStopLSN = InvalidXLogRecPtr;
 			recoveryStopName[0] = '\0';
 
 			if (xact_info == XLOG_XACT_COMMIT ||
@@ -5629,6 +5687,7 @@ recoveryStopsAfter(XLogReaderState *record)
 		recoveryStopAfter = true;
 		recoveryStopXid = InvalidTransactionId;
 		recoveryStopTime = 0;
+		recoveryStopLSN = InvalidXLogRecPtr;
 		recoveryStopName[0] = '\0';
 		return true;
 	}
@@ -6055,6 +6114,11 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("starting point-in-time recovery to \"%s\"",
 							recoveryTargetName)));
+		else if (recoveryTarget == RECOVERY_TARGET_LSN)
+			ereport(LOG,
+					(errmsg("starting point-in-time recovery to WAL position (LSN) \"%X/%X\"",
+							(uint32) (recoveryTargetLSN >> 32),
+							(uint32) recoveryTargetLSN)));
 		else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
 			ereport(LOG,
 					(errmsg("starting point-in-time recovery to earliest consistent point")));
@@ -7124,6 +7188,12 @@ StartupXLOG(void)
 					 "%s %s\n",
 					 recoveryStopAfter ? "after" : "before",
 					 timestamptz_to_str(recoveryStopTime));
+		else if (recoveryTarget == RECOVERY_TARGET_LSN)
+			snprintf(reason, sizeof(reason),
+					 "%s LSN %X/%X\n",
+					 recoveryStopAfter ? "after" : "before",
+					 (uint32 ) (recoveryStopLSN >> 32),
+					 (uint32) recoveryStopLSN);
 		else if (recoveryTarget == RECOVERY_TARGET_NAME)
 			snprintf(reason, sizeof(reason),
 					 "at restore point \"%s\"",
