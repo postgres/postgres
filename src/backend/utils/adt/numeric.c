@@ -4193,11 +4193,11 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	accum_sum_add(&result->sumX, &sumX_var);
 #endif
 
-	set_var_from_num(DatumGetNumeric(sumX2), &sumX2_var);
+	init_var_from_num(DatumGetNumeric(sumX2), &sumX2_var);
 #ifdef HAVE_INT128
 	numericvar_to_int128(&sumX2_var, &result->sumX2);
 #else
-	accum_sum_add(&result->sumX2, &sumX_var);
+	accum_sum_add(&result->sumX2, &sumX2_var);
 #endif
 
 	pq_getmsgend(&buf);
