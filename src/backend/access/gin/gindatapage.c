@@ -86,7 +86,7 @@ typedef struct
 	char		action;
 
 	ItemPointerData *modifieditems;
-	int			nmodifieditems;
+	uint16		nmodifieditems;
 
 	/*
 	 * The following fields represent the items in this segment. If 'items' is
