@@ -12,7 +12,6 @@
 
   <para>
    Changes are sent out in streams identified by logical replication slots.
-   Each stream outputs each change exactly once.
   </para>
 
   <para>
@@ -204,8 +203,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      In the context of logical replication, a slot represents a stream of
      changes that can be replayed to a client in the order they were made on
      the origin server. Each slot streams a sequence of changes from a single
-     database, sending each change exactly once (except when peeking forward
-     in the stream).
+     database.
     </para>
 
     <note>
@@ -219,6 +217,20 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      A replication slot has an identifier that is unique across all databases
      in a <productname>PostgreSQL</productname> cluster. Slots persist
      independently of the connection using them and are crash-safe.
+    </para>
+
+    <para>
+     A logical slot will emit each change just once in normal operation.
+     The current position of each slot is persisted only at checkpoint, so in
+     the case of a crash the slot may return to an earlier LSN, which will
+     then cause recent changes to be resent when the server restarts.
+     Logical decoding clients are responsible for avoiding ill effects from
+     handling the same message more than once.  Clients may wish to record
+     the last LSN they saw when decoding and skip over any repeated data or
+     (when using the replication protocol) request that decoding start from
+     that LSN rather than letting the server determine the start point.
+     The Replication Progress Tracking feature is designed for this purpose,
+     refer to <link linkend="replication-origins">replication origins</link>.
     </para>
 
     <para>
