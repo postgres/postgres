@@ -16,7 +16,7 @@ CHADT   49500 D  # Chatham Daylight Time (New Zealand)
                  #     (Pacific/Chatham)
 CHAST   45900    # Chatham Standard Time (New Zealand)
                  #     (Pacific/Chatham)
-ChST    36000    # Chamorro Standard Time (lower case "h" is as in zic)
+ChST    36000    # Chamorro Standard Time (lower case "h" is as in IANA database)
                  #     (Pacific/Guam)
                  #     (Pacific/Saipan)
 CHUT    36000    # Chuuk Time
@@ -52,7 +52,7 @@ MART   -34200    # Marquesas Time
 MHT     43200    # Kwajalein Time
                  #     (Pacific/Kwajalein)
                  #     (Pacific/Majuro)
-MPT     36000    # North Mariana Islands Time (not in zic)
+MPT     36000    # North Mariana Islands Time (not in IANA database)
 NCT     39600    # New Caledonia Time
                  #     (Pacific/Noumea)
 # CONFLICT! NFT is not unique
@@ -90,13 +90,13 @@ SBT     39600    # Solomon Islands Time
 SST    -39600    # South Sumatran Time
                  #     (Pacific/Midway)
                  #     (Pacific/Pago_Pago)
-TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
+TAHT   -36000    # Tahiti Time (IANA database says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
 TKT     Pacific/Fakaofo  # Tokelau Time
                  #     (Pacific/Fakaofo)
 TOT     46800    # Tonga Time
                  #     (Pacific/Tongatapu)
-TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
+TRUT    36000    # Truk Time (IANA database used to say "TRUT", other sources say "TRUK")
                  #     (Pacific/Truk)
 TVT     43200    # Tuvalu Time
                  #     (Pacific/Funafuti)
@@ -113,5 +113,5 @@ WSST    46800    # West Samoa Standard Time
 # CONFLICT! WST is not unique
 # Other timezones:
 #  - WST: Western Standard Time (Australia)
-WST     46800    # West Samoa Time (caution: this used to mean -39600) (not in zic)
-YAPT    36000    # Yap Time (Micronesia) (not in zic)
+WST     46800    # West Samoa Time (caution: this used to mean -39600) (not in IANA database)
+YAPT    36000    # Yap Time (Micronesia) (not in IANA database)
