@@ -2064,7 +2064,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 * before we add the specified one.
 				 */
 				free_stringlist(&dblist);
-				split_to_stringlist(pg_strdup(optarg), ", ", &dblist);
+				split_to_stringlist(optarg, ", ", &dblist);
 				break;
 			case 2:
 				debug = true;
@@ -2114,7 +2114,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				dlpath = pg_strdup(optarg);
 				break;
 			case 18:
-				split_to_stringlist(pg_strdup(optarg), ", ", &extraroles);
+				split_to_stringlist(optarg, ", ", &extraroles);
 				break;
 			case 19:
 				add_stringlist_item(&temp_configs, optarg);
