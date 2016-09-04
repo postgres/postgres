@@ -303,6 +303,26 @@ This commit is also listed under libpq and psql
        </para>
       </listitem>
 
+      <listitem>
+<!--
+2016-06-07 [a89b4b1be] Update citext extension for parallel query.
+and many others in the same vein
+-->
+       <para>
+        Update extension functions to be marked parallel-safe where
+        appropriate (Andreas Karlsson)
+       </para>
+
+       <para>
+        Many of the standard extensions have been updated to allow their
+        functions to be executed within parallel query worker processes.
+        These changes will not take effect in
+        databases <application>pg_upgrade</>'d from prior versions unless
+        you apply <command>ALTER EXTENSION UPDATE</> to each such extension
+        (in each database of a cluster).
+       </para>
+      </listitem>
+
    </itemizedlist>
 
   </sect2>
