@@ -781,27 +781,30 @@ static RBNode *
 rb_inverted_iterator(RBTreeIterator *iter)
 {
 	RBNode	   *came_from;
+	RBNode	   *current;
+
+	current = iter->last_visited;
 
 loop:
 	switch ((InvertedWalkNextStep) iter->next_step)
 	{
 			/* First call, begin from root */
 		case NextStepBegin:
-			iter->last_visited = iter->rb->root;
+			current = iter->rb->root;
 			iter->next_step = NextStepLeft;
 			goto loop;
 
 		case NextStepLeft:
-			while (iter->last_visited->left != RBNIL)
-				iter->last_visited = iter->last_visited->left;
+			while (current->left != RBNIL)
+				current = current->left;
 
 			iter->next_step = NextStepRight;
 			goto loop;
 
 		case NextStepRight:
-			if (iter->last_visited->right != RBNIL)
+			if (current->right != RBNIL)
 			{
-				iter->last_visited = iter->last_visited->right;
+				current = current->right;
 				iter->next_step = NextStepLeft;
 				goto loop;
 			}
@@ -810,30 +813,29 @@ loop:
 			break;
 
 		case NextStepUp:
-			for (;;)
+			came_from = current;
+			current = current->parent;
+			if (current == NULL)
 			{
-				came_from = iter->last_visited;
-				iter->last_visited = iter->last_visited->parent;
-				if (iter->last_visited == NULL)
-				{
-					iter->is_over = true;
-					break;		/* end of iteration */
-				}
-
-				if (came_from == iter->last_visited->right)
-				{
-					/* return current, then continue to go up */
-					break;
-				}
-
+				iter->is_over = true;
+				break;		/* end of iteration */
+			}
+			else if (came_from == current->right)
+			{
+				/* return current, then continue to go up */
+				break;
+			}
+			else
+			{
 				/* otherwise we came from the left */
+				Assert(came_from == current->left);
 				iter->next_step = NextStepRight;
 				goto loop;
 			}
-			break;
 	}
 
-	return iter->last_visited;
+	iter->last_visited = current;
+	return current;
 }
 
 /*
