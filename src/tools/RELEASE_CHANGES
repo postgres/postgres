@@ -11,7 +11,7 @@ For All Releases (major, minor, beta, RC)
 	o run spellchecker on result
 	o add SGML markup
 
-* Update timezone data to match latest zic database and new
+* Update timezone data to match latest IANA timezone database and new
   Windows releases, if any (see src/timezone/README)
 
 * Translation updates
