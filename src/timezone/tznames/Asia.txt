@@ -48,10 +48,10 @@ BDT     21600    # Bangladesh Time
                  #     (Asia/Dhaka)
 BNT     28800    # Brunei Darussalam Time
                  #     (Asia/Brunei)
-BORT    28800    # Borneo Time (Indonesia) (not in zic)
+BORT    28800    # Borneo Time (Indonesia) (not in IANA database)
 BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
-CCT     28800    # China Coastal Time (not in zic)
+CCT     28800    # China Coastal Time (not in IANA database)
 CHOST   Asia/Choibalsan  # Choibalsan Summer Time
                  #     (Asia/Choibalsan)
 CHOT    Asia/Choibalsan  # Choibalsan Time
@@ -123,7 +123,7 @@ GET     Asia/Tbilisi  # Georgia Time
 GST     14400    # Gulf Standard Time
                  #     (Asia/Dubai)
                  #     (Asia/Muscat)
-HKT     28800    # Hong Kong Time (not in zic)
+HKT     28800    # Hong Kong Time (not in IANA database)
 HOVST   28800 D  # Hovd Summer Time
                  #     (Asia/Hovd)
 HOVT    Asia/Hovd  # Hovd Time
@@ -142,7 +142,7 @@ IRKT    Asia/Irkutsk  # Irkutsk Time
                  #     (Asia/Irkutsk)
 IRST    Asia/Tehran  # Iran Standard Time
                  #     (Asia/Tehran)
-IRT     12600    # Iran Time (not in zic)
+IRT     12600    # Iran Time (not in IANA database)
 # CONFLICT! IST is not unique
 # Other timezones:
 # - IST: Irish Summer Time (Europe)
@@ -155,10 +155,10 @@ IST     19800    # Indian Standard Time
 # - IST: Indian Standard Time (Asia)
 IST      7200    # Israel Standard Time
                  #     (Asia/Jerusalem)
-JAYT    32400    # Jayapura Time (Indonesia) (not in zic)
+JAYT    32400    # Jayapura Time (Indonesia) (not in IANA database)
 JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
-KDT     36000 D  # Korean Daylight Time (not in zic)
+KDT     36000 D  # Korean Daylight Time (not in IANA database)
 KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
 KGT     Asia/Bishkek  # Kyrgyzstan Time
                  #     (Asia/Bishkek)

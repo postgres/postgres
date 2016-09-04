@@ -15,7 +15,7 @@ ACT    -18000    # Acre Time
 # CONFLICT! ACST is not unique
 # Other timezones:
 #  - ACST: Australian Central Standard Time
-ACST   -14400 D  # Acre Summer Time (obsolete, not in zic)
+ACST   -14400 D  # Acre Summer Time (obsolete, not in IANA database)
 ADT    -10800 D  # Atlantic Daylight Time
                  #     (America/Glace_Bay)
                  #     (America/Goose_Bay)
@@ -92,7 +92,7 @@ AST    -14400    # Atlantic Standard Time
                  #     (Atlantic/Bermuda)
 BOT    -14400    # Bolivia Time
                  #     (America/La_Paz)
-BRA    -10800    # Brazil Time (not in zic)
+BRA    -10800    # Brazil Time (not in IANA database)
 BRST    -7200 D  # Brasil Summer Time
                  #     (America/Sao_Paulo)
 BRT    -10800    # Brasil Time
@@ -131,7 +131,7 @@ CLST   -10800 D  # Chile Summer Time
 CLT    America/Santiago  # Chile Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
-COT    -18000    # Columbia Time (not in zic)
+COT    -18000    # Columbia Time (not in IANA database)
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
@@ -207,7 +207,7 @@ EST    -18000    # Eastern Standard Time (America)
                  #     (America/Toronto)
 FNT     -7200    # Fernando de Noronha Time
                  #     (America/Noronha)
-FNST    -3600 D  # Fernando de Noronha Summer Time (not in zic)
+FNST    -3600 D  # Fernando de Noronha Summer Time (not in IANA database)
                  #     (America/Noronha)
 GFT    -10800    # French Guiana Time
                  #     (America/Cayenne)
@@ -265,7 +265,7 @@ NDT     -9000 D  # Newfoundland Daylight Time
 # CONFLICT! NFT is not unique
 # Other timezones:
 #  - NFT: Norfolk Time (Pacific)
-NFT    -12600    # Newfoundland Time (not in zic)
+NFT    -12600    # Newfoundland Time (not in IANA database)
 NST    -12600    # Newfoundland Standard Time
                  #     (America/St_Johns)
 PDT    -25200 D  # Pacific Daylight Time
@@ -274,7 +274,7 @@ PDT    -25200 D  # Pacific Daylight Time
                  #     (America/Tijuana)
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
-PET    -18000    # Peru Time (not in zic)
+PET    -18000    # Peru Time (not in IANA database)
 PMDT    -7200 D  # Pierre & Miquelon Daylight Time
                  #     (America/Miquelon)
 PMST   -10800    # Pierre & Miquelon Standard Time
