@@ -182,10 +182,10 @@ GMT         0    # Greenwich Mean Time
 # - IST: Israel Standard Time (Asia)
 IST      3600 D  # Irish Summer Time
                  #     (Europe/Dublin)
-MEST     7200 D  # Middle Europe Summer Time (not in zic)
-MET      3600    # Middle Europe Time (not in zic)
-METDST   7200 D  # Middle Europe Summer Time (not in zic)
-MEZ      3600    # Mitteleuropäische Zeit (German) (not in zic)
+MEST     7200 D  # Middle Europe Summer Time (not in IANA database)
+MET      3600    # Middle Europe Time (not in IANA database)
+METDST   7200 D  # Middle Europe Summer Time (not in IANA database)
+MEZ      3600    # Mitteleuropäische Zeit (German) (not in IANA database)
 MSD     14400 D  # Moscow Daylight Time (obsolete)
 MSK     Europe/Moscow  # Moscow Time
                  #     (Europe/Moscow)

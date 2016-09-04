@@ -19,9 +19,9 @@
 # in case of a conflict.
 @OVERRIDE
 
-CST     34200    # Central Standard Time (not in zic)
-EAST    36000    # East Australian Standard Time (not in zic)
-EST     36000    # Eastern Standard Time (not in zic)
-SAST    34200    # South Australian Standard Time (not in zic)
-SAT     34200    # South Australian Standard Time (not in zic)
-WST     28800    # Western Standard Time (not in zic)
+CST     34200    # Central Standard Time (not in IANA database)
+EAST    36000    # East Australian Standard Time (not in IANA database)
+EST     36000    # Eastern Standard Time (not in IANA database)
+SAST    34200    # South Australian Standard Time (not in IANA database)
+SAT     34200    # South Australian Standard Time (not in IANA database)
+WST     28800    # Western Standard Time (not in IANA database)
