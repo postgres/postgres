@@ -2623,3 +2623,18 @@ select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
  t
 (1 row)
 
+-- Let's check the non-default timezone abbreviation sets, too
+set timezone_abbreviations = 'Australia';
+select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
+ ok 
+----
+ t
+(1 row)
+
+set timezone_abbreviations = 'India';
+select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
+ ok 
+----
+ t
+(1 row)
+
