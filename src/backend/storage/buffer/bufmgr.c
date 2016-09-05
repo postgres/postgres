@@ -1460,8 +1460,8 @@ MarkBufferDirty(Buffer buffer)
 	bufHdr = GetBufferDescriptor(buffer - 1);
 
 	Assert(BufferIsPinned(buffer));
-	/* unfortunately we can't check if the lock is held exclusively */
-	Assert(LWLockHeldByMe(BufferDescriptorGetContentLock(bufHdr)));
+	Assert(LWLockHeldByMeInMode(BufferDescriptorGetContentLock(bufHdr),
+								LW_EXCLUSIVE));
 
 	old_buf_state = pg_atomic_read_u32(&bufHdr->state);
 	for (;;)

@@ -1880,10 +1880,9 @@ LWLockReleaseAll(void)
 
 
 /*
- * LWLockHeldByMe - test whether my process currently holds a lock
+ * LWLockHeldByMe - test whether my process holds a lock in any mode
  *
- * This is meant as debug support only.  We currently do not distinguish
- * whether the lock is held shared or exclusive.
+ * This is meant as debug support only.
  */
 bool
 LWLockHeldByMe(LWLock *l)
@@ -1893,6 +1892,24 @@ LWLockHeldByMe(LWLock *l)
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
 		if (held_lwlocks[i].lock == l)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * LWLockHeldByMeInMode - test whether my process holds a lock in given mode
+ *
+ * This is meant as debug support only.
+ */
+bool
+LWLockHeldByMeInMode(LWLock *l, LWLockMode mode)
+{
+	int			i;
+
+	for (i = 0; i < num_held_lwlocks; i++)
+	{
+		if (held_lwlocks[i].lock == l && held_lwlocks[i].mode == mode)
 			return true;
 	}
 	return false;
