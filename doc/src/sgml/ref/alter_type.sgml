@@ -266,8 +266,10 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
   <title>Notes</title>
 
   <para>
-   <command>ALTER TYPE ... ADD VALUE</> (the form that adds a new value to an
-   enum type) cannot be executed inside a transaction block.
+   If <command>ALTER TYPE ... ADD VALUE</> (the form that adds a new value to
+   an enum type) is executed inside a transaction block, the new value cannot
+   be used until after the transaction has been committed, except in the case
+   that the enum type itself was created earlier in the same transaction.
   </para>
 
   <para>

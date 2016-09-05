@@ -560,25 +560,72 @@ DROP TYPE bogus;
 -- check transactional behaviour of ALTER TYPE ... ADD VALUE
 --
 CREATE TYPE bogus AS ENUM('good');
--- check that we can't add new values to existing enums in a transaction
+-- check that we can add new values to existing enums in a transaction
+-- but we can't use them
 BEGIN;
-ALTER TYPE bogus ADD VALUE 'bad';
-ERROR:  ALTER TYPE ... ADD cannot run inside a transaction block
+ALTER TYPE bogus ADD VALUE 'new';
+SAVEPOINT x;
+SELECT 'new'::bogus;  -- unsafe
+ERROR:  unsafe use of new value "new" of enum type bogus
+LINE 1: SELECT 'new'::bogus;
+               ^
+HINT:  New enum values must be committed before they can be used.
+ROLLBACK TO x;
+SELECT enum_first(null::bogus);  -- safe
+ enum_first 
+------------
+ good
+(1 row)
+
+SELECT enum_last(null::bogus);  -- unsafe
+ERROR:  unsafe use of new value "new" of enum type bogus
+HINT:  New enum values must be committed before they can be used.
+ROLLBACK TO x;
+SELECT enum_range(null::bogus);  -- unsafe
+ERROR:  unsafe use of new value "new" of enum type bogus
+HINT:  New enum values must be committed before they can be used.
+ROLLBACK TO x;
 COMMIT;
+SELECT 'new'::bogus;  -- now safe
+ bogus 
+-------
+ new
+(1 row)
+
+SELECT enumlabel, enumsortorder
+FROM pg_enum
+WHERE enumtypid = 'bogus'::regtype
+ORDER BY 2;
+ enumlabel | enumsortorder 
+-----------+---------------
+ good      |             1
+ new       |             2
+(2 rows)
+
 -- check that we recognize the case where the enum already existed but was
--- modified in the current txn
+-- modified in the current txn; this should not be considered safe
 BEGIN;
 ALTER TYPE bogus RENAME TO bogon;
 ALTER TYPE bogon ADD VALUE 'bad';
-ERROR:  ALTER TYPE ... ADD cannot run inside a transaction block
+SELECT 'bad'::bogon;
+ERROR:  unsafe use of new value "bad" of enum type bogon
+LINE 1: SELECT 'bad'::bogon;
+               ^
+HINT:  New enum values must be committed before they can be used.
 ROLLBACK;
 DROP TYPE bogus;
--- check that we *can* add new values to existing enums in a transaction,
--- if the type is new as well
+-- check that we can add new values to existing enums in a transaction
+-- and use them, if the type is new as well
 BEGIN;
-CREATE TYPE bogus AS ENUM();
-ALTER TYPE bogus ADD VALUE 'good';
+CREATE TYPE bogus AS ENUM('good');
+ALTER TYPE bogus ADD VALUE 'bad';
 ALTER TYPE bogus ADD VALUE 'ugly';
+SELECT enum_range(null::bogus);
+   enum_range    
+-----------------
+ {good,bad,ugly}
+(1 row)
+
 ROLLBACK;
 --
 -- Cleanup
