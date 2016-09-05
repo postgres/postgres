@@ -381,6 +381,16 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>LSN</acronym></term>
+    <listitem>
+     <para>
+      Log Sequence Number, see <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>
+      and <link linkend="wal-internals">WAL Internals</link>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>MSVC</acronym></term>
     <listitem>
      <para>

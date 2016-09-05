@@ -724,12 +724,28 @@
  <sect1 id="wal-internals">
   <title>WAL Internals</title>
 
+  <indexterm zone="wal-internals">
+   <primary>LSN</primary>
+  </indexterm>
+
   <para>
    <acronym>WAL</acronym> is automatically enabled; no action is
    required from the administrator except ensuring that the
    disk-space requirements for the <acronym>WAL</acronym> logs are met,
    and that any necessary tuning is done (see <xref
    linkend="wal-configuration">).
+  </para>
+
+  <para>
+   <acronym>WAL</acronym> records are appended to the <acronym>WAL</acronym>
+   logs as each new record is written. The insert position is described by
+   a Log Sequence Number (<acronym>LSN</acronym>) that is a byte offset into
+   the logs, increasing monotonically with each new record.
+   <acronym>LSN</acronym> values are returned as the datatype
+   <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>. Values can be
+   compared to calculate the volume of <acronym>WAL</acronym> data that
+   separates them, so they are used to measure the progress of replication
+   and recovery.
   </para>
 
   <para>
