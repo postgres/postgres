@@ -18,3 +18,5 @@ check:
 
 clean distclean maintainer-clean:
 	rm -rf tmp_check
+
+EXTRA_INSTALL = contrib/test_decoding
