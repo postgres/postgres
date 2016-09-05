@@ -172,6 +172,5 @@ extern int	pg_regexec(regex_t *, const pg_wchar *, size_t, size_t, rm_detail_t *
 extern int	pg_regprefix(regex_t *, pg_wchar **, size_t *);
 extern void pg_regfree(regex_t *);
 extern size_t pg_regerror(int, const regex_t *, char *, size_t);
-extern void pg_set_regex_collation(Oid collation);
 
 #endif   /* _REGEX_H_ */

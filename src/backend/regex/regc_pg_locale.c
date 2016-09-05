@@ -736,7 +736,7 @@ store_match(pg_ctype_cache *pcc, pg_wchar chr1, int nchrs)
  * Note that the result must not be freed or modified by caller.
  */
 static struct cvec *
-pg_ctype_get_cache(pg_wc_probefunc probefunc)
+pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 {
 	pg_ctype_cache *pcc;
 	pg_wchar	max_chr;
@@ -770,31 +770,43 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc)
 	pcc->cv.ranges = (chr *) malloc(pcc->cv.rangespace * sizeof(chr) * 2);
 	if (pcc->cv.chrs == NULL || pcc->cv.ranges == NULL)
 		goto out_of_memory;
+	pcc->cv.cclasscode = cclasscode;
 
 	/*
-	 * Decide how many character codes we ought to look through.  For C locale
-	 * there's no need to go further than 127.  Otherwise, if the encoding is
-	 * UTF8 go up to 0x7FF, which is a pretty arbitrary cutoff but we cannot
-	 * extend it as far as we'd like (say, 0xFFFF, the end of the Basic
-	 * Multilingual Plane) without creating significant performance issues due
-	 * to too many characters being fed through the colormap code.  This will
-	 * need redesign to fix reasonably, but at least for the moment we have
-	 * all common European languages covered.  Otherwise (not C, not UTF8) go
-	 * up to 255.  These limits are interrelated with restrictions discussed
-	 * at the head of this file.
+	 * Decide how many character codes we ought to look through.  In general
+	 * we don't go past MAX_SIMPLE_CHR; chr codes above that are handled at
+	 * runtime using the "high colormap" mechanism.  However, in C locale
+	 * there's no need to go further than 127, and if we only have a 1-byte
+	 * <ctype.h> API there's no need to go further than that can handle.
+	 *
+	 * If it's not MAX_SIMPLE_CHR that's constraining the search, mark the
+	 * output cvec as not having any locale-dependent behavior, since there
+	 * will be no need to do any run-time locale checks.  (The #if's here
+	 * would always be true for production values of MAX_SIMPLE_CHR, but it's
+	 * useful to allow it to be small for testing purposes.)
 	 */
 	switch (pg_regex_strategy)
 	{
 		case PG_REGEX_LOCALE_C:
+#if MAX_SIMPLE_CHR >= 127
 			max_chr = (pg_wchar) 127;
+			pcc->cv.cclasscode = -1;
+#else
+			max_chr = (pg_wchar) MAX_SIMPLE_CHR;
+#endif
 			break;
 		case PG_REGEX_LOCALE_WIDE:
 		case PG_REGEX_LOCALE_WIDE_L:
-			max_chr = (pg_wchar) 0x7FF;
+			max_chr = (pg_wchar) MAX_SIMPLE_CHR;
 			break;
 		case PG_REGEX_LOCALE_1BYTE:
 		case PG_REGEX_LOCALE_1BYTE_L:
+#if MAX_SIMPLE_CHR >= UCHAR_MAX
 			max_chr = (pg_wchar) UCHAR_MAX;
+			pcc->cv.cclasscode = -1;
+#else
+			max_chr = (pg_wchar) MAX_SIMPLE_CHR;
+#endif
 			break;
 		default:
 			max_chr = 0;		/* can't get here, but keep compiler quiet */

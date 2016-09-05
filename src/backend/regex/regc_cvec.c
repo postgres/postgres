@@ -34,7 +34,8 @@
 
 /*
  * Notes:
- * Only (selected) functions in _this_ file should treat chr* as non-constant.
+ * Only (selected) functions in _this_ file should treat the chr arrays
+ * of a cvec as non-constant.
  */
 
 /*
@@ -67,6 +68,7 @@ clearcvec(struct cvec * cv)
 	assert(cv != NULL);
 	cv->nchrs = 0;
 	cv->nranges = 0;
+	cv->cclasscode = -1;
 	return cv;
 }
 

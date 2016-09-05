@@ -77,6 +77,16 @@ typedef unsigned uchr;			/* unsigned type that will hold a chr */
  */
 #define CHR_IS_IN_RANGE(c)	((c) <= CHR_MAX)
 
+/*
+ * MAX_SIMPLE_CHR is the cutoff between "simple" and "complicated" processing
+ * in the color map logic.  It should usually be chosen high enough to ensure
+ * that all common characters are <= MAX_SIMPLE_CHR.  However, very large
+ * values will be counterproductive since they cause more regex setup time.
+ * Also, small values can be helpful for testing the high-color-map logic
+ * with plain old ASCII input.
+ */
+#define MAX_SIMPLE_CHR	0x7FF	/* suitable value for Unicode */
+
 /* functions operating on chr */
 #define iscalnum(x) pg_wc_isalnum(x)
 #define iscalpha(x) pg_wc_isalpha(x)

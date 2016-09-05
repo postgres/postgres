@@ -349,6 +349,19 @@ static const struct cname
 	}
 };
 
+/*
+ * The following arrays define the valid character class names.
+ */
+static const char *const classNames[NUM_CCLASSES + 1] = {
+	"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
+	"lower", "print", "punct", "space", "upper", "xdigit", NULL
+};
+
+enum classes
+{
+	CC_ALNUM, CC_ALPHA, CC_ASCII, CC_BLANK, CC_CNTRL, CC_DIGIT, CC_GRAPH,
+	CC_LOWER, CC_PRINT, CC_PUNCT, CC_SPACE, CC_UPPER, CC_XDIGIT
+};
 
 /*
  * We do not use the hard-wired Unicode classification tables that Tcl does.
@@ -544,21 +557,6 @@ cclass(struct vars * v,			/* context */
 				index;
 
 	/*
-	 * The following arrays define the valid character class names.
-	 */
-
-	static const char *const classNames[] = {
-		"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
-		"lower", "print", "punct", "space", "upper", "xdigit", NULL
-	};
-
-	enum classes
-	{
-		CC_ALNUM, CC_ALPHA, CC_ASCII, CC_BLANK, CC_CNTRL, CC_DIGIT, CC_GRAPH,
-		CC_LOWER, CC_PRINT, CC_PUNCT, CC_SPACE, CC_UPPER, CC_XDIGIT
-	};
-
-	/*
 	 * Map the name to the corresponding enumerated value.
 	 */
 	len = endp - startp;
@@ -593,18 +591,20 @@ cclass(struct vars * v,			/* context */
 	 * pg_ctype_get_cache so that we can cache the results.  Other classes
 	 * have definitions that are hard-wired here, and for those we just
 	 * construct a transient cvec on the fly.
+	 *
+	 * NB: keep this code in sync with cclass_column_index(), below.
 	 */
 
 	switch ((enum classes) index)
 	{
 		case CC_PRINT:
-			cv = pg_ctype_get_cache(pg_wc_isprint);
+			cv = pg_ctype_get_cache(pg_wc_isprint, index);
 			break;
 		case CC_ALNUM:
-			cv = pg_ctype_get_cache(pg_wc_isalnum);
+			cv = pg_ctype_get_cache(pg_wc_isalnum, index);
 			break;
 		case CC_ALPHA:
-			cv = pg_ctype_get_cache(pg_wc_isalpha);
+			cv = pg_ctype_get_cache(pg_wc_isalpha, index);
 			break;
 		case CC_ASCII:
 			/* hard-wired meaning */
@@ -625,10 +625,10 @@ cclass(struct vars * v,			/* context */
 			addrange(cv, 0x7f, 0x9f);
 			break;
 		case CC_DIGIT:
-			cv = pg_ctype_get_cache(pg_wc_isdigit);
+			cv = pg_ctype_get_cache(pg_wc_isdigit, index);
 			break;
 		case CC_PUNCT:
-			cv = pg_ctype_get_cache(pg_wc_ispunct);
+			cv = pg_ctype_get_cache(pg_wc_ispunct, index);
 			break;
 		case CC_XDIGIT:
 
@@ -646,16 +646,16 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_SPACE:
-			cv = pg_ctype_get_cache(pg_wc_isspace);
+			cv = pg_ctype_get_cache(pg_wc_isspace, index);
 			break;
 		case CC_LOWER:
-			cv = pg_ctype_get_cache(pg_wc_islower);
+			cv = pg_ctype_get_cache(pg_wc_islower, index);
 			break;
 		case CC_UPPER:
-			cv = pg_ctype_get_cache(pg_wc_isupper);
+			cv = pg_ctype_get_cache(pg_wc_isupper, index);
 			break;
 		case CC_GRAPH:
-			cv = pg_ctype_get_cache(pg_wc_isgraph);
+			cv = pg_ctype_get_cache(pg_wc_isgraph, index);
 			break;
 	}
 
@@ -663,6 +663,47 @@ cclass(struct vars * v,			/* context */
 	if (cv == NULL)
 		ERR(REG_ESPACE);
 	return cv;
+}
+
+/*
+ * cclass_column_index - get appropriate high colormap column index for chr
+ */
+static int
+cclass_column_index(struct colormap * cm, chr c)
+{
+	int			colnum = 0;
+
+	/* Shouldn't go through all these pushups for simple chrs */
+	assert(c > MAX_SIMPLE_CHR);
+
+	/*
+	 * Note: we should not see requests to consider cclasses that are not
+	 * treated as locale-specific by cclass(), above.
+	 */
+	if (cm->classbits[CC_PRINT] && pg_wc_isprint(c))
+		colnum |= cm->classbits[CC_PRINT];
+	if (cm->classbits[CC_ALNUM] && pg_wc_isalnum(c))
+		colnum |= cm->classbits[CC_ALNUM];
+	if (cm->classbits[CC_ALPHA] && pg_wc_isalpha(c))
+		colnum |= cm->classbits[CC_ALPHA];
+	assert(cm->classbits[CC_ASCII] == 0);
+	assert(cm->classbits[CC_BLANK] == 0);
+	assert(cm->classbits[CC_CNTRL] == 0);
+	if (cm->classbits[CC_DIGIT] && pg_wc_isdigit(c))
+		colnum |= cm->classbits[CC_DIGIT];
+	if (cm->classbits[CC_PUNCT] && pg_wc_ispunct(c))
+		colnum |= cm->classbits[CC_PUNCT];
+	assert(cm->classbits[CC_XDIGIT] == 0);
+	if (cm->classbits[CC_SPACE] && pg_wc_isspace(c))
+		colnum |= cm->classbits[CC_SPACE];
+	if (cm->classbits[CC_LOWER] && pg_wc_islower(c))
+		colnum |= cm->classbits[CC_LOWER];
+	if (cm->classbits[CC_UPPER] && pg_wc_isupper(c))
+		colnum |= cm->classbits[CC_UPPER];
+	if (cm->classbits[CC_GRAPH] && pg_wc_isgraph(c))
+		colnum |= cm->classbits[CC_GRAPH];
+
+	return colnum;
 }
 
 /*

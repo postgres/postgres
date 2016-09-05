@@ -194,7 +194,10 @@ findprefix(struct cnfa * cnfa,
 		if (thiscolor == COLORLESS)
 			break;
 		/* The color must be a singleton */
-		if (cm->cd[thiscolor].nchrs != 1)
+		if (cm->cd[thiscolor].nschrs != 1)
+			break;
+		/* Must not have any high-color-map entries */
+		if (cm->cd[thiscolor].nuchrs != 0)
 			break;
 
 		/*
