@@ -1158,17 +1158,15 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		txn->base_snapshot_lsn = InvalidXLogRecPtr;
 	}
 
-	/* delete from list of known subxacts */
-	if (txn->is_known_as_subxact)
-	{
-		/* NB: nsubxacts count of parent will be too high now */
-		dlist_delete(&txn->node);
-	}
-	/* delete from LSN ordered list of toplevel TXNs */
-	else
-	{
-		dlist_delete(&txn->node);
-	}
+	/*
+	 * Remove TXN from its containing list.
+	 *
+	 * Note: if txn->is_known_as_subxact, we are deleting the TXN from its
+	 * parent's list of known subxacts; this leaves the parent's nsubxacts
+	 * count too high, but we don't care.  Otherwise, we are deleting the TXN
+	 * from the LSN-ordered list of toplevel TXNs.
+	 */
+	dlist_delete(&txn->node);
 
 	/* now remove reference from buffer */
 	hash_search(rb->by_txn,
