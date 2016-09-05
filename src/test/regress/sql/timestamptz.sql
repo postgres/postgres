@@ -479,3 +479,8 @@ SELECT '2007-12-09 07:30:00 UTC'::timestamptz AT TIME ZONE 'VET';
 --
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_names;
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
+-- Let's check the non-default timezone abbreviation sets, too
+set timezone_abbreviations = 'Australia';
+select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
+set timezone_abbreviations = 'India';
+select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;

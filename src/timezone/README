@@ -34,6 +34,11 @@ in the same commit.  Usually, if a known abbreviation has changed meaning,
 the appropriate fix is to make it refer to a long-form zone name instead
 of a fixed GMT offset.
 
+The core regression test suite does some simple validation of the zone
+data and abbreviations data (notably by checking that the pg_timezone_names
+and pg_timezone_abbrevs views don't throw errors).  It's worth running it
+as a cross-check on proposed updates.
+
 When there has been a new release of Windows (probably including Service
 Packs), the list of matching timezones need to be updated. Run the
 script in src/tools/win32tzlist.pl on a Windows machine running this new
