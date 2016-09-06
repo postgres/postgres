@@ -2866,6 +2866,9 @@ batchmemtuples(Tuplesortstate *state)
 	int64		availMemLessRefund;
 	int			memtupsize = state->memtupsize;
 
+	/* Caller error if we have no tapes */
+	Assert(state->activeTapes > 0);
+
 	/* For simplicity, assume no memtuples are actually currently counted */
 	Assert(state->memtupcount == 0);
 
@@ -2880,6 +2883,20 @@ batchmemtuples(Tuplesortstate *state)
 	availMemLessRefund = state->availMem - refund;
 
 	/*
+	 * We need to be sure that we do not cause LACKMEM to become true, else
+	 * the batch allocation size could be calculated as negative, causing
+	 * havoc.  Hence, if availMemLessRefund is negative at this point, we must
+	 * do nothing.  Moreover, if it's positive but rather small, there's
+	 * little point in proceeding because we could only increase memtuples by
+	 * a small amount, not worth the cost of the repalloc's.  We somewhat
+	 * arbitrarily set the threshold at ALLOCSET_DEFAULT_INITSIZE per tape.
+	 * (Note that this does not represent any assumption about tuple sizes.)
+	 */
+	if (availMemLessRefund <=
+		(int64) state->activeTapes * ALLOCSET_DEFAULT_INITSIZE)
+		return;
+
+	/*
 	 * To establish balanced memory use after refunding palloc overhead,
 	 * temporarily have our accounting indicate that we've allocated all
 	 * memory we're allowed to less that refund, and call grow_memtuples() to
@@ -2888,9 +2905,11 @@ batchmemtuples(Tuplesortstate *state)
 	state->growmemtuples = true;
 	USEMEM(state, availMemLessRefund);
 	(void) grow_memtuples(state);
-	/* Should not matter, but be tidy */
-	FREEMEM(state, availMemLessRefund);
 	state->growmemtuples = false;
+	/* availMem must stay accurate for spacePerTape calculation */
+	FREEMEM(state, availMemLessRefund);
+	if (LACKMEM(state))
+		elog(ERROR, "unexpected out-of-memory situation in tuplesort");
 
 #ifdef TRACE_SORT
 	if (trace_sort)
