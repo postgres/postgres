@@ -44,11 +44,11 @@ extern bool CheckIndexCompatible(Oid oldId,
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */
-extern ObjectAddress CreateFunction(CreateFunctionStmt *stmt, const char *queryString);
+extern ObjectAddress CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
 extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
-extern ObjectAddress AlterFunction(AlterFunctionStmt *stmt);
+extern ObjectAddress AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt);
 extern ObjectAddress CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 extern ObjectAddress CreateTransform(CreateTransformStmt *stmt);
@@ -58,10 +58,10 @@ extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern Oid	get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok);
-extern void interpret_function_parameter_list(List *parameters,
+extern void interpret_function_parameter_list(ParseState *pstate,
+								  List *parameters,
 								  Oid languageOid,
 								  bool is_aggregate,
-								  const char *queryString,
 								  oidvector **parameterTypes,
 								  ArrayType **allParameterTypes,
 								  ArrayType **parameterModes,
@@ -76,8 +76,8 @@ extern void RemoveOperatorById(Oid operOid);
 extern ObjectAddress AlterOperator(AlterOperatorStmt *stmt);
 
 /* commands/aggregatecmds.c */
-extern ObjectAddress DefineAggregate(List *name, List *args, bool oldstyle,
-				List *parameters, const char *queryString);
+extern ObjectAddress DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle,
+				List *parameters);
 
 /* commands/opclasscmds.c */
 extern ObjectAddress DefineOpClass(CreateOpClassStmt *stmt);
@@ -152,6 +152,5 @@ extern int64 defGetInt64(DefElem *def);
 extern List *defGetQualifiedName(DefElem *def);
 extern TypeName *defGetTypeName(DefElem *def);
 extern int	defGetTypeLength(DefElem *def);
-extern DefElem *defWithOids(bool value);
 
 #endif   /* DEFREM_H */

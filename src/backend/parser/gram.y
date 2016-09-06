@@ -928,38 +928,38 @@ AlterOptRoleElem:
 			PASSWORD Sconst
 				{
 					$$ = makeDefElem("password",
-									 (Node *)makeString($2));
+									 (Node *)makeString($2), @1);
 				}
 			| PASSWORD NULL_P
 				{
-					$$ = makeDefElem("password", NULL);
+					$$ = makeDefElem("password", NULL, @1);
 				}
 			| ENCRYPTED PASSWORD Sconst
 				{
 					$$ = makeDefElem("encryptedPassword",
-									 (Node *)makeString($3));
+									 (Node *)makeString($3), @1);
 				}
 			| UNENCRYPTED PASSWORD Sconst
 				{
 					$$ = makeDefElem("unencryptedPassword",
-									 (Node *)makeString($3));
+									 (Node *)makeString($3), @1);
 				}
 			| INHERIT
 				{
-					$$ = makeDefElem("inherit", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("inherit", (Node *)makeInteger(TRUE), @1);
 				}
 			| CONNECTION LIMIT SignedIconst
 				{
-					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($3));
+					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($3), @1);
 				}
 			| VALID UNTIL Sconst
 				{
-					$$ = makeDefElem("validUntil", (Node *)makeString($3));
+					$$ = makeDefElem("validUntil", (Node *)makeString($3), @1);
 				}
 		/*	Supported but not documented for roles, for use by ALTER GROUP. */
 			| USER role_list
 				{
-					$$ = makeDefElem("rolemembers", (Node *)$2);
+					$$ = makeDefElem("rolemembers", (Node *)$2, @1);
 				}
 			| IDENT
 				{
@@ -969,36 +969,36 @@ AlterOptRoleElem:
 					 * size of the main parser.
 					 */
 					if (strcmp($1, "superuser") == 0)
-						$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
+						$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE), @1);
 					else if (strcmp($1, "nosuperuser") == 0)
-						$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE), @1);
 					else if (strcmp($1, "createrole") == 0)
-						$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
+						$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE), @1);
 					else if (strcmp($1, "nocreaterole") == 0)
-						$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE), @1);
 					else if (strcmp($1, "replication") == 0)
-						$$ = makeDefElem("isreplication", (Node *)makeInteger(TRUE));
+						$$ = makeDefElem("isreplication", (Node *)makeInteger(TRUE), @1);
 					else if (strcmp($1, "noreplication") == 0)
-						$$ = makeDefElem("isreplication", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("isreplication", (Node *)makeInteger(FALSE), @1);
 					else if (strcmp($1, "createdb") == 0)
-						$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
+						$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE), @1);
 					else if (strcmp($1, "nocreatedb") == 0)
-						$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE), @1);
 					else if (strcmp($1, "login") == 0)
-						$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
+						$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE), @1);
 					else if (strcmp($1, "nologin") == 0)
-						$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE), @1);
 					else if (strcmp($1, "bypassrls") == 0)
-						$$ = makeDefElem("bypassrls", (Node *)makeInteger(TRUE));
+						$$ = makeDefElem("bypassrls", (Node *)makeInteger(TRUE), @1);
 					else if (strcmp($1, "nobypassrls") == 0)
-						$$ = makeDefElem("bypassrls", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("bypassrls", (Node *)makeInteger(FALSE), @1);
 					else if (strcmp($1, "noinherit") == 0)
 					{
 						/*
 						 * Note that INHERIT is a keyword, so it's handled by main parser, but
 						 * NOINHERIT is handled here.
 						 */
-						$$ = makeDefElem("inherit", (Node *)makeInteger(FALSE));
+						$$ = makeDefElem("inherit", (Node *)makeInteger(FALSE), @1);
 					}
 					else
 						ereport(ERROR,
@@ -1013,23 +1013,23 @@ CreateOptRoleElem:
 			/* The following are not supported by ALTER ROLE/USER/GROUP */
 			| SYSID Iconst
 				{
-					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
+					$$ = makeDefElem("sysid", (Node *)makeInteger($2), @1);
 				}
 			| ADMIN role_list
 				{
-					$$ = makeDefElem("adminmembers", (Node *)$2);
+					$$ = makeDefElem("adminmembers", (Node *)$2, @1);
 				}
 			| ROLE role_list
 				{
-					$$ = makeDefElem("rolemembers", (Node *)$2);
+					$$ = makeDefElem("rolemembers", (Node *)$2, @1);
 				}
 			| IN_P ROLE role_list
 				{
-					$$ = makeDefElem("addroleto", (Node *)$3);
+					$$ = makeDefElem("addroleto", (Node *)$3, @1);
 				}
 			| IN_P GROUP_P role_list
 				{
-					$$ = makeDefElem("addroleto", (Node *)$3);
+					$$ = makeDefElem("addroleto", (Node *)$3, @1);
 				}
 		;
 
@@ -1206,7 +1206,7 @@ AlterGroupStmt:
 					n->role = $3;
 					n->action = $4;
 					n->options = list_make1(makeDefElem("rolemembers",
-														(Node *)$6));
+														(Node *)$6, @6));
 					$$ = (Node *)n;
 				}
 		;
@@ -2446,20 +2446,20 @@ reloption_list:
 reloption_elem:
 			ColLabel '=' def_arg
 				{
-					$$ = makeDefElem($1, (Node *) $3);
+					$$ = makeDefElem($1, (Node *) $3, @1);
 				}
 			| ColLabel
 				{
-					$$ = makeDefElem($1, NULL);
+					$$ = makeDefElem($1, NULL, @1);
 				}
 			| ColLabel '.' ColLabel '=' def_arg
 				{
 					$$ = makeDefElemExtended($1, $3, (Node *) $5,
-											 DEFELEM_UNSPEC);
+											 DEFELEM_UNSPEC, @1);
 				}
 			| ColLabel '.' ColLabel
 				{
-					$$ = makeDefElemExtended($1, $3, NULL, DEFELEM_UNSPEC);
+					$$ = makeDefElemExtended($1, $3, NULL, DEFELEM_UNSPEC, @1);
 				}
 		;
 
@@ -2669,59 +2669,59 @@ copy_opt_list:
 copy_opt_item:
 			BINARY
 				{
-					$$ = makeDefElem("format", (Node *)makeString("binary"));
+					$$ = makeDefElem("format", (Node *)makeString("binary"), @1);
 				}
 			| OIDS
 				{
-					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE), @1);
 				}
 			| FREEZE
 				{
-					$$ = makeDefElem("freeze", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("freeze", (Node *)makeInteger(TRUE), @1);
 				}
 			| DELIMITER opt_as Sconst
 				{
-					$$ = makeDefElem("delimiter", (Node *)makeString($3));
+					$$ = makeDefElem("delimiter", (Node *)makeString($3), @1);
 				}
 			| NULL_P opt_as Sconst
 				{
-					$$ = makeDefElem("null", (Node *)makeString($3));
+					$$ = makeDefElem("null", (Node *)makeString($3), @1);
 				}
 			| CSV
 				{
-					$$ = makeDefElem("format", (Node *)makeString("csv"));
+					$$ = makeDefElem("format", (Node *)makeString("csv"), @1);
 				}
 			| HEADER_P
 				{
-					$$ = makeDefElem("header", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("header", (Node *)makeInteger(TRUE), @1);
 				}
 			| QUOTE opt_as Sconst
 				{
-					$$ = makeDefElem("quote", (Node *)makeString($3));
+					$$ = makeDefElem("quote", (Node *)makeString($3), @1);
 				}
 			| ESCAPE opt_as Sconst
 				{
-					$$ = makeDefElem("escape", (Node *)makeString($3));
+					$$ = makeDefElem("escape", (Node *)makeString($3), @1);
 				}
 			| FORCE QUOTE columnList
 				{
-					$$ = makeDefElem("force_quote", (Node *)$3);
+					$$ = makeDefElem("force_quote", (Node *)$3, @1);
 				}
 			| FORCE QUOTE '*'
 				{
-					$$ = makeDefElem("force_quote", (Node *)makeNode(A_Star));
+					$$ = makeDefElem("force_quote", (Node *)makeNode(A_Star), @1);
 				}
 			| FORCE NOT NULL_P columnList
 				{
-					$$ = makeDefElem("force_not_null", (Node *)$4);
+					$$ = makeDefElem("force_not_null", (Node *)$4, @1);
 				}
 			| FORCE NULL_P columnList
 				{
-					$$ = makeDefElem("force_null", (Node *)$3);
+					$$ = makeDefElem("force_null", (Node *)$3, @1);
 				}
 			| ENCODING Sconst
 				{
-					$$ = makeDefElem("encoding", (Node *)makeString($2));
+					$$ = makeDefElem("encoding", (Node *)makeString($2), @1);
 				}
 		;
 
@@ -2730,7 +2730,7 @@ copy_opt_item:
 opt_binary:
 			BINARY
 				{
-					$$ = makeDefElem("format", (Node *)makeString("binary"));
+					$$ = makeDefElem("format", (Node *)makeString("binary"), @1);
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2738,7 +2738,7 @@ opt_binary:
 opt_oids:
 			WITH OIDS
 				{
-					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE), @1);
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2746,7 +2746,7 @@ opt_oids:
 copy_delimiter:
 			opt_using DELIMITERS Sconst
 				{
-					$$ = makeDefElem("delimiter", (Node *)makeString($3));
+					$$ = makeDefElem("delimiter", (Node *)makeString($3), @2);
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2771,7 +2771,7 @@ copy_generic_opt_list:
 copy_generic_opt_elem:
 			ColLabel copy_generic_opt_arg
 				{
-					$$ = makeDefElem($1, $2);
+					$$ = makeDefElem($1, $2, @1);
 				}
 		;
 
@@ -3418,8 +3418,8 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 /* WITH (options) is preferred, WITH OIDS and WITHOUT OIDS are legacy forms */
 OptWith:
 			WITH reloptions				{ $$ = $2; }
-			| WITH OIDS					{ $$ = list_make1(defWithOids(true)); }
-			| WITHOUT OIDS				{ $$ = list_make1(defWithOids(false)); }
+			| WITH OIDS					{ $$ = list_make1(makeDefElem("oids", (Node *) makeInteger(true), @1)); }
+			| WITHOUT OIDS				{ $$ = list_make1(makeDefElem("oids", (Node *) makeInteger(false), @1)); }
 			| /*EMPTY*/					{ $$ = NIL; }
 		;
 
@@ -3636,51 +3636,51 @@ SeqOptList: SeqOptElem								{ $$ = list_make1($1); }
 
 SeqOptElem: CACHE NumericOnly
 				{
-					$$ = makeDefElem("cache", (Node *)$2);
+					$$ = makeDefElem("cache", (Node *)$2, @1);
 				}
 			| CYCLE
 				{
-					$$ = makeDefElem("cycle", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("cycle", (Node *)makeInteger(TRUE), @1);
 				}
 			| NO CYCLE
 				{
-					$$ = makeDefElem("cycle", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("cycle", (Node *)makeInteger(FALSE), @1);
 				}
 			| INCREMENT opt_by NumericOnly
 				{
-					$$ = makeDefElem("increment", (Node *)$3);
+					$$ = makeDefElem("increment", (Node *)$3, @1);
 				}
 			| MAXVALUE NumericOnly
 				{
-					$$ = makeDefElem("maxvalue", (Node *)$2);
+					$$ = makeDefElem("maxvalue", (Node *)$2, @1);
 				}
 			| MINVALUE NumericOnly
 				{
-					$$ = makeDefElem("minvalue", (Node *)$2);
+					$$ = makeDefElem("minvalue", (Node *)$2, @1);
 				}
 			| NO MAXVALUE
 				{
-					$$ = makeDefElem("maxvalue", NULL);
+					$$ = makeDefElem("maxvalue", NULL, @1);
 				}
 			| NO MINVALUE
 				{
-					$$ = makeDefElem("minvalue", NULL);
+					$$ = makeDefElem("minvalue", NULL, @1);
 				}
 			| OWNED BY any_name
 				{
-					$$ = makeDefElem("owned_by", (Node *)$3);
+					$$ = makeDefElem("owned_by", (Node *)$3, @1);
 				}
 			| START opt_with NumericOnly
 				{
-					$$ = makeDefElem("start", (Node *)$3);
+					$$ = makeDefElem("start", (Node *)$3, @1);
 				}
 			| RESTART
 				{
-					$$ = makeDefElem("restart", NULL);
+					$$ = makeDefElem("restart", NULL, @1);
 				}
 			| RESTART opt_with NumericOnly
 				{
-					$$ = makeDefElem("restart", (Node *)$3);
+					$$ = makeDefElem("restart", (Node *)$3, @1);
 				}
 		;
 
@@ -3879,19 +3879,19 @@ create_extension_opt_list:
 create_extension_opt_item:
 			SCHEMA name
 				{
-					$$ = makeDefElem("schema", (Node *)makeString($2));
+					$$ = makeDefElem("schema", (Node *)makeString($2), @1);
 				}
 			| VERSION_P NonReservedWord_or_Sconst
 				{
-					$$ = makeDefElem("new_version", (Node *)makeString($2));
+					$$ = makeDefElem("new_version", (Node *)makeString($2), @1);
 				}
 			| FROM NonReservedWord_or_Sconst
 				{
-					$$ = makeDefElem("old_version", (Node *)makeString($2));
+					$$ = makeDefElem("old_version", (Node *)makeString($2), @1);
 				}
 			| CASCADE
 				{
-					$$ = makeDefElem("cascade", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("cascade", (Node *)makeInteger(TRUE), @1);
 				}
 		;
 
@@ -3920,7 +3920,7 @@ alter_extension_opt_list:
 alter_extension_opt_item:
 			TO NonReservedWord_or_Sconst
 				{
-					$$ = makeDefElem("new_version", (Node *)makeString($2));
+					$$ = makeDefElem("new_version", (Node *)makeString($2), @1);
 				}
 		;
 
@@ -4181,10 +4181,10 @@ CreateFdwStmt: CREATE FOREIGN DATA_P WRAPPER name opt_fdw_options create_generic
 		;
 
 fdw_option:
-			HANDLER handler_name				{ $$ = makeDefElem("handler", (Node *)$2); }
-			| NO HANDLER						{ $$ = makeDefElem("handler", NULL); }
-			| VALIDATOR handler_name			{ $$ = makeDefElem("validator", (Node *)$2); }
-			| NO VALIDATOR						{ $$ = makeDefElem("validator", NULL); }
+			HANDLER handler_name				{ $$ = makeDefElem("handler", (Node *)$2, @1); }
+			| NO HANDLER						{ $$ = makeDefElem("handler", NULL, @1); }
+			| VALIDATOR handler_name			{ $$ = makeDefElem("validator", (Node *)$2, @1); }
+			| NO VALIDATOR						{ $$ = makeDefElem("validator", NULL, @1); }
 		;
 
 fdw_options:
@@ -4303,14 +4303,14 @@ alter_generic_option_elem:
 				}
 			| DROP generic_option_name
 				{
-					$$ = makeDefElemExtended(NULL, $2, NULL, DEFELEM_DROP);
+					$$ = makeDefElemExtended(NULL, $2, NULL, DEFELEM_DROP, @2);
 				}
 		;
 
 generic_option_elem:
 			generic_option_name generic_option_arg
 				{
-					$$ = makeDefElem($1, $2);
+					$$ = makeDefElem($1, $2, @1);
 				}
 		;
 
@@ -4982,7 +4982,7 @@ event_trigger_when_list:
 
 event_trigger_when_item:
 		ColId IN_P '(' event_trigger_value_list ')'
-			{ $$ = makeDefElem($1, (Node *) $4); }
+			{ $$ = makeDefElem($1, (Node *) $4, @1); }
 		;
 
 event_trigger_value_list:
@@ -5187,7 +5187,7 @@ DefineStmt:
 					n->kind = OBJECT_COLLATION;
 					n->args = NIL;
 					n->defnames = $3;
-					n->definition = list_make1(makeDefElem("from", (Node *) $5));
+					n->definition = list_make1(makeDefElem("from", (Node *) $5, @5));
 					$$ = (Node *)n;
 				}
 		;
@@ -5201,11 +5201,11 @@ def_list:	def_elem								{ $$ = list_make1($1); }
 
 def_elem:	ColLabel '=' def_arg
 				{
-					$$ = makeDefElem($1, (Node *) $3);
+					$$ = makeDefElem($1, (Node *) $3, @1);
 				}
 			| ColLabel
 				{
-					$$ = makeDefElem($1, NULL);
+					$$ = makeDefElem($1, NULL, @1);
 				}
 		;
 
@@ -5231,7 +5231,7 @@ old_aggr_list: old_aggr_elem						{ $$ = list_make1($1); }
  */
 old_aggr_elem:  IDENT '=' def_arg
 				{
-					$$ = makeDefElem($1, (Node *)$3);
+					$$ = makeDefElem($1, (Node *)$3, @1);
 				}
 		;
 
@@ -6552,15 +6552,15 @@ DefACLOptionList:
 DefACLOption:
 			IN_P SCHEMA name_list
 				{
-					$$ = makeDefElem("schemas", (Node *)$3);
+					$$ = makeDefElem("schemas", (Node *)$3, @1);
 				}
 			| FOR ROLE role_list
 				{
-					$$ = makeDefElem("roles", (Node *)$3);
+					$$ = makeDefElem("roles", (Node *)$3, @1);
 				}
 			| FOR USER role_list
 				{
-					$$ = makeDefElem("roles", (Node *)$3);
+					$$ = makeDefElem("roles", (Node *)$3, @1);
 				}
 		;
 
@@ -7044,87 +7044,87 @@ createfunc_opt_list:
 common_func_opt_item:
 			CALLED ON NULL_P INPUT_P
 				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("strict", (Node *)makeInteger(FALSE), @1);
 				}
 			| RETURNS NULL_P ON NULL_P INPUT_P
 				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE), @1);
 				}
 			| STRICT_P
 				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE), @1);
 				}
 			| IMMUTABLE
 				{
-					$$ = makeDefElem("volatility", (Node *)makeString("immutable"));
+					$$ = makeDefElem("volatility", (Node *)makeString("immutable"), @1);
 				}
 			| STABLE
 				{
-					$$ = makeDefElem("volatility", (Node *)makeString("stable"));
+					$$ = makeDefElem("volatility", (Node *)makeString("stable"), @1);
 				}
 			| VOLATILE
 				{
-					$$ = makeDefElem("volatility", (Node *)makeString("volatile"));
+					$$ = makeDefElem("volatility", (Node *)makeString("volatile"), @1);
 				}
 			| EXTERNAL SECURITY DEFINER
 				{
-					$$ = makeDefElem("security", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("security", (Node *)makeInteger(TRUE), @1);
 				}
 			| EXTERNAL SECURITY INVOKER
 				{
-					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("security", (Node *)makeInteger(FALSE), @1);
 				}
 			| SECURITY DEFINER
 				{
-					$$ = makeDefElem("security", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("security", (Node *)makeInteger(TRUE), @1);
 				}
 			| SECURITY INVOKER
 				{
-					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("security", (Node *)makeInteger(FALSE), @1);
 				}
 			| LEAKPROOF
 				{
-					$$ = makeDefElem("leakproof", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("leakproof", (Node *)makeInteger(TRUE), @1);
 				}
 			| NOT LEAKPROOF
 				{
-					$$ = makeDefElem("leakproof", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("leakproof", (Node *)makeInteger(FALSE), @1);
 				}
 			| COST NumericOnly
 				{
-					$$ = makeDefElem("cost", (Node *)$2);
+					$$ = makeDefElem("cost", (Node *)$2, @1);
 				}
 			| ROWS NumericOnly
 				{
-					$$ = makeDefElem("rows", (Node *)$2);
+					$$ = makeDefElem("rows", (Node *)$2, @1);
 				}
 			| FunctionSetResetClause
 				{
 					/* we abuse the normal content of a DefElem here */
-					$$ = makeDefElem("set", (Node *)$1);
+					$$ = makeDefElem("set", (Node *)$1, @1);
 				}
 			| PARALLEL ColId
 				{
-					$$ = makeDefElem("parallel", (Node *)makeString($2));
+					$$ = makeDefElem("parallel", (Node *)makeString($2), @1);
 				}
 		;
 
 createfunc_opt_item:
 			AS func_as
 				{
-					$$ = makeDefElem("as", (Node *)$2);
+					$$ = makeDefElem("as", (Node *)$2, @1);
 				}
 			| LANGUAGE NonReservedWord_or_Sconst
 				{
-					$$ = makeDefElem("language", (Node *)makeString($2));
+					$$ = makeDefElem("language", (Node *)makeString($2), @1);
 				}
 			| TRANSFORM transform_type_list
 				{
-					$$ = makeDefElem("transform", (Node *)$2);
+					$$ = makeDefElem("transform", (Node *)$2, @1);
 				}
 			| WINDOW
 				{
-					$$ = makeDefElem("window", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("window", (Node *)makeInteger(TRUE), @1);
 				}
 			| common_func_opt_item
 				{
@@ -7336,11 +7336,11 @@ dostmt_opt_list:
 dostmt_opt_item:
 			Sconst
 				{
-					$$ = makeDefElem("as", (Node *)makeString($1));
+					$$ = makeDefElem("as", (Node *)makeString($1), @1);
 				}
 			| LANGUAGE NonReservedWord_or_Sconst
 				{
-					$$ = makeDefElem("language", (Node *)makeString($2));
+					$$ = makeDefElem("language", (Node *)makeString($2), @1);
 				}
 		;
 
@@ -8329,9 +8329,9 @@ operator_def_list:	operator_def_elem								{ $$ = list_make1($1); }
 		;
 
 operator_def_elem: ColLabel '=' NONE
-						{ $$ = makeDefElem($1, NULL); }
+						{ $$ = makeDefElem($1, NULL, @1); }
 				   | ColLabel '=' def_arg
-						{ $$ = makeDefElem($1, (Node *) $3); }
+					   { $$ = makeDefElem($1, (Node *) $3, @1); }
 		;
 
 /*****************************************************************************
@@ -8697,7 +8697,7 @@ TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_SAVEPOINT;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($2)));
+														(Node *)makeString($2), @1));
 					$$ = (Node *)n;
 				}
 			| RELEASE SAVEPOINT ColId
@@ -8705,7 +8705,7 @@ TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($3)));
+														(Node *)makeString($3), @1));
 					$$ = (Node *)n;
 				}
 			| RELEASE ColId
@@ -8713,7 +8713,7 @@ TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($2)));
+														(Node *)makeString($2), @1));
 					$$ = (Node *)n;
 				}
 			| ROLLBACK opt_transaction TO SAVEPOINT ColId
@@ -8721,7 +8721,7 @@ TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($5)));
+														(Node *)makeString($5), @1));
 					$$ = (Node *)n;
 				}
 			| ROLLBACK opt_transaction TO ColId
@@ -8729,7 +8729,7 @@ TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
 					n->options = list_make1(makeDefElem("savepoint_name",
-														(Node *)makeString($4)));
+														(Node *)makeString($4), @1));
 					$$ = (Node *)n;
 				}
 			| PREPARE TRANSACTION Sconst
@@ -8763,19 +8763,19 @@ opt_transaction:	WORK							{}
 transaction_mode_item:
 			ISOLATION LEVEL iso_level
 					{ $$ = makeDefElem("transaction_isolation",
-									   makeStringConst($3, @3)); }
+									   makeStringConst($3, @3), @1); }
 			| READ ONLY
 					{ $$ = makeDefElem("transaction_read_only",
-									   makeIntConst(TRUE, @1)); }
+									   makeIntConst(TRUE, @1), @1); }
 			| READ WRITE
 					{ $$ = makeDefElem("transaction_read_only",
-									   makeIntConst(FALSE, @1)); }
+									   makeIntConst(FALSE, @1), @1); }
 			| DEFERRABLE
 					{ $$ = makeDefElem("transaction_deferrable",
-									   makeIntConst(TRUE, @1)); }
+									   makeIntConst(TRUE, @1), @1); }
 			| NOT DEFERRABLE
 					{ $$ = makeDefElem("transaction_deferrable",
-									   makeIntConst(FALSE, @1)); }
+									   makeIntConst(FALSE, @1), @1); }
 		;
 
 /* Syntax with commas is SQL-spec, without commas is Postgres historical */
@@ -8919,15 +8919,15 @@ createdb_opt_items:
 createdb_opt_item:
 			createdb_opt_name opt_equal SignedIconst
 				{
-					$$ = makeDefElem($1, (Node *)makeInteger($3));
+					$$ = makeDefElem($1, (Node *)makeInteger($3), @1);
 				}
 			| createdb_opt_name opt_equal opt_boolean_or_string
 				{
-					$$ = makeDefElem($1, (Node *)makeString($3));
+					$$ = makeDefElem($1, (Node *)makeString($3), @1);
 				}
 			| createdb_opt_name opt_equal DEFAULT
 				{
-					$$ = makeDefElem($1, NULL);
+					$$ = makeDefElem($1, NULL, @1);
 				}
 		;
 
@@ -8987,7 +8987,7 @@ AlterDatabaseStmt:
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = $3;
 					n->options = list_make1(makeDefElem("tablespace",
-													(Node *)makeString($6)));
+														(Node *)makeString($6), @6));
 					$$ = (Node *)n;
 				 }
 		;
@@ -9451,17 +9451,17 @@ ExplainStmt:
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = $4;
-					n->options = list_make1(makeDefElem("analyze", NULL));
+					n->options = list_make1(makeDefElem("analyze", NULL, @2));
 					if ($3)
 						n->options = lappend(n->options,
-											 makeDefElem("verbose", NULL));
+											 makeDefElem("verbose", NULL, @3));
 					$$ = (Node *) n;
 				}
 		| EXPLAIN VERBOSE ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = $3;
-					n->options = list_make1(makeDefElem("verbose", NULL));
+					n->options = list_make1(makeDefElem("verbose", NULL, @2));
 					$$ = (Node *) n;
 				}
 		| EXPLAIN '(' explain_option_list ')' ExplainableStmt
@@ -9499,7 +9499,7 @@ explain_option_list:
 explain_option_elem:
 			explain_option_name explain_option_arg
 				{
-					$$ = makeDefElem($1, $2);
+					$$ = makeDefElem($1, $2, @1);
 				}
 		;
 

@@ -888,7 +888,7 @@ untransformRelOptions(Datum options)
 			*p++ = '\0';
 			val = (Node *) makeString(pstrdup(p));
 		}
-		result = lappend(result, makeDefElem(pstrdup(s), val));
+		result = lappend(result, makeDefElem(pstrdup(s), val, -1));
 	}
 
 	return result;

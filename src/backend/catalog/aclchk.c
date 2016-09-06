@@ -849,7 +849,7 @@ getRelationsInNamespace(Oid namespaceId, char relkind)
  * ALTER DEFAULT PRIVILEGES statement
  */
 void
-ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
+ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *stmt)
 {
 	GrantStmt  *action = stmt->action;
 	InternalDefaultACL iacls;
@@ -871,7 +871,8 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 			if (dnspnames)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+						 errmsg("conflicting or redundant options"),
+						 parser_errposition(pstate, defel->location)));
 			dnspnames = defel;
 		}
 		else if (strcmp(defel->defname, "roles") == 0)
@@ -879,7 +880,8 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 			if (drolespecs)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+						 errmsg("conflicting or redundant options"),
+						 parser_errposition(pstate, defel->location)));
 			drolespecs = defel;
 		}
 		else

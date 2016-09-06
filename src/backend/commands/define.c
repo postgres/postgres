@@ -319,12 +319,3 @@ defGetTypeLength(DefElem *def)
 					def->defname, defGetString(def))));
 	return 0;					/* keep compiler quiet */
 }
-
-/*
- * Create a DefElem setting "oids" to the specified value.
- */
-DefElem *
-defWithOids(bool value)
-{
-	return makeDefElem("oids", (Node *) makeInteger(value));
-}

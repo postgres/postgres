@@ -52,8 +52,7 @@
  * "parameters" is a list of DefElem representing the agg's definition clauses.
  */
 ObjectAddress
-DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
-				const char *queryString)
+DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List *parameters)
 {
 	char	   *aggName;
 	Oid			aggNamespace;
@@ -287,10 +286,10 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 					 errmsg("basetype is redundant with aggregate input type specification")));
 
 		numArgs = list_length(args);
-		interpret_function_parameter_list(args,
+		interpret_function_parameter_list(pstate,
+										  args,
 										  InvalidOid,
 										  true, /* is an aggregate */
-										  queryString,
 										  &parameterTypes,
 										  &allParameterTypes,
 										  &parameterModes,

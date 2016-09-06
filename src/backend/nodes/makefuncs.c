@@ -540,7 +540,7 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args,
  * and no special action.
  */
 DefElem *
-makeDefElem(char *name, Node *arg)
+makeDefElem(char *name, Node *arg, int location)
 {
 	DefElem    *res = makeNode(DefElem);
 
@@ -548,6 +548,7 @@ makeDefElem(char *name, Node *arg)
 	res->defname = name;
 	res->arg = arg;
 	res->defaction = DEFELEM_UNSPEC;
+	res->location = location;
 
 	return res;
 }
@@ -558,7 +559,7 @@ makeDefElem(char *name, Node *arg)
  */
 DefElem *
 makeDefElemExtended(char *nameSpace, char *name, Node *arg,
-					DefElemAction defaction)
+					DefElemAction defaction, int location)
 {
 	DefElem    *res = makeNode(DefElem);
 
@@ -566,6 +567,7 @@ makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 	res->defname = name;
 	res->arg = arg;
 	res->defaction = defaction;
+	res->location = location;
 
 	return res;
 }

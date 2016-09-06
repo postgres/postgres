@@ -16,16 +16,17 @@
 
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 #include "tcop/dest.h"
 
 /* CopyStateData is private in commands/copy.c */
 typedef struct CopyStateData *CopyState;
 
-extern Oid DoCopy(const CopyStmt *stmt, const char *queryString,
+extern Oid DoCopy(ParseState *state, const CopyStmt *stmt,
 	   uint64 *processed);
 
-extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options);
-extern CopyState BeginCopyFrom(Relation rel, const char *filename,
+extern void ProcessCopyOptions(ParseState *pstate, CopyState cstate, bool is_from, List *options);
+extern CopyState BeginCopyFrom(ParseState *pstate, Relation rel, const char *filename,
 			  bool is_program, List *attnamelist, List *options);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,

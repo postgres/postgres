@@ -148,37 +148,37 @@ base_backup_opt:
 			K_LABEL SCONST
 				{
 				  $$ = makeDefElem("label",
-								   (Node *)makeString($2));
+								   (Node *)makeString($2), -1);
 				}
 			| K_PROGRESS
 				{
 				  $$ = makeDefElem("progress",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_FAST
 				{
 				  $$ = makeDefElem("fast",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_WAL
 				{
 				  $$ = makeDefElem("wal",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_NOWAIT
 				{
 				  $$ = makeDefElem("nowait",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_MAX_RATE UCONST
 				{
 				  $$ = makeDefElem("max_rate",
-								   (Node *)makeInteger($2));
+								   (Node *)makeInteger($2), -1);
 				}
 			| K_TABLESPACE_MAP
 				{
 				  $$ = makeDefElem("tablespace_map",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			;
 
@@ -315,7 +315,7 @@ plugin_opt_list:
 plugin_opt_elem:
 			IDENT plugin_opt_arg
 				{
-					$$ = makeDefElem($1, $2);
+					$$ = makeDefElem($1, $2, -1);
 				}
 		;
 

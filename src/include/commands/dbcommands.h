@@ -19,10 +19,10 @@
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
-extern Oid	createdb(const CreatedbStmt *stmt);
+extern Oid	createdb(ParseState *pstate, const CreatedbStmt *stmt);
 extern void dropdb(const char *dbname, bool missing_ok);
 extern ObjectAddress RenameDatabase(const char *oldname, const char *newname);
-extern Oid	AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel);
+extern Oid	AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel);
 extern Oid	AlterDatabaseSet(AlterDatabaseSetStmt *stmt);
 extern ObjectAddress AlterDatabaseOwner(const char *dbname, Oid newOwnerId);
 
