@@ -389,7 +389,8 @@
     </indexterm>
 
    <para>
-    <productname>PostgreSQL</productname>'s MVCC transaction semantics
+    <productname>PostgreSQL</productname>'s
+    <link linkend="mvcc-intro">MVCC</link> transaction semantics
     depend on being able to compare transaction ID (<acronym>XID</>)
     numbers: a row version with an insertion XID greater than the current
     transaction's XID is <quote>in the future</> and should not be visible
@@ -407,13 +408,10 @@
    <para>
     The reason that periodic vacuuming solves the problem is that
     <command>VACUUM</> will mark rows as <emphasis>frozen</>, indicating that
-    they were inserted by a transaction which committed sufficiently far in
-    the past that the effects of the inserting transaction is certain to be
-    visible, from an MVCC perspective, to all current and future transactions.
-    <productname>PostgreSQL</> reserves a special XID,
-    <literal>FrozenTransactionId</>, which does not follow the normal XID
-    comparison rules and is always considered older
-    than every normal XID. Normal XIDs are
+    they were inserted by a transaction that committed sufficiently far in
+    the past that the effects of the inserting transaction are certain to be
+    visible to all current and future transactions.
+    Normal XIDs are
     compared using modulo-2<superscript>32</> arithmetic. This means
     that for every normal XID, there are two billion XIDs that are
     <quote>older</> and two billion that are <quote>newer</>; another
@@ -423,16 +421,40 @@
     the next two billion transactions, no matter which normal XID we are
     talking about. If the row version still exists after more than two billion
     transactions, it will suddenly appear to be in the future. To
-    prevent this, frozen row versions are treated as if the inserting XID were
+    prevent this, <productname>PostgreSQL</> reserves a special XID,
+    <literal>FrozenTransactionId</>, which does not follow the normal XID
+    comparison rules and is always considered older
+    than every normal XID.
+    Frozen row versions are treated as if the inserting XID were
     <literal>FrozenTransactionId</>, so that they will appear to be
     <quote>in the past</> to all normal transactions regardless of wraparound
     issues, and so such row versions will be valid until deleted, no matter
     how long that is.
    </para>
 
+   <note>
+    <para>
+     In <productname>PostgreSQL</> versions before 9.4, freezing was
+     implemented by actually replacing a row's insertion XID
+     with <literal>FrozenTransactionId</>, which was visible in the
+     row's <structname>xmin</> system column.  Newer versions just set a flag
+     bit, preserving the row's original <structname>xmin</> for possible
+     forensic use.  However, rows with <structname>xmin</> equal
+     to <literal>FrozenTransactionId</> (2) may still be found
+     in databases <application>pg_upgrade</>'d from pre-9.4 versions.
+    </para>
+    <para>
+     Also, system catalogs may contain rows with <structname>xmin</> equal
+     to <literal>BootstrapTransactionId</> (1), indicating that they were
+     inserted during the first phase of <application>initdb</>.
+     Like <literal>FrozenTransactionId</>, this special XID is treated as
+     older than every normal XID.
+    </para>
+   </note>
+
    <para>
     <xref linkend="guc-vacuum-freeze-min-age">
-    controls how old an XID value has to be before its row version will be
+    controls how old an XID value has to be before rows bearing that XID will be
     frozen.  Increasing this setting may avoid unnecessary work if the
     rows that would otherwise be frozen will soon be modified again,
     but decreasing this setting increases
@@ -442,10 +464,10 @@
 
    <para>
     <command>VACUUM</> uses the <link linkend="storage-vm">visibility map</>
-    to determine which pages of a relation must be scanned.  Normally, it
-    will skips pages that don't have any dead row versions even if those pages
+    to determine which pages of a table must be scanned.  Normally, it
+    will skip pages that don't have any dead row versions even if those pages
     might still have row versions with old XID values.  Therefore, normal
-    scans won't succeed in freezing every row version in the table.
+    <command>VACUUM</>s won't always freeze every old row version in the table.
     Periodically, <command>VACUUM</> will perform an <firstterm>aggressive
     vacuum</>, skipping only those pages which contain neither dead rows nor
     any unfrozen XID or MXID values.
