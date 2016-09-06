@@ -439,7 +439,7 @@ appendShellString(PQExpBuffer buf, const char *str)
 	 * contains only safe characters.
 	 */
 	if (*str != '\0' &&
-		strspn(str, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./:") == strlen(str))
+		strspn(str, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./:") == strlen(str))
 	{
 		appendPQExpBufferStr(buf, str);
 		return;
