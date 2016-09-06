@@ -3604,7 +3604,7 @@ main(int argc, char *argv[])
 	appendPQExpBufferStr(start_db_cmd, " -l logfile start");
 
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
-			 "	  %s\n\n"),
+			 "    %s\n\n"),
 		   start_db_cmd->data);
 
 	destroyPQExpBuffer(start_db_cmd);
