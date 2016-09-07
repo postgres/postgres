@@ -335,11 +335,13 @@
     by <application>pg_dump</>.  Such a change is usually only sensible if
     you concurrently make the same change in the extension's script file.
     (But there are special provisions for tables containing configuration
-    data; see below.)
+    data; see <xref linkend="extend-extensions-config-tables">.)
+    In production situations, it's generally better to create an extension
+    update script to perform changes to extension member objects.
    </para>
 
    <para>
-    The extension script may set privileges on objects which are part of the
+    The extension script may set privileges on objects that are part of the
     extension via <command>GRANT</command> and <command>REVOKE</command>
     statements.  The final set of privileges for each object (if any are set)
     will be stored in the
@@ -453,9 +455,11 @@
       <term><varname>comment</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        A comment (any string) about the extension.  Alternatively,
-        the comment can be set by means of the <xref linkend="sql-comment">
-        command in the script file.
+        A comment (any string) about the extension.  The comment is applied
+        when initially creating an extension, but not during extension updates
+        (since that might override user-added comments).  Alternatively,
+        the extension's comment can be set by writing
+        a <xref linkend="sql-comment"> command in the script file.
        </para>
       </listitem>
      </varlistentry>
@@ -518,7 +522,7 @@
         its contained objects into a different schema after initial creation
         of the extension.  The default is <literal>false</>, i.e. the
         extension is not relocatable.
-        See below for more information.
+        See <xref linkend="extend-extensions-relocation"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -529,7 +533,10 @@
        <para>
         This parameter can only be set for non-relocatable extensions.
         It forces the extension to be loaded into exactly the named schema
-        and not any other.  See below for more information.
+        and not any other.
+        The <varname>schema</varname> parameter is consulted only when
+        initially creating an extension, not during extension updates.
+        See <xref linkend="extend-extensions-relocation"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -562,7 +569,8 @@
      comments) by the extension mechanism.  This provision is commonly used
      to throw an error if the script file is fed to <application>psql</>
      rather than being loaded via <command>CREATE EXTENSION</> (see example
-     script below).  Without that, users might accidentally load the
+     script in <xref linkend="extend-extensions-example">).
+     Without that, users might accidentally load the
      extension's contents as <quote>loose</> objects rather than as an
      extension, a state of affairs that's a bit tedious to recover from.
     </para>
@@ -580,7 +588,7 @@
 
    </sect2>
 
-   <sect2>
+   <sect2 id="extend-extensions-relocation">
     <title>Extension Relocatability</title>
 
     <para>
@@ -678,7 +686,7 @@ SET LOCAL search_path TO @extschema@;
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="extend-extensions-config-tables">
     <title>Extension Configuration Tables</title>
 
     <para>
@@ -762,7 +770,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      out but the dump will not be able to be restored directly and user
      intervention will be required.
     </para>
-    
+
     <para>
      Sequences associated with <type>serial</> or <type>bigserial</> columns
      need to be directly marked to dump their state. Marking their parent
@@ -877,7 +885,7 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="extend-extensions-example">
     <title>Extension Example</title>
 
     <para>
