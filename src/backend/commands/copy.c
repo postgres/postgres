@@ -280,7 +280,7 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 /* non-export function prototypes */
 static CopyState BeginCopy(ParseState *pstate, bool is_from, Relation rel, Node *raw_query,
-						   const Oid queryRelId, List *attnamelist,
+		  const Oid queryRelId, List *attnamelist,
 		  List *options);
 static void EndCopy(CopyState cstate);
 static void ClosePipeToProgram(CopyState cstate);
@@ -1175,7 +1175,7 @@ ProcessCopyOptions(ParseState *pstate,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("option \"%s\" not recognized",
 							defel->defname),
-						 parser_errposition(pstate, defel->location)));
+					 parser_errposition(pstate, defel->location)));
 	}
 
 	/*
@@ -1785,10 +1785,18 @@ BeginCopyTo(ParseState *pstate,
 			cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
 			umask(oumask);
 			if (cstate->copy_file == NULL)
+			{
+				/* copy errno because ereport subfunctions might change it */
+				int			save_errno = errno;
+
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\" for writing: %m",
-								cstate->filename)));
+								cstate->filename),
+						 (save_errno == ENOENT || save_errno == EACCES) ?
+						 errhint("COPY TO instructs the PostgreSQL server process to write a file. "
+								 "You may want a client-side facility such as psql's \\copy.") : 0));
+			}
 
 			if (fstat(fileno(cstate->copy_file), &st))
 				ereport(ERROR,
@@ -2810,10 +2818,18 @@ BeginCopyFrom(ParseState *pstate,
 
 			cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_R);
 			if (cstate->copy_file == NULL)
+			{
+				/* copy errno because ereport subfunctions might change it */
+				int			save_errno = errno;
+
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\" for reading: %m",
-								cstate->filename)));
+								cstate->filename),
+						 (save_errno == ENOENT || save_errno == EACCES) ?
+						 errhint("COPY FROM instructs the PostgreSQL server process to read a file. "
+								 "You may want a client-side facility such as psql's \\copy.") : 0));
+			}
 
 			if (fstat(fileno(cstate->copy_file), &st))
 				ereport(ERROR,
