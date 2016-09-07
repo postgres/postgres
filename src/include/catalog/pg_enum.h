@@ -67,5 +67,7 @@ extern void EnumValuesDelete(Oid enumTypeOid);
 extern void AddEnumLabel(Oid enumTypeOid, const char *newVal,
 			 const char *neighbor, bool newValIsAfter,
 			 bool skipIfExists);
+extern void RenameEnumLabel(Oid enumTypeOid,
+				const char *oldVal, const char *newVal);
 
 #endif   /* PG_ENUM_H */

@@ -28,7 +28,8 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replace
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable> [ CASCADE | RESTRICT ]
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT EXISTS ] <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT EXISTS ] <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">neighbor_enum_value</replaceable> ]
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <replaceable class="PARAMETER">existing_enum_value</replaceable> TO <replaceable class="PARAMETER">new_enum_value</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -124,21 +125,13 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CASCADE</literal></term>
+    <term><literal>RENAME VALUE</literal></term>
     <listitem>
      <para>
-      Automatically propagate the operation to typed tables of the
-      type being altered, and their descendants.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>RESTRICT</literal></term>
-    <listitem>
-     <para>
-      Refuse the operation if the type being altered is the type of a
-      typed table.  This is the default.
+      This form renames a value of an enum type.
+      The value's place in the enum's ordering is not affected.
+      An error will occur if the specified value is not present or the new
+      name is already present.
      </para>
     </listitem>
    </varlistentry>
@@ -241,7 +234,19 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
       <term><replaceable class="PARAMETER">new_enum_value</replaceable></term>
       <listitem>
        <para>
-        The new value to be added to an enum type's list of values.
+        The new value to be added to an enum type's list of values,
+        or the new name to be given to an existing value.
+        Like all enum literals, it needs to be quoted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">neighbor_enum_value</replaceable></term>
+      <listitem>
+       <para>
+        The existing enum value that the new value should be added immediately
+        before or after in the enum type's sort ordering.
         Like all enum literals, it needs to be quoted.
        </para>
       </listitem>
@@ -251,9 +256,28 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
       <term><replaceable class="PARAMETER">existing_enum_value</replaceable></term>
       <listitem>
        <para>
-        The existing enum value that the new value should be added immediately
-        before or after in the enum type's sort ordering.
+        The existing enum value that should be renamed.
         Like all enum literals, it needs to be quoted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CASCADE</literal></term>
+      <listitem>
+       <para>
+        Automatically propagate the operation to typed tables of the
+        type being altered, and their descendants.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>RESTRICT</literal></term>
+      <listitem>
+       <para>
+        Refuse the operation if the type being altered is the type of a
+        typed table.  This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -270,6 +294,8 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
    an enum type) is executed inside a transaction block, the new value cannot
    be used until after the transaction has been committed, except in the case
    that the enum type itself was created earlier in the same transaction.
+   Likewise, when a pre-existing enum value is renamed, the transaction must
+   be committed before the renamed value can be used.
   </para>
 
   <para>
@@ -323,7 +349,15 @@ ALTER TYPE compfoo ADD ATTRIBUTE f3 int;
    To add a new value to an enum type in a particular sort position:
 <programlisting>
 ALTER TYPE colors ADD VALUE 'orange' AFTER 'red';
-</programlisting></para>
+</programlisting>
+  </para>
+
+  <para>
+   To rename an enum value:
+<programlisting>
+ALTER TYPE colors RENAME VALUE 'purple' TO 'mauve';
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

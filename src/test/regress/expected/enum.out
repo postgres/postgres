@@ -556,6 +556,28 @@ CREATE TABLE enumtest_bogus_child(parent bogus REFERENCES enumtest_parent);
 ERROR:  foreign key constraint "enumtest_bogus_child_parent_fkey" cannot be implemented
 DETAIL:  Key columns "parent" and "id" are of incompatible types: bogus and rainbow.
 DROP TYPE bogus;
+-- check renaming a value
+ALTER TYPE rainbow RENAME VALUE 'red' TO 'crimson';
+SELECT enumlabel, enumsortorder
+FROM pg_enum
+WHERE enumtypid = 'rainbow'::regtype
+ORDER BY 2;
+ enumlabel | enumsortorder 
+-----------+---------------
+ crimson   |             1
+ orange    |             2
+ yellow    |             3
+ green     |             4
+ blue      |             5
+ purple    |             6
+(6 rows)
+
+-- check that renaming a non-existent value fails
+ALTER TYPE rainbow RENAME VALUE 'red' TO 'crimson';
+ERROR:  "red" is not an existing enum label
+-- check that renaming to an existent value fails
+ALTER TYPE rainbow RENAME VALUE 'blue' TO 'green';
+ERROR:  enum label "green" already exists
 --
 -- check transactional behaviour of ALTER TYPE ... ADD VALUE
 --

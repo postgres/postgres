@@ -1241,16 +1241,24 @@ AlterEnum(AlterEnumStmt *stmt)
 	/* Check it's an enum and check user has permission to ALTER the enum */
 	checkEnumOwner(tup);
 
-	/* Add the new label */
-	AddEnumLabel(enum_type_oid, stmt->newVal,
-				 stmt->newValNeighbor, stmt->newValIsAfter,
-				 stmt->skipIfExists);
+	ReleaseSysCache(tup);
+
+	if (stmt->oldVal)
+	{
+		/* Rename an existing label */
+		RenameEnumLabel(enum_type_oid, stmt->oldVal, stmt->newVal);
+	}
+	else
+	{
+		/* Add a new label */
+		AddEnumLabel(enum_type_oid, stmt->newVal,
+					 stmt->newValNeighbor, stmt->newValIsAfter,
+					 stmt->skipIfNewValExists);
+	}
 
 	InvokeObjectPostAlterHook(TypeRelationId, enum_type_oid, 0);
 
 	ObjectAddressSet(address, TypeRelationId, enum_type_oid);
-
-	ReleaseSysCache(tup);
 
 	return address;
 }

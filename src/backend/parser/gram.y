@@ -5257,30 +5257,44 @@ AlterEnumStmt:
 			{
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = $3;
+				n->oldVal = NULL;
 				n->newVal = $7;
 				n->newValNeighbor = NULL;
 				n->newValIsAfter = true;
-				n->skipIfExists = $6;
+				n->skipIfNewValExists = $6;
 				$$ = (Node *) n;
 			}
 		 | ALTER TYPE_P any_name ADD_P VALUE_P opt_if_not_exists Sconst BEFORE Sconst
 			{
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = $3;
+				n->oldVal = NULL;
 				n->newVal = $7;
 				n->newValNeighbor = $9;
 				n->newValIsAfter = false;
-				n->skipIfExists = $6;
+				n->skipIfNewValExists = $6;
 				$$ = (Node *) n;
 			}
 		 | ALTER TYPE_P any_name ADD_P VALUE_P opt_if_not_exists Sconst AFTER Sconst
 			{
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = $3;
+				n->oldVal = NULL;
 				n->newVal = $7;
 				n->newValNeighbor = $9;
 				n->newValIsAfter = true;
-				n->skipIfExists = $6;
+				n->skipIfNewValExists = $6;
+				$$ = (Node *) n;
+			}
+		 | ALTER TYPE_P any_name RENAME VALUE_P Sconst TO Sconst
+			{
+				AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				n->typeName = $3;
+				n->oldVal = $6;
+				n->newVal = $8;
+				n->newValNeighbor = NULL;
+				n->newValIsAfter = false;
+				n->skipIfNewValExists = false;
 				$$ = (Node *) n;
 			}
 		 ;
