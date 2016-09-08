@@ -145,6 +145,14 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
 </programlisting>
  </para>
 
+ <para>
+  To pass additional command line arguments to the Visual Studio build
+  command (msbuild or vcbuild):
+<programlisting>
+$ENV{MSBFLAGS}="/m";
+</programlisting>
+ </para>
+
  <sect2>
   <title>Requirements</title>
   <para>

@@ -107,6 +107,6 @@ REM for /r %%f in (*.sql) do if exist %%f.in del %%f
 cd %D%
 
 REM Clean up ecpg regression test files
-msbuild /NoLogo ecpg_regression.proj /t:clean /v:q
+msbuild %MSBFLAGS% /NoLogo ecpg_regression.proj /t:clean /v:q
 
 goto :eof

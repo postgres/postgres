@@ -38,6 +38,7 @@ my $vcver = Mkvcbuild::mkvcbuild($config);
 # check what sort of build we are doing
 
 my $bconf     = $ENV{CONFIG} || "Release";
+my $msbflags  = $ENV{MSBFLAGS} || "";
 my $buildwhat = $ARGV[1]     || "";
 if (uc($ARGV[0]) eq 'DEBUG')
 {
@@ -53,16 +54,16 @@ elsif (uc($ARGV[0]) ne "RELEASE")
 if ($buildwhat and $vcver >= 10.00)
 {
 	system(
-		"msbuild $buildwhat.vcxproj /verbosity:normal /p:Configuration=$bconf"
+		"msbuild $buildwhat.vcxproj $msbflags /verbosity:normal /p:Configuration=$bconf"
 	);
 }
 elsif ($buildwhat)
 {
-	system("vcbuild $buildwhat.vcproj $bconf");
+	system("vcbuild $msbflags $buildwhat.vcproj $bconf");
 }
 else
 {
-	system("msbuild pgsql.sln /verbosity:normal /p:Configuration=$bconf");
+	system("msbuild pgsql.sln $msbflags /verbosity:normal /p:Configuration=$bconf");
 }
 
 # report status

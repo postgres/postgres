@@ -138,8 +138,9 @@ sub check
 
 sub ecpgcheck
 {
+	my $msbflags  = $ENV{MSBFLAGS} || "";
 	chdir $startdir;
-	system("msbuild ecpg_regression.proj /p:config=$Config");
+	system("msbuild ecpg_regression.proj $msbflags /p:config=$Config");
 	my $status = $? >> 8;
 	exit $status if $status;
 	InstallTemp();
