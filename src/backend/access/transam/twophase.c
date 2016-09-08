@@ -1886,6 +1886,8 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
 				Assert(TransactionIdFollows(subxid, xid));
 				SubTransSetParent(xid, subxid, overwriteOK);
 			}
+
+			pfree(buf);
 		}
 	}
 	FreeDir(cldir);
