@@ -29,7 +29,7 @@
 
     <listitem>
      <para>
-      Autovacuum no longer performs repetitive scanning of old data
+      Avoid scanning pages unnecessarily during vacuum freeze operations
      </para>
     </listitem>
 
