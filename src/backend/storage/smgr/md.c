@@ -976,6 +976,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 			v = v->mdfd_chain;
 			Assert(ov != reln->md_fd[forknum]); /* we never drop the 1st
 												 * segment */
+			FileClose(ov->mdfd_vfd);
 			pfree(ov);
 		}
 		else if (priorblocks + ((BlockNumber) RELSEG_SIZE) > nblocks)
