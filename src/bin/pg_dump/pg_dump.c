@@ -2552,7 +2552,8 @@ dumpDatabase(Archive *fout)
 		appendPQExpBufferStr(creaQry, " LC_CTYPE = ");
 		appendStringLiteralAH(creaQry, ctype, fout);
 	}
-	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0)
+	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0 &&
+		!dopt->outputNoTablespaces)
 		appendPQExpBuffer(creaQry, " TABLESPACE = %s",
 						  fmtId(tablespace));
 	appendPQExpBufferStr(creaQry, ";\n");
