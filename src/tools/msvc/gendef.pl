@@ -3,6 +3,7 @@ my @def;
 use warnings;
 use strict;
 use 5.8.0;
+use File::Spec::Functions qw(splitpath catpath);
 use List::Util qw(max);
 
 #
@@ -14,9 +15,11 @@ use List::Util qw(max);
 sub dumpsyms
 {
 	my ($objfile, $symfile) = @_;
-	system("dumpbin /symbols /out:symbols.out $_ >NUL")
+	my ($symvol, $symdirs, $symbase) = splitpath($symfile);
+	my $tmpfile = catpath($symvol, $symdirs, "symbols.out");
+	system("dumpbin /symbols /out:$tmpfile $_ >NUL")
 	  && die "Could not call dumpbin";
-	rename("symbols.out", $symfile);
+	rename($tmpfile, $symfile);
 }
 
 # Given a symbol file path, loops over its contents
