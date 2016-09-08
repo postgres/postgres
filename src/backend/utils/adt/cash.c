@@ -189,13 +189,30 @@ cash_in(PG_FUNCTION_ARGS)
 	printf("cashin- string is '%s'\n", s);
 #endif
 
+	/*
+	 * We accumulate the absolute amount in "value" and then apply the sign at
+	 * the end.  (The sign can appear before or after the digits, so it would
+	 * be more complicated to do otherwise.)  Because of the larger range of
+	 * negative signed integers, we build "value" in the negative and then
+	 * flip the sign at the end, catching most-negative-number overflow if
+	 * necessary.
+	 */
+
 	for (; *s; s++)
 	{
 		/* we look for digits as long as we have found less */
 		/* than the required number of decimal places */
 		if (isdigit((unsigned char) *s) && (!seen_dot || dec < fpoint))
 		{
-			value = (value * 10) + (*s - '0');
+			Cash newvalue = (value * 10) - (*s - '0');
+
+			if (newvalue / 10 != value)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("value \"%s\" is out of range for type money",
+								str)));
+
+			value = newvalue;
 
 			if (seen_dot)
 				dec++;
@@ -214,11 +231,27 @@ cash_in(PG_FUNCTION_ARGS)
 
 	/* round off if there's another digit */
 	if (isdigit((unsigned char) *s) && *s >= '5')
-		value++;
+		value--;  /* remember we build the value in the negative */
+
+	if (value > 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%s\" is out of range for type money",
+						str)));
 
 	/* adjust for less than required decimal places */
 	for (; dec < fpoint; dec++)
-		value *= 10;
+	{
+		Cash newvalue = value * 10;
+
+		if (newvalue / 10 != value)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value \"%s\" is out of range for type money",
+							str)));
+
+		value = newvalue;
+	}
 
 	/*
 	 * should only be trailing digits followed by whitespace, right paren,
@@ -247,7 +280,19 @@ cash_in(PG_FUNCTION_ARGS)
 							str)));
 	}
 
-	result = value * sgn;
+	/* If the value is supposed to be positive, flip the sign, but check for
+	 * the most negative number. */
+	if (sgn > 0)
+	{
+		result = -value;
+		if (result < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value \"%s\" is out of range for type money",
+							str)));
+	}
+	else
+		result = value;
 
 #ifdef CASHDEBUG
 	printf("cashin- result is " INT64_FORMAT "\n", result);

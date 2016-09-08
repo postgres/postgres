@@ -185,6 +185,96 @@ SELECT * FROM money_data;
  $123.46
 (1 row)
 
+-- input checks
+SELECT '1234567890'::money;
+       money       
+-------------------
+ $1,234,567,890.00
+(1 row)
+
+SELECT '12345678901234567'::money;
+           money            
+----------------------------
+ $12,345,678,901,234,567.00
+(1 row)
+
+SELECT '123456789012345678'::money;
+ERROR:  value "123456789012345678" is out of range for type money
+LINE 1: SELECT '123456789012345678'::money;
+               ^
+SELECT '9223372036854775807'::money;
+ERROR:  value "9223372036854775807" is out of range for type money
+LINE 1: SELECT '9223372036854775807'::money;
+               ^
+SELECT '-12345'::money;
+    money    
+-------------
+ -$12,345.00
+(1 row)
+
+SELECT '-1234567890'::money;
+       money        
+--------------------
+ -$1,234,567,890.00
+(1 row)
+
+SELECT '-12345678901234567'::money;
+            money            
+-----------------------------
+ -$12,345,678,901,234,567.00
+(1 row)
+
+SELECT '-123456789012345678'::money;
+ERROR:  value "-123456789012345678" is out of range for type money
+LINE 1: SELECT '-123456789012345678'::money;
+               ^
+SELECT '-9223372036854775808'::money;
+ERROR:  value "-9223372036854775808" is out of range for type money
+LINE 1: SELECT '-9223372036854775808'::money;
+               ^
+-- special characters
+SELECT '(1)'::money;
+ money  
+--------
+ -$1.00
+(1 row)
+
+SELECT '($123,456.78)'::money;
+    money     
+--------------
+ -$123,456.78
+(1 row)
+
+-- documented minimums and maximums
+SELECT '-92233720368547758.08'::money;
+            money            
+-----------------------------
+ -$92,233,720,368,547,758.08
+(1 row)
+
+SELECT '92233720368547758.07'::money;
+           money            
+----------------------------
+ $92,233,720,368,547,758.07
+(1 row)
+
+SELECT '-92233720368547758.09'::money;
+ERROR:  value "-92233720368547758.09" is out of range for type money
+LINE 1: SELECT '-92233720368547758.09'::money;
+               ^
+SELECT '92233720368547758.08'::money;
+ERROR:  value "92233720368547758.08" is out of range for type money
+LINE 1: SELECT '92233720368547758.08'::money;
+               ^
+-- rounding
+SELECT '-92233720368547758.085'::money;
+ERROR:  value "-92233720368547758.085" is out of range for type money
+LINE 1: SELECT '-92233720368547758.085'::money;
+               ^
+SELECT '92233720368547758.075'::money;
+ERROR:  value "92233720368547758.075" is out of range for type money
+LINE 1: SELECT '92233720368547758.075'::money;
+               ^
 -- Cast int4/int8 to money
 SELECT 1234567890::money;
        money       
@@ -198,10 +288,6 @@ SELECT 12345678901234567::money;
  $12,345,678,901,234,567.00
 (1 row)
 
-SELECT 123456789012345678::money;
-ERROR:  bigint out of range
-SELECT 9223372036854775807::money;
-ERROR:  bigint out of range
 SELECT (-12345)::money;
     money    
 -------------
@@ -220,10 +306,6 @@ SELECT (-12345678901234567)::money;
  -$12,345,678,901,234,567.00
 (1 row)
 
-SELECT (-123456789012345678)::money;
-ERROR:  bigint out of range
-SELECT (-9223372036854775808)::money;
-ERROR:  bigint out of range
 SELECT 1234567890::int4::money;
        money       
 -------------------
