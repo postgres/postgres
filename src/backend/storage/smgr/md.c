@@ -92,27 +92,23 @@
  *	out to an unlinked old copy of a segment file that will eventually
  *	disappear.
  *
- *	The file descriptor pointer (md_fd field) stored in the SMgrRelation
- *	cache is, therefore, just the head of a list of MdfdVec objects, one
- *	per segment.  But note the md_fd pointer can be NULL, indicating
- *	relation not open.
- *
- *	Also note that mdfd_chain == NULL does not necessarily mean the relation
- *	doesn't have another segment after this one; we may just not have
- *	opened the next segment yet.  (We could not have "all segments are
- *	in the chain" as an invariant anyway, since another backend could
- *	extend the relation when we weren't looking.)  We do not make chain
+ *	File descriptors are stored in the per-fork md_seg_fds arrays inside
+ *	SMgrRelation. The length of these arrays is stored in md_num_open_segs.
+ *	Note that a fork's md_num_open_segs having a specific value does not
+ *	necessarily mean the relation doesn't have additional segments; we may
+ *	just not have opened the next segment yet.  (We could not have "all
+ *	segments are in the array" as an invariant anyway, since another backend
+ *	could extend the relation while we aren't looking.)  We do not have
  *	entries for inactive segments, however; as soon as we find a partial
  *	segment, we assume that any subsequent segments are inactive.
  *
- *	All MdfdVec objects are palloc'd in the MdCxt memory context.
+ *	The entire MdfdVec array is palloc'd in the MdCxt memory context.
  */
 
 typedef struct _MdfdVec
 {
 	File		mdfd_vfd;		/* fd number in fd.c's pool */
 	BlockNumber mdfd_segno;		/* segment number, from 0 */
-	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 } MdfdVec;
 
 static MemoryContext MdCxt;		/* context for all MdfdVec objects */
@@ -189,7 +185,9 @@ static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 					   MdfdVec *seg);
 static void register_unlink(RelFileNodeBackend rnode);
-static MdfdVec *_fdvec_alloc(void);
+static void _fdvec_resize(SMgrRelation reln,
+			  ForkNumber forknum,
+			  int nseg);
 static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
 			  BlockNumber segno);
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
@@ -294,13 +292,14 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 void
 mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 {
+	MdfdVec    *mdfd;
 	char	   *path;
 	File		fd;
 
-	if (isRedo && reln->md_fd[forkNum] != NULL)
+	if (isRedo && reln->md_num_open_segs[forkNum] > 0)
 		return;					/* created and opened already... */
 
-	Assert(reln->md_fd[forkNum] == NULL);
+	Assert(reln->md_num_open_segs[forkNum] == 0);
 
 	path = relpath(reln->smgr_rnode, forkNum);
 
@@ -330,11 +329,10 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 
 	pfree(path);
 
-	reln->md_fd[forkNum] = _fdvec_alloc();
-
-	reln->md_fd[forkNum]->mdfd_vfd = fd;
-	reln->md_fd[forkNum]->mdfd_segno = 0;
-	reln->md_fd[forkNum]->mdfd_chain = NULL;
+	_fdvec_resize(reln, forkNum, 1);
+	mdfd = &reln->md_seg_fds[forkNum][0];
+	mdfd->mdfd_vfd = fd;
+	mdfd->mdfd_segno = 0;
 }
 
 /*
@@ -579,8 +577,8 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 	File		fd;
 
 	/* No work if already open */
-	if (reln->md_fd[forknum])
-		return reln->md_fd[forknum];
+	if (reln->md_num_open_segs[forknum] > 0)
+		return &reln->md_seg_fds[forknum][0];
 
 	path = relpath(reln->smgr_rnode, forknum);
 
@@ -612,11 +610,11 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 
 	pfree(path);
 
-	reln->md_fd[forknum] = mdfd = _fdvec_alloc();
-
+	_fdvec_resize(reln, forknum, 1);
+	mdfd = &reln->md_seg_fds[forknum][0];
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
-	mdfd->mdfd_chain = NULL;
+
 	Assert(_mdnblocks(reln, forknum, mdfd) <= ((BlockNumber) RELSEG_SIZE));
 
 	return mdfd;
@@ -628,25 +626,29 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 void
 mdclose(SMgrRelation reln, ForkNumber forknum)
 {
-	MdfdVec    *v = reln->md_fd[forknum];
+	int			nopensegs = reln->md_num_open_segs[forknum];
 
 	/* No work if already closed */
-	if (v == NULL)
+	if (nopensegs == 0)
 		return;
 
-	reln->md_fd[forknum] = NULL;	/* prevent dangling pointer after error */
-
-	while (v != NULL)
+	/* close segments starting from the end */
+	while (nopensegs > 0)
 	{
-		MdfdVec    *ov = v;
+		MdfdVec    *v = &reln->md_seg_fds[forknum][nopensegs - 1];
 
 		/* if not closed already */
 		if (v->mdfd_vfd >= 0)
+		{
 			FileClose(v->mdfd_vfd);
-		/* Now free vector */
-		v = v->mdfd_chain;
-		pfree(ov);
+			v->mdfd_vfd = -1;
+		}
+
+		nopensegs--;
 	}
+
+	/* resize just once, avoids pointless reallocations */
+	_fdvec_resize(reln, forknum, 0);
 }
 
 /*
@@ -862,9 +864,9 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *	mdnblocks() -- Get the number of blocks stored in a relation.
  *
  *		Important side effect: all active segments of the relation are opened
- *		and added to the mdfd_chain list.  If this routine has not been
+ *		and added to the mdfd_seg_fds array.  If this routine has not been
  *		called, then only segments up to the last one actually touched
- *		are present in the chain.
+ *		are present in the array.
  */
 BlockNumber
 mdnblocks(SMgrRelation reln, ForkNumber forknum)
@@ -873,24 +875,24 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 	BlockNumber nblocks;
 	BlockNumber segno = 0;
 
+	/* mdopen has opened the first segment */
+	Assert(reln->md_num_open_segs[forknum] > 0);
+
 	/*
-	 * Skip through any segments that aren't the last one, to avoid redundant
-	 * seeks on them.  We have previously verified that these segments are
-	 * exactly RELSEG_SIZE long, and it's useless to recheck that each time.
+	 * Start from the last open segments, to avoid redundant seeks.  We have
+	 * previously verified that these segments are exactly RELSEG_SIZE long,
+	 * and it's useless to recheck that each time.
 	 *
 	 * NOTE: this assumption could only be wrong if another backend has
 	 * truncated the relation.  We rely on higher code levels to handle that
 	 * scenario by closing and re-opening the md fd, which is handled via
 	 * relcache flush.  (Since the checkpointer doesn't participate in
-	 * relcache flush, it could have segment chain entries for inactive
-	 * segments; that's OK because the checkpointer never needs to compute
-	 * relation size.)
+	 * relcache flush, it could have segment entries for inactive segments;
+	 * that's OK because the checkpointer never needs to compute relation
+	 * size.)
 	 */
-	while (v->mdfd_chain != NULL)
-	{
-		segno++;
-		v = v->mdfd_chain;
-	}
+	segno = reln->md_num_open_segs[forknum] - 1;
+	v = &reln->md_seg_fds[forknum][segno];
 
 	for (;;)
 	{
@@ -905,21 +907,16 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 		 */
 		segno++;
 
-		if (v->mdfd_chain == NULL)
-		{
-			/*
-			 * We used to pass O_CREAT here, but that's has the disadvantage
-			 * that it might create a segment which has vanished through some
-			 * operating system misadventure.  In such a case, creating the
-			 * segment here undermines _mdfd_getseg's attempts to notice and
-			 * report an error upon access to a missing segment.
-			 */
-			v->mdfd_chain = _mdfd_openseg(reln, forknum, segno, 0);
-			if (v->mdfd_chain == NULL)
-				return segno * ((BlockNumber) RELSEG_SIZE);
-		}
-
-		v = v->mdfd_chain;
+		/*
+		 * We used to pass O_CREAT here, but that's has the disadvantage that
+		 * it might create a segment which has vanished through some operating
+		 * system misadventure.  In such a case, creating the segment here
+		 * undermines _mdfd_getseg's attempts to notice and report an error
+		 * upon access to a missing segment.
+		 */
+		v = _mdfd_openseg(reln, forknum, segno, 0);
+		if (v == NULL)
+			return segno * ((BlockNumber) RELSEG_SIZE);
 	}
 }
 
@@ -929,9 +926,9 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 void
 mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 {
-	MdfdVec    *v;
 	BlockNumber curnblk;
 	BlockNumber priorblocks;
+	int			curopensegs;
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
@@ -951,19 +948,24 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	if (nblocks == curnblk)
 		return;					/* no work */
 
-	v = mdopen(reln, forknum, EXTENSION_FAIL);
-
-	priorblocks = 0;
-	while (v != NULL)
+	/*
+	 * Truncate segments, starting at the last one. Starting at the end makes
+	 * managing the memory for the fd array easier, should there be errors.
+	 */
+	curopensegs = reln->md_num_open_segs[forknum];
+	while (curopensegs > 0)
 	{
-		MdfdVec    *ov = v;
+		MdfdVec    *v;
+
+		priorblocks = (curopensegs - 1) * RELSEG_SIZE;
+
+		v = &reln->md_seg_fds[forknum][curopensegs - 1];
 
 		if (priorblocks > nblocks)
 		{
 			/*
-			 * This segment is no longer active (and has already been unlinked
-			 * from the mdfd_chain). We truncate the file, but do not delete
-			 * it, for reasons explained in the header comments.
+			 * This segment is no longer active. We truncate the file, but do
+			 * not delete it, for reasons explained in the header comments.
 			 */
 			if (FileTruncate(v->mdfd_vfd, 0) < 0)
 				ereport(ERROR,
@@ -973,21 +975,21 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 
 			if (!SmgrIsTemp(reln))
 				register_dirty_segment(reln, forknum, v);
-			v = v->mdfd_chain;
-			Assert(ov != reln->md_fd[forknum]); /* we never drop the 1st
-												 * segment */
-			FileClose(ov->mdfd_vfd);
-			pfree(ov);
+
+			/* we never drop the 1st segment */
+			Assert(v != &reln->md_seg_fds[forknum][0]);
+
+			FileClose(v->mdfd_vfd);
+			_fdvec_resize(reln, forknum, curopensegs - 1);
 		}
 		else if (priorblocks + ((BlockNumber) RELSEG_SIZE) > nblocks)
 		{
 			/*
 			 * This is the last segment we want to keep. Truncate the file to
-			 * the right length, and clear chain link that points to any
-			 * remaining segments (which we shall zap). NOTE: if nblocks is
-			 * exactly a multiple K of RELSEG_SIZE, we will truncate the K+1st
-			 * segment to 0 length but keep it. This adheres to the invariant
-			 * given in the header comments.
+			 * the right length. NOTE: if nblocks is exactly a multiple K of
+			 * RELSEG_SIZE, we will truncate the K+1st segment to 0 length but
+			 * keep it. This adheres to the invariant given in the header
+			 * comments.
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
@@ -999,18 +1001,16 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 						   nblocks)));
 			if (!SmgrIsTemp(reln))
 				register_dirty_segment(reln, forknum, v);
-			v = v->mdfd_chain;
-			ov->mdfd_chain = NULL;
 		}
 		else
 		{
 			/*
-			 * We still need this segment and 0 or more blocks beyond it, so
-			 * nothing to do here.
+			 * We still need this segment, so nothing to do for this and any
+			 * earlier segment.
 			 */
-			v = v->mdfd_chain;
+			break;
 		}
-		priorblocks += RELSEG_SIZE;
+		curopensegs--;
 	}
 }
 
@@ -1023,7 +1023,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 void
 mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
-	MdfdVec    *v;
+	int			segno;
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
@@ -1031,16 +1031,18 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 	 */
 	mdnblocks(reln, forknum);
 
-	v = mdopen(reln, forknum, EXTENSION_FAIL);
+	segno = reln->md_num_open_segs[forknum];
 
-	while (v != NULL)
+	while (segno > 0)
 	{
+		MdfdVec    *v = &reln->md_seg_fds[forknum][segno - 1];
+
 		if (FileSync(v->mdfd_vfd) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m",
 							FilePathName(v->mdfd_vfd))));
-		v = v->mdfd_chain;
+		segno--;
 	}
 }
 
@@ -1703,12 +1705,40 @@ ForgetDatabaseFsyncRequests(Oid dbid)
 
 
 /*
- *	_fdvec_alloc() -- Make a MdfdVec object.
+ *	_fdvec_resize() -- Resize the fork's open segments array
  */
-static MdfdVec *
-_fdvec_alloc(void)
+static void
+_fdvec_resize(SMgrRelation reln,
+			  ForkNumber forknum,
+			  int nseg)
 {
-	return (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
+	if (nseg == 0)
+	{
+		if (reln->md_num_open_segs[forknum] > 0)
+		{
+			pfree(reln->md_seg_fds[forknum]);
+			reln->md_seg_fds[forknum] = NULL;
+		}
+	}
+	else if (reln->md_num_open_segs[forknum] == 0)
+	{
+		reln->md_seg_fds[forknum] =
+			MemoryContextAlloc(MdCxt, sizeof(MdfdVec) * nseg);
+	}
+	else
+	{
+		/*
+		 * It doesn't seem worthwile complicating the code by having a more
+		 * aggressive growth strategy here; the number of segments doesn't
+		 * grow that fast, and the memory context internally will sometimes
+		 * avoid doing an actual reallocation.
+		 */
+		reln->md_seg_fds[forknum] =
+			repalloc(reln->md_seg_fds[forknum],
+					 sizeof(MdfdVec) * nseg);
+	}
+
+	reln->md_num_open_segs[forknum] = nseg;
 }
 
 /*
@@ -1756,13 +1786,14 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 	if (fd < 0)
 		return NULL;
 
-	/* allocate an mdfdvec entry for it */
-	v = _fdvec_alloc();
+	if (segno <= reln->md_num_open_segs[forknum])
+		_fdvec_resize(reln, forknum, segno + 1);
 
 	/* fill the entry */
+	v = &reln->md_seg_fds[forknum][segno];
 	v->mdfd_vfd = fd;
 	v->mdfd_segno = segno;
-	v->mdfd_chain = NULL;
+
 	Assert(_mdnblocks(reln, forknum, v) <= ((BlockNumber) RELSEG_SIZE));
 
 	/* all done */
@@ -1781,7 +1812,7 @@ static MdfdVec *
 _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			 bool skipFsync, int behavior)
 {
-	MdfdVec    *v = mdopen(reln, forknum, behavior);
+	MdfdVec    *v;
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
@@ -1789,98 +1820,116 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 	Assert(behavior &
 		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL));
 
-	if (!v)
-		return NULL;			/* if behavior & EXTENSION_RETURN_NULL */
-
 	targetseg = blkno / ((BlockNumber) RELSEG_SIZE);
-	for (nextsegno = 1; nextsegno <= targetseg; nextsegno++)
+
+	/* if an existing and opened segment, we're done */
+	if (targetseg < reln->md_num_open_segs[forknum])
 	{
+		v = &reln->md_seg_fds[forknum][targetseg];
+		return v;
+	}
+
+	/*
+	 * The target segment is not yet open. Iterate over all the segments
+	 * between the last opened and the target segment. This way missing
+	 * segments either raise an error, or get created (according to
+	 * 'behavior'). Start with either the last opened, or the first segment if
+	 * none was opened before.
+	 */
+	if (reln->md_num_open_segs[forknum] > 0)
+		v = &reln->md_seg_fds[forknum][reln->md_num_open_segs[forknum] - 1];
+	else
+	{
+		v = mdopen(reln, forknum, behavior);
+		if (!v)
+			return NULL;		/* if behavior & EXTENSION_RETURN_NULL */
+	}
+
+	for (nextsegno = reln->md_num_open_segs[forknum];
+		 nextsegno <= targetseg; nextsegno++)
+	{
+		BlockNumber nblocks = _mdnblocks(reln, forknum, v);
+		int			flags = 0;
+
 		Assert(nextsegno == v->mdfd_segno + 1);
 
-		if (v->mdfd_chain == NULL)
+		if (nblocks > ((BlockNumber) RELSEG_SIZE))
+			elog(FATAL, "segment too big");
+
+		if ((behavior & EXTENSION_CREATE) ||
+			(InRecovery && (behavior & EXTENSION_CREATE_RECOVERY)))
 		{
-			BlockNumber nblocks = _mdnblocks(reln, forknum, v);
-			int			flags = 0;
+			/*
+			 * Normally we will create new segments only if authorized by the
+			 * caller (i.e., we are doing mdextend()).  But when doing WAL
+			 * recovery, create segments anyway; this allows cases such as
+			 * replaying WAL data that has a write into a high-numbered
+			 * segment of a relation that was later deleted. We want to go
+			 * ahead and create the segments so we can finish out the replay.
+			 * However if the caller has specified
+			 * EXTENSION_REALLY_RETURN_NULL, then extension is not desired
+			 * even in recovery; we won't reach this point in that case.
+			 *
+			 * We have to maintain the invariant that segments before the last
+			 * active segment are of size RELSEG_SIZE; therefore, if
+			 * extending, pad them out with zeroes if needed.  (This only
+			 * matters if in recovery, or if the caller is extending the
+			 * relation discontiguously, but that can happen in hash indexes.)
+			 */
+			if (nblocks < ((BlockNumber) RELSEG_SIZE))
+			{
+				char	   *zerobuf = palloc0(BLCKSZ);
 
-			if (nblocks > ((BlockNumber) RELSEG_SIZE))
-				elog(FATAL, "segment too big");
-
-			if ((behavior & EXTENSION_CREATE) ||
-				(InRecovery && (behavior & EXTENSION_CREATE_RECOVERY)))
+				mdextend(reln, forknum,
+						 nextsegno * ((BlockNumber) RELSEG_SIZE) - 1,
+						 zerobuf, skipFsync);
+				pfree(zerobuf);
+			}
+			flags = O_CREAT;
+		}
+		else if (!(behavior & EXTENSION_DONT_CHECK_SIZE) &&
+				 nblocks < ((BlockNumber) RELSEG_SIZE))
+		{
+			/*
+			 * When not extending (or explicitly including truncated
+			 * segments), only open the next segment if the current one is
+			 * exactly RELSEG_SIZE.  If not (this branch), either return NULL
+			 * or fail.
+			 */
+			if (behavior & EXTENSION_RETURN_NULL)
 			{
 				/*
-				 * Normally we will create new segments only if authorized by
-				 * the caller (i.e., we are doing mdextend()).  But when doing
-				 * WAL recovery, create segments anyway; this allows cases
-				 * such as replaying WAL data that has a write into a
-				 * high-numbered segment of a relation that was later deleted.
-				 * We want to go ahead and create the segments so we can
-				 * finish out the replay.  However if the caller has specified
-				 * EXTENSION_REALLY_RETURN_NULL, then extension is not desired
-				 * even in recovery; we won't reach this point in that case.
-				 *
-				 * We have to maintain the invariant that segments before the
-				 * last active segment are of size RELSEG_SIZE; therefore, if
-				 * extending, pad them out with zeroes if needed.  (This only
-				 * matters if in recovery, or if the caller is extending the
-				 * relation discontiguously, but that can happen in hash
-				 * indexes.)
+				 * Some callers discern between reasons for _mdfd_getseg()
+				 * returning NULL based on errno. As there's no failing
+				 * syscall involved in this case, explicitly set errno to
+				 * ENOENT, as that seems the closest interpretation.
 				 */
-				if (nblocks < ((BlockNumber) RELSEG_SIZE))
-				{
-					char	   *zerobuf = palloc0(BLCKSZ);
-
-					mdextend(reln, forknum,
-							 nextsegno * ((BlockNumber) RELSEG_SIZE) - 1,
-							 zerobuf, skipFsync);
-					pfree(zerobuf);
-				}
-				flags = O_CREAT;
-			}
-			else if (!(behavior & EXTENSION_DONT_CHECK_SIZE) &&
-					 nblocks < ((BlockNumber) RELSEG_SIZE))
-			{
-				/*
-				 * When not extending (or explicitly including truncated
-				 * segments), only open the next segment if the current one is
-				 * exactly RELSEG_SIZE.  If not (this branch), either return
-				 * NULL or fail.
-				 */
-				if (behavior & EXTENSION_RETURN_NULL)
-				{
-					/*
-					 * Some callers discern between reasons for _mdfd_getseg()
-					 * returning NULL based on errno. As there's no failing
-					 * syscall involved in this case, explicitly set errno to
-					 * ENOENT, as that seems the closest interpretation.
-					 */
-					errno = ENOENT;
-					return NULL;
-				}
-
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\" (target block %u): previous segment is only %u blocks",
-								_mdfd_segpath(reln, forknum, nextsegno),
-								blkno, nblocks)));
+				errno = ENOENT;
+				return NULL;
 			}
 
-			v->mdfd_chain = _mdfd_openseg(reln, forknum, nextsegno, flags);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\" (target block %u): previous segment is only %u blocks",
+							_mdfd_segpath(reln, forknum, nextsegno),
+							blkno, nblocks)));
+		}
 
-			if (v->mdfd_chain == NULL)
-			{
-				if ((behavior & EXTENSION_RETURN_NULL) &&
-					FILE_POSSIBLY_DELETED(errno))
-					return NULL;
-				ereport(ERROR,
-						(errcode_for_file_access(),
+		v = _mdfd_openseg(reln, forknum, nextsegno, flags);
+
+		if (v == NULL)
+		{
+			if ((behavior & EXTENSION_RETURN_NULL) &&
+				FILE_POSSIBLY_DELETED(errno))
+				return NULL;
+			ereport(ERROR,
+					(errcode_for_file_access(),
 				   errmsg("could not open file \"%s\" (target block %u): %m",
 						  _mdfd_segpath(reln, forknum, nextsegno),
 						  blkno)));
-			}
 		}
-		v = v->mdfd_chain;
 	}
+
 	return v;
 }
 
