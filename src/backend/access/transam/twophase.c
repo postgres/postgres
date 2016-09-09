@@ -1758,8 +1758,9 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 			 * need to hold a lock while examining it.  We still acquire the
 			 * lock to modify it, though.
 			 */
-			subxids = (TransactionId *)
-				(buf + MAXALIGN(sizeof(TwoPhaseFileHeader)));
+			subxids = (TransactionId *) (buf +
+								MAXALIGN(sizeof(TwoPhaseFileHeader)) +
+								MAXALIGN(hdr->gidlen));
 			for (i = 0; i < hdr->nsubxacts; i++)
 			{
 				TransactionId subxid = subxids[i];
@@ -1877,8 +1878,9 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
 			 * Examine subtransaction XIDs ... they should all follow main
 			 * XID.
 			 */
-			subxids = (TransactionId *)
-				(buf + MAXALIGN(sizeof(TwoPhaseFileHeader)));
+			subxids = (TransactionId *) (buf +
+								MAXALIGN(sizeof(TwoPhaseFileHeader)) +
+								MAXALIGN(hdr->gidlen));
 			for (i = 0; i < hdr->nsubxacts; i++)
 			{
 				TransactionId subxid = subxids[i];
