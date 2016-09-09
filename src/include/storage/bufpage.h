@@ -409,7 +409,6 @@ do { \
  */
 #define PAI_OVERWRITE			(1 << 0)
 #define PAI_IS_HEAP				(1 << 1)
-#define PAI_ALLOW_FAR_OFFSET	(1 << 2)
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageIsVerified(Page page, BlockNumber blkno);
@@ -429,6 +428,8 @@ extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems);
 extern void PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos,
 						 int nitems);
+extern bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
+						Item newtup, Size newsize);
 extern char *PageSetChecksumCopy(Page page, BlockNumber blkno);
 extern void PageSetChecksumInplace(Page page, BlockNumber blkno);
 

@@ -80,9 +80,31 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 
 		page = (Page) BufferGetPage(buffer);
 
-		/* Delete old tuples */
-		if (xldata->ntodelete > 0)
+		if (xldata->ntodelete == 1 && xldata->ntoinsert == 1)
 		{
+			/*
+			 * When replacing one tuple with one other tuple, we must use
+			 * PageIndexTupleOverwrite for consistency with gistplacetopage.
+			 */
+			OffsetNumber offnum = *((OffsetNumber *) data);
+			IndexTuple	itup;
+			Size		itupsize;
+
+			data += sizeof(OffsetNumber);
+			itup = (IndexTuple) data;
+			itupsize = IndexTupleSize(itup);
+			if (!PageIndexTupleOverwrite(page, offnum, (Item) itup, itupsize))
+				elog(ERROR, "failed to add item to GiST index page, size %d bytes",
+					 (int) itupsize);
+			data += itupsize;
+			/* should be nothing left after consuming 1 tuple */
+			Assert(data - begin == datalen);
+			/* update insertion count for assert check below */
+			ninserted++;
+		}
+		else if (xldata->ntodelete > 0)
+		{
+			/* Otherwise, delete old tuples if any */
 			OffsetNumber *todelete = (OffsetNumber *) data;
 
 			data += sizeof(OffsetNumber) * xldata->ntodelete;
@@ -92,7 +114,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 				GistMarkTuplesDeleted(page);
 		}
 
-		/* add tuples */
+		/* Add new tuples if any */
 		if (data - begin < datalen)
 		{
 			OffsetNumber off = (PageIsEmpty(page)) ? FirstOffsetNumber :
@@ -115,6 +137,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 			}
 		}
 
+		/* Check that XLOG record contained expected number of tuples */
 		Assert(ninserted == xldata->ntoinsert);
 
 		PageSetLSN(page, lsn);

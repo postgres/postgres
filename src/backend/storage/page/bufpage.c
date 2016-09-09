@@ -166,20 +166,23 @@ PageIsVerified(Page page, BlockNumber blkno)
  *	inserted, or InvalidOffsetNumber if the item is not inserted for any
  *	reason.  A WARNING is issued indicating the reason for the refusal.
  *
- *	If flag PAI_OVERWRITE is set, we just store the item at the specified
- *	offsetNumber (which must be either a currently-unused item pointer,
- *	or one past the last existing item).  Otherwise,
- *	if offsetNumber is valid and <= current max offset in the page,
- *	insert item into the array at that position by shuffling ItemId's
- *	down to make room.
- *	If offsetNumber is not valid, then assign one by finding the first
+ *	offsetNumber must be either InvalidOffsetNumber to specify finding a
+ *	free item pointer, or a value between FirstOffsetNumber and one past
+ *	the last existing item, to specify using that particular item pointer.
+ *
+ *	If offsetNumber is valid and flag PAI_OVERWRITE is set, we just store
+ *	the item at the specified offsetNumber, which must be either a
+ *	currently-unused item pointer, or one past the last existing item.
+ *
+ *	If offsetNumber is valid and flag PAI_OVERWRITE is not set, insert
+ *	the item at the specified offsetNumber, moving existing items later
+ *	in the array to make room.
+ *
+ *	If offsetNumber is not valid, then assign a slot by finding the first
  *	one that is both unused and deallocated.
  *
  *	If flag PAI_IS_HEAP is set, we enforce that there can't be more than
  *	MaxHeapTuplesPerPage line pointers on the page.
- *
- *	If flag PAI_ALLOW_FAR_OFFSET is not set, we disallow placing items
- *	beyond one past the last existing item.
  *
  *	!!! EREPORT(ERROR) IS DISALLOWED HERE !!!
  */
@@ -267,11 +270,8 @@ PageAddItemExtended(Page page,
 		}
 	}
 
-	/*
-	 * Reject placing items beyond the first unused line pointer, unless
-	 * caller asked for that behavior specifically.
-	 */
-	if ((flags & PAI_ALLOW_FAR_OFFSET) == 0 && offsetNumber > limit)
+	/* Reject placing items beyond the first unused line pointer */
+	if (offsetNumber > limit)
 	{
 		elog(WARNING, "specified item offset is too large");
 		return InvalidOffsetNumber;
@@ -290,10 +290,7 @@ PageAddItemExtended(Page page,
 	 * Note: do arithmetic as signed ints, to avoid mistakes if, say,
 	 * alignedSize > pd_upper.
 	 */
-	if ((flags & PAI_ALLOW_FAR_OFFSET) != 0)
-		lower = Max(phdr->pd_lower,
-					SizeOfPageHeaderData + sizeof(ItemIdData) * offsetNumber);
-	else if (offsetNumber == limit || needshuffle)
+	if (offsetNumber == limit || needshuffle)
 		lower = phdr->pd_lower + sizeof(ItemIdData);
 	else
 		lower = phdr->pd_lower;
@@ -1092,6 +1089,113 @@ PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos, int nitems)
 		compactify_tuples(itemidbase, nline, page);
 	}
 }
+
+
+/*
+ * PageIndexTupleOverwrite
+ *
+ * Replace a specified tuple on an index page.
+ *
+ * The new tuple is placed exactly where the old one had been, shifting
+ * other tuples' data up or down as needed to keep the page compacted.
+ * This is better than deleting and reinserting the tuple, because it
+ * avoids any data shifting when the tuple size doesn't change; and
+ * even when it does, we avoid moving the item pointers around.
+ * Conceivably this could also be of use to an index AM that cares about
+ * the physical order of tuples as well as their ItemId order.
+ *
+ * If there's insufficient space for the new tuple, return false.  Other
+ * errors represent data-corruption problems, so we just elog.
+ */
+bool
+PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
+						Item newtup, Size newsize)
+{
+	PageHeader	phdr = (PageHeader) page;
+	ItemId		tupid;
+	int			oldsize;
+	unsigned	offset;
+	Size		alignednewsize;
+	int			size_diff;
+	int			itemcount;
+
+	/*
+	 * As with PageRepairFragmentation, paranoia seems justified.
+	 */
+	if (phdr->pd_lower < SizeOfPageHeaderData ||
+		phdr->pd_lower > phdr->pd_upper ||
+		phdr->pd_upper > phdr->pd_special ||
+		phdr->pd_special > BLCKSZ ||
+		phdr->pd_special != MAXALIGN(phdr->pd_special))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
+						phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
+
+	itemcount = PageGetMaxOffsetNumber(page);
+	if ((int) offnum <= 0 || (int) offnum > itemcount)
+		elog(ERROR, "invalid index offnum: %u", offnum);
+
+	tupid = PageGetItemId(page, offnum);
+	Assert(ItemIdHasStorage(tupid));
+	oldsize = ItemIdGetLength(tupid);
+	offset = ItemIdGetOffset(tupid);
+
+	if (offset < phdr->pd_upper || (offset + oldsize) > phdr->pd_special ||
+		offset != MAXALIGN(offset))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted item pointer: offset = %u, size = %u",
+						offset, (unsigned int) oldsize)));
+
+	/*
+	 * Determine actual change in space requirement, check for page overflow.
+	 */
+	oldsize = MAXALIGN(oldsize);
+	alignednewsize = MAXALIGN(newsize);
+	if (alignednewsize > oldsize + (phdr->pd_upper - phdr->pd_lower))
+		return false;
+
+	/*
+	 * Relocate existing data and update line pointers, unless the new tuple
+	 * is the same size as the old (after alignment), in which case there's
+	 * nothing to do.  Notice that what we have to relocate is data before the
+	 * target tuple, not data after, so it's convenient to express size_diff
+	 * as the amount by which the tuple's size is decreasing, making it the
+	 * delta to add to pd_upper and affected line pointers.
+	 */
+	size_diff = oldsize - (int) alignednewsize;
+	if (size_diff != 0)
+	{
+		char	   *addr = (char *) page + phdr->pd_upper;
+		int			i;
+
+		/* relocate all tuple data before the target tuple */
+		memmove(addr + size_diff, addr, offset - phdr->pd_upper);
+
+		/* adjust free space boundary pointer */
+		phdr->pd_upper += size_diff;
+
+		/* adjust affected line pointers too */
+		for (i = FirstOffsetNumber; i <= itemcount; i++)
+		{
+			ItemId		ii = PageGetItemId(phdr, i);
+
+			/* Allow items without storage; currently only BRIN needs that */
+			if (ItemIdHasStorage(ii) && ItemIdGetOffset(ii) <= offset)
+				ii->lp_off += size_diff;
+		}
+	}
+
+	/* Update the item's tuple length (other fields shouldn't change) */
+	ItemIdSetNormal(tupid, offset + size_diff, newsize);
+
+	/* Copy new tuple data onto page */
+	memcpy(PageGetItem(page, tupid), newtup, newsize);
+
+	return true;
+}
+
 
 /*
  * Set checksum for a page in shared buffers.
