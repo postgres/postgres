@@ -2455,10 +2455,15 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	Form_pg_language langStruct;
 	AclResult	aclresult;
 
-	/* Get the function's pg_proc entry */
+	/*
+	 * Get the function's pg_proc entry.  Throw a user-facing error for bad
+	 * OID, because validators can be called with user-specified OIDs.
+	 */
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionOid));
 	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "cache lookup failed for function %u", functionOid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function with OID %u does not exist", functionOid)));
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
 	/*

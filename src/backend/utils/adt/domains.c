@@ -72,18 +72,27 @@ static DomainIOData *
 domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 {
 	DomainIOData *my_extra;
+	TypeCacheEntry *typentry;
 	Oid			baseType;
 
 	my_extra = (DomainIOData *) MemoryContextAlloc(mcxt, sizeof(DomainIOData));
 
-	/* Find out the base type */
-	my_extra->typtypmod = -1;
-	baseType = getBaseTypeAndTypmod(domainType, &my_extra->typtypmod);
-	if (baseType == domainType)
+	/*
+	 * Verify that domainType represents a valid domain type.  We need to be
+	 * careful here because domain_in and domain_recv can be called from SQL,
+	 * possibly with incorrect arguments.  We use lookup_type_cache mainly
+	 * because it will throw a clean user-facing error for a bad OID.
+	 */
+	typentry = lookup_type_cache(domainType, 0);
+	if (typentry->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("type %s is not a domain",
 						format_type_be(domainType))));
+
+	/* Find out the base type */
+	my_extra->typtypmod = -1;
+	baseType = getBaseTypeAndTypmod(domainType, &my_extra->typtypmod);
 
 	/* Look up underlying I/O function */
 	if (binary)

@@ -182,10 +182,10 @@ static int	enum_oid_cmp(const void *left, const void *right);
  * Fetch the type cache entry for the specified datatype, and make sure that
  * all the fields requested by bits in 'flags' are valid.
  *
- * The result is never NULL --- we will elog() if the passed type OID is
+ * The result is never NULL --- we will ereport() if the passed type OID is
  * invalid.  Note however that we may fail to find one or more of the
- * requested opclass-dependent fields; the caller needs to check whether
- * the fields are InvalidOid or not.
+ * values requested by 'flags'; the caller needs to check whether the fields
+ * are InvalidOid or not.
  */
 TypeCacheEntry *
 lookup_type_cache(Oid type_id, int flags)
@@ -224,14 +224,18 @@ lookup_type_cache(Oid type_id, int flags)
 		/*
 		 * If we didn't find one, we want to make one.  But first look up the
 		 * pg_type row, just to make sure we don't make a cache entry for an
-		 * invalid type OID.
+		 * invalid type OID.  If the type OID is not valid, present a
+		 * user-facing error, since some code paths such as domain_in() allow
+		 * this function to be reached with a user-supplied OID.
 		 */
 		HeapTuple	tp;
 		Form_pg_type typtup;
 
 		tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
 		if (!HeapTupleIsValid(tp))
-			elog(ERROR, "cache lookup failed for type %u", type_id);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type with OID %u does not exist", type_id)));
 		typtup = (Form_pg_type) GETSTRUCT(tp);
 		if (!typtup->typisdefined)
 			ereport(ERROR,
@@ -1230,6 +1234,8 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
  *
  * Given a typeid/typmod that should describe a known composite type,
  * return the tuple descriptor for the type.  Will ereport on failure.
+ * (Use ereport because this is reachable with user-specified OIDs,
+ * for example from record_in().)
  *
  * Note: on success, we increment the refcount of the returned TupleDesc,
  * and log the reference in CurrentResourceOwner.  Caller should call
