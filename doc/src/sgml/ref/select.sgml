@@ -391,7 +391,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         not been changed meanwhile.  But different seed values will usually
         produce different samples.
         If <literal>REPEATABLE</literal> is not given then a new random
-        seed is selected for each query.
+        sample is selected for each query, based upon a system-generated seed.
         Note that some add-on sampling methods do not
         accept <literal>REPEATABLE</literal>, and will always produce new
         samples on each use.
