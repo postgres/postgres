@@ -738,7 +738,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	if (phdr->pd_lower < SizeOfPageHeaderData ||
 		phdr->pd_lower > phdr->pd_upper ||
 		phdr->pd_upper > phdr->pd_special ||
-		phdr->pd_special > BLCKSZ)
+		phdr->pd_special > BLCKSZ ||
+		phdr->pd_special != MAXALIGN(phdr->pd_special))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
@@ -757,11 +758,14 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	offset = ItemIdGetOffset(tup);
 
 	if (offset < phdr->pd_upper || (offset + size) > phdr->pd_special ||
-		offset != MAXALIGN(offset) || size != MAXALIGN(size))
+		offset != MAXALIGN(offset))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("corrupted item pointer: offset = %u, size = %u",
 						offset, (unsigned int) size)));
+
+	/* Amount of space to actually be deleted */
+	size = MAXALIGN(size);
 
 	/*
 	 * First, we want to get rid of the pd_linp entry for the index tuple. We
