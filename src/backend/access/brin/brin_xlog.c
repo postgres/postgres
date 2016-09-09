@@ -148,10 +148,8 @@ brin_xlog_update(XLogReaderState *record)
 		page = (Page) BufferGetPage(buffer);
 
 		offnum = xlrec->oldOffnum;
-		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
-			elog(PANIC, "brin_xlog_update: invalid max offset number");
 
-		PageIndexDeleteNoCompact(page, &offnum, 1);
+		PageIndexTupleDeleteNoCompact(page, offnum);
 
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);

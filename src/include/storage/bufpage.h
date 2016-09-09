@@ -429,8 +429,7 @@ extern Size PageGetExactFreeSpace(Page page);
 extern Size PageGetHeapFreeSpace(Page page);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems);
-extern void PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos,
-						 int nitems);
+extern void PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offset);
 extern bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 						Item newtup, Size newsize);
 extern char *PageSetChecksumCopy(Page page, BlockNumber blkno);

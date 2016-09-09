@@ -245,7 +245,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		if (extended)
 			brin_page_init(BufferGetPage(newbuf), BRIN_PAGETYPE_REGULAR);
 
-		PageIndexDeleteNoCompact(oldpage, &oldoff, 1);
+		PageIndexTupleDeleteNoCompact(oldpage, oldoff);
 		newoff = PageAddItem(newpage, (Item) newtup, newsz,
 							 InvalidOffsetNumber, false, false);
 		if (newoff == InvalidOffsetNumber)
