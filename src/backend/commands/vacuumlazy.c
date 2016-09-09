@@ -1747,7 +1747,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 				return;
 			}
 
-			pg_usleep(VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL);
+			pg_usleep(VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL * 1000L);
 		}
 
 		/*
