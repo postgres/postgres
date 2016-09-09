@@ -91,3 +91,21 @@ SELECT ctid,cmin,* FROM combocidtest;
 COMMIT;
 
 SELECT ctid,cmin,* FROM combocidtest;
+
+-- test for bug reported in
+-- CABRT9RC81YUf1=jsmWopcKJEro=VoeG2ou6sPwyOUTx_qteRsg@mail.gmail.com
+CREATE TABLE IF NOT EXISTS testcase(
+	id int PRIMARY KEY,
+	balance numeric
+);
+INSERT INTO testcase VALUES (1, 0);
+BEGIN;
+SELECT * FROM testcase WHERE testcase.id = 1 FOR UPDATE;
+UPDATE testcase SET balance = balance + 400 WHERE id=1;
+SAVEPOINT subxact;
+UPDATE testcase SET balance = balance - 100 WHERE id=1;
+ROLLBACK TO SAVEPOINT subxact;
+-- should return one tuple
+SELECT * FROM testcase WHERE id = 1 FOR UPDATE;
+ROLLBACK;
+DROP TABLE testcase;
