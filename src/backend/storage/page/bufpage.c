@@ -338,26 +338,6 @@ PageAddItemExtended(Page page,
 	return offsetNumber;
 }
 
-/*
- *	PageAddItem
- *
- *	Add an item to a page.  Return value is offset at which it was
- *	inserted, or InvalidOffsetNumber if the item is not inserted for
- *	any reason.
- *
- *	Passing the 'overwrite' and 'is_heap' parameters as true causes the
- *	PAI_OVERWRITE and PAI_IS_HEAP flags to be set, respectively.
- *
- *	!!! EREPORT(ERROR) IS DISALLOWED HERE !!!
- */
-OffsetNumber
-PageAddItem(Page page, Item item, Size size, OffsetNumber offsetNumber,
-			bool overwrite, bool is_heap)
-{
-	return PageAddItemExtended(page, item, size, offsetNumber,
-							   overwrite ? PAI_OVERWRITE : 0 |
-							   is_heap ? PAI_IS_HEAP : 0);
-}
 
 /*
  * PageGetTempPage

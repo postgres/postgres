@@ -410,10 +410,13 @@ do { \
 #define PAI_OVERWRITE			(1 << 0)
 #define PAI_IS_HEAP				(1 << 1)
 
+#define PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
+	PageAddItemExtended(page, item, size, offsetNumber, \
+						((overwrite) ? PAI_OVERWRITE : 0) | \
+						((is_heap) ? PAI_IS_HEAP : 0))
+
 extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageIsVerified(Page page, BlockNumber blkno);
-extern OffsetNumber PageAddItem(Page page, Item item, Size size,
-			OffsetNumber offsetNumber, bool overwrite, bool is_heap);
 extern OffsetNumber PageAddItemExtended(Page page, Item item, Size size,
 					OffsetNumber offsetNumber, int flags);
 extern Page PageGetTempPage(Page page);
