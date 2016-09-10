@@ -633,15 +633,13 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		{
 			/* Get specific pid slot */
 			local_beentry = pgstat_fetch_stat_local_beentry(*(int *) (funcctx->user_fctx));
-			beentry = &local_beentry->backendStatus;
 		}
 		else
 		{
 			/* Get the next one in the list */
 			local_beentry = pgstat_fetch_stat_local_beentry(funcctx->call_cntr + 1);	/* 1-based index */
-			beentry = &local_beentry->backendStatus;
 		}
-		if (!beentry)
+		if (!local_beentry)
 		{
 			int			i;
 
@@ -654,6 +652,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 			SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 		}
+
+		beentry = &local_beentry->backendStatus;
 
 		/* Values available to all callers */
 		values[0] = ObjectIdGetDatum(beentry->st_databaseid);
