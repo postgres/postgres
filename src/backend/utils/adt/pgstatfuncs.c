@@ -688,27 +688,17 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
-		if (pid != -1)
-		{
-			/* Skip any which are not the one we're looking for. */
-			PgBackendStatus *be = pgstat_fetch_stat_beentry(curr_backend);
-
-			if (!be || be->st_procpid != pid)
-				continue;
-
-		}
-
 		/* Get the next one in the list */
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
 		if (!local_beentry)
-			continue;
-
-		beentry = &local_beentry->backendStatus;
-		if (!beentry)
 		{
 			int			i;
 
-			for (i = 0; i < sizeof(nulls) / sizeof(nulls[0]); i++)
+			/* Ignore missing entries if looking for specific PID */
+			if (pid != -1)
+				continue;
+
+			for (i = 0; i < lengthof(nulls); i++)
 				nulls[i] = true;
 
 			nulls[5] = false;
@@ -717,6 +707,12 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 			continue;
 		}
+
+		beentry = &local_beentry->backendStatus;
+
+		/* If looking for specific PID, ignore all the others */
+		if (pid != -1 && beentry->st_procpid != pid)
+			continue;
 
 		/* Values available to all callers */
 		values[0] = ObjectIdGetDatum(beentry->st_databaseid);
