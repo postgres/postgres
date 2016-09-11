@@ -203,7 +203,7 @@
 
 # - Checkpoints -
 
-#checkpoint_timeout = 5min		# range 30s-1h
+#checkpoint_timeout = 5min		# range 30s-1d
 #max_wal_size = 1GB
 #min_wal_size = 80MB
 #checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
