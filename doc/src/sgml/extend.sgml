@@ -885,6 +885,47 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
     </para>
    </sect2>
 
+   <sect2>
+    <title>Installing Extensions using Update Scripts</title>
+
+    <para>
+     An extension that has been around for awhile will probably exist in
+     several versions, for which the author will need to write update scripts.
+     For example, if you have released a <literal>foo</> extension in
+     versions <literal>1.0</>, <literal>1.1</>, and <literal>1.2</>, there
+     should be update scripts <filename>foo--1.0--1.1.sql</>
+     and <filename>foo--1.1--1.2.sql</>.
+     Before <productname>PostgreSQL</> 10, it was necessary to also create
+     new script files <filename>foo--1.1.sql</> and <filename>foo--1.2.sql</>
+     that directly build the newer extension versions, or else the newer
+     versions could not be installed directly, only by
+     installing <literal>1.0</> and then updating.  That was tedious and
+     duplicative, but now it's unnecessary, because <command>CREATE
+     EXTENSION</> can follow update chains automatically.
+     For example, if only the script
+     files <filename>foo--1.0.sql</>, <filename>foo--1.0--1.1.sql</>,
+     and <filename>foo--1.1--1.2.sql</> are available then a request to
+     install version <literal>1.2</> is honored by running those three
+     scripts in sequence.  The processing is the same as if you'd first
+     installed <literal>1.0</> and then updated to <literal>1.2</>.
+     (As with <command>ALTER EXTENSION UPDATE</>, if multiple pathways are
+     available then the shortest is preferred.)  Arranging an extension's
+     script files in this style can reduce the amount of maintenance effort
+     needed to produce small updates.
+    </para>
+
+    <para>
+     If you use secondary (version-specific) control files with an extension
+     maintained in this style, keep in mind that each version needs a control
+     file even if it has no stand-alone installation script, as that control
+     file will determine how the implicit update to that version is performed.
+     For example, if <filename>foo--1.0.control</> specifies <literal>requires
+     = 'bar'</> but <literal>foo</>'s other control files do not, the
+     extension's dependency on <literal>bar</> will be dropped when updating
+     from <literal>1.0</> to another version.
+    </para>
+   </sect2>
+
    <sect2 id="extend-extensions-example">
     <title>Extension Example</title>
 
