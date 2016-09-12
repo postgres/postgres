@@ -1806,6 +1806,9 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	last_reply_timestamp = GetCurrentTimestamp();
 	waiting_for_ping_response = false;
 
+	/* Report to pgstat that this process is a WAL sender */
+	pgstat_report_activity(STATE_RUNNING, "walsender");
+
 	/*
 	 * Loop until we reach the end of this timeline or the client requests to
 	 * stop streaming.
