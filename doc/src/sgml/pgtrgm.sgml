@@ -104,7 +104,7 @@
        the second string a most similar word not a most similar substring.  The
        range of the result is zero (indicating that the two strings are
        completely dissimilar) to one (indicating that the first string is
-       identical to one of the word of the second string).
+       identical to one of the words of the second string).
       </entry>
      </row>
      <row>
