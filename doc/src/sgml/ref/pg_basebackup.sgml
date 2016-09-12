@@ -399,6 +399,24 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-n</option></term>
+      <term><option>--noclean</option></term>
+      <listitem>
+       <para>
+        By default, when <command>pg_basebackup</command> aborts with an
+        error, it removes any directories it might have created before
+        discovering that it cannot finish the job (for example, data directory
+        and transaction log directory). This option inhibits tidying-up and is
+        thus useful for debugging.
+       </para>
+
+       <para>
+        Note that tablespace directories are not cleaned up either way.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P</option></term>
       <term><option>--progress</option></term>
       <listitem>

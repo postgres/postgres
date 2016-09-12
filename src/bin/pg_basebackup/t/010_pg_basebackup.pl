@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 51;
+use Test::More tests => 54;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -39,6 +39,14 @@ system_or_bail 'pg_ctl', '-D', $pgdata, 'reload';
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup fails because of WAL configuration');
+
+ok(! -d "$tempdir/backup", 'backup directory was cleaned up');
+
+$node->command_fails(
+	[ 'pg_basebackup', '-D', "$tempdir/backup", '-n' ],
+	'failing run with noclean option');
+
+ok(-d "$tempdir/backup", 'backup directory was created and left behind');
 
 open CONF, ">>$pgdata/postgresql.conf";
 print CONF "max_replication_slots = 10\n";
