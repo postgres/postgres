@@ -1629,7 +1629,7 @@ CREATE POLICY account_managers ON accounts TO managers
 
 <programlisting>
 CREATE POLICY user_policy ON users
-    USING (user = current_user);
+    USING (user_name = current_user);
 </programlisting>
 
   <para>
@@ -1642,7 +1642,7 @@ CREATE POLICY user_policy ON users
 <programlisting>
 CREATE POLICY user_policy ON users
     USING (true)
-    WITH CHECK (user = current_user);
+    WITH CHECK (user_name = current_user);
 </programlisting>
 
   <para>
@@ -1662,7 +1662,7 @@ CREATE POLICY user_policy ON users
 <programlisting>
 -- Simple passwd-file based example
 CREATE TABLE passwd (
-  username              text UNIQUE NOT NULL,
+  user_name             text UNIQUE NOT NULL,
   pwhash                text,
   uid                   int  PRIMARY KEY,
   gid                   int  NOT NULL,
@@ -1696,9 +1696,9 @@ CREATE POLICY all_view ON passwd FOR SELECT USING (true);
 -- Normal users can update their own records, but
 -- limit which shells a normal user is allowed to set
 CREATE POLICY user_mod ON passwd FOR UPDATE
-  USING (current_user = username)
+  USING (current_user = user_name)
   WITH CHECK (
-    current_user = username AND
+    current_user = user_name AND
     shell IN ('/bin/bash','/bin/sh','/bin/dash','/bin/zsh','/bin/tcsh')
   );
 
@@ -1706,7 +1706,7 @@ CREATE POLICY user_mod ON passwd FOR UPDATE
 GRANT SELECT, INSERT, UPDATE, DELETE ON passwd TO admin;
 -- Users only get select access on public columns
 GRANT SELECT
-  (username, uid, gid, real_name, home_phone, extra_info, home_dir, shell)
+  (user_name, uid, gid, real_name, home_phone, extra_info, home_dir, shell)
   ON passwd TO public;
 -- Allow users to update certain columns
 GRANT UPDATE
@@ -1725,11 +1725,11 @@ GRANT UPDATE
 postgres=&gt; set role admin;
 SET
 postgres=&gt; table passwd;
- username | pwhash | uid | gid | real_name |  home_phone  | extra_info | home_dir    |   shell
-----------+--------+-----+-----+-----------+--------------+------------+-------------+-----------
- admin    | xxx    |   0 |   0 | Admin     | 111-222-3333 |            | /root       | /bin/dash
- bob      | xxx    |   1 |   1 | Bob       | 123-456-7890 |            | /home/bob   | /bin/zsh
- alice    | xxx    |   2 |   1 | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
+ user_name | pwhash | uid | gid | real_name |  home_phone  | extra_info | home_dir    |   shell
+-----------+--------+-----+-----+-----------+--------------+------------+-------------+-----------
+ admin     | xxx    |   0 |   0 | Admin     | 111-222-3333 |            | /root       | /bin/dash
+ bob       | xxx    |   1 |   1 | Bob       | 123-456-7890 |            | /home/bob   | /bin/zsh
+ alice     | xxx    |   2 |   1 | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
 (3 rows)
 
 -- Test what Alice is able to do
@@ -1737,26 +1737,26 @@ postgres=&gt; set role alice;
 SET
 postgres=&gt; table passwd;
 ERROR:  permission denied for relation passwd
-postgres=&gt; select username,real_name,home_phone,extra_info,home_dir,shell from passwd;
- username | real_name |  home_phone  | extra_info | home_dir    |   shell
-----------+-----------+--------------+------------+-------------+-----------
- admin    | Admin     | 111-222-3333 |            | /root       | /bin/dash
- bob      | Bob       | 123-456-7890 |            | /home/bob   | /bin/zsh
- alice    | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
+postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell from passwd;
+ user_name | real_name |  home_phone  | extra_info | home_dir    |   shell
+-----------+-----------+--------------+------------+-------------+-----------
+ admin     | Admin     | 111-222-3333 |            | /root       | /bin/dash
+ bob       | Bob       | 123-456-7890 |            | /home/bob   | /bin/zsh
+ alice     | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
 (3 rows)
 
-postgres=&gt; update passwd set username = 'joe';
+postgres=&gt; update passwd set user_name = 'joe';
 ERROR:  permission denied for relation passwd
 -- Alice is allowed to change her own real_name, but no others
 postgres=&gt; update passwd set real_name = 'Alice Doe';
 UPDATE 1
-postgres=&gt; update passwd set real_name = 'John Doe' where username = 'admin';
+postgres=&gt; update passwd set real_name = 'John Doe' where user_name = 'admin';
 UPDATE 0
 postgres=&gt; update passwd set shell = '/bin/xx';
 ERROR:  new row violates WITH CHECK OPTION for "passwd"
 postgres=&gt; delete from passwd;
 ERROR:  permission denied for relation passwd
-postgres=&gt; insert into passwd (username) values ('xxx');
+postgres=&gt; insert into passwd (user_name) values ('xxx');
 ERROR:  permission denied for relation passwd
 -- Alice can change her own password; RLS silently prevents updating other rows
 postgres=&gt; update passwd set pwhash = 'abc';
@@ -2055,7 +2055,7 @@ DROP SCHEMA myschema CASCADE;
     (since this is one of the ways to restrict the activities of your
     users to well-defined namespaces).  The syntax for that is:
 <programlisting>
-CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATION <replaceable>username</replaceable>;
+CREATE SCHEMA <replaceable>schema_name</replaceable> AUTHORIZATION <replaceable>user_name</replaceable>;
 </programlisting>
     You can even omit the schema name, in which case the schema name
     will be the same as the user name.  See <xref
@@ -2344,7 +2344,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     implements only the basic schema support specified in the
     standard.  Therefore, many users consider qualified names to
     really consist of
-    <literal><replaceable>username</>.<replaceable>tablename</></literal>.
+    <literal><replaceable>user_name</>.<replaceable>table_name</></literal>.
     This is how <productname>PostgreSQL</productname> will effectively
     behave if you create a per-user schema for every user.
    </para>
