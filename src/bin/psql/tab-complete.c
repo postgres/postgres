@@ -601,9 +601,8 @@ static const SchemaQuery Query_for_list_of_matviews = {
 #define Query_for_list_of_template_databases \
 "SELECT pg_catalog.quote_ident(d.datname) "\
 "  FROM pg_catalog.pg_database d "\
-"  JOIN pg_catalog.pg_roles r ON r.rolname = CURRENT_USER "\
 " WHERE substring(pg_catalog.quote_ident(d.datname),1,%d)='%s' "\
-"   AND (d.datistemplate OR r.rolsuper OR d.datdba = r.oid)"
+"   AND (d.datistemplate OR pg_catalog.pg_has_role(d.datdba, 'USAGE'))"
 
 #define Query_for_list_of_databases \
 "SELECT pg_catalog.quote_ident(datname) FROM pg_catalog.pg_database "\
