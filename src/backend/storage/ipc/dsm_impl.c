@@ -41,7 +41,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/storage/ipc/dsm.c
+ *	  src/backend/storage/ipc/dsm_impl.c
  *
  *-------------------------------------------------------------------------
  */
