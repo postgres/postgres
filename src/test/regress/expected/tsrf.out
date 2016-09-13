@@ -130,38 +130,31 @@ SELECT few.dataa, count(*), min(id), max(id), unnest('{1,1,3}'::int[]) FROM few 
 (2 rows)
 
 -- check HAVING works when GROUP BY does [not] reference SRF output
-SELECT dataa, generate_series(1,3), count(*) FROM few GROUP BY 1 HAVING count(*) > 1;
+SELECT dataa, generate_series(1,1), count(*) FROM few GROUP BY 1 HAVING count(*) > 1;
  dataa | generate_series | count 
 -------+-----------------+-------
  a     |               1 |     2
- a     |               2 |     2
- a     |               3 |     2
-(3 rows)
+(1 row)
 
-SELECT dataa, generate_series(1,3), count(*) FROM few GROUP BY 1, 2 HAVING count(*) > 1;
+SELECT dataa, generate_series(1,1), count(*) FROM few GROUP BY 1, 2 HAVING count(*) > 1;
  dataa | generate_series | count 
 -------+-----------------+-------
  a     |               1 |     2
- a     |               2 |     2
- a     |               3 |     2
-(3 rows)
+(1 row)
 
 -- it's weird to have GROUP BYs that increase the number of results
-SELECT few.dataa, count(*), min(id), max(id) FROM few GROUP BY few.dataa;
- dataa | count | min | max 
--------+-------+-----+-----
- b     |     1 |   3 |   3
- a     |     2 |   1 |   2
-(2 rows)
+SELECT few.dataa, count(*) FROM few WHERE dataa = 'a' GROUP BY few.dataa ORDER BY 2;
+ dataa | count 
+-------+-------
+ a     |     2
+(1 row)
 
-SELECT few.dataa, count(*), min(id), max(id) FROM few GROUP BY few.dataa, unnest('{1,1,3}'::int[]);
- dataa | count | min | max 
--------+-------+-----+-----
- b     |     2 |   3 |   3
- a     |     4 |   1 |   2
- b     |     1 |   3 |   3
- a     |     2 |   1 |   2
-(4 rows)
+SELECT few.dataa, count(*) FROM few WHERE dataa = 'a' GROUP BY few.dataa, unnest('{1,1,3}'::int[]) ORDER BY 2;
+ dataa | count 
+-------+-------
+ a     |     2
+ a     |     4
+(2 rows)
 
 -- SRFs are not allowed in aggregate arguments
 SELECT min(generate_series(1, 3)) FROM few;
