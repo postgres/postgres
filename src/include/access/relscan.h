@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/itup.h"
 #include "access/tupdesc.h"
+#include "storage/spin.h"
 
 /*
  * Shared state for parallel heap scan.

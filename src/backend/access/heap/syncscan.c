@@ -48,6 +48,8 @@
 
 #include "access/heapam.h"
 #include "miscadmin.h"
+#include "storage/lwlock.h"
+#include "storage/shmem.h"
 #include "utils/rel.h"
 
 
