@@ -195,8 +195,7 @@ the entire row value in the join output row.
 We disallow set-returning functions in the targetlist of SELECT FOR UPDATE,
 so as to ensure that at most one tuple can be returned for any particular
 set of scan tuples.  Otherwise we'd get duplicates due to the original
-query returning the same set of scan tuples multiple times.  (Note: there
-is no explicit prohibition on SRFs in UPDATE, but the net effect will be
-that only the first result row of an SRF counts, because all subsequent
-rows will result in attempts to re-update an already updated target row.
-This is historical behavior and seems not worth changing.)
+query returning the same set of scan tuples multiple times.  Likewise,
+SRFs are disallowed in an UPDATE's targetlist.  There, they would have the
+effect of the same row being updated multiple times, which is not very
+useful --- and updates after the first would have no effect anyway.
