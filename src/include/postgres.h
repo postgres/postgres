@@ -600,7 +600,7 @@ typedef Datum *DatumPtr;
  * value has adequate lifetime.
  */
 
-#define NameGetDatum(X) PointerGetDatum(X)
+#define NameGetDatum(X) CStringGetDatum(NameStr(*(X)))
 
 /*
  * DatumGetInt64

@@ -1260,7 +1260,7 @@ movedb(const char *dbname, const char *tblspcname)
 		ScanKeyInit(&scankey,
 					Anum_pg_database_datname,
 					BTEqualStrategyNumber, F_NAMEEQ,
-					NameGetDatum(dbname));
+					CStringGetDatum(dbname));
 		sysscan = systable_beginscan(pgdbrel, DatabaseNameIndexId, true,
 									 NULL, 1, &scankey);
 		oldtuple = systable_getnext(sysscan);
@@ -1486,7 +1486,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(stmt->dbname));
+				CStringGetDatum(stmt->dbname));
 	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
 							  NULL, 1, &scankey);
 	tuple = systable_getnext(scan);
@@ -1603,7 +1603,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(dbname));
+				CStringGetDatum(dbname));
 	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
 							  NULL, 1, &scankey);
 	tuple = systable_getnext(scan);
@@ -1743,7 +1743,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 		ScanKeyInit(&scanKey,
 					Anum_pg_database_datname,
 					BTEqualStrategyNumber, F_NAMEEQ,
-					NameGetDatum(name));
+					CStringGetDatum(name));
 
 		scan = systable_beginscan(relation, DatabaseNameIndexId, true,
 								  NULL, 1, &scanKey);

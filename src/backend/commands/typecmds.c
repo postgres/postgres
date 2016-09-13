@@ -3503,7 +3503,7 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 
 		/* check for duplicate name (more friendly than unique-index failure) */
 		if (SearchSysCacheExists2(TYPENAMENSP,
-								  CStringGetDatum(NameStr(typform->typname)),
+								  NameGetDatum(&typform->typname),
 								  ObjectIdGetDatum(nspOid)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),

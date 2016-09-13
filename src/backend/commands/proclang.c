@@ -463,7 +463,7 @@ find_language_template(const char *languageName)
 	ScanKeyInit(&key,
 				Anum_pg_pltemplate_tmplname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(languageName));
+				CStringGetDatum(languageName));
 	scan = systable_beginscan(rel, PLTemplateNameIndexId, true,
 							  NULL, 1, &key);
 
