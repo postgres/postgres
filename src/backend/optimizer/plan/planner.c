@@ -604,6 +604,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		preprocess_expression(root, (Node *) parse->targetList,
 							  EXPRKIND_TARGET);
 
+	/* Constant-folding might have removed all set-returning functions */
+	if (parse->hasTargetSRFs)
+		parse->hasTargetSRFs = expression_returns_set((Node *) parse->targetList);
+
 	newWithCheckOptions = NIL;
 	foreach(l, parse->withCheckOptions)
 	{
@@ -1702,16 +1706,14 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * Figure out whether there's a hard limit on the number of rows that
 		 * query_planner's result subplan needs to return.  Even if we know a
 		 * hard limit overall, it doesn't apply if the query has any
-		 * grouping/aggregation operations.  (XXX it also doesn't apply if the
-		 * tlist contains any SRFs; but checking for that here seems more
-		 * costly than it's worth, since root->limit_tuples is only used for
-		 * cost estimates, and only in a small number of cases.)
+		 * grouping/aggregation operations, or SRFs in the tlist.
 		 */
 		if (parse->groupClause ||
 			parse->groupingSets ||
 			parse->distinctClause ||
 			parse->hasAggs ||
 			parse->hasWindowFuncs ||
+			parse->hasTargetSRFs ||
 			root->hasHavingQual)
 			root->limit_tuples = -1.0;
 		else
@@ -1928,7 +1930,11 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	 * weird usage that it doesn't seem worth greatly complicating matters to
 	 * account for it.
 	 */
-	tlist_rows = tlist_returns_set_rows(tlist);
+	if (parse->hasTargetSRFs)
+		tlist_rows = tlist_returns_set_rows(tlist);
+	else
+		tlist_rows = 1;
+
 	if (tlist_rows > 1)
 	{
 		foreach(lc, current_rel->pathlist)
@@ -4995,7 +5001,8 @@ make_sort_input_target(PlannerInfo *root,
 			 * Check for SRF or volatile functions.  Check the SRF case first
 			 * because we must know whether we have any postponed SRFs.
 			 */
-			if (expression_returns_set((Node *) expr))
+			if (parse->hasTargetSRFs &&
+				expression_returns_set((Node *) expr))
 			{
 				/* We'll decide below whether these are postponable */
 				col_is_srf[i] = true;
@@ -5034,6 +5041,7 @@ make_sort_input_target(PlannerInfo *root,
 		{
 			/* For sortgroupref cols, just check if any contain SRFs */
 			if (!have_srf_sortcols &&
+				parse->hasTargetSRFs &&
 				expression_returns_set((Node *) expr))
 				have_srf_sortcols = true;
 		}

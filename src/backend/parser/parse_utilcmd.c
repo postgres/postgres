@@ -294,7 +294,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		 * overridden if an inherited table has oids.
 		 */
 		stmt->options = lcons(makeDefElem("oids",
-										  (Node *) makeInteger(cxt.hasoids), -1),
+									  (Node *) makeInteger(cxt.hasoids), -1),
 							  stmt->options);
 	}
 
@@ -483,7 +483,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 								 makeString(cxt->relation->relname),
 								 makeString(column->colname));
 		altseqstmt->options = list_make1(makeDefElem("owned_by",
-													 (Node *) attnamelist, -1));
+												  (Node *) attnamelist, -1));
 
 		cxt->alist = lappend(cxt->alist, altseqstmt);
 
@@ -2106,17 +2106,11 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 
 			/*
 			 * transformExpr() should have already rejected subqueries,
-			 * aggregates, and window functions, based on the EXPR_KIND_ for
-			 * an index expression.
+			 * aggregates, window functions, and SRFs, based on the EXPR_KIND_
+			 * for an index expression.
 			 *
-			 * Also reject expressions returning sets; this is for consistency
-			 * with what transformWhereClause() checks for the predicate.
 			 * DefineIndex() will make more checks.
 			 */
-			if (expression_returns_set(ielem->expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("index expression cannot return a set")));
 		}
 	}
 
@@ -2594,12 +2588,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 						def->cooked_default =
 							transformExpr(pstate, def->raw_default,
 										  EXPR_KIND_ALTER_COL_TRANSFORM);
-
-						/* it can't return a set */
-						if (expression_returns_set(def->cooked_default))
-							ereport(ERROR,
-									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("transform expression must not return a set")));
 					}
 
 					newcmds = lappend(newcmds, cmd);

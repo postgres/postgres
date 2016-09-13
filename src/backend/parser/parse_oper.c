@@ -839,6 +839,10 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	result->args = args;
 	result->location = location;
 
+	/* if it returns a set, check that's OK */
+	if (result->opretset)
+		check_srf_call_placement(pstate, location);
+
 	ReleaseSysCache(tup);
 
 	return (Expr *) result;

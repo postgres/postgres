@@ -359,15 +359,20 @@ SELECT * FROM fewmore;
     5
 (5 rows)
 
--- nonsense that seems to be allowed
+-- SRFs are not allowed in UPDATE (they once were, but it was nonsense)
 UPDATE fewmore SET data = generate_series(4,9);
+ERROR:  set-returning functions are not allowed in UPDATE
+LINE 1: UPDATE fewmore SET data = generate_series(4,9);
+                                  ^
 -- SRFs are not allowed in RETURNING
 INSERT INTO fewmore VALUES(1) RETURNING generate_series(1,3);
-ERROR:  set-valued function called in context that cannot accept a set
+ERROR:  set-returning functions are not allowed in RETURNING
+LINE 1: INSERT INTO fewmore VALUES(1) RETURNING generate_series(1,3)...
+                                                ^
 -- nor aggregate arguments
 SELECT count(generate_series(1,3)) FROM few;
 ERROR:  set-valued function called in context that cannot accept a set
--- nor proper VALUES
+-- nor standalone VALUES (but surely this is a bug?)
 VALUES(1, generate_series(1,2));
 ERROR:  set-valued function called in context that cannot accept a set
 -- DISTINCT ON is evaluated before tSRF evaluation if SRF is not
@@ -457,7 +462,7 @@ SELECT a, generate_series(1,2) FROM (VALUES(1),(2),(3)) r(a) LIMIT 2 OFFSET 2;
 
 -- SRFs are not allowed in LIMIT.
 SELECT 1 LIMIT generate_series(1,3);
-ERROR:  argument of LIMIT must not return a set
+ERROR:  set-returning functions are not allowed in LIMIT
 LINE 1: SELECT 1 LIMIT generate_series(1,3);
                        ^
 -- tSRF in correlated subquery, referencing table outside

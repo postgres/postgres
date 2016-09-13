@@ -6799,6 +6799,7 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 */
 	if (query->hasAggs ||
 		query->hasWindowFuncs ||
+		query->hasTargetSRFs ||
 		query->hasSubLinks ||
 		query->hasForUpdate ||
 		query->cteList ||

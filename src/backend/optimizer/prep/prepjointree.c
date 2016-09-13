@@ -1188,8 +1188,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	parse->hasSubLinks |= subquery->hasSubLinks;
 
 	/*
-	 * subquery won't be pulled up if it hasAggs or hasWindowFuncs, so no work
-	 * needed on those flags
+	 * subquery won't be pulled up if it hasAggs, hasWindowFuncs, or
+	 * hasTargetSRFs, so no work needed on those flags
 	 */
 
 	/*
@@ -1419,8 +1419,8 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 		return false;
 
 	/*
-	 * Can't pull up a subquery involving grouping, aggregation, sorting,
-	 * limiting, or WITH.  (XXX WITH could possibly be allowed later)
+	 * Can't pull up a subquery involving grouping, aggregation, SRFs,
+	 * sorting, limiting, or WITH.  (XXX WITH could possibly be allowed later)
 	 *
 	 * We also don't pull up a subquery that has explicit FOR UPDATE/SHARE
 	 * clauses, because pullup would cause the locking to occur semantically
@@ -1430,6 +1430,7 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 	 */
 	if (subquery->hasAggs ||
 		subquery->hasWindowFuncs ||
+		subquery->hasTargetSRFs ||
 		subquery->groupClause ||
 		subquery->groupingSets ||
 		subquery->havingQual ||
@@ -1541,15 +1542,6 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 				return false;
 		}
 	}
-
-	/*
-	 * Don't pull up a subquery that has any set-returning functions in its
-	 * targetlist.  Otherwise we might well wind up inserting set-returning
-	 * functions into places where they mustn't go, such as quals of higher
-	 * queries.  This also ensures deletion of an empty jointree is valid.
-	 */
-	if (expression_returns_set((Node *) subquery->targetList))
-		return false;
 
 	/*
 	 * Don't pull up a subquery that has any volatile functions in its

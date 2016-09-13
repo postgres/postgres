@@ -2560,14 +2560,9 @@ cookDefault(ParseState *pstate,
 
 	/*
 	 * transformExpr() should have already rejected subqueries, aggregates,
-	 * and window functions, based on the EXPR_KIND_ for a default expression.
-	 *
-	 * It can't return a set either.
+	 * window functions, and SRFs, based on the EXPR_KIND_ for a default
+	 * expression.
 	 */
-	if (expression_returns_set(expr))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("default expression must not return a set")));
 
 	/*
 	 * Coerce the expression to the correct type and typmod, if given. This

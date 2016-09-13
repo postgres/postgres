@@ -650,6 +650,11 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 bool
 query_supports_distinctness(Query *query)
 {
+	/* we don't cope with SRFs, see comment below */
+	if (query->hasTargetSRFs)
+		return false;
+
+	/* check for features we can prove distinctness with */
 	if (query->distinctClause != NIL ||
 		query->groupClause != NIL ||
 		query->groupingSets != NIL ||
@@ -695,7 +700,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	 * specified columns, since those must be evaluated before de-duplication;
 	 * but it doesn't presently seem worth the complication to check that.)
 	 */
-	if (expression_returns_set((Node *) query->targetList))
+	if (query->hasTargetSRFs)
 		return false;
 
 	/*

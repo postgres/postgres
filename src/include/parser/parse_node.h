@@ -27,7 +27,7 @@
  * by extension code that might need to call transformExpr().  The core code
  * will not enforce any context-driven restrictions on EXPR_KIND_OTHER
  * expressions, so the caller would have to check for sub-selects, aggregates,
- * and window functions if those need to be disallowed.
+ * window functions, SRFs, etc if those need to be disallowed.
  */
 typedef enum ParseExprKind
 {
@@ -150,6 +150,7 @@ struct ParseState
 	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
 	bool		p_hasAggs;
 	bool		p_hasWindowFuncs;
+	bool		p_hasTargetSRFs;
 	bool		p_hasSubLinks;
 	bool		p_hasModifyingCTE;
 	bool		p_is_insert;

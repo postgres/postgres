@@ -67,4 +67,6 @@ extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
 extern Oid LookupAggNameTypeNames(List *aggname, List *argtypes,
 					   bool noError);
 
+extern void check_srf_call_placement(ParseState *pstate, int location);
+
 #endif   /* PARSE_FUNC_H */
