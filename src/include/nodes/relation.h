@@ -1190,7 +1190,7 @@ typedef struct GatherPath
 {
 	Path		path;
 	Path	   *subpath;		/* path for each worker */
-	bool		single_copy;	/* path must not be executed >1x */
+	bool		single_copy;	/* don't execute path more than once */
 } GatherPath;
 
 /*
