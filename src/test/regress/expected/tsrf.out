@@ -159,6 +159,9 @@ SELECT few.dataa, count(*) FROM few WHERE dataa = 'a' GROUP BY few.dataa, unnest
 -- SRFs are not allowed in aggregate arguments
 SELECT min(generate_series(1, 3)) FROM few;
 ERROR:  set-valued function called in context that cannot accept a set
+-- SRFs are not allowed in window function arguments, either
+SELECT min(generate_series(1, 3)) OVER() FROM few;
+ERROR:  set-valued function called in context that cannot accept a set
 -- SRFs are normally computed after window functions
 SELECT id,lag(id) OVER(), count(*) OVER(), generate_series(1,3) FROM few;
  id | lag | count | generate_series 
@@ -369,9 +372,6 @@ INSERT INTO fewmore VALUES(1) RETURNING generate_series(1,3);
 ERROR:  set-returning functions are not allowed in RETURNING
 LINE 1: INSERT INTO fewmore VALUES(1) RETURNING generate_series(1,3)...
                                                 ^
--- nor aggregate arguments
-SELECT count(generate_series(1,3)) FROM few;
-ERROR:  set-valued function called in context that cannot accept a set
 -- nor standalone VALUES (but surely this is a bug?)
 VALUES(1, generate_series(1,2));
 ERROR:  set-valued function called in context that cannot accept a set
