@@ -375,6 +375,17 @@ LINE 1: INSERT INTO fewmore VALUES(1) RETURNING generate_series(1,3)...
 -- nor standalone VALUES (but surely this is a bug?)
 VALUES(1, generate_series(1,2));
 ERROR:  set-valued function called in context that cannot accept a set
+-- We allow tSRFs that are not at top level
+SELECT int4mul(generate_series(1,2), 10);
+ int4mul 
+---------
+      10
+      20
+(2 rows)
+
+-- but SRFs in function RTEs must be at top level (annoying restriction)
+SELECT * FROM int4mul(generate_series(1,2), 10);
+ERROR:  set-valued function called in context that cannot accept a set
 -- DISTINCT ON is evaluated before tSRF evaluation if SRF is not
 -- referenced either in ORDER BY or in the DISTINCT ON list. The ORDER
 -- BY reference can be implicitly generated, if there's no other ORDER BY.

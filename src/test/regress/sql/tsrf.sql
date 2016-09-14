@@ -80,6 +80,12 @@ INSERT INTO fewmore VALUES(1) RETURNING generate_series(1,3);
 -- nor standalone VALUES (but surely this is a bug?)
 VALUES(1, generate_series(1,2));
 
+-- We allow tSRFs that are not at top level
+SELECT int4mul(generate_series(1,2), 10);
+
+-- but SRFs in function RTEs must be at top level (annoying restriction)
+SELECT * FROM int4mul(generate_series(1,2), 10);
+
 -- DISTINCT ON is evaluated before tSRF evaluation if SRF is not
 -- referenced either in ORDER BY or in the DISTINCT ON list. The ORDER
 -- BY reference can be implicitly generated, if there's no other ORDER BY.
