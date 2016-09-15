@@ -153,7 +153,7 @@ px_gen_salt(const char *salt_type, char *buf, int rounds)
 			return PXE_BAD_SALT_ROUNDS;
 	}
 
-	res = px_get_pseudo_random_bytes((uint8 *) rbuf, g->input_len);
+	res = px_get_random_bytes((uint8 *) rbuf, g->input_len);
 	if (res < 0)
 		return res;
 

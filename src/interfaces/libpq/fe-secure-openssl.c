@@ -506,6 +506,9 @@ wildcard_certificate_match(const char *pattern, const char *string)
 	return 1;
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define ASN1_STRING_get0_data ASN1_STRING_data
+#endif
 
 /*
  * Check if a name from a server's certificate matches the peer's hostname.
@@ -522,7 +525,7 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 {
 	int			len;
 	char	   *name;
-	unsigned char *namedata;
+	const unsigned char *namedata;
 	int			result;
 
 	*store_name = NULL;
@@ -541,7 +544,7 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	 * There is no guarantee the string returned from the certificate is
 	 * NULL-terminated, so make a copy that is.
 	 */
-	namedata = ASN1_STRING_data(name_entry);
+	namedata = ASN1_STRING_get0_data(name_entry);
 	len = ASN1_STRING_length(name_entry);
 	name = malloc(len + 1);
 	if (name == NULL)
@@ -729,9 +732,10 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	return found_match && !got_error;
 }
 
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && OPENSSL_VERSION_NUMBER < 0x10100000L
 /*
- *	Callback functions for OpenSSL internal locking
+ *	Callback functions for OpenSSL internal locking. (OpenSSL 1.1.0
+ *	does its own locking, and doesn't need these anymore.)
  */
 
 static unsigned long
@@ -761,7 +765,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 			PGTHREAD_ERROR("failed to unlock mutex");
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif   /* ENABLE_THREAD_SAFETY && OPENSSL_VERSION_NUMBER < 0x10100000L */
 
 /*
  * Initialize SSL system, in particular creating the SSL_context object
@@ -800,6 +804,7 @@ pgtls_init(PGconn *conn)
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return -1;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	if (pq_init_crypto_lib)
 	{
 		/*
@@ -840,15 +845,20 @@ pgtls_init(PGconn *conn)
 				CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
+#endif   /* OPENSSL_VERSION_NUMBER < 0x10100000L */
 #endif   /* ENABLE_THREAD_SAFETY */
 
 	if (!SSL_context)
 	{
 		if (pq_init_ssl_lib)
 		{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+			OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#else
 			OPENSSL_config(NULL);
 			SSL_library_init();
 			SSL_load_error_strings();
+#endif
 		}
 
 		/*
@@ -897,12 +907,13 @@ pgtls_init(PGconn *conn)
  *	if we had any.)
  *
  *	Callbacks are only set when we're compiled in threadsafe mode, so
- *	we only need to remove them in this case.
+ *	we only need to remove them in this case. They are also not needed
+ *	with OpenSSL 1.1.0 anymore.
  */
 static void
 destroy_ssl_system(void)
 {
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* Mutex is created in initialize_ssl_system() */
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;
@@ -1617,15 +1628,19 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
  * to retry; do we need to adopt their logic for that?
  */
 
-static bool my_bio_initialized = false;
-static BIO_METHOD my_bio_methods;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define BIO_get_data(bio) (bio->ptr)
+#define BIO_set_data(bio, data) (bio->ptr = data)
+#endif
+
+static BIO_METHOD *my_bio_methods;
 
 static int
 my_sock_read(BIO *h, char *buf, int size)
 {
 	int			res;
 
-	res = pqsecure_raw_read((PGconn *) h->ptr, buf, size);
+	res = pqsecure_raw_read((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res < 0)
 	{
@@ -1655,7 +1670,7 @@ my_sock_write(BIO *h, const char *buf, int size)
 {
 	int			res;
 
-	res = pqsecure_raw_write((PGconn *) h->ptr, buf, size);
+	res = pqsecure_raw_write((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
@@ -1683,14 +1698,45 @@ my_sock_write(BIO *h, const char *buf, int size)
 static BIO_METHOD *
 my_BIO_s_socket(void)
 {
-	if (!my_bio_initialized)
+	if (!my_bio_methods)
 	{
-		memcpy(&my_bio_methods, BIO_s_socket(), sizeof(BIO_METHOD));
-		my_bio_methods.bread = my_sock_read;
-		my_bio_methods.bwrite = my_sock_write;
-		my_bio_initialized = true;
+		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+		int			my_bio_index;
+
+		my_bio_index = BIO_get_new_index();
+		if (my_bio_index == -1)
+			return NULL;
+		my_bio_methods = BIO_meth_new(my_bio_index, "libpq socket");
+		if (!my_bio_methods)
+			return NULL;
+		/*
+		 * As of this writing, these functions never fail. But check anyway, like
+		 * OpenSSL's own examples do.
+		 */
+		if (!BIO_meth_set_write(my_bio_methods, my_sock_write) ||
+			!BIO_meth_set_read(my_bio_methods, my_sock_read) ||
+			!BIO_meth_set_gets(my_bio_methods, BIO_meth_get_gets(biom)) ||
+			!BIO_meth_set_puts(my_bio_methods, BIO_meth_get_puts(biom)) ||
+			!BIO_meth_set_ctrl(my_bio_methods, BIO_meth_get_ctrl(biom)) ||
+			!BIO_meth_set_create(my_bio_methods, BIO_meth_get_create(biom)) ||
+			!BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
+			!BIO_meth_set_callback_ctrl(my_bio_methods, BIO_meth_get_callback_ctrl(biom)))
+		{
+			BIO_meth_free(my_bio_methods);
+			my_bio_methods = NULL;
+			return NULL;
+		}
+#else
+		my_bio_methods = malloc(sizeof(BIO_METHOD));
+		if (!my_bio_methods)
+			return NULL;
+		memcpy(my_bio_methods, biom, sizeof(BIO_METHOD));
+		my_bio_methods->bread = my_sock_read;
+		my_bio_methods->bwrite = my_sock_write;
+#endif
 	}
-	return &my_bio_methods;
+	return my_bio_methods;
 }
 
 /* This should exactly match openssl's SSL_set_fd except for using my BIO */
@@ -1698,16 +1744,22 @@ static int
 my_SSL_set_fd(PGconn *conn, int fd)
 {
 	int			ret = 0;
-	BIO		   *bio = NULL;
+	BIO		   *bio;
+	BIO_METHOD *bio_method;
 
-	bio = BIO_new(my_BIO_s_socket());
+	bio_method = my_BIO_s_socket();
+	if (bio_method == NULL)
+	{
+		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
+		goto err;
+	}
+	bio = BIO_new(bio_method);
 	if (bio == NULL)
 	{
 		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
 		goto err;
 	}
-	/* Use 'ptr' to store pointer to PGconn */
-	bio->ptr = conn;
+	BIO_set_data(bio, conn);
 
 	SSL_set_bio(conn->ssl, bio, bio);
 	BIO_set_fd(bio, fd, BIO_NOCLOSE);

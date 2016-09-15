@@ -72,6 +72,7 @@ static int	my_SSL_set_fd(Port *port, int fd);
 
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
+static DH  *generate_dh_parameters(int prime_len, int generator);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
@@ -164,9 +165,13 @@ be_tls_init(void)
 
 	if (!SSL_context)
 	{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#else
 		OPENSSL_config(NULL);
 		SSL_library_init();
 		SSL_load_error_strings();
+#endif
 
 		/*
 		 * We use SSLv23_method() because it can negotiate use of the highest
@@ -667,8 +672,12 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
  * to retry; do we need to adopt their logic for that?
  */
 
-static bool my_bio_initialized = false;
-static BIO_METHOD my_bio_methods;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define BIO_get_data(bio) (bio->ptr)
+#define BIO_set_data(bio, data) (bio->ptr = data)
+#endif
+
+static BIO_METHOD *my_bio_methods = NULL;
 
 static int
 my_sock_read(BIO *h, char *buf, int size)
@@ -677,7 +686,7 @@ my_sock_read(BIO *h, char *buf, int size)
 
 	if (buf != NULL)
 	{
-		res = secure_raw_read(((Port *) h->ptr), buf, size);
+		res = secure_raw_read(((Port *) BIO_get_data(h)), buf, size);
 		BIO_clear_retry_flags(h);
 		if (res <= 0)
 		{
@@ -697,7 +706,7 @@ my_sock_write(BIO *h, const char *buf, int size)
 {
 	int			res = 0;
 
-	res = secure_raw_write(((Port *) h->ptr), buf, size);
+	res = secure_raw_write(((Port *) BIO_get_data(h)), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
@@ -714,14 +723,41 @@ my_sock_write(BIO *h, const char *buf, int size)
 static BIO_METHOD *
 my_BIO_s_socket(void)
 {
-	if (!my_bio_initialized)
+	if (!my_bio_methods)
 	{
-		memcpy(&my_bio_methods, BIO_s_socket(), sizeof(BIO_METHOD));
-		my_bio_methods.bread = my_sock_read;
-		my_bio_methods.bwrite = my_sock_write;
-		my_bio_initialized = true;
+		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+		int			my_bio_index;
+
+		my_bio_index = BIO_get_new_index();
+		if (my_bio_index == -1)
+			return NULL;
+		my_bio_methods = BIO_meth_new(my_bio_index, "PostgreSQL backend socket");
+		if (!my_bio_methods)
+			return NULL;
+		if (!BIO_meth_set_write(my_bio_methods, my_sock_write) ||
+			!BIO_meth_set_read(my_bio_methods, my_sock_read) ||
+			!BIO_meth_set_gets(my_bio_methods, BIO_meth_get_gets(biom)) ||
+			!BIO_meth_set_puts(my_bio_methods, BIO_meth_get_puts(biom)) ||
+			!BIO_meth_set_ctrl(my_bio_methods, BIO_meth_get_ctrl(biom)) ||
+			!BIO_meth_set_create(my_bio_methods, BIO_meth_get_create(biom)) ||
+			!BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
+			!BIO_meth_set_callback_ctrl(my_bio_methods, BIO_meth_get_callback_ctrl(biom)))
+		{
+			BIO_meth_free(my_bio_methods);
+			my_bio_methods = NULL;
+			return NULL;
+		}
+#else
+		my_bio_methods = malloc(sizeof(BIO_METHOD));
+		if (!my_bio_methods)
+			return NULL;
+		memcpy(my_bio_methods, biom, sizeof(BIO_METHOD));
+		my_bio_methods->bread = my_sock_read;
+		my_bio_methods->bwrite = my_sock_write;
+#endif
 	}
-	return &my_bio_methods;
+	return my_bio_methods;
 }
 
 /* This should exactly match openssl's SSL_set_fd except for using my BIO */
@@ -729,17 +765,23 @@ static int
 my_SSL_set_fd(Port *port, int fd)
 {
 	int			ret = 0;
-	BIO		   *bio = NULL;
+	BIO		   *bio;
+	BIO_METHOD *bio_method;
 
-	bio = BIO_new(my_BIO_s_socket());
+	bio_method = my_BIO_s_socket();
+	if (bio_method == NULL)
+	{
+		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
+		goto err;
+	}
+	bio = BIO_new(bio_method);
 
 	if (bio == NULL)
 	{
 		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
 		goto err;
 	}
-	/* Use 'ptr' to store pointer to PGconn */
-	bio->ptr = port;
+	BIO_set_data(bio, port);
 
 	BIO_set_fd(bio, fd, BIO_NOCLOSE);
 	SSL_set_bio(port->ssl, bio, bio);
@@ -834,6 +876,27 @@ load_dh_buffer(const char *buffer, size_t len)
 }
 
 /*
+ *	Generate DH parameters.
+ *
+ *	Last resort if we can't load precomputed nor hardcoded
+ *	parameters.
+ */
+static DH  *
+generate_dh_parameters(int prime_len, int generator)
+{
+	DH		   *dh;
+
+	if ((dh = DH_new()) == NULL)
+		return NULL;
+
+	if (DH_generate_parameters_ex(dh, prime_len, generator, NULL))
+		return dh;
+
+	DH_free(dh);
+	return NULL;
+}
+
+/*
  *	Generate an ephemeral DH key.  Because this can take a long
  *	time to compute, we can use precomputed parameters of the
  *	common key sizes.
@@ -902,7 +965,7 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 		ereport(DEBUG2,
 				(errmsg_internal("DH: generating parameters (%d bits)",
 								 keylength)));
-		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
+		r = generate_dh_parameters(keylength, DH_GENERATOR_2);
 	}
 
 	return r;

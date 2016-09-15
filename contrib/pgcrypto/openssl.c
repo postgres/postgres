@@ -41,6 +41,9 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+#include "utils/memutils.h"
+#include "utils/resowner.h"
+
 /*
  * Max lengths we might want to handle.
  */
@@ -51,18 +54,73 @@
  * Hashes
  */
 
+/*
+ * To make sure we don't leak OpenSSL handles on abort, we keep OSSLDigest
+ * objects in a linked list, allocated in TopMemoryContext. We use the
+ * ResourceOwner mechanism to free them on abort.
+ */
 typedef struct OSSLDigest
 {
 	const EVP_MD *algo;
-	EVP_MD_CTX	ctx;
+	EVP_MD_CTX *ctx;
+
+	ResourceOwner owner;
+	struct OSSLDigest *next;
+	struct OSSLDigest *prev;
 } OSSLDigest;
+
+static OSSLDigest *open_digests = NULL;
+static bool resowner_callback_registered = false;
+
+static void
+free_openssldigest(OSSLDigest *digest)
+{
+	EVP_MD_CTX_destroy(digest->ctx);
+	if (digest->prev)
+		digest->prev->next = digest->next;
+	else
+		open_digests = digest->next;
+	if (digest->next)
+		digest->next->prev = digest->prev;
+	pfree(digest);
+}
+
+/*
+ * Close any open OpenSSL handles on abort.
+ */
+static void
+digest_free_callback(ResourceReleasePhase phase,
+					 bool isCommit,
+					 bool isTopLevel,
+					 void *arg)
+{
+	OSSLDigest *curr;
+	OSSLDigest *next;
+
+	if (phase != RESOURCE_RELEASE_AFTER_LOCKS)
+		return;
+
+	next = open_digests;
+	while (next)
+	{
+		curr = next;
+		next = curr->next;
+
+		if (curr->owner == CurrentResourceOwner)
+		{
+			if (isCommit)
+				elog(WARNING, "pgcrypto digest reference leak: digest %p still referenced", curr);
+			free_openssldigest(curr);
+		}
+	}
+}
 
 static unsigned
 digest_result_size(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	return EVP_MD_CTX_size(&digest->ctx);
+	return EVP_MD_CTX_size(digest->ctx);
 }
 
 static unsigned
@@ -70,7 +128,7 @@ digest_block_size(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	return EVP_MD_CTX_block_size(&digest->ctx);
+	return EVP_MD_CTX_block_size(digest->ctx);
 }
 
 static void
@@ -78,7 +136,7 @@ digest_reset(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_DigestInit_ex(&digest->ctx, digest->algo, NULL);
+	EVP_DigestInit_ex(digest->ctx, digest->algo, NULL);
 }
 
 static void
@@ -86,7 +144,7 @@ digest_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_DigestUpdate(&digest->ctx, data, dlen);
+	EVP_DigestUpdate(digest->ctx, data, dlen);
 }
 
 static void
@@ -94,7 +152,7 @@ digest_finish(PX_MD *h, uint8 *dst)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_DigestFinal_ex(&digest->ctx, dst, NULL);
+	EVP_DigestFinal_ex(digest->ctx, dst, NULL);
 }
 
 static void
@@ -102,9 +160,7 @@ digest_free(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-	EVP_MD_CTX_cleanup(&digest->ctx);
-
-	px_free(digest);
+	free_openssldigest(digest);
 	px_free(h);
 }
 
@@ -116,6 +172,7 @@ int
 px_find_digest(const char *name, PX_MD **res)
 {
 	const EVP_MD *md;
+	EVP_MD_CTX *ctx;
 	PX_MD	   *h;
 	OSSLDigest *digest;
 
@@ -125,17 +182,43 @@ px_find_digest(const char *name, PX_MD **res)
 		OpenSSL_add_all_algorithms();
 	}
 
+	if (!resowner_callback_registered)
+	{
+		RegisterResourceReleaseCallback(digest_free_callback, NULL);
+		resowner_callback_registered = true;
+	}
+
 	md = EVP_get_digestbyname(name);
 	if (md == NULL)
 		return PXE_NO_HASH;
 
-	digest = px_alloc(sizeof(*digest));
-	digest->algo = md;
+	/*
+	 * Create an OSSLDigest object, an OpenSSL MD object, and a PX_MD object.
+	 * The order is crucial, to make sure we don't leak anything on
+	 * out-of-memory or other error.
+	 */
+	digest = MemoryContextAlloc(TopMemoryContext, sizeof(*digest));
 
-	EVP_MD_CTX_init(&digest->ctx);
-	if (EVP_DigestInit_ex(&digest->ctx, digest->algo, NULL) == 0)
+	ctx = EVP_MD_CTX_create();
+	if (!ctx)
+	{
+		pfree(digest);
 		return -1;
+	}
+	if (EVP_DigestInit_ex(ctx, md, NULL) == 0)
+	{
+		pfree(digest);
+		return -1;
+	}
 
+	digest->algo = md;
+	digest->ctx = ctx;
+	digest->owner = CurrentResourceOwner;
+	digest->next = open_digests;
+	digest->prev = NULL;
+	open_digests = digest;
+
+	/* The PX_MD object is allocated in the current memory context. */
 	h = px_alloc(sizeof(*h));
 	h->result_size = digest_result_size;
 	h->block_size = digest_block_size;
@@ -831,6 +914,10 @@ px_find_cipher(const char *name, PX_Cipher **res)
 
 static int	openssl_random_init = 0;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define RAND_OpenSSL RAND_SSLeay
+#endif
+
 /*
  * OpenSSL random should re-feeded occasionally. From /dev/urandom
  * preferably.
@@ -839,7 +926,7 @@ static void
 init_openssl_rand(void)
 {
 	if (RAND_get_rand_method() == NULL)
-		RAND_set_rand_method(RAND_SSLeay());
+		RAND_set_rand_method(RAND_OpenSSL());
 	openssl_random_init = 1;
 }
 
@@ -853,21 +940,6 @@ px_get_random_bytes(uint8 *dst, unsigned count)
 
 	res = RAND_bytes(dst, count);
 	if (res == 1)
-		return count;
-
-	return PXE_OSSL_RAND_ERROR;
-}
-
-int
-px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
-{
-	int			res;
-
-	if (!openssl_random_init)
-		init_openssl_rand();
-
-	res = RAND_pseudo_bytes(dst, count);
-	if (res == 0 || res == 1)
 		return count;
 
 	return PXE_OSSL_RAND_ERROR;
