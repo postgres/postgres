@@ -6908,7 +6908,8 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 
 				/*
 				 * If we are told not to recurse, there had better not be any
-				 * child tables; else the addition would put them out of step.
+				 * child tables, because we can't mark the constraint on the
+				 * parent valid unless it is valid for all child tables.
 				 */
 				if (!recurse)
 					ereport(ERROR,
