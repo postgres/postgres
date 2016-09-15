@@ -341,7 +341,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <accesspriv> privilege
 %type <list>	privileges privilege_list
 %type <privtarget> privilege_target
-%type <funwithargs> function_with_argtypes
+%type <funwithargs> function_with_argtypes aggregate_with_argtypes
 %type <list>	function_with_argtypes_list
 %type <ival>	defacl_privilege_target
 %type <defelt>	DefACLOption
@@ -3943,14 +3943,14 @@ AlterExtensionContentsStmt:
 					n->objname = list_make1(makeString($7));
 					$$ = (Node *)n;
 				}
-			| ALTER EXTENSION name add_drop AGGREGATE func_name aggr_args
+			| ALTER EXTENSION name add_drop AGGREGATE aggregate_with_argtypes
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = $3;
 					n->action = $4;
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = $6;
-					n->objargs = extractAggrArgTypes($7);
+					n->objname = $6->funcname;
+					n->objargs = $6->funcargs;
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop CAST '(' Typename AS Typename ')'
@@ -5819,13 +5819,13 @@ CommentStmt:
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON AGGREGATE func_name aggr_args IS comment_text
+			| COMMENT ON AGGREGATE aggregate_with_argtypes IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = $4;
-					n->objargs = extractAggrArgTypes($5);
-					n->comment = $7;
+					n->objname = $4->funcname;
+					n->objargs = $4->funcargs;
+					n->comment = $6;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON FUNCTION function_with_argtypes IS comment_text
@@ -6035,15 +6035,15 @@ SecLabelStmt:
 					n->label = $8;
 					$$ = (Node *) n;
 				}
-			| SECURITY LABEL opt_provider ON AGGREGATE func_name aggr_args
+			| SECURITY LABEL opt_provider ON AGGREGATE aggregate_with_argtypes
 			  IS security_label
 				{
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = $3;
 					n->objtype = OBJECT_AGGREGATE;
-					n->objname = $6;
-					n->objargs = extractAggrArgTypes($7);
-					n->label = $9;
+					n->objname = $6->funcname;
+					n->objargs = $6->funcargs;
+					n->label = $8;
 					$$ = (Node *) n;
 				}
 			| SECURITY LABEL opt_provider ON FUNCTION function_with_argtypes
@@ -7103,6 +7103,16 @@ aggr_args_list:
 			| aggr_args_list ',' aggr_arg			{ $$ = lappend($1, $3); }
 		;
 
+aggregate_with_argtypes:
+			func_name aggr_args
+				{
+					FuncWithArgs *n = makeNode(FuncWithArgs);
+					n->funcname = $1;
+					n->funcargs = extractAggrArgTypes($2);
+					$$ = n;
+				}
+		;
+
 createfunc_opt_list:
 			/* Must be at least one to prevent conflict */
 			createfunc_opt_item						{ $$ = list_make1($1); }
@@ -7309,24 +7319,24 @@ RemoveFuncStmt:
 		;
 
 RemoveAggrStmt:
-			DROP AGGREGATE func_name aggr_args opt_drop_behavior
+			DROP AGGREGATE aggregate_with_argtypes opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
-					n->objects = list_make1($3);
-					n->arguments = list_make1(extractAggrArgTypes($4));
-					n->behavior = $5;
+					n->objects = list_make1($3->funcname);
+					n->arguments = list_make1($3->funcargs);
+					n->behavior = $4;
 					n->missing_ok = false;
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP AGGREGATE IF_P EXISTS func_name aggr_args opt_drop_behavior
+			| DROP AGGREGATE IF_P EXISTS aggregate_with_argtypes opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
-					n->objects = list_make1($5);
-					n->arguments = list_make1(extractAggrArgTypes($6));
-					n->behavior = $7;
+					n->objects = list_make1($5->funcname);
+					n->arguments = list_make1($5->funcargs);
+					n->behavior = $6;
 					n->missing_ok = true;
 					n->concurrent = false;
 					$$ = (Node *)n;
@@ -7625,13 +7635,13 @@ AlterTblSpcStmt:
  *
  *****************************************************************************/
 
-RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
+RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
-					n->object = $3;
-					n->objarg = extractAggrArgTypes($4);
-					n->newname = $7;
+					n->object = $3->funcname;
+					n->objarg = $3->funcargs;
+					n->newname = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
@@ -8157,13 +8167,13 @@ AlterObjectDependsStmt:
  *****************************************************************************/
 
 AlterObjectSchemaStmt:
-			ALTER AGGREGATE func_name aggr_args SET SCHEMA name
+			ALTER AGGREGATE aggregate_with_argtypes SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_AGGREGATE;
-					n->object = $3;
-					n->objarg = extractAggrArgTypes($4);
-					n->newschema = $7;
+					n->object = $3->funcname;
+					n->objarg = $3->funcargs;
+					n->newschema = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
@@ -8411,13 +8421,13 @@ operator_def_elem: ColLabel '=' NONE
  *
  *****************************************************************************/
 
-AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleSpec
+AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_AGGREGATE;
-					n->object = $3;
-					n->objarg = extractAggrArgTypes($4);
-					n->newowner = $7;
+					n->object = $3->funcname;
+					n->objarg = $3->funcargs;
+					n->newowner = $6;
 					$$ = (Node *)n;
 				}
 			| ALTER COLLATION any_name OWNER TO RoleSpec
