@@ -124,7 +124,9 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		fctx->tupdesc = BlessTupleDesc(tupledesc);
 
 		/* Allocate NBuffers worth of BufferCachePagesRec records. */
-		fctx->record = (BufferCachePagesRec *) palloc(sizeof(BufferCachePagesRec) * NBuffers);
+		fctx->record = (BufferCachePagesRec *)
+			MemoryContextAllocHuge(CurrentMemoryContext,
+								   sizeof(BufferCachePagesRec) * NBuffers);
 
 		/* Set max calls and remember the user function context. */
 		funcctx->max_calls = NBuffers;
