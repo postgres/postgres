@@ -914,10 +914,6 @@ px_find_cipher(const char *name, PX_Cipher **res)
 
 static int	openssl_random_init = 0;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define RAND_OpenSSL RAND_SSLeay
-#endif
-
 /*
  * OpenSSL random should re-feeded occasionally. From /dev/urandom
  * preferably.
@@ -926,7 +922,13 @@ static void
 init_openssl_rand(void)
 {
 	if (RAND_get_rand_method() == NULL)
+	{
+#ifdef HAVE_RAND_OPENSSL
 		RAND_set_rand_method(RAND_OpenSSL());
+#else
+		RAND_set_rand_method(RAND_SSLeay());
+#endif
+	}
 	openssl_random_init = 1;
 }
 

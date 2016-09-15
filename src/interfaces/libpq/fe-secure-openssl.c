@@ -506,10 +506,6 @@ wildcard_certificate_match(const char *pattern, const char *string)
 	return 1;
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define ASN1_STRING_get0_data ASN1_STRING_data
-#endif
-
 /*
  * Check if a name from a server's certificate matches the peer's hostname.
  *
@@ -544,7 +540,11 @@ verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 	 * There is no guarantee the string returned from the certificate is
 	 * NULL-terminated, so make a copy that is.
 	 */
+#ifdef HAVE_ASN1_STRING_GET0_DATA
 	namedata = ASN1_STRING_get0_data(name_entry);
+#else
+	namedata = ASN1_STRING_data(name_entry);
+#endif
 	len = ASN1_STRING_length(name_entry);
 	name = malloc(len + 1);
 	if (name == NULL)
@@ -732,10 +732,13 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	return found_match && !got_error;
 }
 
-#if defined(ENABLE_THREAD_SAFETY) && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
 /*
- *	Callback functions for OpenSSL internal locking. (OpenSSL 1.1.0
- *	does its own locking, and doesn't need these anymore.)
+ *	Callback functions for OpenSSL internal locking.  (OpenSSL 1.1.0
+ *	does its own locking, and doesn't need these anymore.  The
+ *	CRYPTO_lock() function was removed in 1.1.0, when the callbacks
+ *	were made obsolete, so we assume that if CRYPTO_lock() exists,
+ *	the callbacks are still required.)
  */
 
 static unsigned long
@@ -765,7 +768,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 			PGTHREAD_ERROR("failed to unlock mutex");
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY && OPENSSL_VERSION_NUMBER < 0x10100000L */
+#endif   /* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
 
 /*
  * Initialize SSL system, in particular creating the SSL_context object
@@ -804,7 +807,7 @@ pgtls_init(PGconn *conn)
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return -1;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#ifdef HAVE_CRYPTO_LOCK
 	if (pq_init_crypto_lib)
 	{
 		/*
@@ -845,14 +848,14 @@ pgtls_init(PGconn *conn)
 				CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
-#endif   /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#endif   /* HAVE_CRYPTO_LOCK */
 #endif   /* ENABLE_THREAD_SAFETY */
 
 	if (!SSL_context)
 	{
 		if (pq_init_ssl_lib)
 		{
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#ifdef HAVE_OPENSSL_INIT_SSL
 			OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #else
 			OPENSSL_config(NULL);
@@ -913,7 +916,7 @@ pgtls_init(PGconn *conn)
 static void
 destroy_ssl_system(void)
 {
-#if defined(ENABLE_THREAD_SAFETY) && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
 	/* Mutex is created in initialize_ssl_system() */
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;
@@ -1628,7 +1631,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
  * to retry; do we need to adopt their logic for that?
  */
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#ifndef HAVE_BIO_GET_DATA
 #define BIO_get_data(bio) (bio->ptr)
 #define BIO_set_data(bio, data) (bio->ptr = data)
 #endif
@@ -1701,7 +1704,7 @@ my_BIO_s_socket(void)
 	if (!my_bio_methods)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#ifdef HAVE_BIO_METH_NEW
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();

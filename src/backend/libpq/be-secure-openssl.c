@@ -165,7 +165,7 @@ be_tls_init(void)
 
 	if (!SSL_context)
 	{
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#ifdef HAVE_OPENSSL_INIT_SSL
 		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #else
 		OPENSSL_config(NULL);
@@ -672,7 +672,7 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
  * to retry; do we need to adopt their logic for that?
  */
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#ifndef HAVE_BIO_GET_DATA
 #define BIO_get_data(bio) (bio->ptr)
 #define BIO_set_data(bio, data) (bio->ptr = data)
 #endif
@@ -726,7 +726,7 @@ my_BIO_s_socket(void)
 	if (!my_bio_methods)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#ifdef HAVE_BIO_METH_NEW
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
