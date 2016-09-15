@@ -454,7 +454,7 @@ pg_random_uuid(PG_FUNCTION_ARGS)
 	int			err;
 
 	/* generate random bits */
-	err = px_get_pseudo_random_bytes(buf, UUID_LEN);
+	err = px_get_random_bytes(buf, UUID_LEN);
 	if (err < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
