@@ -2,7 +2,7 @@
  *
  * execIndexing.c
  *	  routines for inserting index tuples and enforcing unique and
- *	  exclusive constraints.
+ *	  exclusion constraints.
  *
  * ExecInsertIndexTuples() is the main entry point.  It's called after
  * inserting a tuple to the heap, and it inserts corresponding index tuples
