@@ -5414,21 +5414,21 @@ opclass_item:
 					n->order_family = $5;
 					$$ = (Node *) n;
 				}
-			| FUNCTION Iconst func_name func_args
+			| FUNCTION Iconst function_with_argtypes
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = $3;
-					n->args = extractArgTypes($4);
+					n->name = $3->funcname;
+					n->args = $3->funcargs;
 					n->number = $2;
 					$$ = (Node *) n;
 				}
-			| FUNCTION Iconst '(' type_list ')' func_name func_args
+			| FUNCTION Iconst '(' type_list ')' function_with_argtypes
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
-					n->name = $6;
-					n->args = extractArgTypes($7);
+					n->name = $6->funcname;
+					n->args = $6->funcargs;
 					n->number = $2;
 					n->class_args = $4;
 					$$ = (Node *) n;
@@ -5828,13 +5828,13 @@ CommentStmt:
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON FUNCTION func_name func_args IS comment_text
+			| COMMENT ON FUNCTION function_with_argtypes IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_FUNCTION;
-					n->objname = $4;
-					n->objargs = extractArgTypes($5);
-					n->comment = $7;
+					n->objname = $4->funcname;
+					n->objargs = $4->funcargs;
+					n->comment = $6;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON OPERATOR any_operator oper_argtypes IS comment_text
@@ -6046,15 +6046,15 @@ SecLabelStmt:
 					n->label = $9;
 					$$ = (Node *) n;
 				}
-			| SECURITY LABEL opt_provider ON FUNCTION func_name func_args
+			| SECURITY LABEL opt_provider ON FUNCTION function_with_argtypes
 			  IS security_label
 				{
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = $3;
 					n->objtype = OBJECT_FUNCTION;
-					n->objname = $6;
-					n->objargs = extractArgTypes($7);
-					n->label = $9;
+					n->objname = $6->funcname;
+					n->objargs = $6->funcargs;
+					n->label = $8;
 					$$ = (Node *) n;
 				}
 			| SECURITY LABEL opt_provider ON LARGE_P OBJECT_P NumericOnly
@@ -7284,24 +7284,24 @@ opt_restrict:
  *****************************************************************************/
 
 RemoveFuncStmt:
-			DROP FUNCTION func_name func_args opt_drop_behavior
+			DROP FUNCTION function_with_argtypes opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FUNCTION;
-					n->objects = list_make1($3);
-					n->arguments = list_make1(extractArgTypes($4));
-					n->behavior = $5;
+					n->objects = list_make1($3->funcname);
+					n->arguments = list_make1($3->funcargs);
+					n->behavior = $4;
 					n->missing_ok = false;
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP FUNCTION IF_P EXISTS func_name func_args opt_drop_behavior
+			| DROP FUNCTION IF_P EXISTS function_with_argtypes opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FUNCTION;
-					n->objects = list_make1($5);
-					n->arguments = list_make1(extractArgTypes($6));
-					n->behavior = $7;
+					n->objects = list_make1($5->funcname);
+					n->arguments = list_make1($5->funcargs);
+					n->behavior = $6;
 					n->missing_ok = true;
 					n->concurrent = false;
 					$$ = (Node *)n;
