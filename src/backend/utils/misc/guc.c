@@ -2758,7 +2758,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS,
 		},
 		&min_parallel_relation_size,
-		1024, 0, INT_MAX / 3,
+		(8 * 1024 * 1024) / BLCKSZ, 0, INT_MAX / 3,
 		NULL, NULL, NULL
 	},
 
