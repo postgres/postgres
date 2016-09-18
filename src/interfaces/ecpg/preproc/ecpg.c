@@ -111,15 +111,11 @@ add_preprocessor_define(char *define)
 	defines->next = pd;
 }
 
-#define ECPG_GETOPT_LONG_HELP			1
-#define ECPG_GETOPT_LONG_VERSION		2
-#define ECPG_GETOPT_LONG_REGRESSION		3
+#define ECPG_GETOPT_LONG_REGRESSION		1
 int
 main(int argc, char *const argv[])
 {
 	static struct option ecpg_options[] = {
-		{"help", no_argument, NULL, ECPG_GETOPT_LONG_HELP},
-		{"version", no_argument, NULL, ECPG_GETOPT_LONG_VERSION},
 		{"regression", no_argument, NULL, ECPG_GETOPT_LONG_REGRESSION},
 		{NULL, 0, NULL, 0}
 	};
@@ -140,33 +136,26 @@ main(int argc, char *const argv[])
 
 	find_my_exec(argv[0], my_exec_path);
 
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			help(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
+				   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+			exit(0);
+		}
+	}
+
 	output_filename = NULL;
-	while ((c = getopt_long(argc, argv, "vcio:I:tD:dC:r:h?", ecpg_options, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "vcio:I:tD:dC:r:h", ecpg_options, NULL)) != -1)
 	{
 		switch (c)
 		{
-			case ECPG_GETOPT_LONG_VERSION:
-				printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
-					   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-				exit(0);
-			case ECPG_GETOPT_LONG_HELP:
-				help(progname);
-				exit(0);
-
-				/*
-				 * -? is an alternative spelling of --help. However it is also
-				 * returned by getopt_long for unknown options. We can
-				 * distinguish both cases by means of the optopt variable
-				 * which is set to 0 if it was really -? and not an unknown
-				 * option character.
-				 */
-			case '?':
-				if (optopt == 0)
-				{
-					help(progname);
-					exit(0);
-				}
-				break;
 			case ECPG_GETOPT_LONG_REGRESSION:
 				regression_mode = true;
 				break;
