@@ -487,10 +487,17 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter is intended for use with streaming replication deployments;
         however, if the parameter is specified it will be honored in all cases.
-        Synchronous replication is not affected by this setting because there is
-        not yet any setting to request synchronous apply of transaction commits.
+
         <varname>hot_standby_feedback</> will be delayed by use of this feature
         which could lead to bloat on the master; use both together with care.
+
+        <warning>
+         <para>
+          Synchronous replication is affected by this setting when <varname>synchronous_commit</varname>
+          is set to <literal>remote_apply</literal>; every <literal>COMMIT</literal>
+          will need to wait to be applied.
+         </para>
+        </warning>
        </para>
       </listitem>
      </varlistentry>
