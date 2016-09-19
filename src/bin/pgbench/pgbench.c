@@ -250,6 +250,7 @@ typedef struct
 	int			nvariables;		/* number of variables */
 	bool		vars_sorted;	/* are variables sorted by name? */
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
+	int64		sleep_until;	/* scheduled start time of next cmd (usec) */
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
 	int			use_file;		/* index in sql_scripts for this client */
@@ -1830,6 +1831,7 @@ top:
 			}
 		}
 
+		st->sleep_until = st->txn_scheduled;
 		st->sleeping = true;
 		st->throttling = true;
 		st->is_throttled = true;
@@ -1842,7 +1844,7 @@ top:
 	{							/* are we sleeping? */
 		if (INSTR_TIME_IS_ZERO(now))
 			INSTR_TIME_SET_CURRENT(now);
-		if (INSTR_TIME_GET_MICROSEC(now) < st->txn_scheduled)
+		if (INSTR_TIME_GET_MICROSEC(now) < st->sleep_until)
 			return true;		/* Still sleeping, nothing to do here */
 		/* Else done sleeping, go ahead with next command */
 		st->sleeping = false;
@@ -2141,7 +2143,7 @@ top:
 				usec *= 1000000;
 
 			INSTR_TIME_SET_CURRENT(now);
-			st->txn_scheduled = INSTR_TIME_GET_MICROSEC(now) + usec;
+			st->sleep_until = INSTR_TIME_GET_MICROSEC(now) + usec;
 			st->sleeping = true;
 
 			st->listen = true;
