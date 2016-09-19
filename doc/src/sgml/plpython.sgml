@@ -696,19 +696,6 @@ AS $$
 $$ LANGUAGE plpythonu;
 </programlisting>
 
-       <warning>
-        <para>
-         Due to Python
-         <ulink url="http://bugs.python.org/issue1483133">bug #1483133</ulink>,
-         some debug versions of Python 2.4
-         (configured and compiled with option <literal>--with-pydebug</literal>)
-         are known to crash the <productname>PostgreSQL</productname> server
-         when using an iterator to return a set result.
-         Unpatched versions of Fedora 4 contain this bug.
-         It does not happen in production versions of Python or on patched
-         versions of Fedora 4.
-        </para>
-       </warning>
       </para>
      </listitem>
     </varlistentry>
