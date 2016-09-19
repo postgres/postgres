@@ -219,6 +219,7 @@ typedef struct
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
+	int64		sleep_until;	/* scheduled start time of next cmd (usec) */
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
 	int64		txn_latencies;	/* cumulated latencies */
@@ -1238,6 +1239,7 @@ top:
 			}
 		}
 
+		st->sleep_until = st->txn_scheduled;
 		st->sleeping = 1;
 		st->throttling = true;
 		st->is_throttled = true;
@@ -1253,7 +1255,7 @@ top:
 		if (INSTR_TIME_IS_ZERO(now))
 			INSTR_TIME_SET_CURRENT(now);
 		now_us = INSTR_TIME_GET_MICROSEC(now);
-		if (st->txn_scheduled <= now_us)
+		if (st->sleep_until <= now_us)
 		{
 			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
 			if (st->throttling)
@@ -1721,7 +1723,7 @@ top:
 				usec *= 1000000;
 
 			INSTR_TIME_SET_CURRENT(now);
-			st->txn_scheduled = INSTR_TIME_GET_MICROSEC(now) + usec;
+			st->sleep_until = INSTR_TIME_GET_MICROSEC(now) + usec;
 			st->sleeping = 1;
 
 			st->listen = 1;
