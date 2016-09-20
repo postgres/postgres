@@ -125,7 +125,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 	 * which is created on the second call and reset on later calls.  Thus, in
 	 * the common case where a scan is only rescan'd once, we just put the
 	 * queue in scanCxt and don't pay the overhead of making a second memory
-	 * context.  If we do rescan more than once, the first RBTree is just left
+	 * context.  If we do rescan more than once, the first queue is just left
 	 * for dead until end of scan; this small wastage seems worth the savings
 	 * in the common case.
 	 */
@@ -181,7 +181,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 												ALLOCSET_DEFAULT_SIZES);
 	}
 
-	/* create new, empty RBTree for search queue */
+	/* create new, empty pairing heap for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
 	so->queue = pairingheap_allocate(pairingheap_GISTSearchItem_cmp, scan);
 	MemoryContextSwitchTo(oldCxt);
