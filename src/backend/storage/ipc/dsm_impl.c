@@ -671,6 +671,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 	{
 		DWORD		size_high;
 		DWORD		size_low;
+		DWORD		errcode;
 
 		/* Shifts >= the width of the type are undefined. */
 #ifdef _WIN64
@@ -686,25 +687,29 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 								 size_high,		/* Upper 32 bits of size */
 								 size_low,		/* Lower 32 bits of size */
 								 name);
-		if (!hmap)
-		{
-			_dosmaperr(GetLastError());
-			ereport(elevel,
-					(errcode_for_dynamic_shared_memory(),
-				  errmsg("could not create shared memory segment \"%s\": %m",
-						 name)));
-			return false;
-		}
-		_dosmaperr(GetLastError());
-		if (errno == EEXIST)
+
+		errcode = GetLastError();
+		if (errcode == ERROR_ALREADY_EXISTS || errcode == ERROR_ACCESS_DENIED)
 		{
 			/*
 			 * On Windows, when the segment already exists, a handle for the
 			 * existing segment is returned.  We must close it before
-			 * returning.  We don't do _dosmaperr here, so errno won't be
-			 * modified.
+			 * returning.  However, if the existing segment is created by a
+			 * service, then it returns ERROR_ACCESS_DENIED. We don't do
+			 * _dosmaperr here, so errno won't be modified.
 			 */
-			CloseHandle(hmap);
+			if (hmap)
+				CloseHandle(hmap);
+			return false;
+		}
+
+		if (!hmap)
+		{
+			_dosmaperr(errcode);
+			ereport(elevel,
+					(errcode_for_dynamic_shared_memory(),
+				  errmsg("could not create shared memory segment \"%s\": %m",
+						 name)));
 			return false;
 		}
 	}
