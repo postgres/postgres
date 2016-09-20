@@ -99,6 +99,7 @@ typedef struct _restoreOptions
 	SimpleStringList indexNames;
 	SimpleStringList functionNames;
 	SimpleStringList schemaNames;
+	SimpleStringList schemaExcludeNames;
 	SimpleStringList triggerNames;
 	SimpleStringList tableNames;
 

@@ -85,6 +85,7 @@ main(int argc, char **argv)
 		{"data-only", 0, NULL, 'a'},
 		{"dbname", 1, NULL, 'd'},
 		{"exit-on-error", 0, NULL, 'e'},
+		{"exclude-schema", 1, NULL, 'N'},
 		{"file", 1, NULL, 'f'},
 		{"format", 1, NULL, 'F'},
 		{"function", 1, NULL, 'P'},
@@ -148,7 +149,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:Op:P:RsS:t:T:U:vwWx1",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:N:Op:P:RsS:t:T:U:vwWx1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -194,6 +195,10 @@ main(int argc, char **argv)
 
 			case 'n':			/* Dump data for this schema only */
 				simple_string_list_append(&opts->schemaNames, optarg);
+				break;
+
+			case 'N':			/* Do not dump data for this schema */
+				simple_string_list_append(&opts->schemaExcludeNames, optarg);
 				break;
 
 			case 'O':
@@ -456,6 +461,7 @@ usage(const char *progname)
 	printf(_("  -L, --use-list=FILENAME      use table of contents from this file for\n"
 			 "                               selecting/ordering output\n"));
 	printf(_("  -n, --schema=NAME            restore only objects in this schema\n"));
+	printf(_("  -N, --exclude-schema=NAME    do not restore objects in this schema\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)    restore named function\n"));
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));

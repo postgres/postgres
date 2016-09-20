@@ -302,7 +302,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-n <replaceable class="parameter">namespace</replaceable></option></term>
+      <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>
        <para>
@@ -310,6 +310,22 @@
         may be specified with multiple <option>-n</> switches.  This can be
         combined with the <option>-t</option> option to restore just a
         specific table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N <replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>--exclude-schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not restore objects that are in the named schema.  Multiple schemas
+        to be excluded may be specified with multiple <option>-N</> switches.
+       </para>
+
+       <para>
+        When both <option>-n</> and <option>-N</> are given for the same
+        schema name, the <option>-N</> switch wins and the schema is excluded.
        </para>
       </listitem>
      </varlistentry>

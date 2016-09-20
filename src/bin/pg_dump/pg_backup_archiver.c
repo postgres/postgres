@@ -2751,6 +2751,11 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 			return 0;
 	}
 
+	if (ropt->schemaExcludeNames.head != NULL
+		&& te->namespace
+		&& simple_string_list_member(&ropt->schemaExcludeNames, te->namespace))
+		return 0;
+
 	if (ropt->selTypes)
 	{
 		if (strcmp(te->desc, "TABLE") == 0 ||
