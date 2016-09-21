@@ -3257,6 +3257,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	tps_exclude = total->cnt / (time_include -
 						(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
+	/* Report test parameters. */
 	printf("transaction type: %s\n",
 		   num_scripts == 1 ? sql_script[0].desc : "multiple scripts");
 	printf("scaling factor: %d\n", scale);
@@ -3295,7 +3296,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	else
 	{
 		/* no measurement, show average latency computed from run time */
-		printf("latency average: %.3f ms\n",
+		printf("latency average = %.3f ms\n",
 			   1000.0 * time_include * nclients / total->cnt);
 	}
 
@@ -3323,7 +3324,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 		{
 			if (num_scripts > 1)
 				printf("SQL script %d: %s\n"
-					   " - weight = %d (targets %.1f%% of total)\n"
+					   " - weight: %d (targets %.1f%% of total)\n"
 					   " - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
 					   i + 1, sql_script[i].desc,
 					   sql_script[i].weight,
