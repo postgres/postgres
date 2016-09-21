@@ -2353,9 +2353,9 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	}
 	else
 	{
-		/* only an average latency computed from the duration is available */
+		/* no measurement, show average latency computed from run time */
 		printf("latency average: %.3f ms\n",
-			   1000.0 * duration * nclients / normal_xacts);
+			   1000.0 * time_include * nclients / normal_xacts);
 	}
 
 	if (throttle_delay)
