@@ -106,6 +106,7 @@
   &textsearch;
   &mvcc;
   &perform;
+  &parallel;
 
  </part>
 

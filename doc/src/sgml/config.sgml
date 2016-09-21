@@ -2027,6 +2027,11 @@ include_dir 'conf.d'
          as much CPU time, memory, I/O bandwidth, and so forth as a query which
          uses no workers at all.
         </para>
+
+        <para>
+         For more information on parallel query, see
+         <xref linkend="parallel-query">.
+        </para>
        </listitem>
       </varlistentry>
 
