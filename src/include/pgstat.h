@@ -1007,9 +1007,9 @@ extern void pgstat_initstats(Relation rel);
  *
  *	Called from places where server process needs to wait.  This is called
  *	to report wait event information.  The wait information is stored
- *	as 4-bytes where first byte repersents the wait event class (type of
+ *	as 4-bytes where first byte represents the wait event class (type of
  *	wait, for different types of wait, refer WaitClass) and the next
- *	3-bytes repersent the actual wait event.  Currently 2-bytes are used
+ *	3-bytes represent the actual wait event.  Currently 2-bytes are used
  *	for wait event which is sufficient for current usage, 1-byte is
  *	reserved for future usage.
  *
