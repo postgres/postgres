@@ -3296,9 +3296,11 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	if (throttle_delay || progress || latency_limit)
 		printSimpleStats("latency", &total->latency);
 	else
-		/* only an average latency computed from the duration is available */
+	{
+		/* no measurement, show average latency computed from run time */
 		printf("latency average: %.3f ms\n",
-			   1000.0 * duration * nclients / total->cnt);
+			   1000.0 * time_include * nclients / total->cnt);
+	}
 
 	if (throttle_delay)
 	{
