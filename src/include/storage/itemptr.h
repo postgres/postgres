@@ -30,9 +30,8 @@
  * structure padding bytes.  The struct is designed to be six bytes long
  * (it contains three int16 fields) but a few compilers will pad it to
  * eight bytes unless coerced.  We apply appropriate persuasion where
- * possible, and to cope with unpersuadable compilers, we try to use
- * "SizeOfIptrData" rather than "sizeof(ItemPointerData)" when computing
- * on-disk sizes.
+ * possible.  If your compiler can't be made to play along, you'll waste
+ * lots of space.
  */
 typedef struct ItemPointerData
 {
@@ -45,9 +44,6 @@ pg_attribute_packed()
 pg_attribute_aligned(2)
 #endif
 ItemPointerData;
-
-#define SizeOfIptrData	\
-	(offsetof(ItemPointerData, ip_posid) + sizeof(OffsetNumber))
 
 typedef ItemPointerData *ItemPointer;
 

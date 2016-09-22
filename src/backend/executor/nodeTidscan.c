@@ -139,7 +139,7 @@ TidListCreate(TidScanState *tidstate)
 				continue;
 			itemarray = DatumGetArrayTypeP(arraydatum);
 			deconstruct_array(itemarray,
-							  TIDOID, SizeOfIptrData, false, 's',
+							  TIDOID, sizeof(ItemPointerData), false, 's',
 							  &ipdatums, &ipnulls, &ndatums);
 			if (numTids + ndatums > numAllocTids)
 			{
