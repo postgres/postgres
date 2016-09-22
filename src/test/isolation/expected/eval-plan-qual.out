@@ -163,3 +163,24 @@ ta_id          ta_value       tb_row
 
 1              newTableAValue (1,tableBValue)
 step c2: COMMIT;
+
+starting permutation: wrtwcte readwcte c1 c2
+step wrtwcte: UPDATE table_a SET value = 'tableAValue2' WHERE id = 1;
+step readwcte: 
+	WITH
+	    cte1 AS (
+	      SELECT id FROM table_b WHERE value = 'tableBValue'
+	    ),
+	    cte2 AS (
+	      SELECT * FROM table_a
+	      WHERE id = (SELECT id FROM cte1)
+	      FOR UPDATE
+	    )
+	SELECT * FROM cte2;
+ <waiting ...>
+step c1: COMMIT;
+step c2: COMMIT;
+step readwcte: <... completed>
+id             value          
+
+1              tableAValue2   

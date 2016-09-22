@@ -103,11 +103,27 @@ step "readforss"	{
 	FROM table_a ta
 	WHERE ta.id = 1 FOR UPDATE OF ta;
 }
+step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
 step "c2"	{ COMMIT; }
 
 session "s3"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step "read"	{ SELECT * FROM accounts ORDER BY accountid; }
+
+# this test exercises EvalPlanQual with a CTE, cf bug #14328
+step "readwcte"	{
+	WITH
+	    cte1 AS (
+	      SELECT id FROM table_b WHERE value = 'tableBValue'
+	    ),
+	    cte2 AS (
+	      SELECT * FROM table_a
+	      WHERE id = (SELECT id FROM cte1)
+	      FOR UPDATE
+	    )
+	SELECT * FROM cte2;
+}
+
 teardown	{ COMMIT; }
 
 permutation "wx1" "wx2" "c1" "c2" "read"
@@ -118,3 +134,4 @@ permutation "writep2" "returningp1" "c1" "c2"
 permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
 permutation "updateforss" "readforss" "c1" "c2"
+permutation "wrtwcte" "readwcte" "c1" "c2"
