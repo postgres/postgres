@@ -452,7 +452,7 @@ struct pg_conn
 #ifndef ENABLE_GSS
 	gss_buffer_desc ginbuf;		/* GSS input token */
 #else
-	char	   *gsslib;			/* What GSS librart to use ("gssapi" or
+	char	   *gsslib;			/* What GSS library to use ("gssapi" or
 								 * "sspi") */
 #endif
 	CredHandle *sspicred;		/* SSPI credentials handle */
