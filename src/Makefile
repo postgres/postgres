@@ -26,7 +26,8 @@ SUBDIRS = \
 	bin \
 	pl \
 	makefiles \
-	test/regress
+	test/regress \
+	test/perl
 
 # There are too many interdependencies between the subdirectories, so
 # don't attempt parallel make here.
