@@ -4952,20 +4952,23 @@ getFuncs(Archive *fout, int *numFuncs)
 	selectSourceSchema(fout, "pg_catalog");
 
 	/*
-	 * Find all interesting functions.  We include functions in pg_catalog, if
-	 * they have an ACL different from what we set at initdb time (which is
-	 * saved in pg_init_privs for us to perform this check).  There may also
-	 * be functions which are members of extensions which we must dump if we
-	 * are in binary upgrade mode (we'll mark those functions as to-be-dumped
-	 * when we check if the extension is to-be-dumped and we're in binary
-	 * upgrade mode).
+	 * Find all interesting functions.  This is a bit complicated:
 	 *
-	 * Also, in 9.2 and up, exclude functions that are internally dependent on
-	 * something else, since presumably those will be created as a result of
-	 * creating the something else.  This currently only acts to suppress
-	 * constructor functions for range types.  Note that this is OK only
-	 * because the constructors don't have any dependencies the range type
-	 * doesn't have; otherwise we might not get creation ordering correct.
+	 * 1. Always exclude aggregates; those are handled elsewhere.
+	 *
+	 * 2. Always exclude functions that are internally dependent on something
+	 * else, since presumably those will be created as a result of creating
+	 * the something else.  This currently acts only to suppress constructor
+	 * functions for range types (so we only need it in 9.2 and up).  Note
+	 * this is OK only because the constructors don't have any dependencies
+	 * the range type doesn't have; otherwise we might not get creation
+	 * ordering correct.
+	 *
+	 * 3. Otherwise, we normally exclude functions in pg_catalog.  However, if
+	 * they're members of extensions and we are in binary-upgrade mode then
+	 * include them, since we want to dump extension members individually in
+	 * that mode.  Also, in 9.6 and up, include functions in pg_catalog if
+	 * they have an ACL different from what's shown in pg_init_privs.
 	 */
 	if (fout->remoteVersion >= 90600)
 	{
@@ -4992,14 +4995,14 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "(p.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_proc'::regclass "
 						  "AND pip.objsubid = 0) "
-						  "WHERE NOT proisagg "
-						  "AND NOT EXISTS (SELECT 1 FROM pg_depend "
+						  "WHERE NOT proisagg"
+						  "\n  AND NOT EXISTS (SELECT 1 FROM pg_depend "
 						  "WHERE classid = 'pg_proc'::regclass AND "
-						  "objid = p.oid AND deptype = 'i') AND ("
-						  "pronamespace != "
+						  "objid = p.oid AND deptype = 'i')"
+						  "\n  AND ("
+						  "\n  pronamespace != "
 						  "(SELECT oid FROM pg_namespace "
-						  "WHERE nspname = 'pg_catalog') OR "
-						  "p.proacl IS DISTINCT FROM pip.initprivs",
+						  "WHERE nspname = 'pg_catalog')",
 						  acl_subquery->data,
 						  racl_subquery->data,
 						  initacl_subquery->data,
@@ -5012,6 +5015,8 @@ getFuncs(Archive *fout, int *numFuncs)
 								 "objid = p.oid AND "
 								 "refclassid = 'pg_extension'::regclass AND "
 								 "deptype = 'e')");
+		appendPQExpBufferStr(query,
+						   "\n  OR p.proacl IS DISTINCT FROM pip.initprivs");
 		appendPQExpBufferChar(query, ')');
 
 		destroyPQExpBuffer(acl_subquery);
@@ -5029,16 +5034,18 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "pronamespace, "
 						  "(%s proowner) AS rolname "
 						  "FROM pg_proc p "
-						  "WHERE NOT proisagg AND ("
-						  "pronamespace != "
-						  "(SELECT oid FROM pg_namespace "
-						  "WHERE nspname = 'pg_catalog')",
+						  "WHERE NOT proisagg",
 						  username_subquery);
 		if (fout->remoteVersion >= 90200)
 			appendPQExpBufferStr(query,
 							   "\n  AND NOT EXISTS (SELECT 1 FROM pg_depend "
 								 "WHERE classid = 'pg_proc'::regclass AND "
 								 "objid = p.oid AND deptype = 'i')");
+		appendPQExpBufferStr(query,
+							 "\n  AND ("
+							 "\n  pronamespace != "
+							 "(SELECT oid FROM pg_namespace "
+							 "WHERE nspname = 'pg_catalog')");
 		if (dopt->binary_upgrade && fout->remoteVersion >= 90100)
 			appendPQExpBufferStr(query,
 							   "\n  OR EXISTS(SELECT 1 FROM pg_depend WHERE "
