@@ -122,12 +122,10 @@ standby_desc_invalidations(StringInfo buf,
 			appendStringInfoString(buf, " smgr");
 		/* not expected, but print something anyway */
 		else if (msg->id == SHAREDINVALRELMAP_ID)
-			appendStringInfoString(buf, " relmap");
-		else if (msg->id == SHAREDINVALRELMAP_ID)
 			appendStringInfo(buf, " relmap db %u", msg->rm.dbId);
 		else if (msg->id == SHAREDINVALSNAPSHOT_ID)
 			appendStringInfo(buf, " snapshot %u", msg->sn.relId);
 		else
-			appendStringInfo(buf, " unknown id %d", msg->id);
+			appendStringInfo(buf, " unrecognized id %d", msg->id);
 	}
 }
