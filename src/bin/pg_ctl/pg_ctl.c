@@ -1941,9 +1941,9 @@ do_help(void)
 	printf(_("  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
 	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 			 "                 [-o \"OPTIONS\"]\n"), progname);
-	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
-	printf(_("  %s status  [-D DATADIR]\n"), progname);
-	printf(_("  %s promote [-D DATADIR] [-s]\n"), progname);
+	printf(_("  %s reload                 [-D DATADIR] [-s]\n"), progname);
+	printf(_("  %s status                 [-D DATADIR]\n"), progname);
+	printf(_("  %s promote [-w] [-t SECS] [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #ifdef WIN32
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
