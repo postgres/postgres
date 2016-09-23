@@ -557,16 +557,17 @@ sub mkvcbuild
 			}
 		}
 		$plperl->AddReference($postgres);
+		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\perl*.lib';
 		my @perl_libs =
 		  grep { /perl\d+.lib$/ }
-		  glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
+		  glob($perl_path);
 		if (@perl_libs == 1)
 		{
 			$plperl->AddLibrary($perl_libs[0]);
 		}
 		else
 		{
-			die "could not identify perl library version";
+			die "could not identify perl library version matching pattern $perl_path\n";
 		}
 
 		# Add transform module dependent on plperl
