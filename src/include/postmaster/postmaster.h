@@ -48,7 +48,6 @@ extern const char *progname;
 
 extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 extern void ClosePostmasterPorts(bool am_syslogger);
-extern long PostmasterRandom(void);
 
 extern int	MaxLivePostmasterChildren(void);
 

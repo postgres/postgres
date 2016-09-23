@@ -403,6 +403,7 @@ static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(void);
+static long PostmasterRandom(void);
 static void RandomSalt(char *salt, int len);
 static void signal_child(pid_t pid, int signal);
 static bool SignalSomeChildren(int signal, int targets);
@@ -573,6 +574,16 @@ PostmasterMain(int argc, char *argv[])
 	 * for security, no dir or file created can be group or other accessible
 	 */
 	umask(S_IRWXG | S_IRWXO);
+
+	/*
+	 * Initialize random(3) so we don't get the same values in every run.
+	 *
+	 * Note: the seed is pretty predictable from externally-visible facts such
+	 * as postmaster start time, so avoid using random() for security-critical
+	 * random values during postmaster startup.  At the time of first
+	 * connection, PostmasterRandom will select a hopefully-more-random seed.
+	 */
+	srandom((unsigned int) (MyProcPid ^ MyStartTime));
 
 	/*
 	 * By default, palloc() requests in the postmaster will be allocated in
@@ -5099,8 +5110,12 @@ RandomSalt(char *salt, int len)
 
 /*
  * PostmasterRandom
+ *
+ * Caution: use this only for values needed during connection-request
+ * processing.  Otherwise, the intended property of having an unpredictable
+ * delay between random_start_time and random_stop_time will be broken.
  */
-long
+static long
 PostmasterRandom(void)
 {
 	/*

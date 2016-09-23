@@ -36,7 +36,6 @@
 
 #include "lib/ilist.h"
 #include "miscadmin.h"
-#include "postmaster/postmaster.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -182,7 +181,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 	{
 		Assert(dsm_control_address == NULL);
 		Assert(dsm_control_mapped_size == 0);
-		dsm_control_handle = (dsm_handle) PostmasterRandom();
+		dsm_control_handle = random();
 		if (dsm_control_handle == 0)
 			continue;
 		if (dsm_impl_op(DSM_OP_CREATE, dsm_control_handle, segsize,
