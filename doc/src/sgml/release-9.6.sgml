@@ -6,8 +6,7 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2016-??-??</simpara>
-   <simpara>Current as of 2016-08-27 (commit b9fe6cbc8)</simpara>
+   <simpara>2016-09-29</simpara>
   </note>
 
   <sect2>
@@ -56,7 +55,7 @@
     <listitem>
      <para>
       Substantial performance improvements, especially in the area of
-      scalability on multi-<literal>CPU</>-socket servers
+      scalability on multi-<acronym>CPU</>-socket servers
      </para>
     </listitem>
 
@@ -269,7 +268,7 @@ This commit is also listed under libpq and psql
        <para>
         Write <option>--no-psqlrc</option> (or its
         abbreviation <option>-X</option>) explicitly to obtain the old
-        behavior.  Scripts modified this way will still work with old
+        behavior.  Scripts so modified will still work with old
         versions of <application>psql</>.
        </para>
       </listitem>
@@ -371,6 +370,7 @@ and many others in the same vein
 2016-06-09 [c9ce4a1c6] Eliminate "parallel degree" terminology.
 2016-06-16 [75be66464] Invent min_parallel_relation_size GUC to replace a hard-
 2016-08-16 [f85b1a841] Disable parallel query by default.
+2016-09-15 [72ce78162] Make min_parallel_relation_size's default value platform
 -->
        <para>
         Parallel queries (Robert Haas, Amit Kapila, David Rowley,
@@ -504,6 +504,7 @@ and many others in the same vein
 <!--
 2016-04-08 [071180377] Use quicksort, not replacement selection, for external s
 2016-03-17 [0011c0091] Improve memory management for external sorts.
+2016-09-06 [96ba40c0f] Guard against possible memory allocation botch in batchm
 -->
        <para>
         Improve sorting performance by using quicksort, not replacement
@@ -693,7 +694,7 @@ and many others in the same vein
         <literal>(a,b) REFERENCES r (x,y)</>, then a <literal>WHERE</>
         condition such as <literal>t.a = r.x AND t.b = r.y</> cannot
         select more than one <literal>r</> row per <literal>t</> row.
-        The planner formerly considered <literal>AND</> conditions
+        The planner formerly considered these <literal>AND</> conditions
         to be independent and would often drastically misestimate
         selectivity as a result.  Now it compares the <literal>WHERE</>
         conditions to applicable foreign key constraints and produces
@@ -731,7 +732,7 @@ and many others in the same vein
         containing only already-frozen tuples are identified in the table's
         visibility map, and can be skipped by vacuum even when doing
         transaction wraparound prevention.  This should greatly reduce the
-        cost of maintaining large tables containing mostly-unchanged data.
+        cost of maintaining large tables containing mostly-unchanging data.
        </para>
 
        <para>
@@ -872,7 +873,8 @@ and many others in the same vein
         from where it will be flushed to physical storage in due time.
         Many operating systems are not smart about managing this and allow
         large amounts of dirty data to accumulate before deciding to flush
-        it all at once, leading to long delays for new I/O requests.
+        it all at once, causing long delays for new I/O requests until the
+        flushing finishes.
         This change attempts to alleviate this problem by explicitly
         requesting data flushes after a configurable interval.
        </para>
@@ -1209,7 +1211,7 @@ and many others in the same vein
 2016-04-08 [34c33a1f0] Add BSD authentication method.
 -->
        <para>
-        Add a <link linkend="auth-bsd"><literal>bsd</> authentication
+        Add a <link linkend="auth-bsd"><acronym>BSD</> authentication
         method</link> to allow use of
         the <systemitem class="osname">BSD</> Authentication service for
         <productname>PostgreSQL</> client authentication (Marisa Emerson)
@@ -1300,6 +1302,16 @@ and many others in the same vein
 
       <listitem>
 <!--
+2016-09-11 [f2dba881a] Raise max setting of checkpoint_timeout to 1d
+-->
+       <para>
+        Raise the maximum allowed value
+        of <xref linkend="guc-checkpoint-timeout"> to 24 hours (Simon Riggs)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2015-09-08 [1aba62ec6] Allow per-tablespace effective_io_concurrency
 -->
        <para>
@@ -1346,9 +1358,9 @@ and many others in the same vein
 
        <para>
         Making a distinction between these settings is no longer useful,
-        and is part of a planned future simplification of replication
-        setup.  The old names are still accepted but are converted
-        internally.
+        and merging them is a step towards a planned future simplification
+        of replication setup.  The old names are still accepted but are
+        converted to <literal>replica</> internally.
        </para>
       </listitem>
 
@@ -1375,7 +1387,7 @@ and many others in the same vein
 -->
        <para>
         Allow the server's <acronym>SSL</> key file to have group read
-        access if owned by root (Christoph Berg) <!-- Windows handling? -->
+        access if it is owned by <literal>root</> (Christoph Berg)
        </para>
 
        <para>
@@ -1616,7 +1628,7 @@ XXX this is pending backpatch, may need to remove
        <para>
         Previously, such cases failed if the same target column was
         mentioned more than once, e.g., <literal>INSERT INTO tab (x[1],
-        x[2]) VALUES ...</>.
+        x[2]) VALUES (...)</>.
        </para>
       </listitem>
 
@@ -1797,9 +1809,9 @@ XXX this is pending backpatch, may need to remove
 2016-03-23 [473b93287] Support CREATE ACCESS METHOD
 -->
        <para>
-        Introduce <command>CREATE ACCESS METHOD</> to allow extensions
-        to create index access methods (Alexander Korotkov, Petr
-        Jel&iacute;nek)
+        Introduce <link linkend="sql-create-access-method"><command>CREATE
+        ACCESS METHOD</></> to allow extensions to create index access
+        methods (Alexander Korotkov, Petr Jel&iacute;nek)
        </para>
       </listitem>
 
@@ -1912,7 +1924,7 @@ XXX this is pending backpatch, may need to remove
        <para>
         Formerly, many security-sensitive functions contained hard-wired
         checks that would throw an error if they were called by a
-        non-superuser role.  This forced the use of superuser roles for
+        non-superuser.  This forced the use of superuser roles for
         some relatively pedestrian tasks.  The hard-wired error checks
         are now gone in favor of making <application>initdb</> revoke the
         default public <literal>EXECUTE</> privilege on these functions.
@@ -1930,6 +1942,11 @@ XXX this is pending backpatch, may need to remove
         Create some <link linkend="default-roles">built-in roles</link>
         that can be used to grant access to what were previously
         superuser-only functions (Stephen Frost)
+       </para>
+
+       <para>
+        Currently the only such role is <literal>pg_signal_backend</>,
+        but more are expected to be added in future.
        </para>
       </listitem>
 
@@ -2211,7 +2228,7 @@ XXX this is pending backpatch, may need to remove
         Allow <link linkend="textsearch-statistics"><function>ts_stat()</></>
         and <link linkend="textsearch-update-triggers"><function>tsvector_update_trigger()</></>
         to operate on values that are of types binary-compatible with the
-        expected argument type, not only that argument type; for example
+        expected argument type, not just exactly that type; for example
         allow <type>citext</> where <type>text</> is expected (Teodor
         Sigaev)
        </para>
@@ -2623,10 +2640,26 @@ This commit is also listed under psql and PL/pgSQL
 
       <listitem>
 <!--
+2016-09-08 [31eb14504] Allow pg_dump to dump non-extension members of an extens
+-->
+       <para>
+        Allow <application>pg_dump</> to dump non-extension-owned objects
+        that are within an extension-owned schema
+        (Mart&iacute;n Marqu&eacute;s)
+       </para>
+
+       <para>
+        Previously such objects were ignored because they were mistakenly
+        assumed to belong to the extension owning their schema.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 2016-04-06 [3b3fcc4ee] pg_dump: Add table qualifications to some tags
 -->
        <para>
-        In <application>pg_dump</>, include the table name in object
+        In <application>pg_dump</> output, include the table name in object
         tags for object types that are only uniquely named per-table
         (for example, triggers) (Peter Eisentraut)
        </para>
@@ -2912,6 +2945,7 @@ This commit is also listed under libpq and PL/pgSQL
       <listitem>
 <!--
 2016-03-19 [7bafffea6] pgbench: Allow changing weights for scripts
+2016-09-21 [970300faa] Print test parameters like "foo: 123", and results like
 -->
        <para>
         Allow changing the selection probabilities (weights) for scripts
@@ -3011,6 +3045,7 @@ This commit is also listed under libpq and PL/pgSQL
       <listitem>
 <!--
 2015-12-17 [c4a8812cf] Use just one standalone-backend session for initdb's pos
+2016-08-30 [d9720e437] Fix initdb misbehavior when user mis-enters superuser pa
 -->
        <para>
         Speed up <application>initdb</> by using just one
@@ -3417,6 +3452,16 @@ This commit is also listed under libpq and PL/pgSQL
         <literal>submake-generated-headers</> can now be invoked to ensure
         that generated backend header files are up-to-date.  This is
         useful in subdirectories that might be built <quote>standalone</>.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-09-15 [fcd93e4af] Support OpenSSL 1.1.0.
+2016-09-15 [9895818d5] Fix building with LibreSSL.
+-->
+       <para>
+        Support OpenSSL 1.1.0 (Andreas Karlsson, Heikki Linnakangas)
        </para>
       </listitem>
 
