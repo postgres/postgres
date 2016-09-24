@@ -7596,6 +7596,11 @@
    application.
   </para>
 
+  <para>
+   By default, the <structname>pg_config</structname> view can be read
+   only by superusers.
+  </para>
+
   <table>
    <title><structname>pg_config</> Columns</title>
    <tgroup cols="3">
@@ -7771,8 +7776,8 @@
   </para>
 
   <para>
-   The <structname>pg_file_settings</structname> view can be read only by
-   superusers.
+   By default, the <structname>pg_file_settings</structname> view can be read
+   only by superusers.
   </para>
 
   <table>
