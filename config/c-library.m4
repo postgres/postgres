@@ -292,8 +292,8 @@ AC_MSG_RESULT([$pgac_cv_snprintf_size_t_support])
 
 # PGAC_TYPE_LOCALE_T
 # ------------------
-# Check for the locale_t type and find the right header file.  Mac OS
-# X needs xlocale.h; standard is locale.h, but glibc also has an
+# Check for the locale_t type and find the right header file.  macOS
+# needs xlocale.h; standard is locale.h, but glibc also has an
 # xlocale.h file that we should not use.
 #
 AC_DEFUN([PGAC_TYPE_LOCALE_T],

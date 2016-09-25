@@ -28,5 +28,5 @@ applications.
 from libpgport are linked first.  This avoids having applications
 dependent on symbols that are _used_ by libpq, but not intended to be
 exported by libpq.  libpq's libpgport usage changes over time, so such a
-dependency is a problem.  Win32, Linux, and Darwin use an export list to
+dependency is a problem.  Windows, Linux, and macOS use an export list to
 control the symbols exported by libpq.

@@ -1273,7 +1273,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 
 	/*
-	 * On Darwin, libintl replaces setlocale() with a version that calls
+	 * On macOS, libintl replaces setlocale() with a version that calls
 	 * CFLocaleCopyCurrent() when its second argument is "" and every relevant
 	 * environment variable is unset or empty.  CFLocaleCopyCurrent() makes
 	 * the process multithreaded.  The postmaster calls sigprocmask() and

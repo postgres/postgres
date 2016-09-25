@@ -1487,7 +1487,7 @@
      </para>
 
      <para>
-      This behavior has been observed on BSD-derived kernels including OS X.
+      This behavior has been observed on BSD-derived kernels including macOS.
       It resulted in an entirely-misleading startup failure complaining that
       the shared memory request size was too large.
      </para>
@@ -3765,7 +3765,7 @@
 
      <para>
       While this could theoretically happen anywhere, no standard build of
-      Perl did things this way ... until <productname>Mac OS X</> 10.5.
+      Perl did things this way ... until <productname>macOS</> 10.5.
      </para>
     </listitem>
 

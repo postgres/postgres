@@ -395,7 +395,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 #ifdef __darwin__
 
 	/*
-	 * Current OS X has many locales that report an empty string for CODESET,
+	 * Current macOS has many locales that report an empty string for CODESET,
 	 * but they all seem to actually use UTF-8.
 	 */
 	if (strlen(sys) == 0)

@@ -1844,8 +1844,8 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 	 * Even apart from the risk of broken locales, it's possible that there
 	 * are platforms where the use of abbreviated keys should be disabled at
 	 * compile time.  Having only 4 byte datums could make worst-case
-	 * performance drastically more likely, for example.  Moreover, Darwin's
-	 * strxfrm() implementations is known to not effectively concentrate a
+	 * performance drastically more likely, for example.  Moreover, macOS's
+	 * strxfrm() implementation is known to not effectively concentrate a
 	 * significant amount of entropy from the original string in earlier
 	 * transformed blobs.  It's possible that other supported platforms are
 	 * similarly encumbered.  So, if we ever get past disabling this

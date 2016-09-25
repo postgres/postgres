@@ -2023,7 +2023,7 @@ Branch: REL9_1_STABLE [e56acbe2a] 2016-02-10 19:30:12 -0500
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
-      (including OS X).
+      (including macOS).
      </para>
     </listitem>
 

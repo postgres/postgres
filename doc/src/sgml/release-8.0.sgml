@@ -345,7 +345,7 @@
      </para>
 
      <para>
-      This behavior has been observed on BSD-derived kernels including OS X.
+      This behavior has been observed on BSD-derived kernels including macOS.
       It resulted in an entirely-misleading startup failure complaining that
       the shared memory request size was too large.
      </para>
@@ -1715,7 +1715,7 @@
 
      <para>
       While this could theoretically happen anywhere, no standard build of
-      Perl did things this way ... until <productname>Mac OS X</> 10.5.
+      Perl did things this way ... until <productname>macOS</> 10.5.
      </para>
     </listitem>
 
@@ -2449,7 +2449,7 @@ Win32 to match the backend (Andrew)</para></listitem>
 (Bruce)</para></listitem>
 
 <listitem><para>Fix <application>pgxs</> <literal>-L</> library path
-specification for Win32, Cygwin, OS X, AIX (Bruce)</para></listitem>
+specification for Win32, Cygwin, macOS, AIX (Bruce)</para></listitem>
 
 <listitem><para>Check that SID is enabled while checking for Win32 admin
 privileges (Magnus)</para></listitem>
@@ -5224,7 +5224,7 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
-       Improvements to the Mac OS X startup scripts (Ray A.)
+       Improvements to the macOS startup scripts (Ray A.)
       </para>
      </listitem>
 
@@ -5328,7 +5328,7 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
-       Make libpq and ECPG build as proper shared libraries on OS X (Tom)
+       Make libpq and ECPG build as proper shared libraries on macOS (Tom)
       </para>
      </listitem>
 

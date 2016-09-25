@@ -323,7 +323,7 @@ endif
 endif # shlib_major
 
 # Where possible, restrict the symbols exported by the library to just the
-# official list, so as to avoid unintentional ABI changes.  On recent Darwin
+# official list, so as to avoid unintentional ABI changes.  On recent macOS
 # this also quiets multiply-defined-symbol warnings in programs that use
 # libpgport along with libpq.
 ifneq (,$(SHLIB_EXPORTS))

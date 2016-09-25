@@ -268,7 +268,7 @@
      </para>
 
      <para>
-      This behavior has been observed on BSD-derived kernels including OS X.
+      This behavior has been observed on BSD-derived kernels including macOS.
       It resulted in an entirely-misleading startup failure complaining that
       the shared memory request size was too large.
      </para>
@@ -2437,7 +2437,7 @@ aggregate plan</para></listitem>
 <listitem><para>Pretty-print UNION queries correctly</para></listitem>
 <listitem><para>Make psql handle <literal>\r\n</> newlines properly in COPY IN</para></listitem>
 <listitem><para><application>pg_dump</> handled ACLs with grant options incorrectly</para></listitem>
-<listitem><para>Fix thread support for OS X and Solaris</para></listitem>
+<listitem><para>Fix thread support for macOS and Solaris</para></listitem>
 <listitem><para>Updated JDBC driver (build 215) with various fixes</para></listitem>
 <listitem><para>ECPG fixes</para></listitem>
 <listitem><para>Translation updates (various contributors)</para></listitem>
@@ -2627,7 +2627,7 @@ memory</> error during <command>COPY IN</></para></listitem>
 TABLE AS</> from tables without OIDs</para></listitem>
 <listitem><para>Fix problems with <filename>alter_table</> regression test
 during parallel testing</para></listitem>
-<listitem><para>Fix problems with hitting open file limit, especially on OS X (Tom)</para></listitem>
+<listitem><para>Fix problems with hitting open file limit, especially on macOS (Tom)</para></listitem>
 <listitem><para>Partial fix for Turkish-locale issues</para>
 <para>initdb will succeed now in Turkish locale, but there are still some
 inconveniences associated with the <literal>i/I</> problem.</para></listitem>
@@ -3256,7 +3256,7 @@ DROP SCHEMA information_schema CASCADE;
     </para>
    </listitem>
 
-   <listitem><para>Enable PAM for Mac OS X (Aaron Hillegass)</para></listitem>
+   <listitem><para>Enable PAM for macOS (Aaron Hillegass)</para></listitem>
 
    <listitem>
     <para>Make B-tree indexes fully WAL-safe (Tom)</para>
@@ -3539,9 +3539,9 @@ DROP SCHEMA information_schema CASCADE;
    </listitem>
 
    <listitem>
-    <para>Add Mac OS X Rendezvous server support (Chris Campbell)</para>
+    <para>Add macOS Rendezvous server support (Chris Campbell)</para>
     <para>
-     This allows Mac OS X hosts to query the network for available
+     This allows macOS hosts to query the network for available
      <productname>PostgreSQL</productname> servers.
     </para>
    </listitem>
@@ -4561,7 +4561,7 @@ DROP SCHEMA information_schema CASCADE;
    <listitem><para>Fix locking code for s390x CPU (64-bit) (Tom)</para></listitem>
    <listitem><para>Allow OpenBSD to use local ident credentials (William Ahern)</para></listitem>
    <listitem><para>Make query plan trees read-only to executor (Tom)</para></listitem>
-   <listitem><para>Add Darwin startup scripts (David Wheeler)</para></listitem>
+   <listitem><para>Add macOS startup scripts (David Wheeler)</para></listitem>
    <listitem><para>Allow libpq to compile with Borland C++ compiler (Lester Godwin, Karl Waclawek)</para></listitem>
    <listitem><para>Use our own version of <function>getopt_long()</function> if needed (Peter)</para></listitem>
    <listitem><para>Convert administration scripts to C (Peter)</para></listitem>

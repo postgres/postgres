@@ -223,8 +223,8 @@ save_ps_display_args(int argc, char **argv)
 #if defined(__darwin__)
 
 		/*
-		 * Darwin (and perhaps other NeXT-derived platforms?) has a static
-		 * copy of the argv pointer, which we may fix like so:
+		 * macOS (and perhaps other NeXT-derived platforms?) has a static copy
+		 * of the argv pointer, which we may fix like so:
 		 */
 		*_NSGetArgv() = new_argv;
 #endif

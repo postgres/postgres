@@ -1306,7 +1306,7 @@ omicron         bryanh                  guest1
     socket parameter, or similar mechanisms.  Currently that includes
     <systemitem class="osname">Linux</>,
     most flavors of <systemitem class="osname">BSD</> including
-    <systemitem class="osname">OS X</>,
+    <systemitem class="osname">macOS</>,
     and <systemitem class="osname">Solaris</systemitem>.
    </para>
 

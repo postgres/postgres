@@ -1541,7 +1541,7 @@
 
     <listitem>
      <para>
-      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+      Warn if macOS's <function>setlocale()</> starts an unwanted extra
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
@@ -2093,7 +2093,7 @@
 
     <listitem>
      <para>
-      Fix linking of <application>libpython</> on OS X (Tom Lane)
+      Fix linking of <application>libpython</> on macOS (Tom Lane)
      </para>
 
      <para>
@@ -5895,7 +5895,7 @@
 
     <listitem>
      <para>
-      Fix incorrect quoting of log file name in Mac OS X start script
+      Fix incorrect quoting of log file name in macOS start script
       (Sidar Lopez)
      </para>
     </listitem>
@@ -10745,7 +10745,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
       </para>
 
       <para>
-       Bonjour support now requires <productname>OS X</> 10.3 or later.
+       Bonjour support now requires <productname>macOS</> 10.3 or later.
        The older API has been deprecated by Apple.
       </para>
      </listitem>

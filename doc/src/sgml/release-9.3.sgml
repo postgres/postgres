@@ -812,7 +812,7 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
-      (including OS X).
+      (including macOS).
      </para>
     </listitem>
 
@@ -3021,7 +3021,7 @@ Branch: REL9_0_STABLE [4dddf8552] 2015-05-21 20:41:55 -0400
 
     <listitem>
      <para>
-      Silence some build warnings on OS X (Tom Lane)
+      Silence some build warnings on macOS (Tom Lane)
      </para>
     </listitem>
 
@@ -4092,7 +4092,7 @@ Branch: REL9_0_STABLE [2e4946169] 2015-01-07 22:46:20 -0500
 
     <listitem>
      <para>
-      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+      Warn if macOS's <function>setlocale()</> starts an unwanted extra
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
@@ -5743,7 +5743,7 @@ Branch: REL8_4_STABLE [ae41bb4be] 2014-05-30 18:18:32 -0400
 
     <listitem>
      <para>
-      Fix linking of <application>libpython</> on OS X (Tom Lane)
+      Fix linking of <application>libpython</> on macOS (Tom Lane)
      </para>
 
      <para>
@@ -10710,7 +10710,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Add <link linkend="docguide-toolsets">instructions</link> for setting
-        up the documentation tool chain on Mac <productname>OS X</>
+        up the documentation tool chain on <productname>macOS</>
         (Peter Eisentraut)
        </para>
       </listitem>

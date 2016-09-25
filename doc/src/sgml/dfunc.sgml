@@ -127,8 +127,8 @@ cc -shared -o foo.so foo.o
 
    <varlistentry>
     <term>
-     <systemitem class="osname">OS X</>
-     <indexterm><primary>OS X</><secondary>shared library</></>
+     <systemitem class="osname">macOS</>
+     <indexterm><primary>macOS</><secondary>shared library</></>
     </term>
     <listitem>
      <para>

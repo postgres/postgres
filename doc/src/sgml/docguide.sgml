@@ -275,7 +275,7 @@ apt-get install docbook docbook-dsssl docbook-xsl libxml2-utils openjade1.3 open
   </sect2>
 
   <sect2>
-   <title>OS X</title>
+   <title>macOS</title>
 
    <para>
     If you use MacPorts, the following will get you set up:

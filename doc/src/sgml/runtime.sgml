@@ -1006,12 +1006,12 @@ option        SEMMAP=256
 
 
      <varlistentry>
-      <term><systemitem class="osname">OS X</>
-      <indexterm><primary>OS X</><secondary>IPC configuration</></>
+      <term><systemitem class="osname">macOS</>
+      <indexterm><primary>macOS</><secondary>IPC configuration</></>
       </term>
       <listitem>
        <para>
-        The recommended method for configuring shared memory in OS X
+        The recommended method for configuring shared memory in macOS
         is to create a file named <filename>/etc/sysctl.conf</>,
         containing variable assignments such as:
 <programlisting>
@@ -1021,13 +1021,13 @@ kern.sysv.shmmni=32
 kern.sysv.shmseg=8
 kern.sysv.shmall=1024
 </programlisting>
-        Note that in some OS X versions,
+        Note that in some macOS versions,
         <emphasis>all five</> shared-memory parameters must be set in
         <filename>/etc/sysctl.conf</>, else the values will be ignored.
        </para>
 
        <para>
-        Beware that recent releases of OS X ignore attempts to set
+        Beware that recent releases of macOS ignore attempts to set
         <varname>SHMMAX</> to a value that isn't an exact multiple of 4096.
        </para>
 
@@ -1036,7 +1036,7 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        In older OS X versions, you will need to reboot to have changes in the
+        In older macOS versions, you will need to reboot to have changes in the
         shared memory parameters take effect.  As of 10.5 it is possible to
         change all but <varname>SHMMNI</> on the fly, using
         <application>sysctl</>.  But it's still best to set up your preferred
@@ -1045,7 +1045,7 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        The file <filename>/etc/sysctl.conf</> is only honored in OS X
+        The file <filename>/etc/sysctl.conf</> is only honored in macOS
         10.3.9 and later.  If you are running a previous 10.3.x release,
         you must edit the file <filename>/etc/rc</>
         and change the values in the following commands:
@@ -1057,12 +1057,12 @@ sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
         Note that
-        <filename>/etc/rc</> is usually overwritten by OS X system updates,
+        <filename>/etc/rc</> is usually overwritten by macOS system updates,
         so you should expect to have to redo these edits after each update.
        </para>
 
        <para>
-        In OS X 10.2 and earlier, instead edit these commands in the file
+        In macOS 10.2 and earlier, instead edit these commands in the file
         <filename>/System/Library/StartupItems/SystemTuning/SystemTuning</>.
        </para>
       </listitem>

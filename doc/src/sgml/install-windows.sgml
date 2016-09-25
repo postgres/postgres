@@ -51,7 +51,7 @@
   <productname>MinGW-w64</productname>. These tools can also be used to
   cross-compile for 32 bit and 64 bit <productname>Windows</productname>
   targets on other hosts, such as <productname>Linux</productname> and
-  <productname>Darwin</productname>.
+  <productname>macOS</productname>.
   <productname>Cygwin</productname> is not recommended for running a
   production server, and it should only be used for running on
   older versions of <productname>Windows</productname> where

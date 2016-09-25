@@ -629,7 +629,7 @@
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
-      (including OS X).
+      (including macOS).
      </para>
     </listitem>
 
@@ -3190,7 +3190,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
     <listitem>
      <para>
-      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+      Warn if macOS's <function>setlocale()</> starts an unwanted extra
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
@@ -3899,7 +3899,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
     <listitem>
      <para>
-      Fix linking of <application>libpython</> on OS X (Tom Lane)
+      Fix linking of <application>libpython</> on macOS (Tom Lane)
      </para>
 
      <para>

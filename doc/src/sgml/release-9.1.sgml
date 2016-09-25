@@ -599,7 +599,7 @@ Branch: REL9_1_STABLE [354b3a3ac] 2016-06-19 14:01:17 -0400
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
-      (including OS X).
+      (including macOS).
      </para>
     </listitem>
 
@@ -2937,7 +2937,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
     <listitem>
      <para>
-      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+      Warn if macOS's <function>setlocale()</> starts an unwanted extra
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
@@ -3574,7 +3574,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
     <listitem>
      <para>
-      Fix linking of <application>libpython</> on OS X (Tom Lane)
+      Fix linking of <application>libpython</> on macOS (Tom Lane)
      </para>
 
      <para>
@@ -8443,7 +8443,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
     <listitem>
      <para>
-      Fix incorrect quoting of log file name in Mac OS X start script
+      Fix incorrect quoting of log file name in macOS start script
       (Sidar Lopez)
      </para>
     </listitem>

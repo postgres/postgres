@@ -13,7 +13,7 @@
 # find both .o files and executables.  Therefore, ignore error messages about
 # unsuitable files being fed to objdump.
 #
-# This is known to work on Linux and on some BSDen, including Mac OS X.
+# This is known to work on Linux and on some BSDen, including macOS.
 #
 # Caution: on the platforms we use, this only prints typedefs that are used
 # to declare at least one variable or struct field.  If you have say

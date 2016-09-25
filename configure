@@ -7658,9 +7658,9 @@ $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
 
   if test "$python_enable_shared" != 1; then
     if test "$PORTNAME" = darwin; then
-      # OS X does supply a .dylib even though Py_ENABLE_SHARED does
+      # macOS does supply a .dylib even though Py_ENABLE_SHARED does
       # not get set.  The file detection logic below doesn't succeed
-      # on older OS X versions, so make it explicit.
+      # on older macOS versions, so make it explicit.
       python_enable_shared=1
     elif test "$PORTNAME" = win32; then
       # Windows also needs an explicit override.
@@ -10120,7 +10120,7 @@ else
 fi
 
 elif test "$with_uuid" = e2fs ; then
-  # On OS X, the UUID functions are in libc
+  # On macOS, the UUID functions are in libc
   ac_fn_c_check_func "$LINENO" "uuid_generate" "ac_cv_func_uuid_generate"
 if test "x$ac_cv_func_uuid_generate" = xyes; then :
   UUID_LIBS=""
@@ -12672,7 +12672,7 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRLCPY $ac_have_decl
 _ACEOF
 
-# This is probably only present on Darwin, but may as well check always
+# This is probably only present on macOS, but may as well check always
 ac_fn_c_check_decl "$LINENO" "F_FULLFSYNC" "ac_cv_have_decl_F_FULLFSYNC" "#include <fcntl.h>
 "
 if test "x$ac_cv_have_decl_F_FULLFSYNC" = xyes; then :

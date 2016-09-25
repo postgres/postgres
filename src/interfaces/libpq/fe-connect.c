@@ -1252,7 +1252,7 @@ setKeepalivesIdle(PGconn *conn)
 	}
 #else
 #ifdef TCP_KEEPALIVE
-	/* Darwin uses TCP_KEEPALIVE rather than TCP_KEEPIDLE */
+	/* macOS uses TCP_KEEPALIVE rather than TCP_KEEPIDLE */
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPALIVE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{

@@ -240,7 +240,7 @@
 
     <listitem>
      <para>
-      Fix linking of <application>libpython</> on OS X (Tom Lane)
+      Fix linking of <application>libpython</> on macOS (Tom Lane)
      </para>
 
      <para>
@@ -5334,7 +5334,7 @@
      </para>
 
      <para>
-      This behavior has been observed on BSD-derived kernels including OS X.
+      This behavior has been observed on BSD-derived kernels including macOS.
       It resulted in an entirely-misleading startup failure complaining that
       the shared memory request size was too large.
      </para>
@@ -9764,7 +9764,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
 
      <listitem>
       <para>
-       Enable <application>DTrace</> support on <application>Mac OS X
+       Enable <application>DTrace</> support on <application>macOS
        Leopard</> and other non-Solaris platforms (Robert Lor)
       </para>
      </listitem>

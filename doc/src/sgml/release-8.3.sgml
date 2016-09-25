@@ -3075,7 +3075,7 @@
      </para>
 
      <para>
-      This behavior has been observed on BSD-derived kernels including OS X.
+      This behavior has been observed on BSD-derived kernels including macOS.
       It resulted in an entirely-misleading startup failure complaining that
       the shared memory request size was too large.
      </para>
@@ -8396,7 +8396,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Use <acronym>SYSV</> semaphores rather than POSIX on Darwin
-       &gt;= 6.0, i.e., OS X 10.2 and up (Chris Marcellino)
+       &gt;= 6.0, i.e., macOS 10.2 and up (Chris Marcellino)
       </para>
      </listitem>
 

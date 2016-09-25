@@ -929,7 +929,7 @@ Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
-      (including OS X).
+      (including macOS).
      </para>
     </listitem>
 
@@ -5254,7 +5254,7 @@ Branch: REL9_3_STABLE [6347bdb31] 2015-04-05 13:01:55 -0400
 
     <listitem>
      <para>
-      Silence some build warnings on OS X (Tom Lane)
+      Silence some build warnings on macOS (Tom Lane)
      </para>
     </listitem>
 
@@ -5813,7 +5813,7 @@ Branch: REL9_0_STABLE [2e4946169] 2015-01-07 22:46:20 -0500
 
     <listitem>
      <para>
-      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+      Warn if macOS's <function>setlocale()</> starts an unwanted extra
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
