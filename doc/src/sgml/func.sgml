@@ -15898,6 +15898,21 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry>does current user have privilege for tablespace</entry>
       </row>
       <row>
+       <entry><literal><function>has_type_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>type</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for type</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_type_privilege</function>(<parameter>type</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for type</entry>
+      </row>
+      <row>
        <entry><literal><function>pg_has_role</function>(<parameter>user</parameter>,
                                   <parameter>role</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -15954,6 +15969,9 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
    <indexterm>
     <primary>has_tablespace_privilege</primary>
+   </indexterm>
+   <indexterm>
+    <primary>has_type_privilege</primary>
    </indexterm>
    <indexterm>
     <primary>pg_has_role</primary>
@@ -16107,6 +16125,18 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>CREATE</literal>.
+   </para>
+
+   <para>
+    <function>has_type_privilege</function> checks whether a user
+    can access a type in a particular way.
+    Its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
+    When specifying a type by a text string rather than by OID,
+    the allowed input is the same as for the <type>regtype</> data type
+    (see <xref linkend="datatype-oid">).
+    The desired access privilege type must evaluate to
+    <literal>USAGE</literal>.
    </para>
 
    <para>
