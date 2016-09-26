@@ -1,23 +1,22 @@
-# LANGUAGE message translation file for pg_rewind
-# Copyright (C) 2015 PostgreSQL Global Development Group
+# Russian message translation file for pg_rewind
+# Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
+# Alexander Lakhin <exclusion@gmail.com>, 2015-2016.
 #
-# Alexander Lakhin <exclusion@gmail.com>, 2015.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
+"Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-06-14 20:44+0000\n"
-"PO-Revision-Date: 2015-10-18 18:13+0400\n"
+"POT-Creation-Date: 2016-09-20 18:14+0000\n"
+"PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgsql-translators@postgresql.org>\n"
+"Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 2.0\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
@@ -846,23 +845,23 @@ msgstr ""
 "нарушение последовательности ID линии времени %u (после %u) в сегменте "
 "журнала %s, смещение %u"
 
-#: xlogreader.c:1044
+#: xlogreader.c:1081
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "идентификатор блока %u идёт не по порядку в позиции %X/%X"
 
-#: xlogreader.c:1066
+#: xlogreader.c:1103
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA установлен, но данных в позиции %X/%X нет"
 
-#: xlogreader.c:1073
+#: xlogreader.c:1110
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr ""
 "BKPBLOCK_HAS_DATA не установлен, но длина данных равна %u в позиции %X/%X"
 
-#: xlogreader.c:1106
+#: xlogreader.c:1143
 #, c-format
 msgid ""
 "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
@@ -871,21 +870,21 @@ msgstr ""
 "BKPIMAGE_HAS_HOLE установлен, но для пропуска заданы смещение %u и длина %u "
 "при длине образа блока %u в позиции %X/%X"
 
-#: xlogreader.c:1122
+#: xlogreader.c:1159
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr ""
 "BKPIMAGE_HAS_HOLE не установлен, но для пропуска заданы смещение %u и длина "
 "%u в позиции %X/%X"
 
-#: xlogreader.c:1137
+#: xlogreader.c:1174
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
 msgstr ""
 "BKPIMAGE_IS_COMPRESSED установлен, но длина образа блока равна %u в позиции "
 "%X/%X"
 
-#: xlogreader.c:1152
+#: xlogreader.c:1189
 #, c-format
 msgid ""
 "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image "
@@ -894,25 +893,24 @@ msgstr ""
 "ни BKPIMAGE_HAS_HOLE, ни BKPIMAGE_IS_COMPRESSED не установлены, но длина "
 "образа блока равна %u в позиции %X/%X"
 
-#: xlogreader.c:1168
+#: xlogreader.c:1205
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr ""
 "BKPBLOCK_SAME_REL установлен, но предыдущее значение не задано в позиции %X/"
 "%X"
 
-#: xlogreader.c:1180
+#: xlogreader.c:1217
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "неверный идентификатор блока %u в позиции %X/%X"
 
-#: xlogreader.c:1245
+#: xlogreader.c:1282
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "запись с неверной длиной в позиции %X/%X"
 
-#: xlogreader.c:1334
+#: xlogreader.c:1371
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "неверный сжатый образ в позиции %X/%X, блок %d"
-

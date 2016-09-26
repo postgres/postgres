@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2016-04-18 04:38+0000\n"
-"PO-Revision-Date: 2016-05-19 20:39+0800\n"
+"PO-Revision-Date: 2016-09-26 10:11-0400\n"
 "Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
 "Language-Team: Chinese (Simplified) <ywpeng@whu.edu.cn>\n"
 "Language: zh_CN\n"
@@ -698,13 +698,13 @@ msgstr "无法判断函数 lowrite 的 OID\n"
 #: fe-misc.c:295
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
-msgstr "pgGetInt 不支持大小为 %lu 的整数"
+msgstr "pqGetInt 不支持大小为 %lu 的整数"
 
 # fe-misc.c:341
 #: fe-misc.c:331
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr "pgPutInt 不支持大小为 %lu 的整数"
+msgstr "pqPutInt 不支持大小为 %lu 的整数"
 
 # fe-misc.c:450 fe-misc.c:642 fe-misc.c:798
 #: fe-misc.c:642 fe-misc.c:843
