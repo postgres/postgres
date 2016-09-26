@@ -119,7 +119,7 @@ typedef HashScanOpaqueData *HashScanOpaque;
 #define HASH_VERSION	2		/* 2 signifies only hash key value is stored */
 
 /*
- * Spares[] holds the number of overflow pages currently allocated at or
+ * spares[] holds the number of overflow pages currently allocated at or
  * before a certain splitpoint. For example, if spares[3] = 7 then there are
  * 7 ovflpages before splitpoint 3 (compare BUCKET_TO_BLKNO macro).  The
  * value in spares[ovflpoint] increases as overflow pages are added at the
@@ -129,14 +129,14 @@ typedef HashScanOpaqueData *HashScanOpaque;
  *
  * ovflpages that have been recycled for reuse can be found by looking at
  * bitmaps that are stored within ovflpages dedicated for the purpose.
- * The blknos of these bitmap pages are kept in bitmaps[]; nmaps is the
+ * The blknos of these bitmap pages are kept in mapp[]; nmaps is the
  * number of currently existing bitmaps.
  *
  * The limitation on the size of spares[] comes from the fact that there's
  * no point in having more than 2^32 buckets with only uint32 hashcodes.
  * There is no particular upper limit on the size of mapp[], other than
  * needing to fit into the metapage.  (With 8K block size, 128 bitmaps
- * limit us to 64 Gb of overflow space...)
+ * limit us to 64 GB of overflow space...)
  */
 #define HASH_MAX_SPLITPOINTS		32
 #define HASH_MAX_BITMAPS			128
