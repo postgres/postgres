@@ -237,7 +237,7 @@ ginvalidate(Oid opclassoid)
 		if (opclassgroup &&
 			(opclassgroup->functionset & (((uint64) 1) << i)) != 0)
 			continue;			/* got it */
-		if (i == GIN_COMPARE_PARTIAL_PROC)
+		if (i == GIN_COMPARE_PROC || i == GIN_COMPARE_PARTIAL_PROC)
 			continue;			/* optional method */
 		if (i == GIN_CONSISTENT_PROC || i == GIN_TRICONSISTENT_PROC)
 			continue;			/* don't need both, see check below loop */

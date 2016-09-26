@@ -288,7 +288,7 @@
    have a fixed set of strategies either. Instead the support routines of
    each operator class interpret the strategy numbers according to the
    operator class's definition. As an example, the strategy numbers used by
-   the built-in operator classes for arrays are shown in
+   the built-in operator class for arrays are shown in
    <xref linkend="xindex-gin-array-strat-table">.
   </para>
 

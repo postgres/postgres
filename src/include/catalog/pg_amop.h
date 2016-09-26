@@ -673,8 +673,7 @@ DATA(insert (	2595   718 718 14 s 2864 783 0 ));
 DATA(insert (	2595   718 600 15 o 3291 783 1970 ));
 
 /*
- * gin array_ops (these anyarray operators are used with all the opclasses
- * of the family)
+ * gin array_ops
  */
 DATA(insert (	2745   2277 2277 1 s 2750 2742 0 ));
 DATA(insert (	2745   2277 2277 2 s 2751 2742 0 ));

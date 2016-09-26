@@ -315,9 +315,8 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    operators with which a GIN index can be used vary depending on the
    indexing strategy.
    As an example, the standard distribution of
-   <productname>PostgreSQL</productname> includes GIN operator classes
-   for one-dimensional arrays, which support indexed
-   queries using these operators:
+   <productname>PostgreSQL</productname> includes a GIN operator class
+   for arrays, which supports indexed queries using these operators:
 
    <simplelist>
     <member><literal>&lt;@</literal></member>

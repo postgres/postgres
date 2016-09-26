@@ -437,11 +437,28 @@ ConstructTupleDescriptor(Relation heapRelation,
 			keyType = opclassTup->opckeytype;
 		else
 			keyType = amroutine->amkeytype;
+
+		/*
+		 * If keytype is specified as ANYELEMENT, and opcintype is ANYARRAY,
+		 * then the attribute type must be an array (else it'd not have
+		 * matched this opclass); use its element type.
+		 */
+		if (keyType == ANYELEMENTOID && opclassTup->opcintype == ANYARRAYOID)
+		{
+			keyType = get_base_element_type(to->atttypid);
+			if (!OidIsValid(keyType))
+				elog(ERROR, "could not get element type of array type %u",
+					 to->atttypid);
+		}
+
 		ReleaseSysCache(tuple);
 
+		/*
+		 * If a key type different from the heap value is specified, update
+		 * the type-related fields in the index tupdesc.
+		 */
 		if (OidIsValid(keyType) && keyType != to->atttypid)
 		{
-			/* index value and heap value have different types */
 			tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(keyType));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for type %u", keyType);

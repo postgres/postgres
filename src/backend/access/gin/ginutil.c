@@ -22,7 +22,9 @@
 #include "miscadmin.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -105,9 +107,33 @@ initGinState(GinState *state, Relation index)
 										origTupdesc->attrs[i]->attcollation);
 		}
 
-		fmgr_info_copy(&(state->compareFn[i]),
-					   index_getprocinfo(index, i + 1, GIN_COMPARE_PROC),
-					   CurrentMemoryContext);
+		/*
+		 * If the compare proc isn't specified in the opclass definition, look
+		 * up the index key type's default btree comparator.
+		 */
+		if (index_getprocid(index, i + 1, GIN_COMPARE_PROC) != InvalidOid)
+		{
+			fmgr_info_copy(&(state->compareFn[i]),
+						   index_getprocinfo(index, i + 1, GIN_COMPARE_PROC),
+						   CurrentMemoryContext);
+		}
+		else
+		{
+			TypeCacheEntry *typentry;
+
+			typentry = lookup_type_cache(origTupdesc->attrs[i]->atttypid,
+										 TYPECACHE_CMP_PROC_FINFO);
+			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				errmsg("could not identify a comparison function for type %s",
+					   format_type_be(origTupdesc->attrs[i]->atttypid))));
+			fmgr_info_copy(&(state->compareFn[i]),
+						   &(typentry->cmp_proc_finfo),
+						   CurrentMemoryContext);
+		}
+
+		/* Opclass must always provide extract procs */
 		fmgr_info_copy(&(state->extractValueFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_EXTRACTVALUE_PROC),
 					   CurrentMemoryContext);
