@@ -161,12 +161,8 @@ typedef void (*PrintTocDataPtr) (ArchiveHandle *AH, TocEntry *te);
 typedef void (*ClonePtr) (ArchiveHandle *AH);
 typedef void (*DeClonePtr) (ArchiveHandle *AH);
 
-typedef char *(*WorkerJobRestorePtr) (ArchiveHandle *AH, TocEntry *te);
-typedef char *(*WorkerJobDumpPtr) (ArchiveHandle *AH, TocEntry *te);
-typedef char *(*MasterStartParallelItemPtr) (ArchiveHandle *AH, TocEntry *te,
-														 T_Action act);
-typedef int (*MasterEndParallelItemPtr) (ArchiveHandle *AH, TocEntry *te,
-											  const char *str, T_Action act);
+typedef int (*WorkerJobDumpPtr) (ArchiveHandle *AH, TocEntry *te);
+typedef int (*WorkerJobRestorePtr) (ArchiveHandle *AH, TocEntry *te);
 
 typedef size_t (*CustomOutPtr) (ArchiveHandle *AH, const void *buf, size_t len);
 
@@ -265,9 +261,6 @@ struct _archiveHandle
 	EndBlobsPtr EndBlobsPtr;
 	StartBlobPtr StartBlobPtr;
 	EndBlobPtr EndBlobPtr;
-
-	MasterStartParallelItemPtr MasterStartParallelItemPtr;
-	MasterEndParallelItemPtr MasterEndParallelItemPtr;
 
 	SetupWorkerPtr SetupWorkerPtr;
 	WorkerJobDumpPtr WorkerJobDumpPtr;

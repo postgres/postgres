@@ -152,9 +152,6 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	AH->ClonePtr = NULL;
 	AH->DeClonePtr = NULL;
 
-	AH->MasterStartParallelItemPtr = NULL;
-	AH->MasterEndParallelItemPtr = NULL;
-
 	AH->WorkerJobDumpPtr = NULL;
 	AH->WorkerJobRestorePtr = NULL;
 

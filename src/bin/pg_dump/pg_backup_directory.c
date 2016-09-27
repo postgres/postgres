@@ -89,11 +89,8 @@ static void _LoadBlobs(ArchiveHandle *AH);
 static void _Clone(ArchiveHandle *AH);
 static void _DeClone(ArchiveHandle *AH);
 
-static char *_MasterStartParallelItem(ArchiveHandle *AH, TocEntry *te, T_Action act);
-static int _MasterEndParallelItem(ArchiveHandle *AH, TocEntry *te,
-					   const char *str, T_Action act);
-static char *_WorkerJobRestoreDirectory(ArchiveHandle *AH, TocEntry *te);
-static char *_WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te);
+static int	_WorkerJobRestoreDirectory(ArchiveHandle *AH, TocEntry *te);
+static int	_WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te);
 
 static void setFilePath(ArchiveHandle *AH, char *buf,
 			const char *relativeFilename);
@@ -139,9 +136,6 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 
 	AH->WorkerJobRestorePtr = _WorkerJobRestoreDirectory;
 	AH->WorkerJobDumpPtr = _WorkerJobDumpDirectory;
-
-	AH->MasterStartParallelItemPtr = _MasterStartParallelItem;
-	AH->MasterEndParallelItemPtr = _MasterEndParallelItem;
 
 	/* Set up our private context */
 	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
@@ -754,53 +748,12 @@ _DeClone(ArchiveHandle *AH)
 }
 
 /*
- * This function is executed in the parent process. Depending on the desired
- * action (dump or restore) it creates a string that is understood by the
- * _WorkerJobDump /_WorkerJobRestore functions of the dump format.
+ * This function is executed in the child of a parallel backup for a
+ * directory-format archive and dumps the actual data for one TOC entry.
  */
-static char *
-_MasterStartParallelItem(ArchiveHandle *AH, TocEntry *te, T_Action act)
-{
-	/*
-	 * A static char is okay here, even on Windows because we call this
-	 * function only from one process (the master).
-	 */
-	static char buf[64];
-
-	if (act == ACT_DUMP)
-		snprintf(buf, sizeof(buf), "DUMP %d", te->dumpId);
-	else if (act == ACT_RESTORE)
-		snprintf(buf, sizeof(buf), "RESTORE %d", te->dumpId);
-
-	return buf;
-}
-
-/*
- * This function is executed in the child of a parallel backup for the
- * directory archive and dumps the actual data.
- *
- * We are currently returning only the DumpId so theoretically we could
- * make this function returning an int (or a DumpId). However, to
- * facilitate further enhancements and because sooner or later we need to
- * convert this to a string and send it via a message anyway, we stick with
- * char *. It is parsed on the other side by the _EndMasterParallel()
- * function of the respective dump format.
- */
-static char *
+static int
 _WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te)
 {
-	/*
-	 * short fixed-size string + some ID so far, this needs to be malloc'ed
-	 * instead of static because we work with threads on windows
-	 */
-	const int	buflen = 64;
-	char	   *buf = (char *) pg_malloc(buflen);
-	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
-
-	/* This should never happen */
-	if (!tctx)
-		exit_horribly(modulename, "error during backup\n");
-
 	/*
 	 * This function returns void. We either fail and die horribly or
 	 * succeed... A failure will be detected by the parent when the child dies
@@ -808,63 +761,15 @@ _WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te)
 	 */
 	WriteDataChunksForTocEntry(AH, te);
 
-	snprintf(buf, buflen, "OK DUMP %d", te->dumpId);
-
-	return buf;
+	return 0;
 }
 
 /*
- * This function is executed in the child of a parallel backup for the
- * directory archive and dumps the actual data.
- */
-static char *
-_WorkerJobRestoreDirectory(ArchiveHandle *AH, TocEntry *te)
-{
-	/*
-	 * short fixed-size string + some ID so far, this needs to be malloc'ed
-	 * instead of static because we work with threads on windows
-	 */
-	const int	buflen = 64;
-	char	   *buf = (char *) pg_malloc(buflen);
-	int			status;
-
-	status = parallel_restore(AH, te);
-
-	snprintf(buf, buflen, "OK RESTORE %d %d %d", te->dumpId, status,
-			 status == WORKER_IGNORED_ERRORS ? AH->public.n_errors : 0);
-
-	return buf;
-}
-
-/*
- * This function is executed in the parent process. It analyzes the response of
- * the _WorkerJobDumpDirectory/_WorkerJobRestoreDirectory functions of the
- * respective dump format.
+ * This function is executed in the child of a parallel restore from a
+ * directory-format archive and restores the actual data for one TOC entry.
  */
 static int
-_MasterEndParallelItem(ArchiveHandle *AH, TocEntry *te, const char *str, T_Action act)
+_WorkerJobRestoreDirectory(ArchiveHandle *AH, TocEntry *te)
 {
-	DumpId		dumpId;
-	int			nBytes,
-				n_errors;
-	int			status = 0;
-
-	if (act == ACT_DUMP)
-	{
-		sscanf(str, "%d%n", &dumpId, &nBytes);
-
-		Assert(dumpId == te->dumpId);
-		Assert(nBytes == strlen(str));
-	}
-	else if (act == ACT_RESTORE)
-	{
-		sscanf(str, "%d %d %d%n", &dumpId, &status, &n_errors, &nBytes);
-
-		Assert(dumpId == te->dumpId);
-		Assert(nBytes == strlen(str));
-
-		AH->public.n_errors += n_errors;
-	}
-
-	return status;
+	return parallel_restore(AH, te);
 }
