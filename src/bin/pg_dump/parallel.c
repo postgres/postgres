@@ -59,6 +59,10 @@
 
 #include "postgres_fe.h"
 
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+
 #include "pg_backup_utils.h"
 #include "parallel.h"
 
