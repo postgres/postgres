@@ -12,6 +12,10 @@
 
 #include "postgres_fe.h"
 
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+
 #include "common.h"
 #include "dumputils.h"
 
