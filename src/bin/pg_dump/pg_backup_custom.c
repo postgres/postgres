@@ -820,13 +820,9 @@ _WorkerJobRestoreCustom(ArchiveHandle *AH, TocEntry *te)
 	 */
 	const int	buflen = 64;
 	char	   *buf = (char *) pg_malloc(buflen);
-	ParallelArgs pargs;
 	int			status;
 
-	pargs.AH = AH;
-	pargs.te = te;
-
-	status = parallel_restore(&pargs);
+	status = parallel_restore(AH, te);
 
 	snprintf(buf, buflen, "OK RESTORE %d %d %d", te->dumpId, status,
 			 status == WORKER_IGNORED_ERRORS ? AH->public.n_errors : 0);
