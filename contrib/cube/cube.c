@@ -122,7 +122,7 @@ cube_in(PG_FUNCTION_ARGS)
 	cube_scanner_init(str);
 
 	if (cube_yyparse(&result) != 0)
-		cube_yyerror(&result, "bogus input");
+		cube_yyerror(&result, "cube parser failed");
 
 	cube_scanner_finish();
 
@@ -254,12 +254,9 @@ cube_subset(PG_FUNCTION_ARGS)
 	for (i = 0; i < dim; i++)
 	{
 		if ((dx[i] <= 0) || (dx[i] > DIM(c)))
-		{
-			pfree(result);
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 					 errmsg("Index out of bounds")));
-		}
 		result->x[i] = c->x[dx[i] - 1];
 		if (!IS_POINT(c))
 			result->x[i + dim] = c->x[dx[i] + DIM(c) - 1];
@@ -276,27 +273,15 @@ cube_out(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 	int			dim = DIM(cube);
 	int			i;
-	int			ndig;
 
 	initStringInfo(&buf);
 
-	/*
-	 * Get the number of digits to display.
-	 */
-	ndig = DBL_DIG + extra_float_digits;
-	if (ndig < 1)
-		ndig = 1;
-
-	/*
-	 * while printing the first (LL) corner, check if it is equal to the
-	 * second one
-	 */
 	appendStringInfoChar(&buf, '(');
 	for (i = 0; i < dim; i++)
 	{
 		if (i > 0)
 			appendStringInfoString(&buf, ", ");
-		appendStringInfo(&buf, "%.*g", ndig, LL_COORD(cube, i));
+		appendStringInfoString(&buf, float8out_internal(LL_COORD(cube, i)));
 	}
 	appendStringInfoChar(&buf, ')');
 
@@ -307,7 +292,7 @@ cube_out(PG_FUNCTION_ARGS)
 		{
 			if (i > 0)
 				appendStringInfoString(&buf, ", ");
-			appendStringInfo(&buf, "%.*g", ndig, UR_COORD(cube, i));
+			appendStringInfoString(&buf, float8out_internal(UR_COORD(cube, i)));
 		}
 		appendStringInfoChar(&buf, ')');
 	}
@@ -370,9 +355,6 @@ g_cube_union(PG_FUNCTION_ARGS)
 	NDBOX	   *tmp;
 	int			i;
 
-	/*
-	 * fprintf(stderr, "union\n");
-	 */
 	tmp = DatumGetNDBOX(entryvec->vector[0].key);
 
 	/*
@@ -441,9 +423,6 @@ g_cube_penalty(PG_FUNCTION_ARGS)
 	rt_cube_size(DatumGetNDBOX(origentry->key), &tmp2);
 	*result = (float) (tmp1 - tmp2);
 
-	/*
-	 * fprintf(stderr, "penalty\n"); fprintf(stderr, "\t%g\n", *result);
-	 */
 	PG_RETURN_FLOAT8(*result);
 }
 
@@ -484,9 +463,6 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 			   *right;
 	OffsetNumber maxoff;
 
-	/*
-	 * fprintf(stderr, "picksplit\n");
-	 */
 	maxoff = entryvec->n - 2;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
@@ -617,9 +593,6 @@ g_cube_same(PG_FUNCTION_ARGS)
 	else
 		*result = FALSE;
 
-	/*
-	 * fprintf(stderr, "same: %s\n", (*result ? "TRUE" : "FALSE" ));
-	 */
 	PG_RETURN_NDBOX(result);
 }
 
@@ -633,9 +606,6 @@ g_cube_leaf_consistent(NDBOX *key,
 {
 	bool		retval;
 
-	/*
-	 * fprintf(stderr, "leaf_consistent, %d\n", strategy);
-	 */
 	switch (strategy)
 	{
 		case RTOverlapStrategyNumber:
@@ -665,9 +635,6 @@ g_cube_internal_consistent(NDBOX *key,
 {
 	bool		retval;
 
-	/*
-	 * fprintf(stderr, "internal_consistent, %d\n", strategy);
-	 */
 	switch (strategy)
 	{
 		case RTOverlapStrategyNumber:
@@ -865,12 +832,8 @@ cube_size(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *a = PG_GETARG_NDBOX(0);
 	double		result;
-	int			i;
 
-	result = 1.0;
-	for (i = 0; i < DIM(a); i++)
-		result = result * Abs((LL_COORD(a, i) - UR_COORD(a, i)));
-
+	rt_cube_size(a, &result);
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_FLOAT8(result);
 }
@@ -878,17 +841,26 @@ cube_size(PG_FUNCTION_ARGS)
 void
 rt_cube_size(NDBOX *a, double *size)
 {
+	double		result;
 	int			i;
 
 	if (a == (NDBOX *) NULL)
-		*size = 0.0;
+	{
+		/* special case for GiST */
+		result = 0.0;
+	}
+	else if (IS_POINT(a) || DIM(a) == 0)
+	{
+		/* necessarily has zero size */
+		result = 0.0;
+	}
 	else
 	{
-		*size = 1.0;
+		result = 1.0;
 		for (i = 0; i < DIM(a); i++)
-			*size = (*size) * Abs(UR_COORD(a, i) - LL_COORD(a, i));
+			result *= Abs(UR_COORD(a, i) - LL_COORD(a, i));
 	}
-	return;
+	*size = result;
 }
 
 /* make up a metric in which one box will be 'lower' than the other
@@ -1155,10 +1127,6 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
 
-	/*
-	 * This *very bad* error was found in the source: if ( (a==NULL) ||
-	 * (b=NULL) ) return(FALSE);
-	 */
 	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
@@ -1370,7 +1338,9 @@ g_cube_distance(PG_FUNCTION_ARGS)
 	{
 		int			coord = PG_GETARG_INT32(1);
 
-		if (IS_POINT(cube))
+		if (DIM(cube) == 0)
+			retval = 0.0;
+		else if (IS_POINT(cube))
 			retval = cube->x[(coord - 1) % DIM(cube)];
 		else
 			retval = Min(cube->x[(coord - 1) % DIM(cube)],
