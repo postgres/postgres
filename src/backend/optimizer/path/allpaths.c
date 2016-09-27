@@ -2254,6 +2254,12 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * thereby changing the partition contents and thus the window functions'
  * results for rows that remain.
  *
+ * 5. If the subquery contains any set-returning functions in its targetlist,
+ * we cannot push volatile quals into it.  That would push them below the SRFs
+ * and thereby change the number of times they are evaluated.  Also, a
+ * volatile qual could succeed for some SRF output rows and fail for others,
+ * a behavior that cannot occur if it's evaluated before SRF expansion.
+ *
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
  * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
@@ -2298,8 +2304,10 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 	if (subquery->limitOffset != NULL || subquery->limitCount != NULL)
 		return false;
 
-	/* Check points 3 and 4 */
-	if (subquery->distinctClause || subquery->hasWindowFuncs)
+	/* Check points 3, 4, and 5 */
+	if (subquery->distinctClause ||
+		subquery->hasWindowFuncs ||
+		subquery->hasTargetSRFs)
 		safetyInfo->unsafeVolatile = true;
 
 	/*
