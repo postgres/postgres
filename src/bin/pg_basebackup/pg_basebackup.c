@@ -18,7 +18,9 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
-
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
