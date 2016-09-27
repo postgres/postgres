@@ -33,51 +33,16 @@ typedef enum
 	WFW_ALL_IDLE
 } WFW_WaitOption;
 
-/* Worker process statuses */
-typedef enum
-{
-	WRKR_IDLE,
-	WRKR_WORKING,
-	WRKR_TERMINATED
-} T_WorkerStatus;
-
-/*
- * Per-parallel-worker state of parallel.c.
- *
- * Much of this is valid only in the master process (or, on Windows, should
- * be touched only by the master thread).  But the AH field should be touched
- * only by workers.  The pipe descriptors are valid everywhere.
- */
-typedef struct ParallelSlot
-{
-	T_WorkerStatus workerStatus;	/* see enum above */
-
-	/* These fields are valid if workerStatus == WRKR_WORKING: */
-	TocEntry   *te;				/* item being worked on */
-	ParallelCompletionPtr callback;		/* function to call on completion */
-	void	   *callback_data;	/* passthru data for it */
-
-	ArchiveHandle *AH;			/* Archive data worker is using */
-
-	int			pipeRead;		/* master's end of the pipes */
-	int			pipeWrite;
-	int			pipeRevRead;	/* child's end of the pipes */
-	int			pipeRevWrite;
-
-	/* Child process/thread identity info: */
-#ifdef WIN32
-	uintptr_t	hThread;
-	unsigned int threadId;
-#else
-	pid_t		pid;
-#endif
-} ParallelSlot;
+/* ParallelSlot is an opaque struct known only within parallel.c */
+typedef struct ParallelSlot ParallelSlot;
 
 /* Overall state for parallel.c */
 typedef struct ParallelState
 {
 	int			numWorkers;		/* allowed number of workers */
-	ParallelSlot *parallelSlot; /* array of numWorkers slots */
+	/* these arrays have numWorkers entries, one per worker: */
+	TocEntry  **te;				/* item being worked on, or NULL */
+	ParallelSlot *parallelSlot; /* private info about each worker */
 } ParallelState;
 
 #ifdef WIN32

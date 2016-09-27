@@ -4027,8 +4027,10 @@ get_next_work_item(ArchiveHandle *AH, TocEntry *ready_list,
 
 		for (k = 0; k < pstate->numWorkers; k++)
 		{
-			if (pstate->parallelSlot[k].workerStatus == WRKR_WORKING &&
-				pstate->parallelSlot[k].te->section == SECTION_DATA)
+			TocEntry   *running_te = pstate->te[k];
+
+			if (running_te != NULL &&
+				running_te->section == SECTION_DATA)
 				count++;
 		}
 		if (pstate->numWorkers == 0 || count * 4 < pstate->numWorkers)
@@ -4049,12 +4051,10 @@ get_next_work_item(ArchiveHandle *AH, TocEntry *ready_list,
 		 */
 		for (i = 0; i < pstate->numWorkers; i++)
 		{
-			TocEntry   *running_te;
+			TocEntry   *running_te = pstate->te[i];
 
-			if (pstate->parallelSlot[i].workerStatus != WRKR_WORKING)
+			if (running_te == NULL)
 				continue;
-			running_te = pstate->parallelSlot[i].te;
-
 			if (has_lock_conflicts(te, running_te) ||
 				has_lock_conflicts(running_te, te))
 			{
