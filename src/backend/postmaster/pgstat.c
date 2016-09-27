@@ -28,6 +28,9 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <time.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #include "pgstat.h"
 

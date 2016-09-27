@@ -20,7 +20,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif

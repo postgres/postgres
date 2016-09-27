@@ -14,6 +14,9 @@
 
 #include <unistd.h>
 #include <sys/time.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 /*
  * In a Windows backend, we don't use this implementation, but rather
