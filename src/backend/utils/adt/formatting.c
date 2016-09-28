@@ -354,21 +354,27 @@ typedef struct
 
 /* ----------
  * Format picture cache
- *	(cache size:
- *		Number part = NUM_CACHE_SIZE * NUM_CACHE_FIELDS
- *		Date-time part	= DCH_CACHE_SIZE * DCH_CACHE_FIELDS
- *	)
+ *
+ * We will cache datetime format pictures up to DCH_CACHE_SIZE bytes long;
+ * likewise number format pictures up to NUM_CACHE_SIZE bytes long.
+ *
+ * For simplicity, the cache entries are fixed-size, so they allow for the
+ * worst case of a FormatNode for each byte in the picture string.
+ *
+ * The max number of entries in the caches is DCH_CACHE_ENTRIES
+ * resp. NUM_CACHE_ENTRIES.
  * ----------
  */
 #define NUM_CACHE_SIZE		64
-#define NUM_CACHE_FIELDS	16
+#define NUM_CACHE_ENTRIES	20
 #define DCH_CACHE_SIZE		128
-#define DCH_CACHE_FIELDS	16
+#define DCH_CACHE_ENTRIES	20
 
 typedef struct
 {
 	FormatNode	format[DCH_CACHE_SIZE + 1];
 	char		str[DCH_CACHE_SIZE + 1];
+	bool		valid;
 	int			age;
 } DCHCacheEntry;
 
@@ -376,22 +382,20 @@ typedef struct
 {
 	FormatNode	format[NUM_CACHE_SIZE + 1];
 	char		str[NUM_CACHE_SIZE + 1];
+	bool		valid;
 	int			age;
 	NUMDesc		Num;
 } NUMCacheEntry;
 
-/* global cache for --- date/time part */
-static DCHCacheEntry DCHCache[DCH_CACHE_FIELDS + 1];
+/* global cache for date/time format pictures */
+static DCHCacheEntry DCHCache[DCH_CACHE_ENTRIES];
+static int	n_DCHCache = 0;		/* current number of entries */
+static int	DCHCounter = 0;		/* aging-event counter */
 
-static int	n_DCHCache = 0;		/* number of entries */
-static int	DCHCounter = 0;
-
-/* global cache for --- number part */
-static NUMCacheEntry NUMCache[NUM_CACHE_FIELDS + 1];
-
-static int	n_NUMCache = 0;		/* number of entries */
-static int	NUMCounter = 0;
-static NUMCacheEntry *last_NUMCacheEntry = NUMCache + 0;
+/* global cache for number format pictures */
+static NUMCacheEntry NUMCache[NUM_CACHE_ENTRIES];
+static int	n_NUMCache = 0;		/* current number of entries */
+static int	NUMCounter = 0;		/* aging-event counter */
 
 /* ----------
  * For char->date/time conversion
@@ -944,11 +948,11 @@ typedef struct NUMProc
  * Functions
  * ----------
  */
-static const KeyWord *index_seq_search(char *str, const KeyWord *kw,
+static const KeyWord *index_seq_search(const char *str, const KeyWord *kw,
 				 const int *index);
-static const KeySuffix *suff_search(char *str, const KeySuffix *suf, int type);
+static const KeySuffix *suff_search(const char *str, const KeySuffix *suf, int type);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
-static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
+static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
@@ -982,12 +986,12 @@ static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid);
-static DCHCacheEntry *DCH_cache_search(char *str);
-static DCHCacheEntry *DCH_cache_getnew(char *str);
-
-static NUMCacheEntry *NUM_cache_search(char *str);
-static NUMCacheEntry *NUM_cache_getnew(char *str);
-static void NUM_cache_remove(NUMCacheEntry *ent);
+static DCHCacheEntry *DCH_cache_getnew(const char *str);
+static DCHCacheEntry *DCH_cache_search(const char *str);
+static DCHCacheEntry *DCH_cache_fetch(const char *str);
+static NUMCacheEntry *NUM_cache_getnew(const char *str);
+static NUMCacheEntry *NUM_cache_search(const char *str);
+static NUMCacheEntry *NUM_cache_fetch(const char *str);
 
 
 /* ----------
@@ -997,7 +1001,7 @@ static void NUM_cache_remove(NUMCacheEntry *ent);
  * ----------
  */
 static const KeyWord *
-index_seq_search(char *str, const KeyWord *kw, const int *index)
+index_seq_search(const char *str, const KeyWord *kw, const int *index)
 {
 	int			poz;
 
@@ -1021,7 +1025,7 @@ index_seq_search(char *str, const KeyWord *kw, const int *index)
 }
 
 static const KeySuffix *
-suff_search(char *str, const KeySuffix *suf, int type)
+suff_search(const char *str, const KeySuffix *suf, int type)
 {
 	const KeySuffix *s;
 
@@ -1046,182 +1050,166 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 	if (n->type != NODE_TYPE_ACTION)
 		return;
 
-	/*
-	 * In case of an error, we need to remove the numeric from the cache.  Use
-	 * a PG_TRY block to ensure that this happens.
-	 */
-	PG_TRY();
+	if (IS_EEEE(num) && n->key->id != NUM_E)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("\"EEEE\" must be the last pattern used")));
+
+	switch (n->key->id)
 	{
-		if (IS_EEEE(num) && n->key->id != NUM_E)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("\"EEEE\" must be the last pattern used")));
-
-		switch (n->key->id)
-		{
-			case NUM_9:
-				if (IS_BRACKET(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("\"9\" must be ahead of \"PR\"")));
-				if (IS_MULTI(num))
-				{
-					++num->multi;
-					break;
-				}
-				if (IS_DECIMAL(num))
-					++num->post;
-				else
-					++num->pre;
+		case NUM_9:
+			if (IS_BRACKET(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("\"9\" must be ahead of \"PR\"")));
+			if (IS_MULTI(num))
+			{
+				++num->multi;
 				break;
+			}
+			if (IS_DECIMAL(num))
+				++num->post;
+			else
+				++num->pre;
+			break;
 
-			case NUM_0:
-				if (IS_BRACKET(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("\"0\" must be ahead of \"PR\"")));
-				if (!IS_ZERO(num) && !IS_DECIMAL(num))
-				{
-					num->flag |= NUM_F_ZERO;
-					num->zero_start = num->pre + 1;
-				}
-				if (!IS_DECIMAL(num))
-					++num->pre;
-				else
-					++num->post;
+		case NUM_0:
+			if (IS_BRACKET(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("\"0\" must be ahead of \"PR\"")));
+			if (!IS_ZERO(num) && !IS_DECIMAL(num))
+			{
+				num->flag |= NUM_F_ZERO;
+				num->zero_start = num->pre + 1;
+			}
+			if (!IS_DECIMAL(num))
+				++num->pre;
+			else
+				++num->post;
 
-				num->zero_end = num->pre + num->post;
-				break;
+			num->zero_end = num->pre + num->post;
+			break;
 
-			case NUM_B:
-				if (num->pre == 0 && num->post == 0 && (!IS_ZERO(num)))
-					num->flag |= NUM_F_BLANK;
-				break;
+		case NUM_B:
+			if (num->pre == 0 && num->post == 0 && (!IS_ZERO(num)))
+				num->flag |= NUM_F_BLANK;
+			break;
 
-			case NUM_D:
-				num->flag |= NUM_F_LDECIMAL;
-				num->need_locale = TRUE;
-				/* FALLTHROUGH */
-			case NUM_DEC:
-				if (IS_DECIMAL(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple decimal points")));
-				if (IS_MULTI(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
+		case NUM_D:
+			num->flag |= NUM_F_LDECIMAL;
+			num->need_locale = TRUE;
+			/* FALLTHROUGH */
+		case NUM_DEC:
+			if (IS_DECIMAL(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("multiple decimal points")));
+			if (IS_MULTI(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("cannot use \"V\" and decimal point together")));
-				num->flag |= NUM_F_DECIMAL;
-				break;
+			num->flag |= NUM_F_DECIMAL;
+			break;
 
-			case NUM_FM:
-				num->flag |= NUM_F_FILLMODE;
-				break;
+		case NUM_FM:
+			num->flag |= NUM_F_FILLMODE;
+			break;
 
-			case NUM_S:
-				if (IS_LSIGN(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"S\" twice")));
-				if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
-				if (!IS_DECIMAL(num))
-				{
-					num->lsign = NUM_LSIGN_PRE;
-					num->pre_lsign_num = num->pre;
-					num->need_locale = TRUE;
-					num->flag |= NUM_F_LSIGN;
-				}
-				else if (num->lsign == NUM_LSIGN_NONE)
-				{
-					num->lsign = NUM_LSIGN_POST;
-					num->need_locale = TRUE;
-					num->flag |= NUM_F_LSIGN;
-				}
-				break;
-
-			case NUM_MI:
-				if (IS_LSIGN(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"S\" and \"MI\" together")));
-				num->flag |= NUM_F_MINUS;
-				if (IS_DECIMAL(num))
-					num->flag |= NUM_F_MINUS_POST;
-				break;
-
-			case NUM_PL:
-				if (IS_LSIGN(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"S\" and \"PL\" together")));
-				num->flag |= NUM_F_PLUS;
-				if (IS_DECIMAL(num))
-					num->flag |= NUM_F_PLUS_POST;
-				break;
-
-			case NUM_SG:
-				if (IS_LSIGN(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"S\" and \"SG\" together")));
-				num->flag |= NUM_F_MINUS;
-				num->flag |= NUM_F_PLUS;
-				break;
-
-			case NUM_PR:
-				if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
-				num->flag |= NUM_F_BRACKET;
-				break;
-
-			case NUM_rn:
-			case NUM_RN:
-				num->flag |= NUM_F_ROMAN;
-				break;
-
-			case NUM_L:
-			case NUM_G:
+		case NUM_S:
+			if (IS_LSIGN(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" twice")));
+			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
+			if (!IS_DECIMAL(num))
+			{
+				num->lsign = NUM_LSIGN_PRE;
+				num->pre_lsign_num = num->pre;
 				num->need_locale = TRUE;
-				break;
+				num->flag |= NUM_F_LSIGN;
+			}
+			else if (num->lsign == NUM_LSIGN_NONE)
+			{
+				num->lsign = NUM_LSIGN_POST;
+				num->need_locale = TRUE;
+				num->flag |= NUM_F_LSIGN;
+			}
+			break;
 
-			case NUM_V:
-				if (IS_DECIMAL(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
+		case NUM_MI:
+			if (IS_LSIGN(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"MI\" together")));
+			num->flag |= NUM_F_MINUS;
+			if (IS_DECIMAL(num))
+				num->flag |= NUM_F_MINUS_POST;
+			break;
+
+		case NUM_PL:
+			if (IS_LSIGN(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"PL\" together")));
+			num->flag |= NUM_F_PLUS;
+			if (IS_DECIMAL(num))
+				num->flag |= NUM_F_PLUS_POST;
+			break;
+
+		case NUM_SG:
+			if (IS_LSIGN(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"SG\" together")));
+			num->flag |= NUM_F_MINUS;
+			num->flag |= NUM_F_PLUS;
+			break;
+
+		case NUM_PR:
+			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
+			num->flag |= NUM_F_BRACKET;
+			break;
+
+		case NUM_rn:
+		case NUM_RN:
+			num->flag |= NUM_F_ROMAN;
+			break;
+
+		case NUM_L:
+		case NUM_G:
+			num->need_locale = TRUE;
+			break;
+
+		case NUM_V:
+			if (IS_DECIMAL(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("cannot use \"V\" and decimal point together")));
-				num->flag |= NUM_F_MULTI;
-				break;
+			num->flag |= NUM_F_MULTI;
+			break;
 
-			case NUM_E:
-				if (IS_EEEE(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("cannot use \"EEEE\" twice")));
-				if (IS_BLANK(num) || IS_FILLMODE(num) || IS_LSIGN(num) ||
-					IS_BRACKET(num) || IS_MINUS(num) || IS_PLUS(num) ||
-					IS_ROMAN(num) || IS_MULTI(num))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
+		case NUM_E:
+			if (IS_EEEE(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"EEEE\" twice")));
+			if (IS_BLANK(num) || IS_FILLMODE(num) || IS_LSIGN(num) ||
+				IS_BRACKET(num) || IS_MINUS(num) || IS_PLUS(num) ||
+				IS_ROMAN(num) || IS_MULTI(num))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
 					   errmsg("\"EEEE\" is incompatible with other formats"),
-							 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
-				num->flag |= NUM_F_EEEE;
-				break;
-		}
+						 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
+			num->flag |= NUM_F_EEEE;
+			break;
 	}
-	PG_CATCH();
-	{
-		NUM_cache_remove(last_NUMCacheEntry);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-
-	return;
 }
 
 /* ----------
@@ -1232,7 +1220,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
  * ----------
  */
 static void
-parse_format(FormatNode *node, char *str, const KeyWord *kw,
+parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
 {
 	const KeySuffix *s;
@@ -1350,7 +1338,6 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 
 	n->type = NODE_TYPE_END;
 	n->suffix = 0;
-	return;
 }
 
 /* ----------
@@ -3210,41 +3197,51 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 	}
 }
 
+/* select a DCHCacheEntry to hold the given format picture */
 static DCHCacheEntry *
-DCH_cache_getnew(char *str)
+DCH_cache_getnew(const char *str)
 {
 	DCHCacheEntry *ent;
 
 	/* counter overflow check - paranoia? */
-	if (DCHCounter >= (INT_MAX - DCH_CACHE_FIELDS - 1))
+	if (DCHCounter >= (INT_MAX - DCH_CACHE_ENTRIES))
 	{
 		DCHCounter = 0;
 
-		for (ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+		for (ent = DCHCache; ent < (DCHCache + DCH_CACHE_ENTRIES); ent++)
 			ent->age = (++DCHCounter);
 	}
 
 	/*
-	 * If cache is full, remove oldest entry
+	 * If cache is full, remove oldest entry (or recycle first not-valid one)
 	 */
-	if (n_DCHCache > DCH_CACHE_FIELDS)
+	if (n_DCHCache >= DCH_CACHE_ENTRIES)
 	{
 		DCHCacheEntry *old = DCHCache + 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "cache is full (%d)", n_DCHCache);
 #endif
-		for (ent = DCHCache + 1; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+		if (old->valid)
 		{
-			if (ent->age < old->age)
-				old = ent;
+			for (ent = DCHCache + 1; ent < (DCHCache + DCH_CACHE_ENTRIES); ent++)
+			{
+				if (!ent->valid)
+				{
+					old = ent;
+					break;
+				}
+				if (ent->age < old->age)
+					old = ent;
+			}
 		}
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
 #endif
+		old->valid = false;
 		StrNCpy(old->str, str, DCH_CACHE_SIZE + 1);
-		/* old->format fill parser */
 		old->age = (++DCHCounter);
+		/* caller is expected to fill format, then set valid */
 		return old;
 	}
 	else
@@ -3253,32 +3250,34 @@ DCH_cache_getnew(char *str)
 		elog(DEBUG_elog_output, "NEW (%d)", n_DCHCache);
 #endif
 		ent = DCHCache + n_DCHCache;
+		ent->valid = false;
 		StrNCpy(ent->str, str, DCH_CACHE_SIZE + 1);
-		/* ent->format fill parser */
 		ent->age = (++DCHCounter);
+		/* caller is expected to fill format, then set valid */
 		++n_DCHCache;
 		return ent;
 	}
 }
 
+/* look for an existing DCHCacheEntry matching the given format picture */
 static DCHCacheEntry *
-DCH_cache_search(char *str)
+DCH_cache_search(const char *str)
 {
 	int			i;
 	DCHCacheEntry *ent;
 
 	/* counter overflow check - paranoia? */
-	if (DCHCounter >= (INT_MAX - DCH_CACHE_FIELDS - 1))
+	if (DCHCounter >= (INT_MAX - DCH_CACHE_ENTRIES))
 	{
 		DCHCounter = 0;
 
-		for (ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+		for (ent = DCHCache; ent < (DCHCache + DCH_CACHE_ENTRIES); ent++)
 			ent->age = (++DCHCounter);
 	}
 
 	for (i = 0, ent = DCHCache; i < n_DCHCache; i++, ent++)
 	{
-		if (strcmp(ent->str, str) == 0)
+		if (ent->valid && strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++DCHCounter);
 			return ent;
@@ -3286,6 +3285,29 @@ DCH_cache_search(char *str)
 	}
 
 	return NULL;
+}
+
+/* Find or create a DCHCacheEntry for the given format picture */
+static DCHCacheEntry *
+DCH_cache_fetch(const char *str)
+{
+	DCHCacheEntry *ent;
+
+	if ((ent = DCH_cache_search(str)) == NULL)
+	{
+		/*
+		 * Not in the cache, must run parser and save a new format-picture to
+		 * the cache.  Do not mark the cache entry valid until parsing
+		 * succeeds.
+		 */
+		ent = DCH_cache_getnew(str);
+
+		parse_format(ent->format, str, DCH_keywords,
+					 DCH_suff, DCH_index, DCH_TYPE, NULL);
+
+		ent->valid = true;
+	}
+	return ent;
 }
 
 /*
@@ -3315,47 +3337,27 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval, Oid collid)
 	result = palloc((fmt_len * DCH_MAX_ITEM_SIZ) + 1);
 	*result = '\0';
 
-	/*
-	 * Allocate new memory if format picture is bigger than static cache and
-	 * not use cache (call parser always)
-	 */
 	if (fmt_len > DCH_CACHE_SIZE)
 	{
-		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
+		/*
+		 * Allocate new memory if format picture is bigger than static cache
+		 * and do not use cache (call parser always)
+		 */
 		incache = FALSE;
+
+		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
 
 		parse_format(format, fmt_str, DCH_keywords,
 					 DCH_suff, DCH_index, DCH_TYPE, NULL);
-
-		(format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
 	}
 	else
 	{
 		/*
 		 * Use cache buffers
 		 */
-		DCHCacheEntry *ent;
+		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str);
 
 		incache = TRUE;
-
-		if ((ent = DCH_cache_search(fmt_str)) == NULL)
-		{
-			ent = DCH_cache_getnew(fmt_str);
-
-			/*
-			 * Not in the cache, must run parser and save a new format-picture
-			 * to the cache.
-			 */
-			parse_format(ent->format, fmt_str, DCH_keywords,
-						 DCH_suff, DCH_index, DCH_TYPE, NULL);
-
-			(ent->format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
-
-#ifdef DEBUG_TO_FROM_CHAR
-			/* dump_node(ent->format, fmt_len); */
-			/* dump_index(DCH_keywords, DCH_index);  */
-#endif
-		}
 		format = ent->format;
 	}
 
@@ -3584,7 +3586,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		{
 			/*
 			 * Allocate new memory if format picture is bigger than static
-			 * cache and not use cache (call parser always)
+			 * cache and do not use cache (call parser always)
 			 */
 			incache = FALSE;
 
@@ -3592,31 +3594,15 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 			parse_format(format, fmt_str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
-
-			(format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 		}
 		else
 		{
 			/*
 			 * Use cache buffers
 			 */
-			DCHCacheEntry *ent;
+			DCHCacheEntry *ent = DCH_cache_fetch(fmt_str);
 
 			incache = TRUE;
-
-			if ((ent = DCH_cache_search(fmt_str)) == NULL)
-			{
-				/*
-				 * Not in the cache, must run parser and save a new
-				 * format-picture to the cache.
-				 */
-				ent = DCH_cache_getnew(fmt_str);
-
-				parse_format(ent->format, fmt_str, DCH_keywords,
-							 DCH_suff, DCH_index, DCH_TYPE, NULL);
-
-				(ent->format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
-			}
 			format = ent->format;
 		}
 
@@ -3878,51 +3864,52 @@ do { \
 	(_n)->zero_end		= 0;	\
 } while(0)
 
+/* select a NUMCacheEntry to hold the given format picture */
 static NUMCacheEntry *
-NUM_cache_getnew(char *str)
+NUM_cache_getnew(const char *str)
 {
 	NUMCacheEntry *ent;
 
 	/* counter overflow check - paranoia? */
-	if (NUMCounter >= (INT_MAX - NUM_CACHE_FIELDS - 1))
+	if (NUMCounter >= (INT_MAX - NUM_CACHE_ENTRIES))
 	{
 		NUMCounter = 0;
 
-		for (ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
+		for (ent = NUMCache; ent < (NUMCache + NUM_CACHE_ENTRIES); ent++)
 			ent->age = (++NUMCounter);
 	}
 
 	/*
-	 * If cache is full, remove oldest entry
+	 * If cache is full, remove oldest entry (or recycle first not-valid one)
 	 */
-	if (n_NUMCache > NUM_CACHE_FIELDS)
+	if (n_NUMCache >= NUM_CACHE_ENTRIES)
 	{
 		NUMCacheEntry *old = NUMCache + 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Cache is full (%d)", n_NUMCache);
 #endif
-		for (ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
+		if (old->valid)
 		{
-			/*
-			 * entry removed via NUM_cache_remove() can be used here, which is
-			 * why it's worth scanning first entry again
-			 */
-			if (ent->str[0] == '\0')
+			for (ent = NUMCache + 1; ent < (NUMCache + NUM_CACHE_ENTRIES); ent++)
 			{
-				old = ent;
-				break;
+				if (!ent->valid)
+				{
+					old = ent;
+					break;
+				}
+				if (ent->age < old->age)
+					old = ent;
 			}
-			if (ent->age < old->age)
-				old = ent;
 		}
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "OLD: \"%s\" AGE: %d", old->str, old->age);
 #endif
+		old->valid = false;
 		StrNCpy(old->str, str, NUM_CACHE_SIZE + 1);
-		/* old->format fill parser */
 		old->age = (++NUMCounter);
-		ent = old;
+		/* caller is expected to fill format and Num, then set valid */
+		return old;
 	}
 	else
 	{
@@ -3930,39 +3917,36 @@ NUM_cache_getnew(char *str)
 		elog(DEBUG_elog_output, "NEW (%d)", n_NUMCache);
 #endif
 		ent = NUMCache + n_NUMCache;
+		ent->valid = false;
 		StrNCpy(ent->str, str, NUM_CACHE_SIZE + 1);
-		/* ent->format fill parser */
 		ent->age = (++NUMCounter);
+		/* caller is expected to fill format and Num, then set valid */
 		++n_NUMCache;
+		return ent;
 	}
-
-	zeroize_NUM(&ent->Num);
-
-	last_NUMCacheEntry = ent;
-	return ent;
 }
 
+/* look for an existing NUMCacheEntry matching the given format picture */
 static NUMCacheEntry *
-NUM_cache_search(char *str)
+NUM_cache_search(const char *str)
 {
 	int			i;
 	NUMCacheEntry *ent;
 
 	/* counter overflow check - paranoia? */
-	if (NUMCounter >= (INT_MAX - NUM_CACHE_FIELDS - 1))
+	if (NUMCounter >= (INT_MAX - NUM_CACHE_ENTRIES))
 	{
 		NUMCounter = 0;
 
-		for (ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
+		for (ent = NUMCache; ent < (NUMCache + NUM_CACHE_ENTRIES); ent++)
 			ent->age = (++NUMCounter);
 	}
 
 	for (i = 0, ent = NUMCache; i < n_NUMCache; i++, ent++)
 	{
-		if (strcmp(ent->str, str) == 0)
+		if (ent->valid && strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++NUMCounter);
-			last_NUMCacheEntry = ent;
 			return ent;
 		}
 	}
@@ -3970,14 +3954,29 @@ NUM_cache_search(char *str)
 	return NULL;
 }
 
-static void
-NUM_cache_remove(NUMCacheEntry *ent)
+/* Find or create a NUMCacheEntry for the given format picture */
+static NUMCacheEntry *
+NUM_cache_fetch(const char *str)
 {
-#ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, "REMOVING ENTRY (%s)", ent->str);
-#endif
-	ent->str[0] = '\0';
-	ent->age = 0;
+	NUMCacheEntry *ent;
+
+	if ((ent = NUM_cache_search(str)) == NULL)
+	{
+		/*
+		 * Not in the cache, must run parser and save a new format-picture to
+		 * the cache.  Do not mark the cache entry valid until parsing
+		 * succeeds.
+		 */
+		ent = NUM_cache_getnew(str);
+
+		zeroize_NUM(&ent->Num);
+
+		parse_format(ent->format, str, NUM_keywords,
+					 NULL, NUM_index, NUM_TYPE, &ent->Num);
+
+		ent->valid = true;
+	}
+	return ent;
 }
 
 /* ----------
@@ -3992,13 +3991,12 @@ NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 
 	str = text_to_cstring(pars_str);
 
-	/*
-	 * Allocate new memory if format picture is bigger than static cache and
-	 * not use cache (call parser always). This branches sets shouldFree to
-	 * true, accordingly.
-	 */
 	if (len > NUM_CACHE_SIZE)
 	{
+		/*
+		 * Allocate new memory if format picture is bigger than static cache
+		 * and do not use cache (call parser always)
+		 */
 		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
 
 		*shouldFree = true;
@@ -4007,31 +4005,15 @@ NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 
 		parse_format(format, str, NUM_keywords,
 					 NULL, NUM_index, NUM_TYPE, Num);
-
-		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 	}
 	else
 	{
 		/*
 		 * Use cache buffers
 		 */
-		NUMCacheEntry *ent;
+		NUMCacheEntry *ent = NUM_cache_fetch(str);
 
 		*shouldFree = false;
-
-		if ((ent = NUM_cache_search(str)) == NULL)
-		{
-			ent = NUM_cache_getnew(str);
-
-			/*
-			 * Not in the cache, must run parser and save a new format-picture
-			 * to the cache.
-			 */
-			parse_format(ent->format, str, NUM_keywords,
-						 NULL, NUM_index, NUM_TYPE, &ent->Num);
-
-			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
-		}
 
 		format = ent->format;
 
