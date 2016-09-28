@@ -5832,6 +5832,17 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     </para>
    </note>
 
+   <tip>
+    <para>
+     <function>to_timestamp</function> and <function>to_date</function>
+     exist to handle input formats that cannot be converted by
+     simple casting.  For most standard date/time formats, simply casting the
+     source string to the required data type works, and is much easier.
+     Similarly, <function>to_number</> is unnecessary for standard numeric
+     representations.
+    </para>
+   </tip>
+
    <para>
     In a <function>to_char</> output template string, there are certain
     patterns that are recognized and replaced with appropriately-formatted
@@ -6038,7 +6049,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>Q</literal></entry>
-        <entry>quarter (ignored by <function>to_date</> and <function>to_timestamp</>)</entry>
+        <entry>quarter</entry>
        </row>
        <row>
         <entry><literal>RM</literal></entry>
@@ -6158,20 +6169,6 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       <function>to_timestamp</function> and <function>to_date</function>
-       exist to handle input formats that cannot be converted by
-       simple casting.  These functions interpret input liberally,
-       with minimal error checking.  While they produce valid output,
-       the conversion can yield unexpected results.  For example,
-       input to these functions is not restricted by normal ranges,
-       thus <literal>to_date('20096040','YYYYMMDD')</literal> returns
-       <literal>2014-01-17</literal> rather than causing an error.
-       Casting does not have this behavior.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        Ordinary text is allowed in <function>to_char</function>
        templates and will be output literally.  You can put a substring
        in double quotes to force it to be interpreted as literal text
@@ -6195,7 +6192,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       If the year format specification is less than four digits, e.g.
+       In <function>to_timestamp</function> and <function>to_date</function>,
+       if the year format specification is less than four digits, e.g.
        <literal>YYY</>, and the supplied year is less than four digits,
        the year will be adjusted to be nearest to the year 2020, e.g.
        <literal>95</> becomes 1995.
@@ -6204,8 +6202,9 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       The <literal>YYYY</literal> conversion from string to <type>timestamp</type> or
-       <type>date</type> has a restriction when processing years with more than 4 digits. You must
+       In <function>to_timestamp</function> and <function>to_date</function>,
+       the <literal>YYYY</literal> conversion has a restriction when
+       processing years with more than 4 digits. You must
        use some non-digit character or template after <literal>YYYY</literal>,
        otherwise the year is always interpreted as 4 digits. For example
        (with the year 20000):
@@ -6219,12 +6218,12 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       In conversions from string to <type>timestamp</type> or
-       <type>date</type>, the <literal>CC</literal> (century) field is ignored
+       In <function>to_timestamp</function> and <function>to_date</function>,
+       the <literal>CC</literal> (century) field is accepted but ignored
        if there is a <literal>YYY</literal>, <literal>YYYY</literal> or
        <literal>Y,YYY</literal> field. If <literal>CC</literal> is used with
-       <literal>YY</literal> or <literal>Y</literal> then the year is computed
-       as the year in the specified century.  If the century is
+       <literal>YY</literal> or <literal>Y</literal> then the result is
+       computed as that year in the specified century.  If the century is
        specified but the year is not, the first year of the century
        is assumed.
       </para>
@@ -6232,9 +6231,19 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       An ISO 8601 week-numbering date (as distinct from a Gregorian date)
-       can be specified to <function>to_timestamp</function> and
-       <function>to_date</function> in one of two ways:
+       In <function>to_timestamp</function> and <function>to_date</function>,
+       weekday names or numbers (<literal>DAY</literal>, <literal>D</literal>,
+       and related field types) are accepted but are ignored for purposes of
+       computing the result.  The same is true for quarter
+       (<literal>Q</literal>) fields.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In <function>to_timestamp</function> and <function>to_date</function>,
+       an ISO 8601 week-numbering date (as distinct from a Gregorian date)
+       can be specified in one of two ways:
        <itemizedlist>
         <listitem>
          <para>
@@ -6276,23 +6285,24 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
-       In a conversion from string to <type>timestamp</type>, millisecond
+       In <function>to_timestamp</function>, millisecond
        (<literal>MS</literal>) or microsecond (<literal>US</literal>)
-       values are used as the
+       fields are used as the
        seconds digits after the decimal point. For example
-       <literal>to_timestamp('12:3', 'SS:MS')</literal> is not 3 milliseconds,
-       but 300, because the conversion counts it as 12 + 0.3 seconds.
-       This means for the format <literal>SS:MS</literal>, the input values
-       <literal>12:3</literal>, <literal>12:30</literal>, and <literal>12:300</literal> specify the
-       same number of milliseconds. To get three milliseconds, one must use
-       <literal>12:003</literal>, which the conversion counts as
+       <literal>to_timestamp('12.3', 'SS.MS')</literal> is not 3 milliseconds,
+       but 300, because the conversion treats it as 12 + 0.3 seconds.
+       So, for the format <literal>SS.MS</literal>, the input values
+       <literal>12.3</literal>, <literal>12.30</literal>,
+       and <literal>12.300</literal> specify the
+       same number of milliseconds. To get three milliseconds, one must write
+       <literal>12.003</literal>, which the conversion treats as
        12 + 0.003 = 12.003 seconds.
       </para>
 
       <para>
        Here is a more
        complex example:
-       <literal>to_timestamp('15:12:02.020.001230', 'HH:MI:SS.MS.US')</literal>
+       <literal>to_timestamp('15:12:02.020.001230', 'HH24:MI:SS.MS.US')</literal>
        is 15 hours, 12 minutes, and 2 seconds + 20 milliseconds +
        1230 microseconds = 2.021230 seconds.
       </para>
@@ -6310,9 +6320,10 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
      <listitem>
       <para>
         <function>to_char(interval)</function> formats <literal>HH</> and
-        <literal>HH12</> as shown on a 12-hour clock, i.e. zero hours
-        and 36 hours output as <literal>12</>, while <literal>HH24</>
-        outputs the full hour value, which can exceed 23 for intervals.
+        <literal>HH12</> as shown on a 12-hour clock, for example zero hours
+        and 36 hours both output as <literal>12</>, while <literal>HH24</>
+        outputs the full hour value, which can exceed 23 in
+        an <type>interval</> value.
       </para>
      </listitem>
 
