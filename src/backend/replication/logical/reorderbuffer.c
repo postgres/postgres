@@ -2250,6 +2250,9 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 				data = ((char *) rb->outbuf) + sizeof(ReorderBufferDiskChange);
 
+				/* might have been reallocated above */
+				ondisk = (ReorderBufferDiskChange *) rb->outbuf;
+
 				/* write the prefix including the size */
 				memcpy(data, &prefix_size, sizeof(Size));
 				data += sizeof(Size);
