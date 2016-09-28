@@ -2290,23 +2290,18 @@ get_object_namespace(const ObjectAddress *address)
 int
 read_objtype_from_string(const char *objtype)
 {
-	ObjectType	type;
 	int			i;
 
 	for (i = 0; i < lengthof(ObjectTypeMap); i++)
 	{
 		if (strcmp(ObjectTypeMap[i].tm_name, objtype) == 0)
-		{
-			type = ObjectTypeMap[i].tm_type;
-			break;
-		}
+			return ObjectTypeMap[i].tm_type;
 	}
-	if (i >= lengthof(ObjectTypeMap))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("unrecognized object type \"%s\"", objtype)));
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized object type \"%s\"", objtype)));
 
-	return type;
+	return -1;					/* keep compiler quiet */
 }
 
 /*
