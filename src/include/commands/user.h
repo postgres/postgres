@@ -16,10 +16,19 @@
 #include "parser/parse_node.h"
 
 
-/* Hook to check passwords in CreateRole() and AlterRole() */
-#define PASSWORD_TYPE_PLAINTEXT		0
-#define PASSWORD_TYPE_MD5			1
+/*
+ * Types of password, for Password_encryption GUC and the password_type
+ * argument of the check-password hook.
+ */
+typedef enum PasswordType
+{
+	PASSWORD_TYPE_PLAINTEXT = 0,
+	PASSWORD_TYPE_MD5
+} PasswordType;
 
+extern int	Password_encryption;	/* GUC */
+
+/* Hook to check passwords in CreateRole() and AlterRole() */
 typedef void (*check_password_hook_type) (const char *username, const char *password, int password_type, Datum validuntil_time, bool validuntil_null);
 
 extern PGDLLIMPORT check_password_hook_type check_password_hook;

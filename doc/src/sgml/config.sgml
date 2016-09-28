@@ -1163,21 +1163,22 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
-      <term><varname>password_encryption</varname> (<type>boolean</type>)
+      <term><varname>password_encryption</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>password_encryption</> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        When a password is specified in <xref
-        linkend="sql-createuser"> or
-        <xref linkend="sql-alterrole">
-        without writing either <literal>ENCRYPTED</> or
-        <literal>UNENCRYPTED</>, this parameter determines whether the
-        password is to be encrypted. The default is <literal>on</>
-        (encrypt the password).
+        When a password is specified in <xref linkend="sql-createuser"> or
+        <xref linkend="sql-alterrole"> without writing either <literal>ENCRYPTED</>
+        or <literal>UNENCRYPTED</>, this parameter determines whether the
+        password is to be encrypted. The default value is <literal>md5</>, which
+        stores the password as an MD5 hash. Setting this to <literal>plain</> stores
+        it in plaintext. <literal>on</> and <literal>off</> are also accepted, as
+        aliases for <literal>md5</> and <literal>plain</>, respectively.
        </para>
+       
       </listitem>
      </varlistentry>
 

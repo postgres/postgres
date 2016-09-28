@@ -85,7 +85,7 @@
 #ssl_key_file = 'server.key'		# (change requires restart)
 #ssl_ca_file = ''			# (change requires restart)
 #ssl_crl_file = ''			# (change requires restart)
-#password_encryption = on
+#password_encryption = md5		# md5 or plain
 #db_user_namespace = off
 #row_security = on
 

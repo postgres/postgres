@@ -44,7 +44,7 @@ Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
 
 
 /* GUC parameter */
-extern bool Password_encryption;
+int			Password_encryption = PASSWORD_TYPE_MD5;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;
@@ -80,7 +80,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	ListCell   *item;
 	ListCell   *option;
 	char	   *password = NULL;	/* user password */
-	bool		encrypt_password = Password_encryption; /* encrypt password? */
+	int			password_type = Password_encryption;
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	bool		issuper = false;	/* Make the user a superuser? */
 	bool		inherit = true; /* Auto inherit privileges? */
@@ -140,9 +140,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 						 parser_errposition(pstate, defel->location)));
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
-				encrypt_password = true;
+				password_type = PASSWORD_TYPE_MD5;
 			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
-				encrypt_password = false;
+				password_type = PASSWORD_TYPE_PLAINTEXT;
 		}
 		else if (strcmp(defel->defname, "sysid") == 0)
 		{
@@ -393,7 +393,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 	if (password)
 	{
-		if (!encrypt_password || isMD5(password))
+		if (password_type == PASSWORD_TYPE_PLAINTEXT || isMD5(password))
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(password);
 		else
@@ -505,7 +505,7 @@ AlterRole(AlterRoleStmt *stmt)
 	ListCell   *option;
 	char	   *rolename = NULL;
 	char	   *password = NULL;	/* user password */
-	bool		encrypt_password = Password_encryption; /* encrypt password? */
+	int			password_type = Password_encryption;
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			issuper = -1;	/* Make the user a superuser? */
 	int			inherit = -1;	/* Auto inherit privileges? */
@@ -550,9 +550,9 @@ AlterRole(AlterRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dpassword = defel;
 			if (strcmp(defel->defname, "encryptedPassword") == 0)
-				encrypt_password = true;
+				password_type = PASSWORD_TYPE_MD5;
 			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
-				encrypt_password = false;
+				password_type = PASSWORD_TYPE_PLAINTEXT;
 		}
 		else if (strcmp(defel->defname, "superuser") == 0)
 		{
@@ -804,7 +804,7 @@ AlterRole(AlterRoleStmt *stmt)
 	/* password */
 	if (password)
 	{
-		if (!encrypt_password || isMD5(password))
+		if (password_type == PASSWORD_TYPE_PLAINTEXT || isMD5(password))
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(password);
 		else
