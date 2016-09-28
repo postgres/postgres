@@ -757,7 +757,6 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
 			return AlterTypeOwner(stmt->object, newowner, stmt->objectType);
-			break;
 
 		case OBJECT_FDW:
 			return AlterForeignDataWrapperOwner(strVal(linitial(stmt->object)),
