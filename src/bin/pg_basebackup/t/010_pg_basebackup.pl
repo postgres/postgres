@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 54;
+use Test::More tests => 67;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -55,14 +55,42 @@ print CONF "wal_level = replica\n";
 close CONF;
 $node->restart;
 
+# Write some files to test that they are not copied.
+foreach my $filename (qw(backup_label tablespace_map postgresql.auto.conf.tmp))
+{
+	open FILE, ">>$pgdata/$filename";
+	print FILE "DONOTCOPY";
+	close FILE;
+}
+
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
 
+# Only archive_status directory should be copied in pg_xlog/.
 is_deeply(
 	[ sort(slurp_dir("$tempdir/backup/pg_xlog/")) ],
 	[ sort qw(. .. archive_status) ],
 	'no WAL files copied');
+
+# Contents of these directories should not be copied.
+foreach my $dirname (qw(pg_dynshmem pg_notify pg_replslot pg_serial pg_snapshots pg_stat_tmp pg_subtrans))
+{
+	is_deeply(
+		[ sort(slurp_dir("$tempdir/backup/$dirname/")) ],
+		[ sort qw(. ..) ],
+		"contents of $dirname/ not copied");
+}
+
+# These files should not be copied.
+foreach my $filename (qw(postgresql.auto.conf.tmp postmaster.opts postmaster.pid tablespace_map))
+{
+	ok(! -f "$tempdir/backup/$filename", "$filename not copied");
+}
+
+# Make sure existing backup_label was ignored.
+isnt(slurp_file("$tempdir/backup/backup_label"), 'DONOTCOPY',
+	 'existing backup_label not copied');
 
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backup2", '--xlogdir',
@@ -110,7 +138,17 @@ unlink "$pgdata/$superlongname";
 # skip on Windows.
 SKIP:
 {
-	skip "symlinks not supported on Windows", 10 if ($windows_os);
+	skip "symlinks not supported on Windows", 11 if ($windows_os);
+
+	# Move pg_replslot out of $pgdata and create a symlink to it.
+	$node->stop;
+
+	rename("$pgdata/pg_replslot", "$tempdir/pg_replslot")
+		or BAIL_OUT "could not move $pgdata/pg_replslot";
+	symlink("$tempdir/pg_replslot", "$pgdata/pg_replslot")
+		or BAIL_OUT "could not symlink to $pgdata/pg_replslot";
+
+	$node->start;
 
 	# Create a temporary directory in the system location and symlink it
 	# to our physical temp location.  That way we can use shorter names
@@ -147,6 +185,8 @@ SKIP:
 			  } readdir($dh)),
 		"tablespace symlink was updated");
 	closedir $dh;
+
+	ok(-d "$tempdir/backup1/pg_replslot", 'pg_replslot symlink copied as directory');
 
 	mkdir "$tempdir/tbl=spc2";
 	$node->safe_psql('postgres', "DROP TABLE test1;");

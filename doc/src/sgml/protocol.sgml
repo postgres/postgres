@@ -2069,7 +2069,9 @@ The commands accepted in walsender mode are:
        </listitem>
        <listitem>
         <para>
-         various temporary files created during the operation of the PostgreSQL server
+         Various temporary files and directories created during the operation
+         of the PostgreSQL server, such as any file or directory beginning
+         with <filename>pgsql_tmp</>.
         </para>
        </listitem>
        <listitem>
@@ -2082,13 +2084,18 @@ The commands accepted in walsender mode are:
        </listitem>
        <listitem>
         <para>
-         <filename>pg_replslot</> is copied as an empty directory.
+         <filename>pg_dynshmem</>, <filename>pg_notify</>,
+         <filename>pg_replslot</>, <filename>pg_serial</>,
+         <filename>pg_snapshots</>, <filename>pg_stat_tmp</>, and
+         <filename>pg_subtrans</> are copied as empty directories (even if
+         they are symbolic links).
         </para>
        </listitem>
        <listitem>
         <para>
          Files other than regular files and directories, such as symbolic
-         links and special device files, are skipped.  (Symbolic links
+         links (other than for the directories listed above) and special
+         device files, are skipped.  (Symbolic links
          in <filename>pg_tblspc</filename> are maintained.)
         </para>
        </listitem>

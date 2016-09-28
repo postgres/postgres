@@ -1090,6 +1090,22 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
+    The contents of the directories <filename>pg_dynshmem/</>,
+    <filename>pg_notify/</>, <filename>pg_serial/</>,
+    <filename>pg_snapshots/</>, <filename>pg_stat_tmp/</>,
+    and <filename>pg_subtrans/</> (but not the directories themselves) can be
+    omitted from the backup as they will be initialized on postmaster startup.
+    If <xref linkend="guc-stats-temp-directory"> is set and is under the data
+    directory then the contents of that directory can also be omitted.
+   </para>
+
+   <para>
+    Any file or directory beginning with <filename>pgsql_tmp</filename> can be
+    omitted from the backup.  These files are removed on postmaster start and
+    the directories will be recreated as needed.
+   </para>
+
+   <para>
     The backup label
     file includes the label string you gave to <function>pg_start_backup</>,
     as well as the time at which <function>pg_start_backup</> was run, and
