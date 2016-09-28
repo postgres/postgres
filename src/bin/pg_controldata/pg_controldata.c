@@ -86,6 +86,7 @@ int
 main(int argc, char *argv[])
 {
 	ControlFileData *ControlFile;
+	bool		crc_ok;
 	char	   *DataDir = NULL;
 	time_t		time_tmp;
 	char		pgctime_str[128];
@@ -155,8 +156,8 @@ main(int argc, char *argv[])
 	}
 
 	/* get a copy of the control file */
-	ControlFile = get_controlfile(DataDir, progname);
-	if (!ControlFile)
+	ControlFile = get_controlfile(DataDir, progname, &crc_ok);
+	if (!crc_ok)
 		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
 				 "Either the file is corrupt, or it has a different layout than this program\n"
 				 "is expecting.  The results below are untrustworthy.\n\n"));

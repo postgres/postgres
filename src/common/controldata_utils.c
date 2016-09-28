@@ -29,20 +29,23 @@
 #include "port/pg_crc32c.h"
 
 /*
- * get_controlfile(char *DataDir, const char *progname)
+ * get_controlfile(char *DataDir, const char *progname, bool *crc_ok_p)
  *
- * Get controlfile values. The caller is responsible
- * for pfreeing the result.
+ * Get controlfile values.  The result is returned as a palloc'd copy of the
+ * control file data.
  *
- * Returns NULL if the CRC did not match.
+ * crc_ok_p can be used by the caller to see whether the CRC of the control
+ * file data is correct.
  */
 ControlFileData *
-get_controlfile(const char *DataDir, const char *progname)
+get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 {
 	ControlFileData *ControlFile;
 	int			fd;
 	char		ControlFilePath[MAXPGPATH];
 	pg_crc32c	crc;
+
+	AssertArg(crc_ok_p);
 
 	ControlFile = palloc(sizeof(ControlFileData));
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
@@ -83,11 +86,7 @@ get_controlfile(const char *DataDir, const char *progname)
 				offsetof(ControlFileData, crc));
 	FIN_CRC32C(crc);
 
-	if (!EQ_CRC32C(crc, ControlFile->crc))
-	{
-		pfree(ControlFile);
-		return NULL;
-	}
+	*crc_ok_p = EQ_CRC32C(crc, ControlFile->crc);
 
 	/* Make sure the control file is valid byte order. */
 	if (ControlFile->pg_control_version % 65536 == 0 &&

@@ -2147,28 +2147,18 @@ static DBState
 get_control_dbstate(void)
 {
 	DBState ret;
+	bool	crc_ok;
+	ControlFileData *control_file_data = get_controlfile(pg_data, progname, &crc_ok);
 
-	for (;;)
+	if (!crc_ok)
 	{
-		ControlFileData *control_file_data = get_controlfile(pg_data, progname);
-
-		if (control_file_data)
-		{
-			ret = control_file_data->state;
-			pfree(control_file_data);
-			return ret;
-		}
-
-		if (wait_seconds > 0)
-		{
-			pg_usleep(1000000);		/* 1 sec */
-			wait_seconds--;
-			continue;
-		}
-
 		write_stderr(_("%s: control file appears to be corrupt\n"), progname);
 		exit(1);
 	}
+
+	ret = control_file_data->state;
+	pfree(control_file_data);
+	return ret;
 }
 
 
