@@ -136,17 +136,12 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 
 		/*
-		 * To get a consistent picture of the buffer state, we must lock all
-		 * partitions of the buffer map.  Needless to say, this is horrible
-		 * for concurrency.  Must grab locks in increasing order to avoid
-		 * possible deadlocks.
-		 */
-		for (i = 0; i < NUM_BUFFER_PARTITIONS; i++)
-			LWLockAcquire(BufMappingPartitionLockByIndex(i), LW_SHARED);
-
-		/*
 		 * Scan through all the buffers, saving the relevant fields in the
 		 * fctx->record structure.
+		 *
+		 * We don't hold the partition locks, so we don't get a consistent
+		 * snapshot across all buffers, but we do grab the buffer header
+		 * locks, so the information of each buffer is self-consistent.
 		 */
 		for (i = 0; i < NBuffers; i++)
 		{
@@ -179,16 +174,6 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 
 			UnlockBufHdr(bufHdr, buf_state);
 		}
-
-		/*
-		 * And release locks.  We do this in reverse order for two reasons:
-		 * (1) Anyone else who needs more than one of the locks will be trying
-		 * to lock them in increasing order; we don't want to release the
-		 * other process until it can get all the locks it needs. (2) This
-		 * avoids O(N^2) behavior inside LWLockRelease.
-		 */
-		for (i = NUM_BUFFER_PARTITIONS; --i >= 0;)
-			LWLockRelease(BufMappingPartitionLockByIndex(i));
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
