@@ -11,6 +11,8 @@ DATA = pageinspect--1.5.sql pageinspect--1.4--1.5.sql \
 	pageinspect--unpackaged--1.0.sql
 PGFILEDESC = "pageinspect - functions to inspect contents of database pages"
 
+REGRESS = page btree brin gin
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
