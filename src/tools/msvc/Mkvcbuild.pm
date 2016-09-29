@@ -115,7 +115,7 @@ sub mkvcbuild
 	  string.c username.c wait_error.c);
 
 	our @pgcommonfrontendfiles = (
-		@pgcommonallfiles, qw(fe_memutils.c
+		@pgcommonallfiles, qw(fe_memutils.c file_utils.c
 		  restricted_token.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;

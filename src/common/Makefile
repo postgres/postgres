@@ -44,7 +44,7 @@ OBJS_COMMON = config_info.o controldata_utils.o exec.o ip.o keywords.o \
 	md5.o pg_lzcompress.o pgfnames.o psprintf.o relpath.o rmtree.o \
 	string.o username.o wait_error.o
 
-OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o restricted_token.o
+OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o file_utils.o restricted_token.o
 
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
