@@ -336,6 +336,7 @@ StreamLog(void)
 	stream.stream_stop = stop_streaming;
 	stream.standby_message_timeout = standby_message_timeout;
 	stream.synchronous = synchronous;
+	stream.do_sync = true;
 	stream.mark_done = false;
 	stream.basedir = basedir;
 	stream.partial_suffix = ".partial";

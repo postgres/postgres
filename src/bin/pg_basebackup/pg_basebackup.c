@@ -69,6 +69,7 @@ static bool includewal = false;
 static bool streamwal = false;
 static bool fastcheckpoint = false;
 static bool writerecoveryconf = false;
+static bool do_sync = true;
 static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 static pg_time_t last_progress_report = 0;
 static int32 maxrate = 0;		/* no limit by default */
@@ -329,6 +330,7 @@ usage(void)
 			 "                         set fast or spread checkpointing\n"));
 	printf(_("  -l, --label=LABEL      set backup label\n"));
 	printf(_("  -n, --noclean          do not clean up after errors\n"));
+	printf(_("  -N, --nosync           do not wait for changes to be written safely to disk\n"));
 	printf(_("  -P, --progress         show progress information\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
@@ -460,6 +462,7 @@ LogStreamerMain(logstreamer_param *param)
 	stream.stream_stop = reached_end_position;
 	stream.standby_message_timeout = standby_message_timeout;
 	stream.synchronous = false;
+	stream.do_sync = do_sync;
 	stream.mark_done = true;
 	stream.basedir = param->xlogdir;
 	stream.partial_suffix = NULL;
@@ -1199,7 +1202,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		PQfreemem(copybuf);
 
 	/* sync the resulting tar file, errors are not considered fatal */
-	if (strcmp(basedir, "-") != 0)
+	if (do_sync && strcmp(basedir, "-") != 0)
 		(void) fsync_fname(filename, false, progname);
 }
 
@@ -1967,14 +1970,17 @@ BaseBackup(void)
 	 * all the data of the base directory is synced, taking into account
 	 * all the tablespaces. Errors are not considered fatal.
 	 */
-	if (format == 't')
+	if (do_sync)
 	{
-		if (strcmp(basedir, "-") != 0)
-			(void) fsync_fname(basedir, true, progname);
-	}
-	else
-	{
-		(void) fsync_pgdata(basedir, progname);
+		if (format == 't')
+		{
+			if (strcmp(basedir, "-") != 0)
+				(void) fsync_fname(basedir, true, progname);
+		}
+		else
+		{
+			(void) fsync_pgdata(basedir, progname);
+		}
 	}
 
 	if (verbose)
@@ -2001,6 +2007,7 @@ main(int argc, char **argv)
 		{"compress", required_argument, NULL, 'Z'},
 		{"label", required_argument, NULL, 'l'},
 		{"noclean", no_argument, NULL, 'n'},
+		{"nosync", no_argument, NULL, 'N'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
@@ -2037,7 +2044,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:nzZ:d:c:h:p:U:s:S:wWvP",
+	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:nNzZ:d:c:h:p:U:s:S:wWvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2114,6 +2121,9 @@ main(int argc, char **argv)
 				break;
 			case 'n':
 				noclean = true;
+				break;
+			case 'N':
+				do_sync = false;
 				break;
 			case 'z':
 #ifdef HAVE_LIBZ

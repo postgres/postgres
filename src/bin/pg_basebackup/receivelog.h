@@ -34,8 +34,10 @@ typedef struct StreamCtl
 								 * timeline */
 	int			standby_message_timeout;		/* Send status messages this
 												 * often */
-	bool		synchronous;	/* Flush data on write */
+	bool		synchronous;	/* Flush immediately WAL data on write */
 	bool		mark_done;		/* Mark segment as done in generated archive */
+	bool		do_sync;		/* Flush to disk to ensure consistent state
+								 * of data */
 
 	stream_stop_callback stream_stop;	/* Stop streaming when returns true */
 
