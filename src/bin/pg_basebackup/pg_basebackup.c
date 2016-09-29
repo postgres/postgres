@@ -27,6 +27,7 @@
 #include <zlib.h>
 #endif
 
+#include "common/file_utils.h"
 #include "common/string.h"
 #include "fe_utils/string_utils.h"
 #include "getopt_long.h"
@@ -1196,6 +1197,10 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
+
+	/* sync the resulting tar file, errors are not considered fatal */
+	if (strcmp(basedir, "-") != 0)
+		(void) fsync_fname(filename, false, progname);
 }
 
 
@@ -1472,6 +1477,11 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 	if (basetablespace && writerecoveryconf)
 		WriteRecoveryConf();
+
+	/*
+	 * No data is synced here, everything is done for all tablespaces at the
+	 * end.
+	 */
 }
 
 /*
@@ -1949,6 +1959,23 @@ BaseBackup(void)
 	 */
 	PQclear(res);
 	PQfinish(conn);
+
+	/*
+	 * Make data persistent on disk once backup is completed. For tar
+	 * format once syncing the parent directory is fine, each tar file
+	 * created per tablespace has been already synced. In plain format,
+	 * all the data of the base directory is synced, taking into account
+	 * all the tablespaces. Errors are not considered fatal.
+	 */
+	if (format == 't')
+	{
+		if (strcmp(basedir, "-") != 0)
+			(void) fsync_fname(basedir, true, progname);
+	}
+	else
+	{
+		(void) fsync_pgdata(basedir, progname);
+	}
 
 	if (verbose)
 		fprintf(stderr, "%s: base backup completed\n", progname);

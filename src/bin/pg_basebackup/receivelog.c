@@ -26,6 +26,7 @@
 
 #include "libpq-fe.h"
 #include "access/xlog_internal.h"
+#include "common/file_utils.h"
 
 
 /* fd and filename for currently open WAL file */
@@ -71,17 +72,13 @@ mark_file_as_archived(const char *basedir, const char *fname)
 		return false;
 	}
 
-	if (fsync(fd) != 0)
-	{
-		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
-				progname, tmppath, strerror(errno));
-
-		close(fd);
-
-		return false;
-	}
-
 	close(fd);
+
+	if (fsync_fname(tmppath, false, progname) != 0)
+		return false;
+
+	if (fsync_parent_path(tmppath, progname) != 0)
+		return false;
 
 	return true;
 }
@@ -132,6 +129,16 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	{
 		/* File is open and ready to use */
 		walfile = f;
+
+		/*
+		 * fsync, in case of a previous crash between padding and fsyncing the
+		 * file.
+		 */
+		if (fsync_fname(fn, false, progname) != 0)
+			return false;
+		if (fsync_parent_path(fn, progname) != 0)
+			return false;
+
 		return true;
 	}
 	if (statbuf.st_size != 0)
@@ -159,6 +166,17 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 		}
 	}
 	free(zerobuf);
+
+	/*
+	 * fsync WAL file and containing directory, to ensure the file is
+	 * persistently created and zeroed. That's particularly important when
+	 * using synchronous mode, where the file is modified and fsynced
+	 * in-place, without a directory fsync.
+	 */
+	if (fsync_fname(fn, false, progname) != 0)
+		return false;
+	if (fsync_parent_path(fn, progname) != 0)
+		return false;
 
 	if (lseek(f, SEEK_SET, 0) != 0)
 	{
@@ -220,10 +238,9 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 
 		snprintf(oldfn, sizeof(oldfn), "%s/%s%s", stream->basedir, current_walfile_name, stream->partial_suffix);
 		snprintf(newfn, sizeof(newfn), "%s/%s", stream->basedir, current_walfile_name);
-		if (rename(oldfn, newfn) != 0)
+		if (durable_rename(oldfn, newfn, progname) != 0)
 		{
-			fprintf(stderr, _("%s: could not rename file \"%s\": %s\n"),
-					progname, current_walfile_name, strerror(errno));
+			/* durable_rename produced a log entry */
 			return false;
 		}
 	}
@@ -341,14 +358,6 @@ writeTimeLineHistoryFile(StreamCtl *stream, char *filename, char *content)
 		return false;
 	}
 
-	if (fsync(fd) != 0)
-	{
-		close(fd);
-		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
-				progname, tmppath, strerror(errno));
-		return false;
-	}
-
 	if (close(fd) != 0)
 	{
 		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
@@ -359,10 +368,9 @@ writeTimeLineHistoryFile(StreamCtl *stream, char *filename, char *content)
 	/*
 	 * Now move the completed history file into place with its final name.
 	 */
-	if (rename(tmppath, path) < 0)
+	if (durable_rename(tmppath, path, progname) < 0)
 	{
-		fprintf(stderr, _("%s: could not rename file \"%s\" to \"%s\": %s\n"),
-				progname, tmppath, path, strerror(errno));
+		/* durable_rename produced a log entry */
 		return false;
 	}
 

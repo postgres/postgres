@@ -34,7 +34,7 @@ static void pre_sync_fname(const char *fname, bool isdir,
 						   const char *progname);
 #endif
 static void walkdir(const char *path,
-	void (*action) (const char *fname, bool isdir, const char *progname),
+	int (*action) (const char *fname, bool isdir, const char *progname),
 	bool process_symlinks, const char *progname);
 
 /*
@@ -120,7 +120,7 @@ fsync_pgdata(const char *pg_data, const char *progname)
  */
 static void
 walkdir(const char *path,
-		void (*action) (const char *fname, bool isdir, const char *progname),
+		int (*action) (const char *fname, bool isdir, const char *progname),
 		bool process_symlinks, const char *progname)
 {
 	DIR		   *dir;
@@ -228,7 +228,7 @@ pre_sync_fname(const char *fname, bool isdir, const char *progname)
  * directories on systems where that isn't allowed/required.  Reports
  * other errors non-fatally.
  */
-void
+int
 fsync_fname(const char *fname, bool isdir, const char *progname)
 {
 	int			fd;
@@ -256,10 +256,10 @@ fsync_fname(const char *fname, bool isdir, const char *progname)
 	if (fd < 0)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
-			return;
+			return 0;
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
-		return;
+		return -1;
 	}
 
 	returncode = fsync(fd);
@@ -269,8 +269,103 @@ fsync_fname(const char *fname, bool isdir, const char *progname)
 	 * those errors. Anything else needs to be reported.
 	 */
 	if (returncode != 0 && !(isdir && errno == EBADF))
+	{
 		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
+		return -1;
+	}
 
 	(void) close(fd);
+	return 0;
+}
+
+/*
+ * fsync_parent_path -- fsync the parent path of a file or directory
+ *
+ * This is aimed at making file operations persistent on disk in case of
+ * an OS crash or power failure.
+ */
+int
+fsync_parent_path(const char *fname, const char *progname)
+{
+	char		parentpath[MAXPGPATH];
+
+	strlcpy(parentpath, fname, MAXPGPATH);
+	get_parent_directory(parentpath);
+
+	/*
+	 * get_parent_directory() returns an empty string if the input argument is
+	 * just a file name (see comments in path.c), so handle that as being the
+	 * current directory.
+	 */
+	if (strlen(parentpath) == 0)
+		strlcpy(parentpath, ".", MAXPGPATH);
+
+	if (fsync_fname(parentpath, true, progname) != 0)
+		return -1;
+
+	return 0;
+}
+
+/*
+ * durable_rename -- rename(2) wrapper, issuing fsyncs required for durability
+ *
+ * Wrapper around rename, similar to the backend version.
+ */
+int
+durable_rename(const char *oldfile, const char *newfile, const char *progname)
+{
+	int		fd;
+
+	/*
+	 * First fsync the old and target path (if it exists), to ensure that they
+	 * are properly persistent on disk. Syncing the target file is not
+	 * strictly necessary, but it makes it easier to reason about crashes;
+	 * because it's then guaranteed that either source or target file exists
+	 * after a crash.
+	 */
+	if (fsync_fname(oldfile, false, progname) != 0)
+		return -1;
+
+	fd = open(newfile, PG_BINARY | O_RDWR, 0);
+	if (fd < 0)
+	{
+		if (errno != ENOENT)
+		{
+			fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+					progname, newfile, strerror(errno));
+			return -1;
+		}
+	}
+	else
+	{
+		if (fsync(fd) != 0)
+		{
+			fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
+					progname, newfile, strerror(errno));
+			close(fd);
+			return -1;
+		}
+		close(fd);
+	}
+
+	/* Time to do the real deal... */
+	if (rename(oldfile, newfile) != 0)
+	{
+		fprintf(stderr, _("%s: could not rename file \"%s\" to \"%s\": %s\n"),
+				progname, oldfile, newfile, strerror(errno));
+		return -1;
+	}
+
+	/*
+	 * To guarantee renaming the file is persistent, fsync the file with its
+	 * new name, and its containing directory.
+	 */
+	if (fsync_fname(newfile, false, progname) != 0)
+		return -1;
+
+	if (fsync_parent_path(newfile, progname) != 0)
+		return -1;
+
+	return 0;
 }
