@@ -30,7 +30,7 @@
 #endif
 
 #ifdef PG_FLUSH_DATA_WORKS
-static void pre_sync_fname(const char *fname, bool isdir,
+static int pre_sync_fname(const char *fname, bool isdir,
 						   const char *progname);
 #endif
 static void walkdir(const char *path,
@@ -187,7 +187,7 @@ walkdir(const char *path,
  */
 #ifdef PG_FLUSH_DATA_WORKS
 
-static void
+static int
 pre_sync_fname(const char *fname, bool isdir, const char *progname)
 {
 	int			fd;
@@ -197,10 +197,10 @@ pre_sync_fname(const char *fname, bool isdir, const char *progname)
 	if (fd < 0)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
-			return;
+			return 0;
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
-		return;
+		return -1;
 	}
 
 	/*
@@ -217,6 +217,7 @@ pre_sync_fname(const char *fname, bool isdir, const char *progname)
 #endif
 
 	(void) close(fd);
+	return 0;
 }
 
 #endif   /* PG_FLUSH_DATA_WORKS */
