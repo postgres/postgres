@@ -29,6 +29,9 @@
 #include "commands/vacuum.h"
 
 PG_FUNCTION_INFO_V1(pgstattuple_approx);
+PG_FUNCTION_INFO_V1(pgstattuple_approx_v1_5);
+
+Datum pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo);
 
 typedef struct output_type
 {
@@ -204,11 +207,42 @@ statapprox_heap(Relation rel, output_type *stat)
 
 /*
  * Returns estimated live/dead tuple statistics for the given relid.
+ *
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
  */
 Datum
 pgstattuple_approx(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	PG_RETURN_DATUM(pgstattuple_approx_internal(relid, fcinfo));
+}
+
+/*
+ * As of pgstattuple version 1.5, we no longer need to check if the user
+ * is a superuser because we REVOKE EXECUTE on the SQL function from PUBLIC.
+ * Users can then grant access to it based on their policies.
+ *
+ * Otherwise identical to pgstattuple_approx (above).
+ */
+Datum
+pgstattuple_approx_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+
+	PG_RETURN_DATUM(pgstattuple_approx_internal(relid, fcinfo));
+}
+
+Datum
+pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
+{
 	Relation	rel;
 	output_type stat = {0};
 	TupleDesc	tupdesc;
@@ -216,11 +250,6 @@ pgstattuple_approx(PG_FUNCTION_ARGS)
 	Datum		values[NUM_OUTPUT_COLUMNS];
 	HeapTuple	ret;
 	int			i = 0;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");

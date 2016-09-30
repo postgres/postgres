@@ -40,7 +40,9 @@
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pgstattuple);
+PG_FUNCTION_INFO_V1(pgstattuple_v1_5);
 PG_FUNCTION_INFO_V1(pgstattuplebyid);
+PG_FUNCTION_INFO_V1(pgstattuplebyid_v1_5);
 
 /*
  * struct pgstattuple_type
@@ -152,6 +154,10 @@ build_pgstattuple_type(pgstattuple_type *stat, FunctionCallInfo fcinfo)
  *
  * C FUNCTION definition
  * pgstattuple(text) returns pgstattuple_type
+ *
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
  * ----------
  */
 
@@ -174,6 +180,28 @@ pgstattuple(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
 }
 
+/*
+ * As of pgstattuple version 1.5, we no longer need to check if the user
+ * is a superuser because we REVOKE EXECUTE on the function from PUBLIC.
+ * Users can then grant access to it based on their policies.
+ *
+ * Otherwise identical to pgstattuple (above).
+ */
+Datum
+pgstattuple_v1_5(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	RangeVar   *relrv;
+	Relation	rel;
+
+	/* open relation */
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
+}
+
+/* Must keep superuser() check, see above. */
 Datum
 pgstattuplebyid(PG_FUNCTION_ARGS)
 {
@@ -184,6 +212,19 @@ pgstattuplebyid(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	/* open relation */
+	rel = relation_open(relid, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
+}
+
+/* Remove superuser() check for 1.5 version, see above */
+Datum
+pgstattuplebyid_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
 
 	/* open relation */
 	rel = relation_open(relid, AccessShareLock);

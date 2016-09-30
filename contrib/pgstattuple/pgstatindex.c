@@ -54,6 +54,14 @@ PG_FUNCTION_INFO_V1(pg_relpages);
 PG_FUNCTION_INFO_V1(pg_relpagesbyid);
 PG_FUNCTION_INFO_V1(pgstatginindex);
 
+PG_FUNCTION_INFO_V1(pgstatindex_v1_5);
+PG_FUNCTION_INFO_V1(pgstatindexbyid_v1_5);
+PG_FUNCTION_INFO_V1(pg_relpages_v1_5);
+PG_FUNCTION_INFO_V1(pg_relpagesbyid_v1_5);
+PG_FUNCTION_INFO_V1(pgstatginindex_v1_5);
+
+Datum pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo);
+
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 #define IS_GIN(r) ((r)->rd_rel->relam == GIN_AM_OID)
@@ -99,6 +107,10 @@ static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
  * pgstatindex()
  *
  * Usage: SELECT * FROM pgstatindex('t1_pkey');
+ *
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
  * ------------------------------------------------------
  */
 Datum
@@ -119,6 +131,31 @@ pgstatindex(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
 
+/*
+ * As of pgstattuple version 1.5, we no longer need to check if the user
+ * is a superuser because we REVOKE EXECUTE on the function from PUBLIC.
+ * Users can then grant access to it based on their policies.
+ *
+ * Otherwise identical to pgstatindex (above).
+ */
+Datum
+pgstatindex_v1_5(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	Relation	rel;
+	RangeVar   *relrv;
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
+}
+
+/*
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
+ */
 Datum
 pgstatindexbyid(PG_FUNCTION_ARGS)
 {
@@ -129,6 +166,18 @@ pgstatindexbyid(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	rel = relation_open(relid, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
+}
+
+/* No need for superuser checks in v1.5, see above */
+Datum
+pgstatindexbyid_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
 
 	rel = relation_open(relid, AccessShareLock);
 
@@ -292,6 +341,8 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
  *
  * Usage: SELECT pg_relpages('t1');
  *		  SELECT pg_relpages('t1_pkey');
+ *
+ * Must keep superuser() check, see above.
  * --------------------------------------------------------
  */
 Datum
@@ -319,6 +370,28 @@ pg_relpages(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(relpages);
 }
 
+/* No need for superuser checks in v1.5, see above */
+Datum
+pg_relpages_v1_5(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	int64		relpages;
+	Relation	rel;
+	RangeVar   *relrv;
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* note: this will work OK on non-local temp tables */
+
+	relpages = RelationGetNumberOfBlocks(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(relpages);
+}
+
+/* Must keep superuser() check, see above. */
 Datum
 pg_relpagesbyid(PG_FUNCTION_ARGS)
 {
@@ -342,16 +415,58 @@ pg_relpagesbyid(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(relpages);
 }
 
+/* No need for superuser checks in v1.5, see above */
+Datum
+pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		relpages;
+	Relation	rel;
+
+	rel = relation_open(relid, AccessShareLock);
+
+	/* note: this will work OK on non-local temp tables */
+
+	relpages = RelationGetNumberOfBlocks(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(relpages);
+}
+
 /* ------------------------------------------------------
  * pgstatginindex()
  *
  * Usage: SELECT * FROM pgstatginindex('ginindex');
+ *
+ * Must keep superuser() check, see above.
  * ------------------------------------------------------
  */
 Datum
 pgstatginindex(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	PG_RETURN_DATUM(pgstatginindex_internal(relid, fcinfo));
+}
+
+/* No need for superuser checks in v1.5, see above */
+Datum
+pgstatginindex_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+
+	PG_RETURN_DATUM(pgstatginindex_internal(relid, fcinfo));
+}
+
+Datum
+pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
+{
 	Relation	rel;
 	Buffer		buffer;
 	Page		page;
@@ -362,11 +477,6 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	Datum		values[3];
 	bool		nulls[3] = {false, false, false};
 	Datum		result;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	rel = relation_open(relid, AccessShareLock);
 
@@ -415,5 +525,5 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	tuple = heap_form_tuple(tupleDesc, values, nulls);
 	result = HeapTupleGetDatum(tuple);
 
-	PG_RETURN_DATUM(result);
+	return (result);
 }

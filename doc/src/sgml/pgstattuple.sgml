@@ -12,6 +12,14 @@
   obtain tuple-level statistics.
  </para>
 
+ <para>
+  As these functions return detailed page-level information, only the superuser
+  has EXECUTE privileges on them upon installation.  After the functions have
+  been installed, users may issue <command>GRANT</command> commands to change
+  the privileges on the functions to allow non-superusers to execute them.  See
+  the description of the <xref linkend="sql-grant"> command for specifics.
+ </para>
+
  <sect2>
   <title>Functions</title>
 
