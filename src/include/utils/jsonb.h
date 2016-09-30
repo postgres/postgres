@@ -241,7 +241,7 @@ enum jbvType
  */
 struct JsonbValue
 {
-	jbvType		type;			/* Influences sort order */
+	enum jbvType	type;			/* Influences sort order */
 
 	union
 	{
