@@ -2270,6 +2270,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		fputs("\n# Configuration added by pg_regress\n\n", pg_conf);
 		fputs("log_autovacuum_min_duration = 0\n", pg_conf);
 		fputs("log_checkpoints = on\n", pg_conf);
+		fputs("log_line_prefix = '%m [%p] %q%a '\n", pg_conf);
 		fputs("log_lock_waits = on\n", pg_conf);
 		fputs("log_temp_files = 128kB\n", pg_conf);
 		fputs("max_prepared_transactions = 2\n", pg_conf);

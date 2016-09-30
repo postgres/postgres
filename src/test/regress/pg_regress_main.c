@@ -34,6 +34,7 @@ psql_start_test(const char *testname,
 	char		expectfile[MAXPGPATH];
 	char		psql_cmd[MAXPGPATH * 3];
 	size_t		offset = 0;
+	char	   *appnameenv;
 
 	/*
 	 * Look for files in the output dir first, consistent with a vpath search.
@@ -63,6 +64,9 @@ psql_start_test(const char *testname,
 		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 						   "%s ", launcher);
 
+	appnameenv = psprintf("PGAPPNAME=pg_regress/%s", testname);
+	putenv(appnameenv);
+
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 			 "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
 			 bindir ? bindir : "",
@@ -79,6 +83,9 @@ psql_start_test(const char *testname,
 				testname);
 		exit(2);
 	}
+
+	unsetenv("PGAPPNAME");
+	free(appnameenv);
 
 	return pid;
 }

@@ -409,6 +409,7 @@ sub init
 	open my $conf, ">>$pgdata/postgresql.conf";
 	print $conf "\n# Added by PostgresNode.pm\n";
 	print $conf "fsync = off\n";
+	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
 	print $conf "log_statement = all\n";
 	print $conf "port = $port\n";
 

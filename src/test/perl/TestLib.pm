@@ -62,6 +62,8 @@ BEGIN
 	delete $ENV{PGPORT};
 	delete $ENV{PGHOST};
 
+	$ENV{PGAPPNAME} = $0;
+
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 }
