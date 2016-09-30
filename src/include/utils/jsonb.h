@@ -219,6 +219,20 @@ typedef struct
 #define JB_ROOT_IS_ARRAY(jbp_)	( *(uint32*) VARDATA(jbp_) & JB_FARRAY)
 
 
+enum jbvType
+{
+	/* Scalar types */
+	jbvNull = 0x0,
+	jbvString,
+	jbvNumeric,
+	jbvBool,
+	/* Composite types */
+	jbvArray = 0x10,
+	jbvObject,
+	/* Binary (i.e. struct Jsonb) jbvArray/jbvObject */
+	jbvBinary
+};
+
 /*
  * JsonbValue:	In-memory representation of Jsonb.  This is a convenient
  * deserialized representation, that can easily support using the "val"
@@ -227,19 +241,7 @@ typedef struct
  */
 struct JsonbValue
 {
-	enum
-	{
-		/* Scalar types */
-		jbvNull = 0x0,
-		jbvString,
-		jbvNumeric,
-		jbvBool,
-		/* Composite types */
-		jbvArray = 0x10,
-		jbvObject,
-		/* Binary (i.e. struct Jsonb) jbvArray/jbvObject */
-		jbvBinary
-	}			type;			/* Influences sort order */
+	jbvType		type;			/* Influences sort order */
 
 	union
 	{
