@@ -18,8 +18,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define BITS_PER_HEAPBLOCK_OLD 1
-
 
 #ifndef WIN32
 static int	copy_file(const char *fromfile, const char *tofile);
@@ -84,10 +82,11 @@ copy_file(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	if ((src_fd = open(srcfile, O_RDONLY, 0)) < 0)
+	if ((src_fd = open(srcfile, O_RDONLY | PG_BINARY, 0)) < 0)
 		return -1;
 
-	if ((dest_fd = open(dstfile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
+	if ((dest_fd = open(dstfile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+						S_IRUSR | S_IWUSR)) < 0)
 	{
 		save_errno = errno;
 
@@ -153,31 +152,30 @@ copy_file(const char *srcfile, const char *dstfile)
  * version, we could refuse to copy visibility maps from the old cluster
  * to the new cluster; the next VACUUM would recreate them, but at the
  * price of scanning the entire table.  So, instead, we rewrite the old
- * visibility maps in the new format.  That way, the all-visible bit
- * remains set for the pages for which it was set previously.  The
- * all-frozen bit is never set by this conversion; we leave that to
- * VACUUM.
+ * visibility maps in the new format.  That way, the all-visible bits
+ * remain set for the pages for which they were set previously.  The
+ * all-frozen bits are never set by this conversion; we leave that to VACUUM.
  */
 const char *
 rewriteVisibilityMap(const char *fromfile, const char *tofile)
 {
-	int			src_fd = 0;
-	int			dst_fd = 0;
-	char		buffer[BLCKSZ];
-	ssize_t		bytesRead;
+	int			src_fd;
+	int			dst_fd;
+	char	   *buffer;
+	char	   *new_vmbuf;
 	ssize_t		totalBytesRead = 0;
 	ssize_t		src_filesize;
 	int			rewriteVmBytesPerPage;
 	BlockNumber new_blkno = 0;
 	struct stat statbuf;
 
-	/* Compute we need how many old page bytes to rewrite a new page */
+	/* Compute number of old-format bytes per new page */
 	rewriteVmBytesPerPage = (BLCKSZ - SizeOfPageHeaderData) / 2;
 
 	if ((fromfile == NULL) || (tofile == NULL))
 		return "Invalid old file or new file";
 
-	if ((src_fd = open(fromfile, O_RDONLY, 0)) < 0)
+	if ((src_fd = open(fromfile, O_RDONLY | PG_BINARY, 0)) < 0)
 		return getErrorText();
 
 	if (fstat(src_fd, &statbuf) != 0)
@@ -186,7 +184,8 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile)
 		return getErrorText();
 	}
 
-	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
+	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+					   S_IRUSR | S_IWUSR)) < 0)
 	{
 		close(src_fd);
 		return getErrorText();
@@ -196,13 +195,21 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile)
 	src_filesize = statbuf.st_size;
 
 	/*
+	 * Malloc the work buffers, rather than making them local arrays, to
+	 * ensure adequate alignment.
+	 */
+	buffer = (char *) pg_malloc(BLCKSZ);
+	new_vmbuf = (char *) pg_malloc(BLCKSZ);
+
+	/*
 	 * Turn each visibility map page into 2 pages one by one. Each new page
-	 * has the same page header as the old one.  If the last section of last
-	 * page is empty, we skip it, mostly to avoid turning one-page visibility
-	 * maps for small relations into two pages needlessly.
+	 * has the same page header as the old one.  If the last section of the
+	 * last page is empty, we skip it, mostly to avoid turning one-page
+	 * visibility maps for small relations into two pages needlessly.
 	 */
 	while (totalBytesRead < src_filesize)
 	{
+		ssize_t		bytesRead;
 		char	   *old_cur;
 		char	   *old_break;
 		char	   *old_blkend;
@@ -225,61 +232,59 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile)
 		/*
 		 * These old_* variables point to old visibility map page. old_cur
 		 * points to current position on old page. old_blkend points to end of
-		 * old block. old_break points to old page break position for
-		 * rewriting a new page. After wrote a new page, old_break proceeds
-		 * rewriteVmBytesPerPage bytes.
+		 * old block.  old_break is the end+1 position on the old page for the
+		 * data that will be transferred to the current new page.
 		 */
 		old_cur = buffer + SizeOfPageHeaderData;
 		old_blkend = buffer + bytesRead;
 		old_break = old_cur + rewriteVmBytesPerPage;
 
-		while (old_blkend >= old_break)
+		while (old_break <= old_blkend)
 		{
-			char		new_vmbuf[BLCKSZ];
-			char	   *new_cur = new_vmbuf;
+			char	   *new_cur;
 			bool		empty = true;
 			bool		old_lastpart;
 
-			/* Copy page header in advance */
+			/* First, copy old page header to new page */
 			memcpy(new_vmbuf, &pageheader, SizeOfPageHeaderData);
 
-			/* Rewrite the last part of the old page? */
-			old_lastpart = old_lastblk && (old_blkend == old_break);
+			/* Rewriting the last part of the last old page? */
+			old_lastpart = old_lastblk && (old_break == old_blkend);
 
-			new_cur += SizeOfPageHeaderData;
+			new_cur = new_vmbuf + SizeOfPageHeaderData;
 
 			/* Process old page bytes one by one, and turn it into new page. */
-			while (old_break > old_cur)
+			while (old_cur < old_break)
 			{
+				uint8		byte = *(uint8 *) old_cur;
 				uint16		new_vmbits = 0;
 				int			i;
 
 				/* Generate new format bits while keeping old information */
 				for (i = 0; i < BITS_PER_BYTE; i++)
 				{
-					uint8		byte = *(uint8 *) old_cur;
-
-					if (byte & (1 << (BITS_PER_HEAPBLOCK_OLD * i)))
+					if (byte & (1 << i))
 					{
 						empty = false;
-						new_vmbits |= 1 << (BITS_PER_HEAPBLOCK * i);
+						new_vmbits |=
+							VISIBILITYMAP_ALL_VISIBLE << (BITS_PER_HEAPBLOCK * i);
 					}
 				}
 
-				/* Copy new visibility map bit to new format page */
-				memcpy(new_cur, &new_vmbits, BITS_PER_HEAPBLOCK);
+				/* Copy new visibility map bytes to new-format page */
+				new_cur[0] = (char) (new_vmbits & 0xFF);
+				new_cur[1] = (char) (new_vmbits >> 8);
 
-				old_cur += BITS_PER_HEAPBLOCK_OLD;
+				old_cur++;
 				new_cur += BITS_PER_HEAPBLOCK;
 			}
 
-			/* If the last part of the old page is empty, skip writing it */
+			/* If the last part of the last page is empty, skip writing it */
 			if (old_lastpart && empty)
 				break;
 
-			/* Set new checksum for a visibility map page (if enabled) */
-			if (old_cluster.controldata.data_checksum_version != 0 &&
-				new_cluster.controldata.data_checksum_version != 0)
+			/* Set new checksum for visibility map page, if enabled */
+			if (new_cluster.controldata.data_checksum_version != 0)
 				((PageHeader) new_vmbuf)->pd_checksum =
 					pg_checksum_page(new_vmbuf, new_blkno);
 
@@ -290,17 +295,19 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile)
 				return getErrorText();
 			}
 
+			/* Advance for next new page */
 			old_break += rewriteVmBytesPerPage;
 			new_blkno++;
 		}
 	}
 
-	/* Close files */
+	/* Clean up */
+	pg_free(buffer);
+	pg_free(new_vmbuf);
 	close(dst_fd);
 	close(src_fd);
 
 	return NULL;
-
 }
 
 void
