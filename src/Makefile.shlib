@@ -47,9 +47,8 @@
 # clean-lib             delete the static and shared libraries from the build dir
 # maintainer-clean-lib  delete .def files built for win32
 #
-# Since `all-lib' is the first rule in this file you probably want to
-# have the `all' target before including this file. In the most simple
-# case it would look like this:
+# Typically you would add `all-lib' to the `all' target so that `make all'
+# builds the libraries.  In the most simple case it would look like this:
 #
 #     all: all-lib
 #
