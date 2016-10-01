@@ -367,10 +367,12 @@ bool		pid_lock_file_exists(const char *datadir);
 
 /* file.c */
 
-const char *copyFile(const char *src, const char *dst);
-const char *linkFile(const char *src, const char *dst);
-const char *rewriteVisibilityMap(const char *fromfile, const char *tofile);
-
+void copyFile(const char *src, const char *dst,
+		 const char *schemaName, const char *relName);
+void linkFile(const char *src, const char *dst,
+		 const char *schemaName, const char *relName);
+void rewriteVisibilityMap(const char *fromfile, const char *tofile,
+					 const char *schemaName, const char *relName);
 void		check_hard_link(void);
 FILE	   *fopen_priv(const char *path, const char *mode);
 
@@ -431,7 +433,6 @@ void		pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute_noret
 void		end_progress_output(void);
 void		prep_status(const char *fmt,...) pg_attribute_printf(1, 2);
 void		check_ok(void);
-const char *getErrorText(void);
 unsigned int str2uint(const char *str);
 void		pg_putenv(const char *var, const char *val);
 

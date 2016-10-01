@@ -119,8 +119,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	fflush(stderr);
 
 	if ((output = popen(cmd, "r")) == NULL)
-		pg_fatal("Could not get control data using %s: %s\n",
-				 cmd, getErrorText());
+		pg_fatal("could not get control data using %s: %s\n",
+				 cmd, strerror(errno));
 
 	/* Only in <= 9.2 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)

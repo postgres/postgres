@@ -52,7 +52,8 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 				PQExpBufferData connectbuf;
 
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText());
+					pg_fatal("could not open file \"%s\": %s\n", output_path,
+							 strerror(errno));
 
 				initPQExpBuffer(&connectbuf);
 				appendPsqlMetaConnect(&connectbuf, active_db->db_name);
@@ -150,7 +151,8 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText());
+				pg_fatal("could not open file \"%s\": %s\n", output_path,
+						 strerror(errno));
 			if (!db_used)
 			{
 				fprintf(script, "Database: %s\n", active_db->db_name);

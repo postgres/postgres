@@ -183,7 +183,6 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 static void
 transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_frozenbit)
 {
-	const char *msg;
 	char		old_file[MAXPGPATH];
 	char		new_file[MAXPGPATH];
 	int			segno;
@@ -229,7 +228,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 				else
 					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 							 map->nspname, map->relname, old_file, new_file,
-							 getErrorText());
+							 strerror(errno));
 			}
 
 			/* If file is empty, just return */
@@ -242,35 +241,24 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 		/* Copying files might take some time, so give feedback. */
 		pg_log(PG_STATUS, "%s", old_file);
 
-		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
+		if (vm_must_add_frozenbit && strcmp(type_suffix, "_vm") == 0)
 		{
-			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
-
-			/* Rewrite visibility map if needed */
-			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-				msg = rewriteVisibilityMap(old_file, new_file);
-			else
-				msg = copyFile(old_file, new_file);
-
-			if (msg)
-				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						 map->nspname, map->relname, old_file, new_file, msg);
+			/* Need to rewrite visibility map format */
+			pg_log(PG_VERBOSE, "rewriting \"%s\" to \"%s\"\n",
+				   old_file, new_file);
+			rewriteVisibilityMap(old_file, new_file, map->nspname, map->relname);
+		}
+		else if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
+		{
+			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n",
+				   old_file, new_file);
+			copyFile(old_file, new_file, map->nspname, map->relname);
 		}
 		else
 		{
-			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
-
-			/* Rewrite visibility map if needed */
-			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-				msg = rewriteVisibilityMap(old_file, new_file);
-			else
-				msg = linkFile(old_file, new_file);
-
-			if (msg)
-				pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						 map->nspname, map->relname, old_file, new_file, msg);
+			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n",
+				   old_file, new_file);
+			linkFile(old_file, new_file, map->nspname, map->relname);
 		}
 	}
-
-	return;
 }
