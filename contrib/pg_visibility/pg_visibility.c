@@ -3,6 +3,8 @@
  * pg_visibility.c
  *	  display visibility map information and page-level visibility bits
  *
+ * Copyright (c) 2016, PostgreSQL Global Development Group
+ *
  *	  contrib/pg_visibility/pg_visibility.c
  *-------------------------------------------------------------------------
  */
@@ -54,6 +56,10 @@ static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
 
 /*
  * Visibility map information for a single block of a relation.
+ *
+ * Note: the VM code will silently return zeroes for pages past the end
+ * of the map, so we allow probes up to MaxBlockNumber regardless of the
+ * actual relation size.
  */
 Datum
 pg_visibility_map(PG_FUNCTION_ARGS)
@@ -122,13 +128,22 @@ pg_visibility(PG_FUNCTION_ARGS)
 	values[0] = BoolGetDatum((mapbits & VISIBILITYMAP_ALL_VISIBLE) != 0);
 	values[1] = BoolGetDatum((mapbits & VISIBILITYMAP_ALL_FROZEN) != 0);
 
-	buffer = ReadBuffer(rel, blkno);
-	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+	/* Here we have to explicitly check rel size ... */
+	if (blkno < RelationGetNumberOfBlocks(rel))
+	{
+		buffer = ReadBuffer(rel, blkno);
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	page = BufferGetPage(buffer);
-	values[2] = BoolGetDatum(PageIsAllVisible(page));
+		page = BufferGetPage(buffer);
+		values[2] = BoolGetDatum(PageIsAllVisible(page));
 
-	UnlockReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
+	}
+	else
+	{
+		/* As with the vismap, silently return 0 for pages past EOF */
+		values[2] = BoolGetDatum(false);
+	}
 
 	relation_close(rel, AccessShareLock);
 
@@ -611,14 +626,13 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 			/* Dead line pointers are neither all-visible nor frozen. */
 			if (ItemIdIsDead(itemid))
 			{
-				ItemPointerData tid;
-
-				ItemPointerSet(&tid, blkno, offnum);
-				record_corrupt_item(items, &tid);
+				ItemPointerSet(&(tuple.t_self), blkno, offnum);
+				record_corrupt_item(items, &tuple.t_self);
 				continue;
 			}
 
 			/* Initialize a HeapTupleData structure for checks below. */
+			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
 			tuple.t_tableOid = relid;
@@ -649,12 +663,12 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				RecomputedOldestXmin = GetOldestXmin(NULL, true);
 
 				if (!TransactionIdPrecedes(OldestXmin, RecomputedOldestXmin))
-					record_corrupt_item(items, &tuple.t_data->t_ctid);
+					record_corrupt_item(items, &tuple.t_self);
 				else
 				{
 					OldestXmin = RecomputedOldestXmin;
 					if (!tuple_all_visible(&tuple, OldestXmin, buffer))
-						record_corrupt_item(items, &tuple.t_data->t_ctid);
+						record_corrupt_item(items, &tuple.t_self);
 				}
 			}
 
@@ -665,7 +679,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 			if (check_frozen)
 			{
 				if (heap_tuple_needs_eventual_freeze(tuple.t_data))
-					record_corrupt_item(items, &tuple.t_data->t_ctid);
+					record_corrupt_item(items, &tuple.t_self);
 			}
 		}
 
