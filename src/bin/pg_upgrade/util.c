@@ -233,21 +233,6 @@ get_user_info(char **user_name_p)
 
 
 /*
- * getErrorText()
- *
- *	Returns the text of the most recent error
- */
-const char *
-getErrorText(void)
-{
-#ifdef WIN32
-	_dosmaperr(GetLastError());
-#endif
-	return pg_strdup(strerror(errno));
-}
-
-
-/*
  *	str2uint()
  *
  *	convert string to oid

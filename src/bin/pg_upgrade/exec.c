@@ -191,7 +191,7 @@ pid_lock_file_exists(const char *datadir)
 		/* ENOTDIR means we will throw a more useful error later */
 		if (errno != ENOENT && errno != ENOTDIR)
 			pg_fatal("could not open file \"%s\" for reading: %s\n",
-					 path, getErrorText());
+					 path, strerror(errno));
 
 		return false;
 	}
@@ -285,7 +285,7 @@ check_data_dir(const char *pg_data)
 
 		if (stat(subDirName, &statBuf) != 0)
 			report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
-						  subDirName, getErrorText());
+						  subDirName, strerror(errno));
 		else if (!S_ISDIR(statBuf.st_mode))
 			report_status(PG_FATAL, "%s is not a directory\n",
 						  subDirName);
@@ -309,7 +309,7 @@ check_bin_dir(ClusterInfo *cluster)
 	/* check bindir */
 	if (stat(cluster->bindir, &statBuf) != 0)
 		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
-					  cluster->bindir, getErrorText());
+					  cluster->bindir, strerror(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
 		report_status(PG_FATAL, "%s is not a directory\n",
 					  cluster->bindir);
@@ -352,7 +352,7 @@ validate_exec(const char *dir, const char *cmdName)
 	 */
 	if (stat(path, &buf) < 0)
 		pg_fatal("check for \"%s\" failed: %s\n",
-				 path, getErrorText());
+				 path, strerror(errno));
 	else if (!S_ISREG(buf.st_mode))
 		pg_fatal("check for \"%s\" failed: not an executable file\n",
 				 path);
