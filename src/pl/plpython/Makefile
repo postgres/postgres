@@ -95,7 +95,9 @@ REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-all: submake-generated-headers all-lib
+all: all-lib
+
+$(OBJS): | submake-generated-headers
 
 
 install: all install-lib install-data
