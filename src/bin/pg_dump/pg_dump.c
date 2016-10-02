@@ -12505,6 +12505,9 @@ dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
 	appendPQExpBuffer(labelq, "ACCESS METHOD %s",
 					  qamname);
 
+	if (dopt->binary_upgrade)
+		binary_upgrade_extension_member(q, &aminfo->dobj, labelq->data);
+
 	if (aminfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, aminfo->dobj.catId, aminfo->dobj.dumpId,
 					 aminfo->dobj.name,

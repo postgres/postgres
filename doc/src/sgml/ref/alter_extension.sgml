@@ -30,6 +30,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
 <phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
 
+  ACCESS METHOD <replaceable class="PARAMETER">object_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
