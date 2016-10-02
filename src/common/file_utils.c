@@ -273,6 +273,7 @@ fsync_fname(const char *fname, bool isdir, const char *progname)
 	{
 		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
+		(void) close(fd);
 		return -1;
 	}
 

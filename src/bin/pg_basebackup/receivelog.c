@@ -86,8 +86,11 @@ mark_file_as_archived(const char *basedir, const char *fname, bool do_sync)
 /*
  * Open a new WAL file in the specified directory.
  *
- * The file will be padded to 16Mb with zeroes. The base filename (without
- * partial_suffix) is stored in current_walfile_name.
+ * Returns true if OK; on failure, returns false after printing an error msg.
+ * On success, 'walfile' is set to the FD for the file, and the base filename
+ * (without partial_suffix) is stored in 'current_walfile_name'.
+ *
+ * The file will be padded to 16Mb with zeroes.
  */
 static bool
 open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
@@ -127,18 +130,23 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	}
 	if (statbuf.st_size == XLogSegSize)
 	{
-		/* File is open and ready to use */
-		walfile = f;
-
 		/*
 		 * fsync, in case of a previous crash between padding and fsyncing the
 		 * file.
 		 */
-		if (stream->do_sync && fsync_fname(fn, false, progname) != 0)
-			return false;
-		if (stream->do_sync && fsync_parent_path(fn, progname) != 0)
-			return false;
+		if (stream->do_sync)
+		{
+			if (fsync_fname(fn, false, progname) != 0 ||
+				fsync_parent_path(fn, progname) != 0)
+			{
+				/* error already printed */
+				close(f);
+				return false;
+			}
+		}
 
+		/* File is open and ready to use */
+		walfile = f;
 		return true;
 	}
 	if (statbuf.st_size != 0)
@@ -150,12 +158,20 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 		return false;
 	}
 
-	/* New, empty, file. So pad it to 16Mb with zeroes */
+	/*
+	 * New, empty, file. So pad it to 16Mb with zeroes.  If we fail partway
+	 * through padding, we should attempt to unlink the file on failure, so as
+	 * not to leave behind a partially-filled file.
+	 */
 	zerobuf = pg_malloc0(XLOG_BLCKSZ);
 	for (bytes = 0; bytes < XLogSegSize; bytes += XLOG_BLCKSZ)
 	{
+		errno = 0;
 		if (write(f, zerobuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			fprintf(stderr,
 					_("%s: could not pad transaction log file \"%s\": %s\n"),
 					progname, fn, strerror(errno));
@@ -173,10 +189,16 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	 * using synchronous mode, where the file is modified and fsynced
 	 * in-place, without a directory fsync.
 	 */
-	if (stream->do_sync && fsync_fname(fn, false, progname) != 0)
-		return false;
-	if (stream->do_sync && fsync_parent_path(fn, progname) != 0)
-		return false;
+	if (stream->do_sync)
+	{
+		if (fsync_fname(fn, false, progname) != 0 ||
+			fsync_parent_path(fn, progname) != 0)
+		{
+			/* error already printed */
+			close(f);
+			return false;
+		}
+	}
 
 	if (lseek(f, SEEK_SET, 0) != 0)
 	{
@@ -186,6 +208,8 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 		close(f);
 		return false;
 	}
+
+	/* File is open and ready to use */
 	walfile = f;
 	return true;
 }
@@ -209,6 +233,8 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 		fprintf(stderr,
 			 _("%s: could not determine seek position in file \"%s\": %s\n"),
 				progname, current_walfile_name, strerror(errno));
+		close(walfile);
+		walfile = -1;
 		return false;
 	}
 
@@ -216,6 +242,8 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 	{
 		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 				progname, current_walfile_name, strerror(errno));
+		close(walfile);
+		walfile = -1;
 		return false;
 	}
 
