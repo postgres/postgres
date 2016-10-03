@@ -12,6 +12,31 @@
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
+#include "catalog/pg_language.h"
+
+
+/*
+ * qsort comparator for pointers to library names
+ *
+ * We sort first by name length, then alphabetically for names of the same
+ * length.  This is to ensure that, eg, "hstore_plpython" sorts after both
+ * "hstore" and "plpython"; otherwise transform modules will probably fail
+ * their LOAD tests.  (The backend ought to cope with that consideration,
+ * but it doesn't yet, and even when it does it'll still be a good idea
+ * to have a predictable order of probing here.)
+ */
+static int
+library_name_compare(const void *p1, const void *p2)
+{
+	const char *str1 = *(const char *const *) p1;
+	const char *str2 = *(const char *const *) p2;
+	int			slen1 = strlen(str1);
+	int			slen2 = strlen(str2);
+
+	if (slen1 != slen2)
+		return slen1 - slen2;
+	return strcmp(str1, str2);
+}
 
 
 /*
@@ -38,17 +63,15 @@ get_loadable_libraries(void)
 		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
 
 		/*
-		 * Fetch all libraries referenced in this DB.  We can't exclude the
-		 * "pg_catalog" schema because, while such functions are not
-		 * explicitly dumped by pg_dump, they do reference implicit objects
-		 * that pg_dump does dump, e.g. CREATE LANGUAGE plperl.
+		 * Fetch all libraries containing non-built-in C functions in this DB.
 		 */
 		ress[dbnum] = executeQueryOrDie(conn,
 										"SELECT DISTINCT probin "
-										"FROM	pg_catalog.pg_proc "
-										"WHERE	prolang = 13 /* C */ AND "
+										"FROM pg_catalog.pg_proc "
+										"WHERE prolang = %u AND "
 										"probin IS NOT NULL AND "
 										"oid >= %u;",
+										ClanguageId,
 										FirstNormalObjectId);
 		totaltups += PQntuples(ress[dbnum]);
 
@@ -69,13 +92,15 @@ get_loadable_libraries(void)
 
 			res = executeQueryOrDie(conn,
 									"SELECT 1 "
-						   "FROM	pg_catalog.pg_proc JOIN pg_namespace "
-							 "		ON pronamespace = pg_namespace.oid "
+									"FROM pg_catalog.pg_proc p "
+									"    JOIN pg_catalog.pg_namespace n "
+									"    ON pronamespace = n.oid "
 							   "WHERE proname = 'plpython_call_handler' AND "
 									"nspname = 'public' AND "
-									"prolang = 13 /* C */ AND "
+									"prolang = %u AND "
 									"probin = '$libdir/plpython' AND "
-									"pg_proc.oid >= %u;",
+									"p.oid >= %u;",
+									ClanguageId,
 									FirstNormalObjectId);
 			if (PQntuples(res) > 0)
 			{
@@ -112,13 +137,18 @@ get_loadable_libraries(void)
 	if (found_public_plpython_handler)
 		pg_fatal("Remove the problem functions from the old cluster to continue.\n");
 
-	/* Allocate what's certainly enough space */
-	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
-
 	/*
-	 * Now remove duplicates across DBs.  This is pretty inefficient code, but
-	 * there probably aren't enough entries to matter.
+	 * Now we want to remove duplicates across DBs and sort the library names
+	 * into order.  This avoids multiple probes of the same library, and
+	 * ensures that libraries are probed in a consistent order, which is
+	 * important for reproducible behavior if one library depends on another.
+	 *
+	 * First transfer all the names into one array, then sort, then remove
+	 * duplicates.  Note: we strdup each name in the first loop so that we can
+	 * safely clear the PGresults in the same loop.  This is a bit wasteful
+	 * but it's unlikely there are enough names to matter.
 	 */
+	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
 	totaltups = 0;
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
@@ -131,27 +161,34 @@ get_loadable_libraries(void)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			char	   *lib = PQgetvalue(res, rowno, 0);
-			bool		dup = false;
-			int			n;
 
-			for (n = 0; n < totaltups; n++)
-			{
-				if (strcmp(lib, os_info.libraries[n]) == 0)
-				{
-					dup = true;
-					break;
-				}
-			}
-			if (!dup)
-				os_info.libraries[totaltups++] = pg_strdup(lib);
+			os_info.libraries[totaltups++] = pg_strdup(lib);
 		}
-
 		PQclear(res);
 	}
 
-	os_info.num_libraries = totaltups;
-
 	pg_free(ress);
+
+	if (totaltups > 1)
+	{
+		int			i,
+					lastnondup;
+
+		qsort((void *) os_info.libraries, totaltups, sizeof(char *),
+			  library_name_compare);
+
+		for (i = 1, lastnondup = 0; i < totaltups; i++)
+		{
+			if (strcmp(os_info.libraries[i],
+					   os_info.libraries[lastnondup]) != 0)
+				os_info.libraries[++lastnondup] = os_info.libraries[i];
+			else
+				pg_free(os_info.libraries[i]);
+		}
+		totaltups = lastnondup + 1;
+	}
+
+	os_info.num_libraries = totaltups;
 }
 
 
