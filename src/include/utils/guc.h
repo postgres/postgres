@@ -219,12 +219,12 @@ typedef enum
 #define GUC_UNIT_BLOCKS			0x2000	/* value is in blocks */
 #define GUC_UNIT_XBLOCKS		0x3000	/* value is in xlog blocks */
 #define GUC_UNIT_XSEGS			0x4000	/* value is in xlog segments */
-#define GUC_UNIT_MEMORY			0xF000	/* mask for KB, BLOCKS, XBLOCKS */
+#define GUC_UNIT_MEMORY			0xF000	/* mask for size-related units */
 
 #define GUC_UNIT_MS			   0x10000	/* value is in milliseconds */
 #define GUC_UNIT_S			   0x20000	/* value is in seconds */
 #define GUC_UNIT_MIN		   0x30000	/* value is in minutes */
-#define GUC_UNIT_TIME		   0xF0000	/* mask for MS, S, MIN */
+#define GUC_UNIT_TIME		   0xF0000	/* mask for time-related units */
 
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 

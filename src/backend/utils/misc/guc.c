@@ -8016,20 +8016,23 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	/* unit */
 	if (conf->vartype == PGC_INT)
 	{
-		static char buf[8];
-
 		switch (conf->flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME))
 		{
 			case GUC_UNIT_KB:
 				values[2] = "kB";
 				break;
 			case GUC_UNIT_BLOCKS:
-				snprintf(buf, sizeof(buf), "%dkB", BLCKSZ / 1024);
-				values[2] = buf;
+				snprintf(buffer, sizeof(buffer), "%dkB", BLCKSZ / 1024);
+				values[2] = pstrdup(buffer);
 				break;
 			case GUC_UNIT_XBLOCKS:
-				snprintf(buf, sizeof(buf), "%dkB", XLOG_BLCKSZ / 1024);
-				values[2] = buf;
+				snprintf(buffer, sizeof(buffer), "%dkB", XLOG_BLCKSZ / 1024);
+				values[2] = pstrdup(buffer);
+				break;
+			case GUC_UNIT_XSEGS:
+				snprintf(buffer, sizeof(buffer), "%dMB",
+						 XLOG_SEG_SIZE / (1024 * 1024));
+				values[2] = pstrdup(buffer);
 				break;
 			case GUC_UNIT_MS:
 				values[2] = "ms";
@@ -8040,7 +8043,12 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 			case GUC_UNIT_MIN:
 				values[2] = "min";
 				break;
+			case 0:
+				values[2] = NULL;
+				break;
 			default:
+				elog(ERROR, "unrecognized GUC units value: %d",
+					 conf->flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME));
 				values[2] = NULL;
 				break;
 		}
