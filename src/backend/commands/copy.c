@@ -871,6 +871,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt, uint64 *processed)
 			ColumnRef  *cr;
 			ResTarget  *target;
 			RangeVar   *from;
+			List	   *targetList = NIL;
 
 			if (is_from)
 				ereport(ERROR,
@@ -878,21 +879,59 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt, uint64 *processed)
 				   errmsg("COPY FROM not supported with row-level security"),
 						 errhint("Use INSERT statements instead.")));
 
-			/* Build target list */
-			cr = makeNode(ColumnRef);
-
+			/*
+			 * Build target list
+			 *
+			 * If no columns are specified in the attribute list of the COPY
+			 * command, then the target list is 'all' columns. Therefore, '*'
+			 * should be used as the target list for the resulting SELECT
+			 * statement.
+			 *
+			 * In the case that columns are specified in the attribute list,
+			 * create a ColumnRef and ResTarget for each column and add them to
+			 * the target list for the resulting SELECT statement.
+			 */
 			if (!stmt->attlist)
+			{
+				cr = makeNode(ColumnRef);
 				cr->fields = list_make1(makeNode(A_Star));
+				cr->location = -1;
+
+				target = makeNode(ResTarget);
+				target->name = NULL;
+				target->indirection = NIL;
+				target->val = (Node *) cr;
+				target->location = -1;
+
+				targetList = list_make1(target);
+			}
 			else
-				cr->fields = stmt->attlist;
+			{
+				ListCell   *lc;
 
-			cr->location = 1;
+				foreach(lc, stmt->attlist)
+				{
+					/*
+					 * Build the ColumnRef for each column.  The ColumnRef
+					 * 'fields' property is a String 'Value' node (see
+					 * nodes/value.h) that corresponds to the column name
+					 * respectively.
+					 */
+					cr = makeNode(ColumnRef);
+					cr->fields = list_make1(lfirst(lc));
+					cr->location = -1;
 
-			target = makeNode(ResTarget);
-			target->name = NULL;
-			target->indirection = NIL;
-			target->val = (Node *) cr;
-			target->location = 1;
+					/* Build the ResTarget and add the ColumnRef to it. */
+					target = makeNode(ResTarget);
+					target->name = NULL;
+					target->indirection = NIL;
+					target->val = (Node *) cr;
+					target->location = -1;
+
+					/* Add each column to the SELECT statement's target list */
+					targetList = lappend(targetList, target);
+				}
+			}
 
 			/*
 			 * Build RangeVar for from clause, fully qualified based on the
@@ -903,7 +942,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt, uint64 *processed)
 
 			/* Build query */
 			select = makeNode(SelectStmt);
-			select->targetList = list_make1(target);
+			select->targetList = targetList;
 			select->fromClause = list_make1(from);
 
 			query = (Node *) select;

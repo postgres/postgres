@@ -327,9 +327,72 @@ copy check_con_tbl from stdin;
 \.
 select * from check_con_tbl;
 
+-- test with RLS enabled.
+CREATE ROLE regress_rls_copy_user;
+CREATE ROLE regress_rls_copy_user_colperms;
+CREATE TABLE rls_t1 (a int, b int, c int);
+
+COPY rls_t1 (a, b, c) from stdin;
+1	4	1
+2	3	2
+3	2	3
+4	1	4
+\.
+
+CREATE POLICY p1 ON rls_t1 FOR SELECT USING (a % 2 = 0);
+ALTER TABLE rls_t1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_t1 FORCE ROW LEVEL SECURITY;
+
+GRANT SELECT ON TABLE rls_t1 TO regress_rls_copy_user;
+GRANT SELECT (a, b) ON TABLE rls_t1 TO regress_rls_copy_user_colperms;
+
+-- all columns
+COPY rls_t1 TO stdout;
+COPY rls_t1 (a, b, c) TO stdout;
+
+-- subset of columns
+COPY rls_t1 (a) TO stdout;
+COPY rls_t1 (a, b) TO stdout;
+
+-- column reordering
+COPY rls_t1 (b, a) TO stdout;
+
+SET SESSION AUTHORIZATION regress_rls_copy_user;
+
+-- all columns
+COPY rls_t1 TO stdout;
+COPY rls_t1 (a, b, c) TO stdout;
+
+-- subset of columns
+COPY rls_t1 (a) TO stdout;
+COPY rls_t1 (a, b) TO stdout;
+
+-- column reordering
+COPY rls_t1 (b, a) TO stdout;
+
+RESET SESSION AUTHORIZATION;
+
+SET SESSION AUTHORIZATION regress_rls_copy_user_colperms;
+
+-- attempt all columns (should fail)
+COPY rls_t1 TO stdout;
+COPY rls_t1 (a, b, c) TO stdout;
+
+-- try to copy column with no privileges (should fail)
+COPY rls_t1 (c) TO stdout;
+
+-- subset of columns (should succeed)
+COPY rls_t1 (a) TO stdout;
+COPY rls_t1 (a, b) TO stdout;
+
+RESET SESSION AUTHORIZATION;
+
 DROP TABLE forcetest;
 DROP TABLE vistest;
 DROP FUNCTION truncate_in_subxact();
 DROP TABLE x, y;
+DROP TABLE rls_t1 CASCADE;
+DROP ROLE regress_rls_copy_user;
+DROP ROLE regress_rls_copy_user_colperms;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
