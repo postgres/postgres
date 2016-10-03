@@ -39,6 +39,8 @@ extern bool LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 				long blocknum, int offset);
 extern void LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 				long *blocknum, int *offset);
+extern void LogicalTapeAssignReadBufferSize(LogicalTapeSet *lts, int tapenum,
+								size_t bufsize);
 extern long LogicalTapeSetBlocks(LogicalTapeSet *lts);
 
 #endif   /* LOGTAPE_H */
