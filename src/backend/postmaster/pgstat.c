@@ -3919,7 +3919,8 @@ PgstatCollectorMain(int argc, char *argv[])
 		wr = WaitLatchOrSocket(MyLatch,
 		WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
-							   2 * 1000L /* msec */ );
+							   2 * 1000L /* msec */,
+							   WAIT_EVENT_PGSTAT_MAIN);
 #endif
 
 		/*
