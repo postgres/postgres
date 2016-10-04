@@ -3,11 +3,6 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION hstore_plperl" to load this file. \quit
 
--- make sure the prerequisite libraries are loaded
-LOAD 'plperl';
-SELECT NULL::hstore;
-
-
 CREATE FUNCTION hstore_to_plperl(val internal) RETURNS internal
 LANGUAGE C STRICT IMMUTABLE
 AS 'MODULE_PATHNAME';

@@ -480,10 +480,11 @@ sub mkvcbuild
 			'plpython' . $pymajorver,        'src/pl/plpython',
 			'hstore',                        'contrib/hstore');
 		$hstore_plpython->AddDefine('PLPYTHON_LIBNAME="plpython' . $pymajorver . '"');
-		AddTransformModule(
+		my $ltree_plpython = AddTransformModule(
 			'ltree_plpython' . $pymajorver, 'contrib/ltree_plpython',
 			'plpython' . $pymajorver,       'src/pl/plpython',
 			'ltree',                        'contrib/ltree');
+		$ltree_plpython->AddDefine('PLPYTHON_LIBNAME="plpython' . $pymajorver . '"');
 	}
 
 	if ($solution->{options}->{perl})

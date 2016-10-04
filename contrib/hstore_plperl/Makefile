@@ -23,20 +23,20 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-# In configurations that forbid undefined symbols in libraries, link with each
-# dependency.  This does preclude pgxs builds.
+# We must link libperl explicitly
 ifeq ($(PORTNAME), aix)
 rpathdir = $(pkglibdir):$(perl_archlibexp)/CORE
-SHLIB_LINK += ../hstore/libhstore.exp $(perl_embed_ldflags)
-endif
+SHLIB_LINK += $(perl_embed_ldflags)
+else
 ifeq ($(PORTNAME), win32)
 # these settings are the same as for plperl
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID -Wno-comment
-SHLIB_LINK += ../hstore/libhstore.a $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
+# ... see silliness in plperl Makefile ...
+SHLIB_LINK += $(sort $(wildcard ../../src/pl/plperl/libperl*.a))
+else
+rpathdir = $(perl_archlibexp)/CORE
+SHLIB_LINK += $(perl_embed_ldflags)
 endif
-
-ifeq ($(PORTNAME), cygwin)
-SHLIB_LINK += -L../hstore -l hstore $(perl_embed_ldflags)
 endif
 
 # As with plperl we need to make sure that the CORE directory is included
