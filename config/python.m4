@@ -67,10 +67,12 @@ AC_SUBST(python_includespec)[]dnl
 # directory name and LDLIBRARY is the file name of the shlib.  But in older
 # installations LDLIBRARY is frequently a useless path fragment, and it's also
 # possible that the shlib is in a standard library directory such as /usr/lib
-# so that LIBDIR is of no interest.  We must also check that what we found is
-# a shared library not a plain library, which we do by checking its extension.
-# (We used to rely on Py_ENABLE_SHARED, but that only tells us that a shlib
-# exists, not that we found it.)
+# so that LIBDIR is irrelevant.  Also, some packagers put the .so symlink for
+# the shlib in ${python_configdir} even though Python itself never does.
+# We must also check that what we found is a shared library not a plain
+# library, which we do by checking its extension.  (We used to rely on
+# Py_ENABLE_SHARED, but that only tells us that a shlib exists, not that
+# we found it.)
 AC_DEFUN([PGAC_CHECK_PYTHON_EMBED_SETUP],
 [AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
 AC_MSG_CHECKING([how to link an embedded Python application])
@@ -94,7 +96,8 @@ else
 	fi
 	# Search for a likely-looking file.
 	found_shlib=0
-	for d in "${python_libdir}" /usr/lib64 /usr/lib; do
+	for d in "${python_libdir}" "${python_configdir}" /usr/lib64 /usr/lib
+	do
 		for e in .so .dll .dylib .sl; do
 			if test -e "$d/lib${ldlibrary}$e"; then
 				python_libdir="$d"
