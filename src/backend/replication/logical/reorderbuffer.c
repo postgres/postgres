@@ -872,8 +872,12 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		ReorderBufferChange *cur_change;
 
 		if (txn->nentries != txn->nentries_mem)
+		{
+			/* serialize remaining changes */
+			ReorderBufferSerializeTXN(rb, txn);
 			ReorderBufferRestoreChanges(rb, txn, &state->entries[off].fd,
 										&state->entries[off].segno);
+		}
 
 		cur_change = dlist_head_element(ReorderBufferChange, node,
 										&txn->changes);
@@ -897,10 +901,13 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 			ReorderBufferChange *cur_change;
 
 			if (cur_txn->nentries != cur_txn->nentries_mem)
+			{
+				/* serialize remaining changes */
+				ReorderBufferSerializeTXN(rb, cur_txn);
 				ReorderBufferRestoreChanges(rb, cur_txn,
 											&state->entries[off].fd,
 											&state->entries[off].segno);
-
+			}
 			cur_change = dlist_head_element(ReorderBufferChange, node,
 											&cur_txn->changes);
 
@@ -1303,10 +1310,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
 	txn->commit_time = commit_time;
-
-	/* serialize the last bunch of changes if we need start earlier anyway */
-	if (txn->nentries_mem != txn->nentries)
-		ReorderBufferSerializeTXN(rb, txn);
 
 	/*
 	 * If this transaction didn't have any real changes in our database, it's
