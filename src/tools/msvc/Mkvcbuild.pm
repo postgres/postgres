@@ -475,10 +475,11 @@ sub mkvcbuild
 		$plpython->AddReference($postgres);
 
 		# Add transform modules dependent on plpython
-		AddTransformModule(
+		my $hstore_plpython = AddTransformModule(
 			'hstore_plpython' . $pymajorver, 'contrib/hstore_plpython',
 			'plpython' . $pymajorver,        'src/pl/plpython',
 			'hstore',                        'contrib/hstore');
+		$hstore_plpython->AddDefine('PLPYTHON_LIBNAME="plpython' . $pymajorver . '"');
 		AddTransformModule(
 			'ltree_plpython' . $pymajorver, 'contrib/ltree_plpython',
 			'plpython' . $pymajorver,       'src/pl/plpython',
