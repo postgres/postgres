@@ -291,7 +291,7 @@ extern void CheckDeadLockAlert(void);
 extern bool IsWaitingForLock(void);
 extern void LockErrorCleanup(void);
 
-extern void ProcWaitForSignal(void);
+extern void ProcWaitForSignal(uint32 wait_event_info);
 extern void ProcSendSignal(int pid);
 
 extern void BecomeLockGroupLeader(void);

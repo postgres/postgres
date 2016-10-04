@@ -5827,7 +5827,8 @@ recoveryApplyDelay(XLogReaderState *record)
 
 		WaitLatch(&XLogCtl->recoveryWakeupLatch,
 				  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-				  secs * 1000L + microsecs / 1000);
+				  secs * 1000L + microsecs / 1000,
+				  WAIT_EVENT_RECOVERY_APPLY_DELAY);
 	}
 	return true;
 }
@@ -11387,7 +11388,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 
 						WaitLatch(&XLogCtl->recoveryWakeupLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-								  wait_time);
+								  wait_time, WAIT_EVENT_RECOVERY_WAL_STREAM);
 						ResetLatch(&XLogCtl->recoveryWakeupLatch);
 						now = GetCurrentTimestamp();
 					}
@@ -11550,7 +11551,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 */
 					WaitLatch(&XLogCtl->recoveryWakeupLatch,
 							  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							  5000L);
+							  5000L, WAIT_EVENT_RECOVERY_WAL_ALL);
 					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 					break;
 				}

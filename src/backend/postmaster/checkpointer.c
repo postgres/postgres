@@ -556,7 +556,8 @@ CheckpointerMain(void)
 
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   cur_timeout * 1000L /* convert to ms */ );
+					   cur_timeout * 1000L /* convert to ms */,
+					   WAIT_EVENT_CHECKPOINTER_MAIN);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the

@@ -60,6 +60,7 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/latch.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
@@ -419,7 +420,8 @@ aloop:
 				else
 					waitfor = WL_SOCKET_WRITEABLE;
 
-				WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0);
+				WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0,
+								  WAIT_EVENT_SSL_OPEN_SERVER);
 				goto aloop;
 			case SSL_ERROR_SYSCALL:
 				if (r < 0)

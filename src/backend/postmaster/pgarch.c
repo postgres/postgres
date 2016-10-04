@@ -390,7 +390,8 @@ pgarch_MainLoop(void)
 
 				rc = WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   timeout * 1000L);
+							   timeout * 1000L,
+							   WAIT_EVENT_ARCHIVER_MAIN);
 				if (rc & WL_TIMEOUT)
 					wakened = true;
 			}

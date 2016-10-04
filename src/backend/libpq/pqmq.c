@@ -17,6 +17,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqmq.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 
@@ -171,7 +172,8 @@ mq_putmessage(char msgtype, const char *s, size_t len)
 		if (result != SHM_MQ_WOULD_BLOCK)
 			break;
 
-		WaitLatch(&MyProc->procLatch, WL_LATCH_SET, 0);
+		WaitLatch(&MyProc->procLatch, WL_LATCH_SET, 0,
+				  WAIT_EVENT_MQ_PUT_MESSAGE);
 		ResetLatch(&MyProc->procLatch);
 		CHECK_FOR_INTERRUPTS();
 	}

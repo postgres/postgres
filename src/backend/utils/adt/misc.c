@@ -29,6 +29,7 @@
 #include "common/keywords.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "parser/scansup.h"
 #include "postmaster/syslogger.h"
 #include "rewrite/rewriteHandler.h"
@@ -560,7 +561,8 @@ pg_sleep(PG_FUNCTION_ARGS)
 
 		(void) WaitLatch(MyLatch,
 						 WL_LATCH_SET | WL_TIMEOUT,
-						 delay_ms);
+						 delay_ms,
+						 WAIT_EVENT_PG_SLEEP);
 		ResetLatch(MyLatch);
 	}
 

@@ -184,7 +184,7 @@ extern Size LWLockShmemSize(void);
 extern void CreateLWLocks(void);
 extern void InitLWLockAccess(void);
 
-extern const char *GetLWLockIdentifier(uint8 classId, uint16 eventId);
+extern const char *GetLWLockIdentifier(uint32 classId, uint16 eventId);
 
 /*
  * Extensions (or core code) can obtain an LWLocks by calling

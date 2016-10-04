@@ -15,6 +15,7 @@
 
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 
 #include "test_shm_mq.h"
 
@@ -230,7 +231,7 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 			 * have read or written data and therefore there may now be work
 			 * for us to do.
 			 */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
+			WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EXTENSION);
 			ResetLatch(MyLatch);
 			CHECK_FOR_INTERRUPTS();
 		}

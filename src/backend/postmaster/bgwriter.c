@@ -345,7 +345,7 @@ BackgroundWriterMain(void)
 		 */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   BgWriterDelay /* ms */ );
+					   BgWriterDelay /* ms */, WAIT_EVENT_BGWRITER_MAIN);
 
 		/*
 		 * If no latch event and BgBufferSync says nothing's happening, extend
@@ -372,7 +372,8 @@ BackgroundWriterMain(void)
 			/* Sleep ... */
 			rc = WaitLatch(MyLatch,
 						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-						   BgWriterDelay * HIBERNATE_FACTOR);
+						   BgWriterDelay * HIBERNATE_FACTOR,
+						   WAIT_EVENT_BGWRITER_HIBERNATE);
 			/* Reset the notification request in case we timed out */
 			StrategyNotifyBgWriter(-1);
 		}

@@ -732,9 +732,9 @@ LWLockReportWaitStart(LWLock *lock)
 	int			lockId = T_ID(lock);
 
 	if (lock->tranche == 0)
-		pgstat_report_wait_start(WAIT_LWLOCK_NAMED, (uint16) lockId);
+		pgstat_report_wait_start(WAIT_LWLOCK_NAMED | (uint16) lockId);
 	else
-		pgstat_report_wait_start(WAIT_LWLOCK_TRANCHE, lock->tranche);
+		pgstat_report_wait_start(WAIT_LWLOCK_TRANCHE | lock->tranche);
 }
 
 /*
@@ -750,7 +750,7 @@ LWLockReportWaitEnd(void)
  * Return an identifier for an LWLock based on the wait class and event.
  */
 const char *
-GetLWLockIdentifier(uint8 classId, uint16 eventId)
+GetLWLockIdentifier(uint32 classId, uint16 eventId)
 {
 	if (classId == WAIT_LWLOCK_NAMED)
 		return MainLWLockNames[eventId];

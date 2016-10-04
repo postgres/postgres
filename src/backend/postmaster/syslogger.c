@@ -35,6 +35,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
+#include "pgstat.h"
 #include "pgtime.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
@@ -424,7 +425,8 @@ SysLoggerMain(int argc, char *argv[])
 		rc = WaitLatchOrSocket(MyLatch,
 							   WL_LATCH_SET | WL_SOCKET_READABLE | cur_flags,
 							   syslogPipe[0],
-							   cur_timeout);
+							   cur_timeout,
+							   WAIT_EVENT_SYSLOGGER_MAIN);
 
 		if (rc & WL_SOCKET_READABLE)
 		{

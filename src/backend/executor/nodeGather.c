@@ -38,6 +38,7 @@
 #include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -387,7 +388,7 @@ gather_readnext(GatherState *gatherstate)
 				return NULL;
 
 			/* Nothing to do except wait for developments. */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
+			WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EVENT_EXECUTE_GATHER);
 			ResetLatch(MyLatch);
 			nvisited = 0;
 		}

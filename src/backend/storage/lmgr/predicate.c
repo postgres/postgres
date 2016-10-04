@@ -192,6 +192,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "storage/predicate_internals.h"
@@ -1518,7 +1519,7 @@ GetSafeSnapshot(Snapshot origSnapshot)
 				 SxactIsROUnsafe(MySerializableXact)))
 		{
 			LWLockRelease(SerializableXactHashLock);
-			ProcWaitForSignal();
+			ProcWaitForSignal(WAIT_EVENT_SAFE_SNAPSHOT);
 			LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 		}
 		MySerializableXact->flags &= ~SXACT_FLAG_DEFERRABLE_WAITING;

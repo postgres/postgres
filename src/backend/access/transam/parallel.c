@@ -24,6 +24,7 @@
 #include "libpq/pqmq.h"
 #include "miscadmin.h"
 #include "optimizer/planmain.h"
+#include "pgstat.h"
 #include "storage/ipc.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"
@@ -540,7 +541,8 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 		if (!anyone_alive)
 			break;
 
-		WaitLatch(&MyProc->procLatch, WL_LATCH_SET, -1);
+		WaitLatch(&MyProc->procLatch, WL_LATCH_SET, -1,
+				  WAIT_EVENT_PARALLEL_FINISH);
 		ResetLatch(&MyProc->procLatch);
 	}
 

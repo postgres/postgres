@@ -1364,7 +1364,8 @@ throttle(size_t increment)
 		 */
 		wait_result = WaitLatch(MyLatch,
 							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-								(long) (sleep / 1000));
+								(long) (sleep / 1000),
+								WAIT_EVENT_BASE_BACKUP_THROTTLE);
 
 		if (wait_result & WL_LATCH_SET)
 			CHECK_FOR_INTERRUPTS();

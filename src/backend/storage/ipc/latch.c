@@ -55,6 +55,7 @@
 #endif
 
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
 #include "storage/barrier.h"
@@ -297,9 +298,11 @@ DisownLatch(volatile Latch *latch)
  * we return all of them in one call, but we will return at least one.
  */
 int
-WaitLatch(volatile Latch *latch, int wakeEvents, long timeout)
+WaitLatch(volatile Latch *latch, int wakeEvents, long timeout,
+		  uint32 wait_event_info)
 {
-	return WaitLatchOrSocket(latch, wakeEvents, PGINVALID_SOCKET, timeout);
+	return WaitLatchOrSocket(latch, wakeEvents, PGINVALID_SOCKET, timeout,
+							 wait_event_info);
 }
 
 /*
@@ -316,7 +319,7 @@ WaitLatch(volatile Latch *latch, int wakeEvents, long timeout)
  */
 int
 WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
-				  long timeout)
+				  long timeout, uint32 wait_event_info)
 {
 	int			ret = 0;
 	int			rc;
@@ -344,7 +347,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		AddWaitEventToSet(set, ev, sock, NULL, NULL);
 	}
 
-	rc = WaitEventSetWait(set, timeout, &event, 1);
+	rc = WaitEventSetWait(set, timeout, &event, 1, wait_event_info);
 
 	if (rc == 0)
 		ret |= WL_TIMEOUT;
@@ -863,7 +866,8 @@ WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event)
  */
 int
 WaitEventSetWait(WaitEventSet *set, long timeout,
-				 WaitEvent *occurred_events, int nevents)
+				 WaitEvent *occurred_events, int nevents,
+				 uint32 wait_event_info)
 {
 	int			returned_events = 0;
 	instr_time	start_time;
@@ -882,6 +886,8 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
 		Assert(timeout >= 0 && timeout <= INT_MAX);
 		cur_timeout = timeout;
 	}
+
+	pgstat_report_wait_start(wait_event_info);
 
 #ifndef WIN32
 	waiting = true;
@@ -959,6 +965,8 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
 #ifndef WIN32
 	waiting = false;
 #endif
+
+	pgstat_report_wait_end();
 
 	return returned_events;
 }

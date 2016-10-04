@@ -679,6 +679,42 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
           buffer in question.
          </para>
         </listitem>
+        <listitem>
+         <para>
+          <literal>Activity</>: The server process is idle.  This is used by
+          system processes waiting for activity in their main processing loop.
+          <literal>wait_event</> will identify the specific wait point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Extension</>: The server process is waiting for activity
+          in an extension module.  This category is useful for modules to
+          track custom waiting points.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Client</>: The server process is waiting for some activity
+          on a socket from user applications, and that the server expects
+          something to happen that is independent from its internal processes.
+          <literal>wait_event</> will identify the specific wait point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>IPC</>: The server process is waiting for some activity
+          from another process in the server.  <literal>wait_event</> will
+          identify the specific wait point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Timeout</>: The server process is waiting for a timeout
+          to expire.  <literal>wait_event</> will identify the specific wait
+          point.
+         </para>
+        </listitem>
        </itemizedlist>
       </entry>
      </row>
@@ -1084,6 +1120,139 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry><literal>BufferPin</></entry>
          <entry><literal>BufferPin</></entry>
          <entry>Waiting to acquire a pin on a buffer.</entry>
+        </row>
+        <row>
+         <entry morerows="11"><literal>Activity</></entry>
+         <entry><literal>ArchiverMain</></entry>
+         <entry>Waiting in main loop of the archiver process.</entry>
+        </row>
+        <row>
+         <entry><literal>AutoVacuumMain</></entry>
+         <entry>Waiting in main loop of autovacuum launcher process.</entry>
+        </row>
+        <row>
+         <entry><literal>BgWriterHibernate</></entry>
+         <entry>Waiting in background writer process, hibernating.</entry>
+        </row>
+        <row>
+         <entry><literal>BgWriterMain</></entry>
+         <entry>Waiting in main loop of background writer process background worker.</entry>
+        </row>
+        <row>
+         <entry><literal>CheckpointerMain</></entry>
+         <entry>Waiting in main loop of checkpointer process.</entry>
+        </row>
+        <row>
+         <entry><literal>PgStatMain</></entry>
+         <entry>Waiting in main loop of the statistics collector process.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryWalAll</></entry>
+         <entry>Waiting for WAL from any kind of source (local, archive or stream) at recovery.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryWalStream</></entry>
+         <entry>Waiting for WAL from a stream at recovery.</entry>
+        </row>
+        <row>
+         <entry><literal>SysLoggerMain</></entry>
+         <entry>Waiting in main loop of syslogger process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalReceiverMain</></entry>
+         <entry>Waiting in main loop of WAL receiver process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalSenderMain</></entry>
+         <entry>Waiting in main loop of WAL sender process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalWriterMain</></entry>
+         <entry>Waiting in main loop of WAL writer process.</entry>
+        </row>
+        <row>
+         <entry morerows="5"><literal>Client</></entry>
+         <entry><literal>ClientRead</></entry>
+         <entry>Waiting to read data from the client.</entry>
+        </row>
+        <row>
+         <entry><literal>ClientWrite</></entry>
+         <entry>Waiting to write data from the client.</entry>
+        </row>
+        <row>
+         <entry><literal>SSLOpenServer</></entry>
+         <entry>Waiting for SSL while attempting connection.</entry>
+        </row>
+        <row>
+         <entry><literal>WalReceiverWaitStart</></entry>
+         <entry>Waiting for startup process to send initial data for streaming replication.</entry>
+        </row>
+        <row>
+         <entry><literal>WalSenderWaitForWAL</></entry>
+         <entry>Waiting for WAL to be flushed in WAL sender process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalSenderWriteData</></entry>
+         <entry>Waiting for any activity when processing replies from WAL receiver in WAL sender process.</entry>
+        </row>
+        <row>
+         <entry><literal>Extension</></entry>
+         <entry><literal>Extension</></entry>
+         <entry>Waiting in an extension.</entry>
+        </row>
+        <row>
+         <entry morerows="9"><literal>IPC</></entry>
+         <entry><literal>BgWorkerShutdown</></entry>
+         <entry>Waiting for background worker to shut down.</entry>
+        </row>
+        <row>
+         <entry><literal>BgWorkerStartup</></entry>
+         <entry>Waiting for background worker to start up.</entry>
+        </row>
+        <row>
+         <entry><literal>ExecuteGather</></entry>
+         <entry>Waiting for activity from child process when executing <literal>Gather</> node.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueueInternal</></entry>
+         <entry>Waiting for other process to be attached in shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueuePutMessage</></entry>
+         <entry>Waiting to write a protoocol message to a shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueueReceive</></entry>
+         <entry>Waiting to receive bytes from a shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueueSend</></entry>
+         <entry>Waiting to send bytes to a shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>ParallelFinish</></entry>
+         <entry>Waiting for parallel workers to finish computing.</entry>
+        </row>
+        <row>
+         <entry><literal>SafeSnapshot</></entry>
+         <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</> transaction.</entry>
+        </row>
+        <row>
+         <entry><literal>SyncRep</></entry>
+         <entry>Waiting for confirmation from remote server during synchronous replication.</entry>
+        </row>
+        <row>
+         <entry morerows="2"><literal>Timeout</></entry>
+         <entry><literal>BaseBackupThrottle</></entry>
+         <entry>Waiting during base backup when throttling activity.</entry>
+        </row>
+        <row>
+         <entry><literal>PgSleep</></entry>
+         <entry>Waiting in process that called <function>pg_sleep</>.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryApplyDelay</></entry>
+         <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
         </row>
       </tbody>
      </tgroup>

@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "storage/procsignal.h"
 #include "storage/shm_mq.h"
@@ -894,7 +895,7 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 			 * at top of loop, because setting an already-set latch is much
 			 * cheaper than setting one that has been reset.
 			 */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
+			WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EVENT_MQ_SEND);
 
 			/* Reset the latch so we don't spin. */
 			ResetLatch(MyLatch);
@@ -991,7 +992,7 @@ shm_mq_receive_bytes(shm_mq *mq, Size bytes_needed, bool nowait,
 		 * loop, because setting an already-set latch is much cheaper than
 		 * setting one that has been reset.
 		 */
-		WaitLatch(MyLatch, WL_LATCH_SET, 0);
+		WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EVENT_MQ_RECEIVE);
 
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);
@@ -1090,7 +1091,7 @@ shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
 		}
 
 		/* Wait to be signalled. */
-		WaitLatch(MyLatch, WL_LATCH_SET, 0);
+		WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EVENT_MQ_INTERNAL);
 
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);

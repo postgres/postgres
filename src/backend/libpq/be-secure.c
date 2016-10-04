@@ -33,6 +33,7 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 #include "storage/ipc.h"
@@ -146,7 +147,8 @@ retry:
 
 		ModifyWaitEvent(FeBeWaitSet, 0, waitfor, NULL);
 
-		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1);
+		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1,
+						 WAIT_EVENT_CLIENT_READ);
 
 		/*
 		 * If the postmaster has died, it's not safe to continue running,
@@ -247,7 +249,8 @@ retry:
 
 		ModifyWaitEvent(FeBeWaitSet, 0, waitfor, NULL);
 
-		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1);
+		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1,
+						 WAIT_EVENT_CLIENT_WRITE);
 
 		/* See comments in secure_read. */
 		if (event.events & WL_POSTMASTER_DEATH)

@@ -290,7 +290,8 @@ WalWriterMain(void)
 
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   cur_timeout);
+					   cur_timeout,
+					   WAIT_EVENT_WAL_WRITER_MAIN);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the

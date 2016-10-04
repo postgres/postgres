@@ -598,7 +598,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 		 */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   (nap.tv_sec * 1000L) + (nap.tv_usec / 1000L));
+					   (nap.tv_sec * 1000L) + (nap.tv_usec / 1000L),
+					   WAIT_EVENT_AUTOVACUUM_MAIN);
 
 		ResetLatch(MyLatch);
 

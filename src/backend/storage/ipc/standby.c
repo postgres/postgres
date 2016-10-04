@@ -22,6 +22,7 @@
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
@@ -389,7 +390,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 	}
 
 	/* Wait to be signaled by the release of the Relation Lock */
-	ProcWaitForSignal();
+	ProcWaitForSignal(WAIT_LOCK | locktag.locktag_type);
 
 	/*
 	 * Clear any timeout requests established above.  We assume here that the
@@ -469,7 +470,7 @@ ResolveRecoveryConflictWithBufferPin(void)
 	}
 
 	/* Wait to be signaled by UnpinBuffer() */
-	ProcWaitForSignal();
+	ProcWaitForSignal(WAIT_BUFFER_PIN);
 
 	/*
 	 * Clear any timeout requests established above.  We assume here that the
