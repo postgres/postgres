@@ -477,7 +477,8 @@ SysLoggerMain(int argc, char *argv[])
 
 		(void) WaitLatch(MyLatch,
 						 WL_LATCH_SET | cur_flags,
-						 cur_timeout);
+						 cur_timeout,
+						 WAIT_EVENT_SYSLOGGER_MAIN);
 
 		EnterCriticalSection(&sysloggerSection);
 #endif   /* WIN32 */
