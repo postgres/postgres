@@ -58,36 +58,59 @@ AC_SUBST(python_includespec)[]dnl
 # PGAC_CHECK_PYTHON_EMBED_SETUP
 # -----------------------------
 #
-# Note: selecting libpython from python_configdir works in all Python
-# releases, but it generally finds a non-shared library, which means
-# that we are binding the python interpreter right into libplpython.so.
-# In Python 2.3 and up there should be a shared library available in
-# the main library location.
+# Set python_libdir to the path of the directory containing the Python shared
+# library.  Set python_libspec to the -L/-l linker switches needed to link it.
+# Set python_additional_libs to contain any additional linker switches needed
+# for subsidiary libraries.
+#
+# In modern, well-configured Python installations, LIBDIR gives the correct
+# directory name and LDLIBRARY is the file name of the shlib.  But in older
+# installations LDLIBRARY is frequently a useless path fragment, and it's also
+# possible that the shlib is in a standard library directory such as /usr/lib
+# so that LIBDIR is of no interest.  We must also check that what we found is
+# a shared library not a plain library, which we do by checking its extension.
+# (We used to rely on Py_ENABLE_SHARED, but that only tells us that a shlib
+# exists, not that we found it.)
 AC_DEFUN([PGAC_CHECK_PYTHON_EMBED_SETUP],
 [AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
 AC_MSG_CHECKING([how to link an embedded Python application])
 
 python_libdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
 python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
-python_so=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('SO'))))"`
-ldlibrary=`echo "${python_ldlibrary}" | sed "s/${python_so}$//"`
-python_enable_shared=`${PYTHON} -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_vars().get('Py_ENABLE_SHARED',0))"`
 
-if test x"${python_libdir}" != x"" -a x"${python_ldlibrary}" != x"" -a x"${python_ldlibrary}" != x"${ldlibrary}"
+# If LDLIBRARY exists and has a shlib extension, use it verbatim.
+ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
+if test -e "${python_libdir}/${python_ldlibrary}" -a x"${python_ldlibrary}" != x"${ldlibrary}"
 then
-	# New way: use the official shared library
 	ldlibrary=`echo "${ldlibrary}" | sed "s/^lib//"`
-	python_libspec="-L${python_libdir} -l${ldlibrary}"
 else
-	# Old way: use libpython from python_configdir
-	python_libdir="${python_configdir}"
-	# LDVERSION was introduced in Python 3.2.
+	# Otherwise, guess the base name of the shlib.
+	# LDVERSION was added in Python 3.2, before that use $python_version.
 	python_ldversion=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDVERSION'))))"`
-	if test x"${python_ldversion}" = x""; then
-		python_ldversion=$python_version
+	if test x"${python_ldversion}" != x""; then
+		ldlibrary="python${python_ldversion}"
+	else
+		ldlibrary="python${python_version}"
 	fi
-	python_libspec="-L${python_libdir} -lpython${python_ldversion}"
+	# Search for a likely-looking file.
+	found_shlib=0
+	for d in "${python_libdir}" /usr/lib64 /usr/lib; do
+		for e in .so .dll .dylib .sl; do
+			if test -e "$d/lib${ldlibrary}$e"; then
+				python_libdir="$d"
+				found_shlib=1
+				break 2
+			fi
+		done
+	done
+	if test "$found_shlib" != 1; then
+		AC_MSG_ERROR([could not find shared library for Python
+You might have to rebuild your Python installation.  Refer to the
+documentation for details.  Use --without-python to disable building
+PL/Python.])
+	fi
 fi
+python_libspec="-L${python_libdir} -l${ldlibrary}"
 
 python_additional_libs=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
 

@@ -7622,25 +7622,40 @@ $as_echo_n "checking how to link an embedded Python application... " >&6; }
 
 python_libdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
 python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
-python_so=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('SO'))))"`
-ldlibrary=`echo "${python_ldlibrary}" | sed "s/${python_so}$//"`
-python_enable_shared=`${PYTHON} -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_vars().get('Py_ENABLE_SHARED',0))"`
 
-if test x"${python_libdir}" != x"" -a x"${python_ldlibrary}" != x"" -a x"${python_ldlibrary}" != x"${ldlibrary}"
+# If LDLIBRARY exists and has a shlib extension, use it verbatim.
+ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
+if test -e "${python_libdir}/${python_ldlibrary}" -a x"${python_ldlibrary}" != x"${ldlibrary}"
 then
-	# New way: use the official shared library
 	ldlibrary=`echo "${ldlibrary}" | sed "s/^lib//"`
-	python_libspec="-L${python_libdir} -l${ldlibrary}"
 else
-	# Old way: use libpython from python_configdir
-	python_libdir="${python_configdir}"
-	# LDVERSION was introduced in Python 3.2.
+	# Otherwise, guess the base name of the shlib.
+	# LDVERSION was added in Python 3.2, before that use $python_version.
 	python_ldversion=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDVERSION'))))"`
-	if test x"${python_ldversion}" = x""; then
-		python_ldversion=$python_version
+	if test x"${python_ldversion}" != x""; then
+		ldlibrary="python${python_ldversion}"
+	else
+		ldlibrary="python${python_version}"
 	fi
-	python_libspec="-L${python_libdir} -lpython${python_ldversion}"
+	# Search for a likely-looking file.
+	found_shlib=0
+	for d in "${python_libdir}" /usr/lib64 /usr/lib; do
+		for e in .so .dll .dylib .sl; do
+			if test -e "$d/lib${ldlibrary}$e"; then
+				python_libdir="$d"
+				found_shlib=1
+				break 2
+			fi
+		done
+	done
+	if test "$found_shlib" != 1; then
+		as_fn_error $? "could not find shared library for Python
+You might have to rebuild your Python installation.  Refer to the
+documentation for details.  Use --without-python to disable building
+PL/Python." "$LINENO" 5
+	fi
 fi
+python_libspec="-L${python_libdir} -l${ldlibrary}"
 
 python_additional_libs=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
 
@@ -7649,40 +7664,6 @@ $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
 
 
 
-
-  # We need libpython as a shared library.  With Python >=2.5, we
-  # check the Py_ENABLE_SHARED setting.  On Debian, the setting is not
-  # correct before the jessie release (http://bugs.debian.org/695979).
-  # We also want to support older Python versions.  So as a fallback
-  # we see if there is a file that is named like a shared library.
-
-  if test "$python_enable_shared" != 1; then
-    if test "$PORTNAME" = darwin; then
-      # macOS does supply a .dylib even though Py_ENABLE_SHARED does
-      # not get set.  The file detection logic below doesn't succeed
-      # on older macOS versions, so make it explicit.
-      python_enable_shared=1
-    elif test "$PORTNAME" = win32; then
-      # Windows also needs an explicit override.
-      python_enable_shared=1
-    else
-      # We don't know the platform shared library extension here yet,
-      # so we try some candidates.
-      for dlsuffix in .so .sl; do
-        if ls "$python_libdir"/libpython*${dlsuffix}* >/dev/null 2>&1; then
-          python_enable_shared=1
-          break
-        fi
-      done
-    fi
-  fi
-
-  if test "$python_enable_shared" != 1; then
-    as_fn_error $? "cannot build PL/Python because libpython is not a shared library
-You might have to rebuild your Python installation.  Refer to the
-documentation for details.  Use --without-python to disable building
-PL/Python." "$LINENO" 5
-  fi
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
