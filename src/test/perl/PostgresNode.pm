@@ -1192,7 +1192,7 @@ sub psql
 =item $node->poll_query_until(dbname, query)
 
 Run a query once a second, until it returns 't' (i.e. SQL boolean true).
-Continues polling if psql returns an error result. Times out after 90 seconds.
+Continues polling if psql returns an error result. Times out after 180 seconds.
 
 =cut
 
@@ -1222,7 +1222,7 @@ sub poll_query_until
 		$attempts++;
 	}
 
-	# The query result didn't change in 90 seconds. Give up. Print the stderr
+	# The query result didn't change in 180 seconds. Give up. Print the stderr
 	# from the last attempt, hopefully that's useful for debugging.
 	diag $stderr;
 	return 0;
