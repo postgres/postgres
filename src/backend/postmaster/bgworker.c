@@ -14,11 +14,11 @@
 
 #include <unistd.h>
 
-#include "miscadmin.h"
 #include "libpq/pqsignal.h"
+#include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
-#include "pgstat.h"
 #include "storage/barrier.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
