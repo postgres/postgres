@@ -280,7 +280,7 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 		}
 
 		/* Wait to be signalled. */
-		WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EXTENSION);
+		WaitLatch(MyLatch, WL_LATCH_SET, 0, PG_WAIT_EXTENSION);
 
 		/* Reset the latch so we don't spin. */
 		ResetLatch(MyLatch);

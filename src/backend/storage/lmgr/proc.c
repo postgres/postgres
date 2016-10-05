@@ -1214,7 +1214,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		else
 		{
 			WaitLatch(MyLatch, WL_LATCH_SET, 0,
-					  WAIT_LOCK | locallock->tag.lock.locktag_type);
+					  PG_WAIT_LOCK | locallock->tag.lock.locktag_type);
 			ResetLatch(MyLatch);
 			/* check for deadlocks first, as that's probably log-worthy */
 			if (got_deadlock_timeout)

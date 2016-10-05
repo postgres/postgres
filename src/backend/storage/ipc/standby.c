@@ -390,7 +390,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 	}
 
 	/* Wait to be signaled by the release of the Relation Lock */
-	ProcWaitForSignal(WAIT_LOCK | locktag.locktag_type);
+	ProcWaitForSignal(PG_WAIT_LOCK | locktag.locktag_type);
 
 	/*
 	 * Clear any timeout requests established above.  We assume here that the
@@ -470,7 +470,7 @@ ResolveRecoveryConflictWithBufferPin(void)
 	}
 
 	/* Wait to be signaled by UnpinBuffer() */
-	ProcWaitForSignal(WAIT_BUFFER_PIN);
+	ProcWaitForSignal(PG_WAIT_BUFFER_PIN);
 
 	/*
 	 * Clear any timeout requests established above.  We assume here that the

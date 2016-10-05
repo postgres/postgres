@@ -3147,31 +3147,31 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 
 	switch (classId)
 	{
-		case WAIT_LWLOCK_NAMED:
+		case PG_WAIT_LWLOCK_NAMED:
 			event_type = "LWLockNamed";
 			break;
-		case WAIT_LWLOCK_TRANCHE:
+		case PG_WAIT_LWLOCK_TRANCHE:
 			event_type = "LWLockTranche";
 			break;
-		case WAIT_LOCK:
+		case PG_WAIT_LOCK:
 			event_type = "Lock";
 			break;
-		case WAIT_BUFFER_PIN:
+		case PG_WAIT_BUFFER_PIN:
 			event_type = "BufferPin";
 			break;
-		case WAIT_ACTIVITY:
+		case PG_WAIT_ACTIVITY:
 			event_type = "Activity";
 			break;
-		case WAIT_CLIENT:
+		case PG_WAIT_CLIENT:
 			event_type = "Client";
 			break;
-		case WAIT_EXTENSION:
+		case PG_WAIT_EXTENSION:
 			event_type = "Extension";
 			break;
-		case WAIT_IPC:
+		case PG_WAIT_IPC:
 			event_type = "IPC";
 			break;
-		case WAIT_TIMEOUT:
+		case PG_WAIT_TIMEOUT:
 			event_type = "Timeout";
 			break;
 		default:
@@ -3204,41 +3204,41 @@ pgstat_get_wait_event(uint32 wait_event_info)
 
 	switch (classId)
 	{
-		case WAIT_LWLOCK_NAMED:
-		case WAIT_LWLOCK_TRANCHE:
+		case PG_WAIT_LWLOCK_NAMED:
+		case PG_WAIT_LWLOCK_TRANCHE:
 			event_name = GetLWLockIdentifier(classId, eventId);
 			break;
-		case WAIT_LOCK:
+		case PG_WAIT_LOCK:
 			event_name = GetLockNameFromTagType(eventId);
 			break;
-		case WAIT_BUFFER_PIN:
+		case PG_WAIT_BUFFER_PIN:
 			event_name = "BufferPin";
 			break;
-		case WAIT_ACTIVITY:
+		case PG_WAIT_ACTIVITY:
 			{
 				WaitEventActivity	w = (WaitEventActivity) wait_event_info;
 
 				event_name = pgstat_get_wait_activity(w);
 				break;
 			}
-		case WAIT_CLIENT:
+		case PG_WAIT_CLIENT:
 			{
 				WaitEventClient	w = (WaitEventClient) wait_event_info;
 
 				event_name = pgstat_get_wait_client(w);
 				break;
 			}
-		case WAIT_EXTENSION:
+		case PG_WAIT_EXTENSION:
 			event_name = "Extension";
 			break;
-		case WAIT_IPC:
+		case PG_WAIT_IPC:
 			{
 				WaitEventIPC	w = (WaitEventIPC) wait_event_info;
 
 				event_name = pgstat_get_wait_ipc(w);
 				break;
 			}
-		case WAIT_TIMEOUT:
+		case PG_WAIT_TIMEOUT:
 			{
 				WaitEventTimeout	w = (WaitEventTimeout) wait_event_info;
 

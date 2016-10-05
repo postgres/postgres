@@ -497,7 +497,7 @@ pgfdw_get_result(PGconn *conn, const char *query)
 			wc = WaitLatchOrSocket(MyLatch,
 								   WL_LATCH_SET | WL_SOCKET_READABLE,
 								   PQsocket(conn),
-								   -1L, WAIT_EXTENSION);
+								   -1L, PG_WAIT_EXTENSION);
 			ResetLatch(MyLatch);
 
 			CHECK_FOR_INTERRUPTS();

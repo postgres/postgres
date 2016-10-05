@@ -228,7 +228,7 @@ worker_spi_main(Datum main_arg)
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   worker_spi_naptime * 1000L,
-					   WAIT_EXTENSION);
+					   PG_WAIT_EXTENSION);
 		ResetLatch(MyLatch);
 
 		/* emergency bailout if postmaster has died */

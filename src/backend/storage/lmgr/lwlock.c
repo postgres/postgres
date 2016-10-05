@@ -732,9 +732,9 @@ LWLockReportWaitStart(LWLock *lock)
 	int			lockId = T_ID(lock);
 
 	if (lock->tranche == 0)
-		pgstat_report_wait_start(WAIT_LWLOCK_NAMED | (uint16) lockId);
+		pgstat_report_wait_start(PG_WAIT_LWLOCK_NAMED | (uint16) lockId);
 	else
-		pgstat_report_wait_start(WAIT_LWLOCK_TRANCHE | lock->tranche);
+		pgstat_report_wait_start(PG_WAIT_LWLOCK_TRANCHE | lock->tranche);
 }
 
 /*
@@ -752,10 +752,10 @@ LWLockReportWaitEnd(void)
 const char *
 GetLWLockIdentifier(uint32 classId, uint16 eventId)
 {
-	if (classId == WAIT_LWLOCK_NAMED)
+	if (classId == PG_WAIT_LWLOCK_NAMED)
 		return MainLWLockNames[eventId];
 
-	Assert(classId == WAIT_LWLOCK_TRANCHE);
+	Assert(classId == PG_WAIT_LWLOCK_TRANCHE);
 
 	/*
 	 * It is quite possible that user has registered tranche in one of the
