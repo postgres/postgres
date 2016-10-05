@@ -7628,6 +7628,7 @@ ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's
 if test -e "${python_libdir}/${python_ldlibrary}" -a x"${python_ldlibrary}" != x"${ldlibrary}"
 then
 	ldlibrary=`echo "${ldlibrary}" | sed "s/^lib//"`
+	found_shlib=1
 else
 	# Otherwise, guess the base name of the shlib.
 	# LDVERSION was added in Python 3.2, before that use $python_version.
@@ -7641,6 +7642,7 @@ else
 	found_shlib=0
 	for d in "${python_libdir}" "${python_configdir}" /usr/lib64 /usr/lib
 	do
+		# We don't know the platform DLSUFFIX here, so check 'em all.
 		for e in .so .dll .dylib .sl; do
 			if test -e "$d/lib${ldlibrary}$e"; then
 				python_libdir="$d"
@@ -7649,12 +7651,28 @@ else
 			fi
 		done
 	done
+	# Some platforms (OpenBSD) require us to accept a bare versioned shlib
+	# (".so.n.n") as well. However, check this only after failing to find
+	# ".so" anywhere, because yet other platforms (Debian) put the .so
+	# symlink in a different directory from the underlying versioned shlib.
 	if test "$found_shlib" != 1; then
-		as_fn_error $? "could not find shared library for Python
+		for d in "${python_libdir}" "${python_configdir}" /usr/lib64 /usr/lib
+		do
+			for f in "$d/lib${ldlibrary}.so."* ; do
+				if test -e "$f"; then
+					python_libdir="$d"
+					found_shlib=1
+					break 2
+				fi
+			done
+		done
+	fi
+fi
+if test "$found_shlib" != 1; then
+	as_fn_error $? "could not find shared library for Python
 You might have to rebuild your Python installation.  Refer to the
 documentation for details.  Use --without-python to disable building
 PL/Python." "$LINENO" 5
-	fi
 fi
 python_libspec="-L${python_libdir} -l${ldlibrary}"
 
