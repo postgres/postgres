@@ -7631,12 +7631,18 @@ then
 	found_shlib=1
 else
 	# Otherwise, guess the base name of the shlib.
-	# LDVERSION was added in Python 3.2, before that use $python_version.
+	# LDVERSION was added in Python 3.2, before that use VERSION,
+	# or failing that, $python_version from _PGAC_CHECK_PYTHON_DIRS.
 	python_ldversion=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDVERSION'))))"`
 	if test x"${python_ldversion}" != x""; then
 		ldlibrary="python${python_ldversion}"
 	else
-		ldlibrary="python${python_version}"
+		python_version_var=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('VERSION'))))"`
+		if test x"${python_version_var}" != x""; then
+			ldlibrary="python${python_version_var}"
+		else
+			ldlibrary="python${python_version}"
+		fi
 	fi
 	# Search for a likely-looking file.
 	found_shlib=0
@@ -7659,6 +7665,21 @@ else
 		for d in "${python_libdir}" "${python_configdir}" /usr/lib64 /usr/lib
 		do
 			for f in "$d/lib${ldlibrary}.so."* ; do
+				if test -e "$f"; then
+					python_libdir="$d"
+					found_shlib=1
+					break 2
+				fi
+			done
+		done
+	fi
+	# As usual, Windows has its own ideas.  c:/Windows/System32 takes the
+	# place of /usr/lib as a possible default library location, and the
+	# "lib" prefix might not be there.
+	if test "$found_shlib" != 1 -a "$PORTNAME" = win32 ; then
+		for d in "${python_libdir}" "${python_configdir}" c:/Windows/System32
+		do
+			for f in "$d/lib${ldlibrary}.dll" "$d/${ldlibrary}.dll" ; do
 				if test -e "$f"; then
 					python_libdir="$d"
 					found_shlib=1
