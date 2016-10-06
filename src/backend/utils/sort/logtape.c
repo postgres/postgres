@@ -778,11 +778,16 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 			datablocknum = ltsRewindFrozenIndirectBlock(lts, lt->indirect);
 		}
 
-		/* Allocate a read buffer */
+		/* Allocate a read buffer (unless the tape is empty) */
 		if (lt->buffer)
 			pfree(lt->buffer);
-		lt->buffer = palloc(lt->read_buffer_size);
-		lt->buffer_size = lt->read_buffer_size;
+		lt->buffer = NULL;
+		lt->buffer_size = 0;
+		if (datablocknum != -1L)
+		{
+			lt->buffer = palloc(lt->read_buffer_size);
+			lt->buffer_size = lt->read_buffer_size;
+		}
 
 		/* Read the first block, or reset if tape is empty */
 		lt->curBlockNumber = 0L;
