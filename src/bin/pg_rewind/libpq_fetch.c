@@ -49,6 +49,7 @@ void
 libpqConnect(const char *connstr)
 {
 	char	   *str;
+	PGresult   *res;
 
 	conn = PQconnectdb(connstr);
 	if (PQstatus(conn) == CONNECTION_BAD)
@@ -77,6 +78,19 @@ libpqConnect(const char *connstr)
 	if (strcmp(str, "on") != 0)
 		pg_fatal("full_page_writes must be enabled in the source server\n");
 	pg_free(str);
+
+	/*
+	 * Although we don't do any "real" updates, we do work with a temporary
+	 * table. We don't care about synchronous commit for that. It doesn't
+	 * otherwise matter much, but if the server is using synchronous
+	 * replication, and replication isn't working for some reason, we don't
+	 * want to get stuck, waiting for it to start working again.
+	 */
+	res = PQexec(conn, "SET synchronous_commit = off");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("could not set up connection context: %s",
+				 PQresultErrorMessage(res));
+	PQclear(res);
 }
 
 /*
