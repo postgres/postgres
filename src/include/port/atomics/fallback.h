@@ -133,6 +133,9 @@ pg_atomic_unlocked_test_flag_impl(volatile pg_atomic_flag *ptr)
 #define PG_HAVE_ATOMIC_INIT_U32
 extern void pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_);
 
+#define PG_HAVE_ATOMIC_WRITE_U32
+extern void pg_atomic_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val);
+
 #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
 extern bool pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 												uint32 *expected, uint32 newval);

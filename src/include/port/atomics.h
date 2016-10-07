@@ -255,10 +255,12 @@ pg_atomic_read_u32(volatile pg_atomic_uint32 *ptr)
 }
 
 /*
- * pg_atomic_write_u32 - unlocked write to atomic variable.
+ * pg_atomic_write_u32 - write to atomic variable.
  *
  * The write is guaranteed to succeed as a whole, i.e. it's not possible to
- * observe a partial write for any reader.
+ * observe a partial write for any reader.  Note that this correctly interacts
+ * with pg_atomic_compare_exchange_u32, in contrast to
+ * pg_atomic_unlocked_write_u32().
  *
  * No barrier semantics.
  */
@@ -268,6 +270,25 @@ pg_atomic_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
 	AssertPointerAlignment(ptr, 4);
 
 	pg_atomic_write_u32_impl(ptr, val);
+}
+
+/*
+ * pg_atomic_unlocked_write_u32 - unlocked write to atomic variable.
+ *
+ * The write is guaranteed to succeed as a whole, i.e. it's not possible to
+ * observe a partial write for any reader.  But note that writing this way is
+ * not guaranteed to correctly interact with read-modify-write operations like
+ * pg_atomic_compare_exchange_u32.  This should only be used in cases where
+ * minor performance regressions due to atomics emulation are unacceptable.
+ *
+ * No barrier semantics.
+ */
+static inline void
+pg_atomic_unlocked_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
+{
+	AssertPointerAlignment(ptr, 4);
+
+	pg_atomic_unlocked_write_u32_impl(ptr, val);
 }
 
 /*

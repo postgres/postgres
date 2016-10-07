@@ -104,6 +104,19 @@ pg_atomic_init_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val_)
 	ptr->value = val_;
 }
 
+void
+pg_atomic_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val)
+{
+	/*
+	 * One might think that an unlocked write doesn't need to acquire the
+	 * spinlock, but one would be wrong. Even an unlocked write has to cause a
+	 * concurrent pg_atomic_compare_exchange_u32() (et al) to fail.
+	 */
+	SpinLockAcquire((slock_t *) &ptr->sema);
+	ptr->value = val;
+	SpinLockRelease((slock_t *) &ptr->sema);
+}
+
 bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
