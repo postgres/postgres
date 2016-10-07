@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 38;
+use Test::More tests => 40;
 use ServerSetup;
 use File::Copy;
 
@@ -239,3 +239,11 @@ test_connect_fails(
 test_connect_fails(
 "user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked.key"
 );
+
+# intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
+switch_server_cert($node, 'server-cn-only', 'root_ca');
+$common_connstr =
+"user=ssltestuser dbname=certdb sslkey=ssl/client.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+
+test_connect_ok("sslmode=require sslcert=ssl/client+client_ca.crt");
+test_connect_fails("sslmode=require sslcert=ssl/client.crt");
