@@ -996,6 +996,7 @@ initialize_SSL(PGconn *conn)
 #endif
 			}
 			/* if not found, silently ignore;  we do not require CRL */
+			ERR_clear_error();
 		}
 		have_rootcert = true;
 	}
