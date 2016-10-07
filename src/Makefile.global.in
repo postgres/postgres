@@ -332,7 +332,9 @@ endif
 endif
 
 PROVE = @PROVE@
-PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
+# There are common routines in src/test/perl, and some test suites have
+# extra perl modules in their own directory.
+PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/ -I $(srcdir)
 PROVE_FLAGS = --verbose
 
 # prepend to path if already set, else just set it
