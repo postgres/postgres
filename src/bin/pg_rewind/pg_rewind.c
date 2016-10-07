@@ -162,6 +162,13 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (datadir_source != NULL && connstr_source != NULL)
+	{
+		fprintf(stderr, _("%s: only one of --source-pgdata or --source-server can be specified\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		exit(1);
+	}
+
 	if (datadir_target == NULL)
 	{
 		fprintf(stderr, _("%s: no target data directory specified (--target-pgdata)\n"), progname);
