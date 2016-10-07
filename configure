@@ -7673,11 +7673,11 @@ else
 			done
 		done
 	fi
-	# As usual, Windows has its own ideas.  c:/Windows/System32 takes the
-	# place of /usr/lib as a possible default library location, and the
-	# "lib" prefix might not be there.
-	if test "$found_shlib" != 1 -a "$PORTNAME" = win32 ; then
-		for d in "${python_libdir}" "${python_configdir}" c:/Windows/System32
+	# As usual, Windows has its own ideas.  Possible default library
+	# locations include c:/Windows/System32 and (for Cygwin) /usr/bin,
+	# and the "lib" prefix might not be there.
+	if test "$found_shlib" != 1 -a \( "$PORTNAME" = win32 -o "$PORTNAME" = cygwin \); then
+		for d in "${python_libdir}" "${python_configdir}" c:/Windows/System32 /usr/bin
 		do
 			for f in "$d/lib${ldlibrary}.dll" "$d/${ldlibrary}.dll" ; do
 				if test -e "$f"; then
