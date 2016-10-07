@@ -138,7 +138,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 			if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
 			{
 				buf_state += BUF_USAGECOUNT_ONE;
-				pg_atomic_write_u32(&bufHdr->state, buf_state);
+				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 			}
 		}
 		LocalRefCount[b]++;
@@ -181,7 +181,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 			if (BUF_STATE_GET_USAGECOUNT(buf_state) > 0)
 			{
 				buf_state -= BUF_USAGECOUNT_ONE;
-				pg_atomic_write_u32(&bufHdr->state, buf_state);
+				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 				trycounter = NLocBuffer;
 			}
 			else
@@ -222,7 +222,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 
 		/* Mark not-dirty now in case we error out below */
 		buf_state &= ~BM_DIRTY;
-		pg_atomic_write_u32(&bufHdr->state, buf_state);
+		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 		pgBufferUsage.local_blks_written++;
 	}
@@ -249,7 +249,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		/* mark buffer invalid just in case hash insert fails */
 		CLEAR_BUFFERTAG(bufHdr->tag);
 		buf_state &= ~(BM_VALID | BM_TAG_VALID);
-		pg_atomic_write_u32(&bufHdr->state, buf_state);
+		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 	}
 
 	hresult = (LocalBufferLookupEnt *)
@@ -266,7 +266,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	buf_state |= BM_TAG_VALID;
 	buf_state &= ~BUF_USAGECOUNT_MASK;
 	buf_state += BUF_USAGECOUNT_ONE;
-	pg_atomic_write_u32(&bufHdr->state, buf_state);
+	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 	*foundPtr = FALSE;
 	return bufHdr;
@@ -302,7 +302,7 @@ MarkLocalBufferDirty(Buffer buffer)
 
 	buf_state |= BM_DIRTY;
 
-	pg_atomic_write_u32(&bufHdr->state, buf_state);
+	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 }
 
 /*
@@ -351,7 +351,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 			CLEAR_BUFFERTAG(bufHdr->tag);
 			buf_state &= ~BUF_FLAG_MASK;
 			buf_state &= ~BUF_USAGECOUNT_MASK;
-			pg_atomic_write_u32(&bufHdr->state, buf_state);
+			pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 		}
 	}
 }
@@ -395,7 +395,7 @@ DropRelFileNodeAllLocalBuffers(RelFileNode rnode)
 			CLEAR_BUFFERTAG(bufHdr->tag);
 			buf_state &= ~BUF_FLAG_MASK;
 			buf_state &= ~BUF_USAGECOUNT_MASK;
-			pg_atomic_write_u32(&bufHdr->state, buf_state);
+			pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 		}
 	}
 }

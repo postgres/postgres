@@ -168,7 +168,8 @@ typedef struct buftag
  * We use this same struct for local buffer headers, but the locks are not
  * used and not all of the flag bits are useful either. To avoid unnecessary
  * overhead, manipulations of the state field should be done without actual
- * atomic operations (i.e. only pg_atomic_read/write).
+ * atomic operations (i.e. only pg_atomic_read_u32() and
+ * pg_atomic_unlocked_write_u32()).
  *
  * Be careful to avoid increasing the size of the struct when adding or
  * reordering members.  Keeping it below 64 bytes (the most common CPU

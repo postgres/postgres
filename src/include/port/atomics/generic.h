@@ -58,6 +58,15 @@ pg_atomic_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val)
 }
 #endif
 
+#ifndef PG_HAVE_ATOMIC_UNLOCKED_WRITE_U32
+#define PG_HAVE_ATOMIC_UNLOCKED_WRITE_U32
+static inline void
+pg_atomic_unlocked_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val)
+{
+	ptr->value = val;
+}
+#endif
+
 /*
  * provide fallback for test_and_set using atomic_exchange if available
  */

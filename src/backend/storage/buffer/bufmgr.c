@@ -821,7 +821,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 			Assert(buf_state & BM_VALID);
 			buf_state &= ~BM_VALID;
-			pg_atomic_write_u32(&bufHdr->state, buf_state);
+			pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 		}
 		else
 		{
@@ -941,7 +941,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 		buf_state |= BM_VALID;
-		pg_atomic_write_u32(&bufHdr->state, buf_state);
+		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 	}
 	else
 	{
@@ -3167,7 +3167,7 @@ FlushRelationBuffers(Relation rel)
 						  false);
 
 				buf_state &= ~(BM_DIRTY | BM_JUST_DIRTIED);
-				pg_atomic_write_u32(&bufHdr->state, buf_state);
+				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 				/* Pop the error context stack */
 				error_context_stack = errcallback.previous;
