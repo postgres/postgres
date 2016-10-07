@@ -23,7 +23,8 @@ SSLFILES := $(CERTIFICATES:%=ssl/%.key) $(CERTIFICATES:%=ssl/%.crt) \
 	ssl/client.crl ssl/server.crl ssl/root.crl \
 	ssl/both-cas-1.crt ssl/both-cas-2.crt \
 	ssl/root+server_ca.crt ssl/root+server.crl \
-	ssl/root+client_ca.crt ssl/root+client.crl
+	ssl/root+client_ca.crt ssl/root+client.crl \
+	ssl/client+client_ca.crt
 
 # This target generates all the key and certificate files.
 sslfiles: $(SSLFILES)
@@ -97,6 +98,9 @@ ssl/root+server_ca.crt: ssl/root_ca.crt ssl/server_ca.crt
 
 # and for the server, to validate client certs
 ssl/root+client_ca.crt: ssl/root_ca.crt ssl/client_ca.crt
+	cat $^ > $@
+
+ssl/client+client_ca.crt: ssl/client.crt ssl/client_ca.crt
 	cat $^ > $@
 
 #### CRLs

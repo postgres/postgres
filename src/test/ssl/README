@@ -65,6 +65,10 @@ root+server_ca
 root+client_ca
 	Contains root_crt and client_ca.crt. For use as server's "ssl_ca_file".
 
+client+client_ca
+	Contains client.crt and client_ca.crt in that order. For use as client's
+	certificate chain.
+
 There are also CRLs for each of the CAs: root.crl, server.crl and client.crl.
 
 For convenience, all of these keypairs and certificates are included in the
