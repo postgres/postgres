@@ -218,9 +218,6 @@ SELECT (p.hobbies).equipment.name, name(p.hobbies), p.name FROM ONLY person p;
 
 SELECT name(equipment(p.hobbies)), name(p.hobbies), p.name FROM person* p;
 
-SELECT user_relns() AS user_relns
-   ORDER BY user_relns;
-
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
 
 SELECT name(equipment(hobby_construct_named(text 'skywalking', text 'mer')));

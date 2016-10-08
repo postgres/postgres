@@ -47,14 +47,6 @@ CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where equipment_r.hobby = hobby'
    LANGUAGE SQL;
-CREATE FUNCTION user_relns()
-   RETURNS setof name
-   AS 'select relname
-       from pg_class c, pg_namespace n
-       where relnamespace = n.oid and
-             (nspname !~ ''pg_.*'' and nspname <> ''information_schema'') and
-             relkind <> ''i'' '
-   LANGUAGE SQL;
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
    AS '@libdir@/regress@DLSUFFIX@'
