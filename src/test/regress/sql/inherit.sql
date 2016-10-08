@@ -334,6 +334,45 @@ DROP TABLE test_foreign_constraints_inh;
 DROP TABLE test_foreign_constraints;
 DROP TABLE test_primary_constraints;
 
+-- Test that parent and child CHECK constraints can be created in either order
+create table p1(f1 int);
+create table p1_c1() inherits(p1);
+
+alter table p1 add constraint inh_check_constraint1 check (f1 > 0);
+alter table p1_c1 add constraint inh_check_constraint1 check (f1 > 0);
+
+alter table p1_c1 add constraint inh_check_constraint2 check (f1 < 10);
+alter table p1 add constraint inh_check_constraint2 check (f1 < 10);
+
+select conrelid::regclass::text as relname, conname, conislocal, coninhcount
+from pg_constraint where conname like 'inh\_check\_constraint%'
+order by 1, 2;
+
+drop table p1 cascade;
+
+-- Test that a valid child can have not-valid parent, but not vice versa
+create table invalid_check_con(f1 int);
+create table invalid_check_con_child() inherits(invalid_check_con);
+
+alter table invalid_check_con_child add constraint inh_check_constraint check(f1 > 0) not valid;
+alter table invalid_check_con add constraint inh_check_constraint check(f1 > 0); -- fail
+alter table invalid_check_con_child drop constraint inh_check_constraint;
+
+insert into invalid_check_con values(0);
+
+alter table invalid_check_con_child add constraint inh_check_constraint check(f1 > 0);
+alter table invalid_check_con add constraint inh_check_constraint check(f1 > 0) not valid;
+
+insert into invalid_check_con values(0); -- fail
+insert into invalid_check_con_child values(0); -- fail
+
+select conrelid::regclass::text as relname, conname,
+       convalidated, conislocal, coninhcount, connoinherit
+from pg_constraint where conname like 'inh\_check\_constraint%'
+order by 1, 2;
+
+-- We don't drop the invalid_check_con* tables, to test dump/reload with
+
 --
 -- Test parameterized append plans for inheritance trees
 --
