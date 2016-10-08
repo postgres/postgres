@@ -10373,11 +10373,22 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 								RelationGetRelationName(child_rel),
 								NameStr(parent_con->conname))));
 
-			/* If the constraint is "no inherit" then cannot merge */
+			/* If the child constraint is "no inherit" then cannot merge */
 			if (child_con->connoinherit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("constraint \"%s\" conflicts with non-inherited constraint on child table \"%s\"",
+								NameStr(child_con->conname),
+								RelationGetRelationName(child_rel))));
+
+			/*
+			 * If the child constraint is "not valid" then cannot merge with a
+			 * valid parent constraint
+			 */
+			if (parent_con->convalidated && !child_con->convalidated)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\"",
 								NameStr(child_con->conname),
 								RelationGetRelationName(child_rel))));
 
