@@ -62,6 +62,8 @@ int2_tbl|f
 int4_tbl|f
 int8_tbl|f
 interval_tbl|f
+invalid_check_con|f
+invalid_check_con_child|f
 iportaltest|f
 kd_point_tbl|t
 line_tbl|f
