@@ -14855,23 +14855,148 @@ fi
 
 # Select semaphore implementation type.
 if test "$PORTNAME" != "win32"; then
+  if test x"$PREFERRED_SEMAPHORES" = x"NAMED_POSIX" ; then
+    # Need sem_open for this
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sem_open" >&5
+$as_echo_n "checking for library containing sem_open... " >&6; }
+if ${ac_cv_search_sem_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sem_open ();
+int
+main ()
+{
+return sem_open ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' rt pthread; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_sem_open=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_sem_open+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_sem_open+:} false; then :
+
+else
+  ac_cv_search_sem_open=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_sem_open" >&5
+$as_echo "$ac_cv_search_sem_open" >&6; }
+ac_res=$ac_cv_search_sem_open
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  USE_NAMED_POSIX_SEMAPHORES=1
+fi
+
+  fi
+  if test x"$PREFERRED_SEMAPHORES" = x"UNNAMED_POSIX" ; then
+    # Need sem_init for this
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sem_init" >&5
+$as_echo_n "checking for library containing sem_init... " >&6; }
+if ${ac_cv_search_sem_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sem_init ();
+int
+main ()
+{
+return sem_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' rt pthread; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_sem_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_sem_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_sem_init+:} false; then :
+
+else
+  ac_cv_search_sem_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_sem_init" >&5
+$as_echo "$ac_cv_search_sem_init" >&6; }
+ac_res=$ac_cv_search_sem_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  USE_UNNAMED_POSIX_SEMAPHORES=1
+fi
+
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking which semaphore API to use" >&5
+$as_echo_n "checking which semaphore API to use... " >&6; }
   if test x"$USE_NAMED_POSIX_SEMAPHORES" = x"1" ; then
 
 $as_echo "#define USE_NAMED_POSIX_SEMAPHORES 1" >>confdefs.h
 
     SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
+    sematype="named POSIX"
   else
     if test x"$USE_UNNAMED_POSIX_SEMAPHORES" = x"1" ; then
 
 $as_echo "#define USE_UNNAMED_POSIX_SEMAPHORES 1" >>confdefs.h
 
       SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
+      sematype="unnamed POSIX"
     else
 
 $as_echo "#define USE_SYSV_SEMAPHORES 1" >>confdefs.h
 
       SEMA_IMPLEMENTATION="src/backend/port/sysv_sema.c"
+      sematype="System V"
     fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sematype" >&5
+$as_echo "$sematype" >&6; }
   fi
 else
 
