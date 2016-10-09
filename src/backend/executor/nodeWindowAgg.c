@@ -2218,7 +2218,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 								 numArguments,
 								 0,		/* no ordered-set window functions yet */
 								 false, /* no variadic window functions yet */
-								 wfunc->wintype,
+								 aggtranstype,
 								 wfunc->inputcollid,
 								 transfn_oid,
 								 invtransfn_oid,
