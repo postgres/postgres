@@ -2,14 +2,14 @@
 -- UNION (also INTERSECT, EXCEPT)
 --
 -- Simple UNION constructs
-SELECT 1 AS two UNION SELECT 2;
+SELECT 1 AS two UNION SELECT 2 ORDER BY 1;
  two 
 -----
    1
    2
 (2 rows)
 
-SELECT 1 AS one UNION SELECT 1;
+SELECT 1 AS one UNION SELECT 1 ORDER BY 1;
  one 
 -----
    1
@@ -29,7 +29,7 @@ SELECT 1 AS two UNION ALL SELECT 1;
    1
 (2 rows)
 
-SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
+SELECT 1 AS three UNION SELECT 2 UNION SELECT 3 ORDER BY 1;
  three 
 -------
      1
@@ -37,14 +37,14 @@ SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
      3
 (3 rows)
 
-SELECT 1 AS two UNION SELECT 2 UNION SELECT 2;
+SELECT 1 AS two UNION SELECT 2 UNION SELECT 2 ORDER BY 1;
  two 
 -----
    1
    2
 (2 rows)
 
-SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
+SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2 ORDER BY 1;
  three 
 -------
      1
@@ -52,7 +52,7 @@ SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
      2
 (3 rows)
 
-SELECT 1.1 AS two UNION SELECT 2.2;
+SELECT 1.1 AS two UNION SELECT 2.2 ORDER BY 1;
  two 
 -----
  1.1
@@ -60,41 +60,41 @@ SELECT 1.1 AS two UNION SELECT 2.2;
 (2 rows)
 
 -- Mixed types
-SELECT 1.1 AS two UNION SELECT 2;
+SELECT 1.1 AS two UNION SELECT 2 ORDER BY 1;
  two 
 -----
  1.1
    2
 (2 rows)
 
-SELECT 1 AS two UNION SELECT 2.2;
+SELECT 1 AS two UNION SELECT 2.2 ORDER BY 1;
  two 
 -----
    1
  2.2
 (2 rows)
 
-SELECT 1 AS one UNION SELECT 1.0::float8;
+SELECT 1 AS one UNION SELECT 1.0::float8 ORDER BY 1;
  one 
 -----
    1
 (1 row)
 
-SELECT 1.1 AS two UNION ALL SELECT 2;
+SELECT 1.1 AS two UNION ALL SELECT 2 ORDER BY 1;
  two 
 -----
  1.1
    2
 (2 rows)
 
-SELECT 1.0::float8 AS two UNION ALL SELECT 1;
+SELECT 1.0::float8 AS two UNION ALL SELECT 1 ORDER BY 1;
  two 
 -----
    1
    1
 (2 rows)
 
-SELECT 1.1 AS three UNION SELECT 2 UNION SELECT 3;
+SELECT 1.1 AS three UNION SELECT 2 UNION SELECT 3 ORDER BY 1;
  three 
 -------
    1.1
@@ -109,7 +109,7 @@ SELECT 1.1::float8 AS two UNION SELECT 2 UNION SELECT 2.0::float8 ORDER BY 1;
    2
 (2 rows)
 
-SELECT 1.1 AS three UNION SELECT 2 UNION ALL SELECT 2;
+SELECT 1.1 AS three UNION SELECT 2 UNION ALL SELECT 2 ORDER BY 1;
  three 
 -------
    1.1
@@ -117,7 +117,7 @@ SELECT 1.1 AS three UNION SELECT 2 UNION ALL SELECT 2;
      2
 (3 rows)
 
-SELECT 1.1 AS two UNION (SELECT 2 UNION ALL SELECT 2);
+SELECT 1.1 AS two UNION (SELECT 2 UNION ALL SELECT 2) ORDER BY 1;
  two 
 -----
  1.1
@@ -195,7 +195,8 @@ SELECT f1 AS five FROM FLOAT8_TBL
   WHERE f1 BETWEEN -1e6 AND 1e6
 UNION
 SELECT f1 FROM INT4_TBL
-  WHERE f1 BETWEEN 0 AND 1000000;
+  WHERE f1 BETWEEN 0 AND 1000000
+ORDER BY 1;
          five          
 -----------------------
                -1004.3
@@ -260,19 +261,19 @@ ORDER BY 1;
 --
 -- INTERSECT and EXCEPT
 --
-SELECT q2 FROM int8_tbl INTERSECT SELECT q1 FROM int8_tbl;
+SELECT q2 FROM int8_tbl INTERSECT SELECT q1 FROM int8_tbl ORDER BY 1;
         q2        
 ------------------
- 4567890123456789
               123
+ 4567890123456789
 (2 rows)
 
-SELECT q2 FROM int8_tbl INTERSECT ALL SELECT q1 FROM int8_tbl;
+SELECT q2 FROM int8_tbl INTERSECT ALL SELECT q1 FROM int8_tbl ORDER BY 1;
         q2        
 ------------------
- 4567890123456789
- 4567890123456789
               123
+ 4567890123456789
+ 4567890123456789
 (3 rows)
 
 SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl ORDER BY 1;
@@ -297,24 +298,24 @@ SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl ORDER BY 1;
   4567890123456789
 (3 rows)
 
-SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl;
+SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY 1;
  q1 
 ----
 (0 rows)
 
-SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q2 FROM int8_tbl;
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q2 FROM int8_tbl ORDER BY 1;
         q1        
 ------------------
- 4567890123456789
               123
+ 4567890123456789
 (2 rows)
 
-SELECT q1 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q2 FROM int8_tbl;
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q2 FROM int8_tbl ORDER BY 1;
         q1        
 ------------------
- 4567890123456789
- 4567890123456789
               123
+ 4567890123456789
+ 4567890123456789
 (3 rows)
 
 SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl FOR NO KEY UPDATE;
@@ -322,7 +323,7 @@ ERROR:  FOR NO KEY UPDATE is not allowed with UNION/INTERSECT/EXCEPT
 --
 -- Mixed types
 --
-SELECT f1 FROM float8_tbl INTERSECT SELECT f1 FROM int4_tbl;
+SELECT f1 FROM float8_tbl INTERSECT SELECT f1 FROM int4_tbl ORDER BY 1;
  f1 
 ----
   0
@@ -340,30 +341,30 @@ SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl ORDER BY 1;
 --
 -- Operator precedence and (((((extra))))) parentheses
 --
-SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl;
+SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl  ORDER BY 1;
         q1         
 -------------------
-  4567890123456789
+ -4567890123456789
+               123
                123
                456
   4567890123456789
-               123
   4567890123456789
- -4567890123456789
+  4567890123456789
 (7 rows)
 
-SELECT q1 FROM int8_tbl INTERSECT (((SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl)));
+SELECT q1 FROM int8_tbl INTERSECT (((SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl))) ORDER BY 1;
         q1        
 ------------------
- 4567890123456789
               123
+ 4567890123456789
 (2 rows)
 
-(((SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl))) UNION ALL SELECT q2 FROM int8_tbl;
+(((SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl ORDER BY 1))) UNION ALL SELECT q2 FROM int8_tbl;
         q1         
 -------------------
-  4567890123456789
                123
+  4567890123456789
                456
   4567890123456789
                123
@@ -416,11 +417,11 @@ LINE 1: ... int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1...
                                                              ^
 HINT:  There is a column named "q2" in table "*SELECT* 2", but it cannot be referenced from this part of the query.
 -- But this should work:
-SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)));
+SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1))) ORDER BY 1;
         q1        
 ------------------
- 4567890123456789
               123
+ 4567890123456789
 (2 rows)
 
 --
@@ -593,23 +594,27 @@ SELECT * FROM
   (SELECT 1 AS t, 2 AS x
    UNION
    SELECT 2 AS t, 4 AS x) ss
-WHERE x < 4;
-                 QUERY PLAN                 
---------------------------------------------
- Unique
-   ->  Sort
-         Sort Key: (1), (2)
-         ->  Append
-               ->  Result
-               ->  Result
-                     One-Time Filter: false
-(7 rows)
+WHERE x < 4
+ORDER BY x;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sort
+   Sort Key: (2)
+   ->  Unique
+         ->  Sort
+               Sort Key: (1), (2)
+               ->  Append
+                     ->  Result
+                     ->  Result
+                           One-Time Filter: false
+(9 rows)
 
 SELECT * FROM
   (SELECT 1 AS t, 2 AS x
    UNION
    SELECT 2 AS t, 4 AS x) ss
-WHERE x < 4;
+WHERE x < 4
+ORDER BY x;
  t | x 
 ---+---
  1 | 2
@@ -653,24 +658,28 @@ SELECT * FROM
   (SELECT 1 AS t, (random()*3)::int AS x
    UNION
    SELECT 2 AS t, 4 AS x) ss
-WHERE x > 3;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Subquery Scan on ss
-   Filter: (ss.x > 3)
-   ->  Unique
-         ->  Sort
-               Sort Key: (1), (((random() * '3'::double precision))::integer)
-               ->  Append
-                     ->  Result
-                     ->  Result
-(8 rows)
+WHERE x > 3
+ORDER BY x;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Sort
+   Sort Key: ss.x
+   ->  Subquery Scan on ss
+         Filter: (ss.x > 3)
+         ->  Unique
+               ->  Sort
+                     Sort Key: (1), (((random() * '3'::double precision))::integer)
+                     ->  Append
+                           ->  Result
+                           ->  Result
+(10 rows)
 
 SELECT * FROM
   (SELECT 1 AS t, (random()*3)::int AS x
    UNION
    SELECT 2 AS t, 4 AS x) ss
-WHERE x > 3;
+WHERE x > 3
+ORDER BY x;
  t | x 
 ---+---
  2 | 4

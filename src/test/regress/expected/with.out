@@ -1244,7 +1244,7 @@ WITH outermost(x) AS (
          SELECT * FROM innermost
          UNION SELECT 3)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
  x 
 ---
  1
@@ -1258,7 +1258,7 @@ WITH outermost(x) AS (
          SELECT * FROM outermost  -- fail
          UNION SELECT * FROM innermost)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 ERROR:  relation "outermost" does not exist
 LINE 4:          SELECT * FROM outermost  
                                ^
@@ -1270,7 +1270,7 @@ WITH RECURSIVE outermost(x) AS (
          SELECT * FROM outermost
          UNION SELECT * FROM innermost)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
  x 
 ---
  1
@@ -1282,7 +1282,7 @@ WITH RECURSIVE outermost(x) AS (
     SELECT * FROM innermost
     UNION SELECT * from outermost
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 ERROR:  recursive reference to query "outermost" must not appear within a subquery
 LINE 2:   WITH innermost as (SELECT 2 FROM outermost) 
                                            ^

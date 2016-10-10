@@ -575,7 +575,7 @@ WITH outermost(x) AS (
          SELECT * FROM innermost
          UNION SELECT 3)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 WITH outermost(x) AS (
   SELECT 1
@@ -583,7 +583,7 @@ WITH outermost(x) AS (
          SELECT * FROM outermost  -- fail
          UNION SELECT * FROM innermost)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 WITH RECURSIVE outermost(x) AS (
   SELECT 1
@@ -591,14 +591,14 @@ WITH RECURSIVE outermost(x) AS (
          SELECT * FROM outermost
          UNION SELECT * FROM innermost)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 WITH RECURSIVE outermost(x) AS (
   WITH innermost as (SELECT 2 FROM outermost) -- fail
     SELECT * FROM innermost
     UNION SELECT * from outermost
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 --
 -- This test will fail with the old implementation of PARAM_EXEC parameter

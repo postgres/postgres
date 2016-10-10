@@ -56,7 +56,7 @@ SELECT id,lag(id) OVER(), count(*) OVER(), generate_series(1,3) FROM few;
 SELECT SUM(count(*)) OVER(PARTITION BY generate_series(1,3) ORDER BY generate_series(1,3)), generate_series(1,3) g FROM few GROUP BY g;
 
 -- sorting + grouping
-SELECT few.dataa, count(*), min(id), max(id), generate_series(1,3) FROM few GROUP BY few.dataa ORDER BY 5;
+SELECT few.dataa, count(*), min(id), max(id), generate_series(1,3) FROM few GROUP BY few.dataa ORDER BY 5, 1;
 
 -- grouping sets are a bit special, they produce NULLs in columns not actually NULL
 SELECT dataa, datab b, generate_series(1,2) g, count(*) FROM few GROUP BY CUBE(dataa, datab);

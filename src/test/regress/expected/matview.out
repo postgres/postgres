@@ -33,7 +33,7 @@ SELECT relispopulated FROM pg_class WHERE oid = 'mvtest_tm'::regclass;
  f
 (1 row)
 
-SELECT * FROM mvtest_tm;
+SELECT * FROM mvtest_tm ORDER BY type;
 ERROR:  materialized view "mvtest_tm" has not been populated
 HINT:  Use the REFRESH MATERIALIZED VIEW command.
 REFRESH MATERIALIZED VIEW mvtest_tm;
@@ -44,12 +44,12 @@ SELECT relispopulated FROM pg_class WHERE oid = 'mvtest_tm'::regclass;
 (1 row)
 
 CREATE UNIQUE INDEX mvtest_tm_type ON mvtest_tm (type);
-SELECT * FROM mvtest_tm;
+SELECT * FROM mvtest_tm ORDER BY type;
  type | totamt 
 ------+--------
+ x    |      5
  y    |     12
  z    |     11
- x    |      5
 (3 rows)
 
 -- create various views
