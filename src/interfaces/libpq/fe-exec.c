@@ -1240,8 +1240,7 @@ PQsendQueryStart(PGconn *conn)
 	}
 
 	/* initialize async result-accumulation state */
-	conn->result = NULL;
-	conn->curTuple = NULL;
+	pqClearAsyncResult(conn);
 
 	/* ready to send command message */
 	return true;
