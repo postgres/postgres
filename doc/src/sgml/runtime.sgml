@@ -605,27 +605,47 @@ psql: could not connect to server: No such file or directory
    </indexterm>
 
    <para>
-    Shared memory and semaphores are collectively referred to as
-    <quote><systemitem class="osname">System V</>
-    <acronym>IPC</></quote> (together with message queues, which are not
-    relevant for <productname>PostgreSQL</>).  Except on
-    <systemitem class="osname">Windows</>, where <productname>PostgreSQL</>
-    provides its own replacement implementation of these facilities, these
-    facilities are required in order to run
-    <productname>PostgreSQL</>.
+    <productname>PostgreSQL</> requires the operating system to provide
+    inter-process communication (<acronym>IPC</>) features, specifically
+    shared memory and semaphores.  Unix-derived systems typically provide
+    <quote><systemitem class="osname">System V</></> <acronym>IPC</>,
+    <quote><systemitem class="osname">POSIX</></> <acronym>IPC</>, or both.
+    <systemitem class="osname">Windows</> has its own implementation of
+    these features and is not discussed here.
    </para>
 
    <para>
     The complete lack of these facilities is usually manifested by an
-    <errorname>Illegal system call</> error upon server start. In
-    that case there is no alternative but to reconfigure your
+    <quote><errorname>Illegal system call</></quote> error upon server
+    start.  In that case there is no alternative but to reconfigure your
     kernel.  <productname>PostgreSQL</> won't work without them.
     This situation is rare, however, among modern operating systems.
    </para>
 
    <para>
-    When <productname>PostgreSQL</> exceeds one of the various hard
-    <acronym>IPC</> limits, the server will refuse to start and
+    Upon starting the server, <productname>PostgreSQL</> normally allocates
+    a very small amount of System V shared memory, as well as a much larger
+    amount of POSIX (<function>mmap</>) shared memory.
+    In addition a significant number of semaphores, which can be either
+    System V or POSIX style, are created at server startup.  Currently,
+    POSIX semaphores are used on Linux and FreeBSD systems while other
+    platforms use System V semaphores.
+   </para>
+
+   <note>
+    <para>
+     Prior to <productname>PostgreSQL</> 9.3, only System V shared memory
+     was used, so the amount of System V shared memory required to start the
+     server was much larger.  If you are running an older version of the
+     server, please consult the documentation for your server version.
+    </para>
+   </note>
+
+   <para>
+    System V <acronym>IPC</> features are typically constrained by
+    system-wide allocation limits.
+    When <productname>PostgreSQL</> exceeds one of these limits,
+    the server will refuse to start and
     should leave an instructive error message describing the problem
     and what to do about it. (See also <xref
     linkend="server-start-failures">.) The relevant kernel
@@ -633,15 +653,6 @@ psql: could not connect to server: No such file or directory
     linkend="sysvipc-parameters"> gives an overview. The methods to set
     them, however, vary. Suggestions for some platforms are given below.
    </para>
-
-   <note>
-     <para>
-       Prior to <productname>PostgreSQL</> 9.3, the amount of System V shared
-       memory required to start the server was much larger.  If you are running
-       an older version of the server, please consult the documentation for
-       your server version.
-     </para>
-   </note>
 
    <table id="sysvipc-parameters">
     <title><systemitem class="osname">System V</> <acronym>IPC</> Parameters</title>
@@ -651,7 +662,7 @@ psql: could not connect to server: No such file or directory
       <row>
        <entry>Name</>
        <entry>Description</>
-       <entry>Reasonable values</>
+       <entry>Values needed to run one <productname>PostgreSQL</> instance</>
       </row>
      </thead>
 
@@ -659,7 +670,7 @@ psql: could not connect to server: No such file or directory
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>at least 1kB (more if running many copies of the server)</entry>
+       <entry>at least 1kB, but the default is usually much higher</entry>
       </row>
 
       <row>
@@ -671,7 +682,9 @@ psql: could not connect to server: No such file or directory
       <row>
        <entry><varname>SHMALL</></>
        <entry>Total amount of shared memory available (bytes or pages)</>
-       <entry>if bytes, same as <varname>SHMMAX</varname>; if pages, <literal>ceil(SHMMAX/PAGE_SIZE)</literal></>
+       <entry>same as <varname>SHMMAX</varname> if bytes,
+        or <literal>ceil(SHMMAX/PAGE_SIZE)</literal> if pages,
+        plus room for other applications</>
       </row>
 
       <row>
@@ -689,7 +702,7 @@ psql: could not connect to server: No such file or directory
        <row>
         <entry><varname>SEMMNI</></>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</>
-        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + max_worker_processes + 5) / 16)</literal></>
+        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + max_worker_processes + 5) / 16)</literal> plus room for other applications</>
        </row>
 
        <row>
@@ -725,9 +738,8 @@ psql: could not connect to server: No such file or directory
     (typically 48 bytes, on 64-bit platforms) for each copy of the server.
     On most modern operating systems, this amount can easily be allocated.
     However, if you are running many copies of the server, or if other
-    applications are also using System V shared memory, it may be necessary
-    to increase <varname>SHMMAX</>, the maximum size in bytes of a shared
-    memory segment, or <varname>SHMALL</>, the total amount of System V shared
+    applications are also using System V shared memory, it may be necessary to
+    increase <varname>SHMALL</>, which is the total amount of System V shared
     memory system-wide.  Note that <varname>SHMALL</> is measured in pages
     rather than bytes on many systems.
    </para>
@@ -742,6 +754,7 @@ psql: could not connect to server: No such file or directory
    </para>
 
    <para>
+    When using System V semaphores,
     <productname>PostgreSQL</> uses one semaphore per allowed connection
     (<xref linkend="guc-max-connections">), allowed autovacuum worker process
     (<xref linkend="guc-autovacuum-max-workers">) and allowed background
@@ -779,15 +792,19 @@ psql: could not connect to server: No such file or directory
    </para>
 
    <para>
-    The <varname>SEMMSL</> parameter, which determines how many
-    semaphores can be in a set, must be at least 17 for
+    Various other settings related to <quote>semaphore undo</>, such as
+    <varname>SEMMNU</> and <varname>SEMUME</>, do not affect
     <productname>PostgreSQL</>.
    </para>
 
    <para>
-    Various other settings related to <quote>semaphore undo</>, such as
-    <varname>SEMMNU</> and <varname>SEMUME</>, do not affect
-    <productname>PostgreSQL</>.
+    When using POSIX semaphores, the number of semaphores needed is the
+    same as for System V, that is one semaphore per allowed connection
+    (<xref linkend="guc-max-connections">), allowed autovacuum worker process
+    (<xref linkend="guc-autovacuum-max-workers">) and allowed background
+    process (<xref linkend="guc-max-worker-processes">).
+    On the platforms where this option is preferred, there is no specific
+    kernel limit on the number of POSIX semaphores.
    </para>
 
 
