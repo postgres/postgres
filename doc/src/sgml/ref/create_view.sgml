@@ -87,13 +87,13 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
      <para>
       Creates a recursive view.  The syntax
 <synopsis>
-CREATE RECURSIVE VIEW <replaceable>name</> (<replaceable>columns</>) AS SELECT <replaceable>...</>;
+CREATE RECURSIVE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> (<replaceable>column_names</>) AS SELECT <replaceable>...</>;
 </synopsis>
       is equivalent to
 <synopsis>
-CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replaceable>columns</>) AS (SELECT <replaceable>...</>) SELECT <replaceable>columns</> FROM <replaceable>name</>;
+CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECURSIVE <replaceable>view_name</> (<replaceable>column_names</>) AS (SELECT <replaceable>...</>) SELECT <replaceable>column_names</> FROM <replaceable>view_name</>;
 </synopsis>
-      A view column list must be specified for a recursive view.
+      A view column name list must be specified for a recursive view.
      </para>
     </listitem>
    </varlistentry>
@@ -462,11 +462,16 @@ CREATE VIEW comedies AS
   <para>
    Create a recursive view consisting of the numbers from 1 to 100:
 <programlisting>
-CREATE RECURSIVE VIEW nums_1_100 (n) AS
+CREATE RECURSIVE VIEW public.nums_1_100 (n) AS
     VALUES (1)
 UNION ALL
     SELECT n+1 FROM nums_1_100 WHERE n < 100;
-</programlisting></para>
+</programlisting>
+   Notice that although the recursive view's name is schema-qualified in this
+   <command>CREATE</>, its internal self-reference is not schema-qualified.
+   This is because the implicitly-created CTE's name cannot be
+   schema-qualified.
+  </para>
  </refsect1>
 
  <refsect1>
