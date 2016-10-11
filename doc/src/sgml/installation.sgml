@@ -2000,8 +2000,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    In general, <productname>PostgreSQL</> can be expected to work on
    these CPU architectures: x86, x86_64, IA64, PowerPC,
-   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL, M68K,
-   and PA-RISC.  Code support exists for M32R and VAX, but these
+   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL,
+   and PA-RISC.  Code support exists for M68K, M32R, and VAX, but these
    architectures are not known to have been tested recently.  It is often
    possible to build on an unsupported CPU type by configuring with
    <option>--disable-spinlocks</option>, but performance will be poor.
@@ -2010,11 +2010,11 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    <productname>PostgreSQL</> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
-   FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, Solaris,
-   and UnixWare.  Other Unix-like systems may also work but are not currently
+   FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, and Solaris.
+   Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in
-   the <xref linkend="installation-platform-notes"> below to see if
+   <xref linkend="installation-platform-notes"> below to see if
    there is information
    specific to your operating system, particularly if using an older system.
   </para>
@@ -2635,160 +2635,6 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
      inside the cluster data directory. The dumps will then be written
      into this directory with a unique name based on the identifier of
      the crashing process and the current time of the crash.
-    </para>
-   </sect3>
-  </sect2>
-
-  <sect2 id="installation-notes-sco">
-   <title>SCO OpenServer and SCO UnixWare</title>
-
-   <indexterm zone="installation-notes-sco">
-    <primary>SCO</primary>
-    <secondary>installation on</secondary>
-   </indexterm>
-
-   <indexterm zone="installation-notes-sco">
-    <primary>UnixWare</primary>
-    <secondary>installation on</secondary>
-   </indexterm>
-
-   <para>
-    PostgreSQL can be built on SCO UnixWare 7 and SCO OpenServer 5.
-    On OpenServer, you can use either the OpenServer Development Kit
-    or the Universal Development Kit.  However, some tweaking may be
-    needed, as described below.
-   </para>
-
-   <sect3>
-    <title>Skunkware</title>
-
-    <para>
-     You should locate your copy of the SCO Skunkware CD.  The
-     Skunkware CD is included with UnixWare 7 and current versions of
-     OpenServer 5.  Skunkware includes ready-to-install versions of
-     many popular programs that are available on the Internet.  For
-     example, gzip, gunzip, GNU Make, Flex, and Bison are all
-     included.  For UnixWare 7.1, this CD is now labeled "Open License
-     Software Supplement".  If you do not have this CD, the software
-     on it is available
-     from <ulink url="http://www.sco.com/skunkware/"></ulink>.
-    </para>
-
-    <para>
-     Skunkware has different versions for UnixWare and OpenServer.
-     Make sure you install the correct version for your operating
-     system, except as noted below.
-    </para>
-
-    <para>
-     On UnixWare 7.1.3 and beyond, the GCC compiler is included on the
-     UDK CD as is GNU Make.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>GNU Make</title>
-
-    <para>
-     You need to use the GNU Make program, which is on the Skunkware
-     CD.  By default, it installs
-     as <filename>/usr/local/bin/make</filename>.
-    </para>
-
-    <para>
-     As of UnixWare 7.1.3 and above, the GNU Make program is the
-     OSTK portion of the UDK CD, and is
-     in <filename>/usr/gnu/bin/gmake</filename>.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Readline</title>
-
-    <para>
-     The Readline library is on the Skunkware CD.  But it is not
-     included on the UnixWare 7.1 Skunkware CD.  If you have the
-     UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it from
-     there.  Otherwise,
-     try <ulink url="http://www.sco.com/skunkware/"></ulink>.
-    </para>
-
-    <para>
-     By default, Readline installs into <filename>/usr/local/lib</> and
-     <filename>/usr/local/include</>.  However, the
-     PostgreSQL <command>configure</command> program will not find it
-     there without help.  If you installed Readline, then use the
-     following options to <command>configure</command>:
-<programlisting>
-./configure --with-libraries=/usr/local/lib --with-includes=/usr/local/include
-</programlisting>
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Using the UDK on OpenServer</title>
-
-    <para>
-     If you are using the new Universal Development Kit (UDK) compiler
-     on OpenServer, you need to specify the locations of the UDK
-     libraries:
-<programlisting>
-./configure --with-libraries=/udk/usr/lib --with-includes=/udk/usr/include
-</programlisting>
-     Putting these together with the Readline options from above:
-<programlisting>
-./configure --with-libraries="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include"
-</programlisting>
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Reading the PostgreSQL Man Pages</title>
-
-    <para>
-     By default, the PostgreSQL man pages are installed into
-     <filename>/usr/local/pgsql/share/man</filename>.  By default, UnixWare
-     does not look there for man pages.  To be able to read them you
-     need to modify the
-     <varname>MANPATH</varname> variable
-     in <filename>/etc/default/man</filename>, for example:
-<programlisting>
-MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr/local/man:/usr/local/pgsql/share/man
-</programlisting>
-    </para>
-
-    <para>
-     On OpenServer, some extra research needs to be invested to make
-     the man pages usable, because the man system is a bit different
-     from other platforms.  Currently, PostgreSQL will not install
-     them at all.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>C99 Issues with the 7.1.1b Feature Supplement</title>
-
-    <para>
-     For compilers earlier than the one released with OpenUNIX 8.0.0
-     (UnixWare 7.1.2), including the 7.1.1b Feature Supplement, you
-     may need to specify <option>-Xb</option>
-     in <varname>CFLAGS</varname> or the <varname>CC</varname>
-     environment variable.  The indication of this is an error in
-     compiling <filename>tuplesort.c</filename> referencing inline
-     functions.  Apparently there was a change in the 7.1.2(8.0.0)
-     compiler and beyond.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Threading on UnixWare</title>
-
-    <para>
-     For threading, you<emphasis>must</emphasis> use <option>-Kpthread</option>
-     on <emphasis>all</emphasis> libpq-using programs.  libpq
-     uses <function>pthread_*</function> calls, which are only
-     available with the
-     <option>-Kpthread</>/<option>-Kthread</> flag.
     </para>
    </sect3>
   </sect2>

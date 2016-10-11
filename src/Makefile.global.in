@@ -265,7 +265,6 @@ UUID_LIBS = @UUID_LIBS@
 UUID_EXTRA_OBJS = @UUID_EXTRA_OBJS@
 LD = @LD@
 with_gnu_ld = @with_gnu_ld@
-ld_R_works = @ld_R_works@
 
 # We want -L for libpgport.a and libpgcommon.a to be first in LDFLAGS.  We
 # also need LDFLAGS to be a "recursively expanded" variable, else adjustments

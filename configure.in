@@ -69,9 +69,7 @@ dragonfly*) template=netbsd ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
  openbsd*) template=openbsd ;;
-     sco*) template=sco ;;
  solaris*) template=solaris ;;
-   sysv5*) template=unixware ;;
 esac
 
   if test x"$template" = x"" ; then
@@ -871,18 +869,6 @@ AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 PGAC_PROG_LD
 AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
-case $host_os in sysv5*)
-  AC_CACHE_CHECK([whether ld -R works], [pgac_cv_prog_ld_R],
-  [
-    pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-      [pgac_cv_prog_ld_R=yes],
-      [pgac_cv_prog_ld_R=no])
-    LDFLAGS=$pgac_save_LDFLAGS
-  ])
-  ld_R_works=$pgac_cv_prog_ld_R
-  AC_SUBST(ld_R_works)
-esac
 AC_PROG_RANLIB
 PGAC_CHECK_STRIP
 AC_CHECK_TOOL(AR, ar, ar)

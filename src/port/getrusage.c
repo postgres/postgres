@@ -18,7 +18,6 @@
 #include "rusagestub.h"
 
 /* This code works on:
- *		sco
  *		solaris_i386
  *		solaris_sparc
  *		hpux 9.*

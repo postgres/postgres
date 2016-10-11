@@ -326,11 +326,7 @@ check: postgres.sgml $(ALMOSTALLSGML) check-tabs
 ## Install
 ##
 
-install: install-html
-
-ifneq ($(PORTNAME), sco)
-install: install-man
-endif
+install: install-html install-man
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(htmldir)'/html $(addprefix '$(DESTDIR)$(mandir)'/man, 1 3 $(sqlmansectnum))

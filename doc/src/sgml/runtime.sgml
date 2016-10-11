@@ -1087,34 +1087,6 @@ sysctl -w kern.sysv.shmall
 
 
      <varlistentry>
-      <term><systemitem class="osname">SCO OpenServer</>
-      <indexterm><primary>SCO OpenServer</><secondary>IPC configuration</></>
-      </term>
-      <listitem>
-       <para>
-        In the default configuration, only 512 kB of shared memory per
-        segment is allowed. To increase the setting, first change to the
-        directory <filename>/etc/conf/cf.d</>. To display the current value of
-        <varname>SHMMAX</>, run:
-<programlisting>
-./configure -y SHMMAX
-</programlisting>
-        To set a new value for <varname>SHMMAX</>, run:
-<programlisting>
-./configure SHMMAX=<replaceable>value</>
-</programlisting>
-        where <replaceable>value</> is the new value you want to use
-        (in bytes). After setting <varname>SHMMAX</>, rebuild the kernel:
-<programlisting>
-./link_unix
-</programlisting>
-        and reboot.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
       <term><systemitem class="osname">Solaris</> 2.6 to 2.9 (Solaris
       6 to Solaris 9)
       <indexterm><primary>Solaris</><secondary>IPC configuration</></>
@@ -1185,36 +1157,6 @@ project.max-msg-ids=(priv,4096,deny)
         limits as well.  See "Chapter2:  Projects and Tasks" in the
         <citetitle>System Administrator's Guide</> for more
         information on <literal>projects</> and <command>prctl</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
-      <term><systemitem class="osname">UnixWare</>
-      <indexterm><primary>UnixWare</><secondary>IPC configuration</></>
-      </term>
-      <listitem>
-       <para>
-        On <productname>UnixWare</> 7, the maximum size for shared
-        memory segments is 512 kB in the default configuration.
-        To display the current value of <varname>SHMMAX</>, run:
-<programlisting>
-/etc/conf/bin/idtune -g SHMMAX
-</programlisting>
-        which displays the current, default, minimum, and maximum
-        values. To set a new value for <varname>SHMMAX</>,
-        run:
-<programlisting>
-/etc/conf/bin/idtune SHMMAX <replaceable>value</>
-</programlisting>
-        where <replaceable>value</> is the new value you want to use
-        (in bytes). After setting <varname>SHMMAX</>, rebuild the
-        kernel:
-<programlisting>
-/etc/conf/bin/idbuild -B
-</programlisting>
-        and reboot.
        </para>
       </listitem>
      </varlistentry>

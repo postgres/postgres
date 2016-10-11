@@ -205,32 +205,6 @@ gcc -G -o foo.so foo.o
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term>
-     <systemitem class="osname">UnixWare</>
-     <indexterm><primary>UnixWare</><secondary>shared library</></>
-    </term>
-    <listitem>
-     <para>
-      The compiler flag to create <acronym>PIC</acronym> is <option>-K
-      PIC</option> with the SCO compiler and <option>-fpic</option>
-      with <productname>GCC</productname>.  To link shared libraries,
-      the compiler option is <option>-G</option> with the SCO compiler
-      and <option>-shared</option> with
-      <productname>GCC</productname>.
-<programlisting>
-cc -K PIC -c foo.c
-cc -G -o foo.so foo.o
-</programlisting>
-      or
-<programlisting>
-gcc -fpic -c foo.c
-gcc -shared -o foo.so foo.o
-</programlisting>
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
 
  <tip>

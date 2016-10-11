@@ -683,16 +683,6 @@ StreamConnection(pgsocket server_fd, Port *port)
 		return STATUS_ERROR;
 	}
 
-#ifdef SCO_ACCEPT_BUG
-
-	/*
-	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
-	 * shouldn't hurt to catch it for all versions of those platforms.
-	 */
-	if (port->raddr.addr.ss_family == 0)
-		port->raddr.addr.ss_family = AF_UNIX;
-#endif
-
 	/* fill in the server (local) address */
 	port->laddr.salen = sizeof(port->laddr.addr);
 	if (getsockname(port->sock,

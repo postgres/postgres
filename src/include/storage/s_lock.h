@@ -706,29 +706,6 @@ typedef unsigned char slock_t;
 #if !defined(HAS_TEST_AND_SET)	/* We didn't trigger above, let's try here */
 
 
-#if defined(USE_UNIVEL_CC)		/* Unixware compiler */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock)	tas(lock)
-
-asm int
-tas(volatile slock_t *s_lock)
-{
-/* UNIVEL wants %mem in column 1, so we don't pgindent this file */
-%mem s_lock
-	pushl %ebx
-	movl s_lock, %ebx
-	movl $255, %eax
-	lock
-	xchgb %al, (%ebx)
-	popl %ebx
-}
-
-#endif	 /* defined(USE_UNIVEL_CC) */
-
-
 #if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
 /*
  * HP's PA-RISC

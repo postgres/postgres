@@ -694,7 +694,6 @@ STRIP_SHARED_LIB
 STRIP_STATIC_LIB
 STRIP
 RANLIB
-ld_R_works
 with_gnu_ld
 LD
 LDFLAGS_SL
@@ -2867,9 +2866,7 @@ dragonfly*) template=netbsd ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
  openbsd*) template=openbsd ;;
-     sco*) template=sco ;;
  solaris*) template=solaris ;;
-   sysv5*) template=unixware ;;
 esac
 
   if test x"$template" = x"" ; then
@@ -6382,40 +6379,6 @@ with_gnu_ld=$ac_cv_prog_gnu_ld
 
 
 
-case $host_os in sysv5*)
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ld -R works" >&5
-$as_echo_n "checking whether ld -R works... " >&6; }
-if ${pgac_cv_prog_ld_R+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-    pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  pgac_cv_prog_ld_R=yes
-else
-  pgac_cv_prog_ld_R=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-    LDFLAGS=$pgac_save_LDFLAGS
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_ld_R" >&5
-$as_echo "$pgac_cv_prog_ld_R" >&6; }
-  ld_R_works=$pgac_cv_prog_ld_R
-
-esac
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2

@@ -236,30 +236,6 @@ ifeq ($(PORTNAME), solaris)
   endif
 endif
 
-ifeq ($(PORTNAME), sco)
-  ifeq ($(GCC), yes)
-    LINK.shared		= $(CC) -shared
-  else
-    LINK.shared		= $(CC) -G
-    endif
-  LINK.shared		+= -Wl,-z,text
-  ifdef soname
-    LINK.shared		+= -Wl,-h,$(soname)
-  endif
-endif
-
-ifeq ($(PORTNAME), unixware)
-  ifeq ($(GCC), yes)
-    LINK.shared		= $(CC) -shared
-  else
-    LINK.shared		= $(CC) -G
-  endif
-  LINK.shared		+= -Wl,-z,text
-  ifdef soname
-    LINK.shared		+= -Wl,-h,$(soname)
-  endif
-endif
-
 ifeq ($(PORTNAME), cygwin)
   LINK.shared		= $(CC) -shared
   ifdef SO_MAJOR_VERSION
