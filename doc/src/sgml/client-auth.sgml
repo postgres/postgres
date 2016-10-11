@@ -711,7 +711,7 @@ local   db1,db2,@demodbs  all                                   md5
   <para>
    When using an external authentication system such as Ident or GSSAPI,
    the name of the operating system user that initiated the connection
-   might not be the same as the database user that is to be connect as.
+   might not be the same as the database user (role) that is to be used.
    In this case, a user name map can be applied to map the operating system
    user name to a database user.  To use user name mapping, specify
    <literal>map</literal>=<replaceable>map-name</replaceable>
