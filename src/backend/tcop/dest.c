@@ -218,8 +218,8 @@ NullCommand(CommandDest dest)
 /* ----------------
  *		ReadyForQuery - tell dest that we are ready for a new query
  *
- *		The ReadyForQuery message is sent in protocol versions 2.0 and up
- *		so that the FE can tell when we are done processing a query string.
+ *		The ReadyForQuery message is sent so that the FE can tell when
+ *		we are done processing a query string.
  *		In versions 3.0 and up, it also carries a transaction state indicator.
  *
  *		Note that by flushing the stdio buffer here, we can avoid doing it
@@ -241,7 +241,7 @@ ReadyForQuery(CommandDest dest)
 				pq_sendbyte(&buf, TransactionBlockStatusCode());
 				pq_endmessage(&buf);
 			}
-			else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+			else
 				pq_putemptymessage('Z');
 			/* Flush output at end of cycle in any case. */
 			pq_flush();

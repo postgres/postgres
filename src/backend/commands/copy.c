@@ -353,7 +353,7 @@ SendCopyBegin(CopyState cstate)
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
 	}
-	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+	else
 	{
 		/* old way */
 		if (cstate->binary)
@@ -361,18 +361,6 @@ SendCopyBegin(CopyState cstate)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('H');
-		/* grottiness needed for old COPY OUT protocol */
-		pq_startcopyout();
-		cstate->copy_dest = COPY_OLD_FE;
-	}
-	else
-	{
-		/* very old way */
-		if (cstate->binary)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("COPY BINARY is not supported to stdout or from stdin")));
-		pq_putemptymessage('B');
 		/* grottiness needed for old COPY OUT protocol */
 		pq_startcopyout();
 		cstate->copy_dest = COPY_OLD_FE;
@@ -399,7 +387,7 @@ ReceiveCopyBegin(CopyState cstate)
 		cstate->copy_dest = COPY_NEW_FE;
 		cstate->fe_msgbuf = makeStringInfo();
 	}
-	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+	else
 	{
 		/* old way */
 		if (cstate->binary)
@@ -407,18 +395,6 @@ ReceiveCopyBegin(CopyState cstate)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('G');
-		/* any error in old protocol will make us lose sync */
-		pq_startmsgread();
-		cstate->copy_dest = COPY_OLD_FE;
-	}
-	else
-	{
-		/* very old way */
-		if (cstate->binary)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("COPY BINARY is not supported to stdout or from stdin")));
-		pq_putemptymessage('D');
 		/* any error in old protocol will make us lose sync */
 		pq_startmsgread();
 		cstate->copy_dest = COPY_OLD_FE;
