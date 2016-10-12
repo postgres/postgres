@@ -3688,8 +3688,6 @@ getTypes(Archive *fout, int *numTypes)
 	int			i_inittypacl;
 	int			i_initrtypacl;
 	int			i_rolname;
-	int			i_typinput;
-	int			i_typoutput;
 	int			i_typelem;
 	int			i_typrelid;
 	int			i_typrelkind;
@@ -3734,8 +3732,7 @@ getTypes(Archive *fout, int *numTypes)
 						  "%s AS inittypacl, "
 						  "%s AS initrtypacl, "
 						  "(%s t.typowner) AS rolname, "
-						  "t.typinput::oid AS typinput, "
-					 "t.typoutput::oid AS typoutput, t.typelem, t.typrelid, "
+						  "t.typelem, t.typrelid, "
 						  "CASE WHEN t.typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = t.typrelid) END AS typrelkind, "
 						  "t.typtype, t.typisdefined, "
@@ -3763,8 +3760,7 @@ getTypes(Archive *fout, int *numTypes)
 						  "typnamespace, typacl, NULL as rtypacl, "
 						  "NULL AS inittypacl, NULL AS initrtypacl, "
 						  "(%s typowner) AS rolname, "
-						  "typinput::oid AS typinput, "
-						  "typoutput::oid AS typoutput, typelem, typrelid, "
+						  "typelem, typrelid, "
 						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END AS typrelkind, "
 						  "typtype, typisdefined, "
@@ -3779,8 +3775,7 @@ getTypes(Archive *fout, int *numTypes)
 						  "typnamespace, NULL AS typacl, NULL as rtypacl, "
 						  "NULL AS inittypacl, NULL AS initrtypacl, "
 						  "(%s typowner) AS rolname, "
-						  "typinput::oid AS typinput, "
-						  "typoutput::oid AS typoutput, typelem, typrelid, "
+						  "typelem, typrelid, "
 						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END AS typrelkind, "
 						  "typtype, typisdefined, "
@@ -3795,8 +3790,7 @@ getTypes(Archive *fout, int *numTypes)
 						  "typnamespace, NULL AS typacl, NULL as rtypacl, "
 						  "NULL AS inittypacl, NULL AS initrtypacl, "
 						  "(%s typowner) AS rolname, "
-						  "typinput::oid AS typinput, "
-						  "typoutput::oid AS typoutput, typelem, typrelid, "
+						  "typelem, typrelid, "
 						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END AS typrelkind, "
 						  "typtype, typisdefined, "
@@ -3820,8 +3814,6 @@ getTypes(Archive *fout, int *numTypes)
 	i_inittypacl = PQfnumber(res, "inittypacl");
 	i_initrtypacl = PQfnumber(res, "initrtypacl");
 	i_rolname = PQfnumber(res, "rolname");
-	i_typinput = PQfnumber(res, "typinput");
-	i_typoutput = PQfnumber(res, "typoutput");
 	i_typelem = PQfnumber(res, "typelem");
 	i_typrelid = PQfnumber(res, "typrelid");
 	i_typrelkind = PQfnumber(res, "typrelkind");
