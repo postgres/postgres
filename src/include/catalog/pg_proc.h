@@ -540,7 +540,6 @@ DATA(insert OID = 313 (  int4			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23
 DESCR("convert int2 to int4");
 DATA(insert OID = 314 (  int2			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 21	"23" _null_ _null_ _null_ _null_ _null_ i4toi2 _null_ _null_ _null_ ));
 DESCR("convert int4 to int2");
-DATA(insert OID = 315 (  int2vectoreq	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "22 22" _null_ _null_ _null_ _null_ _null_ int2vectoreq _null_ _null_ _null_ ));
 DATA(insert OID = 316 (  float8			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 701  "23" _null_ _null_ _null_ _null_ _null_	i4tod _null_ _null_ _null_ ));
 DESCR("convert int4 to float8");
 DATA(insert OID = 317 (  int4			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "701" _null_ _null_ _null_ _null_ _null_ dtoi4 _null_ _null_ _null_ ));
@@ -686,8 +685,6 @@ DESCR("hash");
 DATA(insert OID = 457 (  hashoidvector	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "30" _null_ _null_ _null_ _null_ _null_ hashoidvector _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 329 (  hash_aclitem	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1033" _null_ _null_ _null_ _null_ _null_	hash_aclitem _null_ _null_ _null_ ));
-DESCR("hash");
-DATA(insert OID = 398 (  hashint2vector    PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "22" _null_ _null_ _null_ _null_ _null_ hashint2vector _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 399 (  hashmacaddr	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "829" _null_ _null_ _null_ _null_ _null_ hashmacaddr _null_ _null_ _null_ ));
 DESCR("hash");

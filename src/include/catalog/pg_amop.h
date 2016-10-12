@@ -573,8 +573,6 @@ DATA(insert (	2040   1114 1114 1 s 2060 405 0 ));
 DATA(insert (	2222   16 16 1 s   91 405 0 ));
 /* bytea_ops */
 DATA(insert (	2223   17 17 1 s 1955 405 0 ));
-/* int2vector_ops */
-DATA(insert (	2224   22 22 1 s	386 405 0 ));
 /* xid_ops */
 DATA(insert (	2225   28 28 1 s	352 405 0 ));
 /* cid_ops */

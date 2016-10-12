@@ -173,7 +173,6 @@ DATA(insert (	2001   1266 1266 1 1696 ));
 DATA(insert (	2040   1114 1114 1 2039 ));
 DATA(insert (	2222   16 16 1 454 ));
 DATA(insert (	2223   17 17 1 456 ));
-DATA(insert (	2224   22 22 1 398 ));
 DATA(insert (	2225   28 28 1 450 ));
 DATA(insert (	2226   29 29 1 450 ));
 DATA(insert (	2227   702 702 1 450 ));

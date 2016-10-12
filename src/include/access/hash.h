@@ -283,7 +283,6 @@ extern Datum hashenum(PG_FUNCTION_ARGS);
 extern Datum hashfloat4(PG_FUNCTION_ARGS);
 extern Datum hashfloat8(PG_FUNCTION_ARGS);
 extern Datum hashoidvector(PG_FUNCTION_ARGS);
-extern Datum hashint2vector(PG_FUNCTION_ARGS);
 extern Datum hashname(PG_FUNCTION_ARGS);
 extern Datum hashtext(PG_FUNCTION_ARGS);
 extern Datum hashvarlena(PG_FUNCTION_ARGS);

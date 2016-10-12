@@ -156,8 +156,6 @@ DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f f	 0	20	1700  0  0 numeric_fac 
 DESCR("deprecated, use ! instead");
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b f t	29	29	16 385	 0 cideq eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 386 (  "="	   PGNSP PGUID b f t	22	22	16 386	 0 int2vectoreq eqsel eqjoinsel ));
-DESCR("equal");
 
 DATA(insert OID = 387 (  "="	   PGNSP PGUID b t f	27	27	16 387 402 tideq eqsel eqjoinsel ));
 DESCR("equal");

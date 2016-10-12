@@ -254,21 +254,6 @@ int2vectorsend(PG_FUNCTION_ARGS)
 	return array_send(fcinfo);
 }
 
-/*
- * We don't have a complete set of int2vector support routines,
- * but we need int2vectoreq for catcache indexing.
- */
-Datum
-int2vectoreq(PG_FUNCTION_ARGS)
-{
-	int2vector *a = (int2vector *) PG_GETARG_POINTER(0);
-	int2vector *b = (int2vector *) PG_GETARG_POINTER(1);
-
-	if (a->dim1 != b->dim1)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(memcmp(a->values, b->values, a->dim1 * sizeof(int16)) == 0);
-}
-
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *

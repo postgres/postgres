@@ -117,7 +117,6 @@ DATA(insert OID = 2099 (	403		money_ops		PGNSP PGUID ));
 DATA(insert OID = 2222 (	405		bool_ops		PGNSP PGUID ));
 #define BOOL_HASH_FAM_OID 2222
 DATA(insert OID = 2223 (	405		bytea_ops		PGNSP PGUID ));
-DATA(insert OID = 2224 (	405		int2vector_ops	PGNSP PGUID ));
 DATA(insert OID = 2789 (	403		tid_ops			PGNSP PGUID ));
 DATA(insert OID = 2225 (	405		xid_ops			PGNSP PGUID ));
 DATA(insert OID = 2226 (	405		cid_ops			PGNSP PGUID ));

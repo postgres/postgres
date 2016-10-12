@@ -192,7 +192,6 @@ extern Datum int2vectorin(PG_FUNCTION_ARGS);
 extern Datum int2vectorout(PG_FUNCTION_ARGS);
 extern Datum int2vectorrecv(PG_FUNCTION_ARGS);
 extern Datum int2vectorsend(PG_FUNCTION_ARGS);
-extern Datum int2vectoreq(PG_FUNCTION_ARGS);
 extern Datum int4in(PG_FUNCTION_ARGS);
 extern Datum int4out(PG_FUNCTION_ARGS);
 extern Datum int4recv(PG_FUNCTION_ARGS);
