@@ -59,7 +59,7 @@ typedef enum CoercionCodes
 
 /*
  * The allowable values for pg_cast.castmethod are specified by this enum.
- * Since castcontext is stored as a "char", we use ASCII codes for human
+ * Since castmethod is stored as a "char", we use ASCII codes for human
  * convenience in reading the table.
  */
 typedef enum CoercionMethod
