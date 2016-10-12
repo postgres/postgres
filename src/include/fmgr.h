@@ -350,11 +350,12 @@ typedef const Pg_finfo_record *(*PGFInfoFunction) (void);
  *
  *	On Windows, the function and info function must be exported.  Our normal
  *	build processes take care of that via .DEF files or --export-all-symbols.
- *	We add PGDLLEXPORT nonetheless so that C functions built with a
- *	different build process are guaranteed to be exported.
+ *	Module authors using a different build process might need to manually
+ *	declare the function PGDLLEXPORT.  We do that automatically here for the
+ *	info function, since authors shouldn't need to be explicitly aware of it.
  */
 #define PG_FUNCTION_INFO_V1(funcname) \
-extern PGDLLEXPORT Datum funcname(PG_FUNCTION_ARGS); \
+extern Datum funcname(PG_FUNCTION_ARGS); \
 extern PGDLLEXPORT const Pg_finfo_record * CppConcat(pg_finfo_,funcname)(void); \
 const Pg_finfo_record * \
 CppConcat(pg_finfo_,funcname) (void) \
