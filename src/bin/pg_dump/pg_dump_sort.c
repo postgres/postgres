@@ -23,63 +23,7 @@
 static const char *modulename = gettext_noop("sorter");
 
 /*
- * Sort priority for object types when dumping a pre-7.3 database.
- * Objects are sorted by priority levels, and within an equal priority level
- * by OID.  (This is a relatively crude hack to provide semi-reasonable
- * behavior for old databases without full dependency info.)  Note: collations,
- * extensions, text search, foreign-data, materialized view, event trigger,
- * policies, transforms, access methods and default ACL objects can't really
- * happen here, so the rather bogus priorities for them don't matter.
- *
- * NOTE: object-type priorities must match the section assignments made in
- * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
- * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
- * must sort between them.
- */
-static const int oldObjectTypePriority[] =
-{
-	1,							/* DO_NAMESPACE */
-	1,							/* DO_EXTENSION */
-	2,							/* DO_TYPE */
-	2,							/* DO_SHELL_TYPE */
-	2,							/* DO_FUNC */
-	3,							/* DO_AGG */
-	3,							/* DO_OPERATOR */
-	3,							/* DO_ACCESS_METHOD */
-	4,							/* DO_OPCLASS */
-	4,							/* DO_OPFAMILY */
-	4,							/* DO_COLLATION */
-	5,							/* DO_CONVERSION */
-	6,							/* DO_TABLE */
-	8,							/* DO_ATTRDEF */
-	15,							/* DO_INDEX */
-	16,							/* DO_RULE */
-	17,							/* DO_TRIGGER */
-	14,							/* DO_CONSTRAINT */
-	18,							/* DO_FK_CONSTRAINT */
-	2,							/* DO_PROCLANG */
-	2,							/* DO_CAST */
-	11,							/* DO_TABLE_DATA */
-	7,							/* DO_DUMMY_TYPE */
-	4,							/* DO_TSPARSER */
-	4,							/* DO_TSDICT */
-	4,							/* DO_TSTEMPLATE */
-	4,							/* DO_TSCONFIG */
-	4,							/* DO_FDW */
-	4,							/* DO_FOREIGN_SERVER */
-	19,							/* DO_DEFAULT_ACL */
-	4,							/* DO_TRANSFORM */
-	9,							/* DO_BLOB */
-	12,							/* DO_BLOB_DATA */
-	10,							/* DO_PRE_DATA_BOUNDARY */
-	13,							/* DO_POST_DATA_BOUNDARY */
-	20,							/* DO_EVENT_TRIGGER */
-	15,							/* DO_REFRESH_MATVIEW */
-	21							/* DO_POLICY */
-};
-
-/*
- * Sort priority for object types when dumping newer databases.
+ * Sort priority for database object types.
  * Objects are sorted by type, and within a type by name.
  *
  * NOTE: object-type priorities must match the section assignments made in
@@ -87,7 +31,7 @@ static const int oldObjectTypePriority[] =
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
  * must sort between them.
  */
-static const int newObjectTypePriority[] =
+static const int dbObjectTypePriority[] =
 {
 	1,							/* DO_NAMESPACE */
 	4,							/* DO_EXTENSION */
@@ -134,7 +78,6 @@ static DumpId postDataBoundId;
 
 
 static int	DOTypeNameCompare(const void *p1, const void *p2);
-static int	DOTypeOidCompare(const void *p1, const void *p2);
 static bool TopoSort(DumpableObject **objs,
 		 int numObjs,
 		 DumpableObject **ordering,
@@ -266,8 +209,8 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	int			cmpval;
 
 	/* Sort by type */
-	cmpval = newObjectTypePriority[obj1->objType] -
-		newObjectTypePriority[obj2->objType];
+	cmpval = dbObjectTypePriority[obj1->objType] -
+		dbObjectTypePriority[obj2->objType];
 
 	if (cmpval != 0)
 		return cmpval;
@@ -341,37 +284,6 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	}
 
 	/* Usually shouldn't get here, but if we do, sort by OID */
-	return oidcmp(obj1->catId.oid, obj2->catId.oid);
-}
-
-
-/*
- * Sort the given objects into a type/OID-based ordering
- *
- * This is used with pre-7.3 source databases as a crude substitute for the
- * lack of dependency information.
- */
-void
-sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs)
-{
-	if (numObjs > 1)
-		qsort((void *) objs, numObjs, sizeof(DumpableObject *),
-			  DOTypeOidCompare);
-}
-
-static int
-DOTypeOidCompare(const void *p1, const void *p2)
-{
-	DumpableObject *obj1 = *(DumpableObject *const *) p1;
-	DumpableObject *obj2 = *(DumpableObject *const *) p2;
-	int			cmpval;
-
-	cmpval = oldObjectTypePriority[obj1->objType] -
-		oldObjectTypePriority[obj2->objType];
-
-	if (cmpval != 0)
-		return cmpval;
-
 	return oidcmp(obj1->catId.oid, obj2->catId.oid);
 }
 

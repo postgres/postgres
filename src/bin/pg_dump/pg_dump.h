@@ -605,7 +605,6 @@ extern void parseOidArray(const char *str, Oid *array, int arraysize);
 extern void sortDumpableObjects(DumpableObject **objs, int numObjs,
 					DumpId preBoundaryId, DumpId postBoundaryId);
 extern void sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs);
-extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
 extern void sortDataAndIndexObjectsBySize(DumpableObject **objs, int numObjs);
 
 /*

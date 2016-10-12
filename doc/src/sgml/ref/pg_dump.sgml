@@ -758,10 +758,9 @@ PostgreSQL documentation
         the dump. Instead fail if unable to lock a table within the specified
         <replaceable class="parameter">timeout</>. The timeout may be
         specified in any of the formats accepted by <command>SET
-        statement_timeout</>.  (Allowed values vary depending on the server
+        statement_timeout</>.  (Allowed formats vary depending on the server
         version you are dumping from, but an integer number of milliseconds
-        is accepted by all versions since 7.3.  This option is ignored when
-        dumping from a pre-7.3 server.)
+        is accepted by all versions.)
        </para>
       </listitem>
      </varlistentry>
@@ -1172,7 +1171,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <productname>PostgreSQL</> server versions newer than
    <application>pg_dump</>'s version.  <application>pg_dump</> can also
    dump from <productname>PostgreSQL</> servers older than its own version.
-   (Currently, servers back to version 7.0 are supported.)
+   (Currently, servers back to version 8.0 are supported.)
    However, <application>pg_dump</> cannot dump from
    <productname>PostgreSQL</> servers newer than its own major version;
    it will refuse to even try, rather than risk making an invalid dump.

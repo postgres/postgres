@@ -480,10 +480,7 @@ main(int argc, char *argv[])
 				dropDBs(conn);
 
 			if (!roles_only && !no_tablespaces)
-			{
-				if (server_version >= 80000)
-					dropTablespaces(conn);
-			}
+				dropTablespaces(conn);
 
 			if (!tablespaces_only)
 				dropRoles(conn);
@@ -505,12 +502,9 @@ main(int argc, char *argv[])
 				dumpGroups(conn);
 		}
 
+		/* Dump tablespaces */
 		if (!roles_only && !no_tablespaces)
-		{
-			/* Dump tablespaces */
-			if (server_version >= 80000)
-				dumpTablespaces(conn);
-		}
+			dumpTablespaces(conn);
 
 		/* Dump CREATE DATABASE commands */
 		if (binary_upgrade || (!globals_only && !roles_only && !tablespaces_only))
@@ -886,9 +880,8 @@ dumpRoles(PGconn *conn)
 	 * We do it this way because config settings for roles could mention the
 	 * names of other roles.
 	 */
-	if (server_version >= 70300)
-		for (i = 0; i < PQntuples(res); i++)
-			dumpUserConfig(conn, PQgetvalue(res, i, i_rolname));
+	for (i = 0; i < PQntuples(res); i++)
+		dumpUserConfig(conn, PQgetvalue(res, i, i_rolname));
 
 	PQclear(res);
 
@@ -1204,16 +1197,10 @@ dropDBs(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT datname "
-						   "FROM pg_database d "
-						   "WHERE datallowconn ORDER BY 1");
-	else
-		res = executeQuery(conn,
-						   "SELECT datname "
-						   "FROM pg_database d "
-						   "ORDER BY 1");
+	res = executeQuery(conn,
+					   "SELECT datname "
+					   "FROM pg_database d "
+					   "WHERE datallowconn ORDER BY 1");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Drop databases\n--\n\n");
@@ -1269,12 +1256,10 @@ dumpCreateDB(PGconn *conn)
 	 * We will dump encoding and locale specifications in the CREATE DATABASE
 	 * commands for just those databases with values different from defaults.
 	 *
-	 * We consider template0's encoding and locale (or, pre-7.1, template1's)
-	 * to define the installation default.  Pre-8.4 installations do not have
-	 * per-database locale settings; for them, every database must necessarily
-	 * be using the installation default, so there's no need to do anything
-	 * (which is good, since in very old versions there is no good way to find
-	 * out what the installation locale is anyway...)
+	 * We consider template0's encoding and locale to define the installation
+	 * default.  Pre-8.4 installations do not have per-database locale
+	 * settings; for them, every database must necessarily be using the
+	 * installation default, so there's no need to do anything.
 	 */
 	if (server_version >= 80400)
 		res = executeQuery(conn,
@@ -1282,18 +1267,12 @@ dumpCreateDB(PGconn *conn)
 						   "datcollate, datctype "
 						   "FROM pg_database "
 						   "WHERE datname = 'template0'");
-	else if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT pg_encoding_to_char(encoding), "
-						   "null::text AS datcollate, null::text AS datctype "
-						   "FROM pg_database "
-						   "WHERE datname = 'template0'");
 	else
 		res = executeQuery(conn,
 						   "SELECT pg_encoding_to_char(encoding), "
 						   "null::text AS datcollate, null::text AS datctype "
 						   "FROM pg_database "
-						   "WHERE datname = 'template1'");
+						   "WHERE datname = 'template0'");
 
 	/* If for some reason the template DB isn't there, treat as unknown */
 	if (PQntuples(res) > 0)
@@ -1371,7 +1350,7 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 80000)
+	else
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
@@ -1382,47 +1361,6 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70300)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, '' as rdatacl, "
-						   "-1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce("
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, '' as datacl, '' as rdatacl, "
-						   "-1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "WHERE datallowconn ORDER BY 1");
-	else
-	{
-		/*
-		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
-		 * with getting a NULL by not printing any OWNER clause.
-		 */
-		res = executeQuery(conn,
-						   "SELECT datname, "
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
-						   "'f' as datistemplate, "
-						   "'' as datacl, '' as rdatacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "ORDER BY 1");
-	}
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1541,8 +1479,7 @@ dumpCreateDB(PGconn *conn)
 
 		fprintf(OPF, "%s", buf->data);
 
-		if (server_version >= 70300)
-			dumpDatabaseConfig(conn, dbname);
+		dumpDatabaseConfig(conn, dbname);
 
 		free(fdbname);
 	}
@@ -1738,10 +1675,7 @@ dumpDatabases(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	if (server_version >= 70100)
-		res = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1");
-	else
-		res = executeQuery(conn, "SELECT datname FROM pg_database ORDER BY 1");
+	res = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -2062,11 +1996,11 @@ connectDatabase(const char *dbname, const char *connection_string,
 	my_version = PG_VERSION_NUM;
 
 	/*
-	 * We allow the server to be back to 7.0, and up to any minor release of
+	 * We allow the server to be back to 8.0, and up to any minor release of
 	 * our own major version.  (See also version check in pg_dump.c.)
 	 */
 	if (my_version != server_version
-		&& (server_version < 70000 ||
+		&& (server_version < 80000 ||
 			(server_version / 100) > (my_version / 100)))
 	{
 		fprintf(stderr, _("server version: %s; %s version: %s\n"),
@@ -2076,11 +2010,9 @@ connectDatabase(const char *dbname, const char *connection_string,
 	}
 
 	/*
-	 * On 7.3 and later, make sure we are not fooled by non-system schemas in
-	 * the search path.
+	 * Make sure we are not fooled by non-system schemas in the search path.
 	 */
-	if (server_version >= 70300)
-		executeCommand(conn, "SET search_path = pg_catalog");
+	executeCommand(conn, "SET search_path = pg_catalog");
 
 	return conn;
 }

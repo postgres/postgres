@@ -18,8 +18,6 @@
 #include "fe_utils/string_utils.h"
 
 
-#define supports_grant_options(version) ((version) >= 70400)
-
 static bool parseAclItem(const char *item, const char *type,
 			 const char *name, const char *subname, int remoteVersion,
 			 PQExpBuffer grantee, PQExpBuffer grantor,
@@ -246,11 +244,9 @@ buildACLCommands(const char *name, const char *subname,
 
 				/*
 				 * For the owner, the default privilege level is ALL WITH
-				 * GRANT OPTION (only ALL prior to 7.4).
+				 * GRANT OPTION.
 				 */
-				if (supports_grant_options(remoteVersion)
-					? strcmp(privswgo->data, "ALL") != 0
-					: strcmp(privs->data, "ALL") != 0)
+				if (strcmp(privswgo->data, "ALL") != 0)
 				{
 					appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 					if (subname)
@@ -403,16 +399,19 @@ buildDefaultACLCommands(const char *type, const char *nspname,
  *		username=privilegecodes/grantor
  * or
  *		group groupname=privilegecodes/grantor
- * (the /grantor part will not be present if pre-7.4 database).
+ * (the "group" case occurs only with servers before 8.1).
+ *
+ * Returns true on success, false on parse error.  On success, the components
+ * of the string are returned in the PQExpBuffer parameters.
  *
  * The returned grantee string will be the dequoted username or groupname
- * (preceded with "group " in the latter case).  The returned grantor is
- * the dequoted grantor name or empty.  Privilege characters are decoded
- * and split between privileges with grant option (privswgo) and without
- * (privs).
+ * (preceded with "group " in the latter case).  Note that a grant to PUBLIC
+ * is represented by an empty grantee string.  The returned grantor is the
+ * dequoted grantor name.  Privilege characters are decoded and split between
+ * privileges with grant option (privswgo) and without (privs).
  *
- * Note: for cross-version compatibility, it's important to use ALL when
- * appropriate.
+ * Note: for cross-version compatibility, it's important to use ALL to
+ * represent the privilege sets whenever appropriate.
  */
 static bool
 parseAclItem(const char *item, const char *type,
@@ -439,7 +438,7 @@ parseAclItem(const char *item, const char *type,
 		return false;
 	}
 
-	/* grantor may be listed after / */
+	/* grantor should appear after / */
 	slpos = strchr(eqpos + 1, '/');
 	if (slpos)
 	{
@@ -452,7 +451,10 @@ parseAclItem(const char *item, const char *type,
 		}
 	}
 	else
-		resetPQExpBuffer(grantor);
+	{
+		free(buf);
+		return false;
+	}
 
 	/* privilege codes */
 #define CONVERT_PRIV(code, keywd) \
@@ -490,29 +492,19 @@ do { \
 		{
 			/* table only */
 			CONVERT_PRIV('a', "INSERT");
-			if (remoteVersion >= 70200)
-				CONVERT_PRIV('x', "REFERENCES");
+			CONVERT_PRIV('x', "REFERENCES");
 			/* rest are not applicable to columns */
 			if (subname == NULL)
 			{
-				if (remoteVersion >= 70200)
-				{
-					CONVERT_PRIV('d', "DELETE");
-					CONVERT_PRIV('t', "TRIGGER");
-				}
+				CONVERT_PRIV('d', "DELETE");
+				CONVERT_PRIV('t', "TRIGGER");
 				if (remoteVersion >= 80400)
 					CONVERT_PRIV('D', "TRUNCATE");
 			}
 		}
 
 		/* UPDATE */
-		if (remoteVersion >= 70200 ||
-			strcmp(type, "SEQUENCE") == 0 ||
-			strcmp(type, "SEQUENCES") == 0)
-			CONVERT_PRIV('w', "UPDATE");
-		else
-			/* 7.0 and 7.1 have a simpler worldview */
-			CONVERT_PRIV('w', "UPDATE,DELETE");
+		CONVERT_PRIV('w', "UPDATE");
 	}
 	else if (strcmp(type, "FUNCTION") == 0 ||
 			 strcmp(type, "FUNCTIONS") == 0)
