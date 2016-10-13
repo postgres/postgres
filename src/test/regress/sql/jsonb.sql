@@ -814,6 +814,7 @@ select '[]'::jsonb #- '{a}';
 select jsonb_set('"a"','{a}','"b"'); --error
 select jsonb_set('{}','{a}','"b"', false);
 select jsonb_set('[]','{1}','"b"', false);
+select jsonb_set('[{"f1":1,"f2":null},2,null,3]', '{0}','[2,3,4]', false);
 
 -- jsonb_set adding instead of replacing
 

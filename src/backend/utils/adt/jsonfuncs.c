@@ -34,11 +34,11 @@
 #include "utils/typcache.h"
 
 /* Operations available for setPath */
-#define JB_PATH_NOOP					0x0000
 #define JB_PATH_CREATE					0x0001
 #define JB_PATH_DELETE					0x0002
-#define JB_PATH_INSERT_BEFORE			0x0004
-#define JB_PATH_INSERT_AFTER			0x0008
+#define JB_PATH_REPLACE					0x0004
+#define JB_PATH_INSERT_BEFORE			0x0008
+#define JB_PATH_INSERT_AFTER			0x0010
 #define JB_PATH_CREATE_OR_INSERT \
 	(JB_PATH_INSERT_BEFORE | JB_PATH_INSERT_AFTER | JB_PATH_CREATE)
 
@@ -3545,7 +3545,7 @@ jsonb_set(PG_FUNCTION_ARGS)
 	it = JsonbIteratorInit(&in->root);
 
 	res = setPath(&it, path_elems, path_nulls, path_len, &st,
-				  0, newval, create ? JB_PATH_CREATE : JB_PATH_NOOP);
+				  0, newval, create ? JB_PATH_CREATE : JB_PATH_REPLACE);
 
 	Assert(res != NULL);
 
@@ -4003,7 +4003,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 				if (op_type & (JB_PATH_INSERT_AFTER | JB_PATH_INSERT_BEFORE))
 					(void) pushJsonbValue(st, r, &v);
 
-				if (op_type & JB_PATH_INSERT_AFTER)
+				if (op_type & (JB_PATH_INSERT_AFTER | JB_PATH_REPLACE))
 					addJsonbToParseState(st, newval);
 
 				done = true;
@@ -4035,7 +4035,7 @@ setPathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 				}
 			}
 
-			if (op_type & JB_PATH_CREATE_OR_INSERT && !done &&
+			if ((op_type & JB_PATH_CREATE_OR_INSERT) && !done &&
 				level == path_len - 1 && i == nelems - 1)
 			{
 				addJsonbToParseState(st, newval);
