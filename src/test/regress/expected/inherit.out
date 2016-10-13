@@ -645,6 +645,9 @@ Check constraints:
     "p2chk" CHECK (ff1 > 10)
 Inherits: p1
 
+-- Test that child does not override inheritable constraints of the parent
+create table c2 (constraint p2chk check (ff1 > 10) no inherit) inherits (p1);	--fails
+ERROR:  constraint "p2chk" conflicts with inherited constraint on relation "c2"
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 -- Tests for casting between the rowtypes of parent and child
