@@ -363,10 +363,6 @@ main(int argc, char **argv)
 
 	progname = get_progname(argv[0]);
 
-	/* Set default options based on progname */
-	if (strcmp(progname, "pg_backup") == 0)
-		format = "c";
-
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
