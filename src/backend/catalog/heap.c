@@ -2463,6 +2463,17 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 								ccname, RelationGetRelationName(rel))));
 
 			/*
+			 * Must not change an existing inherited constraint to "no
+			 * inherit" status.  That's because inherited constraints should
+			 * be able to propagate to lower-level children.
+			 */
+			if (con->coninhcount > 0 && is_no_inherit)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("constraint \"%s\" conflicts with inherited constraint on relation \"%s\"",
+								ccname, RelationGetRelationName(rel))));
+
+			/*
 			 * If the child constraint is "not valid" then cannot merge with a
 			 * valid parent constraint
 			 */
