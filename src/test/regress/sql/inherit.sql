@@ -157,6 +157,9 @@ create table c1 () inherits (p1);
 \d p1
 \d c1
 
+-- Test that child does not override inheritable constraints of the parent
+create table c2 (constraint p2chk check (ff1 > 10) no inherit) inherits (p1);	--fails
+
 drop table p1 cascade;
 
 -- Tests for casting between the rowtypes of parent and child
