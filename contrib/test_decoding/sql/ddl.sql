@@ -146,9 +146,9 @@ SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
 ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data;
 
 SELECT substring(data, 1, 29), count(*)
-FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1') WITH ORDINALITY
 GROUP BY 1
-ORDER BY min(location - '0/0');
+ORDER BY min(ordinality);
 
 /*
  * check whether we decode subtransactions correctly in relation with each

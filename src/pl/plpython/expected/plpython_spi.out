@@ -220,8 +220,8 @@ SELECT result_len_test($$UPDATE foo3 SET b= '' WHERE a = 2$$);
 
 CREATE FUNCTION result_subscript_test() RETURNS void
 AS $$
-result = plpy.execute("SELECT 1 AS c UNION SELECT 2 "
-                      "UNION SELECT 3 UNION SELECT 4")
+result = plpy.execute("SELECT 1 AS c UNION ALL SELECT 2 "
+                      "UNION ALL SELECT 3 UNION ALL SELECT 4")
 
 plpy.info(result[1]['c'])
 plpy.info(result[-1]['c'])
