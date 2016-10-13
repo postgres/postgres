@@ -189,7 +189,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     Even when parallel query plan is generated for a particular query, there
     are several circumstances under which it will be impossible to execute
     that plan in parallel at execution time.  If this occurs, the leader
-    will execute the portion of the plan between below the <literal>Gather</>
+    will execute the portion of the plan below the <literal>Gather</>
     node entirely by itself, almost as if the <literal>Gather</> node were
     not present.  This will happen if any of the following conditions are met:
   </para>
