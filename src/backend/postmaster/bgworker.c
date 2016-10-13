@@ -602,7 +602,6 @@ StartBackgroundWorker(void)
 	 */
 	if ((worker->bgw_flags & BGWORKER_SHMEM_ACCESS) == 0)
 	{
-		on_exit_reset();
 		dsm_detach_all();
 		PGSharedMemoryDetach();
 	}
