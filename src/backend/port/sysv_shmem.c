@@ -34,6 +34,7 @@
 #include "miscadmin.h"
 #include "portability/mem.h"
 #include "storage/dsm.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
@@ -349,6 +350,80 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 
 #ifdef USE_ANONYMOUS_SHMEM
 
+#ifdef MAP_HUGETLB
+
+/*
+ * Identify the huge page size to use.
+ *
+ * Some Linux kernel versions have a bug causing mmap() to fail on requests
+ * that are not a multiple of the hugepage size.  Versions without that bug
+ * instead silently round the request up to the next hugepage multiple ---
+ * and then munmap() fails when we give it a size different from that.
+ * So we have to round our request up to a multiple of the actual hugepage
+ * size to avoid trouble.
+ *
+ * Doing the round-up ourselves also lets us make use of the extra memory,
+ * rather than just wasting it.  Currently, we just increase the available
+ * space recorded in the shmem header, which will make the extra usable for
+ * purposes such as additional locktable entries.  Someday, for very large
+ * hugepage sizes, we might want to think about more invasive strategies,
+ * such as increasing shared_buffers to absorb the extra space.
+ *
+ * Returns the (real or assumed) page size into *hugepagesize,
+ * and the hugepage-related mmap flags to use into *mmap_flags.
+ *
+ * Currently *mmap_flags is always just MAP_HUGETLB.  Someday, on systems
+ * that support it, we might OR in additional bits to specify a particular
+ * non-default huge page size.
+ */
+static void
+GetHugePageSize(Size *hugepagesize, int *mmap_flags)
+{
+	/*
+	 * If we fail to find out the system's default huge page size, assume it
+	 * is 2MB.  This will work fine when the actual size is less.  If it's
+	 * more, we might get mmap() or munmap() failures due to unaligned
+	 * requests; but at this writing, there are no reports of any non-Linux
+	 * systems being picky about that.
+	 */
+	*hugepagesize = 2 * 1024 * 1024;
+	*mmap_flags = MAP_HUGETLB;
+
+	/*
+	 * System-dependent code to find out the default huge page size.
+	 *
+	 * On Linux, read /proc/meminfo looking for a line like "Hugepagesize:
+	 * nnnn kB".  Ignore any failures, falling back to the preset default.
+	 */
+#ifdef __linux__
+	{
+		FILE	   *fp = AllocateFile("/proc/meminfo", "r");
+		char		buf[128];
+		unsigned int sz;
+		char		ch;
+
+		if (fp)
+		{
+			while (fgets(buf, sizeof(buf), fp))
+			{
+				if (sscanf(buf, "Hugepagesize: %u %c", &sz, &ch) == 2)
+				{
+					if (ch == 'k')
+					{
+						*hugepagesize = sz * (Size) 1024;
+						break;
+					}
+					/* We could accept other units besides kB, if needed */
+				}
+			}
+			FreeFile(fp);
+		}
+	}
+#endif   /* __linux__ */
+}
+
+#endif   /* MAP_HUGETLB */
+
 /*
  * Creates an anonymous mmap()ed shared memory segment.
  *
@@ -371,27 +446,17 @@ CreateAnonymousSegment(Size *size)
 	{
 		/*
 		 * Round up the request size to a suitable large value.
-		 *
-		 * Some Linux kernel versions are known to have a bug, which causes
-		 * mmap() with MAP_HUGETLB to fail if the request size is not a
-		 * multiple of any supported huge page size. To work around that, we
-		 * round up the request size to nearest 2MB. 2MB is the most common
-		 * huge page page size on affected systems.
-		 *
-		 * Aside from that bug, even with a kernel that does the allocation
-		 * correctly, rounding it up ourselves avoids wasting memory. Without
-		 * it, if we for example make an allocation of 2MB + 1 bytes, the
-		 * kernel might decide to use two 2MB huge pages for that, and waste 2
-		 * MB - 1 of memory. When we do the rounding ourselves, we can use
-		 * that space for allocations.
 		 */
-		int			hugepagesize = 2 * 1024 * 1024;
+		Size		hugepagesize;
+		int			mmap_flags;
+
+		GetHugePageSize(&hugepagesize, &mmap_flags);
 
 		if (allocsize % hugepagesize != 0)
 			allocsize += hugepagesize - (allocsize % hugepagesize);
 
 		ptr = mmap(NULL, allocsize, PROT_READ | PROT_WRITE,
-				   PG_MMAP_FLAGS | MAP_HUGETLB, -1, 0);
+				   PG_MMAP_FLAGS | mmap_flags, -1, 0);
 		mmap_errno = errno;
 		if (huge_pages == HUGE_PAGES_TRY && ptr == MAP_FAILED)
 			elog(DEBUG1, "mmap(%zu) with MAP_HUGETLB failed, huge pages disabled: %m",
@@ -402,7 +467,7 @@ CreateAnonymousSegment(Size *size)
 	if (ptr == MAP_FAILED && huge_pages != HUGE_PAGES_ON)
 	{
 		/*
-		 * use the original size, not the rounded up value, when falling back
+		 * Use the original size, not the rounded-up value, when falling back
 		 * to non-huge pages.
 		 */
 		allocsize = *size;
