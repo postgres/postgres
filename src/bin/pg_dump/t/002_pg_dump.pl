@@ -2484,6 +2484,7 @@ qr/^GRANT SELECT ON TABLE test_third_table TO regress_dump_test_role;/m,
 		create_sql   => 'REVOKE CONNECT ON DATABASE dump_test FROM public;',
 		regexp       => qr/^
 			\QREVOKE CONNECT,TEMPORARY ON DATABASE dump_test FROM PUBLIC;\E\n
+			\QGRANT CREATE ON DATABASE dump_test TO regress_dump_test_role;\E\n
 			\QGRANT TEMPORARY ON DATABASE dump_test TO PUBLIC;\E
 			/xm,
 		like   => { pg_dumpall_dbprivs => 1, },
