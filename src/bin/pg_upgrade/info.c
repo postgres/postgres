@@ -238,7 +238,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			{
 				snprintf(reldesc + strlen(reldesc),
 						 sizeof(reldesc) - strlen(reldesc),
-						 " which is an index on \"%s.%s\"",
+						 _(" which is an index on \"%s.%s\""),
 						 hrel->nspname, hrel->relname);
 				/* Shift attention to index's table for toast check */
 				rel = hrel;
@@ -248,7 +248,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 " which is an index on OID %u", rel->indtable);
+					 _(" which is an index on OID %u"), rel->indtable);
 	}
 	if (rel->toastheap)
 	{
@@ -260,7 +260,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			{
 				snprintf(reldesc + strlen(reldesc),
 						 sizeof(reldesc) - strlen(reldesc),
-						 " which is the TOAST table for \"%s.%s\"",
+						 _(" which is the TOAST table for \"%s.%s\""),
 						 brel->nspname, brel->relname);
 				break;
 			}
@@ -268,7 +268,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 " which is the TOAST table for OID %u", rel->toastheap);
+					 _(" which is the TOAST table for OID %u"), rel->toastheap);
 	}
 
 	if (is_new_db)

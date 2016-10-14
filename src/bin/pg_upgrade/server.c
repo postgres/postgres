@@ -36,7 +36,7 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 		if (conn)
 			PQfinish(conn);
 
-		printf("Failure, exiting\n");
+		printf(_("Failure, exiting\n"));
 		exit(1);
 	}
 
@@ -136,7 +136,7 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
-		printf("Failure, exiting\n");
+		printf(_("Failure, exiting\n"));
 		exit(1);
 	}
 	else

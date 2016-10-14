@@ -30,8 +30,10 @@ void
 transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 							 char *old_pgdata, char *new_pgdata)
 {
-	pg_log(PG_REPORT, "%s user relation files\n",
-	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
+	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
+		pg_log(PG_REPORT, "Linking user relation files\n");
+	else
+		pg_log(PG_REPORT, "Copying user relation files\n");
 
 	/*
 	 * Transferring files by tablespace is tricky because a single database

@@ -75,6 +75,7 @@ main(int argc, char **argv)
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_upgrade"));
 	parseCommandLine(argc, argv);
 
 	get_restricted_token(os_info.progname);
