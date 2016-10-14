@@ -43,7 +43,6 @@
 #include "access/htup_details.h"
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
-#include "utils/hsearch.h"
 
 /*
  * The maximum number of tuples per page is not large (typically 256 with
@@ -61,12 +60,12 @@
  * for that page in the page table.
  *
  * We actually store both exact pages and lossy chunks in the same hash
- * table, using identical data structures.  (This is because dynahash.c's
- * memory management doesn't allow space to be transferred easily from one
- * hashtable to another.)  Therefore it's best if PAGES_PER_CHUNK is the
- * same as MAX_TUPLES_PER_PAGE, or at least not too different.  But we
- * also want PAGES_PER_CHUNK to be a power of 2 to avoid expensive integer
- * remainder operations.  So, define it like this:
+ * table, using identical data structures.  (This is because the memory
+ * management for hashtables doesn't easily/efficiently allow space to be
+ * transferred easily from one hashtable to another.)  Therefore it's best
+ * if PAGES_PER_CHUNK is the same as MAX_TUPLES_PER_PAGE, or at least not
+ * too different.  But we also want PAGES_PER_CHUNK to be a power of 2 to
+ * avoid expensive integer remainder operations.  So, define it like this:
  */
 #define PAGES_PER_CHUNK  (BLCKSZ / 32)
 
@@ -97,21 +96,22 @@
 typedef struct PagetableEntry
 {
 	BlockNumber blockno;		/* page number (hashtable key) */
+	char		status;			/* hash entry status */
 	bool		ischunk;		/* T = lossy storage, F = exact */
 	bool		recheck;		/* should the tuples be rechecked? */
 	bitmapword	words[Max(WORDS_PER_PAGE, WORDS_PER_CHUNK)];
 } PagetableEntry;
 
 /*
- * dynahash.c is optimized for relatively large, long-lived hash tables.
- * This is not ideal for TIDBitMap, particularly when we are using a bitmap
- * scan on the inside of a nestloop join: a bitmap may well live only long
- * enough to accumulate one entry in such cases.  We therefore avoid creating
- * an actual hashtable until we need two pagetable entries.  When just one
- * pagetable entry is needed, we store it in a fixed field of TIDBitMap.
- * (NOTE: we don't get rid of the hashtable if the bitmap later shrinks down
- * to zero or one page again.  So, status can be TBM_HASH even when nentries
- * is zero or one.)
+ * We want to avoid the overhead of creating the hashtable, which is
+ * comparatively large, when not necessary. Particularly when we are using a
+ * bitmap scan on the inside of a nestloop join: a bitmap may well live only
+ * long enough to accumulate one entry in such cases.  We therefore avoid
+ * creating an actual hashtable until we need two pagetable entries.  When
+ * just one pagetable entry is needed, we store it in a fixed field of
+ * TIDBitMap.  (NOTE: we don't get rid of the hashtable if the bitmap later
+ * shrinks down to zero or one page again.  So, status can be TBM_HASH even
+ * when nentries is zero or one.)
  */
 typedef enum
 {
@@ -128,12 +128,13 @@ struct TIDBitmap
 	NodeTag		type;			/* to make it a valid Node */
 	MemoryContext mcxt;			/* memory context containing me */
 	TBMStatus	status;			/* see codes above */
-	HTAB	   *pagetable;		/* hash table of PagetableEntry's */
+	struct pagetable_hash *pagetable;	/* hash table of PagetableEntry's */
 	int			nentries;		/* number of entries in pagetable */
 	int			maxentries;		/* limit on same to meet maxbytes */
 	int			npages;			/* number of exact entries in pagetable */
 	int			nchunks;		/* number of lossy entries in pagetable */
 	bool		iterating;		/* tbm_begin_iterate called? */
+	uint32		lossify_start;	/* offset to start lossifying hashtable at */
 	PagetableEntry entry1;		/* used when status == TBM_ONE_PAGE */
 	/* these are valid when iterating is true: */
 	PagetableEntry **spages;	/* sorted exact-page list, or NULL */
@@ -168,6 +169,35 @@ static void tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno);
 static void tbm_lossify(TIDBitmap *tbm);
 static int	tbm_comparator(const void *left, const void *right);
 
+/*
+ * Simple inline murmur hash implementation for the exact width required, for
+ * performance.
+ */
+static inline uint32
+hash_blockno(BlockNumber b)
+{
+	uint32		h = b;
+
+	h ^= h >> 16;
+	h *= 0x85ebca6b;
+	h ^= h >> 13;
+	h *= 0xc2b2ae35;
+	h ^= h >> 16;
+	return h;
+}
+
+/* define hashtable mapping block numbers to PagetableEntry's */
+#define SH_PREFIX pagetable
+#define SH_ELEMENT_TYPE PagetableEntry
+#define SH_KEY_TYPE BlockNumber
+#define SH_KEY blockno
+#define SH_HASH_KEY(tb, key) hash_blockno(key)
+#define SH_EQUAL(tb, a, b) a == b
+#define SH_SCOPE static inline
+#define SH_DEFINE
+#define SH_DECLARE
+#include "lib/simplehash.h"
+
 
 /*
  * tbm_create - create an initially-empty bitmap
@@ -190,17 +220,16 @@ tbm_create(long maxbytes)
 
 	/*
 	 * Estimate number of hashtable entries we can have within maxbytes. This
-	 * estimates the hash overhead at MAXALIGN(sizeof(HASHELEMENT)) plus a
-	 * pointer per hash entry, which is crude but good enough for our purpose.
-	 * Also count an extra Pointer per entry for the arrays created during
-	 * iteration readout.
+	 * estimates the hash cost as sizeof(PagetableEntry), which is good enough
+	 * for our purpose.  Also count an extra Pointer per entry for the arrays
+	 * created during iteration readout.
 	 */
 	nbuckets = maxbytes /
-		(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(sizeof(PagetableEntry))
-		 + sizeof(Pointer) + sizeof(Pointer));
+		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
 	nbuckets = Min(nbuckets, INT_MAX - 1);		/* safety limit */
 	nbuckets = Max(nbuckets, 16);		/* sanity limit */
 	tbm->maxentries = (int) nbuckets;
+	tbm->lossify_start = 0;
 
 	return tbm;
 }
@@ -212,32 +241,25 @@ tbm_create(long maxbytes)
 static void
 tbm_create_pagetable(TIDBitmap *tbm)
 {
-	HASHCTL		hash_ctl;
-
 	Assert(tbm->status != TBM_HASH);
 	Assert(tbm->pagetable == NULL);
 
-	/* Create the hashtable proper */
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = sizeof(BlockNumber);
-	hash_ctl.entrysize = sizeof(PagetableEntry);
-	hash_ctl.hcxt = tbm->mcxt;
-	tbm->pagetable = hash_create("TIDBitmap",
-								 128,	/* start small and extend */
-								 &hash_ctl,
-								 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	tbm->pagetable = pagetable_create(tbm->mcxt, 128);
 
 	/* If entry1 is valid, push it into the hashtable */
 	if (tbm->status == TBM_ONE_PAGE)
 	{
 		PagetableEntry *page;
 		bool		found;
+		char		oldstatus;
 
-		page = (PagetableEntry *) hash_search(tbm->pagetable,
-											  (void *) &tbm->entry1.blockno,
-											  HASH_ENTER, &found);
+		page = pagetable_insert(tbm->pagetable,
+								tbm->entry1.blockno,
+								&found);
 		Assert(!found);
+		oldstatus = page->status;
 		memcpy(page, &tbm->entry1, sizeof(PagetableEntry));
+		page->status = oldstatus;
 	}
 
 	tbm->status = TBM_HASH;
@@ -250,7 +272,7 @@ void
 tbm_free(TIDBitmap *tbm)
 {
 	if (tbm->pagetable)
-		hash_destroy(tbm->pagetable);
+		pagetable_destroy(tbm->pagetable);
 	if (tbm->spages)
 		pfree(tbm->spages);
 	if (tbm->schunks)
@@ -357,12 +379,12 @@ tbm_union(TIDBitmap *a, const TIDBitmap *b)
 		tbm_union_page(a, &b->entry1);
 	else
 	{
-		HASH_SEQ_STATUS status;
+		pagetable_iterator i;
 		PagetableEntry *bpage;
 
 		Assert(b->status == TBM_HASH);
-		hash_seq_init(&status, b->pagetable);
-		while ((bpage = (PagetableEntry *) hash_seq_search(&status)) != NULL)
+		pagetable_start_iterate(b->pagetable, &i);
+		while ((bpage = pagetable_iterate(b->pagetable, &i)) != NULL)
 			tbm_union_page(a, bpage);
 	}
 }
@@ -449,12 +471,12 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 	}
 	else
 	{
-		HASH_SEQ_STATUS status;
+		pagetable_iterator i;
 		PagetableEntry *apage;
 
 		Assert(a->status == TBM_HASH);
-		hash_seq_init(&status, a->pagetable);
-		while ((apage = (PagetableEntry *) hash_seq_search(&status)) != NULL)
+		pagetable_start_iterate(a->pagetable, &i);
+		while ((apage = pagetable_iterate(a->pagetable, &i)) != NULL)
 		{
 			if (tbm_intersect_page(a, apage, b))
 			{
@@ -464,9 +486,7 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 				else
 					a->npages--;
 				a->nentries--;
-				if (hash_search(a->pagetable,
-								(void *) &apage->blockno,
-								HASH_REMOVE, NULL) == NULL)
+				if (!pagetable_delete(a->pagetable, apage->blockno))
 					elog(ERROR, "hash table corrupted");
 			}
 		}
@@ -606,7 +626,7 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	 */
 	if (tbm->status == TBM_HASH && !tbm->iterating)
 	{
-		HASH_SEQ_STATUS status;
+		pagetable_iterator i;
 		PagetableEntry *page;
 		int			npages;
 		int			nchunks;
@@ -620,9 +640,9 @@ tbm_begin_iterate(TIDBitmap *tbm)
 				MemoryContextAlloc(tbm->mcxt,
 								   tbm->nchunks * sizeof(PagetableEntry *));
 
-		hash_seq_init(&status, tbm->pagetable);
 		npages = nchunks = 0;
-		while ((page = (PagetableEntry *) hash_seq_search(&status)) != NULL)
+		pagetable_start_iterate(tbm->pagetable, &i);
+		while ((page = pagetable_iterate(tbm->pagetable, &i)) != NULL)
 		{
 			if (page->ischunk)
 				tbm->schunks[nchunks++] = page;
@@ -791,9 +811,7 @@ tbm_find_pageentry(const TIDBitmap *tbm, BlockNumber pageno)
 		return page;
 	}
 
-	page = (PagetableEntry *) hash_search(tbm->pagetable,
-										  (void *) &pageno,
-										  HASH_FIND, NULL);
+	page = pagetable_lookup(tbm->pagetable, pageno);
 	if (page == NULL)
 		return NULL;
 	if (page->ischunk)
@@ -834,15 +852,16 @@ tbm_get_pageentry(TIDBitmap *tbm, BlockNumber pageno)
 		}
 
 		/* Look up or create an entry */
-		page = (PagetableEntry *) hash_search(tbm->pagetable,
-											  (void *) &pageno,
-											  HASH_ENTER, &found);
+		page = pagetable_insert(tbm->pagetable, pageno, &found);
 	}
 
 	/* Initialize it if not present before */
 	if (!found)
 	{
+		char		oldstatus = page->status;
+
 		MemSet(page, 0, sizeof(PagetableEntry));
+		page->status = oldstatus;
 		page->blockno = pageno;
 		/* must count it too */
 		tbm->nentries++;
@@ -869,9 +888,9 @@ tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno)
 
 	bitno = pageno % PAGES_PER_CHUNK;
 	chunk_pageno = pageno - bitno;
-	page = (PagetableEntry *) hash_search(tbm->pagetable,
-										  (void *) &chunk_pageno,
-										  HASH_FIND, NULL);
+
+	page = pagetable_lookup(tbm->pagetable, chunk_pageno);
+
 	if (page != NULL && page->ischunk)
 	{
 		int			wordnum = WORDNUM(bitno);
@@ -912,9 +931,7 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	 */
 	if (bitno != 0)
 	{
-		if (hash_search(tbm->pagetable,
-						(void *) &pageno,
-						HASH_REMOVE, NULL) != NULL)
+		if (pagetable_delete(tbm->pagetable, pageno))
 		{
 			/* It was present, so adjust counts */
 			tbm->nentries--;
@@ -923,14 +940,15 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	}
 
 	/* Look up or create entry for chunk-header page */
-	page = (PagetableEntry *) hash_search(tbm->pagetable,
-										  (void *) &chunk_pageno,
-										  HASH_ENTER, &found);
+	page = pagetable_insert(tbm->pagetable, chunk_pageno, &found);
 
 	/* Initialize it if not present before */
 	if (!found)
 	{
+		char		oldstatus = page->status;
+
 		MemSet(page, 0, sizeof(PagetableEntry));
+		page->status = oldstatus;
 		page->blockno = chunk_pageno;
 		page->ischunk = true;
 		/* must count it too */
@@ -939,8 +957,11 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	}
 	else if (!page->ischunk)
 	{
+		char		oldstatus = page->status;
+
 		/* chunk header page was formerly non-lossy, make it lossy */
 		MemSet(page, 0, sizeof(PagetableEntry));
+		page->status = oldstatus;
 		page->blockno = chunk_pageno;
 		page->ischunk = true;
 		/* we assume it had some tuple bit(s) set, so mark it lossy */
@@ -962,7 +983,7 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 static void
 tbm_lossify(TIDBitmap *tbm)
 {
-	HASH_SEQ_STATUS status;
+	pagetable_iterator i;
 	PagetableEntry *page;
 
 	/*
@@ -977,8 +998,8 @@ tbm_lossify(TIDBitmap *tbm)
 	Assert(!tbm->iterating);
 	Assert(tbm->status == TBM_HASH);
 
-	hash_seq_init(&status, tbm->pagetable);
-	while ((page = (PagetableEntry *) hash_seq_search(&status)) != NULL)
+	pagetable_start_iterate_at(tbm->pagetable, &i, tbm->lossify_start);
+	while ((page = pagetable_iterate(tbm->pagetable, &i)) != NULL)
 	{
 		if (page->ischunk)
 			continue;			/* already a chunk header */
@@ -995,15 +1016,19 @@ tbm_lossify(TIDBitmap *tbm)
 
 		if (tbm->nentries <= tbm->maxentries / 2)
 		{
-			/* we have done enough */
-			hash_seq_term(&status);
+			/*
+			 * We have made enough room. Remember where to start lossifying
+			 * next round, so we evenly iterate over the hashtable.
+			 */
+			tbm->lossify_start = i.cur;
 			break;
 		}
 
 		/*
 		 * Note: tbm_mark_page_lossy may have inserted a lossy chunk into the
-		 * hashtable.  We can continue the same seq_search scan since we do
-		 * not care whether we visit lossy chunks or not.
+		 * hashtable and may have deleted the non-lossy chunk.  We can
+		 * continue the same hash table scan, since failure to visit one
+		 * element or visiting the newly inserted element, isn't fatal.
 		 */
 	}
 
