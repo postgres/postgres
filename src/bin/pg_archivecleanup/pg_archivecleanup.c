@@ -70,7 +70,7 @@ Initialize(void)
 	if (stat(archiveLocation, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
 	{
-		fprintf(stderr, "%s: archive location \"%s\" does not exist\n",
+		fprintf(stderr, _("%s: archive location \"%s\" does not exist\n"),
 				progname, archiveLocation);
 		exit(2);
 	}
@@ -146,19 +146,19 @@ CleanupPriorWALFiles(void)
 					printf("%s\n", WALFilePath);
 					if (debug)
 						fprintf(stderr,
-								"%s: file \"%s\" would be removed\n",
+								_("%s: file \"%s\" would be removed\n"),
 								progname, WALFilePath);
 					continue;
 				}
 
 				if (debug)
-					fprintf(stderr, "%s: removing file \"%s\"\n",
+					fprintf(stderr, _("%s: removing file \"%s\"\n"),
 							progname, WALFilePath);
 
 				rc = unlink(WALFilePath);
 				if (rc != 0)
 				{
-					fprintf(stderr, "%s: ERROR: could not remove file \"%s\": %s\n",
+					fprintf(stderr, _("%s: ERROR: could not remove file \"%s\": %s\n"),
 							progname, WALFilePath, strerror(errno));
 					break;
 				}
@@ -166,14 +166,14 @@ CleanupPriorWALFiles(void)
 		}
 
 		if (errno)
-			fprintf(stderr, "%s: could not read archive location \"%s\": %s\n",
+			fprintf(stderr, _("%s: could not read archive location \"%s\": %s\n"),
 					progname, archiveLocation, strerror(errno));
 		if (closedir(xldir))
-			fprintf(stderr, "%s: could not close archive location \"%s\": %s\n",
+			fprintf(stderr, _("%s: could not close archive location \"%s\": %s\n"),
 					progname, archiveLocation, strerror(errno));
 	}
 	else
-		fprintf(stderr, "%s: could not open archive location \"%s\": %s\n",
+		fprintf(stderr, _("%s: could not open archive location \"%s\": %s\n"),
 				progname, archiveLocation, strerror(errno));
 }
 
@@ -246,8 +246,8 @@ SetWALFileNameForCleanup(void)
 
 	if (!fnameOK)
 	{
-		fprintf(stderr, "%s: invalid filename input\n", progname);
-		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
+		fprintf(stderr, _("%s: invalid filename input\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
 }
@@ -260,25 +260,25 @@ SetWALFileNameForCleanup(void)
 static void
 usage(void)
 {
-	printf("%s removes older WAL files from PostgreSQL archives.\n\n", progname);
-	printf("Usage:\n");
-	printf("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n", progname);
-	printf("\nOptions:\n");
-	printf("  -d             generate debug output (verbose mode)\n");
-	printf("  -n             dry run, show the names of the files that would be removed\n");
-	printf("  -V, --version  output version information, then exit\n");
-	printf("  -x EXT         clean up files if they have this extension\n");
-	printf("  -?, --help     show this help, then exit\n");
-	printf("\n"
-		   "For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
-		   "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
-		   "e.g.\n"
-		   "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n");
-	printf("\n"
-		   "Or for use as a standalone archive cleaner:\n"
-		   "e.g.\n"
-		   "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n");
-	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
+	printf(_("%s removes older WAL files from PostgreSQL archives.\n\n"), progname);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"), progname);
+	printf(_("\nOptions:\n"));
+	printf(_("  -d             generate debug output (verbose mode)\n"));
+	printf(_("  -n             dry run, show the names of the files that would be removed\n"));
+	printf(_("  -V, --version  output version information, then exit\n"));
+	printf(_("  -x EXT         clean up files if they have this extension\n"));
+	printf(_("  -?, --help     show this help, then exit\n"));
+	printf(_("\n"
+			 "For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
+			 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+			 "e.g.\n"
+			 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"));
+	printf(_("\n"
+			 "Or for use as a standalone archive cleaner:\n"
+			 "e.g.\n"
+			 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 /*------------ MAIN ----------------------------------------*/
@@ -287,6 +287,7 @@ main(int argc, char **argv)
 {
 	int			c;
 
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_archivecleanup"));
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -318,7 +319,7 @@ main(int argc, char **argv)
 														 * from xlogfile names */
 				break;
 			default:
-				fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(2);
 				break;
 		}
@@ -338,8 +339,8 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "%s: must specify archive location\n", progname);
-		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
+		fprintf(stderr, _("%s: must specify archive location\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
 
@@ -350,15 +351,15 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "%s: must specify restartfilename\n", progname);
-		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
+		fprintf(stderr, _("%s: must specify restartfilename\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
 
 	if (optind < argc)
 	{
-		fprintf(stderr, "%s: too many parameters\n", progname);
-		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
+		fprintf(stderr, _("%s: too many parameters\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
 
@@ -376,7 +377,7 @@ main(int argc, char **argv)
 	{
 		snprintf(WALFilePath, MAXPGPATH, "%s/%s",
 				 archiveLocation, exclusiveCleanupFileName);
-		fprintf(stderr, "%s: keep WAL file \"%s\" and later\n",
+		fprintf(stderr, _("%s: keep WAL file \"%s\" and later\n"),
 				progname, WALFilePath);
 	}
 
