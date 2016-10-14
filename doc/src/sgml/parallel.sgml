@@ -339,7 +339,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <para>
     When executing a parallel plan, you can use <literal>EXPLAIN (ANALYZE,
-    VERBOSE)</literal> will display per-worker statistics for each plan node.
+    VERBOSE)</literal> to display per-worker statistics for each plan node.
     This may be useful in determining whether the work is being evenly
     distributed between all plan nodes and more generally in understanding the
     performance characteristics of the plan.
