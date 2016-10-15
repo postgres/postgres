@@ -66,19 +66,6 @@ typedef struct SetOpStatePerGroupData
 	long		numRight;		/* number of right-input dups in group */
 } SetOpStatePerGroupData;
 
-/*
- * To implement hashed mode, we need a hashtable that stores a
- * representative tuple and the duplicate counts for each distinct set
- * of grouping columns.  We compute the hash key from the grouping columns.
- */
-typedef struct SetOpHashEntryData *SetOpHashEntry;
-
-typedef struct SetOpHashEntryData
-{
-	TupleHashEntryData shared;	/* common header for hash table entries */
-	SetOpStatePerGroupData pergroup;
-}	SetOpHashEntryData;
-
 
 static TupleTableSlot *setop_retrieve_direct(SetOpState *setopstate);
 static void setop_fill_hash_table(SetOpState *setopstate);
@@ -141,7 +128,7 @@ build_hash_table(SetOpState *setopstate)
 												setopstate->eqfunctions,
 												setopstate->hashfunctions,
 												node->numGroups,
-												sizeof(SetOpHashEntryData),
+												0,
 												setopstate->tableContext,
 												setopstate->tempContext);
 }
@@ -238,7 +225,7 @@ setop_retrieve_direct(SetOpState *setopstate)
 	 * get state info from node
 	 */
 	outerPlan = outerPlanState(setopstate);
-	pergroup = setopstate->pergroup;
+	pergroup = (SetOpStatePerGroup) setopstate->pergroup;
 	resultTupleSlot = setopstate->ps.ps_ResultTupleSlot;
 
 	/*
@@ -367,7 +354,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 	{
 		TupleTableSlot *outerslot;
 		int			flag;
-		SetOpHashEntry entry;
+		TupleHashEntryData *entry;
 		bool		isnew;
 
 		outerslot = ExecProcNode(outerPlan);
@@ -383,15 +370,20 @@ setop_fill_hash_table(SetOpState *setopstate)
 			Assert(in_first_rel);
 
 			/* Find or build hashtable entry for this tuple's group */
-			entry = (SetOpHashEntry)
-				LookupTupleHashEntry(setopstate->hashtable, outerslot, &isnew);
+			entry = LookupTupleHashEntry(setopstate->hashtable, outerslot,
+										 &isnew);
 
 			/* If new tuple group, initialize counts */
 			if (isnew)
-				initialize_counts(&entry->pergroup);
+			{
+				entry->additional = (SetOpStatePerGroup)
+					MemoryContextAlloc(setopstate->hashtable->tablecxt,
+									   sizeof(SetOpStatePerGroupData));
+				initialize_counts((SetOpStatePerGroup) entry->additional);
+			}
 
 			/* Advance the counts */
-			advance_counts(&entry->pergroup, flag);
+			advance_counts((SetOpStatePerGroup) entry->additional, flag);
 		}
 		else
 		{
@@ -399,12 +391,12 @@ setop_fill_hash_table(SetOpState *setopstate)
 			in_first_rel = false;
 
 			/* For tuples not seen previously, do not make hashtable entry */
-			entry = (SetOpHashEntry)
-				LookupTupleHashEntry(setopstate->hashtable, outerslot, NULL);
+			entry = LookupTupleHashEntry(setopstate->hashtable, outerslot,
+										 NULL);
 
 			/* Advance the counts if entry is already present */
 			if (entry)
-				advance_counts(&entry->pergroup, flag);
+				advance_counts((SetOpStatePerGroup) entry->additional, flag);
 		}
 
 		/* Must reset temp context after each hashtable lookup */
@@ -422,7 +414,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 static TupleTableSlot *
 setop_retrieve_hash_table(SetOpState *setopstate)
 {
-	SetOpHashEntry entry;
+	TupleHashEntryData *entry;
 	TupleTableSlot *resultTupleSlot;
 
 	/*
@@ -438,7 +430,7 @@ setop_retrieve_hash_table(SetOpState *setopstate)
 		/*
 		 * Find the next entry in the hash table
 		 */
-		entry = (SetOpHashEntry) ScanTupleHashTable(&setopstate->hashiter);
+		entry = ScanTupleHashTable(setopstate->hashtable, &setopstate->hashiter);
 		if (entry == NULL)
 		{
 			/* No more entries in hashtable, so done */
@@ -450,12 +442,12 @@ setop_retrieve_hash_table(SetOpState *setopstate)
 		 * See if we should emit any copies of this tuple, and if so return
 		 * the first copy.
 		 */
-		set_output_count(setopstate, &entry->pergroup);
+		set_output_count(setopstate, (SetOpStatePerGroup) entry->additional);
 
 		if (setopstate->numOutput > 0)
 		{
 			setopstate->numOutput--;
-			return ExecStoreMinimalTuple(entry->shared.firstTuple,
+			return ExecStoreMinimalTuple(entry->firstTuple,
 										 resultTupleSlot,
 										 false);
 		}

@@ -434,20 +434,6 @@ typedef struct AggStatePerPhaseData
 	Sort	   *sortnode;		/* Sort node for input ordering for phase */
 }	AggStatePerPhaseData;
 
-/*
- * To implement hashed aggregation, we need a hashtable that stores a
- * representative tuple and an array of AggStatePerGroup structs for each
- * distinct set of GROUP BY column values.  We compute the hash key from
- * the GROUP BY columns.
- */
-typedef struct AggHashEntryData *AggHashEntry;
-
-typedef struct AggHashEntryData
-{
-	TupleHashEntryData shared;	/* common header for hash table entries */
-	/* per-aggregate transition status array */
-	AggStatePerGroupData pergroup[FLEXIBLE_ARRAY_MEMBER];
-}	AggHashEntryData;
 
 static void initialize_phase(AggState *aggstate, int newphase);
 static TupleTableSlot *fetch_input_tuple(AggState *aggstate);
@@ -487,7 +473,7 @@ static TupleTableSlot *project_aggregates(AggState *aggstate);
 static Bitmapset *find_unaggregated_cols(AggState *aggstate);
 static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
 static void build_hash_table(AggState *aggstate);
-static AggHashEntry lookup_hash_entry(AggState *aggstate,
+static TupleHashEntryData *lookup_hash_entry(AggState *aggstate,
 				  TupleTableSlot *inputslot);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
@@ -1646,6 +1632,12 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 /*
  * Initialize the hash table to empty.
  *
+ * To implement hashed aggregation, we need a hashtable that stores a
+ * representative tuple and an array of AggStatePerGroup structs for each
+ * distinct set of GROUP BY column values.  We compute the hash key from the
+ * GROUP BY columns.  The per-group data is allocated in lookup_hash_entry(),
+ * for each entry.
+ *
  * The hash table always lives in the aggcontext memory context.
  */
 static void
@@ -1653,20 +1645,19 @@ build_hash_table(AggState *aggstate)
 {
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
 	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	Size		entrysize;
+	Size		additionalsize;
 
 	Assert(node->aggstrategy == AGG_HASHED);
 	Assert(node->numGroups > 0);
 
-	entrysize = offsetof(AggHashEntryData, pergroup) +
-		aggstate->numaggs * sizeof(AggStatePerGroupData);
+	additionalsize = aggstate->numaggs * sizeof(AggStatePerGroupData);
 
 	aggstate->hashtable = BuildTupleHashTable(node->numCols,
 											  node->grpColIdx,
 											  aggstate->phase->eqfunctions,
 											  aggstate->hashfunctions,
 											  node->numGroups,
-											  entrysize,
+											  additionalsize,
 							 aggstate->aggcontexts[0]->ecxt_per_tuple_memory,
 											  tmpmem);
 }
@@ -1723,6 +1714,8 @@ find_hash_columns(AggState *aggstate)
  *
  * Note that the estimate does not include space for pass-by-reference
  * transition data values, nor for the representative tuple of each group.
+ * Nor does this account of the target fill-factor and growth policy of the
+ * hash table.
  */
 Size
 hash_agg_entry_size(int numAggs)
@@ -1730,11 +1723,10 @@ hash_agg_entry_size(int numAggs)
 	Size		entrysize;
 
 	/* This must match build_hash_table */
-	entrysize = offsetof(AggHashEntryData, pergroup) +
+	entrysize = sizeof(TupleHashEntryData) +
 		numAggs * sizeof(AggStatePerGroupData);
 	entrysize = MAXALIGN(entrysize);
-	/* Account for hashtable overhead (assuming fill factor = 1) */
-	entrysize += 3 * sizeof(void *);
+
 	return entrysize;
 }
 
@@ -1744,12 +1736,12 @@ hash_agg_entry_size(int numAggs)
  *
  * When called, CurrentMemoryContext should be the per-query context.
  */
-static AggHashEntry
+static TupleHashEntryData *
 lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
 {
 	TupleTableSlot *hashslot = aggstate->hashslot;
 	ListCell   *l;
-	AggHashEntry entry;
+	TupleHashEntryData *entry;
 	bool		isnew;
 
 	/* if first time through, initialize hashslot by cloning input slot */
@@ -1771,14 +1763,16 @@ lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
 	}
 
 	/* find or create the hashtable entry using the filtered tuple */
-	entry = (AggHashEntry) LookupTupleHashEntry(aggstate->hashtable,
-												hashslot,
-												&isnew);
+	entry = LookupTupleHashEntry(aggstate->hashtable, hashslot, &isnew);
 
 	if (isnew)
 	{
+		entry->additional = (AggStatePerGroup)
+			MemoryContextAlloc(aggstate->hashtable->tablecxt,
+						  sizeof(AggStatePerGroupData) * aggstate->numtrans);
 		/* initialize aggregates for new tuple group */
-		initialize_aggregates(aggstate, entry->pergroup, 0);
+		initialize_aggregates(aggstate, (AggStatePerGroup) entry->additional,
+							  0);
 	}
 
 	return entry;
@@ -2176,7 +2170,7 @@ static void
 agg_fill_hash_table(AggState *aggstate)
 {
 	ExprContext *tmpcontext;
-	AggHashEntry entry;
+	TupleHashEntryData *entry;
 	TupleTableSlot *outerslot;
 
 	/*
@@ -2203,9 +2197,9 @@ agg_fill_hash_table(AggState *aggstate)
 
 		/* Advance the aggregates */
 		if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
-			combine_aggregates(aggstate, entry->pergroup);
+			combine_aggregates(aggstate, (AggStatePerGroup) entry->additional);
 		else
-			advance_aggregates(aggstate, entry->pergroup);
+			advance_aggregates(aggstate, (AggStatePerGroup) entry->additional);
 
 		/* Reset per-input-tuple context after each tuple */
 		ResetExprContext(tmpcontext);
@@ -2225,7 +2219,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 	ExprContext *econtext;
 	AggStatePerAgg peragg;
 	AggStatePerGroup pergroup;
-	AggHashEntry entry;
+	TupleHashEntryData *entry;
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *result;
 
@@ -2246,7 +2240,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 		/*
 		 * Find the next entry in the hash table
 		 */
-		entry = (AggHashEntry) ScanTupleHashTable(&aggstate->hashiter);
+		entry = ScanTupleHashTable(aggstate->hashtable, &aggstate->hashiter);
 		if (entry == NULL)
 		{
 			/* No more entries in hashtable, so done */
@@ -2267,11 +2261,11 @@ agg_retrieve_hash_table(AggState *aggstate)
 		 * Store the copied first input tuple in the tuple table slot reserved
 		 * for it, so that it can be used in ExecProject.
 		 */
-		ExecStoreMinimalTuple(entry->shared.firstTuple,
+		ExecStoreMinimalTuple(entry->firstTuple,
 							  firstSlot,
 							  false);
 
-		pergroup = entry->pergroup;
+		pergroup = (AggStatePerGroup) entry->additional;
 
 		finalize_aggregates(aggstate, peragg, pergroup, 0);
 

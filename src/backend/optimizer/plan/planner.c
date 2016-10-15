@@ -3292,6 +3292,12 @@ estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
 	/* plus the per-hash-entry overhead */
 	hashentrysize += hash_agg_entry_size(agg_costs->numAggs);
 
+	/*
+	 * Note that this disregards the effect of fill-factor and growth policy
+	 * of the hash-table. That's probably ok, given default the default
+	 * fill-factor is relatively high. It'd be hard to meaningfully factor in
+	 * "double-in-size" growth policies here.
+	 */
 	return hashentrysize * dNumGroups;
 }
 

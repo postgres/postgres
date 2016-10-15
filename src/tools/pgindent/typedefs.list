@@ -2813,6 +2813,8 @@ tsKEY
 ts_db_fctx
 ts_tokentype
 tsearch_readline_state
+tuplehash_hash
+tuplehash_iterator
 txid
 tzEntry
 u1byte

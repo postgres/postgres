@@ -508,7 +508,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 										  node->tab_eq_funcs,
 										  node->tab_hash_funcs,
 										  nbuckets,
-										  sizeof(TupleHashEntryData),
+										  0,
 										  node->hashtablecxt,
 										  node->hashtempcxt);
 
@@ -527,7 +527,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 											  node->tab_eq_funcs,
 											  node->tab_hash_funcs,
 											  nbuckets,
-											  sizeof(TupleHashEntryData),
+											  0,
 											  node->hashtablecxt,
 											  node->hashtempcxt);
 	}
@@ -626,7 +626,7 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot,
 	TupleHashEntry entry;
 
 	InitTupleHashIterator(hashtable, &hashiter);
-	while ((entry = ScanTupleHashTable(&hashiter)) != NULL)
+	while ((entry = ScanTupleHashTable(hashtable, &hashiter)) != NULL)
 	{
 		ExecStoreMinimalTuple(entry->firstTuple, hashtable->tableslot, false);
 		if (!execTuplesUnequal(slot, hashtable->tableslot,
