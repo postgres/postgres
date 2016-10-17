@@ -2084,6 +2084,10 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
  * determination of "non-equal tuple" based on simple binary inequality.  A
  * NULL value in leading attribute will set abbreviated value to zeroed
  * representation, which caller may rely on in abbreviated inequality check.
+ *
+ * The slot receives a copied tuple (sometimes allocated in caller memory
+ * context) that will stay valid regardless of future manipulations of the
+ * tuplesort's state.
  */
 bool
 tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
@@ -2104,6 +2108,11 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 		if (state->sortKeys->abbrev_converter && abbrev)
 			*abbrev = stup.datum1;
 
+		if (!should_free)
+		{
+			stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
+			should_free = true;
+		}
 		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, should_free);
 		return true;
 	}
