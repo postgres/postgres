@@ -5004,7 +5004,8 @@ local0.*    /var/log/postgresql
          value will pad on the left. Padding can be useful to aid human
          readability in log files.
          This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line. The default is an empty string.
+         file or on the server command line. The default is
+         <literal>'%m [%p] '</> which logs a time stamp and the process ID.
 
          <informaltable>
           <tgroup cols="3">
@@ -5140,6 +5141,17 @@ FROM pg_stat_activity;
          <application>Syslog</> produces its own
          time stamp and process ID information, so you probably do not want to
          include those escapes if you are logging to <application>syslog</>.
+        </para>
+       </tip>
+
+       <tip>
+        <para>
+         The <literal>%q</> escape is useful when including information that is
+         only available in session (backend) context like user or database
+         name.  For example:
+<programlisting>
+log_line_prefix = '%m [%p] %q%u@%d/%a '
+</programlisting>
         </para>
        </tip>
       </listitem>
