@@ -626,8 +626,6 @@ static time_t check_time = 0;
 static void
 system_reseed(void)
 {
-	uint8		buf[1024];
-	int			n;
 	time_t		t;
 	int			skip = 1;
 
@@ -642,24 +640,34 @@ system_reseed(void)
 	else if (check_time == 0 ||
 			 (t - check_time) > SYSTEM_RESEED_CHECK_TIME)
 	{
+		uint8		buf;
+
 		check_time = t;
 
 		/* roll dice */
-		px_get_random_bytes(buf, 1);
-		skip = buf[0] >= SYSTEM_RESEED_CHANCE;
+		px_get_random_bytes(&buf, 1);
+		skip = (buf >= SYSTEM_RESEED_CHANCE);
+
+		/* clear 1 byte */
+		px_memset(&buf, 0, sizeof(buf));
 	}
-	/* clear 1 byte */
-	px_memset(buf, 0, sizeof(buf));
+	if (!skip)
+	{
+		/*
+		 * fortuna_add_entropy passes the input to SHA-256, so there's no
+		 * point in giving it more than 256 bits of input to begin with.
+		 */
+		uint8		buf[32];
 
-	if (skip)
-		return;
+		if (!pg_strong_random(buf, sizeof(buf)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("could not acquire random data")));
+		fortuna_add_entropy(buf, sizeof(buf));
 
-	n = px_acquire_system_randomness(buf);
-	if (n > 0)
-		fortuna_add_entropy(buf, n);
-
-	seed_time = t;
-	px_memset(buf, 0, sizeof(buf));
+		seed_time = t;
+		px_memset(buf, 0, sizeof(buf));
+	}
 }
 
 int
