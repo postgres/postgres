@@ -1,7 +1,7 @@
 # contrib/pgcrypto/Makefile
 
 INT_SRCS = md5.c sha1.c sha2.c internal.c internal-sha2.c blf.c rijndael.c \
-		fortuna.c pgp-mpi-internal.c imath.c
+		fortuna.c random.c pgp-mpi-internal.c imath.c
 INT_TESTS = sha2
 
 OSSL_SRCS = openssl.c pgp-mpi-openssl.c

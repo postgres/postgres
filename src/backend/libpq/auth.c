@@ -45,12 +45,6 @@ static void auth_failed(Port *port, int status, char *logdetail);
 static char *recv_password_packet(Port *port);
 static int	recv_and_check_password_packet(Port *port, char **logdetail);
 
-/*----------------------------------------------------------------
- * MD5 authentication
- *----------------------------------------------------------------
- */
-static int	CheckMD5Auth(Port *port, char **logdetail);
-
 
 /*----------------------------------------------------------------
  * Ident authentication
@@ -541,7 +535,9 @@ ClientAuthentication(Port *port)
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
-			status = CheckMD5Auth(port, &logdetail);
+			/* include the salt to use for computing the response */
+			sendAuthRequest(port, AUTH_REQ_MD5, port->md5Salt, 4);
+			status = recv_and_check_password_packet(port, &logdetail);
 			break;
 
 		case uaPassword:
@@ -696,24 +692,9 @@ recv_password_packet(Port *port)
 
 
 /*----------------------------------------------------------------
- * MD5 and password authentication
+ * MD5 authentication
  *----------------------------------------------------------------
  */
-
-static int
-CheckMD5Auth(Port *port, char **logdetail)
-{
-	/* include the salt to use for computing the response */
-	if (!pg_strong_random(port->md5Salt, sizeof(port->md5Salt)))
-	{
-		*logdetail = psprintf(_("Could not generate random salt"));
-		return STATUS_ERROR;
-	}
-
-	sendAuthRequest(port, AUTH_REQ_MD5, port->md5Salt, 4);
-	return recv_and_check_password_packet(port, logdetail);
-}
-
 
 /*
  * Called when we have sent an authorization request for a password.
