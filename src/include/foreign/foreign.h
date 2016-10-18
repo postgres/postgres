@@ -23,7 +23,7 @@
 
 /*
  * Generic option types for validation.
- * NB! Thes are treated as flags, so use only powers of two here.
+ * NB! These are treated as flags, so use only powers of two here.
  */
 typedef enum
 {
