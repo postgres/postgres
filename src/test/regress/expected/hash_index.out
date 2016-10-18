@@ -196,3 +196,39 @@ SELECT h.seqno AS f20000
 --   WHERE x = 90;
 -- SELECT count(*) AS i988 FROM hash_ovfl_heap
 --  WHERE x = 1000;
+--
+-- Cause some overflow insert and splits.
+--
+CREATE TABLE hash_split_heap (keycol INT);
+CREATE INDEX hash_split_index on hash_split_heap USING HASH (keycol);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
+INSERT INTO hash_split_heap SELECT 1 FROM generate_series(1, 70000) a;
+VACUUM FULL hash_split_heap;
+-- Let's do a backward scan.
+BEGIN;
+SET enable_seqscan = OFF;
+SET enable_bitmapscan = OFF;
+DECLARE c CURSOR FOR SELECT * from hash_split_heap WHERE keycol = 1;
+MOVE FORWARD ALL FROM c;
+MOVE BACKWARD 10000 FROM c;
+MOVE BACKWARD ALL FROM c;
+CLOSE c;
+END;
+-- DELETE, INSERT, REBUILD INDEX.
+DELETE FROM hash_split_heap WHERE keycol = 1;
+INSERT INTO hash_split_heap SELECT a/2 FROM generate_series(1, 50000) a;
+VACUUM hash_split_heap;
+REINDEX INDEX hash_split_index;
+-- Clean up.
+DROP TABLE hash_split_heap;
+-- Index on temp table.
+CREATE TEMP TABLE hash_temp_heap (x int, y int);
+INSERT INTO hash_temp_heap VALUES (1,1);
+CREATE INDEX hash_idx ON hash_temp_heap USING hash (x);
+DROP TABLE hash_temp_heap CASCADE;
+-- Float4 type.
+CREATE TABLE hash_heap_float4 (x float4, y int);
+INSERT INTO hash_heap_float4 VALUES (1.1,1);
+CREATE INDEX hash_idx ON hash_heap_float4 USING hash (x);
+WARNING:  hash indexes are not WAL-logged and their use is discouraged
+DROP TABLE hash_heap_float4 CASCADE;
