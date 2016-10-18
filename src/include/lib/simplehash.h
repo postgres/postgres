@@ -256,7 +256,7 @@ SH_PREV(SH_TYPE *tb, uint32 curelem, uint32 startelem)
 	return curelem;
 }
 
-/* return distance between bucket and it's optimal position */
+/* return distance between bucket and its optimal position */
 static inline uint32
 SH_DISTANCE_FROM_OPTIMAL(SH_TYPE *tb, uint32 optimal, uint32 bucket)
 {
@@ -349,7 +349,7 @@ SH_GROW(SH_TYPE *tb, uint32 newsize)
 	 *
 	 * To be able to simply move entries over, we have to start not at the
 	 * first bucket (i.e olddata[0]), but find the first bucket that's either
-	 * empty, or is occupied by an entry at it's optimal position. Such a
+	 * empty, or is occupied by an entry at its optimal position. Such a
 	 * bucket has to exist in any table with a load factor under 1, as not all
 	 * buckets are occupied, i.e. there always has to be an empty bucket.  By
 	 * starting at such a bucket we can move the entries to the larger table,
@@ -485,9 +485,9 @@ SH_INSERT(SH_TYPE *tb, SH_KEY_TYPE key, bool *found)
 		/*
 		 * If the bucket is not empty, we either found a match (in which case
 		 * we're done), or we have to decide whether to skip over or move the
-		 * colliding entry. When the the colliding elements distance to it's
+		 * colliding entry. When the colliding element's distance to its
 		 * optimal position is smaller than the to-be-inserted entry's, we
-		 * shift the colliding entry (and it's followers) forward by one.
+		 * shift the colliding entry (and its followers) forward by one.
 		 */
 
 		if (SH_COMPARE_KEYS(tb, hash, key, entry))
