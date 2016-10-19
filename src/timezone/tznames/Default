@@ -234,14 +234,9 @@ WGT    -10800    # West Greenland Time
 
 #################### ANTARCTICA ####################
 
-DAVT    Antarctica/Davis  # Davis Time (Antarctica)
-                 #     (Antarctica/Davis)
-DDUT    36000    # Dumont-d'Urville Time (Antarctica)
-                 #     (Antarctica/DumontDUrville)
-                 #     (Antarctica/Palmer)
-                 #     (America/Santiago)
-MAWT    Antarctica/Mawson  # Mawson Time (Antarctica)
-                 #     (Antarctica/Mawson)
+DAVT    Antarctica/Davis  # Davis Time (Antarctica) (obsolete)
+DDUT    36000    # Dumont-d'Urville Time (Antarctica) (obsolete)
+MAWT    Antarctica/Mawson  # Mawson Time (Antarctica) (obsolete)
 
 #################### ASIA ####################
 
@@ -256,15 +251,17 @@ AMST    Asia/Yerevan  # Armenia Summer Time
                  #     (Asia/Yerevan)
 # CONFLICT! AMT is not unique
 # Other timezones:
-#  - AMT: Amazon Time (America)
-AMT     Asia/Yerevan  # Armenia Time
-                 #     (Asia/Yerevan)
+#  - AMT: Armenia Time (Asia)
+AMT    -14400    # Amazon Time
+                 #     (America/Boa_Vista)
+                 #     (America/Campo_Grande)
+                 #     (America/Cuiaba)
+                 #     (America/Manaus)
+                 #     (America/Porto_Velho)
 ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
-ANAT    Asia/Anadyr  # Anadyr Time
-                 #     (Asia/Anadyr)
+ANAT    Asia/Anadyr  # Anadyr Time (obsolete)
 AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
-AZT     Asia/Baku  # Azerbaijan Time
-                 #     (Asia/Baku)
+AZT     Asia/Baku  # Azerbaijan Time (obsolete)
 BDT     21600    # Bangladesh Time
                  #     (Asia/Dhaka)
 BNT     28800    # Brunei Darussalam Time
@@ -274,8 +271,7 @@ BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
 CCT     28800    # China Coastal Time (not in IANA database)
 GEST    Asia/Tbilisi  # Georgia Summer Time (obsolete)
-GET     Asia/Tbilisi  # Georgia Time
-                 #     (Asia/Tbilisi)
+GET     Asia/Tbilisi  # Georgia Time (obsolete)
 HKT     28800    # Hong Kong Time (not in IANA database)
 ICT     25200    # Indochina Time
                  #     (Asia/Bangkok)
@@ -285,8 +281,7 @@ ICT     25200    # Indochina Time
 IDT     10800 D  # Israel Daylight Time
                  #     (Asia/Jerusalem)
 IRKST   Asia/Irkutsk  # Irkutsk Summer Time (obsolete)
-IRKT    Asia/Irkutsk  # Irkutsk Time
-                 #     (Asia/Irkutsk)
+IRKT    Asia/Irkutsk  # Irkutsk Time (obsolete)
 IRT     12600    # Iran Time (not in IANA database)
 # CONFLICT! IST is not unique
 # Other timezones:
@@ -299,19 +294,16 @@ JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
 KDT     36000 D  # Korean Daylight Time (not in IANA database)
 KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
-KGT     Asia/Bishkek  # Kyrgyzstan Time
-                 #     (Asia/Bishkek)
+KGT     Asia/Bishkek  # Kyrgyzstan Time (obsolete)
 KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
-KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
-                 #     (Asia/Krasnoyarsk)
+KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time (obsolete)
 KST     32400    # Korean Standard Time
                  #     (Asia/Seoul)
 LKT     Asia/Colombo  # Lanka Time (obsolete)
 MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
-MAGT    Asia/Magadan  # Magadan Time
-                 #     (Asia/Magadan)
+MAGT    Asia/Magadan  # Magadan Time (obsolete)
 MMT     23400    # Myanmar Time
-                 #     (Asia/Rangoon)
+                 #     (Asia/Yangon)
 MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
@@ -320,11 +312,9 @@ NOVT    Asia/Novosibirsk  # Novosibirsk Time (obsolete)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
 OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
-OMST    Asia/Omsk  # Omsk Time
-                 #     (Asia/Omsk)
+OMST    Asia/Omsk  # Omsk Time (obsolete)
 PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
-PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time
-                 #     (Asia/Kamchatka)
+PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time (obsolete)
 PHT     28800    # Philippine Time
                  #     (Asia/Manila)
 PKT     18000    # Pakistan Time
@@ -333,10 +323,8 @@ PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
 SGT     Asia/Singapore  # Singapore Time
                  #     (Asia/Singapore)
-TJT     18000    # Tajikistan Time
-                 #     (Asia/Dushanbe)
-TMT     Asia/Ashgabat  # Turkmenistan Time
-                 #     (Asia/Ashgabat)
+TJT     18000    # Tajikistan Time (obsolete)
+TMT     Asia/Ashgabat  # Turkmenistan Time (obsolete)
 ULAST   32400 D  # Ulan Bator Summer Time
                  #     (Asia/Ulaanbaatar)
 ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
@@ -344,20 +332,15 @@ ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
 UZST    21600 D  # Uzbekistan Summer Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
-UZT     18000    # Uzbekistan Time
-                 #     (Asia/Samarkand)
-                 #     (Asia/Tashkent)
+UZT     18000    # Uzbekistan Time (obsolete)
 VLAST   Asia/Vladivostok  # Vladivostok Summer Time (obsolete)
-VLAT    Asia/Vladivostok  # Vladivostok Time
-                 #     (Asia/Vladivostok)
+VLAT    Asia/Vladivostok  # Vladivostok Time (obsolete)
 XJT     21600    # Xinjiang Time
                  #     (Asia/Urumqi)
 YAKST   Asia/Yakutsk  # Yakutsk Summer Time (obsolete)
-YAKT    Asia/Yakutsk  # Yakutsk Time
-                 #     (Asia/Yakutsk)
+YAKT    Asia/Yakutsk  # Yakutsk Time (obsolete)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
-YEKT    Asia/Yekaterinburg  # Yekaterinburg Time
-                 #     (Asia/Yekaterinburg)
+YEKT    Asia/Yekaterinburg  # Yekaterinburg Time (obsolete)
 
 #################### ATLANTIC ####################
 
@@ -669,8 +652,7 @@ RET     14400    # Reunion Time
                  #     (Indian/Reunion)
 SCT     14400    # Seychelles Time
                  #     (Indian/Mahe)
-TFT     18000    # Kerguelen Time
-                 #     (Indian/Kerguelen)
+TFT     18000    # Kerguelen Time (obsolete)
 
 #################### PACIFIC ####################
 

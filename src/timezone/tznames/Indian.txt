@@ -35,5 +35,4 @@ RET     14400    # Reunion Time
                  #     (Indian/Reunion)
 SCT     14400    # Seychelles Time
                  #     (Indian/Mahe)
-TFT     18000    # Kerguelen Time
-                 #     (Indian/Kerguelen)
+TFT     18000    # Kerguelen Time (obsolete)
