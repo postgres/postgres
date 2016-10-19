@@ -35,6 +35,9 @@ typedef int64 zic_t;
 #define MKDIR_UMASK 0755
 #endif
 #endif
+#ifndef S_ISLNK
+#define S_ISLNK(m) 0
+#endif
 
 struct rule
 {
