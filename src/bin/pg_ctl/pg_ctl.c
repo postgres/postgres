@@ -1959,8 +1959,8 @@ do_help(void)
 	printf(_("  -s, --silent           only print errors, no informational messages\n"));
 	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
-	printf(_("  -w                     wait until operation completes\n"));
-	printf(_("  -W                     do not wait until operation completes\n"));
+	printf(_("  -w, --wait             wait until operation completes\n"));
+	printf(_("  -W, --no-wait          do not wait until operation completes\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("(The default is to wait for shutdown, but not for start or restart.)\n\n"));
 	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n"));
@@ -2174,6 +2174,8 @@ main(int argc, char **argv)
 		{"silent", no_argument, NULL, 's'},
 		{"timeout", required_argument, NULL, 't'},
 		{"core-files", no_argument, NULL, 'c'},
+		{"wait", no_argument, NULL, 'w'},
+		{"no-wait", no_argument, NULL, 'W'},
 		{NULL, 0, NULL, 0}
 	};
 

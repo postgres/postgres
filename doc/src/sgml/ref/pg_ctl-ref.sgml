@@ -383,6 +383,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-w</option></term>
+      <term><option>--wait</option></term>
       <listitem>
        <para>
         Wait for an operation to complete.  This is supported for the
@@ -415,6 +416,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-W</option></term>
+      <term><option>--no-wait</option></term>
       <listitem>
        <para>
         Do not wait for an operation to complete.  This is the opposite of the
