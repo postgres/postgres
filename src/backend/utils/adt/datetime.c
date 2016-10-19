@@ -4957,8 +4957,17 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 						 &tzoff, &tm, &fsec, &tzn, tz) != 0)
 			continue;			/* ignore if conversion fails */
 
-		/* Ignore zic's rather silly "Factory" time zone */
-		if (tzn && strcmp(tzn, "Local time zone must be set--see zic manual page") == 0)
+		/*
+		 * Ignore zic's rather silly "Factory" time zone.  The long string
+		 * about "see zic manual page" is used in tzdata versions before
+		 * 2016g; we can drop it someday when we're pretty sure no such data
+		 * exists in the wild on platforms using --with-system-tzdata.  In
+		 * 2016g and later, the time zone abbreviation "-00" is used for
+		 * "Factory" as well as some invalid cases, all of which we can
+		 * reasonably omit from the pg_timezone_names view.
+		 */
+		if (tzn && (strcmp(tzn, "-00") == 0 ||
+		strcmp(tzn, "Local time zone must be set--see zic manual page") == 0))
 			continue;
 
 		/* Found a displayable zone */
