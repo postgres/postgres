@@ -16,12 +16,9 @@ CLST   -10800 D  # Chile Summer Time
 CLT    America/Santiago  # Chile Time
                  #     (America/Santiago)
                  #     (Antarctica/Palmer)
-DAVT    Antarctica/Davis  # Davis Time (Antarctica)
-                 #     (Antarctica/Davis)
-DDUT    36000    # Dumont-d`Urville Time (Antarctica)
-                 #     (Antarctica/DumontDUrville)
-MAWT    Antarctica/Mawson  # Mawson Time (Antarctica)
-                 #     (Antarctica/Mawson)
+DAVT    Antarctica/Davis  # Davis Time (Antarctica) (obsolete)
+DDUT    36000    # Dumont-d`Urville Time (Antarctica) (obsolete)
+MAWT    Antarctica/Mawson  # Mawson Time (Antarctica) (obsolete)
 MIST    39600    # Macquarie Island Time
                  #     (Antarctica/Macquarie)
 NZDT    46800 D  # New Zealand Daylight Time
@@ -30,9 +27,6 @@ NZDT    46800 D  # New Zealand Daylight Time
 NZST    43200    # New Zealand Standard Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)
-ROTT   -10800    # Rothera Time
-                 #     (Antarctica/Rothera)
-SYOT    10800    # Syowa Time
-                 #     (Antarctica/Syowa)
-VOST    21600    # Vostok time
-                 #     (Antarctica/Vostok)
+ROTT   -10800    # Rothera Time (obsolete)
+SYOT    10800    # Syowa Time (obsolete)
+VOST    21600    # Vostok time (obsolete)

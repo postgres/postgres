@@ -19,11 +19,9 @@ AMST    Asia/Yerevan  # Armenia Summer Time
 # CONFLICT! AMT is not unique
 # Other timezones:
 #  - AMT: Amazon Time (America)
-AMT     Asia/Yerevan  # Armenia Time
-                 #     (Asia/Yerevan)
+AMT     Asia/Yerevan  # Armenia Time (obsolete)
 ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
-ANAT    Asia/Anadyr  # Anadyr Time
-                 #     (Asia/Anadyr)
+ANAT    Asia/Anadyr  # Anadyr Time (obsolete)
 AQTST   Asia/Aqtau  # Aqtau Summer Time (obsolete)
 AQTT    Asia/Aqtau  # Aqtau Time (obsolete)
 # CONFLICT! AST is not unique
@@ -42,8 +40,7 @@ AST     10800    # Arabia Standard Time
                  #     (Asia/Qatar)
                  #     (Asia/Riyadh)
 AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
-AZT     Asia/Baku  # Azerbaijan Time
-                 #     (Asia/Baku)
+AZT     Asia/Baku  # Azerbaijan Time (obsolete)
 BDT     21600    # Bangladesh Time
                  #     (Asia/Dhaka)
 BNT     28800    # Brunei Darussalam Time
@@ -115,8 +112,7 @@ EET      7200    # East-Egypt Time
                  #     (Europe/Zaporozhye)
 EIT     32400    # East Indonesia Time (obsolete, WIT is now preferred)
 GEST    Asia/Tbilisi  # Georgia Summer Time (obsolete)
-GET     Asia/Tbilisi  # Georgia Time
-                 #     (Asia/Tbilisi)
+GET     Asia/Tbilisi  # Georgia Time (obsolete)
 # CONFLICT! GST is not unique
 # Other timezones:
 # - GST: South Georgia Time (Atlantic)
@@ -138,8 +134,7 @@ IDT     10800 D  # Israel Daylight Time
 IRDT    Asia/Tehran  # Iran Daylight Time
                  #     (Asia/Tehran)
 IRKST   Asia/Irkutsk  # Irkutsk Summer Time (obsolete)
-IRKT    Asia/Irkutsk  # Irkutsk Time
-                 #     (Asia/Irkutsk)
+IRKT    Asia/Irkutsk  # Irkutsk Time (obsolete)
 IRST    Asia/Tehran  # Iran Standard Time
                  #     (Asia/Tehran)
 IRT     12600    # Iran Time (not in IANA database)
@@ -160,21 +155,18 @@ JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
 KDT     36000 D  # Korean Daylight Time (not in IANA database)
 KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
-KGT     Asia/Bishkek  # Kyrgyzstan Time
-                 #     (Asia/Bishkek)
+KGT     Asia/Bishkek  # Kyrgyzstan Time (obsolete)
 KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
-KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
-                 #     (Asia/Krasnoyarsk)
+KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time (obsolete)
 KST     Asia/Pyongyang    # Korean Standard Time
                  #     (Asia/Pyongyang)
 KST     32400    # Korean Standard Time
                  #     (Asia/Seoul)
 LKT     Asia/Colombo  # Lanka Time (obsolete)
 MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
-MAGT    Asia/Magadan  # Magadan Time
-                 #     (Asia/Magadan)
+MAGT    Asia/Magadan  # Magadan Time (obsolete)
 MMT     23400    # Myanmar Time
-                 #     (Asia/Rangoon)
+                 #     (Asia/Yangon)
 MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
@@ -183,12 +175,10 @@ NOVT    Asia/Novosibirsk  # Novosibirsk Time (obsolete)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
 OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
-OMST    Asia/Omsk  # Omsk Time
-                 #     (Asia/Omsk)
+OMST    Asia/Omsk  # Omsk Time (obsolete)
 ORAT    Asia/Oral  # Oral Time (obsolete)
 PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
-PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time
-                 #     (Asia/Kamchatka)
+PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time (obsolete)
 PHT     28800    # Philippine Time
                  #     (Asia/Manila)
 PKT     18000    # Pakistan Time
@@ -197,18 +187,14 @@ PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
 QYZT    21600    # Kizilorda Time (obsolete)
 SAKST   Asia/Sakhalin  # Sakhalin Summer Time (obsolete)
-SAKT    Asia/Sakhalin  # Sakhalin Time
-                 #     (Asia/Sakhalin)
+SAKT    Asia/Sakhalin  # Sakhalin Time (obsolete)
 SGT     Asia/Singapore  # Singapore Time
                  #     (Asia/Singapore)
-SRET    39600    # Srednekolymsk Time
-                 #     (Asia/Srednekolymsk)
-TJT     18000    # Tajikistan Time
-                 #     (Asia/Dushanbe)
+SRET    39600    # Srednekolymsk Time (obsolete)
+TJT     18000    # Tajikistan Time (obsolete)
 TLT     32400    # East Timor Time
                  #     (Asia/Dili)
-TMT     Asia/Ashgabat  # Turkmenistan Time
-                 #     (Asia/Ashgabat)
+TMT     Asia/Ashgabat  # Turkmenistan Time (obsolete)
 ULAST   32400 D  # Ulan Bator Summer Time
                  #     (Asia/Ulaanbaatar)
 ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
@@ -216,12 +202,9 @@ ULAT    Asia/Ulaanbaatar  # Ulan Bator Time
 UZST    21600 D  # Uzbekistan Summer Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
-UZT     18000    # Uzbekistan Time
-                 #     (Asia/Samarkand)
-                 #     (Asia/Tashkent)
+UZT     18000    # Uzbekistan Time (obsolete)
 VLAST   Asia/Vladivostok  # Vladivostok Summer Time (obsolete)
-VLAT    Asia/Vladivostok  # Vladivostok Time
-                 #     (Asia/Vladivostok)
+VLAT    Asia/Vladivostok  # Vladivostok Time (obsolete)
 WIB     25200    # Waktu Indonesia Barat
                  #     (Asia/Jakarta)
                  #     (Asia/Pontianak)
@@ -232,8 +215,6 @@ WITA    28800    # Waktu Indonesia Tengah
 XJT     21600    # Xinjiang Time
                  #     (Asia/Urumqi)
 YAKST   Asia/Yakutsk  # Yakutsk Summer Time (obsolete)
-YAKT    Asia/Yakutsk  # Yakutsk Time
-                 #     (Asia/Yakutsk)
+YAKT    Asia/Yakutsk  # Yakutsk Time (obsolete)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
-YEKT    Asia/Yekaterinburg  # Yekaterinburg Time
-                 #     (Asia/Yekaterinburg)
+YEKT    Asia/Yekaterinburg  # Yekaterinburg Time (obsolete)
