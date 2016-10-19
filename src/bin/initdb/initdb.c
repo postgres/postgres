@@ -2402,8 +2402,8 @@ usage(const char *progname)
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
-	printf(_("  -n, --noclean             do not clean up after errors\n"));
-	printf(_("  -N, --nosync              do not wait for changes to be written safely to disk\n"));
+	printf(_("  -n, --no-clean            do not clean up after errors\n"));
+	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -S, --sync-only           only sync data directory\n"));
 	printf(_("\nOther options:\n"));
@@ -3078,8 +3078,10 @@ main(int argc, char *argv[])
 		{"version", no_argument, NULL, 'V'},
 		{"debug", no_argument, NULL, 'd'},
 		{"show", no_argument, NULL, 's'},
-		{"noclean", no_argument, NULL, 'n'},
-		{"nosync", no_argument, NULL, 'N'},
+		{"noclean", no_argument, NULL, 'n'}, /* for backwards compatibility */
+		{"no-clean", no_argument, NULL, 'n'},
+		{"nosync", no_argument, NULL, 'N'},  /* for backwards compatibility */
+		{"no-sync", no_argument, NULL, 'N'},
 		{"sync-only", no_argument, NULL, 'S'},
 		{"xlogdir", required_argument, NULL, 'X'},
 		{"data-checksums", no_argument, NULL, 'k'},
@@ -3165,7 +3167,7 @@ main(int argc, char *argv[])
 				break;
 			case 'n':
 				noclean = true;
-				printf(_("Running in noclean mode.  Mistakes will not be cleaned up.\n"));
+				printf(_("Running in no-clean mode.  Mistakes will not be cleaned up.\n"));
 				break;
 			case 'N':
 				do_sync = false;

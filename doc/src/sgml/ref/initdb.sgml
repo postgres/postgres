@@ -235,7 +235,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-N</option></term>
-      <term><option>--nosync</option></term>
+      <term><option>--no-sync</option></term>
       <listitem>
        <para>
         By default, <command>initdb</command> will wait for all files to be
@@ -355,7 +355,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-n</option></term>
-      <term><option>--noclean</option></term>
+      <term><option>--no-clean</option></term>
       <listitem>
        <para>
         By default, when <command>initdb</command>

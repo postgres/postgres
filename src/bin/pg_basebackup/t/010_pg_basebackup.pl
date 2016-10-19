@@ -44,7 +44,7 @@ ok(! -d "$tempdir/backup", 'backup directory was cleaned up');
 
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/backup", '-n' ],
-	'failing run with noclean option');
+	'failing run with no-clean option');
 
 ok(-d "$tempdir/backup", 'backup directory was created and left behind');
 

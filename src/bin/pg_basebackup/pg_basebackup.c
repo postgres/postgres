@@ -329,8 +329,8 @@ usage(void)
 	printf(_("  -c, --checkpoint=fast|spread\n"
 			 "                         set fast or spread checkpointing\n"));
 	printf(_("  -l, --label=LABEL      set backup label\n"));
-	printf(_("  -n, --noclean          do not clean up after errors\n"));
-	printf(_("  -N, --nosync           do not wait for changes to be written safely to disk\n"));
+	printf(_("  -n, --no-clean         do not clean up after errors\n"));
+	printf(_("  -N, --no-sync          do not wait for changes to be written safely to disk\n"));
 	printf(_("  -P, --progress         show progress information\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
@@ -2006,8 +2006,8 @@ main(int argc, char **argv)
 		{"gzip", no_argument, NULL, 'z'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"label", required_argument, NULL, 'l'},
-		{"noclean", no_argument, NULL, 'n'},
-		{"nosync", no_argument, NULL, 'N'},
+		{"no-clean", no_argument, NULL, 'n'},
+		{"no-sync", no_argument, NULL, 'N'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
