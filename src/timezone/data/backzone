@@ -194,9 +194,9 @@ Zone	Africa/Lusaka	1:53:08 -	LMT	1903 Mar
 
 # Equatorial Guinea
 #
-# Although Shanks says that Malabo switched from UTC to UTC+1 on 1963-12-15,
+# Although Shanks says that Malabo switched from UT +00 to +01 on 1963-12-15,
 # a Google Books search says that London Calling, Issues 432-465 (1948), p 19,
-# says that Spanish Guinea was at GMT+1 back then.  The Shanks data entries
+# says that Spanish Guinea was at +01 back then.  The Shanks data entries
 # are most likely wrong, but we have nothing better; use them here for now.
 #
 Zone	Africa/Malabo	0:35:08 -	LMT	1912
@@ -479,14 +479,14 @@ Zone	Asia/Muscat	3:54:24 -	LMT	1920
 # From Paul Eggert (2014-08-11), after a heads-up from Stephen Colebourne:
 # According to a Portuguese decree (1911-05-26)
 # http://dre.pt/pdf1sdip/1911/05/12500/23132313.pdf
-# Portuguese India switched to GMT+5 on 1912-01-01.
+# Portuguese India switched to UT +05 on 1912-01-01.
 #Zone	Asia/Panaji	[not enough info to complete]
 
 # Cambodia
 # From Paul Eggert (2014-10-11):
 # See Asia/Ho_Chi_Minh for the source for most of this data.  Also, guess
-# (1) Cambodia reverted to UT+7 on 1945-09-02, when Vietnam did, and
-# (2) they also reverted to UT+7 on 1953-11-09, the date of independence.
+# (1) Cambodia reverted to UT +07 on 1945-09-02, when Vietnam did, and
+# (2) they also reverted to +07 on 1953-11-09, the date of independence.
 # These guesses are probably wrong but they're better than guessing no
 # transitions there.
 Zone	Asia/Phnom_Penh	6:59:40 -	LMT	1906 Jul  1
@@ -506,8 +506,8 @@ Zone	Asia/Tel_Aviv	2:19:04 -	LMT	1880
 # Laos
 # From Paul Eggert (2014-10-11):
 # See Asia/Ho_Chi_Minh for the source for most of this data.
-# Trần's book says that Laos reverted to UT+7 on 1955-04-15.
-# Also, guess that Laos reverted to UT+7 on 1945-09-02, when Vietnam did;
+# Trần's book says that Laos reverted to UT +07 on 1955-04-15.
+# Also, guess that Laos reverted to +07 on 1945-09-02, when Vietnam did;
 # this is probably wrong but it's better than guessing no transition.
 Zone	Asia/Vientiane	6:50:24 -	LMT	1906 Jul  1
 			7:06:30	-	PLMT	1911 May  1
