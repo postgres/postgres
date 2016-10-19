@@ -161,12 +161,8 @@ sub promote_standby
 	  or die "Timed out while waiting for standby to receive and write WAL";
 
 	# Now promote slave and insert some new data on master, this will put
-	# the master out-of-sync with the standby. Wait until the standby is
-	# out of recovery mode, and is ready to accept read-write connections.
+	# the master out-of-sync with the standby.
 	$node_standby->promote;
-	$node_standby->poll_query_until('postgres',
-		"SELECT NOT pg_is_in_recovery()")
-	  or die "Timed out while waiting for promotion of standby";
 
 	# Force a checkpoint after the promotion. pg_rewind looks at the control
 	# file to determine what timeline the server is on, and that isn't updated

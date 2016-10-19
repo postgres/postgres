@@ -57,10 +57,7 @@ recovery_target_timeline='latest'
 $node_standby_2->restart;
 
 # Insert some data in standby 1 and check its presence in standby 2
-# to ensure that the timeline switch has been done. Standby 1 needs
-# to exit recovery first before moving on with the test.
-$node_standby_1->poll_query_until('postgres',
-	"SELECT pg_is_in_recovery() <> true");
+# to ensure that the timeline switch has been done.
 $node_standby_1->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
 $until_lsn = $node_standby_1->safe_psql('postgres',
