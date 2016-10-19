@@ -1280,9 +1280,8 @@ gmtsub(pg_time_t const * timep, int32 offset, struct pg_tm * tmp)
 	result = timesub(timep, offset, gmtptr, tmp);
 
 	/*
-	 * Could get fancy here and deliver something such as "UT+xxxx" or
-	 * "UT-xxxx" if offset is non-zero, but this is no time for a treasure
-	 * hunt.
+	 * Could get fancy here and deliver something such as "+xx" or "-xx" if
+	 * offset is non-zero, but this is no time for a treasure hunt.
 	 */
 	if (offset != 0)
 		tmp->tm_zone = wildabbr;
