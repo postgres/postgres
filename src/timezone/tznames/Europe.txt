@@ -191,8 +191,7 @@ MSK     Europe/Moscow  # Moscow Time
                  #     (Europe/Moscow)
                  #     (Europe/Volgograd)
 SAMST   Europe/Samara  # Samara Summer Time (obsolete)
-SAMT    Europe/Samara  # Samara Time
-                 #     (Europe/Samara)
+SAMT    Europe/Samara  # Samara Time (obsolete)
 VOLT    Europe/Volgograd  # Volgograd Time (obsolete)
 WEST     3600 D  # Western Europe Summer Time
                  #     (Africa/Casablanca)
