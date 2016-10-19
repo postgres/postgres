@@ -128,7 +128,7 @@ pg_strftime(char *s, size_t maxsize, const char *format,
 	int			warn;
 
 	warn = IN_NONE;
-	p = _fmt(((format == NULL) ? "%c" : format), t, s, s + maxsize, &warn);
+	p = _fmt(format, t, s, s + maxsize, &warn);
 	if (p == s + maxsize)
 		return 0;
 	*p = '\0';
