@@ -27,11 +27,11 @@ select "Argument test #1"(users, fname, lname) from users where lname = 'doe' or
 
 
 -- check module contents
-CREATE FUNCTION module_contents() RETURNS text AS
+CREATE FUNCTION module_contents() RETURNS SETOF text AS
 $$
 contents = list(filter(lambda x: not x.startswith("__"), dir(plpy)))
 contents.sort()
-return ", ".join(contents)
+return contents
 $$ LANGUAGE plpythonu;
 
 select module_contents();
