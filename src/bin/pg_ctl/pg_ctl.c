@@ -1972,7 +1972,7 @@ do_help(void)
 	printf(_("  -c, --core-files       not applicable on this platform\n"));
 #endif
 	printf(_("  -l, --log=FILENAME     write (or append) server log to FILENAME\n"));
-	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
+	printf(_("  -o, --options=OPTIONS  command line options to pass to postgres\n"
 	 "                         (PostgreSQL server executable) or initdb\n"));
 	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
 	printf(_("\nOptions for stop or restart:\n"));
@@ -2171,6 +2171,7 @@ main(int argc, char **argv)
 		{"log", required_argument, NULL, 'l'},
 		{"mode", required_argument, NULL, 'm'},
 		{"pgdata", required_argument, NULL, 'D'},
+		{"options", required_argument, NULL, 'o'},
 		{"silent", no_argument, NULL, 's'},
 		{"timeout", required_argument, NULL, 't'},
 		{"core-files", no_argument, NULL, 'c'},
