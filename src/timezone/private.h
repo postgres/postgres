@@ -23,6 +23,7 @@
 
 #include "pgtime.h"
 
+/* This string was in the Factory zone through version 2016f.  */
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
 /*
