@@ -263,7 +263,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
-      <term><option>--pgdata <replaceable class="parameter">datadir</replaceable></option></term>
+      <term><option>--pgdata=<replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
         Specifies the file system location of the database configuration files.  If
@@ -275,7 +275,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-l <replaceable class="parameter">filename</replaceable></option></term>
-      <term><option>--log <replaceable class="parameter">filename</replaceable></option></term>
+      <term><option>--log=<replaceable class="parameter">filename</replaceable></option></term>
       <listitem>
        <para>
         Append the server log output to
@@ -288,7 +288,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-m <replaceable class="parameter">mode</replaceable></option></term>
-      <term><option>--mode <replaceable class="parameter">mode</replaceable></option></term>
+      <term><option>--mode=<replaceable class="parameter">mode</replaceable></option></term>
       <listitem>
        <para>
         Specifies the shutdown mode.  <replaceable>mode</replaceable>

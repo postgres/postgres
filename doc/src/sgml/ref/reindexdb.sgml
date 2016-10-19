@@ -396,7 +396,7 @@ PostgreSQL documentation
     To reindex the table <literal>foo</literal> and the index
     <literal>bar</literal> in a database named <literal>abcd</literal>:
 <screen>
-<prompt>$ </prompt><userinput>reindexdb --table foo --index bar abcd</userinput>
+<prompt>$ </prompt><userinput>reindexdb --table=foo --index=bar abcd</userinput>
 </screen></para>
 
  </refsect1>

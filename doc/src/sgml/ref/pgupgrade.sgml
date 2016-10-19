@@ -558,7 +558,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
      run using:
 
 <programlisting>
-psql --username postgres --file script.sql postgres
+psql --username=postgres --file=script.sql postgres
 </programlisting>
 
      The scripts can be run in any order and can be deleted once they have
