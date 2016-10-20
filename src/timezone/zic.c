@@ -789,6 +789,56 @@ namecheck(const char *name)
 	return componentcheck(name, component, cp);
 }
 
+/*
+ * Create symlink contents suitable for symlinking FROM to TO, as a
+ * freshly allocated string.  FROM should be a relative file name, and
+ * is relative to the global variable DIRECTORY.  TO can be either
+ * relative or absolute.
+ */
+#ifdef HAVE_SYMLINK
+static char *
+relname(char const * from, char const * to)
+{
+	size_t		i,
+				taillen,
+				dotdotetcsize;
+	size_t		dir_len = 0,
+				dotdots = 0,
+				linksize = SIZE_MAX;
+	char const *f = from;
+	char	   *result = NULL;
+
+	if (*to == '/')
+	{
+		/* Make F absolute too.  */
+		size_t		len = strlen(directory);
+		bool		needslash = len && directory[len - 1] != '/';
+
+		linksize = len + needslash + strlen(from) + 1;
+		f = result = emalloc(linksize);
+		strcpy(result, directory);
+		result[len] = '/';
+		strcpy(result + len + needslash, from);
+	}
+	for (i = 0; f[i] && f[i] == to[i]; i++)
+		if (f[i] == '/')
+			dir_len = i + 1;
+	for (; f[i]; i++)
+		dotdots += f[i] == '/' && f[i - 1] != '/';
+	taillen = i - dir_len;
+	dotdotetcsize = 3 * dotdots + taillen + 1;
+	if (dotdotetcsize <= linksize)
+	{
+		if (!result)
+			result = emalloc(dotdotetcsize);
+		for (i = 0; i < dotdots; i++)
+			memcpy(result + 3 * i, "../", 3);
+		memmove(result + 3 * dotdots, f + dir_len, taillen + 1);
+	}
+	return result;
+}
+#endif   /* HAVE_SYMLINK */
+
 static void
 dolink(char const * fromfield, char const * tofield, bool staysymlink)
 {
@@ -832,31 +882,17 @@ dolink(char const * fromfield, char const * tofield, bool staysymlink)
 	if (link_errno != 0)
 	{
 #ifdef HAVE_SYMLINK
-		const char *s = fromfield;
-		const char *t;
-		char	   *p;
-		size_t		dotdots = 0;
-		char	   *symlinkcontents;
-		int			symlink_errno;
+		bool		absolute = *fromfield == '/';
+		char	   *linkalloc = absolute ? NULL : relname(fromfield, tofield);
+		char const *contents = absolute ? fromfield : linkalloc;
+		int			symlink_errno = symlink(contents, tofield) == 0 ? 0 : errno;
 
-		do
-			t = s;
-		while ((s = strchr(s, '/'))
-			   && strncmp(fromfield, tofield, ++s - fromfield) == 0);
-
-		for (s = tofield + (t - fromfield); *s; s++)
-			dotdots += *s == '/';
-		symlinkcontents = emalloc(3 * dotdots + strlen(t) + 1);
-		for (p = symlinkcontents; dotdots-- != 0; p += 3)
-			memcpy(p, "../", 3);
-		strcpy(p, t);
-		symlink_errno = symlink(symlinkcontents, tofield) == 0 ? 0 : errno;
 		if (symlink_errno == ENOENT && !todirs_made)
 		{
 			mkdirs(tofield, true);
-			symlink_errno = symlink(symlinkcontents, tofield) == 0 ? 0 : errno;
+			symlink_errno = symlink(contents, tofield) == 0 ? 0 : errno;
 		}
-		free(symlinkcontents);
+		free(linkalloc);
 		if (symlink_errno == 0)
 		{
 			if (link_errno != ENOTSUP)
