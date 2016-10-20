@@ -424,9 +424,8 @@ growalloc(void *ptr, size_t itemsize, int nitems, int *nitems_alloc)
 	else
 	{
 		int			nitems_max = INT_MAX - WORK_AROUND_QTBUG_53071;
-		int			amax = nitems_max < SIZE_MAX ? nitems_max : SIZE_MAX;
 
-		if ((amax - 1) / 3 * 2 < *nitems_alloc)
+		if ((nitems_max - 1) / 3 * 2 < *nitems_alloc)
 			memory_exhausted(_("int overflow"));
 		*nitems_alloc = *nitems_alloc + (*nitems_alloc >> 1) + 1;
 		return erealloc(ptr, size_product(*nitems_alloc, itemsize));
