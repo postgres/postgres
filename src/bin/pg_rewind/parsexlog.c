@@ -54,7 +54,7 @@ static int SimpleXLogPageRead(XLogReaderState *xlogreader,
 				   TimeLineID *pageTLI);
 
 /*
- * Read WAL from the datadir/pg_xlog, starting from 'startpoint' on timeline
+ * Read WAL from the datadir/pg_wal, starting from 'startpoint' on timeline
  * index 'tliIndex' in target timeline history, until 'endpoint'. Make note of
  * the data blocks touched by the WAL records, and return them in a page map.
  */

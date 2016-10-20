@@ -1947,7 +1947,7 @@ The commands accepted in walsender mode are:
          <para>
           Include the necessary WAL segments in the backup. This will include
           all the files between start and stop backup in the
-          <filename>pg_xlog</filename> directory of the base directory tar
+          <filename>pg_wal</filename> directory of the base directory tar
           file.
          </para>
         </listitem>
@@ -2076,8 +2076,8 @@ The commands accepted in walsender mode are:
        </listitem>
        <listitem>
         <para>
-         <filename>pg_xlog</>, including subdirectories. If the backup is run
-         with WAL files included, a synthesized version of <filename>pg_xlog</filename> will be
+         <filename>pg_wal</>, including subdirectories. If the backup is run
+         with WAL files included, a synthesized version of <filename>pg_wal</filename> will be
          included, but it will only contain the files necessary for the
          backup to work, not the rest of the contents.
         </para>

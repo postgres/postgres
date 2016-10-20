@@ -131,10 +131,10 @@ recurse_dir(const char *datadir, const char *parentpath,
 			/*
 			 * If it's a symlink within pg_tblspc, we need to recurse into it,
 			 * to process all the tablespaces.  We also follow a symlink if
-			 * it's for pg_xlog.  Symlinks elsewhere are ignored.
+			 * it's for pg_wal.  Symlinks elsewhere are ignored.
 			 */
 			if ((parentpath && strcmp(parentpath, "pg_tblspc") == 0) ||
-				strcmp(path, "pg_xlog") == 0)
+				strcmp(path, "pg_wal") == 0)
 				recurse_dir(datadir, path, callback);
 #else
 			pg_fatal("\"%s\" is a symbolic link, but symbolic links are not supported on this platform\n",

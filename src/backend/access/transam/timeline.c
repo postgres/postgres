@@ -43,7 +43,7 @@
 
 /*
  * Copies all timeline history files with id's between 'begin' and 'end'
- * from archive to pg_xlog.
+ * from archive to pg_wal.
  */
 void
 restoreTimeLineHistoryFiles(TimeLineID begin, TimeLineID end)
@@ -191,7 +191,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	result = lcons(entry, result);
 
 	/*
-	 * If the history file was fetched from archive, save it in pg_xlog for
+	 * If the history file was fetched from archive, save it in pg_wal for
 	 * future reference.
 	 */
 	if (fromArchive)

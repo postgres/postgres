@@ -472,7 +472,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 
   <para>
    At all times, <productname>PostgreSQL</> maintains a
-   <firstterm>write ahead log</> (WAL) in the <filename>pg_xlog/</>
+   <firstterm>write ahead log</> (WAL) in the <filename>pg_wal/</>
    subdirectory of the cluster's data directory. The log records
    every change made to the database's data files.  This log exists
    primarily for crash-safety purposes: if the system crashes, the
@@ -616,7 +616,7 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
     <literal>%p</> and <literal>%f</> parameters have been replaced,
     the actual command executed might look like this:
 <programlisting>
-test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900000065
+test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900000065
 </programlisting>
     A similar command will be generated for each new file to be archived.
    </para>
@@ -668,9 +668,9 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
     fills, nothing further can be archived until the tape is swapped.
     You should ensure that any error condition or request to a human operator
     is reported appropriately so that the situation can be
-    resolved reasonably quickly. The <filename>pg_xlog/</> directory will
+    resolved reasonably quickly. The <filename>pg_wal/</> directory will
     continue to fill with WAL segment files until the situation is resolved.
-    (If the file system containing <filename>pg_xlog/</> fills up,
+    (If the file system containing <filename>pg_wal/</> fills up,
     <productname>PostgreSQL</> will do a PANIC shutdown.  No committed
     transactions will be lost, but the database will remain offline until
     you free some space.)
@@ -682,7 +682,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
     operation continues even if the archiving process falls a little behind.
     If archiving falls significantly behind, this will increase the amount of
     data that would be lost in the event of a disaster. It will also mean that
-    the <filename>pg_xlog/</> directory will contain large numbers of
+    the <filename>pg_wal/</> directory will contain large numbers of
     not-yet-archived segment files, which could eventually exceed available
     disk space. You are advised to monitor the archiving process to ensure that
     it is working as you intend.
@@ -743,7 +743,7 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_xlog/
     configuration file reload.  If you wish to temporarily stop archiving,
     one way to do it is to set <varname>archive_command</> to the empty
     string (<literal>''</>).
-    This will cause WAL files to accumulate in <filename>pg_xlog/</> until a
+    This will cause WAL files to accumulate in <filename>pg_wal/</> until a
     working <varname>archive_command</> is re-established.
    </para>
   </sect2>
@@ -1062,10 +1062,10 @@ SELECT pg_stop_backup();
 
    <para>
     You should, however, omit from the backup the files within the
-    cluster's <filename>pg_xlog/</> subdirectory.  This
+    cluster's <filename>pg_wal/</> subdirectory.  This
     slight adjustment is worthwhile because it reduces the risk
     of mistakes when restoring.  This is easy to arrange if
-    <filename>pg_xlog/</> is a symbolic link pointing to someplace outside
+    <filename>pg_wal/</> is a symbolic link pointing to someplace outside
     the cluster directory, which is a common setup anyway for performance
     reasons.  You might also want to exclude <filename>postmaster.pid</>
     and <filename>postmaster.opts</>, which record information
@@ -1149,7 +1149,7 @@ SELECT pg_stop_backup();
      location in case you need them later. Note that this precaution will
      require that you have enough free space on your system to hold two
      copies of your existing database. If you do not have enough space,
-     you should at least save the contents of the cluster's <filename>pg_xlog</>
+     you should at least save the contents of the cluster's <filename>pg_wal</>
      subdirectory, as it might contain logs which
      were not archived before the system went down.
     </para>
@@ -1172,9 +1172,9 @@ SELECT pg_stop_backup();
    </listitem>
    <listitem>
     <para>
-     Remove any files present in <filename>pg_xlog/</>; these came from the
+     Remove any files present in <filename>pg_wal/</>; these came from the
      file system backup and are therefore probably obsolete rather than current.
-     If you didn't archive <filename>pg_xlog/</> at all, then recreate
+     If you didn't archive <filename>pg_wal/</> at all, then recreate
      it with proper permissions,
      being careful to ensure that you re-establish it as a symbolic link
      if you had it set up that way before.
@@ -1183,7 +1183,7 @@ SELECT pg_stop_backup();
    <listitem>
     <para>
      If you have unarchived WAL segment files that you saved in step 2,
-     copy them into <filename>pg_xlog/</>.  (It is best to copy them,
+     copy them into <filename>pg_wal/</>.  (It is best to copy them,
      not move them, so you still have the unmodified files if a
      problem occurs and you have to start over.)
     </para>
@@ -1265,9 +1265,9 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 
    <para>
     WAL segments that cannot be found in the archive will be sought in
-    <filename>pg_xlog/</>; this allows use of recent un-archived segments.
+    <filename>pg_wal/</>; this allows use of recent un-archived segments.
     However, segments that are available from the archive will be used in
-    preference to files in <filename>pg_xlog/</>.
+    preference to files in <filename>pg_wal/</>.
    </para>
 
    <para>

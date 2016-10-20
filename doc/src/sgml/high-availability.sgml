@@ -594,24 +594,24 @@ protocol to make nodes agree on a serializable transactional order.
     (see <xref linkend="restore-command">) or directly from the master
     over a TCP connection (streaming replication). The standby server will
     also attempt to restore any WAL found in the standby cluster's
-    <filename>pg_xlog</> directory. That typically happens after a server
+    <filename>pg_wal</> directory. That typically happens after a server
     restart, when the standby replays again WAL that was streamed from the
     master before the restart, but you can also manually copy files to
-    <filename>pg_xlog</> at any time to have them replayed.
+    <filename>pg_wal</> at any time to have them replayed.
    </para>
 
    <para>
     At startup, the standby begins by restoring all WAL available in the
     archive location, calling <varname>restore_command</>. Once it
     reaches the end of WAL available there and <varname>restore_command</>
-    fails, it tries to restore any WAL available in the <filename>pg_xlog</> directory.
+    fails, it tries to restore any WAL available in the <filename>pg_wal</> directory.
     If that fails, and streaming replication has been configured, the
     standby tries to connect to the primary server and start streaming WAL
-    from the last valid record found in archive or <filename>pg_xlog</>. If that fails
+    from the last valid record found in archive or <filename>pg_wal</>. If that fails
     or streaming replication is not configured, or if the connection is
     later disconnected, the standby goes back to step 1 and tries to
     restore the file from the archive again. This loop of retries from the
-    archive, <filename>pg_xlog</>, and via streaming replication goes on until the server
+    archive, <filename>pg_wal</>, and via streaming replication goes on until the server
     is stopped or failover is triggered by a trigger file.
    </para>
 
@@ -619,7 +619,7 @@ protocol to make nodes agree on a serializable transactional order.
     Standby mode is exited and the server switches to normal operation
     when <command>pg_ctl promote</> is run or a trigger file is found
     (<varname>trigger_file</>). Before failover,
-    any WAL immediately available in the archive or in <filename>pg_xlog</> will be
+    any WAL immediately available in the archive or in <filename>pg_wal</> will be
     restored, but no attempt is made to connect to the master.
    </para>
   </sect2>
@@ -895,7 +895,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     However, these methods often result in retaining more WAL segments than
     required, whereas replication slots retain only the number of segments
     known to be needed.  An advantage of these methods is that they bound
-    the space requirement for <literal>pg_xlog</>; there is currently no way
+    the space requirement for <literal>pg_wal</>; there is currently no way
     to do this using replication slots.
    </para>
    <para>

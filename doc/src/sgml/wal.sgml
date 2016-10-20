@@ -557,7 +557,7 @@
   </para>
 
   <para>
-   The number of WAL segment files in <filename>pg_xlog</> directory depends on
+   The number of WAL segment files in <filename>pg_wal</> directory depends on
    <varname>min_wal_size</>, <varname>max_wal_size</> and
    the amount of WAL generated in previous checkpoint cycles. When old log
    segment files are no longer needed, they are removed or recycled (that is,
@@ -582,7 +582,7 @@
    kept at all times. Also, if WAL archiving is used, old segments can not be
    removed or recycled until they are archived. If WAL archiving cannot keep up
    with the pace that WAL is generated, or if <varname>archive_command</varname>
-   fails repeatedly, old WAL files will accumulate in <filename>pg_xlog</>
+   fails repeatedly, old WAL files will accumulate in <filename>pg_wal</>
    until the situation is resolved. A slow or failed standby server that
    uses a replication slot will have the same effect (see
    <xref linkend="streaming-replication-slots">).
@@ -594,7 +594,7 @@
    which are similar to checkpoints in normal operation: the server forces
    all its state to disk, updates the <filename>pg_control</> file to
    indicate that the already-processed WAL data need not be scanned again,
-   and then recycles any old log segment files in the <filename>pg_xlog</>
+   and then recycles any old log segment files in the <filename>pg_wal</>
    directory.
    Restartpoints can't be performed more frequently than checkpoints in the
    master because restartpoints can only be performed at checkpoint records.
@@ -750,7 +750,7 @@
 
   <para>
    <acronym>WAL</acronym> logs are stored in the directory
-   <filename>pg_xlog</filename> under the data directory, as a set of
+   <filename>pg_wal</filename> under the data directory, as a set of
    segment files, normally each 16 MB in size (but the size can be changed
    by altering the <option>--with-wal-segsize</> configure option when
    building the server).  Each segment is divided into pages, normally
@@ -767,7 +767,7 @@
   <para>
    It is advantageous if the log is located on a different disk from the
    main database files.  This can be achieved by moving the
-   <filename>pg_xlog</filename> directory to another location (while the server
+   <filename>pg_wal</filename> directory to another location (while the server
    is shut down, of course) and creating a symbolic link from the
    original location in the main data directory to the new location.
   </para>

@@ -421,7 +421,7 @@ ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
 /*
  * A file was restored from the archive under a temporary filename (path),
  * and now we want to keep it. Rename it under the permanent filename in
- * in pg_xlog (xlogfname), replacing any existing file with the same name.
+ * in pg_wal (xlogfname), replacing any existing file with the same name.
  */
 void
 KeepFileRestoredFromArchive(char *path, char *xlogfname)

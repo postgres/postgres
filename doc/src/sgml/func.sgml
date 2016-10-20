@@ -15327,7 +15327,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
  pg_snapshots    | 13
  pg_multixact    | 14
  PG_VERSION      | 15
- pg_xlog         | 16
+ pg_wal          | 16
  pg_hba.conf     | 17
  pg_stat_tmp     | 18
  pg_subtrans     | 19

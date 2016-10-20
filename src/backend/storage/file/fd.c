@@ -2787,7 +2787,7 @@ looks_like_temp_rel_name(const char *name)
  * Issue fsync recursively on PGDATA and all its contents.
  *
  * We fsync regular files and directories wherever they are, but we
- * follow symlinks only for pg_xlog and immediately under pg_tblspc.
+ * follow symlinks only for pg_wal and immediately under pg_tblspc.
  * Other symlinks are presumed to point at files we're not responsible
  * for fsyncing, and might not have privileges to write at all.
  *
@@ -2811,7 +2811,7 @@ SyncDataDirectory(void)
 		return;
 
 	/*
-	 * If pg_xlog is a symlink, we'll need to recurse into it separately,
+	 * If pg_wal is a symlink, we'll need to recurse into it separately,
 	 * because the first walkdir below will ignore it.
 	 */
 	xlog_is_symlink = false;
@@ -2820,16 +2820,16 @@ SyncDataDirectory(void)
 	{
 		struct stat st;
 
-		if (lstat("pg_xlog", &st) < 0)
+		if (lstat("pg_wal", &st) < 0)
 			ereport(LOG,
 					(errcode_for_file_access(),
 					 errmsg("could not stat file \"%s\": %m",
-							"pg_xlog")));
+							"pg_wal")));
 		else if (S_ISLNK(st.st_mode))
 			xlog_is_symlink = true;
 	}
 #else
-	if (pgwin32_is_junction("pg_xlog"))
+	if (pgwin32_is_junction("pg_wal"))
 		xlog_is_symlink = true;
 #endif
 
@@ -2841,7 +2841,7 @@ SyncDataDirectory(void)
 #ifdef PG_FLUSH_DATA_WORKS
 	walkdir(".", pre_sync_fname, false, DEBUG1);
 	if (xlog_is_symlink)
-		walkdir("pg_xlog", pre_sync_fname, false, DEBUG1);
+		walkdir("pg_wal", pre_sync_fname, false, DEBUG1);
 	walkdir("pg_tblspc", pre_sync_fname, true, DEBUG1);
 #endif
 
@@ -2849,14 +2849,14 @@ SyncDataDirectory(void)
 	 * Now we do the fsync()s in the same order.
 	 *
 	 * The main call ignores symlinks, so in addition to specially processing
-	 * pg_xlog if it's a symlink, pg_tblspc has to be visited separately with
+	 * pg_wal if it's a symlink, pg_tblspc has to be visited separately with
 	 * process_symlinks = true.  Note that if there are any plain directories
 	 * in pg_tblspc, they'll get fsync'd twice.  That's not an expected case
 	 * so we don't worry about optimizing it.
 	 */
 	walkdir(".", datadir_fsync_fname, false, LOG);
 	if (xlog_is_symlink)
-		walkdir("pg_xlog", datadir_fsync_fname, false, LOG);
+		walkdir("pg_wal", datadir_fsync_fname, false, LOG);
 	walkdir("pg_tblspc", datadir_fsync_fname, true, LOG);
 }
 

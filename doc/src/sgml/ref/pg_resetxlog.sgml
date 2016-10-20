@@ -173,22 +173,22 @@ PostgreSQL documentation
      <para>
       The WAL starting address should be
       larger than any WAL segment file name currently existing in
-      the directory <filename>pg_xlog</> under the data directory.
+      the directory <filename>pg_wal</> under the data directory.
       These names are also in hexadecimal and have three parts.  The first
       part is the <quote>timeline ID</> and should usually be kept the same.
       For example, if <filename>00000001000000320000004A</> is the
-      largest entry in <filename>pg_xlog</>, use <literal>-l 00000001000000320000004B</> or higher.
+      largest entry in <filename>pg_wal</>, use <literal>-l 00000001000000320000004B</> or higher.
      </para>
 
      <note>
       <para>
        <command>pg_resetxlog</command> itself looks at the files in
-       <filename>pg_xlog</> and chooses a default <option>-l</> setting
+       <filename>pg_wal</> and chooses a default <option>-l</> setting
        beyond the last existing file name.  Therefore, manual adjustment of
        <option>-l</> should only be needed if you are aware of WAL segment
-       files that are not currently present in <filename>pg_xlog</>, such as
+       files that are not currently present in <filename>pg_wal</>, such as
        entries in an offline archive; or if the contents of
-       <filename>pg_xlog</> have been lost entirely.
+       <filename>pg_wal</> have been lost entirely.
       </para>
      </note>
     </listitem>

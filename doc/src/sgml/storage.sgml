@@ -141,7 +141,7 @@ Item
 </row>
 
 <row>
- <entry><filename>pg_xlog</></entry>
+ <entry><filename>pg_wal</></entry>
  <entry>Subdirectory containing WAL (Write Ahead Log) files</entry>
 </row>
 

@@ -128,7 +128,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
  * pg_stop_backup: finish taking an on-line backup dump
  *
  * We write an end-of-backup WAL record, and remove the backup label file
- * created by pg_start_backup, creating a backup history file in pg_xlog
+ * created by pg_start_backup, creating a backup history file in pg_wal
  * instead (whence it will immediately be archived). The backup history file
  * contains the same info found in the label file, plus the backup-end time
  * and WAL location. Before 9.0, the backup-end time was read from the backup

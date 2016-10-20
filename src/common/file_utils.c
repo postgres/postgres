@@ -29,6 +29,11 @@
 #define PG_FLUSH_DATA_WORKS 1
 #endif
 
+/*
+ * pg_xlog has been renamed to pg_wal in version 10.
+ */
+#define MINIMUM_VERSION_FOR_PG_WAL  100000
+
 #ifdef PG_FLUSH_DATA_WORKS
 static int pre_sync_fname(const char *fname, bool isdir,
 						   const char *progname);
@@ -40,25 +45,31 @@ static void walkdir(const char *path,
 /*
  * Issue fsync recursively on PGDATA and all its contents.
  *
- * We fsync regular files and directories wherever they are, but we
- * follow symlinks only for pg_xlog and immediately under pg_tblspc.
- * Other symlinks are presumed to point at files we're not responsible
- * for fsyncing, and might not have privileges to write at all.
+ * We fsync regular files and directories wherever they are, but we follow
+ * symlinks only for pg_wal (or pg_xlog) and immediately under pg_tblspc.
+ * Other symlinks are presumed to point at files we're not responsible for
+ * fsyncing, and might not have privileges to write at all.
+ *
+ * serverVersion indicates the version of the server to be fsync'd.
  *
  * Errors are reported but not considered fatal.
  */
 void
-fsync_pgdata(const char *pg_data, const char *progname)
+fsync_pgdata(const char *pg_data,
+			 const char *progname,
+			 int serverVersion)
 {
 	bool		xlog_is_symlink;
-	char		pg_xlog[MAXPGPATH];
+	char		pg_wal[MAXPGPATH];
 	char		pg_tblspc[MAXPGPATH];
 
-	snprintf(pg_xlog, MAXPGPATH, "%s/pg_xlog", pg_data);
+	/* handle renaming of pg_xlog to pg_wal in post-10 clusters */
+	snprintf(pg_wal, MAXPGPATH, "%s/%s", pg_data,
+		serverVersion < MINIMUM_VERSION_FOR_PG_WAL ? "pg_xlog" : "pg_wal");
 	snprintf(pg_tblspc, MAXPGPATH, "%s/pg_tblspc", pg_data);
 
 	/*
-	 * If pg_xlog is a symlink, we'll need to recurse into it separately,
+	 * If pg_wal is a symlink, we'll need to recurse into it separately,
 	 * because the first walkdir below will ignore it.
 	 */
 	xlog_is_symlink = false;
@@ -67,14 +78,14 @@ fsync_pgdata(const char *pg_data, const char *progname)
 	{
 		struct stat st;
 
-		if (lstat(pg_xlog, &st) < 0)
+		if (lstat(pg_wal, &st) < 0)
 			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
-					progname, pg_xlog, strerror(errno));
+					progname, pg_wal, strerror(errno));
 		else if (S_ISLNK(st.st_mode))
 			xlog_is_symlink = true;
 	}
 #else
-	if (pgwin32_is_junction(pg_xlog))
+	if (pgwin32_is_junction(pg_wal))
 		xlog_is_symlink = true;
 #endif
 
@@ -85,7 +96,7 @@ fsync_pgdata(const char *pg_data, const char *progname)
 #ifdef PG_FLUSH_DATA_WORKS
 	walkdir(pg_data, pre_sync_fname, false, progname);
 	if (xlog_is_symlink)
-		walkdir(pg_xlog, pre_sync_fname, false, progname);
+		walkdir(pg_wal, pre_sync_fname, false, progname);
 	walkdir(pg_tblspc, pre_sync_fname, true, progname);
 #endif
 
@@ -93,14 +104,14 @@ fsync_pgdata(const char *pg_data, const char *progname)
 	 * Now we do the fsync()s in the same order.
 	 *
 	 * The main call ignores symlinks, so in addition to specially processing
-	 * pg_xlog if it's a symlink, pg_tblspc has to be visited separately with
+	 * pg_wal if it's a symlink, pg_tblspc has to be visited separately with
 	 * process_symlinks = true.  Note that if there are any plain directories
 	 * in pg_tblspc, they'll get fsync'd twice.  That's not an expected case
 	 * so we don't worry about optimizing it.
 	 */
 	walkdir(pg_data, fsync_fname, false, progname);
 	if (xlog_is_symlink)
-		walkdir(pg_xlog, fsync_fname, false, progname);
+		walkdir(pg_wal, fsync_fname, false, progname);
 	walkdir(pg_tblspc, fsync_fname, true, progname);
 }
 

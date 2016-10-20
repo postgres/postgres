@@ -18,7 +18,7 @@
  * If the primary server ends streaming, but doesn't disconnect, walreceiver
  * goes into "waiting" mode, and waits for the startup process to give new
  * instructions. The startup process will treat that the same as
- * disconnection, and will rescan the archive/pg_xlog directory. But when the
+ * disconnection, and will rescan the archive/pg_wal directory. But when the
  * startup process wants to try streaming replication again, it will just
  * nudge the existing walreceiver process that's waiting, instead of launching
  * a new one.
@@ -365,7 +365,7 @@ WalReceiverMain(void)
 		 * we've already reached the end of the old timeline, the server will
 		 * finish the streaming immediately, and we will go back to await
 		 * orders from the startup process. If recovery_target_timeline is
-		 * 'latest', the startup process will scan pg_xlog and find the new
+		 * 'latest', the startup process will scan pg_wal and find the new
 		 * history file, bump recovery target timeline, and ask us to restart
 		 * on the new timeline.
 		 */
@@ -742,7 +742,7 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 										 tli)));
 
 			/*
-			 * Write the file to pg_xlog.
+			 * Write the file to pg_wal.
 			 */
 			writeTimeLineHistoryFile(tli, content, len);
 

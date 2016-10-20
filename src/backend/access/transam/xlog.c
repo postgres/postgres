@@ -235,9 +235,9 @@ static int	LocalXLogInsertAllowed = -1;
  * valid in the startup process.
  *
  * When ArchiveRecoveryRequested is true, but InArchiveRecovery is false, we're
- * currently performing crash recovery using only XLOG files in pg_xlog, but
+ * currently performing crash recovery using only XLOG files in pg_wal, but
  * will switch to using offline XLOG archives as soon as we reach the end of
- * WAL in pg_xlog.
+ * WAL in pg_wal.
 */
 bool		ArchiveRecoveryRequested = false;
 bool		InArchiveRecovery = false;
@@ -700,12 +700,12 @@ typedef enum
 {
 	XLOG_FROM_ANY = 0,			/* request to read WAL from any source */
 	XLOG_FROM_ARCHIVE,			/* restored using restore_command */
-	XLOG_FROM_PG_XLOG,			/* existing file in pg_xlog */
+	XLOG_FROM_PG_WAL,			/* existing file in pg_wal */
 	XLOG_FROM_STREAM			/* streamed from master */
 } XLogSource;
 
 /* human-readable names for XLogSources, for debugging output */
-static const char *xlogSourceNames[] = {"any", "archive", "pg_xlog", "stream"};
+static const char *xlogSourceNames[] = {"any", "archive", "pg_wal", "stream"};
 
 /*
  * openLogFile is -1 or a kernel FD for an open log file segment.
@@ -3345,7 +3345,7 @@ XLogFileOpen(XLogSegNo segno)
  * Open a logfile segment for reading (during recovery).
  *
  * If source == XLOG_FROM_ARCHIVE, the segment is retrieved from archive.
- * Otherwise, it's assumed to be already available in pg_xlog.
+ * Otherwise, it's assumed to be already available in pg_wal.
  */
 static int
 XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
@@ -3374,7 +3374,7 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 				return -1;
 			break;
 
-		case XLOG_FROM_PG_XLOG:
+		case XLOG_FROM_PG_WAL:
 		case XLOG_FROM_STREAM:
 			XLogFilePath(path, tli, segno);
 			restoredFromArchive = false;
@@ -3393,7 +3393,7 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 		KeepFileRestoredFromArchive(path, xlogfname);
 
 		/*
-		 * Set path to point at the new file in pg_xlog.
+		 * Set path to point at the new file in pg_wal.
 		 */
 		snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlogfname);
 	}
@@ -3481,10 +3481,10 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 			}
 		}
 
-		if (source == XLOG_FROM_ANY || source == XLOG_FROM_PG_XLOG)
+		if (source == XLOG_FROM_ANY || source == XLOG_FROM_PG_WAL)
 		{
 			fd = XLogFileRead(segno, emode, tli,
-							  XLOG_FROM_PG_XLOG, true);
+							  XLOG_FROM_PG_WAL, true);
 			if (fd != -1)
 			{
 				if (!expectedTLEs)
@@ -3693,10 +3693,10 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
  *
  * This is called during recovery, whenever we switch to follow a new
  * timeline, and at the end of recovery when we create a new timeline. We
- * wouldn't otherwise care about extra WAL files lying in pg_xlog, but they
+ * wouldn't otherwise care about extra WAL files lying in pg_wal, but they
  * might be leftover pre-allocated or recycled WAL segments on the old timeline
  * that we haven't used yet, and contain garbage. If we just leave them in
- * pg_xlog, they will eventually be archived, and we can't let that happen.
+ * pg_wal, they will eventually be archived, and we can't let that happen.
  * Files that belong to our timeline history are valid, because we have
  * successfully replayed them, but from others we can't be sure.
  *
@@ -3853,15 +3853,15 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 }
 
 /*
- * Verify whether pg_xlog and pg_xlog/archive_status exist.
+ * Verify whether pg_wal and pg_wal/archive_status exist.
  * If the latter does not exist, recreate it.
  *
  * It is not the goal of this function to verify the contents of these
  * directories, but to help in cases where someone has performed a cluster
- * copy for PITR purposes but omitted pg_xlog from the copy.
+ * copy for PITR purposes but omitted pg_wal from the copy.
  *
- * We could also recreate pg_xlog if it doesn't exist, but a deliberate
- * policy decision was made not to.  It is fairly common for pg_xlog to be
+ * We could also recreate pg_wal if it doesn't exist, but a deliberate
+ * policy decision was made not to.  It is fairly common for pg_wal to be
  * a symlink, and if that was the DBA's intent then automatically making a
  * plain directory would result in degraded performance with no notice.
  */
@@ -3871,7 +3871,7 @@ ValidateXLOGDirectoryStructure(void)
 	char		path[MAXPGPATH];
 	struct stat stat_buf;
 
-	/* Check for pg_xlog; if it doesn't exist, error out */
+	/* Check for pg_wal; if it doesn't exist, error out */
 	if (stat(XLOGDIR, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
 		ereport(FATAL,
@@ -4027,11 +4027,11 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 			 * If archive recovery was requested, but we were still doing
 			 * crash recovery, switch to archive recovery and retry using the
 			 * offline archive. We have now replayed all the valid WAL in
-			 * pg_xlog, so we are presumably now consistent.
+			 * pg_wal, so we are presumably now consistent.
 			 *
 			 * We require that there's at least some valid WAL present in
-			 * pg_xlog, however (!fetch_ckpt). We could recover using the WAL
-			 * from the archive, even if pg_xlog is completely empty, but we'd
+			 * pg_wal, however (!fetch_ckpt). We could recover using the WAL
+			 * from the archive, even if pg_wal is completely empty, but we'd
 			 * have no idea how far we'd have to replay to reach consistency.
 			 * So err on the safe side and give up.
 			 */
@@ -4039,7 +4039,7 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 				!fetching_ckpt)
 			{
 				ereport(DEBUG1,
-						(errmsg_internal("reached end of WAL in pg_xlog, entering archive recovery")));
+						(errmsg_internal("reached end of WAL in pg_wal, entering archive recovery")));
 				InArchiveRecovery = true;
 				if (StandbyModeRequested)
 					StandbyMode = true;
@@ -4156,7 +4156,7 @@ rescanLatestTimeLine(void)
 
 	/*
 	 * As in StartupXLOG(), try to ensure we have all the history files
-	 * between the old target and new target in pg_xlog.
+	 * between the old target and new target in pg_wal.
 	 */
 	restoreTimeLineHistoryFiles(oldtarget + 1, newtarget);
 
@@ -5189,7 +5189,7 @@ readRecoveryCommandFile(void)
 			ereport(WARNING,
 					(errmsg("recovery command file \"%s\" specified neither primary_conninfo nor restore_command",
 							RECOVERY_COMMAND_FILE),
-					 errhint("The database server will regularly poll the pg_xlog subdirectory to check for files placed there.")));
+					 errhint("The database server will regularly poll the pg_wal subdirectory to check for files placed there.")));
 	}
 	else
 	{
@@ -6056,7 +6056,7 @@ StartupXLOG(void)
 #endif
 
 	/*
-	 * Verify that pg_xlog and pg_xlog/archive_status exist.  In cases where
+	 * Verify that pg_wal and pg_wal/archive_status exist.  In cases where
 	 * someone has performed a copy for PITR, these directories may have been
 	 * excluded and need to be re-created.
 	 */
@@ -6269,7 +6269,7 @@ StartupXLOG(void)
 		 * and put it into archive recovery by creating a recovery.conf file.
 		 *
 		 * Our strategy in that case is to perform crash recovery first,
-		 * replaying all the WAL present in pg_xlog, and only enter archive
+		 * replaying all the WAL present in pg_wal, and only enter archive
 		 * recovery after that.
 		 *
 		 * But usually we already know how far we need to replay the WAL (up
@@ -6473,7 +6473,7 @@ StartupXLOG(void)
 
 	/*
 	 * Copy any missing timeline history files between 'now' and the recovery
-	 * target timeline from archive to pg_xlog. While we don't need those
+	 * target timeline from archive to pg_wal. While we don't need those
 	 * files ourselves - the history file of the recovery target timeline
 	 * covers all the previous timelines in the history too - a cascading
 	 * standby server might be interested in them. Or, if you archive the WAL
@@ -7094,7 +7094,7 @@ StartupXLOG(void)
 	/*
 	 * We are now done reading the xlog from stream. Turn off streaming
 	 * recovery to force fetching the files (which would be required at end of
-	 * recovery, e.g., timeline history file) from archive or pg_xlog.
+	 * recovery, e.g., timeline history file) from archive or pg_wal.
 	 */
 	StandbyMode = false;
 
@@ -7382,7 +7382,7 @@ StartupXLOG(void)
 		 * As a compromise, we rename the last segment with the .partial
 		 * suffix, and archive it. Archive recovery will never try to read
 		 * .partial segments, so they will normally go unused. But in the odd
-		 * PITR case, the administrator can copy them manually to the pg_xlog
+		 * PITR case, the administrator can copy them manually to the pg_wal
 		 * directory (removing the suffix). They can be useful in debugging,
 		 * too.
 		 *
@@ -9958,7 +9958,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		 * first WAL segment containing the startup checkpoint has pages in
 		 * the beginning with the old timeline ID.  That can cause trouble at
 		 * recovery: we won't have a history file covering the old timeline if
-		 * pg_xlog directory was not included in the base backup and the WAL
+		 * pg_wal directory was not included in the base backup and the WAL
 		 * archive was cleared too before starting the backup.
 		 *
 		 * This also ensures that we have emitted a WAL page header that has
@@ -10605,7 +10605,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * archived before returning. If archiving isn't enabled, the required WAL
 	 * needs to be transported via streaming replication (hopefully with
 	 * wal_keep_segments set high enough), or some more exotic mechanism like
-	 * polling and copying files from pg_xlog with script. We have no
+	 * polling and copying files from pg_wal with script. We have no
 	 * knowledge of those mechanisms, so it's up to the user to ensure that he
 	 * gets all the required WAL.
 	 *
@@ -11195,9 +11195,9 @@ next_record_is_invalid:
  * Open the WAL segment containing WAL position 'RecPtr'.
  *
  * The segment can be fetched via restore_command, or via walreceiver having
- * streamed the record, or it can already be present in pg_xlog. Checking
- * pg_xlog is mainly for crash recovery, but it will be polled in standby mode
- * too, in case someone copies a new segment directly to pg_xlog. That is not
+ * streamed the record, or it can already be present in pg_wal. Checking
+ * pg_wal is mainly for crash recovery, but it will be polled in standby mode
+ * too, in case someone copies a new segment directly to pg_wal. That is not
  * documented or recommended, though.
  *
  * If 'fetching_ckpt' is true, we're fetching a checkpoint record, and should
@@ -11227,8 +11227,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 	/*-------
 	 * Standby mode is implemented by a state machine:
 	 *
-	 * 1. Read from either archive or pg_xlog (XLOG_FROM_ARCHIVE), or just
-	 *	  pg_xlog (XLOG_FROM_XLOG)
+	 * 1. Read from either archive or pg_wal (XLOG_FROM_ARCHIVE), or just
+	 *	  pg_wal (XLOG_FROM_PG_WAL)
 	 * 2. Check trigger file
 	 * 3. Read from primary server via walreceiver (XLOG_FROM_STREAM)
 	 * 4. Rescan timelines
@@ -11244,7 +11244,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 	 *-------
 	 */
 	if (!InArchiveRecovery)
-		currentSource = XLOG_FROM_PG_XLOG;
+		currentSource = XLOG_FROM_PG_WAL;
 	else if (currentSource == 0)
 		currentSource = XLOG_FROM_ARCHIVE;
 
@@ -11263,13 +11263,13 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 			switch (currentSource)
 			{
 				case XLOG_FROM_ARCHIVE:
-				case XLOG_FROM_PG_XLOG:
+				case XLOG_FROM_PG_WAL:
 
 					/*
 					 * Check to see if the trigger file exists. Note that we
 					 * do this only after failure, so when you create the
 					 * trigger file, we still finish replaying as much as we
-					 * can from archive and pg_xlog before failover.
+					 * can from archive and pg_wal before failover.
 					 */
 					if (StandbyMode && CheckForStandbyTrigger())
 					{
@@ -11279,7 +11279,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 
 					/*
 					 * Not in standby mode, and we've now tried the archive
-					 * and pg_xlog.
+					 * and pg_wal.
 					 */
 					if (!StandbyMode)
 						return false;
@@ -11339,7 +11339,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * little chance that the problem will just go away, but
 					 * PANIC is not good for availability either, especially
 					 * in hot standby mode. So, we treat that the same as
-					 * disconnection, and retry from archive/pg_xlog again.
+					 * disconnection, and retry from archive/pg_wal again.
 					 * The WAL in the archive should be identical to what was
 					 * streamed, so it's unlikely that it helps, but one can
 					 * hope...
@@ -11400,11 +11400,11 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					elog(ERROR, "unexpected WAL source %d", currentSource);
 			}
 		}
-		else if (currentSource == XLOG_FROM_PG_XLOG)
+		else if (currentSource == XLOG_FROM_PG_WAL)
 		{
 			/*
-			 * We just successfully read a file in pg_xlog. We prefer files in
-			 * the archive over ones in pg_xlog, so try the next file again
+			 * We just successfully read a file in pg_wal. We prefer files in
+			 * the archive over ones in pg_wal, so try the next file again
 			 * from the archive first.
 			 */
 			if (InArchiveRecovery)
@@ -11425,7 +11425,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 		switch (currentSource)
 		{
 			case XLOG_FROM_ARCHIVE:
-			case XLOG_FROM_PG_XLOG:
+			case XLOG_FROM_PG_WAL:
 				/* Close any old file we might have open. */
 				if (readFile >= 0)
 				{
@@ -11438,7 +11438,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 
 				/*
 				 * Try to restore the file from archive, or read an existing
-				 * file from pg_xlog.
+				 * file from pg_wal.
 				 */
 				readFile = XLogFileReadAnyTLI(readSegNo, DEBUG2,
 						 currentSource == XLOG_FROM_ARCHIVE ? XLOG_FROM_ANY :
@@ -11447,7 +11447,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					return true;	/* success! */
 
 				/*
-				 * Nope, not found in archive or pg_xlog.
+				 * Nope, not found in archive or pg_wal.
 				 */
 				lastSourceFailed = true;
 				break;
@@ -11503,7 +11503,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						 * not open already.  Also read the timeline history
 						 * file if we haven't initialized timeline history
 						 * yet; it should be streamed over and present in
-						 * pg_xlog by now.  Use XLOG_FROM_STREAM so that
+						 * pg_wal by now.  Use XLOG_FROM_STREAM so that
 						 * source info is set correctly and XLogReceiptTime
 						 * isn't changed.
 						 */
@@ -11535,10 +11535,10 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						/*
 						 * Note that we don't "return false" immediately here.
 						 * After being triggered, we still want to replay all
-						 * the WAL that was already streamed. It's in pg_xlog
+						 * the WAL that was already streamed. It's in pg_wal
 						 * now, so we just treat this as a failure, and the
 						 * state machine will move on to replay the streamed
-						 * WAL from pg_xlog, and then recheck the trigger and
+						 * WAL from pg_wal, and then recheck the trigger and
 						 * exit replay.
 						 */
 						lastSourceFailed = true;
@@ -11578,7 +11578,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
  * or legitimate end-of-WAL situation.   Generally, we use it as-is, but if
  * we're retrying the exact same record that we've tried previously, only
  * complain the first time to keep the noise down.  However, we only do when
- * reading from pg_xlog, because we don't expect any invalid records in archive
+ * reading from pg_wal, because we don't expect any invalid records in archive
  * or in records streamed from master. Files in the archive should be complete,
  * and we should never hit the end of WAL because we stop and wait for more WAL
  * to arrive before replaying it.
@@ -11593,7 +11593,7 @@ emode_for_corrupt_record(int emode, XLogRecPtr RecPtr)
 {
 	static XLogRecPtr lastComplaint = 0;
 
-	if (readSource == XLOG_FROM_PG_XLOG && emode == LOG)
+	if (readSource == XLOG_FROM_PG_WAL && emode == LOG)
 	{
 		if (RecPtr == lastComplaint)
 			emode = DEBUG1;

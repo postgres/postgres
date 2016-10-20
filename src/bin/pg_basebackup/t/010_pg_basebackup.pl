@@ -67,9 +67,9 @@ $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup" ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
 
-# Only archive_status directory should be copied in pg_xlog/.
+# Only archive_status directory should be copied in pg_wal/.
 is_deeply(
-	[ sort(slurp_dir("$tempdir/backup/pg_xlog/")) ],
+	[ sort(slurp_dir("$tempdir/backup/pg_wal/")) ],
 	[ sort qw(. .. archive_status) ],
 	'no WAL files copied');
 
@@ -230,12 +230,12 @@ like(
 $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxf", '-X', 'fetch' ],
 	'pg_basebackup -X fetch runs');
-ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_xlog")),
+ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_wal")),
 	'WAL files copied');
 $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxs", '-X', 'stream' ],
 	'pg_basebackup -X stream runs');
-ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_xlog")),
+ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_wal")),
 	'WAL files copied');
 
 $node->command_fails(

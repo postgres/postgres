@@ -118,7 +118,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Directory in which to find log segment files.  The default is to search
-        for them in the <literal>pg_xlog</literal> subdirectory of the current
+        for them in the <literal>pg_wal</literal> subdirectory of the current
         directory.
        </para>
       </listitem>

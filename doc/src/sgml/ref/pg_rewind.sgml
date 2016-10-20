@@ -61,14 +61,14 @@ PostgreSQL documentation
   <para>
    <application>pg_rewind</> examines the timeline histories of the source
    and target clusters to determine the point where they diverged, and
-   expects to find WAL in the target cluster's <filename>pg_xlog</> directory
+   expects to find WAL in the target cluster's <filename>pg_wal</> directory
    reaching all the way back to the point of divergence. The point of divergence
    can be found either on the target timeline, the source timeline, or their common
    ancestor. In the typical failover scenario where the target cluster was
    shut down soon after the divergence, this is not a problem, but if the
    target cluster ran for a long time after the divergence, the old WAL
    files might no longer be present. In that case, they can be manually
-   copied from the WAL archive to the <filename>pg_xlog</> directory, or
+   copied from the WAL archive to the <filename>pg_wal</> directory, or
    fetched on startup by configuring <filename>recovery.conf</>.  The use of
    <application>pg_rewind</> is not limited to failover, e.g.  a standby
    server can be promoted, run some write transactions, and then rewinded

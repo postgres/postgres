@@ -1612,7 +1612,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
        Increase <xref linkend="guc-max-wal-size"> and <xref
        linkend="guc-checkpoint-timeout"> ; this reduces the frequency
        of checkpoints, but increases the storage requirements of
-       <filename>/pg_xlog</>.
+       <filename>/pg_wal</>.
       </para>
      </listitem>
 

@@ -195,7 +195,7 @@ static const char *backend_options = "--single -F -O -j -c search_path=pg_catalo
 
 static const char *const subdirs[] = {
 	"global",
-	"pg_xlog/archive_status",
+	"pg_wal/archive_status",
 	"pg_clog",
 	"pg_commit_ts",
 	"pg_dynshmem",
@@ -2091,8 +2091,6 @@ make_postgres(FILE *cmdfd)
 		PG_CMD_PUTS(*line);
 }
 
-
-
 /*
  * signal handler in case we are interrupted.
  *
@@ -2830,7 +2828,7 @@ create_xlog_or_symlink(void)
 	char	   *subdirloc;
 
 	/* form name of the place for the subdirectory or symlink */
-	subdirloc = psprintf("%s/pg_xlog", pg_data);
+	subdirloc = psprintf("%s/pg_wal", pg_data);
 
 	if (strcmp(xlog_dir, "") != 0)
 	{
@@ -2963,7 +2961,7 @@ initialize_data_directory(void)
 
 	create_xlog_or_symlink();
 
-	/* Create required subdirectories (other than pg_xlog) */
+	/* Create required subdirectories (other than pg_wal) */
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
@@ -3260,7 +3258,7 @@ main(int argc, char *argv[])
 
 		fputs(_("syncing data to disk ... "), stdout);
 		fflush(stdout);
-		fsync_pgdata(pg_data, progname);
+		fsync_pgdata(pg_data, progname, PG_VERSION_NUM);
 		check_ok();
 		return 0;
 	}
@@ -3326,7 +3324,7 @@ main(int argc, char *argv[])
 	{
 		fputs(_("syncing data to disk ... "), stdout);
 		fflush(stdout);
-		fsync_pgdata(pg_data, progname);
+		fsync_pgdata(pg_data, progname, PG_VERSION_NUM);
 		check_ok();
 	}
 	else

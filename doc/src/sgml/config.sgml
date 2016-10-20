@@ -2932,7 +2932,7 @@ include_dir 'conf.d'
        <listitem>
        <para>
         Specifies the minimum number of past log file segments kept in the
-        <filename>pg_xlog</>
+        <filename>pg_wal</>
         directory, in case a standby server needs to fetch them for streaming
         replication. Each segment is normally 16 megabytes. If a standby
         server connected to the sending server falls behind by more than
@@ -2946,7 +2946,7 @@ include_dir 'conf.d'
 
        <para>
         This sets only the minimum number of segments retained in
-        <filename>pg_xlog</>; the system might need to retain more segments
+        <filename>pg_wal</>; the system might need to retain more segments
         for WAL archival or to recover from a checkpoint. If
         <varname>wal_keep_segments</> is zero (the default), the system
         doesn't keep any extra segments for standby purposes, so the number
@@ -3322,7 +3322,7 @@ include_dir 'conf.d'
        <para>
         Specify how long the standby server should wait when WAL data is not
         available from any sources (streaming replication,
-        local <filename>pg_xlog</> or WAL archive) before retrying to
+        local <filename>pg_wal</> or WAL archive) before retrying to
         retrieve WAL data.  This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
         The default value is 5 seconds. Units are milliseconds if not specified.

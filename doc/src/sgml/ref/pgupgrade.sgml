@@ -345,7 +345,7 @@ NET STOP postgresql-9.0
      your old cluster
      once you start the new cluster after the upgrade.  Link mode also
      requires that the old and new cluster data directories be in the
-     same file system.  (Tablespaces and <filename>pg_xlog</> can be on
+     same file system.  (Tablespaces and <filename>pg_wal</> can be on
      different file systems.)  See <literal>pg_upgrade --help</> for a full
      list of options.
     </para>
@@ -508,7 +508,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
       <para>
        If you have tablespaces, you will need to run a similar
        <application>rsync</> command for each tablespace directory.  If you
-       have relocated <filename>pg_xlog</> outside the data directories,
+       have relocated <filename>pg_wal</> outside the data directories,
        <application>rsync</> must be run on those directories too.
       </para>
      </step>

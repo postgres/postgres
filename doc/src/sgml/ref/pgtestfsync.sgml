@@ -57,8 +57,8 @@
        <para>
         Specifies the file name to write test data in.
         This file should be in the same file system that the
-        <filename>pg_xlog</> directory is or will be placed in.
-        (<filename>pg_xlog</> contains the <acronym>WAL</> files.)
+        <filename>pg_wal</> directory is or will be placed in.
+        (<filename>pg_wal</> contains the <acronym>WAL</> files.)
         The default is <filename>pg_test_fsync.out</> in the current
         directory.
        </para>
