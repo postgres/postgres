@@ -92,6 +92,9 @@ typedef struct PgFdwRelationInfo
 	RelOptInfo *innerrel;
 	JoinType	jointype;
 	List	   *joinclauses;
+
+	/* Grouping information */
+	List	   *grouped_tlist;
 } PgFdwRelationInfo;
 
 /* in postgres_fdw.c */
@@ -155,7 +158,7 @@ extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
-extern List *build_tlist_to_deparse(RelOptInfo *foreign_rel);
+extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 						RelOptInfo *foreignrel, List *tlist,
 						List *remote_conds, List *pathkeys,

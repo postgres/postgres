@@ -861,14 +861,13 @@ CREATE OPERATOR === (
 -- built-in operators and functions can be shipped for remote execution
 EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
-                                QUERY PLAN                                
---------------------------------------------------------------------------
- Aggregate
-   Output: count(c3)
-   ->  Foreign Scan on public.ft1 t1
-         Output: c3
-         Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = abs(c2)))
-(5 rows)
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(c3))
+   Relations: Aggregate on (public.ft1 t1)
+   Remote SQL: SELECT count(c3) FROM "S 1"."T 1" WHERE (("C 1" = abs(c2)))
+(4 rows)
 
 SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
  count 
@@ -878,14 +877,13 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = abs(t1.c2);
 
 EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
-                             QUERY PLAN                              
----------------------------------------------------------------------
- Aggregate
-   Output: count(c3)
-   ->  Foreign Scan on public.ft1 t1
-         Output: c3
-         Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = c2))
-(5 rows)
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(c3))
+   Relations: Aggregate on (public.ft1 t1)
+   Remote SQL: SELECT count(c3) FROM "S 1"."T 1" WHERE (("C 1" = c2))
+(4 rows)
 
 SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = t1.c2;
  count 
@@ -937,14 +935,13 @@ ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
 -- ... now they can be shipped
 EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
-                                          QUERY PLAN                                          
-----------------------------------------------------------------------------------------------
- Aggregate
-   Output: count(c3)
-   ->  Foreign Scan on public.ft1 t1
-         Output: c3
-         Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = public.postgres_fdw_abs(c2)))
-(5 rows)
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(c3))
+   Relations: Aggregate on (public.ft1 t1)
+   Remote SQL: SELECT count(c3) FROM "S 1"."T 1" WHERE (("C 1" = public.postgres_fdw_abs(c2)))
+(4 rows)
 
 SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
  count 
@@ -954,14 +951,13 @@ SELECT count(c3) FROM ft1 t1 WHERE t1.c1 = postgres_fdw_abs(t1.c2);
 
 EXPLAIN (VERBOSE, COSTS OFF)
   SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
-                                       QUERY PLAN                                       
-----------------------------------------------------------------------------------------
- Aggregate
-   Output: count(c3)
-   ->  Foreign Scan on public.ft1 t1
-         Output: c3
-         Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" OPERATOR(public.===) c2))
-(5 rows)
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(c3))
+   Relations: Aggregate on (public.ft1 t1)
+   Remote SQL: SELECT count(c3) FROM "S 1"."T 1" WHERE (("C 1" OPERATOR(public.===) c2))
+(4 rows)
 
 SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
  count 
@@ -2283,6 +2279,1138 @@ ALTER VIEW v4 OWNER TO regress_view_owner;
 DROP OWNED BY regress_view_owner;
 DROP ROLE regress_view_owner;
 -- ===================================================================
+-- Aggregate and grouping queries
+-- ===================================================================
+-- Simple aggregates
+explain (verbose, costs off)
+select count(c6), sum(c1), avg(c1), min(c2), max(c1), stddev(c2), sum(c1) * (random() <= 1)::int as sum2 from ft1 where c2 < 5 group by c2 order by 1, 2;
+                                                                      QUERY PLAN                                                                       
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+ Result
+   Output: (count(c6)), (sum(c1)), (avg(c1)), (min(c2)), (max(c1)), (stddev(c2)), ((sum(c1)) * ((random() <= '1'::double precision))::integer), c2
+   ->  Sort
+         Output: (count(c6)), (sum(c1)), (avg(c1)), (min(c2)), (max(c1)), (stddev(c2)), c2
+         Sort Key: (count(ft1.c6)), (sum(ft1.c1))
+         ->  Foreign Scan
+               Output: (count(c6)), (sum(c1)), (avg(c1)), (min(c2)), (max(c1)), (stddev(c2)), c2
+               Relations: Aggregate on (public.ft1)
+               Remote SQL: SELECT count(c6), sum("C 1"), avg("C 1"), min(c2), max("C 1"), stddev(c2), c2 FROM "S 1"."T 1" WHERE ((c2 < 5)) GROUP BY c2
+(9 rows)
+
+select count(c6), sum(c1), avg(c1), min(c2), max(c1), stddev(c2), sum(c1) * (random() <= 1)::int as sum2 from ft1 where c2 < 5 group by c2 order by 1, 2;
+ count |  sum  |         avg          | min | max  | stddev | sum2  
+-------+-------+----------------------+-----+------+--------+-------
+   100 | 49600 | 496.0000000000000000 |   1 |  991 |      0 | 49600
+   100 | 49700 | 497.0000000000000000 |   2 |  992 |      0 | 49700
+   100 | 49800 | 498.0000000000000000 |   3 |  993 |      0 | 49800
+   100 | 49900 | 499.0000000000000000 |   4 |  994 |      0 | 49900
+   100 | 50500 | 505.0000000000000000 |   0 | 1000 |      0 | 50500
+(5 rows)
+
+-- Aggregate is not pushed down as aggregation contains random()
+explain (verbose, costs off)
+select sum(c1 * (random() <= 1)::int) as sum, avg(c1) from ft1;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Aggregate
+   Output: sum((c1 * ((random() <= '1'::double precision))::integer)), avg(c1)
+   ->  Foreign Scan on public.ft1
+         Output: c1
+         Remote SQL: SELECT "C 1" FROM "S 1"."T 1"
+(5 rows)
+
+-- Aggregate over join query
+explain (verbose, costs off)
+select count(*), sum(t1.c1), avg(t2.c1) from ft1 t1 inner join ft1 t2 on (t1.c2 = t2.c2) where t1.c2 = 6;
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(*)), (sum(t1.c1)), (avg(t2.c1))
+   Relations: Aggregate on ((public.ft1 t1) INNER JOIN (public.ft1 t2))
+   Remote SQL: SELECT count(*), sum(r1."C 1"), avg(r2."C 1") FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r2.c2 = 6)) AND ((r1.c2 = 6))))
+(4 rows)
+
+select count(*), sum(t1.c1), avg(t2.c1) from ft1 t1 inner join ft1 t2 on (t1.c2 = t2.c2) where t1.c2 = 6;
+ count |   sum   |         avg          
+-------+---------+----------------------
+ 10000 | 5010000 | 501.0000000000000000
+(1 row)
+
+-- Not pushed down due to local conditions present in underneath input rel
+explain (verbose, costs off)
+select sum(t1.c1), count(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c1 = t2.c1) where ((t1.c1 * t2.c1)/(t1.c1 * t2.c1)) * random() <= 1;
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: sum(t1.c1), count(t2.c1)
+   ->  Foreign Scan
+         Output: t1.c1, t2.c1
+         Filter: (((((t1.c1 * t2.c1) / (t1.c1 * t2.c1)))::double precision * random()) <= '1'::double precision)
+         Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+         Remote SQL: SELECT r1."C 1", r2."C 1" FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1"))))
+(7 rows)
+
+-- GROUP BY clause having expressions
+explain (verbose, costs off)
+select c2/2, sum(c2) * (c2/2) from ft1 group by c2/2 order by c2/2;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Sort
+   Output: ((c2 / 2)), ((sum(c2) * (c2 / 2)))
+   Sort Key: ((ft1.c2 / 2))
+   ->  Foreign Scan
+         Output: ((c2 / 2)), ((sum(c2) * (c2 / 2)))
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT (c2 / 2), (sum(c2) * (c2 / 2)) FROM "S 1"."T 1" GROUP BY ((c2 / 2))
+(7 rows)
+
+select c2/2, sum(c2) * (c2/2) from ft1 group by c2/2 order by c2/2;
+ ?column? | ?column? 
+----------+----------
+        0 |        0
+        1 |      500
+        2 |     1800
+        3 |     3900
+        4 |     6800
+(5 rows)
+
+-- Aggregates in subquery are pushed down.
+explain (verbose, costs off)
+select count(x.a), sum(x.a) from (select c2 a, sum(c1) b from ft1 group by c2, sqrt(c1) order by 1, 2) x;
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: count(ft1.c2), sum(ft1.c2)
+   ->  Sort
+         Output: ft1.c2, (sum(ft1.c1)), (sqrt((ft1.c1)::double precision))
+         Sort Key: ft1.c2, (sum(ft1.c1))
+         ->  Foreign Scan
+               Output: ft1.c2, (sum(ft1.c1)), (sqrt((ft1.c1)::double precision))
+               Relations: Aggregate on (public.ft1)
+               Remote SQL: SELECT c2, sum("C 1"), sqrt("C 1") FROM "S 1"."T 1" GROUP BY c2, (sqrt("C 1"))
+(9 rows)
+
+select count(x.a), sum(x.a) from (select c2 a, sum(c1) b from ft1 group by c2, sqrt(c1) order by 1, 2) x;
+ count | sum  
+-------+------
+  1000 | 4500
+(1 row)
+
+-- Aggregate is still pushed down by taking unshippable expression out
+explain (verbose, costs off)
+select c2 * (random() <= 1)::int as sum1, sum(c1) * c2 as sum2 from ft1 group by c2 order by 1, 2;
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Sort
+   Output: ((c2 * ((random() <= '1'::double precision))::integer)), ((sum(c1) * c2)), c2
+   Sort Key: ((ft1.c2 * ((random() <= '1'::double precision))::integer)), ((sum(ft1.c1) * ft1.c2))
+   ->  Foreign Scan
+         Output: (c2 * ((random() <= '1'::double precision))::integer), ((sum(c1) * c2)), c2
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT (sum("C 1") * c2), c2 FROM "S 1"."T 1" GROUP BY c2
+(7 rows)
+
+select c2 * (random() <= 1)::int as sum1, sum(c1) * c2 as sum2 from ft1 group by c2 order by 1, 2;
+ sum1 |  sum2  
+------+--------
+    0 |      0
+    1 |  49600
+    2 |  99400
+    3 | 149400
+    4 | 199600
+    5 | 250000
+    6 | 300600
+    7 | 351400
+    8 | 402400
+    9 | 453600
+(10 rows)
+
+-- Aggregate with unshippable GROUP BY clause are not pushed
+explain (verbose, costs off)
+select c2 * (random() <= 1)::int as c2 from ft2 group by c2 * (random() <= 1)::int order by 1;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Sort
+   Output: ((c2 * ((random() <= '1'::double precision))::integer))
+   Sort Key: ((ft2.c2 * ((random() <= '1'::double precision))::integer))
+   ->  HashAggregate
+         Output: ((c2 * ((random() <= '1'::double precision))::integer))
+         Group Key: (ft2.c2 * ((random() <= '1'::double precision))::integer)
+         ->  Foreign Scan on public.ft2
+               Output: (c2 * ((random() <= '1'::double precision))::integer)
+               Remote SQL: SELECT c2 FROM "S 1"."T 1"
+(9 rows)
+
+-- GROUP BY clause in various forms, cardinal, alias and constant expression
+explain (verbose, costs off)
+select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (count(c2)), c2, (5), (7.0), (9)
+   Sort Key: ft1.c2
+   ->  Foreign Scan
+         Output: (count(c2)), c2, (5), (7.0), (9)
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT count(c2), c2, 5, 7.0, 9 FROM "S 1"."T 1" GROUP BY c2, 5::integer, 9::integer
+(7 rows)
+
+select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
+  w  | x | y |  z  
+-----+---+---+-----
+ 100 | 0 | 5 | 7.0
+ 100 | 1 | 5 | 7.0
+ 100 | 2 | 5 | 7.0
+ 100 | 3 | 5 | 7.0
+ 100 | 4 | 5 | 7.0
+ 100 | 5 | 5 | 7.0
+ 100 | 6 | 5 | 7.0
+ 100 | 7 | 5 | 7.0
+ 100 | 8 | 5 | 7.0
+ 100 | 9 | 5 | 7.0
+(10 rows)
+
+-- Testing HAVING clause shippability
+explain (verbose, costs off)
+select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800 order by c2;
+                                                               QUERY PLAN                                                               
+----------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, (sum(c1))
+   Sort Key: ft2.c2
+   ->  Foreign Scan
+         Output: c2, (sum(c1))
+         Relations: Aggregate on (public.ft2)
+         Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY c2 HAVING ((avg("C 1") < 500::numeric)) AND ((sum("C 1") < 49800))
+(7 rows)
+
+select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800 order by c2;
+ c2 |  sum  
+----+-------
+  1 | 49600
+  2 | 49700
+(2 rows)
+
+-- Using expressions in HAVING clause
+explain (verbose, costs off)
+select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: c5, (count(c2)), (sqrt((c2)::double precision))
+   Sort Key: ft1.c5, (count(ft1.c2))
+   ->  Foreign Scan
+         Output: c5, (count(c2)), (sqrt((c2)::double precision))
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT c5, count(c2), sqrt(c2) FROM "S 1"."T 1" GROUP BY c5, (sqrt(c2)) HAVING ((sqrt(max(c2)) = 1.41421356237309515::double precision))
+(7 rows)
+
+select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
+            c5            | count 
+--------------------------+-------
+ Sat Jan 03 00:00:00 1970 |    10
+ Tue Jan 13 00:00:00 1970 |    10
+ Fri Jan 23 00:00:00 1970 |    10
+ Mon Feb 02 00:00:00 1970 |    10
+ Thu Feb 12 00:00:00 1970 |    10
+ Sun Feb 22 00:00:00 1970 |    10
+ Wed Mar 04 00:00:00 1970 |    10
+ Sat Mar 14 00:00:00 1970 |    10
+ Tue Mar 24 00:00:00 1970 |    10
+ Fri Apr 03 00:00:00 1970 |    10
+(10 rows)
+
+-- Unshippable HAVING clause will be evaluated locally, and other qual in HAVING clause is pushed down
+explain (verbose, costs off)
+select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having (avg(c1) / avg(c1)) * random() <= 1 and avg(c1) < 500) x;
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Foreign Scan
+         Output: ft1.c5, (NULL::bigint), (sqrt((ft1.c2)::double precision))
+         Filter: (((((avg(ft1.c1)) / (avg(ft1.c1))))::double precision * random()) <= '1'::double precision)
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT c5, NULL::bigint, sqrt(c2), avg("C 1") FROM "S 1"."T 1" GROUP BY c5, (sqrt(c2)) HAVING ((avg("C 1") < 500::numeric))
+(7 rows)
+
+select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having (avg(c1) / avg(c1)) * random() <= 1 and avg(c1) < 500) x;
+ count 
+-------
+    49
+(1 row)
+
+-- Aggregate in HAVING clause is not pushable, and thus aggregation is not pushed down
+explain (verbose, costs off)
+select sum(c1) from ft1 group by c2 having avg(c1 * (random() <= 1)::int) > 100 order by 1;
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Sort
+   Output: (sum(c1)), c2
+   Sort Key: (sum(ft1.c1))
+   ->  HashAggregate
+         Output: sum(c1), c2
+         Group Key: ft1.c2
+         Filter: (avg((ft1.c1 * ((random() <= '1'::double precision))::integer)) > '100'::numeric)
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
+(10 rows)
+
+-- Testing ORDER BY, DISTINCT, FILTER, Ordered-sets and VARIADIC within aggregates
+-- ORDER BY within aggregate, same column used to order
+explain (verbose, costs off)
+select array_agg(c1 order by c1) from ft1 where c1 < 100 group by c2 order by 1;
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (array_agg(c1 ORDER BY c1)), c2
+   Sort Key: (array_agg(ft1.c1 ORDER BY ft1.c1))
+   ->  Foreign Scan
+         Output: (array_agg(c1 ORDER BY c1)), c2
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT array_agg("C 1" ORDER BY "C 1" ASC NULLS LAST), c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) GROUP BY c2
+(7 rows)
+
+select array_agg(c1 order by c1) from ft1 where c1 < 100 group by c2 order by 1;
+           array_agg            
+--------------------------------
+ {1,11,21,31,41,51,61,71,81,91}
+ {2,12,22,32,42,52,62,72,82,92}
+ {3,13,23,33,43,53,63,73,83,93}
+ {4,14,24,34,44,54,64,74,84,94}
+ {5,15,25,35,45,55,65,75,85,95}
+ {6,16,26,36,46,56,66,76,86,96}
+ {7,17,27,37,47,57,67,77,87,97}
+ {8,18,28,38,48,58,68,78,88,98}
+ {9,19,29,39,49,59,69,79,89,99}
+ {10,20,30,40,50,60,70,80,90}
+(10 rows)
+
+-- ORDER BY within aggregate, different column used to order also using DESC
+explain (verbose, costs off)
+select array_agg(c5 order by c1 desc) from ft2 where c2 = 6 and c1 < 50;
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (array_agg(c5 ORDER BY c1 DESC))
+   Relations: Aggregate on (public.ft2)
+   Remote SQL: SELECT array_agg(c5 ORDER BY "C 1" DESC NULLS FIRST) FROM "S 1"."T 1" WHERE (("C 1" < 50)) AND ((c2 = 6))
+(4 rows)
+
+select array_agg(c5 order by c1 desc) from ft2 where c2 = 6 and c1 < 50;
+                                                                array_agg                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------
+ {"Mon Feb 16 00:00:00 1970","Fri Feb 06 00:00:00 1970","Tue Jan 27 00:00:00 1970","Sat Jan 17 00:00:00 1970","Wed Jan 07 00:00:00 1970"}
+(1 row)
+
+-- DISTINCT within aggregate
+explain (verbose, costs off)
+select array_agg(distinct (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+                                                                                                            QUERY PLAN                                                                                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (array_agg(DISTINCT (t1.c1 % 5))), ((t2.c1 % 3))
+   Sort Key: (array_agg(DISTINCT (t1.c1 % 5)))
+   ->  Foreign Scan
+         Output: (array_agg(DISTINCT (t1.c1 % 5))), ((t2.c1 % 3))
+         Relations: Aggregate on ((public.ft4 t1) FULL JOIN (public.ft5 t2))
+         Remote SQL: SELECT array_agg(DISTINCT (r1.c1 % 5)), (r2.c1 % 3) FROM ("S 1"."T 3" r1 FULL JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) WHERE (((r1.c1 < 20) OR ((r1.c1 IS NULL) AND (r2.c1 < 5)))) GROUP BY ((r2.c1 % 3))
+(7 rows)
+
+select array_agg(distinct (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+  array_agg   
+--------------
+ {0,1,2,3,4}
+ {1,2,3,NULL}
+(2 rows)
+
+-- DISTINCT combined with ORDER BY within aggregate
+explain (verbose, costs off)
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+                                                                                                                               QUERY PLAN                                                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (array_agg(DISTINCT (t1.c1 % 5) ORDER BY (t1.c1 % 5))), ((t2.c1 % 3))
+   Sort Key: (array_agg(DISTINCT (t1.c1 % 5) ORDER BY (t1.c1 % 5)))
+   ->  Foreign Scan
+         Output: (array_agg(DISTINCT (t1.c1 % 5) ORDER BY (t1.c1 % 5))), ((t2.c1 % 3))
+         Relations: Aggregate on ((public.ft4 t1) FULL JOIN (public.ft5 t2))
+         Remote SQL: SELECT array_agg(DISTINCT (r1.c1 % 5) ORDER BY ((r1.c1 % 5)) ASC NULLS LAST), (r2.c1 % 3) FROM ("S 1"."T 3" r1 FULL JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) WHERE (((r1.c1 < 20) OR ((r1.c1 IS NULL) AND (r2.c1 < 5)))) GROUP BY ((r2.c1 % 3))
+(7 rows)
+
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+  array_agg   
+--------------
+ {0,1,2,3,4}
+ {1,2,3,NULL}
+(2 rows)
+
+explain (verbose, costs off)
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5 desc nulls last) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+                                                                                                                               QUERY PLAN                                                                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (array_agg(DISTINCT (t1.c1 % 5) ORDER BY (t1.c1 % 5) DESC NULLS LAST)), ((t2.c1 % 3))
+   Sort Key: (array_agg(DISTINCT (t1.c1 % 5) ORDER BY (t1.c1 % 5) DESC NULLS LAST))
+   ->  Foreign Scan
+         Output: (array_agg(DISTINCT (t1.c1 % 5) ORDER BY (t1.c1 % 5) DESC NULLS LAST)), ((t2.c1 % 3))
+         Relations: Aggregate on ((public.ft4 t1) FULL JOIN (public.ft5 t2))
+         Remote SQL: SELECT array_agg(DISTINCT (r1.c1 % 5) ORDER BY ((r1.c1 % 5)) DESC NULLS LAST), (r2.c1 % 3) FROM ("S 1"."T 3" r1 FULL JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) WHERE (((r1.c1 < 20) OR ((r1.c1 IS NULL) AND (r2.c1 < 5)))) GROUP BY ((r2.c1 % 3))
+(7 rows)
+
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5 desc nulls last) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+  array_agg   
+--------------
+ {3,2,1,NULL}
+ {4,3,2,1,0}
+(2 rows)
+
+-- FILTER within aggregate
+explain (verbose, costs off)
+select sum(c1) filter (where c1 < 100 and c2 > 5) from ft1 group by c2 order by 1 nulls last;
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (sum(c1) FILTER (WHERE ((c1 < 100) AND (c2 > 5)))), c2
+   Sort Key: (sum(ft1.c1) FILTER (WHERE ((ft1.c1 < 100) AND (ft1.c2 > 5))))
+   ->  Foreign Scan
+         Output: (sum(c1) FILTER (WHERE ((c1 < 100) AND (c2 > 5)))), c2
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT sum("C 1") FILTER (WHERE (("C 1" < 100) AND (c2 > 5))), c2 FROM "S 1"."T 1" GROUP BY c2
+(7 rows)
+
+select sum(c1) filter (where c1 < 100 and c2 > 5) from ft1 group by c2 order by 1 nulls last;
+ sum 
+-----
+ 510
+ 520
+ 530
+ 540
+    
+    
+    
+    
+    
+    
+(10 rows)
+
+-- DISTINCT, ORDER BY and FILTER within aggregate
+explain (verbose, costs off)
+select sum(c1%3), sum(distinct c1%3 order by c1%3) filter (where c1%3 < 2), c2 from ft1 where c2 = 6 group by c2;
+                                                                                        QUERY PLAN                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (sum((c1 % 3))), (sum(DISTINCT (c1 % 3) ORDER BY (c1 % 3)) FILTER (WHERE ((c1 % 3) < 2))), c2
+   Relations: Aggregate on (public.ft1)
+   Remote SQL: SELECT sum(("C 1" % 3)), sum(DISTINCT ("C 1" % 3) ORDER BY (("C 1" % 3)) ASC NULLS LAST) FILTER (WHERE (("C 1" % 3) < 2)), c2 FROM "S 1"."T 1" WHERE ((c2 = 6)) GROUP BY c2
+(4 rows)
+
+select sum(c1%3), sum(distinct c1%3 order by c1%3) filter (where c1%3 < 2), c2 from ft1 where c2 = 6 group by c2;
+ sum | sum | c2 
+-----+-----+----
+  99 |   1 |  6
+(1 row)
+
+-- Outer query is aggregation query
+explain (verbose, costs off)
+select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+                                              QUERY PLAN                                               
+-------------------------------------------------------------------------------------------------------
+ Unique
+   Output: ((SubPlan 1))
+   ->  Sort
+         Output: ((SubPlan 1))
+         Sort Key: ((SubPlan 1))
+         ->  Foreign Scan
+               Output: (SubPlan 1)
+               Relations: Aggregate on (public.ft2 t2)
+               Remote SQL: SELECT count(*) FILTER (WHERE ((c2 = 6) AND ("C 1" < 10))) FROM "S 1"."T 1"
+               SubPlan 1
+                 ->  Foreign Scan on public.ft1 t1
+                       Output: (count(*) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
+                       Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE (("C 1" = 6))
+(13 rows)
+
+select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+ count 
+-------
+     1
+(1 row)
+
+-- Inner query is aggregation query
+explain (verbose, costs off)
+select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique
+   Output: ((SubPlan 1))
+   ->  Sort
+         Output: ((SubPlan 1))
+         Sort Key: ((SubPlan 1))
+         ->  Foreign Scan on public.ft2 t2
+               Output: (SubPlan 1)
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
+               SubPlan 1
+                 ->  Foreign Scan
+                       Output: (count(t1.c1) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
+                       Relations: Aggregate on (public.ft1 t1)
+                       Remote SQL: SELECT count("C 1") FILTER (WHERE (($1::integer = 6) AND ($2::integer < 10))) FROM "S 1"."T 1" WHERE (("C 1" = 6))
+(13 rows)
+
+select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+ count 
+-------
+     0
+     1
+(2 rows)
+
+-- Aggregate not pushed down as FILTER condition is not pushable
+explain (verbose, costs off)
+select sum(c1) filter (where (c1 / c1) * random() <= 1) from ft1 group by c2 order by 1;
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (sum(c1) FILTER (WHERE ((((c1 / c1))::double precision * random()) <= '1'::double precision))), c2
+   Sort Key: (sum(ft1.c1) FILTER (WHERE ((((ft1.c1 / ft1.c1))::double precision * random()) <= '1'::double precision)))
+   ->  HashAggregate
+         Output: sum(c1) FILTER (WHERE ((((c1 / c1))::double precision * random()) <= '1'::double precision)), c2
+         Group Key: ft1.c2
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
+(9 rows)
+
+explain (verbose, costs off)
+select sum(c2) filter (where c2 in (select c2 from ft1 where c2 < 5)) from ft1;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Aggregate
+   Output: sum(ft1.c2) FILTER (WHERE (hashed SubPlan 1))
+   ->  Foreign Scan on public.ft1
+         Output: ft1.c2
+         Remote SQL: SELECT c2 FROM "S 1"."T 1"
+   SubPlan 1
+     ->  Foreign Scan on public.ft1 ft1_1
+           Output: ft1_1.c2
+           Remote SQL: SELECT c2 FROM "S 1"."T 1" WHERE ((c2 < 5))
+(9 rows)
+
+-- Ordered-sets within aggregate
+explain (verbose, costs off)
+select c2, rank('10'::varchar) within group (order by c6), percentile_cont(c2/10::numeric) within group (order by c1) from ft1 where c2 < 10 group by c2 having percentile_cont(c2/10::numeric) within group (order by c1) < 500 order by c2;
+                                                                                                                                                                           QUERY PLAN                                                                                                                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, (rank('10'::character varying) WITHIN GROUP (ORDER BY c6)), (percentile_cont((((c2)::numeric / '10'::numeric))::double precision) WITHIN GROUP (ORDER BY ((c1)::double precision)))
+   Sort Key: ft1.c2
+   ->  Foreign Scan
+         Output: c2, (rank('10'::character varying) WITHIN GROUP (ORDER BY c6)), (percentile_cont((((c2)::numeric / '10'::numeric))::double precision) WITHIN GROUP (ORDER BY ((c1)::double precision)))
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT c2, rank('10'::character varying) WITHIN GROUP (ORDER BY c6 ASC NULLS LAST), percentile_cont((c2 / 10::numeric)) WITHIN GROUP (ORDER BY ("C 1") ASC NULLS LAST) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY c2 HAVING ((percentile_cont((c2 / 10::numeric)) WITHIN GROUP (ORDER BY ("C 1") ASC NULLS LAST) < 500::double precision))
+(7 rows)
+
+select c2, rank('10'::varchar) within group (order by c6), percentile_cont(c2/10::numeric) within group (order by c1) from ft1 where c2 < 10 group by c2 having percentile_cont(c2/10::numeric) within group (order by c1) < 500 order by c2;
+ c2 | rank | percentile_cont 
+----+------+-----------------
+  0 |  101 |              10
+  1 |  101 |             100
+  2 |    1 |             200
+  3 |    1 |             300
+  4 |    1 |             400
+(5 rows)
+
+-- Using multiple arguments within aggregates
+explain (verbose, costs off)
+select c1, rank(c1, c2) within group (order by c1, c2) from ft1 group by c1, c2 having c1 = 6 order by 1;
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: c1, (rank(c1, c2) WITHIN GROUP (ORDER BY c1, c2)), c2
+   Relations: Aggregate on (public.ft1)
+   Remote SQL: SELECT "C 1", rank("C 1", c2) WITHIN GROUP (ORDER BY "C 1" ASC NULLS LAST, c2 ASC NULLS LAST), c2 FROM "S 1"."T 1" WHERE (("C 1" = 6)) GROUP BY "C 1", c2
+(4 rows)
+
+select c1, rank(c1, c2) within group (order by c1, c2) from ft1 group by c1, c2 having c1 = 6 order by 1;
+ c1 | rank 
+----+------
+  6 |    1
+(1 row)
+
+-- User defined function for user defined aggregate, VARIADIC
+create function least_accum(anyelement, variadic anyarray)
+returns anyelement language sql as
+  'select least($1, min($2[i])) from generate_subscripts($2,1) g(i)';
+create aggregate least_agg(variadic items anyarray) (
+  stype = anyelement, sfunc = least_accum
+);
+-- Not pushed down due to user defined aggregate
+explain (verbose, costs off)
+select c2, least_agg(c1) from ft1 group by c2 order by c2;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Output: c2, (least_agg(VARIADIC ARRAY[c1]))
+   Sort Key: ft1.c2
+   ->  HashAggregate
+         Output: c2, least_agg(VARIADIC ARRAY[c1])
+         Group Key: ft1.c2
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
+(9 rows)
+
+-- Add function and aggregate into extension
+alter extension postgres_fdw add function least_accum(anyelement, variadic anyarray);
+alter extension postgres_fdw add aggregate least_agg(variadic items anyarray);
+alter server loopback options (set extensions 'postgres_fdw');
+-- Now aggregate will be pushed.  Aggregate will display VARIADIC argument.
+explain (verbose, costs off)
+select c2, least_agg(c1) from ft1 where c2 < 100 group by c2 order by c2;
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, (least_agg(VARIADIC ARRAY[c1]))
+   Sort Key: ft1.c2
+   ->  Foreign Scan
+         Output: c2, (least_agg(VARIADIC ARRAY[c1]))
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT c2, public.least_agg(VARIADIC ARRAY["C 1"]) FROM "S 1"."T 1" WHERE ((c2 < 100)) GROUP BY c2
+(7 rows)
+
+select c2, least_agg(c1) from ft1 where c2 < 100 group by c2 order by c2;
+ c2 | least_agg 
+----+-----------
+  0 |        10
+  1 |         1
+  2 |         2
+  3 |         3
+  4 |         4
+  5 |         5
+  6 |         6
+  7 |         7
+  8 |         8
+  9 |         9
+(10 rows)
+
+-- Remove function and aggregate from extension
+alter extension postgres_fdw drop function least_accum(anyelement, variadic anyarray);
+alter extension postgres_fdw drop aggregate least_agg(variadic items anyarray);
+alter server loopback options (set extensions 'postgres_fdw');
+-- Not pushed down as we have dropped objects from extension.
+explain (verbose, costs off)
+select c2, least_agg(c1) from ft1 group by c2 order by c2;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Output: c2, (least_agg(VARIADIC ARRAY[c1]))
+   Sort Key: ft1.c2
+   ->  HashAggregate
+         Output: c2, least_agg(VARIADIC ARRAY[c1])
+         Group Key: ft1.c2
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
+(9 rows)
+
+-- Cleanup
+drop aggregate least_agg(variadic items anyarray);
+drop function least_accum(anyelement, variadic anyarray);
+-- Testing USING OPERATOR() in ORDER BY within aggregate.
+-- For this, we need user defined operators along with operator family and
+-- operator class.  Create those and then add them in extension.  Note that
+-- user defined objects are considered unshippable unless they are part of
+-- the extension.
+create operator public.<^ (
+ leftarg = int4,
+ rightarg = int4,
+ procedure = int4eq
+);
+create operator public.=^ (
+ leftarg = int4,
+ rightarg = int4,
+ procedure = int4lt
+);
+create operator public.>^ (
+ leftarg = int4,
+ rightarg = int4,
+ procedure = int4gt
+);
+create operator family my_op_family using btree;
+create function my_op_cmp(a int, b int) returns int as
+  $$begin return btint4cmp(a, b); end $$ language plpgsql;
+create operator class my_op_class for type int using btree family my_op_family as
+ operator 1 public.<^,
+ operator 3 public.=^,
+ operator 5 public.>^,
+ function 1 my_op_cmp(int, int);
+-- This will not be pushed as user defined sort operator is not part of the
+-- extension yet.
+explain (verbose, costs off)
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ GroupAggregate
+   Output: array_agg(c1 ORDER BY c1 USING <^ NULLS LAST), c2
+   Group Key: ft2.c2
+   ->  Foreign Scan on public.ft2
+         Output: c2, c1
+         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
+(6 rows)
+
+-- Add into extension
+alter extension postgres_fdw add operator class my_op_class using btree;
+alter extension postgres_fdw add function my_op_cmp(a int, b int);
+alter extension postgres_fdw add operator family my_op_family using btree;
+alter extension postgres_fdw add operator public.<^(int, int);
+alter extension postgres_fdw add operator public.=^(int, int);
+alter extension postgres_fdw add operator public.>^(int, int);
+alter server loopback options (set extensions 'postgres_fdw');
+-- Now this will be pushed as sort operator is part of the extension.
+explain (verbose, costs off)
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+                                                                           QUERY PLAN                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (array_agg(c1 ORDER BY c1 USING <^ NULLS LAST)), c2
+   Relations: Aggregate on (public.ft2)
+   Remote SQL: SELECT array_agg("C 1" ORDER BY "C 1" USING OPERATOR(public.<^) NULLS LAST), c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6)) GROUP BY c2
+(4 rows)
+
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+           array_agg            
+--------------------------------
+ {6,16,26,36,46,56,66,76,86,96}
+(1 row)
+
+-- Remove from extension
+alter extension postgres_fdw drop operator class my_op_class using btree;
+alter extension postgres_fdw drop function my_op_cmp(a int, b int);
+alter extension postgres_fdw drop operator family my_op_family using btree;
+alter extension postgres_fdw drop operator public.<^(int, int);
+alter extension postgres_fdw drop operator public.=^(int, int);
+alter extension postgres_fdw drop operator public.>^(int, int);
+alter server loopback options (set extensions 'postgres_fdw');
+-- This will not be pushed as sort operator is now removed from the extension.
+explain (verbose, costs off)
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ GroupAggregate
+   Output: array_agg(c1 ORDER BY c1 USING <^ NULLS LAST), c2
+   Group Key: ft2.c2
+   ->  Foreign Scan on public.ft2
+         Output: c2, c1
+         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
+(6 rows)
+
+-- Cleanup
+drop operator class my_op_class using btree;
+drop function my_op_cmp(a int, b int);
+drop operator family my_op_family using btree;
+drop operator public.>^(int, int);
+drop operator public.=^(int, int);
+drop operator public.<^(int, int);
+-- Input relation to aggregate push down hook is not safe to pushdown and thus
+-- the aggregate cannot be pushed down to foreign server.
+explain (verbose, costs off)
+select count(t1.c3) from ft1 t1, ft1 t2 where t1.c1 = postgres_fdw_abs(t1.c2);
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: count(t1.c3)
+   ->  Nested Loop
+         Output: t1.c3
+         ->  Foreign Scan on public.ft1 t2
+               Remote SQL: SELECT NULL FROM "S 1"."T 1"
+         ->  Materialize
+               Output: t1.c3
+               ->  Foreign Scan on public.ft1 t1
+                     Output: t1.c3
+                     Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = public.postgres_fdw_abs(c2)))
+(11 rows)
+
+-- Subquery in FROM clause having aggregate
+explain (verbose, costs off)
+select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Sort
+   Output: (count(*)), x.b
+   Sort Key: (count(*)), x.b
+   ->  HashAggregate
+         Output: count(*), x.b
+         Group Key: x.b
+         ->  Hash Join
+               Output: x.b
+               Hash Cond: (ft1.c2 = x.a)
+               ->  Foreign Scan on public.ft1
+                     Output: ft1.c2
+                     Remote SQL: SELECT c2 FROM "S 1"."T 1"
+               ->  Hash
+                     Output: x.b, x.a
+                     ->  Subquery Scan on x
+                           Output: x.b, x.a
+                           ->  Foreign Scan
+                                 Output: ft1_1.c2, (sum(ft1_1.c1))
+                                 Relations: Aggregate on (public.ft1)
+                                 Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY c2
+(20 rows)
+
+select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
+ count |   b   
+-------+-------
+   100 | 49600
+   100 | 49700
+   100 | 49800
+   100 | 49900
+   100 | 50000
+   100 | 50100
+   100 | 50200
+   100 | 50300
+   100 | 50400
+   100 | 50500
+(10 rows)
+
+-- FULL join with IS NULL check in HAVING
+explain (verbose, costs off)
+select avg(t1.c1), sum(t2.c1) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) group by t2.c1 having (avg(t1.c1) is null and sum(t2.c1) < 10) or sum(t2.c1) is null order by 1 nulls last, 2;
+                                                                                                          QUERY PLAN                                                                                                           
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: (avg(t1.c1)), (sum(t2.c1)), t2.c1
+   Sort Key: (avg(t1.c1)), (sum(t2.c1))
+   ->  Foreign Scan
+         Output: (avg(t1.c1)), (sum(t2.c1)), t2.c1
+         Relations: Aggregate on ((public.ft4 t1) FULL JOIN (public.ft5 t2))
+         Remote SQL: SELECT avg(r1.c1), sum(r2.c1), r2.c1 FROM ("S 1"."T 3" r1 FULL JOIN "S 1"."T 4" r2 ON (((r1.c1 = r2.c1)))) GROUP BY r2.c1 HAVING ((((avg(r1.c1) IS NULL) AND (sum(r2.c1) < 10)) OR (sum(r2.c1) IS NULL)))
+(7 rows)
+
+select avg(t1.c1), sum(t2.c1) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) group by t2.c1 having (avg(t1.c1) is null and sum(t2.c1) < 10) or sum(t2.c1) is null order by 1 nulls last, 2;
+         avg         | sum 
+---------------------+-----
+ 51.0000000000000000 |    
+                     |   3
+                     |   9
+(3 rows)
+
+-- ORDER BY expression is part of the target list but not pushed down to
+-- foreign server.
+explain (verbose, costs off)
+select sum(c2) * (random() <= 1)::int as sum from ft1 order by 1;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Sort
+   Output: (((sum(c2)) * ((random() <= '1'::double precision))::integer))
+   Sort Key: (((sum(ft1.c2)) * ((random() <= '1'::double precision))::integer))
+   ->  Foreign Scan
+         Output: ((sum(c2)) * ((random() <= '1'::double precision))::integer)
+         Relations: Aggregate on (public.ft1)
+         Remote SQL: SELECT sum(c2) FROM "S 1"."T 1"
+(7 rows)
+
+select sum(c2) * (random() <= 1)::int as sum from ft1 order by 1;
+ sum  
+------
+ 4500
+(1 row)
+
+-- LATERAL join, with parameterization
+set enable_hashagg to false;
+explain (verbose, costs off)
+select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 10 order by 1;
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Sort
+   Output: t1.c2, qry.sum
+   Sort Key: t1.c2
+   ->  Nested Loop
+         Output: t1.c2, qry.sum
+         ->  Seq Scan on "S 1"."T 1" t1
+               Output: t1."C 1", t1.c2, t1.c3, t1.c4, t1.c5, t1.c6, t1.c7, t1.c8
+               Filter: (t1.c2 < 10)
+         ->  Subquery Scan on qry
+               Output: qry.sum, t2.c1
+               Filter: ((t1.c2 * 2) = qry.sum)
+               ->  Foreign Scan
+                     Output: (sum((t2.c1 + t1."C 1"))), t2.c1
+                     Relations: Aggregate on (public.ft2 t2)
+                     Remote SQL: SELECT sum(("C 1" + $1::integer)), "C 1" FROM "S 1"."T 1" GROUP BY "C 1"
+(15 rows)
+
+select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 10 order by 1;
+ c2 | sum 
+----+-----
+  1 |   2
+  2 |   4
+  3 |   6
+  4 |   8
+  5 |  10
+  6 |  12
+  7 |  14
+  8 |  16
+  9 |  18
+(9 rows)
+
+reset enable_hashagg;
+-- Check with placeHolderVars
+explain (verbose, costs off)
+select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
+                                                                                         QUERY PLAN                                                                                         
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: q.b, (count(ft4.c1)), (sum(q.a))
+   Sort Key: q.b, (count(ft4.c1))
+   ->  GroupAggregate
+         Output: q.b, count(ft4.c1), sum(q.a)
+         Group Key: q.b
+         ->  Sort
+               Output: q.b, ft4.c1, q.a
+               Sort Key: q.b
+               ->  Hash Left Join
+                     Output: q.b, ft4.c1, q.a
+                     Hash Cond: ((ft4.c1)::numeric = q.b)
+                     ->  Foreign Scan on public.ft4
+                           Output: ft4.c1, ft4.c2, ft4.c3
+                           Remote SQL: SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 10)) AND ((c1 <= 15))
+                     ->  Hash
+                           Output: q.b, q.a
+                           ->  Subquery Scan on q
+                                 Output: q.b, q.a
+                                 ->  Foreign Scan
+                                       Output: (min(13)), (avg(ft1.c1)), (NULL::bigint)
+                                       Relations: Aggregate on ((public.ft1) INNER JOIN (public.ft2))
+                                       Remote SQL: SELECT min(13), avg(r1."C 1"), NULL::bigint FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r2."C 1" = 12)) AND ((r1."C 1" = 12))))
+(23 rows)
+
+select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
+          b          | count | sum 
+---------------------+-------+-----
+ 12.0000000000000000 |     1 |  13
+                     |     2 |    
+(2 rows)
+
+-- Not supported cases
+-- Grouping sets
+explain (verbose, costs off)
+select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls last;
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ GroupAggregate
+   Output: c2, sum(c1)
+   Group Key: ft1.c2
+   Group Key: ()
+   ->  Foreign Scan on public.ft1
+         Output: c2, c1
+         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3)) ORDER BY c2 ASC NULLS LAST
+(7 rows)
+
+select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls last;
+ c2 |  sum   
+----+--------
+  0 |  50500
+  1 |  49600
+  2 |  49700
+    | 149800
+(4 rows)
+
+explain (verbose, costs off)
+select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last;
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ GroupAggregate
+   Output: c2, sum(c1)
+   Group Key: ft1.c2
+   Group Key: ()
+   ->  Foreign Scan on public.ft1
+         Output: c2, c1
+         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3)) ORDER BY c2 ASC NULLS LAST
+(7 rows)
+
+select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last;
+ c2 |  sum   
+----+--------
+  0 |  50500
+  1 |  49600
+  2 |  49700
+    | 149800
+(4 rows)
+
+explain (verbose, costs off)
+select c2, c6, sum(c1) from ft1 where c2 < 3 group by grouping sets(c2, c6) order by 1 nulls last, 2 nulls last;
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, c6, (sum(c1))
+   Sort Key: ft1.c2, ft1.c6
+   ->  GroupAggregate
+         Output: c2, c6, sum(c1)
+         Group Key: ft1.c2
+         Sort Key: ft1.c6
+           Group Key: ft1.c6
+         ->  Foreign Scan on public.ft1
+               Output: c2, c6, c1
+               Remote SQL: SELECT "C 1", c2, c6 FROM "S 1"."T 1" WHERE ((c2 < 3)) ORDER BY c2 ASC NULLS LAST
+(11 rows)
+
+select c2, c6, sum(c1) from ft1 where c2 < 3 group by grouping sets(c2, c6) order by 1 nulls last, 2 nulls last;
+ c2 | c6 |  sum  
+----+----+-------
+  0 |    | 50500
+  1 |    | 49600
+  2 |    | 49700
+    | 0  | 50500
+    | 1  | 49600
+    | 2  | 49700
+(6 rows)
+
+explain (verbose, costs off)
+select c2, sum(c1), grouping(c2) from ft1 where c2 < 3 group by c2 order by 1 nulls last;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Sort
+   Output: c2, (sum(c1)), (GROUPING(c2))
+   Sort Key: ft1.c2
+   ->  HashAggregate
+         Output: c2, sum(c1), GROUPING(c2)
+         Group Key: ft1.c2
+         ->  Foreign Scan on public.ft1
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE ((c2 < 3))
+(9 rows)
+
+select c2, sum(c1), grouping(c2) from ft1 where c2 < 3 group by c2 order by 1 nulls last;
+ c2 |  sum  | grouping 
+----+-------+----------
+  0 | 50500 |        0
+  1 | 49600 |        0
+  2 | 49700 |        0
+(3 rows)
+
+-- DISTINCT itself is not pushed down, whereas underneath aggregate is pushed
+explain (verbose, costs off)
+select distinct sum(c1)/1000 s from ft2 where c2 < 6 group by c2 order by 1;
+                                               QUERY PLAN                                               
+--------------------------------------------------------------------------------------------------------
+ Unique
+   Output: ((sum(c1) / 1000)), c2
+   ->  Sort
+         Output: ((sum(c1) / 1000)), c2
+         Sort Key: ((sum(ft2.c1) / 1000))
+         ->  Foreign Scan
+               Output: ((sum(c1) / 1000)), c2
+               Relations: Aggregate on (public.ft2)
+               Remote SQL: SELECT (sum("C 1") / 1000), c2 FROM "S 1"."T 1" WHERE ((c2 < 6)) GROUP BY c2
+(9 rows)
+
+select distinct sum(c1)/1000 s from ft2 where c2 < 6 group by c2 order by 1;
+ s  
+----
+ 49
+ 50
+(2 rows)
+
+-- WindowAgg
+explain (verbose, costs off)
+select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 group by c2 order by 1;
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, (sum(c2)), (count(c2) OVER (?)), ((c2 % 2))
+   Sort Key: ft2.c2
+   ->  WindowAgg
+         Output: c2, (sum(c2)), count(c2) OVER (?), ((c2 % 2))
+         ->  Sort
+               Output: c2, ((c2 % 2)), (sum(c2))
+               Sort Key: ((ft2.c2 % 2))
+               ->  Foreign Scan
+                     Output: c2, ((c2 % 2)), (sum(c2))
+                     Relations: Aggregate on (public.ft2)
+                     Remote SQL: SELECT c2, (c2 % 2), sum(c2) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY c2
+(12 rows)
+
+select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 group by c2 order by 1;
+ c2 | sum | count 
+----+-----+-------
+  0 |   0 |     5
+  1 | 100 |     5
+  2 | 200 |     5
+  3 | 300 |     5
+  4 | 400 |     5
+  5 | 500 |     5
+  6 | 600 |     5
+  7 | 700 |     5
+  8 | 800 |     5
+  9 | 900 |     5
+(10 rows)
+
+explain (verbose, costs off)
+select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 where c2 < 10 group by c2 order by 1;
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, (array_agg(c2) OVER (?)), ((c2 % 2))
+   Sort Key: ft1.c2
+   ->  WindowAgg
+         Output: c2, array_agg(c2) OVER (?), ((c2 % 2))
+         ->  Sort
+               Output: c2, ((c2 % 2))
+               Sort Key: ((ft1.c2 % 2)), ft1.c2 DESC
+               ->  Foreign Scan
+                     Output: c2, ((c2 % 2))
+                     Relations: Aggregate on (public.ft1)
+                     Remote SQL: SELECT c2, (c2 % 2) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY c2
+(12 rows)
+
+select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 where c2 < 10 group by c2 order by 1;
+ c2 |  array_agg  
+----+-------------
+  0 | {8,6,4,2,0}
+  1 | {9,7,5,3,1}
+  2 | {8,6,4,2}
+  3 | {9,7,5,3}
+  4 | {8,6,4}
+  5 | {9,7,5}
+  6 | {8,6}
+  7 | {9,7}
+  8 | {8}
+  9 | {9}
+(10 rows)
+
+explain (verbose, costs off)
+select c2, array_agg(c2) over (partition by c2%2 order by c2 range between current row and unbounded following) from ft1 where c2 < 10 group by c2 order by 1;
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Sort
+   Output: c2, (array_agg(c2) OVER (?)), ((c2 % 2))
+   Sort Key: ft1.c2
+   ->  WindowAgg
+         Output: c2, array_agg(c2) OVER (?), ((c2 % 2))
+         ->  Sort
+               Output: c2, ((c2 % 2))
+               Sort Key: ((ft1.c2 % 2)), ft1.c2
+               ->  Foreign Scan
+                     Output: c2, ((c2 % 2))
+                     Relations: Aggregate on (public.ft1)
+                     Remote SQL: SELECT c2, (c2 % 2) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY c2
+(12 rows)
+
+select c2, array_agg(c2) over (partition by c2%2 order by c2 range between current row and unbounded following) from ft1 where c2 < 10 group by c2 order by 1;
+ c2 |  array_agg  
+----+-------------
+  0 | {0,2,4,6,8}
+  1 | {1,3,5,7,9}
+  2 | {2,4,6,8}
+  3 | {3,5,7,9}
+  4 | {4,6,8}
+  5 | {5,7,9}
+  6 | {6,8}
+  7 | {7,9}
+  8 | {8}
+  9 | {9}
+(10 rows)
+
+-- ===================================================================
 -- parameterized queries
 -- ===================================================================
 -- simple join
@@ -2608,6 +3736,9 @@ CONTEXT:  column "c8" of foreign table "ft1"
 SELECT  ft1.c1,  ft2.c2, ft1 FROM ft1, ft2 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = 1; -- ERROR
 ERROR:  invalid input syntax for integer: "foo"
 CONTEXT:  whole-row reference to foreign table "ft1"
+SELECT sum(c2), array_agg(c8) FROM ft1 GROUP BY c8; -- ERROR
+ERROR:  invalid input syntax for integer: "foo"
+CONTEXT:  processing expression at position 2 in select list
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE user_enum;
 -- ===================================================================
 -- subtransaction
@@ -4441,12 +5572,12 @@ SELECT * FROM ft1 ORDER BY c6 ASC NULLS FIRST, c1 OFFSET 15 LIMIT 10;
 -- Consistent check constraints provide consistent results
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2positive CHECK (c2 >= 0);
 EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 < 0;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Aggregate
-   Output: count(*)
-   ->  Foreign Scan on public.ft1
-         Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE ((c2 < 0))
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Foreign Scan
+   Output: (count(*))
+   Relations: Aggregate on (public.ft1)
+   Remote SQL: SELECT count(*) FROM "S 1"."T 1" WHERE ((c2 < 0))
 (4 rows)
 
 SELECT count(*) FROM ft1 WHERE c2 < 0;
@@ -4485,12 +5616,12 @@ ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c2positive;
 -- But inconsistent check constraints provide inconsistent results
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c2negative CHECK (c2 < 0);
 EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 >= 0;
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Aggregate
-   Output: count(*)
-   ->  Foreign Scan on public.ft1
-         Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE ((c2 >= 0))
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(*))
+   Relations: Aggregate on (public.ft1)
+   Remote SQL: SELECT count(*) FROM "S 1"."T 1" WHERE ((c2 >= 0))
 (4 rows)
 
 SELECT count(*) FROM ft1 WHERE c2 >= 0;

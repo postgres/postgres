@@ -541,6 +541,310 @@ ALTER VIEW v4 OWNER TO regress_view_owner;
 DROP OWNED BY regress_view_owner;
 DROP ROLE regress_view_owner;
 
+
+-- ===================================================================
+-- Aggregate and grouping queries
+-- ===================================================================
+
+-- Simple aggregates
+explain (verbose, costs off)
+select count(c6), sum(c1), avg(c1), min(c2), max(c1), stddev(c2), sum(c1) * (random() <= 1)::int as sum2 from ft1 where c2 < 5 group by c2 order by 1, 2;
+select count(c6), sum(c1), avg(c1), min(c2), max(c1), stddev(c2), sum(c1) * (random() <= 1)::int as sum2 from ft1 where c2 < 5 group by c2 order by 1, 2;
+
+-- Aggregate is not pushed down as aggregation contains random()
+explain (verbose, costs off)
+select sum(c1 * (random() <= 1)::int) as sum, avg(c1) from ft1;
+
+-- Aggregate over join query
+explain (verbose, costs off)
+select count(*), sum(t1.c1), avg(t2.c1) from ft1 t1 inner join ft1 t2 on (t1.c2 = t2.c2) where t1.c2 = 6;
+select count(*), sum(t1.c1), avg(t2.c1) from ft1 t1 inner join ft1 t2 on (t1.c2 = t2.c2) where t1.c2 = 6;
+
+-- Not pushed down due to local conditions present in underneath input rel
+explain (verbose, costs off)
+select sum(t1.c1), count(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c1 = t2.c1) where ((t1.c1 * t2.c1)/(t1.c1 * t2.c1)) * random() <= 1;
+
+-- GROUP BY clause having expressions
+explain (verbose, costs off)
+select c2/2, sum(c2) * (c2/2) from ft1 group by c2/2 order by c2/2;
+select c2/2, sum(c2) * (c2/2) from ft1 group by c2/2 order by c2/2;
+
+-- Aggregates in subquery are pushed down.
+explain (verbose, costs off)
+select count(x.a), sum(x.a) from (select c2 a, sum(c1) b from ft1 group by c2, sqrt(c1) order by 1, 2) x;
+select count(x.a), sum(x.a) from (select c2 a, sum(c1) b from ft1 group by c2, sqrt(c1) order by 1, 2) x;
+
+-- Aggregate is still pushed down by taking unshippable expression out
+explain (verbose, costs off)
+select c2 * (random() <= 1)::int as sum1, sum(c1) * c2 as sum2 from ft1 group by c2 order by 1, 2;
+select c2 * (random() <= 1)::int as sum1, sum(c1) * c2 as sum2 from ft1 group by c2 order by 1, 2;
+
+-- Aggregate with unshippable GROUP BY clause are not pushed
+explain (verbose, costs off)
+select c2 * (random() <= 1)::int as c2 from ft2 group by c2 * (random() <= 1)::int order by 1;
+
+-- GROUP BY clause in various forms, cardinal, alias and constant expression
+explain (verbose, costs off)
+select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
+select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2;
+
+-- Testing HAVING clause shippability
+explain (verbose, costs off)
+select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800 order by c2;
+select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800 order by c2;
+
+-- Using expressions in HAVING clause
+explain (verbose, costs off)
+select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
+select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
+
+-- Unshippable HAVING clause will be evaluated locally, and other qual in HAVING clause is pushed down
+explain (verbose, costs off)
+select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having (avg(c1) / avg(c1)) * random() <= 1 and avg(c1) < 500) x;
+select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having (avg(c1) / avg(c1)) * random() <= 1 and avg(c1) < 500) x;
+
+-- Aggregate in HAVING clause is not pushable, and thus aggregation is not pushed down
+explain (verbose, costs off)
+select sum(c1) from ft1 group by c2 having avg(c1 * (random() <= 1)::int) > 100 order by 1;
+
+
+-- Testing ORDER BY, DISTINCT, FILTER, Ordered-sets and VARIADIC within aggregates
+
+-- ORDER BY within aggregate, same column used to order
+explain (verbose, costs off)
+select array_agg(c1 order by c1) from ft1 where c1 < 100 group by c2 order by 1;
+select array_agg(c1 order by c1) from ft1 where c1 < 100 group by c2 order by 1;
+
+-- ORDER BY within aggregate, different column used to order also using DESC
+explain (verbose, costs off)
+select array_agg(c5 order by c1 desc) from ft2 where c2 = 6 and c1 < 50;
+select array_agg(c5 order by c1 desc) from ft2 where c2 = 6 and c1 < 50;
+
+-- DISTINCT within aggregate
+explain (verbose, costs off)
+select array_agg(distinct (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+select array_agg(distinct (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+
+-- DISTINCT combined with ORDER BY within aggregate
+explain (verbose, costs off)
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+
+explain (verbose, costs off)
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5 desc nulls last) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+select array_agg(distinct (t1.c1)%5 order by (t1.c1)%5 desc nulls last) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) where t1.c1 < 20 or (t1.c1 is null and t2.c1 < 5) group by (t2.c1)%3 order by 1;
+
+-- FILTER within aggregate
+explain (verbose, costs off)
+select sum(c1) filter (where c1 < 100 and c2 > 5) from ft1 group by c2 order by 1 nulls last;
+select sum(c1) filter (where c1 < 100 and c2 > 5) from ft1 group by c2 order by 1 nulls last;
+
+-- DISTINCT, ORDER BY and FILTER within aggregate
+explain (verbose, costs off)
+select sum(c1%3), sum(distinct c1%3 order by c1%3) filter (where c1%3 < 2), c2 from ft1 where c2 = 6 group by c2;
+select sum(c1%3), sum(distinct c1%3 order by c1%3) filter (where c1%3 < 2), c2 from ft1 where c2 = 6 group by c2;
+
+-- Outer query is aggregation query
+explain (verbose, costs off)
+select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+-- Inner query is aggregation query
+explain (verbose, costs off)
+select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) from ft1 t1 where t1.c1 = 6) from ft2 t2 order by 1;
+
+-- Aggregate not pushed down as FILTER condition is not pushable
+explain (verbose, costs off)
+select sum(c1) filter (where (c1 / c1) * random() <= 1) from ft1 group by c2 order by 1;
+explain (verbose, costs off)
+select sum(c2) filter (where c2 in (select c2 from ft1 where c2 < 5)) from ft1;
+
+-- Ordered-sets within aggregate
+explain (verbose, costs off)
+select c2, rank('10'::varchar) within group (order by c6), percentile_cont(c2/10::numeric) within group (order by c1) from ft1 where c2 < 10 group by c2 having percentile_cont(c2/10::numeric) within group (order by c1) < 500 order by c2;
+select c2, rank('10'::varchar) within group (order by c6), percentile_cont(c2/10::numeric) within group (order by c1) from ft1 where c2 < 10 group by c2 having percentile_cont(c2/10::numeric) within group (order by c1) < 500 order by c2;
+
+-- Using multiple arguments within aggregates
+explain (verbose, costs off)
+select c1, rank(c1, c2) within group (order by c1, c2) from ft1 group by c1, c2 having c1 = 6 order by 1;
+select c1, rank(c1, c2) within group (order by c1, c2) from ft1 group by c1, c2 having c1 = 6 order by 1;
+
+-- User defined function for user defined aggregate, VARIADIC
+create function least_accum(anyelement, variadic anyarray)
+returns anyelement language sql as
+  'select least($1, min($2[i])) from generate_subscripts($2,1) g(i)';
+create aggregate least_agg(variadic items anyarray) (
+  stype = anyelement, sfunc = least_accum
+);
+
+-- Not pushed down due to user defined aggregate
+explain (verbose, costs off)
+select c2, least_agg(c1) from ft1 group by c2 order by c2;
+
+-- Add function and aggregate into extension
+alter extension postgres_fdw add function least_accum(anyelement, variadic anyarray);
+alter extension postgres_fdw add aggregate least_agg(variadic items anyarray);
+alter server loopback options (set extensions 'postgres_fdw');
+
+-- Now aggregate will be pushed.  Aggregate will display VARIADIC argument.
+explain (verbose, costs off)
+select c2, least_agg(c1) from ft1 where c2 < 100 group by c2 order by c2;
+select c2, least_agg(c1) from ft1 where c2 < 100 group by c2 order by c2;
+
+-- Remove function and aggregate from extension
+alter extension postgres_fdw drop function least_accum(anyelement, variadic anyarray);
+alter extension postgres_fdw drop aggregate least_agg(variadic items anyarray);
+alter server loopback options (set extensions 'postgres_fdw');
+
+-- Not pushed down as we have dropped objects from extension.
+explain (verbose, costs off)
+select c2, least_agg(c1) from ft1 group by c2 order by c2;
+
+-- Cleanup
+drop aggregate least_agg(variadic items anyarray);
+drop function least_accum(anyelement, variadic anyarray);
+
+
+-- Testing USING OPERATOR() in ORDER BY within aggregate.
+-- For this, we need user defined operators along with operator family and
+-- operator class.  Create those and then add them in extension.  Note that
+-- user defined objects are considered unshippable unless they are part of
+-- the extension.
+create operator public.<^ (
+ leftarg = int4,
+ rightarg = int4,
+ procedure = int4eq
+);
+
+create operator public.=^ (
+ leftarg = int4,
+ rightarg = int4,
+ procedure = int4lt
+);
+
+create operator public.>^ (
+ leftarg = int4,
+ rightarg = int4,
+ procedure = int4gt
+);
+
+create operator family my_op_family using btree;
+
+create function my_op_cmp(a int, b int) returns int as
+  $$begin return btint4cmp(a, b); end $$ language plpgsql;
+
+create operator class my_op_class for type int using btree family my_op_family as
+ operator 1 public.<^,
+ operator 3 public.=^,
+ operator 5 public.>^,
+ function 1 my_op_cmp(int, int);
+
+-- This will not be pushed as user defined sort operator is not part of the
+-- extension yet.
+explain (verbose, costs off)
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+
+-- Add into extension
+alter extension postgres_fdw add operator class my_op_class using btree;
+alter extension postgres_fdw add function my_op_cmp(a int, b int);
+alter extension postgres_fdw add operator family my_op_family using btree;
+alter extension postgres_fdw add operator public.<^(int, int);
+alter extension postgres_fdw add operator public.=^(int, int);
+alter extension postgres_fdw add operator public.>^(int, int);
+alter server loopback options (set extensions 'postgres_fdw');
+
+-- Now this will be pushed as sort operator is part of the extension.
+explain (verbose, costs off)
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+
+-- Remove from extension
+alter extension postgres_fdw drop operator class my_op_class using btree;
+alter extension postgres_fdw drop function my_op_cmp(a int, b int);
+alter extension postgres_fdw drop operator family my_op_family using btree;
+alter extension postgres_fdw drop operator public.<^(int, int);
+alter extension postgres_fdw drop operator public.=^(int, int);
+alter extension postgres_fdw drop operator public.>^(int, int);
+alter server loopback options (set extensions 'postgres_fdw');
+
+-- This will not be pushed as sort operator is now removed from the extension.
+explain (verbose, costs off)
+select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+
+-- Cleanup
+drop operator class my_op_class using btree;
+drop function my_op_cmp(a int, b int);
+drop operator family my_op_family using btree;
+drop operator public.>^(int, int);
+drop operator public.=^(int, int);
+drop operator public.<^(int, int);
+
+-- Input relation to aggregate push down hook is not safe to pushdown and thus
+-- the aggregate cannot be pushed down to foreign server.
+explain (verbose, costs off)
+select count(t1.c3) from ft1 t1, ft1 t2 where t1.c1 = postgres_fdw_abs(t1.c2);
+
+-- Subquery in FROM clause having aggregate
+explain (verbose, costs off)
+select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
+select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
+
+-- FULL join with IS NULL check in HAVING
+explain (verbose, costs off)
+select avg(t1.c1), sum(t2.c1) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) group by t2.c1 having (avg(t1.c1) is null and sum(t2.c1) < 10) or sum(t2.c1) is null order by 1 nulls last, 2;
+select avg(t1.c1), sum(t2.c1) from ft4 t1 full join ft5 t2 on (t1.c1 = t2.c1) group by t2.c1 having (avg(t1.c1) is null and sum(t2.c1) < 10) or sum(t2.c1) is null order by 1 nulls last, 2;
+
+-- ORDER BY expression is part of the target list but not pushed down to
+-- foreign server.
+explain (verbose, costs off)
+select sum(c2) * (random() <= 1)::int as sum from ft1 order by 1;
+select sum(c2) * (random() <= 1)::int as sum from ft1 order by 1;
+
+-- LATERAL join, with parameterization
+set enable_hashagg to false;
+explain (verbose, costs off)
+select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 10 order by 1;
+select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum from ft2 t2 group by t2.c1) qry where t1.c2 * 2 = qry.sum and t1.c2 < 10 order by 1;
+reset enable_hashagg;
+
+-- Check with placeHolderVars
+explain (verbose, costs off)
+select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
+select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
+
+
+-- Not supported cases
+-- Grouping sets
+explain (verbose, costs off)
+select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls last;
+select c2, sum(c1) from ft1 where c2 < 3 group by rollup(c2) order by 1 nulls last;
+explain (verbose, costs off)
+select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last;
+select c2, sum(c1) from ft1 where c2 < 3 group by cube(c2) order by 1 nulls last;
+explain (verbose, costs off)
+select c2, c6, sum(c1) from ft1 where c2 < 3 group by grouping sets(c2, c6) order by 1 nulls last, 2 nulls last;
+select c2, c6, sum(c1) from ft1 where c2 < 3 group by grouping sets(c2, c6) order by 1 nulls last, 2 nulls last;
+explain (verbose, costs off)
+select c2, sum(c1), grouping(c2) from ft1 where c2 < 3 group by c2 order by 1 nulls last;
+select c2, sum(c1), grouping(c2) from ft1 where c2 < 3 group by c2 order by 1 nulls last;
+
+-- DISTINCT itself is not pushed down, whereas underneath aggregate is pushed
+explain (verbose, costs off)
+select distinct sum(c1)/1000 s from ft2 where c2 < 6 group by c2 order by 1;
+select distinct sum(c1)/1000 s from ft2 where c2 < 6 group by c2 order by 1;
+
+-- WindowAgg
+explain (verbose, costs off)
+select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 group by c2 order by 1;
+select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 group by c2 order by 1;
+explain (verbose, costs off)
+select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 where c2 < 10 group by c2 order by 1;
+select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 where c2 < 10 group by c2 order by 1;
+explain (verbose, costs off)
+select c2, array_agg(c2) over (partition by c2%2 order by c2 range between current row and unbounded following) from ft1 where c2 < 10 group by c2 order by 1;
+select c2, array_agg(c2) over (partition by c2%2 order by c2 range between current row and unbounded following) from ft1 where c2 < 10 group by c2 order by 1;
+
+
 -- ===================================================================
 -- parameterized queries
 -- ===================================================================
@@ -624,6 +928,7 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE int;
 SELECT * FROM ft1 WHERE c1 = 1;  -- ERROR
 SELECT  ft1.c1,  ft2.c2, ft1.c8 FROM ft1, ft2 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = 1; -- ERROR
 SELECT  ft1.c1,  ft2.c2, ft1 FROM ft1, ft2 WHERE ft1.c1 = ft2.c1 AND ft1.c1 = 1; -- ERROR
+SELECT sum(c2), array_agg(c8) FROM ft1 GROUP BY c8; -- ERROR
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE user_enum;
 
 -- ===================================================================
