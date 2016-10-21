@@ -10309,7 +10309,7 @@ pg_start_backup_callback(int code, Datum arg)
 /*
  * do_pg_stop_backup is the workhorse of the user-visible pg_stop_backup()
  * function.
-
+ *
  * If labelfile is NULL, this stops an exclusive backup. Otherwise this stops
  * the non-exclusive backup specified by 'labelfile'.
  *
