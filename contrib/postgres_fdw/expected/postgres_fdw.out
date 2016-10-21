@@ -2491,35 +2491,6 @@ select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800
   2 | 49700
 (2 rows)
 
--- Using expressions in HAVING clause
-explain (verbose, costs off)
-select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
-                                                                          QUERY PLAN                                                                          
---------------------------------------------------------------------------------------------------------------------------------------------------------------
- Sort
-   Output: c5, (count(c2)), (sqrt((c2)::double precision))
-   Sort Key: ft1.c5, (count(ft1.c2))
-   ->  Foreign Scan
-         Output: c5, (count(c2)), (sqrt((c2)::double precision))
-         Relations: Aggregate on (public.ft1)
-         Remote SQL: SELECT c5, count(c2), sqrt(c2) FROM "S 1"."T 1" GROUP BY c5, (sqrt(c2)) HAVING ((sqrt(max(c2)) = 1.41421356237309515::double precision))
-(7 rows)
-
-select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
-            c5            | count 
---------------------------+-------
- Sat Jan 03 00:00:00 1970 |    10
- Tue Jan 13 00:00:00 1970 |    10
- Fri Jan 23 00:00:00 1970 |    10
- Mon Feb 02 00:00:00 1970 |    10
- Thu Feb 12 00:00:00 1970 |    10
- Sun Feb 22 00:00:00 1970 |    10
- Wed Mar 04 00:00:00 1970 |    10
- Sat Mar 14 00:00:00 1970 |    10
- Tue Mar 24 00:00:00 1970 |    10
- Fri Apr 03 00:00:00 1970 |    10
-(10 rows)
-
 -- Unshippable HAVING clause will be evaluated locally, and other qual in HAVING clause is pushed down
 explain (verbose, costs off)
 select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having (avg(c1) / avg(c1)) * random() <= 1 and avg(c1) < 500) x;
@@ -2844,21 +2815,20 @@ returns anyelement language sql as
 create aggregate least_agg(variadic items anyarray) (
   stype = anyelement, sfunc = least_accum
 );
+-- Disable hash aggregation for plan stability.
+set enable_hashagg to false;
 -- Not pushed down due to user defined aggregate
 explain (verbose, costs off)
 select c2, least_agg(c1) from ft1 group by c2 order by c2;
-                         QUERY PLAN                          
--------------------------------------------------------------
- Sort
-   Output: c2, (least_agg(VARIADIC ARRAY[c1]))
-   Sort Key: ft1.c2
-   ->  HashAggregate
-         Output: c2, least_agg(VARIADIC ARRAY[c1])
-         Group Key: ft1.c2
-         ->  Foreign Scan on public.ft1
-               Output: c2, c1
-               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
-(9 rows)
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ GroupAggregate
+   Output: c2, least_agg(VARIADIC ARRAY[c1])
+   Group Key: ft1.c2
+   ->  Foreign Scan on public.ft1
+         Output: c2, c1
+         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" ORDER BY c2 ASC NULLS LAST
+(6 rows)
 
 -- Add function and aggregate into extension
 alter extension postgres_fdw add function least_accum(anyelement, variadic anyarray);
@@ -2900,20 +2870,18 @@ alter server loopback options (set extensions 'postgres_fdw');
 -- Not pushed down as we have dropped objects from extension.
 explain (verbose, costs off)
 select c2, least_agg(c1) from ft1 group by c2 order by c2;
-                         QUERY PLAN                          
--------------------------------------------------------------
- Sort
-   Output: c2, (least_agg(VARIADIC ARRAY[c1]))
-   Sort Key: ft1.c2
-   ->  HashAggregate
-         Output: c2, least_agg(VARIADIC ARRAY[c1])
-         Group Key: ft1.c2
-         ->  Foreign Scan on public.ft1
-               Output: c2, c1
-               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
-(9 rows)
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ GroupAggregate
+   Output: c2, least_agg(VARIADIC ARRAY[c1])
+   Group Key: ft1.c2
+   ->  Foreign Scan on public.ft1
+         Output: c2, c1
+         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" ORDER BY c2 ASC NULLS LAST
+(6 rows)
 
 -- Cleanup
+reset enable_hashagg;
 drop aggregate least_agg(variadic items anyarray);
 drop function least_accum(anyelement, variadic anyarray);
 -- Testing USING OPERATOR() in ORDER BY within aggregate.

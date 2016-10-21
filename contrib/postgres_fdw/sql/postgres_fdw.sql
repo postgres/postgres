@@ -593,11 +593,6 @@ explain (verbose, costs off)
 select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800 order by c2;
 select c2, sum(c1) from ft2 group by c2 having avg(c1) < 500 and sum(c1) < 49800 order by c2;
 
--- Using expressions in HAVING clause
-explain (verbose, costs off)
-select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
-select c5, count(c2) from ft1 group by c5, sqrt(c2) having sqrt(max(c2)) = sqrt(2) order by 1, 2;
-
 -- Unshippable HAVING clause will be evaluated locally, and other qual in HAVING clause is pushed down
 explain (verbose, costs off)
 select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having (avg(c1) / avg(c1)) * random() <= 1 and avg(c1) < 500) x;
@@ -677,6 +672,9 @@ create aggregate least_agg(variadic items anyarray) (
   stype = anyelement, sfunc = least_accum
 );
 
+-- Disable hash aggregation for plan stability.
+set enable_hashagg to false;
+
 -- Not pushed down due to user defined aggregate
 explain (verbose, costs off)
 select c2, least_agg(c1) from ft1 group by c2 order by c2;
@@ -701,6 +699,7 @@ explain (verbose, costs off)
 select c2, least_agg(c1) from ft1 group by c2 order by c2;
 
 -- Cleanup
+reset enable_hashagg;
 drop aggregate least_agg(variadic items anyarray);
 drop function least_accum(anyelement, variadic anyarray);
 
