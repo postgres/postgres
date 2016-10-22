@@ -1381,53 +1381,67 @@ export PG_OOM_ADJUST_VALUE=0
   </sect2>
 
   <sect2 id="linux-huge-pages">
-   <title>Linux huge pages</title>
+   <title>Linux Huge Pages</title>
 
    <para>
     Using huge pages reduces overhead when using large contiguous chunks of
-    memory, like <productname>PostgreSQL</productname> does. To enable this
+    memory, as <productname>PostgreSQL</productname> does, particularly when
+    using large values of <xref linkend="guc-shared-buffers">.  To use this
     feature in <productname>PostgreSQL</productname> you need a kernel
     with <varname>CONFIG_HUGETLBFS=y</varname> and
-    <varname>CONFIG_HUGETLB_PAGE=y</varname>. You also have to tune the system
-    setting <varname>vm.nr_hugepages</varname>. To estimate the number of
-    necessary huge pages start <productname>PostgreSQL</productname> without
-    huge pages enabled and check the <varname>VmPeak</varname> value from the
-    proc file system:
+    <varname>CONFIG_HUGETLB_PAGE=y</varname>. You will also have to adjust
+    the kernel setting <varname>vm.nr_hugepages</varname>. To estimate the
+    number of huge pages needed, start <productname>PostgreSQL</productname>
+    without huge pages enabled and check the
+    postmaster's <varname>VmPeak</varname> value, as well as the system's
+    huge page size, using the <filename>/proc</> file system.  This might
+    look like:
 <programlisting>
-$ <userinput>head -1 /path/to/data/directory/postmaster.pid</userinput>
+$ <userinput>head -1 $PGDATA/postmaster.pid</userinput>
 4170
 $ <userinput>grep ^VmPeak /proc/4170/status</userinput>
 VmPeak:  6490428 kB
+$ <userinput>grep ^Hugepagesize /proc/meminfo</userinput>
+Hugepagesize:       2048 kB
 </programlisting>
-     <literal>6490428</literal> / <literal>2048</literal>
-     (<varname>PAGE_SIZE</varname> is <literal>2MB</literal> in this case) are
-     roughly <literal>3169.154</literal> huge pages, so you will need at
-     least <literal>3170</literal> huge pages:
+     <literal>6490428</literal> / <literal>2048</literal> gives approximately
+     <literal>3169.154</literal>, so in this example we need at
+     least <literal>3170</literal> huge pages, which we can set with:
 <programlisting>
 $ <userinput>sysctl -w vm.nr_hugepages=3170</userinput>
 </programlisting>
-    Sometimes the kernel is not able to allocate the desired number of huge
-    pages, so it might be necessary to repeat that command or to reboot. Don't
-    forget to add an entry to <filename>/etc/sysctl.conf</filename> to persist
-    this setting through reboots.
+    A larger setting would be appropriate if other programs on the machine
+    also need huge pages.  Don't forget to add this setting
+    to <filename>/etc/sysctl.conf</filename> so that it will be reapplied
+    after reboots.
    </para>
 
    <para>
-    It is also necessary to give the database server operating system
+    Sometimes the kernel is not able to allocate the desired number of huge
+    pages immediately, so it might be necessary to repeat the command or to
+    reboot.  (Immediately after a reboot, most of the machine's memory
+    should be available to convert into huge pages.)  To verify the huge
+    page allocation situation, use:
+<programlisting>
+$ <userinput>grep Huge /proc/meminfo</userinput>
+</programlisting>
+   </para>
+
+   <para>
+    It may also be necessary to give the database server's operating system
     user permission to use huge pages by setting
-    <varname>vm.hugetlb_shm_group</> via <application>sysctl</>, and
-    permission to lock memory with <command>ulimit -l</>.
+    <varname>vm.hugetlb_shm_group</> via <application>sysctl</>, and/or
+    give permission to lock memory with <command>ulimit -l</>.
    </para>
 
    <para>
     The default behavior for huge pages in
     <productname>PostgreSQL</productname> is to use them when possible and
-    to fallback to normal pages when failing. To enforce the use of huge
-    pages, you can set
-    <link linkend="guc-huge-pages"><varname>huge_pages</varname></link>
-    to <literal>on</literal>. Note that in this case
-    <productname>PostgreSQL</productname> will fail to start if not enough huge
-    pages are available.
+    to fall back to normal pages when failing. To enforce the use of huge
+    pages, you can set <xref linkend="guc-huge-pages">
+    to <literal>on</literal> in <filename>postgresql.conf</>.
+    Note that with this setting <productname>PostgreSQL</> will fail to
+    start if not enough huge pages are available.
    </para>
 
    <para>
