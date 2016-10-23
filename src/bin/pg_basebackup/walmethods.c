@@ -416,6 +416,9 @@ tar_write(Walfile f, const void *buf, size_t count)
 		return count;
 	}
 #endif
+	else
+		/* Can't happen - compression enabled with no libz */
+		return -1;
 }
 
 static bool
@@ -879,8 +882,10 @@ CreateWalTarMethod(const char *tarbase, int compression, bool sync)
 	tar_data->fd = -1;
 	tar_data->compression = compression;
 	tar_data->sync = sync;
+#ifdef HAVE_LIBZ
 	if (compression)
 		tar_data->zlibOut = (char *) pg_malloc(ZLIB_OUT_SIZE + 1);
+#endif
 
 	return method;
 }
