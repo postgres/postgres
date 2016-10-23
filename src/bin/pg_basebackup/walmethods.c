@@ -415,10 +415,11 @@ tar_write(Walfile f, const void *buf, size_t count)
 		((TarMethodFile *) f)->currpos += count;
 		return count;
 	}
-#endif
+#else
 	else
 		/* Can't happen - compression enabled with no libz */
 		return -1;
+#endif
 }
 
 static bool
