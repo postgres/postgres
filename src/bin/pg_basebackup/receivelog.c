@@ -132,7 +132,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			}
 
 			/* fsync file in case of a previous crash */
-			if (!stream->walmethod->fsync(f))
+			if (!stream->walmethod->sync(f))
 			{
 				stream->walmethod->close(f, CLOSE_UNLINK);
 				return false;
@@ -768,7 +768,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 		 */
 		if (stream->synchronous && lastFlushPosition < blockpos && walfile != NULL)
 		{
-			if (stream->walmethod->fsync(walfile) != 0)
+			if (stream->walmethod->sync(walfile) != 0)
 			{
 				fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 						progname, current_walfile_name, stream->walmethod->getlasterror());
@@ -1011,7 +1011,7 @@ ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 			 * data has been successfully replicated or not, at the normal
 			 * shutdown of the server.
 			 */
-			if (stream->walmethod->fsync(walfile) != 0)
+			if (stream->walmethod->sync(walfile) != 0)
 			{
 				fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 						progname, current_walfile_name, stream->walmethod->getlasterror());

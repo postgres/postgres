@@ -29,7 +29,7 @@ struct WalWriteMethod
 
 	ssize_t		(*write) (Walfile f, const void *buf, size_t count);
 	off_t		(*get_current_pos) (Walfile f);
-	int			(*fsync) (Walfile f);
+	int			(*sync) (Walfile f);
 	bool		(*finish) (void);
 	char	   *(*getlasterror) (void);
 };

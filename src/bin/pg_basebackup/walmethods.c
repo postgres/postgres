@@ -219,7 +219,7 @@ dir_close(Walfile f, WalCloseMethod method)
 }
 
 static int
-dir_fsync(Walfile f)
+dir_sync(Walfile f)
 {
 	Assert(f != NULL);
 
@@ -287,7 +287,7 @@ CreateWalDirectoryMethod(const char *basedir, bool sync)
 	method->get_current_pos = dir_get_current_pos;
 	method->get_file_size = dir_get_file_size;
 	method->close = dir_close;
-	method->fsync = dir_fsync;
+	method->sync = dir_sync;
 	method->existsfile = dir_existsfile;
 	method->finish = dir_finish;
 	method->getlasterror = dir_getlasterror;
@@ -606,7 +606,7 @@ tar_get_current_pos(Walfile f)
 }
 
 static int
-tar_fsync(Walfile f)
+tar_sync(Walfile f)
 {
 	Assert(f != NULL);
 	tar_clear_error();
@@ -764,7 +764,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		return -1;
 
 	/* Always fsync on close, so the padding gets fsynced */
-	tar_fsync(f);
+	tar_sync(f);
 
 	/* Clean up and done */
 	pg_free(tf->pathname);
@@ -872,7 +872,7 @@ CreateWalTarMethod(const char *tarbase, int compression, bool sync)
 	method->get_current_pos = tar_get_current_pos;
 	method->get_file_size = tar_get_file_size;
 	method->close = tar_close;
-	method->fsync = tar_fsync;
+	method->sync = tar_sync;
 	method->existsfile = tar_existsfile;
 	method->finish = tar_finish;
 	method->getlasterror = tar_getlasterror;
