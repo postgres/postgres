@@ -44,6 +44,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "miscadmin.h"
+#include "storage/bufmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -286,20 +287,17 @@ RI_FKey_check(TriggerData *trigdata)
 	 * We should not even consider checking the row if it is no longer valid,
 	 * since it was either deleted (so the deferred check should be skipped)
 	 * or updated (in which case only the latest version of the row should be
-	 * checked).  Test its liveness according to SnapshotSelf.
-	 *
-	 * NOTE: The normal coding rule is that one must acquire the buffer
-	 * content lock to call HeapTupleSatisfiesVisibility.  We can skip that
-	 * here because we know that AfterTriggerExecute just fetched the tuple
-	 * successfully, so there cannot be a VACUUM compaction in progress on the
-	 * page (either heap_fetch would have waited for the VACUUM, or the
-	 * VACUUM's LockBufferForCleanup would be waiting for us to drop pin). And
-	 * since this is a row inserted by our open transaction, no one else can
-	 * be entitled to change its xmin/xmax.
+	 * checked).  Test its liveness according to SnapshotSelf.  We need pin
+	 * and lock on the buffer to call HeapTupleSatisfiesVisibility.  Caller
+	 * should be holding pin, but not lock.
 	 */
-	Assert(new_row_buf != InvalidBuffer);
+	LockBuffer(new_row_buf, BUFFER_LOCK_SHARE);
 	if (!HeapTupleSatisfiesVisibility(new_row, SnapshotSelf, new_row_buf))
+	{
+		LockBuffer(new_row_buf, BUFFER_LOCK_UNLOCK);
 		return PointerGetDatum(NULL);
+	}
+	LockBuffer(new_row_buf, BUFFER_LOCK_UNLOCK);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables.
