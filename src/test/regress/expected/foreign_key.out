@@ -1381,3 +1381,24 @@ explain (costs off) delete from t1 where a = 1;
 (10 rows)
 
 delete from t1 where a = 1;
+--
+-- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
+--
+create table pktable2(f1 int primary key);
+create table fktable2(f1 int references pktable2 deferrable initially deferred);
+insert into pktable2 values(1);
+begin;
+insert into fktable2 values(1);
+savepoint x;
+delete from fktable2;
+rollback to x;
+commit;
+begin;
+insert into fktable2 values(2);
+savepoint x;
+delete from fktable2;
+rollback to x;
+commit; -- fail
+ERROR:  insert or update on table "fktable2" violates foreign key constraint "fktable2_f1_fkey"
+DETAIL:  Key (f1)=(2) is not present in table "pktable2".
+drop table pktable2, fktable2;
