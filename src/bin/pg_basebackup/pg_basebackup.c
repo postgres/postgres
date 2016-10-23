@@ -449,7 +449,7 @@ typedef struct
 {
 	PGconn	   *bgconn;
 	XLogRecPtr	startptr;
-	char		xlogdir[MAXPGPATH];
+	char		xlog[MAXPGPATH];	/* directory or tarfile depending on mode */
 	char	   *sysidentifier;
 	int			timeline;
 } logstreamer_param;
@@ -470,8 +470,12 @@ LogStreamerMain(logstreamer_param *param)
 	stream.synchronous = false;
 	stream.do_sync = do_sync;
 	stream.mark_done = true;
-	stream.basedir = param->xlogdir;
 	stream.partial_suffix = NULL;
+
+	if (format == 'p')
+		stream.walmethod = CreateWalDirectoryMethod(param->xlog, do_sync);
+	else
+		stream.walmethod = CreateWalTarMethod(param->xlog, compresslevel, do_sync);
 
 	if (!ReceiveXlogStream(param->bgconn, &stream))
 
@@ -481,6 +485,14 @@ LogStreamerMain(logstreamer_param *param)
 		 * way.
 		 */
 		return 1;
+
+	if (!stream.walmethod->finish())
+	{
+		fprintf(stderr,
+				_("%s: could not finish writing WAL files: %s\n"),
+				progname, strerror(errno));
+		return 1;
+	}
 
 	PQfinish(param->bgconn);
 	return 0;
@@ -533,28 +545,32 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 		exit(1);
 
 	/* In post-10 cluster, pg_xlog has been renamed to pg_wal */
-	snprintf(param->xlogdir, sizeof(param->xlogdir), "%s/%s",
+	snprintf(param->xlog, sizeof(param->xlog), "%s/%s",
 			 basedir,
 			 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
 				"pg_xlog" : "pg_wal");
 
-	/*
-	 * Create pg_wal/archive_status or pg_xlog/archive_status (and thus
-	 * pg_wal or pg_xlog) depending on the target server so we can write to
-	 * basedir/pg_wal or basedir/pg_xlog as the directory entry in the tar
-	 * file may arrive later.
-	 */
-	snprintf(statusdir, sizeof(statusdir), "%s/%s/archive_status",
-			 basedir,
-			 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
-				"pg_xlog" : "pg_wal");
 
-	if (pg_mkdir_p(statusdir, S_IRWXU) != 0 && errno != EEXIST)
+	if (format == 'p')
 	{
-		fprintf(stderr,
-				_("%s: could not create directory \"%s\": %s\n"),
-				progname, statusdir, strerror(errno));
-		disconnect_and_exit(1);
+		/*
+		 * Create pg_wal/archive_status or pg_xlog/archive_status (and thus
+		 * pg_wal or pg_xlog) depending on the target server so we can write to
+		 * basedir/pg_wal or basedir/pg_xlog as the directory entry in the tar
+		 * file may arrive later.
+		 */
+		snprintf(statusdir, sizeof(statusdir), "%s/%s/archive_status",
+				 basedir,
+				 PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
+				 "pg_xlog" : "pg_wal");
+
+		if (pg_mkdir_p(statusdir, S_IRWXU) != 0 && errno != EEXIST)
+		{
+			fprintf(stderr,
+					_("%s: could not create directory \"%s\": %s\n"),
+					progname, statusdir, strerror(errno));
+			disconnect_and_exit(1);
+		}
 	}
 
 	/*
@@ -2239,16 +2255,6 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr,
 				_("%s: only tar mode backups can be compressed\n"),
-				progname);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
-
-	if (format != 'p' && streamwal)
-	{
-		fprintf(stderr,
-				_("%s: WAL streaming can only be used in plain mode\n"),
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);

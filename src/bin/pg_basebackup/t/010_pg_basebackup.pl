@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 67;
+use Test::More tests => 69;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -237,6 +237,10 @@ $node->command_ok(
 	'pg_basebackup -X stream runs');
 ok(grep(/^[0-9A-F]{24}$/, slurp_dir("$tempdir/backupxf/pg_wal")),
 	'WAL files copied');
+$node->command_ok(
+	[ 'pg_basebackup', '-D', "$tempdir/backupxst", '-X', 'stream', '-Ft' ],
+	'pg_basebackup -X stream runs in tar mode');
+ok(-f "$tempdir/backupxst/pg_wal.tar", "tar file was created");
 
 $node->command_fails(
 	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1' ],

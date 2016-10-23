@@ -180,7 +180,8 @@ PostgreSQL documentation
             target directory, the tar contents will be written to
             standard output, suitable for piping to for example
             <productname>gzip</productname>. This is only possible if
-            the cluster has no additional tablespaces.
+            the cluster has no additional tablespaces and transaction
+            log streaming is not used.
            </para>
            </listitem>
          </varlistentry>
@@ -323,6 +324,10 @@ PostgreSQL documentation
              If the log has been rotated when it's time to transfer it, the
              backup will fail and be unusable.
            </para>
+           <para>
+            The transaction log files will be written to
+            the <filename>base.tar</filename> file.
+           </para>
           </listitem>
          </varlistentry>
 
@@ -339,6 +344,11 @@ PostgreSQL documentation
              client can keep up with transaction log received, using this mode
              requires no extra transaction logs to be saved on the master.
            </para>
+           <para>
+            The transaction log files are written to a separate file
+            named <filename>pg_wal.tar</filename> (if the server is a version
+            earlier than 10, the file will be named <filename>pg_xlog.tar</filename>).
+           </para>
           </listitem>
          </varlistentry>
         </variablelist>
@@ -353,7 +363,8 @@ PostgreSQL documentation
        <para>
         Enables gzip compression of tar file output, with the default
         compression level. Compression is only available when using
-        the tar format.
+        the tar format, and the suffix <filename>.gz</filename> will
+        automatically be added to all tar filenames.
        </para>
       </listitem>
      </varlistentry>
@@ -366,7 +377,8 @@ PostgreSQL documentation
         Enables gzip compression of tar file output, and specifies the
         compression level (0 through 9, 0 being no compression and 9 being best
         compression). Compression is only available when using the tar
-        format.
+        format, and the suffix <filename>.gz</filename> will
+        automatically be added to all tar filenames.
        </para>
       </listitem>
      </varlistentry>

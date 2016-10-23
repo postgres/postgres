@@ -16,7 +16,7 @@
  * support only non-negative numbers, so we don't worry about the GNU rules
  * for handling negative numbers.)
  */
-static void
+void
 print_tar_number(char *s, int len, uint64 val)
 {
 	if (val < (((uint64) 1) << ((len - 1) * 3)))
