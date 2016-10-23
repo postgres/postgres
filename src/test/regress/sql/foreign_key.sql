@@ -943,3 +943,26 @@ begin;
     update selfref set a = 456 where a = 123;
     select a, b from selfref;
 commit;
+
+--
+-- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
+--
+create table pktable2(f1 int primary key);
+create table fktable2(f1 int references pktable2 deferrable initially deferred);
+insert into pktable2 values(1);
+
+begin;
+insert into fktable2 values(1);
+savepoint x;
+delete from fktable2;
+rollback to x;
+commit;
+
+begin;
+insert into fktable2 values(2);
+savepoint x;
+delete from fktable2;
+rollback to x;
+commit; -- fail
+
+drop table pktable2, fktable2;
