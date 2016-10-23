@@ -195,9 +195,18 @@ ExecCheckHeapTupleVisible(EState *estate,
 		return;
 
 	if (!HeapTupleSatisfiesVisibility(tuple, estate->es_snapshot, buffer))
-		ereport(ERROR,
-				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+	{
+		/*
+		 * We should not raise a serialization failure if the conflict is
+		 * against a tuple inserted by our own transaction, even if it's not
+		 * visible to our snapshot.  (This would happen, for example, if
+		 * conflicting keys are proposed for insertion in a single command.)
+		 */
+		if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple->t_data)))
+			ereport(ERROR,
+					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 			 errmsg("could not serialize access due to concurrent update")));
+	}
 }
 
 /*
