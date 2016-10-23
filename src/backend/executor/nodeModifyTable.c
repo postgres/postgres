@@ -194,6 +194,11 @@ ExecCheckHeapTupleVisible(EState *estate,
 	if (!IsolationUsesXactSnapshot())
 		return;
 
+	/*
+	 * We need buffer pin and lock to call HeapTupleSatisfiesVisibility.
+	 * Caller should be holding pin, but not lock.
+	 */
+	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	if (!HeapTupleSatisfiesVisibility(tuple, estate->es_snapshot, buffer))
 	{
 		/*
@@ -207,6 +212,7 @@ ExecCheckHeapTupleVisible(EState *estate,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 			 errmsg("could not serialize access due to concurrent update")));
 	}
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 }
 
 /*
