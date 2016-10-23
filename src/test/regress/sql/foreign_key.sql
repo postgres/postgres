@@ -1019,3 +1019,26 @@ create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
 
 explain (costs off) delete from t1 where a = 1;
 delete from t1 where a = 1;
+
+--
+-- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
+--
+create table pktable2(f1 int primary key);
+create table fktable2(f1 int references pktable2 deferrable initially deferred);
+insert into pktable2 values(1);
+
+begin;
+insert into fktable2 values(1);
+savepoint x;
+delete from fktable2;
+rollback to x;
+commit;
+
+begin;
+insert into fktable2 values(2);
+savepoint x;
+delete from fktable2;
+rollback to x;
+commit; -- fail
+
+drop table pktable2, fktable2;
