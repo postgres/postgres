@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:40+0000\n"
+"POT-Creation-Date: 2016-10-21 02:04+0000\n"
 "PO-Revision-Date: 2012-10-19 10:58+0800\n"
 "Last-Translator: Xiong He <iihero@qq.com>\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -28,27 +28,27 @@ msgstr "变量 \"%s\"必须是数值类型"
 msgid "descriptor \"%s\" does not exist"
 msgstr "描述符\"%s\"不存在"
 
-#: descriptor.c:161 descriptor.c:210
+#: descriptor.c:161 descriptor.c:212
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "描述符标题成员\"%d\"不存在"
 
-#: descriptor.c:182
+#: descriptor.c:183
 #, c-format
 msgid "nullable is always 1"
 msgstr "可为空永远用1表示"
 
-#: descriptor.c:185
+#: descriptor.c:186
 #, c-format
 msgid "key_member is always 0"
 msgstr "key_member永远是0"
 
-#: descriptor.c:277
+#: descriptor.c:279
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
 msgstr "没有使用描述符成员\"%s\"."
 
-#: descriptor.c:287
+#: descriptor.c:289
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
 msgstr "无法设置描述符成员 \"%s\""
@@ -108,8 +108,7 @@ msgstr "  -D SYMBOL      定义SYMBOL\n"
 
 #: ecpg.c:49
 #, c-format
-msgid ""
-"  -h             parse a header file, this option includes option \"-c\"\n"
+msgid "  -h             parse a header file, this option includes option \"-c\"\n"
 msgstr "-h             分析一个头文件,这个选项包含选项\"-c\"\n"
 
 #: ecpg.c:50
@@ -148,8 +147,8 @@ msgstr " -t              打开事务的自动提交功能\n"
 
 #: ecpg.c:57
 #, c-format
-msgid "  --version      output version information, then exit\n"
-msgstr " --version       输出版本信息，然后退出\n"
+msgid "  -V, --version  output version information, then exit\n"
+msgstr " -V, --version 输出版本信息，然后退出\n"
 
 #: ecpg.c:58
 #, c-format
@@ -164,8 +163,7 @@ msgid ""
 "input file name, after stripping off .pgc if present.\n"
 msgstr ""
 "\n"
-"如果没有指定输出文件，那么输出文件名将由输入文件名（如果有后缀，那么去掉."
-"pgc)\n"
+"如果没有指定输出文件，那么输出文件名将由输入文件名（如果有后缀，那么去掉.pgc)\n"
 "加上.c的后缀名组成.\n"
 
 #: ecpg.c:61
@@ -177,47 +175,47 @@ msgstr ""
 "\n"
 "错误报告至 <pgsql-bugs@postgresql.org>.\n"
 
-#: ecpg.c:182 ecpg.c:333 ecpg.c:343
+#: ecpg.c:171 ecpg.c:322 ecpg.c:332
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: 无法打开文件 \"%s\": %s\n"
 
-#: ecpg.c:221 ecpg.c:234 ecpg.c:250 ecpg.c:275
+#: ecpg.c:210 ecpg.c:223 ecpg.c:239 ecpg.c:264
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
-#: ecpg.c:245
+#: ecpg.c:234
 #, c-format
 msgid "%s: parser debug support (-d) not available\n"
 msgstr "%s: 解析器跟踪调试支持(-d)无效\n"
 
-#: ecpg.c:263
+#: ecpg.c:252
 #, c-format
 msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
 msgstr "%s, PostgreSQL嵌入式C语言预处理器, 版本%d.%d.%d\n"
 
-#: ecpg.c:265
+#: ecpg.c:254
 #, c-format
 msgid "EXEC SQL INCLUDE ... search starts here:\n"
 msgstr "EXEC SQL INCLUDE ... 从这里开始搜索:\n"
 
-#: ecpg.c:268
+#: ecpg.c:257
 #, c-format
 msgid "end of search list\n"
 msgstr "搜索列表的结束部分\n"
 
-#: ecpg.c:274
+#: ecpg.c:263
 #, c-format
 msgid "%s: no input files specified\n"
 msgstr "%s: 没有指定输入文件\n"
 
-#: ecpg.c:466
+#: ecpg.c:455
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "已经声明了游标\"%s\",但是没有打开"
 
-#: ecpg.c:479 preproc.y:109
+#: ecpg.c:468 preproc.y:109
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "无法删除输出文件 \"%s\"\n"
@@ -247,74 +245,72 @@ msgstr "未结束的16进制字符串常量"
 msgid "unterminated quoted string"
 msgstr "未结束的引用字符串"
 
-#: pgc.l:574 pgc.l:587
+#: pgc.l:576 pgc.l:589
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "长度为0的分隔标识符"
 
-#: pgc.l:595
+#: pgc.l:597
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "未结束的引用标识符"
 
-#: pgc.l:941
+#: pgc.l:943
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "在EXEC SQL UNDEF命令中丢失标识符"
 
-#: pgc.l:987 pgc.l:1001
+#: pgc.l:989 pgc.l:1003
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "丢失匹配 \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 
-#: pgc.l:990 pgc.l:1003 pgc.l:1179
+#: pgc.l:992 pgc.l:1005 pgc.l:1181
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "\"EXEC SQL ENDIF;\"丢失"
 
-#: pgc.l:1019 pgc.l:1038
+#: pgc.l:1021 pgc.l:1040
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "多个EXEC SQL ELSE"
 
-#: pgc.l:1060 pgc.l:1074
+#: pgc.l:1062 pgc.l:1076
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "EXEC SQL ENDIF不匹配"
 
-#: pgc.l:1094
+#: pgc.l:1096
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "嵌套EXEC SQL IFDEF条件太多"
 
-#: pgc.l:1127
+#: pgc.l:1129
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "在EXEC SQL IFDEF命令中丢失标识符"
 
-#: pgc.l:1136
+#: pgc.l:1138
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "在EXEC SQL DEFINE命令中丢失标识符"
 
-#: pgc.l:1169
+#: pgc.l:1171
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "在EXEC SQL INCLUDE命令中出现语法错误"
 
-#: pgc.l:1218
+#: pgc.l:1220
 #, c-format
-msgid ""
-"internal error: unreachable state; please report this to <pgsql-"
-"bugs@postgresql.org>"
+msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
 msgstr "内部错误：不可到达的状态；请向<pgsql-bugs@postgresql.org>发送报告"
 
-#: pgc.l:1343
+#: pgc.l:1344
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr "错误:在第%3$d行上包含路径\"%1$s/%2$s\"太长，跳过\n"
 
-#: pgc.l:1365
+#: pgc.l:1367
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "在第%2$d行无法打开应用文件\"%1$s\""
@@ -348,191 +344,189 @@ msgstr "在类型定义中不允许进行初始化"
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "在Informix模式中类型名称\"string\" 是被保留的"
 
-#: preproc.y:529 preproc.y:13277
+#: preproc.y:529 preproc.y:13311
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "已定义类型\"%s\" "
 
-#: preproc.y:553 preproc.y:13930 preproc.y:14251 variable.c:614
+#: preproc.y:553 preproc.y:13969 preproc.y:14290 variable.c:620
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "不支持针对简单数据类型的多维数组"
 
-#: preproc.y:1526
+#: preproc.y:1528
 #, c-format
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "在CLOSE DATABASE语句中不允许使用AT选项"
 
-#: preproc.y:1723
+#: preproc.y:1725
 #, c-format
 msgid "AT option not allowed in CONNECT statement"
 msgstr "在CONNECT语句中不允许使用AT选项"
 
-#: preproc.y:1757
+#: preproc.y:1759
 #, c-format
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "在DISCONNECT语句中不允许使用AT选项"
 
-#: preproc.y:1812
+#: preproc.y:1814
 #, c-format
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "在SET CONNECTION语句中不允许使用AT选项"
 
-#: preproc.y:1834
+#: preproc.y:1836
 #, c-format
 msgid "AT option not allowed in TYPE statement"
 msgstr "在TYPE语句中不允许使用AT选项"
 
-#: preproc.y:1843
+#: preproc.y:1845
 #, c-format
 msgid "AT option not allowed in VAR statement"
 msgstr "在VAR语句中不允许使用AT选项"
 
-#: preproc.y:1850
+#: preproc.y:1852
 #, c-format
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "在WHENEVER语句中不允许使用AT选项"
 
-#: preproc.y:2204 preproc.y:3489 preproc.y:4658 preproc.y:4667 preproc.y:4952
-#: preproc.y:7343 preproc.y:7348 preproc.y:7353 preproc.y:9695 preproc.y:10242
+#: preproc.y:2206 preproc.y:3491 preproc.y:4660 preproc.y:4669 preproc.y:4954
+#: preproc.y:7345 preproc.y:7350 preproc.y:7355 preproc.y:9693 preproc.y:10244
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "不支持的功能特性将会传递给服务器"
 
-#: preproc.y:2446
+#: preproc.y:2448
 #, c-format
 msgid "SHOW ALL is not implemented"
 msgstr "没有使用SHOW ALL"
 
-#: preproc.y:2889 preproc.y:2900
+#: preproc.y:2891 preproc.y:2902
 #, c-format
 msgid "COPY TO STDIN is not possible"
 msgstr "不能进行COPY TO STDIN的操作"
 
-#: preproc.y:2891
+#: preproc.y:2893
 #, c-format
 msgid "COPY FROM STDOUT is not possible"
 msgstr "不能进行COPY FROM STDOUT的操作"
 
-#: preproc.y:2893
+#: preproc.y:2895
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "不能进行COPY FROM STDIN的操作"
 
-#: preproc.y:8157 preproc.y:12866
+#: preproc.y:8155 preproc.y:12900
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr "不支持在不同的声明语句中使用变量\"%s\""
 
-#: preproc.y:8159 preproc.y:12868
+#: preproc.y:8157 preproc.y:12902
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "已经定义了游标\"%s\""
 
-#: preproc.y:8577
+#: preproc.y:8575
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "不再支持将LIMIT #,#语法传递给服务器"
 
-#: preproc.y:8812
+#: preproc.y:8810
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "FROM 中的子查询必须有一个别名"
 
-#: preproc.y:12596
+#: preproc.y:12630
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "在CREATE TABLE AS语句中不能指定INTO子句"
 
-#: preproc.y:12632
+#: preproc.y:12666
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "期望 \"@\", 但是找到了\"%s\""
 
-#: preproc.y:12644
+#: preproc.y:12678
 #, c-format
-msgid ""
-"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
-"supported"
+msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr "只支持协议\"tcp\"和 \"unix\"以及数据库类型 \"postgresql\""
 
-#: preproc.y:12647
+#: preproc.y:12681
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "期望得到 \"://\"，但是找到了\"%s\""
 
-#: preproc.y:12652
+#: preproc.y:12686
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "Unix-域的sockets只能在\"localhost\"上运行，而不能在\"%s\"上运行"
 
-#: preproc.y:12678
+#: preproc.y:12712
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "期望\"postgresql\", 但是只找到了\"%s\""
 
-#: preproc.y:12681
+#: preproc.y:12715
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "无效的连接类型: %s"
 
-#: preproc.y:12690
+#: preproc.y:12724
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "期望\"@\"或\"://\"，但是只找到了\"%s\""
 
-#: preproc.y:12765 preproc.y:12783
+#: preproc.y:12799 preproc.y:12817
 #, c-format
 msgid "invalid data type"
 msgstr "无效数据类型"
 
-#: preproc.y:12794 preproc.y:12811
+#: preproc.y:12828 preproc.y:12845
 #, c-format
 msgid "incomplete statement"
 msgstr "未结束的语句"
 
-#: preproc.y:12797 preproc.y:12814
+#: preproc.y:12831 preproc.y:12848
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "无法识别的符号\"%s\""
 
-#: preproc.y:13088
+#: preproc.y:13122
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr "只有数据类型numeric和decimal有精度/范围参数"
 
-#: preproc.y:13100
+#: preproc.y:13134
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "在这里不允许使用间隔定义"
 
-#: preproc.y:13252 preproc.y:13304
+#: preproc.y:13286 preproc.y:13338
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "在嵌套结构/联合定义中存在太多的层次"
 
-#: preproc.y:13438
+#: preproc.y:13477
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "没有实现指向varchar类型值的指针"
 
-#: preproc.y:13625 preproc.y:13650
+#: preproc.y:13664 preproc.y:13689
 #, c-format
 msgid "using unsupported DESCRIBE statement"
 msgstr "使用不支持的DESCRIBE语句"
 
-#: preproc.y:13897
+#: preproc.y:13936
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "在EXEC SQL VAR命令中不允许初始化"
 
-#: preproc.y:14209
+#: preproc.y:14248
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "在输入上不允许使用标识数组"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:14463
+#: preproc.y:14502
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s 在 \"%s\" 或附近的"
@@ -542,7 +536,7 @@ msgstr "%s 在 \"%s\" 或附近的"
 msgid "out of memory"
 msgstr "内存用尽"
 
-#: type.c:212 type.c:590
+#: type.c:212 type.c:612
 #, c-format
 msgid "unrecognized variable type code %d"
 msgstr "无法识别的变量类型代码%d"
@@ -559,8 +553,7 @@ msgstr "变量\"%s\"是由一个局部变量隐藏的"
 
 #: type.c:275
 #, c-format
-msgid ""
-"indicator variable \"%s\" is hidden by a local variable of a different type"
+msgid "indicator variable \"%s\" is hidden by a local variable of a different type"
 msgstr "标记变量(indicator variable)\"%s\"是由一个不同类型的局部变量隐藏的。"
 
 #: type.c:277
@@ -578,17 +571,17 @@ msgstr "对于数组/指针的记号必须是array/pointer"
 msgid "nested arrays are not supported (except strings)"
 msgstr "不支持嵌套数组（除了字符串外）"
 
-#: type.c:322
+#: type.c:323
 #, c-format
 msgid "indicator for struct has to be a struct"
 msgstr "结构的记号必须是struct"
 
-#: type.c:331 type.c:339 type.c:347
+#: type.c:332 type.c:340 type.c:348
 #, c-format
 msgid "indicator for simple data type has to be simple"
 msgstr "对简单数据类型的指标要简单 "
 
-#: type.c:649
+#: type.c:671
 #, c-format
 msgid "unrecognized descriptor item code %d"
 msgstr "无法识别的描述符成员代码 %d"
@@ -623,47 +616,48 @@ msgstr "变量\"%s\"不是一个数组"
 msgid "variable \"%s\" is not declared"
 msgstr "没有声明变量\"%s\""
 
-#: variable.c:488
+#: variable.c:494
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "标记变量必须有一个整数类型"
 
-#: variable.c:500
+#: variable.c:506
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "无法识别的数据类型名称 \"%s\""
 
-#: variable.c:511 variable.c:519 variable.c:536 variable.c:539
+#: variable.c:517 variable.c:525 variable.c:542 variable.c:545
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "不支持多维数组"
 
-#: variable.c:528
+#: variable.c:534
 #, c-format
-msgid ""
-"multilevel pointers (more than 2 levels) are not supported; found %d level"
-msgid_plural ""
-"multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgid "multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural "multilevel pointers (more than 2 levels) are not supported; found %d levels"
 msgstr[0] "不支持多级指针（超过2级）；找到了%d级指针."
 
-#: variable.c:533
+#: variable.c:539
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "对于这种数据类型不支持指向指针的指针"
 
-#: variable.c:553
+#: variable.c:559
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "不支持结构类型的多维数组"
 
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "查询中使用的 NEW 不在一个规则中"
-
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "查询中使用的 OLD 不在一个规则中"
+#~ msgid "AT option not allowed in DEALLOCATE statement"
+#~ msgstr "在DEALLOCATE语句中不允许使用AT选项"
 
 #~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 #~ msgstr "约束声明 INITIALLY DEFERRED 必须为 DEFERRABLE"
 
-#~ msgid "AT option not allowed in DEALLOCATE statement"
-#~ msgstr "在DEALLOCATE语句中不允许使用AT选项"
+#~ msgid "OLD used in query that is not in a rule"
+#~ msgstr "查询中使用的 OLD 不在一个规则中"
+
+#~ msgid "NEW used in query that is not in a rule"
+#~ msgstr "查询中使用的 NEW 不在一个规则中"
+
+#~ msgid "  --version      output version information, then exit\n"
+#~ msgstr " --version       输出版本信息，然后退出\n"

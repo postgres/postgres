@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-04 17:57+0000\n"
+"POT-Creation-Date: 2016-10-21 02:04+0000\n"
 "PO-Revision-Date: 2012-08-06 15:35-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -111,8 +111,7 @@ msgstr "  -D SYMBOL      define SYMBOL\n"
 
 #: ecpg.c:49
 #, c-format
-msgid ""
-"  -h             parse a header file, this option includes option \"-c\"\n"
+msgid "  -h             parse a header file, this option includes option \"-c\"\n"
 msgstr "  -h             analiza un archivo de cabecera; esto incluye «-c»\n"
 
 #: ecpg.c:50
@@ -148,13 +147,12 @@ msgstr "  --regression   ejecuta en modo de prueba de regresión\n"
 #: ecpg.c:56
 #, c-format
 msgid "  -t             turn on autocommit of transactions\n"
-msgstr ""
-"  -t             activa el compromiso (commit) automático de transacciones\n"
+msgstr "  -t             activa el compromiso (commit) automático de transacciones\n"
 
 #: ecpg.c:57
 #, c-format
-msgid "  --version      output version information, then exit\n"
-msgstr "  --version      muestra información de la versión, luego sale\n"
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  muestra información de la versión, luego sale\n"
 
 #: ecpg.c:58
 #, c-format
@@ -169,8 +167,7 @@ msgid ""
 "input file name, after stripping off .pgc if present.\n"
 msgstr ""
 "\n"
-"Si no se especifica un archivo de salida, el nombre se forma agregando .c "
-"al\n"
+"Si no se especifica un archivo de salida, el nombre se forma agregando .c al\n"
 "archivo de entrada, luego de quitar .pgc si está presente.\n"
 
 #: ecpg.c:61
@@ -182,47 +179,47 @@ msgstr ""
 "\n"
 "Reporte errores a <pgsql-bugs@postgresql.org>.\n"
 
-#: ecpg.c:182 ecpg.c:333 ecpg.c:343
+#: ecpg.c:171 ecpg.c:322 ecpg.c:332
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: no se pudo abrir el archivo «%s»: %s\n"
 
-#: ecpg.c:221 ecpg.c:234 ecpg.c:250 ecpg.c:275
+#: ecpg.c:210 ecpg.c:223 ecpg.c:239 ecpg.c:264
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Utilice «%s --help» para obtener mayor información.\n"
 
-#: ecpg.c:245
+#: ecpg.c:234
 #, c-format
 msgid "%s: parser debug support (-d) not available\n"
 msgstr "%s: la depuración del analizador (parser, -d) no está disponible)\n"
 
-#: ecpg.c:263
+#: ecpg.c:252
 #, c-format
 msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
 msgstr "%s, el preprocesador de C incrustado de PostgreSQL, versión %d.%d.%d\n"
 
-#: ecpg.c:265
+#: ecpg.c:254
 #, c-format
 msgid "EXEC SQL INCLUDE ... search starts here:\n"
 msgstr "EXEC SQL INCLUDE ... la búsqueda comienza aquí:\n"
 
-#: ecpg.c:268
+#: ecpg.c:257
 #, c-format
 msgid "end of search list\n"
 msgstr "fin de la lista de búsqueda\n"
 
-#: ecpg.c:274
+#: ecpg.c:263
 #, c-format
 msgid "%s: no input files specified\n"
 msgstr "%s: no se especificaron archivos de entrada\n"
 
-#: ecpg.c:466
+#: ecpg.c:455
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "el cursor «%s» fue declarado pero no abierto"
 
-#: ecpg.c:479 preproc.y:109
+#: ecpg.c:468 preproc.y:109
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "no se pudo eliminar el archivo de salida «%s»\n"
@@ -309,19 +306,13 @@ msgstr "error de sintaxis en orden EXEC SQL INCLUDE"
 
 #: pgc.l:1220
 #, c-format
-msgid ""
-"internal error: unreachable state; please report this to <pgsql-"
-"bugs@postgresql.org>"
-msgstr ""
-"Error Interno: estado no esperado; por favor reporte a <pgsql-"
-"bugs@postgresql.org>"
+msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
+msgstr "Error Interno: estado no esperado; por favor reporte a <pgsql-bugs@postgresql.org>"
 
 #: pgc.l:1344
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
-msgstr ""
-"Error: ruta de inclusión «%s/%s» es demasiada larga en la línea %d, "
-"omitiendo\n"
+msgstr "Error: ruta de inclusión «%s/%s» es demasiada larga en la línea %d, omitiendo\n"
 
 #: pgc.l:1367
 #, c-format
@@ -365,8 +356,7 @@ msgstr "el tipo «%s» ya está definido"
 #: preproc.y:553 preproc.y:13969 preproc.y:14290 variable.c:620
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
-msgstr ""
-"los arrays multidimensionales para tipos de datos simples no están soportados"
+msgstr "los arrays multidimensionales para tipos de datos simples no están soportados"
 
 #: preproc.y:1528
 #, c-format
@@ -432,8 +422,7 @@ msgstr "COPY FROM STDIN no está implementado"
 #: preproc.y:8155 preproc.y:12900
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
-msgstr ""
-"el uso de la variable «%s» en diferentes sentencias declare no está soportado"
+msgstr "el uso de la variable «%s» en diferentes sentencias declare no está soportado"
 
 #: preproc.y:8157 preproc.y:12902
 #, c-format
@@ -443,8 +432,7 @@ msgstr "el cursor «%s» ya está definido"
 #: preproc.y:8575
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
-msgstr ""
-"la sintaxis LIMIT #,# que ya no está soportada ha sido pasada al servidor"
+msgstr "la sintaxis LIMIT #,# que ya no está soportada ha sido pasada al servidor"
 
 #: preproc.y:8810
 #, c-format
@@ -463,12 +451,8 @@ msgstr "se esperaba «@», se encontró «%s»"
 
 #: preproc.y:12678
 #, c-format
-msgid ""
-"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
-"supported"
-msgstr ""
-"sólo los protocolos «tcp» y «unix» y tipo de bases de datos «postgresql» "
-"están soportados"
+msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
+msgstr "sólo los protocolos «tcp» y «unix» y tipo de bases de datos «postgresql» están soportados"
 
 #: preproc.y:12681
 #, c-format
@@ -478,8 +462,7 @@ msgstr "se esperaba «://», se encontró «%s»"
 #: preproc.y:12686
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
-msgstr ""
-"los sockets de dominio unix sólo trabajan en «localhost» pero no en «%s»"
+msgstr "los sockets de dominio unix sólo trabajan en «localhost» pero no en «%s»"
 
 #: preproc.y:12712
 #, c-format
@@ -514,8 +497,7 @@ msgstr "elemento «%s» no reconocido"
 #: preproc.y:13122
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
-msgstr ""
-"sólo los tipos de dato numeric y decimal tienen argumento de precisión/escala"
+msgstr "sólo los tipos de dato numeric y decimal tienen argumento de precisión/escala"
 
 #: preproc.y:13134
 #, c-format
@@ -566,8 +548,7 @@ msgstr "código de tipo de variable %d no reconocido"
 #: type.c:261
 #, c-format
 msgid "variable \"%s\" is hidden by a local variable of a different type"
-msgstr ""
-"la variable «%s» está escondida por una variable local de tipo diferente"
+msgstr "la variable «%s» está escondida por una variable local de tipo diferente"
 
 #: type.c:263
 #, c-format
@@ -576,11 +557,8 @@ msgstr "la variable «%s» está escondida por una variable local"
 
 #: type.c:275
 #, c-format
-msgid ""
-"indicator variable \"%s\" is hidden by a local variable of a different type"
-msgstr ""
-"la variable de indicador «%s» está escondida por una variable local de tipo "
-"diferente"
+msgid "indicator variable \"%s\" is hidden by a local variable of a different type"
+msgstr "la variable de indicador «%s» está escondida por una variable local de tipo diferente"
 
 #: type.c:277
 #, c-format
@@ -659,14 +637,10 @@ msgstr "los arrays multidimensionales no están soportados"
 
 #: variable.c:534
 #, c-format
-msgid ""
-"multilevel pointers (more than 2 levels) are not supported; found %d level"
-msgid_plural ""
-"multilevel pointers (more than 2 levels) are not supported; found %d levels"
-msgstr[0] ""
-"no se soportan los punteros multinivel (más de 2); se encontró 1 nivel"
-msgstr[1] ""
-"no se soportan los punteros multinivel (más de 2); se encontraron %d niveles"
+msgid "multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural "multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] "no se soportan los punteros multinivel (más de 2); se encontró 1 nivel"
+msgstr[1] "no se soportan los punteros multinivel (más de 2); se encontraron %d niveles"
 
 #: variable.c:539
 #, c-format
@@ -677,3 +651,6 @@ msgstr "los punteros a puntero no están soportados para este tipo de dato"
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "los arrays multidimensionales para estructuras no están soportados"
+
+#~ msgid "  --version      output version information, then exit\n"
+#~ msgstr "  --version      muestra información de la versión, luego sale\n"

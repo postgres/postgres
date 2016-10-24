@@ -1,52 +1,36 @@
-# ru.po
-# PGSCRIPTS Translated Messages into the Russian Language (UTF-8)
+# Russian message translation file for pgscripts
+# Copyright (C) 2003-2016 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
+# Oleg Bartunov <oleg@sai.msu.su>, 2004.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
 #
-# Copyright (c) 2003-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
-# Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
-# Distributed under the same licensing terms as PostgreSQL itself.
-#
-# pgtranslation Id: pgscripts.po,v 1.2 2009/10/14 21:08:40 petere Exp $
-#
-# To the new translator:
-#   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
-#   PG Glossary: <http://www.sai.msu.su/~megera/oddmuse/index.cgi?Pgsql_Glossary>
-#
-# ChangeLog:
-#   - June 27, 2012: Updates for 9.2. Alexander Lakhin <exclusion@gmail.com>.
-#   - April 3, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
-#   - February 20, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
-#   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>.
-#   - May 28 - November 14, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>.
-#   - July 24 - August 25, 2003: Complete Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.2\n"
+"Project-Id-Version: pgscripts (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-11 03:47+0000\n"
-"PO-Revision-Date: 2012-06-25 14:06+0400\n"
+"POT-Creation-Date: 2016-09-20 18:38+0000\n"
+"PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Russian\n"
-"X-Poedit-Country: RUSSIAN FEDERATION\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 1.4\n"
 
 #: clusterdb.c:110 clusterdb.c:129 createdb.c:119 createdb.c:138
 #: createlang.c:89 createlang.c:119 createlang.c:172 createuser.c:163
 #: createuser.c:178 dropdb.c:94 dropdb.c:103 dropdb.c:111 droplang.c:88
 #: droplang.c:118 droplang.c:172 dropuser.c:89 dropuser.c:104 dropuser.c:115
-#: reindexdb.c:120 reindexdb.c:139 vacuumdb.c:133 vacuumdb.c:153
+#: reindexdb.c:120 reindexdb.c:139 vacuumdb.c:134 vacuumdb.c:154
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
 #: clusterdb.c:127 createdb.c:136 createlang.c:117 createuser.c:176
-#: dropdb.c:109 droplang.c:116 dropuser.c:102 reindexdb.c:137 vacuumdb.c:151
+#: dropdb.c:109 droplang.c:116 dropuser.c:102 reindexdb.c:137 vacuumdb.c:152
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
@@ -71,12 +55,12 @@ msgstr "%s: кластеризовать таблицу \"%s\" в базе \"%s\
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: кластеризовать базу \"%s\" не удалось: %s"
 
-#: clusterdb.c:232
+#: clusterdb.c:234
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: кластеризация базы \"%s\"\n"
 
-#: clusterdb.c:248
+#: clusterdb.c:255
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -85,19 +69,19 @@ msgstr ""
 "%s упорядочивает данные всех кластеризованных таблиц в базе данных.\n"
 "\n"
 
-#: clusterdb.c:249 createdb.c:252 createlang.c:234 createuser.c:329
-#: dropdb.c:155 droplang.c:235 dropuser.c:156 reindexdb.c:328 vacuumdb.c:342
+#: clusterdb.c:256 createdb.c:252 createlang.c:234 createuser.c:329
+#: dropdb.c:155 droplang.c:235 dropuser.c:156 reindexdb.c:336 vacuumdb.c:351
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: clusterdb.c:250 reindexdb.c:329 vacuumdb.c:343
+#: clusterdb.c:257 reindexdb.c:337 vacuumdb.c:352
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
-#: clusterdb.c:251 createdb.c:254 createlang.c:236 createuser.c:331
-#: dropdb.c:157 droplang.c:237 dropuser.c:158 reindexdb.c:330 vacuumdb.c:344
+#: clusterdb.c:258 createdb.c:254 createlang.c:236 createuser.c:331
+#: dropdb.c:157 droplang.c:237 dropuser.c:158 reindexdb.c:338 vacuumdb.c:353
 #, c-format
 msgid ""
 "\n"
@@ -106,52 +90,52 @@ msgstr ""
 "\n"
 "Параметры:\n"
 
-#: clusterdb.c:252
+#: clusterdb.c:259
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 кластеризовать все базы\n"
 
-#: clusterdb.c:253
+#: clusterdb.c:260
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=ИМЯ_БД       имя базы данных для кластеризации\n"
 
-#: clusterdb.c:254 createlang.c:238 createuser.c:335 dropdb.c:158
-#: droplang.c:239 dropuser.c:159 reindexdb.c:333
+#: clusterdb.c:261 createlang.c:238 createuser.c:335 dropdb.c:158
+#: droplang.c:239 dropuser.c:159 reindexdb.c:341
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                отображать команды, отправляемые серверу\n"
 
-#: clusterdb.c:255 reindexdb.c:335
+#: clusterdb.c:262 reindexdb.c:343
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               не выводить никакие сообщения\n"
 
-#: clusterdb.c:256
+#: clusterdb.c:263
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table only\n"
 msgstr "  -t, --table=ТАБЛИЦА       кластеризовать только указанную таблицу\n"
 
-#: clusterdb.c:257
+#: clusterdb.c:264
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             выводить исчерпывающие сообщения\n"
 
-#: clusterdb.c:258 createlang.c:240 createuser.c:348 dropdb.c:160
-#: droplang.c:241 dropuser.c:162 reindexdb.c:338
+#: clusterdb.c:265 createlang.c:240 createuser.c:348 dropdb.c:160
+#: droplang.c:241 dropuser.c:162 reindexdb.c:346
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             показать версию и выйти\n"
 
-#: clusterdb.c:259 createlang.c:241 createuser.c:353 dropdb.c:162
-#: droplang.c:242 dropuser.c:164 reindexdb.c:339
+#: clusterdb.c:266 createlang.c:241 createuser.c:353 dropdb.c:162
+#: droplang.c:242 dropuser.c:164 reindexdb.c:347
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
-#: clusterdb.c:260 createdb.c:265 createlang.c:242 createuser.c:354
-#: dropdb.c:163 droplang.c:243 dropuser.c:165 reindexdb.c:340 vacuumdb.c:357
+#: clusterdb.c:267 createdb.c:265 createlang.c:242 createuser.c:354
+#: dropdb.c:163 droplang.c:243 dropuser.c:165 reindexdb.c:348 vacuumdb.c:366
 #, c-format
 msgid ""
 "\n"
@@ -160,44 +144,44 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: clusterdb.c:261 createlang.c:243 createuser.c:355 dropdb.c:164
-#: droplang.c:244 dropuser.c:166 reindexdb.c:341 vacuumdb.c:358
+#: clusterdb.c:268 createlang.c:243 createuser.c:355 dropdb.c:164
+#: droplang.c:244 dropuser.c:166 reindexdb.c:349 vacuumdb.c:367
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ            имя сервера баз данных или каталог сокетов\n"
 
-#: clusterdb.c:262 createlang.c:244 createuser.c:356 dropdb.c:165
-#: droplang.c:245 dropuser.c:167 reindexdb.c:342 vacuumdb.c:359
+#: clusterdb.c:269 createlang.c:244 createuser.c:356 dropdb.c:165
+#: droplang.c:245 dropuser.c:167 reindexdb.c:350 vacuumdb.c:368
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
 
-#: clusterdb.c:263 createlang.c:245 dropdb.c:166 droplang.c:246
-#: reindexdb.c:343 vacuumdb.c:360
+#: clusterdb.c:270 createlang.c:245 dropdb.c:166 droplang.c:246 reindexdb.c:351
+#: vacuumdb.c:369
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ        имя пользователя для подключения к серверу\n"
 
-#: clusterdb.c:264 createlang.c:246 createuser.c:358 dropdb.c:167
-#: droplang.c:247 dropuser.c:169 reindexdb.c:344 vacuumdb.c:361
+#: clusterdb.c:271 createlang.c:246 createuser.c:358 dropdb.c:167
+#: droplang.c:247 dropuser.c:169 reindexdb.c:352 vacuumdb.c:370
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         не запрашивать пароль\n"
 
-#: clusterdb.c:265 createlang.c:247 createuser.c:359 dropdb.c:168
-#: droplang.c:248 dropuser.c:170 reindexdb.c:345 vacuumdb.c:362
+#: clusterdb.c:272 createlang.c:247 createuser.c:359 dropdb.c:168
+#: droplang.c:248 dropuser.c:170 reindexdb.c:353 vacuumdb.c:371
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            запросить пароль\n"
 
-#: clusterdb.c:266 dropdb.c:169 reindexdb.c:346 vacuumdb.c:363
+#: clusterdb.c:273 dropdb.c:169 reindexdb.c:354 vacuumdb.c:372
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=ИМЯ_БД   выбор другой обслуживаемой базы данных\n"
 
-#: clusterdb.c:267
+#: clusterdb.c:274
 #, c-format
 msgid ""
 "\n"
@@ -206,8 +190,8 @@ msgstr ""
 "\n"
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
-#: clusterdb.c:268 createdb.c:273 createlang.c:248 createuser.c:360
-#: dropdb.c:170 droplang.c:249 dropuser.c:171 reindexdb.c:348 vacuumdb.c:365
+#: clusterdb.c:275 createdb.c:273 createlang.c:248 createuser.c:360
+#: dropdb.c:170 droplang.c:249 dropuser.c:171 reindexdb.c:356 vacuumdb.c:374
 #, c-format
 msgid ""
 "\n"
@@ -460,7 +444,7 @@ msgstr "Процедурные языки"
 msgid "%s: missing required argument language name\n"
 msgstr "%s: отсутствует необходимый аргумент: название языка\n"
 
-#: createlang.c:195
+#: createlang.c:194
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
 msgstr "%s: поддержка языка \"%s\" уже имеется в базе \"%s\"\n"
@@ -706,7 +690,7 @@ msgid ""
 msgstr ""
 "  --if-exists               не считать ошибкой отсутствие базы данных\n"
 
-#: droplang.c:201
+#: droplang.c:200
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%s: поддержка языка \"%s\" не установлена в базе данных\"%s\"\n"
@@ -837,17 +821,17 @@ msgstr "%s: переиндексировать индекс \"%s\" в базе \
 msgid "%s: reindexing of database \"%s\" failed: %s"
 msgstr "%s: переиндексировать базу данных \"%s\" не удалось: %s"
 
-#: reindexdb.c:287
+#: reindexdb.c:289
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: переиндексация базы данных \"%s\"\n"
 
-#: reindexdb.c:315
+#: reindexdb.c:323
 #, c-format
 msgid "%s: reindexing of system catalogs failed: %s"
 msgstr "%s: переиндексировать системные каталоги не удалось: %s"
 
-#: reindexdb.c:327
+#: reindexdb.c:335
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -856,33 +840,33 @@ msgstr ""
 "%s переиндексирует базу данных PostgreSQL.\n"
 "\n"
 
-#: reindexdb.c:331
+#: reindexdb.c:339
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
 msgstr "  -a, --all                 переиндексировать все базы данных\n"
 
-#: reindexdb.c:332
+#: reindexdb.c:340
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=БД           имя базы для переиндексации\n"
 
-#: reindexdb.c:334
+#: reindexdb.c:342
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
 msgstr "  -i, --index=ИНДЕКС        пересоздать только указанный индекс\n"
 
-#: reindexdb.c:336
+#: reindexdb.c:344
 #, c-format
 msgid "  -s, --system              reindex system catalogs\n"
 msgstr "  -s, --system              переиндексировать системные каталоги\n"
 
-#: reindexdb.c:337
+#: reindexdb.c:345
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table only\n"
 msgstr ""
 "  -t, --table=ТАБЛИЦА       переиндексировать только указанную таблицу\n"
 
-#: reindexdb.c:347
+#: reindexdb.c:355
 #, c-format
 msgid ""
 "\n"
@@ -891,44 +875,44 @@ msgstr ""
 "\n"
 "Подробнее о переиндексации вы можете узнать в описании SQL-команды REINDEX.\n"
 
-#: vacuumdb.c:161
+#: vacuumdb.c:162
 #, c-format
 msgid "%s: cannot use the \"full\" option when performing only analyze\n"
 msgstr ""
 "%s: при выполнении только анализа нельзя использовать параметр \"full\"\n"
 
-#: vacuumdb.c:167
+#: vacuumdb.c:168
 #, c-format
 msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
 msgstr ""
 "%s: при выполнении только анализа нельзя использовать только \"freeze\"\n"
 
-#: vacuumdb.c:180
+#: vacuumdb.c:181
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s: нельзя очистить все базы данных и одну конкретную одновременно\n"
 
-#: vacuumdb.c:186
+#: vacuumdb.c:187
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr "%s: нельзя очистить одну указанную таблицу во всех базах\n"
 
-#: vacuumdb.c:290
+#: vacuumdb.c:291
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: очистить таблицу \"%s\" в базе \"%s\" не удалось: %s"
 
-#: vacuumdb.c:293
+#: vacuumdb.c:294
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: очистить базу данных \"%s\" не удалось: %s"
 
-#: vacuumdb.c:325
+#: vacuumdb.c:328
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: очистка базы данных \"%s\"\n"
 
-#: vacuumdb.c:341
+#: vacuumdb.c:350
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -937,17 +921,17 @@ msgstr ""
 "%s очищает и анализирует базу данных PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:345
+#: vacuumdb.c:354
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       очистить все базы данных\n"
 
-#: vacuumdb.c:346
+#: vacuumdb.c:355
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=ИМЯ_БД             очистить указанную базу данных\n"
 
-#: vacuumdb.c:347
+#: vacuumdb.c:356
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
@@ -955,56 +939,56 @@ msgid ""
 msgstr ""
 "  -e, --echo                      отображать команды, отправляемые серверу\n"
 
-#: vacuumdb.c:348
+#: vacuumdb.c:357
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      произвести полную очистку\n"
 
-#: vacuumdb.c:349
+#: vacuumdb.c:358
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr ""
 "  -F, --freeze                    заморозить информацию о транзакциях в "
 "строках\n"
 
-#: vacuumdb.c:350
+#: vacuumdb.c:359
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     не выводить сообщения\n"
 
-#: vacuumdb.c:351
+#: vacuumdb.c:360
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr "  -t, --table='ТАБЛ[(КОЛОНКИ)]'   очистить только указанную таблицу\n"
 
-#: vacuumdb.c:352
+#: vacuumdb.c:361
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   выводить исчерпывающие сообщения\n"
 
-#: vacuumdb.c:353
+#: vacuumdb.c:362
 #, c-format
 msgid ""
 "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   показать версию и выйти\n"
 
-#: vacuumdb.c:354
+#: vacuumdb.c:363
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   обновить статистику оптимизатора\n"
 
-#: vacuumdb.c:355
+#: vacuumdb.c:364
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics\n"
 msgstr ""
 "  -Z, --analyze-only              только обновить статистику оптимизатора\n"
 
-#: vacuumdb.c:356
+#: vacuumdb.c:365
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      показать эту справку и выйти\n"
 
-#: vacuumdb.c:364
+#: vacuumdb.c:373
 #, c-format
 msgid ""
 "\n"
