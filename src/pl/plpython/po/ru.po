@@ -1,27 +1,22 @@
 # Russian message translation file for plpython
-# Copyright (C) 2012 PostgreSQL Global Development Group
+# Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
 #
-# ChangeLog:
-#
-#   - April 3, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
-#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: plpython (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-01-14 00:23+0000\n"
-"PO-Revision-Date: 2015-01-15 07:10+0300\n"
+"POT-Creation-Date: 2016-09-20 18:39+0000\n"
+"PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
-"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.5\n"
 
 #: plpython.c:482
 #, c-format
@@ -132,58 +127,58 @@ msgid ""
 msgstr ""
 "функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
 
-#: plpython.c:1667
+#: plpython.c:1677
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: plpython.c:1672 plpython.c:2145
+#: plpython.c:1682 plpython.c:2155
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "функции PL/Python не могут возвращать тип %s"
 
-#: plpython.c:1754
+#: plpython.c:1764
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "функции PL/Python не могут принимать тип %s"
 
-#: plpython.c:1850
+#: plpython.c:1860
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
 
-#: plpython.c:1853
+#: plpython.c:1863
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
 
-#: plpython.c:2147
+#: plpython.c:2157
 msgid "PL/Python does not support conversion to arrays of row types."
 msgstr "PL/Python не поддерживает преобразование в массивы кортежей."
 
-#: plpython.c:2356
+#: plpython.c:2366
 msgid "cannot convert multidimensional array to Python list"
 msgstr "преобразовать многомерный массив в список Python нельзя"
 
-#: plpython.c:2357
+#: plpython.c:2367
 msgid "PL/Python only supports one-dimensional arrays."
 msgstr "PL/Python поддерживает только одномерные массивы."
 
-#: plpython.c:2363
+#: plpython.c:2373
 msgid "could not create new list"
 msgstr "не удалось создать список"
 
-#: plpython.c:2398
+#: plpython.c:2408
 msgid "could not create new dictionary"
 msgstr "не удалось создать словарь"
 
-#: plpython.c:2495
+#: plpython.c:2505
 msgid "could not create bytes representation of Python object"
 msgstr "не удалось создать байтовое представление объекта Python"
 
-#: plpython.c:2587
+#: plpython.c:2597
 msgid "could not create string representation of Python object"
 msgstr "не удалось создать строковое представление объекта Python"
 
-#: plpython.c:2598
+#: plpython.c:2608
 msgid ""
 "could not convert Python object into cstring: Python string representation "
 "appears to contain null bytes"
@@ -191,19 +186,19 @@ msgstr ""
 "не удалось преобразовать объект Python в cstring: похоже, представление "
 "строки Python содержит нулевые байты"
 
-#: plpython.c:2632
+#: plpython.c:2642
 msgid ""
 "return value of function with array return type is not a Python sequence"
 msgstr ""
 "возвращаемое значение функции с результатом-массивом не является "
 "последовательностью"
 
-#: plpython.c:2732
+#: plpython.c:2752
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не найден в сопоставлении"
 
-#: plpython.c:2733
+#: plpython.c:2753
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
@@ -211,16 +206,16 @@ msgstr ""
 "Чтобы присвоить колонке NULL, добавьте в сопоставление значение None с "
 "ключом-именем колонки."
 
-#: plpython.c:2781
+#: plpython.c:2801
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "длина возвращённой последовательности не равна числу колонок в строке"
 
-#: plpython.c:2889
+#: plpython.c:2909
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "в объекте Python не существует атрибут \"%s\""
 
-#: plpython.c:2890
+#: plpython.c:2910
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
@@ -228,36 +223,36 @@ msgstr ""
 "Чтобы присвоить колонке NULL, присвойте возвращаемому значению атрибут с "
 "именем колонки и значением None."
 
-#: plpython.c:3209
+#: plpython.c:3229
 msgid "plan.status takes no arguments"
 msgstr "plan.status не принимает аргументы"
 
-#: plpython.c:3333
+#: plpython.c:3353
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "вторым аргументом plpy.prepare должна быть последовательность"
 
-#: plpython.c:3383
+#: plpython.c:3403
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: имя типа с порядковым номером %d не является строкой"
 
-#: plpython.c:3415
+#: plpython.c:3435
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare не поддерживает составные типы"
 
-#: plpython.c:3505
+#: plpython.c:3525
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute ожидает запрос или план"
 
-#: plpython.c:3524
+#: plpython.c:3544
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute принимает в качестве второго аргумента последовательность"
 
-#: plpython.c:3540
+#: plpython.c:3560
 msgid "could not execute plan"
 msgstr "нельзя выполнить план"
 
-#: plpython.c:3543
+#: plpython.c:3563
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -265,53 +260,53 @@ msgstr[0] "Ожидалась последовательность из %d ар�
 msgstr[1] "Ожидалась последовательность из %d аргументов, получено %d: %s"
 msgstr[2] "Ожидалась последовательность из %d аргументов, получено %d: %s"
 
-#: plpython.c:3685
+#: plpython.c:3705
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "ошибка в SPI_execute_plan: %s"
 
-#: plpython.c:3764
+#: plpython.c:3784
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "ошибка в SPI_execute: %s"
 
-#: plpython.c:3819
+#: plpython.c:3839
 msgid "unrecognized error in PLy_spi_execute_fetch_result"
 msgstr "нераспознанная ошибка в PLy_spi_execute_fetch_result"
 
-#: plpython.c:3881
+#: plpython.c:3901
 msgid "this subtransaction has already been entered"
 msgstr "эта подтранзакция уже начата"
 
-#: plpython.c:3887 plpython.c:3939
+#: plpython.c:3907 plpython.c:3959
 msgid "this subtransaction has already been exited"
 msgstr "эта подтранзакция уже закончена"
 
-#: plpython.c:3933
+#: plpython.c:3953
 msgid "this subtransaction has not been entered"
 msgstr "эта подтранзакция ещё не начата"
 
-#: plpython.c:3945
+#: plpython.c:3965
 msgid "there is no subtransaction to exit from"
 msgstr "нет подтранзакции, которую нужно закончить"
 
-#: plpython.c:4004 plpython.c:4008
+#: plpython.c:4024 plpython.c:4028
 msgid "could not generate SPI exceptions"
 msgstr "не удалось сгенерировать исключения SPI"
 
-#: plpython.c:4033
+#: plpython.c:4053
 msgid "could not add the spiexceptions module"
 msgstr "не удалось добавить модуль spiexceptions"
 
-#: plpython.c:4053
+#: plpython.c:4073
 msgid "could not create the base SPI exceptions"
 msgstr "не удалось создать базовые объекты исключений SPI"
 
-#: plpython.c:4121
+#: plpython.c:4141
 msgid "Python major version mismatch in session"
 msgstr "несовпадение базовой версии Python в сеансе"
 
-#: plpython.c:4122
+#: plpython.c:4142
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -320,49 +315,49 @@ msgstr ""
 "В данном сеансе до этого использовался Python базовой версии %d, а сейчас "
 "планируется использовать Python версии %d."
 
-#: plpython.c:4124
+#: plpython.c:4144
 msgid "Start a new session to use a different Python major version."
 msgstr ""
 "Чтобы переключиться на другую базовую версию Python, начните новый сеанс."
 
-#: plpython.c:4139
+#: plpython.c:4159
 msgid "untrapped error in initialization"
 msgstr "необработанная ошибка при инициализации"
 
-#: plpython.c:4160
+#: plpython.c:4180
 msgid "could not import \"__main__\" module"
 msgstr "не удалось импортировать модуль \"__main__\""
 
-#: plpython.c:4165
+#: plpython.c:4185
 msgid "could not create globals"
 msgstr "не удалось создать глобальные данные"
 
-#: plpython.c:4169
+#: plpython.c:4189
 msgid "could not initialize globals"
 msgstr "не удалось инициализировать глобальные данные"
 
-#: plpython.c:4207 plpython.c:4210
+#: plpython.c:4227 plpython.c:4230
 msgid "could not import \"plpy\" module"
 msgstr "не удалось импортировать модуль \"plpy\""
 
-#: plpython.c:4277
+#: plpython.c:4297
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не удалось распаковать аргументы в plpy.elog"
 
-#: plpython.c:4285
+#: plpython.c:4305
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpython.c:4309 plpython.c:4543 plpython.c:4544
+#: plpython.c:4329 plpython.c:4563 plpython.c:4564
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:4895
+#: plpython.c:4915
 msgid "could not convert Python Unicode object to bytes"
 msgstr "не удалось преобразовать объект Python Unicode в байты"
 
-#: plpython.c:4900
+#: plpython.c:4920
 msgid "could not extract bytes from encoded string"
 msgstr "не удалось извлечь байты из кодированной строки"
 

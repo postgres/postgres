@@ -2,13 +2,13 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
-# grzegorz <begina.felicysym@wp.eu>, 2014.
+# grzegorz <begina.felicysym@wp.eu>, 2014, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2014-03-21 18:39+0000\n"
-"PO-Revision-Date: 2014-03-22 21:22+0200\n"
+"POT-Creation-Date: 2016-08-08 16:09+0000\n"
+"PO-Revision-Date: 2016-08-08 22:05+0200\n"
 "Last-Translator: grzegorz <begina.felicysym@wp.eu>\n"
 "Language-Team: begina.felicysym@wp.eu\n"
 "Language: pl\n"
@@ -55,21 +55,21 @@ msgstr ""
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Oczekiwano None, \"OK\", \"SKIP\", lub \"MODIFY\"."
 
-#: plpython.c:799
+#: plpython.c:797
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "usunięto TD[\"new\"], nie można zmienić wiersza"
 
-#: plpython.c:802
+#: plpython.c:801
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] nie jest słownikiem"
 
-#: plpython.c:826
+#: plpython.c:825
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr ""
 "klucz słownika TD[\"new\"] na pozycji porządkowej %d nie jest ciągiem znaków"
 
-#: plpython.c:832
+#: plpython.c:831
 #, c-format
 msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
@@ -78,108 +78,108 @@ msgstr ""
 "klucz \"%s\" znaleziony w TD[\"new\"] nie istnieje jako kolumna w wierszu "
 "obsługiwanym przez wyzwalacz"
 
-#: plpython.c:928
+#: plpython.c:926
 msgid "could not create new dictionary while building trigger arguments"
 msgstr ""
 "nie można utworzyć nowego słownika w czasie tworzenia argumentów wyzwalacza"
 
-#: plpython.c:1135
+#: plpython.c:1133
 msgid "unsupported set function return mode"
 msgstr "nieobsługiwany tryb zwracania przez funkcję grupy"
 
-#: plpython.c:1136
+#: plpython.c:1134
 msgid ""
-"PL/Python set-returning functions only support returning only value per call."
+"PL/Python set-returning functions only support returning one value per call."
 msgstr ""
-"funkcja zwracająca grupę PL/obsługuje tylko zwracanie jednej wartości w "
-"wywołaniu."
+"Funkcje zwracające grupę PL/Python obsługuje tylko zwracanie jednej wartości "
+"w wywołaniu."
 
-#: plpython.c:1148
+#: plpython.c:1146
 msgid "returned object cannot be iterated"
 msgstr "zwrócony obiekt nie może być przeiterowany"
 
-#: plpython.c:1149
+#: plpython.c:1147
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr "funkcje PL/Python zwracające grupę muszą zwracać iterowalny obiekt."
 
-#: plpython.c:1174
+#: plpython.c:1172
 msgid "error fetching next item from iterator"
 msgstr "błąd pobierania następnego elementu z iteratora"
 
-#: plpython.c:1209
+#: plpython.c:1207
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "funkcja PL/Python zwracająca typ \"void\" nie zwróciła wartości None"
 
-#: plpython.c:1289
+#: plpython.c:1287
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "wymuszone przerywanie podtransakcji, która nie została zakończona"
 
-#: plpython.c:1405
+#: plpython.c:1403
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "nie powiodło się PyList_SetItem() podczas ustawiania argumentów"
 
-#: plpython.c:1409
+#: plpython.c:1407
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "nie powiodło się PyDict_SetItemString() podczas ustawiania argumentów"
 
-#: plpython.c:1421
+#: plpython.c:1419
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
 "funkcja zwracająca rekord w wywołaniu, które nie akceptuje typów złożonych"
 
-#: plpython.c:1669
+#: plpython.c:1677
 msgid "trigger functions can only be called as triggers"
 msgstr "procedury wyzwalaczy mogą być wywoływane jedynie przez wyzwalacze"
 
-#: plpython.c:1674 plpython.c:2147
+#: plpython.c:1682 plpython.c:2155
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funkcje PL/Python nie mogą zwracać wartości typu %s"
 
-#: plpython.c:1756
+#: plpython.c:1764
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "funkcje PL/Python nie obsługują typu %s"
 
-#: plpython.c:1852
+#: plpython.c:1860
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "nie powiodła się kompilacja funkcji PL/Python \"%s\""
 
-#: plpython.c:1855
+#: plpython.c:1863
 msgid "could not compile anonymous PL/Python code block"
 msgstr "nie udało się skompilować anonimowego bloku kodu PL/Python"
 
-#: plpython.c:2149
+#: plpython.c:2157
 msgid "PL/Python does not support conversion to arrays of row types."
 msgstr "PL/Python nie obsługuje konwersji typów wierszowych na tablice."
 
-#: plpython.c:2358
+#: plpython.c:2366
 msgid "cannot convert multidimensional array to Python list"
 msgstr "nie można skonwertować tablicy wielowymiarowej na listę Python"
 
-#: plpython.c:2359
+#: plpython.c:2367
 msgid "PL/Python only supports one-dimensional arrays."
 msgstr "PL/Python obsługuje tylko jednowymiarowe tablice."
 
-#: plpython.c:2365
+#: plpython.c:2373
 msgid "could not create new list"
 msgstr "nie można utworzyć nowej listy"
 
-#: plpython.c:2400
+#: plpython.c:2408
 msgid "could not create new dictionary"
 msgstr "nie można utworzyć nowego słownika"
 
-#: plpython.c:2497
+#: plpython.c:2505
 msgid "could not create bytes representation of Python object"
 msgstr "nie można utworzyć reprezentacji bajtowej obiektu Python"
 
-#: plpython.c:2589
+#: plpython.c:2597
 msgid "could not create string representation of Python object"
 msgstr "nie można utworzyć reprezentacji znakowej obiektu Python"
 
-#: plpython.c:2600
+#: plpython.c:2608
 msgid ""
 "could not convert Python object into cstring: Python string representation "
 "appears to contain null bytes"
@@ -187,18 +187,18 @@ msgstr ""
 "nie można zmienić obiektu Python na cstring: reprezentacja ciągu znaków "
 "Python wydaje się zawierać puste bajty"
 
-#: plpython.c:2634
+#: plpython.c:2642
 msgid ""
 "return value of function with array return type is not a Python sequence"
 msgstr ""
 "wartość zwrócona przez funkcję zwracającą tablicę nie jest sekwencją Python"
 
-#: plpython.c:2734
+#: plpython.c:2752
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "nie odnaleziono klucza \"%s\" w mapowaniu"
 
-#: plpython.c:2735
+#: plpython.c:2753
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
@@ -206,16 +206,16 @@ msgstr ""
 "Aby zwrócić null w kolumnie, dodaj wartość None do mapowania z kluczem "
 "nazwanym wedle kolumny."
 
-#: plpython.c:2783
+#: plpython.c:2801
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "długość zwróconej sekwencji nie jest równa liczbie kolumn w wierszu"
 
-#: plpython.c:2891
+#: plpython.c:2909
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atrybut \"%s\" nie istnieje w obiekcie Python"
 
-#: plpython.c:2892
+#: plpython.c:2910
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
@@ -223,37 +223,37 @@ msgstr ""
 "Aby zwrócić null w kolumnie, niech zwrócony obiekt posiada atrybut nazwany "
 "wedle kolumny z wartością None."
 
-#: plpython.c:3211
+#: plpython.c:3229
 msgid "plan.status takes no arguments"
 msgstr "plan.status nie przyjmuje żadnych argumentów"
 
-#: plpython.c:3335
+#: plpython.c:3353
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "drugi argument plpy.prepare musi być sekwencją"
 
-#: plpython.c:3385
+#: plpython.c:3403
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr ""
 "plpy.prepare: nazwa typu na pozycji porządkowej %d nie jest ciągiem znaków"
 
-#: plpython.c:3417
+#: plpython.c:3435
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare nie obsługuje typów złożonych"
 
-#: plpython.c:3507
+#: plpython.c:3525
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute oczekuje kwerendy lub planu"
 
-#: plpython.c:3526
+#: plpython.c:3544
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute przyjmuje sekwencję jako drugi argument"
 
-#: plpython.c:3542
+#: plpython.c:3560
 msgid "could not execute plan"
 msgstr "nie można wykonać planu"
 
-#: plpython.c:3545
+#: plpython.c:3563
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -261,53 +261,53 @@ msgstr[0] "Oczekiwano sekwencji z %d argumentem, mamy %d: %s"
 msgstr[1] "Oczekiwano sekwencji z %d argumentami, mamy %d: %s"
 msgstr[2] "Oczekiwano sekwencji z %d argumentami, mamy %d: %s"
 
-#: plpython.c:3687
+#: plpython.c:3705
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "nie powiódł się SPI_execute_plan: %s"
 
-#: plpython.c:3766
+#: plpython.c:3784
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "nie powiódł się SPI_execute: %s"
 
-#: plpython.c:3821
+#: plpython.c:3839
 msgid "unrecognized error in PLy_spi_execute_fetch_result"
 msgstr "nierozpoznany błąd w PLy_spi_execute_fetch_result"
 
-#: plpython.c:3883
+#: plpython.c:3901
 msgid "this subtransaction has already been entered"
 msgstr "ta podtransakcja już została wprowadzona"
 
-#: plpython.c:3889 plpython.c:3941
+#: plpython.c:3907 plpython.c:3959
 msgid "this subtransaction has already been exited"
 msgstr "ta podtransakcja już została zakończona"
 
-#: plpython.c:3935
+#: plpython.c:3953
 msgid "this subtransaction has not been entered"
 msgstr "ta podtransakcja nie została wprowadzona"
 
-#: plpython.c:3947
+#: plpython.c:3965
 msgid "there is no subtransaction to exit from"
 msgstr "brak podtransakcji by z niej wyjść"
 
-#: plpython.c:4006 plpython.c:4010
+#: plpython.c:4024 plpython.c:4028
 msgid "could not generate SPI exceptions"
 msgstr "nie można wygenerować wyjątków SPI"
 
-#: plpython.c:4035
+#: plpython.c:4053
 msgid "could not add the spiexceptions module"
 msgstr "nie udało się dodać modułu spiexceptions"
 
-#: plpython.c:4055
+#: plpython.c:4073
 msgid "could not create the base SPI exceptions"
 msgstr "nie można stworzyć bazowych wyjątków SPI"
 
-#: plpython.c:4123
+#: plpython.c:4141
 msgid "Python major version mismatch in session"
 msgstr "niezgodna wersja główna Python w sesji"
 
-#: plpython.c:4124
+#: plpython.c:4142
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -316,47 +316,47 @@ msgstr ""
 "Ta sesja używała poprzednio Python w głównej wersji %d, teraz próbuje użyć "
 "Python w głównej wersji %d."
 
-#: plpython.c:4126
+#: plpython.c:4144
 msgid "Start a new session to use a different Python major version."
 msgstr "Uruchom nową sesję aby użyć innej głównej wersji Python."
 
-#: plpython.c:4141
+#: plpython.c:4159
 msgid "untrapped error in initialization"
 msgstr "niewyłapany błąd w inicjacji"
 
-#: plpython.c:4162
+#: plpython.c:4180
 msgid "could not import \"__main__\" module"
 msgstr "nie można zaimportować modułu \"__main__\""
 
-#: plpython.c:4167
+#: plpython.c:4185
 msgid "could not create globals"
 msgstr "nie można utworzyć zmiennych globalnych"
 
-#: plpython.c:4171
+#: plpython.c:4189
 msgid "could not initialize globals"
 msgstr "nie można zainicjować zmiennych globalnych"
 
-#: plpython.c:4209 plpython.c:4212
+#: plpython.c:4227 plpython.c:4230
 msgid "could not import \"plpy\" module"
 msgstr "nie można zaimportować modułu \"plpy\""
 
-#: plpython.c:4279
+#: plpython.c:4297
 msgid "could not unpack arguments in plpy.elog"
 msgstr "nie można rozpakować argumentów w plpy.elog"
 
-#: plpython.c:4287
+#: plpython.c:4305
 msgid "could not parse error message in plpy.elog"
 msgstr "nie można przetworzyć komunikatu błędu w plpy.elog"
 
-#: plpython.c:4311 plpython.c:4545 plpython.c:4546
+#: plpython.c:4329 plpython.c:4563 plpython.c:4564
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:4897
+#: plpython.c:4915
 msgid "could not convert Python Unicode object to bytes"
 msgstr "nie można zmienić obiektu unikodowego Python na bajty"
 
-#: plpython.c:4902
+#: plpython.c:4920
 msgid "could not extract bytes from encoded string"
 msgstr "nie można wyciągnąć bajtów z kodowanego ciągu znaków"
