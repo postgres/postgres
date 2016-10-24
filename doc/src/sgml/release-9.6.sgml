@@ -280,6 +280,24 @@ Branch: REL9_5_STABLE [beac79369] 2016-10-23 19:14:32 -0400
 
     <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [00f15338b] 2016-10-24 09:45:48 -0300
+Branch: REL9_6_STABLE [c8329f934] 2016-10-24 09:46:49 -0300
+Branch: REL9_5_STABLE [7a2fa5774] 2016-10-24 09:38:28 -0300
+-->
+     <para>
+      Preserve commit timestamps across server restart
+      (Julien Rouhaud, Craig Ringer)
+     </para>
+
+     <para>
+      With <xref linkend="guc-track-commit-timestamp"> turned on, old
+      commit timestamps became inaccessible after a clean server restart.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Andres Freund <andres@anarazel.de>
 Branch: master [61633f790] 2016-10-03 22:11:36 -0700
 Branch: REL9_6_STABLE [76c0b73df] 2016-10-03 22:12:31 -0700
