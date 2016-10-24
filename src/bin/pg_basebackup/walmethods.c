@@ -432,7 +432,7 @@ tar_write_padding_data(TarMethodFile * f, size_t bytes)
 	{
 		size_t		bytestowrite = bytesleft > XLOG_BLCKSZ ? XLOG_BLCKSZ : bytesleft;
 
-		size_t		r = tar_write(f, zerobuf, bytestowrite);
+		ssize_t		r = tar_write(f, zerobuf, bytestowrite);
 
 		if (r < 0)
 			return false;
