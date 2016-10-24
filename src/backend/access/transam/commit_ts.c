@@ -843,6 +843,8 @@ SetCommitTsLimit(TransactionId oldestXact, TransactionId newestXact)
 	else
 	{
 		Assert(ShmemVariableCache->newestCommitTsXid == InvalidTransactionId);
+		ShmemVariableCache->oldestCommitTsXid = oldestXact;
+		ShmemVariableCache->newestCommitTsXid = newestXact;
 	}
 	LWLockRelease(CommitTsLock);
 }
