@@ -321,6 +321,18 @@ Branch: REL9_1_STABLE [7e01c8ef3] 2016-08-14 15:06:02 -0400
 
     <listitem>
      <para>
+      Preserve commit timestamps across server restart
+      (Julien Rouhaud, Craig Ringer)
+     </para>
+
+     <para>
+      With <xref linkend="guc-track-commit-timestamp"> turned on, old
+      commit timestamps became inaccessible after a clean server restart.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix logical WAL decoding to work properly when a subtransaction's WAL
       output is large enough to spill to disk (Andres Freund)
      </para>
