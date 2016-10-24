@@ -650,13 +650,13 @@ msgstr "無法判斷函式 lowrite 的 OID\n"
 #: fe-misc.c:270
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
-msgstr "pgGetInt 不支援大小為 %lu 的整數 "
+msgstr "pqGetInt 不支援大小為 %lu 的整數 "
 
 # fe-misc.c:264
 #: fe-misc.c:306
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr "pgPutInt 不支援大小為 %lu 的整數"
+msgstr "pqPutInt 不支援大小為 %lu 的整數"
 
 # fe-misc.c:544
 # fe-misc.c:748
