@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL) 9.5\n"
+"Project-Id-Version: ecpglib (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-12-23 15:02+0900\n"
-"PO-Revision-Date: 2016-01-20 21:53-0500\n"
+"POT-Creation-Date: 2016-09-26 14:02+0900\n"
+"PO-Revision-Date: 2016-09-26 15:37+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -26,7 +26,7 @@ msgstr "<초기값>"
 
 #: descriptor.c:833 misc.c:120
 msgid "NULL"
-msgstr ""
+msgstr "NULL"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:33
@@ -195,4 +195,4 @@ msgstr "SQL 오류: %s\n"
 
 #: execute.c:1962
 msgid "<empty>"
-msgstr ""
+msgstr "<empty>"

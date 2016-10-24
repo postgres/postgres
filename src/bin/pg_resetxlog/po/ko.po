@@ -3,16 +3,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.5\n"
+"Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-01-27 10:03+0900\n"
-"PO-Revision-Date: 2016-01-29 13:45+0900\n"
+"POT-Creation-Date: 2016-09-26 14:02+0900\n"
+"PO-Revision-Date: 2016-09-26 18:37+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../common/restricted_token.c:68
@@ -79,8 +79,7 @@ msgstr "%s: 트랜잭션 ID (-x) 값은 0이 아니여야함\n"
 #, c-format
 msgid ""
 "%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"
-msgstr ""
-"%s: -c 옵션으로 지정한 트랜잭션 ID는 0이거나 2이상이어야 함\n"
+msgstr "%s: -c 옵션으로 지정한 트랜잭션 ID는 0이거나 2이상이어야 함\n"
 
 #: pg_resetxlog.c:207
 #, c-format
@@ -247,8 +246,8 @@ msgstr "on"
 
 #: pg_resetxlog.c:649
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "마지막 체크포인트 NextXID:            %u/%u\n"
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "마지막 체크포인트 NextXID:            %u:%u\n"
 
 #: pg_resetxlog.c:652
 #, c-format
