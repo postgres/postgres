@@ -1,6 +1,272 @@
 <!-- doc/src/sgml/release-9.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-2-19">
+  <title>Release 9.2.19</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-10-27</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.2.18.
+   For information about new features in the 9.2 major release, see
+   <xref linkend="release-9-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.2.19</title>
+
+   <para>
+    A dump/restore is not required for those running 9.2.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.2.11,
+    see <xref linkend="release-9-2-11">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix EvalPlanQual rechecks involving CTE scans (Tom Lane)
+     </para>
+
+     <para>
+      The recheck would always see the CTE as returning no rows, typically
+      leading to failure to update rows that were recently updated.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper repetition of previous results from hashed aggregation in
+      a subquery (Andrew Gierth)
+     </para>
+
+     <para>
+      The test to see if we can reuse a previously-computed hash table of
+      the aggregate state values neglected the possibility of an outer query
+      reference appearing in an aggregate argument expression.  A change in
+      the value of such a reference should lead to recalculating the hash
+      table, but did not.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>EXPLAIN</> to emit valid XML when
+      <xref linkend="guc-track-io-timing"> is on (Markus Winand)
+     </para>
+
+     <para>
+      Previously the XML output-format option produced syntactically invalid
+      tags such as <literal>&lt;I/O-Read-Time&gt;</>.  That is now
+      rendered as <literal>&lt;I-O-Read-Time&gt;</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Suppress printing of zeroes for unmeasured times
+      in <command>EXPLAIN</> (Maksim Milyutin)
+     </para>
+
+     <para>
+      Certain option combinations resulted in printing zero values for times
+      that actually aren't ever measured in that combination.  Our general
+      policy in <command>EXPLAIN</> is not to print such fields at all, so
+      do that consistently in all cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix timeout length when <command>VACUUM</> is waiting for exclusive
+      table lock so that it can truncate the table (Simon Riggs)
+     </para>
+
+     <para>
+      The timeout was meant to be 50 milliseconds, but it was actually only
+      50 microseconds, causing <command>VACUUM</> to give up on truncation
+      much more easily than intended.  Set it to the intended value.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bugs in merging inherited <literal>CHECK</> constraints while
+      creating or altering a table (Tom Lane, Amit Langote)
+     </para>
+
+     <para>
+      Allow identical <literal>CHECK</> constraints to be added to a parent
+      and child table in either order.  Prevent merging of a valid
+      constraint from the parent table with a <literal>NOT VALID</>
+      constraint on the child.  Likewise, prevent merging of a <literal>NO
+      INHERIT</> child constraint with an inherited constraint.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove artificial restrictions on the values accepted
+      by <function>numeric_in()</> and <function>numeric_recv()</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      We allow numeric values up to the limit of the storage format (more
+      than <literal>1e100000</>), so it seems fairly pointless
+      that <function>numeric_in()</> rejected scientific-notation exponents
+      above 1000.  Likewise, it was silly for <function>numeric_recv()</> to
+      reject more than 1000 digits in an input value.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid very-low-probability data corruption due to testing tuple
+      visibility without holding buffer lock (Thomas Munro, Peter Geoghegan,
+      Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix file descriptor leakage when truncating a temporary relation of
+      more than 1GB (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow starting a standalone backend with <literal>standby_mode</>
+      turned on (Michael Paquier)
+     </para>
+
+     <para>
+      This can't do anything useful, since there will be no WAL receiver
+      process to fetch more WAL data; and it could result in misbehavior
+      in code that wasn't designed with this situation in mind.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't try to share SSL contexts across multiple connections
+      in <application>libpq</> (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This led to assorted corner-case bugs, particularly when trying to use
+      different SSL parameters for different connections.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid corner-case memory leak in <application>libpq</> (Tom Lane)
+     </para>
+
+     <para>
+      The reported problem involved leaking an error report
+      during <function>PQreset()</>, but there might be related cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>ecpg</>'s <option>--help</> and <option>--version</>
+      options work consistently with our other executables (Haribabu Kommi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_dump</>, never dump range constructor functions
+      (Tom Lane)
+     </para>
+
+     <para>
+      This oversight led to <application>pg_upgrade</> failures with
+      extensions containing range types, due to duplicate creation of the
+      constructor functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/intarray/bench/bench.pl</> to print the results
+      of the <command>EXPLAIN</> it does when given the <option>-e</> option
+      (Daniel Gustafsson)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update Windows time zone mapping to recognize some time zone names
+      added in recent Windows versions (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent failure of obsolete dynamic time zone abbreviations (Tom Lane)
+     </para>
+
+     <para>
+      If a dynamic time zone abbreviation does not match any entry in the
+      referenced time zone, treat it as equivalent to the time zone name.
+      This avoids unexpected failures when IANA removes abbreviations from
+      their time zone database, as they did in <application>tzdata</>
+      release 2016f and seem likely to do again in the future.  The
+      consequences were not limited to not recognizing the individual
+      abbreviation; any mismatch caused
+      the <structname>pg_timezone_abbrevs</> view to fail altogether.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2016h
+      for DST law changes in Palestine and Turkey, plus historical
+      corrections for Turkey and some regions of Russia.
+      Switch to numeric abbreviations for some time zones in Antarctica,
+      the former Soviet Union, and Sri Lanka.
+     </para>
+
+     <para>
+      The IANA time zone database previously provided textual abbreviations
+      for all time zones, sometimes making up abbreviations that have little
+      or no currency among the local population.  They are in process of
+      reversing that policy in favor of using numeric UTC offsets in zones
+      where there is no evidence of real-world use of an English
+      abbreviation.  At least for the time being, <productname>PostgreSQL</>
+      will continue to accept such removed abbreviations for timestamp input.
+      But they will not be shown in the <structname>pg_timezone_names</>
+      view nor used for output.
+     </para>
+
+     <para>
+      In this update, <literal>AMT</> is no longer shown as being in use to
+      mean Armenia Time.  Therefore, we have changed the <literal>Default</>
+      abbreviation set to interpret it as Amazon Time, thus UTC-4 not UTC+4.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-2-18">
   <title>Release 9.2.18</title>
 
