@@ -62,37 +62,40 @@ typedef struct _z_stream
 typedef z_stream *z_streamp;
 #endif
 
-/* Current archive version number (the format we can output) */
-#define K_VERS_MAJOR 1
-#define K_VERS_MINOR 12
-#define K_VERS_REV 0
-
 /* Data block types */
 #define BLK_DATA 1
 #define BLK_BLOBS 3
 
+/* Encode version components into a convenient integer <maj><min><rev> */
+#define MAKE_ARCHIVE_VERSION(major, minor, rev) (((major) * 256 + (minor)) * 256 + (rev))
+
+#define ARCHIVE_MAJOR(version) (((version) >> 16) & 255)
+#define ARCHIVE_MINOR(version) (((version) >>  8) & 255)
+#define ARCHIVE_REV(version)   (((version)      ) & 255)
+
 /* Historical version numbers (checked in code) */
-#define K_VERS_1_0 (( (1 * 256 + 0) * 256 + 0) * 256 + 0)
-#define K_VERS_1_2 (( (1 * 256 + 2) * 256 + 0) * 256 + 0)		/* Allow No ZLIB */
-#define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0)		/* BLOBs */
-#define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0)		/* Date & name in header */
-#define K_VERS_1_5 (( (1 * 256 + 5) * 256 + 0) * 256 + 0)		/* Handle dependencies */
-#define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
-#define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in
-																 * header */
-#define K_VERS_1_8 (( (1 * 256 + 8) * 256 + 0) * 256 + 0)		/* change interpretation
-																 * of ID numbers and
-																 * dependencies */
-#define K_VERS_1_9 (( (1 * 256 + 9) * 256 + 0) * 256 + 0)		/* add default_with_oids
-																 * tracking */
-#define K_VERS_1_10 (( (1 * 256 + 10) * 256 + 0) * 256 + 0)		/* add tablespace */
-#define K_VERS_1_11 (( (1 * 256 + 11) * 256 + 0) * 256 + 0)		/* add toc section
-																 * indicator */
-#define K_VERS_1_12 (( (1 * 256 + 12) * 256 + 0) * 256 + 0)		/* add separate BLOB
-																 * entries */
+#define K_VERS_1_0	MAKE_ARCHIVE_VERSION(1, 0, 0)
+#define K_VERS_1_2	MAKE_ARCHIVE_VERSION(1, 2, 0)	/* Allow No ZLIB */
+#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBs */
+#define K_VERS_1_4	MAKE_ARCHIVE_VERSION(1, 4, 0)	/* Date & name in header */
+#define K_VERS_1_5	MAKE_ARCHIVE_VERSION(1, 5, 0)	/* Handle dependencies */
+#define K_VERS_1_6	MAKE_ARCHIVE_VERSION(1, 6, 0)	/* Schema field in TOCs */
+#define K_VERS_1_7	MAKE_ARCHIVE_VERSION(1, 7, 0)	/* File Offset size in header */
+#define K_VERS_1_8	MAKE_ARCHIVE_VERSION(1, 8, 0)	/* change interpretation of ID
+													   numbers and dependencies */
+#define K_VERS_1_9	MAKE_ARCHIVE_VERSION(1, 9, 0)	/* add default_with_oids tracking */
+#define K_VERS_1_10	MAKE_ARCHIVE_VERSION(1, 10, 0)	/* add tablespace */
+#define K_VERS_1_11	MAKE_ARCHIVE_VERSION(1, 11, 0)	/* add toc section indicator */
+#define K_VERS_1_12	MAKE_ARCHIVE_VERSION(1, 12, 0)	/* add separate BLOB entries */
+
+/* Current archive version number (the format we can output) */
+#define K_VERS_MAJOR 1
+#define K_VERS_MINOR 12
+#define K_VERS_REV 0
+#define K_VERS_SELF	MAKE_ARCHIVE_VERSION(K_VERS_MAJOR, K_VERS_MINOR, K_VERS_REV);
 
 /* Newest format we can read */
-#define K_VERS_MAX (( (1 * 256 + 12) * 256 + 255) * 256 + 0)
+#define K_VERS_MAX	MAKE_ARCHIVE_VERSION(K_VERS_MAJOR, K_VERS_MINOR, 255)
 
 
 /* Flags to indicate disposition of offsets stored in files */
@@ -205,10 +208,7 @@ typedef enum
 struct _archiveHandle
 {
 	Archive		public;			/* Public part of archive */
-	char		vmaj;			/* Version of file */
-	char		vmin;
-	char		vrev;
-	int			version;		/* Conveniently formatted version */
+	int			version;		/* Version of file */
 
 	char	   *archiveRemoteVersion;	/* When reading an archive, the
 										 * version of the dumped DB */
