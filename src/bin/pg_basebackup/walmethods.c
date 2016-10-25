@@ -611,6 +611,9 @@ tar_sync(Walfile f)
 	Assert(f != NULL);
 	tar_clear_error();
 
+	if (!tar_data->sync)
+		return 0;
+
 	/*
 	 * Always sync the whole tarfile, because that's all we can do. This makes
 	 * no sense on compressed files, so just ignore those.
@@ -842,7 +845,8 @@ tar_finish(void)
 #endif
 
 	/* sync the empty blocks as well, since they're after the last file */
-	fsync(tar_data->fd);
+	if (tar_data->sync)
+		fsync(tar_data->fd);
 
 	if (close(tar_data->fd) != 0)
 		return false;
