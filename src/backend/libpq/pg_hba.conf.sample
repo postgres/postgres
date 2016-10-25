@@ -59,11 +59,11 @@
 # its special character, and just match a database or username with
 # that name.
 #
-# This file is read on server startup and when the postmaster receives
-# a SIGHUP signal.  If you edit the file on a running system, you have
-# to SIGHUP the postmaster for the changes to take effect.  You can
-# use "pg_ctl reload" to do that.
-
+# This file is read on server startup and when the server receives a
+# SIGHUP signal.  If you edit the file on a running system, you have to
+# SIGHUP the server for the changes to take effect, run "pg_ctl reload",
+# or execute "SELECT pg_reload_conf()".
+#
 # Put your actual configuration here
 # ----------------------------------
 #
