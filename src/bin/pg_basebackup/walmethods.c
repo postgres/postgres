@@ -299,6 +299,13 @@ CreateWalDirectoryMethod(const char *basedir, bool sync)
 	return method;
 }
 
+void
+FreeWalDirectoryMethod(void)
+{
+	pg_free(dir_data->basedir);
+	pg_free(dir_data);
+}
+
 
 /*-------------------------------------------------------------------------
  * WalTarMethod - write wal to a tar file containing pg_xlog contents
@@ -893,4 +900,15 @@ CreateWalTarMethod(const char *tarbase, int compression, bool sync)
 #endif
 
 	return method;
+}
+
+void
+FreeWalTarMethod(void)
+{
+	pg_free(tar_data->tarfilename);
+#ifdef HAVE_LIBZ
+	if (tar_data->compression)
+		 pg_free(tar_data->zlibOut);
+#endif
+	pg_free(tar_data);
 }

@@ -495,6 +495,13 @@ LogStreamerMain(logstreamer_param *param)
 	}
 
 	PQfinish(param->bgconn);
+
+	if (format == 'p')
+		FreeWalDirectoryMethod();
+	else
+		FreeWalTarMethod();
+	pg_free(stream.walmethod);
+
 	return 0;
 }
 

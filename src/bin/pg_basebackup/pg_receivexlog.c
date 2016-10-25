@@ -352,6 +352,10 @@ StreamLog(void)
 	}
 
 	PQfinish(conn);
+
+	FreeWalDirectoryMethod();
+	pg_free(stream.walmethod);
+
 	conn = NULL;
 }
 

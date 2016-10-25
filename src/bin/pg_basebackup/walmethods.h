@@ -43,3 +43,7 @@ struct WalWriteMethod
  */
 WalWriteMethod *CreateWalDirectoryMethod(const char *basedir, bool sync);
 WalWriteMethod *CreateWalTarMethod(const char *tarbase, int compression, bool sync);
+
+/* Cleanup routines for previously-created methods */
+void FreeWalDirectoryMethod(void);
+void FreeWalTarMethod(void);
