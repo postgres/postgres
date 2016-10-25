@@ -808,8 +808,8 @@ reset enable_hashagg;
 
 -- Check with placeHolderVars
 explain (verbose, costs off)
-select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
-select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
+select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
+select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
 
 
 -- Not supported cases

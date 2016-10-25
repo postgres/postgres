@@ -3123,40 +3123,32 @@ select c2, sum from "S 1"."T 1" t1, lateral (select sum(t2.c1 + t1."C 1") sum fr
 reset enable_hashagg;
 -- Check with placeHolderVars
 explain (verbose, costs off)
-select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
-                                                                                         QUERY PLAN                                                                                         
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Sort
-   Output: q.b, (count(ft4.c1)), (sum(q.a))
-   Sort Key: q.b, (count(ft4.c1))
-   ->  GroupAggregate
-         Output: q.b, count(ft4.c1), sum(q.a)
-         Group Key: q.b
-         ->  Sort
-               Output: q.b, ft4.c1, q.a
-               Sort Key: q.b
-               ->  Hash Left Join
-                     Output: q.b, ft4.c1, q.a
-                     Hash Cond: ((ft4.c1)::numeric = q.b)
-                     ->  Foreign Scan on public.ft4
-                           Output: ft4.c1, ft4.c2, ft4.c3
-                           Remote SQL: SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 10)) AND ((c1 <= 15))
-                     ->  Hash
-                           Output: q.b, q.a
-                           ->  Subquery Scan on q
-                                 Output: q.b, q.a
-                                 ->  Foreign Scan
-                                       Output: (min(13)), (avg(ft1.c1)), (NULL::bigint)
-                                       Relations: Aggregate on ((public.ft1) INNER JOIN (public.ft2))
-                                       Remote SQL: SELECT min(13), avg(r1."C 1"), NULL::bigint FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r2."C 1" = 12)) AND ((r1."C 1" = 12))))
-(23 rows)
+select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: sum(q.a), count(q.b)
+   ->  Nested Loop Left Join
+         Output: q.a, q.b
+         Join Filter: ((ft4.c1)::numeric <= q.b)
+         ->  Foreign Scan on public.ft4
+               Output: ft4.c1, ft4.c2, ft4.c3
+               Remote SQL: SELECT c1 FROM "S 1"."T 3"
+         ->  Materialize
+               Output: q.a, q.b
+               ->  Subquery Scan on q
+                     Output: q.a, q.b
+                     ->  Foreign Scan
+                           Output: (13), (avg(ft1.c1)), (NULL::bigint)
+                           Relations: Aggregate on ((public.ft2) LEFT JOIN (public.ft1))
+                           Remote SQL: SELECT 13, avg(r1."C 1"), NULL::bigint FROM ("S 1"."T 1" r2 LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1"))))
+(16 rows)
 
-select q.b, count(ft4.c1), sum(q.a) from ft4 left join (select min(13), avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1) where ft1.c1 = 12) q(a, b, c) on (ft4.c1 = q.b) where ft4.c1 between 10 and 15 group by q.b order by 1 nulls last, 2;
-          b          | count | sum 
----------------------+-------+-----
- 12.0000000000000000 |     1 |  13
-                     |     2 |    
-(2 rows)
+select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
+ sum | count 
+-----+-------
+ 650 |    50
+(1 row)
 
 -- Not supported cases
 -- Grouping sets
