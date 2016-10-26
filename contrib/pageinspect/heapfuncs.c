@@ -279,7 +279,7 @@ heap_page_items(PG_FUNCTION_ARGS)
  *
  * Split raw tuple data taken directly from a page into an array of bytea
  * elements. This routine does a lookup on NULL values and creates array
- * elements accordindly. This is a reimplementation of nocachegetattr()
+ * elements accordingly. This is a reimplementation of nocachegetattr()
  * in heaptuple.c simplified for educational purposes.
  */
 static Datum
