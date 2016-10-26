@@ -568,24 +568,13 @@ INFO:  ([[[1, 2, None], [None, 5, 6]], [[None, 8, 9], [10, 11, 12]]], <class 'li
  {{{1,2,NULL},{NULL,5,6}},{{NULL,8,9},{10,11,12}}}
 (1 row)
 
-CREATE FUNCTION test_type_conversion_array_float4(x float4[]) RETURNS float4[] AS $$
+CREATE FUNCTION test_type_conversion_array_numeric(x numeric[]) RETURNS numeric[] AS $$
 plpy.info(x, type(x))
 return x
 $$ LANGUAGE plpython3u;
-SELECT * FROM test_type_conversion_array_float4(ARRAY[[[1.2,2.3,NULL],[NULL,5.7,6.8]],[[NULL,8.9,9.345],[10.123,11.456,12.6768]]]::float4[]);
-INFO:  ([[[1.2000000476837158, 2.299999952316284, None], [None, 5.699999809265137, 6.800000190734863]], [[None, 8.899999618530273, 9.345000267028809], [10.123000144958496, 11.456000328063965, 12.676799774169922]]], <class 'list'>)
-                      test_type_conversion_array_float4                       
-------------------------------------------------------------------------------
- {{{1.2,2.3,NULL},{NULL,5.7,6.8}},{{NULL,8.9,9.345},{10.123,11.456,12.6768}}}
-(1 row)
-
-CREATE FUNCTION test_type_conversion_array_float8(x float8[]) RETURNS float8[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpython3u;
-SELECT * FROM test_type_conversion_array_float8(ARRAY[[[1.2,2.3,NULL],[NULL,5.7,6.8]],[[NULL,8.9,9.345],[10.123,11.456,12.6768]]]::float8[]);
-INFO:  ([[[1.2, 2.3, None], [None, 5.7, 6.8]], [[None, 8.9, 9.345], [10.123, 11.456, 12.6768]]], <class 'list'>)
-                      test_type_conversion_array_float8                       
+SELECT * FROM test_type_conversion_array_numeric(ARRAY[[[1.2,2.3,NULL],[NULL,5.7,6.8]],[[NULL,8.9,9.345],[10.123,11.456,12.6768]]]::numeric[]);
+INFO:  ([[[Decimal('1.2'), Decimal('2.3'), None], [None, Decimal('5.7'), Decimal('6.8')]], [[None, Decimal('8.9'), Decimal('9.345')], [Decimal('10.123'), Decimal('11.456'), Decimal('12.6768')]]], <class 'list'>)
+                      test_type_conversion_array_numeric                      
 ------------------------------------------------------------------------------
  {{{1.2,2.3,NULL},{NULL,5.7,6.8}},{{NULL,8.9,9.345},{10.123,11.456,12.6768}}}
 (1 row)
