@@ -1026,11 +1026,10 @@ static void
 deparseFromExpr(List *quals, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	RelOptInfo *foreignrel = context->foreignrel;
 	RelOptInfo *scanrel = context->scanrel;
 
 	/* For upper relations, scanrel must be either a joinrel or a baserel */
-	Assert(foreignrel->reloptkind != RELOPT_UPPER_REL ||
+	Assert(context->foreignrel->reloptkind != RELOPT_UPPER_REL ||
 		   scanrel->reloptkind == RELOPT_JOINREL ||
 		   scanrel->reloptkind == RELOPT_BASEREL);
 
