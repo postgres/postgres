@@ -931,9 +931,11 @@ dolink(char const * fromfield, char const * tofield, bool staysymlink)
 			if (link_errno != ENOTSUP)
 				warning(_("copy used because hard link failed: %s"),
 						strerror(link_errno));
+#ifdef HAVE_SYMLINK
 			else if (symlink_errno != ENOTSUP)
 				warning(_("copy used because symbolic link failed: %s"),
 						strerror(symlink_errno));
+#endif
 		}
 	}
 }
