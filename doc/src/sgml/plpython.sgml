@@ -451,13 +451,13 @@ $$ LANGUAGE plpythonu;
   <para>
    SQL array values are passed into PL/Python as a Python list.  To
    return an SQL array value out of a PL/Python function, return a
-   Python sequence, for example a list or tuple:
+   Python list:
 
 <programlisting>
 CREATE FUNCTION return_arr()
   RETURNS int[]
 AS $$
-return (1, 2, 3, 4, 5)
+return [1, 2, 3, 4, 5]
 $$ LANGUAGE plpythonu;
 
 SELECT return_arr();
@@ -467,6 +467,34 @@ SELECT return_arr();
 (1 row)
 </programlisting>
 
+   Multidimensional arrays are passed into PL/Python as nested Python lists.
+   A 2-dimensional array is a list of lists, for example. When returning
+   a multi-dimensional SQL array out of a PL/Python function, the inner
+   lists at each level must all be of the same size. For example:
+
+<programlisting>
+CREATE FUNCTION test_type_conversion_array_int4(x int4[]) RETURNS int4[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
+INFO:  ([[1, 2, 3], [4, 5, 6]], &lt;type 'list'&gt;)
+ test_type_conversion_array_int4 
+---------------------------------
+ {{1,2,3},{4,5,6}}
+(1 row)
+</programlisting>
+
+   Other Python sequences, like tuples, are also accepted for
+   backwards-compatibility with PostgreSQL versions 9.6 and below, when
+   multi-dimensional arrays were not supported. However, they are always
+   treated as one-dimensional arrays, because they are ambiguous with
+   composite types. For the same reason, when a composite type is used in a
+   multi-dimensional array, it must be represented by a tuple, rather than a
+   list.
+  </para>
+  <para>
    Note that in Python, strings are sequences, which can have
    undesirable effects that might be familiar to Python programmers:
 
@@ -541,13 +569,18 @@ CREATE TYPE named_value AS (
 CREATE FUNCTION make_pair (name text, value integer)
   RETURNS named_value
 AS $$
-  return [ name, value ]
-  # or alternatively, as tuple: return ( name, value )
+  return ( name, value )
+  # or alternatively, as tuple: return [ name, value ]
 $$ LANGUAGE plpythonu;
 </programlisting>
 
        To return a SQL null for any column, insert <symbol>None</symbol> at
        the corresponding position.
+      </para>
+      <para>
+       When an array of composite types is returned, it cannot be returned as a list,
+       because it is ambiguous whether the Python list represents a composite type,
+       or another array dimension.
       </para>
      </listitem>
     </varlistentry>
