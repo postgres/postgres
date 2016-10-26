@@ -568,17 +568,6 @@ INFO:  ([[[1L, 2L, None], [None, 5L, 6L]], [[None, 8L, 9L], [10L, 11L, 12L]]], <
  {{{1,2,NULL},{NULL,5,6}},{{NULL,8,9},{10,11,12}}}
 (1 row)
 
-CREATE FUNCTION test_type_conversion_array_numeric(x numeric[]) RETURNS numeric[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-SELECT * FROM test_type_conversion_array_numeric(ARRAY[[[1.2,2.3,NULL],[NULL,5.7,6.8]],[[NULL,8.9,9.345],[10.123,11.456,12.6768]]]::numeric[]);
-INFO:  ([[[Decimal('1.2'), Decimal('2.3'), None], [None, Decimal('5.7'), Decimal('6.8')]], [[None, Decimal('8.9'), Decimal('9.345')], [Decimal('10.123'), Decimal('11.456'), Decimal('12.6768')]]], <type 'list'>)
-                      test_type_conversion_array_numeric                      
-------------------------------------------------------------------------------
- {{{1.2,2.3,NULL},{NULL,5.7,6.8}},{{NULL,8.9,9.345},{10.123,11.456,12.6768}}}
-(1 row)
-
 CREATE FUNCTION test_type_conversion_array_date(x date[]) RETURNS date[] AS $$
 plpy.info(x, type(x))
 return x

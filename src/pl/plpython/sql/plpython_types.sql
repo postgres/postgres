@@ -247,13 +247,6 @@ $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_int8(ARRAY[[[1,2,NULL],[NULL,5,6]],[[NULL,8,9],[10,11,12]]]::int8[]);
 
-CREATE FUNCTION test_type_conversion_array_numeric(x numeric[]) RETURNS numeric[] AS $$
-plpy.info(x, type(x))
-return x
-$$ LANGUAGE plpythonu;
-
-SELECT * FROM test_type_conversion_array_numeric(ARRAY[[[1.2,2.3,NULL],[NULL,5.7,6.8]],[[NULL,8.9,9.345],[10.123,11.456,12.6768]]]::numeric[]);
-
 CREATE FUNCTION test_type_conversion_array_date(x date[]) RETURNS date[] AS $$
 plpy.info(x, type(x))
 return x
