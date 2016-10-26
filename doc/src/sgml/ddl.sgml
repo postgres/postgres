@@ -2559,7 +2559,8 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
   <para>
    All check constraints and not-null constraints on a parent table are
-   automatically inherited by its children.  Other types of constraints
+   automatically inherited by its children, unless explicitly specified
+   otherwise with <literal>NO INHERIT</> clauses.  Other types of constraints
    (unique, primary key, and foreign key constraints) are not inherited.
   </para>
 
@@ -2570,10 +2571,12 @@ VALUES ('Albany', NULL, NULL, 'NY');
    same column name appears in multiple parent tables, or in both a parent
    table and the child's definition, then these columns are <quote>merged</>
    so that there is only one such column in the child table.  To be merged,
-   columns must have the same data types, else an error is raised.  The
-   merged column will have copies of all the check constraints coming from
-   any one of the column definitions it came from, and will be marked not-null
-   if any of them are.
+   columns must have the same data types, else an error is raised.
+   Inheritable check constraints and not-null constraints are merged in a
+   similar fashion.  Thus, for example, a merged column will be marked
+   not-null if any one of the column definitions it came from is marked
+   not-null.  Check constraints are merged if they have the same name,
+   and the merge will fail if their conditions are different.
   </para>
 
   <para>
@@ -2625,12 +2628,19 @@ VALUES ('Albany', NULL, NULL, 'NY');
   </para>
 
   <para>
-   Note how table access permissions are handled.  Querying a parent
-   table can automatically access data in child tables without further
-   access privilege checking.  This preserves the appearance that the
-   data is (also) in the parent table.  Accessing the child tables
-   directly is, however, not automatically allowed and would require
-   further privileges to be granted.
+   Inherited queries perform access permission checks on the parent table
+   only.  Thus, for example, granting <literal>UPDATE</> permission on
+   the <structname>cities</> table implies permission to update rows in
+   the <structname>capitals</structname> table as well, when they are
+   accessed through <structname>cities</>.  This preserves the appearance
+   that the data is (also) in the parent table.  But
+   the <structname>capitals</structname> table could not be updated directly
+   without an additional grant.  In a similar way, the parent table's row
+   security policies (see <xref linkend="ddl-rowsecurity">) are applied to
+   rows coming from child tables during an inherited query.  A child table's
+   policies, if any, are applied only when it is the table explicitly named
+   in the query; and in that case, any policies attached to its parent(s) are
+   ignored.
   </para>
 
   <para>
