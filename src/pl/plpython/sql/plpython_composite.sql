@@ -213,3 +213,12 @@ CREATE FUNCTION composite_type_as_list()  RETURNS type_record[] AS $$
   return [[('first', 1), ('second', 1)], [('first', 2), ('second', 2)], [('first', 3), ('second', 3)]];
 $$ LANGUAGE plpythonu;
 SELECT * FROM composite_type_as_list();
+
+-- Starting with PostgreSQL 10, a composite type in an array cannot be
+-- represented as a Python list, because it's ambiguous with multi-dimensional
+-- arrays. So this throws an error now. The error should contain a useful hint
+-- on the issue.
+CREATE FUNCTION composite_type_as_list_broken()  RETURNS type_record[] AS $$
+  return [['first', 1]];
+$$ LANGUAGE plpythonu;
+SELECT * FROM composite_type_as_list_broken();

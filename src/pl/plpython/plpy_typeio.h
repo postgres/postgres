@@ -10,8 +10,11 @@
 #include "fmgr.h"
 #include "storage/itemptr.h"
 
+/*
+ * Conversion from PostgreSQL Datum to a Python object.
+ */
 struct PLyDatumToOb;
-typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb *, Datum);
+typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb *arg, Datum val);
 
 typedef struct PLyDatumToOb
 {
@@ -39,11 +42,15 @@ typedef union PLyTypeInput
 	PLyTupleToOb r;
 } PLyTypeInput;
 
-/* convert PyObject to a Postgresql Datum or tuple.
- * output from Python
+/*
+ * Conversion from Python object to a Postgresql Datum.
+ *
+ * The 'inarray' argument to the conversion function is true, if the
+ * converted value was in an array (Python list). It is used to give a
+ * better error message in some cases.
  */
 struct PLyObToDatum;
-typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *, int32, PyObject *);
+typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *arg, int32 typmod, PyObject *val, bool inarray);
 
 typedef struct PLyObToDatum
 {
@@ -104,7 +111,7 @@ extern void PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
 extern void PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc);
 
 /* conversion from Python objects to composite Datums */
-extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv);
+extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool isarray);
 
 /* conversion from heap tuples to Python dictionaries */
 extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);

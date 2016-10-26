@@ -14,6 +14,7 @@
 #include "parser/parse_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/numeric.h"
@@ -49,21 +50,21 @@ static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndi
 						  char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
 
 /* conversion from Python objects to Datums */
-static Datum PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
+static Datum PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
+static Datum PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
+static Datum PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
+static Datum PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
+static Datum PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
+static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
 static void PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 							int *dims, int ndim, int dim,
 							Datum *elems, bool *nulls, int *currelem);
 
 /* conversion from Python objects to composite Datums (used by triggers and SRFs) */
-static Datum PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string);
+static Datum PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool inarray);
 static Datum PLyMapping_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping);
 static Datum PLySequence_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence);
-static Datum PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object);
+static Datum PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bool inarray);
 
 void
 PLy_typeinfo_init(PLyTypeInfo *arg, MemoryContext mcxt)
@@ -341,12 +342,12 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
  *	as an object that has __getattr__ support.
  */
 Datum
-PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv)
+PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool inarray)
 {
 	Datum		datum;
 
 	if (PyString_Check(plrv) || PyUnicode_Check(plrv))
-		datum = PLyString_ToComposite(info, desc, plrv);
+		datum = PLyString_ToComposite(info, desc, plrv, inarray);
 	else if (PySequence_Check(plrv))
 		/* composite type as sequence (tuple, list etc) */
 		datum = PLySequence_ToComposite(info, desc, plrv);
@@ -355,7 +356,7 @@ PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv)
 		datum = PLyMapping_ToComposite(info, desc, plrv);
 	else
 		/* returned as smth, must provide method __getattr__(name) */
-		datum = PLyGenericObject_ToComposite(info, desc, plrv);
+		datum = PLyGenericObject_ToComposite(info, desc, plrv, inarray);
 
 	return datum;
 }
@@ -746,7 +747,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
  * type can parse.
  */
 static Datum
-PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	Datum		rv;
 
@@ -765,7 +766,7 @@ PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
  * with embedded nulls.  And it's faster this way.
  */
 static Datum
-PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	PyObject   *volatile plrv_so = NULL;
 	Datum		rv;
@@ -809,7 +810,7 @@ PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
  * for obtaining PostgreSQL tuples.
  */
 static Datum
-PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	Datum		rv;
 	PLyTypeInfo info;
@@ -836,7 +837,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 	 * that info instead of looking it up every time a tuple is returned from
 	 * the function.
 	 */
-	rv = PLyObject_ToCompositeDatum(&info, desc, plrv);
+	rv = PLyObject_ToCompositeDatum(&info, desc, plrv, inarray);
 
 	ReleaseTupleDesc(desc);
 
@@ -908,26 +909,70 @@ PLyObject_AsString(PyObject *plrv)
  * cstring into PostgreSQL type.
  */
 static Datum
-PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
+	char	   *str;
+
 	Assert(plrv != Py_None);
 
+	str = PLyObject_AsString(plrv);
+
+	/*
+	 * If we are parsing a composite type within an array, and the string
+	 * isn't a valid record literal, there's a high chance that the function
+	 * did something like:
+	 *
+	 * CREATE FUNCTION .. RETURNS comptype[] AS $$ return [['foo', 'bar']] $$
+	 * LANGUAGE plpython;
+	 *
+	 * Before PostgreSQL 10, that was interpreted as a single-dimensional
+	 * array, containing record ('foo', 'bar'). PostgreSQL 10 added support
+	 * for multi-dimensional arrays, and it is now interpreted as a
+	 * two-dimensional array, containing two records, 'foo', and 'bar'.
+	 * record_in() will throw an error, because "foo" is not a valid record
+	 * literal.
+	 *
+	 * To make that less confusing to users who are upgrading from older
+	 * versions, try to give a hint in the typical instances of that. If we are
+	 * parsing an array of composite types, and we see a string literal that
+	 * is not a valid record literal, give a hint. We only want to give the
+	 * hint in the narrow case of a malformed string literal, not any error
+	 * from record_in(), so check for that case here specifically.
+	 *
+	 * This check better match the one in record_in(), so that we don't forbid
+	 * literals that are actually valid!
+	 */
+	if (inarray && arg->typfunc.fn_oid == F_RECORD_IN)
+	{
+		char	   *ptr = str;
+
+		/* Allow leading whitespace */
+		while (*ptr && isspace((unsigned char) *ptr))
+			ptr++;
+		if (*ptr++ != '(')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("malformed record literal: \"%s\"", str),
+					 errdetail("Missing left parenthesis."),
+					 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"")));
+	}
+
 	return InputFunctionCall(&arg->typfunc,
-							 PLyObject_AsString(plrv),
+							 str,
 							 arg->typioparam,
 							 typmod);
 }
 
 
 static Datum
-PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	return FunctionCall1(&arg->typtransform, PointerGetDatum(plrv));
 }
 
 
 static Datum
-PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	ArrayType  *array;
 	int			i;
@@ -1085,7 +1130,7 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 			else
 			{
 				nulls[*currelem] = false;
-				elems[*currelem] = elm->func(elm, -1, obj);
+				elems[*currelem] = elm->func(elm, -1, obj, true);
 			}
 			Py_XDECREF(obj);
 			(*currelem)++;
@@ -1095,7 +1140,7 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 
 
 static Datum
-PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string)
+PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool inarray)
 {
 	Datum		result;
 	HeapTuple	typeTup;
@@ -1120,7 +1165,7 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string)
 
 	ReleaseSysCache(typeTup);
 
-	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string);
+	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string, inarray);
 
 	MemoryContextDelete(cxt);
 
@@ -1172,7 +1217,7 @@ PLyMapping_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping)
 			}
 			else if (value)
 			{
-				values[i] = (att->func) (att, -1, value);
+				values[i] = (att->func) (att, -1, value, false);
 				nulls[i] = false;
 			}
 			else
@@ -1265,7 +1310,7 @@ PLySequence_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence)
 			}
 			else if (value)
 			{
-				values[i] = (att->func) (att, -1, value);
+				values[i] = (att->func) (att, -1, value, false);
 				nulls[i] = false;
 			}
 
@@ -1294,7 +1339,7 @@ PLySequence_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence)
 
 
 static Datum
-PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object)
+PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bool inarray)
 {
 	Datum		result;
 	HeapTuple	tuple;
@@ -1335,16 +1380,29 @@ PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object
 			}
 			else if (value)
 			{
-				values[i] = (att->func) (att, -1, value);
+				values[i] = (att->func) (att, -1, value, false);
 				nulls[i] = false;
 			}
 			else
+			{
+				/*
+				 * No attribute for this column in the object.
+				 *
+				 * If we are parsing a composite type in an array, a likely
+				 * cause is that the function contained something like "[[123,
+				 * 'foo']]". Before PostgreSQL 10, that was interpreted as an
+				 * array, with a composite type (123, 'foo') in it. But now
+				 * it's interpreted as a two-dimensional array, and we try to
+				 * interpret "123" as the composite type. See also similar
+				 * heuristic in PLyObject_ToDatum().
+				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("attribute \"%s\" does not exist in Python object", key),
-						 errhint("To return null in a column, "
-						   "let the returned object have an attribute named "
-								 "after column with value None.")));
+						 inarray ?
+						 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"") :
+						 errhint("To return null in a column, let the returned object have an attribute named after column with value None.")));
+			}
 
 			Py_XDECREF(value);
 			value = NULL;

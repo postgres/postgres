@@ -264,7 +264,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 					plan->values[j] =
 						plan->args[j].out.d.func(&(plan->args[j].out.d),
 												 -1,
-												 elem);
+												 elem,
+												 false);
 				}
 				PG_CATCH();
 				{

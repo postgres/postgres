@@ -240,7 +240,8 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 					plan->values[j] =
 						plan->args[j].out.d.func(&(plan->args[j].out.d),
 												 -1,
-												 elem);
+												 elem,
+												 false);
 				}
 				PG_CATCH();
 				{

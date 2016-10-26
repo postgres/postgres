@@ -579,3 +579,16 @@ SELECT * FROM composite_type_as_list();
  {{"(first,1)","(second,1)"},{"(first,2)","(second,2)"},{"(first,3)","(second,3)"}}
 (1 row)
 
+-- Starting with PostgreSQL 10, a composite type in an array cannot be
+-- represented as a Python list, because it's ambiguous with multi-dimensional
+-- arrays. So this throws an error now. The error should contain a useful hint
+-- on the issue.
+CREATE FUNCTION composite_type_as_list_broken()  RETURNS type_record[] AS $$
+  return [['first', 1]];
+$$ LANGUAGE plpythonu;
+SELECT * FROM composite_type_as_list_broken();
+ERROR:  malformed record literal: "first"
+DETAIL:  Missing left parenthesis.
+HINT:  To return a composite type in an array, return the composite type as a Python tuple, e.g. "[('foo')]"
+CONTEXT:  while creating return value
+PL/Python function "composite_type_as_list_broken"
