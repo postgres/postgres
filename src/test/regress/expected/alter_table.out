@@ -534,6 +534,66 @@ ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
 ERROR:  foreign key constraint "fktable_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+-- Test that ALTER CONSTRAINT updates trigger deferrability properly
+CREATE TEMP TABLE PKTABLE (ptest1 int primary key);
+CREATE TEMP TABLE FKTABLE (ftest1 int);
+ALTER TABLE FKTABLE ADD CONSTRAINT fknd FOREIGN KEY(ftest1) REFERENCES pktable
+  ON DELETE CASCADE ON UPDATE NO ACTION NOT DEFERRABLE;
+ALTER TABLE FKTABLE ADD CONSTRAINT fkdd FOREIGN KEY(ftest1) REFERENCES pktable
+  ON DELETE CASCADE ON UPDATE NO ACTION DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE FKTABLE ADD CONSTRAINT fkdi FOREIGN KEY(ftest1) REFERENCES pktable
+  ON DELETE CASCADE ON UPDATE NO ACTION DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE FKTABLE ADD CONSTRAINT fknd2 FOREIGN KEY(ftest1) REFERENCES pktable
+  ON DELETE CASCADE ON UPDATE NO ACTION DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE FKTABLE ALTER CONSTRAINT fknd2 NOT DEFERRABLE;
+ALTER TABLE FKTABLE ADD CONSTRAINT fkdd2 FOREIGN KEY(ftest1) REFERENCES pktable
+  ON DELETE CASCADE ON UPDATE NO ACTION NOT DEFERRABLE;
+ALTER TABLE FKTABLE ALTER CONSTRAINT fkdd2 DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE FKTABLE ADD CONSTRAINT fkdi2 FOREIGN KEY(ftest1) REFERENCES pktable
+  ON DELETE CASCADE ON UPDATE NO ACTION NOT DEFERRABLE;
+ALTER TABLE FKTABLE ALTER CONSTRAINT fkdi2 DEFERRABLE INITIALLY IMMEDIATE;
+SELECT conname, tgfoid::regproc, tgtype, tgdeferrable, tginitdeferred
+FROM pg_trigger JOIN pg_constraint con ON con.oid = tgconstraint
+WHERE tgrelid = 'pktable'::regclass
+ORDER BY 1,2,3;
+ conname |         tgfoid         | tgtype | tgdeferrable | tginitdeferred 
+---------+------------------------+--------+--------------+----------------
+ fkdd    | "RI_FKey_cascade_del"  |      9 | f            | f
+ fkdd    | "RI_FKey_noaction_upd" |     17 | t            | t
+ fkdd2   | "RI_FKey_cascade_del"  |      9 | f            | f
+ fkdd2   | "RI_FKey_noaction_upd" |     17 | t            | t
+ fkdi    | "RI_FKey_cascade_del"  |      9 | f            | f
+ fkdi    | "RI_FKey_noaction_upd" |     17 | t            | f
+ fkdi2   | "RI_FKey_cascade_del"  |      9 | f            | f
+ fkdi2   | "RI_FKey_noaction_upd" |     17 | t            | f
+ fknd    | "RI_FKey_cascade_del"  |      9 | f            | f
+ fknd    | "RI_FKey_noaction_upd" |     17 | f            | f
+ fknd2   | "RI_FKey_cascade_del"  |      9 | f            | f
+ fknd2   | "RI_FKey_noaction_upd" |     17 | f            | f
+(12 rows)
+
+SELECT conname, tgfoid::regproc, tgtype, tgdeferrable, tginitdeferred
+FROM pg_trigger JOIN pg_constraint con ON con.oid = tgconstraint
+WHERE tgrelid = 'fktable'::regclass
+ORDER BY 1,2,3;
+ conname |       tgfoid        | tgtype | tgdeferrable | tginitdeferred 
+---------+---------------------+--------+--------------+----------------
+ fkdd    | "RI_FKey_check_ins" |      5 | t            | t
+ fkdd    | "RI_FKey_check_upd" |     17 | t            | t
+ fkdd2   | "RI_FKey_check_ins" |      5 | t            | t
+ fkdd2   | "RI_FKey_check_upd" |     17 | t            | t
+ fkdi    | "RI_FKey_check_ins" |      5 | t            | f
+ fkdi    | "RI_FKey_check_upd" |     17 | t            | f
+ fkdi2   | "RI_FKey_check_ins" |      5 | t            | f
+ fkdi2   | "RI_FKey_check_upd" |     17 | t            | f
+ fknd    | "RI_FKey_check_ins" |      5 | f            | f
+ fknd    | "RI_FKey_check_upd" |     17 | f            | f
+ fknd2   | "RI_FKey_check_ins" |      5 | f            | f
+ fknd2   | "RI_FKey_check_upd" |     17 | f            | f
+(12 rows)
+
 -- temp tables should go away by themselves, need not drop them.
 -- test check constraint adding
 create table atacc1 ( test int );

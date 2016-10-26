@@ -6740,15 +6740,33 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 
 		while (HeapTupleIsValid(tgtuple = systable_getnext(tgscan)))
 		{
+			Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tgtuple);
 			Form_pg_trigger copy_tg;
+
+			/*
+			 * Remember OIDs of other relation(s) involved in FK constraint.
+			 * (Note: it's likely that we could skip forcing a relcache inval
+			 * for other rels that don't have a trigger whose properties
+			 * change, but let's be conservative.)
+			 */
+			if (tgform->tgrelid != RelationGetRelid(rel))
+				otherrelids = list_append_unique_oid(otherrelids,
+													 tgform->tgrelid);
+
+			/*
+			 * Update deferrability of RI_FKey_noaction_del,
+			 * RI_FKey_noaction_upd, RI_FKey_check_ins and RI_FKey_check_upd
+			 * triggers, but not others; see createForeignKeyTriggers and
+			 * CreateFKCheckTrigger.
+			 */
+			if (tgform->tgfoid != F_RI_FKEY_NOACTION_DEL &&
+				tgform->tgfoid != F_RI_FKEY_NOACTION_UPD &&
+				tgform->tgfoid != F_RI_FKEY_CHECK_INS &&
+				tgform->tgfoid != F_RI_FKEY_CHECK_UPD)
+				continue;
 
 			copyTuple = heap_copytuple(tgtuple);
 			copy_tg = (Form_pg_trigger) GETSTRUCT(copyTuple);
-
-			/* Remember OIDs of other relation(s) involved in FK constraint */
-			if (copy_tg->tgrelid != RelationGetRelid(rel))
-				otherrelids = list_append_unique_oid(otherrelids,
-													 copy_tg->tgrelid);
 
 			copy_tg->tgdeferrable = cmdcon->deferrable;
 			copy_tg->tginitdeferred = cmdcon->initdeferred;
@@ -7512,6 +7530,9 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 
 /*
  * Create the triggers that implement an FK constraint.
+ *
+ * NB: if you change any trigger properties here, see also
+ * ATExecAlterConstraint.
  */
 static void
 createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
