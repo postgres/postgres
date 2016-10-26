@@ -999,15 +999,7 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 
 	for (;;)
 	{
-		if (!PySequence_Check(pyptr))
-			break;
-
-		/* composite type */
-		if (PyTuple_Check(pyptr))
-			break;
-
-		/* string */
-		if (PyString_Check(pyptr) || PyBytes_Check(pyptr) || PyUnicode_Check(pyptr))
+		if (!PyList_Check(pyptr))
 			break;
 
 		if (ndim == MAXDIM)
