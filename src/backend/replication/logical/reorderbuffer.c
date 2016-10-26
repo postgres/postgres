@@ -2552,7 +2552,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				Assert(change->data.msg.prefix[prefix_size - 1] == '\0');
 				data += prefix_size;
 
-				/* read the messsage */
+				/* read the message */
 				memcpy(&change->data.msg.message_size, data, sizeof(Size));
 				data += sizeof(Size);
 				change->data.msg.message = MemoryContextAlloc(rb->context,

@@ -2411,7 +2411,7 @@ pgstat_fetch_stat_beentry(int beid)
 /* ----------
  * pgstat_fetch_stat_local_beentry() -
  *
- *	Like pgstat_fetch_stat_beentry() but with locally computed addtions (like
+ *	Like pgstat_fetch_stat_beentry() but with locally computed additions (like
  *	xid and xmin values of the backend)
  *
  *	NB: caller is responsible for a check if the user is permitted to see
