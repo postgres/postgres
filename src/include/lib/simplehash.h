@@ -116,7 +116,7 @@ typedef struct SH_TYPE
 	MemoryContext ctx;
 
 	/* user defined data, useful for callbacks */
-	void	   *private;
+	void	   *private_data;
 } SH_TYPE;
 
 typedef enum SH_STATUS

@@ -315,7 +315,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hashtable->cur_eq_funcs = NULL;
 
 	hashtable->hashtab = tuplehash_create(tablecxt, nbuckets);
-	hashtable->hashtab->private = hashtable;
+	hashtable->hashtab->private_data = hashtable;
 
 	return hashtable;
 }
@@ -447,7 +447,7 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 static uint32
 TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 {
-	TupleHashTable hashtable = (TupleHashTable) tb->private;
+	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
 	int			numCols = hashtable->numCols;
 	AttrNumber *keyColIdx = hashtable->keyColIdx;
 	uint32		hashkey = 0;
@@ -511,7 +511,7 @@ TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const 
 {
 	TupleTableSlot *slot1;
 	TupleTableSlot *slot2;
-	TupleHashTable hashtable = (TupleHashTable) tb->private;
+	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
 
 	/*
 	 * We assume that simplehash.h will only ever call us with the first
