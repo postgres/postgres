@@ -51,7 +51,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	volatile ResourceOwner oldowner;
 	volatile int nargs;
 
-	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
+	if (!PyArg_ParseTuple(args, "s|O:prepare", &query, &list))
 		return NULL;
 
 	if (list && (!PySequence_Check(list)))

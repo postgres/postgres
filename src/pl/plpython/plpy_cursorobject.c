@@ -406,7 +406,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 	volatile ResourceOwner oldowner;
 	Portal		portal;
 
-	if (!PyArg_ParseTuple(args, "i", &count))
+	if (!PyArg_ParseTuple(args, "i:fetch", &count))
 		return NULL;
 
 	cursor = (PLyCursorObject *) self;

@@ -323,7 +323,7 @@ PLy_quote_literal(PyObject *self, PyObject *args)
 	char	   *quoted;
 	PyObject   *ret;
 
-	if (!PyArg_ParseTuple(args, "s", &str))
+	if (!PyArg_ParseTuple(args, "s:quote_literal", &str))
 		return NULL;
 
 	quoted = quote_literal_cstr(str);
@@ -340,7 +340,7 @@ PLy_quote_nullable(PyObject *self, PyObject *args)
 	char	   *quoted;
 	PyObject   *ret;
 
-	if (!PyArg_ParseTuple(args, "z", &str))
+	if (!PyArg_ParseTuple(args, "z:quote_nullable", &str))
 		return NULL;
 
 	if (str == NULL)
@@ -360,7 +360,7 @@ PLy_quote_ident(PyObject *self, PyObject *args)
 	const char *quoted;
 	PyObject   *ret;
 
-	if (!PyArg_ParseTuple(args, "s", &str))
+	if (!PyArg_ParseTuple(args, "s:quote_ident", &str))
 		return NULL;
 
 	quoted = quote_identifier(str);

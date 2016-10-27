@@ -114,12 +114,11 @@ PLy_plan_dealloc(PyObject *arg)
 static PyObject *
 PLy_plan_status(PyObject *self, PyObject *args)
 {
-	if (PyArg_ParseTuple(args, ""))
+	if (PyArg_ParseTuple(args, ":status"))
 	{
 		Py_INCREF(Py_True);
 		return Py_True;
 		/* return PyInt_FromLong(self->status); */
 	}
-	PLy_exception_set(PLy_exc_error, "plan.status takes no arguments");
 	return NULL;
 }
