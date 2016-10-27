@@ -83,34 +83,6 @@ cstring_send(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
-
-/*
- * any_in		- input routine for pseudo-type ANY.
- */
-Datum
-any_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type any")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * any_out		- output routine for pseudo-type ANY.
- */
-Datum
-any_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type any")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
 /*
  * anyarray_in		- input routine for pseudo-type ANYARRAY.
  */
@@ -119,7 +91,7 @@ anyarray_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anyarray")));
+			 errmsg("cannot accept a value of type %s", "anyarray")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -147,7 +119,7 @@ anyarray_recv(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anyarray")));
+			 errmsg("cannot accept a value of type %s", "anyarray")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -172,7 +144,7 @@ anyenum_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anyenum")));
+			 errmsg("cannot accept a value of type %s", "anyenum")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -196,7 +168,7 @@ anyrange_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anyrange")));
+			 errmsg("cannot accept a value of type %s", "anyrange")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -262,275 +234,6 @@ void_send(PG_FUNCTION_ARGS)
 	/* send an empty string */
 	pq_begintypsend(&buf);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
-}
-
-
-/*
- * trigger_in		- input routine for pseudo-type TRIGGER.
- */
-Datum
-trigger_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type trigger")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * trigger_out		- output routine for pseudo-type TRIGGER.
- */
-Datum
-trigger_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type trigger")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * event_trigger_in - input routine for pseudo-type event_trigger.
- */
-Datum
-event_trigger_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type event_trigger")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * event_trigger_out - output routine for pseudo-type event_trigger.
- */
-Datum
-event_trigger_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type event_trigger")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * language_handler_in		- input routine for pseudo-type LANGUAGE_HANDLER.
- */
-Datum
-language_handler_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type language_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * language_handler_out		- output routine for pseudo-type LANGUAGE_HANDLER.
- */
-Datum
-language_handler_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type language_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * fdw_handler_in		- input routine for pseudo-type FDW_HANDLER.
- */
-Datum
-fdw_handler_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type fdw_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * fdw_handler_out		- output routine for pseudo-type FDW_HANDLER.
- */
-Datum
-fdw_handler_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type fdw_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * index_am_handler_in		- input routine for pseudo-type INDEX_AM_HANDLER.
- */
-Datum
-index_am_handler_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type index_am_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * index_am_handler_out		- output routine for pseudo-type INDEX_AM_HANDLER.
- */
-Datum
-index_am_handler_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type index_am_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * tsm_handler_in		- input routine for pseudo-type TSM_HANDLER.
- */
-Datum
-tsm_handler_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type tsm_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * tsm_handler_out		- output routine for pseudo-type TSM_HANDLER.
- */
-Datum
-tsm_handler_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type tsm_handler")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * internal_in		- input routine for pseudo-type INTERNAL.
- */
-Datum
-internal_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type internal")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * internal_out		- output routine for pseudo-type INTERNAL.
- */
-Datum
-internal_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type internal")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * opaque_in		- input routine for pseudo-type OPAQUE.
- */
-Datum
-opaque_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type opaque")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * opaque_out		- output routine for pseudo-type OPAQUE.
- */
-Datum
-opaque_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type opaque")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-
-/*
- * anyelement_in		- input routine for pseudo-type ANYELEMENT.
- */
-Datum
-anyelement_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anyelement")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * anyelement_out		- output routine for pseudo-type ANYELEMENT.
- */
-Datum
-anyelement_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type anyelement")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * anynonarray_in		- input routine for pseudo-type ANYNONARRAY.
- */
-Datum
-anynonarray_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anynonarray")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-
-/*
- * anynonarray_out		- output routine for pseudo-type ANYNONARRAY.
- */
-Datum
-anynonarray_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type anynonarray")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 /*
@@ -674,3 +377,44 @@ pg_ddl_command_send(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+
+
+/*
+ * Generate input and output functions for a pseudotype that will reject all
+ * input and output attempts.
+ */
+#define PSEUDOTYPE_DUMMY_IO_FUNCS(typname) \
+\
+Datum \
+typname##_in(PG_FUNCTION_ARGS) \
+{ \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			 errmsg("cannot accept a value of type %s", #typname))); \
+\
+	PG_RETURN_VOID();			/* keep compiler quiet */ \
+} \
+\
+Datum \
+typname##_out(PG_FUNCTION_ARGS) \
+{ \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			 errmsg("cannot display a value of type %s", #typname))); \
+\
+	PG_RETURN_VOID();			/* keep compiler quiet */ \
+} \
+\
+extern int no_such_variable
+
+PSEUDOTYPE_DUMMY_IO_FUNCS(any);
+PSEUDOTYPE_DUMMY_IO_FUNCS(trigger);
+PSEUDOTYPE_DUMMY_IO_FUNCS(event_trigger);
+PSEUDOTYPE_DUMMY_IO_FUNCS(language_handler);
+PSEUDOTYPE_DUMMY_IO_FUNCS(fdw_handler);
+PSEUDOTYPE_DUMMY_IO_FUNCS(index_am_handler);
+PSEUDOTYPE_DUMMY_IO_FUNCS(tsm_handler);
+PSEUDOTYPE_DUMMY_IO_FUNCS(internal);
+PSEUDOTYPE_DUMMY_IO_FUNCS(opaque);
+PSEUDOTYPE_DUMMY_IO_FUNCS(anyelement);
+PSEUDOTYPE_DUMMY_IO_FUNCS(anynonarray);
