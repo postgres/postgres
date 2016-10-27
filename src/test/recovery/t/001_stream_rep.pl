@@ -24,6 +24,11 @@ $node_standby_1->start;
 # pg_basebackup works on a standby).
 $node_standby_1->backup($backup_name);
 
+# Take a second backup of the standby while the master is offline.
+$node_master->stop;
+$node_standby_1->backup('my_backup_2');
+$node_master->start;
+
 # Create second standby node linking to standby 1
 my $node_standby_2 = get_new_node('standby_2');
 $node_standby_2->init_from_backup($node_standby_1, $backup_name,
