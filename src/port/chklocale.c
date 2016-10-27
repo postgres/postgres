@@ -290,8 +290,7 @@ pg_codepage_to_encoding(UINT cp)
 			return encoding_match_list[i].pg_enc_code;
 
 	ereport(WARNING,
-			(errmsg("could not determine encoding for codeset \"%s\"", sys),
-		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+			(errmsg("could not determine encoding for codeset \"%s\"", sys)));
 
 	return -1;
 }
@@ -419,8 +418,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 #else
 		ereport(WARNING,
 				(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
-						ctype, sys),
-		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+						ctype, sys)));
 #endif
 	}
 
