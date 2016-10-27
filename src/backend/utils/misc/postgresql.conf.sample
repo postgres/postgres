@@ -165,7 +165,7 @@
 #max_worker_processes = 8		# (change requires restart)
 #max_parallel_workers_per_gather = 2	# taken from max_worker_processes
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
-									# (change requires restart)
+					# (change requires restart)
 #backend_flush_after = 0		# 0 disables, default is 0
 
 
@@ -178,8 +178,8 @@
 #wal_level = minimal			# minimal, replica, or logical
 					# (change requires restart)
 #fsync = on				# flush data to disk for crash safety
-						# (turning this off can cause
-						# unrecoverable data corruption)
+					# (turning this off can cause
+					# unrecoverable data corruption)
 #synchronous_commit = on		# synchronization level;
 					# off, local, remote_write, remote_apply, or on
 #wal_sync_method = fsync		# the default is the first option
@@ -538,7 +538,7 @@
 #session_replication_role = 'origin'
 #statement_timeout = 0			# in milliseconds, 0 is disabled
 #lock_timeout = 0			# in milliseconds, 0 is disabled
-#idle_in_transaction_session_timeout = 0		# in milliseconds, 0 is disabled
+#idle_in_transaction_session_timeout = 0	# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
 #vacuum_multixact_freeze_min_age = 5000000
