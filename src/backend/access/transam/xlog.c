@@ -617,7 +617,7 @@ typedef struct XLogCtlData
 	 * During recovery, we keep a copy of the latest checkpoint record here.
 	 * lastCheckPointRecPtr points to start of checkpoint record and
 	 * lastCheckPointEndPtr points to end+1 of checkpoint record.  Used by the
-	 * background writer when it wants to create a restartpoint.
+	 * checkpointer when it wants to create a restartpoint.
 	 *
 	 * Protected by info_lck.
 	 */
