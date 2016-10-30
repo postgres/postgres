@@ -626,12 +626,26 @@ if (AggCheckCallContext(fcinfo, NULL))
    function, the first input
    must be a temporary state value and can therefore safely be modified
    in-place rather than allocating a new copy.
-   See <literal>int8inc()</> for an example.
+   See <function>int8inc()</> for an example.
    (This is the <emphasis>only</>
    case where it is safe for a function to modify a pass-by-reference input.
    In particular, final functions for normal aggregates must not
    modify their inputs in any case, because in some cases they will be
    re-executed on the same final state value.)
+  </para>
+
+  <para>
+   The second argument of <function>AggCheckCallContext</> can be used to
+   retrieve the memory context in which aggregate state values are being kept.
+   This is useful for transition functions that wish to use <quote>expanded</>
+   objects (see <xref linkend="xtypes-toast">) as their state values.
+   On first call, the transition function should return an expanded object
+   whose memory context is a child of the aggregate state context, and then
+   keep returning the same expanded object on subsequent calls.  See
+   <function>array_append()</> for an example.  (<function>array_append()</>
+   is not the transition function of any built-in aggregate, but it is written
+   to behave efficiently when used as transition function of a custom
+   aggregate.)
   </para>
 
   <para>
