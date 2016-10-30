@@ -898,7 +898,7 @@ BETTER: unrecognized node type: 42
      expressions of various types need to be passed to the macro.
     </para>
     <para>
-     When the definition an inline function references symbols
+     When the definition of an inline function references symbols
      (i.e. variables, functions) that are only available as part of the
      backend, the function may not be visible when included from frontend
      code.
