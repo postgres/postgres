@@ -558,6 +558,16 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 			/* Use average width if aggregate definition gave one */
 			if (aggtransspace > 0)
 				avgwidth = aggtransspace;
+			else if (aggtransfn == F_ARRAY_APPEND)
+			{
+				/*
+				 * If the transition function is array_append(), it'll use an
+				 * expanded array as transvalue, which will occupy at least
+				 * ALLOCSET_SMALL_INITSIZE and possibly more.  Use that as the
+				 * estimate for lack of a better idea.
+				 */
+				avgwidth = ALLOCSET_SMALL_INITSIZE;
+			}
 			else
 			{
 				/*

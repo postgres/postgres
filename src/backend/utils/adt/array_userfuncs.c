@@ -32,6 +32,10 @@ static Datum array_position_common(FunctionCallInfo fcinfo);
  * Caution: if the input is a read/write pointer, this returns the input
  * argument; so callers must be sure that their changes are "safe", that is
  * they cannot leave the array in a corrupt state.
+ *
+ * If we're being called as an aggregate function, make sure any newly-made
+ * expanded array is allocated in the aggregate state context, so as to save
+ * copying operations.
  */
 static ExpandedArrayHeader *
 fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
@@ -39,6 +43,7 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 	ExpandedArrayHeader *eah;
 	Oid			element_type;
 	ArrayMetaState *my_extra;
+	MemoryContext resultcxt;
 
 	/* If first time through, create datatype cache struct */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
@@ -51,10 +56,17 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 		fcinfo->flinfo->fn_extra = my_extra;
 	}
 
+	/* Figure out which context we want the result in */
+	if (!AggCheckCallContext(fcinfo, &resultcxt))
+		resultcxt = CurrentMemoryContext;
+
 	/* Now collect the array value */
 	if (!PG_ARGISNULL(argno))
 	{
+		MemoryContext oldcxt = MemoryContextSwitchTo(resultcxt);
+
 		eah = PG_GETARG_EXPANDED_ARRAYX(argno, my_extra);
+		MemoryContextSwitchTo(oldcxt);
 	}
 	else
 	{
@@ -72,7 +84,7 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 					 errmsg("input data type is not an array")));
 
 		eah = construct_empty_expanded_array(element_type,
-											 CurrentMemoryContext,
+											 resultcxt,
 											 my_extra);
 	}
 

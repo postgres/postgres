@@ -72,10 +72,13 @@
  *	  transition value or a previous function result, and in either case its
  *	  value need not be preserved.  See int8inc() for an example.  Notice that
  *	  advance_transition_function() is coded to avoid a data copy step when
- *	  the previous transition value pointer is returned.  Also, some
- *	  transition functions want to store working state in addition to the
- *	  nominal transition value; they can use the memory context returned by
- *	  AggCheckCallContext() to do that.
+ *	  the previous transition value pointer is returned.  It is also possible
+ *	  to avoid repeated data copying when the transition value is an expanded
+ *	  object: to do that, the transition function must take care to return
+ *	  an expanded object that is in a child context of the memory context
+ *	  returned by AggCheckCallContext().  Also, some transition functions want
+ *	  to store working state in addition to the nominal transition value; they
+ *	  can use the memory context returned by AggCheckCallContext() to do that.
  *
  *	  Note: AggCheckCallContext() is available as of PostgreSQL 9.0.  The
  *	  AggState is available as context in earlier releases (back to 8.1),
@@ -694,8 +697,10 @@ advance_transition_function(AggState *aggstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-	 * pfree the prior transValue.  But if transfn returned a pointer to its
-	 * first input, we don't need to do anything.
+	 * free the prior transValue.  But if transfn returned a pointer to its
+	 * first input, we don't need to do anything.  Also, if transfn returned a
+	 * pointer to a R/W expanded object that is already a child of the
+	 * aggcontext, assume we can adopt that value without copying it.
 	 */
 	if (!peraggstate->transtypeByVal &&
 		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
@@ -703,12 +708,25 @@ advance_transition_function(AggState *aggstate,
 		if (!fcinfo->isnull)
 		{
 			MemoryContextSwitchTo(aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory);
-			newVal = datumCopy(newVal,
-							   peraggstate->transtypeByVal,
-							   peraggstate->transtypeLen);
+			if (DatumIsReadWriteExpandedObject(newVal,
+											   false,
+											   peraggstate->transtypeLen) &&
+				MemoryContextGetParent(DatumGetEOHP(newVal)->eoh_context) == CurrentMemoryContext)
+				 /* do nothing */ ;
+			else
+				newVal = datumCopy(newVal,
+								   peraggstate->transtypeByVal,
+								   peraggstate->transtypeLen);
 		}
 		if (!pergroupstate->transValueIsNull)
-			pfree(DatumGetPointer(pergroupstate->transValue));
+		{
+			if (DatumIsReadWriteExpandedObject(pergroupstate->transValue,
+											   false,
+											   peraggstate->transtypeLen))
+				DeleteExpandedObject(pergroupstate->transValue);
+			else
+				pfree(DatumGetPointer(pergroupstate->transValue));
+		}
 	}
 
 	pergroupstate->transValue = newVal;
@@ -1059,7 +1077,9 @@ finalize_aggregate(AggState *aggstate,
 								 (void *) aggstate, NULL);
 
 		/* Fill in the transition state value */
-		fcinfo.arg[0] = pergroupstate->transValue;
+		fcinfo.arg[0] = MakeExpandedObjectReadOnly(pergroupstate->transValue,
+											 pergroupstate->transValueIsNull,
+												   peraggstate->transtypeLen);
 		fcinfo.argnull[0] = pergroupstate->transValueIsNull;
 		anynull |= pergroupstate->transValueIsNull;
 
@@ -1086,6 +1106,7 @@ finalize_aggregate(AggState *aggstate,
 	}
 	else
 	{
+		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
 		*resultVal = pergroupstate->transValue;
 		*resultIsNull = pergroupstate->transValueIsNull;
 	}
