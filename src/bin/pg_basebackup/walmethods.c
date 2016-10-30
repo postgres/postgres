@@ -442,9 +442,14 @@ tar_write_padding_data(TarMethodFile * f, size_t bytes)
 		ssize_t		r = tar_write(f, zerobuf, bytestowrite);
 
 		if (r < 0)
+		{
+			pg_free(zerobuf);
 			return false;
+		}
 		bytesleft -= r;
 	}
+
+	pg_free(zerobuf);
 	return true;
 }
 
