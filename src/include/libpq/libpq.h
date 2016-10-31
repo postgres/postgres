@@ -81,9 +81,6 @@ extern char *ssl_key_file;
 extern char *ssl_ca_file;
 extern char *ssl_crl_file;
 
-extern int	(*pq_putmessage_hook) (char msgtype, const char *s, size_t len);
-extern int	(*pq_flush_hook) (void);
-
 extern int	secure_initialize(void);
 extern bool secure_loaded_verify_locations(void);
 extern void secure_destroy(void);
