@@ -847,7 +847,7 @@ deparse_type_name(Oid type_oid, int32 typemod)
  *
  * The output targetlist contains the columns that need to be fetched from the
  * foreign server for the given relation.  If foreignrel is an upper relation,
- * then the output targetlist can also contains expressions to be evaluated on
+ * then the output targetlist can also contain expressions to be evaluated on
  * foreign server.
  */
 List *
