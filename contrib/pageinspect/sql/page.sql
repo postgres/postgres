@@ -1,7 +1,7 @@
 CREATE EXTENSION pageinspect;
 
-CREATE TABLE test1 (a int, b text);
-INSERT INTO test1 VALUES (1, 'one');
+CREATE TABLE test1 (a int, b int);
+INSERT INTO test1 VALUES (16777217, 131584);
 
 VACUUM test1;  -- set up FSM
 
