@@ -1,5 +1,5 @@
-CREATE TABLE test1 (a int, b text);
-INSERT INTO test1 VALUES (1, 'one');
+CREATE TABLE test1 (a int8, b text);
+INSERT INTO test1 VALUES (72057594037927937, 'text');
 CREATE INDEX test1_a_idx ON test1 USING btree (a);
 
 \x
