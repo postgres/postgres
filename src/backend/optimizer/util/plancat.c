@@ -53,7 +53,7 @@ get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
 static void get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
-						  Relation relation);
+						  Relation relation, bool inhparent);
 static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 							  List *idxExprs);
 static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
@@ -408,7 +408,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	}
 
 	/* Collect info about relation's foreign keys, if relevant */
-	get_relation_foreign_keys(root, rel, relation);
+	get_relation_foreign_keys(root, rel, relation, inhparent);
 
 	heap_close(relation, NoLock);
 
@@ -433,7 +433,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
  */
 static void
 get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
-						  Relation relation)
+						  Relation relation, bool inhparent)
 {
 	List	   *rtable = root->parse->rtable;
 	List	   *cachedfkeys;
@@ -446,6 +446,15 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	if (rel->reloptkind != RELOPT_BASEREL ||
 		list_length(rtable) < 2)
+		return;
+
+	/*
+	 * If it's the parent of an inheritance tree, ignore its FKs.  We could
+	 * make useful FK-based deductions if we found that all members of the
+	 * inheritance tree have equivalent FK constraints, but detecting that
+	 * would require code that hasn't been written.
+	 */
+	if (inhparent)
 		return;
 
 	/*
@@ -487,6 +496,9 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 			/* Ignore if not the correct table */
 			if (rte->rtekind != RTE_RELATION ||
 				rte->relid != cachedfk->confrelid)
+				continue;
+			/* Ignore if it's an inheritance parent; doesn't really match */
+			if (rte->inh)
 				continue;
 			/* Ignore self-referential FKs; we only care about joins */
 			if (rti == rel->relid)
