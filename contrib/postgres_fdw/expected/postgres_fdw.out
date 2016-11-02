@@ -2447,10 +2447,10 @@ select count(c2) w, c2 x, 5 y, 7.0 z from ft1 group by 2, y, 9.0::int order by 2
                                                 QUERY PLAN                                                
 ----------------------------------------------------------------------------------------------------------
  Sort
-   Output: (count(c2)), c2, (5), (7.0), (9)
+   Output: (count(c2)), c2, 5, 7.0, 9
    Sort Key: ft1.c2
    ->  Foreign Scan
-         Output: (count(c2)), c2, (5), (7.0), (9)
+         Output: (count(c2)), c2, 5, 7.0, 9
          Relations: Aggregate on (public.ft1)
          Remote SQL: SELECT count(c2), c2, 5, 7.0, 9 FROM "S 1"."T 1" GROUP BY c2, 5::integer, 9::integer
 (7 rows)
@@ -2499,7 +2499,7 @@ select count(*) from (select c5, count(c1) from ft1 group by c5, sqrt(c2) having
  Aggregate
    Output: count(*)
    ->  Foreign Scan
-         Output: ft1.c5, (NULL::bigint), (sqrt((ft1.c2)::double precision))
+         Output: ft1.c5, NULL::bigint, (sqrt((ft1.c2)::double precision))
          Filter: (((((avg(ft1.c1)) / (avg(ft1.c1))))::double precision * random()) <= '1'::double precision)
          Relations: Aggregate on (public.ft1)
          Remote SQL: SELECT c5, NULL::bigint, sqrt(c2), avg("C 1") FROM "S 1"."T 1" GROUP BY c5, (sqrt(c2)) HAVING ((avg("C 1") < 500::numeric))
@@ -3139,7 +3139,7 @@ select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.
                ->  Subquery Scan on q
                      Output: q.a, q.b
                      ->  Foreign Scan
-                           Output: (13), (avg(ft1.c1)), (NULL::bigint)
+                           Output: 13, (avg(ft1.c1)), NULL::bigint
                            Relations: Aggregate on ((public.ft2) LEFT JOIN (public.ft1))
                            Remote SQL: SELECT 13, avg(r1."C 1"), NULL::bigint FROM ("S 1"."T 1" r2 LEFT JOIN "S 1"."T 1" r1 ON (((r1."C 1" = r2."C 1"))))
 (16 rows)
