@@ -100,7 +100,7 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 	GinPageOpaque opaq;
 	HeapTuple	resultTuple;
 	Datum		values[3];
-	bool		nulls[10];
+	bool		nulls[3];
 	Datum		flags[16];
 	int			nflags = 0;
 	uint16		flagbits;
@@ -152,9 +152,9 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 	memset(nulls, 0, sizeof(nulls));
 
 	values[0] = Int64GetDatum(opaq->rightlink);
-	values[1] = Int64GetDatum(opaq->maxoff);
-	values[2] = PointerGetDatum(
-					construct_array(flags, nflags, TEXTOID, -1, false, 'i'));
+	values[1] = Int32GetDatum(opaq->maxoff);
+	values[2] = PointerGetDatum(construct_array(flags, nflags,
+												TEXTOID, -1, false, 'i'));
 
 	/* Build and return the result tuple. */
 	resultTuple = heap_form_tuple(tupdesc, values, nulls);
