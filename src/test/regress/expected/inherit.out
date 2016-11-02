@@ -1426,7 +1426,7 @@ ORDER BY thousand, tenthous;
    Sort Key: tenk1.thousand, tenk1.tenthous
    ->  Index Only Scan using tenk1_thous_tenthous on tenk1
    ->  Sort
-         Sort Key: (42), (42)
+         Sort Key: 42, 42
          ->  Index Only Scan using tenk1_hundred on tenk1 tenk1_1
 (6 rows)
 
