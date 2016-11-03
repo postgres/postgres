@@ -40,6 +40,8 @@ TestLib::system_or_bail('pg_basebackup', '-D', $node_master->backup_dir . "/" . 
 
 system("cat " . $node_master->data_dir . "/recovery.conf");
 
+# TODO: make sure we use a physical slot here!
+
 my $node_replica = get_new_node('replica');
 $node_replica->init_from_backup(
 	$node_master, $backup_name,
@@ -59,8 +61,12 @@ $node_master->safe_psql('postgres', q[INSERT INTO test_table(blah) values ('itwo
 # wait for catchup. TODO do this properly.
 sleep(2);
 
+# TODO: check that phys slot on master has xmin set correctly
+
 # and replay from it
 ($ret, $stdout, $stderr) = $node_replica->psql('postgres', qq[SELECT * FROM pg_logical_slot_get_changes('standby_logical', NULL, NULL)]);
 is($ret, 0, 'replay from slot succeeded');
 is($stdout, '', 'replay results');
 is($stderr, '', 'stderr empty');
+
+# TODO check that phys slot xmin advanced
