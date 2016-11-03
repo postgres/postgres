@@ -756,8 +756,10 @@ PGPing PQping(const char *conninfo);
     Several <application>libpq</> functions parse a user-specified string to obtain
     connection parameters.  There are two accepted formats for these strings:
     plain <literal>keyword = value</literal> strings
-    and <ulink url="http://www.ietf.org/rfc/rfc3986.txt">RFC
-    3986</ulink> URIs.
+    and URIs.  URIs generally follow
+    <ulink url="http://www.ietf.org/rfc/rfc3986.txt">RFC
+    3986</ulink>, except that multi-host connection strings are allowed
+    as further described below.
    </para>
 
    <sect3>
@@ -792,7 +794,7 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
    <para>
    The general form for a connection <acronym>URI</acronym> is:
 <synopsis>
-postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&amp;...]
+postgresql://[user[:password]@][netloc][:port][,...][/dbname][?param1=value1&amp;...]
 </synopsis>
    </para>
 
@@ -809,6 +811,7 @@ postgresql://localhost/mydb
 postgresql://user@localhost
 postgresql://user:secret@localhost
 postgresql://other@localhost/otherdb?connect_timeout=10&amp;application_name=myapp
+postgresql://host1:123,host2:456/somedb
 </programlisting>
     Components of the hierarchical part of the <acronym>URI</acronym> can also
     be given as parameters.  For example:
@@ -856,6 +859,15 @@ postgresql:///dbname?host=/var/lib/postgresql
 postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 </programlisting>
    </para>
+
+   <para>
+    It is possible to specify multiple host components, each with an optional
+    port component, in a single URI.  A URI of the form
+    <literal>postgresql://host1:port1,host2:port2,host3:port3/</literal>
+    is equivalent to a connection string of the form
+    <literal>host=host1,host2,host3 port=port1,port2,port3</literal>.  Each
+    host will be tried in turn until a connection is successfully established.
+   </para>
    </sect3>
   </sect2>
 
@@ -870,12 +882,13 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>host</literal></term>
       <listitem>
        <para>
-        Name of host to connect to.<indexterm><primary>host name</></>
-        If this begins with a slash, it specifies Unix-domain
+        Comma-separated list of host names.<indexterm><primary>host name</></>
+        If a host name begins with a slash, it specifies Unix-domain
         communication rather than TCP/IP communication; the value is the
-        name of the directory in which the socket file is stored.  The
-        default behavior when <literal>host</literal> is not specified
-        is to connect to a Unix-domain
+        name of the directory in which the socket file is stored.  If
+        multiple host names are specified, each will be tried in turn in
+        the order given.  The default behavior when <literal>host</literal> is
+        not specified is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</></> in
         <filename>/tmp</filename> (or whatever socket directory was specified
         when <productname>PostgreSQL</> was built). On machines without
@@ -950,6 +963,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Port number to connect to at the server host, or socket file
         name extension for Unix-domain
         connections.<indexterm><primary>port</></>
+        If the <literal>host</> parameter included multiple, comma-separated
+        hosts, this parameter may specify a list of ports of equal length,
+        or it may specify a single port number to be used for all hosts.
        </para>
       </listitem>
      </varlistentry>
@@ -1394,7 +1410,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 
   <para>
    The following functions return parameter values established at connection.
-   These values are fixed for the life of the <structname>PGconn</> object.
+   These values are fixed for the life of the connection.  If a multi-host
+   connection string is used, the values of <function>PQhost</>,
+   <function>PQport</>, and <function>PQpass</> can change if a new connection
+   is established using the same <structname>PGconn</> object.  Other values
+   are fixed for the lifetime of the <structname>PGconn</> object.
 
    <variablelist>
     <varlistentry id="libpq-pqdb">

@@ -683,20 +683,26 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 		case AUTH_REQ_MD5:
 		case AUTH_REQ_PASSWORD:
-			conn->password_needed = true;
-			if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
 			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  PQnoPasswordSupplied);
-				return STATUS_ERROR;
-			}
-			if (pg_password_sendauth(conn, conn->pgpass, areq) != STATUS_OK)
-			{
-				printfPQExpBuffer(&conn->errorMessage,
+				char   *password = conn->connhost[conn->whichhost].password;
+
+				if (password == NULL)
+					password = conn->pgpass;
+				conn->password_needed = true;
+				if (password == NULL || password[0] == '\0')
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  PQnoPasswordSupplied);
+					return STATUS_ERROR;
+				}
+				if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
 					 "fe_sendauth: error sending password authentication\n");
-				return STATUS_ERROR;
+					return STATUS_ERROR;
+				}
+				break;
 			}
-			break;
 
 		case AUTH_REQ_SCM_CREDS:
 			if (pg_local_sendauth(conn) != STATUS_OK)

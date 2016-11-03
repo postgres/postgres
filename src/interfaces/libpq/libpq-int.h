@@ -292,6 +292,30 @@ typedef struct pgDataValue
 	const char *value;			/* data value, without zero-termination */
 } PGdataValue;
 
+typedef enum pg_conn_host_type
+{
+	CHT_HOST_NAME,
+	CHT_HOST_ADDRESS,
+	CHT_UNIX_SOCKET
+} pg_conn_host_type;
+
+/*
+ * pg_conn_host stores all information about one of possibly several hosts
+ * mentioned in the connection string.  Derived by splitting the pghost
+ * on the comma character and then parsing each segment.
+ */
+typedef struct pg_conn_host
+{
+	char	   *host;			/* host name or address, or socket path */
+	pg_conn_host_type type;		/* type of host */
+	char	   *port;			/* port number for this host; if not NULL,
+								 * overrrides the PGConn's pgport */
+	char	   *password;		/* password for this host, read from the
+								 * password file.  only set if the PGconn's
+								 * pgpass field is NULL. */
+	struct addrinfo *addrlist;	/* list of possible backend addresses */
+} pg_conn_host;
+
 /*
  * PGconn stores all the state data associated with a single connection
  * to a backend.
@@ -299,13 +323,15 @@ typedef struct pgDataValue
 struct pg_conn
 {
 	/* Saved values of connection options */
-	char	   *pghost;			/* the machine on which the server is running */
+	char	   *pghost;			/* the machine on which the server is running,
+								 * or a path to a UNIX-domain socket, or a
+								 * comma-separated list of machines and/or
+								 * paths, optionally with port suffixes; if
+								 * NULL, use DEFAULT_PGSOCKET_DIR */
 	char	   *pghostaddr;		/* the numeric IP address of the machine on
 								 * which the server is running.  Takes
 								 * precedence over above. */
 	char	   *pgport;			/* the server's communication port number */
-	char	   *pgunixsocket;	/* the directory of the server's Unix-domain
-								 * socket; if NULL, use DEFAULT_PGSOCKET_DIR */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
@@ -363,6 +389,11 @@ struct pg_conn
 	PGnotify   *notifyHead;		/* oldest unreported Notify msg */
 	PGnotify   *notifyTail;		/* newest unreported Notify msg */
 
+	/* Support for multiple hosts in connection string */
+	int			nconnhost;		/* # of possible hosts */
+	int			whichhost;		/* host we're currently considering */
+	pg_conn_host *connhost;		/* details about each possible host */
+
 	/* Connection data */
 	pgsocket	sock;			/* FD for socket, PGINVALID_SOCKET if
 								 * unconnected */
@@ -378,9 +409,7 @@ struct pg_conn
 	bool		sigpipe_flag;	/* can we mask SIGPIPE via MSG_NOSIGNAL? */
 
 	/* Transient state needed while establishing connection */
-	struct addrinfo *addrlist;	/* list of possible backend addresses */
-	struct addrinfo *addr_cur;	/* the one currently being tried */
-	int			addrlist_family;	/* needed to know how to free addrlist */
+	struct addrinfo *addr_cur;	/* backend address currently being tried */
 	PGSetenvStatusType setenv_state;	/* for 2.0 protocol only */
 	const PQEnvironmentOption *next_eo;
 	bool		send_appname;	/* okay to send application_name? */
