@@ -22,6 +22,7 @@ $node_master->append_conf('postgresql.conf', "max_replication_slots = 4\n");
 $node_master->append_conf('postgresql.conf', "max_wal_senders = 4\n");
 $node_master->append_conf('postgresql.conf', "log_min_messages = 'debug2'\n");
 $node_master->append_conf('postgresql.conf', "log_error_verbosity = verbose\n");
+$node_master->append_conf('postgresql.conf', "hot_standby_feedback = on\n");
 $node_master->dump_info;
 $node_master->start;
 
