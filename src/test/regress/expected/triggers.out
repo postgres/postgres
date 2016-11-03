@@ -1059,11 +1059,11 @@ DELETE 1
 \set QUIET true
 -- Describe view should list triggers
 \d main_view
-   View "public.main_view"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
+              View "public.main_view"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
 Triggers:
     after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt')
     after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_ins_stmt')
@@ -1079,11 +1079,11 @@ Triggers:
 DROP TRIGGER instead_of_insert_trig ON main_view;
 DROP TRIGGER instead_of_delete_trig ON main_view;
 \d+ main_view
-               View "public.main_view"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
- b      | integer |           | plain   | 
+                          View "public.main_view"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
+ b      | integer |           |          |         | plain   | 
 View definition:
  SELECT main_table.a,
     main_table.b

@@ -1049,10 +1049,10 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 drop extension cube cascade;
 NOTICE:  drop cascades to table foo column f1
 \d foo
-      Table "public.foo"
- Column |  Type   | Modifiers 
---------+---------+-----------
- f2     | integer | 
+                Table "public.foo"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f2     | integer |           |          | 
 
 -- list what's installed
 \dT public.*

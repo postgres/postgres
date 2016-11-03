@@ -281,8 +281,8 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 /*
                  Table "public.history"
-    Column    |            Type             | Modifiers
---------------+-----------------------------+-----------
+    Column    |            Type             | Nullable
+--------------+-----------------------------+----------
  customerid   | integer                     | not null
  timestamp    | timestamp without time zone | not null
  action_taken | character(5)                | not null

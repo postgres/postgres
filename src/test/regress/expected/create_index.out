@@ -2452,11 +2452,11 @@ DETAIL:  Key (f2)=(b) is duplicated.
 DELETE FROM concur_heap WHERE f1 = 'b';
 VACUUM FULL concur_heap;
 \d concur_heap
-Table "public.concur_heap"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
+           Table "public.concur_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
     "concur_index3" UNIQUE, btree (f2) INVALID
@@ -2468,11 +2468,11 @@ Indexes:
 
 REINDEX TABLE concur_heap;
 \d concur_heap
-Table "public.concur_heap"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
+           Table "public.concur_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
     "concur_index3" UNIQUE, btree (f2)
@@ -2502,11 +2502,11 @@ DROP INDEX CONCURRENTLY "concur_index5";
 DROP INDEX CONCURRENTLY "concur_index1";
 DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
 \d concur_heap
-Table "public.concur_heap"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
+           Table "public.concur_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
 Indexes:
     "std_index" btree (f2)
 
@@ -2520,12 +2520,12 @@ INSERT INTO cwi_test VALUES(1, 2), (3, 4), (5, 6);
 CREATE UNIQUE INDEX cwi_uniq_idx ON cwi_test(a , b);
 ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
 \d cwi_test
-          Table "public.cwi_test"
- Column |         Type          | Modifiers 
---------+-----------------------+-----------
- a      | integer               | not null
- b      | character varying(10) | not null
- c      | character(1)          | 
+                     Table "public.cwi_test"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ a      | integer               |           | not null | 
+ b      | character varying(10) |           | not null | 
+ c      | character(1)          |           |          | 
 Indexes:
     "cwi_uniq_idx" PRIMARY KEY, btree (a, b)
 
@@ -2543,12 +2543,12 @@ ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
 		USING INDEX cwi_uniq2_idx;
 NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "cwi_uniq2_idx" to "cwi_replaced_pkey"
 \d cwi_test
-          Table "public.cwi_test"
- Column |         Type          | Modifiers 
---------+-----------------------+-----------
- a      | integer               | not null
- b      | character varying(10) | not null
- c      | character(1)          | 
+                     Table "public.cwi_test"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ a      | integer               |           | not null | 
+ b      | character varying(10) |           | not null | 
+ c      | character(1)          |           |          | 
 Indexes:
     "cwi_replaced_pkey" PRIMARY KEY, btree (b, a)
 

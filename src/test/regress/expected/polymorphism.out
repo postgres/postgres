@@ -1495,13 +1495,13 @@ select * from dfview;
 (5 rows)
 
 \d+ dfview
-                View "public.dfview"
- Column |  Type  | Modifiers | Storage | Description 
---------+--------+-----------+---------+-------------
- q1     | bigint |           | plain   | 
- q2     | bigint |           | plain   | 
- c3     | bigint |           | plain   | 
- c4     | bigint |           | plain   | 
+                           View "public.dfview"
+ Column |  Type  | Collation | Nullable | Default | Storage | Description 
+--------+--------+-----------+----------+---------+---------+-------------
+ q1     | bigint |           |          |         | plain   | 
+ q2     | bigint |           |          |         | plain   | 
+ c3     | bigint |           |          |         | plain   | 
+ c4     | bigint |           |          |         | plain   | 
 View definition:
  SELECT int8_tbl.q1,
     int8_tbl.q2,

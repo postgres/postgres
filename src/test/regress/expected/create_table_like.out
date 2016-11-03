@@ -109,32 +109,32 @@ CREATE TABLE ctlt4 (a text, c text);
 ALTER TABLE ctlt4 ALTER COLUMN c SET STORAGE EXTERNAL;
 CREATE TABLE ctlt12_storage (LIKE ctlt1 INCLUDING STORAGE, LIKE ctlt2 INCLUDING STORAGE);
 \d+ ctlt12_storage
-                   Table "public.ctlt12_storage"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | main     |              | 
- b      | text |           | extended |              | 
- c      | text |           | external |              | 
+                             Table "public.ctlt12_storage"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | 
+ b      | text |           |          |         | extended |              | 
+ c      | text |           |          |         | external |              | 
 
 CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDING COMMENTS);
 \d+ ctlt12_comments
-                  Table "public.ctlt12_comments"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | extended |              | A
- b      | text |           | extended |              | B
- c      | text |           | extended |              | C
+                             Table "public.ctlt12_comments"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | extended |              | A
+ b      | text |           |          |         | extended |              | B
+ c      | text |           |          |         | extended |              | C
 
 CREATE TABLE ctlt1_inh (LIKE ctlt1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
 NOTICE:  merging column "b" with inherited definition
 NOTICE:  merging constraint "ctlt1_a_check" with inherited definition
 \d+ ctlt1_inh
-                     Table "public.ctlt1_inh"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | main     |              | A
- b      | text |           | extended |              | B
+                                Table "public.ctlt1_inh"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | A
+ b      | text |           |          |         | extended |              | B
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
 Inherits: ctlt1
@@ -148,12 +148,12 @@ SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_con
 CREATE TABLE ctlt13_inh () INHERITS (ctlt1, ctlt3);
 NOTICE:  merging multiple inherited definitions of column "a"
 \d+ ctlt13_inh
-                     Table "public.ctlt13_inh"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | main     |              | 
- b      | text |           | extended |              | 
- c      | text |           | external |              | 
+                               Table "public.ctlt13_inh"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | 
+ b      | text |           |          |         | extended |              | 
+ c      | text |           |          |         | external |              | 
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt3_a_check" CHECK (length(a) < 5)
@@ -163,12 +163,12 @@ Inherits: ctlt1,
 CREATE TABLE ctlt13_like (LIKE ctlt3 INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
 \d+ ctlt13_like
-                    Table "public.ctlt13_like"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | main     |              | A3
- b      | text |           | extended |              | 
- c      | text |           | external |              | C
+                               Table "public.ctlt13_like"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | A3
+ b      | text |           |          |         | extended |              | 
+ c      | text |           |          |         | external |              | C
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt3_a_check" CHECK (length(a) < 5)
@@ -182,11 +182,11 @@ SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_con
 
 CREATE TABLE ctlt_all (LIKE ctlt1 INCLUDING ALL);
 \d+ ctlt_all
-                      Table "public.ctlt_all"
- Column | Type | Modifiers | Storage  | Stats target | Description 
---------+------+-----------+----------+--------------+-------------
- a      | text | not null  | main     |              | A
- b      | text |           | extended |              | B
+                                Table "public.ctlt_all"
+ Column | Type | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------+-----------+----------+---------+----------+--------------+-------------
+ a      | text |           | not null |         | main     |              | A
+ b      | text |           |          |         | extended |              | B
 Indexes:
     "ctlt_all_pkey" PRIMARY KEY, btree (a)
     "ctlt_all_b_idx" btree (b)

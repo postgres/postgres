@@ -459,9 +459,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 <programlisting>
 postgres=# \d tab
        Table "public.tab"
- Column |  Type   | Modifiers 
---------+---------+-----------
- col    | integer | 
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ col    | integer |           |          | 
 Indexes:
     "idx" btree (col) INVALID
 </programlisting>

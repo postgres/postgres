@@ -218,10 +218,10 @@ rollback;
 -- Commit table creation
 COMMIT PREPARED 'regress-one';
 \d pxtest2
-    Table "public.pxtest2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
+              Table "public.pxtest2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
 
 SELECT * FROM pxtest2;
  a 

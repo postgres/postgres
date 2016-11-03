@@ -6707,43 +6707,43 @@ IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
 (5 rows)
 
 \d import_dest1.*
-               Foreign table "import_dest1.t1"
- Column |       Type        | Modifiers |    FDW Options     
---------+-------------------+-----------+--------------------
- c1     | integer           |           | (column_name 'c1')
- c2     | character varying | not null  | (column_name 'c2')
+                         Foreign table "import_dest1.t1"
+ Column |       Type        | Collation | Nullable | Default |    FDW Options     
+--------+-------------------+-----------+----------+---------+--------------------
+ c1     | integer           |           |          |         | (column_name 'c1')
+ c2     | character varying |           | not null |         | (column_name 'c2')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't1')
 
-                 Foreign table "import_dest1.t2"
- Column |       Type        |   Modifiers   |    FDW Options     
---------+-------------------+---------------+--------------------
- c1     | integer           |               | (column_name 'c1')
- c2     | character varying |               | (column_name 'c2')
- c3     | text              | collate POSIX | (column_name 'c3')
+                         Foreign table "import_dest1.t2"
+ Column |       Type        | Collation | Nullable | Default |    FDW Options     
+--------+-------------------+-----------+----------+---------+--------------------
+ c1     | integer           |           |          |         | (column_name 'c1')
+ c2     | character varying |           |          |         | (column_name 'c2')
+ c3     | text              | POSIX     |          |         | (column_name 'c3')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't2')
 
-                  Foreign table "import_dest1.t3"
- Column |           Type           | Modifiers |    FDW Options     
---------+--------------------------+-----------+--------------------
- c1     | timestamp with time zone |           | (column_name 'c1')
- c2     | typ1                     |           | (column_name 'c2')
+                             Foreign table "import_dest1.t3"
+ Column |           Type           | Collation | Nullable | Default |    FDW Options     
+--------+--------------------------+-----------+----------+---------+--------------------
+ c1     | timestamp with time zone |           |          |         | (column_name 'c1')
+ c2     | typ1                     |           |          |         | (column_name 'c2')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't3')
 
-                 Foreign table "import_dest1.x 4"
- Column |         Type          | Modifiers |     FDW Options     
---------+-----------------------+-----------+---------------------
- c1     | double precision      |           | (column_name 'c1')
- C 2    | text                  |           | (column_name 'C 2')
- c3     | character varying(42) |           | (column_name 'c3')
+                           Foreign table "import_dest1.x 4"
+ Column |         Type          | Collation | Nullable | Default |     FDW Options     
+--------+-----------------------+-----------+----------+---------+---------------------
+ c1     | double precision      |           |          |         | (column_name 'c1')
+ C 2    | text                  |           |          |         | (column_name 'C 2')
+ c3     | character varying(42) |           |          |         | (column_name 'c3')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 'x 4')
 
-    Foreign table "import_dest1.x 5"
- Column | Type | Modifiers | FDW Options 
---------+------+-----------+-------------
+               Foreign table "import_dest1.x 5"
+ Column | Type | Collation | Nullable | Default | FDW Options 
+--------+------+-----------+----------+---------+-------------
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 'x 5')
 
@@ -6763,43 +6763,43 @@ IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
 (5 rows)
 
 \d import_dest2.*
-               Foreign table "import_dest2.t1"
- Column |       Type        | Modifiers |    FDW Options     
---------+-------------------+-----------+--------------------
- c1     | integer           |           | (column_name 'c1')
- c2     | character varying | not null  | (column_name 'c2')
+                         Foreign table "import_dest2.t1"
+ Column |       Type        | Collation | Nullable | Default |    FDW Options     
+--------+-------------------+-----------+----------+---------+--------------------
+ c1     | integer           |           |          |         | (column_name 'c1')
+ c2     | character varying |           | not null |         | (column_name 'c2')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't1')
 
-                 Foreign table "import_dest2.t2"
- Column |       Type        |   Modifiers   |    FDW Options     
---------+-------------------+---------------+--------------------
- c1     | integer           | default 42    | (column_name 'c1')
- c2     | character varying |               | (column_name 'c2')
- c3     | text              | collate POSIX | (column_name 'c3')
+                         Foreign table "import_dest2.t2"
+ Column |       Type        | Collation | Nullable | Default |    FDW Options     
+--------+-------------------+-----------+----------+---------+--------------------
+ c1     | integer           |           |          | 42      | (column_name 'c1')
+ c2     | character varying |           |          |         | (column_name 'c2')
+ c3     | text              | POSIX     |          |         | (column_name 'c3')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't2')
 
-                    Foreign table "import_dest2.t3"
- Column |           Type           |   Modifiers   |    FDW Options     
---------+--------------------------+---------------+--------------------
- c1     | timestamp with time zone | default now() | (column_name 'c1')
- c2     | typ1                     |               | (column_name 'c2')
+                             Foreign table "import_dest2.t3"
+ Column |           Type           | Collation | Nullable | Default |    FDW Options     
+--------+--------------------------+-----------+----------+---------+--------------------
+ c1     | timestamp with time zone |           |          | now()   | (column_name 'c1')
+ c2     | typ1                     |           |          |         | (column_name 'c2')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't3')
 
-                 Foreign table "import_dest2.x 4"
- Column |         Type          | Modifiers |     FDW Options     
---------+-----------------------+-----------+---------------------
- c1     | double precision      |           | (column_name 'c1')
- C 2    | text                  |           | (column_name 'C 2')
- c3     | character varying(42) |           | (column_name 'c3')
+                           Foreign table "import_dest2.x 4"
+ Column |         Type          | Collation | Nullable | Default |     FDW Options     
+--------+-----------------------+-----------+----------+---------+---------------------
+ c1     | double precision      |           |          |         | (column_name 'c1')
+ C 2    | text                  |           |          |         | (column_name 'C 2')
+ c3     | character varying(42) |           |          |         | (column_name 'c3')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 'x 4')
 
-    Foreign table "import_dest2.x 5"
- Column | Type | Modifiers | FDW Options 
---------+------+-----------+-------------
+               Foreign table "import_dest2.x 5"
+ Column | Type | Collation | Nullable | Default | FDW Options 
+--------+------+-----------+----------+---------+-------------
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 'x 5')
 
@@ -6818,43 +6818,43 @@ IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
 (5 rows)
 
 \d import_dest3.*
-               Foreign table "import_dest3.t1"
- Column |       Type        | Modifiers |    FDW Options     
---------+-------------------+-----------+--------------------
- c1     | integer           |           | (column_name 'c1')
- c2     | character varying |           | (column_name 'c2')
+                         Foreign table "import_dest3.t1"
+ Column |       Type        | Collation | Nullable | Default |    FDW Options     
+--------+-------------------+-----------+----------+---------+--------------------
+ c1     | integer           |           |          |         | (column_name 'c1')
+ c2     | character varying |           |          |         | (column_name 'c2')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't1')
 
-               Foreign table "import_dest3.t2"
- Column |       Type        | Modifiers |    FDW Options     
---------+-------------------+-----------+--------------------
- c1     | integer           |           | (column_name 'c1')
- c2     | character varying |           | (column_name 'c2')
- c3     | text              |           | (column_name 'c3')
+                         Foreign table "import_dest3.t2"
+ Column |       Type        | Collation | Nullable | Default |    FDW Options     
+--------+-------------------+-----------+----------+---------+--------------------
+ c1     | integer           |           |          |         | (column_name 'c1')
+ c2     | character varying |           |          |         | (column_name 'c2')
+ c3     | text              |           |          |         | (column_name 'c3')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't2')
 
-                  Foreign table "import_dest3.t3"
- Column |           Type           | Modifiers |    FDW Options     
---------+--------------------------+-----------+--------------------
- c1     | timestamp with time zone |           | (column_name 'c1')
- c2     | typ1                     |           | (column_name 'c2')
+                             Foreign table "import_dest3.t3"
+ Column |           Type           | Collation | Nullable | Default |    FDW Options     
+--------+--------------------------+-----------+----------+---------+--------------------
+ c1     | timestamp with time zone |           |          |         | (column_name 'c1')
+ c2     | typ1                     |           |          |         | (column_name 'c2')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 't3')
 
-                 Foreign table "import_dest3.x 4"
- Column |         Type          | Modifiers |     FDW Options     
---------+-----------------------+-----------+---------------------
- c1     | double precision      |           | (column_name 'c1')
- C 2    | text                  |           | (column_name 'C 2')
- c3     | character varying(42) |           | (column_name 'c3')
+                           Foreign table "import_dest3.x 4"
+ Column |         Type          | Collation | Nullable | Default |     FDW Options     
+--------+-----------------------+-----------+----------+---------+---------------------
+ c1     | double precision      |           |          |         | (column_name 'c1')
+ C 2    | text                  |           |          |         | (column_name 'C 2')
+ c3     | character varying(42) |           |          |         | (column_name 'c3')
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 'x 4')
 
-    Foreign table "import_dest3.x 5"
- Column | Type | Modifiers | FDW Options 
---------+------+-----------+-------------
+               Foreign table "import_dest3.x 5"
+ Column | Type | Collation | Nullable | Default | FDW Options 
+--------+------+-----------+----------+---------+-------------
 Server: loopback
 FDW Options: (schema_name 'import_source', table_name 'x 5')
 

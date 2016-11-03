@@ -2707,11 +2707,11 @@ select * from rules_log;
 
 create rule r3 as on delete to rules_src do notify rules_src_deletion;
 \d+ rules_src
-                      Table "public.rules_src"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- f1     | integer |           | plain   |              | 
- f2     | integer |           | plain   |              | 
+                                 Table "public.rules_src"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           |          |         | plain   |              | 
+ f2     | integer |           |          |         | plain   |              | 
 Rules:
     r1 AS
     ON UPDATE TO rules_src DO  INSERT INTO rules_log (f1, f2, tag) VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
@@ -2727,11 +2727,11 @@ Rules:
 create rule r4 as on insert to rules_src do instead insert into rules_log AS trgt SELECT NEW.* RETURNING trgt.f1, trgt.f2;
 create rule r5 as on update to rules_src do instead UPDATE rules_log AS trgt SET tag = 'updated' WHERE trgt.f1 = new.f1;
 \d+ rules_src
-                      Table "public.rules_src"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- f1     | integer |           | plain   |              | 
- f2     | integer |           | plain   |              | 
+                                 Table "public.rules_src"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           |          |         | plain   |              | 
+ f2     | integer |           |          |         | plain   |              | 
 Rules:
     r1 AS
     ON UPDATE TO rules_src DO  INSERT INTO rules_log (f1, f2, tag) VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
@@ -2767,10 +2767,10 @@ SELECT * FROM rule_v1;
 (1 row)
 
 \d+ rule_v1
-                View "public.rule_v1"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
+                           View "public.rule_v1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
 View definition:
  SELECT rule_t1.a
    FROM rule_t1;
@@ -2795,22 +2795,22 @@ DROP TABLE rule_t1;
 --
 create view rule_v1 as values(1,2);
 \d+ rule_v1
-                 View "public.rule_v1"
- Column  |  Type   | Modifiers | Storage | Description 
----------+---------+-----------+---------+-------------
- column1 | integer |           | plain   | 
- column2 | integer |           | plain   | 
+                           View "public.rule_v1"
+ Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+---------+---------+-----------+----------+---------+---------+-------------
+ column1 | integer |           |          |         | plain   | 
+ column2 | integer |           |          |         | plain   | 
 View definition:
  VALUES (1,2);
 
 drop view rule_v1;
 create view rule_v1(x) as values(1,2);
 \d+ rule_v1
-                 View "public.rule_v1"
- Column  |  Type   | Modifiers | Storage | Description 
----------+---------+-----------+---------+-------------
- x       | integer |           | plain   | 
- column2 | integer |           | plain   | 
+                           View "public.rule_v1"
+ Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+---------+---------+-----------+----------+---------+---------+-------------
+ x       | integer |           |          |         | plain   | 
+ column2 | integer |           |          |         | plain   | 
 View definition:
  SELECT "*VALUES*".column1 AS x,
     "*VALUES*".column2
@@ -2819,11 +2819,11 @@ View definition:
 drop view rule_v1;
 create view rule_v1(x) as select * from (values(1,2)) v;
 \d+ rule_v1
-                 View "public.rule_v1"
- Column  |  Type   | Modifiers | Storage | Description 
----------+---------+-----------+---------+-------------
- x       | integer |           | plain   | 
- column2 | integer |           | plain   | 
+                           View "public.rule_v1"
+ Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+---------+---------+-----------+----------+---------+---------+-------------
+ x       | integer |           |          |         | plain   | 
+ column2 | integer |           |          |         | plain   | 
 View definition:
  SELECT v.column1 AS x,
     v.column2
@@ -2832,11 +2832,11 @@ View definition:
 drop view rule_v1;
 create view rule_v1(x) as select * from (values(1,2)) v(q,w);
 \d+ rule_v1
-                View "public.rule_v1"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- x      | integer |           | plain   | 
- w      | integer |           | plain   | 
+                           View "public.rule_v1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ x      | integer |           |          |         | plain   | 
+ w      | integer |           |          |         | plain   | 
 View definition:
  SELECT v.q AS x,
     v.w

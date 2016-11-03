@@ -10,11 +10,11 @@ SELECT * FROM persons;
 (0 rows)
 
 \d persons
-    Table "public.persons"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | 
- name   | text    | 
+              Table "public.persons"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ name   | text    |           |          | 
 Typed table of type: person_type
 
 CREATE FUNCTION get_all_persons() RETURNS SETOF person_type
@@ -46,11 +46,11 @@ CREATE TABLE persons2 OF person_type (
     UNIQUE (name)
 );
 \d persons2
-   Table "public.persons2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | not null
- name   | text    | 
+              Table "public.persons2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ name   | text    |           |          | 
 Indexes:
     "persons2_pkey" PRIMARY KEY, btree (id)
     "persons2_name_key" UNIQUE CONSTRAINT, btree (name)
@@ -61,11 +61,11 @@ CREATE TABLE persons3 OF person_type (
     name WITH OPTIONS DEFAULT ''
 );
 \d persons3
-       Table "public.persons3"
- Column |  Type   |    Modifiers     
---------+---------+------------------
- id     | integer | not null
- name   | text    | default ''::text
+              Table "public.persons3"
+ Column |  Type   | Collation | Nullable | Default  
+--------+---------+-----------+----------+----------
+ id     | integer |           | not null | 
+ name   | text    |           |          | ''::text
 Indexes:
     "persons3_pkey" PRIMARY KEY, btree (id)
 Typed table of type: person_type

@@ -180,12 +180,12 @@ ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
 -- renaming constraints vs. inheritance
 CREATE TABLE constraint_rename_test (a int CONSTRAINT con1 CHECK (a > 0), b int, c int);
 \d constraint_rename_test
-Table "public.constraint_rename_test"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
+       Table "public.constraint_rename_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
 Check constraints:
     "con1" CHECK (a > 0)
 
@@ -193,13 +193,13 @@ CREATE TABLE constraint_rename_test2 (a int CONSTRAINT con1 CHECK (a > 0), d int
 NOTICE:  merging column "a" with inherited definition
 NOTICE:  merging constraint "con1" with inherited definition
 \d constraint_rename_test2
-Table "public.constraint_rename_test2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
- d      | integer | 
+      Table "public.constraint_rename_test2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+ d      | integer |           |          | 
 Check constraints:
     "con1" CHECK (a > 0)
 Inherits: constraint_rename_test
@@ -210,24 +210,24 @@ ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- fa
 ERROR:  inherited constraint "con1" must be renamed in child tables too
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- ok
 \d constraint_rename_test
-Table "public.constraint_rename_test"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
+       Table "public.constraint_rename_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d constraint_rename_test2
-Table "public.constraint_rename_test2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
- d      | integer | 
+      Table "public.constraint_rename_test2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+ d      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
 Inherits: constraint_rename_test
@@ -236,25 +236,25 @@ ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0) NO INHERIT;
 ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
 \d constraint_rename_test
-Table "public.constraint_rename_test"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
+       Table "public.constraint_rename_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
     "con2bar" CHECK (b > 0) NO INHERIT
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d constraint_rename_test2
-Table "public.constraint_rename_test2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
- d      | integer | 
+      Table "public.constraint_rename_test2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+ d      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
 Inherits: constraint_rename_test
@@ -262,12 +262,12 @@ Inherits: constraint_rename_test
 ALTER TABLE constraint_rename_test ADD CONSTRAINT con3 PRIMARY KEY (a);
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
 \d constraint_rename_test
-Table "public.constraint_rename_test"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | not null
- b      | integer | 
- c      | integer | 
+       Table "public.constraint_rename_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
 Indexes:
     "con3foo" PRIMARY KEY, btree (a)
 Check constraints:
@@ -276,13 +276,13 @@ Check constraints:
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d constraint_rename_test2
-Table "public.constraint_rename_test2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
- c      | integer | 
- d      | integer | 
+      Table "public.constraint_rename_test2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+ d      | integer |           |          | 
 Check constraints:
     "con1foo" CHECK (a > 0)
 Inherits: constraint_rename_test
@@ -383,10 +383,10 @@ set constraint_exclusion TO 'partition';
 create table nv_parent (d date, check (false) no inherit not valid);
 -- not valid constraint added at creation time should automatically become valid
 \d nv_parent
- Table "public.nv_parent"
- Column | Type | Modifiers 
---------+------+-----------
- d      | date | 
+            Table "public.nv_parent"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ d      | date |           |          | 
 Check constraints:
     "nv_parent_check" CHECK (false) NO INHERIT
 
@@ -450,10 +450,10 @@ explain (costs off) select * from nv_parent where d between '2009-08-01'::date a
 -- add an inherited NOT VALID constraint
 alter table nv_parent add check (d between '2001-01-01'::date and '2099-12-31'::date) not valid;
 \d nv_child_2009
-Table "public.nv_child_2009"
- Column | Type | Modifiers 
---------+------+-----------
- d      | date | 
+          Table "public.nv_child_2009"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ d      | date |           |          | 
 Check constraints:
     "nv_child_2009_d_check" CHECK (d >= '01-01-2009'::date AND d <= '12-31-2009'::date)
     "nv_parent_d_check" CHECK (d >= '01-01-2001'::date AND d <= '12-31-2099'::date) NOT VALID
@@ -1904,21 +1904,21 @@ where oid = 'test_storage'::regclass;
 CREATE TABLE test_inh_check (a float check (a > 10.2), b float);
 CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
 \d test_inh_check
-     Table "public.test_inh_check"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- a      | double precision | 
- b      | double precision | 
+               Table "public.test_inh_check"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ a      | double precision |           |          | 
+ b      | double precision |           |          | 
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d test_inh_check_child
-  Table "public.test_inh_check_child"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- a      | double precision | 
- b      | double precision | 
+            Table "public.test_inh_check_child"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ a      | double precision |           |          | 
+ b      | double precision |           |          | 
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Inherits: test_inh_check
@@ -1935,21 +1935,21 @@ select relname, conname, coninhcount, conislocal, connoinherit
 
 ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 \d test_inh_check
-     Table "public.test_inh_check"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- a      | numeric          | 
- b      | double precision | 
+               Table "public.test_inh_check"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ a      | numeric          |           |          | 
+ b      | double precision |           |          | 
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d test_inh_check_child
-  Table "public.test_inh_check_child"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- a      | numeric          | 
- b      | double precision | 
+            Table "public.test_inh_check_child"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ a      | numeric          |           |          | 
+ b      | double precision |           |          | 
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
@@ -1971,11 +1971,11 @@ ALTER TABLE test_inh_check_child ADD CONSTRAINT bmerged CHECK (b > 1);
 ALTER TABLE test_inh_check ADD CONSTRAINT bmerged CHECK (b > 1);
 NOTICE:  merging constraint "bmerged" with inherited definition
 \d test_inh_check
-     Table "public.test_inh_check"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- a      | numeric          | 
- b      | double precision | 
+               Table "public.test_inh_check"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ a      | numeric          |           |          | 
+ b      | double precision |           |          | 
 Check constraints:
     "bmerged" CHECK (b > 1::double precision)
     "bnoinherit" CHECK (b > 100::double precision) NO INHERIT
@@ -1983,11 +1983,11 @@ Check constraints:
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d test_inh_check_child
-  Table "public.test_inh_check_child"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- a      | numeric          | 
- b      | double precision | 
+            Table "public.test_inh_check_child"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ a      | numeric          |           |          | 
+ b      | double precision |           |          | 
 Check constraints:
     "blocal" CHECK (b < 1000::double precision)
     "bmerged" CHECK (b > 1::double precision)
@@ -2011,11 +2011,11 @@ select relname, conname, coninhcount, conislocal, connoinherit
 ALTER TABLE test_inh_check ALTER COLUMN b TYPE numeric;
 NOTICE:  merging constraint "bmerged" with inherited definition
 \d test_inh_check
-Table "public.test_inh_check"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | numeric | 
- b      | numeric | 
+           Table "public.test_inh_check"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | numeric |           |          | 
+ b      | numeric |           |          | 
 Check constraints:
     "bmerged" CHECK (b::double precision > 1::double precision)
     "bnoinherit" CHECK (b::double precision > 100::double precision) NO INHERIT
@@ -2023,11 +2023,11 @@ Check constraints:
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d test_inh_check_child
-Table "public.test_inh_check_child"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | numeric | 
- b      | numeric | 
+        Table "public.test_inh_check_child"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | numeric |           |          | 
+ b      | numeric |           |          | 
 Check constraints:
     "blocal" CHECK (b::double precision < 1000::double precision)
     "bmerged" CHECK (b::double precision > 1::double precision)
@@ -2056,11 +2056,11 @@ ALTER TABLE check_fk_presence_2 DROP CONSTRAINT check_fk_presence_2_id_fkey;
 ANALYZE check_fk_presence_2;
 ROLLBACK;
 \d check_fk_presence_2
-Table "public.check_fk_presence_2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | 
- t      | text    | 
+        Table "public.check_fk_presence_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ t      | text    |           |          | 
 Foreign-key constraints:
     "check_fk_presence_2_id_fkey" FOREIGN KEY (id) REFERENCES check_fk_presence_1(id)
 
@@ -2414,45 +2414,45 @@ drop cascades to text search dictionary dict
 --
 CREATE TYPE test_type AS (a int);
 \d test_type
-Composite type "public.test_type"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
+         Composite type "public.test_type"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
 
 ALTER TYPE nosuchtype ADD ATTRIBUTE b text; -- fails
 ERROR:  relation "nosuchtype" does not exist
 ALTER TYPE test_type ADD ATTRIBUTE b text;
 \d test_type
-Composite type "public.test_type"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | text    | 
+         Composite type "public.test_type"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    |           |          | 
 
 ALTER TYPE test_type ADD ATTRIBUTE b text; -- fails
 ERROR:  column "b" of relation "test_type" already exists
 ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE varchar;
 \d test_type
-   Composite type "public.test_type"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | character varying | 
+              Composite type "public.test_type"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | character varying |           |          | 
 
 ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE integer;
 \d test_type
-Composite type "public.test_type"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | integer | 
+         Composite type "public.test_type"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
 
 ALTER TYPE test_type DROP ATTRIBUTE b;
 \d test_type
-Composite type "public.test_type"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
+         Composite type "public.test_type"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
 
 ALTER TYPE test_type DROP ATTRIBUTE c; -- fails
 ERROR:  column "c" of relation "test_type" does not exist
@@ -2460,19 +2460,19 @@ ALTER TYPE test_type DROP ATTRIBUTE IF EXISTS c;
 NOTICE:  column "c" of relation "test_type" does not exist, skipping
 ALTER TYPE test_type DROP ATTRIBUTE a, ADD ATTRIBUTE d boolean;
 \d test_type
-Composite type "public.test_type"
- Column |  Type   | Modifiers 
---------+---------+-----------
- d      | boolean | 
+         Composite type "public.test_type"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ d      | boolean |           |          | 
 
 ALTER TYPE test_type RENAME ATTRIBUTE a TO aa;
 ERROR:  column "a" does not exist
 ALTER TYPE test_type RENAME ATTRIBUTE d TO dd;
 \d test_type
-Composite type "public.test_type"
- Column |  Type   | Modifiers 
---------+---------+-----------
- dd     | boolean | 
+         Composite type "public.test_type"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ dd     | boolean |           |          | 
 
 DROP TYPE test_type;
 CREATE TYPE test_type1 AS (a int, b text);
@@ -2483,18 +2483,18 @@ CREATE TYPE test_type2 AS (a int, b text);
 CREATE TABLE test_tbl2 OF test_type2;
 CREATE TABLE test_tbl2_subclass () INHERITS (test_tbl2);
 \d test_type2
-Composite type "public.test_type2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | text    | 
+        Composite type "public.test_type2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    |           |          | 
 
 \d test_tbl2
-   Table "public.test_tbl2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | text    | 
+             Table "public.test_tbl2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    |           |          | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
@@ -2503,20 +2503,20 @@ ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 ADD ATTRIBUTE c text CASCADE;
 \d test_type2
-Composite type "public.test_type2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | text    | 
- c      | text    | 
+        Composite type "public.test_type2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    |           |          | 
+ c      | text    |           |          | 
 
 \d test_tbl2
-   Table "public.test_tbl2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- b      | text    | 
- c      | text    | 
+             Table "public.test_tbl2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    |           |          | 
+ c      | text    |           |          | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
@@ -2525,20 +2525,20 @@ ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
 \d test_type2
-   Composite type "public.test_type2"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | character varying | 
- c      | text              | 
+             Composite type "public.test_type2"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | character varying |           |          | 
+ c      | text              |           |          | 
 
 \d test_tbl2
-        Table "public.test_tbl2"
- Column |       Type        | Modifiers 
---------+-------------------+-----------
- a      | integer           | 
- b      | character varying | 
- c      | text              | 
+                  Table "public.test_tbl2"
+ Column |       Type        | Collation | Nullable | Default 
+--------+-------------------+-----------+----------+---------
+ a      | integer           |           |          | 
+ b      | character varying |           |          | 
+ c      | text              |           |          | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
@@ -2547,18 +2547,18 @@ ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 DROP ATTRIBUTE b CASCADE;
 \d test_type2
-Composite type "public.test_type2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- c      | text    | 
+        Composite type "public.test_type2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ c      | text    |           |          | 
 
 \d test_tbl2
-   Table "public.test_tbl2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
- c      | text    | 
+             Table "public.test_tbl2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ c      | text    |           |          | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
@@ -2567,27 +2567,27 @@ ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
 ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
 \d test_type2
-Composite type "public.test_type2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- aa     | integer | 
- c      | text    | 
+        Composite type "public.test_type2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ aa     | integer |           |          | 
+ c      | text    |           |          | 
 
 \d test_tbl2
-   Table "public.test_tbl2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- aa     | integer | 
- c      | text    | 
+             Table "public.test_tbl2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ aa     | integer |           |          | 
+ c      | text    |           |          | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 
 \d test_tbl2_subclass
-Table "public.test_tbl2_subclass"
- Column |  Type   | Modifiers 
---------+---------+-----------
- aa     | integer | 
- c      | text    | 
+         Table "public.test_tbl2_subclass"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ aa     | integer |           |          | 
+ c      | text    |           |          | 
 Inherits: test_tbl2
 
 DROP TABLE test_tbl2_subclass;
@@ -2631,11 +2631,11 @@ CREATE TYPE tt_t1 AS (x int, y numeric(8,2));
 ALTER TABLE tt7 OF tt_t1;			-- reassign an already-typed table
 ALTER TABLE tt7 NOT OF;
 \d tt7
-        Table "public.tt7"
- Column |     Type     | Modifiers 
---------+--------------+-----------
- x      | integer      | 
- y      | numeric(8,2) | 
+                   Table "public.tt7"
+ Column |     Type     | Collation | Nullable | Default 
+--------+--------------+-----------+----------+---------
+ x      | integer      |           |          | 
+ y      | numeric(8,2) |           |          | 
 
 -- make sure we can drop a constraint on the parent but it remains on the child
 CREATE TABLE test_drop_constr_parent (c text CHECK (c IS NOT NULL));
@@ -2671,11 +2671,11 @@ ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
 ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
 ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
 \d alter2.tt8
-          Table "alter2.tt8"
- Column |  Type   |     Modifiers      
---------+---------+--------------------
- a      | integer | 
- f1     | integer | not null default 0
+                Table "alter2.tt8"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ f1     | integer |           | not null | 0
 Indexes:
     "xxx" PRIMARY KEY, btree (f1)
 Check constraints:
@@ -2888,62 +2888,62 @@ DROP TABLE logged1;
 -- test ADD COLUMN IF NOT EXISTS
 CREATE TABLE test_add_column(c1 integer);
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN c2 integer;
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN c2 integer; -- fail because c2 already exists
 ERROR:  column "c2" of relation "test_add_column" already exists
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN IF NOT EXISTS c2 integer; -- skipping because c2 already exists
 NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN c2 integer, -- fail because c2 already exists
 	ADD COLUMN c3 integer;
 ERROR:  column "c2" of relation "test_add_column" already exists
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN IF NOT EXISTS c2 integer, -- skipping because c2 already exists
 	ADD COLUMN c3 integer; -- fail because c3 already exists
 NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
- c3     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
+ c3     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN IF NOT EXISTS c2 integer, -- skipping because c2 already exists
@@ -2951,12 +2951,12 @@ ALTER TABLE test_add_column
 NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
 NOTICE:  column "c3" of relation "test_add_column" already exists, skipping
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
- c3     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
+ c3     | integer |           |          | 
 
 ALTER TABLE test_add_column
 	ADD COLUMN IF NOT EXISTS c2 integer, -- skipping because c2 already exists
@@ -2965,12 +2965,12 @@ ALTER TABLE test_add_column
 NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
 NOTICE:  column "c3" of relation "test_add_column" already exists, skipping
 \d test_add_column
-Table "public.test_add_column"
- Column |  Type   | Modifiers 
---------+---------+-----------
- c1     | integer | 
- c2     | integer | 
- c3     | integer | 
- c4     | integer | 
+          Table "public.test_add_column"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c1     | integer |           |          | 
+ c2     | integer |           |          | 
+ c3     | integer |           |          | 
+ c4     | integer |           |          | 
 
 DROP TABLE test_add_column;

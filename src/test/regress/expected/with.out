@@ -354,10 +354,10 @@ UNION ALL
 )
 SELECT sum(n) FROM t;
 \d+ sums_1_100
-              View "public.sums_1_100"
- Column |  Type  | Modifiers | Storage | Description 
---------+--------+-----------+---------+-------------
- sum    | bigint |           | plain   | 
+                         View "public.sums_1_100"
+ Column |  Type  | Collation | Nullable | Default | Storage | Description 
+--------+--------+-----------+----------+---------+---------+-------------
+ sum    | bigint |           |          |         | plain   | 
 View definition:
  WITH RECURSIVE t(n) AS (
          VALUES (1)

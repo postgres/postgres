@@ -305,12 +305,12 @@ CREATE VIEW aliased_view_4 AS
   select * from temp_view_test.tt1
     where exists (select 1 from tt1 where temp_view_test.tt1.y1 = tt1.f1);
 \d+ aliased_view_1
-          View "testviewschm2.aliased_view_1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.f1,
     tt1.f2,
@@ -321,12 +321,12 @@ View definition:
           WHERE tt1.f1 = tx1.x1));
 
 \d+ aliased_view_2
-          View "testviewschm2.aliased_view_2"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a1.f1,
     a1.f2,
@@ -337,12 +337,12 @@ View definition:
           WHERE a1.f1 = tx1.x1));
 
 \d+ aliased_view_3
-          View "testviewschm2.aliased_view_3"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_3"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.f1,
     tt1.f2,
@@ -353,12 +353,12 @@ View definition:
           WHERE tt1.f1 = a2.x1));
 
 \d+ aliased_view_4
-          View "testviewschm2.aliased_view_4"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- y1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_4"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ y1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.y1,
     tt1.f2,
@@ -370,12 +370,12 @@ View definition:
 
 ALTER TABLE tx1 RENAME TO a1;
 \d+ aliased_view_1
-          View "testviewschm2.aliased_view_1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.f1,
     tt1.f2,
@@ -386,12 +386,12 @@ View definition:
           WHERE tt1.f1 = a1.x1));
 
 \d+ aliased_view_2
-          View "testviewschm2.aliased_view_2"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a1.f1,
     a1.f2,
@@ -402,12 +402,12 @@ View definition:
           WHERE a1.f1 = a1_1.x1));
 
 \d+ aliased_view_3
-          View "testviewschm2.aliased_view_3"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_3"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.f1,
     tt1.f2,
@@ -418,12 +418,12 @@ View definition:
           WHERE tt1.f1 = a2.x1));
 
 \d+ aliased_view_4
-          View "testviewschm2.aliased_view_4"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- y1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_4"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ y1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.y1,
     tt1.f2,
@@ -435,12 +435,12 @@ View definition:
 
 ALTER TABLE tt1 RENAME TO a2;
 \d+ aliased_view_1
-          View "testviewschm2.aliased_view_1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a2.f1,
     a2.f2,
@@ -451,12 +451,12 @@ View definition:
           WHERE a2.f1 = a1.x1));
 
 \d+ aliased_view_2
-          View "testviewschm2.aliased_view_2"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a1.f1,
     a1.f2,
@@ -467,12 +467,12 @@ View definition:
           WHERE a1.f1 = a1_1.x1));
 
 \d+ aliased_view_3
-          View "testviewschm2.aliased_view_3"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_3"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a2.f1,
     a2.f2,
@@ -483,12 +483,12 @@ View definition:
           WHERE a2.f1 = a2_1.x1));
 
 \d+ aliased_view_4
-          View "testviewschm2.aliased_view_4"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- y1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_4"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ y1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.y1,
     tt1.f2,
@@ -500,12 +500,12 @@ View definition:
 
 ALTER TABLE a1 RENAME TO tt1;
 \d+ aliased_view_1
-          View "testviewschm2.aliased_view_1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a2.f1,
     a2.f2,
@@ -516,12 +516,12 @@ View definition:
           WHERE a2.f1 = tt1.x1));
 
 \d+ aliased_view_2
-          View "testviewschm2.aliased_view_2"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a1.f1,
     a1.f2,
@@ -532,12 +532,12 @@ View definition:
           WHERE a1.f1 = tt1.x1));
 
 \d+ aliased_view_3
-          View "testviewschm2.aliased_view_3"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_3"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a2.f1,
     a2.f2,
@@ -548,12 +548,12 @@ View definition:
           WHERE a2.f1 = a2_1.x1));
 
 \d+ aliased_view_4
-          View "testviewschm2.aliased_view_4"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- y1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_4"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ y1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.y1,
     tt1.f2,
@@ -566,12 +566,12 @@ View definition:
 ALTER TABLE a2 RENAME TO tx1;
 ALTER TABLE tx1 SET SCHEMA temp_view_test;
 \d+ aliased_view_1
-          View "testviewschm2.aliased_view_1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tx1.f1,
     tx1.f2,
@@ -582,12 +582,12 @@ View definition:
           WHERE tx1.f1 = tt1.x1));
 
 \d+ aliased_view_2
-          View "testviewschm2.aliased_view_2"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a1.f1,
     a1.f2,
@@ -598,12 +598,12 @@ View definition:
           WHERE a1.f1 = tt1.x1));
 
 \d+ aliased_view_3
-          View "testviewschm2.aliased_view_3"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_3"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tx1.f1,
     tx1.f2,
@@ -614,12 +614,12 @@ View definition:
           WHERE tx1.f1 = a2.x1));
 
 \d+ aliased_view_4
-          View "testviewschm2.aliased_view_4"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- y1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_4"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ y1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tt1.y1,
     tt1.f2,
@@ -633,12 +633,12 @@ ALTER TABLE temp_view_test.tt1 RENAME TO tmp1;
 ALTER TABLE temp_view_test.tmp1 SET SCHEMA testviewschm2;
 ALTER TABLE tmp1 RENAME TO tx1;
 \d+ aliased_view_1
-          View "testviewschm2.aliased_view_1"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tx1.f1,
     tx1.f2,
@@ -649,12 +649,12 @@ View definition:
           WHERE tx1.f1 = tt1.x1));
 
 \d+ aliased_view_2
-          View "testviewschm2.aliased_view_2"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_2"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT a1.f1,
     a1.f2,
@@ -665,12 +665,12 @@ View definition:
           WHERE a1.f1 = tt1.x1));
 
 \d+ aliased_view_3
-          View "testviewschm2.aliased_view_3"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- f1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_3"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ f1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tx1.f1,
     tx1.f2,
@@ -681,12 +681,12 @@ View definition:
           WHERE tx1.f1 = a2.x1));
 
 \d+ aliased_view_4
-          View "testviewschm2.aliased_view_4"
- Column |  Type   | Modifiers | Storage  | Description 
---------+---------+-----------+----------+-------------
- y1     | integer |           | plain    | 
- f2     | integer |           | plain    | 
- f3     | text    |           | extended | 
+                    View "testviewschm2.aliased_view_4"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ y1     | integer |           |          |         | plain    | 
+ f2     | integer |           |          |         | plain    | 
+ f3     | text    |           |          |         | extended | 
 View definition:
  SELECT tx1.y1,
     tx1.f2,

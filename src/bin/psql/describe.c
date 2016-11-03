@@ -1322,9 +1322,8 @@ describeOneTableDetails(const char *schemaname,
 	bool		printTableInitialized = false;
 	int			i;
 	char	   *view_def = NULL;
-	char	   *headers[9];
+	char	   *headers[11];
 	char	  **seq_values = NULL;
-	char	  **modifiers = NULL;
 	char	  **ptr;
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
@@ -1346,7 +1345,7 @@ describeOneTableDetails(const char *schemaname,
 		char		relpersistence;
 		char		relreplident;
 	}			tableinfo;
-	bool		show_modifiers = false;
+	bool		show_column_details = false;
 	bool		retval;
 
 	retval = false;
@@ -1649,9 +1648,10 @@ describeOneTableDetails(const char *schemaname,
 		tableinfo.relkind == 'm' ||
 		tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
 	{
-		show_modifiers = true;
-		headers[cols++] = gettext_noop("Modifiers");
-		modifiers = pg_malloc0((numrows + 1) * sizeof(*modifiers));
+		headers[cols++] = gettext_noop("Collation");
+		headers[cols++] = gettext_noop("Nullable");
+		headers[cols++] = gettext_noop("Default");
+		show_column_details = true;
 	}
 
 	if (tableinfo.relkind == 'S')
@@ -1709,39 +1709,15 @@ describeOneTableDetails(const char *schemaname,
 		/* Type */
 		printTableAddCell(&cont, PQgetvalue(res, i, 1), false, false);
 
-		/* Modifiers: collate, not null, default */
-		if (show_modifiers)
+		/* Collation, Nullable, Default */
+		if (show_column_details)
 		{
-			resetPQExpBuffer(&tmpbuf);
+			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
 
-			if (!PQgetisnull(res, i, 5))
-			{
-				if (tmpbuf.len > 0)
-					appendPQExpBufferChar(&tmpbuf, ' ');
-				appendPQExpBuffer(&tmpbuf, _("collate %s"),
-								  PQgetvalue(res, i, 5));
-			}
+			printTableAddCell(&cont, strcmp(PQgetvalue(res, i, 3), "t") == 0 ? "not null" : "", false, false);
 
-			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
-			{
-				if (tmpbuf.len > 0)
-					appendPQExpBufferChar(&tmpbuf, ' ');
-				appendPQExpBufferStr(&tmpbuf, _("not null"));
-			}
-
-			/* handle "default" here */
 			/* (note: above we cut off the 'default' string at 128) */
-			if (strlen(PQgetvalue(res, i, 2)) != 0)
-			{
-				if (tmpbuf.len > 0)
-					appendPQExpBufferChar(&tmpbuf, ' ');
-				/* translator: default values of column definitions */
-				appendPQExpBuffer(&tmpbuf, _("default %s"),
-								  PQgetvalue(res, i, 2));
-			}
-
-			modifiers[i] = pg_strdup(tmpbuf.data);
-			printTableAddCell(&cont, modifiers[i], false, false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 2), false, false);
 		}
 
 		/* Value: for sequences only */
@@ -2670,13 +2646,6 @@ error_return:
 		free(seq_values);
 	}
 
-	if (modifiers)
-	{
-		for (ptr = modifiers; *ptr; ptr++)
-			free(*ptr);
-		free(modifiers);
-	}
-
 	if (view_def)
 		free(view_def);
 
@@ -3235,24 +3204,24 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "       t.typname as \"%s\",\n"
-	 "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n"
-					  "       TRIM(LEADING\n",
+					  "       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"%s\",\n",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
 					  gettext_noop("Type"));
 
 	if (pset.sversion >= 90100)
-		appendPQExpBufferStr(&buf,
-							 "            COALESCE((SELECT ' collate ' || c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n"
-							 "                      WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation), '') ||\n");
+		appendPQExpBuffer(&buf,
+						  "       (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n"
+						  "        WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation) as \"%s\",\n",
+						  gettext_noop("Collation"));
 	appendPQExpBuffer(&buf,
-	   "            CASE WHEN t.typnotnull THEN ' not null' ELSE '' END ||\n"
-					  "            CASE WHEN t.typdefault IS NOT NULL THEN ' default ' || t.typdefault ELSE '' END\n"
-					  "       ) as \"%s\",\n"
+					  "       CASE WHEN t.typnotnull THEN 'not null' END as \"%s\",\n"
+					  "       t.typdefault as \"%s\",\n"
 					  "       pg_catalog.array_to_string(ARRAY(\n"
 					  "         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n"
 					  "       ), ' ') as \"%s\"",
-					  gettext_noop("Modifier"),
+					  gettext_noop("Nullable"),
+					  gettext_noop("Default"),
 					  gettext_noop("Check"));
 
 	if (verbose)

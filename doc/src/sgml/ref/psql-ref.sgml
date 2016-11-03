@@ -4081,12 +4081,11 @@ CREATE TABLE
   Now look at the table definition again:
 <programlisting>
 testdb=&gt; <userinput>\d my_table</userinput>
-             Table "my_table"
- Attribute |  Type   |      Modifier
------------+---------+--------------------
- first     | integer | not null default 0
- second    | text    |
-
+              Table "public.my_table"
+ Column |  Type   | Collation | Nullable | Default
+--------+---------+-----------+----------+---------
+ first  | integer |           | not null | 0
+ second | text    |           |          | 
 </programlisting>
   Now we change the prompt to something more interesting:
 <programlisting>

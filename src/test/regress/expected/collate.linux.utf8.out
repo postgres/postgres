@@ -9,11 +9,11 @@ CREATE TABLE collate_test1 (
     b text COLLATE "en_US" NOT NULL
 );
 \d collate_test1
-       Table "public.collate_test1"
- Column |  Type   |       Modifiers        
---------+---------+------------------------
- a      | integer | 
- b      | text    | collate en_US not null
+           Table "public.collate_test1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    | en_US     | not null | 
 
 CREATE TABLE collate_test_fail (
     a int,
@@ -40,11 +40,11 @@ CREATE TABLE collate_test_like (
     LIKE collate_test1
 );
 \d collate_test_like
-     Table "public.collate_test_like"
- Column |  Type   |       Modifiers        
---------+---------+------------------------
- a      | integer | 
- b      | text    | collate en_US not null
+         Table "public.collate_test_like"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | text    | en_US     | not null | 
 
 CREATE TABLE collate_test2 (
     a int,
@@ -1044,16 +1044,16 @@ drop cascades to composite type collate_dep_test2 column y
 drop cascades to view collate_dep_test3
 drop cascades to index collate_dep_test4i
 \d collate_dep_test1
-Table "public.collate_dep_test1"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
+         Table "public.collate_dep_test1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
 
 \d collate_dep_test2
-Composite type "public.collate_dep_test2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- x      | integer | 
+     Composite type "public.collate_dep_test2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ x      | integer |           |          | 
 
 DROP TABLE collate_dep_test1, collate_dep_test4t;
 DROP TYPE collate_dep_test2;

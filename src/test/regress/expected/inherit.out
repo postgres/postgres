@@ -627,20 +627,20 @@ select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pg
 -- Test that child does not inherit NO INHERIT constraints
 create table c1 () inherits (p1);
 \d p1
-      Table "public.p1"
- Column |  Type   | Modifiers 
---------+---------+-----------
- ff1    | integer | 
+                 Table "public.p1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ ff1    | integer |           |          | 
 Check constraints:
     "p1chk" CHECK (ff1 > 0) NO INHERIT
     "p2chk" CHECK (ff1 > 10)
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d c1
-      Table "public.c1"
- Column |  Type   | Modifiers 
---------+---------+-----------
- ff1    | integer | 
+                 Table "public.c1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ ff1    | integer |           |          | 
 Check constraints:
     "p2chk" CHECK (ff1 > 10)
 Inherits: p1
@@ -806,12 +806,12 @@ ERROR:  new row for relation "c1" violates check constraint "p2_f2_check"
 DETAIL:  Failing row contains (1, -1, 2).
 create table c2(f3 int) inherits(p1,p2);
 \d c2
-      Table "public.c2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- f1     | integer | 
- f2     | integer | 
- f3     | integer | 
+                 Table "public.c2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+ f2     | integer |           |          | 
+ f3     | integer |           |          | 
 Check constraints:
     "p2_f2_check" CHECK (f2 > 0)
 Inherits: p1,
@@ -822,13 +822,13 @@ NOTICE:  merging multiple inherited definitions of column "f1"
 NOTICE:  merging multiple inherited definitions of column "f2"
 NOTICE:  merging multiple inherited definitions of column "f3"
 \d c3
-      Table "public.c3"
- Column |  Type   | Modifiers 
---------+---------+-----------
- f1     | integer | 
- f2     | integer | 
- f3     | integer | 
- f4     | integer | 
+                 Table "public.c3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+ f2     | integer |           |          | 
+ f3     | integer |           |          | 
+ f4     | integer |           |          | 
 Check constraints:
     "p2_f2_check" CHECK (f2 > 0)
 Inherits: c1,
@@ -844,13 +844,13 @@ create table pp1 (f1 int);
 create table cc1 (f2 text, f3 int) inherits (pp1);
 alter table pp1 add column a1 int check (a1 > 0);
 \d cc1
-      Table "public.cc1"
- Column |  Type   | Modifiers 
---------+---------+-----------
- f1     | integer | 
- f2     | text    | 
- f3     | integer | 
- a1     | integer | 
+                Table "public.cc1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f1     | integer |           |          | 
+ f2     | text    |           |          | 
+ f3     | integer |           |          | 
+ a1     | integer |           |          | 
 Check constraints:
     "pp1_a1_check" CHECK (a1 > 0)
 Inherits: pp1
@@ -859,14 +859,14 @@ create table cc2(f4 float) inherits(pp1,cc1);
 NOTICE:  merging multiple inherited definitions of column "f1"
 NOTICE:  merging multiple inherited definitions of column "a1"
 \d cc2
-          Table "public.cc2"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- f1     | integer          | 
- a1     | integer          | 
- f2     | text             | 
- f3     | integer          | 
- f4     | double precision | 
+                     Table "public.cc2"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ f1     | integer          |           |          | 
+ a1     | integer          |           |          | 
+ f2     | text             |           |          | 
+ f3     | integer          |           |          | 
+ f4     | double precision |           |          | 
 Check constraints:
     "pp1_a1_check" CHECK (a1 > 0)
 Inherits: pp1,
@@ -876,15 +876,15 @@ alter table pp1 add column a2 int check (a2 > 0);
 NOTICE:  merging definition of column "a2" for child "cc2"
 NOTICE:  merging constraint "pp1_a2_check" with inherited definition
 \d cc2
-          Table "public.cc2"
- Column |       Type       | Modifiers 
---------+------------------+-----------
- f1     | integer          | 
- a1     | integer          | 
- f2     | text             | 
- f3     | integer          | 
- f4     | double precision | 
- a2     | integer          | 
+                     Table "public.cc2"
+ Column |       Type       | Collation | Nullable | Default 
+--------+------------------+-----------+----------+---------
+ f1     | integer          |           |          | 
+ a1     | integer          |           |          | 
+ f2     | text             |           |          | 
+ f3     | integer          |           |          | 
+ f4     | double precision |           |          | 
+ a2     | integer          |           |          | 
 Check constraints:
     "pp1_a1_check" CHECK (a1 > 0)
     "pp1_a2_check" CHECK (a2 > 0)
@@ -907,13 +907,13 @@ ALTER TABLE inhts RENAME aa TO aaa;      -- to be failed
 ERROR:  cannot rename inherited column "aa"
 ALTER TABLE inhts RENAME d TO dd;
 \d+ inhts
-                        Table "public.inhts"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- aa     | integer |           | plain   |              | 
- b      | integer |           | plain   |              | 
- c      | integer |           | plain   |              | 
- dd     | integer |           | plain   |              | 
+                                   Table "public.inhts"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ aa     | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
+ dd     | integer |           |          |         | plain   |              | 
 Inherits: inht1,
           inhs1
 
@@ -926,14 +926,14 @@ NOTICE:  merging multiple inherited definitions of column "aa"
 NOTICE:  merging multiple inherited definitions of column "b"
 ALTER TABLE inht1 RENAME aa TO aaa;
 \d+ inht4
-                        Table "public.inht4"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- aaa    | integer |           | plain   |              | 
- b      | integer |           | plain   |              | 
- x      | integer |           | plain   |              | 
- y      | integer |           | plain   |              | 
- z      | integer |           | plain   |              | 
+                                   Table "public.inht4"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ aaa    | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ x      | integer |           |          |         | plain   |              | 
+ y      | integer |           |          |         | plain   |              | 
+ z      | integer |           |          |         | plain   |              | 
 Inherits: inht2,
           inht3
 
@@ -943,14 +943,14 @@ ALTER TABLE inht1 RENAME aaa TO aaaa;
 ALTER TABLE inht1 RENAME b TO bb;                -- to be failed
 ERROR:  cannot rename inherited column "b"
 \d+ inhts
-                        Table "public.inhts"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- aaaa   | integer |           | plain   |              | 
- b      | integer |           | plain   |              | 
- x      | integer |           | plain   |              | 
- c      | integer |           | plain   |              | 
- d      | integer |           | plain   |              | 
+                                   Table "public.inhts"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ aaaa   | integer |           |          |         | plain   |              | 
+ b      | integer |           |          |         | plain   |              | 
+ x      | integer |           |          |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
+ d      | integer |           |          |         | plain   |              | 
 Inherits: inht2,
           inhs1
 
@@ -990,33 +990,33 @@ drop cascades to table inht4
 CREATE TABLE test_constraints (id int, val1 varchar, val2 int, UNIQUE(val1, val2));
 CREATE TABLE test_constraints_inh () INHERITS (test_constraints);
 \d+ test_constraints
-                        Table "public.test_constraints"
- Column |       Type        | Modifiers | Storage  | Stats target | Description 
---------+-------------------+-----------+----------+--------------+-------------
- id     | integer           |           | plain    |              | 
- val1   | character varying |           | extended |              | 
- val2   | integer           |           | plain    |              | 
+                                   Table "public.test_constraints"
+ Column |       Type        | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-------------------+-----------+----------+---------+----------+--------------+-------------
+ id     | integer           |           |          |         | plain    |              | 
+ val1   | character varying |           |          |         | extended |              | 
+ val2   | integer           |           |          |         | plain    |              | 
 Indexes:
     "test_constraints_val1_val2_key" UNIQUE CONSTRAINT, btree (val1, val2)
 Child tables: test_constraints_inh
 
 ALTER TABLE ONLY test_constraints DROP CONSTRAINT test_constraints_val1_val2_key;
 \d+ test_constraints
-                        Table "public.test_constraints"
- Column |       Type        | Modifiers | Storage  | Stats target | Description 
---------+-------------------+-----------+----------+--------------+-------------
- id     | integer           |           | plain    |              | 
- val1   | character varying |           | extended |              | 
- val2   | integer           |           | plain    |              | 
+                                   Table "public.test_constraints"
+ Column |       Type        | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-------------------+-----------+----------+---------+----------+--------------+-------------
+ id     | integer           |           |          |         | plain    |              | 
+ val1   | character varying |           |          |         | extended |              | 
+ val2   | integer           |           |          |         | plain    |              | 
 Child tables: test_constraints_inh
 
 \d+ test_constraints_inh
-                      Table "public.test_constraints_inh"
- Column |       Type        | Modifiers | Storage  | Stats target | Description 
---------+-------------------+-----------+----------+--------------+-------------
- id     | integer           |           | plain    |              | 
- val1   | character varying |           | extended |              | 
- val2   | integer           |           | plain    |              | 
+                                 Table "public.test_constraints_inh"
+ Column |       Type        | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-------------------+-----------+----------+---------+----------+--------------+-------------
+ id     | integer           |           |          |         | plain    |              | 
+ val1   | character varying |           |          |         | extended |              | 
+ val2   | integer           |           |          |         | plain    |              | 
 Inherits: test_constraints
 
 DROP TABLE test_constraints_inh;
@@ -1027,27 +1027,27 @@ CREATE TABLE test_ex_constraints (
 );
 CREATE TABLE test_ex_constraints_inh () INHERITS (test_ex_constraints);
 \d+ test_ex_constraints
-                 Table "public.test_ex_constraints"
- Column |  Type  | Modifiers | Storage | Stats target | Description 
---------+--------+-----------+---------+--------------+-------------
- c      | circle |           | plain   |              | 
+                           Table "public.test_ex_constraints"
+ Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+--------+-----------+----------+---------+---------+--------------+-------------
+ c      | circle |           |          |         | plain   |              | 
 Indexes:
     "test_ex_constraints_c_excl" EXCLUDE USING gist (c WITH &&)
 Child tables: test_ex_constraints_inh
 
 ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
 \d+ test_ex_constraints
-                 Table "public.test_ex_constraints"
- Column |  Type  | Modifiers | Storage | Stats target | Description 
---------+--------+-----------+---------+--------------+-------------
- c      | circle |           | plain   |              | 
+                           Table "public.test_ex_constraints"
+ Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+--------+-----------+----------+---------+---------+--------------+-------------
+ c      | circle |           |          |         | plain   |              | 
 Child tables: test_ex_constraints_inh
 
 \d+ test_ex_constraints_inh
-               Table "public.test_ex_constraints_inh"
- Column |  Type  | Modifiers | Storage | Stats target | Description 
---------+--------+-----------+---------+--------------+-------------
- c      | circle |           | plain   |              | 
+                         Table "public.test_ex_constraints_inh"
+ Column |  Type  | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+--------+-----------+----------+---------+---------+--------------+-------------
+ c      | circle |           |          |         | plain   |              | 
 Inherits: test_ex_constraints
 
 DROP TABLE test_ex_constraints_inh;
@@ -1057,37 +1057,37 @@ CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
 CREATE TABLE test_foreign_constraints(id1 int REFERENCES test_primary_constraints(id));
 CREATE TABLE test_foreign_constraints_inh () INHERITS (test_foreign_constraints);
 \d+ test_primary_constraints
-               Table "public.test_primary_constraints"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- id     | integer | not null  | plain   |              | 
+                         Table "public.test_primary_constraints"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ id     | integer |           | not null |         | plain   |              | 
 Indexes:
     "test_primary_constraints_pkey" PRIMARY KEY, btree (id)
 Referenced by:
     TABLE "test_foreign_constraints" CONSTRAINT "test_foreign_constraints_id1_fkey" FOREIGN KEY (id1) REFERENCES test_primary_constraints(id)
 
 \d+ test_foreign_constraints
-               Table "public.test_foreign_constraints"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- id1    | integer |           | plain   |              | 
+                         Table "public.test_foreign_constraints"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ id1    | integer |           |          |         | plain   |              | 
 Foreign-key constraints:
     "test_foreign_constraints_id1_fkey" FOREIGN KEY (id1) REFERENCES test_primary_constraints(id)
 Child tables: test_foreign_constraints_inh
 
 ALTER TABLE test_foreign_constraints DROP CONSTRAINT test_foreign_constraints_id1_fkey;
 \d+ test_foreign_constraints
-               Table "public.test_foreign_constraints"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- id1    | integer |           | plain   |              | 
+                         Table "public.test_foreign_constraints"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ id1    | integer |           |          |         | plain   |              | 
 Child tables: test_foreign_constraints_inh
 
 \d+ test_foreign_constraints_inh
-             Table "public.test_foreign_constraints_inh"
- Column |  Type   | Modifiers | Storage | Stats target | Description 
---------+---------+-----------+---------+--------------+-------------
- id1    | integer |           | plain   |              | 
+                       Table "public.test_foreign_constraints_inh"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ id1    | integer |           |          |         | plain   |              | 
 Inherits: test_foreign_constraints
 
 DROP TABLE test_foreign_constraints_inh;

@@ -142,11 +142,11 @@ create rule irule3 as on insert to inserttest2 do also
   insert into inserttest (f4[1].if1, f4[1].if2[2])
   select new.f1, new.f2;
 \d+ inserttest2
-                     Table "public.inserttest2"
- Column |  Type  | Modifiers | Storage  | Stats target | Description 
---------+--------+-----------+----------+--------------+-------------
- f1     | bigint |           | plain    |              | 
- f2     | text   |           | extended |              | 
+                                Table "public.inserttest2"
+ Column |  Type  | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+--------+-----------+----------+---------+----------+--------------+-------------
+ f1     | bigint |           |          |         | plain    |              | 
+ f2     | text   |           |          |         | extended |              | 
 Rules:
     irule1 AS
     ON INSERT TO inserttest2 DO  INSERT INTO inserttest (f3.if2[1], f3.if2[2])

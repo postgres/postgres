@@ -69,19 +69,19 @@ CREATE VIEW test_tablesample_v1 AS
 CREATE VIEW test_tablesample_v2 AS
   SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
 \d+ test_tablesample_v1
-          View "public.test_tablesample_v1"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- id     | integer |           | plain   | 
+                     View "public.test_tablesample_v1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ id     | integer |           |          |         | plain   | 
 View definition:
  SELECT test_tablesample.id
    FROM test_tablesample TABLESAMPLE system ((10 * 2)) REPEATABLE (2);
 
 \d+ test_tablesample_v2
-          View "public.test_tablesample_v2"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- id     | integer |           | plain   | 
+                     View "public.test_tablesample_v2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ id     | integer |           |          |         | plain   | 
 View definition:
  SELECT test_tablesample.id
    FROM test_tablesample TABLESAMPLE system (99);
