@@ -2662,6 +2662,17 @@ psql_completion(const char *text, int start, int end)
 							"SHARE ROW EXCLUSIVE MODE",
 							"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE");
 
+	/* Complete LOCK [TABLE] <table> IN ACCESS|ROW with rest of lock mode */
+	else if (Matches4("LOCK", MatchAny, "IN", "ACCESS|ROW") ||
+			 Matches5("LOCK", "TABLE", MatchAny, "IN", "ACCESS|ROW"))
+		COMPLETE_WITH_LIST2("EXCLUSIVE MODE", "SHARE MODE");
+
+	/* Complete LOCK [TABLE] <table> IN SHARE with rest of lock mode */
+	else if (Matches4("LOCK", MatchAny, "IN", "SHARE") ||
+			 Matches5("LOCK", "TABLE", MatchAny, "IN", "SHARE"))
+		COMPLETE_WITH_LIST3("MODE", "ROW EXCLUSIVE MODE",
+							"UPDATE EXCLUSIVE MODE");
+
 /* NOTIFY --- can be inside EXPLAIN, RULE, etc */
 	else if (TailMatches1("NOTIFY"))
 		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s'");
