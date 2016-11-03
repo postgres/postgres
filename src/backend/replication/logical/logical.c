@@ -88,22 +88,32 @@ CheckLogicalDecodingRequirements(void)
 				 errmsg("logical decoding requires a database connection")));
 
 	/* ----
-	 * TODO: We got to change that someday soon...
+	 * Logical decoding from a standby is only safe if:
 	 *
-	 * There's basically three things missing to allow this:
-	 * 1) We need to be able to correctly and quickly identify the timeline a
-	 *	  LSN belongs to
-	 * 2) We need to force hot_standby_feedback to be enabled at all times so
-	 *	  the primary cannot remove rows we need.
-	 * 3) support dropping replication slots referring to a database, in
-	 *	  dbase_redo. There can't be any active ones due to HS recovery
-	 *	  conflicts, so that should be relatively easy.
+	 * 1) hot_standby_feedback is enabled, so catalog tuples still needed
+	 *    by the replica are not removed by the master. We already include
+	 *    slots' required xmin in the oldest global xmin up to the master;
+	 *
+	 * 2) A physical replication slot is used to connect the standby
+	 *    to the master, so we can store the xmin (and catalog_xmin,
+	 *    once we send it separately) on the slot and we don't lose
+	 *    needed tuples to vacuum if we lose our connection;
+	 *
+	 * 3) We drop replication slots referring to a database in dbase_redo
+	 *    when the database is dropped on the master.
+	 *
+	 * We should really send the xmin and catalog_xmin separately in hot standby
+	 * feedback, so we don't hold down vacuum of all tables to the level we only
+	 * really need for the catalogs.
+	 *
+	 * In this first draft approach all three requirements are asserted by
+	 * telling the user "don't do that", so emit a warning.
 	 * ----
 	 */
 	if (RecoveryInProgress())
-		ereport(ERROR,
+		ereport(WARNING,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("logical decoding cannot be used while in recovery")));
+				 errmsg("logical decoding during recovery is experimental")));
 }
 
 /*
