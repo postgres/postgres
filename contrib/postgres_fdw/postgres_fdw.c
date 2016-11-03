@@ -4431,7 +4431,7 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 									   NIL,		/* no pathkeys */
 									   NULL,	/* no required_outer */
 									   epq_path,
-									   NULL);	/* no fdw_private */
+									   NIL);	/* no fdw_private */
 
 	/* Add generated path into joinrel by add_path(). */
 	add_path(joinrel, (Path *) joinpath);
@@ -4748,7 +4748,7 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 										NIL,	/* no pathkeys */
 										NULL,	/* no required_outer */
 										NULL,
-										NULL);	/* no fdw_private */
+										NIL);	/* no fdw_private */
 
 	/* Add generated path into grouped_rel by add_path(). */
 	add_path(grouped_rel, (Path *) grouppath);
