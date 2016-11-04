@@ -53,7 +53,7 @@
      <row>
       <entry>
        <function>
-        xml_is_well_formed(document)
+        xml_valid(document)
        </function>
       </entry>
       <entry>
@@ -62,10 +62,10 @@
       <entry>
        <para>
         This parses the document text in its parameter and returns true if the
-        document is well-formed XML.  (Note: before PostgreSQL 8.2, this
-        function was called <function>xml_valid()</>.  That is the wrong name
-        since validity and well-formedness have different meanings in XML.
-        The old name is still available, but is deprecated.)
+        document is well-formed XML.  (Note: this is an alias for the standard
+        PostgreSQL function <function>xml_is_well_formed()</>.  The
+        name <function>xml_valid()</> is technically incorrect since validity
+        and well-formedness have different meanings in XML.)
        </para>
       </entry>
      </row>
