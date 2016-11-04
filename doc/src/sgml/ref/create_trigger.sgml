@@ -25,6 +25,7 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
     ON <replaceable class="PARAMETER">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
     [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ]
+    [ REFERENCING { { OLD | NEW } TABLE [ AS ] <replaceable class="PARAMETER">transition_relation_name</replaceable> } [ ... ] ]
     [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
@@ -178,6 +179,15 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
   </para>
 
   <para>
+   The <literal>REFERENCING</> option is only allowed for an <literal>AFTER</>
+   trigger which is not a constraint trigger.  <literal>OLD TABLE</> may only
+   be specified once, and only on a trigger which can fire on
+   <literal>UPDATE</> or <literal>DELETE</>.  <literal>NEW TABLE</> may only
+   be specified once, and only on a trigger which can fire on
+   <literal>UPDATE</> or <literal>INSERT</>.
+  </para>
+
+  <para>
    <command>SELECT</command> does not modify any rows so you cannot
    create <command>SELECT</command> triggers. Rules and views are more
    appropriate in such cases.
@@ -277,6 +287,40 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       See the <xref linkend="SQL-CREATETABLE"> documentation for details of
       these constraint options.  This can only be specified for constraint
       triggers.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>REFERENCING</literal></term>
+    <listitem>
+     <para>
+      This immediately preceeds the declaration of one or two relations which
+      can be used to read the before and/or after images of all rows directly
+      affected by the triggering statement.  An <literal>AFTER EACH ROW</>
+      trigger is allowed to use both these transition relation names and the
+      row names (<literal>OLD</> and <literal>NEW</>) which reference each
+      individual row for which the trigger fires.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OLD TABLE</literal></term>
+    <term><literal>NEW TABLE</literal></term>
+    <listitem>
+     <para>
+      This specifies whether the named relation contains the before or after
+      images for rows affected by the statement which fired the trigger.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">transition_relation_name</replaceable></term>
+    <listitem>
+     <para>
+      The (unqualified) name to be used within the trigger for this relation.
      </para>
     </listitem>
    </varlistentry>
@@ -474,6 +518,30 @@ CREATE TRIGGER view_insert
     FOR EACH ROW
     EXECUTE PROCEDURE view_insert_row();
 </programlisting>
+
+   Execute the function <function>check_transfer_balances_to_zero</> for each
+   statement to confirm that the <literal>transfer</> rows offset to a net of
+   zero:
+
+<programlisting>
+CREATE TRIGGER transfer_insert
+    AFTER INSERT ON transfer
+    FOR EACH STATEMENT
+    REFERENCING NEW TABLE AS inserted
+    EXECUTE PROCEDURE check_transfer_balances_to_zero();
+</programlisting>
+
+   Execute the function <function>check_matching_pairs</> for each row to
+   confirm that changes are made to matching pairs at the same time (by the
+   same statement):
+
+<programlisting>
+CREATE TRIGGER paired_items_update
+    AFTER UPDATE ON paired_items
+    FOR EACH ROW
+    REFERENCING NEW TABLE AS newtab OLD TABLE AS oldtab
+    EXECUTE PROCEDURE check_matching_pairs();
+</programlisting>
   </para>
 
   <para>
@@ -502,24 +570,14 @@ CREATE TRIGGER view_insert
    <itemizedlist>
     <listitem>
      <para>
-      SQL allows you to define aliases for the <quote>old</quote>
-      and <quote>new</quote> rows or tables for use in the definition
-      of the triggered action (e.g., <literal>CREATE TRIGGER ... ON
-      tablename REFERENCING OLD ROW AS somename NEW ROW AS othername
-      ...</literal>).  Since <productname>PostgreSQL</productname>
-      allows trigger procedures to be written in any number of
-      user-defined languages, access to the data is handled in a
-      language-specific way.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <productname>PostgreSQL</productname> does not allow the old and new
-      tables to be referenced in statement-level triggers, i.e., the tables
-      that contain all the old and/or new rows, which are referred to by the
-      <literal>OLD TABLE</literal> and <literal>NEW TABLE</literal> clauses in
-      the <acronym>SQL</> standard.
+      While transition tables for <literal>AFTER</> triggers are specified
+      using the <literal>REFERENCING</> clause in the standard way, the row
+      variables used in <literal>FOR EACH ROW</> triggers may not be
+      specified in <literal>REFERENCING</> clause.  They are available in a
+      manner which is dependent on the language in which the trigger function
+      is written.  Some languages effectively behave as though there is a
+      <literal>REFERENCING</> clause containing <literal>OLD ROW AS OLD NEW
+      ROW AS NEW</>.
      </para>
     </listitem>
 

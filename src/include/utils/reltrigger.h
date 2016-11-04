@@ -39,6 +39,8 @@ typedef struct Trigger
 	int16	   *tgattr;
 	char	  **tgargs;
 	char	   *tgqual;
+	char	   *tgoldtable;
+	char	   *tgnewtable;
 } Trigger;
 
 typedef struct TriggerDesc
@@ -68,6 +70,11 @@ typedef struct TriggerDesc
 	/* there are no row-level truncate triggers */
 	bool		trig_truncate_before_statement;
 	bool		trig_truncate_after_statement;
+	/* Is there at least one trigger specifying each transition relation? */
+	bool		trig_insert_new_table;
+	bool		trig_update_old_table;
+	bool		trig_update_new_table;
+	bool		trig_delete_old_table;
 } TriggerDesc;
 
 #endif   /* RELTRIGGER_H */

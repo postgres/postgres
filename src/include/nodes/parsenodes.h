@@ -1204,6 +1204,21 @@ typedef struct CommonTableExpr
 	 ((Query *) (cte)->ctequery)->targetList : \
 	 ((Query *) (cte)->ctequery)->returningList)
 
+/*
+ * TriggerTransition -
+ *	   representation of transition row or table naming clause
+ *
+ * Only transition tables are initially supported in the syntax, and only for
+ * AFTER triggers, but other permutations are accepted by the parser so we can
+ * give a meaningful message from C code.
+ */
+typedef struct TriggerTransition
+{
+	NodeTag		type;
+	char	   *name;
+	bool		isNew;
+	bool		isTable;
+} TriggerTransition;
 
 /*****************************************************************************
  *		Optimizable Statements
@@ -2105,6 +2120,8 @@ typedef struct CreateTrigStmt
 	List	   *columns;		/* column names, or NIL for all columns */
 	Node	   *whenClause;		/* qual expression, or NULL if none */
 	bool		isconstraint;	/* This is a constraint trigger */
+	/* explicitly named transition data */
+	List	   *transitionRels; /* TriggerTransition nodes, or NIL if none */
 	/* The remaining fields are only used for constraint triggers */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */

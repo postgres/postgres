@@ -6231,6 +6231,22 @@
        representation) for the trigger's <literal>WHEN</> condition, or null
        if none</entry>
      </row>
+
+     <row>
+      <entry><structfield>tgoldtable</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry><literal>REFERENCING</> clause name for <literal>OLD TABLE</>,
+       or null if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tgnewtable</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry><literal>REFERENCING</> clause name for <literal>NEW TABLE</>,
+       or null if none</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
