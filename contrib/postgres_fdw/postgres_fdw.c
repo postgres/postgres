@@ -4156,7 +4156,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 * other remote clauses. For LEFT and RIGHT OUTER join, the clauses from
 	 * the outer side are added to remote_conds since those can be evaluated
 	 * after the join is evaluated. The clauses from inner side are added to
-	 * the joinclauses, since they need to evaluated while constructing the
+	 * the joinclauses, since they need to be evaluated while constructing the
 	 * join.
 	 *
 	 * For a FULL OUTER JOIN, the other clauses from either relation can not
