@@ -197,6 +197,9 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		Page		page;
 		GinPageOpaque opaq;
 
+		fctx = SRF_FIRSTCALL_INIT();
+		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+
 		page = get_page_from_raw(raw_page);
 
 		if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GinPageOpaqueData)))
@@ -215,9 +218,6 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 					 errdetail("Flags %04X, expected %04X",
 							   opaq->flags,
 							   (GIN_DATA | GIN_LEAF | GIN_COMPRESSED))));
-
-		fctx = SRF_FIRSTCALL_INIT();
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
 		inter_call_data = palloc(sizeof(gin_leafpage_items_state));
 
