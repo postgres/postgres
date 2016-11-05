@@ -2138,7 +2138,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	i = 1;
 	while (i < objc)
 	{
-		if (Tcl_GetIndexFromObj(interp, objv[i], options, "option",
+		if (Tcl_GetIndexFromObj(NULL, objv[i], options, NULL,
 								TCL_EXACT, &optIndex) != TCL_OK)
 			break;
 
@@ -2484,7 +2484,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	i = 1;
 	while (i < objc)
 	{
-		if (Tcl_GetIndexFromObj(interp, objv[i], options, "option",
+		if (Tcl_GetIndexFromObj(NULL, objv[i], options, NULL,
 								TCL_EXACT, &optIndex) != TCL_OK)
 			break;
 
@@ -2667,6 +2667,15 @@ static int
 pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[])
 {
+	/*
+	 * Check call syntax
+	 */
+	if (objc != 1)
+	{
+		Tcl_WrongNumArgs(interp, 1, objv, "");
+		return TCL_ERROR;
+	}
+
 	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(SPI_lastoid));
 	return TCL_OK;
 }
