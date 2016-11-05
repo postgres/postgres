@@ -338,10 +338,10 @@ pgreadlink(const char *path, char *buf, size_t size)
 
 /*
  * Assumes the file exists, so will return false if it doesn't
- * (since a nonexistant file is not a junction)
+ * (since a nonexistent file is not a junction)
  */
 bool
-pgwin32_is_junction(char *path)
+pgwin32_is_junction(const char *path)
 {
 	DWORD		attr = GetFileAttributes(path);
 
