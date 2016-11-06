@@ -296,20 +296,22 @@ $$ LANGUAGE pltcl;
         If the command is a <command>SELECT</> statement, the values of the
         result columns are placed into Tcl variables named after the columns.
         If the <literal>-array</> option is given, the column values are
-        instead stored into the named associative array, with the
-        column names used as array indexes.
+        instead stored into elements of the named associative array, with the
+        column names used as array indexes.  In addition, the current row
+        number within the result (counting from zero) is stored into the array
+        element named <quote><literal>.tupno</></quote>, unless that name is
+        in use as a column name in the result.
        </para>
        <para>
         If the command is a <command>SELECT</> statement and no <replaceable>loop-body</>
         script is given, then only the first row of results are stored into
-        Tcl variables; remaining rows, if any, are ignored.  No storing occurs
-        if the
-        query returns no rows.  (This case can be detected by checking the
-        result of <function>spi_exec</function>.)  For example:
+        Tcl variables or array elements; remaining rows, if any, are ignored.
+        No storing occurs if the query returns no rows.  (This case can be
+        detected by checking the result of <function>spi_exec</function>.)
+        For example:
 <programlisting>
 spi_exec "SELECT count(*) AS cnt FROM pg_proc"
 </programlisting>
-
         will set the Tcl variable <literal>$cnt</> to the number of rows in
         the <structname>pg_proc</> system catalog.
        </para>
@@ -317,15 +319,15 @@ spi_exec "SELECT count(*) AS cnt FROM pg_proc"
         If the optional <replaceable>loop-body</> argument is given, it is
         a piece of Tcl script that is executed once for each row in the
         query result.  (<replaceable>loop-body</> is ignored if the given
-        command is not a <command>SELECT</>.)  The values of the current row's columns
-        are stored into Tcl variables before each iteration.  For example:
-
+        command is not a <command>SELECT</>.)
+        The values of the current row's columns
+        are stored into Tcl variables or array elements before each iteration.
+        For example:
 <programlisting>
 spi_exec -array C "SELECT * FROM pg_class" {
     elog DEBUG "have table $C(relname)"
 }
 </programlisting>
-
         will print a log message for every row of <literal>pg_class</>.  This
         feature works similarly to other Tcl looping constructs; in
         particular <literal>continue</> and <literal>break</> work in the
@@ -667,20 +669,34 @@ SELECT 'doesn''t' AS ret
 
     <para>
      The return value from a trigger procedure can be one of the strings
-     <literal>OK</> or <literal>SKIP</>, or a list as returned by the
-     <literal>array get</> Tcl command. If the return value is <literal>OK</>,
-     the operation (<command>INSERT</>/<command>UPDATE</>/<command>DELETE</>) that fired the trigger will proceed
+     <literal>OK</> or <literal>SKIP</>, or a list of column name/value pairs.
+     If the return value is <literal>OK</>,
+     the operation (<command>INSERT</>/<command>UPDATE</>/<command>DELETE</>)
+     that fired the trigger will proceed
      normally. <literal>SKIP</> tells the trigger manager to silently suppress
      the operation for this row. If a list is returned, it tells PL/Tcl to
-     return a modified row to the trigger manager. This is only meaningful
+     return a modified row to the trigger manager; the contents of the
+     modified row are specified by the column names and values in the list.
+     Any columns not mentioned in the list are set to null.
+     Returning a modified row is only meaningful
      for row-level <literal>BEFORE</> <command>INSERT</> or <command>UPDATE</>
-     triggers for which the modified row will be inserted instead of the one
+     triggers, for which the modified row will be inserted instead of the one
      given in <varname>$NEW</>; or for row-level <literal>INSTEAD OF</>
      <command>INSERT</> or <command>UPDATE</> triggers where the returned row
-     is used to support <command>INSERT RETURNING</> and
-     <command>UPDATE RETURNING</> commands. The return value is ignored for
-     other types of triggers.
+     is used as the source data for <command>INSERT RETURNING</> or
+     <command>UPDATE RETURNING</> clauses.
+     In row-level <literal>BEFORE</> <command>DELETE</> or <literal>INSTEAD
+     OF</> <command>DELETE</> triggers, returning a modified row has the same
+     effect as returning <literal>OK</>, that is the operation proceeds.
+     The trigger return value is ignored for all other types of triggers.
     </para>
+
+    <tip>
+     <para>
+      The result list can be made from an array representation of the
+      modified tuple with the <literal>array get</> Tcl command.
+     </para>
+    </tip>
 
     <para>
      Here's a little example trigger procedure that forces an integer value
