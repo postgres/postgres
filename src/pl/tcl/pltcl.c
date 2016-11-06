@@ -1055,17 +1055,19 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			FmgrInfo	finfo;
 
 			/************************************************************
-			 * Ignore ".tupno" pseudo elements (see pltcl_set_tuple_values)
-			 ************************************************************/
-			if (strcmp(ret_name, ".tupno") == 0)
-				continue;
-
-			/************************************************************
 			 * Get the attribute number
+			 *
+			 * We silently ignore ".tupno", if it's present but doesn't match
+			 * any actual output column.  This allows direct use of a row
+			 * returned by pltcl_set_tuple_values().
 			 ************************************************************/
 			attnum = SPI_fnumber(tupdesc, ret_name);
 			if (attnum == SPI_ERROR_NOATTRIBUTE)
+			{
+				if (strcmp(ret_name, ".tupno") == 0)
+					continue;
 				elog(ERROR, "invalid attribute \"%s\"", ret_name);
+			}
 			if (attnum <= 0)
 				elog(ERROR, "cannot set system attribute \"%s\"", ret_name);
 
@@ -2414,8 +2416,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 	CONST84 char *nullname = NULL;
 
 	/************************************************************
-	 * Prepare pointers for Tcl_SetVar2() below and in array
-	 * mode set the .tupno element
+	 * Prepare pointers for Tcl_SetVar2() below
 	 ************************************************************/
 	if (arrayname == NULL)
 	{
@@ -2426,6 +2427,12 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 	{
 		arrptr = &arrayname;
 		nameptr = &attname;
+
+		/*
+		 * When outputting to an array, fill the ".tupno" element with the
+		 * current tuple number.  This will be overridden below if ".tupno" is
+		 * in use as an actual field name in the rowtype.
+		 */
 		snprintf(buf, sizeof(buf), "%d", tupno);
 		Tcl_SetVar2(interp, arrayname, ".tupno", buf, 0);
 	}
