@@ -303,3 +303,64 @@ select tcl_lastoid('t2') > 0;
  t
 (1 row)
 
+-- test some error cases
+CREATE FUNCTION tcl_error(OUT a int, OUT b int) AS $$return {$$ LANGUAGE pltcl;
+SELECT tcl_error();
+ERROR:  missing close-brace
+CREATE FUNCTION bad_record(OUT a text, OUT b text) AS $$return [list a]$$ LANGUAGE pltcl;
+SELECT bad_record();
+ERROR:  column name/value list must have even number of elements
+CREATE FUNCTION bad_field(OUT a text, OUT b text) AS $$return [list a 1 b 2 cow 3]$$ LANGUAGE pltcl;
+SELECT bad_field();
+ERROR:  column name/value list contains nonexistent column name "cow"
+-- test compound return
+select * from tcl_test_cube_squared(5);
+ squared | cubed 
+---------+-------
+      25 |   125
+(1 row)
+
+-- test SRF
+select * from tcl_test_squared_rows(0,5);
+ x | y  
+---+----
+ 0 |  0
+ 1 |  1
+ 2 |  4
+ 3 |  9
+ 4 | 16
+(5 rows)
+
+select * from tcl_test_sequence(0,5) as a;
+ a 
+---
+ 0
+ 1
+ 2
+ 3
+ 4
+(5 rows)
+
+select 1, tcl_test_sequence(0,5);
+ ?column? | tcl_test_sequence 
+----------+-------------------
+        1 |                 0
+        1 |                 1
+        1 |                 2
+        1 |                 3
+        1 |                 4
+(5 rows)
+
+CREATE FUNCTION non_srf() RETURNS int AS $$return_next 1$$ LANGUAGE pltcl;
+select non_srf();
+ERROR:  return_next cannot be used in non-set-returning functions
+CREATE FUNCTION bad_record_srf(OUT a text, OUT b text) RETURNS SETOF record AS $$
+return_next [list a]
+$$ LANGUAGE pltcl;
+SELECT bad_record_srf();
+ERROR:  column name/value list must have even number of elements
+CREATE FUNCTION bad_field_srf(OUT a text, OUT b text) RETURNS SETOF record AS $$
+return_next [list a 1 b 2 cow 3]
+$$ LANGUAGE pltcl;
+SELECT bad_field_srf();
+ERROR:  column name/value list contains nonexistent column name "cow"

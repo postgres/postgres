@@ -596,6 +596,22 @@ drop table foo;
 drop event trigger tcl_a_snitch;
 drop event trigger tcl_b_snitch;
 
+CREATE FUNCTION tcl_test_cube_squared(in int, out squared int, out cubed int) AS $$
+    return [list squared [expr {$1 * $1}] cubed [expr {$1 * $1 * $1}]]
+$$ language pltcl;
+
+CREATE FUNCTION tcl_test_squared_rows(int,int) RETURNS TABLE (x int, y int) AS $$
+    for {set i $1} {$i < $2} {incr i} {
+        return_next [list y [expr {$i * $i}] x $i]
+    }
+$$ language pltcl;
+
+CREATE FUNCTION tcl_test_sequence(int,int) RETURNS SETOF int AS $$
+    for {set i $1} {$i < $2} {incr i} {
+        return_next $i
+    }
+$$ language pltcl;
+
 -- test use of errorCode in error handling
 
 create function tcl_error_handling_test() returns text as $$

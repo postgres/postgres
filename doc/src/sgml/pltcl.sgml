@@ -94,11 +94,11 @@ $$ LANGUAGE pltcl;
 
     <para>
      The body of the function is simply a piece of Tcl script.
-     When the function is called, the argument values are passed as
-     variables <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal> to the
-     Tcl script.  The result is returned
-     from the Tcl code in the usual way, with a <literal>return</literal>
-     statement.
+     When the function is called, the argument values are passed to the
+     Tcl script as variables named <literal>1</literal>
+     ... <literal><replaceable>n</replaceable></literal>.  The result is
+     returned from the Tcl code in the usual way, with
+     a <literal>return</literal> statement.
     </para>
 
     <para>
@@ -173,17 +173,57 @@ $$ LANGUAGE pltcl;
     </para>
 
     <para>
-     There is currently no support for returning a composite-type
-     result value, nor for returning sets.
+     PL/Tcl functions can return composite-type results, too.  To do this,
+     the Tcl code must return a list of column name/value pairs matching
+     the expected result type.  Any column names omitted from the list
+     are returned as nulls, and an error is raised if there are unexpected
+     column names.  Here is an example:
+
+<programlisting>
+CREATE FUNCTION square_cube(in int, out squared int, out cubed int) AS $$
+    return [list squared [expr {$1 * $1}] cubed [expr {$1 * $1 * $1}]]
+$$ LANGUAGE pltcl;
+</programlisting>
     </para>
 
+    <tip>
+     <para>
+      The result list can be made from an array representation of the
+      desired tuple with the <literal>array get</> Tcl command.  For example:
+
+<programlisting>
+CREATE FUNCTION raise_pay(employee, delta int) RETURNS employee AS $$
+    set 1(salary) [expr {$1(salary) + $2}]
+    return [array get 1]
+$$ LANGUAGE pltcl;
+</programlisting>
+     </para>
+    </tip>
+
     <para>
-     <application>PL/Tcl</> does not currently have full support for
-     domain types: it treats a domain the same as the underlying scalar
-     type.  This means that constraints associated with the domain will
-     not be enforced.  This is not an issue for function arguments, but
-     it is a hazard if you declare a <application>PL/Tcl</> function
-     as returning a domain type.
+     PL/Tcl functions can return sets.  To do this, the Tcl code should
+     call <function>return_next</function> once per row to be returned,
+     passing either the appropriate value when returning a scalar type,
+     or a list of column name/value pairs when returning a composite type.
+     Here is an example returning a scalar type:
+
+<programlisting>
+CREATE FUNCTION sequence(int, int) RETURNS SETOF int AS $$
+    for {set i $1} {$i &lt; $2} {incr i} {
+        return_next $i
+    }
+$$ LANGUAGE pltcl;
+</programlisting>
+
+     and here is one returning a composite type:
+
+<programlisting>
+CREATE FUNCTION table_of_squares(int, int) RETURNS TABLE (x int, x2 int) AS $$
+    for {set i $1} {$i &lt; $2} {incr i} {
+        return_next [list x $i x2 [expr {$i * $i}]]
+    }
+$$ LANGUAGE pltcl;
+</programlisting>
     </para>
 
    </sect1>
@@ -195,10 +235,9 @@ $$ LANGUAGE pltcl;
      The argument values supplied to a PL/Tcl function's code are simply
      the input arguments converted to text form (just as if they had been
      displayed by a <command>SELECT</> statement).  Conversely, the
-     <literal>return</>
-     command will accept any string that is acceptable input format for
-     the function's declared return type.  So, within the PL/Tcl function,
-     all values are just text strings.
+     <literal>return</> and <literal>return_next</> commands will accept
+     any string that is acceptable input format for the function's declared
+     result type, or for the specified column of a composite result type.
     </para>
 
    </sect1>

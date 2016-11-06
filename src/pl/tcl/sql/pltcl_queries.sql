@@ -97,3 +97,36 @@ create temp table t1 (f1 int);
 select tcl_lastoid('t1');
 create temp table t2 (f1 int) with oids;
 select tcl_lastoid('t2') > 0;
+
+-- test some error cases
+CREATE FUNCTION tcl_error(OUT a int, OUT b int) AS $$return {$$ LANGUAGE pltcl;
+SELECT tcl_error();
+
+CREATE FUNCTION bad_record(OUT a text, OUT b text) AS $$return [list a]$$ LANGUAGE pltcl;
+SELECT bad_record();
+
+CREATE FUNCTION bad_field(OUT a text, OUT b text) AS $$return [list a 1 b 2 cow 3]$$ LANGUAGE pltcl;
+SELECT bad_field();
+
+-- test compound return
+select * from tcl_test_cube_squared(5);
+
+-- test SRF
+select * from tcl_test_squared_rows(0,5);
+
+select * from tcl_test_sequence(0,5) as a;
+
+select 1, tcl_test_sequence(0,5);
+
+CREATE FUNCTION non_srf() RETURNS int AS $$return_next 1$$ LANGUAGE pltcl;
+select non_srf();
+
+CREATE FUNCTION bad_record_srf(OUT a text, OUT b text) RETURNS SETOF record AS $$
+return_next [list a]
+$$ LANGUAGE pltcl;
+SELECT bad_record_srf();
+
+CREATE FUNCTION bad_field_srf(OUT a text, OUT b text) RETURNS SETOF record AS $$
+return_next [list a 1 b 2 cow 3]
+$$ LANGUAGE pltcl;
+SELECT bad_field_srf();
