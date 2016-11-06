@@ -870,12 +870,11 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	Tcl_Obj    *tcl_newtup;
 	int			tcl_rc;
 	int			i;
-	int		   *modattrs;
-	Datum	   *modvalues;
-	char	   *modnulls;
-	int			ret_numvals;
 	const char *result;
-	const char **ret_values;
+	int			result_Objc;
+	Tcl_Obj   **result_Objv;
+	Datum	   *values;
+	bool	   *nulls;
 
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -1065,13 +1064,16 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 		throw_tcl_error(interp, prodesc->user_proname);
 
 	/************************************************************
-	 * The return value from the procedure might be one of
-	 * the magic strings OK or SKIP or a list from array get.
-	 * We can check for OK or SKIP without worrying about encoding.
+	 * Exit SPI environment.
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
+	/************************************************************
+	 * The return value from the procedure might be one of
+	 * the magic strings OK or SKIP, or a list from array get.
+	 * We can check for OK or SKIP without worrying about encoding.
+	 ************************************************************/
 	result = Tcl_GetStringResult(interp);
 
 	if (strcmp(result, "OK") == 0)
@@ -1080,108 +1082,85 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 		return (HeapTuple) NULL;
 
 	/************************************************************
-	 * Convert the result value from the Tcl interpreter
-	 * and setup structures for SPI_modifytuple();
+	 * Otherwise, the return value should be a column name/value list
+	 * specifying the modified tuple to return.
 	 ************************************************************/
-	if (Tcl_SplitList(interp, result,
-					  &ret_numvals, &ret_values) != TCL_OK)
+	if (Tcl_ListObjGetElements(interp, Tcl_GetObjResult(interp),
+							   &result_Objc, &result_Objv) != TCL_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 				 errmsg("could not split return value from trigger: %s",
 						utf_u2e(Tcl_GetStringResult(interp)))));
 
-	/* Use a TRY to ensure ret_values will get freed */
-	PG_TRY();
+	if (result_Objc % 2 != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+		 errmsg("trigger's return list must have even number of elements")));
+
+	values = (Datum *) palloc0(tupdesc->natts * sizeof(Datum));
+	nulls = (bool *) palloc(tupdesc->natts * sizeof(bool));
+	memset(nulls, true, tupdesc->natts * sizeof(bool));
+
+	for (i = 0; i < result_Objc; i += 2)
 	{
-		if (ret_numvals % 2 != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("trigger's return list must have even number of elements")));
+		char	   *ret_name = utf_u2e(Tcl_GetString(result_Objv[i]));
+		char	   *ret_value = utf_u2e(Tcl_GetString(result_Objv[i + 1]));
+		int			attnum;
+		Oid			typinput;
+		Oid			typioparam;
+		FmgrInfo	finfo;
 
-		modattrs = (int *) palloc(tupdesc->natts * sizeof(int));
-		modvalues = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
-		for (i = 0; i < tupdesc->natts; i++)
+		/************************************************************
+		 * Get the attribute number
+		 *
+		 * We silently ignore ".tupno", if it's present but doesn't match
+		 * any actual output column.  This allows direct use of a row
+		 * returned by pltcl_set_tuple_values().
+		 ************************************************************/
+		attnum = SPI_fnumber(tupdesc, ret_name);
+		if (attnum == SPI_ERROR_NOATTRIBUTE)
 		{
-			modattrs[i] = i + 1;
-			modvalues[i] = (Datum) NULL;
-		}
-
-		modnulls = palloc(tupdesc->natts);
-		memset(modnulls, 'n', tupdesc->natts);
-
-		for (i = 0; i < ret_numvals; i += 2)
-		{
-			char	   *ret_name = utf_u2e(ret_values[i]);
-			char	   *ret_value = utf_u2e(ret_values[i + 1]);
-			int			attnum;
-			Oid			typinput;
-			Oid			typioparam;
-			FmgrInfo	finfo;
-
-			/************************************************************
-			 * Get the attribute number
-			 *
-			 * We silently ignore ".tupno", if it's present but doesn't match
-			 * any actual output column.  This allows direct use of a row
-			 * returned by pltcl_set_tuple_values().
-			 ************************************************************/
-			attnum = SPI_fnumber(tupdesc, ret_name);
-			if (attnum == SPI_ERROR_NOATTRIBUTE)
-			{
-				if (strcmp(ret_name, ".tupno") == 0)
-					continue;
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("unrecognized attribute \"%s\"",
-								ret_name)));
-			}
-			if (attnum <= 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot set system attribute \"%s\"",
-								ret_name)));
-
-			/************************************************************
-			 * Ignore dropped columns
-			 ************************************************************/
-			if (tupdesc->attrs[attnum - 1]->attisdropped)
+			if (strcmp(ret_name, ".tupno") == 0)
 				continue;
-
-			/************************************************************
-			 * Lookup the attribute type in the syscache
-			 * for the input function
-			 ************************************************************/
-			getTypeInputInfo(tupdesc->attrs[attnum - 1]->atttypid,
-							 &typinput, &typioparam);
-			fmgr_info(typinput, &finfo);
-
-			/************************************************************
-			 * Set the attribute to NOT NULL and convert the contents
-			 ************************************************************/
-			modvalues[attnum - 1] = InputFunctionCall(&finfo,
-													  ret_value,
-													  typioparam,
-									  tupdesc->attrs[attnum - 1]->atttypmod);
-			modnulls[attnum - 1] = ' ';
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("unrecognized attribute \"%s\"",
+							ret_name)));
 		}
+		if (attnum <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot set system attribute \"%s\"",
+							ret_name)));
 
-		rettup = SPI_modifytuple(trigdata->tg_relation, rettup, tupdesc->natts,
-								 modattrs, modvalues, modnulls);
+		/************************************************************
+		 * Ignore dropped columns
+		 ************************************************************/
+		if (tupdesc->attrs[attnum - 1]->attisdropped)
+			continue;
 
-		pfree(modattrs);
-		pfree(modvalues);
-		pfree(modnulls);
+		/************************************************************
+		 * Lookup the attribute type's input function
+		 ************************************************************/
+		getTypeInputInfo(tupdesc->attrs[attnum - 1]->atttypid,
+						 &typinput, &typioparam);
+		fmgr_info(typinput, &finfo);
 
-		if (rettup == NULL)
-			elog(ERROR, "SPI_modifytuple() failed - RC = %d", SPI_result);
+		/************************************************************
+		 * Set the attribute to NOT NULL and convert the contents
+		 ************************************************************/
+		values[attnum - 1] = InputFunctionCall(&finfo,
+											   ret_value,
+											   typioparam,
+									  tupdesc->attrs[attnum - 1]->atttypmod);
+		nulls[attnum - 1] = false;
 	}
-	PG_CATCH();
-	{
-		ckfree((char *) ret_values);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	ckfree((char *) ret_values);
+
+	/* Build the modified tuple to return */
+	rettup = heap_form_tuple(tupdesc, values, nulls);
+
+	pfree(values);
+	pfree(nulls);
 
 	return rettup;
 }
