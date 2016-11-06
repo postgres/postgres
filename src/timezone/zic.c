@@ -57,13 +57,13 @@ static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #endif
 
 /* The type and printf format for line numbers.  */
-typedef int lineno;
+typedef int lineno_t;
 #define PRIdLINENO "d"
 
 struct rule
 {
 	const char *r_filename;
-	lineno		r_linenum;
+	lineno_t	r_linenum;
 	const char *r_name;
 
 	zic_t		r_loyear;		/* for example, 1986 */
@@ -100,7 +100,7 @@ struct rule
 struct zone
 {
 	const char *z_filename;
-	lineno		z_linenum;
+	lineno_t	z_linenum;
 
 	const char *z_name;
 	zic_t		z_gmtoff;
@@ -181,7 +181,7 @@ static int	leapcnt;
 static bool leapseen;
 static zic_t leapminyear;
 static zic_t leapmaxyear;
-static lineno linenum;
+static lineno_t linenum;
 static int	max_abbrvar_len = PERCENT_Z_LEN_BOUND;
 static int	max_format_len;
 static zic_t max_year;
@@ -190,7 +190,7 @@ static bool noise;
 static bool print_abbrevs;
 static zic_t print_cutoff;
 static const char *rfilename;
-static lineno rlinenum;
+static lineno_t rlinenum;
 static const char *progname;
 static ptrdiff_t timecnt;
 static ptrdiff_t timecnt_alloc;
@@ -288,7 +288,7 @@ static ptrdiff_t nzones_alloc;
 struct link
 {
 	const char *l_filename;
-	lineno		l_linenum;
+	lineno_t	l_linenum;
 	const char *l_from;
 	const char *l_to;
 };
@@ -442,14 +442,13 @@ ecpyalloc(char const * str)
 }
 
 static void *
-growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t * nitems_alloc)
+growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
 {
 	if (nitems < *nitems_alloc)
 		return ptr;
 	else
 	{
-		ptrdiff_t	nitems_max = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
-		ptrdiff_t	amax = nitems_max < SIZE_MAX ? nitems_max : SIZE_MAX;
+		ptrdiff_t	amax = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
 
 		if ((amax - 1) / 3 * 2 < *nitems_alloc)
 			memory_exhausted(_("integer overflow"));
@@ -463,7 +462,7 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t * nitems_alloc
  */
 
 static void
-eats(char const * name, lineno num, char const * rname, lineno rnum)
+eats(char const * name, lineno_t num, char const * rname, lineno_t rnum)
 {
 	filename = name;
 	linenum = num;
@@ -472,7 +471,7 @@ eats(char const * name, lineno num, char const * rname, lineno rnum)
 }
 
 static void
-eat(char const * name, lineno num)
+eat(char const * name, lineno_t num)
 {
 	eats(name, num, NULL, -1);
 }
@@ -1169,7 +1168,7 @@ infile(const char *name)
 	const struct lookup *lp;
 	int			nfields;
 	bool		wantcont;
-	lineno		num;
+	lineno_t	num;
 	char		buf[BUFSIZ];
 
 	if (strcmp(name, "-") == 0)
