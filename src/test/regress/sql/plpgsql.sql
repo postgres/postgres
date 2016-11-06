@@ -4428,3 +4428,25 @@ exception when others then
   null; -- do nothing
 end;
 $$;
+
+-- Test use of plpgsql in a domain check constraint (cf. bug #14414)
+
+create function plpgsql_domain_check(val int) returns boolean as $$
+begin return val > 0; end
+$$ language plpgsql immutable;
+
+create domain plpgsql_domain as integer check(plpgsql_domain_check(value));
+
+do $$
+declare v_test plpgsql_domain;
+begin
+  v_test := 1;
+end;
+$$;
+
+do $$
+declare v_test plpgsql_domain := 1;
+begin
+  v_test := 0;  -- fail
+end;
+$$;
