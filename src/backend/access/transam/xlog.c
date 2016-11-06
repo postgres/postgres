@@ -7812,7 +7812,6 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 	}
 
 	record = ReadRecord(xlogreader, RecPtr, LOG, true);
-	info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (record == NULL)
 	{
@@ -7855,6 +7854,7 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		}
 		return NULL;
 	}
+	info = record->xl_info & ~XLR_INFO_MASK;
 	if (info != XLOG_CHECKPOINT_SHUTDOWN &&
 		info != XLOG_CHECKPOINT_ONLINE)
 	{
