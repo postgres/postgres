@@ -81,6 +81,51 @@ pgxml_parser_init(PgXmlStrictness strictness)
 }
 
 
+/*
+ * Returns true if document is well-formed
+ *
+ * Note: this has been superseded by a core function.  We still have to
+ * have it in the contrib module so that existing SQL-level references
+ * to the function won't fail; but in normal usage with up-to-date SQL
+ * definitions for the contrib module, this won't be called.
+ */
+
+PG_FUNCTION_INFO_V1(xml_is_well_formed);
+
+Datum
+xml_is_well_formed(PG_FUNCTION_ARGS)
+{
+	text	   *t = PG_GETARG_TEXT_P(0);		/* document buffer */
+	bool		result = false;
+	int32		docsize = VARSIZE(t) - VARHDRSZ;
+	xmlDocPtr	doctree;
+	PgXmlErrorContext *xmlerrcxt;
+
+	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
+
+	PG_TRY();
+	{
+		doctree = xmlParseMemory((char *) VARDATA(t), docsize);
+
+		result = (doctree != NULL);
+
+		if (doctree != NULL)
+			xmlFreeDoc(doctree);
+	}
+	PG_CATCH();
+	{
+		pg_xml_done(xmlerrcxt, true);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	pg_xml_done(xmlerrcxt, false);
+
+	PG_RETURN_BOOL(result);
+}
+
+
 /* Encodes special characters (<, >, &, " and \r) as XML entities */
 
 PG_FUNCTION_INFO_V1(xml_encode_special_chars);
