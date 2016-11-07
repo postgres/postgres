@@ -2577,23 +2577,6 @@ concat_text(PG_FUNCTION_ARGS)
         error messages to this effect.
        </para>
       </listitem>
-
-      <listitem>
-       <para>
-        To work correctly on Windows, <literal>C</>-language functions need
-        to be marked with <literal>PGDLLEXPORT</>, unless you use a build
-        process that marks all global functions that way.  In simple cases
-        this detail will be handled transparently by
-        the <literal>PG_FUNCTION_INFO_V1</> macro.  However, if you write
-        explicit external declarations (perhaps in header files), be sure
-        to write them like this:
-<programlisting>
-extern PGDLLEXPORT Datum funcname(PG_FUNCTION_ARGS);
-</programlisting>
-        or you'll get compiler complaints when building on Windows.  (On
-        other platforms, the <literal>PGDLLEXPORT</> macro does nothing.)
-       </para>
-      </listitem>
      </itemizedlist>
     </para>
    </sect2>
