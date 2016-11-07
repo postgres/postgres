@@ -89,7 +89,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
 	char		message[QUERY_ALLOC];
 
-	vsnprintf(message, sizeof(message), fmt, ap);
+	vsnprintf(message, sizeof(message), _(fmt), ap);
 
 	/* PG_VERBOSE and PG_STATUS are only output in verbose mode */
 	/* fopen() on log_opts.internal might have failed, so check it */
@@ -108,7 +108,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 	{
 		case PG_VERBOSE:
 			if (log_opts.verbose)
-				printf("%s", _(message));
+				printf("%s", message);
 			break;
 
 		case PG_STATUS:
@@ -123,16 +123,16 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 					   strlen(message) <= MESSAGE_WIDTH - 2 ? message :
 					   message + strlen(message) - MESSAGE_WIDTH + 3 + 2);
 			else
-				printf("  %s\n", _(message));
+				printf("  %s\n", message);
 			break;
 
 		case PG_REPORT:
 		case PG_WARNING:
-			printf("%s", _(message));
+			printf("%s", message);
 			break;
 
 		case PG_FATAL:
-			printf("\n%s", _(message));
+			printf("\n%s", message);
 			printf("Failure, exiting\n");
 			exit(1);
 			break;

@@ -34,26 +34,26 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
 	char		message[QUERY_ALLOC];
 
-	vsnprintf(message, sizeof(message), fmt, ap);
+	vsnprintf(message, sizeof(message), _(fmt), ap);
 
 	switch (type)
 	{
 		case PG_DEBUG:
 			if (debug)
-				printf("%s", _(message));
+				printf("%s", message);
 			break;
 
 		case PG_PROGRESS:
 			if (showprogress)
-				printf("%s", _(message));
+				printf("%s", message);
 			break;
 
 		case PG_WARNING:
-			printf("%s", _(message));
+			printf("%s", message);
 			break;
 
 		case PG_FATAL:
-			printf("\n%s", _(message));
+			printf("\n%s", message);
 			printf("%s", _("Failure, exiting\n"));
 			exit(1);
 			break;
