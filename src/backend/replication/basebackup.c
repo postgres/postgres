@@ -57,6 +57,8 @@ static bool sendFile(char *readfilename, char *tarfilename,
 static void sendFileWithContent(const char *filename, const char *content);
 static void _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat * statbuf);
+static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat * statbuf,
+			 bool sizeonly);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void base_backup_cleanup(int code, Datum arg);
@@ -969,9 +971,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		if ((statrelpath != NULL && strcmp(pathbuf, statrelpath) == 0) ||
 		  strncmp(de->d_name, PG_STAT_TMP_DIR, strlen(PG_STAT_TMP_DIR)) == 0)
 		{
-			if (!sizeonly)
-				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
-			size += 512;
+			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
 			continue;
 		}
 
@@ -981,9 +981,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 */
 		if (strcmp(de->d_name, "pg_replslot") == 0)
 		{
-			if (!sizeonly)
-				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
-			size += 512;		/* Size of the header just added */
+			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
 			continue;
 		}
 
@@ -994,18 +992,8 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 */
 		if (strcmp(pathbuf, "./pg_xlog") == 0)
 		{
-			if (!sizeonly)
-			{
-				/* If pg_xlog is a symlink, write it as a directory anyway */
-#ifndef WIN32
-				if (S_ISLNK(statbuf.st_mode))
-#else
-				if (pgwin32_is_junction(pathbuf))
-#endif
-					statbuf.st_mode = S_IFDIR | S_IRWXU;
-				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
-			}
-			size += 512;		/* Size of the header just added */
+			/* If pg_xlog is a symlink, write it as a directory anyway */
+			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
 
 			/*
 			 * Also send archive_status directory (by hackishly reusing
@@ -1245,6 +1233,30 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 	}
 
 	pq_putmessage('d', h, 512);
+}
+
+/*
+ * Write tar header for a directory.  If the entry in statbuf is a link then
+ * write it as a directory anyway.
+ */
+static int64
+_tarWriteDir(const char *pathbuf, int basepathlen, struct stat * statbuf,
+			 bool sizeonly)
+{
+	if (sizeonly)
+		/* Directory headers are always 512 bytes */
+		return 512;
+
+	/* If symlink, write it as a directory anyway */
+#ifndef WIN32
+	if (S_ISLNK(statbuf->st_mode))
+#else
+	if (pgwin32_is_junction(pathbuf))
+#endif
+		statbuf->st_mode = S_IFDIR | S_IRWXU;
+
+	_tarWriteHeader(pathbuf + basepathlen + 1, NULL, statbuf);
+	return 512;
 }
 
 /*

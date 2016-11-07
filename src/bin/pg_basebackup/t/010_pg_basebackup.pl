@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 51;
+use Test::More tests => 52;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -102,7 +102,17 @@ unlink "$pgdata/$superlongname";
 # skip on Windows.
 SKIP:
 {
-	skip "symlinks not supported on Windows", 10 if ($windows_os);
+	skip "symlinks not supported on Windows", 11 if ($windows_os);
+
+	# Move pg_replslot out of $pgdata and create a symlink to it.
+	$node->stop;
+
+	rename("$pgdata/pg_replslot", "$tempdir/pg_replslot")
+		   or BAIL_OUT "could not move $pgdata/pg_replslot";
+	symlink("$tempdir/pg_replslot", "$pgdata/pg_replslot")
+		   or BAIL_OUT "could not symlink to $pgdata/pg_replslot";
+
+	$node->start;
 
 	# Create a temporary directory in the system location and symlink it
 	# to our physical temp location.  That way we can use shorter names
@@ -139,6 +149,8 @@ SKIP:
 			  } readdir($dh)),
 		"tablespace symlink was updated");
 	closedir $dh;
+
+	ok(-d "$tempdir/backup1/pg_replslot", 'pg_replslot symlink copied as directory');
 
 	mkdir "$tempdir/tbl=spc2";
 	$node->safe_psql('postgres', "DROP TABLE test1;");
