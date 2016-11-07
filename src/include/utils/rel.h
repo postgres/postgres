@@ -270,7 +270,8 @@ typedef struct StdRdOptions
  *		from the pov of logical decoding.  Note multiple eval of argument!
  */
 #define RelationIsUsedAsCatalogTable(relation)	\
-	((relation)->rd_options ?				\
+	((relation)->rd_rel->relkind == RELKIND_RELATION && \
+	 (relation)->rd_options ? \
 	 ((StdRdOptions *) (relation)->rd_options)->user_catalog_table : false)
 
 /*
