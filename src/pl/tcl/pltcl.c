@@ -3057,11 +3057,29 @@ pltcl_build_tuple_result(Tcl_Interp *interp, Tcl_Obj **kvObjv, int kvObjc,
 		char	   *fieldName = utf_e2u(Tcl_GetString(kvObjv[i]));
 		int			attn = SPI_fnumber(call_state->ret_tupdesc, fieldName);
 
-		if (attn <= 0 || call_state->ret_tupdesc->attrs[attn - 1]->attisdropped)
+		/*
+		 * As in pltcl_trigger_handler, silently ignore ".tupno" if it's in
+		 * the list but doesn't match any column name.
+		 */
+		if (attn == SPI_ERROR_NOATTRIBUTE)
+		{
+			if (strcmp(fieldName, ".tupno") == 0)
+				continue;
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column name/value list contains nonexistent column name \"%s\"",
 							fieldName)));
+		}
+
+		if (attn <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot set system attribute \"%s\"",
+							fieldName)));
+
+		/* Ignore dropped attributes */
+		if (call_state->ret_tupdesc->attrs[attn - 1]->attisdropped)
+			continue;
 
 		values[attn - 1] = utf_e2u(Tcl_GetString(kvObjv[i + 1]));
 	}
