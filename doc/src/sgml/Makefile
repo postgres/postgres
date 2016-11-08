@@ -106,9 +106,9 @@ draft: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
 	$(JADE.html.call) -V draft-mode $<
 	cp $(srcdir)/stylesheet.css html/
 
-html: html-stamp
+oldhtml: oldhtml-stamp
 
-html-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
+oldhtml-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
 	$(MAKE) check-tabs
 	$(MKDIR_P) html
 	$(JADE.html.call) -i include-index $<
@@ -258,9 +258,9 @@ ifeq ($(STYLE),website)
 XSLTPROC_HTML_FLAGS += --param website.stylesheet 1
 endif
 
-xslthtml: xslthtml-stamp
+html: html-stamp
 
-xslthtml-stamp: stylesheet.xsl postgres.xml
+html-stamp: stylesheet.xsl postgres.xml
 	$(XMLLINT) --noout --valid postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^
 	cp $(srcdir)/stylesheet.css html/

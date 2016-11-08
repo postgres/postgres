@@ -2,18 +2,18 @@
 
 /* color scheme similar to www.postgresql.org */
 
-BODY {
+body {
 	color: #000000;
 	background: #FFFFFF;
 	font-family: verdana, sans-serif;
 }
 
-A:link		{ color:#0066A2; }
-A:visited	{ color:#004E66; }
-A:active	{ color:#0066A2; }
-A:hover		{ color:#000000; }
+a:link		{ color:#0066A2; }
+a:visited	{ color:#004E66; }
+a:active	{ color:#0066A2; }
+a:hover		{ color:#000000; }
 
-H1 {
+h1 {
 	font-size: 1.4em;
 	font-weight: bold;
 	margin-top: 0em;
@@ -21,34 +21,34 @@ H1 {
 	color: #EC5800;
 }
 
-H2 {
+h2 {
 	font-size: 1.2em;
 	margin: 1.2em 0em 1.2em 0em;
 	font-weight: bold;
-	color: #666;
+	color: #EC5800;
 }
 
-H3 {
+h3 {
 	font-size: 1.1em;
 	margin: 1.2em 0em 1.2em 0em;
 	font-weight: bold;
 	color: #666;
 }
 
-H4 {
+h4 {
 	font-size: 0.95em;
 	margin: 1.2em 0em 1.2em 0em;
 	font-weight: normal;
 	color: #666;
 }
 
-H5 {
+h5 {
 	font-size: 0.9em;
 	margin: 1.2em 0em 1.2em 0em;
 	font-weight: normal;
 }
 
-H6 {
+h6 {
 	font-size: 0.85em;
 	margin: 1.2em 0em 1.2em 0em;
 	font-weight: normal;
@@ -56,13 +56,13 @@ H6 {
 
 /* center some titles */
 
-.BOOK .TITLE, .BOOK .CORPAUTHOR, .BOOK .COPYRIGHT {
+.book .title, .book .corpauthor, .book .copyright {
 	text-align: center;
 }
 
 /* decoration for formal examples */
 
-DIV.EXAMPLE {
+div.example {
 	padding-left: 15px;
 	border-style: solid;
 	border-width: 0px;
@@ -71,28 +71,16 @@ DIV.EXAMPLE {
 	margin: 0.5ex;
 }
 
-/* less dense spacing of TOC */
-
-.BOOK .TOC DL DT {
-	padding-top: 1.5ex;
-	padding-bottom: 1.5ex;
-}
-
-.BOOK .TOC DL DL DT {
-	padding-top: 0ex;
-	padding-bottom: 0ex;
-}
-
 /* miscellaneous */
 
-PRE.LITERALLAYOUT, .SCREEN, .SYNOPSIS, .PROGRAMLISTING {
+pre.literallayout, .screen, .synopsis, .programlisting {
 	margin-left: 4ex;
 }
 
-.COMMENT	{ color: red; }
+.comment	{ color: red; }
 
-VAR		{ font-family: monospace; font-style: italic; }
+var		{ font-family: monospace; font-style: italic; }
 /* Konqueror's standard style for ACRONYM is italic. */
-ACRONYM		{ font-style: inherit; }
+acronym		{ font-style: inherit; }
 
-.OPTION		{ white-space: nowrap; }
+.option		{ white-space: nowrap; }
