@@ -639,15 +639,8 @@ ttdummy(PG_FUNCTION_ARGS)
 
 	/* Tuple to return to upper Executor ... */
 	if (newtuple)				/* UPDATE */
-	{
-		HeapTuple	tmptuple;
-
-		tmptuple = SPI_copytuple(trigtuple);
-		rettuple = SPI_modifytuple(rel, tmptuple, 1, &(attnum[1]), &newoff, NULL);
-		SPI_freetuple(tmptuple);
-	}
-	else
-		/* DELETE */
+		rettuple = SPI_modifytuple(rel, trigtuple, 1, &(attnum[1]), &newoff, NULL);
+	else	/* DELETE */
 		rettuple = trigtuple;
 
 	SPI_finish();				/* don't forget say Bye to SPI mgr */

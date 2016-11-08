@@ -3382,8 +3382,9 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
    <function>repalloc</function>, or SPI utility functions (except for
    <function>SPI_copytuple</function>,
    <function>SPI_returntuple</function>,
-   <function>SPI_modifytuple</function>, and
-   <function>SPI_palloc</function>) are made in this context.  When a
+   <function>SPI_modifytuple</function>,
+   <function>SPI_palloc</function>, and
+   <function>SPI_datumTransfer</function>) are made in this context.  When a
    procedure disconnects from the SPI manager (via
    <function>SPI_finish</function>) the current context is restored to
    the upper executor context, and all allocations made in the

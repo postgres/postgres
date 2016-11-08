@@ -805,6 +805,12 @@ extern HeapTuple heap_modify_tuple(HeapTuple tuple,
 				  Datum *replValues,
 				  bool *replIsnull,
 				  bool *doReplace);
+extern HeapTuple heap_modify_tuple_by_cols(HeapTuple tuple,
+						  TupleDesc tupleDesc,
+						  int nCols,
+						  int *replCols,
+						  Datum *replValues,
+						  bool *replIsnull);
 extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 				  Datum *values, bool *isnull);
 extern void heap_freetuple(HeapTuple htup);

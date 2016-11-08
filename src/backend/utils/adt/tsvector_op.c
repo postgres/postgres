@@ -2329,8 +2329,10 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	if (prs.curwords)
 	{
 		datum = PointerGetDatum(make_tsvector(&prs));
-		rettuple = SPI_modifytuple(rel, rettuple, 1, &tsvector_attr_num,
-								   &datum, NULL);
+		isnull = false;
+		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
+											 1, &tsvector_attr_num,
+											 &datum, &isnull);
 		pfree(DatumGetPointer(datum));
 	}
 	else
@@ -2340,14 +2342,12 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		SET_VARSIZE(out, CALCDATASIZE(0, 0));
 		out->size = 0;
 		datum = PointerGetDatum(out);
-		rettuple = SPI_modifytuple(rel, rettuple, 1, &tsvector_attr_num,
-								   &datum, NULL);
+		isnull = false;
+		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
+											 1, &tsvector_attr_num,
+											 &datum, &isnull);
 		pfree(prs.words);
 	}
-
-	if (rettuple == NULL)		/* internal error */
-		elog(ERROR, "tsvector_update_trigger: %d returned by SPI_modifytuple",
-			 SPI_result);
 
 	return PointerGetDatum(rettuple);
 }
