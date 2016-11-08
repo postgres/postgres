@@ -202,6 +202,31 @@ do { \
 	matches = completion_matches(text, complete_from_query); \
 } while (0)
 
+#define COMPLETE_WITH_ENUM_VALUE(type) \
+do { \
+	char   *_completion_schema; \
+	char   *_completion_type; \
+\
+	_completion_schema = strtokx(type, " \t\n\r", ".", "\"", 0, \
+								 false, false, pset.encoding); \
+	(void) strtokx(NULL, " \t\n\r", ".", "\"", 0, \
+				   false, false, pset.encoding); \
+	_completion_type = strtokx(NULL, " \t\n\r", ".", "\"", 0, \
+							   false, false, pset.encoding);  \
+	if (_completion_type == NULL)\
+	{ \
+		completion_charp = Query_for_list_of_enum_values; \
+		completion_info_charp = type; \
+	} \
+	else \
+	{ \
+		completion_charp = Query_for_list_of_enum_values_with_schema; \
+		completion_info_charp = _completion_type; \
+		completion_info_charp2 = _completion_schema; \
+	} \
+	matches = completion_matches(text, complete_from_query); \
+} while (0)
+
 #define COMPLETE_WITH_FUNCTION_ARG(function) \
 do { \
 	char   *_completion_schema; \
@@ -595,6 +620,26 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "   AND substring(pg_catalog.quote_ident(attname),1,%d)='%s' "\
 "   AND (pg_catalog.quote_ident(relname)='%s' "\
 "        OR '\"' || relname || '\"' ='%s') "\
+"   AND (pg_catalog.quote_ident(nspname)='%s' "\
+"        OR '\"' || nspname || '\"' ='%s') "
+
+#define Query_for_list_of_enum_values \
+"SELECT pg_catalog.quote_literal(enumlabel) "\
+"  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t "\
+" WHERE t.oid = e.enumtypid "\
+"   AND substring(pg_catalog.quote_literal(enumlabel),1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(typname)='%s' "\
+"        OR '\"' || typname || '\"'='%s') "\
+"   AND pg_catalog.pg_type_is_visible(t.oid)"
+
+#define Query_for_list_of_enum_values_with_schema \
+"SELECT pg_catalog.quote_literal(enumlabel) "\
+"  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
+" WHERE t.oid = e.enumtypid "\
+"   AND n.oid = t.typnamespace "\
+"   AND substring(pg_catalog.quote_literal(enumlabel),1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(typname)='%s' "\
+"        OR '\"' || typname || '\"'='%s') "\
 "   AND (pg_catalog.quote_ident(nspname)='%s' "\
 "        OR '\"' || nspname || '\"' ='%s') "
 
@@ -1872,11 +1917,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST2("ATTRIBUTE", "VALUE");
 	/* ALTER TYPE <foo> RENAME	*/
 	else if (Matches4("ALTER", "TYPE", MatchAny, "RENAME"))
-		COMPLETE_WITH_LIST2("ATTRIBUTE", "TO");
-	/* ALTER TYPE xxx RENAME ATTRIBUTE yyy */
-	else if (Matches6("ALTER", "TYPE", MatchAny, "RENAME", "ATTRIBUTE", MatchAny))
+		COMPLETE_WITH_LIST3("ATTRIBUTE", "TO", "VALUE");
+	/* ALTER TYPE xxx RENAME (ATTRIBUTE|VALUE) yyy */
+	else if (Matches6("ALTER", "TYPE", MatchAny, "RENAME", "ATTRIBUTE|VALUE", MatchAny))
 		COMPLETE_WITH_CONST("TO");
-
 	/*
 	 * If we have ALTER TYPE <sth> ALTER/DROP/RENAME ATTRIBUTE, provide list
 	 * of attributes
@@ -1895,6 +1939,12 @@ psql_completion(const char *text, int start, int end)
 	/* complete ALTER GROUP <foo> ADD|DROP USER with a user name */
 	else if (Matches5("ALTER", "GROUP", MatchAny, "ADD|DROP", "USER"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+
+	/*
+	 * If we have ALTER TYPE <sth> RENAME VALUE, provide list of enum values
+	 */
+	else if (Matches5("ALTER", "TYPE", MatchAny, "RENAME", "VALUE"))
+		COMPLETE_WITH_ENUM_VALUE(prev3_wd);
 
 /* BEGIN */
 	else if (Matches1("BEGIN"))
